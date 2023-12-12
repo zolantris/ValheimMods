@@ -2,7 +2,7 @@
 // Type: ValheimRAFT.Util.BinaryIOUtil
 // Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
 // MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-// Assembly location: C:\Users\Frederick Engelhardt\Downloads\ValheimRAFT 1.4.9-1136-1-4-9-1692901079\ValheimRAFT\ValheimRAFT.dll
+
 
 using System.IO;
 using UnityEngine;
@@ -18,17 +18,22 @@ namespace ValheimRAFT.Util
       writer.Write(vector.z);
     }
 
-    public static Vector3 ReadVector3(this BinaryReader reader) => new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+    public static Vector3 ReadVector3(this BinaryReader reader) => new Vector3(reader.ReadSingle(),
+      reader.ReadSingle(), reader.ReadSingle());
 
     public static void Write(this BinaryWriter writer, Color color)
     {
-      writer.Write((byte) ((double) color.r * (double) byte.MaxValue));
-      writer.Write((byte) ((double) color.g * (double) byte.MaxValue));
-      writer.Write((byte) ((double) color.b * (double) byte.MaxValue));
-      writer.Write((byte) ((double) color.a * (double) byte.MaxValue));
+      writer.Write((byte)((double)color.r * (double)byte.MaxValue));
+      writer.Write((byte)((double)color.g * (double)byte.MaxValue));
+      writer.Write((byte)((double)color.b * (double)byte.MaxValue));
+      writer.Write((byte)((double)color.a * (double)byte.MaxValue));
     }
 
-    public static Color ReadColor(this BinaryReader reader) => new Color((float) reader.ReadByte() / (float) byte.MaxValue, (float) reader.ReadByte() / (float) byte.MaxValue, (float) reader.ReadByte() / (float) byte.MaxValue, (float) reader.ReadByte() / (float) byte.MaxValue);
+    public static Color ReadColor(this BinaryReader reader) => new Color(
+      (float)reader.ReadByte() / (float)byte.MaxValue,
+      (float)reader.ReadByte() / (float)byte.MaxValue,
+      (float)reader.ReadByte() / (float)byte.MaxValue,
+      (float)reader.ReadByte() / (float)byte.MaxValue);
 
     public static void Write(this BinaryWriter writer, Vector2 vector)
     {
@@ -36,6 +41,7 @@ namespace ValheimRAFT.Util
       writer.Write(vector.y);
     }
 
-    public static Vector2 ReadVector2(this BinaryReader reader) => new Vector2(reader.ReadSingle(), reader.ReadSingle());
+    public static Vector2 ReadVector2(this BinaryReader reader) =>
+      new Vector2(reader.ReadSingle(), reader.ReadSingle());
   }
 }

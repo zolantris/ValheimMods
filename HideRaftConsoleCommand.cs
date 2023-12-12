@@ -2,11 +2,12 @@
 // Type: ValheimRAFT.HideRaftConsoleCommand
 // Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
 // MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-// Assembly location: C:\Users\Frederick Engelhardt\Downloads\ValheimRAFT 1.4.9-1136-1-4-9-1692901079\ValheimRAFT\ValheimRAFT.dll
+
 
 using Jotunn;
 using Jotunn.Entities;
 using UnityEngine;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT
 {
@@ -20,31 +21,36 @@ namespace ValheimRAFT
     {
       if (args.Length < 1)
       {
-        Logger.LogInfo((object) "Missing arguments, arguments required: true\\false");
+        Logger.LogInfo((object)"Missing arguments, arguments required: true\\false");
       }
       else
       {
         bool result;
         if (!bool.TryParse(args[0], out result))
         {
-          Logger.LogInfo((object) ("Invalid arguments, " + args[0]));
+          Logger.LogInfo((object)("Invalid arguments, " + args[0]));
         }
         else
         {
           Player localPlayer = Player.m_localPlayer;
-          if (!Object.op_Implicit((Object) localPlayer))
+          if (!localPlayer)
             return;
-          Ship standingOnShip = ((Character) localPlayer).GetStandingOnShip();
-          if (Object.op_Implicit((Object) standingOnShip) && HideRaftConsoleCommand.HideRaft(localPlayer, standingOnShip, result))
+          Ship standingOnShip = ((Character)localPlayer).GetStandingOnShip();
+          if (standingOnShip &&
+              HideRaftConsoleCommand.HideRaft(localPlayer, standingOnShip, result))
             return;
-          RaycastHit raycastHit;
-          if (!Physics.Raycast(((Component) GameCamera.instance).transform.position, ((Component) GameCamera.instance).transform.forward, ref raycastHit, 50f, LayerMask.GetMask(new string[1]
-          {
-            "piece"
-          })))
+
+          RaycastHit raycastHit = new RaycastHit();
+          if (!Physics.Raycast(((Component)GameCamera.instance).transform.position,
+                ((Component)GameCamera.instance).transform.forward, out raycastHit, 50f,
+                LayerMask.GetMask(new string[1]
+                {
+                  "piece"
+                })))
             return;
-          MoveableBaseRootComponent componentInParent = ((Component) ((RaycastHit) ref raycastHit).collider).GetComponentInParent<MoveableBaseRootComponent>();
-          if (Object.op_Implicit((Object) componentInParent))
+          MoveableBaseRootComponent componentInParent =
+            raycastHit.collider.GetComponentInParent<MoveableBaseRootComponent>();
+          if (componentInParent)
             HideRaftConsoleCommand.HideRaft(localPlayer, componentInParent.m_ship, result);
         }
       }
@@ -52,8 +58,9 @@ namespace ValheimRAFT
 
     private static bool HideRaft(Player player, Ship ship, bool hide)
     {
-      MoveableBaseShipComponent component = ((Component) ship).GetComponent<MoveableBaseShipComponent>();
-      if (!Object.op_Implicit((Object) component))
+      MoveableBaseShipComponent component =
+        ((Component)ship).GetComponent<MoveableBaseShipComponent>();
+      if (!component)
         return false;
       component.SetVisual(hide);
       return true;

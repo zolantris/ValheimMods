@@ -2,7 +2,7 @@
 // Type: ValheimRAFT.CultivatableComponent
 // Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
 // MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-// Assembly location: C:\Users\Frederick Engelhardt\Downloads\ValheimRAFT 1.4.9-1136-1-4-9-1692901079\ValheimRAFT\ValheimRAFT.dll
+
 
 using System;
 using System.Collections.Generic;
@@ -15,17 +15,22 @@ namespace ValheimRAFT
   {
     private ZNetView m_nview;
     private static Dictionary<int, List<int>> m_childObjects = new Dictionary<int, List<int>>();
-    private static readonly int MBCultivatableParentIdHash = StringExtensionMethods.GetStableHashCode("MBCultivatableParentId");
-    public static readonly KeyValuePair<int, int> MBCultivatableParentHash = ZDO.GetHashZDOID("MBCultivatableParent");
+
+    private static readonly int MBCultivatableParentIdHash =
+      StringExtensionMethods.GetStableHashCode("MBCultivatableParentId");
+
+    public static readonly KeyValuePair<int, int> MBCultivatableParentHash =
+      ZDO.GetHashZDOID("MBCultivatableParent");
+
     private float textureScale = 8f;
 
     public bool isCultivatable { get; set; } = true;
 
     public void Awake()
     {
-      this.m_nview = ((Component) this).GetComponent<ZNetView>();
-      WearNTear component = ((Component) this).GetComponent<WearNTear>();
-      if (!Object.op_Implicit((Object) component))
+      this.m_nview = ((Component)this).GetComponent<ZNetView>();
+      WearNTear component = ((Component)this).GetComponent<WearNTear>();
+      if (!Object.op_Implicit((Object)component))
         return;
       component.m_onDestroyed += new Action(this.OnDestroyed);
     }
@@ -34,13 +39,22 @@ namespace ValheimRAFT
 
     public void UpdateMaterial()
     {
-      Vector2 vector2_1 = Vector2.op_Division(Object.op_Implicit((Object) ((Component) this).transform.parent) ? new Vector2(-((Component) this).transform.localPosition.x, -((Component) this).transform.localPosition.z) : new Vector2(-((Component) this).transform.position.x, -((Component) this).transform.position.z), this.textureScale);
-      float num = (Object.op_Implicit((Object) ((Component) this).transform.parent) ? -((Component) this).transform.localEulerAngles.y : -((Component) this).transform.eulerAngles.y) / 360f;
+      Vector2 vector2_1 = Vector2.op_Division(
+        Object.op_Implicit((Object)((Component)this).transform.parent)
+          ? new Vector2(-((Component)this).transform.localPosition.x,
+            -((Component)this).transform.localPosition.z)
+          : new Vector2(-((Component)this).transform.position.x,
+            -((Component)this).transform.position.z), this.textureScale);
+      float num = (Object.op_Implicit((Object)((Component)this).transform.parent)
+        ? -((Component)this).transform.localEulerAngles.y
+        : -((Component)this).transform.eulerAngles.y) / 360f;
       Vector2 vector2_2;
       // ISSUE: explicit constructor call
-      ((Vector2) ref vector2_2).\u002Ector(((Component) this).transform.localScale.x, ((Component) this).transform.localScale.z);
+      ((Vector2) ref vector2_2).\u002Ector(((Component)this).transform.localScale.x,
+        ((Component)this).transform.localScale.z);
       vector2_2 = Vector2.op_Division(vector2_2, this.textureScale);
-      foreach (Renderer componentsInChild in ((Component) this).GetComponentsInChildren<MeshRenderer>())
+      foreach (Renderer componentsInChild in
+               ((Component)this).GetComponentsInChildren<MeshRenderer>())
       {
         Material material = componentsInChild.material;
         material.SetTextureOffset("_MainTex", vector2_1);
@@ -63,23 +77,27 @@ namespace ValheimRAFT
         if (zdo != null)
         {
           ZNetView instance = ZNetScene.instance.FindInstance(zdo);
-          if (Object.op_Implicit((Object) instance))
+          if (Object.op_Implicit((Object)instance))
           {
-            if (Object.op_Equality((Object) ((Component) this).gameObject, (Object) instance) || ((Component) this).transform.IsChildOf(((Component) instance).transform))
+            if (Object.op_Equality((Object)((Component)this).gameObject, (Object)instance) ||
+                ((Component)this).transform.IsChildOf(((Component)instance).transform))
             {
-              ZLog.LogWarning((object) string.Format(" gameObject == obj || transform.IsChildOf(obj.transform) {0} == {1} || {2}", (object) ((Component) this).gameObject, (object) instance, (object) ((Component) this).transform.IsChildOf(((Component) instance).transform)));
+              ZLog.LogWarning((object)string.Format(
+                " gameObject == obj || transform.IsChildOf(obj.transform) {0} == {1} || {2}",
+                (object)((Component)this).gameObject, (object)instance,
+                (object)((Component)this).transform.IsChildOf(((Component)instance).transform)));
             }
             else
             {
-              WearNTear component1 = ((Component) instance).GetComponent<WearNTear>();
-              if (Object.op_Implicit((Object) component1))
+              WearNTear component1 = ((Component)instance).GetComponent<WearNTear>();
+              if (Object.op_Implicit((Object)component1))
               {
                 component1.Destroy();
               }
               else
               {
-                ZNetView component2 = ((Component) instance).GetComponent<ZNetView>();
-                if (Object.op_Implicit((Object) component2))
+                ZNetView component2 = ((Component)instance).GetComponent<ZNetView>();
+                if (Object.op_Implicit((Object)component2))
                   component2.Destroy();
               }
             }
@@ -88,6 +106,7 @@ namespace ValheimRAFT
             ZDOMan.instance.DestroyZDO(zdo);
         }
       }
+
       CultivatableComponent.m_childObjects.Remove(persistantId);
     }
 
@@ -99,7 +118,9 @@ namespace ValheimRAFT
 
     public bool UseItem(Humanoid user, ItemDrop.ItemData item) => false;
 
-    public void AddNewChild(ZNetView child) => CultivatableComponent.AddNewChild(ZDOPersistantID.Instance.GetOrCreatePersistantID(this.m_nview.m_zdo), child);
+    public void AddNewChild(ZNetView child) =>
+      CultivatableComponent.AddNewChild(
+        ZDOPersistantID.Instance.GetOrCreatePersistantID(this.m_nview.m_zdo), child);
 
     public static void InitPiece(ZNetView netview)
     {
@@ -118,10 +139,13 @@ namespace ValheimRAFT
         if (ZDOID.op_Inequality(zdoid, ZDOID.None))
         {
           ZDO zdo = ZDOMan.instance.GetZDO(zdoid);
-          parentId = zdo == null ? ZDOPersistantID.ZDOIDToId(zdoid) : ZDOPersistantID.Instance.GetOrCreatePersistantID(zdo);
+          parentId = zdo == null
+            ? ZDOPersistantID.ZDOIDToId(zdoid)
+            : ZDOPersistantID.Instance.GetOrCreatePersistantID(zdo);
           netview.m_zdo.Set(CultivatableComponent.MBCultivatableParentIdHash, parentId, false);
         }
       }
+
       return parentId;
     }
 
@@ -133,10 +157,11 @@ namespace ValheimRAFT
 
     public static void AddChild(int parent, ZNetView child)
     {
-      StaticPhysics component = ((Component) child).GetComponent<StaticPhysics>();
-      if (Object.op_Implicit((Object) component))
-        Object.Destroy((Object) component);
-      CultivatableComponent.AddChild(parent, ZDOPersistantID.Instance.GetOrCreatePersistantID(child.m_zdo));
+      StaticPhysics component = ((Component)child).GetComponent<StaticPhysics>();
+      if (Object.op_Implicit((Object)component))
+        Object.Destroy((Object)component);
+      CultivatableComponent.AddChild(parent,
+        ZDOPersistantID.Instance.GetOrCreatePersistantID(child.m_zdo));
     }
 
     private static void AddChild(int parent, int child)
@@ -149,6 +174,7 @@ namespace ValheimRAFT
         intList = new List<int>();
         CultivatableComponent.m_childObjects.Add(parent, intList);
       }
+
       intList.Add(child);
     }
   }

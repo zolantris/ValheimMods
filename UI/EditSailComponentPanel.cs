@@ -1,254 +1,473 @@
-﻿// Decompiled with JetBrains decompiler
-// Type: ValheimRAFT.UI.EditSailComponentPanel
-// Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-// Assembly location: C:\Users\Frederick Engelhardt\Downloads\ValheimRAFT 1.4.9-1136-1-4-9-1692901079\ValheimRAFT\ValheimRAFT.dll
+﻿// ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+// ValheimRAFT.UI.EditSailComponentPanel
 
-using Jotunn.Managers;
-using System;
 using System.Collections.Generic;
+using Jotunn.GUI;
+using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using ValheimRAFT;
+using ValheimRAFT.UI;
 
-namespace ValheimRAFT.UI
+public class EditSailComponentPanel
 {
-  public class EditSailComponentPanel
+  private GameObject m_editPanel;
+
+  private GameObject m_editSailPanel;
+
+  private GameObject m_editPatternPanel;
+
+  private GameObject m_editLogoPanel;
+
+  private SailComponent m_editSail;
+
+  private Toggle[] m_editLockedSailSides;
+
+  private Toggle[] m_editLockedSailCorners;
+
+  private Toggle m_sailshrinkingToggle;
+
+  private GameObject m_locksTri;
+
+  private GameObject m_locksQuad;
+
+  private Toggle m_disableClothToggle;
+
+  public void ShowPanel(SailComponent sailComponent)
   {
-    private GameObject m_editPanel;
-    private GameObject m_editSailPanel;
-    private GameObject m_editPatternPanel;
-    private GameObject m_editLogoPanel;
-    private SailComponent m_editSail;
-    private Toggle[] m_editLockedSailSides;
-    private Toggle[] m_editLockedSailCorners;
-    private Toggle m_sailshrinkingToggle;
-    private GameObject m_locksTri;
-    private GameObject m_locksQuad;
-    private Toggle m_disableClothToggle;
-
-    public void ShowPanel(SailComponent sailComponent)
+    m_editSail = sailComponent;
+    m_editSail.StartEdit();
+    bool isTri = m_editSail.m_sailCorners.Count == 3;
+    if (!m_editPanel)
     {
-      this.m_editSail = sailComponent;
-      this.m_editSail.StartEdit();
-      bool flag = this.m_editSail.m_sailCorners.Count == 3;
-      if (!Object.op_Implicit((Object) this.m_editPanel))
-        this.InitPanel();
-      GameObject gameObject = flag ? this.m_locksTri : this.m_locksQuad;
-      this.m_editLockedSailCorners = new Toggle[flag ? 3 : 4];
-      this.m_editLockedSailSides = new Toggle[flag ? 3 : 4];
-      this.m_locksTri.SetActive(flag);
-      this.m_locksQuad.SetActive(!flag);
-      this.m_editLockedSailCorners[0] = ((Component) gameObject.transform.Find("CornerA")).GetComponent<Toggle>();
-      this.m_editLockedSailCorners[1] = ((Component) gameObject.transform.Find("CornerB")).GetComponent<Toggle>();
-      this.m_editLockedSailCorners[2] = ((Component) gameObject.transform.Find("CornerC")).GetComponent<Toggle>();
-      if (!flag)
-        this.m_editLockedSailCorners[3] = ((Component) gameObject.transform.Find("CornerD")).GetComponent<Toggle>();
-      this.m_editLockedSailSides[0] = ((Component) gameObject.transform.Find("SideA")).GetComponent<Toggle>();
-      this.m_editLockedSailSides[1] = ((Component) gameObject.transform.Find("SideB")).GetComponent<Toggle>();
-      this.m_editLockedSailSides[2] = ((Component) gameObject.transform.Find("SideC")).GetComponent<Toggle>();
-      if (!flag)
-        this.m_editLockedSailSides[3] = ((Component) gameObject.transform.Find("SideD")).GetComponent<Toggle>();
-      for (int index = 0; index < this.m_editLockedSailCorners.Length; ++index)
+      InitPanel();
+    }
+
+    GameObject locksArea = (isTri ? m_locksTri : m_locksQuad);
+    m_editLockedSailCorners = (Toggle[])(object)new Toggle[isTri ? 3 : 4];
+    m_editLockedSailSides = (Toggle[])(object)new Toggle[isTri ? 3 : 4];
+    m_locksTri.SetActive(isTri);
+    m_locksQuad.SetActive(!isTri);
+    m_editLockedSailCorners[0] =
+      ((Component)locksArea.transform.Find("CornerA")).GetComponent<Toggle>();
+    m_editLockedSailCorners[1] =
+      ((Component)locksArea.transform.Find("CornerB")).GetComponent<Toggle>();
+    m_editLockedSailCorners[2] =
+      ((Component)locksArea.transform.Find("CornerC")).GetComponent<Toggle>();
+    if (!isTri)
+    {
+      m_editLockedSailCorners[3] =
+        ((Component)locksArea.transform.Find("CornerD")).GetComponent<Toggle>();
+    }
+
+    m_editLockedSailSides[0] =
+      ((Component)locksArea.transform.Find("SideA")).GetComponent<Toggle>();
+    m_editLockedSailSides[1] =
+      ((Component)locksArea.transform.Find("SideB")).GetComponent<Toggle>();
+    m_editLockedSailSides[2] =
+      ((Component)locksArea.transform.Find("SideC")).GetComponent<Toggle>();
+    if (!isTri)
+    {
+      m_editLockedSailSides[3] =
+        ((Component)locksArea.transform.Find("SideD")).GetComponent<Toggle>();
+    }
+
+    for (int i = 0; i < m_editLockedSailCorners.Length; i++)
+    {
+      m_editLockedSailCorners[i]
+        .SetIsOnWithoutNotify(
+          m_editSail.m_lockedSailCorners.HasFlag((SailComponent.SailLockedSide)(1 << i)));
+      m_editLockedSailSides[i]
+        .SetIsOnWithoutNotify(
+          m_editSail.m_lockedSailSides.HasFlag((SailComponent.SailLockedSide)(1 << i)));
+    }
+
+    m_sailshrinkingToggle.SetIsOnWithoutNotify(
+      m_editSail.m_sailFlags.HasFlag(SailComponent.SailFlags.AllowSailShrinking));
+    m_disableClothToggle.SetIsOnWithoutNotify(
+      m_editSail.m_sailFlags.HasFlag(SailComponent.SailFlags.DisableCloth));
+    GUIManager.BlockInput(true);
+    m_editPanel.SetActive(true);
+  }
+
+  private void InitPanel()
+  {
+    //IL_00e4: Unknown result type (might be due to invalid IL or missing references)
+    //IL_00ee: Expected O, but got Unknown
+    //IL_0115: Unknown result type (might be due to invalid IL or missing references)
+    //IL_011f: Expected O, but got Unknown
+    //IL_0146: Unknown result type (might be due to invalid IL or missing references)
+    //IL_0150: Expected O, but got Unknown
+    //IL_0199: Unknown result type (might be due to invalid IL or missing references)
+    //IL_01a3: Expected O, but got Unknown
+    //IL_01b6: Unknown result type (might be due to invalid IL or missing references)
+    //IL_01c0: Expected O, but got Unknown
+    //IL_03a5: Unknown result type (might be due to invalid IL or missing references)
+    //IL_03af: Expected O, but got Unknown
+    //IL_03be: Unknown result type (might be due to invalid IL or missing references)
+    //IL_03c8: Expected O, but got Unknown
+    //IL_03d7: Unknown result type (might be due to invalid IL or missing references)
+    //IL_03e1: Expected O, but got Unknown
+    Transform parent = GUIManager.CustomGUIFront.transform;
+    m_editPanel = Object.Instantiate<GameObject>(
+      global::ValheimRAFT.ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("edit_sail_panel"),
+      parent, false);
+    PanelUtil.ApplyPanelStyle(m_editPanel);
+    GameObject texture_panel =
+      global::ValheimRAFT.ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("edit_texture_panel");
+    PanelUtil.ApplyPanelStyle(texture_panel);
+    GUIManager.Instance.ApplyDropdownStyle(
+      ((Component)texture_panel.transform.Find("TextureName")).GetComponent<Dropdown>(), 15);
+    m_editSailPanel = Object.Instantiate<GameObject>(texture_panel, parent, false);
+    m_editPatternPanel = Object.Instantiate<GameObject>(texture_panel, parent, false);
+    m_editLogoPanel = Object.Instantiate<GameObject>(texture_panel, parent, false);
+    m_editSailPanel.SetActive(false);
+    m_editPatternPanel.SetActive(false);
+    m_editLogoPanel.SetActive(false);
+    ((UnityEvent)((Component)m_editSailPanel.transform.Find("Button")).GetComponent<Button>()
+      .onClick).AddListener((UnityAction)delegate
+    {
+      m_editSailPanel.SetActive(false);
+      m_editPanel.SetActive(true);
+    });
+    ((UnityEvent)((Component)m_editPatternPanel.transform.Find("Button")).GetComponent<Button>()
+      .onClick).AddListener((UnityAction)delegate
+    {
+      m_editPatternPanel.SetActive(false);
+      m_editPanel.SetActive(true);
+    });
+    ((UnityEvent)((Component)m_editLogoPanel.transform.Find("Button")).GetComponent<Button>()
+      .onClick).AddListener((UnityAction)delegate
+    {
+      m_editLogoPanel.SetActive(false);
+      m_editPanel.SetActive(true);
+    });
+    GameObject saveObject = ((Component)m_editPanel.transform.Find("SaveButton")).gameObject;
+    GameObject cancelObject = ((Component)m_editPanel.transform.Find("CancelButton")).gameObject;
+    ((UnityEvent)cancelObject.GetComponent<Button>().onClick).AddListener(
+      new UnityAction(CancelEditPanel));
+    ((UnityEvent)saveObject.GetComponent<Button>().onClick).AddListener(
+      new UnityAction(SaveEditPanel));
+    m_sailshrinkingToggle = ((Component)m_editPanel.transform.Find("SailShrinkingToggle"))
+      .GetComponent<Toggle>();
+    ((UnityEvent<bool>)(object)m_sailshrinkingToggle.onValueChanged).AddListener(
+      (UnityAction<bool>)delegate(bool b) { m_editSail.SetAllowSailShrinking(b); });
+    m_disableClothToggle =
+      ((Component)m_editPanel.transform.Find("ClothToggle")).GetComponent<Toggle>();
+    ((UnityEvent<bool>)(object)m_disableClothToggle.onValueChanged).AddListener(
+      (UnityAction<bool>)delegate(bool b) { m_editSail.SetDisableCloth(b); });
+    m_locksTri = ((Component)m_editPanel.transform.Find("LocksTri")).gameObject;
+    m_locksQuad = ((Component)m_editPanel.transform.Find("LocksQuad")).gameObject;
+    Toggle[] componentsInChildren = m_locksTri.GetComponentsInChildren<Toggle>();
+    foreach (Toggle toggle2 in componentsInChildren)
+    {
+      ((UnityEvent<bool>)(object)toggle2.onValueChanged).AddListener((UnityAction<bool>)delegate
       {
-        this.m_editLockedSailCorners[index].SetIsOnWithoutNotify(this.m_editSail.m_lockedSailCorners.HasFlag((Enum) (SailComponent.SailLockedSide) (1 << index)));
-        this.m_editLockedSailSides[index].SetIsOnWithoutNotify(this.m_editSail.m_lockedSailSides.HasFlag((Enum) (SailComponent.SailLockedSide) (1 << index)));
-      }
-      this.m_sailshrinkingToggle.SetIsOnWithoutNotify(this.m_editSail.m_sailFlags.HasFlag((Enum) SailComponent.SailFlags.AllowSailShrinking));
-      this.m_disableClothToggle.SetIsOnWithoutNotify(this.m_editSail.m_sailFlags.HasFlag((Enum) SailComponent.SailFlags.DisableCloth));
-      GUIManager.BlockInput(true);
-      this.m_editPanel.SetActive(true);
+        UpdateSails();
+      });
     }
 
-    private void InitPanel()
+    Toggle[] componentsInChildren2 = m_locksQuad.GetComponentsInChildren<Toggle>();
+    foreach (Toggle toggle in componentsInChildren2)
     {
-      Transform transform = GUIManager.CustomGUIFront.transform;
-      this.m_editPanel = Object.Instantiate<GameObject>(ValheimRAFT.ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("edit_sail_panel"), transform, false);
-      PanelUtil.ApplyPanelStyle(this.m_editPanel);
-      GameObject editPanel = ValheimRAFT.ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("edit_texture_panel");
-      PanelUtil.ApplyPanelStyle(editPanel);
-      GUIManager.Instance.ApplyDropdownStyle(((Component) editPanel.transform.Find("TextureName")).GetComponent<Dropdown>(), 15);
-      this.m_editSailPanel = Object.Instantiate<GameObject>(editPanel, transform, false);
-      this.m_editPatternPanel = Object.Instantiate<GameObject>(editPanel, transform, false);
-      this.m_editLogoPanel = Object.Instantiate<GameObject>(editPanel, transform, false);
-      this.m_editSailPanel.SetActive(false);
-      this.m_editPatternPanel.SetActive(false);
-      this.m_editLogoPanel.SetActive(false);
-      // ISSUE: method pointer
-      ((UnityEvent) ((Component) this.m_editSailPanel.transform.Find("Button")).GetComponent<Button>().onClick).AddListener(new UnityAction((object) this, __methodptr(\u003CInitPanel\u003Eb__12_0)));
-      // ISSUE: method pointer
-      ((UnityEvent) ((Component) this.m_editPatternPanel.transform.Find("Button")).GetComponent<Button>().onClick).AddListener(new UnityAction((object) this, __methodptr(\u003CInitPanel\u003Eb__12_1)));
-      // ISSUE: method pointer
-      ((UnityEvent) ((Component) this.m_editLogoPanel.transform.Find("Button")).GetComponent<Button>().onClick).AddListener(new UnityAction((object) this, __methodptr(\u003CInitPanel\u003Eb__12_2)));
-      GameObject gameObject = ((Component) this.m_editPanel.transform.Find("SaveButton")).gameObject;
-      // ISSUE: method pointer
-      ((UnityEvent) ((Component) this.m_editPanel.transform.Find("CancelButton")).gameObject.GetComponent<Button>().onClick).AddListener(new UnityAction((object) this, __methodptr(CancelEditPanel)));
-      // ISSUE: method pointer
-      ((UnityEvent) gameObject.GetComponent<Button>().onClick).AddListener(new UnityAction((object) this, __methodptr(SaveEditPanel)));
-      this.m_sailshrinkingToggle = ((Component) this.m_editPanel.transform.Find("SailShrinkingToggle")).GetComponent<Toggle>();
-      // ISSUE: method pointer
-      ((UnityEvent<bool>) this.m_sailshrinkingToggle.onValueChanged).AddListener(new UnityAction<bool>((object) this, __methodptr(\u003CInitPanel\u003Eb__12_3)));
-      this.m_disableClothToggle = ((Component) this.m_editPanel.transform.Find("ClothToggle")).GetComponent<Toggle>();
-      // ISSUE: method pointer
-      ((UnityEvent<bool>) this.m_disableClothToggle.onValueChanged).AddListener(new UnityAction<bool>((object) this, __methodptr(\u003CInitPanel\u003Eb__12_4)));
-      this.m_locksTri = ((Component) this.m_editPanel.transform.Find("LocksTri")).gameObject;
-      this.m_locksQuad = ((Component) this.m_editPanel.transform.Find("LocksQuad")).gameObject;
-      foreach (Toggle componentsInChild in this.m_locksTri.GetComponentsInChildren<Toggle>())
+      ((UnityEvent<bool>)(object)toggle.onValueChanged).AddListener((UnityAction<bool>)delegate
       {
-        // ISSUE: method pointer
-        ((UnityEvent<bool>) componentsInChild.onValueChanged).AddListener(new UnityAction<bool>((object) this, __methodptr(\u003CInitPanel\u003Eb__12_8)));
-      }
-      foreach (Toggle componentsInChild in this.m_locksQuad.GetComponentsInChildren<Toggle>())
+        UpdateSails();
+      });
+    }
+
+    Button editSailButton =
+      ((Component)m_editPanel.transform.Find("EditSailButton")).GetComponent<Button>();
+    Button editPatternButton = ((Component)m_editPanel.transform.Find("EditPatternButton"))
+      .GetComponent<Button>();
+    Button editLogoButton =
+      ((Component)m_editPanel.transform.Find("EditLogoButton")).GetComponent<Button>();
+    ((Component)m_editSailPanel.transform.Find("Rotation")).gameObject.SetActive(false);
+    ((Component)m_editSailPanel.transform.Find("RotationLabel")).gameObject.SetActive(false);
+    ((UnityEvent)editSailButton.onClick).AddListener((UnityAction)delegate
+    {
+      m_editSailPanel.SetActive(true);
+      m_editPatternPanel.SetActive(false);
+      m_editLogoPanel.SetActive(false);
+      m_editPanel.SetActive(false);
+      LoadTexturePanel(m_editSailPanel, m_editSail.GetSailMaterial(), "_Main",
+        CustomTextureGroup.Get("Sails"));
+    });
+    ((UnityEvent)editPatternButton.onClick).AddListener((UnityAction)delegate
+    {
+      m_editSailPanel.SetActive(false);
+      m_editPatternPanel.SetActive(true);
+      m_editLogoPanel.SetActive(false);
+      m_editPanel.SetActive(false);
+      LoadTexturePanel(m_editPatternPanel, m_editSail.GetSailMaterial(), "_Pattern",
+        CustomTextureGroup.Get("Patterns"));
+    });
+    ((UnityEvent)editLogoButton.onClick).AddListener((UnityAction)delegate
+    {
+      m_editSailPanel.SetActive(false);
+      m_editPatternPanel.SetActive(false);
+      m_editLogoPanel.SetActive(true);
+      m_editPanel.SetActive(false);
+      LoadTexturePanel(m_editLogoPanel, m_editSail.GetSailMaterial(), "_Logo",
+        CustomTextureGroup.Get("Logos"));
+    });
+  }
+
+  private void LoadTexturePanel(GameObject editPanel, Material mat, string parameterName,
+    CustomTextureGroup group)
+  {
+    //IL_013e: Unknown result type (might be due to invalid IL or missing references)
+    //IL_0148: Expected O, but got Unknown
+    //IL_01a6: Unknown result type (might be due to invalid IL or missing references)
+    //IL_01b0: Expected O, but got Unknown
+    //IL_0296: Unknown result type (might be due to invalid IL or missing references)
+    //IL_02b7: Unknown result type (might be due to invalid IL or missing references)
+    //IL_02bc: Unknown result type (might be due to invalid IL or missing references)
+    //IL_02fb: Unknown result type (might be due to invalid IL or missing references)
+    //IL_0300: Unknown result type (might be due to invalid IL or missing references)
+    Button textureColor =
+      ((Component)editPanel.transform.Find("TextureColor")).GetComponent<Button>();
+    Dropdown textureDropdown =
+      ((Component)editPanel.transform.Find("TextureName")).GetComponent<Dropdown>();
+    InputField offsetx =
+      ((Component)editPanel.transform.Find("OffsetX")).GetComponent<InputField>();
+    InputField offsety =
+      ((Component)editPanel.transform.Find("OffsetY")).GetComponent<InputField>();
+    InputField scalex = ((Component)editPanel.transform.Find("TilingX")).GetComponent<InputField>();
+    InputField scaley = ((Component)editPanel.transform.Find("TilingY")).GetComponent<InputField>();
+    InputField rot = ((Component)editPanel.transform.Find("Rotation")).GetComponent<InputField>();
+    ((UnityEventBase)textureColor.onClick).RemoveAllListeners();
+    ((UnityEventBase)textureDropdown.onValueChanged).RemoveAllListeners();
+    ((UnityEventBase)offsetx.onValueChanged).RemoveAllListeners();
+    ((UnityEventBase)offsety.onValueChanged).RemoveAllListeners();
+    ((UnityEventBase)scalex.onValueChanged).RemoveAllListeners();
+    ((UnityEventBase)scaley.onValueChanged).RemoveAllListeners();
+    ((UnityEventBase)rot.onValueChanged).RemoveAllListeners();
+    List<Dropdown.OptionData> options = new List<Dropdown.OptionData>();
+    for (int i = 0; i < group.Textures.Count; i++)
+    {
+      options.Add(new Dropdown.OptionData(((Object)group.Textures[i].Texture).name));
+    }
+
+    textureDropdown.options = options;
+    ((UnityEvent<int>)(object)textureDropdown.onValueChanged).AddListener(
+      (UnityAction<int>)delegate(int index)
       {
-        // ISSUE: method pointer
-        ((UnityEvent<bool>) componentsInChild.onValueChanged).AddListener(new UnityAction<bool>((object) this, __methodptr(\u003CInitPanel\u003Eb__12_9)));
-      }
-      Button component1 = ((Component) this.m_editPanel.transform.Find("EditSailButton")).GetComponent<Button>();
-      Button component2 = ((Component) this.m_editPanel.transform.Find("EditPatternButton")).GetComponent<Button>();
-      Button component3 = ((Component) this.m_editPanel.transform.Find("EditLogoButton")).GetComponent<Button>();
-      ((Component) this.m_editSailPanel.transform.Find("Rotation")).gameObject.SetActive(false);
-      ((Component) this.m_editSailPanel.transform.Find("RotationLabel")).gameObject.SetActive(false);
-      // ISSUE: method pointer
-      ((UnityEvent) component1.onClick).AddListener(new UnityAction((object) this, __methodptr(\u003CInitPanel\u003Eb__12_5)));
-      // ISSUE: method pointer
-      ((UnityEvent) component2.onClick).AddListener(new UnityAction((object) this, __methodptr(\u003CInitPanel\u003Eb__12_6)));
-      // ISSUE: method pointer
-      ((UnityEvent) component3.onClick).AddListener(new UnityAction((object) this, __methodptr(\u003CInitPanel\u003Eb__12_7)));
-    }
-
-    private void LoadTexturePanel(
-      GameObject editPanel,
-      Material mat,
-      string parameterName,
-      CustomTextureGroup group)
+        mat.SetTexture(parameterName + "Tex", group.Textures[index].Texture);
+        if (group.Textures[index].Normal)
+        {
+          mat.SetTexture(parameterName + "Normal", group.Textures[index].Normal);
+        }
+      });
+    GUIManager.Instance.ApplyDropdownStyle(textureDropdown, 15);
+    ColorPicker.ColorEvent val = default(ColorPicker.ColorEvent);
+    ColorPicker.ColorEvent val2 = default(ColorPicker.ColorEvent);
+    ((UnityEvent)textureColor.onClick).AddListener((UnityAction)delegate
     {
-      // ISSUE: object of a compiler-generated type is created
-      // ISSUE: variable of a compiler-generated type
-      EditSailComponentPanel.\u003C\u003Ec__DisplayClass13_0 cDisplayClass130 = new EditSailComponentPanel.\u003C\u003Ec__DisplayClass13_0();
-      // ISSUE: reference to a compiler-generated field
-      cDisplayClass130.mat = mat;
-      // ISSUE: reference to a compiler-generated field
-      cDisplayClass130.parameterName = parameterName;
-      // ISSUE: reference to a compiler-generated field
-      cDisplayClass130.group = group;
-      Button component1 = ((Component) editPanel.transform.Find("TextureColor")).GetComponent<Button>();
-      Dropdown component2 = ((Component) editPanel.transform.Find("TextureName")).GetComponent<Dropdown>();
-      InputField component3 = ((Component) editPanel.transform.Find("OffsetX")).GetComponent<InputField>();
-      InputField component4 = ((Component) editPanel.transform.Find("OffsetY")).GetComponent<InputField>();
-      InputField component5 = ((Component) editPanel.transform.Find("TilingX")).GetComponent<InputField>();
-      InputField component6 = ((Component) editPanel.transform.Find("TilingY")).GetComponent<InputField>();
-      InputField component7 = ((Component) editPanel.transform.Find("Rotation")).GetComponent<InputField>();
-      ((UnityEventBase) component1.onClick).RemoveAllListeners();
-      ((UnityEventBase) component2.onValueChanged).RemoveAllListeners();
-      ((UnityEventBase) component3.onValueChanged).RemoveAllListeners();
-      ((UnityEventBase) component4.onValueChanged).RemoveAllListeners();
-      ((UnityEventBase) component5.onValueChanged).RemoveAllListeners();
-      ((UnityEventBase) component6.onValueChanged).RemoveAllListeners();
-      ((UnityEventBase) component7.onValueChanged).RemoveAllListeners();
-      List<Dropdown.OptionData> optionDataList = new List<Dropdown.OptionData>();
-      // ISSUE: reference to a compiler-generated field
-      for (int index = 0; index < cDisplayClass130.group.Textures.Count; ++index)
+      //IL_0010: Unknown result type (might be due to invalid IL or missing references)
+      //IL_001f: Unknown result type (might be due to invalid IL or missing references)
+      //IL_002e: Unknown result type (might be due to invalid IL or missing references)
+      //IL_0049: Unknown result type (might be due to invalid IL or missing references)
+      //IL_0065: Unknown result type (might be due to invalid IL or missing references)
+      //IL_006a: Unknown result type (might be due to invalid IL or missing references)
+      //IL_006c: Expected O, but got Unknown
+      //IL_0071: Expected O, but got Unknown
+      //IL_0084: Unknown result type (might be due to invalid IL or missing references)
+      //IL_0089: Unknown result type (might be due to invalid IL or missing references)
+      //IL_008b: Expected O, but got Unknown
+      //IL_0090: Expected O, but got Unknown
+      GUIManager instance = GUIManager.Instance;
+      Vector2 val3 = new Vector2(0.5f, 0.5f);
+      Vector2 val4 = new Vector2(0.5f, 0.5f);
+      Vector2 val5 = new Vector2(0.5f, 0.5f);
+      Color color2 = mat.GetColor(parameterName + "Color");
+      ColorPicker.ColorEvent obj = val;
+      if (obj == null)
       {
-        // ISSUE: reference to a compiler-generated field
-        optionDataList.Add(new Dropdown.OptionData(((Object) cDisplayClass130.group.Textures[index].Texture).name));
+        ColorPicker.ColorEvent val6 = delegate(Color color)
+        {
+          //IL_0017: Unknown result type (might be due to invalid IL or missing references)
+          mat.SetColor(parameterName + "Color", color);
+        };
+        ColorPicker.ColorEvent val7 = val6;
+        val = val6;
+        obj = val7;
       }
-      component2.options = optionDataList;
-      // ISSUE: method pointer
-      ((UnityEvent<int>) component2.onValueChanged).AddListener(new UnityAction<int>((object) cDisplayClass130, __methodptr(\u003CLoadTexturePanel\u003Eb__0)));
-      GUIManager.Instance.ApplyDropdownStyle(component2, 15);
-      // ISSUE: method pointer
-      ((UnityEvent) component1.onClick).AddListener(new UnityAction((object) cDisplayClass130, __methodptr(\u003CLoadTexturePanel\u003Eb__1)));
-      // ISSUE: method pointer
-      ((UnityEvent<string>) component3.onValueChanged).AddListener(new UnityAction<string>((object) cDisplayClass130, __methodptr(\u003CLoadTexturePanel\u003Eb__2)));
-      // ISSUE: method pointer
-      ((UnityEvent<string>) component4.onValueChanged).AddListener(new UnityAction<string>((object) cDisplayClass130, __methodptr(\u003CLoadTexturePanel\u003Eb__3)));
-      // ISSUE: method pointer
-      ((UnityEvent<string>) component5.onValueChanged).AddListener(new UnityAction<string>((object) cDisplayClass130, __methodptr(\u003CLoadTexturePanel\u003Eb__4)));
-      // ISSUE: method pointer
-      ((UnityEvent<string>) component6.onValueChanged).AddListener(new UnityAction<string>((object) cDisplayClass130, __methodptr(\u003CLoadTexturePanel\u003Eb__5)));
-      // ISSUE: method pointer
-      ((UnityEvent<string>) component7.onValueChanged).AddListener(new UnityAction<string>((object) cDisplayClass130, __methodptr(\u003CLoadTexturePanel\u003Eb__6)));
-      // ISSUE: reference to a compiler-generated field
-      // ISSUE: reference to a compiler-generated field
-      Texture texture = cDisplayClass130.mat.GetTexture(cDisplayClass130.parameterName + "Tex");
-      // ISSUE: reference to a compiler-generated field
-      CustomTextureGroup.CustomTexture textureByHash = cDisplayClass130.group.GetTextureByHash(StringExtensionMethods.GetStableHashCode(((Object) texture).name));
-      if (textureByHash != null)
-        component2.SetValueWithoutNotify(textureByHash.Index);
-      // ISSUE: reference to a compiler-generated field
-      // ISSUE: reference to a compiler-generated field
-      this.UpdateColorButton(component1, cDisplayClass130.mat.GetColor(cDisplayClass130.parameterName + "Color"));
-      // ISSUE: reference to a compiler-generated field
-      // ISSUE: reference to a compiler-generated field
-      Vector2 textureOffset = cDisplayClass130.mat.GetTextureOffset(cDisplayClass130.parameterName + "Tex");
-      component3.SetTextWithoutNotify(textureOffset.x.ToString());
-      component4.SetTextWithoutNotify(textureOffset.y.ToString());
-      // ISSUE: reference to a compiler-generated field
-      // ISSUE: reference to a compiler-generated field
-      Vector2 textureScale = cDisplayClass130.mat.GetTextureScale(cDisplayClass130.parameterName + "Tex");
-      component5.SetTextWithoutNotify(textureScale.x.ToString());
-      component6.SetTextWithoutNotify(textureScale.y.ToString());
-      if (!((Component) component7).gameObject.activeSelf)
-        return;
-      // ISSUE: reference to a compiler-generated field
-      // ISSUE: reference to a compiler-generated field
-      component7.SetTextWithoutNotify(cDisplayClass130.mat.GetFloat(cDisplayClass130.parameterName + "Rotation").ToString());
-    }
 
-    private void UpdateColorButton(Button button, Color color)
-    {
-      color.a = 1f;
-      Button button1 = button;
-      ColorBlock colorBlock1 = new ColorBlock();
-      ((ColorBlock) ref colorBlock1).normalColor = color;
-      ((ColorBlock) ref colorBlock1).highlightedColor = color;
-      ((ColorBlock) ref colorBlock1).disabledColor = color;
-      ((ColorBlock) ref colorBlock1).fadeDuration = 0.1f;
-      ((ColorBlock) ref colorBlock1).pressedColor = color;
-      ((ColorBlock) ref colorBlock1).selectedColor = color;
-      ((ColorBlock) ref colorBlock1).colorMultiplier = 1f;
-      ColorBlock colorBlock2 = colorBlock1;
-      ((Selectable) button1).colors = colorBlock2;
-    }
-
-    private void UpdateSails()
-    {
-      if (!Object.op_Implicit((Object) this.m_editSail))
-        return;
-      this.m_editSail.m_lockedSailCorners = SailComponent.SailLockedSide.None;
-      for (int index = 0; index < this.m_editLockedSailCorners.Length; ++index)
-        this.m_editSail.m_lockedSailCorners |= this.m_editLockedSailCorners[index].isOn ? (SailComponent.SailLockedSide) (1 << index) : SailComponent.SailLockedSide.None;
-      this.m_editSail.m_lockedSailSides = SailComponent.SailLockedSide.None;
-      for (int index = 0; index < this.m_editLockedSailSides.Length; ++index)
-        this.m_editSail.m_lockedSailSides |= this.m_editLockedSailSides[index].isOn ? (SailComponent.SailLockedSide) (1 << index) : SailComponent.SailLockedSide.None;
-      this.m_editSail.UpdateCoefficients();
-    }
-
-    public void CloseEditPanel()
-    {
-      if (Object.op_Implicit((Object) this.m_editPanel))
-        this.m_editPanel.SetActive(false);
-      if (Object.op_Implicit((Object) this.m_editSail))
-        this.m_editSail.EndEdit();
-      this.m_editSail = (SailComponent) null;
-      GUIManager.BlockInput(false);
-    }
-
-    public void CancelEditPanel()
-    {
-      if (Object.op_Implicit((Object) this.m_editSail))
-        this.m_editSail.LoadZDO();
-      this.CloseEditPanel();
-    }
-
-    public void SaveEditPanel()
-    {
-      if (Object.op_Implicit((Object) this.m_editSail))
+      ColorPicker.ColorEvent obj2 = val2;
+      if (obj2 == null)
       {
-        this.m_editSail.LoadFromMaterial();
-        this.m_editSail.SaveZDO();
+        ColorPicker.ColorEvent val8 = delegate(Color color)
+        {
+          //IL_0017: Unknown result type (might be due to invalid IL or missing references)
+          mat.SetColor(parameterName + "Color", color);
+        };
+        ColorPicker.ColorEvent val7 = val8;
+        val2 = val8;
+        obj2 = val7;
       }
-      this.CloseEditPanel();
+
+      instance.CreateColorPicker(val3, val4, val5, color2, "Color", obj, obj2, true);
+    });
+    ((UnityEvent<string>)(object)offsetx.onValueChanged).AddListener(
+      (UnityAction<string>)delegate(string str)
+      {
+        //IL_0024: Unknown result type (might be due to invalid IL or missing references)
+        //IL_0029: Unknown result type (might be due to invalid IL or missing references)
+        //IL_0048: Unknown result type (might be due to invalid IL or missing references)
+        if (float.TryParse(str, out var result5))
+        {
+          Vector2 textureOffset2 = mat.GetTextureOffset(parameterName + "Tex");
+          textureOffset2.x = result5;
+          mat.SetTextureOffset(parameterName + "Tex", textureOffset2);
+        }
+      });
+    ((UnityEvent<string>)(object)offsety.onValueChanged).AddListener(
+      (UnityAction<string>)delegate(string str)
+      {
+        //IL_0024: Unknown result type (might be due to invalid IL or missing references)
+        //IL_0029: Unknown result type (might be due to invalid IL or missing references)
+        //IL_0048: Unknown result type (might be due to invalid IL or missing references)
+        if (float.TryParse(str, out var result4))
+        {
+          Vector2 textureOffset = mat.GetTextureOffset(parameterName + "Tex");
+          textureOffset.y = result4;
+          mat.SetTextureOffset(parameterName + "Tex", textureOffset);
+        }
+      });
+    ((UnityEvent<string>)(object)scalex.onValueChanged).AddListener(
+      (UnityAction<string>)delegate(string str)
+      {
+        //IL_0024: Unknown result type (might be due to invalid IL or missing references)
+        //IL_0029: Unknown result type (might be due to invalid IL or missing references)
+        //IL_0048: Unknown result type (might be due to invalid IL or missing references)
+        if (float.TryParse(str, out var result3))
+        {
+          Vector2 textureScale2 = mat.GetTextureScale(parameterName + "Tex");
+          textureScale2.x = result3;
+          mat.SetTextureScale(parameterName + "Tex", textureScale2);
+        }
+      });
+    ((UnityEvent<string>)(object)scaley.onValueChanged).AddListener(
+      (UnityAction<string>)delegate(string str)
+      {
+        //IL_0024: Unknown result type (might be due to invalid IL or missing references)
+        //IL_0029: Unknown result type (might be due to invalid IL or missing references)
+        //IL_0048: Unknown result type (might be due to invalid IL or missing references)
+        if (float.TryParse(str, out var result2))
+        {
+          Vector2 textureScale = mat.GetTextureScale(parameterName + "Tex");
+          textureScale.y = result2;
+          mat.SetTextureScale(parameterName + "Tex", textureScale);
+        }
+      });
+    ((UnityEvent<string>)(object)rot.onValueChanged).AddListener(
+      (UnityAction<string>)delegate(string str)
+      {
+        if (float.TryParse(str, out var result))
+        {
+          mat.SetFloat(parameterName + "Rotation", result);
+        }
+      });
+    Texture tex = mat.GetTexture(parameterName + "Tex");
+    CustomTextureGroup.CustomTexture customtex =
+      group.GetTextureByHash(StringExtensionMethods.GetStableHashCode(((Object)tex).name));
+    if (customtex != null)
+    {
+      textureDropdown.SetValueWithoutNotify(customtex.Index);
     }
+
+    UpdateColorButton(textureColor, mat.GetColor(parameterName + "Color"));
+    Vector2 offset = mat.GetTextureOffset(parameterName + "Tex");
+    offsetx.SetTextWithoutNotify(offset.x.ToString());
+    offsety.SetTextWithoutNotify(offset.y.ToString());
+    Vector2 scale = mat.GetTextureScale(parameterName + "Tex");
+    scalex.SetTextWithoutNotify(scale.x.ToString());
+    scaley.SetTextWithoutNotify(scale.y.ToString());
+    if (((Component)rot).gameObject.activeSelf)
+    {
+      rot.SetTextWithoutNotify(mat.GetFloat(parameterName + "Rotation").ToString());
+    }
+  }
+
+  private void UpdateColorButton(Button button, Color color)
+  {
+    //IL_0010: Unknown result type (might be due to invalid IL or missing references)
+    //IL_0018: Unknown result type (might be due to invalid IL or missing references)
+    //IL_0021: Unknown result type (might be due to invalid IL or missing references)
+    //IL_002a: Unknown result type (might be due to invalid IL or missing references)
+    //IL_0040: Unknown result type (might be due to invalid IL or missing references)
+    //IL_0049: Unknown result type (might be due to invalid IL or missing references)
+    //IL_005d: Unknown result type (might be due to invalid IL or missing references)
+    color.a = 1f;
+    ColorBlock colors = default(ColorBlock);
+    colors.normalColor = color;
+    colors.highlightedColor = color;
+    colors.disabledColor = color;
+    colors.fadeDuration = 0.1f;
+    colors.pressedColor = color;
+    colors.selectedColor = color;
+    colors.colorMultiplier = 1f;
+    ((Selectable)button).colors = colors;
+  }
+
+  private void UpdateSails()
+  {
+    if (m_editSail)
+    {
+      m_editSail.m_lockedSailCorners = SailComponent.SailLockedSide.None;
+      for (int i = 0; i < m_editLockedSailCorners.Length; i++)
+      {
+        m_editSail.m_lockedSailCorners |=
+          (SailComponent.SailLockedSide)(m_editLockedSailCorners[i].isOn ? (1 << i) : 0);
+      }
+
+      m_editSail.m_lockedSailSides = SailComponent.SailLockedSide.None;
+      for (int j = 0; j < m_editLockedSailSides.Length; j++)
+      {
+        m_editSail.m_lockedSailSides |=
+          (SailComponent.SailLockedSide)(m_editLockedSailSides[j].isOn ? (1 << j) : 0);
+      }
+
+      m_editSail.UpdateCoefficients();
+    }
+  }
+
+  public void CloseEditPanel()
+  {
+    if (m_editPanel)
+    {
+      m_editPanel.SetActive(false);
+    }
+
+    if (m_editSail)
+    {
+      m_editSail.EndEdit();
+    }
+
+    m_editSail = null;
+    GUIManager.BlockInput(false);
+  }
+
+  public void CancelEditPanel()
+  {
+    if (m_editSail)
+    {
+      m_editSail.LoadZDO();
+    }
+
+    CloseEditPanel();
+  }
+
+  public void SaveEditPanel()
+  {
+    if (m_editSail)
+    {
+      m_editSail.LoadFromMaterial();
+      m_editSail.SaveZDO();
+    }
+
+    CloseEditPanel();
   }
 }

@@ -2,7 +2,7 @@
 // Type: ValheimRAFT.Util.ZDOPersistantID
 // Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
 // MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-// Assembly location: C:\Users\Frederick Engelhardt\Downloads\ValheimRAFT 1.4.9-1136-1-4-9-1692901079\ValheimRAFT\ValheimRAFT.dll
+
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,7 +11,9 @@ namespace ValheimRAFT.Util
 {
   public class ZDOPersistantID
   {
-    public static readonly int PersistantIDHash = StringExtensionMethods.GetStableHashCode("PersistantID");
+    public static readonly int PersistantIDHash =
+      StringExtensionMethods.GetStableHashCode("PersistantID");
+
     public static ZDOPersistantID Instance = new ZDOPersistantID();
     private Dictionary<int, ZDO> m_zdoGuidLookup = new Dictionary<int, ZDO>();
 
@@ -23,7 +25,8 @@ namespace ValheimRAFT.Util
       return id != 0;
     }
 
-    public static int ZDOIDToId(ZDOID zdoid) => (int) ((ZDOID) ref zdoid).UserID + (int) ((ZDOID) ref zdoid).ID;
+    public static int ZDOIDToId(ZDOID zdoid) =>
+      (int)zdoid.UserID + (int)zdoid.ID;
 
     public int GetOrCreatePersistantID(ZDO zdo)
     {
@@ -36,6 +39,7 @@ namespace ValheimRAFT.Util
         zdo.Set(ZDOPersistantID.PersistantIDHash, id, false);
         this.m_zdoGuidLookup[id] = zdo;
       }
+
       return id;
     }
 
@@ -58,19 +62,21 @@ namespace ValheimRAFT.Util
     public ZDO GetZDO(int id)
     {
       ZDO zdo;
-      return this.m_zdoGuidLookup.TryGetValue(id, out zdo) ? zdo : (ZDO) null;
+      return this.m_zdoGuidLookup.TryGetValue(id, out zdo) ? zdo : (ZDO)null;
     }
 
     public GameObject GetGameObject(int id)
     {
       ZNetView instance = this.GetInstance(id);
-      return Object.op_Implicit((Object) instance) ? ((Component) instance).gameObject : (GameObject) null;
+      return Object.op_Implicit((Object)instance)
+        ? ((Component)instance).gameObject
+        : (GameObject)null;
     }
 
     public ZNetView GetInstance(int id)
     {
       ZDO zdo = this.GetZDO(id);
-      return zdo != null ? ZNetScene.instance.FindInstance(zdo) : (ZNetView) null;
+      return zdo != null ? ZNetScene.instance.FindInstance(zdo) : (ZNetView)null;
     }
   }
 }

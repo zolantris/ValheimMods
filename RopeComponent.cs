@@ -2,7 +2,7 @@
 // Type: ValheimRAFT.RopeComponent
 // Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
 // MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-// Assembly location: C:\Users\Frederick Engelhardt\Downloads\ValheimRAFT 1.4.9-1136-1-4-9-1692901079\ValheimRAFT\ValheimRAFT.dll
+
 
 using UnityEngine;
 
@@ -10,7 +10,7 @@ namespace ValheimRAFT
 {
   public class RopeComponent : MonoBehaviour
   {
-    public SpringJoint m_spring = (SpringJoint) null;
+    public SpringJoint m_spring = (SpringJoint)null;
 
     public string GetHoverName() => "";
 
@@ -22,8 +22,8 @@ namespace ValheimRAFT
 
     internal SpringJoint GetSpring()
     {
-      if (!Object.op_Implicit((Object) this.m_spring))
-        this.m_spring = ((Component) this).gameObject.AddComponent<SpringJoint>();
+      if (!Object.op_Implicit((Object)this.m_spring))
+        this.m_spring = ((Component)this).gameObject.AddComponent<SpringJoint>();
       return this.m_spring;
     }
   }

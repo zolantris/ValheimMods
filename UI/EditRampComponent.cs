@@ -2,7 +2,7 @@
 // Type: ValheimRAFT.UI.EditRampComponent
 // Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
 // MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-// Assembly location: C:\Users\Frederick Engelhardt\Downloads\ValheimRAFT 1.4.9-1136-1-4-9-1692901079\ValheimRAFT\ValheimRAFT.dll
+
 
 using Jotunn.Managers;
 using UnityEngine;
@@ -31,18 +31,24 @@ namespace ValheimRAFT.UI
 
     private void InitPanel()
     {
-      Transform transform = GUIManager.CustomGUIFront.transform;
-      this.m_editPanel = Object.Instantiate<GameObject>(ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("edit_ramp_panel"), transform, false);
-      PanelUtil.ApplyPanelStyle(this.m_editPanel);
-      this.m_segmentsInput = ((Component) this.m_editPanel.transform.Find("SegmentsInput")).GetComponent<InputField>();
-      Button component1 = ((Component) this.m_editPanel.transform.Find("SaveButton")).GetComponent<Button>();
-      Button component2 = ((Component) this.m_editPanel.transform.Find("CancelButton")).GetComponent<Button>();
-      // ISSUE: method pointer
-      ((UnityEvent) component1.onClick).AddListener(new UnityAction(SaveEditPanel));
-      // ISSUE: method pointer
-      ((UnityEvent) component2.onClick).AddListener(new UnityAction(CancelEditPanel));
-      // ISSUE: method pointer
-      ((UnityEvent<string>) this.m_segmentsInput.onValueChanged).AddListener(new UnityAction<string>((object) this, __methodptr(\u003CInitPanel\u003Eb__5_0)));
+      Transform parent = GUIManager.CustomGUIFront.transform;
+      m_editPanel = Object.Instantiate<GameObject>(
+        ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("edit_ramp_panel"), parent, false);
+      PanelUtil.ApplyPanelStyle(m_editPanel);
+      m_segmentsInput = ((Component)m_editPanel.transform.Find("SegmentsInput"))
+        .GetComponent<InputField>();
+      Button saveButton =
+        ((Component)m_editPanel.transform.Find("SaveButton")).GetComponent<Button>();
+      Button cancelButton =
+        ((Component)m_editPanel.transform.Find("CancelButton")).GetComponent<Button>();
+      ((UnityEvent)saveButton.onClick).AddListener(new UnityAction(SaveEditPanel));
+      ((UnityEvent)cancelButton.onClick).AddListener(new UnityAction(CancelEditPanel));
+      ((UnityEvent<string>)(object)m_segmentsInput.onValueChanged).AddListener(
+        (UnityAction<string>)delegate(string val)
+        {
+          int.TryParse(val, out m_segmentCount);
+          m_segmentCount = Mathf.Clamp(m_segmentCount, 2, 32);
+        });
     }
 
     private void ClosePanel()
@@ -55,7 +61,7 @@ namespace ValheimRAFT.UI
 
     private void SaveEditPanel()
     {
-      if (this.m_ramp != (Object) null)
+      if (this.m_ramp != (Object)null)
         this.m_ramp.SetSegmentCount(this.m_segmentCount);
       this.ClosePanel();
     }

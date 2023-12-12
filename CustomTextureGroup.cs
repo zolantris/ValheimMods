@@ -2,7 +2,7 @@
 // Type: ValheimRAFT.CustomTextureGroup
 // Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
 // MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-// Assembly location: C:\Users\Frederick Engelhardt\Downloads\ValheimRAFT 1.4.9-1136-1-4-9-1692901079\ValheimRAFT\ValheimRAFT.dll
+
 
 using BepInEx;
 using Jotunn.Utils;
@@ -22,21 +22,33 @@ namespace ValheimRAFT
       ".jpg",
       ".jpeg"
     };
-    private static Dictionary<string, CustomTextureGroup> m_groups = new Dictionary<string, CustomTextureGroup>();
-    private Dictionary<string, CustomTextureGroup.CustomTexture> m_textureLookUp = new Dictionary<string, CustomTextureGroup.CustomTexture>();
-    private Dictionary<int, CustomTextureGroup.CustomTexture> m_textureHashLookUp = new Dictionary<int, CustomTextureGroup.CustomTexture>();
-    private List<CustomTextureGroup.CustomTexture> m_textures = new List<CustomTextureGroup.CustomTexture>();
+
+    private static Dictionary<string, CustomTextureGroup> m_groups =
+      new Dictionary<string, CustomTextureGroup>();
+
+    private Dictionary<string, CustomTextureGroup.CustomTexture> m_textureLookUp =
+      new Dictionary<string, CustomTextureGroup.CustomTexture>();
+
+    private Dictionary<int, CustomTextureGroup.CustomTexture> m_textureHashLookUp =
+      new Dictionary<int, CustomTextureGroup.CustomTexture>();
+
+    private List<CustomTextureGroup.CustomTexture> m_textures =
+      new List<CustomTextureGroup.CustomTexture>();
 
     public CustomTextureGroup.CustomTexture GetTextureByHash(int hash)
     {
       CustomTextureGroup.CustomTexture customTexture;
-      return this.m_textureHashLookUp.TryGetValue(hash, out customTexture) ? customTexture : (CustomTextureGroup.CustomTexture) null;
+      return this.m_textureHashLookUp.TryGetValue(hash, out customTexture)
+        ? customTexture
+        : (CustomTextureGroup.CustomTexture)null;
     }
 
     public CustomTextureGroup.CustomTexture GetTextureByName(string name)
     {
       CustomTextureGroup.CustomTexture customTexture;
-      return this.m_textureLookUp.TryGetValue(name, out customTexture) ? customTexture : (CustomTextureGroup.CustomTexture) null;
+      return this.m_textureLookUp.TryGetValue(name, out customTexture)
+        ? customTexture
+        : (CustomTextureGroup.CustomTexture)null;
     }
 
     public List<CustomTextureGroup.CustomTexture> Textures => this.m_textures;
@@ -44,7 +56,9 @@ namespace ValheimRAFT
     public static CustomTextureGroup Get(string groupName)
     {
       CustomTextureGroup customTextureGroup;
-      return CustomTextureGroup.m_groups.TryGetValue(groupName, out customTextureGroup) ? customTextureGroup : (CustomTextureGroup) null;
+      return CustomTextureGroup.m_groups.TryGetValue(groupName, out customTextureGroup)
+        ? customTextureGroup
+        : (CustomTextureGroup)null;
     }
 
     public static CustomTextureGroup Load(string groupName)
@@ -54,12 +68,17 @@ namespace ValheimRAFT
         return customTextureGroup1;
       CustomTextureGroup customTextureGroup2 = new CustomTextureGroup();
       CustomTextureGroup.m_groups.Add(groupName, customTextureGroup2);
-      foreach (string file in Directory.GetFiles(Path.Combine(Path.Combine(Paths.PluginPath, "ValheimRAFT", "Assets"), groupName)))
+      foreach (string file in Directory.GetFiles(
+                 Path.Combine(Path.Combine(Paths.PluginPath, "ValheimRAFT", "Assets"), groupName)))
       {
         string extension = Path.GetExtension(file);
-        if (((IEnumerable<string>) CustomTextureGroup.m_validExtensions).Contains<string>(extension, (IEqualityComparer<string>) StringComparer.InvariantCultureIgnoreCase) && !Path.GetFileNameWithoutExtension(file).EndsWith("_normal", StringComparison.InvariantCultureIgnoreCase))
+        if (((IEnumerable<string>)CustomTextureGroup.m_validExtensions).Contains<string>(extension,
+              (IEqualityComparer<string>)StringComparer.InvariantCultureIgnoreCase) && !Path
+              .GetFileNameWithoutExtension(file)
+              .EndsWith("_normal", StringComparison.InvariantCultureIgnoreCase))
           customTextureGroup2.AddTexture(file);
       }
+
       return customTextureGroup2;
     }
 
@@ -71,15 +90,15 @@ namespace ValheimRAFT
       CustomTextureGroup.CustomTexture texture = new CustomTextureGroup.CustomTexture();
       string path = Path.Combine(directoryName, withoutExtension + "_normal" + extension);
       if (File.Exists(path))
-        texture.Normal = (Texture) AssetUtils.LoadTexture(path, false);
-      texture.Texture = (Texture) AssetUtils.LoadTexture(file, false);
-      ((Object) texture.Texture).name = withoutExtension;
+        texture.Normal = (Texture)AssetUtils.LoadTexture(path, false);
+      texture.Texture = (Texture)AssetUtils.LoadTexture(file, false);
+      ((Object)texture.Texture).name = withoutExtension;
       this.AddTexture(texture);
     }
 
     public void AddTexture(CustomTextureGroup.CustomTexture texture)
     {
-      string name = ((Object) texture.Texture).name;
+      string name = ((Object)texture.Texture).name;
       if (this.m_textureLookUp.ContainsKey(name))
         return;
       this.m_textureLookUp.Add(name, texture);
@@ -90,9 +109,9 @@ namespace ValheimRAFT
 
     public class CustomTexture
     {
-      public Texture Texture { get; internal set; } = (Texture) null;
+      public Texture Texture { get; internal set; } = (Texture)null;
 
-      public Texture Normal { get; internal set; } = (Texture) null;
+      public Texture Normal { get; internal set; } = (Texture)null;
 
       public int Index { get; internal set; } = 0;
     }
