@@ -1,181 +1,197 @@
-﻿// Decompiled with JetBrains decompiler
-// Type: ValheimRAFT.CultivatableComponent
-// Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-
+﻿// ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+// ValheimRAFT.CultivatableComponent
 
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimRAFT.Util;
 
-namespace ValheimRAFT
+public class CultivatableComponent : MonoBehaviour
 {
-  public class CultivatableComponent : MonoBehaviour
+  private ZNetView m_nview;
+
+  private static Dictionary<int, List<int>> m_childObjects = new Dictionary<int, List<int>>();
+
+  private static readonly int MBCultivatableParentIdHash =
+    StringExtensionMethods.GetStableHashCode("MBCultivatableParentId");
+
+  public static readonly KeyValuePair<int, int> MBCultivatableParentHash =
+    ZDO.GetHashZDOID("MBCultivatableParent");
+
+  private float textureScale = 8f;
+
+  public bool isCultivatable { get; set; } = true;
+
+
+  public void Awake()
   {
-    private ZNetView m_nview;
-    private static Dictionary<int, List<int>> m_childObjects = new Dictionary<int, List<int>>();
-
-    private static readonly int MBCultivatableParentIdHash =
-      StringExtensionMethods.GetStableHashCode("MBCultivatableParentId");
-
-    public static readonly KeyValuePair<int, int> MBCultivatableParentHash =
-      ZDO.GetHashZDOID("MBCultivatableParent");
-
-    private float textureScale = 8f;
-
-    public bool isCultivatable { get; set; } = true;
-
-    public void Awake()
+    m_nview = GetComponent<ZNetView>();
+    WearNTear wnt = GetComponent<WearNTear>();
+    if ((bool)wnt)
     {
-      this.m_nview = ((Component)this).GetComponent<ZNetView>();
-      WearNTear component = ((Component)this).GetComponent<WearNTear>();
-      if (!Object.op_Implicit((Object)component))
-        return;
-      component.m_onDestroyed += new Action(this.OnDestroyed);
+      wnt.m_onDestroyed = (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(OnDestroyed));
+    }
+  }
+
+  public void Start()
+  {
+    UpdateMaterial();
+  }
+
+  public void UpdateMaterial()
+  {
+    Vector2 uvoffset = (base.transform.parent
+      ? new Vector2(0f - base.transform.localPosition.x, 0f - base.transform.localPosition.z)
+      : new Vector2(0f - base.transform.position.x, 0f - base.transform.position.z));
+    uvoffset /= textureScale;
+    float uvrotation = (base.transform.parent
+      ? (0f - base.transform.localEulerAngles.y)
+      : (0f - base.transform.eulerAngles.y));
+    uvrotation /= 360f;
+    Vector2 uvscale = new Vector2(base.transform.localScale.x, base.transform.localScale.z);
+    uvscale /= textureScale;
+    MeshRenderer[] renderers = GetComponentsInChildren<MeshRenderer>();
+    for (int i = 0; i < renderers.Length; i++)
+    {
+      Material mat = renderers[i].material;
+      mat.SetTextureOffset("_MainTex", uvoffset);
+      mat.SetTextureScale("_MainTex", uvscale);
+      mat.SetTextureOffset("_MainNormal", uvoffset);
+      mat.SetTextureScale("_MainNormal", uvscale);
+      mat.SetFloat("_MainRotation", uvrotation);
+    }
+  }
+
+  private void OnDestroyed()
+  {
+    int myid = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
+    if (!m_childObjects.TryGetValue(myid, out var list))
+    {
+      return;
     }
 
-    public void Start() => this.UpdateMaterial();
-
-    public void UpdateMaterial()
+    for (int i = 0; i < list.Count; i++)
     {
-      Vector2 vector2_1 = Vector2.op_Division(
-        Object.op_Implicit((Object)((Component)this).transform.parent)
-          ? new Vector2(-((Component)this).transform.localPosition.x,
-            -((Component)this).transform.localPosition.z)
-          : new Vector2(-((Component)this).transform.position.x,
-            -((Component)this).transform.position.z), this.textureScale);
-      float num = (Object.op_Implicit((Object)((Component)this).transform.parent)
-        ? -((Component)this).transform.localEulerAngles.y
-        : -((Component)this).transform.eulerAngles.y) / 360f;
-      Vector2 vector2_2;
-      // ISSUE: explicit constructor call
-      ((Vector2) ref vector2_2).\u002Ector(((Component)this).transform.localScale.x,
-        ((Component)this).transform.localScale.z);
-      vector2_2 = Vector2.op_Division(vector2_2, this.textureScale);
-      foreach (Renderer componentsInChild in
-               ((Component)this).GetComponentsInChildren<MeshRenderer>())
+      ZDO zdo = ZDOPersistantID.Instance.GetZDO(list[i]);
+      if (zdo == null)
       {
-        Material material = componentsInChild.material;
-        material.SetTextureOffset("_MainTex", vector2_1);
-        material.SetTextureScale("_MainTex", vector2_2);
-        material.SetTextureOffset("_MainNormal", vector2_1);
-        material.SetTextureScale("_MainNormal", vector2_2);
-        material.SetFloat("_MainRotation", num);
+        continue;
       }
-    }
 
-    private void OnDestroyed()
-    {
-      int persistantId = ZDOPersistantID.Instance.GetOrCreatePersistantID(this.m_nview.m_zdo);
-      List<int> intList;
-      if (!CultivatableComponent.m_childObjects.TryGetValue(persistantId, out intList))
-        return;
-      for (int index = 0; index < intList.Count; ++index)
+      ZNetView obj = ZNetScene.instance.FindInstance(zdo);
+      if ((bool)obj)
       {
-        ZDO zdo = ZDOPersistantID.Instance.GetZDO(intList[index]);
-        if (zdo != null)
+        if (base.gameObject == obj || base.transform.IsChildOf(obj.transform))
         {
-          ZNetView instance = ZNetScene.instance.FindInstance(zdo);
-          if (Object.op_Implicit((Object)instance))
-          {
-            if (Object.op_Equality((Object)((Component)this).gameObject, (Object)instance) ||
-                ((Component)this).transform.IsChildOf(((Component)instance).transform))
-            {
-              ZLog.LogWarning((object)string.Format(
-                " gameObject == obj || transform.IsChildOf(obj.transform) {0} == {1} || {2}",
-                (object)((Component)this).gameObject, (object)instance,
-                (object)((Component)this).transform.IsChildOf(((Component)instance).transform)));
-            }
-            else
-            {
-              WearNTear component1 = ((Component)instance).GetComponent<WearNTear>();
-              if (Object.op_Implicit((Object)component1))
-              {
-                component1.Destroy();
-              }
-              else
-              {
-                ZNetView component2 = ((Component)instance).GetComponent<ZNetView>();
-                if (Object.op_Implicit((Object)component2))
-                  component2.Destroy();
-              }
-            }
-          }
-          else
-            ZDOMan.instance.DestroyZDO(zdo);
+          ZLog.LogWarning(
+            (object)
+            $" gameObject == obj || transform.IsChildOf(obj.transform) {base.gameObject} == {obj} || {base.transform.IsChildOf(obj.transform)}");
+          continue;
+        }
+
+        WearNTear wnt = obj.GetComponent<WearNTear>();
+        if ((bool)wnt)
+        {
+          wnt.Destroy();
+          continue;
+        }
+
+        ZNetView netview = obj.GetComponent<ZNetView>();
+        if ((bool)netview)
+        {
+          netview.Destroy();
         }
       }
-
-      CultivatableComponent.m_childObjects.Remove(persistantId);
-    }
-
-    public string GetHoverName() => "";
-
-    public string GetHoverText() => "";
-
-    public bool Interact(Humanoid user, bool hold, bool alt) => true;
-
-    public bool UseItem(Humanoid user, ItemDrop.ItemData item) => false;
-
-    public void AddNewChild(ZNetView child) =>
-      CultivatableComponent.AddNewChild(
-        ZDOPersistantID.Instance.GetOrCreatePersistantID(this.m_nview.m_zdo), child);
-
-    public static void InitPiece(ZNetView netview)
-    {
-      int parentId = CultivatableComponent.GetParentID(netview);
-      if (parentId == 0)
-        return;
-      CultivatableComponent.AddChild(parentId, netview);
-    }
-
-    public static int GetParentID(ZNetView netview)
-    {
-      int parentId = netview.m_zdo.GetInt(CultivatableComponent.MBCultivatableParentIdHash, 0);
-      if (parentId == 0)
+      else
       {
-        ZDOID zdoid = netview.m_zdo.GetZDOID(CultivatableComponent.MBCultivatableParentHash);
-        if (ZDOID.op_Inequality(zdoid, ZDOID.None))
-        {
-          ZDO zdo = ZDOMan.instance.GetZDO(zdoid);
-          parentId = zdo == null
-            ? ZDOPersistantID.ZDOIDToId(zdoid)
-            : ZDOPersistantID.Instance.GetOrCreatePersistantID(zdo);
-          netview.m_zdo.Set(CultivatableComponent.MBCultivatableParentIdHash, parentId, false);
-        }
+        ZDOMan.instance.DestroyZDO(zdo);
+      }
+    }
+
+    m_childObjects.Remove(myid);
+  }
+
+  public string GetHoverName()
+  {
+    return "";
+  }
+
+  public string GetHoverText()
+  {
+    return "";
+  }
+
+  public bool Interact(Humanoid user, bool hold, bool alt)
+  {
+    return true;
+  }
+
+  public bool UseItem(Humanoid user, ItemDrop.ItemData item)
+  {
+    return false;
+  }
+
+  public void AddNewChild(ZNetView child)
+  {
+    AddNewChild(ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo), child);
+  }
+
+  public static void InitPiece(ZNetView netview)
+  {
+    int id = GetParentID(netview);
+    if (id != 0)
+    {
+      AddChild(id, netview);
+    }
+  }
+
+  public static int GetParentID(ZNetView netview)
+  {
+    int id = netview.m_zdo.GetInt(MBCultivatableParentIdHash);
+    if (id == 0)
+    {
+      ZDOID zdoid = netview.m_zdo.GetZDOID(MBCultivatableParentHash);
+      if (zdoid != ZDOID.None)
+      {
+        ZDO zdoparent = ZDOMan.instance.GetZDO(zdoid);
+        id = ((zdoparent == null)
+          ? ZDOPersistantID.ZDOIDToId(zdoid)
+          : ZDOPersistantID.Instance.GetOrCreatePersistantID(zdoparent));
+        netview.m_zdo.Set(MBCultivatableParentIdHash, id);
+      }
+    }
+
+    return id;
+  }
+
+  public static void AddNewChild(int parent, ZNetView child)
+  {
+    child.m_zdo.Set(MBCultivatableParentIdHash, parent);
+    AddChild(parent, child);
+  }
+
+  public static void AddChild(int parent, ZNetView child)
+  {
+    StaticPhysics sp = child.GetComponent<StaticPhysics>();
+    if ((bool)sp)
+    {
+      UnityEngine.Object.Destroy(sp);
+    }
+
+    AddChild(parent, ZDOPersistantID.Instance.GetOrCreatePersistantID(child.m_zdo));
+  }
+
+  private static void AddChild(int parent, int child)
+  {
+    if (parent != 0)
+    {
+      if (!m_childObjects.TryGetValue(parent, out var list))
+      {
+        list = new List<int>();
+        m_childObjects.Add(parent, list);
       }
 
-      return parentId;
-    }
-
-    public static void AddNewChild(int parent, ZNetView child)
-    {
-      child.m_zdo.Set(CultivatableComponent.MBCultivatableParentIdHash, parent, false);
-      CultivatableComponent.AddChild(parent, child);
-    }
-
-    public static void AddChild(int parent, ZNetView child)
-    {
-      StaticPhysics component = ((Component)child).GetComponent<StaticPhysics>();
-      if (Object.op_Implicit((Object)component))
-        Object.Destroy((Object)component);
-      CultivatableComponent.AddChild(parent,
-        ZDOPersistantID.Instance.GetOrCreatePersistantID(child.m_zdo));
-    }
-
-    private static void AddChild(int parent, int child)
-    {
-      if (parent == 0)
-        return;
-      List<int> intList;
-      if (!CultivatableComponent.m_childObjects.TryGetValue(parent, out intList))
-      {
-        intList = new List<int>();
-        CultivatableComponent.m_childObjects.Add(parent, intList);
-      }
-
-      intList.Add(child);
+      list.Add(child);
     }
   }
 }
