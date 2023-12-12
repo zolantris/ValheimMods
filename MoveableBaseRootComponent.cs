@@ -1,605 +1,662 @@
-﻿// Decompiled with JetBrains decompiler
-// Type: ValheimRAFT.MoveableBaseRootComponent
-// Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
+﻿// ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+// ValheimRAFT.MoveableBaseRootComponent
 
-
-using Jotunn;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Jotunn;
 using UnityEngine;
+using ValheimRAFT;
 using ValheimRAFT.Util;
 using Logger = Jotunn.Logger;
 
-namespace ValheimRAFT
+public class MoveableBaseRootComponent : MonoBehaviour
 {
-  public class MoveableBaseRootComponent : MonoBehaviour
+  public static readonly KeyValuePair<int, int> MBParentHash = ZDO.GetHashZDOID("MBParent");
+
+  public static readonly int MBCharacterParentHash = "MBCharacterParent".GetStableHashCode();
+
+  public static readonly int MBCharacterOffsetHash = "MBCharacterOFfset".GetStableHashCode();
+
+  public static readonly int MBParentIdHash = "MBParentId".GetStableHashCode();
+
+  public static readonly int MBPositionHash = "MBPosition".GetStableHashCode();
+
+  public static readonly int MBRotationHash = "MBRotation".GetStableHashCode();
+
+  public static readonly int MBRotationVecHash = "MBRotationVec".GetStableHashCode();
+
+  internal static Dictionary<int, List<ZNetView>> m_pendingPieces =
+    new Dictionary<int, List<ZNetView>>();
+
+  internal static Dictionary<int, List<ZDO>> m_allPieces = new Dictionary<int, List<ZDO>>();
+
+  internal static Dictionary<int, List<ZDOID>>
+    m_dynamicObjects = new Dictionary<int, List<ZDOID>>();
+
+  internal MoveableBaseShipComponent m_moveableBaseShip;
+
+  internal Rigidbody m_rigidbody;
+
+  internal ZNetView m_nview;
+
+  internal Rigidbody m_syncRigidbody;
+
+  internal Ship m_ship;
+
+  internal List<ZNetView> m_pieces = new List<ZNetView>();
+
+  internal List<MastComponent> m_mastPieces = new List<MastComponent>();
+
+  internal List<RudderComponent> m_rudderPieces = new List<RudderComponent>();
+
+  internal List<ZNetView> m_portals = new List<ZNetView>();
+
+  internal List<RopeLadderComponent> m_ladders = new List<RopeLadderComponent>();
+
+  internal List<BoardingRampComponent> m_boardingRamps = new List<BoardingRampComponent>();
+
+  private Vector2i m_sector;
+
+  private Bounds m_bounds = default(Bounds);
+
+  internal BoxCollider m_blockingcollider;
+
+  internal BoxCollider m_floatcollider;
+
+  internal BoxCollider m_onboardcollider;
+
+  internal int m_id;
+
+  public bool m_statsOverride;
+
+  private static bool itemsRemovedDuringWait;
+
+  public void Awake()
   {
-    public static readonly KeyValuePair<int, int> MBParentHash = ZDO.GetHashZDOID("MBParent");
-
-    public static readonly int MBCharacterParentHash =
-      StringExtensionMethods.GetStableHashCode("MBCharacterParent");
-
-    public static readonly int MBCharacterOffsetHash =
-      StringExtensionMethods.GetStableHashCode("MBCharacterOFfset");
-
-    public static readonly int MBParentIdHash =
-      StringExtensionMethods.GetStableHashCode("MBParentId");
-
-    public static readonly int MBPositionHash =
-      StringExtensionMethods.GetStableHashCode("MBPosition");
-
-    public static readonly int MBRotationHash =
-      StringExtensionMethods.GetStableHashCode("MBRotation");
-
-    public static readonly int MBRotationVecHash =
-      StringExtensionMethods.GetStableHashCode("MBRotationVec");
-
-    internal static Dictionary<int, List<ZNetView>> m_pendingPieces =
-      new Dictionary<int, List<ZNetView>>();
-
-    internal static Dictionary<int, List<ZDO>> m_allPieces = new Dictionary<int, List<ZDO>>();
-
-    internal static Dictionary<int, List<ZDOID>> m_dynamicObjects =
-      new Dictionary<int, List<ZDOID>>();
-
-    internal MoveableBaseShipComponent m_moveableBaseShip;
-    internal Rigidbody m_rigidbody;
-    internal ZNetView m_nview;
-    internal Rigidbody m_syncRigidbody;
-    internal Ship m_ship;
-    internal List<ZNetView> m_pieces = new List<ZNetView>();
-    internal List<MastComponent> m_mastPieces = new List<MastComponent>();
-    internal List<RudderComponent> m_rudderPieces = new List<RudderComponent>();
-    internal List<ZNetView> m_portals = new List<ZNetView>();
-    internal List<RopeLadderComponent> m_ladders = new List<RopeLadderComponent>();
-    internal List<BoardingRampComponent> m_boardingRamps = new List<BoardingRampComponent>();
-    private Vector2i m_sector;
-    private Bounds m_bounds = new Bounds();
-    internal BoxCollider m_blockingcollider;
-    internal BoxCollider m_floatcollider;
-    internal BoxCollider m_onboardcollider;
-    internal int m_id;
-    public bool m_statsOverride;
-    private static bool itemsRemovedDuringWait;
-
-    public void Awake()
+    m_rigidbody = base.gameObject.AddComponent<Rigidbody>();
+    m_rigidbody.isKinematic = true;
+    m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+    m_rigidbody.mass = 99999f;
+    if (ZNet.instance.IsServer())
     {
-      this.m_rigidbody = ((Component)this).gameObject.AddComponent<Rigidbody>();
-      this.m_rigidbody.isKinematic = true;
-      this.m_rigidbody.interpolation = (RigidbodyInterpolation)1;
-      this.m_rigidbody.mass = 99999f;
-      if (!ZNet.instance.IsServer())
-        return;
-      this.StartCoroutine("UpdatePieceSectors");
+      StartCoroutine("UpdatePieceSectors");
+    }
+  }
+
+  public void CleanUp()
+  {
+    StopCoroutine("ActivatePendingPieces");
+    if (!ZNetScene.instance || m_id == 0)
+    {
+      return;
     }
 
-    public void CleanUp()
+    for (int i = 0; i < m_pieces.Count; i++)
     {
-      this.StopCoroutine("ActivatePendingPieces");
-      if (!ZNetScene.instance || this.m_id == 0)
-        return;
-      for (int index = 0; index < this.m_pieces.Count; ++index)
+      ZNetView piece = m_pieces[i];
+      if ((bool)piece)
       {
-        ZNetView piece = this.m_pieces[index];
-        if (piece)
-        {
-          ((Component)piece).transform.SetParent((Transform)null);
-          MoveableBaseRootComponent.AddInactivePiece(this.m_id, piece);
-        }
-      }
-
-      List<Player> allPlayers = Player.GetAllPlayers();
-      for (int index = 0; index < allPlayers.Count; ++index)
-      {
-        if (allPlayers[index] && allPlayers[index].transform.parent == transform)
-          ((Component)allPlayers[index]).transform.SetParent((Transform)null);
+        piece.transform.SetParent(null);
+        AddInactivePiece(m_id, piece);
       }
     }
 
-    private void Sync()
+    List<Player> players = Player.GetAllPlayers();
+    for (int j = 0; j < players.Count; j++)
     {
-      if (!m_syncRigidbody)
-        return;
-      this.m_rigidbody.MovePosition(((Component)this.m_syncRigidbody).transform.position);
-      this.m_rigidbody.MoveRotation(((Component)this.m_syncRigidbody).transform.rotation);
-    }
-
-    public void FixedUpdate() => this.Sync();
-
-    public void LateUpdate()
-    {
-      this.Sync();
-      if (ZNet.instance.IsServer())
-        return;
-      this.UpdateAllPieces();
-    }
-
-    public void UpdateAllPieces()
-    {
-      Vector2i zone = ZoneSystem.instance.GetZone(((Component)this).transform.position);
-      /**
-       * @note this logic looks odd
-       */
-      if (!(zone != this.m_sector))
-        return;
-      this.m_sector = zone;
-      for (int index = 0; index < this.m_pieces.Count; ++index)
+      if ((bool)players[j] && players[j].transform.parent == base.transform)
       {
-        ZNetView piece = this.m_pieces[index];
-        if (!piece)
-        {
-          this.m_pieces.RemoveAt(index);
-          --index;
-        }
-        else
-          piece.m_zdo.SetPosition(((Component)this).transform.position);
+        players[j].transform.SetParent(null);
       }
     }
+  }
 
-    public IEnumerator UpdatePieceSectors()
+  private void Sync()
+  {
+    if ((bool)m_syncRigidbody)
     {
-      while (true)
+      m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
+      m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
+    }
+  }
+
+  public void FixedUpdate()
+  {
+    Sync();
+  }
+
+  public void LateUpdate()
+  {
+    Sync();
+    if (!ZNet.instance.IsServer())
+    {
+      UpdateAllPieces();
+    }
+  }
+
+  public void UpdateAllPieces()
+  {
+    Vector2i sector = ZoneSystem.instance.GetZone(base.transform.position);
+    if (!(sector != m_sector))
+    {
+      return;
+    }
+
+    m_sector = sector;
+    for (int i = 0; i < m_pieces.Count; i++)
+    {
+      ZNetView netview = m_pieces[i];
+      if (!netview)
       {
-        List<ZDO> list;
-        if (!MoveableBaseRootComponent.m_allPieces.TryGetValue(this.m_id, out list))
-        {
-          yield return (object)new WaitForSeconds(5f);
-        }
-        else
-        {
-          Vector3 pos = ((Component)this).transform.position;
-          Vector2i sector = ZoneSystem.instance.GetZone(pos);
-          float time = Time.realtimeSinceStartup;
-          if (sector != this.m_sector)
-          {
-            this.m_sector = sector;
-            for (int i = 0; i < list.Count; ++i)
-            {
-              ZDO zdo = list[i];
-              if (zdo.GetSector() != sector)
-              {
-                int id = zdo.GetInt(MoveableBaseRootComponent.MBParentIdHash, 0);
-                if (id != this.m_id)
-                {
-                  Logger.LogWarning("Invalid piece in piece list found, removing.");
-                  list.FastRemoveAt<ZDO>(i);
-                  --i;
-                  continue;
-                }
-
-                zdo.SetPosition(pos);
-                if ((double)Time.realtimeSinceStartup - (double)time > 0.10000000149011612)
-                {
-                  MoveableBaseRootComponent.itemsRemovedDuringWait = false;
-                  yield return (object)new WaitForEndOfFrame();
-                  time = Time.realtimeSinceStartup;
-                  if (MoveableBaseRootComponent.itemsRemovedDuringWait)
-                    i = 0;
-                }
-              }
-
-              zdo = (ZDO)null;
-            }
-          }
-
-          yield return (object)new WaitForEndOfFrame();
-          list = (List<ZDO>)null;
-          pos = new Vector3();
-          sector = new Vector2i();
-        }
-      }
-    }
-
-    internal float GetColliderBottom() =>
-      (float)((double)((Component)this.m_blockingcollider).transform.position.y +
-        (double)this.m_blockingcollider.center.y - (double)this.m_blockingcollider.size.y / 2.0);
-
-    public static void AddInactivePiece(int id, ZNetView netview)
-    {
-      List<ZNetView> znetViewList;
-      if (!MoveableBaseRootComponent.m_pendingPieces.TryGetValue(id, out znetViewList))
-      {
-        znetViewList = new List<ZNetView>();
-        MoveableBaseRootComponent.m_pendingPieces.Add(id, znetViewList);
-      }
-
-      znetViewList.Add(netview);
-      WearNTear component = ((Component)netview).GetComponent<WearNTear>();
-      if (!component)
-        return;
-      ((Behaviour)component).enabled = false;
-    }
-
-    public void RemovePiece(ZNetView netview)
-    {
-      if (!this.m_pieces.Remove(netview))
-        return;
-      MastComponent component1 = ((Component)netview).GetComponent<MastComponent>();
-      if (component1)
-        this.m_mastPieces.Remove(component1);
-      RudderComponent component2 = ((Component)netview).GetComponent<RudderComponent>();
-      if (component2)
-        this.m_rudderPieces.Remove(component2);
-      BoardingRampComponent component3 = ((Component)netview).GetComponent<BoardingRampComponent>();
-      if (component3)
-        this.m_boardingRamps.Remove(component3);
-      if (netview.GetComponent<TeleportWorld>())
-        this.m_portals.Remove(netview);
-      RopeLadderComponent component4 = ((Component)netview).GetComponent<RopeLadderComponent>();
-      if (component4)
-      {
-        this.m_ladders.Remove(component4);
-        component4.m_mbroot = (MoveableBaseRootComponent)null;
-      }
-
-      this.UpdateStats();
-    }
-
-    private void UpdateStats()
-    {
-    }
-
-    public void DestroyPiece(WearNTear wnt)
-    {
-      this.RemovePiece(((Component)wnt).GetComponent<ZNetView>());
-      this.UpdatePieceCount();
-      if (this.GetPieceCount() != 0)
-        return;
-      var wearAndTearObject = m_ship.GetComponent<WearNTear>();
-
-      if (wearAndTearObject)
-      {
-        Destroy(wearAndTearObject);
-      }
-
-      Destroy(this.gameObject);
-    }
-
-    public void ActivatePendingPiecesCoroutine() => this.StartCoroutine("ActivatePendingPieces");
-
-    public IEnumerator ActivatePendingPieces()
-    {
-      if (!m_nview || this.m_nview.m_zdo == null)
-        yield return (object)null;
-      int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(this.m_nview.m_zdo);
-      List<ZNetView> list;
-      if (MoveableBaseRootComponent.m_pendingPieces.TryGetValue(id, out list))
-      {
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.Start();
-        for (int i = 0; i < list.Count; ++i)
-        {
-          ZNetView obj = list[i];
-          if (obj)
-          {
-            this.ActivatePiece(obj);
-            if (!ZNetScene.instance.InLoadingScreen() && stopwatch.ElapsedMilliseconds >= 10L)
-            {
-              yield return (object)new WaitForEndOfFrame();
-              stopwatch.Restart();
-            }
-
-            obj = (ZNetView)null;
-          }
-        }
-
-        list.Clear();
-        MoveableBaseRootComponent.m_pendingPieces.Remove(id);
-        stopwatch = (Stopwatch)null;
-      }
-
-      List<ZDOID> objectList;
-      if (MoveableBaseRootComponent.m_dynamicObjects.TryGetValue(this.m_id, out objectList))
-      {
-        for (int i = 0; i < objectList.Count; ++i)
-        {
-          GameObject go = ZNetScene.instance.FindInstance(objectList[i]);
-          if (go)
-          {
-            ZNetView nv = go.GetComponentInParent<ZNetView>();
-            if (nv && nv.m_zdo != null)
-            {
-              BinarySearchDictionary<int, Vector3> dic;
-              if (ZDOExtraData.s_vec3.TryGetValue(nv.m_zdo.m_uid, out dic))
-              {
-                Vector3 offset;
-                if (dic.TryGetValue(MoveableBaseRootComponent.MBCharacterOffsetHash, out offset))
-                  ((Component)nv).transform.position =
-                    offset + transform.position;
-                offset = new Vector3();
-              }
-
-              ZDOExtraData.RemoveInt(nv.m_zdo.m_uid,
-                MoveableBaseRootComponent.MBCharacterParentHash);
-              ZDOExtraData.RemoveVec3(nv.m_zdo.m_uid,
-                MoveableBaseRootComponent.MBCharacterOffsetHash);
-              dic = (BinarySearchDictionary<int, Vector3>)null;
-            }
-
-            nv = (ZNetView)null;
-          }
-
-          go = (GameObject)null;
-        }
-
-        MoveableBaseRootComponent.m_dynamicObjects.Remove(this.m_id);
-      }
-
-      yield return (object)null;
-    }
-
-    public static void AddDynamicParent(ZNetView source, GameObject target)
-    {
-      MoveableBaseRootComponent componentInParent =
-        target.GetComponentInParent<MoveableBaseRootComponent>();
-      if (!componentInParent)
-        return;
-      source.m_zdo.Set(MoveableBaseRootComponent.MBCharacterParentHash, componentInParent.m_id,
-        false);
-      source.m_zdo.Set(MoveableBaseRootComponent.MBCharacterOffsetHash,
-        (source.transform.position - componentInParent.transform.position));
-    }
-
-    public static void AddDynamicParent(ZNetView source, GameObject target, Vector3 offset)
-    {
-      MoveableBaseRootComponent componentInParent =
-        target.GetComponentInParent<MoveableBaseRootComponent>();
-      if (!componentInParent)
-        return;
-      source.m_zdo.Set(MoveableBaseRootComponent.MBCharacterParentHash, componentInParent.m_id,
-        false);
-      source.m_zdo.Set(MoveableBaseRootComponent.MBCharacterOffsetHash, offset);
-    }
-
-    public static void InitZDO(ZDO zdo)
-    {
-      if (zdo.m_prefab != StringExtensionMethods.GetStableHashCode("MBRaft"))
-        ;
-      int parentId = MoveableBaseRootComponent.GetParentID(zdo);
-      if (parentId != 0)
-      {
-        List<ZDO> zdoList;
-        if (!MoveableBaseRootComponent.m_allPieces.TryGetValue(parentId, out zdoList))
-        {
-          zdoList = new List<ZDO>();
-          MoveableBaseRootComponent.m_allPieces.Add(parentId, zdoList);
-        }
-
-        zdoList.Add(zdo);
-      }
-
-      int key = zdo.GetInt(MoveableBaseRootComponent.MBCharacterParentHash, 0);
-      if (key == 0)
-        return;
-      List<ZDOID> zdoidList;
-      if (!MoveableBaseRootComponent.m_dynamicObjects.TryGetValue(key, out zdoidList))
-      {
-        zdoidList = new List<ZDOID>();
-        MoveableBaseRootComponent.m_dynamicObjects.Add(key, zdoidList);
-      }
-
-      zdoidList.Add(zdo.m_uid);
-    }
-
-    public static void RemoveZDO(ZDO zdo)
-    {
-      int parentId = MoveableBaseRootComponent.GetParentID(zdo);
-      List<ZDO> list;
-      if (parentId == 0 || !MoveableBaseRootComponent.m_allPieces.TryGetValue(parentId, out list))
-        return;
-      list.FastRemove<ZDO>(zdo);
-      MoveableBaseRootComponent.itemsRemovedDuringWait = true;
-    }
-
-    private static int GetParentID(ZDO zdo)
-    {
-      int parentId = zdo.GetInt(MoveableBaseRootComponent.MBParentIdHash, 0);
-      if (parentId == 0)
-      {
-        ZDOID zdoid = zdo.GetZDOID(MoveableBaseRootComponent.MBParentHash);
-        if (zdoid != ZDOID.None)
-        {
-          ZDO zdo1 = ZDOMan.instance.GetZDO(zdoid);
-          parentId = zdo1 == null
-            ? ZDOPersistantID.ZDOIDToId(zdoid)
-            : ZDOPersistantID.Instance.GetOrCreatePersistantID(zdo1);
-          zdo.Set(MoveableBaseRootComponent.MBParentIdHash, parentId, false);
-          ZDO zdo2 = zdo;
-          int mbRotationVecHash = MoveableBaseRootComponent.MBRotationVecHash;
-          Quaternion quaternion = zdo.GetQuaternion(MoveableBaseRootComponent.MBRotationHash,
-            Quaternion.identity);
-          Vector3 eulerAngles = quaternion.eulerAngles;
-          zdo2.Set(mbRotationVecHash, eulerAngles);
-          zdo.RemoveZDOID(MoveableBaseRootComponent.MBParentHash);
-          ZDOHelper.Remove<Quaternion>(ZDOExtraData.s_quats, zdoid,
-            MoveableBaseRootComponent.MBRotationHash);
-        }
-      }
-
-      return parentId;
-    }
-
-    public static void InitPiece(ZNetView netview)
-    {
-      Rigidbody componentInChildren = ((Component)netview).GetComponentInChildren<Rigidbody>();
-      if (componentInChildren && !componentInChildren.isKinematic)
-        return;
-      int parentId = MoveableBaseRootComponent.GetParentID(netview.m_zdo);
-      if (parentId == 0)
-        return;
-      GameObject gameObject = ZDOPersistantID.Instance.GetGameObject(parentId);
-      if (gameObject)
-      {
-        MoveableBaseShipComponent component = gameObject.GetComponent<MoveableBaseShipComponent>();
-        if (component &&
-            component.m_baseRoot)
-          component.m_baseRoot.ActivatePiece(netview);
+        m_pieces.RemoveAt(i);
+        i--;
       }
       else
-        MoveableBaseRootComponent.AddInactivePiece(parentId, netview);
-    }
-
-    public void ActivatePiece(ZNetView netview)
-    {
-      if (!netview)
-        return;
-      ((Component)netview).transform.SetParent(((Component)this).transform);
-      ((Component)netview).transform.localPosition =
-        netview.m_zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash, Vector3.zero);
-      ((Component)netview).transform.localRotation = Quaternion.Euler(
-        netview.m_zdo.GetVec3(MoveableBaseRootComponent.MBRotationVecHash, Vector3.zero));
-      WearNTear component = ((Component)netview).GetComponent<WearNTear>();
-      if (component)
-        ((Behaviour)component).enabled = true;
-      this.AddPiece(netview);
-    }
-
-    public void AddTemporaryPiece(Piece piece) =>
-      ((Component)piece).transform.SetParent(((Component)this).transform);
-
-    public void AddNewPiece(Piece piece)
-    {
-      if (!piece || !piece.m_nview)
-        return;
-      this.AddNewPiece(piece.m_nview);
-    }
-
-    public void AddNewPiece(ZNetView netview)
-    {
-      ((Component)netview).transform.SetParent(((Component)this).transform);
-      if (netview.m_zdo != null)
       {
-        netview.m_zdo.Set(MoveableBaseRootComponent.MBParentIdHash,
-          ZDOPersistantID.Instance.GetOrCreatePersistantID(this.m_nview.m_zdo), false);
-        netview.m_zdo.Set(MoveableBaseRootComponent.MBPositionHash,
-          ((Component)netview).transform.localPosition);
-        ZDO zdo = netview.m_zdo;
-        int mbRotationVecHash = MoveableBaseRootComponent.MBRotationVecHash;
-        Quaternion localRotation = ((Component)netview).transform.localRotation;
-        Vector3 eulerAngles = localRotation.eulerAngles;
-        zdo.Set(mbRotationVecHash, eulerAngles);
+        netview.m_zdo.SetPosition(base.transform.position);
+      }
+    }
+  }
+
+  public IEnumerator UpdatePieceSectors()
+  {
+    while (true)
+    {
+      if (!m_allPieces.TryGetValue(m_id, out var list))
+      {
+        yield return new WaitForSeconds(5f);
+        continue;
       }
 
-      this.AddPiece(netview);
-      MoveableBaseRootComponent.InitZDO(netview.m_zdo);
-    }
-
-    public void AddPiece(ZNetView netview)
-    {
-      this.m_pieces.Add(netview);
-      this.UpdatePieceCount();
-      this.EncapsulateBounds(netview);
-      WearNTear component1 = ((Component)netview).GetComponent<WearNTear>();
-      if (component1 &&
-          ValheimRaftEntrypoint.Instance.MakeAllPiecesWaterProof.Value)
-        component1.m_noRoofWear = false;
-      CultivatableComponent component2 = ((Component)netview).GetComponent<CultivatableComponent>();
-      if (component2)
-        component2.UpdateMaterial();
-      MastComponent component3 = ((Component)netview).GetComponent<MastComponent>();
-      if (component3)
-        this.m_mastPieces.Add(component3);
-      BoardingRampComponent component4 = ((Component)netview).GetComponent<BoardingRampComponent>();
-      if (component4)
+      Vector3 pos = base.transform.position;
+      Vector2i sector = ZoneSystem.instance.GetZone(pos);
+      float time = Time.realtimeSinceStartup;
+      if (sector != m_sector)
       {
-        component4.ForceRampUpdate();
-        this.m_boardingRamps.Add(component4);
-      }
-
-      RudderComponent component5 = ((Component)netview).GetComponent<RudderComponent>();
-      if (component5)
-      {
-        if (component5.m_controls)
-          component5.m_controls = ((Component)netview).GetComponentInChildren<ShipControlls>();
-        if (!component5.m_wheel)
-          component5.m_wheel = ((Component)netview).transform.Find("controls/wheel");
-        component5.m_controls.m_nview = this.m_nview;
-        component5.m_controls.m_ship = ((Component)this.m_moveableBaseShip).GetComponent<Ship>();
-        this.m_rudderPieces.Add(component5);
-      }
-
-      if (netview.GetComponent<TeleportWorld>())
-        this.m_portals.Add(netview);
-      RopeLadderComponent component6 = ((Component)netview).GetComponent<RopeLadderComponent>();
-      if (component6)
-      {
-        this.m_ladders.Add(component6);
-        component6.m_mbroot = this;
-      }
-
-      foreach (MeshRenderer componentsInChild in ((Component)netview)
-               .GetComponentsInChildren<MeshRenderer>(true))
-      {
-        if (componentsInChild.sharedMaterial)
+        m_sector = sector;
+        for (int i = 0; i < list.Count; i++)
         {
-          Material[] sharedMaterials = ((Renderer)componentsInChild).sharedMaterials;
-          for (int index = 0; index < sharedMaterials.Length; ++index)
+          ZDO zdo = list[i];
+          if (!(zdo.GetSector() != sector))
           {
-            Material material = new Material(sharedMaterials[index]);
-            material.SetFloat("_RippleDistance", 0.0f);
-            material.SetFloat("_ValueNoise", 0.0f);
-            sharedMaterials[index] = material;
+            continue;
           }
 
-          ((Renderer)componentsInChild).sharedMaterials = sharedMaterials;
+          int id = zdo.GetInt(MBParentIdHash);
+          if (id != m_id)
+          {
+            Logger.LogWarning((object)"Invalid piece in piece list found, removing.");
+            list.FastRemoveAt(i);
+            i--;
+            continue;
+          }
+
+          zdo.SetPosition(pos);
+          if (Time.realtimeSinceStartup - time > 0.1f)
+          {
+            itemsRemovedDuringWait = false;
+            yield return new WaitForEndOfFrame();
+            time = Time.realtimeSinceStartup;
+            if (itemsRemovedDuringWait)
+            {
+              i = 0;
+            }
+          }
         }
       }
 
-      Rigidbody[] componentsInChildren = ((Component)netview).GetComponentsInChildren<Rigidbody>();
-      for (int index = 0; index < componentsInChildren.Length; ++index)
+      yield return new WaitForEndOfFrame();
+      list = null;
+    }
+  }
+
+  internal float GetColliderBottom()
+  {
+    return m_blockingcollider.transform.position.y + m_blockingcollider.center.y -
+           m_blockingcollider.size.y / 2f;
+  }
+
+  public static void AddInactivePiece(int id, ZNetView netview)
+  {
+    if (!m_pendingPieces.TryGetValue(id, out var list))
+    {
+      list = new List<ZNetView>();
+      m_pendingPieces.Add(id, list);
+    }
+
+    list.Add(netview);
+    WearNTear wnt = netview.GetComponent<WearNTear>();
+    if ((bool)wnt)
+    {
+      wnt.enabled = false;
+    }
+  }
+
+  public void RemovePiece(ZNetView netview)
+  {
+    if (m_pieces.Remove(netview))
+    {
+      MastComponent mast = netview.GetComponent<MastComponent>();
+      if ((bool)mast)
       {
-        if (componentsInChildren[index].isKinematic)
-          Object.Destroy((Object)componentsInChildren[index]);
+        m_mastPieces.Remove(mast);
       }
 
-      this.UpdateStats();
-    }
-
-    private void UpdatePieceCount()
-    {
-      if (!m_nview || m_nview.m_zdo == null)
-        return;
-      this.m_nview.m_zdo.Set("MBPieceCount", this.m_pieces.Count);
-    }
-
-    public void EncapsulateBounds(ZNetView netview)
-    {
-      Piece component1 = ((Component)netview).GetComponent<Piece>();
-      List<Collider> colliderList = component1
-        ? ((StaticTarget)component1).GetAllColliders()
-        : new List<Collider>(
-          (IEnumerable<Collider>)((Component)netview).GetComponentsInChildren<Collider>());
-      Door componentInChildren = ((Component)netview).GetComponentInChildren<Door>();
-      RopeLadderComponent component2 = ((Component)netview).GetComponent<RopeLadderComponent>();
-      RopeAnchorComponent component3 = ((Component)netview).GetComponent<RopeAnchorComponent>();
-      if (!componentInChildren && !component2 && !component3)
-        ((Bounds)this.m_bounds).Encapsulate(((Component)netview).transform.localPosition);
-      for (int index = 0; index < colliderList.Count; ++index)
+      RudderComponent rudder = netview.GetComponent<RudderComponent>();
+      if ((bool)rudder)
       {
-        Physics.IgnoreCollision(colliderList[index], (Collider)this.m_blockingcollider, true);
-        Physics.IgnoreCollision(colliderList[index], (Collider)this.m_floatcollider, true);
-        Physics.IgnoreCollision(colliderList[index], (Collider)this.m_onboardcollider, true);
+        m_rudderPieces.Remove(rudder);
       }
 
-      this.m_blockingcollider.size =
-        new Vector3((m_bounds).size.x, 3f, (m_bounds).size.z);
-      this.m_blockingcollider.center =
-        new Vector3((m_bounds).center.x, -0.2f, (m_bounds)
-          .center.z);
-      this.m_floatcollider.size =
-        new Vector3((m_bounds).size.x, 3f, (m_bounds).size.z);
-      this.m_floatcollider.center =
-        new Vector3((m_bounds).center.x, -0.2f, m_bounds
-          .center.z);
-      this.m_onboardcollider.size = m_bounds.size;
-      this.m_onboardcollider.center = m_bounds.center;
+      BoardingRampComponent ramp = netview.GetComponent<BoardingRampComponent>();
+      if ((bool)ramp)
+      {
+        m_boardingRamps.Remove(ramp);
+      }
+
+      TeleportWorld portal = netview.GetComponent<TeleportWorld>();
+      if ((bool)portal)
+      {
+        m_portals.Remove(netview);
+      }
+
+      RopeLadderComponent ladder = netview.GetComponent<RopeLadderComponent>();
+      if ((bool)ladder)
+      {
+        m_ladders.Remove(ladder);
+        ladder.m_mbroot = null;
+      }
+
+      UpdateStats();
+    }
+  }
+
+  private void UpdateStats()
+  {
+  }
+
+  public void DestroyPiece(WearNTear wnt)
+  {
+    ZNetView netview = wnt.GetComponent<ZNetView>();
+    RemovePiece(netview);
+    UpdatePieceCount();
+    if (GetPieceCount() == 0)
+    {
+      m_ship.GetComponent<WearNTear>().Destroy();
+      Object.Destroy(base.gameObject);
+    }
+  }
+
+  public void ActivatePendingPiecesCoroutine()
+  {
+    StartCoroutine("ActivatePendingPieces");
+  }
+
+  public IEnumerator ActivatePendingPieces()
+  {
+    if (!m_nview || m_nview.m_zdo == null)
+    {
+      yield return null;
     }
 
-    internal int GetPieceCount() =>
-      !m_nview || this.m_nview.m_zdo == null
-        ? this.m_pieces.Count
-        : this.m_nview.m_zdo.GetInt("MBPieceCount", this.m_pieces.Count);
+    int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
+    if (m_pendingPieces.TryGetValue(id, out var list))
+    {
+      Stopwatch stopwatch = new Stopwatch();
+      stopwatch.Start();
+      for (int j = 0; j < list.Count; j++)
+      {
+        ZNetView obj = list[j];
+        if ((bool)obj)
+        {
+          ActivatePiece(obj);
+          if (!ZNetScene.instance.InLoadingScreen() && stopwatch.ElapsedMilliseconds >= 10)
+          {
+            yield return new WaitForEndOfFrame();
+            stopwatch.Restart();
+          }
+        }
+      }
+
+      list.Clear();
+      m_pendingPieces.Remove(id);
+    }
+
+    if (m_dynamicObjects.TryGetValue(m_id, out var objectList))
+    {
+      for (int i = 0; i < objectList.Count; i++)
+      {
+        GameObject go = ZNetScene.instance.FindInstance(objectList[i]);
+        if (!go)
+        {
+          continue;
+        }
+
+        ZNetView nv = go.GetComponentInParent<ZNetView>();
+        if (!nv || nv.m_zdo == null)
+        {
+          continue;
+        }
+
+        if (ZDOExtraData.s_vec3.TryGetValue(nv.m_zdo.m_uid, out var dic))
+        {
+          if (dic.TryGetValue(MBCharacterOffsetHash, out var offset))
+          {
+            nv.transform.position = offset + base.transform.position;
+          }
+
+          offset = default(Vector3);
+        }
+
+        ZDOExtraData.RemoveInt(nv.m_zdo.m_uid, MBCharacterParentHash);
+        ZDOExtraData.RemoveVec3(nv.m_zdo.m_uid, MBCharacterOffsetHash);
+        dic = null;
+      }
+
+      m_dynamicObjects.Remove(m_id);
+    }
+
+    yield return null;
+  }
+
+  public static void AddDynamicParent(ZNetView source, GameObject target)
+  {
+    MoveableBaseRootComponent mbroot = target.GetComponentInParent<MoveableBaseRootComponent>();
+    if ((bool)mbroot)
+    {
+      source.m_zdo.Set(MBCharacterParentHash, mbroot.m_id);
+      source.m_zdo.Set(MBCharacterOffsetHash,
+        source.transform.position - mbroot.transform.position);
+    }
+  }
+
+  public static void AddDynamicParent(ZNetView source, GameObject target, Vector3 offset)
+  {
+    MoveableBaseRootComponent mbroot = target.GetComponentInParent<MoveableBaseRootComponent>();
+    if ((bool)mbroot)
+    {
+      source.m_zdo.Set(MBCharacterParentHash, mbroot.m_id);
+      source.m_zdo.Set(MBCharacterOffsetHash, offset);
+    }
+  }
+
+  public static void InitZDO(ZDO zdo)
+  {
+    if (zdo.m_prefab == "MBRaft".GetStableHashCode())
+    {
+    }
+
+    int id = GetParentID(zdo);
+    if (id != 0)
+    {
+      if (!m_allPieces.TryGetValue(id, out var list))
+      {
+        list = new List<ZDO>();
+        m_allPieces.Add(id, list);
+      }
+
+      list.Add(zdo);
+    }
+
+    int cid = zdo.GetInt(MBCharacterParentHash);
+    if (cid != 0)
+    {
+      if (!m_dynamicObjects.TryGetValue(cid, out var objectList))
+      {
+        objectList = new List<ZDOID>();
+        m_dynamicObjects.Add(cid, objectList);
+      }
+
+      objectList.Add(zdo.m_uid);
+    }
+  }
+
+  public static void RemoveZDO(ZDO zdo)
+  {
+    int id = GetParentID(zdo);
+    if (id != 0 && m_allPieces.TryGetValue(id, out var list))
+    {
+      list.FastRemove(zdo);
+      itemsRemovedDuringWait = true;
+    }
+  }
+
+  private static int GetParentID(ZDO zdo)
+  {
+    int id = zdo.GetInt(MBParentIdHash);
+    if (id == 0)
+    {
+      ZDOID zdoid = zdo.GetZDOID(MBParentHash);
+      if (zdoid != ZDOID.None)
+      {
+        ZDO zdoparent = ZDOMan.instance.GetZDO(zdoid);
+        id = ((zdoparent == null)
+          ? ZDOPersistantID.ZDOIDToId(zdoid)
+          : ZDOPersistantID.Instance.GetOrCreatePersistantID(zdoparent));
+        zdo.Set(MBParentIdHash, id);
+        zdo.Set(MBRotationVecHash,
+          zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
+        zdo.RemoveZDOID(MBParentHash);
+        ZDOExtraData.s_quats.Remove(zdoid, MBRotationHash);
+      }
+    }
+
+    return id;
+  }
+
+  public static void InitPiece(ZNetView netview)
+  {
+    Rigidbody rb = netview.GetComponentInChildren<Rigidbody>();
+    if ((bool)rb && !rb.isKinematic)
+    {
+      return;
+    }
+
+    int id = GetParentID(netview.m_zdo);
+    if (id == 0)
+    {
+      return;
+    }
+
+    GameObject parentObj = ZDOPersistantID.Instance.GetGameObject(id);
+    if ((bool)parentObj)
+    {
+      MoveableBaseShipComponent mb = parentObj.GetComponent<MoveableBaseShipComponent>();
+      if ((bool)mb && (bool)mb.m_baseRoot)
+      {
+        mb.m_baseRoot.ActivatePiece(netview);
+      }
+    }
+    else
+    {
+      AddInactivePiece(id, netview);
+    }
+  }
+
+  public void ActivatePiece(ZNetView netview)
+  {
+    if ((bool)netview)
+    {
+      netview.transform.SetParent(base.transform);
+      netview.transform.localPosition = netview.m_zdo.GetVec3(MBPositionHash, Vector3.zero);
+      netview.transform.localRotation =
+        Quaternion.Euler(netview.m_zdo.GetVec3(MBRotationVecHash, Vector3.zero));
+      WearNTear wnt = netview.GetComponent<WearNTear>();
+      if ((bool)wnt)
+      {
+        wnt.enabled = true;
+      }
+
+      AddPiece(netview);
+    }
+  }
+
+  public void AddTemporaryPiece(Piece piece)
+  {
+    piece.transform.SetParent(base.transform);
+  }
+
+  public void AddNewPiece(Piece piece)
+  {
+    if ((bool)piece && (bool)piece.m_nview)
+    {
+      AddNewPiece(piece.m_nview);
+    }
+  }
+
+  public void AddNewPiece(ZNetView netview)
+  {
+    netview.transform.SetParent(base.transform);
+    if (netview.m_zdo != null)
+    {
+      netview.m_zdo.Set(MBParentIdHash,
+        ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo));
+      netview.m_zdo.Set(MBPositionHash, netview.transform.localPosition);
+      netview.m_zdo.Set(MBRotationVecHash, netview.transform.localRotation.eulerAngles);
+    }
+
+    AddPiece(netview);
+    InitZDO(netview.m_zdo);
+  }
+
+  public void AddPiece(ZNetView netview)
+  {
+    m_pieces.Add(netview);
+    UpdatePieceCount();
+    EncapsulateBounds(netview);
+    WearNTear wnt = netview.GetComponent<WearNTear>();
+    if ((bool)wnt && global::ValheimRAFT.ValheimRaftEntrypoint.Instance.MakeAllPiecesWaterProof
+          .Value)
+    {
+      wnt.m_noRoofWear = false;
+    }
+
+    CultivatableComponent cultivatable = netview.GetComponent<CultivatableComponent>();
+    if ((bool)cultivatable)
+    {
+      cultivatable.UpdateMaterial();
+    }
+
+    MastComponent mast = netview.GetComponent<MastComponent>();
+    if ((bool)mast)
+    {
+      m_mastPieces.Add(mast);
+    }
+
+    BoardingRampComponent ramp = netview.GetComponent<BoardingRampComponent>();
+    if ((bool)ramp)
+    {
+      ramp.ForceRampUpdate();
+      m_boardingRamps.Add(ramp);
+    }
+
+    RudderComponent rudder = netview.GetComponent<RudderComponent>();
+    if ((bool)rudder)
+    {
+      if (!rudder.m_controls)
+      {
+        rudder.m_controls = netview.GetComponentInChildren<ShipControlls>();
+      }
+
+      if (!rudder.m_wheel)
+      {
+        rudder.m_wheel = netview.transform.Find("controls/wheel");
+      }
+
+      rudder.m_controls.m_nview = m_nview;
+      rudder.m_controls.m_ship = m_moveableBaseShip.GetComponent<Ship>();
+      m_rudderPieces.Add(rudder);
+    }
+
+    TeleportWorld portal = netview.GetComponent<TeleportWorld>();
+    if ((bool)portal)
+    {
+      m_portals.Add(netview);
+    }
+
+    RopeLadderComponent ladder = netview.GetComponent<RopeLadderComponent>();
+    if ((bool)ladder)
+    {
+      m_ladders.Add(ladder);
+      ladder.m_mbroot = this;
+    }
+
+    MeshRenderer[] meshes = netview.GetComponentsInChildren<MeshRenderer>(includeInactive: true);
+    MeshRenderer[] array = meshes;
+    foreach (MeshRenderer meshRenderer in array)
+    {
+      if ((bool)meshRenderer.sharedMaterial)
+      {
+        Material[] sharedMaterials = meshRenderer.sharedMaterials;
+        for (int j = 0; j < sharedMaterials.Length; j++)
+        {
+          Material material = new Material(sharedMaterials[j]);
+          material.SetFloat("_RippleDistance", 0f);
+          material.SetFloat("_ValueNoise", 0f);
+          sharedMaterials[j] = material;
+        }
+
+        meshRenderer.sharedMaterials = sharedMaterials;
+      }
+    }
+
+    Rigidbody[] rbs = netview.GetComponentsInChildren<Rigidbody>();
+    for (int i = 0; i < rbs.Length; i++)
+    {
+      if (rbs[i].isKinematic)
+      {
+        Object.Destroy(rbs[i]);
+      }
+    }
+
+    UpdateStats();
+  }
+
+  private void UpdatePieceCount()
+  {
+    if ((bool)m_nview && m_nview.m_zdo != null)
+    {
+      m_nview.m_zdo.Set("MBPieceCount", m_pieces.Count);
+    }
+  }
+
+  public void EncapsulateBounds(ZNetView netview)
+  {
+    Piece piece = netview.GetComponent<Piece>();
+    List<Collider> colliders = (piece
+      ? piece.GetAllColliders()
+      : new List<Collider>(netview.GetComponentsInChildren<Collider>()));
+    Door door = netview.GetComponentInChildren<Door>();
+    RopeLadderComponent ladder = netview.GetComponent<RopeLadderComponent>();
+    RopeAnchorComponent rope = netview.GetComponent<RopeAnchorComponent>();
+    if (!door && !ladder && !rope)
+    {
+      m_bounds.Encapsulate(netview.transform.localPosition);
+    }
+
+    for (int i = 0; i < colliders.Count; i++)
+    {
+      Physics.IgnoreCollision(colliders[i], m_blockingcollider, ignore: true);
+      Physics.IgnoreCollision(colliders[i], m_floatcollider, ignore: true);
+      Physics.IgnoreCollision(colliders[i], m_onboardcollider, ignore: true);
+    }
+
+    m_blockingcollider.size = new Vector3(m_bounds.size.x, 3f, m_bounds.size.z);
+    m_blockingcollider.center = new Vector3(m_bounds.center.x, -0.2f, m_bounds.center.z);
+    m_floatcollider.size = new Vector3(m_bounds.size.x, 3f, m_bounds.size.z);
+    m_floatcollider.center = new Vector3(m_bounds.center.x, -0.2f, m_bounds.center.z);
+    m_onboardcollider.size = m_bounds.size;
+    m_onboardcollider.center = m_bounds.center;
+  }
+
+  internal int GetPieceCount()
+  {
+    if (!m_nview || m_nview.m_zdo == null)
+    {
+      return m_pieces.Count;
+    }
+
+    return m_nview.m_zdo.GetInt("MBPieceCount", m_pieces.Count);
   }
 }

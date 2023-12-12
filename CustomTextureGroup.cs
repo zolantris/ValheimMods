@@ -1,120 +1,116 @@
-﻿// Decompiled with JetBrains decompiler
-// Type: ValheimRAFT.CustomTextureGroup
-// Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
+﻿// ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+// ValheimRAFT.CustomTextureGroup
 
-
-using BepInEx;
-using Jotunn.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Jotunn.Utils;
 using UnityEngine;
 using Paths = BepInEx.Paths;
 
-namespace ValheimRAFT
+namespace ValheimRAFT;
+
+public class CustomTextureGroup
 {
-  public class CustomTextureGroup
+  public class CustomTexture
   {
-    private static readonly string[] m_validExtensions = new string[3]
+    public Texture Texture { get; internal set; } = null;
+
+
+    public Texture Normal { get; internal set; } = null;
+
+
+    public int Index { get; internal set; } = 0;
+  }
+
+  private static readonly string[] m_validExtensions = new string[3] { ".png", ".jpg", ".jpeg" };
+
+  private static Dictionary<string, CustomTextureGroup> m_groups =
+    new Dictionary<string, CustomTextureGroup>();
+
+  private Dictionary<string, CustomTexture> m_textureLookUp =
+    new Dictionary<string, CustomTexture>();
+
+  private Dictionary<int, CustomTexture> m_textureHashLookUp = new Dictionary<int, CustomTexture>();
+
+  private List<CustomTexture> m_textures = new List<CustomTexture>();
+
+  public List<CustomTexture> Textures => m_textures;
+
+  public CustomTexture GetTextureByHash(int hash)
+  {
+    CustomTexture texture;
+    return m_textureHashLookUp.TryGetValue(hash, out texture) ? texture : null;
+  }
+
+  public CustomTexture GetTextureByName(string name)
+  {
+    CustomTexture texture;
+    return m_textureLookUp.TryGetValue(name, out texture) ? texture : null;
+  }
+
+  public static CustomTextureGroup Get(string groupName)
+  {
+    if (m_groups.TryGetValue(groupName, out var group))
     {
-      ".png",
-      ".jpg",
-      ".jpeg"
-    };
-
-    private static Dictionary<string, CustomTextureGroup> m_groups =
-      new Dictionary<string, CustomTextureGroup>();
-
-    private Dictionary<string, CustomTextureGroup.CustomTexture> m_textureLookUp =
-      new Dictionary<string, CustomTextureGroup.CustomTexture>();
-
-    private Dictionary<int, CustomTextureGroup.CustomTexture> m_textureHashLookUp =
-      new Dictionary<int, CustomTextureGroup.CustomTexture>();
-
-    private List<CustomTextureGroup.CustomTexture> m_textures =
-      new List<CustomTextureGroup.CustomTexture>();
-
-    public CustomTextureGroup.CustomTexture GetTextureByHash(int hash)
-    {
-      CustomTextureGroup.CustomTexture customTexture;
-      return this.m_textureHashLookUp.TryGetValue(hash, out customTexture)
-        ? customTexture
-        : (CustomTextureGroup.CustomTexture)null;
+      return group;
     }
 
-    public CustomTextureGroup.CustomTexture GetTextureByName(string name)
+    return null;
+  }
+
+  public static CustomTextureGroup Load(string groupName)
+  {
+    if (m_groups.TryGetValue(groupName, out var group))
     {
-      CustomTextureGroup.CustomTexture customTexture;
-      return this.m_textureLookUp.TryGetValue(name, out customTexture)
-        ? customTexture
-        : (CustomTextureGroup.CustomTexture)null;
+      return group;
     }
 
-    public List<CustomTextureGroup.CustomTexture> Textures => this.m_textures;
-
-    public static CustomTextureGroup Get(string groupName)
+    group = new CustomTextureGroup();
+    m_groups.Add(groupName, group);
+    string assetDirectory = Path.Combine(Paths.PluginPath, "ValheimRAFT", "Assets");
+    string[] files = Directory.GetFiles(Path.Combine(assetDirectory, groupName));
+    foreach (string file in files)
     {
-      CustomTextureGroup customTextureGroup;
-      return CustomTextureGroup.m_groups.TryGetValue(groupName, out customTextureGroup)
-        ? customTextureGroup
-        : (CustomTextureGroup)null;
-    }
-
-    public static CustomTextureGroup Load(string groupName)
-    {
-      CustomTextureGroup customTextureGroup1;
-      if (CustomTextureGroup.m_groups.TryGetValue(groupName, out customTextureGroup1))
-        return customTextureGroup1;
-      CustomTextureGroup customTextureGroup2 = new CustomTextureGroup();
-      CustomTextureGroup.m_groups.Add(groupName, customTextureGroup2);
-      foreach (string file in Directory.GetFiles(
-                 Path.Combine(Path.Combine(Paths.PluginPath, "ValheimRAFT", "Assets"), groupName)))
+      string ext = Path.GetExtension(file);
+      if (m_validExtensions.Contains(ext, StringComparer.InvariantCultureIgnoreCase) && !Path
+            .GetFileNameWithoutExtension(file)
+            .EndsWith("_normal", StringComparison.InvariantCultureIgnoreCase))
       {
-        string extension = Path.GetExtension(file);
-        if (((IEnumerable<string>)CustomTextureGroup.m_validExtensions).Contains<string>(extension,
-              (IEqualityComparer<string>)StringComparer.InvariantCultureIgnoreCase) && !Path
-              .GetFileNameWithoutExtension(file)
-              .EndsWith("_normal", StringComparison.InvariantCultureIgnoreCase))
-          customTextureGroup2.AddTexture(file);
+        group.AddTexture(file);
       }
-
-      return customTextureGroup2;
     }
 
-    public void AddTexture(string file)
+    return group;
+  }
+
+  public void AddTexture(string file)
+  {
+    string name = Path.GetFileNameWithoutExtension(file);
+    string ext = Path.GetExtension(file);
+    string path = Path.GetDirectoryName(file);
+    CustomTexture texture = new CustomTexture();
+    string normal = Path.Combine(path, name + "_normal" + ext);
+    if (File.Exists(normal))
     {
-      string withoutExtension = Path.GetFileNameWithoutExtension(file);
-      string extension = Path.GetExtension(file);
-      string directoryName = Path.GetDirectoryName(file);
-      CustomTextureGroup.CustomTexture texture = new CustomTextureGroup.CustomTexture();
-      string path = Path.Combine(directoryName, withoutExtension + "_normal" + extension);
-      if (File.Exists(path))
-        texture.Normal = (Texture)AssetUtils.LoadTexture(path, false);
-      texture.Texture = (Texture)AssetUtils.LoadTexture(file, false);
-      (texture.Texture).name = withoutExtension;
-      this.AddTexture(texture);
+      texture.Normal = AssetUtils.LoadTexture(normal, false);
     }
 
-    public void AddTexture(CustomTextureGroup.CustomTexture texture)
+    texture.Texture = AssetUtils.LoadTexture(file, false);
+    texture.Texture.name = name;
+    AddTexture(texture);
+  }
+
+  public void AddTexture(CustomTexture texture)
+  {
+    string name = texture.Texture.name;
+    if (!m_textureLookUp.ContainsKey(name))
     {
-      string name = (texture.Texture).name;
-      if (this.m_textureLookUp.ContainsKey(name))
-        return;
-      this.m_textureLookUp.Add(name, texture);
-      this.m_textureHashLookUp.Add(StringExtensionMethods.GetStableHashCode(name), texture);
-      texture.Index = this.m_textures.Count;
-      this.m_textures.Add(texture);
-    }
-
-    public class CustomTexture
-    {
-      public Texture Texture { get; internal set; } = (Texture)null;
-
-      public Texture Normal { get; internal set; } = (Texture)null;
-
-      public int Index { get; internal set; } = 0;
+      m_textureLookUp.Add(name, texture);
+      m_textureHashLookUp.Add(name.GetStableHashCode(), texture);
+      texture.Index = m_textures.Count;
+      m_textures.Add(texture);
     }
   }
 }

@@ -1,70 +1,68 @@
-﻿// Decompiled with JetBrains decompiler
-// Type: ValheimRAFT.SailCreatorComponent
-// Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-
+﻿// ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+// ValheimRAFT.SailCreatorComponent
 
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimRAFT;
 
-namespace ValheimRAFT
+public class SailCreatorComponent : MonoBehaviour
 {
-  public class SailCreatorComponent : MonoBehaviour
+  private static List<SailCreatorComponent> m_sailCreators = new List<SailCreatorComponent>();
+
+  public static GameObject m_sailPrefab;
+
+  public int m_sailSize;
+
+  public void Awake()
   {
-    private static List<SailCreatorComponent> m_sailCreators = new List<SailCreatorComponent>();
-    public static GameObject m_sailPrefab;
-    public int m_sailSize;
-
-    public void Awake()
+    if (ZNetView.m_forceDisableInit)
     {
-      if (ZNetView.m_forceDisableInit)
-        return;
-      int num;
-      if (SailCreatorComponent.m_sailCreators.Count > 0)
-      {
-        Vector3 vector3 = m_sailCreators[0].transform.position - transform.position;
-        num = vector3.sqrMagnitude > (double)SailComponent.m_maxDistanceSqr
-          ? 1
-          : 0;
-      }
-      else
-        num = 0;
+      return;
+    }
 
-      if (num != 0)
-      {
-        ZLog.Log((object)"Sail creator corner distance too far.");
-        SailCreatorComponent.m_sailCreators.Clear();
-      }
+    if (m_sailCreators.Count > 0 &&
+        (m_sailCreators[0].transform.position - base.transform.position).sqrMagnitude >
+        SailComponent.m_maxDistanceSqr)
+    {
+      ZLog.Log("Sail creator corner distance too far.");
+      m_sailCreators.Clear();
+    }
 
-      SailCreatorComponent.m_sailCreators.Add(this);
-      if (SailCreatorComponent.m_sailCreators.Count < this.m_sailSize)
-        return;
-      ZLog.Log((object)string.Format("Creating new sail {0}/{1}",
-        (object)SailCreatorComponent.m_sailCreators.Count, (object)this.m_sailSize));
-      Vector3 vector3_1 = (
-        m_sailCreators[0].transform.position + m_sailCreators[1].transform.position) / 2f;
+    m_sailCreators.Add(this);
+    if (m_sailCreators.Count >= m_sailSize)
+    {
+      ZLog.Log($"Creating new sail {m_sailCreators.Count}/{m_sailSize}");
+      Vector3 center =
+        (m_sailCreators[0].transform.position + m_sailCreators[1].transform.position) / 2f;
       SailComponent.m_sailInit = false;
-      GameObject gameObject = Object.Instantiate<GameObject>(SailCreatorComponent.m_sailPrefab,
-        vector3_1, Quaternion.identity);
+      GameObject newSail = Object.Instantiate(m_sailPrefab, center, Quaternion.identity);
       SailComponent.m_sailInit = true;
-      SailComponent component1 = gameObject.GetComponent<SailComponent>();
-      component1.m_sailCorners = new List<Vector3>();
-      for (int index = 0; index < this.m_sailSize; ++index)
-        component1.m_sailCorners.Add(m_sailCreators[index].transform.position - vector3_1);
-      component1.LoadFromMaterial();
-      component1.CreateSailMesh();
-      component1.SaveZDO();
-      gameObject.GetComponent<Piece>().SetCreator(
-        ((Component)SailCreatorComponent.m_sailCreators[0]).GetComponent<Piece>().GetCreator());
-      ZNetView component2 = gameObject.GetComponent<ZNetView>();
-      MoveableBaseRootComponent componentInParent =
-        ((Component)SailCreatorComponent.m_sailCreators[0])
-        .GetComponentInParent<MoveableBaseRootComponent>();
-      if (componentInParent)
-        componentInParent.AddNewPiece(component2);
-      for (int index = 0; index < SailCreatorComponent.m_sailCreators.Count; ++index)
-        Object.Destroy((Object)((Component)SailCreatorComponent.m_sailCreators[index]).gameObject);
-      SailCreatorComponent.m_sailCreators.Clear();
+      SailComponent sailcomp = newSail.GetComponent<SailComponent>();
+      sailcomp.m_sailCorners = new List<Vector3>();
+      for (int j = 0; j < m_sailSize; j++)
+      {
+        sailcomp.m_sailCorners.Add(m_sailCreators[j].transform.position - center);
+      }
+
+      sailcomp.LoadFromMaterial();
+      sailcomp.CreateSailMesh();
+      sailcomp.SaveZDO();
+      Piece piece = newSail.GetComponent<Piece>();
+      piece.SetCreator(m_sailCreators[0].GetComponent<Piece>().GetCreator());
+      ZNetView netview = newSail.GetComponent<ZNetView>();
+      MoveableBaseRootComponent mbroot =
+        m_sailCreators[0].GetComponentInParent<MoveableBaseRootComponent>();
+      if ((bool)mbroot)
+      {
+        mbroot.AddNewPiece(netview);
+      }
+
+      for (int i = 0; i < m_sailCreators.Count; i++)
+      {
+        Object.Destroy(m_sailCreators[i].gameObject);
+      }
+
+      m_sailCreators.Clear();
     }
   }
 }

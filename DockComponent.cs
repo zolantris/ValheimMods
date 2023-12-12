@@ -1,80 +1,98 @@
-﻿// Decompiled with JetBrains decompiler
-// Type: ValheimRAFT.DockComponent
-// Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-
+﻿// ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+// ValheimRAFT.DockComponent
 
 using UnityEngine;
 using ValheimRAFT.Util;
 
-namespace ValheimRAFT
+namespace ValheimRAFT;
+
+public class DockComponent : MonoBehaviour
 {
-  public class DockComponent : MonoBehaviour
+  private enum DockState
   {
-    private DockComponent.DockState m_dockState = DockComponent.DockState.None;
-    private float m_dockingStrength = 1f;
-    private GameObject m_dockedObject;
-    private Rigidbody m_dockedRigidbody;
-    private ZNetView m_nview;
-    public Transform m_dockLocation;
-    public Transform m_dockExit;
+    None,
+    EnteringDock,
+    Docked,
+    LeavingDock
+  }
 
-    public void Awake() => this.m_nview = ((Component)this).GetComponent<ZNetView>();
+  private DockState m_dockState = DockState.None;
 
-    public void FixedUpdate()
+  private float m_dockingStrength = 1f;
+
+  private GameObject m_dockedObject;
+
+  private Rigidbody m_dockedRigidbody;
+
+  private ZNetView m_nview;
+
+  public Transform m_dockLocation;
+
+  public Transform m_dockExit;
+
+  public void Awake()
+  {
+    m_nview = GetComponent<ZNetView>();
+  }
+
+  public void FixedUpdate()
+  {
+    if ((bool)m_dockedRigidbody)
     {
-      if (!m_dockedRigidbody)
-        return;
-      if (this.m_dockState == DockComponent.DockState.EnteringDock)
+      if (m_dockState == DockState.EnteringDock)
       {
-        this.PushToward(this.m_dockLocation);
+        PushToward(m_dockLocation);
       }
-      else
+      else if (m_dockState == DockState.LeavingDock)
       {
-        if (this.m_dockState != DockComponent.DockState.LeavingDock)
-          return;
-        this.PushToward(this.m_dockExit);
+        PushToward(m_dockExit);
       }
     }
+  }
 
-    private void PushToward(Transform target)
+  private void PushToward(Transform target)
+  {
+    Vector3 direction = target.transform.position - m_dockedRigidbody.transform.position;
+    m_dockedRigidbody.AddForce(direction.normalized * m_dockingStrength, ForceMode.VelocityChange);
+  }
+
+  public void OnTriggerEnter(Collider other)
+  {
+    if ((bool)m_dockedObject && CanDock(other))
     {
-      Vector3 vector3 = target.transform.position - this.m_dockedRigidbody.transform.position;
-      m_dockedRigidbody.AddForce((vector3.normalized *
-                                  this.m_dockingStrength), ForceMode.VelocityChange);
+      Dock(other);
+    }
+  }
+
+  private void Dock(Collider other)
+  {
+    ZNetView nv = other.GetComponentInParent<ZNetView>();
+    if ((bool)nv && nv.IsOwner())
+    {
+      Rigidbody rb = nv.GetComponent<Rigidbody>();
+      if ((bool)rb)
+      {
+        int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(nv.m_zdo);
+        m_dockedObject = nv.gameObject;
+        m_dockedRigidbody = rb;
+        m_nview.m_zdo.Set("MBDock_dockedObject", id);
+        m_dockState = DockState.EnteringDock;
+      }
+    }
+  }
+
+  private bool CanDock(Collider other)
+  {
+    if (other.name.StartsWith("Karve"))
+    {
+      return true;
     }
 
-    public void OnTriggerEnter(Collider other)
+    if (other.name.StartsWith("VikingShip"))
     {
-      if (!m_dockedObject || !this.CanDock(other))
-        return;
-      this.Dock(other);
+      return true;
     }
 
-    private void Dock(Collider other)
-    {
-      ZNetView componentInParent = ((Component)other).GetComponentInParent<ZNetView>();
-      if (!componentInParent || !componentInParent.IsOwner())
-        return;
-      Rigidbody component = ((Component)componentInParent).GetComponent<Rigidbody>();
-      if (!component)
-        return;
-      int persistantId = ZDOPersistantID.Instance.GetOrCreatePersistantID(componentInParent.m_zdo);
-      this.m_dockedObject = ((Component)componentInParent).gameObject;
-      this.m_dockedRigidbody = component;
-      this.m_nview.m_zdo.Set("MBDock_dockedObject", persistantId);
-      this.m_dockState = DockComponent.DockState.EnteringDock;
-    }
-
-    private bool CanDock(Collider other) => ((Object)other).name.StartsWith("Karve") ||
-                                            ((Object)other).name.StartsWith("VikingShip");
-
-    private enum DockState
-    {
-      None,
-      EnteringDock,
-      Docked,
-      LeavingDock,
-    }
+    return false;
   }
 }

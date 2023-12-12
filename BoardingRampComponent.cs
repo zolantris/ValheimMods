@@ -1,464 +1,471 @@
-﻿// Decompiled with JetBrains decompiler
-// Type: ValheimRAFT.BoardingRampComponent
-// Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
+﻿// ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+// ValheimRAFT.BoardingRampComponent
 
-
-using System;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimRAFT;
 using ValheimRAFT.UI;
 
-namespace ValheimRAFT
+public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
 {
-  public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
+  public enum BoardingRampState
   {
-    public BoardingRampComponent.BoardingRampState m_state =
-      BoardingRampComponent.BoardingRampState.Closing;
+    Closed,
+    Closing,
+    Opening,
+    Open
+  }
 
-    public float m_stateProgress = 0.0f;
-    public float m_stateChangeDuration = 0.5f;
-    public int m_segments = 8;
-    public float m_segmentLength = 2f;
-    public float m_segmentOverlap = 0.2f;
-    public float m_segmentHeight = 0.05f;
-    public float m_maxRampRotation;
-    private GameObject m_segmentObject;
-    private List<GameObject> m_segmentObjects = new List<GameObject>();
-    private List<Transform> m_ropeAttach1 = new List<Transform>();
-    private List<Transform> m_ropeAttach2 = new List<Transform>();
-    private LineRenderer m_rope1;
-    private LineRenderer m_rope2;
-    private GameObject m_ramp;
-    private Transform m_winch1;
-    private Transform m_winch2;
-    private Transform m_winch1Rope;
-    private Transform m_winch2Rope;
-    private bool m_lastHitRamp;
-    private Vector3 m_hitPosition;
-    private bool m_updateRamp;
-    private Quaternion m_desiredRotation;
-    private float m_rotSpeed;
-    private Color m_hitColor;
-    private float m_hitDistance;
-    private ZNetView m_nview;
-    private int m_groundRayMask;
-    private static RaycastHit[] m_rayHits = new RaycastHit[30];
-    private float m_lastBridgeProgress = -1f;
-    private static EditRampComponent m_editPanel;
+  public BoardingRampState m_state = BoardingRampState.Closing;
 
-    private void Awake()
+  public float m_stateProgress = 0f;
+
+  public float m_stateChangeDuration = 0.5f;
+
+  public int m_segments = 8;
+
+  public float m_segmentLength = 2f;
+
+  public float m_segmentOverlap = 0.2f;
+
+  public float m_segmentHeight = 0.05f;
+
+  public float m_maxRampRotation;
+
+  private GameObject m_segmentObject;
+
+  private List<GameObject> m_segmentObjects = new List<GameObject>();
+
+  private List<Transform> m_ropeAttach1 = new List<Transform>();
+
+  private List<Transform> m_ropeAttach2 = new List<Transform>();
+
+  private LineRenderer m_rope1;
+
+  private LineRenderer m_rope2;
+
+  private GameObject m_ramp;
+
+  private Transform m_winch1;
+
+  private Transform m_winch2;
+
+  private Transform m_winch1Rope;
+
+  private Transform m_winch2Rope;
+
+  private bool m_lastHitRamp;
+
+  private Vector3 m_hitPosition;
+
+  private bool m_updateRamp;
+
+  private Quaternion m_desiredRotation;
+
+  private float m_rotSpeed;
+
+  private Color m_hitColor;
+
+  private float m_hitDistance;
+
+  private ZNetView m_nview;
+
+  private int m_groundRayMask;
+
+  private static RaycastHit[] m_rayHits = new RaycastHit[30];
+
+  private float m_lastBridgeProgress = -1f;
+
+  private static EditRampComponent m_editPanel;
+
+  private void Awake()
+  {
+    m_nview = GetComponent<ZNetView>();
+    m_groundRayMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece",
+      "terrain", "blocker", "WaterVolume", "Water");
+    m_ramp = base.transform.Find("Ramp").gameObject;
+    m_segmentObject = base.transform.Find("Ramp/Segment").gameObject;
+    m_rope1 = base.transform.Find("Rope1").GetComponent<LineRenderer>();
+    m_rope2 = base.transform.Find("Rope2").GetComponent<LineRenderer>();
+    m_winch1 = base.transform.Find("Winch1/Cylinder");
+    m_winch2 = base.transform.Find("Winch2/Cylinder");
+    m_winch1Rope = base.transform.Find("Winch1/Pole/RopeAttach");
+    m_winch2Rope = base.transform.Find("Winch2/Pole/RopeAttach");
+    m_segmentObject.SetActive(ZNetView.m_forceDisableInit);
+    if (ZNetView.m_forceDisableInit)
     {
-      this.m_nview = ((Component)this).GetComponent<ZNetView>();
-      this.m_groundRayMask = LayerMask.GetMask(new string[8]
+      m_rope1.gameObject.SetActive(value: false);
+      m_rope2.gameObject.SetActive(value: false);
+      m_segmentObject.SetActive(value: true);
+      base.enabled = false;
+    }
+    else
+    {
+      m_nview.Register<byte>("RPC_SetState", RPC_SetState);
+      m_nview.Register<byte>("RPC_SetSegmentCount", RPC_SetSegmentCount);
+      m_updateRamp = true;
+      LoadZDO();
+    }
+  }
+
+  private void RPC_SetState(long sender, byte state)
+  {
+    if (m_nview.IsOwner())
+    {
+      SetState((BoardingRampState)state);
+    }
+  }
+
+  private void LoadZDO()
+  {
+    if ((bool)m_nview && m_nview.m_zdo != null)
+    {
+      m_state = (BoardingRampState)m_nview.m_zdo.GetInt("MB_m_state");
+      m_segments = m_nview.m_zdo.GetInt("MB_m_segments", 5);
+    }
+  }
+
+  public void RPC_SetSegmentCount(long sender, byte segmentCount)
+  {
+    if ((bool)m_nview && m_nview.IsOwner())
+    {
+      SetSegmentCount(segmentCount);
+    }
+  }
+
+  public void SetSegmentCount(int segmentCount)
+  {
+    if (segmentCount != m_segments)
+    {
+      if ((bool)m_nview && !m_nview.IsOwner())
       {
-        "Default",
-        "static_solid",
-        "Default_small",
-        "piece",
-        "terrain",
-        "blocker",
-        "WaterVolume",
-        "Water"
-      });
-      this.m_ramp = ((Component)((Component)this).transform.Find("Ramp")).gameObject;
-      this.m_segmentObject =
-        ((Component)((Component)this).transform.Find("Ramp/Segment")).gameObject;
-      this.m_rope1 = ((Component)((Component)this).transform.Find("Rope1"))
-        .GetComponent<LineRenderer>();
-      this.m_rope2 = ((Component)((Component)this).transform.Find("Rope2"))
-        .GetComponent<LineRenderer>();
-      this.m_winch1 = ((Component)this).transform.Find("Winch1/Cylinder");
-      this.m_winch2 = ((Component)this).transform.Find("Winch2/Cylinder");
-      this.m_winch1Rope = ((Component)this).transform.Find("Winch1/Pole/RopeAttach");
-      this.m_winch2Rope = ((Component)this).transform.Find("Winch2/Pole/RopeAttach");
-      this.m_segmentObject.SetActive(ZNetView.m_forceDisableInit);
-      if (ZNetView.m_forceDisableInit)
-      {
-        ((Component)this.m_rope1).gameObject.SetActive(false);
-        ((Component)this.m_rope2).gameObject.SetActive(false);
-        this.m_segmentObject.SetActive(true);
-        ((Behaviour)this).enabled = false;
+        m_nview.InvokeRPC("RPC_SetSegmentCount", (byte)segmentCount);
       }
       else
       {
-        this.m_nview.Register<byte>("RPC_SetState", new Action<long, byte>(this.RPC_SetState));
-        this.m_nview.Register<byte>("RPC_SetSegmentCount",
-          new Action<long, byte>(this.RPC_SetSegmentCount));
-        this.m_updateRamp = true;
-        this.LoadZDO();
+        m_segments = segmentCount;
+        m_nview.m_zdo.Set("MB_m_segments", m_segments);
+      }
+    }
+  }
+
+  private void CreateSegments()
+  {
+    while (m_segments < m_segmentObjects.Count)
+    {
+      int j = m_segmentObjects.Count - 1;
+      Object.Destroy(m_segmentObjects[j]);
+      Object.Destroy(m_ropeAttach1[j]);
+      Object.Destroy(m_ropeAttach2[j]);
+      m_segmentObjects.RemoveAt(j);
+      m_ropeAttach1.RemoveAt(j);
+      m_ropeAttach2.RemoveAt(j);
+    }
+
+    for (int i = m_segmentObjects.Count; i < m_segments; i++)
+    {
+      GameObject go = Object.Instantiate(m_segmentObject,
+        base.transform.position + new Vector3(0f, (0f - m_segmentHeight) * (float)i,
+          m_segmentLength * (float)i), Quaternion.identity, m_ramp.transform);
+      go.transform.localRotation = Quaternion.identity;
+      go.transform.localScale = new Vector3(1f + (float)i * 0.0001f, 1f + (float)i * 0.0001f,
+        1f + (float)i * 0.0001f);
+      m_segmentObjects.Add(go);
+      m_ropeAttach1.Add(go.transform.Find("SegmentAnchor/Pole1/RopeAttach"));
+      m_ropeAttach2.Add(go.transform.Find("SegmentAnchor/Pole2/RopeAttach"));
+      go.SetActive(value: true);
+    }
+  }
+
+  private void Update()
+  {
+    if ((bool)m_nview && !m_nview.IsOwner())
+    {
+      BoardingRampState newState = (BoardingRampState)m_nview.m_zdo.GetInt("MB_m_state");
+      if (newState != m_state)
+      {
+        if (newState == BoardingRampState.Closed || newState == BoardingRampState.Closing)
+        {
+          m_state = BoardingRampState.Closing;
+        }
+        else if (newState == BoardingRampState.Open || newState == BoardingRampState.Opening)
+        {
+          m_state = BoardingRampState.Opening;
+        }
+      }
+
+      m_segments = m_nview.m_zdo.GetInt("MB_m_segments", 5);
+    }
+
+    if (m_segmentObjects.Count != m_segments)
+    {
+      CreateSegments();
+      ForceRampUpdate();
+    }
+
+    CheckRampFloor();
+    if (m_state == BoardingRampState.Closing)
+    {
+      m_stateProgress = Mathf.Clamp01(m_stateProgress -
+                                      Time.deltaTime / (m_stateChangeDuration * (float)m_segments));
+      UpdateRamp();
+      if (m_stateProgress <= 0f)
+      {
+        m_state = BoardingRampState.Closed;
+      }
+    }
+    else if (m_state == BoardingRampState.Opening)
+    {
+      m_stateProgress = Mathf.Clamp01(m_stateProgress +
+                                      Time.deltaTime / (m_stateChangeDuration * (float)m_segments));
+      UpdateRamp();
+      if (m_stateProgress >= 1f)
+      {
+        m_state = BoardingRampState.Open;
+      }
+    }
+    else if (m_updateRamp)
+    {
+      UpdateRamp();
+    }
+  }
+
+  private void SetState(BoardingRampState state)
+  {
+    if (m_state == state)
+    {
+      return;
+    }
+
+    m_state = state;
+    if ((bool)m_nview && m_nview.m_zdo != null)
+    {
+      if (m_nview.IsOwner())
+      {
+        m_nview.m_zdo.Set("MB_m_state", (int)state);
+        return;
+      }
+
+      m_nview.InvokeRPC("RPC_SetState", (byte)state);
+    }
+  }
+
+  private bool LinecastNonSelf(Vector3 start, Vector3 end, out RaycastHit hit)
+  {
+    Vector3 d = end - start;
+    return RaycastNonSelf(start, d.normalized, d.magnitude, out hit);
+  }
+
+  private bool RaycastNonSelf(Vector3 start, Vector3 dir, float dist, out RaycastHit hit)
+  {
+    int hitCount = Physics.RaycastNonAlloc(start, dir, m_rayHits, dist, m_groundRayMask,
+      QueryTriggerInteraction.Ignore);
+    int hitIndex = 0;
+    bool found = false;
+    for (int i = 0; i < hitCount; i++)
+    {
+      if (!m_rayHits[i].transform.IsChildOf(base.transform.parent ?? base.transform) &&
+          (!found || m_rayHits[hitIndex].distance > m_rayHits[i].distance))
+      {
+        hitIndex = i;
+        found = true;
       }
     }
 
-    private void RPC_SetState(long sender, byte state)
-    {
-      if (!this.m_nview.IsOwner())
-        return;
-      this.SetState((BoardingRampComponent.BoardingRampState)state);
-    }
+    hit = m_rayHits[hitIndex];
+    return found;
+  }
 
-    private void LoadZDO()
+  private void CheckRampFloor()
+  {
+    if (m_state == BoardingRampState.Closed || m_state == BoardingRampState.Closing)
     {
-      if (!this.m_nview || this.m_nview.m_zdo == null)
-        return;
-      this.m_state =
-        (BoardingRampComponent.BoardingRampState)this.m_nview.m_zdo.GetInt("MB_m_state", 0);
-      this.m_segments = this.m_nview.m_zdo.GetInt("MB_m_segments", 5);
+      m_updateRamp |= m_state == BoardingRampState.Closing ||
+                      m_ramp.transform.eulerAngles.x != -90f;
     }
-
-    public void RPC_SetSegmentCount(long sender, byte segmentCount)
+    else
     {
-      if (!m_nview || !this.m_nview.IsOwner())
-        return;
-      this.SetSegmentCount((int)segmentCount);
-    }
-
-    public void SetSegmentCount(int segmentCount)
-    {
-      if (segmentCount == this.m_segments)
-        return;
-      if (m_nview && !this.m_nview.IsOwner())
+      if (m_state != BoardingRampState.Opening && m_state != BoardingRampState.Open)
       {
-        this.m_nview.InvokeRPC("RPC_SetSegmentCount", new object[1]
+        return;
+      }
+
+      m_updateRamp = true;
+      float dist = m_segmentLength * (float)m_segments;
+      float lineLen = 1f * (m_segmentLength - m_segmentOverlap) * (float)m_segments;
+      Vector3 p =
+        m_ramp.transform.TransformPoint(new Vector3(0f, (0f - m_segmentHeight) * (float)m_segments,
+          lineLen));
+      Vector3 lineStart = m_ramp.transform.position;
+      Vector3 forward = (p - lineStart).normalized;
+      Vector3 up = m_ramp.transform.up;
+      if (LinecastNonSelf(lineStart, p, out var hitInfo))
+      {
+        m_hitColor = Color.green;
+        m_hitDistance = hitInfo.distance / lineLen;
+        if (dist * 0.94f > hitInfo.distance)
         {
-          (object)(byte)segmentCount
-        });
+          m_hitColor = Color.black;
+          LinecastNonSelf(hitInfo.point + forward * 0.1f + up, hitInfo.point + forward * 0.1f - up,
+            out hitInfo);
+        }
+
+        if ((double)Vector3.Dot(hitInfo.normal, Vector3.up) < 0.5)
+        {
+          m_hitColor = Color.white;
+          LinecastNonSelf(hitInfo.point + up, hitInfo.point - up, out hitInfo);
+        }
+
+        m_lastHitRamp = true;
+        m_hitPosition = hitInfo.point;
+        m_updateRamp = true;
+      }
+      else if (m_lastHitRamp && LinecastNonSelf(lineStart - up * 0.3f, p - up * 0.3f, out hitInfo))
+      {
+        m_hitColor = Color.magenta;
+      }
+      else if (!m_lastHitRamp &&
+               RaycastNonSelf(p + new Vector3(0f, 5f, 0f), Vector3.down, 1000f, out hitInfo))
+      {
+        m_hitColor = Color.blue;
+        m_hitPosition = hitInfo.point;
+        m_hitDistance = 1f;
+        m_updateRamp = true;
+        m_lastHitRamp = false;
       }
       else
       {
-        this.m_segments = segmentCount;
-        this.m_nview.m_zdo.Set("MB_m_segments", this.m_segments);
+        m_lastHitRamp = false;
       }
     }
+  }
 
-    private void CreateSegments()
+  public void ForceRampUpdate()
+  {
+    m_updateRamp = true;
+    m_lastBridgeProgress = -1f;
+  }
+
+  private void UpdateRamp()
+  {
+    if (!m_updateRamp)
     {
-      while (this.m_segments < this.m_segmentObjects.Count)
-      {
-        int index = this.m_segmentObjects.Count - 1;
-        Destroy(m_segmentObjects[index]);
-        Destroy(m_ropeAttach1[index]);
-        Destroy(m_ropeAttach2[index]);
-        this.m_segmentObjects.RemoveAt(index);
-        this.m_ropeAttach1.RemoveAt(index);
-        this.m_ropeAttach2.RemoveAt(index);
-      }
-
-      for (int count = this.m_segmentObjects.Count; count < this.m_segments; ++count)
-      {
-        GameObject gameObject = Instantiate<GameObject>(this.m_segmentObject,
-          (((Component)this).transform.position +
-           new Vector3(0.0f, -this.m_segmentHeight * (float)count,
-             this.m_segmentLength * (float)count)), Quaternion.identity, this.m_ramp.transform);
-        gameObject.transform.localRotation = Quaternion.identity;
-        gameObject.transform.localScale = new Vector3(
-          (float)(1.0 + (double)count * 9.9999997473787516E-05),
-          (float)(1.0 + (double)count * 9.9999997473787516E-05),
-          (float)(1.0 + (double)count * 9.9999997473787516E-05));
-        this.m_segmentObjects.Add(gameObject);
-        this.m_ropeAttach1.Add(gameObject.transform.Find("SegmentAnchor/Pole1/RopeAttach"));
-        this.m_ropeAttach2.Add(gameObject.transform.Find("SegmentAnchor/Pole2/RopeAttach"));
-        gameObject.SetActive(true);
-      }
+      return;
     }
 
-    private void Update()
+    m_updateRamp = false;
+    if (m_state == BoardingRampState.Closed || m_state == BoardingRampState.Closing)
     {
-      if (m_nview && !this.m_nview.IsOwner())
-      {
-        BoardingRampComponent.BoardingRampState boardingRampState =
-          (BoardingRampComponent.BoardingRampState)this.m_nview.m_zdo.GetInt("MB_m_state", 0);
-        if (boardingRampState != this.m_state)
-        {
-          if (boardingRampState == BoardingRampComponent.BoardingRampState.Closed ||
-              boardingRampState == BoardingRampComponent.BoardingRampState.Closing)
-            this.m_state = BoardingRampComponent.BoardingRampState.Closing;
-          else if (boardingRampState == BoardingRampComponent.BoardingRampState.Open ||
-                   boardingRampState == BoardingRampComponent.BoardingRampState.Opening)
-            this.m_state = BoardingRampComponent.BoardingRampState.Opening;
-        }
-
-        this.m_segments = this.m_nview.m_zdo.GetInt("MB_m_segments", 5);
-      }
-
-      if (this.m_segmentObjects.Count != this.m_segments)
-      {
-        this.CreateSegments();
-        this.ForceRampUpdate();
-      }
-
-      this.CheckRampFloor();
-      if (this.m_state == BoardingRampComponent.BoardingRampState.Closing)
-      {
-        this.m_stateProgress = Mathf.Clamp01(this.m_stateProgress -
-                                             Time.deltaTime / (this.m_stateChangeDuration *
-                                                               (float)this.m_segments));
-        this.UpdateRamp();
-        if ((double)this.m_stateProgress > 0.0)
-          return;
-        this.m_state = BoardingRampComponent.BoardingRampState.Closed;
-      }
-      else if (this.m_state == BoardingRampComponent.BoardingRampState.Opening)
-      {
-        this.m_stateProgress = Mathf.Clamp01(this.m_stateProgress +
-                                             Time.deltaTime / (this.m_stateChangeDuration *
-                                                               (float)this.m_segments));
-        this.UpdateRamp();
-        if ((double)this.m_stateProgress < 1.0)
-          return;
-        this.m_state = BoardingRampComponent.BoardingRampState.Open;
-      }
-      else
-      {
-        if (!this.m_updateRamp)
-          return;
-        this.UpdateRamp();
-      }
+      m_desiredRotation = ((m_stateProgress < 1f / (float)m_segments)
+        ? Quaternion.Euler(-90f, 0f, 0f)
+        : m_ramp.transform.localRotation);
+      m_rotSpeed = 90f;
     }
-
-    private void SetState(BoardingRampComponent.BoardingRampState state)
+    else
     {
-      if (this.m_state == state)
-        return;
-      this.m_state = state;
-      if (this.m_nview && this.m_nview.m_zdo != null)
-      {
-        if (this.m_nview.IsOwner())
-          this.m_nview.m_zdo.Set("MB_m_state", (int)state);
-        else
-          this.m_nview.InvokeRPC("RPC_SetState", new object[1]
-          {
-            (object)(byte)state
-          });
-      }
+      m_desiredRotation = Quaternion.LookRotation((m_hitPosition - (base.transform.position -
+        new Vector3(0f, m_hitDistance * m_segmentHeight * (float)m_segments, 0f))).normalized);
+      m_desiredRotation =
+        Quaternion.Euler(
+          (Quaternion.Inverse(base.transform.rotation) * m_desiredRotation).eulerAngles.x, 0f, 0f);
+      m_rotSpeed =
+        Mathf.Clamp(Quaternion.Angle(m_ramp.transform.localRotation, m_desiredRotation) * 5f, 0f,
+          90f);
     }
 
-    private bool LinecastNonSelf(Vector3 start, Vector3 end, out RaycastHit hit)
+    m_ramp.transform.localRotation = Quaternion.RotateTowards(m_ramp.transform.localRotation,
+      m_desiredRotation, Time.deltaTime * m_rotSpeed);
+    m_winch1.transform.localRotation =
+      Quaternion.Euler(m_stateProgress * 1000f * (float)m_segments, 0f, -90f);
+    m_winch2.transform.localRotation =
+      Quaternion.Euler(m_stateProgress * 1000f * (float)m_segments, 0f, -90f);
+    float bridgeProgress = m_stateProgress;
+    if (m_lastBridgeProgress != bridgeProgress)
     {
-      Vector3 vector3 = (end - start);
-      return this.RaycastNonSelf(start, vector3.normalized, vector3.magnitude, out hit);
+      m_lastBridgeProgress = bridgeProgress;
+      for (int i = 1; i < m_segmentObjects.Count; i++)
+      {
+        float segmentProgress =
+          Mathf.Clamp01(bridgeProgress * (float)m_segmentObjects.Count / (float)i);
+        m_segmentObjects[i].transform.position = m_ramp.transform.TransformPoint(new Vector3(0f,
+          (0f - m_segmentHeight) * (float)i,
+          segmentProgress * (m_segmentLength - m_segmentOverlap) * (float)i));
+      }
     }
 
-    private bool RaycastNonSelf(Vector3 start, Vector3 dir, float dist, out RaycastHit hit)
+    UpdateRopes();
+  }
+
+  private void UpdateRopes()
+  {
+    m_rope1.positionCount = m_segmentObjects.Count + 1;
+    m_rope2.positionCount = m_segmentObjects.Count + 1;
+    m_rope1.SetPosition(m_segmentObjects.Count,
+      m_rope1.transform.InverseTransformPoint(m_winch1Rope.position));
+    m_rope2.SetPosition(m_segmentObjects.Count,
+      m_rope2.transform.InverseTransformPoint(m_winch2Rope.position));
+    for (int i = 0; i < m_segmentObjects.Count; i++)
     {
-      int num = Physics.RaycastNonAlloc(start, dir, BoardingRampComponent.m_rayHits, dist,
-        this.m_groundRayMask, (QueryTriggerInteraction)1);
-      int index1 = 0;
-      bool flag = false;
-      for (int index2 = 0; index2 < num; ++index2)
-      {
-        if (!BoardingRampComponent.m_rayHits[index2].transform
-              .IsChildOf(((Component)this).transform.parent ?? ((Component)this).transform) &&
-            (!flag || BoardingRampComponent.m_rayHits[index1]
-              .distance > BoardingRampComponent.m_rayHits[index2].distance))
-        {
-          index1 = index2;
-          flag = true;
-        }
-      }
-
-      hit = BoardingRampComponent.m_rayHits[index1];
-      return flag;
+      m_rope1.SetPosition(m_segmentObjects.Count - (i + 1),
+        m_rope1.transform.InverseTransformPoint(m_ropeAttach1[i].position));
+      m_rope2.SetPosition(m_segmentObjects.Count - (i + 1),
+        m_rope2.transform.InverseTransformPoint(m_ropeAttach2[i].position));
     }
+  }
 
-    private void CheckRampFloor()
-    {
-      if (this.m_state == BoardingRampComponent.BoardingRampState.Closed ||
-          this.m_state == BoardingRampComponent.BoardingRampState.Closing)
-      {
-        this.m_updateRamp = ((this.m_updateRamp ? 1 : 0) |
-                             (this.m_state == BoardingRampComponent.BoardingRampState.Closing
-                               ? 1
-                               : ((double)this.m_ramp.transform.eulerAngles.x != -90.0 ? 1 : 0))) !=
-                            0;
-      }
-      else
-      {
-        if (this.m_state != BoardingRampComponent.BoardingRampState.Opening &&
-            this.m_state != BoardingRampComponent.BoardingRampState.Open)
-          return;
-        this.m_updateRamp = true;
-        float num1 = this.m_segmentLength * (float)this.m_segments;
-        float num2 = (float)(1.0 * ((double)this.m_segmentLength - (double)this.m_segmentOverlap)) *
-                     (float)this.m_segments;
-        Vector3 end = this.m_ramp.transform.TransformPoint(new Vector3(0.0f,
-          -this.m_segmentHeight * (float)this.m_segments, num2));
-        Vector3 position = this.m_ramp.transform.position;
-        Vector3 vector3 = (end - position);
-        Vector3 normalized = vector3.normalized;
-        Vector3 up = this.m_ramp.transform.up;
-        RaycastHit hit;
-        if (this.LinecastNonSelf(position, end, out hit))
-        {
-          this.m_hitColor = Color.green;
-          this.m_hitDistance = hit.distance / num2;
-          if ((double)num1 * 0.93999999761581421 > hit.distance)
-          {
-            this.m_hitColor = Color.black;
-            this.LinecastNonSelf(
-              (hit.point +
-               (normalized * 0.1f) + up), (
-                (hit.point +
-                 (normalized * 0.1f)) - up), out hit);
-          }
+  private void OnDrawGizmos()
+  {
+    Gizmos.color = m_hitColor;
+    Gizmos.DrawSphere(m_hitPosition, 0.3f);
+  }
 
-          if ((double)Vector3.Dot(hit.normal, Vector3.up) < 0.5)
-          {
-            this.m_hitColor = Color.white;
-            this.LinecastNonSelf((hit.point + up), (hit.point - up), out hit);
-          }
+  public string GetHoverName()
+  {
+    return "";
+  }
 
-          this.m_lastHitRamp = true;
-          this.m_hitPosition = hit.point;
-          this.m_updateRamp = true;
-        }
-        else if (this.m_lastHitRamp && this.LinecastNonSelf(
-                   (position - (up
-                                * 0.3f)),
-                   (end - (up * 0.3f)), out hit))
-          this.m_hitColor = Color.magenta;
-        else if (!this.m_lastHitRamp && this.RaycastNonSelf(
-                   (end + new Vector3(0.0f, 5f, 0.0f)), Vector3.down, 1000f,
-                   out hit))
-        {
-          this.m_hitColor = Color.blue;
-          this.m_hitPosition = hit.point;
-          this.m_hitDistance = 1f;
-          this.m_updateRamp = true;
-          this.m_lastHitRamp = false;
-        }
-        else
-          this.m_lastHitRamp = false;
-      }
-    }
-
-    public void ForceRampUpdate()
-    {
-      this.m_updateRamp = true;
-      this.m_lastBridgeProgress = -1f;
-    }
-
-    private void UpdateRamp()
-    {
-      if (!this.m_updateRamp)
-        return;
-      this.m_updateRamp = false;
-      if (this.m_state == BoardingRampComponent.BoardingRampState.Closed ||
-          this.m_state == BoardingRampComponent.BoardingRampState.Closing)
-      {
-        this.m_desiredRotation = (double)this.m_stateProgress < 1.0 / (double)this.m_segments
-          ? Quaternion.Euler(-90f, 0.0f, 0.0f)
-          : this.m_ramp.transform.localRotation;
-        this.m_rotSpeed = 90f;
-      }
-      else
-      {
-        Vector3 vector3 = (this.m_hitPosition -
-                           (((Component)this).transform.position -
-                            new Vector3(0.0f,
-                              this.m_hitDistance * this.m_segmentHeight * (float)this.m_segments,
-                              0.0f)));
-        this.m_desiredRotation = Quaternion.LookRotation((vector3).normalized);
-        Quaternion quaternion =
-          Quaternion.Inverse(((Component)this).transform.rotation) * this.m_desiredRotation;
-        this.m_desiredRotation =
-          Quaternion.Euler((quaternion).eulerAngles.x, 0.0f, 0.0f);
-        this.m_rotSpeed =
-          Mathf.Clamp(
-            Quaternion.Angle(this.m_ramp.transform.localRotation, this.m_desiredRotation) * 5f,
-            0.0f, 90f);
-      }
-
-      this.m_ramp.transform.localRotation = Quaternion.RotateTowards(
-        this.m_ramp.transform.localRotation, this.m_desiredRotation,
-        Time.deltaTime * this.m_rotSpeed);
-      ((Component)this.m_winch1).transform.localRotation =
-        Quaternion.Euler(this.m_stateProgress * 1000f * (float)this.m_segments, 0.0f, -90f);
-      ((Component)this.m_winch2).transform.localRotation =
-        Quaternion.Euler(this.m_stateProgress * 1000f * (float)this.m_segments, 0.0f, -90f);
-      float stateProgress = this.m_stateProgress;
-      if ((double)this.m_lastBridgeProgress != (double)stateProgress)
-      {
-        this.m_lastBridgeProgress = stateProgress;
-        for (int index = 1; index < this.m_segmentObjects.Count; ++index)
-        {
-          float num =
-            Mathf.Clamp01(stateProgress * (float)this.m_segmentObjects.Count / (float)index);
-          this.m_segmentObjects[index].transform.position = this.m_ramp.transform.TransformPoint(
-            new Vector3(0.0f, -this.m_segmentHeight * (float)index,
-              num * (this.m_segmentLength - this.m_segmentOverlap) * (float)index));
-        }
-      }
-
-      this.UpdateRopes();
-    }
-
-    private void UpdateRopes()
-    {
-      this.m_rope1.positionCount = this.m_segmentObjects.Count + 1;
-      this.m_rope2.positionCount = this.m_segmentObjects.Count + 1;
-      this.m_rope1.SetPosition(this.m_segmentObjects.Count,
-        ((Component)this.m_rope1).transform.InverseTransformPoint(this.m_winch1Rope.position));
-      this.m_rope2.SetPosition(this.m_segmentObjects.Count,
-        ((Component)this.m_rope2).transform.InverseTransformPoint(this.m_winch2Rope.position));
-      for (int index = 0; index < this.m_segmentObjects.Count; ++index)
-      {
-        this.m_rope1.SetPosition(this.m_segmentObjects.Count - (index + 1),
-          ((Component)this.m_rope1).transform.InverseTransformPoint(this.m_ropeAttach1[index]
-            .position));
-        this.m_rope2.SetPosition(this.m_segmentObjects.Count - (index + 1),
-          ((Component)this.m_rope2).transform.InverseTransformPoint(this.m_ropeAttach2[index]
-            .position));
-      }
-    }
-
-    private void OnDrawGizmos()
-    {
-      Gizmos.color = this.m_hitColor;
-      Gizmos.DrawSphere(this.m_hitPosition, 0.3f);
-    }
-
-    public string GetHoverName() => "";
-
-    public string GetHoverText() => Localization.instance.Localize(
-      "[<color=yellow><b>$KEY_Use</b></color>] " +
-      (this.m_state == BoardingRampComponent.BoardingRampState.Open ||
-       this.m_state == BoardingRampComponent.BoardingRampState.Opening
+  public string GetHoverText()
+  {
+    string stateChangeDesc =
+      ((m_state == BoardingRampState.Open || m_state == BoardingRampState.Opening)
         ? "$mb_boarding_ramp_retract"
-        : "$mb_boarding_ramp_extend")) + Localization.instance.Localize(
-      "\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] $mb_boarding_ramp_edit");
+        : "$mb_boarding_ramp_extend");
+    return Localization.instance.Localize("[<color=yellow><b>$KEY_Use</b></color>] " +
+                                          stateChangeDesc) +
+           Localization.instance.Localize(
+             "\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] $mb_boarding_ramp_edit");
+  }
 
-    public bool Interact(Humanoid user, bool hold, bool alt)
+  public bool Interact(Humanoid user, bool hold, bool alt)
+  {
+    if (alt)
     {
-      if (alt)
+      if (m_editPanel == null)
       {
-        if (BoardingRampComponent.m_editPanel == null)
-          BoardingRampComponent.m_editPanel = new EditRampComponent();
-        BoardingRampComponent.m_editPanel.ShowPanel(this);
-        return true;
+        m_editPanel = new EditRampComponent();
       }
 
-      if (!hold)
-      {
-        if (this.m_state == BoardingRampComponent.BoardingRampState.Open ||
-            this.m_state == BoardingRampComponent.BoardingRampState.Opening)
-          this.SetState(BoardingRampComponent.BoardingRampState.Closing);
-        else if (this.m_state == BoardingRampComponent.BoardingRampState.Closing ||
-                 this.m_state == BoardingRampComponent.BoardingRampState.Closed)
-          this.SetState(BoardingRampComponent.BoardingRampState.Opening);
-      }
-
+      m_editPanel.ShowPanel(this);
       return true;
     }
 
-    public bool UseItem(Humanoid user, ItemDrop.ItemData item) => false;
-
-    public enum BoardingRampState
+    if (!hold)
     {
-      Closed,
-      Closing,
-      Opening,
-      Open,
+      if (m_state == BoardingRampState.Open || m_state == BoardingRampState.Opening)
+      {
+        SetState(BoardingRampState.Closing);
+      }
+      else if (m_state == BoardingRampState.Closing || m_state == BoardingRampState.Closed)
+      {
+        SetState(BoardingRampState.Opening);
+      }
     }
+
+    return true;
+  }
+
+  public bool UseItem(Humanoid user, ItemDrop.ItemData item)
+  {
+    return false;
   }
 }

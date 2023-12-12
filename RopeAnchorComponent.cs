@@ -1,514 +1,532 @@
-﻿// Decompiled with JetBrains decompiler
-// Type: ValheimRAFT.RopeAnchorComponent
-// Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-
+﻿// ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+// ValheimRAFT.RopeAnchorComponent
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimRAFT;
 using ValheimRAFT.Util;
+using Logger = Jotunn.Logger;
 
-namespace ValheimRAFT
+public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 {
-  public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
+  private class Rope
   {
-    public float m_maxRopeDistance = 64f;
+    internal GameObject m_ropeTarget;
+
+    internal RopeAttachmentTarget m_ropeAnchorTarget;
+
+    internal GameObject m_ropeObject;
+
     internal LineRenderer m_rope;
-    internal ZNetView m_nview;
-    internal Rigidbody m_rigidbody;
-    public static RopeAnchorComponent m_draggingRopeFrom;
-    private List<RopeAnchorComponent.Rope> m_ropes = new List<RopeAnchorComponent.Rope>();
-    private List<RopeAnchorComponent.Rope> m_updatingRopes = new List<RopeAnchorComponent.Rope>();
-    private uint m_zdoDataRevision;
-    private float m_lastRopeCheckTime;
-    internal static GameObject m_draggingRopeTo;
 
-    private static readonly Dictionary<string, string[]> m_attachmentPoints =
-      RopeAnchorComponent.GetAttachmentPoints();
+    internal BoxCollider m_collider;
 
-    public void Awake()
+    internal float m_ropeAttachDistance;
+
+    internal RopeComponent m_ropeComponent;
+
+    internal Transform m_targetTransform;
+  }
+
+  private struct RopeAttachmentTarget
+  {
+    public int Id { get; }
+
+    public byte Index { get; }
+
+    public RopeAttachmentTarget(int id, byte index)
     {
-      this.m_rigidbody = ((Component)this).GetComponentInParent<Rigidbody>();
-      this.m_rope = ((Component)this).GetComponent<LineRenderer>();
-      this.m_nview = ((Component)this).GetComponent<ZNetView>();
-      ((Component)this).GetComponent<WearNTear>().m_onDestroyed += new Action(this.DestroyAllRopes);
-      this.LoadFromZDO();
+      this = default(RopeAttachmentTarget);
+      Id = id;
+      Index = index;
     }
 
-    private void DestroyAllRopes()
+    public override int GetHashCode()
     {
-      while (this.m_ropes.Count > 0)
-        this.RemoveRopeAt(0);
+      return (Id << 1) & Index;
     }
 
-    public string GetHoverName() => "";
-
-    public string GetHoverText() =>
-      m_draggingRopeTo != this
-        ? Localization.instance.Localize(
-          "[<color=yellow><b>$KEY_Use</b></color>] $mb_rope_anchor_attach_to")
-        : Localization.instance.Localize(
-          "[<color=yellow><b>$KEY_Use</b></color>] $mb_rope_anchor_attach");
-
-    public bool Interact(Humanoid user, bool hold, bool alt)
+    public override bool Equals(object obj)
     {
-      if (!m_draggingRopeFrom)
+      return obj is RopeAttachmentTarget target && target.Index == Index && target.Id == Id;
+    }
+
+    public static bool operator ==(RopeAttachmentTarget a, RopeAttachmentTarget b)
+    {
+      return a.Index == b.Index && a.Id == b.Id;
+    }
+
+    public static bool operator !=(RopeAttachmentTarget a, RopeAttachmentTarget b)
+    {
+      return a.Index != b.Index || a.Id != b.Id;
+    }
+  }
+
+  public float m_maxRopeDistance = 64f;
+
+  internal LineRenderer m_rope;
+
+  internal ZNetView m_nview;
+
+  internal Rigidbody m_rigidbody;
+
+  public static RopeAnchorComponent m_draggingRopeFrom;
+
+  private List<Rope> m_ropes = new List<Rope>();
+
+  private List<Rope> m_updatingRopes = new List<Rope>();
+
+  private uint m_zdoDataRevision;
+
+  private float m_lastRopeCheckTime;
+
+  internal static GameObject m_draggingRopeTo;
+
+  private static readonly Dictionary<string, string[]> m_attachmentPoints = GetAttachmentPoints();
+
+  public void Awake()
+  {
+    m_rigidbody = GetComponentInParent<Rigidbody>();
+    m_rope = GetComponent<LineRenderer>();
+    m_nview = GetComponent<ZNetView>();
+    WearNTear wnt = GetComponent<WearNTear>();
+    wnt.m_onDestroyed = (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(DestroyAllRopes));
+    LoadFromZDO();
+  }
+
+  private void DestroyAllRopes()
+  {
+    while (m_ropes.Count > 0)
+    {
+      RemoveRopeAt(0);
+    }
+  }
+
+  public string GetHoverName()
+  {
+    return "";
+  }
+
+  public string GetHoverText()
+  {
+    if (m_draggingRopeTo != this)
+    {
+      return Localization.instance.Localize(
+        "[<color=yellow><b>$KEY_Use</b></color>] $mb_rope_anchor_attach_to");
+    }
+
+    return Localization.instance.Localize(
+      "[<color=yellow><b>$KEY_Use</b></color>] $mb_rope_anchor_attach");
+  }
+
+  public bool Interact(Humanoid user, bool hold, bool alt)
+  {
+    if (!m_draggingRopeFrom)
+    {
+      m_draggingRopeFrom = this;
+      m_rope.enabled = true;
+    }
+    else if (m_draggingRopeFrom == this)
+    {
+      if (m_draggingRopeTo != this)
       {
-        RopeAnchorComponent.m_draggingRopeFrom = this;
-        ((Renderer)this.m_rope).enabled = true;
+        AttachRope(m_draggingRopeTo, GetIndexAtLocation(m_draggingRopeTo));
       }
-      else if (m_draggingRopeFrom == this)
+
+      m_draggingRopeFrom = null;
+      m_rope.enabled = false;
+    }
+    else
+    {
+      m_draggingRopeFrom.AttachRope(this);
+      m_draggingRopeFrom.m_rope.enabled = false;
+      m_draggingRopeFrom = null;
+      m_rope.enabled = false;
+    }
+
+    return true;
+  }
+
+  private static Dictionary<string, string[]> GetAttachmentPoints()
+  {
+    Dictionary<string, string[]> attachmentPoints = new Dictionary<string, string[]>();
+    attachmentPoints.Add("Karve(Clone)",
+      new string[5]
       {
-        /**
-         * This fix may not be accurate
-         *
-         * Previously it was: if (Object.op_Inequality((Object)RopeAnchorComponent.m_draggingRopeTo, (Object)this))
-         */
-        if (m_draggingRopeTo != this)
-          this.AttachRope(RopeAnchorComponent.m_draggingRopeTo,
-            this.GetIndexAtLocation(RopeAnchorComponent.m_draggingRopeTo));
-        RopeAnchorComponent.m_draggingRopeFrom = (RopeAnchorComponent)null;
-        ((Renderer)this.m_rope).enabled = false;
+        "ship/ropes/mastrope", "ship/ropes/RopeAttachLeft_bottom_front",
+        "ship/ropes/RopeAttachLeft_bottom_back", "ship/ropes/RopeAttachRight_bottom_front (1)",
+        "ship/ropes/RopeAttachRight_bottom_back (1)"
+      });
+    attachmentPoints.Add("VikingShip(Clone)",
+      new string[8]
+      {
+        "interactive/front", "interactive/mast", "interactive/ladder_right",
+        "interactive/ladder_left", "ship/visual/ropes/RopeAttachLeft_bottom_front",
+        "ship/visual/ropes/RopeAttachLeft_bottom_back",
+        "ship/visual/ropes/RopeAttachRight_bottom_front (1)",
+        "ship/visual/ropes/RopeAttachRight_bottom_back (1)"
+      });
+    attachmentPoints.Add("Deer(Clone)",
+      new string[1] { "Visual/CG/Pelvis/Spine/Spine1/Spine2/Neck" });
+    attachmentPoints.Add("Boar(Clone)",
+      new string[1] { "Visual/CG/Pelvis/Spine/Spine1/Spine2/Neck" });
+    attachmentPoints.Add("Boar_piggy(Clone)",
+      new string[1] { "Visual/CG/Pelvis/Spine/Spine1/Spine2/Neck" });
+    attachmentPoints.Add("Neck(Clone)", new string[1] { "Visual/Armature/Hips/Spine/Spine1/Neck" });
+    return attachmentPoints;
+  }
+
+  private Transform GetAttachmentTransform(GameObject go, RopeAttachmentTarget target)
+  {
+    if (m_attachmentPoints.TryGetValue(go.name, out var points) && target.Index >= 0 &&
+        points.Length > target.Index)
+    {
+      Transform t = go.transform.Find(points[target.Index]);
+      if ((bool)t)
+      {
+        return t;
+      }
+    }
+
+    return go.transform;
+  }
+
+  private byte GetIndexAtLocation(GameObject go)
+  {
+    ZNetView netview = go.GetComponentInParent<ZNetView>();
+    if (!netview)
+    {
+      return 0;
+    }
+
+    if (m_attachmentPoints.TryGetValue(netview.gameObject.name, out var points))
+    {
+      Vector3 playerPos = Player.m_localPlayer.transform.position;
+      byte index = 0;
+      float distance = float.MaxValue;
+      for (int i = 0; i < points.Length; i++)
+      {
+        string point = points[i];
+        Transform t = netview.transform.Find(point);
+        if ((bool)t)
+        {
+          float d = (playerPos - t.position).sqrMagnitude;
+          if (d < distance)
+          {
+            index = (byte)i;
+            distance = d;
+          }
+        }
+      }
+
+      return index;
+    }
+
+    return 0;
+  }
+
+  private void AttachRope(GameObject gameObject, byte index)
+  {
+    ZNetView nv = gameObject.GetComponentInParent<ZNetView>();
+    if ((bool)nv && nv.m_zdo != null)
+    {
+      ZLog.Log($"AttachRope {index}");
+      RopeAttachmentTarget id =
+        new RopeAttachmentTarget(ZDOPersistantID.Instance.GetOrCreatePersistantID(nv.m_zdo), index);
+      if (!RemoveRopeWithID(id))
+      {
+        CreateNewRope(id);
+        SaveToZDO();
+        CheckRopes();
+      }
+    }
+  }
+
+  private void AttachRope(RopeAnchorComponent ropeAnchorComponent)
+  {
+    int parentid =
+      ZDOPersistantID.Instance.GetOrCreatePersistantID(ropeAnchorComponent.GetParentZDO());
+    if (!RemoveRopeWithID(new RopeAttachmentTarget(parentid, 0)) &&
+        !(ropeAnchorComponent == this) &&
+        !ropeAnchorComponent.RemoveRopeWithID(new RopeAttachmentTarget(parentid, 0)))
+    {
+      CreateNewRope(new RopeAttachmentTarget(parentid, 0));
+      SaveToZDO();
+      CheckRopes();
+    }
+  }
+
+  private void CreateNewRope(RopeAttachmentTarget target)
+  {
+    Rope newRope = new Rope();
+    newRope.m_ropeAnchorTarget = target;
+    newRope.m_ropeObject = new GameObject("MBRope");
+    newRope.m_ropeObject.layer = LayerMask.NameToLayer("piece_nonsolid");
+    newRope.m_collider = newRope.m_ropeObject.AddComponent<BoxCollider>();
+    newRope.m_collider.size = new Vector3(0.1f, 0.1f, 0.1f);
+    newRope.m_ropeComponent = newRope.m_ropeObject.AddComponent<RopeComponent>();
+    newRope.m_rope = newRope.m_ropeObject.AddComponent<LineRenderer>();
+    newRope.m_rope.widthMultiplier = m_rope.widthMultiplier;
+    newRope.m_rope.material = m_rope.material;
+    newRope.m_rope.textureMode = LineTextureMode.Tile;
+    newRope.m_ropeObject.transform.SetParent(base.transform.parent);
+    newRope.m_ropeObject.transform.localPosition = Vector3.zero;
+    m_ropes.Add(newRope);
+  }
+
+  private ZDO GetParentZDO()
+  {
+    if (!m_nview || m_nview.m_zdo == null)
+    {
+      return null;
+    }
+
+    return m_nview.m_zdo;
+  }
+
+  private bool RemoveRopeWithID(RopeAttachmentTarget target)
+  {
+    for (int i = 0; i < m_ropes.Count; i++)
+    {
+      if (m_ropes[i].m_ropeAnchorTarget == target)
+      {
+        RemoveRopeAt(i);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private void SaveToZDO()
+  {
+    if ((bool)m_nview && m_nview.m_zdo != null)
+    {
+      ZPackage pkg = new ZPackage();
+      byte version = 2;
+      pkg.Write(version);
+      for (int i = 0; i < m_ropes.Count; i++)
+      {
+        pkg.Write(m_ropes[i].m_ropeAnchorTarget.Id);
+        pkg.Write(m_ropes[i].m_ropeAnchorTarget.Index);
+      }
+
+      m_nview.m_zdo.Set("MBRopeAnchor_Ropes", pkg.GetArray());
+    }
+  }
+
+  private void LoadFromZDO()
+  {
+    if ((bool)m_nview && m_nview.m_zdo != null)
+    {
+      List<RopeAttachmentTarget> ropeIds = new List<RopeAttachmentTarget>();
+      GetRopesFromZDO(ropeIds);
+      for (int i = 0; i < ropeIds.Count; i++)
+      {
+        CreateNewRope(ropeIds[i]);
+      }
+    }
+  }
+
+  public bool UseItem(Humanoid user, ItemDrop.ItemData item)
+  {
+    return false;
+  }
+
+  public void LateUpdate()
+  {
+    if (!m_nview || m_nview.m_zdo == null)
+    {
+      return;
+    }
+
+    if (!m_nview.IsOwner() && m_nview.m_zdo.DataRevision != m_zdoDataRevision)
+    {
+      UpdateRopesFromZDO();
+    }
+
+    if (m_rope.enabled && (bool)Player.m_localPlayer)
+    {
+      m_rope.SetPosition(0, base.transform.position);
+      if ((bool)m_draggingRopeTo)
+      {
+        byte index = GetIndexAtLocation(m_draggingRopeTo);
+        Transform t = GetAttachmentTransform(m_draggingRopeTo, new RopeAttachmentTarget(0, index));
+        if ((bool)t)
+        {
+          m_rope.SetPosition(1, t.position);
+        }
       }
       else
       {
-        RopeAnchorComponent.m_draggingRopeFrom.AttachRope(this);
-        ((Renderer)RopeAnchorComponent.m_draggingRopeFrom.m_rope).enabled = false;
-        RopeAnchorComponent.m_draggingRopeFrom = (RopeAnchorComponent)null;
-        ((Renderer)this.m_rope).enabled = false;
+        m_rope.SetPosition(1,
+          ((Humanoid)Player.m_localPlayer).m_visEquipment.m_rightHand.transform.position);
       }
-
-      return true;
     }
 
-    private static Dictionary<string, string[]> GetAttachmentPoints() =>
-      new Dictionary<string, string[]>()
+    if (Time.time - m_lastRopeCheckTime > 2f)
+    {
+      CheckRopes();
+      m_lastRopeCheckTime = Time.time;
+    }
+
+    for (int i = 0; i < m_updatingRopes.Count; i++)
+    {
+      Rope rope = m_updatingRopes[i];
+      if ((bool)rope.m_ropeObject && (bool)rope.m_ropeTarget)
       {
+        float ropeDistance = (base.transform.position - rope.m_targetTransform.position).magnitude;
+        if (m_nview.IsOwner() && (ropeDistance > m_maxRopeDistance ||
+                                  ropeDistance > rope.m_ropeAttachDistance + 8f))
         {
-          "Karve(Clone)",
-          new string[5]
-          {
-            "ship/ropes/mastrope",
-            "ship/ropes/RopeAttachLeft_bottom_front",
-            "ship/ropes/RopeAttachLeft_bottom_back",
-            "ship/ropes/RopeAttachRight_bottom_front (1)",
-            "ship/ropes/RopeAttachRight_bottom_back (1)"
-          }
-        },
-        {
-          "VikingShip(Clone)",
-          new string[8]
-          {
-            "interactive/front",
-            "interactive/mast",
-            "interactive/ladder_right",
-            "interactive/ladder_left",
-            "ship/visual/ropes/RopeAttachLeft_bottom_front",
-            "ship/visual/ropes/RopeAttachLeft_bottom_back",
-            "ship/visual/ropes/RopeAttachRight_bottom_front (1)",
-            "ship/visual/ropes/RopeAttachRight_bottom_back (1)"
-          }
-        },
-        {
-          "Deer(Clone)",
-          new string[1] { "Visual/CG/Pelvis/Spine/Spine1/Spine2/Neck" }
-        },
-        {
-          "Boar(Clone)",
-          new string[1] { "Visual/CG/Pelvis/Spine/Spine1/Spine2/Neck" }
-        },
-        {
-          "Boar_piggy(Clone)",
-          new string[1] { "Visual/CG/Pelvis/Spine/Spine1/Spine2/Neck" }
-        },
-        {
-          "Neck(Clone)",
-          new string[1] { "Visual/Armature/Hips/Spine/Spine1/Neck" }
+          RemoveUpdatingRopeAt(i);
+          continue;
         }
-      };
 
-    private Transform GetAttachmentTransform(
-      GameObject go,
-      RopeAnchorComponent.RopeAttachmentTarget target)
-    {
-      string[] strArray;
-      if (RopeAnchorComponent.m_attachmentPoints.TryGetValue((go).name, out strArray) &&
-          target.Index >= (byte)0 && strArray.Length > (int)target.Index)
+        rope.m_rope.SetPosition(0, base.transform.position);
+        rope.m_rope.SetPosition(1, rope.m_targetTransform.position);
+      }
+      else
       {
-        Transform attachmentTransform = go.transform.Find(strArray[(int)target.Index]);
-        if (attachmentTransform)
-          return attachmentTransform;
+        m_updatingRopes.RemoveAt(i);
+        i--;
+      }
+    }
+  }
+
+  private void CheckRopes()
+  {
+    for (int i = 0; i < m_ropes.Count; i++)
+    {
+      Rope rope = m_ropes[i];
+      if ((bool)rope.m_ropeTarget)
+      {
+        continue;
       }
 
-      return go.transform;
-    }
-
-    private byte GetIndexAtLocation(GameObject go)
-    {
-      ZNetView componentInParent = go.GetComponentInParent<ZNetView>();
-      string[] strArray;
-      if (!componentInParent ||
-          !RopeAnchorComponent.m_attachmentPoints.TryGetValue(
-            ((componentInParent).gameObject).name, out strArray))
-        return 0;
-      Vector3 position = ((Component)Player.m_localPlayer).transform.position;
-      byte indexAtLocation = 0;
-      float num = float.MaxValue;
-      for (int index = 0; index < strArray.Length; ++index)
+      rope.m_ropeTarget = ZDOPersistantID.Instance.GetGameObject(rope.m_ropeAnchorTarget.Id);
+      if (!rope.m_ropeTarget)
       {
-        string str = strArray[index];
-        Transform transform = ((Component)componentInParent).transform.Find(str);
-        if (transform)
+        if (ZNet.instance.IsServer())
         {
-          Vector3 vector3 = position - transform.position;
-          float sqrMagnitude = vector3.sqrMagnitude;
-          if ((double)sqrMagnitude < (double)num)
+          ZDO zdo = ZDOPersistantID.Instance.GetZDO(rope.m_ropeAnchorTarget.Id);
+          if (zdo == null)
           {
-            indexAtLocation = (byte)index;
-            num = sqrMagnitude;
+            RemoveRopeAt(i);
+            i--;
           }
         }
+
+        continue;
       }
 
-      return indexAtLocation;
-    }
-
-    private void AttachRope(GameObject gameObject, byte index)
-    {
-      ZNetView componentInParent = gameObject.GetComponentInParent<ZNetView>();
-      if (!componentInParent || componentInParent.m_zdo == null)
-        return;
-      ZLog.Log((object)string.Format("AttachRope {0}", (object)index));
-      RopeAnchorComponent.RopeAttachmentTarget target =
-        new RopeAnchorComponent.RopeAttachmentTarget(
-          ZDOPersistantID.Instance.GetOrCreatePersistantID(componentInParent.m_zdo), index);
-      if (this.RemoveRopeWithID(target))
-        return;
-      this.CreateNewRope(target);
-      this.SaveToZDO();
-      this.CheckRopes();
-    }
-
-    private void AttachRope(RopeAnchorComponent ropeAnchorComponent)
-    {
-      int persistantId =
-        ZDOPersistantID.Instance.GetOrCreatePersistantID(ropeAnchorComponent.GetParentZDO());
-      if (this.RemoveRopeWithID(
-            new RopeAnchorComponent.RopeAttachmentTarget(persistantId, (byte)0)) ||
-          ropeAnchorComponent == this ||
-          ropeAnchorComponent.RemoveRopeWithID(
-            new RopeAnchorComponent.RopeAttachmentTarget(persistantId, (byte)0)))
-        return;
-      this.CreateNewRope(new RopeAnchorComponent.RopeAttachmentTarget(persistantId, (byte)0));
-      this.SaveToZDO();
-      this.CheckRopes();
-    }
-
-    private void CreateNewRope(RopeAnchorComponent.RopeAttachmentTarget target)
-    {
-      RopeAnchorComponent.Rope rope = new RopeAnchorComponent.Rope()
+      Transform targetTransform =
+        GetAttachmentTransform(rope.m_ropeTarget, rope.m_ropeAnchorTarget);
+      rope.m_ropeAttachDistance = (base.transform.position - targetTransform.position).magnitude;
+      rope.m_targetTransform = targetTransform;
+      Rigidbody rb = rope.m_ropeTarget.GetComponentInParent<Rigidbody>();
+      if ((bool)rb)
       {
-        m_ropeAnchorTarget = target,
-        m_ropeObject = new GameObject("MBRope")
-      };
-      rope.m_ropeObject.layer = LayerMask.NameToLayer("piece_nonsolid");
-      rope.m_collider = rope.m_ropeObject.AddComponent<BoxCollider>();
-      rope.m_collider.size = new Vector3(0.1f, 0.1f, 0.1f);
-      rope.m_ropeComponent = rope.m_ropeObject.AddComponent<RopeComponent>();
-      rope.m_rope = rope.m_ropeObject.AddComponent<LineRenderer>();
-      rope.m_rope.widthMultiplier = this.m_rope.widthMultiplier;
-      ((Renderer)rope.m_rope).material = ((Renderer)this.m_rope).material;
-      rope.m_rope.textureMode = (LineTextureMode)1;
-      rope.m_ropeObject.transform.SetParent(((Component)this).transform.parent);
-      rope.m_ropeObject.transform.localPosition = Vector3.zero;
-      this.m_ropes.Add(rope);
+        SpringJoint spring = rope.m_ropeComponent.GetSpring();
+        Rigidbody springRb = rope.m_ropeComponent.GetComponent<Rigidbody>();
+        springRb.isKinematic = true;
+        springRb.useGravity = false;
+        spring.maxDistance = rope.m_ropeAttachDistance + 2f;
+        spring.minDistance = 0f;
+        spring.spring = 10000f;
+        spring.connectedBody = rb;
+        spring.autoConfigureConnectedAnchor = false;
+        spring.anchor = springRb.transform.InverseTransformPoint(base.transform.position);
+        spring.connectedAnchor = rb.transform.InverseTransformPoint(targetTransform.position);
+      }
+
+      if ((!rb && rope.m_ropeTarget.transform.parent == base.transform.parent) || rb == m_rigidbody)
+      {
+        rope.m_rope.useWorldSpace = false;
+        rope.m_rope.SetPosition(0,
+          rope.m_rope.transform.InverseTransformPoint(base.transform.position));
+        rope.m_rope.SetPosition(1,
+          rope.m_rope.transform.InverseTransformPoint(rope.m_targetTransform.position));
+      }
+      else
+      {
+        m_updatingRopes.Add(rope);
+      }
+    }
+  }
+
+  private void UpdateRopesFromZDO()
+  {
+    m_zdoDataRevision = m_nview.m_zdo.DataRevision;
+    HashSet<RopeAttachmentTarget> ropeIds = new HashSet<RopeAttachmentTarget>();
+    GetRopesFromZDO(ropeIds);
+    for (int i = 0; i < m_ropes.Count; i++)
+    {
+      Rope rope = m_ropes[i];
+      if (!ropeIds.Contains(rope.m_ropeAnchorTarget))
+      {
+        RemoveRopeAt(i);
+        i--;
+      }
     }
 
-    private ZDO GetParentZDO() =>
-      !m_nview || this.m_nview.m_zdo == null
-        ? (ZDO)null
-        : this.m_nview.m_zdo;
-
-    private bool RemoveRopeWithID(RopeAnchorComponent.RopeAttachmentTarget target)
+    foreach (RopeAttachmentTarget ropeId in ropeIds)
     {
-      for (int index = 0; index < this.m_ropes.Count; ++index)
+      if (!m_ropes.Any((Rope k) => k.m_ropeAnchorTarget == ropeId))
       {
-        if (this.m_ropes[index].m_ropeAnchorTarget == target)
+        CreateNewRope(ropeId);
+      }
+    }
+  }
+
+  public static int GetRopeTarget(ZDOID zdoid)
+  {
+    ZDO zdoparent = ZDOMan.instance.GetZDO(zdoid);
+    if (zdoparent != null)
+    {
+      return ZDOPersistantID.Instance.GetOrCreatePersistantID(zdoparent);
+    }
+
+    return ZDOPersistantID.ZDOIDToId(zdoid);
+  }
+
+  private void GetRopesFromZDO(ICollection<RopeAttachmentTarget> ropeIds)
+  {
+    try
+    {
+      byte[] bytesPkg = m_nview.m_zdo.GetByteArray("MBRopeAnchor_Ropes");
+      if (bytesPkg != null && bytesPkg.Length != 0)
+      {
+        ZPackage pkg = new ZPackage(bytesPkg);
+        byte version = pkg.ReadByte();
+        while (pkg.GetPos() < pkg.Size())
         {
-          this.RemoveRopeAt(index);
-          return true;
-        }
-      }
-
-      return false;
-    }
-
-    private void SaveToZDO()
-    {
-      if (!m_nview || this.m_nview.m_zdo == null)
-        return;
-      ZPackage zpackage = new ZPackage();
-      byte num = 2;
-      zpackage.Write(num);
-      for (int index = 0; index < this.m_ropes.Count; ++index)
-      {
-        zpackage.Write(this.m_ropes[index].m_ropeAnchorTarget.Id);
-        zpackage.Write(this.m_ropes[index].m_ropeAnchorTarget.Index);
-      }
-
-      this.m_nview.m_zdo.Set("MBRopeAnchor_Ropes", zpackage.GetArray());
-    }
-
-    private void LoadFromZDO()
-    {
-      if (!m_nview || this.m_nview.m_zdo == null)
-        return;
-      List<RopeAnchorComponent.RopeAttachmentTarget> ropeIds =
-        new List<RopeAnchorComponent.RopeAttachmentTarget>();
-      this.GetRopesFromZDO((ICollection<RopeAnchorComponent.RopeAttachmentTarget>)ropeIds);
-      for (int index = 0; index < ropeIds.Count; ++index)
-        this.CreateNewRope(ropeIds[index]);
-    }
-
-    public bool UseItem(Humanoid user, ItemDrop.ItemData item) => false;
-
-    public void LateUpdate()
-    {
-      if (!m_nview || this.m_nview.m_zdo == null)
-        return;
-      if (!this.m_nview.IsOwner() &&
-          (int)this.m_nview.m_zdo.DataRevision != (int)this.m_zdoDataRevision)
-        this.UpdateRopesFromZDO();
-      if (((Renderer)this.m_rope).enabled && Player.m_localPlayer)
-      {
-        this.m_rope.SetPosition(0, ((Component)this).transform.position);
-        if (m_draggingRopeTo)
-        {
-          byte indexAtLocation = this.GetIndexAtLocation(RopeAnchorComponent.m_draggingRopeTo);
-          Transform attachmentTransform = this.GetAttachmentTransform(
-            RopeAnchorComponent.m_draggingRopeTo,
-            new RopeAnchorComponent.RopeAttachmentTarget(0, indexAtLocation));
-          if (attachmentTransform)
-            this.m_rope.SetPosition(1, attachmentTransform.position);
-        }
-        else
-          this.m_rope.SetPosition(1,
-            ((Component)((Humanoid)Player.m_localPlayer).m_visEquipment.m_rightHand).transform
-            .position);
-      }
-
-      if ((double)Time.time - (double)this.m_lastRopeCheckTime > 2.0)
-      {
-        this.CheckRopes();
-        this.m_lastRopeCheckTime = Time.time;
-      }
-
-      for (int index = 0; index < this.m_updatingRopes.Count; ++index)
-      {
-        RopeAnchorComponent.Rope updatingRope = this.m_updatingRopes[index];
-        if (updatingRope.m_ropeObject && updatingRope.m_ropeTarget)
-        {
-          Vector3 vector3 = transform.position - updatingRope.m_targetTransform.position;
-          float magnitude = vector3.magnitude;
-          if (this.m_nview.IsOwner() && ((double)magnitude > (double)this.m_maxRopeDistance ||
-                                         (double)magnitude >
-                                         (double)updatingRope.m_ropeAttachDistance + 8.0))
-          {
-            this.RemoveUpdatingRopeAt(index);
-          }
-          else
-          {
-            updatingRope.m_rope.SetPosition(0, ((Component)this).transform.position);
-            updatingRope.m_rope.SetPosition(1, updatingRope.m_targetTransform.position);
-          }
-        }
-        else
-        {
-          this.m_updatingRopes.RemoveAt(index);
-          --index;
+          ropeIds.Add(new RopeAttachmentTarget(
+            (version <= 1) ? GetRopeTarget(pkg.ReadZDOID()) : pkg.ReadInt(), pkg.ReadByte()));
         }
       }
     }
-
-    private void CheckRopes()
+    catch (Exception)
     {
-      for (int index = 0; index < this.m_ropes.Count; ++index)
-      {
-        RopeAnchorComponent.Rope rope1 = this.m_ropes[index];
-        if (!rope1.m_ropeTarget)
-        {
-          rope1.m_ropeTarget = ZDOPersistantID.Instance.GetGameObject(rope1.m_ropeAnchorTarget.Id);
-          if (!rope1.m_ropeTarget)
-          {
-            if (ZNet.instance.IsServer() &&
-                ZDOPersistantID.Instance.GetZDO(rope1.m_ropeAnchorTarget.Id) == null)
-            {
-              this.RemoveRopeAt(index);
-              --index;
-            }
-          }
-          else
-          {
-            Transform attachmentTransform =
-              this.GetAttachmentTransform(rope1.m_ropeTarget, rope1.m_ropeAnchorTarget);
-            RopeAnchorComponent.Rope rope2 = rope1;
-            Vector3 vector3 = transform.position - attachmentTransform.position;
-            double magnitude = vector3.magnitude;
-            rope2.m_ropeAttachDistance = (float)magnitude;
-            rope1.m_targetTransform = attachmentTransform;
-            Rigidbody componentInParent = rope1.m_ropeTarget.GetComponentInParent<Rigidbody>();
-            if (componentInParent)
-            {
-              SpringJoint spring = rope1.m_ropeComponent.GetSpring();
-              Rigidbody component = ((Component)rope1.m_ropeComponent).GetComponent<Rigidbody>();
-              component.isKinematic = true;
-              component.useGravity = false;
-              spring.maxDistance = rope1.m_ropeAttachDistance + 2f;
-              spring.minDistance = 0.0f;
-              spring.spring = 10000f;
-              ((Joint)spring).connectedBody = componentInParent;
-              ((Joint)spring).autoConfigureConnectedAnchor = false;
-              ((Joint)spring).anchor =
-                ((Component)component).transform.InverseTransformPoint(((Component)this).transform
-                  .position);
-              ((Joint)spring).connectedAnchor =
-                ((Component)componentInParent).transform.InverseTransformPoint(attachmentTransform
-                  .position);
-            }
-
-            if (!componentInParent && rope1.m_ropeTarget.transform.parent == transform.parent ||
-                componentInParent == this.m_rigidbody)
-            {
-              rope1.m_rope.useWorldSpace = false;
-              rope1.m_rope.SetPosition(0,
-                ((Component)rope1.m_rope).transform.InverseTransformPoint(((Component)this)
-                  .transform.position));
-              rope1.m_rope.SetPosition(1,
-                ((Component)rope1.m_rope).transform.InverseTransformPoint(rope1.m_targetTransform
-                  .position));
-            }
-            else
-              this.m_updatingRopes.Add(rope1);
-          }
-        }
-      }
+      Logger.LogInfo($"ValheimRaft:RopeAnchorComponent - error gettting rope ZDO");
     }
+  }
 
-    private void UpdateRopesFromZDO()
+  private void RemoveUpdatingRopeAt(int i)
+  {
+    int index = m_ropes.IndexOf(m_updatingRopes[i]);
+    if (index != -1)
     {
-      this.m_zdoDataRevision = this.m_nview.m_zdo.DataRevision;
-      HashSet<RopeAnchorComponent.RopeAttachmentTarget> ropeIds =
-        new HashSet<RopeAnchorComponent.RopeAttachmentTarget>();
-      this.GetRopesFromZDO((ICollection<RopeAnchorComponent.RopeAttachmentTarget>)ropeIds);
-      for (int index = 0; index < this.m_ropes.Count; ++index)
-      {
-        RopeAnchorComponent.Rope rope = this.m_ropes[index];
-        if (!ropeIds.Contains(rope.m_ropeAnchorTarget))
-        {
-          this.RemoveRopeAt(index);
-          --index;
-        }
-      }
-
-      foreach (RopeAnchorComponent.RopeAttachmentTarget attachmentTarget in ropeIds)
-      {
-        RopeAnchorComponent.RopeAttachmentTarget ropeId = attachmentTarget;
-        if (!this.m_ropes.Any<RopeAnchorComponent.Rope>(
-              (Func<RopeAnchorComponent.Rope, bool>)(k => k.m_ropeAnchorTarget == ropeId)))
-          this.CreateNewRope(ropeId);
-      }
+      RemoveRopeAt(index);
     }
+  }
 
-    public static int GetRopeTarget(ZDOID zdoid)
-    {
-      ZDO zdo = ZDOMan.instance.GetZDO(zdoid);
-      return zdo == null
-        ? ZDOPersistantID.ZDOIDToId(zdoid)
-        : ZDOPersistantID.Instance.GetOrCreatePersistantID(zdo);
-    }
-
-    private void GetRopesFromZDO(
-      ICollection<RopeAnchorComponent.RopeAttachmentTarget> ropeIds)
-    {
-      try
-      {
-        byte[] byteArray = this.m_nview.m_zdo.GetByteArray("MBRopeAnchor_Ropes", (byte[])null);
-        if (byteArray == null || byteArray.Length == 0)
-          return;
-        ZPackage zpackage = new ZPackage(byteArray);
-        byte num = zpackage.ReadByte();
-        while (zpackage.GetPos() < zpackage.Size())
-          ropeIds.Add(new RopeAnchorComponent.RopeAttachmentTarget(
-            num <= (byte)1
-              ? RopeAnchorComponent.GetRopeTarget(zpackage.ReadZDOID())
-              : zpackage.ReadInt(), zpackage.ReadByte()));
-      }
-      catch (Exception ex)
-      {
-      }
-    }
-
-    private void RemoveUpdatingRopeAt(int i)
-    {
-      int i1 = this.m_ropes.IndexOf(this.m_updatingRopes[i]);
-      if (i1 == -1)
-        return;
-      this.RemoveRopeAt(i1);
-    }
-
-    private void RemoveRopeAt(int i)
-    {
-      Destroy(this.m_ropes[i].m_ropeObject);
-      this.m_ropes.RemoveAt(i);
-      this.SaveToZDO();
-    }
-
-    private class Rope
-    {
-      internal GameObject m_ropeTarget;
-      internal RopeAnchorComponent.RopeAttachmentTarget m_ropeAnchorTarget;
-      internal GameObject m_ropeObject;
-      internal LineRenderer m_rope;
-      internal BoxCollider m_collider;
-      internal float m_ropeAttachDistance;
-      internal RopeComponent m_ropeComponent;
-      internal Transform m_targetTransform;
-    }
-
-    private struct RopeAttachmentTarget
-    {
-      public RopeAttachmentTarget(int id, byte index)
-        : this()
-      {
-        this.Id = id;
-        this.Index = index;
-      }
-
-      public int Id { get; }
-
-      public byte Index { get; }
-
-      public override int GetHashCode() => this.Id << 1 & (int)this.Index;
-
-      public override bool Equals(object obj) =>
-        obj is RopeAnchorComponent.RopeAttachmentTarget attachmentTarget &&
-        (int)attachmentTarget.Index == (int)this.Index && attachmentTarget.Id == this.Id;
-
-      public static bool operator ==(
-        RopeAnchorComponent.RopeAttachmentTarget a,
-        RopeAnchorComponent.RopeAttachmentTarget b)
-      {
-        return (int)a.Index == (int)b.Index && a.Id == b.Id;
-      }
-
-      public static bool operator !=(
-        RopeAnchorComponent.RopeAttachmentTarget a,
-        RopeAnchorComponent.RopeAttachmentTarget b)
-      {
-        return (int)a.Index != (int)b.Index || a.Id != b.Id;
-      }
-    }
+  private void RemoveRopeAt(int i)
+  {
+    UnityEngine.Object.Destroy(m_ropes[i].m_ropeObject);
+    m_ropes.RemoveAt(i);
+    SaveToZDO();
   }
 }
