@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--Project was exported from assembly: C:\Users\Frederick Engelhardt\Downloads\ValheimRAFT 1.4.9-1136-1-4-9-1692901079\ValheimRAFT\ValheimRAFT.dll-->
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AssemblyName>ValheimRAFT</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <ApplicationVersion>0.0.0.0</ApplicationVersion>
+    <FileAlignment>512</FileAlignment>
+    <RootNamespace>ValheimRAFT</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BoardingRampComponent.cs" />
+    <Compile Include="CreativeModeConsoleCommand.cs" />
+    <Compile Include="CultivatableComponent.cs" />
+    <Compile Include="CustomMastComponent.cs" />
+    <Compile Include="CustomTextureGroup.cs" />
+    <Compile Include="DockComponent.cs" />
+    <Compile Include="HideRaftConsoleCommand.cs" />
+    <Compile Include="MastComponent.cs" />
+    <Compile Include="MeshHelper.cs" />
+    <Compile Include="MoveableBaseRootComponent.cs" />
+    <Compile Include="MoveableBaseShipComponent.cs" />
+    <Compile Include="MoveRaftConsoleCommand.cs" />
+    <Compile Include="PierComponent.cs" />
+    <Compile Include="RecoverRaftConsoleCommand.cs" />
+    <Compile Include="RopeAnchorComponent.cs" />
+    <Compile Include="RopeComponent.cs" />
+    <Compile Include="RopeLadderComponent.cs" />
+    <Compile Include="RudderComponent.cs" />
+    <Compile Include="SailComponent.cs" />
+    <Compile Include="SailCreatorComponent.cs" />
+    <Compile Include="ValheimRAFT.cs" />
+    <Compile Include="Util\BinaryIOUtil.cs" />
+    <Compile Include="Util\ListUtil.cs" />
+    <Compile Include="Util\ZDOUtil.cs" />
+    <Compile Include="UI\EditRampComponent.cs" />
+    <Compile Include="UI\EditSailComponentPanel.cs" />
+    <Compile Include="UI\PanelUtil.cs" />
+    <Compile Include="Patches\Plantable_Patch.cs" />
+    <Compile Include="Patches\Teleport_Patch.cs" />
+    <Compile Include="Patches\ValheimRAFT_Patch.cs" />
+    <Compile Include="System\Runtime\CompilerServices\RefSafetyRulesAttribute.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AssetBundle.AssetBundle" />
+    <EmbeddedResource Include="AssetBundle.valheimraft" />
+    <EmbeddedResource Include="AssetBundle\AssetBundle.manifest" />
+    <EmbeddedResource Include="AssetBundle\valheimraft.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".gitignore" />
+    <Content Include="README.md" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
