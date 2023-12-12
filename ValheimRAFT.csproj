@@ -160,7 +160,7 @@
         <Exec Command="copy &quot;$(OutDir)\ValheimRAFT.dll&quot; &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\plugins\zolantris-valheimraft\ValheimRAFT.dll&quot;"/>
     </Target>
     <Target Name="Manually Run Valheim" Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'" AfterTargets="PostBuild_Copy_To_Valheim_R2ModMan">
-        <Exec Command="&quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
+        <Exec Command="&quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; -console --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
     </Target>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

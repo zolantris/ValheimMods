@@ -727,66 +727,61 @@ namespace ValheimRAFT.Patches
 
     [HarmonyPatch(typeof(Player), "FindHoverObject")]
     [HarmonyPrefix]
-    private static bool FindHoverObject(
-      Player __instance,
-      ref GameObject hover,
+    private static bool FindHoverObject(Player __instance, ref GameObject hover,
       ref Character hoverCreature)
     {
-      hover = (GameObject)null;
-      hoverCreature = (Character)null;
-      RaycastHit[] array = Physics.RaycastAll(((Component)GameCamera.instance).transform.position,
-        ((Component)GameCamera.instance).transform.forward, 50f, __instance.m_interactMask);
-      Array.Sort<RaycastHit>(array,
-        (Comparison<RaycastHit>)((x, y) => x.distance.CompareTo(y.distance)));
-      foreach (RaycastHit raycastHit in array)
+      hover = null;
+      hoverCreature = null;
+      RaycastHit[] array = Physics.RaycastAll(GameCamera.instance.transform.position,
+        GameCamera.instance.transform.forward, 50f, __instance.m_interactMask);
+      Array.Sort(array, (RaycastHit x, RaycastHit y) => x.distance.CompareTo(y.distance));
+      RaycastHit[] array2 = array;
+      for (int i = 0; i < array2.Length; i++)
       {
-        if (!raycastHit.collider.attachedRigidbody ||
-            raycastHit.collider.attachedRigidbody.gameObject != __instance.gameObject)
+        RaycastHit raycastHit = array2[i];
+        if ((bool)raycastHit.collider.attachedRigidbody &&
+            raycastHit.collider.attachedRigidbody.gameObject == __instance.gameObject)
         {
-          if (hoverCreature == null)
-          {
-            Character character = raycastHit.collider.attachedRigidbody
-              ? raycastHit
-                .collider.attachedRigidbody
-                .GetComponent<Character>()
-              : raycastHit.collider.GetComponent<Character>();
-            if (character != null)
-              hoverCreature = character;
-          }
-
-          if ((double)Vector3.Distance(((Character)__instance).m_eye.position,
-                raycastHit.point) < (double)__instance.m_maxInteractDistance)
-          {
-            if ((raycastHit.collider).GetComponent<Hoverable>() !=
-                null)
-            {
-              hover = raycastHit.collider.gameObject;
-            }
-            else
-            {
-              int num = raycastHit.collider.attachedRigidbody
-                ? 0
-                : (raycastHit.collider.attachedRigidbody)
-                .GetComponent<MoveableBaseRootComponent>()
-                  ? 1
-                  : 0;
-              hover = num == 0
-                ? raycastHit.collider.gameObject
-                : raycastHit.collider.attachedRigidbody.gameObject;
-            }
-
-            break;
-          }
-
-          break;
+          continue;
         }
+
+        if (hoverCreature == null)
+        {
+          Character character = (raycastHit.collider.attachedRigidbody
+            ? raycastHit.collider.attachedRigidbody.GetComponent<Character>()
+            : raycastHit.collider.GetComponent<Character>());
+          if (character != null)
+          {
+            hoverCreature = character;
+          }
+        }
+
+        if (Vector3.Distance(__instance.m_eye.position, raycastHit.point) <
+            __instance.m_maxInteractDistance)
+        {
+          if (raycastHit.collider.GetComponent<Hoverable>() != null)
+          {
+            hover = raycastHit.collider.gameObject;
+          }
+          else if ((bool)raycastHit.collider.attachedRigidbody && !raycastHit.collider
+                     .attachedRigidbody.GetComponent<MoveableBaseRootComponent>())
+          {
+            hover = raycastHit.collider.attachedRigidbody.gameObject;
+          }
+          else
+          {
+            hover = raycastHit.collider.gameObject;
+          }
+        }
+
+        break;
       }
 
-      RopeAnchorComponent.m_draggingRopeTo = (GameObject)null;
-      if (hover && RopeAnchorComponent.m_draggingRopeFrom)
+      RopeAnchorComponent.m_draggingRopeTo = null;
+      if ((bool)hover && (bool)RopeAnchorComponent.m_draggingRopeFrom)
       {
         RopeAnchorComponent.m_draggingRopeTo = hover;
-        hover = ((Component)RopeAnchorComponent.m_draggingRopeFrom).gameObject;
+        hover = RopeAnchorComponent.m_draggingRopeFrom.gameObject;
       }
 
       return false;
