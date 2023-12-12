@@ -32,7 +32,7 @@ namespace ValheimRAFT
       this.m_zsync = ((Component)this).GetComponent<ZSyncTransform>();
       this.m_ship = ((Component)this).GetComponent<Ship>();
       GameObject gameObject = new GameObject();
-      ((Object)gameObject).name = "MoveableBase";
+      gameObject.name = "MoveableBase";
       gameObject.layer = 0;
       this.m_baseRootObject = gameObject;
       this.m_baseRoot = this.m_baseRootObject.AddComponent<MoveableBaseRootComponent>();
@@ -114,9 +114,9 @@ namespace ValheimRAFT
         {
           Vector3 vector3 =
             ((Component)this).transform.TransformPoint(new Vector3(num1, 0.45f, num2));
-          this.m_baseRoot.AddNewPiece(Object
-            .Instantiate<GameObject>(prefab, vector3, ((Component)this).transform.rotation)
-            .GetComponent<ZNetView>());
+          this.m_baseRoot.AddNewPiece(
+            Instantiate<GameObject>(prefab, vector3, ((Component)this).transform.rotation)
+              .GetComponent<ZNetView>());
         }
       }
     }
@@ -125,14 +125,14 @@ namespace ValheimRAFT
     {
       if (this.m_flags.HasFlag((Enum)MoveableBaseShipComponent.MBFlags.IsAnchored))
         this.SetAnchor(false);
-      if (!ValheimRAFT.ValheimRAFT.Instance.AllowFlight.Value)
+      if (!ValheimRAFT.ValheimRaftEntrypoint.Instance.AllowFlight.Value)
       {
         this.m_targetHeight = 0.0f;
       }
       else
       {
-        if (!Object.op_Implicit((Object)this.m_baseRoot) ||
-            !Object.op_Implicit((Object)this.m_baseRoot.m_floatcollider))
+        if (!m_baseRoot ||
+            !m_baseRoot.m_floatcollider)
           return;
         this.m_targetHeight =
           Mathf.Clamp(((Component)this.m_baseRoot.m_floatcollider).transform.position.y + 1f,
@@ -147,14 +147,14 @@ namespace ValheimRAFT
       if (this.m_flags.HasFlag((Enum)MoveableBaseShipComponent.MBFlags.IsAnchored))
         this.SetAnchor(false);
       float targetHeight = this.m_targetHeight;
-      if (!ValheimRAFT.ValheimRAFT.Instance.AllowFlight.Value)
+      if (!ValheimRAFT.ValheimRaftEntrypoint.Instance.AllowFlight.Value)
       {
         this.m_targetHeight = 0.0f;
       }
       else
       {
-        if (!Object.op_Implicit((Object)this.m_baseRoot) ||
-            !Object.op_Implicit((Object)this.m_baseRoot.m_floatcollider))
+        if (!m_baseRoot ||
+            !m_baseRoot.m_floatcollider)
           return;
         this.m_targetHeight =
           Mathf.Clamp(((Component)this.m_baseRoot.m_floatcollider).transform.position.y - 1f,

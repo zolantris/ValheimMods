@@ -108,26 +108,26 @@ namespace ValheimRAFT
       Material sailMaterial = this.GetSailMaterial();
       Texture texture1 = sailMaterial.GetTexture("_MainTex");
       if (CustomTextureGroup.Get("Sails")
-            .GetTextureByHash(StringExtensionMethods.GetStableHashCode(((Object)texture1).name)) !=
+            .GetTextureByHash(StringExtensionMethods.GetStableHashCode((texture1).name)) !=
           null)
-        this.m_mainHash = StringExtensionMethods.GetStableHashCode(((Object)texture1).name);
+        this.m_mainHash = StringExtensionMethods.GetStableHashCode((texture1).name);
       this.m_mainScale = sailMaterial.GetTextureScale("_MainTex");
       this.m_mainOffset = sailMaterial.GetTextureOffset("_MainTex");
       this.m_mainColor = sailMaterial.GetColor("_MainColor");
       Texture texture2 = sailMaterial.GetTexture("_PatternTex");
       if (CustomTextureGroup.Get("Patterns")
-            .GetTextureByHash(StringExtensionMethods.GetStableHashCode(((Object)texture2).name)) !=
+            .GetTextureByHash(StringExtensionMethods.GetStableHashCode((texture2).name)) !=
           null)
-        this.m_patternHash = StringExtensionMethods.GetStableHashCode(((Object)texture2).name);
+        this.m_patternHash = StringExtensionMethods.GetStableHashCode((texture2).name);
       this.m_patternScale = sailMaterial.GetTextureScale("_PatternTex");
       this.m_patternOffset = sailMaterial.GetTextureOffset("_PatternTex");
       this.m_patternColor = sailMaterial.GetColor("_PatternColor");
       this.m_patternRotation = sailMaterial.GetFloat("_PatternRotation");
       Texture texture3 = sailMaterial.GetTexture("_LogoTex");
       if (CustomTextureGroup.Get("Logos")
-            .GetTextureByHash(StringExtensionMethods.GetStableHashCode(((Object)texture3).name)) !=
+            .GetTextureByHash(StringExtensionMethods.GetStableHashCode(texture3.name)) !=
           null)
-        this.m_logoHash = StringExtensionMethods.GetStableHashCode(((Object)texture3).name);
+        this.m_logoHash = StringExtensionMethods.GetStableHashCode(texture3.name);
       this.m_logoScale = sailMaterial.GetTextureScale("_LogoTex");
       this.m_logoOffset = sailMaterial.GetTextureOffset("_LogoTex");
       this.m_logoColor = sailMaterial.GetColor("_LogoColor");

@@ -172,7 +172,7 @@ namespace ValheimRAFT
       while (this.m_steps.Count < num1)
       {
         GameObject gameObject =
-          Object.Instantiate<GameObject>(this.m_stepObject, ((Component)this).transform);
+          Instantiate<GameObject>(this.m_stepObject, ((Component)this).transform);
         this.m_steps.Add(gameObject);
         gameObject.transform.localPosition =
           new Vector3(0.0f, -this.m_stepDistance * (float)this.m_steps.Count, 0.0f);

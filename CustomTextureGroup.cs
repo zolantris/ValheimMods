@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using Paths = BepInEx.Paths;
 
 namespace ValheimRAFT
 {
@@ -92,13 +93,13 @@ namespace ValheimRAFT
       if (File.Exists(path))
         texture.Normal = (Texture)AssetUtils.LoadTexture(path, false);
       texture.Texture = (Texture)AssetUtils.LoadTexture(file, false);
-      ((Object)texture.Texture).name = withoutExtension;
+      (texture.Texture).name = withoutExtension;
       this.AddTexture(texture);
     }
 
     public void AddTexture(CustomTextureGroup.CustomTexture texture)
     {
-      string name = ((Object)texture.Texture).name;
+      string name = (texture.Texture).name;
       if (this.m_textureLookUp.ContainsKey(name))
         return;
       this.m_textureLookUp.Add(name, texture);

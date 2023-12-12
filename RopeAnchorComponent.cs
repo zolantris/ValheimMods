@@ -134,7 +134,7 @@ namespace ValheimRAFT
       RopeAnchorComponent.RopeAttachmentTarget target)
     {
       string[] strArray;
-      if (RopeAnchorComponent.m_attachmentPoints.TryGetValue(((Object)go).name, out strArray) &&
+      if (RopeAnchorComponent.m_attachmentPoints.TryGetValue((go).name, out strArray) &&
           target.Index >= (byte)0 && strArray.Length > (int)target.Index)
       {
         Transform attachmentTransform = go.transform.Find(strArray[(int)target.Index]);
@@ -263,7 +263,7 @@ namespace ValheimRAFT
 
     private void LoadFromZDO()
     {
-      if (!Object.op_Implicit((Object)this.m_nview) || this.m_nview.m_zdo == null)
+      if (!m_nview || this.m_nview.m_zdo == null)
         return;
       List<RopeAnchorComponent.RopeAttachmentTarget> ropeIds =
         new List<RopeAnchorComponent.RopeAttachmentTarget>();

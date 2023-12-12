@@ -26,14 +26,13 @@ namespace ValheimRAFT
       foreach (Component component1 in colliderArray)
       {
         ZNetView component2 = component1.GetComponent<ZNetView>();
-        if (Object.op_Inequality((Object)component2, (Object)null) && component2.m_zdo != null &&
-            !Object.op_Implicit((Object)((Component)component2)
-              .GetComponentInParent<MoveableBaseRootComponent>()))
+        if (component2 != null && component2.m_zdo != null &&
+            !component2.GetComponentInParent<MoveableBaseRootComponent>())
         {
           ZDOID zdoid = component2.m_zdo.GetZDOID(MoveableBaseRootComponent.MBParentHash);
-          if (ZDOID.op_Inequality(zdoid, ZDOID.None))
+          if ((zdoid != ZDOID.None))
           {
-            if (!Object.op_Inequality((Object)ZNetScene.instance.FindInstance(zdoid), (Object)null))
+            if (!((Object)ZNetScene.instance.FindInstance(zdoid) != (Object)null))
             {
               List<ZNetView> znetViewList;
               if (!dictionary.TryGetValue(zdoid, out znetViewList))
@@ -50,8 +49,7 @@ namespace ValheimRAFT
         }
       }
 
-      ZLog.Log((object)string.Format("Found {0} potential ships to recover.",
-        (object)dictionary.Count));
+      ZLog.Log($"Found {(object)dictionary.Count} potential ships to recover.");
       if (args.Length != 0 && args[0] == "confirm")
       {
         foreach (ZDOID key in dictionary.Keys)

@@ -68,7 +68,7 @@ namespace ValheimRAFT.Util
     public GameObject GetGameObject(int id)
     {
       ZNetView instance = this.GetInstance(id);
-      return Object.op_Implicit((Object)instance)
+      return instance
         ? ((Component)instance).gameObject
         : (GameObject)null;
     }

@@ -111,11 +111,12 @@ public class EditSailComponentPanel
     //IL_03e1: Expected O, but got Unknown
     Transform parent = GUIManager.CustomGUIFront.transform;
     m_editPanel = Object.Instantiate<GameObject>(
-      global::ValheimRAFT.ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("edit_sail_panel"),
+      ValheimRaftEntrypoint.m_assetBundle.LoadAsset<GameObject>(
+        "edit_sail_panel"),
       parent, false);
     PanelUtil.ApplyPanelStyle(m_editPanel);
     GameObject texture_panel =
-      global::ValheimRAFT.ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("edit_texture_panel");
+      ValheimRaftEntrypoint.m_assetBundle.LoadAsset<GameObject>("edit_texture_panel");
     PanelUtil.ApplyPanelStyle(texture_panel);
     GUIManager.Instance.ApplyDropdownStyle(
       ((Component)texture_panel.transform.Find("TextureName")).GetComponent<Dropdown>(), 15);

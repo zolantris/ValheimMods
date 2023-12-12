@@ -17,7 +17,7 @@ namespace ValheimRAFT.UI
     {
       Array.ForEach<Button>(editPanel.GetComponentsInChildren<Button>(true), (Action<Button>)(b =>
       {
-        if (!((Object)b).name.EndsWith("Button"))
+        if (!(b).name.EndsWith("Button"))
           return;
         GUIManager.Instance.ApplyButtonStyle(b, 16);
       }));
@@ -26,13 +26,13 @@ namespace ValheimRAFT.UI
       Array.ForEach<Text>(editPanel.GetComponentsInChildren<Text>(true), (Action<Text>)(b =>
       {
         b.text = Localization.instance.Localize(b.text);
-        if (!((Object)b).name.EndsWith("Label"))
+        if (!((b).name.EndsWith("Label")))
           return;
         GUIManager.Instance.ApplyTextStyle(b, 16);
       }));
       Array.ForEach<Toggle>(editPanel.GetComponentsInChildren<Toggle>(true), (Action<Toggle>)(b =>
       {
-        if (!((Object)b).name.EndsWith("Toggle"))
+        if (!(b).name.EndsWith("Toggle"))
           return;
         GUIManager.Instance.ApplyToogleStyle(b);
       }));
