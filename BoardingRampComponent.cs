@@ -99,7 +99,7 @@ namespace ValheimRAFT
 
     private void LoadZDO()
     {
-      if (!Object.op_Implicit((Object)this.m_nview) || this.m_nview.m_zdo == null)
+      if (!this.m_nview || this.m_nview.m_zdo == null)
         return;
       this.m_state =
         (BoardingRampComponent.BoardingRampState)this.m_nview.m_zdo.GetInt("MB_m_state", 0);
@@ -108,7 +108,7 @@ namespace ValheimRAFT
 
     public void RPC_SetSegmentCount(long sender, byte segmentCount)
     {
-      if (!Object.op_Implicit((Object)this.m_nview) || !this.m_nview.IsOwner())
+      if (!m_nview || !this.m_nview.IsOwner())
         return;
       this.SetSegmentCount((int)segmentCount);
     }
@@ -117,7 +117,7 @@ namespace ValheimRAFT
     {
       if (segmentCount == this.m_segments)
         return;
-      if (Object.op_Implicit((Object)this.m_nview) && !this.m_nview.IsOwner())
+      if (m_nview && !this.m_nview.IsOwner())
       {
         this.m_nview.InvokeRPC("RPC_SetSegmentCount", new object[1]
         {
@@ -136,9 +136,9 @@ namespace ValheimRAFT
       while (this.m_segments < this.m_segmentObjects.Count)
       {
         int index = this.m_segmentObjects.Count - 1;
-        Object.Destroy((Object)this.m_segmentObjects[index]);
-        Object.Destroy((Object)this.m_ropeAttach1[index]);
-        Object.Destroy((Object)this.m_ropeAttach2[index]);
+        Destroy(m_segmentObjects[index]);
+        Destroy(m_ropeAttach1[index]);
+        Destroy(m_ropeAttach2[index]);
         this.m_segmentObjects.RemoveAt(index);
         this.m_ropeAttach1.RemoveAt(index);
         this.m_ropeAttach2.RemoveAt(index);
@@ -146,10 +146,10 @@ namespace ValheimRAFT
 
       for (int count = this.m_segmentObjects.Count; count < this.m_segments; ++count)
       {
-        GameObject gameObject = Object.Instantiate<GameObject>(this.m_segmentObject,
-          Vector3.op_Addition(((Component)this).transform.position,
-            new Vector3(0.0f, -this.m_segmentHeight * (float)count,
-              this.m_segmentLength * (float)count)), Quaternion.identity, this.m_ramp.transform);
+        GameObject gameObject = Instantiate<GameObject>(this.m_segmentObject,
+          (((Component)this).transform.position +
+           new Vector3(0.0f, -this.m_segmentHeight * (float)count,
+             this.m_segmentLength * (float)count)), Quaternion.identity, this.m_ramp.transform);
         gameObject.transform.localRotation = Quaternion.identity;
         gameObject.transform.localScale = new Vector3(
           (float)(1.0 + (double)count * 9.9999997473787516E-05),
@@ -164,7 +164,7 @@ namespace ValheimRAFT
 
     private void Update()
     {
-      if (Object.op_Implicit((Object)this.m_nview) && !this.m_nview.IsOwner())
+      if (m_nview && !this.m_nview.IsOwner())
       {
         BoardingRampComponent.BoardingRampState boardingRampState =
           (BoardingRampComponent.BoardingRampState)this.m_nview.m_zdo.GetInt("MB_m_state", 0);
@@ -221,7 +221,7 @@ namespace ValheimRAFT
       if (this.m_state == state)
         return;
       this.m_state = state;
-      if (Object.op_Implicit((Object)this.m_nview) && this.m_nview.m_zdo != null)
+      if (this.m_nview && this.m_nview.m_zdo != null)
       {
         if (this.m_nview.IsOwner())
           this.m_nview.m_zdo.Set("MB_m_state", (int)state);

@@ -493,7 +493,7 @@ namespace ValheimRAFT
       this.EncapsulateBounds(netview);
       WearNTear component1 = ((Component)netview).GetComponent<WearNTear>();
       if (component1 &&
-          ValheimRAFT.Instance.MakeAllPiecesWaterProof.Value)
+          ValheimRaftEntrypoint.Instance.MakeAllPiecesWaterProof.Value)
         component1.m_noRoofWear = false;
       CultivatableComponent component2 = ((Component)netview).GetComponent<CultivatableComponent>();
       if (component2)

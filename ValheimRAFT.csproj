@@ -69,9 +69,9 @@
         <Reference Include="Unity.TextMeshPro">
             <HintPath>libs\Unity.TextMeshPro.dll</HintPath>
         </Reference>
-        <Reference Include="UnityEngine">
-            <HintPath>libs\UnityEngine.dll</HintPath>
-        </Reference>
+        <!--        <Reference Include="UnityEngine">-->
+        <!--            <HintPath>libs\UnityEngine.dll</HintPath>-->
+        <!--        </Reference>-->
         <Reference Include="UnityEngine.AnimationModule">
             <HintPath>libs\UnityEngine.AnimationModule.dll</HintPath>
         </Reference>
@@ -133,7 +133,7 @@
         <Compile Include="RudderComponent.cs"/>
         <Compile Include="SailComponent.cs"/>
         <Compile Include="SailCreatorComponent.cs"/>
-        <Compile Include="ValheimRAFT.cs"/>
+        <Compile Include="ValheimRaftEntrypoint.cs"/>
         <Compile Include="Util\BinaryIOUtil.cs"/>
         <Compile Include="Util\ListUtil.cs"/>
         <Compile Include="Util\ZDOUtil.cs"/>

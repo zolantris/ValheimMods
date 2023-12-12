@@ -37,22 +37,22 @@ namespace ValheimRAFT.Patches
       if (zdo == null)
         return;
       ZNetView instance1 = ZNetScene.instance.FindInstance(zdo);
-      Vector3 vector3_1 = Object.op_Implicit((Object)instance1)
+      Vector3 vector3_1 = instance1
         ? ((Component)instance1).transform.position
         : zdo.GetPosition();
-      Quaternion rot = Object.op_Implicit((Object)instance1)
+      Quaternion rot = instance1
         ? ((Component)instance1).transform.rotation
         : zdo.GetRotation();
-      Vector3 vector3_2 = Quaternion.op_Multiply(rot, Vector3.forward);
+      Vector3 vector3_2 = (rot * Vector3.forward);
       Vector3 pos =
-        Vector3.op_Addition(
-          Vector3.op_Addition(vector3_1, Vector3.op_Multiply(vector3_2, __instance.m_exitDistance)),
-          Vector3.up);
+      (
+        (vector3_1 + (vector3_2 * __instance.m_exitDistance)) +
+        Vector3.up);
       GameObject instance2 = ZNetScene.instance.FindInstance(playerId);
-      if (Object.op_Implicit((Object)instance2))
+      if (instance2)
       {
         Player component = instance2.GetComponent<Player>();
-        if (Object.op_Implicit((Object)component))
+        if (component)
           Teleport_Patch.TeleportToObject(component, pos, rot, zdo.m_uid);
       }
     }
@@ -123,7 +123,7 @@ namespace ValheimRAFT.Patches
       if (Teleport_Patch.m_teleportTarget.TryGetValue(__instance, out zdoid))
       {
         GameObject instance = ZNetScene.instance.FindInstance(zdoid);
-        if (Object.op_Implicit((Object)instance))
+        if (instance)
           return Teleport_Patch.GetTeleportPosition(instance);
       }
 
@@ -133,11 +133,11 @@ namespace ValheimRAFT.Patches
     private static Vector3 GetTeleportPosition(GameObject go)
     {
       TeleportWorld component = go.GetComponent<TeleportWorld>();
-      return Object.op_Implicit((Object)component)
-        ? Vector3.op_Addition(
-          Vector3.op_Addition(((Component)component).transform.position,
-            Vector3.op_Multiply(((Component)component).transform.forward,
-              component.m_exitDistance)), Vector3.up)
+      return component
+        ? (
+          (((Component)component).transform.position +
+           (((Component)component).transform.forward *
+            component.m_exitDistance)) + Vector3.up)
         : go.transform.position;
     }
 
@@ -151,7 +151,7 @@ namespace ValheimRAFT.Patches
       if (zdo != null)
       {
         ZNetView instance = ZNetScene.instance.FindInstance(zdo);
-        if (!Object.op_Implicit((Object)instance))
+        if (!instance)
         {
           __instance.m_teleportTimer = 8f;
           __instance.m_teleporting = true;

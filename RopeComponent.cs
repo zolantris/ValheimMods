@@ -22,8 +22,8 @@ namespace ValheimRAFT
 
     internal SpringJoint GetSpring()
     {
-      if (!Object.op_Implicit((Object)this.m_spring))
-        this.m_spring = ((Component)this).gameObject.AddComponent<SpringJoint>();
+      if (!m_spring)
+        m_spring = ((Component)this).gameObject.AddComponent<SpringJoint>();
       return this.m_spring;
     }
   }

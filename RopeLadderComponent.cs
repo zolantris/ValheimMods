@@ -130,7 +130,7 @@ namespace ValheimRAFT
       else if ((double)point.y < (double)ZoneSystem.instance.m_waterLevel)
       {
         point.y = ZoneSystem.instance.m_waterLevel;
-        Vector3 vector3_3 = Vector3.op_Subtraction(point, vector3_1);
+        Vector3 vector3_3 = point - vector3_1;
         float num = vector3_3.magnitude + 2f;
         if ((double)num < (double)this.m_ladderHeight)
         {
@@ -143,7 +143,7 @@ namespace ValheimRAFT
 
       if (this.m_ghostObject)
       {
-        if (!Object.op_Implicit((Object)this.m_ghostAttachPoint))
+        if (!m_ghostAttachPoint)
         {
           GameObject gameObject = new GameObject();
           gameObject.transform.SetParent(this.m_attachPoint);
@@ -153,10 +153,10 @@ namespace ValheimRAFT
 
         this.m_ghostAttachPoint.SetPosition(0, ((Component)this.m_attachPoint).transform.position);
         this.m_ghostAttachPoint.SetPosition(1,
-          Vector3.op_Addition(((Component)this.m_attachPoint).transform.position,
-            Vector3.op_Multiply(
-              Vector3.op_UnaryNegation(((Component)this.m_attachPoint).transform.up),
-              this.m_ladderHeight)));
+          (((Component)this.m_attachPoint).transform.position +
+           (
+             -(((Component)this.m_attachPoint).transform.up) *
+             this.m_ladderHeight)));
       }
 
       int num1 = Mathf.RoundToInt(this.m_ladderHeight / this.m_stepDistance);
@@ -165,7 +165,7 @@ namespace ValheimRAFT
       ((Component)this).GetComponent<WearNTear>().ResetHighlight();
       while (this.m_steps.Count > num1)
       {
-        Object.Destroy((Object)this.m_steps[this.m_steps.Count - 1]);
+        Destroy(m_steps[this.m_steps.Count - 1]);
         this.m_steps.RemoveAt(this.m_steps.Count - 1);
       }
 

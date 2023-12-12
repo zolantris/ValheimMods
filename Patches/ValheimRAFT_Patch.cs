@@ -190,7 +190,7 @@ namespace ValheimRAFT.Patches
       if (__instance.m_nview && !__instance.m_nview.IsOwner())
         return false;
       __instance.UpdateUpsideDmg(Time.fixedDeltaTime);
-      if (!flag && (__instance.m_speed == 2 || __instance.m_speed == 1))
+      if (!flag && (__instance.m_speed == (Ship.Speed)2 || __instance.m_speed == (Ship.Speed)1))
         __instance.m_speed = (Ship.Speed)0;
       Vector3 worldCenterOfMass = __instance.m_body.worldCenterOfMass;
       Vector3 vector3_1 =
@@ -297,7 +297,7 @@ namespace ValheimRAFT.Patches
           Vector3 position = ((Component)__instance.m_floatCollider).transform.position;
           float upwardsForce = ValheimRAFT_Patch.GetUpwardsForce(component.m_targetHeight,
             position.y + __instance.m_body.velocity.y, component.m_liftForce);
-          __instance.m_body.AddForceAtPosition(Vector3.op_Multiply(Vector3.up, upwardsForce),
+          __instance.m_body.AddForceAtPosition((Vector3.up * upwardsForce),
             position, (ForceMode)2);
         }
       }
@@ -357,9 +357,9 @@ namespace ValheimRAFT.Patches
     private static void ApplySailForce(Ship __instance, float num5)
     {
       float num1 = 0.0f;
-      if (__instance.m_speed == 4)
+      if (__instance.m_speed == (Ship.Speed)4)
         num1 = 1f;
-      else if (__instance.m_speed == 3)
+      else if (__instance.m_speed == (Ship.Speed)3)
         num1 = 0.5f;
       Vector3 sailForce = __instance.GetSailForce(num1, Time.fixedDeltaTime);
       Vector3 worldCenterOfMass = __instance.m_body.worldCenterOfMass;
@@ -374,9 +374,9 @@ namespace ValheimRAFT.Patches
          (0.0f - __instance.m_rudderValue) * Time.fixedDeltaTime), vector3_1, (ForceMode)2);
       Vector3 vector3_2 = Vector3.zero;
       Ship.Speed speed = __instance.m_speed;
-      if (speed != 1)
+      if (speed != (Ship.Speed)1)
       {
-        if (speed == 2)
+        if (speed == (Ship.Speed)2)
           vector3_2 +=
             (((Component)__instance).transform.forward *
              __instance.m_backwardForce) * (1f - Mathf.Abs(__instance.m_rudderValue))
@@ -387,9 +387,9 @@ namespace ValheimRAFT.Patches
                       __instance.m_backwardForce *
                       (1f - Mathf.Abs(__instance.m_rudderValue)));
 
-      if (__instance.m_speed == 1 || __instance.m_speed == 2)
+      if (__instance.m_speed == Ship.Speed.Back || __instance.m_speed == Ship.Speed.Slow)
       {
-        float num3 = __instance.m_speed != 1 ? 1f : -1f;
+        float num3 = __instance.m_speed != Ship.Speed.Back ? 1f : -1f;
         vector3_2 = vector3_2 + __instance.transform.right * __instance.m_stearForce *
           (0.0f - __instance.m_rudderValue) * num3;
       }

@@ -53,7 +53,7 @@ namespace ValheimRAFT
       this.m_mastComponent = ((Component)this).GetComponent<MastComponent>();
       this.m_sailObject = ((Component)((Component)this).transform.Find("Sail")).gameObject;
       this.m_sailCloth = this.m_sailObject.GetComponent<Cloth>();
-      if (Object.op_Implicit((Object)this.m_sailCloth))
+      if (m_sailCloth)
       {
         this.m_sailCloth.useTethers = false;
         this.m_sailCloth.useGravity = true;
@@ -72,17 +72,16 @@ namespace ValheimRAFT
     public void Update()
     {
       Vector3 windForce = EnvMan.instance.GetWindForce();
-      this.m_sailCloth.externalAcceleration = Vector3.op_Multiply(windForce, this.m_windMultiplier);
-      this.m_sailCloth.randomAcceleration = Vector3.op_Multiply(
-        Vector3.op_Multiply(windForce, this.m_windMultiplier),
-        this.m_clothRandomAccelerationFactor);
+      this.m_sailCloth.externalAcceleration = windForce * m_windMultiplier;
+      this.m_sailCloth.randomAcceleration =
+        windForce * m_windMultiplier * m_clothRandomAccelerationFactor;
     }
 
     public void OnDestroy() => SailComponent.m_sailComponents.Remove(this);
 
     public void SetAllowSailShrinking(bool allow)
     {
-      if (!Object.op_Implicit((Object)this.m_mastComponent))
+      if (!m_mastComponent)
         return;
       this.m_sailFlags =
         allow
@@ -93,14 +92,14 @@ namespace ValheimRAFT
 
     public void SetDisableCloth(bool allow)
     {
-      if (!Object.op_Implicit((Object)this.m_mastComponent))
+      if (!m_mastComponent)
         return;
       this.m_sailFlags =
         allow
           ? this.m_sailFlags | SailComponent.SailFlags.DisableCloth
           : this.m_sailFlags & ~SailComponent.SailFlags.DisableCloth;
       this.m_mastComponent.m_disableCloth = allow;
-      if (Object.op_Implicit((Object)this.m_sailCloth) && this.m_sailCloth.enabled != !allow)
+      if (m_sailCloth && this.m_sailCloth.enabled != !allow)
         this.m_sailCloth.enabled = !allow;
     }
 
@@ -139,7 +138,7 @@ namespace ValheimRAFT
 
     public void LoadZDO()
     {
-      if (!Object.op_Implicit((Object)this.m_nview) || this.m_nview.m_zdo == null)
+      if (!m_nview || this.m_nview.m_zdo == null)
         return;
       byte[] byteArray = this.m_nview.m_zdo.GetByteArray("MB_sailConfig", (byte[])null);
       if (byteArray == null)
@@ -162,7 +161,7 @@ namespace ValheimRAFT
         for (int index = 0; index < num; ++index)
         {
           Vector3 vector3 = Utils.ReadVector3(reader);
-          if (Vector3.op_Inequality(this.m_sailCorners[index], vector3))
+          if ((this.m_sailCorners[index] != vector3))
           {
             this.m_sailCorners[index] = vector3;
             flag1 = true;
@@ -232,7 +231,7 @@ namespace ValheimRAFT
 
     public void SaveZDO()
     {
-      if (!Object.op_Implicit((Object)this.m_nview) || this.m_nview.m_zdo == null)
+      if (!this.m_nview || this.m_nview.m_zdo == null)
         return;
       MemoryStream output = new MemoryStream();
       BinaryWriter writer = new BinaryWriter((Stream)output);
@@ -242,17 +241,17 @@ namespace ValheimRAFT
         Utils.Write(writer, this.m_sailCorners[index]);
       writer.Write((byte)this.m_lockedSailSides);
       writer.Write((byte)this.m_lockedSailCorners);
-      Utils.Write(writer, Vector2.op_Implicit(this.m_mainScale));
-      Utils.Write(writer, Vector2.op_Implicit(this.m_mainOffset));
+      Utils.Write(writer, this.m_mainScale);
+      Utils.Write(writer, this.m_mainOffset);
       writer.Write(this.m_mainColor);
       writer.Write(this.m_mainHash);
-      Utils.Write(writer, Vector2.op_Implicit(this.m_patternScale));
-      Utils.Write(writer, Vector2.op_Implicit(this.m_patternOffset));
+      Utils.Write(writer, this.m_patternScale);
+      Utils.Write(writer, this.m_patternOffset);
       writer.Write(this.m_patternColor);
       writer.Write(this.m_patternHash);
       writer.Write(this.m_patternRotation);
-      Utils.Write(writer, Vector2.op_Implicit(this.m_logoScale));
-      Utils.Write(writer, Vector2.op_Implicit(this.m_logoOffset));
+      Utils.Write(writer, this.m_logoScale);
+      Utils.Write(writer, this.m_logoOffset);
       writer.Write(this.m_logoColor);
       writer.Write(this.m_logoHash);
       writer.Write(this.m_logoRotation);
@@ -330,9 +329,9 @@ namespace ValheimRAFT
           3
         }, 0);
         mesh1.Optimize();
-        Vector3 vector3_2 = Vector3.op_Subtraction(this.m_sailCorners[1], this.m_sailCorners[0]);
+        Vector3 vector3_2 = (this.m_sailCorners[1] - this.m_sailCorners[0]);
         float magnitude1 = ((Vector3)vector3_2).magnitude;
-        vector3_1 = Vector3.op_Subtraction(this.m_sailCorners[2], this.m_sailCorners[0]);
+        vector3_1 = (this.m_sailCorners[2] - this.m_sailCorners[0]);
         float magnitude2 = ((Vector3)vector3_1).magnitude;
         float num1 = Mathf.Round(magnitude1 / this.m_sailSubdivision);
         float num2 = Mathf.Round(magnitude2 / this.m_sailSubdivision);
@@ -378,8 +377,8 @@ namespace ValheimRAFT
         float num = this.m_sailSubdivision * this.m_sailSubdivision;
         while (true)
         {
-          vector3_1 = Vector3.op_Subtraction(mesh2.vertices[mesh2.triangles[0]],
-            mesh2.vertices[mesh2.triangles[1]]);
+          vector3_1 = (mesh2.vertices[mesh2.triangles[0]] -
+                       mesh2.vertices[mesh2.triangles[1]]);
           if ((double)((Vector3)vector3_1).sqrMagnitude >= (double)num)
             MeshHelper.Subdivide(mesh2);
           else
@@ -420,27 +419,27 @@ namespace ValheimRAFT
           this.m_lockedSailSides = SailComponent.SailLockedSide.Everything;
         }
 
-        Vector3 vector3_1 = Vector3.op_Subtraction(this.m_sailCorners[0], this.m_sailCorners[1]);
+        Vector3 vector3_1 = this.m_sailCorners[0] - this.m_sailCorners[1];
         Vector3 normalized1 = ((Vector3)vector3_1).normalized;
-        Vector3 vector3_2 = Vector3.op_Subtraction(this.m_sailCorners[1], this.m_sailCorners[2]);
+        Vector3 vector3_2 = this.m_sailCorners[1] - this.m_sailCorners[2];
         Vector3 normalized2 = ((Vector3)vector3_2).normalized;
-        Vector3 vector3_3 = Vector3.op_Subtraction(this.m_sailCorners[2], this.m_sailCorners[0]);
+        Vector3 vector3_3 = this.m_sailCorners[2] - this.m_sailCorners[0];
         Vector3 normalized3 = ((Vector3)vector3_3).normalized;
         for (int index = 0; index < sharedMesh.vertices.Length; ++index)
         {
           if (this.m_lockedSailCorners.HasFlag((Enum)SailComponent.SailLockedSide.A) &&
-              Vector3.op_Equality(sharedMesh.vertices[index], this.m_sailCorners[0]))
+              sharedMesh.vertices[index] == this.m_sailCorners[0])
             skinningCoefficientArray[index].maxDistance = 0.0f;
           if (this.m_lockedSailCorners.HasFlag((Enum)SailComponent.SailLockedSide.B) &&
-              Vector3.op_Equality(sharedMesh.vertices[index], this.m_sailCorners[1]))
+              sharedMesh.vertices[index] == this.m_sailCorners[1])
             skinningCoefficientArray[index].maxDistance = 0.0f;
           if (this.m_lockedSailCorners.HasFlag((Enum)SailComponent.SailLockedSide.C) &&
-              Vector3.op_Equality(sharedMesh.vertices[index], this.m_sailCorners[2]))
+              sharedMesh.vertices[index] == this.m_sailCorners[2])
             skinningCoefficientArray[index].maxDistance = 0.0f;
           int num1;
           if (this.m_lockedSailSides.HasFlag((Enum)SailComponent.SailLockedSide.A))
           {
-            vector3_3 = Vector3.op_Subtraction(this.m_sailCorners[0], sharedMesh.vertices[index]);
+            vector3_3 = (this.m_sailCorners[0] - sharedMesh.vertices[index]);
             num1 = (double)Mathf.Abs(Vector3.Dot(((Vector3)vector3_3).normalized, normalized1)) >=
                    0.99989998340606689
               ? 1
@@ -454,7 +453,7 @@ namespace ValheimRAFT
           int num2;
           if (this.m_lockedSailSides.HasFlag((Enum)SailComponent.SailLockedSide.B))
           {
-            vector3_3 = Vector3.op_Subtraction(this.m_sailCorners[1], sharedMesh.vertices[index]);
+            vector3_3 = (this.m_sailCorners[1] - sharedMesh.vertices[index]);
             num2 = (double)Mathf.Abs(Vector3.Dot(((Vector3)vector3_3).normalized, normalized2)) >=
                    0.99989998340606689
               ? 1
@@ -468,7 +467,7 @@ namespace ValheimRAFT
           int num3;
           if (this.m_lockedSailSides.HasFlag((Enum)SailComponent.SailLockedSide.C))
           {
-            vector3_3 = Vector3.op_Subtraction(this.m_sailCorners[2], sharedMesh.vertices[index]);
+            vector3_3 = (this.m_sailCorners[2] - sharedMesh.vertices[index]);
             num3 = (double)Mathf.Abs(Vector3.Dot(((Vector3)vector3_3).normalized, normalized3)) >=
                    0.99989998340606689
               ? 1
@@ -490,32 +489,32 @@ namespace ValheimRAFT
           this.m_lockedSailSides = SailComponent.SailLockedSide.Everything;
         }
 
-        Vector3 vector3_4 = Vector3.op_Subtraction(this.m_sailCorners[0], this.m_sailCorners[1]);
+        Vector3 vector3_4 = (this.m_sailCorners[0] - this.m_sailCorners[1]);
         Vector3 normalized4 = ((Vector3)vector3_4).normalized;
-        Vector3 vector3_5 = Vector3.op_Subtraction(this.m_sailCorners[1], this.m_sailCorners[2]);
+        Vector3 vector3_5 = (this.m_sailCorners[1] - this.m_sailCorners[2]);
         Vector3 normalized5 = ((Vector3)vector3_5).normalized;
-        Vector3 vector3_6 = Vector3.op_Subtraction(this.m_sailCorners[2], this.m_sailCorners[3]);
+        Vector3 vector3_6 = (this.m_sailCorners[2] - this.m_sailCorners[3]);
         Vector3 normalized6 = ((Vector3)vector3_6).normalized;
-        vector3_6 = Vector3.op_Subtraction(this.m_sailCorners[3], this.m_sailCorners[0]);
+        vector3_6 = (this.m_sailCorners[3] - this.m_sailCorners[0]);
         Vector3 normalized7 = ((Vector3)vector3_6).normalized;
         for (int index = 0; index < sharedMesh.vertices.Length; ++index)
         {
           if (this.m_lockedSailCorners.HasFlag((Enum)SailComponent.SailLockedSide.A) &&
-              Vector3.op_Equality(sharedMesh.vertices[index], this.m_sailCorners[0]))
+              sharedMesh.vertices[index] == this.m_sailCorners[0])
             skinningCoefficientArray[index].maxDistance = 0.0f;
           if (this.m_lockedSailCorners.HasFlag((Enum)SailComponent.SailLockedSide.B) &&
-              Vector3.op_Equality(sharedMesh.vertices[index], this.m_sailCorners[1]))
+              (sharedMesh.vertices[index] == this.m_sailCorners[1]))
             skinningCoefficientArray[index].maxDistance = 0.0f;
           if (this.m_lockedSailCorners.HasFlag((Enum)SailComponent.SailLockedSide.C) &&
-              Vector3.op_Equality(sharedMesh.vertices[index], this.m_sailCorners[2]))
+              (sharedMesh.vertices[index] == this.m_sailCorners[2]))
             skinningCoefficientArray[index].maxDistance = 0.0f;
           if (this.m_lockedSailCorners.HasFlag((Enum)SailComponent.SailLockedSide.D) &&
-              Vector3.op_Equality(sharedMesh.vertices[index], this.m_sailCorners[3]))
+              (sharedMesh.vertices[index] == this.m_sailCorners[3]))
             skinningCoefficientArray[index].maxDistance = 0.0f;
           int num4;
           if (this.m_lockedSailSides.HasFlag((Enum)SailComponent.SailLockedSide.A))
           {
-            vector3_6 = Vector3.op_Subtraction(this.m_sailCorners[0], sharedMesh.vertices[index]);
+            vector3_6 = (this.m_sailCorners[0] - sharedMesh.vertices[index]);
             num4 = (double)Mathf.Abs(Vector3.Dot(((Vector3)vector3_6).normalized, normalized4)) >=
                    0.99989998340606689
               ? 1
@@ -529,7 +528,7 @@ namespace ValheimRAFT
           int num5;
           if (this.m_lockedSailSides.HasFlag((Enum)SailComponent.SailLockedSide.B))
           {
-            vector3_6 = Vector3.op_Subtraction(this.m_sailCorners[1], sharedMesh.vertices[index]);
+            vector3_6 = (this.m_sailCorners[1] - sharedMesh.vertices[index]);
             num5 = (double)Mathf.Abs(Vector3.Dot(((Vector3)vector3_6).normalized, normalized5)) >=
                    0.99989998340606689
               ? 1
@@ -543,7 +542,7 @@ namespace ValheimRAFT
           int num6;
           if (this.m_lockedSailSides.HasFlag((Enum)SailComponent.SailLockedSide.C))
           {
-            vector3_6 = Vector3.op_Subtraction(this.m_sailCorners[2], sharedMesh.vertices[index]);
+            vector3_6 = (this.m_sailCorners[2] - sharedMesh.vertices[index]);
             num6 = (double)Mathf.Abs(Vector3.Dot(((Vector3)vector3_6).normalized, normalized6)) >=
                    0.99989998340606689
               ? 1
@@ -557,7 +556,7 @@ namespace ValheimRAFT
           int num7;
           if (this.m_lockedSailSides.HasFlag((Enum)SailComponent.SailLockedSide.D))
           {
-            vector3_6 = Vector3.op_Subtraction(this.m_sailCorners[3], sharedMesh.vertices[index]);
+            vector3_6 = (this.m_sailCorners[3] - sharedMesh.vertices[index]);
             num7 = (double)Mathf.Abs(Vector3.Dot(((Vector3)vector3_6).normalized, normalized7)) >=
                    0.99989998340606689
               ? 1
@@ -576,7 +575,7 @@ namespace ValheimRAFT
 
     public void SetPatternScale(Vector2 vector2)
     {
-      if (Vector2.op_Equality(this.m_patternScale, vector2))
+      if (this.m_patternScale == vector2)
         return;
       this.m_patternScale = vector2;
       ((Renderer)this.m_mesh).material.SetTextureScale("_PatternTex", this.m_patternScale);
@@ -584,7 +583,7 @@ namespace ValheimRAFT
 
     public void SetPatternOffset(Vector2 vector2)
     {
-      if (Vector2.op_Equality(this.m_patternOffset, vector2))
+      if ((this.m_patternOffset == vector2))
         return;
       this.m_patternOffset = vector2;
       ((Renderer)this.m_mesh).material.SetTextureOffset("_PatternTex", this.m_patternOffset);
@@ -592,7 +591,7 @@ namespace ValheimRAFT
 
     public void SetPatternColor(Color color)
     {
-      if (Color.op_Equality(this.m_patternColor, color))
+      if ((this.m_patternColor == color))
         return;
       this.m_patternColor = color;
       ((Renderer)this.m_mesh).material.SetColor("_PatternColor", color);
@@ -613,18 +612,18 @@ namespace ValheimRAFT
       this.m_patternHash = hash;
       CustomTextureGroup.CustomTexture textureByHash =
         CustomTextureGroup.Get("Patterns").GetTextureByHash(hash);
-      if (textureByHash == null || !Object.op_Implicit((Object)textureByHash.Texture) ||
-          !Object.op_Implicit((Object)this.m_mesh))
+      if (textureByHash == null || !textureByHash.Texture ||
+          !m_mesh)
         return;
       ((Renderer)this.m_mesh).material.SetTexture("_PatternTex", textureByHash.Texture);
-      if (!Object.op_Implicit((Object)textureByHash.Normal))
+      if (!textureByHash.Normal)
         return;
       ((Renderer)this.m_mesh).material.SetTexture("_PatternNormal", textureByHash.Normal);
     }
 
     public void SetMainScale(Vector2 vector2)
     {
-      if (Vector2.op_Equality(this.m_mainScale, vector2))
+      if (this.m_mainScale == vector2)
         return;
       this.m_mainScale = vector2;
       ((Renderer)this.m_mesh).material.SetTextureScale("_MainTex", this.m_mainScale);
@@ -632,7 +631,7 @@ namespace ValheimRAFT
 
     public void SetMainOffset(Vector2 vector2)
     {
-      if (Vector2.op_Equality(this.m_mainOffset, vector2))
+      if (this.m_mainOffset == vector2)
         return;
       this.m_mainOffset = vector2;
       ((Renderer)this.m_mesh).material.SetTextureOffset("_MainTex", this.m_mainOffset);
@@ -640,7 +639,7 @@ namespace ValheimRAFT
 
     public void SetMainColor(Color color)
     {
-      if (Color.op_Equality(this.m_mainColor, color))
+      if (this.m_mainColor == color)
         return;
       this.m_mainColor = color;
       ((Renderer)this.m_mesh).material.SetColor("_MainColor", color);
@@ -653,18 +652,18 @@ namespace ValheimRAFT
       this.m_mainHash = hash;
       CustomTextureGroup.CustomTexture textureByHash =
         CustomTextureGroup.Get("Sails").GetTextureByHash(hash);
-      if (textureByHash == null || !Object.op_Implicit((Object)textureByHash.Texture) ||
-          !Object.op_Implicit((Object)this.m_mesh))
+      if (textureByHash == null || !textureByHash.Texture ||
+          !m_mesh)
         return;
       ((Renderer)this.m_mesh).material.SetTexture("_MainTex", textureByHash.Texture);
-      if (!Object.op_Implicit((Object)textureByHash.Normal))
+      if (!textureByHash.Normal)
         return;
       ((Renderer)this.m_mesh).material.SetTexture("_MainNormal", textureByHash.Normal);
     }
 
     public void SetLogoScale(Vector2 vector2)
     {
-      if (Vector2.op_Equality(this.m_logoScale, vector2))
+      if (this.m_logoScale == vector2)
         return;
       this.m_logoScale = vector2;
       ((Renderer)this.m_mesh).material.SetTextureScale("_LogoTex", this.m_logoScale);
@@ -672,7 +671,7 @@ namespace ValheimRAFT
 
     public void SetLogoOffset(Vector2 vector2)
     {
-      if (Vector2.op_Equality(this.m_logoOffset, vector2))
+      if (this.m_logoOffset == vector2)
         return;
       this.m_logoOffset = vector2;
       ((Renderer)this.m_mesh).material.SetTextureOffset("_LogoTex", this.m_logoOffset);
@@ -680,7 +679,7 @@ namespace ValheimRAFT
 
     public void SetLogoColor(Color color)
     {
-      if (Color.op_Equality(this.m_logoColor, color))
+      if (this.m_logoColor == color)
         return;
       this.m_logoColor = color;
       ((Renderer)this.m_mesh).material.SetColor("_LogoColor", color);
@@ -701,11 +700,11 @@ namespace ValheimRAFT
       this.m_logoHash = hash;
       CustomTextureGroup.CustomTexture textureByHash =
         CustomTextureGroup.Get("Logos").GetTextureByHash(hash);
-      if (textureByHash == null || !Object.op_Implicit((Object)textureByHash.Texture) ||
-          !Object.op_Implicit((Object)this.m_mesh))
+      if (textureByHash == null || !textureByHash.Texture ||
+          !this.m_mesh)
         return;
       ((Renderer)this.m_mesh).material.SetTexture("_LogoTex", textureByHash.Texture);
-      if (!Object.op_Implicit((Object)textureByHash.Normal))
+      if (!textureByHash.Normal)
         return;
       ((Renderer)this.m_mesh).material.SetTexture("_LogoNormal", textureByHash.Normal);
     }
@@ -714,7 +713,7 @@ namespace ValheimRAFT
     {
       for (int index = 0; index < this.m_sailCorners.Count; ++index)
         Gizmos.DrawSphere(
-          Vector3.op_Addition(((Component)this).transform.position, this.m_sailCorners[index]),
+          (((Component)this).transform.position + this.m_sailCorners[index]),
           0.1f);
     }
 

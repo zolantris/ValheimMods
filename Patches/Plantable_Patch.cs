@@ -67,10 +67,10 @@ namespace ValheimRAFT.Patches
 
     private static bool IsCultivated(Piece piece)
     {
-      if (!Object.op_Implicit((Object)piece))
+      if (!piece)
         return false;
       CultivatableComponent component = ((Component)piece).GetComponent<CultivatableComponent>();
-      return Object.op_Implicit((Object)component) && component.isCultivatable;
+      return component && component.isCultivatable;
     }
 
     [HarmonyPatch(typeof(Plant), "Grow")]
@@ -103,7 +103,7 @@ namespace ValheimRAFT.Patches
       ZNetView component = newObject.GetComponent<ZNetView>();
       MoveableBaseRootComponent componentInParent =
         ((Component)oldPlant).GetComponentInParent<MoveableBaseRootComponent>();
-      if (Object.op_Implicit((Object)component) && Object.op_Implicit((Object)componentInParent))
+      if (component && componentInParent)
         componentInParent.AddNewPiece(component);
       int parentId = CultivatableComponent.GetParentID(oldPlant.m_nview);
       if (parentId != 0)

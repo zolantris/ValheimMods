@@ -65,7 +65,7 @@ namespace ValheimRAFT
         ((IEnumerable<BoxCollider>)((Component)((Component)this).transform)
           .GetComponentsInChildren<BoxCollider>()).FirstOrDefault<BoxCollider>(
           (Func<BoxCollider, bool>)(k =>
-            ((Object)((Component)k).gameObject).name == "OnboardTrigger"));
+            ((k).gameObject).name == "OnboardTrigger"));
       ((Component)this.m_baseRoot.m_onboardcollider).transform.localScale = new Vector3(1f, 1f, 1f);
       this.m_baseRoot.m_floatcollider = component.m_floatCollider;
       ((Component)this.m_baseRoot.m_floatcollider).transform.localScale = new Vector3(1f, 1f, 1f);
@@ -75,9 +75,9 @@ namespace ValheimRAFT
       ((Component)this.m_baseRoot.m_blockingcollider).transform.localScale =
         new Vector3(1f, 1f, 1f);
       ((Component)this.m_baseRoot.m_blockingcollider).gameObject.layer =
-        ValheimRAFT.ValheimRAFT.CustomRaftLayer;
+        ValheimRAFT.ValheimRaftEntrypoint.CustomRaftLayer;
       ((Component)((Component)this.m_baseRoot.m_blockingcollider).transform.parent).gameObject
-        .layer = ValheimRAFT.ValheimRAFT.CustomRaftLayer;
+        .layer = ValheimRAFT.ValheimRaftEntrypoint.CustomRaftLayer;
       ZLog.Log((object)string.Format("Activating MBRoot: {0}", (object)this.m_baseRoot.m_id));
       this.m_baseRoot.ActivatePendingPiecesCoroutine();
       this.FirstTimeCreation();
@@ -97,10 +97,10 @@ namespace ValheimRAFT
 
     public void OnDestroy()
     {
-      if (!Object.op_Implicit((Object)this.m_baseRoot))
+      if (!m_baseRoot)
         return;
       this.m_baseRoot.CleanUp();
-      Object.Destroy((Object)((Component)this.m_baseRoot).gameObject);
+      Destroy(m_baseRoot.gameObject);
     }
 
     private void FirstTimeCreation()
@@ -169,13 +169,13 @@ namespace ValheimRAFT
 
     internal void UpdateStats(bool flight)
     {
-      if (!Object.op_Implicit((Object)this.m_rigidbody) ||
-          !Object.op_Implicit((Object)this.m_baseRoot) || this.m_baseRoot.m_statsOverride)
+      if (!m_rigidbody ||
+          !m_baseRoot || this.m_baseRoot.m_statsOverride)
         return;
       this.m_rigidbody.mass = 3000f;
       this.m_rigidbody.angularDrag = flight ? 1f : 0.0f;
       this.m_rigidbody.drag = flight ? 1f : 0.0f;
-      if (Object.op_Implicit((Object)this.m_ship))
+      if (m_ship)
       {
         this.m_ship.m_angularDamping = flight ? 5f : 0.8f;
         this.m_ship.m_backwardForce = 1f;
@@ -188,7 +188,7 @@ namespace ValheimRAFT
         this.m_ship.m_stearVelForceFactor = 1.3f;
         this.m_ship.m_waterImpactDamage = 0.0f;
         ImpactEffect component = ((Component)this.m_ship).GetComponent<ImpactEffect>();
-        if (Object.op_Implicit((Object)component))
+        if (component)
         {
           component.m_interval = 0.1f;
           component.m_minVelocity = 0.1f;

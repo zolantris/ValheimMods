@@ -281,7 +281,7 @@ namespace ValheimRAFT
       if (!this.m_nview.IsOwner() &&
           (int)this.m_nview.m_zdo.DataRevision != (int)this.m_zdoDataRevision)
         this.UpdateRopesFromZDO();
-      if (((Renderer)this.m_rope).enabled && Object.op_Implicit((Object)Player.m_localPlayer))
+      if (((Renderer)this.m_rope).enabled && Player.m_localPlayer)
       {
         this.m_rope.SetPosition(0, ((Component)this).transform.position);
         if (m_draggingRopeTo)

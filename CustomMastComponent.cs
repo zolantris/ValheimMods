@@ -34,7 +34,7 @@ namespace ValheimRAFT
 
     public void LoadZDO()
     {
-      if (!Object.op_Implicit((Object)this.m_nview) || this.m_nview.m_zdo == null)
+      if (!m_nview || this.m_nview.m_zdo == null)
         return;
       Vector3 vec3_1 = this.m_nview.m_zdo.GetVec3("MBMast_upperBeam", new Vector3(1f, 1f, 1f));
       this.m_upperBeamLength = vec3_1.x;
