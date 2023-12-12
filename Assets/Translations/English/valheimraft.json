@@ -1,0 +1,82 @@
+{
+	"mb_raft": "Raft Base", 
+	"mb_raft_desc": "A raft... that you can build on!",
+	
+	"mb_raft_mast": "Raft mast",
+    "mb_raft_mast_desc": "A mast for your base, in the style of the raft",
+	
+	"mb_karve_mast": "Karve mast",
+	"mb_karve_mast_desc": "A mast for your base, in the style of the karve",
+	
+	"mb_vikingship_mast": "Longship mast",
+	"mb_vikingship_mast_desc": "A mast for your base, in the style of the longship",
+
+	"mb_rudder": "Steering wheel", 
+	"mb_rudder_desc": "A steering wheel for on your moving base!",
+	
+	"mb_rudder_use": "Steer",
+	
+	"mb_rope_ladder": "Rope ladder", 
+	"mb_rope_ladder_desc": "A simple ladder made out of ropes and planks.",
+	
+	"mb_rope_ladder_use": "Climb",
+	
+	"mb_rope_anchor": "Rope Anchor", 
+	"mb_rope_anchor_desc": "A rope anchor point that allows you to attach ropes to.",
+	
+	"mb_rope_anchor_attach": "Attach Rope",
+	"mb_rope_anchor_attach_to": "Attach Rope to this object",
+	
+	"mb_anchor_key_desc": "Raise\\Lower anchor",
+	
+	"mb_sail": "Sail",
+	"mb_sail_desc": "Customizable sail.",
+	"mb_sail_edit": "Customize sail",
+	
+	"mb_sail_4": "Sail (4 Sides)",
+	"mb_sail_4_desc": "Customizable sail with 4 corners.",
+	
+	"mb_sail_3": "Sail (3 Sides)",
+	"mb_sail_3_desc": "Customizable sail with 3 corners.",
+
+	"mb_pier": "Pier Support",
+	"mb_pier_desc": "Pier support that is built on water and automatically extends all the way to the sea floor.",
+
+	"mb_boarding_ramp": "Boarding ramp",
+	"mb_boarding_ramp_desc": "Extendenable ramp to board your ship.",
+	
+	"mb_boarding_ramp_wide": "Boarding ramp (Wide)",
+	"mb_boarding_ramp_wide_desc": "Extendenable ramp to board your ship.",
+	
+	"mb_boarding_ramp_edit": "Edit Ramp"
+	"mb_boarding_ramp_extend": "Extend",
+	"mb_boarding_ramp_retract": "Retract",
+	
+	"mb_dirt_floor_1x1": "Dirt floor 1x1 (cultivatable)",
+	"mb_dirt_floor_1x1_desc": "Cultivatable piece of ground that can be placed on rafts."
+	
+	"mb_dirt_floor_2x2": "Dirt floor 2x2 (cultivatable)",
+	"mb_dirt_floor_2x2_desc": "Cultivatable piece of ground that can be placed on rafts."
+	
+	"mb_edit_sail_panel_clothanchors": "Cloth Anchors"
+	"mb_edit_sail_panel_edit_sail": "Edit Sail",
+	"mb_edit_sail_panel_edit_pattern": "Edit Pattern",
+	"mb_edit_sail_panel_edit_logo": "Edit Logo",
+	"mb_edit_sail_panel_save": "Save",
+	"mb_edit_sail_panel_cancel": "Cancel",
+	
+	"mb_edit_ramp_panel_segments": "Segments",
+	"mb_edit_ramp_panel_save": "Save",
+	"mb_edit_ramp_panel_cancel": "Cancel",
+	
+	"mb_edit_sail_sailraise": "Allow raising sail."
+	
+	"mb_edit_texture_panel_texture": "Texture",
+	"mb_edit_texture_panel_color": "Color",
+	"mb_edit_texture_panel_offset": "Offset",
+	"mb_edit_texture_panel_tiling": "Tiling",
+	"mb_edit_texture_panel_rotation": "Rotation",
+	"mb_edit_texture_panel_close": "Close",
+	
+	"mb_edit_sail_clothoff": "Force cloth physics off."
+}
