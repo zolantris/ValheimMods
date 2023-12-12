@@ -147,10 +147,25 @@
         <Compile Include="AssemblyInfo.cs"/>
     </ItemGroup>
     <ItemGroup>
-        <EmbeddedResource Include="AssetBundle.AssetBundle"/>
-        <EmbeddedResource Include="AssetBundle.valheimraft"/>
+        <!--           new structure (failing to load assets, but they are detected      -->
+        <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="ValheimRAFT.AssetBundle.AssetBundle"/>
         <EmbeddedResource Include="AssetBundle\AssetBundle.manifest"/>
+        <EmbeddedResource Include="AssetBundle\valheimraft" LogicalName="ValheimRAFT.AssetBundle.valheimraft"/>
         <EmbeddedResource Include="AssetBundle\valheimraft.manifest"/>
+
+        <!--   old asset bundle structure (working)     -->
+        <!--        <EmbeddedResource Include="AssetBundle.valheimraft"/>-->
+        <!--        <EmbeddedResource Include="AssetBundle.AssetBundle"/>-->
+        <!--        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest"/>-->
+        <!--        <EmbeddedResource Include="AssetBundle\valheimraft.manifest"/>-->
+        <!--        <None Remove="ValheimRAFT.AssetBundle.AssetBundle"/>-->
+        <!--        <None Remove="ValheimRAFT.AssetBundle.valheimraft"/>-->
+        <!--        <None Remove="ValheimRAFT.AssetBundle.AssetBundle.manifest"/>-->
+        <!--        <None Remove="ValheimRAFT.AssetBundle.valheimraft.manifest"/>-->
+        <!--        <EmbeddedResource Include="ValheimRAFT.AssetBundle.AssetBundle" LogicalName="ValheimRAFT.AssetBundle.AssetBundle"/>-->
+        <!--        <EmbeddedResource Include="ValheimRAFT.AssetBundle.valheimraft" LogicalName="ValheimRAFT.AssetBundle.valheimraft"/>-->
+        <!--        <EmbeddedResource Include="ValheimRAFT.AssetBundle.AssetBundle.manifest" LogicalName="ValheimRAFT.AssetBundle.AssetBundle.manifest"/>-->
+        <!--        <EmbeddedResource Include="ValheimRAFT.AssetBundle.valheimraft.manifest" LogicalName="ValheimRAFT.AssetBundle.valheimraft.manifest"/>-->
     </ItemGroup>
     <ItemGroup>
         <Content Include=".gitignore"/>

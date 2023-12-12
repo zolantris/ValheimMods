@@ -59,7 +59,7 @@ public class SailCreatorComponent : MonoBehaviour
 
       for (int i = 0; i < m_sailCreators.Count; i++)
       {
-        Object.Destroy(m_sailCreators[i].gameObject);
+        Destroy(m_sailCreators[i].gameObject);
       }
 
       m_sailCreators.Clear();

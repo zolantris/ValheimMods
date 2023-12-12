@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using BepInEx.Logging;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimRAFT.UI;
@@ -96,7 +97,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     m_sailComponents.Add(this);
     m_mastComponent = GetComponent<MastComponent>();
-    m_sailObject = base.transform.Find("Sail").gameObject;
+    m_sailObject = transform.Find("Sail").gameObject;
+    ZLog.Log($"m_sailObject ${m_sailObject}");
     m_sailCloth = m_sailObject.GetComponent<Cloth>();
     if ((bool)(UnityEngine.Object)(object)m_sailCloth)
     {
@@ -106,7 +108,10 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     }
 
     m_mesh = m_sailObject.GetComponent<SkinnedMeshRenderer>();
+    ZLog.Log($"SailMesh loaded {m_mesh.material}");
+
     m_meshCollider = m_sailObject.GetComponent<MeshCollider>();
+    ZLog.Log($"SailMesh collider loaded: {m_meshCollider}");
     m_nview = GetComponent<ZNetView>();
     if (m_sailInit)
     {
@@ -122,7 +127,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     Vector3 vector = EnvMan.instance.GetWindForce();
     m_sailCloth.externalAcceleration = vector * m_windMultiplier;
-    m_sailCloth.randomAcceleration = vector * m_windMultiplier * m_clothRandomAccelerationFactor;
+    m_sailCloth.randomAcceleration = vector * (m_windMultiplier * m_clothRandomAccelerationFactor);
   }
 
   public void OnDestroy()
