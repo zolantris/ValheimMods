@@ -1,46 +1,45 @@
-﻿// Decompiled with JetBrains decompiler
-// Type: ValheimRAFT.UI.PanelUtil
-// Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
+﻿// ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+// ValheimRAFT.UI.PanelUtil
 
-
-using Jotunn.Managers;
 using System;
+using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ValheimRAFT.UI
+public class PanelUtil
 {
-  public class PanelUtil
+  public static void ApplyPanelStyle(GameObject editPanel)
   {
-    public static void ApplyPanelStyle(GameObject editPanel)
+    Array.ForEach(editPanel.GetComponentsInChildren<Button>(includeInactive: true),
+      delegate(Button b)
+      {
+        if (b.name.EndsWith("Button"))
+        {
+          GUIManager.Instance.ApplyButtonStyle(b, 16);
+        }
+      });
+    Array.ForEach(editPanel.GetComponentsInChildren<InputField>(includeInactive: true),
+      delegate(InputField b) { GUIManager.Instance.ApplyInputFieldStyle(b, 16); });
+    Array.ForEach(editPanel.GetComponentsInChildren<Text>(includeInactive: true), delegate(Text b)
     {
-      Array.ForEach<Button>(editPanel.GetComponentsInChildren<Button>(true), (Action<Button>)(b =>
+      b.text = Localization.instance.Localize(b.text);
+      if (b.name.EndsWith("Label"))
       {
-        if (!(b).name.EndsWith("Button"))
-          return;
-        GUIManager.Instance.ApplyButtonStyle(b, 16);
-      }));
-      Array.ForEach<InputField>(editPanel.GetComponentsInChildren<InputField>(true),
-        (Action<InputField>)(b => GUIManager.Instance.ApplyInputFieldStyle(b, 16)));
-      Array.ForEach<Text>(editPanel.GetComponentsInChildren<Text>(true), (Action<Text>)(b =>
-      {
-        b.text = Localization.instance.Localize(b.text);
-        if (!((b).name.EndsWith("Label")))
-          return;
         GUIManager.Instance.ApplyTextStyle(b, 16);
-      }));
-      Array.ForEach<Toggle>(editPanel.GetComponentsInChildren<Toggle>(true), (Action<Toggle>)(b =>
+      }
+    });
+    Array.ForEach(editPanel.GetComponentsInChildren<Toggle>(includeInactive: true),
+      delegate(Toggle b)
       {
-        if (!(b).name.EndsWith("Toggle"))
-          return;
-        GUIManager.Instance.ApplyToogleStyle(b);
-      }));
-      Image component = editPanel.GetComponent<Image>();
-      component.sprite = GUIManager.Instance.GetSprite("woodpanel_trophys");
-      component.type = (Image.Type)1;
-      ((Graphic)component).material = PrefabManager.Cache.GetPrefab<Material>("litpanel");
-      ((Graphic)component).color = Color.white;
-    }
+        if (b.name.EndsWith("Toggle"))
+        {
+          GUIManager.Instance.ApplyToogleStyle(b);
+        }
+      });
+    Image image = editPanel.GetComponent<Image>();
+    image.sprite = GUIManager.Instance.GetSprite("woodpanel_trophys");
+    image.type = Image.Type.Sliced;
+    image.material = PrefabManager.Cache.GetPrefab<Material>("litpanel");
+    image.color = Color.white;
   }
 }

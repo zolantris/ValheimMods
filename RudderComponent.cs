@@ -1,145 +1,137 @@
-﻿// Decompiled with JetBrains decompiler
-// Type: ValheimRAFT.RudderComponent
-// Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-
+﻿// ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+// ValheimRAFT.RudderComponent
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace ValheimRAFT
+public class RudderComponent : MonoBehaviour
 {
-  public class RudderComponent : MonoBehaviour
+  public ShipControlls m_controls;
+
+  public Transform m_wheel;
+
+  public List<Transform> m_spokes = new List<Transform>();
+
+  public Vector3 m_leftHandPosition = new Vector3(0f, 0f, 2f);
+
+  public Vector3 m_rightHandPosition = new Vector3(0f, 0f, -2f);
+
+  public float m_holdWheelTime = 0.7f;
+
+  public float m_wheelRotationFactor = 4f;
+
+  public float m_handIKSpeed = 0.2f;
+
+  private float m_movingLeftAlpha;
+
+  private float m_movingRightAlpha;
+
+  private Transform m_currentLeftHand;
+
+  private Transform m_currentRightHand;
+
+  private Transform m_targetLeftHand;
+
+  private Transform m_targetRightHand;
+
+  public void UpdateSpokes()
   {
-    public ShipControlls m_controls;
-    public Transform m_wheel;
-    public List<Transform> m_spokes = new List<Transform>();
-    public Vector3 m_leftHandPosition = new Vector3(0.0f, 0.0f, 2f);
-    public Vector3 m_rightHandPosition = new Vector3(0.0f, 0.0f, -2f);
-    public float m_holdWheelTime = 0.7f;
-    public float m_wheelRotationFactor = 4f;
-    public float m_handIKSpeed = 0.2f;
-    private float m_movingLeftAlpha;
-    private float m_movingRightAlpha;
-    private Transform m_currentLeftHand;
-    private Transform m_currentRightHand;
-    private Transform m_targetLeftHand;
-    private Transform m_targetRightHand;
+    m_spokes.Clear();
+    m_spokes.AddRange(from k in m_wheel.GetComponentsInChildren<Transform>()
+      where k.gameObject.name.StartsWith("grabpoint")
+      select k);
+  }
 
-    public void UpdateSpokes()
+  public void UpdateIK(Animator animator)
+  {
+    if (!m_wheel)
     {
-      this.m_spokes.Clear();
-      this.m_spokes.AddRange(
-        ((IEnumerable<Transform>)((Component)this.m_wheel).GetComponentsInChildren<Transform>())
-        .Where<Transform>((Func<Transform, bool>)(k =>
-          (gameObject).name.StartsWith("grabpoint"))));
+      return;
     }
 
-    public void UpdateIK(Animator animator)
+    if (!m_currentLeftHand)
     {
-      if (!m_wheel)
-        return;
-      if (!m_currentLeftHand)
-        this.m_currentLeftHand =
-          this.GetNearestSpoke(((Component)this).transform.TransformPoint(this.m_leftHandPosition));
-      if (!m_currentRightHand)
-        this.m_currentRightHand =
-          this.GetNearestSpoke(
-            ((Component)this).transform.TransformPoint(this.m_rightHandPosition));
-      if (!m_targetLeftHand &&
-          !m_targetRightHand)
-      {
-        Vector3 vector3_1 =
-          ((Component)this).transform.InverseTransformPoint(this.m_currentLeftHand.position);
-        Vector3 vector3_2 =
-          ((Component)this).transform.InverseTransformPoint(this.m_currentRightHand.position);
-        if ((double)vector3_1.z < 0.20000000298023224)
-        {
-          Vector3 vector3_3;
-          // ISSUE: explicit constructor call
-          vector3_3 = new Vector3(0.0f, (double)vector3_1.y > 0.5 ? -2f : 2f, 0.0f);
-          this.m_targetLeftHand = this.GetNearestSpoke(
-            ((Component)this).transform.TransformPoint(m_leftHandPosition + vector3_3));
-          this.m_movingLeftAlpha = Time.time;
-        }
-        else if ((double)vector3_2.z > -0.20000000298023224)
-        {
-          Vector3 vector3_4;
-          // ISSUE: explicit constructor call
-          vector3_4 = new Vector3(0.0f, (double)vector3_2.y > 0.5 ? -2f : 2f, 0.0f);
-          this.m_targetRightHand = this.GetNearestSpoke(
-            ((Component)this).transform.TransformPoint(m_rightHandPosition + vector3_4));
-          this.m_movingRightAlpha = Time.time;
-        }
-      }
-
-      float num1 = Mathf.Clamp01((Time.time - this.m_movingLeftAlpha) / this.m_handIKSpeed);
-      float num2 = Mathf.Clamp01((Time.time - this.m_movingRightAlpha) / this.m_handIKSpeed);
-      float num3 = Mathf.Sin(num1 * 3.14159274f) * (1f - this.m_holdWheelTime) +
-                   this.m_holdWheelTime;
-      float num4 = Mathf.Sin(num2 * 3.14159274f) * (1f - this.m_holdWheelTime) +
-                   this.m_holdWheelTime;
-      if (m_targetLeftHand && (double)num1 > 0.99000000953674316)
-      {
-        this.m_currentLeftHand = this.m_targetLeftHand;
-        this.m_targetLeftHand = (Transform)null;
-      }
-
-      if (m_targetRightHand && (double)num2 > 0.99000000953674316)
-      {
-        this.m_currentRightHand = this.m_targetRightHand;
-        this.m_targetRightHand = (Transform)null;
-      }
-
-      Vector3 vector3_5 = m_targetLeftHand
-        ? Vector3.Lerp(((Component)this.m_currentLeftHand).transform.position,
-          ((Component)this.m_targetLeftHand).transform.position, num1)
-        : ((Component)this.m_currentLeftHand).transform.position;
-      Vector3 vector3_6 = m_targetRightHand
-        ? Vector3.Lerp(((Component)this.m_currentRightHand).transform.position,
-          ((Component)this.m_targetRightHand).transform.position, num2)
-        : ((Component)this.m_currentRightHand).transform.position;
-      Vector3 vector3_7;
-      if (!m_targetLeftHand)
-      {
-        Quaternion rotation = ((Component)this.m_currentLeftHand).transform.rotation;
-        vector3_7 = rotation.eulerAngles;
-      }
-      else
-      {
-        Quaternion rotation1 = ((Component)this.m_currentLeftHand).transform.rotation;
-        Vector3 eulerAngles1 = rotation1.eulerAngles;
-        Quaternion rotation2 = ((Component)this.m_targetLeftHand).transform.rotation;
-        Vector3 eulerAngles2 = rotation2.eulerAngles;
-        double num5 = (double)num1;
-        vector3_7 = Vector3.Slerp(eulerAngles1, eulerAngles2, (float)num5);
-      }
-
-      animator.SetIKPositionWeight((AvatarIKGoal)2, num3);
-      animator.SetIKPosition((AvatarIKGoal)2, vector3_5);
-      animator.SetIKPositionWeight((AvatarIKGoal)3, num4);
-      animator.SetIKPosition((AvatarIKGoal)3, vector3_6);
+      m_currentLeftHand = GetNearestSpoke(base.transform.TransformPoint(m_leftHandPosition));
     }
 
-    public Transform GetNearestSpoke(Vector3 position)
+    if (!m_currentRightHand)
     {
-      Transform nearestSpoke = (Transform)null;
-      float num = 0.0f;
-      for (int index = 0; index < this.m_spokes.Count; ++index)
-      {
-        Transform spoke = this.m_spokes[index];
-        Vector3 vector3 = transform.position - position;
-        float sqrMagnitude = vector3.sqrMagnitude;
-        if (nearestSpoke == null || (double)sqrMagnitude < (double)num)
-        {
-          nearestSpoke = spoke;
-          num = sqrMagnitude;
-        }
-      }
-
-      return nearestSpoke;
+      m_currentRightHand = GetNearestSpoke(base.transform.TransformPoint(m_rightHandPosition));
     }
+
+    if (!m_targetLeftHand && !m_targetRightHand)
+    {
+      Vector3 left = base.transform.InverseTransformPoint(m_currentLeftHand.position);
+      Vector3 right = base.transform.InverseTransformPoint(m_currentRightHand.position);
+      if (left.z < 0.2f)
+      {
+        Vector3 offsetY2 = new Vector3(0f, (left.y > 0.5f) ? (-2f) : 2f, 0f);
+        m_targetLeftHand =
+          GetNearestSpoke(base.transform.TransformPoint(m_leftHandPosition + offsetY2));
+        m_movingLeftAlpha = Time.time;
+      }
+      else if (right.z > -0.2f)
+      {
+        Vector3 offsetY = new Vector3(0f, (right.y > 0.5f) ? (-2f) : 2f, 0f);
+        m_targetRightHand =
+          GetNearestSpoke(base.transform.TransformPoint(m_rightHandPosition + offsetY));
+        m_movingRightAlpha = Time.time;
+      }
+    }
+
+    float leftHandAlpha = Mathf.Clamp01((Time.time - m_movingLeftAlpha) / m_handIKSpeed);
+    float rightHandAlpha = Mathf.Clamp01((Time.time - m_movingRightAlpha) / m_handIKSpeed);
+    float leftHandIKWeight = Mathf.Sin(leftHandAlpha * (float)Math.PI) * (1f - m_holdWheelTime) +
+                             m_holdWheelTime;
+    float rightHandIKWeight = Mathf.Sin(rightHandAlpha * (float)Math.PI) * (1f - m_holdWheelTime) +
+                              m_holdWheelTime;
+    if ((bool)m_targetLeftHand && leftHandAlpha > 0.99f)
+    {
+      m_currentLeftHand = m_targetLeftHand;
+      m_targetLeftHand = null;
+    }
+
+    if ((bool)m_targetRightHand && rightHandAlpha > 0.99f)
+    {
+      m_currentRightHand = m_targetRightHand;
+      m_targetRightHand = null;
+    }
+
+    Vector3 leftHandPos = (m_targetLeftHand
+      ? Vector3.Lerp(m_currentLeftHand.transform.position, m_targetLeftHand.transform.position,
+        leftHandAlpha)
+      : m_currentLeftHand.transform.position);
+    Vector3 rightHandPos = (m_targetRightHand
+      ? Vector3.Lerp(m_currentRightHand.transform.position, m_targetRightHand.transform.position,
+        rightHandAlpha)
+      : m_currentRightHand.transform.position);
+    Vector3 rightHandRot = (m_targetLeftHand
+      ? Vector3.Slerp(m_currentLeftHand.transform.rotation.eulerAngles,
+        m_targetLeftHand.transform.rotation.eulerAngles, leftHandAlpha)
+      : m_currentLeftHand.transform.rotation.eulerAngles);
+    animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, leftHandIKWeight);
+    animator.SetIKPosition(AvatarIKGoal.LeftHand, leftHandPos);
+    animator.SetIKPositionWeight(AvatarIKGoal.RightHand, rightHandIKWeight);
+    animator.SetIKPosition(AvatarIKGoal.RightHand, rightHandPos);
+  }
+
+  public Transform GetNearestSpoke(Vector3 position)
+  {
+    Transform best = null;
+    float bestDistance = 0f;
+    for (int i = 0; i < m_spokes.Count; i++)
+    {
+      Transform spoke = m_spokes[i];
+      float dist = (spoke.transform.position - position).sqrMagnitude;
+      if (best == null || dist < bestDistance)
+      {
+        best = spoke;
+        bestDistance = dist;
+      }
+    }
+
+    return best;
   }
 }
