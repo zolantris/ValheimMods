@@ -247,8 +247,14 @@ namespace ValheimRAFT
       this.UpdatePieceCount();
       if (this.GetPieceCount() != 0)
         return;
-      ((Component)this.m_ship).GetComponent<WearNTear>().Destroy();
-      Object.Destroy((Object)((Component)this).gameObject);
+      var wearAndTearObject = m_ship.GetComponent<WearNTear>();
+
+      if (wearAndTearObject)
+      {
+        Destroy(wearAndTearObject);
+      }
+
+      Destroy(this.gameObject);
     }
 
     public void ActivatePendingPiecesCoroutine() => this.StartCoroutine("ActivatePendingPieces");

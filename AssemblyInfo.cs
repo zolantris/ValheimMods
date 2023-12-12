@@ -2,6 +2,5 @@
 using System.Runtime.CompilerServices;
 using System.Security.Permissions;
 
-[assembly: Extension]
-[assembly: AssemblyVersion("0.0.0.0")]
+[assembly: AssemblyVersion("1.5.0.0")]
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]

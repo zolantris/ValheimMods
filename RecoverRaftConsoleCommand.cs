@@ -12,11 +12,11 @@ namespace ValheimRAFT
 {
   internal class RecoverRaftConsoleCommand : ConsoleCommand
   {
-    public virtual string Name => "RaftRecover";
+    public override string Name => "RaftRecover";
 
-    public virtual string Help => "Attempts to recover unattached rafts.";
+    public override string Help => "Attempts to recover unattached rafts.";
 
-    public virtual void Run(string[] args)
+    public override void Run(string[] args)
     {
       Collider[] colliderArray =
         Physics.OverlapSphere(((Component)GameCamera.instance).transform.position, 1000f);

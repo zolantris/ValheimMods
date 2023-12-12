@@ -13,11 +13,11 @@ namespace ValheimRAFT
 {
   internal class HideRaftConsoleCommand : ConsoleCommand
   {
-    public virtual string Name => "RaftHide";
+    public override string Name => "RaftHide";
 
-    public virtual string Help => "Toggles the base raft mesh";
+    public override string Help => "Toggles the base raft mesh";
 
-    public virtual void Run(string[] args)
+    public override void Run(string[] args)
     {
       if (args.Length < 1)
       {

@@ -15,12 +15,12 @@ namespace ValheimRAFT
 {
   internal class MoveRaftConsoleCommand : ConsoleCommand
   {
-    public virtual string Name => "RaftOffset";
+    public override string Name => "RaftOffset";
 
-    public virtual string Help =>
+    public override string Help =>
       "Offsets the raft by the given coordinates (X Y Z). Note: it's intended use is so you can slightly offset the pieces relative to the raft center. The actual center of the raft will NOT move.";
 
-    public virtual void Run(string[] args)
+    public override void Run(string[] args)
     {
       if (args.Length < 3)
       {

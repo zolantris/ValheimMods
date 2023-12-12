@@ -1,158 +1,160 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <!--Project was exported from assembly: C:\Users\Frederick Engelhardt\Downloads\ValheimRAFT 1.4.9-1136-1-4-9-1692901079\ValheimRAFT\ValheimRAFT.dll-->
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AssemblyName>ValheimRAFT</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <ApplicationVersion>1.5.0.0</ApplicationVersion>
-    <FileAlignment>512</FileAlignment>
-    <RootNamespace>ValheimRAFT</RootNamespace>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="0Harmony">
-      <HintPath>libs\0Harmony.dll</HintPath>
-    </Reference>
-    <Reference Include="assembly_guiutils">
-      <HintPath>libs\assembly_guiutils.dll</HintPath>
-    </Reference>
-    <Reference Include="assembly_utils">
-      <HintPath>libs\assembly_utils.dll</HintPath>
-    </Reference>
-    <Reference Include="assembly_valheim">
-      <HintPath>libs\assembly_valheim.dll</HintPath>
-    </Reference>
-    <Reference Include="BepInEx">
-      <HintPath>libs\BepInEx.dll</HintPath>
-    </Reference>
-    <Reference Include="BepInEx.Harmony">
-      <HintPath>libs\BepInEx.Harmony.dll</HintPath>
-    </Reference>
-    <Reference Include="Jotunn">
-      <HintPath>libs\Jotunn.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoMod.Utils">
-      <HintPath>libs\MonoMod.Utils.dll</HintPath>
-    </Reference>
-    <Reference Include="netstandard">
-      <HintPath>libs\netstandard.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="ui_lib">
-      <HintPath>libs\ui_lib.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.TextMeshPro">
-      <HintPath>libs\Unity.TextMeshPro.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>libs\UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.AnimationModule">
-      <HintPath>libs\UnityEngine.AnimationModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.AssetBundleModule">
-      <HintPath>libs\UnityEngine.AssetBundleModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.AudioModule">
-      <HintPath>libs\UnityEngine.AudioModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.ClothModule">
-      <HintPath>libs\UnityEngine.ClothModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>libs\UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.IMGUIModule">
-      <HintPath>libs\UnityEngine.IMGUIModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>libs\UnityEngine.InputLegacyModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.InputModule">
-      <HintPath>libs\UnityEngine.InputModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.ParticleSystemModule">
-      <HintPath>libs\UnityEngine.ParticleSystemModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.PhysicsModule">
-      <HintPath>libs\UnityEngine.PhysicsModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>libs\UnityEngine.UI.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UIModule">
-      <HintPath>libs\UnityEngine.UIModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.VideoModule">
-      <HintPath>libs\UnityEngine.VideoModule.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="BoardingRampComponent.cs" />
-    <Compile Include="CreativeModeConsoleCommand.cs" />
-    <Compile Include="CultivatableComponent.cs" />
-    <Compile Include="CustomMastComponent.cs" />
-    <Compile Include="CustomTextureGroup.cs" />
-    <Compile Include="DockComponent.cs" />
-    <Compile Include="HideRaftConsoleCommand.cs" />
-    <Compile Include="MastComponent.cs" />
-    <Compile Include="MeshHelper.cs" />
-    <Compile Include="MoveableBaseRootComponent.cs" />
-    <Compile Include="MoveableBaseShipComponent.cs" />
-    <Compile Include="MoveRaftConsoleCommand.cs" />
-    <Compile Include="PierComponent.cs" />
-    <Compile Include="RecoverRaftConsoleCommand.cs" />
-    <Compile Include="RopeAnchorComponent.cs" />
-    <Compile Include="RopeComponent.cs" />
-    <Compile Include="RopeLadderComponent.cs" />
-    <Compile Include="RudderComponent.cs" />
-    <Compile Include="SailComponent.cs" />
-    <Compile Include="SailCreatorComponent.cs" />
-    <Compile Include="ValheimRAFT.cs" />
-    <Compile Include="Util\BinaryIOUtil.cs" />
-    <Compile Include="Util\ListUtil.cs" />
-    <Compile Include="Util\ZDOUtil.cs" />
-    <Compile Include="UI\EditRampComponent.cs" />
-    <Compile Include="UI\EditSailComponentPanel.cs" />
-    <Compile Include="UI\PanelUtil.cs" />
-    <Compile Include="Patches\Plantable_Patch.cs" />
-    <Compile Include="Patches\Teleport_Patch.cs" />
-    <Compile Include="Patches\ValheimRAFT_Patch.cs" />
-    <Compile Include="System\Runtime\CompilerServices\RefSafetyRulesAttribute.cs" />
-    <Compile Include="AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="AssetBundle.AssetBundle" />
-    <EmbeddedResource Include="AssetBundle.valheimraft" />
-    <EmbeddedResource Include="AssetBundle\AssetBundle.manifest" />
-    <EmbeddedResource Include="AssetBundle\valheimraft.manifest" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include=".gitignore" />
-    <Content Include="README.md" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+    <!--Project was exported from assembly: C:\Users\Frederick Engelhardt\Downloads\ValheimRAFT 1.4.9-1136-1-4-9-1692901079\ValheimRAFT\ValheimRAFT.dll-->
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+        <ProjectGuid>{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}</ProjectGuid>
+        <OutputType>Library</OutputType>
+        <AssemblyName>ValheimRAFT</AssemblyName>
+        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+        <ApplicationVersion>1.5.0.0</ApplicationVersion>
+        <FileAlignment>512</FileAlignment>
+        <RootNamespace>ValheimRAFT</RootNamespace>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <OutputPath>bin\Debug\</OutputPath>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    <ItemGroup>
+        <Reference Include="0Harmony">
+            <HintPath>libs\0Harmony.dll</HintPath>
+        </Reference>
+        <Reference Include="assembly_guiutils">
+            <HintPath>libs\assembly_guiutils.dll</HintPath>
+        </Reference>
+        <Reference Include="assembly_utils">
+            <HintPath>libs\assembly_utils.dll</HintPath>
+        </Reference>
+        <Reference Include="assembly_valheim">
+            <HintPath>libs\assembly_valheim.dll</HintPath>
+        </Reference>
+        <Reference Include="BepInEx">
+            <HintPath>libs\BepInEx.dll</HintPath>
+        </Reference>
+        <Reference Include="BepInEx.Harmony">
+            <HintPath>libs\BepInEx.Harmony.dll</HintPath>
+        </Reference>
+        <Reference Include="Jotunn">
+            <HintPath>libs\Jotunn.dll</HintPath>
+        </Reference>
+        <Reference Include="MonoMod.Utils">
+            <HintPath>libs\MonoMod.Utils.dll</HintPath>
+        </Reference>
+        <Reference Include="netstandard">
+            <HintPath>libs\netstandard.dll</HintPath>
+        </Reference>
+        <Reference Include="System"/>
+        <Reference Include="System.Core"/>
+        <Reference Include="ui_lib">
+            <HintPath>libs\ui_lib.dll</HintPath>
+        </Reference>
+        <Reference Include="Unity.TextMeshPro">
+            <HintPath>libs\Unity.TextMeshPro.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine">
+            <HintPath>libs\UnityEngine.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.AnimationModule">
+            <HintPath>libs\UnityEngine.AnimationModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.AssetBundleModule">
+            <HintPath>libs\UnityEngine.AssetBundleModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.AudioModule">
+            <HintPath>libs\UnityEngine.AudioModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.ClothModule">
+            <HintPath>libs\UnityEngine.ClothModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.CoreModule">
+            <HintPath>libs\UnityEngine.CoreModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.IMGUIModule">
+            <HintPath>libs\UnityEngine.IMGUIModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.InputLegacyModule">
+            <HintPath>libs\UnityEngine.InputLegacyModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.InputModule">
+            <HintPath>libs\UnityEngine.InputModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.ParticleSystemModule">
+            <HintPath>libs\UnityEngine.ParticleSystemModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.PhysicsModule">
+            <HintPath>libs\UnityEngine.PhysicsModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UI">
+            <HintPath>libs\UnityEngine.UI.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UIModule">
+            <HintPath>libs\UnityEngine.UIModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.VideoModule">
+            <HintPath>libs\UnityEngine.VideoModule.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Include="BoardingRampComponent.cs"/>
+        <Compile Include="CreativeModeConsoleCommand.cs"/>
+        <Compile Include="CultivatableComponent.cs"/>
+        <Compile Include="CustomMastComponent.cs"/>
+        <Compile Include="CustomTextureGroup.cs"/>
+        <Compile Include="DockComponent.cs"/>
+        <Compile Include="HideRaftConsoleCommand.cs"/>
+        <Compile Include="MastComponent.cs"/>
+        <Compile Include="MeshHelper.cs"/>
+        <Compile Include="MoveableBaseRootComponent.cs"/>
+        <Compile Include="MoveableBaseShipComponent.cs"/>
+        <Compile Include="MoveRaftConsoleCommand.cs"/>
+        <Compile Include="PierComponent.cs"/>
+        <Compile Include="RecoverRaftConsoleCommand.cs"/>
+        <Compile Include="RopeAnchorComponent.cs"/>
+        <Compile Include="RopeComponent.cs"/>
+        <Compile Include="RopeLadderComponent.cs"/>
+        <Compile Include="RudderComponent.cs"/>
+        <Compile Include="SailComponent.cs"/>
+        <Compile Include="SailCreatorComponent.cs"/>
+        <Compile Include="ValheimRAFT.cs"/>
+        <Compile Include="Util\BinaryIOUtil.cs"/>
+        <Compile Include="Util\ListUtil.cs"/>
+        <Compile Include="Util\ZDOUtil.cs"/>
+        <Compile Include="UI\EditRampComponent.cs"/>
+        <Compile Include="UI\EditSailComponentPanel.cs"/>
+        <Compile Include="UI\PanelUtil.cs"/>
+        <Compile Include="Patches\Plantable_Patch.cs"/>
+        <Compile Include="Patches\Teleport_Patch.cs"/>
+        <Compile Include="Patches\ValheimRAFT_Patch.cs"/>
+        <Compile Include="System\Runtime\CompilerServices\RefSafetyRulesAttribute.cs"/>
+        <Compile Include="AssemblyInfo.cs"/>
+    </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="AssetBundle.AssetBundle"/>
+        <EmbeddedResource Include="AssetBundle.valheimraft"/>
+        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest"/>
+        <EmbeddedResource Include="AssetBundle\valheimraft.manifest"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include=".gitignore"/>
+        <Content Include="README.md"/>
+    </ItemGroup>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

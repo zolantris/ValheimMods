@@ -11,11 +11,11 @@ namespace ValheimRAFT
 {
   internal class CreativeModeConsoleCommand : ConsoleCommand
   {
-    public virtual string Name => "RaftCreative";
+    public override string Name => "RaftCreative";
 
-    public virtual string Help => "Sets the current raft you are standing on into creative mode.";
+    public override string Help => "Sets the current raft you are standing on into creative mode.";
 
-    public virtual void Run(string[] args)
+    public override void Run(string[] args)
     {
       Player localPlayer = Player.m_localPlayer;
       if (!localPlayer)
