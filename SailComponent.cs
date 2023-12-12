@@ -306,9 +306,9 @@ namespace ValheimRAFT
         }, 0);
         mesh1.Optimize();
         Vector3 vector3_2 = Vector3.op_Subtraction(this.m_sailCorners[1], this.m_sailCorners[0]);
-        float magnitude1 = ((Vector3) ref vector3_2).magnitude;
+        float magnitude1 = ((Vector3)  vector3_2).magnitude;
         vector3_1 = Vector3.op_Subtraction(this.m_sailCorners[2], this.m_sailCorners[0]);
-        float magnitude2 = ((Vector3) ref vector3_1).magnitude;
+        float magnitude2 = ((Vector3)  vector3_1).magnitude;
         float num1 = Mathf.Round(magnitude1 / this.m_sailSubdivision);
         float num2 = Mathf.Round(magnitude2 / this.m_sailSubdivision);
         for (int index1 = 0; (double) index1 <= (double) num1; ++index1)
@@ -349,7 +349,7 @@ namespace ValheimRAFT
         while (true)
         {
           vector3_1 = Vector3.op_Subtraction(mesh2.vertices[mesh2.triangles[0]], mesh2.vertices[mesh2.triangles[1]]);
-          if ((double) ((Vector3) ref vector3_1).sqrMagnitude >= (double) num)
+          if ((double) ((Vector3)  vector3_1).sqrMagnitude >= (double) num)
             MeshHelper.Subdivide(mesh2);
           else
             break;
@@ -382,11 +382,11 @@ namespace ValheimRAFT
           this.m_lockedSailSides = SailComponent.SailLockedSide.Everything;
         }
         Vector3 vector3_1 = Vector3.op_Subtraction(this.m_sailCorners[0], this.m_sailCorners[1]);
-        Vector3 normalized1 = ((Vector3) ref vector3_1).normalized;
+        Vector3 normalized1 = ((Vector3)  vector3_1).normalized;
         Vector3 vector3_2 = Vector3.op_Subtraction(this.m_sailCorners[1], this.m_sailCorners[2]);
-        Vector3 normalized2 = ((Vector3) ref vector3_2).normalized;
+        Vector3 normalized2 = ((Vector3)  vector3_2).normalized;
         Vector3 vector3_3 = Vector3.op_Subtraction(this.m_sailCorners[2], this.m_sailCorners[0]);
-        Vector3 normalized3 = ((Vector3) ref vector3_3).normalized;
+        Vector3 normalized3 = ((Vector3)  vector3_3).normalized;
         for (int index = 0; index < sharedMesh.vertices.Length; ++index)
         {
           if (this.m_lockedSailCorners.HasFlag((Enum) SailComponent.SailLockedSide.A) && Vector3.op_Equality(sharedMesh.vertices[index], this.m_sailCorners[0]))
@@ -399,7 +399,7 @@ namespace ValheimRAFT
           if (this.m_lockedSailSides.HasFlag((Enum) SailComponent.SailLockedSide.A))
           {
             vector3_3 = Vector3.op_Subtraction(this.m_sailCorners[0], sharedMesh.vertices[index]);
-            num1 = (double) Mathf.Abs(Vector3.Dot(((Vector3) ref vector3_3).normalized, normalized1)) >= 0.99989998340606689 ? 1 : 0;
+            num1 = (double) Mathf.Abs(Vector3.Dot(((Vector3)  vector3_3).normalized, normalized1)) >= 0.99989998340606689 ? 1 : 0;
           }
           else
             num1 = 0;
@@ -409,7 +409,7 @@ namespace ValheimRAFT
           if (this.m_lockedSailSides.HasFlag((Enum) SailComponent.SailLockedSide.B))
           {
             vector3_3 = Vector3.op_Subtraction(this.m_sailCorners[1], sharedMesh.vertices[index]);
-            num2 = (double) Mathf.Abs(Vector3.Dot(((Vector3) ref vector3_3).normalized, normalized2)) >= 0.99989998340606689 ? 1 : 0;
+            num2 = (double) Mathf.Abs(Vector3.Dot(((Vector3)  vector3_3).normalized, normalized2)) >= 0.99989998340606689 ? 1 : 0;
           }
           else
             num2 = 0;
@@ -419,7 +419,7 @@ namespace ValheimRAFT
           if (this.m_lockedSailSides.HasFlag((Enum) SailComponent.SailLockedSide.C))
           {
             vector3_3 = Vector3.op_Subtraction(this.m_sailCorners[2], sharedMesh.vertices[index]);
-            num3 = (double) Mathf.Abs(Vector3.Dot(((Vector3) ref vector3_3).normalized, normalized3)) >= 0.99989998340606689 ? 1 : 0;
+            num3 = (double) Mathf.Abs(Vector3.Dot(((Vector3)  vector3_3).normalized, normalized3)) >= 0.99989998340606689 ? 1 : 0;
           }
           else
             num3 = 0;
@@ -435,13 +435,13 @@ namespace ValheimRAFT
           this.m_lockedSailSides = SailComponent.SailLockedSide.Everything;
         }
         Vector3 vector3_4 = Vector3.op_Subtraction(this.m_sailCorners[0], this.m_sailCorners[1]);
-        Vector3 normalized4 = ((Vector3) ref vector3_4).normalized;
+        Vector3 normalized4 = ((Vector3)  vector3_4).normalized;
         Vector3 vector3_5 = Vector3.op_Subtraction(this.m_sailCorners[1], this.m_sailCorners[2]);
-        Vector3 normalized5 = ((Vector3) ref vector3_5).normalized;
+        Vector3 normalized5 = ((Vector3)  vector3_5).normalized;
         Vector3 vector3_6 = Vector3.op_Subtraction(this.m_sailCorners[2], this.m_sailCorners[3]);
-        Vector3 normalized6 = ((Vector3) ref vector3_6).normalized;
+        Vector3 normalized6 = ((Vector3)  vector3_6).normalized;
         vector3_6 = Vector3.op_Subtraction(this.m_sailCorners[3], this.m_sailCorners[0]);
-        Vector3 normalized7 = ((Vector3) ref vector3_6).normalized;
+        Vector3 normalized7 = ((Vector3)  vector3_6).normalized;
         for (int index = 0; index < sharedMesh.vertices.Length; ++index)
         {
           if (this.m_lockedSailCorners.HasFlag((Enum) SailComponent.SailLockedSide.A) && Vector3.op_Equality(sharedMesh.vertices[index], this.m_sailCorners[0]))
@@ -456,7 +456,7 @@ namespace ValheimRAFT
           if (this.m_lockedSailSides.HasFlag((Enum) SailComponent.SailLockedSide.A))
           {
             vector3_6 = Vector3.op_Subtraction(this.m_sailCorners[0], sharedMesh.vertices[index]);
-            num4 = (double) Mathf.Abs(Vector3.Dot(((Vector3) ref vector3_6).normalized, normalized4)) >= 0.99989998340606689 ? 1 : 0;
+            num4 = (double) Mathf.Abs(Vector3.Dot(((Vector3)  vector3_6).normalized, normalized4)) >= 0.99989998340606689 ? 1 : 0;
           }
           else
             num4 = 0;
@@ -466,7 +466,7 @@ namespace ValheimRAFT
           if (this.m_lockedSailSides.HasFlag((Enum) SailComponent.SailLockedSide.B))
           {
             vector3_6 = Vector3.op_Subtraction(this.m_sailCorners[1], sharedMesh.vertices[index]);
-            num5 = (double) Mathf.Abs(Vector3.Dot(((Vector3) ref vector3_6).normalized, normalized5)) >= 0.99989998340606689 ? 1 : 0;
+            num5 = (double) Mathf.Abs(Vector3.Dot(((Vector3)  vector3_6).normalized, normalized5)) >= 0.99989998340606689 ? 1 : 0;
           }
           else
             num5 = 0;
@@ -476,7 +476,7 @@ namespace ValheimRAFT
           if (this.m_lockedSailSides.HasFlag((Enum) SailComponent.SailLockedSide.C))
           {
             vector3_6 = Vector3.op_Subtraction(this.m_sailCorners[2], sharedMesh.vertices[index]);
-            num6 = (double) Mathf.Abs(Vector3.Dot(((Vector3) ref vector3_6).normalized, normalized6)) >= 0.99989998340606689 ? 1 : 0;
+            num6 = (double) Mathf.Abs(Vector3.Dot(((Vector3)  vector3_6).normalized, normalized6)) >= 0.99989998340606689 ? 1 : 0;
           }
           else
             num6 = 0;
@@ -486,7 +486,7 @@ namespace ValheimRAFT
           if (this.m_lockedSailSides.HasFlag((Enum) SailComponent.SailLockedSide.D))
           {
             vector3_6 = Vector3.op_Subtraction(this.m_sailCorners[3], sharedMesh.vertices[index]);
-            num7 = (double) Mathf.Abs(Vector3.Dot(((Vector3) ref vector3_6).normalized, normalized7)) >= 0.99989998340606689 ? 1 : 0;
+            num7 = (double) Mathf.Abs(Vector3.Dot(((Vector3)  vector3_6).normalized, normalized7)) >= 0.99989998340606689 ? 1 : 0;
           }
           else
             num7 = 0;

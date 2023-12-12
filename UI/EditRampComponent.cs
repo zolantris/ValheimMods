@@ -21,7 +21,7 @@ namespace ValheimRAFT.UI
     public void ShowPanel(BoardingRampComponent boardingRamp)
     {
       this.m_ramp = boardingRamp;
-      if (!Object.op_Implicit((Object) this.m_editPanel))
+      if (!this.m_editPanel)
         this.InitPanel();
       this.m_segmentCount = boardingRamp.m_segments;
       this.m_segmentsInput.SetTextWithoutNotify(boardingRamp.m_segments.ToString());
@@ -32,15 +32,15 @@ namespace ValheimRAFT.UI
     private void InitPanel()
     {
       Transform transform = GUIManager.CustomGUIFront.transform;
-      this.m_editPanel = Object.Instantiate<GameObject>(ValheimRAFT.ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("edit_ramp_panel"), transform, false);
+      this.m_editPanel = Object.Instantiate<GameObject>(ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("edit_ramp_panel"), transform, false);
       PanelUtil.ApplyPanelStyle(this.m_editPanel);
       this.m_segmentsInput = ((Component) this.m_editPanel.transform.Find("SegmentsInput")).GetComponent<InputField>();
       Button component1 = ((Component) this.m_editPanel.transform.Find("SaveButton")).GetComponent<Button>();
       Button component2 = ((Component) this.m_editPanel.transform.Find("CancelButton")).GetComponent<Button>();
       // ISSUE: method pointer
-      ((UnityEvent) component1.onClick).AddListener(new UnityAction((object) this, __methodptr(SaveEditPanel)));
+      ((UnityEvent) component1.onClick).AddListener(new UnityAction(SaveEditPanel));
       // ISSUE: method pointer
-      ((UnityEvent) component2.onClick).AddListener(new UnityAction((object) this, __methodptr(CancelEditPanel)));
+      ((UnityEvent) component2.onClick).AddListener(new UnityAction(CancelEditPanel));
       // ISSUE: method pointer
       ((UnityEvent<string>) this.m_segmentsInput.onValueChanged).AddListener(new UnityAction<string>((object) this, __methodptr(\u003CInitPanel\u003Eb__5_0)));
     }
@@ -55,7 +55,7 @@ namespace ValheimRAFT.UI
 
     private void SaveEditPanel()
     {
-      if (Object.op_Inequality((Object) this.m_ramp, (Object) null))
+      if (this.m_ramp != (Object) null)
         this.m_ramp.SetSegmentCount(this.m_segmentCount);
       this.ClosePanel();
     }

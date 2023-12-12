@@ -1,5 +1,5 @@
 ﻿// Decompiled with JetBrains decompiler
-// Type: ValheimRAFT.ValheimRAFT
+// Type: ValheimRAFT
 // Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
 // MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
 // Assembly location: C:\Users\Frederick Engelhardt\Downloads\ValheimRAFT 1.4.9-1136-1-4-9-1692901079\ValheimRAFT\ValheimRAFT.dll
@@ -17,12 +17,13 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.U2D;
+using Object = UnityEngine.Object;
 
 namespace ValheimRAFT
 {
   [BepInPlugin("BepIn.Sarcen.ValheimRAFT", "ValheimRAFT", "1.4.9")]
-  [BepInDependency]
-  [NetworkCompatibility]
+  // [BepInDependency]
+  [NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
   public class ValheimRAFT : BaseUnityPlugin
   {
     internal const string Author = "Sarcen";
@@ -35,7 +36,7 @@ namespace ValheimRAFT
     public static AssetBundle m_assetBundle;
     private bool m_customItemsAdded;
 
-    public static ValheimRAFT.ValheimRAFT Instance { get; private set; }
+    public static ValheimRAFT Instance { get; private set; }
 
     public ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
 
@@ -43,7 +44,7 @@ namespace ValheimRAFT
 
     private void Awake()
     {
-      ValheimRAFT.ValheimRAFT.Instance = this;
+      ValheimRAFT.Instance = this;
       this.MakeAllPiecesWaterProof = this.Config.Bind<bool>("Server config", "MakeAllPiecesWaterProof", true, new ConfigDescription("Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.", (AcceptableValueBase) null, new object[1]
       {
         (object) new ConfigurationManagerAttributes()
@@ -58,24 +59,24 @@ namespace ValheimRAFT
           IsAdminOnly = true
         }
       }));
-      ValheimRAFT.ValheimRAFT.m_harmony = new Harmony("Harmony.Sarcen.ValheimRAFT");
-      ValheimRAFT.ValheimRAFT.m_harmony.PatchAll();
+      m_harmony = new Harmony("Harmony.Sarcen.ValheimRAFT");
+      m_harmony.PatchAll();
       int layer = LayerMask.NameToLayer("vehicle");
       for (int index = 0; index < 32; ++index)
-        Physics.IgnoreLayerCollision(ValheimRAFT.ValheimRAFT.CustomRaftLayer, index, Physics.GetIgnoreLayerCollision(layer, index));
-      Physics.IgnoreLayerCollision(ValheimRAFT.ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("vehicle"), true);
-      Physics.IgnoreLayerCollision(ValheimRAFT.ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("piece"), true);
-      Physics.IgnoreLayerCollision(ValheimRAFT.ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("character"), true);
-      Physics.IgnoreLayerCollision(ValheimRAFT.ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("smoke"), true);
-      Physics.IgnoreLayerCollision(ValheimRAFT.ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("character_ghost"), true);
-      Physics.IgnoreLayerCollision(ValheimRAFT.ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("weapon"), true);
-      Physics.IgnoreLayerCollision(ValheimRAFT.ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("blocker"), true);
-      Physics.IgnoreLayerCollision(ValheimRAFT.ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("pathblocker"), true);
-      Physics.IgnoreLayerCollision(ValheimRAFT.ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("viewblock"), true);
-      Physics.IgnoreLayerCollision(ValheimRAFT.ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("character_net"), true);
-      Physics.IgnoreLayerCollision(ValheimRAFT.ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("character_noenv"), true);
-      Physics.IgnoreLayerCollision(ValheimRAFT.ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("Default_small"), false);
-      Physics.IgnoreLayerCollision(ValheimRAFT.ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("Default"), false);
+        Physics.IgnoreLayerCollision(ValheimRAFT.CustomRaftLayer, index, Physics.GetIgnoreLayerCollision(layer, index));
+      Physics.IgnoreLayerCollision(ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("vehicle"), true);
+      Physics.IgnoreLayerCollision(ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("piece"), true);
+      Physics.IgnoreLayerCollision(ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("character"), true);
+      Physics.IgnoreLayerCollision(ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("smoke"), true);
+      Physics.IgnoreLayerCollision(ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("character_ghost"), true);
+      Physics.IgnoreLayerCollision(ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("weapon"), true);
+      Physics.IgnoreLayerCollision(ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("blocker"), true);
+      Physics.IgnoreLayerCollision(ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("pathblocker"), true);
+      Physics.IgnoreLayerCollision(ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("viewblock"), true);
+      Physics.IgnoreLayerCollision(ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("character_net"), true);
+      Physics.IgnoreLayerCollision(ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("character_noenv"), true);
+      Physics.IgnoreLayerCollision(ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("Default_small"), false);
+      Physics.IgnoreLayerCollision(ValheimRAFT.CustomRaftLayer, LayerMask.NameToLayer("Default"), false);
       CommandManager.Instance.AddConsoleCommand((ConsoleCommand) new CreativeModeConsoleCommand());
       CommandManager.Instance.AddConsoleCommand((ConsoleCommand) new MoveRaftConsoleCommand());
       CommandManager.Instance.AddConsoleCommand((ConsoleCommand) new HideRaftConsoleCommand());
@@ -91,7 +92,7 @@ namespace ValheimRAFT
       {
         CustomTextureGroup.CustomTexture texture = customTextureGroup1.Textures[index];
         texture.Texture.wrapMode = (TextureWrapMode) 1;
-        if (Object.op_Implicit((Object) texture.Normal))
+        if (((Object) texture.Normal))
           texture.Normal.wrapMode = (TextureWrapMode) 1;
       }
       CustomTextureGroup customTextureGroup2 = CustomTextureGroup.Load("Patterns");
@@ -100,7 +101,7 @@ namespace ValheimRAFT
         CustomTextureGroup.CustomTexture texture = customTextureGroup2.Textures[index];
         texture.Texture.filterMode = (FilterMode) 0;
         texture.Texture.wrapMode = (TextureWrapMode) 0;
-        if (Object.op_Implicit((Object) texture.Normal))
+        if (((Object) texture.Normal))
           texture.Normal.wrapMode = (TextureWrapMode) 0;
       }
       CustomTextureGroup customTextureGroup3 = CustomTextureGroup.Load("Logos");
@@ -108,7 +109,7 @@ namespace ValheimRAFT
       {
         CustomTextureGroup.CustomTexture texture = customTextureGroup3.Textures[index];
         texture.Texture.wrapMode = (TextureWrapMode) 1;
-        if (Object.op_Implicit((Object) texture.Normal))
+        if (((Object) texture.Normal))
           texture.Normal.wrapMode = (TextureWrapMode) 1;
       }
     }
@@ -118,13 +119,13 @@ namespace ValheimRAFT
       if (this.m_customItemsAdded)
         return;
       this.m_customItemsAdded = true;
-      ValheimRAFT.ValheimRAFT.m_assetBundle = AssetUtils.LoadAssetBundleFromResources("valheimraft", Assembly.GetExecutingAssembly());
-      GameObject gameObject1 = ValheimRAFT.ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("Assets/boarding_ramp.prefab");
-      GameObject gameObject2 = ValheimRAFT.ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("Assets/steering_wheel.prefab");
-      GameObject gameObject3 = ValheimRAFT.ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("Assets/rope_ladder.prefab");
-      GameObject gameObject4 = ValheimRAFT.ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("Assets/rope_anchor.prefab");
-      SpriteAtlas spriteAtlas = ValheimRAFT.ValheimRAFT.m_assetBundle.LoadAsset<SpriteAtlas>("Assets/icons.spriteatlas");
-      Material material = ValheimRAFT.ValheimRAFT.m_assetBundle.LoadAsset<Material>("Assets/SailMat.mat");
+      ValheimRAFT.m_assetBundle = AssetUtils.LoadAssetBundleFromResources("valheimraft", Assembly.GetExecutingAssembly());
+      GameObject gameObject1 = ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("Assets/boarding_ramp.prefab");
+      GameObject gameObject2 = ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("Assets/steering_wheel.prefab");
+      GameObject gameObject3 = ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("Assets/rope_ladder.prefab");
+      GameObject gameObject4 = ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("Assets/rope_anchor.prefab");
+      SpriteAtlas spriteAtlas = ValheimRAFT.m_assetBundle.LoadAsset<SpriteAtlas>("Assets/icons.spriteatlas");
+      Material material = ValheimRAFT.m_assetBundle.LoadAsset<Material>("Assets/SailMat.mat");
       PrefabManager instance1 = PrefabManager.Instance;
       GameObject prefab1 = instance1.GetPrefab("Raft");
       Piece component1 = instance1.GetPrefab("wood_pole2").GetComponent<Piece>();
@@ -138,10 +139,10 @@ namespace ValheimRAFT
       ((Component) clonedPrefab1.transform.Find("ship/visual/mast")).gameObject.SetActive(false);
       ((Component) clonedPrefab1.transform.Find("interactive/mast")).gameObject.SetActive(false);
       clonedPrefab1.GetComponent<Rigidbody>().mass = 1000f;
-      Object.Destroy((Object) ((Component) clonedPrefab1.transform.Find("ship/colliders/log")).gameObject);
-      Object.Destroy((Object) ((Component) clonedPrefab1.transform.Find("ship/colliders/log (1)")).gameObject);
-      Object.Destroy((Object) ((Component) clonedPrefab1.transform.Find("ship/colliders/log (2)")).gameObject);
-      Object.Destroy((Object) ((Component) clonedPrefab1.transform.Find("ship/colliders/log (3)")).gameObject);
+      Destroy((Object) ((Component) clonedPrefab1.transform.Find("ship/colliders/log")).gameObject);
+      Destroy((Object) ((Component) clonedPrefab1.transform.Find("ship/colliders/log (1)")).gameObject);
+      Destroy((Object) ((Component) clonedPrefab1.transform.Find("ship/colliders/log (2)")).gameObject);
+      Destroy((Object) ((Component) clonedPrefab1.transform.Find("ship/colliders/log (3)")).gameObject);
       Piece component4 = clonedPrefab1.GetComponent<Piece>();
       component4.m_name = "$mb_raft";
       component4.m_description = "$mb_raft_desc";
@@ -177,7 +178,7 @@ namespace ValheimRAFT
       wearNtear1.m_destroyedEffect = component3.m_destroyedEffect;
       wearNtear1.m_hitEffect = component3.m_hitEffect;
       wearNtear1.m_noRoofWear = false;
-      ValheimRAFT.ValheimRAFT.FixedRopes(clonedPrefab2);
+      ValheimRAFT.FixedRopes(clonedPrefab2);
       this.FixCollisionLayers(clonedPrefab2);
       PieceManager pieceManager2 = instance2;
       GameObject gameObject9 = clonedPrefab2;
@@ -218,7 +219,7 @@ namespace ValheimRAFT
       wearNtear2.m_noRoofWear = false;
       wearNtear2.m_destroyedEffect = component3.m_destroyedEffect;
       wearNtear2.m_hitEffect = component3.m_hitEffect;
-      ValheimRAFT.ValheimRAFT.FixedRopes(clonedPrefab3);
+      ValheimRAFT.FixedRopes(clonedPrefab3);
       this.FixCollisionLayers(clonedPrefab3);
       PieceManager pieceManager3 = instance2;
       GameObject gameObject10 = clonedPrefab3;
@@ -265,7 +266,7 @@ namespace ValheimRAFT
       wearNtear3.m_noRoofWear = false;
       wearNtear3.m_destroyedEffect = component3.m_destroyedEffect;
       wearNtear3.m_hitEffect = component3.m_hitEffect;
-      ValheimRAFT.ValheimRAFT.FixedRopes(clonedPrefab4);
+      ValheimRAFT.FixedRopes(clonedPrefab4);
       this.FixCollisionLayers(clonedPrefab4);
       PieceManager pieceManager4 = instance2;
       GameObject gameObject11 = clonedPrefab4;
@@ -657,7 +658,7 @@ namespace ValheimRAFT
       PieceConfig pieceConfig22 = pieceConfig21;
       CustomPiece customPiece11 = new CustomPiece(gameObject22, false, pieceConfig22);
       pieceManager11.AddPiece(customPiece11);
-      GameObject gameObject23 = ValheimRAFT.ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("dirt_floor.prefab");
+      GameObject gameObject23 = ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("dirt_floor.prefab");
       GameObject clonedPrefab12 = instance1.CreateClonedPrefab("MBDirtfloor_2x2", gameObject23);
       clonedPrefab12.transform.localScale = new Vector3(2f, 1f, 2f);
       clonedPrefab12.AddComponent<ZNetView>().m_persistent = true;
@@ -686,7 +687,7 @@ namespace ValheimRAFT
       PieceConfig pieceConfig24 = pieceConfig23;
       CustomPiece customPiece12 = new CustomPiece(gameObject24, false, pieceConfig24);
       pieceManager12.AddPiece(customPiece12);
-      GameObject gameObject25 = ValheimRAFT.ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("dirt_floor.prefab");
+      GameObject gameObject25 = ValheimRAFT.m_assetBundle.LoadAsset<GameObject>("dirt_floor.prefab");
       GameObject clonedPrefab13 = instance1.CreateClonedPrefab("MBDirtfloor_1x1", gameObject25);
       clonedPrefab13.transform.localScale = new Vector3(1f, 1f, 1f);
       clonedPrefab13.AddComponent<ZNetView>().m_persistent = true;
