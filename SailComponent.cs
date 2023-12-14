@@ -98,7 +98,6 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     m_sailComponents.Add(this);
     m_mastComponent = GetComponent<MastComponent>();
     m_sailObject = transform.Find("Sail").gameObject;
-    ZLog.Log($"m_sailObject ${m_sailObject}");
     m_sailCloth = m_sailObject.GetComponent<Cloth>();
     if ((bool)(UnityEngine.Object)(object)m_sailCloth)
     {
@@ -108,10 +107,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     }
 
     m_mesh = m_sailObject.GetComponent<SkinnedMeshRenderer>();
-    ZLog.Log($"SailMesh loaded {m_mesh.material}");
 
     m_meshCollider = m_sailObject.GetComponent<MeshCollider>();
-    ZLog.Log($"SailMesh collider loaded: {m_meshCollider}");
     m_nview = GetComponent<ZNetView>();
     if (m_sailInit)
     {
@@ -164,16 +161,10 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   public void LoadFromMaterial()
   {
     Material sailMaterial = GetSailMaterial();
-    ZLog.Log(sailMaterial);
 
     Texture mainTex = sailMaterial.GetTexture("_MainTex");
     CustomTextureGroup.CustomTexture mainGroup = CustomTextureGroup.Get("Sails")
       .GetTextureByHash(mainTex.name.GetStableHashCode());
-
-
-    ZLog.Log("Logging CustomTexture for mainGroup");
-    ZLog.Log(mainTex);
-    ZLog.Log(mainGroup);
 
     if (mainGroup != null)
     {
@@ -211,8 +202,6 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public Material GetSailMaterial()
   {
-    ZLog.Log("GetSailMaterialCalled");
-    ZLog.Log(m_mesh.material);
     return m_mesh.material;
   }
 

@@ -818,7 +818,6 @@ namespace ValheimRAFT
       }
 
       stringBuilder.AppendLine("");
-      ZLog.Log((object)stringBuilder.ToString());
     }
   }
 }
