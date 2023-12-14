@@ -69,7 +69,7 @@ public class CustomTextureGroup
 
     group = new CustomTextureGroup();
     m_groups.Add(groupName, group);
-    string assetDirectory = Path.Combine(Paths.PluginPath, "ValheimRAFT", "Assets");
+    string assetDirectory = Path.Combine(Paths.PluginPath, "zolantris-ValheimRAFT", "Assets");
     string[] files = Directory.GetFiles(Path.Combine(assetDirectory, groupName));
     foreach (string file in files)
     {

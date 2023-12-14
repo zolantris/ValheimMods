@@ -164,9 +164,17 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   public void LoadFromMaterial()
   {
     Material sailMaterial = GetSailMaterial();
+    ZLog.Log(sailMaterial);
+
     Texture mainTex = sailMaterial.GetTexture("_MainTex");
     CustomTextureGroup.CustomTexture mainGroup = CustomTextureGroup.Get("Sails")
       .GetTextureByHash(mainTex.name.GetStableHashCode());
+
+
+    ZLog.Log("Logging CustomTexture for mainGroup");
+    ZLog.Log(mainTex);
+    ZLog.Log(mainGroup);
+
     if (mainGroup != null)
     {
       m_mainHash = mainTex.name.GetStableHashCode();
@@ -203,6 +211,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public Material GetSailMaterial()
   {
+    ZLog.Log("GetSailMaterialCalled");
+    ZLog.Log(m_mesh.material);
     return m_mesh.material;
   }
 

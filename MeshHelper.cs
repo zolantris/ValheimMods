@@ -1,93 +1,100 @@
-﻿// Decompiled with JetBrains decompiler
-// Type: ValheimRAFT.MeshHelper
-// Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace ValheimRAFT
+namespace ValheimRAFT;
+
+public class MeshHelper
 {
-  public class MeshHelper
+  private static List<Vector3> vertices;
+
+  private static List<Vector3> normals;
+
+  private static List<Vector2> uv;
+
+  private static List<int> indices;
+
+  private static Dictionary<uint, int> newVectices;
+
+  private static int GetNewVertex(int i1, int i2)
   {
-    private static List<Vector3> vertices;
-    private static List<Vector3> normals;
-    private static List<Vector2> uv;
-    private static List<int> indices;
-    private static Dictionary<uint, int> newVectices;
-
-    private static int GetNewVertex(int i1, int i2)
+    uint t1 = (uint)((i1 << 16) | i2);
+    uint t2 = (uint)((i2 << 16) | i1);
+    if (newVectices.ContainsKey(t2))
     {
-      uint key1 = (uint)(i1 << 16 | i2);
-      uint key2 = (uint)(i2 << 16 | i1);
-      if (MeshHelper.newVectices.ContainsKey(key2))
-        return MeshHelper.newVectices[key2];
-      if (MeshHelper.newVectices.ContainsKey(key1))
-        return MeshHelper.newVectices[key1];
-      int count = MeshHelper.vertices.Count;
-      MeshHelper.newVectices.Add(key1, count);
-      MeshHelper.vertices.Add((
-        (MeshHelper.vertices[i1] + MeshHelper.vertices[i2]) * 0.5f));
-      if (MeshHelper.normals != null)
-      {
-        List<Vector3> normals = MeshHelper.normals;
-        Vector3 vector3 = MeshHelper.normals[i1] + MeshHelper.normals[i2];
-        Vector3 normalized = vector3.normalized;
-        normals.Add(normalized);
-      }
-
-      if (MeshHelper.uv != null)
-        MeshHelper.uv.Add(
-          ((MeshHelper.uv[i1] + MeshHelper.uv[i2]) * 0.5f));
-      return count;
+      return newVectices[t2];
     }
 
-    public static void Subdivide(Mesh mesh)
+    if (newVectices.ContainsKey(t1))
     {
-      MeshHelper.newVectices = new Dictionary<uint, int>();
-      MeshHelper.vertices = new List<Vector3>((IEnumerable<Vector3>)mesh.vertices);
-      MeshHelper.normals = mesh.normals == null || mesh.normals.Length != mesh.vertices.Length
-        ? (List<Vector3>)null
-        : new List<Vector3>((IEnumerable<Vector3>)mesh.normals);
-      MeshHelper.uv = mesh.uv == null || mesh.uv.Length != mesh.vertices.Length
-        ? (List<Vector2>)null
-        : new List<Vector2>((IEnumerable<Vector2>)mesh.uv);
-      MeshHelper.indices = new List<int>();
-      int[] triangles = mesh.triangles;
-      for (int index = 0; index < triangles.Length; index += 3)
-      {
-        int num1 = triangles[index];
-        int num2 = triangles[index + 1];
-        int num3 = triangles[index + 2];
-        int newVertex1 = MeshHelper.GetNewVertex(num1, num2);
-        int newVertex2 = MeshHelper.GetNewVertex(num2, num3);
-        int newVertex3 = MeshHelper.GetNewVertex(num3, num1);
-        MeshHelper.indices.Add(num1);
-        MeshHelper.indices.Add(newVertex1);
-        MeshHelper.indices.Add(newVertex3);
-        MeshHelper.indices.Add(num2);
-        MeshHelper.indices.Add(newVertex2);
-        MeshHelper.indices.Add(newVertex1);
-        MeshHelper.indices.Add(num3);
-        MeshHelper.indices.Add(newVertex3);
-        MeshHelper.indices.Add(newVertex2);
-        MeshHelper.indices.Add(newVertex1);
-        MeshHelper.indices.Add(newVertex2);
-        MeshHelper.indices.Add(newVertex3);
-      }
-
-      mesh.vertices = MeshHelper.vertices.ToArray();
-      if (MeshHelper.normals != null)
-        mesh.normals = MeshHelper.normals.ToArray();
-      if (MeshHelper.uv != null)
-        mesh.uv = MeshHelper.uv.ToArray();
-      mesh.triangles = MeshHelper.indices.ToArray();
-      MeshHelper.newVectices = (Dictionary<uint, int>)null;
-      MeshHelper.vertices = (List<Vector3>)null;
-      MeshHelper.normals = (List<Vector3>)null;
-      MeshHelper.uv = (List<Vector2>)null;
-      MeshHelper.indices = (List<int>)null;
+      return newVectices[t1];
     }
+
+    int newIndex = vertices.Count;
+    newVectices.Add(t1, newIndex);
+    vertices.Add((vertices[i1] + vertices[i2]) * 0.5f);
+    if (normals != null)
+    {
+      normals.Add((normals[i1] + normals[i2]).normalized);
+    }
+
+    if (uv != null)
+    {
+      uv.Add((uv[i1] + uv[i2]) * 0.5f);
+    }
+
+    return newIndex;
+  }
+
+  public static void Subdivide(Mesh mesh)
+  {
+    newVectices = new Dictionary<uint, int>();
+    vertices = new List<Vector3>(mesh.vertices);
+    normals = ((mesh.normals != null && mesh.normals.Length == mesh.vertices.Length)
+      ? new List<Vector3>(mesh.normals)
+      : null);
+    uv = ((mesh.uv != null && mesh.uv.Length == mesh.vertices.Length)
+      ? new List<Vector2>(mesh.uv)
+      : null);
+    indices = new List<int>();
+    int[] triangles = mesh.triangles;
+    for (int i = 0; i < triangles.Length; i += 3)
+    {
+      int i2 = triangles[i];
+      int i3 = triangles[i + 1];
+      int i4 = triangles[i + 2];
+      int a = GetNewVertex(i2, i3);
+      int b = GetNewVertex(i3, i4);
+      int c = GetNewVertex(i4, i2);
+      indices.Add(i2);
+      indices.Add(a);
+      indices.Add(c);
+      indices.Add(i3);
+      indices.Add(b);
+      indices.Add(a);
+      indices.Add(i4);
+      indices.Add(c);
+      indices.Add(b);
+      indices.Add(a);
+      indices.Add(b);
+      indices.Add(c);
+    }
+
+    mesh.vertices = vertices.ToArray();
+    if (normals != null)
+    {
+      mesh.normals = normals.ToArray();
+    }
+
+    if (uv != null)
+    {
+      mesh.uv = uv.ToArray();
+    }
+
+    mesh.triangles = indices.ToArray();
+    newVectices = null;
+    vertices = null;
+    normals = null;
+    uv = null;
+    indices = null;
   }
 }

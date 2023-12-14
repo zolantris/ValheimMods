@@ -22,14 +22,14 @@ using Object = UnityEngine.Object;
 
 namespace ValheimRAFT
 {
-  [BepInPlugin("BepIn.Sarcen.ValheimRAFT", "ValheimRAFT", "1.5.0")]
+  [BepInPlugin(BepInGUID, Name, Version)]
   // [BepInDependency]
   [NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
   public class ValheimRaftEntrypoint : BaseUnityPlugin
   {
     internal const string Author = "Sarcen";
     internal const string Name = "ValheimRAFT";
-    internal const string Version = "1.4.9";
+    internal const string Version = "1.5.0";
     internal const string BepInGUID = "BepIn.Sarcen.ValheimRAFT";
     internal const string HarmonyGUID = "Harmony.Sarcen.ValheimRAFT";
     internal static Harmony m_harmony;
@@ -65,7 +65,7 @@ namespace ValheimRAFT
               IsAdminOnly = true
             }
           }));
-      m_harmony = new Harmony("Harmony.Sarcen.ValheimRAFT");
+      m_harmony = new Harmony(HarmonyGUID);
       m_harmony.PatchAll();
       int layer = LayerMask.NameToLayer("vehicle");
       for (int index = 0; index < 32; ++index)
@@ -152,17 +152,13 @@ namespace ValheimRAFT
       m_customItemsAdded = true;
       m_assetBundle =
         AssetUtils.LoadAssetBundleFromResources("valheimraft", Assembly.GetExecutingAssembly());
-      Logger.Log(LogLevel.Debug,
-        $"asset_bundle loaded {m_assetBundle.GetAllAssetNames().Join()} {m_assetBundle.GetAllScenePaths().Join()}");
-      GameObject boarding_ramp = m_assetBundle.LoadAsset<GameObject>("boarding_ramp");
+      GameObject boarding_ramp = m_assetBundle.LoadAsset<GameObject>("Assets/boarding_ramp.prefab");
       GameObject steering_wheel =
-        m_assetBundle.LoadAsset<GameObject>("steering_wheel");
-      Logger.Log(LogLevel.Debug,
-        $"loading status steering_wheel: {steering_wheel.gameObject.name}");
-
-      GameObject rope_ladder = m_assetBundle.LoadAsset<GameObject>("rope_ladder");
-      GameObject rope_anchor = m_assetBundle.LoadAsset<GameObject>("rope_anchor");
-      Material sailMat = m_assetBundle.LoadAsset<Material>("SailMat.mat");
+        m_assetBundle.LoadAsset<GameObject>("Assets/steering_wheel.prefab");
+      GameObject rope_ladder = m_assetBundle.LoadAsset<GameObject>("Assets/rope_ladder.prefab");
+      GameObject rope_anchor = m_assetBundle.LoadAsset<GameObject>("Assets/rope_anchor.prefab");
+      SpriteAtlas sprites = m_assetBundle.LoadAsset<SpriteAtlas>("Assets/icons.spriteatlas");
+      Material sailMat = m_assetBundle.LoadAsset<Material>("Assets/SailMat.mat");
       PrefabManager prefabMan = PrefabManager.Instance;
       GameObject raft = prefabMan.GetPrefab("Raft");
       Piece wood_pole2 = prefabMan.GetPrefab("wood_pole2").GetComponent<Piece>();
@@ -174,17 +170,15 @@ namespace ValheimRAFT
       GameObject vikingship = prefabMan.GetPrefab("VikingShip");
       GameObject vikingshipMast = vikingship.transform.Find("ship/visual/Mast").gameObject;
       PieceManager pieceMan = PieceManager.Instance;
-
       GameObject r16 = prefabMan.CreateClonedPrefab("MBRaft", raft);
       r16.transform.Find("ship/visual/mast").gameObject.SetActive(value: false);
       r16.transform.Find("interactive/mast").gameObject.SetActive(value: false);
       r16.GetComponent<Rigidbody>().mass = 1000f;
-      Destroy(r16.transform.Find("ship/colliders/log").gameObject);
-      Destroy(r16.transform.Find("ship/colliders/log (1)").gameObject);
-      Destroy(r16.transform.Find("ship/colliders/log (2)").gameObject);
-      Destroy(r16.transform.Find("ship/colliders/log (3)").gameObject);
+      Object.Destroy(r16.transform.Find("ship/colliders/log").gameObject);
+      Object.Destroy(r16.transform.Find("ship/colliders/log (1)").gameObject);
+      Object.Destroy(r16.transform.Find("ship/colliders/log (2)").gameObject);
+      Object.Destroy(r16.transform.Find("ship/colliders/log (3)").gameObject);
       Piece piece16 = r16.GetComponent<Piece>();
-
       piece16.m_name = "$mb_raft";
       piece16.m_description = "$mb_raft_desc";
       ZNetView nv9 = r16.GetComponent<ZNetView>();
@@ -194,21 +188,7 @@ namespace ValheimRAFT
       wnt12.m_noRoofWear = false;
       ImpactEffect impact = r16.GetComponent<ImpactEffect>();
       impact.m_damageToSelf = false;
-      PieceConfig val = new PieceConfig
-      {
-        PieceTable = null,
-        Category = null,
-        CraftingStation = null,
-        ExtendStation = null,
-        Name = null,
-        Description = null,
-        Enabled = false,
-        AllowedInDungeons = false,
-        Icon = null,
-        Requirements = new RequirementConfig[]
-        {
-        }
-      };
+      PieceConfig val = new PieceConfig();
       val.PieceTable = "Hammer";
       val.Description = "$mb_raft_desc";
       val.Category = "ValheimRAFT";
@@ -221,7 +201,6 @@ namespace ValheimRAFT
         }
       };
       pieceMan.AddPiece(new CustomPiece(r16, false, val));
-
       GameObject r15 = prefabMan.CreateClonedPrefab("MBRaftMast", raftMast);
       Piece piece15 = r15.AddComponent<Piece>();
       piece15.m_name = "$mb_raft_mast";
@@ -239,24 +218,10 @@ namespace ValheimRAFT
       wnt11.m_noRoofWear = false;
       FixedRopes(r15);
       FixCollisionLayers(r15);
-      val = new PieceConfig
-      {
-        PieceTable = null,
-        Category = null,
-        CraftingStation = null,
-        ExtendStation = null,
-        Name = null,
-        Description = null,
-        Enabled = false,
-        AllowedInDungeons = false,
-        Icon = null,
-        Requirements = new RequirementConfig[]
-        {
-        }
-      };
+      val = new PieceConfig();
       val.PieceTable = "Hammer";
       val.Description = "$mb_raft_mast_desc";
-      val.Icon = m_assetBundle.LoadAsset<Sprite>("Assets/Sprite/raftmast");
+      val.Icon = sprites.GetSprite("raftmast");
       val.Category = "ValheimRAFT";
       val.Requirements = (RequirementConfig[])(object)new RequirementConfig[2]
       {
@@ -291,11 +256,10 @@ namespace ValheimRAFT
       wnt10.m_hitEffect = wood_floor_wnt.m_hitEffect;
       FixedRopes(r14);
       FixCollisionLayers(r14);
-
       val = new PieceConfig();
       val.PieceTable = "Hammer";
       val.Description = "$mb_karve_mast_desc";
-      val.Icon = m_assetBundle.LoadAsset<Sprite>("Assets/Sprite/karvemast");
+      val.Icon = sprites.GetSprite("karvemast");
       val.Category = "ValheimRAFT";
       val.Requirements = (RequirementConfig[])(object)new RequirementConfig[3]
       {
@@ -339,7 +303,7 @@ namespace ValheimRAFT
       val = new PieceConfig();
       val.PieceTable = "Hammer";
       val.Description = "$mb_vikingship_mast_desc";
-      val.Icon = m_assetBundle.LoadAsset<Sprite>("Assets/Sprite/vikingmast");
+      val.Icon = sprites.GetSprite("vikingmast");
       val.Category = "ValheimRAFT";
       val.Requirements = (RequirementConfig[])(object)new RequirementConfig[3]
       {
@@ -388,7 +352,7 @@ namespace ValheimRAFT
       val = new PieceConfig();
       val.PieceTable = "Hammer";
       val.Description = "$mb_rudder_desc";
-      val.Icon = m_assetBundle.LoadAsset<Sprite>("Assets/Sprite/steering_wheel");
+      val.Icon = sprites.GetSprite("steering_wheel");
       val.Category = "ValheimRAFT";
       val.Requirements = (RequirementConfig[])(object)new RequirementConfig[1]
       {
@@ -429,7 +393,7 @@ namespace ValheimRAFT
       val = new PieceConfig();
       val.PieceTable = "Hammer";
       val.Description = "$mb_rope_ladder_desc";
-      val.Icon = m_assetBundle.LoadAsset<Sprite>("Assets/Sprite/rope_ladder");
+      val.Icon = sprites.GetSprite("rope_ladder");
       val.Category = "ValheimRAFT";
       val.Requirements = (RequirementConfig[])(object)new RequirementConfig[1]
       {
@@ -464,7 +428,7 @@ namespace ValheimRAFT
       val = new PieceConfig();
       val.PieceTable = "Hammer";
       val.Description = "$mb_rope_anchor_desc";
-      val.Icon = m_assetBundle.LoadAsset<Sprite>("Assets/Sprite/rope_anchor");
+      val.Icon = sprites.GetSprite("rope_anchor");
       val.Category = "ValheimRAFT";
       val.Requirements = (RequirementConfig[])(object)new RequirementConfig[2]
       {
@@ -483,12 +447,16 @@ namespace ValheimRAFT
       };
       pieceMan.AddPiece(new CustomPiece(r10, false, val));
       GameObject r9 = prefabMan.CreateEmptyPrefab("MBSail", true);
-      Destroy(r9.GetComponent<BoxCollider>());
-      Destroy(r9.GetComponent<MeshFilter>());
+
+      // commenting these out shows the sail being created, but the mesh is invalid
+      Object.Destroy(r9.GetComponent<BoxCollider>());
+      Object.Destroy(r9.GetComponent<MeshFilter>());
+
       Piece piece9 = r9.AddComponent<Piece>();
       piece9.m_name = "$mb_sail";
       piece9.m_description = "$mb_sail_desc";
       piece9.m_placeEffect = wood_floor.m_placeEffect;
+
       ZNetView nv2 = r9.GetComponent<ZNetView>();
       nv2.m_persistent = true;
       GameObject sailObject = new GameObject("Sail");
@@ -513,7 +481,13 @@ namespace ValheimRAFT
       mast.m_allowSailRotation = false;
       mast.m_allowSailShrinking = true;
       r9.layer = LayerMask.NameToLayer("piece_nonsolid");
+
+      // The mesh fails with this m_sailPrefab meaning it's not stable
       SailCreatorComponent.m_sailPrefab = r9;
+
+      ZLog.LogWarning("SAIL CREATOR COMPONENT");
+      ZLog.LogWarning(SailCreatorComponent.m_sailPrefab);
+
       PrefabManager.Instance.AddPrefab(r9);
       GameObject r8 = prefabMan.CreateEmptyPrefab("MBSailCreator_4", false);
       Piece piece8 = r8.AddComponent<Piece>();
@@ -530,7 +504,7 @@ namespace ValheimRAFT
         PieceTable = "Hammer",
         Description = "$mb_sail_4_desc",
         Category = "ValheimRAFT",
-        Icon = m_assetBundle.LoadAsset<Sprite>("Assets/Sprite/customsail")
+        Icon = sprites.GetSprite("customsail")
       }));
       GameObject r7 = prefabMan.CreateEmptyPrefab("MBSailCreator_3", false);
       Piece piece7 = r7.AddComponent<Piece>();
@@ -548,7 +522,7 @@ namespace ValheimRAFT
         Name = "$mb_sail",
         Description = "$mb_sail_3_desc",
         Category = "ValheimRAFT",
-        Icon = m_assetBundle.LoadAsset<Sprite>("Assets/Sprite/customsail_tri")
+        Icon = sprites.GetSprite("customsail_tri")
       }));
       GameObject sourceObject4 = prefabMan.GetPrefab("wood_pole_log_4");
       GameObject r6 = prefabMan.CreateClonedPrefab("MBPier_Pole", sourceObject4);
@@ -558,16 +532,16 @@ namespace ValheimRAFT
       piece6.m_waterPiece = true;
       PierComponent pier2 = r6.AddComponent<PierComponent>();
       pier2.m_segmentObject = prefabMan.CreateClonedPrefab("MBPier_Pole_Segment", sourceObject4);
-      Destroy(pier2.m_segmentObject.GetComponent<ZNetView>());
-      Destroy(pier2.m_segmentObject.GetComponent<Piece>());
-      Destroy(pier2.m_segmentObject.GetComponent<WearNTear>());
+      Object.Destroy(pier2.m_segmentObject.GetComponent<ZNetView>());
+      Object.Destroy(pier2.m_segmentObject.GetComponent<Piece>());
+      Object.Destroy(pier2.m_segmentObject.GetComponent<WearNTear>());
       FixSnapPoints(r6);
       Transform[] transforms2 = pier2.m_segmentObject.GetComponentsInChildren<Transform>();
       for (int j = 0; j < transforms2.Length; j++)
       {
         if ((bool)transforms2[j] && transforms2[j].CompareTag("snappoint"))
         {
-          Destroy(transforms2[j]);
+          Object.Destroy(transforms2[j]);
         }
       }
 
@@ -595,16 +569,16 @@ namespace ValheimRAFT
       piece5.m_waterPiece = true;
       PierComponent pier = r5.AddComponent<PierComponent>();
       pier.m_segmentObject = prefabMan.CreateClonedPrefab("MBPier_Stone_Segment", sourceObject3);
-      Destroy(pier.m_segmentObject.GetComponent<ZNetView>());
-      Destroy(pier.m_segmentObject.GetComponent<Piece>());
-      Destroy(pier.m_segmentObject.GetComponent<WearNTear>());
+      Object.Destroy(pier.m_segmentObject.GetComponent<ZNetView>());
+      Object.Destroy(pier.m_segmentObject.GetComponent<Piece>());
+      Object.Destroy(pier.m_segmentObject.GetComponent<WearNTear>());
       FixSnapPoints(r5);
       Transform[] transforms = pier.m_segmentObject.GetComponentsInChildren<Transform>();
       for (int i = 0; i < transforms.Length; i++)
       {
         if ((bool)transforms[i] && transforms[i].CompareTag("snappoint"))
         {
-          Destroy(transforms[i]);
+          Object.Destroy(transforms[i]);
         }
       }
 
@@ -631,7 +605,7 @@ namespace ValheimRAFT
       GameObject new_floor = Object.Instantiate(
         wood_floor.transform.Find("New/_Combined Mesh [high]").gameObject, floor.transform.parent,
         worldPositionStays: false);
-      Destroy(floor);
+      Object.Destroy(floor);
       new_floor.transform.localPosition = new Vector3(1f, -52.55f, 0.5f);
       new_floor.transform.localScale = Vector3.one;
       new_floor.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
@@ -669,7 +643,7 @@ namespace ValheimRAFT
       val = new PieceConfig();
       val.PieceTable = "Hammer";
       val.Description = "$mb_boarding_ramp_desc";
-      val.Icon = m_assetBundle.LoadAsset<Sprite>("Assets/Sprite/boarding_ramp");
+      val.Icon = sprites.GetSprite("boarding_ramp");
       val.Category = "ValheimRAFT";
       val.Requirements = (RequirementConfig[])(object)new RequirementConfig[2]
       {
@@ -700,7 +674,7 @@ namespace ValheimRAFT
       val = new PieceConfig();
       val.PieceTable = "Hammer";
       val.Description = "$mb_boarding_ramp_wide_desc";
-      val.Icon = m_assetBundle.LoadAsset<Sprite>("Assets/Sprite/boarding_ramp");
+      val.Icon = sprites.GetSprite("boarding_ramp");
       val.Category = "ValheimRAFT";
       val.Requirements = (RequirementConfig[])(object)new RequirementConfig[2]
       {
@@ -718,7 +692,7 @@ namespace ValheimRAFT
         }
       };
       pieceMan.AddPiece(new CustomPiece(r3, false, val));
-      GameObject sourceObject2 = m_assetBundle.LoadAsset<GameObject>("dirt_floor");
+      GameObject sourceObject2 = m_assetBundle.LoadAsset<GameObject>("dirt_floor.prefab");
       GameObject r2 = prefabMan.CreateClonedPrefab("MBDirtfloor_2x2", sourceObject2);
       r2.transform.localScale = new Vector3(2f, 1f, 2f);
       ZNetView netview2 = r2.AddComponent<ZNetView>();
@@ -735,7 +709,7 @@ namespace ValheimRAFT
       val.Name = "$mb_dirt_floor_2x2";
       val.Description = "$mb_dirt_floor_2x2_desc";
       val.Category = "ValheimRAFT";
-      val.Icon = m_assetBundle.LoadAsset<Sprite>("Assets/Sprite/dirtfloor_icon");
+      val.Icon = sprites.GetSprite("dirtfloor_icon");
       val.Requirements = (RequirementConfig[])(object)new RequirementConfig[1]
       {
         new RequirementConfig
@@ -746,7 +720,7 @@ namespace ValheimRAFT
         }
       };
       pieceMan.AddPiece(new CustomPiece(r2, false, val));
-      GameObject sourceObject = m_assetBundle.LoadAsset<GameObject>("dirt_floor");
+      GameObject sourceObject = m_assetBundle.LoadAsset<GameObject>("dirt_floor.prefab");
       GameObject r = prefabMan.CreateClonedPrefab("MBDirtfloor_1x1", sourceObject);
       r.transform.localScale = new Vector3(1f, 1f, 1f);
       ZNetView netview = r.AddComponent<ZNetView>();
@@ -763,7 +737,7 @@ namespace ValheimRAFT
       val.Name = "$mb_dirt_floor_1x1";
       val.Description = "$mb_dirt_floor_1x1_desc";
       val.Category = "ValheimRAFT";
-      val.Icon = m_assetBundle.LoadAsset<Sprite>("Assets/Sprite/dirtfloor_icon");
+      val.Icon = sprites.GetSprite("dirtfloor_icon");
       val.Requirements = (RequirementConfig[])(object)new RequirementConfig[1]
       {
         new RequirementConfig

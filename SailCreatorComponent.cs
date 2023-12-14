@@ -35,6 +35,12 @@ public class SailCreatorComponent : MonoBehaviour
       Vector3 center =
         (m_sailCreators[0].transform.position + m_sailCreators[1].transform.position) / 2f;
       SailComponent.m_sailInit = false;
+
+      if (!m_sailPrefab)
+      {
+        ZLog.LogError("ERROR m_sailPrefab not valid");
+      }
+
       GameObject newSail = Object.Instantiate(m_sailPrefab, center, Quaternion.identity);
       SailComponent.m_sailInit = true;
       SailComponent sailcomp = newSail.GetComponent<SailComponent>();
