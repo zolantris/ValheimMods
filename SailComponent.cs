@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using BepInEx.Logging;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimRAFT.UI;
@@ -96,7 +97,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     m_sailComponents.Add(this);
     m_mastComponent = GetComponent<MastComponent>();
-    m_sailObject = base.transform.Find("Sail").gameObject;
+    m_sailObject = transform.Find("Sail").gameObject;
     m_sailCloth = m_sailObject.GetComponent<Cloth>();
     if ((bool)(UnityEngine.Object)(object)m_sailCloth)
     {
@@ -106,6 +107,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     }
 
     m_mesh = m_sailObject.GetComponent<SkinnedMeshRenderer>();
+
     m_meshCollider = m_sailObject.GetComponent<MeshCollider>();
     m_nview = GetComponent<ZNetView>();
     if (m_sailInit)
@@ -122,7 +124,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     Vector3 vector = EnvMan.instance.GetWindForce();
     m_sailCloth.externalAcceleration = vector * m_windMultiplier;
-    m_sailCloth.randomAcceleration = vector * m_windMultiplier * m_clothRandomAccelerationFactor;
+    m_sailCloth.randomAcceleration = vector * (m_windMultiplier * m_clothRandomAccelerationFactor);
   }
 
   public void OnDestroy()
@@ -159,9 +161,11 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   public void LoadFromMaterial()
   {
     Material sailMaterial = GetSailMaterial();
+
     Texture mainTex = sailMaterial.GetTexture("_MainTex");
     CustomTextureGroup.CustomTexture mainGroup = CustomTextureGroup.Get("Sails")
       .GetTextureByHash(mainTex.name.GetStableHashCode());
+
     if (mainGroup != null)
     {
       m_mainHash = mainTex.name.GetStableHashCode();

@@ -60,6 +60,30 @@ public class CustomTextureGroup
     return null;
   }
 
+  public static string[] GetFiles(string groupName, string modFolderName)
+  {
+    /*
+     * Early exit to retry with other options
+     */
+    if (!Directory.Exists(Path.Combine(Paths.PluginPath, modFolderName)))
+    {
+      return Array.Empty<string>();
+    }
+
+    string assetDirectory = Path.Combine(Paths.PluginPath, modFolderName, "Assets");
+
+    if (!Directory.Exists(assetDirectory))
+    {
+      /*
+       * fallback so if user somehow breaks their install, the mod will warn them.
+       */
+      ZLog.LogError($"Invalid setup, Asset Directory missing within {assetDirectory}");
+    }
+
+    string[] files = Directory.GetFiles(Path.Combine(assetDirectory, groupName));
+    return files;
+  }
+
   public static CustomTextureGroup Load(string groupName)
   {
     if (m_groups.TryGetValue(groupName, out var group))
@@ -69,8 +93,21 @@ public class CustomTextureGroup
 
     group = new CustomTextureGroup();
     m_groups.Add(groupName, group);
-    string assetDirectory = Path.Combine(Paths.PluginPath, "ValheimRAFT", "Assets");
-    string[] files = Directory.GetFiles(Path.Combine(assetDirectory, groupName));
+
+    string[] files = GetFiles((groupName),
+      ValheimRaftEntrypoint.Instance.PluginFolderName.Value);
+
+    if (files.Length == 0)
+    {
+      files = GetFiles(groupName, ValheimRaftEntrypoint.Name);
+    }
+
+    if (files.Length == 0)
+    {
+      files = GetFiles((groupName),
+        $"{ValheimRaftEntrypoint.Author}-${ValheimRaftEntrypoint.Name}");
+    }
+
     foreach (string file in files)
     {
       string ext = Path.GetExtension(file);

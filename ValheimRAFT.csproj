@@ -147,10 +147,25 @@
         <Compile Include="AssemblyInfo.cs"/>
     </ItemGroup>
     <ItemGroup>
-        <EmbeddedResource Include="AssetBundle.AssetBundle"/>
-        <EmbeddedResource Include="AssetBundle.valheimraft"/>
-        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest"/>
-        <EmbeddedResource Include="AssetBundle\valheimraft.manifest"/>
+        <!--           new structure (failing to load assets, but they are detected      -->
+        <!--        <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="ValheimRAFT.AssetBundle.AssetBundle"/>-->
+        <!--        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest"/>-->
+        <!--        <EmbeddedResource Include="AssetBundle\valheimraft" LogicalName="ValheimRAFT.AssetBundle.valheimraft"/>-->
+        <!--        <EmbeddedResource Include="AssetBundle\valheimraft.manifest"/>-->
+
+        <!--   old asset bundle structure (working)     -->
+        <!--        <EmbeddedResource Include="AssetBundle.valheimraft"/>-->
+        <!--        <EmbeddedResource Include="AssetBundle.AssetBundle"/>-->
+        <!--        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest"/>-->
+        <!--        <EmbeddedResource Include="AssetBundle\valheimraft.manifest"/>-->
+        <None Remove="ValheimRAFT.AssetBundle.AssetBundle"/>
+        <None Remove="ValheimRAFT.AssetBundle.valheimraft"/>
+        <None Remove="ValheimRAFT.AssetBundle.AssetBundle.manifest"/>
+        <None Remove="ValheimRAFT.AssetBundle.valheimraft.manifest"/>
+        <EmbeddedResource Include="ValheimRAFT.AssetBundle.AssetBundle" LogicalName="ValheimRAFT.AssetBundle.AssetBundle"/>
+        <EmbeddedResource Include="ValheimRAFT.AssetBundle.valheimraft" LogicalName="ValheimRAFT.AssetBundle.valheimraft"/>
+        <EmbeddedResource Include="ValheimRAFT.AssetBundle.AssetBundle.manifest" LogicalName="ValheimRAFT.AssetBundle.AssetBundle.manifest"/>
+        <EmbeddedResource Include="ValheimRAFT.AssetBundle.valheimraft.manifest" LogicalName="ValheimRAFT.AssetBundle.valheimraft.manifest"/>
     </ItemGroup>
     <ItemGroup>
         <Content Include=".gitignore"/>
@@ -159,7 +174,7 @@
     <Target Name="PostBuild_Copy_To_Valheim_R2ModMan" AfterTargets="PostBuildEvent">
         <Exec Command="copy &quot;$(OutDir)\ValheimRAFT.dll&quot; &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\plugins\zolantris-valheimraft\ValheimRAFT.dll&quot;"/>
     </Target>
-    <Target Name="Manually Run Valheim" Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'" AfterTargets="PostBuild_Copy_To_Valheim_R2ModMan">
+    <Target Name="Manually Run Valheim" Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'" AfterTargets="PostBuild_Copy_To_Valheim_R2ModMan">
         <Exec Command="&quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; -console --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
     </Target>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
