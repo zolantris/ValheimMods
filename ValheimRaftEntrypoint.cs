@@ -43,9 +43,24 @@ namespace ValheimRAFT
 
     public ConfigEntry<bool> AllowFlight { get; set; }
 
+    public ConfigEntry<string> PluginFolderName { get; set; }
+
     private void Awake()
     {
       Instance = this;
+
+      this.PluginFolderName = this.Config.Bind<string>("ClientConfig",
+        "pluginFolderName", Name, new ConfigDescription(
+          "Allows users to set the folder search name if their" +
+          $" manager renames the folder, r2modman has a fallback case added to search for {Author}-{Name}",
+          (AcceptableValueBase)null, new object[1]
+          {
+            (object)new ConfigurationManagerAttributes()
+            {
+              IsAdminOnly = false
+            }
+          }));
+
       this.MakeAllPiecesWaterProof = this.Config.Bind<bool>("Server config",
         "MakeAllPiecesWaterProof", true, new ConfigDescription(
           "Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.",
