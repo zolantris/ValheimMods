@@ -142,6 +142,13 @@ namespace ValheimRAFT
       }
     }
 
+    /**
+     * This should be swapped into an iteration of items
+     * - avoid duplicate code
+     * - avoid replication
+     * - cleanup readability
+     * - less blocks
+     */
     internal void AddCustomPieces()
     {
       if (m_customItemsAdded)
@@ -481,13 +488,7 @@ namespace ValheimRAFT
       mast.m_allowSailRotation = false;
       mast.m_allowSailShrinking = true;
       r9.layer = LayerMask.NameToLayer("piece_nonsolid");
-
-      // The mesh fails with this m_sailPrefab meaning it's not stable
       SailCreatorComponent.m_sailPrefab = r9;
-
-      ZLog.LogWarning("SAIL CREATOR COMPONENT");
-      ZLog.LogWarning(SailCreatorComponent.m_sailPrefab);
-
       PrefabManager.Instance.AddPrefab(r9);
       GameObject r8 = prefabMan.CreateEmptyPrefab("MBSailCreator_4", false);
       Piece piece8 = r8.AddComponent<Piece>();
