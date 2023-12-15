@@ -33,6 +33,15 @@
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release:Build:Mod|AnyCPU' ">
+      <OutputPath>bin\Release:Build:Mod\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release:Run:Valheim|AnyCPU' ">
+      <OutputPath>bin\Release:Run:Valheim\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug:Run:Valheim|AnyCPU' ">
+      <OutputPath>bin\Debug:Run:Valheim\</OutputPath>
+    </PropertyGroup>
     <ItemGroup>
         <Reference Include="0Harmony">
             <HintPath>libs\0Harmony.dll</HintPath>
