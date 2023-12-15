@@ -33,14 +33,23 @@
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug  Run Valheim|AnyCPU' ">
+        <OutputPath>bin\Debug Run Valheim\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' ">
+        <OutputPath>bin\Release Run Valheim\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
+        <OutputPath>bin\Release Archive\</OutputPath>
+    </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release:Build:Mod|AnyCPU' ">
-      <OutputPath>bin\Release:Build:Mod\</OutputPath>
+        <OutputPath>bin\Release:Build:Mod\</OutputPath>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release:Run:Valheim|AnyCPU' ">
-      <OutputPath>bin\Release:Run:Valheim\</OutputPath>
+        <OutputPath>bin\Release:Run:Valheim\</OutputPath>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug:Run:Valheim|AnyCPU' ">
-      <OutputPath>bin\Debug:Run:Valheim\</OutputPath>
+        <OutputPath>bin\Debug:Run:Valheim\</OutputPath>
     </PropertyGroup>
     <ItemGroup>
         <Reference Include="0Harmony">
@@ -167,24 +176,45 @@
         <!--        <EmbeddedResource Include="AssetBundle.AssetBundle"/>-->
         <!--        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest"/>-->
         <!--        <EmbeddedResource Include="AssetBundle\valheimraft.manifest"/>-->
-        <None Remove="ValheimRAFT.AssetBundle.AssetBundle"/>
-        <None Remove="ValheimRAFT.AssetBundle.valheimraft"/>
-        <None Remove="ValheimRAFT.AssetBundle.AssetBundle.manifest"/>
-        <None Remove="ValheimRAFT.AssetBundle.valheimraft.manifest"/>
-        <EmbeddedResource Include="ValheimRAFT.AssetBundle.AssetBundle" LogicalName="ValheimRAFT.AssetBundle.AssetBundle"/>
-        <EmbeddedResource Include="ValheimRAFT.AssetBundle.valheimraft" LogicalName="ValheimRAFT.AssetBundle.valheimraft"/>
-        <EmbeddedResource Include="ValheimRAFT.AssetBundle.AssetBundle.manifest" LogicalName="ValheimRAFT.AssetBundle.AssetBundle.manifest"/>
-        <EmbeddedResource Include="ValheimRAFT.AssetBundle.valheimraft.manifest" LogicalName="ValheimRAFT.AssetBundle.valheimraft.manifest"/>
+        <None Remove="AssetBundleDeprecated\ValheimRAFT.AssetBundle.AssetBundle"/>
+        <None Remove="AssetBundleDeprecated\ValheimRAFT.AssetBundle.valheimraft"/>
+        <None Remove="AssetBundleDeprecated\ValheimRAFT.AssetBundle.AssetBundle.manifest"/>
+        <None Remove="AssetBundleDeprecated\ValheimRAFT.AssetBundle.valheimraft.manifest"/>
+        <EmbeddedResource Include="AssetBundleDeprecated\ValheimRAFT.AssetBundle.AssetBundle" LogicalName="ValheimRAFT.AssetBundle.AssetBundle"/>
+        <EmbeddedResource Include="AssetBundleDeprecated\ValheimRAFT.AssetBundle.valheimraft" LogicalName="ValheimRAFT.AssetBundle.valheimraft"/>
+        <EmbeddedResource Include="AssetBundleDeprecated\ValheimRAFT.AssetBundle.AssetBundle.manifest" LogicalName="ValheimRAFT.AssetBundle.AssetBundle.manifest"/>
+        <EmbeddedResource Include="AssetBundleDeprecated\ValheimRAFT.AssetBundle.valheimraft.manifest" LogicalName="ValheimRAFT.AssetBundle.valheimraft.manifest"/>
     </ItemGroup>
     <ItemGroup>
         <Content Include=".gitignore"/>
         <Content Include="README.md"/>
     </ItemGroup>
-    <Target Name="PostBuild_Copy_To_Valheim_R2ModMan" AfterTargets="PostBuildEvent">
+    <Target Name="Copy_To_R2ModMan" Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'" AfterTargets="PostBuildEvent">
         <Exec Command="copy &quot;$(OutDir)\ValheimRAFT.dll&quot; &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\plugins\zolantris-valheimraft\ValheimRAFT.dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)\ValheimRAFT.pdb&quot; &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\plugins\zolantris-valheimraft\ValheimRAFT.pdb&quot;"/>
     </Target>
-    <Target Name="Manually Run Valheim" Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'" AfterTargets="PostBuild_Copy_To_Valheim_R2ModMan">
+    <Target Name="Run_Valheim" Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'" AfterTargets="Copy_To_R2ModMan">
         <Exec Command="&quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; -console --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
+    </Target>
+    <Target Name="Generate_Mod_Archive" Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'" AfterTargets="PostBuildEvent">
+        <PropertyGroup>
+            <AssetsDir>$(OutDir)..\..\Assets\</AssetsDir>
+            <ModOutputDir>$(OutDir)ModVersions\</ModOutputDir>
+            <TmpDir>$(OutDir)tmp\</TmpDir>
+            <ModNameVersion>ValheimRaft-$(ApplicationVersion).zip</ModNameVersion>
+        </PropertyGroup>
+        <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>
+        <Exec Command="if not exist &quot;$(ModOutputDir)&quot; mkdir &quot;$(ModOutputDir)&quot;"/>
+        <Exec Command="if not exist &quot;$(TmpDir)&quot; mkdir &quot;$(TmpDir)&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(TmpDir)ValheimRAFT.dll&quot;"/>
+        <Exec Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)Assets\&quot; /E/H"/>
+
+        <!-- delete duplicate mod version-->
+        <Exec Command="if exist &quot;$(ModOutputDir)$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(ModNameVersion)&quot;"/>
+        <Exec Command="powershell Compress-Archive '$(TmpDir)' '$(ModOutputDir)$(ModNameVersion)'"/>
+
+        <!--    cleanup    -->
+        <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>
     </Target>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

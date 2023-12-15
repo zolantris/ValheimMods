@@ -24,15 +24,17 @@ namespace ValheimRAFT
 {
   [BepInPlugin(BepInGUID, Name, Version)]
   // [BepInDependency]
-  [NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
+  [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
   public class ValheimRaftEntrypoint : BaseUnityPlugin
   {
-    internal const string Author = "Sarcen";
+    internal const string Author = "zolantris";
+
     internal const string Name = "ValheimRAFT";
-    internal const string Version = "1.5.0";
-    internal const string BepInGUID = "BepIn.Sarcen.ValheimRAFT";
-    internal const string HarmonyGUID = "Harmony.Sarcen.ValheimRAFT";
-    internal static Harmony m_harmony;
+
+    private const string Version = "1.5.0.0";
+    private const string BepInGUID = $"BepIn.{Author}.ValheimRAFT";
+    private const string HarmonyGUID = $"Harmony.{Author}.ValheimRAFT";
+    private static Harmony m_harmony;
     internal static int CustomRaftLayer = 29;
     public static AssetBundle m_assetBundle;
     private bool m_customItemsAdded;
