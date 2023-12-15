@@ -23,7 +23,7 @@
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugType>pdbonly</DebugType>
         <Optimize>true</Optimize>
@@ -42,15 +42,6 @@
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <OutputPath>bin\Release Archive\</OutputPath>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release:Build:Mod|AnyCPU' ">
-        <OutputPath>bin\Release:Build:Mod\</OutputPath>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release:Run:Valheim|AnyCPU' ">
-        <OutputPath>bin\Release:Run:Valheim\</OutputPath>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug:Run:Valheim|AnyCPU' ">
-        <OutputPath>bin\Debug:Run:Valheim\</OutputPath>
-    </PropertyGroup>
     <ItemGroup>
         <Reference Include="0Harmony">
             <HintPath>libs\0Harmony.dll</HintPath>
@@ -67,26 +58,11 @@
         <Reference Include="BepInEx">
             <HintPath>libs\BepInEx.dll</HintPath>
         </Reference>
-        <Reference Include="BepInEx.Harmony">
-            <HintPath>libs\BepInEx.Harmony.dll</HintPath>
-        </Reference>
         <Reference Include="Jotunn">
             <HintPath>libs\Jotunn.dll</HintPath>
         </Reference>
-        <Reference Include="MonoMod.Utils">
-            <HintPath>libs\MonoMod.Utils.dll</HintPath>
-        </Reference>
-        <Reference Include="netstandard">
-            <HintPath>libs\netstandard.dll</HintPath>
-        </Reference>
         <Reference Include="System"/>
         <Reference Include="System.Core"/>
-        <Reference Include="ui_lib">
-            <HintPath>libs\ui_lib.dll</HintPath>
-        </Reference>
-        <Reference Include="Unity.TextMeshPro">
-            <HintPath>libs\Unity.TextMeshPro.dll</HintPath>
-        </Reference>
         <Reference Include="UnityEngine">
             <HintPath>libs\UnityEngine.dll</HintPath>
         </Reference>
@@ -96,38 +72,17 @@
         <Reference Include="UnityEngine.AssetBundleModule">
             <HintPath>libs\UnityEngine.AssetBundleModule.dll</HintPath>
         </Reference>
-        <Reference Include="UnityEngine.AudioModule">
-            <HintPath>libs\UnityEngine.AudioModule.dll</HintPath>
-        </Reference>
         <Reference Include="UnityEngine.ClothModule">
             <HintPath>libs\UnityEngine.ClothModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.CoreModule">
             <HintPath>libs\UnityEngine.CoreModule.dll</HintPath>
         </Reference>
-        <Reference Include="UnityEngine.IMGUIModule">
-            <HintPath>libs\UnityEngine.IMGUIModule.dll</HintPath>
-        </Reference>
-        <Reference Include="UnityEngine.InputLegacyModule">
-            <HintPath>libs\UnityEngine.InputLegacyModule.dll</HintPath>
-        </Reference>
-        <Reference Include="UnityEngine.InputModule">
-            <HintPath>libs\UnityEngine.InputModule.dll</HintPath>
-        </Reference>
-        <Reference Include="UnityEngine.ParticleSystemModule">
-            <HintPath>libs\UnityEngine.ParticleSystemModule.dll</HintPath>
-        </Reference>
         <Reference Include="UnityEngine.PhysicsModule">
             <HintPath>libs\UnityEngine.PhysicsModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.UI">
             <HintPath>libs\UnityEngine.UI.dll</HintPath>
-        </Reference>
-        <Reference Include="UnityEngine.UIModule">
-            <HintPath>libs\UnityEngine.UIModule.dll</HintPath>
-        </Reference>
-        <Reference Include="UnityEngine.VideoModule">
-            <HintPath>libs\UnityEngine.VideoModule.dll</HintPath>
         </Reference>
     </ItemGroup>
     <ItemGroup>
@@ -193,7 +148,7 @@
         <Exec Command="copy &quot;$(OutDir)\ValheimRAFT.dll&quot; &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\plugins\zolantris-valheimraft\ValheimRAFT.dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)\ValheimRAFT.pdb&quot; &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\plugins\zolantris-valheimraft\ValheimRAFT.pdb&quot;"/>
     </Target>
-    <Target Name="Run_Valheim" Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'" AfterTargets="Copy_To_R2ModMan">
+    <Target Name="Run_Valheim" Condition="'$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU'" AfterTargets="Copy_To_R2ModMan">
         <Exec Command="&quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; -console --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
     </Target>
     <Target Name="Generate_Mod_Archive" Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'" AfterTargets="PostBuildEvent">
@@ -207,11 +162,12 @@
         <Exec Command="if not exist &quot;$(ModOutputDir)&quot; mkdir &quot;$(ModOutputDir)&quot;"/>
         <Exec Command="if not exist &quot;$(TmpDir)&quot; mkdir &quot;$(TmpDir)&quot;"/>
         <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(TmpDir)ValheimRAFT.dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(TmpDir)ValheimRAFT.pdb&quot;"/>
         <Exec Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)Assets\&quot; /E/H"/>
 
         <!-- delete duplicate mod version-->
         <Exec Command="if exist &quot;$(ModOutputDir)$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(ModNameVersion)&quot;"/>
-        <Exec Command="powershell Compress-Archive '$(TmpDir)' '$(ModOutputDir)$(ModNameVersion)'"/>
+        <Exec Command="powershell Compress-Archive '$(TmpDir)\*' '$(ModOutputDir)$(ModNameVersion)'"/>
 
         <!--    cleanup    -->
         <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>
