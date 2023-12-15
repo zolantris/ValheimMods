@@ -31,7 +31,7 @@ namespace ValheimRAFT
 
     internal const string Name = "ValheimRAFT";
 
-    private const string Version = "1.5.0.0";
+    private const string Version = "1.5.0";
     private const string BepInGUID = $"BepIn.{Author}.ValheimRAFT";
     private const string HarmonyGUID = $"Harmony.{Author}.ValheimRAFT";
     private static Harmony m_harmony;

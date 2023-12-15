@@ -1,7 +1,20 @@
 ﻿# ValheimRaft - (continued)
 
-A ValheimRaft fork. The original mod owner [Sarcenzzz](https://www.nexusmods.com/valheim/users/3061574) abandoned the
+A [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork that works with latest Valheim. The original mod
+owner [Sarcenzzz](https://www.nexusmods.com/valheim/users/3061574) abandoned the
 mod, this fork aims to keep the mod functional with future goals of expanding functionality.
+
+## Meshes
+
+In Mod versions lower than `1.5.0` there were problems with the folder being renamed. In >=1.5.0 there is a
+configuration
+manager option to change the path to resolve the ValheimRAFT folder.
+
+If you want meshes (IE sails and ropes ) to render, your mod must either be named `ValheimRaft`
+or `zolantris-ValheimRaft`.
+
+Otherwise make sure to edit the "pluginFolderName" key and add the folder name for ValheimRaft located
+within the BepInEx\Plugins path. Afterwards relaunch the game. There should be no mesh issues.
 
 ## Community
 

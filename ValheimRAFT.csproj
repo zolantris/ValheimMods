@@ -7,7 +7,7 @@
         <OutputType>Library</OutputType>
         <AssemblyName>ValheimRAFT</AssemblyName>
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-        <ApplicationVersion>1.5.0.0</ApplicationVersion>
+        <ApplicationVersion>1.5.0</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -153,17 +153,25 @@
     </Target>
     <Target Name="Generate_Mod_Archive" Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'" AfterTargets="PostBuildEvent">
         <PropertyGroup>
-            <AssetsDir>$(OutDir)..\..\Assets\</AssetsDir>
+            <RepoDir>$(OutDir)..\..\</RepoDir>
+            <AssetsDir>$(RepoDir)Assets\</AssetsDir>
             <ModOutputDir>$(OutDir)ModVersions\</ModOutputDir>
             <TmpDir>$(OutDir)tmp\</TmpDir>
+            <ThunderStoreDir>$(RepoDir)\ThunderStore\</ThunderStoreDir>
             <ModNameVersion>ValheimRaft-$(ApplicationVersion).zip</ModNameVersion>
         </PropertyGroup>
         <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>
         <Exec Command="if not exist &quot;$(ModOutputDir)&quot; mkdir &quot;$(ModOutputDir)&quot;"/>
         <Exec Command="if not exist &quot;$(TmpDir)&quot; mkdir &quot;$(TmpDir)&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(TmpDir)ValheimRAFT.dll&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(TmpDir)ValheimRAFT.pdb&quot;"/>
-        <Exec Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)Assets\&quot; /E/H"/>
+        <Exec Command="if not exist &quot;$(TmpDir)plugins&quot; mkdir &quot;$(TmpDir)plugins&quot;"/>
+
+        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(TmpDir)plugins\ValheimRAFT.dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(TmpDir)plugins\ValheimRAFT.pdb&quot;"/>
+        <Exec Command="copy &quot;$(RepoDir)README.md&quot; &quot;$(TmpDir)README.md&quot;"/>
+        <Exec Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>
+
+        <!--  Thunderstore and Nexus store may need different deploys  -->
+        <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>
 
         <!-- delete duplicate mod version-->
         <Exec Command="if exist &quot;$(ModOutputDir)$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(ModNameVersion)&quot;"/>
