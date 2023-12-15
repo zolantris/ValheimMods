@@ -1,4 +1,4 @@
-﻿# ValheimRaft - (continued)
+# ValheimRAFT
 
 A [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork that works with latest Valheim. The original mod
 owner [Sarcenzzz](https://www.nexusmods.com/valheim/users/3061574) abandoned the
@@ -18,7 +18,7 @@ within the BepInEx\Plugins path. Afterwards relaunch the game. There should be n
 
 ## Community
 
-Join us on discord to get the lastest information, upcoming features, and discover other mods.
+Join us on discord to get the latest information, upcoming features, and discover other mods.
 
 [Discord Link](https://discord.gg/XqA7j2qgRZ)
 

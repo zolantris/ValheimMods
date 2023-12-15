@@ -157,10 +157,12 @@
             <AssetsDir>$(RepoDir)Assets\</AssetsDir>
             <ModOutputDir>$(OutDir)ModVersions\</ModOutputDir>
             <TmpDir>$(OutDir)tmp\</TmpDir>
-            <ThunderStoreDir>$(RepoDir)\ThunderStore\</ThunderStoreDir>
-            <ModNameVersion>ValheimRaft-$(ApplicationVersion).zip</ModNameVersion>
+            <ThunderStoreDir>$(RepoDir)ThunderStore\</ThunderStoreDir>
+            <ModNameVersion>$(AssemblyName)-$(ApplicationVersion).zip</ModNameVersion>
         </PropertyGroup>
+        <Exec Command="if exist &quot;$(TmpDir)plugins\Assets&quot; rd /s /q &quot;$(TmpDir)plugins\Assets&quot;"/>
         <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>
+
         <Exec Command="if not exist &quot;$(ModOutputDir)&quot; mkdir &quot;$(ModOutputDir)&quot;"/>
         <Exec Command="if not exist &quot;$(TmpDir)&quot; mkdir &quot;$(TmpDir)&quot;"/>
         <Exec Command="if not exist &quot;$(TmpDir)plugins&quot; mkdir &quot;$(TmpDir)plugins&quot;"/>
@@ -168,9 +170,14 @@
         <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(TmpDir)plugins\ValheimRAFT.dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(TmpDir)plugins\ValheimRAFT.pdb&quot;"/>
         <Exec Command="copy &quot;$(RepoDir)README.md&quot; &quot;$(TmpDir)README.md&quot;"/>
+
+        <!-- Copy Assets -->
         <Exec Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>
+        <Exec Command="del &quot;$(TmpDir)plugins\Assets\*.png.meta&quot;"/>
+
 
         <!--  Thunderstore and Nexus store may need different deploys  -->
+
         <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>
 
         <!-- delete duplicate mod version-->
@@ -178,7 +185,7 @@
         <Exec Command="powershell Compress-Archive '$(TmpDir)\*' '$(ModOutputDir)$(ModNameVersion)'"/>
 
         <!--    cleanup    -->
-        <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>
+        <!--        <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>-->
     </Target>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>
