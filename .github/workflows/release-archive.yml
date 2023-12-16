@@ -1,4 +1,4 @@
-﻿name: ValheimRAFT Build
+﻿name: Release Archive Builder
 
 on:
   push:
