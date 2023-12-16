@@ -2,9 +2,9 @@ name: ValheimRAFT Build
 
 on:
   push:
-    branches: [ "main", "ci"]
-  pull_request: 
     branches: [ "main" ]
+  pull_request: 
+    branches: [ "main", "develop" ]
 
 jobs:
   build:
