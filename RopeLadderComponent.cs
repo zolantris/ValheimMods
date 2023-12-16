@@ -1,10 +1,4 @@
-﻿// Decompiled with JetBrains decompiler
-// Type: ValheimRAFT.RopeLadderComponent
-// Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 

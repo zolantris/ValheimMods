@@ -87,11 +87,11 @@ public class EditSailComponentPanel
     Transform parent = GUIManager.CustomGUIFront.transform;
     m_editPanel =
       Object.Instantiate(
-        ValheimRaftEntrypoint.m_assetBundle.LoadAsset<GameObject>("edit_sail_panel"),
+        Main.m_assetBundle.LoadAsset<GameObject>("edit_sail_panel"),
         parent, worldPositionStays: false);
     PanelUtil.ApplyPanelStyle(m_editPanel);
     GameObject texture_panel =
-      ValheimRaftEntrypoint.m_assetBundle.LoadAsset<GameObject>("edit_texture_panel");
+      Main.m_assetBundle.LoadAsset<GameObject>("edit_texture_panel");
     PanelUtil.ApplyPanelStyle(texture_panel);
     GUIManager.Instance.ApplyDropdownStyle(
       texture_panel.transform.Find("TextureName").GetComponent<Dropdown>(), 15);

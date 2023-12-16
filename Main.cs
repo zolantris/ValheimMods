@@ -1,10 +1,4 @@
-﻿// Decompiled with JetBrains decompiler
-// Type: ValheimRAFT
-// Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-
-
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using Jotunn.Configs;
@@ -14,7 +8,6 @@ using Jotunn.Utils;
 using System;
 using System.Reflection;
 using System.Text;
-using BepInEx.Logging;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.U2D;
@@ -22,24 +15,26 @@ using Object = UnityEngine.Object;
 
 namespace ValheimRAFT
 {
-  [BepInPlugin(BepInGUID, Name, Version)]
+  [BepInPlugin(BepInGuid, ModName, Version)]
   [BepInDependency(Jotunn.Main.ModGuid)]
   [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
-  public class ValheimRaftEntrypoint : BaseUnityPlugin
+  public class Main : BaseUnityPlugin
   {
-    internal const string Author = "zolantris";
-
-    internal const string Name = "ValheimRAFT";
-
-    private const string Version = "1.5.0";
-    private const string BepInGUID = $"BepIn.{Author}.ValheimRAFT";
-    private const string HarmonyGUID = $"Harmony.{Author}.ValheimRAFT";
+    /*
+     * Author was previously "sarcen". Switching to zolantris possibly will cause breaks if a person upgrades their raft to this mod. May need to publish a compatibility version.
+     * - This needs to be confirmed as an issue before things are switched back.
+     */
+    public const string Author = "zolantris";
+    private const string Version = "1.5.1";
+    internal const string ModName = "ValheimRAFT";
+    public const string BepInGuid = $"BepIn.{Author}.{ModName}";
+    private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";
     private static Harmony m_harmony;
     internal static int CustomRaftLayer = 29;
     public static AssetBundle m_assetBundle;
     private bool m_customItemsAdded;
 
-    public static ValheimRaftEntrypoint Instance { get; private set; }
+    public static Main Instance { get; private set; }
 
     public ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
 
@@ -47,14 +42,23 @@ namespace ValheimRAFT
 
     public ConfigEntry<string> PluginFolderName { get; set; }
 
-    private void Awake()
+    /**
+     * These folder names are matched for the CustomTexturesGroup
+     */
+    public string[] possibleModFolderNames =
+    {
+      $"{Author}-{ModName}", ModName
+    };
+
+    public void Awake()
     {
       Instance = this;
-
-      this.PluginFolderName = this.Config.Bind<string>("ClientConfig",
-        "pluginFolderName", Name, new ConfigDescription(
-          "Allows users to set the folder search name if their" +
-          $" manager renames the folder, r2modman has a fallback case added to search for {Author}-{Name}",
+      PluginFolderName = Config.Bind<string>("Config",
+        "pluginFolderName", "", new ConfigDescription(
+          "Users can leave this empty. If they do not, the mod will attempt to match the folder string. Allows users to set the folder search name if their" +
+          $" manager renames the folder, r2modman has a fallback case added to search for {Author}-{ModName}" +
+          "Default search values are an ordered list first one is always matching non-empty strings from this pluginFolderName." +
+          $"Folder Matches are:  {Author}-{ModName}, zolantris-{ModName} Zolantris-{ModName}, and {ModName}",
           (AcceptableValueBase)null, new object[1]
           {
             (object)new ConfigurationManagerAttributes()
@@ -63,7 +67,7 @@ namespace ValheimRAFT
             }
           }));
 
-      this.MakeAllPiecesWaterProof = this.Config.Bind<bool>("Server config",
+      MakeAllPiecesWaterProof = Config.Bind<bool>("Server config",
         "MakeAllPiecesWaterProof", true, new ConfigDescription(
           "Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.",
           (AcceptableValueBase)null, new object[1]
@@ -73,7 +77,7 @@ namespace ValheimRAFT
               IsAdminOnly = true
             }
           }));
-      this.AllowFlight = this.Config.Bind<bool>("Server config", "AllowFlight", false,
+      AllowFlight = Config.Bind<bool>("Server config", "AllowFlight", false,
         new ConfigDescription("Allow the raft to fly (jump\\crouch to go up and down)",
           (AcceptableValueBase)null, new object[1]
           {
@@ -82,8 +86,10 @@ namespace ValheimRAFT
               IsAdminOnly = true
             }
           }));
-      m_harmony = new Harmony(HarmonyGUID);
+
+      m_harmony = new Harmony(HarmonyGuid);
       m_harmony.PatchAll();
+
       int layer = LayerMask.NameToLayer("vehicle");
       for (int index = 0; index < 32; ++index)
         Physics.IgnoreLayerCollision(CustomRaftLayer, index,

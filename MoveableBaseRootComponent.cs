@@ -526,7 +526,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     UpdatePieceCount();
     EncapsulateBounds(netview);
     WearNTear wnt = netview.GetComponent<WearNTear>();
-    if ((bool)wnt && global::ValheimRAFT.ValheimRaftEntrypoint.Instance.MakeAllPiecesWaterProof
+    if ((bool)wnt && global::ValheimRAFT.Main.Instance.MakeAllPiecesWaterProof
           .Value)
     {
       wnt.m_noRoofWear = false;
