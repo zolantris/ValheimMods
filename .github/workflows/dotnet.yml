@@ -1,4 +1,4 @@
-name: EZRep Build
+name: ValheimRAFT Build
 
 on:
   push:
