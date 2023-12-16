@@ -94,18 +94,32 @@ public class CustomTextureGroup
     group = new CustomTextureGroup();
     m_groups.Add(groupName, group);
 
-    string[] files = GetFiles((groupName),
-      ValheimRaftEntrypoint.Instance.PluginFolderName.Value);
+    string[] files = { };
 
-    if (files.Length == 0)
+    /*
+     * This if blocks is provided to make the PluginFolderName check a bit more verbose
+     */
     {
-      files = GetFiles(groupName, ValheimRaftEntrypoint.Name);
-    }
+      foreach (var possibleModFolderName in ValheimRaftEntrypoint.Instance.possibleModFolderNames)
+      {
+        if (possibleModFolderName == "" || !Directory.Exists(Path.Combine(Paths.PluginPath,
+              possibleModFolderName))) continue;
 
-    if (files.Length == 0)
-    {
-      files = GetFiles((groupName),
-        $"{ValheimRaftEntrypoint.Author}-${ValheimRaftEntrypoint.Name}");
+        if (possibleModFolderName == ValheimRaftEntrypoint.Instance.PluginFolderName.Value)
+        {
+          ZLog.DevLog(
+            $"{ValheimRaftEntrypoint.Name} PluginFolderName path detected, resolving assets from that folder");
+        }
+
+        files = GetFiles(groupName, possibleModFolderName);
+        break;
+      }
+
+      /*
+       * this log will not be reached if the "guess" path matches
+       */
+      ZLog.LogError(
+        $"ValheimRAFT: Unable to detect modFolder path, this will cause mesh issues with sails. Please set ValheimRAFT mod folder in the BepInExConfig file. The ValheimRAFT folder should found within this directory {Paths.PluginPath}");
     }
 
     foreach (string file in files)

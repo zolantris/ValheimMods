@@ -47,14 +47,26 @@ namespace ValheimRAFT
 
     public ConfigEntry<string> PluginFolderName { get; set; }
 
+    /**
+     * These folder names are matched for the CustomTexturesGroup
+     */
+    public string[] possibleModFolderNames =
+    {
+      Instance.PluginFolderName.Value,
+      $"{Author}-{Name}", $"zolantris-{Name}",
+      $"Virtualize-{Name}", $"{Name}"
+    };
+
     private void Awake()
     {
       Instance = this;
 
-      this.PluginFolderName = this.Config.Bind<string>("ClientConfig",
-        "pluginFolderName", Name, new ConfigDescription(
-          "Allows users to set the folder search name if their" +
-          $" manager renames the folder, r2modman has a fallback case added to search for {Author}-{Name}",
+      this.PluginFolderName = Config.Bind<string>("ClientConfig",
+        "pluginFolderName", "", new ConfigDescription(
+          "Users can leave this empty. If they do not, the mod will attempt to match the folder string. Allows users to set the folder search name if their" +
+          $" manager renames the folder, r2modman has a fallback case added to search for {Author}-{Name}" +
+          "Default search values are an ordered list first one is always matching non-empty strings from this pluginFolderName." +
+          $"Folder Matches are: {possibleModFolderNames}",
           (AcceptableValueBase)null, new object[1]
           {
             (object)new ConfigurationManagerAttributes()
