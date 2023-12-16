@@ -1,28 +1,51 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
-name: .NET
+name: EZRep Build
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
+    branches: [ "main", "ci"]
+  pull_request: 
     branches: [ "main" ]
 
 jobs:
   build:
-
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 4.8.1
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet "build" --no-restore
-    - name: Archive
-      run: dotnet "Build Archive"
+      - uses: actions/checkout@v2
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v1.0.2
+
+      - name: Navigate to Workspace
+        run: cd $GITHUB_WORKSPACE
+
+      - name: Create Build Directory
+        run: mkdir _build
+
+      - name: Restore Packages
+        run: nuget restore ValheimRAFT.sln
+
+      - name: Build Solution
+        run: |
+          msbuild.exe ValheimRAFT.sln /nologo /nr:false /p:DeployOnBuild=true /p:DeployDefaultTarget=WebPublish /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=True /p:platform="Any CPU" /p:configuration="Release" /p:PublishUrl="../_build"
+
+#      - name: Upload artifact
+#        uses: actions/upload-artifact@v1.0.0
+#        with:
+#          name: EZRepBundle
+#          path: "./_build"
+#
+#      - name: Login to Azure
+#        uses: azure/login@v1
+#        with:
+#          creds: ${{ secrets.AZURE_CREDENTIALS }}
+#
+#      - name: Publish Artifacts to Azure
+#        uses: Azure/webapps-deploy@v2
+#        with:
+#          app-name: ezrep
+#          package: "./_build"
+#          slot-name: production        
