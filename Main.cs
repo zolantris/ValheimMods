@@ -22,24 +22,25 @@ using Object = UnityEngine.Object;
 
 namespace ValheimRAFT
 {
-  [BepInPlugin(BepInGUID, Name, Version)]
-  // [BepInDependency(Jotunn.Main.ModGuid)]
+  [BepInPlugin(BepInGuid, ModName, Version)]
+  [BepInDependency(Jotunn.Main.ModGuid)]
   [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
-  public class ValheimRaftEntrypoint : BaseUnityPlugin
+  public class Main : BaseUnityPlugin
   {
-    internal const string Author = "zolantris";
-
-    internal const string Name = "ValheimRAFT";
-
+    /*
+     * This was previously sarcen which will cause breaks if a person upgrades their raft to this mod. May need to publish
+     */
+    public const string Author = "zolantris";
     private const string Version = "1.5.1";
-    private const string BepInGUID = $"BepIn.{Author}.{Name}";
-    private const string HarmonyGUID = $"Harmony.{Author}.{Name}";
+    internal const string ModName = "ValheimRAFT";
+    public const string BepInGuid = $"BepIn.{Author}.{ModName}";
+    private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";
     private static Harmony m_harmony;
     internal static int CustomRaftLayer = 29;
     public static AssetBundle m_assetBundle;
     private bool m_customItemsAdded;
 
-    public static ValheimRaftEntrypoint Instance { get; private set; }
+    public static Main Instance { get; private set; }
 
     public ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
 
@@ -52,20 +53,19 @@ namespace ValheimRAFT
      */
     public string[] possibleModFolderNames =
     {
-      Instance.PluginFolderName.Value,
-      $"{Author}-{Name}", $"Zolantris-{Name}", $"zolantris-{Name}", $"{Name}"
+      $"{Author}-{ModName}", ModName
     };
 
-    private void Awake()
+    public void Awake()
     {
       Instance = this;
 
-      this.PluginFolderName = this.Config.Bind<string>("Critical Config",
+      this.PluginFolderName = this.Config.Bind<string>("Config",
         "pluginFolderName", "", new ConfigDescription(
           "Users can leave this empty. If they do not, the mod will attempt to match the folder string. Allows users to set the folder search name if their" +
-          $" manager renames the folder, r2modman has a fallback case added to search for {Author}-{Name}" +
+          $" manager renames the folder, r2modman has a fallback case added to search for {Author}-{ModName}" +
           "Default search values are an ordered list first one is always matching non-empty strings from this pluginFolderName." +
-          $"Folder Matches are:  {Author}-{Name}, zolantris-{Name} Zolantris-{Name}, and {Name}",
+          $"Folder Matches are:  {Author}-{ModName}, zolantris-{ModName} Zolantris-{ModName}, and {ModName}",
           (AcceptableValueBase)null, new object[1]
           {
             (object)new ConfigurationManagerAttributes()
@@ -93,7 +93,7 @@ namespace ValheimRAFT
               IsAdminOnly = true
             }
           }));
-      m_harmony = new Harmony(HarmonyGUID);
+      m_harmony = new Harmony(HarmonyGuid);
       m_harmony.PatchAll();
       int layer = LayerMask.NameToLayer("vehicle");
       for (int index = 0; index < 32; ++index)

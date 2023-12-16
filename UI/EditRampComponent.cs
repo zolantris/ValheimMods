@@ -33,7 +33,7 @@ namespace ValheimRAFT.UI
     {
       Transform parent = GUIManager.CustomGUIFront.transform;
       m_editPanel = Object.Instantiate<GameObject>(
-        ValheimRaftEntrypoint.m_assetBundle.LoadAsset<GameObject>("edit_ramp_panel"),
+        Main.m_assetBundle.LoadAsset<GameObject>("edit_ramp_panel"),
         parent, false);
       PanelUtil.ApplyPanelStyle(m_editPanel);
       m_segmentsInput = ((Component)m_editPanel.transform.Find("SegmentsInput"))

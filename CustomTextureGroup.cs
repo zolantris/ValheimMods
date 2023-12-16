@@ -96,31 +96,36 @@ public class CustomTextureGroup
 
     string[] files = GetFiles(groupName, "Zolantris-ValheimRAFT");
 
-    // /*
-    //  * This if blocks is provided to make the PluginFolderName check a bit more verbose
-    //  */
-    // {
-    //   foreach (var possibleModFolderName in ValheimRaftEntrypoint.Instance.possibleModFolderNames)
-    //   {
-    //     if (possibleModFolderName == "" || !Directory.Exists(Path.Combine(Paths.PluginPath,
-    //           possibleModFolderName))) continue;
-    //
-    //     if (possibleModFolderName == ValheimRaftEntrypoint.Instance.PluginFolderName.Value)
-    //     {
-    //       ZLog.DevLog(
-    //         $"{ValheimRaftEntrypoint.Name} PluginFolderName path detected, resolving assets from that folder");
-    //     }
-    //
-    //     files = GetFiles(groupName, possibleModFolderName);
-    //     break;
-    //   }
-    //
-    //   /*
-    //    * this log will not be reached if the "guess" path matches
-    //    */
-    //   ZLog.LogError(
-    //     $"ValheimRAFT: Unable to detect modFolder path, this will cause mesh issues with sails. Please set ValheimRAFT mod folder in the BepInExConfig file. The ValheimRAFT folder should found within this directory {Paths.PluginPath}");
-    // }
+    /*
+     * This if blocks is provided to make the PluginFolderName check a bit more verbose
+     * - It could be added to the array, but would have to be done after CONFIG initializes
+     */
+    if (Main.Instance.PluginFolderName.Value == "" || !Directory.Exists(
+          Path.Combine(Paths.PluginPath,
+            Main.Instance.PluginFolderName.Value)))
+    {
+      ZLog.DevLog(
+        $"{Main.ModName} PluginFolderName path detected, resolving assets from that folder");
+    }
+    else
+    {
+      {
+        foreach (var possibleModFolderName in Main.Instance.possibleModFolderNames)
+        {
+          if (!Directory.Exists(Path.Combine(Paths.PluginPath,
+                possibleModFolderName))) continue;
+
+          files = GetFiles(groupName, possibleModFolderName);
+          break;
+        }
+
+        /*
+         * this log will not be reached if the "guess" path matches
+         */
+        ZLog.LogError(
+          $"ValheimRAFT: Unable to detect modFolder path, this will cause mesh issues with sails. Please set ValheimRAFT mod folder in the BepInExConfig file. The ValheimRAFT folder should found within this directory {Paths.PluginPath}");
+      }
+    }
 
     foreach (string file in files)
     {

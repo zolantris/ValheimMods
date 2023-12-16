@@ -12,7 +12,7 @@
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU'">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugSymbols>true</DebugSymbols>
         <DebugType>full</DebugType>
@@ -33,14 +33,14 @@
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug  Run Valheim|AnyCPU' ">
-        <OutputPath>bin\Debug Run Valheim\</OutputPath>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' ">
+        <OutputPath>bin\Debug\</OutputPath>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' ">
-        <OutputPath>bin\Release Run Valheim\</OutputPath>
+        <OutputPath>bin\Release\</OutputPath>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
-        <OutputPath>bin\Release Archive\</OutputPath>
+        <OutputPath>bin\Release\</OutputPath>
     </PropertyGroup>
     <ItemGroup>
         <Reference Include="0Harmony">
@@ -106,7 +106,7 @@
         <Compile Include="RudderComponent.cs"/>
         <Compile Include="SailComponent.cs"/>
         <Compile Include="SailCreatorComponent.cs"/>
-        <Compile Include="ValheimRaftEntrypoint.cs"/>
+        <Compile Include="Main.cs"/>
         <Compile Include="Util\BinaryIOUtil.cs"/>
         <Compile Include="Util\ListUtil.cs"/>
         <Compile Include="Util\ZDOUtil.cs"/>
@@ -144,19 +144,13 @@
         <Content Include=".gitignore"/>
         <Content Include="README.md"/>
     </ItemGroup>
-    <!--    <PropertyGroup>-->
-    <!--        <R2ModManPath>AppData\Roaming\r2modmanPlus-local</R2ModManPath>-->
-    <!--        <R2ModManProfile>valheim_mod_debugging</R2ModManProfile>-->
-    <!--        <PluginDeployTarget>Zolantris-ValheimRAFT</PluginDeployTarget>-->
-    <!--        <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>-->
-    <!--    </PropertyGroup>-->
+    <PropertyGroup>
+        <R2ModManPath>%HOMEPATH%\AppData\Roaming\r2modmanPlus-local</R2ModManPath>
+        <R2ModManProfile>Valheim\profiles\valheim_mod_debugging</R2ModManProfile>
+        <PluginDeployTarget>BepInEx\plugins\zolantris-ValheimRAFT</PluginDeployTarget>
+        <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
+    </PropertyGroup>
     <Target Name="Copy_To_R2ModMan" Condition=" '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="PostBuildEvent">
-        <PropertyGroup>
-            <R2ModManPath>%HOMEPATH%\AppData\Roaming\r2modmanPlus-local</R2ModManPath>
-            <R2ModManProfile>Valheim\profiles\valheim_mod_debugging</R2ModManProfile>
-            <PluginDeployTarget>BepInEx\plugins\Zolantris-ValheimRAFT</PluginDeployTarget>
-            <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
-        </PropertyGroup>
         <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(PluginDeployPath)\ValheimRAFT.dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(PluginDeployPath)\ValheimRAFT.pdb&quot;"/>
     </Target>
