@@ -6,7 +6,7 @@ mod, this fork aims to keep the mod functional with future goals of expanding fu
 
 ## Meshes
 
-In Mod versions lower than `1.5.0` there were problems with the folder being renamed. In >=1.5.0 there is a
+In Mod versions lower than `1.5.1` there were problems with the folder being renamed. In >=1.5.1 there is a
 configuration
 manager option to change the path to resolve the ValheimRAFT folder.
 

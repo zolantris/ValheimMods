@@ -23,7 +23,7 @@ using Object = UnityEngine.Object;
 namespace ValheimRAFT
 {
   [BepInPlugin(BepInGUID, Name, Version)]
-  [BepInDependency(Jotunn.Main.ModGuid)]
+  // [BepInDependency(Jotunn.Main.ModGuid)]
   [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
   public class ValheimRaftEntrypoint : BaseUnityPlugin
   {
@@ -31,9 +31,9 @@ namespace ValheimRAFT
 
     internal const string Name = "ValheimRAFT";
 
-    private const string Version = "1.5.0";
-    private const string BepInGUID = $"BepIn.{Author}.ValheimRAFT";
-    private const string HarmonyGUID = $"Harmony.{Author}.ValheimRAFT";
+    private const string Version = "1.5.1";
+    private const string BepInGUID = $"BepIn.{Author}.{Name}";
+    private const string HarmonyGUID = $"Harmony.{Author}.{Name}";
     private static Harmony m_harmony;
     internal static int CustomRaftLayer = 29;
     public static AssetBundle m_assetBundle;
@@ -53,20 +53,19 @@ namespace ValheimRAFT
     public string[] possibleModFolderNames =
     {
       Instance.PluginFolderName.Value,
-      $"{Author}-{Name}", $"zolantris-{Name}",
-      $"Virtualize-{Name}", $"{Name}"
+      $"{Author}-{Name}", $"Zolantris-{Name}", $"zolantris-{Name}", $"{Name}"
     };
 
     private void Awake()
     {
       Instance = this;
 
-      this.PluginFolderName = Config.Bind<string>("ClientConfig",
+      this.PluginFolderName = this.Config.Bind<string>("Critical Config",
         "pluginFolderName", "", new ConfigDescription(
           "Users can leave this empty. If they do not, the mod will attempt to match the folder string. Allows users to set the folder search name if their" +
           $" manager renames the folder, r2modman has a fallback case added to search for {Author}-{Name}" +
           "Default search values are an ordered list first one is always matching non-empty strings from this pluginFolderName." +
-          $"Folder Matches are: {possibleModFolderNames}",
+          $"Folder Matches are:  {Author}-{Name}, zolantris-{Name} Zolantris-{Name}, and {Name}",
           (AcceptableValueBase)null, new object[1]
           {
             (object)new ConfigurationManagerAttributes()

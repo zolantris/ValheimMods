@@ -7,7 +7,7 @@
         <OutputType>Library</OutputType>
         <AssemblyName>ValheimRAFT</AssemblyName>
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-        <ApplicationVersion>1.5.0</ApplicationVersion>
+        <ApplicationVersion>1.5.1</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -144,11 +144,23 @@
         <Content Include=".gitignore"/>
         <Content Include="README.md"/>
     </ItemGroup>
-    <Target Name="Copy_To_R2ModMan" Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'" AfterTargets="PostBuildEvent">
-        <Exec Command="copy &quot;$(OutDir)\ValheimRAFT.dll&quot; &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\plugins\zolantris-valheimraft\ValheimRAFT.dll&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)\ValheimRAFT.pdb&quot; &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\plugins\zolantris-valheimraft\ValheimRAFT.pdb&quot;"/>
+    <!--    <PropertyGroup>-->
+    <!--        <R2ModManPath>AppData\Roaming\r2modmanPlus-local</R2ModManPath>-->
+    <!--        <R2ModManProfile>valheim_mod_debugging</R2ModManProfile>-->
+    <!--        <PluginDeployTarget>Zolantris-ValheimRAFT</PluginDeployTarget>-->
+    <!--        <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>-->
+    <!--    </PropertyGroup>-->
+    <Target Name="Copy_To_R2ModMan" Condition=" '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="PostBuildEvent">
+        <PropertyGroup>
+            <R2ModManPath>%HOMEPATH%\AppData\Roaming\r2modmanPlus-local</R2ModManPath>
+            <R2ModManProfile>Valheim\profiles\valheim_mod_debugging</R2ModManProfile>
+            <PluginDeployTarget>BepInEx\plugins\Zolantris-ValheimRAFT</PluginDeployTarget>
+            <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
+        </PropertyGroup>
+        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(PluginDeployPath)\ValheimRAFT.dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(PluginDeployPath)\ValheimRAFT.pdb&quot;"/>
     </Target>
-    <Target Name="Run_Valheim" Condition="'$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU'" AfterTargets="Copy_To_R2ModMan">
+    <Target Name="Run_Valheim" Condition=" '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="Copy_To_R2ModMan">
         <Exec Command="&quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; -console --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
     </Target>
     <Target Name="Generate_Mod_Archive" Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'" AfterTargets="PostBuildEvent">
