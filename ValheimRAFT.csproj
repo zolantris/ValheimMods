@@ -33,15 +33,6 @@
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' ">
-        <OutputPath>bin\Debug\</OutputPath>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' ">
-        <OutputPath>bin\Release\</OutputPath>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
-        <OutputPath>bin\Release\</OutputPath>
-    </PropertyGroup>
     <ItemGroup>
         <Reference Include="0Harmony">
             <HintPath>libs\0Harmony.dll</HintPath>
@@ -189,9 +180,7 @@
         <!-- delete duplicate mod version-->
         <Exec Command="if exist &quot;$(ModOutputDir)$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(ModNameVersion)&quot;"/>
         <Exec Command="powershell Compress-Archive '$(TmpDir)\*' '$(ModOutputDir)$(ModNameVersion)'"/>
-
-        <!--    cleanup    -->
-        <!--        <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>-->
+        <Exec Command="powershell Compress-Archive '$(RepoDir)libs\*' '$(ModOutputDir)libs-$(ApplicationVersion).zip'"/>
     </Target>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>
