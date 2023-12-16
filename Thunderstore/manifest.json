@@ -3,5 +3,5 @@
   "version_number": "1.5.1",
   "website_url": "https://github.com/zolantris/ValheimRaft",
   "description": "ValheimRAFT fork with some QOL stability fixes works with latest Valheim. This mod will be supported until the original owner comes back",
-  "dependencies": ["ValheimModding-Jotunn-2.15.2"]
+  "dependencies": ["ValheimModding-Jotunn"]
 }

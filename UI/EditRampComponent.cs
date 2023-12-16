@@ -1,10 +1,4 @@
-﻿// Decompiled with JetBrains decompiler
-// Type: ValheimRAFT.UI.EditRampComponent
-// Assembly: ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// MVID: B1A8BB6C-BD4E-4881-9FD4-7E1D68B1443D
-
-
-using Jotunn.Managers;
+﻿using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
