@@ -23,7 +23,7 @@ using Object = UnityEngine.Object;
 namespace ValheimRAFT
 {
   [BepInPlugin(BepInGUID, Name, Version)]
-  // [BepInDependency]
+  [BepInDependency(Jotunn.Main.ModGuid)]
   [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
   public class ValheimRaftEntrypoint : BaseUnityPlugin
   {
