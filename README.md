@@ -4,17 +4,18 @@ A [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork that works wit
 owner [Sarcenzzz](https://www.nexusmods.com/valheim/users/3061574) abandoned the
 mod, this fork aims to keep the mod functional with future goals of expanding functionality.
 
-## Meshes
+## Build Status
 
-In Mod versions lower than `1.5.0` there were problems with the folder being renamed. In `>=1.5.0` there is a
-configuration
-manager option to change the path to resolve the ValheimRAFT folder.
+[![ValheimRAFT Build](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml/badge.svg)](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml)
 
-If you want meshes (IE sails and ropes ) to render automatically, your mod must either be named `ValheimRAFT`
-or `zolantris-ValheimRAFT`.
+## Features
 
-Otherwise make sure to edit the `pluginFolderName` key and add the folder name for ValheimRaft located
-within the BepInEx\Plugins path. Afterwards relaunch the game. There should be no mesh issues.
+- Build a RAFT on the water using Valheim's building prefabs.
+- Adds a climbable ladder
+- Add piers that reach the ocean floor (stone and log)
+- Adds anchors
+- Adds custom sails (requires meshes to be working)
+- Adds ropes (requires meshes to be working)
 
 ## Community
 
@@ -39,6 +40,18 @@ general format is
 1. Please fork the codebase and make a pull request via your fork branch.
 2. Changes need to be feature based IE keep the changes minimal and single focused. Larger changes are welcome, but they
    have higher chance of breaking other things and are harder to maintain.
+
+## Meshes
+
+In Mod versions lower than `1.5.0` there were problems with the folder being renamed. In `>=1.5.0` there is a
+configuration
+manager option to change the path to resolve the ValheimRAFT folder.
+
+If you want meshes (IE sails and ropes ) to render automatically, your mod must either be named `ValheimRAFT`
+or `zolantris-ValheimRAFT`.
+
+Otherwise make sure to edit the `pluginFolderName` key and add the folder name for ValheimRaft located
+within the BepInEx\Plugins path. Afterwards relaunch the game. There should be no mesh issues.
 
 ### Getting Started
 
