@@ -55,7 +55,7 @@ The server issues are not being tabled, but they won't be fixed for a bit.
 
 Join us on discord to get the latest information, upcoming features, and discover other mods.
 
-[Discord Link](https://discord.gg/Kcw4d97ez3)
+[Discord Link](https://discord.gg/jeUcpCvB3z)
 
 ## Issues
 
