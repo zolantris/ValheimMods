@@ -21,7 +21,7 @@ mod, this fork aims to keep the mod functional with future goals of expanding fu
 
 Join us on discord to get the latest information, upcoming features, and discover other mods.
 
-[Discord Link](https://discord.gg/XqA7j2qgRZ)
+[Discord Link](https://discord.gg/Kcw4d97ez3)
 
 ## Issues
 
