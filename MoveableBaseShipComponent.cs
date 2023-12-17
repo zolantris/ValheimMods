@@ -72,7 +72,13 @@ public class MoveableBaseShipComponent : MonoBehaviour
     BoxCollider[] colliders = base.transform.GetComponentsInChildren<BoxCollider>();
     m_baseRoot.m_onboardcollider =
       colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "OnboardTrigger");
-    m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    if (m_baseRoot.m_onboardcollider != null)
+      m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    else
+    {
+      ZLog.LogError("ValheimRAFT MovableBaseShipComponent m_baseRoot.m_onboardcollider is null");
+    }
+
     m_baseRoot.m_floatcollider = ship.m_floatCollider;
     m_baseRoot.m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     m_baseRoot.m_blockingcollider = ship.transform.Find("ship/colliders/Cube")
@@ -178,7 +184,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
       }
     }
 
-    m_nview.m_zdo.Set("MBTargetHeight", m_targetHeight);
+    m_nview.GetZDO().Set("MBTargetHeight", m_targetHeight);
   }
 
   internal void UpdateStats(bool flight)

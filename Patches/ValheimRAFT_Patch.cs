@@ -168,14 +168,14 @@ public class ValheimRAFT_Patch
   private static bool Ship_FixedUpdate(Ship __instance)
   {
     MoveableBaseShipComponent mb = __instance.GetComponent<MoveableBaseShipComponent>();
-    if (!mb || !__instance.m_nview || __instance.m_nview.m_zdo == null)
+    if (!mb || !__instance.m_nview || __instance.m_nview.GetZDO() == null)
     {
       return true;
     }
 
-    mb.m_targetHeight = __instance.m_nview.m_zdo.GetFloat("MBTargetHeight", mb.m_targetHeight);
+    mb.m_targetHeight = __instance.m_nview.GetZDO().GetFloat("MBTargetHeight", mb.m_targetHeight);
     mb.m_flags =
-      (MoveableBaseShipComponent.MBFlags)__instance.m_nview.m_zdo.GetInt("MBFlags",
+      (MoveableBaseShipComponent.MBFlags)__instance.m_nview.GetZDO().GetInt("MBFlags",
         (int)mb.m_flags);
     mb.m_zsync.m_useGravity = mb.m_targetHeight == 0f;
     bool flag = __instance.HaveControllingPlayer();
@@ -436,7 +436,7 @@ public class ValheimRAFT_Patch
   [HarmonyPostfix]
   private static void ZNetView_Awake(ZNetView __instance)
   {
-    if (__instance.m_zdo != null)
+    if (__instance.GetZDO() != null)
     {
       MoveableBaseRootComponent.InitPiece(__instance);
       CultivatableComponent.InitPiece(__instance);
@@ -635,10 +635,10 @@ public class ValheimRAFT_Patch
       {
         list.InsertRange(i + 2, (IEnumerable<CodeInstruction>)(object)new CodeInstruction[3]
         {
-          new CodeInstruction(OpCodes.Ldarg_0, (object)null),
-          new CodeInstruction(OpCodes.Ldloc_3, (object)null),
-          new CodeInstruction(OpCodes.Call,
-            (object)AccessTools.Method(typeof(ValheimRAFT_Patch), "PlacedPiece", (Type[])null,
+          new(OpCodes.Ldarg_0, (object)null),
+          new(OpCodes.Ldloc_3, (object)null),
+          new(OpCodes.Call,
+            AccessTools.Method(typeof(ValheimRAFT_Patch), "PlacedPiece", (Type[])null,
               (Type[])null))
         });
         break;
@@ -699,7 +699,7 @@ public class ValheimRAFT_Patch
       Vector3 localPos = mbr.transform.InverseTransformPoint(__instance.transform.position);
       Vector3 start = localPos + Vector3.up * 2f;
       start = mbr.transform.TransformPoint(start);
-      Quaternion localDir = ((Character)__instance).m_lookYaw *
+      Quaternion localDir = ((Character)__instance).GetLookYaw() *
                             Quaternion.Euler(__instance.m_lookPitch,
                               0f - mbr.transform.rotation.eulerAngles.y + yawOffset, 0f);
       Vector3 end = mbr.transform.rotation * localDir * Vector3.forward;
@@ -727,11 +727,11 @@ public class ValheimRAFT_Patch
   [HarmonyPrefix]
   private static void Player_Save(Player __instance, ZPackage pkg)
   {
-    if ((bool)((Character)__instance).m_lastGroundCollider &&
-        ((Character)__instance).m_lastGroundTouch < 0.3f)
+    if ((bool)(__instance).GetLastGroundCollider() &&
+        (__instance).m_lastGroundTouch < 0.3f)
     {
-      MoveableBaseRootComponent.AddDynamicParent(((Character)__instance).m_nview,
-        ((Character)__instance).m_lastGroundCollider.gameObject);
+      MoveableBaseRootComponent.AddDynamicParent((__instance).m_nview,
+        (__instance).GetLastGroundCollider().gameObject);
     }
   }
 
@@ -835,15 +835,16 @@ public class ValheimRAFT_Patch
   private static bool OnAnimatorIK(CharacterAnimEvent __instance, int layerIndex)
   {
     if (__instance.m_character is Player player && player.IsAttached() &&
-        (bool)player.m_attachPoint && (bool)player.m_attachPoint.parent)
+        (bool)player.GetAttachPoint() && (bool)player.GetAttachPoint().parent)
     {
-      RudderComponent rudder = player.m_attachPoint.parent.GetComponent<RudderComponent>();
+      RudderComponent rudder = player.GetAttachPoint().parent.GetComponent<RudderComponent>();
       if ((bool)rudder)
       {
         rudder.UpdateIK(((Character)player).m_animator);
       }
 
-      RopeLadderComponent ladder = player.m_attachPoint.parent.GetComponent<RopeLadderComponent>();
+      RopeLadderComponent ladder =
+        player.GetAttachPoint().parent.GetComponent<RopeLadderComponent>();
       if ((bool)ladder)
       {
         ladder.UpdateIK(((Character)player).m_animator);
@@ -858,11 +859,11 @@ public class ValheimRAFT_Patch
   [HarmonyPrefix]
   private static void AttachStop(Player __instance)
   {
-    if (__instance.IsAttached() && (bool)__instance.m_attachPoint &&
-        (bool)__instance.m_attachPoint.parent)
+    if (__instance.IsAttached() && (bool)__instance.GetAttachPoint() &&
+        (bool)__instance.GetAttachPoint().parent)
     {
       RopeLadderComponent ladder =
-        __instance.m_attachPoint.parent.GetComponent<RopeLadderComponent>();
+        __instance.GetAttachPoint().parent.GetComponent<RopeLadderComponent>();
       if ((bool)ladder)
       {
         ladder.StepOffLadder(__instance);
@@ -881,14 +882,14 @@ public class ValheimRAFT_Patch
     bool secondaryAttack, bool block, bool blockHold, bool jump, bool crouch, bool run,
     bool autoRun)
   {
-    if (__instance.IsAttached() && (bool)__instance.m_attachPoint &&
-        (bool)__instance.m_attachPoint.parent)
+    if (__instance.IsAttached() && (bool)__instance.GetAttachPoint() &&
+        (bool)__instance.GetAttachPoint().parent)
     {
       if (movedir.x == 0f && movedir.y == 0f && !jump && !crouch && !attack && !attackHold &&
           !secondaryAttack && !block)
       {
         RopeLadderComponent ladder =
-          __instance.m_attachPoint.parent.GetComponent<RopeLadderComponent>();
+          __instance.GetAttachPoint().parent.GetComponent<RopeLadderComponent>();
         if ((bool)ladder)
         {
           ladder.MoveOnLadder(__instance, movedir.z);
@@ -896,7 +897,7 @@ public class ValheimRAFT_Patch
         }
       }
 
-      RudderComponent rudder = __instance.m_attachPoint.parent.GetComponent<RudderComponent>();
+      RudderComponent rudder = __instance.GetAttachPoint().parent.GetComponent<RudderComponent>();
       if ((bool)rudder && __instance.m_doodadController != null)
       {
         __instance.SetDoodadControlls(ref movedir, ref ((Character)__instance).m_lookDir, ref run,

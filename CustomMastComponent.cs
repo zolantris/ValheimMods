@@ -43,13 +43,13 @@ public class CustomMastComponent : MastComponent
 
   public void LoadZDO()
   {
-    if ((bool)m_nview && m_nview.m_zdo != null)
+    if ((bool)m_nview && m_nview.GetZDO() != null)
     {
-      Vector3 upperBeam = m_nview.m_zdo.GetVec3("MBMast_upperBeam", new Vector3(1f, 1f, 1f));
+      Vector3 upperBeam = m_nview.GetZDO().GetVec3("MBMast_upperBeam", new Vector3(1f, 1f, 1f));
       m_upperBeamLength = upperBeam.x;
       m_upperBeamWidth = upperBeam.y;
       m_upperBeamEnabled = upperBeam.z == 1f;
-      Vector3 lowerBeam = m_nview.m_zdo.GetVec3("MBMast_lowerBeam", new Vector3(1f, 1f, 1f));
+      Vector3 lowerBeam = m_nview.GetZDO().GetVec3("MBMast_lowerBeam", new Vector3(1f, 1f, 1f));
       m_lowerBeamLength = lowerBeam.x;
       m_lowerBeamWidth = lowerBeam.y;
       m_lowerBeamEnabled = lowerBeam.z == 1f;

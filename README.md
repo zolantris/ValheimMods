@@ -75,10 +75,14 @@ within the BepInEx\Plugins path. Afterwards relaunch the game. There should be n
 6. Manual Compiling
     1. delete the current libs folder (if the libs are outdated) and create a new libs folder and follow the manual
        compiling steps below.
-    2. You will need to publicize all the required require dependencies. These dependencies can be found in
-       DRIVE_PATH_TO_STEAM...Steam\steamapps\common\Valheim\valheim_Data\Managed
-    3. To publicize, copy all the dependencies required into a separate folder.
-       Install https://github.com/CabbageCrow/AssemblyPublicizer and run the GUI tool on that folder.
-    4. Rename the __publicized assemblies back to their original names.
-    5. Move those assemblies to the libs folder under ValheimRaft.
-    6. Click compile. It should work.
+    2. Publicizer for assembly_valheim:
+        1. You will need to publicize all the required require dependencies. These dependencies can be found in
+           DRIVE_PATH_TO_STEAM...Steam\steamapps\common\Valheim\valheim_Data\Managed
+        2. Run .\programs\nuget.exe source add -Name nuget.org -Source https://api.nuget.org/v3/index.json
+        3. Run .\programs\nuget.exe install Krafs.Publicizer -OutputDirectory packages
+        4. This will install the automatic publicizer. It will publicize only the assembly_valheim file under libs.
+        5. Alternatively To publicize, copy all the dependencies required into a separate folder.
+           Install https://github.com/CabbageCrow/AssemblyPublicizer and run the GUI tool on that folder.
+    3. Rename the __publicized assemblies back to their original names.
+    4. Move those assemblies to the libs folder under ValheimRaft.
+    5. Click compile. It should work.

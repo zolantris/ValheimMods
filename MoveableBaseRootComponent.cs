@@ -80,13 +80,13 @@ public class MoveableBaseRootComponent : MonoBehaviour
     m_rigidbody.mass = 99999f;
     if (ZNet.instance.IsServer())
     {
-      StartCoroutine("UpdatePieceSectors");
+      StartCoroutine(nameof(UpdatePieceSectors));
     }
   }
 
   public void CleanUp()
   {
-    StopCoroutine("ActivatePendingPieces");
+    StopCoroutine(nameof(ActivatePendingPieces));
     if (!ZNetScene.instance || m_id == 0)
     {
       return;
@@ -154,7 +154,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
       }
       else
       {
-        netview.m_zdo.SetPosition(base.transform.position);
+        netview.GetZDO().SetPosition(base.transform.position);
       }
     }
   }
@@ -186,7 +186,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
           int id = zdo.GetInt(MBParentIdHash);
           if (id != m_id)
           {
-            Logger.LogWarning((object)"Invalid piece in piece list found, removing.");
+            ZLog.LogWarning("Invalid piece in piece list found, removing.");
             list.FastRemoveAt(i);
             i--;
             continue;
@@ -295,12 +295,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public IEnumerator ActivatePendingPieces()
   {
-    if (!m_nview || m_nview.m_zdo == null)
+    if (!m_nview || m_nview.GetZDO() == null)
     {
       yield return null;
     }
 
-    int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
+    int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.GetZDO());
     if (m_pendingPieces.TryGetValue(id, out var list))
     {
       Stopwatch stopwatch = new Stopwatch();
@@ -334,12 +334,21 @@ public class MoveableBaseRootComponent : MonoBehaviour
         }
 
         ZNetView nv = go.GetComponentInParent<ZNetView>();
-        if (!nv || nv.m_zdo == null)
+        if (!nv || nv.GetZDO() == null)
         {
           continue;
         }
 
-        if (ZDOExtraData.s_vec3.TryGetValue(nv.m_zdo.m_uid, out var dic))
+
+        /*
+         * possible workaround code for non-public access of s_vec3 dictionary
+         */
+        // if (nv.GetZDO().GetVec3(nv.GetZDO().GetHashCode(), out var dic))
+        // {
+        //   nv.transform.position = dic + base.transform.position;
+        // }
+
+        if (ZDOExtraData.s_vec3.TryGetValue(nv.GetZDO().m_uid, out var dic))
         {
           if (dic.TryGetValue(MBCharacterOffsetHash, out var offset))
           {
@@ -349,8 +358,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
           offset = default(Vector3);
         }
 
-        ZDOExtraData.RemoveInt(nv.m_zdo.m_uid, MBCharacterParentHash);
-        ZDOExtraData.RemoveVec3(nv.m_zdo.m_uid, MBCharacterOffsetHash);
+        ZDOExtraData.RemoveInt(nv.GetZDO().m_uid, MBCharacterParentHash);
+        ZDOExtraData.RemoveVec3(nv.GetZDO().m_uid, MBCharacterOffsetHash);
         dic = null;
       }
 
@@ -365,8 +374,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
     MoveableBaseRootComponent mbroot = target.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbroot)
     {
-      source.m_zdo.Set(MBCharacterParentHash, mbroot.m_id);
-      source.m_zdo.Set(MBCharacterOffsetHash,
+      source.GetZDO().Set(MBCharacterParentHash, mbroot.m_id);
+      source.GetZDO().Set(MBCharacterOffsetHash,
         source.transform.position - mbroot.transform.position);
     }
   }
@@ -376,14 +385,14 @@ public class MoveableBaseRootComponent : MonoBehaviour
     MoveableBaseRootComponent mbroot = target.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbroot)
     {
-      source.m_zdo.Set(MBCharacterParentHash, mbroot.m_id);
-      source.m_zdo.Set(MBCharacterOffsetHash, offset);
+      source.GetZDO().Set(MBCharacterParentHash, mbroot.m_id);
+      source.GetZDO().Set(MBCharacterOffsetHash, offset);
     }
   }
 
   public static void InitZDO(ZDO zdo)
   {
-    if (zdo.m_prefab == "MBRaft".GetStableHashCode())
+    if (zdo.GetPrefab() == "MBRaft".GetStableHashCode())
     {
     }
 
@@ -438,7 +447,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
         zdo.Set(MBRotationVecHash,
           zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
         zdo.RemoveZDOID(MBParentHash);
-        ZDOExtraData.s_quats.Remove(zdoid, MBRotationHash);
+        ZDOExtraData.RemoveQuaternion(zdoid, MBRotationHash);
       }
     }
 
@@ -453,7 +462,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
       return;
     }
 
-    int id = GetParentID(netview.m_zdo);
+    int id = GetParentID(netview.GetZDO());
     if (id == 0)
     {
       return;
@@ -479,9 +488,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
     if ((bool)netview)
     {
       netview.transform.SetParent(base.transform);
-      netview.transform.localPosition = netview.m_zdo.GetVec3(MBPositionHash, Vector3.zero);
+      netview.transform.localPosition = netview.GetZDO().GetVec3(MBPositionHash, Vector3.zero);
       netview.transform.localRotation =
-        Quaternion.Euler(netview.m_zdo.GetVec3(MBRotationVecHash, Vector3.zero));
+        Quaternion.Euler(netview.GetZDO().GetVec3(MBRotationVecHash, Vector3.zero));
       WearNTear wnt = netview.GetComponent<WearNTear>();
       if ((bool)wnt)
       {
@@ -508,16 +517,16 @@ public class MoveableBaseRootComponent : MonoBehaviour
   public void AddNewPiece(ZNetView netview)
   {
     netview.transform.SetParent(base.transform);
-    if (netview.m_zdo != null)
+    if (netview.GetZDO() != null)
     {
-      netview.m_zdo.Set(MBParentIdHash,
-        ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo));
-      netview.m_zdo.Set(MBPositionHash, netview.transform.localPosition);
-      netview.m_zdo.Set(MBRotationVecHash, netview.transform.localRotation.eulerAngles);
+      netview.GetZDO().Set(MBParentIdHash,
+        ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.GetZDO()));
+      netview.GetZDO().Set(MBPositionHash, netview.transform.localPosition);
+      netview.GetZDO().Set(MBRotationVecHash, netview.transform.localRotation.eulerAngles);
     }
 
     AddPiece(netview);
-    InitZDO(netview.m_zdo);
+    InitZDO(netview.GetZDO());
   }
 
   public void AddPiece(ZNetView netview)
@@ -615,9 +624,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   private void UpdatePieceCount()
   {
-    if ((bool)m_nview && m_nview.m_zdo != null)
+    if ((bool)m_nview && m_nview.GetZDO() != null)
     {
-      m_nview.m_zdo.Set("MBPieceCount", m_pieces.Count);
+      m_nview.GetZDO().Set("MBPieceCount", m_pieces.Count);
     }
   }
 
@@ -652,11 +661,11 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   internal int GetPieceCount()
   {
-    if (!m_nview || m_nview.m_zdo == null)
+    if (!m_nview || m_nview.GetZDO() == null)
     {
       return m_pieces.Count;
     }
 
-    return m_nview.m_zdo.GetInt("MBPieceCount", m_pieces.Count);
+    return m_nview.GetZDO().GetInt("MBPieceCount", m_pieces.Count);
   }
 }
