@@ -23,7 +23,7 @@ Important! **Please UNINSTALL ValheimRAFT from your server**. At this time the *
 well
 together.
 
-The following as been tested:
+The following has been tested:
 
 - Client only with a server IE (connecting to server without mod),
     - creating a boat and logging on and off the server does not destroy the boat.
