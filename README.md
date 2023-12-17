@@ -8,6 +8,40 @@ mod, this fork aims to keep the mod functional with future goals of expanding fu
 
 [![ValheimRAFT Build](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml/badge.svg)](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml)
 
+# Single Player Support
+
+Everything works well.
+
+Small issues
+
+- There may be some object destruction issues related to creating/spawning boats on top of each
+  other, (don't do it)
+
+## Server Support
+
+Important! **Please UNINSTALL ValheimRAFT from your server**. At this time the **server** and the **client** do not work
+well
+together.
+
+The following as been tested:
+
+- Client only with a server IE (connecting to server without mod),
+    - creating a boat and logging on and off the server does not destroy the boat.
+    - sailing and teleporting does not destroy the boat.
+    - The client will still be able to create items and the server will keep those raft items
+    - restarting/stopping/starting server keeps the boat.
+    - Removing the ValheimRAFT mod from the client will make the server glitch out the boat items.
+    - joining back (after adding the mod again) will render the items correctly.
+- Server & Client (BROKEN)
+    - If you use both, the server will garbage collect the client's IDs because they are considered invalid.
+    - If you use both the server will break the client mod items due to there being a breakage.
+
+The server issues are not being tabled, but they won't be fixed for a bit.
+
+- There needs to be a bunch of logging added to areas that do the object destruction and validation.
+- Once that's done we can look at the broken areas and compare them with the client IDs to see why things are not
+  working.
+
 ## Features
 
 - Build a RAFT on the water using Valheim's building prefabs.
