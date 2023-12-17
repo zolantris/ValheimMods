@@ -8,6 +8,7 @@ using Jotunn.Utils;
 using System;
 using System.Reflection;
 using System.Text;
+using Jotunn;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.U2D;
@@ -17,7 +18,7 @@ namespace ValheimRAFT
 {
   [BepInPlugin(BepInGuid, ModName, Version)]
   [BepInDependency(Jotunn.Main.ModGuid)]
-  [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
+  [NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
   public class Main : BaseUnityPlugin
   {
     /*
@@ -25,7 +26,7 @@ namespace ValheimRAFT
      * - This needs to be confirmed as an issue before things are switched back.
      */
     public const string Author = "zolantris";
-    private const string Version = "1.5.1";
+    private const string Version = "1.5.2";
     internal const string ModName = "ValheimRAFT";
     public const string BepInGuid = $"BepIn.{Author}.{ModName}";
     private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";
@@ -86,6 +87,22 @@ namespace ValheimRAFT
               IsAdminOnly = true
             }
           }));
+
+      // if (ZNet.instance)
+      // {
+      //   if (ZNet.instance.IsServerInstance())
+      //   {
+      //     ZLog.Log(
+      //       "Detected ValheimRAFT on server, skipping most of the initialization, ValheimRAFT must be installed on the client, and the server will only retain config.");
+      //     return;
+      //   }
+      //
+      //   if (ZNet.instance.IsLocalInstance())
+      //   {
+      //     ZLog.LogWarning(
+      //       "Detected local instance of valheim server using ValheimRAFT. ValheimRAFT may be unstable with other clients that connect. Please report the bug to https://github.com/zolantris/ValheimRaft/issues if there are problems");
+      //   }
+      // }
 
       m_harmony = new Harmony(HarmonyGuid);
       m_harmony.PatchAll();

@@ -118,10 +118,10 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
 
   private void LoadZDO()
   {
-    if ((bool)m_nview && m_nview.m_zdo != null)
+    if ((bool)m_nview && m_nview.GetZDO() != null)
     {
-      m_state = (BoardingRampState)m_nview.m_zdo.GetInt("MB_m_state");
-      m_segments = m_nview.m_zdo.GetInt("MB_m_segments", 5);
+      m_state = (BoardingRampState)m_nview.GetZDO().GetInt("MB_m_state");
+      m_segments = m_nview.GetZDO().GetInt("MB_m_segments", 5);
     }
   }
 
