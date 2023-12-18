@@ -98,7 +98,7 @@ namespace ValheimRAFT.Patches
       MoveableBaseRootComponent.Delegate componentInParent =
         ((Component)oldPlant).GetComponentInParent<MoveableBaseRootComponent.Delegate>();
       if (component && componentInParent)
-        componentInParent.AddNewPiece(component);
+        componentInParent.Instance.AddNewPiece(component);
       int parentId = CultivatableComponent.GetParentID(oldPlant.m_nview);
       if (parentId != 0)
         CultivatableComponent.AddNewChild(parentId, component);

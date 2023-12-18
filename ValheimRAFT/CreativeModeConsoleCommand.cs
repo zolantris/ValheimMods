@@ -27,8 +27,8 @@ namespace ValheimRAFT
               "piece"
             })))
         return;
-      MoveableBaseRootComponent componentInParent =
-        raycastHit.collider.GetComponentInParent<MoveableBaseRootComponent>();
+      MoveableBaseRootComponent.Server componentInParent =
+        raycastHit.collider.GetComponentInParent<MoveableBaseRootComponent.Server>();
       if (componentInParent)
         CreativeModeConsoleCommand.ToggleMode(localPlayer, componentInParent.m_ship);
     }

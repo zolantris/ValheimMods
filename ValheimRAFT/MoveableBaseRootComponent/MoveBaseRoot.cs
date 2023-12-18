@@ -18,20 +18,6 @@ namespace ValheimRAFT.MoveableBaseRootComponent;
 
 public abstract class MoveBaseRoot : MonoBehaviour
 {
-  public static readonly KeyValuePair<int, int> MbParentHash = ZDO.GetHashZDOID("MBParent");
-
-  public static readonly int MbCharacterParentHash = "MBCharacterParent".GetStableHashCode();
-
-  public static readonly int MbCharacterOffsetHash = "MBCharacterOFfset".GetStableHashCode();
-
-  public static readonly int MbParentIdHash = "MBParentId".GetStableHashCode();
-
-  public static readonly int MbPositionHash = "MBPosition".GetStableHashCode();
-
-  public static readonly int MbRotationHash = "MBRotation".GetStableHashCode();
-
-  public static readonly int MbRotationVecHash = "MBRotationVec".GetStableHashCode();
-
   internal static Dictionary<int, List<ZNetView>> m_pendingPieces =
     new Dictionary<int, List<ZNetView>>();
 
@@ -64,7 +50,7 @@ public abstract class MoveBaseRoot : MonoBehaviour
 
   public Vector2i m_sector;
 
-  private Bounds m_bounds = default(Bounds);
+  internal Bounds m_bounds = default(Bounds);
 
   internal BoxCollider m_blockingcollider;
 
@@ -124,6 +110,7 @@ public abstract class MoveBaseRoot : MonoBehaviour
 
   public virtual IEnumerator UpdatePieceSectors()
   {
+    yield return null;
   }
 
   public abstract List<MastComponent> GetMastPieces();
@@ -152,6 +139,7 @@ public abstract class MoveBaseRoot : MonoBehaviour
 
   public IEnumerator ActivatePendingPieces()
   {
+    yield return null;
   }
 
   public static void AddDynamicParent(ZNetView source, GameObject target)
@@ -170,15 +158,11 @@ public abstract class MoveBaseRoot : MonoBehaviour
   {
   }
 
-  private static int GetParentID(ZDO zdo)
-  {
-  }
-
   public virtual void ActivatePiece(ZNetView netview)
   {
   }
 
-  public void AddTemporaryPiece(Piece piece)
+  public virtual void AddTemporaryPiece(Piece piece)
   {
   }
 

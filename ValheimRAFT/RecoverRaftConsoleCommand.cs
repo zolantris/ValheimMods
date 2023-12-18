@@ -1,6 +1,7 @@
 ﻿using Jotunn.Entities;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimRAFT.MoveableBaseRootComponent;
 
 namespace ValheimRAFT
 {
@@ -21,9 +22,9 @@ namespace ValheimRAFT
       {
         ZNetView component2 = component1.GetComponent<ZNetView>();
         if (component2 != null && component2.m_zdo != null &&
-            !component2.GetComponentInParent<MoveableBaseRootComponent>())
+            !component2.GetComponentInParent<Delegate>())
         {
-          ZDOID zdoid = component2.m_zdo.GetZDOID(MoveableBaseRootComponent.MBParentHash);
+          ZDOID zdoid = component2.m_zdo.GetZDOID(Server.MbParentHash);
           if ((zdoid != ZDOID.None))
           {
             if (!((Object)ZNetScene.instance.FindInstance(zdoid) != (Object)null))
@@ -39,7 +40,7 @@ namespace ValheimRAFT
             }
           }
           else
-            component2.m_zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash, Vector3.zero);
+            component2.m_zdo.GetVec3(Server.MbPositionHash, Vector3.zero);
         }
       }
 
@@ -59,11 +60,11 @@ namespace ValheimRAFT
             ((Component)netview).transform.SetParent(((Component)component.m_baseRootDelegate)
               .transform);
             ((Component)netview).transform.localPosition =
-              netview.m_zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash, Vector3.zero);
+              netview.m_zdo.GetVec3(Server.MbPositionHash, Vector3.zero);
             ((Component)netview).transform.localRotation =
-              netview.m_zdo.GetQuaternion(MoveableBaseRootComponent.MBRotationHash,
+              netview.m_zdo.GetQuaternion(Server.MbRotationHash,
                 Quaternion.identity);
-            component.m_baseRootDelegate.AddNewPiece(netview);
+            component.m_baseRootDelegate.Instance.AddNewPiece(netview);
           }
         }
       }

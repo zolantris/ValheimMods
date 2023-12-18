@@ -80,6 +80,7 @@ public sealed class Client : MoveBaseRoot
 
   public IEnumerator ActivatePendingPieces()
   {
+    yield return null;
   }
 
   public static void AddDynamicParent(ZNetView source, GameObject target)
@@ -98,8 +99,12 @@ public sealed class Client : MoveBaseRoot
   {
   }
 
+  /**
+   * returning empty zdo
+   */
   private static int GetParentID(ZDO zdo)
   {
+    return 0;
   }
 
   public static void InitPiece(ZNetView netview)

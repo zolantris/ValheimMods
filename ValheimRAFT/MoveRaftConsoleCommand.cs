@@ -62,11 +62,13 @@ namespace ValheimRAFT
 
               /*
                * @todo This must be fired from the Server even if on the client
+               *
+               * disabled due to this taking a bit of time to refactor will come back to this.
                */
-              MoveableBaseRootComponent.Delegate.Instance.componentInParent = raycastHit
-                .collider.GetComponentInParent<MoveableBaseRootComponent>();
-              if (componentInParent)
-                MoveRaftConsoleCommand.MoveRaft(localPlayer, componentInParent.m_ship, offset);
+              // MoveableBaseRootComponent.Delegate.GetComponentInParent() = raycastHit
+              //   .collider.GetComponentInParent<MoveableBaseRootComponent>();
+              // if (componentInParent)
+              //   MoveRaftConsoleCommand.MoveRaft(localPlayer, componentInParent.m_ship, offset);
             }
           }
         }
@@ -93,12 +95,12 @@ namespace ValheimRAFT
           .Instance).m_nview.m_zdo);
       foreach (ZDO zdo in ZDOMan.instance.m_objectsByID.Values)
       {
-        if (zdo.GetInt(MoveableBaseRootComponent.MBParentIdHash, 0) == persistantId)
+        if (zdo.GetInt(Server.MbParentIdHash, 0) == persistantId)
         {
           Vector3 vector3 =
-            (zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash, Vector3.zero) +
+            (zdo.GetVec3(Server.MbPositionHash, Vector3.zero) +
              offset);
-          zdo.Set(MoveableBaseRootComponent.MBPositionHash, vector3);
+          zdo.Set(Server.MbPositionHash, vector3);
           zdo.SetPosition(((Component)ship).transform.position);
           ZNetView instance = ZNetScene.instance.FindInstance(zdo);
           if (instance)

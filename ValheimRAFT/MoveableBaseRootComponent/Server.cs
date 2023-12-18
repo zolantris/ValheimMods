@@ -25,6 +25,20 @@ public class Server : MoveBaseRoot
     return m_mastPieces;
   }
 
+  public static readonly KeyValuePair<int, int> MbParentHash = ZDO.GetHashZDOID("MBParent");
+
+  public static readonly int MbCharacterParentHash = "MBCharacterParent".GetStableHashCode();
+
+  public static readonly int MbCharacterOffsetHash = "MBCharacterOFfset".GetStableHashCode();
+
+  public static readonly int MbParentIdHash = "MBParentId".GetStableHashCode();
+
+  public static readonly int MbPositionHash = "MBPosition".GetStableHashCode();
+
+  public static readonly int MbRotationHash = "MBRotation".GetStableHashCode();
+
+  public static readonly int MbRotationVecHash = "MBRotationVec".GetStableHashCode();
+
   public static CustomRPC SyncBuildSectorsRPC;
 
   public static CustomRPC DelegateToServerRPC;
@@ -246,7 +260,7 @@ public class Server : MoveBaseRoot
     yield return true;
   }
 
-  public IEnumerator UpdatePieceSectors()
+  public override IEnumerator UpdatePieceSectors()
   {
     while (true)
     {
@@ -578,7 +592,7 @@ public class Server : MoveBaseRoot
     }
   }
 
-  public void AddTemporaryPiece(Piece piece)
+  public override void AddTemporaryPiece(Piece piece)
   {
     piece.transform.SetParent(base.transform);
   }
