@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
+using ValheimRAFT.MoveableBaseRootComponent;
 
 namespace ValheimRAFT
 {
@@ -10,7 +12,7 @@ namespace ValheimRAFT
     public LineRenderer m_ropeLine;
     public BoxCollider m_collider;
     public Transform m_attachPoint;
-    public MoveableBaseRootComponent m_mbroot;
+    public MoveableBaseRootComponent.Delegate m_mbRootDelegate;
     public float m_stepDistance = 0.5f;
     public float m_ladderHeight = 1f;
     public float m_ladderMoveSpeed = 2f;
@@ -110,13 +112,9 @@ namespace ValheimRAFT
         }
       }
 
-      if (m_mbroot &&
-          m_mbroot.m_moveableBaseShip &&
-          (double)this.m_mbroot.m_moveableBaseShip.m_targetHeight > 0.0 &&
-          !this.m_mbroot.m_moveableBaseShip.m_flags.HasFlag((Enum)MoveableBaseShipComponent.MBFlags
-            .IsAnchored) && point.y < m_mbroot.GetColliderBottom())
+      if (((Server)m_mbRootDelegate.Instance).GetAnchorHeight(point.y))
       {
-        point.y = this.m_mbroot.GetColliderBottom();
+        point.y = this.m_mbRootDelegate.Instance.GetColliderBottom();
         Vector3 vector3_2 = point - vector3_1;
         this.m_ladderHeight = vector3_2.magnitude;
         this.m_lastHitWaterDistance = 0.0f;

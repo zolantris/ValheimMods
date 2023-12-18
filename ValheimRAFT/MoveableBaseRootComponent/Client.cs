@@ -16,11 +16,129 @@ using Main = ValheimRAFT.Main;
 
 namespace ValheimRAFT.MoveableBaseRootComponent;
 
-public class Client : MonoBehaviour
+public sealed class Client : MoveBaseRoot
 {
-  private Dictionary RpcHandlers;
-
   public void Awake()
   {
+  }
+
+
+  public override List<MastComponent> GetMastPieces()
+  {
+    throw new System.NotImplementedException();
+  }
+
+  public override float GetColliderBottom()
+  {
+    return 0f;
+  }
+
+  public void CleanUp()
+  {
+  }
+
+  public void Sync()
+  {
+  }
+
+  public void FixedUpdate()
+  {
+  }
+
+  public void LateUpdate()
+  {
+  }
+
+  public void UpdateAllPieces()
+  {
+  }
+
+  public IEnumerator UpdatePieceSectors()
+  {
+    yield return true;
+  }
+
+  public static void AddInactivePiece(int id, ZNetView netview)
+  {
+  }
+
+  public void RemovePiece(ZNetView netview)
+  {
+  }
+
+  private void UpdateStats()
+  {
+  }
+
+  public void DestroyPiece(WearNTear wnt)
+  {
+  }
+
+  public void ActivatePendingPiecesCoroutine()
+  {
+  }
+
+  public IEnumerator ActivatePendingPieces()
+  {
+  }
+
+  public static void AddDynamicParent(ZNetView source, GameObject target)
+  {
+  }
+
+  public static void AddDynamicParent(ZNetView source, GameObject target, Vector3 offset)
+  {
+  }
+
+  public static void InitZDO(ZDO zdo)
+  {
+  }
+
+  public static void RemoveZDO(ZDO zdo)
+  {
+  }
+
+  private static int GetParentID(ZDO zdo)
+  {
+  }
+
+  public static void InitPiece(ZNetView netview)
+  {
+  }
+
+  public void ActivatePiece(ZNetView netview)
+  {
+  }
+
+  public void AddTemporaryPiece(Piece piece)
+  {
+  }
+
+  public override void AddNewPiece(Piece piece)
+  {
+  }
+
+  public override void AddNewPiece(ZNetView netview)
+  {
+  }
+
+  public override void AddPiece(ZNetView netview)
+  {
+  }
+
+  /**
+   * this is not used directly
+   */
+  // private void UpdatePieceCount()
+  // {
+  // }
+  public override void EncapsulateBounds(ZNetView netview)
+  {
+  }
+
+  internal override int GetPieceCount()
+  {
+    ZLog.LogError("error with client call for GetPieceCount");
+    return 0;
   }
 }

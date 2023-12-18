@@ -2,6 +2,7 @@
 using Jotunn.Entities;
 using System.Diagnostics;
 using UnityEngine;
+using ValheimRAFT.MoveableBaseRootComponent;
 using ValheimRAFT.Util;
 using Logger = Jotunn.Logger;
 
@@ -62,7 +63,7 @@ namespace ValheimRAFT
               /*
                * @todo This must be fired from the Server even if on the client
                */
-              MoveableBaseRootComponent.Delegate.componentInParent = raycastHit
+              MoveableBaseRootComponent.Delegate.Instance.componentInParent = raycastHit
                 .collider.GetComponentInParent<MoveableBaseRootComponent>();
               if (componentInParent)
                 MoveRaftConsoleCommand.MoveRaft(localPlayer, componentInParent.m_ship, offset);
@@ -74,6 +75,12 @@ namespace ValheimRAFT
 
     private static bool MoveRaft(Player player, Ship ship, Vector3 offset)
     {
+      if (!ZNet.instance.IsServer())
+      {
+        ZLog.Log("client cannot move ship, only server");
+        return false;
+      }
+
       MoveableBaseShipComponent component =
         ((Component)ship).GetComponent<MoveableBaseShipComponent>();
       if (!component ||
@@ -82,7 +89,8 @@ namespace ValheimRAFT
       Stopwatch stopwatch = new Stopwatch();
       stopwatch.Start();
       int persistantId =
-        ZDOPersistantID.Instance.GetOrCreatePersistantID(component.m_baseRootDelegate.m_nview.m_zdo);
+        ZDOPersistantID.Instance.GetOrCreatePersistantID(((Server)component.m_baseRootDelegate
+          .Instance).m_nview.m_zdo);
       foreach (ZDO zdo in ZDOMan.instance.m_objectsByID.Values)
       {
         if (zdo.GetInt(MoveableBaseRootComponent.MBParentIdHash, 0) == persistantId)

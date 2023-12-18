@@ -95,8 +95,8 @@ namespace ValheimRAFT.Patches
     private static ZNetView PlantGrowth(GameObject newObject, Plant oldPlant)
     {
       ZNetView component = newObject.GetComponent<ZNetView>();
-      MoveableBaseRootComponent componentInParent =
-        ((Component)oldPlant).GetComponentInParent<MoveableBaseRootComponent>();
+      MoveableBaseRootComponent.Delegate componentInParent =
+        ((Component)oldPlant).GetComponentInParent<MoveableBaseRootComponent.Delegate>();
       if (component && componentInParent)
         componentInParent.AddNewPiece(component);
       int parentId = CultivatableComponent.GetParentID(oldPlant.m_nview);

@@ -4,6 +4,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Jotunn;
 using Jotunn.Entities;
@@ -16,71 +18,17 @@ using Main = ValheimRAFT.Main;
 
 namespace ValheimRAFT.MoveableBaseRootComponent;
 
-public class Server : MonoBehaviour
+public class Server : MoveBaseRoot
 {
-  public static readonly KeyValuePair<int, int> MBParentHash = ZDO.GetHashZDOID("MBParent");
-
-  public static readonly int MBCharacterParentHash = "MBCharacterParent".GetStableHashCode();
-
-  public static readonly int MBCharacterOffsetHash = "MBCharacterOFfset".GetStableHashCode();
-
-  public static readonly int MBParentIdHash = "MBParentId".GetStableHashCode();
-
-  public static readonly int MBPositionHash = "MBPosition".GetStableHashCode();
-
-  public static readonly int MBRotationHash = "MBRotation".GetStableHashCode();
-
-  public static readonly int MBRotationVecHash = "MBRotationVec".GetStableHashCode();
-
-  internal static Dictionary<int, List<ZNetView>> m_pendingPieces =
-    new Dictionary<int, List<ZNetView>>();
-
-  internal static Dictionary<int, List<ZDO>> m_allPieces = new Dictionary<int, List<ZDO>>();
-
-  internal static Dictionary<int, List<ZDOID>>
-    m_dynamicObjects = new Dictionary<int, List<ZDOID>>();
-
-  internal MoveableBaseShipComponent m_moveableBaseShip;
-
-  internal Rigidbody m_rigidbody;
-
-  internal ZNetView m_nview;
-
-  internal Rigidbody m_syncRigidbody;
-
-  internal Ship m_ship;
-
-  internal List<ZNetView> m_pieces = new List<ZNetView>();
-
-  internal List<MastComponent> m_mastPieces = new List<MastComponent>();
-
-  internal List<RudderComponent> m_rudderPieces = new List<RudderComponent>();
-
-  internal List<ZNetView> m_portals = new List<ZNetView>();
-
-  internal List<RopeLadderComponent> m_ladders = new List<RopeLadderComponent>();
-
-  internal List<BoardingRampComponent> m_boardingRamps = new List<BoardingRampComponent>();
-
-  private Vector2i m_sector;
-
-  private Bounds m_bounds = default(Bounds);
-
-  internal BoxCollider m_blockingcollider;
-
-  internal BoxCollider m_floatcollider;
-
-  internal BoxCollider m_onboardcollider;
-
-  internal int m_id;
-
-  public bool m_statsOverride;
-
-  private static bool itemsRemovedDuringWait;
+  public override List<MastComponent> GetMastPieces()
+  {
+    return m_mastPieces;
+  }
 
   public static CustomRPC SyncBuildSectorsRPC;
 
   public static CustomRPC DelegateToServerRPC;
+
 
   public void Awake()
   {
@@ -93,16 +41,81 @@ public class Server : MonoBehaviour
     SyncBuildSectorsRPC = NetworkManager.Instance.AddRPC(
       "UselessRPC", SyncBuildSectorsRPCServerReceive, SyncBuildSectorsRPCClientReceive);
 
-    // if (ZNet.instance.IsServer())
-    // {
-    //   StartCoroutine(nameof(UpdatePieceSectors));
-    // }
+    if (ZNet.instance.IsServer())
+    {
+      StartCoroutine(nameof(UpdatePieceSectors));
+    }
+  }
+
+  public override bool GetStatsOverride()
+  {
+    return m_statsOverride;
+  }
+
+  public override void InitializeShipComponent(MoveableBaseShipComponent moveableBaseShipComponent,
+    ZNetView nView, Ship ship, Rigidbody rigidbody)
+  {
+    m_moveableBaseShip = moveableBaseShipComponent;
+    m_nview = nView;
+    m_ship = ship;
+    m_id = ZDOPersistantID.Instance.GetOrCreatePersistantID(nView.m_zdo);
+    m_syncRigidbody = rigidbody;
+  }
+
+  public override BoxCollider GetFloatCollider()
+  {
+    return m_floatcollider;
+  }
+
+  public override void InitializeShipColliders(BoxCollider[] colliders)
+  {
+    m_onboardcollider =
+      colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "OnboardTrigger");
+    if (m_onboardcollider != null)
+      m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    else
+    {
+      ZLog.LogError("ValheimRAFT MovableBaseShipComponent m_baseRoot.m_onboardcollider is null");
+    }
+
+    m_floatcollider = m_ship.m_floatCollider;
+    m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    m_blockingcollider = m_ship.transform.Find("ship/colliders/Cube")
+      .GetComponentInChildren<BoxCollider>();
+    m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    m_blockingcollider.gameObject.layer =
+      Main.CustomRaftLayer;
+    m_blockingcollider.transform.parent.gameObject.layer =
+      Main.CustomRaftLayer;
+    ZLog.Log($"Activating MBRoot: {m_id}");
+    ActivatePendingPiecesCoroutine();
+    FirstTimeCreation();
+  }
+
+  private void FirstTimeCreation()
+  {
+    if (GetPieceCount() != 0)
+    {
+      return;
+    }
+
+    GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
+    for (float x = -1f; x < 1.01f; x += 2f)
+    {
+      for (float z = -2f; z < 2.01f; z += 2f)
+      {
+        Vector3 pt = base.transform.TransformPoint(new Vector3(x, 0.45f, z));
+        GameObject obj = UnityEngine.Object.Instantiate(floor, pt, base.transform.rotation);
+        ZNetView netview = obj.GetComponent<ZNetView>();
+        AddNewPiece(netview);
+      }
+    }
   }
 
   public void CleanUp()
   {
+    StopCoroutine(nameof(ActivatePendingPieces));
     if (!ZNetScene.instance || m_id == 0)
-      StopCoroutine(nameof(ActivatePendingPieces));
     {
       return;
     }
@@ -202,18 +215,9 @@ public class Server : MonoBehaviour
 // React to the RPC call on a server
   private IEnumerator SyncBuildSectorsRPCServerReceive(long sender, ZPackage package)
   {
-    Jotunn.Logger.LogMessage($"Received blob, processing");
-
-    string dot = string.Empty;
-    for (int i = 0; i < 5; ++i)
-    {
-      dot += ".";
-      Jotunn.Logger.LogMessage(dot);
-      yield return OneSecondWait;
-    }
-
     Jotunn.Logger.LogMessage($"Broadcasting to all clients");
     SyncBuildSectorsRPC.SendPackage(ZNet.instance.m_peers, new ZPackage(package.GetArray()));
+    yield return true;
   }
 
   public static readonly WaitForSeconds HalfSecondWait = new WaitForSeconds(0.5f);
@@ -266,7 +270,7 @@ public class Server : MonoBehaviour
             continue;
           }
 
-          int id = zdo.GetInt(MBParentIdHash);
+          int id = zdo.GetInt(MbParentIdHash);
           if (id != m_id)
           {
             ZLog.LogWarning("Invalid piece in piece list found, removing.");
@@ -294,8 +298,14 @@ public class Server : MonoBehaviour
     }
   }
 
-  internal float GetColliderBottom()
+  public override List<RudderComponent> GetRudderPieces()
   {
+    return m_rudderPieces;
+  }
+
+  public override float GetColliderBottom()
+  {
+    // this had IL transformation issues
     return m_blockingcollider.transform.position.y + m_blockingcollider.center.y -
            m_blockingcollider.size.y / 2f;
   }
@@ -348,7 +358,7 @@ public class Server : MonoBehaviour
       if ((bool)ladder)
       {
         m_ladders.Remove(ladder);
-        ladder.m_mbroot = null;
+        ladder.m_mbRootDelegate = null;
       }
 
       UpdateStats();
@@ -375,10 +385,6 @@ public class Server : MonoBehaviour
   public void ActivatePendingPiecesCoroutine()
   {
     StartCoroutine("ActivatePendingPieces");
-  }
-
-  public Server()
-  {
   }
 
   public IEnumerator ActivatePendingPieces()
@@ -438,7 +444,7 @@ public class Server : MonoBehaviour
 
         if (ZDOExtraData.s_vec3.TryGetValue(nv.GetZDO().m_uid, out var dic))
         {
-          if (dic.TryGetValue(MBCharacterOffsetHash, out var offset))
+          if (dic.TryGetValue(MbCharacterOffsetHash, out var offset))
           {
             nv.transform.position = offset + base.transform.position;
           }
@@ -446,8 +452,8 @@ public class Server : MonoBehaviour
           offset = default(Vector3);
         }
 
-        ZDOExtraData.RemoveInt(nv.GetZDO().m_uid, MBCharacterParentHash);
-        ZDOExtraData.RemoveVec3(nv.GetZDO().m_uid, MBCharacterOffsetHash);
+        ZDOExtraData.RemoveInt(nv.GetZDO().m_uid, MbCharacterParentHash);
+        ZDOExtraData.RemoveVec3(nv.GetZDO().m_uid, MbCharacterOffsetHash);
         dic = null;
       }
 
@@ -462,8 +468,8 @@ public class Server : MonoBehaviour
     Server mbroot = target.GetComponentInParent<Server>();
     if ((bool)mbroot)
     {
-      source.GetZDO().Set(MBCharacterParentHash, mbroot.m_id);
-      source.GetZDO().Set(MBCharacterOffsetHash,
+      source.GetZDO().Set(MbCharacterParentHash, mbroot.m_id);
+      source.GetZDO().Set(MbCharacterOffsetHash,
         source.transform.position - mbroot.transform.position);
     }
   }
@@ -473,8 +479,8 @@ public class Server : MonoBehaviour
     Server mbroot = target.GetComponentInParent<Server>();
     if ((bool)mbroot)
     {
-      source.GetZDO().Set(MBCharacterParentHash, mbroot.m_id);
-      source.GetZDO().Set(MBCharacterOffsetHash, offset);
+      source.GetZDO().Set(MbCharacterParentHash, mbroot.m_id);
+      source.GetZDO().Set(MbCharacterOffsetHash, offset);
     }
   }
 
@@ -500,7 +506,7 @@ public class Server : MonoBehaviour
       list.Add(zdo);
     }
 
-    int cid = zdo.GetInt(MBCharacterParentHash);
+    int cid = zdo.GetInt(MbCharacterParentHash);
     if (cid != 0)
     {
       if (!m_dynamicObjects.TryGetValue(cid, out var objectList))
@@ -525,64 +531,43 @@ public class Server : MonoBehaviour
 
   private static int GetParentID(ZDO zdo)
   {
-    int id = zdo.GetInt(MBParentIdHash);
+    int id = zdo.GetInt(MbParentIdHash);
     if (id == 0)
     {
-      ZDOID zdoid = zdo.GetZDOID(MBParentHash);
+      ZDOID zdoid = zdo.GetZDOID(MbParentHash);
       if (zdoid != ZDOID.None)
       {
         ZDO zdoparent = ZDOMan.instance.GetZDO(zdoid);
         id = ((zdoparent == null)
           ? ZDOPersistantID.ZDOIDToId(zdoid)
           : ZDOPersistantID.Instance.GetOrCreatePersistantID(zdoparent));
-        zdo.Set(MBParentIdHash, id);
-        zdo.Set(MBRotationVecHash,
-          zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
-        zdo.RemoveZDOID(MBParentHash);
-        ZDOExtraData.RemoveQuaternion(zdoid, MBRotationHash);
+        zdo.Set(MbParentIdHash, id);
+        zdo.Set(MbRotationVecHash,
+          zdo.GetQuaternion(MbRotationHash, Quaternion.identity).eulerAngles);
+        zdo.RemoveZDOID(MbParentHash);
+        ZDOExtraData.RemoveQuaternion(zdoid, MbRotationHash);
       }
     }
 
     return id;
   }
 
-  public static void InitPiece(ZNetView netview)
+  public bool GetAnchorHeight(float pointY)
   {
-    Rigidbody rb = netview.GetComponentInChildren<Rigidbody>();
-    if ((bool)rb && !rb.isKinematic)
-    {
-      return;
-    }
-
-    int id = GetParentID(netview.GetZDO());
-    if (id == 0)
-    {
-      return;
-    }
-
-    GameObject parentObj = ZDOPersistantID.Instance.GetGameObject(id);
-    if ((bool)parentObj)
-    {
-      MoveableBaseShipComponent mb = parentObj.GetComponent<MoveableBaseShipComponent>();
-      if ((bool)mb && (bool)mb.m_baseRootDelegate)
-      {
-        mb.m_baseRootDelegate.ActivatePiece(netview);
-      }
-    }
-    else
-    {
-      AddInactivePiece(id, netview);
-    }
+    return m_moveableBaseShip && m_moveableBaseShip.m_targetHeight > 0.0 &&
+           m_moveableBaseShip.m_flags.HasFlag(MoveableBaseShipComponent
+             .MBFlags
+             .IsAnchored) && pointY < GetColliderBottom();
   }
 
-  public void ActivatePiece(ZNetView netview)
+  public override void ActivatePiece(ZNetView netview)
   {
     if ((bool)netview)
     {
       netview.transform.SetParent(base.transform);
-      netview.transform.localPosition = netview.GetZDO().GetVec3(MBPositionHash, Vector3.zero);
+      netview.transform.localPosition = netview.GetZDO().GetVec3(MbPositionHash, Vector3.zero);
       netview.transform.localRotation =
-        Quaternion.Euler(netview.GetZDO().GetVec3(MBRotationVecHash, Vector3.zero));
+        Quaternion.Euler(netview.GetZDO().GetVec3(MbRotationVecHash, Vector3.zero));
       WearNTear wnt = netview.GetComponent<WearNTear>();
       if ((bool)wnt)
       {
@@ -598,7 +583,7 @@ public class Server : MonoBehaviour
     piece.transform.SetParent(base.transform);
   }
 
-  public void AddNewPiece(Piece piece)
+  public override void AddNewPiece(Piece piece)
   {
     if ((bool)piece && (bool)piece.m_nview)
     {
@@ -606,7 +591,7 @@ public class Server : MonoBehaviour
     }
   }
 
-  public void AddNewPiece(ZNetView netview)
+  public override void AddNewPiece(ZNetView netview)
   {
     ZLog.Log($"netview piece update, {netview.GetZDO()}");
     netview.transform.SetParent(base.transform);
@@ -614,17 +599,46 @@ public class Server : MonoBehaviour
       $"netview transformed parent to, localPosition:{transform.localPosition} {netview.transform.localRotation.eulerAngles}");
     if (netview.GetZDO() != null)
     {
-      netview.GetZDO().Set(MBParentIdHash,
+      netview.GetZDO().Set(MbParentIdHash,
         ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.GetZDO()));
-      netview.GetZDO().Set(MBPositionHash, netview.transform.localPosition);
-      netview.GetZDO().Set(MBRotationVecHash, netview.transform.localRotation.eulerAngles);
+      netview.GetZDO().Set(MbPositionHash, netview.transform.localPosition);
+      netview.GetZDO().Set(MbRotationVecHash, netview.transform.localRotation.eulerAngles);
     }
 
     AddPiece(netview);
     InitZDO(netview.GetZDO());
   }
 
-  public void AddPiece(ZNetView netview)
+  public static void InitPiece(ZNetView netview)
+  {
+    Rigidbody rb = ((Component)netview).GetComponentInChildren<Rigidbody>();
+    if (rb && !rb.isKinematic)
+    {
+      return;
+    }
+
+    int id = GetParentID(netview.m_zdo);
+    if (id == 0)
+    {
+      return;
+    }
+
+    GameObject parentObj = ZDOPersistantID.Instance.GetGameObject(id);
+    if (parentObj)
+    {
+      MoveableBaseShipComponent mb = parentObj.GetComponent<MoveableBaseShipComponent>();
+      if (mb && mb.m_baseRootDelegate)
+      {
+        mb.m_baseRootDelegate.Instance.ActivatePiece(netview);
+      }
+    }
+    else
+    {
+      AddInactivePiece(id, netview);
+    }
+  }
+
+  public override void AddPiece(ZNetView netview)
   {
     m_pieces.Add(netview);
     UpdatePieceCount();
@@ -683,7 +697,8 @@ public class Server : MonoBehaviour
     if ((bool)ladder)
     {
       m_ladders.Add(ladder);
-      ladder.m_mbroot = this;
+      // was "this" before
+      ladder.m_mbRootDelegate = GetComponentInParent<Delegate>();
     }
 
     MeshRenderer[] meshes = netview.GetComponentsInChildren<MeshRenderer>(includeInactive: true);
@@ -717,7 +732,7 @@ public class Server : MonoBehaviour
     UpdateStats();
   }
 
-  private void UpdatePieceCount()
+  internal override void UpdatePieceCount()
   {
     if ((bool)m_nview && m_nview.GetZDO() != null)
     {
@@ -726,7 +741,7 @@ public class Server : MonoBehaviour
     }
   }
 
-  public void EncapsulateBounds(ZNetView netview)
+  public override void EncapsulateBounds(ZNetView netview)
   {
     Piece piece = netview.GetComponent<Piece>();
     List<Collider> colliders = (piece
@@ -755,7 +770,7 @@ public class Server : MonoBehaviour
     m_onboardcollider.center = m_bounds.center;
   }
 
-  internal int GetPieceCount()
+  internal override int GetPieceCount()
   {
     if (!m_nview || m_nview.GetZDO() == null)
     {

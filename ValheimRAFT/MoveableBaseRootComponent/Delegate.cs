@@ -4,11 +4,16 @@ using UnityEngine;
 
 namespace ValheimRAFT.MoveableBaseRootComponent;
 
-public class Delegate : MoveBaseRoot
+public class Delegate : MonoBehaviour
 {
   private Client m_client;
   private Server m_server;
-  public MonoBehaviour Instance { get; set; }
+
+  /**
+   * instance is used as a passthrough, the client will always run a server sync command and the server will always notify the client when a method is fired from there
+   */
+  public MoveBaseRoot Instance { get; set; }
+
 
   /**
    * @todo confirm that Awake will have ZNet.instance available
@@ -23,14 +28,12 @@ public class Delegate : MoveBaseRoot
 
     if (ZNet.instance.IsClientInstance())
     {
-      m_client = new Client();
+      m_client = gameObject.AddComponent<Client>();
       Instance = m_client;
+      return;
     }
 
-    if (ZNet.IsSinglePlayer || ZNet.instance.IsServerInstance())
-    {
-      m_server = new Server();
-      Instance = m_server;
-    }
+    m_server = gameObject.AddComponent<Server>();
+    Instance = m_server;
   }
 }

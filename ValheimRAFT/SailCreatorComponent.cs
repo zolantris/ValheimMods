@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimRAFT;
+using ValheimRAFT.MoveableBaseRootComponent;
 
 public class SailCreatorComponent : MonoBehaviour
 {
@@ -56,11 +57,11 @@ public class SailCreatorComponent : MonoBehaviour
       Piece piece = newSail.GetComponent<Piece>();
       piece.SetCreator(m_sailCreators[0].GetComponent<Piece>().GetCreator());
       ZNetView netview = newSail.GetComponent<ZNetView>();
-      Server mbroot =
-        m_sailCreators[0].GetComponentInParent<Server>();
+      Delegate mbroot =
+        m_sailCreators[0].GetComponentInParent<Delegate>();
       if ((bool)mbroot)
       {
-        mbroot.AddNewPiece(netview);
+        mbroot.Instance.AddNewPiece(netview);
       }
 
       for (int i = 0; i < m_sailCreators.Count; i++)

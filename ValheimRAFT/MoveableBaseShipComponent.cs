@@ -57,13 +57,18 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_nview.Register("SetVisual",
       delegate(long sender, bool state) { RPC_SetVisual(sender, state); });
 
-    m_baseRootDelegate.m_moveableBaseShip = this;
-    m_baseRootDelegate.m_nview = m_nview;
-    m_baseRootDelegate.m_ship = ship;
-    m_baseRootDelegate.m_id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
+
     m_rigidbody = GetComponent<Rigidbody>();
-    m_baseRootDelegate.m_syncRigidbody = m_rigidbody;
     m_rigidbody.mass = 1000f;
+
+    /*
+     * @todo find out if the server guard is needed
+     */
+    // if (ZNet.instance.IsServer())
+    // {
+    m_baseRootDelegate.Instance.InitializeShipComponent(this, m_nview, ship, m_rigidbody);
+    // }
+
     m_baseRootObject.transform.SetParent(null);
     m_baseRootObject.transform.position = base.transform.position;
     m_baseRootObject.transform.rotation = base.transform.rotation;
@@ -78,28 +83,9 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
 
     UpdateVisual();
-    BoxCollider[] colliders = base.transform.GetComponentsInChildren<BoxCollider>();
-    m_baseRootDelegate.m_onboardcollider =
-      colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "OnboardTrigger");
-    if (m_baseRootDelegate.m_onboardcollider != null)
-      m_baseRootDelegate.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    else
-    {
-      ZLog.LogError("ValheimRAFT MovableBaseShipComponent m_baseRoot.m_onboardcollider is null");
-    }
 
-    m_baseRootDelegate.m_floatcollider = ship.m_floatCollider;
-    m_baseRootDelegate.m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    m_baseRootDelegate.m_blockingcollider = ship.transform.Find("ship/colliders/Cube")
-      .GetComponentInChildren<BoxCollider>();
-    m_baseRootDelegate.m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    m_baseRootDelegate.m_blockingcollider.gameObject.layer =
-      Main.CustomRaftLayer;
-    m_baseRootDelegate.m_blockingcollider.transform.parent.gameObject.layer =
-      Main.CustomRaftLayer;
-    ZLog.Log($"Activating MBRoot: {m_baseRootDelegate.m_id}");
-    m_baseRootDelegate.ActivatePendingPiecesCoroutine();
-    FirstTimeCreation();
+    BoxCollider[] colliders = base.transform.GetComponentsInChildren<BoxCollider>();
+    m_baseRootDelegate.Instance.InitializeShipColliders(colliders);
   }
 
   public void UpdateVisual()
@@ -116,30 +102,31 @@ public class MoveableBaseShipComponent : MonoBehaviour
   {
     if ((bool)m_baseRootDelegate)
     {
-      m_baseRootDelegate.CleanUp();
+      m_baseRootDelegate.Instance.CleanUp();
       UnityEngine.Object.Destroy(m_baseRootDelegate.gameObject);
     }
   }
 
-  private void FirstTimeCreation()
-  {
-    if (m_baseRootDelegate.GetPieceCount() != 0)
-    {
-      return;
-    }
-
-    GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
-    for (float x = -1f; x < 1.01f; x += 2f)
-    {
-      for (float z = -2f; z < 2.01f; z += 2f)
-      {
-        Vector3 pt = base.transform.TransformPoint(new Vector3(x, 0.45f, z));
-        GameObject obj = UnityEngine.Object.Instantiate(floor, pt, base.transform.rotation);
-        ZNetView netview = obj.GetComponent<ZNetView>();
-        m_baseRootDelegate.AddNewPiece(netview);
-      }
-    }
-  }
+  // Moved to MoveableBaseRootComponent Server
+  // private void FirstTimeCreation()
+  // {
+  //   if (m_baseRootDelegate.GetPieceCount() != 0)
+  //   {
+  //     return;
+  //   }
+  //
+  //   GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
+  //   for (float x = -1f; x < 1.01f; x += 2f)
+  //   {
+  //     for (float z = -2f; z < 2.01f; z += 2f)
+  //     {
+  //       Vector3 pt = base.transform.TransformPoint(new Vector3(x, 0.45f, z));
+  //       GameObject obj = UnityEngine.Object.Instantiate(floor, pt, base.transform.rotation);
+  //       ZNetView netview = obj.GetComponent<ZNetView>();
+  //       m_baseRootDelegate.AddNewPiece(netview);
+  //     }
+  //   }
+  // }
 
   internal void Accend()
   {
@@ -154,18 +141,22 @@ public class MoveableBaseShipComponent : MonoBehaviour
     }
     else
     {
-      if (!m_baseRootDelegate || !m_baseRootDelegate.m_floatcollider)
+      if (!m_baseRootDelegate || !m_baseRootDelegate.Instance.GetFloatCollider())
       {
         return;
       }
 
-      m_targetHeight = Mathf.Clamp(m_baseRootDelegate.m_floatcollider.transform.position.y + 1f,
+      m_targetHeight = Mathf.Clamp(
+        m_baseRootDelegate.Instance.GetFloatCollider().transform.position.y + 1f,
         ZoneSystem.instance.m_waterLevel, 200f);
     }
 
     m_nview.m_zdo.Set("MBTargetHeight", m_targetHeight);
   }
 
+  /**
+   * @todo this may belong in the BaseRootComponent
+   */
   internal void Descent()
   {
     if (m_flags.HasFlag(MBFlags.IsAnchored))
@@ -180,14 +171,15 @@ public class MoveableBaseShipComponent : MonoBehaviour
     }
     else
     {
-      if (!m_baseRootDelegate || !m_baseRootDelegate.m_floatcollider)
+      if (!m_baseRootDelegate || !m_baseRootDelegate.Instance.GetFloatCollider())
       {
         return;
       }
 
-      m_targetHeight = Mathf.Clamp(m_baseRootDelegate.m_floatcollider.transform.position.y - 1f,
+      m_targetHeight = Mathf.Clamp(
+        m_baseRootDelegate.Instance.GetFloatCollider().transform.position.y - 1f,
         ZoneSystem.instance.m_waterLevel, 200f);
-      if (m_baseRootDelegate.m_floatcollider.transform.position.y - 1f <=
+      if (m_baseRootDelegate.Instance.GetFloatCollider().transform.position.y - 1f <=
           ZoneSystem.instance.m_waterLevel)
       {
         m_targetHeight = 0f;
@@ -199,7 +191,8 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   internal void UpdateStats(bool flight)
   {
-    if (!m_rigidbody || !m_baseRootDelegate || m_baseRootDelegate.m_statsOverride)
+    if (!m_rigidbody || !m_baseRootDelegate ||
+        (ZNet.instance.IsServer() && m_baseRootDelegate.Instance.GetStatsOverride()))
     {
       return;
     }

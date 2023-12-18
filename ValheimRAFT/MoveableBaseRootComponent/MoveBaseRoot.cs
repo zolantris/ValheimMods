@@ -18,7 +18,91 @@ namespace ValheimRAFT.MoveableBaseRootComponent;
 
 public abstract class MoveBaseRoot : MonoBehaviour
 {
+  public static readonly KeyValuePair<int, int> MbParentHash = ZDO.GetHashZDOID("MBParent");
+
+  public static readonly int MbCharacterParentHash = "MBCharacterParent".GetStableHashCode();
+
+  public static readonly int MbCharacterOffsetHash = "MBCharacterOFfset".GetStableHashCode();
+
+  public static readonly int MbParentIdHash = "MBParentId".GetStableHashCode();
+
+  public static readonly int MbPositionHash = "MBPosition".GetStableHashCode();
+
+  public static readonly int MbRotationHash = "MBRotation".GetStableHashCode();
+
+  public static readonly int MbRotationVecHash = "MBRotationVec".GetStableHashCode();
+
+  internal static Dictionary<int, List<ZNetView>> m_pendingPieces =
+    new Dictionary<int, List<ZNetView>>();
+
+  internal static Dictionary<int, List<ZDO>> m_allPieces = new Dictionary<int, List<ZDO>>();
+
+  internal static Dictionary<int, List<ZDOID>>
+    m_dynamicObjects = new Dictionary<int, List<ZDOID>>();
+
+  internal MoveableBaseShipComponent m_moveableBaseShip;
+
+  internal Rigidbody m_rigidbody;
+
+  public ZNetView m_nview;
+
+  internal Rigidbody m_syncRigidbody;
+
+  internal Ship m_ship;
+
+  internal List<ZNetView> m_pieces = new List<ZNetView>();
+
+  internal List<MastComponent> m_mastPieces = new List<MastComponent>();
+
+  internal List<RudderComponent> m_rudderPieces = new List<RudderComponent>();
+
+  internal List<ZNetView> m_portals = new List<ZNetView>();
+
+  internal List<RopeLadderComponent> m_ladders = new List<RopeLadderComponent>();
+
+  internal List<BoardingRampComponent> m_boardingRamps = new List<BoardingRampComponent>();
+
+  public Vector2i m_sector;
+
+  private Bounds m_bounds = default(Bounds);
+
+  internal BoxCollider m_blockingcollider;
+
+  internal BoxCollider m_floatcollider;
+
+  internal BoxCollider m_onboardcollider;
+
+  internal int m_id;
+
+  public bool m_statsOverride = false;
+
+  public static bool itemsRemovedDuringWait;
+
+  public virtual BoxCollider GetFloatCollider()
+  {
+    return m_floatcollider;
+  }
+
+  public virtual List<RudderComponent> GetRudderPieces()
+  {
+    return m_rudderPieces;
+  }
+
+  public virtual bool GetStatsOverride()
+  {
+    return m_statsOverride;
+  }
+
   public virtual void CleanUp()
+  {
+  }
+
+  public virtual void InitializeShipComponent(MoveableBaseShipComponent moveableBaseShipComponent,
+    ZNetView nView, Ship ship, Rigidbody rigidbody)
+  {
+  }
+
+  public virtual void InitializeShipColliders(BoxCollider[] colliders)
   {
   }
 
@@ -42,9 +126,9 @@ public abstract class MoveBaseRoot : MonoBehaviour
   {
   }
 
-  internal float GetColliderBottom()
-  {
-  }
+  public abstract List<MastComponent> GetMastPieces();
+
+  public abstract float GetColliderBottom();
 
   public static void AddInactivePiece(int id, ZNetView netview)
   {
@@ -90,11 +174,7 @@ public abstract class MoveBaseRoot : MonoBehaviour
   {
   }
 
-  public static void InitPiece(ZNetView netview)
-  {
-  }
-
-  public void ActivatePiece(ZNetView netview)
+  public virtual void ActivatePiece(ZNetView netview)
   {
   }
 
@@ -102,27 +182,17 @@ public abstract class MoveBaseRoot : MonoBehaviour
   {
   }
 
-  public void AddNewPiece(Piece piece)
+  public abstract void AddNewPiece(Piece piece);
+
+  public abstract void AddNewPiece(ZNetView netview);
+
+  public abstract void AddPiece(ZNetView netview);
+
+  internal virtual void UpdatePieceCount()
   {
   }
 
-  public void AddNewPiece(ZNetView netview)
-  {
-  }
+  public abstract void EncapsulateBounds(ZNetView netview);
 
-  public void AddPiece(ZNetView netview)
-  {
-  }
-
-  private void UpdatePieceCount()
-  {
-  }
-
-  public void EncapsulateBounds(ZNetView netview)
-  {
-  }
-
-  internal int GetPieceCount()
-  {
-  }
+  internal abstract int GetPieceCount();
 }

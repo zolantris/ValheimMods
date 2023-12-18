@@ -8,8 +8,10 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT;
+using ValheimRAFT.MoveableBaseRootComponent;
 using ValheimRAFT.Patches;
 using ValheimRAFT.Util;
+using Delegate = ValheimRAFT.MoveableBaseRootComponent.Delegate;
 
 [HarmonyPatch]
 public class ValheimRAFT_Patch
@@ -95,12 +97,14 @@ public class ValheimRAFT_Patch
       return;
     }
 
-    for (int i = 0; i < mb.m_baseRootDelegate.m_mastPieces.Count; i++)
+    var mastPieces = mb.m_baseRootDelegate.Instance.GetMastPieces();
+
+    for (int i = 0; i < mastPieces.Count; i++)
     {
-      MastComponent mast = mb.m_baseRootDelegate.m_mastPieces[i];
+      MastComponent mast = mastPieces[i];
       if (!mast)
       {
-        mb.m_baseRootDelegate.m_mastPieces.RemoveAt(i);
+        mastPieces.RemoveAt(i);
         i--;
       }
       else if (mast.m_allowSailRotation)
@@ -120,12 +124,15 @@ public class ValheimRAFT_Patch
       return;
     }
 
-    for (int j = 0; j < mb.m_baseRootDelegate.m_mastPieces.Count; j++)
+    var mastPieces = mb.m_baseRootDelegate.Instance.GetMastPieces();
+
+
+    for (int j = 0; j < mastPieces.Count; j++)
     {
-      MastComponent mast = mb.m_baseRootDelegate.m_mastPieces[j];
+      MastComponent mast = mastPieces[j];
       if (!mast)
       {
-        mb.m_baseRootDelegate.m_mastPieces.RemoveAt(j);
+        mastPieces.RemoveAt(j);
         j--;
       }
       else if (mast.m_allowSailShrinking)
@@ -145,12 +152,14 @@ public class ValheimRAFT_Patch
       }
     }
 
-    for (int i = 0; i < mb.m_baseRootDelegate.m_rudderPieces.Count; i++)
+    var rudderPieces = mb.m_baseRootDelegate.Instance.GetRudderPieces();
+
+    for (int i = 0; i < rudderPieces.Count; i++)
     {
-      RudderComponent rudder = mb.m_baseRootDelegate.m_rudderPieces[i];
+      RudderComponent rudder = rudderPieces[i];
       if (!rudder)
       {
-        mb.m_baseRootDelegate.m_rudderPieces.RemoveAt(i);
+        rudderPieces.RemoveAt(i);
         i--;
       }
       else if ((bool)rudder.m_wheel)
@@ -428,8 +437,11 @@ public class ValheimRAFT_Patch
 
   public static void ZDOUnload(ZDO zdo)
   {
-    Server.RemoveZDO(zdo);
-    ZDOPersistantID.Instance.Unregister(zdo);
+    if (ZNet.instance.IsServer())
+    {
+      Server.RemoveZDO(zdo);
+      ZDOPersistantID.Instance.Unregister(zdo);
+    }
   }
 
   [HarmonyPatch(typeof(ZNetView), "Awake")]
@@ -672,16 +684,16 @@ public class ValheimRAFT_Patch
       }
     }
 
-    Server mb = m_lastRayPiece.GetComponentInParent<Server>();
+    Delegate mb = m_lastRayPiece.GetComponentInParent<Delegate>();
     if ((bool)mb)
     {
       if ((bool)netview)
       {
-        mb.AddNewPiece(netview);
+        mb.Instance.AddNewPiece(netview);
       }
       else
       {
-        mb.AddTemporaryPiece(piece);
+        mb.Instance.AddTemporaryPiece(piece);
       }
     }
   }
