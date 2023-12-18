@@ -101,38 +101,39 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="BoardingRampComponent.cs"/>
-        <Compile Include="CreativeModeConsoleCommand.cs"/>
-        <Compile Include="CultivatableComponent.cs"/>
-        <Compile Include="CustomMastComponent.cs"/>
-        <Compile Include="CustomTextureGroup.cs"/>
-        <Compile Include="DockComponent.cs"/>
-        <Compile Include="HideRaftConsoleCommand.cs"/>
-        <Compile Include="MastComponent.cs"/>
-        <Compile Include="MeshHelper.cs"/>
-        <Compile Include="MoveableBaseRootComponent.cs"/>
-        <Compile Include="MoveableBaseShipComponent.cs"/>
-        <Compile Include="MoveRaftConsoleCommand.cs"/>
-        <Compile Include="PierComponent.cs"/>
-        <Compile Include="RecoverRaftConsoleCommand.cs"/>
-        <Compile Include="RopeAnchorComponent.cs"/>
-        <Compile Include="RopeComponent.cs"/>
-        <Compile Include="RopeLadderComponent.cs"/>
-        <Compile Include="RudderComponent.cs"/>
-        <Compile Include="SailComponent.cs"/>
-        <Compile Include="SailCreatorComponent.cs"/>
-        <Compile Include="Main.cs"/>
-        <Compile Include="Util\BinaryIOUtil.cs"/>
-        <Compile Include="Util\ListUtil.cs"/>
-        <Compile Include="Util\ZDOUtil.cs"/>
-        <Compile Include="UI\EditRampComponent.cs"/>
-        <Compile Include="UI\EditSailComponentPanel.cs"/>
-        <Compile Include="UI\PanelUtil.cs"/>
-        <Compile Include="Patches\Plantable_Patch.cs"/>
-        <Compile Include="Patches\Teleport_Patch.cs"/>
-        <Compile Include="Patches\ValheimRAFT_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Util\BinaryIOUtil.cs"/>
+        <Compile Include="ValheimRAFT.Util\ListUtil.cs"/>
+        <Compile Include="ValheimRAFT.Util\ValheimRAFTServer.cs"/>
+        <Compile Include="ValheimRAFT.Util\ZDOUtil.cs"/>
+        <Compile Include="ValheimRAFT.UI\EditRampComponent.cs"/>
+        <Compile Include="ValheimRAFT.UI\EditSailComponentPanel.cs"/>
+        <Compile Include="ValheimRAFT.UI\PanelUtil.cs"/>
+        <Compile Include="ValheimRAFT.Patches\Plantable_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\Teleport_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\ValheimRAFT_Patch.cs"/>
         <Compile Include="System\Runtime\CompilerServices\RefSafetyRulesAttribute.cs"/>
-        <Compile Include="AssemblyInfo.cs"/>
+        <Compile Include="ValheimRAFT\AssemblyInfo.cs"/>
+        <Compile Include="ValheimRAFT\BoardingRampComponent.cs"/>
+        <Compile Include="ValheimRAFT\CreativeModeConsoleCommand.cs"/>
+        <Compile Include="ValheimRAFT\CultivatableComponent.cs"/>
+        <Compile Include="ValheimRAFT\CustomMastComponent.cs"/>
+        <Compile Include="ValheimRAFT\CustomTextureGroup.cs"/>
+        <Compile Include="ValheimRAFT\DockComponent.cs"/>
+        <Compile Include="ValheimRAFT\HideRaftConsoleCommand.cs"/>
+        <Compile Include="ValheimRAFT\Main.cs"/>
+        <Compile Include="ValheimRAFT\MastComponent.cs"/>
+        <Compile Include="ValheimRAFT\MeshHelper.cs"/>
+        <Compile Include="ValheimRAFT\MoveableBaseRootComponent.cs"/>
+        <Compile Include="ValheimRAFT\MoveableBaseShipComponent.cs"/>
+        <Compile Include="ValheimRAFT\MoveRaftConsoleCommand.cs"/>
+        <Compile Include="ValheimRAFT\PierComponent.cs"/>
+        <Compile Include="ValheimRAFT\RecoverRaftConsoleCommand.cs"/>
+        <Compile Include="ValheimRAFT\RopeAnchorComponent.cs"/>
+        <Compile Include="ValheimRAFT\RopeComponent.cs"/>
+        <Compile Include="ValheimRAFT\RopeLadderComponent.cs"/>
+        <Compile Include="ValheimRAFT\RudderComponent.cs"/>
+        <Compile Include="ValheimRAFT\SailComponent.cs"/>
+        <Compile Include="ValheimRAFT\SailCreatorComponent.cs"/>
     </ItemGroup>
     <ItemGroup>
         <!--           new structure (failing to load assets, but they are detected      -->
@@ -190,6 +191,8 @@
             <ModOutputDir>$(OutDir)ModVersions\</ModOutputDir>
             <TmpDir>$(OutDir)tmp\</TmpDir>
             <ThunderStoreDir>$(RepoDir)ThunderStore\</ThunderStoreDir>
+            <ThunderStoreName>Thunderstore</ThunderStoreName>
+            <NexusName>Nexus</NexusName>
             <ModNameVersion>$(AssemblyName)-$(ApplicationVersion).zip</ModNameVersion>
         </PropertyGroup>
         <Exec Command="if exist &quot;$(TmpDir)plugins\Assets&quot; rd /s /q &quot;$(TmpDir)plugins\Assets&quot;"/>
@@ -213,9 +216,13 @@
         <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>
 
         <!-- delete duplicate mod version-->
-        <Exec Command="if exist &quot;$(ModOutputDir)$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(ModNameVersion)&quot;"/>
+        <Exec Command="if exist &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot;"/>
+        <Exec Command="if exist &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot;"/>
         <Exec Command="if exist &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot; del /s /q &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot;"/>
-        <Exec Command="powershell Compress-Archive '$(TmpDir)\*' '$(ModOutputDir)$(ModNameVersion)'"/>
+
+
+        <Exec Command="powershell Compress-Archive '$(TmpDir)\*' '$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)'"/>
+        <Exec Command="powershell Compress-Archive '$(TmpDir)\plugins\*' '$(ModOutputDir)$(NexusName)-$(ModNameVersion)'"/>
         <Exec Command="powershell Compress-Archive '$(RepoDir)libs\*' '$(ModOutputDir)libs-$(ApplicationVersion).zip'"/>
     </Target>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>

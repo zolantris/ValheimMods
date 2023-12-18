@@ -18,6 +18,7 @@ namespace ValheimRAFT
 {
   [BepInPlugin(BepInGuid, ModName, Version)]
   [BepInDependency(Jotunn.Main.ModGuid)]
+  [BepInProcess("valheim.exe")]
   [NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
   public class Main : BaseUnityPlugin
   {

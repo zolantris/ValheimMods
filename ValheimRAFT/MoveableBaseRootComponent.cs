@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Jotunn;
+using Jotunn.Managers;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimRAFT.Util;
@@ -72,16 +73,22 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   private static bool itemsRemovedDuringWait;
 
+
   public void Awake()
   {
     m_rigidbody = base.gameObject.AddComponent<Rigidbody>();
     m_rigidbody.isKinematic = true;
     m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     m_rigidbody.mass = 99999f;
-    if (ZNet.instance.IsServer())
-    {
-      StartCoroutine(nameof(UpdatePieceSectors));
-    }
+
+    // Create your RPC as early as possible so it gets registered with the game
+    UselessRPC = NetworkManager.Instance.AddRPC(
+      "UselessRPC", UselessRPCServerReceive, UselessRPCClientReceive);
+
+    // if (ZNet.instance.IsServer())
+    // {
+    //   StartCoroutine(nameof(UpdatePieceSectors));
+    // }
   }
 
   public void CleanUp()
@@ -156,6 +163,44 @@ public class MoveableBaseRootComponent : MonoBehaviour
       {
         netview.GetZDO().SetPosition(base.transform.position);
       }
+    }
+  }
+
+  public static CustomRPC UselessRPC;
+
+  public static readonly WaitForSeconds OneSecondWait = new WaitForSeconds(1f);
+
+// React to the RPC call on a server
+  private IEnumerator UselessRPCServerReceive(long sender, ZPackage package)
+  {
+    Jotunn.Logger.LogMessage($"Received blob, processing");
+
+    string dot = string.Empty;
+    for (int i = 0; i < 5; ++i)
+    {
+      dot += ".";
+      Jotunn.Logger.LogMessage(dot);
+      yield return OneSecondWait;
+    }
+
+    Jotunn.Logger.LogMessage($"Broadcasting to all clients");
+    UselessRPC.SendPackage(ZNet.instance.m_peers, new ZPackage(package.GetArray()));
+  }
+
+  public static readonly WaitForSeconds HalfSecondWait = new WaitForSeconds(0.5f);
+
+// React to the RPC call on a client
+  private IEnumerator UselessRPCClientReceive(long sender, ZPackage package)
+  {
+    Jotunn.Logger.LogMessage($"Received blob, processing");
+    yield return null;
+
+    string dot = string.Empty;
+    for (int i = 0; i < 10; ++i)
+    {
+      dot += ".";
+      Jotunn.Logger.LogMessage(dot);
+      yield return HalfSecondWait;
     }
   }
 
@@ -392,7 +437,11 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public static void InitZDO(ZDO zdo)
   {
-    if (zdo.GetPrefab() == "MBRaft".GetStableHashCode())
+    if (ZNet.instance.IsClientInstance())
+    {
+    }
+
+    if (zdo.GetPrefab() == StringExtensionMethods.GetStableHashCode("MBRaft"))
     {
     }
 
