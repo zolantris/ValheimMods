@@ -44,7 +44,7 @@ namespace ValheimRAFT
       component2.m_isKinematicBody = component1.m_rigidbody.isKinematic;
       if (component1.m_rigidbody.isKinematic)
       {
-        if (player.transform.parent == component1.m_baseRoot.transform)
+        if (player.transform.parent == component1.m_baseRootDelegate.transform)
           ((Character)player).m_body.position = new Vector3(
             ((Component)((Character)player).m_body).transform.position.x,
             ((Component)((Character)player).m_body).transform.position.y + 34.5f -

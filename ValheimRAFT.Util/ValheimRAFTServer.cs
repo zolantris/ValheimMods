@@ -8,6 +8,6 @@ public class ValheimRAFTServer
 
   public ValheimRAFTServer()
   {
-    ValheimRAFTServer.isServer
+    // ValheimRAFTServer.isServer = ZN
   }
 }

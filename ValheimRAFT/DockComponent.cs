@@ -4,95 +4,97 @@
 using UnityEngine;
 using ValheimRAFT.Util;
 
-namespace ValheimRAFT;
-
-public class DockComponent : MonoBehaviour
+namespace ValheimRAFT
 {
-  private enum DockState
+  public class DockComponent : MonoBehaviour
   {
-    None,
-    EnteringDock,
-    Docked,
-    LeavingDock
-  }
-
-  private DockState m_dockState = DockState.None;
-
-  private float m_dockingStrength = 1f;
-
-  private GameObject m_dockedObject;
-
-  private Rigidbody m_dockedRigidbody;
-
-  private ZNetView m_nview;
-
-  public Transform m_dockLocation;
-
-  public Transform m_dockExit;
-
-  public void Awake()
-  {
-    m_nview = GetComponent<ZNetView>();
-  }
-
-  public void FixedUpdate()
-  {
-    if ((bool)m_dockedRigidbody)
+    private enum DockState
     {
-      if (m_dockState == DockState.EnteringDock)
-      {
-        PushToward(m_dockLocation);
-      }
-      else if (m_dockState == DockState.LeavingDock)
-      {
-        PushToward(m_dockExit);
-      }
+      None,
+      EnteringDock,
+      Docked,
+      LeavingDock
     }
-  }
 
-  private void PushToward(Transform target)
-  {
-    Vector3 direction = target.transform.position - m_dockedRigidbody.transform.position;
-    m_dockedRigidbody.AddForce(direction.normalized * m_dockingStrength, ForceMode.VelocityChange);
-  }
+    private DockState m_dockState = DockState.None;
 
-  public void OnTriggerEnter(Collider other)
-  {
-    if ((bool)m_dockedObject && CanDock(other))
+    private float m_dockingStrength = 1f;
+
+    private GameObject m_dockedObject;
+
+    private Rigidbody m_dockedRigidbody;
+
+    private ZNetView m_nview;
+
+    public Transform m_dockLocation;
+
+    public Transform m_dockExit;
+
+    public void Awake()
     {
-      Dock(other);
+      m_nview = GetComponent<ZNetView>();
     }
-  }
 
-  private void Dock(Collider other)
-  {
-    ZNetView nv = other.GetComponentInParent<ZNetView>();
-    if ((bool)nv && nv.IsOwner())
+    public void FixedUpdate()
     {
-      Rigidbody rb = nv.GetComponent<Rigidbody>();
-      if ((bool)rb)
+      if ((bool)m_dockedRigidbody)
       {
-        int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(nv.m_zdo);
-        m_dockedObject = nv.gameObject;
-        m_dockedRigidbody = rb;
-        m_nview.m_zdo.Set("MBDock_dockedObject", id);
-        m_dockState = DockState.EnteringDock;
+        if (m_dockState == DockState.EnteringDock)
+        {
+          PushToward(m_dockLocation);
+        }
+        else if (m_dockState == DockState.LeavingDock)
+        {
+          PushToward(m_dockExit);
+        }
       }
     }
-  }
 
-  private bool CanDock(Collider other)
-  {
-    if (other.name.StartsWith("Karve"))
+    private void PushToward(Transform target)
     {
-      return true;
+      Vector3 direction = target.transform.position - m_dockedRigidbody.transform.position;
+      m_dockedRigidbody.AddForce(direction.normalized * m_dockingStrength,
+        ForceMode.VelocityChange);
     }
 
-    if (other.name.StartsWith("VikingShip"))
+    public void OnTriggerEnter(Collider other)
     {
-      return true;
+      if ((bool)m_dockedObject && CanDock(other))
+      {
+        Dock(other);
+      }
     }
 
-    return false;
+    private void Dock(Collider other)
+    {
+      ZNetView nv = other.GetComponentInParent<ZNetView>();
+      if ((bool)nv && nv.IsOwner())
+      {
+        Rigidbody rb = nv.GetComponent<Rigidbody>();
+        if ((bool)rb)
+        {
+          int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(nv.m_zdo);
+          m_dockedObject = nv.gameObject;
+          m_dockedRigidbody = rb;
+          m_nview.m_zdo.Set("MBDock_dockedObject", id);
+          m_dockState = DockState.EnteringDock;
+        }
+      }
+    }
+
+    private bool CanDock(Collider other)
+    {
+      if (other.name.StartsWith("Karve"))
+      {
+        return true;
+      }
+
+      if (other.name.StartsWith("VikingShip"))
+      {
+        return true;
+      }
+
+      return false;
+    }
   }
 }

@@ -18,8 +18,8 @@ namespace ValheimRAFT
 {
   [BepInPlugin(BepInGuid, ModName, Version)]
   [BepInDependency(Jotunn.Main.ModGuid)]
-  [BepInProcess("valheim.exe")]
-  [NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
+  // [BepInProcess("valheim.exe")]
+  [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
   public class Main : BaseUnityPlugin
   {
     /*
@@ -27,7 +27,7 @@ namespace ValheimRAFT
      * - This needs to be confirmed as an issue before things are switched back.
      */
     public const string Author = "zolantris";
-    private const string Version = "1.5.2";
+    private const string Version = "1.6.0";
     internal const string ModName = "ValheimRAFT";
     public const string BepInGuid = $"BepIn.{Author}.{ModName}";
     private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";

@@ -56,13 +56,14 @@ namespace ValheimRAFT
             .GetComponent<MoveableBaseShipComponent>();
           foreach (ZNetView netview in znetViewList)
           {
-            ((Component)netview).transform.SetParent(((Component)component.m_baseRoot).transform);
+            ((Component)netview).transform.SetParent(((Component)component.m_baseRootDelegate)
+              .transform);
             ((Component)netview).transform.localPosition =
               netview.m_zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash, Vector3.zero);
             ((Component)netview).transform.localRotation =
               netview.m_zdo.GetQuaternion(MoveableBaseRootComponent.MBRotationHash,
                 Quaternion.identity);
-            component.m_baseRoot.AddNewPiece(netview);
+            component.m_baseRootDelegate.AddNewPiece(netview);
           }
         }
       }

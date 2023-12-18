@@ -8,7 +8,7 @@
         <AssemblyName>ValheimRAFT</AssemblyName>
         <TargetFramework>netstandard2.0</TargetFramework>
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-        <ApplicationVersion>1.5.2</ApplicationVersion>
+        <ApplicationVersion>1.6.0</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -24,7 +24,7 @@
         <!--                <PublicizerRuntimeStrategies>Unsafe;IgnoresAccessChecksTo</PublicizerRuntimeStrategies>-->
         <PublicizerLogFilePath>.\Logs\publicizer.txt</PublicizerLogFilePath>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU'">
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU'">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugSymbols>true</DebugSymbols>
         <DebugType>full</DebugType>
@@ -55,6 +55,9 @@
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' ">
+        <OutputPath>bin\Debug ClientServer\</OutputPath>
     </PropertyGroup>
     <ItemGroup>
         <Publicize Include="assembly_valheim"/>
@@ -123,7 +126,10 @@
         <Compile Include="ValheimRAFT\Main.cs"/>
         <Compile Include="ValheimRAFT\MastComponent.cs"/>
         <Compile Include="ValheimRAFT\MeshHelper.cs"/>
-        <Compile Include="ValheimRAFT\MoveableBaseRootComponent.cs"/>
+        <Compile Include="ValheimRAFT\MoveableBaseRootComponent\Client.cs"/>
+        <Compile Include="ValheimRAFT\MoveableBaseRootComponent\Delegate.cs"/>
+        <Compile Include="ValheimRAFT\MoveableBaseRootComponent\Server.cs"/>
+        <Compile Include="ValheimRAFT\MoveableBaseRootComponent\MoveBaseRoot.cs"/>
         <Compile Include="ValheimRAFT\MoveableBaseShipComponent.cs"/>
         <Compile Include="ValheimRAFT\MoveRaftConsoleCommand.cs"/>
         <Compile Include="ValheimRAFT\PierComponent.cs"/>
@@ -169,19 +175,19 @@
         <PluginDeployTarget>BepInEx\plugins\zolantris-ValheimRAFT</PluginDeployTarget>
         <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
     </PropertyGroup>
-    <Target Name="Copy_To_R2ModMan" Condition=" '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="PostBuildEvent">
+    <Target Name="Copy_To_R2ModMan" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="PostBuildEvent">
         <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(PluginDeployPath)\ValheimRAFT.dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(PluginDeployPath)\ValheimRAFT.pdb&quot;"/>
     </Target>
-    <Target Name="Copy_To_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' " AfterTargets="PostBuildEvent">
+    <Target Name="Copy_To_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' " AfterTargets="PostBuildEvent">
         <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\ValheimRAFT.dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\ValheimRAFT.pdb&quot;"/>
     </Target>
-    <Target Name="Run_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' " AfterTargets="Copy_To_Valheim_Server">
+    <Target Name="Run_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' " AfterTargets="Copy_To_Valheim_Server" BeforeTargets="Run_Valheim">
         <Exec Command="cd &quot;$(ValheimServerPath)&quot;
         powershell Start-Process -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>
     </Target>
-    <Target Name="Run_Valheim" Condition=" '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="Copy_To_R2ModMan">
+    <Target Name="Run_Valheim" Condition="'$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="Copy_To_R2ModMan">
         <Exec Command="&quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; -console --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
     </Target>
     <Target Name="Generate_Mod_Archive" Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'" AfterTargets="PostBuildEvent">

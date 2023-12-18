@@ -4,14 +4,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using HarmonyLib;
 using Jotunn;
+using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimRAFT.Util;
 using Logger = Jotunn.Logger;
+using Main = ValheimRAFT.Main;
 
-public class MoveableBaseRootComponent : MonoBehaviour
+namespace ValheimRAFT.MoveableBaseRootComponent;
+
+public class Server : MonoBehaviour
 {
   public static readonly KeyValuePair<int, int> MBParentHash = ZDO.GetHashZDOID("MBParent");
 
@@ -73,6 +78,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   private static bool itemsRemovedDuringWait;
 
+  public static CustomRPC SyncBuildSectorsRPC;
+
+  public static CustomRPC DelegateToServerRPC;
 
   public void Awake()
   {
@@ -82,8 +90,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
     m_rigidbody.mass = 99999f;
 
     // Create your RPC as early as possible so it gets registered with the game
-    UselessRPC = NetworkManager.Instance.AddRPC(
-      "UselessRPC", UselessRPCServerReceive, UselessRPCClientReceive);
+    SyncBuildSectorsRPC = NetworkManager.Instance.AddRPC(
+      "UselessRPC", SyncBuildSectorsRPCServerReceive, SyncBuildSectorsRPCClientReceive);
 
     // if (ZNet.instance.IsServer())
     // {
@@ -93,8 +101,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void CleanUp()
   {
-    StopCoroutine(nameof(ActivatePendingPieces));
     if (!ZNetScene.instance || m_id == 0)
+      StopCoroutine(nameof(ActivatePendingPieces));
     {
       return;
     }
@@ -166,12 +174,33 @@ public class MoveableBaseRootComponent : MonoBehaviour
     }
   }
 
-  public static CustomRPC UselessRPC;
 
   public static readonly WaitForSeconds OneSecondWait = new WaitForSeconds(1f);
 
+
+  enum BuildSectorRequest
+  {
+    GET_ALL_SECTORS,
+    POST_SECTOR,
+    EDIT_SECTOR,
+    DELETE_SECTOR,
+  }
+
+  public static void RunSyncBuildSectors()
+  {
+    ZPackage package = new ZPackage();
+    // byte[] array = new byte[int.Parse(args[0]) * 1024 * 1024];
+    // random.NextBytes(array);
+    string[] array = { "BuildSectorRequest", BuildSectorRequest.GET_ALL_SECTORS.ToString() };
+    package.Write(string.Join("_", array));
+
+    // Invoke the RPC with the server as the target and our random data package as the payload
+    Jotunn.Logger.LogMessage($"RunSyncBuildSectors() called");
+    SyncBuildSectorsRPC.SendPackage(ZRoutedRpc.instance.GetServerPeerID(), package);
+  }
+
 // React to the RPC call on a server
-  private IEnumerator UselessRPCServerReceive(long sender, ZPackage package)
+  private IEnumerator SyncBuildSectorsRPCServerReceive(long sender, ZPackage package)
   {
     Jotunn.Logger.LogMessage($"Received blob, processing");
 
@@ -184,24 +213,33 @@ public class MoveableBaseRootComponent : MonoBehaviour
     }
 
     Jotunn.Logger.LogMessage($"Broadcasting to all clients");
-    UselessRPC.SendPackage(ZNet.instance.m_peers, new ZPackage(package.GetArray()));
+    SyncBuildSectorsRPC.SendPackage(ZNet.instance.m_peers, new ZPackage(package.GetArray()));
   }
 
   public static readonly WaitForSeconds HalfSecondWait = new WaitForSeconds(0.5f);
 
+  public static string Base64Decode(string base64EncodedData)
+  {
+    var base64EncodedBytes = System.Convert.FromBase64String(base64EncodedData);
+    return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
+  }
+
 // React to the RPC call on a client
-  private IEnumerator UselessRPCClientReceive(long sender, ZPackage package)
+  private IEnumerator SyncBuildSectorsRPCClientReceive(long sender, ZPackage package)
   {
     Jotunn.Logger.LogMessage($"Received blob, processing");
-    yield return null;
-
-    string dot = string.Empty;
-    for (int i = 0; i < 10; ++i)
-    {
-      dot += ".";
-      Jotunn.Logger.LogMessage(dot);
-      yield return HalfSecondWait;
-    }
+    string packageItems = Base64Decode(package.GetBase64());
+    Jotunn.Logger.LogMessage($"SyncBuildSectorsRPCClientReceive(): {packageItems}");
+    // yield return null;
+    //
+    // string dot = string.Empty;
+    // for (int i = 0; i < 10; ++i)
+    // {
+    //   dot += ".";
+    //   Jotunn.Logger.LogMessage(dot);
+    //   yield return HalfSecondWait;
+    // }
+    yield return true;
   }
 
   public IEnumerator UpdatePieceSectors()
@@ -324,6 +362,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   public void DestroyPiece(WearNTear wnt)
   {
     ZNetView netview = wnt.GetComponent<ZNetView>();
+    ZLog.Log($"DestroyPiece: {netview.GetZDO()}");
     RemovePiece(netview);
     UpdatePieceCount();
     if (GetPieceCount() == 0)
@@ -336,6 +375,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
   public void ActivatePendingPiecesCoroutine()
   {
     StartCoroutine("ActivatePendingPieces");
+  }
+
+  public Server()
+  {
   }
 
   public IEnumerator ActivatePendingPieces()
@@ -416,7 +459,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public static void AddDynamicParent(ZNetView source, GameObject target)
   {
-    MoveableBaseRootComponent mbroot = target.GetComponentInParent<MoveableBaseRootComponent>();
+    Server mbroot = target.GetComponentInParent<Server>();
     if ((bool)mbroot)
     {
       source.GetZDO().Set(MBCharacterParentHash, mbroot.m_id);
@@ -427,7 +470,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public static void AddDynamicParent(ZNetView source, GameObject target, Vector3 offset)
   {
-    MoveableBaseRootComponent mbroot = target.GetComponentInParent<MoveableBaseRootComponent>();
+    Server mbroot = target.GetComponentInParent<Server>();
     if ((bool)mbroot)
     {
       source.GetZDO().Set(MBCharacterParentHash, mbroot.m_id);
@@ -521,9 +564,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
     if ((bool)parentObj)
     {
       MoveableBaseShipComponent mb = parentObj.GetComponent<MoveableBaseShipComponent>();
-      if ((bool)mb && (bool)mb.m_baseRoot)
+      if ((bool)mb && (bool)mb.m_baseRootDelegate)
       {
-        mb.m_baseRoot.ActivatePiece(netview);
+        mb.m_baseRootDelegate.ActivatePiece(netview);
       }
     }
     else
@@ -565,7 +608,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void AddNewPiece(ZNetView netview)
   {
+    ZLog.Log($"netview piece update, {netview.GetZDO()}");
     netview.transform.SetParent(base.transform);
+    ZLog.Log(
+      $"netview transformed parent to, localPosition:{transform.localPosition} {netview.transform.localRotation.eulerAngles}");
     if (netview.GetZDO() != null)
     {
       netview.GetZDO().Set(MBParentIdHash,
@@ -675,6 +721,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   {
     if ((bool)m_nview && m_nview.GetZDO() != null)
     {
+      ZLog.Log($"nview piece update, {m_nview.GetZDO()} to {m_pieces.Count}");
       m_nview.GetZDO().Set("MBPieceCount", m_pieces.Count);
     }
   }

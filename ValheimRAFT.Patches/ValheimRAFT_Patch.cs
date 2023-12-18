@@ -90,17 +90,17 @@ public class ValheimRAFT_Patch
   private static void Ship_UpdateSail(Ship __instance)
   {
     MoveableBaseShipComponent mb = __instance.GetComponent<MoveableBaseShipComponent>();
-    if (!mb || !mb.m_baseRoot)
+    if (!mb || !mb.m_baseRootDelegate)
     {
       return;
     }
 
-    for (int i = 0; i < mb.m_baseRoot.m_mastPieces.Count; i++)
+    for (int i = 0; i < mb.m_baseRootDelegate.m_mastPieces.Count; i++)
     {
-      MastComponent mast = mb.m_baseRoot.m_mastPieces[i];
+      MastComponent mast = mb.m_baseRootDelegate.m_mastPieces[i];
       if (!mast)
       {
-        mb.m_baseRoot.m_mastPieces.RemoveAt(i);
+        mb.m_baseRootDelegate.m_mastPieces.RemoveAt(i);
         i--;
       }
       else if (mast.m_allowSailRotation)
@@ -115,17 +115,17 @@ public class ValheimRAFT_Patch
   private static void Ship_UpdateSailSize(Ship __instance)
   {
     MoveableBaseShipComponent mb = __instance.GetComponent<MoveableBaseShipComponent>();
-    if (!mb || !mb.m_baseRoot)
+    if (!mb || !mb.m_baseRootDelegate)
     {
       return;
     }
 
-    for (int j = 0; j < mb.m_baseRoot.m_mastPieces.Count; j++)
+    for (int j = 0; j < mb.m_baseRootDelegate.m_mastPieces.Count; j++)
     {
-      MastComponent mast = mb.m_baseRoot.m_mastPieces[j];
+      MastComponent mast = mb.m_baseRootDelegate.m_mastPieces[j];
       if (!mast)
       {
-        mb.m_baseRoot.m_mastPieces.RemoveAt(j);
+        mb.m_baseRootDelegate.m_mastPieces.RemoveAt(j);
         j--;
       }
       else if (mast.m_allowSailShrinking)
@@ -145,12 +145,12 @@ public class ValheimRAFT_Patch
       }
     }
 
-    for (int i = 0; i < mb.m_baseRoot.m_rudderPieces.Count; i++)
+    for (int i = 0; i < mb.m_baseRootDelegate.m_rudderPieces.Count; i++)
     {
-      RudderComponent rudder = mb.m_baseRoot.m_rudderPieces[i];
+      RudderComponent rudder = mb.m_baseRootDelegate.m_rudderPieces[i];
       if (!rudder)
       {
-        mb.m_baseRoot.m_rudderPieces.RemoveAt(i);
+        mb.m_baseRootDelegate.m_rudderPieces.RemoveAt(i);
         i--;
       }
       else if ((bool)rudder.m_wheel)
@@ -416,7 +416,7 @@ public class ValheimRAFT_Patch
   private static void ZDOLoaded(ZDO zdo)
   {
     ZDOPersistantID.Instance.Register(zdo);
-    MoveableBaseRootComponent.InitZDO(zdo);
+    Server.InitZDO(zdo);
   }
 
   [HarmonyPatch(typeof(ZDO), "Reset")]
@@ -428,7 +428,7 @@ public class ValheimRAFT_Patch
 
   public static void ZDOUnload(ZDO zdo)
   {
-    MoveableBaseRootComponent.RemoveZDO(zdo);
+    Server.RemoveZDO(zdo);
     ZDOPersistantID.Instance.Unregister(zdo);
   }
 
@@ -438,7 +438,7 @@ public class ValheimRAFT_Patch
   {
     if (__instance.GetZDO() != null)
     {
-      MoveableBaseRootComponent.InitPiece(__instance);
+      Server.InitPiece(__instance);
       CultivatableComponent.InitPiece(__instance);
     }
   }
@@ -447,7 +447,7 @@ public class ValheimRAFT_Patch
   [HarmonyPrefix]
   private static void ZNetView_OnDestroy(ZNetView __instance)
   {
-    MoveableBaseRootComponent mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
+    Server mbr = __instance.GetComponentInParent<Server>();
     if ((bool)mbr)
     {
       mbr.RemovePiece(__instance);
@@ -458,7 +458,7 @@ public class ValheimRAFT_Patch
   [HarmonyPrefix]
   private static void WearNTear_Destroy(WearNTear __instance)
   {
-    MoveableBaseRootComponent mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
+    Server mbr = __instance.GetComponentInParent<Server>();
     if ((bool)mbr)
     {
       mbr.DestroyPiece(__instance);
@@ -505,7 +505,7 @@ public class ValheimRAFT_Patch
       return null;
     }
 
-    MoveableBaseRootComponent mbr = rb.GetComponent<MoveableBaseRootComponent>();
+    Server mbr = rb.GetComponent<Server>();
     if ((bool)mbr)
     {
       return null;
@@ -549,8 +549,8 @@ public class ValheimRAFT_Patch
       return rot;
     }
 
-    MoveableBaseRootComponent
-      mbr = m_lastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
+    Server
+      mbr = m_lastRayPiece.GetComponentInParent<Server>();
     if (!mbr)
     {
       return rot;
@@ -573,8 +573,8 @@ public class ValheimRAFT_Patch
       __result = __instance.m_lastGroundBody.GetComponent<Ship>();
       if (!__result)
       {
-        MoveableBaseRootComponent mb =
-          __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
+        Server mb =
+          __instance.m_lastGroundBody.GetComponentInParent<Server>();
         if ((bool)mb && (bool)mb.m_moveableBaseShip)
         {
           __result = mb.m_moveableBaseShip.GetComponent<Ship>();
@@ -601,10 +601,10 @@ public class ValheimRAFT_Patch
       return;
     }
 
-    MoveableBaseRootComponent mbr = null;
+    Server mbr = null;
     if ((bool)__instance.m_lastGroundBody)
     {
-      mbr = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
+      mbr = __instance.m_lastGroundBody.GetComponentInParent<Server>();
       if ((bool)mbr && __instance.transform.parent != mbr.transform)
       {
         __instance.transform.SetParent(mbr.transform);
@@ -672,7 +672,7 @@ public class ValheimRAFT_Patch
       }
     }
 
-    MoveableBaseRootComponent mb = m_lastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
+    Server mb = m_lastRayPiece.GetComponentInParent<Server>();
     if ((bool)mb)
     {
       if ((bool)netview)
@@ -693,7 +693,7 @@ public class ValheimRAFT_Patch
     bool water)
   {
     int layerMask = __instance.m_placeRayMask;
-    MoveableBaseRootComponent mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
+    Server mbr = __instance.GetComponentInParent<Server>();
     if ((bool)mbr)
     {
       Vector3 localPos = mbr.transform.InverseTransformPoint(__instance.transform.position);
@@ -705,8 +705,8 @@ public class ValheimRAFT_Patch
       Vector3 end = mbr.transform.rotation * localDir * Vector3.forward;
       if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) && (bool)hitInfo.collider)
       {
-        MoveableBaseRootComponent mbrTarget =
-          hitInfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
+        Server mbrTarget =
+          hitInfo.collider.GetComponentInParent<Server>();
         if ((bool)mbrTarget)
         {
           point = hitInfo.point;
@@ -730,7 +730,7 @@ public class ValheimRAFT_Patch
     if ((bool)(__instance).GetLastGroundCollider() &&
         (__instance).m_lastGroundTouch < 0.3f)
     {
-      MoveableBaseRootComponent.AddDynamicParent((__instance).m_nview,
+      Server.AddDynamicParent((__instance).m_nview,
         (__instance).GetLastGroundCollider().gameObject);
     }
   }
@@ -753,7 +753,7 @@ public class ValheimRAFT_Patch
       return false;
     }
 
-    MoveableBaseRootComponent mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
+    Server mbr = __instance.GetComponentInParent<Server>();
     if (!mbr)
     {
       return true;
@@ -807,7 +807,7 @@ public class ValheimRAFT_Patch
           hover = raycastHit.collider.gameObject;
         }
         else if ((bool)raycastHit.collider.attachedRigidbody && !raycastHit.collider
-                   .attachedRigidbody.GetComponent<MoveableBaseRootComponent>())
+                   .attachedRigidbody.GetComponent<Server>())
         {
           hover = raycastHit.collider.attachedRigidbody.gameObject;
         }

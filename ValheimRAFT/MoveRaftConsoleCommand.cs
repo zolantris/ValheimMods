@@ -58,7 +58,11 @@ namespace ValheimRAFT
                       "piece"
                     })))
                 return;
-              MoveableBaseRootComponent componentInParent = raycastHit
+
+              /*
+               * @todo This must be fired from the Server even if on the client
+               */
+              MoveableBaseRootComponent.Delegate.componentInParent = raycastHit
                 .collider.GetComponentInParent<MoveableBaseRootComponent>();
               if (componentInParent)
                 MoveRaftConsoleCommand.MoveRaft(localPlayer, componentInParent.m_ship, offset);
@@ -73,12 +77,12 @@ namespace ValheimRAFT
       MoveableBaseShipComponent component =
         ((Component)ship).GetComponent<MoveableBaseShipComponent>();
       if (!component ||
-          !component.m_baseRoot)
+          !component.m_baseRootDelegate)
         return false;
       Stopwatch stopwatch = new Stopwatch();
       stopwatch.Start();
       int persistantId =
-        ZDOPersistantID.Instance.GetOrCreatePersistantID(component.m_baseRoot.m_nview.m_zdo);
+        ZDOPersistantID.Instance.GetOrCreatePersistantID(component.m_baseRootDelegate.m_nview.m_zdo);
       foreach (ZDO zdo in ZDOMan.instance.m_objectsByID.Values)
       {
         if (zdo.GetInt(MoveableBaseRootComponent.MBParentIdHash, 0) == persistantId)

@@ -56,8 +56,8 @@ public class SailCreatorComponent : MonoBehaviour
       Piece piece = newSail.GetComponent<Piece>();
       piece.SetCreator(m_sailCreators[0].GetComponent<Piece>().GetCreator());
       ZNetView netview = newSail.GetComponent<ZNetView>();
-      MoveableBaseRootComponent mbroot =
-        m_sailCreators[0].GetComponentInParent<MoveableBaseRootComponent>();
+      Server mbroot =
+        m_sailCreators[0].GetComponentInParent<Server>();
       if ((bool)mbroot)
       {
         mbroot.AddNewPiece(netview);
