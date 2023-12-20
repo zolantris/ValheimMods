@@ -1,13 +1,9 @@
-﻿// ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// ValheimRAFT.UI.EditSailComponentPanel
-
 using System.Collections.Generic;
-using Jotunn.GUI;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.UI;
-using ValheimRAFT;
-using ValheimRAFT.UI;
+
+namespace ValheimRAFT.UI;
 
 public class EditSailComponentPanel
 {
@@ -78,20 +74,17 @@ public class EditSailComponentPanel
       m_editSail.m_sailFlags.HasFlag(SailComponent.SailFlags.AllowSailShrinking));
     m_disableClothToggle.SetIsOnWithoutNotify(
       m_editSail.m_sailFlags.HasFlag(SailComponent.SailFlags.DisableCloth));
-    GUIManager.BlockInput(true);
+    GUIManager.BlockInput(state: true);
     m_editPanel.SetActive(value: true);
   }
 
   private void InitPanel()
   {
     Transform parent = GUIManager.CustomGUIFront.transform;
-    m_editPanel =
-      Object.Instantiate(
-        Main.m_assetBundle.LoadAsset<GameObject>("edit_sail_panel"),
-        parent, worldPositionStays: false);
+    m_editPanel = Object.Instantiate(Main.m_assetBundle.LoadAsset<GameObject>("edit_sail_panel"),
+      parent, worldPositionStays: false);
     PanelUtil.ApplyPanelStyle(m_editPanel);
-    GameObject texture_panel =
-      Main.m_assetBundle.LoadAsset<GameObject>("edit_texture_panel");
+    GameObject texture_panel = Main.m_assetBundle.LoadAsset<GameObject>("edit_texture_panel");
     PanelUtil.ApplyPanelStyle(texture_panel);
     GUIManager.Instance.ApplyDropdownStyle(
       texture_panel.transform.Find("TextureName").GetComponent<Dropdown>(), 15);
@@ -213,48 +206,12 @@ public class EditSailComponentPanel
       }
     });
     GUIManager.Instance.ApplyDropdownStyle(textureDropdown, 15);
-    ColorPicker.ColorEvent val = default(ColorPicker.ColorEvent);
-    ColorPicker.ColorEvent val2 = default(ColorPicker.ColorEvent);
     textureColor.onClick.AddListener(delegate
     {
-      //IL_0065: Unknown result type (might be due to invalid IL or missing references)
-      //IL_006a: Unknown result type (might be due to invalid IL or missing references)
-      //IL_006c: Expected O, but got Unknown
-      //IL_0071: Expected O, but got Unknown
-      //IL_0084: Unknown result type (might be due to invalid IL or missing references)
-      //IL_0089: Unknown result type (might be due to invalid IL or missing references)
-      //IL_008b: Expected O, but got Unknown
-      //IL_0090: Expected O, but got Unknown
-      GUIManager instance = GUIManager.Instance;
-      Vector2 vector = new Vector2(0.5f, 0.5f);
-      Vector2 vector2 = new Vector2(0.5f, 0.5f);
-      Vector2 vector3 = new Vector2(0.5f, 0.5f);
-      Color color2 = mat.GetColor(parameterName + "Color");
-      ColorPicker.ColorEvent obj = val;
-      if (obj == null)
-      {
-        ColorPicker.ColorEvent val3 = delegate(Color color)
-        {
-          mat.SetColor(parameterName + "Color", color);
-        };
-        ColorPicker.ColorEvent val4 = val3;
-        val = val3;
-        obj = val4;
-      }
-
-      ColorPicker.ColorEvent obj2 = val2;
-      if (obj2 == null)
-      {
-        ColorPicker.ColorEvent val5 = delegate(Color color)
-        {
-          mat.SetColor(parameterName + "Color", color);
-        };
-        ColorPicker.ColorEvent val4 = val5;
-        val2 = val5;
-        obj2 = val4;
-      }
-
-      instance.CreateColorPicker(vector, vector2, vector3, color2, "Color", obj, obj2, true);
+      GUIManager.Instance.CreateColorPicker(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+        new Vector2(0.5f, 0.5f), mat.GetColor(parameterName + "Color"), "Color",
+        delegate(Color color) { mat.SetColor(parameterName + "Color", color); },
+        delegate(Color color) { mat.SetColor(parameterName + "Color", color); }, useAlpha: true);
     });
     offsetx.onValueChanged.AddListener(delegate(string str)
     {
@@ -370,7 +327,7 @@ public class EditSailComponentPanel
     }
 
     m_editSail = null;
-    GUIManager.BlockInput(false);
+    GUIManager.BlockInput(state: false);
   }
 
   public void CancelEditPanel()

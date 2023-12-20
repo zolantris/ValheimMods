@@ -1,66 +1,51 @@
-﻿using Jotunn.Entities;
+using Jotunn.Entities;
 using UnityEngine;
 
-namespace ValheimRAFT
+namespace ValheimRAFT;
+
+internal class CreativeModeConsoleCommand : ConsoleCommand
 {
-  internal class CreativeModeConsoleCommand : ConsoleCommand
-  {
-    public override string Name => "RaftCreative";
+	public override string Name => "RaftCreative";
 
-    public override string Help => "Sets the current raft you are standing on into creative mode.";
+	public override string Help => "Sets the current raft you are standing on into creative mode.";
 
-    public override void Run(string[] args)
-    {
-      Player localPlayer = Player.m_localPlayer;
-      if (!localPlayer)
-        return;
-      Ship standingOnShip = ((Character)localPlayer).GetStandingOnShip();
-      if (standingOnShip &&
-          CreativeModeConsoleCommand.ToggleMode(localPlayer, standingOnShip))
-        return;
+	public override void Run(string[] args)
+	{
+		Player player = Player.m_localPlayer;
+		if (!player)
+		{
+			return;
+		}
+		Ship ship = player.GetStandingOnShip();
+		if ((!ship || !ToggleMode(player, ship)) && Physics.Raycast(GameCamera.instance.transform.position, GameCamera.instance.transform.forward, out var hitinfo, 50f, LayerMask.GetMask("piece")))
+		{
+			MoveableBaseRootComponent mbr = hitinfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
+			if ((bool)mbr)
+			{
+				ToggleMode(player, mbr.m_ship);
+			}
+		}
+	}
 
-      RaycastHit raycastHit;
-      if (!Physics.Raycast(((Component)GameCamera.instance).transform.position,
-            ((Component)GameCamera.instance).transform.forward, out raycastHit, 50f,
-            LayerMask.GetMask(new string[1]
-            {
-              "piece"
-            })))
-        return;
-      MoveableBaseRootComponent.Server componentInParent =
-        raycastHit.collider.GetComponentInParent<MoveableBaseRootComponent.Server>();
-      if (componentInParent)
-        CreativeModeConsoleCommand.ToggleMode(localPlayer, componentInParent.m_ship);
-    }
-
-    private static bool ToggleMode(Player player, Ship ship)
-    {
-      MoveableBaseShipComponent component1 =
-        ((Component)ship).GetComponent<MoveableBaseShipComponent>();
-      if (!component1)
-        return false;
-      ZSyncTransform component2 = ((Component)ship).GetComponent<ZSyncTransform>();
-      component1.m_rigidbody.isKinematic = !component1.m_rigidbody.isKinematic;
-      component2.m_isKinematicBody = component1.m_rigidbody.isKinematic;
-      if (component1.m_rigidbody.isKinematic)
-      {
-        if (player.transform.parent == component1.m_baseRootDelegate.transform)
-          ((Character)player).m_body.position = new Vector3(
-            ((Component)((Character)player).m_body).transform.position.x,
-            ((Component)((Character)player).m_body).transform.position.y + 34.5f -
-            component1.m_rigidbody.position.y,
-            ((Component)((Character)player).m_body).transform.position.z);
-        component1.m_rigidbody.position = new Vector3(((Component)component1).transform.position.x,
-          35f, ((Component)component1).transform.position.z);
-        Rigidbody rigidbody = component1.m_rigidbody;
-        Quaternion rotation = component1.m_rigidbody.rotation;
-        Quaternion quaternion = Quaternion.Euler(0.0f,
-          (float)((double)Mathf.Floor(rotation.eulerAngles.y / 22.5f) * 22.5),
-          0.0f);
-        rigidbody.rotation = quaternion;
-      }
-
-      return true;
-    }
-  }
+	private static bool ToggleMode(Player player, Ship ship)
+	{
+		MoveableBaseShipComponent mb = ship.GetComponent<MoveableBaseShipComponent>();
+		if ((bool)mb)
+		{
+			ZSyncTransform zsync = ship.GetComponent<ZSyncTransform>();
+			mb.m_rigidbody.isKinematic = !mb.m_rigidbody.isKinematic;
+			zsync.m_isKinematicBody = mb.m_rigidbody.isKinematic;
+			if (mb.m_rigidbody.isKinematic)
+			{
+				if (player.transform.parent == mb.m_baseRoot.transform)
+				{
+					((Character)player).m_body.position = new Vector3(((Character)player).m_body.transform.position.x, ((Character)player).m_body.transform.position.y + 34.5f - mb.m_rigidbody.position.y, ((Character)player).m_body.transform.position.z);
+				}
+				mb.m_rigidbody.position = new Vector3(mb.transform.position.x, 35f, mb.transform.position.z);
+				mb.m_rigidbody.rotation = Quaternion.Euler(0f, Mathf.Floor(mb.m_rigidbody.rotation.eulerAngles.y / 22.5f) * 22.5f, 0f);
+			}
+			return true;
+		}
+		return false;
+	}
 }

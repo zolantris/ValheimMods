@@ -126,10 +126,7 @@
         <Compile Include="ValheimRAFT\Main.cs"/>
         <Compile Include="ValheimRAFT\MastComponent.cs"/>
         <Compile Include="ValheimRAFT\MeshHelper.cs"/>
-        <Compile Include="ValheimRAFT\MoveableBaseRootComponent\Client.cs"/>
-        <Compile Include="ValheimRAFT\MoveableBaseRootComponent\Delegate.cs"/>
-        <Compile Include="ValheimRAFT\MoveableBaseRootComponent\Server.cs"/>
-        <Compile Include="ValheimRAFT\MoveableBaseRootComponent\MoveBaseRoot.cs"/>
+        <Compile Include="ValheimRAFT\MoveableBaseRootComponent.cs"/>
         <Compile Include="ValheimRAFT\MoveableBaseShipComponent.cs"/>
         <Compile Include="ValheimRAFT\MoveRaftConsoleCommand.cs"/>
         <Compile Include="ValheimRAFT\PierComponent.cs"/>

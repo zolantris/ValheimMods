@@ -1,13 +1,9 @@
-﻿// ValheimRAFT, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-// ValheimRAFT.MoveableBaseShipComponent
-
 using System;
 using System.Linq;
-using Jotunn;
 using UnityEngine;
 using ValheimRAFT.Util;
-using Main = ValheimRAFT.Main;
-using ValheimRAFT.MoveableBaseRootComponent;
+
+namespace ValheimRAFT;
 
 public class MoveableBaseShipComponent : MonoBehaviour
 {
@@ -19,7 +15,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     HideMesh = 2
   }
 
-  internal ValheimRAFT.MoveableBaseRootComponent.Delegate m_baseRootDelegate;
+  internal MoveableBaseRootComponent m_baseRoot;
 
   internal Rigidbody m_rigidbody;
 
@@ -50,42 +46,42 @@ public class MoveableBaseShipComponent : MonoBehaviour
       name = "MoveableBase",
       layer = 0
     };
-    m_baseRootDelegate =
-      m_baseRootObject.AddComponent<ValheimRAFT.MoveableBaseRootComponent.Delegate>();
+    m_baseRoot = m_baseRootObject.AddComponent<MoveableBaseRootComponent>();
     m_nview.Register("SetAnchor",
       delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
     m_nview.Register("SetVisual",
       delegate(long sender, bool state) { RPC_SetVisual(sender, state); });
-
-
+    m_baseRoot.m_moveableBaseShip = this;
+    m_baseRoot.m_nview = m_nview;
+    m_baseRoot.m_ship = ship;
+    m_baseRoot.m_id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
     m_rigidbody = GetComponent<Rigidbody>();
+    m_baseRoot.m_syncRigidbody = m_rigidbody;
     m_rigidbody.mass = 1000f;
-
-    /*
-     * @todo find out if the server guard is needed
-     */
-    // if (ZNet.instance.IsServer())
-    // {
-    m_baseRootDelegate.Instance.InitializeShipComponent(this, m_nview, ship, m_rigidbody);
-    // }
-
     m_baseRootObject.transform.SetParent(null);
     m_baseRootObject.transform.position = base.transform.position;
     m_baseRootObject.transform.rotation = base.transform.rotation;
-
-    // This looks odd that the older ship is being transformed.
-    // switching ship to m_ship
-    m_ship.transform.Find("ship/visual/mast")?.gameObject.SetActive(value: false);
-    m_ship.transform.Find("ship/colliders/log")?.gameObject.SetActive(value: false);
-    m_ship.transform.Find("ship/colliders/log (1)")?.gameObject.SetActive(value: false);
-    m_ship.transform.Find("ship/colliders/log (2)")?.gameObject.SetActive(value: false);
-    m_ship.transform.Find("ship/colliders/log (3)")?.gameObject.SetActive(value: false);
-
-
+    ship.transform.Find("ship/visual/mast")?.gameObject.SetActive(value: false);
+    ship.transform.Find("ship/colliders/log")?.gameObject.SetActive(value: false);
+    ship.transform.Find("ship/colliders/log (1)")?.gameObject.SetActive(value: false);
+    ship.transform.Find("ship/colliders/log (2)")?.gameObject.SetActive(value: false);
+    ship.transform.Find("ship/colliders/log (3)")?.gameObject.SetActive(value: false);
     UpdateVisual();
-
     BoxCollider[] colliders = base.transform.GetComponentsInChildren<BoxCollider>();
-    m_baseRootDelegate.Instance.InitializeShipColliders(colliders);
+    m_baseRoot.m_onboardcollider =
+      colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "OnboardTrigger");
+    ZLog.Log($"ONBOARD COLLIDER {m_baseRoot.m_onboardcollider}, collider must not be null");
+    m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    m_baseRoot.m_floatcollider = ship.m_floatCollider;
+    m_baseRoot.m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    m_baseRoot.m_blockingcollider = ship.transform.Find("ship/colliders/Cube")
+      .GetComponentInChildren<BoxCollider>();
+    m_baseRoot.m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    m_baseRoot.m_blockingcollider.gameObject.layer = Main.CustomRaftLayer;
+    m_baseRoot.m_blockingcollider.transform.parent.gameObject.layer = Main.CustomRaftLayer;
+    ZLog.Log($"Activating MBRoot: {m_baseRoot.m_id}");
+    m_baseRoot.ActivatePendingPiecesCoroutine();
+    FirstTimeCreation();
   }
 
   public void UpdateVisual()
@@ -100,33 +96,35 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   public void OnDestroy()
   {
-    if ((bool)m_baseRootDelegate)
+    if ((bool)m_baseRoot)
     {
-      m_baseRootDelegate.Instance.CleanUp();
-      UnityEngine.Object.Destroy(m_baseRootDelegate.gameObject);
+      m_baseRoot.CleanUp();
+      UnityEngine.Object.Destroy(m_baseRoot.gameObject);
     }
   }
 
-  // Moved to MoveableBaseRootComponent Server
-  // private void FirstTimeCreation()
-  // {
-  //   if (m_baseRootDelegate.GetPieceCount() != 0)
-  //   {
-  //     return;
-  //   }
-  //
-  //   GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
-  //   for (float x = -1f; x < 1.01f; x += 2f)
-  //   {
-  //     for (float z = -2f; z < 2.01f; z += 2f)
-  //     {
-  //       Vector3 pt = base.transform.TransformPoint(new Vector3(x, 0.45f, z));
-  //       GameObject obj = UnityEngine.Object.Instantiate(floor, pt, base.transform.rotation);
-  //       ZNetView netview = obj.GetComponent<ZNetView>();
-  //       m_baseRootDelegate.AddNewPiece(netview);
-  //     }
-  //   }
-  // }
+  /**
+   * this creates the Raft 2x3 area
+   */
+  private void FirstTimeCreation()
+  {
+    if (m_baseRoot.GetPieceCount() != 0)
+    {
+      return;
+    }
+
+    GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
+    for (float x = -1f; x < 1.01f; x += 2f)
+    {
+      for (float z = -2f; z < 2.01f; z += 2f)
+      {
+        Vector3 pt = base.transform.TransformPoint(new Vector3(x, 0.6f, z));
+        GameObject obj = Instantiate(floor, pt, base.transform.rotation);
+        ZNetView netview = obj.GetComponent<ZNetView>();
+        m_baseRoot.AddNewPiece(netview);
+      }
+    }
+  }
 
   internal void Accend()
   {
@@ -135,28 +133,24 @@ public class MoveableBaseShipComponent : MonoBehaviour
       SetAnchor(state: false);
     }
 
-    if (!global::ValheimRAFT.Main.Instance.AllowFlight.Value)
+    if (!Main.Instance.AllowFlight.Value)
     {
       m_targetHeight = 0f;
     }
     else
     {
-      if (!m_baseRootDelegate || !m_baseRootDelegate.Instance.GetFloatCollider())
+      if (!m_baseRoot || !m_baseRoot.m_floatcollider)
       {
         return;
       }
 
-      m_targetHeight = Mathf.Clamp(
-        m_baseRootDelegate.Instance.GetFloatCollider().transform.position.y + 1f,
+      m_targetHeight = Mathf.Clamp(m_baseRoot.m_floatcollider.transform.position.y + 1f,
         ZoneSystem.instance.m_waterLevel, 200f);
     }
 
     m_nview.m_zdo.Set("MBTargetHeight", m_targetHeight);
   }
 
-  /**
-   * @todo this may belong in the BaseRootComponent
-   */
   internal void Descent()
   {
     if (m_flags.HasFlag(MBFlags.IsAnchored))
@@ -171,28 +165,25 @@ public class MoveableBaseShipComponent : MonoBehaviour
     }
     else
     {
-      if (!m_baseRootDelegate || !m_baseRootDelegate.Instance.GetFloatCollider())
+      if (!m_baseRoot || !m_baseRoot.m_floatcollider)
       {
         return;
       }
 
-      m_targetHeight = Mathf.Clamp(
-        m_baseRootDelegate.Instance.GetFloatCollider().transform.position.y - 1f,
+      m_targetHeight = Mathf.Clamp(m_baseRoot.m_floatcollider.transform.position.y - 1f,
         ZoneSystem.instance.m_waterLevel, 200f);
-      if (m_baseRootDelegate.Instance.GetFloatCollider().transform.position.y - 1f <=
-          ZoneSystem.instance.m_waterLevel)
+      if (m_baseRoot.m_floatcollider.transform.position.y - 1f <= ZoneSystem.instance.m_waterLevel)
       {
         m_targetHeight = 0f;
       }
     }
 
-    m_nview.GetZDO().Set("MBTargetHeight", m_targetHeight);
+    m_nview.m_zdo.Set("MBTargetHeight", m_targetHeight);
   }
 
   internal void UpdateStats(bool flight)
   {
-    if (!m_rigidbody || !m_baseRootDelegate ||
-        (ZNet.instance.IsServer() && m_baseRootDelegate.Instance.GetStatsOverride()))
+    if (!m_rigidbody || !m_baseRoot || m_baseRoot.m_statsOverride)
     {
       return;
     }
@@ -229,7 +220,6 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   public void RPC_SetAnchor(long sender, bool state)
   {
-    ZLog.Log("RPC_SET_ANCHOR called");
     m_flags = (state ? (m_flags | MBFlags.IsAnchored) : (m_flags & ~MBFlags.IsAnchored));
     m_nview.m_zdo.Set("MBFlags", (int)m_flags);
   }

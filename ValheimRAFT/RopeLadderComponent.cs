@@ -1,287 +1,279 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
-using ValheimRAFT.MoveableBaseRootComponent;
 
-namespace ValheimRAFT
+namespace ValheimRAFT;
+
+public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
 {
-  public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
-  {
-    public GameObject m_stepObject;
-    public LineRenderer m_ropeLine;
-    public BoxCollider m_collider;
-    public Transform m_attachPoint;
-    public MoveableBaseRootComponent.Delegate m_mbRootDelegate;
-    public float m_stepDistance = 0.5f;
-    public float m_ladderHeight = 1f;
-    public float m_ladderMoveSpeed = 2f;
-    public int m_stepOffsetUp = 1;
-    public int m_stepOffsetDown = 0;
-    private List<GameObject> m_steps = new List<GameObject>();
-    private bool m_ghostObject;
-    private LineRenderer m_ghostAttachPoint;
-    private float m_lastHitWaterDistance;
-    private static readonly int INVALID_STEP = int.MaxValue;
-    private static int rayMask = 0;
-    internal float m_currentMoveDir;
-    internal int m_currentLeft;
-    internal int m_currentRight;
-    internal float m_leftMoveTime;
-    internal float m_rightMoveTime;
-    internal int m_targetLeft;
-    internal int m_targetRight;
-    internal bool m_lastMovedLeft;
+	public GameObject m_stepObject;
 
-    public string GetHoverName() => "";
+	public LineRenderer m_ropeLine;
 
-    public string GetHoverText() =>
-      Localization.instance.Localize("[<color=yellow><b>$KEY_Use</b></color>] $mb_rope_ladder_use");
+	public BoxCollider m_collider;
 
-    public bool Interact(Humanoid user, bool hold, bool alt)
-    {
-      this.ClimbLadder(Player.m_localPlayer);
-      return true;
-    }
+	public Transform m_attachPoint;
 
-    public bool UseItem(Humanoid user, ItemDrop.ItemData item) => false;
+	public MoveableBaseRootComponent m_mbroot;
 
-    private void Awake()
-    {
-      this.m_stepObject = ((Component)((Component)this).transform.Find("step")).gameObject;
-      this.m_ropeLine = ((Component)this).GetComponent<LineRenderer>();
-      this.m_collider = ((Component)this).GetComponentInChildren<BoxCollider>();
-      this.m_ghostObject = ZNetView.m_forceDisableInit;
-      this.m_attachPoint = ((Component)this).transform.Find("attachpoint");
-      this.InvokeRepeating("UpdateSteps", 0.1f, this.m_ghostObject ? 0.1f : 5f);
-    }
+	public float m_stepDistance = 0.5f;
 
-    private void ClimbLadder(Player player)
-    {
-      if (!player)
-        return;
-      if (((Character)player).IsAttached())
-      {
-        ((Character)player).AttachStop();
-      }
-      else
-      {
-        this.m_currentLeft = RopeLadderComponent.INVALID_STEP;
-        this.m_currentRight = RopeLadderComponent.INVALID_STEP;
-        this.m_targetLeft = RopeLadderComponent.INVALID_STEP;
-        this.m_targetRight = RopeLadderComponent.INVALID_STEP;
-        this.m_attachPoint.localPosition = new Vector3(this.m_attachPoint.localPosition.x,
-          this.ClampOffset(this.m_attachPoint.parent
-            .InverseTransformPoint(((Component)player).transform.position).y),
-          this.m_attachPoint.localPosition.z);
-        ((Character)player).AttachStart(this.m_attachPoint, (GameObject)null, true, false, false,
-          "Movement", Vector3.zero, (Transform)null);
-      }
-    }
+	public float m_ladderHeight = 1f;
 
-    private void UpdateSteps()
-    {
-      if (!m_stepObject)
-        return;
-      if (RopeLadderComponent.rayMask == 0)
-        RopeLadderComponent.rayMask = LayerMask.GetMask(new string[5]
-        {
-          "Default",
-          "static_solid",
-          "Default_small",
-          "piece",
-          "terrain"
-        });
-      this.m_ladderHeight = 200f;
-      Vector3 point = new Vector3(((Component)this.m_attachPoint).transform.position.x, 0.0f,
-        ((Component)this.m_attachPoint).transform.position.z);
-      Vector3 vector3_1 = new Vector3(this.m_attachPoint.transform.position.x,
-        ((Component)this).transform.position.y,
-        ((Component)this.m_attachPoint).transform.position.z);
-      foreach (RaycastHit raycastHit in Physics.RaycastAll(
-                 new Ray(vector3_1,
-                   -m_attachPoint.transform.up),
-                 this.m_ladderHeight, RopeLadderComponent.rayMask))
-      {
-        if (!raycastHit.collider == m_collider &&
-            raycastHit.collider.GetComponentInParent<Character>() &&
-            raycastHit.distance < m_ladderHeight)
-        {
-          this.m_ladderHeight = raycastHit.distance;
-          point = raycastHit.point;
-        }
-      }
+	public float m_ladderMoveSpeed = 2f;
 
-      if (((Server)m_mbRootDelegate.Instance).GetAnchorHeight(point.y))
-      {
-        point.y = this.m_mbRootDelegate.Instance.GetColliderBottom();
-        Vector3 vector3_2 = point - vector3_1;
-        this.m_ladderHeight = vector3_2.magnitude;
-        this.m_lastHitWaterDistance = 0.0f;
-      }
-      else if ((double)point.y < (double)ZoneSystem.instance.m_waterLevel)
-      {
-        point.y = ZoneSystem.instance.m_waterLevel;
-        Vector3 vector3_3 = point - vector3_1;
-        float num = vector3_3.magnitude + 2f;
-        if ((double)num < (double)this.m_ladderHeight)
-        {
-          if ((double)this.m_lastHitWaterDistance != 0.0)
-            num = this.m_lastHitWaterDistance;
-          this.m_ladderHeight = num;
-          this.m_lastHitWaterDistance = num;
-        }
-      }
+	public int m_stepOffsetUp = 1;
 
-      if (this.m_ghostObject)
-      {
-        if (!m_ghostAttachPoint)
-        {
-          GameObject gameObject = new GameObject();
-          gameObject.transform.SetParent(this.m_attachPoint);
-          this.m_ghostAttachPoint = gameObject.AddComponent<LineRenderer>();
-          this.m_ghostAttachPoint.widthMultiplier = 0.1f;
-        }
+	public int m_stepOffsetDown = 0;
 
-        this.m_ghostAttachPoint.SetPosition(0, ((Component)this.m_attachPoint).transform.position);
-        this.m_ghostAttachPoint.SetPosition(1,
-          (((Component)this.m_attachPoint).transform.position +
-           (
-             -(((Component)this.m_attachPoint).transform.up) *
-             this.m_ladderHeight)));
-      }
+	private List<GameObject> m_steps = new List<GameObject>();
 
-      int num1 = Mathf.RoundToInt(this.m_ladderHeight / this.m_stepDistance);
-      if (this.m_steps.Count == num1)
-        return;
-      ((Component)this).GetComponent<WearNTear>().ResetHighlight();
-      while (this.m_steps.Count > num1)
-      {
-        Destroy(m_steps[this.m_steps.Count - 1]);
-        this.m_steps.RemoveAt(this.m_steps.Count - 1);
-      }
+	private bool m_ghostObject;
 
-      while (this.m_steps.Count < num1)
-      {
-        GameObject gameObject =
-          Instantiate<GameObject>(this.m_stepObject, ((Component)this).transform);
-        this.m_steps.Add(gameObject);
-        gameObject.transform.localPosition =
-          new Vector3(0.0f, -this.m_stepDistance * (float)this.m_steps.Count, 0.0f);
-      }
+	private LineRenderer m_ghostAttachPoint;
 
-      this.m_ropeLine.useWorldSpace = false;
-      this.m_ropeLine.SetPosition(0, new Vector3(0.4f, 0.0f, 0.0f));
-      this.m_ropeLine.SetPosition(1,
-        new Vector3(0.4f, -this.m_stepDistance * (float)this.m_steps.Count, 0.0f));
-      this.m_ropeLine.SetPosition(2,
-        new Vector3(-0.4f, -this.m_stepDistance * (float)this.m_steps.Count, 0.0f));
-      this.m_ropeLine.SetPosition(3, new Vector3(-0.4f, 0.0f, 0.0f));
-      if (this.m_ghostObject)
-        return;
-      this.m_collider.size = new Vector3(1f, this.m_ladderHeight, 0.1f);
-      ((Component)this.m_collider).transform.localPosition =
-        new Vector3(0.0f, (float)(-(double)this.m_ladderHeight / 2.0), 0.0f);
-    }
+	private float m_lastHitWaterDistance;
 
-    public void UpdateIK(Animator animator)
-    {
-      int num1 = Mathf.RoundToInt(this.m_attachPoint.localPosition.y / this.m_stepDistance);
-      if (this.m_currentRight == RopeLadderComponent.INVALID_STEP)
-        this.m_currentRight = num1;
-      if (this.m_currentLeft == RopeLadderComponent.INVALID_STEP)
-        this.m_currentLeft = num1;
-      if (this.m_targetLeft == RopeLadderComponent.INVALID_STEP &&
-          this.m_targetRight == RopeLadderComponent.INVALID_STEP &&
-          (double)this.m_currentMoveDir != 0.0)
-      {
-        if ((double)this.m_currentMoveDir > 0.0 && this.m_currentLeft < this.m_currentRight ||
-            (double)this.m_currentMoveDir < 0.0 && this.m_currentLeft > this.m_currentRight ||
-            !this.m_lastMovedLeft)
-        {
-          this.m_targetLeft = num1 + ((double)this.m_currentMoveDir > 0.0
-            ? this.m_stepOffsetUp
-            : this.m_stepOffsetDown);
-          this.m_leftMoveTime = Time.time;
-          this.m_lastMovedLeft = true;
-        }
-        else
-        {
-          this.m_targetRight = num1 + ((double)this.m_currentMoveDir > 0.0
-            ? this.m_stepOffsetUp
-            : this.m_stepOffsetDown);
-          this.m_rightMoveTime = Time.time;
-          this.m_lastMovedLeft = false;
-        }
-      }
+	private static readonly int INVALID_STEP = int.MaxValue;
 
-      Vector3 vector3_1 = ((Component)this).transform.TransformPoint(new Vector3(-0.3f,
-        (float)(this.m_currentLeft + 2) * this.m_stepDistance, -0.1f));
-      Vector3 vector3_2 = ((Component)this).transform.TransformPoint(new Vector3(-0.2f,
-        (float)this.m_currentLeft * this.m_stepDistance, -0.3f));
-      Vector3 vector3_3 = ((Component)this).transform.TransformPoint(new Vector3(0.3f,
-        (float)(this.m_currentRight + 2) * this.m_stepDistance, -0.1f));
-      Vector3 vector3_4 = ((Component)this).transform.TransformPoint(new Vector3(0.2f,
-        (float)this.m_currentRight * this.m_stepDistance, -0.3f));
-      if (this.m_targetLeft != RopeLadderComponent.INVALID_STEP)
-      {
-        Vector3 vector3_5 = ((Component)this).transform.TransformPoint(new Vector3(-0.3f,
-          (float)(this.m_targetLeft + 3) * this.m_stepDistance, 0.0f));
-        Vector3 vector3_6 = ((Component)this).transform.TransformPoint(new Vector3(-0.2f,
-          (float)this.m_targetLeft * this.m_stepDistance, 0.0f));
-        float num2 = Mathf.Clamp01((float)(((double)Time.time - (double)this.m_leftMoveTime) *
-                                           ((double)this.m_ladderMoveSpeed /
-                                            (double)this.m_stepDistance)));
-        vector3_1 = Vector3.Lerp(vector3_1, vector3_5, num2);
-        vector3_2 = Vector3.Lerp(vector3_2, vector3_6, num2);
-        if (Mathf.Approximately(num2, 1f))
-        {
-          this.m_currentLeft = this.m_targetLeft;
-          this.m_targetLeft = RopeLadderComponent.INVALID_STEP;
-        }
-      }
-      else if (this.m_targetRight != RopeLadderComponent.INVALID_STEP)
-      {
-        Vector3 vector3_7 = ((Component)this).transform.TransformPoint(new Vector3(0.3f,
-          (float)(this.m_targetRight + 3) * this.m_stepDistance, 0.0f));
-        Vector3 vector3_8 = ((Component)this).transform.TransformPoint(new Vector3(0.2f,
-          (float)this.m_targetRight * this.m_stepDistance, 0.0f));
-        float num3 = Mathf.Clamp01((float)(((double)Time.time - (double)this.m_rightMoveTime) *
-                                           ((double)this.m_ladderMoveSpeed /
-                                            (double)this.m_stepDistance)));
-        vector3_3 = Vector3.Lerp(vector3_3, vector3_7, num3);
-        vector3_4 = Vector3.Lerp(vector3_4, vector3_8, num3);
-        if (Mathf.Approximately(num3, 1f))
-        {
-          this.m_currentRight = this.m_targetRight;
-          this.m_targetRight = RopeLadderComponent.INVALID_STEP;
-        }
-      }
+	private static int rayMask = 0;
 
-      animator.SetIKPosition((AvatarIKGoal)2, vector3_1);
-      animator.SetIKPositionWeight((AvatarIKGoal)2, 1f);
-      animator.SetIKPosition((AvatarIKGoal)0, vector3_2);
-      animator.SetIKPositionWeight((AvatarIKGoal)0, 1f);
-      animator.SetIKPosition((AvatarIKGoal)3, vector3_3);
-      animator.SetIKPositionWeight((AvatarIKGoal)3, 1f);
-      animator.SetIKPosition((AvatarIKGoal)1, vector3_4);
-      animator.SetIKPositionWeight((AvatarIKGoal)1, 1f);
-    }
+	internal float m_currentMoveDir;
 
-    public void MoveOnLadder(Player player, float movedir)
-    {
-      float y = this.m_attachPoint.localPosition.y;
-      if ((double)movedir > 0.0)
-        y += this.m_ladderMoveSpeed * Time.deltaTime;
-      else if ((double)movedir < 0.0)
-        y -= this.m_ladderMoveSpeed * Time.deltaTime;
-      this.m_attachPoint.localPosition = new Vector3(this.m_attachPoint.localPosition.x,
-        this.ClampOffset(y), this.m_attachPoint.localPosition.z);
-      this.m_currentMoveDir = movedir;
-    }
+	internal int m_currentLeft;
 
-    private float ClampOffset(float offset) => Mathf.Clamp(offset, -this.m_collider.size.y, 0.5f);
+	internal int m_currentRight;
 
-    public void StepOffLadder(Player player) => player.m_attachPoint = (Transform)null;
-  }
+	internal float m_leftMoveTime;
+
+	internal float m_rightMoveTime;
+
+	internal int m_targetLeft;
+
+	internal int m_targetRight;
+
+	internal bool m_lastMovedLeft;
+
+	public string GetHoverName()
+	{
+		return "";
+	}
+
+	public string GetHoverText()
+	{
+		return Localization.instance.Localize("[<color=yellow><b>$KEY_Use</b></color>] $mb_rope_ladder_use");
+	}
+
+	public bool Interact(Humanoid user, bool hold, bool alt)
+	{
+		ClimbLadder(Player.m_localPlayer);
+		return true;
+	}
+
+	public bool UseItem(Humanoid user, ItemDrop.ItemData item)
+	{
+		return false;
+	}
+
+	private void Awake()
+	{
+		m_stepObject = base.transform.Find("step").gameObject;
+		m_ropeLine = GetComponent<LineRenderer>();
+		m_collider = GetComponentInChildren<BoxCollider>();
+		m_ghostObject = ZNetView.m_forceDisableInit;
+		m_attachPoint = base.transform.Find("attachpoint");
+		InvokeRepeating("UpdateSteps", 0.1f, m_ghostObject ? 0.1f : 5f);
+	}
+
+	private void ClimbLadder(Player player)
+	{
+		if ((bool)player)
+		{
+			if (player.IsAttached())
+			{
+				player.AttachStop();
+				return;
+			}
+			m_currentLeft = INVALID_STEP;
+			m_currentRight = INVALID_STEP;
+			m_targetLeft = INVALID_STEP;
+			m_targetRight = INVALID_STEP;
+			m_attachPoint.localPosition = new Vector3(m_attachPoint.localPosition.x, ClampOffset(m_attachPoint.parent.InverseTransformPoint(player.transform.position).y), m_attachPoint.localPosition.z);
+			player.AttachStart(m_attachPoint, null, hideWeapons: true, isBed: false, onShip: false, "Movement", Vector3.zero);
+		}
+	}
+
+	private void UpdateSteps()
+	{
+		if (!m_stepObject)
+		{
+			return;
+		}
+		if (rayMask == 0)
+		{
+			rayMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain");
+		}
+		m_ladderHeight = 200f;
+		Vector3 hitpoint = new Vector3(m_attachPoint.transform.position.x, 0f, m_attachPoint.transform.position.z);
+		Vector3 raystart = new Vector3(m_attachPoint.transform.position.x, base.transform.position.y, m_attachPoint.transform.position.z);
+		RaycastHit[] hits = Physics.RaycastAll(new Ray(raystart, -m_attachPoint.transform.up), m_ladderHeight, rayMask);
+		for (int i = 0; i < hits.Length; i++)
+		{
+			RaycastHit hit = hits[i];
+			if (!(hit.collider == m_collider) && !hit.collider.GetComponentInParent<Character>() && hit.distance < m_ladderHeight)
+			{
+				m_ladderHeight = hit.distance;
+				hitpoint = hit.point;
+			}
+		}
+		if ((bool)m_mbroot && (bool)m_mbroot.m_moveableBaseShip && m_mbroot.m_moveableBaseShip.m_targetHeight > 0f && !m_mbroot.m_moveableBaseShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored) && hitpoint.y < m_mbroot.GetColliderBottom())
+		{
+			hitpoint.y = m_mbroot.GetColliderBottom();
+			m_ladderHeight = (hitpoint - raystart).magnitude;
+			m_lastHitWaterDistance = 0f;
+		}
+		else if (hitpoint.y < ZoneSystem.instance.m_waterLevel)
+		{
+			hitpoint.y = ZoneSystem.instance.m_waterLevel;
+			float waterdist = (hitpoint - raystart).magnitude + 2f;
+			if (waterdist < m_ladderHeight)
+			{
+				if (m_lastHitWaterDistance != 0f)
+				{
+					waterdist = m_lastHitWaterDistance;
+				}
+				m_ladderHeight = waterdist;
+				m_lastHitWaterDistance = waterdist;
+			}
+		}
+		if (m_ghostObject)
+		{
+			if (!m_ghostAttachPoint)
+			{
+				GameObject go2 = new GameObject();
+				go2.transform.SetParent(m_attachPoint);
+				m_ghostAttachPoint = go2.AddComponent<LineRenderer>();
+				m_ghostAttachPoint.widthMultiplier = 0.1f;
+			}
+			m_ghostAttachPoint.SetPosition(0, m_attachPoint.transform.position);
+			m_ghostAttachPoint.SetPosition(1, m_attachPoint.transform.position + -m_attachPoint.transform.up * m_ladderHeight);
+		}
+		int steps = Mathf.RoundToInt(m_ladderHeight / m_stepDistance);
+		if (m_steps.Count != steps)
+		{
+			WearNTear wnt = GetComponent<WearNTear>();
+			wnt.ResetHighlight();
+			while (m_steps.Count > steps)
+			{
+				Object.Destroy(m_steps[m_steps.Count - 1]);
+				m_steps.RemoveAt(m_steps.Count - 1);
+			}
+			while (m_steps.Count < steps)
+			{
+				GameObject go = Object.Instantiate(m_stepObject, base.transform);
+				m_steps.Add(go);
+				go.transform.localPosition = new Vector3(0f, (0f - m_stepDistance) * (float)m_steps.Count, 0f);
+			}
+			m_ropeLine.useWorldSpace = false;
+			m_ropeLine.SetPosition(0, new Vector3(0.4f, 0f, 0f));
+			m_ropeLine.SetPosition(1, new Vector3(0.4f, (0f - m_stepDistance) * (float)m_steps.Count, 0f));
+			m_ropeLine.SetPosition(2, new Vector3(-0.4f, (0f - m_stepDistance) * (float)m_steps.Count, 0f));
+			m_ropeLine.SetPosition(3, new Vector3(-0.4f, 0f, 0f));
+			if (!m_ghostObject)
+			{
+				m_collider.size = new Vector3(1f, m_ladderHeight, 0.1f);
+				m_collider.transform.localPosition = new Vector3(0f, (0f - m_ladderHeight) / 2f, 0f);
+			}
+		}
+	}
+
+	public void UpdateIK(Animator animator)
+	{
+		int center = Mathf.RoundToInt(m_attachPoint.localPosition.y / m_stepDistance);
+		if (m_currentRight == INVALID_STEP)
+		{
+			m_currentRight = center;
+		}
+		if (m_currentLeft == INVALID_STEP)
+		{
+			m_currentLeft = center;
+		}
+		if (m_targetLeft == INVALID_STEP && m_targetRight == INVALID_STEP && m_currentMoveDir != 0f)
+		{
+			if ((m_currentMoveDir > 0f && m_currentLeft < m_currentRight) || (m_currentMoveDir < 0f && m_currentLeft > m_currentRight) || !m_lastMovedLeft)
+			{
+				m_targetLeft = center + ((m_currentMoveDir > 0f) ? m_stepOffsetUp : m_stepOffsetDown);
+				m_leftMoveTime = Time.time;
+				m_lastMovedLeft = true;
+			}
+			else
+			{
+				m_targetRight = center + ((m_currentMoveDir > 0f) ? m_stepOffsetUp : m_stepOffsetDown);
+				m_rightMoveTime = Time.time;
+				m_lastMovedLeft = false;
+			}
+		}
+		Vector3 leftHand = base.transform.TransformPoint(new Vector3(-0.3f, (float)(m_currentLeft + 2) * m_stepDistance, -0.1f));
+		Vector3 leftFoot = base.transform.TransformPoint(new Vector3(-0.2f, (float)m_currentLeft * m_stepDistance, -0.3f));
+		Vector3 rightHand = base.transform.TransformPoint(new Vector3(0.3f, (float)(m_currentRight + 2) * m_stepDistance, -0.1f));
+		Vector3 rightFoot = base.transform.TransformPoint(new Vector3(0.2f, (float)m_currentRight * m_stepDistance, -0.3f));
+		if (m_targetLeft != INVALID_STEP)
+		{
+			Vector3 targetLeftHand = base.transform.TransformPoint(new Vector3(-0.3f, (float)(m_targetLeft + 3) * m_stepDistance, 0f));
+			Vector3 targetLeftFoot = base.transform.TransformPoint(new Vector3(-0.2f, (float)m_targetLeft * m_stepDistance, 0f));
+			float leftAlpha = Mathf.Clamp01((Time.time - m_leftMoveTime) * (m_ladderMoveSpeed / m_stepDistance));
+			leftHand = Vector3.Lerp(leftHand, targetLeftHand, leftAlpha);
+			leftFoot = Vector3.Lerp(leftFoot, targetLeftFoot, leftAlpha);
+			if (Mathf.Approximately(leftAlpha, 1f))
+			{
+				m_currentLeft = m_targetLeft;
+				m_targetLeft = INVALID_STEP;
+			}
+		}
+		else if (m_targetRight != INVALID_STEP)
+		{
+			Vector3 targetRightHand = base.transform.TransformPoint(new Vector3(0.3f, (float)(m_targetRight + 3) * m_stepDistance, 0f));
+			Vector3 targetRightFoot = base.transform.TransformPoint(new Vector3(0.2f, (float)m_targetRight * m_stepDistance, 0f));
+			float rightAlpha = Mathf.Clamp01((Time.time - m_rightMoveTime) * (m_ladderMoveSpeed / m_stepDistance));
+			rightHand = Vector3.Lerp(rightHand, targetRightHand, rightAlpha);
+			rightFoot = Vector3.Lerp(rightFoot, targetRightFoot, rightAlpha);
+			if (Mathf.Approximately(rightAlpha, 1f))
+			{
+				m_currentRight = m_targetRight;
+				m_targetRight = INVALID_STEP;
+			}
+		}
+		animator.SetIKPosition(AvatarIKGoal.LeftHand, leftHand);
+		animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, 1f);
+		animator.SetIKPosition(AvatarIKGoal.LeftFoot, leftFoot);
+		animator.SetIKPositionWeight(AvatarIKGoal.LeftFoot, 1f);
+		animator.SetIKPosition(AvatarIKGoal.RightHand, rightHand);
+		animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 1f);
+		animator.SetIKPosition(AvatarIKGoal.RightFoot, rightFoot);
+		animator.SetIKPositionWeight(AvatarIKGoal.RightFoot, 1f);
+	}
+
+	public void MoveOnLadder(Player player, float movedir)
+	{
+		float offset = m_attachPoint.localPosition.y;
+		if (movedir > 0f)
+		{
+			offset += m_ladderMoveSpeed * Time.deltaTime;
+		}
+		else if (movedir < 0f)
+		{
+			offset -= m_ladderMoveSpeed * Time.deltaTime;
+		}
+		m_attachPoint.localPosition = new Vector3(m_attachPoint.localPosition.x, ClampOffset(offset), m_attachPoint.localPosition.z);
+		m_currentMoveDir = movedir;
+	}
+
+	private float ClampOffset(float offset)
+	{
+		return Mathf.Clamp(offset, 0f - m_collider.size.y, 0.5f);
+	}
+
+	public void StepOffLadder(Player player)
+	{
+		player.m_attachPoint = null;
+	}
 }

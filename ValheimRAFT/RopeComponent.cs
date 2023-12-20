@@ -1,24 +1,37 @@
-﻿using UnityEngine;
+using UnityEngine;
 
-namespace ValheimRAFT
+namespace ValheimRAFT;
+
+public class RopeComponent : MonoBehaviour
 {
-  public class RopeComponent : MonoBehaviour
-  {
-    public SpringJoint m_spring = (SpringJoint)null;
+	public SpringJoint m_spring = null;
 
-    public string GetHoverName() => "";
+	public string GetHoverName()
+	{
+		return "";
+	}
 
-    public string GetHoverText() => "$mb_rope_use";
+	public string GetHoverText()
+	{
+		return "$mb_rope_use";
+	}
 
-    public bool Interact(Humanoid user, bool hold, bool alt) => true;
+	public bool Interact(Humanoid user, bool hold, bool alt)
+	{
+		return true;
+	}
 
-    public bool UseItem(Humanoid user, ItemDrop.ItemData item) => false;
+	public bool UseItem(Humanoid user, ItemDrop.ItemData item)
+	{
+		return false;
+	}
 
-    internal SpringJoint GetSpring()
-    {
-      if (!m_spring)
-        m_spring = ((Component)this).gameObject.AddComponent<SpringJoint>();
-      return this.m_spring;
-    }
-  }
+	internal SpringJoint GetSpring()
+	{
+		if (!m_spring)
+		{
+			m_spring = base.gameObject.AddComponent<SpringJoint>();
+		}
+		return m_spring;
+	}
 }
