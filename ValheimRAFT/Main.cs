@@ -19,14 +19,14 @@ namespace ValheimRAFT
   [BepInPlugin(BepInGuid, ModName, Version)]
   [BepInDependency(Jotunn.Main.ModGuid)]
   // [BepInProcess("valheim.exe")]
-  [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
+  [NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
   public class Main : BaseUnityPlugin
   {
     /*
      * @note keeping this as Sarcen for now since there are low divergences from the original codebase and patches already mapped to sarcen's mod
      */
     public const string Author = "Sarcen";
-    private const string Version = "1.6.0";
+    private const string Version = "1.6.1";
     internal const string ModName = "ValheimRAFT";
     public const string BepInGuid = $"BepIn.{Author}.{ModName}";
     private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";

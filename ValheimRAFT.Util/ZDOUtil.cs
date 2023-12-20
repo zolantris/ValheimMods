@@ -6,7 +6,7 @@ namespace ValheimRAFT.Util
   public class ZDOPersistantID
   {
     public static readonly int PersistantIDHash =
-      StringExtensionMethods.GetStableHashCode("PersistantID");
+      "PersistantID".GetStableHashCode();
 
     public static ZDOPersistantID Instance = new ZDOPersistantID();
     private Dictionary<int, ZDO> m_zdoGuidLookup = new Dictionary<int, ZDO>();
