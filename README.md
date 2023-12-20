@@ -75,9 +75,15 @@ general format is
 2. Changes need to be feature based IE keep the changes minimal and single focused. Larger changes are welcome, but they
    have higher chance of breaking other things and are harder to maintain.
 
-## Meshes
+## Config
 
-In Mod versions lower than `1.5.0` there were problems with the folder being renamed. In `>=1.5.0` there is a
+### InitialRaftFloorHeight
+
+Lets you set the height of the floors so they do not clip. Recommended to stay between 0.4 and 0.6.
+
+### Meshes
+
+In Mod versions at or lower than `1.4.9` there were problems with the folder being renamed. In `>=1.5.0` there is a
 configuration
 manager option to change the path to resolve the ValheimRAFT folder.
 
@@ -87,7 +93,17 @@ or `zolantris-ValheimRAFT`.
 Otherwise make sure to edit the `pluginFolderName` key and add the folder name for ValheimRaft located
 within the BepInEx\Plugins path. Afterwards relaunch the game. There should be no mesh issues.
 
-### Getting Started
+## Mod Support
+
+In 1.6.0+ this mod supports [PlanBuild](https://www.nexusmods.com/valheim/mods/1125) a popular blueprinting mod. Support
+is added via a patch that makes BuildPlan use the Raft localPosition instead of worldposition which could be
+moving/swaying and can easily break the save.
+
+- Hopefully this logic can be incorporated within PlanBuild directly. There is a config toggle to turn this patch off.
+- Alternative approaches for this could be doing a detection if the game object is attached to a parent object and
+  calculating coordinates of the items **after** all object positions have been fetched.
+
+## Getting Started
 
 1. Clone / download this project
 2. IDE: Download Rider or Visual studio. Use Rider if you do not want to waste tons of time resizing things. Visual

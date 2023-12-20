@@ -43,6 +43,7 @@ namespace ValheimRAFT
 
     public ConfigEntry<string> PluginFolderName { get; set; }
     public ConfigEntry<float> InitialRaftFloorHeight { get; set; }
+    public ConfigEntry<bool> PatchPlanBuildPositionIssues { get; set; }
 
     /**
      * These folder names are matched for the CustomTexturesGroup
@@ -55,6 +56,17 @@ namespace ValheimRAFT
     public void Awake()
     {
       Instance = this;
+      PatchPlanBuildPositionIssues = Config.Bind<bool>("Patches",
+        "fixPlanBuildPositionIssues", true, new ConfigDescription(
+          "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT.",
+          (AcceptableValueBase)null, new object[1]
+          {
+            (object)new ConfigurationManagerAttributes()
+            {
+              IsAdminOnly = false
+            }
+          }));
+
       InitialRaftFloorHeight = Config.Bind<float>("Config",
         "initialRaftFloorHeight", 0.5f, new ConfigDescription(
           "Allows users to set the raft floor spawn height. 0.45 was the original height in 1.4.9 but it looked a bit too low. Now people can customize it",

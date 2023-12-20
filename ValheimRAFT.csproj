@@ -61,6 +61,7 @@
     </PropertyGroup>
     <ItemGroup>
         <Publicize Include="assembly_valheim"/>
+        <Publicize Include="PlanBuild"/>
         <Reference Include="0Harmony">
             <HintPath>libs\0Harmony.dll</HintPath>
         </Reference>
@@ -102,11 +103,15 @@
         <Reference Include="UnityEngine.UI">
             <HintPath>libs\UnityEngine.UI.dll</HintPath>
         </Reference>
+        <!--  Mods -->
+        <Reference Include="PlanBuild">
+            <HintPath>libs\PlanBuild.dll</HintPath>
+        </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="ValheimRAFT.Patches\PlanBuildPatch.cs"/>
         <Compile Include="ValheimRAFT.Util\BinaryIOUtil.cs"/>
         <Compile Include="ValheimRAFT.Util\ListUtil.cs"/>
-        <Compile Include="ValheimRAFT.Util\ValheimRAFTServer.cs"/>
         <Compile Include="ValheimRAFT.Util\ZDOUtil.cs"/>
         <Compile Include="ValheimRAFT.UI\EditRampComponent.cs"/>
         <Compile Include="ValheimRAFT.UI\EditSailComponentPanel.cs"/>
@@ -161,6 +166,7 @@
     </ItemGroup>
     <ItemGroup>
         <Content Include=".gitignore"/>
+        <Content Include="libs\PlanBuild.dll"/>
         <Content Include="README.md"/>
         <Content Include="Thunderstore\manifest.json"/>
     </ItemGroup>
