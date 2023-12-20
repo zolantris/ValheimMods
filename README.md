@@ -95,11 +95,13 @@ within the BepInEx\Plugins path. Afterwards relaunch the game. There should be n
 
 ## Mod Support
 
-In 1.6.0+ this mod supports [PlanBuild](https://www.nexusmods.com/valheim/mods/1125) a popular blueprinting mod. Support
-is added via a patch that makes BuildPlan use the Raft localPosition instead of worldposition which could be
-moving/swaying and can easily break the save.
+In 1.6.0+ this mod supports [PlanBuild](https://www.nexusmods.com/valheim/mods/1125) a popular blueprinting mod.
 
-- Hopefully this logic can be incorporated within PlanBuild directly. There is a config toggle to turn this patch off.
+Support is added via a patch that makes PlanBuild use the Raft `localPosition` instead of world position which each item
+could be moving/swaying and updating as the PlanBuild iterated through the items. This easily breaks the Plan save.
+
+- Hopefully this logic can be incorporated within PlanBuild directly. There is a config toggle to turn this patch off to
+  future proof things.
 - Alternative approaches for this could be doing a detection if the game object is attached to a parent object and
   calculating coordinates of the items **after** all object positions have been fetched.
 
