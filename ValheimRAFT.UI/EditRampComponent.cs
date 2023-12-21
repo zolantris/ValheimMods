@@ -31,7 +31,8 @@ public class EditRampComponent
   private void InitPanel()
   {
     Transform parent = GUIManager.CustomGUIFront.transform;
-    m_editPanel = Object.Instantiate(Main.m_assetBundle.LoadAsset<GameObject>("edit_ramp_panel"),
+    m_editPanel = Object.Instantiate(
+      ValheimRaftPlugin.m_assetBundle.LoadAsset<GameObject>("edit_ramp_panel"),
       parent, worldPositionStays: false);
     PanelUtil.ApplyPanelStyle(m_editPanel);
     m_segmentsInput = m_editPanel.transform.Find("SegmentsInput").GetComponent<InputField>();

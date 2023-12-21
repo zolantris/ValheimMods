@@ -5,18 +5,36 @@ using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 using PlanBuild.Blueprints;
+using PlanBuild.Plans;
 
 namespace ValheimRAFT.Patches;
 
 [HarmonyPatch]
-public class PlanBuild_Patch
+public class PlanBuildPatch
 {
+  // [HarmonyPatch(typeof(PlanPiece), "CanCreatePlan")]
+  // [HarmonyPrefix]
+  // public static bool CanCreatePlan(Piece piece)
+  // {
+  //   /* Previously the logic had
+  //    * piece.GetComponent<Ship>() == null
+  //    */
+  //   if (piece.GetComponent<Plant>() == null && piece.GetComponent<TerrainOp>() == null &&
+  //       piece.GetComponent<TerrainModifier>() == null && piece.GetComponent<PlanPiece>() == null)
+  //   {
+  //     return !piece.name.Equals("piece_plan_totem");
+  //   }
+  //
+  //   return false;
+  // }
+
+
   [HarmonyPatch(typeof(Blueprint), "Capture")]
   [HarmonyPrefix]
   public static bool Capture(Blueprint __instance, ref bool __result, Selection selection,
     bool captureCurrentSnapPoints = false, bool keepMarkers = false)
   {
-    if (!Main.Instance.PatchPlanBuildPositionIssues.Value)
+    if (!ValheimRaftPlugin.Instance.PatchPlanBuildPositionIssues.Value)
     {
       return false;
     }

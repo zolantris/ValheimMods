@@ -1,5 +1,7 @@
 # ValheimRAFT
 
+<img src="./Thunderstore/icon.png" alt="ValheimRAFT Community Made Boat Hjalmere">
+
 A [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork that works with latest Valheim. The original mod
 owner [Sarcenzzz](https://www.nexusmods.com/valheim/users/3061574) abandoned the
 mod, this fork aims to keep the mod functional with future goals of expanding functionality.
@@ -8,39 +10,32 @@ mod, this fork aims to keep the mod functional with future goals of expanding fu
 
 [![ValheimRAFT Build](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml/badge.svg)](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml)
 
-# Single Player Support
+## Client/Server/SinglePlayer Support
 
-Everything works well.
-
-Small issues
-
-- There may be some object destruction issues related to creating/spawning boats on top of each
-  other, (don't do it)
-
-## Server Support
-
-Important! **Please UNINSTALL ValheimRAFT from your server**. At this time the **server** and the **client** do not work
-well
-together.
+Server support may or may not work. In **>=1.6.2** ships and loading were mainly fixed by adding some threading
+optimization. There is also a config called `ServerRaftUpdateZoneInterval` this allows users to tweak the update
+frequency of checks.
 
 The following has been tested:
 
+- SinglePlayer
+    - boats will load
+    - FPS issues with giant ships
 - Client only with a server IE (connecting to server without mod),
     - creating a boat and logging on and off the server does not destroy the boat.
     - sailing and teleporting does not destroy the boat.
-    - The client will still be able to create items and the server will keep those raft items
+    - The client will still be able to create items and the server will keep those raft items. (unless you have mods
+      that garbage collect unused ZDOs)
     - restarting/stopping/starting server keeps the boat.
     - Removing the ValheimRAFT mod from the client will make the server glitch out the boat items.
     - joining back (after adding the mod again) will render the items correctly.
-- Server & Client (BROKEN)
-    - If you use both, the server will garbage collect the client's IDs because they are considered invalid.
-    - If you use both the server will break the client mod items due to there being a breakage.
-
-The server issues are not being tabled, but they won't be fixed for a bit.
-
-- There needs to be a bunch of logging added to areas that do the object destruction and validation.
-- Once that's done we can look at the broken areas and compare them with the client IDs to see why things are not
-  working.
+    - Loading a ship into view will possibly
+- Server & Client
+    - Loading a 4500 build plan ship. Traveling around a couple sectors. The ship remained as built.
+    - Moving away from the ship until it unloaded. Moving back immediately and attempting to land on the ship while it
+      renders. It works and still loads. Looks a bit funny as it spawns.
+        - **Warning** to anyone that builds property next to a large ship, when it renders it's possible a wave could
+          briefly flip it and the top part of the ship rolls and hits property.
 
 ## Features
 
@@ -56,6 +51,30 @@ The server issues are not being tabled, but they won't be fixed for a bit.
 Join us on discord to get the latest information, upcoming features, and discover other mods.
 
 [Discord Link](https://discord.gg/jeUcpCvB3z)
+
+## Config
+
+### InitialRaftFloorHeight
+
+| ConfigName                 | Description                                                                                                                  |
+|----------------------------|------------------------------------------------------------------------------------------------------------------------------|
+| InitialRaftFloorHeight     | Lets you set the height of the floors so they do not clip. Recommended to stay between 0.4 and 0.6.                          |
+| UpdatePieceSectors         | Set interval in seconds for the server update to trigger and re-render pieces if in view                                     |
+| pluginFolderName           | Allows you to specify the plugin folder if it's been renamed. See the meshes section below for more details                  |
+| raftHealth                 | Set the raft health for wear and tear. I set it to `500` default, but it was originaly `10000` which is not balanced         |
+| fixPlanBuildPositionIssues | Turn on/off the patches for PlanBuild, only needed if the user has PlanBuild and it adds support for ValheimRaft coordinates |
+
+### Meshes
+
+In Mod versions at or lower than `1.4.9` there were problems with the folder being renamed. In `>=1.5.0` there is a
+configuration
+manager option to change the path to resolve the ValheimRAFT folder.
+
+If you want meshes (IE sails and ropes ) to render automatically, your mod must either be named `ValheimRAFT`
+or `zolantris-ValheimRAFT`.
+
+Otherwise make sure to edit the `pluginFolderName` key and add the folder name for ValheimRaft located
+within the BepInEx\Plugins path. Afterwards relaunch the game. There should be no mesh issues.
 
 ## Issues
 
@@ -74,24 +93,6 @@ general format is
 1. Please fork the codebase and make a pull request via your fork branch.
 2. Changes need to be feature based IE keep the changes minimal and single focused. Larger changes are welcome, but they
    have higher chance of breaking other things and are harder to maintain.
-
-## Config
-
-### InitialRaftFloorHeight
-
-Lets you set the height of the floors so they do not clip. Recommended to stay between 0.4 and 0.6.
-
-### Meshes
-
-In Mod versions at or lower than `1.4.9` there were problems with the folder being renamed. In `>=1.5.0` there is a
-configuration
-manager option to change the path to resolve the ValheimRAFT folder.
-
-If you want meshes (IE sails and ropes ) to render automatically, your mod must either be named `ValheimRAFT`
-or `zolantris-ValheimRAFT`.
-
-Otherwise make sure to edit the `pluginFolderName` key and add the folder name for ValheimRaft located
-within the BepInEx\Plugins path. Afterwards relaunch the game. There should be no mesh issues.
 
 ## Mod Support
 

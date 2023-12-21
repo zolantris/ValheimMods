@@ -77,8 +77,9 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.m_blockingcollider = ship.transform.Find("ship/colliders/Cube")
       .GetComponentInChildren<BoxCollider>();
     m_baseRoot.m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    m_baseRoot.m_blockingcollider.gameObject.layer = Main.CustomRaftLayer;
-    m_baseRoot.m_blockingcollider.transform.parent.gameObject.layer = Main.CustomRaftLayer;
+    m_baseRoot.m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    m_baseRoot.m_blockingcollider.transform.parent.gameObject.layer =
+      ValheimRaftPlugin.CustomRaftLayer;
     ZLog.Log($"Activating MBRoot: {m_baseRoot.m_id}");
     m_baseRoot.ActivatePendingPiecesCoroutine();
     FirstTimeCreation();
@@ -133,7 +134,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
       SetAnchor(state: false);
     }
 
-    if (!Main.Instance.AllowFlight.Value)
+    if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
     {
       m_targetHeight = 0f;
     }
@@ -159,7 +160,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     }
 
     float oldTargetHeight = m_targetHeight;
-    if (!Main.Instance.AllowFlight.Value)
+    if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
     {
       m_targetHeight = 0f;
     }
