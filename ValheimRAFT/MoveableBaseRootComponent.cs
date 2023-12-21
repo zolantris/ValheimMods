@@ -26,6 +26,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public static readonly int MBRotationVecHash = "MBRotationVec".GetStableHashCode();
 
+  internal bool canUpdate = true;
+
   internal static Dictionary<int, List<ZNetView>> m_pendingPieces =
     new Dictionary<int, List<ZNetView>>();
 
@@ -163,43 +165,92 @@ public class MoveableBaseRootComponent : MonoBehaviour
     Sync();
     if (!ZNet.instance.IsServer())
     {
-      UpdateAllPieces();
+      if (canUpdate)
+      {
+        UpdateAllPieces();
+      }
     }
   }
 
-  public void UpdateAllPieces()
+  public IEnumerator UpdatePiecesWorker(List<ZNetView> pieces)
   {
-    Vector2i sector = ZoneSystem.instance.GetZone(base.transform.position);
-    if (!(sector != m_sector))
+    for (int i = 0; i < pieces.Count; i++)
     {
-      return;
-    }
-
-    m_sector = sector;
-    for (int i = 0; i < m_pieces.Count; i++)
-    {
-      ZNetView netview = m_pieces[i];
-      ZLog.Log($"UpdatePieces: netview {netview} {m_pieces[i]}");
+      ZNetView netview = pieces[i];
       if (!netview)
       {
-        m_pieces.RemoveAt(i);
+        pieces.RemoveAt(i);
         i--;
       }
       else
       {
-        ZLog.LogError(
-          $"netview exists, setting position of item previous position: {netview.transform.position} localPosition:{netview.transform.localPosition} basePosition: {base.transform.position}");
         netview.m_zdo.SetPosition(base.transform.position);
       }
     }
+
+    yield return true;
+  }
+
+  public IEnumerator UpdateAllPiecesCoroutine()
+  {
+    int worker = 0;
+    int io = 0;
+    System.Threading.ThreadPool.GetAvailableThreads(out worker, out io);
+    // ZLog.Log(
+    //   $"Starting PieceSectors Coroutine with worker(maxThreads):{worker} io(available threads):{io} thread availability");
+
+    Vector2i sector = ZoneSystem.instance.GetZone(base.transform.position);
+    if (!(sector != m_sector))
+    {
+      yield return null;
+    }
+
+    m_sector = sector;
+    var list = m_pieces.ToList();
+
+    var iterators = new List<Coroutine>();
+    int listCount = 0;
+    while (list.Count > 0 && m_pieces.Count > listCount)
+    {
+      var itemsToRender = list.Skip(0).Take(Math.Min(list.Count, 50)).ToList();
+      listCount += 50;
+      iterators.Add(StartCoroutine(UpdatePiecesWorker(itemsToRender)));
+
+      // ZLog.Log($"List Count {list.Count}");
+      /*
+       * pauses if io has no available threads
+       */
+      if (iterators.Count >= io)
+      {
+        yield return iterators.Skip(0).Take(1);
+      }
+    }
+
+    foreach (var iterator in iterators)
+    {
+      yield return iterator;
+    }
+
+    canUpdate = true;
+  }
+
+  /*
+   * this method calls at least 2 times per second
+   * figure out why this is necessary
+   */
+  public void UpdateAllPieces()
+  {
+    if (!canUpdate) return;
+    StartCoroutine(UpdateAllPiecesCoroutine());
   }
 
 
   /**
    * large ships need additional threads to render the ship quickly
    */
-  public IEnumerator UpdatePiecesWorker(List<ZDO> list)
+  public IEnumerator UpdatePiecesSectorWorker(List<ZDO> list)
   {
+    ZLog.Log("started UpdatePiecesSectorWorker");
     Vector3 pos = base.transform.position;
     Vector2i sector = ZoneSystem.instance.GetZone(pos);
     float time = Time.realtimeSinceStartup;
@@ -240,6 +291,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
         }
       }
     }
+
+    yield return true;
   }
 
   /*
@@ -252,6 +305,11 @@ public class MoveableBaseRootComponent : MonoBehaviour
    */
   public IEnumerator UpdatePieceSectors()
   {
+    int worker = 0;
+    int io = 0;
+    System.Threading.ThreadPool.GetAvailableThreads(out worker, out io);
+    ZLog.Log(
+      $"Starting PieceSectors Coroutine with worker(maxThreads):{worker} io(available threads):{io} thread availability");
     while (true)
     {
       var output = m_allPieces.TryGetValue(m_id, out var list);
@@ -264,14 +322,23 @@ public class MoveableBaseRootComponent : MonoBehaviour
         continue;
       }
 
-      if (list.Count > 50)
+      if (list.Count > 100)
       {
         var iterators = new List<Coroutine>();
         for (int i = 0; i < list.Count;)
         {
-          var itemsToRender = list.Skip(0).Take(50).ToList();
-          iterators.Add(StartCoroutine(UpdatePiecesWorker(itemsToRender)));
-          i += 50;
+          var itemsToRender = list.Skip(0).Take(500).ToList();
+          iterators.Add(StartCoroutine(UpdatePiecesSectorWorker(itemsToRender)));
+
+          /*
+           * pauses if io has no available threads
+           */
+          if (iterators.Count >= io)
+          {
+            yield return iterators.Skip(0).Take(1);
+          }
+
+          i += 500;
         }
 
         foreach (var iterator in iterators)
@@ -281,7 +348,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
       }
       else
       {
-        yield return UpdatePiecesWorker(list);
+        yield return UpdatePiecesSectorWorker(list);
       }
 
       yield return new WaitForEndOfFrame();
