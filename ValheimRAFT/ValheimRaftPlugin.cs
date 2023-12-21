@@ -114,7 +114,7 @@ namespace ValheimRAFT
         "ServerRaftUpdateZoneInterval",
         10f,
         new ConfigDescription(
-          "Allows Server Admin control over the update tick for the RAFT location. Larger Rafts will take much longer and lag out players, increasing the update tick to higher numbers may drastically improve performance. Lowest value is 5 seconds which was the previous value. Try increasing it to 60 seconds and see if the rafts work well",
+          "Allows Server Admin control over the update tick for the RAFT location. Larger Rafts will take much longer and lag out players, but making this ticket longer will make the raft turn into a box from a long distance away.",
           (AcceptableValueBase)null, new object[1]
           {
             (object)new ConfigurationManagerAttributes()
@@ -179,18 +179,16 @@ namespace ValheimRAFT
       CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new MoveRaftConsoleCommand());
       CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new HideRaftConsoleCommand());
       CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new RecoverRaftConsoleCommand());
+
+      /*
+       * @todo add a way to skip LoadCustomTextures when on server. This check when used here crashes the Plugin.
+       */
       PrefabManager.OnVanillaPrefabsAvailable += new Action(this.LoadCustomTextures);
       PrefabManager.OnVanillaPrefabsAvailable += new Action(this.AddCustomPieces);
     }
 
     private void LoadCustomTextures()
     {
-      if (ZNet.instance.IsDedicated())
-      {
-        ZLog.Log("Skipping Texture load of ValheimRaft masts/ropes on Dedicated server");
-        return;
-      }
-
       CustomTextureGroup sails = CustomTextureGroup.Load("Sails");
       for (int k = 0; k < sails.Textures.Count; k++)
       {

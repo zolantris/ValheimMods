@@ -176,10 +176,11 @@ public class MoveableBaseRootComponent : MonoBehaviour
     }
 
     m_sector = sector;
+
+
     for (int i = 0; i < m_pieces.Count; i++)
     {
       ZNetView netview = m_pieces[i];
-      ZLog.Log($"UpdatePieces: netview {netview} {m_pieces[i]}");
       if (!netview)
       {
         m_pieces.RemoveAt(i);
@@ -187,8 +188,6 @@ public class MoveableBaseRootComponent : MonoBehaviour
       }
       else
       {
-        ZLog.LogError(
-          $"netview exists, setting position of item previous position: {netview.transform.position} localPosition:{netview.transform.localPosition} basePosition: {base.transform.position}");
         netview.m_zdo.SetPosition(base.transform.position);
       }
     }
@@ -197,22 +196,25 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   /**
    * large ships need additional threads to render the ship quickly
+   *
+   * @todo setPosition should not need to be called unless the item is out of alignment. In theory it should be relative to parent so it never should be out of alignment.
    */
-  public IEnumerator UpdatePiecesWorker(List<ZDO> list)
+  public IEnumerator UpdatePieceSectorWorker(List<ZDO> list)
   {
     Vector3 pos = base.transform.position;
     Vector2i sector = ZoneSystem.instance.GetZone(pos);
-    float time = Time.realtimeSinceStartup;
     if (sector != m_sector)
     {
       m_sector = sector;
       for (int i = 0; i < list.Count; i++)
       {
         ZDO zdo = list[i];
-        if (!(zdo.GetSector() != sector))
-        {
-          continue;
-        }
+
+        // This could also be a problem. If the zdo is created but the ship is in part of another sector it gets cut off.
+        // if (!(zdo.GetSector() != sector))
+        // {
+        //   continue;
+        // }
 
         int id = zdo.GetInt(MBParentIdHash);
         if (id != m_id)
@@ -224,20 +226,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
           continue;
         }
 
-        // If this zdo is for a prefab item it could the items all get clustered in same area.
-        // Need to debug this value
-        // ZLog.DevLog($"setting zdo {zdo} in sector {sector} pos: {pos}");
         zdo.SetPosition(pos);
-        if (Time.realtimeSinceStartup - time > 0.1f)
-        {
-          itemsRemovedDuringWait = false;
-          yield return new WaitForEndOfFrame();
-          time = Time.realtimeSinceStartup;
-          if (itemsRemovedDuringWait)
-          {
-            i = 0;
-          }
-        }
+        yield return null;
       }
     }
   }
@@ -254,11 +244,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
   {
     while (true)
     {
+      float time = Time.realtimeSinceStartup;
       var output = m_allPieces.TryGetValue(m_id, out var list);
       if (!output)
       {
         ZLog.Log("Waiting for UpdatePieceSectors to be ready");
-        yield return new WaitForSeconds(Math.Max(5f,
+        yield return new WaitForSeconds(Math.Max(2f,
           ValheimRaftPlugin.Instance.ServerRaftUpdateZoneInterval
             .Value));
         continue;
@@ -270,7 +261,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
         for (int i = 0; i < list.Count;)
         {
           var itemsToRender = list.Skip(0).Take(50).ToList();
-          iterators.Add(StartCoroutine(UpdatePiecesWorker(itemsToRender)));
+          iterators.Add(StartCoroutine(UpdatePieceSectorWorker(itemsToRender)));
           i += 50;
         }
 
@@ -281,7 +272,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
       }
       else
       {
-        yield return UpdatePiecesWorker(list);
+        yield return UpdatePieceSectorWorker(list);
       }
 
       yield return new WaitForEndOfFrame();
