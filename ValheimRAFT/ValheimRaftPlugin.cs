@@ -8,6 +8,7 @@ using Jotunn.Utils;
 using System;
 using System.Reflection;
 using System.Text;
+using Jotunn;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.U2D;
@@ -58,17 +59,6 @@ namespace ValheimRAFT
     public void Awake()
     {
       Instance = this;
-      ServerRaftUpdateZoneInterval = Config.Bind<float>("Server", "ServerRaftUpdateZoneInterval",
-        10f,
-        new ConfigDescription(
-          "Allows Server Admin control over the update tick for the RAFT location. Larger Rafts will take much longer and lag out players, increasing the update tick to higher numbers may drastically improve performance. Lowest value is 5 seconds which was the previous value. Try increasing it to 60 seconds and see if the rafts work well",
-          (AcceptableValueBase)null, new object[1]
-          {
-            (object)new ConfigurationManagerAttributes()
-            {
-              IsAdminOnly = true
-            }
-          }));
       RaftHealth = Config.Bind<float>("Config", "raftHealth", 500f,
         "Set the raft health when used with wearNTear, lowest value is 100f");
       PatchPlanBuildPositionIssues = Config.Bind<bool>("Patches",
@@ -117,6 +107,19 @@ namespace ValheimRAFT
             (object)new ConfigurationManagerAttributes()
             {
               IsAdminOnly = false
+            }
+          }));
+
+      ServerRaftUpdateZoneInterval = Config.Bind<float>("Server config",
+        "ServerRaftUpdateZoneInterval",
+        10f,
+        new ConfigDescription(
+          "Allows Server Admin control over the update tick for the RAFT location. Larger Rafts will take much longer and lag out players, increasing the update tick to higher numbers may drastically improve performance. Lowest value is 5 seconds which was the previous value. Try increasing it to 60 seconds and see if the rafts work well",
+          (AcceptableValueBase)null, new object[1]
+          {
+            (object)new ConfigurationManagerAttributes()
+            {
+              IsAdminOnly = true
             }
           }));
 
@@ -182,6 +185,12 @@ namespace ValheimRAFT
 
     private void LoadCustomTextures()
     {
+      if (ZNet.instance.IsServerInstance())
+      {
+        ZLog.Log("Skipping Texture load of ValheimRaft masts/ropes on Dedicated server");
+        return;
+      }
+
       CustomTextureGroup sails = CustomTextureGroup.Load("Sails");
       for (int k = 0; k < sails.Textures.Count; k++)
       {

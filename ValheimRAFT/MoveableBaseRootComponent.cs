@@ -194,16 +194,68 @@ public class MoveableBaseRootComponent : MonoBehaviour
     }
   }
 
+
+  /**
+   * large ships need additional threads to render the ship quickly
+   */
+  public IEnumerator UpdatePiecesWorker(List<ZDO> list)
+  {
+    Vector3 pos = base.transform.position;
+    Vector2i sector = ZoneSystem.instance.GetZone(pos);
+    float time = Time.realtimeSinceStartup;
+    if (sector != m_sector)
+    {
+      m_sector = sector;
+      for (int i = 0; i < list.Count; i++)
+      {
+        ZDO zdo = list[i];
+        if (!(zdo.GetSector() != sector))
+        {
+          continue;
+        }
+
+        int id = zdo.GetInt(MBParentIdHash);
+        if (id != m_id)
+        {
+          Jotunn.Logger.LogWarning("Invalid piece in piece list found, removing.");
+          ZLog.LogWarning($"zdo uid: {zdo.m_uid} zdoId:{id} does not match id:{id}");
+          list.FastRemoveAt(i);
+          i--;
+          continue;
+        }
+
+        // If this zdo is for a prefab item it could the items all get clustered in same area.
+        // Need to debug this value
+        // ZLog.DevLog($"setting zdo {zdo} in sector {sector} pos: {pos}");
+        zdo.SetPosition(pos);
+        if (Time.realtimeSinceStartup - time > 0.1f)
+        {
+          itemsRemovedDuringWait = false;
+          yield return new WaitForEndOfFrame();
+          time = Time.realtimeSinceStartup;
+          if (itemsRemovedDuringWait)
+          {
+            i = 0;
+          }
+        }
+      }
+    }
+  }
+
   /*
-   * This method may be important, but it also seems heavily related to causing the raft to disappear.
+   * This method IS important, but it also seems heavily related to causing the raft to disappear if it fails.
    *
-   * Also larger ships like the Hjalmere will lag out dropping a server from 120fps to 24fps.
+   * - This method must fire when a zone loads, otherwise the items will be in a box position until they are renders.
+   * - For larger ships, this can take up to 20 seconds. Yikes.
+   *
+   * Outside of this problem, this script repeatedly calls (but stays on a separate thread) which may be related to fps drop.
    */
   public IEnumerator UpdatePieceSectors()
   {
     while (true)
     {
-      if (!m_allPieces.TryGetValue(m_id, out var list))
+      var output = m_allPieces.TryGetValue(m_id, out var list);
+      if (!output)
       {
         ZLog.Log("Waiting for UpdatePieceSectors to be ready");
         yield return new WaitForSeconds(Math.Max(5f,
@@ -212,45 +264,24 @@ public class MoveableBaseRootComponent : MonoBehaviour
         continue;
       }
 
-      Vector3 pos = base.transform.position;
-      Vector2i sector = ZoneSystem.instance.GetZone(pos);
-      float time = Time.realtimeSinceStartup;
-      if (sector != m_sector)
+      if (list.Count > 50)
       {
-        m_sector = sector;
-        for (int i = 0; i < list.Count; i++)
+        var iterators = new List<Coroutine>();
+        for (int i = 0; i < list.Count;)
         {
-          ZDO zdo = list[i];
-          if (!(zdo.GetSector() != sector))
-          {
-            continue;
-          }
-
-          int id = zdo.GetInt(MBParentIdHash);
-          if (id != m_id)
-          {
-            Jotunn.Logger.LogWarning("Invalid piece in piece list found, removing.");
-            ZLog.LogWarning($"zdo uid: {zdo.m_uid} zdoId:{id} does not match id:{id}");
-            list.FastRemoveAt(i);
-            i--;
-            continue;
-          }
-
-          // If this zdo is for a prefab item it could the items all get clustered in same area.
-          // Need to debug this value
-          // ZLog.DevLog($"setting zdo {zdo} in sector {sector} pos: {pos}");
-          zdo.SetPosition(pos);
-          if (Time.realtimeSinceStartup - time > 0.1f)
-          {
-            itemsRemovedDuringWait = false;
-            yield return new WaitForEndOfFrame();
-            time = Time.realtimeSinceStartup;
-            if (itemsRemovedDuringWait)
-            {
-              i = 0;
-            }
-          }
+          var itemsToRender = list.Skip(0).Take(50).ToList();
+          iterators.Add(StartCoroutine(UpdatePiecesWorker(itemsToRender)));
+          i += 50;
         }
+
+        foreach (var iterator in iterators)
+        {
+          yield return iterator;
+        }
+      }
+      else
+      {
+        yield return UpdatePiecesWorker(list);
       }
 
       yield return new WaitForEndOfFrame();
