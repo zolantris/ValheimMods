@@ -185,7 +185,7 @@ namespace ValheimRAFT
 
     private void LoadCustomTextures()
     {
-      if (ZNet.instance.IsServerInstance())
+      if (ZNet.instance.IsDedicated())
       {
         ZLog.Log("Skipping Texture load of ValheimRaft masts/ropes on Dedicated server");
         return;
@@ -256,7 +256,6 @@ namespace ValheimRAFT
       PieceManager pieceMan = PieceManager.Instance;
 
       GameObject r16 = prefabMan.CreateClonedPrefab("MBRaft", raft);
-      r16.tag = PrefabNames.m_raft;
       r16.transform.Find("ship/visual/mast").gameObject.SetActive(value: false);
       r16.transform.Find("interactive/mast").gameObject.SetActive(value: false);
       r16.GetComponent<Rigidbody>().mass = 1000f;
