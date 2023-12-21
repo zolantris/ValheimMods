@@ -72,12 +72,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void Awake()
   {
-    // DontDestroyOnLoad(base.gameObject);
+    DontDestroyOnLoad(base.gameObject);
     m_rigidbody = base.gameObject.AddComponent<Rigidbody>();
     m_rigidbody.isKinematic = true;
     m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     m_rigidbody.mass = 99999f;
-    // DontDestroyOnLoad(m_rigidbody);
+    DontDestroyOnLoad(m_rigidbody);
     /*
      * This should work on both client and server, but the garbage collecting should only apply if the ZDOs are not persistent
      */
