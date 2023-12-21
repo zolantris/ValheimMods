@@ -1,5 +1,7 @@
 # ValheimRAFT
 
+<img src="./Thunderstore/icon.png" alt="ValheimRAFT Community Made Boat Hjalmere">
+
 A [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork that works with latest Valheim. The original mod
 owner [Sarcenzzz](https://www.nexusmods.com/valheim/users/3061574) abandoned the
 mod, this fork aims to keep the mod functional with future goals of expanding functionality.

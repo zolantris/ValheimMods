@@ -95,23 +95,24 @@ namespace ValheimRAFT
       group = new CustomTextureGroup();
       m_groups.Add(groupName, group);
 
-      string[] files = GetFiles(groupName, "Zolantris-ValheimRAFT");
+      var files = new string[] { };
 
       /*
        * This if blocks is provided to make the PluginFolderName check a bit more verbose
        * - It could be added to the array, but would have to be done after CONFIG initializes
        */
-      if (Main.Instance.PluginFolderName.Value == "" || !Directory.Exists(
+      if (ValheimRaftPlugin.Instance.PluginFolderName.Value != "" && Directory.Exists(
             Path.Combine(Paths.PluginPath,
-              Main.Instance.PluginFolderName.Value)))
+              ValheimRaftPlugin.Instance.PluginFolderName.Value)))
       {
         ZLog.DevLog(
-          $"{Main.ModName} PluginFolderName path detected, resolving assets from that folder");
+          $"{ValheimRaftPlugin.ModName} PluginFolderName path detected, resolving assets from that folder");
+        files = GetFiles(groupName, ValheimRaftPlugin.Instance.PluginFolderName.Value);
       }
       else
       {
         {
-          foreach (var possibleModFolderName in Main.Instance.possibleModFolderNames)
+          foreach (var possibleModFolderName in ValheimRaftPlugin.Instance.possibleModFolderNames)
           {
             if (!Directory.Exists(Path.Combine(Paths.PluginPath,
                   possibleModFolderName))) continue;

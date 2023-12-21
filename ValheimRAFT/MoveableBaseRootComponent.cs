@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Jotunn;
 using UnityEngine;
 using ValheimRAFT.Util;
@@ -71,14 +72,46 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void Awake()
   {
+    // DontDestroyOnLoad(base.gameObject);
     m_rigidbody = base.gameObject.AddComponent<Rigidbody>();
     m_rigidbody.isKinematic = true;
     m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     m_rigidbody.mass = 99999f;
+    // DontDestroyOnLoad(m_rigidbody);
+    /*
+     * This should work on both client and server, but the garbage collecting should only apply if the ZDOs are not persistent
+     */
     if (ZNet.instance.IsServer())
     {
-      StartCoroutine("UpdatePieceSectors");
+      StartCoroutine(nameof(UpdatePieceSectors));
+      // StartCoroutine(nameof(DeleteInvalidRafts));
     }
+  }
+
+  /*
+   * This needs to be used to cleanup Rafts that are do not have any parents
+   */
+  public IEnumerator DeleteInvalidRafts()
+  {
+    yield return false;
+    // yield return new WaitForSeconds(5f);
+    //
+    // var objects = Resources.FindObjectsOfTypeAll<MoveableBaseShipComponent>()
+    //   .Where(obj => obj.name == PrefabNames.m_raft);
+    //
+    // ZLog.Log($"objects {objects}");
+    //
+    // foreach (var o in objects)
+    // {
+    //   var movableBaseChild = o.GetComponentInChildren<MoveableBaseShipComponent>();
+    //   var movableBaseParent = o.GetComponentInParent<MoveableBaseShipComponent>();
+    //   if (!movableBaseChild && !movableBaseParent)
+    //   {
+    //     ZLog.LogWarning(
+    //       "Destroying Raft instance that has no MovableBaseChildren. This RAFT was invalid.");
+    //     DestroyBoat(o.m_nview);
+    //   }
+    // }
   }
 
   public void CleanUp()
@@ -162,6 +195,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     {
       if (!m_allPieces.TryGetValue(m_id, out var list))
       {
+        ZLog.Log("Waiting for UpdatePieceSectors to be ready");
         yield return new WaitForSeconds(5f);
         continue;
       }
@@ -181,9 +215,11 @@ public class MoveableBaseRootComponent : MonoBehaviour
           }
 
           int id = zdo.GetInt(MBParentIdHash);
+          ZLog.Log($"ZDO Id for MBParentIdHash {id}");
           if (id != m_id)
           {
             Jotunn.Logger.LogWarning("Invalid piece in piece list found, removing.");
+            ZLog.LogWarning($"zdo uid: {zdo.m_uid} zdoId:{id} does not match id:{id}");
             list.FastRemoveAt(i);
             i--;
             continue;
@@ -284,8 +320,14 @@ public class MoveableBaseRootComponent : MonoBehaviour
     if (GetPieceCount() == 0)
     {
       m_ship.GetComponent<WearNTear>().Destroy();
-      Object.Destroy(base.gameObject);
+      Destroy(base.gameObject);
     }
+  }
+
+  public void DestroyBoat()
+  {
+    m_ship.GetComponent<WearNTear>().Destroy();
+    Destroy(base.gameObject);
   }
 
   public void ActivatePendingPiecesCoroutine()
@@ -297,11 +339,18 @@ public class MoveableBaseRootComponent : MonoBehaviour
   {
     if (!m_nview || m_nview.m_zdo == null)
     {
+      ZLog.Log(
+        $"ActivatePendingPieces early exit due to m_nview: {m_nview} m_nview.m_zdo {(m_nview != null ? m_nview.m_zdo : null)}");
       yield return null;
     }
 
     int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
-    if (m_pendingPieces.TryGetValue(id, out var list))
+    m_pendingPieces.TryGetValue(id, out var list);
+
+    ZLog.Log($"List count {m_dynamicObjects.Count}");
+    ZLog.Log($"DynamicObjects count {m_dynamicObjects.Count}");
+
+    if (list is { Count: > 0 })
     {
       Stopwatch stopwatch = new Stopwatch();
       stopwatch.Start();
@@ -323,11 +372,14 @@ public class MoveableBaseRootComponent : MonoBehaviour
       m_pendingPieces.Remove(id);
     }
 
-    if (m_dynamicObjects.TryGetValue(m_id, out var objectList))
+    m_dynamicObjects.TryGetValue(m_id, out var objectList);
+    var ObjectListHasNoValidItems = true;
+    if (objectList is { Count: > 0 })
     {
       for (int i = 0; i < objectList.Count; i++)
       {
         GameObject go = ZNetScene.instance.FindInstance(objectList[i]);
+
         if (!go)
         {
           continue;
@@ -337,6 +389,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
         if (!nv || nv.m_zdo == null)
         {
           continue;
+        }
+        else
+        {
+          ObjectListHasNoValidItems = false;
         }
 
         if (ZDOExtraData.s_vec3.TryGetValue(nv.m_zdo.m_uid, out var dic))
@@ -355,6 +411,16 @@ public class MoveableBaseRootComponent : MonoBehaviour
       }
 
       m_dynamicObjects.Remove(m_id);
+    }
+
+    /*
+     * This prevents empty Prefabs of MBRaft from existing
+     */
+    if (list == null || list.Count == 0 &&
+        (m_dynamicObjects.Count == 0 || ObjectListHasNoValidItems)
+       )
+    {
+      DestroyBoat();
     }
 
     yield return null;
@@ -530,7 +596,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     UpdatePieceCount();
     EncapsulateBounds(netview);
     WearNTear wnt = netview.GetComponent<WearNTear>();
-    if ((bool)wnt && Main.Instance.MakeAllPiecesWaterProof.Value)
+    if ((bool)wnt && ValheimRaftPlugin.Instance.MakeAllPiecesWaterProof.Value)
     {
       wnt.m_noRoofWear = false;
     }

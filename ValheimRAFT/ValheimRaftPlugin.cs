@@ -8,11 +8,12 @@ using Jotunn.Utils;
 using System;
 using System.Reflection;
 using System.Text;
-using Jotunn;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.U2D;
 using Object = UnityEngine.Object;
+using ValheimRAFT.Patches;
+using ValheimRAFT.Util;
 
 namespace ValheimRAFT
 {
@@ -20,22 +21,21 @@ namespace ValheimRAFT
   [BepInDependency(Jotunn.Main.ModGuid)]
   // [BepInProcess("valheim.exe")]
   [NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
-  public class Main : BaseUnityPlugin
+  public class ValheimRaftPlugin : BaseUnityPlugin
   {
     /*
      * @note keeping this as Sarcen for now since there are low divergences from the original codebase and patches already mapped to sarcen's mod
      */
     public const string Author = "Sarcen";
-    private const string Version = "1.6.1";
+    private const string Version = "1.6.2";
     internal const string ModName = "ValheimRAFT";
     public const string BepInGuid = $"BepIn.{Author}.{ModName}";
     private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";
-    private static Harmony m_harmony;
     internal static int CustomRaftLayer = 29;
     public static AssetBundle m_assetBundle;
     private bool m_customItemsAdded;
 
-    public static Main Instance { get; private set; }
+    public static ValheimRaftPlugin Instance { get; private set; }
 
     public ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
 
@@ -44,6 +44,7 @@ namespace ValheimRAFT
     public ConfigEntry<string> PluginFolderName { get; set; }
     public ConfigEntry<float> InitialRaftFloorHeight { get; set; }
     public ConfigEntry<bool> PatchPlanBuildPositionIssues { get; set; }
+    public ConfigEntry<float> RaftHealth { get; set; }
 
     /**
      * These folder names are matched for the CustomTexturesGroup
@@ -56,6 +57,8 @@ namespace ValheimRAFT
     public void Awake()
     {
       Instance = this;
+      RaftHealth = Config.Bind<float>("Config", "raftHealth", 500f,
+        "Set the raft health when used with wearNTear, lowest value is 100f");
       PatchPlanBuildPositionIssues = Config.Bind<bool>("Patches",
         "fixPlanBuildPositionIssues", true, new ConfigDescription(
           "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT.",
@@ -125,8 +128,7 @@ namespace ValheimRAFT
             }
           }));
 
-      m_harmony = new Harmony(HarmonyGuid);
-      m_harmony.PatchAll();
+      PatchController.Apply(HarmonyGuid);
 
       int layer = LayerMask.NameToLayer("vehicle");
       for (int index = 0; index < 32; ++index)
@@ -231,7 +233,9 @@ namespace ValheimRAFT
       GameObject vikingship = prefabMan.GetPrefab("VikingShip");
       GameObject vikingshipMast = vikingship.transform.Find("ship/visual/Mast").gameObject;
       PieceManager pieceMan = PieceManager.Instance;
+
       GameObject r16 = prefabMan.CreateClonedPrefab("MBRaft", raft);
+      r16.tag = PrefabNames.m_raft;
       r16.transform.Find("ship/visual/mast").gameObject.SetActive(value: false);
       r16.transform.Find("interactive/mast").gameObject.SetActive(value: false);
       r16.GetComponent<Rigidbody>().mass = 1000f;
@@ -247,7 +251,9 @@ namespace ValheimRAFT
       ZNetView nv9 = r16.GetComponent<ZNetView>();
       nv9.m_persistent = true;
       WearNTear wnt12 = r16.GetComponent<WearNTear>();
-      wnt12.m_health = 10000f;
+
+      // Lowest is 100f
+      wnt12.m_health = Math.Max(100f, RaftHealth.Value);
       wnt12.m_noRoofWear = false;
       ImpactEffect impact = r16.GetComponent<ImpactEffect>();
       impact.m_damageToSelf = false;

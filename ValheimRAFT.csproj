@@ -8,7 +8,7 @@
         <AssemblyName>ValheimRAFT</AssemblyName>
         <TargetFramework>netstandard2.0</TargetFramework>
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-        <ApplicationVersion>1.6.1</ApplicationVersion>
+        <ApplicationVersion>1.6.2</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -109,9 +109,11 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="ValheimRAFT.Patches\PatchController.cs"/>
         <Compile Include="ValheimRAFT.Patches\PlanBuildPatch.cs"/>
         <Compile Include="ValheimRAFT.Util\BinaryIOUtil.cs"/>
         <Compile Include="ValheimRAFT.Util\ListUtil.cs"/>
+        <Compile Include="ValheimRAFT.Util\PrefabNames.cs"/>
         <Compile Include="ValheimRAFT.Util\ZDOUtil.cs"/>
         <Compile Include="ValheimRAFT.UI\EditRampComponent.cs"/>
         <Compile Include="ValheimRAFT.UI\EditSailComponentPanel.cs"/>
@@ -128,7 +130,7 @@
         <Compile Include="ValheimRAFT\CustomTextureGroup.cs"/>
         <Compile Include="ValheimRAFT\DockComponent.cs"/>
         <Compile Include="ValheimRAFT\HideRaftConsoleCommand.cs"/>
-        <Compile Include="ValheimRAFT\Main.cs"/>
+        <Compile Include="ValheimRAFT\ValheimRaftPlugin.cs"/>
         <Compile Include="ValheimRAFT\MastComponent.cs"/>
         <Compile Include="ValheimRAFT\MeshHelper.cs"/>
         <Compile Include="ValheimRAFT\MoveableBaseRootComponent.cs"/>
@@ -187,11 +189,14 @@
         <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\ValheimRAFT.pdb&quot;"/>
     </Target>
     <Target Name="Run_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' " AfterTargets="Copy_To_Valheim_Server" BeforeTargets="Run_Valheim">
-        <Exec Command="cd &quot;$(ValheimServerPath)&quot;
-        powershell Start-Process -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>
+        <!--        <Exec Command="cd &quot;$(ValheimServerPath)&quot;-->
+        <!--        powershell Start-Process -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
+        <!--    Windows Terminal    -->
+        <Exec Command="wt.exe -w 1 --focus -d &quot;$(ValheimServerPath)&quot; --title Valheim_Client powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>
     </Target>
     <Target Name="Run_Valheim" Condition="'$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="Copy_To_R2ModMan">
         <Exec Command="&quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; -console --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
+        <!--        <Exec Command="wt.exe -w 1 sp -d &quot;$(ValheimServerPath)&quot; &#45;&#45;title Valheim_Client powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
     </Target>
     <Target Name="Generate_Mod_Archive" Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'" AfterTargets="PostBuildEvent">
         <PropertyGroup>
