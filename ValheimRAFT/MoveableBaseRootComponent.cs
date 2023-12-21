@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -5,6 +6,7 @@ using System.Linq;
 using Jotunn;
 using UnityEngine;
 using ValheimRAFT.Util;
+using Object = UnityEngine.Object;
 
 namespace ValheimRAFT;
 
@@ -72,12 +74,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void Awake()
   {
-    DontDestroyOnLoad(base.gameObject);
     m_rigidbody = base.gameObject.AddComponent<Rigidbody>();
     m_rigidbody.isKinematic = true;
     m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     m_rigidbody.mass = 99999f;
-    DontDestroyOnLoad(m_rigidbody);
     /*
      * This should work on both client and server, but the garbage collecting should only apply if the ZDOs are not persistent
      */
@@ -90,6 +90,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   /*
    * This needs to be used to cleanup Rafts that are do not have any parents
+   *
+   * Alternative is advanced creativemode which allows deleting the raft object. Will need get the functionality from that and add safer logic.
    */
   public IEnumerator DeleteInvalidRafts()
   {
@@ -177,6 +179,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     for (int i = 0; i < m_pieces.Count; i++)
     {
       ZNetView netview = m_pieces[i];
+      ZLog.Log($"UpdatePieces: netview {netview} {m_pieces[i]}");
       if (!netview)
       {
         m_pieces.RemoveAt(i);
@@ -184,11 +187,18 @@ public class MoveableBaseRootComponent : MonoBehaviour
       }
       else
       {
+        ZLog.LogError(
+          $"netview exists, setting position of item previous position: {netview.transform.position} localPosition:{netview.transform.localPosition} basePosition: {base.transform.position}");
         netview.m_zdo.SetPosition(base.transform.position);
       }
     }
   }
 
+  /*
+   * This method may be important, but it also seems heavily related to causing the raft to disappear.
+   *
+   * Also larger ships like the Hjalmere will lag out dropping a server from 120fps to 24fps.
+   */
   public IEnumerator UpdatePieceSectors()
   {
     while (true)
@@ -196,7 +206,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
       if (!m_allPieces.TryGetValue(m_id, out var list))
       {
         ZLog.Log("Waiting for UpdatePieceSectors to be ready");
-        yield return new WaitForSeconds(5f);
+        yield return new WaitForSeconds(Math.Max(5f,
+          ValheimRaftPlugin.Instance.ServerRaftUpdateZoneInterval
+            .Value));
         continue;
       }
 
@@ -215,7 +227,6 @@ public class MoveableBaseRootComponent : MonoBehaviour
           }
 
           int id = zdo.GetInt(MBParentIdHash);
-          ZLog.Log($"ZDO Id for MBParentIdHash {id}");
           if (id != m_id)
           {
             Jotunn.Logger.LogWarning("Invalid piece in piece list found, removing.");
@@ -227,7 +238,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
           // If this zdo is for a prefab item it could the items all get clustered in same area.
           // Need to debug this value
-          ZLog.Log($"setting zdo {zdo} in sector {sector} pos: {pos}");
+          // ZLog.DevLog($"setting zdo {zdo} in sector {sector} pos: {pos}");
           zdo.SetPosition(pos);
           if (Time.realtimeSinceStartup - time > 0.1f)
           {
@@ -326,7 +337,16 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void DestroyBoat()
   {
-    m_ship.GetComponent<WearNTear>().Destroy();
+    var wnt_ship = m_ship.GetComponent<WearNTear>();
+    if (wnt_ship)
+    {
+      wnt_ship.Destroy();
+    }
+    else if (m_ship)
+    {
+      Destroy(m_ship);
+    }
+
     Destroy(base.gameObject);
   }
 
@@ -420,7 +440,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
         (m_dynamicObjects.Count == 0 || ObjectListHasNoValidItems)
        )
     {
-      DestroyBoat();
+      ZLog.LogError($"found boat without any items attached {m_ship} {m_nview}");
+      // DestroyBoat();
     }
 
     yield return null;
@@ -449,6 +470,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public static void InitZDO(ZDO zdo)
   {
+    // this codeblock was left unhandled. I wonder if there needs to be an early exit or fix for MBRaft specifically.
     if (zdo.m_prefab == "MBRaft".GetStableHashCode())
     {
     }

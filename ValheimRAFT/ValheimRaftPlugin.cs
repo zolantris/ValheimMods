@@ -45,6 +45,7 @@ namespace ValheimRAFT
     public ConfigEntry<float> InitialRaftFloorHeight { get; set; }
     public ConfigEntry<bool> PatchPlanBuildPositionIssues { get; set; }
     public ConfigEntry<float> RaftHealth { get; set; }
+    public ConfigEntry<float> ServerRaftUpdateZoneInterval { get; set; }
 
     /**
      * These folder names are matched for the CustomTexturesGroup
@@ -57,6 +58,17 @@ namespace ValheimRAFT
     public void Awake()
     {
       Instance = this;
+      ServerRaftUpdateZoneInterval = Config.Bind<float>("Server", "ServerRaftUpdateZoneInterval",
+        10f,
+        new ConfigDescription(
+          "Allows Server Admin control over the update tick for the RAFT location. Larger Rafts will take much longer and lag out players, increasing the update tick to higher numbers may drastically improve performance. Lowest value is 5 seconds which was the previous value. Try increasing it to 60 seconds and see if the rafts work well",
+          (AcceptableValueBase)null, new object[1]
+          {
+            (object)new ConfigurationManagerAttributes()
+            {
+              IsAdminOnly = true
+            }
+          }));
       RaftHealth = Config.Bind<float>("Config", "raftHealth", 500f,
         "Set the raft health when used with wearNTear, lowest value is 100f");
       PatchPlanBuildPositionIssues = Config.Bind<bool>("Patches",
