@@ -6,8 +6,6 @@
         <ProjectGuid>{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}</ProjectGuid>
         <OutputType>Library</OutputType>
         <AssemblyName>ValheimRAFT</AssemblyName>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <TargetFrameworkVersion>4.8</TargetFrameworkVersion>
         <ApplicationVersion>1.6.2</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
@@ -98,6 +96,7 @@
         <Content Include="src\ValheimRAFT\README.md"/>
         <Content Include="Thunderstore\icon.png"/>
         <Content Include="Thunderstore\manifest.json"/>
+        <Content Include="ValheimRAFT.sln"/>
     </ItemGroup>
     <PropertyGroup>
         <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>

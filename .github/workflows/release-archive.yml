@@ -11,6 +11,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - uses: nuget/setup-nuget@v1
+        with:
+          nuget-version: '5.x'
+
+      - run: nuget restore ValheimMods.sln
+
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
 
