@@ -6,9 +6,28 @@ A [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork that works wit
 owner [Sarcenzzz](https://www.nexusmods.com/valheim/users/3061574) abandoned the
 mod, this fork aims to keep the mod functional with future goals of expanding functionality.
 
-## Build Status
 
+## Build Status
 [![ValheimRAFT Build](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml/badge.svg)](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml)
+
+## Contents
+<!-- TOC -->
+* [ValheimRAFT](#valheimraft)
+    * [Build Status](#build-status)
+    * [Client/Server/SinglePlayer Support](#clientserversingleplayer-support)
+    * [Features](#features)
+    * [Community](#community)
+    * [Config](#config)
+        * [InitialRaftFloorHeight](#initialraftfloorheight)
+        * [Meshes](#meshes)
+    * [Issues](#issues)
+    * [Mod Support](#mod-support)
+    * [Contributing](#contributing)
+    * [Support Open Source](#support-open-source)
+    * [Getting Started](#getting-started)
+<!-- TOC -->
+
+
 
 ## Client/Server/SinglePlayer Support
 

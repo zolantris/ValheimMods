@@ -14,10 +14,10 @@ The following statuses will be used to label repos.
 - active development - Active
 - unsupported - Deprecated
 
-| Name                                         | Status     | Description                                                        | 
-|----------------------------------------------|------------|-----------------------------------------|
-| [ValheimRAFT](src/ValheimRAFT)               | **Active** | Allows Valheim Build system on the water, similar to the Raft Game |
-| [ValheimRAFT](src/BuildingDamageModExtended) | **LTS**    | Allows Valheim Build system on the water, similar to the Raft Game |
+| Name                                         | Status     | Description                                                                                                   | 
+|----------------------------------------------|------------|---------------------------------------------------------------------------------------------------------------|
+| [ValheimRAFT](src/ValheimRAFT)               | **Active** | Allows Valheim Build system on the water, similar to the Raft Game                                            |
+| [BuildingDamageModExtended](src/BuildingDamageModExtended) | **LTS**    | Allows setting building damage multipliers based on entity types and also additionally allows for damage caps |
 
 
 ## Contributing
