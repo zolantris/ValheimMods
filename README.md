@@ -61,7 +61,7 @@ Join us on discord to get the latest information, upcoming features, and discove
 | InitialRaftFloorHeight       | Lets you set the height of the floors so they do not clip. Recommended to stay between 0.4 and 0.6.                          |
 | ServerRaftUpdateZoneInterval | Set interval in seconds for the server update to trigger and re-render pieces if in view                                     |
 | pluginFolderName             | Allows you to specify the plugin folder if it's been renamed. See the meshes section below for more details                  |
-| raftHealth                   | Set the raft health for wear and tear. I set it to `500` default, but it was originaly `10000` which is not balanced         |
+| raftHealth                   | Set the raft health for wear and tear. I set it to `500` default, but it was originally `10000` which is not balanced        |
 | fixPlanBuildPositionIssues   | Turn on/off the patches for PlanBuild, only needed if the user has PlanBuild and it adds support for ValheimRaft coordinates |
 
 ### Meshes
