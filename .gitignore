@@ -366,4 +366,7 @@ FodyWeavers.xsd
 libs/client_libs
 libs/server_libs
 
+Logs/
+**/Logs/
+
 #libs/
