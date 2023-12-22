@@ -101,6 +101,10 @@ could be moving/swaying and updating as the PlanBuild iterated through the items
 2. Changes need to be feature based IE keep the changes minimal and single focused. Larger changes are welcome, but they
    have higher chance of breaking other things and are harder to maintain.
 
+## Support Open Source
+
+<a href='https://ko-fi.com/zolantris' target='_blank'><img height='35' style='border:0px;height:46px;' src='https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com' />
+
 ## Getting Started
 
-Please reference the [getting started docs](../../docs/getting-started.md)
+Please reference the [getting started docs](../../docs/getting-started.md).
