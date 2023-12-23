@@ -366,4 +366,10 @@ FodyWeavers.xsd
 libs/client_libs
 libs/server_libs
 
+Logs/
+**/Logs/
+
+# This overrides Properties for the project
+.props
+
 #libs/

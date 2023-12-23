@@ -1,0 +1,168 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.8" DefaultTargets="Build">
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+        <ProjectGuid>{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}</ProjectGuid>
+        <OutputType>Library</OutputType>
+        <AssemblyName>ValheimRAFT</AssemblyName>
+        <ApplicationVersion>1.6.2</ApplicationVersion>
+        <FileAlignment>512</FileAlignment>
+        <RootNamespace>ValheimRAFT</RootNamespace>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+    <Import Project="$(SolutionDir)\valheim.targets"/>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU'">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <OutputPath>bin\Debug\</OutputPath>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU'">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="ValheimRAFT.Patches\PatchController.cs"/>
+        <Compile Include="ValheimRAFT.Patches\PlanBuildPatch.cs"/>
+        <Compile Include="ValheimRAFT.Util\BinaryIOUtil.cs"/>
+        <Compile Include="ValheimRAFT.Util\ListUtil.cs"/>
+        <Compile Include="ValheimRAFT.Util\PrefabNames.cs"/>
+        <Compile Include="ValheimRAFT.Util\ZDOUtil.cs"/>
+        <Compile Include="ValheimRAFT.UI\EditRampComponent.cs"/>
+        <Compile Include="ValheimRAFT.UI\EditSailComponentPanel.cs"/>
+        <Compile Include="ValheimRAFT.UI\PanelUtil.cs"/>
+        <Compile Include="ValheimRAFT.Patches\Plantable_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\Teleport_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\ValheimRAFT_Patch.cs"/>
+        <Compile Include="ValheimRAFT\AssemblyInfo.cs"/>
+        <Compile Include="ValheimRAFT\BoardingRampComponent.cs"/>
+        <Compile Include="ValheimRAFT\CreativeModeConsoleCommand.cs"/>
+        <Compile Include="ValheimRAFT\CultivatableComponent.cs"/>
+        <Compile Include="ValheimRAFT\CustomMastComponent.cs"/>
+        <Compile Include="ValheimRAFT\CustomTextureGroup.cs"/>
+        <Compile Include="ValheimRAFT\DockComponent.cs"/>
+        <Compile Include="ValheimRAFT\HideRaftConsoleCommand.cs"/>
+        <Compile Include="ValheimRAFT\ValheimRaftPlugin.cs"/>
+        <Compile Include="ValheimRAFT\MastComponent.cs"/>
+        <Compile Include="ValheimRAFT\MeshHelper.cs"/>
+        <Compile Include="ValheimRAFT\MoveableBaseRootComponent.cs"/>
+        <Compile Include="ValheimRAFT\MoveableBaseShipComponent.cs"/>
+        <Compile Include="ValheimRAFT\MoveRaftConsoleCommand.cs"/>
+        <Compile Include="ValheimRAFT\PierComponent.cs"/>
+        <Compile Include="ValheimRAFT\RecoverRaftConsoleCommand.cs"/>
+        <Compile Include="ValheimRAFT\RopeAnchorComponent.cs"/>
+        <Compile Include="ValheimRAFT\RopeComponent.cs"/>
+        <Compile Include="ValheimRAFT\RopeLadderComponent.cs"/>
+        <Compile Include="ValheimRAFT\RudderComponent.cs"/>
+        <Compile Include="ValheimRAFT\SailComponent.cs"/>
+        <Compile Include="ValheimRAFT\SailCreatorComponent.cs"/>
+    </ItemGroup>
+    <ItemGroup>
+        <!--           new structure (failing to load assets, but they are detected      -->
+        <!--        <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="ValheimRAFT.AssetBundle.AssetBundle"/>-->
+        <!--        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest"/>-->
+        <!--        <EmbeddedResource Include="AssetBundle\valheimraft" LogicalName="ValheimRAFT.AssetBundle.valheimraft"/>-->
+        <!--        <EmbeddedResource Include="AssetBundle\valheimraft.manifest"/>-->
+
+        <!--   old asset bundle structure (working)     -->
+        <!--        <EmbeddedResource Include="AssetBundle.valheimraft"/>-->
+        <!--        <EmbeddedResource Include="AssetBundle.AssetBundle"/>-->
+        <!--        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest"/>-->
+        <!--        <EmbeddedResource Include="AssetBundle\valheimraft.manifest"/>-->
+        <None Remove="AssetBundleDeprecated\ValheimRAFT.AssetBundle.AssetBundle"/>
+        <None Remove="AssetBundleDeprecated\ValheimRAFT.AssetBundle.valheimraft"/>
+        <None Remove="AssetBundleDeprecated\ValheimRAFT.AssetBundle.AssetBundle.manifest"/>
+        <None Remove="AssetBundleDeprecated\ValheimRAFT.AssetBundle.valheimraft.manifest"/>
+        <EmbeddedResource Include="AssetBundleDeprecated\ValheimRAFT.AssetBundle.AssetBundle" LogicalName="ValheimRAFT.AssetBundle.AssetBundle"/>
+        <EmbeddedResource Include="AssetBundleDeprecated\ValheimRAFT.AssetBundle.valheimraft" LogicalName="ValheimRAFT.AssetBundle.valheimraft"/>
+        <EmbeddedResource Include="AssetBundleDeprecated\ValheimRAFT.AssetBundle.AssetBundle.manifest" LogicalName="ValheimRAFT.AssetBundle.AssetBundle.manifest"/>
+        <EmbeddedResource Include="AssetBundleDeprecated\ValheimRAFT.AssetBundle.valheimraft.manifest" LogicalName="ValheimRAFT.AssetBundle.valheimraft.manifest"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include=".gitignore"/>
+        <Content Include="libs\PlanBuild.dll"/>
+        <Content Include="src\ValheimRAFT\README.md"/>
+        <Content Include="Thunderstore\icon.png"/>
+        <Content Include="Thunderstore\manifest.json"/>
+        <Content Include="ValheimRAFT.sln"/>
+    </ItemGroup>
+    <PropertyGroup>
+        <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
+        <R2ModManPath>%HOMEPATH%\AppData\Roaming\r2modmanPlus-local</R2ModManPath>
+        <R2ModManProfile>Valheim\profiles\valheim_mod_debugging</R2ModManProfile>
+        <PluginDeployTarget>BepInEx\plugins\zolantris-ValheimRAFT</PluginDeployTarget>
+        <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
+    </PropertyGroup>
+    <Target Name="Copy_To_R2ModMan" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="PostBuildEvent">
+        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(PluginDeployPath)\ValheimRAFT.dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(PluginDeployPath)\ValheimRAFT.pdb&quot;"/>
+    </Target>
+    <Target KeepDuplicateOutputs="false" Name="Copy_To_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' " AfterTargets="PostBuildEvent">
+        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\ValheimRAFT.dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\ValheimRAFT.pdb&quot;"/>
+    </Target>
+    <Target Name="Run_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' " AfterTargets="Copy_To_Valheim_Server">
+        <!--        <Exec Command="cd &quot;$(ValheimServerPath)&quot;-->
+        <!--        powershell Start-Process -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
+        <!--    Windows Terminal    -->
+        <Exec Command="wt.exe -w 1 --focus -d &quot;$(ValheimServerPath)&quot; --title Valheim_Client powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>
+    </Target>
+    <Target Name="Run_Valheim" Condition="'$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="Copy_To_R2ModMan">
+        <Exec Command="&quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; -console --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
+        <!--        <Exec Command="wt.exe -w 1 sp -d &quot;$(ValheimServerPath)&quot; &#45;&#45;title Valheim_Client powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
+    </Target>
+    <Target Name="Generate_Mod_Archive" Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'" AfterTargets="PostBuildEvent">
+        <PropertyGroup>
+            <RepoDir>$(OutDir)..\..\</RepoDir>
+            <AssetsDir>$(RepoDir)Assets\</AssetsDir>
+            <ModOutputDir>$(OutDir)ModVersions\</ModOutputDir>
+            <TmpDir>$(OutDir)tmp\</TmpDir>
+            <ThunderStoreDir>$(RepoDir)ThunderStore\</ThunderStoreDir>
+            <ThunderStoreName>Thunderstore</ThunderStoreName>
+            <NexusName>Nexus</NexusName>
+            <ModNameVersion>$(AssemblyName)-$(ApplicationVersion).zip</ModNameVersion>
+        </PropertyGroup>
+        <Exec Command="if exist &quot;$(TmpDir)plugins\Assets&quot; rd /s /q &quot;$(TmpDir)plugins\Assets&quot;"/>
+        <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>
+
+        <Exec Command="if not exist &quot;$(ModOutputDir)&quot; mkdir &quot;$(ModOutputDir)&quot;"/>
+        <Exec Command="if not exist &quot;$(TmpDir)&quot; mkdir &quot;$(TmpDir)&quot;"/>
+        <Exec Command="if not exist &quot;$(TmpDir)plugins&quot; mkdir &quot;$(TmpDir)plugins&quot;"/>
+
+        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(TmpDir)plugins\ValheimRAFT.dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(TmpDir)plugins\ValheimRAFT.pdb&quot;"/>
+        <Exec Command="copy &quot;$(RepoDir)README.md&quot; &quot;$(TmpDir)README.md&quot;"/>
+
+        <!-- Copy Assets -->
+        <Exec Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>
+        <Exec Command="del &quot;$(TmpDir)plugins\Assets\*.png.meta&quot;"/>
+
+
+        <!--  Thunderstore and Nexus store may need different deploys  -->
+
+        <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>
+
+        <!-- delete duplicate mod version-->
+        <Exec Command="if exist &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot;"/>
+        <Exec Command="if exist &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot;"/>
+        <Exec Command="if exist &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot; del /s /q &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot;"/>
+
+
+        <Exec Command="powershell Compress-Archive '$(TmpDir)\*' '$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)'"/>
+        <Exec Command="powershell Compress-Archive '$(TmpDir)\plugins\*' '$(ModOutputDir)$(NexusName)-$(ModNameVersion)'"/>
+        <Exec Command="powershell Compress-Archive '$(RepoDir)libs\*' '$(ModOutputDir)libs-$(ApplicationVersion).zip'"/>
+    </Target>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+</Project>

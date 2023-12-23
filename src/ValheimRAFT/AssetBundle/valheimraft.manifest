@@ -1,0 +1,166 @@
+ManifestFileVersion: 0
+CRC: 1835255578
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: ebfad6040c8a0979d6dc0d8f2386239c
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 63af28d02b6876c30c34648acbc15e45
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 54
+  Script: {instanceID: 0}
+- Class: 65
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: d199490a83bb2b844b9695cbf13b01ef, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 0d0b652f32a2cc243917e4028fa0f046, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 120
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 222
+  Script: {instanceID: 0}
+- Class: 224
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: UnityEngine.CoreModule
+  ClassName: UnityEngine.Events.PersistentCallGroup
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.AnimationTriggers
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Button/ButtonClickedEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.ColorBlock
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Dropdown/DropdownEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Dropdown/OptionData
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Dropdown/OptionDataList
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.FontData
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.InputField/OnChangeEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.InputField/SubmitEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.MaskableGraphic/CullStateChangedEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Navigation
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.ScrollRect/ScrollRectEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Scrollbar/ScrollEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Slider/SliderEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.SpriteState
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Toggle/ToggleEvent
+Assets:
+- Assets/Mesh/Line010.asset
+- Assets/Mesh/Torus.asset
+- Assets/Texture2D/sactx-0-256x256-DXT5-icons-117e51dd.png
+- Assets/Slider.prefab
+- Assets/pattern_checker.png
+- Assets/edit_texture_panel.prefab
+- Assets/Texture2D/pirate_skull.png
+- Assets/Mesh/Line002.asset
+- Assets/dirt_floor.prefab
+- Assets/Mesh/Line001.asset
+- Assets/Mesh/Sphere010.asset
+- Assets/Mesh/Sphere012.asset
+- Assets/Texture2D/sail_normal.png
+- Assets/Shader/Custom_SailShader.shader
+- Assets/Texture2D/dirtfloor_d.png
+- Assets/Mesh/Rectangle006.asset
+- Assets/Material/03 - Default.mat
+- Assets/Mesh/Circle003.asset
+- Assets/Mesh/Circle002.asset
+- Assets/Mesh/Sphere008.asset
+- Assets/Material/02 - Default.mat
+- Assets/Mesh/Line009.asset
+- Assets/Mesh/Rectangle004.asset
+- Assets/rope_anchor.prefab
+- Assets/pattern_stripe.png
+- Assets/Mesh/Line005.asset
+- Assets/edit_sail_panel.prefab
+- Assets/edit_ramp_panel.prefab
+- Assets/steering_wheel.prefab
+- Assets/boarding_ramp.prefab
+- Assets/Mesh/Sphere007.asset
+- Assets/raftmast.asset
+- Assets/SailMat.mat
+- Assets/Texture2D/dirtfloor_n.png
+- Assets/Material/Dirtfloor.mat
+- Assets/Texture2D/rope_d.png
+- Assets/Mesh/Line012.asset
+- Assets/Shader/Custom_DirtfloorShader.shader
+- Assets/Mesh/Sphere009.asset
+- Assets/karvemast.asset
+- Assets/Mesh/Line004.asset
+- Assets/Mesh/Sphere004.asset
+- Assets/Mesh/Sphere011.asset
+- Assets/Texture2D/sail.png
+- Assets/Mesh/Line007.asset
+- Assets/Mesh/Sphere006.asset
+- Assets/Sprite/boarding_ramp.asset
+- Assets/Mesh/Line006.asset
+- Assets/Sprite/rope_ladder.asset
+- Assets/pattern_dot.png
+- Assets/Mesh/Sphere002.asset
+- Assets/rope_ladder.prefab
+- Assets/Sprite/customsail_tri.asset
+- Assets/Mesh/Cylinder001.asset
+- Assets/Sprite/customsail.asset
+- Assets/steering_wheel.asset
+- Assets/Sprite/dirtfloor_icon.asset
+- Assets/Material/RopeMat.mat
+- Assets/Mesh/Line003.asset
+- Assets/Mesh/Line011.asset
+- Assets/Texture2D/wood_59_diffuse 1.png
+- Assets/Texture2D/rope_n.png
+- Assets/Mesh/Line008.asset
+- Assets/Mesh/Sphere001.asset
+- Assets/Mesh/Sphere005.asset
+- Assets/Sprite/rope_anchor.asset
+- Assets/Mesh/Sphere003.asset
+- Assets/vikingmast.asset
+Dependencies: []

@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>1.0.1</Version>
+        <ProjectGuid>{05E33387-F302-4EB9-B002-7DF95DD37CE7}</ProjectGuid>
+    </PropertyGroup>
+    <Import Project="$(SolutionDir)\valheim.targets"/>
+</Project>
