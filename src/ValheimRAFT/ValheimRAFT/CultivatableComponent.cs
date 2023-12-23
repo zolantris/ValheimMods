@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimRAFT.Util;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
@@ -62,6 +63,8 @@ public class CultivatableComponent : MonoBehaviour
 		{
 			return;
 		}
+
+		Logger.LogInfo("OnDestroyed called for CultivateableComponent");
 		for (int i = 0; i < list.Count; i++)
 		{
 			ZDO zdo = ZDOPersistantID.Instance.GetZDO(list[i]);

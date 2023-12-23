@@ -7,7 +7,6 @@ using Jotunn;
 using UnityEngine;
 using ValheimRAFT.Util;
 using Logger = Jotunn.Logger;
-using Object = UnityEngine.Object;
 
 namespace ValheimRAFT;
 
@@ -44,6 +43,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   internal Ship m_ship;
 
+  internal MovableBaseZone m_shipZone;
+
   internal List<ZNetView> m_pieces = new();
 
   internal List<MastComponent> m_mastPieces = new();
@@ -74,17 +75,25 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void Awake()
   {
+    m_shipZone = gameObject.AddComponent<MovableBaseZone>();
     m_rigidbody = gameObject.AddComponent<Rigidbody>();
     m_rigidbody.isKinematic = true;
     m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     m_rigidbody.mass = 99999f;
+    // This force the shipzone to load
     // m_rigidbody.transform.SetParent(m_ship.transform);
     // transform.SetParent(m_rigidbody.transform);
     /*
      * This should work on both client and server, but the garbage collecting should only apply if the ZDOs are not persistent
      */
-    if (ZNet.instance.IsServer()) StartCoroutine(nameof(UpdatePieceSectors));
+    if (!ZNet.instance.IsClientInstance())
+      StartUpdatePieceSectors();
     // StartCoroutine(nameof(DeleteInvalidRafts));
+  }
+
+  public void StartUpdatePieceSectors()
+  {
+    StartCoroutine(nameof(UpdatePieceSectors));
   }
 
   /*
@@ -117,6 +126,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void CleanUp()
   {
+    Logger.LogWarning("cleanup called");
     StopCoroutine("ActivatePendingPieces");
     if (!ZNetScene.instance || m_id == 0) return;
 
@@ -125,6 +135,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
       var piece = m_pieces[i];
       if ((bool)piece)
       {
+        Logger.LogWarning("SetParent called on piece and unparenting it");
         piece.transform.SetParent(null);
         AddInactivePiece(m_id, piece);
       }
@@ -153,24 +164,27 @@ public class MoveableBaseRootComponent : MonoBehaviour
   public void LateUpdate()
   {
     Sync();
-    // if (!ZNet.instance.IsServer()) UpdateAllPieces();
+    // if (ZNet.instance.IsClientInstance()) UpdateAllPieces();
   }
 
   public void UpdateAllPieces()
   {
     var sector = ZoneSystem.instance.GetZone(transform.position);
-    if (!(sector != m_sector)) return;
+    Logger.LogInfo($"sector is: {sector} moveablezone is {m_shipZone.transform.position}");
+    if (sector == m_sector) return;
 
     m_sector = sector;
 
+    Logger.LogInfo("In new sector, updating all zdos");
     for (var i = 0; i < m_pieces.Count; i++)
     {
       var netview = m_pieces[i];
       if (!netview)
       {
-        ZLog.LogError($"Error, netview not detected, removing m_piece {m_pieces[i]}");
-        m_pieces.RemoveAt(i);
-        i--;
+        ZLog.LogError(
+          $"Error, netview not detected, SKIPPING the removal of m_piece {m_pieces[i]}");
+        // m_pieces.RemoveAt(i);
+        // i--;
       }
       else
       {
@@ -178,6 +192,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
       }
     }
   }
+  
 
 
   /**
@@ -189,6 +204,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   {
     var pos = transform.position;
     var sector = ZoneSystem.instance.GetZone(pos);
+    Logger.LogInfo($"Sector getZone {sector}");
     if (sector != m_sector)
     {
       m_sector = sector;
@@ -197,7 +213,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
         var zdo = list[i];
 
         // This could also be a problem. If the zdo is created but the ship is in part of another sector it gets cut off.
-        if (!(zdo.GetSector() != sector)) continue;
+        if (zdo.GetSector() == sector) continue;
 
         var id = zdo.GetInt(MBParentIdHash);
         if (id != m_id)
@@ -313,14 +329,15 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void DestroyPiece(WearNTear wnt)
   {
-    var netview = wnt.GetComponent<ZNetView>();
-    RemovePiece(netview);
-    UpdatePieceCount();
-    if (GetPieceCount() == 0)
-    {
-      m_ship.GetComponent<WearNTear>().Destroy();
-      Destroy(gameObject);
-    }
+    Logger.LogWarning("DestroyPiece called but logic skipped");
+    // var netview = wnt.GetComponent<ZNetView>();
+    // RemovePiece(netview);
+    // UpdatePieceCount();
+    // if (GetPieceCount() == 0)
+    // {
+    //   m_ship.GetComponent<WearNTear>().Destroy();
+    //   Destroy(gameObject);
+    // }
   }
 
   public void DestroyBoat()
@@ -445,6 +462,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     // this codeblock was left unhandled. I wonder if there needs to be an early exit or fix for MBRaft specifically.
     if (zdo.m_prefab == "MBRaft".GetStableHashCode())
     {
+      return;
     }
 
     var id = GetParentID(zdo);
@@ -565,13 +583,14 @@ public class MoveableBaseRootComponent : MonoBehaviour
       netview.m_zdo.Set(MBPositionHash, netview.transform.localPosition);
     }
 
-    AddPiece(netview);
     InitZDO(netview.m_zdo);
+    // addPieced must be called otherwise the piece can be considered invalid
+    AddPiece(netview);
   }
 
   public void AddPiece(ZNetView netview)
   {
-    netview.transform.SetParent(m_ship.transform);
+    netview.transform.SetParent(transform);
     m_pieces.Add(netview);
     UpdatePieceCount();
     EncapsulateBounds(netview);
@@ -634,7 +653,11 @@ public class MoveableBaseRootComponent : MonoBehaviour
     var rbs = netview.GetComponentsInChildren<Rigidbody>();
     for (var i = 0; i < rbs.Length; i++)
       if (rbs[i].isKinematic)
+      {
+        Logger.LogError(
+          $"MoveableBaseRootComponent.AddPiece() Calling destroy on rigidbody {rbs[i]}");
         Destroy(rbs[i]);
+      }
 
     UpdateStats();
   }

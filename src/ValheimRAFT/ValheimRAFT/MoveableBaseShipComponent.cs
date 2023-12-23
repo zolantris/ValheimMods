@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 using ValheimRAFT.Util;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
@@ -59,9 +60,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_rigidbody = GetComponent<Rigidbody>();
     m_baseRoot.m_syncRigidbody = m_rigidbody;
     m_rigidbody.mass = 1000f;
-    // previously
     m_baseRootObject.transform.SetParent(null);
-    // m_rigidbody.transform.SetParent(transform);
     m_baseRootObject.transform.position = transform.position;
     m_baseRootObject.transform.rotation = transform.rotation;
     ship.transform.Find("ship/visual/mast")?.gameObject.SetActive(false);
@@ -74,7 +73,9 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.m_onboardcollider =
       colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "OnboardTrigger");
     ZLog.Log($"ONBOARD COLLIDER {m_baseRoot.m_onboardcollider}, collider must not be null");
-    m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    if (m_baseRoot.m_onboardcollider != null)
+      m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    
     m_baseRoot.m_floatcollider = ship.m_floatCollider;
     m_baseRoot.m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     m_baseRoot.m_blockingcollider = ship.transform.Find("ship/colliders/Cube")
@@ -83,7 +84,12 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
     m_baseRoot.m_blockingcollider.transform.parent.gameObject.layer =
       ValheimRaftPlugin.CustomRaftLayer;
-    ZLog.Log($"Activating MBRoot: {m_baseRoot.m_id}");
+    ZLog.Log($"Activating MBRoot: {m_baseRoot.m_id} {m_baseRoot.transform}");
+
+
+    m_baseRoot.m_shipZone.transform.SetParent(m_baseRoot.transform);
+    m_baseRoot.m_shipZone.RegisterBoatZone();
+    
     m_baseRoot.ActivatePendingPiecesCoroutine();
     FirstTimeCreation();
   }
@@ -100,8 +106,19 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   public void OnDestroy()
   {
+    Logger.LogError("OnDestroy called, removing all objects");
+    var skipDestroy = true;
+    if (skipDestroy)
+    {
+      return;
+    }
+    
     if ((bool)m_baseRoot)
     {
+      if (m_baseRoot.m_ship)
+      {
+        Destroy(m_baseRoot.m_ship.gameObject);
+      }
       m_baseRoot.CleanUp();
       Destroy(m_baseRoot.gameObject);
     }

@@ -5,6 +5,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT.Util;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;
 
@@ -424,18 +425,42 @@ public class ValheimRAFT_Patch
 
   [HarmonyPatch(typeof(ZNetView), "OnDestroy")]
   [HarmonyPrefix]
-  private static void ZNetView_OnDestroy(ZNetView __instance)
+  private static bool ZNetView_OnDestroy(ZNetView __instance)
   {
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-    if ((bool)mbr) mbr.RemovePiece(__instance);
+    if ((bool)mbr)
+    {
+      Logger.LogWarning(
+        "ZNetView_OnDestroy called for the MoveableBaseRoot skipping, but this indicates an error, Running local fix which moves the ship back to position");
+      // mbr.RemovePiece(__instance);
+      // mbr.UpdateAllPieces();
+      // mbr.StartUpdatePieceSectors();
+      if (Player.m_localPlayer.transform.IsChildOf(mbr.transform))
+      {
+        ZLog.LogWarning(
+          "Error encountered with the RAFT, automatically regenerating it since the player was attached it the raft");
+        MoveRaftConsoleCommand.MoveRaft(Player.m_localPlayer, mbr.m_ship, new Vector3(0, 0, 0));
+      }
+
+      return false;
+    }
+
+    return true;
   }
 
   [HarmonyPatch(typeof(WearNTear), "Destroy")]
   [HarmonyPrefix]
-  private static void WearNTear_Destroy(WearNTear __instance)
+  private static bool WearNTear_Destroy(WearNTear __instance)
   {
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-    if ((bool)mbr) mbr.DestroyPiece(__instance);
+    if ((bool)mbr)
+    {
+      Logger.LogError("WearNTear_Destroy called on MoveableBaseRoot skipping");
+      // mbr.DestroyPiece(__instance);
+      return false;
+    }
+
+    return true;
   }
 
   [HarmonyPatch(typeof(WearNTear), "ApplyDamage")]
@@ -520,6 +545,12 @@ public class ValheimRAFT_Patch
 
     return false;
   }
+
+  // [HarmonyPatch(typeof(ZoneSystem.ZoneLocation), 'd')]
+  // [HarmonyPrefix]
+  // private static void ZoneLocation_Unload()
+  // {
+  // }
 
   [HarmonyPatch(typeof(Character), "UpdateGroundContact")]
   [HarmonyPostfix]
