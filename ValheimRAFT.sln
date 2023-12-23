@@ -1,7 +1,7 @@
 
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ValheimRAFT", "ValheimRAFT.csproj", "{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ValheimRAFT", ".\src\ValheimRAFT\ValheimRAFT.csproj", "{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

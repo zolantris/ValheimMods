@@ -10,9 +10,10 @@
         <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </PropertyGroup>
 
-    <Import Project="$(SolutionDir)\.props" Condition="Exists('$(SolutionDir)\.props')"/>
+    <Import Project=".props" Condition="Exists('.props')"/>
 
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU'">
+        <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugSymbols>true</DebugSymbols>
         <DebugType>full</DebugType>
         <Optimize>false</Optimize>
@@ -20,15 +21,17 @@
         <DefineConstants>DEBUG;TRACE</DefineConstants>
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU'">
+        <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugType>pdbonly</DebugType>
         <Optimize>true</Optimize>
         <OutputPath>bin\Release\</OutputPath>
         <DefineConstants>TRACE</DefineConstants>
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <!--  disables cache which can prevent building or running stuff  -->
@@ -85,8 +88,15 @@
     <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
         <StartAction>Program</StartAction>
         <StartProgram>$(GamePath)\valheim.exe</StartProgram>
-        <StartArguments>-console</StartArguments>
+        <StartArguments>-console --doorstop-enable true --doorstop-target $(HOMEPATH)\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll</StartArguments>
         <StartWorkingDirectory>$(GamePath)</StartWorkingDirectory>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+        <StartAction>Program</StartAction>
+        <StartProgram>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server\start_headless_server.bat</StartProgram>
+        <!--        <StartArguments>-console &#45;&#45;doorstop-enable true &#45;&#45;doorstop-target $(HOMEPATH)\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll</StartArguments>-->
+        <StartWorkingDirectory>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</StartWorkingDirectory>
     </PropertyGroup>
 
     <!-- Add BepInEx references -->
@@ -293,7 +303,9 @@
 
     <ItemGroup Label="required-mods">
         <Reference Include="Jotunn">
+            <SpecificVersion>False</SpecificVersion>
             <HintPath>..\..\libs\Jotunn.dll</HintPath>
+            <Private>False</Private>
         </Reference>
     </ItemGroup>
 
@@ -309,7 +321,7 @@
     </ItemGroup>
 
     <!-- Copy to plugins folder and zip -->
-    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <!-- <Target Name="PostBuild" AfterTargets="PostBuildEvent">
         <ItemGroup>
             <AllFiles Include="$(TargetDir)**\*.*" Exclude="$(TargetDir)**\*.pdb"/>
         </ItemGroup>
@@ -318,6 +330,6 @@
         <Copy SourceFiles="@(AllFiles)" DestinationFolder="$(TargetDir)..\Release\%(RecursiveDir)"/>
         <ZipDirectory SourceDirectory="$(TargetDir)..\Release" DestinationFile="$(ProjectDir)\bin\$(TargetName).zip"/>
         <RemoveDir Directories="$(TargetDir)..\Release"/>
-    </Target>
+    </Target> -->
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>
