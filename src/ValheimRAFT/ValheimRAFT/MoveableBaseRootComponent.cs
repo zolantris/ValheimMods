@@ -84,6 +84,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
      */
     if (ZNet.instance.IsServer())
     {
+      ZLog.LogWarning("Starting UpdatePieceSectors");
       StartCoroutine(nameof(UpdatePieceSectors));
       // StartCoroutine(nameof(DeleteInvalidRafts));
     }
@@ -162,7 +163,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   public void LateUpdate()
   {
     Sync();
-    if (!ZNet.instance.IsServer())
+    if (!ZNet.instance.IsServer() && !ZNet.instance.IsClientInstance())
     {
       UpdateAllPieces();
     }
@@ -226,9 +227,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
         }
 
         zdo.SetPosition(pos);
-        yield return null;
       }
     }
+
+    yield return null;
   }
 
   /*
@@ -274,8 +276,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
         yield return UpdatePieceSectorWorker(list);
       }
 
-      yield return new WaitForEndOfFrame();
       list = null;
+      yield return new WaitForEndOfFrame();
     }
   }
 
