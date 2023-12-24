@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Util
 {
@@ -15,6 +16,7 @@ namespace ValheimRAFT.Util
 
     public bool GetPersistentID(ZDO zdo, out int id)
     {
+      // Logger.LogInfo($"GetPersistentID called {PersistantIDHash}");
       id = zdo.GetInt(ZDOPersistantID.PersistantIDHash, 0);
       return id != 0;
     }
@@ -28,7 +30,7 @@ namespace ValheimRAFT.Util
       if (id == 0)
       {
         id = ZDOPersistantID.ZDOIDToId(zdo.m_uid);
-        ZLog.LogWarning($"ZDOIDToId(): ZDO ID was 0, now {id}");
+        // ZLog.LogWarning($"ZDOIDToId(): ZDO ID was 0, now {id}");
         while (this.m_zdoGuidLookup.ContainsKey(id))
           ++id;
         zdo.Set(ZDOPersistantID.PersistantIDHash, id, false);

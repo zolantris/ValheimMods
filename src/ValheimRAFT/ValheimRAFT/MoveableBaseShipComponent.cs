@@ -113,6 +113,18 @@ public class MoveableBaseShipComponent : MonoBehaviour
    */
   private void FirstTimeCreation()
   {
+    if (m_baseRoot.GetPieceCount() > 0)
+      foreach (var piece in m_baseRoot.m_pieces)
+        if (piece.m_zdo == null)
+        {
+          var prefabName = piece.GetPrefabName();
+          var prefab = ZNetScene.instance.GetPrefab(prefabName);
+          var obj = Instantiate(prefab, m_baseRoot.transform);
+          obj.transform.localPosition = piece.transform.localPosition;
+          obj.transform.localScale = piece.transform.localScale;
+          obj.transform.localRotation = piece.transform.localRotation;
+        }
+
     if (m_baseRoot.GetPieceCount() != 0)
     {
       return;
@@ -126,7 +138,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
         Vector3 pt = base.transform.TransformPoint(new Vector3(x, 0.6f, z));
         var obj = Instantiate(floor, pt, transform.rotation);
         ZNetView netview = obj.GetComponent<ZNetView>();
-        netview.m_zdo = null;
+        // netview.m_zdo = null;
         m_baseRoot.AddNewPiece(netview);
       }
     }

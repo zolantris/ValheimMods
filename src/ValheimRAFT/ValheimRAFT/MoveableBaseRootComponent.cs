@@ -60,6 +60,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   internal List<BoardingRampComponent> m_boardingRamps = new List<BoardingRampComponent>();
 
   private Vector2i m_sector;
+  private Vector2i m_serverSector;
 
   private Bounds m_bounds = default(Bounds);
 
@@ -91,7 +92,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     if (ZNet.instance.IsServer())
     {
       ZLog.LogWarning("Starting UpdatePieceSectors");
-      // StartCoroutine(nameof(UpdatePieceSectors));
+      StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
       // StartCoroutine(nameof(DeleteInvalidRafts));
     }
   }
@@ -166,62 +167,77 @@ public class MoveableBaseRootComponent : MonoBehaviour
     Sync();
   }
 
+  /*
+   * @important, server does not have access to lifecycle methods so a coroutine is required to update things
+   */
   public void LateUpdate()
   {
     Sync();
-    if (!ZNet.instance.IsServer() && !ZNet.instance.IsClientInstance())
+    if (!ZNet.instance.IsServer())
     {
       UpdateAllPieces();
     }
-    else
-    {
-      var output = m_allPieces.TryGetValue(m_id, out var list);
 
-      if (output) UpdatePiecesInSector(list);
+    if (ZNet.instance.IsServerInstance())
+    {
+      Logger.LogError("Somehow server called LATE UPDATE");
     }
   }
 
   public void UpdateAllPieces()
   {
     Vector2i sector = ZoneSystem.instance.GetZone(base.transform.position);
-    if (!(sector != m_sector))
+    if (m_sector != m_serverSector)
+    {
+      StopCoroutine("UpdatePiecesInEachSectorWorker");
+      StartCoroutine("UpdatePiecesInEachSectorWorker");
+    }
+
+    if (sector == m_sector)
     {
       return;
     }
 
     m_sector = sector;
 
-
     for (int i = 0; i < m_pieces.Count; i++)
     {
       ZNetView netview = m_pieces[i];
       if (!netview)
       {
-        Logger.LogWarning($"Error found with m_pieces: netview {netview}");
+        Logger.LogError($"Error found with m_pieces: netview {netview}");
         // m_pieces.RemoveAt(i);
         // i--;
       }
       else
       {
+        if (transform.position != netview.transform.position)
+        {
+          Logger.LogError("transform position mismatch with netview");
+          netview.transform.SetParent(transform);
+        }
         netview.m_zdo.SetPosition(base.transform.position);
       }
     }
   }
 
 
-  public void UpdatePiecesInSector(List<ZDO> list)
+  public void UpdatePieces(List<ZDO> list)
   {
     var pos = transform.position;
     var sector = ZoneSystem.instance.GetZone(pos);
-    if (sector != m_sector)
+    if (m_serverSector != sector)
     {
-      m_sector = sector;
+      if (sector != m_sector) m_sector = sector;
+
+      m_serverSector = sector;
+      
       for (var i = 0; i < list.Count; i++)
       {
         var zdo = list[i];
 
         // This could also be a problem. If the zdo is created but the ship is in part of another sector it gets cut off.
-        if (!(zdo.GetSector() != sector)) continue;
+        if (zdo.GetSector() == sector) continue;
 
         var id = zdo.GetInt(MBParentIdHash);
         if (id != m_id)
@@ -244,9 +260,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
    *
    * @todo setPosition should not need to be called unless the item is out of alignment. In theory it should be relative to parent so it never should be out of alignment.
    */
-  public IEnumerator UpdatePiecesInSectorWorker(List<ZDO> list)
+  public IEnumerator UpdatePiecesWorker(List<ZDO> list)
   {
-    UpdatePiecesInSector(list);
+    UpdatePieces(list);
     yield return null;
   }
 
@@ -279,26 +295,27 @@ public class MoveableBaseRootComponent : MonoBehaviour
         continue;
       }
 
-      var maxItemPerPool = 5000;
-      if (list.Count > maxItemPerPool)
-      {
-        var iterators = new List<Coroutine>();
-        for (int i = 0; i < list.Count;)
-        {
-          var itemsToRender = list.Skip(0).Take(maxItemPerPool).ToList();
-          iterators.Add(StartCoroutine(UpdatePiecesInSectorWorker(itemsToRender)));
-          i += maxItemPerPool;
-        }
-
-        foreach (var t in iterators)
-        {
-          yield return t;
-        }
-      }
-      else
-      {
-        yield return StartCoroutine(UpdatePieceSectorWorker(list));
-      }
+      UpdatePieces(list);
+      // var maxItemPerPool = 5000;
+      // if (list.Count > maxItemPerPool)
+      // {
+      //   var iterators = new List<Coroutine>();
+      //   for (int i = 0; i < list.Count;)
+      //   {
+      //     var itemsToRender = list.Skip(0).Take(maxItemPerPool).ToList();
+      //     iterators.Add(StartCoroutine(UpdatePiecesWorker(itemsToRender)));
+      //     i += maxItemPerPool;
+      //   }
+      //
+      //   foreach (var t in iterators)
+      //   {
+      //     yield return t;
+      //   }
+      // }
+      // else
+      // {
+      //   yield return StartCoroutine(UpdatePiecesWorker(list));
+      // }
 
       list = null;
       yield return new WaitForEndOfFrame();
