@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using UnityEngine;
 using ValheimRAFT.Util;
-using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
@@ -38,7 +37,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   public void Awake()
   {
-    var ship = GetComponent<Ship>();
+    Ship ship = GetComponent<Ship>();
     m_nview = GetComponent<ZNetView>();
     m_zsync = GetComponent<ZSyncTransform>();
     m_ship = GetComponent<Ship>();
@@ -48,7 +47,6 @@ public class MoveableBaseShipComponent : MonoBehaviour
       layer = 0
     };
     m_baseRoot = m_baseRootObject.AddComponent<MoveableBaseRootComponent>();
-    m_baseRoot.transform.SetParent(m_ship.transform);
     m_nview.Register("SetAnchor",
       delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
     m_nview.Register("SetVisual",
@@ -61,21 +59,19 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.m_syncRigidbody = m_rigidbody;
     m_rigidbody.mass = 1000f;
     m_baseRootObject.transform.SetParent(null);
-    m_baseRootObject.transform.position = transform.position;
-    m_baseRootObject.transform.rotation = transform.rotation;
-    ship.transform.Find("ship/visual/mast")?.gameObject.SetActive(false);
-    ship.transform.Find("ship/colliders/log")?.gameObject.SetActive(false);
-    ship.transform.Find("ship/colliders/log (1)")?.gameObject.SetActive(false);
-    ship.transform.Find("ship/colliders/log (2)")?.gameObject.SetActive(false);
-    ship.transform.Find("ship/colliders/log (3)")?.gameObject.SetActive(false);
+    m_baseRootObject.transform.position = base.transform.position;
+    m_baseRootObject.transform.rotation = base.transform.rotation;
+    ship.transform.Find("ship/visual/mast")?.gameObject.SetActive(value: false);
+    ship.transform.Find("ship/colliders/log")?.gameObject.SetActive(value: false);
+    ship.transform.Find("ship/colliders/log (1)")?.gameObject.SetActive(value: false);
+    ship.transform.Find("ship/colliders/log (2)")?.gameObject.SetActive(value: false);
+    ship.transform.Find("ship/colliders/log (3)")?.gameObject.SetActive(value: false);
     UpdateVisual();
-    var colliders = transform.GetComponentsInChildren<BoxCollider>();
+    BoxCollider[] colliders = base.transform.GetComponentsInChildren<BoxCollider>();
     m_baseRoot.m_onboardcollider =
       colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "OnboardTrigger");
     ZLog.Log($"ONBOARD COLLIDER {m_baseRoot.m_onboardcollider}, collider must not be null");
-    if (m_baseRoot.m_onboardcollider != null)
-      m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    
+    m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     m_baseRoot.m_floatcollider = ship.m_floatCollider;
     m_baseRoot.m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     m_baseRoot.m_blockingcollider = ship.transform.Find("ship/colliders/Cube")
@@ -84,12 +80,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
     m_baseRoot.m_blockingcollider.transform.parent.gameObject.layer =
       ValheimRaftPlugin.CustomRaftLayer;
-    ZLog.Log($"Activating MBRoot: {m_baseRoot.m_id} {m_baseRoot.transform}");
-
-
-    m_baseRoot.m_shipZone.transform.SetParent(m_baseRoot.transform);
-    m_baseRoot.m_shipZone.RegisterBoatZone();
-    
+    ZLog.Log($"Activating MBRoot: {m_baseRoot.m_id}");
     m_baseRoot.ActivatePendingPiecesCoroutine();
     FirstTimeCreation();
   }
@@ -99,28 +90,17 @@ public class MoveableBaseShipComponent : MonoBehaviour
     if (m_nview.m_zdo != null)
     {
       m_flags = (MBFlags)m_nview.m_zdo.GetInt("MBFlags", (int)m_flags);
-      transform.Find("ship/visual").gameObject.SetActive(!m_flags.HasFlag(MBFlags.HideMesh));
-      transform.Find("interactive").gameObject.SetActive(!m_flags.HasFlag(MBFlags.HideMesh));
+      base.transform.Find("ship/visual").gameObject.SetActive(!m_flags.HasFlag(MBFlags.HideMesh));
+      base.transform.Find("interactive").gameObject.SetActive(!m_flags.HasFlag(MBFlags.HideMesh));
     }
   }
 
   public void OnDestroy()
   {
-    Logger.LogError("OnDestroy called, removing all objects");
-    var skipDestroy = true;
-    if (skipDestroy)
-    {
-      return;
-    }
-    
     if ((bool)m_baseRoot)
     {
-      if (m_baseRoot.m_ship)
-      {
-        Destroy(m_baseRoot.m_ship.gameObject);
-      }
       m_baseRoot.CleanUp();
-      Destroy(m_baseRoot.gameObject);
+      UnityEngine.Object.Destroy(m_baseRoot.gameObject);
     }
   }
 
@@ -129,22 +109,30 @@ public class MoveableBaseShipComponent : MonoBehaviour
    */
   private void FirstTimeCreation()
   {
-    if (m_baseRoot.GetPieceCount() != 0) return;
-
-    var floor = ZNetScene.instance.GetPrefab("wood_floor");
-    for (var x = -1f; x < 1.01f; x += 2f)
-    for (var z = -2f; z < 2.01f; z += 2f)
+    if (m_baseRoot.GetPieceCount() != 0)
     {
-      var pt = transform.TransformPoint(new Vector3(x, 0.6f, z));
-      var obj = Instantiate(floor, pt, transform.rotation);
-      var netview = obj.GetComponent<ZNetView>();
-      m_baseRoot.AddNewPiece(netview);
+      return;
+    }
+
+    GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
+    for (float x = -1f; x < 1.01f; x += 2f)
+    {
+      for (float z = -2f; z < 2.01f; z += 2f)
+      {
+        Vector3 pt = base.transform.TransformPoint(new Vector3(x, 0.6f, z));
+        GameObject obj = Instantiate(floor, pt, base.transform.rotation);
+        ZNetView netview = obj.GetComponent<ZNetView>();
+        m_baseRoot.AddNewPiece(netview);
+      }
     }
   }
 
   internal void Accend()
   {
-    if (m_flags.HasFlag(MBFlags.IsAnchored)) SetAnchor(false);
+    if (m_flags.HasFlag(MBFlags.IsAnchored))
+    {
+      SetAnchor(state: false);
+    }
 
     if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
     {
@@ -152,7 +140,10 @@ public class MoveableBaseShipComponent : MonoBehaviour
     }
     else
     {
-      if (!m_baseRoot || !m_baseRoot.m_floatcollider) return;
+      if (!m_baseRoot || !m_baseRoot.m_floatcollider)
+      {
+        return;
+      }
 
       m_targetHeight = Mathf.Clamp(m_baseRoot.m_floatcollider.transform.position.y + 1f,
         ZoneSystem.instance.m_waterLevel, 200f);
@@ -163,21 +154,29 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   internal void Descent()
   {
-    if (m_flags.HasFlag(MBFlags.IsAnchored)) SetAnchor(false);
+    if (m_flags.HasFlag(MBFlags.IsAnchored))
+    {
+      SetAnchor(state: false);
+    }
 
-    var oldTargetHeight = m_targetHeight;
+    float oldTargetHeight = m_targetHeight;
     if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
     {
       m_targetHeight = 0f;
     }
     else
     {
-      if (!m_baseRoot || !m_baseRoot.m_floatcollider) return;
+      if (!m_baseRoot || !m_baseRoot.m_floatcollider)
+      {
+        return;
+      }
 
       m_targetHeight = Mathf.Clamp(m_baseRoot.m_floatcollider.transform.position.y - 1f,
         ZoneSystem.instance.m_waterLevel, 200f);
       if (m_baseRoot.m_floatcollider.transform.position.y - 1f <= ZoneSystem.instance.m_waterLevel)
+      {
         m_targetHeight = 0f;
+      }
     }
 
     m_nview.m_zdo.Set("MBTargetHeight", m_targetHeight);
@@ -185,24 +184,27 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   internal void UpdateStats(bool flight)
   {
-    if (!m_rigidbody || !m_baseRoot || m_baseRoot.m_statsOverride) return;
+    if (!m_rigidbody || !m_baseRoot || m_baseRoot.m_statsOverride)
+    {
+      return;
+    }
 
     m_rigidbody.mass = 3000f;
-    m_rigidbody.angularDrag = flight ? 1f : 0f;
-    m_rigidbody.drag = flight ? 1f : 0f;
+    m_rigidbody.angularDrag = (flight ? 1f : 0f);
+    m_rigidbody.drag = (flight ? 1f : 0f);
     if ((bool)m_ship)
     {
-      m_ship.m_angularDamping = flight ? 5f : 0.8f;
+      m_ship.m_angularDamping = (flight ? 5f : 0.8f);
       m_ship.m_backwardForce = 1f;
-      m_ship.m_damping = flight ? 5f : 0.35f;
-      m_ship.m_dampingSideway = flight ? 3f : 0.3f;
+      m_ship.m_damping = (flight ? 5f : 0.35f);
+      m_ship.m_dampingSideway = (flight ? 3f : 0.3f);
       m_ship.m_force = 3f;
       m_ship.m_forceDistance = 5f;
-      m_ship.m_sailForceFactor = flight ? 0.2f : 0.05f;
-      m_ship.m_stearForce = flight ? 0.2f : 1f;
+      m_ship.m_sailForceFactor = (flight ? 0.2f : 0.05f);
+      m_ship.m_stearForce = (flight ? 0.2f : 1f);
       m_ship.m_stearVelForceFactor = 1.3f;
       m_ship.m_waterImpactDamage = 0f;
-      var impact = m_ship.GetComponent<ImpactEffect>();
+      ImpactEffect impact = m_ship.GetComponent<ImpactEffect>();
       if ((bool)impact)
       {
         impact.m_interval = 0.1f;
@@ -219,7 +221,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   public void RPC_SetAnchor(long sender, bool state)
   {
-    m_flags = state ? m_flags | MBFlags.IsAnchored : m_flags & ~MBFlags.IsAnchored;
+    m_flags = (state ? (m_flags | MBFlags.IsAnchored) : (m_flags & ~MBFlags.IsAnchored));
     m_nview.m_zdo.Set("MBFlags", (int)m_flags);
   }
 
@@ -230,7 +232,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   public void RPC_SetVisual(long sender, bool state)
   {
-    m_flags = state ? m_flags | MBFlags.HideMesh : m_flags & ~MBFlags.HideMesh;
+    m_flags = (state ? (m_flags | MBFlags.HideMesh) : (m_flags & ~MBFlags.HideMesh));
     m_nview.m_zdo.Set("MBFlags", (int)m_flags);
     UpdateVisual();
   }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using ValheimRAFT.Util;
-using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
@@ -90,14 +89,12 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 		m_rope = GetComponent<LineRenderer>();
 		m_nview = GetComponent<ZNetView>();
 		WearNTear wnt = GetComponent<WearNTear>();
-		
 		wnt.m_onDestroyed = (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(DestroyAllRopes));
 		LoadFromZDO();
 	}
 
 	private void DestroyAllRopes()
 	{
-		Logger.LogInfo("RopeAnchorCalled DestroyAllRopes");
 		while (m_ropes.Count > 0)
 		{
 			RemoveRopeAt(0);

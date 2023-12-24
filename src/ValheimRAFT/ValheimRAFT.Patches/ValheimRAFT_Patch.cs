@@ -430,9 +430,9 @@ public class ValheimRAFT_Patch
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbr)
     {
-      Logger.LogWarning(
-        "ZNetView_OnDestroy called for the MoveableBaseRoot skipping, but this indicates an error, Running local fix which moves the ship back to position");
-      // mbr.RemovePiece(__instance);
+      // Logger.LogWarning(
+      // "ZNetView_OnDestroy called for the MoveableBaseRoot skipping, but this indicates an error, Running local fix which moves the ship back to position");
+      mbr.RemovePiece(__instance);
       // mbr.UpdateAllPieces();
       // mbr.StartUpdatePieceSectors();
       if (Player.m_localPlayer.transform.IsChildOf(mbr.transform))
@@ -455,9 +455,8 @@ public class ValheimRAFT_Patch
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbr)
     {
-      Logger.LogError("WearNTear_Destroy called on MoveableBaseRoot skipping");
-      // mbr.DestroyPiece(__instance);
-      return false;
+      // Logger.LogError("WearNTear_Destroy called on MoveableBaseRoot skipping");
+      mbr.DestroyPiece(__instance);
     }
 
     return true;

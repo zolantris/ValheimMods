@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Util
 {
@@ -51,7 +50,6 @@ namespace ValheimRAFT.Util
 
     public void Unregister(ZDO zdo)
     {
-      // Logger.LogWarning($"Unregister called for {zdo.m_uid}");
       int id;
       if (!this.GetPersistentID(zdo, out id))
         return;
