@@ -299,6 +299,11 @@
             <HintPath>$(ManagedDataPath)\UnityEngine.AssetBundleModule.dll</HintPath>
             <Private>False</Private>
         </Reference>
+        <Reference Include="UnityEngine.IMGUIModule">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>$(ManagedDataPath)\UnityEngine.IMGUIModule.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
     </ItemGroup>
 
     <ItemGroup Label="required-mods">

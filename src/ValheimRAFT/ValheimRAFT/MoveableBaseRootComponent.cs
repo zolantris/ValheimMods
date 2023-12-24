@@ -190,6 +190,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     if (m_sector != m_serverSector)
     {
       StopCoroutine("UpdatePiecesInEachSectorWorker");
+      // this basically means we are running it on the client now too. There needs to be a way to directly tell server to stop the coroutine
       StartCoroutine("UpdatePiecesInEachSectorWorker");
     }
 
@@ -269,6 +270,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
   /*
    * This method IS important, but it also seems heavily related to causing the raft to disappear if it fails.
    *
+   * - Apparently to get this working this method must also fire on the client & on server.
+   *
    * - This method must fire when a zone loads, otherwise the items will be in a box position until they are renders.
    * - For larger ships, this can take up to 20 seconds. Yikes.
    *
@@ -276,7 +279,6 @@ public class MoveableBaseRootComponent : MonoBehaviour
    */
   public IEnumerator UpdatePiecesInEachSectorWorker()
   {
-    Logger.LogInfo("init UpdatePieceSectors");
     while (true)
     {
       /*
