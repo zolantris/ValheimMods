@@ -6,6 +6,7 @@ using System.Linq;
 using Jotunn;
 using UnityEngine;
 using ValheimRAFT.Util;
+using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
 namespace ValheimRAFT;
@@ -183,8 +184,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
       ZNetView netview = m_pieces[i];
       if (!netview)
       {
-        m_pieces.RemoveAt(i);
-        i--;
+        Logger.LogWarning($"Error found with m_pieces: netview {netview}");
+        // m_pieces.RemoveAt(i);
+        // i--;
       }
       else
       {
@@ -211,18 +213,15 @@ public class MoveableBaseRootComponent : MonoBehaviour
         ZDO zdo = list[i];
 
         // This could also be a problem. If the zdo is created but the ship is in part of another sector it gets cut off.
-        // if (!(zdo.GetSector() != sector))
-        // {
-        //   continue;
-        // }
+        if (!(zdo.GetSector() != sector)) continue;
 
         int id = zdo.GetInt(MBParentIdHash);
         if (id != m_id)
         {
           Jotunn.Logger.LogWarning("Invalid piece in piece list found, removing.");
           ZLog.LogWarning($"zdo uid: {zdo.m_uid} zdoId:{id} does not match id:{id}");
-          list.FastRemoveAt(i);
-          i--;
+          // list.FastRemoveAt(i);
+          // i--;
           continue;
         }
 

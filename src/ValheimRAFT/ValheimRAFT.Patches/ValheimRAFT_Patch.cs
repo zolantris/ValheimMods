@@ -430,19 +430,16 @@ public class ValheimRAFT_Patch
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbr)
     {
-      // Logger.LogWarning(
-      // "ZNetView_OnDestroy called for the MoveableBaseRoot skipping, but this indicates an error, Running local fix which moves the ship back to position");
       mbr.RemovePiece(__instance);
-      // mbr.UpdateAllPieces();
-      // mbr.StartUpdatePieceSectors();
-      if (Player.m_localPlayer.transform.IsChildOf(mbr.transform))
+      if (ValheimRaftPlugin.Instance.DisplacedRaftAutoFix.Value &&
+          (bool)Player.m_localPlayer && Player.m_localPlayer.transform.IsChildOf(mbr.transform))
       {
         ZLog.LogWarning(
-          "Error encountered with the RAFT, automatically regenerating it since the player was attached it the raft");
+          "DisplacedRaftAutoFix enabled: automatically regenerating broken since the player was attached it the raft");
         MoveRaftConsoleCommand.MoveRaft(Player.m_localPlayer, mbr.m_ship, new Vector3(0, 0, 0));
+        // only regenerate if the raft glitches out
+        return false;
       }
-
-      return false;
     }
 
     return true;

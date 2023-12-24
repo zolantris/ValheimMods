@@ -48,6 +48,7 @@ namespace ValheimRAFT
     public ConfigEntry<float> RaftHealth { get; set; }
     public ConfigEntry<float> ServerRaftUpdateZoneInterval { get; set; }
     public ConfigEntry<float> RaftSailForceMultiplier { get; set; }
+    public ConfigEntry<bool> DisplacedRaftAutoFix { get; set; }
 
     /**
      * These folder names are matched for the CustomTexturesGroup
@@ -60,6 +61,9 @@ namespace ValheimRAFT
     public void Awake()
     {
       Instance = this;
+      DisplacedRaftAutoFix = Config.Bind("Debug",
+        "DisplacedRaftAutoFix", false,
+        "Automatically fix a displaced glitched out raft if the player is standing on the raft. This will make the player fall into the water briefly but avoid having to run 'raftoffset 0 0 0'");
       RaftSailForceMultiplier = Config.Bind("Config", "RaftSailForceMultiplier", 4f,
         "Set the sailforce multipler of the raft. 1 was the original value");
       RaftHealth = Config.Bind<float>("Config", "raftHealth", 500f,
