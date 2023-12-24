@@ -59,7 +59,10 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.m_syncRigidbody = m_rigidbody;
     m_rigidbody.mass = 1000f;
     m_baseRootObject.transform.SetParent(null);
-    m_baseRootObject.transform.SetParent(ship.transform);
+
+    // m_baseRootObject.transform.SetParent(ship.transform);
+    m_baseRoot.m_baseShip = this;
+    
     m_baseRootObject.transform.position = base.transform.position;
     m_baseRootObject.transform.rotation = base.transform.rotation;
     ship.transform.Find("ship/visual/mast")?.gameObject.SetActive(value: false);
@@ -184,7 +187,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_nview.m_zdo.Set("MBTargetHeight", m_targetHeight);
   }
 
-  internal void UpdateStats(bool flight)
+  public void UpdateStats(bool flight)
   {
     if (!m_rigidbody || !m_baseRoot || m_baseRoot.m_statsOverride)
     {

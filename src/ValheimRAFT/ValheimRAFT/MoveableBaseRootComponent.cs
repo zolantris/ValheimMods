@@ -30,6 +30,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
   internal static Dictionary<int, List<ZNetView>> m_pendingPieces =
     new Dictionary<int, List<ZNetView>>();
 
+  internal static Dictionary<int, List<ZNetView>> m_nonZdoPieces = new();
+  
   internal static Dictionary<int, List<ZDO>> m_allPieces = new Dictionary<int, List<ZDO>>();
 
   internal static Dictionary<int, List<ZDOID>>
@@ -73,6 +75,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   private static bool itemsRemovedDuringWait;
 
+  internal Coroutine pendingPiecesCoroutine;
+
+  public MoveableBaseShipComponent m_baseShip;
+
   public void Awake()
   {
     m_rigidbody = base.gameObject.AddComponent<Rigidbody>();
@@ -85,7 +91,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     if (ZNet.instance.IsServer())
     {
       ZLog.LogWarning("Starting UpdatePieceSectors");
-      StartCoroutine(nameof(UpdatePieceSectors));
+      // StartCoroutine(nameof(UpdatePieceSectors));
       // StartCoroutine(nameof(DeleteInvalidRafts));
     }
   }
@@ -167,6 +173,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
     {
       UpdateAllPieces();
     }
+    else
+    {
+      var output = m_allPieces.TryGetValue(m_id, out var list);
+
+      if (output) UpdatePiecesInSector(list);
+    }
   }
 
   public void UpdateAllPieces()
@@ -197,29 +209,24 @@ public class MoveableBaseRootComponent : MonoBehaviour
   }
 
 
-  /**
-   * large ships need additional threads to render the ship quickly
-   *
-   * @todo setPosition should not need to be called unless the item is out of alignment. In theory it should be relative to parent so it never should be out of alignment.
-   */
-  public IEnumerator UpdatePieceSectorWorker(List<ZDO> list)
+  public void UpdatePiecesInSector(List<ZDO> list)
   {
-    Vector3 pos = base.transform.position;
-    Vector2i sector = ZoneSystem.instance.GetZone(pos);
+    var pos = transform.position;
+    var sector = ZoneSystem.instance.GetZone(pos);
     if (sector != m_sector)
     {
       m_sector = sector;
-      for (int i = 0; i < list.Count; i++)
+      for (var i = 0; i < list.Count; i++)
       {
-        ZDO zdo = list[i];
+        var zdo = list[i];
 
         // This could also be a problem. If the zdo is created but the ship is in part of another sector it gets cut off.
         if (!(zdo.GetSector() != sector)) continue;
 
-        int id = zdo.GetInt(MBParentIdHash);
+        var id = zdo.GetInt(MBParentIdHash);
         if (id != m_id)
         {
-          Jotunn.Logger.LogWarning("Invalid piece in piece list found, removing.");
+          Logger.LogWarning("Invalid piece in piece list found, removing.");
           ZLog.LogWarning($"zdo uid: {zdo.m_uid} zdoId:{id} does not match id:{id}");
           // list.FastRemoveAt(i);
           // i--;
@@ -229,7 +236,17 @@ public class MoveableBaseRootComponent : MonoBehaviour
         zdo.SetPosition(pos);
       }
     }
+  }
 
+
+  /**
+   * large ships need additional threads to render the ship quickly
+   *
+   * @todo setPosition should not need to be called unless the item is out of alignment. In theory it should be relative to parent so it never should be out of alignment.
+   */
+  public IEnumerator UpdatePiecesInSectorWorker(List<ZDO> list)
+  {
+    UpdatePiecesInSector(list);
     yield return null;
   }
 
@@ -241,11 +258,16 @@ public class MoveableBaseRootComponent : MonoBehaviour
    *
    * Outside of this problem, this script repeatedly calls (but stays on a separate thread) which may be related to fps drop.
    */
-  public IEnumerator UpdatePieceSectors()
+  public IEnumerator UpdatePiecesInEachSectorWorker()
   {
     Logger.LogInfo("init UpdatePieceSectors");
     while (true)
     {
+      /*
+       * wait for the pending pieces coroutine to complete before updating
+       */
+      if (pendingPiecesCoroutine != null) yield return pendingPiecesCoroutine;
+      
       float time = Time.realtimeSinceStartup;
       var output = m_allPieces.TryGetValue(m_id, out var list);
       if (!output)
@@ -257,25 +279,25 @@ public class MoveableBaseRootComponent : MonoBehaviour
         continue;
       }
 
-      var maxItemPerPool = 2500;
+      var maxItemPerPool = 5000;
       if (list.Count > maxItemPerPool)
       {
         var iterators = new List<Coroutine>();
         for (int i = 0; i < list.Count;)
         {
           var itemsToRender = list.Skip(0).Take(maxItemPerPool).ToList();
-          iterators.Add(StartCoroutine(UpdatePieceSectorWorker(itemsToRender)));
+          iterators.Add(StartCoroutine(UpdatePiecesInSectorWorker(itemsToRender)));
           i += maxItemPerPool;
         }
 
-        for (var i = 0; i < iterators.Count; ++i)
+        foreach (var t in iterators)
         {
-          yield return iterators[i];
+          yield return t;
         }
       }
       else
       {
-        yield return UpdatePieceSectorWorker(list);
+        yield return StartCoroutine(UpdatePieceSectorWorker(list));
       }
 
       list = null;
@@ -291,10 +313,14 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public static void AddInactivePiece(int id, ZNetView netview)
   {
+    Logger.LogInfo($"AddInactivePiece called, {id}");
     if (!m_pendingPieces.TryGetValue(id, out var list))
     {
+      Logger.LogInfo($"Pending pieces dictionary failed");
       list = new List<ZNetView>();
       m_pendingPieces.Add(id, list);
+      Logger.LogInfo(
+        $"AddInactivePiece called, {m_pendingPieces} has new id {id} with list: {list}");
     }
 
     list.Add(netview);
@@ -340,13 +366,14 @@ public class MoveableBaseRootComponent : MonoBehaviour
         ladder.m_mbroot = null;
       }
 
-      UpdateStats();
+      // Probably unecessary but maybe it was intended to update the root when an item was removed.
+      m_baseShip.UpdateStats(false);
     }
   }
 
-  private void UpdateStats()
-  {
-  }
+  // private void UpdateStats()
+  // {
+  // }
 
   public void DestroyPiece(WearNTear wnt)
   {
@@ -377,7 +404,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void ActivatePendingPiecesCoroutine()
   {
-    StartCoroutine("ActivatePendingPieces");
+    pendingPiecesCoroutine = StartCoroutine("ActivatePendingPieces");
   }
 
   public IEnumerator ActivatePendingPieces()
@@ -391,6 +418,11 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
     int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
     m_pendingPieces.TryGetValue(id, out var list);
+    m_nonZdoPieces.TryGetValue(id, out var list2);
+
+    if (list2 != null)
+      if (list != null)
+        list.AddRange(list2);
 
     ZLog.Log($"List count {m_dynamicObjects.Count}");
     ZLog.Log($"DynamicObjects count {m_dynamicObjects.Count}");
@@ -643,7 +675,11 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void AddPiece(ZNetView netview)
   {
+    // if (netview.m_zdo != null)
+    //   m_pieces.Add(netview);
+    // else
     m_pieces.Add(netview);
+
     UpdatePieceCount();
     EncapsulateBounds(netview);
     WearNTear wnt = netview.GetComponent<WearNTear>();
@@ -726,12 +762,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
     {
       if (rbs[i].isKinematic)
       {
-        ZLog.Log($"destroying kinematic rbs, {rbs[i]}");
-        Object.Destroy(rbs[i]);
+        // ZLog.Log($"destroying kinematic rbs, {rbs[i]}");
+        // Object.Destroy(rbs[i]);
       }
     }
 
-    UpdateStats();
+    m_baseShip.UpdateStats(false);
   }
 
   private void UpdatePieceCount()

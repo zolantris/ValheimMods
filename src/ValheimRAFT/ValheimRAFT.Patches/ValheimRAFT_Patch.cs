@@ -412,6 +412,15 @@ public class ValheimRAFT_Patch
     ZDOPersistantID.Instance.Unregister(zdo);
   }
 
+  [HarmonyPatch(typeof(ZNetView), "ResetZDO")]
+  [HarmonyPrefix]
+  private static bool ZNetView_ResetZDO(ZNetView __instance)
+  {
+    if (__instance.m_zdo == null) return false;
+
+    return true;
+  }
+
   [HarmonyPatch(typeof(ZNetView), "Awake")]
   [HarmonyPostfix]
   private static void ZNetView_Awake(ZNetView __instance)

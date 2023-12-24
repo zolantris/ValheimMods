@@ -104,10 +104,12 @@
         <!--        <Exec Command="cd &quot;$(ValheimServerPath)&quot;-->
         <!--        powershell Start-Process -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
         <!--    Windows Terminal    -->
-        <Exec Command="wt.exe -w 1 --focus -d &quot;$(ValheimServerPath)&quot; --title Valheim_Server powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>
+        <!--        <Exec Command="powershell Stop-Task -Name ValheimServer"/>-->
+        <Exec Command="wt.exe -w 1 --focus -d &quot;$(ValheimServerPath)&quot; --title ValheimServer powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>
     </Target>
     <Target Name="Run_Valheim" Condition="'$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="Copy_To_R2ModMan">
-        <Exec Command="wt.exe -w 2 --title ValheimServer &quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; -console --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
+        <!--        <Exec Command="powershell Stop-Task -Name ValheimClient"/>-->
+        <Exec Command="wt.exe -w 2 --title ValheimClient &quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; -console --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
         <!--        <Exec Command="wt.exe -w 1 sp -d &quot;$(ValheimServerPath)&quot; &#45;&#45;title Valheim_Client powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
     </Target>
     <Target Name="Generate_Mod_Archive" Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'" AfterTargets="PostBuildEvent">

@@ -28,8 +28,16 @@ Go [here](docs/CONTRIBUTING.md) for more information.
 
 ## Support Open Source
 
-<a href='https://ko-fi.com/zolantris' target='_blank'><img height='35' style='border:0px;height:46px;' src='https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com' />
+<a href='https://ko-fi.com/zolantris' target='_blank'><img height='35' style='border:0px;height:46px;' src='https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com'></a>
 
+## Want Valheim To Run Faster?
 
-[ValheimRAFT_Dir]: https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT
-[BuildingDamageModExtended_Dir]: https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT
+Add this to `valheim_Data/boot.config folder. This should allow script heavy mods to run on more threads without bottlenecking the game UI so fps will be much higher.
+
+The gc-max-time-slice takes a integer that should be the number of threads available on your machine. Example below for a machine with 20 threads 
+```
+gc-max-time-slice=20
+```
+
+[ValheimRAFT_Dir]: src/ValheimRAFT
+[BuildingDamageModExtended_Dir]: src/ValheimRAFT
