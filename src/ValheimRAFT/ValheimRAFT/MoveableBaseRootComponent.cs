@@ -91,7 +91,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     if (ZNet.instance.IsServer())
     {
       ZLog.LogWarning("Starting UpdatePieceSectors");
-      // StartCoroutine(nameof(UpdatePieceSectors));
+      StartCoroutine(nameof(UpdatePieceSectors));
       // StartCoroutine(nameof(DeleteInvalidRafts));
     }
   }
@@ -173,12 +173,6 @@ public class MoveableBaseRootComponent : MonoBehaviour
     {
       UpdateAllPieces();
     }
-    else
-    {
-      var output = m_allPieces.TryGetValue(m_id, out var list);
-
-      if (output) UpdatePiecesInSector(list);
-    }
   }
 
   public void UpdateAllPieces()
@@ -209,7 +203,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
   }
 
 
-  public void UpdatePiecesInSector(List<ZDO> list)
+  /**
+   * large ships need additional threads to render the ship quickly
+   *
+   * @todo setPosition should not need to be called unless the item is out of alignment. In theory it should be relative to parent so it never should be out of alignment.
+   */
+  public IEnumerator UpdatePieceSectorWorker(List<ZDO> list)
   {
     var pos = transform.position;
     var sector = ZoneSystem.instance.GetZone(pos);
@@ -236,17 +235,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
         zdo.SetPosition(pos);
       }
     }
-  }
 
-
-  /**
-   * large ships need additional threads to render the ship quickly
-   *
-   * @todo setPosition should not need to be called unless the item is out of alignment. In theory it should be relative to parent so it never should be out of alignment.
-   */
-  public IEnumerator UpdatePiecesInSectorWorker(List<ZDO> list)
-  {
-    UpdatePiecesInSector(list);
     yield return null;
   }
 
@@ -258,7 +247,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
    *
    * Outside of this problem, this script repeatedly calls (but stays on a separate thread) which may be related to fps drop.
    */
-  public IEnumerator UpdatePiecesInEachSectorWorker()
+  public IEnumerator UpdatePieceSectors()
   {
     Logger.LogInfo("init UpdatePieceSectors");
     while (true)
@@ -286,7 +275,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
         for (int i = 0; i < list.Count;)
         {
           var itemsToRender = list.Skip(0).Take(maxItemPerPool).ToList();
-          iterators.Add(StartCoroutine(UpdatePiecesInSectorWorker(itemsToRender)));
+          iterators.Add(StartCoroutine(UpdatePieceSectorWorker(itemsToRender)));
           i += maxItemPerPool;
         }
 
