@@ -243,6 +243,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
    */
   public IEnumerator UpdatePieceSectors()
   {
+    Logger.LogInfo("init UpdatePieceSectors");
     while (true)
     {
       float time = Time.realtimeSinceStartup;
@@ -256,19 +257,20 @@ public class MoveableBaseRootComponent : MonoBehaviour
         continue;
       }
 
-      if (list.Count > 50)
+      var maxItemPerPool = 2500;
+      if (list.Count > maxItemPerPool)
       {
         var iterators = new List<Coroutine>();
         for (int i = 0; i < list.Count;)
         {
-          var itemsToRender = list.Skip(0).Take(50).ToList();
+          var itemsToRender = list.Skip(0).Take(maxItemPerPool).ToList();
           iterators.Add(StartCoroutine(UpdatePieceSectorWorker(itemsToRender)));
-          i += 50;
+          i += maxItemPerPool;
         }
 
-        foreach (var iterator in iterators)
+        for (var i = 0; i < iterators.Count; ++i)
         {
-          yield return iterator;
+          yield return iterators[i];
         }
       }
       else
@@ -630,9 +632,13 @@ public class MoveableBaseRootComponent : MonoBehaviour
       netview.m_zdo.Set(MBRotationVecHash, netview.transform.localRotation.eulerAngles);
       netview.m_zdo.Set(MBPositionHash, netview.transform.localPosition);
     }
-
     AddPiece(netview);
-    InitZDO(netview.m_zdo);
+
+    if (netview.m_zdo != null)
+    {
+      Logger.LogInfo($"AddNewPiece skipping ZDO for {netview.GetPrefabName()}");
+      InitZDO(netview.m_zdo);
+    }
   }
 
   public void AddPiece(ZNetView netview)
@@ -720,6 +726,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     {
       if (rbs[i].isKinematic)
       {
+        ZLog.Log($"destroying kinematic rbs, {rbs[i]}");
         Object.Destroy(rbs[i]);
       }
     }
