@@ -451,12 +451,13 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
     /*
      * This prevents empty Prefabs of MBRaft from existing
+     * @todo make this only apply for boats with no objects in any list
      */
     if (list == null || list.Count == 0 &&
         (m_dynamicObjects.Count == 0 || ObjectListHasNoValidItems)
        )
     {
-      ZLog.LogError($"found boat without any items attached {m_ship} {m_nview}");
+      // ZLog.LogError($"found boat without any items attached {m_ship} {m_nview}");
       // DestroyBoat();
     }
 
