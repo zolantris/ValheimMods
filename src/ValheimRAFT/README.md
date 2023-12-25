@@ -3,8 +3,11 @@
 <img src="./Thunderstore/icon.png" alt="ValheimRAFT Community Made Boat Hjalmere">
 
 A [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork that works with latest Valheim. The original mod
-owner [Sarcenzzz](https://www.nexusmods.com/valheim/users/3061574) abandoned the
-mod, this fork aims to keep the mod functional with future goals of expanding functionality.
+owner [Sarcenzzz](https://www.nexusmods.com/valheim/users/3061574) stopped maintaining the mod. 
+
+As of 12/25/2023 I got official permission to maintain and open source this mod.
+
+This decompile fork aims to keep the mod functional with future goals of expanding functionality.
 
 
 ## Build Status
