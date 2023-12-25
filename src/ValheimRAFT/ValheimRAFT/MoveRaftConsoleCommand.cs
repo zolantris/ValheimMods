@@ -60,7 +60,7 @@ internal class MoveRaftConsoleCommand : ConsoleCommand
     }
   }
 
-  private static bool MoveRaft(Player player, Ship ship, Vector3 offset)
+  public static bool MoveRaft(Player player, Ship ship, Vector3 offset)
   {
     MoveableBaseShipComponent mb = ship.GetComponent<MoveableBaseShipComponent>();
 

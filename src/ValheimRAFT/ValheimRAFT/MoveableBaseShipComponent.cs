@@ -59,6 +59,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.m_syncRigidbody = m_rigidbody;
     m_rigidbody.mass = 1000f;
     m_baseRootObject.transform.SetParent(null);
+    
     m_baseRootObject.transform.position = base.transform.position;
     m_baseRootObject.transform.rotation = base.transform.rotation;
     ship.transform.Find("ship/visual/mast")?.gameObject.SetActive(value: false);
@@ -109,18 +110,33 @@ public class MoveableBaseShipComponent : MonoBehaviour
    */
   private void FirstTimeCreation()
   {
+    if (m_baseRoot.GetPieceCount() > 0)
+      foreach (var piece in m_baseRoot.m_pieces)
+        if (piece.m_zdo == null)
+        {
+          var prefabName = piece.GetPrefabName();
+          var prefab = ZNetScene.instance.GetPrefab(prefabName);
+          var obj = Instantiate(prefab, m_baseRoot.transform);
+          obj.transform.localPosition = piece.transform.localPosition;
+          obj.transform.localScale = piece.transform.localScale;
+          obj.transform.localRotation = piece.transform.localRotation;
+        }
+
     if (m_baseRoot.GetPieceCount() != 0)
     {
       return;
     }
 
+    /*
+     * @todo turn the original planks into a Prefab so boat floors can be larger
+     */
     GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
     for (float x = -1f; x < 1.01f; x += 2f)
     {
       for (float z = -2f; z < 2.01f; z += 2f)
       {
         Vector3 pt = base.transform.TransformPoint(new Vector3(x, 0.6f, z));
-        GameObject obj = Instantiate(floor, pt, base.transform.rotation);
+        var obj = Instantiate(floor, pt, transform.rotation);
         ZNetView netview = obj.GetComponent<ZNetView>();
         m_baseRoot.AddNewPiece(netview);
       }
@@ -182,7 +198,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_nview.m_zdo.Set("MBTargetHeight", m_targetHeight);
   }
 
-  internal void UpdateStats(bool flight)
+  public void UpdateStats(bool flight)
   {
     if (!m_rigidbody || !m_baseRoot || m_baseRoot.m_statsOverride)
     {

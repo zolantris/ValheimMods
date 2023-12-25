@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>QuickConnect</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <TargetFramework>net48</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>11.0</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup />
+  <Import Project="../../valheim.targets" />
+  <ItemGroup />
+  <ItemGroup>
+    <Reference Include="assembly_valheim">
+      <HintPath>..\..\libs\assembly_valheim.dll</HintPath>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>..\..\libs\0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\..\libs\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="BepInEx">
+      <HintPath>..\..\libs\BepInEx.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>..\..\libs\UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

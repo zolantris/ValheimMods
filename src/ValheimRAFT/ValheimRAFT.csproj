@@ -6,34 +6,47 @@
         <ProjectGuid>{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}</ProjectGuid>
         <OutputType>Library</OutputType>
         <AssemblyName>ValheimRAFT</AssemblyName>
-        <ApplicationVersion>1.6.2</ApplicationVersion>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+        <Platforms>AnyCPU</Platforms>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <ApplicationVersion>1.6.3</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
     </PropertyGroup>
-    <Import Project="$(SolutionDir)\valheim.targets"/>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU'">
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <DebugSymbols>true</DebugSymbols>
-        <DebugType>full</DebugType>
-        <Optimize>false</Optimize>
-        <OutputPath>bin\Debug\</OutputPath>
-        <DefineConstants>DEBUG;TRACE</DefineConstants>
-        <ErrorReport>prompt</ErrorReport>
-        <WarningLevel>4</WarningLevel>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU'">
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <DebugType>pdbonly</DebugType>
-        <Optimize>true</Optimize>
-        <OutputPath>bin\Release\</OutputPath>
-        <DefineConstants>TRACE</DefineConstants>
-        <ErrorReport>prompt</ErrorReport>
-        <WarningLevel>4</WarningLevel>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
     <ItemGroup>
+        <Content Include="..\..\valheim.targets"/>
+    </ItemGroup>
+    <Import Project="..\..\valheim.targets"/>
+    <ItemGroup>
+        <Compile Include="..\AutoQuickConnect\Properties\AssemblyInfo.cs">
+            <Link>ValheimMods\src\AutoQuickConnect\Properties\AssemblyInfo.cs</Link>
+        </Compile>
+        <Compile Include="..\AutoQuickConnect\QuickConnect\Mod.cs">
+            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\Mod.cs</Link>
+        </Compile>
+        <Compile Include="..\AutoQuickConnect\QuickConnect\PatchCharacterBack.cs">
+            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\PatchCharacterBack.cs</Link>
+        </Compile>
+        <Compile Include="..\AutoQuickConnect\QuickConnect\PatchConnectFailed.cs">
+            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\PatchConnectFailed.cs</Link>
+        </Compile>
+        <Compile Include="..\AutoQuickConnect\QuickConnect\PatchPasswordPrompt.cs">
+            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\PatchPasswordPrompt.cs</Link>
+        </Compile>
+        <Compile Include="..\AutoQuickConnect\QuickConnect\PatchStartUp.cs">
+            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\PatchStartUp.cs</Link>
+        </Compile>
+        <Compile Include="..\AutoQuickConnect\QuickConnect\PatchUiInit.cs">
+            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\PatchUiInit.cs</Link>
+        </Compile>
+        <Compile Include="..\AutoQuickConnect\QuickConnect\QuickConnectUI.cs">
+            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\QuickConnectUI.cs</Link>
+        </Compile>
+        <Compile Include="..\AutoQuickConnect\QuickConnect\Servers.cs">
+            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\Servers.cs</Link>
+        </Compile>
         <Compile Include="ValheimRAFT.Patches\PatchController.cs"/>
         <Compile Include="ValheimRAFT.Patches\PlanBuildPatch.cs"/>
         <Compile Include="ValheimRAFT.Util\BinaryIOUtil.cs"/>
@@ -54,6 +67,7 @@
         <Compile Include="ValheimRAFT\CustomTextureGroup.cs"/>
         <Compile Include="ValheimRAFT\DockComponent.cs"/>
         <Compile Include="ValheimRAFT\HideRaftConsoleCommand.cs"/>
+        <Compile Include="ValheimRAFT\MovableBaseZone.cs"/>
         <Compile Include="ValheimRAFT\ValheimRaftPlugin.cs"/>
         <Compile Include="ValheimRAFT\MastComponent.cs"/>
         <Compile Include="ValheimRAFT\MeshHelper.cs"/>
@@ -91,6 +105,9 @@
         <EmbeddedResource Include="AssetBundleDeprecated\ValheimRAFT.AssetBundle.valheimraft.manifest" LogicalName="ValheimRAFT.AssetBundle.valheimraft.manifest"/>
     </ItemGroup>
     <ItemGroup>
+        <Content Include="..\AutoQuickConnect\AutoQuickConnect.csproj">
+            <Link>ValheimMods\src\AutoQuickConnect\AutoQuickConnect.csproj</Link>
+        </Content>
         <Content Include=".gitignore"/>
         <Content Include="libs\PlanBuild.dll"/>
         <Content Include="src\ValheimRAFT\README.md"/>
@@ -117,11 +134,14 @@
         <!--        <Exec Command="cd &quot;$(ValheimServerPath)&quot;-->
         <!--        powershell Start-Process -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
         <!--    Windows Terminal    -->
-        <Exec Command="wt.exe -w 1 --focus -d &quot;$(ValheimServerPath)&quot; --title Valheim_Client powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>
+        <!--        <Exec Command="powershell Stop-Task -Name ValheimServer"/>-->
+        <Exec Command="wt.exe -w 1 --focus -d &quot;$(ValheimServerPath)&quot; --title ValheimServer powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>
     </Target>
     <Target Name="Run_Valheim" Condition="'$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="Copy_To_R2ModMan">
-        <Exec Command="&quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; -console --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
-        <!--        <Exec Command="wt.exe -w 1 sp -d &quot;$(ValheimServerPath)&quot; &#45;&#45;title Valheim_Client powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
+        <!--        <Exec Command="powershell Stop-Task -Name ValheimClient"/>-->
+        <!--    -console -char ZOL -server 50.39.165.163:2456 -password 12345    -->
+        <Exec Command="wt.exe -w 2 --title ValheimClient &quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
+        <!--                <Exec Command="wt.exe -w 1 sp -d &quot;$(ValheimServerPath)&quot; &#45;&#45;title Valheim_Client powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
     </Target>
     <Target Name="Generate_Mod_Archive" Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'" AfterTargets="PostBuildEvent">
         <PropertyGroup>

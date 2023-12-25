@@ -28,7 +28,7 @@ namespace ValheimRAFT
      * @note keeping this as Sarcen for now since there are low divergences from the original codebase and patches already mapped to sarcen's mod
      */
     public const string Author = "Sarcen";
-    private const string Version = "1.6.2";
+    private const string Version = "1.6.3";
     internal const string ModName = "ValheimRAFT";
     public const string BepInGuid = $"BepIn.{Author}.{ModName}";
     private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";
@@ -47,6 +47,8 @@ namespace ValheimRAFT
     public ConfigEntry<bool> PatchPlanBuildPositionIssues { get; set; }
     public ConfigEntry<float> RaftHealth { get; set; }
     public ConfigEntry<float> ServerRaftUpdateZoneInterval { get; set; }
+    public ConfigEntry<float> RaftSailForceMultiplier { get; set; }
+    public ConfigEntry<bool> DisplacedRaftAutoFix { get; set; }
 
     /**
      * These folder names are matched for the CustomTexturesGroup
@@ -59,6 +61,11 @@ namespace ValheimRAFT
     public void Awake()
     {
       Instance = this;
+      DisplacedRaftAutoFix = Config.Bind("Debug",
+        "DisplacedRaftAutoFix", false,
+        "Automatically fix a displaced glitched out raft if the player is standing on the raft. This will make the player fall into the water briefly but avoid having to run 'raftoffset 0 0 0'");
+      RaftSailForceMultiplier = Config.Bind("Config", "RaftSailForceMultiplier", 4f,
+        "Set the sailforce multipler of the raft. 1 was the original value");
       RaftHealth = Config.Bind<float>("Config", "raftHealth", 500f,
         "Set the raft health when used with wearNTear, lowest value is 100f");
       PatchPlanBuildPositionIssues = Config.Bind<bool>("Patches",
