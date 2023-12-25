@@ -306,23 +306,28 @@ public class ValheimRAFT_Patch
     return false;
   }
 
-  [HarmonyPatch(typeof(Ship), "GetSailForce")]
-  private static class ChangeShipBaseSpeed
-  {
-    private static bool Prefix(Ship __instance, ref Vector3 __result, float sailSize, float dt)
-    {
-      var windDir = EnvMan.instance.GetWindDir();
-      var num1 = Mathf.Lerp(0.25f, 1f, EnvMan.instance.GetWindIntensity());
-      var num2 = __instance.GetWindAngleFactor() * num1;
-      var forward = __instance.transform.forward;
-      __instance.m_sailForce = Vector3.SmoothDamp(__instance.m_sailForce,
-        Vector3.Normalize(windDir + forward) * num2 * __instance.m_sailForceFactor * sailSize,
-        ref __instance.m_windChangeVelocity, 1f, 1000f);
-      ZLog.Log($"Ship sailforce: {__instance.m_sailForce}");
-      __result = __instance.m_sailForce;
-      return true;
-    }
-  }
+
+  /**
+   * this is disabled for now, but in the future this calc will need to be overridden based on number of sails and ship weight/size
+   */
+  // [HarmonyPatch(typeof(Ship), "GetSailForce")]
+  // private static class ChangeShipBaseSpeed
+  // {
+  //   private static bool Prefix(Ship __instance, ref Vector3 __result, float sailSize, float dt)
+  //   {
+  //     if ()
+  //     var windDir = EnvMan.instance.GetWindDir();
+  //     var num1 = Mathf.Lerp(0.25f, 1f, EnvMan.instance.GetWindIntensity());
+  //     var num2 = __instance.GetWindAngleFactor() * num1;
+  //     var forward = __instance.transform.forward;
+  //     __instance.m_sailForce = Vector3.SmoothDamp(__instance.m_sailForce,
+  //       Vector3.Normalize(windDir + forward) * num2 * __instance.m_sailForceFactor * sailSize,
+  //       ref __instance.m_windChangeVelocity, 1f, 1000f);
+  //     ZLog.Log($"Ship sailforce: {__instance.m_sailForce}");
+  //     __result = __instance.m_sailForce;
+  //     return true;
+  //   }
+  // }
 
   private static void ApplySailForce(Ship __instance, float num5)
   {
@@ -550,12 +555,7 @@ public class ValheimRAFT_Patch
 
     return false;
   }
-
-  // [HarmonyPatch(typeof(ZoneSystem.ZoneLocation), 'd')]
-  // [HarmonyPrefix]
-  // private static void ZoneLocation_Unload()
-  // {
-  // }
+  
 
   [HarmonyPatch(typeof(Character), "UpdateGroundContact")]
   [HarmonyPostfix]
