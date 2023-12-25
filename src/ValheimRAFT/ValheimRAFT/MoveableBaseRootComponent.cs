@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Jotunn;
+using Jotunn.Managers;
 using UnityEngine;
 using ValheimRAFT.Util;
 using Logger = Jotunn.Logger;
@@ -76,9 +77,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   internal Coroutine pendingPiecesCoroutine;
 
-  private Coroutine updateSectorCoroutine;
+  private Coroutine server_UpdatePiecesCoroutine;
 
-  public MoveableBaseShipComponent m_baseShip;
+  public void Create()
+  {
+    ZLog.LogWarning("CALLED CREATE IN MOVEABLEBASE_ROOT");
+  }
 
   public void Awake()
   {
@@ -91,40 +95,15 @@ public class MoveableBaseRootComponent : MonoBehaviour
      */
     if (ZNet.instance.IsServer())
     {
-      ZLog.LogWarning("Starting UpdatePieceSectors");
-      updateSectorCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
+      ZLog.LogWarning("IS SERVER");
+      server_UpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
+
+    ZLog.LogWarning(
+      $"znet instance: {ZNet.instance} isServer {ZNet.instance.IsServer()} isDedicated: {ZNet.instance.IsDedicated()}");
 
     if (ZNet.instance.IsServerInstance())
       Logger.LogError("SERVER MUST CALL, Test Log to see if server calls this");
-  }
-
-  /*
-   * This needs to be used to cleanup Rafts that are do not have any parents
-   *
-   * Alternative is advanced creativemode which allows deleting the raft object. Will need get the functionality from that and add safer logic.
-   */
-  public IEnumerator DeleteInvalidRafts()
-  {
-    yield return false;
-    // yield return new WaitForSeconds(5f);
-    //
-    // var objects = Resources.FindObjectsOfTypeAll<MoveableBaseShipComponent>()
-    //   .Where(obj => obj.name == PrefabNames.m_raft);
-    //
-    // ZLog.Log($"objects {objects}");
-    //
-    // foreach (var o in objects)
-    // {
-    //   var movableBaseChild = o.GetComponentInChildren<MoveableBaseShipComponent>();
-    //   var movableBaseParent = o.GetComponentInParent<MoveableBaseShipComponent>();
-    //   if (!movableBaseChild && !movableBaseParent)
-    //   {
-    //     ZLog.LogWarning(
-    //       "Destroying Raft instance that has no MovableBaseChildren. This RAFT was invalid.");
-    //     DestroyBoat(o.m_nview);
-    //   }
-    // }
   }
 
   public void CleanUp()
@@ -177,28 +156,23 @@ public class MoveableBaseRootComponent : MonoBehaviour
     Sync();
     if (!ZNet.instance.IsServer())
     {
-      UpdateAllPieces();
-    }
-
-    if (ZNet.instance.IsServerInstance())
-    {
-      Logger.LogError("Somehow server called LATE UPDATE");
+      Client_UpdateAllPieces();
     }
   }
 
-  public void UpdateAllPieces()
+  /**
+   * @warning this must only be called on the client
+   */
+  public void Client_UpdateAllPieces()
   {
     Vector2i sector = ZoneSystem.instance.GetZone(base.transform.position);
-    if (m_sector != m_serverSector)
-    {
-      if (updateSectorCoroutine != null) StopCoroutine(updateSectorCoroutine);
-      updateSectorCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
-    }
-
+    
     if (sector == m_sector)
     {
       return;
     }
+
+    if (m_sector != m_serverSector) ServerSyncAllPieces();
 
     m_sector = sector;
 
@@ -215,13 +189,18 @@ public class MoveableBaseRootComponent : MonoBehaviour
       {
         if (transform.position != netview.transform.position)
         {
-          Logger.LogError(
-            $"transform position mismatch with netview netview: {netview.transform.position} {netview.transform.localPosition} baseRaft: {transform.position}");
-          netview.transform.SetParent(transform);
+          ZLog.Log(
+            $"Transform position {transform.position} {netview.transform.position} {netview.transform.localPosition}");
+          netview.m_zdo.SetPosition(transform.position);
         }
-        netview.m_zdo.SetPosition(base.transform.position);
       }
     }
+  }
+
+  public void ServerSyncAllPieces()
+  {
+    if (server_UpdatePiecesCoroutine != null) StopCoroutine(server_UpdatePiecesCoroutine);
+    StartCoroutine(UpdatePiecesInEachSectorWorker());
   }
 
 
@@ -229,31 +208,28 @@ public class MoveableBaseRootComponent : MonoBehaviour
   {
     var pos = transform.position;
     var sector = ZoneSystem.instance.GetZone(pos);
-    if (m_serverSector != sector)
+
+    if (m_serverSector == sector) return;
+    if (!sector.Equals(m_sector)) m_sector = sector;
+
+    m_serverSector = sector;
+
+    for (var i = 0; i < list.Count; i++)
     {
-      if (sector != m_sector) m_sector = sector;
+      var zdo = list[i];
 
-      m_serverSector = sector;
-      
-      for (var i = 0; i < list.Count; i++)
+      // This could also be a problem. If the zdo is created but the ship is in part of another sector it gets cut off.
+      if (zdo.GetSector() == sector) continue;
+
+      var id = zdo.GetInt(MBParentIdHash);
+      if (id != m_id)
       {
-        var zdo = list[i];
-
-        // This could also be a problem. If the zdo is created but the ship is in part of another sector it gets cut off.
-        if (zdo.GetSector() == sector) continue;
-
-        var id = zdo.GetInt(MBParentIdHash);
-        if (id != m_id)
-        {
-          Logger.LogWarning("Invalid piece in piece list found, removing.");
-          ZLog.LogWarning($"zdo uid: {zdo.m_uid} zdoId:{id} does not match id:{id}");
-          list.FastRemoveAt(i);
-          i--;
-          continue;
-        }
-
-        zdo.SetPosition(pos);
+        list.FastRemoveAt(i);
+        i--;
+        continue;
       }
+
+      zdo.SetPosition(pos);
     }
   }
 
@@ -263,7 +239,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
    *
    * @todo setPosition should not need to be called unless the item is out of alignment. In theory it should be relative to parent so it never should be out of alignment.
    */
-  public IEnumerator UpdatePiecesWorker(List<ZDO> list)
+  private IEnumerator UpdatePiecesWorker(List<ZDO> list)
   {
     UpdatePieces(list);
     yield return null;
@@ -292,14 +268,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
       var output = m_allPieces.TryGetValue(m_id, out var list);
       if (!output)
       {
-        ZLog.Log("Waiting for UpdatePieceSectors to be ready");
         yield return new WaitForSeconds(Math.Max(2f,
           ValheimRaftPlugin.Instance.ServerRaftUpdateZoneInterval
             .Value));
         continue;
       }
-
-      UpdatePieces(list);
+      
       yield return UpdatePiecesWorker(list);
 
       list = null;
@@ -315,14 +289,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public static void AddInactivePiece(int id, ZNetView netview)
   {
-    Logger.LogInfo($"AddInactivePiece called, {id}");
     if (!m_pendingPieces.TryGetValue(id, out var list))
     {
-      Logger.LogInfo($"Pending pieces dictionary failed");
       list = new List<ZNetView>();
       m_pendingPieces.Add(id, list);
-      Logger.LogInfo(
-        $"AddInactivePiece called, {m_pendingPieces} has new id {id} with list: {list}");
     }
 
     list.Add(netview);
@@ -399,7 +369,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void ActivatePendingPiecesCoroutine()
   {
-    pendingPiecesCoroutine = StartCoroutine("ActivatePendingPieces");
+    if (pendingPiecesCoroutine != null) StopCoroutine(pendingPiecesCoroutine);
+
+    pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
   }
 
   public IEnumerator ActivatePendingPieces()
@@ -413,9 +385,6 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
     int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
     m_pendingPieces.TryGetValue(id, out var list);
-
-    Logger.LogDebug($"List count {m_dynamicObjects.Count}");
-    Logger.LogDebug($"DynamicObjects count {m_dynamicObjects.Count}");
 
     if (list is { Count: > 0 })
     {
@@ -748,8 +717,6 @@ public class MoveableBaseRootComponent : MonoBehaviour
         Destroy(rbs[i]);
       }
     }
-
-    m_baseShip.UpdateStats(false);
   }
 
   private void UpdatePieceCount()

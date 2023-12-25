@@ -6,6 +6,7 @@ using HarmonyLib;
 using UnityEngine;
 using PlanBuild.Blueprints;
 using PlanBuild.Plans;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;
 
@@ -34,10 +35,7 @@ public class PlanBuildPatch
   public static bool Capture(Blueprint __instance, ref bool __result, Selection selection,
     bool captureCurrentSnapPoints = false, bool keepMarkers = false)
   {
-    if (!ValheimRaftPlugin.Instance.PatchPlanBuildPositionIssues.Value)
-    {
-      return false;
-    }
+    Logger.LogDebug("Using ValheimRAFT patch for: PlanBuild.Blueprint.Capture");
 
     Jotunn.Logger.LogDebug("Collecting piece information");
     int num = 0;
