@@ -59,9 +59,6 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.m_syncRigidbody = m_rigidbody;
     m_rigidbody.mass = 1000f;
     m_baseRootObject.transform.SetParent(null);
-
-    // m_baseRootObject.transform.SetParent(ship.transform);
-    m_baseRoot.m_baseShip = this;
     
     m_baseRootObject.transform.position = base.transform.position;
     m_baseRootObject.transform.rotation = base.transform.rotation;
@@ -130,6 +127,9 @@ public class MoveableBaseShipComponent : MonoBehaviour
       return;
     }
 
+    /*
+     * @todo turn the original planks into a Prefab so boat floors can be larger
+     */
     GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
     for (float x = -1f; x < 1.01f; x += 2f)
     {
@@ -138,7 +138,6 @@ public class MoveableBaseShipComponent : MonoBehaviour
         Vector3 pt = base.transform.TransformPoint(new Vector3(x, 0.6f, z));
         var obj = Instantiate(floor, pt, transform.rotation);
         ZNetView netview = obj.GetComponent<ZNetView>();
-        // netview.m_zdo = null;
         m_baseRoot.AddNewPiece(netview);
       }
     }

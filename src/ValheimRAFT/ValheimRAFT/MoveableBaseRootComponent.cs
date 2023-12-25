@@ -29,8 +29,6 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   internal static Dictionary<int, List<ZNetView>> m_pendingPieces =
     new Dictionary<int, List<ZNetView>>();
-
-  internal static Dictionary<int, List<ZNetView>> m_nonZdoPieces = new();
   
   internal static Dictionary<int, List<ZDO>> m_allPieces = new Dictionary<int, List<ZDO>>();
 
@@ -78,6 +76,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   internal Coroutine pendingPiecesCoroutine;
 
+  private Coroutine updateSectorCoroutine;
+
   public MoveableBaseShipComponent m_baseShip;
 
   public void Awake()
@@ -92,9 +92,11 @@ public class MoveableBaseRootComponent : MonoBehaviour
     if (ZNet.instance.IsServer())
     {
       ZLog.LogWarning("Starting UpdatePieceSectors");
-      StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
-      // StartCoroutine(nameof(DeleteInvalidRafts));
+      updateSectorCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
+
+    if (ZNet.instance.IsServerInstance())
+      Logger.LogError("SERVER MUST CALL, Test Log to see if server calls this");
   }
 
   /*
@@ -189,9 +191,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
     Vector2i sector = ZoneSystem.instance.GetZone(base.transform.position);
     if (m_sector != m_serverSector)
     {
-      StopCoroutine("UpdatePiecesInEachSectorWorker");
-      // this basically means we are running it on the client now too. There needs to be a way to directly tell server to stop the coroutine
-      StartCoroutine("UpdatePiecesInEachSectorWorker");
+      if (updateSectorCoroutine != null) StopCoroutine(updateSectorCoroutine);
+      updateSectorCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
 
     if (sector == m_sector)
@@ -207,14 +208,15 @@ public class MoveableBaseRootComponent : MonoBehaviour
       if (!netview)
       {
         Logger.LogError($"Error found with m_pieces: netview {netview}");
-        // m_pieces.RemoveAt(i);
-        // i--;
+        m_pieces.RemoveAt(i);
+        i--;
       }
       else
       {
         if (transform.position != netview.transform.position)
         {
-          Logger.LogError("transform position mismatch with netview");
+          Logger.LogError(
+            $"transform position mismatch with netview netview: {netview.transform.position} {netview.transform.localPosition} baseRaft: {transform.position}");
           netview.transform.SetParent(transform);
         }
         netview.m_zdo.SetPosition(base.transform.position);
@@ -245,8 +247,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
         {
           Logger.LogWarning("Invalid piece in piece list found, removing.");
           ZLog.LogWarning($"zdo uid: {zdo.m_uid} zdoId:{id} does not match id:{id}");
-          // list.FastRemoveAt(i);
-          // i--;
+          list.FastRemoveAt(i);
+          i--;
           continue;
         }
 
@@ -298,26 +300,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
       }
 
       UpdatePieces(list);
-      // var maxItemPerPool = 5000;
-      // if (list.Count > maxItemPerPool)
-      // {
-      //   var iterators = new List<Coroutine>();
-      //   for (int i = 0; i < list.Count;)
-      //   {
-      //     var itemsToRender = list.Skip(0).Take(maxItemPerPool).ToList();
-      //     iterators.Add(StartCoroutine(UpdatePiecesWorker(itemsToRender)));
-      //     i += maxItemPerPool;
-      //   }
-      //
-      //   foreach (var t in iterators)
-      //   {
-      //     yield return t;
-      //   }
-      // }
-      // else
-      // {
-      //   yield return StartCoroutine(UpdatePiecesWorker(list));
-      // }
+      yield return UpdatePiecesWorker(list);
 
       list = null;
       yield return new WaitForEndOfFrame();
@@ -384,15 +367,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
         m_ladders.Remove(ladder);
         ladder.m_mbroot = null;
       }
-
-      // Probably unecessary but maybe it was intended to update the root when an item was removed.
-      m_baseShip.UpdateStats(false);
     }
   }
-
-  // private void UpdateStats()
-  // {
-  // }
 
   public void DestroyPiece(WearNTear wnt)
   {
@@ -437,14 +413,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
     int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
     m_pendingPieces.TryGetValue(id, out var list);
-    m_nonZdoPieces.TryGetValue(id, out var list2);
 
-    if (list2 != null)
-      if (list != null)
-        list.AddRange(list2);
-
-    ZLog.Log($"List count {m_dynamicObjects.Count}");
-    ZLog.Log($"DynamicObjects count {m_dynamicObjects.Count}");
+    Logger.LogDebug($"List count {m_dynamicObjects.Count}");
+    Logger.LogDebug($"DynamicObjects count {m_dynamicObjects.Count}");
 
     if (list is { Count: > 0 })
     {
@@ -589,15 +560,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
   private static int GetParentID(ZDO zdo)
   {
     int id = zdo.GetInt(MBParentIdHash);
-    // ZLog.Log($"GetParentID(): MBParentIdHash {id}");
     if (id == 0)
     {
       ZDOID zdoid = zdo.GetZDOID(MBParentHash);
-      // ZLog.Log($"GetParentID(): zdoid {zdoid}");
       if (zdoid != ZDOID.None)
       {
         ZDO zdoparent = ZDOMan.instance.GetZDO(zdoid);
-        // ZLog.Log($"GetParentID(): zdoParent {zdoid}");
         id = ((zdoparent == null)
           ? ZDOPersistantID.ZDOIDToId(zdoid)
           : ZDOPersistantID.Instance.GetOrCreatePersistantID(zdoparent));
@@ -683,20 +651,13 @@ public class MoveableBaseRootComponent : MonoBehaviour
       netview.m_zdo.Set(MBRotationVecHash, netview.transform.localRotation.eulerAngles);
       netview.m_zdo.Set(MBPositionHash, netview.transform.localPosition);
     }
-    AddPiece(netview);
 
-    if (netview.m_zdo != null)
-    {
-      Logger.LogInfo($"AddNewPiece skipping ZDO for {netview.GetPrefabName()}");
-      InitZDO(netview.m_zdo);
-    }
+    AddPiece(netview);
+    InitZDO(netview.m_zdo);
   }
 
   public void AddPiece(ZNetView netview)
   {
-    // if (netview.m_zdo != null)
-    //   m_pieces.Add(netview);
-    // else
     m_pieces.Add(netview);
 
     UpdatePieceCount();
@@ -776,13 +737,15 @@ public class MoveableBaseRootComponent : MonoBehaviour
       }
     }
 
+    /*
+     * @todo investigate why this is called. Determine if it is needed
+     */
     Rigidbody[] rbs = netview.GetComponentsInChildren<Rigidbody>();
     for (int i = 0; i < rbs.Length; i++)
     {
       if (rbs[i].isKinematic)
       {
-        // ZLog.Log($"destroying kinematic rbs, {rbs[i]}");
-        // Object.Destroy(rbs[i]);
+        Destroy(rbs[i]);
       }
     }
 
