@@ -21,21 +21,21 @@ namespace ValheimRAFT;
 
 [BepInPlugin(BepInGuid, ModName, Version)]
 [BepInDependency(Main.ModGuid)]
-// [BepInProcess("valheim.exe")]
-// [NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
+[NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
 public class ValheimRaftPlugin : BaseUnityPlugin
 {
   /*
    * @note keeping this as Sarcen for now since there are low divergences from the original codebase and patches already mapped to sarcen's mod
    */
   public const string Author = "Sarcen";
-  private const string Version = "1.6.3";
+  private const string Version = "1.6.4";
   internal const string ModName = "ValheimRAFT";
   public const string BepInGuid = $"BepIn.{Author}.{ModName}";
   private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";
   internal static int CustomRaftLayer = 29;
   public static AssetBundle m_assetBundle;
   private bool m_customItemsAdded;
+  public CustomLocalization localization;
 
   public static ValheimRaftPlugin Instance { get; private set; }
 
@@ -309,11 +309,25 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         }));
   }
 
+  /**
+   * this is a placeholder fix until the asset bundle packs the translations and does the following
+   * https://valheim-modding.github.io/Jotunn/tutorials/localization.html#example-json-file
+   */
+  private void InitLocalization()
+  {
+    localization = LocalizationManager.Instance.GetLocalization();
+    localization.AddTranslation("English", new Dictionary<string, string>
+    {
+      { "mb_anchor_disabled", "\\n(anchored)\\nLShift to remove Anchor while steering" },
+      { "mb_anchor_enabled", "\\nLShift to Anchor" }
+    });
+  }
+
   public void Awake()
   {
     Instance = this;
     CreateConfig();
-
+    InitLocalization();
     PatchController.Apply(HarmonyGuid);
 
     var layer = LayerMask.NameToLayer("vehicle");
@@ -384,12 +398,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       texture.Texture.wrapMode = TextureWrapMode.Clamp;
       if ((bool)texture.Normal) texture.Normal.wrapMode = TextureWrapMode.Clamp;
     }
-  }
-
-  internal string GetRudderHoverText()
-  {
-    return Localization.instance.Localize(
-      "[<color=yellow><b>$mb_rudder_use</b></color>]");
   }
 
   internal void AddCustomPieces()

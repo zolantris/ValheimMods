@@ -493,7 +493,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
       else if (mMastPiece.name.Contains("MBVikingShipMast"))
       {
         ++numberOfTier3Sails;
-        totalSailArea += numberOfTier2Sails * SailAreaForce.Tier3;
+        totalSailArea += numberOfTier3Sails * SailAreaForce.Tier3;
         ;
       }
     }
@@ -512,7 +512,6 @@ public class MoveableBaseRootComponent : MonoBehaviour
         }
       }
 
-      Logger.LogDebug($"customSailsArea {customSailsArea} adding to {totalSailArea}");
       totalSailArea +=
         (customSailsArea * Math.Max(0.1f, SailAreaForce.CustomTier1AreaForceMultiplier));
     }
@@ -522,11 +521,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
      *
      *  divide by 10 b/c all the enums were set with a 10 multiplier to keep them whole numbers
      */
-    if (totalSailArea != 0f)
+    if (totalSailArea != 0)
     {
-      ZLog.Log($"SailAreaThrottle, {SailAreaForce.SailAreaThrottle}");
       totalSailArea /= Math.Max(1f, SailAreaForce.SailAreaThrottle);
     }
+
+    Logger.LogDebug($"totalSailArea: {totalSailArea}");
 
     return totalSailArea;
   }

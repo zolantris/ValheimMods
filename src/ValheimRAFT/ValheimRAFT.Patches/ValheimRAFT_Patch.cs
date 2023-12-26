@@ -38,6 +38,24 @@ public class ValheimRAFT_Patch
     }
   }
 
+  [HarmonyPatch(typeof(ShipControlls), "GetHoverText")]
+  [HarmonyPrefix]
+  public static bool GetRudderHoverText(ShipControlls __instance, ref string __result)
+  {
+    var baseRoot = __instance.GetComponentInParent<MoveableBaseRootComponent>();
+    if (!baseRoot)
+    {
+      return true;
+    }
+
+    __result = Localization.instance.Localize(
+      baseRoot.m_moveableBaseShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored)
+        ? "<color=yellow><b>$mb_rudder_use</b></color><color=white>$mb_anchor_enabled</color>"
+        : "<color=yellow><b>$mb_rudder_use</b></color><color=white>$mb_anchor_disabled</color>");
+
+    return false;
+  }
+
   [HarmonyPatch(typeof(ShipControlls), "RPC_RequestRespons")]
   [HarmonyPrefix]
   private static bool ShipControlls_RPC_RequestRespons(ShipControlls __instance, long sender,
@@ -351,9 +369,6 @@ public class ValheimRAFT_Patch
   private static void ApplySailForce(Ship __instance, float num5)
   {
     var mb = __instance.GetComponent<MoveableBaseShipComponent>();
-
-
-    ZLog.Log($"ApplySailForce called, mbroot {mb.m_baseRoot}");
 
     var sailArea = 0f;
 
@@ -673,12 +688,20 @@ public class ValheimRAFT_Patch
     {
       if ((bool)netview)
       {
-        ZLog.Log("adding new piece");
+        /*
+         * viking mast is very small when it should be larger
+         */
+        if (gameObject.name == "MBVikingShipMast(Clone)")
+        {
+          gameObject.transform.localScale = new Vector3(2.2f, 2.2f, 2.2f);
+        }
+
+        Logger.LogDebug($"adding new piece {piece.name} {gameObject.name}");
         mb.AddNewPiece(netview);
       }
       else
       {
-        ZLog.Log("adding temp piece");
+        Logger.LogDebug("adding temp piece");
         mb.AddTemporaryPiece(piece);
       }
     }

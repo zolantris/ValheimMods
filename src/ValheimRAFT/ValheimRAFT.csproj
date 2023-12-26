@@ -10,7 +10,7 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>1.6.3</ApplicationVersion>
+        <ApplicationVersion>1.6.4</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -79,14 +79,12 @@
     </ItemGroup>
     <ItemGroup>
         <Content Include=".gitignore"/>
+        <Content Include="Assets\Translations\English\valheimraft.json"/>
         <Content Include="libs\PlanBuild.dll"/>
         <Content Include="src\ValheimRAFT\README.md"/>
         <Content Include="Thunderstore\icon.png"/>
         <Content Include="Thunderstore\manifest.json"/>
         <Content Include="ValheimRAFT.sln"/>
-    </ItemGroup>
-    <ItemGroup>
-        <Reference Include="Microsoft.CSharp"/>
     </ItemGroup>
     <PropertyGroup>
         <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>

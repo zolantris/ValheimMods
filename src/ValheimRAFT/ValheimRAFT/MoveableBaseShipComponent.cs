@@ -208,7 +208,6 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   public void UpdateStats(bool flight)
   {
-    Logger.LogInfo("ValheimRAFT.MoveableBaseShipComponent - called UpdateStats");
     if (!m_rigidbody || !m_baseRoot || m_baseRoot.m_statsOverride)
     {
       return;
