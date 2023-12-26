@@ -27,13 +27,14 @@ Global
 		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Debug Run Valheim Server|Any CPU.ActiveCfg = Debug Run Valheim Server|Any CPU
 		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Debug Run Valheim Server|Any CPU.Build.0 = Debug Run Valheim Server|Any CPU
 		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Debug ClientServer|Any CPU.Build.0 = Debug ClientServer|Any CPU
+		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Release Archive|Any CPU.ActiveCfg = Release Archive|Any CPU
+		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Release Archive|Any CPU.Build.0 = Release Archive|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Release Run Valheim|Any CPU.ActiveCfg = Debug|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Release Run Valheim|Any CPU.Build.0 = Debug|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Release Archive|Any CPU.ActiveCfg = Debug|Any CPU
-		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Release Archive|Any CPU.Build.0 = Debug|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Debug Run Valheim|Any CPU.ActiveCfg = Debug|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Release Run Valheim Server|Any CPU.ActiveCfg = Debug|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Release Run Valheim Server|Any CPU.Build.0 = Debug|Any CPU

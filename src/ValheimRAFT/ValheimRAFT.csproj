@@ -99,6 +99,9 @@
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' ">
         <OutputPath>bin\Debug Run Valheim Server\</OutputPath>
     </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
+      <OutputPath>bin\Release Archive\</OutputPath>
+    </PropertyGroup>
     <Target Name="Copy_To_R2ModMan" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="PostBuildEvent">
         <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(PluginDeployPath)\ValheimRAFT.dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(PluginDeployPath)\ValheimRAFT.pdb&quot;"/>
