@@ -1,111 +1,75 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.8" DefaultTargets="Build">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"
+            Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
         <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-        <ProjectGuid>{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}</ProjectGuid>
+        <ProjectGuid>{E9B48BE9-4D8E-44DB-961A-D7C279B2CA2B}</ProjectGuid>
         <OutputType>Library</OutputType>
-        <AssemblyName>ValheimRAFT</AssemblyName>
+        <AppDesignerFolder>Properties</AppDesignerFolder>
+        <RootNamespace>ValheimVehicles</RootNamespace>
+        <AssemblyName>ValheimVehicles</AssemblyName>
         <TargetFramework>netstandard2.0</TargetFramework>
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-        <Platforms>AnyCPU</Platforms>
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>1.6.4</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
-        <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
     </PropertyGroup>
-    <Import Project="..\..\valheim.targets"/>
+    <Import Project="$(SolutionDir)/valheim.targets"/>
+    <!--        <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">-->
+    <!--            <PlatformTarget>AnyCPU</PlatformTarget>-->
+    <!--            <DebugSymbols>true</DebugSymbols>-->
+    <!--            <DebugType>full</DebugType>-->
+    <!--            <Optimize>false</Optimize>-->
+    <!--            <OutputPath>bin\Debug\</OutputPath>-->
+    <!--            <DefineConstants>DEBUG;TRACE</DefineConstants>-->
+    <!--            <ErrorReport>prompt</ErrorReport>-->
+    <!--            <WarningLevel>4</WarningLevel>-->
+    <!--        </PropertyGroup>-->
+    <!--        <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">-->
+    <!--            <PlatformTarget>AnyCPU</PlatformTarget>-->
+    <!--            <DebugType>pdbonly</DebugType>-->
+    <!--            <Optimize>true</Optimize>-->
+    <!--            <OutputPath>bin\Release\</OutputPath>-->
+    <!--            <DefineConstants>TRACE</DefineConstants>-->
+    <!--            <ErrorReport>prompt</ErrorReport>-->
+    <!--            <WarningLevel>4</WarningLevel>-->
+    <!--        </PropertyGroup>-->
     <ItemGroup>
+        <Compile Include="ValheimVehiclesPlugin.cs"/>
+        <Compile Include=".\VehicleUtils\*.cs"/>
+        <Compile Include=".\Vehicles\*.cs"/>
+        <Compile Include=".\Patches\*.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
-        <Compile Include="ValheimRAFT.Patches\PatchController.cs"/>
-        <Compile Include="ValheimRAFT.Patches\PlanBuildPatch.cs"/>
-        <Compile Include="ValheimRAFT.Util\BinaryIOUtil.cs"/>
-        <Compile Include="ValheimRAFT.Util\ListUtil.cs"/>
-        <Compile Include="ValheimRAFT.Util\PrefabNames.cs"/>
-        <Compile Include="ValheimRAFT.Util\ZDOUtil.cs"/>
-        <Compile Include="ValheimRAFT.UI\EditRampComponent.cs"/>
-        <Compile Include="ValheimRAFT.UI\EditSailComponentPanel.cs"/>
-        <Compile Include="ValheimRAFT.UI\PanelUtil.cs"/>
-        <Compile Include="ValheimRAFT.Patches\Plantable_Patch.cs"/>
-        <Compile Include="ValheimRAFT.Patches\Teleport_Patch.cs"/>
-        <Compile Include="ValheimRAFT.Patches\ValheimRAFT_Patch.cs"/>
-        <Compile Include="ValheimRAFT\AssemblyInfo.cs"/>
-        <Compile Include="ValheimRAFT\BoardingRampComponent.cs"/>
-        <Compile Include="ValheimRAFT\CreativeModeConsoleCommand.cs"/>
-        <Compile Include="ValheimRAFT\CultivatableComponent.cs"/>
-        <Compile Include="ValheimRAFT\CustomMastComponent.cs"/>
-        <Compile Include="ValheimRAFT\CustomTextureGroup.cs"/>
-        <Compile Include="ValheimRAFT\DockComponent.cs"/>
-        <Compile Include="ValheimRAFT\HideRaftConsoleCommand.cs"/>
-        <Compile Include="ValheimRAFT\MovableBaseZone.cs"/>
-        <Compile Include="ValheimRAFT\ShipStats.cs"/>
-        <Compile Include="ValheimRAFT\SailAreaForce.cs"/>
-        <Compile Include="ValheimRAFT\ValheimRaftPlugin.cs"/>
-        <Compile Include="ValheimRAFT\MastComponent.cs"/>
-        <Compile Include="ValheimRAFT\MeshHelper.cs"/>
-        <Compile Include="ValheimRAFT\MoveableBaseRootComponent.cs"/>
-        <Compile Include="ValheimRAFT\MoveableBaseShipComponent.cs"/>
-        <Compile Include="ValheimRAFT\MoveRaftConsoleCommand.cs"/>
-        <Compile Include="ValheimRAFT\PierComponent.cs"/>
-        <Compile Include="ValheimRAFT\RecoverRaftConsoleCommand.cs"/>
-        <Compile Include="ValheimRAFT\RopeAnchorComponent.cs"/>
-        <Compile Include="ValheimRAFT\RopeComponent.cs"/>
-        <Compile Include="ValheimRAFT\RopeLadderComponent.cs"/>
-        <Compile Include="ValheimRAFT\RudderComponent.cs"/>
-        <Compile Include="ValheimRAFT\SailComponent.cs"/>
-        <Compile Include="ValheimRAFT\SailCreatorComponent.cs"/>
     </ItemGroup>
-    <ItemGroup>
-        <!--           new structure (failing to load assets, but they are detected      -->
-        <!--        <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="ValheimRAFT.AssetBundle.AssetBundle"/>-->
-        <!--        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest"/>-->
-        <!--        <EmbeddedResource Include="AssetBundle\valheimraft" LogicalName="ValheimRAFT.AssetBundle.valheimraft"/>-->
-        <!--        <EmbeddedResource Include="AssetBundle\valheimraft.manifest"/>-->
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+         Other similar extension points exist, see Microsoft.Common.targets.
+    <Target Name="BeforeBuild">
+    </Target>
+    <Target Name="AfterBuild">
+    </Target>
+    -->
 
-        <!--   old asset bundle structure (working)     -->
-        <!--        <EmbeddedResource Include="AssetBundle.valheimraft"/>-->
-        <!--        <EmbeddedResource Include="AssetBundle.AssetBundle"/>-->
-        <!--        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest"/>-->
-        <!--        <EmbeddedResource Include="AssetBundle\valheimraft.manifest"/>-->
-        <None Remove="AssetBundle\AssetBundle"/>
-        <None Remove="AssetBundle\valheimraft"/>
-        <None Remove="AssetBundle\AssetBundle.manifest"/>
-        <None Remove="AssetBundle\valheimraft.manifest"/>
-        <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="AssetBundle"/>
-        <EmbeddedResource Include="AssetBundle\valheimraft" LogicalName="valheimraft"/>
-        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest"/>
-        <EmbeddedResource Include="AssetBundle\valheimraft.manifest" LogicalName="valheimraft.manifest"/>
-    </ItemGroup>
-    <ItemGroup>
-        <Content Include=".gitignore"/>
-        <Content Include="Assets\Translations\English\valheimraft.json"/>
-        <Content Include="libs\PlanBuild.dll"/>
-        <Content Include="src\ValheimRAFT\README.md"/>
-        <Content Include="Thunderstore\icon.png"/>
-        <Content Include="Thunderstore\manifest.json"/>
-        <Content Include="ValheimRAFT.sln"/>
-    </ItemGroup>
     <PropertyGroup>
         <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
         <R2ModManPath>%HOMEPATH%\AppData\Roaming\r2modmanPlus-local</R2ModManPath>
         <R2ModManProfile>Valheim\profiles\valheim_mod_debugging</R2ModManProfile>
-        <PluginDeployTarget>BepInEx\plugins\zolantris-ValheimRAFT</PluginDeployTarget>
+        <PluginDeployTarget>BepInEx\plugins\zolantris-ValheimVehicles</PluginDeployTarget>
         <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
     </PropertyGroup>
+
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' ">
         <OutputPath>bin\Debug ClientServer\</OutputPath>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' ">
-        <OutputPath>bin\Debug Run Valheim Server\</OutputPath>
-    </PropertyGroup>
+
     <Target Name="Copy_To_R2ModMan" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="PostBuildEvent">
-        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(PluginDeployPath)\ValheimRAFT.dll&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(PluginDeployPath)\ValheimRAFT.pdb&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
     </Target>
     <Target KeepDuplicateOutputs="false" Name="Copy_To_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' " AfterTargets="PostBuildEvent">
-        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\ValheimRAFT.dll&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\ValheimRAFT.pdb&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>
     </Target>
     <Target Name="Run_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' " AfterTargets="Copy_To_Valheim_Server">
         <!--        <Exec Command="cd &quot;$(ValheimServerPath)&quot;-->
@@ -161,5 +125,5 @@
         <Exec Command="powershell Compress-Archive '$(TmpDir)\plugins\*' '$(ModOutputDir)$(NexusName)-$(ModNameVersion)'"/>
         <Exec Command="powershell Compress-Archive '$(RepoDir)libs\*' '$(ModOutputDir)libs-$(ApplicationVersion).zip'"/>
     </Target>
-    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+
 </Project>

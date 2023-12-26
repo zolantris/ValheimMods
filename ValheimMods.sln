@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BuildingDamageModExtended",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoQuickConnect", "src\AutoQuickConnect\AutoQuickConnect.csproj", "{2E19EFCD-E5BC-4A21-9501-229EB99133B1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ValheimVehicles", "src\ValheimVehicles\ValheimVehicles.csproj", "{E9B48BE9-4D8E-44DB-961A-D7C279B2CA2B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,23 +22,12 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Release Run Valheim|Any CPU.ActiveCfg = Release Run Valheim|Any CPU
-		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Release Run Valheim|Any CPU.Build.0 = Release Run Valheim|Any CPU
-		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Release Archive|Any CPU.ActiveCfg = Release Archive|Any CPU
-		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Release Archive|Any CPU.Build.0 = Release Archive|Any CPU
-		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Release Run Valheim Server|Any CPU.ActiveCfg = Release Run Valheim Server|Any CPU
-		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Release Run Valheim Server|Any CPU.Build.0 = Release Run Valheim Server|Any CPU
+		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Debug ClientServer|Any CPU.ActiveCfg = Debug ClientServer|Any CPU
+		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Debug Run Valheim|Any CPU.ActiveCfg = Debug ClientServer|Any CPU
 		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Debug Run Valheim Server|Any CPU.ActiveCfg = Debug Run Valheim Server|Any CPU
 		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Debug Run Valheim Server|Any CPU.Build.0 = Debug Run Valheim Server|Any CPU
-		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Debug ClientServer|Any CPU.ActiveCfg = Debug ClientServer|Any CPU
 		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Debug ClientServer|Any CPU.Build.0 = Debug ClientServer|Any CPU
-		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Debug Run Valheim|Any CPU.ActiveCfg = Debug ClientServer|Any CPU
-		{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}.Debug Run Valheim|Any CPU.Build.0 = Debug ClientServer|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Release Run Valheim|Any CPU.ActiveCfg = Debug|Any CPU
@@ -47,9 +38,9 @@ Global
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Release Run Valheim Server|Any CPU.ActiveCfg = Debug|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Release Run Valheim Server|Any CPU.Build.0 = Debug|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Debug Run Valheim Server|Any CPU.ActiveCfg = Debug|Any CPU
-		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Debug Run Valheim Server|Any CPU.Build.0 = Debug|Any CPU
 		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Debug ClientServer|Any CPU.ActiveCfg = Debug|Any CPU
-		{2E19EFCD-E5BC-4A21-9501-229EB99133B1}.Debug ClientServer|Any CPU.Build.0 = Debug|Any CPU
+		{05E33387-F302-4EB9-B002-7DF95DD37CE7}.Debug Run Valheim|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9B48BE9-4D8E-44DB-961A-D7C279B2CA2B}.Debug ClientServer|Any CPU.ActiveCfg = Debug ClientServer|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

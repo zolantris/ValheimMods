@@ -38,6 +38,24 @@ public class ValheimRAFT_Patch
     }
   }
 
+  [HarmonyPatch(typeof(ShipControlls), "GetHoverText")]
+  [HarmonyPrefix]
+  public static bool GetRudderHoverText(ShipControlls __instance, ref string __result)
+  {
+    var baseRoot = __instance.GetComponentInParent<MoveableBaseRootComponent>();
+    if (!baseRoot)
+    {
+      return true;
+    }
+
+    __result = Localization.instance.Localize(
+      baseRoot.m_moveableBaseShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored)
+        ? "<color=yellow><b>$mb_rudder_use</b></color><color=white>$mb_anchor_enabled</color>"
+        : "<color=yellow><b>$mb_rudder_use</b></color><color=white>$mb_anchor_disabled</color>");
+
+    return false;
+  }
+
   [HarmonyPatch(typeof(ShipControlls), "RPC_RequestRespons")]
   [HarmonyPrefix]
   private static bool ShipControlls_RPC_RequestRespons(ShipControlls __instance, long sender,
@@ -149,11 +167,16 @@ public class ValheimRAFT_Patch
   {
     var mb = __instance.GetComponent<MoveableBaseShipComponent>();
     if (!mb || !__instance.m_nview || __instance.m_nview.m_zdo == null) return true;
+
+    // This could be the spot that causes the raft to fly at spawn
     mb.m_targetHeight = __instance.m_nview.m_zdo.GetFloat("MBTargetHeight", mb.m_targetHeight);
     mb.m_flags =
       (MoveableBaseShipComponent.MBFlags)__instance.m_nview.m_zdo.GetInt("MBFlags",
         (int)mb.m_flags);
+
+    // This could be the spot that causes the raft to fly at spawn
     mb.m_zsync.m_useGravity = mb.m_targetHeight == 0f;
+
     var flag = __instance.HaveControllingPlayer();
     __instance.UpdateControlls(Time.fixedDeltaTime);
     __instance.UpdateSail(Time.fixedDeltaTime);
@@ -224,8 +247,9 @@ public class ValheimRAFT_Patch
       if (__instance.m_players.Count == 0 ||
           mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored))
       {
-        velocity.x *= 0.1f;
-        velocity.z *= 0.1f;
+        var anchoredVelocity = 0.0f;
+        velocity.x = anchoredVelocity;
+        velocity.z = anchoredVelocity;
       }
 
       __instance.m_body.velocity = velocity;
@@ -315,32 +339,78 @@ public class ValheimRAFT_Patch
   // {
   //   private static bool Prefix(Ship __instance, ref Vector3 __result, float sailSize, float dt)
   //   {
-  //     if ()
   //     var windDir = EnvMan.instance.GetWindDir();
-  //     var num1 = Mathf.Lerp(0.25f, 1f, EnvMan.instance.GetWindIntensity());
-  //     var num2 = __instance.GetWindAngleFactor() * num1;
+  //     var windIntensity = Mathf.Lerp(0.25f, 1f, EnvMan.instance.GetWindIntensity());
+  //     var windIntensityAndAngleFactor = __instance.GetWindAngleFactor() * windIntensity;
   //     var forward = __instance.transform.forward;
-  //     __instance.m_sailForce = Vector3.SmoothDamp(__instance.m_sailForce,
-  //       Vector3.Normalize(windDir + forward) * num2 * __instance.m_sailForceFactor * sailSize,
+  //
+  //     var windDirAndForwardVector = Vector3.Normalize(windDir + forward);
+  //
+  //     var outputSailForce = Vector3.SmoothDamp(__instance.m_sailForce,
+  //       windDirAndForwardVector * windIntensityAndAngleFactor * __instance.m_sailForceFactor *
+  //       sailSize,
   //       ref __instance.m_windChangeVelocity, 1f, 1000f);
+  //
+  //     ZLog.Log(
+  //       $"GetSailForce, m_sailForce {__instance.m_sailForce} m_windDir+forward {windDirAndForwardVector} windIntensity: {windIntensity}");
+  //     ZLog.Log($"SailSize: {sailSize}");
+  //     ZLog.Log(
+  //       "Calcs for windDirAndForwardVector * windIntensityAndAngleFactor * __instance.m_sailForceFactor * sailSize");
+  //
+  //     __instance.m_sailForce = outputSailForce;
+  //
   //     ZLog.Log($"Ship sailforce: {__instance.m_sailForce}");
   //     __result = __instance.m_sailForce;
-  //     return true;
+  //
+  //
+  //     return false;
   //   }
   // }
-
   private static void ApplySailForce(Ship __instance, float num5)
   {
-    var sailSize = 0f;
-    if (__instance.m_speed == Ship.Speed.Full)
-      sailSize = 1f;
-    else if (__instance.m_speed == Ship.Speed.Half) sailSize = 0.5f;
-    var sailForce = __instance.GetSailForce(sailSize, Time.fixedDeltaTime);
+    var mb = __instance.GetComponent<MoveableBaseShipComponent>();
+
+    var sailArea = 0f;
+
+    if (mb.m_baseRoot)
+    {
+      sailArea = mb.m_baseRoot.GetShipSailArea();
+    }
+
+    /*
+     * Computed sailSpeed based on the rudder settings.
+     */
+    switch (__instance.m_speed)
+    {
+      case Ship.Speed.Full:
+        break;
+      case Ship.Speed.Half:
+        sailArea *= 0.5f;
+        break;
+      case Ship.Speed.Slow:
+        sailArea = Math.Min(0.5f, sailArea * 0.1f);
+        break;
+      case Ship.Speed.Stop:
+      case Ship.Speed.Back:
+      default:
+        sailArea = 0f;
+        break;
+    }
+
+    if (mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored))
+    {
+      sailArea = 0f;
+    }
+
+    var sailForce = __instance.GetSailForce(sailArea, Time.fixedDeltaTime);
+
     var position = __instance.m_body.worldCenterOfMass;
 
+
+    //  * Math.Max(0.5f, ValheimRaftPlugin.Instance.RaftSailForceMultiplier.Value)
     // set the speed, this may need to be converted to a vector for the multiplier
     __instance.m_body.AddForceAtPosition(
-      sailForce * Math.Max(0.5f, ValheimRaftPlugin.Instance.RaftSailForceMultiplier.Value),
+      sailForce,
       position,
       ForceMode.VelocityChange);
 
@@ -465,10 +535,8 @@ public class ValheimRAFT_Patch
   {
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbr)
-    {
       // Logger.LogError("WearNTear_Destroy called on MoveableBaseRoot skipping");
       mbr.DestroyPiece(__instance);
-    }
 
     return true;
   }
@@ -555,7 +623,7 @@ public class ValheimRAFT_Patch
 
     return false;
   }
-  
+
 
   [HarmonyPatch(typeof(Character), "UpdateGroundContact")]
   [HarmonyPostfix]
@@ -617,12 +685,20 @@ public class ValheimRAFT_Patch
     {
       if ((bool)netview)
       {
-        ZLog.Log("adding new piece");
+        /*
+         * viking mast is very small when it should be larger
+         */
+        if (gameObject.name == "MBVikingShipMast(Clone)")
+        {
+          // gameObject.transform.localScale = new Vector3(2.2f, 2.2f, 2.2f);
+        }
+
+        Logger.LogDebug($"adding new piece {piece.name} {gameObject.name}");
         mb.AddNewPiece(netview);
       }
       else
       {
-        ZLog.Log("adding temp piece");
+        Logger.LogDebug("adding temp piece");
         mb.AddTemporaryPiece(piece);
       }
     }
@@ -815,7 +891,7 @@ public class ValheimRAFT_Patch
           if ((bool)mb)
           {
             if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
-              mb.Accend();
+              mb.Ascend();
             else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
               mb.Descent();
             else if (ZInput.GetButtonDown("Run") || ZInput.GetButtonDown("JoyRun"))

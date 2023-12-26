@@ -12,7 +12,7 @@
 
     <Import Project=".props" Condition="Exists('.props')"/>
 
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU'">
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU'">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugSymbols>true</DebugSymbols>
         <DebugType>full</DebugType>
@@ -23,7 +23,7 @@
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU'">
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU'">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugType>pdbonly</DebugType>
         <Optimize>true</Optimize>
@@ -74,12 +74,14 @@
     <Choose>
         <When Condition="$(BepInExPath) == ''">
             <PropertyGroup>
-                <BepInExPath>$(GamePath)\BepInEx\core</BepInExPath>
+                <!--                $(GamePath)\BepInEx\core-->
+                <BepInExPath>$(SolutionDir)/libs</BepInExPath>
             </PropertyGroup>
         </When>
         <When Condition="$(ManagedDataPath) == ''">
             <PropertyGroup>
-                <ManagedDataPath>$(GamePath)\valheim_Data\Managed</ManagedDataPath>
+                <!--                $(GamePath)\valheim_Data\Managed-->
+                <ManagedDataPath>$(SolutionDir)/libs</ManagedDataPath>
             </PropertyGroup>
         </When>
     </Choose>

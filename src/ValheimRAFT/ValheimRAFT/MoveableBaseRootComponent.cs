@@ -6,6 +6,7 @@ using System.Linq;
 using Jotunn;
 using Jotunn.Managers;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimRAFT.Util;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
@@ -28,13 +29,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public static readonly int MBRotationVecHash = "MBRotationVec".GetStableHashCode();
 
-  internal static Dictionary<int, List<ZNetView>> m_pendingPieces =
-    new Dictionary<int, List<ZNetView>>();
-  
-  internal static Dictionary<int, List<ZDO>> m_allPieces = new Dictionary<int, List<ZDO>>();
+  internal static Dictionary<int, List<ZNetView>> m_pendingPieces = new();
+
+  internal static Dictionary<int, List<ZDO>> m_allPieces = new();
 
   internal static Dictionary<int, List<ZDOID>>
-    m_dynamicObjects = new Dictionary<int, List<ZDOID>>();
+    m_dynamicObjects = new();
 
   internal MoveableBaseShipComponent m_moveableBaseShip;
 
@@ -46,22 +46,33 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   internal Ship m_ship;
 
-  internal List<ZNetView> m_pieces = new List<ZNetView>();
+  internal List<ZNetView> m_pieces = new();
 
-  internal List<MastComponent> m_mastPieces = new List<MastComponent>();
+  internal List<MastComponent> m_mastPieces = new();
+  internal List<SailComponent> m_sailPiece = new();
 
-  internal List<RudderComponent> m_rudderPieces = new List<RudderComponent>();
+  internal List<RudderComponent> m_rudderPieces = new();
 
-  internal List<ZNetView> m_portals = new List<ZNetView>();
+  internal List<ZNetView> m_portals = new();
 
-  internal List<RopeLadderComponent> m_ladders = new List<RopeLadderComponent>();
+  internal List<RopeLadderComponent> m_ladders = new();
 
-  internal List<BoardingRampComponent> m_boardingRamps = new List<BoardingRampComponent>();
+  internal List<BoardingRampComponent> m_boardingRamps = new();
+
+  /*
+   * sail calcs
+   */
+  public int numberOfTier1Sails = 0;
+  public int numberOfTier2Sails = 0;
+  public int numberOfTier3Sails = 0;
+  public float customSailsArea = 0f;
+  public float totalSailArea = 0f;
+  /* end sail calcs  */
 
   private Vector2i m_sector;
   private Vector2i m_serverSector;
 
-  private Bounds m_bounds = default(Bounds);
+  private Bounds m_bounds = default;
 
   internal BoxCollider m_blockingcollider;
 
@@ -79,14 +90,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   private Coroutine server_UpdatePiecesCoroutine;
 
-  public void Create()
-  {
-    ZLog.LogWarning("CALLED CREATE IN MOVEABLEBASE_ROOT");
-  }
-
   public void Awake()
   {
-    m_rigidbody = base.gameObject.AddComponent<Rigidbody>();
+    m_rigidbody = gameObject.AddComponent<Rigidbody>();
     m_rigidbody.isKinematic = true;
     m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     m_rigidbody.mass = 99999f;
@@ -102,21 +108,18 @@ public class MoveableBaseRootComponent : MonoBehaviour
     ZLog.LogWarning(
       $"znet instance: {ZNet.instance} isServer {ZNet.instance.IsServer()} isDedicated: {ZNet.instance.IsDedicated()}");
 
-    if (ZNet.instance.IsServerInstance())
+    if (ZNet.instance.IsServer())
       Logger.LogError("SERVER MUST CALL, Test Log to see if server calls this");
   }
 
   public void CleanUp()
   {
     StopCoroutine("ActivatePendingPieces");
-    if (!ZNetScene.instance || m_id == 0)
-    {
-      return;
-    }
+    if (!ZNetScene.instance || m_id == 0) return;
 
-    for (int i = 0; i < m_pieces.Count; i++)
+    for (var i = 0; i < m_pieces.Count; i++)
     {
-      ZNetView piece = m_pieces[i];
+      var piece = m_pieces[i];
       if ((bool)piece)
       {
         piece.transform.SetParent(null);
@@ -124,14 +127,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
       }
     }
 
-    List<Player> players = Player.GetAllPlayers();
-    for (int j = 0; j < players.Count; j++)
-    {
-      if ((bool)players[j] && players[j].transform.parent == base.transform)
-      {
+    var players = Player.GetAllPlayers();
+    for (var j = 0; j < players.Count; j++)
+      if ((bool)players[j] && players[j].transform.parent == transform)
         players[j].transform.SetParent(null);
-      }
-    }
   }
 
   private void Sync()
@@ -154,10 +153,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   public void LateUpdate()
   {
     Sync();
-    if (!ZNet.instance.IsServer())
-    {
-      Client_UpdateAllPieces();
-    }
+    if (!ZNet.instance.IsServer()) Client_UpdateAllPieces();
   }
 
   /**
@@ -165,20 +161,17 @@ public class MoveableBaseRootComponent : MonoBehaviour
    */
   public void Client_UpdateAllPieces()
   {
-    Vector2i sector = ZoneSystem.instance.GetZone(base.transform.position);
-    
-    if (sector == m_sector)
-    {
-      return;
-    }
+    var sector = ZoneSystem.instance.GetZone(transform.position);
+
+    if (sector == m_sector) return;
 
     if (m_sector != m_serverSector) ServerSyncAllPieces();
 
     m_sector = sector;
 
-    for (int i = 0; i < m_pieces.Count; i++)
+    for (var i = 0; i < m_pieces.Count; i++)
     {
-      ZNetView netview = m_pieces[i];
+      var netview = m_pieces[i];
       if (!netview)
       {
         Logger.LogError($"Error found with m_pieces: netview {netview}");
@@ -189,8 +182,6 @@ public class MoveableBaseRootComponent : MonoBehaviour
       {
         if (transform.position != netview.transform.position)
         {
-          ZLog.Log(
-            $"Transform position {transform.position} {netview.transform.position} {netview.transform.localPosition}");
           netview.m_zdo.SetPosition(transform.position);
         }
       }
@@ -263,8 +254,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
        * wait for the pending pieces coroutine to complete before updating
        */
       if (pendingPiecesCoroutine != null) yield return pendingPiecesCoroutine;
-      
-      float time = Time.realtimeSinceStartup;
+
+      var time = Time.realtimeSinceStartup;
       var output = m_allPieces.TryGetValue(m_id, out var list);
       if (!output)
       {
@@ -273,7 +264,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
             .Value));
         continue;
       }
-      
+
       yield return UpdatePiecesWorker(list);
 
       list = null;
@@ -296,59 +287,60 @@ public class MoveableBaseRootComponent : MonoBehaviour
     }
 
     list.Add(netview);
-    WearNTear wnt = netview.GetComponent<WearNTear>();
-    if ((bool)wnt)
-    {
-      wnt.enabled = false;
-    }
+    var wnt = netview.GetComponent<WearNTear>();
+    if ((bool)wnt) wnt.enabled = false;
   }
 
   public void RemovePiece(ZNetView netview)
   {
     if (m_pieces.Remove(netview))
     {
-      MastComponent mast = netview.GetComponent<MastComponent>();
+      var sail = netview.GetComponent<SailComponent>();
+      if ((bool)sail)
+      {
+        m_sailPiece.Remove(sail);
+      }
+
+      var mast = netview.GetComponent<MastComponent>();
       if ((bool)mast)
       {
         m_mastPieces.Remove(mast);
       }
 
-      RudderComponent rudder = netview.GetComponent<RudderComponent>();
-      if ((bool)rudder)
-      {
-        m_rudderPieces.Remove(rudder);
-      }
+      var rudder = netview.GetComponent<RudderComponent>();
+      if ((bool)rudder) m_rudderPieces.Remove(rudder);
 
-      BoardingRampComponent ramp = netview.GetComponent<BoardingRampComponent>();
-      if ((bool)ramp)
-      {
-        m_boardingRamps.Remove(ramp);
-      }
+      var ramp = netview.GetComponent<BoardingRampComponent>();
+      if ((bool)ramp) m_boardingRamps.Remove(ramp);
 
-      TeleportWorld portal = netview.GetComponent<TeleportWorld>();
-      if ((bool)portal)
-      {
-        m_portals.Remove(netview);
-      }
+      var portal = netview.GetComponent<TeleportWorld>();
+      if ((bool)portal) m_portals.Remove(netview);
 
-      RopeLadderComponent ladder = netview.GetComponent<RopeLadderComponent>();
+      var ladder = netview.GetComponent<RopeLadderComponent>();
       if ((bool)ladder)
       {
         m_ladders.Remove(ladder);
         ladder.m_mbroot = null;
       }
     }
+
+    UpdateStats();
+  }
+
+  private void UpdateStats()
+  {
   }
 
   public void DestroyPiece(WearNTear wnt)
   {
-    ZNetView netview = wnt.GetComponent<ZNetView>();
+    var netview = wnt.GetComponent<ZNetView>();
     RemovePiece(netview);
     UpdatePieceCount();
+    totalSailArea = 0f;
     if (GetPieceCount() == 0)
     {
       m_ship.GetComponent<WearNTear>().Destroy();
-      Destroy(base.gameObject);
+      Destroy(gameObject);
     }
   }
 
@@ -356,15 +348,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
   {
     var wnt_ship = m_ship.GetComponent<WearNTear>();
     if (wnt_ship)
-    {
       wnt_ship.Destroy();
-    }
-    else if (m_ship)
-    {
-      Destroy(m_ship);
-    }
+    else if (m_ship) Destroy(m_ship);
 
-    Destroy(base.gameObject);
+    Destroy(gameObject);
   }
 
   public void ActivatePendingPiecesCoroutine()
@@ -383,16 +370,16 @@ public class MoveableBaseRootComponent : MonoBehaviour
       yield return null;
     }
 
-    int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
+    var id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
     m_pendingPieces.TryGetValue(id, out var list);
 
     if (list is { Count: > 0 })
     {
-      Stopwatch stopwatch = new Stopwatch();
+      var stopwatch = new Stopwatch();
       stopwatch.Start();
-      for (int j = 0; j < list.Count; j++)
+      for (var j = 0; j < list.Count; j++)
       {
-        ZNetView obj = list[j];
+        var obj = list[j];
         if ((bool)obj)
         {
           ActivatePiece(obj);
@@ -408,37 +395,30 @@ public class MoveableBaseRootComponent : MonoBehaviour
       m_pendingPieces.Remove(id);
     }
 
+    ZLog.Log($"Ship Size calc is: m_bounds {m_bounds} bounds size {m_bounds.size}");
+
     m_dynamicObjects.TryGetValue(m_id, out var objectList);
     var ObjectListHasNoValidItems = true;
     if (objectList is { Count: > 0 })
     {
-      for (int i = 0; i < objectList.Count; i++)
+      for (var i = 0; i < objectList.Count; i++)
       {
-        GameObject go = ZNetScene.instance.FindInstance(objectList[i]);
+        var go = ZNetScene.instance.FindInstance(objectList[i]);
 
-        if (!go)
-        {
-          continue;
-        }
+        if (!go) continue;
 
-        ZNetView nv = go.GetComponentInParent<ZNetView>();
+        var nv = go.GetComponentInParent<ZNetView>();
         if (!nv || nv.m_zdo == null)
-        {
           continue;
-        }
         else
-        {
           ObjectListHasNoValidItems = false;
-        }
 
         if (ZDOExtraData.s_vec3.TryGetValue(nv.m_zdo.m_uid, out var dic))
         {
           if (dic.TryGetValue(MBCharacterOffsetHash, out var offset))
-          {
-            nv.transform.position = offset + base.transform.position;
-          }
+            nv.transform.position = offset + transform.position;
 
-          offset = default(Vector3);
+          offset = default;
         }
 
         ZDOExtraData.RemoveInt(nv.m_zdo.m_uid, MBCharacterParentHash);
@@ -453,8 +433,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
      * This prevents empty Prefabs of MBRaft from existing
      * @todo make this only apply for boats with no objects in any list
      */
-    if (list == null || list.Count == 0 &&
-        (m_dynamicObjects.Count == 0 || ObjectListHasNoValidItems)
+    if (list == null || (list.Count == 0 &&
+                         (m_dynamicObjects.Count == 0 || ObjectListHasNoValidItems))
        )
     {
       // ZLog.LogError($"found boat without any items attached {m_ship} {m_nview}");
@@ -466,7 +446,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public static void AddDynamicParent(ZNetView source, GameObject target)
   {
-    MoveableBaseRootComponent mbroot = target.GetComponentInParent<MoveableBaseRootComponent>();
+    var mbroot = target.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbroot)
     {
       source.m_zdo.Set(MBCharacterParentHash, mbroot.m_id);
@@ -475,9 +455,100 @@ public class MoveableBaseRootComponent : MonoBehaviour
     }
   }
 
+  /**
+   * A cached getter for sail size. Cache invalidates when a piece is added or removed
+   *
+   * This method calls so frequently outside of the scope of ValheimRaftPlugin.Instance so the Config values cannot be fetched for some reason.
+   */
+  public float GetShipSailArea()
+  {
+    if (totalSailArea != 0f || !ValheimRaftPlugin.Instance ||
+        m_mastPieces.Count == 0 && m_sailPiece.Count == 0)
+    {
+      return totalSailArea;
+    }
+
+    totalSailArea = 0;
+    customSailsArea = 0;
+    numberOfTier1Sails = 0;
+    numberOfTier2Sails = 0;
+    numberOfTier3Sails = 0;
+
+    var hasConfigOverride = ValheimRaftPlugin.Instance.EnableCustomPropulsionConfig.Value;
+
+    foreach (var mMastPiece in m_mastPieces)
+    {
+      if (mMastPiece.name.Contains("MBRaftMast"))
+      {
+        ++numberOfTier1Sails;
+        var multiplier = hasConfigOverride
+          ? ValheimRaftPlugin.Instance.SailTier1Area.Value
+          : SailAreaForce.Tier1;
+        totalSailArea += numberOfTier1Sails * multiplier;
+      }
+      else if (mMastPiece.name.Contains("MBKarveMast"))
+      {
+        ++numberOfTier2Sails;
+        var multiplier = hasConfigOverride
+          ? ValheimRaftPlugin.Instance.SailTier2Area.Value
+          : SailAreaForce.Tier2;
+        totalSailArea += numberOfTier2Sails * multiplier;
+      }
+      else if (mMastPiece.name.Contains("MBVikingShipMast"))
+      {
+        ++numberOfTier3Sails;
+        var multiplier = hasConfigOverride
+          ? ValheimRaftPlugin.Instance.SailTier3Area.Value
+          : SailAreaForce.Tier3;
+        totalSailArea += numberOfTier3Sails * multiplier;
+        ;
+      }
+    }
+
+    Logger.LogDebug(
+      $"numberOfTieredSails {numberOfTier1Sails} {numberOfTier2Sails} {numberOfTier3Sails}");
+
+    var sailComponents = GetComponentsInChildren<SailComponent>();
+    if (sailComponents.Length != 0)
+    {
+      foreach (var sailComponent in sailComponents)
+      {
+        if ((bool)sailComponent)
+        {
+          customSailsArea += sailComponent.GetSailArea();
+        }
+      }
+
+      var multiplier = hasConfigOverride
+        ? ValheimRaftPlugin.Instance.SailCustomAreaTier1Multiplier.Value
+        : SailAreaForce.CustomTier1AreaForceMultiplier;
+
+      totalSailArea +=
+        (customSailsArea * Math.Max(0.1f,
+          multiplier));
+    }
+
+    /*
+     * Clamps everything by base 10
+     *
+     *  divide by 10 b/c all the enums were set with a 10 multiplier to keep them whole numbers
+     */
+    if (totalSailArea != 0)
+    {
+      var clampValue = hasConfigOverride
+        ? ValheimRaftPlugin.Instance.SailAreaThrottle.Value
+        : SailAreaForce.SailAreaThrottle;
+      totalSailArea /= Math.Max(1f, clampValue);
+    }
+
+    Logger.LogDebug($"totalSailArea: {totalSailArea}");
+
+    return totalSailArea;
+  }
+
   public static void AddDynamicParent(ZNetView source, GameObject target, Vector3 offset)
   {
-    MoveableBaseRootComponent mbroot = target.GetComponentInParent<MoveableBaseRootComponent>();
+    var mbroot = target.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbroot)
     {
       source.m_zdo.Set(MBCharacterParentHash, mbroot.m_id);
@@ -492,7 +563,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     {
     }
 
-    int id = GetParentID(zdo);
+    var id = GetParentID(zdo);
     if (id != 0)
     {
       if (!m_allPieces.TryGetValue(id, out var list))
@@ -504,7 +575,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
       list.Add(zdo);
     }
 
-    int cid = zdo.GetInt(MBCharacterParentHash);
+    var cid = zdo.GetInt(MBCharacterParentHash);
     if (cid != 0)
     {
       if (!m_dynamicObjects.TryGetValue(cid, out var objectList))
@@ -519,7 +590,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public static void RemoveZDO(ZDO zdo)
   {
-    int id = GetParentID(zdo);
+    var id = GetParentID(zdo);
     if (id != 0 && m_allPieces.TryGetValue(id, out var list))
     {
       list.FastRemove(zdo);
@@ -529,16 +600,16 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   private static int GetParentID(ZDO zdo)
   {
-    int id = zdo.GetInt(MBParentIdHash);
+    var id = zdo.GetInt(MBParentIdHash);
     if (id == 0)
     {
-      ZDOID zdoid = zdo.GetZDOID(MBParentHash);
+      var zdoid = zdo.GetZDOID(MBParentHash);
       if (zdoid != ZDOID.None)
       {
-        ZDO zdoparent = ZDOMan.instance.GetZDO(zdoid);
-        id = ((zdoparent == null)
+        var zdoparent = ZDOMan.instance.GetZDO(zdoid);
+        id = zdoparent == null
           ? ZDOPersistantID.ZDOIDToId(zdoid)
-          : ZDOPersistantID.Instance.GetOrCreatePersistantID(zdoparent));
+          : ZDOPersistantID.Instance.GetOrCreatePersistantID(zdoparent);
         zdo.Set(MBParentIdHash, id);
         zdo.Set(MBRotationVecHash,
           zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
@@ -552,26 +623,17 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public static void InitPiece(ZNetView netview)
   {
-    Rigidbody rb = netview.GetComponentInChildren<Rigidbody>();
-    if ((bool)rb && !rb.isKinematic)
-    {
-      return;
-    }
+    var rb = netview.GetComponentInChildren<Rigidbody>();
+    if ((bool)rb && !rb.isKinematic) return;
 
-    int id = GetParentID(netview.m_zdo);
-    if (id == 0)
-    {
-      return;
-    }
+    var id = GetParentID(netview.m_zdo);
+    if (id == 0) return;
 
-    GameObject parentObj = ZDOPersistantID.Instance.GetGameObject(id);
+    var parentObj = ZDOPersistantID.Instance.GetGameObject(id);
     if ((bool)parentObj)
     {
-      MoveableBaseShipComponent mb = parentObj.GetComponent<MoveableBaseShipComponent>();
-      if ((bool)mb && (bool)mb.m_baseRoot)
-      {
-        mb.m_baseRoot.ActivatePiece(netview);
-      }
+      var mb = parentObj.GetComponent<MoveableBaseShipComponent>();
+      if ((bool)mb && (bool)mb.m_baseRoot) mb.m_baseRoot.ActivatePiece(netview);
     }
     else
     {
@@ -583,15 +645,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
   {
     if ((bool)netview)
     {
-      netview.transform.SetParent(base.transform);
+      netview.transform.SetParent(transform);
       netview.transform.localPosition = netview.m_zdo.GetVec3(MBPositionHash, Vector3.zero);
       netview.transform.localRotation =
         Quaternion.Euler(netview.m_zdo.GetVec3(MBRotationVecHash, Vector3.zero));
-      WearNTear wnt = netview.GetComponent<WearNTear>();
-      if ((bool)wnt)
-      {
-        wnt.enabled = true;
-      }
+      var wnt = netview.GetComponent<WearNTear>();
+      if ((bool)wnt) wnt.enabled = true;
 
       AddPiece(netview);
     }
@@ -599,7 +658,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void AddTemporaryPiece(Piece piece)
   {
-    piece.transform.SetParent(base.transform);
+    piece.transform.SetParent(transform);
   }
 
   public void AddNewPiece(Piece piece)
@@ -613,7 +672,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void AddNewPiece(ZNetView netview)
   {
-    netview.transform.SetParent(base.transform);
+    netview.transform.SetParent(transform);
     if (netview.m_zdo != null)
     {
       netview.m_zdo.Set(MBParentIdHash,
@@ -628,76 +687,68 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void AddPiece(ZNetView netview)
   {
+    totalSailArea = 0;
     m_pieces.Add(netview);
+    m_moveableBaseShip.GetShipStats().GetShipFloatation(m_pieces);
 
     UpdatePieceCount();
     EncapsulateBounds(netview);
-    WearNTear wnt = netview.GetComponent<WearNTear>();
+    var wnt = netview.GetComponent<WearNTear>();
     if ((bool)wnt && ValheimRaftPlugin.Instance.MakeAllPiecesWaterProof.Value)
-    {
       wnt.m_noRoofWear = false;
-    }
 
-    CultivatableComponent cultivatable = netview.GetComponent<CultivatableComponent>();
-    if ((bool)cultivatable)
-    {
-      cultivatable.UpdateMaterial();
-    }
+    var cultivatable = netview.GetComponent<CultivatableComponent>();
+    if ((bool)cultivatable) cultivatable.UpdateMaterial();
 
-    MastComponent mast = netview.GetComponent<MastComponent>();
+    var mast = netview.GetComponent<MastComponent>();
     if ((bool)mast)
     {
       m_mastPieces.Add(mast);
     }
 
-    BoardingRampComponent ramp = netview.GetComponent<BoardingRampComponent>();
+    var sail = netview.GetComponent<SailComponent>();
+    if ((bool)sail)
+    {
+      m_sailPiece.Add(sail);
+    }
+
+    var ramp = netview.GetComponent<BoardingRampComponent>();
     if ((bool)ramp)
     {
       ramp.ForceRampUpdate();
       m_boardingRamps.Add(ramp);
     }
 
-    RudderComponent rudder = netview.GetComponent<RudderComponent>();
+    var rudder = netview.GetComponent<RudderComponent>();
     if ((bool)rudder)
     {
-      if (!rudder.m_controls)
-      {
-        rudder.m_controls = netview.GetComponentInChildren<ShipControlls>();
-      }
+      if (!rudder.m_controls) rudder.m_controls = netview.GetComponentInChildren<ShipControlls>();
 
-      if (!rudder.m_wheel)
-      {
-        rudder.m_wheel = netview.transform.Find("controls/wheel");
-      }
+      if (!rudder.m_wheel) rudder.m_wheel = netview.transform.Find("controls/wheel");
 
       rudder.m_controls.m_nview = m_nview;
       rudder.m_controls.m_ship = m_moveableBaseShip.GetComponent<Ship>();
       m_rudderPieces.Add(rudder);
     }
 
-    TeleportWorld portal = netview.GetComponent<TeleportWorld>();
-    if ((bool)portal)
-    {
-      m_portals.Add(netview);
-    }
+    var portal = netview.GetComponent<TeleportWorld>();
+    if ((bool)portal) m_portals.Add(netview);
 
-    RopeLadderComponent ladder = netview.GetComponent<RopeLadderComponent>();
+    var ladder = netview.GetComponent<RopeLadderComponent>();
     if ((bool)ladder)
     {
       m_ladders.Add(ladder);
       ladder.m_mbroot = this;
     }
 
-    MeshRenderer[] meshes = netview.GetComponentsInChildren<MeshRenderer>(includeInactive: true);
-    MeshRenderer[] array = meshes;
-    foreach (MeshRenderer meshRenderer in array)
-    {
+    var meshes = netview.GetComponentsInChildren<MeshRenderer>(true);
+    foreach (var meshRenderer in meshes)
       if ((bool)meshRenderer.sharedMaterial)
       {
-        Material[] sharedMaterials = meshRenderer.sharedMaterials;
-        for (int j = 0; j < sharedMaterials.Length; j++)
+        var sharedMaterials = meshRenderer.sharedMaterials;
+        for (var j = 0; j < sharedMaterials.Length; j++)
         {
-          Material material = new Material(sharedMaterials[j]);
+          var material = new Material(sharedMaterials[j]);
           material.SetFloat("_RippleDistance", 0f);
           material.SetFloat("_ValueNoise", 0f);
           sharedMaterials[j] = material;
@@ -705,48 +756,37 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
         meshRenderer.sharedMaterials = sharedMaterials;
       }
-    }
 
     /*
      * @todo investigate why this is called. Determine if it is needed
      */
-    Rigidbody[] rbs = netview.GetComponentsInChildren<Rigidbody>();
-    for (int i = 0; i < rbs.Length; i++)
-    {
+    var rbs = netview.GetComponentsInChildren<Rigidbody>();
+    for (var i = 0; i < rbs.Length; i++)
       if (rbs[i].isKinematic)
-      {
         Destroy(rbs[i]);
-      }
-    }
   }
 
   private void UpdatePieceCount()
   {
-    if ((bool)m_nview && m_nview.m_zdo != null)
-    {
-      m_nview.m_zdo.Set("MBPieceCount", m_pieces.Count);
-    }
+    if ((bool)m_nview && m_nview.m_zdo != null) m_nview.m_zdo.Set("MBPieceCount", m_pieces.Count);
   }
 
   public void EncapsulateBounds(ZNetView netview)
   {
-    Piece piece = netview.GetComponent<Piece>();
-    List<Collider> colliders = (piece
+    var piece = netview.GetComponent<Piece>();
+    var colliders = piece
       ? piece.GetAllColliders()
-      : new List<Collider>(netview.GetComponentsInChildren<Collider>()));
-    Door door = netview.GetComponentInChildren<Door>();
-    RopeLadderComponent ladder = netview.GetComponent<RopeLadderComponent>();
-    RopeAnchorComponent rope = netview.GetComponent<RopeAnchorComponent>();
-    if (!door && !ladder && !rope)
-    {
-      m_bounds.Encapsulate(netview.transform.localPosition);
-    }
+      : new List<Collider>(netview.GetComponentsInChildren<Collider>());
+    var door = netview.GetComponentInChildren<Door>();
+    var ladder = netview.GetComponent<RopeLadderComponent>();
+    var rope = netview.GetComponent<RopeAnchorComponent>();
+    if (!door && !ladder && !rope) m_bounds.Encapsulate(netview.transform.localPosition);
 
-    for (int i = 0; i < colliders.Count; i++)
+    for (var i = 0; i < colliders.Count; i++)
     {
-      Physics.IgnoreCollision(colliders[i], m_blockingcollider, ignore: true);
-      Physics.IgnoreCollision(colliders[i], m_floatcollider, ignore: true);
-      Physics.IgnoreCollision(colliders[i], m_onboardcollider, ignore: true);
+      Physics.IgnoreCollision(colliders[i], m_blockingcollider, true);
+      Physics.IgnoreCollision(colliders[i], m_floatcollider, true);
+      Physics.IgnoreCollision(colliders[i], m_onboardcollider, true);
     }
 
     m_blockingcollider.size = new Vector3(m_bounds.size.x, 3f, m_bounds.size.z);
@@ -759,10 +799,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   internal int GetPieceCount()
   {
-    if (!m_nview || m_nview.m_zdo == null)
-    {
-      return m_pieces.Count;
-    }
+    if (!m_nview || m_nview.m_zdo == null) return m_pieces.Count;
 
     return m_nview.m_zdo.GetInt("MBPieceCount", m_pieces.Count);
   }

@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 using ValheimRAFT.Util;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
@@ -20,6 +21,8 @@ public class MoveableBaseShipComponent : MonoBehaviour
   internal Rigidbody m_rigidbody;
 
   internal Ship m_ship;
+
+  internal ShipStats m_shipStats = new ShipStats();
 
   internal ZNetView m_nview;
 
@@ -59,7 +62,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.m_syncRigidbody = m_rigidbody;
     m_rigidbody.mass = 1000f;
     m_baseRootObject.transform.SetParent(null);
-    
+
     m_baseRootObject.transform.position = base.transform.position;
     m_baseRootObject.transform.rotation = base.transform.rotation;
     ship.transform.Find("ship/visual/mast")?.gameObject.SetActive(value: false);
@@ -105,6 +108,11 @@ public class MoveableBaseShipComponent : MonoBehaviour
     }
   }
 
+  public ShipStats GetShipStats()
+  {
+    return m_shipStats;
+  }
+
   /**
    * this creates the Raft 2x3 area
    */
@@ -143,7 +151,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     }
   }
 
-  internal void Accend()
+  internal void Ascend()
   {
     if (m_flags.HasFlag(MBFlags.IsAnchored))
     {
