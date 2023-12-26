@@ -39,6 +39,7 @@
         <Compile Include="ValheimRAFT\DockComponent.cs"/>
         <Compile Include="ValheimRAFT\HideRaftConsoleCommand.cs"/>
         <Compile Include="ValheimRAFT\MovableBaseZone.cs"/>
+        <Compile Include="ValheimRAFT\SailAreaForce.cs"/>
         <Compile Include="ValheimRAFT\ValheimRaftPlugin.cs"/>
         <Compile Include="ValheimRAFT\MastComponent.cs"/>
         <Compile Include="ValheimRAFT\MeshHelper.cs"/>

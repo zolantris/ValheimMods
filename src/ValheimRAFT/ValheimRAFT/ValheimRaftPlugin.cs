@@ -6,6 +6,7 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using Jotunn;
@@ -50,6 +51,16 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> RaftSailForceMultiplier { get; set; }
   public ConfigEntry<bool> DisplacedRaftAutoFix { get; set; }
 
+
+  public ConfigEntry<bool> EnableCustomPropulsionConfig { get; set; }
+  public ConfigEntry<float> SailAreaThrottle { get; set; }
+  public ConfigEntry<float> SailTier1Area { get; set; }
+  public ConfigEntry<float> SailTier2Area { get; set; }
+  public ConfigEntry<float> SailTier3Area { get; set; }
+  public ConfigEntry<float> SailCustomAreaTier1Multiplier { get; set; }
+  public ConfigEntry<float> BoatDragCoefficient { get; set; }
+  public ConfigEntry<float> MastShearForceThreshold { get; set; }
+
   /**
    * These folder names are matched for the CustomTexturesGroup
    */
@@ -58,9 +69,113 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     $"{Author}-{ModName}", ModName
   };
 
-  public void Awake()
+  class ConfigData<T>
   {
-    Instance = this;
+    public string section;
+    public string key;
+
+    public string description;
+
+    // public bool defaultValue;
+    // public ConfigEntry<T> bindVariable;
+    public string bindVariable;
+    public T defaultValue;
+    public bool isAdminOnly = false;
+  }
+
+  private void CreateConfig()
+  {
+    List<ConfigData<object>> configList =
+    [
+      new ConfigData<bool>()
+      {
+        bindVariable = EnableCustomPropulsionConfig,
+        section = "Propulsion",
+        key = "EnableCustomPropulsionConfig",
+        defaultValue = false,
+        description =
+          "Enables all custom propulsion values",
+      },
+      new ConfigData<float>()
+      {
+        bindVariable = SailAreaThrottle,
+        section = "Propulsion",
+        key = "SailAreaThrottle",
+        defaultValue = 10f,
+        description =
+          "Throttles the sail area, having this value high will prevent a boat with many sails and small area from breaking the sails. This value is meant to be left alone and will not apply unless the HasCustomSailConfig is enabled",
+      },
+      new ConfigData<float>()
+      {
+        bindVariable = SailTier1Area,
+        section = "Propulsion",
+        key = "SailTier1Area",
+        defaultValue = (float)SailAreaForce.Tier1,
+        description = "Manual sets the area of the tier 1 sail."
+      },
+      new ConfigData<float>()
+      {
+        bindVariable = SailTier2Area,
+        section = "Propulsion",
+        key = "SailTier2Area",
+        defaultValue = (float)SailAreaForce.Tier2,
+        description = "Manual sets the area of the tier 2 sail."
+      },
+      new ConfigData<float>()
+      {
+        bindVariable = SailTier3Area,
+        section = "Propulsion",
+        key = "SailTier3Area",
+        defaultValue = (float)SailAreaForce.Tier3,
+        description = "Manual sets the area of the tier 3 sail."
+      },
+      new ConfigData<float>()
+      {
+        bindVariable = SailCustomAreaTier1Multiplier,
+        section = "Propulsion",
+        key = "SailCustomAreaTier1Multiplier",
+        defaultValue = (float)SailAreaForce.CustomTier1AreaForceMultiplier,
+        description =
+          "Manual sets the area multiplier the custom tier1 sail. Currently there is only 1 tier"
+      },
+      new ConfigData<float>()
+      {
+        bindVariable = BoatDragCoefficient,
+        section = "Propulsion",
+        key = "BoatDragCoefficient",
+        defaultValue = 0.2f,
+        description =
+          "Manually set the boat drag coefficient. This value will make boats that do not have a vertical design or are top heavy much slower and require many more sails"
+      },
+      new ConfigData<float>()
+      {
+        bindVariable = MastShearForceThreshold,
+        section = "Propulsion",
+        key = "MastShearForceThreshold",
+        defaultValue = 0.2f,
+        description =
+          "Mast"
+      },
+    ];
+
+    foreach (var configData in configList)
+    {
+      configData.bindVariable = Config.Bind(configData.section,
+        configData.key, configData.defaultValue, new ConfigDescription(
+          configData.description,
+          (AcceptableValueBase)null, new object[1]
+          {
+            (object)new ConfigurationManagerAttributes()
+            {
+              IsAdminOnly = configData.isAdminOnly
+            }
+          }));
+    }
+
+    /*
+     * @todo move this into the larger config object
+     * the old ugly way to add config.
+     */
     DisplacedRaftAutoFix = Config.Bind("Debug",
       "DisplacedRaftAutoFix", false,
       "Automatically fix a displaced glitched out raft if the player is standing on the raft. This will make the player fall into the water briefly but avoid having to run 'raftoffset 0 0 0'");
@@ -149,6 +264,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
             IsAdminOnly = true
           }
         }));
+  }
+
+  public void Awake()
+  {
+    Instance = this;
+    CreateConfig();
 
     PatchController.Apply(HarmonyGuid);
 
