@@ -348,6 +348,9 @@ public class EditSailComponentPanel
     {
       m_editSail.LoadFromMaterial();
       m_editSail.SaveZDO();
+
+      // reloading the zdo after saving should fix the update problems.
+      m_editSail.LoadZDO();
     }
 
     CloseEditPanel();

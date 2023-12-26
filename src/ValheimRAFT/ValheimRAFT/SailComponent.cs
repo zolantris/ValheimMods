@@ -4,6 +4,7 @@ using System.IO;
 using UnityEngine;
 using ValheimRAFT.UI;
 using ValheimRAFT.Util;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
@@ -89,6 +90,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   private Vector2 m_mainOffset;
 
   private Color m_mainColor;
+
+  private float m_sailArea;
 
   public void Awake()
   {
@@ -291,6 +294,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     SetLogoRotation(zdo_logoRotation);
     SetAllowSailShrinking(zdo_sailFlags.HasFlag(SailFlags.AllowSailShrinking));
     SetDisableCloth(zdo_sailFlags.HasFlag(SailFlags.DisableCloth));
+    UpdateSailArea();
     if (meshUpdateRequired)
     {
       CreateSailMesh();
@@ -343,6 +347,11 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     if (m_sailCorners.Count < 3)
     {
       return;
+    }
+
+    foreach (var VARIABLE in m_sailCorners)
+    {
+      ZLog.Log($"SAILCORNER: {VARIABLE}");
     }
 
     List<Vector3> vertices = new List<Vector3>();
@@ -459,9 +468,75 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     UpdateCoefficients();
   }
 
+  public float GetSailArea()
+  {
+    if (m_sailArea == 0f)
+    {
+      UpdateSailArea();
+    }
+
+    return m_sailArea;
+  }
+
+  private void UpdateSailArea()
+  {
+    if (m_sailCorners.Count is not (3 or 4))
+    {
+      Logger.LogError(
+        $"CalculateSailArea exited due to not enough vertices provided, max vertices should be 3 or 4, got {m_sailCorners.Count}");
+      return;
+    }
+
+
+    var surfaceAreaInForwardDirection = Area(m_sailCorners);
+    m_sailArea = surfaceAreaInForwardDirection;
+
+    Logger.LogDebug($"SailComponent UpdateSailArea: {m_sailArea}");
+  }
+
+  public float Area(List<Vector3> vertices)
+  {
+    Vector3 result = Vector3.zero;
+    for (int p = vertices.Count - 1, q = 0; q < vertices.Count; p = q++)
+    {
+      result += Vector3.Cross(vertices[q], vertices[p]);
+    }
+
+    result *= 0.5f;
+    return result.magnitude;
+  }
+
+  /**
+   * mesh area may still be useful.
+   */
+  float CalculateFacingArea(Mesh mesh, Vector3 direction)
+  {
+    direction = direction.normalized;
+    var triangles = mesh.triangles;
+    var vertices = mesh.vertices;
+
+    double sum = 0.0;
+
+    for (int i = 0; i < triangles.Length; i += 3)
+    {
+      Vector3 corner = vertices[triangles[i]];
+      Vector3 a = vertices[triangles[i + 1]] - corner;
+      Vector3 b = vertices[triangles[i + 2]] - corner;
+
+      float projection = Vector3.Dot(Vector3.Cross(b, a), direction);
+      if (projection > 0f)
+        sum += projection;
+    }
+
+    return (float)(sum / 2.0);
+  }
+
   public void UpdateCoefficients()
   {
     m_sailCloth.enabled = !m_sailFlags.HasFlag(SailFlags.DisableCloth);
+
+    UpdateSailArea();
+
     Mesh mesh = m_mesh.sharedMesh;
     ClothSkinningCoefficient[] coefficients = ((mesh.vertexCount == m_sailCloth.coefficients.Length)
       ? m_sailCloth.coefficients

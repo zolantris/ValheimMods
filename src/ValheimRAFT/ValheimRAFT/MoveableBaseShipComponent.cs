@@ -59,7 +59,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.m_syncRigidbody = m_rigidbody;
     m_rigidbody.mass = 1000f;
     m_baseRootObject.transform.SetParent(null);
-    
+
     m_baseRootObject.transform.position = base.transform.position;
     m_baseRootObject.transform.rotation = base.transform.rotation;
     ship.transform.Find("ship/visual/mast")?.gameObject.SetActive(value: false);
@@ -143,7 +143,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     }
   }
 
-  internal void Accend()
+  internal void Ascend()
   {
     if (m_flags.HasFlag(MBFlags.IsAnchored))
     {

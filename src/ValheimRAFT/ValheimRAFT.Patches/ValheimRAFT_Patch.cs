@@ -224,8 +224,9 @@ public class ValheimRAFT_Patch
       if (__instance.m_players.Count == 0 ||
           mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored))
       {
-        velocity.x *= 0.1f;
-        velocity.z *= 0.1f;
+        var anchoredVelocity = 0.0f;
+        velocity.x = anchoredVelocity;
+        velocity.z = anchoredVelocity;
       }
 
       __instance.m_body.velocity = velocity;
@@ -310,37 +311,80 @@ public class ValheimRAFT_Patch
   /**
    * this is disabled for now, but in the future this calc will need to be overridden based on number of sails and ship weight/size
    */
-  // [HarmonyPatch(typeof(Ship), "GetSailForce")]
-  // private static class ChangeShipBaseSpeed
-  // {
-  //   private static bool Prefix(Ship __instance, ref Vector3 __result, float sailSize, float dt)
-  //   {
-  //     if ()
-  //     var windDir = EnvMan.instance.GetWindDir();
-  //     var num1 = Mathf.Lerp(0.25f, 1f, EnvMan.instance.GetWindIntensity());
-  //     var num2 = __instance.GetWindAngleFactor() * num1;
-  //     var forward = __instance.transform.forward;
-  //     __instance.m_sailForce = Vector3.SmoothDamp(__instance.m_sailForce,
-  //       Vector3.Normalize(windDir + forward) * num2 * __instance.m_sailForceFactor * sailSize,
-  //       ref __instance.m_windChangeVelocity, 1f, 1000f);
-  //     ZLog.Log($"Ship sailforce: {__instance.m_sailForce}");
-  //     __result = __instance.m_sailForce;
-  //     return true;
-  //   }
-  // }
+  [HarmonyPatch(typeof(Ship), "GetSailForce")]
+  private static class ChangeShipBaseSpeed
+  {
+    private static bool Prefix(Ship __instance, ref Vector3 __result, float sailSize, float dt)
+    {
+      var windDir = EnvMan.instance.GetWindDir();
+      var windIntensity = Mathf.Lerp(0.25f, 1f, EnvMan.instance.GetWindIntensity());
+      var windIntensityAndAngleFactor = __instance.GetWindAngleFactor() * windIntensity;
+      var forward = __instance.transform.forward;
+
+      var windDirAndForwardVector = Vector3.Normalize(windDir + forward);
+
+      var outputSailForce = Vector3.SmoothDamp(__instance.m_sailForce,
+        windDirAndForwardVector * windIntensityAndAngleFactor * __instance.m_sailForceFactor *
+        sailSize,
+        ref __instance.m_windChangeVelocity, 1f, 99f);
+
+      ZLog.Log(
+        $"GetSailForce, m_sailForce {__instance.m_sailForce} m_windDir+forward {windDirAndForwardVector} windIntensity: {windIntensity}");
+      ZLog.Log($"SailSize: {sailSize}");
+      ZLog.Log(
+        "Calcs for windDirAndForwardVector * windIntensityAndAngleFactor * __instance.m_sailForceFactor * sailSize");
+
+      __instance.m_sailForce = outputSailForce;
+
+      ZLog.Log($"Ship sailforce: {__instance.m_sailForce}");
+      __result = __instance.m_sailForce;
+
+
+      return false;
+    }
+  }
 
   private static void ApplySailForce(Ship __instance, float num5)
   {
+    var mb = __instance.GetComponent<MoveableBaseShipComponent>();
+
+
+    ZLog.Log($"ApplySailForce called, mbroot {mb.m_baseRoot}");
+
     var sailSize = 0f;
-    if (__instance.m_speed == Ship.Speed.Full)
-      sailSize = 1f;
-    else if (__instance.m_speed == Ship.Speed.Half) sailSize = 0.5f;
+
+    if (mb.m_baseRoot)
+    {
+      sailSize = mb.m_baseRoot.GetSailSize();
+    }
+    else if (__instance.m_speed == Ship.Speed.Half)
+    {
+      if (sailSize == 0f) sailSize = 0.5f;
+      else
+      {
+        sailSize *= 0.5f;
+      }
+    }
+
+    sailSize /= 10f;
+
+    if (mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored))
+    {
+      sailSize = 0f;
+    }
+
+    ZLog.Log($"SailSize is {sailSize}");
+
     var sailForce = __instance.GetSailForce(sailSize, Time.fixedDeltaTime);
+
+    ZLog.Log($"Sailforce is {sailForce}");
     var position = __instance.m_body.worldCenterOfMass;
 
+
+    //  * Math.Max(0.5f, ValheimRaftPlugin.Instance.RaftSailForceMultiplier.Value)
     // set the speed, this may need to be converted to a vector for the multiplier
     __instance.m_body.AddForceAtPosition(
-      sailForce * Math.Max(0.5f, ValheimRaftPlugin.Instance.RaftSailForceMultiplier.Value),
+      sailForce,
       position,
       ForceMode.VelocityChange);
 
@@ -465,10 +509,8 @@ public class ValheimRAFT_Patch
   {
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbr)
-    {
       // Logger.LogError("WearNTear_Destroy called on MoveableBaseRoot skipping");
       mbr.DestroyPiece(__instance);
-    }
 
     return true;
   }
@@ -555,7 +597,7 @@ public class ValheimRAFT_Patch
 
     return false;
   }
-  
+
 
   [HarmonyPatch(typeof(Character), "UpdateGroundContact")]
   [HarmonyPostfix]
@@ -815,7 +857,7 @@ public class ValheimRAFT_Patch
           if ((bool)mb)
           {
             if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
-              mb.Accend();
+              mb.Ascend();
             else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
               mb.Descent();
             else if (ZInput.GetButtonDown("Run") || ZInput.GetButtonDown("JoyRun"))

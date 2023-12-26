@@ -15,38 +15,9 @@
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
     </PropertyGroup>
-    <ItemGroup>
-        <Content Include="..\..\valheim.targets"/>
-    </ItemGroup>
     <Import Project="..\..\valheim.targets"/>
     <ItemGroup>
-        <Compile Include="..\AutoQuickConnect\Properties\AssemblyInfo.cs">
-            <Link>ValheimMods\src\AutoQuickConnect\Properties\AssemblyInfo.cs</Link>
-        </Compile>
-        <Compile Include="..\AutoQuickConnect\QuickConnect\Mod.cs">
-            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\Mod.cs</Link>
-        </Compile>
-        <Compile Include="..\AutoQuickConnect\QuickConnect\PatchCharacterBack.cs">
-            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\PatchCharacterBack.cs</Link>
-        </Compile>
-        <Compile Include="..\AutoQuickConnect\QuickConnect\PatchConnectFailed.cs">
-            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\PatchConnectFailed.cs</Link>
-        </Compile>
-        <Compile Include="..\AutoQuickConnect\QuickConnect\PatchPasswordPrompt.cs">
-            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\PatchPasswordPrompt.cs</Link>
-        </Compile>
-        <Compile Include="..\AutoQuickConnect\QuickConnect\PatchStartUp.cs">
-            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\PatchStartUp.cs</Link>
-        </Compile>
-        <Compile Include="..\AutoQuickConnect\QuickConnect\PatchUiInit.cs">
-            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\PatchUiInit.cs</Link>
-        </Compile>
-        <Compile Include="..\AutoQuickConnect\QuickConnect\QuickConnectUI.cs">
-            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\QuickConnectUI.cs</Link>
-        </Compile>
-        <Compile Include="..\AutoQuickConnect\QuickConnect\Servers.cs">
-            <Link>ValheimMods\src\AutoQuickConnect\QuickConnect\Servers.cs</Link>
-        </Compile>
+        <Compile Include="Properties\AssemblyInfo.cs"/>
         <Compile Include="ValheimRAFT.Patches\PatchController.cs"/>
         <Compile Include="ValheimRAFT.Patches\PlanBuildPatch.cs"/>
         <Compile Include="ValheimRAFT.Util\BinaryIOUtil.cs"/>
@@ -95,19 +66,16 @@
         <!--        <EmbeddedResource Include="AssetBundle.AssetBundle"/>-->
         <!--        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest"/>-->
         <!--        <EmbeddedResource Include="AssetBundle\valheimraft.manifest"/>-->
-        <None Remove="AssetBundleDeprecated\ValheimRAFT.AssetBundle.AssetBundle"/>
-        <None Remove="AssetBundleDeprecated\ValheimRAFT.AssetBundle.valheimraft"/>
-        <None Remove="AssetBundleDeprecated\ValheimRAFT.AssetBundle.AssetBundle.manifest"/>
-        <None Remove="AssetBundleDeprecated\ValheimRAFT.AssetBundle.valheimraft.manifest"/>
-        <EmbeddedResource Include="AssetBundleDeprecated\ValheimRAFT.AssetBundle.AssetBundle" LogicalName="ValheimRAFT.AssetBundle.AssetBundle"/>
-        <EmbeddedResource Include="AssetBundleDeprecated\ValheimRAFT.AssetBundle.valheimraft" LogicalName="ValheimRAFT.AssetBundle.valheimraft"/>
-        <EmbeddedResource Include="AssetBundleDeprecated\ValheimRAFT.AssetBundle.AssetBundle.manifest" LogicalName="ValheimRAFT.AssetBundle.AssetBundle.manifest"/>
-        <EmbeddedResource Include="AssetBundleDeprecated\ValheimRAFT.AssetBundle.valheimraft.manifest" LogicalName="ValheimRAFT.AssetBundle.valheimraft.manifest"/>
+        <None Remove="AssetBundle\AssetBundle"/>
+        <None Remove="AssetBundle\valheimraft"/>
+        <None Remove="AssetBundle\AssetBundle.manifest"/>
+        <None Remove="AssetBundle\valheimraft.manifest"/>
+        <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="AssetBundle"/>
+        <EmbeddedResource Include="AssetBundle\valheimraft" LogicalName="valheimraft"/>
+        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest"/>
+        <EmbeddedResource Include="AssetBundle\valheimraft.manifest" LogicalName="valheimraft.manifest"/>
     </ItemGroup>
     <ItemGroup>
-        <Content Include="..\AutoQuickConnect\AutoQuickConnect.csproj">
-            <Link>ValheimMods\src\AutoQuickConnect\AutoQuickConnect.csproj</Link>
-        </Content>
         <Content Include=".gitignore"/>
         <Content Include="libs\PlanBuild.dll"/>
         <Content Include="src\ValheimRAFT\README.md"/>
@@ -121,6 +89,12 @@
         <R2ModManProfile>Valheim\profiles\valheim_mod_debugging</R2ModManProfile>
         <PluginDeployTarget>BepInEx\plugins\zolantris-ValheimRAFT</PluginDeployTarget>
         <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' ">
+        <OutputPath>bin\Debug ClientServer\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' ">
+        <OutputPath>bin\Debug Run Valheim Server\</OutputPath>
     </PropertyGroup>
     <Target Name="Copy_To_R2ModMan" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="PostBuildEvent">
         <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(PluginDeployPath)\ValheimRAFT.dll&quot;"/>
