@@ -3,8 +3,11 @@
   <component name="UserContentModel">
     <attachedFolders>
       <Path>../valheim-connect-mods</Path>
+      <Path>../valheim_extracted</Path>
     </attachedFolders>
-    <explicitIncludes />
+    <explicitIncludes>
+      <Path>src/ValheimRAFT/Assets/Translations/English/valheimraft.json</Path>
+    </explicitIncludes>
     <explicitExcludes />
   </component>
 </project>
