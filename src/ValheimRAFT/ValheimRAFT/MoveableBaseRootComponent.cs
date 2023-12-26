@@ -182,8 +182,6 @@ public class MoveableBaseRootComponent : MonoBehaviour
       {
         if (transform.position != netview.transform.position)
         {
-          ZLog.Log(
-            $"Transform position {transform.position} {netview.transform.position} {netview.transform.localPosition}");
           netview.m_zdo.SetPosition(transform.position);
         }
       }
@@ -476,24 +474,33 @@ public class MoveableBaseRootComponent : MonoBehaviour
     numberOfTier2Sails = 0;
     numberOfTier3Sails = 0;
 
+    var hasConfigOverride = ValheimRaftPlugin.Instance.EnableCustomPropulsionConfig.Value;
+
     foreach (var mMastPiece in m_mastPieces)
     {
       if (mMastPiece.name.Contains("MBRaftMast"))
       {
         ++numberOfTier1Sails;
-        totalSailArea += numberOfTier1Sails * SailAreaForce.Tier1;
+        var multiplier = hasConfigOverride
+          ? ValheimRaftPlugin.Instance.SailTier1Area.Value
+          : SailAreaForce.Tier1;
+        totalSailArea += numberOfTier1Sails * multiplier;
       }
-
       else if (mMastPiece.name.Contains("MBKarveMast"))
       {
         ++numberOfTier2Sails;
-        totalSailArea += numberOfTier2Sails * SailAreaForce.Tier2;
+        var multiplier = hasConfigOverride
+          ? ValheimRaftPlugin.Instance.SailTier2Area.Value
+          : SailAreaForce.Tier2;
+        totalSailArea += numberOfTier2Sails * multiplier;
       }
-
       else if (mMastPiece.name.Contains("MBVikingShipMast"))
       {
         ++numberOfTier3Sails;
-        totalSailArea += numberOfTier3Sails * SailAreaForce.Tier3;
+        var multiplier = hasConfigOverride
+          ? ValheimRaftPlugin.Instance.SailTier3Area.Value
+          : SailAreaForce.Tier3;
+        totalSailArea += numberOfTier3Sails * multiplier;
         ;
       }
     }
@@ -512,8 +519,13 @@ public class MoveableBaseRootComponent : MonoBehaviour
         }
       }
 
+      var multiplier = hasConfigOverride
+        ? ValheimRaftPlugin.Instance.SailCustomAreaTier1Multiplier.Value
+        : SailAreaForce.CustomTier1AreaForceMultiplier;
+
       totalSailArea +=
-        (customSailsArea * Math.Max(0.1f, SailAreaForce.CustomTier1AreaForceMultiplier));
+        (customSailsArea * Math.Max(0.1f,
+          multiplier));
     }
 
     /*
@@ -523,7 +535,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
      */
     if (totalSailArea != 0)
     {
-      totalSailArea /= Math.Max(1f, SailAreaForce.SailAreaThrottle);
+      var clampValue = hasConfigOverride
+        ? ValheimRaftPlugin.Instance.SailAreaThrottle.Value
+        : SailAreaForce.SailAreaThrottle;
+      totalSailArea /= Math.Max(1f, clampValue);
     }
 
     Logger.LogDebug($"totalSailArea: {totalSailArea}");

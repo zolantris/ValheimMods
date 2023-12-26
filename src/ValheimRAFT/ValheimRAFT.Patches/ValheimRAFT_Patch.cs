@@ -402,11 +402,8 @@ public class ValheimRAFT_Patch
       sailArea = 0f;
     }
 
-    ZLog.Log($"SailSize is {sailArea}");
-
     var sailForce = __instance.GetSailForce(sailArea, Time.fixedDeltaTime);
 
-    ZLog.Log($"Sailforce is {sailForce}");
     var position = __instance.m_body.worldCenterOfMass;
 
 
@@ -693,7 +690,7 @@ public class ValheimRAFT_Patch
          */
         if (gameObject.name == "MBVikingShipMast(Clone)")
         {
-          gameObject.transform.localScale = new Vector3(2.2f, 2.2f, 2.2f);
+          // gameObject.transform.localScale = new Vector3(2.2f, 2.2f, 2.2f);
         }
 
         Logger.LogDebug($"adding new piece {piece.name} {gameObject.name}");

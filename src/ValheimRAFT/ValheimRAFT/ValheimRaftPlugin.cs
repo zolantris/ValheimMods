@@ -111,110 +111,130 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   {
     List<ConfigData<bool>> configListBool =
     [
-      new ConfigData<bool>()
-      {
-        bindVariable = EnableCustomPropulsionConfig,
-        section = "Propulsion",
-        key = "EnableCustomPropulsionConfig",
-        defaultValue = false,
-        description =
-          "Enables all custom propulsion values",
-      },
+      // new ConfigData<bool>()
+      // {
+      //   bindVariable = EnableCustomPropulsionConfig,
+      //   section = "Propulsion",
+      //   key = "EnableCustomPropulsionConfig",
+      //   defaultValue = false,
+      //   description =
+      //     "Enables all custom propulsion values",
+      // },
     ];
 
     List<ConfigData<float>> configListFloat =
     [
-      new ConfigData<float>()
-      {
-        bindVariable = SailAreaThrottle,
-        section = "Propulsion",
-        key = "SailAreaThrottle",
-        defaultValue = 10f,
-        description =
-          "Throttles the sail area, having this value high will prevent a boat with many sails and small area from breaking the sails. This value is meant to be left alone and will not apply unless the HasCustomSailConfig is enabled",
-      },
-      new ConfigData<float>()
-      {
-        bindVariable = SailTier1Area,
-        section = "Propulsion",
-        key = "SailTier1Area",
-        defaultValue = SailAreaForce.Tier1,
-        description = "Manual sets the area of the tier 1 sail."
-      },
-      new ConfigData<float>()
-      {
-        bindVariable = SailTier2Area,
-        section = "Propulsion",
-        key = "SailTier2Area",
-        defaultValue = SailAreaForce.Tier2,
-        description = "Manual sets the area of the tier 2 sail."
-      },
-      new ConfigData<float>()
-      {
-        bindVariable = SailTier3Area,
-        section = "Propulsion",
-        key = "SailTier3Area",
-        defaultValue = SailAreaForce.Tier3,
-        description = "Manual sets the area of the tier 3 sail."
-      },
-      new ConfigData<float>()
-      {
-        bindVariable = SailCustomAreaTier1Multiplier,
-        section = "Propulsion",
-        key = "SailCustomAreaTier1Multiplier",
-        defaultValue = SailAreaForce.CustomTier1AreaForceMultiplier,
-        description =
-          "Manual sets the area multiplier the custom tier1 sail. Currently there is only 1 tier"
-      },
-      new ConfigData<float>()
-      {
-        bindVariable = BoatDragCoefficient,
-        section = "Propulsion",
-        key = "BoatDragCoefficient",
-        defaultValue = 0.2f,
-        description =
-          "Manually set the boat drag coefficient. This value will make boats that do not have a vertical design or are top heavy much slower and require many more sails"
-      },
-      new ConfigData<float>()
-      {
-        bindVariable = MastShearForceThreshold,
-        section = "Propulsion",
-        key = "MastShearForceThreshold",
-        defaultValue = 0.2f,
-        description =
-          "Mast"
-      },
+      // new ConfigData<float>()
+      // {
+      //   bindVariable = SailAreaThrottle,
+      //   section = "Propulsion",
+      //   key = "SailAreaThrottle",
+      //   defaultValue = 10f,
+      //   description =
+      //     "Throttles the sail area, having this value high will prevent a boat with many sails and small area from breaking the sails. This value is meant to be left alone and will not apply unless the HasCustomSailConfig is enabled",
+      // },
+      // new ConfigData<float>()
+      // {
+      //   bindVariable = SailTier1Area,
+      //   section = "Propulsion",
+      //   key = "SailTier1Area",
+      //   defaultValue = SailAreaForce.Tier1,
+      //   description = "Manual sets the area of the tier 1 sail."
+      // },
+      // new ConfigData<float>()
+      // {
+      //   bindVariable = SailTier2Area,
+      //   section = "Propulsion",
+      //   key = "SailTier2Area",
+      //   defaultValue = SailAreaForce.Tier2,
+      //   description = "Manual sets the area of the tier 2 sail."
+      // },
+      // new ConfigData<float>()
+      // {
+      //   bindVariable = SailTier3Area,
+      //   section = "Propulsion",
+      //   key = "SailTier3Area",
+      //   defaultValue = SailAreaForce.Tier3,
+      //   description = "Manual sets the area of the tier 3 sail."
+      // },
+      // new ConfigData<float>()
+      // {
+      //   bindVariable = SailCustomAreaTier1Multiplier,
+      //   section = "Propulsion",
+      //   key = "SailCustomAreaTier1Multiplier",
+      //   defaultValue = SailAreaForce.CustomTier1AreaForceMultiplier,
+      //   description =
+      //     "Manual sets the area multiplier the custom tier1 sail. Currently there is only 1 tier"
+      // },
+      // new ConfigData<float>()
+      // {
+      //   bindVariable = BoatDragCoefficient,
+      //   section = "Propulsion",
+      //   key = "BoatDragCoefficient",
+      //   defaultValue = 0.2f,
+      //   description =
+      //     "Manually set the boat drag coefficient. This value will make boats that do not have a vertical design or are top heavy much slower and require many more sails"
+      // },
+      // new ConfigData<float>()
+      // {
+      //   bindVariable = MastShearForceThreshold,
+      //   section = "Propulsion",
+      //   key = "MastShearForceThreshold",
+      //   defaultValue = 0.2f,
+      //   description =
+      //     "Mast"
+      // },
     ];
 
-    foreach (var configData in configListBool)
-    {
-      configData.bindVariable = Config.Bind(configData.section,
-        configData.key, configData.defaultValue, new ConfigDescription(
-          configData.description,
-          (AcceptableValueBase)null, new object[1]
-          {
-            (object)new ConfigurationManagerAttributes()
-            {
-              IsAdminOnly = configData.isAdminOnly
-            }
-          }));
-    }
+    // foreach (var configData in configListBool)
+    // {
+    //   configData.bindVariable = Config.Bind(configData.section,
+    //     configData.key, configData.defaultValue, new ConfigDescription(
+    //       configData.description,
+    //       (AcceptableValueBase)null, new object[1]
+    //       {
+    //         (object)new ConfigurationManagerAttributes()
+    //         {
+    //           IsAdminOnly = configData.isAdminOnly
+    //         }
+    //       }));
+    // }
+    //
+    // foreach (var configData in configListFloat)
+    // {
+    //   configData.bindVariable = Config.Bind(configData.section,
+    //     configData.key, configData.defaultValue, new ConfigDescription(
+    //       configData.description,
+    //       (AcceptableValueBase)null, new object[1]
+    //       {
+    //         (object)new ConfigurationManagerAttributes()
+    //         {
+    //           IsAdminOnly = configData.isAdminOnly
+    //         }
+    //       }));
+    // }
 
-    foreach (var configData in configListFloat)
-    {
-      configData.bindVariable = Config.Bind(configData.section,
-        configData.key, configData.defaultValue, new ConfigDescription(
-          configData.description,
-          (AcceptableValueBase)null, new object[1]
-          {
-            (object)new ConfigurationManagerAttributes()
-            {
-              IsAdminOnly = configData.isAdminOnly
-            }
-          }));
-    }
+    EnableCustomPropulsionConfig = Config.Bind("Propulsion",
+      "EnableCustomPropulsionConfig", SailAreaForce.HasPropulsionConfigOverride,
+      "Enables all custom propulsion values");
+
+    SailAreaThrottle = Config.Bind("Propulsion",
+      "SailAreaThrottle", SailAreaForce.SailAreaThrottle,
+      "Throttles the sail area, having this value high will prevent a boat with many sails and small area from breaking the sails. This value is meant to be left alone and will not apply unless the HasCustomSailConfig is enabled");
 
 
+    SailCustomAreaTier1Multiplier = Config.Bind("Propulsion",
+      "SailCustomAreaTier1Multiplier", SailAreaForce.CustomTier1AreaForceMultiplier,
+      "Manual sets the area multiplier the custom tier1 sail. Currently there is only 1 tier");
+    SailTier1Area = Config.Bind("Propulsion",
+      "SailTier1Area", SailAreaForce.Tier1,
+      "Manual sets the area of the tier 1 sail.");
+    SailTier2Area = Config.Bind("Propulsion",
+      "SailTier2Area", SailAreaForce.Tier2,
+      "Manual sets the area of the tier 2 sail.");
+    SailTier3Area = Config.Bind("Propulsion",
+      "SailTier3Area", SailAreaForce.Tier3,
+      "Manual sets the area of the tier 3 sail.");
     /*
      * @todo move this into the larger config object
      * the old ugly way to add config.
@@ -548,6 +568,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     }));
     var r13 = prefabMan.CreateClonedPrefab("MBVikingShipMast", vikingshipMast);
     var piece13 = r13.AddComponent<Piece>();
+    // The connector is off by a bit, translating downwards should help but it doesn't work for the vikingmast
+    piece13.transform.localScale = new Vector3(2f, 2f, 2f);
     piece13.m_name = "$mb_vikingship_mast";
     piece13.m_description = "$mb_vikingship_mast_desc";
     piece13.m_placeEffect = wood_floor.m_placeEffect;

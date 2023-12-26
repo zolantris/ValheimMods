@@ -6,12 +6,14 @@ A [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork that works wit
 owner [Sarcenzzz](https://www.nexusmods.com/valheim/users/3061574) abandoned the
 mod, this fork aims to keep the mod functional with future goals of expanding functionality.
 
-
 ## Build Status
+
 [![ValheimRAFT Build](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml/badge.svg)](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml)
 
 ## Contents
+
 <!-- TOC -->
+
 * [ValheimRAFT](#valheimraft)
     * [Build Status](#build-status)
     * [Client/Server/SinglePlayer Support](#clientserversingleplayer-support)
@@ -25,9 +27,8 @@ mod, this fork aims to keep the mod functional with future goals of expanding fu
     * [Contributing](#contributing)
     * [Support Open Source](#support-open-source)
     * [Getting Started](#getting-started)
+
 <!-- TOC -->
-
-
 
 ## Client/Server/SinglePlayer Support
 
@@ -64,6 +65,8 @@ The following has been tested:
 - Adds anchors
 - Adds custom sails (requires meshes to be working)
 - Adds ropes (requires meshes to be working)
+- Sails now will each contribute to the total ship speed. Mesh sails do an area calculation while tier1-3 sails are
+  preset values.
 
 ## Community
 
@@ -73,17 +76,21 @@ Join us on discord to get the latest information, upcoming features, and discove
 
 ## Config
 
-### InitialRaftFloorHeight
-
-| ConfigName                   | Description                                                                                                                                                                                                                                                                                           |
-|------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| InitialRaftFloorHeight       | Lets you set the height of the floors so they do not clip. Recommended to stay between 0.4 and 0.6.                                                                                                                                                                                                   |
-| ServerRaftUpdateZoneInterval | Set interval in seconds for the server update to trigger and re-render pieces if in view                                                                                                                                                                                                              |
-| pluginFolderName             | Allows you to specify the plugin folder if it's been renamed. See the meshes section below for more details                                                                                                                                                                                           |
-| raftHealth                   | Set the raft health for wear and tear. I set it to `500` default, but it was originally `10000` which is not balanced                                                                                                                                                                                 |
-| fixPlanBuildPositionIssues   | Turn on/off the patches for PlanBuild, only needed if the user has PlanBuild and it adds support for ValheimRaft coordinates. The planbuild plugins requires a specific naming convention. Make sure in the plugins folder it is named either "MathiasDecrock-PlanBuild" or "PlanBuild"                 |
-| DisplacedRaftAutoFix                   | Should automatically regenerate the displaced raft. Only useful if the command raftoffset 0 0 0 works for this issue.                                                                                                                                                                                 |
-| RaftSailForceMultiplier       | Lets you configure how much sail force is put into the raft. This makes the raft much faster. Default is 4x faster. Original was 1x speed, but it seemed too slow. Feel free to tweak this value. Lowest is 0.5x speed and there is no max but values above 20 will make the raft have crazy velocity |
+| ConfigName                    | Description                                                                                                                                                                                                                                                                             |
+|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| InitialRaftFloorHeight        | Lets you set the height of the floors so they do not clip. Recommended to stay between 0.4 and 0.6.                                                                                                                                                                                     |
+| ServerRaftUpdateZoneInterval  | Set interval in seconds for the server update to trigger and re-render pieces if in view                                                                                                                                                                                                |
+| pluginFolderName              | Allows you to specify the plugin folder if it's been renamed. See the meshes section below for more details                                                                                                                                                                             |
+| raftHealth                    | Set the raft health for wear and tear. I set it to `500` default, but it was originally `10000` which is not balanced                                                                                                                                                                   |
+| fixPlanBuildPositionIssues    | Turn on/off the patches for PlanBuild, only needed if the user has PlanBuild and it adds support for ValheimRaft coordinates. The planbuild plugins requires a specific naming convention. Make sure in the plugins folder it is named either "MathiasDecrock-PlanBuild" or "PlanBuild" |
+| DisplacedRaftAutoFix          | Should automatically regenerate the displaced raft. Only useful if the command raftoffset 0 0 0 works for this issue.                                                                                                                                                                   |
+| ~~RaftSailForceMultiplier~~   | Deprecated. Use the propulsion controls below                                                                                                                                                                                                                                           |
+| EnableCustomPropulsionConfig  | Enables custom propulsion overrides (For customization and testing)                                                                                                                                                                                                                     |
+| SailTier1Area                 | (propulsion) -> Sets the tier1 sail area.                                                                                                                                                                                                                                               |
+| SailTier2Area                 | (propulsion) -> Sets the tier2 sail area.                                                                                                                                                                                                                                               |
+| SailTier3Area                 | (propulsion) -> Sets the tier3 sail area.                                                                                                                                                                                                                                               |
+| SailCustomAreaTier1Multiplier | (propulsion) -> sets the area multiplier the custom tier1 sail. Currently there is only 1 tier                                                                                                                                                                                          |
+| SailAreaThrottle              | (propulsion) -> Divides the whole ship's area calc by this number                                                                                                                                                                                                                       |
 
 ### Meshes
 
@@ -101,8 +108,12 @@ within the BepInEx\Plugins path. Afterwards relaunch the game. There should be n
 
 If you have a bug, please create an issue under the
 repo's [issues section](https://github.com/zolantris/ValheimMods/issues).
-- Please respect the form. Adding the relevant information makes it easier to triage the problem. 
-- Click [here](https://github.com/zolantris/ValheimRaft/issues/new?assignees=&labels=bug&projects=&template=raft-bug-report.yml) to create an issue now.
+
+- Please respect the form. Adding the relevant information makes it easier to triage the problem.
+-
+
+Click [here](https://github.com/zolantris/ValheimRaft/issues/new?assignees=&labels=bug&projects=&template=raft-bug-report.yml)
+to create an issue now.
 
 ## Mod Support
 
