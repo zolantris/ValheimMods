@@ -124,8 +124,11 @@ namespace ValheimRAFT
           /*
            * this log will not be reached if the "guess" path matches
            */
-          ZLog.LogError(
-            $"ValheimRAFT: Unable to detect modFolder path, this will cause mesh issues with sails. Please set ValheimRAFT mod folder in the BepInExConfig file. The ValheimRAFT folder should found within this directory {Paths.PluginPath}");
+          if (files.Length == 0)
+          {
+            ZLog.LogError(
+              $"ValheimRAFT: Unable to detect modFolder path, this will cause mesh issues with sails. Please set ValheimRAFT mod folder in the BepInExConfig file. The ValheimRAFT folder should found within this directory {Paths.PluginPath}");
+          }
         }
       }
 

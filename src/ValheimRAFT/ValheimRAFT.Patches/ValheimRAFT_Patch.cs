@@ -359,7 +359,7 @@ public class ValheimRAFT_Patch
 
     if (mb.m_baseRoot)
     {
-      sailArea = mb.m_baseRoot.GetSailSize();
+      sailArea = mb.m_baseRoot.GetShipSailArea();
     }
 
     /*

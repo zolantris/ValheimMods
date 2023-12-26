@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 using ValheimRAFT.Util;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
@@ -20,6 +21,8 @@ public class MoveableBaseShipComponent : MonoBehaviour
   internal Rigidbody m_rigidbody;
 
   internal Ship m_ship;
+
+  internal ShipStats m_shipStats = new ShipStats();
 
   internal ZNetView m_nview;
 
@@ -103,6 +106,11 @@ public class MoveableBaseShipComponent : MonoBehaviour
       m_baseRoot.CleanUp();
       UnityEngine.Object.Destroy(m_baseRoot.gameObject);
     }
+  }
+
+  public ShipStats GetShipStats()
+  {
+    return m_shipStats;
   }
 
   /**
@@ -200,6 +208,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   public void UpdateStats(bool flight)
   {
+    Logger.LogInfo("ValheimRAFT.MoveableBaseShipComponent - called UpdateStats");
     if (!m_rigidbody || !m_baseRoot || m_baseRoot.m_statsOverride)
     {
       return;

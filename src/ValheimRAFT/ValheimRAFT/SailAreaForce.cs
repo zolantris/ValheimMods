@@ -1,9 +1,12 @@
 namespace ValheimRAFT;
 
-enum SailAreaForce
+static class SailAreaForce
 {
-  Tier1 = 10,
-  Tier2 = 20,
-  Tier3 = 30,
-  CustomTier1AreaForceMultiplier = 1,
+  public static readonly float Tier1 = 10f;
+  public static readonly float Tier2 = 20f;
+  public static readonly float Tier3 = 30f;
+  public static readonly float CustomTier1AreaForceMultiplier = 1f;
+
+  public static bool HasPropulsionConfigOverride = false;
+  public static float SailAreaThrottle = 10f;
 }

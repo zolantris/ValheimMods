@@ -65,27 +65,51 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    * These folder names are matched for the CustomTexturesGroup
    */
   public string[] possibleModFolderNames =
-  {
-    $"{Author}-{ModName}", ModName
-  };
+  [
+    $"{Author}-{ModName}", $"zolantris-{ModName}", $"Zolantris-{ModName}", ModName
+  ];
 
-  class ConfigData<T>
+  private class ConfigData<T>
   {
     public string section;
     public string key;
 
     public string description;
 
-    // public bool defaultValue;
-    // public ConfigEntry<T> bindVariable;
-    public string bindVariable;
+    public ConfigEntry<T> bindVariable;
+
     public T defaultValue;
+
+    public float dvFloat;
+
+    public string dvString;
+
+    public bool dvBool;
+
     public bool isAdminOnly = false;
+
+    // public string GetDefault(string v)
+    // {
+    //   dvString = v;
+    //   return dvString;
+    // }
+    //
+    // public bool GetDefault(bool v)
+    // {
+    //   dvBool = v;
+    //   return dvBool;
+    // }
+    //
+    // public float GetDefault(float v)
+    // {
+    //   dvFloat = v;
+    //   return dvFloat;
+    // }
   }
 
   private void CreateConfig()
   {
-    List<ConfigData<object>> configList =
+    List<ConfigData<bool>> configListBool =
     [
       new ConfigData<bool>()
       {
@@ -96,6 +120,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         description =
           "Enables all custom propulsion values",
       },
+    ];
+
+    List<ConfigData<float>> configListFloat =
+    [
       new ConfigData<float>()
       {
         bindVariable = SailAreaThrottle,
@@ -110,7 +138,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         bindVariable = SailTier1Area,
         section = "Propulsion",
         key = "SailTier1Area",
-        defaultValue = (float)SailAreaForce.Tier1,
+        defaultValue = SailAreaForce.Tier1,
         description = "Manual sets the area of the tier 1 sail."
       },
       new ConfigData<float>()
@@ -118,7 +146,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         bindVariable = SailTier2Area,
         section = "Propulsion",
         key = "SailTier2Area",
-        defaultValue = (float)SailAreaForce.Tier2,
+        defaultValue = SailAreaForce.Tier2,
         description = "Manual sets the area of the tier 2 sail."
       },
       new ConfigData<float>()
@@ -126,7 +154,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         bindVariable = SailTier3Area,
         section = "Propulsion",
         key = "SailTier3Area",
-        defaultValue = (float)SailAreaForce.Tier3,
+        defaultValue = SailAreaForce.Tier3,
         description = "Manual sets the area of the tier 3 sail."
       },
       new ConfigData<float>()
@@ -134,7 +162,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         bindVariable = SailCustomAreaTier1Multiplier,
         section = "Propulsion",
         key = "SailCustomAreaTier1Multiplier",
-        defaultValue = (float)SailAreaForce.CustomTier1AreaForceMultiplier,
+        defaultValue = SailAreaForce.CustomTier1AreaForceMultiplier,
         description =
           "Manual sets the area multiplier the custom tier1 sail. Currently there is only 1 tier"
       },
@@ -158,7 +186,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       },
     ];
 
-    foreach (var configData in configList)
+    foreach (var configData in configListBool)
     {
       configData.bindVariable = Config.Bind(configData.section,
         configData.key, configData.defaultValue, new ConfigDescription(
@@ -171,6 +199,21 @@ public class ValheimRaftPlugin : BaseUnityPlugin
             }
           }));
     }
+
+    foreach (var configData in configListFloat)
+    {
+      configData.bindVariable = Config.Bind(configData.section,
+        configData.key, configData.defaultValue, new ConfigDescription(
+          configData.description,
+          (AcceptableValueBase)null, new object[1]
+          {
+            (object)new ConfigurationManagerAttributes()
+            {
+              IsAdminOnly = configData.isAdminOnly
+            }
+          }));
+    }
+
 
     /*
      * @todo move this into the larger config object
@@ -341,6 +384,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       texture.Texture.wrapMode = TextureWrapMode.Clamp;
       if ((bool)texture.Normal) texture.Normal.wrapMode = TextureWrapMode.Clamp;
     }
+  }
+
+  internal string GetRudderHoverText()
+  {
+    return Localization.instance.Localize(
+      "[<color=yellow><b>$mb_rudder_use</b></color>]");
   }
 
   internal void AddCustomPieces()
@@ -543,7 +592,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     nv5.m_persistent = true;
     var rudder = r12.AddComponent<RudderComponent>();
     rudder.m_controls = r12.AddComponent<ShipControlls>();
-    rudder.m_controls.m_hoverText = "$mb_rudder_use";
+    rudder.m_controls.m_hoverText = "Derp derp use!";
     rudder.m_controls.m_attachPoint = r12.transform.Find("attachpoint");
     rudder.m_controls.m_attachAnimation = "Standing Torch Idle right";
     rudder.m_controls.m_detachOffset = new Vector3(0f, 0f, 0f);

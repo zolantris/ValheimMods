@@ -91,7 +91,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   private Color m_mainColor;
 
-  private float m_sailArea;
+  private float m_sailArea = 0f;
 
   public void Awake()
   {

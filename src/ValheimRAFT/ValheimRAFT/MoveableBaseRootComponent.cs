@@ -49,6 +49,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   internal List<ZNetView> m_pieces = new();
 
   internal List<MastComponent> m_mastPieces = new();
+  internal List<SailComponent> m_sailPiece = new();
 
   internal List<RudderComponent> m_rudderPieces = new();
 
@@ -64,8 +65,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
   public int numberOfTier1Sails = 0;
   public int numberOfTier2Sails = 0;
   public int numberOfTier3Sails = 0;
-  public float customSailsArea = 0;
-  public float totalSailArea = 0;
+  public float customSailsArea = 0f;
+  public float totalSailArea = 0f;
   /* end sail calcs  */
 
   private Vector2i m_sector;
@@ -296,6 +297,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
   {
     if (m_pieces.Remove(netview))
     {
+      var sail = netview.GetComponent<SailComponent>();
+      if ((bool)sail)
+      {
+        m_sailPiece.Remove(sail);
+      }
+
       var mast = netview.GetComponent<MastComponent>();
       if ((bool)mast)
       {
@@ -452,66 +459,62 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   /**
    * A cached getter for sail size. Cache invalidates when a piece is added or removed
+   *
+   * This method calls so frequently outside of the scope of ValheimRaftPlugin.Instance so the Config values cannot be fetched for some reason.
    */
-  public float GetSailSize()
+  public float GetShipSailArea()
   {
-    if (totalSailArea != 0f)
+    if (totalSailArea != 0f || !ValheimRaftPlugin.Instance ||
+        m_mastPieces.Count == 0 && m_sailPiece.Count == 0)
     {
       return totalSailArea;
     }
 
+    totalSailArea = 0;
     customSailsArea = 0;
     numberOfTier1Sails = 0;
     numberOfTier2Sails = 0;
     numberOfTier3Sails = 0;
 
-    var hasPropulsionConfigOverride = ValheimRaftPlugin.Instance.EnableCustomPropulsionConfig.Value;
     foreach (var mMastPiece in m_mastPieces)
     {
       if (mMastPiece.name.Contains("MBRaftMast"))
       {
-        numberOfTier1Sails += 1;
-        var multiplier = hasPropulsionConfigOverride
-          ? ValheimRaftPlugin.Instance.SailTier1Area.Value
-          : (float)SailAreaForce.Tier1;
-        totalSailArea += numberOfTier1Sails * multiplier;
+        ++numberOfTier1Sails;
+        totalSailArea += numberOfTier1Sails * SailAreaForce.Tier1;
       }
 
       else if (mMastPiece.name.Contains("MBKarveMast"))
       {
-        numberOfTier2Sails += 1;
-        var multiplier = hasPropulsionConfigOverride
-          ? ValheimRaftPlugin.Instance.SailTier2Area.Value
-          : (float)SailAreaForce.Tier2;
-        totalSailArea += numberOfTier2Sails * multiplier;
+        ++numberOfTier2Sails;
+        totalSailArea += numberOfTier2Sails * SailAreaForce.Tier2;
       }
 
       else if (mMastPiece.name.Contains("MBVikingShipMast"))
       {
-        numberOfTier3Sails += 1;
-        var multiplier = hasPropulsionConfigOverride
-          ? ValheimRaftPlugin.Instance.SailTier3Area.Value
-          : (float)SailAreaForce.Tier3;
-        totalSailArea += numberOfTier2Sails * multiplier;
+        ++numberOfTier3Sails;
+        totalSailArea += numberOfTier2Sails * SailAreaForce.Tier3;
+        ;
       }
     }
 
-    ZLog.Log($"numberOfTieredSails {numberOfTier1Sails} {numberOfTier2Sails} {numberOfTier3Sails}");
-    ZLog.Log($"totalSailArea after tiered sails {totalSailArea}");
-
+    Logger.LogDebug(
+      $"numberOfTieredSails {numberOfTier1Sails} {numberOfTier2Sails} {numberOfTier3Sails}");
 
     var sailComponents = GetComponentsInChildren<SailComponent>();
-    ZLog.Log($"sails count {sailComponents.Length}");
     if (sailComponents.Length != 0)
     {
       foreach (var sailComponent in sailComponents)
       {
-        customSailsArea += sailComponent.GetSailArea();
+        if ((bool)sailComponent)
+        {
+          customSailsArea += sailComponent.GetSailArea();
+        }
       }
 
-      ZLog.DevLog($"customSailsArea {customSailsArea} adding to {totalSailArea}");
-      totalSailArea += (customSailsArea * Math.Max(0.1f,
-        ValheimRaftPlugin.Instance.SailCustomAreaTier1Multiplier.Value));
+      Logger.LogDebug($"customSailsArea {customSailsArea} adding to {totalSailArea}");
+      totalSailArea +=
+        (customSailsArea * Math.Max(0.1f, SailAreaForce.CustomTier1AreaForceMultiplier));
     }
 
     /*
@@ -519,9 +522,11 @@ public class MoveableBaseRootComponent : MonoBehaviour
      *
      *  divide by 10 b/c all the enums were set with a 10 multiplier to keep them whole numbers
      */
-    totalSailArea /= Math.Min(5f, ValheimRaftPlugin.Instance.SailAreaThrottle.Value);
-
-    ZLog.Log($"totalSailArea {totalSailArea}");
+    if (totalSailArea != 0f)
+    {
+      ZLog.Log($"SailAreaThrottle, {SailAreaForce.SailAreaThrottle}");
+      totalSailArea /= Math.Max(1f, SailAreaForce.SailAreaThrottle);
+    }
 
     return totalSailArea;
   }
@@ -669,6 +674,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   {
     totalSailArea = 0;
     m_pieces.Add(netview);
+    m_moveableBaseShip.GetShipStats().GetShipFloatation(m_pieces);
 
     UpdatePieceCount();
     EncapsulateBounds(netview);
@@ -683,6 +689,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
     if ((bool)mast)
     {
       m_mastPieces.Add(mast);
+    }
+
+    var sail = netview.GetComponent<SailComponent>();
+    if ((bool)sail)
+    {
+      m_sailPiece.Add(sail);
     }
 
     var ramp = netview.GetComponent<BoardingRampComponent>();
