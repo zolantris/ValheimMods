@@ -136,7 +136,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     m_nview = GetComponent<ZNetView>();
     if (m_sailInit)
       LoadZDO();
-    else if (!ZNetView.m_forceDisableInit) InvokeRepeating("LoadZDO", 5f, 5f);
+    else if (!ZNetView.m_forceDisableInit) InvokeRepeating(nameof(LoadZDO), 5f, 5f);
   }
 
   public void Update()
@@ -149,6 +149,12 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   public void OnDestroy()
   {
     m_sailComponents.Remove(this);
+  }
+
+  private void DestroySelfOnError()
+  {
+    m_nview.m_zdo.Reset();
+    Destroy(this);
   }
 
   public void SetAllowSailShrinking(bool allow)
@@ -243,6 +249,14 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     var meshUpdateRequired = false;
     var coefficientUpdateRequired = false;
     var zdo_corners = zdo.GetInt(m_sailCornersCountHash);
+
+    if (zdo_corners == 0 && m_sailCorners.Count != 3 && m_sailCorners.Count != 4)
+    {
+      Logger.LogError(
+        $"SailCornersCount: {m_sailCorners.Count} is corrupt or mismatches the last ValheimRAFT version. Destroying this component to prevent errors");
+      DestroySelfOnError();
+      return;
+    }
 
     if (m_sailCorners.Count != zdo_corners)
     {
