@@ -133,11 +133,13 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public void SetAllowSailShrinking(bool allow)
   {
+    Logger.LogDebug($"SetAllowSailShrinking allow: {allow} flags {m_sailFlags}");
     if ((bool)m_mastComponent)
     {
       m_sailFlags = (allow
         ? (m_sailFlags | SailFlags.AllowSailShrinking)
         : (m_sailFlags & ~SailFlags.AllowSailShrinking));
+      Logger.LogDebug($"SetAllowSailShrinking (after) allow: {allow} flags {m_sailFlags}");
       m_mastComponent.m_allowSailShrinking = allow;
     }
   }
@@ -341,17 +343,12 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public void CreateSailMesh()
   {
-    ZLog.Log(
+    Logger.LogDebug(
       $"CreateSailMesh(): {m_sailCorners.Count} m_lockedSailCorners: {m_lockedSailCorners} ({(int)m_lockedSailCorners}) m_lockedSailSides: {m_lockedSailSides} ({(int)m_lockedSailSides})");
     m_sailCloth.enabled = false;
     if (m_sailCorners.Count < 3)
     {
       return;
-    }
-
-    foreach (var VARIABLE in m_sailCorners)
-    {
-      ZLog.Log($"SAILCORNER: {VARIABLE}");
     }
 
     List<Vector3> vertices = new List<Vector3>();

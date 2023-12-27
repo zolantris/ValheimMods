@@ -131,6 +131,7 @@ public class ValheimRAFT_Patch
       }
       else if (mast.m_allowSailShrinking)
       {
+        Logger.LogDebug("ALLOW SAIL SHRINKING, SHRINKING SAIL");
         if (mast.m_sailObject.transform.localScale != __instance.m_sailObject.transform.localScale)
           mast.m_sailCloth.enabled = false;
         mast.m_sailObject.transform.localScale = __instance.m_sailObject.transform.localScale;
@@ -138,6 +139,7 @@ public class ValheimRAFT_Patch
       }
       else
       {
+        Logger.LogError("SAIL SHRINKING DISABLED");
         mast.m_sailObject.transform.localScale = Vector3.one;
         mast.m_sailCloth.enabled = !mast.m_disableCloth;
       }
@@ -250,6 +252,8 @@ public class ValheimRAFT_Patch
         var anchoredVelocity = 0.0f;
         velocity.x = anchoredVelocity;
         velocity.z = anchoredVelocity;
+        // WIP to see if this makes the ship still
+        velocity.y = anchoredVelocity;
       }
 
       __instance.m_body.velocity = velocity;
