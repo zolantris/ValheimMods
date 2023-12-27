@@ -11,5 +11,5 @@ using System.Runtime.Versioning;
 [assembly: AssemblyProduct("ValheimRAFT")]
 [assembly: AssemblyCopyright("Copyright ©  2023")]
 [assembly: Guid("6015B165-2627-40A7-8CA1-3E6B6CD7CB49")]
-[assembly: AssemblyFileVersion("1.6.5")]
-[assembly: AssemblyVersion("1.6.5")]
+[assembly: AssemblyFileVersion("1.6.6")]
+[assembly: AssemblyVersion("1.6.6")]

@@ -14,19 +14,19 @@ namespace ValheimRAFT;
 
 public class PrefabRegistry : MonoBehaviour
 {
-  PrefabManager prefabManager;
-  PieceManager pieceManager;
-  SpriteAtlas sprites;
-  GameObject boarding_ramp;
-  GameObject mbBoardingRamp;
-  GameObject steering_wheel;
-  GameObject rope_ladder;
-  GameObject rope_anchor;
-  GameObject raftMast;
-  GameObject dirtFloor;
-  Material sailMat;
-  Piece woodFloorPiece;
-  WearNTear woodFloorPieceWearNTear;
+  private PrefabManager prefabManager;
+  private PieceManager pieceManager;
+  private SpriteAtlas sprites;
+  private GameObject boarding_ramp;
+  private GameObject mbBoardingRamp;
+  private GameObject steering_wheel;
+  private GameObject rope_ladder;
+  private GameObject rope_anchor;
+  private GameObject raftMast;
+  private GameObject dirtFloor;
+  private Material sailMat;
+  private Piece woodFloorPiece;
+  private WearNTear woodFloorPieceWearNTear;
 
   private const string ValheimRaftMenuName = "ValheimRAFT";
 
@@ -49,10 +49,8 @@ public class PrefabRegistry : MonoBehaviour
     sailMat = ValheimRaftPlugin.m_assetBundle.LoadAsset<Material>("Assets/SailMat.mat");
     dirtFloor = ValheimRaftPlugin.m_assetBundle.LoadAsset<GameObject>("dirt_floor.prefab");
 
-
     prefabManager = PrefabManager.Instance;
     pieceManager = PieceManager.Instance;
-
 
     var woodFloorPrefab = prefabManager.GetPrefab("wood_floor");
     woodFloorPiece = woodFloorPrefab.GetComponent<Piece>();
@@ -69,9 +67,7 @@ public class PrefabRegistry : MonoBehaviour
       // Many components do not have WearNTear so they must be added to the prefabPiece
       wearNTearComponent = prefabComponent.AddComponent<WearNTear>();
       if (!wearNTearComponent)
-      {
         Logger.LogError($"error setting WearNTear for RAFT prefab {prefabComponent.name}");
-      }
 
       return wearNTearComponent;
     }
@@ -398,13 +394,8 @@ public class PrefabRegistry : MonoBehaviour
     ropeAnchorComponent.m_rope.widthMultiplier = 0.05f;
     ropeAnchorComponent.m_rope.enabled = false;
 
-    SetWearNTear(mbRopeAnchorPrefab, 3);
-    var wnt6 = mbRopeAnchorPrefab.AddComponent<WearNTear>();
-    wnt6.m_health = 1000f;
-    wnt6.m_destroyedEffect = woodFloorPieceWearNTear.m_destroyedEffect;
-    wnt6.m_hitEffect = woodFloorPieceWearNTear.m_hitEffect;
-    wnt6.m_noRoofWear = false;
-    wnt6.m_supports = false;
+    var ropeAnchorComponentWearNTear = SetWearNTear(mbRopeAnchorPrefab, 3);
+    ropeAnchorComponentWearNTear.m_supports = false;
 
     FixCollisionLayers(mbRopeAnchorPrefab);
 
@@ -521,7 +512,7 @@ public class PrefabRegistry : MonoBehaviour
     }));
   }
 
-  void RegisterPierPole()
+  private void RegisterPierPole()
   {
     var woodPolePrefab = prefabManager.GetPrefab("wood_pole_log_4");
     var mbPierPolePrefab = prefabManager.CreateClonedPrefab("MBPier_Pole", woodPolePrefab);
@@ -568,7 +559,7 @@ public class PrefabRegistry : MonoBehaviour
     }));
   }
 
-  void RegisterPierWall()
+  private void RegisterPierWall()
   {
     var stoneWallPrefab = prefabManager.GetPrefab("stone_wall_4x2");
     var pierWallPrefab = prefabManager.CreateClonedPrefab("MBPier_Stone", stoneWallPrefab);
@@ -610,7 +601,7 @@ public class PrefabRegistry : MonoBehaviour
     }));
   }
 
-  void RegisterBoardingRamp()
+  private void RegisterBoardingRamp()
   {
     var woodPole2PrefabPiece = prefabManager.GetPrefab("wood_pole2").GetComponent<Piece>();
 
@@ -688,7 +679,7 @@ public class PrefabRegistry : MonoBehaviour
   /**
    * must be called after RegisterBoardingRamp
    */
-  void RegisterBoardingRampWide()
+  private void RegisterBoardingRampWide()
   {
     var mbBoardingRampWide =
       prefabManager.CreateClonedPrefab("MBBoardingRamp_Wide", mbBoardingRamp);
@@ -730,7 +721,7 @@ public class PrefabRegistry : MonoBehaviour
     }));
   }
 
-  void RegisterDirtFloor(int size)
+  private void RegisterDirtFloor(int size)
   {
     var prefabSizeString = $"{size}x{size}";
     var prefabName = $"MBDirtFloor_{prefabSizeString}";
@@ -766,68 +757,6 @@ public class PrefabRegistry : MonoBehaviour
         {
           // this may cause issues it's just size^2 but Math.Pow returns a double
           Amount = (int)Math.Pow(size, 2),
-          Item = "Stone",
-          Recover = true
-        }
-      }
-    }));
-  }
-
-  void RegisterAllDirtFloors()
-  {
-    var sourceObject2 = ValheimRaftPlugin.m_assetBundle.LoadAsset<GameObject>("dirt_floor.prefab");
-    var r2 = prefabManager.CreateClonedPrefab("MBDirtfloor_2x2", sourceObject2);
-    r2.transform.localScale = new Vector3(2f, 1f, 2f);
-    var netview2 = r2.AddComponent<ZNetView>();
-    netview2.m_persistent = true;
-    var wnt2 = r2.AddComponent<WearNTear>();
-    wnt2.m_health = 1000f;
-    var piece2 = r2.AddComponent<Piece>();
-    piece2.m_placeEffect = woodFloorPiece.m_placeEffect;
-    var cultivatable2 = r2.AddComponent<CultivatableComponent>();
-    FixCollisionLayers(r2);
-    FixSnapPoints(r2);
-    pieceManager.AddPiece(new CustomPiece(r2, false, new PieceConfig
-    {
-      PieceTable = "Hammer",
-      Name = "$mb_dirt_floor_2x2",
-      Description = "$mb_dirt_floor_2x2_desc",
-      Category = "ValheimRAFT",
-      Icon = sprites.GetSprite("dirtfloor_icon"),
-      Requirements = new RequirementConfig[1]
-      {
-        new()
-        {
-          Amount = 4,
-          Item = "Stone",
-          Recover = true
-        }
-      }
-    }));
-    var sourceObject = ValheimRaftPlugin.m_assetBundle.LoadAsset<GameObject>("dirt_floor.prefab");
-    var r = prefabManager.CreateClonedPrefab("MBDirtfloor_1x1", sourceObject);
-    r.transform.localScale = new Vector3(1f, 1f, 1f);
-    var netview = r.AddComponent<ZNetView>();
-    netview.m_persistent = true;
-    var wnt = r.AddComponent<WearNTear>();
-    wnt.m_health = 1000f;
-    var piece = r.AddComponent<Piece>();
-    piece.m_placeEffect = woodFloorPiece.m_placeEffect;
-    var cultivatable = r.AddComponent<CultivatableComponent>();
-    FixCollisionLayers(r);
-    FixSnapPoints(r);
-    pieceManager.AddPiece(new CustomPiece(r, false, new PieceConfig
-    {
-      PieceTable = "Hammer",
-      Name = "$mb_dirt_floor_1x1",
-      Description = "$mb_dirt_floor_1x1_desc",
-      Category = "ValheimRAFT",
-      Icon = sprites.GetSprite("dirtfloor_icon"),
-      Requirements = new RequirementConfig[1]
-      {
-        new()
-        {
-          Amount = 1,
           Item = "Stone",
           Recover = true
         }
