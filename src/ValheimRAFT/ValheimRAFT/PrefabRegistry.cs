@@ -292,7 +292,7 @@ public class PrefabRegistry : MonoBehaviour
     nv5.m_persistent = true;
     var rudder = mbRudderPrefab.AddComponent<RudderComponent>();
     rudder.m_controls = mbRudderPrefab.AddComponent<ShipControlls>();
-    rudder.m_controls.m_hoverText = "Derp derp use!";
+    rudder.m_controls.m_hoverText = "$mb_rudder_use";
     rudder.m_controls.m_attachPoint = mbRudderPrefab.transform.Find("attachpoint");
     rudder.m_controls.m_attachAnimation = "Standing Torch Idle right";
     rudder.m_controls.m_detachOffset = new Vector3(0f, 0f, 0f);

@@ -101,15 +101,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
      */
     if (ZNet.instance.IsServer())
     {
-      ZLog.LogWarning("IS SERVER");
       server_UpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
-
-    ZLog.LogWarning(
-      $"znet instance: {ZNet.instance} isServer {ZNet.instance.IsServer()} isDedicated: {ZNet.instance.IsDedicated()}");
-
-    if (ZNet.instance.IsServer())
-      Logger.LogError("SERVER MUST CALL, Test Log to see if server calls this");
   }
 
   public void CleanUp()
