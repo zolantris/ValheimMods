@@ -36,6 +36,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public static AssetBundle m_assetBundle;
   private bool m_customItemsAdded;
   public CustomLocalization localization;
+  private PrefabRegistry prefabRegistry;
 
   public static ValheimRaftPlugin Instance { get; private set; }
 
@@ -282,8 +283,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     if (m_customItemsAdded) return;
 
     m_customItemsAdded = true;
-    var prefabRegistry = gameObject.AddComponent<PrefabRegistry>();
+    m_assetBundle =
+      AssetUtils.LoadAssetBundleFromResources("valheimraft", Assembly.GetExecutingAssembly());
+
+    // Registers all prefabs
+    prefabRegistry = gameObject.AddComponent<PrefabRegistry>();
     prefabRegistry.Init();
-    prefabRegistry.RegisterAllPrefabs();
   }
 }

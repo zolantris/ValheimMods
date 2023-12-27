@@ -36,8 +36,6 @@ public class PrefabRegistry : MonoBehaviour
 
   public void Init()
   {
-    ValheimRaftPlugin.m_assetBundle =
-      AssetUtils.LoadAssetBundleFromResources("valheimraft", Assembly.GetExecutingAssembly());
     boarding_ramp =
       ValheimRaftPlugin.m_assetBundle.LoadAsset<GameObject>("Assets/boarding_ramp.prefab");
     steering_wheel =
@@ -56,16 +54,25 @@ public class PrefabRegistry : MonoBehaviour
     pieceManager = PieceManager.Instance;
 
 
-    woodFloorPiece = prefabManager.GetPrefab("wood_floor").GetComponent<Piece>();
+    var woodFloorPrefab = prefabManager.GetPrefab("wood_floor");
+    woodFloorPiece = woodFloorPrefab.GetComponent<Piece>();
     woodFloorPieceWearNTear = woodFloorPiece.GetComponent<WearNTear>();
+
+    RegisterAllPrefabs();
   }
 
-  private WearNTear SetWearNTear(GameObject prefabComponent, int tierMultiplier)
+  private WearNTear SetWearNTear(GameObject prefabComponent, int tierMultiplier = 1)
   {
     var wearNTearComponent = prefabComponent.GetComponent<WearNTear>();
     if (!wearNTearComponent)
     {
-      Logger.LogError($"error setting WearNTear for RAFT prefab {prefabComponent.name}");
+      // Many components do not have WearNTear so they must be added to the prefabPiece
+      wearNTearComponent = prefabComponent.AddComponent<WearNTear>();
+      if (!wearNTearComponent)
+      {
+        Logger.LogError($"error setting WearNTear for RAFT prefab {prefabComponent.name}");
+      }
+
       return wearNTearComponent;
     }
 
@@ -78,17 +85,12 @@ public class PrefabRegistry : MonoBehaviour
   }
 
 
-  private WearNTear SetWearNTear(GameObject prefabComponent)
-  {
-    return SetWearNTear(prefabComponent, 1);
-  }
-
   private void RegisterVikingMast()
   {
-    var vikingship = prefabManager.GetPrefab("VikingShip");
-    var vikingshipMast = vikingship.transform.Find("ship/visual/Mast").gameObject;
+    var vikingShipPrefab = prefabManager.GetPrefab("VikingShip");
+    var vikingShipMast = vikingShipPrefab.transform.Find("ship/visual/Mast").gameObject;
 
-    var vikingShipMastPrefab = prefabManager.CreateClonedPrefab("MBVikingShipMast", vikingshipMast);
+    var vikingShipMastPrefab = prefabManager.CreateClonedPrefab("MBVikingShipMast", vikingShipMast);
     var vikingShipMastPrefabPiece = vikingShipMastPrefab.AddComponent<Piece>();
     // The connector is off by a bit, translating downwards should help but it doesn't work for the vikingmast
     vikingShipMastPrefabPiece.transform.localScale = new Vector3(2f, 2f, 2f);
@@ -185,24 +187,25 @@ public class PrefabRegistry : MonoBehaviour
 
   private void RegisterRaftMast()
   {
-    var r15 = prefabManager.CreateClonedPrefab("MBRaftMast", raftMast);
-    var piece15 = r15.AddComponent<Piece>();
-    piece15.m_name = "$mb_raft_mast";
-    piece15.m_description = "$mb_raft_mast_desc";
-    piece15.m_placeEffect = woodFloorPiece.m_placeEffect;
-    var nv8 = r15.AddComponent<ZNetView>();
-    nv8.m_persistent = true;
-    var mast4 = r15.AddComponent<MastComponent>();
-    mast4.m_sailObject = r15.transform.Find("Sail").gameObject;
-    mast4.m_sailCloth = mast4.m_sailObject.GetComponentInChildren<Cloth>();
-    var wnt11 = r15.AddComponent<WearNTear>();
-    wnt11.m_health = 1000f;
-    wnt11.m_destroyedEffect = woodFloorPieceWearNTear.m_destroyedEffect;
-    wnt11.m_hitEffect = woodFloorPieceWearNTear.m_hitEffect;
-    wnt11.m_noRoofWear = false;
-    FixedRopes(r15);
-    FixCollisionLayers(r15);
-    pieceManager.AddPiece(new CustomPiece(r15, false, new PieceConfig
+    var mbRaftMastPrefab = prefabManager.CreateClonedPrefab("MBRaftMast", raftMast);
+
+    var mbRaftMastPrefabPiece = mbRaftMastPrefab.AddComponent<Piece>();
+    mbRaftMastPrefabPiece.m_name = "$mb_raft_mast";
+    mbRaftMastPrefabPiece.m_description = "$mb_raft_mast_desc";
+    mbRaftMastPrefabPiece.m_placeEffect = woodFloorPiece.m_placeEffect;
+
+    var nv = mbRaftMastPrefab.AddComponent<ZNetView>();
+    nv.m_persistent = true;
+
+    var mastComponent = mbRaftMastPrefab.AddComponent<MastComponent>();
+    mastComponent.m_sailObject = mbRaftMastPrefab.transform.Find("Sail").gameObject;
+    mastComponent.m_sailCloth = mastComponent.m_sailObject.GetComponentInChildren<Cloth>();
+
+    SetWearNTear(mbRaftMastPrefab);
+
+    FixedRopes(mbRaftMastPrefab);
+    FixCollisionLayers(mbRaftMastPrefab);
+    pieceManager.AddPiece(new CustomPiece(mbRaftMastPrefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
       Description = "$mb_raft_mast_desc",
@@ -247,7 +250,7 @@ public class PrefabRegistry : MonoBehaviour
     mast.m_allowSailRotation = true;
 
     // Abstract wnt for masts
-    SetMastWearNTear(mbKarveMastPrefab, 2);
+    SetWearNTear(mbKarveMastPrefab, 2);
 
     FixedRopes(mbKarveMastPrefab);
     FixCollisionLayers(mbKarveMastPrefab);
@@ -299,13 +302,8 @@ public class PrefabRegistry : MonoBehaviour
     rudder.m_controls.m_detachOffset = new Vector3(0f, 0f, 0f);
     rudder.m_wheel = mbRudderPrefab.transform.Find("controls/wheel");
     rudder.UpdateSpokes();
-    var wnt8 = mbRudderPrefab.AddComponent<WearNTear>();
 
-
-    wnt8.m_health = 1000f;
-    wnt8.m_noRoofWear = false;
-    wnt8.m_destroyedEffect = woodFloorPieceWearNTear.m_destroyedEffect;
-    wnt8.m_hitEffect = woodFloorPieceWearNTear.m_hitEffect;
+    SetWearNTear(mbRudderPrefab);
 
     FixSnapPoints(mbRudderPrefab);
     FixCollisionLayers(mbRudderPrefab);
@@ -614,7 +612,7 @@ public class PrefabRegistry : MonoBehaviour
 
   void RegisterBoardingRamp()
   {
-    var woodPole2Prefab = prefabManager.GetPrefab("wood_pole2").GetComponent<Piece>();
+    var woodPole2PrefabPiece = prefabManager.GetPrefab("wood_pole2").GetComponent<Piece>();
 
     var mbBoardingRamp = prefabManager.CreateClonedPrefab("MBBoardingRamp", boarding_ramp);
     var floor = mbBoardingRamp.transform.Find("Ramp/Segment/SegmentAnchor/Floor").gameObject;
@@ -627,7 +625,7 @@ public class PrefabRegistry : MonoBehaviour
     newFloor.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
 
     var woodMat =
-      woodPole2Prefab.transform.Find("New").GetComponent<MeshRenderer>().sharedMaterial;
+      woodPole2PrefabPiece.transform.Find("New").GetComponent<MeshRenderer>().sharedMaterial;
     mbBoardingRamp.transform.Find("Winch1/Pole").GetComponent<MeshRenderer>().sharedMaterial =
       woodMat;
     mbBoardingRamp.transform.Find("Winch2/Pole").GetComponent<MeshRenderer>().sharedMaterial =
@@ -759,7 +757,7 @@ public class PrefabRegistry : MonoBehaviour
         new()
         {
           // this may cause issues it's just size^2 but Math.Pow returns a double
-          Amount = (int)Math.Pow(size, 2),
+          Amount = size ^ 2,
           Item = "Stone",
           Recover = true
         }

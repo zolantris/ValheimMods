@@ -131,7 +131,7 @@ public class ValheimRAFT_Patch
       }
       else if (mast.m_allowSailShrinking)
       {
-        Logger.LogDebug("ALLOW SAIL SHRINKING, SHRINKING SAIL");
+        Logger.LogDebug("ValheimRAFT: sailShrinking enabled");
         if (mast.m_sailObject.transform.localScale != __instance.m_sailObject.transform.localScale)
           mast.m_sailCloth.enabled = false;
         mast.m_sailObject.transform.localScale = __instance.m_sailObject.transform.localScale;
@@ -139,7 +139,7 @@ public class ValheimRAFT_Patch
       }
       else
       {
-        Logger.LogError("SAIL SHRINKING DISABLED");
+        Logger.LogDebug("ValheimRAFT: sailShrinking disabled");
         mast.m_sailObject.transform.localScale = Vector3.one;
         mast.m_sailCloth.enabled = !mast.m_disableCloth;
       }
