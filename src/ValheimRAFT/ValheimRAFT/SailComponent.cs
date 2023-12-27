@@ -118,8 +118,6 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   private float m_sailArea = 0f;
 
-  private const bool hasDebugSails = true;
-
   public void Awake()
   {
     m_sailComponents.Add(this);
@@ -209,7 +207,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     m_logoColor = sailMaterial.GetColor("_LogoColor");
     m_logoRotation = sailMaterial.GetFloat("_LogoRotation");
 
-    if (hasDebugSails)
+    if (ValheimRaftPlugin.Instance.HasDebugSails.Value)
     {
       Logger.LogDebug("AFTER LOAD FROM MATERIAL");
       Logger.LogDebug($"m_lockedSailSides {m_lockedSailSides}");
@@ -237,42 +235,15 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     return m_mesh.material;
   }
 
-  public Vector3 Vector3FromString(string Vector3string)
-  {
-    //get first number (x)
-    var startChar = 1;
-    var endChar = Vector3string.IndexOf(",");
-    var lastEnd = endChar;
-    var x = (float)Convert.ToDecimal(Vector3string.Substring(startChar, endChar - 1));
-    //get second number (y)
-    startChar = lastEnd + 1;
-    endChar = Vector3string.IndexOf(",", lastEnd);
-    lastEnd = endChar;
-    var y = (float)Convert.ToDecimal(Vector3string.Substring(startChar, endChar));
-    //get third number (z)
-    startChar = lastEnd + 1;
-    endChar = Vector3string.IndexOf(",", lastEnd);
-    lastEnd = endChar;
-    var z = (float)Convert.ToDecimal(Vector3string.Substring(startChar, endChar));
-    //build a new vector3 object using the values we've parsed
-    var vector3 = new Vector3(x, y, z);
-    //pass back a vector3 type
-    return vector3;
-  }
-
   public void LoadZDO()
   {
     if (!m_nview || m_nview.m_zdo == null) return;
-
-    // var stream = new MemoryStream(bytes);
-    // var reader = new BinaryReader(stream);
-    // var version = reader.ReadByte();
-    // if (version != 1) return;
     var zdo = m_nview.m_zdo;
 
     var meshUpdateRequired = false;
     var coefficientUpdateRequired = false;
     var zdo_corners = zdo.GetInt(m_sailCornersCountHash);
+
     if (m_sailCorners.Count != zdo_corners)
     {
       m_sailCorners.Clear();
@@ -340,30 +311,11 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     var zdo_logoRotation = zdo.GetFloat(m_logoRotationHash, m_logoRotation);
     var zdo_sailFlags = (SailFlags)zdo.GetInt(m_sailFlagsHash, (int)m_sailFlags);
 
-    // var zdo_lockedSailSides = (SailLockedSide)reader.ReadByte();
-    // var zdo_lockedSailCorners = (SailLockedSide)reader.ReadByte();
-    // var zdo_mainScale = reader.ReadVector2();
-    // var zdo_mainOffset = reader.ReadVector2();
-    // var zdo_mainColor = reader.ReadColor();
-
     if (zdo_mainColor != m_mainColor)
       Logger.LogWarning(
         $"ZDO color: {zdo_mainColor} mismatching mesh color {m_mainColor} from sailMaterialColor: {GetSailMaterial().GetColor("_MainColor")}");
 
-    // var zdo_mainHash = reader.ReadInt32();
-    // var zdo_patternScale = reader.ReadVector2();
-    // var zdo_patternOffset = reader.ReadVector2();
-    // var zdo_patternColor = reader.ReadColor();
-    // var zdo_patternHash = reader.ReadInt32();
-    // var zdo_patternRotation = reader.ReadSingle();
-    // var zdo_logoScale = reader.ReadVector2();
-    // var zdo_logoOffset = reader.ReadVector2();
-    // var zdo_logoColor = reader.ReadColor();
-    // var zdo_logoHash = reader.ReadInt32();
-    // var zdo_logoRotation = reader.ReadSingle();
-    // var zdo_sailFlags = (SailFlags)reader.ReadByte();
-
-    if (hasDebugSails)
+    if (ValheimRaftPlugin.Instance.HasDebugSails.Value)
     {
       Logger.LogDebug($"zdo_lockedSailSides {zdo_lockedSailSides}");
       Logger.LogDebug($"zdo_lockedSailCorners {zdo_lockedSailCorners}");
@@ -443,13 +395,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     if ((bool)m_nview && m_nview.m_zdo != null)
     {
-      var stream = new MemoryStream();
-      var writer = new BinaryWriter(stream);
-      // writer.Write((byte)1);
-      // writer.Write((byte)m_sailCorners.Count);
-      // for (var i = 0; i < m_sailCorners.Count; i++) writer.Write(m_sailCorners[i]);
-
-      if (hasDebugSails)
+      if (ValheimRaftPlugin.Instance.HasDebugSails.Value)
       {
         Logger.LogDebug($"m_lockedSailSides {m_lockedSailSides}");
         Logger.LogDebug($"m_lockedSailCorners {m_lockedSailCorners}");
@@ -515,27 +461,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
       zdo.Set(m_logoColorHash, logoColorByteArray);
       zdo.Set(m_logoZdoHash, m_logoHash);
       zdo.Set(m_logoRotationHash, m_logoRotation);
-
       zdo.Set(m_sailFlagsHash, (int)m_sailFlags);
-
-      // writer.Write((byte)m_lockedSailSides);
-      // writer.Write((byte)m_lockedSailCorners);
-      // writer.Write(m_mainScale);
-      // writer.Write(m_mainOffset);
-      // writer.Write(m_mainColor);
-      // writer.Write(m_mainHash);
-      // writer.Write(m_patternScale);
-      // writer.Write(m_patternOffset);
-      // writer.Write(m_patternColor);
-      // writer.Write(m_patternHash);
-      // writer.Write(m_patternRotation);
-      // writer.Write(m_logoScale);
-      // writer.Write(m_logoOffset);
-      // writer.Write(m_logoColor);
-      // writer.Write(m_logoHash);
-      // writer.Write(m_logoRotation);
-      // writer.Write((byte)m_sailFlags);
-      // m_nview.m_zdo.Set(sailConfigKey, stream.ToArray());
     }
   }
 

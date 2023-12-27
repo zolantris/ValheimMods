@@ -61,6 +61,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> SailCustomAreaTier1Multiplier { get; set; }
   public ConfigEntry<float> BoatDragCoefficient { get; set; }
   public ConfigEntry<float> MastShearForceThreshold { get; set; }
+  public ConfigEntry<bool> HasDebugSails { get; set; }
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -72,6 +73,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreateConfig()
   {
+    HasDebugSails = Config.Bind("Debug", "HasDebugSails", false,
+      "Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only.")
     EnableCustomPropulsionConfig = Config.Bind("Propulsion",
       "EnableCustomPropulsionConfig", SailAreaForce.HasPropulsionConfigOverride,
       "Enables all custom propulsion values");
