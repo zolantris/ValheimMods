@@ -41,11 +41,11 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public GameObject m_sailObject;
 
-  public List<Vector3> m_sailCorners = new List<Vector3>();
+  public List<Vector3> m_sailCorners = new();
 
   public float m_sailSubdivision = 0.5f;
 
-  public static List<SailComponent> m_sailComponents = new List<SailComponent>();
+  public static List<SailComponent> m_sailComponents = new();
 
   public static float m_maxDistanceSqr = 1024f;
 
@@ -97,7 +97,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     m_sailComponents.Add(this);
     m_mastComponent = GetComponent<MastComponent>();
-    m_sailObject = base.transform.Find("Sail").gameObject;
+    m_sailObject = transform.Find("Sail").gameObject;
     m_sailCloth = m_sailObject.GetComponent<Cloth>();
     if ((bool)m_sailCloth)
     {
@@ -110,18 +110,13 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     m_meshCollider = m_sailObject.GetComponent<MeshCollider>();
     m_nview = GetComponent<ZNetView>();
     if (m_sailInit)
-    {
       LoadZDO();
-    }
-    else if (!ZNetView.m_forceDisableInit)
-    {
-      InvokeRepeating("LoadZDO", 5f, 5f);
-    }
+    else if (!ZNetView.m_forceDisableInit) InvokeRepeating("LoadZDO", 5f, 5f);
   }
 
   public void Update()
   {
-    Vector3 vector = EnvMan.instance.GetWindForce();
+    var vector = EnvMan.instance.GetWindForce();
     m_sailCloth.externalAcceleration = vector * m_windMultiplier;
     m_sailCloth.randomAcceleration = vector * m_windMultiplier * m_clothRandomAccelerationFactor;
   }
@@ -136,9 +131,9 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     Logger.LogDebug($"SetAllowSailShrinking allow: {allow} flags {m_sailFlags}");
     if ((bool)m_mastComponent)
     {
-      m_sailFlags = (allow
-        ? (m_sailFlags | SailFlags.AllowSailShrinking)
-        : (m_sailFlags & ~SailFlags.AllowSailShrinking));
+      m_sailFlags = allow
+        ? m_sailFlags | SailFlags.AllowSailShrinking
+        : m_sailFlags & ~SailFlags.AllowSailShrinking;
       Logger.LogDebug($"SetAllowSailShrinking (after) allow: {allow} flags {m_sailFlags}");
       m_mastComponent.m_allowSailShrinking = allow;
     }
@@ -148,50 +143,38 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     if ((bool)m_mastComponent)
     {
-      m_sailFlags = (allow
-        ? (m_sailFlags | SailFlags.DisableCloth)
-        : (m_sailFlags & ~SailFlags.DisableCloth));
+      m_sailFlags = allow
+        ? m_sailFlags | SailFlags.DisableCloth
+        : m_sailFlags & ~SailFlags.DisableCloth;
       m_mastComponent.m_disableCloth = allow;
-      if ((bool)m_sailCloth && m_sailCloth.enabled != !allow)
-      {
-        m_sailCloth.enabled = !allow;
-      }
+      if ((bool)m_sailCloth && m_sailCloth.enabled != !allow) m_sailCloth.enabled = !allow;
     }
   }
 
   public void LoadFromMaterial()
   {
-    Material sailMaterial = GetSailMaterial();
-    Texture mainTex = sailMaterial.GetTexture("_MainTex");
-    CustomTextureGroup.CustomTexture mainGroup = CustomTextureGroup.Get("Sails")
+    var sailMaterial = GetSailMaterial();
+    var mainTex = sailMaterial.GetTexture("_MainTex");
+    var mainGroup = CustomTextureGroup.Get("Sails")
       .GetTextureByHash(mainTex.name.GetStableHashCode());
-    if (mainGroup != null)
-    {
-      m_mainHash = mainTex.name.GetStableHashCode();
-    }
+    if (mainGroup != null) m_mainHash = mainTex.name.GetStableHashCode();
 
     m_mainScale = sailMaterial.GetTextureScale("_MainTex");
     m_mainOffset = sailMaterial.GetTextureOffset("_MainTex");
     m_mainColor = sailMaterial.GetColor("_MainColor");
-    Texture patternTex = sailMaterial.GetTexture("_PatternTex");
-    CustomTextureGroup.CustomTexture patternGroup = CustomTextureGroup.Get("Patterns")
+    var patternTex = sailMaterial.GetTexture("_PatternTex");
+    var patternGroup = CustomTextureGroup.Get("Patterns")
       .GetTextureByHash(patternTex.name.GetStableHashCode());
-    if (patternGroup != null)
-    {
-      m_patternHash = patternTex.name.GetStableHashCode();
-    }
+    if (patternGroup != null) m_patternHash = patternTex.name.GetStableHashCode();
 
     m_patternScale = sailMaterial.GetTextureScale("_PatternTex");
     m_patternOffset = sailMaterial.GetTextureOffset("_PatternTex");
     m_patternColor = sailMaterial.GetColor("_PatternColor");
     m_patternRotation = sailMaterial.GetFloat("_PatternRotation");
-    Texture logoTex = sailMaterial.GetTexture("_LogoTex");
-    CustomTextureGroup.CustomTexture logoGroup = CustomTextureGroup.Get("Logos")
+    var logoTex = sailMaterial.GetTexture("_LogoTex");
+    var logoGroup = CustomTextureGroup.Get("Logos")
       .GetTextureByHash(logoTex.name.GetStableHashCode());
-    if (logoGroup != null)
-    {
-      m_logoHash = logoTex.name.GetStableHashCode();
-    }
+    if (logoGroup != null) m_logoHash = logoTex.name.GetStableHashCode();
 
     m_logoScale = sailMaterial.GetTextureScale("_LogoTex");
     m_logoOffset = sailMaterial.GetTextureOffset("_LogoTex");
@@ -206,43 +189,31 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public void LoadZDO()
   {
-    if (!m_nview || m_nview.m_zdo == null)
-    {
-      return;
-    }
+    if (!m_nview || m_nview.m_zdo == null) return;
 
-    byte[] bytes = m_nview.m_zdo.GetByteArray("MB_sailConfig");
+    var bytes = m_nview.m_zdo.GetByteArray("MB_sailConfig");
 
-    if (bytes == null)
-    {
-      return;
-    }
+    if (bytes == null) return;
 
-    MemoryStream stream = new MemoryStream(bytes);
-    BinaryReader reader = new BinaryReader(stream);
-    byte version = reader.ReadByte();
-    if (version != 1)
-    {
-      return;
-    }
+    var stream = new MemoryStream(bytes);
+    var reader = new BinaryReader(stream);
+    var version = reader.ReadByte();
+    if (version != 1) return;
 
-    bool meshUpdateRequired = false;
-    bool coefficientUpdateRequired = false;
+    var meshUpdateRequired = false;
+    var coefficientUpdateRequired = false;
     int zdo_corners = reader.ReadByte();
     if (m_sailCorners.Count != zdo_corners)
     {
       meshUpdateRequired = true;
       m_sailCorners.Clear();
-      for (int i = 0; i < zdo_corners; i++)
-      {
-        m_sailCorners.Add(reader.ReadVector3());
-      }
+      for (var i = 0; i < zdo_corners; i++) m_sailCorners.Add(reader.ReadVector3());
     }
     else
     {
-      for (int j = 0; j < zdo_corners; j++)
+      for (var j = 0; j < zdo_corners; j++)
       {
-        Vector3 v = reader.ReadVector3();
+        var v = reader.ReadVector3();
         if (m_sailCorners[j] != v)
         {
           m_sailCorners[j] = v;
@@ -251,23 +222,23 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
       }
     }
 
-    SailLockedSide zdo_lockedSailSides = (SailLockedSide)reader.ReadByte();
-    SailLockedSide zdo_lockedSailCorners = (SailLockedSide)reader.ReadByte();
-    Vector2 zdo_mainScale = reader.ReadVector2();
-    Vector2 zdo_mainOffset = reader.ReadVector2();
-    Color zdo_mainColor = reader.ReadColor();
-    int zdo_mainHash = reader.ReadInt32();
-    Vector2 zdo_patternScale = reader.ReadVector2();
-    Vector2 zdo_patternOffset = reader.ReadVector2();
-    Color zdo_patternColor = reader.ReadColor();
-    int zdo_patternHash = reader.ReadInt32();
-    float zdo_patternRotation = reader.ReadSingle();
-    Vector2 zdo_logoScale = reader.ReadVector2();
-    Vector2 zdo_logoOffset = reader.ReadVector2();
-    Color zdo_logoColor = reader.ReadColor();
-    int zdo_logoHash = reader.ReadInt32();
-    float zdo_logoRotation = reader.ReadSingle();
-    SailFlags zdo_sailFlags = (SailFlags)reader.ReadByte();
+    var zdo_lockedSailSides = (SailLockedSide)reader.ReadByte();
+    var zdo_lockedSailCorners = (SailLockedSide)reader.ReadByte();
+    var zdo_mainScale = reader.ReadVector2();
+    var zdo_mainOffset = reader.ReadVector2();
+    var zdo_mainColor = reader.ReadColor();
+    var zdo_mainHash = reader.ReadInt32();
+    var zdo_patternScale = reader.ReadVector2();
+    var zdo_patternOffset = reader.ReadVector2();
+    var zdo_patternColor = reader.ReadColor();
+    var zdo_patternHash = reader.ReadInt32();
+    var zdo_patternRotation = reader.ReadSingle();
+    var zdo_logoScale = reader.ReadVector2();
+    var zdo_logoOffset = reader.ReadVector2();
+    var zdo_logoColor = reader.ReadColor();
+    var zdo_logoHash = reader.ReadInt32();
+    var zdo_logoRotation = reader.ReadSingle();
+    var zdo_sailFlags = (SailFlags)reader.ReadByte();
     if (zdo_lockedSailSides != m_lockedSailSides)
     {
       coefficientUpdateRequired = true;
@@ -297,28 +268,21 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     SetAllowSailShrinking(zdo_sailFlags.HasFlag(SailFlags.AllowSailShrinking));
     SetDisableCloth(zdo_sailFlags.HasFlag(SailFlags.DisableCloth));
     UpdateSailArea();
+    Logger.LogDebug($"MeshupdateRequiredStatus: {meshUpdateRequired}");
     if (meshUpdateRequired)
-    {
       CreateSailMesh();
-    }
-    else if (coefficientUpdateRequired)
-    {
-      UpdateCoefficients();
-    }
+    else if (coefficientUpdateRequired) UpdateCoefficients();
   }
 
   public void SaveZDO()
   {
     if ((bool)m_nview && m_nview.m_zdo != null)
     {
-      MemoryStream stream = new MemoryStream();
-      BinaryWriter writer = new BinaryWriter(stream);
+      var stream = new MemoryStream();
+      var writer = new BinaryWriter(stream);
       writer.Write((byte)1);
       writer.Write((byte)m_sailCorners.Count);
-      for (int i = 0; i < m_sailCorners.Count; i++)
-      {
-        writer.Write(m_sailCorners[i]);
-      }
+      for (var i = 0; i < m_sailCorners.Count; i++) writer.Write(m_sailCorners[i]);
 
       writer.Write((byte)m_lockedSailSides);
       writer.Write((byte)m_lockedSailCorners);
@@ -346,15 +310,12 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     Logger.LogDebug(
       $"CreateSailMesh(): {m_sailCorners.Count} m_lockedSailCorners: {m_lockedSailCorners} ({(int)m_lockedSailCorners}) m_lockedSailSides: {m_lockedSailSides} ({(int)m_lockedSailSides})");
     m_sailCloth.enabled = false;
-    if (m_sailCorners.Count < 3)
-    {
-      return;
-    }
+    if (m_sailCorners.Count < 3) return;
 
-    List<Vector3> vertices = new List<Vector3>();
-    List<Vector2> uvs = new List<Vector2>();
-    List<int> triangles = new List<int>();
-    Mesh collisionMesh = new Mesh();
+    var vertices = new List<Vector3>();
+    var uvs = new List<Vector2>();
+    var triangles = new List<int>();
+    var collisionMesh = new Mesh();
     if (m_sailCorners.Count == 3)
     {
       collisionMesh.SetVertices(new Vector3[3]
@@ -402,57 +363,50 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
         1, 3
       }, 0);
       collisionMesh.Optimize();
-      float dx = (m_sailCorners[1] - m_sailCorners[0]).magnitude;
-      float dy = (m_sailCorners[2] - m_sailCorners[0]).magnitude;
-      float dxs = Mathf.Round(dx / m_sailSubdivision);
-      float dys = Mathf.Round(dy / m_sailSubdivision);
-      for (int x2 = 0; (float)x2 <= dxs; x2++)
+      var dx = (m_sailCorners[1] - m_sailCorners[0]).magnitude;
+      var dy = (m_sailCorners[2] - m_sailCorners[0]).magnitude;
+      var dxs = Mathf.Round(dx / m_sailSubdivision);
+      var dys = Mathf.Round(dy / m_sailSubdivision);
+      for (var x2 = 0; (float)x2 <= dxs; x2++)
+      for (var y2 = 0; (float)y2 <= dys; y2++)
       {
-        for (int y2 = 0; (float)y2 <= dys; y2++)
+        var xs1 = Vector3.Lerp(m_sailCorners[0], m_sailCorners[1], (float)x2 / dxs);
+        var xs2 = Vector3.Lerp(m_sailCorners[3], m_sailCorners[2], (float)x2 / dxs);
+        var ys1 = Vector3.Lerp(xs1, xs2, (float)y2 / dys);
+        vertices.Add(ys1);
+        uvs.Add(new Vector2
         {
-          Vector3 xs1 = Vector3.Lerp(m_sailCorners[0], m_sailCorners[1], (float)x2 / dxs);
-          Vector3 xs2 = Vector3.Lerp(m_sailCorners[3], m_sailCorners[2], (float)x2 / dxs);
-          Vector3 ys1 = Vector3.Lerp(xs1, xs2, (float)y2 / dys);
-          vertices.Add(ys1);
-          uvs.Add(new Vector2
-          {
-            x = (float)x2 / dxs,
-            y = (float)y2 / dys
-          });
-        }
+          x = (float)x2 / dxs,
+          y = (float)y2 / dys
+        });
       }
 
       dxs += 1f;
       dys += 1f;
-      for (int x = 0; (float)x < dxs - 1f; x++)
+      for (var x = 0; (float)x < dxs - 1f; x++)
+      for (var y = 0; (float)y < dys - 1f; y++)
       {
-        for (int y = 0; (float)y < dys - 1f; y++)
-        {
-          triangles.Add((int)(dys * (float)x + (float)y) + 1);
-          triangles.Add((int)(dys * (float)x + (float)y));
-          triangles.Add((int)(dys * (float)x + (float)y) + (int)dys);
-          triangles.Add((int)(dys * (float)x + (float)y) + 1);
-          triangles.Add((int)(dys * (float)x + (float)y) + (int)dys);
-          triangles.Add((int)(dys * (float)x + (float)y) + (int)dys + 1);
-        }
+        triangles.Add((int)(dys * (float)x + (float)y) + 1);
+        triangles.Add((int)(dys * (float)x + (float)y));
+        triangles.Add((int)(dys * (float)x + (float)y) + (int)dys);
+        triangles.Add((int)(dys * (float)x + (float)y) + 1);
+        triangles.Add((int)(dys * (float)x + (float)y) + (int)dys);
+        triangles.Add((int)(dys * (float)x + (float)y) + (int)dys + 1);
       }
     }
 
-    Mesh mesh = new Mesh();
+    var mesh = new Mesh();
     mesh.SetVertices(vertices);
     mesh.SetTriangles(triangles, 0);
     mesh.SetUVs(0, uvs);
     if (m_sailCorners.Count == 3)
     {
-      float sqrSubDist = m_sailSubdivision * m_sailSubdivision;
+      var sqrSubDist = m_sailSubdivision * m_sailSubdivision;
       while (true)
       {
-        float dist = (mesh.vertices[mesh.triangles[0]] - mesh.vertices[mesh.triangles[1]])
+        var dist = (mesh.vertices[mesh.triangles[0]] - mesh.vertices[mesh.triangles[1]])
           .sqrMagnitude;
-        if (dist < sqrSubDist)
-        {
-          break;
-        }
+        if (dist < sqrSubDist) break;
 
         MeshHelper.Subdivide(mesh);
       }
@@ -467,10 +421,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public float GetSailArea()
   {
-    if (m_sailArea == 0f)
-    {
-      UpdateSailArea();
-    }
+    if (m_sailArea == 0f) UpdateSailArea();
 
     return m_sailArea;
   }
@@ -493,11 +444,9 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public float Area(List<Vector3> vertices)
   {
-    Vector3 result = Vector3.zero;
+    var result = Vector3.zero;
     for (int p = vertices.Count - 1, q = 0; q < vertices.Count; p = q++)
-    {
       result += Vector3.Cross(vertices[q], vertices[p]);
-    }
 
     result *= 0.5f;
     return result.magnitude;
@@ -506,21 +455,21 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   /**
    * mesh area may still be useful.
    */
-  float CalculateFacingArea(Mesh mesh, Vector3 direction)
+  private float CalculateFacingArea(Mesh mesh, Vector3 direction)
   {
     direction = direction.normalized;
     var triangles = mesh.triangles;
     var vertices = mesh.vertices;
 
-    double sum = 0.0;
+    var sum = 0.0;
 
-    for (int i = 0; i < triangles.Length; i += 3)
+    for (var i = 0; i < triangles.Length; i += 3)
     {
-      Vector3 corner = vertices[triangles[i]];
-      Vector3 a = vertices[triangles[i + 1]] - corner;
-      Vector3 b = vertices[triangles[i + 2]] - corner;
+      var corner = vertices[triangles[i]];
+      var a = vertices[triangles[i + 1]] - corner;
+      var b = vertices[triangles[i + 2]] - corner;
 
-      float projection = Vector3.Dot(Vector3.Cross(b, a), direction);
+      var projection = Vector3.Dot(Vector3.Cross(b, a), direction);
       if (projection > 0f)
         sum += projection;
     }
@@ -534,11 +483,11 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
     UpdateSailArea();
 
-    Mesh mesh = m_mesh.sharedMesh;
-    ClothSkinningCoefficient[] coefficients = ((mesh.vertexCount == m_sailCloth.coefficients.Length)
+    var mesh = m_mesh.sharedMesh;
+    var coefficients = mesh.vertexCount == m_sailCloth.coefficients.Length
       ? m_sailCloth.coefficients
-      : new ClothSkinningCoefficient[mesh.vertexCount]);
-    for (int i = 0; i < coefficients.Length; i++)
+      : new ClothSkinningCoefficient[mesh.vertexCount];
+    for (var i = 0; i < coefficients.Length; i++)
     {
       coefficients[i].maxDistance = float.MaxValue;
       coefficients[i].collisionSphereDistance = float.MaxValue;
@@ -554,46 +503,34 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
         m_lockedSailSides = SailLockedSide.Everything;
       }
 
-      Vector3 sideA2 = (m_sailCorners[0] - m_sailCorners[1]).normalized;
-      Vector3 sideB2 = (m_sailCorners[1] - m_sailCorners[2]).normalized;
-      Vector3 sideC2 = (m_sailCorners[2] - m_sailCorners[0]).normalized;
-      for (int k = 0; k < mesh.vertices.Length; k++)
+      var sideA2 = (m_sailCorners[0] - m_sailCorners[1]).normalized;
+      var sideB2 = (m_sailCorners[1] - m_sailCorners[2]).normalized;
+      var sideC2 = (m_sailCorners[2] - m_sailCorners[0]).normalized;
+      for (var k = 0; k < mesh.vertices.Length; k++)
       {
         if (m_lockedSailCorners.HasFlag(SailLockedSide.A) && mesh.vertices[k] == m_sailCorners[0])
-        {
           coefficients[k].maxDistance = 0f;
-        }
 
         if (m_lockedSailCorners.HasFlag(SailLockedSide.B) && mesh.vertices[k] == m_sailCorners[1])
-        {
           coefficients[k].maxDistance = 0f;
-        }
 
         if (m_lockedSailCorners.HasFlag(SailLockedSide.C) && mesh.vertices[k] == m_sailCorners[2])
-        {
           coefficients[k].maxDistance = 0f;
-        }
 
         if (m_lockedSailSides.HasFlag(SailLockedSide.A) &&
             Mathf.Abs(Vector3.Dot((m_sailCorners[0] - mesh.vertices[k]).normalized, sideA2)) >=
             0.9999f)
-        {
           coefficients[k].maxDistance = 0f;
-        }
 
         if (m_lockedSailSides.HasFlag(SailLockedSide.B) &&
             Mathf.Abs(Vector3.Dot((m_sailCorners[1] - mesh.vertices[k]).normalized, sideB2)) >=
             0.9999f)
-        {
           coefficients[k].maxDistance = 0f;
-        }
 
         if (m_lockedSailSides.HasFlag(SailLockedSide.C) &&
             Mathf.Abs(Vector3.Dot((m_sailCorners[2] - mesh.vertices[k]).normalized, sideC2)) >=
             0.9999f)
-        {
           coefficients[k].maxDistance = 0f;
-        }
       }
     }
     else if (m_sailCorners.Count == 4)
@@ -604,59 +541,43 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
         m_lockedSailSides = SailLockedSide.Everything;
       }
 
-      Vector3 sideA = (m_sailCorners[0] - m_sailCorners[1]).normalized;
-      Vector3 sideB = (m_sailCorners[1] - m_sailCorners[2]).normalized;
-      Vector3 sideC = (m_sailCorners[2] - m_sailCorners[3]).normalized;
-      Vector3 sideD = (m_sailCorners[3] - m_sailCorners[0]).normalized;
-      for (int j = 0; j < mesh.vertices.Length; j++)
+      var sideA = (m_sailCorners[0] - m_sailCorners[1]).normalized;
+      var sideB = (m_sailCorners[1] - m_sailCorners[2]).normalized;
+      var sideC = (m_sailCorners[2] - m_sailCorners[3]).normalized;
+      var sideD = (m_sailCorners[3] - m_sailCorners[0]).normalized;
+      for (var j = 0; j < mesh.vertices.Length; j++)
       {
         if (m_lockedSailCorners.HasFlag(SailLockedSide.A) && mesh.vertices[j] == m_sailCorners[0])
-        {
           coefficients[j].maxDistance = 0f;
-        }
 
         if (m_lockedSailCorners.HasFlag(SailLockedSide.B) && mesh.vertices[j] == m_sailCorners[1])
-        {
           coefficients[j].maxDistance = 0f;
-        }
 
         if (m_lockedSailCorners.HasFlag(SailLockedSide.C) && mesh.vertices[j] == m_sailCorners[2])
-        {
           coefficients[j].maxDistance = 0f;
-        }
 
         if (m_lockedSailCorners.HasFlag(SailLockedSide.D) && mesh.vertices[j] == m_sailCorners[3])
-        {
           coefficients[j].maxDistance = 0f;
-        }
 
         if (m_lockedSailSides.HasFlag(SailLockedSide.A) &&
             Mathf.Abs(Vector3.Dot((m_sailCorners[0] - mesh.vertices[j]).normalized, sideA)) >=
             0.9999f)
-        {
           coefficients[j].maxDistance = 0f;
-        }
 
         if (m_lockedSailSides.HasFlag(SailLockedSide.B) &&
             Mathf.Abs(Vector3.Dot((m_sailCorners[1] - mesh.vertices[j]).normalized, sideB)) >=
             0.9999f)
-        {
           coefficients[j].maxDistance = 0f;
-        }
 
         if (m_lockedSailSides.HasFlag(SailLockedSide.C) &&
             Mathf.Abs(Vector3.Dot((m_sailCorners[2] - mesh.vertices[j]).normalized, sideC)) >=
             0.9999f)
-        {
           coefficients[j].maxDistance = 0f;
-        }
 
         if (m_lockedSailSides.HasFlag(SailLockedSide.D) &&
             Mathf.Abs(Vector3.Dot((m_sailCorners[3] - mesh.vertices[j]).normalized, sideD)) >=
             0.9999f)
-        {
           coefficients[j].maxDistance = 0f;
-        }
       }
     }
 
@@ -701,21 +622,16 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public void SetPattern(int hash)
   {
-    if (m_patternHash == hash)
-    {
-      return;
-    }
+    if (m_patternHash == hash) return;
 
     m_patternHash = hash;
-    CustomTextureGroup.CustomTexture customtexture =
+    var customtexture =
       CustomTextureGroup.Get("Patterns").GetTextureByHash(hash);
     if (customtexture != null && (bool)customtexture.Texture && (bool)m_mesh)
     {
       m_mesh.material.SetTexture("_PatternTex", customtexture.Texture);
       if ((bool)customtexture.Normal)
-      {
         m_mesh.material.SetTexture("_PatternNormal", customtexture.Normal);
-      }
     }
   }
 
@@ -748,21 +664,16 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public void SetMain(int hash)
   {
-    if (m_mainHash == hash)
-    {
-      return;
-    }
+    if (m_mainHash == hash) return;
 
     m_mainHash = hash;
-    CustomTextureGroup.CustomTexture customtexture =
+    var customtexture =
       CustomTextureGroup.Get("Sails").GetTextureByHash(hash);
     if (customtexture != null && (bool)customtexture.Texture && (bool)m_mesh)
     {
       m_mesh.material.SetTexture("_MainTex", customtexture.Texture);
       if ((bool)customtexture.Normal)
-      {
         m_mesh.material.SetTexture("_MainNormal", customtexture.Normal);
-      }
     }
   }
 
@@ -804,30 +715,23 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public void SetLogo(int hash)
   {
-    if (m_logoHash == hash)
-    {
-      return;
-    }
+    if (m_logoHash == hash) return;
 
     m_logoHash = hash;
-    CustomTextureGroup.CustomTexture customtexture =
+    var customtexture =
       CustomTextureGroup.Get("Logos").GetTextureByHash(hash);
     if (customtexture != null && (bool)customtexture.Texture && (bool)m_mesh)
     {
       m_mesh.material.SetTexture("_LogoTex", customtexture.Texture);
       if ((bool)customtexture.Normal)
-      {
         m_mesh.material.SetTexture("_LogoNormal", customtexture.Normal);
-      }
     }
   }
 
   private void OnDrawGizmos()
   {
-    for (int i = 0; i < m_sailCorners.Count; i++)
-    {
-      Gizmos.DrawSphere(base.transform.position + m_sailCorners[i], 0.1f);
-    }
+    for (var i = 0; i < m_sailCorners.Count; i++)
+      Gizmos.DrawSphere(transform.position + m_sailCorners[i], 0.1f);
   }
 
   public string GetHoverName()
@@ -842,10 +746,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
-    if (m_editPanel == null)
-    {
-      m_editPanel = new EditSailComponentPanel();
-    }
+    if (m_editPanel == null) m_editPanel = new EditSailComponentPanel();
 
     TryEdit();
     return true;
