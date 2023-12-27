@@ -1,21 +1,14 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
-using HarmonyLib;
-using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 using Jotunn;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.U2D;
-using Object = UnityEngine.Object;
 using ValheimRAFT.Patches;
-using ValheimRAFT.Util;
 
 namespace ValheimRAFT;
 
@@ -74,7 +67,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private void CreateConfig()
   {
     HasDebugSails = Config.Bind("Debug", "HasDebugSails", false,
-      "Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only.")
+      "Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only.");
+
     EnableCustomPropulsionConfig = Config.Bind("Propulsion",
       "EnableCustomPropulsionConfig", SailAreaForce.HasPropulsionConfigOverride,
       "Enables all custom propulsion values");
