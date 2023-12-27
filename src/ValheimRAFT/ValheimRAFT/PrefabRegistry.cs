@@ -18,13 +18,13 @@ public class PrefabRegistry : MonoBehaviour
   PieceManager pieceManager;
   SpriteAtlas sprites;
   GameObject boarding_ramp;
+  GameObject mbBoardingRamp;
   GameObject steering_wheel;
   GameObject rope_ladder;
   GameObject rope_anchor;
   GameObject raftMast;
   GameObject dirtFloor;
   Material sailMat;
-  private GameObject mbBoardingRamp;
   Piece woodFloorPiece;
   WearNTear woodFloorPieceWearNTear;
 
@@ -436,7 +436,7 @@ public class PrefabRegistry : MonoBehaviour
     }));
   }
 
-  private void RegisterSail()
+  private void RegisterCustomSail()
   {
     var mbSailPrefab = prefabManager.CreateEmptyPrefab("MBSail");
     Destroy(mbSailPrefab.GetComponent<BoxCollider>());
@@ -484,7 +484,7 @@ public class PrefabRegistry : MonoBehaviour
   /**
    * this allows for registering N types of sails. Maybe in the future there will be more vertices supported
    */
-  public void RegisterCustomSail(int sailCount)
+  public void RegisterCustomSailCreator(int sailCount)
   {
     if (sailCount is not (3 or 4))
     {
@@ -614,7 +614,7 @@ public class PrefabRegistry : MonoBehaviour
   {
     var woodPole2PrefabPiece = prefabManager.GetPrefab("wood_pole2").GetComponent<Piece>();
 
-    var mbBoardingRamp = prefabManager.CreateClonedPrefab("MBBoardingRamp", boarding_ramp);
+    mbBoardingRamp = prefabManager.CreateClonedPrefab("MBBoardingRamp", boarding_ramp);
     var floor = mbBoardingRamp.transform.Find("Ramp/Segment/SegmentAnchor/Floor").gameObject;
     var newFloor = Instantiate(
       woodFloorPiece.transform.Find("New/_Combined Mesh [high]").gameObject, floor.transform.parent,
@@ -655,7 +655,7 @@ public class PrefabRegistry : MonoBehaviour
     boardingRamp2.m_segments = 5;
 
     // previously was 1000f
-    var mbBoardingRampWearNTear = SetWearNTear(this.mbBoardingRamp, 1);
+    var mbBoardingRampWearNTear = SetWearNTear(mbBoardingRamp, 1);
     mbBoardingRampWearNTear.m_supports = false;
 
     FixCollisionLayers(mbBoardingRamp);
@@ -685,9 +685,13 @@ public class PrefabRegistry : MonoBehaviour
     }));
   }
 
+  /**
+   * must be called after RegisterBoardingRamp
+   */
   void RegisterBoardingRampWide()
   {
-    var mbBoardingRampWide = prefabManager.CreateClonedPrefab("MBBoardingRamp_Wide", boarding_ramp);
+    var mbBoardingRampWide =
+      prefabManager.CreateClonedPrefab("MBBoardingRamp_Wide", mbBoardingRamp);
     var mbBoardingRampWidePiece = mbBoardingRampWide.GetComponent<Piece>();
     mbBoardingRampWidePiece.m_name = "$mb_boarding_ramp_wide";
     mbBoardingRampWidePiece.m_description = "$mb_boarding_ramp_wide_desc";
@@ -695,6 +699,9 @@ public class PrefabRegistry : MonoBehaviour
     var boardingRamp = mbBoardingRampWide.GetComponent<BoardingRampComponent>();
     boardingRamp.m_stateChangeDuration = 0.3f;
     boardingRamp.m_segments = 5;
+
+    SetWearNTear(mbBoardingRampWide, 1);
+
 
     mbBoardingRampWide.transform.localScale = new Vector3(2f, 1f, 1f);
     FixSnapPoints(mbBoardingRampWide);
@@ -728,6 +735,7 @@ public class PrefabRegistry : MonoBehaviour
     var prefabSizeString = $"{size}x{size}";
     var prefabName = $"MBDirtFloor_{prefabSizeString}";
     var mbDirtFloorPrefab = prefabManager.CreateClonedPrefab(prefabName, dirtFloor);
+
     mbDirtFloorPrefab.transform.localScale = new Vector3(size, 1f, size);
 
     var nv = mbDirtFloorPrefab.AddComponent<ZNetView>();
@@ -757,7 +765,69 @@ public class PrefabRegistry : MonoBehaviour
         new()
         {
           // this may cause issues it's just size^2 but Math.Pow returns a double
-          Amount = size ^ 2,
+          Amount = (int)Math.Pow(size, 2),
+          Item = "Stone",
+          Recover = true
+        }
+      }
+    }));
+  }
+
+  void RegisterAllDirtFloors()
+  {
+    var sourceObject2 = ValheimRaftPlugin.m_assetBundle.LoadAsset<GameObject>("dirt_floor.prefab");
+    var r2 = prefabManager.CreateClonedPrefab("MBDirtfloor_2x2", sourceObject2);
+    r2.transform.localScale = new Vector3(2f, 1f, 2f);
+    var netview2 = r2.AddComponent<ZNetView>();
+    netview2.m_persistent = true;
+    var wnt2 = r2.AddComponent<WearNTear>();
+    wnt2.m_health = 1000f;
+    var piece2 = r2.AddComponent<Piece>();
+    piece2.m_placeEffect = woodFloorPiece.m_placeEffect;
+    var cultivatable2 = r2.AddComponent<CultivatableComponent>();
+    FixCollisionLayers(r2);
+    FixSnapPoints(r2);
+    pieceManager.AddPiece(new CustomPiece(r2, false, new PieceConfig
+    {
+      PieceTable = "Hammer",
+      Name = "$mb_dirt_floor_2x2",
+      Description = "$mb_dirt_floor_2x2_desc",
+      Category = "ValheimRAFT",
+      Icon = sprites.GetSprite("dirtfloor_icon"),
+      Requirements = new RequirementConfig[1]
+      {
+        new()
+        {
+          Amount = 4,
+          Item = "Stone",
+          Recover = true
+        }
+      }
+    }));
+    var sourceObject = ValheimRaftPlugin.m_assetBundle.LoadAsset<GameObject>("dirt_floor.prefab");
+    var r = prefabManager.CreateClonedPrefab("MBDirtfloor_1x1", sourceObject);
+    r.transform.localScale = new Vector3(1f, 1f, 1f);
+    var netview = r.AddComponent<ZNetView>();
+    netview.m_persistent = true;
+    var wnt = r.AddComponent<WearNTear>();
+    wnt.m_health = 1000f;
+    var piece = r.AddComponent<Piece>();
+    piece.m_placeEffect = woodFloorPiece.m_placeEffect;
+    var cultivatable = r.AddComponent<CultivatableComponent>();
+    FixCollisionLayers(r);
+    FixSnapPoints(r);
+    pieceManager.AddPiece(new CustomPiece(r, false, new PieceConfig
+    {
+      PieceTable = "Hammer",
+      Name = "$mb_dirt_floor_1x1",
+      Description = "$mb_dirt_floor_1x1_desc",
+      Category = "ValheimRAFT",
+      Icon = sprites.GetSprite("dirtfloor_icon"),
+      Requirements = new RequirementConfig[1]
+      {
+        new()
+        {
+          Amount = 1,
           Item = "Stone",
           Recover = true
         }
@@ -775,9 +845,11 @@ public class PrefabRegistry : MonoBehaviour
     RegisterRaftMast();
     RegisterKarveMast();
     RegisterVikingMast();
-    RegisterSail();
-    RegisterCustomSail(3);
-    RegisterCustomSail(4);
+    RegisterCustomSail();
+
+    // Sail creators
+    RegisterCustomSailCreator(3);
+    RegisterCustomSailCreator(4);
 
     // Rope items
     RegisterRopeAnchor();
