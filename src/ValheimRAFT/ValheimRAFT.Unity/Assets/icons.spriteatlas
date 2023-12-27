@@ -17,7 +17,7 @@ SpriteAtlas:
       textureCompression: 0
       filterMode: 1
       generateMipMaps: 0
-      readable: 0
+      readable: 1
       crunchedCompression: 0
       sRGB: 1
     platformSettings: []
@@ -26,17 +26,47 @@ SpriteAtlas:
       padding: 4
       blockOffset: 1
       allowAlphaSplitting: 0
-      enableRotation: 1
-      enableTightPacking: 1
+      enableRotation: 0
+      enableTightPacking: 0
     secondaryTextureSettings: {}
     variantMultiplier: 1
-    packables: []
+    packables:
+    - {fileID: 21300000, guid: f453cada10fee0b4bb65321fedf1c8e6, type: 3}
+    - {fileID: 21300000, guid: ad85bb7afeb121f4ba9a71d41c38402b, type: 3}
+    - {fileID: 21300000, guid: d30cd65fcbf4fbf40bf1fcfa8cac2e0e, type: 3}
+    - {fileID: 21300000, guid: 6a8603db01abb7a40bdebcb9cdc4e085, type: 3}
+    - {fileID: 21300000, guid: c5799bd039396594bb64061886a5bdc1, type: 3}
+    - {fileID: 21300000, guid: 94dfc420ce6f4f74f8bd361172521fde, type: 3}
+    - {fileID: 21300000, guid: c331a58e1a55f1d49a3e904073b06fe3, type: 3}
+    - {fileID: 21300000, guid: cdba525de4464704da6306cd930a8930, type: 3}
+    - {fileID: 21300000, guid: bbe629ab722f5104aa140bc4eea71ee0, type: 3}
+    - {fileID: 21300000, guid: 762ddfea308568b4cbff3ce305d6a4a8, type: 3}
     bindAsDefault: 1
     isAtlasV2: 0
     cachedData: {fileID: 0}
   m_MasterAtlas: {fileID: 0}
-  m_PackedSprites: []
-  m_PackedSpriteNamesToIndex: []
+  m_PackedSprites:
+  - {fileID: 21300000, guid: 94dfc420ce6f4f74f8bd361172521fde, type: 3}
+  - {fileID: 21300000, guid: c5799bd039396594bb64061886a5bdc1, type: 3}
+  - {fileID: 21300000, guid: ad85bb7afeb121f4ba9a71d41c38402b, type: 3}
+  - {fileID: 21300000, guid: f453cada10fee0b4bb65321fedf1c8e6, type: 3}
+  - {fileID: 21300000, guid: 762ddfea308568b4cbff3ce305d6a4a8, type: 3}
+  - {fileID: 21300000, guid: bbe629ab722f5104aa140bc4eea71ee0, type: 3}
+  - {fileID: 21300000, guid: 6a8603db01abb7a40bdebcb9cdc4e085, type: 3}
+  - {fileID: 21300000, guid: cdba525de4464704da6306cd930a8930, type: 3}
+  - {fileID: 21300000, guid: c331a58e1a55f1d49a3e904073b06fe3, type: 3}
+  - {fileID: 21300000, guid: d30cd65fcbf4fbf40bf1fcfa8cac2e0e, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - rope_anchor
+  - rope_ladder
+  - karvemast
+  - raftmast
+  - dirtfloor_icon
+  - boarding_ramp
+  - steering_wheel
+  - customsail_tri
+  - customsail
+  - vikingmast
   m_RenderDataMap: {}
-  m_Tag: New Sprite Atlas
+  m_Tag: icons
   m_IsVariant: 0

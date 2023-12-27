@@ -118,17 +118,19 @@ public class MoveableBaseShipComponent : MonoBehaviour
    */
   private void FirstTimeCreation()
   {
-    if (m_baseRoot.GetPieceCount() > 0)
-      foreach (var piece in m_baseRoot.m_pieces)
-        if (piece.m_zdo == null)
-        {
-          var prefabName = piece.GetPrefabName();
-          var prefab = ZNetScene.instance.GetPrefab(prefabName);
-          var obj = Instantiate(prefab, m_baseRoot.transform);
-          obj.transform.localPosition = piece.transform.localPosition;
-          obj.transform.localScale = piece.transform.localScale;
-          obj.transform.localRotation = piece.transform.localRotation;
-        }
+    // Pretty sure this was experimental code. 
+
+    // if (m_baseRoot.GetPieceCount() > 0)
+    //   foreach (var piece in m_baseRoot.m_pieces)
+    //     if (piece.m_zdo == null)
+    //     {
+    //       var prefabName = piece.GetPrefabName();
+    //       var prefab = ZNetScene.instance.GetPrefab(prefabName);
+    //       var obj = Instantiate(prefab, m_baseRoot.transform);
+    //       obj.transform.localPosition = piece.transform.localPosition;
+    //       obj.transform.localScale = piece.transform.localScale;
+    //       obj.transform.localRotation = piece.transform.localRotation;
+    //     }
 
     if (m_baseRoot.GetPieceCount() != 0)
     {
@@ -205,6 +207,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
     m_nview.m_zdo.Set("MBTargetHeight", m_targetHeight);
   }
+
 
   public void UpdateStats(bool flight)
   {

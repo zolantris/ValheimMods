@@ -10,7 +10,7 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>1.6.4</ApplicationVersion>
+        <ApplicationVersion>1.6.5</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -39,6 +39,7 @@
         <Compile Include="ValheimRAFT\DockComponent.cs"/>
         <Compile Include="ValheimRAFT\HideRaftConsoleCommand.cs"/>
         <Compile Include="ValheimRAFT\MovableBaseZone.cs"/>
+        <Compile Include="ValheimRAFT\PrefabRegistry.cs"/>
         <Compile Include="ValheimRAFT\ShipStats.cs"/>
         <Compile Include="ValheimRAFT\SailAreaForce.cs"/>
         <Compile Include="ValheimRAFT\ValheimRaftPlugin.cs"/>
@@ -85,6 +86,7 @@
         <Content Include="Thunderstore\icon.png"/>
         <Content Include="Thunderstore\manifest.json"/>
         <Content Include="ValheimRAFT.sln"/>
+        <Content Include="ValheimRAFT.Unity\.gitignore"/>
     </ItemGroup>
     <PropertyGroup>
         <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
@@ -100,15 +102,15 @@
         <OutputPath>bin\Debug Run Valheim Server\</OutputPath>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
-      <OutputPath>bin\Release Archive\</OutputPath>
+        <OutputPath>bin\Release Archive\</OutputPath>
     </PropertyGroup>
     <Target Name="Copy_To_R2ModMan" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="PostBuildEvent">
-        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(PluginDeployPath)\ValheimRAFT.dll&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(PluginDeployPath)\ValheimRAFT.pdb&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
     </Target>
     <Target KeepDuplicateOutputs="false" Name="Copy_To_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' " AfterTargets="PostBuildEvent">
-        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\ValheimRAFT.dll&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\ValheimRAFT.pdb&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>
     </Target>
     <Target Name="Run_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' " AfterTargets="Copy_To_Valheim_Server">
         <!--        <Exec Command="cd &quot;$(ValheimServerPath)&quot;-->
@@ -141,8 +143,8 @@
         <Exec Command="if not exist &quot;$(TmpDir)&quot; mkdir &quot;$(TmpDir)&quot;"/>
         <Exec Command="if not exist &quot;$(TmpDir)plugins&quot; mkdir &quot;$(TmpDir)plugins&quot;"/>
 
-        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(TmpDir)plugins\ValheimRAFT.dll&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(TmpDir)plugins\ValheimRAFT.pdb&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(TmpDir)plugins\$(AssemblyName).dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(TmpDir)plugins\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(RepoDir)README.md&quot; &quot;$(TmpDir)README.md&quot;"/>
 
         <!-- Copy Assets -->
