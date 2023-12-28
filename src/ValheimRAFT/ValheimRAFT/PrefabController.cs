@@ -198,7 +198,14 @@ public class PrefabController : MonoBehaviour
     AddToRaftPrefabPieces(vikingShipMastPrefabPiece);
 
     AddNetViewWithPersistence(vikingShipMastPrefab);
-    SetSailConfig(vikingShipPrefab);
+
+    var vikingShipMastComponent = vikingShipMastPrefab.AddComponent<MastComponent>();
+    vikingShipMastComponent.m_sailObject = vikingShipMastPrefab.transform.Find("Sail").gameObject;
+    vikingShipMastComponent.m_sailCloth =
+      vikingShipMastComponent.m_sailObject.GetComponentInChildren<Cloth>();
+    vikingShipMastComponent.m_allowSailRotation = true;
+    vikingShipMastComponent.m_allowSailShrinking = true;
+
     // Set wear and tear can be abstracted
     SetWearNTear(vikingShipMastPrefab, 3);
 
@@ -295,7 +302,12 @@ public class PrefabController : MonoBehaviour
     AddToRaftPrefabPieces(mbRaftMastPrefabPiece);
     AddNetViewWithPersistence(mbRaftMastPrefab);
 
-    SetSailConfig(mbRaftMastPrefab);
+    var mastComponent = mbRaftMastPrefab.AddComponent<MastComponent>();
+    mastComponent.m_allowSailRotation = true;
+    mastComponent.m_allowSailShrinking = true;
+    mastComponent.m_sailObject = mbRaftMastPrefab.transform.Find("Sail").gameObject;
+    mastComponent.m_sailCloth = mastComponent.m_sailObject.GetComponentInChildren<Cloth>();
+
     SetWearNTear(mbRaftMastPrefab);
 
     FixedRopes(mbRaftMastPrefab);
@@ -325,16 +337,6 @@ public class PrefabController : MonoBehaviour
     }));
   }
 
-  void SetSailConfig(GameObject prefab)
-  {
-    var mast = prefab.AddComponent<MastComponent>();
-    mast.m_sailObject =
-      prefab.transform.Find("Sail").gameObject;
-    mast.m_sailCloth = mast.m_sailObject.GetComponentInChildren<Cloth>();
-    mast.m_allowSailShrinking = true;
-    mast.m_allowSailRotation = true;
-  }
-
   public void RegisterKarveMast()
   {
     var karve = prefabManager.GetPrefab("Karve");
@@ -350,7 +352,12 @@ public class PrefabController : MonoBehaviour
     AddNetViewWithPersistence(mbKarveMastPrefab);
 
     // tweak the mast
-    SetSailConfig(mbKarveMastPrefab);
+    var mast = mbKarveMastPrefab.AddComponent<MastComponent>();
+    mast.m_sailObject =
+      mbKarveMastPrefab.transform.Find("Sail").gameObject;
+    mast.m_sailCloth = mast.m_sailObject.GetComponentInChildren<Cloth>();
+    mast.m_allowSailShrinking = true;
+    mast.m_allowSailRotation = true;
 
     // Abstract wnt for masts
     SetWearNTear(mbKarveMastPrefab, 2);

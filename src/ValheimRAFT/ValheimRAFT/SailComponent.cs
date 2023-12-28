@@ -17,7 +17,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     None = 0,
     AllowSailShrinking = 1,
     DisableCloth = 2,
-    AllowSailRotation = 3,
+    AllowSailRotation = 4,
   }
 
   [Flags]
@@ -54,6 +54,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   private int m_logoRotationHash = "m_logoRotation".GetStableHashCode();
   private int m_logoOffsetHash = "m_logoOffset".GetStableHashCode();
   private int m_sailFlagsHash = "m_sailFlagsHash".GetStableHashCode();
+  private int m_sailOriginalRotationHash = "m_sailOriginalRotation".GetStableHashCode();
+  private Quaternion m_sailOriginalRotation;
 
   private MastComponent m_mastComponent;
 
@@ -123,6 +125,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     m_sailComponents.Add(this);
     m_mastComponent = GetComponent<MastComponent>();
+    m_mastComponent.m_allowSailRotation = false;
     m_sailObject = transform.Find("Sail").gameObject;
     m_sailCloth = m_sailObject.GetComponent<Cloth>();
     if ((bool)m_sailCloth)
@@ -135,6 +138,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     m_mesh = m_sailObject.GetComponent<SkinnedMeshRenderer>();
     m_meshCollider = m_sailObject.GetComponent<MeshCollider>();
     m_nview = GetComponent<ZNetView>();
+
     if (m_sailInit)
       LoadZDO();
     else if (!ZNetView.m_forceDisableInit) InvokeRepeating(nameof(LoadZDO), 5f, 5f);
@@ -177,7 +181,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
           m_mastComponent.m_allowSailRotation = allow;
           if (allow == false)
           {
-            m_mastComponent.transform.localRotation = new Quaternion();
+            m_mastComponent.transform.localRotation = m_sailOriginalRotation;
           }
 
           break;
@@ -255,6 +259,18 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     if (!m_nview || m_nview.m_zdo == null) return;
     var zdo = m_nview.m_zdo;
+
+    var fallbackRotation = new Quaternion();
+    var savedRotation = zdo.GetQuaternion(m_sailOriginalRotationHash, fallbackRotation);
+
+    if (savedRotation == fallbackRotation)
+    {
+      zdo.Set(m_sailOriginalRotationHash, m_mastComponent.transform.localRotation);
+    }
+    else
+    {
+      m_sailOriginalRotation = savedRotation;
+    }
 
     var meshUpdateRequired = false;
     var coefficientUpdateRequired = false;
