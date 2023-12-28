@@ -1,5 +1,5 @@
 using System;
-using System.Reflection;
+using System.Collections.Generic;
 using System.Text;
 using Jotunn.Configs;
 using Jotunn.Entities;
@@ -27,12 +27,100 @@ public class PrefabRegistry : MonoBehaviour
   private Material sailMat;
   private Piece woodFloorPiece;
   private WearNTear woodFloorPieceWearNTear;
+  private SynchronizationManager synchronizationManager;
+  private List<Piece> raftPrefabPieces = new();
+  private bool prefabsEnabled = true;
 
   private const string ValheimRaftMenuName = "ValheimRAFT";
 
 
   // todo this should come from config
   private float wearNTearBaseHealth = 250f;
+
+  private void UpdatePrefabs(bool isPrefabEnabled)
+  {
+    foreach (var piece in raftPrefabPieces)
+    {
+      var pmPiece = pieceManager.GetPiece(piece.name);
+      if (pmPiece == null)
+      {
+        Logger.LogWarning(
+          $"ValheimRaft attempted to run UpdatePrefab on {piece.name} but jotunn pieceManager did not find that piece name");
+        continue;
+      }
+
+      Logger.LogDebug($"Setting m_enabled: to {isPrefabEnabled}, for name {piece.name}");
+      pmPiece.Piece.m_enabled = isPrefabEnabled;
+    }
+  }
+
+  public void UpdatePrefabStatus()
+  {
+    var isAdmin = SynchronizationManager.Instance.PlayerIsAdmin;
+    if (prefabsEnabled == isAdmin) return;
+    prefabsEnabled = isAdmin;
+    UpdatePrefabs(isAdmin);
+  }
+
+  public void UpdatePrefabStatus(object obj, ConfigurationSynchronizationEventArgs e)
+  {
+    Logger.LogInfo($"obj {obj} ConfigEvent {e}");
+    UpdatePrefabStatus();
+  }
+
+  private void AddToRaftPrefabPieces(Piece raftPiece)
+  {
+    raftPrefabPieces.Add(raftPiece);
+  }
+
+  private static void AddNetViewWithPersistence(GameObject prefab)
+  {
+    var netView = prefab.GetComponent<ZNetView>();
+    if (!netView)
+    {
+      netView = prefab.AddComponent<ZNetView>();
+    }
+
+    if (!netView)
+    {
+      Logger.LogError("Unable to register NetView, ValheimRAFT could be broken without netview");
+      return;
+    }
+
+    netView.m_persistent = true;
+  }
+
+  public void RegisterAllPrefabs()
+  {
+    // Critical Items
+    RegisterRaftPrefab();
+    RegisterRudder();
+
+    // Masts
+    RegisterRaftMast();
+    RegisterKarveMast();
+    RegisterVikingMast();
+    RegisterCustomSail();
+
+    // Sail creators
+    RegisterCustomSailCreator(3);
+    RegisterCustomSailCreator(4);
+
+    // Rope items
+    RegisterRopeAnchor();
+    RegisterRopeLadder();
+
+    // pier components
+    RegisterPierPole();
+    RegisterPierWall();
+
+    // Ramps
+    RegisterBoardingRamp();
+    RegisterBoardingRampWide();
+    // Floors
+    RegisterDirtFloor(1);
+    RegisterDirtFloor(2);
+  }
 
   public void Init()
   {
@@ -56,7 +144,18 @@ public class PrefabRegistry : MonoBehaviour
     woodFloorPiece = woodFloorPrefab.GetComponent<Piece>();
     woodFloorPieceWearNTear = woodFloorPiece.GetComponent<WearNTear>();
 
+    // registers all prefabs
     RegisterAllPrefabs();
+
+    /*
+     * listens for admin status updates and changes prefab active status
+     */
+    if (ValheimRaftPlugin.Instance.AdminsCanOnlyBuildRaft.Value)
+    {
+      SynchronizationManager.OnConfigurationSynchronized += UpdatePrefabStatus;
+      SynchronizationManager.OnAdminStatusChanged += UpdatePrefabStatus;
+      SynchronizationManager.OnConfigurationSynchronized += UpdatePrefabStatus;
+    }
   }
 
   private WearNTear SetWearNTear(GameObject prefabComponent, int tierMultiplier = 1)
@@ -93,8 +192,10 @@ public class PrefabRegistry : MonoBehaviour
     vikingShipMastPrefabPiece.m_name = "$mb_vikingship_mast";
     vikingShipMastPrefabPiece.m_description = "$mb_vikingship_mast_desc";
     vikingShipMastPrefabPiece.m_placeEffect = woodFloorPiece.m_placeEffect;
-    var nv6 = vikingShipMastPrefab.AddComponent<ZNetView>();
-    nv6.m_persistent = true;
+    AddToRaftPrefabPieces(vikingShipMastPrefabPiece);
+
+    AddNetViewWithPersistence(vikingShipMastPrefab);
+
     var vikingShipMastComponent = vikingShipMastPrefab.AddComponent<MastComponent>();
     vikingShipMastComponent.m_sailObject = vikingShipMastPrefab.transform.Find("Sail").gameObject;
     vikingShipMastComponent.m_sailCloth =
@@ -112,6 +213,7 @@ public class PrefabRegistry : MonoBehaviour
       Description = "$mb_vikingship_mast_desc",
       Icon = sprites.GetSprite("vikingmast"),
       Category = ValheimRaftMenuName,
+      Enabled = true,
       Requirements = new RequirementConfig[3]
       {
         new()
@@ -151,14 +253,15 @@ public class PrefabRegistry : MonoBehaviour
     Destroy(mbRaftPrefab.transform.Find("ship/colliders/log (2)").gameObject);
     Destroy(mbRaftPrefab.transform.Find("ship/colliders/log (3)").gameObject);
 
-    var piece16 = mbRaftPrefab.GetComponent<Piece>();
-    piece16.m_name = "$mb_raft";
-    piece16.m_description = "$mb_raft_desc";
-    var nv9 = mbRaftPrefab.GetComponent<ZNetView>();
-    nv9.m_persistent = true;
+    var mbRaftPrefabPiece = mbRaftPrefab.GetComponent<Piece>();
+    mbRaftPrefabPiece.m_name = "$mb_raft";
+    mbRaftPrefabPiece.m_description = "$mb_raft_desc";
+    AddToRaftPrefabPieces(mbRaftPrefabPiece);
+
+    AddNetViewWithPersistence(mbRaftPrefab);
+
     var mbRaftPrefabWearNTear = mbRaftPrefab.GetComponent<WearNTear>();
 
-    // Lowest is 100f
     mbRaftPrefabWearNTear.m_health = Math.Max(100f, ValheimRaftPlugin.Instance.RaftHealth.Value);
     mbRaftPrefabWearNTear.m_noRoofWear = false;
 
@@ -170,6 +273,7 @@ public class PrefabRegistry : MonoBehaviour
       PieceTable = "Hammer",
       Description = "$mb_raft_desc",
       Category = ValheimRaftMenuName,
+      Enabled = true,
       Requirements = new RequirementConfig[1]
       {
         new()
@@ -190,8 +294,8 @@ public class PrefabRegistry : MonoBehaviour
     mbRaftMastPrefabPiece.m_description = "$mb_raft_mast_desc";
     mbRaftMastPrefabPiece.m_placeEffect = woodFloorPiece.m_placeEffect;
 
-    var nv = mbRaftMastPrefab.AddComponent<ZNetView>();
-    nv.m_persistent = true;
+    AddToRaftPrefabPieces(mbRaftMastPrefabPiece);
+    AddNetViewWithPersistence(mbRaftMastPrefab);
 
     var mastComponent = mbRaftMastPrefab.AddComponent<MastComponent>();
     mastComponent.m_sailObject = mbRaftMastPrefab.transform.Find("Sail").gameObject;
@@ -207,6 +311,7 @@ public class PrefabRegistry : MonoBehaviour
       Description = "$mb_raft_mast_desc",
       Icon = sprites.GetSprite("raftmast"),
       Category = ValheimRaftMenuName,
+      Enabled = true,
       Requirements = new RequirementConfig[2]
       {
         new()
@@ -230,12 +335,14 @@ public class PrefabRegistry : MonoBehaviour
     var karve = prefabManager.GetPrefab("Karve");
     var karveMast = karve.transform.Find("ship/mast").gameObject;
     var mbKarveMastPrefab = prefabManager.CreateClonedPrefab("MBKarveMast", karveMast);
-    var piece14 = mbKarveMastPrefab.AddComponent<Piece>();
-    piece14.m_name = "$mb_karve_mast";
-    piece14.m_description = "$mb_karve_mast_desc";
-    piece14.m_placeEffect = woodFloorPiece.m_placeEffect;
-    var nv7 = mbKarveMastPrefab.AddComponent<ZNetView>();
-    nv7.m_persistent = true;
+
+    var mbKarveMastPiece = mbKarveMastPrefab.AddComponent<Piece>();
+    mbKarveMastPiece.m_name = "$mb_karve_mast";
+    mbKarveMastPiece.m_description = "$mb_karve_mast_desc";
+    mbKarveMastPiece.m_placeEffect = woodFloorPiece.m_placeEffect;
+
+    AddToRaftPrefabPieces(mbKarveMastPiece);
+    AddNetViewWithPersistence(mbKarveMastPrefab);
 
     // tweak the mast
     var mast = mbKarveMastPrefab.AddComponent<MastComponent>();
@@ -257,6 +364,7 @@ public class PrefabRegistry : MonoBehaviour
       Description = "$mb_karve_mast_desc",
       Icon = sprites.GetSprite("karvemast"),
       Category = ValheimRaftMenuName,
+      Enabled = true,
       Requirements = new RequirementConfig[3]
       {
         new()
@@ -284,12 +392,15 @@ public class PrefabRegistry : MonoBehaviour
   private void RegisterRudder()
   {
     var mbRudderPrefab = prefabManager.CreateClonedPrefab("MBRudder", steering_wheel);
-    var piece12 = mbRudderPrefab.AddComponent<Piece>();
-    piece12.m_name = "$mb_rudder";
-    piece12.m_description = "$mb_rudder_desc";
-    piece12.m_placeEffect = woodFloorPiece.m_placeEffect;
-    var nv5 = mbRudderPrefab.AddComponent<ZNetView>();
-    nv5.m_persistent = true;
+
+    var mbRudderPrefabPiece = mbRudderPrefab.AddComponent<Piece>();
+    mbRudderPrefabPiece.m_name = "$mb_rudder";
+    mbRudderPrefabPiece.m_description = "$mb_rudder_desc";
+    mbRudderPrefabPiece.m_placeEffect = woodFloorPiece.m_placeEffect;
+
+    AddToRaftPrefabPieces(mbRudderPrefabPiece);
+    AddNetViewWithPersistence(mbRudderPrefab);
+
     var rudder = mbRudderPrefab.AddComponent<RudderComponent>();
     rudder.m_controls = mbRudderPrefab.AddComponent<ShipControlls>();
     rudder.m_controls.m_hoverText = "$mb_rudder_use";
@@ -309,6 +420,7 @@ public class PrefabRegistry : MonoBehaviour
       Description = "$mb_rudder_desc",
       Icon = sprites.GetSprite("steering_wheel"),
       Category = ValheimRaftMenuName,
+      Enabled = true,
       Requirements = new RequirementConfig[1]
       {
         new()
@@ -332,8 +444,8 @@ public class PrefabRegistry : MonoBehaviour
     mbRopeLadderPrefabPiece.m_primaryTarget = false;
     mbRopeLadderPrefabPiece.m_randomTarget = false;
 
-    var netview = mbRopeLadderPrefab.AddComponent<ZNetView>();
-    netview.m_persistent = true;
+    AddToRaftPrefabPieces(mbRopeLadderPrefabPiece);
+    AddNetViewWithPersistence(mbRopeLadderPrefab);
 
     var ropeLadder = mbRopeLadderPrefab.AddComponent<RopeLadderComponent>();
     var rope = raftMast.GetComponentInChildren<LineRenderer>(true);
@@ -362,13 +474,14 @@ public class PrefabRegistry : MonoBehaviour
       Description = "$mb_rope_ladder_desc",
       Icon = sprites.GetSprite("rope_ladder"),
       Category = ValheimRaftMenuName,
+      Enabled = true,
       Requirements = new RequirementConfig[1]
       {
         new()
         {
           Amount = 10,
           Item = "Wood",
-          Recover = true
+          Recover = true,
         }
       }
     }));
@@ -383,8 +496,8 @@ public class PrefabRegistry : MonoBehaviour
     mbRopeAnchorPrefabPiece.m_description = "$mb_rope_anchor_desc";
     mbRopeAnchorPrefabPiece.m_placeEffect = woodFloorPiece.m_placeEffect;
 
-    var netview = mbRopeAnchorPrefab.AddComponent<ZNetView>();
-    netview.m_persistent = true;
+    AddToRaftPrefabPieces(mbRopeAnchorPrefabPiece);
+    AddNetViewWithPersistence(mbRopeAnchorPrefab);
 
     var ropeAnchorComponent = mbRopeAnchorPrefab.AddComponent<RopeAnchorComponent>();
     var baseRope = raftMast.GetComponentInChildren<LineRenderer>(true);
@@ -409,6 +522,7 @@ public class PrefabRegistry : MonoBehaviour
       Description = "$mb_rope_anchor_desc",
       Icon = sprites.GetSprite("rope_anchor"),
       Category = ValheimRaftMenuName,
+      Enabled = true,
       Requirements = new RequirementConfig[2]
       {
         new()
@@ -438,8 +552,8 @@ public class PrefabRegistry : MonoBehaviour
     mbSailPrefabPiece.m_description = "$mb_sail_desc";
     mbSailPrefabPiece.m_placeEffect = woodFloorPiece.m_placeEffect;
 
-    var netview = mbSailPrefab.GetComponent<ZNetView>();
-    netview.m_persistent = true;
+    AddToRaftPrefabPieces(mbSailPrefabPiece);
+    AddNetViewWithPersistence(mbSailPrefab);
 
     var sailObject = new GameObject("Sail")
     {
@@ -488,10 +602,11 @@ public class PrefabRegistry : MonoBehaviour
 
     var piece = prefab.AddComponent<Piece>();
     var pieceName = sailCount == 3 ? "$mb_sail" : $"$mb_sail_{sailCount}";
-
     piece.m_name = pieceName;
     piece.m_description = $"$mb_sail_{sailCount}_desc";
     piece.m_placeEffect = woodFloorPiece.m_placeEffect;
+
+    AddToRaftPrefabPieces(piece);
 
     var sailCreatorComponent = prefab.AddComponent<SailCreatorComponent>();
     sailCreatorComponent.m_sailSize = sailCount;
@@ -508,6 +623,7 @@ public class PrefabRegistry : MonoBehaviour
       PieceTable = "Hammer",
       Description = $"$mb_sail_{sailCount}_desc",
       Category = ValheimRaftMenuName,
+      Enabled = true,
       Icon = sailIcon
     }));
   }
@@ -523,6 +639,8 @@ public class PrefabRegistry : MonoBehaviour
 
     var pierPolePrefabPiece = mbPierPolePrefab.GetComponent<Piece>();
     pierPolePrefabPiece.m_waterPiece = true;
+
+    AddToRaftPrefabPieces(pierPolePrefabPiece);
 
     var pierComponent = mbPierPolePrefab.AddComponent<PierComponent>();
     pierComponent.m_segmentObject =
@@ -540,12 +658,13 @@ public class PrefabRegistry : MonoBehaviour
     pierComponent.m_segmentHeight = 4f;
     pierComponent.m_baseOffset = -1f;
 
-    pieceManager.AddPiece(new CustomPiece(mbPierPolePrefab, false, new PieceConfig
+    var customPiece = new CustomPiece(mbPierPolePrefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
       Name = "$mb_pier (" + pierPolePrefabPiece.m_name + ")",
       Description = "$mb_pier_desc\n " + pierPolePrefabPiece.m_description,
       Category = ValheimRaftMenuName,
+      Enabled = true,
       Icon = pierPolePrefabPiece.m_icon,
       Requirements = new RequirementConfig[1]
       {
@@ -556,7 +675,12 @@ public class PrefabRegistry : MonoBehaviour
           Recover = true
         }
       }
-    }));
+    });
+
+    // this could be off with the name since the name is overridden it may not apply until after things are run.
+    AddToRaftPrefabPieces(customPiece.Piece);
+
+    pieceManager.AddPiece(customPiece);
   }
 
   private void RegisterPierWall()
@@ -582,12 +706,13 @@ public class PrefabRegistry : MonoBehaviour
     pier.m_segmentHeight = 2f;
     pier.m_baseOffset = 0f;
 
-    pieceManager.AddPiece(new CustomPiece(pierWallPrefab, false, new PieceConfig
+    var customPiece = new CustomPiece(pierWallPrefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
       Name = "$mb_pier (" + pierWallPrefabPiece.m_name + ")",
       Description = "$mb_pier_desc\n " + pierWallPrefabPiece.m_description,
       Category = ValheimRaftMenuName,
+      Enabled = true,
       Icon = pierWallPrefabPiece.m_icon,
       Requirements = new RequirementConfig[1]
       {
@@ -598,7 +723,11 @@ public class PrefabRegistry : MonoBehaviour
           Recover = true
         }
       }
-    }));
+    });
+
+    AddToRaftPrefabPieces(customPiece.Piece);
+
+    pieceManager.AddPiece(customPiece);
   }
 
   private void RegisterBoardingRamp()
@@ -639,8 +768,10 @@ public class PrefabRegistry : MonoBehaviour
     mbBoardingRampPiece.m_name = "$mb_boarding_ramp";
     mbBoardingRampPiece.m_description = "$mb_boarding_ramp_desc";
     mbBoardingRampPiece.m_placeEffect = woodFloorPiece.m_placeEffect;
-    var nv = mbBoardingRamp.AddComponent<ZNetView>();
-    nv.m_persistent = true;
+
+    AddToRaftPrefabPieces(mbBoardingRampPiece);
+    AddNetViewWithPersistence(mbBoardingRamp);
+
     var boardingRamp2 = mbBoardingRamp.AddComponent<BoardingRampComponent>();
     boardingRamp2.m_stateChangeDuration = 0.3f;
     boardingRamp2.m_segments = 5;
@@ -658,6 +789,7 @@ public class PrefabRegistry : MonoBehaviour
       Description = "$mb_boarding_ramp_desc",
       Icon = sprites.GetSprite("boarding_ramp"),
       Category = ValheimRaftMenuName,
+      Enabled = true,
       Requirements = new RequirementConfig[2]
       {
         new()
@@ -687,6 +819,8 @@ public class PrefabRegistry : MonoBehaviour
     mbBoardingRampWidePiece.m_name = "$mb_boarding_ramp_wide";
     mbBoardingRampWidePiece.m_description = "$mb_boarding_ramp_wide_desc";
 
+    AddToRaftPrefabPieces(mbBoardingRampWidePiece);
+
     var boardingRamp = mbBoardingRampWide.GetComponent<BoardingRampComponent>();
     boardingRamp.m_stateChangeDuration = 0.3f;
     boardingRamp.m_segments = 5;
@@ -703,6 +837,7 @@ public class PrefabRegistry : MonoBehaviour
       Description = "$mb_boarding_ramp_wide_desc",
       Icon = sprites.GetSprite("boarding_ramp"),
       Category = ValheimRaftMenuName,
+      Enabled = true,
       Requirements = new RequirementConfig[2]
       {
         new()
@@ -729,14 +864,14 @@ public class PrefabRegistry : MonoBehaviour
 
     mbDirtFloorPrefab.transform.localScale = new Vector3(size, 1f, size);
 
-    var nv = mbDirtFloorPrefab.AddComponent<ZNetView>();
-    nv.m_persistent = true;
+    var mbDirtFloorPrefabPiece = mbDirtFloorPrefab.AddComponent<Piece>();
+    mbDirtFloorPrefabPiece.m_placeEffect = woodFloorPiece.m_placeEffect;
+
+    AddToRaftPrefabPieces(mbDirtFloorPrefabPiece);
+    AddNetViewWithPersistence(mbDirtFloorPrefab);
 
     var dirtFloorWearNTear = mbDirtFloorPrefab.AddComponent<WearNTear>();
     dirtFloorWearNTear.m_health = wearNTearBaseHealth;
-
-    var mbDirtFloorPrefabPiece = mbDirtFloorPrefab.AddComponent<Piece>();
-    mbDirtFloorPrefabPiece.m_placeEffect = woodFloorPiece.m_placeEffect;
 
     // Makes the component cultivatable
     mbDirtFloorPrefab.AddComponent<CultivatableComponent>();
@@ -750,6 +885,7 @@ public class PrefabRegistry : MonoBehaviour
       Name = $"$mb_dirt_floor_{prefabSizeString}",
       Description = $"$mb_dirt_floor_{prefabSizeString}_desc",
       Category = ValheimRaftMenuName,
+      Enabled = true,
       Icon = sprites.GetSprite("dirtfloor_icon"),
       Requirements = new RequirementConfig[1]
       {
@@ -762,38 +898,6 @@ public class PrefabRegistry : MonoBehaviour
         }
       }
     }));
-  }
-
-  public void RegisterAllPrefabs()
-  {
-    // Critical Items
-    RegisterRaftPrefab();
-    RegisterRudder();
-
-    // Masts
-    RegisterRaftMast();
-    RegisterKarveMast();
-    RegisterVikingMast();
-    RegisterCustomSail();
-
-    // Sail creators
-    RegisterCustomSailCreator(3);
-    RegisterCustomSailCreator(4);
-
-    // Rope items
-    RegisterRopeAnchor();
-    RegisterRopeLadder();
-
-    // pier components
-    RegisterPierPole();
-    RegisterPierWall();
-
-    // Ramps
-    RegisterBoardingRamp();
-    RegisterBoardingRampWide();
-    // Floors
-    RegisterDirtFloor(1);
-    RegisterDirtFloor(2);
   }
 
   private void FixCollisionLayers(GameObject r)

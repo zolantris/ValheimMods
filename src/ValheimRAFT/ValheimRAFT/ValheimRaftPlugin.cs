@@ -21,7 +21,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    * @note keeping this as Sarcen for now since there are low divergences from the original codebase and patches already mapped to sarcen's mod
    */
   public const string Author = "Sarcen";
-  private const string Version = "1.6.6";
+  private const string Version = "1.6.7";
   internal const string ModName = "ValheimRAFT";
   public const string BepInGuid = $"BepIn.{Author}.{ModName}";
   private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";
@@ -45,7 +45,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> RaftSailForceMultiplier { get; set; }
   public ConfigEntry<bool> DisplacedRaftAutoFix { get; set; }
 
+  // Admin configs
+  public ConfigEntry<bool> AdminsCanOnlyBuildRaft { get; set; }
 
+
+  // Propulsion Configs
   public ConfigEntry<bool> EnableCustomPropulsionConfig { get; set; }
   public ConfigEntry<float> SailAreaThrottle { get; set; }
   public ConfigEntry<float> SailTier1Area { get; set; }
@@ -147,6 +151,18 @@ public class ValheimRaftPlugin : BaseUnityPlugin
           (object)new ConfigurationManagerAttributes()
           {
             IsAdminOnly = false
+          }
+        }));
+
+
+    AdminsCanOnlyBuildRaft = Config.Bind("Server config", "AdminsCanOnlyBuildRaft", false,
+      new ConfigDescription(
+        "ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart",
+        (AcceptableValueBase)null, new object[1]
+        {
+          (object)new ConfigurationManagerAttributes()
+          {
+            IsAdminOnly = true
           }
         }));
 

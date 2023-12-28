@@ -1,6 +1,6 @@
 ﻿{
   "name": "ValheimRAFT",
-  "version_number": "1.6.6",
+  "version_number": "1.6.7",
   "website_url": "https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT",
   "description": "ValheimRAFT fork with some QOL stability fixes works with latest Valheim. This mod will be supported until the original owner comes back",
   "dependencies": [
