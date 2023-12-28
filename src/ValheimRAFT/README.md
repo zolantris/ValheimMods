@@ -3,7 +3,7 @@
 <img src="./Thunderstore/icon.png" alt="ValheimRAFT Community Made Boat Hjalmere">
 
 A [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork that works with latest Valheim. The original mod
-owner [Sarcenzzz](https://www.nexusmods.com/valheim/users/3061574) stopped maintaining the mod. 
+owner [Sarcenzzz](https://www.nexusmods.com/valheim/users/3061574) stopped maintaining the mod.
 
 As of 12/25/2023 I got official permission to maintain and open source this mod.
 
@@ -94,6 +94,7 @@ Join us on discord to get the latest information, upcoming features, and discove
 | SailTier3Area                 | (propulsion) -> Sets the tier3 sail area.                                                                                                                                                                                                                                               |
 | SailCustomAreaTier1Multiplier | (propulsion) -> sets the area multiplier the custom tier1 sail. Currently there is only 1 tier                                                                                                                                                                                          |
 | SailAreaThrottle              | (propulsion) -> Divides the whole ship's area calc by this number                                                                                                                                                                                                                       |
+| AdminsCanOnlyBuildRaft        | (Admin) -> hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts                                                                                                                                                              |
 
 ### Meshes
 

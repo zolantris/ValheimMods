@@ -74,7 +74,9 @@ public class MoveableBaseShipComponent : MonoBehaviour
     BoxCollider[] colliders = base.transform.GetComponentsInChildren<BoxCollider>();
     m_baseRoot.m_onboardcollider =
       colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "OnboardTrigger");
-    ZLog.Log($"ONBOARD COLLIDER {m_baseRoot.m_onboardcollider}, collider must not be null");
+
+    Logger.LogDebug($"ONBOARD COLLIDER {m_baseRoot.m_onboardcollider}, collider must not be null");
+
     m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     m_baseRoot.m_floatcollider = ship.m_floatCollider;
     m_baseRoot.m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
@@ -84,7 +86,9 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
     m_baseRoot.m_blockingcollider.transform.parent.gameObject.layer =
       ValheimRaftPlugin.CustomRaftLayer;
-    ZLog.Log($"Activating MBRoot: {m_baseRoot.m_id}");
+
+    Logger.LogDebug($"Activating MBRoot: {m_baseRoot.m_id}");
+
     m_baseRoot.ActivatePendingPiecesCoroutine();
     FirstTimeCreation();
   }
