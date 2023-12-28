@@ -157,7 +157,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     AdminsCanOnlyBuildRaft = Config.Bind("Server config", "AdminsCanOnlyBuildRaft", false,
       new ConfigDescription(
-        "ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically. Server / client does not need to restart",
+        "ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart",
         (AcceptableValueBase)null, new object[1]
         {
           (object)new ConfigurationManagerAttributes()
