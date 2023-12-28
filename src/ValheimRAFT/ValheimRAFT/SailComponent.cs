@@ -16,7 +16,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     None = 0,
     AllowSailShrinking = 1,
-    DisableCloth = 2
+    DisableCloth = 2,
+    AllowSailRotation = 3,
   }
 
   [Flags]
@@ -143,7 +144,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     var vector = EnvMan.instance.GetWindForce();
     m_sailCloth.externalAcceleration = vector * m_windMultiplier;
-    m_sailCloth.randomAcceleration = vector * m_windMultiplier * m_clothRandomAccelerationFactor;
+    m_sailCloth.randomAcceleration = vector * (m_windMultiplier * m_clothRandomAccelerationFactor);
   }
 
   public void OnDestroy()
@@ -157,28 +158,37 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     Destroy(this);
   }
 
-  public void SetAllowSailShrinking(bool allow)
-  {
-    Logger.LogDebug($"SetAllowSailShrinking allow: {allow} flags {m_sailFlags}");
-    if ((bool)m_mastComponent)
-    {
-      m_sailFlags = allow
-        ? m_sailFlags | SailFlags.AllowSailShrinking
-        : m_sailFlags & ~SailFlags.AllowSailShrinking;
-      Logger.LogDebug($"SetAllowSailShrinking (after) allow: {allow} flags {m_sailFlags}");
-      m_mastComponent.m_allowSailShrinking = allow;
-    }
-  }
 
-  public void SetDisableCloth(bool allow)
+  public void SetSailMastSetting(SailFlags flag, bool allow)
   {
     if ((bool)m_mastComponent)
     {
       m_sailFlags = allow
-        ? m_sailFlags | SailFlags.DisableCloth
-        : m_sailFlags & ~SailFlags.DisableCloth;
-      m_mastComponent.m_disableCloth = allow;
-      if ((bool)m_sailCloth && m_sailCloth.enabled != !allow) m_sailCloth.enabled = !allow;
+        ? m_sailFlags | flag
+        : m_sailFlags & ~flag;
+
+      switch (flag)
+      {
+        case SailFlags.DisableCloth:
+          m_mastComponent.m_disableCloth = allow;
+          if ((bool)m_sailCloth && m_sailCloth.enabled != !allow) m_sailCloth.enabled = !allow;
+          break;
+        case SailFlags.AllowSailRotation:
+          m_mastComponent.m_allowSailRotation = allow;
+          if (allow == false)
+          {
+            m_mastComponent.transform.localRotation = new Quaternion();
+          }
+
+          break;
+        case SailFlags.AllowSailShrinking:
+          m_mastComponent.m_allowSailShrinking = allow;
+          break;
+        default:
+          Logger.LogWarning(
+            $"SetSailMastSetting called with flag {flag}, but flag does not exist in SailFlags");
+          break;
+      }
     }
   }
 
@@ -326,8 +336,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     var zdo_sailFlags = (SailFlags)zdo.GetInt(m_sailFlagsHash, (int)m_sailFlags);
 
     if (zdo_mainColor != m_mainColor)
-      Logger.LogWarning(
-        $"ZDO color: {zdo_mainColor} mismatching mesh color {m_mainColor} from sailMaterialColor: {GetSailMaterial().GetColor("_MainColor")}");
+      Logger.LogDebug(
+        $"ZDO color: {zdo_mainColor} updated on LoadZDO of mesh color {m_mainColor} from sailMaterialColor: {GetSailMaterial().GetColor("_MainColor")}");
 
     if (ValheimRaftPlugin.Instance.HasDebugSails.Value)
     {
@@ -376,8 +386,14 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     SetLogoOffset(zdo_logoOffset);
     SetLogoScale(zdo_logoScale);
     SetLogoRotation(zdo_logoRotation);
-    SetAllowSailShrinking(zdo_sailFlags.HasFlag(SailFlags.AllowSailShrinking));
-    SetDisableCloth(zdo_sailFlags.HasFlag(SailFlags.DisableCloth));
+
+
+    SetSailMastSetting(SailFlags.AllowSailShrinking,
+      zdo_sailFlags.HasFlag(SailFlags.AllowSailShrinking));
+    SetSailMastSetting(SailFlags.DisableCloth, zdo_sailFlags.HasFlag(SailFlags.DisableCloth));
+    SetSailMastSetting(SailFlags.AllowSailRotation,
+      zdo_sailFlags.HasFlag(SailFlags.AllowSailRotation));
+
     UpdateSailArea();
     Logger.LogDebug($"MeshupdateRequiredStatus: {meshUpdateRequired}");
     if (meshUpdateRequired)

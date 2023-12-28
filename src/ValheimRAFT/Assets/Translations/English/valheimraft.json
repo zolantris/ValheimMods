@@ -49,6 +49,7 @@
   "mb_edit_ramp_panel_save": "Save",
   "mb_edit_ramp_panel_cancel": "Cancel",
   "mb_edit_sail_sailraise": "Allow raising sail.",
+  "mb_edit_sail_rotation": "Allow sail rotation.",
   "mb_edit_texture_panel_texture": "Texture",
   "mb_edit_texture_panel_color": "Color",
   "mb_edit_texture_panel_offset": "Offset",

@@ -29,7 +29,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public static AssetBundle m_assetBundle;
   private bool m_customItemsAdded;
   public CustomLocalization localization;
-  private PrefabRegistry prefabRegistry;
+  private PrefabController _prefabController;
 
   public static ValheimRaftPlugin Instance { get; private set; }
 
@@ -44,8 +44,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> ServerRaftUpdateZoneInterval { get; set; }
   public ConfigEntry<float> RaftSailForceMultiplier { get; set; }
   public ConfigEntry<bool> DisplacedRaftAutoFix { get; set; }
-
-  // Admin configs
   public ConfigEntry<bool> AdminsCanOnlyBuildRaft { get; set; }
 
 
@@ -93,21 +91,30 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     SailAreaThrottle = Config.Bind("Propulsion",
       "SailAreaThrottle", SailAreaForce.SailAreaThrottle,
-      "Throttles the sail area, having this value high will prevent a boat with many sails and small area from breaking the sails. This value is meant to be left alone and will not apply unless the HasCustomSailConfig is enabled");
+      CreateConfigDescription(
+        "Throttles the sail area, having this value high will prevent a boat with many sails and small area from breaking the sails. This value is meant to be left alone and will not apply unless the HasCustomSailConfig is enabled",
+        true));
 
 
     SailCustomAreaTier1Multiplier = Config.Bind("Propulsion",
       "SailCustomAreaTier1Multiplier", SailAreaForce.CustomTier1AreaForceMultiplier,
-      "Manual sets the area multiplier the custom tier1 sail. Currently there is only 1 tier");
+      CreateConfigDescription(
+        "Manual sets the area multiplier the custom tier1 sail. Currently there is only 1 tier",
+        true)
+    );
+
     SailTier1Area = Config.Bind("Propulsion",
       "SailTier1Area", SailAreaForce.Tier1,
-      "Manual sets the area of the tier 1 sail.");
+      CreateConfigDescription("Manual sets the area of the tier 1 sail.", true)
+    );
+
     SailTier2Area = Config.Bind("Propulsion",
       "SailTier2Area", SailAreaForce.Tier2,
-      "Manual sets the area of the tier 2 sail.");
+      CreateConfigDescription("Manual sets the area of the tier 2 sail.", true));
+
     SailTier3Area = Config.Bind("Propulsion",
       "SailTier3Area", SailAreaForce.Tier3,
-      "Manual sets the area of the tier 3 sail.");
+      CreateConfigDescription("Manual sets the area of the tier 3 sail.", true));
   }
 
   private void CreateServerConfig()
@@ -341,7 +348,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       AssetUtils.LoadAssetBundleFromResources("valheimraft", Assembly.GetExecutingAssembly());
 
     // Registers all prefabs
-    prefabRegistry = gameObject.AddComponent<PrefabRegistry>();
-    prefabRegistry.Init();
+    _prefabController = gameObject.AddComponent<PrefabController>();
+    _prefabController.Init();
   }
 }

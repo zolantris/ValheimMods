@@ -8,7 +8,7 @@ public class MastComponent : MonoBehaviour
 
   public Cloth m_sailCloth;
 
-  internal bool m_allowSailRotation = true;
+  internal bool m_allowSailRotation;
 
   internal bool m_allowSailShrinking = true;
 

@@ -110,7 +110,8 @@ public class ValheimRAFT_Patch
       }
       else if (mast.m_allowSailRotation)
       {
-        mast.transform.localRotation = __instance.m_mastObject.transform.localRotation;
+        var newRotation = __instance.m_mastObject.transform.localRotation;
+        mast.transform.localRotation = newRotation;
       }
     }
   }

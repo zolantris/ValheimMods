@@ -12,7 +12,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
-public class PrefabRegistry : MonoBehaviour
+public class PrefabController : MonoBehaviour
 {
   private PrefabManager prefabManager;
   private PieceManager pieceManager;
@@ -31,7 +31,7 @@ public class PrefabRegistry : MonoBehaviour
   private List<Piece> raftPrefabPieces = new();
   private bool prefabsEnabled = true;
 
-  private const string ValheimRaftMenuName = "ValheimRAFT";
+  private const string ValheimRaftMenuName = "Raft";
 
 
   // todo this should come from config
@@ -52,19 +52,25 @@ public class PrefabRegistry : MonoBehaviour
       Logger.LogDebug($"Setting m_enabled: to {isPrefabEnabled}, for name {piece.name}");
       pmPiece.Piece.m_enabled = isPrefabEnabled;
     }
+
+    prefabsEnabled = isPrefabEnabled;
   }
 
   public void UpdatePrefabStatus()
   {
+    if (!ValheimRaftPlugin.Instance.AdminsCanOnlyBuildRaft.Value && prefabsEnabled)
+    {
+      return;
+    }
+
+    Logger.LogDebug(
+      $"ValheimRAFT: UpdatePrefabStatusCalled with AdminsCanOnlyBuildRaft set as {ValheimRaftPlugin.Instance.AdminsCanOnlyBuildRaft.Value}, updating prefabs and player access");
     var isAdmin = SynchronizationManager.Instance.PlayerIsAdmin;
-    if (prefabsEnabled == isAdmin) return;
-    prefabsEnabled = isAdmin;
     UpdatePrefabs(isAdmin);
   }
 
   public void UpdatePrefabStatus(object obj, ConfigurationSynchronizationEventArgs e)
   {
-    Logger.LogInfo($"obj {obj} ConfigEvent {e}");
     UpdatePrefabStatus();
   }
 
@@ -150,12 +156,9 @@ public class PrefabRegistry : MonoBehaviour
     /*
      * listens for admin status updates and changes prefab active status
      */
-    if (ValheimRaftPlugin.Instance.AdminsCanOnlyBuildRaft.Value)
-    {
-      SynchronizationManager.OnConfigurationSynchronized += UpdatePrefabStatus;
-      SynchronizationManager.OnAdminStatusChanged += UpdatePrefabStatus;
-      SynchronizationManager.OnConfigurationSynchronized += UpdatePrefabStatus;
-    }
+    SynchronizationManager.OnConfigurationSynchronized += UpdatePrefabStatus;
+    SynchronizationManager.OnAdminStatusChanged += UpdatePrefabStatus;
+    UpdatePrefabStatus();
   }
 
   private WearNTear SetWearNTear(GameObject prefabComponent, int tierMultiplier = 1)
@@ -195,12 +198,7 @@ public class PrefabRegistry : MonoBehaviour
     AddToRaftPrefabPieces(vikingShipMastPrefabPiece);
 
     AddNetViewWithPersistence(vikingShipMastPrefab);
-
-    var vikingShipMastComponent = vikingShipMastPrefab.AddComponent<MastComponent>();
-    vikingShipMastComponent.m_sailObject = vikingShipMastPrefab.transform.Find("Sail").gameObject;
-    vikingShipMastComponent.m_sailCloth =
-      vikingShipMastComponent.m_sailObject.GetComponentInChildren<Cloth>();
-
+    SetSailConfig(vikingShipPrefab);
     // Set wear and tear can be abstracted
     SetWearNTear(vikingShipMastPrefab, 3);
 
@@ -297,10 +295,7 @@ public class PrefabRegistry : MonoBehaviour
     AddToRaftPrefabPieces(mbRaftMastPrefabPiece);
     AddNetViewWithPersistence(mbRaftMastPrefab);
 
-    var mastComponent = mbRaftMastPrefab.AddComponent<MastComponent>();
-    mastComponent.m_sailObject = mbRaftMastPrefab.transform.Find("Sail").gameObject;
-    mastComponent.m_sailCloth = mastComponent.m_sailObject.GetComponentInChildren<Cloth>();
-
+    SetSailConfig(mbRaftMastPrefab);
     SetWearNTear(mbRaftMastPrefab);
 
     FixedRopes(mbRaftMastPrefab);
@@ -330,6 +325,16 @@ public class PrefabRegistry : MonoBehaviour
     }));
   }
 
+  void SetSailConfig(GameObject prefab)
+  {
+    var mast = prefab.AddComponent<MastComponent>();
+    mast.m_sailObject =
+      prefab.transform.Find("Sail").gameObject;
+    mast.m_sailCloth = mast.m_sailObject.GetComponentInChildren<Cloth>();
+    mast.m_allowSailShrinking = true;
+    mast.m_allowSailRotation = true;
+  }
+
   public void RegisterKarveMast()
   {
     var karve = prefabManager.GetPrefab("Karve");
@@ -345,12 +350,7 @@ public class PrefabRegistry : MonoBehaviour
     AddNetViewWithPersistence(mbKarveMastPrefab);
 
     // tweak the mast
-    var mast = mbKarveMastPrefab.AddComponent<MastComponent>();
-    mast.m_sailObject =
-      mbKarveMastPrefab.transform.Find("Sail").gameObject;
-    mast.m_sailCloth = mast.m_sailObject.GetComponentInChildren<Cloth>();
-    mast.m_allowSailShrinking = true;
-    mast.m_allowSailRotation = true;
+    SetSailConfig(mbKarveMastPrefab);
 
     // Abstract wnt for masts
     SetWearNTear(mbKarveMastPrefab, 2);
