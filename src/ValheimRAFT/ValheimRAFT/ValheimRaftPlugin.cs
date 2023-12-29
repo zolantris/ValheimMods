@@ -51,8 +51,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   // Propulsion Configs
   public ConfigEntry<bool> EnableCustomPropulsionConfig { get; set; }
 
-  // probably deprecated
-  public ConfigEntry<float> SailAreaThrottle { get; set; }
   public ConfigEntry<float> MaxPropulsionSpeed { get; set; }
   public ConfigEntry<float> MaxSailSpeed { get; set; }
   public ConfigEntry<float> SpeedCapMultiplier { get; set; }
@@ -127,7 +125,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       CreateConfigDescription(
         "enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less"));
 
-    HasShipContainerWeightCalculations = Config.Bind("Propulsion", "HasShipWeightCalculations",
+    HasShipContainerWeightCalculations = Config.Bind("Propulsion",
+      "HasShipContainerWeightCalculations",
       true,
       CreateConfigDescription(
         "enables ship weight calculations for containers which affects sail-force (sailing speed) and future propulsion calculations. Makes ships with lots of containers require more sails"));
@@ -139,12 +138,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     EnableCustomPropulsionConfig = Config.Bind("Propulsion",
       "EnableCustomPropulsionConfig", SailAreaForce.HasPropulsionConfigOverride,
       CreateConfigDescription("Enables all custom propulsion values", false));
-
-    SailAreaThrottle = Config.Bind("Propulsion",
-      "SailAreaThrottle", SailAreaForce.SailAreaThrottle,
-      CreateConfigDescription(
-        "Throttles the sail area, having this value high will prevent a boat with many sails and small area from breaking the sails. This value is meant to be left alone and will not apply unless the HasCustomSailConfig is enabled",
-        true));
 
 
     SailCustomAreaTier1Multiplier = Config.Bind("Propulsion",

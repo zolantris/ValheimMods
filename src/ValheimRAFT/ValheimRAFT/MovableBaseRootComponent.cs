@@ -674,13 +674,11 @@ public class MovableBaseRootComponent : MonoBehaviour
     }
 
     /*
-     * Clamps everything by base 10
-     *
-     *  divide by 10 b/c all the enums were set with a 10 multiplier to keep them whole numbers
+     * Clamps everything by the maxSailSpeed
      */
     if (totalSailArea != 0 && !ValheimRaftPlugin.Instance.HasShipWeightCalculations.Value)
     {
-      totalSailArea = Math.Max(ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value, totalSailArea);
+      totalSailArea = Math.Min(ValheimRaftPlugin.Instance.MaxSailSpeed.Value, totalSailArea);
     }
 
     return totalSailArea;
@@ -703,7 +701,9 @@ public class MovableBaseRootComponent : MonoBehaviour
         $"GetSailingForce() = speedCapMultiplier * area /(totalMass / mpFactor); {speedCapMultiplier} * ({area}/({TotalMass}/{mpFactor})) = {sailForce}");
     }
 
-    return Math.Min(ValheimRaftPlugin.Instance.MaxSailSpeed.Value, sailForce);
+    var maxSailForce = Math.Min(ValheimRaftPlugin.Instance.MaxSailSpeed.Value, sailForce);
+    var maxPropulsion = Math.Min(ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value, maxSailForce);
+    return maxPropulsion;
   }
 
   public static void AddDynamicParent(ZNetView source, GameObject target, Vector3 offset)
