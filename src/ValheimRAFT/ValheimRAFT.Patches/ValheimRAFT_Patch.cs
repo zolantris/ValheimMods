@@ -66,9 +66,9 @@ public class ValheimRAFT_Patch
         $"\nshipMass(no-containers): {baseRoot.ShipMass}";
       shipStatsText += $"\nshipContainerMass: {baseRoot.ShipContainerMass}";
       shipStatsText +=
-        $"\ntotalMassToPush: massToPush * totalMass -> {shipMassToPush}% * {baseRoot.TotalMass} = {baseRoot.TotalMass * shipMassToPush / 100f}";
+        $"\ntotalMassToPush: {shipMassToPush}% * {baseRoot.TotalMass} = {baseRoot.TotalMass * shipMassToPush / 100f}";
       shipStatsText +=
-        $"\nshipSailingForce (calculated sailArea and total mass): {baseRoot.GetSailingForce()}";
+        $"\nshipPropulsion: {baseRoot.GetSailingForce()}";
 
       // final formatting
       shipStatsText = $"<color=white>{shipStatsText}</color>";

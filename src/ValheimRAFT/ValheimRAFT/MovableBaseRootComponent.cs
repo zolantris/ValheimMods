@@ -366,6 +366,7 @@ public class MovableBaseRootComponent : MonoBehaviour
       return;
     }
 
+    ShipContainerMass = 0f;
     var containers = GetComponentsInChildren<Container>();
     foreach (var container in containers)
     {
@@ -380,6 +381,7 @@ public class MovableBaseRootComponent : MonoBehaviour
     if (inventory != null)
     {
       var containerWeight = inventory.GetTotalWeight();
+      Logger.LogDebug($"containerWeight {containerWeight} name: {container.name}");
       if (isRemoving)
       {
         ShipContainerMass -= containerWeight;
