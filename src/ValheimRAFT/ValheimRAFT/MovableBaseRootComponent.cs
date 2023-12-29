@@ -562,9 +562,6 @@ public class MovableBaseRootComponent : MonoBehaviour
       }
     }
 
-    Logger.LogDebug(
-      $"numberOfTieredSails {numberOfTier1Sails} {numberOfTier2Sails} {numberOfTier3Sails}");
-
     var sailComponents = GetComponentsInChildren<SailComponent>();
     if (sailComponents.Length != 0)
     {
@@ -596,8 +593,6 @@ public class MovableBaseRootComponent : MonoBehaviour
       totalSailArea = Math.Max(ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value, totalSailArea);
     }
 
-    Logger.LogDebug($"totalSailArea: {totalSailArea}");
-
     return totalSailArea;
   }
 
@@ -609,11 +604,16 @@ public class MovableBaseRootComponent : MonoBehaviour
     var mpFactor = ValheimRaftPlugin.Instance.MassPercentageFactor.Value;
     var speedCapMultiplier = ValheimRaftPlugin.Instance.SpeedCapMultiplier.Value;
 
-    var sailforce = speedCapMultiplier * area /
+    var sailForce = speedCapMultiplier * area /
                     (totalMass / mpFactor);
-    Logger.LogInfo(
-      $"GetSailingForce() = speedCapMultiplier * area /(totalMass / mpFactor); {speedCapMultiplier} * ({area}/({totalMass}/{mpFactor})) = {sailforce}");
-    return Math.Min(ValheimRaftPlugin.Instance.MaxSailSpeed.Value, sailforce);
+
+    if (ValheimRaftPlugin.Instance.HasDebugSails.Value)
+    {
+      Logger.LogDebug(
+        $"GetSailingForce() = speedCapMultiplier * area /(totalMass / mpFactor); {speedCapMultiplier} * ({area}/({totalMass}/{mpFactor})) = {sailForce}");
+    }
+
+    return Math.Min(ValheimRaftPlugin.Instance.MaxSailSpeed.Value, sailForce);
   }
 
   public static void AddDynamicParent(ZNetView source, GameObject target, Vector3 offset)

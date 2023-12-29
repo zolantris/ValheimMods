@@ -93,15 +93,15 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreatePropulsionConfig()
   {
-    MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 50f,
+    MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 25f,
       CreateConfigDescription(
         "Sets the absolute max speed a ship can ever hit. Prevents or enables space launches",
         true));
-    MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 20f,
+    MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 15f,
       CreateConfigDescription(
         "Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.",
         true));
-    MassPercentageFactor = Config.Bind("Propulsion", "MassPercentage", 25f, CreateConfigDescription(
+    MassPercentageFactor = Config.Bind("Propulsion", "MassPercentage", 33f, CreateConfigDescription(
       "Sets the mass percentage of the ship that will slow down the sails",
       true));
     SpeedCapMultiplier = Config.Bind("Propulsion", "SpeedCapMultiplier", 2f,
