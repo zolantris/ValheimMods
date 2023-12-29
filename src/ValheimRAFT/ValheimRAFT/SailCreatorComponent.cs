@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
@@ -22,14 +23,14 @@ public class SailCreatorComponent : MonoBehaviour
         (m_sailCreators[0].transform.position - base.transform.position).sqrMagnitude >
         SailComponent.m_maxDistanceSqr)
     {
-      ZLog.Log("Sail creator corner distance too far.");
+      Logger.LogDebug("Sail creator corner distance too far.");
       m_sailCreators.Clear();
     }
 
     m_sailCreators.Add(this);
     if (m_sailCreators.Count >= m_sailSize)
     {
-      ZLog.Log($"Creating new sail {m_sailCreators.Count}/{m_sailSize}");
+      Logger.LogDebug($"Creating new sail {m_sailCreators.Count}/{m_sailSize}");
       Vector3 center =
         (m_sailCreators[0].transform.position + m_sailCreators[1].transform.position) / 2f;
       SailComponent.m_sailInit = false;

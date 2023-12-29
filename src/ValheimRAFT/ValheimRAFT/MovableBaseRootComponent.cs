@@ -1,15 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using Jotunn;
-using Jotunn.Managers;
 using UnityEngine;
-using UnityEngine.Serialization;
 using ValheimRAFT.Util;
 using Logger = Jotunn.Logger;
-using Object = UnityEngine.Object;
 
 namespace ValheimRAFT;
 
@@ -115,7 +109,12 @@ public class MovableBaseRootComponent : MonoBehaviour
   public void CleanUp()
   {
     Logger.LogDebug("CleanupCalled which stops ActivatePendingPieces");
-    StopCoroutine("ActivatePendingPieces");
+    if (pendingPiecesCoroutine != null)
+    {
+      Logger.LogDebug("CleanUp cancelling ActivatePendingPieces coroutine");
+      StopCoroutine(pendingPiecesCoroutine);
+    }
+
     if (!ZNetScene.instance || m_id == 0) return;
 
     for (var i = 0; i < m_pieces.Count; i++)
@@ -424,7 +423,7 @@ public class MovableBaseRootComponent : MonoBehaviour
     /*
      * locally scaled pieces should have a mass multiplier.
      *
-     * Could assume everything is a rectangular prism L*W*H
+     * For now assuming everything is a rectangular prism L*W*H
      */
     if (piece.transform.localScale != new Vector3(1, 1, 1))
     {
@@ -432,6 +431,11 @@ public class MovableBaseRootComponent : MonoBehaviour
                        piece.transform.localScale.z;
       Logger.LogDebug(
         $"ValheimRAFT ComputeShipItemWeight() found piece that does not have a 1,1,1 local scale piece: {pieceName} scale: {piece.transform.localScale}, the 3d localScale will be multiplied by the area of this vector instead of 1x1x1");
+    }
+
+    if (pieceName == "wood_floor_1x1")
+    {
+      return 1f * baseMultiplier;
     }
 
     /*
@@ -452,11 +456,8 @@ public class MovableBaseRootComponent : MonoBehaviour
       return MaterialWeight.BlackMarble * baseMultiplier;
     }
 
-    // Stone ×20
-    // Surtling core ×5
-    // Iron ×10
-    // Fine wood ×20
-    if (pieceName.Contains("blastfurnace"))
+    if (pieceName.Contains("blastfurnace") || pieceName.Contains("charcoal_kiln") ||
+        pieceName.Contains("forge") || pieceName.Contains("smelter"))
     {
       return 20f * baseMultiplier;
     }
@@ -502,7 +503,7 @@ public class MovableBaseRootComponent : MonoBehaviour
   {
     if (!m_nview || m_nview.m_zdo == null)
     {
-      ZLog.Log(
+      Logger.LogDebug(
         $"ActivatePendingPieces early exit due to m_nview: {m_nview} m_nview.m_zdo {(m_nview != null ? m_nview.m_zdo : null)}");
       yield return null;
     }
@@ -512,22 +513,30 @@ public class MovableBaseRootComponent : MonoBehaviour
 
     if (list is { Count: > 0 })
     {
-      var stopwatch = new Stopwatch();
-      stopwatch.Start();
+      // var stopwatch = new Stopwatch();
+      // stopwatch.Start();
       for (var j = 0; j < list.Count; j++)
       {
         var obj = list[j];
         if ((bool)obj)
         {
           ActivatePiece(obj);
-          if (!ZNetScene.instance.InLoadingScreen() && stopwatch.ElapsedMilliseconds >= 10)
-          {
-            Logger.LogDebug(
-              $"pendingPiece is not in loading state waiting until next frame piece: {obj.name}");
-            yield return new WaitForEndOfFrame();
-            Logger.LogDebug($"made it to next frame piece:{obj.name}");
-            stopwatch.Restart();
-          }
+
+          /* This code slows down all re-renders.
+           * @todo Removing in 1.6.9 and higher.
+           */
+          // if (!ZNetScene.instance.InLoadingScreen() && stopwatch.ElapsedMilliseconds >= 10)
+          // {
+          //   Logger.LogDebug(
+          //     $"pendingPiece is not in loading state waiting until next frame piece: {obj.name}");
+          //   yield return new WaitForEndOfFrame();
+          //   Logger.LogDebug($"made it to next frame piece:{obj.name}");
+          //   stopwatch.Restart();
+          // }
+        }
+        else
+        {
+          Logger.LogDebug($"ActivatePendingPieces obj is not valid {obj}");
         }
       }
 
@@ -535,7 +544,7 @@ public class MovableBaseRootComponent : MonoBehaviour
       m_pendingPieces.Remove(id);
     }
 
-    ZLog.Log($"Ship Size calc is: m_bounds {m_bounds} bounds size {m_bounds.size}");
+    Logger.LogDebug($"Ship Size calc is: m_bounds {m_bounds} bounds size {m_bounds.size}");
 
     m_dynamicObjects.TryGetValue(m_id, out var objectList);
     var ObjectListHasNoValidItems = true;
@@ -577,7 +586,7 @@ public class MovableBaseRootComponent : MonoBehaviour
                          (m_dynamicObjects.Count == 0 || ObjectListHasNoValidItems))
        )
     {
-      // ZLog.LogError($"found boat without any items attached {m_ship} {m_nview}");
+      // Logger.LogError($"found boat without any items attached {m_ship} {m_nview}");
       // DestroyBoat();
     }
 
@@ -821,7 +830,7 @@ public class MovableBaseRootComponent : MonoBehaviour
   {
     if ((bool)piece && (bool)piece.m_nview)
     {
-      ZLog.Log("Added new piece is valid");
+      Logger.LogDebug("Added new piece is valid");
       AddNewPiece(piece.m_nview);
     }
   }

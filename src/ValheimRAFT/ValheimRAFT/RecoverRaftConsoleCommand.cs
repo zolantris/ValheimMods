@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Jotunn.Entities;
 using UnityEngine;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
@@ -14,7 +15,7 @@ internal class RecoverRaftConsoleCommand : ConsoleCommand
   {
     Collider[] colliders = Physics.OverlapSphere(GameCamera.instance.transform.position, 1000f);
     Dictionary<ZDOID, List<ZNetView>> unattached = new Dictionary<ZDOID, List<ZNetView>>();
-    ZLog.Log($"Searching {GameCamera.instance.transform.position}");
+    Logger.LogDebug($"Searching {GameCamera.instance.transform.position}");
     Collider[] array = colliders;
     foreach (Collider collider in array)
     {
@@ -47,7 +48,7 @@ internal class RecoverRaftConsoleCommand : ConsoleCommand
       }
     }
 
-    ZLog.Log($"Found {unattached.Count} potential ships to recover.");
+    Logger.LogDebug($"Found {unattached.Count} potential ships to recover.");
     if (args.Length != 0 && args[0] == "confirm")
     {
       foreach (ZDOID zdoid in unattached.Keys)
@@ -73,7 +74,7 @@ internal class RecoverRaftConsoleCommand : ConsoleCommand
 
     if (unattached.Count > 0)
     {
-      ZLog.Log("Use \"RaftRecover confirm\" to complete the recover.");
+      Logger.LogDebug("Use \"RaftRecover confirm\" to complete the recover.");
     }
   }
 }

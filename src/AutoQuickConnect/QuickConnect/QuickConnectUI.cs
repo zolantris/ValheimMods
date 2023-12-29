@@ -54,7 +54,7 @@ internal class QuickConnectUI : MonoBehaviour
 
   public static PlayerProfile LoadChar()
   {
-    ZLog.Log("called load char");
+    Logger.LogDebug("called load char");
     PlayerProfile playerProfile = LoadSingleChar("zol");
     if (playerProfile == null)
     {

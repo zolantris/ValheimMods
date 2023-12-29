@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Jotunn;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimRAFT.Patches;
 
 namespace ValheimRAFT;
@@ -29,7 +30,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public static AssetBundle m_assetBundle;
   private bool m_customItemsAdded;
   public CustomLocalization localization;
-  private PrefabController _prefabController;
+  public PrefabController prefabController;
 
   public static ValheimRaftPlugin Instance { get; private set; }
 
@@ -398,7 +399,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       AssetUtils.LoadAssetBundleFromResources("valheimraft", Assembly.GetExecutingAssembly());
 
     // Registers all prefabs
-    _prefabController = gameObject.AddComponent<PrefabController>();
-    _prefabController.Init();
+    prefabController = gameObject.AddComponent<PrefabController>();
+    prefabController.Init();
   }
 }

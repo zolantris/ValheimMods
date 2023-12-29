@@ -48,11 +48,11 @@ public class PatchStartUp
     if (loadedChar == null)
     {
       loadedChar = QuickConnectUI.LoadChar();
-      ZLog.Log($"CHARACTER LOADED NAME {loadedChar?.m_playerName}");
+      Logger.LogDebug($"CHARACTER LOADED NAME {loadedChar?.m_playerName}");
       if (loadedChar == null) __instance.OnAbort();
     }
 
-    ZLog.Log($"CHARACTER LOADED NAME {loadedChar?.m_playerName}");
+    Logger.LogDebug($"CHARACTER LOADED NAME {loadedChar?.m_playerName}");
 
     // MusicMan.instance.TriggerMusic("menu");
     // AccessTools.DeclaredMethod(typeof(FejdStartup), "UpdateCharacterList").Invoke(__instance, null);

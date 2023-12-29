@@ -8,6 +8,7 @@ using System.Linq;
 using Jotunn.Utils;
 using UnityEngine;
 using Paths = BepInEx.Paths;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT
 {
@@ -78,7 +79,7 @@ namespace ValheimRAFT
         /*
          * fallback so if user somehow breaks their install, the mod will warn them.
          */
-        ZLog.LogError($"Invalid setup, Asset Directory missing within {assetDirectory}");
+        Logger.LogError($"Invalid setup, Asset Directory missing within {assetDirectory}");
       }
 
       string[] files = Directory.GetFiles(Path.Combine(assetDirectory, groupName));
@@ -105,7 +106,7 @@ namespace ValheimRAFT
             Path.Combine(Paths.PluginPath,
               ValheimRaftPlugin.Instance.PluginFolderName.Value)))
       {
-        ZLog.DevLog(
+        Logger.LogDebug(
           $"{ValheimRaftPlugin.ModName} PluginFolderName path detected, resolving assets from that folder");
         files = GetFiles(groupName, ValheimRaftPlugin.Instance.PluginFolderName.Value);
       }
@@ -126,7 +127,7 @@ namespace ValheimRAFT
            */
           if (files.Length == 0)
           {
-            ZLog.LogError(
+            Logger.LogError(
               $"ValheimRAFT: Unable to detect modFolder path, this will cause mesh issues with sails. Please set ValheimRAFT mod folder in the BepInExConfig file. The ValheimRAFT folder should found within this directory {Paths.PluginPath}");
           }
         }

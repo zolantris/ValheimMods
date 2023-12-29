@@ -21,7 +21,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   {
     Instance = this;
 
-    ZLog.Log("ValheimVehicles called awake");
+    Logger.LogDebug("ValheimVehicles called awake");
     PrefabManager.OnVanillaPrefabsAvailable += new Action(PrefabRegistry.CreateCustomPrefabs);
   }
 }

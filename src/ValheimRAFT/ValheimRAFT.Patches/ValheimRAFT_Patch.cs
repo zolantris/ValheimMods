@@ -57,7 +57,7 @@ public class ValheimRAFT_Patch
       shipStatsText += $"\nshipMass: {baseRoot.TotalMass}";
       shipStatsText += $"\nsailArea: {baseRoot.GetTotalSailArea()}";
       shipStatsText +=
-        $"\nshipMassToPush: massToPush * totalMass -> {shipMassToPush} * {baseRoot.TotalMass} = {baseRoot.TotalMass * shipMassToPush}";
+        $"\nshipMassToPush: massToPush * totalMass -> {shipMassToPush}% * {baseRoot.TotalMass} = {baseRoot.TotalMass * shipMassToPush / 100f}";
       shipStatsText += $"\nshipSailingForce: {baseRoot.GetSailingForce()}";
       shipStatsText += $"\nshipContainerMass: {baseRoot.ShipContainerMass}";
       shipStatsText +=
@@ -388,15 +388,15 @@ public class ValheimRAFT_Patch
   //       sailSize,
   //       ref __instance.m_windChangeVelocity, 1f, 1000f);
   //
-  //     ZLog.Log(
+  //     Logger.LogDebug(
   //       $"GetSailForce, m_sailForce {__instance.m_sailForce} m_windDir+forward {windDirAndForwardVector} windIntensity: {windIntensity}");
-  //     ZLog.Log($"SailSize: {sailSize}");
-  //     ZLog.Log(
+  //     Logger.LogDebug($"SailSize: {sailSize}");
+  //     Logger.LogDebug(
   //       "Calcs for windDirAndForwardVector * windIntensityAndAngleFactor * __instance.m_sailForceFactor * sailSize");
   //
   //     __instance.m_sailForce = outputSailForce;
   //
-  //     ZLog.Log($"Ship sailforce: {__instance.m_sailForce}");
+  //     Logger.LogDebug($"Ship sailforce: {__instance.m_sailForce}");
   //     __result = __instance.m_sailForce;
   //
   //
@@ -555,7 +555,7 @@ public class ValheimRAFT_Patch
       if (ValheimRaftPlugin.Instance.DisplacedRaftAutoFix.Value &&
           (bool)Player.m_localPlayer && Player.m_localPlayer.transform.IsChildOf(mbr.transform))
       {
-        ZLog.LogWarning(
+        Logger.LogWarning(
           "DisplacedRaftAutoFix enabled: automatically regenerating broken since the player was attached it the raft");
         MoveRaftConsoleCommand.MoveRaft(Player.m_localPlayer, mbr.m_ship, new Vector3(0, 0, 0));
         // only regenerate if the raft glitches out

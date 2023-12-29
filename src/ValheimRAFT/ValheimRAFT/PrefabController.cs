@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Jotunn;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -56,6 +57,118 @@ public class PrefabController : MonoBehaviour
     prefabsEnabled = isPrefabEnabled;
   }
 
+  public void RegisterBoatWood()
+  {
+    var tbName = "bloat_wood";
+    var tbPiece = pieceManager.GetPiece(tbName);
+    if (tbPiece != null)
+    {
+      return;
+    }
+
+
+    var prefab = prefabManager.CreateClonedPrefab(tbName, prefabManager.GetPrefab("wood_floor"));
+    var prefabPiece = prefab.AddComponent<Piece>();
+
+    SetWearNTear(prefab);
+    prefabPiece.name = "boat_wood";
+    prefabPiece.transform.localScale = new Vector3(2, 4, 2);
+
+    var nv = AddNetViewWithPersistence(prefab);
+    nv.m_zdo = new ZDO();
+    AddToRaftPrefabPieces(prefabPiece);
+    SetWearNTear(prefab);
+    // var wnt = prefabPiece.GetComponent<WearNTear>();
+    // if (!wnt)
+    // {
+    //   wnt = prefab.AddComponent<WearNTear>();
+    // }
+
+    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    {
+      PieceTable = "Hammer",
+      Description = "This is custom wood floor",
+      Icon = sprites.GetSprite("vikingmast"),
+      Category = ValheimRaftMenuName,
+      Enabled = true,
+      Name = tbName,
+      Requirements =
+      [
+        new()
+        {
+          Amount = 10,
+          Item = "FineWood",
+          Recover = true
+        }
+      ]
+    }));
+    pieceManager.RegisterPieceInPieceTable(prefab, "Hammer", ValheimRaftMenuName);
+  }
+
+  /**
+   * experimental only to be used to create copies of boats.
+   */
+  public void RegisterTestBoatPrefab(MovableBaseRootComponent mbroot)
+  {
+    var tbName = "MBTestBoat";
+    var tb = prefabManager.GetPrefab(tbName);
+    if (tb)
+    {
+      // prefabManager.DestroyPrefab(tbName);
+      pieceManager.RemovePiece(tbName);
+    }
+
+    RegisterBoatWood();
+
+    var mbRaftPrefab =
+      prefabManager.CreateClonedPrefab(tbName, prefabManager.GetPrefab("MBRaft"));
+
+
+    var mbRaftPrefabPiece = mbRaftPrefab.AddComponentCopy(mbroot.m_movableBaseShip);
+    AddNetViewWithPersistence(mbRaftPrefab);
+    SetWearNTear(mbRaftPrefab);
+    // mbRaftPrefab.AddComponentCopy(mbroot);
+    // var piece = boatPrefab.AddComponent<Piece>();
+    //
+    // AddToRaftPrefabPieces(piece);
+    // AddNetViewWithPersistence(boatPrefab);
+    // SetWearNTear(boatPrefab);
+
+    pieceManager.RemovePiece(tbName);
+    var prefabPiece = new CustomPiece(mbRaftPrefab, false, new PieceConfig
+    {
+      PieceTable = "Hammer",
+      Description = "This is a custom boat",
+      Icon = sprites.GetSprite("vikingmast"),
+      Category = ValheimRaftMenuName,
+      Enabled = true,
+      Name = tbName,
+      Requirements = new RequirementConfig[3]
+      {
+        new()
+        {
+          Amount = 10,
+          Item = "FineWood",
+          Recover = true
+        },
+        new()
+        {
+          Amount = 2,
+          Item = "RoundLog",
+          Recover = true
+        },
+        new()
+        {
+          Amount = 6,
+          Item = "WolfPelt",
+          Recover = true
+        }
+      }
+    });
+    pieceManager.AddPiece(prefabPiece);
+    pieceManager.RegisterPieceInPieceTable(mbRaftPrefab, "Hammer", ValheimRaftMenuName);
+  }
+
   public void UpdatePrefabStatus()
   {
     if (!ValheimRaftPlugin.Instance.AdminsCanOnlyBuildRaft.Value && prefabsEnabled)
@@ -79,7 +192,7 @@ public class PrefabController : MonoBehaviour
     raftPrefabPieces.Add(raftPiece);
   }
 
-  private static void AddNetViewWithPersistence(GameObject prefab)
+  private static ZNetView AddNetViewWithPersistence(GameObject prefab)
   {
     var netView = prefab.GetComponent<ZNetView>();
     if (!netView)
@@ -90,10 +203,12 @@ public class PrefabController : MonoBehaviour
     if (!netView)
     {
       Logger.LogError("Unable to register NetView, ValheimRAFT could be broken without netview");
-      return;
+      return netView;
     }
 
     netView.m_persistent = true;
+
+    return netView;
   }
 
   public void RegisterAllPrefabs()
@@ -215,7 +330,7 @@ public class PrefabController : MonoBehaviour
     pieceManager.AddPiece(new CustomPiece(vikingShipMastPrefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
-      Description = "$mb_vikingship_mast_desc",
+      Description = $"$mb_vikingship_mast_desc\n{GetTieredSailAreaText(3)}",
       Icon = sprites.GetSprite("vikingmast"),
       Category = ValheimRaftMenuName,
       Enabled = true,
@@ -290,6 +405,20 @@ public class PrefabController : MonoBehaviour
     }));
   }
 
+  private string GetTieredSailAreaText(int tier)
+  {
+    float tierValue = tier switch
+    {
+      1 => ValheimRaftPlugin.Instance.SailTier1Area.Value,
+      2 => ValheimRaftPlugin.Instance.SailTier1Area.Value,
+      3 => ValheimRaftPlugin.Instance.SailTier1Area.Value,
+      4 => ValheimRaftPlugin.Instance.SailCustomAreaTier1Multiplier.Value,
+      _ => 0f
+    };
+
+    return $"\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{tierValue}</b></color>]";
+  }
+
   private void RegisterRaftMast()
   {
     var mbRaftMastPrefab = prefabManager.CreateClonedPrefab("MBRaftMast", raftMast);
@@ -315,7 +444,8 @@ public class PrefabController : MonoBehaviour
     pieceManager.AddPiece(new CustomPiece(mbRaftMastPrefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
-      Description = "$mb_raft_mast_desc",
+      Description =
+        $"$mb_raft_mast_desc\n{GetTieredSailAreaText(1)}",
       Icon = sprites.GetSprite("raftmast"),
       Category = ValheimRaftMenuName,
       Enabled = true,
@@ -368,7 +498,7 @@ public class PrefabController : MonoBehaviour
     pieceManager.AddPiece(new CustomPiece(mbKarveMastPrefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
-      Description = "$mb_karve_mast_desc",
+      Description = $"$mb_karve_mast_desc\n{GetTieredSailAreaText(2)}",
       Icon = sprites.GetSprite("karvemast"),
       Category = ValheimRaftMenuName,
       Enabled = true,
@@ -954,6 +1084,6 @@ public class PrefabController : MonoBehaviour
     }
 
     sb.AppendLine("");
-    ZLog.Log(sb.ToString());
+    Logger.LogDebug(sb.ToString());
   }
 }
