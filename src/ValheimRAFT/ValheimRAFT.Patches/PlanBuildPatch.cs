@@ -47,7 +47,7 @@ public class PlanBuildPatch
     foreach (ZDOID item2 in selection)
     {
       GameObject gameObject = BlueprintManager.GetGameObject(item2, required: true);
-      ZLog.Log($"GameObject {gameObject.name}");
+      Logger.LogDebug($"GameObject {gameObject.name}");
       if (gameObject.name.StartsWith("piece_bpsnappoint"))
       {
         list2.Add(gameObject.transform.position);
@@ -173,11 +173,11 @@ public class PlanBuildPatch
     foreach (Piece item4 in orderedEnumerable)
     {
       Vector3 pos;
-      var shipBase = item4.m_nview.GetComponentInParent<MoveableBaseRootComponent>();
+      var shipBase = item4.m_nview.GetComponentInParent<MovableBaseRootComponent>();
       if (shipBase)
       {
-        ZLog.DevLog(
-          $"used ship calc for position {item4.m_nview.m_zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash, Vector3.zero)}");
+        Logger.LogDebug(
+          $"used ship calc for position {item4.m_nview.m_zdo.GetVec3(MovableBaseRootComponent.MBPositionHash, Vector3.zero)}");
         pos = item4.m_nview.transform.localPosition;
       }
       else
@@ -187,23 +187,23 @@ public class PlanBuildPatch
          * Example: pos = item4.m_nview.GetZDO().GetPosition() - vector[i]
          */
         pos = item4.m_nview.GetZDO().GetPosition() - vector;
-        ZLog.DevLog("used default calc for position");
+        Logger.LogDebug("used default calc for position");
       }
 
-      ZLog.DevLog($"pos {pos}");
+      Logger.LogDebug($"pos {pos}");
 
 
       Quaternion rotation;
 
       if (shipBase)
       {
-        ZLog.Log("used ship calc for rotation");
+        Logger.LogDebug("used ship calc for rotation");
         rotation = item4.m_nview.transform.localRotation;
       }
       else
       {
         rotation = item4.m_nview.GetZDO().GetRotation();
-        ZLog.Log("used default calc for rotation");
+        Logger.LogDebug("used default calc for rotation");
         rotation.eulerAngles = item4.transform.eulerAngles;
       }
 

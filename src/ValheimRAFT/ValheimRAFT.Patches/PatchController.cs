@@ -21,11 +21,13 @@ internal class PatchController
     /*
      * PlanBuild uses mmmHookgen so it cannot be detected with bepinex
      *
+     * The patch flag must be enabled and the folder must be detected otherwise it will not apply to patch a mod that does not exist
+     *
      * So it does not show up on Chainloader.PluginInfos.ContainsKey(PlanBuildGUID)
      */
-    if (
-      Directory.Exists(Path.Combine(Paths.PluginPath, "MathiasDecrock-PlanBuild")) ||
-      Directory.Exists(Path.Combine(Paths.PluginPath, "PlanBuild")))
+    if (ValheimRaftPlugin.Instance.PatchPlanBuildPositionIssues.Value &&
+        (Directory.Exists(Path.Combine(Paths.PluginPath, "MathiasDecrock-PlanBuild")) ||
+         Directory.Exists(Path.Combine(Paths.PluginPath, "PlanBuild"))))
     {
       Logger.LogInfo("Applying PlanBuild Patch");
       Harmony.PatchAll(typeof(PlanBuildPatch));

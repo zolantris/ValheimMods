@@ -8,13 +8,14 @@ using System.Collections.Generic;
 using System.Reflection;
 using Jotunn;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimRAFT.Patches;
 
 namespace ValheimRAFT;
 
 [BepInPlugin(BepInGuid, ModName, Version)]
 [BepInDependency(Main.ModGuid)]
-[NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
+[NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Patch)]
 public class ValheimRaftPlugin : BaseUnityPlugin
 {
   /*
@@ -29,7 +30,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public static AssetBundle m_assetBundle;
   private bool m_customItemsAdded;
   public CustomLocalization localization;
-  private PrefabRegistry prefabRegistry;
+  public PrefabController prefabController;
 
   public static ValheimRaftPlugin Instance { get; private set; }
 
@@ -44,14 +45,20 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> ServerRaftUpdateZoneInterval { get; set; }
   public ConfigEntry<float> RaftSailForceMultiplier { get; set; }
   public ConfigEntry<bool> DisplacedRaftAutoFix { get; set; }
-
-  // Admin configs
   public ConfigEntry<bool> AdminsCanOnlyBuildRaft { get; set; }
 
 
   // Propulsion Configs
   public ConfigEntry<bool> EnableCustomPropulsionConfig { get; set; }
-  public ConfigEntry<float> SailAreaThrottle { get; set; }
+
+  public ConfigEntry<float> MaxPropulsionSpeed { get; set; }
+  public ConfigEntry<float> MaxSailSpeed { get; set; }
+  public ConfigEntry<float> SpeedCapMultiplier { get; set; }
+
+  // for those that want to cruise with rudder
+  // public ConfigEntry<bool> AllowRudderSpeed { get; set; }
+  // public ConfigEntry<float> RudderSpeed2 { get; set; }
+  // public ConfigEntry<float> RudderSpeed3 { get; set; }
   public ConfigEntry<float> SailTier1Area { get; set; }
   public ConfigEntry<float> SailTier2Area { get; set; }
   public ConfigEntry<float> SailTier3Area { get; set; }
@@ -59,6 +66,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> BoatDragCoefficient { get; set; }
   public ConfigEntry<float> MastShearForceThreshold { get; set; }
   public ConfigEntry<bool> HasDebugSails { get; set; }
+  public ConfigEntry<bool> HasShipWeightCalculations { get; set; }
+  public ConfigEntry<float> MassPercentageFactor { get; set; }
+  public ConfigEntry<bool> ShowShipStats { get; set; }
+  public ConfigEntry<bool> HasShipContainerWeightCalculations { get; set; }
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -68,43 +79,150 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     $"{Author}-{ModName}", $"zolantris-{ModName}", $"Zolantris-{ModName}", ModName
   ];
 
-  private void CreateConfig()
+  private ConfigDescription CreateConfigDescription(string description, bool isAdmin = false)
   {
+    return new ConfigDescription(
+      description,
+      (AcceptableValueBase)null, new object[1]
+      {
+        (object)new ConfigurationManagerAttributes()
+        {
+          IsAdminOnly = true
+        }
+      });
+  }
+
+  private void CreatePropulsionConfig()
+  {
+    ShowShipStats = Config.Bind("Debug", "ShowShipState", true);
+    MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 25f,
+      CreateConfigDescription(
+        "Sets the absolute max speed a ship can ever hit. Prevents or enables space launches",
+        true));
+    MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 15f,
+      CreateConfigDescription(
+        "Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.",
+        true));
+    MassPercentageFactor = Config.Bind("Propulsion", "MassPercentage", 33f, CreateConfigDescription(
+      "Sets the mass percentage of the ship that will slow down the sails",
+      true));
+    SpeedCapMultiplier = Config.Bind("Propulsion", "SpeedCapMultiplier", 2f,
+      CreateConfigDescription(
+        "Sets the speed at which it becomes significantly harder to gain speed per sail area",
+        true));
+
+    // RudderSpeed2 = Config.Bind("Propulsion", "RudderSpeed2", 5f,
+    //   CreateConfigDescription(
+    //     "Max speed at rudder speed 2.", true));
+    // RudderSpeed3 = Config.Bind("Propulsion", "RudderSpeed3", 10f,
+    //   CreateConfigDescription(
+    //     "", true));
+    // AllowRudderSpeed = Config.Bind("Propulsion", "AllowRudderSpeed", true,
+    //   CreateConfigDescription(
+    //     "", true));
+
+    HasShipWeightCalculations = Config.Bind("Propulsion", "HasShipWeightCalculations", true,
+      CreateConfigDescription(
+        "enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less"));
+
+    HasShipContainerWeightCalculations = Config.Bind("Propulsion",
+      "HasShipContainerWeightCalculations",
+      true,
+      CreateConfigDescription(
+        "enables ship weight calculations for containers which affects sail-force (sailing speed) and future propulsion calculations. Makes ships with lots of containers require more sails"));
+
     HasDebugSails = Config.Bind("Debug", "HasDebugSails", false,
-      "Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only.");
+      CreateConfigDescription(
+        "Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only."));
 
     EnableCustomPropulsionConfig = Config.Bind("Propulsion",
       "EnableCustomPropulsionConfig", SailAreaForce.HasPropulsionConfigOverride,
-      "Enables all custom propulsion values");
-
-    SailAreaThrottle = Config.Bind("Propulsion",
-      "SailAreaThrottle", SailAreaForce.SailAreaThrottle,
-      "Throttles the sail area, having this value high will prevent a boat with many sails and small area from breaking the sails. This value is meant to be left alone and will not apply unless the HasCustomSailConfig is enabled");
+      CreateConfigDescription("Enables all custom propulsion values", false));
 
 
     SailCustomAreaTier1Multiplier = Config.Bind("Propulsion",
       "SailCustomAreaTier1Multiplier", SailAreaForce.CustomTier1AreaForceMultiplier,
-      "Manual sets the area multiplier the custom tier1 sail. Currently there is only 1 tier");
+      CreateConfigDescription(
+        "Manual sets the area multiplier the custom tier1 sail. Currently there is only 1 tier",
+        true)
+    );
+
     SailTier1Area = Config.Bind("Propulsion",
       "SailTier1Area", SailAreaForce.Tier1,
-      "Manual sets the area of the tier 1 sail.");
+      CreateConfigDescription("Manual sets the area of the tier 1 sail.", true)
+    );
+
     SailTier2Area = Config.Bind("Propulsion",
       "SailTier2Area", SailAreaForce.Tier2,
-      "Manual sets the area of the tier 2 sail.");
+      CreateConfigDescription("Manual sets the area of the tier 2 sail.", true));
+
     SailTier3Area = Config.Bind("Propulsion",
       "SailTier3Area", SailAreaForce.Tier3,
-      "Manual sets the area of the tier 3 sail.");
-    /*
-     * @todo move this into the larger config object
-     * the old ugly way to add config.
-     */
+      CreateConfigDescription("Manual sets the area of the tier 3 sail.", true));
+  }
+
+  private void CreateServerConfig()
+  {
+    AdminsCanOnlyBuildRaft = Config.Bind("Server config", "AdminsCanOnlyBuildRaft", false,
+      new ConfigDescription(
+        "ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart",
+        (AcceptableValueBase)null, new object[1]
+        {
+          (object)new ConfigurationManagerAttributes()
+          {
+            IsAdminOnly = true
+          }
+        }));
+
+    ServerRaftUpdateZoneInterval = Config.Bind<float>("Server config",
+      "ServerRaftUpdateZoneInterval",
+      10f,
+      new ConfigDescription(
+        "Allows Server Admin control over the update tick for the RAFT location. Larger Rafts will take much longer and lag out players, but making this ticket longer will make the raft turn into a box from a long distance away.",
+        (AcceptableValueBase)null, new object[1]
+        {
+          (object)new ConfigurationManagerAttributes()
+          {
+            IsAdminOnly = true
+          }
+        }));
+
+    MakeAllPiecesWaterProof = Config.Bind<bool>("Server config",
+      "MakeAllPiecesWaterProof", true, new ConfigDescription(
+        "Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.",
+        (AcceptableValueBase)null, new object[1]
+        {
+          (object)new ConfigurationManagerAttributes()
+          {
+            IsAdminOnly = true
+          }
+        }));
+    AllowFlight = Config.Bind<bool>("Server config", "AllowFlight", false,
+      new ConfigDescription("Allow the raft to fly (jump\\crouch to go up and down)",
+        (AcceptableValueBase)null, new object[1]
+        {
+          (object)new ConfigurationManagerAttributes()
+          {
+            IsAdminOnly = true
+          }
+        }));
+  }
+
+  private void CreateDebugConfig()
+  {
     DisplacedRaftAutoFix = Config.Bind("Debug",
       "DisplacedRaftAutoFix", false,
       "Automatically fix a displaced glitched out raft if the player is standing on the raft. This will make the player fall into the water briefly but avoid having to run 'raftoffset 0 0 0'");
-    RaftSailForceMultiplier = Config.Bind("Config", "RaftSailForceMultiplier", 4f,
-      "Set the sailforce multipler of the raft. 1 was the original value");
+  }
+
+  private void CreatePrefabConfig()
+  {
     RaftHealth = Config.Bind<float>("Config", "raftHealth", 500f,
       "Set the raft health when used with wearNTear, lowest value is 100f");
+  }
+
+  private void CreateBaseConfig()
+  {
     PatchPlanBuildPositionIssues = Config.Bind<bool>("Patches",
       "fixPlanBuildPositionIssues", true, new ConfigDescription(
         "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT.",
@@ -153,51 +271,25 @@ public class ValheimRaftPlugin : BaseUnityPlugin
             IsAdminOnly = false
           }
         }));
+  }
 
 
-    AdminsCanOnlyBuildRaft = Config.Bind("Server config", "AdminsCanOnlyBuildRaft", false,
-      new ConfigDescription(
-        "ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart",
-        (AcceptableValueBase)null, new object[1]
-        {
-          (object)new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = true
-          }
-        }));
+  /*
+   * aggregates all config creators.
+   *
+   * Future plans:
+   * - Abstract specific config directly into related files and call init here to set those values in the associated classes.
+   * - Most likely those items will need to be "static" values.
+   * - Add a watcher so those items can take the new config and process it as things update.
+   */
 
-    ServerRaftUpdateZoneInterval = Config.Bind<float>("Server config",
-      "ServerRaftUpdateZoneInterval",
-      10f,
-      new ConfigDescription(
-        "Allows Server Admin control over the update tick for the RAFT location. Larger Rafts will take much longer and lag out players, but making this ticket longer will make the raft turn into a box from a long distance away.",
-        (AcceptableValueBase)null, new object[1]
-        {
-          (object)new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = true
-          }
-        }));
-
-    MakeAllPiecesWaterProof = Config.Bind<bool>("Server config",
-      "MakeAllPiecesWaterProof", true, new ConfigDescription(
-        "Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.",
-        (AcceptableValueBase)null, new object[1]
-        {
-          (object)new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = true
-          }
-        }));
-    AllowFlight = Config.Bind<bool>("Server config", "AllowFlight", false,
-      new ConfigDescription("Allow the raft to fly (jump\\crouch to go up and down)",
-        (AcceptableValueBase)null, new object[1]
-        {
-          (object)new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = true
-          }
-        }));
+  private void CreateConfig()
+  {
+    CreateBaseConfig();
+    CreatePrefabConfig();
+    CreateDebugConfig();
+    CreatePropulsionConfig();
+    CreateServerConfig();
   }
 
   /**
@@ -206,12 +298,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    */
   private void InitLocalization()
   {
-    localization = LocalizationManager.Instance.GetLocalization();
-    localization.AddTranslation("English", new Dictionary<string, string>
-    {
-      { "mb_anchor_disabled", "\\n(anchored)\\nLShift to remove Anchor while steering" },
-      { "mb_anchor_enabled", "\\nLShift to Anchor" }
-    });
+    // localization = LocalizationManager.Instance.GetLocalization();
+    // localization.AddTranslation("English", new Dictionary<string, string>
+    // {
+    //   { "mb_anchor_disabled", "\\n(anchored)\\nLShift to remove Anchor while steering" },
+    //   { "mb_anchor_enabled", "\\nLShift to Anchor" }
+    // });
   }
 
   public void Awake()
@@ -300,7 +392,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       AssetUtils.LoadAssetBundleFromResources("valheimraft", Assembly.GetExecutingAssembly());
 
     // Registers all prefabs
-    prefabRegistry = gameObject.AddComponent<PrefabRegistry>();
-    prefabRegistry.Init();
+    prefabController = gameObject.AddComponent<PrefabController>();
+    prefabController.Init();
   }
 }

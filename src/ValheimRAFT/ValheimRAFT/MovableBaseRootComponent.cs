@@ -1,19 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using Jotunn;
-using Jotunn.Managers;
 using UnityEngine;
-using UnityEngine.Serialization;
 using ValheimRAFT.Util;
 using Logger = Jotunn.Logger;
-using Object = UnityEngine.Object;
 
 namespace ValheimRAFT;
 
-public class MoveableBaseRootComponent : MonoBehaviour
+public class MovableBaseRootComponent : MonoBehaviour
 {
   public static readonly KeyValuePair<int, int> MBParentHash = ZDO.GetHashZDOID("MBParent");
 
@@ -36,7 +30,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
   internal static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
 
-  internal MoveableBaseShipComponent m_moveableBaseShip;
+  internal MovableBaseShipComponent m_movableBaseShip;
+
+  public MovableBaseRootComponent instance;
 
   internal Rigidbody m_rigidbody;
 
@@ -59,6 +55,11 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   internal List<BoardingRampComponent> m_boardingRamps = new();
 
+  internal float ShipContainerMass = 0f;
+  internal float ShipMass = 0f;
+
+  internal float TotalMass => ShipContainerMass + ShipMass;
+
   /*
    * sail calcs
    */
@@ -66,32 +67,25 @@ public class MoveableBaseRootComponent : MonoBehaviour
   public int numberOfTier2Sails = 0;
   public int numberOfTier3Sails = 0;
   public float customSailsArea = 0f;
-  public float totalSailArea = 0f;
-  /* end sail calcs  */
 
+  public float totalSailArea = 0f;
+
+/* end sail calcs  */
   private Vector2i m_sector;
   private Vector2i m_serverSector;
-
   private Bounds m_bounds = default;
-
   internal BoxCollider m_blockingcollider;
-
   internal BoxCollider m_floatcollider;
-
   internal BoxCollider m_onboardcollider;
-
   internal int m_id;
-
   public bool m_statsOverride;
-
   private static bool itemsRemovedDuringWait;
-
   internal Coroutine pendingPiecesCoroutine;
-
   private Coroutine server_UpdatePiecesCoroutine;
 
   public void Awake()
   {
+    instance = this;
     m_rigidbody = gameObject.AddComponent<Rigidbody>();
     m_rigidbody.isKinematic = true;
     m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
@@ -107,7 +101,13 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void CleanUp()
   {
-    StopCoroutine("ActivatePendingPieces");
+    Logger.LogDebug("CleanupCalled which stops ActivatePendingPieces");
+    if (pendingPiecesCoroutine != null)
+    {
+      Logger.LogDebug("CleanUp cancelling ActivatePendingPieces coroutine");
+      StopCoroutine(pendingPiecesCoroutine);
+    }
+
     if (!ZNetScene.instance || m_id == 0) return;
 
     for (var i = 0; i < m_pieces.Count; i++)
@@ -140,9 +140,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
     Sync();
   }
 
-  /*
-   * @important, server does not have access to lifecycle methods so a coroutine is required to update things
-   */
+/*
+ * @important, server does not have access to lifecycle methods so a coroutine is required to update things
+ */
   public void LateUpdate()
   {
     Sync();
@@ -229,16 +229,16 @@ public class MoveableBaseRootComponent : MonoBehaviour
     yield return null;
   }
 
-  /*
-   * This method IS important, but it also seems heavily related to causing the raft to disappear if it fails.
-   *
-   * - Apparently to get this working this method must also fire on the client & on server.
-   *
-   * - This method must fire when a zone loads, otherwise the items will be in a box position until they are renders.
-   * - For larger ships, this can take up to 20 seconds. Yikes.
-   *
-   * Outside of this problem, this script repeatedly calls (but stays on a separate thread) which may be related to fps drop.
-   */
+/*
+ * This method IS important, but it also seems heavily related to causing the raft to disappear if it fails.
+ *
+ * - Apparently to get this working this method must also fire on the client & on server.
+ *
+ * - This method must fire when a zone loads, otherwise the items will be in a box position until they are renders.
+ * - For larger ships, this can take up to 20 seconds. Yikes.
+ *
+ * Outside of this problem, this script repeatedly calls (but stays on a separate thread) which may be related to fps drop.
+ */
   public IEnumerator UpdatePiecesInEachSectorWorker()
   {
     while (true)
@@ -271,45 +271,75 @@ public class MoveableBaseRootComponent : MonoBehaviour
            m_blockingcollider.size.y / 2f;
   }
 
-  public static void AddInactivePiece(int id, ZNetView netview)
+  public static void AddInactivePiece(int id, ZNetView netView)
   {
+    Logger.LogDebug($"addInactivePiece called with {id} for {netView.name}");
     if (!m_pendingPieces.TryGetValue(id, out var list))
     {
       list = new List<ZNetView>();
       m_pendingPieces.Add(id, list);
     }
 
-    list.Add(netview);
-    var wnt = netview.GetComponent<WearNTear>();
+    list.Add(netView);
+    var wnt = netView.GetComponent<WearNTear>();
     if ((bool)wnt) wnt.enabled = false;
   }
 
-  public void RemovePiece(ZNetView netview)
+/*
+ * deltaMass can be positive or negative number
+ */
+  public void UpdateMass(ZNetView netView, bool isRemoving = false)
   {
-    if (m_pieces.Remove(netview))
+    var piece = netView.GetComponent<Piece>();
+    if (piece == null)
     {
-      var sail = netview.GetComponent<SailComponent>();
+      Logger.LogWarning(
+        "unable to fetch piece data from netViewPiece this could be a raft piece erroring.");
+    }
+
+    var pieceWeight = ComputePieceWeight(piece, isRemoving);
+
+    if (isRemoving)
+    {
+      ShipMass -= pieceWeight;
+    }
+    else
+    {
+      ShipMass += pieceWeight;
+    }
+
+    m_rigidbody.mass = TotalMass;
+    m_syncRigidbody.mass = TotalMass;
+  }
+
+  public void RemovePiece(ZNetView netView)
+  {
+    if (m_pieces.Remove(netView))
+    {
+      UpdateMass(netView, true);
+
+      var sail = netView.GetComponent<SailComponent>();
       if ((bool)sail)
       {
         m_sailPiece.Remove(sail);
       }
 
-      var mast = netview.GetComponent<MastComponent>();
+      var mast = netView.GetComponent<MastComponent>();
       if ((bool)mast)
       {
         m_mastPieces.Remove(mast);
       }
 
-      var rudder = netview.GetComponent<RudderComponent>();
+      var rudder = netView.GetComponent<RudderComponent>();
       if ((bool)rudder) m_rudderPieces.Remove(rudder);
 
-      var ramp = netview.GetComponent<BoardingRampComponent>();
+      var ramp = netView.GetComponent<BoardingRampComponent>();
       if ((bool)ramp) m_boardingRamps.Remove(ramp);
 
-      var portal = netview.GetComponent<TeleportWorld>();
-      if ((bool)portal) m_portals.Remove(netview);
+      var portal = netView.GetComponent<TeleportWorld>();
+      if ((bool)portal) m_portals.Remove(netView);
 
-      var ladder = netview.GetComponent<RopeLadderComponent>();
+      var ladder = netView.GetComponent<RopeLadderComponent>();
       if ((bool)ladder)
       {
         m_ladders.Remove(ladder);
@@ -323,6 +353,117 @@ public class MoveableBaseRootComponent : MonoBehaviour
   private void UpdateStats()
   {
   }
+
+  /**
+   * this will recalculate only when the ship speed changes.
+   */
+  public void ComputeAllShipContainerItemWeight()
+  {
+    if (!ValheimRaftPlugin.Instance.HasShipContainerWeightCalculations.Value &&
+        ShipContainerMass != 0f)
+    {
+      ShipContainerMass = 0f;
+      return;
+    }
+
+    ShipContainerMass = 0f;
+    var containers = GetComponentsInChildren<Container>();
+    foreach (var container in containers)
+    {
+      ComputeContainerWeight(container);
+    }
+  }
+
+
+  private void ComputeContainerWeight(Container container, bool isRemoving = false)
+  {
+    var inventory = container.GetInventory();
+    if (inventory != null)
+    {
+      var containerWeight = inventory.GetTotalWeight();
+      Logger.LogDebug($"containerWeight {containerWeight} name: {container.name}");
+      if (isRemoving)
+      {
+        ShipContainerMass -= containerWeight;
+      }
+      else
+      {
+        ShipContainerMass += containerWeight;
+      }
+    }
+    else
+    {
+      Logger.LogWarning(
+        "ComputeContainerWeight could not get inventory from container, ship weight calculations could be off, using fallback weight 2f");
+    }
+  }
+
+/*
+ * this function must be used on additional and removal of items to avoid retaining item weight
+ */
+  private float ComputePieceWeight(Piece piece, bool isRemoving)
+  {
+    var pieceName = piece.name;
+    Logger.LogDebug($"ComputePieceWeight: name {pieceName}");
+    Logger.LogDebug($"{piece.m_category}");
+
+    if (ValheimRaftPlugin.Instance.HasShipContainerWeightCalculations.Value)
+    {
+      var container = piece.GetComponent<Container>();
+      if (container != null)
+      {
+        ComputeContainerWeight(container, isRemoving);
+        return 0f;
+      }
+    }
+
+    var baseMultiplier = 1f;
+    /*
+     * locally scaled pieces should have a mass multiplier.
+     *
+     * For now assuming everything is a rectangular prism L*W*H
+     */
+    if (piece.transform.localScale != new Vector3(1, 1, 1))
+    {
+      baseMultiplier = piece.transform.localScale.x * piece.transform.localScale.y *
+                       piece.transform.localScale.z;
+      Logger.LogDebug(
+        $"ValheimRAFT ComputeShipItemWeight() found piece that does not have a 1,1,1 local scale piece: {pieceName} scale: {piece.transform.localScale}, the 3d localScale will be multiplied by the area of this vector instead of 1x1x1");
+    }
+
+    if (pieceName == "wood_floor_1x1")
+    {
+      return 1f * baseMultiplier;
+    }
+
+    /*
+     * wood_log/wood_core may be split out to a lower ratio
+     */
+    if (pieceName.Contains("wood"))
+    {
+      return MaterialWeight.Wood * baseMultiplier;
+    }
+
+    if (pieceName.Contains("stone_"))
+    {
+      return MaterialWeight.Stone * baseMultiplier;
+    }
+
+    if (pieceName.Contains("blackmarble"))
+    {
+      return MaterialWeight.BlackMarble * baseMultiplier;
+    }
+
+    if (pieceName.Contains("blastfurnace") || pieceName.Contains("charcoal_kiln") ||
+        pieceName.Contains("forge") || pieceName.Contains("smelter"))
+    {
+      return 20f * baseMultiplier;
+    }
+
+    // default return is the weight of wood 1x1
+    return 2f * baseMultiplier;
+  }
+
 
   public void DestroyPiece(WearNTear wnt)
   {
@@ -349,6 +490,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void ActivatePendingPiecesCoroutine()
   {
+    Logger.LogDebug(
+      $"Called activePendingPiecesCoroutine, pendingPieces count: {m_pendingPieces.Count}");
     if (pendingPiecesCoroutine != null) StopCoroutine(pendingPiecesCoroutine);
 
     pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
@@ -358,7 +501,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   {
     if (!m_nview || m_nview.m_zdo == null)
     {
-      ZLog.Log(
+      Logger.LogDebug(
         $"ActivatePendingPieces early exit due to m_nview: {m_nview} m_nview.m_zdo {(m_nview != null ? m_nview.m_zdo : null)}");
       yield return null;
     }
@@ -368,19 +511,30 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
     if (list is { Count: > 0 })
     {
-      var stopwatch = new Stopwatch();
-      stopwatch.Start();
+      // var stopwatch = new Stopwatch();
+      // stopwatch.Start();
       for (var j = 0; j < list.Count; j++)
       {
         var obj = list[j];
         if ((bool)obj)
         {
           ActivatePiece(obj);
-          if (!ZNetScene.instance.InLoadingScreen() && stopwatch.ElapsedMilliseconds >= 10)
-          {
-            yield return new WaitForEndOfFrame();
-            stopwatch.Restart();
-          }
+
+          /* This code slows down all re-renders.
+           * @todo Removing in 1.6.9 and higher.
+           */
+          // if (!ZNetScene.instance.InLoadingScreen() && stopwatch.ElapsedMilliseconds >= 10)
+          // {
+          //   Logger.LogDebug(
+          //     $"pendingPiece is not in loading state waiting until next frame piece: {obj.name}");
+          //   yield return new WaitForEndOfFrame();
+          //   Logger.LogDebug($"made it to next frame piece:{obj.name}");
+          //   stopwatch.Restart();
+          // }
+        }
+        else
+        {
+          Logger.LogDebug($"ActivatePendingPieces obj is not valid {obj}");
         }
       }
 
@@ -388,7 +542,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
       m_pendingPieces.Remove(id);
     }
 
-    ZLog.Log($"Ship Size calc is: m_bounds {m_bounds} bounds size {m_bounds.size}");
+    Logger.LogDebug($"Ship Size calc is: m_bounds {m_bounds} bounds size {m_bounds.size}");
 
     m_dynamicObjects.TryGetValue(m_id, out var objectList);
     var ObjectListHasNoValidItems = true;
@@ -430,7 +584,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
                          (m_dynamicObjects.Count == 0 || ObjectListHasNoValidItems))
        )
     {
-      // ZLog.LogError($"found boat without any items attached {m_ship} {m_nview}");
+      // Logger.LogError($"found boat without any items attached {m_ship} {m_nview}");
       // DestroyBoat();
     }
 
@@ -439,7 +593,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public static void AddDynamicParent(ZNetView source, GameObject target)
   {
-    var mbroot = target.GetComponentInParent<MoveableBaseRootComponent>();
+    var mbroot = target.GetComponentInParent<MovableBaseRootComponent>();
     if ((bool)mbroot)
     {
       source.m_zdo.Set(MBCharacterParentHash, mbroot.m_id);
@@ -453,7 +607,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
    *
    * This method calls so frequently outside of the scope of ValheimRaftPlugin.Instance so the Config values cannot be fetched for some reason.
    */
-  public float GetShipSailArea()
+  public float GetTotalSailArea()
   {
     if (totalSailArea != 0f || !ValheimRaftPlugin.Instance ||
         m_mastPieces.Count == 0 && m_sailPiece.Count == 0)
@@ -498,9 +652,6 @@ public class MoveableBaseRootComponent : MonoBehaviour
       }
     }
 
-    Logger.LogDebug(
-      $"numberOfTieredSails {numberOfTier1Sails} {numberOfTier2Sails} {numberOfTier3Sails}");
-
     var sailComponents = GetComponentsInChildren<SailComponent>();
     if (sailComponents.Length != 0)
     {
@@ -512,6 +663,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
         }
       }
 
+      Logger.LogDebug($"CustomSailsArea {customSailsArea}");
       var multiplier = hasConfigOverride
         ? ValheimRaftPlugin.Instance.SailCustomAreaTier1Multiplier.Value
         : SailAreaForce.CustomTier1AreaForceMultiplier;
@@ -522,26 +674,41 @@ public class MoveableBaseRootComponent : MonoBehaviour
     }
 
     /*
-     * Clamps everything by base 10
-     *
-     *  divide by 10 b/c all the enums were set with a 10 multiplier to keep them whole numbers
+     * Clamps everything by the maxSailSpeed
      */
-    if (totalSailArea != 0)
+    if (totalSailArea != 0 && !ValheimRaftPlugin.Instance.HasShipWeightCalculations.Value)
     {
-      var clampValue = hasConfigOverride
-        ? ValheimRaftPlugin.Instance.SailAreaThrottle.Value
-        : SailAreaForce.SailAreaThrottle;
-      totalSailArea /= Math.Max(1f, clampValue);
+      totalSailArea = Math.Min(ValheimRaftPlugin.Instance.MaxSailSpeed.Value, totalSailArea);
     }
-
-    Logger.LogDebug($"totalSailArea: {totalSailArea}");
 
     return totalSailArea;
   }
 
+  public float GetSailingForce()
+  {
+    var area = GetTotalSailArea();
+    if (!ValheimRaftPlugin.Instance.HasShipWeightCalculations.Value) return area;
+
+    var mpFactor = ValheimRaftPlugin.Instance.MassPercentageFactor.Value;
+    var speedCapMultiplier = ValheimRaftPlugin.Instance.SpeedCapMultiplier.Value;
+
+    var sailForce = speedCapMultiplier * area /
+                    (TotalMass / mpFactor);
+
+    if (ValheimRaftPlugin.Instance.HasDebugSails.Value)
+    {
+      Logger.LogDebug(
+        $"GetSailingForce() = speedCapMultiplier * area /(totalMass / mpFactor); {speedCapMultiplier} * ({area}/({TotalMass}/{mpFactor})) = {sailForce}");
+    }
+
+    var maxSailForce = Math.Min(ValheimRaftPlugin.Instance.MaxSailSpeed.Value, sailForce);
+    var maxPropulsion = Math.Min(ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value, maxSailForce);
+    return maxPropulsion;
+  }
+
   public static void AddDynamicParent(ZNetView source, GameObject target, Vector3 offset)
   {
-    var mbroot = target.GetComponentInParent<MoveableBaseRootComponent>();
+    var mbroot = target.GetComponentInParent<MovableBaseRootComponent>();
     if ((bool)mbroot)
     {
       source.m_zdo.Set(MBCharacterParentHash, mbroot.m_id);
@@ -625,8 +792,11 @@ public class MoveableBaseRootComponent : MonoBehaviour
     var parentObj = ZDOPersistantID.Instance.GetGameObject(id);
     if ((bool)parentObj)
     {
-      var mb = parentObj.GetComponent<MoveableBaseShipComponent>();
-      if ((bool)mb && (bool)mb.m_baseRoot) mb.m_baseRoot.ActivatePiece(netview);
+      var mb = parentObj.GetComponent<MovableBaseShipComponent>();
+      if ((bool)mb && (bool)mb.m_baseRoot)
+      {
+        mb.m_baseRoot.ActivatePiece(netview);
+      }
     }
     else
     {
@@ -658,83 +828,86 @@ public class MoveableBaseRootComponent : MonoBehaviour
   {
     if ((bool)piece && (bool)piece.m_nview)
     {
-      ZLog.Log("Added new piece is valid");
+      Logger.LogDebug("Added new piece is valid");
       AddNewPiece(piece.m_nview);
     }
   }
 
-  public void AddNewPiece(ZNetView netview)
+  public void AddNewPiece(ZNetView netView)
   {
-    netview.transform.SetParent(transform);
-    if (netview.m_zdo != null)
+    netView.transform.SetParent(transform);
+    if (netView.m_zdo != null)
     {
-      netview.m_zdo.Set(MBParentIdHash,
+      netView.m_zdo.Set(MBParentIdHash,
         ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo));
-      netview.m_zdo.Set(MBRotationVecHash, netview.transform.localRotation.eulerAngles);
-      netview.m_zdo.Set(MBPositionHash, netview.transform.localPosition);
+      netView.m_zdo.Set(MBRotationVecHash, netView.transform.localRotation.eulerAngles);
+      netView.m_zdo.Set(MBPositionHash, netView.transform.localPosition);
     }
 
-    AddPiece(netview);
-    InitZDO(netview.m_zdo);
+    AddPiece(netView);
+    InitZDO(netView.m_zdo);
   }
 
-  public void AddPiece(ZNetView netview)
+  public void AddPiece(ZNetView netView)
   {
     totalSailArea = 0;
-    m_pieces.Add(netview);
-    m_moveableBaseShip.GetShipStats().GetShipFloatation(m_pieces);
+    m_pieces.Add(netView);
+    UpdateMass(netView);
+
+
+    m_movableBaseShip.GetShipStats().GetShipFloatation(m_pieces);
 
     UpdatePieceCount();
-    EncapsulateBounds(netview);
-    var wnt = netview.GetComponent<WearNTear>();
+    EncapsulateBounds(netView);
+    var wnt = netView.GetComponent<WearNTear>();
     if ((bool)wnt && ValheimRaftPlugin.Instance.MakeAllPiecesWaterProof.Value)
       wnt.m_noRoofWear = false;
 
-    var cultivatable = netview.GetComponent<CultivatableComponent>();
+    var cultivatable = netView.GetComponent<CultivatableComponent>();
     if ((bool)cultivatable) cultivatable.UpdateMaterial();
 
-    var mast = netview.GetComponent<MastComponent>();
+    var mast = netView.GetComponent<MastComponent>();
     if ((bool)mast)
     {
       m_mastPieces.Add(mast);
     }
 
-    var sail = netview.GetComponent<SailComponent>();
+    var sail = netView.GetComponent<SailComponent>();
     if ((bool)sail)
     {
       m_sailPiece.Add(sail);
     }
 
-    var ramp = netview.GetComponent<BoardingRampComponent>();
+    var ramp = netView.GetComponent<BoardingRampComponent>();
     if ((bool)ramp)
     {
       ramp.ForceRampUpdate();
       m_boardingRamps.Add(ramp);
     }
 
-    var rudder = netview.GetComponent<RudderComponent>();
+    var rudder = netView.GetComponent<RudderComponent>();
     if ((bool)rudder)
     {
-      if (!rudder.m_controls) rudder.m_controls = netview.GetComponentInChildren<ShipControlls>();
+      if (!rudder.m_controls) rudder.m_controls = netView.GetComponentInChildren<ShipControlls>();
 
-      if (!rudder.m_wheel) rudder.m_wheel = netview.transform.Find("controls/wheel");
+      if (!rudder.m_wheel) rudder.m_wheel = netView.transform.Find("controls/wheel");
 
       rudder.m_controls.m_nview = m_nview;
-      rudder.m_controls.m_ship = m_moveableBaseShip.GetComponent<Ship>();
+      rudder.m_controls.m_ship = m_movableBaseShip.GetComponent<Ship>();
       m_rudderPieces.Add(rudder);
     }
 
-    var portal = netview.GetComponent<TeleportWorld>();
-    if ((bool)portal) m_portals.Add(netview);
+    var portal = netView.GetComponent<TeleportWorld>();
+    if ((bool)portal) m_portals.Add(netView);
 
-    var ladder = netview.GetComponent<RopeLadderComponent>();
+    var ladder = netView.GetComponent<RopeLadderComponent>();
     if ((bool)ladder)
     {
       m_ladders.Add(ladder);
       ladder.m_mbroot = this;
     }
 
-    var meshes = netview.GetComponentsInChildren<MeshRenderer>(true);
+    var meshes = netView.GetComponentsInChildren<MeshRenderer>(true);
     foreach (var meshRenderer in meshes)
       if ((bool)meshRenderer.sharedMaterial)
       {
@@ -752,8 +925,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
     /*
      * @todo investigate why this is called. Determine if it is needed
+     *
+     * - most likely this is to prevent other rigidbody nodes from interacting with unity world physics within the ship
      */
-    var rbs = netview.GetComponentsInChildren<Rigidbody>();
+    var rbs = netView.GetComponentsInChildren<Rigidbody>();
     for (var i = 0; i < rbs.Length; i++)
       if (rbs[i].isKinematic)
         Destroy(rbs[i]);

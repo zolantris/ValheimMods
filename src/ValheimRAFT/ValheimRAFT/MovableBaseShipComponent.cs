@@ -6,7 +6,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
-public class MoveableBaseShipComponent : MonoBehaviour
+public class MovableBaseShipComponent : MonoBehaviour
 {
   [Flags]
   public enum MBFlags
@@ -16,7 +16,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     HideMesh = 2
   }
 
-  internal MoveableBaseRootComponent m_baseRoot;
+  internal MovableBaseRootComponent m_baseRoot;
 
   internal Rigidbody m_rigidbody;
 
@@ -46,21 +46,21 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_ship = GetComponent<Ship>();
     m_baseRootObject = new GameObject
     {
-      name = "MoveableBase",
+      name = "MovableBase",
       layer = 0
     };
-    m_baseRoot = m_baseRootObject.AddComponent<MoveableBaseRootComponent>();
+    m_baseRoot = m_baseRootObject.AddComponent<MovableBaseRootComponent>();
     m_nview.Register("SetAnchor",
       delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
     m_nview.Register("SetVisual",
       delegate(long sender, bool state) { RPC_SetVisual(sender, state); });
-    m_baseRoot.m_moveableBaseShip = this;
+    m_baseRoot.m_movableBaseShip = this;
     m_baseRoot.m_nview = m_nview;
     m_baseRoot.m_ship = ship;
     m_baseRoot.m_id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
     m_rigidbody = GetComponent<Rigidbody>();
     m_baseRoot.m_syncRigidbody = m_rigidbody;
-    m_rigidbody.mass = 1000f;
+    m_rigidbody.mass = m_baseRoot.TotalMass;
     m_baseRootObject.transform.SetParent(null);
 
     m_baseRootObject.transform.position = base.transform.position;
@@ -75,9 +75,16 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.m_onboardcollider =
       colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "OnboardTrigger");
 
-    Logger.LogDebug($"ONBOARD COLLIDER {m_baseRoot.m_onboardcollider}, collider must not be null");
+    if (!m_baseRoot.m_onboardcollider)
+    {
+      Logger.LogError(
+        $"ONBOARD COLLIDER {m_baseRoot.m_onboardcollider}, collider must not be null");
+    }
+    else
+    {
+      m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    }
 
-    m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     m_baseRoot.m_floatcollider = ship.m_floatCollider;
     m_baseRoot.m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     m_baseRoot.m_blockingcollider = ship.transform.Find("ship/colliders/Cube")
@@ -86,9 +93,6 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
     m_baseRoot.m_blockingcollider.transform.parent.gameObject.layer =
       ValheimRaftPlugin.CustomRaftLayer;
-
-    Logger.LogDebug($"Activating MBRoot: {m_baseRoot.m_id}");
-
     m_baseRoot.ActivatePendingPiecesCoroutine();
     FirstTimeCreation();
   }
@@ -220,9 +224,21 @@ public class MoveableBaseShipComponent : MonoBehaviour
       return;
     }
 
-    m_rigidbody.mass = 3000f;
+    m_rigidbody.mass = m_baseRoot.TotalMass;
     m_rigidbody.angularDrag = (flight ? 1f : 0f);
-    m_rigidbody.drag = (flight ? 1f : 0f);
+    // m_rigidbody.drag = (flight ? 1f : 0f);
+
+    var rb = m_ship.GetComponent<Rigidbody>();
+
+    if (rb)
+    {
+      Logger.LogDebug($"ship rigidbody rb.drag {rb.drag} rb.mass {rb.mass}");
+    }
+    else
+    {
+      Logger.LogDebug("ship does not have rigidbody");
+    }
+
     if ((bool)m_ship)
     {
       m_ship.m_angularDamping = (flight ? 5f : 0.8f);

@@ -51,8 +51,8 @@ internal class MoveRaftConsoleCommand : ConsoleCommand
           GameCamera.instance.transform.position, GameCamera.instance.transform.forward,
           out var hitinfo, 50f, LayerMask.GetMask("piece")))
     {
-      MoveableBaseRootComponent mbr =
-        hitinfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
+      MovableBaseRootComponent mbr =
+        hitinfo.collider.GetComponentInParent<MovableBaseRootComponent>();
       if ((bool)mbr)
       {
         MoveRaft(player, mbr.m_ship, offset);
@@ -62,7 +62,7 @@ internal class MoveRaftConsoleCommand : ConsoleCommand
 
   public static bool MoveRaft(Player player, Ship ship, Vector3 offset)
   {
-    MoveableBaseShipComponent mb = ship.GetComponent<MoveableBaseShipComponent>();
+    MovableBaseShipComponent mb = ship.GetComponent<MovableBaseShipComponent>();
 
     if ((bool)mb && (bool)mb.m_baseRoot)
     {
@@ -71,12 +71,12 @@ internal class MoveRaftConsoleCommand : ConsoleCommand
       int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(mb.m_baseRoot.m_nview.m_zdo);
       foreach (ZDO zdo in ZDOMan.instance.m_objectsByID.Values)
       {
-        int zdoid = zdo.GetInt(MoveableBaseRootComponent.MBParentIdHash);
+        int zdoid = zdo.GetInt(MovableBaseRootComponent.MBParentIdHash);
         if (zdoid == id)
         {
-          Vector3 pos = zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash, Vector3.zero);
+          Vector3 pos = zdo.GetVec3(MovableBaseRootComponent.MBPositionHash, Vector3.zero);
           Vector3 newpos = pos + offset;
-          zdo.Set(MoveableBaseRootComponent.MBPositionHash, newpos);
+          zdo.Set(MovableBaseRootComponent.MBPositionHash, newpos);
           zdo.SetPosition(ship.transform.position);
           ZNetView obj = ZNetScene.instance.FindInstance(zdo);
           if ((bool)obj)

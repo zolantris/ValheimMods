@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using ValheimRAFT.Util;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
@@ -237,7 +238,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     ZNetView nv = gameObject.GetComponentInParent<ZNetView>();
     if ((bool)nv && nv.m_zdo != null)
     {
-      ZLog.Log($"AttachRope {index}");
+      Logger.LogDebug($"AttachRope {index}");
       RopeAttachmentTarget id =
         new RopeAttachmentTarget(ZDOPersistantID.Instance.GetOrCreatePersistantID(nv.m_zdo), index);
       if (!RemoveRopeWithID(id))

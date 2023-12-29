@@ -21,7 +21,9 @@ public class EditSailComponentPanel
 
   private Toggle[] m_editLockedSailCorners;
 
-  private Toggle m_sailshrinkingToggle;
+  private Toggle m_sailShrinkingToggle;
+
+  private Toggle m_sailRotationToggle;
 
   private GameObject m_locksTri;
 
@@ -34,6 +36,7 @@ public class EditSailComponentPanel
     m_editSail = sailComponent;
     m_editSail.StartEdit();
     var isTri = m_editSail.m_sailCorners.Count == 3;
+
     if (!m_editPanel) InitPanel();
 
     var locksArea = isTri ? m_locksTri : m_locksQuad;
@@ -62,10 +65,14 @@ public class EditSailComponentPanel
           m_editSail.m_lockedSailSides.HasFlag((SailComponent.SailLockedSide)(1 << i)));
     }
 
-    m_sailshrinkingToggle.SetIsOnWithoutNotify(
+    // toggle buttons
+    m_sailShrinkingToggle.SetIsOnWithoutNotify(
       m_editSail.m_sailFlags.HasFlag(SailComponent.SailFlags.AllowSailShrinking));
     m_disableClothToggle.SetIsOnWithoutNotify(
       m_editSail.m_sailFlags.HasFlag(SailComponent.SailFlags.DisableCloth));
+    m_sailRotationToggle.SetIsOnWithoutNotify(
+      m_editSail.m_sailFlags.HasFlag(SailComponent.SailFlags.AllowSailRotation));
+
     GUIManager.BlockInput(true);
     m_editPanel.SetActive(true);
   }
@@ -77,14 +84,15 @@ public class EditSailComponentPanel
       ValheimRaftPlugin.m_assetBundle.LoadAsset<GameObject>("edit_sail_panel"),
       parent, false);
     PanelUtil.ApplyPanelStyle(m_editPanel);
-    var texture_panel =
+    var texturePanel =
       ValheimRaftPlugin.m_assetBundle.LoadAsset<GameObject>("edit_texture_panel");
-    PanelUtil.ApplyPanelStyle(texture_panel);
+    PanelUtil.ApplyPanelStyle(texturePanel);
+
     GUIManager.Instance.ApplyDropdownStyle(
-      texture_panel.transform.Find("TextureName").GetComponent<Dropdown>(), 15);
-    m_editSailPanel = Object.Instantiate(texture_panel, parent, false);
-    m_editPatternPanel = Object.Instantiate(texture_panel, parent, false);
-    m_editLogoPanel = Object.Instantiate(texture_panel, parent, false);
+      texturePanel.transform.Find("TextureName").GetComponent<Dropdown>(), 15);
+    m_editSailPanel = Object.Instantiate(texturePanel, parent, false);
+    m_editPatternPanel = Object.Instantiate(texturePanel, parent, false);
+    m_editLogoPanel = Object.Instantiate(texturePanel, parent, false);
     m_editSailPanel.SetActive(false);
     m_editPatternPanel.SetActive(false);
     m_editLogoPanel.SetActive(false);
@@ -107,16 +115,22 @@ public class EditSailComponentPanel
     var cancelObject = m_editPanel.transform.Find("CancelButton").gameObject;
     cancelObject.GetComponent<Button>().onClick.AddListener(CancelEditPanel);
     saveObject.GetComponent<Button>().onClick.AddListener(SaveEditPanel);
-    m_sailshrinkingToggle =
+    m_sailShrinkingToggle =
       m_editPanel.transform.Find("SailShrinkingToggle").GetComponent<Toggle>();
-    m_sailshrinkingToggle.onValueChanged.AddListener(delegate(bool b)
+    m_sailShrinkingToggle.onValueChanged.AddListener(delegate(bool b)
     {
-      m_editSail.SetAllowSailShrinking(b);
+      m_editSail.SetSailMastSetting(SailComponent.SailFlags.AllowSailShrinking, b);
     });
-    m_disableClothToggle = m_editPanel.transform.Find("ClothToggle").GetComponent<Toggle>();
+
+    m_sailRotationToggle = m_editPanel.transform.Find("SailRotationToggle").GetComponent<Toggle>();
+    m_sailRotationToggle.onValueChanged.AddListener(delegate(bool b)
+    {
+      m_editSail.SetSailMastSetting(SailComponent.SailFlags.AllowSailRotation, b);
+    });
+    m_disableClothToggle = m_editPanel.transform.Find("SailClothToggle").GetComponent<Toggle>();
     m_disableClothToggle.onValueChanged.AddListener(delegate(bool b)
     {
-      m_editSail.SetDisableCloth(b);
+      m_editSail.SetSailMastSetting(SailComponent.SailFlags.DisableCloth, b);
     });
     m_locksTri = m_editPanel.transform.Find("LocksTri").gameObject;
     m_locksQuad = m_editPanel.transform.Find("LocksQuad").gameObject;

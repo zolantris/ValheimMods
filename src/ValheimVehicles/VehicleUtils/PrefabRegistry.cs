@@ -35,7 +35,7 @@ public class PrefabRegistry : MonoBehaviour
     largeWoodFloor.transform.localScale = new Vector3(4, 4, 4);
 
 
-    ZLog.Log("Registered CustomFloor");
+    Logger.LogDebug("Registered CustomFloor");
     // prefabManager.AddPrefab(largeWoodFloor);
     pieceManger.AddPiece(new CustomPiece(largeWoodFloor, false, new PieceConfig
     {
