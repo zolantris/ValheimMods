@@ -49,7 +49,17 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   // Propulsion Configs
   public ConfigEntry<bool> EnableCustomPropulsionConfig { get; set; }
+
+  // probably deprecated
   public ConfigEntry<float> SailAreaThrottle { get; set; }
+  public ConfigEntry<float> MaxPropulsionSpeed { get; set; }
+  public ConfigEntry<float> MaxSailSpeed { get; set; }
+  public ConfigEntry<float> SpeedCapMultiplier { get; set; }
+
+  // for those that want to cruise with rudder
+  public ConfigEntry<bool> AllowRudderSpeed { get; set; }
+  public ConfigEntry<float> RudderSpeed2 { get; set; }
+  public ConfigEntry<float> RudderSpeed3 { get; set; }
   public ConfigEntry<float> SailTier1Area { get; set; }
   public ConfigEntry<float> SailTier2Area { get; set; }
   public ConfigEntry<float> SailTier3Area { get; set; }
@@ -57,6 +67,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> BoatDragCoefficient { get; set; }
   public ConfigEntry<float> MastShearForceThreshold { get; set; }
   public ConfigEntry<bool> HasDebugSails { get; set; }
+  public ConfigEntry<bool> HasShipWeightCalculations { get; set; }
+  public ConfigEntry<float> MassPercentageFactor { get; set; }
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -81,6 +93,37 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreatePropulsionConfig()
   {
+    MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 50f,
+      CreateConfigDescription(
+        "Sets the absolute max speed a ship can ever hit. Prevents or enables space launches",
+        true));
+    MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 20f,
+      CreateConfigDescription(
+        "Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.",
+        true));
+    MassPercentageFactor = Config.Bind("Propulsion", "MassPercentage", 25f, CreateConfigDescription(
+      "Sets the mass percentage of the ship that will slow down the sails",
+      true));
+    SpeedCapMultiplier = Config.Bind("Propulsion", "SpeedCapMultiplier", 2f,
+      CreateConfigDescription(
+        "Sets the speed at which it becomes significantly harder to gain speed per sail area",
+        true));
+
+    RudderSpeed2 = Config.Bind("Propulsion", "RudderSpeed2", 5f,
+      CreateConfigDescription(
+        "Max speed at rudder speed 2.", true));
+    RudderSpeed3 = Config.Bind("Propulsion", "RudderSpeed3", 10f,
+      CreateConfigDescription(
+        "", true));
+    AllowRudderSpeed = Config.Bind("Propulsion", "AllowRudderSpeed", true,
+      CreateConfigDescription(
+        "", true));
+
+    HasShipWeightCalculations = Config.Bind("Propulsion", "HasShipWeightCalculations", true,
+      CreateConfigDescription(
+        "enables ship weight calcs for sailforce and future propulsion, makes larger ships require more sails and smaller ships require less"));
+
+
     HasDebugSails = Config.Bind("Debug", "HasDebugSails", false,
       CreateConfigDescription(
         "Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only."));

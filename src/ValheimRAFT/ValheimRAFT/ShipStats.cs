@@ -25,7 +25,7 @@ public class ShipStats
     foreach (var zNetView in pieces)
     {
       var prefabName = zNetView.GetPrefabName();
-      Logger.LogInfo($"prefabName {prefabName}");
+      Logger.LogDebug($"prefabName {prefabName}");
       switch (prefabName)
       {
         case "":

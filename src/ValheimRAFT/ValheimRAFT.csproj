@@ -45,8 +45,8 @@
         <Compile Include="ValheimRAFT\ValheimRaftPlugin.cs"/>
         <Compile Include="ValheimRAFT\MastComponent.cs"/>
         <Compile Include="ValheimRAFT\MeshHelper.cs"/>
-        <Compile Include="ValheimRAFT\MoveableBaseRootComponent.cs"/>
-        <Compile Include="ValheimRAFT\MoveableBaseShipComponent.cs"/>
+        <Compile Include="ValheimRAFT\MovableBaseRootComponent.cs"/>
+        <Compile Include="ValheimRAFT\MovableBaseShipComponent.cs"/>
         <Compile Include="ValheimRAFT\MoveRaftConsoleCommand.cs"/>
         <Compile Include="ValheimRAFT\PierComponent.cs"/>
         <Compile Include="ValheimRAFT\RecoverRaftConsoleCommand.cs"/>

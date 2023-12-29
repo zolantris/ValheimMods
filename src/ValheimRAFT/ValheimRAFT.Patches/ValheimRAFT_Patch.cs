@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
+using JetBrains.Annotations;
 using UnityEngine;
 using ValheimRAFT.Util;
 using Logger = Jotunn.Logger;
@@ -42,14 +43,14 @@ public class ValheimRAFT_Patch
   [HarmonyPrefix]
   public static bool GetRudderHoverText(ShipControlls __instance, ref string __result)
   {
-    var baseRoot = __instance.GetComponentInParent<MoveableBaseRootComponent>();
+    var baseRoot = __instance.GetComponentInParent<MovableBaseRootComponent>();
     if (!baseRoot)
     {
       return true;
     }
 
     var isAnchored =
-      baseRoot.m_moveableBaseShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored);
+      baseRoot.m_movableBaseShip.m_flags.HasFlag(MovableBaseShipComponent.MBFlags.IsAnchored);
     var anchoredStatus = isAnchored ? "[<color=red><b>$mb_rudder_use_anchored</b></color>]" : "";
     var anchorText =
       isAnchored
@@ -85,7 +86,7 @@ public class ValheimRAFT_Patch
     {
       var ladders = __instance.GetComponentsInChildren<Ladder>();
       for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
-      __instance.gameObject.AddComponent<MoveableBaseShipComponent>();
+      __instance.gameObject.AddComponent<MovableBaseShipComponent>();
     }
   }
 
@@ -93,7 +94,7 @@ public class ValheimRAFT_Patch
   [HarmonyPrefix]
   private static bool Ship_UpdateUpsideDmg(Ship __instance)
   {
-    var mb = __instance.GetComponent<MoveableBaseShipComponent>();
+    var mb = __instance.GetComponent<MovableBaseShipComponent>();
     if ((bool)mb && __instance.transform.up.y < 0f)
       __instance.m_body.rotation = Quaternion.Euler(new Vector3(
         __instance.m_body.rotation.eulerAngles.x, __instance.m_body.rotation.eulerAngles.y, 0f));
@@ -104,7 +105,7 @@ public class ValheimRAFT_Patch
   [HarmonyPostfix]
   private static void Ship_UpdateSail(Ship __instance)
   {
-    var mb = __instance.GetComponent<MoveableBaseShipComponent>();
+    var mb = __instance.GetComponent<MovableBaseShipComponent>();
     if (!mb || !mb.m_baseRoot) return;
     for (var i = 0; i < mb.m_baseRoot.m_mastPieces.Count; i++)
     {
@@ -126,7 +127,7 @@ public class ValheimRAFT_Patch
   [HarmonyPostfix]
   private static void Ship_UpdateSailSize(Ship __instance)
   {
-    var mb = __instance.GetComponent<MoveableBaseShipComponent>();
+    var mb = __instance.GetComponent<MovableBaseShipComponent>();
     if (!mb || !mb.m_baseRoot) return;
     for (var j = 0; j < mb.m_baseRoot.m_mastPieces.Count; j++)
     {
@@ -174,13 +175,13 @@ public class ValheimRAFT_Patch
   [HarmonyPrefix]
   private static bool Ship_FixedUpdate(Ship __instance)
   {
-    var mb = __instance.GetComponent<MoveableBaseShipComponent>();
+    var mb = __instance.GetComponent<MovableBaseShipComponent>();
     if (!mb || !__instance.m_nview || __instance.m_nview.m_zdo == null) return true;
 
     // This could be the spot that causes the raft to fly at spawn
     mb.m_targetHeight = __instance.m_nview.m_zdo.GetFloat("MBTargetHeight", mb.m_targetHeight);
     mb.m_flags =
-      (MoveableBaseShipComponent.MBFlags)__instance.m_nview.m_zdo.GetInt("MBFlags",
+      (MovableBaseShipComponent.MBFlags)__instance.m_nview.m_zdo.GetInt("MBFlags",
         (int)mb.m_flags);
 
     // This could be the spot that causes the raft to fly at spawn
@@ -191,13 +192,13 @@ public class ValheimRAFT_Patch
     __instance.UpdateSail(Time.fixedDeltaTime);
     __instance.UpdateRudder(Time.fixedDeltaTime, flag);
     if (__instance.m_players.Count == 0 ||
-        mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored))
+        mb.m_flags.HasFlag(MovableBaseShipComponent.MBFlags.IsAnchored))
     {
       __instance.m_speed = Ship.Speed.Stop;
       __instance.m_rudderValue = 0f;
-      if (!mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored))
+      if (!mb.m_flags.HasFlag(MovableBaseShipComponent.MBFlags.IsAnchored))
       {
-        mb.m_flags |= MoveableBaseShipComponent.MBFlags.IsAnchored;
+        mb.m_flags |= MovableBaseShipComponent.MBFlags.IsAnchored;
         __instance.m_nview.m_zdo.Set("MBFlags", (int)mb.m_flags);
       }
     }
@@ -254,7 +255,7 @@ public class ValheimRAFT_Patch
       if (velocity.magnitude > __instance.m_body.velocity.magnitude)
         velocity = velocity.normalized * __instance.m_body.velocity.magnitude;
       if (__instance.m_players.Count == 0 ||
-          mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored))
+          mb.m_flags.HasFlag(MovableBaseShipComponent.MBFlags.IsAnchored))
       {
         var anchoredVelocity = 0.0f;
         velocity.x = anchoredVelocity;
@@ -379,13 +380,13 @@ public class ValheimRAFT_Patch
   // }
   private static void ApplySailForce(Ship __instance, float num5)
   {
-    var mb = __instance.GetComponent<MoveableBaseShipComponent>();
+    var mb = __instance.GetComponent<MovableBaseShipComponent>();
 
     var sailArea = 0f;
 
     if (mb.m_baseRoot)
     {
-      sailArea = mb.m_baseRoot.GetShipSailArea();
+      sailArea = mb.m_baseRoot.GetSailingForce();
     }
 
     /*
@@ -408,7 +409,7 @@ public class ValheimRAFT_Patch
         break;
     }
 
-    if (mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored))
+    if (mb.m_flags.HasFlag(MovableBaseShipComponent.MBFlags.IsAnchored))
     {
       sailArea = 0f;
     }
@@ -482,7 +483,7 @@ public class ValheimRAFT_Patch
   private static void ZDOLoaded(ZDO zdo)
   {
     ZDOPersistantID.Instance.Register(zdo);
-    MoveableBaseRootComponent.InitZDO(zdo);
+    MovableBaseRootComponent.InitZDO(zdo);
   }
 
   [HarmonyPatch(typeof(ZDO), "Reset")]
@@ -494,7 +495,7 @@ public class ValheimRAFT_Patch
 
   public static void ZDOUnload(ZDO zdo)
   {
-    MoveableBaseRootComponent.RemoveZDO(zdo);
+    MovableBaseRootComponent.RemoveZDO(zdo);
     ZDOPersistantID.Instance.Unregister(zdo);
   }
 
@@ -513,7 +514,7 @@ public class ValheimRAFT_Patch
   {
     if (__instance.m_zdo != null)
     {
-      MoveableBaseRootComponent.InitPiece(__instance);
+      MovableBaseRootComponent.InitPiece(__instance);
       CultivatableComponent.InitPiece(__instance);
     }
   }
@@ -522,7 +523,7 @@ public class ValheimRAFT_Patch
   [HarmonyPrefix]
   private static bool ZNetView_OnDestroy(ZNetView __instance)
   {
-    var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
+    var mbr = __instance.GetComponentInParent<MovableBaseRootComponent>();
     if ((bool)mbr)
     {
       mbr.RemovePiece(__instance);
@@ -544,7 +545,7 @@ public class ValheimRAFT_Patch
   [HarmonyPrefix]
   private static bool WearNTear_Destroy(WearNTear __instance)
   {
-    var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
+    var mbr = __instance.GetComponentInParent<MovableBaseRootComponent>();
     if ((bool)mbr)
       // Logger.LogError("WearNTear_Destroy called on MoveableBaseRoot skipping");
       mbr.DestroyPiece(__instance);
@@ -556,7 +557,7 @@ public class ValheimRAFT_Patch
   [HarmonyPrefix]
   private static bool WearNTear_ApplyDamage(WearNTear __instance, float damage)
   {
-    return !__instance.GetComponent<MoveableBaseShipComponent>();
+    return !__instance.GetComponent<MovableBaseShipComponent>();
   }
 
   [HarmonyPatch(typeof(WearNTear), "UpdateSupport")]
@@ -571,18 +572,19 @@ public class ValheimRAFT_Patch
       if (list[i].Calls(AccessTools.PropertyGetter(typeof(Collider), "attachedRigidbody")))
       {
         list[i] = new CodeInstruction(OpCodes.Call,
-          AccessTools.Method(typeof(ValheimRAFT_Patch), "AttachRigidbodyMoveableBase"));
+          AccessTools.Method(typeof(ValheimRAFT_Patch), "AttachRigidbodyMovableBase"));
         break;
       }
 
     return list;
   }
 
-  private static Rigidbody AttachRigidbodyMoveableBase(Collider collider)
+  [UsedImplicitly]
+  private static Rigidbody AttachRigidbodyMovableBase(Collider collider)
   {
     var rb = collider.attachedRigidbody;
     if (!rb) return null;
-    var mbr = rb.GetComponent<MoveableBaseRootComponent>();
+    var mbr = rb.GetComponent<MovableBaseRootComponent>();
     if ((bool)mbr) return null;
     return rb;
   }
@@ -609,7 +611,7 @@ public class ValheimRAFT_Patch
   {
     var rot = Quaternion.Euler(x, y, z);
     if (!m_lastRayPiece) return rot;
-    var mbr = m_lastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
+    var mbr = m_lastRayPiece.GetComponentInParent<MovableBaseRootComponent>();
     if (!mbr) return rot;
     return mbr.transform.rotation * rot;
   }
@@ -624,9 +626,9 @@ public class ValheimRAFT_Patch
       __result = __instance.m_lastGroundBody.GetComponent<Ship>();
       if (!__result)
       {
-        var mb = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
-        if ((bool)mb && (bool)mb.m_moveableBaseShip)
-          __result = mb.m_moveableBaseShip.GetComponent<Ship>();
+        var mb = __instance.m_lastGroundBody.GetComponentInParent<MovableBaseRootComponent>();
+        if ((bool)mb && (bool)mb.m_movableBaseShip)
+          __result = mb.m_movableBaseShip.GetComponent<Ship>();
       }
 
       return false;
@@ -646,10 +648,10 @@ public class ValheimRAFT_Patch
       return;
     }
 
-    MoveableBaseRootComponent mbr = null;
+    MovableBaseRootComponent mbr = null;
     if ((bool)__instance.m_lastGroundBody)
     {
-      mbr = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
+      mbr = __instance.m_lastGroundBody.GetComponentInParent<MovableBaseRootComponent>();
       if ((bool)mbr && __instance.transform.parent != mbr.transform)
         __instance.transform.SetParent(mbr.transform);
     }
@@ -691,7 +693,7 @@ public class ValheimRAFT_Patch
       if ((bool)cul) cul.AddNewChild(netview);
     }
 
-    var mb = m_lastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
+    var mb = m_lastRayPiece.GetComponentInParent<MovableBaseRootComponent>();
     if ((bool)mb)
     {
       if ((bool)netview)
@@ -722,7 +724,7 @@ public class ValheimRAFT_Patch
     bool water)
   {
     var layerMask = __instance.m_placeRayMask;
-    var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
+    var mbr = __instance.GetComponentInParent<MovableBaseRootComponent>();
     if ((bool)mbr)
     {
       var localPos = mbr.transform.InverseTransformPoint(__instance.transform.position);
@@ -733,7 +735,7 @@ public class ValheimRAFT_Patch
       var end = mbr.transform.rotation * localDir * Vector3.forward;
       if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) && (bool)hitInfo.collider)
       {
-        var mbrTarget = hitInfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
+        var mbrTarget = hitInfo.collider.GetComponentInParent<MovableBaseRootComponent>();
         if ((bool)mbrTarget)
         {
           point = hitInfo.point;
@@ -756,7 +758,7 @@ public class ValheimRAFT_Patch
   {
     if ((bool)((Character)__instance).m_lastGroundCollider &&
         ((Character)__instance).m_lastGroundTouch < 0.3f)
-      MoveableBaseRootComponent.AddDynamicParent(((Character)__instance).m_nview,
+      MovableBaseRootComponent.AddDynamicParent(((Character)__instance).m_nview,
         ((Character)__instance).m_lastGroundCollider.gameObject);
   }
 
@@ -774,7 +776,7 @@ public class ValheimRAFT_Patch
   private static bool UpdateSupport(WearNTear __instance)
   {
     if (!__instance.isActiveAndEnabled) return false;
-    var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
+    var mbr = __instance.GetComponentInParent<MovableBaseRootComponent>();
     if (!mbr) return true;
     if (__instance.transform.localPosition.y < 1f)
     {
@@ -815,7 +817,7 @@ public class ValheimRAFT_Patch
         if (raycastHit.collider.GetComponent<Hoverable>() != null)
           hover = raycastHit.collider.gameObject;
         else if ((bool)raycastHit.collider.attachedRigidbody && !raycastHit.collider
-                   .attachedRigidbody.GetComponent<MoveableBaseRootComponent>())
+                   .attachedRigidbody.GetComponent<MovableBaseRootComponent>())
           hover = raycastHit.collider.attachedRigidbody.gameObject;
         else
           hover = raycastHit.collider.gameObject;
@@ -898,7 +900,7 @@ public class ValheimRAFT_Patch
         if (__instance.m_doodadController is ShipControlls shipControlls &&
             (bool)shipControlls.m_ship)
         {
-          var mb = shipControlls.m_ship.GetComponent<MoveableBaseShipComponent>();
+          var mb = shipControlls.m_ship.GetComponent<MovableBaseShipComponent>();
           if ((bool)mb)
           {
             if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
@@ -906,8 +908,8 @@ public class ValheimRAFT_Patch
             else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
               mb.Descent();
             else if (ZInput.GetButtonDown("Run") || ZInput.GetButtonDown("JoyRun"))
-              mb.SetAnchor(!mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored));
-            else if (mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored) &&
+              mb.SetAnchor(!mb.m_flags.HasFlag(MovableBaseShipComponent.MBFlags.IsAnchored));
+            else if (mb.m_flags.HasFlag(MovableBaseShipComponent.MBFlags.IsAnchored) &&
                      movedir != Vector3.zero) mb.SetAnchor(false);
           }
         }
