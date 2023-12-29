@@ -38,6 +38,7 @@
         <Compile Include="ValheimRAFT\CustomTextureGroup.cs"/>
         <Compile Include="ValheimRAFT\DockComponent.cs"/>
         <Compile Include="ValheimRAFT\HideRaftConsoleCommand.cs"/>
+        <Compile Include="ValheimRAFT\MaterialWeight.cs"/>
         <Compile Include="ValheimRAFT\MovableBaseZone.cs"/>
         <Compile Include="ValheimRAFT\PrefabController.cs"/>
         <Compile Include="ValheimRAFT\ShipStats.cs"/>

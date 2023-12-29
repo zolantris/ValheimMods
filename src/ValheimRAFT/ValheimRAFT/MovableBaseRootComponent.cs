@@ -56,8 +56,9 @@ public class MovableBaseRootComponent : MonoBehaviour
   internal List<BoardingRampComponent> m_boardingRamps = new();
 
   internal float ShipContainerMass = 0f;
-  internal float ShipMass { get; set; }
-  internal float TotalMass = 0f;
+  internal float ShipMass = 0f;
+
+  internal float TotalMass => ShipContainerMass + ShipMass;
 
   /*
    * sail calcs
@@ -66,28 +67,20 @@ public class MovableBaseRootComponent : MonoBehaviour
   public int numberOfTier2Sails = 0;
   public int numberOfTier3Sails = 0;
   public float customSailsArea = 0f;
-  public float totalSailArea = 0f;
-  /* end sail calcs  */
 
+  public float totalSailArea = 0f;
+
+/* end sail calcs  */
   private Vector2i m_sector;
   private Vector2i m_serverSector;
-
   private Bounds m_bounds = default;
-
   internal BoxCollider m_blockingcollider;
-
   internal BoxCollider m_floatcollider;
-
   internal BoxCollider m_onboardcollider;
-
   internal int m_id;
-
   public bool m_statsOverride;
-
   private static bool itemsRemovedDuringWait;
-
   internal Coroutine pendingPiecesCoroutine;
-
   private Coroutine server_UpdatePiecesCoroutine;
 
   public void Awake()
@@ -147,9 +140,9 @@ public class MovableBaseRootComponent : MonoBehaviour
     Sync();
   }
 
-  /*
-   * @important, server does not have access to lifecycle methods so a coroutine is required to update things
-   */
+/*
+ * @important, server does not have access to lifecycle methods so a coroutine is required to update things
+ */
   public void LateUpdate()
   {
     Sync();
@@ -236,16 +229,16 @@ public class MovableBaseRootComponent : MonoBehaviour
     yield return null;
   }
 
-  /*
-   * This method IS important, but it also seems heavily related to causing the raft to disappear if it fails.
-   *
-   * - Apparently to get this working this method must also fire on the client & on server.
-   *
-   * - This method must fire when a zone loads, otherwise the items will be in a box position until they are renders.
-   * - For larger ships, this can take up to 20 seconds. Yikes.
-   *
-   * Outside of this problem, this script repeatedly calls (but stays on a separate thread) which may be related to fps drop.
-   */
+/*
+ * This method IS important, but it also seems heavily related to causing the raft to disappear if it fails.
+ *
+ * - Apparently to get this working this method must also fire on the client & on server.
+ *
+ * - This method must fire when a zone loads, otherwise the items will be in a box position until they are renders.
+ * - For larger ships, this can take up to 20 seconds. Yikes.
+ *
+ * Outside of this problem, this script repeatedly calls (but stays on a separate thread) which may be related to fps drop.
+ */
   public IEnumerator UpdatePiecesInEachSectorWorker()
   {
     while (true)
@@ -292,9 +285,9 @@ public class MovableBaseRootComponent : MonoBehaviour
     if ((bool)wnt) wnt.enabled = false;
   }
 
-  /*
-   * deltaMass can be positive or negative number
-   */
+/*
+ * deltaMass can be positive or negative number
+ */
   public void UpdateMass(ZNetView netView, bool isRemoving = false)
   {
     var piece = netView.GetComponent<Piece>();
@@ -308,14 +301,12 @@ public class MovableBaseRootComponent : MonoBehaviour
 
     if (isRemoving)
     {
-      TotalMass -= pieceWeight;
+      ShipMass -= pieceWeight;
     }
     else
     {
-      TotalMass += pieceWeight;
+      ShipMass += pieceWeight;
     }
-
-    ShipMass = TotalMass - ShipContainerMass;
 
     m_rigidbody.mass = TotalMass;
     m_syncRigidbody.mass = TotalMass;
@@ -363,35 +354,51 @@ public class MovableBaseRootComponent : MonoBehaviour
   {
   }
 
-  /*
-   * Material weight per 2x2 IE wood_floor stone_floor black_marble floor
+  /**
+   * this will recalculate only when the ship speed changes.
    */
-  class MaterialWeight
+  public void ComputeAllShipContainerItemWeight()
   {
-    public const float BlackMarble = 8f; // 2f black marble + 4 cost
-    public const float Stone = 12f; // 2f stone + 6 cost
-    public const float Wood = 4f; // 2f wood + 2 cost
+    if (!ValheimRaftPlugin.Instance.HasShipContainerWeightCalculations.Value &&
+        ShipContainerMass != 0f)
+    {
+      ShipContainerMass = 0f;
+      return;
+    }
+
+    var containers = GetComponentsInChildren<Container>();
+    foreach (var container in containers)
+    {
+      ComputeContainerWeight(container);
+    }
   }
 
-  private float ComputeContainerWeight(Container container)
+
+  private void ComputeContainerWeight(Container container, bool isRemoving = false)
   {
     var inventory = container.GetInventory();
     if (inventory != null)
     {
-      var inventoryTotalWeight = inventory.GetTotalWeight();
-      return inventoryTotalWeight;
+      var containerWeight = inventory.GetTotalWeight();
+      if (isRemoving)
+      {
+        ShipContainerMass -= containerWeight;
+      }
+      else
+      {
+        ShipContainerMass += containerWeight;
+      }
     }
-
-    Logger.LogWarning(
-      "ComputeContainerWeight could not get inventory from container, ship weight calculations could be off, using fallback weight 2f");
-
-    // fallback weight 2f;
-    return 2f;
+    else
+    {
+      Logger.LogWarning(
+        "ComputeContainerWeight could not get inventory from container, ship weight calculations could be off, using fallback weight 2f");
+    }
   }
 
-  /*
-   * this function must be used on additional and removal of items to avoid retaining item weight
-   */
+/*
+ * this function must be used on additional and removal of items to avoid retaining item weight
+ */
   private float ComputePieceWeight(Piece piece, bool isRemoving)
   {
     var pieceName = piece.name;
@@ -403,19 +410,8 @@ public class MovableBaseRootComponent : MonoBehaviour
       var container = piece.GetComponent<Container>();
       if (container != null)
       {
-        var containerWeight = ComputeContainerWeight(container);
-
-        // todo to cleanup nested mass updaters
-        if (isRemoving)
-        {
-          ShipContainerMass -= containerWeight;
-        }
-        else
-        {
-          ShipContainerMass += containerWeight;
-        }
-
-        return containerWeight;
+        ComputeContainerWeight(container, isRemoving);
+        return 0f;
       }
     }
 

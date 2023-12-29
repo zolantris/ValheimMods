@@ -58,9 +58,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> SpeedCapMultiplier { get; set; }
 
   // for those that want to cruise with rudder
-  public ConfigEntry<bool> AllowRudderSpeed { get; set; }
-  public ConfigEntry<float> RudderSpeed2 { get; set; }
-  public ConfigEntry<float> RudderSpeed3 { get; set; }
+  // public ConfigEntry<bool> AllowRudderSpeed { get; set; }
+  // public ConfigEntry<float> RudderSpeed2 { get; set; }
+  // public ConfigEntry<float> RudderSpeed3 { get; set; }
   public ConfigEntry<float> SailTier1Area { get; set; }
   public ConfigEntry<float> SailTier2Area { get; set; }
   public ConfigEntry<float> SailTier3Area { get; set; }
@@ -113,15 +113,15 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         "Sets the speed at which it becomes significantly harder to gain speed per sail area",
         true));
 
-    RudderSpeed2 = Config.Bind("Propulsion", "RudderSpeed2", 5f,
-      CreateConfigDescription(
-        "Max speed at rudder speed 2.", true));
-    RudderSpeed3 = Config.Bind("Propulsion", "RudderSpeed3", 10f,
-      CreateConfigDescription(
-        "", true));
-    AllowRudderSpeed = Config.Bind("Propulsion", "AllowRudderSpeed", true,
-      CreateConfigDescription(
-        "", true));
+    // RudderSpeed2 = Config.Bind("Propulsion", "RudderSpeed2", 5f,
+    //   CreateConfigDescription(
+    //     "Max speed at rudder speed 2.", true));
+    // RudderSpeed3 = Config.Bind("Propulsion", "RudderSpeed3", 10f,
+    //   CreateConfigDescription(
+    //     "", true));
+    // AllowRudderSpeed = Config.Bind("Propulsion", "AllowRudderSpeed", true,
+    //   CreateConfigDescription(
+    //     "", true));
 
     HasShipWeightCalculations = Config.Bind("Propulsion", "HasShipWeightCalculations", true,
       CreateConfigDescription(

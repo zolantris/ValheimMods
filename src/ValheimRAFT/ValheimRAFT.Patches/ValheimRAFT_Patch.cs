@@ -34,6 +34,12 @@ public class ValheimRAFT_Patch
   {
     if (character == Player.m_localPlayer)
     {
+      var baseRoot = __instance.GetComponentInParent<MovableBaseRootComponent>();
+      if (baseRoot != null)
+      {
+        baseRoot.ComputeAllShipContainerItemWeight();
+      }
+
       m_lastUsedControls = __instance;
       __instance.m_ship.m_controlGuiPos.position = __instance.transform.position;
     }
@@ -54,14 +60,15 @@ public class ValheimRAFT_Patch
     if (ValheimRaftPlugin.Instance.ShowShipStats.Value)
     {
       var shipMassToPush = ValheimRaftPlugin.Instance.MassPercentageFactor.Value;
-      shipStatsText += $"\nshipMass: {baseRoot.TotalMass}";
       shipStatsText += $"\nsailArea: {baseRoot.GetTotalSailArea()}";
-      shipStatsText +=
-        $"\nshipMassToPush: massToPush * totalMass -> {shipMassToPush}% * {baseRoot.TotalMass} = {baseRoot.TotalMass * shipMassToPush / 100f}";
-      shipStatsText += $"\nshipSailingForce: {baseRoot.GetSailingForce()}";
-      shipStatsText += $"\nshipContainerMass: {baseRoot.ShipContainerMass}";
+      shipStatsText += $"\ntotalMass: {baseRoot.TotalMass}";
       shipStatsText +=
         $"\nshipMass(no-containers): {baseRoot.ShipMass}";
+      shipStatsText += $"\nshipContainerMass: {baseRoot.ShipContainerMass}";
+      shipStatsText +=
+        $"\ntotalMassToPush: massToPush * totalMass -> {shipMassToPush}% * {baseRoot.TotalMass} = {baseRoot.TotalMass * shipMassToPush / 100f}";
+      shipStatsText +=
+        $"\nshipSailingForce (calculated sailArea and total mass): {baseRoot.GetSailingForce()}";
 
       // final formatting
       shipStatsText = $"<color=white>{shipStatsText}</color>";
