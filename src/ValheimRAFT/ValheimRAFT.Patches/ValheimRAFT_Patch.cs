@@ -48,10 +48,16 @@ public class ValheimRAFT_Patch
       return true;
     }
 
-    __result = Localization.instance.Localize(
-      baseRoot.m_moveableBaseShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored)
-        ? "<color=yellow><b>$mb_rudder_use</b></color><color=white>$mb_anchor_enabled</color>"
-        : "<color=yellow><b>$mb_rudder_use</b></color><color=white>$mb_anchor_disabled</color>");
+    var isAnchored =
+      baseRoot.m_moveableBaseShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored);
+    var anchoredStatus = isAnchored ? "[<color=red><b>$mb_rudder_use_anchored</b></color>]" : "";
+    var anchorText =
+      isAnchored
+        ? "$mb_rudder_use_anchor_disable_detail"
+        : "$mb_rudder_use_anchor_enable_detail";
+    __result =
+      Localization.instance.Localize(
+        $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$mb_rudder_use</b></color> {anchoredStatus}\n[<color=yellow><b>LShift</b></color>] <color=white>{anchorText}</color>");
 
     return false;
   }

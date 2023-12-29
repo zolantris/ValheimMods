@@ -54,8 +54,6 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   private int m_logoRotationHash = "m_logoRotation".GetStableHashCode();
   private int m_logoOffsetHash = "m_logoOffset".GetStableHashCode();
   private int m_sailFlagsHash = "m_sailFlagsHash".GetStableHashCode();
-  private int m_sailOriginalRotationHash = "m_sailOriginalRotation".GetStableHashCode();
-  private Quaternion m_sailOriginalRotation;
 
   private MastComponent m_mastComponent;
 
@@ -179,11 +177,6 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
           break;
         case SailFlags.AllowSailRotation:
           m_mastComponent.m_allowSailRotation = allow;
-          if (allow == false)
-          {
-            m_mastComponent.transform.localRotation = m_sailOriginalRotation;
-          }
-
           break;
         case SailFlags.AllowSailShrinking:
           m_mastComponent.m_allowSailShrinking = allow;
@@ -259,18 +252,6 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     if (!m_nview || m_nview.m_zdo == null) return;
     var zdo = m_nview.m_zdo;
-
-    var fallbackRotation = new Quaternion();
-    var savedRotation = zdo.GetQuaternion(m_sailOriginalRotationHash, fallbackRotation);
-
-    if (savedRotation == fallbackRotation)
-    {
-      zdo.Set(m_sailOriginalRotationHash, m_mastComponent.transform.localRotation);
-    }
-    else
-    {
-      m_sailOriginalRotation = savedRotation;
-    }
 
     var meshUpdateRequired = false;
     var coefficientUpdateRequired = false;
@@ -947,7 +928,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public string GetHoverText()
   {
-    return Localization.instance.Localize("[<color=yellow><b>$KEY_Use</b></color>] $mb_sail_edit");
+    return Localization.instance.Localize(
+      $"[<color=yellow><b>$KEY_Use</b></color>] $mb_sail_edit \narea ({Math.Round(m_sailArea)})");
   }
 
   public bool Interact(Humanoid user, bool hold, bool alt)

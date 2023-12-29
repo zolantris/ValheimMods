@@ -254,12 +254,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    */
   private void InitLocalization()
   {
-    localization = LocalizationManager.Instance.GetLocalization();
-    localization.AddTranslation("English", new Dictionary<string, string>
-    {
-      { "mb_anchor_disabled", "\\n(anchored)\\nLShift to remove Anchor while steering" },
-      { "mb_anchor_enabled", "\\nLShift to Anchor" }
-    });
+    // localization = LocalizationManager.Instance.GetLocalization();
+    // localization.AddTranslation("English", new Dictionary<string, string>
+    // {
+    //   { "mb_anchor_disabled", "\\n(anchored)\\nLShift to remove Anchor while steering" },
+    //   { "mb_anchor_enabled", "\\nLShift to Anchor" }
+    // });
   }
 
   public void Awake()
