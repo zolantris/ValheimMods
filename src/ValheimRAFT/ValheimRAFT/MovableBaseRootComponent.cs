@@ -38,6 +38,8 @@ public class MovableBaseRootComponent : MonoBehaviour
 
   internal MovableBaseShipComponent m_movableBaseShip;
 
+  public MovableBaseRootComponent instance;
+
   internal Rigidbody m_rigidbody;
 
   internal ZNetView m_nview;
@@ -59,7 +61,9 @@ public class MovableBaseRootComponent : MonoBehaviour
 
   internal List<BoardingRampComponent> m_boardingRamps = new();
 
-  internal float totalMass = 0f;
+  internal float ShipContainerMass = 0f;
+  internal float ShipMass { get; set; }
+  internal float TotalMass = 0f;
 
   /*
    * sail calcs
@@ -94,6 +98,7 @@ public class MovableBaseRootComponent : MonoBehaviour
 
   public void Awake()
   {
+    instance = this;
     m_rigidbody = gameObject.AddComponent<Rigidbody>();
     m_rigidbody.isKinematic = true;
     m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
@@ -109,6 +114,7 @@ public class MovableBaseRootComponent : MonoBehaviour
 
   public void CleanUp()
   {
+    Logger.LogDebug("CleanupCalled which stops ActivatePendingPieces");
     StopCoroutine("ActivatePendingPieces");
     if (!ZNetScene.instance || m_id == 0) return;
 
@@ -273,29 +279,54 @@ public class MovableBaseRootComponent : MonoBehaviour
            m_blockingcollider.size.y / 2f;
   }
 
-  public static void AddInactivePiece(int id, ZNetView netview)
+  public static void AddInactivePiece(int id, ZNetView netView)
   {
+    Logger.LogDebug($"addInactivePiece called with {id} for {netView.name}");
     if (!m_pendingPieces.TryGetValue(id, out var list))
     {
       list = new List<ZNetView>();
       m_pendingPieces.Add(id, list);
     }
 
-    list.Add(netview);
-    var wnt = netview.GetComponent<WearNTear>();
+    list.Add(netView);
+    var wnt = netView.GetComponent<WearNTear>();
     if ((bool)wnt) wnt.enabled = false;
+  }
+
+  /*
+   * deltaMass can be positive or negative number
+   */
+  public void UpdateMass(ZNetView netView, bool isRemoving = false)
+  {
+    var piece = netView.GetComponent<Piece>();
+    if (piece == null)
+    {
+      Logger.LogWarning(
+        "unable to fetch piece data from netViewPiece this could be a raft piece erroring.");
+    }
+
+    var pieceWeight = ComputePieceWeight(piece, isRemoving);
+
+    if (isRemoving)
+    {
+      TotalMass -= pieceWeight;
+    }
+    else
+    {
+      TotalMass += pieceWeight;
+    }
+
+    ShipMass = TotalMass - ShipContainerMass;
+
+    m_rigidbody.mass = TotalMass;
+    m_syncRigidbody.mass = TotalMass;
   }
 
   public void RemovePiece(ZNetView netview)
   {
     if (m_pieces.Remove(netview))
     {
-      var piece = netview.GetComponent<Piece>();
-      if ((bool)piece)
-      {
-        var pieceWeight = ComputePieceWeight(piece);
-        totalMass -= pieceWeight;
-      }
+      UpdateMass(netview, true);
 
       var sail = netview.GetComponent<SailComponent>();
       if ((bool)sail)
@@ -343,17 +374,64 @@ public class MovableBaseRootComponent : MonoBehaviour
     public const float Wood = 4f; // 2f wood + 2 cost
   }
 
+  private float ComputeContainerWeight(Container container)
+  {
+    var inventory = container.GetInventory();
+    if (inventory != null)
+    {
+      var inventoryTotalWeight = inventory.GetTotalWeight();
+      return inventoryTotalWeight;
+    }
+
+    Logger.LogWarning(
+      "ComputeContainerWeight could not get inventory from container, ship weight calculations could be off, using fallback weight 2f");
+
+    // fallback weight 2f;
+    return 2f;
+  }
+
   /*
    * this function must be used on additional and removal of items to avoid retaining item weight
    */
-  private float ComputePieceWeight(Piece piece)
+  private float ComputePieceWeight(Piece piece, bool isRemoving)
   {
     var pieceName = piece.name;
+    Logger.LogDebug($"ComputePieceWeight: name {pieceName}");
+    Logger.LogDebug($"{piece.m_category}");
 
+    if (ValheimRaftPlugin.Instance.HasShipContainerWeightCalculations.Value)
+    {
+      var container = piece.GetComponent<Container>();
+      if (container != null)
+      {
+        var containerWeight = ComputeContainerWeight(container);
+
+        // todo to cleanup nested mass updaters
+        if (isRemoving)
+        {
+          ShipContainerMass -= containerWeight;
+        }
+        else
+        {
+          ShipContainerMass += containerWeight;
+        }
+
+        return containerWeight;
+      }
+    }
+
+    var baseMultiplier = 1f;
+    /*
+     * locally scaled pieces should have a mass multiplier.
+     *
+     * Could assume everything is a rectangular prism L*W*H
+     */
     if (piece.transform.localScale != new Vector3(1, 1, 1))
     {
+      baseMultiplier = piece.transform.localScale.x * piece.transform.localScale.y *
+                       piece.transform.localScale.z;
       Logger.LogDebug(
-        $"ValheimRAFT ComputeShipItemWeight() found piece that does not have a 1,1,1 local scale piece: {pieceName} scale: {piece.transform.localScale}");
+        $"ValheimRAFT ComputeShipItemWeight() found piece that does not have a 1,1,1 local scale piece: {pieceName} scale: {piece.transform.localScale}, the 3d localScale will be multiplied by the area of this vector instead of 1x1x1");
     }
 
     /*
@@ -361,17 +439,17 @@ public class MovableBaseRootComponent : MonoBehaviour
      */
     if (pieceName.Contains("wood"))
     {
-      return MaterialWeight.Wood;
+      return MaterialWeight.Wood * baseMultiplier;
     }
 
     if (pieceName.Contains("stone_"))
     {
-      return MaterialWeight.Stone;
+      return MaterialWeight.Stone * baseMultiplier;
     }
 
     if (pieceName.Contains("blackmarble"))
     {
-      return MaterialWeight.BlackMarble;
+      return MaterialWeight.BlackMarble * baseMultiplier;
     }
 
     // Stone ×20
@@ -380,11 +458,11 @@ public class MovableBaseRootComponent : MonoBehaviour
     // Fine wood ×20
     if (pieceName.Contains("blastfurnace"))
     {
-      return 20f;
+      return 20f * baseMultiplier;
     }
 
     // default return is the weight of wood 1x1
-    return 2f;
+    return 2f * baseMultiplier;
   }
 
 
@@ -413,6 +491,8 @@ public class MovableBaseRootComponent : MonoBehaviour
 
   public void ActivatePendingPiecesCoroutine()
   {
+    Logger.LogDebug(
+      $"Called activePendingPiecesCoroutine, pendingPieces count: {m_pendingPieces.Count}");
     if (pendingPiecesCoroutine != null) StopCoroutine(pendingPiecesCoroutine);
 
     pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
@@ -442,7 +522,10 @@ public class MovableBaseRootComponent : MonoBehaviour
           ActivatePiece(obj);
           if (!ZNetScene.instance.InLoadingScreen() && stopwatch.ElapsedMilliseconds >= 10)
           {
+            Logger.LogDebug(
+              $"pendingPiece is not in loading state waiting until next frame piece: {obj.name}");
             yield return new WaitForEndOfFrame();
+            Logger.LogDebug($"made it to next frame piece:{obj.name}");
             stopwatch.Restart();
           }
         }
@@ -605,12 +688,12 @@ public class MovableBaseRootComponent : MonoBehaviour
     var speedCapMultiplier = ValheimRaftPlugin.Instance.SpeedCapMultiplier.Value;
 
     var sailForce = speedCapMultiplier * area /
-                    (totalMass / mpFactor);
+                    (TotalMass / mpFactor);
 
     if (ValheimRaftPlugin.Instance.HasDebugSails.Value)
     {
       Logger.LogDebug(
-        $"GetSailingForce() = speedCapMultiplier * area /(totalMass / mpFactor); {speedCapMultiplier} * ({area}/({totalMass}/{mpFactor})) = {sailForce}");
+        $"GetSailingForce() = speedCapMultiplier * area /(totalMass / mpFactor); {speedCapMultiplier} * ({area}/({TotalMass}/{mpFactor})) = {sailForce}");
     }
 
     return Math.Min(ValheimRaftPlugin.Instance.MaxSailSpeed.Value, sailForce);
@@ -703,7 +786,10 @@ public class MovableBaseRootComponent : MonoBehaviour
     if ((bool)parentObj)
     {
       var mb = parentObj.GetComponent<MovableBaseShipComponent>();
-      if ((bool)mb && (bool)mb.m_baseRoot) mb.m_baseRoot.ActivatePiece(netview);
+      if ((bool)mb && (bool)mb.m_baseRoot)
+      {
+        mb.m_baseRoot.ActivatePiece(netview);
+      }
     }
     else
     {
@@ -759,17 +845,8 @@ public class MovableBaseRootComponent : MonoBehaviour
   {
     totalSailArea = 0;
     m_pieces.Add(netView);
+    UpdateMass(netView);
 
-    var piece = netView.GetComponent<Piece>();
-    if (piece)
-    {
-      totalMass += ComputePieceWeight(netView.GetComponent<Piece>());
-    }
-    else
-    {
-      Logger.LogWarning(
-        "unable to fetch piece data from netViewPiece this could be a raft piece erroring.");
-    }
 
     m_movableBaseShip.GetShipStats().GetShipFloatation(m_pieces);
 

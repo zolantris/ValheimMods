@@ -49,6 +49,24 @@ public class ValheimRAFT_Patch
       return true;
     }
 
+    var shipStatsText = "";
+
+    if (ValheimRaftPlugin.Instance.ShowShipStats.Value)
+    {
+      var shipMassToPush = ValheimRaftPlugin.Instance.MassPercentageFactor.Value;
+      shipStatsText += $"\nshipMass: {baseRoot.TotalMass}";
+      shipStatsText += $"\nsailArea: {baseRoot.GetTotalSailArea()}";
+      shipStatsText +=
+        $"\nshipMassToPush: massToPush * totalMass -> {shipMassToPush} * {baseRoot.TotalMass} = {baseRoot.TotalMass * shipMassToPush}";
+      shipStatsText += $"\nshipSailingForce: {baseRoot.GetSailingForce()}";
+      shipStatsText += $"\nshipContainerMass: {baseRoot.ShipContainerMass}";
+      shipStatsText +=
+        $"\nshipMass(no-containers): {baseRoot.ShipMass}";
+
+      // final formatting
+      shipStatsText = $"<color=white>{shipStatsText}</color>";
+    }
+
     var isAnchored =
       baseRoot.m_movableBaseShip.m_flags.HasFlag(MovableBaseShipComponent.MBFlags.IsAnchored);
     var anchoredStatus = isAnchored ? "[<color=red><b>$mb_rudder_use_anchored</b></color>]" : "";
@@ -58,7 +76,7 @@ public class ValheimRAFT_Patch
         : "$mb_rudder_use_anchor_enable_detail";
     __result =
       Localization.instance.Localize(
-        $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$mb_rudder_use</b></color> {anchoredStatus}\n[<color=yellow><b>LShift</b></color>] <color=white>{anchorText}</color>");
+        $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$mb_rudder_use</b></color> {anchoredStatus}\n[<color=yellow><b>LShift</b></color>] <color=white>{anchorText}</color> {shipStatsText}");
 
     return false;
   }
@@ -171,6 +189,12 @@ public class ValheimRAFT_Patch
     }
   }
 
+  private static Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity)
+  {
+    var zeroVelocity = Vector3.zero;
+    return Vector3.SmoothDamp(currentVelocity, Vector3.zero, ref zeroVelocity, 5f);
+  }
+
   [HarmonyPatch(typeof(Ship), "CustomFixedUpdate")]
   [HarmonyPrefix]
   private static bool Ship_FixedUpdate(Ship __instance)
@@ -257,11 +281,12 @@ public class ValheimRAFT_Patch
       if (__instance.m_players.Count == 0 ||
           mb.m_flags.HasFlag(MovableBaseShipComponent.MBFlags.IsAnchored))
       {
-        var anchoredVelocity = 0.0f;
-        velocity.x = anchoredVelocity;
-        velocity.z = anchoredVelocity;
-        // WIP to see if this makes the ship still
-        velocity.y = anchoredVelocity;
+        var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
+        velocity = anchoredVelocity;
+        // velocity.x = anchoredVelocity;
+        // velocity.z = anchoredVelocity;
+        // // WIP to see if this makes the ship still
+        // velocity.y = anchoredVelocity;
       }
 
       __instance.m_body.velocity = velocity;
@@ -686,28 +711,20 @@ public class ValheimRAFT_Patch
     if (!piece) return;
     var rb = piece.GetComponentInChildren<Rigidbody>();
     if (((bool)rb && !rb.isKinematic) || !m_lastRayPiece) return;
-    var netview = piece.GetComponent<ZNetView>();
-    if ((bool)netview)
+    var netView = piece.GetComponent<ZNetView>();
+    if ((bool)netView)
     {
       var cul = m_lastRayPiece.GetComponent<CultivatableComponent>();
-      if ((bool)cul) cul.AddNewChild(netview);
+      if ((bool)cul) cul.AddNewChild(netView);
     }
 
     var mb = m_lastRayPiece.GetComponentInParent<MovableBaseRootComponent>();
     if ((bool)mb)
     {
-      if ((bool)netview)
+      if ((bool)netView)
       {
-        /*
-         * viking mast is very small when it should be larger
-         */
-        if (gameObject.name == "MBVikingShipMast(Clone)")
-        {
-          // gameObject.transform.localScale = new Vector3(2.2f, 2.2f, 2.2f);
-        }
-
         Logger.LogDebug($"adding new piece {piece.name} {gameObject.name}");
-        mb.AddNewPiece(netview);
+        mb.AddNewPiece(netView);
       }
       else
       {

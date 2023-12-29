@@ -69,6 +69,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> HasDebugSails { get; set; }
   public ConfigEntry<bool> HasShipWeightCalculations { get; set; }
   public ConfigEntry<float> MassPercentageFactor { get; set; }
+  public ConfigEntry<bool> ShowShipStats { get; set; }
+  public ConfigEntry<bool> HasShipContainerWeightCalculations { get; set; }
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -93,6 +95,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreatePropulsionConfig()
   {
+    ShowShipStats = Config.Bind("Debug", "ShowShipState", true);
     MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 25f,
       CreateConfigDescription(
         "Sets the absolute max speed a ship can ever hit. Prevents or enables space launches",
@@ -121,8 +124,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     HasShipWeightCalculations = Config.Bind("Propulsion", "HasShipWeightCalculations", true,
       CreateConfigDescription(
-        "enables ship weight calcs for sailforce and future propulsion, makes larger ships require more sails and smaller ships require less"));
+        "enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less"));
 
+    HasShipContainerWeightCalculations = Config.Bind("Propulsion", "HasShipWeightCalculations",
+      true,
+      CreateConfigDescription(
+        "enables ship weight calculations for containers which affects sail-force (sailing speed) and future propulsion calculations. Makes ships with lots of containers require more sails"));
 
     HasDebugSails = Config.Bind("Debug", "HasDebugSails", false,
       CreateConfigDescription(
