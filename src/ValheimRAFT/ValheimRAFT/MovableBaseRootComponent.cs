@@ -322,34 +322,34 @@ public class MovableBaseRootComponent : MonoBehaviour
     m_syncRigidbody.mass = TotalMass;
   }
 
-  public void RemovePiece(ZNetView netview)
+  public void RemovePiece(ZNetView netView)
   {
-    if (m_pieces.Remove(netview))
+    if (m_pieces.Remove(netView))
     {
-      UpdateMass(netview, true);
+      UpdateMass(netView, true);
 
-      var sail = netview.GetComponent<SailComponent>();
+      var sail = netView.GetComponent<SailComponent>();
       if ((bool)sail)
       {
         m_sailPiece.Remove(sail);
       }
 
-      var mast = netview.GetComponent<MastComponent>();
+      var mast = netView.GetComponent<MastComponent>();
       if ((bool)mast)
       {
         m_mastPieces.Remove(mast);
       }
 
-      var rudder = netview.GetComponent<RudderComponent>();
+      var rudder = netView.GetComponent<RudderComponent>();
       if ((bool)rudder) m_rudderPieces.Remove(rudder);
 
-      var ramp = netview.GetComponent<BoardingRampComponent>();
+      var ramp = netView.GetComponent<BoardingRampComponent>();
       if ((bool)ramp) m_boardingRamps.Remove(ramp);
 
-      var portal = netview.GetComponent<TeleportWorld>();
-      if ((bool)portal) m_portals.Remove(netview);
+      var portal = netView.GetComponent<TeleportWorld>();
+      if ((bool)portal) m_portals.Remove(netView);
 
-      var ladder = netview.GetComponent<RopeLadderComponent>();
+      var ladder = netView.GetComponent<RopeLadderComponent>();
       if ((bool)ladder)
       {
         m_ladders.Remove(ladder);

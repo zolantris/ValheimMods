@@ -192,7 +192,7 @@ public class ValheimRAFT_Patch
   private static Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity)
   {
     var zeroVelocity = Vector3.zero;
-    return Vector3.SmoothDamp(currentVelocity, Vector3.zero, ref zeroVelocity, 5f);
+    return Vector3.SmoothDamp(currentVelocity * 0.5f, Vector3.zero, ref zeroVelocity, 5f);
   }
 
   [HarmonyPatch(typeof(Ship), "CustomFixedUpdate")]
@@ -425,7 +425,7 @@ public class ValheimRAFT_Patch
         sailArea *= 0.5f;
         break;
       case Ship.Speed.Slow:
-        sailArea = Math.Min(0.5f, sailArea * 0.1f);
+        sailArea = Math.Min(0.1f, sailArea * 0.1f);
         break;
       case Ship.Speed.Stop:
       case Ship.Speed.Back:
