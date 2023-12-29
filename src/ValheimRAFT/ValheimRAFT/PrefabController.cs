@@ -32,6 +32,10 @@ public class PrefabController : MonoBehaviour
   private List<Piece> raftPrefabPieces = new();
   private bool prefabsEnabled = true;
 
+  public const string Tier1RaftMastName = "MBRaftMast";
+  public const string Tier2RaftMastName = "MBKarveMast";
+  public const string Tier3RaftMastName = "MBVikingShipMast";
+  public const string Tier1CustomSailName = "MBSail";
   private const string ValheimRaftMenuName = "Raft";
 
 
@@ -184,6 +188,7 @@ public class PrefabController : MonoBehaviour
 
   public void UpdatePrefabStatus(object obj, ConfigurationSynchronizationEventArgs e)
   {
+    UpdateRaftSailDescriptions();
     UpdatePrefabStatus();
   }
 
@@ -303,7 +308,7 @@ public class PrefabController : MonoBehaviour
     var vikingShipPrefab = prefabManager.GetPrefab("VikingShip");
     var vikingShipMast = vikingShipPrefab.transform.Find("ship/visual/Mast").gameObject;
 
-    var vikingShipMastPrefab = prefabManager.CreateClonedPrefab("MBVikingShipMast", vikingShipMast);
+    var vikingShipMastPrefab = prefabManager.CreateClonedPrefab(Tier3RaftMastName, vikingShipMast);
     var vikingShipMastPrefabPiece = vikingShipMastPrefab.AddComponent<Piece>();
     // The connector is off by a bit, translating downwards should help but it doesn't work for the vikingmast
     vikingShipMastPrefabPiece.transform.localScale = new Vector3(2f, 2f, 2f);
@@ -330,7 +335,7 @@ public class PrefabController : MonoBehaviour
     pieceManager.AddPiece(new CustomPiece(vikingShipMastPrefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
-      Description = $"$mb_vikingship_mast_desc\n{GetTieredSailAreaText(3)}",
+      Description = GetTieredSailAreaText(3),
       Icon = sprites.GetSprite("vikingmast"),
       Category = ValheimRaftMenuName,
       Enabled = true,
@@ -405,23 +410,35 @@ public class PrefabController : MonoBehaviour
     }));
   }
 
+  private void UpdateRaftSailDescriptions()
+  {
+    var tier1 = pieceManager.GetPiece(Tier1RaftMastName);
+    tier1.Piece.m_description = GetTieredSailAreaText(1);
+    var tier2 = pieceManager.GetPiece(Tier2RaftMastName);
+    tier2.Piece.m_description = GetTieredSailAreaText(2);
+    var tier3 = pieceManager.GetPiece(Tier3RaftMastName);
+    tier3.Piece.m_description = GetTieredSailAreaText(3);
+  }
+
   private string GetTieredSailAreaText(int tier)
   {
-    float tierValue = tier switch
+    string description = tier switch
     {
-      1 => ValheimRaftPlugin.Instance.SailTier1Area.Value,
-      2 => ValheimRaftPlugin.Instance.SailTier1Area.Value,
-      3 => ValheimRaftPlugin.Instance.SailTier1Area.Value,
-      4 => ValheimRaftPlugin.Instance.SailCustomAreaTier1Multiplier.Value,
-      _ => 0f
+      1 =>
+        $"$mb_raft_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{ValheimRaftPlugin.Instance.SailTier1Area.Value}</b></color>]",
+      2 =>
+        $"$mb_karve_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{ValheimRaftPlugin.Instance.SailTier2Area.Value}</b></color>]",
+      3 =>
+        $"$mb_vikingship_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{ValheimRaftPlugin.Instance.SailTier3Area.Value}</b></color>]",
+      _ => ""
     };
 
-    return $"\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{tierValue}</b></color>]";
+    return description;
   }
 
   private void RegisterRaftMast()
   {
-    var mbRaftMastPrefab = prefabManager.CreateClonedPrefab("MBRaftMast", raftMast);
+    var mbRaftMastPrefab = prefabManager.CreateClonedPrefab(Tier1RaftMastName, raftMast);
 
     var mbRaftMastPrefabPiece = mbRaftMastPrefab.AddComponent<Piece>();
     mbRaftMastPrefabPiece.m_name = "$mb_raft_mast";
@@ -445,7 +462,7 @@ public class PrefabController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description =
-        $"$mb_raft_mast_desc\n{GetTieredSailAreaText(1)}",
+        GetTieredSailAreaText(1),
       Icon = sprites.GetSprite("raftmast"),
       Category = ValheimRaftMenuName,
       Enabled = true,
@@ -471,7 +488,7 @@ public class PrefabController : MonoBehaviour
   {
     var karve = prefabManager.GetPrefab("Karve");
     var karveMast = karve.transform.Find("ship/mast").gameObject;
-    var mbKarveMastPrefab = prefabManager.CreateClonedPrefab("MBKarveMast", karveMast);
+    var mbKarveMastPrefab = prefabManager.CreateClonedPrefab(Tier2RaftMastName, karveMast);
 
     var mbKarveMastPiece = mbKarveMastPrefab.AddComponent<Piece>();
     mbKarveMastPiece.m_name = "$mb_karve_mast";
@@ -498,7 +515,7 @@ public class PrefabController : MonoBehaviour
     pieceManager.AddPiece(new CustomPiece(mbKarveMastPrefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
-      Description = $"$mb_karve_mast_desc\n{GetTieredSailAreaText(2)}",
+      Description = GetTieredSailAreaText(2),
       Icon = sprites.GetSprite("karvemast"),
       Category = ValheimRaftMenuName,
       Enabled = true,
@@ -680,7 +697,7 @@ public class PrefabController : MonoBehaviour
 
   private void RegisterCustomSail()
   {
-    var mbSailPrefab = prefabManager.CreateEmptyPrefab("MBSail");
+    var mbSailPrefab = prefabManager.CreateEmptyPrefab(Tier1CustomSailName);
     Destroy(mbSailPrefab.GetComponent<BoxCollider>());
     Destroy(mbSailPrefab.GetComponent<MeshFilter>());
 
