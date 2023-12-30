@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
-using JetBrains.Annotations;
 using UnityEngine;
 using ValheimRAFT.Util;
 using Logger = Jotunn.Logger;
@@ -219,6 +218,8 @@ public class ValheimRAFT_Patch
     mb.m_zsync.m_useGravity = mb.m_targetHeight == 0f;
 
     var flag = __instance.HaveControllingPlayer();
+    Logger.LogDebug($"Update with HaveControllingPlayer FLAG, {flag}");
+
     __instance.UpdateControlls(Time.fixedDeltaTime);
     __instance.UpdateSail(Time.fixedDeltaTime);
     __instance.UpdateRudder(Time.fixedDeltaTime, flag);
@@ -614,7 +615,6 @@ public class ValheimRAFT_Patch
     return list;
   }
 
-  [UsedImplicitly]
   private static Rigidbody AttachRigidbodyMovableBase(Collider collider)
   {
     var rb = collider.attachedRigidbody;
