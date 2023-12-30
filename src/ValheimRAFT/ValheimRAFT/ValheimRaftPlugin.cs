@@ -22,7 +22,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    * @note keeping this as Sarcen for now since there are low divergences from the original codebase and patches already mapped to sarcen's mod
    */
   public const string Author = "Sarcen";
-  private const string Version = "1.6.7";
+  private const string Version = "1.6.8";
   internal const string ModName = "ValheimRAFT";
   public const string BepInGuid = $"BepIn.{Author}.{ModName}";
   private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";

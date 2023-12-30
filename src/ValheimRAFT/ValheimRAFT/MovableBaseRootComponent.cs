@@ -391,11 +391,6 @@ public class MovableBaseRootComponent : MonoBehaviour
         ShipContainerMass += containerWeight;
       }
     }
-    else
-    {
-      Logger.LogWarning(
-        "ComputeContainerWeight could not get inventory from container, ship weight calculations could be off, using fallback weight 2f");
-    }
   }
 
 /*
