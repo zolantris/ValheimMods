@@ -10,7 +10,7 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>1.6.9</ApplicationVersion>
+        <ApplicationVersion>1.6.10</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -113,7 +113,7 @@
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
         <Exec Command="xcopy /d &quot;.\Assets&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
     </Target>
-    <Target Name="Copy_To_R2ModMan_vm" AfterTargets="Copy_To_R2ModMan">
+    <Target Name="Copy_To_R2ModMan_vm" Condition="Exists('$(SandboxiePluginDeployPath)\$(AssemblyName).dll')" AfterTargets="Copy_To_R2ModMan">
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>
         <Exec Command="xcopy /d &quot;.\Assets&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
