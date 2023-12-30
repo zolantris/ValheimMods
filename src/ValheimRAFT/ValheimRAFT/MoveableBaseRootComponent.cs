@@ -514,18 +514,6 @@ public class MoveableBaseRootComponent : MonoBehaviour
         if ((bool)obj)
         {
           ActivatePiece(obj);
-
-          /* This code slows down all re-renders.
-           * @todo Removing in 1.6.9 and higher.
-           */
-          // if (!ZNetScene.instance.InLoadingScreen() && stopwatch.ElapsedMilliseconds >= 10)
-          // {
-          //   Logger.LogDebug(
-          //     $"pendingPiece is not in loading state waiting until next frame piece: {obj.name}");
-          //   yield return new WaitForEndOfFrame();
-          //   Logger.LogDebug($"made it to next frame piece:{obj.name}");
-          //   stopwatch.Restart();
-          // }
         }
         else
         {

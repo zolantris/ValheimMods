@@ -22,7 +22,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    * @note keeping this as Sarcen for now since there are low divergences from the original codebase and patches already mapped to sarcen's mod
    */
   public const string Author = "Sarcen";
-  private const string Version = "1.6.9";
+  private const string Version = "1.6.10";
   internal const string ModName = "ValheimRAFT";
   public const string BepInGuid = $"BepIn.{Author}.{ModName}";
   private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";
@@ -100,18 +100,18 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       CreateConfigDescription(
         "Sets the ramp to allow only the creator to trigger and edit or all players", true));
     ShowShipStats = Config.Bind("Debug", "ShowShipState", true);
-    MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 25f,
+    MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 18f,
       CreateConfigDescription(
         "Sets the absolute max speed a ship can ever hit. Prevents or enables space launches",
         true));
-    MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 15f,
+    MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 10f,
       CreateConfigDescription(
         "Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.",
         true));
-    MassPercentageFactor = Config.Bind("Propulsion", "MassPercentage", 33f, CreateConfigDescription(
+    MassPercentageFactor = Config.Bind("Propulsion", "MassPercentage", 55f, CreateConfigDescription(
       "Sets the mass percentage of the ship that will slow down the sails",
       true));
-    SpeedCapMultiplier = Config.Bind("Propulsion", "SpeedCapMultiplier", 2f,
+    SpeedCapMultiplier = Config.Bind("Propulsion", "SpeedCapMultiplier", 1f,
       CreateConfigDescription(
         "Sets the speed at which it becomes significantly harder to gain speed per sail area",
         true));
@@ -143,7 +143,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     EnableCustomPropulsionConfig = Config.Bind("Propulsion",
       "EnableCustomPropulsionConfig", SailAreaForce.HasPropulsionConfigOverride,
       CreateConfigDescription("Enables all custom propulsion values", false));
-    
+
     SailCustomAreaTier1Multiplier = Config.Bind("Propulsion",
       "SailCustomAreaTier1Multiplier", SailAreaForce.CustomTier1AreaForceMultiplier,
       CreateConfigDescription(
