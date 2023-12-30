@@ -156,7 +156,12 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   private void DestroySelfOnError()
   {
-    m_nview.m_zdo.Reset();
+    if ((bool)m_nview)
+    {
+      m_nview.m_zdo?.Reset();
+    }
+
+    CancelInvoke();
     Destroy(this);
   }
 

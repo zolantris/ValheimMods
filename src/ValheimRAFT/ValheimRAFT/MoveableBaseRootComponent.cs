@@ -293,7 +293,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     var piece = netView.GetComponent<Piece>();
     if (piece == null)
     {
-      Logger.LogWarning(
+      Logger.LogDebug(
         "unable to fetch piece data from netViewPiece this could be a raft piece erroring.");
     }
 
