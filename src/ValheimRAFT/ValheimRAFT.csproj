@@ -46,8 +46,8 @@
         <Compile Include="ValheimRAFT\ValheimRaftPlugin.cs"/>
         <Compile Include="ValheimRAFT\MastComponent.cs"/>
         <Compile Include="ValheimRAFT\MeshHelper.cs"/>
-        <Compile Include="ValheimRAFT\MoveableBaseRootComponent.cs" />
-        <Compile Include="ValheimRAFT\MoveableBaseShipComponent.cs" />
+        <Compile Include="ValheimRAFT\MoveableBaseRootComponent.cs"/>
+        <Compile Include="ValheimRAFT\MoveableBaseShipComponent.cs"/>
         <Compile Include="ValheimRAFT\MoveRaftConsoleCommand.cs"/>
         <Compile Include="ValheimRAFT\PierComponent.cs"/>
         <Compile Include="ValheimRAFT\RecoverRaftConsoleCommand.cs"/>
@@ -91,10 +91,13 @@
     </ItemGroup>
     <PropertyGroup>
         <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
-        <R2ModManPath>%HOMEPATH%\AppData\Roaming\r2modmanPlus-local</R2ModManPath>
+        <R2ModManPath>AppData\Roaming\r2modmanPlus-local</R2ModManPath>
         <R2ModManProfile>Valheim\profiles\valheim_mod_debugging</R2ModManProfile>
         <PluginDeployTarget>BepInEx\plugins\zolantris-ValheimRAFT</PluginDeployTarget>
-        <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
+        <PluginDeployPath>%HOMEPATH%\$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
+        <SandboxieVMPath>C:\Sandbox\fre\DefaultBox</SandboxieVMPath>
+        <SandboxieUserPath>$(SandboxieVMPath)\user\current</SandboxieUserPath>
+        <SandboxiePluginDeployPath>$(SandboxieUserPath)\$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</SandboxiePluginDeployPath>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' ">
         <OutputPath>bin\Debug ClientServer\</OutputPath>
@@ -110,6 +113,11 @@
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
         <Exec Command="xcopy /d &quot;.\Assets&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
     </Target>
+    <Target Name="Copy_To_R2ModMan_vm" AfterTargets="Copy_To_R2ModMan">
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>
+        <Exec Command="xcopy /d &quot;.\Assets&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
+    </Target>
     <Target KeepDuplicateOutputs="false" Name="Copy_To_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' " AfterTargets="PostBuildEvent">
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>
@@ -119,6 +127,7 @@
     </Target>
     <Target Name="Run_Valheim" Condition="'$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="Copy_To_R2ModMan">
         <Exec Command="wt.exe -w 2 --title ValheimClient &quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
+        <Exec Command="wt.exe -w 3 --title ValheimClient &quot;$(SandboxieVMPath)\drive\D\SteamLibrary\steamapps\common\Valheim\valheim.exe&quot; --doorstop-enable true --doorstop-target &quot;C:\Users\fre\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
     </Target>
     <Target Name="Generate_Mod_Archive" Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'" AfterTargets="PostBuildEvent">
         <PropertyGroup>
