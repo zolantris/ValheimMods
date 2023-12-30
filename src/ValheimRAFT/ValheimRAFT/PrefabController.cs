@@ -112,7 +112,7 @@ public class PrefabController : MonoBehaviour
   /**
    * experimental only to be used to create copies of boats.
    */
-  public void RegisterTestBoatPrefab(MovableBaseRootComponent mbroot)
+  public void RegisterTestBoatPrefab(MoveableBaseRootComponent mbroot)
   {
     var tbName = "MBTestBoat";
     var tb = prefabManager.GetPrefab(tbName);
@@ -128,7 +128,7 @@ public class PrefabController : MonoBehaviour
       prefabManager.CreateClonedPrefab(tbName, prefabManager.GetPrefab("MBRaft"));
 
 
-    var mbRaftPrefabPiece = mbRaftPrefab.AddComponentCopy(mbroot.m_movableBaseShip);
+    var mbRaftPrefabPiece = mbRaftPrefab.AddComponentCopy(mbroot.MMoveableBaseShip);
     AddNetViewWithPersistence(mbRaftPrefab);
     SetWearNTear(mbRaftPrefab);
     // mbRaftPrefab.AddComponentCopy(mbroot);

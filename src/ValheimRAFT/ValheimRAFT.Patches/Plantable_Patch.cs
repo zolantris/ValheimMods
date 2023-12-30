@@ -88,7 +88,7 @@ public class Plantable_Patch
   private static ZNetView PlantGrowth(GameObject newObject, Plant oldPlant)
   {
     ZNetView newPlantNetView = newObject.GetComponent<ZNetView>();
-    MovableBaseRootComponent mbr = oldPlant.GetComponentInParent<MovableBaseRootComponent>();
+    MoveableBaseRootComponent mbr = oldPlant.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)newPlantNetView && (bool)mbr)
     {
       mbr.AddNewPiece(newPlantNetView);

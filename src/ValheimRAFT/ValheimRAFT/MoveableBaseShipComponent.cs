@@ -6,7 +6,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
-public class MovableBaseShipComponent : MonoBehaviour
+public class MoveableBaseShipComponent : MonoBehaviour
 {
   [Flags]
   public enum MBFlags
@@ -16,7 +16,7 @@ public class MovableBaseShipComponent : MonoBehaviour
     HideMesh = 2
   }
 
-  internal MovableBaseRootComponent m_baseRoot;
+  internal MoveableBaseRootComponent m_baseRoot;
 
   internal Rigidbody m_rigidbody;
 
@@ -49,12 +49,12 @@ public class MovableBaseShipComponent : MonoBehaviour
       name = "MovableBase",
       layer = 0
     };
-    m_baseRoot = m_baseRootObject.AddComponent<MovableBaseRootComponent>();
+    m_baseRoot = m_baseRootObject.AddComponent<MoveableBaseRootComponent>();
     m_nview.Register("SetAnchor",
       delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
     m_nview.Register("SetVisual",
       delegate(long sender, bool state) { RPC_SetVisual(sender, state); });
-    m_baseRoot.m_movableBaseShip = this;
+    m_baseRoot.MMoveableBaseShip = this;
     m_baseRoot.m_nview = m_nview;
     m_baseRoot.m_ship = ship;
     m_baseRoot.m_id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);

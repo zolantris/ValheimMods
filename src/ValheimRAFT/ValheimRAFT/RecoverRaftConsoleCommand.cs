@@ -21,12 +21,12 @@ internal class RecoverRaftConsoleCommand : ConsoleCommand
     {
       ZNetView netview = collider.GetComponent<ZNetView>();
       if (!(netview != null) || netview.m_zdo == null ||
-          (bool)netview.GetComponentInParent<MovableBaseRootComponent>())
+          (bool)netview.GetComponentInParent<MoveableBaseRootComponent>())
       {
         continue;
       }
 
-      ZDOID zdoid2 = netview.m_zdo.GetZDOID(MovableBaseRootComponent.MBParentHash);
+      ZDOID zdoid2 = netview.m_zdo.GetZDOID(MoveableBaseRootComponent.MBParentHash);
       if (zdoid2 != ZDOID.None)
       {
         GameObject parentInstance = ZNetScene.instance.FindInstance(zdoid2);
@@ -44,7 +44,7 @@ internal class RecoverRaftConsoleCommand : ConsoleCommand
       else
       {
         Vector3 partOffset =
-          netview.m_zdo.GetVec3(MovableBaseRootComponent.MBPositionHash, Vector3.zero);
+          netview.m_zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash, Vector3.zero);
       }
     }
 
@@ -57,14 +57,14 @@ internal class RecoverRaftConsoleCommand : ConsoleCommand
         GameObject shipPrefab = ZNetScene.instance.GetPrefab("MBRaft");
         GameObject ship = Object.Instantiate(shipPrefab, list[0].transform.position,
           list[0].transform.rotation);
-        MovableBaseShipComponent mbship = ship.GetComponent<MovableBaseShipComponent>();
+        MoveableBaseShipComponent mbship = ship.GetComponent<MoveableBaseShipComponent>();
         foreach (ZNetView piece in list)
         {
           piece.transform.SetParent(mbship.m_baseRoot.transform);
           piece.transform.localPosition =
-            piece.m_zdo.GetVec3(MovableBaseRootComponent.MBPositionHash, Vector3.zero);
+            piece.m_zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash, Vector3.zero);
           piece.transform.localRotation =
-            piece.m_zdo.GetQuaternion(MovableBaseRootComponent.MBRotationHash, Quaternion.identity);
+            piece.m_zdo.GetQuaternion(MoveableBaseRootComponent.MBRotationHash, Quaternion.identity);
           mbship.m_baseRoot.AddNewPiece(piece);
         }
       }

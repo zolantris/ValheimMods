@@ -7,7 +7,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
-public class MovableBaseRootComponent : MonoBehaviour
+public class MoveableBaseRootComponent : MonoBehaviour
 {
   public static readonly KeyValuePair<int, int> MBParentHash = ZDO.GetHashZDOID("MBParent");
 
@@ -30,9 +30,9 @@ public class MovableBaseRootComponent : MonoBehaviour
   internal static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
 
-  internal MovableBaseShipComponent m_movableBaseShip;
+  internal MoveableBaseShipComponent MMoveableBaseShip;
 
-  public MovableBaseRootComponent instance;
+  public MoveableBaseRootComponent instance;
 
   internal Rigidbody m_rigidbody;
 
@@ -588,7 +588,7 @@ public class MovableBaseRootComponent : MonoBehaviour
 
   public static void AddDynamicParent(ZNetView source, GameObject target)
   {
-    var mbroot = target.GetComponentInParent<MovableBaseRootComponent>();
+    var mbroot = target.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbroot)
     {
       source.m_zdo.Set(MBCharacterParentHash, mbroot.m_id);
@@ -703,7 +703,7 @@ public class MovableBaseRootComponent : MonoBehaviour
 
   public static void AddDynamicParent(ZNetView source, GameObject target, Vector3 offset)
   {
-    var mbroot = target.GetComponentInParent<MovableBaseRootComponent>();
+    var mbroot = target.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbroot)
     {
       source.m_zdo.Set(MBCharacterParentHash, mbroot.m_id);
@@ -787,7 +787,7 @@ public class MovableBaseRootComponent : MonoBehaviour
     var parentObj = ZDOPersistantID.Instance.GetGameObject(id);
     if ((bool)parentObj)
     {
-      var mb = parentObj.GetComponent<MovableBaseShipComponent>();
+      var mb = parentObj.GetComponent<MoveableBaseShipComponent>();
       if ((bool)mb && (bool)mb.m_baseRoot)
       {
         mb.m_baseRoot.ActivatePiece(netview);
@@ -850,7 +850,7 @@ public class MovableBaseRootComponent : MonoBehaviour
     UpdateMass(netView);
 
 
-    m_movableBaseShip.GetShipStats().GetShipFloatation(m_pieces);
+    MMoveableBaseShip.GetShipStats().GetShipFloatation(m_pieces);
 
     UpdatePieceCount();
     EncapsulateBounds(netView);
@@ -888,7 +888,7 @@ public class MovableBaseRootComponent : MonoBehaviour
       if (!rudder.m_wheel) rudder.m_wheel = netView.transform.Find("controls/wheel");
 
       rudder.m_controls.m_nview = m_nview;
-      rudder.m_controls.m_ship = m_movableBaseShip.GetComponent<Ship>();
+      rudder.m_controls.m_ship = MMoveableBaseShip.GetComponent<Ship>();
       m_rudderPieces.Add(rudder);
     }
 

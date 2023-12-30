@@ -35,8 +35,8 @@ internal class HideRaftConsoleCommand : ConsoleCommand
           GameCamera.instance.transform.position, GameCamera.instance.transform.forward,
           out var hitinfo, 50f, LayerMask.GetMask("piece")))
     {
-      MovableBaseRootComponent mbr =
-        hitinfo.collider.GetComponentInParent<MovableBaseRootComponent>();
+      MoveableBaseRootComponent mbr =
+        hitinfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
       if ((bool)mbr)
       {
         HideRaft(player, mbr.m_ship, hide);
@@ -46,7 +46,7 @@ internal class HideRaftConsoleCommand : ConsoleCommand
 
   private static bool HideRaft(Player player, Ship ship, bool hide)
   {
-    MovableBaseShipComponent mb = ship.GetComponent<MovableBaseShipComponent>();
+    MoveableBaseShipComponent mb = ship.GetComponent<MoveableBaseShipComponent>();
     if ((bool)mb)
     {
       mb.SetVisual(hide);

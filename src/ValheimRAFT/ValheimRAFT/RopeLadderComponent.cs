@@ -13,7 +13,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
 
   public Transform m_attachPoint;
 
-  public MovableBaseRootComponent m_mbroot;
+  public MoveableBaseRootComponent m_mbroot;
 
   public float m_stepDistance = 0.5f;
 
@@ -137,9 +137,9 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
       }
     }
 
-    if ((bool)m_mbroot && (bool)m_mbroot.m_movableBaseShip &&
-        m_mbroot.m_movableBaseShip.m_targetHeight > 0f &&
-        !m_mbroot.m_movableBaseShip.m_flags.HasFlag(MovableBaseShipComponent.MBFlags.IsAnchored) &&
+    if ((bool)m_mbroot && (bool)m_mbroot.MMoveableBaseShip &&
+        m_mbroot.MMoveableBaseShip.m_targetHeight > 0f &&
+        !m_mbroot.MMoveableBaseShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored) &&
         hitpoint.y < m_mbroot.GetColliderBottom())
     {
       hitpoint.y = m_mbroot.GetColliderBottom();

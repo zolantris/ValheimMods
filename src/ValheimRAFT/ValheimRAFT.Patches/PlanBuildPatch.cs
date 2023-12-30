@@ -173,11 +173,11 @@ public class PlanBuildPatch
     foreach (Piece item4 in orderedEnumerable)
     {
       Vector3 pos;
-      var shipBase = item4.m_nview.GetComponentInParent<MovableBaseRootComponent>();
+      var shipBase = item4.m_nview.GetComponentInParent<MoveableBaseRootComponent>();
       if (shipBase)
       {
         Logger.LogDebug(
-          $"used ship calc for position {item4.m_nview.m_zdo.GetVec3(MovableBaseRootComponent.MBPositionHash, Vector3.zero)}");
+          $"used ship calc for position {item4.m_nview.m_zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash, Vector3.zero)}");
         pos = item4.m_nview.transform.localPosition;
       }
       else

@@ -22,7 +22,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    * @note keeping this as Sarcen for now since there are low divergences from the original codebase and patches already mapped to sarcen's mod
    */
   public const string Author = "Sarcen";
-  private const string Version = "1.6.8";
+  private const string Version = "1.6.9";
   internal const string ModName = "ValheimRAFT";
   public const string BepInGuid = $"BepIn.{Author}.{ModName}";
   private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";
@@ -70,6 +70,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> MassPercentageFactor { get; set; }
   public ConfigEntry<bool> ShowShipStats { get; set; }
   public ConfigEntry<bool> HasShipContainerWeightCalculations { get; set; }
+  public ConfigEntry<bool> AllowAllPlayersToControlBoatRamp { get; set; }
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -94,6 +95,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreatePropulsionConfig()
   {
+    AllowAllPlayersToControlBoatRamp = Config.Bind("Config", "AllowAllPlayersToControlBoatRamp",
+      true,
+      CreateConfigDescription(
+        "Sets the ramp to allow only the creator to trigger and edit or all players", true));
     ShowShipStats = Config.Bind("Debug", "ShowShipState", true);
     MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 25f,
       CreateConfigDescription(

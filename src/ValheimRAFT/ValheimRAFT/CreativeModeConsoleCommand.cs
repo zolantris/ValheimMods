@@ -22,8 +22,8 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
           GameCamera.instance.transform.position, GameCamera.instance.transform.forward,
           out var hitinfo, 50f, LayerMask.GetMask("piece")))
     {
-      MovableBaseRootComponent mbr =
-        hitinfo.collider.GetComponentInParent<MovableBaseRootComponent>();
+      MoveableBaseRootComponent mbr =
+        hitinfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
       if ((bool)mbr)
       {
         ToggleMode(player, mbr.m_ship);
@@ -33,7 +33,7 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
 
   private static bool ToggleMode(Player player, Ship ship)
   {
-    MovableBaseShipComponent mb = ship.GetComponent<MovableBaseShipComponent>();
+    MoveableBaseShipComponent mb = ship.GetComponent<MoveableBaseShipComponent>();
     if ((bool)mb)
     {
       ZSyncTransform zsync = ship.GetComponent<ZSyncTransform>();
