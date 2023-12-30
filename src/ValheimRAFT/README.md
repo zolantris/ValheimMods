@@ -94,15 +94,13 @@ Join us on discord to get the latest information, upcoming features, and discove
 | MassPercentageFactor               | (propulsion) -> Sets the mass percentage of the ship that will slow down the sails.                                                                                                                                                                                                     |
 | SpeedCapMultiplier                 | (propulsion) -> Sets the speed at which it becomes significantly harder to gain speed per sail area, the ships will still be capped at their maxSail speed.                                                                                                                             |
 | MaxPropulsionSpeed                 | (propulsion) -> Sets the absolute max speed a ship can ever hit. Prevents or enables space launches. Will be used as a cap for all propulsion introduced in future versions.                                                                                                            |
+| MaxSailSpeed                       | (propulsion) -> Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.                                                                                                                                       |
+| SailTier1Area                      | (propulsion) -> Sets the tier1 sail area.                                                                                                                                                                                                                                               |
+| SailTier2Area                      | (propulsion) -> Sets the tier2 sail area.                                                                                                                                                                                                                                               |
+| SailTier3Area                      | (propulsion) -> Sets the tier3 sail area.                                                                                                                                                                                                                                               |
+| SailCustomAreaTier1Multiplier      | (propulsion) -> sets the area multiplier the custom tier1 sail. Currently there is only 1 tier                                                                                                                                                                                          |
+| AdminsCanOnlyBuildRaft             | (Server config) -> ValheimRAFT hammer menu pieces are registered as disabled unless the user                                                                                                                                                                                            
 
-| MaxSailSpeed | (propulsion) -> Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space
-launches, cannot exceed MaxPropulsionSpeed. |
-| SailTier1Area | (propulsion) -> Sets the tier1 sail area. |
-| SailTier2Area | (propulsion) -> Sets the tier2 sail area. |
-| SailTier3Area | (propulsion) -> Sets the tier3 sail area. |
-| SailCustomAreaTier1Multiplier | (propulsion) -> sets the area multiplier the custom tier1 sail. Currently there is
-only 1 tier |
-| AdminsCanOnlyBuildRaft | (Server config) -> ValheimRAFT hammer menu pieces are registered as disabled unless the user
 is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to
 see it apply (if your remove yourself as admin). Server / client does not need to restart |
 
