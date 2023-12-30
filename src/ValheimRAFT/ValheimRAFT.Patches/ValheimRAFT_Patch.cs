@@ -290,10 +290,6 @@ public class ValheimRAFT_Patch
       {
         var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
         velocity = anchoredVelocity;
-        // velocity.x = anchoredVelocity;
-        // velocity.z = anchoredVelocity;
-        // // WIP to see if this makes the ship still
-        // velocity.y = anchoredVelocity;
       }
 
       __instance.m_body.velocity = velocity;
@@ -329,6 +325,13 @@ public class ValheimRAFT_Patch
     }
     else if (mb.m_targetHeight > 0f)
     {
+      if (__instance.m_players.Count == 0 ||
+          mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored))
+      {
+        var anchoredVelocity = CalculateAnchorStopVelocity(__instance.m_body.velocity);
+        __instance.m_body.velocity = anchoredVelocity;
+      }
+
       mb.UpdateStats(true);
       var side1 = __instance.m_floatCollider.transform.position +
                   __instance.m_floatCollider.transform.forward * __instance.m_floatCollider.size.z /

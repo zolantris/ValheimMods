@@ -143,8 +143,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     EnableCustomPropulsionConfig = Config.Bind("Propulsion",
       "EnableCustomPropulsionConfig", SailAreaForce.HasPropulsionConfigOverride,
       CreateConfigDescription("Enables all custom propulsion values", false));
-
-
+    
     SailCustomAreaTier1Multiplier = Config.Bind("Propulsion",
       "SailCustomAreaTier1Multiplier", SailAreaForce.CustomTier1AreaForceMultiplier,
       CreateConfigDescription(

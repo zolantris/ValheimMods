@@ -226,7 +226,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
     m_rigidbody.mass = m_baseRoot.TotalMass;
     m_rigidbody.angularDrag = (flight ? 1f : 0f);
-    // m_rigidbody.drag = (flight ? 1f : 0f);
+    m_rigidbody.drag = (flight ? 1f : 0f);
 
     var rb = m_ship.GetComponent<Rigidbody>();
 
