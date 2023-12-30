@@ -102,8 +102,13 @@ public class MoveableBaseShipComponent : MonoBehaviour
     if (m_nview.m_zdo != null)
     {
       m_flags = (MBFlags)m_nview.m_zdo.GetInt("MBFlags", (int)m_flags);
-      base.transform.Find("ship/visual").gameObject.SetActive(!m_flags.HasFlag(MBFlags.HideMesh));
-      base.transform.Find("interactive").gameObject.SetActive(!m_flags.HasFlag(MBFlags.HideMesh));
+      var newTransform = m_flags.HasFlag(MBFlags.HideMesh) ? Vector3.zero : Vector3.one;
+      /*
+       * hide with vector transform instead of active change to prevent NRE spam.
+       * Previously these called gameobject SetActive(!m_flags.HasFlag(MBFlags.HideMesh));
+       */
+      transform.Find("ship/visual").gameObject.transform.localScale = newTransform;
+      transform.Find("interactive").gameObject.transform.localScale = newTransform;
     }
   }
 
