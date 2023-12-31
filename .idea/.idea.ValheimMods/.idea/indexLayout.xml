@@ -2,11 +2,15 @@
 <project version="4">
   <component name="UserContentModel">
     <attachedFolders>
+      <Path>docs</Path>
+      <Path>libs</Path>
       <Path>../valheim-connect-mods</Path>
       <Path>../valheim_extracted</Path>
     </attachedFolders>
     <explicitIncludes>
       <Path>README.md</Path>
+      <Path>docs</Path>
+      <Path>libs</Path>
       <Path>src/ValheimRAFT/Assets/Translations/English/valheimraft.json</Path>
       <Path>src/ValheimRAFT/README.md</Path>
     </explicitIncludes>

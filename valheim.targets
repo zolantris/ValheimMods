@@ -11,7 +11,12 @@
     </PropertyGroup>
 
     <Import Project="$(SolutionsDir).props" Condition="Exists('$(SolutionsDir).props')"/>
-
+    
+    <PropertyGroup Condition="!Exists('$(SolutionsDir).props')">
+        <BepInExPath>$(SolutionDir)libs</BepInExPath>
+        <ManagedDataPath>$(SolutionDir)libs</ManagedDataPath>
+    </PropertyGroup>
+    
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU'">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugSymbols>true</DebugSymbols>
@@ -65,23 +70,6 @@
                 <GamePath Condition="!Exists('$(GamePath)') AND '$(_SteamLibraryPath)' != ''">$(_SteamLibraryPath)\steamapps\common\Valheim</GamePath>
                 <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files\Steam\steamapps\common\Valheim</GamePath>
                 <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files (x86)\Steam\steamapps\common\Valheim</GamePath>
-            </PropertyGroup>
-        </When>
-    </Choose>
-
-
-    <!-- Manual overrides -->
-    <Choose>
-        <When Condition="$(BepInExPath) == ''">
-            <PropertyGroup>
-                <!--                $(GamePath)\BepInEx\core-->
-                <BepInExPath>$(SolutionDir)/libs</BepInExPath>
-            </PropertyGroup>
-        </When>
-        <When Condition="$(ManagedDataPath) == ''">
-            <PropertyGroup>
-                <!--                $(GamePath)\valheim_Data\Managed-->
-                <ManagedDataPath>$(SolutionDir)/libs</ManagedDataPath>
             </PropertyGroup>
         </When>
     </Choose>
@@ -329,7 +317,7 @@
         <Publicize Include="PlanBuild"/>
         <Reference Include="PlanBuild">
             <SpecificVersion>False</SpecificVersion>
-            <HintPath>..\..\libs\PlanBuild.dll</HintPath>
+            <HintPath>$(SolutionDir)\libs\PlanBuild.dll</HintPath>
             <Private>False</Private>
         </Reference>
     </ItemGroup>
