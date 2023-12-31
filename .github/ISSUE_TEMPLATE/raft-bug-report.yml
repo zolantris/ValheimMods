@@ -44,6 +44,8 @@ body:
         
         Paste only the logs. They will be automatically reformatted into code blocks.
       render: txt
+    validations:
+      required: true
   - type: textarea
     id: env
     attributes:
@@ -67,7 +69,7 @@ body:
         Mods:
         - **BepInEx**: 5.4.2202
         - Jotunn 2.15.2
-        - **ValheimRAFT**: 1.7.0
+        - **ValheimRAFT**: Major.Minor.Patch
       render: markdown
     validations:
       required: true
