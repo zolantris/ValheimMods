@@ -140,6 +140,10 @@ Noting that Planbuild does not register well with harmony so searching for it is
 is a path resolution and a config flag to enable coordinate fixes. Disable the config value `fixPlanBuildPositionIssues`
 and it should not longer cause errors for not having PlanBuild installed.
 
+## Graphics
+
+This project supports both **Vulkan** and **Direct3D11** as of >=1.6.11. Previously it only supported Direct3D11.
+
 ## Contributing
 
 1. Please fork the codebase and make a pull request via your fork branch.
