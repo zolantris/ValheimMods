@@ -10,7 +10,7 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>1.6.10</ApplicationVersion>
+        <ApplicationVersion>$(AssemblyVersion)</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -32,7 +32,6 @@
         <Compile Include="ValheimRAFT.Patches\Plantable_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Teleport_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\ValheimRAFT_Patch.cs"/>
-        <Compile Include="ValheimRAFT\AssemblyInfo.cs"/>
         <Compile Include="ValheimRAFT\BoardingRampComponent.cs"/>
         <Compile Include="ValheimRAFT\CreativeModeConsoleCommand.cs"/>
         <Compile Include="ValheimRAFT\CultivatableComponent.cs"/>

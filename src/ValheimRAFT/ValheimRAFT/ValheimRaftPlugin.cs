@@ -13,6 +13,7 @@ using ValheimRAFT.Patches;
 
 namespace ValheimRAFT;
 
+[assembly: AssemblyFileVersion(ValheimRaftPlugin.Version)]
 [BepInPlugin(BepInGuid, ModName, Version)]
 [BepInDependency(Main.ModGuid)]
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Patch)]
@@ -22,14 +23,15 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    * @note keeping this as Sarcen for now since there are low divergences from the original codebase and patches already mapped to sarcen's mod
    */
   public const string Author = "Sarcen";
-  private const string Version = "1.6.10";
+  public const string Version = "1.6.10";
   internal const string ModName = "ValheimRAFT";
   public const string BepInGuid = $"BepIn.{Author}.{ModName}";
   private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";
-  internal static int CustomRaftLayer = 29;
+  public const string ModDescription = "Valheim Mod for building on the sea";
+  public const string CopyRight = "Copyright © 2023, GNU-v3 licensed";
+  internal static readonly int CustomRaftLayer = 29;
   public static AssetBundle m_assetBundle;
   private bool m_customItemsAdded;
-  public CustomLocalization localization;
   public PrefabController prefabController;
 
   public static ValheimRaftPlugin Instance { get; private set; }
@@ -296,31 +298,34 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CreateServerConfig();
   }
 
-  /**
-   * this is a placeholder fix until the asset bundle packs the translations and does the following
-   * https://valheim-modding.github.io/Jotunn/tutorials/localization.html#example-json-file
-   */
-  private void InitLocalization()
-  {
-    // localization = LocalizationManager.Instance.GetLocalization();
-    // localization.AddTranslation("English", new Dictionary<string, string>
-    // {
-    //   { "mb_anchor_disabled", "\\n(anchored)\\nLShift to remove Anchor while steering" },
-    //   { "mb_anchor_enabled", "\\nLShift to Anchor" }
-    // });
-  }
-
   public void Awake()
   {
     Instance = this;
     CreateConfig();
-    InitLocalization();
     PatchController.Apply(HarmonyGuid);
 
+    AddPhysicsSettings();
+
+    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new CreativeModeConsoleCommand());
+    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new MoveRaftConsoleCommand());
+    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new HideRaftConsoleCommand());
+    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new RecoverRaftConsoleCommand());
+
+    /*
+     * @todo add a way to skip LoadCustomTextures when on server. This check when used here crashes the Plugin.
+     */
+    PrefabManager.OnVanillaPrefabsAvailable += new Action(LoadCustomTextures);
+    PrefabManager.OnVanillaPrefabsAvailable += new Action(AddCustomPieces);
+  }
+
+  private void AddPhysicsSettings()
+  {
     var layer = LayerMask.NameToLayer("vehicle");
+
     for (var index = 0; index < 32; ++index)
       Physics.IgnoreLayerCollision(CustomRaftLayer, index,
         Physics.GetIgnoreLayerCollision(layer, index));
+
     Physics.IgnoreLayerCollision(CustomRaftLayer, LayerMask.NameToLayer("vehicle"),
       true);
     Physics.IgnoreLayerCollision(CustomRaftLayer, LayerMask.NameToLayer("piece"),
@@ -347,16 +352,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       LayerMask.NameToLayer("Default_small"), false);
     Physics.IgnoreLayerCollision(CustomRaftLayer, LayerMask.NameToLayer("Default"),
       false);
-    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new CreativeModeConsoleCommand());
-    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new MoveRaftConsoleCommand());
-    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new HideRaftConsoleCommand());
-    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new RecoverRaftConsoleCommand());
-
-    /*
-     * @todo add a way to skip LoadCustomTextures when on server. This check when used here crashes the Plugin.
-     */
-    PrefabManager.OnVanillaPrefabsAvailable += new Action(LoadCustomTextures);
-    PrefabManager.OnVanillaPrefabsAvailable += new Action(AddCustomPieces);
   }
 
   private void LoadCustomTextures()
