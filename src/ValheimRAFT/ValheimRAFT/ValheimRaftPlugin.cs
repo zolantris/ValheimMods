@@ -16,6 +16,7 @@ namespace ValheimRAFT;
 [assembly: AssemblyFileVersion(ValheimRaftPlugin.Version)]
 [BepInPlugin(BepInGuid, ModName, Version)]
 [BepInDependency(Main.ModGuid)]
+// [NetworkCompatibility(CompatibilityLevel.NotEnforced, VersionStrictness.None)]
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Patch)]
 public class ValheimRaftPlugin : BaseUnityPlugin
 {

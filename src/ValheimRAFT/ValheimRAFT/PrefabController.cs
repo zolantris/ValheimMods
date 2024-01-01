@@ -63,50 +63,33 @@ public class PrefabController : MonoBehaviour
 
   public void RegisterBoatWood()
   {
-    var tbName = "bloat_wood";
-    var tbPiece = pieceManager.GetPiece(tbName);
-    if (tbPiece != null)
-    {
-      return;
-    }
+    var prefabName = "boat_wood_floor";
+    var prefab =
+      prefabManager.CreateClonedPrefab(prefabName, prefabManager.GetPrefab("wood_floor"));
+    var prefabPiece = prefab.GetComponent<Piece>();
+    prefabPiece.name = prefabName;
 
-
-    var prefab = prefabManager.CreateClonedPrefab(tbName, prefabManager.GetPrefab("wood_floor"));
-    var prefabPiece = prefab.AddComponent<Piece>();
-
-    SetWearNTear(prefab);
-    prefabPiece.name = "boat_wood";
-    prefabPiece.transform.localScale = new Vector3(2, 4, 2);
-
-    var nv = AddNetViewWithPersistence(prefab);
-    nv.m_zdo = new ZDO();
+    prefab.AddComponent<WaterDisplacementComponent>();
+    AddNetViewWithPersistence(prefab);
+    // nv.m_zdo = new ZDO();
     AddToRaftPrefabPieces(prefabPiece);
     SetWearNTear(prefab);
-    // var wnt = prefabPiece.GetComponent<WearNTear>();
-    // if (!wnt)
-    // {
-    //   wnt = prefab.AddComponent<WearNTear>();
-    // }
-
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
-      Description = "This is custom wood floor",
-      Icon = sprites.GetSprite("vikingmast"),
+      Description = "This is custom wood floor that displaces water below it",
       Category = ValheimRaftMenuName,
       Enabled = true,
-      Name = tbName,
-      Requirements =
-      [
+      Requirements = new RequirementConfig[1]
+      {
         new()
         {
           Amount = 10,
-          Item = "FineWood",
+          Item = "Wood",
           Recover = true
-        }
-      ]
+        },
+      }
     }));
-    pieceManager.RegisterPieceInPieceTable(prefab, "Hammer", ValheimRaftMenuName);
   }
 
   /**
@@ -121,8 +104,6 @@ public class PrefabController : MonoBehaviour
       // prefabManager.DestroyPrefab(tbName);
       pieceManager.RemovePiece(tbName);
     }
-
-    RegisterBoatWood();
 
     var mbRaftPrefab =
       prefabManager.CreateClonedPrefab(tbName, prefabManager.GetPrefab("MBRaft"));
@@ -246,6 +227,9 @@ public class PrefabController : MonoBehaviour
     // Floors
     RegisterDirtFloor(1);
     RegisterDirtFloor(2);
+
+    // floatation
+    RegisterBoatWood();
   }
 
   public void Init()
@@ -387,9 +371,11 @@ public class PrefabController : MonoBehaviour
 
     var mbRaftPrefabWearNTear = mbRaftPrefab.GetComponent<WearNTear>();
 
-    mbRaftPrefabWearNTear.m_health = Math.Max(100f, ValheimRaftPlugin.Instance.RaftHealth.Value);
-    mbRaftPrefabWearNTear.m_noRoofWear = false;
-
+    if (mbRaftPrefabWearNTear)
+    {
+      mbRaftPrefabWearNTear.m_health = Math.Max(100f, ValheimRaftPlugin.Instance.RaftHealth.Value);
+      mbRaftPrefabWearNTear.m_noRoofWear = false;
+    }
 
     var impact = mbRaftPrefab.GetComponent<ImpactEffect>();
     impact.m_damageToSelf = false;

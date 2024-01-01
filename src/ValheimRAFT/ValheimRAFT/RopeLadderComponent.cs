@@ -181,7 +181,12 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
     if (m_steps.Count != steps)
     {
       WearNTear wnt = GetComponent<WearNTear>();
-      wnt.ResetHighlight();
+
+      if ((bool)wnt)
+      {
+        wnt.ResetHighlight();
+      }
+
       while (m_steps.Count > steps)
       {
         Object.Destroy(m_steps[m_steps.Count - 1]);

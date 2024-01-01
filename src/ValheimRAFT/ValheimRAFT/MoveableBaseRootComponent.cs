@@ -82,10 +82,14 @@ public class MoveableBaseRootComponent : MonoBehaviour
   private static bool itemsRemovedDuringWait;
   internal Coroutine pendingPiecesCoroutine;
   private Coroutine server_UpdatePiecesCoroutine;
+  private ShipDisplacementManager _displacementManager;
 
   public void Awake()
   {
     instance = this;
+    // _displacementManager = gameObject.AddComponent<ShipDisplacementManager>();
+    // _displacementManager.mbRoot = instance;
+
     m_rigidbody = gameObject.AddComponent<Rigidbody>();
     m_rigidbody.isKinematic = true;
     m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
@@ -314,9 +318,28 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void RemovePiece(ZNetView netView)
   {
+    if (!netView)
+    {
+      Logger.LogWarning("Netview invalid, skipping removal");
+      return;
+    }
+
     if (m_pieces.Remove(netView))
     {
       UpdateMass(netView, true);
+
+      // var wdc = netView.GetComponent<WaterDisplacementComponent>();
+      // if ((bool)wdc)
+      // {
+      //   HashSet<ShipDisplacementManager> managers =
+      //     ShipDisplacementManager.getManagers(base.transform.position, 20f);
+      //   foreach (ShipDisplacementManager item in managers)
+      //   {
+      //     Logger.LogDebug("REMOVING displacement tile");
+      //     item.UnRegisterDisplacementTile(wdc);
+      //   }
+      // }
+
 
       var sail = netView.GetComponent<SailComponent>();
       if ((bool)sail)
@@ -462,13 +485,24 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void DestroyPiece(WearNTear wnt)
   {
+    if (!(bool)wnt)
+    {
+      Logger.LogWarning("WNT destroy piece called but wnt is not valid");
+      return;
+    }
+
     var netview = wnt.GetComponent<ZNetView>();
     RemovePiece(netview);
     UpdatePieceCount();
     totalSailArea = 0f;
     if (GetPieceCount() == 0)
     {
-      m_ship.GetComponent<WearNTear>().Destroy();
+      var shipWnt = m_ship.GetComponent<WearNTear>();
+      if ((bool)shipWnt)
+      {
+        shipWnt.Destroy();
+      }
+
       Destroy(gameObject);
     }
   }
@@ -837,6 +871,18 @@ public class MoveableBaseRootComponent : MonoBehaviour
     m_pieces.Add(netView);
     UpdateMass(netView);
 
+
+    // var displacementManager = netView.GetComponent<WaterDisplacementComponent>();
+    // if (displacementManager)
+    // {
+    //   HashSet<ShipDisplacementManager> managers =
+    //     ShipDisplacementManager.getManagers(base.transform.position, 20f);
+    //   foreach (ShipDisplacementManager item in managers)
+    //   {
+    //     Logger.LogDebug("registering displacement tile");
+    //     item.RegisterDisplacementTile(displacementManager);
+    //   }
+    // }
 
     MMoveableBaseShip.GetShipStats().GetShipFloatation(m_pieces);
 

@@ -31,7 +31,6 @@ public class PanelUtil
     Array.ForEach(editPanel.GetComponentsInChildren<Toggle>(includeInactive: true),
       delegate(Toggle b)
       {
-        Logger.LogInfo($"PANEL_UTIL CHILD {b.name}");
         if (b.name.EndsWith("Toggle"))
         {
           GUIManager.Instance.ApplyToogleStyle(b);

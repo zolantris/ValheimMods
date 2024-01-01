@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using ValheimRAFT.Util;
@@ -15,6 +16,9 @@ public class MoveableBaseShipComponent : MonoBehaviour
     IsAnchored = 1,
     HideMesh = 2
   }
+
+  public static HashSet<MoveableBaseShipComponent> allShipInstances =
+    new HashSet<MoveableBaseShipComponent>();
 
   internal MoveableBaseRootComponent m_baseRoot;
 
@@ -40,6 +44,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   public void Awake()
   {
+    allShipInstances.Add(this);
     Ship ship = GetComponent<Ship>();
     m_nview = GetComponent<ZNetView>();
     m_zsync = GetComponent<ZSyncTransform>();
@@ -114,10 +119,12 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   public void OnDestroy()
   {
+    allShipInstances.Remove(this);
+
     if ((bool)m_baseRoot)
     {
       m_baseRoot.CleanUp();
-      UnityEngine.Object.Destroy(m_baseRoot.gameObject);
+      Destroy(m_baseRoot.gameObject);
     }
   }
 

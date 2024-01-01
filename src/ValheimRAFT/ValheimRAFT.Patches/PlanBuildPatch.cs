@@ -54,7 +54,10 @@ public class PlanBuildPatch
         if (!keepMarkers)
         {
           WearNTear component = gameObject.GetComponent<WearNTear>();
-          component.Remove();
+          if ((bool)component)
+          {
+            component.Remove();
+          }
         }
 
         continue;
@@ -75,7 +78,10 @@ public class PlanBuildPatch
         if (!keepMarkers)
         {
           WearNTear component2 = gameObject.GetComponent<WearNTear>();
-          component2.Remove();
+          if ((bool)component2)
+          {
+            component2.Remove();
+          }
         }
 
         continue;
@@ -94,7 +100,10 @@ public class PlanBuildPatch
         if (!keepMarkers)
         {
           WearNTear component3 = gameObject.GetComponent<WearNTear>();
-          component3.Remove();
+          if ((bool)component3)
+          {
+            component3.Remove();
+          }
         }
 
         continue;

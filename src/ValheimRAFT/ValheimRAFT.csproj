@@ -22,6 +22,7 @@
         <Compile Include="Properties\AssemblyInfo.cs"/>
         <Compile Include="ValheimRAFT.Patches\PatchController.cs"/>
         <Compile Include="ValheimRAFT.Patches\PlanBuildPatch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\WaterDisplacementPatches.cs"/>
         <Compile Include="ValheimRAFT.Util\BinaryIOUtil.cs"/>
         <Compile Include="ValheimRAFT.Util\ListUtil.cs"/>
         <Compile Include="ValheimRAFT.Util\PrefabNames.cs"/>
@@ -42,6 +43,7 @@
         <Compile Include="ValheimRAFT\MaterialWeight.cs"/>
         <Compile Include="ValheimRAFT\MovableBaseZone.cs"/>
         <Compile Include="ValheimRAFT\PrefabController.cs"/>
+        <Compile Include="ValheimRAFT\ShipDisplacementManager.cs"/>
         <Compile Include="ValheimRAFT\ShipStats.cs"/>
         <Compile Include="ValheimRAFT\SailAreaForce.cs"/>
         <Compile Include="ValheimRAFT\ValheimRaftPlugin.cs"/>
@@ -58,6 +60,7 @@
         <Compile Include="ValheimRAFT\RudderComponent.cs"/>
         <Compile Include="ValheimRAFT\SailComponent.cs"/>
         <Compile Include="ValheimRAFT\SailCreatorComponent.cs"/>
+        <Compile Include="ValheimRAFT\WaterDisplacementComponent.cs"/>
     </ItemGroup>
     <ItemGroup>
         <None Remove="AssetBundle\AssetBundle"/>
