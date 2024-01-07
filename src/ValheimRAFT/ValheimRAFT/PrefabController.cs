@@ -600,6 +600,7 @@ public class PrefabController : MonoBehaviour
 
     AddToRaftPrefabPieces(mbRopeLadderPrefabPiece);
     AddNetViewWithPersistence(mbRopeLadderPrefab);
+    FixSnapPoints(mbRopeLadderPrefab);
 
     var ropeLadder = mbRopeLadderPrefab.AddComponent<RopeLadderComponent>();
     var rope = raftMast.GetComponentInChildren<LineRenderer>(true);
@@ -727,6 +728,7 @@ public class PrefabController : MonoBehaviour
 
     // this is a tier 1 sail
     SetWearNTear(mbSailPrefab, 1);
+    FixSnapPoints(mbSailPrefab);
 
     // mast should allowSailShrinking
     var mast = mbSailPrefab.AddComponent<MastComponent>();
@@ -1024,8 +1026,7 @@ public class PrefabController : MonoBehaviour
     AddToRaftPrefabPieces(mbDirtFloorPrefabPiece);
     AddNetViewWithPersistence(mbDirtFloorPrefab);
 
-    var dirtFloorWearNTear = mbDirtFloorPrefab.AddComponent<WearNTear>();
-    dirtFloorWearNTear.m_health = wearNTearBaseHealth;
+    SetWearNTear(mbDirtFloorPrefab);
 
     // Makes the component cultivatable
     mbDirtFloorPrefab.AddComponent<CultivatableComponent>();

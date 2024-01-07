@@ -366,16 +366,18 @@ public class MoveableBaseRootComponent : MonoBehaviour
       return;
     }
 
-    ShipContainerMass = 0f;
     var containers = GetComponentsInChildren<Container>();
+    float totalContainerMass = 0f;
     foreach (var container in containers)
     {
-      ComputeContainerWeight(container);
+      totalContainerMass += ComputeContainerWeight(container);
     }
+
+    ShipContainerMass = totalContainerMass;
   }
 
 
-  private void ComputeContainerWeight(Container container, bool isRemoving = false)
+  private float ComputeContainerWeight(Container container, bool isRemoving = false)
   {
     var inventory = container.GetInventory();
     if (inventory != null)
@@ -384,13 +386,13 @@ public class MoveableBaseRootComponent : MonoBehaviour
       Logger.LogDebug($"containerWeight {containerWeight} name: {container.name}");
       if (isRemoving)
       {
-        ShipContainerMass -= containerWeight;
+        return -containerWeight;
       }
-      else
-      {
-        ShipContainerMass += containerWeight;
-      }
+
+      return containerWeight;
     }
+
+    return 0f;
   }
 
 /*
@@ -462,22 +464,31 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void DestroyPiece(WearNTear wnt)
   {
+    if (!(bool)wnt)
+    {
+      return;
+    }
+
     var netview = wnt.GetComponent<ZNetView>();
     RemovePiece(netview);
     UpdatePieceCount();
     totalSailArea = 0f;
     if (GetPieceCount() == 0)
     {
-      m_ship.GetComponent<WearNTear>().Destroy();
-      Destroy(gameObject);
+      var wntShip = m_ship.GetComponent<WearNTear>();
+      if ((bool)wntShip) wntShip.Destroy();
+      if (gameObject)
+      {
+        Destroy(gameObject);
+      }
     }
   }
 
   public void DestroyBoat()
   {
-    var wnt_ship = m_ship.GetComponent<WearNTear>();
-    if (wnt_ship)
-      wnt_ship.Destroy();
+    var wntShip = m_ship.GetComponent<WearNTear>();
+    if ((bool)wntShip)
+      wntShip.Destroy();
     else if (m_ship) Destroy(m_ship);
 
     Destroy(gameObject);
@@ -940,10 +951,14 @@ public class MoveableBaseRootComponent : MonoBehaviour
       Physics.IgnoreCollision(colliders[i], m_onboardcollider, true);
     }
 
-    m_blockingcollider.size = new Vector3(m_bounds.size.x, 3f, m_bounds.size.z);
-    m_blockingcollider.center = new Vector3(m_bounds.center.x, -0.2f, m_bounds.center.z);
-    m_floatcollider.size = new Vector3(m_bounds.size.x, 3f, m_bounds.size.z);
-    m_floatcollider.center = new Vector3(m_bounds.center.x, -0.2f, m_bounds.center.z);
+    m_blockingcollider.size = new Vector3(m_bounds.size.x,
+      ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value, m_bounds.size.z);
+    m_blockingcollider.center = new Vector3(m_bounds.center.x,
+      ValheimRaftPlugin.Instance.BlockingColliderVerticalCenterOffset.Value, m_bounds.center.z);
+    m_floatcollider.size = new Vector3(m_bounds.size.x,
+      ValheimRaftPlugin.Instance.FloatingColliderVerticalSize.Value, m_bounds.size.z);
+    m_floatcollider.center = new Vector3(m_bounds.center.x,
+      ValheimRaftPlugin.Instance.FloatingColliderVerticalCenterOffset.Value, m_bounds.center.z);
     m_onboardcollider.size = m_bounds.size;
     m_onboardcollider.center = m_bounds.center;
   }

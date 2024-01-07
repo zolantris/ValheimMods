@@ -233,17 +233,6 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_rigidbody.angularDrag = (flight ? 1f : 0f);
     m_rigidbody.drag = (flight ? 1f : 0f);
 
-    var rb = m_ship.GetComponent<Rigidbody>();
-
-    if (rb)
-    {
-      Logger.LogDebug($"ship rigidbody rb.drag {rb.drag} rb.mass {rb.mass}");
-    }
-    else
-    {
-      Logger.LogDebug("ship does not have rigidbody");
-    }
-
     if ((bool)m_ship)
     {
       m_ship.m_angularDamping = (flight ? 5f : 0.8f);
