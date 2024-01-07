@@ -206,6 +206,14 @@ public class ValheimRAFT_Patch
     var mb = __instance.GetComponent<MoveableBaseShipComponent>();
     if (!mb || !__instance.m_nview || __instance.m_nview.m_zdo == null) return true;
 
+    /*
+     * creative mode should not allows movement and applying force on a object will cause errors when the object is kinematic
+     */
+    if (mb.isCreative)
+    {
+      return false;
+    }
+
     // This could be the spot that causes the raft to fly at spawn
     mb.m_targetHeight = __instance.m_nview.m_zdo.GetFloat("MBTargetHeight", mb.m_targetHeight);
     mb.m_flags =

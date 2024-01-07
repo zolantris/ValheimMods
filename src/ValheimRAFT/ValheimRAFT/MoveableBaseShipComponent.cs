@@ -18,6 +18,8 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   internal MoveableBaseRootComponent m_baseRoot;
 
+  public bool isCreative = false;
+
   internal Rigidbody m_rigidbody;
 
   internal Ship m_ship;

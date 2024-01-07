@@ -46,22 +46,28 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
           ((Character)player).m_body.position = new Vector3(
             ((Character)player).m_body.transform.position.x,
             ((Character)player).m_body.transform.position.y +
-            ValheimRaftPlugin.Instance.RaftCreativeHeight.Value - mb.m_rigidbody.position.y,
+            ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
             ((Character)player).m_body.transform.position.z);
         }
 
         mb.m_rigidbody.position =
-          new Vector3(mb.transform.position.x, 35f, mb.transform.position.z);
-        /*
-         * @todo rotation rounding could be useful for drydocking, but here it causes a jitter that may surprise users a bit.
-         */
-        // mb.m_rigidbody.rotation = Quaternion.Euler(0f,
-        //   Mathf.Floor(mb.m_rigidbody.rotation.eulerAngles.y / 22.5f) * 22.5f, 0f);
+          new Vector3(mb.transform.position.x,
+            mb.m_rigidbody.position.y + ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
+            mb.transform.position.z);
+        mb.m_rigidbody.rotation = Quaternion.Euler(mb.m_rigidbody.rotation.x, 0f,
+          mb.m_rigidbody.rotation.z);
+        mb.isCreative = true;
       }
+      else
+      {
+        mb.isCreative = false;
+      }
+
 
       return true;
     }
 
+    mb.isCreative = false;
     return false;
   }
 }

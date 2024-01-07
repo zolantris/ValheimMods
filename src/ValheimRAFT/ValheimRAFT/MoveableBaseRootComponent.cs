@@ -541,11 +541,19 @@ public class MoveableBaseRootComponent : MonoBehaviour
         var obj = list[j];
         if ((bool)obj)
         {
+          if (hasDebug)
+          {
+            Logger.LogDebug($"ActivatePendingPieces obj: {obj} {obj.name}");
+          }
+
           ActivatePiece(obj);
         }
         else
         {
-          Logger.LogWarning($"ActivatePendingPieces obj is not valid {obj}");
+          if (hasDebug)
+          {
+            Logger.LogDebug($"ActivatePendingPieces obj is not valid {obj}");
+          }
         }
       }
 

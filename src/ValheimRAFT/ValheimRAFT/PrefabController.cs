@@ -600,7 +600,7 @@ public class PrefabController : MonoBehaviour
 
     AddToRaftPrefabPieces(mbRopeLadderPrefabPiece);
     AddNetViewWithPersistence(mbRopeLadderPrefab);
-    // FixSnapPoints(mbRopeLadderPrefab);
+    FixSnapPoints(mbRopeLadderPrefab);
 
     var ropeLadder = mbRopeLadderPrefab.AddComponent<RopeLadderComponent>();
     var rope = raftMast.GetComponentInChildren<LineRenderer>(true);
@@ -728,7 +728,7 @@ public class PrefabController : MonoBehaviour
 
     // this is a tier 1 sail
     SetWearNTear(mbSailPrefab, 1);
-    // FixSnapPoints(mbSailPrefab);
+    FixSnapPoints(mbSailPrefab);
 
     // mast should allowSailShrinking
     var mast = mbSailPrefab.AddComponent<MastComponent>();

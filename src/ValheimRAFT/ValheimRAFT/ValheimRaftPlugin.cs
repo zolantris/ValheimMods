@@ -130,9 +130,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private void CreateCommandConfig()
   {
     RaftCreativeHeight = Config.Bind("Config", "RaftCreativeHeight",
-      34.5f,
+      5f,
       CreateConfigDescription(
-        "Sets the raft creative height", false));
+        "Sets the raftcreative command height, raftcreative is relative to the current height of the ship, negative numbers will sink your ship temporarily",
+        false));
   }
 
   private void CreatePropulsionConfig()
