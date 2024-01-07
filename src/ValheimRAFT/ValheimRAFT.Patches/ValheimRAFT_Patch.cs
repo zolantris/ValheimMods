@@ -163,7 +163,6 @@ public class ValheimRAFT_Patch
       }
       else if (mast.m_allowSailShrinking)
       {
-        Logger.LogDebug("ValheimRAFT: sailShrinking enabled");
         if (mast.m_sailObject.transform.localScale != __instance.m_sailObject.transform.localScale)
           mast.m_sailCloth.enabled = false;
         mast.m_sailObject.transform.localScale = __instance.m_sailObject.transform.localScale;
@@ -171,7 +170,6 @@ public class ValheimRAFT_Patch
       }
       else
       {
-        Logger.LogDebug("ValheimRAFT: sailShrinking disabled");
         mast.m_sailObject.transform.localScale = Vector3.one;
         mast.m_sailCloth.enabled = !mast.m_disableCloth;
       }
@@ -218,7 +216,6 @@ public class ValheimRAFT_Patch
     mb.m_zsync.m_useGravity = mb.m_targetHeight == 0f;
 
     var flag = __instance.HaveControllingPlayer();
-    Logger.LogDebug($"Update with HaveControllingPlayer FLAG, {flag}");
 
     __instance.UpdateControlls(Time.fixedDeltaTime);
     __instance.UpdateSail(Time.fixedDeltaTime);

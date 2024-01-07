@@ -72,6 +72,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> ShowShipStats { get; set; }
   public ConfigEntry<bool> HasShipContainerWeightCalculations { get; set; }
   public ConfigEntry<bool> AllowAllPlayersToControlBoatRamp { get; set; }
+  public ConfigEntry<float> RaftCreativeHeight { get; set; }
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -92,6 +93,14 @@ public class ValheimRaftPlugin : BaseUnityPlugin
           IsAdminOnly = true
         }
       });
+  }
+
+  private void CreateCommandConfig()
+  {
+    RaftCreativeHeight = Config.Bind("Config", "RaftCreativeHeight",
+      34.5f,
+      CreateConfigDescription(
+        "Sets the raft creative height", false));
   }
 
   private void CreatePropulsionConfig()
@@ -295,6 +304,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CreateDebugConfig();
     CreatePropulsionConfig();
     CreateServerConfig();
+    CreateCommandConfig();
   }
 
   public void Awake()
