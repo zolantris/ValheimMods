@@ -29,12 +29,9 @@ namespace ValheimRAFT.Util
       if (id == 0)
       {
         id = ZDOPersistantID.ZDOIDToId(zdo.m_uid);
-        // Logger.LogWarning($"ZDOIDToId(): ZDO ID was 0, now {id}");
         while (this.m_zdoGuidLookup.ContainsKey(id))
           ++id;
         zdo.Set(ZDOPersistantID.PersistantIDHash, id, false);
-
-        Logger.LogDebug($"ZDOIDToId(): dictionary {id} set to {zdo}");
         this.m_zdoGuidLookup[id] = zdo;
       }
 

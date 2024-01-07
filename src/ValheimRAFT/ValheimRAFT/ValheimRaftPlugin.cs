@@ -73,7 +73,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> MassPercentageFactor { get; set; }
   public ConfigEntry<bool> ShowShipStats { get; set; }
   public ConfigEntry<bool> HasShipContainerWeightCalculations { get; set; }
-  public ConfigEntry<bool> AllowAllPlayersToControlBoatRamp { get; set; }
   public ConfigEntry<float> RaftCreativeHeight { get; set; }
   public ConfigEntry<float> FloatingColliderVerticalSize { get; set; }
   public ConfigEntry<float> FloatingColliderVerticalCenterOffset { get; set; }
@@ -138,10 +137,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreatePropulsionConfig()
   {
-    AllowAllPlayersToControlBoatRamp = Config.Bind("Config", "AllowAllPlayersToControlBoatRamp",
-      true,
-      CreateConfigDescription(
-        "Sets the ramp to allow only the creator to trigger and edit or all players", true));
     ShowShipStats = Config.Bind("Debug", "ShowShipState", true);
     MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 18f,
       CreateConfigDescription(
@@ -270,9 +265,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreateBaseConfig()
   {
-    HasDebugSails = Config.Bind("Debug", "HasDebugBase", false,
+    HasDebugBase = Config.Bind("Debug", "HasDebugBase", false,
       CreateConfigDescription(
-        "Outputs more debug logs for the moveable base component. Useful for troubleshooting errors, but may fill logs quicker"));
+        "Outputs more debug logs for the MoveableBaseRootComponent. Useful for troubleshooting errors, but may fill logs quicker"));
     PatchPlanBuildPositionIssues = Config.Bind<bool>("Patches",
       "fixPlanBuildPositionIssues", true, new ConfigDescription(
         "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT.",
