@@ -281,7 +281,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         }));
 
     InitialRaftFloorHeight = Config.Bind<float>("Config",
-      "initialRaftFloorHeight", 0.5f, new ConfigDescription(
+      "initialRaftFloorHeight", 0.6f, new ConfigDescription(
         "Allows users to set the raft floor spawn height. 0.45 was the original height in 1.4.9 but it looked a bit too low. Now people can customize it",
         (AcceptableValueBase)null, new object[1]
         {
