@@ -13,7 +13,6 @@ using ValheimRAFT.Patches;
 
 namespace ValheimRAFT;
 
-[assembly: AssemblyFileVersion(ValheimRaftPlugin.Version)]
 [BepInPlugin(BepInGuid, ModName, Version)]
 [BepInDependency(Main.ModGuid)]
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Patch)]
