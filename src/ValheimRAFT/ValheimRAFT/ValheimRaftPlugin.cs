@@ -67,6 +67,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> BoatDragCoefficient { get; set; }
   public ConfigEntry<float> MastShearForceThreshold { get; set; }
   public ConfigEntry<bool> HasDebugSails { get; set; }
+  public ConfigEntry<bool> HasDebugBase { get; set; }
+
   public ConfigEntry<bool> HasShipWeightCalculations { get; set; }
   public ConfigEntry<float> MassPercentageFactor { get; set; }
   public ConfigEntry<bool> ShowShipStats { get; set; }
@@ -268,6 +270,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreateBaseConfig()
   {
+    HasDebugSails = Config.Bind("Debug", "HasDebugBase", false,
+      CreateConfigDescription(
+        "Outputs more debug logs for the moveable base component. Useful for troubleshooting errors, but may fill logs quicker"));
     PatchPlanBuildPositionIssues = Config.Bind<bool>("Patches",
       "fixPlanBuildPositionIssues", true, new ConfigDescription(
         "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT.",

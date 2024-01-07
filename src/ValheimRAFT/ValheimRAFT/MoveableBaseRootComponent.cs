@@ -57,6 +57,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   internal float ShipContainerMass = 0f;
   internal float ShipMass = 0f;
+  public static bool hasDebug;
 
   internal float TotalMass => ShipContainerMass + ShipMass;
 
@@ -86,6 +87,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   public void Awake()
   {
     instance = this;
+    hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
     m_rigidbody = gameObject.AddComponent<Rigidbody>();
     m_rigidbody.isKinematic = true;
     m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
@@ -101,10 +103,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void CleanUp()
   {
-    Logger.LogDebug("CleanupCalled which stops ActivatePendingPieces");
     if (pendingPiecesCoroutine != null)
     {
-      Logger.LogDebug("CleanUp cancelling ActivatePendingPieces coroutine");
       StopCoroutine(pendingPiecesCoroutine);
     }
 
@@ -273,7 +273,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public static void AddInactivePiece(int id, ZNetView netView)
   {
-    Logger.LogDebug($"addInactivePiece called with {id} for {netView.name}");
+    if (hasDebug) Logger.LogDebug($"addInactivePiece called with {id} for {netView.name}");
     if (!m_pendingPieces.TryGetValue(id, out var list))
     {
       list = new List<ZNetView>();
@@ -293,8 +293,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
     var piece = netView.GetComponent<Piece>();
     if (piece == null)
     {
-      Logger.LogDebug(
-        "unable to fetch piece data from netViewPiece this could be a raft piece erroring.");
+      if (hasDebug)
+        Logger.LogDebug(
+          "unable to fetch piece data from netViewPiece this could be a raft piece erroring.");
+      return;
     }
 
     var pieceWeight = ComputePieceWeight(piece, isRemoving);
@@ -383,7 +385,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     if (inventory != null)
     {
       var containerWeight = inventory.GetTotalWeight();
-      Logger.LogDebug($"containerWeight {containerWeight} name: {container.name}");
+      if (hasDebug) Logger.LogDebug($"containerWeight {containerWeight} name: {container.name}");
       if (isRemoving)
       {
         return -containerWeight;
@@ -400,9 +402,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
  */
   private float ComputePieceWeight(Piece piece, bool isRemoving)
   {
+    if (!(bool)piece)
+    {
+      return 0f;
+    }
+
     var pieceName = piece.name;
-    Logger.LogDebug($"ComputePieceWeight: name {pieceName}");
-    Logger.LogDebug($"{piece.m_category}");
 
     if (ValheimRaftPlugin.Instance.HasShipContainerWeightCalculations.Value)
     {
@@ -424,8 +429,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
     {
       baseMultiplier = piece.transform.localScale.x * piece.transform.localScale.y *
                        piece.transform.localScale.z;
-      Logger.LogDebug(
-        $"ValheimRAFT ComputeShipItemWeight() found piece that does not have a 1,1,1 local scale piece: {pieceName} scale: {piece.transform.localScale}, the 3d localScale will be multiplied by the area of this vector instead of 1x1x1");
+      if (hasDebug)
+        Logger.LogDebug(
+          $"ValheimRAFT ComputeShipItemWeight() found piece that does not have a 1,1,1 local scale piece: {pieceName} scale: {piece.transform.localScale}, the 3d localScale will be multiplied by the area of this vector instead of 1x1x1");
     }
 
     if (pieceName == "wood_floor_1x1")
@@ -496,8 +502,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void ActivatePendingPiecesCoroutine()
   {
-    Logger.LogDebug(
-      $"Called activePendingPiecesCoroutine, pendingPieces count: {m_pendingPieces.Count}");
+    if (hasDebug)
+      Logger.LogDebug(
+        $"ActivatePendingPiecesCoroutine(): pendingPieces count: {m_pendingPieces.Count}");
     if (pendingPiecesCoroutine != null) StopCoroutine(pendingPiecesCoroutine);
 
     pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
@@ -507,8 +514,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
   {
     if (!m_nview || m_nview.m_zdo == null)
     {
-      Logger.LogDebug(
-        $"ActivatePendingPieces early exit due to m_nview: {m_nview} m_nview.m_zdo {(m_nview != null ? m_nview.m_zdo : null)}");
+      if (hasDebug)
+        Logger.LogDebug(
+          $"ActivatePendingPieces early exit due to m_nview: {m_nview} m_nview.m_zdo {(m_nview != null ? m_nview.m_zdo : null)}");
       yield return null;
     }
 
@@ -528,7 +536,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
         }
         else
         {
-          Logger.LogDebug($"ActivatePendingPieces obj is not valid {obj}");
+          Logger.LogWarning($"ActivatePendingPieces obj is not valid {obj}");
         }
       }
 
@@ -536,7 +544,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
       m_pendingPieces.Remove(id);
     }
 
-    Logger.LogDebug($"Ship Size calc is: m_bounds {m_bounds} bounds size {m_bounds.size}");
+    if (hasDebug)
+      Logger.LogDebug($"Ship Size calc is: m_bounds {m_bounds} bounds size {m_bounds.size}");
 
     m_dynamicObjects.TryGetValue(m_id, out var objectList);
     var ObjectListHasNoValidItems = true;
@@ -657,7 +666,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
         }
       }
 
-      Logger.LogDebug($"CustomSailsArea {customSailsArea}");
+      if (hasDebug) Logger.LogDebug($"CustomSailsArea {customSailsArea}");
       var multiplier = hasConfigOverride
         ? ValheimRaftPlugin.Instance.SailCustomAreaTier1Multiplier.Value
         : SailAreaForce.CustomTier1AreaForceMultiplier;
@@ -822,7 +831,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   {
     if ((bool)piece && (bool)piece.m_nview)
     {
-      Logger.LogDebug("Added new piece is valid");
+      if (hasDebug) Logger.LogDebug("Added new piece is valid");
       AddNewPiece(piece.m_nview);
     }
   }
