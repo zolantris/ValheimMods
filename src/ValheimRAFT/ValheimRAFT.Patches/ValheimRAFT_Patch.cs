@@ -931,7 +931,9 @@ public class ValheimRAFT_Patch
               mb.Ascend();
             else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
               mb.Descent();
-            else if (ZInput.GetButtonDown("Run") || ZInput.GetButtonDown("JoyRun"))
+            else if (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsPressed() ||
+                     ZInput.GetButtonDown("JoyRun"))
+              // ZInput.GetButtonDown("Run")
               mb.SetAnchor(!mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored));
             else if (mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored) &&
                      movedir != Vector3.zero) mb.SetAnchor(false);

@@ -77,6 +77,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> FloatingColliderVerticalCenterOffset { get; set; }
   public ConfigEntry<float> BlockingColliderVerticalSize { get; set; }
   public ConfigEntry<float> BlockingColliderVerticalCenterOffset { get; set; }
+  public ConfigEntry<KeyboardShortcut> AnchorKeyboardShortcut { get; set; }
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -317,6 +318,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         }));
   }
 
+  private void CreateKeyboardSetup()
+  {
+    AnchorKeyboardShortcut =
+      Config.Bind("Config", "AnchorKeyboardShortcut", new KeyboardShortcut(KeyCode.LeftShift),
+        new ConfigDescription("Anchor keyboard hotkey. Only applies to keyboard"));
+  }
 
   /*
    * aggregates all config creators.
@@ -336,6 +343,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CreateServerConfig();
     CreateCommandConfig();
     CreateColliderConfig();
+    CreateKeyboardSetup();
   }
 
   public void Awake()
