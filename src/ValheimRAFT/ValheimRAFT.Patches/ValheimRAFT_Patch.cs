@@ -206,6 +206,14 @@ public class ValheimRAFT_Patch
     var mb = __instance.GetComponent<MoveableBaseShipComponent>();
     if (!mb || !__instance.m_nview || __instance.m_nview.m_zdo == null) return true;
 
+    /*
+     * creative mode should not allows movement and applying force on a object will cause errors when the object is kinematic
+     */
+    if (mb.isCreative)
+    {
+      return false;
+    }
+
     // This could be the spot that causes the raft to fly at spawn
     mb.m_targetHeight = __instance.m_nview.m_zdo.GetFloat("MBTargetHeight", mb.m_targetHeight);
     mb.m_flags =
@@ -579,11 +587,9 @@ public class ValheimRAFT_Patch
   private static bool WearNTear_Destroy(WearNTear __instance)
   {
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-    if ((bool)mbr)
-      // Logger.LogError("WearNTear_Destroy called on MoveableBaseRoot skipping");
-      mbr.DestroyPiece(__instance);
-
-    return true;
+    if (!(bool)mbr) return true;
+    mbr.DestroyPiece(__instance);
+    return false;
   }
 
   [HarmonyPatch(typeof(WearNTear), "ApplyDamage")]

@@ -57,7 +57,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   internal float ShipContainerMass = 0f;
   internal float ShipMass = 0f;
-  public static bool hasDebug;
+  public static bool hasDebug = false;
 
   internal float TotalMass => ShipContainerMass + ShipMass;
 
@@ -290,8 +290,18 @@ public class MoveableBaseRootComponent : MonoBehaviour
  */
   public void UpdateMass(ZNetView netView, bool isRemoving = false)
   {
+    if (!(bool)netView)
+    {
+      if (hasDebug)
+      {
+        Logger.LogDebug("NetView is invalid skipping mass update");
+      }
+
+      return;
+    }
+
     var piece = netView.GetComponent<Piece>();
-    if (piece == null)
+    if (!(bool)piece)
     {
       if (hasDebug)
         Logger.LogDebug(
@@ -412,10 +422,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
     if (ValheimRaftPlugin.Instance.HasShipContainerWeightCalculations.Value)
     {
       var container = piece.GetComponent<Container>();
-      if (container != null)
+      if ((bool)container)
       {
-        ComputeContainerWeight(container, isRemoving);
-        return 0f;
+        ShipContainerMass += ComputeContainerWeight(container, isRemoving);
       }
     }
 
@@ -532,11 +541,19 @@ public class MoveableBaseRootComponent : MonoBehaviour
         var obj = list[j];
         if ((bool)obj)
         {
+          if (hasDebug)
+          {
+            Logger.LogDebug($"ActivatePendingPieces obj: {obj} {obj.name}");
+          }
+
           ActivatePiece(obj);
         }
         else
         {
-          Logger.LogWarning($"ActivatePendingPieces obj is not valid {obj}");
+          if (hasDebug)
+          {
+            Logger.LogDebug($"ActivatePendingPieces obj is not valid {obj}");
+          }
         }
       }
 
@@ -855,10 +872,6 @@ public class MoveableBaseRootComponent : MonoBehaviour
   {
     totalSailArea = 0;
     m_pieces.Add(netView);
-    UpdateMass(netView);
-
-
-    MMoveableBaseShip.GetShipStats().GetShipFloatation(m_pieces);
 
     UpdatePieceCount();
     EncapsulateBounds(netView);
@@ -925,6 +938,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
         meshRenderer.sharedMaterials = sharedMaterials;
       }
+
+    UpdateMass(netView);
 
     /*
      * @todo investigate why this is called. Determine if it is needed

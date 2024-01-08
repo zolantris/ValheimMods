@@ -18,6 +18,8 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   internal MoveableBaseRootComponent m_baseRoot;
 
+  public bool isCreative = false;
+
   internal Rigidbody m_rigidbody;
 
   internal Ship m_ship;
@@ -131,20 +133,6 @@ public class MoveableBaseShipComponent : MonoBehaviour
    */
   private void FirstTimeCreation()
   {
-    // Pretty sure this was experimental code. 
-
-    // if (m_baseRoot.GetPieceCount() > 0)
-    //   foreach (var piece in m_baseRoot.m_pieces)
-    //     if (piece.m_zdo == null)
-    //     {
-    //       var prefabName = piece.GetPrefabName();
-    //       var prefab = ZNetScene.instance.GetPrefab(prefabName);
-    //       var obj = Instantiate(prefab, m_baseRoot.transform);
-    //       obj.transform.localPosition = piece.transform.localPosition;
-    //       obj.transform.localScale = piece.transform.localScale;
-    //       obj.transform.localRotation = piece.transform.localRotation;
-    //     }
-
     if (m_baseRoot.GetPieceCount() != 0)
     {
       return;
@@ -158,7 +146,8 @@ public class MoveableBaseShipComponent : MonoBehaviour
     {
       for (float z = -2f; z < 2.01f; z += 2f)
       {
-        Vector3 pt = base.transform.TransformPoint(new Vector3(x, 0.6f, z));
+        Vector3 pt = base.transform.TransformPoint(new Vector3(x,
+          ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
         var obj = Instantiate(floor, pt, transform.rotation);
         ZNetView netview = obj.GetComponent<ZNetView>();
         m_baseRoot.AddNewPiece(netview);
