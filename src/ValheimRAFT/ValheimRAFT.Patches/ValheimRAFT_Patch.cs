@@ -82,7 +82,7 @@ public class ValheimRAFT_Patch
         : "$mb_rudder_use_anchor_enable_detail";
     __result =
       Localization.instance.Localize(
-        $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$mb_rudder_use</b></color> {anchoredStatus}\n[<color=yellow><b>LShift</b></color>] <color=white>{anchorText}</color> {shipStatsText}");
+        $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$mb_rudder_use</b></color> {anchoredStatus}\n[<color=yellow><b>{ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value}</b></color>] <color=white>{anchorText}</color> {shipStatsText}");
 
     return false;
   }
