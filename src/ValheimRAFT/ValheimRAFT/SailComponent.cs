@@ -158,7 +158,10 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     if ((bool)m_nview)
     {
-      m_nview.m_zdo?.Reset();
+      if (m_nview.m_zdo != null)
+      {
+        m_nview.m_zdo?.Reset();
+      }
     }
 
     CancelInvoke();

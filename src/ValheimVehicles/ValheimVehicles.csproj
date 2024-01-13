@@ -37,9 +37,9 @@
     <!--        </PropertyGroup>-->
     <ItemGroup>
         <Compile Include="ValheimVehiclesPlugin.cs"/>
-        <Compile Include=".\VehicleUtils\*.cs"/>
-        <Compile Include=".\Vehicles\*.cs"/>
-        <Compile Include=".\Patches\*.cs"/>
+        <Compile Include=".\ValheimVehicles.Utils\*.cs"/>
+        <Compile Include=".\ValheimVehicles.Vehicles\*.cs"/>
+        <Compile Include=".\ValheimVehicles.Patches\*.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>

@@ -1,5 +1,10 @@
 namespace ValheimRAFT;
 
+/*
+ * base values only for Config
+ *
+ * All of these values can be overriden by user config.
+ */
 static class SailAreaForce
 {
   public static readonly float Tier1 = 5f;

@@ -587,9 +587,8 @@ public class ValheimRAFT_Patch
   private static bool WearNTear_Destroy(WearNTear __instance)
   {
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-    if (!(bool)mbr) return true;
-    mbr.DestroyPiece(__instance);
-    return false;
+    if ((bool)mbr) mbr.DestroyPiece(__instance);
+    return true;
   }
 
   [HarmonyPatch(typeof(WearNTear), "ApplyDamage")]
