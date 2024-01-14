@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace ValheimVehicles.Vehicles;
 
-public class WaterVehicle : Monobehavior
+public class WaterVehicle : MonoBehaviour
 {
   public void CalculateSailSpeed()
   {

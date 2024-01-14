@@ -59,6 +59,12 @@
         <Compile Include="ValheimRAFT\SailComponent.cs"/>
         <Compile Include="ValheimRAFT\SailCreatorComponent.cs"/>
     </ItemGroup>
+    <!-- Until ValheimVehicles is published, RAFT will directly pull in it's dependencies -->
+    <ItemGroup>
+        <Compile Include="..\ValheimVehicles\ValheimVehicles.Prefabs\*.cs"/>
+        <Compile Include="..\ValheimVehicles\ValheimVehicles.Vehicles\*.cs"/>
+        <Compile Include="..\ValheimVehicles\ValheimVehicles.Utils\*.cs"/>
+    </ItemGroup>
     <ItemGroup>
         <None Remove="AssetBundle\AssetBundle"/>
         <None Remove="AssetBundle\valheimraft"/>
@@ -80,7 +86,7 @@
     <PropertyGroup>
         <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
         <R2ModManPath>AppData\Roaming\r2modmanPlus-local</R2ModManPath>
-        <R2ModManProfile>Valheim\profiles\valheim_mod_debugging</R2ModManProfile>
+        <R2ModManProfile>Valheim\profiles\valheim_raft_debugging</R2ModManProfile>
         <PluginDeployTarget>BepInEx\plugins\zolantris-ValheimRAFT</PluginDeployTarget>
         <PluginDeployPath>%HOMEPATH%\$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
         <SandboxieVMPath>C:\Sandbox\fre\DefaultBox</SandboxieVMPath>

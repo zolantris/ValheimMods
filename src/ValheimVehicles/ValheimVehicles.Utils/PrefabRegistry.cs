@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using Jotunn.Entities;
 using UnityEngine;
 using UnityEngine.U2D;
+using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.VehicleUtils;
 

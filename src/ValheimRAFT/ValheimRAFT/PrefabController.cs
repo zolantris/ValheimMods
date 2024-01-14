@@ -9,9 +9,16 @@ using Jotunn.Utils;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.U2D;
+using ValheimVehicles.Prefabs;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
+
+public class SnapPoint : MonoBehaviour
+{
+  private string name = "_snappoint";
+  private string tag = "snappoint";
+}
 
 public class PrefabController : MonoBehaviour
 {
@@ -222,6 +229,9 @@ public class PrefabController : MonoBehaviour
     RegisterRaftPrefab();
     RegisterRudder();
 
+    // Raft Structure
+    RegisterHulls();
+
     // Masts
     RegisterRaftMast();
     RegisterKarveMast();
@@ -246,6 +256,130 @@ public class PrefabController : MonoBehaviour
     // Floors
     RegisterDirtFloor(1);
     RegisterDirtFloor(2);
+  }
+
+  public void RegisterStructure(string name)
+  {
+  }
+
+  /*
+   * adds a snapoint to the center and all corners of object
+   *
+   * add snappoints to surface area
+   * https://github.com/Valheim-Modding/Wiki/wiki/Snappoints
+   */
+  private void AddSnapPointsToExterior(GameObject prefabObject)
+  {
+    // var t = prefabObject.GetComponentsInChildren<Transform>(true);
+    // Logger.LogDebug($"AddSnapPointsToExterior called transforms length: {t.Length}");
+    // for (var i = 0; i < t.Length; i++)
+    // {
+    //   Logger.LogDebug($"ItemTag: {t[i].tag}");
+    //   if (t[i].tag.Contains("snappoint"))
+    //   {
+    //     Logger.LogDebug(
+    //       $"LocalVector scale of snappoint {t[i].localScale} new scale mult {prefabObject.transform.localScale}");
+    //     t[i].localPosition = Vector3.Scale(t[i].localScale, prefabObject.transform.localScale);
+    //   }
+    // }
+
+
+    // var children = piece.gameObject.GetComponentsInChildren<GameObject>();
+    // Logger.LogDebug($"Piece {piece.GetSnapPoints()}");
+    // for (var x = 0; x < piece.transform.localScale.x; x++)
+    // {
+    //   for (var z = 0; z < piece.transform.localScale.z; z++)
+    //   {
+    //     var snap = piece.gameObject.AddComponent<SnapPoint>();
+    //     // probably not necessary to set parent and child as this is done automatically in theory
+    //     snap.transform.position = piece.transform.position;
+    //     snap.transform.localPosition = new Vector3(x, snap.transform.localPosition.y, z);
+    //     Logger.LogDebug(
+    //       $"piece pos: {piece.transform.position} snap pos: {snap.transform.position} snaplocal {snap.transform.localPosition}");
+    //     // {
+    //     //   // size = new Vector3(1, 1f, 1),
+    //     //   gameObject =
+    //     //   {
+    //     //     name = "_snappoint",
+    //     //     tag = "snappoint",
+    //     //     // layer = LayerMask.NameToLayer("piece_nonsolid")
+    //     //   },
+    //     //   transform =
+    //     //   {
+    //     //     localPosition = new Vector3(x, 1f, z)
+    //     //     // position = 
+    //     //   }
+    //     // };
+    //     // Instantiate(snap);
+    //   }
+    // }
+  }
+
+  private static string GetHullPrefabName(string materialMaterial,
+    string orientation)
+  {
+    return $"mb_ship_hull_{materialMaterial}_{orientation}";
+  }
+
+  public void RegisterHulls()
+  {
+    RegisterHull("wood_wall_log_4x0.5", ShipHulls.HullMaterial.CoreWood,
+      ShipHulls.HullOrientation.Horizontal, new Vector3(2f, 1f, 8f));
+  }
+
+  public void RegisterHull(string prefabName, string prefabMaterial,
+    string prefabOrientation, Vector3 pieceScale)
+  {
+    var woodHorizontalOriginalPrefab = prefabManager.GetPrefab(prefabName);
+    var raftStructureBeam =
+      prefabManager.CreateClonedPrefab(
+        GetHullPrefabName(prefabMaterial, prefabOrientation),
+        woodHorizontalOriginalPrefab);
+    var piece = raftStructureBeam.GetComponent<Piece>();
+
+    raftStructureBeam.transform.localScale = pieceScale;
+    piece.m_waterPiece = true;
+
+
+    /*
+     * @todo fix snappoints
+     */
+    // AddSnapPointsToExterior(raftStructureBeam);
+
+    // Less complicated wnt so re-usable method is not used
+    var wntComponent = SetWearNTear(raftStructureBeam);
+    SetWearNTearSupport(wntComponent, WearNTear.MaterialType.HardWood);
+    FixSnapPoints(raftStructureBeam);
+
+    pieceManager.AddPiece(new CustomPiece(raftStructureBeam, false, new PieceConfig
+    {
+      PieceTable = "Hammer",
+      Name = "Hull (core-wood)",
+      Description = "Main structure component for raft",
+      Category = ValheimRaftMenuName,
+      Enabled = true,
+      Requirements = new RequirementConfig[3]
+      {
+        new()
+        {
+          Amount = 10,
+          Item = "FineWood",
+          Recover = true
+        },
+        new()
+        {
+          Amount = 2,
+          Item = "RoundLog",
+          Recover = true
+        },
+        new()
+        {
+          Amount = 6,
+          Item = "WolfPelt",
+          Recover = true
+        }
+      }
+    }));
   }
 
   public void Init()
@@ -281,7 +415,7 @@ public class PrefabController : MonoBehaviour
     UpdatePrefabStatus();
   }
 
-  private WearNTear SetWearNTear(GameObject prefabComponent, int tierMultiplier = 1)
+  private WearNTear GetWearNTearSafe(GameObject prefabComponent)
   {
     var wearNTearComponent = prefabComponent.GetComponent<WearNTear>();
     if (!wearNTearComponent)
@@ -289,10 +423,19 @@ public class PrefabController : MonoBehaviour
       // Many components do not have WearNTear so they must be added to the prefabPiece
       wearNTearComponent = prefabComponent.AddComponent<WearNTear>();
       if (!wearNTearComponent)
-        Logger.LogError($"error setting WearNTear for RAFT prefab {prefabComponent.name}");
-
-      return wearNTearComponent;
+        Logger.LogError(
+          $"error setting WearNTear for RAFT prefab {prefabComponent.name}, the ValheimRAFT mod may be unstable without WearNTear working properly");
     }
+
+    return wearNTearComponent;
+  }
+
+  private WearNTear SetWearNTear(GameObject prefabComponent, int tierMultiplier = 1,
+    bool canFloat = false)
+  {
+    var wearNTearComponent = GetWearNTearSafe(prefabComponent);
+
+    wearNTearComponent.m_noSupportWear = canFloat;
 
     wearNTearComponent.m_health = wearNTearBaseHealth * tierMultiplier;
     wearNTearComponent.m_noRoofWear = false;
@@ -300,6 +443,14 @@ public class PrefabController : MonoBehaviour
     wearNTearComponent.m_hitEffect = woodFloorPieceWearNTear.m_hitEffect;
 
     return wearNTearComponent;
+  }
+
+  private WearNTear SetWearNTearSupport(WearNTear wntComponent, WearNTear.MaterialType materialType)
+  {
+    // this will use the base material support provided by valheim for support. This should be balanced for wood. Stone may need some tweaks for buoyancy and other balancing concerns
+    wntComponent.m_materialType = materialType;
+
+    return wntComponent;
   }
 
 

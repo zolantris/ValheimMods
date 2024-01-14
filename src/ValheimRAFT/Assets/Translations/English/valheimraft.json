@@ -59,5 +59,7 @@
   "mb_edit_texture_panel_tiling": "Tiling",
   "mb_edit_texture_panel_rotation": "Rotation",
   "mb_edit_texture_panel_close": "Close",
-  "mb_edit_sail_clothoff": "Force cloth physics off."
+  "mb_edit_sail_clothoff": "Force cloth physics off.",
+  "mb_ship_hull_corewood_horizontal": "Hull - core-wood (0deg)",
+  "mb_ship_hull_wood_horizontal": "Hull - wood (0deg)"
 }
