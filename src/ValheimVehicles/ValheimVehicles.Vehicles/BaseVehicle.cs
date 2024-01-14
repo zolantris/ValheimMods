@@ -263,6 +263,7 @@ public class BaseVehicle : MonoBehaviour
       list = null;
       yield return new WaitForEndOfFrame();
     }
+    // ReSharper disable once IteratorNeverReturns
   }
 
   internal float GetColliderBottom()
@@ -739,11 +740,6 @@ public class BaseVehicle : MonoBehaviour
 
   public static void InitZDO(ZDO zdo)
   {
-    // this codeblock was left unhandled. I wonder if there needs to be an early exit or fix for MBRaft specifically.
-    if (zdo.m_prefab == "MBRaft".GetStableHashCode())
-    {
-    }
-
     var id = GetParentID(zdo);
     if (id != 0)
     {

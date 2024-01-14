@@ -36,12 +36,18 @@
     <!--            <WarningLevel>4</WarningLevel>-->
     <!--        </PropertyGroup>-->
     <ItemGroup>
-        <Compile Include="ValheimVehicles.Prefabs\ShipHulls.cs"/>
         <Compile Include="ValheimVehiclesPlugin.cs"/>
         <Compile Include=".\ValheimVehicles.Utils\*.cs"/>
         <Compile Include=".\ValheimVehicles.Vehicles\*.cs"/>
         <Compile Include=".\ValheimVehicles.Patches\*.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Folder Include="ValheimVehicles.Prefabs\"/>
+        <Folder Include="ValheimVehicles.Propulsion\Sailing\"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\ValheimRAFT\ValheimRAFT.csproj"/>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

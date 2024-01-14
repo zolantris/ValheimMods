@@ -35,7 +35,7 @@ public class ValheimShip : MonoBehaviour
 
   public Transform m_controlGuiPos;
 
-  [Header("Misc")] public BoxCollider m_floatCollider;
+  [Header("Misc")] public BoxCollider m_floatCollider = new BoxCollider();
 
   public float m_waterLevelOffset;
 
@@ -127,8 +127,26 @@ public class ValheimShip : MonoBehaviour
   private void Awake()
   {
     m_nview = GetComponent<ZNetView>();
+    if (!m_nview)
+    {
+      m_nview = gameObject.AddComponent<ZNetView>();
+      m_nview.m_persistent = true;
+    }
+
     m_body = GetComponent<Rigidbody>();
+    if (!m_body)
+    {
+      m_body = gameObject.AddComponent<Rigidbody>();
+      m_body.mass = 2000f;
+      m_body.useGravity = true;
+    }
+
     WearNTear component = GetComponent<WearNTear>();
+    if (!component)
+    {
+      component = gameObject.AddComponent<WearNTear>();
+    }
+
     if ((bool)component)
     {
       component.m_onDestroyed =

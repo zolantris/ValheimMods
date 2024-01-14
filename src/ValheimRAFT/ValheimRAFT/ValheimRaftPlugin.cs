@@ -28,7 +28,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";
   public const string ModDescription = "Valheim Mod for building on the sea";
   public const string CopyRight = "Copyright © 2023, GNU-v3 licensed";
-  internal static readonly int CustomRaftLayer = 29;
+  public static readonly int CustomRaftLayer = 29;
   public static AssetBundle m_assetBundle;
   private bool m_customItemsAdded;
   public PrefabController prefabController;

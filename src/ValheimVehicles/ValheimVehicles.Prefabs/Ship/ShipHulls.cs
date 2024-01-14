@@ -52,4 +52,17 @@ public abstract class ShipHulls
 
     return $"{prefabMaterialSegment}{prefabOrientationSegment}";
   }
+
+  public static string GetHullTranslations(string hullMaterial, HullOrientation hullOrientation)
+  {
+    if (hullMaterial == HullMaterial.CoreWood)
+    {
+      if (hullOrientation == HullOrientation.Horizontal)
+      {
+        return "$mb_ship_hull_corewood_0";
+      }
+    }
+
+    return "Ship Hull, WIP name";
+  }
 }

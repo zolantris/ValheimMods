@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Jotunn;
 using UnityEngine;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
@@ -14,6 +15,8 @@ public class WaterVehicleController : MonoBehaviour
 {
   public BaseVehicle baseVehicle;
   public ValheimShip ship;
+  public static GameObject vikingShipPrefab;
+  public const string ControllerID = "WaterVehicle";
 
   [Flags]
   public enum MBFlags
@@ -45,11 +48,26 @@ public class WaterVehicleController : MonoBehaviour
 
   public void Awake()
   {
+    // vikingShipPrefab.AddComponent();
+
     baseVehicle = gameObject.AddComponent<BaseVehicle>();
-    ship = gameObject.AddComponent<ValheimShip>();
     m_nview = GetComponent<ZNetView>();
+    if (!(bool)m_nview)
+    {
+      Logger.LogDebug("WaterVehicleController.Awake() NetView does not exist, creating new one");
+      m_nview = gameObject.AddComponent<ZNetView>();
+    }
+
+    Logger.LogDebug($"WaterVehicleController.Awake() NetView {m_nview}");
+
     m_zsync = GetComponent<ZSyncTransform>();
 
+    if (!(bool)m_zsync)
+    {
+      m_zsync = gameObject.AddComponent<ZSyncTransform>();
+    }
+
+    ship = gameObject.AddComponent<ValheimShip>();
     if (!(bool)ship)
     {
       Logger.LogError("no ship component added");
@@ -58,7 +76,7 @@ public class WaterVehicleController : MonoBehaviour
 
     m_baseRootObject = new GameObject
     {
-      name = "MovableBase",
+      name = ControllerID,
       layer = 0
     };
     m_nview.Register("SetAnchor",
@@ -75,16 +93,18 @@ public class WaterVehicleController : MonoBehaviour
 
     m_baseRootObject.transform.position = base.transform.position;
     m_baseRootObject.transform.rotation = base.transform.rotation;
-    ship.transform.Find("ship/visual/mast")?.gameObject.SetActive(value: false);
-    ship.transform.Find("ship/colliders/log")?.gameObject.SetActive(value: false);
-    ship.transform.Find("ship/colliders/log (1)")?.gameObject.SetActive(value: false);
-    ship.transform.Find("ship/colliders/log (2)")?.gameObject.SetActive(value: false);
-    ship.transform.Find("ship/colliders/log (3)")?.gameObject.SetActive(value: false);
     UpdateVisual();
     BoxCollider[] colliders = base.transform.GetComponentsInChildren<BoxCollider>();
-    baseVehicle.m_onboardcollider =
-      colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "OnboardTrigger");
 
+    // baseVehicle.m_onboardcollider =
+    //   colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "OnboardTrigger");
+    var watermask = vikingShipPrefab.transform.Find("ship/visual/watermask").gameObject;
+    Instantiate(watermask, m_baseRootObject.transform);
+
+    ship.m_floatCollider = vikingShipPrefab.transform.Find("FloatCollider")
+      .GetComponentInChildren<BoxCollider>();
+    baseVehicle.m_onboardcollider = vikingShipPrefab.transform.Find("OnboardTrigger")
+      .GetComponentInChildren<BoxCollider>();
     if (!baseVehicle.m_onboardcollider)
     {
       Logger.LogError(
@@ -95,15 +115,16 @@ public class WaterVehicleController : MonoBehaviour
       baseVehicle.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     }
 
+
     baseVehicle.m_floatcollider = ship.m_floatCollider;
     baseVehicle.m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    baseVehicle.m_blockingcollider = ship.transform.Find("ship/colliders/Cube")
+    baseVehicle.m_blockingcollider = vikingShipPrefab.transform.Find("ship/colliders/hullcullider")
       .GetComponentInChildren<BoxCollider>();
     baseVehicle.m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     baseVehicle.m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
     baseVehicle.m_blockingcollider.transform.parent.gameObject.layer =
       ValheimRaftPlugin.CustomRaftLayer;
-    baseVehicle.ActivatePendingPiecesCoroutine();
+    // baseVehicle.ActivatePendingPiecesCoroutine();
     FirstTimeCreation();
   }
 
@@ -116,13 +137,13 @@ public class WaterVehicleController : MonoBehaviour
     if (m_nview.m_zdo != null)
     {
       m_flags = (MBFlags)m_nview.m_zdo.GetInt("MBFlags", (int)m_flags);
-      var newTransform = m_flags.HasFlag(MBFlags.HideMesh) ? Vector3.zero : Vector3.one;
+      // var newTransform = m_flags.HasFlag(MBFlags.HideMesh) ? Vector3.zero : Vector3.one;
       /*
        * hide with vector transform instead of active change to prevent NRE spam.
        * Previously these called gameobject SetActive(!m_flags.HasFlag(MBFlags.HideMesh));
        */
-      transform.Find("ship/visual").gameObject.transform.localScale = newTransform;
-      transform.Find("interactive").gameObject.transform.localScale = newTransform;
+      // transform.Find("ship/visual").gameObject.transform.localScale = newTransform;
+      // transform.Find("interactive").gameObject.transform.localScale = newTransform;
     }
   }
 
@@ -161,8 +182,8 @@ public class WaterVehicleController : MonoBehaviour
         Vector3 pt = base.transform.TransformPoint(new Vector3(x,
           ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
         var obj = Instantiate(floor, pt, transform.rotation);
-        ZNetView netview = obj.GetComponent<ZNetView>();
-        baseVehicle.AddNewPiece(netview);
+        ZNetView netView = obj.GetComponent<ZNetView>();
+        baseVehicle.AddNewPiece(netView);
       }
     }
   }
@@ -272,6 +293,9 @@ public class WaterVehicleController : MonoBehaviour
     m_nview.InvokeRPC("SetVisual", state);
   }
 
+  /**
+   * deprecated, not needed
+   */
   public void RPC_SetVisual(long sender, bool state)
   {
     m_flags = (state ? (m_flags | MBFlags.HideMesh) : (m_flags & ~MBFlags.HideMesh));

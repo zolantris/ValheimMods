@@ -325,6 +325,7 @@
     <Target Name="Copy_To_R2ModMan" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="PostBuildEvent">
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
+        <Exec Command="xcopy /d &quot;.\Assets&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
     </Target>
     <Target Name="Copy_To_R2ModMan_vm" Condition="Exists('$(SandboxiePluginDeployPath)\$(AssemblyName).dll')" AfterTargets="Copy_To_R2ModMan">
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>

@@ -6,6 +6,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT.Util;
+using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;
@@ -530,6 +531,7 @@ public class ValheimRAFT_Patch
   {
     ZDOPersistantID.Instance.Register(zdo);
     MoveableBaseRootComponent.InitZDO(zdo);
+    BaseVehicle.InitZDO(zdo);
   }
 
   [HarmonyPatch(typeof(ZDO), "Reset")]
@@ -542,6 +544,7 @@ public class ValheimRAFT_Patch
   public static void ZDOUnload(ZDO zdo)
   {
     MoveableBaseRootComponent.RemoveZDO(zdo);
+    BaseVehicle.RemoveZDO(zdo);
     ZDOPersistantID.Instance.Unregister(zdo);
   }
 
@@ -561,6 +564,7 @@ public class ValheimRAFT_Patch
     if (__instance.m_zdo != null)
     {
       MoveableBaseRootComponent.InitPiece(__instance);
+      BaseVehicle.InitPiece(__instance);
       CultivatableComponent.InitPiece(__instance);
     }
   }
@@ -626,6 +630,17 @@ public class ValheimRAFT_Patch
       }
     }
 
+    var bv = __instance.GetComponentInParent<BaseVehicle>();
+    if ((bool)bv)
+    {
+      bv.RemovePiece(__instance);
+      if (ValheimRaftPlugin.Instance.DisplacedRaftAutoFix.Value &&
+          (bool)Player.m_localPlayer && Player.m_localPlayer.transform.IsChildOf(mbr.transform))
+      {
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -634,7 +649,10 @@ public class ValheimRAFT_Patch
   private static bool WearNTear_Destroy(WearNTear __instance)
   {
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
+    var bv = __instance.GetComponentInParent<BaseVehicle>();
+
     if ((bool)mbr) mbr.DestroyPiece(__instance);
+    if ((bool)bv) bv.DestroyPiece(__instance);
     return true;
   }
 
@@ -669,7 +687,8 @@ public class ValheimRAFT_Patch
     var rb = collider.attachedRigidbody;
     if (!rb) return null;
     var mbr = rb.GetComponent<MoveableBaseRootComponent>();
-    if ((bool)mbr) return null;
+    var bv = rb.GetComponent<BaseVehicle>();
+    if ((bool)mbr || bv) return null;
     return rb;
   }
 

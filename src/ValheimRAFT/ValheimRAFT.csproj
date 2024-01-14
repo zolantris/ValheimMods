@@ -61,9 +61,7 @@
     </ItemGroup>
     <!-- Until ValheimVehicles is published, RAFT will directly pull in it's dependencies -->
     <ItemGroup>
-        <Compile Include="..\ValheimVehicles\ValheimVehicles.Prefabs\*.cs"/>
-        <Compile Include="..\ValheimVehicles\ValheimVehicles.Vehicles\*.cs"/>
-        <Compile Include="..\ValheimVehicles\ValheimVehicles.Utils\*.cs"/>
+        <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>
     </ItemGroup>
     <ItemGroup>
         <None Remove="AssetBundle\AssetBundle"/>
