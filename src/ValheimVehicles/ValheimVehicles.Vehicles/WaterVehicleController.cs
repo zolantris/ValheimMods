@@ -10,7 +10,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
-public class WaterVehicle : MonoBehaviour
+public class WaterVehicleController : MonoBehaviour
 {
   public BaseVehicle baseVehicle;
   public ValheimShip ship;
@@ -46,23 +46,27 @@ public class WaterVehicle : MonoBehaviour
   public void Awake()
   {
     baseVehicle = gameObject.AddComponent<BaseVehicle>();
-    ValheimShip valheimShip = gameObject.AddComponent<ValheimShip>();
+    ship = gameObject.AddComponent<ValheimShip>();
     m_nview = GetComponent<ZNetView>();
     m_zsync = GetComponent<ZSyncTransform>();
-    ship = GetComponent<ValheimShip>();
+
+    if (!(bool)ship)
+    {
+      Logger.LogError("no ship component added");
+      return;
+    }
+
     m_baseRootObject = new GameObject
     {
       name = "MovableBase",
       layer = 0
     };
-    baseVehicle = m_baseRootObject.AddComponent<MoveableBaseRootComponent>();
     m_nview.Register("SetAnchor",
       delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
     m_nview.Register("SetVisual",
       delegate(long sender, bool state) { RPC_SetVisual(sender, state); });
     baseVehicle.vehicleController = this;
     baseVehicle.m_nview = m_nview;
-    baseVehicle.m_ship = ship;
     baseVehicle.m_id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
     m_rigidbody = GetComponent<Rigidbody>();
     baseVehicle.m_syncRigidbody = m_rigidbody;

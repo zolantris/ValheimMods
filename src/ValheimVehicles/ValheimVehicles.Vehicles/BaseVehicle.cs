@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Util;
 using Logger = Jotunn.Logger;
@@ -31,7 +32,7 @@ public class BaseVehicle : MonoBehaviour
   internal static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
 
-  internal WaterVehicle vehicleController;
+  public WaterVehicleController vehicleController;
 
   public BaseVehicle instance;
 
@@ -40,8 +41,6 @@ public class BaseVehicle : MonoBehaviour
   internal ZNetView m_nview;
 
   internal Rigidbody m_syncRigidbody;
-
-  internal ValheimShip m_ship;
 
   internal List<ZNetView> m_pieces = new();
 
@@ -357,6 +356,7 @@ public class BaseVehicle : MonoBehaviour
       {
         m_ladders.Remove(ladder);
         ladder.m_mbroot = null;
+        ladder.baseVehicle = null;
       }
     }
 
@@ -491,7 +491,7 @@ public class BaseVehicle : MonoBehaviour
     totalSailArea = 0f;
     if (GetPieceCount() == 0)
     {
-      var wntShip = m_ship.GetComponent<WearNTear>();
+      var wntShip = vehicleController.GetComponent<WearNTear>();
       if ((bool)wntShip) wntShip.Destroy();
       if (gameObject)
       {
@@ -502,10 +502,10 @@ public class BaseVehicle : MonoBehaviour
 
   public void DestroyBoat()
   {
-    var wntShip = m_ship.GetComponent<WearNTear>();
+    var wntShip = vehicleController.GetComponent<WearNTear>();
     if ((bool)wntShip)
       wntShip.Destroy();
-    else if (m_ship) Destroy(m_ship);
+    else if (vehicleController) Destroy(vehicleController);
 
     Destroy(gameObject);
   }
@@ -802,42 +802,42 @@ public class BaseVehicle : MonoBehaviour
     return id;
   }
 
-  public static void InitPiece(ZNetView netview)
+  public static void InitPiece(ZNetView netView)
   {
     Logger.LogDebug("InitPiece() called");
-    var rb = netview.GetComponentInChildren<Rigidbody>();
+    var rb = netView.GetComponentInChildren<Rigidbody>();
     if ((bool)rb && !rb.isKinematic) return;
 
-    var id = GetParentID(netview.m_zdo);
+    var id = GetParentID(netView.m_zdo);
     if (id == 0) return;
 
     var parentObj = ZDOPersistantID.Instance.GetGameObject(id);
     if ((bool)parentObj)
     {
-      var mb = parentObj.GetComponent<MoveableBaseShipComponent>();
+      var mb = parentObj.GetComponent<WaterVehicleController>();
       if ((bool)mb && (bool)mb.baseVehicle)
       {
-        mb.baseVehicle.ActivatePiece(netview);
+        mb.baseVehicle.ActivatePiece(netView);
       }
     }
     else
     {
-      AddInactivePiece(id, netview);
+      AddInactivePiece(id, netView);
     }
   }
 
-  public void ActivatePiece(ZNetView netview)
+  public void ActivatePiece(ZNetView netView)
   {
-    if ((bool)netview)
+    if ((bool)netView)
     {
-      netview.transform.SetParent(transform);
-      netview.transform.localPosition = netview.m_zdo.GetVec3(MBPositionHash, Vector3.zero);
-      netview.transform.localRotation =
-        Quaternion.Euler(netview.m_zdo.GetVec3(MBRotationVecHash, Vector3.zero));
-      var wnt = netview.GetComponent<WearNTear>();
+      netView.transform.SetParent(transform);
+      netView.transform.localPosition = netView.m_zdo.GetVec3(MBPositionHash, Vector3.zero);
+      netView.transform.localRotation =
+        Quaternion.Euler(netView.m_zdo.GetVec3(MBRotationVecHash, Vector3.zero));
+      var wnt = netView.GetComponent<WearNTear>();
       if ((bool)wnt) wnt.enabled = true;
 
-      AddPiece(netview);
+      AddPiece(netView);
     }
   }
 
@@ -906,12 +906,13 @@ public class BaseVehicle : MonoBehaviour
     var rudder = netView.GetComponent<RudderComponent>();
     if ((bool)rudder)
     {
-      if (!rudder.m_controls) rudder.m_controls = netView.GetComponentInChildren<ShipControlls>();
+      if (!rudder.valheimShipControls)
+        rudder.valheimShipControls = netView.GetComponentInChildren<ValheimShipControls>();
 
       if (!rudder.m_wheel) rudder.m_wheel = netView.transform.Find("controls/wheel");
 
-      rudder.m_controls.m_nview = m_nview;
-      rudder.m_controls.m_ship = vehicleController.GetComponent<Ship>();
+      rudder.valheimShipControls.m_nview = m_nview;
+      rudder.valheimShipControls.m_ship = vehicleController.GetComponent<ValheimShip>();
       m_rudderPieces.Add(rudder);
     }
 
@@ -922,7 +923,7 @@ public class BaseVehicle : MonoBehaviour
     if ((bool)ladder)
     {
       m_ladders.Add(ladder);
-      ladder.m_mbroot = instance;
+      ladder.baseVehicle = instance;
     }
 
     var meshes = netView.GetComponentsInChildren<MeshRenderer>(true);
@@ -959,16 +960,16 @@ public class BaseVehicle : MonoBehaviour
     if ((bool)m_nview && m_nview.m_zdo != null) m_nview.m_zdo.Set("MBPieceCount", m_pieces.Count);
   }
 
-  public void EncapsulateBounds(ZNetView netview)
+  public void EncapsulateBounds(ZNetView netView)
   {
-    var piece = netview.GetComponent<Piece>();
+    var piece = netView.GetComponent<Piece>();
     var colliders = piece
       ? piece.GetAllColliders()
-      : new List<Collider>(netview.GetComponentsInChildren<Collider>());
-    var door = netview.GetComponentInChildren<Door>();
-    var ladder = netview.GetComponent<RopeLadderComponent>();
-    var rope = netview.GetComponent<RopeAnchorComponent>();
-    if (!door && !ladder && !rope) m_bounds.Encapsulate(netview.transform.localPosition);
+      : new List<Collider>(netView.GetComponentsInChildren<Collider>());
+    var door = netView.GetComponentInChildren<Door>();
+    var ladder = netView.GetComponent<RopeLadderComponent>();
+    var rope = netView.GetComponent<RopeAnchorComponent>();
+    if (!door && !ladder && !rope) m_bounds.Encapsulate(netView.transform.localPosition);
 
     for (var i = 0; i < colliders.Count; i++)
     {

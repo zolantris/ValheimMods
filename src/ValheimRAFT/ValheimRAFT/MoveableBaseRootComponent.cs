@@ -30,7 +30,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   internal static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
 
-  internal MoveableBaseShipComponent MMoveableBaseShip;
+  internal MoveableBaseShipComponent shipController;
 
   public MoveableBaseRootComponent instance;
 
@@ -909,7 +909,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
       if (!rudder.m_wheel) rudder.m_wheel = netView.transform.Find("controls/wheel");
 
       rudder.m_controls.m_nview = m_nview;
-      rudder.m_controls.m_ship = MMoveableBaseShip.GetComponent<Ship>();
+      rudder.m_controls.m_ship = shipController.GetComponent<Ship>();
       m_rudderPieces.Add(rudder);
     }
 

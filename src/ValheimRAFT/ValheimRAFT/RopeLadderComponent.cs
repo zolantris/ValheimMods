@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimVehicles.Vehicles;
 
 namespace ValheimRAFT;
 
@@ -14,6 +15,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
   public Transform m_attachPoint;
 
   public MoveableBaseRootComponent m_mbroot;
+  public BaseVehicle baseVehicle;
 
   public float m_stepDistance = 0.5f;
 
@@ -107,6 +109,29 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
     }
   }
 
+  private bool IsFlyingAndNotAnchored(Vector3 hitPoint)
+  {
+    if ((bool)m_mbroot && (bool)m_mbroot.shipController &&
+        m_mbroot.shipController.m_targetHeight > 0f &&
+        !m_mbroot.shipController.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags
+          .IsAnchored) &&
+        hitPoint.y < m_mbroot.GetColliderBottom())
+    {
+      return true;
+    }
+
+    if ((bool)baseVehicle && (bool)baseVehicle.vehicleController &&
+        baseVehicle.vehicleController.m_targetHeight > 0f &&
+        !baseVehicle.vehicleController.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags
+          .IsAnchored) &&
+        hitPoint.y < baseVehicle.GetColliderBottom())
+    {
+      return true;
+    }
+
+    return false;
+  }
+
   private void UpdateSteps()
   {
     if (!m_stepObject)
@@ -137,10 +162,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
       }
     }
 
-    if ((bool)m_mbroot && (bool)m_mbroot.MMoveableBaseShip &&
-        m_mbroot.MMoveableBaseShip.m_targetHeight > 0f &&
-        !m_mbroot.MMoveableBaseShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored) &&
-        hitpoint.y < m_mbroot.GetColliderBottom())
+    if (IsFlyingAndNotAnchored(hitpoint))
     {
       hitpoint.y = m_mbroot.GetColliderBottom();
       m_ladderHeight = (hitpoint - raystart).magnitude;

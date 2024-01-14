@@ -12,7 +12,7 @@ namespace ValheimVehicles.Prefabs;
  */
 public class ShipHullPrefabComponent : MonoBehaviour
 {
-  private WaterVehicle _waterVehicle;
+  private WaterVehicleController _waterVehicleController;
 
   private void GetShipZDO(ZNetView netView)
   {
@@ -22,12 +22,12 @@ public class ShipHullPrefabComponent : MonoBehaviour
   private void Awake()
   {
     Logger.LogDebug("called Awake for ShipHullPrefabComponent");
-    _waterVehicle = GetComponentInParent<WaterVehicle>();
+    _waterVehicleController = GetComponentInParent<WaterVehicleController>();
 
     /*
      * early exits as this instance of water vehicle is not needed
      */
-    if ((bool)_waterVehicle)
+    if ((bool)_waterVehicleController)
     {
       return;
     }
@@ -41,11 +41,11 @@ public class ShipHullPrefabComponent : MonoBehaviour
       netView = gameObject.AddComponent<ZNetView>();
     }
 
-    _waterVehicle = gameObject.AddComponent<WaterVehicle>();
+    _waterVehicleController = gameObject.AddComponent<WaterVehicleController>();
     // var waterVehicleNetView = waterVehicle.Init();
 
     // waterVehicleNetView.m_zdo.GetZDOID();
-    transform.SetParent(_waterVehicle.transform);
+    transform.SetParent(_waterVehicleController.transform);
   }
 
   private void FirstTimeCreation()
@@ -67,7 +67,7 @@ public class ShipHullPrefabComponent : MonoBehaviour
           ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
         var obj = Instantiate(floor, pt, transform.rotation);
         var netView = obj.GetComponent<ZNetView>();
-        _waterVehicle.baseVehicle.AddNewPiece(netView);
+        _waterVehicleController.baseVehicle.AddNewPiece(netView);
       }
     }
   }

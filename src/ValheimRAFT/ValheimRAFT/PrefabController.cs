@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.U2D;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -135,7 +136,7 @@ public class PrefabController : MonoBehaviour
       prefabManager.CreateClonedPrefab(tbName, prefabManager.GetPrefab("MBRaft"));
 
 
-    var mbRaftPrefabPiece = mbRaftPrefab.AddComponentCopy(mbroot.MMoveableBaseShip);
+    var mbRaftPrefabPiece = mbRaftPrefab.AddComponentCopy(mbroot.shipController);
     AddNetViewWithPersistence(mbRaftPrefab);
     SetWearNTear(mbRaftPrefab);
     // mbRaftPrefab.AddComponentCopy(mbroot);
@@ -316,7 +317,7 @@ public class PrefabController : MonoBehaviour
   }
 
   private static string GetHullPrefabName(string materialMaterial,
-    string orientation)
+    ShipHulls.HullOrientation orientation)
   {
     return $"mb_ship_hull_{materialMaterial}_{orientation}";
   }
@@ -328,7 +329,7 @@ public class PrefabController : MonoBehaviour
   }
 
   public void RegisterHull(string prefabName, string prefabMaterial,
-    string prefabOrientation, Vector3 pieceScale)
+    ShipHulls.HullOrientation prefabOrientation, Vector3 pieceScale)
   {
     var woodHorizontalOriginalPrefab = prefabManager.GetPrefab(prefabName);
     var raftStructureBeam =
@@ -707,11 +708,21 @@ public class PrefabController : MonoBehaviour
     AddNetViewWithPersistence(mbRudderPrefab);
 
     var rudder = mbRudderPrefab.AddComponent<RudderComponent>();
+
+    // for older components
     rudder.m_controls = mbRudderPrefab.AddComponent<ShipControlls>();
     rudder.m_controls.m_hoverText = "$mb_rudder_use";
     rudder.m_controls.m_attachPoint = mbRudderPrefab.transform.Find("attachpoint");
     rudder.m_controls.m_attachAnimation = "Standing Torch Idle right";
     rudder.m_controls.m_detachOffset = new Vector3(0f, 0f, 0f);
+
+    // for newer vehicle components
+    rudder.valheimShipControls = mbRudderPrefab.AddComponent<ValheimShipControls>();
+    rudder.valheimShipControls.m_hoverText = "$mb_rudder_use";
+    rudder.valheimShipControls.m_attachPoint = mbRudderPrefab.transform.Find("attachpoint");
+    rudder.valheimShipControls.m_attachAnimation = "Standing Torch Idle right";
+    rudder.valheimShipControls.m_detachOffset = new Vector3(0f, 0f, 0f);
+
     rudder.m_wheel = mbRudderPrefab.transform.Find("controls/wheel");
     rudder.UpdateSpokes();
 

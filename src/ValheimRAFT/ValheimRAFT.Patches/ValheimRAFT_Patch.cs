@@ -75,7 +75,7 @@ public class ValheimRAFT_Patch
     }
 
     var isAnchored =
-      baseRoot.MMoveableBaseShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored);
+      baseRoot.shipController.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored);
     var anchoredStatus = isAnchored ? "[<color=red><b>$mb_rudder_use_anchored</b></color>]" : "";
     var anchorText =
       isAnchored
@@ -711,8 +711,8 @@ public class ValheimRAFT_Patch
       if (!__result)
       {
         var mb = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
-        if ((bool)mb && (bool)mb.MMoveableBaseShip)
-          __result = mb.MMoveableBaseShip.GetComponent<Ship>();
+        if ((bool)mb && (bool)mb.shipController)
+          __result = mb.shipController.GetComponent<Ship>();
       }
 
       return false;

@@ -56,7 +56,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
       delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
     m_nview.Register("SetVisual",
       delegate(long sender, bool state) { RPC_SetVisual(sender, state); });
-    m_baseRoot.MMoveableBaseShip = this;
+    m_baseRoot.shipController = this;
     m_baseRoot.m_nview = m_nview;
     m_baseRoot.m_ship = ship;
     m_baseRoot.m_id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
