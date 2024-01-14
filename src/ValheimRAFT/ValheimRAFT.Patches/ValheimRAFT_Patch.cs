@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
+using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT.Util;
@@ -80,9 +81,13 @@ public class ValheimRAFT_Patch
       isAnchored
         ? "$mb_rudder_use_anchor_disable_detail"
         : "$mb_rudder_use_anchor_enable_detail";
+    var anchorKey =
+      ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set"
+        ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString()
+        : ZInput.instance.GetBoundKeyString("Run");
     __result =
       Localization.instance.Localize(
-        $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$mb_rudder_use</b></color> {anchoredStatus}\n[<color=yellow><b>{ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value}</b></color>] <color=white>{anchorText}</color> {shipStatsText}");
+        $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$mb_rudder_use</b></color> {anchoredStatus}\n[<color=yellow><b>{anchorKey}</b></color>] <color=white>{anchorText}</color> {shipStatsText}");
 
     return false;
   }
@@ -943,6 +948,7 @@ public class ValheimRAFT_Patch
     }
   }
 
+  // Logic for anchor needs to be moved to the Update method instead of fixed update which SetControls is called in
   [HarmonyPatch(typeof(Player), "SetControls")]
   [HarmonyPrefix]
   private static bool SetControls(Player __instance, Vector3 movedir, bool attack, bool attackHold,
@@ -974,15 +980,25 @@ public class ValheimRAFT_Patch
           var mb = shipControlls.m_ship.GetComponent<MoveableBaseShipComponent>();
           if ((bool)mb)
           {
-            if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
-              mb.Ascend();
-            else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
-              mb.Descent();
-            else if (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown() ||
-                     ZInput.GetButtonDown("JoyRun"))
+            var anchorKey =
+              (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "False" &&
+               ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set")
+                ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown()
+                : ZInput
+                  .GetButtonDown("Run");
+            if (anchorKey || ZInput.GetButtonDown("JoyRun"))
+            {
+              Logger.LogDebug("Anchor button is down setting anchor");
               mb.SetAnchor(!mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored));
-            else if (mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored) &&
-                     movedir != Vector3.zero) mb.SetAnchor(false);
+            }
+            else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
+            {
+              mb.Ascend();
+            }
+            else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
+            {
+              mb.Descent();
+            }
           }
         }
 
