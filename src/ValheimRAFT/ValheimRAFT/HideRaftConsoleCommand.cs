@@ -1,6 +1,7 @@
 using Jotunn;
 using Jotunn.Entities;
 using UnityEngine;
+using ValheimVehicles.Vehicles;
 
 namespace ValheimRAFT;
 
@@ -35,18 +36,22 @@ internal class HideRaftConsoleCommand : ConsoleCommand
           GameCamera.instance.transform.position, GameCamera.instance.transform.forward,
           out var hitinfo, 50f, LayerMask.GetMask("piece")))
     {
-      MoveableBaseRootComponent mbr =
-        hitinfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
+      BaseVehicle mbr =
+        hitinfo.collider.GetComponentInParent<BaseVehicle>();
       if ((bool)mbr)
       {
-        HideRaft(player, mbr.m_ship, hide);
+        HideRaft(player, ship, hide);
       }
     }
   }
 
+
+  /*
+   * This will do nothing with the new ship hulls
+   */
   private static bool HideRaft(Player player, Ship ship, bool hide)
   {
-    MoveableBaseShipComponent mb = ship.GetComponent<MoveableBaseShipComponent>();
+    var mb = ship.GetComponent<WaterVehicle>();
     if ((bool)mb)
     {
       mb.SetVisual(hide);

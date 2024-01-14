@@ -1,5 +1,6 @@
 using Jotunn.Entities;
 using UnityEngine;
+using ValheimVehicles.Vehicles;
 
 namespace ValheimRAFT;
 
@@ -17,13 +18,13 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
       return;
     }
 
-    Ship ship = player.GetStandingOnShip();
+    var ship = player.GetStandingOnShip();
     if ((!ship || !ToggleMode(player, ship)) && Physics.Raycast(
           GameCamera.instance.transform.position, GameCamera.instance.transform.forward,
           out var hitinfo, 50f, LayerMask.GetMask("piece")))
     {
-      MoveableBaseRootComponent mbr =
-        hitinfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
+      BaseVehicle mbr =
+        hitinfo.collider.GetComponentInParent<BaseVehicle>();
       if ((bool)mbr)
       {
         ToggleMode(player, mbr.m_ship);
@@ -31,17 +32,16 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
     }
   }
 
-  private static bool ToggleMode(Player player, Ship ship)
+  private static bool ToggleModeInternal(WaterVehicle waterVehicle, Player player)
   {
-    MoveableBaseShipComponent mb = ship.GetComponent<MoveableBaseShipComponent>();
-    if ((bool)mb)
+    if ((bool)waterVehicle)
     {
-      ZSyncTransform zsync = ship.GetComponent<ZSyncTransform>();
-      mb.m_rigidbody.isKinematic = !mb.m_rigidbody.isKinematic;
-      zsync.m_isKinematicBody = mb.m_rigidbody.isKinematic;
-      if (mb.m_rigidbody.isKinematic)
+      ZSyncTransform zsync = waterVehicle.GetComponent<ZSyncTransform>();
+      waterVehicle.m_rigidbody.isKinematic = !waterVehicle.m_rigidbody.isKinematic;
+      zsync.m_isKinematicBody = waterVehicle.m_rigidbody.isKinematic;
+      if (waterVehicle.m_rigidbody.isKinematic)
       {
-        if (player.transform.parent == mb.m_baseRoot.transform)
+        if (player.transform.parent == waterVehicle.baseVehicle.transform)
         {
           ((Character)player).m_body.position = new Vector3(
             ((Character)player).m_body.transform.position.x,
@@ -50,24 +50,37 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
             ((Character)player).m_body.transform.position.z);
         }
 
-        mb.m_rigidbody.position =
-          new Vector3(mb.transform.position.x,
-            mb.m_rigidbody.position.y + ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
-            mb.transform.position.z);
-        mb.m_rigidbody.transform.rotation =
-          Quaternion.Euler(0f, mb.m_rigidbody.rotation.eulerAngles.y, 0f);
-        mb.isCreative = true;
+        waterVehicle.m_rigidbody.position =
+          new Vector3(waterVehicle.transform.position.x,
+            waterVehicle.m_rigidbody.position.y +
+            ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
+            waterVehicle.transform.position.z);
+        waterVehicle.m_rigidbody.transform.rotation =
+          Quaternion.Euler(0f, waterVehicle.m_rigidbody.rotation.eulerAngles.y, 0f);
+        waterVehicle.isCreative = true;
       }
       else
       {
-        mb.isCreative = false;
+        waterVehicle.isCreative = false;
       }
 
 
       return true;
     }
 
-    mb.isCreative = false;
+    waterVehicle.isCreative = false;
     return false;
+  }
+
+  private static bool ToggleMode(Player player, Ship ship)
+  {
+    MoveableBaseShipComponent baseShipComponent = ship.GetComponent<MoveableBaseShipComponent>();
+    return ToggleModeInternal(baseShipComponent, player);
+  }
+
+  private static bool ToggleMode(Player player, ValheimShip ship)
+  {
+    MoveableBaseShipComponent baseShipComponent = ship.GetComponent<MoveableBaseShipComponent>();
+    return ToggleModeInternal(baseShipComponent, player);
   }
 }
