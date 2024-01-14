@@ -135,7 +135,7 @@ public class PrefabController : MonoBehaviour
       prefabManager.CreateClonedPrefab(tbName, prefabManager.GetPrefab("MBRaft"));
 
 
-    var mbRaftPrefabPiece = mbRaftPrefab.AddComponentCopy(mbroot.vehicleController);
+    var mbRaftPrefabPiece = mbRaftPrefab.AddComponentCopy(mbroot.MMoveableBaseShip);
     AddNetViewWithPersistence(mbRaftPrefab);
     SetWearNTear(mbRaftPrefab);
     // mbRaftPrefab.AddComponentCopy(mbroot);
@@ -315,30 +315,26 @@ public class PrefabController : MonoBehaviour
     // }
   }
 
-  private static string GetHullPrefabName(string hullMaterial,
-    ShipHulls.HullOrientation hullOrientation)
+  private static string GetHullPrefabName(string materialMaterial,
+    string orientation)
   {
-    return $"mb_ship_hull_{hullMaterial}_{hullOrientation}";
+    return $"mb_ship_hull_{materialMaterial}_{orientation}";
   }
 
   public void RegisterHulls()
   {
-    RegisterHull(ShipHulls.HullMaterial.CoreWood,
+    RegisterHull("wood_wall_log_4x0.5", ShipHulls.HullMaterial.CoreWood,
       ShipHulls.HullOrientation.Horizontal, new Vector3(2f, 1f, 8f));
   }
 
-  public void RegisterHull(string prefabMaterial,
-    ShipHulls.HullOrientation prefabOrientation, Vector3 pieceScale)
+  public void RegisterHull(string prefabName, string prefabMaterial,
+    string prefabOrientation, Vector3 pieceScale)
   {
-    var prefabName = ShipHulls.GetVanillaPrefab(prefabMaterial, prefabOrientation);
-
     var woodHorizontalOriginalPrefab = prefabManager.GetPrefab(prefabName);
-
     var raftStructureBeam =
       prefabManager.CreateClonedPrefab(
         GetHullPrefabName(prefabMaterial, prefabOrientation),
         woodHorizontalOriginalPrefab);
-
     var piece = raftStructureBeam.GetComponent<Piece>();
 
     raftStructureBeam.transform.localScale = pieceScale;

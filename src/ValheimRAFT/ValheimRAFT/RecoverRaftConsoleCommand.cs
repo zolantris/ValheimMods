@@ -60,13 +60,12 @@ internal class RecoverRaftConsoleCommand : ConsoleCommand
         MoveableBaseShipComponent mbship = ship.GetComponent<MoveableBaseShipComponent>();
         foreach (ZNetView piece in list)
         {
-          piece.transform.SetParent(mbship.baseVehicle.transform);
+          piece.transform.SetParent(mbship.m_baseRoot.transform);
           piece.transform.localPosition =
             piece.m_zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash, Vector3.zero);
           piece.transform.localRotation =
-            piece.m_zdo.GetQuaternion(MoveableBaseRootComponent.MBRotationHash,
-              Quaternion.identity);
-          mbship.baseVehicle.AddNewPiece(piece);
+            piece.m_zdo.GetQuaternion(MoveableBaseRootComponent.MBRotationHash, Quaternion.identity);
+          mbship.m_baseRoot.AddNewPiece(piece);
         }
       }
 

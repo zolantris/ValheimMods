@@ -6,7 +6,6 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT.Util;
-using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;
@@ -76,7 +75,7 @@ public class ValheimRAFT_Patch
     }
 
     var isAnchored =
-      baseRoot.vehicleController.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored);
+      baseRoot.MMoveableBaseShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored);
     var anchoredStatus = isAnchored ? "[<color=red><b>$mb_rudder_use_anchored</b></color>]" : "";
     var anchorText =
       isAnchored
@@ -136,13 +135,13 @@ public class ValheimRAFT_Patch
   private static void Ship_UpdateSail(Ship __instance)
   {
     var mb = __instance.GetComponent<MoveableBaseShipComponent>();
-    if (!mb || !mb.baseVehicle) return;
-    for (var i = 0; i < mb.baseVehicle.m_mastPieces.Count; i++)
+    if (!mb || !mb.m_baseRoot) return;
+    for (var i = 0; i < mb.m_baseRoot.m_mastPieces.Count; i++)
     {
-      var mast = mb.baseVehicle.m_mastPieces[i];
+      var mast = mb.m_baseRoot.m_mastPieces[i];
       if (!mast)
       {
-        mb.baseVehicle.m_mastPieces.RemoveAt(i);
+        mb.m_baseRoot.m_mastPieces.RemoveAt(i);
         i--;
       }
       else if (mast.m_allowSailRotation)
@@ -158,13 +157,13 @@ public class ValheimRAFT_Patch
   private static void Ship_UpdateSailSize(Ship __instance)
   {
     var mb = __instance.GetComponent<MoveableBaseShipComponent>();
-    if (!mb || !mb.baseVehicle) return;
-    for (var j = 0; j < mb.baseVehicle.m_mastPieces.Count; j++)
+    if (!mb || !mb.m_baseRoot) return;
+    for (var j = 0; j < mb.m_baseRoot.m_mastPieces.Count; j++)
     {
-      var mast = mb.baseVehicle.m_mastPieces[j];
+      var mast = mb.m_baseRoot.m_mastPieces[j];
       if (!mast)
       {
-        mb.baseVehicle.m_mastPieces.RemoveAt(j);
+        mb.m_baseRoot.m_mastPieces.RemoveAt(j);
         j--;
       }
       else if (mast.m_allowSailShrinking)
@@ -181,12 +180,12 @@ public class ValheimRAFT_Patch
       }
     }
 
-    for (var i = 0; i < mb.baseVehicle.m_rudderPieces.Count; i++)
+    for (var i = 0; i < mb.m_baseRoot.m_rudderPieces.Count; i++)
     {
-      var rudder = mb.baseVehicle.m_rudderPieces[i];
+      var rudder = mb.m_baseRoot.m_rudderPieces[i];
       if (!rudder)
       {
-        mb.baseVehicle.m_rudderPieces.RemoveAt(i);
+        mb.m_baseRoot.m_rudderPieces.RemoveAt(i);
         i--;
       }
       else if ((bool)rudder.m_wheel)
@@ -431,9 +430,9 @@ public class ValheimRAFT_Patch
 
     var sailArea = 0f;
 
-    if (mb.baseVehicle)
+    if (mb.m_baseRoot)
     {
-      sailArea = mb.baseVehicle.GetSailingForce();
+      sailArea = mb.m_baseRoot.GetSailingForce();
     }
 
     /*
@@ -555,9 +554,6 @@ public class ValheimRAFT_Patch
     return true;
   }
 
-  /*
-   * @todo this should be removed, it calls initPiece on every ZNetView instance.
-   */
   [HarmonyPatch(typeof(ZNetView), "Awake")]
   [HarmonyPostfix]
   private static void ZNetView_Awake(ZNetView __instance)
@@ -615,7 +611,7 @@ public class ValheimRAFT_Patch
   [HarmonyPrefix]
   private static bool ZNetView_OnDestroy(ZNetView __instance)
   {
-    var mbr = __instance.GetComponentInParent<BaseVehicle>();
+    var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbr)
     {
       mbr.RemovePiece(__instance);
@@ -715,8 +711,8 @@ public class ValheimRAFT_Patch
       if (!__result)
       {
         var mb = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
-        if ((bool)mb && (bool)mb.vehicleController)
-          __result = mb.vehicleController.GetComponent<Ship>();
+        if ((bool)mb && (bool)mb.MMoveableBaseShip)
+          __result = mb.MMoveableBaseShip.GetComponent<Ship>();
       }
 
       return false;

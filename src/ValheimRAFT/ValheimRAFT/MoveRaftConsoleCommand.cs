@@ -3,7 +3,6 @@ using Jotunn;
 using Jotunn.Entities;
 using UnityEngine;
 using ValheimRAFT.Util;
-using ValheimVehicles.Vehicles;
 
 namespace ValheimRAFT;
 
@@ -47,7 +46,7 @@ internal class MoveRaftConsoleCommand : ConsoleCommand
       return;
     }
 
-    var ship = player.GetStandingOnShip();
+    Ship ship = player.GetStandingOnShip();
     if ((!ship || !MoveRaft(player, ship, offset)) && Physics.Raycast(
           GameCamera.instance.transform.position, GameCamera.instance.transform.forward,
           out var hitinfo, 50f, LayerMask.GetMask("piece")))
@@ -61,22 +60,24 @@ internal class MoveRaftConsoleCommand : ConsoleCommand
     }
   }
 
-  private static bool MoveRaftInternal(WaterVehicle mb, Player player, Vector3 offset)
+  public static bool MoveRaft(Player player, Ship ship, Vector3 offset)
   {
-    if ((bool)mb && (bool)mb.baseVehicle)
+    MoveableBaseShipComponent mb = ship.GetComponent<MoveableBaseShipComponent>();
+
+    if ((bool)mb && (bool)mb.m_baseRoot)
     {
       Stopwatch stopWatch = new Stopwatch();
       stopWatch.Start();
-      int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(mb.baseVehicle.m_nview.m_zdo);
+      int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(mb.m_baseRoot.m_nview.m_zdo);
       foreach (ZDO zdo in ZDOMan.instance.m_objectsByID.Values)
       {
-        int zdoid = zdo.GetInt(BaseVehicle.MBParentIdHash);
+        int zdoid = zdo.GetInt(MoveableBaseRootComponent.MBParentIdHash);
         if (zdoid == id)
         {
-          Vector3 pos = zdo.GetVec3(BaseVehicle.MBPositionHash, Vector3.zero);
+          Vector3 pos = zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash, Vector3.zero);
           Vector3 newpos = pos + offset;
-          zdo.Set(BaseVehicle.MBPositionHash, newpos);
-          zdo.SetPosition(mb.ship.transform.position);
+          zdo.Set(MoveableBaseRootComponent.MBPositionHash, newpos);
+          zdo.SetPosition(ship.transform.position);
           ZNetView obj = ZNetScene.instance.FindInstance(zdo);
           if ((bool)obj)
           {
@@ -90,17 +91,5 @@ internal class MoveRaftConsoleCommand : ConsoleCommand
     }
 
     return false;
-  }
-
-  public static bool MoveRaft(Player player, ValheimShip ship, Vector3 offset)
-  {
-    var mb = ship.GetComponent<WaterVehicle>();
-    return MoveRaftInternal(mb, player, offset);
-  }
-
-  public static bool MoveRaft(Player player, Ship ship, Vector3 offset)
-  {
-    var mb = ship.GetComponent<WaterVehicle>();
-    return MoveRaftInternal(mb, player, offset);
   }
 }
