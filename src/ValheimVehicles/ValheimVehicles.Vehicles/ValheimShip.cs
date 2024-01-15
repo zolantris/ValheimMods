@@ -157,7 +157,7 @@ public class ValheimShip : MonoBehaviour
     m_body.maxDepenetrationVelocity = 2f;
 
     m_blockingCollider = gameObject.AddComponent<BoxCollider>();
-    m_blockingCollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    m_blockingCollider.gameObject.layer = 28; // vehicle layer
     m_blockingCollider.transform.localScale = new Vector3(1f, 1f, 1f);
     m_blockingCollider.transform.localPosition = new Vector3(0f, 0.29f, 0f);
 
@@ -165,10 +165,10 @@ public class ValheimShip : MonoBehaviour
 
     Logger.LogDebug("Made it to 151");
     WearNTear wnt = GetComponent<WearNTear>();
-    if (!(bool)wnt)
-    {
-      wnt = gameObject.AddComponent<WearNTear>();
-    }
+    // if (!(bool)wnt)
+    // {
+    //   wnt = gameObject.AddComponent<WearNTear>();
+    // }
 
     if ((bool)wnt)
     {
@@ -179,13 +179,13 @@ public class ValheimShip : MonoBehaviour
     Logger.LogDebug("Made it to 164");
 
 
-    if (m_nview.GetZDO() == null)
-    {
-      m_nview.m_zdo = new ZDO()
-      {
-        Persistent = true,
-      };
-    }
+    // if (m_nview.GetZDO() == null)
+    // {
+    //   m_nview.m_zdo = new ZDO()
+    //   {
+    //     Persistent = true,
+    //   };
+    // }
 
     if (m_nview.GetZDO() == null)
     {
@@ -222,6 +222,9 @@ public class ValheimShip : MonoBehaviour
     Instances.Remove(this);
   }
 
+  /**
+   * TODO this could be set to false for the ship as an override to allow the ship to never unrender
+   */
   public bool CanBeRemoved()
   {
     return m_players.Count == 0;

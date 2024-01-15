@@ -61,28 +61,26 @@ public class ShipHullComponent : MonoBehaviour
      * Skip ship initiation if the hull is already part of the ship
      */
     _shipInstance = gameObject.GetComponentInParent<ValheimShip>();
-    if (!(bool)_shipInstance)
+    if ((bool)_shipInstance) return;
+    _shipInstance =
+      // Makes the ship instance exist outside of the hull component to prevent issues
+      // Adds the ship globally to the ValheimRaftPluginGO for now
+      // TODO to make a VehicleComponent gameobject that is responsible for initializing all Vehicles
+      gameObject.AddComponent<ValheimShip>();
+    // _shipInstance.transform.SetParent(null);
+
+
+    // Adds the hull to the baseVehicle
+    var waterVehicleController = _shipInstance.GetComponent<WaterVehicleController>();
+
+    if ((bool)waterVehicleController)
     {
-      _shipInstance =
-        // Makes the ship instance exist outside of the hull component to prevent issues
-        // Adds the ship globally to the ValheimRaftPluginGO for now
-        // TODO to make a VehicleComponent gameobject that is responsible for initializing all Vehicles
-        gameObject.AddComponent<ValheimShip>();
-      _shipInstance.transform.SetParent(null);
-
-
-      // Adds the hull to the baseVehicle
-      var waterVehicleController = _shipInstance.GetComponent<WaterVehicleController>();
-
-      if ((bool)waterVehicleController)
-      {
-        waterVehicleController.baseVehicle.AddNewPiece(GetComponent<ZNetView>());
-      }
-
-
-      // var baseVehicle = _shipInstance.GetComponent<BaseVehicle>();
-      // transform.SetParent(baseVehicle.transform);
+      waterVehicleController.baseVehicle.AddNewPiece(GetComponent<ZNetView>());
     }
+
+
+    // var baseVehicle = _shipInstance.GetComponent<BaseVehicle>();
+    // transform.SetParent(baseVehicle.transform);
     // var waterVehicleNetView = waterVehicle.Init();
 
     // waterVehicleNetView.m_zdo.GetZDOID();
