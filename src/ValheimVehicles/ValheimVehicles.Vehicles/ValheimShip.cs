@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
+using ValheimRAFT;
+using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
@@ -25,7 +28,7 @@ public class ValheimShip : MonoBehaviour
 
   private float m_sendRudderTime;
 
-  [Header("Objects")] public GameObject m_sailObject;
+  // [Header("Objects")] public GameObject m_sailObject;
 
   public GameObject m_mastObject;
 
@@ -35,7 +38,8 @@ public class ValheimShip : MonoBehaviour
 
   public Transform m_controlGuiPos;
 
-  [Header("Misc")] public BoxCollider m_floatCollider = new BoxCollider();
+  [Header("Misc")] public BoxCollider m_floatCollider;
+  public BoxCollider m_blockingCollider;
 
   public float m_waterLevelOffset;
 
@@ -121,46 +125,91 @@ public class ValheimShip : MonoBehaviour
 
   private float m_rudderPaddleTimer;
 
-  public static List<ValheimShip> Instances { get; } = new List<ValheimShip>();
+  private WaterVehicleController _cachedVehicleController;
+
+  public static List<ValheimShip> Instances { get; } = [];
 
 
   private void Awake()
   {
     m_nview = GetComponent<ZNetView>();
-    if (!m_nview)
+
+    Logger.LogDebug("Made it to 133");
+    if (!(bool)m_nview)
     {
+      Logger.LogDebug("Netview did not exist on ValheimShip, adding new netview");
       m_nview = gameObject.AddComponent<ZNetView>();
       m_nview.m_persistent = true;
+      m_nview.m_zdo = new ZDO();
+      // {
+      //   Persistent = true,
+      // };
     }
 
     m_body = GetComponent<Rigidbody>();
-    if (!m_body)
+    if (!(bool)m_body)
     {
       m_body = gameObject.AddComponent<Rigidbody>();
-      m_body.mass = 2000f;
-      m_body.useGravity = true;
     }
 
-    WearNTear component = GetComponent<WearNTear>();
-    if (!component)
+    m_body.mass = 2000f;
+    m_body.useGravity = true;
+    m_body.maxDepenetrationVelocity = 2f;
+
+    m_blockingCollider = gameObject.AddComponent<BoxCollider>();
+    m_blockingCollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    m_blockingCollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    m_blockingCollider.transform.localPosition = new Vector3(0f, 0.29f, 0f);
+
+    m_floatCollider = PrefabController.shipFloatCollider;
+
+    Logger.LogDebug("Made it to 151");
+    WearNTear wnt = GetComponent<WearNTear>();
+    if (!(bool)wnt)
     {
-      component = gameObject.AddComponent<WearNTear>();
+      wnt = gameObject.AddComponent<WearNTear>();
     }
 
-    if ((bool)component)
+    if ((bool)wnt)
     {
-      component.m_onDestroyed =
-        (Action)Delegate.Combine(component.m_onDestroyed, new Action(OnDestroyed));
+      wnt.m_onDestroyed =
+        (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(OnDestroyed));
+    }
+
+    Logger.LogDebug("Made it to 164");
+
+
+    if (m_nview.GetZDO() == null)
+    {
+      m_nview.m_zdo = new ZDO()
+      {
+        Persistent = true,
+      };
     }
 
     if (m_nview.GetZDO() == null)
     {
-      base.enabled = false;
+      Logger.LogError("ZDO of ship returned null");
+      enabled = false;
     }
 
-    m_body.maxDepenetrationVelocity = 2f;
+
     Heightmap.ForceGenerateAll();
-    m_sailCloth = m_sailObject.GetComponentInChildren<Cloth>();
+    Logger.LogDebug("Made it to 180");
+
+    // m_sailCloth = m_sailObject.GetComponentInChildren<Cloth>();
+    Logger.LogDebug("Made it to 183");
+
+    // RaftCode from the AWAKE patch of ship
+    InitializeBaseShipComponent();
+  }
+
+  private void InitializeBaseShipComponent()
+  {
+    Logger.LogDebug("Made it to InitializeBaseShipComponent");
+    var ladders = GetComponentsInChildren<Ladder>();
+    for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
+    gameObject.AddComponent<WaterVehicleController>();
   }
 
   private void OnEnable()
@@ -191,7 +240,7 @@ public class ValheimShip : MonoBehaviour
   {
     if (m_players.Count != 0)
     {
-      Jotunn.Logger.LogDebug("Vel:" + m_body.velocity.magnitude.ToString("0.0"));
+      Logger.LogDebug("Vel:" + m_body.velocity.magnitude.ToString("0.0"));
     }
   }
 
@@ -296,48 +345,60 @@ public class ValheimShip : MonoBehaviour
     }
   }
 
+
+  private void FixedUpdate()
+  {
+    // m_body.WakeUp();
+    // m_body.AddForceAtPosition(Vector3.up, m_floatCollider.transform.position);
+  }
+
   private static Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity)
   {
     var zeroVelocity = Vector3.zero;
     return Vector3.SmoothDamp(currentVelocity * 0.5f, Vector3.zero, ref zeroVelocity, 5f);
   }
 
-  public void CustomFixedUpdate()
+  public void FixedUpdate1()
   {
-    var mb = GetComponent<WaterVehicleController>();
-    if (!mb || !m_nview || m_nview.m_zdo == null) return;
+    if (!_cachedVehicleController)
+    {
+      _cachedVehicleController = GetComponent<WaterVehicleController>();
+    }
+
+    if (!_cachedVehicleController || !m_nview || m_nview.m_zdo == null) return;
 
     /*
      * creative mode should not allows movement and applying force on a object will cause errors when the object is kinematic
      */
-    if (mb.isCreative)
+    if (_cachedVehicleController.isCreative)
     {
       return;
     }
 
     // This could be the spot that causes the raft to fly at spawn
-    mb.m_targetHeight = m_nview.m_zdo.GetFloat("MBTargetHeight", mb.m_targetHeight);
-    mb.m_flags =
+    _cachedVehicleController.m_targetHeight =
+      m_nview.m_zdo.GetFloat("MBTargetHeight", _cachedVehicleController.m_targetHeight);
+    _cachedVehicleController.m_flags =
       (WaterVehicleController.MBFlags)m_nview.m_zdo.GetInt("MBFlags",
-        (int)mb.m_flags);
+        (int)_cachedVehicleController.m_flags);
 
     // This could be the spot that causes the raft to fly at spawn
-    mb.m_zsync.m_useGravity = mb.m_targetHeight == 0f;
+    _cachedVehicleController.m_zsync.m_useGravity = _cachedVehicleController.m_targetHeight == 0f;
 
     var flag = HaveControllingPlayer();
 
-    UpdateControlls(Time.fixedDeltaTime);
+    UpdateControls(Time.fixedDeltaTime);
     UpdateSail(Time.fixedDeltaTime);
     UpdateRudder(Time.fixedDeltaTime, flag);
     if (m_players.Count == 0 ||
-        mb.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
+        _cachedVehicleController.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
     {
       m_speed = Speed.Stop;
       m_rudderValue = 0f;
-      if (!mb.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
+      if (!_cachedVehicleController.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
       {
-        mb.m_flags |= WaterVehicleController.MBFlags.IsAnchored;
-        m_nview.m_zdo.Set("MBFlags", (int)mb.m_flags);
+        _cachedVehicleController.m_flags |= WaterVehicleController.MBFlags.IsAnchored;
+        m_nview.m_zdo.Set("MBFlags", (int)_cachedVehicleController.m_flags);
       }
     }
 
@@ -369,7 +430,7 @@ public class ValheimShip : MonoBehaviour
     var currentDepth = worldCenterOfMass.y - averageWaterHeight - m_waterLevelOffset;
     if (!(currentDepth > m_disableLevel))
     {
-      mb.UpdateStats(false);
+      _cachedVehicleController.UpdateStats(false);
       m_body.WakeUp();
       UpdateWaterForce(currentDepth, Time.fixedDeltaTime);
       var vector5 = new Vector3(vector3.x, waterLevel2, vector3.z);
@@ -394,7 +455,7 @@ public class ValheimShip : MonoBehaviour
       if (velocity.magnitude > m_body.velocity.magnitude)
         velocity = velocity.normalized * m_body.velocity.magnitude;
       if (m_players.Count == 0 ||
-          mb.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
+          _cachedVehicleController.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
       {
         var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
         velocity = anchoredVelocity;
@@ -422,25 +483,25 @@ public class ValheimShip : MonoBehaviour
         ForceMode.VelocityChange);
       ApplySailForce(this, num5);
       ApplyEdgeForce(Time.fixedDeltaTime);
-      if (mb.m_targetHeight > 0f)
+      if (_cachedVehicleController.m_targetHeight > 0f)
       {
         var centerpos = m_floatCollider.transform.position;
-        var centerforce = GetUpwardsForce(mb.m_targetHeight,
-          centerpos.y + m_body.velocity.y, mb.m_liftForce);
+        var centerforce = GetUpwardsForce(_cachedVehicleController.m_targetHeight,
+          centerpos.y + m_body.velocity.y, _cachedVehicleController.m_liftForce);
         m_body.AddForceAtPosition(Vector3.up * centerforce, centerpos,
           ForceMode.VelocityChange);
       }
     }
-    else if (mb.m_targetHeight > 0f)
+    else if (_cachedVehicleController.m_targetHeight > 0f)
     {
       if (m_players.Count == 0 ||
-          mb.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
+          _cachedVehicleController.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
       {
         var anchoredVelocity = CalculateAnchorStopVelocity(m_body.velocity);
         m_body.velocity = anchoredVelocity;
       }
 
-      mb.UpdateStats(true);
+      _cachedVehicleController.UpdateStats(true);
       var side1 = m_floatCollider.transform.position +
                   m_floatCollider.transform.forward * m_floatCollider.size.z /
                   2f;
@@ -459,15 +520,19 @@ public class ValheimShip : MonoBehaviour
       var corner3curforce = m_body.GetPointVelocity(side3);
       var corner4curforce = m_body.GetPointVelocity(side4);
       var side1force =
-        GetUpwardsForce(mb.m_targetHeight, side1.y + corner1curforce.y, mb.m_balanceForce);
+        GetUpwardsForce(_cachedVehicleController.m_targetHeight, side1.y + corner1curforce.y,
+          _cachedVehicleController.m_balanceForce);
       var side2force =
-        GetUpwardsForce(mb.m_targetHeight, side2.y + corner2curforce.y, mb.m_balanceForce);
+        GetUpwardsForce(_cachedVehicleController.m_targetHeight, side2.y + corner2curforce.y,
+          _cachedVehicleController.m_balanceForce);
       var side3force =
-        GetUpwardsForce(mb.m_targetHeight, side3.y + corner3curforce.y, mb.m_balanceForce);
+        GetUpwardsForce(_cachedVehicleController.m_targetHeight, side3.y + corner3curforce.y,
+          _cachedVehicleController.m_balanceForce);
       var side4force =
-        GetUpwardsForce(mb.m_targetHeight, side4.y + corner4curforce.y, mb.m_balanceForce);
-      var centerforce2 = GetUpwardsForce(mb.m_targetHeight,
-        centerpos2.y + m_body.velocity.y, mb.m_liftForce);
+        GetUpwardsForce(_cachedVehicleController.m_targetHeight, side4.y + corner4curforce.y,
+          _cachedVehicleController.m_balanceForce);
+      var centerforce2 = GetUpwardsForce(_cachedVehicleController.m_targetHeight,
+        centerpos2.y + m_body.velocity.y, _cachedVehicleController.m_liftForce);
       m_body.AddForceAtPosition(Vector3.up * side1force, side1,
         ForceMode.VelocityChange);
       m_body.AddForceAtPosition(Vector3.up * side2force, side2,
@@ -578,7 +643,7 @@ public class ValheimShip : MonoBehaviour
   public void CustomFixedUpdate_Deprecated()
   {
     bool flag = HaveControllingPlayer();
-    UpdateControlls(Time.fixedDeltaTime);
+    UpdateControls(Time.fixedDeltaTime);
     UpdateSail(Time.fixedDeltaTime);
     UpdateRudder(Time.fixedDeltaTime, flag);
     if ((bool)m_nview && !m_nview.IsOwner())
@@ -825,7 +890,7 @@ public class ValheimShip : MonoBehaviour
     }
   }
 
-  private void UpdateControlls(float dt)
+  private void UpdateControls(float dt)
   {
     if (m_nview.IsOwner())
     {
@@ -923,37 +988,37 @@ public class ValheimShip : MonoBehaviour
         break;
     }
 
-    Vector3 localScale = m_sailObject.transform.localScale;
-    bool flag = Mathf.Abs(localScale.y - num) < 0.01f;
-    if (!flag)
-    {
-      localScale.y = Mathf.MoveTowards(localScale.y, num, dt);
-      m_sailObject.transform.localScale = localScale;
-    }
+    // Vector3 localScale = m_sailObject.transform.localScale;
+    // bool flag = Mathf.Abs(localScale.y - num) < 0.01f;
+    // if (!flag)
+    // {
+    // localScale.y = Mathf.MoveTowards(localScale.y, num, dt);
+    // m_sailObject.transform.localScale = localScale;
+    // }
 
-    if ((bool)(UnityEngine.Object)(object)m_sailCloth)
-    {
-      if (m_speed == Speed.Stop || m_speed == Speed.Slow || m_speed == Speed.Back)
-      {
-        if (flag && m_sailCloth.enabled)
-        {
-          m_sailCloth.enabled = false;
-        }
-      }
-      else if (flag)
-      {
-        if (!m_sailWasInPosition)
-        {
-          Utils.RecreateComponent(ref m_sailCloth);
-        }
-      }
-      else
-      {
-        m_sailCloth.enabled = true;
-      }
-    }
-
-    m_sailWasInPosition = flag;
+    // if ((bool)m_sailCloth)
+    // {
+    //   if (m_speed == Speed.Stop || m_speed == Speed.Slow || m_speed == Speed.Back)
+    //   {
+    //     if (flag && m_sailCloth.enabled)
+    //     {
+    //       m_sailCloth.enabled = false;
+    //     }
+    //   }
+    //   else if (flag)
+    //   {
+    //     if (!m_sailWasInPosition)
+    //     {
+    //       Utils.RecreateComponent(ref m_sailCloth);
+    //     }
+    //   }
+    //   else
+    //   {
+    //     m_sailCloth.enabled = true;
+    //   }
+    // }
+    //
+    // m_sailWasInPosition = flag;
   }
 
   private void UpdateOwner()

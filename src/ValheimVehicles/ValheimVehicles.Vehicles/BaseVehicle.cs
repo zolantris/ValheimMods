@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Util;
+using ValheimVehicles.Propulsion.Rudder;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
@@ -40,8 +41,6 @@ public class BaseVehicle : MonoBehaviour
 
   internal ZNetView m_nview;
 
-  internal Rigidbody m_syncRigidbody;
-
   internal List<ZNetView> m_pieces = new();
 
   internal List<MastComponent> m_mastPieces = new();
@@ -75,10 +74,10 @@ public class BaseVehicle : MonoBehaviour
   private Vector2i m_sector;
   private Vector2i m_serverSector;
   private Bounds m_bounds = default;
-  internal BoxCollider m_blockingcollider;
+  public BoxCollider m_blockingcollider;
   internal BoxCollider m_floatcollider;
   internal BoxCollider m_onboardcollider;
-  internal int m_id;
+  public int m_id;
   public bool m_statsOverride;
   private static bool itemsRemovedDuringWait;
   internal Coroutine pendingPiecesCoroutine;
@@ -88,10 +87,11 @@ public class BaseVehicle : MonoBehaviour
   {
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
-    m_rigidbody = gameObject.AddComponent<Rigidbody>();
-    m_rigidbody.isKinematic = true;
-    m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-    m_rigidbody.mass = 99999f;
+
+    // m_rigidbody = gameObject.AddComponent<Rigidbody>();
+    // m_rigidbody.isKinematic = true;
+    // m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+    // m_rigidbody.mass = 99999f;
     /*
      * This should work on both client and server, but the garbage collecting should only apply if the ZDOs are not persistent
      */
@@ -128,24 +128,24 @@ public class BaseVehicle : MonoBehaviour
 
   private void Sync()
   {
-    if ((bool)m_syncRigidbody)
-    {
-      m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
-      m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
-    }
+    // if ((bool)m_syncRigidbody)
+    // {
+    //   m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
+    //   m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
+    // }
   }
 
-  public void FixedUpdate()
-  {
-    Sync();
-  }
+  // public void FixedUpdate()
+  // {
+  //   // Sync();
+  // }
 
 /*
  * @important, server does not have access to lifecycle methods so a coroutine is required to update things
  */
   public void LateUpdate()
   {
-    Sync();
+    // Sync();
     if (!ZNet.instance.IsServer()) Client_UpdateAllPieces();
   }
 
@@ -322,7 +322,6 @@ public class BaseVehicle : MonoBehaviour
     }
 
     m_rigidbody.mass = TotalMass;
-    m_syncRigidbody.mass = TotalMass;
   }
 
   public void RemovePiece(ZNetView netView)
@@ -800,9 +799,11 @@ public class BaseVehicle : MonoBehaviour
 
   public static void InitPiece(ZNetView netView)
   {
-    Logger.LogDebug("InitPiece() called");
     var rb = netView.GetComponentInChildren<Rigidbody>();
-    if ((bool)rb && !rb.isKinematic) return;
+    if ((bool)rb && !rb.isKinematic)
+    {
+      return;
+    }
 
     var id = GetParentID(netView.m_zdo);
     if (id == 0) return;
@@ -810,10 +811,12 @@ public class BaseVehicle : MonoBehaviour
     var parentObj = ZDOPersistantID.Instance.GetGameObject(id);
     if ((bool)parentObj)
     {
-      var mb = parentObj.GetComponent<WaterVehicleController>();
-      if ((bool)mb && (bool)mb.baseVehicle)
+      var waterVehicleController = parentObj.GetComponent<WaterVehicleController>();
+      Logger.LogDebug($"ParentObj {parentObj}");
+      if ((bool)waterVehicleController && (bool)waterVehicleController.baseVehicle)
       {
-        mb.baseVehicle.ActivatePiece(netView);
+        Logger.LogDebug("ActivatingBaseVehicle piece");
+        waterVehicleController.baseVehicle.ActivatePiece(netView);
       }
     }
     else
@@ -903,12 +906,23 @@ public class BaseVehicle : MonoBehaviour
     if ((bool)rudder)
     {
       if (!rudder.valheimShipControls)
-        rudder.valheimShipControls = netView.GetComponentInChildren<ValheimShipControls>();
+        rudder.valheimShipControls =
+          netView.GetComponentInChildren<ValheimShipControls>();
 
       if (!rudder.m_wheel) rudder.m_wheel = netView.transform.Find("controls/wheel");
 
       rudder.valheimShipControls.m_nview = m_nview;
-      rudder.valheimShipControls.m_ship = vehicleController.GetComponent<ValheimShip>();
+      rudder.valheimShipControls.m_ship =
+        vehicleController.GetComponent<ValheimShip>();
+
+      if (rudder.m_controls.enabled)
+      {
+        rudder.m_controls.enabled = false;
+      }
+
+      rudder.valheimShipControls.enabled = true;
+
+      Logger.LogDebug("added rudder to BaseVehicle");
       m_rudderPieces.Add(rudder);
     }
 
@@ -988,8 +1002,15 @@ public class BaseVehicle : MonoBehaviour
 
   internal int GetPieceCount()
   {
-    if (!m_nview || m_nview.m_zdo == null) return m_pieces.Count;
+    if (!m_nview || m_nview.m_zdo == null)
+    {
+      Logger.LogDebug($"GetPieceCount netview or ZDO null {m_pieces.Count}");
+      return m_pieces.Count;
+    }
 
-    return m_nview.m_zdo.GetInt("MBPieceCount", m_pieces.Count);
+    var count = m_nview.m_zdo.GetInt("MBPieceCount", m_pieces.Count);
+
+    Logger.LogDebug($"GetPieceCount() {count}");
+    return count;
   }
 }

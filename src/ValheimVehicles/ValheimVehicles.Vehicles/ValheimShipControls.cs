@@ -22,10 +22,10 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   private void Awake()
   {
-    m_nview = m_ship.GetComponent<ZNetView>();
-    m_nview.Register<long>("RequestControl", RPC_RequestControl);
-    m_nview.Register<long>("ReleaseControl", RPC_ReleaseControl);
-    m_nview.Register<bool>("RequestRespons", RPC_RequestRespons);
+    // m_nview = m_ship.GetComponent<ZNetView>();
+    // m_nview.Register<long>("RequestControl", RPC_RequestControl);
+    // m_nview.Register<long>("ReleaseControl", RPC_ReleaseControl);
+    // m_nview.Register<bool>("RequestRespons", RPC_RequestRespons);
   }
 
   public bool IsValid()
@@ -108,7 +108,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     }
 
     var isAnchored =
-      baseRoot.vehicleController.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored);
+      baseRoot.vehicleController.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored);
     var anchoredStatus = isAnchored ? "[<color=red><b>$mb_rudder_use_anchored</b></color>]" : "";
     var anchorText =
       isAnchored

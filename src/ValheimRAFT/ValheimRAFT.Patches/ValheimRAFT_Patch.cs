@@ -6,6 +6,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT.Util;
+using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
@@ -33,7 +34,7 @@ public class ValheimRAFT_Patch
   [HarmonyPrefix]
   private static void Interact(ShipControlls __instance, Humanoid character)
   {
-    if (character == Player.m_localPlayer)
+    if (character == Player.m_localPlayer && __instance.isActiveAndEnabled)
     {
       var baseRoot = __instance.GetComponentInParent<MoveableBaseRootComponent>();
       if (baseRoot != null)
@@ -569,47 +570,47 @@ public class ValheimRAFT_Patch
     }
   }
 
-  [HarmonyPatch(typeof(Player), "FindClosestSnappoint")]
-  [HarmonyPrefix]
-  private static bool FindClosestSnapPointPrefix(Player __instance)
-  {
-    Logger.LogDebug(
-      $"LogPoint(SINGLE) before: {__instance.m_tempSnapPoints1.Count} {__instance.m_tempSnapPoints1}");
-    Logger.LogDebug(
-      $"LogPoint(SINGLE) before: {__instance.m_tempSnapPoints2.Count} {__instance.m_tempSnapPoints2}");
-    return true;
-  }
-
-  [HarmonyPatch(typeof(Player), "FindClosestSnappoint")]
-  [HarmonyPostfix]
-  private static void FindClosestSnapPointPostfix(Player __instance)
-  {
-    Logger.LogDebug(
-      $"LogPoint(SINGLE) after: {__instance.m_tempSnapPoints1.Count} {__instance.m_tempSnapPoints1}");
-    Logger.LogDebug(
-      $"LogPoint(SINGLE) after: {__instance.m_tempSnapPoints2.Count} {__instance.m_tempSnapPoints2}");
-  }
-
-  [HarmonyPatch(typeof(Player), "FindClosestSnapPoints")]
-  [HarmonyPrefix]
-  private static bool FindClosestSnapPointsPrefix(Player __instance)
-  {
-    Logger.LogDebug(
-      $"LogPoints before: {__instance.m_tempSnapPoints1.Count} {__instance.m_tempSnapPoints1}");
-    Logger.LogDebug(
-      $"LogPoints before: {__instance.m_tempSnapPoints2.Count} {__instance.m_tempSnapPoints2}");
-    return true;
-  }
-
-  [HarmonyPatch(typeof(Player), "FindClosestSnapPoints")]
-  [HarmonyPostfix]
-  private static void FindClosestSnapPointsPostfix(Player __instance)
-  {
-    Logger.LogDebug(
-      $"LogPoints after: {__instance.m_tempSnapPoints1.Count} {__instance.m_tempSnapPoints1}");
-    Logger.LogDebug(
-      $"LogPoints after: {__instance.m_tempSnapPoints2.Count} {__instance.m_tempSnapPoints2}");
-  }
+  // [HarmonyPatch(typeof(Player), "FindClosestSnappoint")]
+  // [HarmonyPrefix]
+  // private static bool FindClosestSnapPointPrefix(Player __instance)
+  // {
+  //   Logger.LogDebug(
+  //     $"LogPoint(SINGLE) before: {__instance.m_tempSnapPoints1.Count} {__instance.m_tempSnapPoints1}");
+  //   Logger.LogDebug(
+  //     $"LogPoint(SINGLE) before: {__instance.m_tempSnapPoints2.Count} {__instance.m_tempSnapPoints2}");
+  //   return true;
+  // }
+  //
+  // [HarmonyPatch(typeof(Player), "FindClosestSnappoint")]
+  // [HarmonyPostfix]
+  // private static void FindClosestSnapPointPostfix(Player __instance)
+  // {
+  //   Logger.LogDebug(
+  //     $"LogPoint(SINGLE) after: {__instance.m_tempSnapPoints1.Count} {__instance.m_tempSnapPoints1}");
+  //   Logger.LogDebug(
+  //     $"LogPoint(SINGLE) after: {__instance.m_tempSnapPoints2.Count} {__instance.m_tempSnapPoints2}");
+  // }
+  //
+  // [HarmonyPatch(typeof(Player), "FindClosestSnapPoints")]
+  // [HarmonyPrefix]
+  // private static bool FindClosestSnapPointsPrefix(Player __instance)
+  // {
+  //   Logger.LogDebug(
+  //     $"LogPoints before: {__instance.m_tempSnapPoints1.Count} {__instance.m_tempSnapPoints1}");
+  //   Logger.LogDebug(
+  //     $"LogPoints before: {__instance.m_tempSnapPoints2.Count} {__instance.m_tempSnapPoints2}");
+  //   return true;
+  // }
+  //
+  // [HarmonyPatch(typeof(Player), "FindClosestSnapPoints")]
+  // [HarmonyPostfix]
+  // private static void FindClosestSnapPointsPostfix(Player __instance)
+  // {
+  //   Logger.LogDebug(
+  //     $"LogPoints after: {__instance.m_tempSnapPoints1.Count} {__instance.m_tempSnapPoints1}");
+  //   Logger.LogDebug(
+  //     $"LogPoints after: {__instance.m_tempSnapPoints2.Count} {__instance.m_tempSnapPoints2}");
+  // }
 
   [HarmonyPatch(typeof(ZNetView), "OnDestroy")]
   [HarmonyPrefix]

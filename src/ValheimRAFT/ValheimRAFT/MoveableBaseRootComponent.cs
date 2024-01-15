@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimRAFT.Util;
+using ValheimVehicles.Propulsion.Rudder;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -910,6 +911,12 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
       rudder.m_controls.m_nview = m_nview;
       rudder.m_controls.m_ship = shipController.GetComponent<Ship>();
+      rudder.m_controls.enabled = true;
+      if (rudder.valheimShipControls.enabled)
+      {
+        rudder.valheimShipControls.enabled = false;
+      }
+
       m_rudderPieces.Add(rudder);
     }
 

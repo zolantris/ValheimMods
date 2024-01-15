@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimVehicles.Vehicles;
@@ -10,21 +11,33 @@ namespace ValheimVehicles.Prefabs;
  *
  * Determines if it needs to initialize a WaterVehicle or if it is already connected to WaterVehicle
  */
-public class ShipHullPrefabComponent : MonoBehaviour
+public class ShipHullComponent : MonoBehaviour
 {
   private WaterVehicleController _waterVehicleController;
+  private ValheimShip _shipInstance;
 
   private void GetShipZDO(ZNetView netView)
   {
     // netView.m_zdo.GetInt();
   }
 
-  private void Start()
+  // private void OnDestroy()
+  // {
+  //   if ((bool)_waterVehicleController)
+  //   {
+  //     Destroy(_waterVehicleController);
+  //   }
+  // }
+
+  /*
+   * Most initialization logic can be called within Start as Awake will actually trigger when the vehicle ghost appears
+   */
+  private void Awake()
   {
-    Logger.LogDebug("called Awake for ShipHullPrefabComponent");
+    Logger.LogDebug("ShipHullPrefabComponent.Awake() called");
     _waterVehicleController = GetComponentInParent<WaterVehicleController>();
 
-    Logger.LogDebug($"Awake parent {_waterVehicleController}");
+    Logger.LogDebug($"WaterVehicleController GETTER {_waterVehicleController}");
 
     /*
      * early exits as this instance of water vehicle is not needed
@@ -43,14 +56,40 @@ public class ShipHullPrefabComponent : MonoBehaviour
     //   netView = gameObject.AddComponent<ZNetView>();
     // }
 
-    _waterVehicleController = gameObject.AddComponent<WaterVehicleController>();
+    // _waterVehicleController =
+    /**
+     * Skip ship initiation if the hull is already part of the ship
+     */
+    _shipInstance = gameObject.GetComponentInParent<ValheimShip>();
+    if (!(bool)_shipInstance)
+    {
+      _shipInstance =
+        // Makes the ship instance exist outside of the hull component to prevent issues
+        // Adds the ship globally to the ValheimRaftPluginGO for now
+        // TODO to make a VehicleComponent gameobject that is responsible for initializing all Vehicles
+        gameObject.AddComponent<ValheimShip>();
+      _shipInstance.transform.SetParent(null);
+
+
+      // Adds the hull to the baseVehicle
+      var waterVehicleController = _shipInstance.GetComponent<WaterVehicleController>();
+
+      if ((bool)waterVehicleController)
+      {
+        waterVehicleController.baseVehicle.AddNewPiece(GetComponent<ZNetView>());
+      }
+
+
+      // var baseVehicle = _shipInstance.GetComponent<BaseVehicle>();
+      // transform.SetParent(baseVehicle.transform);
+    }
     // var waterVehicleNetView = waterVehicle.Init();
 
     // waterVehicleNetView.m_zdo.GetZDOID();
-    _waterVehicleController.transform.SetParent(null);
-    transform.SetParent(_waterVehicleController.transform);
-
-    Logger.LogDebug($"Re-parented the watervehicle controller {_waterVehicleController}");
+    // _waterVehicleController.transform.SetParent(null);
+    // transform.SetParent(_waterVehicleController.transform);
+    //
+    // Logger.LogDebug($"Re-parented the watervehicle controller {_waterVehicleController}");
     // FirstTimeCreation();
   }
 

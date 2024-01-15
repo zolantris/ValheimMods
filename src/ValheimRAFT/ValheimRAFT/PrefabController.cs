@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.U2D;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
@@ -41,6 +42,19 @@ public class PrefabController : MonoBehaviour
   private bool prefabsEnabled = true;
   private GameObject vanillaRaftPrefab;
   private GameObject vikingShipPrefab;
+
+  /*
+   * ship related items
+   * Todo make a vehicle specific prefab within the assetbundle for ValheimRAFT ships
+   *
+   * These values will be accessed by the WaterVehicleController (or alternatively a custom ship prefab will be created using these values
+   *
+   * All values will come from the VikingShip instead of the raft
+   */
+  public static GameObject waterMask;
+  public static BoxCollider shipFloatCollider;
+  public static BoxCollider shipOnboardCollider;
+  public static BoxCollider shipBlockingCollider;
 
   public const string Tier1RaftMastName = "MBRaftMast";
   public const string Tier2RaftMastName = "MBKarveMast";
@@ -357,9 +371,9 @@ public class PrefabController : MonoBehaviour
     SetWearNTearSupport(wntComponent, WearNTear.MaterialType.HardWood);
     AddNetViewWithPersistence(raftHullPrefab);
     // FixSnapPoints(raftHullPrefab);
-    WaterVehicleController.vikingShipPrefab = vikingShipPrefab;
 
-    var shipHullPrefabComponent = raftHullPrefab.AddComponent<ShipHullPrefabComponent>();
+    // this will be used to hide water on the boat
+    var shipHullPrefabComponent = raftHullPrefab.AddComponent<ShipHullComponent>();
 
     // might not need to add netview if the log already has it
 
@@ -473,6 +487,16 @@ public class PrefabController : MonoBehaviour
   {
     vikingShipPrefab = prefabManager.GetPrefab("VikingShip");
     var vikingShipMast = vikingShipPrefab.transform.Find("ship/visual/Mast").gameObject;
+    /*
+     * @todo apply this watermask to hide water on the boat
+     */
+    waterMask = vikingShipPrefab.transform.Find("ship/visual/watermask").gameObject;
+    shipFloatCollider = vikingShipPrefab.transform.Find("FloatCollider")
+      .GetComponentInChildren<BoxCollider>();
+    shipOnboardCollider = vikingShipPrefab.transform.Find("OnboardTrigger")
+      .GetComponentInChildren<BoxCollider>();
+    // shipBlockingCollider = vikingShipPrefab.transform.Find("ship/colliders/hullcullider")
+    //   .GetComponentInChildren<BoxCollider>();
 
     var vikingShipMastPrefab = prefabManager.CreateClonedPrefab(Tier3RaftMastName, vikingShipMast);
     var vikingShipMastPrefabPiece = vikingShipMastPrefab.AddComponent<Piece>();
@@ -724,6 +748,7 @@ public class PrefabController : MonoBehaviour
     var rudder = mbRudderPrefab.AddComponent<RudderComponent>();
 
     // for older components
+    // m_controls and valheimShipControls are dynamically enabled/disabled
     rudder.m_controls = mbRudderPrefab.AddComponent<ShipControlls>();
     rudder.m_controls.m_hoverText = "$mb_rudder_use";
     rudder.m_controls.m_attachPoint = mbRudderPrefab.transform.Find("attachpoint");
@@ -731,11 +756,11 @@ public class PrefabController : MonoBehaviour
     rudder.m_controls.m_detachOffset = new Vector3(0f, 0f, 0f);
 
     // for newer vehicle components
-    // rudder.valheimShipControls = mbRudderPrefab.AddComponent<ValheimShipControls>();
-    // rudder.valheimShipControls.m_hoverText = "$mb_rudder_use";
-    // rudder.valheimShipControls.m_attachPoint = mbRudderPrefab.transform.Find("attachpoint");
-    // rudder.valheimShipControls.m_attachAnimation = "Standing Torch Idle right";
-    // rudder.valheimShipControls.m_detachOffset = new Vector3(0f, 0f, 0f);
+    rudder.valheimShipControls = mbRudderPrefab.AddComponent<ValheimShipControls>();
+    rudder.valheimShipControls.m_hoverText = "$mb_rudder_use";
+    rudder.valheimShipControls.m_attachPoint = mbRudderPrefab.transform.Find("attachpoint");
+    rudder.valheimShipControls.m_attachAnimation = "Standing Torch Idle right";
+    rudder.valheimShipControls.m_detachOffset = new Vector3(0f, 0f, 0f);
 
     rudder.m_wheel = mbRudderPrefab.transform.Find("controls/wheel");
     rudder.UpdateSpokes();

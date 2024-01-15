@@ -58,6 +58,15 @@ public class WaterVehicleController : MonoBehaviour
       m_nview = gameObject.AddComponent<ZNetView>();
     }
 
+    if (m_nview.GetZDO() == null)
+    {
+      Logger.LogDebug("WaterVehicleController.Awake() ZDO was null, creating new one");
+      m_nview.m_zdo = new ZDO()
+      {
+        Persistent = true,
+      };
+    }
+
     Logger.LogDebug($"WaterVehicleController.Awake() NetView {m_nview}");
 
     m_zsync = GetComponent<ZSyncTransform>();
@@ -67,10 +76,11 @@ public class WaterVehicleController : MonoBehaviour
       m_zsync = gameObject.AddComponent<ZSyncTransform>();
     }
 
-    ship = gameObject.AddComponent<ValheimShip>();
+    ship = gameObject.GetComponent<ValheimShip>();
     if (!(bool)ship)
     {
-      Logger.LogError("no ship component added");
+      Logger.LogError(
+        "no 1 component detected, this could mean the WaterVehicleController is orphaned from a ship script which initialized it");
       return;
     }
 
@@ -85,26 +95,40 @@ public class WaterVehicleController : MonoBehaviour
       delegate(long sender, bool state) { RPC_SetVisual(sender, state); });
     baseVehicle.vehicleController = this;
     baseVehicle.m_nview = m_nview;
+
+    Logger.LogDebug($"NVIEW ZDO {m_nview.m_zdo}");
+
     baseVehicle.m_id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
     m_rigidbody = GetComponent<Rigidbody>();
-    baseVehicle.m_syncRigidbody = m_rigidbody;
-    m_rigidbody.mass = baseVehicle.TotalMass;
-    m_baseRootObject.transform.SetParent(null);
 
-    m_baseRootObject.transform.position = base.transform.position;
-    m_baseRootObject.transform.rotation = base.transform.rotation;
+    if ((bool)m_rigidbody)
+    {
+      baseVehicle.m_rigidbody = m_rigidbody;
+      m_rigidbody.mass = baseVehicle.TotalMass;
+    }
+    else
+    {
+      Logger.LogError("Rigidbody not detected for WaterVehicleController");
+    }
+
+    Logger.LogDebug($"Made it to 114");
+    m_baseRootObject.transform.SetParent(null);
+    m_baseRootObject.transform.position = transform.position;
+    m_baseRootObject.transform.rotation = transform.rotation;
     UpdateVisual();
-    BoxCollider[] colliders = base.transform.GetComponentsInChildren<BoxCollider>();
+
+    Logger.LogDebug($"Made it to 120");
+
+    // BoxCollider[] colliders = base.transform.GetComponentsInChildren<BoxCollider>();
 
     // baseVehicle.m_onboardcollider =
     //   colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "OnboardTrigger");
-    var watermask = vikingShipPrefab.transform.Find("ship/visual/watermask").gameObject;
-    Instantiate(watermask, m_baseRootObject.transform);
 
-    ship.m_floatCollider = vikingShipPrefab.transform.Find("FloatCollider")
-      .GetComponentInChildren<BoxCollider>();
-    baseVehicle.m_onboardcollider = vikingShipPrefab.transform.Find("OnboardTrigger")
-      .GetComponentInChildren<BoxCollider>();
+    // Instantiate(, m_baseRootObject.transform);
+    ship.m_floatCollider = PrefabController.shipFloatCollider;
+    baseVehicle.m_onboardcollider = PrefabController.shipOnboardCollider;
+
+    Logger.LogDebug($"Made it to 130");
     if (!baseVehicle.m_onboardcollider)
     {
       Logger.LogError(
@@ -115,16 +139,37 @@ public class WaterVehicleController : MonoBehaviour
       baseVehicle.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     }
 
-
+    Logger.LogDebug(
+      $"Colliders, shipBlockingCollider {PrefabController.shipBlockingCollider} float collider {ship.m_floatCollider}");
+    Logger.LogDebug($"Made it to 142");
     baseVehicle.m_floatcollider = ship.m_floatCollider;
+    Logger.LogDebug($"Made it to 146");
     baseVehicle.m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    baseVehicle.m_blockingcollider = vikingShipPrefab.transform.Find("ship/colliders/hullcullider")
-      .GetComponentInChildren<BoxCollider>();
-    baseVehicle.m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    baseVehicle.m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
-    baseVehicle.m_blockingcollider.transform.parent.gameObject.layer =
-      ValheimRaftPlugin.CustomRaftLayer;
-    // baseVehicle.ActivatePendingPiecesCoroutine();
+    Logger.LogDebug($"Made it to 148");
+    // var blockingCollider = ship.gameObject.AddComponent<BoxCollider>();
+    // blockingCollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    Logger.LogDebug($"Made it to 156");
+
+    baseVehicle.m_blockingcollider = ship.m_blockingCollider;
+    // if ((bool)baseVehicle.m_blockingcollider)
+    // {
+    //   baseVehicle.m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    //   baseVehicle.m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    //   baseVehicle.m_blockingcollider.transform.localPosition = new Vector3(0f, 0.29f, 0f);
+    // }
+    // else
+    // {
+    //   Logger.LogError("No baseVehicle collider to update");
+    // }
+
+    // blockingCollider.transform.parent.gameObject.layer =
+    //   ValheimRaftPlugin.CustomRaftLayer;
+
+    Logger.LogDebug($"Made it 158");
+    // baseVehicle.m_blockingcollider = blockingCollider;
+    Logger.LogDebug($"Made it to 164");
+    baseVehicle.ActivatePendingPiecesCoroutine();
+    Logger.LogDebug($"Made it to 166");
     FirstTimeCreation();
   }
 
@@ -273,6 +318,10 @@ public class WaterVehicleController : MonoBehaviour
         impact.m_interval = 0.1f;
         impact.m_minVelocity = 0.1f;
         impact.m_damages.m_damage = 100f;
+      }
+      else
+      {
+        Logger.LogDebug("No Ship ImpactEffect detected, this needs to be added to the custom ship");
       }
     }
   }
