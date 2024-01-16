@@ -11,11 +11,17 @@ namespace ValheimVehicles.Vehicles;
 /*
  * Mostly vanilla Valheim However this is safe from other mods overriding valheim ships directly
  */
-public class VVShip : ValheimBaseGameShip
+public class VVShip : ValheimBaseGameShip, IVehicleProperties
 {
+  public BoxCollider FloatCollider
+  {
+    get => m_floatcollider;
+    set => m_floatcollider = value;
+  }
+
   private static readonly List<VVShip> s_currentShips = new();
   private WaterVehicleController _cachedVehicleController;
-  public static List<VVShip> Instances { get; }
+  public static List<VVShip> Instances { get; } = new();
 
 
   private void Awake()
@@ -29,15 +35,15 @@ public class VVShip : ValheimBaseGameShip
     Logger.LogDebug("Made it to InitializeBaseShipComponent");
     var ladders = GetComponentsInChildren<Ladder>();
     for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
-    gameObject.AddComponent<WaterVehicleController>();
+    // gameObject.AddComponent<WaterVehicleController>();
   }
 
-  private void OnEnable()
+  internal void OnEnable()
   {
     Instances.Add(this);
   }
 
-  private void OnDisable()
+  internal void OnDisable()
   {
     Instances.Remove(this);
   }
@@ -54,7 +60,9 @@ public class VVShip : ValheimBaseGameShip
   public void FixedUpdate()
   {
     // m_body.WakeUp();
-    // m_body.AddForceAtPosition(Vector3.up, m_floatCollider.transform.position);
+    // m_body.AddForceAtPosition(Vector3.up, m_floatcollider.center);
+
+    FixedUpdate1();
   }
 
   public static VVShip GetLocalShip()
@@ -279,9 +287,9 @@ public class VVShip : ValheimBaseGameShip
 
     var sailArea = 0f;
 
-    if (mb.baseVehicleController)
+    if ((bool)mb)
     {
-      sailArea = mb.baseVehicleController.GetSailingForce();
+      sailArea = mb.GetSailingForce();
     }
 
     /*

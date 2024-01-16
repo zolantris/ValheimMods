@@ -11,7 +11,7 @@ namespace ValheimVehicles.Vehicles;
 /*
  * Mostly vanilla Valheim However this is safe from other mods overriding valheim ships directly
  */
-public class ValheimBaseGameShip : MonoBehaviour, IVehicleProperties
+public class ValheimBaseGameShip : MonoBehaviour
 {
   public enum Speed
   {
@@ -34,17 +34,13 @@ public class ValheimBaseGameShip : MonoBehaviour, IVehicleProperties
 
   public GameObject m_rudderObject;
 
-  public ShipControlls m_shipControlls;
+  public ValheimShipControls m_shipControlls;
 
   public Transform m_controlGuiPos;
 
-  public BoxCollider m_floatcollider
-  {
-    get => new BoxCollider();
-    set => m_floatcollider = value;
-  }
+  public BoxCollider m_floatcollider = new BoxCollider();
 
-  public BoxCollider m_blockingCollider;
+  public BoxCollider m_blockingCollider = new BoxCollider();
 
   public float m_waterLevelOffset;
 
@@ -132,7 +128,7 @@ public class ValheimBaseGameShip : MonoBehaviour, IVehicleProperties
 
   internal WaterVehicleController CachedVehicleController;
 
-  public static List<ValheimBaseGameShip> Instances { get; } = new();
+  // public static virtual List<ValheimBaseGameShip> Instances { get; } = new();
 
 
   internal void Awake()
@@ -148,10 +144,10 @@ public class ValheimBaseGameShip : MonoBehaviour, IVehicleProperties
       m_nview.m_zdo.Persistent = true;
     }
 
-    m_blockingCollider = gameObject.AddComponent<BoxCollider>();
-    m_blockingCollider.gameObject.layer = 28; // vehicle layer
-    m_blockingCollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    m_blockingCollider.transform.localPosition = new Vector3(0f, 0.29f, 0f);
+    // m_blockingCollider = gameObject.AddComponent<BoxCollider>();
+    // m_blockingCollider.gameObject.layer = 28; // vehicle layer
+    // m_blockingCollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    // m_blockingCollider.transform.localPosition = new Vector3(0f, 0.29f, 0f);
 
     if (!m_floatcollider)
     {
@@ -174,11 +170,12 @@ public class ValheimBaseGameShip : MonoBehaviour, IVehicleProperties
     m_body = GetComponent<Rigidbody>();
     if (!(bool)m_body)
     {
-      m_body = gameObject.AddComponent<Rigidbody>();
+      Logger.LogDebug("No rigidbody detected");
+      // m_body = gameObject.AddComponent<Rigidbody>();
     }
 
-    m_body.mass = 2000f;
-    m_body.useGravity = true;
+    // m_body.mass = 2000f;
+    // m_body.useGravity = true;
     m_body.maxDepenetrationVelocity = 2f;
 
     Logger.LogDebug("Made it to 164");
@@ -203,24 +200,6 @@ public class ValheimBaseGameShip : MonoBehaviour, IVehicleProperties
 
     // m_sailCloth = m_sailObject.GetComponentInChildren<Cloth>();
     Logger.LogDebug("Made it to 183");
-  }
-
-  internal void InitializeBaseShipComponent()
-  {
-    Logger.LogDebug("Made it to InitializeBaseShipComponent");
-    var ladders = GetComponentsInChildren<Ladder>();
-    for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
-    gameObject.AddComponent<WaterVehicleController>();
-  }
-
-  internal void OnEnable()
-  {
-    Instances.Add(this);
-  }
-
-  internal void OnDisable()
-  {
-    Instances.Remove(this);
   }
 
   /**

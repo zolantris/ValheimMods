@@ -35,7 +35,6 @@ public class BaseVehicleController : MonoBehaviour
   internal static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
 
-  [FormerlySerializedAs("vehicleControllerController")]
   public WaterVehicleController vehicleController;
 
   public BaseVehicleController instance;
@@ -79,9 +78,9 @@ public class BaseVehicleController : MonoBehaviour
   private Vector2i m_sector;
   private Vector2i m_serverSector;
   private Bounds m_bounds = default;
-  public BoxCollider m_blockingcollider;
-  internal BoxCollider m_floatcollider => VehicleInstance.m_floatcollider;
-  internal BoxCollider m_onboardcollider;
+  public BoxCollider m_blockingcollider = new();
+  internal BoxCollider m_floatcollider => VehicleInstance.FloatCollider;
+  internal BoxCollider m_onboardcollider = new();
   public int m_id;
   public bool m_statsOverride;
   private static bool itemsRemovedDuringWait;
@@ -535,7 +534,7 @@ public class BaseVehicleController : MonoBehaviour
       yield return null;
     }
 
-    var id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
+    var id = ZDOPersistantID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
     m_pendingPieces.TryGetValue(id, out var list);
 
     if (list is { Count: > 0 })
@@ -790,7 +789,7 @@ public class BaseVehicleController : MonoBehaviour
         var zdoparent = ZDOMan.instance.GetZDO(zdoid);
         id = zdoparent == null
           ? ZDOPersistantID.ZDOIDToId(zdoid)
-          : ZDOPersistantID.Instance.GetOrCreatePersistantID(zdoparent);
+          : ZDOPersistantID.Instance.GetOrCreatePersistentID(zdoparent);
         zdo.Set(MBParentIdHash, id);
         zdo.Set(MBRotationVecHash,
           zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
@@ -816,16 +815,17 @@ public class BaseVehicleController : MonoBehaviour
     var parentObj = ZDOPersistantID.Instance.GetGameObject(id);
     if ((bool)parentObj)
     {
-      var waterVehicleController = parentObj.GetComponent<WaterVehicleController>();
+      var controller = parentObj.GetComponent<BaseVehicleController>();
       Logger.LogDebug($"ParentObj {parentObj}");
-      if ((bool)waterVehicleController && (bool)waterVehicleController.baseVehicleController)
+      if ((bool)controller)
       {
         Logger.LogDebug("ActivatingBaseVehicle piece");
-        waterVehicleController.baseVehicleController.ActivatePiece(netView);
+        controller.ActivatePiece(netView);
       }
     }
     else
     {
+      Logger.LogDebug($"adding inactive piece, {id} {netView.m_zdo}");
       AddInactivePiece(id, netView);
     }
   }
@@ -852,23 +852,50 @@ public class BaseVehicleController : MonoBehaviour
 
   public void AddNewPiece(Piece piece)
   {
-    if ((bool)piece && (bool)piece.m_nview)
+    if (!(bool)piece)
     {
-      if (hasDebug) Logger.LogDebug("Added new piece is valid");
-      AddNewPiece(piece.m_nview);
+      Logger.LogError("piece does not exist");
+      return;
     }
+
+    if (!(bool)piece.m_nview)
+    {
+      Logger.LogError("m_nview does not exist on piece");
+      return;
+    }
+
+    if (hasDebug) Logger.LogDebug("Added new piece is valid");
+    AddNewPiece(piece.m_nview);
   }
 
   public void AddNewPiece(ZNetView netView)
   {
+    if (!(bool)netView)
+    {
+      Logger.LogError("netView does not exist");
+      return;
+    }
+
+    Logger.LogDebug($"netView exists {netView.name}");
     netView.transform.SetParent(transform);
+    Logger.LogDebug($"netView set parent");
     if (netView.m_zdo != null)
     {
-      netView.m_zdo.Set(MBParentIdHash,
-        ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo));
+      Logger.LogDebug($"netView has a zdo, {m_nview.m_zdo}");
+      var newId = ZDOPersistantID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
+      Logger.LogDebug(
+        $"persistent id {newId}");
+      netView.m_zdo.Set(MBParentIdHash, newId);
+      Logger.LogDebug(
+        $"netView.transform.localRotation.eulerAngles {netView.transform.localRotation.eulerAngles}");
+
       netView.m_zdo.Set(MBRotationVecHash, netView.transform.localRotation.eulerAngles);
+      Logger.LogDebug(
+        $"netView.transform.localRotation.eulerAngles {netView.transform.localPosition}");
       netView.m_zdo.Set(MBPositionHash, netView.transform.localPosition);
     }
+
+    Logger.LogDebug($"made it end, about to call addpiece and init zdo");
 
     AddPiece(netView);
     InitZDO(netView.m_zdo);
@@ -876,6 +903,12 @@ public class BaseVehicleController : MonoBehaviour
 
   public void AddPiece(ZNetView netView)
   {
+    if (!(bool)netView)
+    {
+      Logger.LogError("netView does not exist but somehow called AddPiece()");
+      return;
+    }
+
     totalSailArea = 0;
     m_pieces.Add(netView);
 
@@ -967,7 +1000,10 @@ public class BaseVehicleController : MonoBehaviour
     var rbs = netView.GetComponentsInChildren<Rigidbody>();
     for (var i = 0; i < rbs.Length; i++)
       if (rbs[i].isKinematic)
+      {
+        Logger.LogDebug($"destroying kinematic rbs");
         Destroy(rbs[i]);
+      }
   }
 
   private void UpdatePieceCount()

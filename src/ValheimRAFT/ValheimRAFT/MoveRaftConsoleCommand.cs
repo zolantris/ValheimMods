@@ -68,7 +68,7 @@ internal class MoveRaftConsoleCommand : ConsoleCommand
     {
       Stopwatch stopWatch = new Stopwatch();
       stopWatch.Start();
-      int id = ZDOPersistantID.Instance.GetOrCreatePersistantID(mb.m_baseRoot.m_nview.m_zdo);
+      int id = ZDOPersistantID.Instance.GetOrCreatePersistentID(mb.m_baseRoot.m_nview.m_zdo);
       foreach (ZDO zdo in ZDOMan.instance.m_objectsByID.Values)
       {
         int zdoid = zdo.GetInt(MoveableBaseRootComponent.MBParentIdHash);

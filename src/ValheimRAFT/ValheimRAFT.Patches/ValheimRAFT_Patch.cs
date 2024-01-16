@@ -661,7 +661,16 @@ public class ValheimRAFT_Patch
   [HarmonyPrefix]
   private static bool WearNTear_ApplyDamage(WearNTear __instance, float damage)
   {
-    return !__instance.GetComponent<MoveableBaseShipComponent>();
+    var mbr = __instance.GetComponent<MoveableBaseShipComponent>();
+    var bv = __instance.GetComponent<BaseVehicleController>();
+
+    // vehicles ignore WNT for now...
+    if (mbr || bv)
+    {
+      return false;
+    }
+
+    return true;
   }
 
   [HarmonyPatch(typeof(WearNTear), "UpdateSupport")]

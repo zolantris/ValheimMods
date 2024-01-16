@@ -44,8 +44,11 @@ public class PrefabController : MonoBehaviour
   private bool prefabsEnabled = true;
   private GameObject vanillaRaftPrefab;
   private GameObject vikingShipPrefab;
+  public const string WaterVehiclePrefabName = "WaterVehicle";
 
-  public static GameObject waterVehiclePrefabInstance;
+
+  public static GameObject GetWaterVehiclePrefab =>
+    PrefabManager.Instance.GetPrefab(WaterVehiclePrefabName);
 
   /*
    * ship related items
@@ -368,9 +371,9 @@ public class PrefabController : MonoBehaviour
           break;
       }
 
-      // GameObject go = GameObject.CreatePrimitive(primType);
-      // go.transform.parent = prefab.transform;
-      Renderer[] renderers = new Renderer[5];
+      GameObject go = GameObject.CreatePrimitive(primType);
+      go.transform.parent = prefab.transform;
+      Renderer[] renderers = new Renderer[1];
       // renderers[0] = go.GetComponent<Renderer>();
 
       for (int r = 0; r < renderers.Length; r++)
@@ -380,15 +383,15 @@ public class PrefabController : MonoBehaviour
           case 0:
             renderers[r] = waterMask.GetComponentInChildren<MeshRenderer>();
             break;
-          case 1:
-            renderers[r] = waterMask.GetComponentInChildren<MeshRenderer>();
-            break;
-          case 2:
-            renderers[r] = waterMask.GetComponentInChildren<MeshRenderer>();
-            break;
-          case 3:
-            renderers[r] = waterMask.GetComponentInChildren<MeshRenderer>();
-            break;
+          // case 1:
+          //   renderers[r] = waterMask.GetComponentInChildren<MeshRenderer>();
+          //   break;
+          // case 2:
+          //   renderers[r] = waterMask.GetComponentInChildren<MeshRenderer>();
+          //   break;
+          // case 3:
+          //   renderers[r] = waterMask.GetComponentInChildren<MeshRenderer>();
+          //   break;
         }
       }
 
@@ -452,32 +455,45 @@ public class PrefabController : MonoBehaviour
      * 9. LODGroup
      */
 
-    var prefabName = "WaterVehicle";
-    var waterVehiclePrefab = prefabManager.CreateEmptyPrefab(prefabName);
-    // waterVehiclePrefab.gameObject.layer = LayerMask.NameToLayer("default");
+    var waterVehiclePrefab = prefabManager.CreateEmptyPrefab(WaterVehiclePrefabName, true);
+    Logger.LogDebug("Made it past waterVehiclePrefab empty create");
+    // var waterVehiclePrefab = new GameObject()
+    // {
+    //   name = prefabName,
+    //   layer = 0
+    // };
+    waterVehiclePrefab.gameObject.layer = LayerMask.NameToLayer("default");
     waterVehiclePrefab.gameObject.layer = 0;
-    waterVehiclePrefab.AddComponentCopy(waterMask);
+    Instantiate(waterMask, waterVehiclePrefab.transform);
 
     /*
      * Add all necessary colliders to the ship prefab
      * TODO make this a GameObject with a BoxCollider in it
      */
     var floatColliderComponent = vanillaRaftPrefab.transform.Find("FloatCollider");
+
+    Logger.LogDebug($"Floatcollider: {floatColliderComponent}");
     var blockingColliderComponent = vanillaRaftPrefab.transform.Find("ship/colliders/Cube");
     var onboardColliderComponent = vanillaRaftPrefab.transform.Find("OnboardTrigger");
 
     floatColliderComponent.transform.localScale = new Vector3(1f, 1f, 1f);
-
+    blockingColliderComponent.transform.localScale = new Vector3(1f, 1f, 1f);
+    blockingColliderComponent.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    blockingColliderComponent.transform.parent.gameObject.layer =
+      ValheimRaftPlugin.CustomRaftLayer;
     /*
      * add the colliders to the prefab
      */
-    waterVehiclePrefab.AddComponentCopy(blockingColliderComponent);
-    waterVehiclePrefab.AddComponentCopy(onboardColliderComponent);
-    waterVehiclePrefab.AddComponentCopy(floatColliderComponent);
-
+    var bc = Instantiate(blockingColliderComponent,
+      waterVehiclePrefab.transform);
+    var oc = Instantiate(onboardColliderComponent,
+      waterVehiclePrefab.transform);
+    var fc = Instantiate(floatColliderComponent,
+      waterVehiclePrefab.transform);
+    Logger.LogDebug("Made it past Instantiate");
 
     // Adds the cube mesh filter (not sure if this is needed)
-    var meshFilter = waterVehiclePrefab.AddComponent<MeshFilter>();
+    var meshFilter = waterVehiclePrefab.GetComponent<MeshFilter>();
     meshFilter.mesh = vanillaRaftPrefab.GetComponent<MeshFilter>().mesh;
 
     var rigidbody = waterVehiclePrefab.AddComponent<Rigidbody>();
@@ -488,15 +504,23 @@ public class PrefabController : MonoBehaviour
     rigidbody.useGravity = true;
     rigidbody.automaticInertiaTensor = true;
     rigidbody.automaticCenterOfMass = true;
-    rigidbody.isKinematic = false;
+    rigidbody.isKinematic = true;
 
+    Logger.LogDebug("before shipInstance");
     var shipInstance = waterVehiclePrefab.AddComponent<VVShip>();
-    shipInstance.gameObject.layer = LayerMask.NameToLayer("vehicle");
-    shipInstance.m_floatcollider = waterVehiclePrefab.GetComponentInChildren<BoxCollider>();
+    // shipInstance.gameObject.SetActive(false);
+    shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    Logger.LogDebug("before m_floatcollider");
 
-    var zNetView = waterVehiclePrefab.AddComponent<ZNetView>();
-    zNetView.m_type = ZDO.ObjectType.Prioritized;
-    zNetView.m_persistent = true;
+    shipInstance.m_floatcollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
+    shipInstance.FloatCollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
+    Logger.LogDebug($"m_floatcollider of ship, {shipInstance.FloatCollider.bounds}");
+
+    // var zNetView = waterVehiclePrefab.AddComponent<ZNetView>();
+    // zNetView.m_type = ZDO.ObjectType.Prioritized;
+    // zNetView.m_persistent = true;
+    Logger.LogDebug("ZNetView");
+
 
     var zSyncTransform = waterVehiclePrefab.AddComponent<ZSyncTransform>();
     zSyncTransform.m_syncPosition = true;
@@ -528,6 +552,7 @@ public class PrefabController : MonoBehaviour
     var waterVehicleController =
       waterVehiclePrefab.AddComponent<WaterVehicleController>();
     waterVehicleController.VehicleInstance = shipInstance;
+    Logger.LogDebug("made before get box colliders");
 
     // directly using the reference might also work, but (unknown) risk is it could just reference the boat collider instead
     // float_collider is automatically gotten from the shipInstance
@@ -537,8 +562,13 @@ public class PrefabController : MonoBehaviour
     waterVehicleController.m_blockingcollider =
       blockingColliderComponent.GetComponentInChildren<BoxCollider>();
 
-    prefabManager.AddPrefab(waterVehiclePrefab);
-    waterVehiclePrefabInstance = prefabManager.GetPrefab(prefabName);
+    // this probably works on the base collider game objects
+    // waterVehicleController.m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    // waterVehicleController.m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    // waterVehicleController.m_blockingcollider.transform.parent.gameObject.layer =
+    //   ValheimRaftPlugin.CustomRaftLayer;
+    Logger.LogDebug("made it to before add prefab");
+    // prefabManager.AddPrefab(waterVehiclePrefab);
   }
 
   public void RegisterHulls()

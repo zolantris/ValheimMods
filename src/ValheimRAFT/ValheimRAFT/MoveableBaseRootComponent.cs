@@ -530,7 +530,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
       yield return null;
     }
 
-    var id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
+    var id = ZDOPersistantID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
     m_pendingPieces.TryGetValue(id, out var list);
 
     if (list is { Count: > 0 })
@@ -790,7 +790,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
         var zdoparent = ZDOMan.instance.GetZDO(zdoid);
         id = zdoparent == null
           ? ZDOPersistantID.ZDOIDToId(zdoid)
-          : ZDOPersistantID.Instance.GetOrCreatePersistantID(zdoparent);
+          : ZDOPersistantID.Instance.GetOrCreatePersistentID(zdoparent);
         zdo.Set(MBParentIdHash, id);
         zdo.Set(MBRotationVecHash,
           zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
@@ -860,7 +860,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     if (netView.m_zdo != null)
     {
       netView.m_zdo.Set(MBParentIdHash,
-        ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo));
+        ZDOPersistantID.Instance.GetOrCreatePersistentID(m_nview.m_zdo));
       netView.m_zdo.Set(MBRotationVecHash, netView.transform.localRotation.eulerAngles);
       netView.m_zdo.Set(MBPositionHash, netView.transform.localPosition);
     }

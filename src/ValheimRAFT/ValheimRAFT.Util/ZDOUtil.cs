@@ -6,32 +6,32 @@ namespace ValheimRAFT.Util
 {
   public class ZDOPersistantID
   {
-    public static readonly int PersistantIDHash =
-      "PersistantID".GetStableHashCode();
+    public static readonly int PersistentIDHash =
+      "PersistentID".GetStableHashCode();
 
     public static ZDOPersistantID Instance = new();
     private Dictionary<int, ZDO> m_zdoGuidLookup = new();
 
     public void Reset() => m_zdoGuidLookup.Clear();
 
-    public bool GetPersistentID(ZDO zdo, out int id)
+    public static bool GetPersistentID(ZDO zdo, out int id)
     {
-      id = zdo.GetInt(PersistantIDHash, 0);
+      id = zdo.GetInt(PersistentIDHash, 0);
       return id != 0;
     }
 
     public static int ZDOIDToId(ZDOID zdoid) =>
       (int)zdoid.UserID + (int)zdoid.ID;
 
-    public int GetOrCreatePersistantID(ZDO zdo)
+    public int GetOrCreatePersistentID(ZDO zdo)
     {
-      int id = zdo.GetInt(PersistantIDHash, 0);
+      int id = zdo.GetInt(PersistentIDHash, 0);
       if (id == 0)
       {
         id = ZDOIDToId(zdo.m_uid);
         while (this.m_zdoGuidLookup.ContainsKey(id))
           ++id;
-        zdo.Set(PersistantIDHash, id, false);
+        zdo.Set(PersistentIDHash, id, false);
         m_zdoGuidLookup[id] = zdo;
       }
 

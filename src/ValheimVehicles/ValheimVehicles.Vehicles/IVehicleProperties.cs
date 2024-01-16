@@ -4,5 +4,5 @@ namespace ValheimVehicles.Vehicles;
 
 public interface IVehicleProperties
 {
-  public BoxCollider m_floatcollider { get; set; }
+  public BoxCollider FloatCollider { get; set; }
 }

@@ -240,7 +240,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     {
       Logger.LogDebug($"AttachRope {index}");
       RopeAttachmentTarget id =
-        new RopeAttachmentTarget(ZDOPersistantID.Instance.GetOrCreatePersistantID(nv.m_zdo), index);
+        new RopeAttachmentTarget(ZDOPersistantID.Instance.GetOrCreatePersistentID(nv.m_zdo), index);
       if (!RemoveRopeWithID(id))
       {
         CreateNewRope(id);
@@ -253,7 +253,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   private void AttachRope(RopeAnchorComponent ropeAnchorComponent)
   {
     int parentid =
-      ZDOPersistantID.Instance.GetOrCreatePersistantID(ropeAnchorComponent.GetParentZDO());
+      ZDOPersistantID.Instance.GetOrCreatePersistentID(ropeAnchorComponent.GetParentZDO());
     if (!RemoveRopeWithID(new RopeAttachmentTarget(parentid, 0)) &&
         !(ropeAnchorComponent == this) &&
         !ropeAnchorComponent.RemoveRopeWithID(new RopeAttachmentTarget(parentid, 0)))
@@ -492,7 +492,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     ZDO zdoparent = ZDOMan.instance.GetZDO(zdoid);
     if (zdoparent != null)
     {
-      return ZDOPersistantID.Instance.GetOrCreatePersistantID(zdoparent);
+      return ZDOPersistantID.Instance.GetOrCreatePersistentID(zdoparent);
     }
 
     return ZDOPersistantID.ZDOIDToId(zdoid);
