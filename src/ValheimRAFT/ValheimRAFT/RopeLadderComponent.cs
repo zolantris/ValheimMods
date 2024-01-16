@@ -16,7 +16,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
   public Transform m_attachPoint;
 
   public MoveableBaseRootComponent m_mbroot;
-  [FormerlySerializedAs("baseVehicle")] public BaseVehicleController baseVehicleController;
+  public BaseVehicleController baseVehicleController;
 
   public float m_stepDistance = 0.5f;
 

@@ -35,7 +35,6 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
     Logger.LogDebug("Made it to InitializeBaseShipComponent");
     var ladders = GetComponentsInChildren<Ladder>();
     for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
-    // gameObject.AddComponent<WaterVehicleController>();
   }
 
   internal void OnEnable()
@@ -49,7 +48,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
   }
 
   /**
-   * TODO this could be set to false for the ship as an override to allow the ship to never unrender
+   * TODO this could be set to false for the ship as an override to allow the ship to never remove itself
    */
   public bool CanBeRemoved()
   {
@@ -59,10 +58,10 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
 
   public void FixedUpdate()
   {
-    // m_body.WakeUp();
-    // m_body.AddForceAtPosition(Vector3.up, m_floatcollider.center);
+    m_body.WakeUp();
+    m_body.AddForceAtPosition(Vector3.up, m_floatcollider.center, ForceMode.VelocityChange);
 
-    FixedUpdate1();
+    // FixedUpdate1();
   }
 
   public static VVShip GetLocalShip()

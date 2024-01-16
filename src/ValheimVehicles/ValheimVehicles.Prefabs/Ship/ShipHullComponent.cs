@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Jotunn;
 using UnityEngine;
 using ValheimRAFT;
@@ -62,7 +63,7 @@ public class ShipHullComponent : MonoBehaviour
     waterVehiclePrefabInstance.transform.rotation = transform.rotation;
 
     AddToVehicle();
-    FirstTimeCreation();
+    // FirstTimeCreation();
     // _waterVehicleController =
     /**
      * Skip ship initiation if the hull is already part of the ship
@@ -88,6 +89,23 @@ public class ShipHullComponent : MonoBehaviour
     //
     // Logger.LogDebug($"Re-parented the watervehicle controller {_waterVehicleController}");
     // FirstTimeCreation();
+  }
+
+  private void OnDestroy()
+  {
+    if (waterVehiclePrefabInstance)
+    {
+      Logger.LogDebug($"called destroy of hull object, {_waterVehicleController.m_pieces.Count}");
+      if (_waterVehicleController.m_hullPieces.Count == 0)
+      {
+        Destroy(_waterVehicleController.gameObject);
+      }
+      else
+      {
+        var zNetView = GetComponent<ZNetView>();
+        _waterVehicleController.RemovePiece(zNetView);
+      }
+    }
   }
 
   private void AddToVehicle()

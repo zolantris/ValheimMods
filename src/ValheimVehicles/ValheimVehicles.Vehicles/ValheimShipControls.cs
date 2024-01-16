@@ -9,7 +9,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 {
   public string m_hoverText = "";
 
-  [FormerlySerializedAs("m_ship")] public VVShip mVehicleShip;
+  public VVShip mVehicleShip;
 
   public float m_maxUseRange = 10f;
 
@@ -88,28 +88,38 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   public string GetHoverText()
   {
-    var baseRoot = GetComponentInParent<BaseVehicleController>();
+    var controller = GetComponentInParent<WaterVehicleController>();
+    Logger.LogDebug($"Controller {controller}");
+    if (controller == null)
+    {
+      controller = GetComponent<WaterVehicleController>();
+    }
+
     var shipStatsText = "";
 
     if (ValheimRaftPlugin.Instance.ShowShipStats.Value)
     {
       var shipMassToPush = ValheimRaftPlugin.Instance.MassPercentageFactor.Value;
-      shipStatsText += $"\nsailArea: {baseRoot.GetTotalSailArea()}";
-      shipStatsText += $"\ntotalMass: {baseRoot.TotalMass}";
+      shipStatsText += $"\nsailArea: {controller.GetTotalSailArea()}";
+      shipStatsText += $"\ntotalMass: {controller.TotalMass}";
       shipStatsText +=
-        $"\nshipMass(no-containers): {baseRoot.ShipMass}";
-      shipStatsText += $"\nshipContainerMass: {baseRoot.ShipContainerMass}";
+        $"\nshipMass(no-containers): {controller.ShipMass}";
+      shipStatsText += $"\nshipContainerMass: {controller.ShipContainerMass}";
       shipStatsText +=
-        $"\ntotalMassToPush: {shipMassToPush}% * {baseRoot.TotalMass} = {baseRoot.TotalMass * shipMassToPush / 100f}";
+        $"\ntotalMassToPush: {shipMassToPush}% * {controller.TotalMass} = {controller.TotalMass * shipMassToPush / 100f}";
       shipStatsText +=
-        $"\nshipPropulsion: {baseRoot.GetSailingForce()}";
+        $"\nshipPropulsion: {controller.GetSailingForce()}";
 
       /* final formatting */
       shipStatsText = $"<color=white>{shipStatsText}</color>";
     }
 
+    Logger.LogDebug($"Current Hover text {shipStatsText}");
+
+    var waterVehicleController = GetComponentInParent<WaterVehicleController>();
+
     var isAnchored =
-      baseRoot.vehicleController.m_flags.HasFlag(WaterVehicleController.MBFlags
+      waterVehicleController.m_flags.HasFlag(WaterVehicleController.MBFlags
         .IsAnchored);
     var anchoredStatus = isAnchored ? "[<color=red><b>$mb_rudder_use_anchored</b></color>]" : "";
     var anchorText =

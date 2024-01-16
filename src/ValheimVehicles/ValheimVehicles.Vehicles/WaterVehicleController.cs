@@ -15,7 +15,7 @@ namespace ValheimVehicles.Vehicles;
 
 public class WaterVehicleController : BaseVehicleController
 {
-  public VVShip VehicleInstance { set; get; }
+  public VVShip shipInstance;
 
   public const string ControllerID = "WaterVehicle";
 
@@ -29,7 +29,7 @@ public class WaterVehicleController : BaseVehicleController
 
   public bool isCreative = false;
 
-  internal Rigidbody m_rigidbody => VehicleInstance.m_body;
+  internal Rigidbody m_rigidbody => shipInstance.m_body;
 
   internal ShipStats m_shipStats = new ShipStats();
 
@@ -73,11 +73,18 @@ public class WaterVehicleController : BaseVehicleController
     //   m_zsync = gameObject.AddComponent<ZSyncTransform>();
     // }
 
-    VehicleInstance = gameObject.GetComponent<VVShip>();
-    if (!(bool)VehicleInstance)
+    shipInstance = gameObject.GetComponent<VVShip>();
+    if (shipInstance == null)
     {
       Logger.LogError(
-        "no 1 component detected, this could mean the WaterVehicleController is orphaned from a ship script which initialized it");
+        "No ShipInstance detected");
+      // return;
+    }
+
+    if (VehicleInstance == null)
+    {
+      Logger.LogError(
+        "No VehicleInstance detected");
       // return;
     }
 
@@ -96,9 +103,9 @@ public class WaterVehicleController : BaseVehicleController
 
     Logger.LogDebug($"NVIEW ZDO {m_nview.m_zdo}");
 
-    m_id = ZDOPersistantID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
+    m_id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
 
-    if (!(bool)VehicleInstance.m_body)
+    if (!(bool)shipInstance.m_body)
     {
       Logger.LogError("Rigidbody not detected for WaterVehicleController ship");
     }
@@ -119,7 +126,7 @@ public class WaterVehicleController : BaseVehicleController
 
     if (!m_onboardcollider)
     {
-      m_onboardcollider
+      m_onboardcollider = new BoxCollider();
       Logger.LogError(
         $"ONBOARD COLLIDER {m_onboardcollider}, collider must not be null");
     }
@@ -267,23 +274,23 @@ public class WaterVehicleController : BaseVehicleController
       return;
     }
 
-    m_rigidbody.mass = TotalMass;
+    // m_rigidbody.mass = TotalMass;
     m_rigidbody.angularDrag = (flight ? 1f : 0f);
     m_rigidbody.drag = (flight ? 1f : 0f);
 
-    if ((bool)VehicleInstance)
+    if ((bool)shipInstance)
     {
-      VehicleInstance.m_angularDamping = (flight ? 5f : 0.8f);
-      VehicleInstance.m_backwardForce = 1f;
-      VehicleInstance.m_damping = (flight ? 5f : 0.35f);
-      VehicleInstance.m_dampingSideway = (flight ? 3f : 0.3f);
-      VehicleInstance.m_force = 3f;
-      VehicleInstance.m_forceDistance = 5f;
-      VehicleInstance.m_sailForceFactor = (flight ? 0.2f : 0.05f);
-      VehicleInstance.m_stearForce = (flight ? 0.2f : 1f);
-      VehicleInstance.m_stearVelForceFactor = 1.3f;
-      VehicleInstance.m_waterImpactDamage = 0f;
-      ImpactEffect impact = VehicleInstance.GetComponent<ImpactEffect>();
+      shipInstance.m_angularDamping = (flight ? 5f : 0.8f);
+      shipInstance.m_backwardForce = 1f;
+      shipInstance.m_damping = (flight ? 5f : 0.35f);
+      shipInstance.m_dampingSideway = (flight ? 3f : 0.3f);
+      shipInstance.m_force = 3f;
+      shipInstance.m_forceDistance = 5f;
+      shipInstance.m_sailForceFactor = (flight ? 0.2f : 0.05f);
+      shipInstance.m_stearForce = (flight ? 0.2f : 1f);
+      shipInstance.m_stearVelForceFactor = 1.3f;
+      shipInstance.m_waterImpactDamage = 0f;
+      ImpactEffect impact = shipInstance.GetComponent<ImpactEffect>();
       if ((bool)impact)
       {
         impact.m_interval = 0.1f;

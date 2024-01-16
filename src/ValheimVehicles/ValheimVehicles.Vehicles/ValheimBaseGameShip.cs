@@ -128,7 +128,17 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal WaterVehicleController CachedVehicleController;
 
-  // public static virtual List<ValheimBaseGameShip> Instances { get; } = new();
+  public static List<ValheimBaseGameShip> Instances { get; } = new();
+
+  private void OnEnable()
+  {
+    Instances.Add(this);
+  }
+
+  private void OnDisable()
+  {
+    Instances.Remove(this);
+  }
 
 
   internal void Awake()
@@ -183,15 +193,8 @@ public class ValheimBaseGameShip : MonoBehaviour
 
     if (m_nview.GetZDO() == null)
     {
-      Logger.LogError("ZDO returned null, creating new ZDO, this should not be happening!");
-      m_nview.m_zdo = new ZDO();
-      m_nview.m_zdo.Persistent = true;
-    }
-
-    if (m_nview.GetZDO() == null)
-    {
-      Logger.LogError("ZDO of ship returned null");
-      enabled = false;
+      Logger.LogError("ZDO of ship returned null, disabling ship");
+      base.enabled = false;
     }
 
 

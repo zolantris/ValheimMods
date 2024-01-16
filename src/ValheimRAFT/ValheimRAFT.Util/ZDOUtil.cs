@@ -4,12 +4,12 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Util
 {
-  public class ZDOPersistantID
+  public class ZDOPersistentID
   {
     public static readonly int PersistentIDHash =
       "PersistentID".GetStableHashCode();
 
-    public static ZDOPersistantID Instance = new();
+    public static ZDOPersistentID Instance = new();
     private Dictionary<int, ZDO> m_zdoGuidLookup = new();
 
     public void Reset() => m_zdoGuidLookup.Clear();
@@ -25,6 +25,8 @@ namespace ValheimRAFT.Util
 
     public int GetOrCreatePersistentID(ZDO zdo)
     {
+      zdo ??= new ZDO();
+
       int id = zdo.GetInt(PersistentIDHash, 0);
       if (id == 0)
       {

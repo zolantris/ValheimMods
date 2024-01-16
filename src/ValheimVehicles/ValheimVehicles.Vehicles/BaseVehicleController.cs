@@ -1,11 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using ValheimVehicles.Vehicles;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Util;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
@@ -44,6 +46,7 @@ public class BaseVehicleController : MonoBehaviour
   internal ZNetView m_nview;
 
   internal List<ZNetView> m_pieces = new();
+  internal List<ShipHullComponent> m_hullPieces = new();
 
   internal List<MastComponent> m_mastPieces = new();
   internal List<SailComponent> m_sailPiece = new();
@@ -79,7 +82,7 @@ public class BaseVehicleController : MonoBehaviour
   private Vector2i m_serverSector;
   private Bounds m_bounds = default;
   public BoxCollider m_blockingcollider = new();
-  internal BoxCollider m_floatcollider => VehicleInstance.FloatCollider;
+  internal BoxCollider m_floatcollider;
   internal BoxCollider m_onboardcollider = new();
   public int m_id;
   public bool m_statsOverride;
@@ -325,7 +328,10 @@ public class BaseVehicleController : MonoBehaviour
       ShipMass += pieceWeight;
     }
 
-    m_rigidbody.mass = TotalMass;
+    /*
+     * TODO figure out if this should updated
+     */
+    // m_rigidbody.mass = TotalMass;
   }
 
   public void RemovePiece(ZNetView netView)
@@ -333,6 +339,12 @@ public class BaseVehicleController : MonoBehaviour
     if (m_pieces.Remove(netView))
     {
       UpdateMass(netView, true);
+
+      var hull = netView.GetComponent<ShipHullComponent>();
+      if ((bool)hull)
+      {
+        m_hullPieces.Remove(hull);
+      }
 
       var sail = netView.GetComponent<SailComponent>();
       if ((bool)sail)
@@ -526,17 +538,26 @@ public class BaseVehicleController : MonoBehaviour
 
   public IEnumerator ActivatePendingPieces()
   {
-    if (!m_nview || m_nview.m_zdo == null)
+    if (!m_nview || m_nview == null)
     {
-      if (hasDebug)
-        Logger.LogDebug(
-          $"ActivatePendingPieces early exit due to m_nview: {m_nview} m_nview.m_zdo {(m_nview != null ? m_nview.m_zdo : null)}");
+      // if (hasDebug)
+      //   Logger.LogDebug(
+      //     $"ActivatePendingPieces early exit due to m_nview: {m_nview} m_nview.m_zdo {(m_nview != null ? m_nview.m_zdo : null)}");
       yield return null;
     }
 
-    var id = ZDOPersistantID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
+    if (m_nview.m_zdo == null)
+    {
+      Logger.LogDebug("m_zdo is null for activate pending pieces");
+      yield return null;
+    }
+
+
+    Logger.LogDebug($"ActivePieces before ZDOPersistenID creation {m_nview.m_zdo}");
+    var id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
     m_pendingPieces.TryGetValue(id, out var list);
 
+    Logger.LogDebug($"mpending pieces list {list.Count}");
     if (list is { Count: > 0 })
     {
       // var stopwatch = new Stopwatch();
@@ -566,16 +587,21 @@ public class BaseVehicleController : MonoBehaviour
       m_pendingPieces.Remove(id);
     }
 
+    Logger.LogDebug($"after list 589");
+
+
     if (hasDebug)
       Logger.LogDebug($"Ship Size calc is: m_bounds {m_bounds} bounds size {m_bounds.size}");
 
     m_dynamicObjects.TryGetValue(m_id, out var objectList);
     var ObjectListHasNoValidItems = true;
+    Logger.LogDebug($"after list 598");
     if (objectList is { Count: > 0 })
     {
       for (var i = 0; i < objectList.Count; i++)
       {
         var go = ZNetScene.instance.FindInstance(objectList[i]);
+        Logger.LogDebug($"after list 604");
 
         if (!go) continue;
 
@@ -601,16 +627,18 @@ public class BaseVehicleController : MonoBehaviour
       m_dynamicObjects.Remove(m_id);
     }
 
+    Logger.LogDebug($"after list 630");
+
     /*
      * This prevents empty Prefabs of MBRaft from existing
      * @todo make this only apply for boats with no objects in any list
      */
-    if (list == null || (list.Count == 0 &&
-                         (m_dynamicObjects.Count == 0 || ObjectListHasNoValidItems))
+    if ((list.Count == 0 &&
+         (m_dynamicObjects.Count == 0 || ObjectListHasNoValidItems))
        )
     {
-      // Logger.LogError($"found boat without any items attached {m_ship} {m_nview}");
-      // DestroyBoat();
+      Logger.LogError($"found boat without any items attached {m_nview}");
+      DestroyBoat();
     }
 
     yield return null;
@@ -788,8 +816,8 @@ public class BaseVehicleController : MonoBehaviour
       {
         var zdoparent = ZDOMan.instance.GetZDO(zdoid);
         id = zdoparent == null
-          ? ZDOPersistantID.ZDOIDToId(zdoid)
-          : ZDOPersistantID.Instance.GetOrCreatePersistentID(zdoparent);
+          ? ZDOPersistentID.ZDOIDToId(zdoid)
+          : ZDOPersistentID.Instance.GetOrCreatePersistentID(zdoparent);
         zdo.Set(MBParentIdHash, id);
         zdo.Set(MBRotationVecHash,
           zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
@@ -812,7 +840,7 @@ public class BaseVehicleController : MonoBehaviour
     var id = GetParentID(netView.m_zdo);
     if (id == 0) return;
 
-    var parentObj = ZDOPersistantID.Instance.GetGameObject(id);
+    var parentObj = ZDOPersistentID.Instance.GetGameObject(id);
     if ((bool)parentObj)
     {
       var controller = parentObj.GetComponent<BaseVehicleController>();
@@ -879,10 +907,10 @@ public class BaseVehicleController : MonoBehaviour
     Logger.LogDebug($"netView exists {netView.name}");
     netView.transform.SetParent(transform);
     Logger.LogDebug($"netView set parent");
-    if (netView.m_zdo != null)
+    Logger.LogDebug($"ZDOPersistentID instance {ZDOPersistentID.Instance}");
+    if (netView.GetZDO() != null)
     {
-      Logger.LogDebug($"netView has a zdo, {m_nview.m_zdo}");
-      var newId = ZDOPersistantID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
+      var newId = ZDOPersistentID.Instance.GetOrCreatePersistentID(netView.GetZDO());
       Logger.LogDebug(
         $"persistent id {newId}");
       netView.m_zdo.Set(MBParentIdHash, newId);
@@ -897,8 +925,15 @@ public class BaseVehicleController : MonoBehaviour
 
     Logger.LogDebug($"made it end, about to call addpiece and init zdo");
 
+
+    if (netView.GetZDO() == null)
+    {
+      Logger.LogError("NetView has no valid ZDO returning");
+      return;
+    }
+
     AddPiece(netView);
-    InitZDO(netView.m_zdo);
+    InitZDO(netView.GetZDO());
   }
 
   public void AddPiece(ZNetView netView)
@@ -917,6 +952,12 @@ public class BaseVehicleController : MonoBehaviour
     var wnt = netView.GetComponent<WearNTear>();
     if ((bool)wnt && ValheimRaftPlugin.Instance.MakeAllPiecesWaterProof.Value)
       wnt.m_noRoofWear = false;
+
+    var hull = netView.GetComponent<ShipHullComponent>();
+    if ((bool)hull)
+    {
+      m_hullPieces.Add(hull);
+    }
 
     var cultivatable = netView.GetComponent<CultivatableComponent>();
     if ((bool)cultivatable) cultivatable.UpdateMaterial();
@@ -949,13 +990,15 @@ public class BaseVehicleController : MonoBehaviour
 
       if (!rudder.m_wheel) rudder.m_wheel = netView.transform.Find("controls/wheel");
 
-      rudder.valheimShipControls.m_nview = m_nview;
-      rudder.valheimShipControls.mVehicleShip =
-        vehicleController.GetComponent<VVShip>();
+      var ship = vehicleController.GetComponent<VVShip>();
+      Logger.LogDebug($"Rudder binding to ship {ship.name}");
+      rudder.valheimShipControls.mVehicleShip = ship;
+      ship.m_shipControlls = rudder.valheimShipControls;
 
-      if (rudder.m_controls.enabled)
+      if (rudder.m_controls != null)
       {
-        rudder.m_controls.enabled = false;
+        Destroy(rudder.m_controls.gameObject);
+        rudder.m_controls = null;
       }
 
       rudder.valheimShipControls.enabled = true;

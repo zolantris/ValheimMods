@@ -530,7 +530,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
       yield return null;
     }
 
-    var id = ZDOPersistantID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
+    var id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
     m_pendingPieces.TryGetValue(id, out var list);
 
     if (list is { Count: > 0 })
@@ -789,8 +789,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
       {
         var zdoparent = ZDOMan.instance.GetZDO(zdoid);
         id = zdoparent == null
-          ? ZDOPersistantID.ZDOIDToId(zdoid)
-          : ZDOPersistantID.Instance.GetOrCreatePersistentID(zdoparent);
+          ? ZDOPersistentID.ZDOIDToId(zdoid)
+          : ZDOPersistentID.Instance.GetOrCreatePersistentID(zdoparent);
         zdo.Set(MBParentIdHash, id);
         zdo.Set(MBRotationVecHash,
           zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
@@ -810,7 +810,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     var id = GetParentID(netview.m_zdo);
     if (id == 0) return;
 
-    var parentObj = ZDOPersistantID.Instance.GetGameObject(id);
+    var parentObj = ZDOPersistentID.Instance.GetGameObject(id);
     if ((bool)parentObj)
     {
       var mb = parentObj.GetComponent<MoveableBaseShipComponent>();
@@ -860,7 +860,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     if (netView.m_zdo != null)
     {
       netView.m_zdo.Set(MBParentIdHash,
-        ZDOPersistantID.Instance.GetOrCreatePersistentID(m_nview.m_zdo));
+        ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.m_zdo));
       netView.m_zdo.Set(MBRotationVecHash, netView.transform.localRotation.eulerAngles);
       netView.m_zdo.Set(MBPositionHash, netView.transform.localPosition);
     }

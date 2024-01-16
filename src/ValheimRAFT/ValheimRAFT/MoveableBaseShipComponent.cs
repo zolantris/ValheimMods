@@ -59,7 +59,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.shipController = this;
     m_baseRoot.m_nview = m_nview;
     m_baseRoot.m_ship = ship;
-    m_baseRoot.m_id = ZDOPersistantID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
+    m_baseRoot.m_id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
     m_rigidbody = GetComponent<Rigidbody>();
     m_baseRoot.m_syncRigidbody = m_rigidbody;
     m_rigidbody.mass = m_baseRoot.TotalMass;

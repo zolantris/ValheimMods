@@ -462,7 +462,6 @@ public class PrefabController : MonoBehaviour
     //   name = prefabName,
     //   layer = 0
     // };
-    waterVehiclePrefab.gameObject.layer = LayerMask.NameToLayer("default");
     waterVehiclePrefab.gameObject.layer = 0;
     Instantiate(waterMask, waterVehiclePrefab.transform);
 
@@ -496,6 +495,11 @@ public class PrefabController : MonoBehaviour
     var meshFilter = waterVehiclePrefab.GetComponent<MeshFilter>();
     meshFilter.mesh = vanillaRaftPrefab.GetComponent<MeshFilter>().mesh;
 
+    var zNetView = waterVehiclePrefab.AddComponent<ZNetView>();
+    zNetView.m_type = ZDO.ObjectType.Prioritized;
+    zNetView.m_persistent = true;
+    Logger.LogDebug("ZNetView");
+
     var rigidbody = waterVehiclePrefab.AddComponent<Rigidbody>();
     rigidbody.mass = 2000f;
     rigidbody.angularDrag = 0.1f;
@@ -504,7 +508,9 @@ public class PrefabController : MonoBehaviour
     rigidbody.useGravity = true;
     rigidbody.automaticInertiaTensor = true;
     rigidbody.automaticCenterOfMass = true;
-    rigidbody.isKinematic = true;
+    rigidbody.isKinematic = false;
+    // setting to true makes the shadows not vibrate, it may be related to kinematic items triggering too many re-renders or the kinematic item needs to be moved lower
+    // rigidbody.isKinematic = false;
 
     Logger.LogDebug("before shipInstance");
     var shipInstance = waterVehiclePrefab.AddComponent<VVShip>();
@@ -515,11 +521,6 @@ public class PrefabController : MonoBehaviour
     shipInstance.m_floatcollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
     shipInstance.FloatCollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
     Logger.LogDebug($"m_floatcollider of ship, {shipInstance.FloatCollider.bounds}");
-
-    // var zNetView = waterVehiclePrefab.AddComponent<ZNetView>();
-    // zNetView.m_type = ZDO.ObjectType.Prioritized;
-    // zNetView.m_persistent = true;
-    Logger.LogDebug("ZNetView");
 
 
     var zSyncTransform = waterVehiclePrefab.AddComponent<ZSyncTransform>();
@@ -533,7 +534,7 @@ public class PrefabController : MonoBehaviour
 
     // wearntear may need to be removed or tweaked
     waterVehiclePrefab.AddComponent<WearNTear>();
-    SetWearNTear(waterVehiclePrefab, 1, true);
+    SetWearNTear(waterVehiclePrefab, 1, false);
     waterVehiclePrefab.AddComponent<ImpactEffect>();
     AddVehicleLODs(waterVehiclePrefab);
 
@@ -552,16 +553,25 @@ public class PrefabController : MonoBehaviour
     var waterVehicleController =
       waterVehiclePrefab.AddComponent<WaterVehicleController>();
     waterVehicleController.VehicleInstance = shipInstance;
+    waterVehicleController.shipInstance = shipInstance;
+    waterVehicleController.GetComponent<BaseVehicleController>().VehicleInstance = shipInstance;
     Logger.LogDebug("made before get box colliders");
 
     // directly using the reference might also work, but (unknown) risk is it could just reference the boat collider instead
     // float_collider is automatically gotten from the shipInstance
     // @todo make other colliders come from the vehicleComponent or remove colliders from the ship and have the ship do a getter.
+    waterVehicleController.m_floatcollider =
+      floatColliderComponent.GetComponentInChildren<BoxCollider>();
     waterVehicleController.m_onboardcollider =
       onboardColliderComponent.GetComponentInChildren<BoxCollider>();
     waterVehicleController.m_blockingcollider =
       blockingColliderComponent.GetComponentInChildren<BoxCollider>();
 
+    var piece = waterVehiclePrefab.AddComponent<Piece>();
+    piece.m_waterPiece = true;
+    piece.m_description = "new raft base";
+    piece.m_icon = vanillaRaftPrefab.GetComponent<Piece>().m_icon;
+    piece.m_name = "RaftHullBase";
     // this probably works on the base collider game objects
     // waterVehicleController.m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     // waterVehicleController.m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
@@ -569,6 +579,35 @@ public class PrefabController : MonoBehaviour
     //   ValheimRaftPlugin.CustomRaftLayer;
     Logger.LogDebug("made it to before add prefab");
     // prefabManager.AddPrefab(waterVehiclePrefab);
+    pieceManager.AddPiece(new CustomPiece(waterVehiclePrefab, false, new PieceConfig
+    {
+      PieceTable = "Hammer",
+      Name = piece.m_name,
+      Description = piece.m_description,
+      Category = ValheimRaftMenuName,
+      Enabled = true,
+      Requirements = new RequirementConfig[3]
+      {
+        new()
+        {
+          Amount = 10,
+          Item = "FineWood",
+          Recover = true
+        },
+        new()
+        {
+          Amount = 2,
+          Item = "RoundLog",
+          Recover = true
+        },
+        new()
+        {
+          Amount = 6,
+          Item = "WolfPelt",
+          Recover = true
+        }
+      }
+    }));
   }
 
   public void RegisterHulls()
@@ -602,7 +641,10 @@ public class PrefabController : MonoBehaviour
     // Less complicated wnt so re-usable method is not used
     var wntComponent = SetWearNTear(raftHullPrefab);
     SetWearNTearSupport(wntComponent, WearNTear.MaterialType.HardWood);
+
+    // this may need to send in Piece instead
     AddNetViewWithPersistence(raftHullPrefab);
+
     // FixSnapPoints(raftHullPrefab);
 
     // this will be used to hide water on the boat
@@ -977,11 +1019,11 @@ public class PrefabController : MonoBehaviour
 
     // for older components
     // m_controls and valheimShipControls are dynamically enabled/disabled
-    rudder.m_controls = mbRudderPrefab.AddComponent<ShipControlls>();
-    rudder.m_controls.m_hoverText = "$mb_rudder_use";
-    rudder.m_controls.m_attachPoint = mbRudderPrefab.transform.Find("attachpoint");
-    rudder.m_controls.m_attachAnimation = "Standing Torch Idle right";
-    rudder.m_controls.m_detachOffset = new Vector3(0f, 0f, 0f);
+    // rudder.m_controls = mbRudderPrefab.AddComponent<ShipControlls>();
+    // rudder.m_controls.m_hoverText = "$mb_rudder_use";
+    // rudder.m_controls.m_attachPoint = mbRudderPrefab.transform.Find("attachpoint");
+    // rudder.m_controls.m_attachAnimation = "Standing Torch Idle right";
+    // rudder.m_controls.m_detachOffset = new Vector3(0f, 0f, 0f);
 
     // for newer vehicle components
     rudder.valheimShipControls = mbRudderPrefab.AddComponent<ValheimShipControls>();

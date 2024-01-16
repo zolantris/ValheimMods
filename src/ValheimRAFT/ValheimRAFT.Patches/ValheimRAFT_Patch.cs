@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
+using System.Runtime.InteropServices;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
@@ -530,7 +531,7 @@ public class ValheimRAFT_Patch
 
   private static void ZDOLoaded(ZDO zdo)
   {
-    ZDOPersistantID.Instance.Register(zdo);
+    ZDOPersistentID.Instance.Register(zdo);
     MoveableBaseRootComponent.InitZDO(zdo);
     BaseVehicleController.InitZDO(zdo);
   }
@@ -546,7 +547,7 @@ public class ValheimRAFT_Patch
   {
     MoveableBaseRootComponent.RemoveZDO(zdo);
     BaseVehicleController.RemoveZDO(zdo);
-    ZDOPersistantID.Instance.Unregister(zdo);
+    ZDOPersistentID.Instance.Unregister(zdo);
   }
 
   [HarmonyPatch(typeof(ZNetView), "ResetZDO")]
@@ -736,8 +737,29 @@ public class ValheimRAFT_Patch
     if (!__instance.IsOnGround()) return false;
     if ((bool)__instance.m_lastGroundBody)
     {
-      __result = __instance.m_lastGroundBody.GetComponent<Ship>();
-      if (!__result)
+      var lastOnShip = __instance.m_lastGroundBody.GetComponent<Ship>();
+      var lastOnWaterVehicle = __instance.m_lastGroundBody.GetComponent<VVShip>();
+
+      if (lastOnShip)
+      {
+        __result = lastOnShip;
+      }
+
+      if (lastOnWaterVehicle)
+      {
+        // Have to cast the custom VVShip to Ship using json otherwise this cannot be done
+        var jsonString = JsonUtility.ToJson(lastOnWaterVehicle.ToString());
+        var shipCast = JsonUtility.FromJson<Ship>(jsonString);
+        __result = shipCast;
+      }
+
+      if (!lastOnShip && !lastOnWaterVehicle)
+      {
+        __result = null;
+      }
+
+
+      if (__result == null)
       {
         var mb = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
         if ((bool)mb && (bool)mb.shipController)
@@ -842,6 +864,31 @@ public class ValheimRAFT_Patch
       {
         var mbrTarget = hitInfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
         if ((bool)mbrTarget)
+        {
+          point = hitInfo.point;
+          normal = hitInfo.normal;
+          piece = hitInfo.collider.GetComponentInParent<Piece>();
+          heightmap = null;
+          waterSurface = null;
+          __result = true;
+          return false;
+        }
+      }
+    }
+
+    var bvc = __instance.GetComponentInParent<BaseVehicleController>();
+    if ((bool)bvc)
+    {
+      var localPos = bvc.transform.InverseTransformPoint(__instance.transform.position);
+      var start = localPos + Vector3.up * 2f;
+      start = bvc.transform.TransformPoint(start);
+      var localDir = ((Character)__instance).m_lookYaw * Quaternion.Euler(__instance.m_lookPitch,
+        0f - bvc.transform.rotation.eulerAngles.y + yawOffset, 0f);
+      var end = bvc.transform.rotation * localDir * Vector3.forward;
+      if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) && (bool)hitInfo.collider)
+      {
+        var bvcTarget = hitInfo.collider.GetComponentInParent<BaseVehicleController>();
+        if ((bool)bvcTarget)
         {
           point = hitInfo.point;
           normal = hitInfo.normal;
@@ -1059,7 +1106,7 @@ public class ValheimRAFT_Patch
   [HarmonyPostfix]
   private static void ZNetScene_Shutdown()
   {
-    ZDOPersistantID.Instance.Reset();
+    ZDOPersistentID.Instance.Reset();
   }
 
   [HarmonyPatch(typeof(Character), "OnCollisionStay")]
