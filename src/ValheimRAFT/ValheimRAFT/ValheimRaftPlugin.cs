@@ -84,9 +84,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    * These folder names are matched for the CustomTexturesGroup
    */
   public string[] possibleModFolderNames =
-  [
-    $"{Author}-{ModName}", $"zolantris-{ModName}", $"Zolantris-{ModName}", ModName
-  ];
+    new[]
+    {
+      $"{Author}-{ModName}", $"zolantris-{ModName}", $"Zolantris-{ModName}", ModName
+    };
 
   private ConfigDescription CreateConfigDescription(string description, bool isAdmin = false)
   {

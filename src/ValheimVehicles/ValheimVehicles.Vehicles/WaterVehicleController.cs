@@ -1,21 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ValheimVehicles.Vehicles;
 using Jotunn;
 using UnityEngine;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
+using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Util;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
-public class WaterVehicleController : MonoBehaviour
+public class WaterVehicleController : BaseVehicleController
 {
-  public BaseVehicle baseVehicle;
-  public ValheimShip ship;
-  public static GameObject vikingShipPrefab;
+  public BaseVehicleController baseVehicleController;
+  public VVShip vehicleShip;
   public const string ControllerID = "WaterVehicle";
 
   [Flags]
@@ -28,13 +29,11 @@ public class WaterVehicleController : MonoBehaviour
 
   public bool isCreative = false;
 
-  internal Rigidbody m_rigidbody;
+  internal Rigidbody m_rigidbody => vehicleShip.m_body;
 
   internal ShipStats m_shipStats = new ShipStats();
 
   internal ZNetView m_nview;
-
-  internal GameObject m_baseRootObject;
 
   internal ZSyncTransform m_zsync;
 
@@ -50,7 +49,7 @@ public class WaterVehicleController : MonoBehaviour
   {
     // vikingShipPrefab.AddComponent();
 
-    baseVehicle = gameObject.AddComponent<BaseVehicle>();
+    // baseVehicleController = gameObject.AddComponent<BaseVehicleController>();
     m_nview = GetComponent<ZNetView>();
     if (!(bool)m_nview)
     {
@@ -76,48 +75,39 @@ public class WaterVehicleController : MonoBehaviour
       m_zsync = gameObject.AddComponent<ZSyncTransform>();
     }
 
-    ship = gameObject.GetComponent<ValheimShip>();
-    if (!(bool)ship)
+    // ship = gameObject.GetComponent<ValheimShip>();
+    if (!(bool)vehicleShip)
     {
       Logger.LogError(
         "no 1 component detected, this could mean the WaterVehicleController is orphaned from a ship script which initialized it");
       return;
     }
 
-    m_baseRootObject = new GameObject
-    {
-      name = ControllerID,
-      layer = 0
-    };
+    // m_baseRootObject = new GameObject
+    // {
+    //   name = ControllerID,
+    //   layer = 0
+    // };
     m_nview.Register("SetAnchor",
       delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
     m_nview.Register("SetVisual",
       delegate(long sender, bool state) { RPC_SetVisual(sender, state); });
-    baseVehicle.vehicleController = this;
-    baseVehicle.m_nview = m_nview;
+    // vehicleController = this;
+    // m_nview = m_nview;
 
     Logger.LogDebug($"NVIEW ZDO {m_nview.m_zdo}");
 
-    baseVehicle.m_id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
-    m_rigidbody = GetComponent<Rigidbody>();
+    m_id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
 
-    if ((bool)m_rigidbody)
+    if (!(bool)vehicleShip.m_body)
     {
-      baseVehicle.m_rigidbody = m_rigidbody;
-      m_rigidbody.mass = baseVehicle.TotalMass;
-    }
-    else
-    {
-      Logger.LogError("Rigidbody not detected for WaterVehicleController");
+      Logger.LogError("Rigidbody not detected for WaterVehicleController ship");
     }
 
-    Logger.LogDebug($"Made it to 114");
-    m_baseRootObject.transform.SetParent(null);
-    m_baseRootObject.transform.position = transform.position;
-    m_baseRootObject.transform.rotation = transform.rotation;
+    // m_baseRootObject.transform.SetParent(null);
+    // m_baseRootObject.transform.position = transform.position;
+    // m_baseRootObject.transform.rotation = transform.rotation;
     UpdateVisual();
-
-    Logger.LogDebug($"Made it to 120");
 
     // BoxCollider[] colliders = base.transform.GetComponentsInChildren<BoxCollider>();
 
@@ -125,32 +115,18 @@ public class WaterVehicleController : MonoBehaviour
     //   colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "OnboardTrigger");
 
     // Instantiate(, m_baseRootObject.transform);
-    ship.m_floatCollider = PrefabController.shipFloatCollider;
-    baseVehicle.m_onboardcollider = PrefabController.shipOnboardCollider;
+    // vehicleShip.m_floatcollider = PrefabController.shipFloatCollider;
+    // m_onboardcollider = PrefabController.shipOnboardCollider;
 
-    Logger.LogDebug($"Made it to 130");
-    if (!baseVehicle.m_onboardcollider)
+    if (!m_onboardcollider)
     {
       Logger.LogError(
-        $"ONBOARD COLLIDER {baseVehicle.m_onboardcollider}, collider must not be null");
-    }
-    else
-    {
-      baseVehicle.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+        $"ONBOARD COLLIDER {m_onboardcollider}, collider must not be null");
     }
 
-    Logger.LogDebug(
-      $"Colliders, shipBlockingCollider {PrefabController.shipBlockingCollider} float collider {ship.m_floatCollider}");
-    Logger.LogDebug($"Made it to 142");
-    baseVehicle.m_floatcollider = ship.m_floatCollider;
-    Logger.LogDebug($"Made it to 146");
-    baseVehicle.m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    Logger.LogDebug($"Made it to 148");
     // var blockingCollider = ship.gameObject.AddComponent<BoxCollider>();
     // blockingCollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
-    Logger.LogDebug($"Made it to 156");
-
-    baseVehicle.m_blockingcollider = ship.m_blockingCollider;
+    // m_blockingcollider = vehicleShip.m_blockingCollider;
     // if ((bool)baseVehicle.m_blockingcollider)
     // {
     //   baseVehicle.m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
@@ -165,11 +141,11 @@ public class WaterVehicleController : MonoBehaviour
     // blockingCollider.transform.parent.gameObject.layer =
     //   ValheimRaftPlugin.CustomRaftLayer;
 
-    Logger.LogDebug($"Made it 158");
+
     // baseVehicle.m_blockingcollider = blockingCollider;
     Logger.LogDebug($"Made it to 164");
-    baseVehicle.ActivatePendingPiecesCoroutine();
-    Logger.LogDebug($"Made it to 166");
+    ActivatePendingPiecesCoroutine();
+
     FirstTimeCreation();
   }
 
@@ -194,10 +170,10 @@ public class WaterVehicleController : MonoBehaviour
 
   public void OnDestroy()
   {
-    if ((bool)baseVehicle)
+    if ((bool)baseVehicleController)
     {
-      baseVehicle.CleanUp();
-      UnityEngine.Object.Destroy(baseVehicle.gameObject);
+      CleanUp();
+      UnityEngine.Object.Destroy(gameObject);
     }
   }
 
@@ -211,7 +187,7 @@ public class WaterVehicleController : MonoBehaviour
    */
   private void FirstTimeCreation()
   {
-    if (baseVehicle.GetPieceCount() != 0)
+    if (GetPieceCount() != 0)
     {
       return;
     }
@@ -219,7 +195,7 @@ public class WaterVehicleController : MonoBehaviour
     /*
      * @todo turn the original planks into a Prefab so boat floors can be larger
      */
-    GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
+    var floor = ZNetScene.instance.GetPrefab("wood_floor");
     for (float x = -1f; x < 1.01f; x += 2f)
     {
       for (float z = -2f; z < 2.01f; z += 2f)
@@ -228,7 +204,7 @@ public class WaterVehicleController : MonoBehaviour
           ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
         var obj = Instantiate(floor, pt, transform.rotation);
         ZNetView netView = obj.GetComponent<ZNetView>();
-        baseVehicle.AddNewPiece(netView);
+        AddNewPiece(netView);
       }
     }
   }
@@ -246,12 +222,12 @@ public class WaterVehicleController : MonoBehaviour
     }
     else
     {
-      if (!baseVehicle || !baseVehicle.m_floatcollider)
+      if (!baseVehicleController || !m_floatcollider)
       {
         return;
       }
 
-      m_targetHeight = Mathf.Clamp(baseVehicle.m_floatcollider.transform.position.y + 1f,
+      m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y + 1f,
         ZoneSystem.instance.m_waterLevel, 200f);
     }
 
@@ -272,14 +248,15 @@ public class WaterVehicleController : MonoBehaviour
     }
     else
     {
-      if (!baseVehicle || !baseVehicle.m_floatcollider)
+      if (!baseVehicleController || !m_floatcollider)
       {
         return;
       }
 
-      m_targetHeight = Mathf.Clamp(baseVehicle.m_floatcollider.transform.position.y - 1f,
+      m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y - 1f,
         ZoneSystem.instance.m_waterLevel, 200f);
-      if (baseVehicle.m_floatcollider.transform.position.y - 1f <= ZoneSystem.instance.m_waterLevel)
+      if (m_floatcollider.transform.position.y - 1f <=
+          ZoneSystem.instance.m_waterLevel)
       {
         m_targetHeight = 0f;
       }
@@ -291,28 +268,28 @@ public class WaterVehicleController : MonoBehaviour
 
   public void UpdateStats(bool flight)
   {
-    if (!m_rigidbody || !baseVehicle || baseVehicle.m_statsOverride)
+    if (!m_rigidbody || !baseVehicleController || m_statsOverride)
     {
       return;
     }
 
-    m_rigidbody.mass = baseVehicle.TotalMass;
+    m_rigidbody.mass = TotalMass;
     m_rigidbody.angularDrag = (flight ? 1f : 0f);
     m_rigidbody.drag = (flight ? 1f : 0f);
 
-    if ((bool)ship)
+    if ((bool)vehicleShip)
     {
-      ship.m_angularDamping = (flight ? 5f : 0.8f);
-      ship.m_backwardForce = 1f;
-      ship.m_damping = (flight ? 5f : 0.35f);
-      ship.m_dampingSideway = (flight ? 3f : 0.3f);
-      ship.m_force = 3f;
-      ship.m_forceDistance = 5f;
-      ship.m_sailForceFactor = (flight ? 0.2f : 0.05f);
-      ship.m_stearForce = (flight ? 0.2f : 1f);
-      ship.m_stearVelForceFactor = 1.3f;
-      ship.m_waterImpactDamage = 0f;
-      ImpactEffect impact = ship.GetComponent<ImpactEffect>();
+      vehicleShip.m_angularDamping = (flight ? 5f : 0.8f);
+      vehicleShip.m_backwardForce = 1f;
+      vehicleShip.m_damping = (flight ? 5f : 0.35f);
+      vehicleShip.m_dampingSideway = (flight ? 3f : 0.3f);
+      vehicleShip.m_force = 3f;
+      vehicleShip.m_forceDistance = 5f;
+      vehicleShip.m_sailForceFactor = (flight ? 0.2f : 0.05f);
+      vehicleShip.m_stearForce = (flight ? 0.2f : 1f);
+      vehicleShip.m_stearVelForceFactor = 1.3f;
+      vehicleShip.m_waterImpactDamage = 0f;
+      ImpactEffect impact = vehicleShip.GetComponent<ImpactEffect>();
       if ((bool)impact)
       {
         impact.m_interval = 0.1f;

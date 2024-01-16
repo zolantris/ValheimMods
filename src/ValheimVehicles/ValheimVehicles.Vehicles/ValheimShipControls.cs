@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimRAFT;
 using Logger = Jotunn.Logger;
 
@@ -8,7 +9,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 {
   public string m_hoverText = "";
 
-  public ValheimShip m_ship;
+  [FormerlySerializedAs("m_ship")] public VVShip mVehicleShip;
 
   public float m_maxUseRange = 10f;
 
@@ -61,7 +62,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
       return false;
     }
 
-    if (player.GetStandingOnShip() != m_ship)
+    if (player.GetStandingOnShip() != mVehicleShip)
     {
       return false;
     }
@@ -72,7 +73,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   public Component GetControlledComponent()
   {
-    return m_ship;
+    return mVehicleShip;
   }
 
   public Vector3 GetPosition()
@@ -82,12 +83,12 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run, bool autoRun, bool block)
   {
-    m_ship.ApplyControlls(moveDir);
+    mVehicleShip.ApplyControlls(moveDir);
   }
 
   public string GetHoverText()
   {
-    var baseRoot = GetComponentInParent<BaseVehicle>();
+    var baseRoot = GetComponentInParent<BaseVehicleController>();
     var shipStatsText = "";
 
     if (ValheimRaftPlugin.Instance.ShowShipStats.Value)
@@ -108,7 +109,8 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     }
 
     var isAnchored =
-      baseRoot.vehicleController.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored);
+      baseRoot.vehicleController.m_flags.HasFlag(WaterVehicleController.MBFlags
+        .IsAnchored);
     var anchoredStatus = isAnchored ? "[<color=red><b>$mb_rudder_use_anchored</b></color>]" : "";
     var anchorText =
       isAnchored
@@ -129,7 +131,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   private void RPC_RequestControl(long sender, long playerID)
   {
-    if (m_nview.IsOwner() && m_ship.IsPlayerInBoat(playerID))
+    if (m_nview.IsOwner() && mVehicleShip.IsPlayerInBoat(playerID))
     {
       if (GetUser() == playerID || !HaveValidUser())
       {
@@ -190,7 +192,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     long user = GetUser();
     if (user != 0L)
     {
-      return m_ship.IsPlayerInBoat(user);
+      return mVehicleShip.IsPlayerInBoat(user);
     }
 
     return false;

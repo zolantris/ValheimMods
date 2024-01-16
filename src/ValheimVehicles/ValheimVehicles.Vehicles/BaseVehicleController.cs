@@ -1,16 +1,18 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using ValheimVehicles.Vehicles;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Util;
 using ValheimVehicles.Propulsion.Rudder;
 using Logger = Jotunn.Logger;
+using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.Vehicles;
 
-public class BaseVehicle : MonoBehaviour
+public class BaseVehicleController : MonoBehaviour
 {
   public static readonly KeyValuePair<int, int> MBParentHash = ZDO.GetHashZDOID("MBParent");
 
@@ -33,9 +35,10 @@ public class BaseVehicle : MonoBehaviour
   internal static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
 
+  [FormerlySerializedAs("vehicleControllerController")]
   public WaterVehicleController vehicleController;
 
-  public BaseVehicle instance;
+  public BaseVehicleController instance;
 
   internal Rigidbody m_rigidbody;
 
@@ -70,12 +73,14 @@ public class BaseVehicle : MonoBehaviour
 
   public float totalSailArea = 0f;
 
+  public IVehicleProperties VehicleInstance { set; get; }
+
 /* end sail calcs  */
   private Vector2i m_sector;
   private Vector2i m_serverSector;
   private Bounds m_bounds = default;
   public BoxCollider m_blockingcollider;
-  internal BoxCollider m_floatcollider;
+  internal BoxCollider m_floatcollider => VehicleInstance.m_floatcollider;
   internal BoxCollider m_onboardcollider;
   public int m_id;
   public bool m_statsOverride;
@@ -356,7 +361,7 @@ public class BaseVehicle : MonoBehaviour
       {
         m_ladders.Remove(ladder);
         ladder.m_mbroot = null;
-        ladder.baseVehicle = null;
+        ladder.baseVehicleController = null;
       }
     }
 
@@ -614,7 +619,7 @@ public class BaseVehicle : MonoBehaviour
 
   public static void AddDynamicParent(ZNetView source, GameObject target)
   {
-    var mbroot = target.GetComponentInParent<BaseVehicle>();
+    var mbroot = target.GetComponentInParent<BaseVehicleController>();
     if ((bool)mbroot)
     {
       source.m_zdo.Set(MBCharacterParentHash, mbroot.m_id);
@@ -729,7 +734,7 @@ public class BaseVehicle : MonoBehaviour
 
   public static void AddDynamicParent(ZNetView source, GameObject target, Vector3 offset)
   {
-    var mbroot = target.GetComponentInParent<BaseVehicle>();
+    var mbroot = target.GetComponentInParent<BaseVehicleController>();
     if ((bool)mbroot)
     {
       source.m_zdo.Set(MBCharacterParentHash, mbroot.m_id);
@@ -813,10 +818,10 @@ public class BaseVehicle : MonoBehaviour
     {
       var waterVehicleController = parentObj.GetComponent<WaterVehicleController>();
       Logger.LogDebug($"ParentObj {parentObj}");
-      if ((bool)waterVehicleController && (bool)waterVehicleController.baseVehicle)
+      if ((bool)waterVehicleController && (bool)waterVehicleController.baseVehicleController)
       {
         Logger.LogDebug("ActivatingBaseVehicle piece");
-        waterVehicleController.baseVehicle.ActivatePiece(netView);
+        waterVehicleController.baseVehicleController.ActivatePiece(netView);
       }
     }
     else
@@ -912,8 +917,8 @@ public class BaseVehicle : MonoBehaviour
       if (!rudder.m_wheel) rudder.m_wheel = netView.transform.Find("controls/wheel");
 
       rudder.valheimShipControls.m_nview = m_nview;
-      rudder.valheimShipControls.m_ship =
-        vehicleController.GetComponent<ValheimShip>();
+      rudder.valheimShipControls.mVehicleShip =
+        vehicleController.GetComponent<VVShip>();
 
       if (rudder.m_controls.enabled)
       {
@@ -933,7 +938,7 @@ public class BaseVehicle : MonoBehaviour
     if ((bool)ladder)
     {
       m_ladders.Add(ladder);
-      ladder.baseVehicle = instance;
+      ladder.baseVehicleController = instance;
     }
 
     var meshes = netView.GetComponentsInChildren<MeshRenderer>(true);

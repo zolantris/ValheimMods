@@ -11,7 +11,7 @@ namespace ValheimVehicles.Vehicles;
 /*
  * Mostly vanilla Valheim However this is safe from other mods overriding valheim ships directly
  */
-public class ValheimShip : MonoBehaviour
+public class ValheimBaseGameShip : MonoBehaviour, IVehicleProperties
 {
   public enum Speed
   {
@@ -22,11 +22,11 @@ public class ValheimShip : MonoBehaviour
     Full
   }
 
-  private bool m_forwardPressed;
+  internal bool m_forwardPressed;
 
-  private bool m_backwardPressed;
+  internal bool m_backwardPressed;
 
-  private float m_sendRudderTime;
+  internal float m_sendRudderTime;
 
   // [Header("Objects")] public GameObject m_sailObject;
 
@@ -38,7 +38,12 @@ public class ValheimShip : MonoBehaviour
 
   public Transform m_controlGuiPos;
 
-  [Header("Misc")] public BoxCollider m_floatCollider;
+  public BoxCollider m_floatcollider
+  {
+    get => new BoxCollider();
+    set => m_floatcollider = value;
+  }
+
   public BoxCollider m_blockingCollider;
 
   public float m_waterLevelOffset;
@@ -85,55 +90,54 @@ public class ValheimShip : MonoBehaviour
 
   public EffectList m_waterImpactEffect = new EffectList();
 
-  private bool m_sailWasInPosition;
+  internal bool m_sailWasInPosition;
 
-  private Vector3 m_windChangeVelocity = Vector3.zero;
+  internal Vector3 m_windChangeVelocity = Vector3.zero;
 
-  private Speed m_speed;
+  internal Speed m_speed;
 
-  private float m_rudder;
+  internal float m_rudder;
 
-  private float m_rudderValue;
+  internal float m_rudderValue;
 
-  private Vector3 m_sailForce = Vector3.zero;
+  internal Vector3 m_sailForce = Vector3.zero;
 
-  private readonly List<Player> m_players = new List<Player>();
+  internal readonly List<Player> m_players = new List<Player>();
 
-  private WaterVolume m_previousCenter;
+  internal WaterVolume m_previousCenter;
 
-  private WaterVolume m_previousLeft;
+  internal WaterVolume m_previousLeft;
 
-  private WaterVolume m_previousRight;
+  internal WaterVolume m_previousRight;
 
-  private WaterVolume m_previousForward;
+  internal WaterVolume m_previousForward;
 
-  private WaterVolume m_previousBack;
+  internal WaterVolume m_previousBack;
 
-  private static readonly List<ValheimShip> s_currentShips = new List<ValheimShip>();
+  internal static readonly List<ValheimBaseGameShip> s_currentShips = new();
 
-  private Rigidbody m_body;
+  public Rigidbody m_body;
 
-  private ZNetView m_nview;
+  internal ZNetView m_nview;
 
-  private Cloth m_sailCloth;
+  internal Cloth m_sailCloth;
 
-  private float m_lastDepth = -9999f;
+  internal float m_lastDepth = -9999f;
 
-  private float m_lastWaterImpactTime;
+  internal float m_lastWaterImpactTime;
 
-  private float m_upsideDownDmgTimer;
+  internal float m_upsideDownDmgTimer;
 
-  private float m_rudderPaddleTimer;
+  internal float m_rudderPaddleTimer;
 
-  private WaterVehicleController _cachedVehicleController;
+  internal WaterVehicleController CachedVehicleController;
 
-  public static List<ValheimShip> Instances { get; } = [];
+  public static List<ValheimBaseGameShip> Instances { get; } = new();
 
 
-  private void Awake()
+  internal void Awake()
   {
     m_nview = GetComponent<ZNetView>();
-
     Logger.LogDebug("Made it to 133");
     if (!(bool)m_nview)
     {
@@ -141,9 +145,30 @@ public class ValheimShip : MonoBehaviour
       m_nview = gameObject.AddComponent<ZNetView>();
       m_nview.m_persistent = true;
       m_nview.m_zdo = new ZDO();
-      // {
-      //   Persistent = true,
-      // };
+      m_nview.m_zdo.Persistent = true;
+    }
+
+    m_blockingCollider = gameObject.AddComponent<BoxCollider>();
+    m_blockingCollider.gameObject.layer = 28; // vehicle layer
+    m_blockingCollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    m_blockingCollider.transform.localPosition = new Vector3(0f, 0.29f, 0f);
+
+    if (!m_floatcollider)
+    {
+      Logger.LogError("No float collider exists for ship, this is a prefab setup issue.");
+    }
+
+    Logger.LogDebug("Made it to 151");
+    WearNTear wnt = GetComponent<WearNTear>();
+    if (!(bool)wnt)
+    {
+      wnt = gameObject.AddComponent<WearNTear>();
+    }
+
+    if ((bool)wnt)
+    {
+      wnt.m_onDestroyed =
+        (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(OnDestroyed));
     }
 
     m_body = GetComponent<Rigidbody>();
@@ -156,36 +181,15 @@ public class ValheimShip : MonoBehaviour
     m_body.useGravity = true;
     m_body.maxDepenetrationVelocity = 2f;
 
-    m_blockingCollider = gameObject.AddComponent<BoxCollider>();
-    m_blockingCollider.gameObject.layer = 28; // vehicle layer
-    m_blockingCollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    m_blockingCollider.transform.localPosition = new Vector3(0f, 0.29f, 0f);
-
-    m_floatCollider = PrefabController.shipFloatCollider;
-
-    Logger.LogDebug("Made it to 151");
-    WearNTear wnt = GetComponent<WearNTear>();
-    // if (!(bool)wnt)
-    // {
-    //   wnt = gameObject.AddComponent<WearNTear>();
-    // }
-
-    if ((bool)wnt)
-    {
-      wnt.m_onDestroyed =
-        (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(OnDestroyed));
-    }
-
     Logger.LogDebug("Made it to 164");
 
 
-    // if (m_nview.GetZDO() == null)
-    // {
-    //   m_nview.m_zdo = new ZDO()
-    //   {
-    //     Persistent = true,
-    //   };
-    // }
+    if (m_nview.GetZDO() == null)
+    {
+      Logger.LogError("ZDO returned null, creating new ZDO, this should not be happening!");
+      m_nview.m_zdo = new ZDO();
+      m_nview.m_zdo.Persistent = true;
+    }
 
     if (m_nview.GetZDO() == null)
     {
@@ -199,12 +203,9 @@ public class ValheimShip : MonoBehaviour
 
     // m_sailCloth = m_sailObject.GetComponentInChildren<Cloth>();
     Logger.LogDebug("Made it to 183");
-
-    // RaftCode from the AWAKE patch of ship
-    InitializeBaseShipComponent();
   }
 
-  private void InitializeBaseShipComponent()
+  internal void InitializeBaseShipComponent()
   {
     Logger.LogDebug("Made it to InitializeBaseShipComponent");
     var ladders = GetComponentsInChildren<Ladder>();
@@ -212,12 +213,12 @@ public class ValheimShip : MonoBehaviour
     gameObject.AddComponent<WaterVehicleController>();
   }
 
-  private void OnEnable()
+  internal void OnEnable()
   {
     Instances.Add(this);
   }
 
-  private void OnDisable()
+  internal void OnDisable()
   {
     Instances.Remove(this);
   }
@@ -230,7 +231,7 @@ public class ValheimShip : MonoBehaviour
     return m_players.Count == 0;
   }
 
-  private void Start()
+  internal void Start()
   {
     m_nview.Register("Stop", RPC_Stop);
     m_nview.Register("Forward", RPC_Forward);
@@ -239,7 +240,7 @@ public class ValheimShip : MonoBehaviour
     InvokeRepeating("UpdateOwner", 2f, 2f);
   }
 
-  private void PrintStats()
+  internal void PrintStats()
   {
     if (m_players.Count != 0)
     {
@@ -291,7 +292,7 @@ public class ValheimShip : MonoBehaviour
     m_nview.Invoke("Rudder", rudder);
   }
 
-  private void RPC_Rudder(long sender, float value)
+  internal void RPC_Rudder(long sender, float value)
   {
     m_rudderValue = value;
   }
@@ -301,12 +302,12 @@ public class ValheimShip : MonoBehaviour
     m_nview.InvokeRPC("Stop");
   }
 
-  private void RPC_Stop(long sender)
+  internal void RPC_Stop(long sender)
   {
     m_speed = Speed.Stop;
   }
 
-  private void RPC_Forward(long sender)
+  internal void RPC_Forward(long sender)
   {
     switch (m_speed)
     {
@@ -327,7 +328,7 @@ public class ValheimShip : MonoBehaviour
     }
   }
 
-  private void RPC_Backward(long sender)
+  internal void RPC_Backward(long sender)
   {
     switch (m_speed)
     {
@@ -348,289 +349,7 @@ public class ValheimShip : MonoBehaviour
     }
   }
 
-
-  private void FixedUpdate()
-  {
-    // m_body.WakeUp();
-    // m_body.AddForceAtPosition(Vector3.up, m_floatCollider.transform.position);
-  }
-
-  private static Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity)
-  {
-    var zeroVelocity = Vector3.zero;
-    return Vector3.SmoothDamp(currentVelocity * 0.5f, Vector3.zero, ref zeroVelocity, 5f);
-  }
-
-  public void FixedUpdate1()
-  {
-    if (!_cachedVehicleController)
-    {
-      _cachedVehicleController = GetComponent<WaterVehicleController>();
-    }
-
-    if (!_cachedVehicleController || !m_nview || m_nview.m_zdo == null) return;
-
-    /*
-     * creative mode should not allows movement and applying force on a object will cause errors when the object is kinematic
-     */
-    if (_cachedVehicleController.isCreative)
-    {
-      return;
-    }
-
-    // This could be the spot that causes the raft to fly at spawn
-    _cachedVehicleController.m_targetHeight =
-      m_nview.m_zdo.GetFloat("MBTargetHeight", _cachedVehicleController.m_targetHeight);
-    _cachedVehicleController.m_flags =
-      (WaterVehicleController.MBFlags)m_nview.m_zdo.GetInt("MBFlags",
-        (int)_cachedVehicleController.m_flags);
-
-    // This could be the spot that causes the raft to fly at spawn
-    _cachedVehicleController.m_zsync.m_useGravity = _cachedVehicleController.m_targetHeight == 0f;
-
-    var flag = HaveControllingPlayer();
-
-    UpdateControls(Time.fixedDeltaTime);
-    UpdateSail(Time.fixedDeltaTime);
-    UpdateRudder(Time.fixedDeltaTime, flag);
-    if (m_players.Count == 0 ||
-        _cachedVehicleController.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
-    {
-      m_speed = Speed.Stop;
-      m_rudderValue = 0f;
-      if (!_cachedVehicleController.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
-      {
-        _cachedVehicleController.m_flags |= WaterVehicleController.MBFlags.IsAnchored;
-        m_nview.m_zdo.Set("MBFlags", (int)_cachedVehicleController.m_flags);
-      }
-    }
-
-    if ((bool)m_nview && !m_nview.IsOwner()) return;
-
-    UpdateUpsideDmg(Time.fixedDeltaTime);
-    if (!flag && (m_speed == Speed.Slow || m_speed == Speed.Back))
-      m_speed = Speed.Stop;
-    var worldCenterOfMass = m_body.worldCenterOfMass;
-    var vector = m_floatCollider.transform.position +
-                 m_floatCollider.transform.forward * m_floatCollider.size.z /
-                 2f;
-    var vector2 = m_floatCollider.transform.position -
-                  m_floatCollider.transform.forward * m_floatCollider.size.z /
-                  2f;
-    var vector3 = m_floatCollider.transform.position -
-                  m_floatCollider.transform.right * m_floatCollider.size.x /
-                  2f;
-    var vector4 = m_floatCollider.transform.position +
-                  m_floatCollider.transform.right * m_floatCollider.size.x /
-                  2f;
-    var waterLevel = Floating.GetWaterLevel(worldCenterOfMass, ref m_previousCenter);
-    var waterLevel2 = Floating.GetWaterLevel(vector3, ref m_previousLeft);
-    var waterLevel3 = Floating.GetWaterLevel(vector4, ref m_previousRight);
-    var waterLevel4 = Floating.GetWaterLevel(vector, ref m_previousForward);
-    var waterLevel5 = Floating.GetWaterLevel(vector2, ref m_previousBack);
-    var averageWaterHeight =
-      (waterLevel + waterLevel2 + waterLevel3 + waterLevel4 + waterLevel5) / 5f;
-    var currentDepth = worldCenterOfMass.y - averageWaterHeight - m_waterLevelOffset;
-    if (!(currentDepth > m_disableLevel))
-    {
-      _cachedVehicleController.UpdateStats(false);
-      m_body.WakeUp();
-      UpdateWaterForce(currentDepth, Time.fixedDeltaTime);
-      var vector5 = new Vector3(vector3.x, waterLevel2, vector3.z);
-      var vector6 = new Vector3(vector4.x, waterLevel3, vector4.z);
-      var vector7 = new Vector3(vector.x, waterLevel4, vector.z);
-      var vector8 = new Vector3(vector2.x, waterLevel5, vector2.z);
-      var fixedDeltaTime = Time.fixedDeltaTime;
-      var num3 = fixedDeltaTime * 50f;
-      var num4 = Mathf.Clamp01(Mathf.Abs(currentDepth) / m_forceDistance);
-      var vector9 = Vector3.up * m_force * num4;
-      m_body.AddForceAtPosition(vector9 * num3, worldCenterOfMass,
-        ForceMode.VelocityChange);
-      var num5 = Vector3.Dot(m_body.velocity, transform.forward);
-      var num6 = Vector3.Dot(m_body.velocity, transform.right);
-      var velocity = m_body.velocity;
-      var value = velocity.y * velocity.y * Mathf.Sign(velocity.y) * m_damping * num4;
-      var value2 = num5 * num5 * Mathf.Sign(num5) * m_dampingForward * num4;
-      var value3 = num6 * num6 * Mathf.Sign(num6) * m_dampingSideway * num4;
-      velocity.y -= Mathf.Clamp(value, -1f, 1f);
-      velocity -= transform.forward * Mathf.Clamp(value2, -1f, 1f);
-      velocity -= transform.right * Mathf.Clamp(value3, -1f, 1f);
-      if (velocity.magnitude > m_body.velocity.magnitude)
-        velocity = velocity.normalized * m_body.velocity.magnitude;
-      if (m_players.Count == 0 ||
-          _cachedVehicleController.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
-      {
-        var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
-        velocity = anchoredVelocity;
-      }
-
-      m_body.velocity = velocity;
-      m_body.angularVelocity -=
-        m_body.angularVelocity * m_angularDamping * num4;
-      var num7 = 0.15f;
-      var num8 = 0.5f;
-      var f = Mathf.Clamp((vector7.y - vector.y) * num7, 0f - num8, num8);
-      var f2 = Mathf.Clamp((vector8.y - vector2.y) * num7, 0f - num8, num8);
-      var f3 = Mathf.Clamp((vector5.y - vector3.y) * num7, 0f - num8, num8);
-      var f4 = Mathf.Clamp((vector6.y - vector4.y) * num7, 0f - num8, num8);
-      f = Mathf.Sign(f) * Mathf.Abs(Mathf.Pow(f, 2f));
-      f2 = Mathf.Sign(f2) * Mathf.Abs(Mathf.Pow(f2, 2f));
-      f3 = Mathf.Sign(f3) * Mathf.Abs(Mathf.Pow(f3, 2f));
-      f4 = Mathf.Sign(f4) * Mathf.Abs(Mathf.Pow(f4, 2f));
-      m_body.AddForceAtPosition(Vector3.up * f * num3, vector, ForceMode.VelocityChange);
-      m_body.AddForceAtPosition(Vector3.up * f2 * num3, vector2,
-        ForceMode.VelocityChange);
-      m_body.AddForceAtPosition(Vector3.up * f3 * num3, vector3,
-        ForceMode.VelocityChange);
-      m_body.AddForceAtPosition(Vector3.up * f4 * num3, vector4,
-        ForceMode.VelocityChange);
-      ApplySailForce(this, num5);
-      ApplyEdgeForce(Time.fixedDeltaTime);
-      if (_cachedVehicleController.m_targetHeight > 0f)
-      {
-        var centerpos = m_floatCollider.transform.position;
-        var centerforce = GetUpwardsForce(_cachedVehicleController.m_targetHeight,
-          centerpos.y + m_body.velocity.y, _cachedVehicleController.m_liftForce);
-        m_body.AddForceAtPosition(Vector3.up * centerforce, centerpos,
-          ForceMode.VelocityChange);
-      }
-    }
-    else if (_cachedVehicleController.m_targetHeight > 0f)
-    {
-      if (m_players.Count == 0 ||
-          _cachedVehicleController.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
-      {
-        var anchoredVelocity = CalculateAnchorStopVelocity(m_body.velocity);
-        m_body.velocity = anchoredVelocity;
-      }
-
-      _cachedVehicleController.UpdateStats(true);
-      var side1 = m_floatCollider.transform.position +
-                  m_floatCollider.transform.forward * m_floatCollider.size.z /
-                  2f;
-      var side2 = m_floatCollider.transform.position -
-                  m_floatCollider.transform.forward * m_floatCollider.size.z /
-                  2f;
-      var side3 = m_floatCollider.transform.position -
-                  m_floatCollider.transform.right * m_floatCollider.size.x /
-                  2f;
-      var side4 = m_floatCollider.transform.position +
-                  m_floatCollider.transform.right * m_floatCollider.size.x /
-                  2f;
-      var centerpos2 = m_floatCollider.transform.position;
-      var corner1curforce = m_body.GetPointVelocity(side1);
-      var corner2curforce = m_body.GetPointVelocity(side2);
-      var corner3curforce = m_body.GetPointVelocity(side3);
-      var corner4curforce = m_body.GetPointVelocity(side4);
-      var side1force =
-        GetUpwardsForce(_cachedVehicleController.m_targetHeight, side1.y + corner1curforce.y,
-          _cachedVehicleController.m_balanceForce);
-      var side2force =
-        GetUpwardsForce(_cachedVehicleController.m_targetHeight, side2.y + corner2curforce.y,
-          _cachedVehicleController.m_balanceForce);
-      var side3force =
-        GetUpwardsForce(_cachedVehicleController.m_targetHeight, side3.y + corner3curforce.y,
-          _cachedVehicleController.m_balanceForce);
-      var side4force =
-        GetUpwardsForce(_cachedVehicleController.m_targetHeight, side4.y + corner4curforce.y,
-          _cachedVehicleController.m_balanceForce);
-      var centerforce2 = GetUpwardsForce(_cachedVehicleController.m_targetHeight,
-        centerpos2.y + m_body.velocity.y, _cachedVehicleController.m_liftForce);
-      m_body.AddForceAtPosition(Vector3.up * side1force, side1,
-        ForceMode.VelocityChange);
-      m_body.AddForceAtPosition(Vector3.up * side2force, side2,
-        ForceMode.VelocityChange);
-      m_body.AddForceAtPosition(Vector3.up * side3force, side3,
-        ForceMode.VelocityChange);
-      m_body.AddForceAtPosition(Vector3.up * side4force, side4,
-        ForceMode.VelocityChange);
-      m_body.AddForceAtPosition(Vector3.up * centerforce2, centerpos2,
-        ForceMode.VelocityChange);
-      var dir = Vector3.Dot(m_body.velocity, transform.forward);
-      ApplySailForce(this, dir);
-    }
-  }
-
-  private static void ApplySailForce(ValheimShip __instance, float num5)
-  {
-    var mb = __instance.GetComponent<WaterVehicleController>();
-
-    var sailArea = 0f;
-
-    if (mb.baseVehicle)
-    {
-      sailArea = mb.baseVehicle.GetSailingForce();
-    }
-
-    /*
-     * Computed sailSpeed based on the rudder settings.
-     */
-    switch (__instance.m_speed)
-    {
-      case Speed.Full:
-        break;
-      case Speed.Half:
-        sailArea *= 0.5f;
-        break;
-      case Speed.Slow:
-        sailArea = Math.Min(0.1f, sailArea * 0.1f);
-        break;
-      case Speed.Stop:
-      case Speed.Back:
-      default:
-        sailArea = 0f;
-        break;
-    }
-
-    if (mb.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
-    {
-      sailArea = 0f;
-    }
-
-    var sailForce = __instance.GetSailForce(sailArea, Time.fixedDeltaTime);
-
-    var position = __instance.m_body.worldCenterOfMass;
-
-
-    //  * Math.Max(0.5f, ValheimRaftPlugin.Instance.RaftSailForceMultiplier.Value)
-    // set the speed, this may need to be converted to a vector for the multiplier
-    __instance.m_body.AddForceAtPosition(
-      sailForce,
-      position,
-      ForceMode.VelocityChange);
-
-    var stearoffset = __instance.m_floatCollider.transform.position -
-                      __instance.m_floatCollider.transform.forward *
-                      __instance.m_floatCollider.size.z / 2f;
-    var num7 = num5 * __instance.m_stearVelForceFactor;
-    __instance.m_body.AddForceAtPosition(
-      __instance.transform.right * num7 * (0f - __instance.m_rudderValue) * Time.fixedDeltaTime,
-      stearoffset, ForceMode.VelocityChange);
-    var stearforce = Vector3.zero;
-    switch (__instance.m_speed)
-    {
-      case Speed.Slow:
-        stearforce += __instance.transform.forward * __instance.m_backwardForce *
-                      (1f - Mathf.Abs(__instance.m_rudderValue));
-        break;
-      case Speed.Back:
-        stearforce += -__instance.transform.forward * __instance.m_backwardForce *
-                      (1f - Mathf.Abs(__instance.m_rudderValue));
-        break;
-    }
-
-    if (__instance.m_speed == Speed.Back || __instance.m_speed == Speed.Slow)
-    {
-      float num6 = __instance.m_speed != Speed.Back ? 1 : -1;
-      stearforce += __instance.transform.right * __instance.m_stearForce *
-                    (0f - __instance.m_rudderValue) * num6;
-    }
-
-    __instance.m_body.AddForceAtPosition(stearforce * Time.fixedDeltaTime, stearoffset,
-      ForceMode.VelocityChange);
-  }
-
-  private static float GetUpwardsForce(float targetY, float currentY, float maxForce)
+  internal static float GetUpwardsForce(float targetY, float currentY, float maxForce)
   {
     var dist = targetY - currentY;
     if (dist == 0f) return 0f;
@@ -667,14 +386,14 @@ public class ValheimShip : MonoBehaviour
     }
 
     Vector3 worldCenterOfMass = m_body.worldCenterOfMass;
-    Vector3 vector = m_floatCollider.transform.position +
-                     m_floatCollider.transform.forward * m_floatCollider.size.z / 2f;
-    Vector3 vector2 = m_floatCollider.transform.position -
-                      m_floatCollider.transform.forward * m_floatCollider.size.z / 2f;
-    Vector3 vector3 = m_floatCollider.transform.position -
-                      m_floatCollider.transform.right * m_floatCollider.size.x / 2f;
-    Vector3 vector4 = m_floatCollider.transform.position +
-                      m_floatCollider.transform.right * m_floatCollider.size.x / 2f;
+    Vector3 vector = m_floatcollider.transform.position +
+                     m_floatcollider.transform.forward * m_floatcollider.size.z / 2f;
+    Vector3 vector2 = m_floatcollider.transform.position -
+                      m_floatcollider.transform.forward * m_floatcollider.size.z / 2f;
+    Vector3 vector3 = m_floatcollider.transform.position -
+                      m_floatcollider.transform.right * m_floatcollider.size.x / 2f;
+    Vector3 vector4 = m_floatcollider.transform.position +
+                      m_floatcollider.transform.right * m_floatcollider.size.x / 2f;
     float waterLevel = Floating.GetWaterLevel(worldCenterOfMass, ref m_previousCenter);
     float waterLevel2 = Floating.GetWaterLevel(vector3, ref m_previousLeft);
     float waterLevel3 = Floating.GetWaterLevel(vector4, ref m_previousRight);
@@ -770,7 +489,7 @@ public class ValheimShip : MonoBehaviour
     }
   }
 
-  private void UpdateUpsideDmg(float dt)
+  internal void UpdateUpsideDmg(float dt)
   {
     if (base.transform.up.y >= 0f)
     {
@@ -793,7 +512,7 @@ public class ValheimShip : MonoBehaviour
     }
   }
 
-  private Vector3 GetSailForce(float sailSize, float dt)
+  internal Vector3 GetSailForce(float sailSize, float dt)
   {
     Vector3 windDir = EnvMan.instance.GetWindDir();
     float windIntensity = EnvMan.instance.GetWindIntensity();
@@ -814,7 +533,7 @@ public class ValheimShip : MonoBehaviour
     return num2 * num3;
   }
 
-  private void UpdateWaterForce(float depth, float dt)
+  internal void UpdateWaterForce(float depth, float dt)
   {
     if (m_lastDepth == -9999f)
     {
@@ -847,7 +566,7 @@ public class ValheimShip : MonoBehaviour
     }
   }
 
-  private void ApplyEdgeForce(float dt)
+  internal void ApplyEdgeForce(float dt)
   {
     float magnitude = base.transform.position.magnitude;
     float num = 10420f;
@@ -860,7 +579,7 @@ public class ValheimShip : MonoBehaviour
     }
   }
 
-  private void FixTilt()
+  internal void FixTilt()
   {
     float num = Mathf.Asin(base.transform.right.y);
     float num2 = Mathf.Asin(base.transform.forward.y);
@@ -893,7 +612,7 @@ public class ValheimShip : MonoBehaviour
     }
   }
 
-  private void UpdateControls(float dt)
+  internal void UpdateControls(float dt)
   {
     if (m_nview.IsOwner())
     {
@@ -919,7 +638,7 @@ public class ValheimShip : MonoBehaviour
     return true;
   }
 
-  private void UpdateSail(float dt)
+  internal void UpdateSail(float dt)
   {
     UpdateSailSize(dt);
     Vector3 windDir = EnvMan.instance.GetWindDir();
@@ -943,7 +662,7 @@ public class ValheimShip : MonoBehaviour
     }
   }
 
-  private void UpdateRudder(float dt, bool haveControllingPlayer)
+  internal void UpdateRudder(float dt, bool haveControllingPlayer)
   {
     if (!m_rudderObject)
     {
@@ -969,7 +688,7 @@ public class ValheimShip : MonoBehaviour
       Quaternion.Slerp(m_rudderObject.transform.localRotation, b, 0.5f);
   }
 
-  private void UpdateSailSize(float dt)
+  internal void UpdateSailSize(float dt)
   {
     float num = 0f;
     switch (m_speed)
@@ -1024,7 +743,7 @@ public class ValheimShip : MonoBehaviour
     // m_sailWasInPosition = flag;
   }
 
-  private void UpdateOwner()
+  internal void UpdateOwner()
   {
     if (m_nview.IsValid() && m_nview.IsOwner() && !(Player.m_localPlayer == null) &&
         m_players.Count > 0 && !IsPlayerInBoat(Player.m_localPlayer))
@@ -1035,7 +754,7 @@ public class ValheimShip : MonoBehaviour
     }
   }
 
-  private void OnTriggerEnter(Collider collider)
+  internal void OnTriggerEnter(Collider collider)
   {
     Player component = collider.GetComponent<Player>();
     if ((bool)component)
@@ -1055,7 +774,7 @@ public class ValheimShip : MonoBehaviour
     }
   }
 
-  private void OnTriggerExit(Collider collider)
+  internal void OnTriggerExit(Collider collider)
   {
     Player component = collider.GetComponent<Player>();
     if ((bool)component)
@@ -1111,7 +830,7 @@ public class ValheimShip : MonoBehaviour
     return m_players.Count > 0;
   }
 
-  private void OnDestroyed()
+  internal void OnDestroyed()
   {
     if (m_nview.IsValid() && m_nview.IsOwner())
     {
@@ -1134,7 +853,7 @@ public class ValheimShip : MonoBehaviour
     return false;
   }
 
-  public static ValheimShip GetLocalShip()
+  public static ValheimBaseGameShip GetLocalShip()
   {
     if (s_currentShips.Count != 0)
     {
@@ -1144,7 +863,7 @@ public class ValheimShip : MonoBehaviour
     return null;
   }
 
-  private bool HaveControllingPlayer()
+  internal bool HaveControllingPlayer()
   {
     if (m_players.Count != 0)
     {
@@ -1203,7 +922,7 @@ public class ValheimShip : MonoBehaviour
     return 0f - Utils.YawFromDirection(base.transform.InverseTransformDirection(windDir));
   }
 
-  private void OnDrawGizmosSelected()
+  internal void OnDrawGizmosSelected()
   {
     Gizmos.color = Color.red;
     Gizmos.DrawWireSphere(base.transform.position + base.transform.forward * m_stearForceOffset,

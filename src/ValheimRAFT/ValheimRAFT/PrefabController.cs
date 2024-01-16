@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Jotunn;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
+using Unity.IO.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.U2D;
@@ -43,6 +45,8 @@ public class PrefabController : MonoBehaviour
   private GameObject vanillaRaftPrefab;
   private GameObject vikingShipPrefab;
 
+  public static GameObject waterVehiclePrefabInstance;
+
   /*
    * ship related items
    * Todo make a vehicle specific prefab within the assetbundle for ValheimRAFT ships
@@ -51,10 +55,7 @@ public class PrefabController : MonoBehaviour
    *
    * All values will come from the VikingShip instead of the raft
    */
-  public static GameObject waterMask;
-  public static BoxCollider shipFloatCollider;
-  public static BoxCollider shipOnboardCollider;
-  public static BoxCollider shipBlockingCollider;
+  public static Component waterMask;
 
   public const string Tier1RaftMastName = "MBRaftMast";
   public const string Tier2RaftMastName = "MBKarveMast";
@@ -121,14 +122,15 @@ public class PrefabController : MonoBehaviour
       Enabled = true,
       Name = tbName,
       Requirements =
-      [
-        new()
+        new RequirementConfig[1]
         {
-          Amount = 10,
-          Item = "FineWood",
-          Recover = true
+          new()
+          {
+            Amount = 10,
+            Item = "FineWood",
+            Recover = true
+          }
         }
-      ]
     }));
     pieceManager.RegisterPieceInPieceTable(prefab, "Hammer", ValheimRaftMenuName);
   }
@@ -249,6 +251,9 @@ public class PrefabController : MonoBehaviour
     // Raft Structure
     RegisterHulls();
 
+    // VehiclePrefabs
+    RegisterWaterVehicle();
+
     // Masts
     RegisterRaftMast();
     RegisterKarveMast();
@@ -336,6 +341,204 @@ public class PrefabController : MonoBehaviour
     ShipHulls.HullOrientation orientation)
   {
     return $"mb_ship_hull_{materialMaterial}_{orientation}";
+  }
+
+  private LODGroup vehicleLOD;
+
+  public void AddVehicleLODs(GameObject prefab)
+  {
+    vehicleLOD = prefab.AddComponent<LODGroup>();
+    // add LOD levels.
+    // Create a GUI that allows for forcing a specific LOD level.
+    // Add 4 LOD levels
+    LOD[] lods = new LOD[4];
+    for (int i = 0; i < 4; i++)
+    {
+      PrimitiveType primType = PrimitiveType.Cube;
+      switch (i)
+      {
+        case 1:
+          primType = PrimitiveType.Capsule;
+          break;
+        case 2:
+          primType = PrimitiveType.Sphere;
+          break;
+        case 3:
+          primType = PrimitiveType.Cylinder;
+          break;
+      }
+
+      // GameObject go = GameObject.CreatePrimitive(primType);
+      // go.transform.parent = prefab.transform;
+      Renderer[] renderers = new Renderer[5];
+      // renderers[0] = go.GetComponent<Renderer>();
+
+      for (int r = 0; r < renderers.Length; r++)
+      {
+        switch (r)
+        {
+          case 0:
+            renderers[r] = waterMask.GetComponentInChildren<MeshRenderer>();
+            break;
+          case 1:
+            renderers[r] = waterMask.GetComponentInChildren<MeshRenderer>();
+            break;
+          case 2:
+            renderers[r] = waterMask.GetComponentInChildren<MeshRenderer>();
+            break;
+          case 3:
+            renderers[r] = waterMask.GetComponentInChildren<MeshRenderer>();
+            break;
+        }
+      }
+
+
+      lods[i] = new LOD(1.0F / (i + 2), renderers);
+      lods[i].screenRelativeTransitionHeight = 25f;
+    }
+
+    vehicleLOD.SetLODs(lods);
+    vehicleLOD.RecalculateBounds();
+  }
+
+  void OnGUI()
+  {
+    if (GUILayout.Button("Enable / Disable"))
+      vehicleLOD.enabled = !vehicleLOD.enabled;
+
+    if (GUILayout.Button("Default"))
+      vehicleLOD.ForceLOD(-1);
+
+    if (GUILayout.Button("Force 0"))
+      vehicleLOD.ForceLOD(0);
+
+    if (GUILayout.Button("Force 1"))
+      vehicleLOD.ForceLOD(1);
+
+    if (GUILayout.Button("Force 2"))
+      vehicleLOD.ForceLOD(2);
+
+    if (GUILayout.Button("Force 3"))
+      vehicleLOD.ForceLOD(3);
+
+    if (GUILayout.Button("Force 4"))
+      vehicleLOD.ForceLOD(4);
+
+    if (GUILayout.Button("Force 5"))
+      vehicleLOD.ForceLOD(5);
+
+    if (GUILayout.Button("Force 6"))
+      vehicleLOD.ForceLOD(6);
+  }
+
+  public void RegisterWaterVehicle()
+  {
+    /* this is similar to a Unity Project way to create a ship. But at runtime with code...instead of unity dragdrop stuff that I dislike.
+     * Will move to unity and create a GameObject in the future once the structure is determined.
+     *
+     * This waterVehicle will match the raftprefab structure but also container the vikingship prefab watermask
+     */
+
+    /*
+     * Order is as followed
+     * 1. MeshFilter (Cube)
+     * 2. Rigidbody
+     * 3. Ship (script)
+     * 4. ZNetView (script)
+     * 5. ZSyncTransform (script)
+     * 6. Piece (script)
+     * 7. WearNTear (script)
+     * 8. ImpactEffect (script)
+     * 9. LODGroup
+     */
+
+    var prefabName = "WaterVehicle";
+    var waterVehiclePrefab = prefabManager.CreateEmptyPrefab(prefabName);
+    // waterVehiclePrefab.gameObject.layer = LayerMask.NameToLayer("default");
+    waterVehiclePrefab.gameObject.layer = 0;
+    waterVehiclePrefab.AddComponentCopy(waterMask);
+
+    /*
+     * Add all necessary colliders to the ship prefab
+     * TODO make this a GameObject with a BoxCollider in it
+     */
+    var floatColliderComponent = vanillaRaftPrefab.transform.Find("FloatCollider");
+    var blockingColliderComponent = vanillaRaftPrefab.transform.Find("ship/colliders/Cube");
+    var onboardColliderComponent = vanillaRaftPrefab.transform.Find("OnboardTrigger");
+
+    floatColliderComponent.transform.localScale = new Vector3(1f, 1f, 1f);
+
+    /*
+     * add the colliders to the prefab
+     */
+    waterVehiclePrefab.AddComponentCopy(blockingColliderComponent);
+    waterVehiclePrefab.AddComponentCopy(onboardColliderComponent);
+    waterVehiclePrefab.AddComponentCopy(floatColliderComponent);
+
+
+    // Adds the cube mesh filter (not sure if this is needed)
+    var meshFilter = waterVehiclePrefab.AddComponent<MeshFilter>();
+    meshFilter.mesh = vanillaRaftPrefab.GetComponent<MeshFilter>().mesh;
+
+    var rigidbody = waterVehiclePrefab.AddComponent<Rigidbody>();
+    rigidbody.mass = 2000f;
+    rigidbody.angularDrag = 0.1f;
+    rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+    rigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
+    rigidbody.useGravity = true;
+    rigidbody.automaticInertiaTensor = true;
+    rigidbody.automaticCenterOfMass = true;
+    rigidbody.isKinematic = false;
+
+    var shipInstance = waterVehiclePrefab.AddComponent<VVShip>();
+    shipInstance.gameObject.layer = LayerMask.NameToLayer("vehicle");
+    shipInstance.m_floatcollider = waterVehiclePrefab.GetComponentInChildren<BoxCollider>();
+
+    var zNetView = waterVehiclePrefab.AddComponent<ZNetView>();
+    zNetView.m_type = ZDO.ObjectType.Prioritized;
+    zNetView.m_persistent = true;
+
+    var zSyncTransform = waterVehiclePrefab.AddComponent<ZSyncTransform>();
+    zSyncTransform.m_syncPosition = true;
+    zSyncTransform.m_syncPosition = true;
+    zSyncTransform.m_syncBodyVelocity = true;
+
+    // Piece SHOULD be optional as this is a prefab that will not be placeable
+    // enabling piece could cause problems
+    // waterVehiclePrefab.AddComponent<Piece>();
+
+    // wearntear may need to be removed or tweaked
+    waterVehiclePrefab.AddComponent<WearNTear>();
+    SetWearNTear(waterVehiclePrefab, 1, true);
+    waterVehiclePrefab.AddComponent<ImpactEffect>();
+    AddVehicleLODs(waterVehiclePrefab);
+
+    // waterVehiclePrefab.AddComponent<>()
+    // m_baseRoot.m_floatcollider = ship.m_floatCollider;
+    // m_baseRoot.m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    //
+    // m_baseRoot.m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    // m_baseRoot.m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    // m_baseRoot.m_blockingcollider.transform.parent.gameObject.layer =
+    //   ValheimRaftPlugin.CustomRaftLayer;
+
+
+    // shipInstance.m_floatCollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
+
+    var waterVehicleController =
+      waterVehiclePrefab.AddComponent<WaterVehicleController>();
+    waterVehicleController.VehicleInstance = shipInstance;
+
+    // directly using the reference might also work, but (unknown) risk is it could just reference the boat collider instead
+    // float_collider is automatically gotten from the shipInstance
+    // @todo make other colliders come from the vehicleComponent or remove colliders from the ship and have the ship do a getter.
+    waterVehicleController.m_onboardcollider =
+      onboardColliderComponent.GetComponentInChildren<BoxCollider>();
+    waterVehicleController.m_blockingcollider =
+      blockingColliderComponent.GetComponentInChildren<BoxCollider>();
+
+    prefabManager.AddPrefab(waterVehiclePrefab);
+    waterVehiclePrefabInstance = prefabManager.GetPrefab(prefabName);
   }
 
   public void RegisterHulls()
@@ -433,6 +636,13 @@ public class PrefabController : MonoBehaviour
     woodFloorPiece = woodFloorPrefab.GetComponent<Piece>();
     woodFloorPieceWearNTear = woodFloorPiece.GetComponent<WearNTear>();
 
+    vanillaRaftPrefab = prefabManager.GetPrefab("Raft");
+    vikingShipPrefab = prefabManager.GetPrefab("VikingShip");
+
+    // shipFloatCollider = vikingShipPrefab.transform.Find("FloatCollider")
+    // .GetComponentInChildren<BoxCollider>();
+    waterMask = vikingShipPrefab.transform.Find("ship/visual/watermask");
+
     // registers all prefabs
     RegisterAllPrefabs();
 
@@ -485,18 +695,7 @@ public class PrefabController : MonoBehaviour
 
   private void RegisterVikingMast()
   {
-    vikingShipPrefab = prefabManager.GetPrefab("VikingShip");
     var vikingShipMast = vikingShipPrefab.transform.Find("ship/visual/Mast").gameObject;
-    /*
-     * @todo apply this watermask to hide water on the boat
-     */
-    waterMask = vikingShipPrefab.transform.Find("ship/visual/watermask").gameObject;
-    shipFloatCollider = vikingShipPrefab.transform.Find("FloatCollider")
-      .GetComponentInChildren<BoxCollider>();
-    shipOnboardCollider = vikingShipPrefab.transform.Find("OnboardTrigger")
-      .GetComponentInChildren<BoxCollider>();
-    // shipBlockingCollider = vikingShipPrefab.transform.Find("ship/colliders/hullcullider")
-    //   .GetComponentInChildren<BoxCollider>();
 
     var vikingShipMastPrefab = prefabManager.CreateClonedPrefab(Tier3RaftMastName, vikingShipMast);
     var vikingShipMastPrefabPiece = vikingShipMastPrefab.AddComponent<Piece>();
@@ -555,7 +754,6 @@ public class PrefabController : MonoBehaviour
 
   private void RegisterRaftPrefab()
   {
-    vanillaRaftPrefab = prefabManager.GetPrefab("Raft");
     raftMast = vanillaRaftPrefab.transform.Find("ship/visual/mast").gameObject;
     var mbRaftPrefab = prefabManager.CreateClonedPrefab("MBRaft", vanillaRaftPrefab);
 

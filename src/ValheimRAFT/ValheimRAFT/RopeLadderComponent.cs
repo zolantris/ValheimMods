@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimVehicles.Vehicles;
 
 namespace ValheimRAFT;
@@ -15,7 +16,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
   public Transform m_attachPoint;
 
   public MoveableBaseRootComponent m_mbroot;
-  public BaseVehicle baseVehicle;
+  [FormerlySerializedAs("baseVehicle")] public BaseVehicleController baseVehicleController;
 
   public float m_stepDistance = 0.5f;
 
@@ -120,11 +121,12 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
       return true;
     }
 
-    if ((bool)baseVehicle && (bool)baseVehicle.vehicleController &&
-        baseVehicle.vehicleController.m_targetHeight > 0f &&
-        !baseVehicle.vehicleController.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags
+    if ((bool)baseVehicleController && (bool)baseVehicleController.vehicleController &&
+        baseVehicleController.vehicleController.m_targetHeight > 0f &&
+        !baseVehicleController.vehicleController.m_flags.HasFlag(MoveableBaseShipComponent
+          .MBFlags
           .IsAnchored) &&
-        hitPoint.y < baseVehicle.GetColliderBottom())
+        hitPoint.y < baseVehicleController.GetColliderBottom())
     {
       return true;
     }

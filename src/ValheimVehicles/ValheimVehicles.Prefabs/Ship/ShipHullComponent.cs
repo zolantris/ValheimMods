@@ -1,4 +1,5 @@
 using System;
+using Jotunn;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimVehicles.Vehicles;
@@ -14,7 +15,7 @@ namespace ValheimVehicles.Prefabs;
 public class ShipHullComponent : MonoBehaviour
 {
   private WaterVehicleController _waterVehicleController;
-  private ValheimShip _shipInstance;
+  private GameObject waterVehiclePrefabInstance;
 
   private void GetShipZDO(ZNetView netView)
   {
@@ -55,27 +56,29 @@ public class ShipHullComponent : MonoBehaviour
     //   // return;
     //   netView = gameObject.AddComponent<ZNetView>();
     // }
-
+    waterVehiclePrefabInstance = Instantiate(PrefabController.waterVehiclePrefabInstance);
     // _waterVehicleController =
     /**
      * Skip ship initiation if the hull is already part of the ship
      */
-    _shipInstance = gameObject.GetComponentInParent<ValheimShip>();
-    if ((bool)_shipInstance) return;
-    _shipInstance =
-      // Makes the ship instance exist outside of the hull component to prevent issues
-      // Adds the ship globally to the ValheimRaftPluginGO for now
-      // TODO to make a VehicleComponent gameobject that is responsible for initializing all Vehicles
-      gameObject.AddComponent<ValheimShip>();
+
+    // _vehicleShipInstance = gameObject.GetComponentInParent<VVShip>();
+    // if ((bool)_vehicleShipInstance) return;
+    // _vehicleShipInstance =
+    //   // Makes the ship instance exist outside of the hull component to prevent issues
+    //   // Adds the ship globally to the ValheimRaftPluginGO for now
+    //   // TODO to make a VehicleComponent gameobject that is responsible for initializing all Vehicles
+    //   gameObject.AddComponent<VVShip>();
     // _shipInstance.transform.SetParent(null);
 
 
     // Adds the hull to the baseVehicle
-    var waterVehicleController = _shipInstance.GetComponent<WaterVehicleController>();
+    var waterVehicleController =
+      waterVehiclePrefabInstance.GetComponent<WaterVehicleController>();
 
     if ((bool)waterVehicleController)
     {
-      waterVehicleController.baseVehicle.AddNewPiece(GetComponent<ZNetView>());
+      waterVehicleController.AddNewPiece(GetComponent<ZNetView>());
     }
 
 

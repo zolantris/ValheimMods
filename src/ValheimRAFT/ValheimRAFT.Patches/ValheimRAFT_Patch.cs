@@ -532,7 +532,7 @@ public class ValheimRAFT_Patch
   {
     ZDOPersistantID.Instance.Register(zdo);
     MoveableBaseRootComponent.InitZDO(zdo);
-    BaseVehicle.InitZDO(zdo);
+    BaseVehicleController.InitZDO(zdo);
   }
 
   [HarmonyPatch(typeof(ZDO), "Reset")]
@@ -545,7 +545,7 @@ public class ValheimRAFT_Patch
   public static void ZDOUnload(ZDO zdo)
   {
     MoveableBaseRootComponent.RemoveZDO(zdo);
-    BaseVehicle.RemoveZDO(zdo);
+    BaseVehicleController.RemoveZDO(zdo);
     ZDOPersistantID.Instance.Unregister(zdo);
   }
 
@@ -565,7 +565,7 @@ public class ValheimRAFT_Patch
     if (__instance.m_zdo != null)
     {
       MoveableBaseRootComponent.InitPiece(__instance);
-      BaseVehicle.InitPiece(__instance);
+      BaseVehicleController.InitPiece(__instance);
       CultivatableComponent.InitPiece(__instance);
     }
   }
@@ -631,7 +631,7 @@ public class ValheimRAFT_Patch
       }
     }
 
-    var bv = __instance.GetComponentInParent<BaseVehicle>();
+    var bv = __instance.GetComponentInParent<BaseVehicleController>();
     if ((bool)bv)
     {
       bv.RemovePiece(__instance);
@@ -650,7 +650,7 @@ public class ValheimRAFT_Patch
   private static bool WearNTear_Destroy(WearNTear __instance)
   {
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-    var bv = __instance.GetComponentInParent<BaseVehicle>();
+    var bv = __instance.GetComponentInParent<BaseVehicleController>();
 
     if ((bool)mbr) mbr.DestroyPiece(__instance);
     if ((bool)bv) bv.DestroyPiece(__instance);
@@ -688,7 +688,7 @@ public class ValheimRAFT_Patch
     var rb = collider.attachedRigidbody;
     if (!rb) return null;
     var mbr = rb.GetComponent<MoveableBaseRootComponent>();
-    var bv = rb.GetComponent<BaseVehicle>();
+    var bv = rb.GetComponent<BaseVehicleController>();
     if ((bool)mbr || bv) return null;
     return rb;
   }
@@ -858,6 +858,15 @@ public class ValheimRAFT_Patch
         ((Character)__instance).m_lastGroundCollider.gameObject);
   }
 
+
+  // may be useful for debugging ship controls
+  // [HarmonyPatch(typeof(Player), "GetControlledShip")]
+  // [HarmonyPostfix]
+  // private static void GetControlledShipPostfix(Player __instance, ref bool __result)
+  // {
+  //   
+  // }
+
   [HarmonyPatch(typeof(Player), "PieceRayTest")]
   [HarmonyPostfix]
   private static void PieceRayTestPostfix(Player __instance, ref bool __result, ref Vector3 point,
@@ -873,7 +882,8 @@ public class ValheimRAFT_Patch
   {
     if (!__instance.isActiveAndEnabled) return false;
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-    if (!mbr) return true;
+    var baseVehicle = __instance.GetComponentInParent<BaseVehicleController>();
+    if (!mbr && !baseVehicle) return true;
     if (__instance.transform.localPosition.y < 1f)
     {
       __instance.m_nview.GetZDO().Set("support", 1500f);
