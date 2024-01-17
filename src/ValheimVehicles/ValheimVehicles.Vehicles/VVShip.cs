@@ -23,18 +23,23 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
   private WaterVehicleController _cachedVehicleController;
   public static List<VVShip> Instances { get; } = new();
 
-
   private void Awake()
   {
     base.Awake();
     InitializeBaseShipComponent();
   }
 
+  /*
+   * Only initializes the controller if the prefab is enabled (when zdo is initialized this happens)
+   */
   private void InitializeBaseShipComponent()
   {
-    Logger.LogDebug("Made it to InitializeBaseShipComponent");
-    var ladders = GetComponentsInChildren<Ladder>();
-    for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
+    if ((bool)m_nview && m_nview.GetZDO() != null)
+    {
+      Logger.LogDebug("Made it to InitializeBaseShipComponent");
+      var ladders = GetComponentsInChildren<Ladder>();
+      for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
+    }
   }
 
   internal void OnEnable()
@@ -58,8 +63,22 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
 
   public void FixedUpdate()
   {
+    if (!_cachedVehicleController)
+    {
+      _cachedVehicleController = GetComponent<WaterVehicleController>();
+      if (!_cachedVehicleController)
+      {
+        return;
+      }
+    }
+
     m_body.WakeUp();
-    m_body.AddForceAtPosition(Vector3.up, m_floatcollider.center, ForceMode.VelocityChange);
+
+    m_body.useGravity = _cachedVehicleController.transform.position.y > 0f;
+    if (!m_body.useGravity)
+    {
+      m_body.AddForceAtPosition(Vector3.up, m_floatcollider.center, ForceMode.VelocityChange);
+    }
 
     // FixedUpdate1();
   }

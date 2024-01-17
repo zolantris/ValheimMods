@@ -144,16 +144,12 @@ public class ValheimBaseGameShip : MonoBehaviour
   internal void Awake()
   {
     m_nview = GetComponent<ZNetView>();
-    Logger.LogDebug("Made it to 133");
-    if (!(bool)m_nview)
-    {
-      Logger.LogDebug("Netview did not exist on ValheimShip, adding new netview");
-      m_nview = gameObject.AddComponent<ZNetView>();
-      m_nview.m_persistent = true;
-      m_nview.m_zdo = new ZDO();
-      m_nview.m_zdo.Persistent = true;
-    }
 
+    if (!m_nview)
+    {
+      Logger.LogError(
+        "ValheimBaseShip initialized without NetView, or netview is not available yet (ghost mode?)");
+    }
     // m_blockingCollider = gameObject.AddComponent<BoxCollider>();
     // m_blockingCollider.gameObject.layer = 28; // vehicle layer
     // m_blockingCollider.transform.localScale = new Vector3(1f, 1f, 1f);
@@ -166,11 +162,6 @@ public class ValheimBaseGameShip : MonoBehaviour
 
     Logger.LogDebug("Made it to 151");
     WearNTear wnt = GetComponent<WearNTear>();
-    if (!(bool)wnt)
-    {
-      wnt = gameObject.AddComponent<WearNTear>();
-    }
-
     if ((bool)wnt)
     {
       wnt.m_onDestroyed =
@@ -180,12 +171,11 @@ public class ValheimBaseGameShip : MonoBehaviour
     m_body = GetComponent<Rigidbody>();
     if (!(bool)m_body)
     {
-      Logger.LogDebug("No rigidbody detected");
-      // m_body = gameObject.AddComponent<Rigidbody>();
+      Logger.LogError("No rigidbody detected, ship must have a Rigidbody to work");
     }
 
-    // m_body.mass = 2000f;
-    // m_body.useGravity = true;
+    m_body.mass = 2000f;
+    m_body.useGravity = true;
     m_body.maxDepenetrationVelocity = 2f;
 
     Logger.LogDebug("Made it to 164");
@@ -193,7 +183,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
     if (m_nview.GetZDO() == null)
     {
-      Logger.LogError("ZDO of ship returned null, disabling ship");
+      Logger.LogError("ZDO of ship returned null, disabling ship, until ZDO is ready");
       base.enabled = false;
     }
 

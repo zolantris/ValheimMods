@@ -47,52 +47,36 @@ public class WaterVehicleController : BaseVehicleController
 
   public void Awake()
   {
-    base.Awake();
+    shipInstance = gameObject.GetComponent<VVShip>();
     m_nview = GetComponent<ZNetView>();
-    // if (!(bool)m_nview)
-    // {
-    //   Logger.LogDebug("WaterVehicleController.Awake() NetView does not exist, creating new one");
-    //   m_nview = gameObject.AddComponent<ZNetView>();
-    // }
-
-    // if (m_nview.GetZDO() == null)
-    // {
-    //   Logger.LogDebug("WaterVehicleController.Awake() ZDO was null, creating new one");
-    //   m_nview.m_zdo = new ZDO()
-    //   {
-    //     Persistent = true,
-    //   };
-    // }
-
-    Logger.LogDebug($"WaterVehicleController.Awake() NetView {m_nview}");
-
     m_zsync = GetComponent<ZSyncTransform>();
 
-    // if (!(bool)m_zsync)
-    // {
-    //   m_zsync = gameObject.AddComponent<ZSyncTransform>();
-    // }
+    if (!m_zsync || !m_nview || !shipInstance)
+    {
+      Logger.LogDebug(
+        "Awake called, but no netview or zsync, this should only call for a prefab ghost");
+      return;
+    }
 
-    shipInstance = gameObject.GetComponent<VVShip>();
+    if (m_nview.GetZDO() == null)
+    {
+      enabled = false;
+    }
+
+    // Calls the base awake method
+    base.Awake();
+
     if (shipInstance == null)
     {
       Logger.LogError(
         "No ShipInstance detected");
-      // return;
     }
 
     if (VehicleInstance == null)
     {
       Logger.LogError(
         "No VehicleInstance detected");
-      // return;
     }
-
-    // m_baseRootObject = new GameObject
-    // {
-    //   name = ControllerID,
-    //   layer = 0
-    // };
 
     m_nview.Register("SetAnchor",
       delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
@@ -110,19 +94,7 @@ public class WaterVehicleController : BaseVehicleController
       Logger.LogError("Rigidbody not detected for WaterVehicleController ship");
     }
 
-    // m_baseRootObject.transform.SetParent(null);
-    // m_baseRootObject.transform.position = transform.position;
-    // m_baseRootObject.transform.rotation = transform.rotation;
     UpdateVisual();
-
-    // BoxCollider[] colliders = base.transform.GetComponentsInChildren<BoxCollider>();
-
-    // baseVehicle.m_onboardcollider =
-    //   colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "OnboardTrigger");
-
-    // Instantiate(, m_baseRootObject.transform);
-    // vehicleShip.m_floatcollider = PrefabController.shipFloatCollider;
-    // m_onboardcollider = PrefabController.shipOnboardCollider;
 
     if (!m_onboardcollider)
     {
@@ -145,15 +117,16 @@ public class WaterVehicleController : BaseVehicleController
     //   Logger.LogError("No baseVehicle collider to update");
     // }
 
-    // blockingCollider.transform.parent.gameObject.layer =
-    //   ValheimRaftPlugin.CustomRaftLayer;
-
-
     // baseVehicle.m_blockingcollider = blockingCollider;
     Logger.LogDebug($"Made it to 164");
-    ActivatePendingPiecesCoroutine();
+    FirstTimeCreation();
+  }
 
-    // FirstTimeCreation();
+  private void OnEnable()
+  {
+    shipInstance = gameObject.GetComponent<VVShip>();
+    m_nview = GetComponent<ZNetView>();
+    m_zsync = GetComponent<ZSyncTransform>();
   }
 
 

@@ -113,6 +113,7 @@ public class ValheimRAFT_Patch
   [HarmonyPostfix]
   private static void Ship_Awake(Ship __instance)
   {
+    Logger.LogDebug("Ship_Awake, called");
     if ((bool)__instance.m_nview && __instance.m_nview.m_zdo != null &&
         __instance.name.StartsWith("MBRaft"))
     {

@@ -102,7 +102,26 @@ public class BaseVehicleController : MonoBehaviour
     /*
      * This should work on both client and server, but the garbage collecting should only apply if the ZDOs are not persistent
      */
+    ActivatePendingPiecesCoroutine();
     if (ZNet.instance.IsServer())
+    {
+      server_UpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
+    }
+  }
+
+  private void OnDisable()
+  {
+    if (server_UpdatePiecesCoroutine != null)
+    {
+      StopCoroutine(server_UpdatePiecesCoroutine);
+    }
+  }
+
+  private void OnEnable()
+  {
+    ActivatePendingPiecesCoroutine();
+
+    if (ZNet.instance.IsDedicated())
     {
       server_UpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
@@ -153,7 +172,9 @@ public class BaseVehicleController : MonoBehaviour
   public void LateUpdate()
   {
     // Sync();
-    if (!ZNet.instance.IsServer()) Client_UpdateAllPieces();
+    // this should probably call on all servers
+    if (!ZNet.instance.IsDedicated())
+      Client_UpdateAllPieces();
   }
 
   /**

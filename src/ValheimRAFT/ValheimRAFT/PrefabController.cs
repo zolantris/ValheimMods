@@ -492,8 +492,8 @@ public class PrefabController : MonoBehaviour
     Logger.LogDebug("Made it past Instantiate");
 
     // Adds the cube mesh filter (not sure if this is needed)
-    var meshFilter = waterVehiclePrefab.GetComponent<MeshFilter>();
-    meshFilter.mesh = vanillaRaftPrefab.GetComponent<MeshFilter>().mesh;
+    // var meshFilter = waterVehiclePrefab.GetComponent<MeshFilter>();
+    // meshFilter.mesh = vanillaRaftPrefab.GetComponent<MeshFilter>().mesh;
 
     var zNetView = waterVehiclePrefab.AddComponent<ZNetView>();
     zNetView.m_type = ZDO.ObjectType.Prioritized;
@@ -512,10 +512,24 @@ public class PrefabController : MonoBehaviour
     // setting to true makes the shadows not vibrate, it may be related to kinematic items triggering too many re-renders or the kinematic item needs to be moved lower
     // rigidbody.isKinematic = false;
 
-    Logger.LogDebug("before shipInstance");
+    /*
+     * ShipControls were a gameObject with a script attached to them. This approach directly attaches the script instead of having the rudder show.
+     */
+    var valheimShipControls = waterVehiclePrefab.AddComponent<ValheimShipControls>();
+
     var shipInstance = waterVehiclePrefab.AddComponent<VVShip>();
     // shipInstance.gameObject.SetActive(false);
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+
+    shipInstance.m_shipControlls = waterVehiclePrefab.GetComponent<ValheimShipControls>();
+    // two way binding...yikes but this is how valheim did it.
+    // @todo to refactor this so only the ship or the controls fire actions in a single direction.
+    valheimShipControls.mVehicleShip = shipInstance;
+    valheimShipControls.m_attachPoint = shipInstance.transform;
+    valheimShipControls.m_detachOffset = Vector3.zero;
+    valheimShipControls.m_attachAnimation = "attach_sitship";
+    valheimShipControls.m_maxUseRange = 10f;
+
     Logger.LogDebug("before m_floatcollider");
 
     shipInstance.m_floatcollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
@@ -551,7 +565,7 @@ public class PrefabController : MonoBehaviour
     // shipInstance.m_floatCollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
 
     var waterVehicleController =
-      waterVehiclePrefab.AddComponent<WaterVehicleController>();
+      shipInstance.gameObject.AddComponent<WaterVehicleController>();
     waterVehicleController.VehicleInstance = shipInstance;
     waterVehicleController.shipInstance = shipInstance;
     waterVehicleController.GetComponent<BaseVehicleController>().VehicleInstance = shipInstance;
@@ -566,6 +580,12 @@ public class PrefabController : MonoBehaviour
       onboardColliderComponent.GetComponentInChildren<BoxCollider>();
     waterVehicleController.m_blockingcollider =
       blockingColliderComponent.GetComponentInChildren<BoxCollider>();
+
+    var shipHullPrefab = prefabManager.GetPrefab(
+      GetHullPrefabName(ShipHulls.HullMaterial.CoreWood, ShipHulls.HullOrientation.Horizontal));
+    var shipHullInstance = Instantiate(shipHullPrefab, waterVehiclePrefab.transform);
+    var shipHullPiece = shipHullInstance.GetComponent<Piece>();
+    waterVehicleController.AddNewPiece(shipHullPiece);
 
     var piece = waterVehiclePrefab.AddComponent<Piece>();
     piece.m_waterPiece = true;
@@ -648,7 +668,7 @@ public class PrefabController : MonoBehaviour
     // FixSnapPoints(raftHullPrefab);
 
     // this will be used to hide water on the boat
-    var shipHullPrefabComponent = raftHullPrefab.AddComponent<ShipHullComponent>();
+    // var shipHullPrefabComponent = raftHullPrefab.AddComponent<ShipHullComponent>();
 
     // might not need to add netview if the log already has it
 
