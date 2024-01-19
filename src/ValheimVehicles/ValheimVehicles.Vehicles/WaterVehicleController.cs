@@ -9,6 +9,7 @@ using UnityEngine.PlayerLoop;
 using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Util;
+using ValheimVehicles.Prefabs;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
@@ -55,16 +56,31 @@ public class WaterVehicleController : BaseVehicleController
     {
       Logger.LogDebug(
         "Awake called, but no netview or zsync, this should only call for a prefab ghost");
+      enabled = false;
       return;
     }
 
     if (m_nview.GetZDO() == null)
     {
+      Logger.LogDebug(
+        "Awake() ZDO is null, disabling component for now");
       enabled = false;
     }
 
     // Calls the base awake method
     base.Awake();
+    ZdoReadyAwake();
+  }
+
+  private void ZdoReadyAwake()
+  {
+    if (m_nview.GetZDO() == null)
+    {
+      return;
+    }
+
+    // this may get called twice.
+    GetPersistentID();
 
     if (shipInstance == null)
     {
@@ -83,11 +99,8 @@ public class WaterVehicleController : BaseVehicleController
     m_nview.Register("SetVisual",
       delegate(long sender, bool state) { RPC_SetVisual(sender, state); });
     vehicleController = this;
-    // m_nview = m_nview;
 
     Logger.LogDebug($"NVIEW ZDO {m_nview.m_zdo}");
-
-    m_id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
 
     if (!(bool)shipInstance.m_body)
     {
@@ -98,7 +111,7 @@ public class WaterVehicleController : BaseVehicleController
 
     if (!m_onboardcollider)
     {
-      m_onboardcollider = new BoxCollider();
+      // m_onboardcollider = new BoxCollider();
       Logger.LogError(
         $"ONBOARD COLLIDER {m_onboardcollider}, collider must not be null");
     }
@@ -127,6 +140,7 @@ public class WaterVehicleController : BaseVehicleController
     shipInstance = gameObject.GetComponent<VVShip>();
     m_nview = GetComponent<ZNetView>();
     m_zsync = GetComponent<ZSyncTransform>();
+    ZdoReadyAwake();
   }
 
 
@@ -161,26 +175,68 @@ public class WaterVehicleController : BaseVehicleController
    */
   private void FirstTimeCreation()
   {
-    if (GetPieceCount() != 0)
+    if (GetPieceCount() != 0 && m_nview.GetZDO() != null)
     {
       return;
     }
 
+    Logger.LogDebug("Calling FirstTimeCreation, generating wood_floors");
     /*
      * @todo turn the original planks into a Prefab so boat floors can be larger
      */
-    var floor = ZNetScene.instance.GetPrefab("wood_floor");
-    for (float x = -1f; x < 1.01f; x += 2f)
+    // var floor = ZNetScene.instance.GetPrefab("wood_floor");
+
+    var shipHullPrefab = PrefabController.prefabManager.GetPrefab(
+      PrefabController.GetHullPrefabName(ShipHulls.HullMaterial.CoreWood,
+        ShipHulls.HullOrientation.Horizontal));
+    var obj = Instantiate(shipHullPrefab);
+    var netView = obj.GetComponent<ZNetView>();
+
+    if (!(bool)netView)
     {
-      for (float z = -2f; z < 2.01f; z += 2f)
-      {
-        Vector3 pt = base.transform.TransformPoint(new Vector3(x,
-          ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
-        var obj = Instantiate(floor, pt, transform.rotation);
-        ZNetView netView = obj.GetComponent<ZNetView>();
-        AddNewPiece(netView);
-      }
+      Logger.LogError("No netView for wood_floor initialized floor");
+      return;
     }
+
+    if (netView.GetZDO() == null)
+    {
+      Logger.LogError("No ZDO for wood_floor initialized floor");
+      return;
+    }
+
+    AddNewPiece(netView);
+
+    // for (float x = -1f; x < 1.01f; x += 2f)
+    // {
+    //   for (float z = -2f; z < 2.01f; z += 2f)
+    //   {
+    //     Vector3 pt = transform.TransformPoint(new Vector3(x,
+    //       ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
+    //     var obj = Instantiate(floor, pt, transform.rotation);
+    //     var wnt = obj.GetComponent<WearNTear>();
+    //     if ((bool)wnt)
+    //     {
+    //       wnt.m_noSupportWear = true;
+    //     }
+    //     else
+    //     {
+    //       Logger.LogError("No WNT for wood_floor initialized floor");
+    //     }
+    //
+    //     ZNetView netView = obj.GetComponent<ZNetView>();
+    //     if (!(bool)netView)
+    //     {
+    //       Logger.LogError("No netView for wood_floor initialized floor");
+    //     }
+    //
+    //     if (netView.GetZDO() == null)
+    //     {
+    //       Logger.LogError("No ZDO for wood_floor initialized floor");
+    //     }
+    //
+    //     AddNewPiece(netView);
+    //   }
+    // }
   }
 
   internal void Ascend()

@@ -14,13 +14,18 @@ using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.Vehicles;
 
+/**
+ * @description This is a controller used for all vehicles
+ *
+ * Currently it must be initialized within a vehicle view IE VVShip or upcoming landvehicle instances.
+ */
 public class BaseVehicleController : MonoBehaviour
 {
   public static readonly KeyValuePair<int, int> MBParentHash = ZDO.GetHashZDOID("MBParent");
 
   public static readonly int MBCharacterParentHash = "MBCharacterParent".GetStableHashCode();
 
-  public static readonly int MBCharacterOffsetHash = "MBCharacterOFfset".GetStableHashCode();
+  public static readonly int MBCharacterOffsetHash = "MBCharacterOffset".GetStableHashCode();
 
   public static readonly int MBParentIdHash = "MBParentId".GetStableHashCode();
 
@@ -30,11 +35,11 @@ public class BaseVehicleController : MonoBehaviour
 
   public static readonly int MBRotationVecHash = "MBRotationVec".GetStableHashCode();
 
-  internal static Dictionary<int, List<ZNetView>> m_pendingPieces = new();
+  public static Dictionary<int, List<ZNetView>> m_pendingPieces = new();
 
-  internal static Dictionary<int, List<ZDO>> m_allPieces = new();
+  public static Dictionary<int, List<ZDO>> m_allPieces = new();
 
-  internal static Dictionary<int, List<ZDOID>>
+  public static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
 
   public WaterVehicleController vehicleController;
@@ -42,6 +47,7 @@ public class BaseVehicleController : MonoBehaviour
   public BaseVehicleController instance;
 
   internal Rigidbody m_rigidbody;
+  internal Rigidbody m_syncRigidbody;
 
   internal ZNetView m_nview;
 
@@ -80,7 +86,7 @@ public class BaseVehicleController : MonoBehaviour
 /* end sail calcs  */
   private Vector2i m_sector;
   private Vector2i m_serverSector;
-  private Bounds m_bounds = default;
+  private Bounds m_bounds = new();
   public BoxCollider m_blockingcollider = new();
   internal BoxCollider m_floatcollider;
   internal BoxCollider m_onboardcollider = new();
@@ -90,23 +96,62 @@ public class BaseVehicleController : MonoBehaviour
   internal Coroutine pendingPiecesCoroutine;
   private Coroutine server_UpdatePiecesCoroutine;
 
+  private void SetShipColliders()
+  {
+    var colliders = transform.GetComponentsInChildren<BoxCollider>();
+    m_onboardcollider =
+      colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "VVOnboardTrigger");
+    m_floatcollider =
+      colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "VVFloatCollider");
+    m_blockingcollider =
+      colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "VVBlockingCollider");
+  }
+
   public void Awake()
   {
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
 
-    // m_rigidbody = gameObject.AddComponent<Rigidbody>();
-    // m_rigidbody.isKinematic = true;
-    // m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-    // m_rigidbody.mass = 99999f;
+
+    SetShipColliders();
+
+    // m_rigidbody = GetComponent<Rigidbody>();
+    // comes from parent vehicle component
+    m_syncRigidbody = gameObject.GetComponent<Rigidbody>();
+    m_rigidbody = gameObject.AddComponent<Rigidbody>();
+    m_rigidbody.isKinematic = true;
+    m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+    m_rigidbody.mass = 99999f;
+
+    if (!isActiveAndEnabled)
+    {
+      return;
+    }
+
     /*
      * This should work on both client and server, but the garbage collecting should only apply if the ZDOs are not persistent
      */
-    ActivatePendingPiecesCoroutine();
+    // ActivatePendingPiecesCoroutine();
     if (ZNet.instance.IsServer())
     {
       server_UpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
+  }
+
+  public void GetPersistentID()
+  {
+    Logger.LogDebug($"GetPersistentID, called {name}");
+    if (!(bool)m_nview)
+    {
+      return;
+    }
+
+    if (m_nview.GetZDO() == null)
+    {
+      return;
+    }
+
+    m_id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
   }
 
   private void OnDisable()
@@ -119,8 +164,8 @@ public class BaseVehicleController : MonoBehaviour
 
   private void OnEnable()
   {
+    GetPersistentID();
     ActivatePendingPiecesCoroutine();
-
     if (ZNet.instance.IsDedicated())
     {
       server_UpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
@@ -154,24 +199,24 @@ public class BaseVehicleController : MonoBehaviour
 
   private void Sync()
   {
-    // if ((bool)m_syncRigidbody)
-    // {
-    //   m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
-    //   m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
-    // }
+    if ((bool)m_syncRigidbody && (bool)m_rigidbody && isActiveAndEnabled)
+    {
+      m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
+      m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
+    }
   }
 
-  // public void FixedUpdate()
-  // {
-  //   // Sync();
-  // }
+  public void FixedUpdate()
+  {
+    Sync();
+  }
 
 /*
  * @important, server does not have access to lifecycle methods so a coroutine is required to update things
  */
   public void LateUpdate()
   {
-    // Sync();
+    Sync();
     // this should probably call on all servers
     if (!ZNet.instance.IsDedicated())
       Client_UpdateAllPieces();
@@ -549,36 +594,34 @@ public class BaseVehicleController : MonoBehaviour
 
   public void ActivatePendingPiecesCoroutine()
   {
-    if (hasDebug)
-      Logger.LogDebug(
-        $"ActivatePendingPiecesCoroutine(): pendingPieces count: {m_pendingPieces.Count}");
-    if (pendingPiecesCoroutine != null) StopCoroutine(pendingPiecesCoroutine);
-
-    pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
+    // if (hasDebug)
+    //   Logger.LogDebug(
+    //     $"ActivatePendingPiecesCoroutine(): pendingPieces count: {m_pendingPieces.Count}");
+    // if (pendingPiecesCoroutine != null) StopCoroutine(pendingPiecesCoroutine);
+    //
+    // pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
   }
 
   public IEnumerator ActivatePendingPieces()
   {
-    if (!m_nview || m_nview == null)
+    if (!(bool)m_nview || m_nview == null)
     {
-      // if (hasDebug)
-      //   Logger.LogDebug(
-      //     $"ActivatePendingPieces early exit due to m_nview: {m_nview} m_nview.m_zdo {(m_nview != null ? m_nview.m_zdo : null)}");
       yield return null;
     }
 
-    if (m_nview.m_zdo == null)
+    if (m_nview.GetZDO() == null)
     {
       Logger.LogDebug("m_zdo is null for activate pending pieces");
       yield return null;
     }
 
+    Logger.LogDebug("ActivatePendingPieces before ID getter");
 
-    Logger.LogDebug($"ActivePieces before ZDOPersistenID creation {m_nview.m_zdo}");
-    var id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
+    var id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
+    Logger.LogDebug("ActivatePendingPieces after ID getter");
     m_pendingPieces.TryGetValue(id, out var list);
 
-    Logger.LogDebug($"mpending pieces list {list.Count}");
+    // Logger.LogDebug($"mpending pieces list {list.Count}");
     if (list is { Count: > 0 })
     {
       // var stopwatch = new Stopwatch();
@@ -615,7 +658,7 @@ public class BaseVehicleController : MonoBehaviour
       Logger.LogDebug($"Ship Size calc is: m_bounds {m_bounds} bounds size {m_bounds.size}");
 
     m_dynamicObjects.TryGetValue(m_id, out var objectList);
-    var ObjectListHasNoValidItems = true;
+    var objectListHasNoValidItems = true;
     Logger.LogDebug($"after list 598");
     if (objectList is { Count: > 0 })
     {
@@ -630,7 +673,7 @@ public class BaseVehicleController : MonoBehaviour
         if (!nv || nv.m_zdo == null)
           continue;
         else
-          ObjectListHasNoValidItems = false;
+          objectListHasNoValidItems = false;
 
         if (ZDOExtraData.s_vec3.TryGetValue(nv.m_zdo.m_uid, out var dic))
         {
@@ -655,7 +698,7 @@ public class BaseVehicleController : MonoBehaviour
      * @todo make this only apply for boats with no objects in any list
      */
     if ((list.Count == 0 &&
-         (m_dynamicObjects.Count == 0 || ObjectListHasNoValidItems))
+         (m_dynamicObjects.Count == 0 || objectListHasNoValidItems))
        )
     {
       Logger.LogError($"found boat without any items attached {m_nview}");
@@ -667,12 +710,12 @@ public class BaseVehicleController : MonoBehaviour
 
   public static void AddDynamicParent(ZNetView source, GameObject target)
   {
-    var mbroot = target.GetComponentInParent<BaseVehicleController>();
-    if ((bool)mbroot)
+    var bvc = target.GetComponentInParent<BaseVehicleController>();
+    if ((bool)bvc)
     {
-      source.m_zdo.Set(MBCharacterParentHash, mbroot.m_id);
+      source.m_zdo.Set(MBCharacterParentHash, bvc.m_id);
       source.m_zdo.Set(MBCharacterOffsetHash,
-        source.transform.position - mbroot.transform.position);
+        source.transform.position - bvc.transform.position);
     }
   }
 
@@ -1086,11 +1129,15 @@ public class BaseVehicleController : MonoBehaviour
     var rope = netView.GetComponent<RopeAnchorComponent>();
     if (!door && !ladder && !rope) m_bounds.Encapsulate(netView.transform.localPosition);
 
+    Logger.LogDebug(
+      $"Colliders set, m_floatcollider: {m_floatcollider}, m_onboardcollider: {m_onboardcollider}, m_blockingcollider: {m_blockingcollider}");
+
     for (var i = 0; i < colliders.Count; i++)
     {
-      Physics.IgnoreCollision(colliders[i], m_blockingcollider, true);
-      Physics.IgnoreCollision(colliders[i], m_floatcollider, true);
-      Physics.IgnoreCollision(colliders[i], m_onboardcollider, true);
+      if (m_floatcollider) Physics.IgnoreCollision(colliders[i], m_floatcollider, true);
+      if (m_blockingcollider) Physics.IgnoreCollision(colliders[i], m_blockingcollider, true);
+      if (m_onboardcollider)
+        Physics.IgnoreCollision(colliders[i], m_onboardcollider, true);
     }
 
     m_blockingcollider.size = new Vector3(m_bounds.size.x,

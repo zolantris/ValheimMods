@@ -89,7 +89,6 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
   public string GetHoverText()
   {
     var controller = GetComponentInParent<WaterVehicleController>();
-    Logger.LogDebug($"Controller {controller}");
     if (controller == null)
     {
       controller = GetComponent<WaterVehicleController>();
@@ -113,8 +112,6 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
       /* final formatting */
       shipStatsText = $"<color=white>{shipStatsText}</color>";
     }
-
-    Logger.LogDebug($"Current Hover text {shipStatsText}");
 
     var waterVehicleController = GetComponentInParent<WaterVehicleController>();
 

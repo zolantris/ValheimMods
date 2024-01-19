@@ -181,8 +181,16 @@ public class ValheimBaseGameShip : MonoBehaviour
     Logger.LogDebug("Made it to 164");
 
 
+    // This cannot be done. The ship needs a new zdo once it is created.
     if (m_nview.GetZDO() == null)
     {
+      // m_nview.m_zdo =
+      //   ZDOMan.instance.CreateNewZDO(base.transform.position, "WaterVehicle".GetStableHashCode());
+      // m_nview.m_zdo.Persistent = true;
+      // m_nview.m_zdo.Type = ZDO.ObjectType.Prioritized;
+      // m_nview.m_zdo.Distant = true;
+      // // m_nview.m_zdo.SetPrefab("WaterVehicle".GetStableHashCode());
+      // m_nview.m_zdo.SetRotation(base.transform.rotation);
       Logger.LogError("ZDO of ship returned null, disabling ship, until ZDO is ready");
       base.enabled = false;
     }
@@ -835,9 +843,13 @@ public class ValheimBaseGameShip : MonoBehaviour
     return null;
   }
 
+  /**
+   * adds guard for when ship controls do not exist on the ship.
+   * - previous ship would assume m_shipControlls was connected because it was part of the base prefab
+   */
   internal bool HaveControllingPlayer()
   {
-    if (m_players.Count != 0)
+    if (m_players.Count != 0 && (bool)m_shipControlls)
     {
       return m_shipControlls.HaveValidUser();
     }

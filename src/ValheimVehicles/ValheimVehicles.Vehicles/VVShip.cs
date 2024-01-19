@@ -13,6 +13,8 @@ namespace ValheimVehicles.Vehicles;
  */
 public class VVShip : ValheimBaseGameShip, IVehicleProperties
 {
+  private BaseVehicleController _controller;
+
   public BoxCollider FloatCollider
   {
     get => m_floatcollider;
@@ -26,30 +28,52 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
   private void Awake()
   {
     base.Awake();
-    InitializeBaseShipComponent();
+    InitializeWaterVehicleController();
   }
 
   /*
    * Only initializes the controller if the prefab is enabled (when zdo is initialized this happens)
    */
-  private void InitializeBaseShipComponent()
+  private void InitializeWaterVehicleController()
   {
     if ((bool)m_nview && m_nview.GetZDO() != null)
     {
-      Logger.LogDebug("Made it to InitializeBaseShipComponent");
+      Logger.LogDebug("Made it to InitializeWaterVehicleController");
       var ladders = GetComponentsInChildren<Ladder>();
       for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
+
+      var waterVehicleController =
+        gameObject.AddComponent<WaterVehicleController>();
+      waterVehicleController.enabled = false;
+      waterVehicleController.transform.SetParent(transform);
+      waterVehicleController.transform.localPosition = Vector3.zero;
+      waterVehicleController.transform.localScale = Vector3.one;
+      waterVehicleController.VehicleInstance = this;
+      waterVehicleController.shipInstance = this;
+
+      Logger.LogDebug(
+        $"Colliders set, m_floatcollider: {waterVehicleController.m_floatcollider}, m_onboardcollider: {waterVehicleController.m_onboardcollider}, m_blockingcollider: {waterVehicleController.m_blockingcollider}");
     }
   }
 
   internal void OnEnable()
   {
     Instances.Add(this);
+    var controller = GetComponent<WaterVehicleController>();
+    if ((bool)controller)
+    {
+      controller.enabled = true;
+    }
   }
 
   internal void OnDisable()
   {
     Instances.Remove(this);
+    var controller = GetComponent<WaterVehicleController>();
+    if ((bool)controller)
+    {
+      controller.enabled = false;
+    }
   }
 
   /**
@@ -72,13 +96,14 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
       }
     }
 
-    m_body.WakeUp();
-
-    m_body.useGravity = _cachedVehicleController.transform.position.y > 0f;
-    if (!m_body.useGravity)
-    {
-      m_body.AddForceAtPosition(Vector3.up, m_floatcollider.center, ForceMode.VelocityChange);
-    }
+    FixedUpdate1();
+    // m_body.WakeUp();
+    //
+    // m_body.useGravity = _cachedVehicleController.transform.position.y > 0f;
+    // if (!m_body.useGravity)
+    // {
+    //   m_body.AddForceAtPosition(Vector3.up, m_floatcollider.center, ForceMode.VelocityChange);
+    // }
 
     // FixedUpdate1();
   }
@@ -101,11 +126,6 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
 
   public void FixedUpdate1()
   {
-    if (!_cachedVehicleController)
-    {
-      _cachedVehicleController = GetComponent<WaterVehicleController>();
-    }
-
     if (!_cachedVehicleController || !m_nview || m_nview.m_zdo == null) return;
 
     /*

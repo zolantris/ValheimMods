@@ -634,15 +634,26 @@ public class ValheimRAFT_Patch
     }
 
     var bv = __instance.GetComponentInParent<BaseVehicleController>();
+    var wvc = __instance.GetComponentInParent<WaterVehicleController>();
     if ((bool)bv)
     {
       bv.RemovePiece(__instance);
       if (ValheimRaftPlugin.Instance.DisplacedRaftAutoFix.Value &&
-          (bool)Player.m_localPlayer && Player.m_localPlayer.transform.IsChildOf(mbr.transform))
+          (bool)Player.m_localPlayer && Player.m_localPlayer.transform.IsChildOf(bv.transform))
       {
         return false;
       }
     }
+    else if ((bool)wvc)
+    {
+      wvc.RemovePiece(__instance);
+      if (ValheimRaftPlugin.Instance.DisplacedRaftAutoFix.Value &&
+          (bool)Player.m_localPlayer && Player.m_localPlayer.transform.IsChildOf(wvc.transform))
+      {
+        return false;
+      }
+    }
+
 
     return true;
   }
@@ -653,9 +664,16 @@ public class ValheimRAFT_Patch
   {
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     var bv = __instance.GetComponentInParent<BaseVehicleController>();
+    var wvc = __instance.GetComponent<WaterVehicleController>();
 
     if ((bool)mbr) mbr.DestroyPiece(__instance);
+
     if ((bool)bv) bv.DestroyPiece(__instance);
+    else if ((bool)wvc)
+    {
+      wvc.DestroyPiece(__instance);
+    }
+
     return true;
   }
 
@@ -664,10 +682,11 @@ public class ValheimRAFT_Patch
   private static bool WearNTear_ApplyDamage(WearNTear __instance, float damage)
   {
     var mbr = __instance.GetComponent<MoveableBaseShipComponent>();
+    var wvc = __instance.GetComponent<WaterVehicleController>();
     var bv = __instance.GetComponent<BaseVehicleController>();
 
     // vehicles ignore WNT for now...
-    if (mbr || bv)
+    if (mbr || bv || wvc)
     {
       return false;
     }
@@ -699,8 +718,9 @@ public class ValheimRAFT_Patch
     var rb = collider.attachedRigidbody;
     if (!rb) return null;
     var mbr = rb.GetComponent<MoveableBaseRootComponent>();
-    var bv = rb.GetComponent<BaseVehicleController>();
-    if ((bool)mbr || bv) return null;
+    var bvc = rb.GetComponent<BaseVehicleController>();
+    var wvc = rb.GetComponent<WaterVehicleController>();
+    if ((bool)mbr || bvc || wvc) return null;
     return rb;
   }
 
@@ -733,7 +753,7 @@ public class ValheimRAFT_Patch
 
   [HarmonyPatch(typeof(Character), "GetStandingOnShip")]
   [HarmonyPrefix]
-  private static bool Character_GetStandingOnShip(Character __instance, ref Ship __result)
+  private static bool Character_GetStandingOnShip(Character __instance, ref object __result)
   {
     if (!__instance.IsOnGround()) return false;
     if ((bool)__instance.m_lastGroundBody)
@@ -748,10 +768,7 @@ public class ValheimRAFT_Patch
 
       if (lastOnWaterVehicle)
       {
-        // Have to cast the custom VVShip to Ship using json otherwise this cannot be done
-        var jsonString = JsonUtility.ToJson(lastOnWaterVehicle.ToString());
-        var shipCast = JsonUtility.FromJson<Ship>(jsonString);
-        __result = shipCast;
+        __result = lastOnWaterVehicle;
       }
 
       if (!lastOnShip && !lastOnWaterVehicle)
@@ -911,8 +928,12 @@ public class ValheimRAFT_Patch
   {
     if ((bool)((Character)__instance).m_lastGroundCollider &&
         ((Character)__instance).m_lastGroundTouch < 0.3f)
-      MoveableBaseRootComponent.AddDynamicParent(((Character)__instance).m_nview,
-        ((Character)__instance).m_lastGroundCollider.gameObject);
+    {
+      MoveableBaseRootComponent.AddDynamicParent((__instance).m_nview,
+        (__instance).m_lastGroundCollider.gameObject);
+      BaseVehicleController.AddDynamicParent((__instance).m_nview,
+        (__instance).m_lastGroundCollider.gameObject);
+    }
   }
 
 
@@ -979,8 +1000,10 @@ public class ValheimRAFT_Patch
       {
         if (raycastHit.collider.GetComponent<Hoverable>() != null)
           hover = raycastHit.collider.gameObject;
-        else if ((bool)raycastHit.collider.attachedRigidbody && !raycastHit.collider
-                   .attachedRigidbody.GetComponent<MoveableBaseRootComponent>())
+        else if ((bool)raycastHit.collider.attachedRigidbody && (!raycastHit.collider
+                   .attachedRigidbody.GetComponent<MoveableBaseRootComponent>() || !raycastHit
+                   .collider
+                   .attachedRigidbody.GetComponent<BaseVehicleController>()))
           hover = raycastHit.collider.attachedRigidbody.gameObject;
         else
           hover = raycastHit.collider.gameObject;
