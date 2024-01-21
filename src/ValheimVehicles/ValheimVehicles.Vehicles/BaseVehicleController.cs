@@ -96,7 +96,7 @@ public class BaseVehicleController : MonoBehaviour
   internal Coroutine pendingPiecesCoroutine;
   private Coroutine server_UpdatePiecesCoroutine;
 
-  private void SetShipColliders()
+  private void SetColliders()
   {
     var colliders = transform.GetComponentsInChildren<BoxCollider>();
     m_onboardcollider =
@@ -105,6 +105,9 @@ public class BaseVehicleController : MonoBehaviour
       colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "VVFloatCollider");
     m_blockingcollider =
       colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "VVBlockingCollider");
+
+    Logger.LogDebug(
+      $"Colliders set, m_floatcollider: {m_floatcollider}, m_onboardcollider: {m_onboardcollider}, m_blockingcollider: {m_blockingcollider}");
   }
 
   public void Awake()
@@ -112,8 +115,7 @@ public class BaseVehicleController : MonoBehaviour
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
 
-
-    SetShipColliders();
+    SetColliders();
 
     // m_rigidbody = GetComponent<Rigidbody>();
     // comes from parent vehicle component
@@ -170,6 +172,11 @@ public class BaseVehicleController : MonoBehaviour
     {
       server_UpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
+  }
+
+  public void OnDestroy()
+  {
+    CleanUp();
   }
 
   public void CleanUp()

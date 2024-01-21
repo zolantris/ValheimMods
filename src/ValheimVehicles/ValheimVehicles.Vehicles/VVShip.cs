@@ -25,9 +25,13 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
   private WaterVehicleController _cachedVehicleController;
   public static List<VVShip> Instances { get; } = new();
 
-  private void Awake()
+  private new void Awake()
   {
-    base.Awake();
+    if (!m_nview)
+    {
+      m_nview = GetComponent<ZNetView>();
+    }
+
     InitializeWaterVehicleController();
   }
 
@@ -42,39 +46,29 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
       var ladders = GetComponentsInChildren<Ladder>();
       for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
 
-      var waterVehicleController =
-        gameObject.AddComponent<WaterVehicleController>();
-      waterVehicleController.enabled = false;
-      waterVehicleController.transform.SetParent(transform);
-      waterVehicleController.transform.localPosition = Vector3.zero;
-      waterVehicleController.transform.localScale = Vector3.one;
-      waterVehicleController.VehicleInstance = this;
-      waterVehicleController.shipInstance = this;
-
-      Logger.LogDebug(
-        $"Colliders set, m_floatcollider: {waterVehicleController.m_floatcollider}, m_onboardcollider: {waterVehicleController.m_onboardcollider}, m_blockingcollider: {waterVehicleController.m_blockingcollider}");
+      gameObject.AddComponent<WaterVehicleController>();
     }
   }
 
-  internal void OnEnable()
-  {
-    Instances.Add(this);
-    var controller = GetComponent<WaterVehicleController>();
-    if ((bool)controller)
-    {
-      controller.enabled = true;
-    }
-  }
+  // internal void OnEnable()
+  // {
+  //   Instances.Add(this);
+  //   var controller = GetComponent<WaterVehicleController>();
+  //   if ((bool)controller)
+  //   {
+  //     controller.enabled = true;
+  //   }
+  // }
 
-  internal void OnDisable()
-  {
-    Instances.Remove(this);
-    var controller = GetComponent<WaterVehicleController>();
-    if ((bool)controller)
-    {
-      controller.enabled = false;
-    }
-  }
+  // internal void OnDisable()
+  // {
+  //   Instances.Remove(this);
+  //   var controller = GetComponent<WaterVehicleController>();
+  //   if ((bool)controller)
+  //   {
+  //     controller.enabled = false;
+  //   }
+  // }
 
   /**
    * TODO this could be set to false for the ship as an override to allow the ship to never remove itself

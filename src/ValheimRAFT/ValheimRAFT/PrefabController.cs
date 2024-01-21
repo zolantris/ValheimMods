@@ -547,8 +547,9 @@ public class PrefabController : MonoBehaviour
     // waterVehiclePrefab.AddComponent<Piece>();
 
     // wearntear may need to be removed or tweaked
-    waterVehiclePrefab.AddComponent<WearNTear>();
-    var wnt = SetWearNTear(waterVehiclePrefab, 1, true);
+    // waterVehiclePrefab.AddComponent<WearNTear>();
+    // var wnt = SetWearNTear(waterVehiclePrefab, 1, true);
+    // wnt.m_connectedHeightMap = new Heightmap();
 
     waterVehiclePrefab.AddComponent<ImpactEffect>();
     AddVehicleLODs(waterVehiclePrefab);
@@ -565,12 +566,12 @@ public class PrefabController : MonoBehaviour
 
     // shipInstance.m_floatCollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
 
-    var shipHullPrefab = prefabManager.GetPrefab(
-      GetHullPrefabName(ShipHulls.HullMaterial.CoreWood, ShipHulls.HullOrientation.Horizontal));
-    var shipHullInstance =
-      Instantiate(shipHullPrefab.gameObject, shipInstance.transform, shipInstance.transform);
-    shipHullInstance.transform.SetParent(shipInstance.transform);
-    shipHullInstance.transform.localPosition = new Vector3(0, 0, 0);
+    // var shipHullPrefab = prefabManager.GetPrefab(
+    //   GetHullPrefabName(ShipHulls.HullMaterial.CoreWood, ShipHulls.HullOrientation.Horizontal));
+    // var shipHullInstance =
+    //   Instantiate(shipHullPrefab.gameObject, shipInstance.transform, shipInstance.transform);
+    // shipHullInstance.transform.SetParent(shipInstance.transform);
+    // shipHullInstance.transform.localPosition = new Vector3(0, 0, 0);
 
     // shipHullInstance.transform.localRotation = shipInstance.transform.rotation;
     // var shipHullPiece = shipHullInstance.GetComponent<Piece>();
@@ -656,7 +657,7 @@ public class PrefabController : MonoBehaviour
     // FixSnapPoints(raftHullPrefab);
 
     // this will be used to hide water on the boat
-    // var shipHullPrefabComponent = raftHullPrefab.AddComponent<ShipHullComponent>();
+    var shipHullPrefabComponent = raftHullPrefab.AddComponent<ShipHullComponent>();
 
     // might not need to add netview if the log already has it
 

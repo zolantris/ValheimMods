@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
@@ -150,10 +151,15 @@ public class ValheimBaseGameShip : MonoBehaviour
       Logger.LogError(
         "ValheimBaseShip initialized without NetView, or netview is not available yet (ghost mode?)");
     }
+
     // m_blockingCollider = gameObject.AddComponent<BoxCollider>();
     // m_blockingCollider.gameObject.layer = 28; // vehicle layer
     // m_blockingCollider.transform.localScale = new Vector3(1f, 1f, 1f);
     // m_blockingCollider.transform.localPosition = new Vector3(0f, 0.29f, 0f);
+    var colliders = transform.GetComponentsInChildren<BoxCollider>();
+
+    m_floatcollider =
+      colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "VVFloatCollider");
 
     if (!m_floatcollider)
     {
@@ -180,19 +186,10 @@ public class ValheimBaseGameShip : MonoBehaviour
 
     Logger.LogDebug("Made it to 164");
 
-
-    // This cannot be done. The ship needs a new zdo once it is created.
     if (m_nview.GetZDO() == null)
     {
-      // m_nview.m_zdo =
-      //   ZDOMan.instance.CreateNewZDO(base.transform.position, "WaterVehicle".GetStableHashCode());
-      // m_nview.m_zdo.Persistent = true;
-      // m_nview.m_zdo.Type = ZDO.ObjectType.Prioritized;
-      // m_nview.m_zdo.Distant = true;
-      // // m_nview.m_zdo.SetPrefab("WaterVehicle".GetStableHashCode());
-      // m_nview.m_zdo.SetRotation(base.transform.rotation);
       Logger.LogError("ZDO of ship returned null, disabling ship, until ZDO is ready");
-      base.enabled = false;
+      enabled = false;
     }
 
 

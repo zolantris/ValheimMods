@@ -48,32 +48,36 @@ public class WaterVehicleController : BaseVehicleController
 
   public void Awake()
   {
+    base.Awake();
     shipInstance = gameObject.GetComponent<VVShip>();
     m_nview = GetComponent<ZNetView>();
     m_zsync = GetComponent<ZSyncTransform>();
+    transform.SetParent(transform);
+    transform.localPosition = Vector3.zero;
+    transform.localScale = Vector3.one;
+    VehicleInstance = shipInstance;
 
-    if (!m_zsync || !m_nview || !shipInstance)
-    {
-      Logger.LogDebug(
-        "Awake called, but no netview or zsync, this should only call for a prefab ghost");
-      enabled = false;
-      return;
-    }
+    // if (!m_zsync || !m_nview || !shipInstance)
+    // {
+    //   Logger.LogDebug(
+    //     "Awake called, but no netview or zsync, this should only call for a prefab ghost");
+    //   enabled = false;
+    //   return;
+    // }
+    //
+    // if (m_nview.GetZDO() == null)
+    // {
+    //   Logger.LogDebug(
+    //     "Awake() ZDO is null, disabling component for now");
+    //   enabled = false;
+    // }
 
-    if (m_nview.GetZDO() == null)
-    {
-      Logger.LogDebug(
-        "Awake() ZDO is null, disabling component for now");
-      enabled = false;
-    }
-
-    // Calls the base awake method
-    base.Awake();
     ZdoReadyAwake();
   }
 
   private void ZdoReadyAwake()
   {
+    Logger.LogDebug($"ZdoReadyAwake called, zdo is: {m_nview.GetZDO()}");
     if (m_nview.GetZDO() == null)
     {
       return;
@@ -159,12 +163,6 @@ public class WaterVehicleController : BaseVehicleController
     }
   }
 
-  public void OnDestroy()
-  {
-    CleanUp();
-    Destroy(gameObject);
-  }
-
   public ShipStats GetShipStats()
   {
     return m_shipStats;
@@ -175,7 +173,10 @@ public class WaterVehicleController : BaseVehicleController
    */
   private void FirstTimeCreation()
   {
-    if (GetPieceCount() != 0 && m_nview.GetZDO() != null)
+    //  && m_nview.GetZDO() != null
+    Logger.LogDebug(
+      $"Calling FirstTimeCreation before getpiece check pieces count {GetPieceCount()}");
+    if (GetPieceCount() != 0)
     {
       return;
     }
