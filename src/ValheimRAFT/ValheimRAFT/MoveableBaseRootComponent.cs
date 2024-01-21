@@ -95,7 +95,13 @@ public class MoveableBaseRootComponent : MonoBehaviour
     /*
      * This should work on both client and server, but the garbage collecting should only apply if the ZDOs are not persistent
      */
-    if (ZNet.instance.IsServer())
+    if (!(bool)ZNet.instance)
+    {
+      // prevents NRE from next command
+      return;
+    }
+
+    if (ZNet.instance.IsDedicated())
     {
       server_UpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
@@ -146,7 +152,14 @@ public class MoveableBaseRootComponent : MonoBehaviour
   public void LateUpdate()
   {
     Sync();
-    if (!ZNet.instance.IsDedicated() || !ZNet.instance) Client_UpdateAllPieces();
+    if (!(bool)ZNet.instance)
+    {
+      // prevents NRE from next command
+      Client_UpdateAllPieces();
+      return;
+    }
+
+    if (ZNet.instance.IsDedicated() == false) Client_UpdateAllPieces();
   }
 
   /**
