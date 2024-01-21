@@ -97,14 +97,15 @@ public class PrefabController : MonoBehaviour
       Enabled = true,
       Name = tbName,
       Requirements =
-      [
-        new()
+        new RequirementConfig[1]
         {
-          Amount = 10,
-          Item = "FineWood",
-          Recover = true
+          new()
+          {
+            Amount = 10,
+            Item = "FineWood",
+            Recover = true
+          }
         }
-      ]
     }));
     pieceManager.RegisterPieceInPieceTable(prefab, "Hammer", ValheimRaftMenuName);
   }

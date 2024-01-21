@@ -146,7 +146,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   public void LateUpdate()
   {
     Sync();
-    if (!ZNet.instance.IsServer()) Client_UpdateAllPieces();
+    if (!ZNet.instance.IsDedicated() || !ZNet.instance) Client_UpdateAllPieces();
   }
 
   /**
