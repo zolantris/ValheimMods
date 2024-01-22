@@ -664,10 +664,9 @@ public class ValheimRAFT_Patch
   {
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     var bv = __instance.GetComponentInParent<BaseVehicleController>();
-    var wvc = __instance.GetComponent<WaterVehicleController>();
+    var wvc = __instance.GetComponentInParent<WaterVehicleController>();
 
     if ((bool)mbr) mbr.DestroyPiece(__instance);
-
     if ((bool)bv) bv.DestroyPiece(__instance);
     else if ((bool)wvc)
     {

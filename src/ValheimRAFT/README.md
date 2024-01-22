@@ -169,7 +169,7 @@ and it should not longer cause errors for not having PlanBuild installed.
 
 ## Graphics
 
-This project supports both **Vulkan** and **Direct3D11** as of >=1.6.12.
+This project supports both **Vulkan** and **Direct3D11** as of >=1.6.11.
 Previously it only supported Direct3D11.
 
 ## Contributing
@@ -187,3 +187,37 @@ Previously it only supported Direct3D11.
 ## Getting Started
 
 Please reference the [getting started docs](../../docs/getting-started.md).
+
+## Custom Logging for powershell
+
+Add this to your powershell profile. This will allow your to highlight only logs
+from ValheimVehicles and ValheimRAFT mods as well as errors.
+
+These commands are for powershell users. If you are running things on linux
+there are simpler (and similar) commands for syntax highlighting. I advise
+googling them.
+
+```powershell
+function Get-LogColor {
+    Param([Parameter(Position=0)]
+    [String]$LogEntry)
+
+    process {
+        if ($LogEntry.Contains("ValheimRAFT") -or $LogEntry.Contains("ValheimVehicles")){
+          if ($LogEntry.Contains("Debug")) {Return "Green"}
+          elseif ($LogEntry.Contains("Warn")) {Return "Yellow"}
+          elseif ($LogEntry.Contains("Error") -or $LogEntry.Contains("NullReferenceException")) {Return "Red"}
+          else {Return "White"}
+        }
+        if ($LogEntry.Contains("NullReferenceException")) {Return "Red"}
+        else {Return "White"}
+    }
+}
+```
+
+When launching the game just run the following command to output the latest
+logs.
+
+```powershell
+gc -wait -tail 10 C:\Users\fre\AppData\LocalLow\IronGate\Valheim\Player.log | ForEach {Write-Host -ForegroundColor (Get-LogColor $_) $_}
+```
