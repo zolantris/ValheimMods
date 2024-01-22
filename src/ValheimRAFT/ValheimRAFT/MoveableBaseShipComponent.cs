@@ -64,6 +64,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.m_syncRigidbody = m_rigidbody;
     m_rigidbody.mass = m_baseRoot.TotalMass;
     m_baseRootObject.transform.SetParent(null);
+    Logger.LogDebug("Set baseRoot params from BaseShipComponent");
 
     m_baseRootObject.transform.position = base.transform.position;
     m_baseRootObject.transform.rotation = base.transform.rotation;

@@ -16,9 +16,15 @@ namespace ValheimVehicles.Vehicles;
 
 public class WaterVehicleController : BaseVehicleController
 {
-  public VVShip shipInstance;
-
   public const string ControllerID = "WaterVehicle";
+
+  public VVShip _shipInstance;
+
+  public VVShip ShipInstance
+  {
+    get => _shipInstance;
+    set => _shipInstance = InitializeShipValues(value);
+  }
 
   [Flags]
   public enum MBFlags
@@ -30,7 +36,7 @@ public class WaterVehicleController : BaseVehicleController
 
   public bool isCreative = false;
 
-  internal Rigidbody m_rigidbody => shipInstance.m_body;
+  internal Rigidbody m_rigidbody;
 
   internal ShipStats m_shipStats = new ShipStats();
 
@@ -45,17 +51,46 @@ public class WaterVehicleController : BaseVehicleController
   public float m_liftForce = 20f;
 
   public MBFlags m_flags;
+  private bool _initialized = false;
 
-  public void Awake()
+  /*
+   * Must be called from
+   */
+  private VVShip InitializeShipValues(VVShip vvShip)
   {
-    base.Awake();
-    shipInstance = gameObject.GetComponent<VVShip>();
-    m_nview = GetComponent<ZNetView>();
-    m_zsync = GetComponent<ZSyncTransform>();
-    transform.SetParent(transform);
-    transform.localPosition = Vector3.zero;
-    transform.localScale = Vector3.one;
-    VehicleInstance = shipInstance;
+    VehicleInstance = vvShip;
+
+    // connect vvShip properties to this gameobject
+    m_nview = vvShip.GetComponent<ZNetView>();
+    m_zsync = vvShip.GetComponent<ZSyncTransform>();
+    m_syncRigidbody = vvShip.GetComponent<Rigidbody>();
+
+    // prevent mass from being set lower than 20f;
+    m_syncRigidbody.mass = Math.Max(TotalMass, 20f);
+
+
+    SetColliders(vvShip.gameObject);
+
+    _initialized = true;
+    return vvShip;
+  }
+
+  public new void Awake()
+  {
+    vehicleController = this;
+  }
+
+  public new void Start()
+  {
+    if (!_initialized || !(bool)vehicleController)
+    {
+      Logger.LogError("not initialized, exiting ship logic to prevent crash");
+      return;
+    }
+
+    // transform.localPosition = Vector3.zero;
+    // transform.localScale = Vector3.one;
+    ZdoReadyStart();
 
     // if (!m_zsync || !m_nview || !shipInstance)
     // {
@@ -71,12 +106,12 @@ public class WaterVehicleController : BaseVehicleController
     //     "Awake() ZDO is null, disabling component for now");
     //   enabled = false;
     // }
-
-    ZdoReadyAwake();
   }
 
-  private void ZdoReadyAwake()
+  private void ZdoReadyStart()
   {
+    if (!(bool)m_nview) return;
+
     Logger.LogDebug($"ZdoReadyAwake called, zdo is: {m_nview.GetZDO()}");
     if (m_nview.GetZDO() == null)
     {
@@ -86,7 +121,7 @@ public class WaterVehicleController : BaseVehicleController
     // this may get called twice.
     GetPersistentID();
 
-    if (shipInstance == null)
+    if (VehicleInstance == null)
     {
       Logger.LogError(
         "No ShipInstance detected");
@@ -105,11 +140,6 @@ public class WaterVehicleController : BaseVehicleController
     vehicleController = this;
 
     Logger.LogDebug($"NVIEW ZDO {m_nview.m_zdo}");
-
-    if (!(bool)shipInstance.m_body)
-    {
-      Logger.LogError("Rigidbody not detected for WaterVehicleController ship");
-    }
 
     UpdateVisual();
 
@@ -139,13 +169,15 @@ public class WaterVehicleController : BaseVehicleController
     FirstTimeCreation();
   }
 
-  private void OnEnable()
-  {
-    shipInstance = gameObject.GetComponent<VVShip>();
-    m_nview = GetComponent<ZNetView>();
-    m_zsync = GetComponent<ZSyncTransform>();
-    ZdoReadyAwake();
-  }
+  // private void OnEnable()
+  // {
+  //   if (!_initialized)
+  //   {
+  //     return;
+  //   }
+  //
+  //   ZdoReadyStart();
+  // }
 
 
   public void UpdateVisual()
@@ -187,25 +219,39 @@ public class WaterVehicleController : BaseVehicleController
      */
     // var floor = ZNetScene.instance.GetPrefab("wood_floor");
 
-    var shipHullPrefab = PrefabController.prefabManager.GetPrefab(
-      PrefabController.GetHullPrefabName(ShipHulls.HullMaterial.CoreWood,
-        ShipHulls.HullOrientation.Horizontal));
-    var obj = Instantiate(shipHullPrefab);
-    var netView = obj.GetComponent<ZNetView>();
+    // var shipHullPrefab = PrefabController.prefabManager.GetPrefab(
+    //   PrefabController.GetHullPrefabName(ShipHulls.HullMaterial.CoreWood,
+    //     ShipHulls.HullOrientation.Horizontal));
+    // var obj = Instantiate(shipHullPrefab);
 
-    if (!(bool)netView)
+    GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
+    for (float x = -1f; x < 1.01f; x += 2f)
     {
-      Logger.LogError("No netView for wood_floor initialized floor");
-      return;
+      for (float z = -2f; z < 2.01f; z += 2f)
+      {
+        Vector3 pt = transform.TransformPoint(new Vector3(x,
+          ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
+        var obj = Instantiate(floor, pt, transform.rotation);
+        ZNetView netview = obj.GetComponent<ZNetView>();
+        AddNewPiece(netview);
+      }
     }
 
-    if (netView.GetZDO() == null)
-    {
-      Logger.LogError("No ZDO for wood_floor initialized floor");
-      return;
-    }
+    // var netView = obj.GetComponent<ZNetView>();
 
-    AddNewPiece(netView);
+    // if (!(bool)netView)
+    // {
+    //   Logger.LogError("No netView for wood_floor initialized floor");
+    //   return;
+    // }
+    //
+    // if (netView.GetZDO() == null)
+    // {
+    //   Logger.LogError("No ZDO for wood_floor initialized floor");
+    //   return;
+    // }
+    //
+    // AddNewPiece(netView);
 
     // for (float x = -1f; x < 1.01f; x += 2f)
     // {
@@ -308,19 +354,19 @@ public class WaterVehicleController : BaseVehicleController
     m_rigidbody.angularDrag = (flight ? 1f : 0f);
     m_rigidbody.drag = (flight ? 1f : 0f);
 
-    if ((bool)shipInstance)
+    if ((bool)ShipInstance)
     {
-      shipInstance.m_angularDamping = (flight ? 5f : 0.8f);
-      shipInstance.m_backwardForce = 1f;
-      shipInstance.m_damping = (flight ? 5f : 0.35f);
-      shipInstance.m_dampingSideway = (flight ? 3f : 0.3f);
-      shipInstance.m_force = 3f;
-      shipInstance.m_forceDistance = 5f;
-      shipInstance.m_sailForceFactor = (flight ? 0.2f : 0.05f);
-      shipInstance.m_stearForce = (flight ? 0.2f : 1f);
-      shipInstance.m_stearVelForceFactor = 1.3f;
-      shipInstance.m_waterImpactDamage = 0f;
-      ImpactEffect impact = shipInstance.GetComponent<ImpactEffect>();
+      ShipInstance.m_angularDamping = (flight ? 5f : 0.8f);
+      ShipInstance.m_backwardForce = 1f;
+      ShipInstance.m_damping = (flight ? 5f : 0.35f);
+      ShipInstance.m_dampingSideway = (flight ? 3f : 0.3f);
+      ShipInstance.m_force = 3f;
+      ShipInstance.m_forceDistance = 5f;
+      ShipInstance.m_sailForceFactor = (flight ? 0.2f : 0.05f);
+      ShipInstance.m_stearForce = (flight ? 0.2f : 1f);
+      ShipInstance.m_stearVelForceFactor = 1.3f;
+      ShipInstance.m_waterImpactDamage = 0f;
+      ImpactEffect impact = ShipInstance.GetComponent<ImpactEffect>();
       if ((bool)impact)
       {
         impact.m_interval = 0.1f;

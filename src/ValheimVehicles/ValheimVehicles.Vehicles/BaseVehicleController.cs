@@ -96,26 +96,56 @@ public class BaseVehicleController : MonoBehaviour
   internal Coroutine pendingPiecesCoroutine;
   private Coroutine server_UpdatePiecesCoroutine;
 
-  private void SetColliders()
+  public void SetColliders(GameObject vehicleInstance)
   {
-    var colliders = transform.GetComponentsInChildren<BoxCollider>();
+    var colliders = vehicleInstance.transform.GetComponentsInChildren<BoxCollider>();
     m_onboardcollider =
-      colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "VVOnboardTrigger");
+      colliders.FirstOrDefault((k) => k.gameObject.name.Contains("VVOnboardTrigger"));
     m_floatcollider =
-      colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "VVFloatCollider");
+      colliders.FirstOrDefault((k) => k.gameObject.name.Contains("VVFloatCollider"));
     m_blockingcollider =
-      colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "VVBlockingCollider");
+      colliders.FirstOrDefault((k) => k.gameObject.name.Contains("VVBlockingCollider"));
+
+    if (m_onboardcollider != null)
+    {
+      m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    }
+
+    if (m_floatcollider != null) m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+
+    if (m_blockingcollider != null)
+    {
+      m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+      m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+      m_blockingcollider.transform.parent.gameObject.layer =
+        ValheimRaftPlugin.CustomRaftLayer;
+    }
 
     Logger.LogDebug(
       $"Colliders set, m_floatcollider: {m_floatcollider}, m_onboardcollider: {m_onboardcollider}, m_blockingcollider: {m_blockingcollider}");
+  }
+
+
+  public void FireErrorOnNull(Collider obj, String name)
+  {
+    if (!(bool)obj)
+    {
+      Logger.LogError($"BaseVehicleError: collider not initialized for <{name}>");
+    }
+  }
+
+  public void ValidateInitialization()
+  {
+    // colliders that must be valid
+    FireErrorOnNull(m_floatcollider, "VVFloatCollider");
+    FireErrorOnNull(m_blockingcollider, "VVBlockingCollider");
+    FireErrorOnNull(m_onboardcollider, "VVOnboardCollider");
   }
 
   public void Awake()
   {
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
-
-    SetColliders();
 
     // m_rigidbody = GetComponent<Rigidbody>();
     // comes from parent vehicle component
@@ -124,8 +154,13 @@ public class BaseVehicleController : MonoBehaviour
     m_rigidbody.isKinematic = true;
     m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     m_rigidbody.mass = 99999f;
+  }
 
-    if (!isActiveAndEnabled)
+  public void Start()
+  {
+    ValidateInitialization();
+
+    if (!(bool)ZNet.instance)
     {
       return;
     }
@@ -133,8 +168,7 @@ public class BaseVehicleController : MonoBehaviour
     /*
      * This should work on both client and server, but the garbage collecting should only apply if the ZDOs are not persistent
      */
-    // ActivatePendingPiecesCoroutine();
-    if (ZNet.instance.IsServer())
+    if (ZNet.instance.IsDedicated())
     {
       server_UpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
@@ -224,9 +258,15 @@ public class BaseVehicleController : MonoBehaviour
   public void LateUpdate()
   {
     Sync();
-    // this should probably call on all servers
-    if (!ZNet.instance.IsDedicated())
+
+    if (!(bool)ZNet.instance)
+    {
+      // prevents NRE from next command
       Client_UpdateAllPieces();
+      return;
+    }
+
+    if (ZNet.instance.IsDedicated() == false) Client_UpdateAllPieces();
   }
 
   /**
@@ -244,18 +284,18 @@ public class BaseVehicleController : MonoBehaviour
 
     for (var i = 0; i < m_pieces.Count; i++)
     {
-      var netview = m_pieces[i];
-      if (!netview)
+      var nv = m_pieces[i];
+      if (!nv)
       {
-        Logger.LogError($"Error found with m_pieces: netview {netview}");
+        Logger.LogError($"Error found with m_pieces: netview {nv}");
         m_pieces.RemoveAt(i);
         i--;
       }
       else
       {
-        if (transform.position != netview.transform.position)
+        if (transform.position != nv.transform.position)
         {
-          netview.m_zdo.SetPosition(transform.position);
+          nv.m_zdo.SetPosition(transform.position);
         }
       }
     }
@@ -340,6 +380,7 @@ public class BaseVehicleController : MonoBehaviour
 
       yield return UpdatePiecesWorker(list);
 
+      // todo remove this if it does nothing
       list = null;
       yield return new WaitForEndOfFrame();
     }

@@ -87,6 +87,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void Awake()
   {
+    Logger.LogDebug("called Awake on BaseRootComponent");
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
     m_rigidbody = gameObject.AddComponent<Rigidbody>();

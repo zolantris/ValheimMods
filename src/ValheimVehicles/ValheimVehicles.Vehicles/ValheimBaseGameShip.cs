@@ -131,12 +131,12 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public static List<ValheimBaseGameShip> Instances { get; } = new();
 
-  private void OnEnable()
+  public virtual void OnEnable()
   {
     Instances.Add(this);
   }
 
-  private void OnDisable()
+  public virtual void OnDisable()
   {
     Instances.Remove(this);
   }

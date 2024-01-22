@@ -13,7 +13,8 @@ namespace ValheimVehicles.Vehicles;
  */
 public class VVShip : ValheimBaseGameShip, IVehicleProperties
 {
-  private BaseVehicleController _controller;
+  private WaterVehicleController _controller;
+  private GameObject _waterVehicle;
 
   public BoxCollider FloatCollider
   {
@@ -40,35 +41,47 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
    */
   private void InitializeWaterVehicleController()
   {
-    if ((bool)m_nview && m_nview.GetZDO() != null)
-    {
-      Logger.LogDebug("Made it to InitializeWaterVehicleController");
-      var ladders = GetComponentsInChildren<Ladder>();
-      for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
+    if (!(bool)m_nview || m_nview.GetZDO() == null || (bool)_waterVehicle) return;
+    Logger.LogDebug("Made it to InitializeWaterVehicleController");
+    var ladders = GetComponentsInChildren<Ladder>();
+    for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
 
-      gameObject.AddComponent<WaterVehicleController>();
+    _waterVehicle = new GameObject
+    {
+      name = "VehicleShip",
+      layer = 0
+    };
+
+    _controller = _waterVehicle.AddComponent<WaterVehicleController>();
+    _controller.ShipInstance = this;
+
+    // waterVehicle must exist as it's own top level object
+    _waterVehicle.transform.SetParent(null);
+    _waterVehicle.transform.position = transform.position;
+    _waterVehicle.transform.rotation = transform.rotation;
+  }
+
+  public void OnDestroy()
+  {
+    if ((bool)_controller)
+    {
+      _controller.CleanUp();
+      Destroy(_controller.gameObject);
     }
   }
 
-  // internal void OnEnable()
-  // {
-  //   Instances.Add(this);
-  //   var controller = GetComponent<WaterVehicleController>();
-  //   if ((bool)controller)
-  //   {
-  //     controller.enabled = true;
-  //   }
-  // }
+  public override void OnEnable()
+  {
+    base.OnEnable();
+    if ((bool)_controller) return;
 
-  // internal void OnDisable()
-  // {
-  //   Instances.Remove(this);
-  //   var controller = GetComponent<WaterVehicleController>();
-  //   if ((bool)controller)
-  //   {
-  //     controller.enabled = false;
-  //   }
-  // }
+    _controller = GetComponent<WaterVehicleController>();
+
+    if (!(bool)_controller)
+    {
+      InitializeWaterVehicleController();
+    }
+  }
 
   /**
    * TODO this could be set to false for the ship as an override to allow the ship to never remove itself

@@ -20,30 +20,31 @@ public class ShipHullComponent : MonoBehaviour
 
   private void Awake()
   {
-    var nv = GetComponent<ZNetView>();
-    _vvShip = GetComponent<VVShip>();
-    _waterVehicleController = GetComponentInParent<WaterVehicleController>();
-
-    // exit if this ShipHull is initialized with a vehicle controller
-    if ((bool)_waterVehicleController)
-    {
-      return;
-    }
-
-    if (!(bool)_vvShip)
-    {
-      _vvShip = GetComponentInParent<VVShip>();
-    }
-
-    if (!(bool)_vvShip)
-    {
-      _vvShip = GetComponentInChildren<VVShip>();
-    }
-
-    if (nv && nv.GetZDO() != null && _vvShip == null)
-    {
-      _vvShip = gameObject.AddComponent<VVShip>();
-    }
+    // var nv = GetComponent<ZNetView>();
+    // _vvShip = GetComponent<VVShip>();
+    // _waterVehicleController = GetComponentInParent<WaterVehicleController>();
+    //
+    // // exit if this ShipHull is initialized with a vehicle controller
+    // if ((bool)_waterVehicleController)
+    // {
+    //   return;
+    // }
+    //
+    // if (!(bool)_vvShip)
+    // {
+    //   _vvShip = GetComponentInParent<VVShip>();
+    // }
+    //
+    // if (!(bool)_vvShip)
+    // {
+    //   _vvShip = GetComponentInChildren<VVShip>();
+    // }
+    //
+    // if (nv && nv.GetZDO() != null && _vvShip == null)
+    // {
+    //   Logger.LogWarning("vvship not available, adding new ship");
+    //   _vvShip = gameObject.AddComponent<VVShip>();
+    // }
   }
   // private WaterVehicleController _waterVehicleController;
   // private GameObject waterVehiclePrefabInstance;

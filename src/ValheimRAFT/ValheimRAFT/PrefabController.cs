@@ -522,7 +522,6 @@ public class PrefabController : MonoBehaviour
     // var valheimShipControls = waterVehiclePrefab.AddComponent<ValheimShipControls>();
 
     var shipInstance = waterVehiclePrefab.AddComponent<VVShip>();
-    // shipInstance.gameObject.SetActive(false);
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
 
     // shipInstance.m_shipControlls = waterVehiclePrefab.GetComponent<ValheimShipControls>();
@@ -534,7 +533,7 @@ public class PrefabController : MonoBehaviour
     // valheimShipControls.m_attachAnimation = "attach_sitship";
     // valheimShipControls.m_maxUseRange = 10f;
 
-    // shipInstance.m_floatcollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
+    shipInstance.m_floatcollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
     shipInstance.FloatCollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
 
     var zSyncTransform = waterVehiclePrefab.AddComponent<ZSyncTransform>();
