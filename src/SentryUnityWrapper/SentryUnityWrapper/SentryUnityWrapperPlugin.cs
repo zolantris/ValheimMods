@@ -4,48 +4,17 @@ using System.IO;
 using System.Linq;
 using BepInEx;
 using Sentry;
-using Sentry.Extensibility;
 using Sentry.Unity;
 using UnityEngine;
 
-namespace SentryUnitySdkWrapper;
-
-public class Options
-{
-  private readonly SentryUnityOptions _sentryUnityOptions = new()
-  {
-    Debug = false
-  };
-
-  public SentryUnityOptions GetSentryUnityOptions()
-  {
-    return _sentryUnityOptions;
-  }
-
-  public string PluginName;
-  public string PluginGuid;
-  public string PluginVersion;
-  public string GameName;
-
-  public Options(string pluginGuid, string pluginName, string pluginVersion, string sentryDsn,
-    bool enabled = true,
-    string gameName = "Valheim")
-  {
-    PluginVersion = pluginVersion;
-    GameName = gameName;
-    PluginGuid = pluginGuid;
-    PluginName = pluginName;
-    _sentryUnityOptions.Enabled = enabled;
-    _sentryUnityOptions.Dsn = sentryDsn;
-  }
-};
+namespace SentryUnityWrapper;
 
 [BepInPlugin(BepInGuid, ModName, Version)]
-public class SentryUnitySdkWrapperPlugin : BaseUnityPlugin
+public class SentryUnityWrapperPlugin : BaseUnityPlugin
 {
   public const string Author = "zolantris";
   public const string Version = "1.8.0";
-  internal const string ModName = "SentryUnitySdkWrapper";
+  internal const string ModName = "SentryUnityWrapper";
   public const string BepInGuid = $"{Author}.{ModName}";
   private const string HarmonyGuid = $"{Author}.{ModName}";
 
@@ -54,8 +23,8 @@ public class SentryUnitySdkWrapperPlugin : BaseUnityPlugin
 
   public const string CopyRight = "Copyright © 2024, GNU-v3 licensed";
 
-  public static Dictionary<string, Options> RegisteredPlugins = new();
-  public static Dictionary<string, Options> PendingPluginsToRegister = new();
+  public static Dictionary<string, Config> RegisteredPlugins = new();
+  public static Dictionary<string, Config> PendingPluginsToRegister = new();
 
   private bool _canAutoRegister = true;
   private float _autoRegisterTime = 10f;
@@ -96,15 +65,17 @@ public class SentryUnitySdkWrapperPlugin : BaseUnityPlugin
     pluginsToRegister.ForEach((plugin) => { InitializeScopedLogging(plugin.Key, plugin.Value); });
   }
 
-  public static Options CreateOptions(string pluginGuid, string modName, string pluginVersion,
+  public static Config CreateConfig(string pluginGuid, string modName,
+    string pluginVersion,
     string sentryDsn,
     bool enabled = true,
     string gameName = "Valheim")
   {
-    return new Options(pluginGuid, modName, pluginVersion, sentryDsn, enabled, gameName);
+    return new Config(pluginGuid, modName, pluginVersion, sentryDsn, enabled,
+      gameName);
   }
 
-  public static void RegisterPluginAsync(Options options)
+  public static void RegisterPluginAsync(Config options)
   {
     PendingPluginsToRegister.Add(options.PluginGuid, options);
   }
@@ -117,7 +88,7 @@ public class SentryUnitySdkWrapperPlugin : BaseUnityPlugin
    * This method will automatically register a plugin with it's guid
    */
   private static bool InitializeScopedLogging(string pluginGuid,
-    Options options)
+    Config options)
   {
     RegisteredPlugins.TryGetValue(pluginGuid, out var existingPlugin);
 
@@ -146,32 +117,33 @@ public class SentryUnitySdkWrapperPlugin : BaseUnityPlugin
     // SentrySdk.CaptureException("")
 
     // Sentry.SentrySdk.CaptureEvent(SentrySdk.CaptureEvent());
-    SentryUnity.Init(sentryUnityOptions =>
+    SentryUnity.Init(sentryUnityConfig =>
     {
       // A Sentry Data Source Name (DSN) is required.
       // See https://docs.sentry.io/product/sentry-basics/dsn-explainer/
       // You can set it in the SENTRY_DSN environment variable, or you can set it in code here.
-      sentryUnityOptions.Dsn = options.GetSentryUnityOptions().Dsn;
+      sentryUnityConfig.Dsn = options.GetSentryUnityOptions().Dsn;
 
-      sentryUnityOptions.CacheDirectoryPath = Path.Combine(Paths.PluginPath, options.PluginGuid);
+      sentryUnityConfig.CacheDirectoryPath =
+        Path.Combine(Paths.PluginPath, options.PluginGuid);
 
       // When debug is enabled, the Sentry client will emit detailed debugging information to the console.
       // This might be helpful, or might interfere with the normal operation of your application.
       // We enable it here for demonstration purposes when first trying Sentry.
       // You shouldn't do this in your applications unless you're troubleshooting issues with Sentry.
-      sentryUnityOptions.Debug = false;
+      sentryUnityConfig.Debug = false;
 
       // This option is recommended. It enables Sentry's "Release Health" feature.
-      sentryUnityOptions.AutoSessionTracking = true;
+      sentryUnityConfig.AutoSessionTracking = true;
 
       // Enabling this option is recommended for client applications only. It ensures all threads use the same global scope.
-      sentryUnityOptions.IsGlobalModeEnabled = false;
+      sentryUnityConfig.IsGlobalModeEnabled = false;
 
       // This option will enable Sentry's tracing features. You still need to start transactions and spans.
-      sentryUnityOptions.EnableTracing = true;
+      sentryUnityConfig.EnableTracing = true;
 
       // Example sample rate for your transactions: captures 10% of transactions
-      sentryUnityOptions.TracesSampleRate = 1.0;
+      sentryUnityConfig.TracesSampleRate = 1.0;
     });
 
     return true;

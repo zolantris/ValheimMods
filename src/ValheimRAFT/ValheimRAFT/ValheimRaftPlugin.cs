@@ -4,12 +4,9 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
 using System;
-using System.Collections.Generic;
 using System.Reflection;
 using Jotunn;
-using SentryUnitySdkWrapper;
 using UnityEngine;
-using UnityEngine.Serialization;
 using ValheimRAFT.Patches;
 using ValheimRAFT.Util;
 
@@ -361,14 +358,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     CreateConfig();
     PatchController.Apply(HarmonyGuid);
-
-    if (EnableMetrics.Value)
-    {
-      var Dsn =
-        "https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496";
-      SentryUnitySdkWrapper.SentryUnitySdkWrapperPlugin.RegisterPluginAsync(Guid, new Options(pluginGuid));
-      // SentryLogging.InitLogging();
-    }
+    PatchController.ApplyMetricIfAvailable();
 
     AddPhysicsSettings();
 

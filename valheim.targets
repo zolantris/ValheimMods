@@ -324,16 +324,10 @@
     
     <!--  Metrics  -->
     <ItemGroup>
-        <Reference Include="Sentry">
-            <HintPath>$(SolutionDir)\SentryUnity\1.8.0\Runtime\Sentry.dll</HintPath>
+        <Reference Include="SentryUnitySdkWrapper">
+            <HintPath>$(SolutionDir)\local_libs\SentryUnityBepInExPlugin.dll</HintPath>
+            <Private>False</Private>
         </Reference>
-        <Reference Include="Sentry.Unity">
-            <HintPath>$(SolutionDir)\SentryUnity\1.8.0\Runtime\Sentry.Unity.dll</HintPath>
-        </Reference>
-    </ItemGroup>
-    <!--  Sentry Unity wrapper added for now  -->
-    <ItemGroup>
-        <Compile Include="$(SolutionDir)\src\SentryUnitySdkWrapper\*.cs"/>
     </ItemGroup>
     
     <!--  Copy/convert commands are top level  -->
@@ -363,8 +357,8 @@
         <PropertyGroup>
             <RepoDir>$(OutDir)..\..\</RepoDir>
             <AssetsDir>$(RepoDir)Assets\</AssetsDir>
-            <ModOutputDir>$(OutDir)ModVersions\</ModOutputDir>
-            <TmpDir>$(OutDir)tmp\</TmpDir>
+            <ModOutputDir>$(OutDir)..\ModVersions\</ModOutputDir>
+            <TmpDir>$(OutDir)..\tmp\</TmpDir>
             <ThunderStoreDir>$(RepoDir)ThunderStore\</ThunderStoreDir>
             <ThunderStoreName>Thunderstore</ThunderStoreName>
             <NexusName>Nexus</NexusName>
@@ -376,7 +370,7 @@
         <Exec Command="if not exist &quot;$(ModOutputDir)&quot; mkdir &quot;$(ModOutputDir)&quot;"/>
         <Exec Command="if not exist &quot;$(TmpDir)&quot; mkdir &quot;$(TmpDir)&quot;"/>
         <Exec Command="if not exist &quot;$(TmpDir)plugins&quot; mkdir &quot;$(TmpDir)plugins&quot;"/>
-        <Exec Command="if not exist &quot;$(TmpDir)ValheimRAFT&quot; mkdir &quot;$(TmpDir)ValheimRAFT&quot;"/>
+        <Exec Command="if not exist &quot;$(TmpDir)$(AssemblyName)&quot; mkdir &quot;$(TmpDir)$(AssemblyName)&quot;"/>
 
 
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(TmpDir)plugins\$(AssemblyName).dll&quot;"/>
@@ -384,23 +378,22 @@
         <Exec Command="copy &quot;$(RepoDir)README.md&quot; &quot;$(TmpDir)README.md&quot;"/>
 
         <!-- Copy Assets -->
-        <Exec Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>
-        <Exec Command="del &quot;$(TmpDir)plugins\Assets\*.png.meta&quot;"/>
-
-
-        <!--  Thunderstore and Nexus store may need different deploys  -->
+        <Exec Command="if exist &quot;$(AssetsDir)&quot; xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>
+        <Exec Command="if exist $&quot;$(AssetsDir)&quot; del &quot;$(TmpDir)plugins\Assets\*.png.meta&quot;"/>
+<!--   copy all files from outputdir, anything included is something that does not exist in the base game dependencies     -->
+        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(TmpDir)plugins\&quot; /q /s /y /i" />
 
         <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>
-
         <!-- delete duplicate mod version-->
         <Exec Command="if exist &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot;"/>
         <Exec Command="if exist &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot;"/>
         <Exec Command="if exist &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot; del /s /q &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot;"/>
 
-
         <Exec Command="powershell Compress-Archive '$(TmpDir)\*' '$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)'"/>
-        <Exec Command="xcopy /d &quot;$(TmpDir)plugins&quot; &quot;$(TmpDir)ValheimRAFT&quot; /E/H"/>
-        <Exec Command="powershell Compress-Archive '$(TmpDir)ValheimRAFT' '$(ModOutputDir)$(NexusName)-$(ModNameVersion)'"/>
+        
+        <!--  For modNexus there needs to be a folder with the modname     -->
+        <Exec Command="xcopy /d &quot;$(TmpDir)plugins&quot; &quot;$(TmpDir)$(AssemblyName)&quot; /E/H"/>
+        <Exec Command="powershell Compress-Archive '$(TmpDir)$(AssemblyName)' '$(ModOutputDir)$(NexusName)-$(ModNameVersion)'"/>
         <Exec Command="powershell Compress-Archive '$(SolutionDir)libs\*' '$(ModOutputDir)libs-$(ApplicationVersion).zip'"/>
     </Target>
     <!-- Copy to plugins folder and zip -->

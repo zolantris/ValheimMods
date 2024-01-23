@@ -21,11 +21,13 @@
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup>
         <Compile Include="Properties\AssemblyInfo.cs"/>
+        <Compile Include="Properties\CustomAssemblyAttributes.cs"/>
         <Compile Include="ValheimRAFT.Patches\PatchController.cs"/>
         <Compile Include="ValheimRAFT.Patches\PlanBuildPatch.cs"/>
         <Compile Include="ValheimRAFT.Util\BinaryIOUtil.cs"/>
         <Compile Include="ValheimRAFT.Util\ListUtil.cs"/>
         <Compile Include="ValheimRAFT.Util\PrefabNames.cs"/>
+        <Compile Include="ValheimRAFT.Util\SentryMetrics.cs"/>
         <Compile Include="ValheimRAFT.Util\ZDOUtil.cs"/>
         <Compile Include="ValheimRAFT.UI\EditRampComponent.cs"/>
         <Compile Include="ValheimRAFT.UI\EditSailComponentPanel.cs"/>
@@ -83,6 +85,14 @@
         <Content Include="ValheimRAFT.Unity\.gitignore"/>
     </ItemGroup>
     <ItemGroup>
+        <Reference Include="SentryUnityWrapper">
+            <HintPath>$(SolutionDir)\src\SentryUnityWrapper\bin\Debug\SentryUnityWrapper.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+    <ItemGroup>
+        <Reference Include="PlanBuild">
+            <HintPath>obj\Debug ClientServer\PublicizedAssemblies\PlanBuild.F26E30AE9A1F46EAFC2DE96B4E72DA97\PlanBuild.dll</HintPath>
+        </Reference>
     </ItemGroup>
     <PropertyGroup>
         <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>

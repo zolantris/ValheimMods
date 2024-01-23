@@ -1,0 +1,6 @@
+﻿{
+  "name": "SentryUnityWrapper",
+  "version_number": "1.8.0",
+  "website_url": "https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT",
+  "description": "Sentry-Unity BepInEx friendly plugin. This is meant for debugging mod issues, and tracking errors/crashes. This package ships the relevant SDKs for sentry-unity and allows for direct integration instead of require a full unity project and game."
+}

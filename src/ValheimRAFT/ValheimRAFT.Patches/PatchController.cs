@@ -1,15 +1,32 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using BepInEx;
+using BepInEx.Bootstrap;
 using HarmonyLib;
 using Jotunn;
+using ValheimRAFT.Util;
 
 namespace ValheimRAFT.Patches;
 
-internal class PatchController
+internal static class PatchController
 {
   public static string PlanBuildGUID = "marcopogo.PlanBuild";
 
   private static Harmony Harmony;
+
+  internal static void ApplyMetricIfAvailable()
+  {
+    string @namespace = "SentryUnityWrapper";
+    string @pluginClass = "SentryUnityWrapperPlugin";
+    if (ValheimRaftPlugin.Instance.EnableMetrics.Value &&
+        Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper"))
+    {
+      if (Type.GetType($"{@namespace}.{@pluginClass}") != null)
+      {
+        SentryMetrics.ApplyMetrics();
+      }
+    }
+  }
 
   internal static void Apply(string harmonyGuid)
   {

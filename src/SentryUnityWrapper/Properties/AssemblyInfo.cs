@@ -4,14 +4,14 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle(SentryUnitySdkWrapper.SentryUnitySdkWrapperPlugin.ModName)]
-[assembly: AssemblyProduct(SentryUnitySdkWrapper.SentryUnitySdkWrapperPlugin.ModName)]
-[assembly: AssemblyDescription(SentryUnitySdkWrapper.SentryUnitySdkWrapperPlugin.ModDescription)]
+[assembly: AssemblyTitle(SentryUnityWrapper.SentryUnityWrapperPlugin.ModName)]
+[assembly: AssemblyProduct(SentryUnityWrapper.SentryUnityWrapperPlugin.ModName)]
+[assembly: AssemblyDescription(SentryUnityWrapper.SentryUnityWrapperPlugin.ModDescription)]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Virtualize LLC")]
-[assembly: AssemblyCopyright(SentryUnitySdkWrapper.SentryUnitySdkWrapperPlugin.CopyRight)]
-[assembly: AssemblyFileVersion(SentryUnitySdkWrapper.SentryUnitySdkWrapperPlugin.Version)]
-[assembly: AssemblyVersion(SentryUnitySdkWrapper.SentryUnitySdkWrapperPlugin.Version)]
+[assembly: AssemblyCopyright(SentryUnityWrapper.SentryUnityWrapperPlugin.CopyRight)]
+[assembly: AssemblyFileVersion(SentryUnityWrapper.SentryUnityWrapperPlugin.Version)]
+[assembly: AssemblyVersion(SentryUnityWrapper.SentryUnityWrapperPlugin.Version)]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
