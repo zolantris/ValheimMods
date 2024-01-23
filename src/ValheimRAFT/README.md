@@ -184,10 +184,11 @@ Previously it only supported Direct3D11.
 
 <a href='https://ko-fi.com/zolantris' target='_blank'><img height='35' style='border:0px;height:46px;' src='https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com' />
 
-## Logging & Privacy Future Notice
+## Logging Metrics
 
 These packages may contain logging. Logging can be opted out by any user by
-unchecking `enableExternalLogCollecting`.
+unchecking `enableMetrics`. If you choose to opt-out, please be aware, this will
+make it more difficult to troubleshoot issues.
 
 ### What information will be collected
 - 
@@ -202,6 +203,13 @@ unchecking `enableExternalLogCollecting`.
 This logging has yet to be implemented.
 
 ## Installing nuget packages
+
+### With Rider
+
+use Rider and click nuget (should be bottom left panel, one of the items), and
+search for the package
+
+### with nuget.exe (not recommended)
 
 1. Install nuget.exe
 2. For installing sentry as an example run.

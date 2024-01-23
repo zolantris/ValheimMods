@@ -85,7 +85,8 @@ public class MoveableBaseShipComponent : MonoBehaviour
     }
     else
     {
-      m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+      if (m_baseRoot.m_onboardcollider != null)
+        m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     }
 
     m_baseRoot.m_floatcollider = ship.m_floatCollider;

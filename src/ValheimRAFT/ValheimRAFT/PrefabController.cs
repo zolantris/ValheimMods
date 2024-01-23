@@ -565,12 +565,15 @@ public class PrefabController : MonoBehaviour
 
     // shipInstance.m_floatCollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
 
+    var shipHullPrefab = prefabManager.GetPrefab("wood_wall_log_4x0.5").transform.Find("New");
+    shipHullPrefab.name = "ValheimVehicles_ShipHull";
     // var shipHullPrefab = prefabManager.GetPrefab(
     //   GetHullPrefabName(ShipHulls.HullMaterial.CoreWood, ShipHulls.HullOrientation.Horizontal));
-    // var shipHullInstance =
-    //   Instantiate(shipHullPrefab.gameObject, shipInstance.transform, shipInstance.transform);
-    // shipHullInstance.transform.SetParent(shipInstance.transform);
-    // shipHullInstance.transform.localPosition = new Vector3(0, 0, 0);
+    var shipHullInstance =
+      Instantiate(shipHullPrefab.gameObject, shipInstance.transform, shipInstance.transform);
+    shipHullInstance.transform.position = new Vector3(0, 0, 0);
+    shipHullInstance.transform.SetParent(shipInstance.transform);
+    shipHullInstance.transform.localPosition = new Vector3(0, 0, 0);
 
     // shipHullInstance.transform.localRotation = shipInstance.transform.rotation;
     // var shipHullPiece = shipHullInstance.GetComponent<Piece>();
@@ -656,7 +659,7 @@ public class PrefabController : MonoBehaviour
     // FixSnapPoints(raftHullPrefab);
 
     // this will be used to hide water on the boat
-    var shipHullPrefabComponent = raftHullPrefab.AddComponent<ShipHullComponent>();
+    // var shipHullPrefabComponent = raftHullPrefab.AddComponent<ShipHullComponent>();
 
     // might not need to add netview if the log already has it
 

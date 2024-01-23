@@ -321,6 +321,21 @@
             <Private>False</Private>
         </Reference>
     </ItemGroup>
+    
+    <!--  Metrics  -->
+    <ItemGroup>
+        <Reference Include="Sentry">
+            <HintPath>$(SolutionDir)\SentryUnity\1.8.0\Runtime\Sentry.dll</HintPath>
+        </Reference>
+        <Reference Include="Sentry.Unity">
+            <HintPath>$(SolutionDir)\SentryUnity\1.8.0\Runtime\Sentry.Unity.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+    <!--  Sentry Unity wrapper added for now  -->
+    <ItemGroup>
+        <Compile Include="$(SolutionDir)\src\SentryUnitySdkWrapper\*.cs"/>
+    </ItemGroup>
+    
     <!--  Copy/convert commands are top level  -->
     <Target Name="convert_pdb_to_mdb" Condition="'$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU'" BeforeTargets="PostBuildEvent">
         <Exec Command="$(SolutionDir)pdb2mdb.exe $(TargetPath)" />

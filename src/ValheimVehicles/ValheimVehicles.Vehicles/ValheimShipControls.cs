@@ -18,7 +18,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
   public Vector3 m_detachOffset = new Vector3(0f, 0.5f, 0f);
 
   public string m_attachAnimation = "attach_chair";
-
+  public ValheimShipControls m_lastUsedControls;
   public ZNetView m_nview;
 
   private void Awake()
@@ -41,6 +41,18 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   public bool Interact(Humanoid character, bool repeat, bool alt)
   {
+    if (character == Player.m_localPlayer && isActiveAndEnabled)
+    {
+      var baseRoot = GetComponentInParent<MoveableBaseRootComponent>();
+      if (baseRoot != null)
+      {
+        baseRoot.ComputeAllShipContainerItemWeight();
+      }
+
+      m_lastUsedControls = this;
+      mVehicleShip.m_controlGuiPos.position = transform.position;
+    }
+
     if (repeat)
     {
       return false;
@@ -62,8 +74,9 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
       return false;
     }
 
-    if (player.GetStandingOnShip() != mVehicleShip)
+    if ((player.GetStandingOnShip() as object) as VVShip != mVehicleShip)
     {
+      Logger.LogDebug("Player is not on VVShip");
       return false;
     }
 
@@ -162,6 +175,12 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   private void RPC_RequestRespons(long sender, bool granted)
   {
+    if (this != m_lastUsedControls)
+    {
+      m_lastUsedControls.RPC_RequestRespons(sender, granted);
+      return;
+    }
+
     if (!Player.m_localPlayer)
     {
       return;

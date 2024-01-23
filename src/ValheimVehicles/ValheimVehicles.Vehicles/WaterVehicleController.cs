@@ -16,9 +16,7 @@ namespace ValheimVehicles.Vehicles;
 
 public class WaterVehicleController : BaseVehicleController
 {
-  public const string ControllerID = "WaterVehicle";
-
-  public VVShip _shipInstance;
+  private VVShip _shipInstance;
 
   public VVShip ShipInstance
   {
@@ -36,11 +34,7 @@ public class WaterVehicleController : BaseVehicleController
 
   public bool isCreative = false;
 
-  internal Rigidbody m_rigidbody;
-
   internal ShipStats m_shipStats = new ShipStats();
-
-  internal ZNetView m_nview;
 
   internal ZSyncTransform m_zsync;
 
@@ -225,6 +219,11 @@ public class WaterVehicleController : BaseVehicleController
     // var obj = Instantiate(shipHullPrefab);
 
     GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
+    var wnt = floor.GetComponent<WearNTear>();
+    wnt.m_supports = true;
+    wnt.m_support = 2000f;
+    wnt.m_noSupportWear = true;
+    wnt.m_noRoofWear = true;
     for (float x = -1f; x < 1.01f; x += 2f)
     {
       for (float z = -2f; z < 2.01f; z += 2f)

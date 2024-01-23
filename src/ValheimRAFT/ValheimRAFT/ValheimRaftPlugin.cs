@@ -7,9 +7,11 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Jotunn;
+using SentryUnitySdkWrapper;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT.Patches;
+using ValheimRAFT.Util;
 
 namespace ValheimRAFT;
 
@@ -79,6 +81,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> BlockingColliderVerticalSize { get; set; }
   public ConfigEntry<float> BlockingColliderVerticalCenterOffset { get; set; }
   public ConfigEntry<KeyboardShortcut> AnchorKeyboardShortcut { get; set; }
+  public ConfigEntry<bool> EnableMetrics { get; set; }
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -267,6 +270,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreateBaseConfig()
   {
+    EnableMetrics = Config.Bind("Debug", "enableMetrics", true,
+      CreateConfigDescription(
+        "Enable sentry debug logging which will make it easier to troubleshoot raft errors and detect performance bottlenecks. The bare minimum is collected, and only data related to ValheimRaft. See https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT#logging-metrics for more details about what is collected"));
     HasDebugBase = Config.Bind("Debug", "HasDebugBase", false,
       CreateConfigDescription(
         "Outputs more debug logs for the MoveableBaseRootComponent. Useful for troubleshooting errors, but may fill logs quicker"));
@@ -351,8 +357,18 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public void Awake()
   {
     Instance = this;
+
+
     CreateConfig();
     PatchController.Apply(HarmonyGuid);
+
+    if (EnableMetrics.Value)
+    {
+      var Dsn =
+        "https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496";
+      SentryUnitySdkWrapper.SentryUnitySdkWrapperPlugin.RegisterPluginAsync(Guid, new Options(pluginGuid));
+      // SentryLogging.InitLogging();
+    }
 
     AddPhysicsSettings();
 

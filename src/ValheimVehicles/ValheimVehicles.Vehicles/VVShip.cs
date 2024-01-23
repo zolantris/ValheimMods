@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 using ValheimRAFT;
+using ValheimVehicles.ValheimVehicles.Prefabs;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
@@ -22,9 +23,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
     set => m_floatcollider = value;
   }
 
-  private static readonly List<VVShip> s_currentShips = new();
-  private WaterVehicleController _cachedVehicleController;
-  public static List<VVShip> Instances { get; } = new();
+  // private static readonly List<VVShip> s_currentShips = new();
 
   private new void Awake()
   {
@@ -48,7 +47,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
 
     _waterVehicle = new GameObject
     {
-      name = "VehicleShip",
+      name = PrefabNames.ValheimVehiclesShipName,
       layer = 0
     };
 
@@ -94,35 +93,21 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
 
   public void FixedUpdate()
   {
-    if (!_cachedVehicleController)
+    if (!_controller)
     {
-      _cachedVehicleController = GetComponent<WaterVehicleController>();
-      if (!_cachedVehicleController)
-      {
-        return;
-      }
+      return;
     }
-
-    FixedUpdate1();
-    // m_body.WakeUp();
-    //
-    // m_body.useGravity = _cachedVehicleController.transform.position.y > 0f;
-    // if (!m_body.useGravity)
-    // {
-    //   m_body.AddForceAtPosition(Vector3.up, m_floatcollider.center, ForceMode.VelocityChange);
-    // }
 
     // FixedUpdate1();
-  }
-
-  public static VVShip GetLocalShip()
-  {
-    if (s_currentShips.Count != 0)
+    m_body.WakeUp();
+    //
+    m_body.useGravity = transform.position.y > 20f;
+    if (!m_body.useGravity)
     {
-      return s_currentShips[s_currentShips.Count - 1];
+      m_body.AddForceAtPosition(Vector3.up * 20f, m_floatcollider.center, ForceMode.VelocityChange);
     }
 
-    return null;
+    // FixedUpdate1();
   }
 
   private static Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity)
@@ -131,28 +116,31 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
     return Vector3.SmoothDamp(currentVelocity * 0.5f, Vector3.zero, ref zeroVelocity, 5f);
   }
 
-  public void FixedUpdate1()
+  /**
+   * This is the original code for updating ship speed
+   */
+  public void ValheimRaftCustomFixedUpdate()
   {
-    if (!_cachedVehicleController || !m_nview || m_nview.m_zdo == null) return;
+    if (!_controller || !m_nview || m_nview.m_zdo == null) return;
 
     /*
      * creative mode should not allows movement and applying force on a object will cause errors when the object is kinematic
      */
-    if (_cachedVehicleController.isCreative)
+    if (_controller.isCreative)
     {
       return;
     }
 
     // This could be the spot that causes the raft to fly at spawn
-    _cachedVehicleController.m_targetHeight =
-      m_nview.m_zdo.GetFloat("MBTargetHeight", _cachedVehicleController.m_targetHeight);
-    _cachedVehicleController.m_flags =
+    _controller.m_targetHeight =
+      m_nview.m_zdo.GetFloat("MBTargetHeight", _controller.m_targetHeight);
+    _controller.m_flags =
       (WaterVehicleController.MBFlags)m_nview.m_zdo.GetInt("MBFlags",
-        (int)_cachedVehicleController.m_flags);
+        (int)_controller.m_flags);
 
     // This could be the spot that causes the raft to fly at spawn
-    _cachedVehicleController.m_zsync.m_useGravity =
-      _cachedVehicleController.m_targetHeight == 0f;
+    _controller.m_zsync.m_useGravity =
+      _controller.m_targetHeight == 0f;
 
     var flag = HaveControllingPlayer();
 
@@ -160,17 +148,17 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
     UpdateSail(Time.fixedDeltaTime);
     UpdateRudder(Time.fixedDeltaTime, flag);
     if (m_players.Count == 0 ||
-        _cachedVehicleController.m_flags.HasFlag(WaterVehicleController.MBFlags
+        _controller.m_flags.HasFlag(WaterVehicleController.MBFlags
           .IsAnchored))
     {
       m_speed = Speed.Stop;
       m_rudderValue = 0f;
-      if (!_cachedVehicleController.m_flags.HasFlag(WaterVehicleController
+      if (!_controller.m_flags.HasFlag(WaterVehicleController
             .MBFlags.IsAnchored))
       {
-        _cachedVehicleController.m_flags |=
+        _controller.m_flags |=
           WaterVehicleController.MBFlags.IsAnchored;
-        m_nview.m_zdo.Set("MBFlags", (int)_cachedVehicleController.m_flags);
+        m_nview.m_zdo.Set("MBFlags", (int)_controller.m_flags);
       }
     }
 
@@ -202,7 +190,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
     var currentDepth = worldCenterOfMass.y - averageWaterHeight - m_waterLevelOffset;
     if (!(currentDepth > m_disableLevel))
     {
-      _cachedVehicleController.UpdateStats(false);
+      _controller.UpdateStats(false);
       m_body.WakeUp();
       UpdateWaterForce(currentDepth, Time.fixedDeltaTime);
       var vector5 = new Vector3(vector3.x, waterLevel2, vector3.z);
@@ -227,7 +215,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
       if (velocity.magnitude > m_body.velocity.magnitude)
         velocity = velocity.normalized * m_body.velocity.magnitude;
       if (m_players.Count == 0 ||
-          _cachedVehicleController.m_flags.HasFlag(WaterVehicleController
+          _controller.m_flags.HasFlag(WaterVehicleController
             .MBFlags.IsAnchored))
       {
         var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
@@ -256,26 +244,26 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
         ForceMode.VelocityChange);
       ApplySailForce(this, num5);
       ApplyEdgeForce(Time.fixedDeltaTime);
-      if (_cachedVehicleController.m_targetHeight > 0f)
+      if (_controller.m_targetHeight > 0f)
       {
         var centerpos = m_floatcollider.transform.position;
-        var centerforce = GetUpwardsForce(_cachedVehicleController.m_targetHeight,
-          centerpos.y + m_body.velocity.y, _cachedVehicleController.m_liftForce);
+        var centerforce = GetUpwardsForce(_controller.m_targetHeight,
+          centerpos.y + m_body.velocity.y, _controller.m_liftForce);
         m_body.AddForceAtPosition(Vector3.up * centerforce, centerpos,
           ForceMode.VelocityChange);
       }
     }
-    else if (_cachedVehicleController.m_targetHeight > 0f)
+    else if (_controller.m_targetHeight > 0f)
     {
       if (m_players.Count == 0 ||
-          _cachedVehicleController.m_flags.HasFlag(WaterVehicleController
+          _controller.m_flags.HasFlag(WaterVehicleController
             .MBFlags.IsAnchored))
       {
         var anchoredVelocity = CalculateAnchorStopVelocity(m_body.velocity);
         m_body.velocity = anchoredVelocity;
       }
 
-      _cachedVehicleController.UpdateStats(true);
+      _controller.UpdateStats(true);
       var side1 = m_floatcollider.transform.position +
                   m_floatcollider.transform.forward * m_floatcollider.size.z /
                   2f;
@@ -294,23 +282,23 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
       var corner3curforce = m_body.GetPointVelocity(side3);
       var corner4curforce = m_body.GetPointVelocity(side4);
       var side1force =
-        GetUpwardsForce(_cachedVehicleController.m_targetHeight,
+        GetUpwardsForce(_controller.m_targetHeight,
           side1.y + corner1curforce.y,
-          _cachedVehicleController.m_balanceForce);
+          _controller.m_balanceForce);
       var side2force =
-        GetUpwardsForce(_cachedVehicleController.m_targetHeight,
+        GetUpwardsForce(_controller.m_targetHeight,
           side2.y + corner2curforce.y,
-          _cachedVehicleController.m_balanceForce);
+          _controller.m_balanceForce);
       var side3force =
-        GetUpwardsForce(_cachedVehicleController.m_targetHeight,
+        GetUpwardsForce(_controller.m_targetHeight,
           side3.y + corner3curforce.y,
-          _cachedVehicleController.m_balanceForce);
+          _controller.m_balanceForce);
       var side4force =
-        GetUpwardsForce(_cachedVehicleController.m_targetHeight,
+        GetUpwardsForce(_controller.m_targetHeight,
           side4.y + corner4curforce.y,
-          _cachedVehicleController.m_balanceForce);
-      var centerforce2 = GetUpwardsForce(_cachedVehicleController.m_targetHeight,
-        centerpos2.y + m_body.velocity.y, _cachedVehicleController.m_liftForce);
+          _controller.m_balanceForce);
+      var centerforce2 = GetUpwardsForce(_controller.m_targetHeight,
+        centerpos2.y + m_body.velocity.y, _controller.m_liftForce);
       m_body.AddForceAtPosition(Vector3.up * side1force, side1,
         ForceMode.VelocityChange);
       m_body.AddForceAtPosition(Vector3.up * side2force, side2,

@@ -99,12 +99,17 @@ public class BaseVehicleController : MonoBehaviour
   public void SetColliders(GameObject vehicleInstance)
   {
     var colliders = vehicleInstance.transform.GetComponentsInChildren<BoxCollider>();
+
+    // defaults to a new boxcollider if somehow things are not detected
     m_onboardcollider =
-      colliders.FirstOrDefault((k) => k.gameObject.name.Contains("VVOnboardTrigger"));
+      colliders.FirstOrDefault((k) => k.gameObject.name.Contains("VVOnboardTrigger")) ??
+      new BoxCollider();
     m_floatcollider =
-      colliders.FirstOrDefault((k) => k.gameObject.name.Contains("VVFloatCollider"));
+      colliders.FirstOrDefault((k) => k.gameObject.name.Contains("VVFloatCollider")) ??
+      new BoxCollider();
     m_blockingcollider =
-      colliders.FirstOrDefault((k) => k.gameObject.name.Contains("VVBlockingCollider"));
+      colliders.FirstOrDefault((k) => k.gameObject.name.Contains("VVBlockingCollider")) ??
+      new BoxCollider();
 
     if (m_onboardcollider != null)
     {
@@ -120,9 +125,6 @@ public class BaseVehicleController : MonoBehaviour
       m_blockingcollider.transform.parent.gameObject.layer =
         ValheimRaftPlugin.CustomRaftLayer;
     }
-
-    Logger.LogDebug(
-      $"Colliders set, m_floatcollider: {m_floatcollider}, m_onboardcollider: {m_onboardcollider}, m_blockingcollider: {m_blockingcollider}");
   }
 
 
@@ -147,13 +149,14 @@ public class BaseVehicleController : MonoBehaviour
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
 
-    // m_rigidbody = GetComponent<Rigidbody>();
-    // comes from parent vehicle component
     m_syncRigidbody = gameObject.GetComponent<Rigidbody>();
     m_rigidbody = gameObject.AddComponent<Rigidbody>();
     m_rigidbody.isKinematic = true;
     m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     m_rigidbody.mass = 99999f;
+    Debug.Log("Captured Log"); // Breadcrumb
+    Debug.LogWarning("Captured Warning"); // Breadcrumb
+    Debug.LogError("This is a Test error called within BaseVehicleController.Awake");
   }
 
   public void Start()
@@ -240,7 +243,7 @@ public class BaseVehicleController : MonoBehaviour
 
   private void Sync()
   {
-    if ((bool)m_syncRigidbody && (bool)m_rigidbody && isActiveAndEnabled)
+    if ((bool)m_syncRigidbody && (bool)m_rigidbody)
     {
       m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
       m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
@@ -303,8 +306,8 @@ public class BaseVehicleController : MonoBehaviour
 
   public void ServerSyncAllPieces()
   {
-    if (server_UpdatePiecesCoroutine != null) StopCoroutine(server_UpdatePiecesCoroutine);
-    StartCoroutine(UpdatePiecesInEachSectorWorker());
+    StopCoroutine(server_UpdatePiecesCoroutine);
+    server_UpdatePiecesCoroutine = StartCoroutine(UpdatePiecesInEachSectorWorker());
   }
 
 
@@ -745,8 +748,8 @@ public class BaseVehicleController : MonoBehaviour
      * This prevents empty Prefabs of MBRaft from existing
      * @todo make this only apply for boats with no objects in any list
      */
-    if ((list.Count == 0 &&
-         (m_dynamicObjects.Count == 0 || objectListHasNoValidItems))
+    if (list is { Count: 0 } &&
+        (m_dynamicObjects.Count == 0 || objectListHasNoValidItems)
        )
     {
       Logger.LogError($"found boat without any items attached {m_nview}");

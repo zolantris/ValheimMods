@@ -208,6 +208,9 @@ public class ValheimRAFT_Patch
     return Vector3.SmoothDamp(currentVelocity * 0.5f, Vector3.zero, ref zeroVelocity, 5f);
   }
 
+  /**
+   * only required for older ships.
+   */
   [HarmonyPatch(typeof(Ship), "CustomFixedUpdate")]
   [HarmonyPrefix]
   private static bool Ship_FixedUpdate(Ship __instance)
@@ -392,42 +395,6 @@ public class ValheimRAFT_Patch
     return false;
   }
 
-
-  /**
-   * this is disabled for now, but in the future this calc will need to be overridden based on number of sails and ship weight/size
-   */
-  // [HarmonyPatch(typeof(Ship), "GetSailForce")]
-  // private static class ChangeShipBaseSpeed
-  // {
-  //   private static bool Prefix(Ship __instance, ref Vector3 __result, float sailSize, float dt)
-  //   {
-  //     var windDir = EnvMan.instance.GetWindDir();
-  //     var windIntensity = Mathf.Lerp(0.25f, 1f, EnvMan.instance.GetWindIntensity());
-  //     var windIntensityAndAngleFactor = __instance.GetWindAngleFactor() * windIntensity;
-  //     var forward = __instance.transform.forward;
-  //
-  //     var windDirAndForwardVector = Vector3.Normalize(windDir + forward);
-  //
-  //     var outputSailForce = Vector3.SmoothDamp(__instance.m_sailForce,
-  //       windDirAndForwardVector * windIntensityAndAngleFactor * __instance.m_sailForceFactor *
-  //       sailSize,
-  //       ref __instance.m_windChangeVelocity, 1f, 1000f);
-  //
-  //     Logger.LogDebug(
-  //       $"GetSailForce, m_sailForce {__instance.m_sailForce} m_windDir+forward {windDirAndForwardVector} windIntensity: {windIntensity}");
-  //     Logger.LogDebug($"SailSize: {sailSize}");
-  //     Logger.LogDebug(
-  //       "Calcs for windDirAndForwardVector * windIntensityAndAngleFactor * __instance.m_sailForceFactor * sailSize");
-  //
-  //     __instance.m_sailForce = outputSailForce;
-  //
-  //     Logger.LogDebug($"Ship sailforce: {__instance.m_sailForce}");
-  //     __result = __instance.m_sailForce;
-  //
-  //
-  //     return false;
-  //   }
-  // }
   private static void ApplySailForce(Ship __instance, float num5)
   {
     var mb = __instance.GetComponent<MoveableBaseShipComponent>();
@@ -634,7 +601,6 @@ public class ValheimRAFT_Patch
     }
 
     var bv = __instance.GetComponentInParent<BaseVehicleController>();
-    var wvc = __instance.GetComponentInParent<WaterVehicleController>();
     if ((bool)bv)
     {
       bv.RemovePiece(__instance);
@@ -644,18 +610,23 @@ public class ValheimRAFT_Patch
         return false;
       }
     }
-    else if ((bool)wvc)
-    {
-      wvc.RemovePiece(__instance);
-      if (ValheimRaftPlugin.Instance.DisplacedRaftAutoFix.Value &&
-          (bool)Player.m_localPlayer && Player.m_localPlayer.transform.IsChildOf(wvc.transform))
-      {
-        return false;
-      }
-    }
 
 
     return true;
+  }
+
+  [HarmonyPatch(typeof(WearNTear), "Start")]
+  [HarmonyPrefix]
+  private static bool WearNTear_Start(WearNTear __instance)
+  {
+    // we could check to see if the object is within a Controller, but this is unnecessary. Start just needs a protector.
+    // this is a patch for basegame to prevent WNT from calling on objects without heightmaps which will return a NRE
+    var hInstance = Heightmap.FindHeightmap(__instance.transform.position);
+
+    if (hInstance != null) return true;
+
+    __instance.m_connectedHeightMap = hInstance;
+    return false;
   }
 
   [HarmonyPatch(typeof(WearNTear), "Destroy")]
@@ -681,11 +652,10 @@ public class ValheimRAFT_Patch
   private static bool WearNTear_ApplyDamage(WearNTear __instance, float damage)
   {
     var mbr = __instance.GetComponent<MoveableBaseShipComponent>();
-    var wvc = __instance.GetComponent<WaterVehicleController>();
     var bv = __instance.GetComponent<BaseVehicleController>();
 
     // vehicles ignore WNT for now...
-    if (mbr || bv || wvc)
+    if (mbr || bv)
     {
       return false;
     }
@@ -712,14 +682,13 @@ public class ValheimRAFT_Patch
     return list;
   }
 
-  private static Rigidbody AttachRigidbodyMovableBase(Collider collider)
+  private static Rigidbody? AttachRigidbodyMovableBase(Collider collider)
   {
     var rb = collider.attachedRigidbody;
     if (!rb) return null;
     var mbr = rb.GetComponent<MoveableBaseRootComponent>();
     var bvc = rb.GetComponent<BaseVehicleController>();
-    var wvc = rb.GetComponent<WaterVehicleController>();
-    if ((bool)mbr || bvc || wvc) return null;
+    if ((bool)mbr || bvc) return null;
     return rb;
   }
 
@@ -737,7 +706,7 @@ public class ValheimRAFT_Patch
             typeof(float)
           })))
         list[i] = new CodeInstruction(OpCodes.Call,
-          AccessTools.Method(typeof(ValheimRAFT_Patch), "RelativeEuler"));
+          AccessTools.Method(typeof(ValheimRAFT_Patch), nameof(RelativeEuler)));
     return list;
   }
 
@@ -746,7 +715,13 @@ public class ValheimRAFT_Patch
     var rot = Quaternion.Euler(x, y, z);
     if (!m_lastRayPiece) return rot;
     var mbr = m_lastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
-    if (!mbr) return rot;
+    var bvc = m_lastRayPiece.GetComponentInParent<BaseVehicleController>();
+    if (!mbr && !bvc) return rot;
+    if (bvc)
+    {
+      return bvc.transform.rotation * rot;
+    }
+
     return mbr.transform.rotation * rot;
   }
 
@@ -778,9 +753,15 @@ public class ValheimRAFT_Patch
 
       if (__result == null)
       {
+        // todo deprecate this logic
         var mb = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
         if ((bool)mb && (bool)mb.shipController)
           __result = mb.shipController.GetComponent<Ship>();
+
+        // new logic
+        var bvc = __instance.m_lastGroundBody.GetComponentInParent<WaterVehicleController>();
+        if ((bool)bvc && (bool)bvc.ShipInstance)
+          __result = bvc.ShipInstance;
       }
 
       return false;
@@ -800,7 +781,7 @@ public class ValheimRAFT_Patch
       return;
     }
 
-    MoveableBaseRootComponent mbr = null;
+    MoveableBaseRootComponent? mbr = null;
     if ((bool)__instance.m_lastGroundBody)
     {
       mbr = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
@@ -808,7 +789,15 @@ public class ValheimRAFT_Patch
         __instance.transform.SetParent(mbr.transform);
     }
 
-    if (!mbr && __instance.transform.parent != null) __instance.transform.SetParent(null);
+    BaseVehicleController? bvc = null;
+    if ((bool)__instance.m_lastGroundBody)
+    {
+      bvc = __instance.m_lastGroundBody.GetComponentInParent<BaseVehicleController>();
+      if ((bool)bvc && __instance.transform.parent != bvc.transform)
+        __instance.transform.SetParent(bvc.transform);
+    }
+
+    if (!mbr && !bvc && __instance.transform.parent != null) __instance.transform.SetParent(null);
   }
 
   [HarmonyPatch(typeof(Player), "PlacePiece")]
@@ -824,7 +813,7 @@ public class ValheimRAFT_Patch
         {
           new(OpCodes.Ldarg_0),
           new(OpCodes.Ldloc_3),
-          new(OpCodes.Call, AccessTools.Method(typeof(ValheimRAFT_Patch), "PlacedPiece"))
+          new(OpCodes.Call, AccessTools.Method(typeof(ValheimRAFT_Patch), nameof(PlacedPiece)))
         });
         break;
       }
@@ -845,6 +834,23 @@ public class ValheimRAFT_Patch
       if ((bool)cul) cul.AddNewChild(netView);
     }
 
+    var bvc = m_lastRayPiece.GetComponentInParent<BaseVehicleController>();
+    if ((bool)bvc)
+    {
+      if ((bool)netView)
+      {
+        Logger.LogDebug($"BaseVehicleController: adding new piece {piece.name} {gameObject.name}");
+        bvc.AddNewPiece(netView);
+      }
+      else
+      {
+        Logger.LogDebug("BaseVehicleController: adding temp piece");
+        bvc.AddTemporaryPiece(piece);
+      }
+
+      return;
+    }
+
     var mb = m_lastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mb)
     {
@@ -861,22 +867,20 @@ public class ValheimRAFT_Patch
     }
   }
 
-  [HarmonyPatch(typeof(Player), "PieceRayTest")]
-  [HarmonyPrefix]
-  private static bool PieceRayTest(Player __instance, ref bool __result, ref Vector3 point,
+  private static bool HandleGameObjectRayCast(Transform transform, LayerMask layerMask,
+    Player __instance, ref bool __result,
+    ref Vector3 point,
     ref Vector3 normal, ref Piece piece, ref Heightmap heightmap, ref Collider waterSurface,
     bool water)
   {
-    var layerMask = __instance.m_placeRayMask;
-    var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-    if ((bool)mbr)
+    if ((bool)transform)
     {
-      var localPos = mbr.transform.InverseTransformPoint(__instance.transform.position);
+      var localPos = transform.transform.InverseTransformPoint(__instance.transform.position);
       var start = localPos + Vector3.up * 2f;
-      start = mbr.transform.TransformPoint(start);
+      start = transform.transform.TransformPoint(start);
       var localDir = ((Character)__instance).m_lookYaw * Quaternion.Euler(__instance.m_lookPitch,
-        0f - mbr.transform.rotation.eulerAngles.y + yawOffset, 0f);
-      var end = mbr.transform.rotation * localDir * Vector3.forward;
+        0f - transform.transform.rotation.eulerAngles.y + yawOffset, 0f);
+      var end = transform.transform.rotation * localDir * Vector3.forward;
       if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) && (bool)hitInfo.collider)
       {
         var mbrTarget = hitInfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
@@ -893,29 +897,31 @@ public class ValheimRAFT_Patch
       }
     }
 
+    return true;
+  }
+
+  [HarmonyPatch(typeof(Player), "PieceRayTest")]
+  [HarmonyPrefix]
+  private static bool PieceRayTest(Player __instance, ref bool __result, ref Vector3 point,
+    ref Vector3 normal, ref Piece piece, ref Heightmap heightmap, ref Collider waterSurface,
+    bool water)
+  {
+    var layerMask = __instance.m_placeRayMask;
+
     var bvc = __instance.GetComponentInParent<BaseVehicleController>();
     if ((bool)bvc)
+      return HandleGameObjectRayCast(bvc.transform, layerMask, __instance, ref __result, ref point,
+        ref normal, ref piece,
+        ref heightmap,
+        ref waterSurface, water);
+
+    var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
+    if ((bool)mbr)
     {
-      var localPos = bvc.transform.InverseTransformPoint(__instance.transform.position);
-      var start = localPos + Vector3.up * 2f;
-      start = bvc.transform.TransformPoint(start);
-      var localDir = ((Character)__instance).m_lookYaw * Quaternion.Euler(__instance.m_lookPitch,
-        0f - bvc.transform.rotation.eulerAngles.y + yawOffset, 0f);
-      var end = bvc.transform.rotation * localDir * Vector3.forward;
-      if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) && (bool)hitInfo.collider)
-      {
-        var bvcTarget = hitInfo.collider.GetComponentInParent<BaseVehicleController>();
-        if ((bool)bvcTarget)
-        {
-          point = hitInfo.point;
-          normal = hitInfo.normal;
-          piece = hitInfo.collider.GetComponentInParent<Piece>();
-          heightmap = null;
-          waterSurface = null;
-          __result = true;
-          return false;
-        }
-      }
+      return HandleGameObjectRayCast(mbr.transform, layerMask, __instance, ref __result, ref point,
+        ref normal, ref piece,
+        ref heightmap,
+        ref waterSurface, water);
     }
 
     return true;
@@ -961,12 +967,10 @@ public class ValheimRAFT_Patch
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     var baseVehicle = __instance.GetComponentInParent<BaseVehicleController>();
     if (!mbr && !baseVehicle) return true;
-    if (__instance.transform.localPosition.y < 1f)
-    {
-      __instance.m_nview.GetZDO().Set("support", 1500f);
-      return false;
-    }
+    if (!(__instance.transform.localPosition.y < 1f)) return false;
 
+    // makes all support values below 1f very high
+    __instance.m_nview.GetZDO().Set("support", 1500f);
     return false;
   }
 
