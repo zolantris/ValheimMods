@@ -71,11 +71,14 @@ public class WaterVehicleController : BaseVehicleController
 
   public new void Awake()
   {
+    base.Awake();
     vehicleController = this;
   }
 
   public new void Start()
   {
+    base.Start();
+
     if (!_initialized || !(bool)vehicleController)
     {
       Logger.LogError("not initialized, exiting ship logic to prevent crash");

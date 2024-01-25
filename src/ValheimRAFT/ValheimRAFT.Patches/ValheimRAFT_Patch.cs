@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.Animations;
 using ValheimRAFT.Util;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles;
@@ -884,7 +885,8 @@ public class ValheimRAFT_Patch
       if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) && (bool)hitInfo.collider)
       {
         var mbrTarget = hitInfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
-        if ((bool)mbrTarget)
+        var bvcTarget = hitInfo.collider.GetComponentInParent<BaseVehicleController>();
+        if ((bool)mbrTarget || (bool)bvcTarget)
         {
           point = hitInfo.point;
           normal = hitInfo.normal;
@@ -966,11 +968,13 @@ public class ValheimRAFT_Patch
     if (!__instance.isActiveAndEnabled) return false;
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     var baseVehicle = __instance.GetComponentInParent<BaseVehicleController>();
-    if (!mbr && !baseVehicle) return true;
+    if (!(bool)mbr && !(bool)baseVehicle) return true;
     if (!(__instance.transform.localPosition.y < 1f)) return false;
 
     // makes all support values below 1f very high
     __instance.m_nview.GetZDO().Set("support", 1500f);
+    __instance.m_support = 1500f;
+    __instance.m_noSupportWear = true;
     return false;
   }
 
@@ -1003,8 +1007,8 @@ public class ValheimRAFT_Patch
       {
         if (raycastHit.collider.GetComponent<Hoverable>() != null)
           hover = raycastHit.collider.gameObject;
-        else if ((bool)raycastHit.collider.attachedRigidbody && (!raycastHit.collider
-                   .attachedRigidbody.GetComponent<MoveableBaseRootComponent>() || !raycastHit
+        else if ((bool)raycastHit.collider.attachedRigidbody && (!(bool)raycastHit.collider
+                   .attachedRigidbody.GetComponent<MoveableBaseRootComponent>() || !(bool)raycastHit
                    .collider
                    .attachedRigidbody.GetComponent<BaseVehicleController>()))
           hover = raycastHit.collider.attachedRigidbody.gameObject;
@@ -1091,6 +1095,7 @@ public class ValheimRAFT_Patch
             (bool)shipControlls.m_ship)
         {
           var mb = shipControlls.m_ship.GetComponent<MoveableBaseShipComponent>();
+          var waterVehicleController = shipControlls.m_ship.GetComponent<WaterVehicleController>();
           if ((bool)mb)
           {
             var anchorKey =
@@ -1111,6 +1116,31 @@ public class ValheimRAFT_Patch
             else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
             {
               mb.Descent();
+            }
+          }
+
+          if ((bool)waterVehicleController)
+          {
+            var anchorKey =
+              (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "False" &&
+               ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set")
+                ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown()
+                : ZInput
+                  .GetButtonDown("Run");
+            if (anchorKey || ZInput.GetButtonDown("JoyRun"))
+            {
+              Logger.LogDebug("Anchor button is down setting anchor");
+              waterVehicleController.SetAnchor(
+                !waterVehicleController.m_flags.HasFlag(
+                  MoveableBaseShipComponent.MBFlags.IsAnchored));
+            }
+            else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
+            {
+              waterVehicleController.Ascend();
+            }
+            else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
+            {
+              waterVehicleController.Descent();
             }
           }
         }

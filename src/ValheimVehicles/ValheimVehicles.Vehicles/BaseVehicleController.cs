@@ -306,7 +306,11 @@ public class BaseVehicleController : MonoBehaviour
 
   public void ServerSyncAllPieces()
   {
-    StopCoroutine(server_UpdatePiecesCoroutine);
+    if (server_UpdatePiecesCoroutine != null)
+    {
+      StopCoroutine(server_UpdatePiecesCoroutine);
+    }
+
     server_UpdatePiecesCoroutine = StartCoroutine(UpdatePiecesInEachSectorWorker());
   }
 
@@ -645,12 +649,12 @@ public class BaseVehicleController : MonoBehaviour
 
   public void ActivatePendingPiecesCoroutine()
   {
-    // if (hasDebug)
-    //   Logger.LogDebug(
-    //     $"ActivatePendingPiecesCoroutine(): pendingPieces count: {m_pendingPieces.Count}");
-    // if (pendingPiecesCoroutine != null) StopCoroutine(pendingPiecesCoroutine);
-    //
-    // pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
+    if (hasDebug)
+      Logger.LogDebug(
+        $"ActivatePendingPiecesCoroutine(): pendingPieces count: {m_pendingPieces.Count}");
+    if (pendingPiecesCoroutine != null) StopCoroutine(pendingPiecesCoroutine);
+
+    pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
   }
 
   public IEnumerator ActivatePendingPieces()

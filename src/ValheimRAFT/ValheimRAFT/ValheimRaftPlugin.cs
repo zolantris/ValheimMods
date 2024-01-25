@@ -5,13 +5,17 @@ using Jotunn.Managers;
 using Jotunn.Utils;
 using System;
 using System.Reflection;
+using BepInEx.Bootstrap;
 using Jotunn;
+using Properties;
 using UnityEngine;
 using ValheimRAFT.Patches;
 using ValheimRAFT.Util;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
+// [SentryDSN()]
 [BepInPlugin(BepInGuid, ModName, Version)]
 [BepInDependency(Main.ModGuid)]
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Patch)]
@@ -351,6 +355,23 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CreateKeyboardSetup();
   }
 
+  internal void ApplyMetricIfAvailable()
+  {
+    string @namespace = "SentryUnityWrapper";
+    string @pluginClass = "SentryUnityWrapperPlugin";
+    Logger.LogDebug(
+      $"contains sentryunitywrapper: {Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper")}");
+
+    Logger.LogDebug($"plugininfos {Chainloader.PluginInfos}");
+
+    if (EnableMetrics.Value &&
+        Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper"))
+    {
+      Logger.LogDebug("Made it to sentry check");
+      SentryMetrics.ApplyMetrics();
+    }
+  }
+
   public void Awake()
   {
     Instance = this;
@@ -358,7 +379,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     CreateConfig();
     PatchController.Apply(HarmonyGuid);
-    PatchController.ApplyMetricIfAvailable();
 
     AddPhysicsSettings();
 
@@ -372,6 +392,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
      */
     PrefabManager.OnVanillaPrefabsAvailable += new Action(LoadCustomTextures);
     PrefabManager.OnVanillaPrefabsAvailable += new Action(AddCustomPieces);
+  }
+
+  private void Start()
+  {
+    // SentryLoads after
+    ApplyMetricIfAvailable();
   }
 
   private void AddPhysicsSettings()

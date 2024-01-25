@@ -29,7 +29,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal float m_sendRudderTime;
 
-  // [Header("Objects")] public GameObject m_sailObject;
+  [Header("Objects")] public GameObject m_sailObject;
 
   public GameObject m_mastObject;
 
@@ -41,9 +41,8 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public BoxCollider m_floatcollider = new BoxCollider();
 
-  public BoxCollider m_blockingCollider = new BoxCollider();
-
-  public float m_waterLevelOffset;
+  // base game sets default of 1.5f
+  public float m_waterLevelOffset = 1.5f;
 
   public float m_forceDistance = 1f;
 
@@ -156,10 +155,22 @@ public class ValheimBaseGameShip : MonoBehaviour
     // m_blockingCollider.gameObject.layer = 28; // vehicle layer
     // m_blockingCollider.transform.localScale = new Vector3(1f, 1f, 1f);
     // m_blockingCollider.transform.localPosition = new Vector3(0f, 0.29f, 0f);
-    var colliders = transform.GetComponentsInChildren<BoxCollider>();
+    var collider = transform.Find("VVFloatCollider");
 
-    m_floatcollider =
-      colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "VVFloatCollider");
+    if (collider != null)
+    {
+      collider.SetParent(transform);
+    }
+
+    var boxColliders = transform.Find("VVFloatCollider")?.GetComponentsInChildren<BoxCollider>();
+
+    var floatBoxCollider =
+      boxColliders?.FirstOrDefault((BoxCollider k) => k.gameObject.name == "VVFloatCollider");
+    if (floatBoxCollider != null)
+    {
+      m_floatcollider = floatBoxCollider;
+    }
+
 
     if (!m_floatcollider)
     {

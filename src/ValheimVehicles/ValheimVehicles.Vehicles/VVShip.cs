@@ -27,6 +27,8 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
 
   private new void Awake()
   {
+    base.Awake();
+    Logger.LogDebug($"called Awake in VVShip, m_body {m_body}");
     if (!m_nview)
     {
       m_nview = GetComponent<ZNetView>();
@@ -41,7 +43,9 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
   private void InitializeWaterVehicleController()
   {
     if (!(bool)m_nview || m_nview.GetZDO() == null || (bool)_waterVehicle) return;
+
     Logger.LogDebug("Made it to InitializeWaterVehicleController");
+
     var ladders = GetComponentsInChildren<Ladder>();
     for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
 
@@ -72,10 +76,6 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
   public override void OnEnable()
   {
     base.OnEnable();
-    if ((bool)_controller) return;
-
-    _controller = GetComponent<WaterVehicleController>();
-
     if (!(bool)_controller)
     {
       InitializeWaterVehicleController();
@@ -85,29 +85,33 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
   /**
    * TODO this could be set to false for the ship as an override to allow the ship to never remove itself
    */
-  public bool CanBeRemoved()
-  {
-    return m_players.Count == 0;
-  }
-
-
+  // public bool CanBeRemoved()
+  // {
+  //   return m_players.Count == 0;
+  // }
   public void FixedUpdate()
   {
-    if (!_controller)
+    if (!(bool)_controller || !(bool)m_body || !(bool)m_floatcollider)
     {
       return;
     }
 
     // FixedUpdate1();
-    m_body.WakeUp();
+    // m_body.WakeUp();
+    // var worldCenterOfMass = m_body.worldCenterOfMass;
+    // var currentDepth = Floating.GetWaterLevel(worldCenterOfMass, ref m_previousCenter);
+    // m_body.useGravity = _controller.m_zsync.m_useGravity =
+    //   _controller.m_targetHeight == 0f;
     //
-    m_body.useGravity = transform.position.y > 20f;
-    if (!m_body.useGravity)
-    {
-      m_body.AddForceAtPosition(Vector3.up * 20f, m_floatcollider.center, ForceMode.VelocityChange);
-    }
+    // if (m_body.position.y <= currentDepth)
+    // {
+    //   var vectorForceMult =
+    //     Mathf.Clamp01(Mathf.Abs(m_body.position.y - currentDepth) / m_forceDistance);
+    //   m_body.AddForceAtPosition(Vector3.up * vectorForceMult, worldCenterOfMass,
+    //     ForceMode.VelocityChange);
+    // }
 
-    // FixedUpdate1();
+    ValheimRaftCustomFixedUpdate();
   }
 
   private static Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity)
@@ -316,13 +320,11 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
 
   private static void ApplySailForce(VVShip __instance, float num5)
   {
-    var mb = __instance.GetComponent<WaterVehicleController>();
-
     var sailArea = 0f;
 
-    if ((bool)mb)
+    if ((bool)__instance._controller)
     {
-      sailArea = mb.GetSailingForce();
+      sailArea = __instance._controller.GetSailingForce();
     }
 
     /*
@@ -345,7 +347,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
         break;
     }
 
-    if (mb.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
+    if (__instance._controller.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
     {
       sailArea = 0f;
     }

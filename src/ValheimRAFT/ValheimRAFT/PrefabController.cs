@@ -475,15 +475,6 @@ public class PrefabController : MonoBehaviour
     var blockingColliderComponent = vanillaRaftPrefab.transform.Find("ship/colliders/Cube");
     var onboardColliderComponent = vanillaRaftPrefab.transform.Find("OnboardTrigger");
 
-    onboardColliderComponent.name = "VVOnboardTrigger";
-    floatColliderComponent.name = "VVFloatCollider";
-    blockingColliderComponent.name = "VVBlockingCollider";
-
-    floatColliderComponent.transform.localScale = new Vector3(1f, 1f, 1f);
-    blockingColliderComponent.transform.localScale = new Vector3(1f, 1f, 1f);
-    blockingColliderComponent.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
-    blockingColliderComponent.transform.parent.gameObject.layer =
-      ValheimRaftPlugin.CustomRaftLayer;
     /*
      * add the colliders to the prefab
      */
@@ -493,6 +484,23 @@ public class PrefabController : MonoBehaviour
       waterVehiclePrefab.transform);
     var fc = Instantiate(floatColliderComponent,
       waterVehiclePrefab.transform);
+
+    oc.name = "VVOnboardTrigger";
+    fc.name = "VVFloatCollider";
+    bc.name = "VVBlockingCollider";
+
+    bc.transform.SetParent(waterVehiclePrefab.transform);
+    oc.transform.SetParent(waterVehiclePrefab.transform);
+    fc.transform.SetParent(waterVehiclePrefab.transform);
+
+    fc.transform.localScale = new Vector3(1f, 1f, 1f);
+    bc.transform.localScale = new Vector3(1f, 1f, 1f);
+    bc.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    // bc.transform.parent.gameObject.layer =
+    //   ValheimRaftPlugin.CustomRaftLayer;
+    // bc.transform.localPosition = Vector3.zero;
+    // oc.transform.localPosition = Vector3.zero;
+    // fc.transform.localPosition = Vector3.zero;
     Logger.LogDebug("Made it past Instantiate");
 
     // Adds the cube mesh filter (not sure if this is needed)
@@ -565,13 +573,13 @@ public class PrefabController : MonoBehaviour
 
     // shipInstance.m_floatCollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
 
-    var shipHullPrefab = prefabManager.GetPrefab("wood_wall_log_4x0.5").transform.Find("New");
-    shipHullPrefab.name = "ValheimVehicles_ShipHull";
+    var shipHullPrefab = prefabManager.GetPrefab("wood_wall_log_4x0.5");
+    // shipHullPrefab.name = "ValheimVehicles_ShipHull";
     // var shipHullPrefab = prefabManager.GetPrefab(
     //   GetHullPrefabName(ShipHulls.HullMaterial.CoreWood, ShipHulls.HullOrientation.Horizontal));
     var shipHullInstance =
       Instantiate(shipHullPrefab.gameObject, shipInstance.transform, shipInstance.transform);
-    shipHullInstance.transform.position = new Vector3(0, 0, 0);
+    // shipHullInstance.transform.position = new Vector3(0, 0, 0);
     shipHullInstance.transform.SetParent(shipInstance.transform);
     shipHullInstance.transform.localPosition = new Vector3(0, 0, 0);
 
@@ -580,6 +588,7 @@ public class PrefabController : MonoBehaviour
     // waterVehicleController.AddNewPiece(shipHullPiece);
     var piece = waterVehiclePrefab.AddComponent<Piece>();
     piece.m_waterPiece = true;
+    // piece.m_groundPiece = true;
     piece.m_description = "new raft base";
     piece.m_icon = vanillaRaftPrefab.GetComponent<Piece>().m_icon;
     piece.m_name = "RaftHullBase";

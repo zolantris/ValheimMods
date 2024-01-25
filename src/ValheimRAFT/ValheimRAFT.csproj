@@ -62,6 +62,14 @@
         <Compile Include="ValheimRAFT\SailComponent.cs"/>
         <Compile Include="ValheimRAFT\SailCreatorComponent.cs"/>
     </ItemGroup>
+    <PropertyGroup>
+        <SentryDSN>https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496</SentryDSN>
+    </PropertyGroup>
+    <ItemGroup>
+        <AssemblyAttribute Include="Properties.CustomAssemblyAttributes">
+            <_Parameter1>"$(SentryDSN)"</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
     <!-- Until ValheimVehicles is published, RAFT will directly pull in it's dependencies -->
     <ItemGroup>
         <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>

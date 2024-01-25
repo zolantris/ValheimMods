@@ -28,6 +28,7 @@ public class SentryUnityWrapperPlugin : BaseUnityPlugin
 
   private bool _canAutoRegister = true;
   private float _autoRegisterTime = 10f;
+  private bool _hasCalledSentryInit = false;
 
   private void Awake()
   {
@@ -90,12 +91,14 @@ public class SentryUnityWrapperPlugin : BaseUnityPlugin
   private static bool InitializeScopedLogging(string pluginGuid,
     Config options)
   {
+    Debug.Log("called InitializeScopedLogging");
     RegisteredPlugins.TryGetValue(pluginGuid, out var existingPlugin);
 
     if (existingPlugin != null)
     {
       Debug.LogError(
         $"A registered namespace for this sentry-plugin already exists for {pluginGuid}, please add a different namespace or contact the mod author to change their naming");
+      PendingPluginsToRegister.Remove(options.PluginGuid);
       return false;
     }
 
@@ -103,6 +106,7 @@ public class SentryUnityWrapperPlugin : BaseUnityPlugin
     {
       Debug.LogError(
         "No sentry Dsn provided. Please create a unity project within sentry and add the dsn from the projects settings");
+      PendingPluginsToRegister.Remove(options.PluginGuid);
       return false;
     }
 
@@ -112,6 +116,34 @@ public class SentryUnityWrapperPlugin : BaseUnityPlugin
       scope.SetTag("bepinex.plugin.guid", options.PluginGuid);
       scope.SetTag("pluginName", options.PluginName);
       scope.SetTag("gameName", options.GameName);
+    });
+
+    var client = new SentryClient(new SentryUnityOptions()
+    {
+      // A Sentry Data Source Name (DSN) is required.
+      // See https://docs.sentry.io/product/sentry-basics/dsn-explainer/
+      // You can set it in the SENTRY_DSN environment variable, or you can set it in code here.
+      Dsn = options.GetSentryUnityOptions().Dsn;
+      CacheDirectoryPath =
+      Path.Combine(Paths.PluginPath, options.PluginName);
+
+      // When debug is enabled, the Sentry client will emit detailed debugging information to the console.
+      // This might be helpful, or might interfere with the normal operation of your application.
+      // We enable it here for demonstration purposes when first trying Sentry.
+      // You shouldn't do this in your applications unless you're troubleshooting issues with Sentry.
+      Debug = false;
+
+      // This option is recommended. It enables Sentry's "Release Health" feature.
+      AutoSessionTracking = true;
+
+      // Enabling this option is recommended for client applications only. It ensures all threads use the same global scope.
+      IsGlobalModeEnabled = false;
+
+      // This option will enable Sentry's tracing features. You still need to start transactions and spans.
+      EnableTracing = true;
+
+      // Example sample rate for your transactions: captures 10% of transactions
+      TracesSampleRate = 1.0;
     });
 
     // SentrySdk.CaptureException("")
@@ -125,7 +157,7 @@ public class SentryUnityWrapperPlugin : BaseUnityPlugin
       sentryUnityConfig.Dsn = options.GetSentryUnityOptions().Dsn;
 
       sentryUnityConfig.CacheDirectoryPath =
-        Path.Combine(Paths.PluginPath, options.PluginGuid);
+        Path.Combine(Paths.PluginPath, options.PluginName);
 
       // When debug is enabled, the Sentry client will emit detailed debugging information to the console.
       // This might be helpful, or might interfere with the normal operation of your application.
@@ -145,6 +177,9 @@ public class SentryUnityWrapperPlugin : BaseUnityPlugin
       // Example sample rate for your transactions: captures 10% of transactions
       sentryUnityConfig.TracesSampleRate = 1.0;
     });
+
+    PendingPluginsToRegister.Remove(options.PluginGuid);
+    RegisteredPlugins.Add(options.PluginGuid, options);
 
     return true;
   }

@@ -44,7 +44,6 @@ Global
 		{E9B48BE9-4D8E-44DB-961A-D7C279B2CA2B}.Debug Run Valheim Server|Any CPU.ActiveCfg = Debug ClientServer|Any CPU
 		{E9B48BE9-4D8E-44DB-961A-D7C279B2CA2B}.Debug Run Valheim Server|Any CPU.Build.0 = Debug ClientServer|Any CPU
 		{64841F32-084A-437C-9A15-34D8354B3ED1}.Debug ClientServer|Any CPU.ActiveCfg = Release Archive|Any CPU
-		{64841F32-084A-437C-9A15-34D8354B3ED1}.Debug ClientServer|Any CPU.Build.0 = Release Archive|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

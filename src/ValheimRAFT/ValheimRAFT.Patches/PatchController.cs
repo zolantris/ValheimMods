@@ -14,20 +14,6 @@ internal static class PatchController
 
   private static Harmony Harmony;
 
-  internal static void ApplyMetricIfAvailable()
-  {
-    string @namespace = "SentryUnityWrapper";
-    string @pluginClass = "SentryUnityWrapperPlugin";
-    if (ValheimRaftPlugin.Instance.EnableMetrics.Value &&
-        Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper"))
-    {
-      if (Type.GetType($"{@namespace}.{@pluginClass}") != null)
-      {
-        SentryMetrics.ApplyMetrics();
-      }
-    }
-  }
-
   internal static void Apply(string harmonyGuid)
   {
     Harmony = new Harmony(harmonyGuid);
