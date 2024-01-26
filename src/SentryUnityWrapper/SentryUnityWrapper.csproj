@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.8" DefaultTargets="Build">
-    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"
-            Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
+    <!--    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"-->
+    <!--            Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>-->
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
         <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -19,26 +19,9 @@
         <Nullable>enable</Nullable>
         <ApplicationVersion>1.8.0</ApplicationVersion>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
-        <DebugType>pdbonly</DebugType>
-        <Optimize>true</Optimize>
-        <DefineConstants>TRACE</DefineConstants>
-        <ErrorReport>prompt</ErrorReport>
-        <WarningLevel>4</WarningLevel>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <OutputPath>bin\Release Archive\</OutputPath>
-    </PropertyGroup>
     <Import Project="..\..\valheim.targets"/>
+    <!--  really just needs unity and bepinex  -->
     <ItemGroup>
-        <!--        <Reference Include="BepInEx">-->
-        <!--            <HintPath>..\libs\BepInEx.dll</HintPath>-->
-        <!--        </Reference>-->
-        <!--        <Reference Include="System"/>-->
-        <!--        <Reference Include="System.Core"/>-->
-        <!--        <Reference Include="System.Xml"/>-->
-        <!--        <Reference Include="UnityEngine">-->
-        <!--            <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.15f1\Editor\Data\Managed\UnityEngine.dll</HintPath>-->
-        <!--        </Reference>-->
         <!--  Metrics  -->
         <Reference Include="Sentry">
             <HintPath>$(SolutionDir)\SentryUnity\1.8.0\Runtime\Sentry.dll</HintPath>

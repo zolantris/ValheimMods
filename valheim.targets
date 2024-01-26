@@ -307,8 +307,8 @@
     <PropertyGroup>
         <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
         <R2ModManPath>%HOMEPATH%\AppData\Roaming\r2modmanPlus-local</R2ModManPath>
-        <R2ModManProfile>Valheim\profiles\valheim_mod_debugging</R2ModManProfile>
-        <PluginDeployTarget>BepInEx\plugins\zolantris-ValheimRAFT</PluginDeployTarget>
+        <R2ModManProfile>Valheim\profiles\valheim_raft_debugging</R2ModManProfile>
+        <PluginDeployTarget>BepInEx\plugins\zolantris-SentryUnityWrapper</PluginDeployTarget>
         <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
     </PropertyGroup>
     <!-- Patches for community mods -->
@@ -340,7 +340,12 @@
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).mdb&quot;"/>
-        <Exec Command="xcopy /d &quot;.\Assets&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
+
+        <Exec Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i" />
+        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath\&quot; /q /s /y /i" />
+        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath\&quot; /q /s /y /i" />
+        
+        <Exec Condition="Exists('$(PluginDeployPath)\Assets\')" Command="xcopy /d &quot;.\Assets&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
     </Target>
     <Target Name="Copy_To_R2ModMan_vm" Condition="Exists('$(SandboxiePluginDeployPath)\$(AssemblyName).dll')" AfterTargets="Copy_To_R2ModMan">
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>
@@ -348,7 +353,7 @@
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)plugins\$(AssemblyName).mdb&quot;"/>
         <Exec Command="xcopy /d &quot;.\Assets&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
     </Target>
-    <Target KeepDuplicateOutputs="false" Name="Copy_To_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' " AfterTargets="convert_pdb_to_mdb">
+    <Target KeepDuplicateOutputs="false" Name="Copy_To_Valheim_Server" Condition=" $(AssemblyName) != 'SentryUnityWrapper' And ('$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU')" AfterTargets="convert_pdb_to_mdb">
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).mdb&quot;"/>

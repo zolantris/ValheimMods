@@ -652,9 +652,14 @@ public class BaseVehicleController : MonoBehaviour
     if (hasDebug)
       Logger.LogDebug(
         $"ActivatePendingPiecesCoroutine(): pendingPieces count: {m_pendingPieces.Count}");
-    if (pendingPiecesCoroutine != null) StopCoroutine(pendingPiecesCoroutine);
-
-    pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
+    if (pendingPiecesCoroutine != null)
+    {
+      // StopCoroutine(pendingPiecesCoroutine);
+    }
+    else
+    {
+      pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
+    }
   }
 
   public IEnumerator ActivatePendingPieces()

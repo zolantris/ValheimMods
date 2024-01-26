@@ -48,6 +48,7 @@
         <Folder Include="ValheimVehicles.Propulsion\Sailing\"/>
     </ItemGroup>
     <ItemGroup>
+        <ProjectReference Include="..\SentryUnityWrapper\SentryUnityWrapper.csproj"/>
         <ProjectReference Include="..\ValheimRAFT\ValheimRAFT.csproj"/>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>

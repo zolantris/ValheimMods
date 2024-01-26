@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using SentryUnityWrapper;
 using UnityEngine;
 using ValheimRAFT.Util;
 using ValheimVehicles.Propulsion.Rudder;
@@ -87,6 +88,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void Awake()
   {
+    SentryUnityWrapperPlugin.BindToClient(ValheimRaftPlugin.BepInGuid);
+
     Logger.LogDebug("called Awake on BaseRootComponent");
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
@@ -107,6 +110,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
     {
       server_UpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
+
+    Debug.Log("Captured Log"); // Breadcrumb
+    Debug.LogWarning("Captured Warning"); // Breadcrumb
+    Debug.LogError("This is a Test error called within BaseVehicleController.Awake");
   }
 
   public void CleanUp()

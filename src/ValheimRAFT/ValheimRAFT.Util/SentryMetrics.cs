@@ -31,5 +31,12 @@ public abstract class SentryMetrics
     SentryUnityWrapperPlugin.RegisterPluginAsync(
       new(ValheimRaftPlugin.BepInGuid, ValheimRaftPlugin.ModName, ValheimRaftPlugin.Version,
         Dsn));
+
+
+    var dsn =
+      "https://45e6b5f08cfdf76cae86a36cc3bdffd1@o243490.ingest.sentry.io/4506635619467264";
+    SentryUnityWrapperPlugin.RegisterPluginAsync(
+      new("zolantris.ValheimVehicles", "ValheimVehicles", ValheimRaftPlugin.Version,
+        dsn));
   }
 }

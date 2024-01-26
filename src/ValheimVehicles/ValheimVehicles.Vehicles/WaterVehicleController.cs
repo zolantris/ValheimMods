@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ValheimVehicles.Vehicles;
 using Jotunn;
+using SentryUnityWrapper;
 using UnityEngine;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
@@ -73,6 +74,7 @@ public class WaterVehicleController : BaseVehicleController
   {
     base.Awake();
     vehicleController = this;
+    SentryUnityWrapperPlugin.BindToClient("zolantris.ValheimVehicles");
   }
 
   public new void Start()
