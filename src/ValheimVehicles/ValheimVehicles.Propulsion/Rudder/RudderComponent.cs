@@ -1,18 +1,22 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimVehicles.Vehicles;
+using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Propulsion.Rudder;
 
 public class RudderComponent : MonoBehaviour
 {
-  public ShipControlls? m_controls;
+  public IRudderControls? Controls;
+  private ValheimShipControls _controls;
 
-  public ValheimShipControls? valheimShipControls;
+  public IVehicleShip ShipInstance;
 
-  public Transform m_wheel;
+  public Transform? wheelTransform;
 
   public List<Transform> m_spokes = new();
 
@@ -38,17 +42,74 @@ public class RudderComponent : MonoBehaviour
 
   private Transform m_targetRightHand;
 
+  public void InitializeControls(ZNetView netView, IVehicleShip vehicleShip)
+  {
+    ShipInstance = vehicleShip;
+    if (!(bool)_controls)
+    {
+      _controls =
+        gameObject.AddComponent<ValheimShipControls>();
+      Controls = _controls;
+    }
+
+    // Destroy(_controls.gameObject);
+    // else
+    // {
+    //   if (m_controls != null) Destroy(m_controls.gameObject);
+    //   Destroy(rudder);
+    //   Destroy(netView);
+    //   return;
+    // }
+
+    if (!wheelTransform) wheelTransform = netView.transform.Find("controls/wheel");
+
+
+    if (Controls != null)
+    {
+      _controls.InitializeRudderWithShip(ShipInstance,
+        this);
+      ShipInstance = vehicleShip;
+      _controls.enabled = true;
+    }
+
+    Logger.LogDebug("added rudder to BaseVehicle");
+    // if (Controls == null)
+    // {
+    // }
+    //
+    // if (!wheelTransform) wheelTransform = netView.transform.Find("controls/wheel");
+    // if (Controls != null)
+    // {
+    //   Controls.m_nview = m_nview;
+    //   Controls.m_ship = shipController.GetComponent<Ship>();
+    //   Controls.enabled = true;
+    //   if (Controls.enabled)
+    //   {
+    //     Controls.enabled = false;
+    //   }
+    // }
+    //
+    // Controls = netView.GetComponentInChildren<ValheimShipControls>();
+    // Controls.m_nview = m_nview;
+    // Controls.m_ship = shipController.GetComponent<Ship>();
+    // Controls.enabled = true;
+    // if (Controls.enabled)
+    // {
+    //   Controls.enabled = false;
+    // }
+  }
+
   public void UpdateSpokes()
   {
     m_spokes.Clear();
-    m_spokes.AddRange(from k in m_wheel.GetComponentsInChildren<Transform>()
+    m_spokes.AddRange(from k in wheelTransform.GetComponentsInChildren<Transform>()
       where k.gameObject.name.StartsWith("grabpoint")
       select k);
   }
 
   public void UpdateIK(Animator animator)
   {
-    if (!m_wheel)
+    if (!wheelTransform)
     {
       return;
     }

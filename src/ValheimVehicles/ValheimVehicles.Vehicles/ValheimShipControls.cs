@@ -6,43 +6,45 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
-public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDoodadController
+public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDoodadController,
+  IRudderControls
 {
-  public string m_hoverText = "";
+  public IVehicleShip ShipInstance => _shipInstance;
 
-  public VVShip ShipInstance;
-
-  public float m_maxUseRange = 10f;
+  private VVShip _shipInstance;
+  // public float m_maxUseRange = 10f;
 
   // might be safer to directly make this a getter
-  public Transform m_attachPoint;
+  // public Transform m_attachPoint;
 
   public Vector3 m_detachOffset = new Vector3(0f, 0.5f, 0f);
+
+  public string m_hoverText { get; set; }
+  public float m_maxUseRange { get; set; }
+  public Transform m_attachPoint { get; set; }
 
   public string m_attachAnimation = "Standing Torch Idle right";
   public ValheimShipControls m_lastUsedControls;
   public ZNetView m_nview;
 
-  public VVShip InitializeRudderWithShip(VVShip ship, RudderComponent rudder)
+  public void InitializeRudderWithShip(IVehicleShip ship, RudderComponent rudder)
   {
-    ShipInstance = ship;
-    ShipInstance.m_controlGuiPos = transform;
+    _shipInstance = ShipInstance.Instance;
+    _shipInstance.m_controlGuiPos = transform;
 
     var rudderAttachPoint = rudder.transform.Find("attachpoint");
     if (rudderAttachPoint != null)
     {
-      m_attachPoint.position = rudderAttachPoint.position;
+      m_attachPoint = rudderAttachPoint.transform;
     }
 
-    m_nview = ship.GetComponent<ZNetView>();
+    m_nview = ship.Instance.GetComponent<ZNetView>();
     if (m_nview != null)
     {
       m_nview.Register<long>("RequestControl", RPC_RequestControl);
       m_nview.Register<long>("ReleaseControl", RPC_ReleaseControl);
       m_nview.Register<bool>("RequestRespons", RPC_RequestRespons);
     }
-
-    return ship;
   }
 
   public bool IsValid()
@@ -72,9 +74,9 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
       }
 
       m_lastUsedControls = this;
-      if (ShipInstance != null)
+      if (_shipInstance != null)
       {
-        ShipInstance.m_controlGuiPos = transform;
+        _shipInstance.m_controlGuiPos = transform;
       }
     }
 
@@ -111,7 +113,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   public Component GetControlledComponent()
   {
-    return ShipInstance;
+    return _shipInstance;
   }
 
   public Vector3 GetPosition()
@@ -121,7 +123,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run, bool autoRun, bool block)
   {
-    ShipInstance.ApplyControlls(moveDir);
+    _shipInstance.ApplyControlls(moveDir);
   }
 
   public string GetHoverText()
@@ -154,7 +156,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     var waterVehicleController = GetComponentInParent<WaterVehicleController>();
 
     var isAnchored =
-      waterVehicleController.m_flags.HasFlag(WaterVehicleController.MBFlags
+      waterVehicleController.VehicleFlags.HasFlag(WaterVehicleFlags
         .IsAnchored);
     var anchoredStatus = isAnchored ? "[<color=red><b>$mb_rudder_use_anchored</b></color>]" : "";
     var anchorText =

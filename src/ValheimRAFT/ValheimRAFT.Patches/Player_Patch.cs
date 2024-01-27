@@ -256,11 +256,40 @@ public class Player_Patch
       {
         __instance.SetDoodadControlls(ref movedir, ref ((Character)__instance).m_lookDir, ref run,
           ref autoRun, blockHold);
-        if (__instance.m_doodadController is ShipControlls shipControlls &&
-            (bool)shipControlls.m_ship)
+        if (rudder.Controls != null)
         {
-          var mb = shipControlls.m_ship.GetComponent<MoveableBaseShipComponent>();
-          var waterVehicleController = shipControlls.m_ship.GetComponent<WaterVehicleController>();
+          // might be a problem....
+          var waterVehicleController = rudder.GetComponentInParent<WaterVehicleController>();
+          var wvc2 = rudder.GetComponent<WaterVehicleController>();
+          if (waterVehicleController != null)
+          {
+            var anchorKey =
+              (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "False" &&
+               ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set")
+                ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown()
+                : ZInput
+                  .GetButtonDown("Run");
+            if (anchorKey || ZInput.GetButtonDown("JoyRun"))
+            {
+              Logger.LogDebug("Anchor button is down setting anchor");
+              waterVehicleController.SetAnchor(
+                !waterVehicleController.VehicleFlags.HasFlag(
+                  MoveableBaseShipComponent.MBFlags.IsAnchored));
+            }
+            else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
+            {
+              waterVehicleController.Ascend();
+            }
+            else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
+            {
+              waterVehicleController.Descent();
+            }
+          }
+        }
+        else if (rudder.Controls != null)
+        {
+          var mb = rudder.GetComponentInParent<MoveableBaseShipComponent>();
+          // may break, this might need GetComponent
           if ((bool)mb)
           {
             var anchorKey =
@@ -281,31 +310,6 @@ public class Player_Patch
             else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
             {
               mb.Descent();
-            }
-          }
-
-          if ((bool)waterVehicleController)
-          {
-            var anchorKey =
-              (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "False" &&
-               ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set")
-                ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown()
-                : ZInput
-                  .GetButtonDown("Run");
-            if (anchorKey || ZInput.GetButtonDown("JoyRun"))
-            {
-              Logger.LogDebug("Anchor button is down setting anchor");
-              waterVehicleController.SetAnchor(
-                !waterVehicleController.m_flags.HasFlag(
-                  MoveableBaseShipComponent.MBFlags.IsAnchored));
-            }
-            else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
-            {
-              waterVehicleController.Ascend();
-            }
-            else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
-            {
-              waterVehicleController.Descent();
             }
           }
         }

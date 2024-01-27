@@ -5,6 +5,7 @@ using SentryUnityWrapper;
 using UnityEngine;
 using ValheimRAFT.Util;
 using ValheimVehicles.Propulsion.Rudder;
+using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -33,6 +34,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
     m_dynamicObjects = new();
 
   internal MoveableBaseShipComponent shipController;
+
+  private IVehicleShip ShipInstance => shipController as IVehicleShip;
 
   public MoveableBaseRootComponent instance;
 
@@ -926,18 +929,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     var rudder = netView.GetComponent<RudderComponent>();
     if ((bool)rudder)
     {
-      if (!rudder.m_controls) rudder.m_controls = netView.GetComponentInChildren<ShipControlls>();
-
-      if (!rudder.m_wheel) rudder.m_wheel = netView.transform.Find("controls/wheel");
-
-      rudder.m_controls.m_nview = m_nview;
-      rudder.m_controls.m_ship = shipController.GetComponent<Ship>();
-      rudder.m_controls.enabled = true;
-      if (rudder.valheimShipControls.enabled)
-      {
-        rudder.valheimShipControls.enabled = false;
-      }
-
+      rudder.InitializeControls(netView, ShipInstance);
       m_rudderPieces.Add(rudder);
     }
 

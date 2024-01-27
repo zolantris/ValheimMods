@@ -13,16 +13,24 @@ namespace ValheimVehicles.Vehicles;
 /*
  * Mostly vanilla Valheim However this is safe from other mods overriding valheim ships directly
  */
-public class VVShip : ValheimBaseGameShip, IVehicleProperties
+public class VVShip : ValheimBaseGameShip, IVehicleShip
 {
-  public WaterVehicleController Controller;
+  public GameObject RudderObject { get; set; }
+
+  public IWaterVehicleController Controller => _controller;
+
+  private WaterVehicleController _controller;
   private GameObject _waterVehicle;
+
+  public VVShip Instance => this;
 
   public BoxCollider FloatCollider
   {
     get => m_floatcollider;
     set => m_floatcollider = value;
   }
+
+  public Transform ControlGuiPosition { get; set; }
 
   // private static readonly List<VVShip> s_currentShips = new();
 
@@ -56,10 +64,11 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
       name = PrefabNames.ValheimVehiclesShipName,
       layer = 0
     };
-    Controller = gameObject.AddComponent<WaterVehicleController>();
-    Controller.transform.SetParent(_waterVehicle.transform);
-    Controller.ShipInstance = this;
-    Controller.ActivatePendingPiecesCoroutine();
+    _controller = gameObject.AddComponent<WaterVehicleController>();
+    _controller.InitializeShipValues(this);
+
+    _controller.transform.SetParent(_waterVehicle.transform);
+    _controller.ActivatePendingPiecesCoroutine();
 
     // waterVehicle must exist as it's own top level object
     _waterVehicle.transform.SetParent(null);
@@ -69,17 +78,17 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
 
   public void OnDestroy()
   {
-    if ((bool)Controller)
+    if (_controller != null)
     {
-      Controller.CleanUp();
-      Destroy(Controller.gameObject);
+      _controller.CleanUp();
+      Destroy(_controller.gameObject);
     }
   }
 
   public override void OnEnable()
   {
     base.OnEnable();
-    if (!(bool)Controller)
+    if (_controller == null)
     {
       InitializeWaterVehicleController();
     }
@@ -94,7 +103,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
   // }
   public void FixedUpdate()
   {
-    if (!(bool)Controller || !(bool)m_body || !(bool)m_floatcollider)
+    if ((bool)_controller || !(bool)m_body || !(bool)m_floatcollider)
     {
       return;
     }
@@ -128,26 +137,26 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
    */
   public void ValheimRaftCustomFixedUpdate()
   {
-    if (!Controller || !m_nview || m_nview.m_zdo == null) return;
+    if (!_controller || !m_nview || m_nview.m_zdo == null) return;
 
     /*
      * creative mode should not allows movement and applying force on a object will cause errors when the object is kinematic
      */
-    if (Controller.isCreative)
+    if (_controller.isCreative)
     {
       return;
     }
 
     // This could be the spot that causes the raft to fly at spawn
-    Controller.m_targetHeight =
-      m_nview.m_zdo.GetFloat("MBTargetHeight", Controller.m_targetHeight);
-    Controller.m_flags =
-      (WaterVehicleController.MBFlags)m_nview.m_zdo.GetInt("MBFlags",
-        (int)Controller.m_flags);
+    _controller.m_targetHeight =
+      m_nview.m_zdo.GetFloat("MBTargetHeight", _controller.m_targetHeight);
+    _controller.VehicleFlags =
+      (WaterVehicleFlags)m_nview.m_zdo.GetInt("MBFlags",
+        (int)_controller.VehicleFlags);
 
     // This could be the spot that causes the raft to fly at spawn
-    Controller.m_zsync.m_useGravity =
-      Controller.m_targetHeight == 0f;
+    _controller.m_zsync.m_useGravity =
+      _controller.m_targetHeight == 0f;
 
     var flag = HaveControllingPlayer();
 
@@ -155,17 +164,17 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
     UpdateSail(Time.fixedDeltaTime);
     UpdateRudder(Time.fixedDeltaTime, flag);
     if (m_players.Count == 0 ||
-        Controller.m_flags.HasFlag(WaterVehicleController.MBFlags
+        _controller.VehicleFlags.HasFlag(WaterVehicleFlags
           .IsAnchored))
     {
       m_speed = Speed.Stop;
       m_rudderValue = 0f;
-      if (!Controller.m_flags.HasFlag(WaterVehicleController
-            .MBFlags.IsAnchored))
+      if (!_controller.VehicleFlags.HasFlag(
+            WaterVehicleFlags.IsAnchored))
       {
-        Controller.m_flags |=
-          WaterVehicleController.MBFlags.IsAnchored;
-        m_nview.m_zdo.Set("MBFlags", (int)Controller.m_flags);
+        _controller.VehicleFlags |=
+          WaterVehicleFlags.IsAnchored;
+        m_nview.m_zdo.Set("MBFlags", (int)_controller.VehicleFlags);
       }
     }
 
@@ -199,7 +208,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
     var currentDepth = worldCenterOfMass.y - averageWaterHeight - m_waterLevelOffset;
     if (!(currentDepth > m_disableLevel))
     {
-      Controller.UpdateStats(false);
+      _controller.UpdateStats(false);
       m_body.WakeUp();
       UpdateWaterForce(currentDepth, Time.fixedDeltaTime);
       var vector5 = new Vector3(vector3.x, waterLevel2, vector3.z);
@@ -224,8 +233,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
       if (velocity.magnitude > m_body.velocity.magnitude)
         velocity = velocity.normalized * m_body.velocity.magnitude;
       if (m_players.Count == 0 ||
-          Controller.m_flags.HasFlag(WaterVehicleController
-            .MBFlags.IsAnchored))
+          _controller.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
       {
         var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
         velocity = anchoredVelocity;
@@ -253,26 +261,25 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
         ForceMode.VelocityChange);
       ApplySailForce(this, num5);
       ApplyEdgeForce(Time.fixedDeltaTime);
-      if (Controller.m_targetHeight > 0f)
+      if (_controller.m_targetHeight > 0f)
       {
         var centerpos = m_floatcollider.transform.position;
-        var centerforce = GetUpwardsForce(Controller.m_targetHeight,
-          centerpos.y + m_body.velocity.y, Controller.m_liftForce);
+        var centerforce = GetUpwardsForce(_controller.m_targetHeight,
+          centerpos.y + m_body.velocity.y, _controller.m_liftForce);
         m_body.AddForceAtPosition(Vector3.up * centerforce, centerpos,
           ForceMode.VelocityChange);
       }
     }
-    else if (Controller.m_targetHeight > 0f)
+    else if (_controller.m_targetHeight > 0f)
     {
       if (m_players.Count == 0 ||
-          Controller.m_flags.HasFlag(WaterVehicleController
-            .MBFlags.IsAnchored))
+          _controller.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
       {
         var anchoredVelocity = CalculateAnchorStopVelocity(m_body.velocity);
         m_body.velocity = anchoredVelocity;
       }
 
-      Controller.UpdateStats(true);
+      _controller.UpdateStats(true);
       var side1 = m_floatcollider.transform.position +
                   m_floatcollider.transform.forward * m_floatcollider.size.z /
                   2f;
@@ -291,23 +298,23 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
       var corner3curforce = m_body.GetPointVelocity(side3);
       var corner4curforce = m_body.GetPointVelocity(side4);
       var side1force =
-        GetUpwardsForce(Controller.m_targetHeight,
+        GetUpwardsForce(_controller.m_targetHeight,
           side1.y + corner1curforce.y,
-          Controller.m_balanceForce);
+          _controller.m_balanceForce);
       var side2force =
-        GetUpwardsForce(Controller.m_targetHeight,
+        GetUpwardsForce(_controller.m_targetHeight,
           side2.y + corner2curforce.y,
-          Controller.m_balanceForce);
+          _controller.m_balanceForce);
       var side3force =
-        GetUpwardsForce(Controller.m_targetHeight,
+        GetUpwardsForce(_controller.m_targetHeight,
           side3.y + corner3curforce.y,
-          Controller.m_balanceForce);
+          _controller.m_balanceForce);
       var side4force =
-        GetUpwardsForce(Controller.m_targetHeight,
+        GetUpwardsForce(_controller.m_targetHeight,
           side4.y + corner4curforce.y,
-          Controller.m_balanceForce);
-      var centerforce2 = GetUpwardsForce(Controller.m_targetHeight,
-        centerpos2.y + m_body.velocity.y, Controller.m_liftForce);
+          _controller.m_balanceForce);
+      var centerforce2 = GetUpwardsForce(_controller.m_targetHeight,
+        centerpos2.y + m_body.velocity.y, _controller.m_liftForce);
       m_body.AddForceAtPosition(Vector3.up * side1force, side1,
         ForceMode.VelocityChange);
       m_body.AddForceAtPosition(Vector3.up * side2force, side2,
@@ -323,19 +330,19 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
     }
   }
 
-  private static void ApplySailForce(VVShip __instance, float num5)
+  private static void ApplySailForce(VVShip instance, float num5)
   {
     var sailArea = 0f;
 
-    if ((bool)__instance.Controller)
+    if ((bool)instance._controller)
     {
-      sailArea = __instance.Controller.GetSailingForce();
+      sailArea = instance._controller.GetSailingForce();
     }
 
     /*
      * Computed sailSpeed based on the rudder settings.
      */
-    switch (__instance.m_speed)
+    switch (instance.m_speed)
     {
       case Speed.Full:
         break;
@@ -352,51 +359,51 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
         break;
     }
 
-    if (__instance.Controller.m_flags.HasFlag(WaterVehicleController.MBFlags.IsAnchored))
+    if (instance._controller.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
     {
       sailArea = 0f;
     }
 
-    var sailForce = __instance.GetSailForce(sailArea, Time.fixedDeltaTime);
+    var sailForce = instance.GetSailForce(sailArea, Time.fixedDeltaTime);
 
-    var position = __instance.m_body.worldCenterOfMass;
+    var position = instance.m_body.worldCenterOfMass;
 
 
     //  * Math.Max(0.5f, ValheimRaftPlugin.Instance.RaftSailForceMultiplier.Value)
     // set the speed, this may need to be converted to a vector for the multiplier
-    __instance.m_body.AddForceAtPosition(
+    instance.m_body.AddForceAtPosition(
       sailForce,
       position,
       ForceMode.VelocityChange);
 
-    var stearoffset = __instance.m_floatcollider.transform.position -
-                      __instance.m_floatcollider.transform.forward *
-                      __instance.m_floatcollider.size.z / 2f;
-    var num7 = num5 * __instance.m_stearVelForceFactor;
-    __instance.m_body.AddForceAtPosition(
-      __instance.transform.right * num7 * (0f - __instance.m_rudderValue) * Time.fixedDeltaTime,
+    var stearoffset = instance.m_floatcollider.transform.position -
+                      instance.m_floatcollider.transform.forward *
+                      instance.m_floatcollider.size.z / 2f;
+    var num7 = num5 * instance.m_stearVelForceFactor;
+    instance.m_body.AddForceAtPosition(
+      instance.transform.right * num7 * (0f - instance.m_rudderValue) * Time.fixedDeltaTime,
       stearoffset, ForceMode.VelocityChange);
     var stearforce = Vector3.zero;
-    switch (__instance.m_speed)
+    switch (instance.m_speed)
     {
       case Speed.Slow:
-        stearforce += __instance.transform.forward * __instance.m_backwardForce *
-                      (1f - Mathf.Abs(__instance.m_rudderValue));
+        stearforce += instance.transform.forward * instance.m_backwardForce *
+                      (1f - Mathf.Abs(instance.m_rudderValue));
         break;
       case Speed.Back:
-        stearforce += -__instance.transform.forward * __instance.m_backwardForce *
-                      (1f - Mathf.Abs(__instance.m_rudderValue));
+        stearforce += -instance.transform.forward * instance.m_backwardForce *
+                      (1f - Mathf.Abs(instance.m_rudderValue));
         break;
     }
 
-    if (__instance.m_speed == Speed.Back || __instance.m_speed == Speed.Slow)
+    if (instance.m_speed == Speed.Back || instance.m_speed == Speed.Slow)
     {
-      float num6 = __instance.m_speed != Speed.Back ? 1 : -1;
-      stearforce += __instance.transform.right * __instance.m_stearForce *
-                    (0f - __instance.m_rudderValue) * num6;
+      float num6 = instance.m_speed != Speed.Back ? 1 : -1;
+      stearforce += instance.transform.right * instance.m_stearForce *
+                    (0f - instance.m_rudderValue) * num6;
     }
 
-    __instance.m_body.AddForceAtPosition(stearforce * Time.fixedDeltaTime, stearoffset,
+    instance.m_body.AddForceAtPosition(stearforce * Time.fixedDeltaTime, stearoffset,
       ForceMode.VelocityChange);
   }
 }

@@ -42,7 +42,7 @@ public class Character_Patch
 
         // new logic
         var bvc = __instance.m_lastGroundBody.GetComponentInParent<WaterVehicleController>();
-        if ((bool)bvc && (bool)bvc.ShipInstance)
+        if ((bool)bvc && (bool)bvc.ShipInstance.Instance)
           __result = bvc.ShipInstance;
       }
 

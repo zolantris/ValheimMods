@@ -42,9 +42,9 @@ public class WearNTear_Patch
     if ((bool)bv) bv.DestroyPiece(__instance);
     else if ((bool)vvShip)
     {
-      if ((bool)vvShip.Controller)
+      if ((bool)vvShip.Controller.Instance)
       {
-        vvShip.Controller.DestroyPiece(__instance);
+        vvShip.Controller.Instance.DestroyPiece(__instance);
       }
     }
 

@@ -15,46 +15,47 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
-public class WaterVehicleController : BaseVehicleController
+[Flags]
+public enum WaterVehicleFlags
+{
+  None = 0,
+  IsAnchored = 1,
+  HideMesh = 2
+}
+
+public class WaterVehicleController : BaseVehicleController, IWaterVehicleController
 {
   private VVShip _shipInstance;
 
-  public VVShip ShipInstance
+  public IVehicleShip ShipInstance
   {
     get => _shipInstance;
-    set => _shipInstance = InitializeShipValues(value);
   }
 
-  [Flags]
-  public enum MBFlags
-  {
-    None = 0,
-    IsAnchored = 1,
-    HideMesh = 2
-  }
+  public WaterVehicleController Instance => this;
 
   public bool isCreative = false;
 
   internal ShipStats m_shipStats = new ShipStats();
 
-  internal ZSyncTransform m_zsync;
+  public float m_targetHeight { get; set; }
 
-  public float m_targetHeight;
+  public WaterVehicleFlags VehicleFlags { get; set; }
+  public ZSyncTransform m_zsync { get; set; }
 
   public float m_balanceForce = 0.03f;
 
   public float m_liftForce = 20f;
 
-  public MBFlags m_flags;
   private bool _initialized = false;
   private ImpactEffect _impactEffect;
 
   /*
    * Must be called from
    */
-  private VVShip InitializeShipValues(VVShip vvShip)
+  public VVShip InitializeShipValues(VVShip vvShip)
   {
-    VehicleInstance = vvShip;
+    _shipInstance = vvShip;
 
     // connect vvShip properties to this gameobject
     m_nview = vvShip.GetComponent<ZNetView>();
@@ -78,6 +79,7 @@ public class WaterVehicleController : BaseVehicleController
     waterVehicleController = this;
     base.Awake();
     SentryUnityWrapperPlugin.BindToClient("zolantris.ValheimVehicles");
+    ZdoReadyStart();
   }
 
   public new void Start()
@@ -92,7 +94,6 @@ public class WaterVehicleController : BaseVehicleController
 
     // transform.localPosition = Vector3.zero;
     // transform.localScale = Vector3.one;
-    ZdoReadyStart();
 
     // if (!m_zsync || !m_nview || !shipInstance)
     // {
@@ -141,61 +142,13 @@ public class WaterVehicleController : BaseVehicleController
       delegate(long sender, bool state) { RPC_SetVisual(sender, state); });
     waterVehicleController = this;
 
-    Logger.LogDebug($"NVIEW ZDO {m_nview.m_zdo}");
-
-    UpdateVisual();
-
-    if (!m_onboardcollider)
-    {
-      // m_onboardcollider = new BoxCollider();
-      Logger.LogError(
-        $"ONBOARD COLLIDER {m_onboardcollider}, collider must not be null");
-    }
-
-    // var blockingCollider = ship.gameObject.AddComponent<BoxCollider>();
-    // blockingCollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
-    // m_blockingcollider = vehicleShip.m_blockingCollider;
-    // if ((bool)baseVehicle.m_blockingcollider)
-    // {
-    //   baseVehicle.m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
-    //   baseVehicle.m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    //   baseVehicle.m_blockingcollider.transform.localPosition = new Vector3(0f, 0.29f, 0f);
-    // }
-    // else
-    // {
-    //   Logger.LogError("No baseVehicle collider to update");
-    // }
-
-    // baseVehicle.m_blockingcollider = blockingCollider;
-    Logger.LogDebug($"Made it to 164");
     FirstTimeCreation();
-    // ActivatePendingPiecesCoroutine();
+    ActivatePendingPiecesCoroutine();
   }
-
-  // private void OnEnable()
-  // {
-  //   if (!_initialized)
-  //   {
-  //     return;
-  //   }
-  //
-  //   ZdoReadyStart();
-  // }
-
 
   public void UpdateVisual()
   {
-    if (m_nview.m_zdo != null)
-    {
-      m_flags = (MBFlags)m_nview.m_zdo.GetInt("MBFlags", (int)m_flags);
-      // var newTransform = m_flags.HasFlag(MBFlags.HideMesh) ? Vector3.zero : Vector3.one;
-      /*
-       * hide with vector transform instead of active change to prevent NRE spam.
-       * Previously these called gameobject SetActive(!m_flags.HasFlag(MBFlags.HideMesh));
-       */
-      // transform.Find("ship/visual").gameObject.transform.localScale = newTransform;
-      // transform.Find("interactive").gameObject.transform.localScale = newTransform;
-    }
+    Logger.LogWarning("UpdateVisual Called but no longer does anything");
   }
 
   public ShipStats GetShipStats()
@@ -208,10 +161,8 @@ public class WaterVehicleController : BaseVehicleController
    */
   private void FirstTimeCreation()
   {
-    //  && m_nview.GetZDO() != null
-    // Logger.LogDebug(
-    //   $"Calling FirstTimeCreation before getpiece check pieces count {GetPieceCount()}");
     var pieceCount = GetPieceCount();
+
     if (pieceCount != 0)
     {
       return;
@@ -221,8 +172,6 @@ public class WaterVehicleController : BaseVehicleController
     /*
      * @todo turn the original planks into a Prefab so boat floors can be larger
      */
-    // var floor = ZNetScene.instance.GetPrefab("wood_floor");
-
     var pt = transform.TransformPoint(new Vector3(0f,
       ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, 0f));
     var shipHullPrefab = PrefabController.prefabManager.GetPrefab(
@@ -248,77 +197,11 @@ public class WaterVehicleController : BaseVehicleController
       Logger.LogError("called destroy on obj, due to netview not existing");
       Destroy(obj);
     }
-
-    // GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
-    // var wnt = floor.GetComponent<WearNTear>();
-    // wnt.m_supports = true;
-    // wnt.m_support = 2000f;
-    // wnt.m_noSupportWear = true;
-    // wnt.m_noRoofWear = true;
-    // for (float x = -1f; x < 1.01f; x += 2f)
-    // {
-    //   for (float z = -2f; z < 2.01f; z += 2f)
-    //   {
-    //     Vector3 pt = transform.TransformPoint(new Vector3(x,
-    //       ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
-    //     var obj = Instantiate(floor, pt, transform.rotation);
-    //     ZNetView netview = obj.GetComponent<ZNetView>();
-    //     AddNewPiece(netview);
-    //   }
-    // }
-
-    // var netView = obj.GetComponent<ZNetView>();
-
-    // if (!(bool)netView)
-    // {
-    //   Logger.LogError("No netView for wood_floor initialized floor");
-    //   return;
-    // }
-    //
-    // if (netView.GetZDO() == null)
-    // {
-    //   Logger.LogError("No ZDO for wood_floor initialized floor");
-    //   return;
-    // }
-    //
-    // AddNewPiece(netView);
-
-    // for (float x = -1f; x < 1.01f; x += 2f)
-    // {
-    //   for (float z = -2f; z < 2.01f; z += 2f)
-    //   {
-    //     Vector3 pt = transform.TransformPoint(new Vector3(x,
-    //       ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
-    //     var obj = Instantiate(floor, pt, transform.rotation);
-    //     var wnt = obj.GetComponent<WearNTear>();
-    //     if ((bool)wnt)
-    //     {
-    //       wnt.m_noSupportWear = true;
-    //     }
-    //     else
-    //     {
-    //       Logger.LogError("No WNT for wood_floor initialized floor");
-    //     }
-    //
-    //     ZNetView netView = obj.GetComponent<ZNetView>();
-    //     if (!(bool)netView)
-    //     {
-    //       Logger.LogError("No netView for wood_floor initialized floor");
-    //     }
-    //
-    //     if (netView.GetZDO() == null)
-    //     {
-    //       Logger.LogError("No ZDO for wood_floor initialized floor");
-    //     }
-    //
-    //     AddNewPiece(netView);
-    //   }
-    // }
   }
 
-  internal void Ascend()
+  public void Ascend()
   {
-    if (m_flags.HasFlag(MBFlags.IsAnchored))
+    if (VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
     {
       SetAnchor(state: false);
     }
@@ -341,9 +224,9 @@ public class WaterVehicleController : BaseVehicleController
     m_nview.m_zdo.Set("MBTargetHeight", m_targetHeight);
   }
 
-  internal void Descent()
+  public void Descent()
   {
-    if (m_flags.HasFlag(MBFlags.IsAnchored))
+    if (VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
     {
       SetAnchor(state: false);
     }
@@ -384,18 +267,18 @@ public class WaterVehicleController : BaseVehicleController
     m_rigidbody.angularDrag = (flight ? 1f : 0f);
     m_rigidbody.drag = (flight ? 1f : 0f);
 
-    if ((bool)ShipInstance)
+    if ((bool)_shipInstance)
     {
-      ShipInstance.m_angularDamping = (flight ? 5f : 0.8f);
-      ShipInstance.m_backwardForce = 1f;
-      ShipInstance.m_damping = (flight ? 5f : 0.35f);
-      ShipInstance.m_dampingSideway = (flight ? 3f : 0.3f);
-      ShipInstance.m_force = 3f;
-      ShipInstance.m_forceDistance = 5f;
-      ShipInstance.m_sailForceFactor = (flight ? 0.2f : 0.05f);
-      ShipInstance.m_stearForce = (flight ? 0.2f : 1f);
-      ShipInstance.m_stearVelForceFactor = 1.3f;
-      ShipInstance.m_waterImpactDamage = 0f;
+      _shipInstance.m_angularDamping = (flight ? 5f : 0.8f);
+      _shipInstance.m_backwardForce = 1f;
+      _shipInstance.m_damping = (flight ? 5f : 0.35f);
+      _shipInstance.m_dampingSideway = (flight ? 3f : 0.3f);
+      _shipInstance.m_force = 3f;
+      _shipInstance.m_forceDistance = 5f;
+      _shipInstance.m_sailForceFactor = (flight ? 0.2f : 0.05f);
+      _shipInstance.m_stearForce = (flight ? 0.2f : 1f);
+      _shipInstance.m_stearVelForceFactor = 1.3f;
+      _shipInstance.m_waterImpactDamage = 0f;
       /*
        * this may be unstable and require a getter each time...highly doubt it though.
        */
@@ -413,15 +296,17 @@ public class WaterVehicleController : BaseVehicleController
     }
   }
 
-  internal void SetAnchor(bool state)
+  public void SetAnchor(bool state)
   {
     m_nview.InvokeRPC("SetAnchor", state);
   }
 
   public void RPC_SetAnchor(long sender, bool state)
   {
-    m_flags = (state ? (m_flags | MBFlags.IsAnchored) : (m_flags & ~MBFlags.IsAnchored));
-    m_nview.m_zdo.Set("MBFlags", (int)m_flags);
+    VehicleFlags = (state
+      ? (VehicleFlags | WaterVehicleFlags.IsAnchored)
+      : (VehicleFlags & ~WaterVehicleFlags.IsAnchored));
+    m_nview.m_zdo.Set("MBFlags", (int)VehicleFlags);
   }
 
   internal void SetVisual(bool state)
@@ -434,8 +319,10 @@ public class WaterVehicleController : BaseVehicleController
    */
   public void RPC_SetVisual(long sender, bool state)
   {
-    m_flags = (state ? (m_flags | MBFlags.HideMesh) : (m_flags & ~MBFlags.HideMesh));
-    m_nview.m_zdo.Set("MBFlags", (int)m_flags);
+    VehicleFlags = (state
+      ? (VehicleFlags | WaterVehicleFlags.HideMesh)
+      : (VehicleFlags & ~WaterVehicleFlags.HideMesh));
+    m_nview.m_zdo.Set("MBFlags", (int)VehicleFlags);
     UpdateVisual();
   }
 

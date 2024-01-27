@@ -91,12 +91,14 @@ public class Ship_Patch
         mb.m_baseRoot.m_rudderPieces.RemoveAt(i);
         i--;
       }
-      else if ((bool)rudder.m_wheel)
+      else if ((bool)rudder.wheelTransform)
       {
-        rudder.m_wheel.localRotation = Quaternion.Slerp(rudder.m_wheel.localRotation,
-          Quaternion.Euler(
-            __instance.m_rudderRotationMax * (0f - __instance.m_rudderValue) *
-            rudder.m_wheelRotationFactor, 0f, 0f), 0.5f);
+        if (rudder.wheelTransform != null)
+          rudder.wheelTransform.localRotation = Quaternion.Slerp(
+            rudder.wheelTransform.localRotation,
+            Quaternion.Euler(
+              __instance.m_rudderRotationMax * (0f - __instance.m_rudderValue) *
+              rudder.m_wheelRotationFactor, 0f, 0f), 0.5f);
       }
     }
   }

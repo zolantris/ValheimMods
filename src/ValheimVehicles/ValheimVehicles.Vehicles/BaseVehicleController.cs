@@ -19,8 +19,10 @@ namespace ValheimVehicles.Vehicles;
  *
  * Currently it must be initialized within a vehicle view IE VVShip or upcoming landvehicle instances.
  */
-public class BaseVehicleController : MonoBehaviour
+public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 {
+  public ZNetView m_nview { get; set; }
+
   public static readonly KeyValuePair<int, int> MBParentHash = ZDO.GetHashZDOID("MBParent");
 
   public static readonly int MBCharacterParentHash = "MBCharacterParent".GetStableHashCode();
@@ -52,8 +54,6 @@ public class BaseVehicleController : MonoBehaviour
   internal Rigidbody m_rigidbody;
   internal Rigidbody m_syncRigidbody;
 
-  internal ZNetView m_nview;
-
   internal List<ZNetView> m_pieces = new();
   internal List<ShipHullComponent> m_hullPieces = new();
 
@@ -84,7 +84,7 @@ public class BaseVehicleController : MonoBehaviour
 
   public float totalSailArea = 0f;
 
-  public IVehicleProperties? VehicleInstance { set; get; }
+  public IVehicleShip VehicleInstance { set; get; }
 
 /* end sail calcs  */
   private Vector2i m_sector;
@@ -1118,45 +1118,10 @@ public class BaseVehicleController : MonoBehaviour
       m_boardingRamps.Add(ramp);
     }
 
-    // todo most of this rudder stuff should be done within the component
     var rudder = netView.GetComponent<RudderComponent>();
     if ((bool)rudder)
     {
-      if (!rudder.valheimShipControls)
-      {
-        rudder.valheimShipControls =
-          rudder.gameObject.AddComponent<ValheimShipControls>();
-        if ((bool)rudder.valheimShipControls)
-        {
-          if (rudder.m_controls != null) Destroy(rudder.m_controls.gameObject);
-        }
-        // else m_controls could be set...but this can be skipped.
-      }
-
-
-      if (!rudder.m_wheel) rudder.m_wheel = netView.transform.Find("controls/wheel");
-
-      if ((bool)waterVehicleController && (bool)waterVehicleController.ShipInstance)
-      {
-        Logger.LogDebug($"Rudder binding to ship {waterVehicleController.ShipInstance.name}");
-      }
-      else
-      {
-        if (rudder.m_controls != null) Destroy(rudder.m_controls.gameObject);
-        Destroy(rudder);
-        Destroy(netView);
-        return;
-      }
-
-      if (rudder.valheimShipControls != null)
-      {
-        rudder.valheimShipControls.InitializeRudderWithShip(waterVehicleController.ShipInstance,
-          rudder);
-        waterVehicleController.ShipInstance.m_shipControlls = rudder.valheimShipControls;
-        rudder.valheimShipControls.enabled = true;
-      }
-
-      Logger.LogDebug("added rudder to BaseVehicle");
+      rudder.InitializeControls(netView, VehicleInstance);
       m_rudderPieces.Add(rudder);
     }
 

@@ -973,7 +973,7 @@ public class PrefabController : MonoBehaviour
     // rudder.valheimShipControls.m_attachAnimation = "Standing Torch Idle right";
     // rudder.valheimShipControls.m_detachOffset = new Vector3(0f, 0f, 0f);
 
-    rudder.m_wheel = mbRudderPrefab.transform.Find("controls/wheel");
+    rudder.wheelTransform = mbRudderPrefab.transform.Find("controls/wheel");
     rudder.UpdateSpokes();
 
     SetWearNTear(mbRudderPrefab);

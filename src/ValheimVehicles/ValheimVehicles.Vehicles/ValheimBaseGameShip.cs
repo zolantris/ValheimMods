@@ -234,7 +234,18 @@ public class ValheimBaseGameShip : MonoBehaviour
     }
   }
 
+  /*
+   * Valheim has method mispellings.
+   */
   public void ApplyControlls(Vector3 dir)
+  {
+    ApplyControls(dir);
+  }
+
+  /*
+   * The new method
+   */
+  public void ApplyControls(Vector3 dir)
   {
     bool flag = (double)dir.z > 0.5;
     bool flag2 = (double)dir.z < -0.5;
