@@ -8,8 +8,8 @@ public interface IRudderControls
 
   public IVehicleShip ShipInstance { get; }
 
-  public float m_maxUseRange { get; set; }
+  public float MaxUseRange { get; set; }
 
   // might be safer to directly make this a getter
-  public Transform m_attachPoint { get; set; }
+  public Transform AttachPoint { get; set; }
 }

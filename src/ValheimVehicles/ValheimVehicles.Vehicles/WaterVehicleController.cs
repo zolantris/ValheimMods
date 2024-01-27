@@ -25,12 +25,9 @@ public enum WaterVehicleFlags
 
 public class WaterVehicleController : BaseVehicleController, IWaterVehicleController
 {
-  private VVShip _shipInstance;
+  private VVShip? _vehicleInstance;
 
-  public IVehicleShip ShipInstance
-  {
-    get => _shipInstance;
-  }
+  public IVehicleShip? VehicleInstance => _vehicleInstance;
 
   public WaterVehicleController Instance => this;
 
@@ -53,9 +50,10 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
   /*
    * Must be called from
    */
-  public VVShip InitializeShipValues(VVShip vvShip)
+  public void InitializeShipValues(VVShip vvShip)
   {
-    _shipInstance = vvShip;
+    _vehicleInstance = vvShip;
+    base.VehicleInstance = VehicleInstance;
 
     // connect vvShip properties to this gameobject
     m_nview = vvShip.GetComponent<ZNetView>();
@@ -71,7 +69,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     SetColliders(vvShip.gameObject);
 
     _initialized = true;
-    return vvShip;
   }
 
   public new void Awake()
@@ -124,13 +121,13 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     // this may get called twice.
     GetPersistentID();
 
-    if (VehicleInstance == null)
+    if (base.VehicleInstance == null)
     {
       Logger.LogError(
         "No ShipInstance detected");
     }
 
-    if (VehicleInstance == null)
+    if (base.VehicleInstance == null)
     {
       Logger.LogError(
         "No VehicleInstance detected");
@@ -267,18 +264,18 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     m_rigidbody.angularDrag = (flight ? 1f : 0f);
     m_rigidbody.drag = (flight ? 1f : 0f);
 
-    if ((bool)_shipInstance)
+    if ((bool)_vehicleInstance)
     {
-      _shipInstance.m_angularDamping = (flight ? 5f : 0.8f);
-      _shipInstance.m_backwardForce = 1f;
-      _shipInstance.m_damping = (flight ? 5f : 0.35f);
-      _shipInstance.m_dampingSideway = (flight ? 3f : 0.3f);
-      _shipInstance.m_force = 3f;
-      _shipInstance.m_forceDistance = 5f;
-      _shipInstance.m_sailForceFactor = (flight ? 0.2f : 0.05f);
-      _shipInstance.m_stearForce = (flight ? 0.2f : 1f);
-      _shipInstance.m_stearVelForceFactor = 1.3f;
-      _shipInstance.m_waterImpactDamage = 0f;
+      _vehicleInstance.m_angularDamping = (flight ? 5f : 0.8f);
+      _vehicleInstance.m_backwardForce = 1f;
+      _vehicleInstance.m_damping = (flight ? 5f : 0.35f);
+      _vehicleInstance.m_dampingSideway = (flight ? 3f : 0.3f);
+      _vehicleInstance.m_force = 3f;
+      _vehicleInstance.m_forceDistance = 5f;
+      _vehicleInstance.m_sailForceFactor = (flight ? 0.2f : 0.05f);
+      _vehicleInstance.m_stearForce = (flight ? 0.2f : 1f);
+      _vehicleInstance.m_stearVelForceFactor = 1.3f;
+      _vehicleInstance.m_waterImpactDamage = 0f;
       /*
        * this may be unstable and require a getter each time...highly doubt it though.
        */
@@ -298,15 +295,19 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
   public void SetAnchor(bool state)
   {
+    m_nview.m_zdo.Set("MBFlags", (int)VehicleFlags);
     m_nview.InvokeRPC("SetAnchor", state);
   }
 
   public void RPC_SetAnchor(long sender, bool state)
   {
-    VehicleFlags = (state
-      ? (VehicleFlags | WaterVehicleFlags.IsAnchored)
-      : (VehicleFlags & ~WaterVehicleFlags.IsAnchored));
-    m_nview.m_zdo.Set("MBFlags", (int)VehicleFlags);
+    if (sender != Player.m_localPlayer.GetZDOID().UserID)
+    {
+      VehicleFlags = (state
+        ? (VehicleFlags | WaterVehicleFlags.IsAnchored)
+        : (VehicleFlags & ~WaterVehicleFlags.IsAnchored));
+      m_nview.m_zdo.Set("MBFlags", (int)VehicleFlags);
+    }
   }
 
   internal void SetVisual(bool state)

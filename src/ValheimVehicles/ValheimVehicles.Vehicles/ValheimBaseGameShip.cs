@@ -707,37 +707,37 @@ public class ValheimBaseGameShip : MonoBehaviour
         break;
     }
 
-    // Vector3 localScale = m_sailObject.transform.localScale;
-    // bool flag = Mathf.Abs(localScale.y - num) < 0.01f;
-    // if (!flag)
-    // {
-    // localScale.y = Mathf.MoveTowards(localScale.y, num, dt);
-    // m_sailObject.transform.localScale = localScale;
-    // }
+    Vector3 localScale = m_sailObject.transform.localScale;
+    bool flag = Mathf.Abs(localScale.y - num) < 0.01f;
+    if (!flag)
+    {
+      localScale.y = Mathf.MoveTowards(localScale.y, num, dt);
+      m_sailObject.transform.localScale = localScale;
+    }
 
-    // if ((bool)m_sailCloth)
-    // {
-    //   if (m_speed == Speed.Stop || m_speed == Speed.Slow || m_speed == Speed.Back)
-    //   {
-    //     if (flag && m_sailCloth.enabled)
-    //     {
-    //       m_sailCloth.enabled = false;
-    //     }
-    //   }
-    //   else if (flag)
-    //   {
-    //     if (!m_sailWasInPosition)
-    //     {
-    //       Utils.RecreateComponent(ref m_sailCloth);
-    //     }
-    //   }
-    //   else
-    //   {
-    //     m_sailCloth.enabled = true;
-    //   }
-    // }
-    //
-    // m_sailWasInPosition = flag;
+    if ((bool)m_sailCloth)
+    {
+      if (m_speed == Speed.Stop || m_speed == Speed.Slow || m_speed == Speed.Back)
+      {
+        if (flag && m_sailCloth.enabled)
+        {
+          m_sailCloth.enabled = false;
+        }
+      }
+      else if (flag)
+      {
+        if (!m_sailWasInPosition)
+        {
+          Utils.RecreateComponent(ref m_sailCloth);
+        }
+      }
+      else
+      {
+        m_sailCloth.enabled = true;
+      }
+    }
+
+    m_sailWasInPosition = flag;
   }
 
   internal void UpdateOwner()

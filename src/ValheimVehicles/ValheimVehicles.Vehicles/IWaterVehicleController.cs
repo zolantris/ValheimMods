@@ -10,6 +10,5 @@ public interface IWaterVehicleController : IBaseVehicleController
   public void SetAnchor(bool state);
   public void Descent();
   public void Ascend();
-  public IVehicleShip ShipInstance { get; }
   public WaterVehicleController Instance { get; }
 }

@@ -9,41 +9,47 @@ namespace ValheimVehicles.Vehicles;
 public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDoodadController,
   IRudderControls
 {
-  public IVehicleShip ShipInstance => _shipInstance;
-
-  private VVShip _shipInstance;
-  // public float m_maxUseRange = 10f;
-
+  public IVehicleShip ShipInstance { get; set; }
   // might be safer to directly make this a getter
   // public Transform m_attachPoint;
 
   public Vector3 m_detachOffset = new Vector3(0f, 0.5f, 0f);
 
   public string m_hoverText { get; set; }
-  public float m_maxUseRange { get; set; }
-  public Transform m_attachPoint { get; set; }
+  [SerializeField] private float maxUseRange = 10f;
+
+  public float MaxUseRange
+  {
+    get => maxUseRange;
+    set => maxUseRange = value;
+  }
+
+  public Transform AttachPoint { get; set; }
 
   public string m_attachAnimation = "Standing Torch Idle right";
   public ValheimShipControls m_lastUsedControls;
   public ZNetView m_nview;
 
+  private bool hasRegister = false;
+
   public void InitializeRudderWithShip(IVehicleShip ship, RudderComponent rudder)
   {
-    _shipInstance = ShipInstance.Instance;
-    _shipInstance.m_controlGuiPos = transform;
+    ShipInstance = ship;
+    ShipInstance.Instance.m_controlGuiPos = transform;
 
     var rudderAttachPoint = rudder.transform.Find("attachpoint");
     if (rudderAttachPoint != null)
     {
-      m_attachPoint = rudderAttachPoint.transform;
+      AttachPoint = rudderAttachPoint.transform;
     }
 
     m_nview = ship.Instance.GetComponent<ZNetView>();
-    if (m_nview != null)
+    if (m_nview != null && !hasRegister)
     {
       m_nview.Register<long>("RequestControl", RPC_RequestControl);
       m_nview.Register<long>("ReleaseControl", RPC_ReleaseControl);
       m_nview.Register<bool>("RequestRespons", RPC_RequestRespons);
+      hasRegister = true;
     }
   }
 
@@ -68,15 +74,16 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
         baseRoot.ComputeAllShipContainerItemWeight();
       }
 
-      if (baseVehicle)
+      if (baseVehicle != null)
       {
         baseVehicle.ComputeAllShipContainerItemWeight();
       }
 
       m_lastUsedControls = this;
-      if (_shipInstance != null)
+      if (ShipInstance.Instance != null)
       {
-        _shipInstance.m_controlGuiPos = transform;
+        ShipInstance.Instance.m_controlGuiPos = transform;
+        ShipInstance.Instance.ControlGuiPosition = transform;
       }
     }
 
@@ -113,7 +120,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   public Component GetControlledComponent()
   {
-    return _shipInstance;
+    return ShipInstance.Instance;
   }
 
   public Vector3 GetPosition()
@@ -123,15 +130,15 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run, bool autoRun, bool block)
   {
-    _shipInstance.ApplyControlls(moveDir);
+    ShipInstance.Instance.ApplyControls(moveDir);
   }
 
   public string GetHoverText()
   {
-    var controller = GetComponentInParent<WaterVehicleController>();
+    var controller = ShipInstance?.Controller?.Instance;
     if (controller == null)
     {
-      controller = GetComponent<WaterVehicleController>();
+      return "";
     }
 
     var shipStatsText = "";
@@ -216,9 +223,9 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     if (granted)
     {
       Player.m_localPlayer.StartDoodadControl(this);
-      if (m_attachPoint != null)
+      if (AttachPoint != null)
       {
-        Player.m_localPlayer.AttachStart(m_attachPoint, null, hideWeapons: false, isBed: false,
+        Player.m_localPlayer.AttachStart(AttachPoint, null, hideWeapons: false, isBed: false,
           onShip: true, m_attachAnimation, m_detachOffset);
       }
     }
@@ -233,7 +240,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     if (m_nview.IsValid())
     {
       m_nview.InvokeRPC("ReleaseControl", player.GetPlayerID());
-      if (m_attachPoint != null)
+      if (AttachPoint != null)
       {
         player.AttachStop();
       }
@@ -263,6 +270,6 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   private bool InUseDistance(Humanoid human)
   {
-    return Vector3.Distance(human.transform.position, m_attachPoint.position) < m_maxUseRange;
+    return Vector3.Distance(human.transform.position, AttachPoint.position) < MaxUseRange;
   }
 }

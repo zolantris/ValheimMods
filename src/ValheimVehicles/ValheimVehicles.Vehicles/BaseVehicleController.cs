@@ -84,7 +84,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public float totalSailArea = 0f;
 
-  public IVehicleShip VehicleInstance { set; get; }
+  public virtual IVehicleShip? VehicleInstance { set; get; }
 
 /* end sail calcs  */
   private Vector2i m_sector;

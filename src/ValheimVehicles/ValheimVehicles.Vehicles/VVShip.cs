@@ -30,7 +30,11 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
     set => m_floatcollider = value;
   }
 
-  public Transform ControlGuiPosition { get; set; }
+  public Transform ControlGuiPosition
+  {
+    get => m_controlGuiPos;
+    set => m_controlGuiPos = value;
+  }
 
   // private static readonly List<VVShip> s_currentShips = new();
 
@@ -54,6 +58,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
   {
     if (!(bool)m_nview || m_nview.GetZDO() == null || (bool)_waterVehicle) return;
 
+    enabled = true;
     Logger.LogDebug("Made it to InitializeWaterVehicleController");
 
     var ladders = GetComponentsInChildren<Ladder>();
@@ -65,10 +70,10 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
       layer = 0
     };
     _controller = gameObject.AddComponent<WaterVehicleController>();
-    _controller.InitializeShipValues(this);
+    _controller.InitializeShipValues(Instance);
 
     _controller.transform.SetParent(_waterVehicle.transform);
-    _controller.ActivatePendingPiecesCoroutine();
+    // _controller.ActivatePendingPiecesCoroutine();
 
     // waterVehicle must exist as it's own top level object
     _waterVehicle.transform.SetParent(null);
@@ -103,7 +108,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
   // }
   public void FixedUpdate()
   {
-    if ((bool)_controller || !(bool)m_body || !(bool)m_floatcollider)
+    if (!(bool)_controller || !(bool)m_body || !(bool)m_floatcollider)
     {
       return;
     }
@@ -137,7 +142,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
    */
   public void ValheimRaftCustomFixedUpdate()
   {
-    if (!_controller || !m_nview || m_nview.m_zdo == null) return;
+    if (!(bool)_controller || !(bool)m_nview || m_nview.m_zdo == null) return;
 
     /*
      * creative mode should not allows movement and applying force on a object will cause errors when the object is kinematic
@@ -161,7 +166,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
     var flag = HaveControllingPlayer();
 
     UpdateControls(Time.fixedDeltaTime);
-    UpdateSail(Time.fixedDeltaTime);
+    // UpdateSail(Time.fixedDeltaTime);
     UpdateRudder(Time.fixedDeltaTime, flag);
     if (m_players.Count == 0 ||
         _controller.VehicleFlags.HasFlag(WaterVehicleFlags

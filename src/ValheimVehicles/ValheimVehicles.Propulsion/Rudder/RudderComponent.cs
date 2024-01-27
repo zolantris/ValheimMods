@@ -42,8 +42,14 @@ public class RudderComponent : MonoBehaviour
 
   private Transform m_targetRightHand;
 
-  public void InitializeControls(ZNetView netView, IVehicleShip vehicleShip)
+  public void InitializeControls(ZNetView netView, IVehicleShip? vehicleShip)
   {
+    if (vehicleShip == null)
+    {
+      Logger.LogError("Initialized called with null vehicleShip");
+      return;
+    }
+
     ShipInstance = vehicleShip;
     if (!(bool)_controls)
     {
@@ -66,7 +72,7 @@ public class RudderComponent : MonoBehaviour
 
     if (Controls != null)
     {
-      _controls.InitializeRudderWithShip(ShipInstance,
+      _controls.InitializeRudderWithShip(vehicleShip,
         this);
       ShipInstance = vehicleShip;
       _controls.enabled = true;

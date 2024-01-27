@@ -274,7 +274,7 @@ public class Player_Patch
               Logger.LogDebug("Anchor button is down setting anchor");
               waterVehicleController.SetAnchor(
                 !waterVehicleController.VehicleFlags.HasFlag(
-                  MoveableBaseShipComponent.MBFlags.IsAnchored));
+                  WaterVehicleFlags.IsAnchored));
             }
             else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
             {
