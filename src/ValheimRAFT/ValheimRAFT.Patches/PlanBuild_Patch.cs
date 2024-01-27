@@ -11,7 +11,7 @@ using Logger = Jotunn.Logger;
 namespace ValheimRAFT.Patches;
 
 [HarmonyPatch]
-public class PlanBuildPatch
+public class PlanBuild_Patch
 {
   // [HarmonyPatch(typeof(PlanPiece), "CanCreatePlan")]
   // [HarmonyPrefix]
@@ -53,7 +53,7 @@ public class PlanBuildPatch
         list2.Add(gameObject.transform.position);
         if (!keepMarkers)
         {
-          WearNTear component = gameObject.GetComponent<WearNTear>();
+          WearNTear_Patch component = gameObject.GetComponent<WearNTear_Patch>();
           component.Remove();
         }
 
@@ -74,7 +74,7 @@ public class PlanBuildPatch
 
         if (!keepMarkers)
         {
-          WearNTear component2 = gameObject.GetComponent<WearNTear>();
+          WearNTear_Patch component2 = gameObject.GetComponent<WearNTear_Patch>();
           component2.Remove();
         }
 
@@ -93,7 +93,7 @@ public class PlanBuildPatch
         list3.Add(item);
         if (!keepMarkers)
         {
-          WearNTear component3 = gameObject.GetComponent<WearNTear>();
+          WearNTear_Patch component3 = gameObject.GetComponent<WearNTear_Patch>();
           component3.Remove();
         }
 

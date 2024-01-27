@@ -20,6 +20,13 @@ internal static class PatchController
     Harmony.PatchAll(typeof(Plantable_Patch));
     Harmony.PatchAll(typeof(Teleport_Patch));
     Harmony.PatchAll(typeof(ValheimRAFT_Patch));
+    Harmony.PatchAll(typeof(Ship_Patch));
+    Harmony.PatchAll(typeof(ShipControls_Patch));
+    Harmony.PatchAll(typeof(WearNTear_Patch));
+    Harmony.PatchAll(typeof(Character_Patch));
+    Harmony.PatchAll(typeof(ZDO_Patch));
+    Harmony.PatchAll(typeof(ZNetView_Patch));
+    Harmony.PatchAll(typeof(Player_Patch));
 
     /*
      * PlanBuild uses mmmHookgen so it cannot be detected with bepinex
@@ -33,7 +40,7 @@ internal static class PatchController
          Directory.Exists(Path.Combine(Paths.PluginPath, "PlanBuild"))))
     {
       Logger.LogInfo("Applying PlanBuild Patch");
-      Harmony.PatchAll(typeof(PlanBuildPatch));
+      Harmony.PatchAll(typeof(PlanBuild_Patch));
     }
   }
 }

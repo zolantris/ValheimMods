@@ -27,7 +27,7 @@ public class Plantable_Patch
 
       List<Label> labels = list[i - 2].ExtractLabels();
       object pieceLocalIndex = null;
-      MethodInfo rayPieceMethod = AccessTools.Method(typeof(Player), "PieceRayTest");
+      MethodInfo rayPieceMethod = AccessTools.Method(typeof(Player), nameof(Player.PieceRayTest));
       for (int j = 0; j < list.Count; j++)
       {
         if (list[j].Calls(rayPieceMethod) && list[j - 4].IsLdloc())
