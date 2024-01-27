@@ -16,6 +16,8 @@ TagManager:
   - depthmask
   - 
   - 
+  - character
+  - piece
   - 
   - 
   - 
@@ -33,9 +35,7 @@ TagManager:
   - 
   - 
   - 
-  - 
-  - 
-  - 
+  - Vehicle
   - CustomVehicleLayer
   - 
   - 
