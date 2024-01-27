@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2547471668
+CRC: 34835342
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 787c25f875e39517ab2dec9f2eb382d2
+    Hash: 2bfb5e1d61706a08611d55eb89982f59
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 6aa3da45dcf459bd3cbb16ea89ca6092
+    Hash: 9529d16844debc0839dbcbdf96acbb7a
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 787c25f875e39517ab2dec9f2eb382d2
+    Hash: 2bfb5e1d61706a08611d55eb89982f59
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -48,6 +48,8 @@ ClassTypes:
   Script: {fileID: 11500000, guid: d199490a83bb2b844b9695cbf13b01ef, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 6b1e9a42ce9c74942a22e45748552f44, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
 - Class: 114
@@ -115,6 +117,8 @@ Assets:
 - Assets/rope_ladder.prefab
 - Assets/steering_wheel.prefab
 - Assets/raftmast.png
+- Assets/ship_hull.prefab
+- Assets/VehicleShip.prefab
 - Assets/edit_texture_panel.prefab
 - Assets/boarding_ramp.prefab
 - Assets/rope_anchor.prefab
