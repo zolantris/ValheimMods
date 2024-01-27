@@ -491,10 +491,13 @@ public class PrefabController : MonoBehaviour
     // var shipHullPiece = shipHullInstance.GetComponent<Piece>();
     // waterVehicleController.AddNewPiece(shipHullPiece);
 
-    var shipControlsGui = waterVehiclePrefab.AddComponent<Transform>();
-    shipControlsGui.SetParent(waterVehiclePrefab.transform);
-    shipControlsGui.localPosition = new Vector3(2.154f, 1.027f, -2.162f);
-    shipInstance.m_controlGuiPos = shipControlsGui;
+    var shipControlsGui = new GameObject
+      { name = "ControlGui", layer = 0 };
+    var shipControlsGuiInstance = Instantiate(shipControlsGui,
+      waterVehiclePrefab.transform);
+    shipControlsGui.transform.SetParent(waterVehiclePrefab.transform);
+    shipControlsGui.transform.localPosition = new Vector3(2.154f, 1.027f, -2.162f);
+    shipInstance.m_controlGuiPos = shipControlsGuiInstance.transform;
 
     var piece = waterVehiclePrefab.AddComponent<Piece>();
     piece.m_waterPiece = true;
