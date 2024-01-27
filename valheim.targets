@@ -342,8 +342,8 @@
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).mdb&quot;"/>
 
         <Exec Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i" />
-        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath\&quot; /q /s /y /i" />
-        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath\&quot; /q /s /y /i" />
+        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i" />
+        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i" />
         
         <Exec Condition="Exists('$(PluginDeployPath)\Assets\')" Command="xcopy /d &quot;.\Assets&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
     </Target>
