@@ -316,4 +316,37 @@ public class Player_Patch
 
     return true;
   }
+
+  [HarmonyPatch(typeof(Player), "UpdatePlacementGhost")]
+  [HarmonyTranspiler]
+  private static IEnumerable<CodeInstruction> UpdatePlacementGhost(
+    IEnumerable<CodeInstruction> instructions)
+  {
+    var list = instructions.ToList();
+    for (var i = 0; i < list.Count; i++)
+      if (list[i].Calls(AccessTools.Method(typeof(Quaternion), "Euler", new[]
+          {
+            typeof(float),
+            typeof(float),
+            typeof(float)
+          })))
+        list[i] = new CodeInstruction(OpCodes.Call,
+          AccessTools.Method(typeof(Player_Patch), nameof(RelativeEuler)));
+    return list;
+  }
+
+  private static Quaternion RelativeEuler(float x, float y, float z)
+  {
+    var rot = Quaternion.Euler(x, y, z);
+    if (!PatchSharedData.PlayerLastRayPiece) return rot;
+    var mbr = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
+    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<BaseVehicleController>();
+    if (!mbr && !bvc) return rot;
+    if (bvc)
+    {
+      return bvc.transform.rotation * rot;
+    }
+
+    return mbr.transform.rotation * rot;
+  }
 }

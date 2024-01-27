@@ -12,21 +12,22 @@ internal static class PatchController
 {
   public static string PlanBuildGUID = "marcopogo.PlanBuild";
 
-  private static Harmony Harmony;
+  private static Harmony? Harmony;
 
   internal static void Apply(string harmonyGuid)
   {
     Harmony = new Harmony(harmonyGuid);
+    Harmony.PatchAll(typeof(Character_Patch));
+    Harmony.PatchAll(typeof(CharacterAnimEvent_Patch));
     Harmony.PatchAll(typeof(Plantable_Patch));
-    Harmony.PatchAll(typeof(Teleport_Patch));
+    Harmony.PatchAll(typeof(Player_Patch));
     Harmony.PatchAll(typeof(Ship_Patch));
     Harmony.PatchAll(typeof(ShipControls_Patch));
+    Harmony.PatchAll(typeof(Teleport_Patch));
     Harmony.PatchAll(typeof(WearNTear_Patch));
-    Harmony.PatchAll(typeof(Character_Patch));
     Harmony.PatchAll(typeof(ZDO_Patch));
+    Harmony.PatchAll(typeof(ZNetScene_Patch));
     Harmony.PatchAll(typeof(ZNetView_Patch));
-    Harmony.PatchAll(typeof(Player_Patch));
-
     /*
      * PlanBuild uses mmmHookgen so it cannot be detected with bepinex
      *

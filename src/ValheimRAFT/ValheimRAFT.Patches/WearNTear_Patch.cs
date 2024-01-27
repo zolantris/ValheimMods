@@ -80,7 +80,7 @@ public class WearNTear_Patch
       if (list[i].Calls(AccessTools.PropertyGetter(typeof(Collider), "attachedRigidbody")))
       {
         list[i] = new CodeInstruction(OpCodes.Call,
-          AccessTools.Method(typeof(WearNTear),
+          AccessTools.Method(typeof(WearNTear_Patch),
             nameof(AttachRigidbodyMovableBase)));
         break;
       }
@@ -113,38 +113,5 @@ public class WearNTear_Patch
     var bvc = rb.GetComponent<BaseVehicleController>();
     if ((bool)mbr || bvc) return null;
     return rb;
-  }
-
-  [HarmonyPatch(typeof(Player), "UpdatePlacementGhost")]
-  [HarmonyTranspiler]
-  private static IEnumerable<CodeInstruction> UpdatePlacementGhost(
-    IEnumerable<CodeInstruction> instructions)
-  {
-    var list = instructions.ToList();
-    for (var i = 0; i < list.Count; i++)
-      if (list[i].Calls(AccessTools.Method(typeof(Quaternion), "Euler", new[]
-          {
-            typeof(float),
-            typeof(float),
-            typeof(float)
-          })))
-        list[i] = new CodeInstruction(OpCodes.Call,
-          AccessTools.Method(typeof(WearNTear_Patch), nameof(RelativeEuler)));
-    return list;
-  }
-
-  private static Quaternion RelativeEuler(float x, float y, float z)
-  {
-    var rot = Quaternion.Euler(x, y, z);
-    if (!PatchSharedData.PlayerLastRayPiece) return rot;
-    var mbr = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
-    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<BaseVehicleController>();
-    if (!mbr && !bvc) return rot;
-    if (bvc)
-    {
-      return bvc.transform.rotation * rot;
-    }
-
-    return mbr.transform.rotation * rot;
   }
 }

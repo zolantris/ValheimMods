@@ -11,7 +11,11 @@ public static class PatchSharedData
   // public static Dictionary<string, Piece> PlayerLastRayPiece = new();
   public static Piece PlayerLastRayPiece;
 
-  public static float YawOffset;
+  /*
+   * todo remove this
+   * not used, probably can removed unless the yawoffset is needed for piece placing
+   */
+  public static readonly float YawOffset = 0f;
 
   public static ShipControlls PlayerLastUsedControls;
   // public static Dictionary<string, ShipControlls> PlayerLastUsedControls;
