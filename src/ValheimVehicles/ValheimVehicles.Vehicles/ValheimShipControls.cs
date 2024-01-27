@@ -9,7 +9,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 {
   public string m_hoverText = "";
 
-  public VVShip mVehicleShip;
+  public VVShip ShipInstance;
 
   public float m_maxUseRange = 10f;
 
@@ -50,7 +50,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
       }
 
       m_lastUsedControls = this;
-      mVehicleShip.m_controlGuiPos.position = transform.position;
+      ShipInstance.m_controlGuiPos.position = transform.position;
     }
 
     if (repeat)
@@ -74,7 +74,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
       return false;
     }
 
-    if ((player.GetStandingOnShip() as object) as VVShip != mVehicleShip)
+    if ((player.GetStandingOnShip() as object) as VVShip != ShipInstance)
     {
       Logger.LogDebug("Player is not on VVShip");
       return false;
@@ -86,7 +86,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   public Component GetControlledComponent()
   {
-    return mVehicleShip;
+    return ShipInstance;
   }
 
   public Vector3 GetPosition()
@@ -96,7 +96,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run, bool autoRun, bool block)
   {
-    mVehicleShip.ApplyControlls(moveDir);
+    ShipInstance.ApplyControlls(moveDir);
   }
 
   public string GetHoverText()
@@ -151,7 +151,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   private void RPC_RequestControl(long sender, long playerID)
   {
-    if (m_nview.IsOwner() && mVehicleShip.IsPlayerInBoat(playerID))
+    if (m_nview.IsOwner() && ShipInstance.IsPlayerInBoat(playerID))
     {
       if (GetUser() == playerID || !HaveValidUser())
       {
@@ -218,7 +218,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     long user = GetUser();
     if (user != 0L)
     {
-      return mVehicleShip.IsPlayerInBoat(user);
+      return ShipInstance.IsPlayerInBoat(user);
     }
 
     return false;

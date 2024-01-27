@@ -53,6 +53,11 @@ public abstract class ShipHulls
     return $"{prefabMaterialSegment}{prefabOrientationSegment}";
   }
 
+  public static string GetHullPrefabName(string hullMaterial, HullOrientation hullOrientation)
+  {
+    return $"vv_ship_hull_{GetVanillaPrefab(hullMaterial, hullOrientation)}";
+  }
+
   public static string GetHullTranslations(string hullMaterial, HullOrientation hullOrientation)
   {
     if (hullMaterial == HullMaterial.CoreWood)
@@ -63,6 +68,6 @@ public abstract class ShipHulls
       }
     }
 
-    return "Ship Hull, WIP name";
+    return "$mb_ship_hull_corewood_0";
   }
 }

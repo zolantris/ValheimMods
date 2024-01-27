@@ -93,8 +93,8 @@ public class BaseVehicleController : MonoBehaviour
   public int m_id;
   public bool m_statsOverride;
   private static bool itemsRemovedDuringWait;
-  internal Coroutine pendingPiecesCoroutine;
-  private Coroutine server_UpdatePiecesCoroutine;
+  private Coroutine? _pendingPiecesCoroutine;
+  private Coroutine? _serverUpdatePiecesCoroutine;
 
   public void SetColliders(GameObject vehicleInstance)
   {
@@ -173,7 +173,7 @@ public class BaseVehicleController : MonoBehaviour
      */
     if (ZNet.instance.IsDedicated())
     {
-      server_UpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
+      _serverUpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
   }
 
@@ -195,19 +195,18 @@ public class BaseVehicleController : MonoBehaviour
 
   private void OnDisable()
   {
-    if (server_UpdatePiecesCoroutine != null)
+    if (_serverUpdatePiecesCoroutine != null)
     {
-      StopCoroutine(server_UpdatePiecesCoroutine);
+      StopCoroutine(_serverUpdatePiecesCoroutine);
     }
   }
 
   private void OnEnable()
   {
     GetPersistentID();
-    ActivatePendingPiecesCoroutine();
     if (ZNet.instance.IsDedicated())
     {
-      server_UpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
+      _serverUpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
   }
 
@@ -218,16 +217,20 @@ public class BaseVehicleController : MonoBehaviour
 
   public void CleanUp()
   {
-    if (pendingPiecesCoroutine != null)
+    if (_pendingPiecesCoroutine != null)
     {
-      StopCoroutine(pendingPiecesCoroutine);
+      StopCoroutine(_pendingPiecesCoroutine);
+    }
+
+    if (_serverUpdatePiecesCoroutine != null)
+    {
+      StopCoroutine(_serverUpdatePiecesCoroutine);
     }
 
     if (!ZNetScene.instance || m_id == 0) return;
 
-    for (var i = 0; i < m_pieces.Count; i++)
+    foreach (var piece in m_pieces)
     {
-      var piece = m_pieces[i];
       if ((bool)piece)
       {
         piece.transform.SetParent(null);
@@ -245,6 +248,7 @@ public class BaseVehicleController : MonoBehaviour
   {
     if ((bool)m_syncRigidbody && (bool)m_rigidbody)
     {
+      m_syncRigidbody.mass = Math.Max(TotalMass, 2000f);
       m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
       m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
     }
@@ -306,12 +310,12 @@ public class BaseVehicleController : MonoBehaviour
 
   public void ServerSyncAllPieces()
   {
-    if (server_UpdatePiecesCoroutine != null)
+    if (_serverUpdatePiecesCoroutine != null)
     {
-      StopCoroutine(server_UpdatePiecesCoroutine);
+      StopCoroutine(_serverUpdatePiecesCoroutine);
     }
 
-    server_UpdatePiecesCoroutine = StartCoroutine(UpdatePiecesInEachSectorWorker());
+    _serverUpdatePiecesCoroutine = StartCoroutine(UpdatePiecesInEachSectorWorker());
   }
 
 
@@ -373,7 +377,7 @@ public class BaseVehicleController : MonoBehaviour
       /*
        * wait for the pending pieces coroutine to complete before updating
        */
-      if (pendingPiecesCoroutine != null) yield return pendingPiecesCoroutine;
+      if (_pendingPiecesCoroutine != null) yield return _pendingPiecesCoroutine;
 
       var time = Time.realtimeSinceStartup;
       var output = m_allPieces.TryGetValue(m_id, out var list);
@@ -626,7 +630,8 @@ public class BaseVehicleController : MonoBehaviour
     RemovePiece(netview);
     UpdatePieceCount();
     totalSailArea = 0f;
-    if (GetPieceCount() == 0)
+    var pieceCount = GetPieceCount();
+    if (pieceCount == 0)
     {
       var wntShip = vehicleController.GetComponent<WearNTear>();
       if ((bool)wntShip) wntShip.Destroy();
@@ -652,14 +657,12 @@ public class BaseVehicleController : MonoBehaviour
     if (hasDebug)
       Logger.LogDebug(
         $"ActivatePendingPiecesCoroutine(): pendingPieces count: {m_pendingPieces.Count}");
-    if (pendingPiecesCoroutine != null)
+    if (_pendingPiecesCoroutine != null)
     {
-      // StopCoroutine(pendingPiecesCoroutine);
+      StopCoroutine(_pendingPiecesCoroutine);
     }
-    else
-    {
-      pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
-    }
+
+    _pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
   }
 
   public IEnumerator ActivatePendingPieces()
@@ -1114,9 +1117,20 @@ public class BaseVehicleController : MonoBehaviour
 
       if (!rudder.m_wheel) rudder.m_wheel = netView.transform.Find("controls/wheel");
 
-      var ship = vehicleController.GetComponent<VVShip>();
-      Logger.LogDebug($"Rudder binding to ship {ship.name}");
-      rudder.valheimShipControls.mVehicleShip = ship;
+      var ship = vehicleController.ShipInstance;
+      if ((bool)ship)
+      {
+        Logger.LogDebug($"Rudder binding to ship {ship.name}");
+      }
+      else
+      {
+        Destroy(rudder.m_controls.gameObject);
+        Destroy(rudder);
+        Destroy(netView);
+        return;
+      }
+
+      rudder.valheimShipControls.ShipInstance = ship;
       ship.m_shipControlls = rudder.valheimShipControls;
 
       if (rudder.m_controls != null)

@@ -57,6 +57,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleProperties
 
     _controller = _waterVehicle.AddComponent<WaterVehicleController>();
     _controller.ShipInstance = this;
+    _controller.ActivatePendingPiecesCoroutine();
 
     // waterVehicle must exist as it's own top level object
     _waterVehicle.transform.SetParent(null);

@@ -47,6 +47,7 @@ public class WaterVehicleController : BaseVehicleController
 
   public MBFlags m_flags;
   private bool _initialized = false;
+  // private ImpactEffect _impactEffect;
 
   /*
    * Must be called from
@@ -59,9 +60,10 @@ public class WaterVehicleController : BaseVehicleController
     m_nview = vvShip.GetComponent<ZNetView>();
     m_zsync = vvShip.GetComponent<ZSyncTransform>();
     m_syncRigidbody = vvShip.GetComponent<Rigidbody>();
+    // _impactEffect = vvShip.GetComponent<ImpactEffect>();
 
     // prevent mass from being set lower than 20f;
-    m_syncRigidbody.mass = Math.Max(TotalMass, 20f);
+    m_syncRigidbody.mass = Math.Max(TotalMass, 2000f);
 
 
     SetColliders(vvShip.gameObject);
@@ -166,6 +168,7 @@ public class WaterVehicleController : BaseVehicleController
     // baseVehicle.m_blockingcollider = blockingCollider;
     Logger.LogDebug($"Made it to 164");
     FirstTimeCreation();
+    // ActivatePendingPiecesCoroutine();
   }
 
   // private void OnEnable()
@@ -205,9 +208,10 @@ public class WaterVehicleController : BaseVehicleController
   private void FirstTimeCreation()
   {
     //  && m_nview.GetZDO() != null
-    Logger.LogDebug(
-      $"Calling FirstTimeCreation before getpiece check pieces count {GetPieceCount()}");
-    if (GetPieceCount() != 0)
+    // Logger.LogDebug(
+    //   $"Calling FirstTimeCreation before getpiece check pieces count {GetPieceCount()}");
+    var pieceCount = GetPieceCount();
+    if (pieceCount != 0)
     {
       return;
     }
@@ -218,28 +222,49 @@ public class WaterVehicleController : BaseVehicleController
      */
     // var floor = ZNetScene.instance.GetPrefab("wood_floor");
 
-    // var shipHullPrefab = PrefabController.prefabManager.GetPrefab(
-    //   PrefabController.GetHullPrefabName(ShipHulls.HullMaterial.CoreWood,
-    //     ShipHulls.HullOrientation.Horizontal));
-    // var obj = Instantiate(shipHullPrefab);
-
-    GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
-    var wnt = floor.GetComponent<WearNTear>();
-    wnt.m_supports = true;
-    wnt.m_support = 2000f;
-    wnt.m_noSupportWear = true;
-    wnt.m_noRoofWear = true;
-    for (float x = -1f; x < 1.01f; x += 2f)
+    var pt = transform.TransformPoint(new Vector3(0f,
+      ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, 0f));
+    var shipHullPrefab = PrefabController.prefabManager.GetPrefab(
+      ShipHulls.GetHullPrefabName(ShipHulls.HullMaterial.CoreWood,
+        ShipHulls.HullOrientation.Horizontal));
+    var obj = Instantiate(shipHullPrefab, pt, transform.rotation);
+    var wnt = obj.GetComponent<WearNTear>();
+    if ((bool)wnt)
     {
-      for (float z = -2f; z < 2.01f; z += 2f)
-      {
-        Vector3 pt = transform.TransformPoint(new Vector3(x,
-          ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
-        var obj = Instantiate(floor, pt, transform.rotation);
-        ZNetView netview = obj.GetComponent<ZNetView>();
-        AddNewPiece(netview);
-      }
+      wnt.m_supports = true;
+      wnt.m_support = 2000f;
+      wnt.m_noSupportWear = true;
+      wnt.m_noRoofWear = true;
     }
+
+    var netView = obj.GetComponent<ZNetView>();
+    if (netView)
+    {
+      AddNewPiece(netView);
+    }
+    else
+    {
+      Logger.LogError("called destroy on obj, due to netview not existing");
+      Destroy(obj);
+    }
+
+    // GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
+    // var wnt = floor.GetComponent<WearNTear>();
+    // wnt.m_supports = true;
+    // wnt.m_support = 2000f;
+    // wnt.m_noSupportWear = true;
+    // wnt.m_noRoofWear = true;
+    // for (float x = -1f; x < 1.01f; x += 2f)
+    // {
+    //   for (float z = -2f; z < 2.01f; z += 2f)
+    //   {
+    //     Vector3 pt = transform.TransformPoint(new Vector3(x,
+    //       ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
+    //     var obj = Instantiate(floor, pt, transform.rotation);
+    //     ZNetView netview = obj.GetComponent<ZNetView>();
+    //     AddNewPiece(netview);
+    //   }
+    // }
 
     // var netView = obj.GetComponent<ZNetView>();
 
@@ -370,12 +395,14 @@ public class WaterVehicleController : BaseVehicleController
       ShipInstance.m_stearForce = (flight ? 0.2f : 1f);
       ShipInstance.m_stearVelForceFactor = 1.3f;
       ShipInstance.m_waterImpactDamage = 0f;
-      ImpactEffect impact = ShipInstance.GetComponent<ImpactEffect>();
-      if ((bool)impact)
+      // ImpactEffect impact = ShipInstance.GetComponent<ImpactEffect>();
+      var _impactEffect = ShipInstance.GetComponent<ImpactEffect>();
+
+      if ((bool)_impactEffect)
       {
-        impact.m_interval = 0.1f;
-        impact.m_minVelocity = 0.1f;
-        impact.m_damages.m_damage = 100f;
+        _impactEffect.m_interval = 0.1f;
+        _impactEffect.m_minVelocity = 0.1f;
+        _impactEffect.m_damages.m_damage = 100f;
       }
       else
       {

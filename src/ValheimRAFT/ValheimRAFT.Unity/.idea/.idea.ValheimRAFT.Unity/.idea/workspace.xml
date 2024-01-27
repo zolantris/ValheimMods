@@ -5,79 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9eb05097-9d84-4b87-8e9a-0e73fcf3150e" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/projectSettingsUpdater.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_AlphaParticle.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Blob.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Bonemass.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Clouds.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Creature.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Decal.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Distortion.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Flow.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_FlowOpaque.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Gradient Mapped Particle (Unlit).shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Grass.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_GuiScroll.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Heightmap.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_InteriorSide.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_LitGui.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_LitParticles.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_ParticleDecal.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Piece.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Player.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Rug.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_ShadowBlob.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_SkyObject.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_SkyboxProcedural.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Smoke Balls.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_StaticRock.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Tar.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Trilinearmap.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_UI_BGBlur.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Vegetation.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Water.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_WaterBottom.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_WaterMask.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Yggdrasil.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Yggdrasil_root.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_icon.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_mapshader.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Hidden_BlitCopyHDRTonemap.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Hidden_Dof_DX11Dof.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Hidden_Dof_DepthOfFieldHdr.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Hidden_RadialCutoutShader.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Hidden_RadialCutoutShader_0.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Hidden_RadialSegementShader.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Hidden_SimpleClear.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Hidden_SunShaftsComposite.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Lux Lit Particles_ Bumped.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Lux Lit Particles_ Tess Bumped.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Particles_Standard Surface2.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Particles_Standard Unlit2.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Standard TwoSided.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/TextMeshPro_Distance Field (Surface).shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/TextMeshPro_Distance Field.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/TextMeshPro_Distance Field_0.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/TextMeshPro_Mobile_Distance Field.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/TextMeshPro_Mobile_Distance Field_0.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/TextMeshPro_Sprite.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/ToonDeferredShading2017.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Unlit_DepthWrite.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Unlit_Lighting.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/JVLSailShader.shader" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/VehicleShip.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/SailMat.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SailMat.mat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/SailShader.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SailShader.shader" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/TagManager.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/TagManager.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../ValheimRAFT/PrefabController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/PrefabController.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Ship/ShipHulls.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Ship/ShipHulls.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/BaseVehicleController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/BaseVehicleController.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VVShip.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VVShip.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/ValheimBaseGameShip.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/ValheimBaseGameShip.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/ValheimShipControls.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/ValheimShipControls.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/WaterVehicleController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/WaterVehicleController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../valheim.targets" beforeDir="false" afterPath="$PROJECT_DIR$/../../../valheim.targets" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -90,35 +25,35 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/../../../../../../../../Program Files/Unity/Hub/Editor/2022.3.12f1/Editor/Data/CGIncludes/UnityInstancing.cginc" root0="SKIP_HIGHLIGHTING" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 2
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 2
+}</component>
   <component name="ProjectId" id="2bTykWCw8onDDR3IjvOVjMC3AZr" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "feat/decouple-ship-logic-from-raft",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feat/decouple-ship-logic-from-raft&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "rider.external.source.directories": [
-      "C:\\Users\\fre\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\DecompilerCache",
-      "C:\\Users\\fre\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\SourcesCache",
-      "C:\\Users\\fre\\AppData\\Local\\Symbols\\src"
+  &quot;keyToStringList&quot;: {
+    &quot;rider.external.source.directories&quot;: [
+      &quot;C:\\Users\\fre\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\DecompilerCache&quot;,
+      &quot;C:\\Users\\fre\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\SourcesCache&quot;,
+      &quot;C:\\Users\\fre\\AppData\\Local\\Symbols\\src&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
     <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
       <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\2022.3.12f1\Editor\Unity.exe" />

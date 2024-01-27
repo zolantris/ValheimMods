@@ -126,8 +126,6 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal float m_rudderPaddleTimer;
 
-  internal WaterVehicleController CachedVehicleController;
-
   public static List<ValheimBaseGameShip> Instances { get; } = new();
 
   public virtual void OnEnable()
