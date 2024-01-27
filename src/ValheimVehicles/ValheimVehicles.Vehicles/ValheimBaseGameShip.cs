@@ -37,7 +37,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public ValheimShipControls m_shipControlls;
 
-  public Transform m_controlGuiPos;
+  public Transform? m_controlGuiPos;
 
   public BoxCollider m_floatcollider = new BoxCollider();
 

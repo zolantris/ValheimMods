@@ -19,7 +19,6 @@ internal static class PatchController
     Harmony = new Harmony(harmonyGuid);
     Harmony.PatchAll(typeof(Plantable_Patch));
     Harmony.PatchAll(typeof(Teleport_Patch));
-    Harmony.PatchAll(typeof(ValheimRAFT_Patch));
     Harmony.PatchAll(typeof(Ship_Patch));
     Harmony.PatchAll(typeof(ShipControls_Patch));
     Harmony.PatchAll(typeof(WearNTear_Patch));

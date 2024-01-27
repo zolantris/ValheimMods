@@ -117,7 +117,7 @@ public class PrefabController : MonoBehaviour
   private static ZNetView AddNetViewWithPersistence(GameObject prefab)
   {
     var netView = prefab.GetComponent<ZNetView>();
-    if (!netView)
+    if (!(bool)netView)
     {
       netView = prefab.AddComponent<ZNetView>();
     }
@@ -376,7 +376,7 @@ public class PrefabController : MonoBehaviour
     //   name = prefabName,
     //   layer = 0
     // };
-    waterVehiclePrefab.gameObject.layer = 0;
+    waterVehiclePrefab.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
     // Instantiate(waterMask, waterVehiclePrefab.transform);
 
     /*
@@ -409,7 +409,7 @@ public class PrefabController : MonoBehaviour
     bc.transform.localScale = new Vector3(1f, 1f, 1f);
     bc.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
 
-    var zNetView = AddNetViewWithPersistence(waterVehiclePrefab);
+    var zNetView = waterVehiclePrefab.AddComponent<ZNetView>();
     zNetView.m_type = ZDO.ObjectType.Prioritized;
     zNetView.m_persistent = true;
 
@@ -428,8 +428,7 @@ public class PrefabController : MonoBehaviour
     /*
      * ShipControls were a gameObject with a script attached to them. This approach directly attaches the script instead of having the rudder show.
      */
-    // var valheimShipControls = waterVehiclePrefab.AddComponent<ValheimShipControls>();
-
+    waterVehiclePrefab.AddComponent<ValheimShipControls>();
     var shipInstance = waterVehiclePrefab.AddComponent<VVShip>();
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
 
@@ -451,8 +450,17 @@ public class PrefabController : MonoBehaviour
     zSyncTransform.m_syncBodyVelocity = true;
 
     // wearntear may need to be removed or tweaked
-    // waterVehiclePrefab.AddComponent<WearNTear>();
-    // var wnt = SetWearNTear(waterVehiclePrefab, 1, true);
+    waterVehiclePrefab.AddComponent<WearNTear>();
+    var woodWNT = woodFloorPiece.GetComponent<WearNTear>();
+    var wnt = SetWearNTear(waterVehiclePrefab, 1, true);
+    SetWearNTearSupport(wnt, WearNTear.MaterialType.HardWood);
+    wnt.m_colliders = woodWNT.m_colliders;
+    wnt.m_onDamaged += woodWNT.m_onDamaged;
+    wnt.m_onDestroyed += woodWNT.m_onDestroyed;
+    wnt.m_supports = true;
+    wnt.m_support = 2000f;
+    wnt.m_noSupportWear = true;
+    wnt.m_noRoofWear = true;
     // wnt.m_connectedHeightMap = new Heightmap();
 
     waterVehiclePrefab.AddComponent<ImpactEffect>();
@@ -482,6 +490,7 @@ public class PrefabController : MonoBehaviour
     // shipHullInstance.transform.localRotation = shipInstance.transform.rotation;
     // var shipHullPiece = shipHullInstance.GetComponent<Piece>();
     // waterVehicleController.AddNewPiece(shipHullPiece);
+
     var piece = waterVehiclePrefab.AddComponent<Piece>();
     piece.m_waterPiece = true;
     // piece.m_groundPiece = true;
@@ -529,18 +538,20 @@ public class PrefabController : MonoBehaviour
   public void RegisterHulls()
   {
     RegisterHull("wood_wall_log_4x0.5", ShipHulls.HullMaterial.CoreWood,
-      ShipHulls.HullOrientation.Horizontal, new Vector3(2f, 1f, 4f));
+      ShipHulls.HullOrientation.Horizontal, new Vector3(2f, 1f, 2f));
   }
 
   public void RegisterHull(string prefabName, string prefabMaterial,
     ShipHulls.HullOrientation prefabOrientation, Vector3 pieceScale)
   {
-    var woodHorizontalOriginalPrefab = prefabManager.GetPrefab(prefabName);
+    // var woodHorizontalOriginalPrefab = prefabManager.GetPrefab(prefabName);
     var hullPrefabName = ShipHulls.GetHullPrefabName(prefabMaterial, prefabOrientation);
     var raftHullPrefab =
       prefabManager.CreateClonedPrefab(
         hullPrefabName,
-        boarding_ramp);
+        ship_hull);
+    raftHullPrefab.layer = 0;
+    raftHullPrefab.gameObject.layer = 0;
     var piece = raftHullPrefab.AddComponent<Piece>();
 
     Logger.LogDebug($"position {raftHullPrefab.transform.position}");
@@ -549,15 +560,26 @@ public class PrefabController : MonoBehaviour
     raftHullPrefab.gameObject.transform.position = Vector3.zero;
     raftHullPrefab.gameObject.transform.localPosition = Vector3.zero;
     Logger.LogDebug($"position {raftHullPrefab.transform.position}");
-    piece.m_waterPiece = true;
+    // piece.m_waterPiece = true;
+    piece.m_icon = vanillaRaftPrefab.GetComponent<Piece>().m_icon;
     /*
      * @todo fix snappoints
      */
     // AddSnapPointsToExterior(raftStructureBeam);
 
     // Less complicated wnt so re-usable method is not used
+    // raftHullPrefab.AddComponent<WearNTear>();
+    var woodWNT = woodFloorPiece.GetComponent<WearNTear>();
     var wntComponent = SetWearNTear(raftHullPrefab);
     SetWearNTearSupport(wntComponent, WearNTear.MaterialType.HardWood);
+    wntComponent.m_colliders = woodWNT.m_colliders;
+    wntComponent.m_onDamaged += woodWNT.m_onDamaged;
+    wntComponent.m_onDestroyed += woodWNT.m_onDestroyed;
+    wntComponent.m_supports = true;
+    wntComponent.m_support = 2000f;
+    wntComponent.m_noSupportWear = true;
+    wntComponent.m_noRoofWear = true;
+
 
     // this may need to send in Piece instead
     AddNetViewWithPersistence(raftHullPrefab);
@@ -648,7 +670,7 @@ public class PrefabController : MonoBehaviour
   private WearNTear GetWearNTearSafe(GameObject prefabComponent)
   {
     var wearNTearComponent = prefabComponent.GetComponent<WearNTear>();
-    if (!wearNTearComponent)
+    if (!(bool)wearNTearComponent)
     {
       // Many components do not have WearNTear so they must be added to the prefabPiece
       wearNTearComponent = prefabComponent.AddComponent<WearNTear>();
@@ -945,11 +967,11 @@ public class PrefabController : MonoBehaviour
     // rudder.m_controls.m_detachOffset = new Vector3(0f, 0f, 0f);
 
     // for newer vehicle components
-    rudder.valheimShipControls = mbRudderPrefab.AddComponent<ValheimShipControls>();
-    rudder.valheimShipControls.m_hoverText = "$mb_rudder_use";
-    rudder.valheimShipControls.m_attachPoint = mbRudderPrefab.transform.Find("attachpoint");
-    rudder.valheimShipControls.m_attachAnimation = "Standing Torch Idle right";
-    rudder.valheimShipControls.m_detachOffset = new Vector3(0f, 0f, 0f);
+    // rudder.valheimShipControls = mbRudderPrefab.AddComponent<ValheimShipControls>();
+    // rudder.valheimShipControls.m_hoverText = "$mb_rudder_use";
+    // rudder.valheimShipControls.m_attachPoint = mbRudderPrefab.transform.Find("attachpoint");
+    // rudder.valheimShipControls.m_attachAnimation = "Standing Torch Idle right";
+    // rudder.valheimShipControls.m_detachOffset = new Vector3(0f, 0f, 0f);
 
     rudder.m_wheel = mbRudderPrefab.transform.Find("controls/wheel");
     rudder.UpdateSpokes();

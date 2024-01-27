@@ -5,7 +5,6 @@ using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 using PlanBuild.Blueprints;
-using PlanBuild.Plans;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;
@@ -53,7 +52,7 @@ public class PlanBuild_Patch
         list2.Add(gameObject.transform.position);
         if (!keepMarkers)
         {
-          WearNTear_Patch component = gameObject.GetComponent<WearNTear_Patch>();
+          WearNTear component = gameObject.GetComponent<WearNTear>();
           component.Remove();
         }
 
@@ -74,7 +73,7 @@ public class PlanBuild_Patch
 
         if (!keepMarkers)
         {
-          WearNTear_Patch component2 = gameObject.GetComponent<WearNTear_Patch>();
+          WearNTear component2 = gameObject.GetComponent<WearNTear>();
           component2.Remove();
         }
 
@@ -93,7 +92,7 @@ public class PlanBuild_Patch
         list3.Add(item);
         if (!keepMarkers)
         {
-          WearNTear_Patch component3 = gameObject.GetComponent<WearNTear_Patch>();
+          WearNTear component3 = gameObject.GetComponent<WearNTear>();
           component3.Remove();
         }
 

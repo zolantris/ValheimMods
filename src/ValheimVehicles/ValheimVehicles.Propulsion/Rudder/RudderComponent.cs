@@ -8,9 +8,9 @@ namespace ValheimVehicles.Propulsion.Rudder;
 
 public class RudderComponent : MonoBehaviour
 {
-  public ShipControlls m_controls;
+  public ShipControlls? m_controls;
 
-  public ValheimShipControls valheimShipControls;
+  public ValheimShipControls? valheimShipControls;
 
   public Transform m_wheel;
 

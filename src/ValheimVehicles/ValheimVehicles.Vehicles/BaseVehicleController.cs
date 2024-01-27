@@ -42,8 +42,11 @@ public class BaseVehicleController : MonoBehaviour
   public static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
 
-  public WaterVehicleController vehicleController;
-
+  /*
+   * @todo make this a generic most likely this all should be in a shared extension api
+   * IE: VehicleInstance getter
+   */
+  public WaterVehicleController waterVehicleController;
   public BaseVehicleController instance;
 
   internal Rigidbody m_rigidbody;
@@ -81,7 +84,7 @@ public class BaseVehicleController : MonoBehaviour
 
   public float totalSailArea = 0f;
 
-  public IVehicleProperties VehicleInstance { set; get; }
+  public IVehicleProperties? VehicleInstance { set; get; }
 
 /* end sail calcs  */
   private Vector2i m_sector;
@@ -633,8 +636,12 @@ public class BaseVehicleController : MonoBehaviour
     var pieceCount = GetPieceCount();
     if (pieceCount == 0)
     {
-      var wntShip = vehicleController.GetComponent<WearNTear>();
-      if ((bool)wntShip) wntShip.Destroy();
+      if ((bool)instance)
+      {
+        var wntShip = instance.GetComponent<WearNTear>();
+        if ((bool)wntShip) wntShip.Destroy();
+      }
+
       if (gameObject)
       {
         Destroy(gameObject);
@@ -644,12 +651,15 @@ public class BaseVehicleController : MonoBehaviour
 
   public void DestroyBoat()
   {
-    var wntShip = vehicleController.GetComponent<WearNTear>();
+    var wntShip = instance.GetComponent<WearNTear>();
     if ((bool)wntShip)
       wntShip.Destroy();
-    else if (vehicleController) Destroy(vehicleController);
+    else if (instance) Destroy(instance);
 
-    Destroy(gameObject);
+    if (instance.gameObject != gameObject)
+    {
+      Destroy(gameObject);
+    }
   }
 
   public void ActivatePendingPiecesCoroutine()
@@ -1108,38 +1118,43 @@ public class BaseVehicleController : MonoBehaviour
       m_boardingRamps.Add(ramp);
     }
 
+    // todo most of this rudder stuff should be done within the component
     var rudder = netView.GetComponent<RudderComponent>();
     if ((bool)rudder)
     {
       if (!rudder.valheimShipControls)
+      {
         rudder.valheimShipControls =
-          netView.GetComponentInChildren<ValheimShipControls>();
+          rudder.gameObject.AddComponent<ValheimShipControls>();
+        if ((bool)rudder.valheimShipControls)
+        {
+          if (rudder.m_controls != null) Destroy(rudder.m_controls.gameObject);
+        }
+        // else m_controls could be set...but this can be skipped.
+      }
+
 
       if (!rudder.m_wheel) rudder.m_wheel = netView.transform.Find("controls/wheel");
 
-      var ship = vehicleController.ShipInstance;
-      if ((bool)ship)
+      if ((bool)waterVehicleController && (bool)waterVehicleController.ShipInstance)
       {
-        Logger.LogDebug($"Rudder binding to ship {ship.name}");
+        Logger.LogDebug($"Rudder binding to ship {waterVehicleController.ShipInstance.name}");
       }
       else
       {
-        Destroy(rudder.m_controls.gameObject);
+        if (rudder.m_controls != null) Destroy(rudder.m_controls.gameObject);
         Destroy(rudder);
         Destroy(netView);
         return;
       }
 
-      rudder.valheimShipControls.ShipInstance = ship;
-      ship.m_shipControlls = rudder.valheimShipControls;
-
-      if (rudder.m_controls != null)
+      if (rudder.valheimShipControls != null)
       {
-        Destroy(rudder.m_controls.gameObject);
-        rudder.m_controls = null;
+        rudder.valheimShipControls.InitializeRudderWithShip(waterVehicleController.ShipInstance,
+          rudder);
+        waterVehicleController.ShipInstance.m_shipControlls = rudder.valheimShipControls;
+        rudder.valheimShipControls.enabled = true;
       }
-
-      rudder.valheimShipControls.enabled = true;
 
       Logger.LogDebug("added rudder to BaseVehicle");
       m_rudderPieces.Add(rudder);

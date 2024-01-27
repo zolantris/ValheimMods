@@ -1,6 +1,7 @@
 using HarmonyLib;
-using Jotunn;
+using UnityEngine;
 using ValheimVehicles.Vehicles;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;
 

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
+using ValheimVehicles.Propulsion.Rudder;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
@@ -13,20 +14,35 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   public float m_maxUseRange = 10f;
 
+  // might be safer to directly make this a getter
   public Transform m_attachPoint;
 
   public Vector3 m_detachOffset = new Vector3(0f, 0.5f, 0f);
 
-  public string m_attachAnimation = "attach_chair";
+  public string m_attachAnimation = "Standing Torch Idle right";
   public ValheimShipControls m_lastUsedControls;
   public ZNetView m_nview;
 
-  private void Awake()
+  public VVShip InitializeRudderWithShip(VVShip ship, RudderComponent rudder)
   {
-    // m_nview = m_ship.GetComponent<ZNetView>();
-    // m_nview.Register<long>("RequestControl", RPC_RequestControl);
-    // m_nview.Register<long>("ReleaseControl", RPC_ReleaseControl);
-    // m_nview.Register<bool>("RequestRespons", RPC_RequestRespons);
+    ShipInstance = ship;
+    ShipInstance.m_controlGuiPos = transform;
+
+    var rudderAttachPoint = rudder.transform.Find("attachpoint");
+    if (rudderAttachPoint != null)
+    {
+      m_attachPoint.position = rudderAttachPoint.position;
+    }
+
+    m_nview = ship.GetComponent<ZNetView>();
+    if (m_nview != null)
+    {
+      m_nview.Register<long>("RequestControl", RPC_RequestControl);
+      m_nview.Register<long>("ReleaseControl", RPC_ReleaseControl);
+      m_nview.Register<bool>("RequestRespons", RPC_RequestRespons);
+    }
+
+    return ship;
   }
 
   public bool IsValid()
@@ -44,13 +60,22 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     if (character == Player.m_localPlayer && isActiveAndEnabled)
     {
       var baseRoot = GetComponentInParent<MoveableBaseRootComponent>();
+      var baseVehicle = GetComponentInParent<BaseVehicleController>();
       if (baseRoot != null)
       {
         baseRoot.ComputeAllShipContainerItemWeight();
       }
 
+      if (baseVehicle)
+      {
+        baseVehicle.ComputeAllShipContainerItemWeight();
+      }
+
       m_lastUsedControls = this;
-      ShipInstance.m_controlGuiPos.position = transform.position;
+      if (ShipInstance != null)
+      {
+        ShipInstance.m_controlGuiPos = transform;
+      }
     }
 
     if (repeat)

@@ -5,18 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9eb05097-9d84-4b87-8e9a-0e73fcf3150e" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Assets/hull_cylinder.fbx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheimraft" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheimraft" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheimraft.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheimraft.manifest" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/ValheimRAFT_Patch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/ValheimRAFT_Patch.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/boarding_ramp.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/boarding_ramp.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/dirt_floor.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/dirt_floor.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ship_hull.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ship_hull.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/steering_wheel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/steering_wheel.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/TagManager.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/TagManager.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/PatchController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/PatchController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.csproj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../ValheimRAFT/PrefabController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/PrefabController.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../ValheimRAFT/RopeLadderComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/RopeLadderComponent.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Propulsion/Rudder/RudderComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Propulsion/Rudder/RudderComponent.cs" afterDir="false" />

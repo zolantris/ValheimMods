@@ -47,7 +47,7 @@ public class WaterVehicleController : BaseVehicleController
 
   public MBFlags m_flags;
   private bool _initialized = false;
-  // private ImpactEffect _impactEffect;
+  private ImpactEffect _impactEffect;
 
   /*
    * Must be called from
@@ -60,7 +60,8 @@ public class WaterVehicleController : BaseVehicleController
     m_nview = vvShip.GetComponent<ZNetView>();
     m_zsync = vvShip.GetComponent<ZSyncTransform>();
     m_syncRigidbody = vvShip.GetComponent<Rigidbody>();
-    // _impactEffect = vvShip.GetComponent<ImpactEffect>();
+    instance = this;
+    _impactEffect = vvShip.GetComponent<ImpactEffect>();
 
     // prevent mass from being set lower than 20f;
     m_syncRigidbody.mass = Math.Max(TotalMass, 2000f);
@@ -74,8 +75,8 @@ public class WaterVehicleController : BaseVehicleController
 
   public new void Awake()
   {
+    waterVehicleController = this;
     base.Awake();
-    vehicleController = this;
     SentryUnityWrapperPlugin.BindToClient("zolantris.ValheimVehicles");
   }
 
@@ -83,7 +84,7 @@ public class WaterVehicleController : BaseVehicleController
   {
     base.Start();
 
-    if (!_initialized || !(bool)vehicleController)
+    if (!_initialized || !(bool)waterVehicleController)
     {
       Logger.LogError("not initialized, exiting ship logic to prevent crash");
       return;
@@ -138,7 +139,7 @@ public class WaterVehicleController : BaseVehicleController
       delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
     m_nview.Register("SetVisual",
       delegate(long sender, bool state) { RPC_SetVisual(sender, state); });
-    vehicleController = this;
+    waterVehicleController = this;
 
     Logger.LogDebug($"NVIEW ZDO {m_nview.m_zdo}");
 
@@ -238,7 +239,7 @@ public class WaterVehicleController : BaseVehicleController
     }
 
     var netView = obj.GetComponent<ZNetView>();
-    if (netView)
+    if ((bool)netView)
     {
       AddNewPiece(netView);
     }
@@ -395,9 +396,10 @@ public class WaterVehicleController : BaseVehicleController
       ShipInstance.m_stearForce = (flight ? 0.2f : 1f);
       ShipInstance.m_stearVelForceFactor = 1.3f;
       ShipInstance.m_waterImpactDamage = 0f;
+      /*
+       * this may be unstable and require a getter each time...highly doubt it though.
+       */
       // ImpactEffect impact = ShipInstance.GetComponent<ImpactEffect>();
-      var _impactEffect = ShipInstance.GetComponent<ImpactEffect>();
-
       if ((bool)_impactEffect)
       {
         _impactEffect.m_interval = 0.1f;
