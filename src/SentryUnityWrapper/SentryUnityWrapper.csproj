@@ -23,6 +23,7 @@
     <!--  really just needs unity and bepinex  -->
     <ItemGroup>
         <!--  Metrics  -->
+        <Reference Include="Microsoft.CSharp"/>
         <Reference Include="Sentry">
             <HintPath>$(SolutionDir)\SentryUnity\1.8.0\Runtime\Sentry.dll</HintPath>
         </Reference>
