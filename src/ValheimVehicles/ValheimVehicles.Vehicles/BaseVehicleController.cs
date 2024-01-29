@@ -52,7 +52,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   public BaseVehicleController instance;
 
   internal Rigidbody m_rigidbody;
-  internal Rigidbody m_syncRigidbody;
+  // internal Rigidbody m_syncRigidbody;
 
   internal List<ZNetView> m_pieces = new();
   internal List<ShipHullComponent> m_hullPieces = new();
@@ -152,11 +152,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
 
-    m_syncRigidbody = gameObject.GetComponent<Rigidbody>();
-    m_rigidbody = gameObject.AddComponent<Rigidbody>();
-    m_rigidbody.isKinematic = true;
-    m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-    m_rigidbody.mass = 99999f;
+    m_rigidbody = GetComponent<Rigidbody>();
+    // m_rigidbody.isKinematic = true;
+    // m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+    // m_rigidbody.mass = 99999f;
     Debug.Log("Captured Log"); // Breadcrumb
     Debug.LogWarning("Captured Warning"); // Breadcrumb
     Debug.LogError("This is a Test error called within BaseVehicleController.Awake");
@@ -207,7 +206,13 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   private void OnEnable()
   {
     GetPersistentID();
-    if (ZNet.instance.IsDedicated())
+
+    if (!(bool)ZNet.instance)
+    {
+      return;
+    }
+
+    if (ZNet.instance.IsDedicated() && _serverUpdatePiecesCoroutine == null)
     {
       _serverUpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
@@ -249,25 +254,25 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   private void Sync()
   {
-    if ((bool)m_syncRigidbody && (bool)m_rigidbody)
-    {
-      m_syncRigidbody.mass = Math.Max(TotalMass, 2000f);
-      m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
-      m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
-    }
+    // if ((bool)m_syncRigidbody && (bool)m_rigidbody)
+    // {
+    //   m_syncRigidbody.mass = Math.Max(TotalMass, 2000f);
+    //   m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
+    //   m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
+    // }
   }
 
-  public void FixedUpdate()
-  {
-    Sync();
-  }
+  // public void FixedUpdate()
+  // {
+  //   Sync();
+  // }
 
 /*
  * @important, server does not have access to lifecycle methods so a coroutine is required to update things
  */
   public void LateUpdate()
   {
-    Sync();
+    // Sync();
 
     if (!(bool)ZNet.instance)
     {
@@ -288,7 +293,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     if (sector == m_sector) return;
 
-    if (m_sector != m_serverSector) ServerSyncAllPieces();
+    // if (m_sector != m_serverSector) ServerSyncAllPieces();
 
     m_sector = sector;
 
@@ -624,28 +629,26 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public void DestroyPiece(WearNTear wnt)
   {
-    if (!(bool)wnt)
+    if ((bool)wnt)
     {
-      return;
+      if (wnt.name.Contains(PrefabController.WaterVehiclePrefabName))
+      {
+        // prevents a loop of DestroyPiece being called from WearNTear_Patch.
+        return;
+      }
+
+      var netview = wnt.GetComponent<ZNetView>();
+      RemovePiece(netview);
+      UpdatePieceCount();
+      totalSailArea = 0f;
     }
 
-    var netview = wnt.GetComponent<ZNetView>();
-    RemovePiece(netview);
-    UpdatePieceCount();
-    totalSailArea = 0f;
     var pieceCount = GetPieceCount();
-    if (pieceCount == 0)
+    if (pieceCount > 0) return;
+    if (VehicleInstance?.Instance != null)
     {
-      if ((bool)instance)
-      {
-        var wntShip = instance.GetComponent<WearNTear>();
-        if ((bool)wntShip) wntShip.Destroy();
-      }
-
-      if (gameObject)
-      {
-        Destroy(gameObject);
-      }
+      var wntShip = VehicleInstance.Instance.GetComponent<WearNTear>();
+      if ((bool)wntShip) wntShip.Destroy();
     }
   }
 

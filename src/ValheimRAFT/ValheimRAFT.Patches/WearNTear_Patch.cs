@@ -35,7 +35,6 @@ public class WearNTear_Patch
   {
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     var bv = __instance.GetComponentInParent<BaseVehicleController>();
-    var wvc = __instance.GetComponent<WaterVehicleController>();
     var vvShip = __instance.GetComponent<VVShip>();
 
     if ((bool)mbr) mbr.DestroyPiece(__instance);

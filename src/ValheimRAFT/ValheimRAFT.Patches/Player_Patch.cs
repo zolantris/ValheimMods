@@ -272,9 +272,8 @@ public class Player_Patch
             if (anchorKey || ZInput.GetButtonDown("JoyRun"))
             {
               Logger.LogDebug("Anchor button is down setting anchor");
-              waterVehicleController.SetAnchor(
-                !waterVehicleController.VehicleFlags.HasFlag(
-                  WaterVehicleFlags.IsAnchored));
+
+              waterVehicleController.ToggleAnchor();
             }
             else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
             {

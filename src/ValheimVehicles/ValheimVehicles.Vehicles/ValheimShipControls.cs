@@ -108,7 +108,9 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
       return false;
     }
 
-    if ((player.GetStandingOnShip() as object) as VVShip != ShipInstance)
+    var playerOnShip = player.GetStandingOnShip();
+    if (playerOnShip == null ||
+        !(playerOnShip).name.Contains(PrefabController.WaterVehiclePrefabName))
     {
       Logger.LogDebug("Player is not on VVShip");
       return false;
@@ -185,17 +187,18 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   private void RPC_RequestControl(long sender, long playerID)
   {
-    if (m_nview.IsOwner() && ShipInstance.IsPlayerInBoat(playerID))
+    var isOwner = m_nview.IsOwner();
+    var isInBoat = ShipInstance.IsPlayerInBoat(playerID);
+    if (!isOwner || !isInBoat) return;
+
+    if (GetUser() == playerID || !HaveValidUser())
     {
-      if (GetUser() == playerID || !HaveValidUser())
-      {
-        m_nview.GetZDO().Set(ZDOVars.s_user, playerID);
-        m_nview.InvokeRPC(sender, "RequestRespons", true);
-      }
-      else
-      {
-        m_nview.InvokeRPC(sender, "RequestRespons", false);
-      }
+      m_nview.GetZDO().Set(ZDOVars.s_user, playerID);
+      m_nview.InvokeRPC(sender, "RequestRespons", true);
+    }
+    else
+    {
+      m_nview.InvokeRPC(sender, "RequestRespons", false);
     }
   }
 

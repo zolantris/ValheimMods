@@ -236,6 +236,7 @@ public class PrefabController : MonoBehaviour
     // add LOD levels.
     // Create a GUI that allows for forcing a specific LOD level.
     // Add 4 LOD levels
+    // var hull = prefab.transform.Find("")
     LOD[] lods = new LOD[1];
     for (int i = 0; i < lods.Length; i++)
     {
@@ -296,10 +297,17 @@ public class PrefabController : MonoBehaviour
         Destroy(vvShip);
       }
     }
+
     //
-    // if (GUILayout.Button("Default"))
-    //   vehicleLOD.ForceLOD(-1);
-    //
+    if (GUILayout.Button("ToggleAnchors"))
+    {
+      var waterVehicleControllers = Resources.FindObjectsOfTypeAll<WaterVehicleController>();
+      foreach (var wvc in waterVehicleControllers)
+      {
+        wvc.ToggleAnchor();
+      }
+    }
+
     // if (GUILayout.Button("Force 0"))
     //   vehicleLOD.ForceLOD(0);
     //
@@ -364,6 +372,7 @@ public class PrefabController : MonoBehaviour
     waterVehiclePrefab.name = WaterVehiclePrefabName;
     // var waterVehiclePrefab = prefabManager.CreateEmptyPrefab(WaterVehiclePrefabName, false);
     Logger.LogDebug("Made it past waterVehiclePrefab empty create");
+    // waterVehiclePrefab.transform.localScale = new Vector3(2f, 2f, 2f);
 
     // empty prefabs create a white cube...delete it!
     // var meshCollider = waterVehiclePrefab.GetComponent<MeshCollider>();
@@ -464,7 +473,7 @@ public class PrefabController : MonoBehaviour
     // wnt.m_connectedHeightMap = new Heightmap();
 
     waterVehiclePrefab.AddComponent<ImpactEffect>();
-    AddVehicleLODs(waterVehiclePrefab);
+    // AddVehicleLODs(waterVehiclePrefab);
 
     // waterVehiclePrefab.AddComponent<>()
     // m_baseRoot.m_floatcollider = ship.m_floatCollider;
@@ -505,13 +514,7 @@ public class PrefabController : MonoBehaviour
     piece.m_description = "new raft base";
     piece.m_icon = vanillaRaftPrefab.GetComponent<Piece>().m_icon;
     piece.m_name = "RaftHullBase";
-    // this probably works on the base collider game objects
-    // waterVehicleController.m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    // waterVehicleController.m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
-    // waterVehicleController.m_blockingcollider.transform.parent.gameObject.layer =
-    //   ValheimRaftPlugin.CustomRaftLayer;
-    Logger.LogDebug("made it to before add prefab");
-    // prefabManager.AddPrefab(waterVehiclePrefab);
+
     pieceManager.AddPiece(new CustomPiece(waterVehiclePrefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
@@ -546,7 +549,7 @@ public class PrefabController : MonoBehaviour
   public void RegisterHulls()
   {
     RegisterHull("wood_wall_log_4x0.5", ShipHulls.HullMaterial.CoreWood,
-      ShipHulls.HullOrientation.Horizontal, new Vector3(2f, 1f, 2f));
+      ShipHulls.HullOrientation.Horizontal, new Vector3(1, 1f, 1f));
   }
 
   public void RegisterHull(string prefabName, string prefabMaterial,
@@ -570,6 +573,7 @@ public class PrefabController : MonoBehaviour
     Logger.LogDebug($"position {raftHullPrefab.transform.position}");
     // piece.m_waterPiece = true;
     piece.m_icon = vanillaRaftPrefab.GetComponent<Piece>().m_icon;
+    piece.m_noClipping = true;
     /*
      * @todo fix snappoints
      */

@@ -85,8 +85,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
   {
     if (_controller != null)
     {
-      _controller.CleanUp();
-      Destroy(_controller.gameObject);
+      Destroy(_controller);
     }
   }
 

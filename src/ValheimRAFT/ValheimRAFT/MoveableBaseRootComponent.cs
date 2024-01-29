@@ -91,9 +91,6 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public void Awake()
   {
-    SentryUnityWrapperPlugin.BindToClient(ValheimRaftPlugin.BepInGuid);
-
-    Logger.LogDebug("called Awake on BaseRootComponent");
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
     m_rigidbody = gameObject.AddComponent<Rigidbody>();

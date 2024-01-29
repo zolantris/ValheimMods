@@ -39,7 +39,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public Transform? m_controlGuiPos;
 
-  public BoxCollider m_floatcollider = new BoxCollider();
+  public BoxCollider m_floatcollider;
 
   // base game sets default of 1.5f
   public float m_waterLevelOffset = 1.5f;
@@ -158,15 +158,14 @@ public class ValheimBaseGameShip : MonoBehaviour
     if (collider != null)
     {
       collider.SetParent(transform);
-    }
+      var boxColliders = collider.GetComponentsInChildren<BoxCollider>();
 
-    var boxColliders = transform.Find("VVFloatCollider")?.GetComponentsInChildren<BoxCollider>();
-
-    var floatBoxCollider =
-      boxColliders?.FirstOrDefault((BoxCollider k) => k.gameObject.name == "VVFloatCollider");
-    if (floatBoxCollider != null)
-    {
-      m_floatcollider = floatBoxCollider;
+      var floatBoxCollider =
+        boxColliders?.FirstOrDefault((BoxCollider k) => k.gameObject.name == "VVFloatCollider");
+      if (floatBoxCollider != null)
+      {
+        m_floatcollider = floatBoxCollider;
+      }
     }
 
 
@@ -175,8 +174,7 @@ public class ValheimBaseGameShip : MonoBehaviour
       Logger.LogError("No float collider exists for ship, this is a prefab setup issue.");
     }
 
-    Logger.LogDebug("Made it to 151");
-    WearNTear wnt = GetComponent<WearNTear>();
+    var wnt = GetComponent<WearNTear>();
     if ((bool)wnt)
     {
       wnt.m_onDestroyed =
@@ -203,10 +201,8 @@ public class ValheimBaseGameShip : MonoBehaviour
 
 
     Heightmap.ForceGenerateAll();
-    Logger.LogDebug("Made it to 180");
 
     // m_sailCloth = m_sailObject.GetComponentInChildren<Cloth>();
-    Logger.LogDebug("Made it to 183");
   }
 
   /**
@@ -742,22 +738,22 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal void UpdateOwner()
   {
-    if (m_nview.IsValid() && m_nview.IsOwner() && !(Player.m_localPlayer == null) &&
+    if (m_nview.IsValid() && m_nview.IsOwner() && (bool)Player.m_localPlayer &&
         m_players.Count > 0 && !IsPlayerInBoat(Player.m_localPlayer))
     {
       long owner = m_players[0].GetOwner();
       m_nview.GetZDO().SetOwner(owner);
-      Jotunn.Logger.LogDebug("Changing ship owner to " + owner);
+      Logger.LogDebug("Changing ship owner to " + owner);
     }
   }
 
-  internal void OnTriggerEnter(Collider collider)
+  public void OnTriggerEnter(Collider collider)
   {
     Player component = collider.GetComponent<Player>();
     if ((bool)component)
     {
       m_players.Add(component);
-      Jotunn.Logger.LogDebug("Player onboard, total onboard " + m_players.Count);
+      Logger.LogDebug("Player onboard, total onboard " + m_players.Count);
       if (component == Player.m_localPlayer)
       {
         s_currentShips.Add(this);
@@ -806,7 +802,8 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public bool IsPlayerInBoat(Player player)
   {
-    return m_players.Contains(player);
+    var currentPlayOnBoat = m_players.Contains(player);
+    return currentPlayOnBoat;
   }
 
   public bool IsPlayerInBoat(long playerID)

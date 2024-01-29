@@ -9,7 +9,7 @@ public class Character_Patch
 {
   [HarmonyPatch(typeof(Character), "GetStandingOnShip")]
   [HarmonyPrefix]
-  private static bool Character_GetStandingOnShip(Character __instance, ref object __result)
+  private static bool Character_GetStandingOnShip(Character __instance, ref object? __result)
   {
     if (!__instance.IsOnGround()) return false;
     if ((bool)__instance.m_lastGroundBody)
@@ -25,6 +25,7 @@ public class Character_Patch
       if (lastOnWaterVehicle)
       {
         __result = lastOnWaterVehicle;
+        // lastOnWaterVehicle.m_players.Add(__instance.get);
       }
 
       if (!lastOnShip && !lastOnWaterVehicle)

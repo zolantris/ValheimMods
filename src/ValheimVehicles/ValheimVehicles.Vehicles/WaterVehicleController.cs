@@ -55,15 +55,19 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     _vehicleInstance = vvShip;
     base.VehicleInstance = VehicleInstance;
 
+    if (!(bool)m_rigidbody)
+    {
+      m_rigidbody = vvShip.GetComponent<Rigidbody>();
+    }
+
     // connect vvShip properties to this gameobject
     m_nview = vvShip.GetComponent<ZNetView>();
     m_zsync = vvShip.GetComponent<ZSyncTransform>();
-    m_syncRigidbody = vvShip.GetComponent<Rigidbody>();
     instance = this;
     _impactEffect = vvShip.GetComponent<ImpactEffect>();
 
     // prevent mass from being set lower than 20f;
-    m_syncRigidbody.mass = Math.Max(TotalMass, 2000f);
+    m_rigidbody.mass = Math.Max(TotalMass, 2000f);
 
 
     SetColliders(vvShip.gameObject);
@@ -75,7 +79,7 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
   {
     waterVehicleController = this;
     base.Awake();
-    SentryUnityWrapperPlugin.BindToClient("zolantris.ValheimVehicles");
+
     ZdoReadyStart();
   }
 
@@ -200,7 +204,7 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
   {
     if (VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
     {
-      SetAnchor(state: false);
+      SendSetAnchor(state: false);
     }
 
     if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
@@ -225,7 +229,7 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
   {
     if (VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
     {
-      SetAnchor(state: false);
+      SendSetAnchor(state: false);
     }
 
     float oldTargetHeight = m_targetHeight;
@@ -293,21 +297,31 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     }
   }
 
-  public void SetAnchor(bool state)
+  public void ToggleAnchor()
   {
+    VehicleFlags = (waterVehicleController.VehicleFlags.HasFlag(
+      WaterVehicleFlags.IsAnchored)
+      ? (VehicleFlags | WaterVehicleFlags.IsAnchored)
+      : (VehicleFlags & ~WaterVehicleFlags.IsAnchored));
     m_nview.m_zdo.Set("MBFlags", (int)VehicleFlags);
+    SendSetAnchor(waterVehicleController.VehicleFlags.HasFlag(
+      WaterVehicleFlags.IsAnchored));
+  }
+
+  public void SendSetAnchor(bool state)
+  {
     m_nview.InvokeRPC("SetAnchor", state);
   }
 
   public void RPC_SetAnchor(long sender, bool state)
   {
-    if (sender != Player.m_localPlayer.GetZDOID().UserID)
-    {
-      VehicleFlags = (state
-        ? (VehicleFlags | WaterVehicleFlags.IsAnchored)
-        : (VehicleFlags & ~WaterVehicleFlags.IsAnchored));
-      m_nview.m_zdo.Set("MBFlags", (int)VehicleFlags);
-    }
+    // if (sender != Player.m_localPlayer.GetZDOID().UserID)
+    // {
+    VehicleFlags = (state
+      ? (VehicleFlags | WaterVehicleFlags.IsAnchored)
+      : (VehicleFlags & ~WaterVehicleFlags.IsAnchored));
+    m_nview.m_zdo.Set("MBFlags", (int)VehicleFlags);
+    // }
   }
 
   internal void SetVisual(bool state)
