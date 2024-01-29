@@ -163,6 +163,7 @@ public class Player_Patch
     PatchSharedData.PlayerLastRayPiece = piece;
   }
 
+
   [HarmonyPatch(typeof(Player), "FindHoverObject")]
   [HarmonyPrefix]
   private static bool FindHoverObject(Player __instance, ref GameObject hover,
@@ -351,5 +352,34 @@ public class Player_Patch
     }
 
     return mbr.transform.rotation * rot;
+  }
+
+  [HarmonyPatch(typeof(Player), nameof(Player.GetControlledShip))]
+  [HarmonyPrefix]
+  public static bool GetControlledShip(Player __instance, object __result)
+  {
+    /*
+     * This patch protects against the type case used in the original GetControlledShip which prevents controls overrides from triggering hud.
+     */
+    var vvShipResult = HandleGetControlledShip(__instance);
+
+    if (vvShipResult == null)
+    {
+      return true;
+    }
+
+    __result = vvShipResult;
+    return false;
+  }
+
+  public static object? HandleGetControlledShip(Player player)
+  {
+    var hasDoodadController = player.m_doodadController != null;
+    var isShipWheelControllerValid = player.m_doodadController?.IsValid() ?? false;
+    var vvShipResult =
+      hasDoodadController && isShipWheelControllerValid
+        ? player.m_doodadController?.GetControlledComponent() as VVShip
+        : null;
+    return vvShipResult;
   }
 }

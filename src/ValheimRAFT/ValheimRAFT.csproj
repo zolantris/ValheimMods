@@ -24,6 +24,7 @@
         <Compile Include="Properties\CustomAssemblyAttributes.cs"/>
         <Compile Include="ValheimRAFT.Patches\CharacterAnimEvent_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Character_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\Hud_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\PatchSharedData.cs"/>
         <Compile Include="ValheimRAFT.Patches\PatchController.cs"/>
         <Compile Include="ValheimRAFT.Patches\PlanBuild_Patch.cs"/>
@@ -113,7 +114,7 @@
             <Private>False</Private>
         </Reference>
     </ItemGroup>
-    
+
     <PropertyGroup>
         <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
         <R2ModManPath>AppData\Roaming\r2modmanPlus-local</R2ModManPath>

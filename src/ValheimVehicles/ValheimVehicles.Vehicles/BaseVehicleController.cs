@@ -93,7 +93,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   public BoxCollider m_blockingcollider = new();
   internal BoxCollider m_floatcollider;
   internal BoxCollider m_onboardcollider = new();
-  public int m_id;
+
+  private int _persistentZdoId;
+
+  public int PersistentZdoId => GetPersistentID();
+
   public bool m_statsOverride;
   private static bool itemsRemovedDuringWait;
   private Coroutine? _pendingPiecesCoroutine;
@@ -179,20 +183,21 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
   }
 
-  public void GetPersistentID()
+  protected int GetPersistentID()
   {
     Logger.LogDebug($"GetPersistentID, called {name}");
     if (!(bool)m_nview)
     {
-      return;
+      return 0;
     }
 
     if (m_nview.GetZDO() == null)
     {
-      return;
+      return 0;
     }
 
-    m_id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
+    _persistentZdoId = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
+    return _persistentZdoId;
   }
 
   private void OnDisable()
@@ -235,14 +240,14 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       StopCoroutine(_serverUpdatePiecesCoroutine);
     }
 
-    if (!ZNetScene.instance || m_id == 0) return;
+    if (!ZNetScene.instance || _persistentZdoId == 0) return;
 
     foreach (var piece in m_pieces)
     {
       if ((bool)piece)
       {
         piece.transform.SetParent(null);
-        AddInactivePiece(m_id, piece);
+        AddInactivePiece(_persistentZdoId, piece);
       }
     }
 
@@ -345,7 +350,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       if (zdo.GetSector() == sector) continue;
 
       var id = zdo.GetInt(MBParentIdHash);
-      if (id != m_id)
+      if (id != _persistentZdoId)
       {
         list.FastRemoveAt(i);
         i--;
@@ -388,7 +393,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       if (_pendingPiecesCoroutine != null) yield return _pendingPiecesCoroutine;
 
       var time = Time.realtimeSinceStartup;
-      var output = m_allPieces.TryGetValue(m_id, out var list);
+      var output = m_allPieces.TryGetValue(_persistentZdoId, out var list);
       if (!output)
       {
         yield return new WaitForSeconds(Math.Max(2f,
@@ -733,7 +738,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if (hasDebug)
       Logger.LogDebug($"Ship Size calc is: m_bounds {m_bounds} bounds size {m_bounds.size}");
 
-    m_dynamicObjects.TryGetValue(m_id, out var objectList);
+    m_dynamicObjects.TryGetValue(_persistentZdoId, out var objectList);
     var objectListHasNoValidItems = true;
     Logger.LogDebug($"after list 598");
     if (objectList is { Count: > 0 })
@@ -764,7 +769,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         dic = null;
       }
 
-      m_dynamicObjects.Remove(m_id);
+      m_dynamicObjects.Remove(_persistentZdoId);
     }
 
     Logger.LogDebug($"after list 630");
@@ -789,7 +794,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var bvc = target.GetComponentInParent<BaseVehicleController>();
     if ((bool)bvc)
     {
-      source.m_zdo.Set(MBCharacterParentHash, bvc.m_id);
+      source.m_zdo.Set(MBCharacterParentHash, bvc._persistentZdoId);
       source.m_zdo.Set(MBCharacterOffsetHash,
         source.transform.position - bvc.transform.position);
     }
@@ -904,12 +909,12 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var mbroot = target.GetComponentInParent<BaseVehicleController>();
     if ((bool)mbroot)
     {
-      source.m_zdo.Set(MBCharacterParentHash, mbroot.m_id);
+      source.m_zdo.Set(MBCharacterParentHash, mbroot._persistentZdoId);
       source.m_zdo.Set(MBCharacterOffsetHash, offset);
     }
   }
 
-  public static void InitZDO(ZDO zdo)
+  public static void InitZdo(ZDO zdo)
   {
     var id = GetParentID(zdo);
     if (id != 0)
@@ -952,6 +957,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if (id == 0)
     {
       var zdoid = zdo.GetZDOID(MBParentHash);
+      // Logger.LogDebug($"Parent: ZDOID {zdoid}");
       if (zdoid != ZDOID.None)
       {
         var zdoparent = ZDOMan.instance.GetZDO(zdoid);
@@ -1073,7 +1079,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
 
     AddPiece(netView);
-    InitZDO(netView.GetZDO());
+    InitZdo(netView.GetZDO());
   }
 
   public void AddPiece(ZNetView netView)

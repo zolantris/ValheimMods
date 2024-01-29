@@ -48,7 +48,7 @@ public class PrefabController : MonoBehaviour
   public const string WaterVehiclePrefabName = "WaterVehicle";
 
 
-  public static GameObject GetWaterVehiclePrefab =>
+  public static GameObject WaterVehiclePrefab =>
     PrefabManager.Instance.GetPrefab(WaterVehiclePrefabName);
 
   /*
@@ -367,10 +367,10 @@ public class PrefabController : MonoBehaviour
     //   Destroy(shipHullPrefabPiece);
     // }
 
-    var waterVehiclePrefab =
-      prefabManager.CreateClonedPrefab(WaterVehiclePrefabName, ship_hull);
-    waterVehiclePrefab.name = WaterVehiclePrefabName;
-    // var waterVehiclePrefab = prefabManager.CreateEmptyPrefab(WaterVehiclePrefabName, false);
+    // var waterVehiclePrefab =
+    //   prefabManager.CreateClonedPrefab(WaterVehiclePrefabName, ship_hull);
+    // waterVehiclePrefab.name = WaterVehiclePrefabName;
+    var waterVehiclePrefab = prefabManager.CreateEmptyPrefab(WaterVehiclePrefabName, false);
     Logger.LogDebug("Made it past waterVehiclePrefab empty create");
     // waterVehiclePrefab.transform.localScale = new Vector3(2f, 2f, 2f);
 
@@ -515,35 +515,35 @@ public class PrefabController : MonoBehaviour
     piece.m_icon = vanillaRaftPrefab.GetComponent<Piece>().m_icon;
     piece.m_name = "RaftHullBase";
 
-    pieceManager.AddPiece(new CustomPiece(waterVehiclePrefab, false, new PieceConfig
-    {
-      PieceTable = "Hammer",
-      Name = piece.m_name,
-      Description = piece.m_description,
-      Category = ValheimRaftMenuName,
-      Enabled = true,
-      Requirements = new RequirementConfig[3]
-      {
-        new()
-        {
-          Amount = 10,
-          Item = "FineWood",
-          Recover = true
-        },
-        new()
-        {
-          Amount = 2,
-          Item = "RoundLog",
-          Recover = true
-        },
-        new()
-        {
-          Amount = 6,
-          Item = "WolfPelt",
-          Recover = true
-        }
-      }
-    }));
+    // pieceManager.AddPiece(new CustomPiece(waterVehiclePrefab, false, new PieceConfig
+    // {
+    //   PieceTable = "Hammer",
+    //   Name = piece.m_name,
+    //   Description = piece.m_description,
+    //   Category = ValheimRaftMenuName,
+    //   Enabled = true,
+    //   Requirements = new RequirementConfig[3]
+    //   {
+    //     new()
+    //     {
+    //       Amount = 10,
+    //       Item = "FineWood",
+    //       Recover = true
+    //     },
+    //     new()
+    //     {
+    //       Amount = 2,
+    //       Item = "RoundLog",
+    //       Recover = true
+    //     },
+    //     new()
+    //     {
+    //       Amount = 6,
+    //       Item = "WolfPelt",
+    //       Recover = true
+    //     }
+    //   }
+    // }));
   }
 
   public void RegisterHulls()
@@ -559,7 +559,7 @@ public class PrefabController : MonoBehaviour
     var hullPrefabName = ShipHulls.GetHullPrefabName(prefabMaterial, prefabOrientation);
     var raftHullPrefab =
       prefabManager.CreateClonedPrefab(
-        hullPrefabName,
+        "VVShipHull_Wood",
         ship_hull);
     raftHullPrefab.layer = 0;
     raftHullPrefab.gameObject.layer = 0;
@@ -571,7 +571,7 @@ public class PrefabController : MonoBehaviour
     raftHullPrefab.gameObject.transform.position = Vector3.zero;
     raftHullPrefab.gameObject.transform.localPosition = Vector3.zero;
     Logger.LogDebug($"position {raftHullPrefab.transform.position}");
-    // piece.m_waterPiece = true;
+    piece.m_waterPiece = true;
     piece.m_icon = vanillaRaftPrefab.GetComponent<Piece>().m_icon;
     piece.m_noClipping = true;
     /*
@@ -581,12 +581,12 @@ public class PrefabController : MonoBehaviour
 
     // Less complicated wnt so re-usable method is not used
     // raftHullPrefab.AddComponent<WearNTear>();
-    var woodWNT = woodFloorPiece.GetComponent<WearNTear>();
+    var woodWnt = woodFloorPiece.GetComponent<WearNTear>();
     var wntComponent = SetWearNTear(raftHullPrefab);
     SetWearNTearSupport(wntComponent, WearNTear.MaterialType.HardWood);
-    wntComponent.m_colliders = woodWNT.m_colliders;
-    wntComponent.m_onDamaged += woodWNT.m_onDamaged;
-    wntComponent.m_onDestroyed += woodWNT.m_onDestroyed;
+    wntComponent.m_colliders = woodWnt.m_colliders;
+    wntComponent.m_onDamaged += woodWnt.m_onDamaged;
+    wntComponent.m_onDestroyed += woodWnt.m_onDestroyed;
     wntComponent.m_supports = true;
     wntComponent.m_support = 2000f;
     wntComponent.m_noSupportWear = true;
@@ -599,7 +599,7 @@ public class PrefabController : MonoBehaviour
     // FixSnapPoints(raftHullPrefab);
 
     // this will be used to hide water on the boat
-    // var shipHullPrefabComponent = raftHullPrefab.AddComponent<ShipHullComponent>();
+    raftHullPrefab.AddComponent<ShipHullComponent>();
 
     // might not need to add netview if the log already has it
 

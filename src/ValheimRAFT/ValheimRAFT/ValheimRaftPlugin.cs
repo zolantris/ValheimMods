@@ -278,7 +278,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       CreateConfigDescription(
         "Outputs more debug logs for the MoveableBaseRootComponent. Useful for troubleshooting errors, but may fill logs quicker"));
     PatchPlanBuildPositionIssues = Config.Bind<bool>("Patches",
-      "fixPlanBuildPositionIssues", true, new ConfigDescription(
+      "fixPlanBuildPositionIssues", false, new ConfigDescription(
         "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT.",
         (AcceptableValueBase)null, new object[1]
         {

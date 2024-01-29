@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
@@ -51,6 +52,14 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
       m_nview.Register<bool>("RequestRespons", RPC_RequestRespons);
       hasRegister = true;
     }
+  }
+
+  private void OnDestroy()
+  {
+    if (!hasRegister) return;
+    m_nview.Unregister("RequestControl");
+    m_nview.Unregister("ReleaseControl");
+    m_nview.Unregister("RequestRespons");
   }
 
   public bool IsValid()

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Jotunn;
 using UnityEngine;
@@ -15,36 +16,55 @@ namespace ValheimVehicles.Prefabs;
  */
 public class ShipHullComponent : MonoBehaviour
 {
-  private VVShip _vvShip;
-  public WaterVehicleController _waterVehicleController;
+  private static readonly KeyValuePair<int, int> ShipZdo = ZDO.GetHashZDOID("MBParent");
+  private static readonly int ShipZdoId = "ValheimVehicleShipId".GetStableHashCode();
 
   private void Awake()
   {
-    // var nv = GetComponent<ZNetView>();
-    // _vvShip = GetComponent<VVShip>();
-    // _waterVehicleController = GetComponentInParent<WaterVehicleController>();
-    //
-    // // exit if this ShipHull is initialized with a vehicle controller
-    // if ((bool)_waterVehicleController)
-    // {
-    //   return;
-    // }
-    //
-    // if (!(bool)_vvShip)
-    // {
-    //   _vvShip = GetComponentInParent<VVShip>();
-    // }
-    //
-    // if (!(bool)_vvShip)
-    // {
-    //   _vvShip = GetComponentInChildren<VVShip>();
-    // }
-    //
-    // if (nv && nv.GetZDO() != null && _vvShip == null)
-    // {
-    //   Logger.LogWarning("vvship not available, adding new ship");
-    //   _vvShip = gameObject.AddComponent<VVShip>();
-    // }
+    var nv = GetComponent<ZNetView>();
+
+    if (nv == null)
+    {
+      return;
+    }
+
+    var zdo = nv.GetZDO();
+
+    if (zdo == null)
+    {
+      return;
+    }
+
+    var zdoParent = zdo.GetZDOID(ShipZdo);
+    var zdoParentId = zdo.GetInt(ShipZdoId);
+
+    if (zdoParent != ZDOID.None || zdoParentId != 0)
+    {
+      return;
+    }
+
+    InitShip(nv);
+  }
+
+  private void InitShip(ZNetView netView)
+  {
+    var waterVehiclePrefab = PrefabController.WaterVehiclePrefab;
+
+    /*
+     * Sets the shipInstance to this current position/rotation, but the object will have no parent
+     */
+    var shipInstance =
+      Instantiate(waterVehiclePrefab, null);
+    shipInstance.transform.position = transform.position;
+    shipInstance.transform.rotation = transform.rotation;
+
+    if (shipInstance == null) return;
+
+    var instanceController = shipInstance.GetComponentInChildren<WaterVehicleController>();
+
+    if (instanceController == null) return;
+    instanceController.AddNewPiece(netView);
+    netView.GetZDO().Set(ShipZdoId, instanceController.PersistentZdoId);
   }
   // private WaterVehicleController _waterVehicleController;
   // private GameObject waterVehiclePrefabInstance;

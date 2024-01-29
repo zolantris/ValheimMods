@@ -69,6 +69,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
       name = PrefabNames.ValheimVehiclesShipName,
       layer = 0
     };
+
     _controller = gameObject.AddComponent<WaterVehicleController>();
     _controller.InitializeShipValues(Instance);
 
@@ -319,16 +320,32 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
           _controller.m_balanceForce);
       var centerforce2 = GetUpwardsForce(_controller.m_targetHeight,
         centerpos2.y + m_body.velocity.y, _controller.m_liftForce);
-      m_body.AddForceAtPosition(Vector3.up * side1force, side1,
+
+      /**
+       * applies only center force to keep boat stable and not flip
+       */
+      m_body.AddForceAtPosition(Vector3.up * centerforce2, side1,
         ForceMode.VelocityChange);
-      m_body.AddForceAtPosition(Vector3.up * side2force, side2,
+      m_body.AddForceAtPosition(Vector3.up * centerforce2, side2,
         ForceMode.VelocityChange);
-      m_body.AddForceAtPosition(Vector3.up * side3force, side3,
+      m_body.AddForceAtPosition(Vector3.up * centerforce2, side3,
         ForceMode.VelocityChange);
-      m_body.AddForceAtPosition(Vector3.up * side4force, side4,
+      m_body.AddForceAtPosition(Vector3.up * centerforce2, side4,
         ForceMode.VelocityChange);
       m_body.AddForceAtPosition(Vector3.up * centerforce2, centerpos2,
         ForceMode.VelocityChange);
+
+
+      // m_body.AddForceAtPosition(Vector3.up * side1force, side1,
+      //   ForceMode.VelocityChange);
+      // m_body.AddForceAtPosition(Vector3.up * side2force, side2,
+      //   ForceMode.VelocityChange);
+      // m_body.AddForceAtPosition(Vector3.up * side3force, side3,
+      //   ForceMode.VelocityChange);
+      // m_body.AddForceAtPosition(Vector3.up * side4force, side4,
+      //   ForceMode.VelocityChange);
+      // m_body.AddForceAtPosition(Vector3.up * centerforce2, centerpos2,
+      //   ForceMode.VelocityChange);
       var dir = Vector3.Dot(m_body.velocity, transform.forward);
       ApplySailForce(this, dir);
     }

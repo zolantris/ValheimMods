@@ -25,7 +25,7 @@ public class ZDO_Patch
   {
     ZDOPersistentID.Instance.Register(zdo);
     MoveableBaseRootComponent.InitZDO(zdo);
-    BaseVehicleController.InitZDO(zdo);
+    BaseVehicleController.InitZdo(zdo);
   }
 
   [HarmonyPatch(typeof(ZDO), "Reset")]

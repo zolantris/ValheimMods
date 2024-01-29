@@ -56,6 +56,8 @@ public class RudderComponent : MonoBehaviour
       _controls =
         gameObject.AddComponent<ValheimShipControls>();
       Controls = _controls;
+      // two way binding is required for this to work.
+      vehicleShip.Instance.m_shipControlls = _controls;
     }
 
     // Destroy(_controls.gameObject);

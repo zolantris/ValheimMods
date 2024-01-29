@@ -297,12 +297,16 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     }
   }
 
+  /*
+   * Toggle the ship anchor and emit the event to other players so their client can update
+   */
   public void ToggleAnchor()
   {
-    VehicleFlags = (waterVehicleController.VehicleFlags.HasFlag(
-      WaterVehicleFlags.IsAnchored)
-      ? (VehicleFlags | WaterVehicleFlags.IsAnchored)
-      : (VehicleFlags & ~WaterVehicleFlags.IsAnchored));
+    var isAnchored = waterVehicleController.VehicleFlags.HasFlag(
+      WaterVehicleFlags.IsAnchored);
+    VehicleFlags = isAnchored
+      ? (VehicleFlags & ~WaterVehicleFlags.IsAnchored)
+      : (VehicleFlags | WaterVehicleFlags.IsAnchored);
     m_nview.m_zdo.Set("MBFlags", (int)VehicleFlags);
     SendSetAnchor(waterVehicleController.VehicleFlags.HasFlag(
       WaterVehicleFlags.IsAnchored));

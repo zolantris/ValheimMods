@@ -53,6 +53,9 @@ Go [here](docs/CONTRIBUTING.md) for more information.
     coreclr_path=
     corlib_dir=
     ```
+   _Noting that doorstop_config.ini must be changed within the valheim game
+   folder
+   instead of the r2modman/thunderstore profile folder._
 4. Copy and overwrite the doorstop_4.x.x_libs/BepInEx.Preloader.dll into
    BepInEx/core and replace the current file.
 5. For Rider IDE under BepInEx/config/BepInEx.cfg enable dump assemblies. (set
