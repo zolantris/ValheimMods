@@ -59,6 +59,9 @@ public class ZNetView_Patch
       }
     }
 
+    // exit znetview destroy if ship hull is being added
+    if (__instance.gameObject.name.Contains("VVShipHull")) return false;
+
 
     return true;
   }

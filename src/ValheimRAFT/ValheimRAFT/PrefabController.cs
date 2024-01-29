@@ -46,10 +46,14 @@ public class PrefabController : MonoBehaviour
   private GameObject vanillaRaftPrefab;
   private GameObject vikingShipPrefab;
   public const string WaterVehiclePrefabName = "WaterVehicle";
+  private static GameObject _waterVehiclePrefab;
+  public static PrefabController Instance;
 
+  // public static GameObject WaterVehiclePrefab =>
+  //   PrefabManager.Instance.GetPrefab(WaterVehiclePrefabName);  
 
   public static GameObject WaterVehiclePrefab =>
-    PrefabManager.Instance.GetPrefab(WaterVehiclePrefabName);
+    _waterVehiclePrefab;
 
   /*
    * ship related items
@@ -66,6 +70,11 @@ public class PrefabController : MonoBehaviour
   public const string Tier3RaftMastName = "MBVikingShipMast";
   public const string Tier1CustomSailName = "MBSail";
   private const string ValheimRaftMenuName = "Raft";
+
+  private void Awake()
+  {
+    Instance = this;
+  }
 
 
   // todo this should come from config
@@ -291,10 +300,23 @@ public class PrefabController : MonoBehaviour
   {
     if (GUILayout.Button("Delete All Ships"))
     {
-      var vvShips = Resources.FindObjectsOfTypeAll<VVShip>();
-      foreach (var vvShip in vvShips)
+      var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+      foreach (var obj in allObjects)
       {
-        Destroy(vvShip);
+        if (obj.name.Contains("ValheimVehicles_Ship"))
+        {
+          Destroy(obj);
+        }
+
+        if (obj.name.Contains("WaterVehicleController(Clone)"))
+        {
+          Destroy(obj);
+        }
+
+        if (obj.name.Contains("VVShip(Clone)"))
+        {
+          Destroy(obj);
+        }
       }
     }
 
@@ -367,10 +389,15 @@ public class PrefabController : MonoBehaviour
     //   Destroy(shipHullPrefabPiece);
     // }
 
-    // var waterVehiclePrefab =
-    //   prefabManager.CreateClonedPrefab(WaterVehiclePrefabName, ship_hull);
+    _waterVehiclePrefab =
+      prefabManager.CreateClonedPrefab(WaterVehiclePrefabName, ship_hull);
     // waterVehiclePrefab.name = WaterVehiclePrefabName;
-    var waterVehiclePrefab = prefabManager.CreateEmptyPrefab(WaterVehiclePrefabName, false);
+    // var waterVehiclePrefab = prefabManager.CreateEmptyPrefab(WaterVehiclePrefabName, false);
+    // _waterVehiclePrefab = new GameObject()
+    // {
+    //   name = WaterVehiclePrefabName
+    // };
+    // _waterVehiclePrefab.AddComponent<Transform>();
     Logger.LogDebug("Made it past waterVehiclePrefab empty create");
     // waterVehiclePrefab.transform.localScale = new Vector3(2f, 2f, 2f);
 
@@ -378,15 +405,15 @@ public class PrefabController : MonoBehaviour
     // var meshCollider = waterVehiclePrefab.GetComponent<MeshCollider>();
     // var meshFilter = waterVehiclePrefab.GetComponent<MeshFilter>();
     // if ((bool)meshCollider) Destroy(meshCollider);
-    // if ((bool)meshCollider) Destroy(meshFilter);
+    // if ((bool)meshFilter) Destroy(meshFilter);
 
     // var waterVehiclePrefab = new GameObject()
     // {
     //   name = prefabName,
     //   layer = 0
     // };
-    waterVehiclePrefab.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
-    // Instantiate(waterMask, waterVehiclePrefab.transform);
+    _waterVehiclePrefab.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    Instantiate(waterMask, _waterVehiclePrefab.transform);
 
     /*
      * Add all necessary colliders to the ship prefab
@@ -400,29 +427,29 @@ public class PrefabController : MonoBehaviour
      * add the colliders to the prefab
      */
     var bc = Instantiate(blockingColliderComponent,
-      waterVehiclePrefab.transform);
+      _waterVehiclePrefab.transform);
     var oc = Instantiate(onboardColliderComponent,
-      waterVehiclePrefab.transform);
+      _waterVehiclePrefab.transform);
     var fc = Instantiate(floatColliderComponent,
-      waterVehiclePrefab.transform);
+      _waterVehiclePrefab.transform);
 
     oc.name = "VVOnboardTrigger";
     fc.name = "VVFloatCollider";
     bc.name = "VVBlockingCollider";
 
-    bc.transform.SetParent(waterVehiclePrefab.transform);
-    oc.transform.SetParent(waterVehiclePrefab.transform);
-    fc.transform.SetParent(waterVehiclePrefab.transform);
+    bc.transform.SetParent(_waterVehiclePrefab.transform);
+    oc.transform.SetParent(_waterVehiclePrefab.transform);
+    fc.transform.SetParent(_waterVehiclePrefab.transform);
 
     fc.transform.localScale = new Vector3(1f, 1f, 1f);
     bc.transform.localScale = new Vector3(1f, 1f, 1f);
     bc.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
 
-    var zNetView = waterVehiclePrefab.AddComponent<ZNetView>();
+    var zNetView = _waterVehiclePrefab.AddComponent<ZNetView>();
     zNetView.m_type = ZDO.ObjectType.Prioritized;
     zNetView.m_persistent = true;
 
-    var rigidbody = waterVehiclePrefab.AddComponent<Rigidbody>();
+    var rigidbody = _waterVehiclePrefab.AddComponent<Rigidbody>();
     rigidbody.mass = 2000f;
     rigidbody.angularDrag = 0.1f;
     rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
@@ -437,8 +464,8 @@ public class PrefabController : MonoBehaviour
     /*
      * ShipControls were a gameObject with a script attached to them. This approach directly attaches the script instead of having the rudder show.
      */
-    waterVehiclePrefab.AddComponent<ValheimShipControls>();
-    var shipInstance = waterVehiclePrefab.AddComponent<VVShip>();
+    _waterVehiclePrefab.AddComponent<ValheimShipControls>();
+    var shipInstance = _waterVehiclePrefab.AddComponent<VVShip>();
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
 
     // shipInstance.m_shipControlls = waterVehiclePrefab.GetComponent<ValheimShipControls>();
@@ -453,15 +480,15 @@ public class PrefabController : MonoBehaviour
     shipInstance.m_floatcollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
     shipInstance.FloatCollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
 
-    var zSyncTransform = waterVehiclePrefab.AddComponent<ZSyncTransform>();
+    var zSyncTransform = _waterVehiclePrefab.AddComponent<ZSyncTransform>();
     zSyncTransform.m_syncPosition = true;
     zSyncTransform.m_syncPosition = true;
     zSyncTransform.m_syncBodyVelocity = true;
 
     // wearntear may need to be removed or tweaked
-    waterVehiclePrefab.AddComponent<WearNTear>();
+    _waterVehiclePrefab.AddComponent<WearNTear>();
     var woodWNT = woodFloorPiece.GetComponent<WearNTear>();
-    var wnt = SetWearNTear(waterVehiclePrefab, 1, true);
+    var wnt = SetWearNTear(_waterVehiclePrefab, 1, true);
     SetWearNTearSupport(wnt, WearNTear.MaterialType.HardWood);
     wnt.m_colliders = woodWNT.m_colliders;
     wnt.m_onDamaged += woodWNT.m_onDamaged;
@@ -472,7 +499,7 @@ public class PrefabController : MonoBehaviour
     wnt.m_noRoofWear = true;
     // wnt.m_connectedHeightMap = new Heightmap();
 
-    waterVehiclePrefab.AddComponent<ImpactEffect>();
+    _waterVehiclePrefab.AddComponent<ImpactEffect>();
     // AddVehicleLODs(waterVehiclePrefab);
 
     // waterVehiclePrefab.AddComponent<>()
@@ -503,12 +530,12 @@ public class PrefabController : MonoBehaviour
     var shipControlsGui = new GameObject
       { name = "ControlGui", layer = 0 };
     var shipControlsGuiInstance = Instantiate(shipControlsGui,
-      waterVehiclePrefab.transform);
-    shipControlsGui.transform.SetParent(waterVehiclePrefab.transform);
+      _waterVehiclePrefab.transform);
+    shipControlsGui.transform.SetParent(_waterVehiclePrefab.transform);
     shipControlsGui.transform.localPosition = new Vector3(2.154f, 1.027f, -2.162f);
     shipInstance.m_controlGuiPos = shipControlsGuiInstance.transform;
 
-    var piece = waterVehiclePrefab.AddComponent<Piece>();
+    var piece = _waterVehiclePrefab.AddComponent<Piece>();
     piece.m_waterPiece = true;
     // piece.m_groundPiece = true;
     piece.m_description = "new raft base";
@@ -573,7 +600,7 @@ public class PrefabController : MonoBehaviour
     Logger.LogDebug($"position {raftHullPrefab.transform.position}");
     piece.m_waterPiece = true;
     piece.m_icon = vanillaRaftPrefab.GetComponent<Piece>().m_icon;
-    piece.m_noClipping = true;
+    // piece.m_noClipping = true;
     /*
      * @todo fix snappoints
      */
@@ -585,8 +612,8 @@ public class PrefabController : MonoBehaviour
     var wntComponent = SetWearNTear(raftHullPrefab);
     SetWearNTearSupport(wntComponent, WearNTear.MaterialType.HardWood);
     wntComponent.m_colliders = woodWnt.m_colliders;
-    wntComponent.m_onDamaged += woodWnt.m_onDamaged;
-    wntComponent.m_onDestroyed += woodWnt.m_onDestroyed;
+    // wntComponent.m_onDamaged += woodWnt.m_onDamaged;
+    // wntComponent.m_onDestroyed += woodWnt.m_onDestroyed;
     wntComponent.m_supports = true;
     wntComponent.m_support = 2000f;
     wntComponent.m_noSupportWear = true;

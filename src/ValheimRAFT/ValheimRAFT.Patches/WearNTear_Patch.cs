@@ -58,6 +58,12 @@ public class WearNTear_Patch
     var bv = __instance.GetComponent<BaseVehicleController>();
     var vvShip = __instance.GetComponent<VVShip>();
 
+    // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
+    if (__instance.gameObject.name.Contains("VVShipHull"))
+    {
+      return false;
+    }
+
     // vehicles ignore WNT for now...
     if ((bool)mbr || (bool)bv || (bool)vvShip)
     {
@@ -95,10 +101,10 @@ public class WearNTear_Patch
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     var baseVehicle = __instance.GetComponentInParent<BaseVehicleController>();
     if (!(bool)mbr && !(bool)baseVehicle) return true;
-    if (!(__instance.transform.localPosition.y < 1f)) return false;
+    if (__instance.transform.localPosition.y > 1f) return true;
 
     // makes all support values below 1f very high
-    __instance.m_nview.GetZDO().Set("support", 1500f);
+    __instance.m_nview.GetZDO().Set(ZDOVars.s_support, 1500f);
     __instance.m_support = 1500f;
     __instance.m_noSupportWear = true;
     return false;

@@ -181,6 +181,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       _serverUpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
+
+    ActivatePendingPiecesCoroutine();
   }
 
   protected int GetPersistentID()
@@ -298,7 +300,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     if (sector == m_sector) return;
 
-    // if (m_sector != m_serverSector) ServerSyncAllPieces();
+    if (m_sector != m_serverSector) ServerSyncAllPieces();
 
     m_sector = sector;
 
@@ -390,7 +392,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       /*
        * wait for the pending pieces coroutine to complete before updating
        */
-      if (_pendingPiecesCoroutine != null) yield return _pendingPiecesCoroutine;
+      // if (_pendingPiecesCoroutine != null)
+      // {
+      //   
+      // };
 
       var time = Time.realtimeSinceStartup;
       var output = m_allPieces.TryGetValue(_persistentZdoId, out var list);
@@ -411,6 +416,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     // ReSharper disable once IteratorNeverReturns
   }
 
+  // this needs to be connected to ropeladder too.
   internal float GetColliderBottom()
   {
     return m_blockingcollider.transform.position.y + m_blockingcollider.center.y -
@@ -1065,7 +1071,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
       netView.m_zdo.Set(MBRotationVecHash, netView.transform.localRotation.eulerAngles);
       Logger.LogDebug(
-        $"netView.transform.localRotation.eulerAngles {netView.transform.localPosition}");
+        $"netView.transform.localPosition {netView.transform.localPosition}");
       netView.m_zdo.Set(MBPositionHash, netView.transform.localPosition);
     }
 
@@ -1192,8 +1198,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var rope = netView.GetComponent<RopeAnchorComponent>();
     if (!door && !ladder && !rope) m_bounds.Encapsulate(netView.transform.localPosition);
 
-    Logger.LogDebug(
-      $"Colliders set, m_floatcollider: {m_floatcollider}, m_onboardcollider: {m_onboardcollider}, m_blockingcollider: {m_blockingcollider}");
+    // Logger.LogDebug(
+    //   $"Colliders set, m_floatcollider: {m_floatcollider.bounds}, m_onboardcollider: {m_onboardcollider}, m_blockingcollider: {m_blockingcollider}");
+    Logger.LogDebug($"m_floatcollider: {m_floatcollider.bounds}");
 
     for (var i = 0; i < colliders.Count; i++)
     {

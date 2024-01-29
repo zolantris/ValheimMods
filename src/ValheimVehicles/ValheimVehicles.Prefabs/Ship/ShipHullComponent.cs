@@ -50,6 +50,7 @@ public class ShipHullComponent : MonoBehaviour
   {
     var waterVehiclePrefab = PrefabController.WaterVehiclePrefab;
 
+    waterVehiclePrefab.AddComponent<Transform>();
     /*
      * Sets the shipInstance to this current position/rotation, but the object will have no parent
      */

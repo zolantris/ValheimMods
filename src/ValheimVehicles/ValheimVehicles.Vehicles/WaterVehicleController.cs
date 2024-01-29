@@ -72,6 +72,8 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
     SetColliders(vvShip.gameObject);
 
+    ZdoReadyStart();
+
     _initialized = true;
   }
 
@@ -92,24 +94,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
       Logger.LogError("not initialized, exiting ship logic to prevent crash");
       return;
     }
-
-    // transform.localPosition = Vector3.zero;
-    // transform.localScale = Vector3.one;
-
-    // if (!m_zsync || !m_nview || !shipInstance)
-    // {
-    //   Logger.LogDebug(
-    //     "Awake called, but no netview or zsync, this should only call for a prefab ghost");
-    //   enabled = false;
-    //   return;
-    // }
-    //
-    // if (m_nview.GetZDO() == null)
-    // {
-    //   Logger.LogDebug(
-    //     "Awake() ZDO is null, disabling component for now");
-    //   enabled = false;
-    // }
   }
 
   private void ZdoReadyStart()
@@ -141,10 +125,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
       delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
     m_nview.Register("SetVisual",
       delegate(long sender, bool state) { RPC_SetVisual(sender, state); });
-    waterVehicleController = this;
-
-    FirstTimeCreation();
-    ActivatePendingPiecesCoroutine();
   }
 
   public void UpdateVisual()

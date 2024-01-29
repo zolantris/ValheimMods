@@ -86,8 +86,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
   internal int m_id;
   public bool m_statsOverride;
   private static bool itemsRemovedDuringWait;
-  internal Coroutine pendingPiecesCoroutine;
-  private Coroutine server_UpdatePiecesCoroutine;
+  private Coroutine? pendingPiecesCoroutine;
+  private Coroutine? server_UpdatePiecesCoroutine;
 
   public void Awake()
   {
