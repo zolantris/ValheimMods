@@ -323,9 +323,9 @@
     </ItemGroup>
     
     <!--  Metrics  -->
-    <ItemGroup>
-        <Reference Include="SentryUnitySdkWrapper">
-            <HintPath>$(SolutionDir)\local_libs\SentryUnityBepInExPlugin.dll</HintPath>
+    <ItemGroup Condition="$(AssemblyName) == 'ValheimRAFT'">
+        <Reference Include="SentryUnityWrapper">
+            <HintPath>$(SolutionDir)\src\SentryUnityWrapper\bin\Debug\SentryUnityWrapper.dll</HintPath>
             <Private>False</Private>
         </Reference>
     </ItemGroup>
@@ -341,8 +341,7 @@
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).mdb&quot;"/>
 
-        <Exec Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i" />
-        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i" />
+        <Exec Condition="$(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i" />
         <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i" />
         
         <Exec Condition="Exists('$(PluginDeployPath)\Assets\')" Command="xcopy /d &quot;.\Assets&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>

@@ -8,7 +8,6 @@ using HarmonyLib;
 using Sentry;
 using Sentry.Extensibility;
 using Sentry.Unity;
-using SentryUnitySdkWrapper;
 using UnityEngine;
 
 namespace SentryUnityWrapper;
