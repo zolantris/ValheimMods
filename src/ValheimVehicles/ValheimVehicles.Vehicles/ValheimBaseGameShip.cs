@@ -141,6 +141,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal void Awake()
   {
+    DontDestroyOnLoad(this.gameObject);
     m_nview = GetComponent<ZNetView>();
 
     if (!m_nview)

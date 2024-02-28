@@ -4,6 +4,7 @@ using System.Linq;
 using Jotunn;
 using UnityEngine;
 using ValheimRAFT;
+using ValheimRAFT.Util;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
@@ -16,7 +17,7 @@ namespace ValheimVehicles.Prefabs;
  */
 public class ShipHullComponent : MonoBehaviour
 {
-  private static readonly KeyValuePair<int, int> ShipZdo = ZDO.GetHashZDOID("MBParent");
+  private static readonly KeyValuePair<int, int> ShipZdo = ZDO.GetHashZDOID("ValheimVehicleParent");
   private static readonly int ShipZdoId = "ValheimVehicleShipId".GetStableHashCode();
 
   private void Awake()
@@ -49,8 +50,6 @@ public class ShipHullComponent : MonoBehaviour
   private void InitShip(ZNetView netView)
   {
     var waterVehiclePrefab = PrefabController.WaterVehiclePrefab;
-
-    waterVehiclePrefab.AddComponent<Transform>();
     /*
      * Sets the shipInstance to this current position/rotation, but the object will have no parent
      */
@@ -58,6 +57,31 @@ public class ShipHullComponent : MonoBehaviour
       Instantiate(waterVehiclePrefab, null);
     shipInstance.transform.position = transform.position;
     shipInstance.transform.rotation = transform.rotation;
+
+    var zNetView = shipInstance.GetComponent<ZNetView>();
+    var currentNetViewZdo = netView.GetZDO();
+
+    // Initializing without using the prefabManager.CreateClonedPrefab causes issues
+    if (!zNetView)
+    {
+      zNetView = waterVehiclePrefab.AddComponent<ZNetView>();
+      zNetView.m_type = ZDO.ObjectType.Prioritized;
+      zNetView.m_persistent = true;
+    }
+
+    if (zNetView.m_zdo.m_uid == currentNetViewZdo.m_uid)
+    {
+      Logger.LogDebug("ZDO in hull is same as WaterVehicle");
+      zNetView.m_zdo = new ZDO
+      {
+        Persistent = true
+      };
+      // this may happen already
+      // var id = ZDOPersistentID.Instance.GetOrCreatePersistentID(zNetView.m_zdo);
+    }
+
+    Logger.LogInfo($"ShipZNetView zdo, {zNetView.m_zdo}");
+    Logger.LogInfo($"ShipHull zdo, {currentNetViewZdo}");
 
     if (shipInstance == null) return;
 

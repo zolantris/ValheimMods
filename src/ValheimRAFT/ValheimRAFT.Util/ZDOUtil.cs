@@ -31,7 +31,7 @@ namespace ValheimRAFT.Util
       if (id == 0)
       {
         id = ZDOIDToId(zdo.m_uid);
-        while (this.m_zdoGuidLookup.ContainsKey(id))
+        while (m_zdoGuidLookup.ContainsKey(id))
           ++id;
         zdo.Set(PersistentIDHash, id, false);
         m_zdoGuidLookup[id] = zdo;

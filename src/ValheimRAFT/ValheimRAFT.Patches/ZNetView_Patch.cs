@@ -60,7 +60,8 @@ public class ZNetView_Patch
     }
 
     // exit znetview destroy if ship hull is being added
-    if (__instance.gameObject.name.Contains("VVShipHull")) return false;
+    if (__instance.gameObject.name.Contains(PrefabController.ShipHullPrefabName) ||
+        __instance.gameObject.name.Contains(PrefabController.WaterVehiclePrefabName)) return false;
 
 
     return true;

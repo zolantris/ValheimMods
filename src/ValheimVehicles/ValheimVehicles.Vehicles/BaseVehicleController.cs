@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using HarmonyLib;
 using ValheimVehicles.Vehicles;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -36,6 +37,13 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   public static readonly int MBRotationHash = "MBRotation".GetStableHashCode();
 
   public static readonly int MBRotationVecHash = "MBRotationVec".GetStableHashCode();
+
+  public static readonly int MBPieceCount = "MBPieceCount".GetStableHashCode();
+
+  /*
+   * Get all the instances statically
+   */
+  public static Dictionary<int, BaseVehicleController> Instances = new();
 
   public static Dictionary<int, List<ZNetView>> m_pendingPieces = new();
 
@@ -91,7 +99,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   private Vector2i m_serverSector;
   private Bounds m_bounds = new();
   public BoxCollider m_blockingcollider = new();
-  internal BoxCollider m_floatcollider;
+  internal BoxCollider m_floatcollider = new();
   internal BoxCollider m_onboardcollider = new();
 
   private int _persistentZdoId;
@@ -153,6 +161,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public void Awake()
   {
+    DontDestroyOnLoad(this);
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
 
@@ -165,7 +174,29 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     Debug.LogError("This is a Test error called within BaseVehicleController.Awake");
   }
 
-  public void Start()
+  /*
+   * Possible alternatives to this approach:
+   * - Add a setter that triggers initializeBaseVehicleValues when the zdo is falsy -> truthy
+   */
+  public void InitializeBaseVehicleValuesWhenReady()
+  {
+    if (m_nview == null)
+    {
+      return;
+    }
+
+    // encapsulate ensures that the float collider will never be smaller than the boat hull size IE the initial objects
+    m_bounds.Encapsulate(m_nview.transform.localPosition);
+
+    // Instances allows getting the instance from a ZDO
+    // OR something queryable on a ZDO making it much easier to debug and eventually update items
+    if (!Instances.GetValueSafe(PersistentZdoId))
+    {
+      Instances.Add(PersistentZdoId, this);
+    }
+  }
+
+  public virtual void Start()
   {
     ValidateInitialization();
 
@@ -173,6 +204,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       return;
     }
+
+    Logger.LogInfo($"BaseVehicleController pieces {m_pieces.Count}");
+    Logger.LogInfo($"BaseVehicleController pendingPieces {m_pendingPieces.Count}");
+    Logger.LogInfo($"BaseVehicleController allPieces {m_allPieces.Count}");
 
     /*
      * This should work on both client and server, but the garbage collecting should only apply if the ZDOs are not persistent
@@ -232,6 +267,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public void CleanUp()
   {
+    if (Instances.GetValueSafe(_persistentZdoId))
+    {
+      Instances.Remove(_persistentZdoId);
+    }
+
     if (_pendingPiecesCoroutine != null)
     {
       StopCoroutine(_pendingPiecesCoroutine);
@@ -408,9 +448,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       }
 
       yield return UpdatePiecesWorker(list);
-
-      // todo remove this if it does nothing
-      list = null;
       yield return new WaitForEndOfFrame();
     }
     // ReSharper disable once IteratorNeverReturns
@@ -665,6 +702,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public void DestroyBoat()
   {
+    /*
+     * TODO figure out why this is exiting too early when there are items
+     */
+    // return;
     var wntShip = instance.GetComponent<WearNTear>();
     if ((bool)wntShip)
       wntShip.Destroy();
@@ -734,7 +775,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         }
       }
 
-      list.Clear();
+      // this is commented out b/c it may be triggering the destroy method guard at the bottom.
+      // list.Clear();
       m_pendingPieces.Remove(id);
     }
 
@@ -912,12 +954,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public static void AddDynamicParent(ZNetView source, GameObject target, Vector3 offset)
   {
-    var mbroot = target.GetComponentInParent<BaseVehicleController>();
-    if ((bool)mbroot)
-    {
-      source.m_zdo.Set(MBCharacterParentHash, mbroot._persistentZdoId);
-      source.m_zdo.Set(MBCharacterOffsetHash, offset);
-    }
+    var baseVehicleController = target.GetComponentInParent<BaseVehicleController>();
+    Logger.LogInfo($"Called AddDynamicParent {baseVehicleController}");
+    if (!(bool)baseVehicleController) return;
+    source.m_zdo.Set(MBCharacterParentHash, baseVehicleController._persistentZdoId);
+    source.m_zdo.Set(MBCharacterOffsetHash, offset);
   }
 
   public static void InitZdo(ZDO zdo)
@@ -949,34 +990,31 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public static void RemoveZDO(ZDO zdo)
   {
+    // Logger.LogInfo("called RemoveZDO");
     var id = GetParentID(zdo);
-    if (id != 0 && m_allPieces.TryGetValue(id, out var list))
-    {
-      list.FastRemove(zdo);
-      itemsRemovedDuringWait = true;
-    }
+    if (id == 0 || !m_allPieces.TryGetValue(id, out var list)) return;
+    list.FastRemove(zdo);
+    itemsRemovedDuringWait = true;
   }
 
   private static int GetParentID(ZDO zdo)
   {
     var id = zdo.GetInt(MBParentIdHash);
-    if (id == 0)
-    {
-      var zdoid = zdo.GetZDOID(MBParentHash);
-      // Logger.LogDebug($"Parent: ZDOID {zdoid}");
-      if (zdoid != ZDOID.None)
-      {
-        var zdoparent = ZDOMan.instance.GetZDO(zdoid);
-        id = zdoparent == null
-          ? ZDOPersistentID.ZDOIDToId(zdoid)
-          : ZDOPersistentID.Instance.GetOrCreatePersistentID(zdoparent);
-        zdo.Set(MBParentIdHash, id);
-        zdo.Set(MBRotationVecHash,
-          zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
-        zdo.RemoveZDOID(MBParentHash);
-        ZDOExtraData.s_quats.Remove(zdoid, MBRotationHash);
-      }
-    }
+    if (id != 0) return id;
+
+    var zdoid = zdo.GetZDOID(MBParentHash);
+    // Logger.LogDebug($"Parent: ZDOID {zdoid}");
+    if (zdoid == ZDOID.None) return id;
+
+    var zdoparent = ZDOMan.instance.GetZDO(zdoid);
+    id = zdoparent == null
+      ? ZDOPersistentID.ZDOIDToId(zdoid)
+      : ZDOPersistentID.Instance.GetOrCreatePersistentID(zdoparent);
+    zdo.Set(MBParentIdHash, id);
+    zdo.Set(MBRotationVecHash,
+      zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
+    zdo.RemoveZDOID(MBParentHash);
+    ZDOExtraData.s_quats.Remove(zdoid, MBRotationHash);
 
     return id;
   }
@@ -1175,16 +1213,19 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
      */
     var rbs = netView.GetComponentsInChildren<Rigidbody>();
     for (var i = 0; i < rbs.Length; i++)
-      if (rbs[i].isKinematic)
+    {
+      var rbsItem = rbs[i];
+      if (rbsItem.isKinematic)
       {
         Logger.LogDebug($"destroying kinematic rbs");
-        Destroy(rbs[i]);
+        Destroy(rbsItem);
       }
+    }
   }
 
   private void UpdatePieceCount()
   {
-    if ((bool)m_nview && m_nview.m_zdo != null) m_nview.m_zdo.Set("MBPieceCount", m_pieces.Count);
+    if ((bool)m_nview && m_nview.m_zdo != null) m_nview.m_zdo.Set(MBPieceCount, m_pieces.Count);
   }
 
   public void EncapsulateBounds(ZNetView netView)
@@ -1230,7 +1271,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return m_pieces.Count;
     }
 
-    var count = m_nview.m_zdo.GetInt("MBPieceCount", m_pieces.Count);
+    var count = m_nview.m_zdo.GetInt(MBPieceCount, m_pieces.Count);
 
     Logger.LogDebug($"GetPieceCount() {count}");
     return count;

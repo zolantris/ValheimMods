@@ -45,12 +45,14 @@ public class PrefabController : MonoBehaviour
   private bool prefabsEnabled = true;
   private GameObject vanillaRaftPrefab;
   private GameObject vikingShipPrefab;
-  public const string WaterVehiclePrefabName = "WaterVehicle";
-  private static GameObject _waterVehiclePrefab;
+  private const string PrefabPrefix = "ValheimVehicles";
+  public const string WaterVehiclePrefabName = $"{PrefabPrefix}_WaterVehicle";
+  private static GameObject? _waterVehiclePrefab;
+  public const string ShipHullPrefabName = $"{PrefabPrefix}_ShipHull_Wood";
   public static PrefabController Instance;
 
   // public static GameObject WaterVehiclePrefab =>
-  //   PrefabManager.Instance.GetPrefab(WaterVehiclePrefabName);  
+  //   PrefabManager.Instance.GetPrefab(WaterVehiclePrefabName);
 
   public static GameObject WaterVehiclePrefab =>
     _waterVehiclePrefab;
@@ -303,7 +305,7 @@ public class PrefabController : MonoBehaviour
       var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
       foreach (var obj in allObjects)
       {
-        if (obj.name.Contains("ValheimVehicles_Ship"))
+        if (obj.name.Contains("ValheimVehicles_Ship") || obj.name.Contains("VVShipHull_Wood"))
         {
           Destroy(obj);
         }
@@ -389,30 +391,37 @@ public class PrefabController : MonoBehaviour
     //   Destroy(shipHullPrefabPiece);
     // }
 
-    _waterVehiclePrefab =
-      prefabManager.CreateClonedPrefab(WaterVehiclePrefabName, ship_hull);
+    // var waterVehiclePrefab =
+    //   prefabManager.CreateClonedPrefab(WaterVehiclePrefabName, ship_hull);
     // waterVehiclePrefab.name = WaterVehiclePrefabName;
     // var waterVehiclePrefab = prefabManager.CreateEmptyPrefab(WaterVehiclePrefabName, false);
-    // _waterVehiclePrefab = new GameObject()
+    // waterVehiclePrefab = new GameObject()
     // {
     //   name = WaterVehiclePrefabName
     // };
-    // _waterVehiclePrefab.AddComponent<Transform>();
-    Logger.LogDebug("Made it past waterVehiclePrefab empty create");
+    // waterVehiclePrefab.AddComponent<Transform>();
     // waterVehiclePrefab.transform.localScale = new Vector3(2f, 2f, 2f);
-
     // empty prefabs create a white cube...delete it!
     // var meshCollider = waterVehiclePrefab.GetComponent<MeshCollider>();
     // var meshFilter = waterVehiclePrefab.GetComponent<MeshFilter>();
     // if ((bool)meshCollider) Destroy(meshCollider);
     // if ((bool)meshFilter) Destroy(meshFilter);
-
     // var waterVehiclePrefab = new GameObject()
     // {
     //   name = prefabName,
     //   layer = 0
     // };
-    _waterVehiclePrefab.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+
+    _waterVehiclePrefab = new GameObject
+    {
+      name = WaterVehiclePrefabName,
+      layer = 0,
+    };
+
+    DontDestroyOnLoad(_waterVehiclePrefab);
+
+    // AddNetViewWithPersistence(waterVehiclePrefab);
+
     Instantiate(waterMask, _waterVehiclePrefab.transform);
 
     /*
@@ -422,7 +431,6 @@ public class PrefabController : MonoBehaviour
     var floatColliderComponent = vanillaRaftPrefab.transform.Find("FloatCollider");
     var blockingColliderComponent = vanillaRaftPrefab.transform.Find("ship/colliders/Cube");
     var onboardColliderComponent = vanillaRaftPrefab.transform.Find("OnboardTrigger");
-
     /*
      * add the colliders to the prefab
      */
@@ -445,9 +453,9 @@ public class PrefabController : MonoBehaviour
     bc.transform.localScale = new Vector3(1f, 1f, 1f);
     bc.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
 
-    var zNetView = _waterVehiclePrefab.AddComponent<ZNetView>();
-    zNetView.m_type = ZDO.ObjectType.Prioritized;
-    zNetView.m_persistent = true;
+    // var zNetView = waterVehiclePrefab.AddComponent<ZNetView>();
+    // zNetView.m_type = ZDO.ObjectType.Prioritized;
+    // zNetView.m_persistent = true;
 
     var rigidbody = _waterVehiclePrefab.AddComponent<Rigidbody>();
     rigidbody.mass = 2000f;
@@ -481,7 +489,6 @@ public class PrefabController : MonoBehaviour
     shipInstance.FloatCollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
 
     var zSyncTransform = _waterVehiclePrefab.AddComponent<ZSyncTransform>();
-    zSyncTransform.m_syncPosition = true;
     zSyncTransform.m_syncPosition = true;
     zSyncTransform.m_syncBodyVelocity = true;
 
@@ -542,6 +549,7 @@ public class PrefabController : MonoBehaviour
     piece.m_icon = vanillaRaftPrefab.GetComponent<Piece>().m_icon;
     piece.m_name = "RaftHullBase";
 
+    prefabManager.AddPrefab(_waterVehiclePrefab);
     // pieceManager.AddPiece(new CustomPiece(waterVehiclePrefab, false, new PieceConfig
     // {
     //   PieceTable = "Hammer",
@@ -583,10 +591,10 @@ public class PrefabController : MonoBehaviour
     ShipHulls.HullOrientation prefabOrientation, Vector3 pieceScale)
   {
     // var woodHorizontalOriginalPrefab = prefabManager.GetPrefab(prefabName);
-    var hullPrefabName = ShipHulls.GetHullPrefabName(prefabMaterial, prefabOrientation);
+    // var hullPrefabName = ShipHulls.GetHullPrefabName(prefabMaterial, prefabOrientation);
     var raftHullPrefab =
       prefabManager.CreateClonedPrefab(
-        "VVShipHull_Wood",
+        ShipHullPrefabName,
         ship_hull);
     raftHullPrefab.layer = 0;
     raftHullPrefab.gameObject.layer = 0;
@@ -618,7 +626,6 @@ public class PrefabController : MonoBehaviour
     wntComponent.m_support = 2000f;
     wntComponent.m_noSupportWear = true;
     wntComponent.m_noRoofWear = true;
-
 
     // this may need to send in Piece instead
     AddNetViewWithPersistence(raftHullPrefab);

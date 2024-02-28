@@ -79,21 +79,22 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
   public new void Awake()
   {
+    DontDestroyOnLoad(this.gameObject);
     waterVehicleController = this;
     base.Awake();
 
     ZdoReadyStart();
   }
 
-  public new void Start()
+  public override void Start()
   {
-    base.Start();
-
     if (!_initialized || !(bool)waterVehicleController)
     {
       Logger.LogError("not initialized, exiting ship logic to prevent crash");
       return;
     }
+
+    base.Start();
   }
 
   private void ZdoReadyStart()
@@ -108,6 +109,9 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
     // this may get called twice.
     GetPersistentID();
+    // vital for vehicle
+    InitializeBaseVehicleValuesWhenReady();
+
 
     if (base.VehicleInstance == null)
     {

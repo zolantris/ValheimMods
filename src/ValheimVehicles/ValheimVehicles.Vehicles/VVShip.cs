@@ -12,6 +12,8 @@ namespace ValheimVehicles.Vehicles;
 
 /*
  * Mostly vanilla Valheim However this is safe from other mods overriding valheim ships directly
+ *
+ * 2215240816:53310 53409
  */
 public class VVShip : ValheimBaseGameShip, IVehicleShip
 {
@@ -40,6 +42,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
 
   private new void Awake()
   {
+    DontDestroyOnLoad(this.gameObject);
     base.Awake();
 
     Logger.LogDebug($"called Awake in VVShip, m_body {m_body}");
@@ -73,7 +76,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
     _controller = gameObject.AddComponent<WaterVehicleController>();
     _controller.InitializeShipValues(Instance);
 
-    _controller.transform.SetParent(_waterVehicle.transform);
+    // _controller.transform.SetParent(_waterVehicle.transform);
     // _controller.ActivatePendingPiecesCoroutine();
 
     // waterVehicle must exist as it's own top level object
