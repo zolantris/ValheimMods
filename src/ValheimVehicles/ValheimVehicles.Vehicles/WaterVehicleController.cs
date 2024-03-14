@@ -79,7 +79,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
   public new void Awake()
   {
-    DontDestroyOnLoad(this.gameObject);
     waterVehicleController = this;
     base.Awake();
 

@@ -161,7 +161,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public void Awake()
   {
-    DontDestroyOnLoad(this);
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
 
@@ -185,8 +184,14 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
+    if (_persistentZdoId == 0)
+    {
+      _persistentZdoId = GetPersistentID();
+    }
+
     // encapsulate ensures that the float collider will never be smaller than the boat hull size IE the initial objects
     m_bounds.Encapsulate(m_nview.transform.localPosition);
+
 
     // Instances allows getting the instance from a ZDO
     // OR something queryable on a ZDO making it much easier to debug and eventually update items
@@ -225,12 +230,14 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     Logger.LogDebug($"GetPersistentID, called {name}");
     if (!(bool)m_nview)
     {
-      return 0;
+      _persistentZdoId = 0;
+      return _persistentZdoId;
     }
 
     if (m_nview.GetZDO() == null)
     {
-      return 0;
+      _persistentZdoId = 0;
+      return _persistentZdoId;
     }
 
     _persistentZdoId = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
@@ -776,12 +783,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       }
 
       // this is commented out b/c it may be triggering the destroy method guard at the bottom.
-      // list.Clear();
+      list.Clear();
       m_pendingPieces.Remove(id);
     }
-
-    Logger.LogDebug($"after list 589");
-
 
     if (hasDebug)
       Logger.LogDebug($"Ship Size calc is: m_bounds {m_bounds} bounds size {m_bounds.size}");
@@ -820,8 +824,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       m_dynamicObjects.Remove(_persistentZdoId);
     }
 
-    Logger.LogDebug($"after list 630");
-
     /*
      * This prevents empty Prefabs of MBRaft from existing
      * @todo make this only apply for boats with no objects in any list
@@ -842,7 +844,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var bvc = target.GetComponentInParent<BaseVehicleController>();
     if ((bool)bvc)
     {
-      source.m_zdo.Set(MBCharacterParentHash, bvc._persistentZdoId);
+      source.m_zdo.Set(MBCharacterParentHash, bvc.PersistentZdoId);
       source.m_zdo.Set(MBCharacterOffsetHash,
         source.transform.position - bvc.transform.position);
     }
@@ -1098,9 +1100,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     netView.transform.SetParent(transform);
     Logger.LogDebug($"netView set parent");
     Logger.LogDebug($"ZDOPersistentID instance {ZDOPersistentID.Instance}");
-    if (netView.GetZDO() != null)
+    if (netView.m_zdo != null)
     {
-      var newId = ZDOPersistentID.Instance.GetOrCreatePersistentID(netView.GetZDO());
+      var newId = ZDOPersistentID.Instance.GetOrCreatePersistentID(netView.m_zdo);
       Logger.LogDebug(
         $"persistent id {newId}");
       netView.m_zdo.Set(MBParentIdHash, newId);

@@ -305,7 +305,8 @@ public class PrefabController : MonoBehaviour
       var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
       foreach (var obj in allObjects)
       {
-        if (obj.name.Contains("ValheimVehicles_Ship") || obj.name.Contains("VVShipHull_Wood"))
+        if (obj.name.Contains($"{WaterVehiclePrefabName}(Clone)") ||
+            obj.name.Contains("VVShipHull_Wood(Clone)"))
         {
           Destroy(obj);
         }
@@ -411,18 +412,18 @@ public class PrefabController : MonoBehaviour
     //   name = prefabName,
     //   layer = 0
     // };
+    _waterVehiclePrefab = prefabManager.CreateEmptyPrefab(WaterVehiclePrefabName, true);
+    // _waterVehiclePrefab = new GameObject
+    // {
+    //   name = WaterVehiclePrefabName,
+    //   layer = 0,
+    // };
 
-    _waterVehiclePrefab = new GameObject
-    {
-      name = WaterVehiclePrefabName,
-      layer = 0,
-    };
-
-    DontDestroyOnLoad(_waterVehiclePrefab);
+    // DontDestroyOnLoad(_waterVehiclePrefab);
 
     // AddNetViewWithPersistence(waterVehiclePrefab);
 
-    Instantiate(waterMask, _waterVehiclePrefab.transform);
+    // Instantiate(waterMask, _waterVehiclePrefab.transform);
 
     /*
      * Add all necessary colliders to the ship prefab
@@ -497,9 +498,9 @@ public class PrefabController : MonoBehaviour
     var woodWNT = woodFloorPiece.GetComponent<WearNTear>();
     var wnt = SetWearNTear(_waterVehiclePrefab, 1, true);
     SetWearNTearSupport(wnt, WearNTear.MaterialType.HardWood);
-    wnt.m_colliders = woodWNT.m_colliders;
-    wnt.m_onDamaged += woodWNT.m_onDamaged;
-    wnt.m_onDestroyed += woodWNT.m_onDestroyed;
+    // wnt.m_colliders = woodWNT.m_colliders;
+    // wnt.m_onDamaged += woodWNT.m_onDamaged;
+    // wnt.m_onDestroyed += woodWNT.m_onDestroyed;
     wnt.m_supports = true;
     wnt.m_support = 2000f;
     wnt.m_noSupportWear = true;
@@ -549,8 +550,10 @@ public class PrefabController : MonoBehaviour
     piece.m_icon = vanillaRaftPrefab.GetComponent<Piece>().m_icon;
     piece.m_name = "RaftHullBase";
 
+    FixCollisionLayers(_waterVehiclePrefab);
     prefabManager.AddPrefab(_waterVehiclePrefab);
-    // pieceManager.AddPiece(new CustomPiece(waterVehiclePrefab, false, new PieceConfig
+    prefabManager.RegisterToZNetScene(_waterVehiclePrefab);
+    // pieceManager.AddPiece(new CustomPiece(_waterVehiclePrefab, true, new PieceConfig
     // {
     //   PieceTable = "Hammer",
     //   Name = piece.m_name,
@@ -751,6 +754,31 @@ public class PrefabController : MonoBehaviour
     return wntComponent;
   }
 
+  public void AddBoundsToAllChildren(GameObject parent, GameObject componentToEncapsulate)
+  {
+    var boxCol = parent.GetComponent<BoxCollider>();
+    if (boxCol == null)
+    {
+      boxCol = parent.AddComponent<BoxCollider>();
+    }
+
+    Bounds bounds = new Bounds(parent.transform.position, Vector3.zero);
+
+    var allDescendants = componentToEncapsulate.GetComponentsInChildren<Transform>();
+    foreach (Transform desc in allDescendants)
+    {
+      Renderer childRenderer = desc.GetComponent<Renderer>();
+      if (childRenderer != null)
+      {
+        bounds.Encapsulate(childRenderer.bounds);
+        Logger.LogDebug(childRenderer.bounds);
+      }
+
+      boxCol.center = new Vector3(boxCol.center.x, boxCol.center.y + bounds.size.y / 2,
+        boxCol.center.z);
+      boxCol.size = bounds.size;
+    }
+  }
 
   private void RegisterVikingMast()
   {
@@ -758,8 +786,12 @@ public class PrefabController : MonoBehaviour
 
     var vikingShipMastPrefab = prefabManager.CreateClonedPrefab(Tier3RaftMastName, vikingShipMast);
     var vikingShipMastPrefabPiece = vikingShipMastPrefab.AddComponent<Piece>();
+
+    AddBoundsToAllChildren(vikingShipMastPrefab, vikingShipMastPrefab);
+
     // The connector is off by a bit, translating downwards should help but it doesn't work for the vikingmast
     vikingShipMastPrefabPiece.transform.localScale = new Vector3(2f, 2f, 2f);
+    vikingShipMastPrefab.transform.localPosition = new Vector3(0, -1, 0);
     vikingShipMastPrefabPiece.m_name = "$mb_vikingship_mast";
     vikingShipMastPrefabPiece.m_description = "$mb_vikingship_mast_desc";
     vikingShipMastPrefabPiece.m_placeEffect = woodFloorPiece.m_placeEffect;
@@ -773,6 +805,9 @@ public class PrefabController : MonoBehaviour
       vikingShipMastComponent.m_sailObject.GetComponentInChildren<Cloth>();
     vikingShipMastComponent.m_allowSailRotation = true;
     vikingShipMastComponent.m_allowSailShrinking = true;
+
+    // shipCollider
+    AddSnapPoint("$hud_snappoint_bottom", vikingShipMastPrefab);
 
     // Set wear and tear can be abstracted
     SetWearNTear(vikingShipMastPrefab, 3);
@@ -891,6 +926,7 @@ public class PrefabController : MonoBehaviour
     mbRaftMastPrefabPiece.m_name = "$mb_raft_mast";
     mbRaftMastPrefabPiece.m_description = "$mb_raft_mast_desc";
     mbRaftMastPrefabPiece.m_placeEffect = woodFloorPiece.m_placeEffect;
+    AddBoundsToAllChildren(mbRaftMastPrefab, mbRaftMastPrefab);
 
     AddToRaftPrefabPieces(mbRaftMastPrefabPiece);
     AddNetViewWithPersistence(mbRaftMastPrefab);
@@ -902,6 +938,8 @@ public class PrefabController : MonoBehaviour
     mastComponent.m_sailCloth = mastComponent.m_sailObject.GetComponentInChildren<Cloth>();
 
     SetWearNTear(mbRaftMastPrefab);
+
+    AddSnapPoint("$hud_snappoint_bottom", mbRaftMastPrefab);
 
     FixedRopes(mbRaftMastPrefab);
     FixCollisionLayers(mbRaftMastPrefab);
@@ -942,6 +980,7 @@ public class PrefabController : MonoBehaviour
     mbKarveMastPiece.m_description = "$mb_karve_mast_desc";
     mbKarveMastPiece.m_placeEffect = woodFloorPiece.m_placeEffect;
 
+    AddBoundsToAllChildren(mbKarveMastPrefab, mbKarveMastPrefab);
     AddToRaftPrefabPieces(mbKarveMastPiece);
     AddNetViewWithPersistence(mbKarveMastPrefab);
 
@@ -955,6 +994,8 @@ public class PrefabController : MonoBehaviour
 
     // Abstract wnt for masts
     SetWearNTear(mbKarveMastPrefab, 2);
+
+    AddSnapPoint("$hud_snappoint_bottom", mbKarveMastPrefab);
 
     FixedRopes(mbKarveMastPrefab);
     FixCollisionLayers(mbKarveMastPrefab);
@@ -1154,6 +1195,16 @@ public class PrefabController : MonoBehaviour
     }));
   }
 
+  private void AddSnapPoint(string name, GameObject parentObj)
+  {
+    var snappointObj = new GameObject()
+    {
+      name = name,
+      tag = "snappoint"
+    };
+    Instantiate(snappointObj, parentObj.transform);
+  }
+
   private void RegisterCustomSail()
   {
     var mbSailPrefab = prefabManager.CreateEmptyPrefab(Tier1CustomSailName);
@@ -1176,6 +1227,7 @@ public class PrefabController : MonoBehaviour
       },
       layer = LayerMask.NameToLayer("piece_nonsolid")
     };
+
     var sail = mbSailPrefab.AddComponent<SailComponent>();
     sail.m_sailObject = sailObject;
     sail.m_sailCloth = sailObject.AddComponent<Cloth>();
@@ -1186,7 +1238,6 @@ public class PrefabController : MonoBehaviour
 
     // this is a tier 1 sail
     SetWearNTear(mbSailPrefab, 1);
-    FixSnapPoints(mbSailPrefab);
 
     // mast should allowSailShrinking
     var mast = mbSailPrefab.AddComponent<MastComponent>();

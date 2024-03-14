@@ -42,7 +42,6 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
 
   private new void Awake()
   {
-    DontDestroyOnLoad(this.gameObject);
     base.Awake();
 
     Logger.LogDebug($"called Awake in VVShip, m_body {m_body}");
@@ -85,13 +84,13 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
     // _waterVehicle.transform.rotation = transform.rotation;
   }
 
-  public void OnDestroy()
-  {
-    if (_controller != null)
-    {
-      Destroy(_controller);
-    }
-  }
+  // public void OnDestroy()
+  // {
+  //   if (_controller != null)
+  //   {
+  //     Destroy(_controller);
+  //   }
+  // }
 
   public override void OnEnable()
   {
