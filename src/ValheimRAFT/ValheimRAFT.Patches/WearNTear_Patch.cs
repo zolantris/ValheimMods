@@ -33,11 +33,6 @@ public class WearNTear_Patch
   [HarmonyPrefix]
   private static bool WearNTear_Destroy(WearNTear __instance)
   {
-    if (__instance.gameObject.name.Contains(PrefabController.ShipHullPrefabName))
-    {
-      return false;
-    }
-
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     var bv = __instance.GetComponentInParent<BaseVehicleController>();
     var vvShip = __instance.GetComponent<VVShip>();

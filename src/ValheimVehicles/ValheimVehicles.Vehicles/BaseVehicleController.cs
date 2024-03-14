@@ -1029,6 +1029,18 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
+    if (netView.name.Contains(PrefabController.ShipHullPrefabName))
+    {
+      var shipHullComponent = netView.GetComponent<ShipHullComponent>();
+      // initializes the ship if the shipHull being referenced has no ship attached to it.
+      // If initializing, it needs to call addPiece and skip these blocks
+      if ((bool)shipHullComponent && shipHullComponent.zdoParentId == 0)
+      {
+        VVShip.Init(netView, shipHullComponent);
+        return;
+      }
+    }
+
     var id = GetParentID(netView.m_zdo);
     if (id == 0) return;
 

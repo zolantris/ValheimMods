@@ -328,10 +328,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     UpdateVisual();
   }
 
-  public void Init()
-  {
-  }
-
   public void CalculateSailSpeed()
   {
   }
