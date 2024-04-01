@@ -11,6 +11,7 @@ using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
@@ -96,6 +97,34 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     base.Start();
   }
 
+  // public void OnEnable()
+  // {
+  //   ZdoReadyStart();
+  // }
+
+  private void InitHull()
+  {
+    var pieceCount = GetPieceCount();
+    var buildGhostInstance = m_nview.GetComponent<VehicleBuildGhost>();
+    if (pieceCount != 0)
+    {
+      if (buildGhostInstance)
+      {
+        buildGhostInstance.DisableVehicleGhost();
+      }
+
+      return;
+    }
+
+    var placeholderInstance = buildGhostInstance.GetPlaceholderInstance();
+    var hullNetView = placeholderInstance.GetComponent<ZNetView>();
+
+    hullNetView.transform.SetParent(null);
+
+    AddNewPiece(hullNetView);
+    buildGhostInstance.DisableVehicleGhost();
+  }
+
   private void ZdoReadyStart()
   {
     if (!(bool)m_nview) return;
@@ -108,20 +137,18 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
     // this may get called twice.
     GetPersistentID();
+
     // vital for vehicle
     InitializeBaseVehicleValuesWhenReady();
+
+    // Initializes the base hull if it does not exist
+    InitHull();
 
 
     if (base.VehicleInstance == null)
     {
       Logger.LogError(
         "No ShipInstance detected");
-    }
-
-    if (base.VehicleInstance == null)
-    {
-      Logger.LogError(
-        "No VehicleInstance detected");
     }
 
     m_nview.Register("SetAnchor",
@@ -145,6 +172,8 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
    */
   private void FirstTimeCreation()
   {
+    Logger.LogWarning("called FirstTimeCreation");
+    return;
     var pieceCount = GetPieceCount();
 
     if (pieceCount != 0)

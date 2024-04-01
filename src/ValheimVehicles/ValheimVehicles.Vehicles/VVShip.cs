@@ -7,6 +7,7 @@ using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.ValheimVehicles.Prefabs;
+using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
@@ -24,6 +25,8 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
 
   private WaterVehicleController _controller;
   private GameObject _waterVehicle;
+
+  public VehicleBuildGhost VehicleBuildGhostInstance;
 
   public VVShip Instance => this;
 
@@ -54,19 +57,22 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
     InitializeWaterVehicleController();
   }
 
-  public static void Init(ZNetView netView, ShipHullComponent shipHullComponent)
+  public static void InitShip(ZNetView netView)
   {
-    var waterVehiclePrefab = PrefabController.WaterVehiclePrefab;
+    // this method should not be used unless 
+    Logger.LogWarning("InitShip called, this method is not supported");
+    return;
     /*
      * Sets the shipInstance to this current position/rotation, but the object will have no parent
      */
     var shipInstance =
-      Instantiate(waterVehiclePrefab, null);
+      Instantiate(PrefabController.WaterVehiclePrefab, null);
     shipInstance.transform.position = netView.transform.position;
     shipInstance.transform.rotation = netView.transform.rotation;
 
     var zNetView = shipInstance.GetComponent<ZNetView>();
     var currentNetViewZdo = netView.GetZDO();
+    currentNetViewZdo.SetPosition(netView.transform.position);
 
     // if (zNetView.m_zdo.m_uid == currentNetViewZdo.m_uid)
     // {
@@ -96,12 +102,13 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
     //     Vector3 pt = instanceController.transform.TransformPoint(new Vector3(x,
     //       ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
     //     var obj = Instantiate(floor, pt, instanceController.transform.rotation);
-    //     ZNetView netview = obj.GetComponent<ZNetView>();
-    //     instanceController.AddNewPiece(netview);
+    //     ZNetView floorNetView = obj.GetComponent<ZNetView>();
+    //     instanceController.AddNewPiece(floorNetView);
     //   }
     // }
-    instanceController.AddNewPiece(netView);
-    shipHullComponent.SetParentZdoId(instanceController.PersistentZdoId);
+
+    // instanceController.AddNewPiece(netView);
+    // shipHullComponent.SetParentZdoId(instanceController.PersistentZdoId);
   }
 
   /*
@@ -112,7 +119,6 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
     if (!(bool)m_nview || m_nview.GetZDO() == null || (bool)_waterVehicle) return;
 
     enabled = true;
-    Logger.LogDebug("Made it to InitializeWaterVehicleController");
 
     var ladders = GetComponentsInChildren<Ladder>();
     for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
@@ -125,7 +131,7 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
 
     _controller = gameObject.AddComponent<WaterVehicleController>();
     _controller.InitializeShipValues(Instance);
-
+    // HideGhostPlaceholder();
     // _controller.transform.SetParent(_waterVehicle.transform);
     // _controller.ActivatePendingPiecesCoroutine();
 
@@ -133,6 +139,25 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
     // _waterVehicle.transform.SetParent(null);
     // _waterVehicle.transform.position = transform.position;
     // _waterVehicle.transform.rotation = transform.rotation;
+  }
+
+  private void AddInitialHullPiece()
+  {
+  }
+
+  private void HideGhostPlaceholder()
+  {
+    var placeholderGhost = m_nview.GetComponent<VehicleBuildGhost>();
+
+
+    if ((bool)placeholderGhost)
+    {
+      placeholderGhost.gameObject.SetActive(false);
+    }
+    else
+    {
+      Logger.LogWarning("No placeholder Ghost Component found on vehicle");
+    }
   }
 
   // public void OnDestroy()

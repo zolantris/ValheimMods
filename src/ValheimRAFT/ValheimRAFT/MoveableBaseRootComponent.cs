@@ -626,8 +626,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
                          (m_dynamicObjects.Count == 0 || ObjectListHasNoValidItems))
        )
     {
-      // Logger.LogError($"found boat without any items attached {m_ship} {m_nview}");
-      // DestroyBoat();
+      Logger.LogError($"found boat without any items attached {m_ship} {m_nview}");
+      DestroyBoat();
     }
 
     yield return null;

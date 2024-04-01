@@ -332,6 +332,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8255029666921226665}
   - component: {fileID: 5824623074048672182}
+  - component: {fileID: 628050078429419060}
   m_Layer: 29
   m_Name: ship_hull
   m_TagString: Untagged
@@ -384,6 +385,27 @@ LODGroup:
     renderers:
     - renderer: {fileID: 4181019085183906626}
   m_Enabled: 1
+--- !u!65 &628050078429419060
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8255029666921226666}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.7096577, y: 0.42350382, z: 7.973273}
+  m_Center: {x: 0.119164705, y: -0.2882708, z: 0.013528109}
 --- !u!1 &8255029667724065972
 GameObject:
   m_ObjectHideFlags: 0

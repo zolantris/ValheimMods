@@ -25,5 +25,7 @@ public static class PatchSharedData
   //   return PlayerLastUsedControls.GetValueSafe<string, ShipControlls>(playerId);
   // }
 
+  // stops zone destroys of items outside of zones...
+  // WARNING DEBUG ONLY
   public static bool m_disableCreateDestroy;
 }

@@ -35,17 +35,9 @@ public class WearNTear_Patch
   {
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     var bv = __instance.GetComponentInParent<BaseVehicleController>();
-    var vvShip = __instance.GetComponent<VVShip>();
 
     if ((bool)mbr) mbr.DestroyPiece(__instance);
     if ((bool)bv) bv.DestroyPiece(__instance);
-    else if ((bool)vvShip)
-    {
-      if ((bool)vvShip.Controller.Instance)
-      {
-        vvShip.Controller.Instance.DestroyPiece(__instance);
-      }
-    }
 
     return true;
   }
@@ -56,7 +48,6 @@ public class WearNTear_Patch
   {
     var mbr = __instance.GetComponent<MoveableBaseShipComponent>();
     var bv = __instance.GetComponent<BaseVehicleController>();
-    var vvShip = __instance.GetComponent<VVShip>();
 
     // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
     if (__instance.gameObject.name.Contains(PrefabController.ShipHullPrefabName))
@@ -65,7 +56,7 @@ public class WearNTear_Patch
     }
 
     // vehicles ignore WNT for now...
-    if ((bool)mbr || (bool)bv || (bool)vvShip)
+    if ((bool)mbr || (bool)bv)
     {
       return false;
     }
@@ -101,11 +92,12 @@ public class WearNTear_Patch
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     var baseVehicle = __instance.GetComponentInParent<BaseVehicleController>();
     if (!(bool)mbr && !(bool)baseVehicle) return true;
-    if (__instance.transform.localPosition.y > 1f) return true;
+    // if (__instance.transform.localPosition.y > 1f) return true;
 
     // makes all support values below 1f very high
     __instance.m_nview.GetZDO().Set(ZDOVars.s_support, 1500f);
     __instance.m_support = 1500f;
+    __instance.m_supports = true;
     __instance.m_noSupportWear = true;
     return false;
   }

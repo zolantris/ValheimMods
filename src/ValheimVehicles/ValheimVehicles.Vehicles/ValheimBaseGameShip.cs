@@ -191,8 +191,6 @@ public class ValheimBaseGameShip : MonoBehaviour
     m_body.useGravity = true;
     m_body.maxDepenetrationVelocity = 2f;
 
-    Logger.LogDebug("Made it to 164");
-
     if (m_nview.GetZDO() == null)
     {
       Logger.LogError("ZDO of ship returned null, disabling ship, until ZDO is ready");

@@ -190,7 +190,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
 
     // encapsulate ensures that the float collider will never be smaller than the boat hull size IE the initial objects
-    m_bounds.Encapsulate(m_nview.transform.localPosition);
+    // m_bounds.Encapsulate(m_nview.transform.localPosition);
 
 
     // Instances allows getting the instance from a ZDO
@@ -241,6 +241,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
 
     _persistentZdoId = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
+    Logger.LogInfo($"BaseVehicleController _persistentZdoId: {_persistentZdoId}");
     return _persistentZdoId;
   }
 
@@ -255,6 +256,12 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   private void OnEnable()
   {
     GetPersistentID();
+
+    var nv = GetComponent<ZNetView>();
+
+    if (nv)
+    {
+    }
 
     if (!(bool)ZNet.instance)
     {
@@ -443,6 +450,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       // {
       //   
       // };
+      if (!m_nview)
+      {
+        yield return new WaitUntil(() => (bool)m_nview);
+      }
 
       var time = Time.realtimeSinceStartup;
       var output = m_allPieces.TryGetValue(_persistentZdoId, out var list);
@@ -474,6 +485,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       list = new List<ZNetView>();
       m_pendingPieces.Add(id, list);
+      netView.gameObject.SetActive(false);
     }
 
     list.Add(netView);
@@ -792,13 +804,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     m_dynamicObjects.TryGetValue(_persistentZdoId, out var objectList);
     var objectListHasNoValidItems = true;
-    Logger.LogDebug($"after list 598");
     if (objectList is { Count: > 0 })
     {
       for (var i = 0; i < objectList.Count; i++)
       {
         var go = ZNetScene.instance.FindInstance(objectList[i]);
-        Logger.LogDebug($"after list 604");
 
         if (!go) continue;
 
@@ -832,7 +842,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         (m_dynamicObjects.Count == 0 || objectListHasNoValidItems)
        )
     {
-      Logger.LogError($"found boat without any items attached {m_nview}");
+      Logger.LogError(
+        $"found boat with _persistentZdoId {_persistentZdoId}, without any items attached");
       DestroyBoat();
     }
 
@@ -954,20 +965,12 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     return maxPropulsion;
   }
 
-  public static void AddDynamicParent(ZNetView source, GameObject target, Vector3 offset)
-  {
-    var baseVehicleController = target.GetComponentInParent<BaseVehicleController>();
-    Logger.LogInfo($"Called AddDynamicParent {baseVehicleController}");
-    if (!(bool)baseVehicleController) return;
-    source.m_zdo.Set(MBCharacterParentHash, baseVehicleController._persistentZdoId);
-    source.m_zdo.Set(MBCharacterOffsetHash, offset);
-  }
-
   public static void InitZdo(ZDO zdo)
   {
     var id = GetParentID(zdo);
     if (id != 0)
     {
+      Logger.LogInfo($"InitZDO for id: {id}");
       if (!m_allPieces.TryGetValue(id, out var list))
       {
         list = new List<ZDO>();
@@ -1002,21 +1005,22 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   private static int GetParentID(ZDO zdo)
   {
     var id = zdo.GetInt(MBParentIdHash);
-    if (id != 0) return id;
-
-    var zdoid = zdo.GetZDOID(MBParentHash);
-    // Logger.LogDebug($"Parent: ZDOID {zdoid}");
-    if (zdoid == ZDOID.None) return id;
-
-    var zdoparent = ZDOMan.instance.GetZDO(zdoid);
-    id = zdoparent == null
-      ? ZDOPersistentID.ZDOIDToId(zdoid)
-      : ZDOPersistentID.Instance.GetOrCreatePersistentID(zdoparent);
-    zdo.Set(MBParentIdHash, id);
-    zdo.Set(MBRotationVecHash,
-      zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
-    zdo.RemoveZDOID(MBParentHash);
-    ZDOExtraData.s_quats.Remove(zdoid, MBRotationHash);
+    if (id == 0)
+    {
+      var zdoid = zdo.GetZDOID(MBParentHash);
+      if (zdoid != ZDOID.None)
+      {
+        var zdoparent = ZDOMan.instance.GetZDO(zdoid);
+        id = zdoparent == null
+          ? ZDOPersistentID.ZDOIDToId(zdoid)
+          : ZDOPersistentID.Instance.GetOrCreatePersistentID(zdoparent);
+        zdo.Set(MBParentIdHash, id);
+        zdo.Set(MBRotationVecHash,
+          zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
+        zdo.RemoveZDOID(MBParentHash);
+        ZDOExtraData.s_quats.Remove(zdoid, MBRotationHash);
+      }
+    }
 
     return id;
   }
@@ -1029,16 +1033,16 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
-    if (netView.name.Contains(PrefabController.ShipHullPrefabName))
+    if (netView.name.Contains(PrefabController.WaterVehiclePrefabName))
     {
-      var shipHullComponent = netView.GetComponent<ShipHullComponent>();
+      // var shipHullComponent = netView.GetComponent<ShipHullComponent>();
       // initializes the ship if the shipHull being referenced has no ship attached to it.
       // If initializing, it needs to call addPiece and skip these blocks
-      if ((bool)shipHullComponent && shipHullComponent.zdoParentId == 0)
-      {
-        VVShip.Init(netView, shipHullComponent);
-        return;
-      }
+      // if ((bool)shipHullComponent && shipHullComponent.zdoParentId == 0)
+      // {
+      // VVShip.InitShip(netView);
+      // return;
+      // }
     }
 
     var id = GetParentID(netView.m_zdo);
@@ -1114,10 +1118,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     Logger.LogDebug($"ZDOPersistentID instance {ZDOPersistentID.Instance}");
     if (netView.m_zdo != null)
     {
-      var newId = ZDOPersistentID.Instance.GetOrCreatePersistentID(netView.m_zdo);
-      Logger.LogDebug(
-        $"persistent id {newId}");
-      netView.m_zdo.Set(MBParentIdHash, newId);
+      netView.m_zdo.Set(MBParentIdHash, PersistentZdoId);
       Logger.LogDebug(
         $"netView.transform.localRotation.eulerAngles {netView.transform.localRotation.eulerAngles}");
 
@@ -1160,6 +1161,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var hull = netView.GetComponent<ShipHullComponent>();
     if ((bool)hull)
     {
+      hull.SetParentZdoId(PersistentZdoId);
       m_hullPieces.Add(hull);
     }
 
@@ -1253,8 +1255,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var rope = netView.GetComponent<RopeAnchorComponent>();
     if (!door && !ladder && !rope) m_bounds.Encapsulate(netView.transform.localPosition);
 
-    // Logger.LogDebug(
-    //   $"Colliders set, m_floatcollider: {m_floatcollider.bounds}, m_onboardcollider: {m_onboardcollider}, m_blockingcollider: {m_blockingcollider}");
     Logger.LogDebug($"m_floatcollider: {m_floatcollider.bounds}");
 
     for (var i = 0; i < colliders.Count; i++)
