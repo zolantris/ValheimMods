@@ -485,7 +485,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       list = new List<ZNetView>();
       m_pendingPieces.Add(id, list);
-      netView.gameObject.SetActive(false);
+      // netView.gameObject.SetActive(false);
     }
 
     list.Add(netView);
@@ -715,7 +715,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if (VehicleInstance?.Instance != null)
     {
       var wntShip = VehicleInstance.Instance.GetComponent<WearNTear>();
-      if ((bool)wntShip) wntShip.Destroy();
+      // if ((bool)wntShip) wntShip.Destroy();
     }
   }
 
@@ -1033,16 +1033,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
-    if (netView.name.Contains(PrefabController.WaterVehiclePrefabName))
+    if (netView.name == $"{PrefabController.WaterVehiclePrefabName}(Clone)")
     {
-      // var shipHullComponent = netView.GetComponent<ShipHullComponent>();
-      // initializes the ship if the shipHull being referenced has no ship attached to it.
-      // If initializing, it needs to call addPiece and skip these blocks
-      // if ((bool)shipHullComponent && shipHullComponent.zdoParentId == 0)
-      // {
-      // VVShip.InitShip(netView);
-      // return;
-      // }
+      return;
     }
 
     var id = GetParentID(netView.m_zdo);
@@ -1053,11 +1046,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       var controller = parentObj.GetComponent<BaseVehicleController>();
       Logger.LogDebug($"ParentObj {parentObj}");
-      if ((bool)controller)
-      {
-        Logger.LogDebug("ActivatingBaseVehicle piece");
-        controller.ActivatePiece(netView);
-      }
+      if (!(bool)controller) return;
+      Logger.LogDebug("ActivatingBaseVehicle piece");
+      controller.ActivatePiece(netView);
     }
     else
     {

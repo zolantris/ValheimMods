@@ -9,10 +9,10 @@ namespace ValheimVehicles.Vehicles.Components;
 public class VehicleBuildGhost : MonoBehaviour
 {
   private GameObject? _placeholderInstance;
-  public GameObject? placeholderComponent = CreateCubePrimitive();
+  public GameObject? placeholderComponent;
   public static readonly int IsVehicleInitialized = "IsVehicleInitialized".GetStableHashCode();
 
-  public GameObject GetPlaceholderInstance()
+  public GameObject? GetPlaceholderInstance()
   {
     return _placeholderInstance;
   }
@@ -22,9 +22,13 @@ public class VehicleBuildGhost : MonoBehaviour
     var netView = GetComponent<ZNetView>();
     netView.GetZDO().Set(IsVehicleInitialized, true);
 
-    if (_placeholderInstance)
+    if (_placeholderInstance != null && _placeholderInstance.name.Contains("Cube"))
     {
       Destroy(_placeholderInstance);
+    }
+    else
+    {
+      _placeholderInstance = null;
     }
   }
 
@@ -39,36 +43,29 @@ public class VehicleBuildGhost : MonoBehaviour
     if (!(bool)netView) return false;
     var zdo = netView.GetZDO();
     if (zdo == null) return false;
-    return zdo.GetBool(IsVehicleInitialized) == true;
+    return zdo.GetBool(IsVehicleInitialized);
   }
 
-  private void RenderPlaceholderComponent()
+  public void UpdatePlaceholder()
   {
     if (IsInitialized())
     {
+      if (_placeholderInstance != null)
+      {
+        Destroy(_placeholderInstance);
+      }
+
       placeholderComponent = null;
       _placeholderInstance = null;
       return;
     }
 
-    if (placeholderComponent == null)
+    if (_placeholderInstance != null)
     {
-      placeholderComponent = CreateCubePrimitive();
+      Destroy(_placeholderInstance);
+      _placeholderInstance = null;
     }
 
-    if (_placeholderInstance == null)
-    {
-      _placeholderInstance = Instantiate(placeholderComponent, transform);
-    }
-  }
-
-  public void Awake()
-  {
-    RenderPlaceholderComponent();
-  }
-
-  private void OnEnable()
-  {
-    RenderPlaceholderComponent();
+    _placeholderInstance = Instantiate(placeholderComponent, transform);
   }
 }

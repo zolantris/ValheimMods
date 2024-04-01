@@ -33,8 +33,15 @@ public class WearNTear_Patch
   [HarmonyPrefix]
   private static bool WearNTear_Destroy(WearNTear __instance)
   {
+    // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
+    if (__instance.gameObject.name.Contains(PrefabController.WaterVehiclePrefabName))
+    {
+      return false;
+    }
+
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     var bv = __instance.GetComponentInParent<BaseVehicleController>();
+
 
     if ((bool)mbr) mbr.DestroyPiece(__instance);
     if ((bool)bv) bv.DestroyPiece(__instance);
@@ -50,7 +57,8 @@ public class WearNTear_Patch
     var bv = __instance.GetComponent<BaseVehicleController>();
 
     // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
-    if (__instance.gameObject.name.Contains(PrefabController.ShipHullPrefabName))
+    if (__instance.gameObject.name.Contains(PrefabController.ShipHullPrefabName) ||
+        __instance.gameObject.name.Contains(PrefabController.WaterVehiclePrefabName))
     {
       return false;
     }

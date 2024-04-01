@@ -106,7 +106,7 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
   {
     var pieceCount = GetPieceCount();
     var buildGhostInstance = m_nview.GetComponent<VehicleBuildGhost>();
-    if (pieceCount != 0)
+    if (pieceCount != 0 || !(bool)buildGhostInstance)
     {
       if (buildGhostInstance)
       {
@@ -117,8 +117,9 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     }
 
     var placeholderInstance = buildGhostInstance.GetPlaceholderInstance();
-    var hullNetView = placeholderInstance.GetComponent<ZNetView>();
+    if (placeholderInstance == null) return;
 
+    var hullNetView = placeholderInstance.GetComponent<ZNetView>();
     hullNetView.transform.SetParent(null);
 
     AddNewPiece(hullNetView);

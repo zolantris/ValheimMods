@@ -414,12 +414,11 @@ public class PrefabController : MonoBehaviour
       name = WaterVehiclePrefabName,
       layer = 0,
     };
-
-    // _waterVehiclePrefab = prefabManager.CreateEmptyPrefab(WaterVehiclePrefabName, true);
-    // prefabManager.CreateClonedPrefab(WaterVehiclePrefabName, _shipHullPrefab);
     var buildGhost = waterVehicle.AddComponent<VehicleBuildGhost>();
     buildGhost.placeholderComponent = _shipHullPrefab;
-
+    buildGhost.UpdatePlaceholder();
+    // _waterVehiclePrefab = prefabManager.CreateEmptyPrefab(WaterVehiclePrefabName, true);
+    // prefabManager.CreateClonedPrefab(WaterVehiclePrefabName, _shipHullPrefab);
     var _waterVehiclePrefab =
       prefabManager.CreateClonedPrefab(WaterVehiclePrefabName, waterVehicle);
     AddNetViewWithPersistence(_waterVehiclePrefab);
@@ -759,7 +758,7 @@ public class PrefabController : MonoBehaviour
         Logger.LogDebug(childRenderer.bounds);
       }
 
-      boxCol.center = new Vector3(boxCol.center.x, boxCol.center.y + bounds.size.y / 2,
+      boxCol.center = new Vector3(boxCol.center.x, boxCol.center.y,
         boxCol.center.z);
       boxCol.size = bounds.size;
     }
