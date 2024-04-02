@@ -52,6 +52,7 @@ public class PrefabController : MonoBehaviour
   private static GameObject? _shipHullPrefab;
   public const string ShipHullPrefabName = $"{PrefabPrefix}_ShipHull_Wood";
   public static PrefabController Instance;
+  public const string SailBoxColliderName = $"{PrefabPrefix}_SailBoxCollider";
 
   // public static GameObject WaterVehiclePrefab =>
   //   PrefabManager.Instance.GetPrefab(WaterVehiclePrefabName);
@@ -153,7 +154,8 @@ public class PrefabController : MonoBehaviour
   {
     // Critical Items
     RegisterRaftPrefab();
-    RegisterRudder();
+    RegisterSteeringWheel();
+    RegisterShipRudder();
 
     // Raft Structure
     RegisterHulls();
@@ -415,6 +417,8 @@ public class PrefabController : MonoBehaviour
       layer = 0,
     };
     var buildGhost = waterVehicle.AddComponent<VehicleBuildGhost>();
+    // If the layer is not set to 0 collisions will occur
+    buildGhost.gameObject.layer = 0;
     buildGhost.placeholderComponent = _shipHullPrefab;
     buildGhost.UpdatePlaceholder();
     // _waterVehiclePrefab = prefabManager.CreateEmptyPrefab(WaterVehiclePrefabName, true);
@@ -422,20 +426,8 @@ public class PrefabController : MonoBehaviour
     var _waterVehiclePrefab =
       prefabManager.CreateClonedPrefab(WaterVehiclePrefabName, waterVehicle);
     AddNetViewWithPersistence(_waterVehiclePrefab);
+
     _waterVehiclePrefab.layer = 0;
-    // buildGhost.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
-    // _waterVehiclePrefab.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
-    // _waterVehiclePrefab = new GameObject
-    // {
-    //   name = WaterVehiclePrefabName,
-    //   layer = 0,
-    // };
-
-    // DontDestroyOnLoad(_waterVehiclePrefab);
-
-    // AddNetViewWithPersistence(waterVehiclePrefab);
-
-    // Instantiate(waterMask, _waterVehiclePrefab.transform);
 
     /*
      * Add all necessary colliders to the ship prefab
@@ -738,6 +730,12 @@ public class PrefabController : MonoBehaviour
     return wntComponent;
   }
 
+  /**
+   * todo this needs to be fixed so the mast blocks only with the mast part and ignores the non-sail area.
+   * if the collider is too big it also pushes the rigidbody system underwater (IE Raft sinks)
+   *
+   * May be easier to just get the game object structure for each sail and do a search for the sail and master parts.
+   */
   public void AddBoundsToAllChildren(GameObject parent, GameObject componentToEncapsulate)
   {
     var boxCol = parent.GetComponent<BoxCollider>();
@@ -745,6 +743,8 @@ public class PrefabController : MonoBehaviour
     {
       boxCol = parent.AddComponent<BoxCollider>();
     }
+
+    boxCol.name = SailBoxColliderName;
 
     Bounds bounds = new Bounds(parent.transform.position, Vector3.zero);
 
@@ -758,10 +758,19 @@ public class PrefabController : MonoBehaviour
         Logger.LogDebug(childRenderer.bounds);
       }
 
-      boxCol.center = new Vector3(boxCol.center.x, boxCol.center.y,
-        boxCol.center.z);
-      boxCol.size = bounds.size;
+      boxCol.center = new Vector3(0, bounds.max.y,
+        0);
+      boxCol.size = boxCol.center * 2;
     }
+  }
+
+  /**
+   * A new ship rudder that pivots 90 degrees starboard/port.
+   * - Rudder controls the ship direction.
+   * - @TODO Rudder may only work with v2 ships
+   */
+  private void RegisterShipRudder()
+  {
   }
 
   private void RegisterVikingMast()
@@ -770,8 +779,6 @@ public class PrefabController : MonoBehaviour
 
     var vikingShipMastPrefab = prefabManager.CreateClonedPrefab(Tier3RaftMastName, vikingShipMast);
     var vikingShipMastPrefabPiece = vikingShipMastPrefab.AddComponent<Piece>();
-
-    AddBoundsToAllChildren(vikingShipMastPrefab, vikingShipMastPrefab);
 
     // The connector is off by a bit, translating downwards should help but it doesn't work for the vikingmast
     vikingShipMastPrefabPiece.transform.localScale = new Vector3(2f, 2f, 2f);
@@ -785,6 +792,10 @@ public class PrefabController : MonoBehaviour
 
     var vikingShipMastComponent = vikingShipMastPrefab.AddComponent<MastComponent>();
     vikingShipMastComponent.m_sailObject = vikingShipMastPrefab.transform.Find("Sail").gameObject;
+
+    AddBoundsToAllChildren(vikingShipMastPrefab, vikingShipMastPrefab);
+
+
     vikingShipMastComponent.m_sailCloth =
       vikingShipMastComponent.m_sailObject.GetComponentInChildren<Cloth>();
     vikingShipMastComponent.m_allowSailRotation = true;
@@ -1015,7 +1026,7 @@ public class PrefabController : MonoBehaviour
     }));
   }
 
-  private void RegisterRudder()
+  private void RegisterSteeringWheel()
   {
     var mbRudderPrefab = prefabManager.CreateClonedPrefab("MBRudder", steering_wheel);
 

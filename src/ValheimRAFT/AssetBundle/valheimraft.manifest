@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2827786399
+CRC: 4018912345
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: b7a7714e7d11a28882d156d2dad2b4c2
+    Hash: 0599b7a6278fce4507ff47b488d037f1
   TypeTreeHash:
     serializedVersion: 2
     Hash: 5e82d87847fb8507f8459456364a7f46
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: b7a7714e7d11a28882d156d2dad2b4c2
+    Hash: 0599b7a6278fce4507ff47b488d037f1
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -106,15 +106,17 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.Toggle/ToggleEvent
 Assets:
+- Assets/ship_rudder_basic.prefab
 - Assets/edit_ramp_panel.prefab
 - Assets/edit_sail_panel.prefab
 - Assets/pattern_dot.png
 - Assets/pattern_stripe.png
 - Assets/Slider.prefab
 - Assets/karvemast.png
-- Assets/SailMat.mat
+- Assets/ship_rudder_advanced.prefab
 - Assets/pattern_checker.png
 - Assets/rope_ladder.prefab
+- Assets/SailMat.mat
 - Assets/steering_wheel.prefab
 - Assets/raftmast.png
 - Assets/ship_hull.prefab
