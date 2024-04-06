@@ -74,6 +74,8 @@ public class ShipRudderPrefabs : IRegisterPrefab
     rudderPrefab.layer = 0;
     rudderPrefab.gameObject.layer = 0;
     var piece = rudderPrefab.AddComponent<Piece>();
+    piece.m_name = "$valheim_vehicles_rudder_advanced";
+    piece.m_description = "$valheim_vehicles_rudder_advanced_desc";
     piece.m_icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
 
     PrefabRegistryHelpers.SetWearNTear(rudderPrefab);
@@ -85,8 +87,8 @@ public class ShipRudderPrefabs : IRegisterPrefab
       /*
        * @todo make the name dynamic getter from HullMaterial
        */
-      Name = "$valheim_vehicles_rudder_advanced",
-      Description = "$valheim_vehicles_rudder_advanced_desc",
+      Name = piece.m_name,
+      Description = piece.m_description,
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[3]

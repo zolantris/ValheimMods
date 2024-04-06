@@ -49,6 +49,7 @@ public class ShipHullPrefab : IRegisterPrefab
     piece.m_waterPiece = false;
     piece.m_icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
     piece.m_noClipping = false;
+    piece.m_name = pieceName;
 
     var wntComponent = PrefabRegistryHelpers.SetWearNTear(raftHullPrefab);
     PrefabRegistryHelpers.SetWearNTearSupport(wntComponent, WearNTear.MaterialType.HardWood);
@@ -67,7 +68,7 @@ public class ShipHullPrefab : IRegisterPrefab
     // this will be used to hide water on the boat
     raftHullPrefab.AddComponent<ShipHullComponent>();
 
-    raftHullPrefab = RaftHullPrefabInstance;
+    RaftHullPrefabInstance = raftHullPrefab;
 
     pieceManager.AddPiece(new CustomPiece(raftHullPrefab, false, new PieceConfig
     {
@@ -75,8 +76,8 @@ public class ShipHullPrefab : IRegisterPrefab
       /*
        * @todo make the name dynamic getter from HullMaterial
        */
-      Name = pieceName,
-      Description = "Main structure component for raft",
+      Name = piece.m_name,
+      Description = piece.m_description,
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[3]

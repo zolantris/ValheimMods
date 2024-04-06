@@ -25,7 +25,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var buildGhost = waterVehicle.AddComponent<VehicleBuildGhost>();
     buildGhost.gameObject.layer = 0;
     buildGhost.placeholderComponent =
-      prefabManager.GetPrefab(PrefabNames.ShipHullCoreWoodHorizontal);
+      ShipHullPrefab.RaftHullPrefabInstance;
     buildGhost.UpdatePlaceholder();
 
     var _waterVehiclePrefab =
@@ -125,7 +125,6 @@ public class WaterVehiclePrefab : IRegisterPrefab
     piece.m_icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
     piece.m_name = "$valheim_vehicles_raft";
 
-    prefabManager.AddPrefab(_waterVehiclePrefab);
     pieceManager.AddPiece(new CustomPiece(_waterVehiclePrefab, true, new PieceConfig
     {
       PieceTable = "Hammer",

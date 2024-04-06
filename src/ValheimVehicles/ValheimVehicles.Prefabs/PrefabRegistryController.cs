@@ -60,6 +60,11 @@ public class PrefabRegistryController : MonoBehaviour
       ShipHullPrefab.Instance.Register(prefabManager, pieceManager);
     }
 
+    if (GUILayout.Button("register all prefabs"))
+    {
+      RegisterAllPrefabs();
+    }
+
     // if (GUILayout.Button("Force 0"))
     //   vehicleLOD.ForceLOD(0);
     //
@@ -150,7 +155,7 @@ public class PrefabRegistryController : MonoBehaviour
 
     RegisterAllPrefabs();
 
-    // _initialized = true;
+    _initialized = true;
   }
 
   public static void AddToRaftPrefabPieces(Piece raftPiece)
