@@ -47,24 +47,24 @@ public class WaterVehiclePrefab : IRegisterPrefab
     /*
      * add the colliders to the prefab
      */
-    var bc = PrefabRegistryController.Instantiate(blockingColliderComponent,
+    var blockingCollider = PrefabRegistryController.Instantiate(blockingColliderComponent,
       _waterVehiclePrefab.transform);
-    var oc = PrefabRegistryController.Instantiate(onboardColliderComponent,
+    var onboardCollider = PrefabRegistryController.Instantiate(onboardColliderComponent,
       _waterVehiclePrefab.transform);
-    var fc = PrefabRegistryController.Instantiate(floatColliderComponent,
+    var floatCollider = PrefabRegistryController.Instantiate(floatColliderComponent,
       _waterVehiclePrefab.transform);
 
-    oc.name = PrefabNames.WaterVehicleFloatCollider;
-    fc.name = PrefabNames.VehicleBlockingCollider;
-    bc.name = PrefabNames.VehicleBlockingCollider;
+    onboardCollider.name = PrefabNames.VehicleOnboardCollider;
+    floatCollider.name = PrefabNames.WaterVehicleFloatCollider;
+    blockingCollider.name = PrefabNames.VehicleBlockingCollider;
 
-    bc.transform.SetParent(_waterVehiclePrefab.transform);
-    oc.transform.SetParent(_waterVehiclePrefab.transform);
-    fc.transform.SetParent(_waterVehiclePrefab.transform);
+    blockingCollider.transform.SetParent(_waterVehiclePrefab.transform);
+    onboardCollider.transform.SetParent(_waterVehiclePrefab.transform);
+    floatCollider.transform.SetParent(_waterVehiclePrefab.transform);
 
-    fc.transform.localScale = new Vector3(1f, 1f, 1f);
-    bc.transform.localScale = new Vector3(1f, 1f, 1f);
-    bc.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    floatCollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    blockingCollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    blockingCollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
 
     var rigidbody = _waterVehiclePrefab.AddComponent<Rigidbody>();
     rigidbody.mass = 2000f;

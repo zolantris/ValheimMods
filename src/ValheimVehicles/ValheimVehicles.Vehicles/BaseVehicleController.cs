@@ -118,13 +118,16 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     // defaults to a new boxcollider if somehow things are not detected
     m_onboardcollider =
-      colliders.FirstOrDefault((k) => k.gameObject.name.Contains("VVOnboardTrigger")) ??
+      colliders.FirstOrDefault(
+        (k) => k.gameObject.name.Contains(PrefabNames.VehicleOnboardCollider)) ??
       new BoxCollider();
     m_floatcollider =
-      colliders.FirstOrDefault((k) => k.gameObject.name.Contains("VVFloatCollider")) ??
+      colliders.FirstOrDefault((k) =>
+        k.gameObject.name.Contains(PrefabNames.WaterVehicleFloatCollider)) ??
       new BoxCollider();
     m_blockingcollider =
-      colliders.FirstOrDefault((k) => k.gameObject.name.Contains("VVBlockingCollider")) ??
+      colliders.FirstOrDefault((k) =>
+        k.gameObject.name.Contains(PrefabNames.VehicleBlockingCollider)) ??
       new BoxCollider();
 
     if (m_onboardcollider != null)
@@ -155,9 +158,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   public void ValidateInitialization()
   {
     // colliders that must be valid
-    FireErrorOnNull(m_floatcollider, "VVFloatCollider");
-    FireErrorOnNull(m_blockingcollider, "VVBlockingCollider");
-    FireErrorOnNull(m_onboardcollider, "VVOnboardCollider");
+    FireErrorOnNull(m_floatcollider, PrefabNames.WaterVehicleFloatCollider);
+    FireErrorOnNull(m_blockingcollider, PrefabNames.VehicleBlockingCollider);
+    FireErrorOnNull(m_onboardcollider, PrefabNames.VehicleOnboardCollider);
   }
 
   public void Awake()
