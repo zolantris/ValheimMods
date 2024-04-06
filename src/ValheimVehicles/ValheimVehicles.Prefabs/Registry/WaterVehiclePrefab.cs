@@ -39,19 +39,19 @@ public class WaterVehiclePrefab : IRegisterPrefab
      * TODO make this a GameObject with a BoxCollider in it
      */
     var floatColliderComponent =
-      LoadValheimRaftAssets.vanillaRaftPrefab.transform.Find("FloatCollider");
+      LoadValheimAssets.vanillaRaftPrefab.transform.Find("FloatCollider");
     var blockingColliderComponent =
-      LoadValheimRaftAssets.vanillaRaftPrefab.transform.Find("ship/colliders/Cube");
+      LoadValheimAssets.vanillaRaftPrefab.transform.Find("ship/colliders/Cube");
     var onboardColliderComponent =
-      LoadValheimRaftAssets.vanillaRaftPrefab.transform.Find("OnboardTrigger");
+      LoadValheimAssets.vanillaRaftPrefab.transform.Find("OnboardTrigger");
     /*
      * add the colliders to the prefab
      */
-    var bc = Object.Instantiate(blockingColliderComponent,
+    var bc = PrefabRegistryController.Instantiate(blockingColliderComponent,
       _waterVehiclePrefab.transform);
-    var oc = Object.Instantiate(onboardColliderComponent,
+    var oc = PrefabRegistryController.Instantiate(onboardColliderComponent,
       _waterVehiclePrefab.transform);
-    var fc = Object.Instantiate(floatColliderComponent,
+    var fc = PrefabRegistryController.Instantiate(floatColliderComponent,
       _waterVehiclePrefab.transform);
 
     oc.name = PrefabNames.WaterVehicleFloatCollider;
@@ -94,7 +94,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
 
     // wearntear may need to be removed or tweaked
     _waterVehiclePrefab.AddComponent<WearNTear>();
-    var woodWNT = LoadValheimRaftAssets.woodFloorPiece.GetComponent<WearNTear>();
+    var woodWNT = LoadValheimAssets.woodFloorPiece.GetComponent<WearNTear>();
     var wnt = PrefabRegistryHelpers.SetWearNTear(_waterVehiclePrefab, 1, true);
     PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.HardWood);
     // wnt.m_colliders = woodWNT.m_colliders;
@@ -122,7 +122,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var piece = _waterVehiclePrefab.AddComponent<Piece>();
     piece.m_waterPiece = true;
     piece.m_description = "$valheim_vehicles_raft_desc";
-    piece.m_icon = LoadValheimRaftAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
+    piece.m_icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
     piece.m_name = "$valheim_vehicles_raft";
 
     prefabManager.AddPrefab(_waterVehiclePrefab);

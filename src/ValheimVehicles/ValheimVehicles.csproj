@@ -38,7 +38,6 @@
     <!--        </PropertyGroup>-->
     <ItemGroup>
         <Compile Include="ValheimVehicles.Prefabs\PrefabNames.cs"/>
-        <Compile Include="ValheimVehicles.Prefabs\RegisterShipRudderPrefabs.cs"/>
         <Compile Include="ValheimVehicles.Propulsion\Rudder\RudderComponent.cs"/>
         <Compile Include="ValheimVehiclesPlugin.cs"/>
         <Compile Include=".\ValheimVehicles.Utils\*.cs"/>

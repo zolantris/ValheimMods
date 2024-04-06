@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4264096596935946194}
   - component: {fileID: 2503703829144457564}
   - component: {fileID: 3731444457897624790}
+  - component: {fileID: 2194714734613398038}
   m_Layer: 0
   m_Name: ShipRudder
   m_TagString: Untagged
@@ -83,6 +84,28 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &2194714734613398038
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1413649113178185382}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 805307392
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 1
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 3116605872268139933, guid: de366338f7acc9447a42c20a0025f67e, type: 3}
 --- !u!1 &1697587327003114138
 GameObject:
   m_ObjectHideFlags: 0
@@ -296,6 +319,7 @@ GameObject:
   - component: {fileID: 1945257517402141096}
   - component: {fileID: 7778351566454858037}
   - component: {fileID: 707671276306360665}
+  - component: {fileID: 7983180666326535447}
   m_Layer: 0
   m_Name: ShipRudderAttachSlant
   m_TagString: Untagged
@@ -368,6 +392,28 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &7983180666326535447
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3319851224779146325}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 805307392
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 1
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4318242022830811675, guid: de366338f7acc9447a42c20a0025f67e, type: 3}
 --- !u!1 &4224361877481065752
 GameObject:
   m_ObjectHideFlags: 0

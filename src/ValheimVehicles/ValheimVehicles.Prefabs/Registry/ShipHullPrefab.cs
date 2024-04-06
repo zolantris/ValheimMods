@@ -4,7 +4,7 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimRAFT;
-using ValheimVehicles.ValheimVehicles.Prefabs;
+using ValheimVehicles.Prefabs;
 using Object = UnityEngine.Object;
 using Logger = Jotunn.Logger;
 
@@ -13,6 +13,8 @@ namespace ValheimVehicles.Prefabs.Registry;
 public class ShipHullPrefab : IRegisterPrefab
 {
   public static readonly ShipHullPrefab Instance = new();
+
+  public static GameObject? RaftHullPrefabInstance;
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
@@ -28,7 +30,7 @@ public class ShipHullPrefab : IRegisterPrefab
   //     ShipHulls.HullOrientation.Horizontal, new Vector3(1, 1f, 1f));
   // }
 
-  private GameObject RegisterHull(
+  private static void RegisterHull(
     string prefabName, string pieceName,
     Vector3 pieceScale,
     PrefabManager prefabManager,
@@ -41,16 +43,13 @@ public class ShipHullPrefab : IRegisterPrefab
     raftHullPrefab.gameObject.layer = 0;
     var piece = raftHullPrefab.AddComponent<Piece>();
 
-    Logger.LogDebug($"position {raftHullPrefab.transform.position}");
-
     raftHullPrefab.transform.localScale = pieceScale;
     raftHullPrefab.gameObject.transform.position = Vector3.zero;
     raftHullPrefab.gameObject.transform.localPosition = Vector3.zero;
-    Logger.LogDebug($"position {raftHullPrefab.transform.position}");
-    piece.m_waterPiece = true;
-    piece.m_icon = LoadValheimRaftAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
-    piece.m_noClipping = true;
-    var woodWnt = LoadValheimRaftAssets.woodFloorPiece.GetComponent<WearNTear>();
+    piece.m_waterPiece = false;
+    piece.m_icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
+    piece.m_noClipping = false;
+
     var wntComponent = PrefabRegistryHelpers.SetWearNTear(raftHullPrefab);
     PrefabRegistryHelpers.SetWearNTearSupport(wntComponent, WearNTear.MaterialType.HardWood);
     wntComponent.m_onDamaged = null;
@@ -58,8 +57,8 @@ public class ShipHullPrefab : IRegisterPrefab
     wntComponent.m_support = 2000f;
     wntComponent.m_noSupportWear = true;
     wntComponent.m_noRoofWear = true;
-    wntComponent.m_hitEffect = woodWnt.m_hitEffect;
-    wntComponent.m_hitNoise = woodWnt.m_hitNoise;
+    wntComponent.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
+    wntComponent.m_hitNoise = LoadValheimAssets.woodFloorPieceWearNTear.m_hitNoise;
     wntComponent.m_health = 25000f;
 
     // this may need to send in Piece instead
@@ -67,6 +66,8 @@ public class ShipHullPrefab : IRegisterPrefab
 
     // this will be used to hide water on the boat
     raftHullPrefab.AddComponent<ShipHullComponent>();
+
+    raftHullPrefab = RaftHullPrefabInstance;
 
     pieceManager.AddPiece(new CustomPiece(raftHullPrefab, false, new PieceConfig
     {
@@ -100,7 +101,6 @@ public class ShipHullPrefab : IRegisterPrefab
         }
       }
     }));
-    return raftHullPrefab;
   }
 
   // private GameObject RegisterHull(string prefabName, string prefabMaterial,

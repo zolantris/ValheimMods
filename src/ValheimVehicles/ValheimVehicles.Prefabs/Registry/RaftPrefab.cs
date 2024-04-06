@@ -15,7 +15,7 @@ public class RaftPrefab : IRegisterPrefab
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
     var mbRaftPrefab =
-      prefabManager.CreateClonedPrefab("MBRaft", LoadValheimRaftAssets.vanillaRaftPrefab);
+      prefabManager.CreateClonedPrefab(PrefabNames.m_raft, LoadValheimAssets.vanillaRaftPrefab);
 
     mbRaftPrefab.transform.Find("ship/visual/mast").gameObject.SetActive(false);
     mbRaftPrefab.transform.Find("interactive/mast").gameObject.SetActive(false);

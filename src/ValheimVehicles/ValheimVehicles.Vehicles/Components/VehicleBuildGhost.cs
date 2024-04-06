@@ -66,6 +66,11 @@ public class VehicleBuildGhost : MonoBehaviour
       _placeholderInstance = null;
     }
 
+    if (placeholderComponent == null)
+    {
+      return;
+    }
+
     _placeholderInstance = Instantiate(placeholderComponent, transform);
   }
 }

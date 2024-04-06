@@ -1028,8 +1028,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         zdo.RemoveZDOID(MBParentHash);
         ZDOExtraData.s_quats.Remove(zdoid, MBRotationHash);
       }
-
-      Logger.LogWarning("zdo was of ZDOID.None");
     }
 
     return id;

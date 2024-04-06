@@ -82,6 +82,15 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\LoadValheimVehiclesAssets.cs">
             <Link>ValheimVehicles.Prefabs\LoadValheimVehiclesAssets.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\ShipRudderPrefabs.cs">
+            <Link>ValheimVehicles.Prefabs\Registry\ShipRudderPrefabs.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\ShipRudderPrefabs.cs">
+            <Link>ValheimVehicles.Prefabs\Registry\ShipRudderPrefabs.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\LoadValheimVehiclesSharedAssets.cs">
+            <Link>ValheimVehicles.Prefabs\LoadValheimVehiclesSharedAssets.cs</Link>
+        </Compile>
     </ItemGroup>
     <PropertyGroup>
         <SentryDSN>https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496</SentryDSN>
@@ -100,8 +109,10 @@
         <None Remove="AssetBundle\valheim-vehicles-shared"/>
         <None Remove="AssetBundle\valheim-raft"/>
         <None Remove="AssetBundle\valheim-vehicles"/>
+        <None Remove="AssetBundle\valheim-raft.manifest"/>
+        <None Remove="AssetBundle\valheim-vehicles.manifest"/>
+        <None Remove="AssetBundle\valheim-vehicles-shared.manifest"/>
         <None Remove="AssetBundle\AssetBundle.manifest"/>
-        <None Remove="AssetBundle\valheimraft.manifest"/>
         <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="AssetBundle"/>
         <EmbeddedResource Include="AssetBundle\valheim-vehicles-shared" LogicalName="valheim-vehicles-shared"/>
         <EmbeddedResource Include="AssetBundle\valheim-raft" LogicalName="valheim-raft"/>

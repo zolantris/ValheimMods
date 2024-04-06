@@ -49,8 +49,8 @@ public abstract class PrefabRegistryHelpers
     wearNTearComponent.m_health = PrefabRegistryController.wearNTearBaseHealth * tierMultiplier;
     wearNTearComponent.m_noRoofWear = false;
     wearNTearComponent.m_destroyedEffect =
-      LoadValheimRaftAssets.woodFloorPieceWearNTear.m_destroyedEffect;
-    wearNTearComponent.m_hitEffect = LoadValheimRaftAssets.woodFloorPieceWearNTear.m_hitEffect;
+      LoadValheimAssets.woodFloorPieceWearNTear.m_destroyedEffect;
+    wearNTearComponent.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
 
     return wearNTearComponent;
   }

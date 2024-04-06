@@ -28,7 +28,7 @@ public class SailPrefabs : IRegisterPrefab
 
   private void RegisterVikingMast(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    var vikingShipMast = LoadValheimRaftAssets.vikingShipPrefab.transform.Find("ship/visual/Mast")
+    var vikingShipMast = LoadValheimAssets.vikingShipPrefab.transform.Find("ship/visual/Mast")
       .gameObject;
 
     var vikingShipMastPrefab =
@@ -40,7 +40,7 @@ public class SailPrefabs : IRegisterPrefab
     vikingShipMastPrefab.transform.localPosition = new Vector3(0, -1, 0);
     vikingShipMastPrefabPiece.m_name = "$mb_vikingship_mast";
     vikingShipMastPrefabPiece.m_description = "$mb_vikingship_mast_desc";
-    vikingShipMastPrefabPiece.m_placeEffect = LoadValheimRaftAssets.woodFloorPiece.m_placeEffect;
+    vikingShipMastPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
     PrefabRegistryController.AddToRaftPrefabPieces(vikingShipMastPrefabPiece);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(vikingShipMastPrefab);
@@ -106,7 +106,7 @@ public class SailPrefabs : IRegisterPrefab
     var mbSailPrefabPiece = mbSailPrefab.AddComponent<Piece>();
     mbSailPrefabPiece.m_name = "$mb_sail";
     mbSailPrefabPiece.m_description = "$mb_sail_desc";
-    mbSailPrefabPiece.m_placeEffect = LoadValheimRaftAssets.woodFloorPiece.m_placeEffect;
+    mbSailPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
     PrefabRegistryController.AddToRaftPrefabPieces(mbSailPrefabPiece);
     PrefabRegistryHelpers.AddNetViewWithPersistence(mbSailPrefab);
@@ -162,7 +162,7 @@ public class SailPrefabs : IRegisterPrefab
     var pieceName = sailCount == 3 ? "$mb_sail" : $"$mb_sail_{sailCount}";
     piece.m_name = pieceName;
     piece.m_description = $"$mb_sail_{sailCount}_desc";
-    piece.m_placeEffect = LoadValheimRaftAssets.woodFloorPiece.m_placeEffect;
+    piece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
     PrefabRegistryController.AddToRaftPrefabPieces(piece);
 
@@ -206,12 +206,12 @@ public class SailPrefabs : IRegisterPrefab
   {
     var mbRaftMastPrefab =
       prefabManager.CreateClonedPrefab(PrefabNames.Tier1RaftMastName,
-        LoadValheimRaftAssets.raftMast);
+        LoadValheimAssets.raftMast);
 
     var mbRaftMastPrefabPiece = mbRaftMastPrefab.AddComponent<Piece>();
     mbRaftMastPrefabPiece.m_name = "$mb_raft_mast";
     mbRaftMastPrefabPiece.m_description = "$mb_raft_mast_desc";
-    mbRaftMastPrefabPiece.m_placeEffect = LoadValheimRaftAssets.woodFloorPiece.m_placeEffect;
+    mbRaftMastPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
     // PrefabRegistryHelpers.AddBoundsToAllChildren(mbRaftMastPrefab, mbRaftMastPrefab);
 
     PrefabRegistryController.AddToRaftPrefabPieces(mbRaftMastPrefabPiece);
@@ -265,7 +265,7 @@ public class SailPrefabs : IRegisterPrefab
     var mbKarveMastPiece = mbKarveMastPrefab.AddComponent<Piece>();
     mbKarveMastPiece.m_name = "$mb_karve_mast";
     mbKarveMastPiece.m_description = "$mb_karve_mast_desc";
-    mbKarveMastPiece.m_placeEffect = LoadValheimRaftAssets.woodFloorPiece.m_placeEffect;
+    mbKarveMastPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
     // PrefabRegistryHelpers.AddBoundsToAllChildren(mbKarveMastPrefab, mbKarveMastPrefab);
     PrefabRegistryController.AddToRaftPrefabPieces(mbKarveMastPiece);

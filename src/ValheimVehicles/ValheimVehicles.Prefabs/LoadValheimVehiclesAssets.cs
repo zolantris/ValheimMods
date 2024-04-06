@@ -14,9 +14,11 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public void Init(AssetBundle assetBundle)
   {
     ShipHullAsset =
-      assetBundle.LoadAsset<GameObject>("vehicle_ship_hull.prefab");
+      assetBundle.LoadAsset<GameObject>("Assets/ValheimVehicles/vehicle_ship_hull.prefab");
     ShipRudderBasicAsset =
-      assetBundle.LoadAsset<GameObject>("vehicle_ship_rudder_basic");
-    ShipRudderAdvancedAsset = assetBundle.LoadAsset<GameObject>("dirt_floor.prefab");
+      assetBundle.LoadAsset<GameObject>("Assets/ValheimVehicles/vehicle_ship_rudder_basic.prefab");
+    ShipRudderAdvancedAsset =
+      assetBundle.LoadAsset<GameObject>(
+        "Assets/ValheimVehicles/vehicle_ship_rudder_advanced.prefab");
   }
 }

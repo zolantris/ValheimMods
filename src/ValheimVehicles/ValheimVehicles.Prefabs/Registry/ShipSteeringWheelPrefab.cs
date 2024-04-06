@@ -1,9 +1,6 @@
-using System;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
-using UnityEngine;
-using ValheimRAFT;
 using ValheimVehicles.Propulsion.Rudder;
 using Object = UnityEngine.Object;
 
@@ -16,12 +13,13 @@ public class ShipSteeringWheelPrefab : IRegisterPrefab
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
     var mbRudderPrefab =
-      prefabManager.CreateClonedPrefab("MBRudder", LoadValheimRaftAssets.steering_wheel);
+      prefabManager.CreateClonedPrefab(PrefabNames.ShipSteeringWheel,
+        LoadValheimRaftAssets.steeringWheel);
 
     var mbRudderPrefabPiece = mbRudderPrefab.AddComponent<Piece>();
     mbRudderPrefabPiece.m_name = "$mb_rudder";
     mbRudderPrefabPiece.m_description = "$mb_rudder_desc";
-    mbRudderPrefabPiece.m_placeEffect = LoadValheimRaftAssets.woodFloorPiece.m_placeEffect;
+    mbRudderPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
     PrefabRegistryController.AddToRaftPrefabPieces(mbRudderPrefabPiece);
     PrefabRegistryHelpers.AddNetViewWithPersistence(mbRudderPrefab);

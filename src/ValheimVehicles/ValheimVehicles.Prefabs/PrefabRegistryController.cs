@@ -9,7 +9,6 @@ using UnityEngine;
 using UnityEngine.U2D;
 using ValheimRAFT;
 using ValheimVehicles.Prefabs.Registry;
-using ValheimVehicles.ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
@@ -25,7 +24,7 @@ public class PrefabRegistryController : MonoBehaviour
   private static bool prefabsEnabled = true;
 
   public static AssetBundle raftAssetBundle;
-  public static AssetBundle sharedAssetBundle;
+  public static AssetBundle vehicleSharedAssetBundle;
   public static AssetBundle vehicleAssetBundle;
 
   private static bool _initialized = false;
@@ -54,6 +53,11 @@ public class PrefabRegistryController : MonoBehaviour
       {
         wvc.ToggleAnchor();
       }
+    }
+
+    if (GUILayout.Button("register hull"))
+    {
+      ShipHullPrefab.Instance.Register(prefabManager, pieceManager);
     }
 
     // if (GUILayout.Button("Force 0"))
@@ -122,13 +126,16 @@ public class PrefabRegistryController : MonoBehaviour
    */
   public static void Init()
   {
-    if (_initialized) return;
-    raftAssetBundle =
-      AssetUtils.LoadAssetBundleFromResources("valheim-raft", Assembly.GetExecutingAssembly());
-
-    sharedAssetBundle =
+    // if (_initialized) return;
+    vehicleSharedAssetBundle =
       AssetUtils.LoadAssetBundleFromResources("valheim-vehicles-shared",
         Assembly.GetExecutingAssembly());
+
+    Logger.LogDebug($"valheim-vehicles-shared {vehicleSharedAssetBundle}");
+    raftAssetBundle =
+      AssetUtils.LoadAssetBundleFromResources("valheim-raft", Assembly.GetExecutingAssembly());
+    Logger.LogDebug($"valheim-raft {raftAssetBundle}");
+
 
     vehicleAssetBundle =
       AssetUtils.LoadAssetBundleFromResources("valheim-vehicles", Assembly.GetExecutingAssembly());
@@ -136,12 +143,14 @@ public class PrefabRegistryController : MonoBehaviour
     prefabManager = PrefabManager.Instance;
     pieceManager = PieceManager.Instance;
 
+    LoadValheimAssets.Instance.Init(prefabManager);
+    LoadValheimVehicleSharedAssets.Instance.Init(vehicleSharedAssetBundle);
     LoadValheimRaftAssets.Instance.Init(raftAssetBundle);
     LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle);
 
     RegisterAllPrefabs();
 
-    _initialized = true;
+    // _initialized = true;
   }
 
   public static void AddToRaftPrefabPieces(Piece raftPiece)
@@ -151,9 +160,13 @@ public class PrefabRegistryController : MonoBehaviour
 
   public static void RegisterValheimVehiclesPrefabs()
   {
+    ShipRudderPrefabs.Instance.Register(prefabManager, pieceManager);
+
+    // Raft Structure
     ShipHullPrefab.Instance.Register(prefabManager, pieceManager);
-    RegisterShipRudderPrefabs.RegisterShipRudderBasic();
-    RegisterShipRudderPrefabs.RegisterShipRudderAdvanced();
+
+    // VehiclePrefabs
+    WaterVehiclePrefab.Instance.Register(prefabManager, pieceManager);
   }
 
   public static void RegisterAllPrefabs()
@@ -164,12 +177,6 @@ public class PrefabRegistryController : MonoBehaviour
 
     // ValheimVehicle Prefabs
     RegisterValheimVehiclesPrefabs();
-
-    // Raft Structure
-    ShipHullPrefab.Instance.Register(prefabManager, pieceManager);
-
-    // VehiclePrefabs
-    WaterVehiclePrefab.Instance.Register(prefabManager, pieceManager);
 
     // sails and masts
     SailPrefabs.Instance.Register(prefabManager, pieceManager);
@@ -194,12 +201,12 @@ public class PrefabRegistryController : MonoBehaviour
   private static void RegisterRopeLadder()
   {
     var mbRopeLadderPrefab =
-      prefabManager.CreateClonedPrefab("MBRopeLadder", LoadValheimRaftAssets.rope_ladder);
+      prefabManager.CreateClonedPrefab("MBRopeLadder", LoadValheimRaftAssets.ropeLadder);
 
     var mbRopeLadderPrefabPiece = mbRopeLadderPrefab.AddComponent<Piece>();
     mbRopeLadderPrefabPiece.m_name = "$mb_rope_ladder";
     mbRopeLadderPrefabPiece.m_description = "$mb_rope_ladder_desc";
-    mbRopeLadderPrefabPiece.m_placeEffect = LoadValheimRaftAssets.woodFloorPiece.m_placeEffect;
+    mbRopeLadderPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
     mbRopeLadderPrefabPiece.m_primaryTarget = false;
     mbRopeLadderPrefabPiece.m_randomTarget = false;
 
@@ -208,7 +215,7 @@ public class PrefabRegistryController : MonoBehaviour
     PrefabRegistryHelpers.FixSnapPoints(mbRopeLadderPrefab);
 
     var ropeLadder = mbRopeLadderPrefab.AddComponent<RopeLadderComponent>();
-    var rope = LoadValheimRaftAssets.raftMast.GetComponentInChildren<LineRenderer>(true);
+    var rope = LoadValheimAssets.raftMast.GetComponentInChildren<LineRenderer>(true);
     ropeLadder.m_ropeLine = ropeLadder.GetComponent<LineRenderer>();
     ropeLadder.m_ropeLine.material = new Material(rope.material);
     ropeLadder.m_ropeLine.textureMode = LineTextureMode.Tile;
@@ -217,7 +224,7 @@ public class PrefabRegistryController : MonoBehaviour
 
     var ladderMesh = ropeLadder.m_stepObject.GetComponentInChildren<MeshRenderer>();
     ladderMesh.material =
-      new Material(LoadValheimRaftAssets.woodFloorPiece.GetComponentInChildren<MeshRenderer>()
+      new Material(LoadValheimAssets.woodFloorPiece.GetComponentInChildren<MeshRenderer>()
         .material);
 
     /*
@@ -256,13 +263,13 @@ public class PrefabRegistryController : MonoBehaviour
     var mbRopeAnchorPrefabPiece = mbRopeAnchorPrefab.AddComponent<Piece>();
     mbRopeAnchorPrefabPiece.m_name = "$mb_rope_anchor";
     mbRopeAnchorPrefabPiece.m_description = "$mb_rope_anchor_desc";
-    mbRopeAnchorPrefabPiece.m_placeEffect = LoadValheimRaftAssets.woodFloorPiece.m_placeEffect;
+    mbRopeAnchorPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
     AddToRaftPrefabPieces(mbRopeAnchorPrefabPiece);
     PrefabRegistryHelpers.AddNetViewWithPersistence(mbRopeAnchorPrefab);
 
     var ropeAnchorComponent = mbRopeAnchorPrefab.AddComponent<RopeAnchorComponent>();
-    var baseRope = LoadValheimRaftAssets.raftMast.GetComponentInChildren<LineRenderer>(true);
+    var baseRope = LoadValheimAssets.raftMast.GetComponentInChildren<LineRenderer>(true);
 
     ropeAnchorComponent.m_rope = mbRopeAnchorPrefab.AddComponent<LineRenderer>();
     ropeAnchorComponent.m_rope.material = new Material(baseRope.material);
@@ -412,10 +419,10 @@ public class PrefabRegistryController : MonoBehaviour
 
     var mbBoardingRamp =
       prefabManager.CreateClonedPrefab(PrefabNames.BoardingRamp,
-        LoadValheimRaftAssets.boarding_ramp);
+        LoadValheimRaftAssets.boardingRampAsset);
     var floor = mbBoardingRamp.transform.Find("Ramp/Segment/SegmentAnchor/Floor").gameObject;
     var newFloor = Instantiate(
-      LoadValheimRaftAssets.woodFloorPiece.transform.Find("New/_Combined Mesh [high]").gameObject,
+      LoadValheimAssets.woodFloorPiece.transform.Find("New/_Combined Mesh [high]").gameObject,
       floor.transform.parent,
       false);
     Destroy(floor);
@@ -438,7 +445,7 @@ public class PrefabRegistryController : MonoBehaviour
     mbBoardingRamp.transform.Find("Winch2/Cylinder").GetComponent<MeshRenderer>().sharedMaterial =
       woodMat;
 
-    var ropeMat = LoadValheimRaftAssets.raftMast.GetComponentInChildren<LineRenderer>(true)
+    var ropeMat = LoadValheimAssets.raftMast.GetComponentInChildren<LineRenderer>(true)
       .sharedMaterial;
     mbBoardingRamp.transform.Find("Rope1").GetComponent<LineRenderer>().sharedMaterial = ropeMat;
     mbBoardingRamp.transform.Find("Rope2").GetComponent<LineRenderer>().sharedMaterial = ropeMat;
@@ -446,7 +453,7 @@ public class PrefabRegistryController : MonoBehaviour
     var mbBoardingRampPiece = mbBoardingRamp.AddComponent<Piece>();
     mbBoardingRampPiece.m_name = "$mb_boarding_ramp";
     mbBoardingRampPiece.m_description = "$mb_boarding_ramp_desc";
-    mbBoardingRampPiece.m_placeEffect = LoadValheimRaftAssets.woodFloorPiece.m_placeEffect;
+    mbBoardingRampPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
     AddToRaftPrefabPieces(mbBoardingRampPiece);
     PrefabRegistryHelpers.AddNetViewWithPersistence(mbBoardingRamp);
@@ -545,7 +552,7 @@ public class PrefabRegistryController : MonoBehaviour
     mbDirtFloorPrefab.transform.localScale = new Vector3(size, 1f, size);
 
     var mbDirtFloorPrefabPiece = mbDirtFloorPrefab.AddComponent<Piece>();
-    mbDirtFloorPrefabPiece.m_placeEffect = LoadValheimRaftAssets.woodFloorPiece.m_placeEffect;
+    mbDirtFloorPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
     AddToRaftPrefabPieces(mbDirtFloorPrefabPiece);
     PrefabRegistryHelpers.AddNetViewWithPersistence(mbDirtFloorPrefab);
