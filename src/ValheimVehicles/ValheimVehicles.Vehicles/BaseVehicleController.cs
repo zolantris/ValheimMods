@@ -12,6 +12,7 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
+using PrefabNames = ValheimVehicles.Prefabs.PrefabNames;
 
 namespace ValheimVehicles.Vehicles;
 
@@ -261,6 +262,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     if (nv)
     {
+      m_nview = nv;
     }
 
     if (!(bool)ZNet.instance)
@@ -694,11 +696,15 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   }
 
 
+  /**
+   * prevent ship destruction on m_nview null
+   * - if null it would prevent getting the ZDO information for the ship pieces
+   */
   public void DestroyPiece(WearNTear wnt)
   {
     if ((bool)wnt)
     {
-      if (wnt.name.Contains(PrefabController.WaterVehiclePrefabName))
+      if (wnt.name.Contains(PrefabNames.WaterVehiclePrefabName))
       {
         // prevents a loop of DestroyPiece being called from WearNTear_Patch.
         return;
@@ -710,8 +716,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       totalSailArea = 0f;
     }
 
+
     var pieceCount = GetPieceCount();
-    if (pieceCount > 0) return;
+
+    if (pieceCount > 0 || m_nview == null) return;
     if (VehicleInstance?.Instance != null)
     {
       var wntShip = VehicleInstance.Instance.GetComponent<WearNTear>();
@@ -995,7 +1003,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public static void RemoveZDO(ZDO zdo)
   {
-    // Logger.LogInfo("called RemoveZDO");
     var id = GetParentID(zdo);
     if (id == 0 || !m_allPieces.TryGetValue(id, out var list)) return;
     list.FastRemove(zdo);
@@ -1014,12 +1021,15 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         id = zdoparent == null
           ? ZDOPersistentID.ZDOIDToId(zdoid)
           : ZDOPersistentID.Instance.GetOrCreatePersistentID(zdoparent);
+        Logger.LogDebug($"zdoParent {zdoparent}, id: {id}");
         zdo.Set(MBParentIdHash, id);
         zdo.Set(MBRotationVecHash,
           zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
         zdo.RemoveZDOID(MBParentHash);
         ZDOExtraData.s_quats.Remove(zdoid, MBRotationHash);
       }
+
+      Logger.LogWarning("zdo was of ZDOID.None");
     }
 
     return id;
@@ -1033,7 +1043,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
-    if (netView.name == $"{PrefabController.WaterVehiclePrefabName}(Clone)")
+    if (netView.name == $"{PrefabNames.WaterVehiclePrefabName}(Clone)")
     {
       return;
     }
@@ -1272,7 +1282,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   {
     if (!m_nview || m_nview.m_zdo == null)
     {
-      Logger.LogDebug($"GetPieceCount netview or ZDO null {m_pieces.Count}");
+      Logger.LogDebug(
+        $"GetPieceCount ZNetView or ZDO null {m_pieces.Count}, this could cause boat to self destruct if it returns 0 at destroy piece");
       return m_pieces.Count;
     }
 

@@ -1,5 +1,6 @@
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
@@ -60,8 +61,8 @@ public class ZNetView_Patch
     }
 
     // exit znetview destroy if ship hull is being added
-    if (__instance.gameObject.name.Contains(PrefabController.ShipHullPrefabName) ||
-        __instance.gameObject.name.Contains(PrefabController.WaterVehiclePrefabName)) return false;
+    if (__instance.gameObject.name.Contains(PrefabNames.ShipHullPrefabName) ||
+        __instance.gameObject.name.Contains(PrefabNames.WaterVehiclePrefabName)) return false;
 
 
     return true;

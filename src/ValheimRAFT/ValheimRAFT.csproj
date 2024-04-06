@@ -37,7 +37,6 @@
         <Compile Include="ValheimRAFT.Patches\ZNetView_Patch.cs"/>
         <Compile Include="ValheimRAFT.Util\BinaryIOUtil.cs"/>
         <Compile Include="ValheimRAFT.Util\ListUtil.cs"/>
-        <Compile Include="ValheimRAFT.Util\PrefabNames.cs"/>
         <Compile Include="ValheimRAFT.Util\SentryMetrics.cs"/>
         <Compile Include="ValheimRAFT.Util\ZDOUtil.cs"/>
         <Compile Include="ValheimRAFT.UI\EditRampComponent.cs"/>
@@ -71,6 +70,18 @@
         <Compile Include="ValheimRAFT\RudderComponent.cs"/>
         <Compile Include="ValheimRAFT\SailComponent.cs"/>
         <Compile Include="ValheimRAFT\SailCreatorComponent.cs"/>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\RegisterValheimVehiclePrefabs.cs">
+            <Link>ValheimVehicles.Prefabs\RegisterValheimVehiclePrefabs.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\RegisterHullPrefabs.cs">
+            <Link>ValheimVehicles.Prefabs\RegisterHullPrefabs.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\PrefabRegistryHelpers.cs">
+            <Link>ValheimVehicles.Prefabs\PrefabRegistryHelpers.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\LoadValheimVehiclesAssets.cs">
+            <Link>ValheimVehicles.Prefabs\LoadValheimVehiclesAssets.cs</Link>
+        </Compile>
     </ItemGroup>
     <PropertyGroup>
         <SentryDSN>https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496</SentryDSN>
@@ -86,13 +97,19 @@
     </ItemGroup>
     <ItemGroup>
         <None Remove="AssetBundle\AssetBundle"/>
-        <None Remove="AssetBundle\valheimraft"/>
+        <None Remove="AssetBundle\valheim-vehicles-shared"/>
+        <None Remove="AssetBundle\valheim-raft"/>
+        <None Remove="AssetBundle\valheim-vehicles"/>
         <None Remove="AssetBundle\AssetBundle.manifest"/>
         <None Remove="AssetBundle\valheimraft.manifest"/>
         <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="AssetBundle"/>
-        <EmbeddedResource Include="AssetBundle\valheimraft" LogicalName="valheimraft"/>
+        <EmbeddedResource Include="AssetBundle\valheim-vehicles-shared" LogicalName="valheim-vehicles-shared"/>
+        <EmbeddedResource Include="AssetBundle\valheim-raft" LogicalName="valheim-raft"/>
+        <EmbeddedResource Include="AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles"/>
         <EmbeddedResource Include="AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest"/>
-        <EmbeddedResource Include="AssetBundle\valheimraft.manifest" LogicalName="valheimraft.manifest"/>
+        <EmbeddedResource Include="AssetBundle\valheim-vehicles-shared.manifest" LogicalName="valheim-vehicles-shared.manifest"/>
+        <EmbeddedResource Include="AssetBundle\valheim-raft.manifest" LogicalName="valheim-raft.manifest"/>
+        <EmbeddedResource Include="AssetBundle\valheim-vehicles.manifest" LogicalName="valheim-vehicles.manifest"/>
     </ItemGroup>
     <ItemGroup>
         <Content Include=".gitignore"/>

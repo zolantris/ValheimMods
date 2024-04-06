@@ -61,5 +61,7 @@
   "mb_edit_texture_panel_close": "Close",
   "mb_edit_sail_clothoff": "Force cloth physics off.",
   "mb_ship_hull_corewood_0": "Hull - core-wood (0deg)",
-  "mb_ship_hull_wood_0": "Hull - wood (0deg)"
+  "mb_ship_hull_wood_0": "Hull - wood (0deg)",
+  "valheim_vehicles_raft": "A Raft Water-Vehicle",
+  "valheim_vehicles_raft_desc": "A raft (>=v2.0.0)...that you can build on!"
 }

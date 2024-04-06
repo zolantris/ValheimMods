@@ -1,0 +1,41 @@
+ManifestFileVersion: 0
+CRC: 2788569640
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 2fcd5bc7fda7dd2d54ebf1f8f00d4b74
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: c3560a6824f7e6ece25bf44cb14f8fdc
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 2fcd5bc7fda7dd2d54ebf1f8f00d4b74
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 65
+  Script: {instanceID: 0}
+- Class: 205
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/ValheimVehicles/vehicle_ship_rudder_basic.prefab
+- Assets/ValheimVehicles/vehicle_ship_rudder_advanced.prefab
+- Assets/ValheimVehicles/vehicle_ship_hull.prefab
+Dependencies:
+- C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/AssetBundle/valheim-vehicles-shared

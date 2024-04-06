@@ -171,48 +171,47 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
   /**
    * this creates the Raft 2x3 area
    */
-  private void FirstTimeCreation()
-  {
-    Logger.LogWarning("called FirstTimeCreation");
-    return;
-    var pieceCount = GetPieceCount();
-
-    if (pieceCount != 0)
-    {
-      return;
-    }
-
-    Logger.LogDebug("Calling FirstTimeCreation, generating wood_floors");
-    /*
-     * @todo turn the original planks into a Prefab so boat floors can be larger
-     */
-    var pt = transform.TransformPoint(new Vector3(0f,
-      ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, 0f));
-    var shipHullPrefab = PrefabController.prefabManager.GetPrefab(
-      ShipHulls.GetHullPrefabName(ShipHulls.HullMaterial.CoreWood,
-        ShipHulls.HullOrientation.Horizontal));
-    var obj = Instantiate(shipHullPrefab, pt, transform.rotation);
-    var wnt = obj.GetComponent<WearNTear>();
-    if ((bool)wnt)
-    {
-      wnt.m_supports = true;
-      wnt.m_support = 2000f;
-      wnt.m_noSupportWear = true;
-      wnt.m_noRoofWear = true;
-    }
-
-    var netView = obj.GetComponent<ZNetView>();
-    if ((bool)netView)
-    {
-      AddNewPiece(netView);
-    }
-    else
-    {
-      Logger.LogError("called destroy on obj, due to netview not existing");
-      Destroy(obj);
-    }
-  }
-
+  // private void FirstTimeCreation()
+  // {
+  //   Logger.LogWarning("called FirstTimeCreation");
+  //   return;
+  //   var pieceCount = GetPieceCount();
+  //
+  //   if (pieceCount != 0)
+  //   {
+  //     return;
+  //   }
+  //
+  //   Logger.LogDebug("Calling FirstTimeCreation, generating wood_floors");
+  //   /*
+  //    * @todo turn the original planks into a Prefab so boat floors can be larger
+  //    */
+  //   var pt = transform.TransformPoint(new Vector3(0f,
+  //     ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, 0f));
+  //   var shipHullPrefab = PrefabController.prefabManager.GetPrefab(
+  //     ShipHulls.GetHullPrefabName(ShipHulls.HullMaterial.CoreWood,
+  //       ShipHulls.HullOrientation.Horizontal));
+  //   var obj = Instantiate(shipHullPrefab, pt, transform.rotation);
+  //   var wnt = obj.GetComponent<WearNTear>();
+  //   if ((bool)wnt)
+  //   {
+  //     wnt.m_supports = true;
+  //     wnt.m_support = 2000f;
+  //     wnt.m_noSupportWear = true;
+  //     wnt.m_noRoofWear = true;
+  //   }
+  //
+  //   var netView = obj.GetComponent<ZNetView>();
+  //   if ((bool)netView)
+  //   {
+  //     AddNewPiece(netView);
+  //   }
+  //   else
+  //   {
+  //     Logger.LogError("called destroy on obj, due to netview not existing");
+  //     Destroy(obj);
+  //   }
+  // }
   public void Ascend()
   {
     if (VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))

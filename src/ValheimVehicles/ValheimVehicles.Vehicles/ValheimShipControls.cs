@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using Logger = Jotunn.Logger;
 
@@ -119,7 +120,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
     var playerOnShip = player.GetStandingOnShip();
     if (playerOnShip == null ||
-        !(playerOnShip).name.Contains(PrefabController.WaterVehiclePrefabName))
+        !(playerOnShip).name.Contains(PrefabNames.WaterVehiclePrefabName))
     {
       Logger.LogDebug("Player is not on VVShip");
       return false;

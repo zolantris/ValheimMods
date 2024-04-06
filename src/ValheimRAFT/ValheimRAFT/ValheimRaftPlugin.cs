@@ -11,6 +11,7 @@ using Properties;
 using UnityEngine;
 using ValheimRAFT.Patches;
 using ValheimRAFT.Util;
+using ValheimVehicles.Prefabs;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -34,7 +35,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public static readonly int CustomRaftLayer = 29;
   public static AssetBundle m_assetBundle;
   private bool m_customItemsAdded;
-  public PrefabController prefabController;
+  public PrefabRegistryController prefabController;
 
   public static ValheimRaftPlugin Instance { get; private set; }
 
@@ -468,12 +469,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   {
     if (m_customItemsAdded) return;
 
-    m_customItemsAdded = true;
-    m_assetBundle =
-      AssetUtils.LoadAssetBundleFromResources("valheimraft", Assembly.GetExecutingAssembly());
+    // Registers all prefabs using ValheimVehicles PrefabRegistryController
+    prefabController = gameObject.AddComponent<PrefabRegistryController>();
+    PrefabRegistryController.Init();
 
-    // Registers all prefabs
-    prefabController = gameObject.AddComponent<PrefabController>();
-    prefabController.Init();
+    m_customItemsAdded = true;
   }
 }

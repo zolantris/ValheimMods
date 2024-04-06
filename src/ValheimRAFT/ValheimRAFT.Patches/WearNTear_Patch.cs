@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
@@ -34,7 +35,7 @@ public class WearNTear_Patch
   private static bool WearNTear_Destroy(WearNTear __instance)
   {
     // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
-    if (__instance.gameObject.name.Contains(PrefabController.WaterVehiclePrefabName))
+    if (__instance.gameObject.name.Contains(PrefabNames.WaterVehiclePrefabName))
     {
       return false;
     }
@@ -57,8 +58,8 @@ public class WearNTear_Patch
     var bv = __instance.GetComponent<BaseVehicleController>();
 
     // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
-    if (__instance.gameObject.name.Contains(PrefabController.ShipHullPrefabName) ||
-        __instance.gameObject.name.Contains(PrefabController.WaterVehiclePrefabName))
+    if (__instance.gameObject.name.Contains(PrefabNames.ShipHullPrefabName) ||
+        __instance.gameObject.name.Contains(PrefabNames.WaterVehiclePrefabName))
     {
       return false;
     }

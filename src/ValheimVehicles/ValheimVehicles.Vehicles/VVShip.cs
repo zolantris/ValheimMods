@@ -57,59 +57,59 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
     InitializeWaterVehicleController();
   }
 
-  public static void InitShip(ZNetView netView)
-  {
-    // this method should not be used unless 
-    Logger.LogWarning("InitShip called, this method is not supported");
-    return;
-    /*
-     * Sets the shipInstance to this current position/rotation, but the object will have no parent
-     */
-    var shipInstance =
-      Instantiate(PrefabController.WaterVehiclePrefab, null);
-    shipInstance.transform.position = netView.transform.position;
-    shipInstance.transform.rotation = netView.transform.rotation;
-
-    var zNetView = shipInstance.GetComponent<ZNetView>();
-    var currentNetViewZdo = netView.GetZDO();
-    currentNetViewZdo.SetPosition(netView.transform.position);
-
-    // if (zNetView.m_zdo.m_uid == currentNetViewZdo.m_uid)
-    // {
-    //   Logger.LogDebug("ZDO in hull is same as WaterVehicle");
-    //   zNetView.m_zdo = new ZDO
-    //   {
-    //     Persistent = true
-    //   };
-    //   // this may happen already
-    //   // var id = ZDOPersistentID.Instance.GetOrCreatePersistentID(zNetView.m_zdo);
-    // }
-
-    Logger.LogInfo($"ShipZNetView zdo, {zNetView.m_zdo}");
-    Logger.LogInfo($"ShipHull zdo, {currentNetViewZdo}");
-
-    if (shipInstance == null) return;
-
-    var instanceController = shipInstance.GetComponentInChildren<WaterVehicleController>();
-
-    if (instanceController == null) return;
-
-    // GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
-    // for (float x = -1f; x < 1.01f; x += 2f)
-    // {
-    //   for (float z = -2f; z < 2.01f; z += 2f)
-    //   {
-    //     Vector3 pt = instanceController.transform.TransformPoint(new Vector3(x,
-    //       ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
-    //     var obj = Instantiate(floor, pt, instanceController.transform.rotation);
-    //     ZNetView floorNetView = obj.GetComponent<ZNetView>();
-    //     instanceController.AddNewPiece(floorNetView);
-    //   }
-    // }
-
-    // instanceController.AddNewPiece(netView);
-    // shipHullComponent.SetParentZdoId(instanceController.PersistentZdoId);
-  }
+  // public static void InitShip(ZNetView netView)
+  // {
+  //   // this method should not be used unless 
+  //   Logger.LogWarning("InitShip called, this method is not supported");
+  //   return;
+  //   /*
+  //    * Sets the shipInstance to this current position/rotation, but the object will have no parent
+  //    */
+  //   var shipInstance =
+  //     Instantiate(PrefabController.WaterVehiclePrefab, null);
+  //   shipInstance.transform.position = netView.transform.position;
+  //   shipInstance.transform.rotation = netView.transform.rotation;
+  //
+  //   var zNetView = shipInstance.GetComponent<ZNetView>();
+  //   var currentNetViewZdo = netView.GetZDO();
+  //   currentNetViewZdo.SetPosition(netView.transform.position);
+  //
+  //   // if (zNetView.m_zdo.m_uid == currentNetViewZdo.m_uid)
+  //   // {
+  //   //   Logger.LogDebug("ZDO in hull is same as WaterVehicle");
+  //   //   zNetView.m_zdo = new ZDO
+  //   //   {
+  //   //     Persistent = true
+  //   //   };
+  //   //   // this may happen already
+  //   //   // var id = ZDOPersistentID.Instance.GetOrCreatePersistentID(zNetView.m_zdo);
+  //   // }
+  //
+  //   Logger.LogInfo($"ShipZNetView zdo, {zNetView.m_zdo}");
+  //   Logger.LogInfo($"ShipHull zdo, {currentNetViewZdo}");
+  //
+  //   if (shipInstance == null) return;
+  //
+  //   var instanceController = shipInstance.GetComponentInChildren<WaterVehicleController>();
+  //
+  //   if (instanceController == null) return;
+  //
+  //   // GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
+  //   // for (float x = -1f; x < 1.01f; x += 2f)
+  //   // {
+  //   //   for (float z = -2f; z < 2.01f; z += 2f)
+  //   //   {
+  //   //     Vector3 pt = instanceController.transform.TransformPoint(new Vector3(x,
+  //   //       ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
+  //   //     var obj = Instantiate(floor, pt, instanceController.transform.rotation);
+  //   //     ZNetView floorNetView = obj.GetComponent<ZNetView>();
+  //   //     instanceController.AddNewPiece(floorNetView);
+  //   //   }
+  //   // }
+  //
+  //   // instanceController.AddNewPiece(netView);
+  //   // shipHullComponent.SetParentZdoId(instanceController.PersistentZdoId);
+  // }
 
   /*
    * Only initializes the controller if the prefab is enabled (when zdo is initialized this happens)
