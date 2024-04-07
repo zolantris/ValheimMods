@@ -35,9 +35,10 @@ public class WearNTear_Patch
   private static bool WearNTear_Destroy(WearNTear __instance)
   {
     // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
+    // allows for skipping other checks since this is the ship that needs to be destroyed and not trigger a loop
     if (__instance.gameObject.name.Contains(PrefabNames.WaterVehiclePrefabName))
     {
-      return false;
+      return true;
     }
 
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();

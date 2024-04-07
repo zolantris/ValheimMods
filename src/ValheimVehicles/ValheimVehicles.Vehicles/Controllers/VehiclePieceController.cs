@@ -1,5 +1,12 @@
-namespace ValheimVehicles.Vehicles.Components;
+using System.Collections.Generic;
 
-public class VehiclePiecesController
+namespace ValheimVehicles.Vehicles.Controllers;
+
+public class VehiclePieceController
 {
+  // public ActiveZonesWithVehicles
+
+  // Active Vehicles
+  public List<ZDO> activeVehicles;
+  public static Dictionary<int, List<ZDO>> m_allPieces = new();
 }

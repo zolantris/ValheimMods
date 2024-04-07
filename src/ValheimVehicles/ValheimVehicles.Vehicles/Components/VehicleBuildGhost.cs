@@ -18,14 +18,22 @@ public class VehicleBuildGhost : MonoBehaviour
     return _placeholderInstance;
   }
 
+  private void Awake()
+  {
+    GetIsInitialized();
+    ShouldRenderPlaceholder();
+  }
+
   private void Start()
   {
-    UpdatePlaceholder();
+    GetIsInitialized();
+    ShouldRenderPlaceholder();
   }
 
   private void OnEnable()
   {
-    UpdatePlaceholder();
+    GetIsInitialized();
+    ShouldRenderPlaceholder();
   }
 
   public void DisableVehicleGhost()
@@ -39,7 +47,7 @@ public class VehicleBuildGhost : MonoBehaviour
     }
     else
     {
-      _placeholderInstance = null;
+      DestroyGhostPiece();
     }
   }
 
@@ -54,7 +62,7 @@ public class VehicleBuildGhost : MonoBehaviour
 
     if ((bool)_placeholderInstance)
     {
-      Destroy(_placeholderInstance);
+      DestroyGhostPiece();
     }
 
     placeholderComponent = null;
@@ -73,17 +81,24 @@ public class VehicleBuildGhost : MonoBehaviour
     return _isInitialized;
   }
 
-  public void UpdatePlaceholder()
+  private void DestroyGhostPiece()
   {
-    if (GetIsInitialized())
-    {
-      OnInitialized();
-      return;
-    }
+    if (!_placeholderInstance) return;
+    var wnt = _placeholderInstance.GetComponent<WearNTear>();
 
-    if ((bool)_placeholderInstance)
+    if ((bool)wnt)
+      wnt.Destroy();
+    else if (_placeholderInstance)
     {
       Destroy(_placeholderInstance);
+    }
+  }
+
+  public void UpdatePlaceholder()
+  {
+    if ((bool)_placeholderInstance)
+    {
+      DestroyGhostPiece();
       _placeholderInstance = null;
     }
 
@@ -92,6 +107,15 @@ public class VehicleBuildGhost : MonoBehaviour
       return;
     }
 
-    _placeholderInstance = Instantiate(placeholderComponent, transform);
+    _placeholderInstance =
+      Instantiate(placeholderComponent, transform);
+  }
+
+  public void ShouldRenderPlaceholder()
+  {
+    if (GetIsInitialized())
+    {
+      OnInitialized();
+    }
   }
 }

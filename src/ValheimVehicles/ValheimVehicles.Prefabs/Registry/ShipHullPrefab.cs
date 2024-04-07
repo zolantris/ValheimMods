@@ -14,7 +14,8 @@ public class ShipHullPrefab : IRegisterPrefab
 {
   public static readonly ShipHullPrefab Instance = new();
 
-  public static GameObject? RaftHullPrefabInstance;
+  public static GameObject? RaftHullPrefabInstance =>
+    PrefabManager.Instance.GetPrefab(PrefabNames.ShipHullPrefabName);
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
@@ -65,8 +66,6 @@ public class ShipHullPrefab : IRegisterPrefab
 
     // this will be used to hide water on the boat
     raftHullPrefab.AddComponent<ShipHullComponent>();
-
-    RaftHullPrefabInstance = raftHullPrefab;
 
     pieceManager.AddPiece(new CustomPiece(raftHullPrefab, false, new PieceConfig
     {

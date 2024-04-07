@@ -33,6 +33,7 @@ public class PrefabRegistryController : MonoBehaviour
 
   private void OnGUI()
   {
+    GUILayout.BeginArea(new Rect(10, 10, 100, 100));
     if (GUILayout.Button("Delete All Ships"))
     {
       var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
@@ -60,21 +61,12 @@ public class PrefabRegistryController : MonoBehaviour
       }
     }
 
-    if (GUILayout.Button("register hull"))
-    {
-      ShipHullPrefab.Instance.Register(prefabManager, pieceManager);
-    }
-
-    if (GUILayout.Button("register all prefabs"))
-    {
-      RegisterAllPrefabs();
-    }
-
     // if (GUILayout.Button("Force 0"))
     //   vehicleLOD.ForceLOD(0);
     //
     // if (GUILayout.Button("Force 1"))
     //   vehicleLOD.ForceLOD(1);
+    GUILayout.EndArea();
   }
 
   // todo this should come from config
@@ -136,7 +128,6 @@ public class PrefabRegistryController : MonoBehaviour
    */
   public static void Init()
   {
-    // if (_initialized) return;
     vehicleSharedAssetBundle =
       AssetUtils.LoadAssetBundleFromResources("valheim-vehicles-shared",
         Assembly.GetExecutingAssembly());
@@ -159,8 +150,6 @@ public class PrefabRegistryController : MonoBehaviour
     LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle);
 
     RegisterAllPrefabs();
-
-    _initialized = true;
   }
 
   public static void AddToRaftPrefabPieces(Piece raftPiece)

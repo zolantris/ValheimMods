@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 
@@ -16,10 +17,10 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
 
   public IWaterVehicleController Controller => _controller;
 
+  public GameObject? previewComponent;
+
   private WaterVehicleController _controller;
   private GameObject _waterVehicle;
-
-  public VehicleBuildGhost VehicleBuildGhostInstance;
 
   public VVShip Instance => this;
 
@@ -50,66 +51,28 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
     InitializeWaterVehicleController();
   }
 
-  // public static void InitShip(ZNetView netView)
-  // {
-  //   // this method should not be used unless 
-  //   Logger.LogWarning("InitShip called, this method is not supported");
-  //   return;
-  //   /*
-  //    * Sets the shipInstance to this current position/rotation, but the object will have no parent
-  //    */
-  //   var shipInstance =
-  //     Instantiate(PrefabController.WaterVehiclePrefab, null);
-  //   shipInstance.transform.position = netView.transform.position;
-  //   shipInstance.transform.rotation = netView.transform.rotation;
-  //
-  //   var zNetView = shipInstance.GetComponent<ZNetView>();
-  //   var currentNetViewZdo = netView.GetZDO();
-  //   currentNetViewZdo.SetPosition(netView.transform.position);
-  //
-  //   // if (zNetView.m_zdo.m_uid == currentNetViewZdo.m_uid)
-  //   // {
-  //   //   Logger.LogDebug("ZDO in hull is same as WaterVehicle");
-  //   //   zNetView.m_zdo = new ZDO
-  //   //   {
-  //   //     Persistent = true
-  //   //   };
-  //   //   // this may happen already
-  //   //   // var id = ZDOPersistentID.Instance.GetOrCreatePersistentID(zNetView.m_zdo);
-  //   // }
-  //
-  //   Logger.LogInfo($"ShipZNetView zdo, {zNetView.m_zdo}");
-  //   Logger.LogInfo($"ShipHull zdo, {currentNetViewZdo}");
-  //
-  //   if (shipInstance == null) return;
-  //
-  //   var instanceController = shipInstance.GetComponentInChildren<WaterVehicleController>();
-  //
-  //   if (instanceController == null) return;
-  //
-  //   // GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
-  //   // for (float x = -1f; x < 1.01f; x += 2f)
-  //   // {
-  //   //   for (float z = -2f; z < 2.01f; z += 2f)
-  //   //   {
-  //   //     Vector3 pt = instanceController.transform.TransformPoint(new Vector3(x,
-  //   //       ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
-  //   //     var obj = Instantiate(floor, pt, instanceController.transform.rotation);
-  //   //     ZNetView floorNetView = obj.GetComponent<ZNetView>();
-  //   //     instanceController.AddNewPiece(floorNetView);
-  //   //   }
-  //   // }
-  //
-  //   // instanceController.AddNewPiece(netView);
-  //   // shipHullComponent.SetParentZdoId(instanceController.PersistentZdoId);
-  // }
+  public override void OnEnable()
+  {
+    base.OnEnable();
+    InitializeWaterVehicleController();
+  }
+
+  public void FixedUpdate()
+  {
+    if (!(bool)_controller || !(bool)m_body || !(bool)m_floatcollider)
+    {
+      return;
+    }
+
+    ValheimRaftCustomFixedUpdate();
+  }
 
   /*
    * Only initializes the controller if the prefab is enabled (when zdo is initialized this happens)
    */
   private void InitializeWaterVehicleController()
   {
-    if (!(bool)m_nview || m_nview.GetZDO() == null || (bool)_waterVehicle) return;
+    if (!(bool)m_nview || m_nview.GetZDO() == null || m_nview.m_ghost || (bool)_controller) return;
 
     enabled = true;
 
@@ -120,40 +83,18 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
     _controller.InitializeShipValues(Instance);
   }
 
-  private void AddInitialHullPiece()
+  private void DestroyGhostPlaceholder()
   {
-  }
-
-  private void HideGhostPlaceholder()
-  {
-    var placeholderGhost = m_nview.GetComponent<VehicleBuildGhost>();
-
-
-    if ((bool)placeholderGhost)
-    {
-      placeholderGhost.gameObject.SetActive(false);
-    }
-    else
-    {
-      Logger.LogWarning("No placeholder Ghost Component found on vehicle");
-    }
-  }
-
-  // public void OnDestroy()
-  // {
-  //   if (_controller != null)
-  //   {
-  //     Destroy(_controller);
-  //   }
-  // }
-
-  public override void OnEnable()
-  {
-    base.OnEnable();
-    if (_controller == null)
-    {
-      InitializeWaterVehicleController();
-    }
+    // var placeholderGhost = m_nview.GetComponent<VehicleBuildGhost>();
+    // Destroy(placeholderGhost);
+    // if ((bool)placeholderGhost)
+    // {
+    //   placeholderGhost.gameObject.SetActive(false);
+    // }
+    // else
+    // {
+    //   Logger.LogWarning("No placeholder Ghost Component found on vehicle");
+    // }
   }
 
   /**
@@ -163,31 +104,6 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
   // {
   //   return m_players.Count == 0;
   // }
-  public void FixedUpdate()
-  {
-    if (!(bool)_controller || !(bool)m_body || !(bool)m_floatcollider)
-    {
-      return;
-    }
-
-    // FixedUpdate1();
-    // m_body.WakeUp();
-    // var worldCenterOfMass = m_body.worldCenterOfMass;
-    // var currentDepth = Floating.GetWaterLevel(worldCenterOfMass, ref m_previousCenter);
-    // m_body.useGravity = _controller.m_zsync.m_useGravity =
-    //   _controller.m_targetHeight == 0f;
-    //
-    // if (m_body.position.y <= currentDepth)
-    // {
-    //   var vectorForceMult =
-    //     Mathf.Clamp01(Mathf.Abs(m_body.position.y - currentDepth) / m_forceDistance);
-    //   m_body.AddForceAtPosition(Vector3.up * vectorForceMult, worldCenterOfMass,
-    //     ForceMode.VelocityChange);
-    // }
-
-    ValheimRaftCustomFixedUpdate();
-  }
-
   private static Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity)
   {
     var zeroVelocity = Vector3.zero;

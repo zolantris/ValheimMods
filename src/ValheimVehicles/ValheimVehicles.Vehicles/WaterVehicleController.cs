@@ -11,6 +11,7 @@ using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 
@@ -71,7 +72,7 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
     SetColliders(vvShip.gameObject);
     ZdoReadyStart();
-    GetInitState();
+    LoadInitState();
   }
 
   public new void Awake()
@@ -93,10 +94,10 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     base.Start();
   }
 
-  // public void OnEnable()
-  // {
-  //   ZdoReadyStart();
-  // }
+  public void OnEnable()
+  {
+    ZdoReadyStart();
+  }
 
   private void InitHull()
   {
@@ -104,14 +105,25 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     var buildGhostInstance = m_nview.GetComponent<VehicleBuildGhost>();
     if (pieceCount != 0 || !(bool)buildGhostInstance)
     {
-      buildGhostInstance.enabled = false;
       if (buildGhostInstance)
       {
         buildGhostInstance.DisableVehicleGhost();
       }
+    }
 
+    if (pieceCount != 0 || !m_nview)
+    {
       return;
     }
+
+    var prefab = ShipHullPrefab.RaftHullPrefabInstance;
+    if (!prefab) return;
+
+    var hull = Instantiate(prefab, transform);
+    if (hull == null) return;
+
+    var hullNetView = hull.GetComponent<ZNetView>();
+    AddNewPiece(hullNetView);
 
     // todo This logic is unnecessary as InitPiece is called from zdo initialization of the PlaceholderItem
     //
@@ -167,50 +179,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     return m_shipStats;
   }
 
-  /**
-   * this creates the Raft 2x3 area
-   */
-  // private void FirstTimeCreation()
-  // {
-  //   Logger.LogWarning("called FirstTimeCreation");
-  //   return;
-  //   var pieceCount = GetPieceCount();
-  //
-  //   if (pieceCount != 0)
-  //   {
-  //     return;
-  //   }
-  //
-  //   Logger.LogDebug("Calling FirstTimeCreation, generating wood_floors");
-  //   /*
-  //    * @todo turn the original planks into a Prefab so boat floors can be larger
-  //    */
-  //   var pt = transform.TransformPoint(new Vector3(0f,
-  //     ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, 0f));
-  //   var shipHullPrefab = PrefabController.prefabManager.GetPrefab(
-  //     ShipHulls.GetHullPrefabName(ShipHulls.HullMaterial.CoreWood,
-  //       ShipHulls.HullOrientation.Horizontal));
-  //   var obj = Instantiate(shipHullPrefab, pt, transform.rotation);
-  //   var wnt = obj.GetComponent<WearNTear>();
-  //   if ((bool)wnt)
-  //   {
-  //     wnt.m_supports = true;
-  //     wnt.m_support = 2000f;
-  //     wnt.m_noSupportWear = true;
-  //     wnt.m_noRoofWear = true;
-  //   }
-  //
-  //   var netView = obj.GetComponent<ZNetView>();
-  //   if ((bool)netView)
-  //   {
-  //     AddNewPiece(netView);
-  //   }
-  //   else
-  //   {
-  //     Logger.LogError("called destroy on obj, due to netview not existing");
-  //     Destroy(obj);
-  //   }
-  // }
   public void Ascend()
   {
     if (VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
@@ -308,9 +276,9 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     }
   }
 
-  /*
-   * Toggle the ship anchor and emit the event to other players so their client can update
-   */
+/*
+ * Toggle the ship anchor and emit the event to other players so their client can update
+ */
   public void ToggleAnchor()
   {
     var isAnchored = waterVehicleController.VehicleFlags.HasFlag(

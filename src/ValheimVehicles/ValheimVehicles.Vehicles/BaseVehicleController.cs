@@ -11,6 +11,7 @@ using ValheimRAFT;
 using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
+using static ValheimVehicles.Propulsion.Sail.SailAreaForce;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 using PrefabNames = ValheimVehicles.Prefabs.PrefabNames;
@@ -48,7 +49,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   /*
    * Get all the instances statically
    */
-  public static Dictionary<int, BaseVehicleController> Instances = new();
+  public static Dictionary<int, BaseVehicleController> ActiveInstances = new();
 
   public static Dictionary<int, List<ZNetView>> m_pendingPieces = new();
 
@@ -91,7 +92,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   internal InitializationState BaseVehicleInitState
   {
-    get => GetInitState();
+    get => _baseVehicleInitializationState;
     set
     {
       if (!Enum.IsDefined(typeof(InitializationState), value))
@@ -136,6 +137,26 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   private static bool itemsRemovedDuringWait;
   private Coroutine? _pendingPiecesCoroutine;
   private Coroutine? _serverUpdatePiecesCoroutine;
+  GUIStyle myButtonStyle;
+
+  private void OnGUI()
+  {
+    if (myButtonStyle == null)
+    {
+      myButtonStyle = new GUIStyle(GUI.skin.button);
+      myButtonStyle.fontSize = 50;
+    }
+
+    GUILayout.BeginArea(new Rect(150, 10, 100, 100), myButtonStyle);
+    if (GUILayout.Button("activatePendingPieces"))
+    {
+      {
+        ActivatePendingPiecesCoroutine();
+      }
+    }
+
+    GUILayout.EndArea();
+  }
 
   /**
    * Side Effect to be used when initialization state changes. This allows for starting the ActivatePendingPiecesCoroutine
@@ -147,29 +168,19 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     ActivatePendingPiecesCoroutine();
   }
 
-  // this may need to return flags like pending, false, true
-  internal InitializationState GetInitState()
+  public void LoadInitState()
   {
     if (!m_nview)
     {
-      _baseVehicleInitializationState = InitializationState.Pending;
-      return BaseVehicleInitState;
-    }
-
-    if (_baseVehicleInitializationState != InitializationState.Pending)
-    {
-      return _baseVehicleInitializationState;
+      BaseVehicleInitState = InitializationState.Pending;
     }
 
     var initialized = m_nview.GetZDO().GetBool(ZdoKeyBaseVehicleInitState);
 
-    _baseVehicleInitializationState =
-      initialized ? InitializationState.Complete : InitializationState.Created;
-
-    return _baseVehicleInitializationState;
+    BaseVehicleInitState = initialized ? InitializationState.Complete : InitializationState.Created;
   }
 
-  private void SetInitComplete()
+  public void SetInitComplete()
   {
     m_nview.GetZDO().Set(ZdoKeyBaseVehicleInitState, true);
     BaseVehicleInitState = InitializationState.Complete;
@@ -256,15 +267,17 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       _persistentZdoId = GetPersistentID();
     }
 
+    LoadInitState();
+
     // encapsulate ensures that the float collider will never be smaller than the boat hull size IE the initial objects
     // m_bounds.Encapsulate(m_nview.transform.localPosition);
 
 
     // Instances allows getting the instance from a ZDO
     // OR something queryable on a ZDO making it much easier to debug and eventually update items
-    if (!Instances.GetValueSafe(PersistentZdoId))
+    if (!ActiveInstances.GetValueSafe(PersistentZdoId))
     {
-      Instances.Add(PersistentZdoId, this);
+      ActiveInstances.Add(PersistentZdoId, this);
     }
   }
 
@@ -347,9 +360,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public void CleanUp()
   {
-    if (Instances.GetValueSafe(_persistentZdoId))
+    RemovePlayerFromBoat();
+
+    if (ActiveInstances.GetValueSafe(_persistentZdoId))
     {
-      Instances.Remove(_persistentZdoId);
+      ActiveInstances.Remove(_persistentZdoId);
     }
 
     if (_pendingPiecesCoroutine != null)
@@ -372,11 +387,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         AddInactivePiece(_persistentZdoId, piece);
       }
     }
-
-    var players = Player.GetAllPlayers();
-    for (var j = 0; j < players.Count; j++)
-      if ((bool)players[j] && players[j].transform.parent == transform)
-        players[j].transform.SetParent(null);
   }
 
   private void Sync()
@@ -547,11 +557,17 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   public static void AddInactivePiece(int id, ZNetView netView)
   {
     if (hasDebug) Logger.LogDebug($"addInactivePiece called with {id} for {netView.name}");
+
+    if (ActiveInstances.TryGetValue(id, out var activeInstance))
+    {
+      activeInstance.ActivatePiece(netView);
+      return;
+    }
+
     if (!m_pendingPieces.TryGetValue(id, out var list))
     {
       list = new List<ZNetView>();
       m_pendingPieces.Add(id, list);
-      // netView.gameObject.SetActive(false);
     }
 
     list.Add(netView);
@@ -602,6 +618,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public void RemovePiece(ZNetView netView)
   {
+    if (netView.name.Contains(PrefabNames.WaterVehiclePrefabName)) return;
     if (m_pieces.Remove(netView))
     {
       UpdateMass(netView, true);
@@ -642,7 +659,14 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       }
     }
 
-    UpdateStats();
+    // if (GetPieceCount() == 0)
+    // {
+    //   DestroyVehicle();
+    // }
+    // else
+    // {
+    //   UpdateStats();
+    // }
   }
 
   private void UpdateStats()
@@ -797,15 +821,29 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
   }
 
+  public void RemovePlayerFromBoat()
+  {
+    var players = Player.GetAllPlayers();
+    foreach (var t in players.Where(t => (bool)t && t.transform.parent == transform))
+      t.transform.SetParent(null);
+  }
+
   /*
    * TODO figure out why this is exiting too early when there are items
    */
   public void DestroyVehicle()
   {
     var wntVehicle = instance.GetComponent<WearNTear>();
+
+    RemovePlayerFromBoat();
+
     if ((bool)wntVehicle)
       wntVehicle.Destroy();
-    else if (instance) Destroy(instance);
+    else if (instance)
+    {
+      Destroy(instance);
+    }
+
     if (instance.gameObject != gameObject)
     {
       Destroy(gameObject);
@@ -928,7 +966,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       Logger.LogError(
         $"found boat with _persistentZdoId {_persistentZdoId}, without any items attached");
-      // DestroyBoat();
     }
 
     yield return null;
@@ -973,7 +1010,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         ++numberOfTier1Sails;
         var multiplier = hasConfigOverride
           ? ValheimRaftPlugin.Instance.SailTier1Area.Value
-          : SailAreaForce.Tier1;
+          : Tier1;
         totalSailArea += numberOfTier1Sails * multiplier;
       }
       else if (mMastPiece.name.Contains("MBKarveMast"))
@@ -981,7 +1018,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         ++numberOfTier2Sails;
         var multiplier = hasConfigOverride
           ? ValheimRaftPlugin.Instance.SailTier2Area.Value
-          : SailAreaForce.Tier2;
+          : Tier2;
         totalSailArea += numberOfTier2Sails * multiplier;
       }
       else if (mMastPiece.name.Contains("MBVikingShipMast"))
@@ -989,7 +1026,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         ++numberOfTier3Sails;
         var multiplier = hasConfigOverride
           ? ValheimRaftPlugin.Instance.SailTier3Area.Value
-          : SailAreaForce.Tier3;
+          : Tier3;
         totalSailArea += numberOfTier3Sails * multiplier;
         ;
       }
@@ -1009,7 +1046,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       if (hasDebug) Logger.LogDebug($"CustomSailsArea {customSailsArea}");
       var multiplier = hasConfigOverride
         ? ValheimRaftPlugin.Instance.SailCustomAreaTier1Multiplier.Value
-        : SailAreaForce.CustomTier1AreaForceMultiplier;
+        : CustomTier1AreaForceMultiplier;
 
       totalSailArea +=
         (customSailsArea * Math.Max(0.1f,
@@ -1194,6 +1231,12 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
+    if (m_pieces.Contains(netView))
+    {
+      Logger.LogWarning($"NetView already is added. name: {netView.name}");
+      return;
+    }
+
     Logger.LogDebug($"netView exists {netView.name}");
     netView.transform.SetParent(transform);
     Logger.LogDebug($"netView set parent");
@@ -1222,9 +1265,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     AddPiece(netView);
     InitZdo(netView.GetZDO());
 
-    // first time initialization
-    // after first initialization if count of items reaches 0 it will delete the boat
-    if (m_pieces.Count == 0)
+    if (GetPieceCount() == 1)
     {
       SetInitComplete();
     }

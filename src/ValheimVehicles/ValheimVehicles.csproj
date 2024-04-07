@@ -37,8 +37,10 @@
     <!--            <WarningLevel>4</WarningLevel>-->
     <!--        </PropertyGroup>-->
     <ItemGroup>
+        <Compile Include="Patches\Zone_Patch.cs"/>
         <Compile Include="ValheimVehicles.Prefabs\PrefabNames.cs"/>
         <Compile Include="ValheimVehicles.Propulsion\Rudder\RudderComponent.cs"/>
+        <Compile Include="ValheimVehicles.Propulsion\Sail\SailAreaForce.cs"/>
         <Compile Include="ValheimVehiclesPlugin.cs"/>
         <Compile Include=".\ValheimVehicles.Utils\*.cs"/>
         <Compile Include=".\ValheimVehicles.Vehicles\*.cs"/>
@@ -47,6 +49,7 @@
     </ItemGroup>
     <ItemGroup>
         <Folder Include="ValheimVehicles.Propulsion\Sailing\"/>
+        <Folder Include="ValheimVehicles.Utils\"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\SentryUnityWrapper\SentryUnityWrapper.csproj"/>
