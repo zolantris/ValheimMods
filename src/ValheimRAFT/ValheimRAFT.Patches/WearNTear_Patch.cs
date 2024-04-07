@@ -24,7 +24,7 @@ public class WearNTear_Patch
     if (hInstance != null) return true;
 
     Logger.LogWarning(
-      "WearNTear heightmap not found, this could be a problem with a prefab layer type not being a piece");
+      $"WearNTear heightmap not found, this could be a problem with a prefab layer type not being a piece, netview name: {__instance.m_nview.name}");
 
     __instance.m_connectedHeightMap = hInstance;
     return false;
@@ -58,8 +58,7 @@ public class WearNTear_Patch
     var bv = __instance.GetComponent<BaseVehicleController>();
 
     // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
-    if (__instance.gameObject.name.Contains(PrefabNames.ShipHullPrefabName) ||
-        __instance.gameObject.name.Contains(PrefabNames.WaterVehiclePrefabName))
+    if (__instance.gameObject.name.Contains(PrefabNames.WaterVehiclePrefabName))
     {
       return false;
     }

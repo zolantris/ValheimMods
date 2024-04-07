@@ -11,17 +11,28 @@ public class VehicleBuildGhost : MonoBehaviour
   private GameObject? _placeholderInstance;
   public GameObject? placeholderComponent;
   public static readonly int IsVehicleInitialized = "IsVehicleInitialized".GetStableHashCode();
+  private bool _isInitialized = false;
 
   public GameObject? GetPlaceholderInstance()
   {
     return _placeholderInstance;
   }
 
+  private void Start()
+  {
+    UpdatePlaceholder();
+  }
+
+  private void OnEnable()
+  {
+    UpdatePlaceholder();
+  }
+
   public void DisableVehicleGhost()
   {
     var netView = GetComponent<ZNetView>();
     netView.GetZDO().Set(IsVehicleInitialized, true);
-
+    _isInitialized = true;
     if (_placeholderInstance != null && _placeholderInstance.name.Contains("Cube"))
     {
       Destroy(_placeholderInstance);
@@ -37,36 +48,46 @@ public class VehicleBuildGhost : MonoBehaviour
     return GameObject.CreatePrimitive(PrimitiveType.Cube);
   }
 
-  private bool IsInitialized()
+  private void OnInitialized()
   {
+    if (!_isInitialized) return;
+
+    if ((bool)_placeholderInstance)
+    {
+      Destroy(_placeholderInstance);
+    }
+
+    placeholderComponent = null;
+    _placeholderInstance = null;
+  }
+
+  private bool GetIsInitialized()
+  {
+    if (_isInitialized) return true;
+
     var netView = GetComponent<ZNetView>();
     if (!(bool)netView) return false;
     var zdo = netView.GetZDO();
     if (zdo == null) return false;
-    return zdo.GetBool(IsVehicleInitialized);
+    _isInitialized = zdo.GetBool(IsVehicleInitialized);
+    return _isInitialized;
   }
 
   public void UpdatePlaceholder()
   {
-    if (IsInitialized())
+    if (GetIsInitialized())
     {
-      if (_placeholderInstance != null)
-      {
-        Destroy(_placeholderInstance);
-      }
-
-      placeholderComponent = null;
-      _placeholderInstance = null;
+      OnInitialized();
       return;
     }
 
-    if (_placeholderInstance != null)
+    if ((bool)_placeholderInstance)
     {
       Destroy(_placeholderInstance);
       _placeholderInstance = null;
     }
 
-    if (placeholderComponent == null)
+    if (!(bool)placeholderComponent)
     {
       return;
     }

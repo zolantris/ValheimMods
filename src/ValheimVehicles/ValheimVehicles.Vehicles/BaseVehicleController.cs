@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using HarmonyLib;
 using ValheimVehicles.Vehicles;
@@ -41,6 +42,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public static readonly int MBPieceCount = "MBPieceCount".GetStableHashCode();
 
+  public static readonly string ZdoKeyBaseVehicleInitState =
+    "ValheimVehicles_BaseVehicle_Initialized";
+
   /*
    * Get all the instances statically
    */
@@ -61,7 +65,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   public BaseVehicleController instance;
 
   internal Rigidbody m_rigidbody;
-  // internal Rigidbody m_syncRigidbody;
 
   internal List<ZNetView> m_pieces = new();
   internal List<ShipHullComponent> m_hullPieces = new();
@@ -76,6 +79,28 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   internal List<RopeLadderComponent> m_ladders = new();
 
   internal List<BoardingRampComponent> m_boardingRamps = new();
+
+  internal enum InitializationState
+  {
+    Pending, // when the ship has a pending state
+    Complete, // when the ship loads as an existing ship and has pieces.
+    Created, // when the ship is created with 0 pieces
+  }
+
+  private InitializationState _baseVehicleInitializationState = InitializationState.Pending;
+
+  internal InitializationState BaseVehicleInitState
+  {
+    get => GetInitState();
+    set
+    {
+      if (!Enum.IsDefined(typeof(InitializationState), value))
+        throw new InvalidEnumArgumentException(nameof(value), (int)value,
+          typeof(InitializationState));
+      _baseVehicleInitializationState = value;
+      OnBaseVehicleInitializationStateChange(value);
+    }
+  }
 
   internal float ShipContainerMass = 0f;
   internal float ShipMass = 0f;
@@ -111,6 +136,44 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   private static bool itemsRemovedDuringWait;
   private Coroutine? _pendingPiecesCoroutine;
   private Coroutine? _serverUpdatePiecesCoroutine;
+
+  /**
+   * Side Effect to be used when initialization state changes. This allows for starting the ActivatePendingPiecesCoroutine
+   */
+  private void OnBaseVehicleInitializationStateChange(InitializationState state)
+  {
+    if (state != InitializationState.Complete) return;
+
+    ActivatePendingPiecesCoroutine();
+  }
+
+  // this may need to return flags like pending, false, true
+  internal InitializationState GetInitState()
+  {
+    if (!m_nview)
+    {
+      _baseVehicleInitializationState = InitializationState.Pending;
+      return BaseVehicleInitState;
+    }
+
+    if (_baseVehicleInitializationState != InitializationState.Pending)
+    {
+      return _baseVehicleInitializationState;
+    }
+
+    var initialized = m_nview.GetZDO().GetBool(ZdoKeyBaseVehicleInitState);
+
+    _baseVehicleInitializationState =
+      initialized ? InitializationState.Complete : InitializationState.Created;
+
+    return _baseVehicleInitializationState;
+  }
+
+  private void SetInitComplete()
+  {
+    m_nview.GetZDO().Set(ZdoKeyBaseVehicleInitState, true);
+    BaseVehicleInitState = InitializationState.Complete;
+  }
 
   public void SetColliders(GameObject vehicleInstance)
   {
@@ -225,8 +288,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       _serverUpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
-
-    ActivatePendingPiecesCoroutine();
   }
 
   protected int GetPersistentID()
@@ -665,6 +726,12 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
           $"ValheimRAFT ComputeShipItemWeight() found piece that does not have a 1,1,1 local scale piece: {pieceName} scale: {piece.transform.localScale}, the 3d localScale will be multiplied by the area of this vector instead of 1x1x1");
     }
 
+    // todo figure out hull weight like 20 woood per hull. Also calculate buoyancy from hull wood
+    if (pieceName == PrefabNames.ShipHullCoreWoodHorizontal)
+    {
+      return 20f;
+    }
+
     if (pieceName == "wood_floor_1x1")
     {
       return 1f * baseMultiplier;
@@ -709,7 +776,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       if (wnt.name.Contains(PrefabNames.WaterVehiclePrefabName))
       {
-        // prevents a loop of DestroyPiece being called from WearNTear_Patch.
+        // prevents a loop of DestroyPiece being called from WearNTear_Patch
         return;
       }
 
@@ -726,21 +793,19 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if (VehicleInstance?.Instance != null)
     {
       var wntShip = VehicleInstance.Instance.GetComponent<WearNTear>();
-      // if ((bool)wntShip) wntShip.Destroy();
+      if ((bool)wntShip) wntShip.Destroy();
     }
   }
 
-  public void DestroyBoat()
+  /*
+   * TODO figure out why this is exiting too early when there are items
+   */
+  public void DestroyVehicle()
   {
-    /*
-     * TODO figure out why this is exiting too early when there are items
-     */
-    // return;
-    var wntShip = instance.GetComponent<WearNTear>();
-    if ((bool)wntShip)
-      wntShip.Destroy();
+    var wntVehicle = instance.GetComponent<WearNTear>();
+    if ((bool)wntVehicle)
+      wntVehicle.Destroy();
     else if (instance) Destroy(instance);
-
     if (instance.gameObject != gameObject)
     {
       Destroy(gameObject);
@@ -757,6 +822,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       StopCoroutine(_pendingPiecesCoroutine);
     }
 
+    // do not run if in a Pending or Created state
+    if (BaseVehicleInitState != InitializationState.Complete && m_pendingPieces.Count == 0) return;
+
     _pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
   }
 
@@ -764,13 +832,18 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   {
     if (!(bool)m_nview || m_nview == null)
     {
+      yield return new WaitUntil(() => (bool)m_nview);
+    }
+
+    if (BaseVehicleInitState != InitializationState.Complete)
+    {
       yield return null;
     }
 
     if (m_nview.GetZDO() == null)
     {
       Logger.LogDebug("m_zdo is null for activate pending pieces");
-      yield return null;
+      yield return new WaitUntil(() => m_nview.m_zdo != null);
     }
 
     Logger.LogDebug("ActivatePendingPieces before ID getter");
@@ -855,7 +928,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       Logger.LogError(
         $"found boat with _persistentZdoId {_persistentZdoId}, without any items attached");
-      DestroyBoat();
+      // DestroyBoat();
     }
 
     yield return null;
@@ -986,6 +1059,13 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       {
         list = new List<ZDO>();
         m_allPieces.Add(id, list);
+      }
+
+      if (list.Contains(zdo))
+      {
+        Logger.LogWarning(
+          $"ValheimVehicles.BaseVehicleController: The zdo {zdo.m_uid}, tried to be added when it already exists within the list. Please submit a bug if this issue shows up frequently.");
+        return;
       }
 
       list.Add(zdo);
@@ -1141,6 +1221,13 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     AddPiece(netView);
     InitZdo(netView.GetZDO());
+
+    // first time initialization
+    // after first initialization if count of items reaches 0 it will delete the boat
+    if (m_pieces.Count == 0)
+    {
+      SetInitComplete();
+    }
   }
 
   public void AddPiece(ZNetView netView)
@@ -1239,6 +1326,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         Destroy(rbsItem);
       }
     }
+
+    if (hasDebug)
+      Logger.LogDebug(
+        $"After Adding Piece: {netView.name}, Ship Size calc is: m_bounds {m_bounds} bounds size {m_bounds.size}");
   }
 
   private void UpdatePieceCount()

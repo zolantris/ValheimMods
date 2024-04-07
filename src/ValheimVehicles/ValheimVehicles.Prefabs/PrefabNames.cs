@@ -1,5 +1,8 @@
 namespace ValheimVehicles.Prefabs;
 
+/**
+ * @todo register translatable pieceName and pieceDescription based on these names for easy lookups
+ */
 public static class PrefabNames
 {
   public static string m_raft = "MBRaft";

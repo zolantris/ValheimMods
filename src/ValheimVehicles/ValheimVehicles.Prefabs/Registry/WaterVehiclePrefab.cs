@@ -22,15 +22,16 @@ public class WaterVehiclePrefab : IRegisterPrefab
       name = PrefabNames.WaterVehiclePrefabName,
       layer = 0,
     };
-    var buildGhost = waterVehicle.AddComponent<VehicleBuildGhost>();
-    buildGhost.gameObject.layer = 0;
-    buildGhost.placeholderComponent =
-      ShipHullPrefab.RaftHullPrefabInstance;
-    buildGhost.UpdatePlaceholder();
 
     var _waterVehiclePrefab =
       prefabManager.CreateClonedPrefab(PrefabNames.WaterVehiclePrefabName, waterVehicle);
     PrefabRegistryHelpers.AddNetViewWithPersistence(_waterVehiclePrefab);
+
+    var buildGhost = _waterVehiclePrefab.AddComponent<VehicleBuildGhost>();
+    buildGhost.gameObject.layer = 0;
+    buildGhost.placeholderComponent =
+      prefabManager.GetPrefab(PrefabNames.ShipHullPrefabName);
+    buildGhost.UpdatePlaceholder();
 
     _waterVehiclePrefab.layer = 0;
 

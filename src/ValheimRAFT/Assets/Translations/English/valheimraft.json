@@ -65,8 +65,8 @@
   "valheim_vehicles_raft": "A Raft Water-Vehicle",
   "valheim_vehicles_raft_desc": "A raft (>=v2.0.0)...that you can build on!",
   "valheim_vehicles_raft_hull_desc": "A sea-sturdy piece of wood. Maybe it can let me build more things.",
-  "valheim_vehicles_rudder_advanced": "Advanced Ship Rudder",
+  "valheim_vehicles_rudder_advanced": "Ship Rudder (Advanced)",
   "valheim_vehicles_rudder_advanced_desc": "Advanced Ship Rudder, the technology of steering has advanced. You now can steer better. Allows for turning ships of large mass, the direction a rudder faces will determine the boat sailing direction",
-  "valheim_vehicles_rudder_basic": "A Basic Ship Rudder. Plundered from a basic raft.",
-  "valheim_vehicles_rudder_basic_desc": "Basic Ship Rudder, allows for turning small to medium ships. The direction a rudder faces will determine the boat sailing direction"
+  "valheim_vehicles_rudder_basic": "Ship Rudder (Basic)",
+  "valheim_vehicles_rudder_basic_desc": "Basic Ship Rudder - Allows for turning small to medium ships. The direction a rudder faces will determine the boat sailing direction"
 }

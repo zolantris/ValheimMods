@@ -41,6 +41,11 @@ public class PrefabRegistryController : MonoBehaviour
         if (obj.name.Contains($"{PrefabNames.WaterVehiclePrefabName}(Clone)") ||
             obj.name.Contains($"{PrefabNames.ShipHullPrefabName}(Clone)"))
         {
+          if (ReferenceEquals(obj, ShipHullPrefab.RaftHullPrefabInstance))
+          {
+            return;
+          }
+
           Destroy(obj);
         }
       }

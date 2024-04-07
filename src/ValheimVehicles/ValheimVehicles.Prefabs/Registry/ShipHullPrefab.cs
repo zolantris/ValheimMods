@@ -39,6 +39,7 @@ public class ShipHullPrefab : IRegisterPrefab
     var raftHullPrefab =
       prefabManager.CreateClonedPrefab(
         prefabName, LoadValheimVehicleAssets.ShipHullAsset);
+    PrefabRegistryHelpers.AddNetViewWithPersistence(raftHullPrefab);
     raftHullPrefab.layer = 0;
     raftHullPrefab.gameObject.layer = 0;
     var piece = raftHullPrefab.AddComponent<Piece>();
@@ -61,9 +62,6 @@ public class ShipHullPrefab : IRegisterPrefab
     wntComponent.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
     wntComponent.m_hitNoise = LoadValheimAssets.woodFloorPieceWearNTear.m_hitNoise;
     wntComponent.m_health = 25000f;
-
-    // this may need to send in Piece instead
-    PrefabRegistryHelpers.AddNetViewWithPersistence(raftHullPrefab);
 
     // this will be used to hide water on the boat
     raftHullPrefab.AddComponent<ShipHullComponent>();

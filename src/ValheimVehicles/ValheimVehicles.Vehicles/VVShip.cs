@@ -116,22 +116,8 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
     var ladders = GetComponentsInChildren<Ladder>();
     for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
 
-    // _waterVehicle = new GameObject
-    // {
-    //   name = PrefabNames.ValheimVehiclesShipName,
-    //   layer = 0
-    // };
-
     _controller = gameObject.AddComponent<WaterVehicleController>();
     _controller.InitializeShipValues(Instance);
-    // HideGhostPlaceholder();
-    // _controller.transform.SetParent(_waterVehicle.transform);
-    // _controller.ActivatePendingPiecesCoroutine();
-
-    // waterVehicle must exist as it's own top level object
-    // _waterVehicle.transform.SetParent(null);
-    // _waterVehicle.transform.position = transform.position;
-    // _waterVehicle.transform.rotation = transform.rotation;
   }
 
   private void AddInitialHullPiece()

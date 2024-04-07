@@ -45,7 +45,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
   public float m_liftForce = 20f;
 
-  private bool _initialized = false;
   private ImpactEffect _impactEffect;
 
   /*
@@ -70,12 +69,9 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     // prevent mass from being set lower than 20f;
     m_rigidbody.mass = Math.Max(TotalMass, 2000f);
 
-
     SetColliders(vvShip.gameObject);
-
     ZdoReadyStart();
-
-    _initialized = true;
+    GetInitState();
   }
 
   public new void Awake()
@@ -88,7 +84,7 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
   public override void Start()
   {
-    if (!_initialized || !(bool)waterVehicleController)
+    if (BaseVehicleInitState == InitializationState.Pending || !(bool)waterVehicleController)
     {
       Logger.LogError("not initialized, exiting ship logic to prevent crash");
       return;
@@ -108,6 +104,7 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     var buildGhostInstance = m_nview.GetComponent<VehicleBuildGhost>();
     if (pieceCount != 0 || !(bool)buildGhostInstance)
     {
+      buildGhostInstance.enabled = false;
       if (buildGhostInstance)
       {
         buildGhostInstance.DisableVehicleGhost();
@@ -116,14 +113,16 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
       return;
     }
 
-    var placeholderInstance = buildGhostInstance.GetPlaceholderInstance();
-    if (placeholderInstance == null) return;
-
-    var hullNetView = placeholderInstance.GetComponent<ZNetView>();
-    hullNetView.transform.SetParent(null);
-
-    AddNewPiece(hullNetView);
-    buildGhostInstance.DisableVehicleGhost();
+    // todo This logic is unnecessary as InitPiece is called from zdo initialization of the PlaceholderItem
+    //
+    // var placeholderInstance = buildGhostInstance.GetPlaceholderInstance();
+    // if (placeholderInstance == null) return;
+    //
+    // var hullNetView = placeholderInstance.GetComponent<ZNetView>();
+    // hullNetView.transform.SetParent(null);
+    //
+    // AddNewPiece(hullNetView);
+    // buildGhostInstance.DisableVehicleGhost();
   }
 
   private void ZdoReadyStart()
