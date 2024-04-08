@@ -137,7 +137,8 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
     var flag = HaveControllingPlayer();
 
     UpdateControls(Time.fixedDeltaTime);
-    // UpdateSail(Time.fixedDeltaTime);
+    UpdateSail(Time.fixedDeltaTime);
+    SyncVehicleMastsAndSails();
     UpdateRudder(Time.fixedDeltaTime, flag);
     if (m_players.Count == 0 ||
         _controller.VehicleFlags.HasFlag(WaterVehicleFlags
@@ -320,6 +321,16 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
       var dir = Vector3.Dot(m_body.velocity, transform.forward);
       ApplySailForce(this, dir);
     }
+  }
+
+  /**
+   * In theory we can just make the sailComponent and mastComponent parents of the masts/sails of the ship. This will make any mutations to those parents in sync with the sail changes
+   */
+  private void SyncVehicleMastsAndSails()
+  {
+    // foreach (var instanceMMastPiece in _controller.Instance.m_mastPieces)
+    // {
+    // }
   }
 
   private static void ApplySailForce(VVShip instance, float num5)

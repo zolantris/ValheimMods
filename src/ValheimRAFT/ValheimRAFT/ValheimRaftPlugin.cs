@@ -33,7 +33,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public const string ModDescription = "Valheim Mod for building on the sea";
   public const string CopyRight = "Copyright © 2023, GNU-v3 licensed";
   public static readonly int CustomRaftLayer = 29;
-  public static AssetBundle m_assetBundle;
   private bool m_customItemsAdded;
   public PrefabRegistryController prefabController;
 

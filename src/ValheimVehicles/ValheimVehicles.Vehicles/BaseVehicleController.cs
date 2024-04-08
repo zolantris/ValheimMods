@@ -71,7 +71,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   internal List<ShipHullComponent> m_hullPieces = new();
 
   internal List<MastComponent> m_mastPieces = new();
-  internal List<SailComponent> m_sailPiece = new();
+  internal List<SailComponent> m_sailPieces = new();
 
   internal List<RudderComponent> m_rudderPieces = new();
 
@@ -632,7 +632,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       var sail = netView.GetComponent<SailComponent>();
       if ((bool)sail)
       {
-        m_sailPiece.Remove(sail);
+        m_sailPieces.Remove(sail);
       }
 
       var mast = netView.GetComponent<MastComponent>();
@@ -990,7 +990,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   public float GetTotalSailArea()
   {
     if (totalSailArea != 0f || !ValheimRaftPlugin.Instance ||
-        m_mastPieces.Count == 0 && m_sailPiece.Count == 0)
+        m_mastPieces.Count == 0 && m_sailPieces.Count == 0)
     {
       return totalSailArea;
     }
@@ -1003,8 +1003,15 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     var hasConfigOverride = ValheimRaftPlugin.Instance.EnableCustomPropulsionConfig.Value;
 
-    foreach (var mMastPiece in m_mastPieces)
+    foreach (var mMastPiece in m_mastPieces.ToList())
     {
+      // prevent NRE from occuring if destroying the mastPiece but it still exists
+      if (!mMastPiece)
+      {
+        m_mastPieces.Remove(mMastPiece);
+        continue;
+      }
+
       if (mMastPiece.name.Contains("MBRaftMast"))
       {
         ++numberOfTier1Sails;
@@ -1301,13 +1308,19 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var mast = netView.GetComponent<MastComponent>();
     if ((bool)mast)
     {
+      // ReSharper disable once MergeIntoPattern
+      if (VehicleInstance?.Instance && mast.m_allowSailShrinking && mast.m_allowSailShrinking)
+      {
+        mast.transform.SetParent(VehicleInstance.Instance.m_mastObject.transform);
+      }
+
       m_mastPieces.Add(mast);
     }
 
     var sail = netView.GetComponent<SailComponent>();
     if ((bool)sail)
     {
-      m_sailPiece.Add(sail);
+      m_sailPieces.Add(sail);
     }
 
     var ramp = netView.GetComponent<BoardingRampComponent>();

@@ -7,6 +7,7 @@ using UnityEngine;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
+using Object = System.Object;
 
 namespace ValheimRAFT.Patches;
 
@@ -95,18 +96,22 @@ public class Player_Patch
       var end = transform.transform.rotation * localDir * Vector3.forward;
       if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) && (bool)hitInfo.collider)
       {
-        var mbrTarget = hitInfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
-        var bvcTarget = hitInfo.collider.GetComponentInParent<BaseVehicleController>();
-        if ((bool)mbrTarget || (bool)bvcTarget)
+        Object target;
+        target = hitInfo.collider.GetComponentInParent<BaseVehicleController>();
+        if (!(bool)target)
         {
-          point = hitInfo.point;
-          normal = hitInfo.normal;
-          piece = hitInfo.collider.GetComponentInParent<Piece>();
-          heightmap = null;
-          waterSurface = null;
-          __result = true;
-          return false;
+          target = hitInfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
         }
+
+        if (!(bool)target) return true;
+
+        point = hitInfo.point;
+        normal = hitInfo.normal;
+        piece = hitInfo.collider.GetComponentInParent<Piece>();
+        heightmap = null;
+        waterSurface = null;
+        __result = true;
+        return true;
       }
     }
 
