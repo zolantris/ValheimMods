@@ -184,6 +184,42 @@ Previously it only supported Direct3D11.
 
 <a href='https://ko-fi.com/zolantris' target='_blank'><img height='35' style='border:0px;height:46px;' src='https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com' />
 
+## Logging Metrics
+
+These packages may contain logging. Logging can be opted out by any user by
+unchecking `enableMetrics`. If you choose to opt-out, please be aware, this will
+make it more difficult to troubleshoot issues.
+
+### What information will be collected
+- 
+
+- Paths related to Valheim Game directory
+- Paths related to ValheimRAFT / ValheimVehicles plugin directory such as
+  symlinked directories from vortex mod installer or directories created by
+  r2modman or thunderstore.
+- Health related to the ValheimRAFT mod. It will track performance, slowdowns,
+  and bottlenecks making it significantly easier to debug.
+
+This logging has yet to be implemented.
+
+## Installing nuget packages
+
+### With Rider
+
+use Rider and click nuget (should be bottom left panel, one of the items), and
+search for the package
+
+### with nuget.exe (not recommended)
+
+1. Install nuget.exe
+2. For installing sentry as an example run.
+    ```powershell
+    ..\..\programs\nuget.exe install Sentry -Version 3.41.3 -OutputDirectory Packages`
+    ```
+
+The example above is if the path for nuget exists 2 directories above this repo
+and within programs folder.
+
 ## Getting Started
 
 Please reference the [getting started docs](../../docs/getting-started.md).

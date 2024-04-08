@@ -56,14 +56,15 @@ public class MoveableBaseShipComponent : MonoBehaviour
       delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
     m_nview.Register("SetVisual",
       delegate(long sender, bool state) { RPC_SetVisual(sender, state); });
-    m_baseRoot.MMoveableBaseShip = this;
+    m_baseRoot.shipController = this;
     m_baseRoot.m_nview = m_nview;
     m_baseRoot.m_ship = ship;
-    m_baseRoot.m_id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
+    m_baseRoot.m_id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
     m_rigidbody = GetComponent<Rigidbody>();
     m_baseRoot.m_syncRigidbody = m_rigidbody;
     m_rigidbody.mass = m_baseRoot.TotalMass;
     m_baseRootObject.transform.SetParent(null);
+    Logger.LogDebug("Set baseRoot params from BaseShipComponent");
 
     m_baseRootObject.transform.position = base.transform.position;
     m_baseRootObject.transform.rotation = base.transform.rotation;
@@ -84,7 +85,8 @@ public class MoveableBaseShipComponent : MonoBehaviour
     }
     else
     {
-      m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+      if (m_baseRoot.m_onboardcollider != null)
+        m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     }
 
     m_baseRoot.m_floatcollider = ship.m_floatCollider;

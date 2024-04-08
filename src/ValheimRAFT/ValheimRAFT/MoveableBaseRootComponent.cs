@@ -1,8 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using SentryUnityWrapper;
 using UnityEngine;
 using ValheimRAFT.Util;
+using ValheimVehicles.Propulsion.Rudder;
+using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -30,7 +33,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
   internal static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
 
-  internal MoveableBaseShipComponent MMoveableBaseShip;
+  internal MoveableBaseShipComponent shipController;
+
+  private IVehicleShip ShipInstance => shipController as IVehicleShip;
 
   public MoveableBaseRootComponent instance;
 
@@ -81,8 +86,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
   internal int m_id;
   public bool m_statsOverride;
   private static bool itemsRemovedDuringWait;
-  internal Coroutine pendingPiecesCoroutine;
-  private Coroutine server_UpdatePiecesCoroutine;
+  private Coroutine? pendingPiecesCoroutine;
+  private Coroutine? server_UpdatePiecesCoroutine;
 
   public void Awake()
   {
@@ -105,6 +110,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
     {
       server_UpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
+
+    Debug.Log("Captured Log"); // Breadcrumb
+    Debug.LogWarning("Captured Warning"); // Breadcrumb
+    Debug.LogError("This is a Test error called within BaseVehicleController.Awake");
   }
 
   public void CleanUp()
@@ -542,7 +551,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
       yield return null;
     }
 
-    var id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
+    var id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
     m_pendingPieces.TryGetValue(id, out var list);
 
     if (list is { Count: > 0 })
@@ -617,8 +626,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
                          (m_dynamicObjects.Count == 0 || ObjectListHasNoValidItems))
        )
     {
-      // Logger.LogError($"found boat without any items attached {m_ship} {m_nview}");
-      // DestroyBoat();
+      Logger.LogError($"found boat without any items attached {m_ship} {m_nview}");
+      DestroyBoat();
     }
 
     yield return null;
@@ -801,8 +810,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
       {
         var zdoparent = ZDOMan.instance.GetZDO(zdoid);
         id = zdoparent == null
-          ? ZDOPersistantID.ZDOIDToId(zdoid)
-          : ZDOPersistantID.Instance.GetOrCreatePersistantID(zdoparent);
+          ? ZDOPersistentID.ZDOIDToId(zdoid)
+          : ZDOPersistentID.Instance.GetOrCreatePersistentID(zdoparent);
         zdo.Set(MBParentIdHash, id);
         zdo.Set(MBRotationVecHash,
           zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
@@ -822,7 +831,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     var id = GetParentID(netview.m_zdo);
     if (id == 0) return;
 
-    var parentObj = ZDOPersistantID.Instance.GetGameObject(id);
+    var parentObj = ZDOPersistentID.Instance.GetGameObject(id);
     if ((bool)parentObj)
     {
       var mb = parentObj.GetComponent<MoveableBaseShipComponent>();
@@ -872,7 +881,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     if (netView.m_zdo != null)
     {
       netView.m_zdo.Set(MBParentIdHash,
-        ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo));
+        ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.m_zdo));
       netView.m_zdo.Set(MBRotationVecHash, netView.transform.localRotation.eulerAngles);
       netView.m_zdo.Set(MBPositionHash, netView.transform.localPosition);
     }
@@ -917,12 +926,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
     var rudder = netView.GetComponent<RudderComponent>();
     if ((bool)rudder)
     {
-      if (!rudder.m_controls) rudder.m_controls = netView.GetComponentInChildren<ShipControlls>();
-
-      if (!rudder.m_wheel) rudder.m_wheel = netView.transform.Find("controls/wheel");
-
-      rudder.m_controls.m_nview = m_nview;
-      rudder.m_controls.m_ship = MMoveableBaseShip.GetComponent<Ship>();
+      rudder.InitializeControls(netView, ShipInstance);
       m_rudderPieces.Add(rudder);
     }
 

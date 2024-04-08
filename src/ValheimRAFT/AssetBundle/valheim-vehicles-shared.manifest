@@ -1,0 +1,40 @@
+ManifestFileVersion: 0
+CRC: 3236552512
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 1c47735e50d545d4c442f99055120a68
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: d27d605e56b00c7d193d3604b99a7461
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 1c47735e50d545d4c442f99055120a68
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/rope_anchor.fbx
+- Assets/rope_d.png
+- Assets/RopeMat.mat
+- Assets/rope_n.png
+- Assets/03 - Default.mat
+- Assets/wood_59_diffuse 1.jpg
+- Assets/02 - Default.mat
+Dependencies: []

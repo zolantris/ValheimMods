@@ -19,6 +19,7 @@
     }
 
     CGINCLUDE
+    #include <UnityPBSLighting.cginc>
     sampler2D _MainTex;
     sampler2D _MainNormal;
     fixed4 _MainColor;

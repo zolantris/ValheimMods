@@ -1,23 +1,34 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using BepInEx;
+using BepInEx.Bootstrap;
 using HarmonyLib;
 using Jotunn;
+using ValheimRAFT.Util;
 
 namespace ValheimRAFT.Patches;
 
-internal class PatchController
+internal static class PatchController
 {
   public static string PlanBuildGUID = "marcopogo.PlanBuild";
 
-  private static Harmony Harmony;
+  private static Harmony? Harmony;
 
   internal static void Apply(string harmonyGuid)
   {
     Harmony = new Harmony(harmonyGuid);
+    Harmony.PatchAll(typeof(Character_Patch));
+    Harmony.PatchAll(typeof(CharacterAnimEvent_Patch));
     Harmony.PatchAll(typeof(Plantable_Patch));
+    Harmony.PatchAll(typeof(Player_Patch));
+    Harmony.PatchAll(typeof(Ship_Patch));
+    Harmony.PatchAll(typeof(ShipControls_Patch));
     Harmony.PatchAll(typeof(Teleport_Patch));
-    Harmony.PatchAll(typeof(ValheimRAFT_Patch));
-
+    Harmony.PatchAll(typeof(WearNTear_Patch));
+    Harmony.PatchAll(typeof(ZDO_Patch));
+    Harmony.PatchAll(typeof(ZNetScene_Patch));
+    Harmony.PatchAll(typeof(ZNetView_Patch));
+    Harmony.PatchAll(typeof(Hud_Patch));
     /*
      * PlanBuild uses mmmHookgen so it cannot be detected with bepinex
      *
@@ -30,7 +41,7 @@ internal class PatchController
          Directory.Exists(Path.Combine(Paths.PluginPath, "PlanBuild"))))
     {
       Logger.LogInfo("Applying PlanBuild Patch");
-      Harmony.PatchAll(typeof(PlanBuildPatch));
+      Harmony.PatchAll(typeof(PlanBuild_Patch));
     }
   }
 }

@@ -118,6 +118,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   private Color m_mainColor;
 
   private float m_sailArea = 0f;
+  private static bool DebugBoxCollider = true;
 
   public void Awake()
   {
@@ -142,6 +143,19 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     else if (!ZNetView.m_forceDisableInit) InvokeRepeating(nameof(LoadZDO), 5f, 5f);
   }
 
+  private void OnDrawGizmos()
+  {
+    if (DebugBoxCollider)
+    {
+      Gizmos.color = Color.green;
+      Gizmos.matrix = this.transform.localToWorldMatrix;
+      Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
+    }
+
+    for (var i = 0; i < m_sailCorners.Count; i++)
+      Gizmos.DrawSphere(transform.position + m_sailCorners[i], 0.1f);
+  }
+
   public void Update()
   {
     var vector = EnvMan.instance.GetWindForce();
@@ -158,7 +172,10 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     if ((bool)m_nview)
     {
-      m_nview.m_zdo?.Reset();
+      if (m_nview.m_zdo != null)
+      {
+        m_nview.m_zdo?.Reset();
+      }
     }
 
     CancelInvoke();
@@ -918,12 +935,6 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
       if ((bool)customtexture.Normal)
         m_mesh.material.SetTexture("_LogoNormal", customtexture.Normal);
     }
-  }
-
-  private void OnDrawGizmos()
-  {
-    for (var i = 0; i < m_sailCorners.Count; i++)
-      Gizmos.DrawSphere(transform.position + m_sailCorners[i], 0.1f);
   }
 
   public string GetHoverName()

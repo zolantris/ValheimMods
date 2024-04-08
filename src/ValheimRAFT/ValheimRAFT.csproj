@@ -14,24 +14,36 @@
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
     <Import Project="..\..\valheim.targets"/>
     <!--  gameLauncher launches the game on different paths and clients/servers only put this in the project that should be built  -->
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup>
         <Compile Include="Properties\AssemblyInfo.cs"/>
+        <Compile Include="Properties\CustomAssemblyAttributes.cs"/>
+        <Compile Include="ValheimRAFT.Patches\CharacterAnimEvent_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\Character_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\Hud_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\PatchSharedData.cs"/>
         <Compile Include="ValheimRAFT.Patches\PatchController.cs"/>
-        <Compile Include="ValheimRAFT.Patches\PlanBuildPatch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\PlanBuild_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\Player_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\ShipControls_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\Ship_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\WearNTear_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\ZDO_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\ZNetScene_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\ZNetView_Patch.cs"/>
         <Compile Include="ValheimRAFT.Util\BinaryIOUtil.cs"/>
         <Compile Include="ValheimRAFT.Util\ListUtil.cs"/>
-        <Compile Include="ValheimRAFT.Util\PrefabNames.cs"/>
+        <Compile Include="ValheimRAFT.Util\SentryMetrics.cs"/>
         <Compile Include="ValheimRAFT.Util\ZDOUtil.cs"/>
         <Compile Include="ValheimRAFT.UI\EditRampComponent.cs"/>
         <Compile Include="ValheimRAFT.UI\EditSailComponentPanel.cs"/>
         <Compile Include="ValheimRAFT.UI\PanelUtil.cs"/>
         <Compile Include="ValheimRAFT.Patches\Plantable_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Teleport_Patch.cs"/>
-        <Compile Include="ValheimRAFT.Patches\ValheimRAFT_Patch.cs"/>
         <Compile Include="ValheimRAFT\BoardingRampComponent.cs"/>
         <Compile Include="ValheimRAFT\CreativeModeConsoleCommand.cs"/>
         <Compile Include="ValheimRAFT\CultivatableComponent.cs"/>
@@ -58,16 +70,57 @@
         <Compile Include="ValheimRAFT\RudderComponent.cs"/>
         <Compile Include="ValheimRAFT\SailComponent.cs"/>
         <Compile Include="ValheimRAFT\SailCreatorComponent.cs"/>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\RegisterValheimVehiclePrefabs.cs">
+            <Link>ValheimVehicles.Prefabs\RegisterValheimVehiclePrefabs.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\RegisterHullPrefabs.cs">
+            <Link>ValheimVehicles.Prefabs\RegisterHullPrefabs.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\PrefabRegistryHelpers.cs">
+            <Link>ValheimVehicles.Prefabs\PrefabRegistryHelpers.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\LoadValheimVehiclesAssets.cs">
+            <Link>ValheimVehicles.Prefabs\LoadValheimVehiclesAssets.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\ShipRudderPrefabs.cs">
+            <Link>ValheimVehicles.Prefabs\Registry\ShipRudderPrefabs.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\ShipRudderPrefabs.cs">
+            <Link>ValheimVehicles.Prefabs\Registry\ShipRudderPrefabs.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\LoadValheimVehiclesSharedAssets.cs">
+            <Link>ValheimVehicles.Prefabs\LoadValheimVehiclesSharedAssets.cs</Link>
+        </Compile>
+    </ItemGroup>
+    <PropertyGroup>
+        <SentryDSN>https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496</SentryDSN>
+    </PropertyGroup>
+    <ItemGroup>
+        <AssemblyAttribute Include="Properties.CustomAssemblyAttributes">
+            <_Parameter1>"$(SentryDSN)"</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+    <!-- Until ValheimVehicles is published, RAFT will directly pull in it's dependencies -->
+    <ItemGroup>
+        <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>
     </ItemGroup>
     <ItemGroup>
         <None Remove="AssetBundle\AssetBundle"/>
-        <None Remove="AssetBundle\valheimraft"/>
+        <None Remove="AssetBundle\valheim-vehicles-shared"/>
+        <None Remove="AssetBundle\valheim-raft"/>
+        <None Remove="AssetBundle\valheim-vehicles"/>
+        <None Remove="AssetBundle\valheim-raft.manifest"/>
+        <None Remove="AssetBundle\valheim-vehicles.manifest"/>
+        <None Remove="AssetBundle\valheim-vehicles-shared.manifest"/>
         <None Remove="AssetBundle\AssetBundle.manifest"/>
-        <None Remove="AssetBundle\valheimraft.manifest"/>
         <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="AssetBundle"/>
-        <EmbeddedResource Include="AssetBundle\valheimraft" LogicalName="valheimraft"/>
+        <EmbeddedResource Include="AssetBundle\valheim-vehicles-shared" LogicalName="valheim-vehicles-shared"/>
+        <EmbeddedResource Include="AssetBundle\valheim-raft" LogicalName="valheim-raft"/>
+        <EmbeddedResource Include="AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles"/>
         <EmbeddedResource Include="AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest"/>
-        <EmbeddedResource Include="AssetBundle\valheimraft.manifest" LogicalName="valheimraft.manifest"/>
+        <EmbeddedResource Include="AssetBundle\valheim-vehicles-shared.manifest" LogicalName="valheim-vehicles-shared.manifest"/>
+        <EmbeddedResource Include="AssetBundle\valheim-raft.manifest" LogicalName="valheim-raft.manifest"/>
+        <EmbeddedResource Include="AssetBundle\valheim-vehicles.manifest" LogicalName="valheim-vehicles.manifest"/>
     </ItemGroup>
     <ItemGroup>
         <Content Include=".gitignore"/>
@@ -77,10 +130,28 @@
         <Content Include="Thunderstore\manifest.json"/>
         <Content Include="ValheimRAFT.Unity\.gitignore"/>
     </ItemGroup>
+
+    <!--  Other bepinex plugins  -->
+    <ItemGroup>
+        <Reference Include="SentryUnityWrapper">
+            <HintPath>$(SolutionDir)\src\SentryUnityWrapper\bin\Debug\SentryUnityWrapper.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="PlanBuild">
+            <HintPath>$(SolutionDir)\libs\PlanBuild.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+    </ItemGroup>
+    <ItemGroup>
+        <Folder Include="..\ValheimVehicles\ValheimVehicles.Utils\">
+            <Link>ValheimVehicles.Utils</Link>
+        </Folder>
+    </ItemGroup>
+
     <PropertyGroup>
         <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
         <R2ModManPath>AppData\Roaming\r2modmanPlus-local</R2ModManPath>
-        <R2ModManProfile>Valheim\profiles\valheim_mod_debugging</R2ModManProfile>
+        <R2ModManProfile>Valheim\profiles\valheim_raft_debugging</R2ModManProfile>
         <PluginDeployTarget>BepInEx\plugins\zolantris-ValheimRAFT</PluginDeployTarget>
         <PluginDeployPath>%HOMEPATH%\$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
         <SandboxieVMPath>C:\Sandbox\fre\DefaultBox</SandboxieVMPath>

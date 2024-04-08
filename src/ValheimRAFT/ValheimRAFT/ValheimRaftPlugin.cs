@@ -4,15 +4,19 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
 using System;
-using System.Collections.Generic;
 using System.Reflection;
+using BepInEx.Bootstrap;
 using Jotunn;
+using Properties;
 using UnityEngine;
-using UnityEngine.Serialization;
 using ValheimRAFT.Patches;
+using ValheimRAFT.Util;
+using ValheimVehicles.Prefabs;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
+// [SentryDSN()]
 [BepInPlugin(BepInGuid, ModName, Version)]
 [BepInDependency(Main.ModGuid)]
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Patch)]
@@ -28,10 +32,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";
   public const string ModDescription = "Valheim Mod for building on the sea";
   public const string CopyRight = "Copyright © 2023, GNU-v3 licensed";
-  internal static readonly int CustomRaftLayer = 29;
+  public static readonly int CustomRaftLayer = 29;
   public static AssetBundle m_assetBundle;
   private bool m_customItemsAdded;
-  public PrefabController prefabController;
+  public PrefabRegistryController prefabController;
 
   public static ValheimRaftPlugin Instance { get; private set; }
 
@@ -79,6 +83,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> BlockingColliderVerticalSize { get; set; }
   public ConfigEntry<float> BlockingColliderVerticalCenterOffset { get; set; }
   public ConfigEntry<KeyboardShortcut> AnchorKeyboardShortcut { get; set; }
+  public ConfigEntry<bool> EnableMetrics { get; set; }
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -267,11 +272,14 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreateBaseConfig()
   {
+    EnableMetrics = Config.Bind("Debug", "enableMetrics", true,
+      CreateConfigDescription(
+        "Enable sentry debug logging which will make it easier to troubleshoot raft errors and detect performance bottlenecks. The bare minimum is collected, and only data related to ValheimRaft. See https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT#logging-metrics for more details about what is collected"));
     HasDebugBase = Config.Bind("Debug", "HasDebugBase", false,
       CreateConfigDescription(
         "Outputs more debug logs for the MoveableBaseRootComponent. Useful for troubleshooting errors, but may fill logs quicker"));
     PatchPlanBuildPositionIssues = Config.Bind<bool>("Patches",
-      "fixPlanBuildPositionIssues", true, new ConfigDescription(
+      "fixPlanBuildPositionIssues", false, new ConfigDescription(
         "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT.",
         (AcceptableValueBase)null, new object[1]
         {
@@ -348,9 +356,28 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CreateKeyboardSetup();
   }
 
+  internal void ApplyMetricIfAvailable()
+  {
+    string @namespace = "SentryUnityWrapper";
+    string @pluginClass = "SentryUnityWrapperPlugin";
+    Logger.LogDebug(
+      $"contains sentryunitywrapper: {Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper")}");
+
+    Logger.LogDebug($"plugininfos {Chainloader.PluginInfos}");
+
+    if (EnableMetrics.Value &&
+        Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper"))
+    {
+      Logger.LogDebug("Made it to sentry check");
+      SentryMetrics.ApplyMetrics();
+    }
+  }
+
   public void Awake()
   {
     Instance = this;
+
+
     CreateConfig();
     PatchController.Apply(HarmonyGuid);
 
@@ -366,6 +393,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
      */
     PrefabManager.OnVanillaPrefabsAvailable += new Action(LoadCustomTextures);
     PrefabManager.OnVanillaPrefabsAvailable += new Action(AddCustomPieces);
+  }
+
+  private void Start()
+  {
+    // SentryLoads after
+    ApplyMetricIfAvailable();
   }
 
   private void AddPhysicsSettings()
@@ -436,12 +469,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   {
     if (m_customItemsAdded) return;
 
-    m_customItemsAdded = true;
-    m_assetBundle =
-      AssetUtils.LoadAssetBundleFromResources("valheimraft", Assembly.GetExecutingAssembly());
+    // Registers all prefabs using ValheimVehicles PrefabRegistryController
+    prefabController = gameObject.AddComponent<PrefabRegistryController>();
+    PrefabRegistryController.Init();
 
-    // Registers all prefabs
-    prefabController = gameObject.AddComponent<PrefabController>();
-    prefabController.Init();
+    m_customItemsAdded = true;
   }
 }

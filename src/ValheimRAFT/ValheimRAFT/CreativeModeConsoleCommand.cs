@@ -54,8 +54,8 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
           new Vector3(mb.transform.position.x,
             mb.m_rigidbody.position.y + ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
             mb.transform.position.z);
-        mb.m_rigidbody.rotation = Quaternion.Euler(mb.m_rigidbody.rotation.x, 0f,
-          mb.m_rigidbody.rotation.z);
+        mb.m_rigidbody.transform.rotation =
+          Quaternion.Euler(0f, mb.m_rigidbody.rotation.eulerAngles.y, 0f);
         mb.isCreative = true;
       }
       else

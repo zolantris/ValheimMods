@@ -19,7 +19,8 @@ public class Plantable_Patch
     List<CodeInstruction> list = instructions.ToList();
     for (int i = 0; i < list.Count; i++)
     {
-      if (!list[i].StoresField(AccessTools.Field(typeof(Player), "m_placementStatus")) ||
+      if (!list[i].StoresField(AccessTools.Field(typeof(Player),
+            nameof(Player.m_placementStatus))) ||
           !list[i - 1].LoadsConstant(Player.PlacementStatus.NeedCultivated))
       {
         continue;
@@ -27,7 +28,7 @@ public class Plantable_Patch
 
       List<Label> labels = list[i - 2].ExtractLabels();
       object pieceLocalIndex = null;
-      MethodInfo rayPieceMethod = AccessTools.Method(typeof(Player), "PieceRayTest");
+      MethodInfo rayPieceMethod = AccessTools.Method(typeof(Player), nameof(Player.PieceRayTest));
       for (int j = 0; j < list.Count; j++)
       {
         if (list[j].Calls(rayPieceMethod) && list[j - 4].IsLdloc())
@@ -41,11 +42,11 @@ public class Plantable_Patch
       Label sourceJump = (Label)list[i - 3].operand;
       list.Find((CodeInstruction match) => match.labels.Contains(sourceJump)).labels
         .Add(targetLabel);
-      list.InsertRange(i - 2, new CodeInstruction[3]
+      list.InsertRange(i - 2, new[]
       {
         new CodeInstruction(OpCodes.Ldloc, pieceLocalIndex).WithLabels(labels),
         new CodeInstruction(OpCodes.Call,
-          AccessTools.Method(typeof(Plantable_Patch), "IsCultivated")),
+          AccessTools.Method(typeof(Plantable_Patch), nameof(IsCultivated))),
         new CodeInstruction(OpCodes.Brtrue, targetLabel)
       });
       break;
@@ -72,11 +73,11 @@ public class Plantable_Patch
     List<CodeInstruction> list = instructions.ToList();
     for (int i = 0; i < list.Count; i++)
     {
-      if (list[i].Calls(AccessTools.Method(typeof(GameObject), "GetComponent", new Type[0],
+      if (list[i].Calls(AccessTools.Method(typeof(GameObject), "GetComponent", Type.EmptyTypes,
             new Type[1] { typeof(ZNetView) })))
       {
         list[i] = new CodeInstruction(OpCodes.Call,
-          AccessTools.Method(typeof(Plantable_Patch), "PlantGrowth"));
+          AccessTools.Method(typeof(Plantable_Patch), nameof(PlantGrowth)));
         list.Insert(i, new CodeInstruction(OpCodes.Ldarg_0));
         break;
       }
