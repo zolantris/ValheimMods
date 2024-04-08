@@ -9,7 +9,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Propulsion.Rudder;
 
-public class RudderComponent : MonoBehaviour
+public class RudderWheelComponent : MonoBehaviour
 {
   public IRudderControls? Controls;
   private ValheimShipControls _controls;
@@ -41,6 +41,81 @@ public class RudderComponent : MonoBehaviour
   private Transform m_targetLeftHand;
 
   private Transform m_targetRightHand;
+
+  /**
+   * For Workaround with older ships
+   */
+  private class CompatVehicleShip(Ship ship) : IVehicleShip
+  {
+    public bool IsPlayerInBoat(ZDOID zdoId)
+    {
+      return ship.IsPlayerInBoat(zdoId);
+    }
+
+    public bool IsPlayerInBoat(Player zdoId)
+    {
+      return ship.IsPlayerInBoat(zdoId);
+    }
+
+    public bool IsPlayerInBoat(long playerID)
+    {
+      return ship.IsPlayerInBoat(playerID);
+    }
+
+    public GameObject RudderObject
+    {
+      get => ship.m_rudderObject;
+      set { }
+    }
+
+    public IWaterVehicleController Controller { get; }
+
+    public BoxCollider FloatCollider
+    {
+      get => ship.m_floatCollider;
+      set { }
+    }
+
+    public Transform ControlGuiPosition
+    {
+      get => ship.m_controlGuiPos;
+      set { }
+    }
+
+    public VVShip Instance
+    {
+      get => null!;
+    }
+  }
+
+  public void InitializeControls(ZNetView netView, Ship vehicleShip)
+  {
+    if (vehicleShip == null)
+    {
+      Logger.LogError("Initialized called with null vehicleShip");
+      return;
+    }
+
+    ShipInstance = new CompatVehicleShip(vehicleShip);
+    if (!(bool)_controls)
+    {
+      _controls =
+        gameObject.AddComponent<ValheimShipControls>();
+      Controls = _controls;
+    }
+
+    if (!wheelTransform) wheelTransform = netView.transform.Find("controls/wheel");
+
+
+    if (Controls != null)
+    {
+      _controls.DEPRECATED_InitializeRudderWithShip(ShipInstance,
+        this, vehicleShip);
+      _controls.enabled = true;
+    }
+
+    Logger.LogDebug("added rudder to BaseVehicle");
+  }
 
   public void InitializeControls(ZNetView netView, IVehicleShip? vehicleShip)
   {

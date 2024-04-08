@@ -773,7 +773,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     if ((bool)component)
     {
       m_players.Remove(component);
-      Jotunn.Logger.LogDebug("Player over board, players left " + m_players.Count);
+      Logger.LogDebug("Player over board, players left " + m_players.Count);
       if (component == Player.m_localPlayer)
       {
         s_currentShips.Remove(this);

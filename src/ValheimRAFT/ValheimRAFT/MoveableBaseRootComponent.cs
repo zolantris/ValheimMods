@@ -35,7 +35,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   internal MoveableBaseShipComponent shipController;
 
-  private IVehicleShip ShipInstance => shipController as IVehicleShip;
+  private IVehicleShip? ShipInstance => m_ship as IVehicleShip;
 
   public MoveableBaseRootComponent instance;
 
@@ -52,7 +52,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   internal List<MastComponent> m_mastPieces = new();
   internal List<SailComponent> m_sailPiece = new();
 
-  internal List<RudderComponent> m_rudderPieces = new();
+  internal List<RudderWheelComponent> m_rudderPieces = new();
 
   internal List<ZNetView> m_portals = new();
 
@@ -364,7 +364,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
         m_mastPieces.Remove(mast);
       }
 
-      var rudder = netView.GetComponent<RudderComponent>();
+      var rudder = netView.GetComponent<RudderWheelComponent>();
       if ((bool)rudder) m_rudderPieces.Remove(rudder);
 
       var ramp = netView.GetComponent<BoardingRampComponent>();
@@ -924,10 +924,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
       m_boardingRamps.Add(ramp);
     }
 
-    var rudder = netView.GetComponent<RudderComponent>();
+    var rudder = netView.GetComponent<RudderWheelComponent>();
     if ((bool)rudder)
     {
-      rudder.InitializeControls(netView, ShipInstance);
+      rudder.InitializeControls(netView, m_ship);
       m_rudderPieces.Add(rudder);
     }
 

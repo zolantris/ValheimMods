@@ -73,7 +73,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   internal List<MastComponent> m_mastPieces = new();
   internal List<SailComponent> m_sailPieces = new();
 
-  internal List<RudderComponent> m_rudderPieces = new();
+  internal List<RudderWheelComponent> m_rudderPieces = new();
 
   internal List<ZNetView> m_portals = new();
 
@@ -641,7 +641,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         m_mastPieces.Remove(mast);
       }
 
-      var rudder = netView.GetComponent<RudderComponent>();
+      var rudder = netView.GetComponent<RudderWheelComponent>();
       if ((bool)rudder) m_rudderPieces.Remove(rudder);
 
       var ramp = netView.GetComponent<BoardingRampComponent>();
@@ -1330,7 +1330,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       m_boardingRamps.Add(ramp);
     }
 
-    var rudder = netView.GetComponent<RudderComponent>();
+    var rudder = netView.GetComponent<RudderWheelComponent>();
     if ((bool)rudder)
     {
       rudder.InitializeControls(netView, VehicleInstance);

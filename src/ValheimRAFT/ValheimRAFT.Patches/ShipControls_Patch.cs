@@ -10,7 +10,7 @@ public class ShipControls_Patch
   [HarmonyPrefix]
   private static bool ShipControlls_Awake(Ship __instance)
   {
-    return !__instance.GetComponentInParent<RudderComponent>();
+    return !__instance.GetComponentInParent<RudderWheelComponent>();
   }
 
   [HarmonyPatch(typeof(ShipControlls), "Interact")]
@@ -60,7 +60,8 @@ public class ShipControls_Patch
     }
 
     var isAnchored =
-      baseRoot.shipController.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored);
+      baseRoot.shipController.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags
+        .IsAnchored);
     var anchoredStatus = isAnchored ? "[<color=red><b>$mb_rudder_use_anchored</b></color>]" : "";
     var anchorText =
       isAnchored

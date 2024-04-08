@@ -12,41 +12,42 @@ public class Character_Patch
   private static bool Character_GetStandingOnShip(Character __instance, ref object? __result)
   {
     if (!__instance.IsOnGround()) return false;
-    if ((bool)__instance.m_lastGroundBody)
+    if (!(bool)__instance.m_lastGroundBody) return true;
+
+    var lastOnWaterVehicle = __instance.m_lastGroundBody.GetComponent<VVShip>();
+
+    if (lastOnWaterVehicle)
     {
-      var lastOnWaterVehicle = __instance.m_lastGroundBody.GetComponent<VVShip>();
-      if (lastOnWaterVehicle)
+      __result = lastOnWaterVehicle;
+      return true;
+    }
+
+    var lastOnShip = __instance.m_lastGroundBody.GetComponent<Ship>();
+    if (lastOnShip)
+    {
+      __result = lastOnShip;
+      return true;
+    }
+
+
+    if (__result == null)
+    {
+      // new logic (this is checked first and exits if valid)
+      var bvc = __instance.m_lastGroundBody.GetComponentInParent<BaseVehicleController>();
+      if ((bool)bvc)
       {
-        __result = lastOnWaterVehicle;
-      }
-      else
-      {
-        var lastOnShip = __instance.m_lastGroundBody.GetComponent<Ship>();
-        if (lastOnShip)
-        {
-          __result = lastOnShip;
-        }
+        __result = bvc.VehicleInstance;
+        return false;
       }
 
-      if (__result == null)
+      /*
+       * @deprecated old ship logic
+       */
+      var mb = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
+      if ((bool)mb && (bool)mb.m_ship)
       {
-        // new logic (this is checked first and exits if valid)
-        var bvc = __instance.m_lastGroundBody.GetComponentInParent<BaseVehicleController>();
-        if ((bool)bvc && (bool)bvc.VehicleInstance?.Instance)
-        {
-          __result = bvc.VehicleInstance;
-          return false;
-        }
-
-        /*
-         * @deprecated old ship logic
-         */
-        var mb = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
-        if ((bool)mb && (bool)mb.shipController)
-        {
-          __result = mb.shipController.GetComponent<Ship>();
-          return true;
-        }
+        __result = mb.m_ship;
+        return true;
       }
     }
 
@@ -64,20 +65,23 @@ public class Character_Patch
       return;
     }
 
+    BaseVehicleController? bvc = null;
+    if ((bool)__instance.m_lastGroundBody)
+    {
+      bvc = __instance.m_lastGroundBody.GetComponentInParent<BaseVehicleController>();
+      if ((bool)bvc && __instance.transform.parent != bvc.transform)
+      {
+        __instance.transform.SetParent(bvc.transform);
+        return;
+      }
+    }
+
     MoveableBaseRootComponent? mbr = null;
     if ((bool)__instance.m_lastGroundBody)
     {
       mbr = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
       if ((bool)mbr && __instance.transform.parent != mbr.transform)
         __instance.transform.SetParent(mbr.transform);
-    }
-
-    BaseVehicleController? bvc = null;
-    if ((bool)__instance.m_lastGroundBody)
-    {
-      bvc = __instance.m_lastGroundBody.GetComponentInParent<BaseVehicleController>();
-      if ((bool)bvc && __instance.transform.parent != bvc.transform)
-        __instance.transform.SetParent(bvc.transform);
     }
 
     if (!mbr && !bvc && __instance.transform.parent != null) __instance.transform.SetParent(null);

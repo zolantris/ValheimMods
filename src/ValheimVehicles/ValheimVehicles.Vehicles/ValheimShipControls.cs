@@ -34,18 +34,29 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   private bool hasRegister = false;
 
-  public void InitializeRudderWithShip(IVehicleShip ship, RudderComponent rudder)
+  /**
+   * Will not be supported in v3.x.x
+   */
+  public void DEPRECATED_InitializeRudderWithShip(IVehicleShip vehicleShip,
+    RudderWheelComponent rudderWheel, Ship ship)
+  {
+    m_nview = ship.m_nview;
+    InitializeRudderWithShip(vehicleShip, rudderWheel);
+  }
+
+  public void InitializeRudderWithShip(IVehicleShip ship, RudderWheelComponent rudderWheel)
   {
     ShipInstance = ship;
     ShipInstance.Instance.m_controlGuiPos = transform;
 
-    var rudderAttachPoint = rudder.transform.Find("attachpoint");
+    var rudderAttachPoint = rudderWheel.transform.Find("attachpoint");
     if (rudderAttachPoint != null)
     {
       AttachPoint = rudderAttachPoint.transform;
     }
 
     m_nview = ship.Instance.GetComponent<ZNetView>();
+
     if (m_nview != null && !hasRegister)
     {
       m_nview.Register<long>("RequestControl", RPC_RequestControl);
@@ -113,6 +124,22 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     }
 
     Player player = character as Player;
+
+    var playerOnShipViaShipInstance =
+      ShipInstance.Instance.gameObject.GetComponentsInChildren<Player>();
+
+    /*
+     * <note /> This logic allows for the player to just look at the Raft and see if the player is a child within it.
+     */
+    foreach (var player1 in playerOnShipViaShipInstance)
+    {
+      Logger.LogDebug(
+        $"Interact PlayerId {player1.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
+      if (player1.GetPlayerID() != player.GetPlayerID()) continue;
+      m_nview.InvokeRPC("RequestControl", player.GetPlayerID());
+      return true;
+    }
+
     if (player == null || player.IsEncumbered())
     {
       return false;
@@ -127,7 +154,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     }
 
     m_nview.InvokeRPC("RequestControl", player.GetPlayerID());
-    return false;
+    return true;
   }
 
   public Component GetControlledComponent()

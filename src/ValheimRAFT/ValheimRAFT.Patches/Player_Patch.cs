@@ -97,13 +97,10 @@ public class Player_Patch
       if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) && (bool)hitInfo.collider)
       {
         Object target;
-        target = hitInfo.collider.GetComponentInParent<BaseVehicleController>();
-        if (!(bool)target)
-        {
-          target = hitInfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
-        }
+        target = hitInfo.collider.GetComponentInParent<BaseVehicleController>() ??
+                 (Object)hitInfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
 
-        if (!(bool)target) return true;
+        if (target == null) return true;
 
         point = hitInfo.point;
         normal = hitInfo.normal;
@@ -257,7 +254,7 @@ public class Player_Patch
         }
       }
 
-      var rudder = __instance.m_attachPoint.parent.GetComponent<RudderComponent>();
+      var rudder = __instance.m_attachPoint.parent.GetComponent<RudderWheelComponent>();
       if ((bool)rudder && __instance.m_doodadController != null)
       {
         __instance.SetDoodadControlls(ref movedir, ref ((Character)__instance).m_lookDir, ref run,

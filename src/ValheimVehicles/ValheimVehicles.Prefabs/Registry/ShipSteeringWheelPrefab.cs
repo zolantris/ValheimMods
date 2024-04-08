@@ -24,7 +24,7 @@ public class ShipSteeringWheelPrefab : IRegisterPrefab
     PrefabRegistryController.AddToRaftPrefabPieces(mbRudderPrefabPiece);
     PrefabRegistryHelpers.AddNetViewWithPersistence(mbRudderPrefab);
 
-    var rudder = mbRudderPrefab.AddComponent<RudderComponent>();
+    var rudder = mbRudderPrefab.AddComponent<RudderWheelComponent>();
 
     // for older components
     // m_controls and valheimShipControls are dynamically enabled/disabled

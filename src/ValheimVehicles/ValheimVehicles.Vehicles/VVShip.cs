@@ -41,8 +41,14 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
 
   private void SetupShipComponents()
   {
-    m_mastObject = new GameObject(name = PrefabNames.VehicleSailMast);
-    m_sailObject = new GameObject(name = PrefabNames.VehicleSail);
+    m_mastObject = new GameObject()
+    {
+      name = PrefabNames.VehicleSailMast
+    };
+    m_sailObject = new GameObject()
+    {
+      name = PrefabNames.VehicleSail
+    };
 
     m_sailCloth = m_sailObject.AddComponent<Cloth>();
     m_sailCloth.name = PrefabNames.VehicleSailCloth;

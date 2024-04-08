@@ -39,7 +39,7 @@
     <ItemGroup>
         <Compile Include="Patches\Zone_Patch.cs"/>
         <Compile Include="ValheimVehicles.Prefabs\PrefabNames.cs"/>
-        <Compile Include="ValheimVehicles.Propulsion\Rudder\RudderComponent.cs"/>
+        <Compile Include="ValheimVehicles.Propulsion\Rudder\RudderWheelComponent.cs"/>
         <Compile Include="ValheimVehicles.Propulsion\Sail\SailAreaForce.cs"/>
         <Compile Include="ValheimVehiclesPlugin.cs"/>
         <Compile Include=".\ValheimVehicles.Utils\*.cs"/>
