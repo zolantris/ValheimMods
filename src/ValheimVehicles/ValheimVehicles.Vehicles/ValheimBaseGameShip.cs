@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 using ValheimRAFT;
+using ValheimVehicles.Prefabs;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
@@ -153,7 +154,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     // m_blockingCollider.gameObject.layer = 28; // vehicle layer
     // m_blockingCollider.transform.localScale = new Vector3(1f, 1f, 1f);
     // m_blockingCollider.transform.localPosition = new Vector3(0f, 0.29f, 0f);
-    var collider = transform.Find("VVFloatCollider");
+    var collider = transform.Find(PrefabNames.WaterVehicleFloatCollider);
 
     if (collider != null)
     {
@@ -161,7 +162,8 @@ public class ValheimBaseGameShip : MonoBehaviour
       var boxColliders = collider.GetComponentsInChildren<BoxCollider>();
 
       var floatBoxCollider =
-        boxColliders?.FirstOrDefault((BoxCollider k) => k.gameObject.name == "VVFloatCollider");
+        boxColliders?.FirstOrDefault((BoxCollider k) =>
+          k.gameObject.name == PrefabNames.WaterVehicleFloatCollider);
       if (floatBoxCollider != null)
       {
         m_floatcollider = floatBoxCollider;

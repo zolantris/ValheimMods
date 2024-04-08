@@ -414,7 +414,6 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
       zdo_sailFlags.HasFlag(SailFlags.AllowSailRotation));
 
     UpdateSailArea();
-    Logger.LogDebug($"MeshupdateRequiredStatus: {meshUpdateRequired}");
     if (meshUpdateRequired)
       CreateSailMesh();
     else if (coefficientUpdateRequired) UpdateCoefficients();

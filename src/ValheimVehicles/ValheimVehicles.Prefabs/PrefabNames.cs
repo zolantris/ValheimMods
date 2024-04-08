@@ -28,4 +28,7 @@ public static class PrefabNames
   public const string ShipSteeringWheel = $"{ValheimVehiclesPrefix}_ShipSteeringWheel";
   public const string WaterVehiclePreviewHull = $"{ValheimVehiclesPrefix}_WaterVehiclePreviewHull";
   public const string PiecesContainer = $"{ValheimVehiclesPrefix}_PiecesContainer";
+  public const string VehicleSail = $"{ValheimVehiclesPrefix}_VehicleSail";
+  public const string VehicleSailMast = $"{ValheimVehiclesPrefix}_VehicleSailMast";
+  public const string VehicleSailCloth = $"{ValheimVehiclesPrefix}_SailCloth";
 }

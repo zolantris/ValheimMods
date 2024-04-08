@@ -130,6 +130,7 @@ public class SailPrefabs : IRegisterPrefab
 
     // this is a tier 1 sail
     PrefabRegistryHelpers.SetWearNTear(mbSailPrefab, 1);
+    PrefabRegistryHelpers.FixSnapPoints(mbSailPrefab);
 
     // mast should allowSailShrinking
     var mast = mbSailPrefab.AddComponent<MastComponent>();

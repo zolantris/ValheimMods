@@ -760,9 +760,10 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   public static void InitZDO(ZDO zdo)
   {
-    // this codeblock was left unhandled. I wonder if there needs to be an early exit or fix for MBRaft specifically.
+    // does not init the MBRaft as it should never exist as a piece within the raft items
     if (zdo.m_prefab == "MBRaft".GetStableHashCode())
     {
+      return;
     }
 
     var id = GetParentID(zdo);

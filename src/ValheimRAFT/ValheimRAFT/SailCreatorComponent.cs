@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -49,12 +50,8 @@ public class SailCreatorComponent : MonoBehaviour
       Piece piece = newSail.GetComponent<Piece>();
       piece.SetCreator(m_sailCreators[0].GetComponent<Piece>().GetCreator());
       ZNetView netview = newSail.GetComponent<ZNetView>();
-      MoveableBaseRootComponent mbroot =
-        m_sailCreators[0].GetComponentInParent<MoveableBaseRootComponent>();
-      if ((bool)mbroot)
-      {
-        mbroot.AddNewPiece(netview);
-      }
+
+      AddToVehicle(netview);
 
       for (int i = 0; i < m_sailCreators.Count; i++)
       {
@@ -63,5 +60,45 @@ public class SailCreatorComponent : MonoBehaviour
 
       m_sailCreators.Clear();
     }
+  }
+
+  /**
+   * <description/> Delegates to the VehicleController that it is placed within.
+   * - This avoids the additional check if possible.
+   */
+  public void AddToVehicle(ZNetView netView)
+  {
+    if (AddToBasicVehicle(netView))
+    {
+      return;
+    }
+
+    AddToMoveableBaseRoot(netView);
+  }
+
+  public bool AddToMoveableBaseRoot(ZNetView netView)
+  {
+    var mbr =
+      m_sailCreators[0].GetComponentInParent<MoveableBaseRootComponent>();
+    if ((bool)mbr)
+    {
+      mbr.AddNewPiece(netView);
+      return true;
+    }
+
+    return false;
+  }
+
+  public bool AddToBasicVehicle(ZNetView netView)
+  {
+    var baseVehicle =
+      m_sailCreators[0].GetComponentInParent<BaseVehicleController>();
+    if ((bool)baseVehicle)
+    {
+      baseVehicle.AddNewPiece(netView);
+      return true;
+    }
+
+    return false;
   }
 }

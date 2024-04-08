@@ -26,7 +26,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var buildGhost = waterVehicle.AddComponent<VehicleBuildGhost>();
     buildGhost.gameObject.layer = 0;
     buildGhost.placeholderComponent = LoadValheimVehicleAssets.ShipHullAsset;
-    buildGhost.UpdatePlaceholder();
+    buildGhost.RenderPlaceholder();
 
     var _waterVehiclePrefab =
       prefabManager.CreateClonedPrefab(PrefabNames.WaterVehiclePrefabName, waterVehicle);

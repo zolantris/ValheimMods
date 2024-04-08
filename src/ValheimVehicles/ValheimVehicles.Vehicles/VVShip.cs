@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
@@ -38,8 +39,19 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
 
   // private static readonly List<VVShip> s_currentShips = new();
 
+  private void SetupShipComponents()
+  {
+    m_mastObject = new GameObject(name = PrefabNames.VehicleSailMast);
+    m_sailObject = new GameObject(name = PrefabNames.VehicleSail);
+
+    m_sailCloth = m_sailObject.AddComponent<Cloth>();
+    m_sailCloth.name = PrefabNames.VehicleSailCloth;
+  }
+
   private new void Awake()
   {
+    SetupShipComponents();
+
     base.Awake();
 
     Logger.LogDebug($"called Awake in VVShip, m_body {m_body}");
@@ -81,20 +93,6 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
 
     _controller = gameObject.AddComponent<WaterVehicleController>();
     _controller.InitializeShipValues(Instance);
-  }
-
-  private void DestroyGhostPlaceholder()
-  {
-    // var placeholderGhost = m_nview.GetComponent<VehicleBuildGhost>();
-    // Destroy(placeholderGhost);
-    // if ((bool)placeholderGhost)
-    // {
-    //   placeholderGhost.gameObject.SetActive(false);
-    // }
-    // else
-    // {
-    //   Logger.LogWarning("No placeholder Ghost Component found on vehicle");
-    // }
   }
 
   /**
@@ -309,16 +307,16 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
         ForceMode.VelocityChange);
 
 
-      // m_body.AddForceAtPosition(Vector3.up * side1force, side1,
-      //   ForceMode.VelocityChange);
-      // m_body.AddForceAtPosition(Vector3.up * side2force, side2,
-      //   ForceMode.VelocityChange);
-      // m_body.AddForceAtPosition(Vector3.up * side3force, side3,
-      //   ForceMode.VelocityChange);
-      // m_body.AddForceAtPosition(Vector3.up * side4force, side4,
-      //   ForceMode.VelocityChange);
-      // m_body.AddForceAtPosition(Vector3.up * centerforce2, centerpos2,
-      //   ForceMode.VelocityChange);
+      m_body.AddForceAtPosition(Vector3.up * side1force, side1,
+        ForceMode.VelocityChange);
+      m_body.AddForceAtPosition(Vector3.up * side2force, side2,
+        ForceMode.VelocityChange);
+      m_body.AddForceAtPosition(Vector3.up * side3force, side3,
+        ForceMode.VelocityChange);
+      m_body.AddForceAtPosition(Vector3.up * side4force, side4,
+        ForceMode.VelocityChange);
+      m_body.AddForceAtPosition(Vector3.up * centerforce2, centerpos2,
+        ForceMode.VelocityChange);
       var dir = Vector3.Dot(m_body.velocity, transform.forward);
       ApplySailForce(this, dir);
     }

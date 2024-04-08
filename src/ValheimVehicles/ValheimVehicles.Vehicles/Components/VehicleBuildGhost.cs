@@ -94,6 +94,12 @@ public class VehicleBuildGhost : MonoBehaviour
     }
   }
 
+  public void RenderPlaceholder()
+  {
+    _placeholderInstance =
+      Instantiate(placeholderComponent, transform);
+  }
+
   public void UpdatePlaceholder()
   {
     if ((bool)_placeholderInstance)
@@ -107,8 +113,7 @@ public class VehicleBuildGhost : MonoBehaviour
       return;
     }
 
-    _placeholderInstance =
-      Instantiate(placeholderComponent, transform);
+    RenderPlaceholder();
   }
 
   public void ShouldRenderPlaceholder()
