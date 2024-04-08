@@ -14,43 +14,44 @@ public class Character_Patch
     if (!__instance.IsOnGround()) return false;
     if ((bool)__instance.m_lastGroundBody)
     {
-      var lastOnShip = __instance.m_lastGroundBody.GetComponent<Ship>();
       var lastOnWaterVehicle = __instance.m_lastGroundBody.GetComponent<VVShip>();
-
-      if (lastOnShip)
-      {
-        __result = lastOnShip;
-      }
-
       if (lastOnWaterVehicle)
       {
         __result = lastOnWaterVehicle;
-        // lastOnWaterVehicle.m_players.Add(__instance.get);
       }
-
-      if (!lastOnShip && !lastOnWaterVehicle)
+      else
       {
-        __result = null;
+        var lastOnShip = __instance.m_lastGroundBody.GetComponent<Ship>();
+        if (lastOnShip)
+        {
+          __result = lastOnShip;
+        }
       }
-
 
       if (__result == null)
       {
-        // todo deprecate this logic
+        // new logic (this is checked first and exits if valid)
+        var bvc = __instance.m_lastGroundBody.GetComponentInParent<BaseVehicleController>();
+        if ((bool)bvc && (bool)bvc.VehicleInstance?.Instance)
+        {
+          __result = bvc.VehicleInstance;
+          return false;
+        }
+
+        /*
+         * @deprecated old ship logic
+         */
         var mb = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
         if ((bool)mb && (bool)mb.shipController)
+        {
           __result = mb.shipController.GetComponent<Ship>();
-
-        // new logic
-        var bvc = __instance.m_lastGroundBody.GetComponentInParent<WaterVehicleController>();
-        if ((bool)bvc && (bool)bvc.VehicleInstance.Instance)
-          __result = bvc.VehicleInstance;
+          return true;
+        }
       }
-
-      return false;
     }
 
-    return false;
+    // fallthrough if there is some edge case let the base game handle it
+    return true;
   }
 
   [HarmonyPatch(typeof(Character), "UpdateGroundContact")]
