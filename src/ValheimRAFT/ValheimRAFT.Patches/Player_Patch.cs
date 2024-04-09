@@ -380,7 +380,7 @@ public class Player_Patch
     var isShipWheelControllerValid = player.m_doodadController?.IsValid() ?? false;
     var vvShipResult =
       hasDoodadController && isShipWheelControllerValid
-        ? player.m_doodadController?.GetControlledComponent() as VVShip
+        ? player.m_doodadController?.GetControlledComponent() as VehicleShip
         : null;
     return vvShipResult;
   }

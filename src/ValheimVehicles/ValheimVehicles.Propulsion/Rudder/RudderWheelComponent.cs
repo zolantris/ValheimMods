@@ -82,12 +82,15 @@ public class RudderWheelComponent : MonoBehaviour
       set { }
     }
 
-    public VVShip? Instance
+    public VehicleShip? Instance
     {
       get => null!;
     }
   }
 
+  /**
+   * @Deprecated for Older MoveableShip compatibility. Likely will just remove the ship controller from the MBRaft.
+   */
   public void InitializeControls(ZNetView netView, Ship vehicleShip)
   {
     if (vehicleShip == null)

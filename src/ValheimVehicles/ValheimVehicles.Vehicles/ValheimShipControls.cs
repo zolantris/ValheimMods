@@ -17,6 +17,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   public Vector3 m_detachOffset = new Vector3(0f, 0.5f, 0f);
 
+  private string hoverText = "$valheim_vehicles_ship_controls";
   public string m_hoverText { get; set; }
   [SerializeField] private float maxUseRange = 10f;
 
@@ -104,16 +105,18 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
   {
     if (character == Player.m_localPlayer && isActiveAndEnabled)
     {
-      var baseRoot = GetComponentInParent<MoveableBaseRootComponent>();
       var baseVehicle = GetComponentInParent<BaseVehicleController>();
-      if (baseRoot != null)
-      {
-        baseRoot.ComputeAllShipContainerItemWeight();
-      }
-
       if (baseVehicle != null)
       {
         baseVehicle.ComputeAllShipContainerItemWeight();
+      }
+      else
+      {
+        var baseRoot = GetComponentInParent<MoveableBaseRootComponent>();
+        if (baseRoot != null)
+        {
+          baseRoot.ComputeAllShipContainerItemWeight();
+        }
       }
 
       m_lastUsedControls = this;
@@ -128,6 +131,8 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     {
       return false;
     }
+
+    if (m_nview == null) return false;
 
     if (!m_nview.IsValid())
     {

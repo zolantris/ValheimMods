@@ -1,6 +1,7 @@
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
+using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.Prefabs;
 
@@ -26,9 +27,10 @@ public class ShipRudderPrefabs : IRegisterPrefab
     rudderPrefab.gameObject.layer = 0;
     var piece = rudderPrefab.AddComponent<Piece>();
 
-    piece.m_icon = LoadValheimVehicleAssets.Sprites.GetSprite(SpriteNames.ShipRudderAdvanced);
+    piece.m_icon = LoadValheimVehicleAssets.Sprites.GetSprite(SpriteNames.ShipRudderBasic);
 
     PrefabRegistryHelpers.SetWearNTear(rudderPrefab);
+    PrefabRegistryHelpers.FixCollisionLayers(rudderPrefab);
 
     pieceManager.AddPiece(new CustomPiece(rudderPrefab, false, new PieceConfig
     {
@@ -75,10 +77,14 @@ public class ShipRudderPrefabs : IRegisterPrefab
     var piece = rudderPrefab.AddComponent<Piece>();
     piece.m_name = "$valheim_vehicles_rudder_advanced";
     piece.m_description = "$valheim_vehicles_rudder_advanced_desc";
-    piece.m_icon = LoadValheimVehicleAssets.Sprites.GetSprite(SpriteNames.ShipRudderBasic);
+    piece.m_icon = LoadValheimVehicleAssets.Sprites.GetSprite(SpriteNames.ShipRudderAdvancedv2);
+
+    var rudderComponent = rudderPrefab.AddComponent<RudderComponent>();
+    rudderComponent.PivotPoint = rudderPrefab.transform.Find("rudder_advanced");
 
     PrefabRegistryHelpers.SetWearNTear(rudderPrefab);
-
+    PrefabRegistryHelpers.FixCollisionLayers(rudderPrefab);
+    PrefabRegistryHelpers.HoistSnapPointsToTop(rudderPrefab, rudderPrefab);
 
     pieceManager.AddPiece(new CustomPiece(rudderPrefab, false, new PieceConfig
     {

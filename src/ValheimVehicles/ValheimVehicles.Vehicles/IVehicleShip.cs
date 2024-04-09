@@ -13,5 +13,5 @@ public interface IVehicleShip
   public BoxCollider FloatCollider { get; set; }
 
   public Transform ControlGuiPosition { get; set; }
-  public VVShip Instance { get; }
+  public VehicleShip Instance { get; }
 }

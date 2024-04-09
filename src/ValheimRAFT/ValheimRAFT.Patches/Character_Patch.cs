@@ -14,7 +14,7 @@ public class Character_Patch
     if (!__instance.IsOnGround()) return false;
     if (!(bool)__instance.m_lastGroundBody) return true;
 
-    var lastOnWaterVehicle = __instance.m_lastGroundBody.GetComponent<VVShip>();
+    var lastOnWaterVehicle = __instance.m_lastGroundBody.GetComponent<VehicleShip>();
 
     if (lastOnWaterVehicle)
     {

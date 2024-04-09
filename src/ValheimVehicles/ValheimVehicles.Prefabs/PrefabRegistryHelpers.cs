@@ -136,8 +136,19 @@ public abstract class PrefabRegistryHelpers
   public static void FixSnapPoints(GameObject r)
   {
     var t = r.GetComponentsInChildren<Transform>(true);
-    for (var i = 0; i < t.Length; i++)
-      if (t[i].name.StartsWith("_snappoint"))
-        t[i].tag = "snappoint";
+    foreach (var t1 in t)
+      if (t1.name.StartsWith("_snappoint"))
+        t1.tag = "snappoint";
+  }
+
+  // Use this to work around object resizing requiring repeated movement of child snappoints. This way snappoints can stay in the relative object without issue
+  public static void HoistSnapPointsToTop(GameObject r, GameObject originalObject)
+  {
+    var t = r.GetComponentsInChildren<Transform>(true);
+    foreach (var t1 in t)
+      if (t1.tag == "snappoint")
+      {
+        t1.SetParent(originalObject.transform);
+      }
   }
 }

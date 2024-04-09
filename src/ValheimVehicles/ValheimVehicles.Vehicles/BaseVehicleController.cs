@@ -11,6 +11,7 @@ using ValheimRAFT;
 using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
+using ValheimVehicles.Vehicles.Components;
 using static ValheimVehicles.Propulsion.Sail.SailAreaForce;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
@@ -70,10 +71,21 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   internal List<ZNetView> m_pieces = new();
   internal List<ShipHullComponent> m_hullPieces = new();
 
-  internal List<MastComponent> m_mastPieces = new();
-  internal List<SailComponent> m_sailPieces = new();
+  internal List<MastComponent> m_mastPieces = [];
 
-  internal List<RudderWheelComponent> m_rudderPieces = new();
+  internal List<SailComponent> m_sailPieces = [];
+
+
+  // todo make a patch to fix coordinates on death to send player to the correct zdo location.
+  // bed component
+  internal List<Bed> m_bedPieces = [];
+
+
+  // ship rudders
+  internal List<RudderComponent> m_rudderPieces = [];
+
+  // wheels for rudders
+  internal List<RudderWheelComponent> m_rudderWheelPieces = new();
 
   internal List<ZNetView> m_portals = new();
 
@@ -137,6 +149,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   private static bool itemsRemovedDuringWait;
   private Coroutine? _pendingPiecesCoroutine;
   private Coroutine? _serverUpdatePiecesCoroutine;
+  private Coroutine? _bedUpdateCoroutine;
   GUIStyle myButtonStyle;
 
   private void OnGUI()
@@ -204,16 +217,21 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         k.gameObject.name.Contains(PrefabNames.VehicleBlockingCollider)) ??
       new BoxCollider();
 
+    // todo the local scales cause issues with floating with new ships until an item is manually placed by the player
     if (m_onboardcollider != null)
     {
       m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     }
 
-    if (m_floatcollider != null) m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+    if (m_floatcollider != null)
+    {
+      m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+      m_floatcollider.size = new Vector3(4f, 1f, 2f); // size of raft hull
+    }
 
     if (m_blockingcollider != null)
     {
-      m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+      m_blockingcollider.transform.localScale = new Vector3(4f, 1f, 2f);
       m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
       m_blockingcollider.transform.parent.gameObject.layer =
         ValheimRaftPlugin.CustomRaftLayer;
@@ -249,6 +267,29 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     Debug.Log("Captured Log"); // Breadcrumb
     Debug.LogWarning("Captured Warning"); // Breadcrumb
     Debug.LogError("This is a Test error called within BaseVehicleController.Awake");
+  }
+
+  public void UpdateBedSpawn()
+  {
+    foreach (var mBedPiece in m_bedPieces)
+    {
+      if (!(bool)mBedPiece.m_nview) continue;
+
+      var zdoPosition = mBedPiece.m_nview.m_zdo.GetPosition();
+      if (zdoPosition == mBedPiece.m_spawnPoint.position)
+      {
+        continue;
+      }
+
+      mBedPiece.m_spawnPoint.position = zdoPosition;
+    }
+  }
+
+  IEnumerable UpdateBedSpawnWorker()
+  {
+    UpdateBedSpawn();
+
+    yield return new WaitForSeconds(3);
   }
 
   /*
@@ -301,6 +342,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       _serverUpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
+
+    _bedUpdateCoroutine = StartCoroutine(nameof(UpdateBedSpawnWorker));
   }
 
   protected int GetPersistentID()
@@ -491,6 +534,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
       zdo.SetPosition(pos);
     }
+
+    UpdateBedSpawn();
   }
 
 
@@ -641,8 +686,15 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         m_mastPieces.Remove(mast);
       }
 
-      var rudder = netView.GetComponent<RudderWheelComponent>();
+      var rudder = netView.GetComponent<RudderComponent>();
       if ((bool)rudder) m_rudderPieces.Remove(rudder);
+
+      var wheel = netView.GetComponent<RudderWheelComponent>();
+      if ((bool)wheel) m_rudderWheelPieces.Remove(wheel);
+
+
+      var bed = netView.GetComponent<Bed>();
+      if ((bool)bed) m_bedPieces.Remove(bed);
 
       var ramp = netView.GetComponent<BoardingRampComponent>();
       if ((bool)ramp) m_boardingRamps.Remove(ramp);
@@ -1311,7 +1363,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       // ReSharper disable once MergeIntoPattern
       if (VehicleInstance?.Instance && mast.m_allowSailShrinking && mast.m_allowSailShrinking)
       {
-        mast.transform.SetParent(VehicleInstance.Instance.m_mastObject.transform);
+        // mast.transform.SetParent(VehicleInstance.Instance.m_mastObject.transform);
       }
 
       m_mastPieces.Add(mast);
@@ -1323,6 +1375,12 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       m_sailPieces.Add(sail);
     }
 
+    var bed = netView.GetComponent<Bed>();
+    if ((bool)bed)
+    {
+      m_bedPieces.Add(bed);
+    }
+
     var ramp = netView.GetComponent<BoardingRampComponent>();
     if ((bool)ramp)
     {
@@ -1330,11 +1388,18 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       m_boardingRamps.Add(ramp);
     }
 
-    var rudder = netView.GetComponent<RudderWheelComponent>();
+    var rudder = netView.GetComponent<RudderComponent>();
     if ((bool)rudder)
     {
-      rudder.InitializeControls(netView, VehicleInstance);
       m_rudderPieces.Add(rudder);
+    }
+
+
+    var rudderWheel = netView.GetComponent<RudderWheelComponent>();
+    if ((bool)rudderWheel)
+    {
+      rudderWheel.InitializeControls(netView, VehicleInstance);
+      m_rudderWheelPieces.Add(rudderWheel);
     }
 
     var portal = netView.GetComponent<TeleportWorld>();

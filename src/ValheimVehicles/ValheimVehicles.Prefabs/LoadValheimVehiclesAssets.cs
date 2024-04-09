@@ -16,12 +16,13 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public void Init(AssetBundle assetBundle)
   {
     ShipHullAsset =
-      assetBundle.LoadAsset<GameObject>("Assets/ValheimVehicles/vehicle_ship_hull.prefab");
+      assetBundle.LoadAsset<GameObject>("vehicle_ship_hull.prefab");
     ShipRudderBasicAsset =
-      assetBundle.LoadAsset<GameObject>("Assets/ValheimVehicles/vehicle_ship_rudder_basic.prefab");
+      assetBundle.LoadAsset<GameObject>("vehicle_ship_rudder_basic.prefab");
     ShipRudderAdvancedAsset =
       assetBundle.LoadAsset<GameObject>(
-        "Assets/ValheimVehicles/vehicle_ship_rudder_advanced.prefab");
-    Sprites = assetBundle.LoadAsset<SpriteAtlas>("vehicle_icons");
+        "vehicle_ship_rudder_advancedv2.prefab");
+    Sprites = assetBundle.LoadAsset<SpriteAtlas>(
+      "vehicle_icons.spriteatlasv2");
   }
 }

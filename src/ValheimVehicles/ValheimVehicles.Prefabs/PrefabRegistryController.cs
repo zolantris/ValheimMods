@@ -140,13 +140,18 @@ public class PrefabRegistryController : MonoBehaviour
 
     vehicleAssetBundle =
       AssetUtils.LoadAssetBundleFromResources("valheim-vehicles", Assembly.GetExecutingAssembly());
+    Logger.LogDebug($"valheim-vehicles {vehicleAssetBundle}");
+
 
     prefabManager = PrefabManager.Instance;
     pieceManager = PieceManager.Instance;
 
     LoadValheimAssets.Instance.Init(prefabManager);
     LoadValheimVehicleSharedAssets.Instance.Init(vehicleSharedAssetBundle);
+
+    // dependent on ValheimVehiclesShared
     LoadValheimRaftAssets.Instance.Init(raftAssetBundle);
+    // dependent on ValheimVehiclesShared and RaftAssetBundle
     LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle);
 
     RegisterAllPrefabs();

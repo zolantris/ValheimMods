@@ -27,7 +27,7 @@ public enum WaterVehicleFlags
 
 public class WaterVehicleController : BaseVehicleController, IWaterVehicleController
 {
-  private VVShip? _vehicleInstance;
+  private VehicleShip? _vehicleInstance;
 
   public IVehicleShip? VehicleInstance => _vehicleInstance;
 
@@ -51,26 +51,26 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
   /*
    * Must be called from
    */
-  public void InitializeShipValues(VVShip vvShip)
+  public void InitializeShipValues(VehicleShip vehicleShip)
   {
-    _vehicleInstance = vvShip;
+    _vehicleInstance = vehicleShip;
     base.VehicleInstance = VehicleInstance;
 
     if (!(bool)m_rigidbody)
     {
-      m_rigidbody = vvShip.GetComponent<Rigidbody>();
+      m_rigidbody = vehicleShip.GetComponent<Rigidbody>();
     }
 
     // connect vvShip properties to this gameobject
-    m_nview = vvShip.GetComponent<ZNetView>();
-    m_zsync = vvShip.GetComponent<ZSyncTransform>();
+    m_nview = vehicleShip.GetComponent<ZNetView>();
+    m_zsync = vehicleShip.GetComponent<ZSyncTransform>();
     instance = this;
-    _impactEffect = vvShip.GetComponent<ImpactEffect>();
+    _impactEffect = vehicleShip.GetComponent<ImpactEffect>();
 
     // prevent mass from being set lower than 20f;
     m_rigidbody.mass = Math.Max(TotalMass, 2000f);
 
-    SetColliders(vvShip.gameObject);
+    SetColliders(vehicleShip.gameObject);
     ZdoReadyStart();
     LoadInitState();
   }

@@ -54,6 +54,11 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var floatCollider = PrefabRegistryController.Instantiate(floatColliderComponent,
       _waterVehiclePrefab.transform);
 
+    // EXPERIMENTAL. MAY CAUSE EXTREME LAG or annoying noises
+    // will need to verify if the effects also expand across raft as it gets larger
+    var waterEffects =
+      Object.Instantiate(LoadValheimAssets.shipWaterEffects, waterVehicle.transform);
+
     onboardCollider.name = PrefabNames.VehicleOnboardCollider;
     floatCollider.name = PrefabNames.WaterVehicleFloatCollider;
     blockingCollider.name = PrefabNames.VehicleBlockingCollider;
@@ -82,7 +87,8 @@ public class WaterVehiclePrefab : IRegisterPrefab
      * ShipControls were a gameObject with a script attached to them. This approach directly attaches the script instead of having the rudder show.
      */
     _waterVehiclePrefab.AddComponent<ValheimShipControls>();
-    var shipInstance = _waterVehiclePrefab.AddComponent<VVShip>();
+    var shipInstance = _waterVehiclePrefab.AddComponent<VehicleShip>();
+    shipInstance.waterEffects = waterEffects;
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
 
     shipInstance.m_floatcollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();

@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5482195425014939976}
-  m_Layer: 29
+  m_Layer: 0
   m_Name: $hud_snappoint
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -42,7 +42,8 @@ GameObject:
   - component: {fileID: 2183907421939428108}
   - component: {fileID: 1442791218621702706}
   - component: {fileID: 2594190075613009015}
-  m_Layer: 29
+  - component: {fileID: 803229096561866342}
+  m_Layer: 0
   m_Name: ShipRudder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -84,7 +85,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3a73dd8248d0d494e8ee1fec6f5c8685, type: 2}
+  - {fileID: 2100000, guid: 36b51383f76de1f448788cc0f8f64e62, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -114,6 +115,28 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6683733923790035384}
   m_Mesh: {fileID: 4300000, guid: 6cf6140b3df6ec347b1bc2baf8177021, type: 2}
+--- !u!64 &803229096561866342
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6683733923790035384}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 805306368
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 1
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4300000, guid: 6cf6140b3df6ec347b1bc2baf8177021, type: 2}
 --- !u!1 &8084605276814208552
 GameObject:
   m_ObjectHideFlags: 0
@@ -123,8 +146,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2314426317429442316}
-  - component: {fileID: 4379365909509766630}
-  m_Layer: 29
+  m_Layer: 0
   m_Name: vehicle_ship_rudder_basic
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -148,25 +170,3 @@ Transform:
   - {fileID: 2183907421939428108}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!64 &4379365909509766630
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8084605276814208552}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 805307392
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 0}

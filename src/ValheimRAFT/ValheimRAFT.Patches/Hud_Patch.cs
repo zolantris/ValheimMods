@@ -11,7 +11,7 @@ public class Hud_Patch
   [HarmonyPrefix]
   public static bool UpdateShipHud(Hud __instance, Player player, float dt)
   {
-    VVShip? controlledShip = Player_Patch.HandleGetControlledShip(player) as VVShip;
+    VehicleShip? controlledShip = Player_Patch.HandleGetControlledShip(player) as VehicleShip;
     if (controlledShip == null)
     {
       __instance.m_shipHudRoot.gameObject.SetActive(value: false);

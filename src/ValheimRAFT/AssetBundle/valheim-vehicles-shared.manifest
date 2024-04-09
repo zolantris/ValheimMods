@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 424951253
+CRC: 590720271
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: baacbd2842617ca104af4df4d8b45d0d
+    Hash: 2d93cbd472c936cfe7ed0159a7b14014
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0e971d6ec910fda0a941f7ca640159c0
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: baacbd2842617ca104af4df4d8b45d0d
+    Hash: 2d93cbd472c936cfe7ed0159a7b14014
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -36,6 +36,7 @@ SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/rope_anchor.fbx
 - Assets/rope_d.png
+- Assets/wood_59_diffuse.jpg
 - Assets/RopeMat.mat
 - Assets/rope_n.png
 - Assets/03 - Default.mat

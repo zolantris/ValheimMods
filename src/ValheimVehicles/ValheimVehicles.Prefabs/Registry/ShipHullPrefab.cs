@@ -41,6 +41,7 @@ public class ShipHullPrefab : IRegisterPrefab
     raftHullPrefab.gameObject.layer = 0;
     var piece = raftHullPrefab.AddComponent<Piece>();
 
+
     raftHullPrefab.transform.localScale = pieceScale;
     raftHullPrefab.gameObject.transform.position = Vector3.zero;
     raftHullPrefab.gameObject.transform.localPosition = Vector3.zero;
