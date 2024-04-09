@@ -41,12 +41,28 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     RudderWheelComponent rudderWheel, Ship ship)
   {
     m_nview = ship.m_nview;
-    InitializeRudderWithShip(vehicleShip, rudderWheel);
+    var rudderAttachPoint = rudderWheel.transform.Find("attachpoint");
+    if (rudderAttachPoint != null)
+    {
+      AttachPoint = rudderAttachPoint.transform;
+    }
+
+    if (m_nview != null && !hasRegister)
+    {
+      m_nview.Unregister("RequestControl");
+      m_nview.Unregister("ReleaseControl");
+      m_nview.Unregister("RequestRespons");
+
+      m_nview.Register<long>("RequestControl", RPC_RequestControl);
+      m_nview.Register<long>("ReleaseControl", RPC_ReleaseControl);
+      m_nview.Register<bool>("RequestRespons", RPC_RequestRespons);
+      hasRegister = true;
+    }
   }
 
-  public void InitializeRudderWithShip(IVehicleShip ship, RudderWheelComponent rudderWheel)
+  public void InitializeRudderWithShip(IVehicleShip vehicleShip, RudderWheelComponent rudderWheel)
   {
-    ShipInstance = ship;
+    ShipInstance = vehicleShip;
     ShipInstance.Instance.m_controlGuiPos = transform;
 
     var rudderAttachPoint = rudderWheel.transform.Find("attachpoint");
@@ -55,7 +71,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
       AttachPoint = rudderAttachPoint.transform;
     }
 
-    m_nview = ship.Instance.GetComponent<ZNetView>();
+    m_nview = vehicleShip.Instance.GetComponent<ZNetView>();
 
     if (m_nview != null && !hasRegister)
     {
@@ -101,7 +117,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
       }
 
       m_lastUsedControls = this;
-      if (ShipInstance.Instance != null)
+      if (ShipInstance?.Instance != null)
       {
         ShipInstance.Instance.m_controlGuiPos = transform;
         ShipInstance.Instance.ControlGuiPosition = transform;
@@ -126,19 +142,20 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     Player player = character as Player;
 
     var playerOnShipViaShipInstance =
-      ShipInstance.Instance.gameObject.GetComponentsInChildren<Player>();
+      ShipInstance?.Instance?.gameObject.GetComponentsInChildren<Player>();
 
     /*
      * <note /> This logic allows for the player to just look at the Raft and see if the player is a child within it.
      */
-    foreach (var player1 in playerOnShipViaShipInstance)
-    {
-      Logger.LogDebug(
-        $"Interact PlayerId {player1.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
-      if (player1.GetPlayerID() != player.GetPlayerID()) continue;
-      m_nview.InvokeRPC("RequestControl", player.GetPlayerID());
-      return true;
-    }
+    if (playerOnShipViaShipInstance != null)
+      foreach (var player1 in playerOnShipViaShipInstance)
+      {
+        Logger.LogDebug(
+          $"Interact PlayerId {player1.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
+        if (player1.GetPlayerID() != player.GetPlayerID()) continue;
+        m_nview.InvokeRPC("RequestControl", player.GetPlayerID());
+        return true;
+      }
 
     if (player == null || player.IsEncumbered())
     {
@@ -159,7 +176,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   public Component GetControlledComponent()
   {
-    return ShipInstance.Instance;
+    return ShipInstance?.Instance;
   }
 
   public Vector3 GetPosition()
@@ -169,7 +186,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run, bool autoRun, bool block)
   {
-    ShipInstance.Instance.ApplyControls(moveDir);
+    ShipInstance?.Instance.ApplyControls(moveDir);
   }
 
   public string GetHoverText()

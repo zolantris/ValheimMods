@@ -10,6 +10,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject? ShipRudderBasicAsset;
   public static GameObject? ShipRudderAdvancedAsset;
   public static readonly LoadValheimVehicleAssets Instance = new();
+  public static SpriteAtlas Sprites = null!;
+
 
   public void Init(AssetBundle assetBundle)
   {
@@ -20,5 +22,6 @@ public class LoadValheimVehicleAssets : ILoadAssets
     ShipRudderAdvancedAsset =
       assetBundle.LoadAsset<GameObject>(
         "Assets/ValheimVehicles/vehicle_ship_rudder_advanced.prefab");
+    Sprites = assetBundle.LoadAsset<SpriteAtlas>("vehicle_icons");
   }
 }

@@ -1,11 +1,7 @@
-using System;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
-using ValheimRAFT;
-using ValheimVehicles.Prefabs;
-using Object = UnityEngine.Object;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;
@@ -49,7 +45,7 @@ public class ShipHullPrefab : IRegisterPrefab
     raftHullPrefab.gameObject.transform.position = Vector3.zero;
     raftHullPrefab.gameObject.transform.localPosition = Vector3.zero;
     piece.m_waterPiece = false;
-    piece.m_icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
+    piece.m_icon = LoadValheimVehicleAssets.Sprites.GetSprite(SpriteNames.ShipHull);
     piece.m_noClipping = false;
     piece.m_name = pieceName;
 
@@ -62,7 +58,7 @@ public class ShipHullPrefab : IRegisterPrefab
     wntComponent.m_noRoofWear = true;
     wntComponent.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
     wntComponent.m_hitNoise = LoadValheimAssets.woodFloorPieceWearNTear.m_hitNoise;
-    wntComponent.m_health = 25000f;
+    wntComponent.m_health = 250f;
 
     // this will be used to hide water on the boat
     raftHullPrefab.AddComponent<ShipHullComponent>();

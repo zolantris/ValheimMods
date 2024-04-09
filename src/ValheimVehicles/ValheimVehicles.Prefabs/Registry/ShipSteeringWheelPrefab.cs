@@ -24,7 +24,7 @@ public class ShipSteeringWheelPrefab : IRegisterPrefab
     PrefabRegistryController.AddToRaftPrefabPieces(mbRudderPrefabPiece);
     PrefabRegistryHelpers.AddNetViewWithPersistence(mbRudderPrefab);
 
-    var rudder = mbRudderPrefab.AddComponent<RudderWheelComponent>();
+    var rudderWheelComponent = mbRudderPrefab.AddComponent<RudderWheelComponent>();
 
     // for older components
     // m_controls and valheimShipControls are dynamically enabled/disabled
@@ -41,8 +41,8 @@ public class ShipSteeringWheelPrefab : IRegisterPrefab
     // rudder.valheimShipControls.m_attachAnimation = "Standing Torch Idle right";
     // rudder.valheimShipControls.m_detachOffset = new Vector3(0f, 0f, 0f);
 
-    rudder.wheelTransform = mbRudderPrefab.transform.Find("controls/wheel");
-    rudder.UpdateSpokes();
+    rudderWheelComponent.wheelTransform = mbRudderPrefab.transform.Find("controls/wheel");
+    rudderWheelComponent.UpdateSpokes();
 
     PrefabRegistryHelpers.SetWearNTear(mbRudderPrefab);
 
@@ -51,7 +51,7 @@ public class ShipSteeringWheelPrefab : IRegisterPrefab
     {
       PieceTable = "Hammer",
       Description = "$mb_rudder_desc",
-      Icon = LoadValheimRaftAssets.sprites.GetSprite("steering_wheel"),
+      Icon = LoadValheimVehicleSharedAssets.Sprites.GetSprite("steering_wheel"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[1]

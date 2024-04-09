@@ -329,11 +329,57 @@ public class VVShip : ValheimBaseGameShip, IVehicleShip
     }
   }
 
+  public new void UpdateSail(float deltaTime)
+  {
+    base.UpdateSail(deltaTime);
+  }
+
   /**
    * In theory we can just make the sailComponent and mastComponent parents of the masts/sails of the ship. This will make any mutations to those parents in sync with the sail changes
    */
   private void SyncVehicleMastsAndSails()
   {
+    // var mb = __instance.GetComponent<MoveableBaseShipComponent>();
+    if (!_controller) return;
+    for (var j = 0; j < _controller.m_mastPieces.Count; j++)
+    {
+      var mast = _controller.m_mastPieces[j];
+      if (!mast)
+      {
+        _controller.m_mastPieces.RemoveAt(j);
+        j--;
+      }
+      else if (mast.m_allowSailShrinking)
+      {
+        if (mast.m_sailObject.transform.localScale != m_sailObject.transform.localScale)
+          mast.m_sailCloth.enabled = false;
+        mast.m_sailObject.transform.localScale = m_sailObject.transform.localScale;
+        mast.m_sailCloth.enabled = m_sailCloth.enabled;
+      }
+      else
+      {
+        mast.m_sailObject.transform.localScale = Vector3.one;
+        mast.m_sailCloth.enabled = !mast.m_disableCloth;
+      }
+    }
+
+    for (var i = 0; i < _controller.m_rudderPieces.Count; i++)
+    {
+      var rudder = _controller.m_rudderPieces[i];
+      if (!(bool)rudder)
+      {
+        _controller.m_rudderPieces.RemoveAt(i);
+        i--;
+      }
+      else if ((bool)rudder.wheelTransform)
+      {
+        rudder.wheelTransform.localRotation = Quaternion.Slerp(
+          rudder.wheelTransform.localRotation,
+          Quaternion.Euler(
+            m_rudderRotationMax * (0f - m_rudderValue) *
+            rudder.m_wheelRotationFactor, 0f, 0f), 0.5f);
+      }
+    }
     // foreach (var instanceMMastPiece in _controller.Instance.m_mastPieces)
     // {
     // }

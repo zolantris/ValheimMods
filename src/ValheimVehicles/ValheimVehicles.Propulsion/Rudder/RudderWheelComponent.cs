@@ -82,7 +82,7 @@ public class RudderWheelComponent : MonoBehaviour
       set { }
     }
 
-    public VVShip Instance
+    public VVShip? Instance
     {
       get => null!;
     }

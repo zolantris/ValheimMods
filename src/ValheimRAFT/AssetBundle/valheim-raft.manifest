@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 640165338
+CRC: 1844475785
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 7e952587fcfa095d0bd2efc2e264d594
+    Hash: ea0f777c91ee993af31d55ad46caf187
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 6aa3da45dcf459bd3cbb16ea89ca6092
+    Hash: 0437a7b2dea5c468458664fd1488a1fe
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 7e952587fcfa095d0bd2efc2e264d594
+    Hash: ea0f777c91ee993af31d55ad46caf187
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -64,8 +64,6 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 224
   Script: {instanceID: 0}
-- Class: 687078895
-  Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.CoreModule
   ClassName: UnityEngine.Events.PersistentCallGroup
@@ -109,18 +107,13 @@ Assets:
 - Assets/pattern_dot.png
 - Assets/pattern_stripe.png
 - Assets/Slider.prefab
-- Assets/karvemast.png
 - Assets/SailMat.mat
 - Assets/pattern_checker.png
 - Assets/rope_ladder.prefab
 - Assets/steering_wheel.prefab
-- Assets/raftmast.png
 - Assets/edit_texture_panel.prefab
 - Assets/boarding_ramp.prefab
 - Assets/rope_anchor.prefab
-- Assets/steering_wheel.png
-- Assets/icons.spriteatlas
 - Assets/dirt_floor.prefab
-- Assets/vikingmast.png
 Dependencies:
 - C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/AssetBundle/valheim-vehicles-shared

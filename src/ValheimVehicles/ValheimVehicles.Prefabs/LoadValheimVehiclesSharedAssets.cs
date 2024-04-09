@@ -7,9 +7,10 @@ namespace ValheimVehicles.Prefabs;
 public class LoadValheimVehicleSharedAssets : ILoadAssets
 {
   public static readonly LoadValheimVehicleSharedAssets Instance = new();
+  public static SpriteAtlas Sprites = null!;
 
   public void Init(AssetBundle assetBundle)
   {
-    // init random
+    Sprites = assetBundle.LoadAsset<SpriteAtlas>("icons.spriteatlas");
   }
 }

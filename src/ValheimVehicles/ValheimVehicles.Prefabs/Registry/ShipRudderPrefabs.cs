@@ -26,8 +26,7 @@ public class ShipRudderPrefabs : IRegisterPrefab
     rudderPrefab.gameObject.layer = 0;
     var piece = rudderPrefab.AddComponent<Piece>();
 
-    piece.m_icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
-
+    piece.m_icon = LoadValheimVehicleAssets.Sprites.GetSprite(SpriteNames.ShipRudderAdvanced);
 
     PrefabRegistryHelpers.SetWearNTear(rudderPrefab);
 
@@ -76,7 +75,7 @@ public class ShipRudderPrefabs : IRegisterPrefab
     var piece = rudderPrefab.AddComponent<Piece>();
     piece.m_name = "$valheim_vehicles_rudder_advanced";
     piece.m_description = "$valheim_vehicles_rudder_advanced_desc";
-    piece.m_icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
+    piece.m_icon = LoadValheimVehicleAssets.Sprites.GetSprite(SpriteNames.ShipRudderBasic);
 
     PrefabRegistryHelpers.SetWearNTear(rudderPrefab);
 

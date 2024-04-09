@@ -55,6 +55,10 @@ public class Ship_Patch
     }
   }
 
+
+  /**
+   * todo this may not work well with two postfixes, there are two for UpdateSail
+   */
   [HarmonyPatch(typeof(Ship), "UpdateSail")]
   [HarmonyPostfix]
   private static void Ship_UpdateSailSize(Ship __instance)

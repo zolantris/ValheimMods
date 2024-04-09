@@ -67,7 +67,6 @@
         <Compile Include="ValheimRAFT\RopeAnchorComponent.cs"/>
         <Compile Include="ValheimRAFT\RopeComponent.cs"/>
         <Compile Include="ValheimRAFT\RopeLadderComponent.cs"/>
-        <Compile Include="ValheimRAFT\RudderComponent.cs"/>
         <Compile Include="ValheimRAFT\SailComponent.cs"/>
         <Compile Include="ValheimRAFT\SailCreatorComponent.cs"/>
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\RegisterValheimVehiclePrefabs.cs">

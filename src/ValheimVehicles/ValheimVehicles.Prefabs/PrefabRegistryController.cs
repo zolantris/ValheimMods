@@ -239,7 +239,7 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_rope_ladder_desc",
-      Icon = LoadValheimRaftAssets.sprites.GetSprite("rope_ladder"),
+      Icon = LoadValheimVehicleSharedAssets.Sprites.GetSprite("rope_ladder"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[1]
@@ -288,7 +288,7 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_rope_anchor_desc",
-      Icon = LoadValheimRaftAssets.sprites.GetSprite("rope_anchor"),
+      Icon = LoadValheimVehicleSharedAssets.Sprites.GetSprite("rope_anchor"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[2]
@@ -472,7 +472,7 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_boarding_ramp_desc",
-      Icon = LoadValheimRaftAssets.sprites.GetSprite("boarding_ramp"),
+      Icon = LoadValheimVehicleSharedAssets.Sprites.GetSprite("boarding_ramp"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[2]
@@ -520,7 +520,7 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_boarding_ramp_wide_desc",
-      Icon = LoadValheimRaftAssets.sprites.GetSprite("boarding_ramp"),
+      Icon = LoadValheimVehicleSharedAssets.Sprites.GetSprite("boarding_ramp"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[2]
@@ -571,7 +571,7 @@ public class PrefabRegistryController : MonoBehaviour
       Description = $"$mb_dirt_floor_{prefabSizeString}_desc",
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Icon = LoadValheimRaftAssets.sprites.GetSprite("dirtfloor_icon"),
+      Icon = LoadValheimVehicleSharedAssets.Sprites.GetSprite("dirtfloor_icon"),
       Requirements = new RequirementConfig[1]
       {
         new()
