@@ -84,7 +84,7 @@ public class ShipRudderPrefabs : IRegisterPrefab
 
     PrefabRegistryHelpers.SetWearNTear(rudderPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(rudderPrefab);
-    PrefabRegistryHelpers.HoistSnapPointsToTop(rudderPrefab, rudderPrefab);
+    PrefabRegistryHelpers.HoistSnapPointsToPrefab(rudderPrefab);
 
     pieceManager.AddPiece(new CustomPiece(rudderPrefab, false, new PieceConfig
     {

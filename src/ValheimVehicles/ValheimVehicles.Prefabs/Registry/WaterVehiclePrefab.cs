@@ -80,6 +80,9 @@ public class WaterVehiclePrefab : IRegisterPrefab
     rigidbody.automaticInertiaTensor = true;
     rigidbody.automaticCenterOfMass = true;
     rigidbody.isKinematic = false;
+
+    var zSyncTranform = _waterVehiclePrefab.AddComponent<ZSyncTransform>();
+
     // setting to true makes the shadows not vibrate, it may be related to kinematic items triggering too many re-renders or the kinematic item needs to be moved lower
     // rigidbody.isKinematic = false;
 
@@ -88,15 +91,25 @@ public class WaterVehiclePrefab : IRegisterPrefab
      */
     _waterVehiclePrefab.AddComponent<ValheimShipControls>();
     var shipInstance = _waterVehiclePrefab.AddComponent<VehicleShip>();
+    shipInstance.m_zsyncTransform = zSyncTranform;
+    shipInstance.m_zsyncTransform.m_syncPosition = true;
+    shipInstance.m_zsyncTransform.m_syncBodyVelocity = true;
+    shipInstance.m_body = rigidbody;
+    shipInstance.m_zsyncTransform.m_body = shipInstance.m_body;
     shipInstance.waterEffects = waterEffects;
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    shipInstance.m_zsyncTransform.m_body = rigidbody;
+    shipInstance.m_zsyncTransform = zSyncTranform;
+    shipInstance.m_zsyncTransform.m_syncPosition = true;
+    shipInstance.m_zsyncTransform.m_syncBodyVelocity = true;
+    shipInstance.m_body = rigidbody;
+    shipInstance.m_zsyncTransform.m_body = shipInstance.m_body;
+    shipInstance.waterEffects = waterEffects;
+    shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    shipInstance.m_zsyncTransform.m_body = rigidbody;
 
     shipInstance.m_floatcollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
     shipInstance.FloatCollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
-
-    var zSyncTransform = _waterVehiclePrefab.AddComponent<ZSyncTransform>();
-    zSyncTransform.m_syncPosition = true;
-    zSyncTransform.m_syncBodyVelocity = true;
 
     // wearntear may need to be removed or tweaked
     _waterVehiclePrefab.AddComponent<WearNTear>();

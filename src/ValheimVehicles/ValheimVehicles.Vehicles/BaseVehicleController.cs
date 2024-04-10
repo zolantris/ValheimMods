@@ -199,7 +199,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     BaseVehicleInitState = InitializationState.Complete;
   }
 
-  public void SetColliders(GameObject vehicleInstance)
+  public void SetColliders(VehicleShip vehicleInstance)
   {
     var colliders = vehicleInstance.transform.GetComponentsInChildren<BoxCollider>();
 
@@ -208,10 +208,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       colliders.FirstOrDefault(
         (k) => k.gameObject.name.Contains(PrefabNames.VehicleOnboardCollider)) ??
       new BoxCollider();
-    m_floatcollider =
-      colliders.FirstOrDefault((k) =>
-        k.gameObject.name.Contains(PrefabNames.WaterVehicleFloatCollider)) ??
-      new BoxCollider();
+    m_floatcollider = vehicleInstance.m_floatcollider;
     m_blockingcollider =
       colliders.FirstOrDefault((k) =>
         k.gameObject.name.Contains(PrefabNames.VehicleBlockingCollider)) ??
@@ -220,18 +217,18 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     // todo the local scales cause issues with floating with new ships until an item is manually placed by the player
     if (m_onboardcollider != null)
     {
-      m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+      // m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     }
 
     if (m_floatcollider != null)
     {
-      m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-      m_floatcollider.size = new Vector3(4f, 1f, 2f); // size of raft hull
+      // m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+      // m_floatcollider.size = new Vector3(4f, 1f, 2f); // size of raft hull
     }
 
     if (m_blockingcollider != null)
     {
-      m_blockingcollider.transform.localScale = new Vector3(4f, 1f, 2f);
+      // m_blockingcollider.transform.localScale = new Vector3(4f, 1f, 2f);
       m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
       m_blockingcollider.transform.parent.gameObject.layer =
         ValheimRaftPlugin.CustomRaftLayer;
@@ -260,7 +257,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
 
-    m_rigidbody = GetComponent<Rigidbody>();
+    if (!m_rigidbody)
+    {
+      m_rigidbody = GetComponent<Rigidbody>();
+    }
+
     // m_rigidbody.isKinematic = true;
     // m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     // m_rigidbody.mass = 99999f;
@@ -1465,7 +1466,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var door = netView.GetComponentInChildren<Door>();
     var ladder = netView.GetComponent<RopeLadderComponent>();
     var rope = netView.GetComponent<RopeAnchorComponent>();
+
+    Logger.LogDebug($"previous m_bounds extents: {m_bounds.extents}");
     if (!door && !ladder && !rope) m_bounds.Encapsulate(netView.transform.localPosition);
+    Logger.LogDebug($"current m_bounds extents (after Encapsulate): {m_bounds.extents}");
 
     Logger.LogDebug($"m_floatcollider: {m_floatcollider.bounds}");
 
@@ -1482,9 +1486,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     m_blockingcollider.center = new Vector3(m_bounds.center.x,
       ValheimRaftPlugin.Instance.BlockingColliderVerticalCenterOffset.Value, m_bounds.center.z);
     m_floatcollider.size = new Vector3(m_bounds.size.x,
-      ValheimRaftPlugin.Instance.FloatingColliderVerticalSize.Value, m_bounds.size.z);
+      3f, m_bounds.size.z);
     m_floatcollider.center = new Vector3(m_bounds.center.x,
-      ValheimRaftPlugin.Instance.FloatingColliderVerticalCenterOffset.Value, m_bounds.center.z);
+      -0.2f, m_bounds.center.z);
     m_onboardcollider.size = m_bounds.size;
     m_onboardcollider.center = m_bounds.center;
   }

@@ -29,7 +29,11 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 {
   private VehicleShip? _vehicleInstance;
 
-  public IVehicleShip? VehicleInstance => _vehicleInstance;
+  public VehicleShip? VehicleInstance
+  {
+    get => _vehicleInstance;
+    set => _vehicleInstance = value;
+  }
 
   public WaterVehicleController Instance => this;
 
@@ -53,7 +57,7 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
    */
   public void InitializeShipValues(VehicleShip vehicleShip)
   {
-    _vehicleInstance = vehicleShip;
+    VehicleInstance = vehicleShip;
     base.VehicleInstance = VehicleInstance;
 
     if (!(bool)m_rigidbody)
@@ -70,7 +74,7 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     // prevent mass from being set lower than 20f;
     m_rigidbody.mass = Math.Max(TotalMass, 2000f);
 
-    SetColliders(vehicleShip.gameObject);
+    SetColliders(vehicleShip);
     ZdoReadyStart();
     LoadInitState();
   }

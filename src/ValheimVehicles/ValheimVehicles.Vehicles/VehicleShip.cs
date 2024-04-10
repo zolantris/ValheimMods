@@ -26,6 +26,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   private WaterVehicleController _controller;
   private GameObject _waterVehicle;
   private Vector3 shipFrontDirection = Vector3.forward;
+  public ZSyncTransform m_zsyncTransform;
 
   public VehicleShip Instance => this;
 
@@ -136,6 +137,18 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     if (!m_nview)
     {
       m_nview = GetComponent<ZNetView>();
+    }
+
+    // should already exist
+    if (!(bool)m_zsyncTransform)
+    {
+      m_zsyncTransform = GetComponent<ZSyncTransform>();
+    }
+
+    // should exist
+    if (!(bool)m_zsyncTransform.m_body)
+    {
+      m_zsyncTransform.m_body = m_body;
     }
 
     InitializeWaterVehicleController();

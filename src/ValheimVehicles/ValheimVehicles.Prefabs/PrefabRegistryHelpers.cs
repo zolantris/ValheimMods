@@ -142,13 +142,14 @@ public abstract class PrefabRegistryHelpers
   }
 
   // Use this to work around object resizing requiring repeated movement of child snappoints. This way snappoints can stay in the relative object without issue
-  public static void HoistSnapPointsToTop(GameObject r, GameObject originalObject)
+  public static void HoistSnapPointsToPrefab(GameObject prefab)
   {
-    var t = r.GetComponentsInChildren<Transform>(true);
-    foreach (var t1 in t)
-      if (t1.tag == "snappoint")
+    var transformObjs = prefab.GetComponentsInChildren<Transform>(true);
+    foreach (var transformObj in transformObjs)
+      if (transformObj.tag == "snappoint")
       {
-        t1.SetParent(originalObject.transform);
+        transformObj.SetParent(prefab.transform);
+        transformObj.gameObject.SetActive(false);
       }
   }
 }

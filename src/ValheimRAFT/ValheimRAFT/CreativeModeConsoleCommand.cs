@@ -1,5 +1,6 @@
 using Jotunn.Entities;
 using UnityEngine;
+using ValheimVehicles.Vehicles;
 
 namespace ValheimRAFT;
 
@@ -11,24 +12,73 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
 
   public override void Run(string[] args)
   {
-    Player player = Player.m_localPlayer;
+    var player = Player.m_localPlayer;
     if (!player)
     {
       return;
     }
 
-    Ship ship = player.GetStandingOnShip();
-    if ((!ship || !ToggleMode(player, ship)) && Physics.Raycast(
+    var ship = player.GetStandingOnShip();
+    if ((ship && ToggleMode(player, ship)) || !Physics.Raycast(
           GameCamera.instance.transform.position, GameCamera.instance.transform.forward,
-          out var hitinfo, 50f, LayerMask.GetMask("piece")))
+          out var hitinfo, 50f, LayerMask.GetMask("piece"))) return;
+
+    var waterVehicleController = hitinfo.collider.GetComponentInParent<WaterVehicleController>();
+
+    if ((bool)waterVehicleController)
     {
-      MoveableBaseRootComponent mbr =
-        hitinfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
-      if ((bool)mbr)
-      {
-        ToggleMode(player, mbr.m_ship);
-      }
+      ToggleMode(player, waterVehicleController);
+      return;
     }
+
+    var mbr =
+      hitinfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
+    if ((bool)mbr)
+    {
+      ToggleMode(player, mbr.m_ship);
+    }
+  }
+
+  private static bool ToggleMode(Character player,
+    WaterVehicleController waterVehicleController)
+  {
+    if (!(bool)waterVehicleController || !(bool)waterVehicleController.VehicleInstance)
+    {
+      return false;
+    }
+
+    var ship = waterVehicleController.VehicleInstance;
+
+    ship.m_body.isKinematic = !ship.m_body.isKinematic;
+    ship.m_zsyncTransform.m_isKinematicBody = ship.m_body.isKinematic;
+    if (ship.m_body.isKinematic)
+    {
+      if (player.transform.parent == waterVehicleController.transform)
+      {
+        player.m_body.position = new Vector3(
+          player.m_body.transform.position.x,
+          player.m_body.transform.position.y +
+          ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
+          player.m_body.transform.position.z);
+      }
+
+      var directionRaftUpwards = new Vector3(ship.transform.position.x,
+        ship.m_body.position.y + ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
+        ship.transform.position.z);
+      var rotationWithoutTilt = Quaternion.Euler(0f, ship.m_body.rotation.eulerAngles.y, 0f);
+      waterVehicleController.isCreative = true;
+
+      ship.m_body.position = directionRaftUpwards;
+      waterVehicleController.transform.rotation = rotationWithoutTilt;
+      ship.m_body.transform.rotation = rotationWithoutTilt;
+    }
+    else
+    {
+      waterVehicleController.isCreative = false;
+    }
+
+
+    return true;
   }
 
   private static bool ToggleMode(Player player, Ship ship)

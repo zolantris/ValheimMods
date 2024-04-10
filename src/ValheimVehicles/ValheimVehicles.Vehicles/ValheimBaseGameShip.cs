@@ -183,9 +183,9 @@ public class ValheimBaseGameShip : MonoBehaviour
         (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(OnDestroyed));
     }
 
-    m_body = GetComponent<Rigidbody>();
     if (!(bool)m_body)
     {
+      m_body = GetComponent<Rigidbody>();
       Logger.LogError("No rigidbody detected, ship must have a Rigidbody to work");
     }
 
