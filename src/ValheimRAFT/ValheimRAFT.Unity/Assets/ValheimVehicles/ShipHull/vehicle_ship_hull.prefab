@@ -1,5 +1,37 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1161980290542483708
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5798469629172463720}
+  m_Layer: 10
+  m_Name: worn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &5798469629172463720
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1161980290542483708}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2518669488811353034}
+  m_Father: {fileID: 8255029666921226665}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2016758975684452438
 GameObject:
   m_ObjectHideFlags: 0
@@ -10,7 +42,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2504101837117483914}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner close center top
+  m_Name: $hud_snappoint_top 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -25,11 +57,11 @@ Transform:
   m_GameObject: {fileID: 2016758975684452438}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.028239876, y: 0.01261422, z: 3.9923847}
-  m_LocalScale: {x: 1.0123422, y: 0.5, z: 1}
+  m_LocalPosition: {x: -0.0009765625, y: 0.05045688, z: 8.01477}
+  m_LocalScale: {x: 2.0246844, y: 3, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 7793664135098138934}
+  m_Father: {fileID: 8255029666921226665}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3156440502361413405
 GameObject:
@@ -41,7 +73,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3670656403851905079}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner far top
+  m_Name: $hud_snappoint_top 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -56,11 +88,11 @@ Transform:
   m_GameObject: {fileID: 3156440502361413405}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.027751833, y: 0.01261422, z: -0.014999999}
-  m_LocalScale: {x: 1.0123422, y: 0.5, z: 1}
+  m_LocalPosition: {x: 0, y: 0.05045688, z: 0}
+  m_LocalScale: {x: 2.0246844, y: 3, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 7793664135098138934}
+  m_Father: {fileID: 8255029666921226665}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3714206783456646400
 GameObject:
@@ -73,9 +105,9 @@ GameObject:
   - component: {fileID: 7793664135098138934}
   - component: {fileID: 1208421650250876315}
   - component: {fileID: 853556014040281936}
-  - component: {fileID: 2148436117085781503}
+  - component: {fileID: 490425823793237416}
   m_Layer: 10
-  m_Name: hull
+  m_Name: hull_new
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -89,22 +121,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3714206783456646400}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.05550319, y: -0.02522844, z: 0.03}
-  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_LocalScale: {x: 2, y: 6, z: 2}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 2504101837117483914}
-  - {fileID: 6472660947006270998}
-  - {fileID: 3670656403851905079}
-  - {fileID: 2943511723383439693}
-  - {fileID: 8255029667724065931}
-  - {fileID: 8255029667875808093}
-  - {fileID: 5129300967393071727}
-  - {fileID: 1726198583781934729}
-  - {fileID: 8255029666520749534}
-  - {fileID: 8255029667945673495}
-  m_Father: {fileID: 8255029666921226665}
+  m_Children: []
+  m_Father: {fileID: 3058724440025975530}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &1208421650250876315
 MeshFilter:
@@ -134,7 +156,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 36b51383f76de1f448788cc0f8f64e62, type: 2}
+  - {fileID: 2100000, guid: 95e8034110fa5b5408c376188aad1e89, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -156,7 +178,7 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &2148436117085781503
+--- !u!65 &490425823793237416
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -169,14 +191,14 @@ BoxCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 805306372
+    m_Bits: 0
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2.0000005, y: 0.20122977, z: 1.9616691}
-  m_Center: {x: 0, y: -0.14938506, z: 0}
+  m_Size: {x: 2, y: 0.25, z: 4}
+  m_Center: {x: -0.027323097, y: -0.11624032, z: 1.9886708}
 --- !u!1 &6952726561451604053
 GameObject:
   m_ObjectHideFlags: 0
@@ -187,7 +209,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5129300967393071727}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner far right
+  m_Name: $hud_snappoint_corner 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -202,11 +224,11 @@ Transform:
   m_GameObject: {fileID: 6952726561451604053}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.0205927, y: 0.01261422, z: -0.015000001}
-  m_LocalScale: {x: 1.0123422, y: 0.5, z: 1}
+  m_LocalPosition: {x: -1.9856822, y: 0.05045688, z: 0}
+  m_LocalScale: {x: 2.0246844, y: 3, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 7793664135098138934}
+  m_Father: {fileID: 8255029666921226665}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6994507678464982199
 GameObject:
@@ -218,7 +240,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6472660947006270998}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner close center bottom
+  m_Name: $hud_snappoint_bottom 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -233,11 +255,11 @@ Transform:
   m_GameObject: {fileID: 6994507678464982199}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.029, y: -0.238, z: 3.991}
-  m_LocalScale: {x: 1.0123422, y: 0.5, z: 1}
+  m_LocalPosition: {x: -0.0024968088, y: -1.4532285, z: 8.012}
+  m_LocalScale: {x: 2.0246844, y: 3, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 7793664135098138934}
+  m_Father: {fileID: 8255029666921226665}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7033023833451844587
 GameObject:
@@ -249,7 +271,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1726198583781934729}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner far left
+  m_Name: $hud_snappoint_corner 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -264,12 +286,95 @@ Transform:
   m_GameObject: {fileID: 7033023833451844587}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.96508896, y: 0.01261422, z: -0.015000001}
-  m_LocalScale: {x: 1.0123422, y: 0.5, z: 1}
+  m_LocalPosition: {x: 1.9856813, y: 0.05045688, z: 0}
+  m_LocalScale: {x: 2.0246844, y: 3, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 7793664135098138934}
+  m_Father: {fileID: 8255029666921226665}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7122604126827766826
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2518669488811353034}
+  - component: {fileID: 2151668602619660564}
+  - component: {fileID: 3392301538507013917}
+  m_Layer: 10
+  m_Name: hull_worn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2518669488811353034
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7122604126827766826}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.05550319, y: -0.02522844, z: 0.03}
+  m_LocalScale: {x: 2, y: 6, z: 2}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5798469629172463720}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &2151668602619660564
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7122604126827766826}
+  m_Mesh: {fileID: -6766304776793214413, guid: 478ddaee3b0015c4c872afb3a21a65ad, type: 3}
+--- !u!23 &3392301538507013917
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7122604126827766826}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: ece6faf700823e74cab8591e89bbf176, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &7294917404123732093
 GameObject:
   m_ObjectHideFlags: 0
@@ -280,7 +385,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2943511723383439693}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner far bottom
+  m_Name: $hud_snappoint_bottom 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -295,11 +400,43 @@ Transform:
   m_GameObject: {fileID: 7294917404123732093}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.027751833, y: -0.2333858, z: -0.015000001}
-  m_LocalScale: {x: 1.0123422, y: 0.5, z: 1}
+  m_LocalPosition: {x: -0, y: -1.4255433, z: 0}
+  m_LocalScale: {x: 2.0246844, y: 3, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 7793664135098138934}
+  m_Father: {fileID: 8255029666921226665}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7351879301649859288
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3058724440025975530}
+  m_Layer: 10
+  m_Name: new
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3058724440025975530
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7351879301649859288}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7793664135098138934}
+  m_Father: {fileID: 8255029666921226665}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8255029666520749535
 GameObject:
@@ -311,7 +448,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8255029666520749534}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner mid right
+  m_Name: $hud_snappoint_corner $hud_snappoint_inner 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -326,11 +463,11 @@ Transform:
   m_GameObject: {fileID: 8255029666520749535}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.0203531, y: 0.01261422, z: 1.9849999}
-  m_LocalScale: {x: 1.0123422, y: 0.5, z: 1}
+  m_LocalPosition: {x: -1.985203, y: 0.05045688, z: 4}
+  m_LocalScale: {x: 2.0246844, y: 3, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 7793664135098138934}
+  m_Father: {fileID: 8255029666921226665}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8255029666921226666
 GameObject:
@@ -342,8 +479,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8255029666921226665}
   - component: {fileID: 5824623074048672182}
-  - component: {fileID: 628050078429419060}
-  m_Layer: 29
+  m_Layer: 10
   m_Name: vehicle_ship_hull
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -363,7 +499,18 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 7793664135098138934}
+  - {fileID: 2504101837117483914}
+  - {fileID: 3670656403851905079}
+  - {fileID: 8255029666520749534}
+  - {fileID: 8255029667945673495}
+  - {fileID: 1726198583781934729}
+  - {fileID: 5129300967393071727}
+  - {fileID: 8255029667724065931}
+  - {fileID: 8255029667875808093}
+  - {fileID: 6472660947006270998}
+  - {fileID: 2943511723383439693}
+  - {fileID: 3058724440025975530}
+  - {fileID: 5798469629172463720}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!205 &5824623074048672182
@@ -383,29 +530,9 @@ LODGroup:
   - screenRelativeHeight: 0.03
     fadeTransitionWidth: 0
     renderers:
-    - renderer: {fileID: 0}
+    - renderer: {fileID: 853556014040281936}
+    - renderer: {fileID: 3392301538507013917}
   m_Enabled: 0
---- !u!65 &628050078429419060
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8255029666921226666}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 3
-  m_Size: {x: 3.7096577, y: 0.42350382, z: 7.973273}
-  m_Center: {x: 0.119164705, y: -0.2882708, z: 0.013528109}
 --- !u!1 &8255029667724065972
 GameObject:
   m_ObjectHideFlags: 0
@@ -416,7 +543,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8255029667724065931}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner close left
+  m_Name: $hud_snappoint_corner 3
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -431,11 +558,11 @@ Transform:
   m_GameObject: {fileID: 8255029667724065972}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.96518874, y: 0.01261422, z: 3.9850001}
-  m_LocalScale: {x: 1.0123422, y: 0.5, z: 1}
+  m_LocalPosition: {x: 1.9858806, y: 0.05045688, z: 8}
+  m_LocalScale: {x: 2.0246844, y: 3, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 7793664135098138934}
+  m_Father: {fileID: 8255029666921226665}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8255029667875808094
 GameObject:
@@ -447,7 +574,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8255029667875808093}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner close right
+  m_Name: $hud_snappoint_corner 4
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -462,11 +589,11 @@ Transform:
   m_GameObject: {fileID: 8255029667875808094}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.0207075, y: 0.01261422, z: 3.9850001}
-  m_LocalScale: {x: 1.0123422, y: 0.5, z: 1}
+  m_LocalPosition: {x: -1.9859118, y: 0.05045688, z: 8}
+  m_LocalScale: {x: 2.0246844, y: 3, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 7793664135098138934}
+  m_Father: {fileID: 8255029666921226665}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8255029667945673488
 GameObject:
@@ -478,7 +605,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8255029667945673495}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner mid left
+  m_Name: $hud_snappoint_corner $hud_snappoint_inner 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -493,9 +620,9 @@ Transform:
   m_GameObject: {fileID: 8255029667945673488}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.9658623, y: 0.01261422, z: 1.9849999}
-  m_LocalScale: {x: 1.0123422, y: 0.5, z: 1}
+  m_LocalPosition: {x: 1.9872277, y: 0.05045688, z: 4}
+  m_LocalScale: {x: 2.0246844, y: 3, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 7793664135098138934}
+  m_Father: {fileID: 8255029666921226665}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

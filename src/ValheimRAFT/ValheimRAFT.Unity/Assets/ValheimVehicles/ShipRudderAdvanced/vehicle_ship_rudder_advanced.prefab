@@ -64,7 +64,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3a73dd8248d0d494e8ee1fec6f5c8685, type: 2}
+  - {fileID: 2100000, guid: 95e8034110fa5b5408c376188aad1e89, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -372,7 +372,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3a73dd8248d0d494e8ee1fec6f5c8685, type: 2}
+  - {fileID: 2100000, guid: 95e8034110fa5b5408c376188aad1e89, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -623,7 +623,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4630424519954225227}
   m_Layer: 0
-  m_Name: RidderTurnPoint
+  m_Name: RudderTurnPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
