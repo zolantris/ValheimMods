@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3526079750
+CRC: 3450628885
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 91819257d7de0e96fd1e3701db07c02e
+    Hash: a47149ece7bb2285fc75d539a4cc1727
   TypeTreeHash:
     serializedVersion: 2
     Hash: 9b8c6b348963aea3255d489afee50c8d
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 91819257d7de0e96fd1e3701db07c02e
+    Hash: a47149ece7bb2285fc75d539a4cc1727
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -40,6 +40,7 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/ValheimVehicles/VehicleShip/vehicle_ship.prefab
 - Assets/ValheimVehicles/ShipRudderBasic/vehicle_ship_rudder_basic.prefab
 - Assets/ValheimVehicles/vehicle_icons.spriteatlasv2
 - Assets/ValheimVehicles/ShipRudderAdvanced/vehicle_ship_rudder_advanced.prefab

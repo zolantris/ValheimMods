@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1844475785
+CRC: 764746347
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: ea0f777c91ee993af31d55ad46caf187
+    Hash: daec2062a3f507497476c5a98990292e
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0437a7b2dea5c468458664fd1488a1fe
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: ea0f777c91ee993af31d55ad46caf187
+    Hash: daec2062a3f507497476c5a98990292e
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -107,7 +107,7 @@ Assets:
 - Assets/pattern_dot.png
 - Assets/pattern_stripe.png
 - Assets/Slider.prefab
-- Assets/SailMat.mat
+- Assets/Material/SailMat.mat
 - Assets/pattern_checker.png
 - Assets/rope_ladder.prefab
 - Assets/steering_wheel.prefab
