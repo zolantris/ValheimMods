@@ -19,6 +19,8 @@ using PrefabNames = ValheimVehicles.Prefabs.PrefabNames;
 
 namespace ValheimVehicles.Vehicles;
 
+using Vehicles_BaseVehicleController = Vehicles.BaseVehicleController;
+
 /**
  * @description This is a controller used for all vehicles
  *
@@ -66,7 +68,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   public WaterVehicleController waterVehicleController;
   public BaseVehicleController instance;
 
-  internal Rigidbody m_rigidbody;
+  internal Rigidbody
+    m_rigidbody; // for the ship controller items or alternatively access via VehicleInstance.m_body
 
   internal List<ZNetView> m_pieces = new();
   internal List<ShipHullComponent> m_hullPieces = new();
@@ -163,9 +166,12 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     GUILayout.BeginArea(new Rect(150, 10, 100, 100), myButtonStyle);
     if (GUILayout.Button("activatePendingPieces"))
     {
-      {
-        ActivatePendingPiecesCoroutine();
-      }
+      ActivatePendingPiecesCoroutine();
+    }
+
+    if (GUILayout.Button("center boat"))
+    {
+      RebuildBounds();
     }
 
     GUILayout.EndArea();
@@ -206,12 +212,12 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     // defaults to a new boxcollider if somehow things are not detected
     m_onboardcollider =
       colliders.FirstOrDefault(
-        (k) => k.gameObject.name.Contains(PrefabNames.VehicleOnboardCollider)) ??
+        (k) => k.gameObject.name.Contains(PrefabNames.WaterVehicleOnboardCollider)) ??
       new BoxCollider();
     m_floatcollider = vehicleInstance.m_floatcollider;
     m_blockingcollider =
       colliders.FirstOrDefault((k) =>
-        k.gameObject.name.Contains(PrefabNames.VehicleBlockingCollider)) ??
+        k.gameObject.name.Contains(PrefabNames.WaterVehicleBlockingCollider)) ??
       new BoxCollider();
 
     // todo the local scales cause issues with floating with new ships until an item is manually placed by the player
@@ -248,8 +254,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   {
     // colliders that must be valid
     FireErrorOnNull(m_floatcollider, PrefabNames.WaterVehicleFloatCollider);
-    FireErrorOnNull(m_blockingcollider, PrefabNames.VehicleBlockingCollider);
-    FireErrorOnNull(m_onboardcollider, PrefabNames.VehicleOnboardCollider);
+    FireErrorOnNull(m_blockingcollider, PrefabNames.WaterVehicleBlockingCollider);
+    FireErrorOnNull(m_onboardcollider, PrefabNames.WaterVehicleOnboardCollider);
   }
 
   public void Awake()
@@ -257,14 +263,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
 
-    if (!m_rigidbody)
+    if (!(bool)m_rigidbody)
     {
       m_rigidbody = GetComponent<Rigidbody>();
     }
 
-    // m_rigidbody.isKinematic = true;
-    // m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-    // m_rigidbody.mass = 99999f;
     Debug.Log("Captured Log"); // Breadcrumb
     Debug.LogWarning("Captured Warning"); // Breadcrumb
     Debug.LogError("This is a Test error called within BaseVehicleController.Awake");
@@ -344,7 +347,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       _serverUpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
 
-    _bedUpdateCoroutine = StartCoroutine(nameof(UpdateBedSpawnWorker));
+    // _bedUpdateCoroutine = StartCoroutine(nameof(UpdateBedSpawnWorker));
   }
 
   protected int GetPersistentID()
@@ -433,28 +436,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
   }
 
-  private void Sync()
-  {
-    // if ((bool)m_syncRigidbody && (bool)m_rigidbody)
-    // {
-    //   m_syncRigidbody.mass = Math.Max(TotalMass, 2000f);
-    //   m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
-    //   m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
-    // }
-  }
-
-  // public void FixedUpdate()
-  // {
-  //   Sync();
-  // }
-
 /*
  * @important, server does not have access to lifecycle methods so a coroutine is required to update things
  */
   public void LateUpdate()
   {
-    // Sync();
-
     if (!(bool)ZNet.instance)
     {
       // prevents NRE from next command
@@ -656,10 +642,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       ShipMass += pieceWeight;
     }
 
-    /*
-     * TODO figure out if this should updated
-     */
-    // m_rigidbody.mass = TotalMass;
+    if ((bool)m_rigidbody)
+    {
+      m_rigidbody.mass = TotalMass;
+    }
   }
 
   public void RemovePiece(ZNetView netView)
@@ -668,10 +654,14 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if (m_pieces.Remove(netView))
     {
       UpdateMass(netView, true);
+      RebuildBounds();
 
       var hull = netView.GetComponent<ShipHullComponent>();
       if ((bool)hull)
       {
+        // todo
+        // only rebuilds bounds for hull pieces. If the player does not use a hull it will not increase boat size.
+        // RebuildBounds();
         m_hullPieces.Remove(hull);
       }
 
@@ -1283,6 +1273,31 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     AddNewPiece(piece.m_nview);
   }
 
+  /**
+   * True let's WearNTear destroy this vehicle
+   *
+   * this could also be used to force a re-render if the user attempts to destroy a raft with pending pieces, might as well run activate pending pieces.
+   */
+  public static bool CanDestroyVehicle(ZNetView netView)
+  {
+    if (!netView) return false;
+
+    var bvc = netView.GetComponent<Vehicles_BaseVehicleController>();
+    if (!(bool)bvc) return true;
+
+    var hasPendingPieces =
+      m_pendingPieces.TryGetValue(bvc.GetPersistentID(), out var pendingPieces);
+    var hasPieces = bvc.GetPieceCount() != 0;
+
+    // if there are pending pieces, do not let vehicle be destroyed
+    if (pendingPieces != null && hasPendingPieces && pendingPieces.Count > 0)
+    {
+      return false;
+    }
+
+    return !hasPieces;
+  }
+
   public void AddNewPiece(ZNetView netView)
   {
     if (!(bool)netView)
@@ -1296,6 +1311,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       Logger.LogWarning($"NetView already is added. name: {netView.name}");
       return;
     }
+
+    var previousCount = GetPieceCount();
 
     Logger.LogDebug($"netView exists {netView.name}");
     netView.transform.SetParent(transform);
@@ -1325,7 +1342,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     AddPiece(netView);
     InitZdo(netView.GetZDO());
 
-    if (GetPieceCount() == 1)
+    if (previousCount == 0 && GetPieceCount() == 1)
     {
       SetInitComplete();
     }
@@ -1413,14 +1430,35 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       ladder.baseVehicleController = instance;
     }
 
+    /*
+     * Very very important. It fixes shadow flicker on all of valheim's prefabs with boats. If this is removed, the raft is seizure inducing.
+     */
     var meshes = netView.GetComponentsInChildren<MeshRenderer>(true);
     foreach (var meshRenderer in meshes)
+    {
+      foreach (var meshRendererMaterial in meshRenderer.materials)
+      {
+        var isBlackMarble = meshRendererMaterial.name.Contains("blackmarble");
+        if (isBlackMarble)
+        {
+          meshRendererMaterial.SetFloat("_TriplanarLocalPos", 1f);
+        }
+      }
+
       if ((bool)meshRenderer.sharedMaterial)
       {
+        // todo disable triplanar shader which causes shader to move on black marble
         var sharedMaterials = meshRenderer.sharedMaterials;
+
         for (var j = 0; j < sharedMaterials.Length; j++)
         {
           var material = new Material(sharedMaterials[j]);
+          var isBlackMarble = sharedMaterials[j].name.Contains("blackmarble");
+          if (isBlackMarble)
+          {
+            material.SetFloat("_TriplanarLocalPos", 1f);
+          }
+
           material.SetFloat("_RippleDistance", 0f);
           material.SetFloat("_ValueNoise", 0f);
           sharedMaterials[j] = material;
@@ -1428,6 +1466,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
         meshRenderer.sharedMaterials = sharedMaterials;
       }
+    }
 
     UpdateMass(netView);
 
@@ -1457,6 +1496,19 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if ((bool)m_nview && m_nview.m_zdo != null) m_nview.m_zdo.Set(MBPieceCount, m_pieces.Count);
   }
 
+  /**
+   * bounds cannot be decapsulated by default so regenerating it seems prudent on piece removal
+   */
+  public void RebuildBounds()
+  {
+    m_bounds = new Bounds();
+
+    foreach (var netView in m_pieces)
+    {
+      EncapsulateBounds(netView);
+    }
+  }
+
   public void EncapsulateBounds(ZNetView netView)
   {
     var piece = netView.GetComponent<Piece>();
@@ -1469,6 +1521,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     Logger.LogDebug($"previous m_bounds extents: {m_bounds.extents}");
     if (!door && !ladder && !rope) m_bounds.Encapsulate(netView.transform.localPosition);
+
     Logger.LogDebug($"current m_bounds extents (after Encapsulate): {m_bounds.extents}");
 
     Logger.LogDebug($"m_floatcollider: {m_floatcollider.bounds}");
