@@ -1541,7 +1541,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     m_floatcollider.size = new Vector3(m_bounds.size.x,
       3f, m_bounds.size.z);
     m_floatcollider.center = new Vector3(m_bounds.center.x,
-      -0.2f, m_bounds.center.z);
+      m_floatcollider.center.y, m_bounds.center.z);
     m_onboardcollider.size = m_bounds.size;
     m_onboardcollider.center = m_bounds.center;
   }

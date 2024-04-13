@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
+using UnityEngine.UIElements;
 using ValheimRAFT;
 using ValheimVehicles.Prefabs;
 using Logger = Jotunn.Logger;
@@ -162,7 +163,7 @@ public class ValheimBaseGameShip : MonoBehaviour
       var boxColliders = collider.GetComponentsInChildren<BoxCollider>();
 
       var floatBoxCollider =
-        boxColliders?.FirstOrDefault((BoxCollider k) =>
+        boxColliders?.FirstOrDefault((k) =>
           k.gameObject.name == PrefabNames.WaterVehicleFloatCollider);
       if (floatBoxCollider != null)
       {
@@ -802,8 +803,8 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public bool IsPlayerInBoat(Player player)
   {
-    var currentPlayOnBoat = m_players.Contains(player);
-    return currentPlayOnBoat;
+    var currentPlayerOnBoat = m_players.Contains(player);
+    return currentPlayerOnBoat;
   }
 
   public bool IsPlayerInBoat(long playerID)

@@ -14,9 +14,9 @@ public static class PrefabNames
   public const string BoardingRamp = "MBBoardingRamp";
   public const string BoardingRampWide = "MBBoardingRamp_Wide";
   public const string ValheimVehiclesShipName = "ValheimVehicles_Ship";
-  public const string WaterVehicleFloatCollider = "VVFloatCollider";
-  public const string VehicleBlockingCollider = "VVBlockingCollider";
-  public const string VehicleOnboardCollider = "VVOnboardCollider";
+  public const string WaterVehicleFloatCollider = "VehicleShip_FloatCollider";
+  public const string WaterVehicleBlockingCollider = "VehicleShip_BlockingCollider";
+  public const string WaterVehicleOnboardCollider = "VehicleShip_OnboardTriggerCollider";
   public const string ValheimRaftMenuName = "Raft";
   public const string ShipHullCoreWoodHorizontal = "$mb_ship_hull_corewood_0";
   private const string ValheimVehiclesPrefix = "ValheimVehicles";
@@ -27,7 +27,10 @@ public static class PrefabNames
   public const string ShipRudderAdvanced = $"{ValheimVehiclesPrefix}_ShipRudderAdvanced";
   public const string ShipSteeringWheel = $"{ValheimVehiclesPrefix}_ShipSteeringWheel";
   public const string WaterVehiclePreviewHull = $"{ValheimVehiclesPrefix}_WaterVehiclePreviewHull";
-  public const string PiecesContainer = $"{ValheimVehiclesPrefix}_PiecesContainer";
+
+  public const string VehiclePieces =
+    $"{ValheimVehiclesPrefix}_VehiclePiecesContainer";
+
   public const string VehicleSail = $"{ValheimVehiclesPrefix}_VehicleSail";
   public const string VehicleSailMast = $"{ValheimVehiclesPrefix}_VehicleSailMast";
   public const string VehicleSailCloth = $"{ValheimVehiclesPrefix}_SailCloth";

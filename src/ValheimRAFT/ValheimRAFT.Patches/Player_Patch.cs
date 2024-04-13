@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
@@ -34,13 +35,35 @@ public class Player_Patch
     return list;
   }
 
+  public static void HidePreviewComponent(ZNetView netView)
+  {
+    if (netView.name.Contains(PrefabNames.WaterVehiclePrefabName))
+    {
+      var vehicleShip = netView.GetComponent<VehicleShip>();
+      if (vehicleShip.previewComponent != null)
+      {
+        vehicleShip.previewComponent.SetActive(false);
+      }
+    }
+  }
+
   private static void PlacedPiece(Player player, GameObject gameObject)
   {
     var piece = gameObject.GetComponent<Piece>();
     if (!piece) return;
     var rb = piece.GetComponentInChildren<Rigidbody>();
-    if (((bool)rb && !rb.isKinematic) || !PatchSharedData.PlayerLastRayPiece) return;
     var netView = piece.GetComponent<ZNetView>();
+
+    if ((bool)netView)
+    {
+      HidePreviewComponent(netView);
+    }
+
+    if (((bool)rb && !rb.isKinematic) || !PatchSharedData.PlayerLastRayPiece)
+    {
+      return;
+    }
+
     if ((bool)netView)
     {
       var cul = PatchSharedData.PlayerLastRayPiece.GetComponent<CultivatableComponent>();
@@ -233,6 +256,38 @@ public class Player_Patch
     }
   }
 
+  /**
+   * todo migrate to a hotkey handler
+   * This way of detecting keys is much more efficient and is not bogged down my Component getters
+   */
+  private static bool GetAnchorKey()
+  {
+    return false;
+    // if (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "False" &&
+    //     ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set")
+    // {
+    //   var isLeftShiftDown = ZInput.GetButtonDown("LeftShift");
+    //   var mainKeyString = ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.MainKey
+    //     .ToString();
+    //   var buttonDownDynamic =
+    //     ZInput.GetButtonDown(mainKeyString);
+    //
+    //   // Logger.LogDebug($"AnchorKey: leftShift {isLeftShiftDown}, mainKey: {mainKeyString}");
+    //   // Logger.LogDebug(
+    //   //   $"AnchorKey isDown: {ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown()}");
+    //   return buttonDownDynamic || isLeftShiftDown ||
+    //          ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown();
+    // }
+    //
+    // var isPressingRun = ZInput.GetButtonDown("Run") || ZInput.GetButtonDown("JoyRun");
+    // var isPressingJoyRun = ZInput.GetButtonDown("JoyRun");
+    //
+    // // Logger.LogDebug(
+    // //   $"AnchorKey isPressingRun: {isPressingRun},isPressingJoyRun {isPressingJoyRun} ");
+    //
+    // return isPressingRun || isPressingJoyRun;
+  }
+
   // Logic for anchor needs to be moved to the Update method instead of fixed update which SetControls is called in
   [HarmonyPatch(typeof(Player), "SetControls")]
   [HarmonyPrefix]
@@ -240,6 +295,9 @@ public class Player_Patch
     bool secondaryAttack, bool block, bool blockHold, bool jump, bool crouch, bool run,
     bool autoRun)
   {
+    var anchorKey = GetAnchorKey();
+
+
     if (__instance.IsAttached() && (bool)__instance.m_attachPoint &&
         (bool)__instance.m_attachPoint.parent)
     {
@@ -263,16 +321,9 @@ public class Player_Patch
         {
           // might be a problem....
           var waterVehicleController = rudder.GetComponentInParent<WaterVehicleController>();
-          var wvc2 = rudder.GetComponent<WaterVehicleController>();
           if (waterVehicleController != null)
           {
-            var anchorKey =
-              (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "False" &&
-               ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set")
-                ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown()
-                : ZInput
-                  .GetButtonDown("Run");
-            if (anchorKey || ZInput.GetButtonDown("JoyRun"))
+            if (anchorKey)
             {
               Logger.LogDebug("Anchor button is down setting anchor");
 
@@ -287,31 +338,28 @@ public class Player_Patch
               waterVehicleController.Descent();
             }
           }
-        }
-        else if (rudder.Controls != null)
-        {
-          var mb = rudder.GetComponentInParent<MoveableBaseShipComponent>();
-          // may break, this might need GetComponent
-          if ((bool)mb)
+
+          else
           {
-            var anchorKey =
-              (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "False" &&
-               ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set")
-                ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown()
-                : ZInput
-                  .GetButtonDown("Run");
-            if (anchorKey || ZInput.GetButtonDown("JoyRun"))
+            // todo remove deprecated method once MBRaft is using VehicleShip
+
+            var mb = rudder.GetComponentInParent<MoveableBaseShipComponent>();
+            // may break, this might need GetComponent
+            if ((bool)mb)
             {
-              Logger.LogDebug("Anchor button is down setting anchor");
-              mb.SetAnchor(!mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored));
-            }
-            else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
-            {
-              mb.Ascend();
-            }
-            else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
-            {
-              mb.Descent();
+              if (anchorKey)
+              {
+                Logger.LogDebug("Anchor button is down setting anchor");
+                mb.SetAnchor(!mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored));
+              }
+              else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
+              {
+                mb.Ascend();
+              }
+              else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
+              {
+                mb.Descent();
+              }
             }
           }
         }

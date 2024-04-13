@@ -51,8 +51,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.9832802, y: 0.5304965, z: 8.002552}
-  m_Center: {x: 0.009851456, y: -0.7169433, z: 4.0022593}
+  m_Size: {x: 3.9832802, y: 0.7467227, z: 8.002552}
+  m_Center: {x: 0.009851456, y: -2.0891445, z: 4.0022593}
 --- !u!1 &3209758250000226484
 GameObject:
   m_ObjectHideFlags: 0
@@ -64,7 +64,7 @@ GameObject:
   - component: {fileID: 3611477259236849903}
   - component: {fileID: 4114980218132534811}
   m_Layer: 14
-  m_Name: VehicleShip_OnboardTrigger
+  m_Name: VehicleShip_OnboardTriggerCollider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -100,7 +100,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -116,7 +116,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2003201206612410018}
   - component: {fileID: 6376123223915371795}
-  m_Layer: 28
+  m_Layer: 29
   m_Name: VehicleShip_BlockingCollider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -153,7 +153,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -168,6 +168,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 370483867695338920}
+  - component: {fileID: 2050706920436258416}
   m_Layer: 0
   m_Name: vehicle_ship
   m_TagString: Untagged
@@ -194,6 +195,33 @@ Transform:
   - {fileID: 2850072292773347864}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!54 &2050706920436258416
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6660037161417452804}
+  serializedVersion: 4
+  m_Mass: 2000
+  m_Drag: 0
+  m_AngularDrag: 0.1
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 1
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1001 &6125665258097271729
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -204,7 +232,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1161980290542483708, guid: 223d7e8889d6244409f582e68d2cb08f, type: 3}
       propertyPath: m_Layer
-      value: 28
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 2016758975684452438, guid: 223d7e8889d6244409f582e68d2cb08f, type: 3}
       propertyPath: m_Layer
@@ -216,7 +244,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3714206783456646400, guid: 223d7e8889d6244409f582e68d2cb08f, type: 3}
       propertyPath: m_Layer
-      value: 28
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 6555916739113406156, guid: 223d7e8889d6244409f582e68d2cb08f, type: 3}
+      propertyPath: m_Layer
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 6952726561451604053, guid: 223d7e8889d6244409f582e68d2cb08f, type: 3}
       propertyPath: m_Layer
@@ -232,7 +264,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7122604126827766826, guid: 223d7e8889d6244409f582e68d2cb08f, type: 3}
       propertyPath: m_Layer
-      value: 28
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 7294917404123732093, guid: 223d7e8889d6244409f582e68d2cb08f, type: 3}
       propertyPath: m_Layer
@@ -240,7 +272,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7351879301649859288, guid: 223d7e8889d6244409f582e68d2cb08f, type: 3}
       propertyPath: m_Layer
-      value: 28
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 8255029666520749535, guid: 223d7e8889d6244409f582e68d2cb08f, type: 3}
       propertyPath: m_Layer
@@ -292,7 +324,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8255029666921226666, guid: 223d7e8889d6244409f582e68d2cb08f, type: 3}
       propertyPath: m_Layer
-      value: 28
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 8255029667724065972, guid: 223d7e8889d6244409f582e68d2cb08f, type: 3}
       propertyPath: m_Layer

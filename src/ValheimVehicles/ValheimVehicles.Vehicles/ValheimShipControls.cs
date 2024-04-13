@@ -12,11 +12,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
   IRudderControls
 {
   public IVehicleShip ShipInstance { get; set; }
-  // might be safer to directly make this a getter
-  // public Transform m_attachPoint;
-
   public Vector3 m_detachOffset = new Vector3(0f, 0.5f, 0f);
-
   private string hoverText = "$valheim_vehicles_ship_controls";
   public string m_hoverText { get; set; }
   [SerializeField] private float maxUseRange = 10f;
@@ -146,8 +142,9 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
     Player player = character as Player;
 
+
     var playerOnShipViaShipInstance =
-      ShipInstance?.Instance?.gameObject.GetComponentsInChildren<Player>();
+      ShipInstance?.Instance?.VehiclePiecesContainer?.GetComponentsInChildren<Player>() ?? null;
 
     /*
      * <note /> This logic allows for the player to just look at the Raft and see if the player is a child within it.
@@ -222,7 +219,6 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     }
 
     var waterVehicleController = GetComponentInParent<WaterVehicleController>();
-
     var isAnchored =
       waterVehicleController.VehicleFlags.HasFlag(WaterVehicleFlags
         .IsAnchored);

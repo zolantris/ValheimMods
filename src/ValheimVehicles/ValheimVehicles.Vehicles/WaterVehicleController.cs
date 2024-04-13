@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ValheimVehicles.Vehicles;
 using Jotunn;
+using Jotunn.Managers;
 using SentryUnityWrapper;
 using UnityEngine;
 using UnityEngine;
@@ -105,9 +106,10 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
   private void InitHull()
   {
+    return;
     var pieceCount = GetPieceCount();
     var buildGhostInstance = m_nview.GetComponent<VehicleBuildGhost>();
-    if (pieceCount != 0 || !(bool)buildGhostInstance)
+    if (pieceCount != 0 && (bool)buildGhostInstance)
     {
       if (buildGhostInstance)
       {
@@ -120,10 +122,10 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
       return;
     }
 
-    var prefab = ShipHullPrefab.RaftHullPrefabInstance;
+    var prefab = PrefabManager.Instance.GetPrefab(PrefabNames.ShipHullPrefabName);
     if (!prefab) return;
 
-    var hull = Instantiate(prefab, transform);
+    var hull = Instantiate(prefab, transform.position, transform.rotation);
     if (hull == null) return;
 
     var hullNetView = hull.GetComponent<ZNetView>();

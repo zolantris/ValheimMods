@@ -21,6 +21,13 @@ public class VehicleBuildGhost : MonoBehaviour
   private void Awake()
   {
     GetIsInitialized();
+    var netView = GetComponent<ZNetView>();
+    if (!netView || netView.m_ghost)
+    {
+      DisableVehicleGhost();
+      return;
+    }
+
     ShouldRenderPlaceholder();
   }
 

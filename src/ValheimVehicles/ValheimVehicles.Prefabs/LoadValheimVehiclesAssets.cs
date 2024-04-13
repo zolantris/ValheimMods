@@ -6,15 +6,20 @@ namespace ValheimVehicles.Prefabs;
 
 public class LoadValheimVehicleAssets : ILoadAssets
 {
-  public static GameObject? ShipHullAsset;
-  public static GameObject? ShipRudderBasicAsset;
-  public static GameObject? ShipRudderAdvancedAsset;
+  public static GameObject ShipHullAsset = null!;
+  public static GameObject ShipRudderBasicAsset = null!;
+  public static GameObject ShipRudderAdvancedAsset = null!;
+  public static GameObject VehicleShipAsset = null!;
+  public static GameObject VehiclePiecesAsset = null!;
   public static readonly LoadValheimVehicleAssets Instance = new();
   public static SpriteAtlas Sprites = null!;
 
 
   public void Init(AssetBundle assetBundle)
   {
+    VehicleShipAsset =
+      assetBundle.LoadAsset<GameObject>("vehicle_ship.prefab");
+    VehiclePiecesAsset = assetBundle.LoadAsset<GameObject>("vehicle_ship_pieces.prefab");
     ShipHullAsset =
       assetBundle.LoadAsset<GameObject>("vehicle_ship_hull.prefab");
     ShipRudderBasicAsset =

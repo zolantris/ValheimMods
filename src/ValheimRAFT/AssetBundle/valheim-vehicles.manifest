@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3450628885
+CRC: 49998040
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: a47149ece7bb2285fc75d539a4cc1727
+    Hash: 369f1899a7dacba82b22f9cf8f79eacd
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 9b8c6b348963aea3255d489afee50c8d
+    Hash: a9b4adc7ae7213fa96cae7e659463795
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: a47149ece7bb2285fc75d539a4cc1727
+    Hash: 369f1899a7dacba82b22f9cf8f79eacd
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -28,6 +28,8 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 48
   Script: {instanceID: 0}
+- Class: 54
+  Script: {instanceID: 0}
 - Class: 64
   Script: {instanceID: 0}
 - Class: 65
@@ -40,8 +42,9 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
-- Assets/ValheimVehicles/VehicleShip/vehicle_ship.prefab
+- Assets/ValheimVehicles/VehicleShip/vehicle_ship_pieces.prefab
 - Assets/ValheimVehicles/ShipRudderBasic/vehicle_ship_rudder_basic.prefab
+- Assets/ValheimVehicles/VehicleShip/vehicle_ship.prefab
 - Assets/ValheimVehicles/vehicle_icons.spriteatlasv2
 - Assets/ValheimVehicles/ShipRudderAdvanced/vehicle_ship_rudder_advanced.prefab
 - Assets/ValheimVehicles/ShipRudderAdvanced/vehicle_ship_rudder_advancedv2.prefab

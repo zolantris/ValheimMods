@@ -5,6 +5,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
@@ -13,6 +14,70 @@ namespace ValheimRAFT.Patches;
 [HarmonyPatch]
 public class WearNTear_Patch
 {
+  [HarmonyPatch(typeof(WearNTear), "Highlight")]
+  [HarmonyPrefix]
+  private static bool WearNTear_Highlight(WearNTear __instance)
+  {
+    // 0.217.46 caused lots of issues with the new null check on m_oldMaterials
+    // return __instance.m_oldMaterials != null;
+    if (__instance.m_oldMaterials == null)
+    {
+      __instance.m_oldMaterials = new List<WearNTear.OldMeshData>();
+      foreach (Renderer highlightRenderer in __instance.GetHighlightRenderers())
+      {
+        WearNTear.OldMeshData oldMeshData = new WearNTear.OldMeshData()
+        {
+          m_materials = highlightRenderer.sharedMaterials
+        };
+        oldMeshData.m_color = new Color[oldMeshData.m_materials.Length];
+        oldMeshData.m_emissiveColor = new Color[oldMeshData.m_materials.Length];
+        for (int index = 0; index < oldMeshData.m_materials.Length; ++index)
+        {
+          if (oldMeshData.m_materials[index] == null) continue;
+          if (oldMeshData.m_materials[index].HasProperty("_Color"))
+            oldMeshData.m_color[index] = oldMeshData.m_materials[index].GetColor("_Color");
+          if (oldMeshData.m_materials[index].HasProperty("_EmissionColor"))
+            oldMeshData.m_emissiveColor[index] =
+              oldMeshData.m_materials[index].GetColor("_EmissionColor");
+        }
+
+        oldMeshData.m_renderer = highlightRenderer;
+        __instance.m_oldMaterials.Add(oldMeshData);
+      }
+    }
+
+    float supportColorValue = __instance.GetSupportColorValue();
+    Color color = new Color(0.6f, 0.8f, 1f);
+    if ((double)supportColorValue >= 0.0)
+    {
+      float H;
+      float S;
+      Color.RGBToHSV(
+        Color.Lerp(new Color(1f, 0.0f, 0.0f), new Color(0.0f, 1f, 0.0f), supportColorValue), out H,
+        out S, out float _);
+      S = Mathf.Lerp(1f, 0.5f, supportColorValue);
+      float V = Mathf.Lerp(1.2f, 0.9f, supportColorValue);
+      color = Color.HSVToRGB(H, S, V);
+    }
+
+    foreach (WearNTear.OldMeshData oldMaterial in __instance.m_oldMaterials)
+    {
+      if ((bool)(UnityEngine.Object)oldMaterial.m_renderer)
+      {
+        foreach (Material material in oldMaterial.m_renderer.materials)
+        {
+          material.SetColor("_EmissionColor", color * 0.4f);
+          material.color = color;
+        }
+      }
+    }
+
+    __instance.CancelInvoke("ResetHighlight");
+    __instance.Invoke("ResetHighlight", 0.2f);
+
+    return false;
+  }
+
   [HarmonyPatch(typeof(WearNTear), "Start")]
   [HarmonyPrefix]
   private static bool WearNTear_Start(WearNTear __instance)
@@ -38,7 +103,7 @@ public class WearNTear_Patch
     // allows for skipping other checks since this is the ship that needs to be destroyed and not trigger a loop
     if (__instance.gameObject.name.Contains(PrefabNames.WaterVehiclePrefabName))
     {
-      return true;
+      return BaseVehicleController.CanDestroyVehicle(__instance.m_nview);
     }
 
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();

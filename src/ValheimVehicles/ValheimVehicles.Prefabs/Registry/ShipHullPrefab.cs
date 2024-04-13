@@ -50,19 +50,27 @@ public class ShipHullPrefab : IRegisterPrefab
     piece.m_noClipping = false;
     piece.m_name = pieceName;
 
-    var wntComponent = PrefabRegistryHelpers.SetWearNTear(raftHullPrefab);
-    PrefabRegistryHelpers.SetWearNTearSupport(wntComponent, WearNTear.MaterialType.HardWood);
-    wntComponent.m_onDamaged = null;
-    wntComponent.m_supports = true;
-    wntComponent.m_support = 2000f;
-    wntComponent.m_noSupportWear = true;
-    wntComponent.m_noRoofWear = true;
-    wntComponent.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
-    wntComponent.m_hitNoise = LoadValheimAssets.woodFloorPieceWearNTear.m_hitNoise;
-    wntComponent.m_health = 250f;
+    var wnt = PrefabRegistryHelpers.SetWearNTear(raftHullPrefab);
+    PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.HardWood);
+    // wnt.m_oldMaterials = LoadValheimAssets.woodFloorPieceWearNTear.m_oldMaterials;
+    // wnt.m_oldMaterials = null;
+    wnt.m_onDamaged = null;
+    wnt.m_supports = true;
+    wnt.m_support = 2000f;
+    wnt.m_noSupportWear = true;
+    wnt.m_noRoofWear = true;
+    wnt.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
+    wnt.m_hitNoise = LoadValheimAssets.woodFloorPieceWearNTear.m_hitNoise;
+    wnt.m_health = 250f;
+    wnt.m_new = LoadValheimVehicleAssets.ShipHullAsset.transform.Find("new").gameObject;
+    var wornHull = LoadValheimVehicleAssets.ShipHullAsset.transform.Find("worn").gameObject;
+    wnt.m_worn = wornHull;
+    wnt.m_broken = wornHull;
+
 
     // this will be used to hide water on the boat
     raftHullPrefab.AddComponent<ShipHullComponent>();
+    PrefabRegistryHelpers.HoistSnapPointsToPrefab(raftHullPrefab);
 
     pieceManager.AddPiece(new CustomPiece(raftHullPrefab, false, new PieceConfig
     {
