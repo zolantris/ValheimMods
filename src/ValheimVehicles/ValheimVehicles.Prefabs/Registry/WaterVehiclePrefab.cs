@@ -149,7 +149,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    RegisterVehicleShipPiecesContainer();
+    // RegisterVehicleShipPiecesContainer();
     RegisterWaterVehiclePrefab();
   }
 }

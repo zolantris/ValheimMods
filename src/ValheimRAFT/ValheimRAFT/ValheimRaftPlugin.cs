@@ -83,6 +83,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> BlockingColliderVerticalCenterOffset { get; set; }
   public ConfigEntry<KeyboardShortcut> AnchorKeyboardShortcut { get; set; }
   public ConfigEntry<bool> EnableMetrics { get; set; }
+  public ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -104,6 +105,17 @@ public class ValheimRaftPlugin : BaseUnityPlugin
           IsAdminOnly = true
         }
       });
+  }
+
+  /**
+   * @todo will port to valheim vehicles plugin soon.
+   */
+  private void CreateVehicleConfig()
+  {
+    EnableExactVehicleBounds = Config.Bind("ValheimVehicles", "EnableExactVehicleBounds", false,
+      CreateConfigDescription(
+        "Ensures that a piece placed within the raft is included in the float collider correctly. Piece bounds of X and Z are considered, no height is factored into floating collider bounds (which controls ship floatation). Height IS factored into the onboard trigger.",
+        false));
   }
 
   private void CreateColliderConfig()

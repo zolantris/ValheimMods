@@ -78,6 +78,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   internal List<SailComponent> m_sailPieces = [];
 
+  /*
+   * List of players on the boat
+   */
+  internal List<Player> m_players = [];
+
 
   // todo make a patch to fix coordinates on death to send player to the correct zdo location.
   // bed component
@@ -95,6 +100,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   internal List<RopeLadderComponent> m_ladders = new();
 
   internal List<BoardingRampComponent> m_boardingRamps = new();
+
+  internal GameObject MovementDirection;
 
   internal enum InitializationState
   {
@@ -121,6 +128,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   internal float ShipContainerMass = 0f;
   internal float ShipMass = 0f;
   public static bool hasDebug = false;
+  public static bool hasDebugBase = false;
 
   internal float TotalMass => ShipContainerMass + ShipMass;
 
@@ -261,7 +269,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   public void Awake()
   {
     instance = this;
+
+    // todo set the static value via config watcher
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
+    hasDebugBase = ValheimRaftPlugin.Instance.HasDebugBase.Value;
 
     if (!(bool)m_rigidbody)
     {
@@ -644,7 +655,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     if ((bool)m_rigidbody)
     {
-      m_rigidbody.mass = TotalMass;
+      // minimum is 2000f, and max is 20000f
+      m_rigidbody.mass = Mathf.Max(2000f + Mathf.Max(0f, TotalMass), 20000f);
     }
   }
 
@@ -918,7 +930,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     if (BaseVehicleInitState != InitializationState.Complete)
     {
-      yield return null;
+      yield return new WaitUntil(() => BaseVehicleInitState == InitializationState.Complete);
     }
 
     if (m_nview.GetZDO() == null)
@@ -927,20 +939,22 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       yield return new WaitUntil(() => m_nview.m_zdo != null);
     }
 
-    Logger.LogDebug("ActivatePendingPieces before ID getter");
-
     var id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
-    Logger.LogDebug("ActivatePendingPieces after ID getter");
-    m_pendingPieces.TryGetValue(id, out var list);
+    if (!m_pendingPieces.TryGetValue(id, out var list))
+    {
+      list = [];
+    }
 
-    // Logger.LogDebug($"mpending pieces list {list.Count}");
+    Logger.LogDebug($"m_pendingPieces list length: {list.Count}");
     if (list is { Count: > 0 })
     {
-      // var stopwatch = new Stopwatch();
-      // stopwatch.Start();
-      for (var j = 0; j < list.Count; j++)
+      if (destroyCancellationToken.IsCancellationRequested)
       {
-        var obj = list[j];
+        yield break;
+      }
+
+      foreach (var obj in list)
+      {
         if ((bool)obj)
         {
           if (hasDebug)
@@ -959,7 +973,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         }
       }
 
-      // this is commented out b/c it may be triggering the destroy method guard at the bottom.
       list.Clear();
       m_pendingPieces.Remove(id);
     }
@@ -967,33 +980,34 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if (hasDebug)
       Logger.LogDebug($"Ship Size calc is: m_bounds {m_bounds} bounds size {m_bounds.size}");
 
-    m_dynamicObjects.TryGetValue(_persistentZdoId, out var objectList);
+    m_dynamicObjects.TryGetValue(_persistentZdoId, out var dynamicObjectList);
     var objectListHasNoValidItems = true;
-    if (objectList is { Count: > 0 })
+    if (dynamicObjectList is { Count: > 0 })
     {
-      for (var i = 0; i < objectList.Count; i++)
+      foreach (ZNetView? nv in from t in
+                 dynamicObjectList.TakeWhile(t => !destroyCancellationToken.IsCancellationRequested)
+               select ZNetScene.instance.FindInstance(t)
+               into go
+               where go
+               select go.GetComponentInParent<ZNetView>())
       {
-        var go = ZNetScene.instance.FindInstance(objectList[i]);
-
-        if (!go) continue;
-
-        var nv = go.GetComponentInParent<ZNetView>();
         if (!nv || nv.m_zdo == null)
           continue;
-        else
-          objectListHasNoValidItems = false;
 
+        objectListHasNoValidItems = false;
         if (ZDOExtraData.s_vec3.TryGetValue(nv.m_zdo.m_uid, out var dic))
         {
           if (dic.TryGetValue(MBCharacterOffsetHash, out var offset))
             nv.transform.position = offset + transform.position;
 
-          offset = default;
+          // todo unused remove if does nothing
+          // offset = default;
         }
 
         ZDOExtraData.RemoveInt(nv.m_zdo.m_uid, MBCharacterParentHash);
         ZDOExtraData.RemoveVec3(nv.m_zdo.m_uid, MBCharacterOffsetHash);
-        dic = null;
+        // todo unused remove if does nothing
+        // dic = null;
       }
 
       m_dynamicObjects.Remove(_persistentZdoId);
@@ -1360,7 +1374,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     m_pieces.Add(netView);
 
     UpdatePieceCount();
-    EncapsulateBounds(netView);
+    EncapsulateBounds(netView, m_bounds);
     var wnt = netView.GetComponent<WearNTear>();
     if ((bool)wnt && ValheimRaftPlugin.Instance.MakeAllPiecesWaterProof.Value)
       wnt.m_noRoofWear = false;
@@ -1501,37 +1515,24 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
    */
   public void RebuildBounds()
   {
-    m_bounds = new Bounds();
+    var newBounds = new Bounds();
 
     foreach (var netView in m_pieces)
     {
-      EncapsulateBounds(netView);
+      EncapsulateBounds(netView, newBounds);
     }
+
+    m_bounds = newBounds;
   }
 
-  public void EncapsulateBounds(ZNetView netView)
+  public void OnBoundsChangeUpdateShipColliders(List<Collider> colliders)
   {
-    var piece = netView.GetComponent<Piece>();
-    var colliders = piece
-      ? piece.GetAllColliders()
-      : new List<Collider>(netView.GetComponentsInChildren<Collider>());
-    var door = netView.GetComponentInChildren<Door>();
-    var ladder = netView.GetComponent<RopeLadderComponent>();
-    var rope = netView.GetComponent<RopeAnchorComponent>();
-
-    Logger.LogDebug($"previous m_bounds extents: {m_bounds.extents}");
-    if (!door && !ladder && !rope) m_bounds.Encapsulate(netView.transform.localPosition);
-
-    Logger.LogDebug($"current m_bounds extents (after Encapsulate): {m_bounds.extents}");
-
-    Logger.LogDebug($"m_floatcollider: {m_floatcollider.bounds}");
-
-    for (var i = 0; i < colliders.Count; i++)
+    foreach (var t in colliders)
     {
-      if (m_floatcollider) Physics.IgnoreCollision(colliders[i], m_floatcollider, true);
-      if (m_blockingcollider) Physics.IgnoreCollision(colliders[i], m_blockingcollider, true);
+      if (m_floatcollider) Physics.IgnoreCollision(t, m_floatcollider, true);
+      if (m_blockingcollider) Physics.IgnoreCollision(t, m_blockingcollider, true);
       if (m_onboardcollider)
-        Physics.IgnoreCollision(colliders[i], m_onboardcollider, true);
+        Physics.IgnoreCollision(t, m_onboardcollider, true);
     }
 
     m_blockingcollider.size = new Vector3(m_bounds.size.x,
@@ -1544,6 +1545,101 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       m_floatcollider.center.y, m_bounds.center.z);
     m_onboardcollider.size = m_bounds.size;
     m_onboardcollider.center = m_bounds.center;
+  }
+
+  /**
+   * updating center of mass is important as it will properly fix how rotation works at the helm
+   */
+  public void OnBoundsChangeUpdateCenterOfMass()
+  {
+    // todo add a way to toggle this for a specific wheelPiece or rudderPiece based on a saved ZDO flag
+    if (m_rudderPieces.Count > 0)
+    {
+      var firstPiece = m_rudderPieces.First();
+      m_rigidbody.centerOfMass = firstPiece.transform.localPosition;
+    }
+    else if (m_rudderWheelPieces.Count > 0)
+    {
+      var firstPiece = m_rudderWheelPieces.First();
+      m_rigidbody.centerOfMass = firstPiece.transform.localPosition;
+    }
+    else
+    {
+      m_rigidbody.centerOfMass = m_bounds.center;
+    }
+  }
+
+  /**
+   * @description alternative heavier approach to detecting bounds
+   * - likely will cause issues if the object is invisible or not supposed to be in a specific layer
+   * - check for layer piece
+   * - check for enabled
+   */
+  public void EncapsulateAllChildrenWithinBounds(ZNetView netView, Bounds targetBounds)
+  {
+    if (hasDebug)
+    {
+      Logger.LogDebug(
+        $"called EncapsulateAllChildrenWithinBounds, due to no colliders detected within netview named: {netView.name}");
+    }
+
+    var renderers = netView.GetComponentsInChildren<Renderer>();
+    foreach (var renderer in renderers)
+    {
+      if (renderer == null) continue;
+      if (!renderer.enabled && renderer.gameObject.layer == LayerMask.GetMask("piece"))
+        targetBounds.Encapsulate(renderer.bounds);
+    }
+  }
+
+  /**
+   * Functional that updates targetBounds, useful for updating with new items or running off large lists and updating the newBounds value without mutating rigidbody values
+   */
+  public void EncapsulateBounds(ZNetView netView, Bounds targetBounds)
+  {
+    var piece = netView.GetComponent<Piece>();
+    var colliders = piece
+      ? piece.GetAllColliders()
+      : new List<Collider>(netView.GetComponentsInChildren<Collider>());
+    var door = netView.GetComponentInChildren<Door>();
+    var ladder = netView.GetComponent<RopeLadderComponent>();
+    var rope = netView.GetComponent<RopeAnchorComponent>();
+
+    Logger.LogDebug($"previous m_bounds extents: {m_bounds.extents}");
+    if (!door && !ladder && !rope)
+    {
+      // local position is in accurate but better
+      // todo possibly use the heavier approach here if there are no colliders
+      if (colliders.Count == 0)
+      {
+        var EnableExactVehicleBounds = ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value;
+        if (hasDebugBase)
+        {
+          Logger.LogWarning(
+            "No colliders detected for piece, using centerpoint as encapsulation, FYI the raft could be inaccurately sized, consider enabling the <EnableExactVehicleBounds=true> which will likely fix this object");
+        }
+
+        if (EnableExactVehicleBounds)
+        {
+          EncapsulateAllChildrenWithinBounds(netView, targetBounds);
+        }
+        else
+        {
+          targetBounds.Encapsulate(netView.transform.localPosition);
+        }
+      }
+
+      foreach (var collider in colliders)
+      {
+        targetBounds.Encapsulate(collider.bounds);
+      }
+    }
+
+    OnBoundsChangeUpdateShipColliders(colliders);
+    OnBoundsChangeUpdateCenterOfMass();
+
+    Logger.LogDebug($"current m_bounds extents (after Encapsulate): {m_bounds.extents}");
+    Logger.LogDebug($"m_floatcollider: {m_floatcollider.bounds}");
   }
 
   internal int GetPieceCount()

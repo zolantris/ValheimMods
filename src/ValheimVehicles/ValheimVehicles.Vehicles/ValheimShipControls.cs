@@ -144,7 +144,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
 
     var playerOnShipViaShipInstance =
-      ShipInstance?.Instance?.VehiclePiecesContainer?.GetComponentsInChildren<Player>() ?? null;
+      ShipInstance?.Instance?.GetComponentsInChildren<Player>() ?? null;
 
     /*
      * <note /> This logic allows for the player to just look at the Raft and see if the player is a child within it.
@@ -246,15 +246,14 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     var isInBoat = ShipInstance.IsPlayerInBoat(playerID);
     if (!isOwner || !isInBoat) return;
 
+    var isValidUser = false;
     if (GetUser() == playerID || !HaveValidUser())
     {
       m_nview.GetZDO().Set(ZDOVars.s_user, playerID);
-      m_nview.InvokeRPC(sender, "RequestRespons", true);
+      isValidUser = true;
     }
-    else
-    {
-      m_nview.InvokeRPC(sender, "RequestRespons", false);
-    }
+
+    m_nview.InvokeRPC(sender, "RequestRespons", isValidUser);
   }
 
   private void RPC_ReleaseControl(long sender, long playerID)

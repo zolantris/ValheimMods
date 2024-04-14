@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3158253785
+CRC: 1492895368
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 9db8c110622afbb8aff51172978d2772
+    Hash: 5fce332737aa1dadc2cdebaa19872318
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0e971d6ec910fda0a941f7ca640159c0
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 9db8c110622afbb8aff51172978d2772
+    Hash: 5fce332737aa1dadc2cdebaa19872318
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -40,6 +40,7 @@ Assets:
 - Assets/Texture2D/wood_59_diffuse_256.png
 - Assets/rope_n.png
 - Assets/Material/03 - Default.mat
+- Assets/Horem/Mocks/Shaders/Custom_WaterMask.shader
 - Assets/icons.spriteatlasv2
 - Assets/02 - Default.mat
 Dependencies: []

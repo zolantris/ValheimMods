@@ -222,14 +222,14 @@ BoxCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 16
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.9184752, y: 1.4771793, z: 8.014129}
-  m_Center: {x: -0.03490925, y: -0.72983, z: 3.9957347}
+  m_Size: {x: 3.978971, y: 0.63599247, z: 8.014129}
+  m_Center: {x: -0.0014388561, y: -0.2966816, z: 3.9957347}
 --- !u!1 &6952726561451604053
 GameObject:
   m_ObjectHideFlags: 0

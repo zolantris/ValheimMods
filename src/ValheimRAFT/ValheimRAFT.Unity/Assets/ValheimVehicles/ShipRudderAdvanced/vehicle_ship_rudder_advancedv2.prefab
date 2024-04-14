@@ -105,7 +105,6 @@ GameObject:
   - component: {fileID: 2270176176690278139}
   - component: {fileID: 2969759586780876320}
   - component: {fileID: 6684262094753371256}
-  - component: {fileID: 1475588984428323598}
   m_Layer: 16
   m_Name: rudder
   m_TagString: Untagged
@@ -181,28 +180,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &1475588984428323598
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4467943875273496122}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 805306368
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 1
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -7893583952944017332, guid: 435086074bddcf542bb202846d455c62, type: 3}
 --- !u!1 &5706030049292349690
 GameObject:
   m_ObjectHideFlags: 0
@@ -212,6 +189,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5077854269718908073}
+  - component: {fileID: 5072356786213414956}
   m_Layer: 0
   m_Name: vehicle_ship_rudder_advancedv2
   m_TagString: Untagged
@@ -235,6 +213,27 @@ Transform:
   - {fileID: 1149849451404623230}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &5072356786213414956
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5706030049292349690}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 805306384
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.109202445, y: 2.470037, z: 0.91187894}
+  m_Center: {x: 0.041551083, y: -0.9028199, z: -0.5604108}
 --- !u!1 &7895494166254424414
 GameObject:
   m_ObjectHideFlags: 0

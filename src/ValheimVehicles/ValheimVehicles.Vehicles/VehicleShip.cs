@@ -31,6 +31,9 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   private GameObject _waterVehicle;
   public ZSyncTransform m_zsyncTransform;
 
+  private VehicleDebugHelpers _vehicleDebugHelpers;
+
+
   private GameObject _shipRotationObj;
   public Transform ShipDirectionTransform => _shipRotationObj.transform;
 
@@ -48,13 +51,21 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     set => m_controlGuiPos = value;
   }
 
+  // private void OnCollisionEnter(Collision collision)
+  // {
+  //   foreach (var contact in collision.contacts)
+  //   {
+  //     Debug.DrawRay(contact.point, contact.normal, Color.white);
+  //   }
+  // }
+
   public void OnDestroy()
   {
-    if (VehiclePiecesContainer)
-    {
-      _controller.CleanUp();
-      Destroy(VehiclePiecesContainer);
-    }
+    // if (VehiclePiecesContainer)
+    // {
+    // _controller.CleanUp();
+    // Destroy(VehiclePiecesContainer);
+    // }
 
     if (_shipRotationObj)
     {
@@ -140,6 +151,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     {
       name = "VehicleShip_transform"
     };
+
     m_sailCloth = m_sailObject.AddComponent<Cloth>();
     m_sailCloth.name = PrefabNames.VehicleSailCloth;
   }
@@ -156,11 +168,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
 
     GUILayout.BeginArea(new Rect(300, 10, 150, 150), myButtonStyle);
-    if (GUILayout.Button("Update collider draw"))
-    {
-      DrawColliders();
-    }
-
+    // todo rotate the ship gauge base on this value
+    // called ShipHud, duplicate it and add some more ui stuff.
     if (GUILayout.Button("rotate90 ship"))
     {
       if (currentRotationOffset > 360)
@@ -186,7 +195,9 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
         var rudderPiece = _controller.m_rudderPieces.First();
         if (rudderPiece.transform.localRotation != _shipRotationObj.transform.rotation)
         {
-          _shipRotationObj.transform.localRotation = rudderPiece.transform.localRotation;
+          _shipRotationObj.transform.localRotation =
+            Quaternion.Euler(0f, rudderPiece.transform.localRotation.y - 180f, 0f);
+          m_body.centerOfMass = rudderPiece.transform.localPosition;
         }
       }
       // Instance.transform.rotation = new Quaternion(Instance.transform.rotation.x,
@@ -203,6 +214,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       {
         var wheelPiece = _controller.m_rudderWheelPieces.First();
         _shipRotationObj.transform.localRotation = wheelPiece.transform.localRotation;
+
+        m_body.centerOfMass = wheelPiece.transform.localPosition;
       }
 
       // FloatCollider.transform.Rotate(0, currentRotationOffset, 0);
@@ -214,92 +227,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
 
     GUILayout.EndArea();
-  }
-
-  private List<LineRenderer> lines = new List<LineRenderer>();
-
-  private void DrawLine(Vector3 start, Vector3 end, Color color, Material material,
-    float width = 0.01f)
-  {
-    LineRenderer line = new GameObject("Line_" + start.ToString() + "_" + end.ToString())
-      .AddComponent<LineRenderer>();
-    line.material = material;
-    line.startColor = color;
-    line.endColor = color;
-    line.startWidth = width;
-    line.endWidth = width;
-    line.positionCount = 2;
-    line.useWorldSpace = true;
-    line.SetPosition(0, start);
-    line.SetPosition(1, end);
-    line.transform.SetParent(transform);
-    lines.Add(line);
-  }
-
-  public void SetLinesColor(Color color)
-  {
-    for (int i = 0; i < lines.Count; i++)
-    {
-      lines[i].material.color = color;
-      lines[i].startColor = color;
-      lines[i].endColor = color;
-    }
-  }
-
-  private void DrawColliders()
-  {
-    BoxCollider boxCollider = GetComponent<BoxCollider>();
-    if (boxCollider != null)
-    {
-      Material material = new Material(Shader.Find("Unlit/Color"));
-      Color color = Color.green;
-      material.color = color;
-      float width = 0.01f;
-      Vector3 rightDir = boxCollider.transform.right.normalized;
-      Vector3 forwardDir = boxCollider.transform.forward.normalized;
-      Vector3 upDir = boxCollider.transform.up.normalized;
-      Vector3 center = boxCollider.transform.position + boxCollider.center;
-      Vector3 size = boxCollider.size;
-      size.x *= boxCollider.transform.lossyScale.x;
-      size.y *= boxCollider.transform.lossyScale.y;
-      size.z *= boxCollider.transform.lossyScale.z;
-      DrawLine(center + upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f,
-        center + upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f, color,
-        material, width);
-      DrawLine(center - upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f,
-        center - upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f, color,
-        material, width);
-      DrawLine(center + upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f,
-        center - upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f, color,
-        material, width);
-      DrawLine(center + upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f,
-        center - upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f, color,
-        material, width);
-      DrawLine(center + upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f,
-        center + upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-        material, width);
-      DrawLine(center - upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f,
-        center - upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-        material, width);
-      DrawLine(center + upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f,
-        center - upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-        material, width);
-      DrawLine(center + upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f,
-        center - upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-        material, width);
-      DrawLine(center + upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f,
-        center + upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-        material, width);
-      DrawLine(center - upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f,
-        center - upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-        material, width);
-      DrawLine(center + upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f,
-        center + upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-        material, width);
-      DrawLine(center - upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f,
-        center - upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-        material, width);
-    }
   }
 
   private new void Awake()
@@ -391,18 +318,18 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     /*
      * @todo turn the original planks into a Prefab so boat floors can be larger
      */
-    GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
-    for (float x = -1f; x < 1.01f; x += 2f)
-    {
-      for (float z = -2f; z < 2.01f; z += 2f)
-      {
-        Vector3 pt = base.transform.TransformPoint(new Vector3(x,
-          ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
-        var obj = Instantiate(floor, pt, transform.rotation);
-        ZNetView netview = obj.GetComponent<ZNetView>();
-        _controller.AddNewPiece(netview);
-      }
-    }
+    // GameObject floor = ZNetScene.instance.GetPrefab("wood_floor");
+    // for (float x = -1f; x < 1.01f; x += 2f)
+    // {
+    //   for (float z = -2f; z < 2.01f; z += 2f)
+    //   {
+    //     Vector3 pt = base.transform.TransformPoint(new Vector3(x,
+    //       ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
+    //     var obj = Instantiate(floor, pt, transform.rotation);
+    //     ZNetView netview = obj.GetComponent<ZNetView>();
+    //     _controller.AddNewPiece(netview);
+    //   }
+    // }
 
     _controller.SetInitComplete();
   }
@@ -419,16 +346,42 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     var ladders = GetComponentsInChildren<Ladder>();
     for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
 
-    VehiclePiecesContainer = Instantiate(WaterVehiclePrefab.GetVehiclePieces, transform);
+    // VehiclePiecesContainer = Instantiate(WaterVehiclePrefab.GetVehiclePieces, transform);
 
-    if (!VehiclePiecesContainer)
+    // if (!VehiclePiecesContainer)
+    // {
+    //   Logger.LogError("No vehicle pieces container, will not initialize vehicle without it");
+    //   return;
+    // }
+
+    _controller = gameObject.AddComponent<WaterVehicleController>();
+    _controller.InitializeShipValues(Instance);
+
+    if (!_vehicleDebugHelpers && ValheimRaftPlugin.Instance.HasDebugBase.Value)
     {
-      Logger.LogError("No vehicle pieces container, will not initialize vehicle without it");
-      return;
+      _vehicleDebugHelpers = gameObject.AddComponent<VehicleDebugHelpers>();
+      _vehicleDebugHelpers.AddColliderToRerender(new DrawTargetColliders()
+      {
+        collider = m_floatcollider,
+        lineColor = Color.green,
+        parent = _controller.gameObject
+      });
+      _vehicleDebugHelpers.AddColliderToRerender(new DrawTargetColliders()
+      {
+        collider = _controller.m_blockingcollider,
+        lineColor = Color.magenta,
+        parent = _controller.gameObject
+      });
+      _vehicleDebugHelpers.AddColliderToRerender(new DrawTargetColliders()
+      {
+        collider = _controller.m_onboardcollider,
+        lineColor = Color.magenta,
+        parent = _controller.gameObject
+      });
     }
 
-    _controller = VehiclePiecesContainer.AddComponent<WaterVehicleController>();
-    _controller.InitializeShipValues(Instance);
+    _vehicleDebugHelpers.autoUpdateColliders = true;
+
     m_mastObject.transform.SetParent(_controller.transform);
     m_sailObject.transform.SetParent(_controller.transform);
     InitHull();
@@ -437,10 +390,10 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   /**
    * TODO this could be set to false for the ship as an override to allow the ship to never remove itself
    */
-  // public bool CanBeRemoved()
-  // {
-  //   return m_players.Count == 0;
-  // }
+// public bool CanBeRemoved()
+// {
+//   return m_players.Count == 0;
+// }
   private static Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity)
   {
     var zeroVelocity = Vector3.zero;

@@ -353,11 +353,11 @@
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)plugins\$(AssemblyName).mdb&quot;"/>
         <Exec Command="xcopy /d &quot;.\Assets\&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
     </Target>
-    <Target KeepDuplicateOutputs="false" Name="Copy_To_Valheim_Server" Condition=" $(AssemblyName) != 'SentryUnityWrapper' And ('$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU')" AfterTargets="convert_pdb_to_mdb">
-        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).mdb&quot;"/>
-    </Target>
+<!--    <Target KeepDuplicateOutputs="false" Name="Copy_To_Valheim_Server" Condition=" $(AssemblyName) != 'SentryUnityWrapper' And ('$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU')" AfterTargets="convert_pdb_to_mdb">-->
+<!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>-->
+<!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>-->
+<!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).mdb&quot;"/>-->
+<!--    </Target>-->
     <Target Name="Generate_Mod_Archive" Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'" AfterTargets="PostBuildEvent">
         <PropertyGroup>
             <RepoDir>$(OutDir)..\..\</RepoDir>

@@ -13,10 +13,12 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject VehiclePiecesAsset = null!;
   public static readonly LoadValheimVehicleAssets Instance = new();
   public static SpriteAtlas Sprites = null!;
+  public static Shader PieceShader = null!;
 
 
   public void Init(AssetBundle assetBundle)
   {
+    PieceShader = assetBundle.LoadAsset<Shader>("Custom_Piece.shader");
     VehicleShipAsset =
       assetBundle.LoadAsset<GameObject>("vehicle_ship.prefab");
     VehiclePiecesAsset = assetBundle.LoadAsset<GameObject>("vehicle_ship_pieces.prefab");
