@@ -1612,14 +1612,14 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       // todo possibly use the heavier approach here if there are no colliders
       if (colliders.Count == 0)
       {
-        var EnableExactVehicleBounds = ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value;
+        var enableExactVehicleBounds = ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value;
         if (hasDebugBase)
         {
           Logger.LogWarning(
             "No colliders detected for piece, using centerpoint as encapsulation, FYI the raft could be inaccurately sized, consider enabling the <EnableExactVehicleBounds=true> which will likely fix this object");
         }
 
-        if (EnableExactVehicleBounds)
+        if (enableExactVehicleBounds)
         {
           EncapsulateAllChildrenWithinBounds(netView, targetBounds);
         }
@@ -1628,6 +1628,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
           targetBounds.Encapsulate(netView.transform.localPosition);
         }
       }
+
+      targetBounds.Encapsulate(netView.transform.localPosition);
 
       foreach (var collider in colliders)
       {
