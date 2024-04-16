@@ -5,6 +5,7 @@ using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
+using Registry;
 using UnityEngine;
 using UnityEngine.U2D;
 using ValheimRAFT;
@@ -18,6 +19,7 @@ public class PrefabRegistryController : MonoBehaviour
 {
   public static PrefabManager prefabManager;
   public static PieceManager pieceManager;
+  public static int PieceLayer = LayerMask.NameToLayer("piece");
 
   private static SynchronizationManager synchronizationManager;
   private static List<Piece> raftPrefabPieces = new();
@@ -39,7 +41,7 @@ public class PrefabRegistryController : MonoBehaviour
       var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
       foreach (var obj in allObjects)
       {
-        if (obj.name.Contains($"{PrefabNames.WaterVehiclePrefabName}(Clone)") ||
+        if (obj.name.Contains($"{PrefabNames.WaterVehicleContainer}(Clone)") ||
             obj.name.Contains($"{PrefabNames.ShipHullPrefabName}(Clone)"))
         {
           if (ReferenceEquals(obj, ShipHullPrefab.RaftHullPrefabInstance))
@@ -50,6 +52,11 @@ public class PrefabRegistryController : MonoBehaviour
           Destroy(obj);
         }
       }
+    }
+
+    if (GUILayout.Button("RegisterWaterVehicle"))
+    {
+      // WaterVehiclePrefab.Instance.Register(prefabManager, pieceManager);
     }
 
     if (GUILayout.Button("ToggleAnchors"))
@@ -170,6 +177,7 @@ public class PrefabRegistryController : MonoBehaviour
     ShipHullPrefab.Instance.Register(prefabManager, pieceManager);
 
     // VehiclePrefabs
+    VehiclePiecesPrefab.Instance.Register(prefabManager, pieceManager);
     WaterVehiclePrefab.Instance.Register(prefabManager, pieceManager);
   }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
 using Logger = Jotunn.Logger;
@@ -95,6 +96,8 @@ public class VehicleDebugHelpers : MonoBehaviour
     GameObject parent, List<LineRenderer> lineItems, int index,
     float width = 0.01f)
   {
+    if (lineItems == null) throw new ArgumentNullException(nameof(lineItems));
+
     LineRenderer line;
     if (index < lineItems.Count)
     {
@@ -102,8 +105,9 @@ public class VehicleDebugHelpers : MonoBehaviour
     }
     else
     {
-      line = new GameObject($"Line_{index}")
+      line = new GameObject($"{parent.name}_Line_{index}")
         .AddComponent<LineRenderer>();
+      line.transform.SetParent(parent.transform);
     }
 
     line.material = material;
@@ -112,10 +116,9 @@ public class VehicleDebugHelpers : MonoBehaviour
     line.startWidth = width;
     line.endWidth = width;
     line.positionCount = 2;
-    line.useWorldSpace = false;
+    line.useWorldSpace = true;
     line.SetPosition(0, start);
     line.SetPosition(1, end);
-    line.transform.SetParent(parent.transform);
 
     if (index < lineItems.Count)
     {
@@ -137,8 +140,10 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   private IEnumerable DrawCollidersCoroutine()
   {
+    Logger.LogDebug("called DrawCollidersCoroutine");
     while (autoUpdateColliders)
     {
+      Logger.LogDebug("DrawCollidersCoroutine Update");
       yield return DrawAllColliders();
       yield return new WaitForSeconds(2f);
       yield return null;
@@ -147,6 +152,7 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   private bool DrawAllColliders()
   {
+    Logger.LogDebug("DrawAllColliders called");
     foreach (var drawTargetColliders in targetColliders)
     {
       DrawColliders(drawTargetColliders.collider, drawTargetColliders.parent,
@@ -180,9 +186,10 @@ public class VehicleDebugHelpers : MonoBehaviour
     size.y *= boxCollider.transform.lossyScale.y;
     size.z *= boxCollider.transform.lossyScale.z;
 
-    if (!lines.TryGetValue(name, out var colliderItems))
+    if (!lines.TryGetValue(boxCollider.name, out var colliderItems))
     {
       colliderItems = [];
+      lines.Add(boxCollider.name, colliderItems);
     }
 
     var index = 0;
@@ -233,5 +240,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     DrawLine(center - upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f,
       center - upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
       material, parent, colliderItems, index, width);
+
+    lines[boxCollider.name] = colliderItems;
   }
 }

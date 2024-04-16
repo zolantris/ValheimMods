@@ -114,7 +114,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   {
     EnableExactVehicleBounds = Config.Bind("ValheimVehicles", "EnableExactVehicleBounds", false,
       CreateConfigDescription(
-        "Ensures that a piece placed within the raft is included in the float collider correctly. Piece bounds of X and Z are considered, no height is factored into floating collider bounds (which controls ship floatation). Height IS factored into the onboard trigger.",
+        "Ensures that a piece placed within the raft is included in the float collider correctly. This only applies if the piece does not have proper colliders. Likely useful only for compatibility for other mods. Piece bounds of X and Z are considered, no height is factored into floating collider bounds (which controls ship floatation). Height IS factored into the onboard trigger.",
         false));
   }
 
@@ -122,26 +122,26 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   {
     FloatingColliderVerticalCenterOffset = Config.Bind("Debug",
       "FloatingColliderVerticalCenterOffset",
-      -0.65f,
+      -0.2f,
       CreateConfigDescription(
         "Sets the raft vertical collision center location original value is -0.2f. Lower offsets can make the boat more jittery, positive offsets will cause the boat to go underwater in areas",
         false));
     FloatingColliderVerticalSize = Config.Bind("Debug", "FloatingColliderVerticalSize",
-      1.3f,
+      3f,
       CreateConfigDescription(
         "Sets the raft floating collider size. Smaller sizes can make the boat more jittery",
         false));
 
-    BlockingColliderVerticalSize = Config.Bind("Debug", "BlockingColliderVerticalSize",
-      1.3f,
-      CreateConfigDescription(
-        "Sets sets the raft blocking collider size.", false));
     BlockingColliderVerticalCenterOffset = Config.Bind("Debug",
       "BlockingColliderVerticalCenterOffset",
-      -0.65f,
+      -0.2f,
       CreateConfigDescription(
         "Sets the raft BlockingColliderVerticalCenterOffset which blocks the player or objects passing through. This will trigger physics so if there is an interaction between the boat and player/it can cause the player to push the boat in the direction of interaction",
         false));
+    BlockingColliderVerticalSize = Config.Bind("Debug", "BlockingColliderVerticalSize",
+      3f,
+      CreateConfigDescription(
+        "Sets sets the raft blocking collider size.", false));
   }
 
   private void CreateCommandConfig()

@@ -342,8 +342,15 @@ public class MoveableBaseRootComponent : MonoBehaviour
       ShipMass += pieceWeight;
     }
 
-    m_rigidbody.mass = TotalMass;
-    m_syncRigidbody.mass = TotalMass;
+    if ((bool)m_rigidbody)
+    {
+      m_rigidbody.mass = 1000f + TotalMass;
+    }
+
+    if ((bool)m_syncRigidbody)
+    {
+      m_syncRigidbody.mass = 1000f + TotalMass;
+    }
   }
 
   public void RemovePiece(ZNetView netView)
@@ -380,12 +387,6 @@ public class MoveableBaseRootComponent : MonoBehaviour
         ladder.m_mbroot = null;
       }
     }
-
-    UpdateStats();
-  }
-
-  private void UpdateStats()
-  {
   }
 
   /**

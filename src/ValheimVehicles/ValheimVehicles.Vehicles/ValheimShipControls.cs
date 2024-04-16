@@ -166,7 +166,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
     var playerOnShip = player.GetStandingOnShip();
     if (playerOnShip == null ||
-        !(playerOnShip).name.Contains(PrefabNames.WaterVehiclePrefabName))
+        !(playerOnShip).name.Contains(PrefabNames.WaterVehicleContainer))
     {
       Logger.LogDebug("Player is not on VVShip");
       return false;

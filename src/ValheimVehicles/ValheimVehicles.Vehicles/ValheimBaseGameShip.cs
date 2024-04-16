@@ -203,7 +203,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
     Heightmap.ForceGenerateAll();
 
-    // m_sailCloth = m_sailObject.GetComponentInChildren<Cloth>();
+    m_sailCloth = m_sailObject.GetComponentInChildren<Cloth>();
   }
 
   /**

@@ -36,6 +36,9 @@ public class ShipHullPrefab : IRegisterPrefab
     var raftHullPrefab =
       prefabManager.CreateClonedPrefab(
         prefabName, LoadValheimVehicleAssets.ShipHullAsset);
+
+    if (!(bool)raftHullPrefab) return;
+
     PrefabRegistryHelpers.AddNetViewWithPersistence(raftHullPrefab);
     raftHullPrefab.layer = 0;
     raftHullPrefab.gameObject.layer = 0;

@@ -37,13 +37,11 @@ public class Player_Patch
 
   public static void HidePreviewComponent(ZNetView netView)
   {
-    if (netView.name.Contains(PrefabNames.WaterVehiclePrefabName))
+    if (!netView.name.Contains(PrefabNames.WaterVehicleContainer)) return;
+    var vehicleShip = netView.GetComponent<VehicleShip>();
+    if (vehicleShip.GhostContainer != null)
     {
-      var vehicleShip = netView.GetComponent<VehicleShip>();
-      if (vehicleShip.previewComponent != null)
-      {
-        vehicleShip.previewComponent.SetActive(false);
-      }
+      vehicleShip.GhostContainer.SetActive(false);
     }
   }
 

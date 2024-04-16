@@ -22,7 +22,8 @@ public class VehicleBuildGhost : MonoBehaviour
   {
     GetIsInitialized();
     var netView = GetComponent<ZNetView>();
-    if (!netView || netView.m_ghost)
+    if (!netView) return;
+    if (!netView.m_ghost)
     {
       DisableVehicleGhost();
       return;

@@ -17,10 +17,26 @@ public static class PrefabNames
   public const string WaterVehicleFloatCollider = "VehicleShip_FloatCollider";
   public const string WaterVehicleBlockingCollider = "VehicleShip_BlockingCollider";
   public const string WaterVehicleOnboardCollider = "VehicleShip_OnboardTriggerCollider";
+
   public const string ValheimRaftMenuName = "Raft";
+
+  // Containers that are nested within a VehiclePrefab top level
+  // utilize the Get<Name> methods within the LoadValheimVehiclesAssets class to get these GameObjects
+  public const string PiecesContainer =
+    "piecesContainer";
+
+  public const string GhostContainer =
+    "ghostContainer";
+
+  public const string VehicleContainer =
+    "vehicleContainer";
+
+  public const string VehiclePiecesContainer = $"{ValheimVehiclesPrefix}_{PiecesContainer}";
+
   public const string ShipHullCoreWoodHorizontal = "$mb_ship_hull_corewood_0";
   private const string ValheimVehiclesPrefix = "ValheimVehicles";
-  public const string WaterVehiclePrefabName = $"{ValheimVehiclesPrefix}_WaterVehicle";
+  public const string WaterVehicleContainer = $"{ValheimVehiclesPrefix}_WaterVehicle";
+  public const string WaterVehicleShip = $"{ValheimVehiclesPrefix}_WaterVehicleShip";
   public const string ShipHullPrefabName = $"{ValheimVehiclesPrefix}_ShipHull_Wood";
   public const string SailBoxColliderName = $"{ValheimVehiclesPrefix}_SailBoxCollider";
   public const string ShipRudderBasic = $"{ValheimVehiclesPrefix}_ShipRudderBasic";
@@ -28,10 +44,9 @@ public static class PrefabNames
   public const string ShipSteeringWheel = $"{ValheimVehiclesPrefix}_ShipSteeringWheel";
   public const string WaterVehiclePreviewHull = $"{ValheimVehiclesPrefix}_WaterVehiclePreviewHull";
 
-  public const string VehiclePieces =
-    $"{ValheimVehiclesPrefix}_VehiclePiecesContainer";
-
   public const string VehicleSail = $"{ValheimVehiclesPrefix}_VehicleSail";
+  public const string VehicleShipTransform = $"{ValheimVehiclesPrefix}_VehicleShipTransform";
+  public const string VehicleShipEffects = $"{ValheimVehiclesPrefix}_VehicleShipEffects";
   public const string VehicleSailMast = $"{ValheimVehiclesPrefix}_VehicleSailMast";
   public const string VehicleSailCloth = $"{ValheimVehiclesPrefix}_SailCloth";
 }

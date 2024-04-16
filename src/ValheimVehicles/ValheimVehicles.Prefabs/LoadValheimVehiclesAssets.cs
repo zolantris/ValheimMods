@@ -1,3 +1,4 @@
+using Jotunn;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.U2D;
@@ -15,6 +16,14 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static SpriteAtlas Sprites = null!;
   public static Shader PieceShader = null!;
 
+  public static GameObject GetGhostContainer(GameObject obj) =>
+    obj.FindDeepChild(PrefabNames.GhostContainer).gameObject;
+
+  public static GameObject GetPiecesContainer(GameObject obj) =>
+    obj.FindDeepChild(PrefabNames.PiecesContainer).gameObject;
+
+  public static GameObject GetVehicleContainer(GameObject obj) =>
+    obj.FindDeepChild(PrefabNames.VehicleContainer).gameObject;
 
   public void Init(AssetBundle assetBundle)
   {

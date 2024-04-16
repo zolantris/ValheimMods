@@ -45,7 +45,12 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
   public float m_targetHeight { get; set; }
 
   public WaterVehicleFlags VehicleFlags { get; set; }
-  public ZSyncTransform m_zsync { get; set; }
+
+  public ZSyncTransform m_zsyncTransform
+  {
+    get => VehicleInstance.m_zsyncTransform;
+    set { }
+  }
 
   public float m_balanceForce = 0.03f;
 
@@ -61,14 +66,19 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     VehicleInstance = vehicleShip;
     base.VehicleInstance = VehicleInstance;
 
+    if (!(bool)m_syncRigidbody)
+    {
+      m_syncRigidbody = vehicleShip.m_body;
+    }
+
     if (!(bool)m_rigidbody)
     {
-      m_rigidbody = vehicleShip.GetComponent<Rigidbody>();
+      m_rigidbody = GetComponent<Rigidbody>();
     }
 
     // connect vvShip properties to this gameobject
-    m_nview = vehicleShip.GetComponent<ZNetView>();
-    m_zsync = vehicleShip.GetComponent<ZSyncTransform>();
+    m_nview = vehicleShip.m_nview;
+    m_zsyncTransform = vehicleShip.m_zsyncTransform;
     instance = this;
     _impactEffect = vehicleShip.GetComponent<ImpactEffect>();
 
@@ -104,45 +114,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     ZdoReadyStart();
   }
 
-  private void InitHull()
-  {
-    return;
-    var pieceCount = GetPieceCount();
-    var buildGhostInstance = m_nview.GetComponent<VehicleBuildGhost>();
-    if (pieceCount != 0 && (bool)buildGhostInstance)
-    {
-      if (buildGhostInstance)
-      {
-        buildGhostInstance.DisableVehicleGhost();
-      }
-    }
-
-    if (pieceCount != 0 || !m_nview)
-    {
-      return;
-    }
-
-    var prefab = PrefabManager.Instance.GetPrefab(PrefabNames.ShipHullPrefabName);
-    if (!prefab) return;
-
-    var hull = Instantiate(prefab, transform.position, transform.rotation);
-    if (hull == null) return;
-
-    var hullNetView = hull.GetComponent<ZNetView>();
-    AddNewPiece(hullNetView);
-
-    // todo This logic is unnecessary as InitPiece is called from zdo initialization of the PlaceholderItem
-    //
-    // var placeholderInstance = buildGhostInstance.GetPlaceholderInstance();
-    // if (placeholderInstance == null) return;
-    //
-    // var hullNetView = placeholderInstance.GetComponent<ZNetView>();
-    // hullNetView.transform.SetParent(null);
-    //
-    // AddNewPiece(hullNetView);
-    // buildGhostInstance.DisableVehicleGhost();
-  }
-
   private void ZdoReadyStart()
   {
     if (!(bool)m_nview) return;
@@ -158,10 +129,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
     // vital for vehicle
     InitializeBaseVehicleValuesWhenReady();
-
-    // Initializes the base hull if it does not exist
-    InitHull();
-
 
     if (base.VehicleInstance == null)
     {

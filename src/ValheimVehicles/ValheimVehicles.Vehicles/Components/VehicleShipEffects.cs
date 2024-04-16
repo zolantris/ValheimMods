@@ -3,7 +3,7 @@ namespace ValheimVehicles.Vehicles.Components;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CustomShipEffects : MonoBehaviour
+public class VehicleShipEffects : MonoBehaviour
 {
   public Transform m_shadow;
 
@@ -41,12 +41,25 @@ public class CustomShipEffects : MonoBehaviour
 
   private VehicleShip m_ship;
 
-  public static List<ShipEffects> Instances { get; } = new List<CustomShipEffects>();
+  public static List<VehicleShipEffects> Instances { get; } = [];
 
+  public static void CloneShipEffectsToInstance(VehicleShipEffects instance,
+    ShipEffects shipEffects)
+  {
+    instance.m_splashEffects = shipEffects.m_splashEffects;
+    instance.m_shadow = shipEffects.m_shadow;
+    instance.m_minimumWakeVel = shipEffects.m_minimumWakeVel;
+    instance.m_speedWakeRoot = shipEffects.m_speedWakeRoot;
+    instance.m_inWaterSoundRoot = shipEffects.m_inWaterSoundRoot;
+    instance.m_wakeSoundRoot = shipEffects.m_wakeSoundRoot;
+    instance.m_audioFadeDuration = shipEffects.m_audioFadeDuration;
+    instance.m_sailSound = shipEffects.m_sailSound;
+    instance.m_sailFadeDuration = shipEffects.m_sailFadeDuration;
+  }
 
   private void Awake()
   {
-    ZNetView componentInParent = GetComponentInParent<ZNetView>();
+    var componentInParent = GetComponentInParent<ZNetView>();
     if ((bool)componentInParent && componentInParent.GetZDO() == null)
     {
       base.enabled = false;
@@ -62,8 +75,8 @@ public class CustomShipEffects : MonoBehaviour
 
     if ((bool)m_wakeSoundRoot)
     {
-      AudioSource[] componentsInChildren = m_wakeSoundRoot.GetComponentsInChildren<AudioSource>();
-      foreach (AudioSource audioSource in componentsInChildren)
+      var componentsInChildren = m_wakeSoundRoot.GetComponentsInChildren<AudioSource>();
+      foreach (var audioSource in componentsInChildren)
       {
         audioSource.pitch = Random.Range(0.9f, 1.1f);
         m_wakeSounds.Add(new KeyValuePair<AudioSource, float>(audioSource, audioSource.volume));
@@ -72,9 +85,9 @@ public class CustomShipEffects : MonoBehaviour
 
     if ((bool)m_inWaterSoundRoot)
     {
-      AudioSource[] componentsInChildren =
+      var componentsInChildren =
         m_inWaterSoundRoot.GetComponentsInChildren<AudioSource>();
-      foreach (AudioSource audioSource2 in componentsInChildren)
+      foreach (var audioSource2 in componentsInChildren)
       {
         audioSource2.pitch = Random.Range(0.9f, 1.1f);
         m_inWaterSounds.Add(
@@ -101,7 +114,7 @@ public class CustomShipEffects : MonoBehaviour
 
   public void CustomLateUpdate(float deltaTime)
   {
-    if (!Floating.IsUnderWater(base.transform.position, ref m_previousWaterVolume))
+    if (!Floating.IsUnderWater(transform.position, ref m_previousWaterVolume))
     {
       m_shadow.gameObject.SetActive(value: false);
       SetWake(enabled: false, deltaTime);

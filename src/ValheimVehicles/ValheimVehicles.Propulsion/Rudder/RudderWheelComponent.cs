@@ -76,6 +76,8 @@ public class RudderWheelComponent : MonoBehaviour
       set { }
     }
 
+    public Transform? ShipDirectionTransform { get; }
+
     public Transform ControlGuiPosition
     {
       get => ship.m_controlGuiPos;

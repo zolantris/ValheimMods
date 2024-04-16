@@ -5,8 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9eb05097-9d84-4b87-8e9a-0e73fcf3150e" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../../../.idea/.idea.ValheimMods/.idea/indexLayout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../../../.idea/.idea.ValheimMods/.idea/indexLayout.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../.idea/.idea.ValheimMods/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../../../.idea/.idea.ValheimMods/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-raft" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-raft" afterDir="false" />
@@ -16,14 +14,20 @@
       <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles-shared.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles-shared.manifest" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/VehicleShip/vehicle_ship_pieces.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/VehicleShip/vehicle_ship_pieces.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/steering_wheel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/steering_wheel.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/TagManager.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/TagManager.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/LoadValheimVehiclesAssets.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/LoadValheimVehiclesAssets.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Vegetation.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Custom_Vegetation.shader" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/JVLSailShader.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/JVLSailShader.shader" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/ShipHull/vehicle_ship_hull.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/ShipHull/vehicle_ship_hull.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/VehicleShip/vehicle_ship.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/VehicleShip/vehicle_ship.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/ValheimRaftPlugin.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/ValheimRaftPlugin.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabNames.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabNames.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryController.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/WaterVehiclePrefab.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/WaterVehiclePrefab.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/ValheimShipControls.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/ValheimShipControls.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/BaseVehicleController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/BaseVehicleController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleShipEffects.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleShipEffects.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/ValheimBaseGameShip.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/ValheimBaseGameShip.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VehicleDebugHelpers.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VehicleDebugHelpers.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VehicleShip.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VehicleShip.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../valheim.targets" beforeDir="false" afterPath="$PROJECT_DIR$/../../../valheim.targets" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -117,6 +121,7 @@
       <workItem from="1712977938716" duration="1148000" />
       <workItem from="1713049322595" duration="698000" />
       <workItem from="1713053920412" duration="149000" />
+      <workItem from="1713089921616" duration="908000" />
     </task>
     <servers />
   </component>

@@ -101,17 +101,36 @@ public class WearNTear_Patch
   {
     // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
     // allows for skipping other checks since this is the ship that needs to be destroyed and not trigger a loop
-    if (__instance.gameObject.name.Contains(PrefabNames.WaterVehiclePrefabName))
+    if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleShip))
     {
       return BaseVehicleController.CanDestroyVehicle(__instance.m_nview);
     }
 
-    var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
+
     var bv = __instance.GetComponentInParent<BaseVehicleController>();
+    if ((bool)bv)
+    {
+      bv.DestroyPiece(__instance);
+      return true;
+    }
 
-
+    var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbr) mbr.DestroyPiece(__instance);
-    if ((bool)bv) bv.DestroyPiece(__instance);
+
+    /*
+     * SAFETY FEATURE
+     * - prevent destruction of ship attached pieces if the ship fails to initialize properly
+     */
+    if (__instance.m_nview && !(bool)mbr && !(bool)bv)
+    {
+      var hasVehicleParent =
+        __instance.m_nview.m_zdo.GetInt(BaseVehicleController.MBParentIdHash, 0);
+      if (hasVehicleParent != 0)
+      {
+        __instance.enabled = false;
+        return false;
+      }
+    }
 
     return true;
   }
@@ -124,7 +143,7 @@ public class WearNTear_Patch
     var bv = __instance.GetComponent<BaseVehicleController>();
 
     // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
-    if (__instance.gameObject.name.Contains(PrefabNames.WaterVehiclePrefabName))
+    if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleContainer))
     {
       return false;
     }
