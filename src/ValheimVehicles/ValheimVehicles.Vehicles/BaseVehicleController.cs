@@ -448,12 +448,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   private void Sync()
   {
     if (!(bool)m_syncRigidbody || VehicleInstance == null) return;
-
     m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
     m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
-    m_rigidbody.centerOfMass = m_syncRigidbody.centerOfMass;
-    // if ((bool)VehicleInstance.ShipDirectionTransform)
-    //   m_rigidbody.MoveRotation(VehicleInstance.ShipDirectionTransform!.rotation);
+    m_floatcollider.center = m_floatcollider.bounds.center - m_rigidbody.worldCenterOfMass;
   }
 
   public void FixedUpdate()
@@ -1548,23 +1545,46 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public void OnBoundsChangeUpdateShipColliders()
   {
+    if (!(bool)m_blockingcollider || !(bool)m_floatcollider || !(bool)m_onboardcollider)
+    {
+      Logger.LogWarning(
+        "Ship colliders updated but the ship was unable to access colliders on ship object. Likely cause is ZoneSystem destroying the ship");
+      return;
+    }
+
+    if (hasDebug)
+    {
+      Logger.LogDebug($"floatcollider size before {m_floatcollider.size}");
+      Logger.LogDebug($"floatcollider size after {m_floatcollider.size}");
+    }
+
     m_blockingcollider.size = new Vector3(m_bounds.size.x,
       ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value, m_bounds.size.z);
     m_blockingcollider.center = new Vector3(m_bounds.center.x,
       ValheimRaftPlugin.Instance.BlockingColliderVerticalCenterOffset.Value, m_bounds.center.z);
 
-    Logger.LogDebug($"floatcollider size before {m_floatcollider.size}");
     m_floatcollider.size = new Vector3(m_bounds.size.x,
-      3f, m_bounds.size.z);
-    Logger.LogDebug($"floatcollider size after {m_floatcollider.size}");
+      m_floatcollider.size.y, m_bounds.size.z);
 
-    Logger.LogDebug($"floatcollider center before {m_floatcollider.center}");
+
     m_floatcollider.center = new Vector3(m_bounds.center.x,
       m_floatcollider.center.y, m_bounds.center.z);
-    Logger.LogDebug($"floatcollider center after {m_floatcollider.center}");
 
-    m_onboardcollider.size = m_bounds.size;
-    m_onboardcollider.center = m_bounds.center;
+    /*
+     * onboard colliders need to be higher than the items placed on the ship.
+     *
+     * todo make this logic exact.
+     * - Have a minimum "deck" position and determine height based on the deck. For now this do not need to be done
+     */
+    m_onboardcollider.size = new Vector3(m_bounds.size.x, m_bounds.size.y + 3f, m_bounds.size.z);
+    m_onboardcollider.center = new Vector3(m_bounds.size.x, Mathf.Min(3f, m_bounds.size.y + 3f),
+      m_bounds.size.z);
+
+    if (hasDebug)
+    {
+      Logger.LogDebug($"floatcollider center before {m_floatcollider.center}");
+      Logger.LogDebug($"floatcollider center after {m_floatcollider.center}");
+    }
   }
 
   public void IgnoreShipColliders(List<Collider> colliders)
@@ -1579,24 +1599,29 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   }
 
   /**
-   * updating center of mass is important as it will properly fix how rotation works at the helm
+   * updating rotation point of object is important as it will properly fix how rotation works at the helm
+   *
+   * Using rigidbody center of mass could also work, but it then breaks physics for objects that are now outside the rigidbody center of mass (since it shifts all colliders)
    */
-  public void OnBoundsChangeUpdateCenterOfMass()
+  public void OnBoundsChangeUpdateShipRotationPoint()
   {
     // todo add a way to toggle this for a specific wheelPiece or rudderPiece based on a saved ZDO flag
     if (m_rudderPieces.Count > 0)
     {
       var firstPiece = m_rudderPieces.First();
-      m_rigidbody.centerOfMass = firstPiece.transform.localPosition;
+      VehicleInstance.Instance.shipRotationObj = firstPiece.gameObject;
     }
     else if (m_rudderWheelPieces.Count > 0)
     {
       var firstPiece = m_rudderWheelPieces.First();
-      m_rigidbody.centerOfMass = firstPiece.transform.localPosition;
+      VehicleInstance.Instance.shipRotationObj = firstPiece.gameObject;
+      // m_rigidbody.centerOfMass = firstPiece.transform.localPosition;
     }
     else
     {
-      m_rigidbody.centerOfMass = m_bounds.center;
+      // m_rigidbody.ResetCenterOfMass();
+      // m_syncRigidbody.ResetCenterOfMass();
+      // m_rigidbody.centerOfMass = m_bounds.center;
     }
   }
 
@@ -1620,6 +1645,59 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       if (renderer == null) continue;
       if (!renderer.enabled && renderer.gameObject.layer == LayerMask.GetMask("piece"))
         m_bounds.Encapsulate(renderer.bounds);
+    }
+  }
+
+  public static Bounds TransformBounds(Transform _transform, Bounds _localBounds)
+  {
+    var center = _transform.TransformPoint(_localBounds.center);
+
+    // transform the local extents' axes
+    var extents = _localBounds.extents;
+    var axisX = _transform.TransformVector(extents.x, 0, 0);
+    var axisY = _transform.TransformVector(0, extents.y, 0);
+    var axisZ = _transform.TransformVector(0, 0, extents.z);
+
+    // sum their absolute value to get the world extents
+    extents.x = Mathf.Abs(axisX.x) + Mathf.Abs(axisY.x) + Mathf.Abs(axisZ.x);
+    extents.y = Mathf.Abs(axisX.y) + Mathf.Abs(axisY.y) + Mathf.Abs(axisZ.y);
+    extents.z = Mathf.Abs(axisX.z) + Mathf.Abs(axisY.z) + Mathf.Abs(axisZ.z);
+
+    return new Bounds { center = center, extents = extents };
+  }
+
+  public void EncapsulateColliders(List<Collider> colliders)
+  {
+    if (m_bounds.size == Vector3.zero)
+    {
+      m_bounds = new Bounds(m_floatcollider.center, m_floatcollider.size);
+    }
+
+    foreach (var collider in colliders)
+    {
+      // very important to use local bounds otherwise it grabs world position point as center and causes the bounds to extend massively
+      // var isGlobalPosition = collider.bounds. collider.bounds.center
+      // var localCenterOffset = collider.bounds.center - netView.transform.position;
+      // var localCenter = collider.transform.TransformPoint(collider.bounds.center);
+
+      // first: Center(0.1,0.2,0.2)
+      // Second: Center: (-471.940887, 20.7657166, 4952.95605), Extents: (0.50050354, 0.227736473, 0.512207031)
+
+      var isLocalCenter = collider.transform.localPosition != collider.transform.position &&
+                          collider.bounds.Contains(collider.transform.localPosition);
+
+      var localCenter = collider.bounds.center;
+      if (!isLocalCenter)
+      {
+        localCenter = collider.transform.position - collider.bounds.center;
+      }
+
+      // var localCenter = collider.transform.localPosition + localCenterOffset;
+      var colliderWorldBounds = new Bounds(localCenter, collider.bounds.extents);
+      // var localBounds = TransformBounds(collider.transform, collider.bounds);
+
+      // first time initialization bounds will be zeroed
+      m_bounds.Encapsulate(colliderWorldBounds);
     }
   }
 
@@ -1660,21 +1738,13 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         }
       }
 
-      m_bounds.Encapsulate(netView.transform.localPosition);
-
-      foreach (var collider in colliders)
-      {
-        // very important to use local bounds otherwise it grabs world position point as center and causes the bounds to extend massively
-        var localCenterOffset = collider.bounds.center - netView.transform.position;
-        var localCenter = netView.transform.localPosition + localCenterOffset;
-        var localBounds = new Bounds(localCenter, collider.bounds.extents);
-        m_bounds.Encapsulate(localBounds);
-      }
+      // m_bounds.Encapsulate(netView.transform.localPosition);
+      EncapsulateColliders(colliders);
     }
 
     IgnoreShipColliders(colliders);
     OnBoundsChangeUpdateShipColliders();
-    OnBoundsChangeUpdateCenterOfMass();
+    OnBoundsChangeUpdateShipRotationPoint();
 
     Logger.LogDebug($"current m_bounds extents (after Encapsulate): {m_bounds.extents}");
     Logger.LogDebug($"m_floatcollider: {m_floatcollider.bounds}");

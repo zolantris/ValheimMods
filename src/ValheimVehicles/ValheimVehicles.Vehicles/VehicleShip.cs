@@ -47,6 +47,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   // private GameObject _piecesContainer;
   private GameObject _ghostContainer;
 
+  public static bool CustomShipPhysicsEnabled = true;
+
   // public GameObject VehicleContainer =>
   //   VehicleShipHelpers.GetOrFindObj(_vehicleContainer, gameObject,
   //     PrefabNames.VehicleContainer);
@@ -77,8 +79,14 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   {
     get
     {
-      if (!(bool)shipRotationObj || !(bool)shipRotationObj.transform) return transform;
-      return shipRotationObj.transform;
+      if ((bool)m_floatcollider)
+      {
+        return m_floatcollider.transform;
+      }
+
+      return transform;
+      // if (!(bool)shipRotationObj || !(bool)shipRotationObj.transform) return transform;
+      // return shipRotationObj.transform;
     }
   }
 
@@ -107,6 +115,11 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   //     Debug.DrawRay(contact.point, contact.normal, Color.white);
   //   }
   // }
+
+  public new void OnTriggerEnter(Collider collider)
+  {
+    base.OnTriggerEnter(collider);
+  }
 
   public void OnDestroy()
   {
@@ -250,6 +263,19 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       RedrawLines();
     }
 
+    if (GUILayout.Button("toggle customphysics"))
+    {
+      CustomShipPhysicsEnabled = !CustomShipPhysicsEnabled;
+    }
+
+    if (GUILayout.Button("Rebuild bounds"))
+    {
+      if ((bool)_controller)
+      {
+        _controller.RebuildBounds();
+      }
+    }
+
     // called ShipHud, duplicate it and add some more ui stuff.
     if (GUILayout.Button("rotate90 ship"))
     {
@@ -310,6 +336,35 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     GUILayout.EndArea();
   }
 
+  public void FixShipRotation()
+  {
+    var eulerAngles = transform.rotation.eulerAngles;
+    var eulerX = eulerAngles.x;
+    var eulerY = eulerAngles.y;
+    var eulerZ = eulerAngles.z;
+
+    var transformedX = eulerX;
+    var transformedZ = eulerZ;
+    var shouldUpdate = false;
+
+    if (eulerX is > 60 and < 300)
+    {
+      transformedX = 0;
+      shouldUpdate = true;
+    }
+
+    if (eulerZ is > 60 and < 300)
+    {
+      transformedZ = 0;
+      shouldUpdate = true;
+    }
+
+    if (shouldUpdate)
+    {
+      transform.rotation = Quaternion.Euler(transformedX, transform.rotation.y, transformedZ);
+    }
+  }
+
   private new void Awake()
   {
     AwakeSetupShipComponents();
@@ -327,6 +382,9 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     {
       m_nview = GetComponent<ZNetView>();
     }
+
+    FixShipRotation();
+
 
     InitializeWaterVehicleController();
     StartCoroutine(nameof(RedrawLinesCoroutine));
@@ -347,8 +405,18 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
     if (!shipRotationObj) return;
 
+    if (CustomShipPhysicsEnabled)
+    {
+      CustomPhysics();
+      return;
+    }
+
     // todo remove this if unnecessary
-    ShipDirectionTransform.position = m_floatcollider.transform.position;
+    // ShipDirectionTransform.position = m_floatcollider.transform.position;
+    // ShipDirectionTransform.rotation = Quaternion.Euler(
+    //   m_floatcollider.transform.rotation.eulerAngles.x,
+    //   ShipDirectionTransform.rotation.eulerAngles.y,
+    //   m_floatcollider.transform.rotation.eulerAngles.z);
 
     TestFixedUpdate();
     // ValheimRaftCustomFixedUpdate();
@@ -370,6 +438,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   private void RedrawLines()
   {
+    Logger.LogDebug("RedrawLines called");
     if (!(bool)_controller) return;
 
     foreach (var lineRenderer in lines.ToList())
@@ -382,7 +451,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     var material = new Material(unlitColor);
     var color = Color.green;
     material.color = color;
-    var width = 0.01f;
+    var width = 0.02f;
     var rightDir = m_floatcollider.transform.right.normalized;
     var forwardDir = m_floatcollider.transform.forward.normalized;
     var upDir = m_floatcollider.transform.up.normalized;
@@ -545,12 +614,14 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       _vehicleDebugHelpers.AddColliderToRerender(new DrawTargetColliders()
       {
         collider = _controller.m_onboardcollider,
-        lineColor = Color.magenta,
+        lineColor = Color.red,
         parent = gameObject
       });
     }
 
     _vehicleDebugHelpers.autoUpdateColliders = true;
+    _vehicleDebugHelpers.VehicleObj = gameObject;
+    _vehicleDebugHelpers.VehicleShipInstance = this;
 
     m_mastObject.transform.SetParent(_controller.transform);
     m_sailObject.transform.SetParent(_controller.transform);
@@ -630,6 +701,23 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     return m_floatcollider.size.z;
   }
 
+  public void CustomPhysics()
+  {
+    m_body.useGravity = _controller.m_targetHeight == 0f;
+
+    var waterLevelAtCenterShip = Floating.GetWaterLevel(m_floatcollider.center, ref m_previousBack);
+
+    // above the water
+    if (waterLevelAtCenterShip < m_body.centerOfMass.y)
+    {
+      return;
+    }
+
+    m_body.WakeUp();
+    m_body.AddForceAtPosition(Vector3.up * 0.001f, m_body.worldCenterOfMass,
+      ForceMode.Force);
+  }
+
   public void TestFixedUpdate()
   {
     if (!(bool)_controller || !(bool)m_nview || m_nview.m_zdo == null) return;
@@ -677,6 +765,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
     if ((bool)m_nview && !m_nview.IsOwner()) return;
 
+    if (m_body.isKinematic) return;
     // don't damage the ship lol
     // UpdateUpsideDmg(Time.fixedDeltaTime);
 

@@ -49,7 +49,15 @@ public class PrefabRegistryController : MonoBehaviour
             return;
           }
 
-          Destroy(obj);
+          var wnt = obj.GetComponent<WearNTear>();
+          if ((bool)wnt)
+          {
+            wnt.Destroy();
+          }
+          else
+          {
+            Destroy(obj);
+          }
         }
       }
     }

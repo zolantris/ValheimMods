@@ -114,6 +114,14 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     ZdoReadyStart();
   }
 
+  public void OnDisable()
+  {
+    m_nview.Unregister("SetAnchor");
+
+    // todo this likely is not needed for boat v2. Maybe only used for water effects
+    m_nview.Unregister("SetVisual");
+  }
+
   private void ZdoReadyStart()
   {
     if (!(bool)m_nview) return;

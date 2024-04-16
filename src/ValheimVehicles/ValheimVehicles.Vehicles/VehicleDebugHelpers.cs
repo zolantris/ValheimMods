@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
@@ -30,8 +31,9 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   public bool autoUpdateColliders = false;
   private List<IDrawTargetColliders> targetColliders = [];
-  private GameObject vehicleShipObj;
   GUIStyle myButtonStyle;
+  public GameObject VehicleObj;
+  public VehicleShip VehicleShipInstance;
   private Coroutine? _drawColliderCoroutine = null;
 
   public void Awake()
@@ -43,6 +45,8 @@ public class VehicleDebugHelpers : MonoBehaviour
 
     _drawColliderCoroutine = StartCoroutine(nameof(DrawCollidersCoroutine));
   }
+
+  private InvokeBinder repeatInvoke;
 
   private void OnGUI()
   {
@@ -56,24 +60,31 @@ public class VehicleDebugHelpers : MonoBehaviour
     if (GUILayout.Button("toggle collider visualization"))
     {
       autoUpdateColliders = !autoUpdateColliders;
+
+      CancelInvoke(nameof(DrawAllColliders));
       if (autoUpdateColliders)
       {
-        if (_drawColliderCoroutine != null)
-        {
-          StopCoroutine(_drawColliderCoroutine);
-          _drawColliderCoroutine = null;
-        }
-
-        StartCoroutine(nameof(DrawCollidersCoroutine));
+        InvokeRepeating(nameof(DrawAllColliders), 0f, 0.1f);
       }
+
+      // if (_drawColliderCoroutine != null)
+      // {
+      //   StopCoroutine(_drawColliderCoroutine);
+      //   _drawColliderCoroutine = null;
+      // }
+      //
+      // if (autoUpdateColliders)
+      // {
+      //   _drawColliderCoroutine = StartCoroutine(nameof(DrawCollidersCoroutine));
+      // }
     }
 
-    if (GUILayout.Button("run collider visual"))
-    {
-      autoUpdateColliders = false;
-      StopCoroutine(nameof(DrawCollidersCoroutine));
-      DrawAllColliders();
-    }
+    // if (GUILayout.Button("run collider visual"))
+    // {
+    //   autoUpdateColliders = false;
+    //   StopCoroutine(nameof(DrawCollidersCoroutine));
+    //   DrawAllColliders();
+    // }
 
     if (GUILayout.Button("Flip Ship"))
     {
@@ -85,11 +96,13 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   private void FlipShip()
   {
-    if (vehicleShipObj == null) return;
+    if (VehicleShipInstance.m_body == null) return;
     // flips the x and z axis which act as the boat depth and sides
     // y axis is boat height. Flipping that would just rotate boat which is why it is omitted
-    transform.parent.rotation =
-      Quaternion.Euler(0f, vehicleShipObj.transform.eulerAngles.x, 0f);
+    VehicleShipInstance.m_body.isKinematic = true;
+    transform.rotation = Quaternion.Euler(0f, VehicleObj.transform.eulerAngles.y,
+      0f);
+    VehicleShipInstance.m_body.isKinematic = false;
   }
 
   private void DrawLine(Vector3 start, Vector3 end, Color color, Material material,
@@ -144,9 +157,8 @@ public class VehicleDebugHelpers : MonoBehaviour
     while (autoUpdateColliders)
     {
       Logger.LogDebug("DrawCollidersCoroutine Update");
-      yield return DrawAllColliders();
-      yield return new WaitForSeconds(2f);
-      yield return null;
+      DrawAllColliders();
+      yield return new WaitForEndOfFrame();
     }
   }
 
