@@ -1531,6 +1531,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   /**
    * bounds cannot be decapsulated by default so regenerating it seems prudent on piece removal
    */
+  /**
+   * bounds cannot be decapsulated by default so regenerating it seems prudent on piece removal
+   */
   public void RebuildBounds()
   {
     m_bounds = new Bounds();
@@ -1539,8 +1542,90 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       EncapsulateBounds(netView);
     }
+
+    OnBoundsChangeUpdateShipColliders();
   }
 
+  public void OnBoundsChangeUpdateShipColliders()
+  {
+    m_blockingcollider.size = new Vector3(m_bounds.size.x,
+      ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value, m_bounds.size.z);
+    m_blockingcollider.center = new Vector3(m_bounds.center.x,
+      ValheimRaftPlugin.Instance.BlockingColliderVerticalCenterOffset.Value, m_bounds.center.z);
+
+    Logger.LogDebug($"floatcollider size before {m_floatcollider.size}");
+    m_floatcollider.size = new Vector3(m_bounds.size.x,
+      3f, m_bounds.size.z);
+    Logger.LogDebug($"floatcollider size after {m_floatcollider.size}");
+
+    Logger.LogDebug($"floatcollider center before {m_floatcollider.center}");
+    m_floatcollider.center = new Vector3(m_bounds.center.x,
+      m_floatcollider.center.y, m_bounds.center.z);
+    Logger.LogDebug($"floatcollider center after {m_floatcollider.center}");
+
+    m_onboardcollider.size = m_bounds.size;
+    m_onboardcollider.center = m_bounds.center;
+  }
+
+  public void IgnoreShipColliders(List<Collider> colliders)
+  {
+    foreach (var t in colliders)
+    {
+      if (m_floatcollider) Physics.IgnoreCollision(t, m_floatcollider, true);
+      if (m_blockingcollider) Physics.IgnoreCollision(t, m_blockingcollider, true);
+      if (m_onboardcollider)
+        Physics.IgnoreCollision(t, m_onboardcollider, true);
+    }
+  }
+
+  /**
+   * updating center of mass is important as it will properly fix how rotation works at the helm
+   */
+  public void OnBoundsChangeUpdateCenterOfMass()
+  {
+    // todo add a way to toggle this for a specific wheelPiece or rudderPiece based on a saved ZDO flag
+    if (m_rudderPieces.Count > 0)
+    {
+      var firstPiece = m_rudderPieces.First();
+      m_rigidbody.centerOfMass = firstPiece.transform.localPosition;
+    }
+    else if (m_rudderWheelPieces.Count > 0)
+    {
+      var firstPiece = m_rudderWheelPieces.First();
+      m_rigidbody.centerOfMass = firstPiece.transform.localPosition;
+    }
+    else
+    {
+      m_rigidbody.centerOfMass = m_bounds.center;
+    }
+  }
+
+  /**
+   * @description alternative heavier approach to detecting bounds
+   * - likely will cause issues if the object is invisible or not supposed to be in a specific layer
+   * - check for layer piece
+   * - check for enabled
+   */
+  public void EncapsulateAllChildrenWithinBounds(ZNetView netView)
+  {
+    if (hasDebug)
+    {
+      Logger.LogDebug(
+        $"called EncapsulateAllChildrenWithinBounds, due to no colliders detected within netview named: {netView.name}");
+    }
+
+    var renderers = netView.GetComponentsInChildren<Renderer>();
+    foreach (var renderer in renderers)
+    {
+      if (renderer == null) continue;
+      if (!renderer.enabled && renderer.gameObject.layer == LayerMask.GetMask("piece"))
+        m_bounds.Encapsulate(renderer.bounds);
+    }
+  }
+
+  /**
+   * Functional that updates targetBounds, useful for updating with new items or running off large lists and updating the newBounds value without mutating rigidbody values
+   */
   public void EncapsulateBounds(ZNetView netView)
   {
     var piece = netView.GetComponent<Piece>();
@@ -1554,32 +1639,86 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     Logger.LogDebug($"previous m_bounds extents: {m_bounds.extents}");
     if (!door && !ladder && !rope)
     {
+      // local position is in accurate but better
+      // todo possibly use the heavier approach here if there are no colliders
+      if (colliders.Count == 0)
+      {
+        var enableExactVehicleBounds = ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value;
+        if (hasDebug)
+        {
+          Logger.LogWarning(
+            "No colliders detected for piece, using centerpoint as encapsulation, FYI the raft could be inaccurately sized, consider enabling the <EnableExactVehicleBounds=true> which will likely fix this object");
+        }
+
+        if (enableExactVehicleBounds)
+        {
+          EncapsulateAllChildrenWithinBounds(netView);
+        }
+        else
+        {
+          m_bounds.Encapsulate(netView.transform.localPosition);
+        }
+      }
+
       m_bounds.Encapsulate(netView.transform.localPosition);
+
+      foreach (var collider in colliders)
+      {
+        // very important to use local bounds otherwise it grabs world position point as center and causes the bounds to extend massively
+        var localCenterOffset = collider.bounds.center - netView.transform.position;
+        var localCenter = netView.transform.localPosition + localCenterOffset;
+        var localBounds = new Bounds(localCenter, collider.bounds.extents);
+        m_bounds.Encapsulate(localBounds);
+      }
     }
+
+    IgnoreShipColliders(colliders);
+    OnBoundsChangeUpdateShipColliders();
+    OnBoundsChangeUpdateCenterOfMass();
 
     Logger.LogDebug($"current m_bounds extents (after Encapsulate): {m_bounds.extents}");
-
     Logger.LogDebug($"m_floatcollider: {m_floatcollider.bounds}");
-
-    for (var i = 0; i < colliders.Count; i++)
-    {
-      if (m_floatcollider) Physics.IgnoreCollision(colliders[i], m_floatcollider, true);
-      if (m_blockingcollider) Physics.IgnoreCollision(colliders[i], m_blockingcollider, true);
-      if (m_onboardcollider)
-        Physics.IgnoreCollision(colliders[i], m_onboardcollider, true);
-    }
-
-    m_blockingcollider.size = new Vector3(m_bounds.size.x,
-      ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value, m_bounds.size.z);
-    m_blockingcollider.center = new Vector3(m_bounds.center.x,
-      ValheimRaftPlugin.Instance.BlockingColliderVerticalCenterOffset.Value, m_bounds.center.z);
-    m_floatcollider.size = new Vector3(m_bounds.size.x,
-      m_floatcollider.size.y, m_bounds.size.z);
-    m_floatcollider.center = new Vector3(m_bounds.center.x,
-      m_floatcollider.center.y, m_bounds.center.z);
-    m_onboardcollider.size = m_bounds.size;
-    m_onboardcollider.center = m_bounds.center;
   }
+
+  // public void EncapsulateBounds(ZNetView netView)
+  // {
+  //   var piece = netView.GetComponent<Piece>();
+  //   var colliders = piece
+  //     ? piece.GetAllColliders()
+  //     : new List<Collider>(netView.GetComponentsInChildren<Collider>());
+  //   var door = netView.GetComponentInChildren<Door>();
+  //   var ladder = netView.GetComponent<RopeLadderComponent>();
+  //   var rope = netView.GetComponent<RopeAnchorComponent>();
+  //
+  //   Logger.LogDebug($"previous m_bounds extents: {m_bounds.extents}");
+  //   if (!door && !ladder && !rope)
+  //   {
+  //     m_bounds.Encapsulate(netView.transform.localPosition);
+  //   }
+  //
+  //   Logger.LogDebug($"current m_bounds extents (after Encapsulate): {m_bounds.extents}");
+  //
+  //   Logger.LogDebug($"m_floatcollider: {m_floatcollider.bounds}");
+  //
+  //   for (var i = 0; i < colliders.Count; i++)
+  //   {
+  //     if (m_floatcollider) Physics.IgnoreCollision(colliders[i], m_floatcollider, true);
+  //     if (m_blockingcollider) Physics.IgnoreCollision(colliders[i], m_blockingcollider, true);
+  //     if (m_onboardcollider)
+  //       Physics.IgnoreCollision(colliders[i], m_onboardcollider, true);
+  //   }
+  //
+  //   m_blockingcollider.size = new Vector3(m_bounds.size.x,
+  //     ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value, m_bounds.size.z);
+  //   m_blockingcollider.center = new Vector3(m_bounds.center.x,
+  //     ValheimRaftPlugin.Instance.BlockingColliderVerticalCenterOffset.Value, m_bounds.center.z);
+  //   m_floatcollider.size = new Vector3(m_bounds.size.x,
+  //     m_floatcollider.size.y, m_bounds.size.z);
+  //   m_floatcollider.center = new Vector3(m_bounds.center.x,
+  //     m_floatcollider.center.y, m_bounds.center.z);
+  //   m_onboardcollider.size = m_bounds.size;
+  //   m_onboardcollider.center = m_bounds.center;
+  // }
 
   internal int GetPieceCount()
   {
