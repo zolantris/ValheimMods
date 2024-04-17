@@ -228,32 +228,31 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     m_rigidbody.angularDrag = (flight ? 1f : 0f);
     m_rigidbody.drag = (flight ? 1f : 0f);
 
-    if ((bool)_vehicleInstance)
+    if (!(bool)_vehicleInstance) return;
+
+    _vehicleInstance.m_angularDamping = (flight ? 5f : 0.8f);
+    _vehicleInstance.m_backwardForce = 1f;
+    _vehicleInstance.m_damping = (flight ? 5f : 0.35f);
+    _vehicleInstance.m_dampingSideway = (flight ? 3f : 0.3f);
+    _vehicleInstance.m_force = 3f;
+    _vehicleInstance.m_forceDistance = 5f;
+    _vehicleInstance.m_sailForceFactor = (flight ? 0.2f : 0.05f);
+    _vehicleInstance.m_stearForce = (flight ? 0.2f : 1f);
+    _vehicleInstance.m_stearVelForceFactor = 1.3f;
+    _vehicleInstance.m_waterImpactDamage = 0f;
+    /*
+     * this may be unstable and require a getter each time...highly doubt it though.
+     */
+    // ImpactEffect impact = ShipInstance.GetComponent<ImpactEffect>();
+    if ((bool)_impactEffect)
     {
-      _vehicleInstance.m_angularDamping = (flight ? 5f : 0.8f);
-      _vehicleInstance.m_backwardForce = 1f;
-      _vehicleInstance.m_damping = (flight ? 5f : 0.35f);
-      _vehicleInstance.m_dampingSideway = (flight ? 3f : 0.3f);
-      _vehicleInstance.m_force = 3f;
-      _vehicleInstance.m_forceDistance = 5f;
-      _vehicleInstance.m_sailForceFactor = (flight ? 0.2f : 0.05f);
-      _vehicleInstance.m_stearForce = (flight ? 0.2f : 1f);
-      _vehicleInstance.m_stearVelForceFactor = 1.3f;
-      _vehicleInstance.m_waterImpactDamage = 0f;
-      /*
-       * this may be unstable and require a getter each time...highly doubt it though.
-       */
-      // ImpactEffect impact = ShipInstance.GetComponent<ImpactEffect>();
-      if ((bool)_impactEffect)
-      {
-        _impactEffect.m_interval = 0.1f;
-        _impactEffect.m_minVelocity = 0.1f;
-        _impactEffect.m_damages.m_damage = 100f;
-      }
-      else
-      {
-        Logger.LogDebug("No Ship ImpactEffect detected, this needs to be added to the custom ship");
-      }
+      _impactEffect.m_interval = 0.1f;
+      _impactEffect.m_minVelocity = 0.1f;
+      _impactEffect.m_damages.m_damage = 100f;
+    }
+    else
+    {
+      Logger.LogDebug("No Ship ImpactEffect detected, this needs to be added to the custom ship");
     }
   }
 

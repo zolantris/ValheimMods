@@ -6,12 +6,14 @@ using Jotunn.Utils;
 using System;
 using System.Reflection;
 using BepInEx.Bootstrap;
+using Components;
 using Jotunn;
 using Properties;
 using UnityEngine;
 using ValheimRAFT.Patches;
 using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -410,8 +412,17 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   {
     // SentryLoads after
     ApplyMetricIfAvailable();
+    AddGuiLayerComponents();
   }
 
+  /**
+   * Important for raft collisions to only include water and landmass colliders.
+   *
+   * Other collisions on the piece level are not handled on the CustomRaftLayer
+   *
+   * todo remove CustomRaftLayer and use the VehicleLayer instead.
+   * - Requires adding explicit collision ignores for the rigidbody attached to VehicleInstance (m_body)
+   */
   private void AddPhysicsSettings()
   {
     var layer = LayerMask.NameToLayer("vehicle");
@@ -451,35 +462,39 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private void LoadCustomTextures()
   {
     var sails = CustomTextureGroup.Load("Sails");
-    for (var k = 0; k < sails.Textures.Count; k++)
+    foreach (var texture3 in sails.Textures)
     {
-      var texture3 = sails.Textures[k];
       texture3.Texture.wrapMode = TextureWrapMode.Clamp;
       if ((bool)texture3.Normal) texture3.Normal.wrapMode = TextureWrapMode.Clamp;
     }
 
     var patterns = CustomTextureGroup.Load("Patterns");
-    for (var j = 0; j < patterns.Textures.Count; j++)
+    foreach (var texture2 in patterns.Textures)
     {
-      var texture2 = patterns.Textures[j];
       texture2.Texture.filterMode = FilterMode.Point;
       texture2.Texture.wrapMode = TextureWrapMode.Repeat;
       if ((bool)texture2.Normal) texture2.Normal.wrapMode = TextureWrapMode.Repeat;
     }
 
     var logos = CustomTextureGroup.Load("Logos");
-    for (var i = 0; i < logos.Textures.Count; i++)
+    foreach (var texture in logos.Textures)
     {
-      var texture = logos.Textures[i];
       texture.Texture.wrapMode = TextureWrapMode.Clamp;
       if ((bool)texture.Normal) texture.Normal.wrapMode = TextureWrapMode.Clamp;
     }
   }
 
-  internal void AddCustomPieces()
+  /**
+   * todo: move to Vehicles plugin when it is ready
+   */
+  private void AddGuiLayerComponents()
+  {
+    gameObject.AddComponent<VehicleDebugGui>();
+  }
+
+  private void AddCustomPieces()
   {
     if (m_customItemsAdded) return;
-
     // Registers all prefabs using ValheimVehicles PrefabRegistryController
     prefabController = gameObject.AddComponent<PrefabRegistryController>();
     PrefabRegistryController.Init();

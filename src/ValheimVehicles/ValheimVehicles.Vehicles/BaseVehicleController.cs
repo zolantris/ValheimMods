@@ -69,10 +69,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   public BaseVehicleController instance;
 
   // rigidbody for all pieces within the ship. Does not directly contribute to floatation, floatation controlled by m_syncRigidbody and synced to this m_rigidbody
-  internal Rigidbody m_rigidbody;
+  internal Rigidbody? m_rigidbody;
 
   // for the ship physics without item piece colliders or alternatively access via VehicleInstance.m_body
-  internal Rigidbody m_syncRigidbody;
+  internal Rigidbody? m_syncRigidbody;
 
   internal List<ZNetView> m_pieces = [];
   internal List<ShipHullComponent> m_hullPieces = [];
@@ -172,7 +172,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       ActivatePendingPiecesCoroutine();
     }
 
-    if (GUILayout.Button("center boat"))
+    if (GUILayout.Button("rebuild bounds"))
     {
       RebuildBounds();
     }
@@ -226,18 +226,18 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     // todo the local scales cause issues with floating with new ships until an item is manually placed by the player
     if (m_onboardcollider != null)
     {
-      // m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+      m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     }
 
     if (m_floatcollider != null)
     {
-      // m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+      m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
       // m_floatcollider.size = new Vector3(4f, 1f, 2f); // size of raft hull
     }
 
     if (m_blockingcollider != null)
     {
-      // m_blockingcollider.transform.localScale = new Vector3(4f, 1f, 2f);
+      m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 2f);
       m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
       m_blockingcollider.transform.parent.gameObject.layer =
         ValheimRaftPlugin.CustomRaftLayer;
@@ -245,7 +245,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   }
 
 
-  public void FireErrorOnNull(Collider obj, String name)
+  public void FireErrorOnNull(Collider obj, string name)
   {
     if (!(bool)obj)
     {
@@ -447,10 +447,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   private void Sync()
   {
-    if (!(bool)m_syncRigidbody || VehicleInstance == null) return;
+    if (!(bool)m_syncRigidbody || !(bool)m_rigidbody) return;
     m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
     m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
-    m_floatcollider.center = m_floatcollider.bounds.center - m_rigidbody.worldCenterOfMass;
   }
 
   public void FixedUpdate()
@@ -1533,6 +1532,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
    */
   public void RebuildBounds()
   {
+    if (!(bool)m_floatcollider || !(bool)m_onboardcollider || !(bool)m_blockingcollider)
+    {
+      return;
+    }
+
     m_bounds = new Bounds();
 
     foreach (var netView in m_pieces)
@@ -1558,26 +1562,60 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       Logger.LogDebug($"floatcollider size after {m_floatcollider.size}");
     }
 
+    // old approach
+    // m_blockingcollider.size = new Vector3(m_bounds.size.x,
+    //   ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value, m_bounds.size.z);
+    // m_blockingcollider.center = new Vector3(m_bounds.center.x,
+    //   ValheimRaftPlugin.Instance.BlockingColliderVerticalCenterOffset.Value, m_bounds.center.z);
+    // m_floatcollider.size = new Vector3(m_bounds.size.x,
+    //   ValheimRaftPlugin.Instance.FloatingColliderVerticalSize.Value, m_bounds.size.z);
+    // m_floatcollider.center = new Vector3(m_bounds.center.x,
+    //   ValheimRaftPlugin.Instance.FloatingColliderVerticalCenterOffset.Value, m_bounds.center.z);
+    // m_onboardcollider.size = m_bounds.size;
+    // m_onboardcollider.center = m_bounds.center;
+    // end of OLD APPROACH!
+
     m_blockingcollider.size = new Vector3(m_bounds.size.x,
       ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value, m_bounds.size.z);
     m_blockingcollider.center = new Vector3(m_bounds.center.x,
-      ValheimRaftPlugin.Instance.BlockingColliderVerticalCenterOffset.Value, m_bounds.center.z);
+      ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value / 2, m_bounds.center.z);
+
+    // VehicleShip_FloatCollider
+    // center -1.5992 -2.0976 1.3841
+    // extents 3.6007 0.2688 6.6194
+    // size 7.2014 0.5376 13.2389
+    // bounds -1.5992 -2.0976 1.3841
+
+
+    // watervehicle controller bounds
+    // size 7.2014 4.1465 13.2389
+    // extents 3.6007 2.0733 6.6194
+    // center -1.5992 -1.0518 1.3841
+    // min -5.1999 -3.1251 -5.2354
+    // max 2.0015 1.0215 8.0035
+
+    // VehicleSHip rb
+    // position -190.9417 26.5681 4415.641
+    // world center -188.0447 28.0174 4418
+    //
+    // vehicle pieces rigidbody
+    // world center -191.3834 23.238 4416.917
+    // position -191.2324 28.0026 4415.408
 
     m_floatcollider.size = new Vector3(m_bounds.size.x,
       m_floatcollider.size.y, m_bounds.size.z);
-
-
     m_floatcollider.center = new Vector3(m_bounds.center.x,
-      m_floatcollider.center.y, m_bounds.center.z);
-
-    /*
+      -0.2f, m_bounds.center.z);
+    m_floatcollider.transform.localPosition =
+      new Vector3(m_bounds.center.x, -2f, m_bounds.center.y);
+    /*?
      * onboard colliders need to be higher than the items placed on the ship.
      *
      * todo make this logic exact.
      * - Have a minimum "deck" position and determine height based on the deck. For now this do not need to be done
      */
-    m_onboardcollider.size = new Vector3(m_bounds.size.x, m_bounds.size.y + 3f, m_bounds.size.z);
-    m_onboardcollider.center = new Vector3(m_bounds.size.x, Mathf.Min(3f, m_bounds.size.y + 3f),
+    m_onboardcollider.size = new Vector3(m_bounds.size.x, m_bounds.size.y, m_bounds.size.z);
+    m_onboardcollider.center = new Vector3(m_bounds.size.x, Mathf.Max(3f, m_bounds.size.y),
       m_bounds.size.z);
 
     if (hasDebug)
@@ -1668,9 +1706,12 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public void EncapsulateColliders(List<Collider> colliders)
   {
+    if (!(bool)m_floatcollider) return;
+
     if (m_bounds.size == Vector3.zero)
     {
-      m_bounds = new Bounds(m_floatcollider.center, m_floatcollider.size);
+      m_bounds = new Bounds();
+      // m_bounds.Encapsulate(m_floatcollider.bounds);
     }
 
     foreach (var collider in colliders)
@@ -1719,27 +1760,28 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       // local position is in accurate but better
       // todo possibly use the heavier approach here if there are no colliders
-      if (colliders.Count == 0)
-      {
-        var enableExactVehicleBounds = ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value;
-        if (hasDebug)
-        {
-          Logger.LogWarning(
-            "No colliders detected for piece, using centerpoint as encapsulation, FYI the raft could be inaccurately sized, consider enabling the <EnableExactVehicleBounds=true> which will likely fix this object");
-        }
-
-        if (enableExactVehicleBounds)
-        {
-          EncapsulateAllChildrenWithinBounds(netView);
-        }
-        else
-        {
-          m_bounds.Encapsulate(netView.transform.localPosition);
-        }
-      }
+      // if (colliders.Count == 0)
+      // {
+      //   var enableExactVehicleBounds = ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value;
+      //   if (hasDebug)
+      //   {
+      //     Logger.LogWarning(
+      //       "No colliders detected for piece, using centerpoint as encapsulation, FYI the raft could be inaccurately sized, consider enabling the <EnableExactVehicleBounds=true> which will likely fix this object");
+      //   }
+      //
+      //   if (enableExactVehicleBounds)
+      //   {
+      //     EncapsulateAllChildrenWithinBounds(netView);
+      //   }
+      //   else
+      //   {
+      //     m_bounds.Encapsulate(netView.transform.localPosition);
+      //   }
+      // }
+      m_bounds.Encapsulate(netView.transform.localPosition);
 
       // m_bounds.Encapsulate(netView.transform.localPosition);
-      EncapsulateColliders(colliders);
+      // EncapsulateColliders(colliders);
     }
 
     IgnoreShipColliders(colliders);

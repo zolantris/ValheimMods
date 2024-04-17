@@ -19,7 +19,9 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
     }
 
     var ship = player.GetStandingOnShip();
-    if ((ship && ToggleMode(player, ship)) || !Physics.Raycast(
+    if (!(bool)ship) return;
+
+    if (ToggleMode(player, ship) || !Physics.Raycast(
           GameCamera.instance.transform.position, GameCamera.instance.transform.forward,
           out var hitinfo, 50f, LayerMask.GetMask("piece"))) return;
 

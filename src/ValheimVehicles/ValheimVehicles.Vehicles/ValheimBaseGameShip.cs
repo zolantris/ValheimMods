@@ -750,7 +750,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public void OnTriggerEnter(Collider collider)
   {
-    Player component = collider.GetComponent<Player>();
+    var component = collider.GetComponent<Player>();
     if ((bool)component)
     {
       m_players.Add(component);
@@ -761,7 +761,7 @@ public class ValheimBaseGameShip : MonoBehaviour
       }
     }
 
-    Character component2 = collider.GetComponent<Character>();
+    var component2 = collider.GetComponent<Character>();
     if ((bool)component2)
     {
       component2.InNumShipVolumes++;

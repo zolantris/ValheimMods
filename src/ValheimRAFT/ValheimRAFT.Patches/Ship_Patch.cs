@@ -1,6 +1,8 @@
 using System;
+using Components;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;
@@ -17,8 +19,31 @@ public class Ship_Patch
         __instance.name.StartsWith("MBRaft"))
     {
       var ladders = __instance.GetComponentsInChildren<Ladder>();
-      for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
-      __instance.gameObject.AddComponent<MoveableBaseShipComponent>();
+      foreach (var t in ladders)
+        t.m_useDistance = 10f;
+
+      var mbShip = __instance.gameObject.AddComponent<MoveableBaseShipComponent>();
+
+      var debugHelpersInstance = mbShip.VehicleDebugHelpersInstance =
+        __instance.gameObject.AddComponent<VehicleDebugHelpers>();
+      debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
+      {
+        collider = mbShip.m_baseRoot.m_floatcollider,
+        lineColor = Color.green,
+        parent = mbShip.m_baseRoot.gameObject
+      });
+      debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
+      {
+        collider = mbShip.m_baseRoot.m_blockingcollider,
+        lineColor = Color.magenta,
+        parent = mbShip.m_baseRoot.gameObject
+      });
+      debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
+      {
+        collider = mbShip.m_baseRoot.m_onboardcollider,
+        lineColor = Color.yellow,
+        parent = mbShip.m_baseRoot.gameObject
+      });
     }
   }
 

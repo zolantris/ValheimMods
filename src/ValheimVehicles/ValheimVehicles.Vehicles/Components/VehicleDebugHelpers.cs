@@ -5,7 +5,9 @@ using System.Dynamic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using ValheimRAFT;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Utis;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
@@ -18,7 +20,7 @@ public interface IDrawTargetColliders
   public GameObject parent { get; set; }
 }
 
-public class DrawTargetColliders : IDrawTargetColliders
+public struct DrawTargetColliders : IDrawTargetColliders
 {
   public BoxCollider collider { get; set; }
   public Color lineColor { get; set; }
@@ -31,72 +33,74 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   public bool autoUpdateColliders = false;
   private List<IDrawTargetColliders> targetColliders = [];
-  GUIStyle myButtonStyle;
   public GameObject VehicleObj;
   public VehicleShip VehicleShipInstance;
   private Coroutine? _drawColliderCoroutine = null;
 
-  public void Awake()
-  {
-    if (!autoUpdateColliders)
-    {
-      return;
-    }
-
-    _drawColliderCoroutine = StartCoroutine(nameof(DrawCollidersCoroutine));
-  }
-
   private InvokeBinder repeatInvoke;
 
-  private void OnGUI()
+  public void StartRenderAllCollidersLoop()
   {
-    if (myButtonStyle == null)
+    autoUpdateColliders = !autoUpdateColliders;
+    CancelInvoke(nameof(DrawAllColliders));
+    if (autoUpdateColliders)
     {
-      myButtonStyle = new GUIStyle(GUI.skin.button);
-      myButtonStyle.fontSize = 50;
+      InvokeRepeating(nameof(DrawAllColliders), 0f, 0.05f);
     }
-
-    GUILayout.BeginArea(new Rect(500, 10, 150, 150), myButtonStyle);
-    if (GUILayout.Button("toggle collider visualization"))
+    else
     {
-      autoUpdateColliders = !autoUpdateColliders;
-
-      CancelInvoke(nameof(DrawAllColliders));
-      if (autoUpdateColliders)
+      foreach (var keyValuePair in lines)
       {
-        InvokeRepeating(nameof(DrawAllColliders), 0f, 0.1f);
+        if (!lines.TryGetValue(keyValuePair.Key, out var data)) continue;
+        if (data == null) continue;
+        foreach (var lineRenderer in keyValuePair.Value.OfType<LineRenderer>())
+        {
+          Destroy(lineRenderer);
+          data.Remove(lineRenderer);
+        }
       }
-
-      // if (_drawColliderCoroutine != null)
-      // {
-      //   StopCoroutine(_drawColliderCoroutine);
-      //   _drawColliderCoroutine = null;
-      // }
-      //
-      // if (autoUpdateColliders)
-      // {
-      //   _drawColliderCoroutine = StartCoroutine(nameof(DrawCollidersCoroutine));
-      // }
     }
-
-    // if (GUILayout.Button("run collider visual"))
-    // {
-    //   autoUpdateColliders = false;
-    //   StopCoroutine(nameof(DrawCollidersCoroutine));
-    //   DrawAllColliders();
-    // }
-
-    if (GUILayout.Button("Flip Ship"))
-    {
-      FlipShip();
-    }
-
-    GUILayout.EndArea();
   }
 
-  private void FlipShip()
+  private static RaycastHit? RaycastToPiecesUnderPlayerCamera()
   {
-    if (VehicleShipInstance.m_body == null) return;
+    var player = Player.m_localPlayer;
+    if (player == null)
+    {
+      return null;
+    }
+
+    if (!Physics.Raycast(
+          GameCamera.instance.transform.position, GameCamera.instance.transform.forward,
+          out var rayCastHitInfo, 50f, LayerMask.GetMask("piece"))) return null;
+    return rayCastHitInfo;
+  }
+
+  public static VehicleDebugHelpers GetOnboardVehicleDebugHelper()
+  {
+    return GetVehicleController()?.VehicleInstance.Instance.VehicleDebugHelpersInstance;
+  }
+
+  public static VehicleDebugHelpers? GetOnboardMBRaftDebugHelper()
+  {
+    return GetMBRaftController()?.shipController?.VehicleDebugHelpersInstance;
+  }
+
+  public static MoveableBaseRootComponent? GetMBRaftController()
+  {
+    var rayCastHitInfo = RaycastToPiecesUnderPlayerCamera();
+    return rayCastHitInfo?.collider.GetComponentInParent<MoveableBaseRootComponent>();
+  }
+
+  public static BaseVehicleController? GetVehicleController()
+  {
+    var rayCastHitInfo = RaycastToPiecesUnderPlayerCamera();
+    return rayCastHitInfo?.collider.GetComponentInParent<WaterVehicleController>();
+  }
+
+  public void FlipShip()
+  {
+    if (!(bool)VehicleShipInstance.m_body) return;
     // flips the x and z axis which act as the boat depth and sides
     // y axis is boat height. Flipping that would just rotate boat which is why it is omitted
     VehicleShipInstance.m_body.isKinematic = true;
@@ -105,8 +109,8 @@ public class VehicleDebugHelpers : MonoBehaviour
     VehicleShipInstance.m_body.isKinematic = false;
   }
 
-  private void DrawLine(Vector3 start, Vector3 end, Color color, Material material,
-    GameObject parent, List<LineRenderer> lineItems, int index,
+  private static void DrawLine(Vector3 start, Vector3 end, Color color, Material material,
+    GameObject parent, Collider collider, List<LineRenderer> lineItems, int index,
     float width = 0.01f)
   {
     if (lineItems == null) throw new ArgumentNullException(nameof(lineItems));
@@ -118,7 +122,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     }
     else
     {
-      line = new GameObject($"{parent.name}_Line_{index}")
+      line = new GameObject($"{collider.name}_Line_{index}")
         .AddComponent<LineRenderer>();
       line.transform.SetParent(parent.transform);
     }
@@ -129,7 +133,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     line.startWidth = width;
     line.endWidth = width;
     line.positionCount = 2;
-    line.useWorldSpace = true;
+    line.useWorldSpace = false;
     line.SetPosition(0, start);
     line.SetPosition(1, end);
 
@@ -154,17 +158,18 @@ public class VehicleDebugHelpers : MonoBehaviour
   private IEnumerable DrawCollidersCoroutine()
   {
     Logger.LogDebug("called DrawCollidersCoroutine");
-    while (autoUpdateColliders)
+    while (autoUpdateColliders == true)
     {
       Logger.LogDebug("DrawCollidersCoroutine Update");
       DrawAllColliders();
-      yield return new WaitForEndOfFrame();
+      yield return null;
     }
+
+    yield return null;
   }
 
   private bool DrawAllColliders()
   {
-    Logger.LogDebug("DrawAllColliders called");
     foreach (var drawTargetColliders in targetColliders)
     {
       DrawColliders(drawTargetColliders.collider, drawTargetColliders.parent,
@@ -207,51 +212,51 @@ public class VehicleDebugHelpers : MonoBehaviour
     var index = 0;
     DrawLine(center + upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f,
       center + upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f, color,
-      material, parent, colliderItems, index, width);
+      material, parent, boxCollider, colliderItems, index, width);
     index++;
     DrawLine(center - upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f,
       center - upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f, color,
-      material, parent, colliderItems, index, width);
+      material, parent, boxCollider, colliderItems, index, width);
     index++;
     DrawLine(center + upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f,
       center - upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f, color,
-      material, parent, colliderItems, index, width);
+      material, parent, boxCollider, colliderItems, index, width);
     index++;
     DrawLine(center + upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f,
       center - upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f, color,
-      material, parent, colliderItems, index, width);
+      material, parent, boxCollider, colliderItems, index, width);
     index++;
     DrawLine(center + upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f,
       center + upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-      material, parent, colliderItems, index, width);
+      material, parent, boxCollider, colliderItems, index, width);
     index++;
     DrawLine(center - upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f,
       center - upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-      material, parent, colliderItems, index, width);
+      material, parent, boxCollider, colliderItems, index, width);
     index++;
     DrawLine(center + upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f,
       center - upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-      material, parent, colliderItems, index, width);
+      material, parent, boxCollider, colliderItems, index, width);
     index++;
     DrawLine(center + upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f,
       center - upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-      material, parent, colliderItems, index, width);
+      material, parent, boxCollider, colliderItems, index, width);
     index++;
     DrawLine(center + upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f,
       center + upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-      material, parent, colliderItems, index, width);
+      material, parent, boxCollider, colliderItems, index, width);
     index++;
     DrawLine(center - upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f,
       center - upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-      material, parent, colliderItems, index, width);
+      material, parent, boxCollider, colliderItems, index, width);
     index++;
     DrawLine(center + upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f,
       center + upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-      material, parent, colliderItems, index, width);
+      material, parent, boxCollider, colliderItems, index, width);
     index++;
     DrawLine(center - upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f,
       center - upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-      material, parent, colliderItems, index, width);
+      material, parent, boxCollider, colliderItems, index, width);
 
     lines[boxCollider.name] = colliderItems;
   }

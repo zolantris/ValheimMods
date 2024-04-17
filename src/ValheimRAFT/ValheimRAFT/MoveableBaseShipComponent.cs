@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 using ValheimRAFT.Util;
+using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -15,6 +16,8 @@ public class MoveableBaseShipComponent : MonoBehaviour
     IsAnchored = 1,
     HideMesh = 2
   }
+
+  public VehicleDebugHelpers VehicleDebugHelpersInstance;
 
   internal MoveableBaseRootComponent m_baseRoot;
 
