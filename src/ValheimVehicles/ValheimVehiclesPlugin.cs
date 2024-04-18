@@ -2,7 +2,6 @@
 using BepInEx;
 using Jotunn.Managers;
 using UnityEngine;
-using ValheimVehicles.VehicleUtils;
 
 namespace ValheimVehicles;
 
@@ -21,7 +20,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   {
     Instance = this;
 
-    Logger.LogDebug("ValheimVehicles called awake");
-    PrefabManager.OnVanillaPrefabsAvailable += new Action(PrefabRegistry.CreateCustomPrefabs);
+    // Logger.LogDebug("ValheimVehicles called awake");
+    // PrefabManager.OnVanillaPrefabsAvailable += new Action(PrefabRegistry.CreateCustomPrefabs);
   }
 }

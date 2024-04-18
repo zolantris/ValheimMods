@@ -91,22 +91,20 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    * These folder names are matched for the CustomTexturesGroup
    */
   public string[] possibleModFolderNames =
-    new[]
-    {
-      $"{Author}-{ModName}", $"zolantris-{ModName}", $"Zolantris-{ModName}", ModName
-    };
+  [
+    $"{Author}-{ModName}", $"zolantris-{ModName}", $"Zolantris-{ModName}", ModName
+  ];
 
   private ConfigDescription CreateConfigDescription(string description, bool isAdmin = false)
   {
     return new ConfigDescription(
       description,
-      (AcceptableValueBase)null, new object[1]
+      null,
+      new ConfigurationManagerAttributes()
       {
-        (object)new ConfigurationManagerAttributes()
-        {
-          IsAdminOnly = true
-        }
-      });
+        IsAdminOnly = true
+      }
+    );
   }
 
   /**
@@ -371,19 +369,17 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   internal void ApplyMetricIfAvailable()
   {
-    string @namespace = "SentryUnityWrapper";
-    string @pluginClass = "SentryUnityWrapperPlugin";
+    var @namespace = "SentryUnityWrapper";
+    var @pluginClass = "SentryUnityWrapperPlugin";
     Logger.LogDebug(
       $"contains sentryunitywrapper: {Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper")}");
 
     Logger.LogDebug($"plugininfos {Chainloader.PluginInfos}");
 
-    if (EnableMetrics.Value &&
-        Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper"))
-    {
-      Logger.LogDebug("Made it to sentry check");
-      SentryMetrics.ApplyMetrics();
-    }
+    if (!EnableMetrics.Value ||
+        !Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper")) return;
+    Logger.LogDebug("Made it to sentry check");
+    SentryMetrics.ApplyMetrics();
   }
 
   public void Awake()

@@ -13,6 +13,7 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles.Components;
 using static ValheimVehicles.Propulsion.Sail.SailAreaForce;
+using Component = UnityEngine.Component;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 using PrefabNames = ValheimVehicles.Prefabs.PrefabNames;
@@ -232,7 +233,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if (m_floatcollider != null)
     {
       m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-      // m_floatcollider.size = new Vector3(4f, 1f, 2f); // size of raft hull
     }
 
     if (m_blockingcollider != null)
@@ -1169,7 +1169,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var id = GetParentID(zdo);
     if (id != 0)
     {
-      Logger.LogInfo($"InitZDO for id: {id}");
+      // Logger.LogInfo($"InitZDO for id: {id}");
       if (!m_allPieces.TryGetValue(id, out var list))
       {
         list = [];
@@ -1524,6 +1524,14 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if ((bool)m_nview && m_nview.m_zdo != null) m_nview.m_zdo.Set(MBPieceCount, m_pieces.Count);
   }
 
+  private float GetAverageFloatHeightFromHulls()
+  {
+    if (m_hullPieces.Count <= 0) return m_bounds.min.y + 0.2f;
+    var piecesHeight = m_hullPieces.Sum(mHullPiece => mHullPiece.transform.localPosition.y);
+    var averagePieceHeight = piecesHeight / m_hullPieces.Count;
+    return averagePieceHeight;
+  }
+
   /**
    * bounds cannot be decapsulated by default so regenerating it seems prudent on piece removal
    */
@@ -1602,12 +1610,24 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     // world center -191.3834 23.238 4416.917
     // position -191.2324 28.0026 4415.408
 
-    m_floatcollider.size = new Vector3(m_bounds.size.x,
+    // m_floatcollider.size =
+    var newFloatSize = new Vector3(m_bounds.size.x,
       m_floatcollider.size.y, m_bounds.size.z);
-    m_floatcollider.center = new Vector3(m_bounds.center.x,
-      -0.2f, m_bounds.center.z);
-    m_floatcollider.transform.localPosition =
-      new Vector3(m_bounds.center.x, -2f, m_bounds.center.y);
+    m_floatcollider.size = newFloatSize;
+
+    // todo compute the float colliderY transform so it aligns with bounds if player builds underneath boat
+    var averageFloatHeight = GetAverageFloatHeightFromHulls();
+    m_floatcollider.center = new Vector3(m_bounds.center.x, averageFloatHeight, m_bounds.center.z);
+    // var computedFloatCenterY = m_bounds.center.y;
+    // m_floatcollider.center = new Vector3(m_bounds.center.x,
+    // m_floatcollider.center.y, m_bounds.center.z);
+    // m_floatcollider.bounds = new Bounds(transform.position + m_bounds.center, newFloatSize);
+
+
+    // likely not needed, the center position should not be transformed ever...only the bounds should update which should mutate the center position of the bounds object but not the parent game object.
+    // var localCenterOfFC = transform.InverseTransformPoint(m_bounds.center);
+    // m_floatcollider.transform.localPosition =
+    // new Vector3(localCenterOfFC.x, -2f, localCenterOfFC.z);
     /*?
      * onboard colliders need to be higher than the items placed on the ship.
      *
@@ -1615,8 +1635,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
      * - Have a minimum "deck" position and determine height based on the deck. For now this do not need to be done
      */
     m_onboardcollider.size = new Vector3(m_bounds.size.x, m_bounds.size.y, m_bounds.size.z);
-    m_onboardcollider.center = new Vector3(m_bounds.size.x, Mathf.Max(3f, m_bounds.size.y),
-      m_bounds.size.z);
+    m_onboardcollider.center = m_bounds.center;
 
     if (hasDebug)
     {
@@ -1704,45 +1723,90 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     return new Bounds { center = center, extents = extents };
   }
 
-  public void EncapsulateColliders(List<Collider> colliders)
+
+  /*
+   * Bounds must be local
+   * - world position bounds will desync when the vehicle moves
+   * - Using global position bounds with a local bounds will cause the center to extend to the global position and break the raft
+   */
+  private Bounds? TransformColliderGlobalBoundsToLocal(Collider collider, Component netView)
+  {
+    var offsetFromController =
+      transform.InverseTransformPoint(collider.bounds.center);
+
+    var colliderLocalBounds = new Bounds(offsetFromController, collider.bounds.size)
+    {
+      extents = collider.bounds.extents
+    };
+
+    if (colliderLocalBounds.Contains(offsetFromController + collider.transform.position))
+    {
+      offsetFromController = collider.bounds.center;
+      colliderLocalBounds = new Bounds(offsetFromController, collider.bounds.size)
+      {
+        extents = collider.bounds.extents
+      };
+    }
+
+    if (!colliderLocalBounds.Contains(offsetFromController))
+    {
+      var tmpColliderOffsetFromNetView = collider.bounds.center + collider.transform.localPosition;
+      var offsetFromGlobalNetViewPosition =
+        netView.transform.InverseTransformPoint(tmpColliderOffsetFromNetView);
+      var localOffsetFromPieceContainer =
+        transform.InverseTransformPoint(offsetFromGlobalNetViewPosition);
+
+      // todo may need to use netview local position to get offset from netview
+      offsetFromController = localOffsetFromPieceContainer;
+      colliderLocalBounds = new Bounds(offsetFromController, collider.bounds.size)
+      {
+        extents = collider.bounds.extents
+      };
+    }
+
+    /*
+     * @notes: verify that the control relative + local bounds and the new center bounds (which should be the same) is within the new bounds.
+     * - center value could be a non-relative point meaning it exceeds the bounds
+     */
+    var isValidBounds = offsetFromController == colliderLocalBounds.center &&
+                        colliderLocalBounds.Contains(offsetFromController) &&
+                        colliderLocalBounds.Contains(colliderLocalBounds.center);
+
+    return isValidBounds ? colliderLocalBounds : null;
+  }
+
+  public void EncapsulateColliders(List<Collider> colliders, ZNetView netView)
   {
     if (!(bool)m_floatcollider) return;
 
-    if (m_bounds.size == Vector3.zero)
-    {
-      m_bounds = new Bounds();
-      // m_bounds.Encapsulate(m_floatcollider.bounds);
-    }
+    // if (m_bounds.size == Vector3.zero)
+    // {
+    //   // make sure that bounds is zeroed to match transform BaseVehicleController center point
+    //   m_bounds.center = Vector3.zero;
+    //   // var newCenter = transform.TransformPoint(m_floatcollider.center);
+    //   // Logger.LogDebug($"newcenter tranform {newCenter}, netview pos {netView.transform.position}");
+    //   // m_bounds = new Bounds(newCenter, Vector3.zero);
+    //   // m_bounds = new Bounds
+    //   // { center = m_floatcollider.bounds.center, extents = m_floatcollider.bounds.extents };
+    //   // m_bounds.Encapsulate(m_floatcollider.bounds);
+    // }
 
     foreach (var collider in colliders)
     {
-      // very important to use local bounds otherwise it grabs world position point as center and causes the bounds to extend massively
-      // var isGlobalPosition = collider.bounds. collider.bounds.center
-      // var localCenterOffset = collider.bounds.center - netView.transform.position;
-      // var localCenter = collider.transform.TransformPoint(collider.bounds.center);
-
-      // first: Center(0.1,0.2,0.2)
-      // Second: Center: (-471.940887, 20.7657166, 4952.95605), Extents: (0.50050354, 0.227736473, 0.512207031)
-
-      var isLocalCenter = collider.transform.localPosition != collider.transform.position &&
-                          collider.bounds.Contains(collider.transform.localPosition);
-
-      var localCenter = collider.bounds.center;
-      if (!isLocalCenter)
+      var localBounds = TransformColliderGlobalBoundsToLocal(collider, netView);
+      if (localBounds == null)
       {
-        localCenter = collider.transform.position - collider.bounds.center;
+        Logger.LogInfo(
+          $"Using fallback localPosition on netView: {netView.name}, collider.name: {collider.name}");
+        m_bounds.Encapsulate(netView.transform.localPosition);
+        continue;
       }
 
-      // var localCenter = collider.transform.localPosition + localCenterOffset;
-      var colliderWorldBounds = new Bounds(localCenter, collider.bounds.extents);
-      // var localBounds = TransformBounds(collider.transform, collider.bounds);
-
-      // first time initialization bounds will be zeroed
-      m_bounds.Encapsulate(colliderWorldBounds);
+      m_bounds.Encapsulate(localBounds.Value);
     }
   }
 
-  /**
+  /*
    * Functional that updates targetBounds, useful for updating with new items or running off large lists and updating the newBounds value without mutating rigidbody values
    */
   public void EncapsulateBounds(ZNetView netView)
@@ -1750,87 +1814,25 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var piece = netView.GetComponent<Piece>();
     var colliders = piece
       ? piece.GetAllColliders()
-      : new List<Collider>(netView.GetComponentsInChildren<Collider>());
+      : [..netView.GetComponentsInChildren<Collider>()];
     var door = netView.GetComponentInChildren<Door>();
     var ladder = netView.GetComponent<RopeLadderComponent>();
     var rope = netView.GetComponent<RopeAnchorComponent>();
 
+    IgnoreShipColliders(colliders);
+
     Logger.LogDebug($"previous m_bounds extents: {m_bounds.extents}");
+
     if (!door && !ladder && !rope)
     {
-      // local position is in accurate but better
-      // todo possibly use the heavier approach here if there are no colliders
-      // if (colliders.Count == 0)
-      // {
-      //   var enableExactVehicleBounds = ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value;
-      //   if (hasDebug)
-      //   {
-      //     Logger.LogWarning(
-      //       "No colliders detected for piece, using centerpoint as encapsulation, FYI the raft could be inaccurately sized, consider enabling the <EnableExactVehicleBounds=true> which will likely fix this object");
-      //   }
-      //
-      //   if (enableExactVehicleBounds)
-      //   {
-      //     EncapsulateAllChildrenWithinBounds(netView);
-      //   }
-      //   else
-      //   {
-      //     m_bounds.Encapsulate(netView.transform.localPosition);
-      //   }
-      // }
-      m_bounds.Encapsulate(netView.transform.localPosition);
-
-      // m_bounds.Encapsulate(netView.transform.localPosition);
-      // EncapsulateColliders(colliders);
+      EncapsulateColliders(colliders, netView);
+      OnBoundsChangeUpdateShipColliders();
+      OnBoundsChangeUpdateShipRotationPoint();
     }
 
-    IgnoreShipColliders(colliders);
-    OnBoundsChangeUpdateShipColliders();
-    OnBoundsChangeUpdateShipRotationPoint();
-
     Logger.LogDebug($"current m_bounds extents (after Encapsulate): {m_bounds.extents}");
-    Logger.LogDebug($"m_floatcollider: {m_floatcollider.bounds}");
+    Logger.LogDebug($"m_floatcollider bounds: {m_floatcollider.bounds}");
   }
-
-  // public void EncapsulateBounds(ZNetView netView)
-  // {
-  //   var piece = netView.GetComponent<Piece>();
-  //   var colliders = piece
-  //     ? piece.GetAllColliders()
-  //     : new List<Collider>(netView.GetComponentsInChildren<Collider>());
-  //   var door = netView.GetComponentInChildren<Door>();
-  //   var ladder = netView.GetComponent<RopeLadderComponent>();
-  //   var rope = netView.GetComponent<RopeAnchorComponent>();
-  //
-  //   Logger.LogDebug($"previous m_bounds extents: {m_bounds.extents}");
-  //   if (!door && !ladder && !rope)
-  //   {
-  //     m_bounds.Encapsulate(netView.transform.localPosition);
-  //   }
-  //
-  //   Logger.LogDebug($"current m_bounds extents (after Encapsulate): {m_bounds.extents}");
-  //
-  //   Logger.LogDebug($"m_floatcollider: {m_floatcollider.bounds}");
-  //
-  //   for (var i = 0; i < colliders.Count; i++)
-  //   {
-  //     if (m_floatcollider) Physics.IgnoreCollision(colliders[i], m_floatcollider, true);
-  //     if (m_blockingcollider) Physics.IgnoreCollision(colliders[i], m_blockingcollider, true);
-  //     if (m_onboardcollider)
-  //       Physics.IgnoreCollision(colliders[i], m_onboardcollider, true);
-  //   }
-  //
-  //   m_blockingcollider.size = new Vector3(m_bounds.size.x,
-  //     ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value, m_bounds.size.z);
-  //   m_blockingcollider.center = new Vector3(m_bounds.center.x,
-  //     ValheimRaftPlugin.Instance.BlockingColliderVerticalCenterOffset.Value, m_bounds.center.z);
-  //   m_floatcollider.size = new Vector3(m_bounds.size.x,
-  //     m_floatcollider.size.y, m_bounds.size.z);
-  //   m_floatcollider.center = new Vector3(m_bounds.center.x,
-  //     m_floatcollider.center.y, m_bounds.center.z);
-  //   m_onboardcollider.size = m_bounds.size;
-  //   m_onboardcollider.center = m_bounds.center;
-  // }
 
   internal int GetPieceCount()
   {

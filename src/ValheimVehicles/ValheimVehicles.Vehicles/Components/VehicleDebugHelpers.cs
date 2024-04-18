@@ -53,7 +53,7 @@ public class VehicleDebugHelpers : MonoBehaviour
       {
         if (!lines.TryGetValue(keyValuePair.Key, out var data)) continue;
         if (data == null) continue;
-        foreach (var lineRenderer in keyValuePair.Value.OfType<LineRenderer>())
+        foreach (var lineRenderer in keyValuePair.Value.ToList().OfType<LineRenderer>())
         {
           Destroy(lineRenderer);
           data.Remove(lineRenderer);
@@ -133,7 +133,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     line.startWidth = width;
     line.endWidth = width;
     line.positionCount = 2;
-    line.useWorldSpace = false;
+    line.useWorldSpace = true;
     line.SetPosition(0, start);
     line.SetPosition(1, end);
 
@@ -193,7 +193,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     {
       color = color
     };
-    const float width = 0.01f;
+    const float width = 0.05f;
     var rightDir = boxCollider.transform.right.normalized;
     var forwardDir = boxCollider.transform.forward.normalized;
     var upDir = boxCollider.transform.up.normalized;
