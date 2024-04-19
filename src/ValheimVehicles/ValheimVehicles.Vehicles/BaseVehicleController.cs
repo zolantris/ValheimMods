@@ -237,7 +237,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     if (m_blockingcollider != null)
     {
-      m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 2f);
+      m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
       m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
       m_blockingcollider.transform.parent.gameObject.layer =
         ValheimRaftPlugin.CustomRaftLayer;
@@ -1570,47 +1570,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       Logger.LogDebug($"floatcollider size after {m_floatcollider.size}");
     }
 
-    // old approach
-    // m_blockingcollider.size = new Vector3(m_bounds.size.x,
-    //   ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value, m_bounds.size.z);
-    // m_blockingcollider.center = new Vector3(m_bounds.center.x,
-    //   ValheimRaftPlugin.Instance.BlockingColliderVerticalCenterOffset.Value, m_bounds.center.z);
-    // m_floatcollider.size = new Vector3(m_bounds.size.x,
-    //   ValheimRaftPlugin.Instance.FloatingColliderVerticalSize.Value, m_bounds.size.z);
-    // m_floatcollider.center = new Vector3(m_bounds.center.x,
-    //   ValheimRaftPlugin.Instance.FloatingColliderVerticalCenterOffset.Value, m_bounds.center.z);
-    // m_onboardcollider.size = m_bounds.size;
-    // m_onboardcollider.center = m_bounds.center;
-    // end of OLD APPROACH!
-
     m_blockingcollider.size = new Vector3(m_bounds.size.x,
       ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value, m_bounds.size.z);
     m_blockingcollider.center = new Vector3(m_bounds.center.x,
       ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value / 2, m_bounds.center.z);
 
-    // VehicleShip_FloatCollider
-    // center -1.5992 -2.0976 1.3841
-    // extents 3.6007 0.2688 6.6194
-    // size 7.2014 0.5376 13.2389
-    // bounds -1.5992 -2.0976 1.3841
-
-
-    // watervehicle controller bounds
-    // size 7.2014 4.1465 13.2389
-    // extents 3.6007 2.0733 6.6194
-    // center -1.5992 -1.0518 1.3841
-    // min -5.1999 -3.1251 -5.2354
-    // max 2.0015 1.0215 8.0035
-
-    // VehicleSHip rb
-    // position -190.9417 26.5681 4415.641
-    // world center -188.0447 28.0174 4418
-    //
-    // vehicle pieces rigidbody
-    // world center -191.3834 23.238 4416.917
-    // position -191.2324 28.0026 4415.408
-
-    // m_floatcollider.size =
     var newFloatSize = new Vector3(m_bounds.size.x,
       m_floatcollider.size.y, m_bounds.size.z);
     m_floatcollider.size = newFloatSize;
@@ -1618,17 +1582,18 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     // todo compute the float colliderY transform so it aligns with bounds if player builds underneath boat
     var averageFloatHeight = GetAverageFloatHeightFromHulls();
     m_floatcollider.center = new Vector3(m_bounds.center.x, averageFloatHeight, m_bounds.center.z);
-    // var computedFloatCenterY = m_bounds.center.y;
-    // m_floatcollider.center = new Vector3(m_bounds.center.x,
-    // m_floatcollider.center.y, m_bounds.center.z);
-    // m_floatcollider.bounds = new Bounds(transform.position + m_bounds.center, newFloatSize);
 
+    /*
+     * The local position must be transformed to be center of the boat, this means the center is actually the size of the x and z coordinates for float collider.
+     *
+     * todo it's possible center could just be set to these values and local transforms can be removed completely
+     */
+    var centeredLocalPositionXZ = new Vector3(m_bounds.center.x, 0f, m_bounds.center.z) * 2f;
 
-    // likely not needed, the center position should not be transformed ever...only the bounds should update which should mutate the center position of the bounds object but not the parent game object.
-    // var localCenterOfFC = transform.InverseTransformPoint(m_bounds.center);
-    // m_floatcollider.transform.localPosition =
-    // new Vector3(localCenterOfFC.x, -2f, localCenterOfFC.z);
-    /*?
+    m_blockingcollider.transform.localPosition = centeredLocalPositionXZ;
+    m_floatcollider.transform.localPosition = centeredLocalPositionXZ;
+
+    /*
      * onboard colliders need to be higher than the items placed on the ship.
      *
      * todo make this logic exact.
@@ -1636,6 +1601,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
      */
     m_onboardcollider.size = new Vector3(m_bounds.size.x, m_bounds.size.y, m_bounds.size.z);
     m_onboardcollider.center = m_bounds.center;
+    m_onboardcollider.transform.localPosition = m_bounds.center * 2f;
 
     if (hasDebug)
     {
@@ -1728,11 +1694,43 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
    * Bounds must be local
    * - world position bounds will desync when the vehicle moves
    * - Using global position bounds with a local bounds will cause the center to extend to the global position and break the raft
+   *
+   * FYI most bounds are GLOBAL so this may not be best solution. Maybe there are better ways to calculate moving object bounds.
+   *
+   * @alternative is to calculate all bounds as world coordinates, then do a subtraction of the transform.position when setting the center points of all colliders. This should then set the bounds to a sane number
+   *
+   * (-1.00952148, 0.632003784, -0.0151367188)
    */
   private Bounds? TransformColliderGlobalBoundsToLocal(Collider collider, Component netView)
   {
-    var offsetFromController =
-      transform.InverseTransformPoint(collider.bounds.center);
+    Vector3 offsetFromController;
+
+    var worldOffsetFromNetView = collider.transform.parent.position + collider.bounds.center;
+
+    var localOffsetFromNetView = collider.transform.parent.localPosition + collider.bounds.center;
+
+    // may need netview directly if it's not the "parent"
+    var parentOffset = collider.transform.parent.localPosition;
+
+    var hasLocalPosition = (collider.transform.position + collider.transform.localPosition) !=
+                           collider.transform.position;
+
+    // Checks if it transforms into a localPosition point.
+    // - If it's already local position, it will be vastly inaccurate.
+    // could use transform directly, but then hasLocalCenterPositionFromWorld would need to add the localposition instead
+    var localCenterPositionFromWorld =
+      netView.transform.InverseTransformPoint(collider.bounds.center);
+    var hasLocalCenterPositionFromWorld =
+      collider.bounds.Contains(localCenterPositionFromWorld + netView.transform.position);
+    // inverse transforming a local position bounds causes a bunch of problems. Guarding with this if block prevents this problem
+    if (hasLocalCenterPositionFromWorld)
+    {
+      offsetFromController = localCenterPositionFromWorld + parentOffset;
+    }
+    else
+    {
+      offsetFromController = collider.bounds.center + netView.transform.localPosition;
+    }
 
     var colliderLocalBounds = new Bounds(offsetFromController, collider.bounds.size)
     {
@@ -1764,6 +1762,14 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       };
     }
 
+    var colliderLocalPositionWithinBounds =
+      collider.transform.parent.localPosition + collider.transform.localPosition;
+
+    if (!collider.bounds.Contains(colliderLocalPositionWithinBounds))
+    {
+      return null;
+    }
+
     /*
      * @notes: verify that the control relative + local bounds and the new center bounds (which should be the same) is within the new bounds.
      * - center value could be a non-relative point meaning it exceeds the bounds
@@ -1771,6 +1777,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var isValidBounds = offsetFromController == colliderLocalBounds.center &&
                         colliderLocalBounds.Contains(offsetFromController) &&
                         colliderLocalBounds.Contains(colliderLocalBounds.center);
+
 
     return isValidBounds ? colliderLocalBounds : null;
   }

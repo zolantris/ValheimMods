@@ -140,7 +140,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
       return false;
     }
 
-    Player player = character as Player;
+    var player = character as Player;
 
 
     var playerOnShipViaShipInstance =
