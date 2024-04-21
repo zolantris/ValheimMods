@@ -1536,7 +1536,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   private float GetAverageFloatHeightFromHulls()
   {
-    if (m_hullPieces.Count <= 0) return m_bounds.min.y + 0.2f;
+    if (m_hullPieces.Count <= 0) return -0.2f;
 
     foreach (var hullPiece in m_hullPieces)
     {
@@ -1747,58 +1747,41 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
    *
    * @alternative is to calculate all bounds as world coordinates, then do a subtraction of the transform.position when setting the center points of all colliders. This should then set the bounds to a sane number
    *
-   * (-1.00952148, 0.632003784, -0.0151367188)
    */
-  private Bounds? TransformColliderGlobalBoundsToLocal(Collider collider, GameObject netView)
+  private static Bounds? TransformColliderGlobalBoundsToLocal(Collider collider, GameObject netView)
   {
-    Vector3 center;
+    Vector3? center = null;
 
-    var parentOffset = collider.transform.parent.localPosition;
+    var parentOffset = netView.transform.localPosition;
+    var localCenterPositionFromGlobalBoundsCenter =
+      collider.bounds.center - netView.transform.position;
 
-    // world coordinates
-    var localCenterPositionFromBoundsCenter =
-      netView.transform.InverseTransformPoint(collider.bounds.center);
-    var worldCenterPositionFromBoundsCenter =
-      netView.transform.TransformPoint(collider.bounds.center);
-    var hasLocalCenterPositionFromWorld =
-      collider.bounds.Contains(localCenterPositionFromBoundsCenter + netView.transform.position);
+    var worldCenterPositionFromLocalBoundsCenter =
+      netView.transform.root.TransformPoint(collider.bounds.center);
+    // (1641.40649, 30.6234646, 3545.7312)
+    // (1645.69397, 31.2765636, 3548.26392)
+    var isGlobalCenter = collider.bounds.Contains(localCenterPositionFromGlobalBoundsCenter);
 
-    // local coordinates
-    var localOffsetFromWorldPosition =
-      netView.transform.position - worldCenterPositionFromBoundsCenter;
-    var localFromOffsetController =
-      netView.transform.InverseTransformPoint(localOffsetFromWorldPosition);
-    var isColliderLocalCenter = localOffsetFromWorldPosition == localFromOffsetController;
+    // var isGlobalCenter = (collider.transform.position + collider.bounds.center) ==
+    //                      localCenterPositionFromGlobalBoundsCenter;
 
-    // test only
-    // todo remove
-    var existsWithinVehicle = netView.transform.parent.position + netView.transform.localPosition +
-                              collider.bounds.center;
+    var isLocalCenter = !collider.bounds.Contains(localCenterPositionFromGlobalBoundsCenter);
 
-    // inverse transforming a local position bounds causes a bunch of problems. Guarding with this if block prevents this problem
-    if (hasLocalCenterPositionFromWorld)
+    // global bounds.center
+    if (isGlobalCenter)
     {
-      center = localCenterPositionFromBoundsCenter + parentOffset;
-      return new Bounds(center, collider.bounds.size)
-      {
-        extents = collider.bounds.extents
-      };
+      center = localCenterPositionFromGlobalBoundsCenter + parentOffset;
     }
 
-    if (isColliderLocalCenter)
+    // local bounds.center
+    if (isLocalCenter)
     {
       center = collider.bounds.center + parentOffset;
-      // local POSITION COORDINATES
-      return new Bounds(center,
-        collider.bounds.size)
-      {
-        extents = collider.bounds.extents
-      };
     }
 
-    center = collider.bounds.center + parentOffset;
+    if (center == null) return null;
 
-    return new Bounds(center,
+    return new Bounds(center.Value,
       collider.bounds.size)
     {
       extents = collider.bounds.extents
