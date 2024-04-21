@@ -854,6 +854,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6589294939018646251}
   - component: {fileID: 8600342321117760864}
+  - component: {fileID: 7390813409967821091}
   m_Layer: 0
   m_Name: steering_wheel
   m_TagString: Untagged
@@ -905,6 +906,53 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.283027, y: 2.0301983, z: 1.3162545}
   m_Center: {x: 0.068568766, y: 0.42495975, z: -0.021271527}
+--- !u!205 &7390813409967821091
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3136300084984330545}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: -0.03313732, y: 0.425502, z: 0.003503412}
+  m_Size: 2.0514917
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.036174618
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 1383099584178731007}
+    - renderer: {fileID: 694308990200557583}
+    - renderer: {fileID: 3872491328386259962}
+    - renderer: {fileID: 8498145805122796681}
+    - renderer: {fileID: 114414383011636876}
+    - renderer: {fileID: 2693869293590324613}
+    - renderer: {fileID: 803475856928744311}
+    - renderer: {fileID: 3715678946745131310}
+    - renderer: {fileID: 2495707321152490591}
+    - renderer: {fileID: 7953611025102687388}
+    - renderer: {fileID: 2132914795655238008}
+    - renderer: {fileID: 8515412342502272436}
+    - renderer: {fileID: 5232838853963170963}
+    - renderer: {fileID: 1839240826203636224}
+    - renderer: {fileID: 4336922052901897025}
+    - renderer: {fileID: 4018979542617015945}
+    - renderer: {fileID: 7818385561145607333}
+    - renderer: {fileID: 5287643590580064541}
+    - renderer: {fileID: 6323218164961184505}
+    - renderer: {fileID: 5967954779995369576}
+    - renderer: {fileID: 657542773703511092}
+    - renderer: {fileID: 5474013999427227880}
+    - renderer: {fileID: 7508856216438451633}
+    - renderer: {fileID: 4009008081360190943}
+    - renderer: {fileID: 8548960057641268562}
+    - renderer: {fileID: 3051057682115973257}
+    - renderer: {fileID: 6400473788501662464}
+    - renderer: {fileID: 957852397954799608}
+    - renderer: {fileID: 3429441077107958058}
+  m_Enabled: 1
 --- !u!1 &3179719574374394145
 GameObject:
   m_ObjectHideFlags: 0
