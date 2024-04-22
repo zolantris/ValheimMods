@@ -140,8 +140,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 /* end sail calcs  */
   private Vector2i m_sector;
   private Vector2i m_serverSector;
-  private Bounds m_bounds = new();
-  private Bounds _hullBounds = new();
+  private Bounds _vehicleBounds;
+  private Bounds _hullBounds;
   public BoxCollider m_blockingcollider = new();
   internal BoxCollider m_floatcollider = new();
   internal BoxCollider m_onboardcollider = new();
@@ -990,7 +990,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
 
     if (hasDebug)
-      Logger.LogDebug($"Ship Size calc is: m_bounds {m_bounds} bounds size {m_bounds.size}");
+      Logger.LogDebug(
+        $"Ship Size calc is: m_bounds {_vehicleBounds} bounds size {_vehicleBounds.size}");
 
     m_dynamicObjects.TryGetValue(_persistentZdoId, out var objectList);
     var objectListHasNoValidItems = true;
@@ -1511,7 +1512,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     if (hasDebug)
       Logger.LogDebug(
-        $"After Adding Piece: {netView.name}, Ship Size calc is: m_bounds {m_bounds} bounds size {m_bounds.size}");
+        $"After Adding Piece: {netView.name}, Ship Size calc is: m_bounds {_vehicleBounds} bounds size {_vehicleBounds.size}");
   }
 
   private void UpdatePieceCount()
@@ -1535,17 +1536,27 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   }
 
 
+  // for increasing ship wake size.
   private void SetShipWakeBounds()
   {
     VehicleInstance.Instance.ShipEffectsObj.transform.localPosition = _hullBounds.center;
-    var renderer = VehicleInstance.Instance.ShipEffectsObj.GetComponent<Renderer>();
+    var renderer = VehicleInstance.Instance.ShipEffectsObj.GetComponentsInChildren<Renderer>();
     var psys = VehicleInstance.Instance.ShipEffectsObj.GetComponentsInChildren<ParticleSystem>();
 
+    var renderBounds = new Bounds();
+
+    foreach (var renderer1 in renderer)
+    {
+      if (renderer1 == null) continue;
+      renderBounds.Encapsulate(renderer1.bounds);
+    }
+
     if (psys == null || renderer == null) return;
-    var prevBoundsSize = renderer.bounds.size;
-    var sizeRatio = new Vector3(_hullBounds.size.x / prevBoundsSize.x, prevBoundsSize.y,
-      _hullBounds.size.z / prevBoundsSize.z);
-    var scalar = Vector3.Scale(prevBoundsSize, sizeRatio);
+
+    var sizeRatio = new Vector3(_hullBounds.size.x / renderBounds.size.x, renderBounds.size.y,
+      _hullBounds.size.z / renderBounds.size.z);
+    var scalar = Vector3.Scale(renderBounds.size, sizeRatio);
+
     foreach (var ps in psys)
     {
       var main = ps.main;
@@ -1588,7 +1599,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
-    m_bounds = new Bounds();
+    _vehicleBounds = new Bounds();
 
     foreach (var netView in m_pieces)
     {
@@ -1622,9 +1633,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
      */
     var averageFloatHeight = GetAverageFloatHeightFromHulls();
     var floatColliderCenterOffset =
-      new Vector3(m_bounds.center.x, averageFloatHeight, m_bounds.center.z);
-    var floatColliderSize = new Vector3(m_bounds.size.x,
-      m_floatcollider.size.y, m_bounds.size.z);
+      new Vector3(_vehicleBounds.center.x, averageFloatHeight, _vehicleBounds.center.z);
+    var floatColliderSize = new Vector3(_vehicleBounds.size.x,
+      m_floatcollider.size.y, _vehicleBounds.size.z);
 
     /*
      * blocking collider is the collider that prevents the ship from going through objects.
@@ -1633,10 +1644,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
      * - may need an additional size
      * - may need more logic for water masks (hiding water on boat) and other boat magic that has not been added yet.
      */
-    var blockingColliderCenterOffset = new Vector3(m_bounds.center.x,
-      ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value / 2, m_bounds.center.z);
-    var blockingColliderSize = new Vector3(m_bounds.size.x,
-      ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value, m_bounds.size.z);
+    var blockingColliderCenterOffset = new Vector3(_vehicleBounds.center.x,
+      ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value / 2, _vehicleBounds.center.z);
+    var blockingColliderSize = new Vector3(_vehicleBounds.size.x,
+      ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value, _vehicleBounds.size.z);
 
     /*
      * onboard colliders
@@ -1650,15 +1661,16 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     const float characterHeightScalar = 1.2f;
     var computedOnboardTriggerSize =
       Math.Min(
-        Math.Max(m_bounds.size.y * characterHeightScalar,
-          m_bounds.size.y + characterTriggerMinHeight),
-        m_bounds.size.y + characterTriggerMaxAddedHeight);
+        Math.Max(_vehicleBounds.size.y * characterHeightScalar,
+          _vehicleBounds.size.y + characterTriggerMinHeight),
+        _vehicleBounds.size.y + characterTriggerMaxAddedHeight);
     var onboardColliderCenter =
-      new Vector3(m_bounds.center.x, m_bounds.center.y + computedOnboardTriggerSize / 2f,
-        m_bounds.center.z);
-    var onboardColliderSize = new Vector3(m_bounds.size.x,
+      new Vector3(_vehicleBounds.center.x,
+        computedOnboardTriggerSize / 2f,
+        _vehicleBounds.center.z);
+    var onboardColliderSize = new Vector3(_vehicleBounds.size.x,
       computedOnboardTriggerSize,
-      m_bounds.size.z);
+      _vehicleBounds.size.z);
 
     // Assign all the colliders
     m_blockingcollider.size = blockingColliderSize;
@@ -1734,7 +1746,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       if (renderer == null) continue;
       if (!renderer.enabled && renderer.gameObject.layer == LayerMask.GetMask("piece"))
-        m_bounds.Encapsulate(renderer.bounds);
+        _vehicleBounds.Encapsulate(renderer.bounds);
     }
   }
 
@@ -1769,139 +1781,134 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
    * @alternative is to calculate all bounds as world coordinates, then do a subtraction of the transform.position when setting the center points of all colliders. This should then set the bounds to a sane number
    *
    */
-  public static Bounds? TransformColliderGlobalBoundsToLocal(Collider collider, GameObject netView,
-    Vector3 localBoundsCenter, Vector3 localBoundsSize)
+  public static Bounds? TransformColliderGlobalBoundsToLocal(Collider collider)
   {
-    Vector3 offsetFromController;
+    var colliderCenterMagnitude = collider.bounds.center.magnitude;
+    var worldPositionMagnitude = collider.transform.position.magnitude;
 
-    var targetBounds = new Bounds(localBoundsCenter, localBoundsSize);
+    Vector3 center;
 
-    var worldOffsetFromNetView = collider.transform.parent.position + collider.bounds.center;
-
-    var localOffsetFromNetView = collider.transform.parent.localPosition + collider.bounds.center;
-
-    // may need netview directly if it's not the "parent"
-    var parentOffset = collider.transform.parent.localPosition;
-
-    var hasLocalPosition = (collider.transform.localPosition) !=
-                           collider.transform.position;
-
-    var hasGlobalPosition = collider.bounds.Contains(collider.transform.position);
-    // var pointWithinExtent = collider.bounds.extents * closestPoint
-    // Checks if it transforms into a localPosition point.
-    // - If it's already local position, it will be vastly inaccurate.
-    // could use transform directly, but then hasLocalCenterPositionFromWorld would need to add the localposition instead
-    var localCenterPositionFromBoundsCenter =
-      netView.transform.InverseTransformPoint(collider.bounds.center);
-    var worldCenterPositionFromBoundsCenter =
-      netView.transform.TransformPoint(collider.bounds.center);
-    var hasLocalCenterPositionFromWorld =
-      collider.bounds.Contains(localCenterPositionFromBoundsCenter + netView.transform.position);
-
-    var existsWithinVehicle = netView.transform.parent.position + netView.transform.localPosition +
-                              collider.bounds.center;
-    // inverse transforming a local position bounds causes a bunch of problems. Guarding with this if block prevents this problem
-    if (hasLocalCenterPositionFromWorld || hasGlobalPosition)
+    /*
+     * <summary>confirms that the magnitude is near zero when subtracting a guaranteed world-position coordinate with a bounds.center coordinate that could be local or global.</summary>
+     *
+     * - if magnitude is above 5f (or probably even 1f) it is very likely a local position subtracted against a global position.
+     *
+     * - Limitations: At world center 0,0,0 this calc likely will not be accurate, but won't really matter
+     */
+    var isLocalPosition = Mathf.Abs(colliderCenterMagnitude - worldPositionMagnitude) > 5f;
+    if (isLocalPosition)
     {
-      offsetFromController = localCenterPositionFromBoundsCenter + parentOffset;
+      center = collider.transform.root.transform.TransformPoint(collider.bounds.center) -
+               collider.transform.root.position;
     }
     else
     {
-      // assumes things are local points...
-      offsetFromController = collider.bounds.center + netView.transform.localPosition +
-                             collider.transform.localPosition;
+      center = collider.transform.root.transform.InverseTransformPoint(collider.bounds.center);
     }
 
-    var colliderLocalBounds = new Bounds(offsetFromController, collider.bounds.size)
-    {
-      extents = collider.bounds.extents
-    };
-
-    // todo remove this as it never is hit
-    if (colliderLocalBounds.Contains(offsetFromController + collider.transform.position))
-    {
-      offsetFromController = collider.bounds.center;
-    }
-
-    // todo remove this as it never is hit
-    if (!colliderLocalBounds.Contains(offsetFromController))
-    {
-      var tmpColliderOffsetFromNetView = collider.bounds.center + collider.transform.localPosition;
-      var offsetFromGlobalNetViewPosition =
-        netView.transform.InverseTransformPoint(tmpColliderOffsetFromNetView);
-      var localOffsetFromPieceContainer =
-        netView.transform.InverseTransformPoint(offsetFromGlobalNetViewPosition);
-
-      // todo may need to use netview local position to get offset from netview
-      offsetFromController = localOffsetFromPieceContainer;
-    }
-
-
-    if (hasLocalCenterPositionFromWorld)
-    {
-      return colliderLocalBounds;
-    }
-
-
-    offsetFromController = netView.transform.position - worldCenterPositionFromBoundsCenter;
-    var localFromOffsetController = netView.transform.InverseTransformPoint(offsetFromController);
-    var isLocalCenter = offsetFromController == localFromOffsetController
-      ;
-
-    if (isLocalCenter)
-    {
-      // local POSITION COORDINATES
-      return colliderLocalBounds;
-    }
-
-
-    // local POSITION COORDINATES.
-    // offsetFromController = netView.transform.localPosition +
-    //                        (collider.transform.position - collider.bounds.center);
-    offsetFromController = netView.transform.localPosition + collider.bounds.center;
-    var newBounds = new Bounds(offsetFromController,
-      collider.bounds.size)
-    {
-      extents = collider.bounds.extents
-    };
-
-    targetBounds.Encapsulate(newBounds);
-    if (localBoundsCenter.magnitude < targetBounds.center.magnitude - 40f ||
-        (localBoundsSize * 2).magnitude < targetBounds.size.magnitude)
-    {
-      Logger.LogError("bounds likely tried to encapsulate a point that was global and broke");
-      return null;
-    }
-
-    if (localBoundsCenter.z < targetBounds.center.z + 40f ||
-        localBoundsCenter.x < targetBounds.center.x + 40f ||
-        localBoundsCenter.y < targetBounds.center.y + 40f)
-    {
-      return null;
-    }
-
-    return newBounds;
+    return new Bounds(center, collider.bounds.size);
   }
+  // may need netview directly if it's not the "parent"
+  // var parentOffset = collider.transform.parent.localPosition;
+  //
+  // var hasLocalPosition = (collider.transform.localPosition) !=
+  //                        collider.transform.position;
+  // var hasLocalCenterPosition = collider.bounds.center + collider.transform.localPosition;
+  //
+  // collider.bounds.center.magnitude;
+  //
+  // var center = collider.bounds.center +
+  //              Vector3.Scale(collider.transform.localPosition, collider.transform.localScale);
+  //
+  // var hasGlobalPosition = collider.bounds.Contains(collider.transform.position);
+  // // var pointWithinExtent = collider.bounds.extents * closestPoint
+  // // Checks if it transforms into a localPosition point.
+  // // - If it's already local position, it will be vastly inaccurate.
+  // // could use transform directly, but then hasLocalCenterPositionFromWorld would need to add the localposition instead
+  // var localTransformRemoved = collider.transform.position - collider.transform.localPosition;
+  // var containsPositionWithoutLocalTransform =
+  //   collider.bounds.Contains(localTransformRemoved);
+  //
+  // if (containsPositionWithoutLocalTransform)
+  // {
+  //   offsetFromController =
+  //     localTransformRemoved - collider.bounds.center - collider.transform.position;
+  // }
+  //
+  // // true local position from root transform. This is the controller transform
+  // var localCenterPositionFromBoundsCenter =
+  //   netView.transform.root.transform.InverseTransformPoint(collider.bounds.center);
+  // var worldCenterPositionFromBoundsCenter =
+  //   netView.transform.root.transform.TransformPoint(collider.bounds.center);
+  //
+  // var hasLocalCenterPositionFromWorld =
+  //   collider.bounds.Contains(localCenterPositionFromBoundsCenter + netView.transform.position);
+  //
+  // offsetFromController = netView.transform.root.position + collider.bounds.center;
+  //
+  // // inverse transforming a local position bounds causes a bunch of problems. Guarding with this if block prevents this problem
+  // if (hasLocalCenterPositionFromWorld || hasGlobalPosition)
+  // {
+  //   offsetFromController = localCenterPositionFromBoundsCenter + parentOffset;
+  // }
+  //
+  // if (!hasLocalCenterPositionFromWorld && hasLocalPosition)
+  // {
+  //   // assumes things are local points...
+  //   //      offsetFromController = collider.transform.position + collider.bounds.center;
+  // }
+  //
+  // var newBounds = new Bounds(offsetFromController,
+  //   collider.bounds.size);
+  //
+  // // targetBounds.Encapsulate(newBounds);
+  // // if (localBoundsCenter.magnitude < targetBounds.center.magnitude - 40f)
+  // // {
+  // //   Logger.LogError("bounds likely tried to encapsulate a point that was global and broke");
+  // //   return null;
+  // // }
+  //
+  // // if (localBoundsCenter.z < targetBounds.center.z  ||
+  // //     localBoundsCenter.x < targetBounds.center.x + 40f ||
+  // //     localBoundsCenter.y < targetBounds.center.y + 40f)
+  // // {
+  // //   return null;
+  // // }
+  //
+  // return newBounds;
+
 
   private Bounds? EncapsulateColliders(List<Collider> colliders, Vector3 boundsCenter,
     Vector3 boundsSize,
     GameObject netView)
   {
     if (!(bool)m_floatcollider) return null;
+
     var outputBounds = new Bounds(boundsCenter, boundsSize);
+
     foreach (var collider in colliders)
     {
-      var localBounds =
-        TransformColliderGlobalBoundsToLocal(collider, netView, boundsCenter, boundsSize);
+      Bounds? localBounds = null;
+      if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value)
+      {
+        localBounds =
+          TransformColliderGlobalBoundsToLocal(collider);
+      }
+
       if (localBounds == null)
       {
         Logger.LogInfo(
           $"Using fallback localPosition on netView: {netView.name}, collider.name: {collider.name}");
-        outputBounds.Encapsulate(netView.transform.localPosition);
+        outputBounds.Encapsulate(collider.transform.localPosition);
         continue;
       }
 
       outputBounds.Encapsulate(localBounds.Value);
+    }
+
+    if (colliders.Count == 0)
+    {
+      outputBounds.Encapsulate(netView.transform.localPosition);
     }
 
     return outputBounds;
@@ -1915,9 +1922,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       : [..netView.GetComponentsInChildren<Collider>()];
   }
 
-  /*
-   * Functional that updates targetBounds, useful for updating with new items or running off large lists and updating the newBounds value without mutating rigidbody values
-   */
+/*
+ * Functional that updates targetBounds, useful for updating with new items or running off large lists and updating the newBounds value without mutating rigidbody values
+ */
   public void EncapsulateBounds(GameObject go)
   {
     var colliders = GetCollidersInPiece(go);
@@ -1927,19 +1934,20 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var ladder = go.GetComponent<RopeLadderComponent>();
     var rope = go.GetComponent<RopeAnchorComponent>();
 
-    Logger.LogDebug($"previous m_bounds extents: {m_bounds.extents}");
+    Logger.LogDebug($"previous m_bounds extents: {_vehicleBounds.extents}");
 
     if (!door && !ladder && !rope)
     {
-      var newBounds = EncapsulateColliders(colliders, m_bounds.center, m_bounds.size, go);
+      var newBounds =
+        EncapsulateColliders(colliders, _vehicleBounds.center, _vehicleBounds.size, go);
       if (newBounds != null)
       {
-        m_bounds = newBounds.Value;
+        _vehicleBounds = newBounds.Value;
         OnShipBoundsChange();
       }
     }
 
-    Logger.LogDebug($"current m_bounds extents (after Encapsulate): {m_bounds.extents}");
+    Logger.LogDebug($"current m_bounds extents (after Encapsulate): {_vehicleBounds.extents}");
     Logger.LogDebug($"m_floatcollider bounds: {m_floatcollider.bounds}");
   }
 
