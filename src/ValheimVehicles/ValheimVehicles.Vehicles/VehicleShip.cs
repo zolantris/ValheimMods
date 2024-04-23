@@ -305,7 +305,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       if (_controller.m_rudderWheelPieces.Count > 0)
       {
         var wheelPiece = _controller.m_rudderWheelPieces.First();
-        shipRotationObj.transform.localRotation = wheelPiece.transform.localRotation;
+        UpdateShipRotationObj(wheelPiece.gameObject);
 
         m_body.centerOfMass = wheelPiece.transform.localPosition;
       }
@@ -390,13 +390,20 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   public void UpdateShipRotationObj(GameObject? go)
   {
+    if (!isActiveAndEnabled) return;
     if (go == null)
     {
-      shipRotationObj = transform.gameObject;
+      shipRotationObj.transform.localRotation = Quaternion.Euler(Vector3.zero);
+      // todo fix shipRotationObj calcs
+      // shipRotationObj.transform.localPosition = Vector3.zero;
+      // shipRotationObj.transform.SetParent(transform);
+      // shipRotationObj.transform.localPosition = FloatColliderObj.transform.localPosition;
       return;
     }
 
-    shipRotationObj = go;
+    shipRotationObj.transform.localRotation = Quaternion.Euler(
+      go.transform.localRotation.eulerAngles.x, go.transform.localRotation.eulerAngles.y,
+      go.transform.localRotation.eulerAngles.z);
   }
 
   public void FixedUpdate()
@@ -423,10 +430,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
     TestFixedUpdate();
     // ValheimRaftCustomFixedUpdate();
-  }
-
-  private void GetShipTransform()
-  {
   }
 
   private void InitHull()
@@ -503,9 +506,14 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     _controller = _vehiclePiecesContainerInstance.AddComponent<WaterVehicleController>();
     _controller.InitializeShipValues(Instance);
 
-    if (!VehicleDebugHelpersInstance && ValheimRaftPlugin.Instance.HasDebugBase.Value)
+    if (VehicleDebugHelpersInstance == null && ValheimRaftPlugin.Instance.HasDebugBase.Value)
     {
       VehicleDebugHelpersInstance = gameObject.AddComponent<VehicleDebugHelpers>();
+    }
+
+
+    if (VehicleDebugHelpersInstance != null)
+    {
       VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
       {
         collider = m_floatcollider,
@@ -524,12 +532,9 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
         lineColor = Color.yellow,
         parent = gameObject
       });
+      VehicleDebugHelpersInstance.VehicleObj = gameObject;
+      VehicleDebugHelpersInstance.VehicleShipInstance = this;
     }
-
-    VehicleDebugHelpersInstance.autoUpdateColliders = true;
-    VehicleDebugHelpersInstance.StartRenderAllCollidersLoop();
-    VehicleDebugHelpersInstance.VehicleObj = gameObject;
-    VehicleDebugHelpersInstance.VehicleShipInstance = this;
 
     m_mastObject.transform.SetParent(_controller.transform);
     m_sailObject.transform.SetParent(_controller.transform);
@@ -689,6 +694,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     var vector4 = ShipDirectionTransform.position +
                   ShipDirectionTransform.right * m_floatcollider.extents.x;
     var waterLevelCenter = Floating.GetWaterLevel(worldCenterOfMass, ref m_previousCenter);
+
     var waterLevelLeft = Floating.GetWaterLevel(vector3, ref m_previousLeft);
     var waterLevelRight = Floating.GetWaterLevel(vector4, ref m_previousRight);
     var waterLevelForward = Floating.GetWaterLevel(vector, ref m_previousForward);
@@ -724,22 +730,23 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       var value3 = num6 * num6 * Mathf.Sign(num6) * m_dampingSideway * currentDepthForceMultiplier;
 
       velocity.y -= Mathf.Clamp(value, -1f, 1f);
-      velocity -= transform.forward * Mathf.Clamp(value2, -1f, 1f);
-      velocity -= transform.right * Mathf.Clamp(value3, -1f, 1f);
+      velocity -= ShipDirectionTransform.forward * Mathf.Clamp(value2, -1f, 1f);
+      velocity -= ShipDirectionTransform.right * Mathf.Clamp(value3, -1f, 1f);
 
       if (velocity.magnitude > m_body.velocity.magnitude)
         velocity = velocity.normalized * m_body.velocity.magnitude;
+
+      m_body.velocity = velocity;
+      m_body.angularVelocity -=
+        m_body.angularVelocity * m_angularDamping * currentDepthForceMultiplier;
 
       if (m_players.Count == 0 ||
           _controller.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
       {
         var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
-        velocity = anchoredVelocity;
+        m_body.velocity = anchoredVelocity;
+        m_body.angularVelocity = anchoredVelocity;
       }
-
-      m_body.velocity = velocity;
-      m_body.angularVelocity -=
-        m_body.angularVelocity * m_angularDamping * currentDepthForceMultiplier;
 
       var num7 = 0.15f;
       var num8 = 0.5f;

@@ -95,7 +95,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   public static BaseVehicleController? GetVehicleController()
   {
     var rayCastHitInfo = RaycastToPiecesUnderPlayerCamera();
-    return rayCastHitInfo?.collider.GetComponentInParent<WaterVehicleController>();
+    return rayCastHitInfo?.collider.GetComponentInParent<BaseVehicleController>();
   }
 
   public void FlipShip()
@@ -110,7 +110,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   }
 
   private static void DrawLine(Vector3 start, Vector3 end, Color color, Material material,
-    GameObject parent, Collider collider, List<LineRenderer> lineItems, int index,
+    GameObject parent, Object collider, List<LineRenderer> lineItems, int index,
     float width = 0.01f)
   {
     if (lineItems == null) throw new ArgumentNullException(nameof(lineItems));

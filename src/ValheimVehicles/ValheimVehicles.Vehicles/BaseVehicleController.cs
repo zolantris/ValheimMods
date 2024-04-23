@@ -460,7 +460,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
  */
   public void LateUpdate()
   {
-    Sync();
+    // Sync();
     if (!(bool)ZNet.instance)
     {
       // prevents NRE from next command
@@ -678,6 +678,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if (netView.name.Contains(PrefabNames.WaterVehicleContainer)) return;
     if (m_pieces.Remove(netView))
     {
+      Physics.SyncTransforms();
       UpdateMass(netView, true);
       RebuildBounds();
 
@@ -706,7 +707,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       if ((bool)rudder)
       {
         m_rudderPieces.Remove(rudder);
-        VehicleInstance.Instance.UpdateShipRotationObj(null);
+
+        if (VehicleInstance.Instance)
+        {
+          VehicleInstance.Instance.UpdateShipRotationObj(null);
+        }
       }
 
       var wheel = netView.GetComponent<RudderWheelComponent>();
@@ -730,15 +735,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         ladder.baseVehicleController = null;
       }
     }
-
-    // if (GetPieceCount() == 0)
-    // {
-    //   DestroyVehicle();
-    // }
-    // else
-    // {
-    //   UpdateStats();
-    // }
   }
 
   private void UpdateStats()
@@ -1387,6 +1383,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
+    Physics.SyncTransforms();
+
     totalSailArea = 0;
     m_pieces.Add(netView);
 
@@ -1551,14 +1549,14 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       VehicleInstance.Instance.ShipEffectsObj.transform.localPosition =
         new Vector3(m_floatcollider.transform.localPosition.x,
-          m_floatcollider.transform.localPosition.y,
+          VehicleInstance.Instance.ShipEffectsObj.transform.localPosition.y,
           m_floatcollider.bounds.min.z);
       return;
     }
 
     VehicleInstance.Instance.ShipEffectsObj.transform.localPosition = new Vector3(
       firstRudder.transform.localPosition.x,
-      m_floatcollider.transform.localPosition.y - m_floatcollider.bounds.extents.y,
+      VehicleInstance.Instance.ShipEffectsObj.transform.localPosition.y,
       firstRudder.transform.localPosition.z);
   }
 
@@ -1752,6 +1750,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   /// - world position bounds will desync when the vehicle moves
   /// - Using global position bounds with a local bounds will cause the center to extend to the global position and break the raft
   ///
+  /// Looks like the solution is Physics.SyncTransforms() because on first render before Physics it does not update transforms.
+  ///
   public static Bounds? TransformColliderGlobalBoundsToLocal(Collider collider)
   {
     var colliderCenterMagnitude = collider.bounds.center.magnitude;
@@ -1769,86 +1769,15 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var isOutOfBounds = Mathf.Abs(colliderCenterMagnitude - worldPositionMagnitude) > 5f;
     if (isOutOfBounds)
     {
-      return null;
-      // var globalCenterFromRoot =
-      //   collider.transform.root.transform.TransformPoint(collider.bounds.center);
-      // center = collider.transform.root.transform.InverseTransformPoint(globalCenterFromRoot);
-    }
-    else
-    {
-      center = collider.transform.root.transform.InverseTransformPoint(collider.bounds.center);
+      Logger.LogWarning(
+        "Possible out of bounds error, you may need to disable exact collider updates if this makes the ship bounds break.");
     }
 
-    return new Bounds(center, collider.bounds.size);
+    center = collider.transform.root.transform.InverseTransformPoint(collider.bounds.center);
+    var outputBounds = new Bounds(center, collider.bounds.size);
+
+    return outputBounds;
   }
-  // may need netview directly if it's not the "parent"
-  // var parentOffset = collider.transform.parent.localPosition;
-  //
-  // var hasLocalPosition = (collider.transform.localPosition) !=
-  //                        collider.transform.position;
-  // var hasLocalCenterPosition = collider.bounds.center + collider.transform.localPosition;
-  //
-  // collider.bounds.center.magnitude;
-  //
-  // var center = collider.bounds.center +
-  //              Vector3.Scale(collider.transform.localPosition, collider.transform.localScale);
-  //
-  // var hasGlobalPosition = collider.bounds.Contains(collider.transform.position);
-  // // var pointWithinExtent = collider.bounds.extents * closestPoint
-  // // Checks if it transforms into a localPosition point.
-  // // - If it's already local position, it will be vastly inaccurate.
-  // // could use transform directly, but then hasLocalCenterPositionFromWorld would need to add the localposition instead
-  // var localTransformRemoved = collider.transform.position - collider.transform.localPosition;
-  // var containsPositionWithoutLocalTransform =
-  //   collider.bounds.Contains(localTransformRemoved);
-  //
-  // if (containsPositionWithoutLocalTransform)
-  // {
-  //   offsetFromController =
-  //     localTransformRemoved - collider.bounds.center - collider.transform.position;
-  // }
-  //
-  // // true local position from root transform. This is the controller transform
-  // var localCenterPositionFromBoundsCenter =
-  //   netView.transform.root.transform.InverseTransformPoint(collider.bounds.center);
-  // var worldCenterPositionFromBoundsCenter =
-  //   netView.transform.root.transform.TransformPoint(collider.bounds.center);
-  //
-  // var hasLocalCenterPositionFromWorld =
-  //   collider.bounds.Contains(localCenterPositionFromBoundsCenter + netView.transform.position);
-  //
-  // offsetFromController = netView.transform.root.position + collider.bounds.center;
-  //
-  // // inverse transforming a local position bounds causes a bunch of problems. Guarding with this if block prevents this problem
-  // if (hasLocalCenterPositionFromWorld || hasGlobalPosition)
-  // {
-  //   offsetFromController = localCenterPositionFromBoundsCenter + parentOffset;
-  // }
-  //
-  // if (!hasLocalCenterPositionFromWorld && hasLocalPosition)
-  // {
-  //   // assumes things are local points...
-  //   //      offsetFromController = collider.transform.position + collider.bounds.center;
-  // }
-  //
-  // var newBounds = new Bounds(offsetFromController,
-  //   collider.bounds.size);
-  //
-  // // targetBounds.Encapsulate(newBounds);
-  // // if (localBoundsCenter.magnitude < targetBounds.center.magnitude - 40f)
-  // // {
-  // //   Logger.LogError("bounds likely tried to encapsulate a point that was global and broke");
-  // //   return null;
-  // // }
-  //
-  // // if (localBoundsCenter.z < targetBounds.center.z  ||
-  // //     localBoundsCenter.x < targetBounds.center.x + 40f ||
-  // //     localBoundsCenter.y < targetBounds.center.y + 40f)
-  // // {
-  // //   return null;
-  // // }
-  //
-  // return newBounds;
 
 
   private Bounds? EncapsulateColliders(List<Collider> colliders, Vector3 boundsCenter,
@@ -1856,37 +1785,32 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     GameObject netView)
   {
     if (!(bool)m_floatcollider) return null;
-
-    var RendererBounds = netView.GetComponent<Renderer>();
-
     var outputBounds = new Bounds(boundsCenter, boundsSize);
 
-    foreach (var collider in colliders)
+    var RendererBounds = netView.GetComponentsInChildren<Renderer>();
+    foreach (var renderer in colliders)
     {
       Bounds? localBounds = null;
       if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value)
       {
         localBounds =
-          TransformColliderGlobalBoundsToLocal(collider);
+          TransformColliderGlobalBoundsToLocal(renderer);
       }
 
       if (localBounds == null)
       {
         Logger.LogInfo(
-          $"Using fallback localPosition on netView: {netView.name}, collider.name: {collider.name}");
-        outputBounds.Encapsulate(new Bounds(
-          netView.transform.position - collider.transform.position +
-          netView.transform.localPosition, collider.bounds.center));
+          $"Using fallback localPosition on netView: {netView.name}, collider.name: {renderer.name}");
         continue;
       }
 
       outputBounds.Encapsulate(localBounds.Value);
     }
 
-    if (colliders.Count == 0)
-    {
-      outputBounds.Encapsulate(netView.transform.localPosition);
-    }
+    // if (colliders.Count == 0)
+    // {
+    // }
+    outputBounds.Encapsulate(netView.transform.localPosition);
 
     return outputBounds;
   }
