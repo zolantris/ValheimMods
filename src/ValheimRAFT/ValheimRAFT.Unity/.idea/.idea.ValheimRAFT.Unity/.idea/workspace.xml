@@ -5,8 +5,24 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9eb05097-9d84-4b87-8e9a-0e73fcf3150e" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../../../ValheimMods.sln" beforeDir="false" afterPath="$PROJECT_DIR$/../../../ValheimMods.sln" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../SentryUnityWrapper/SentryUnityWrapper/SentryUnityWrapperPlugin.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../SentryUnityWrapper/SentryUnityWrapper/SentryUnityWrapperPlugin.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-raft" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-raft" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-raft.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-raft.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/Character_Patch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/Character_Patch.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/ValheimRAFT_PATCH.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/ValheimRAFT_Patch.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/BaseVehicleController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/BaseVehicleController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/XR/Settings/OpenXR Package Settings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/XR/Settings/OpenXR Package Settings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ProjectSettings/ProjectVersion.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/ProjectVersion.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/MoveableBaseRootComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/MoveableBaseRootComponent.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Propulsion/Rudder/RudderWheelComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Propulsion/Rudder/RudderWheelComponent.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/IVehicleShip.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/IVehicleShip.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/ValheimShipControls.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/ValheimShipControls.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VehicleShip.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VehicleShip.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../valheim.targets" beforeDir="false" afterPath="$PROJECT_DIR$/../../../valheim.targets" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -51,7 +67,7 @@
 }</component>
   <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
     <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
-      <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\2022.3.12f1\Editor\Unity.exe" />
+      <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\2022.3.17f1\Editor\Unity.exe" />
       <option name="PROGRAM_PARAMETERS" value="-projectPath C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT\ValheimRAFT.Unity -debugCodeOptimization" />
       <option name="WORKING_DIRECTORY" value="C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT\ValheimRAFT.Unity" />
       <option name="PASS_PARENT_ENVS" value="1" />
@@ -59,7 +75,7 @@
       <method v="2" />
     </configuration>
     <configuration name="Unit Tests (batch mode)" type="RunUnityExe" factoryName="Unity Executable">
-      <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\2022.3.12f1\Editor\Unity.exe" />
+      <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\2022.3.17f1\Editor\Unity.exe" />
       <option name="PROGRAM_PARAMETERS" value="-runTests -batchmode -projectPath C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT\ValheimRAFT.Unity -testResults Logs/results.xml -testPlatform EditMode -debugCodeOptimization" />
       <option name="WORKING_DIRECTORY" value="C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT\ValheimRAFT.Unity" />
       <option name="PASS_PARENT_ENVS" value="1" />
@@ -102,6 +118,7 @@
       <workItem from="1713053920412" duration="149000" />
       <workItem from="1713089921616" duration="908000" />
       <workItem from="1713262659217" duration="5000" />
+      <workItem from="1713833689463" duration="1026000" />
     </task>
     <servers />
   </component>
