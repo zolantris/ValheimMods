@@ -703,7 +703,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       }
 
       var rudder = netView.GetComponent<RudderComponent>();
-      if ((bool)rudder) m_rudderPieces.Remove(rudder);
+      if ((bool)rudder)
+      {
+        m_rudderPieces.Remove(rudder);
+        VehicleInstance.Instance.UpdateShipRotationObj(null);
+      }
 
       var wheel = netView.GetComponent<RudderWheelComponent>();
       if ((bool)wheel) m_rudderWheelPieces.Remove(wheel);
@@ -1437,6 +1441,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if ((bool)rudder)
     {
       m_rudderPieces.Add(rudder);
+      VehicleInstance.Instance.UpdateShipRotationObj(rudder.gameObject);
+      SetShipWakeBounds();
     }
 
 
@@ -1539,30 +1545,21 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   // for increasing ship wake size.
   private void SetShipWakeBounds()
   {
-    VehicleInstance.Instance.ShipEffectsObj.transform.localPosition = _hullBounds.center;
-    var renderer = VehicleInstance.Instance.ShipEffectsObj.GetComponentsInChildren<Renderer>();
-    var psys = VehicleInstance.Instance.ShipEffectsObj.GetComponentsInChildren<ParticleSystem>();
+    var firstRudder = m_rudderPieces.First();
 
-    var renderBounds = new Bounds();
-
-    foreach (var renderer1 in renderer)
+    if (firstRudder == null)
     {
-      if (renderer1 == null) continue;
-      renderBounds.Encapsulate(renderer1.bounds);
+      VehicleInstance.Instance.ShipEffectsObj.transform.localPosition =
+        new Vector3(m_floatcollider.transform.localPosition.x,
+          m_floatcollider.transform.localPosition.y,
+          m_floatcollider.bounds.min.z);
+      return;
     }
 
-    if (psys == null || renderer == null) return;
-
-    var sizeRatio = new Vector3(_hullBounds.size.x / renderBounds.size.x, renderBounds.size.y,
-      _hullBounds.size.z / renderBounds.size.z);
-    var scalar = Vector3.Scale(renderBounds.size, sizeRatio);
-
-    foreach (var ps in psys)
-    {
-      var main = ps.main;
-      main.scalingMode = ParticleSystemScalingMode.Local;
-      ps.transform.localScale = scalar;
-    }
+    VehicleInstance.Instance.ShipEffectsObj.transform.localPosition = new Vector3(
+      firstRudder.transform.localPosition.x,
+      m_floatcollider.transform.localPosition.y - m_floatcollider.bounds.extents.y,
+      firstRudder.transform.localPosition.z);
   }
 
   private float GetAverageFloatHeightFromHulls()
@@ -1578,7 +1575,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       _hullBounds = newBounds.Value;
     }
 
-    SetShipWakeBounds();
     var piecesHeightFromPosition =
       m_hullPieces.Sum(mHullPiece => mHullPiece.transform.localPosition.y);
     var piecesHeight = _hullBounds.center.y;
@@ -1704,27 +1700,26 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
    * updating rotation point of object is important as it will properly fix how rotation works at the helm
    *
    * Using rigidbody center of mass could also work, but it then breaks physics for objects that are now outside the rigidbody center of mass (since it shifts all colliders)
+   *
+   * todo add a way to toggle this for a specific wheelPiece or rudderPiece based on a saved ZDO flag
    */
   public void OnBoundsChangeUpdateShipRotationPoint()
   {
-    // todo add a way to toggle this for a specific wheelPiece or rudderPiece based on a saved ZDO flag
+    if (VehicleInstance == null) return;
+
+    GameObject? shipTransformObj = null;
     if (m_rudderPieces.Count > 0)
     {
       var firstPiece = m_rudderPieces.First();
-      VehicleInstance.Instance.shipRotationObj = firstPiece.gameObject;
+      shipTransformObj = firstPiece.gameObject;
     }
     else if (m_rudderWheelPieces.Count > 0)
     {
       var firstPiece = m_rudderWheelPieces.First();
-      VehicleInstance.Instance.shipRotationObj = firstPiece.gameObject;
-      // m_rigidbody.centerOfMass = firstPiece.transform.localPosition;
+      shipTransformObj = firstPiece.gameObject;
     }
-    else
-    {
-      // m_rigidbody.ResetCenterOfMass();
-      // m_syncRigidbody.ResetCenterOfMass();
-      // m_rigidbody.centerOfMass = m_bounds.center;
-    }
+
+    VehicleInstance.Instance.UpdateShipRotationObj(shipTransformObj);
   }
 
   /**
@@ -1750,37 +1745,13 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
   }
 
-  // From internet, does nothing, is inaccurate.
-  // todo remove if we don't need
-  public static Bounds TransformBounds(Transform _transform, Bounds _localBounds)
-  {
-    var center = _transform.TransformPoint(_localBounds.center);
 
-    // transform the local extents' axes
-    var extents = _localBounds.extents;
-    var axisX = _transform.TransformVector(extents.x, 0, 0);
-    var axisY = _transform.TransformVector(0, extents.y, 0);
-    var axisZ = _transform.TransformVector(0, 0, extents.z);
-
-    // sum their absolute value to get the world extents
-    extents.x = Mathf.Abs(axisX.x) + Mathf.Abs(axisY.x) + Mathf.Abs(axisZ.x);
-    extents.y = Mathf.Abs(axisX.y) + Mathf.Abs(axisY.y) + Mathf.Abs(axisZ.y);
-    extents.z = Mathf.Abs(axisX.z) + Mathf.Abs(axisY.z) + Mathf.Abs(axisZ.z);
-
-    return new Bounds { center = center, extents = extents };
-  }
-
-
-  /*
-   * Bounds must be local
-   * - world position bounds will desync when the vehicle moves
-   * - Using global position bounds with a local bounds will cause the center to extend to the global position and break the raft
-   *
-   * FYI most bounds are GLOBAL so this may not be best solution. Maybe there are better ways to calculate moving object bounds.
-   *
-   * @alternative is to calculate all bounds as world coordinates, then do a subtraction of the transform.position when setting the center points of all colliders. This should then set the bounds to a sane number
-   *
-   */
+  ///
+  /// <summary>Parses Collider.bounds and confirm if it's local/ or out of ship bounds</summary>
+  /// - Collider.bounds should be global but it may not be returning the correct value when instantiated
+  /// - world position bounds will desync when the vehicle moves
+  /// - Using global position bounds with a local bounds will cause the center to extend to the global position and break the raft
+  ///
   public static Bounds? TransformColliderGlobalBoundsToLocal(Collider collider)
   {
     var colliderCenterMagnitude = collider.bounds.center.magnitude;
@@ -1793,13 +1764,15 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
      *
      * - if magnitude is above 5f (or probably even 1f) it is very likely a local position subtracted against a global position.
      *
-     * - Limitations: At world center 0,0,0 this calc likely will not be accurate, but won't really matter
+     * - Limitations: Near world center 0,0,0 this calc likely will not be accurate, but won't really matter
      */
-    var isLocalPosition = Mathf.Abs(colliderCenterMagnitude - worldPositionMagnitude) > 5f;
-    if (isLocalPosition)
+    var isOutOfBounds = Mathf.Abs(colliderCenterMagnitude - worldPositionMagnitude) > 5f;
+    if (isOutOfBounds)
     {
-      center = collider.transform.root.transform.TransformPoint(collider.bounds.center) -
-               collider.transform.root.position;
+      return null;
+      // var globalCenterFromRoot =
+      //   collider.transform.root.transform.TransformPoint(collider.bounds.center);
+      // center = collider.transform.root.transform.InverseTransformPoint(globalCenterFromRoot);
     }
     else
     {
@@ -1884,6 +1857,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   {
     if (!(bool)m_floatcollider) return null;
 
+    var RendererBounds = netView.GetComponent<Renderer>();
+
     var outputBounds = new Bounds(boundsCenter, boundsSize);
 
     foreach (var collider in colliders)
@@ -1899,7 +1874,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       {
         Logger.LogInfo(
           $"Using fallback localPosition on netView: {netView.name}, collider.name: {collider.name}");
-        outputBounds.Encapsulate(collider.transform.localPosition);
+        outputBounds.Encapsulate(new Bounds(
+          netView.transform.position - collider.transform.position +
+          netView.transform.localPosition, collider.bounds.center));
         continue;
       }
 

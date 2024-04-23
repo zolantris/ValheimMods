@@ -42,24 +42,18 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 {
   public GameObject RudderObject { get; set; }
 
-  // private GameObject _vehicleContainer;
-
-  // private GameObject _piecesContainer;
+  private GameObject _piecesContainer;
   private GameObject _ghostContainer;
 
   public static bool CustomShipPhysicsEnabled = false;
-
-  // public GameObject VehicleContainer =>
-  //   VehicleShipHelpers.GetOrFindObj(_vehicleContainer, gameObject,
-  //     PrefabNames.VehicleContainer);
 
   public GameObject GhostContainer =>
     VehicleShipHelpers.GetOrFindObj(_ghostContainer, gameObject,
       PrefabNames.GhostContainer);
 
-  // public GameObject PiecesContainer =>
-  //   VehicleShipHelpers.GetOrFindObj(_piecesContainer, transform.parent.gameObject,
-  //     PrefabNames.PiecesContainer);
+  public GameObject PiecesContainer =>
+    VehicleShipHelpers.GetOrFindObj(_piecesContainer, transform.parent.gameObject,
+      PrefabNames.PiecesContainer);
 
   public IWaterVehicleController Controller => _controller;
 
@@ -67,7 +61,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   public VehicleShipEffects? ShipEffects;
 
   private WaterVehicleController _controller;
-  private GameObject _waterVehicle;
   public ZSyncTransform m_zsyncTransform;
 
   public VehicleDebugHelpers VehicleDebugHelpersInstance { get; private set; }
@@ -387,7 +380,23 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   public override void OnEnable()
   {
     base.OnEnable();
+    if (ShipEffectsObj != null)
+    {
+      shipRotationObj.transform.localPosition = new Vector3(0, -2, 0);
+    }
+
     InitializeWaterVehicleController();
+  }
+
+  public void UpdateShipRotationObj(GameObject? go)
+  {
+    if (go == null)
+    {
+      shipRotationObj = transform.gameObject;
+      return;
+    }
+
+    shipRotationObj = go;
   }
 
   public void FixedUpdate()
@@ -436,11 +445,11 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     var prefab = PrefabManager.Instance.GetPrefab(PrefabNames.ShipHullPrefabName);
     if (!prefab) return;
 
-    // var hull = Instantiate(prefab, transform.position, transform.rotation);
-    // if (hull == null) return;
+    var hull = Instantiate(prefab, transform.position, transform.rotation);
+    if (hull == null) return;
 
-    // var hullNetView = hull.GetComponent<ZNetView>();
-    // _controller.AddNewPiece(hullNetView);
+    var hullNetView = hull.GetComponent<ZNetView>();
+    _controller.AddNewPiece(hullNetView);
 
     // todo This logic is unnecessary as InitPiece is called from zdo initialization of the PlaceholderItem
     //
@@ -455,18 +464,18 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     /*
      * @todo turn the original planks into a Prefab so boat floors can be larger
      */
-    var floor = ZNetScene.instance.GetPrefab("wood_floor");
-    for (var x = -1f; x < 1.01f; x += 2f)
-    {
-      for (var z = -2f; z < 2.01f; z += 2f)
-      {
-        var pt = _controller.transform.TransformPoint(new Vector3(x,
-          ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
-        var obj = Instantiate(floor, pt, transform.rotation);
-        var netview = obj.GetComponent<ZNetView>();
-        _controller.AddNewPiece(netview);
-      }
-    }
+    // var floor = ZNetScene.instance.GetPrefab("wood_floor");
+    // for (var x = -1f; x < 1.01f; x += 2f)
+    // {
+    //   for (var z = -2f; z < 20.01f; z += 2f)
+    //   {
+    //     var pt = _controller.transform.TransformPoint(new Vector3(x,
+    //       ValheimRaftPlugin.Instance.InitialRaftFloorHeight.Value, z));
+    //     var obj = Instantiate(floor, pt, transform.rotation);
+    //     var netview = obj.GetComponent<ZNetView>();
+    //     _controller.AddNewPiece(netview);
+    //   }
+    // }
 
     _controller.SetInitComplete();
   }

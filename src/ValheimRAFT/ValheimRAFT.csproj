@@ -31,6 +31,7 @@
         <Compile Include="ValheimRAFT.Patches\Player_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\ShipControls_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Ship_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\ValheimRAFT_PATCH.cs"/>
         <Compile Include="ValheimRAFT.Patches\WearNTear_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\ZDO_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\ZNetScene_Patch.cs"/>
@@ -195,6 +196,9 @@
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <OutputPath>bin\Release Archive\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Test|AnyCPU' ">
+        <OutputPath>bin\Test\</OutputPath>
     </PropertyGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

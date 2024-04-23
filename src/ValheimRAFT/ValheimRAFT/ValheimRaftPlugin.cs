@@ -27,13 +27,13 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   /*
    * @note keeping this as Sarcen for now since there are low divergences from the original codebase and patches already mapped to sarcen's mod
    */
-  public const string Author = "Sarcen";
-  public const string Version = "1.6.14";
+  public const string Author = "Zolantris";
+  public const string Version = "2.0.0";
   internal const string ModName = "ValheimRAFT";
-  public const string BepInGuid = $"BepIn.{Author}.{ModName}";
-  private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";
+  public const string BepInGuid = $"{Author}.{ModName}";
+  private const string HarmonyGuid = $"{Author}.{ModName}";
   public const string ModDescription = "Valheim Mod for building on the sea";
-  public const string CopyRight = "Copyright © 2023, GNU-v3 licensed";
+  public const string CopyRight = "Copyright © 2023-2024, GNU-v3 licensed";
   public static readonly int CustomRaftLayer = 29;
   private bool m_customItemsAdded;
   public PrefabRegistryController prefabController;
@@ -357,14 +357,19 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreateConfig()
   {
+    //
+    // Config.SettingChanged += 
     CreateBaseConfig();
     CreatePrefabConfig();
     CreateDebugConfig();
-    CreatePropulsionConfig();
     CreateServerConfig();
     CreateCommandConfig();
     CreateColliderConfig();
     CreateKeyboardSetup();
+
+    // vehicles
+    CreateVehicleConfig();
+    CreatePropulsionConfig();
   }
 
   internal void ApplyMetricIfAvailable()

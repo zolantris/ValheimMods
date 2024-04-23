@@ -25,11 +25,12 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
           GameCamera.instance.transform.position, GameCamera.instance.transform.forward,
           out var hitinfo, 50f, LayerMask.GetMask("piece"))) return;
 
-    var waterVehicleController = hitinfo.collider.GetComponentInParent<WaterVehicleController>();
+    var vehicleShip = hitinfo.collider.GetComponentInParent<VehicleShip>();
 
-    if ((bool)waterVehicleController)
+    if (vehicleShip.Instance != null && (bool)vehicleShip)
     {
-      ToggleMode(player, waterVehicleController);
+      var vehicleShipController = (WaterVehicleController)vehicleShip.Instance.Controller;
+      ToggleMode(player, vehicleShipController);
       return;
     }
 

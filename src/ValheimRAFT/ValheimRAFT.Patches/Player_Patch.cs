@@ -16,7 +16,7 @@ public class Player_Patch
 {
   [HarmonyPatch(typeof(Player), "PlacePiece")]
   [HarmonyTranspiler]
-  private static IEnumerable<CodeInstruction> PlacePiece(IEnumerable<CodeInstruction> instructions)
+  public static IEnumerable<CodeInstruction> PlacePiece(IEnumerable<CodeInstruction> instructions)
   {
     var list = instructions.ToList();
     for (var i = 0; i < list.Count; i++)
@@ -45,7 +45,7 @@ public class Player_Patch
     }
   }
 
-  private static void PlacedPiece(Player player, GameObject gameObject)
+  public static void PlacedPiece(Player player, GameObject gameObject)
   {
     var piece = gameObject.GetComponent<Piece>();
     if (!piece) return;
@@ -101,7 +101,7 @@ public class Player_Patch
     }
   }
 
-  private static bool HandleGameObjectRayCast(Transform transform, LayerMask layerMask,
+  public static bool HandleGameObjectRayCast(Transform transform, LayerMask layerMask,
     Player __instance, ref bool __result,
     ref Vector3 point,
     ref Vector3 normal, ref Piece piece, ref Heightmap heightmap, ref Collider waterSurface,
@@ -138,7 +138,7 @@ public class Player_Patch
 
   [HarmonyPatch(typeof(Player), "PieceRayTest")]
   [HarmonyPrefix]
-  private static bool PieceRayTest(Player __instance, ref bool __result, ref Vector3 point,
+  public static bool PieceRayTest(Player __instance, ref bool __result, ref Vector3 point,
     ref Vector3 normal, ref Piece piece, ref Heightmap heightmap, ref Collider waterSurface,
     bool water)
   {
@@ -165,7 +165,7 @@ public class Player_Patch
 
   [HarmonyPatch(typeof(Player), "Save")]
   [HarmonyPrefix]
-  private static void Player_Save(Player __instance, ZPackage pkg)
+  public static void Player_Save(Player __instance, ZPackage pkg)
   {
     if ((bool)((Character)__instance).m_lastGroundCollider &&
         ((Character)__instance).m_lastGroundTouch < 0.3f)
@@ -179,7 +179,7 @@ public class Player_Patch
 
   [HarmonyPatch(typeof(Player), "PieceRayTest")]
   [HarmonyPostfix]
-  private static void PieceRayTestPostfix(Player __instance, ref bool __result, ref Vector3 point,
+  public static void PieceRayTestPostfix(Player __instance, ref bool __result, ref Vector3 point,
     ref Vector3 normal, ref Piece piece, ref Heightmap heightmap, ref Collider waterSurface,
     bool water)
   {
@@ -189,7 +189,7 @@ public class Player_Patch
 
   [HarmonyPatch(typeof(Player), "FindHoverObject")]
   [HarmonyPrefix]
-  private static bool FindHoverObject(Player __instance, ref GameObject hover,
+  public static bool FindHoverObject(Player __instance, ref GameObject hover,
     ref Character hoverCreature)
   {
     hover = null;
@@ -240,7 +240,7 @@ public class Player_Patch
 
   [HarmonyPatch(typeof(Player), "AttachStop")]
   [HarmonyPrefix]
-  private static void AttachStop(Player __instance)
+  public static void AttachStop(Player __instance)
   {
     if (__instance.IsAttached() && (bool)__instance.m_attachPoint &&
         (bool)__instance.m_attachPoint.parent)
@@ -258,7 +258,7 @@ public class Player_Patch
    * todo migrate to a hotkey handler
    * This way of detecting keys is much more efficient and is not bogged down my Component getters
    */
-  private static bool GetAnchorKey()
+  public static bool GetAnchorKey()
   {
     return false;
     // if (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "False" &&
@@ -289,7 +289,7 @@ public class Player_Patch
   // Logic for anchor needs to be moved to the Update method instead of fixed update which SetControls is called in
   [HarmonyPatch(typeof(Player), "SetControls")]
   [HarmonyPrefix]
-  private static bool SetControls(Player __instance, Vector3 movedir, bool attack, bool attackHold,
+  public static bool SetControls(Player __instance, Vector3 movedir, bool attack, bool attackHold,
     bool secondaryAttack, bool block, bool blockHold, bool jump, bool crouch, bool run,
     bool autoRun)
   {
@@ -371,7 +371,7 @@ public class Player_Patch
 
   [HarmonyPatch(typeof(Player), "UpdatePlacementGhost")]
   [HarmonyTranspiler]
-  private static IEnumerable<CodeInstruction> UpdatePlacementGhost(
+  public static IEnumerable<CodeInstruction> UpdatePlacementGhost(
     IEnumerable<CodeInstruction> instructions)
   {
     var list = instructions.ToList();
@@ -387,7 +387,7 @@ public class Player_Patch
     return list;
   }
 
-  private static Quaternion RelativeEuler(float x, float y, float z)
+  public static Quaternion RelativeEuler(float x, float y, float z)
   {
     var rot = Quaternion.Euler(x, y, z);
     if (!PatchSharedData.PlayerLastRayPiece) return rot;

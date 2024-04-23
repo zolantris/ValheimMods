@@ -24,7 +24,6 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var waterVehicleObj = new GameObject()
     {
       name = PrefabNames.WaterVehicleContainer,
-      transform = { parent = null }
     };
 
     PrefabManager.Instance.CreateClonedPrefab(PrefabNames.WaterVehicleContainer,
@@ -99,6 +98,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
     VehicleShipEffects.CloneShipEffectsToInstance(vehicleShipEffects, shipEffects);
     Object.Destroy(shipEffects);
 
+    vehicleShipEffects.transform.localPosition = new Vector3(0, -2, 0);
     shipInstance.ShipEffectsObj = vehicleShipEffects.gameObject;
     shipInstance.ShipEffects = vehicleShipEffects;
 
