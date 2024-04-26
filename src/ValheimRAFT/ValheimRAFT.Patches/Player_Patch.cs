@@ -218,32 +218,33 @@ public class Player_Patch
       {
         hover = raycastHit.collider.gameObject;
         isUnhandled = false;
+        break;
       }
 
       if (isParentHoverable != null)
       {
         hover = raycastHit.collider.gameObject.transform.parent.gameObject;
         isUnhandled = false;
+        break;
       }
-      else
+
+      var hitBaseVehicle = raycastHit.collider
+        .attachedRigidbody.GetComponent<BaseVehicleController>();
+      var hitMoveableBaseRoot = raycastHit.collider
+        .attachedRigidbody.GetComponent<MoveableBaseRootComponent>();
+      switch ((bool)raycastHit.collider.attachedRigidbody)
       {
-        var hitBaseVehicle = raycastHit.collider
-          .attachedRigidbody.GetComponent<BaseVehicleController>();
-        var hitMoveableBaseRoot = raycastHit.collider
-          .attachedRigidbody.GetComponent<MoveableBaseRootComponent>();
-        switch ((bool)raycastHit.collider.attachedRigidbody)
-        {
-          case true when !(bool)hitBaseVehicle:
-          case true when !(bool)hitMoveableBaseRoot:
-            hover = raycastHit.collider.attachedRigidbody.gameObject;
-            isUnhandled = false;
-            break;
-          default:
-            hover = raycastHit.collider.gameObject;
-            isUnhandled = false;
-            break;
-        }
+        case true when !(bool)hitBaseVehicle:
+        case true when !(bool)hitMoveableBaseRoot:
+          hover = raycastHit.collider.attachedRigidbody.gameObject;
+          isUnhandled = false;
+          break;
+        default:
+          hover = raycastHit.collider.gameObject;
+          isUnhandled = false;
+          break;
       }
+
 
       if (isUnhandled == false) break;
     }
