@@ -76,7 +76,7 @@ public class RudderWheelComponent : MonoBehaviour
       set { }
     }
 
-    public Transform? ShipDirectionTransform { get; }
+    public Transform? ShipForwardRotation { get; }
 
     public Transform ControlGuiPosition
     {
@@ -86,7 +86,7 @@ public class RudderWheelComponent : MonoBehaviour
 
     public VehicleShip? Instance
     {
-      get => null!;
+      get => ship as object as VehicleShip;
     }
   }
 

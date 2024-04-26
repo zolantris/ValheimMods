@@ -4,6 +4,8 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimRAFT;
+using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.Prefabs.Registry;
@@ -12,35 +14,88 @@ public class RaftPrefab : IRegisterPrefab
 {
   public static readonly RaftPrefab Instance = new();
 
-  public void Register(PrefabManager prefabManager, PieceManager pieceManager)
+  public GameObject GetTransformedRaft()
   {
-    var mbRaftPrefab =
-      prefabManager.CreateClonedPrefab(PrefabNames.m_raft, LoadValheimAssets.vanillaRaftPrefab);
+    var raftPrefab =
+      PrefabManager.Instance.CreateClonedPrefab(PrefabNames.m_raft,
+        LoadValheimAssets.vanillaRaftPrefab);
 
-    mbRaftPrefab.transform.Find("ship/visual/mast").gameObject.SetActive(false);
-    mbRaftPrefab.transform.Find("interactive/mast").gameObject.SetActive(false);
-    mbRaftPrefab.GetComponent<Rigidbody>().mass = 1000f;
+    raftPrefab.transform.Find("ship/visual/mast").gameObject.SetActive(false);
+    raftPrefab.transform.Find("interactive/mast").gameObject.SetActive(false);
+    raftPrefab.GetComponent<Rigidbody>().mass = 1000f;
 
     // WIP These destroy values may not apply
-    Object.Destroy(mbRaftPrefab.transform.Find("ship/colliders/log").gameObject);
-    Object.Destroy(mbRaftPrefab.transform.Find("ship/colliders/log (1)").gameObject);
-    Object.Destroy(mbRaftPrefab.transform.Find("ship/colliders/log (2)").gameObject);
-    Object.Destroy(mbRaftPrefab.transform.Find("ship/colliders/log (3)").gameObject);
+    Object.Destroy(raftPrefab.transform.Find("ship/colliders/log").gameObject);
+    Object.Destroy(raftPrefab.transform.Find("ship/colliders/log (1)").gameObject);
+    Object.Destroy(raftPrefab.transform.Find("ship/colliders/log (2)").gameObject);
+    Object.Destroy(raftPrefab.transform.Find("ship/colliders/log (3)").gameObject);
 
-    var mbRaftPrefabPiece = mbRaftPrefab.GetComponent<Piece>();
-    mbRaftPrefabPiece.m_name = "$mb_raft";
-    mbRaftPrefabPiece.m_description = "$mb_raft_desc";
+    var piece = raftPrefab.GetComponent<Piece>();
+    piece.m_name = "$mb_raft";
+    piece.m_description = "$mb_raft_desc";
 
-    PrefabRegistryController.AddToRaftPrefabPieces(mbRaftPrefabPiece);
-    PrefabRegistryHelpers.AddNetViewWithPersistence(mbRaftPrefab);
-    var wnt = PrefabRegistryHelpers.GetWearNTearSafe(mbRaftPrefab);
+    var wnt = PrefabRegistryHelpers.GetWearNTearSafe(raftPrefab);
 
     wnt.m_health = Math.Max(100f, ValheimRaftPlugin.Instance.RaftHealth.Value);
     wnt.m_noRoofWear = false;
 
-    var impact = mbRaftPrefab.GetComponent<ImpactEffect>();
+    var impact = raftPrefab.GetComponent<ImpactEffect>();
     impact.m_damageToSelf = false;
-    pieceManager.AddPiece(new CustomPiece(mbRaftPrefab, false, new PieceConfig
+
+    PrefabRegistryController.AddToRaftPrefabPieces(piece);
+    PrefabRegistryHelpers.AddNetViewWithPersistence(raftPrefab);
+
+    return raftPrefab;
+  }
+
+  // public GameObject RegisterUpgradedRaft()
+  // {
+  //   // var mbRaftPrefab = GetTransformedRaft();
+  //   // var raftShip = mbRaftPrefab.GetComponent<Ship>();
+  //   // Object.Destroy(raftShip);
+  //   // var shipInstance = mbRaftPrefab.AddComponent<VehicleShip>();
+  //   // mbRaftPrefab.AddComponent<ValheimShipControls>();
+  //   //
+  //   // var waterEffects = mbRaftPrefab.transform.Find("WaterEffects").gameObject;
+  //   // var shipEffects = waterEffects.GetComponent<ShipEffects>();
+  //   // var vehicleShipEffects = waterEffects.AddComponent<VehicleShipEffects>();
+  //   // VehicleShipEffects.CloneShipEffectsToInstance(vehicleShipEffects, shipEffects);
+  //   // Object.Destroy(shipEffects);
+  //   //
+  //   // vehicleShipEffects.transform.localPosition = new Vector3(0, -2, 0);
+  //   // shipInstance.ShipEffectsObj = vehicleShipEffects.gameObject;
+  //   // shipInstance.ShipEffects = vehicleShipEffects;
+  //   // shipInstance.m_controlGuiPos = shipControlsGui.transform;
+  //   //
+  //   //
+  //   // shipInstance.FloatColliderObj = floatColliderObj.gameObject;
+  //   // shipInstance.FloatCollider = floatBoxCollider;
+  //
+  //   return mbRaftPrefab;
+  // }
+  // todo likely switch this to a command. This should not be part of release as it likely could cause regressions, better to have an upgrade command.
+  public GameObject RegisterRaftV2Compat()
+  {
+    var raftPrefab = WaterVehiclePrefab.CreateWaterVehiclePrefab(PrefabNames.m_raft);
+    var piece = raftPrefab.AddComponent<Piece>();
+    piece.m_waterPiece = true;
+    piece.m_icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
+    piece.m_name = "$mb_raft";
+    piece.m_description = "$mb_raft_desc";
+
+    PrefabRegistryController.AddToRaftPrefabPieces(piece);
+
+    return raftPrefab;
+  }
+
+  public void Register(PrefabManager prefabManager, PieceManager pieceManager)
+  {
+    GameObject raftPrefab;
+    raftPrefab = ValheimRaftPlugin.Instance.AutoUpgradeV1Raft.Value
+      ? RegisterRaftV2Compat()
+      : GetTransformedRaft();
+
+    pieceManager.AddPiece(new CustomPiece(raftPrefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
       Description = "$mb_raft_desc",

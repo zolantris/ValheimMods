@@ -7,7 +7,7 @@ Shader "Hidden/RadialSegementShader" {
 		_StencilOp ("Stencil Operation", Float) = 0
 		_StencilWriteMask ("Stencil Write Mask", Float) = 255
 		_StencilReadMask ("Stencil Read Mask", Float) = 255
-		_Bluriness ("Bluriness", Range(1E-07, 1)) = 0.01
+		_Bluriness ("Bluriness", Range(0, 1)) = 0.01
 		_Offset ("Offset", Range(0, 1)) = 0
 		_Thickness ("Thickness", Range(0, 1)) = 0.4
 		[IntRange] _Segments ("Segments", Range(4, 16)) = 8

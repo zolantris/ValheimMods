@@ -132,6 +132,14 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
       m_sailCloth.useTethers = false;
       m_sailCloth.useGravity = true;
       m_sailCloth.bendingStiffness = 1f;
+      m_sailCloth.externalAcceleration = new Vector3(0, 0, -100f);
+      m_sailCloth.randomAcceleration = new Vector3(0, 0, -50f);
+      m_sailCloth.enableContinuousCollision = true;
+      m_sailCloth.useVirtualParticles = 5;
+      m_sailCloth.clothSolverFrequency = 120f;
+      m_sailCloth.sleepThreshold = 0.1f;
+      m_sailCloth.worldAccelerationScale = 0.5f;
+      m_sailCloth.worldVelocityScale = 0.5f;
     }
 
     m_mesh = m_sailObject.GetComponent<SkinnedMeshRenderer>();

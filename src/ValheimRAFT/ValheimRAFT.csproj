@@ -31,7 +31,7 @@
         <Compile Include="ValheimRAFT.Patches\Player_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\ShipControls_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Ship_Patch.cs"/>
-        <Compile Include="ValheimRAFT.Patches\ValheimRAFT_PATCH.cs"/>
+        <Compile Include="ValheimRAFT.Patches\ValheimRAFT_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\WearNTear_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\ZDO_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\ZNetScene_Patch.cs"/>

@@ -13,8 +13,14 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 {
   public IVehicleShip ShipInstance { get; set; }
   public Vector3 m_detachOffset = new Vector3(0f, 0.5f, 0f);
-  private string hoverText = "$valheim_vehicles_ship_controls";
-  public string m_hoverText { get; set; }
+  [SerializeField] private string hoverText = "$valheim_vehicles_ship_controls";
+
+  public string m_hoverText
+  {
+    get => hoverText;
+    set => hoverText = value;
+  }
+
   [SerializeField] private float maxUseRange = 10f;
 
   public float MaxUseRange
@@ -31,6 +37,13 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   private bool hasRegister = false;
 
+  private void Awake()
+  {
+    if (m_nview == null || m_nview.m_zdo == null) return;
+
+    InitializeRPC();
+  }
+
   /**
    * Will not be supported in v3.x.x
    */
@@ -38,23 +51,42 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     RudderWheelComponent rudderWheel, Ship ship)
   {
     m_nview = ship.m_nview;
+    ship.m_controlGuiPos = transform;
     var rudderAttachPoint = rudderWheel.transform.Find("attachpoint");
     if (rudderAttachPoint != null)
     {
       AttachPoint = rudderAttachPoint.transform;
     }
+  }
+
+  private void InitializeRPC()
+  {
+    if (m_nview != null && hasRegister)
+    {
+      UnRegisterRPCListeners();
+    }
 
     if (m_nview != null && !hasRegister)
     {
-      m_nview.Unregister("RequestControl");
-      m_nview.Unregister("ReleaseControl");
-      m_nview.Unregister("RequestRespons");
-
-      m_nview.Register<long>("RequestControl", RPC_RequestControl);
-      m_nview.Register<long>("ReleaseControl", RPC_ReleaseControl);
-      m_nview.Register<bool>("RequestRespons", RPC_RequestRespons);
+      RegisterRPCListeners();
       hasRegister = true;
     }
+  }
+
+  private void UnRegisterRPCListeners()
+  {
+    m_nview.Unregister(nameof(RPC_RequestControl));
+    m_nview.Unregister(nameof(RPC_ReleaseControl));
+    m_nview.Unregister(nameof(RPC_RequestResponse));
+    hasRegister = false;
+  }
+
+  private void RegisterRPCListeners()
+  {
+    m_nview.Register<long>(nameof(RPC_RequestControl), RPC_RequestControl);
+    m_nview.Register<long>(nameof(RPC_ReleaseControl), RPC_ReleaseControl);
+    m_nview.Register<bool>(nameof(RPC_RequestResponse), RPC_RequestResponse);
+    hasRegister = true;
   }
 
   public void InitializeRudderWithShip(IVehicleShip vehicleShip, RudderWheelComponent rudderWheel)
@@ -72,9 +104,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
     if (m_nview != null && !hasRegister)
     {
-      m_nview.Register<long>("RequestControl", RPC_RequestControl);
-      m_nview.Register<long>("ReleaseControl", RPC_ReleaseControl);
-      m_nview.Register<bool>("RequestRespons", RPC_RequestRespons);
+      RegisterRPCListeners();
       hasRegister = true;
     }
   }
@@ -82,9 +112,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
   private void OnDestroy()
   {
     if (!hasRegister) return;
-    m_nview.Unregister("RequestControl");
-    m_nview.Unregister("ReleaseControl");
-    m_nview.Unregister("RequestRespons");
+    UnRegisterRPCListeners();
   }
 
   public bool IsValid()
@@ -99,11 +127,13 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
 
   public bool Interact(Humanoid character, bool repeat, bool alt)
   {
+    var isBaseVehicleParent = false;
     if (character == Player.m_localPlayer && isActiveAndEnabled)
     {
       var baseVehicle = GetComponentInParent<BaseVehicleController>();
       if (baseVehicle != null)
       {
+        isBaseVehicleParent = true;
         baseVehicle.ComputeAllShipContainerItemWeight();
       }
       else
@@ -155,7 +185,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
         Logger.LogDebug(
           $"Interact PlayerId {player1.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
         if (player1.GetPlayerID() != player.GetPlayerID()) continue;
-        m_nview.InvokeRPC("RequestControl", player.GetPlayerID());
+        m_nview.InvokeRPC(nameof(RPC_RequestControl), player.GetPlayerID());
         return true;
       }
 
@@ -165,15 +195,15 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     }
 
     var playerOnShip = player.GetStandingOnShip();
-    if (playerOnShip == null ||
-        !(playerOnShip).name.Contains(PrefabNames.WaterVehicleContainer))
+
+    if (playerOnShip == null)
     {
-      Logger.LogDebug("Player is not on VVShip");
+      Logger.LogDebug("Player is not on Ship");
       return false;
     }
 
-    m_nview.InvokeRPC("RequestControl", player.GetPlayerID());
-    return true;
+    m_nview.InvokeRPC(nameof(RPC_RequestControl), player.GetPlayerID());
+    return false;
   }
 
   public Component GetControlledComponent()
@@ -253,7 +283,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
       isValidUser = true;
     }
 
-    m_nview.InvokeRPC(sender, "RequestRespons", isValidUser);
+    m_nview.InvokeRPC(sender, nameof(RPC_RequestResponse), isValidUser);
   }
 
   private void RPC_ReleaseControl(long sender, long playerID)
@@ -264,11 +294,11 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
     }
   }
 
-  private void RPC_RequestRespons(long sender, bool granted)
+  private void RPC_RequestResponse(long sender, bool granted)
   {
     if (this != m_lastUsedControls)
     {
-      m_lastUsedControls.RPC_RequestRespons(sender, granted);
+      m_lastUsedControls.RPC_RequestResponse(sender, granted);
       return;
     }
 
@@ -296,7 +326,7 @@ public class ValheimShipControls : MonoBehaviour, Interactable, Hoverable, IDood
   {
     if (m_nview.IsValid())
     {
-      m_nview.InvokeRPC("ReleaseControl", player.GetPlayerID());
+      m_nview.InvokeRPC(nameof(RPC_ReleaseControl), player.GetPlayerID());
       if (AttachPoint != null)
       {
         player.AttachStop();

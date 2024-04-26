@@ -86,6 +86,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<KeyboardShortcut> AnchorKeyboardShortcut { get; set; }
   public ConfigEntry<bool> EnableMetrics { get; set; }
   public ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
+  public ConfigEntry<bool> AutoUpgradeV1Raft { get; set; }
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -112,6 +113,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    */
   private void CreateVehicleConfig()
   {
+    AutoUpgradeV1Raft = Config.Bind("ValheimVehicles", "Auto Upgrade Raft", false,
+      CreateConfigDescription(
+        "Automatically updates the RaftV1 to the new raft. This allows players to update smoothly into the new raft"));
     EnableExactVehicleBounds = Config.Bind("ValheimVehicles", "EnableExactVehicleBounds", false,
       CreateConfigDescription(
         "Ensures that a piece placed within the raft is included in the float collider correctly. This only applies if the piece does not have proper colliders. Likely useful only for compatibility for other mods. Piece bounds of X and Z are considered, no height is factored into floating collider bounds (which controls ship floatation). Height IS factored into the onboard trigger.",

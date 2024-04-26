@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2734336514
+CRC: 515303596
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 0051d453005bf87b4fd01eef5acac521
+    Hash: 320470866be843fdb2b0f3e86c2d6d65
   TypeTreeHash:
     serializedVersion: 2
     Hash: a5f9605f5bd1f415cbd4216fffca347a
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 0051d453005bf87b4fd01eef5acac521
+    Hash: 320470866be843fdb2b0f3e86c2d6d65
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -118,4 +118,4 @@ Assets:
 - Assets/rope_anchor.prefab
 - Assets/dirt_floor.prefab
 Dependencies:
-- C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/../AssetBundle/valheim-vehicles-shared
+- C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/AssetBundle/valheim-vehicles-shared

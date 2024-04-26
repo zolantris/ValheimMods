@@ -19,14 +19,14 @@ public class Character_Patch
     if (lastOnWaterVehicle)
     {
       __result = lastOnWaterVehicle;
-      return true;
+      return false;
     }
 
     var lastOnShip = __instance.m_lastGroundBody.GetComponent<Ship>();
     if (lastOnShip)
     {
       __result = lastOnShip;
-      return true;
+      return false;
     }
 
 
@@ -47,7 +47,7 @@ public class Character_Patch
       if ((bool)mb && (bool)mb.m_ship)
       {
         __result = mb.m_ship;
-        return true;
+        return false;
       }
     }
 

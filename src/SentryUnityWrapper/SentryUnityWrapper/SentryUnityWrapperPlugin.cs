@@ -228,7 +228,10 @@ public class SentryUnityWrapperPlugin : BaseUnityPlugin
       // See https://docs.sentry.io/product/sentry-basics/dsn-explainer/
       // You can set it in the SENTRY_DSN environment variable, or you can set it in code here.
       Dsn = options.GetSentryUnityOptions().Dsn,
-      CacheDirectoryPath = Path.Combine(Paths.PluginPath, options.PluginName),
+      // CacheDirectoryPath = Path.Combine(Paths.PluginPath, SentryUnityWrapperPlugin.ModName,
+      //   options.PluginName),
+      CacheDirectoryPath =
+        Path.Combine(Paths.PluginPath, ModName, options.PluginName),
 
       // When debug is enabled, the Sentry client will emit detailed debugging information to the console.
       // This might be helpful, or might interfere with the normal operation of your application.

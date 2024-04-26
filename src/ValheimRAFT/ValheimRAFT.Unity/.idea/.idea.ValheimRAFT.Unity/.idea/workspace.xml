@@ -7,17 +7,21 @@
     <list default="true" id="9eb05097-9d84-4b87-8e9a-0e73fcf3150e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/../../../ValheimMods.sln" beforeDir="false" afterPath="$PROJECT_DIR$/../../../ValheimMods.sln" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../SentryUnityWrapper/SentryUnityWrapper/SentryUnityWrapperPlugin.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../SentryUnityWrapper/SentryUnityWrapper/SentryUnityWrapperPlugin.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-raft" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-raft" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-raft.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-raft.manifest" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/Character_Patch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/Character_Patch.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/ValheimRAFT_PATCH.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/ValheimRAFT_Patch.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/Player_Patch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/Player_Patch.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/XR/Settings/OpenXR Package Settings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/XR/Settings/OpenXR Package Settings.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/ProjectVersion.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/ProjectVersion.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Hidden_RadialSegementShader.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Hidden_RadialSegementShader.shader" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/JVLSailShader.shader" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Material/SailMat.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Material/SailMat.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/sailmat.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/sailmat_normal.png" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/../ValheimRAFT.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.csproj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../ValheimRAFT/MoveableBaseRootComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/MoveableBaseRootComponent.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/SailComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/SailComponent.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/ValheimRaftPlugin.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/ValheimRaftPlugin.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/RaftPrefab.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/RaftPrefab.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/SailPrefabs.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/SailPrefabs.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/WaterVehiclePrefab.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/WaterVehiclePrefab.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Propulsion/Rudder/RudderWheelComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Propulsion/Rudder/RudderWheelComponent.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/IVehicleShip.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/IVehicleShip.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/ValheimShipControls.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/ValheimShipControls.cs" afterDir="false" />
@@ -34,7 +38,8 @@
   </component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/../../../../../../../../Program Files/Unity/Hub/Editor/2022.3.12f1/Editor/Data/CGIncludes/UnityInstancing.cginc" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../unity_repos/valheim_exported_assets/ValheimAssets/Assets/Shader/Custom_Vegetation.shader" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../../../../Program Files/Unity/Hub/Editor/2022.3.17f1/Editor/Data/CGIncludes/HLSLSupport.cginc" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../unity_repos/valheim_exported_assets/ValheimAssets/Assets/Shader/Custom_Vegetation.shader" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -118,7 +123,9 @@
       <workItem from="1713053920412" duration="149000" />
       <workItem from="1713089921616" duration="908000" />
       <workItem from="1713262659217" duration="5000" />
-      <workItem from="1713833689463" duration="1026000" />
+      <workItem from="1713833689463" duration="1368000" />
+      <workItem from="1714102225419" duration="2538000" />
+      <workItem from="1714105161860" duration="638000" />
     </task>
     <servers />
   </component>

@@ -123,6 +123,9 @@ public class SailPrefabs : IRegisterPrefab
     var sail = mbSailPrefab.AddComponent<SailComponent>();
     sail.m_sailObject = sailObject;
     sail.m_sailCloth = sailObject.AddComponent<Cloth>();
+
+    sail.m_sailCloth.useGravity = true;
+
     sail.m_meshCollider = sailObject.AddComponent<MeshCollider>();
     sail.m_mesh = sailObject.GetComponent<SkinnedMeshRenderer>();
     sail.m_mesh.shadowCastingMode = ShadowCastingMode.TwoSided;

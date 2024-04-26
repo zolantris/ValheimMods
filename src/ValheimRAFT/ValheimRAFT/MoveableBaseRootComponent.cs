@@ -45,7 +45,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
 
   internal Rigidbody m_syncRigidbody;
 
-  internal Ship m_ship;
+  public Ship m_ship;
 
   internal List<ZNetView> m_pieces = new();
 

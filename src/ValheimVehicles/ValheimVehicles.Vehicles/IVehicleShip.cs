@@ -11,7 +11,7 @@ public interface IVehicleShip
   public GameObject RudderObject { get; set; }
   public IWaterVehicleController Controller { get; }
   public BoxCollider FloatCollider { get; set; }
-  public Transform? ShipDirectionTransform { get; }
+  public Transform? ShipForwardRotation { get; }
 
   public Transform ControlGuiPosition { get; set; }
   public VehicleShip Instance { get; }
