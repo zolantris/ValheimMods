@@ -229,7 +229,6 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
     m_mainScale = sailMaterial.GetTextureScale("_MainTex");
     m_mainOffset = sailMaterial.GetTextureOffset("_MainTex");
-    m_mainColor = sailMaterial.GetColor("_MainColor");
 
     var patternTex = sailMaterial.GetTexture("_PatternTex");
     var patternGroup = CustomTextureGroup.Get("Patterns")
@@ -889,7 +888,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     {
       m_mesh.material.SetTexture("_MainTex", customtexture.Texture);
       if ((bool)customtexture.Normal)
-        m_mesh.material.SetTexture("_MainNormal", customtexture.Normal);
+        m_mesh.material.SetTexture("_BumpMap", customtexture.Normal);
     }
   }
 

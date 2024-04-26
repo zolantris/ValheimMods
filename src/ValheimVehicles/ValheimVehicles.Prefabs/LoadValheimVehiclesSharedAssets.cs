@@ -11,6 +11,6 @@ public class LoadValheimVehicleSharedAssets : ILoadAssets
 
   public void Init(AssetBundle assetBundle)
   {
-    Sprites = assetBundle.LoadAsset<SpriteAtlas>("icons.spriteatlasv2");
+    Sprites = assetBundle.LoadAsset<SpriteAtlas>("shared_icons.spriteatlasv2");
   }
 }

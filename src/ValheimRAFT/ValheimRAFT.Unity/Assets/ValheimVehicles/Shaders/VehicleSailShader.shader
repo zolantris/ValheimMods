@@ -1,7 +1,8 @@
 ﻿Shader "Custom/VehicleSailShader" {
 	Properties {
-		_Color ("Color", Color) = (1,1,1,1)
+		_Color ("Color", Vector) = (1,1,1,1)
         _MainTex ("Albedo (RGB)", 2D) = "white" {}
+		_MainColor ("Color", Color) = (1,1,1,1)
 
         _Wet ("Wet", Range(0,1)) = 0.0
 
@@ -13,8 +14,7 @@
         _LogoRotation("Logo Rotation", Range(0, 1)) = 0.0
         _LogoColor ("Logo Color", Color) = (1,1,1,1)
 		
-//		_MainTex ("Albedo (RGB)", 2D) = "white" {}
-//		_Color ("Color", Vector) = (1,1,1,1)
+
 		_Glossiness ("Smoothness", Range(0, 1)) = 0.5
 		_Metallic ("Metallic", Range(0, 1)) = 0
 		_Cutoff ("Alpha Cutoff", Range(0, 1)) = 0.5
@@ -50,7 +50,10 @@
     sampler2D _MainTex;
     sampler2D _BumpMap;
 
+    float  _Cutoff;
+
     half _Wet;
+    fixed4 _MainColor;
     fixed4 _Color;
 
     sampler2D _PatternTex;
@@ -99,25 +102,23 @@
 
         // Albedo comes from a texture tinted by color
     	// fixed4 mainCol = tex2D (_MainTex, IN.uv_MainTex) * _Color * _MainColor;
-    	fixed4 mainCol = tex2D (_MainTex, IN.uv_MainTex) * _Color;
+		fixed4 color = tex2D(_MainTex, IN.uv_MainTex) * _Color;
+    	fixed4 mainCol = tex2D (_MainTex, IN.uv_MainTex) * _MainColor;
         fixed4 patternCol = tex2D (_PatternTex, IN.uv_PatternTex);
         fixed4 logoCol = tex2D (_LogoTex, IN.uv_LogoTex);
 
         o.Albedo = lerp(mainCol.rgb, patternCol.rgb * _PatternColor.rgb, patternCol.r * _PatternColor.a);
         o.Albedo = lerp(o.Albedo, logoCol.rgb * _LogoColor.rgb, logoCol.a * _LogoColor.a);
-        o.Albedo = o.Albedo;
         // Metallic and smoothness come from slider variables
         o.Normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));// + tex2D(_PatternNormal, IN.uv_PatternTex) + tex2D(_LogoNormal, IN.uv_LogoTex);
         o.Metallic = 0;
         o.Smoothness = _Wet;
-        o.Alpha = mainCol.a;
+
+    	// base Valheim will likely override color with FogShaders, this will make the item disappear
+    	o.Alpha = color.a;
+
+    	clip(o.Alpha-_Cutoff);
     }
-    void surfVeg (Input IN, inout SurfaceOutputStandard o)
-	{
-		fixed4 c = tex2D(_MainTex, IN.uv_MainTex) * _Color;
-		o.Albedo = c.rgb;
-		o.Alpha = c.a;
-	}
     ENDCG
 
 	//DummyShaderTextExporter
@@ -129,10 +130,10 @@
 
         CGPROGRAM
         // Physically based Standard lighting model, and enable shadows on all light types
-        #pragma surface surf Standard fullforwardshadows
+        #pragma surface surf Standard
 
         // Use shader model 3.0 target, to get nicer looking lighting
-        #pragma target 4.0
+        #pragma target 3.0
 
         UNITY_INSTANCING_BUFFER_START(Props)
             // put more per-instance properties here
@@ -146,11 +147,11 @@
 
         CGPROGRAM
         // Physically based Standard lighting model, and enable shadows on all light types
-        #pragma surface surf Standard fullforwardshadows
+        #pragma surface surf Standard
         #pragma vertex vert
 
         // Use shader model 3.0 target, to get nicer looking lighting
-        #pragma target 4.0
+        #pragma target 3.0
 
         UNITY_INSTANCING_BUFFER_START(Props)
             // put more per-instance properties here

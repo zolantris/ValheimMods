@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 515303596
+CRC: 700496347
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 320470866be843fdb2b0f3e86c2d6d65
+    Hash: ef24fa7dd955a58e794d49e0bc1ea4de
   TypeTreeHash:
     serializedVersion: 2
     Hash: a5f9605f5bd1f415cbd4216fffca347a
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 320470866be843fdb2b0f3e86c2d6d65
+    Hash: ef24fa7dd955a58e794d49e0bc1ea4de
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -104,18 +104,25 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.Toggle/ToggleEvent
 Assets:
-- Assets/edit_ramp_panel.prefab
-- Assets/edit_sail_panel.prefab
-- Assets/pattern_dot.png
-- Assets/pattern_stripe.png
-- Assets/Slider.prefab
-- Assets/Material/SailMat.mat
-- Assets/pattern_checker.png
-- Assets/rope_ladder.prefab
-- Assets/steering_wheel.prefab
-- Assets/edit_texture_panel.prefab
-- Assets/boarding_ramp.prefab
-- Assets/rope_anchor.prefab
-- Assets/dirt_floor.prefab
+- Assets/ValheimVehicles/Prefabs/edit_ramp_panel 1.prefab
+- Assets/ValheimVehicles/Prefabs/edit_ramp_panel.prefab
+- Assets/ValheimVehicles/Prefabs/dirt_floor 1.prefab
+- Assets/ValheimVehicles/Prefabs/edit_sail_panel.prefab
+- Assets/ValheimVehicles/Texture/pattern_dot.png
+- Assets/ValheimVehicles/Texture/pattern_stripe.png
+- Assets/ValheimVehicles/Prefabs/Slider.prefab
+- Assets/ValheimVehicles/Material/SailMat.mat
+- Assets/ValheimVehicles/Texture/pattern_checker.png
+- Assets/ValheimVehicles/Prefabs/rope_ladder.prefab
+- Assets/ValheimVehicles/Prefabs/edit_sail_panel 1.prefab
+- Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
+- Assets/ValheimVehicles/Prefabs/edit_texture_panel 1.prefab
+- Assets/ValheimVehicles/Texture/sail_normal.png
+- Assets/ValheimVehicles/Prefabs/boarding_ramp 1.prefab
+- Assets/ValheimVehicles/Prefabs/edit_texture_panel.prefab
+- Assets/ValheimVehicles/Prefabs/boarding_ramp.prefab
+- Assets/ValheimVehicles/Prefabs/rope_anchor.prefab
+- Assets/ValheimVehicles/Prefabs/dirt_floor.prefab
+- Assets/ValheimVehicles/Texture/sail.png
 Dependencies:
 - C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/AssetBundle/valheim-vehicles-shared

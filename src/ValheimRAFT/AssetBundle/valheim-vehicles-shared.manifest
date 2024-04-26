@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2330446076
+CRC: 1306524426
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: ee68c570a320570d1c947b89bcd3eab7
+    Hash: a4b08250e670ac044ecf6f0d8403c43b
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0e971d6ec910fda0a941f7ca640159c0
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: ee68c570a320570d1c947b89bcd3eab7
+    Hash: a4b08250e670ac044ecf6f0d8403c43b
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -34,14 +34,14 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
-- Assets/rope_anchor.fbx
-- Assets/Texture2D/wood_59_diffuse_256_normal.png
-- Assets/rope_d.png
-- Assets/Material/RopeMat.mat
-- Assets/Texture2D/wood_59_diffuse_256.png
-- Assets/rope_n.png
-- Assets/Material/03 - Default.mat
+- Assets/ValheimVehicles/Icons/rope_anchor.fbx
+- Assets/ValheimVehicles/Texture/wood_59_diffuse_256_normal.png
+- Assets/ValheimVehicles/Material/rope_d.png
+- Assets/ValheimVehicles/Material/RopeMat.mat
+- Assets/ValheimVehicles/Texture/wood_59_diffuse_256.png
+- Assets/ValheimVehicles/Texture/rope_n.png
+- Assets/ValheimVehicles/Material/03 - Default.mat
 - Assets/Horem/Mocks/Shaders/Custom_WaterMask.shader
-- Assets/icons.spriteatlasv2
-- Assets/02 - Default.mat
+- Assets/ValheimVehicles/shared_icons.spriteatlasv2
+- Assets/ValheimVehicles/02 - Default.mat
 Dependencies: []
