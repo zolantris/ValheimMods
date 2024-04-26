@@ -12,6 +12,7 @@ using Properties;
 using UnityEngine;
 using ValheimRAFT.Patches;
 using ValheimRAFT.Util;
+using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
@@ -401,16 +402,29 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     AddPhysicsSettings();
 
-    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new CreativeModeConsoleCommand());
-    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new MoveRaftConsoleCommand());
-    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new HideRaftConsoleCommand());
-    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new RecoverRaftConsoleCommand());
+    RegisterConsoleCommands();
+    RegisterVehicleConsoleCommands();
 
     /*
      * @todo add a way to skip LoadCustomTextures when on server. This check when used here crashes the Plugin.
      */
-    PrefabManager.OnVanillaPrefabsAvailable += new Action(LoadCustomTextures);
-    PrefabManager.OnVanillaPrefabsAvailable += new Action(AddCustomPieces);
+    PrefabManager.OnVanillaPrefabsAvailable += LoadCustomTextures;
+    PrefabManager.OnVanillaPrefabsAvailable += AddCustomPieces;
+  }
+
+  public void RegisterConsoleCommands()
+  {
+    CommandManager.Instance.AddConsoleCommand(new CreativeModeConsoleCommand());
+    CommandManager.Instance.AddConsoleCommand(new MoveRaftConsoleCommand());
+    CommandManager.Instance.AddConsoleCommand(new HideRaftConsoleCommand());
+    CommandManager.Instance.AddConsoleCommand(new RecoverRaftConsoleCommand());
+  }
+
+
+  // this will be removed when vehicles becomes independent of valheim raft.
+  public void RegisterVehicleConsoleCommands()
+  {
+    CommandManager.Instance.AddConsoleCommand(new VehicleCommands());
   }
 
   private void Start()

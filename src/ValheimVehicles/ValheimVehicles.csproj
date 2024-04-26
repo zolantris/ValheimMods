@@ -38,6 +38,8 @@
     <!--        </PropertyGroup>-->
     <ItemGroup>
         <Compile Include="Patches\Zone_Patch.cs"/>
+        <Compile Include="ValheimVehicles.ConsoleCommands\LocateVehicle.cs"/>
+        <Compile Include="ValheimVehicles.ConsoleCommands\VehicleCommands.cs"/>
         <Compile Include="ValheimVehicles.Prefabs\PrefabNames.cs"/>
         <Compile Include="ValheimVehicles.Propulsion\Rudder\RudderWheelComponent.cs"/>
         <Compile Include="ValheimVehicles.Propulsion\Sail\SailAreaForce.cs"/>
