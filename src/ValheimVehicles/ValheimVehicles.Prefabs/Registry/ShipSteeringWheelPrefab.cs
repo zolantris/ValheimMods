@@ -14,10 +14,10 @@ public class ShipSteeringWheelPrefab : IRegisterPrefab
   {
     var prefab =
       prefabManager.CreateClonedPrefab(PrefabNames.ShipSteeringWheel,
-        LoadValheimRaftAssets.steeringWheel);
+        LoadValheimVehicleAssets.SteeringWheel);
 
     var mbRudderPrefabPiece =
-      PrefabPieceHelper.AddPieceForPrefab(PrefabNames.ShipSteeringWheel, prefab);
+      PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.ShipSteeringWheel, prefab);
     mbRudderPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
     PrefabRegistryController.AddToRaftPrefabPieces(mbRudderPrefabPiece);

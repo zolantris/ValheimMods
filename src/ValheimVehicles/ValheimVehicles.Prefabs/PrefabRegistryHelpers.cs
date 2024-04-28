@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using HarmonyLib;
 using UnityEngine;
 using Logger = Jotunn.Logger;
 
@@ -5,6 +7,80 @@ namespace ValheimVehicles.Prefabs;
 
 public abstract class PrefabRegistryHelpers
 {
+  public struct PieceData
+  {
+    public string Name;
+    public string Description;
+    public Sprite Icon;
+  }
+
+  public static readonly Dictionary<string, PieceData> PieceDataDictionary = new();
+
+  public static void Init()
+  {
+    PieceDataDictionary.Add(PrefabNames.ShipSteeringWheel, new PieceData()
+    {
+      Name = "valheim_vehicles_wheel",
+      Description = "valheim_vehicles_wheel_desc",
+      Icon = LoadValheimVehicleSharedAssets.SharedSprites.GetSprite(SpriteNames.ShipSteeringWheel)
+    });
+
+    PieceDataDictionary.Add(PrefabNames.ShipKeel, new PieceData()
+    {
+      Name = "valheim_vehicles_ship_keel",
+      Description = "valheim_vehicles_ship_keel_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipKeel)
+    });
+
+    PieceDataDictionary.Add(PrefabNames.ShipHullPrefabName, new PieceData()
+    {
+      Name = "valheim_vehicles_ship_hull",
+      Description = "valheim_vehicles_ship_hull_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHull)
+    });
+
+    PieceDataDictionary.Add(PrefabNames.ShipRudderBasic, new PieceData()
+    {
+      Name = "valheim_vehicles_rudder_basic",
+      Description = "valheim_vehicles_rudder_basic_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipRudderBasic)
+    });
+
+    PieceDataDictionary.Add(PrefabNames.ShipRudderAdvanced, new PieceData()
+    {
+      Name = "valheim_vehicles_rudder_advanced",
+      Description = "valheim_vehicles_rudder_advanced_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipRudderAdvanced)
+    });
+
+    PieceDataDictionary.Add(PrefabNames.VehicleToggleSwitch, new PieceData()
+    {
+      Name = "valheim_vehicles_toggle_switch",
+      Description = "valheim_vehicles_toggle_switch_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.Switch)
+    });
+  }
+
+  public static string GetPieceNameFromPrefab(string name)
+  {
+    return Localization.instance.Localize(PieceDataDictionary.GetValueSafe(name).Name);
+  }
+
+  public static Piece AddPieceForPrefab(string prefabName, GameObject prefab)
+  {
+    var pieceInformation = PieceDataDictionary.GetValueSafe(prefabName);
+
+    var piece = prefab.AddComponent<Piece>();
+
+    // dollar sign added for translation reference
+    piece.m_name = $"${pieceInformation.Name}";
+    piece.m_description = $"${pieceInformation.Description}";
+
+    piece.m_icon = pieceInformation.Icon;
+
+    return piece;
+  }
+
   public static ZNetView AddNetViewWithPersistence(GameObject prefab)
   {
     var netView = prefab.GetComponent<ZNetView>();

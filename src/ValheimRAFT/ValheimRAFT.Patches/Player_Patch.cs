@@ -259,7 +259,7 @@ public class Player_Patch
 
   [HarmonyPatch(typeof(Player), "AttachStop")]
   [HarmonyPrefix]
-  public static void AttachStop(Player __instance)
+  public static bool AttachStop(Player __instance)
   {
     if (__instance.IsAttached() && (bool)__instance.m_attachPoint &&
         (bool)__instance.m_attachPoint.parent)
@@ -271,6 +271,8 @@ public class Player_Patch
       ((Character)__instance).m_animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, 0f);
       ((Character)__instance).m_animator.SetIKRotationWeight(AvatarIKGoal.RightHand, 0f);
     }
+
+    return true;
   }
 
   /**
@@ -314,9 +316,12 @@ public class Player_Patch
   {
     var anchorKey = GetAnchorKey();
 
+    var isAttached = __instance.IsAttached();
+    var shouldHandle = isAttached && (bool)__instance.m_attachPoint &&
+                       (bool)__instance.m_attachPoint.parent;
 
-    if (__instance.IsAttached() && (bool)__instance.m_attachPoint &&
-        (bool)__instance.m_attachPoint.parent)
+
+    if (shouldHandle)
     {
       if (movedir.x == 0f && movedir.y == 0f && !jump && !crouch && !attack && !attackHold &&
           !secondaryAttack && !block)

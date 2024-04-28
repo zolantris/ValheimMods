@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 464327629
+CRC: 404561059
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: b554d0283d86edd3fc1e6ed6cfdb8767
+    Hash: ddfa19cf780ccd6a5d66572caba7fb86
   TypeTreeHash:
     serializedVersion: 2
-    Hash: a9b4adc7ae7213fa96cae7e659463795
+    Hash: 3733a985012d89209da68e07b493f965
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: b554d0283d86edd3fc1e6ed6cfdb8767
+    Hash: ddfa19cf780ccd6a5d66572caba7fb86
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -34,6 +34,8 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 65
   Script: {instanceID: 0}
+- Class: 120
+  Script: {instanceID: 0}
 - Class: 205
   Script: {instanceID: 0}
 - Class: 213
@@ -42,15 +44,15 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
-- Assets/ValheimVehicles/Prefabs/VehicleShip/vehicle_ship_pieces.prefab
-- Assets/ValheimVehicles/Prefabs/ShipRudderBasic/vehicle_ship_rudder_basic.prefab
-- Assets/ValheimVehicles/Prefabs/VehicleShip/vehicle_ship.prefab
-- Assets/ValheimVehicles/Prefabs/ShipHull/vehicle_ship_keel.prefab
+- Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab
+- Assets/ValheimVehicles/Prefabs/vehicle_ship_rudder_basic.prefab
+- Assets/ValheimVehicles/Prefabs/vehicle_ship.prefab
+- Assets/ValheimVehicles/Prefabs/vehicle_ship_keel.prefab
 - Assets/ValheimVehicles/vehicle_icons.spriteatlasv2
-- Assets/ValheimVehicles/Prefabs/ShipRudderAdvanced/vehicle_ship_rudder_advanced.prefab
-- Assets/ValheimVehicles/Prefabs/ShipRudderAdvanced/vehicle_ship_rudder_advancedv2.prefab
+- Assets/ValheimVehicles/Prefabs/vehicle_ship_rudder_advanced.prefab
+- Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
 - Assets/Shader/Custom_Piece.shader
-- Assets/ValheimVehicles/Prefabs/ShipHull/vehicle_ship_hull.prefab
-- Assets/ValheimVehicles/Prefabs/Switch/vehicle_switch.prefab
+- Assets/ValheimVehicles/Prefabs/vehicle_ship_hull.prefab
+- Assets/ValheimVehicles/Prefabs/vehicle_switch.prefab
 Dependencies:
 - C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/AssetBundle/valheim-vehicles-shared

@@ -254,6 +254,14 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       m_body.AddForceAtPosition(forceAmount, directionForce, ForceMode.Impulse);
     }
 
+    var waterLevelOffset =
+      GUILayout.TextField(m_waterLevelOffset.ToString(), 25);
+
+    if (waterLevelOffset != null && float.TryParse(waterLevelOffset, out var offset))
+    {
+      m_waterLevelOffset = offset;
+    }
+
     if (GUILayout.Button($"customphysics {CustomShipPhysicsEnabled}"))
     {
       CustomShipPhysicsEnabled = !CustomShipPhysicsEnabled;
@@ -702,15 +710,19 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       (waterLevelCenter + waterLevelLeft + waterLevelRight + waterLevelForward + waterLevelBack) /
       5f;
     var currentDepth = worldCenterOfMass.y - averageWaterHeight - m_waterLevelOffset;
-    if (!(currentDepth > m_disableLevel))
+    var isAboveBuoyantLevel = currentDepth > m_disableLevel;
+
+    if (!isAboveBuoyantLevel)
     {
       _controller.UpdateStats(false);
       m_body.WakeUp();
       UpdateWaterForce(currentDepth, Time.fixedDeltaTime);
-      var vector5 = new Vector3(shipLeft.x, waterLevelLeft, shipLeft.z);
-      var vector6 = new Vector3(shipRight.x, waterLevelRight, shipRight.z);
-      var vector7 = new Vector3(shipForward.x, waterLevelForward, shipForward.z);
-      var vector8 = new Vector3(shipBack.x, waterLevelBack, shipBack.z);
+
+      var leftForce = new Vector3(shipLeft.x, waterLevelLeft, shipLeft.z);
+      var rightForce = new Vector3(shipRight.x, waterLevelRight, shipRight.z);
+      var forwardForce = new Vector3(shipForward.x, waterLevelForward, shipForward.z);
+      var backwardForce = new Vector3(shipBack.x, waterLevelBack, shipBack.z);
+
       var fixedDeltaTime = Time.fixedDeltaTime;
       var deltaForceMultiplier = fixedDeltaTime * 50f;
 
@@ -749,10 +761,10 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
       var num7 = 0.15f;
       var num8 = 0.5f;
-      var f = Mathf.Clamp((vector7.y - shipForward.y) * num7, 0f - num8, num8);
-      var f2 = Mathf.Clamp((vector8.y - shipBack.y) * num7, 0f - num8, num8);
-      var f3 = Mathf.Clamp((vector5.y - shipLeft.y) * num7, 0f - num8, num8);
-      var f4 = Mathf.Clamp((vector6.y - shipRight.y) * num7, 0f - num8, num8);
+      var f = Mathf.Clamp((forwardForce.y - shipForward.y) * num7, 0f - num8, num8);
+      var f2 = Mathf.Clamp((backwardForce.y - shipBack.y) * num7, 0f - num8, num8);
+      var f3 = Mathf.Clamp((leftForce.y - shipLeft.y) * num7, 0f - num8, num8);
+      var f4 = Mathf.Clamp((rightForce.y - shipRight.y) * num7, 0f - num8, num8);
       f = Mathf.Sign(f) * Mathf.Abs(Mathf.Pow(f, 2f));
       f2 = Mathf.Sign(f2) * Mathf.Abs(Mathf.Pow(f2, 2f));
       f3 = Mathf.Sign(f3) * Mathf.Abs(Mathf.Pow(f3, 2f));

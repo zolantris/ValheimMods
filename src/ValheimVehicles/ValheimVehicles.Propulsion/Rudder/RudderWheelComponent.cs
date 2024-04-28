@@ -126,7 +126,7 @@ public class RudderWheelComponent : MonoBehaviour, Interactable, Hoverable
       }
     }
 
-    return _controls != null && _controls.Interact(user, hold, alt);
+    return _controls.Interact(user, hold, alt);
   }
 
   public bool UseItem(Humanoid user, ItemDrop.ItemData item)
@@ -149,6 +149,7 @@ public class RudderWheelComponent : MonoBehaviour, Interactable, Hoverable
 
     if (!(bool)_controls)
     {
+      // _controls = gameObject.AddComponent<VehicleMovementController>();
       _controls = vehicleShip.GetComponent<VehicleMovementController>();
     }
 
@@ -183,6 +184,7 @@ public class RudderWheelComponent : MonoBehaviour, Interactable, Hoverable
 
     if (!(bool)_controls)
     {
+      // _controls = gameObject.AddComponent<VehicleMovementController>();
       _controls = vehicleShip.Instance.m_shipControlls;
     }
 

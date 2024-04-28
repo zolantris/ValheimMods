@@ -14,11 +14,12 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject ShipKeelAsset = null!;
 
   // vehicles
+  public static GameObject SteeringWheel;
   public static GameObject VehicleShipAsset = null!;
   public static GameObject VehiclePiecesAsset = null!;
 
   // generic/misc
-  public static SpriteAtlas Sprites = null!;
+  public static SpriteAtlas VehicleSprites = null!;
   public static Shader PieceShader = null!;
 
   public static readonly LoadValheimVehicleAssets Instance = new();
@@ -34,6 +35,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
   public void Init(AssetBundle assetBundle)
   {
+    SteeringWheel = assetBundle.LoadAsset<GameObject>("steering_wheel.prefab");
     PieceShader = assetBundle.LoadAsset<Shader>("Custom_Piece.shader");
     ShipKeelAsset = assetBundle.LoadAsset<GameObject>("vehicle_ship_keel");
     VehicleShipAsset =
@@ -46,7 +48,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
     ShipRudderAdvancedAsset =
       assetBundle.LoadAsset<GameObject>(
         "vehicle_ship_rudder_advanced.prefab");
-    Sprites = assetBundle.LoadAsset<SpriteAtlas>(
+    VehicleSprites = assetBundle.LoadAsset<SpriteAtlas>(
       "vehicle_icons.spriteatlasv2");
   }
 }

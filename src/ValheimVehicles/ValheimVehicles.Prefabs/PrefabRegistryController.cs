@@ -143,13 +143,11 @@ public class PrefabRegistryController : MonoBehaviour
    */
   public static void Init()
   {
-    PrefabPieceHelper.Init();
-
     vehicleSharedAssetBundle =
       AssetUtils.LoadAssetBundleFromResources("valheim-vehicles-shared",
         Assembly.GetExecutingAssembly());
-
     Logger.LogDebug($"valheim-vehicles-shared {vehicleSharedAssetBundle}");
+
     raftAssetBundle =
       AssetUtils.LoadAssetBundleFromResources("valheim-raft", Assembly.GetExecutingAssembly());
     Logger.LogDebug($"valheim-raft {raftAssetBundle}");
@@ -158,7 +156,6 @@ public class PrefabRegistryController : MonoBehaviour
     vehicleAssetBundle =
       AssetUtils.LoadAssetBundleFromResources("valheim-vehicles", Assembly.GetExecutingAssembly());
     Logger.LogDebug($"valheim-vehicles {vehicleAssetBundle}");
-
 
     prefabManager = PrefabManager.Instance;
     pieceManager = PieceManager.Instance;
@@ -170,6 +167,9 @@ public class PrefabRegistryController : MonoBehaviour
     LoadValheimRaftAssets.Instance.Init(raftAssetBundle);
     // dependent on ValheimVehiclesShared and RaftAssetBundle
     LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle);
+
+    // must be called after assets are loaded
+    PrefabRegistryHelpers.Init();
 
     RegisterAllPrefabs();
   }
@@ -262,7 +262,7 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_rope_ladder_desc",
-      Icon = LoadValheimVehicleSharedAssets.Sprites.GetSprite("rope_ladder"),
+      Icon = LoadValheimVehicleSharedAssets.SharedSprites.GetSprite("rope_ladder"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[1]
@@ -311,7 +311,7 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_rope_anchor_desc",
-      Icon = LoadValheimVehicleSharedAssets.Sprites.GetSprite("rope_anchor"),
+      Icon = LoadValheimVehicleSharedAssets.SharedSprites.GetSprite("rope_anchor"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[2]
@@ -495,7 +495,7 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_boarding_ramp_desc",
-      Icon = LoadValheimVehicleSharedAssets.Sprites.GetSprite("boarding_ramp"),
+      Icon = LoadValheimVehicleSharedAssets.SharedSprites.GetSprite("boarding_ramp"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[2]
@@ -543,7 +543,7 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_boarding_ramp_wide_desc",
-      Icon = LoadValheimVehicleSharedAssets.Sprites.GetSprite("boarding_ramp"),
+      Icon = LoadValheimVehicleSharedAssets.SharedSprites.GetSprite("boarding_ramp"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[2]
@@ -594,7 +594,7 @@ public class PrefabRegistryController : MonoBehaviour
       Description = $"$mb_dirt_floor_{prefabSizeString}_desc",
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Icon = LoadValheimVehicleSharedAssets.Sprites.GetSprite("dirtfloor_icon"),
+      Icon = LoadValheimVehicleSharedAssets.SharedSprites.GetSprite("dirtfloor_icon"),
       Requirements = new RequirementConfig[1]
       {
         new()

@@ -10,7 +10,6 @@ public class LoadValheimRaftAssets : ILoadAssets
   public static readonly LoadValheimRaftAssets Instance = new();
 
   public static GameObject boardingRampAsset;
-  public static GameObject steeringWheel;
   public static GameObject ropeLadder;
   public static GameObject dirtFloor;
   public static Material sailMat;
@@ -27,8 +26,6 @@ public class LoadValheimRaftAssets : ILoadAssets
       assetBundle.LoadAsset<GameObject>("rope_anchor.prefab");
     boardingRampAsset =
       assetBundle.LoadAsset<GameObject>("boarding_ramp.prefab");
-    steeringWheel =
-      assetBundle.LoadAsset<GameObject>("steering_wheel.prefab");
     ropeLadder =
       assetBundle.LoadAsset<GameObject>("rope_ladder.prefab");
     sailMat = assetBundle.LoadAsset<Material>("SailMat.mat");

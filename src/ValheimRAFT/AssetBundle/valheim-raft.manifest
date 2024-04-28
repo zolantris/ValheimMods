@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2151168714
+CRC: 923584265
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: fcbb9914fe9485bf392fec1912fabd88
+    Hash: 2265ea346c4b5dcbf5912c627c1f48a9
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 962a6fa09ff7ee44209932c381081484
+    Hash: 425ad3d99a8801ad38843bdb2921a3b5
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: fcbb9914fe9485bf392fec1912fabd88
+    Hash: 2265ea346c4b5dcbf5912c627c1f48a9
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -57,8 +57,6 @@ ClassTypes:
 - Class: 120
   Script: {instanceID: 0}
 - Class: 128
-  Script: {instanceID: 0}
-- Class: 205
   Script: {instanceID: 0}
 - Class: 213
   Script: {instanceID: 0}
@@ -115,7 +113,6 @@ Assets:
 - Assets/ValheimVehicles/Texture/pattern_checker.png
 - Assets/ValheimVehicles/Prefabs/rope_ladder.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_sail_panel 1.prefab
-- Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel 1.prefab
 - Assets/ValheimVehicles/Texture/sail_normal.png
 - Assets/ValheimVehicles/Prefabs/boarding_ramp 1.prefab

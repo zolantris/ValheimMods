@@ -139,7 +139,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     BlockingColliderVerticalCenterOffset = Config.Bind("Debug",
       "BlockingColliderVerticalCenterOffset",
-      -0.2f,
+      -1.5f,
       CreateConfigDescription(
         "Sets the raft BlockingColliderVerticalCenterOffset which blocks the player or objects passing through. This will trigger physics so if there is an interaction between the boat and player/it can cause the player to push the boat in the direction of interaction",
         false));

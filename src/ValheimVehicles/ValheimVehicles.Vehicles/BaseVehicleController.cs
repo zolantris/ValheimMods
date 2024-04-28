@@ -709,7 +709,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
         if (VehicleInstance?.Instance)
         {
-          RotateVehicleColliders();
+          RebuildBounds();
         }
       }
 
@@ -720,7 +720,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
         if (VehicleInstance?.Instance)
         {
-          RotateVehicleColliders();
+          RebuildBounds();
         }
       }
 
@@ -825,8 +825,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
           $"ValheimRAFT ComputeShipItemWeight() found piece that does not have a 1,1,1 local scale piece: {pieceName} scale: {piece.transform.localScale}, the 3d localScale will be multiplied by the area of this vector instead of 1x1x1");
     }
 
-    // todo figure out hull weight like 20 woood per hull. Also calculate buoyancy from hull wood
-    if (pieceName == PrefabNames.ShipHullCoreWoodHorizontal)
+    // todo figure out hull weight like 20 wood per hull. Also calculate buoyancy from hull wood
+    if (pieceName == PrefabRegistryHelpers.GetPieceNameFromPrefab(PrefabNames.ShipHullPrefabName))
     {
       return 20f;
     }
@@ -1570,7 +1570,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   private float GetAverageFloatHeightFromHulls()
   {
-    if (m_hullPieces.Count <= 0) return -0.2f;
+    if (m_hullPieces.Count <= 0) return _vehicleBounds.center.y;
+    // if (m_hullPieces.Count <= 0) return 0.2f;
 
     foreach (var hullPiece in m_hullPieces)
     {
@@ -1618,8 +1619,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     m_floatcollider.transform.localRotation = rotation;
     m_blockingcollider.transform.localRotation = rotation;
     m_onboardcollider.transform.localRotation = rotation;
-
-    RebuildBounds();
   }
 
   /**
@@ -1635,8 +1634,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
-    Physics.SyncTransforms();
+    RotateVehicleColliders();
 
+    Physics.SyncTransforms();
 
     _vehicleBounds = new Bounds();
 
@@ -1684,9 +1684,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
      * - may need more logic for water masks (hiding water on boat) and other boat magic that has not been added yet.
      */
     var blockingColliderCenterOffset = new Vector3(_vehicleBounds.center.x,
-      ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value / 2, _vehicleBounds.center.z);
+      floatColliderCenterOffset.y + 0.2f, _vehicleBounds.center.z);
     var blockingColliderSize = new Vector3(_vehicleBounds.size.x,
-      ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value, _vehicleBounds.size.z);
+      floatColliderSize.y, _vehicleBounds.size.z);
 
     /*
      * onboard colliders
@@ -1797,7 +1797,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   ///
   /// Looks like the solution is Physics.SyncTransforms() because on first render before Physics it does not update transforms.
   ///
-  public static Bounds? TransformColliderGlobalBoundsToLocal(Collider collider)
+  public static Bounds? TransformColliderGlobalBoundsToLocal(Renderer collider)
   {
     var colliderCenterMagnitude = collider.bounds.center.magnitude;
     var worldPositionMagnitude = collider.transform.position.magnitude;
@@ -1832,8 +1832,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if (!(bool)m_floatcollider) return null;
     var outputBounds = new Bounds(boundsCenter, boundsSize);
 
-    var RendererBounds = netView.GetComponentsInChildren<Renderer>();
-    foreach (var renderer in colliders)
+    var renderers = netView.GetComponentsInChildren<Renderer>();
+    foreach (var renderer in renderers)
     {
       Bounds? localBounds = null;
       if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value)

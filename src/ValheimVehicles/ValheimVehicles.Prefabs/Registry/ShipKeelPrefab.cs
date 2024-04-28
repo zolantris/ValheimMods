@@ -19,16 +19,17 @@ public class ShipKeelPrefab : IRegisterPrefab
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     PrefabRegistryHelpers.SetWearNTear(prefab);
-    PrefabPieceHelper.AddPieceForPrefab(PrefabNames.ShipKeel, prefab);
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.ShipKeel, prefab);
 
-    var pieceTranslations = PrefabPieceHelper.Values.GetValueSafe(PrefabNames.ShipKeel);
+    var pieceTranslations =
+      PrefabRegistryHelpers.PieceDataDictionary.GetValueSafe(PrefabNames.ShipKeel);
 
 
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
       Description = pieceTranslations.Description,
-      Icon = LoadValheimVehicleSharedAssets.Sprites.GetSprite(SpriteNames.ShipKeel),
+      Icon = LoadValheimVehicleSharedAssets.SharedSprites.GetSprite(SpriteNames.ShipKeel),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements =

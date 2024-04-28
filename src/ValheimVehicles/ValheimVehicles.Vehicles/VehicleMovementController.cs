@@ -8,7 +8,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
-public class VehicleMovementController : MonoBehaviour, Interactable, Hoverable, IDoodadController,
+public class VehicleMovementController : MonoBehaviour, IDoodadController,
   IRudderControls
 {
   public IVehicleShip ShipInstance { get; set; }
@@ -199,7 +199,7 @@ public class VehicleMovementController : MonoBehaviour, Interactable, Hoverable,
     }
 
     m_nview.InvokeRPC(nameof(RPC_RequestControl), player.GetPlayerID());
-    return false;
+    return true;
   }
 
   public Component GetControlledComponent()
@@ -310,6 +310,9 @@ public class VehicleMovementController : MonoBehaviour, Interactable, Hoverable,
       {
         Player.m_localPlayer.AttachStart(AttachPoint, null, hideWeapons: false, isBed: false,
           onShip: true, m_attachAnimation, m_detachOffset);
+        Player.m_localPlayer.SetDoodadControlls(ref Player.m_localPlayer.m_moveDir,
+          ref Player.m_localPlayer.m_lookDir, ref Player.m_localPlayer.m_run,
+          ref Player.m_localPlayer.m_run, false);
       }
     }
     else

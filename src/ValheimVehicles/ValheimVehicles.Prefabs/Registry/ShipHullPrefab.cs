@@ -31,12 +31,10 @@ public class ShipHullPrefab : IRegisterPrefab
       prefabManager.CreateClonedPrefab(
         prefabName, LoadValheimVehicleAssets.ShipHullAsset);
 
-    if (!(bool)prefab) return;
-
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     prefab.layer = 0;
     prefab.gameObject.layer = 0;
-    var piece = PrefabPieceHelper.AddPieceForPrefab(PrefabNames.ShipHullPrefabName, prefab);
+    var piece = PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab);
 
     // shifting for collider testing
     prefab.transform.localPosition = new Vector3(0, 0, -4);
@@ -73,6 +71,8 @@ public class ShipHullPrefab : IRegisterPrefab
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
+      Name = piece.m_name,
+      Description = piece.m_description,
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements =
