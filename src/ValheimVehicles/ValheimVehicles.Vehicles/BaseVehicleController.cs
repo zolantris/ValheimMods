@@ -678,7 +678,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if (netView.name.Contains(PrefabNames.WaterVehicleContainer)) return;
     if (m_pieces.Remove(netView))
     {
-      Physics.SyncTransforms();
       UpdateMass(netView, true);
       RebuildBounds();
 
@@ -708,14 +707,22 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       {
         m_rudderPieces.Remove(rudder);
 
-        if (VehicleInstance.Instance)
+        if (VehicleInstance?.Instance)
         {
-          VehicleInstance.Instance.UpdateShipRotationObj(null);
+          RotateVehicleColliders();
         }
       }
 
       var wheel = netView.GetComponent<RudderWheelComponent>();
-      if ((bool)wheel) m_rudderWheelPieces.Remove(wheel);
+      if ((bool)wheel)
+      {
+        m_rudderWheelPieces.Remove(wheel);
+
+        if (VehicleInstance?.Instance)
+        {
+          RotateVehicleColliders();
+        }
+      }
 
 
       var bed = netView.GetComponent<Bed>();
@@ -1250,10 +1257,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if ((bool)parentObj)
     {
       var vehicleShip = parentObj.GetComponent<VehicleShip>();
+      if (vehicleShip == null) return;
       Logger.LogDebug($"ParentObj {parentObj}");
-      if (vehicleShip.Controller == null) return;
+      if (vehicleShip != null && vehicleShip.VehicleController == null) return;
       Logger.LogDebug("ActivatingBaseVehicle piece");
-      vehicleShip.Controller.Instance.ActivatePiece(netView);
+      vehicleShip.VehicleController.Instance.ActivatePiece(netView);
     }
     else
     {
@@ -1439,7 +1447,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if ((bool)rudder)
     {
       m_rudderPieces.Add(rudder);
-      VehicleInstance.Instance.UpdateShipRotationObj(rudder.gameObject);
+      RotateVehicleColliders();
       SetShipWakeBounds();
     }
 
@@ -1447,8 +1455,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var rudderWheel = netView.GetComponent<RudderWheelComponent>();
     if ((bool)rudderWheel)
     {
-      rudderWheel.InitializeControls(netView, VehicleInstance);
       m_rudderWheelPieces.Add(rudderWheel);
+      rudderWheel.InitializeControls(netView, VehicleInstance);
+      RotateVehicleColliders();
     }
 
     var portal = netView.GetComponent<TeleportWorld>();
@@ -1527,7 +1536,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   private void UpdateShipBounds()
   {
     OnBoundsChangeUpdateShipColliders();
-    OnBoundsChangeUpdateShipRotationPoint();
   }
 
   /// <summary>
@@ -1581,6 +1589,40 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   }
 
   /**
+   * Must fire RebuildBounds after doing this otherwise colliders will not have the correct x z axis when rotating the y
+   */
+  private void RotateVehicleColliders()
+  {
+    if (VehicleInstance == null || !(bool)m_floatcollider || !(bool)m_onboardcollider ||
+        !(bool)m_blockingcollider)
+    {
+      return;
+    }
+
+    var rotation = Quaternion.Euler(Vector3.zero);
+    if (m_rudderPieces.Count > 0)
+    {
+      var firstPiece = m_rudderPieces.First();
+      rotation = firstPiece.transform.localRotation;
+    }
+    else if (m_rudderWheelPieces.Count > 0)
+    {
+      var firstPiece = m_rudderWheelPieces.First();
+      rotation = firstPiece.transform.localRotation;
+    }
+
+    if (m_floatcollider.transform.localRotation == rotation &&
+        m_blockingcollider.transform.localRotation == rotation &&
+        m_onboardcollider.transform.localRotation == rotation) return;
+
+    m_floatcollider.transform.localRotation = rotation;
+    m_blockingcollider.transform.localRotation = rotation;
+    m_onboardcollider.transform.localRotation = rotation;
+
+    RebuildBounds();
+  }
+
+  /**
    * bounds cannot be decapsulated by default so regenerating it seems prudent on piece removal
    */
   /**
@@ -1592,6 +1634,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       return;
     }
+
+    Physics.SyncTransforms();
+
 
     _vehicleBounds = new Bounds();
 
@@ -1701,24 +1746,24 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
    *
    * todo add a way to toggle this for a specific wheelPiece or rudderPiece based on a saved ZDO flag
    */
-  public void OnBoundsChangeUpdateShipRotationPoint()
-  {
-    if (VehicleInstance == null) return;
-
-    GameObject? shipTransformObj = null;
-    if (m_rudderPieces.Count > 0)
-    {
-      var firstPiece = m_rudderPieces.First();
-      shipTransformObj = firstPiece.gameObject;
-    }
-    else if (m_rudderWheelPieces.Count > 0)
-    {
-      var firstPiece = m_rudderWheelPieces.First();
-      shipTransformObj = firstPiece.gameObject;
-    }
-
-    VehicleInstance.Instance.UpdateShipRotationObj(shipTransformObj);
-  }
+  // public void OnBoundsChangeUpdateShipRotationPoint()
+  // {
+  //   if (VehicleInstance == null) return;
+  //
+  //   GameObject? shipTransformObj = null;
+  //   if (m_rudderPieces.Count > 0)
+  //   {
+  //     var firstPiece = m_rudderPieces.First();
+  //     shipTransformObj = firstPiece.gameObject;
+  //   }
+  //   else if (m_rudderWheelPieces.Count > 0)
+  //   {
+  //     var firstPiece = m_rudderWheelPieces.First();
+  //     shipTransformObj = firstPiece.gameObject;
+  //   }
+  //
+  //   RotateVehicleColliders(shipTransformObj);
+  // }
 
   /**
    * @description alternative heavier approach to detecting bounds

@@ -177,7 +177,6 @@
             <Link>ValheimVehicles.Utils</Link>
         </Folder>
     </ItemGroup>
-
     <PropertyGroup>
         <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
         <R2ModManPath>AppData\Roaming\r2modmanPlus-local</R2ModManPath>
@@ -187,18 +186,6 @@
         <SandboxieVMPath>C:\Sandbox\fre\DefaultBox</SandboxieVMPath>
         <SandboxieUserPath>$(SandboxieVMPath)\user\current</SandboxieUserPath>
         <SandboxiePluginDeployPath>$(SandboxieUserPath)\$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</SandboxiePluginDeployPath>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' ">
-        <OutputPath>bin\Debug ClientServer\</OutputPath>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' ">
-        <OutputPath>bin\Debug Run Valheim Server\</OutputPath>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
-        <OutputPath>bin\Release Archive\</OutputPath>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Test|AnyCPU' ">
-        <OutputPath>bin\Test\</OutputPath>
     </PropertyGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

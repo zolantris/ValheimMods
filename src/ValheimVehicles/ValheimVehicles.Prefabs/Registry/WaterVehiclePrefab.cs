@@ -73,9 +73,10 @@ public class WaterVehiclePrefab : IRegisterPrefab
     zSyncTranform.m_syncRotation = true;
     zSyncTranform.m_body = vehicleRigidbody;
 
-    waterVehiclePrefab.AddComponent<ValheimShipControls>();
+    var shipControls = waterVehiclePrefab.AddComponent<VehicleMovementController>();
 
     var shipInstance = waterVehiclePrefab.AddComponent<VehicleShip>();
+    shipInstance.MovementController = shipControls;
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
     shipInstance.m_body = vehicleRigidbody;
     shipInstance.m_zsyncTransform = zSyncTranform;

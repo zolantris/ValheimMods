@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1304722473
+CRC: 2647844816
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 6175265a87436365dfb61a615c4083bb
+    Hash: 89b7352252b0f479149fc366b22f1e17
   TypeTreeHash:
     serializedVersion: 2
     Hash: a9b4adc7ae7213fa96cae7e659463795
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 6175265a87436365dfb61a615c4083bb
+    Hash: 89b7352252b0f479149fc366b22f1e17
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -44,11 +44,15 @@ SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/ValheimVehicles/Prefabs/VehicleShip/vehicle_ship_pieces.prefab
 - Assets/ValheimVehicles/Prefabs/ShipRudderBasic/vehicle_ship_rudder_basic.prefab
+- Assets/ValheimVehicles/Prefabs/ShipHull/vehicle_ship_keel_icon.png
 - Assets/ValheimVehicles/Prefabs/VehicleShip/vehicle_ship.prefab
+- Assets/ValheimVehicles/Prefabs/ShipHull/vehicle_ship_keel.prefab
+- Assets/ValheimVehicles/Prefabs/ShipHull/vehicle_ship_hull_icon.png
 - Assets/ValheimVehicles/vehicle_icons.spriteatlasv2
 - Assets/ValheimVehicles/Prefabs/ShipRudderAdvanced/vehicle_ship_rudder_advanced.prefab
 - Assets/ValheimVehicles/Prefabs/ShipRudderAdvanced/vehicle_ship_rudder_advancedv2.prefab
 - Assets/Shader/Custom_Piece.shader
 - Assets/ValheimVehicles/Prefabs/ShipHull/vehicle_ship_hull.prefab
+- Assets/ValheimVehicles/Prefabs/Switch/vehicle_switch.prefab
 Dependencies:
 - C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/AssetBundle/valheim-vehicles-shared

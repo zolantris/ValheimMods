@@ -37,7 +37,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public GameObject m_rudderObject;
 
-  public ValheimShipControls m_shipControlls;
+  public VehicleMovementController m_shipControlls;
 
   public Transform? m_controlGuiPos;
 
@@ -100,7 +100,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal Vector3 m_sailForce = Vector3.zero;
 
-  internal readonly List<Player> m_players = new List<Player>();
+  internal List<Player> m_players = [];
 
   internal WaterVolume m_previousCenter;
 
@@ -151,10 +151,6 @@ public class ValheimBaseGameShip : MonoBehaviour
         "ValheimBaseShip initialized without NetView, or netview is not available yet (ghost mode?)");
     }
 
-    // m_blockingCollider = gameObject.AddComponent<BoxCollider>();
-    // m_blockingCollider.gameObject.layer = 28; // vehicle layer
-    // m_blockingCollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    // m_blockingCollider.transform.localPosition = new Vector3(0f, 0.29f, 0f);
     var collider = transform.Find(PrefabNames.WaterVehicleFloatCollider);
 
     if (collider != null)
@@ -207,7 +203,7 @@ public class ValheimBaseGameShip : MonoBehaviour
   }
 
   /**
-   * TODO this could be set to false for the ship as an override to allow the ship to never unrender
+   * TODO this could be set to false for the ship as an override to allow the ship to never un-render
    */
   public bool CanBeRemoved()
   {
@@ -232,7 +228,7 @@ public class ValheimBaseGameShip : MonoBehaviour
   }
 
   /*
-   * Valheim has method mispellings.
+   * Valheim has method misspellings
    */
   public void ApplyControlls(Vector3 dir)
   {
@@ -864,6 +860,11 @@ public class ValheimBaseGameShip : MonoBehaviour
    */
   internal bool HaveControllingPlayer()
   {
+    if (m_players == null)
+    {
+      return false;
+    }
+
     if (m_players.Count != 0 && (bool)m_shipControlls)
     {
       return m_shipControlls.HaveValidUser();

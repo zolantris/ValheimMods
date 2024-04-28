@@ -9,10 +9,10 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Propulsion.Rudder;
 
-public class RudderWheelComponent : MonoBehaviour
+public class RudderWheelComponent : MonoBehaviour, Interactable, Hoverable
 {
-  public IRudderControls? Controls;
-  private ValheimShipControls _controls;
+  public IRudderControls? Controls => _controls;
+  private VehicleMovementController _controls;
 
   public IVehicleShip ShipInstance;
 
@@ -42,6 +42,8 @@ public class RudderWheelComponent : MonoBehaviour
 
   private Transform m_targetRightHand;
 
+  private Transform AttachPoint;
+
   /**
    * For Workaround with older ships
    */
@@ -68,7 +70,7 @@ public class RudderWheelComponent : MonoBehaviour
       set { }
     }
 
-    public IWaterVehicleController Controller { get; }
+    public IWaterVehicleController VehicleController { get; }
 
     public BoxCollider FloatCollider
     {
@@ -86,8 +88,50 @@ public class RudderWheelComponent : MonoBehaviour
 
     public VehicleShip? Instance
     {
-      get => ship as object as VehicleShip;
+      get => (VehicleShip)(ship as object);
     }
+  }
+
+  public string GetHoverText()
+  {
+    return ShipInstance.Instance
+      ? ShipInstance.Instance.MovementController.GetHoverText()
+      : "Invalid, no ship detected";
+  }
+
+  private void Awake()
+  {
+    AttachPoint = transform.Find("attachpoint");
+  }
+
+  public string GetHoverName()
+  {
+    return Localization.instance.Localize("$mb_rudder");
+  }
+
+
+  /// <summary>
+  /// pass-through for the single instance of VehicleMovementController on a vehicle
+  /// </summary>
+  /// Updates attachpoint of parent when Interacted with
+  public bool Interact(Humanoid user, bool hold, bool alt)
+  {
+    if (_controls != null)
+    {
+      _controls.AttachPoint = AttachPoint;
+
+      if (ShipInstance?.Instance != null)
+      {
+        ShipInstance.Instance.ControlGuiPosition = transform;
+      }
+    }
+
+    return _controls != null && _controls.Interact(user, hold, alt);
+  }
+
+  public bool UseItem(Humanoid user, ItemDrop.ItemData item)
+  {
+    return false;
   }
 
   /**
@@ -102,17 +146,22 @@ public class RudderWheelComponent : MonoBehaviour
     }
 
     ShipInstance = new CompatVehicleShip(vehicleShip);
+
+    if (!(bool)_controls)
+    {
+      _controls = vehicleShip.GetComponent<VehicleMovementController>();
+    }
+
     if (!(bool)_controls)
     {
       _controls =
-        gameObject.AddComponent<ValheimShipControls>();
-      Controls = _controls;
+        vehicleShip.gameObject.AddComponent<VehicleMovementController>();
     }
 
     if (!wheelTransform) wheelTransform = netView.transform.Find("controls/wheel");
 
 
-    if (Controls != null)
+    if (_controls != null)
     {
       _controls.DEPRECATED_InitializeRudderWithShip(ShipInstance,
         this, vehicleShip);
@@ -131,26 +180,21 @@ public class RudderWheelComponent : MonoBehaviour
     }
 
     ShipInstance = vehicleShip;
+
+    if (!(bool)_controls)
+    {
+      _controls = vehicleShip.Instance.m_shipControlls;
+    }
+
     if (!(bool)_controls)
     {
       _controls =
-        gameObject.AddComponent<ValheimShipControls>();
-      Controls = _controls;
+        vehicleShip.Instance.gameObject.AddComponent<VehicleMovementController>();
       // two way binding is required for this to work.
       vehicleShip.Instance.m_shipControlls = _controls;
     }
 
-    // Destroy(_controls.gameObject);
-    // else
-    // {
-    //   if (m_controls != null) Destroy(m_controls.gameObject);
-    //   Destroy(rudder);
-    //   Destroy(netView);
-    //   return;
-    // }
-
     if (!wheelTransform) wheelTransform = netView.transform.Find("controls/wheel");
-
 
     if (Controls != null)
     {
@@ -161,30 +205,6 @@ public class RudderWheelComponent : MonoBehaviour
     }
 
     Logger.LogDebug("added rudder to BaseVehicle");
-    // if (Controls == null)
-    // {
-    // }
-    //
-    // if (!wheelTransform) wheelTransform = netView.transform.Find("controls/wheel");
-    // if (Controls != null)
-    // {
-    //   Controls.m_nview = m_nview;
-    //   Controls.m_ship = shipController.GetComponent<Ship>();
-    //   Controls.enabled = true;
-    //   if (Controls.enabled)
-    //   {
-    //     Controls.enabled = false;
-    //   }
-    // }
-    //
-    // Controls = netView.GetComponentInChildren<ValheimShipControls>();
-    // Controls.m_nview = m_nview;
-    // Controls.m_ship = shipController.GetComponent<Ship>();
-    // Controls.enabled = true;
-    // if (Controls.enabled)
-    // {
-    //   Controls.enabled = false;
-    // }
   }
 
   public void UpdateSpokes()
@@ -204,30 +224,30 @@ public class RudderWheelComponent : MonoBehaviour
 
     if (!m_currentLeftHand)
     {
-      m_currentLeftHand = GetNearestSpoke(base.transform.TransformPoint(m_leftHandPosition));
+      m_currentLeftHand = GetNearestSpoke(transform.TransformPoint(m_leftHandPosition));
     }
 
     if (!m_currentRightHand)
     {
-      m_currentRightHand = GetNearestSpoke(base.transform.TransformPoint(m_rightHandPosition));
+      m_currentRightHand = GetNearestSpoke(transform.TransformPoint(m_rightHandPosition));
     }
 
     if (!m_targetLeftHand && !m_targetRightHand)
     {
-      Vector3 left = base.transform.InverseTransformPoint(m_currentLeftHand.position);
-      Vector3 right = base.transform.InverseTransformPoint(m_currentRightHand.position);
+      Vector3 left = transform.InverseTransformPoint(m_currentLeftHand.position);
+      Vector3 right = transform.InverseTransformPoint(m_currentRightHand.position);
       if (left.z < 0.2f)
       {
         Vector3 offsetY2 = new Vector3(0f, (left.y > 0.5f) ? (-2f) : 2f, 0f);
         m_targetLeftHand =
-          GetNearestSpoke(base.transform.TransformPoint(m_leftHandPosition + offsetY2));
+          GetNearestSpoke(transform.TransformPoint(m_leftHandPosition + offsetY2));
         m_movingLeftAlpha = Time.time;
       }
       else if (right.z > -0.2f)
       {
         Vector3 offsetY = new Vector3(0f, (right.y > 0.5f) ? (-2f) : 2f, 0f);
         m_targetRightHand =
-          GetNearestSpoke(base.transform.TransformPoint(m_rightHandPosition + offsetY));
+          GetNearestSpoke(transform.TransformPoint(m_rightHandPosition + offsetY));
         m_movingRightAlpha = Time.time;
       }
     }
@@ -270,17 +290,14 @@ public class RudderWheelComponent : MonoBehaviour
 
   public Transform GetNearestSpoke(Vector3 position)
   {
-    Transform best = null;
-    float bestDistance = 0f;
-    for (int i = 0; i < m_spokes.Count; i++)
+    Transform? best = null;
+    var bestDistance = 0f;
+    foreach (var spoke in m_spokes)
     {
-      Transform spoke = m_spokes[i];
-      float dist = (spoke.transform.position - position).sqrMagnitude;
-      if (best == null || dist < bestDistance)
-      {
-        best = spoke;
-        bestDistance = dist;
-      }
+      var dist = (spoke.transform.position - position).sqrMagnitude;
+      if (best != null && !(dist < bestDistance)) continue;
+      best = spoke;
+      bestDistance = dist;
     }
 
     return best;

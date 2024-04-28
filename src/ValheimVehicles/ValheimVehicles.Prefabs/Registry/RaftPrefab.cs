@@ -77,6 +77,7 @@ public class RaftPrefab : IRegisterPrefab
   public GameObject RegisterRaftV2Compat()
   {
     var raftPrefab = WaterVehiclePrefab.CreateWaterVehiclePrefab(PrefabNames.m_raft);
+
     var piece = raftPrefab.AddComponent<Piece>();
     piece.m_waterPiece = true;
     piece.m_icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
@@ -90,6 +91,7 @@ public class RaftPrefab : IRegisterPrefab
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
+    // var raftPrefab = GetTransformedRaft();
     GameObject raftPrefab;
     raftPrefab = ValheimRaftPlugin.Instance.AutoUpgradeV1Raft.Value
       ? RegisterRaftV2Compat()
@@ -101,14 +103,14 @@ public class RaftPrefab : IRegisterPrefab
       Description = "$mb_raft_desc",
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[1]
-      {
+      Requirements =
+      [
         new()
         {
           Amount = 20,
           Item = "Wood"
         }
-      }
+      ]
     }));
   }
 }

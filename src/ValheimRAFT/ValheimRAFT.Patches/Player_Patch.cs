@@ -228,6 +228,8 @@ public class Player_Patch
         break;
       }
 
+      if (raycastHit.collider.attachedRigidbody == null) continue;
+
       var hitBaseVehicle = raycastHit.collider
         .attachedRigidbody.GetComponent<BaseVehicleController>();
       var hitMoveableBaseRoot = raycastHit.collider
@@ -239,12 +241,7 @@ public class Player_Patch
           hover = raycastHit.collider.attachedRigidbody.gameObject;
           isUnhandled = false;
           break;
-        default:
-          hover = raycastHit.collider.gameObject;
-          isUnhandled = false;
-          break;
       }
-
 
       if (isUnhandled == false) break;
     }
@@ -413,15 +410,20 @@ public class Player_Patch
   {
     var rot = Quaternion.Euler(x, y, z);
     if (!PatchSharedData.PlayerLastRayPiece) return rot;
-    var mbr = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
+
     var bvc = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<BaseVehicleController>();
-    if (!mbr && !bvc) return rot;
     if (bvc)
     {
       return bvc.transform.rotation * rot;
     }
 
-    return mbr.transform.rotation * rot;
+    var mbr = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
+    if ((bool)mbr)
+    {
+      return mbr.transform.rotation * rot;
+    }
+
+    return rot;
   }
 
   [HarmonyPatch(typeof(Player), nameof(Player.GetControlledShip))]

@@ -9,7 +9,7 @@ public interface IVehicleShip
   public bool IsPlayerInBoat(long playerID);
 
   public GameObject RudderObject { get; set; }
-  public IWaterVehicleController Controller { get; }
+  public IWaterVehicleController VehicleController { get; }
   public BoxCollider FloatCollider { get; set; }
   public Transform? ShipForwardRotation { get; }
 

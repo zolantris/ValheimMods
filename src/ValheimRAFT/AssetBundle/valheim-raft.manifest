@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 700496347
+CRC: 2151168714
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: ef24fa7dd955a58e794d49e0bc1ea4de
+    Hash: fcbb9914fe9485bf392fec1912fabd88
   TypeTreeHash:
     serializedVersion: 2
-    Hash: a5f9605f5bd1f415cbd4216fffca347a
+    Hash: 962a6fa09ff7ee44209932c381081484
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: ef24fa7dd955a58e794d49e0bc1ea4de
+    Hash: fcbb9914fe9485bf392fec1912fabd88
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -35,11 +35,11 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 0d0b652f32a2cc243917e4028fa0f046, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
 - Class: 114
@@ -104,22 +104,22 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.Toggle/ToggleEvent
 Assets:
-- Assets/ValheimVehicles/Prefabs/edit_ramp_panel 1.prefab
-- Assets/ValheimVehicles/Prefabs/edit_ramp_panel.prefab
+- Assets/ValheimVehicles/Prefabs/GUI/edit_ramp_panel 1.prefab
+- Assets/ValheimVehicles/Prefabs/GUI/edit_ramp_panel.prefab
 - Assets/ValheimVehicles/Prefabs/dirt_floor 1.prefab
-- Assets/ValheimVehicles/Prefabs/edit_sail_panel.prefab
+- Assets/ValheimVehicles/Prefabs/GUI/edit_sail_panel.prefab
 - Assets/ValheimVehicles/Texture/pattern_dot.png
 - Assets/ValheimVehicles/Texture/pattern_stripe.png
-- Assets/ValheimVehicles/Prefabs/Slider.prefab
+- Assets/ValheimVehicles/Prefabs/GUI/Slider.prefab
 - Assets/ValheimVehicles/Material/SailMat.mat
 - Assets/ValheimVehicles/Texture/pattern_checker.png
 - Assets/ValheimVehicles/Prefabs/rope_ladder.prefab
-- Assets/ValheimVehicles/Prefabs/edit_sail_panel 1.prefab
+- Assets/ValheimVehicles/Prefabs/GUI/edit_sail_panel 1.prefab
 - Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
-- Assets/ValheimVehicles/Prefabs/edit_texture_panel 1.prefab
+- Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel 1.prefab
 - Assets/ValheimVehicles/Texture/sail_normal.png
 - Assets/ValheimVehicles/Prefabs/boarding_ramp 1.prefab
-- Assets/ValheimVehicles/Prefabs/edit_texture_panel.prefab
+- Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel.prefab
 - Assets/ValheimVehicles/Prefabs/boarding_ramp.prefab
 - Assets/ValheimVehicles/Prefabs/rope_anchor.prefab
 - Assets/ValheimVehicles/Prefabs/dirt_floor.prefab

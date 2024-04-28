@@ -44,6 +44,17 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   private GameObject _piecesContainer;
   private GameObject _ghostContainer;
+  public VehicleMovementController _movementController;
+
+  public VehicleMovementController MovementController
+  {
+    get => _movementController;
+    set
+    {
+      _movementController = value;
+      m_shipControlls = value;
+    }
+  }
 
   public static bool CustomShipPhysicsEnabled = false;
 
@@ -55,7 +66,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     VehicleShipHelpers.GetOrFindObj(_piecesContainer, transform.parent.gameObject,
       PrefabNames.PiecesContainer);
 
-  public IWaterVehicleController Controller => _controller;
+  public IWaterVehicleController VehicleController => _controller;
 
   public GameObject? ShipEffectsObj;
   public VehicleShipEffects? ShipEffects;
@@ -64,8 +75,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   public ZSyncTransform m_zsyncTransform;
 
   public VehicleDebugHelpers VehicleDebugHelpersInstance { get; private set; }
-
-  public GameObject shipRotationObj;
 
   public Transform? ShipForwardRotation
   {
@@ -111,11 +120,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     if ((bool)_vehiclePiecesContainerInstance)
     {
       Destroy(_vehiclePiecesContainerInstance);
-    }
-
-    if ((bool)shipRotationObj)
-    {
-      Destroy(shipRotationObj);
     }
 
     // also destroys the sailcloth
@@ -188,6 +192,10 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     //   gameObject.SetActive(false);
     //   return;
     // }
+    if (!(bool)MovementController)
+    {
+      MovementController = GetComponent<VehicleMovementController>();
+    }
 
     if (!(bool)m_body)
     {
@@ -197,15 +205,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     if (!(bool)m_zsyncTransform)
     {
       m_zsyncTransform = GetComponent<ZSyncTransform>();
-    }
-
-    if (!(bool)shipRotationObj)
-    {
-      shipRotationObj = new GameObject
-      {
-        name = PrefabNames.VehicleShipTransform,
-        transform = { parent = transform }
-      };
     }
 
     if (!(bool)m_mastObject)
@@ -280,40 +279,39 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
         currentRotationOffset += 90;
       }
 
-      shipRotationObj.transform.Rotate(0, 90, 0);
+      m_floatcollider.transform.Rotate(0, 90, 0);
+      _controller.RebuildBounds();
 
       // Instance.transform.rotation = new Quaternion(Instance.transform.rotation.x,
       //   Instance.transform.rotation.y + 90, Instance.transform.rotation.z,
       //   Instance.transform.rotation.w);
     }
 
-    if (GUILayout.Button("rotate based on rudder dir"))
-    {
-      if (_controller.m_rudderPieces.Count > 0)
-      {
-        var rudderPiece = _controller.m_rudderPieces.First();
-        if (rudderPiece.transform.localRotation != shipRotationObj.transform.rotation)
-        {
-          shipRotationObj.transform.localRotation =
-            Quaternion.Euler(0f, rudderPiece.transform.localRotation.y - 180f, 0f);
-          m_body.centerOfMass = rudderPiece.transform.localPosition;
-        }
-      }
-      // Instance.transform.rotation = new Quaternion(Instance.transform.rotation.x,
-      //   Instance.transform.rotation.y + 90, Instance.transform.rotation.z,
-      //   Instance.transform.rotation.w);
-      // _controller.transform.rotation = new Quaternion(_controller.transform.rotation.x,
-      //   _controller.transform.rotation.y - 90, _controller.transform.rotation.z,
-      //   _controller.transform.rotation.w);
-    }
+    // if (GUILayout.Button("rotate based on rudder dir"))
+    // {
+    //   if (_controller.m_rudderPieces.Count > 0)
+    //   {
+    //     var rudderPiece = _controller.m_rudderPieces.First();
+    //     if (rudderPiece.transform.localRotation != shipRotationObj.transform.rotation)
+    //     {
+    //       shipRotationObj.transform.localRotation =
+    //         Quaternion.Euler(0f, rudderPiece.transform.localRotation.y - 180f, 0f);
+    //       m_body.centerOfMass = rudderPiece.transform.localPosition;
+    //     }
+    //   }
+    //   // Instance.transform.rotation = new Quaternion(Instance.transform.rotation.x,
+    //   //   Instance.transform.rotation.y + 90, Instance.transform.rotation.z,
+    //   //   Instance.transform.rotation.w);
+    //   // _controller.transform.rotation = new Quaternion(_controller.transform.rotation.x,
+    //   //   _controller.transform.rotation.y - 90, _controller.transform.rotation.z,
+    //   //   _controller.transform.rotation.w);
+    // }
 
     if (GUILayout.Button("rotate based on steering"))
     {
       if (_controller.m_rudderWheelPieces.Count > 0)
       {
         var wheelPiece = _controller.m_rudderWheelPieces.First();
-        UpdateShipRotationObj(wheelPiece.gameObject);
-
         m_body.centerOfMass = wheelPiece.transform.localPosition;
       }
 
@@ -366,12 +364,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     var excludedLayers = LayerMask.GetMask("piece", "piece_nonsolid");
     m_body.excludeLayers = excludedLayers;
 
-    if (m_floatcollider)
-    {
-      shipRotationObj.transform.position = m_floatcollider.transform.position;
-      shipRotationObj.transform.SetParent(transform);
-    }
-
     Logger.LogDebug($"called Awake in {name}, m_body {m_body}");
     if (!m_nview)
     {
@@ -387,31 +379,26 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   public override void OnEnable()
   {
     base.OnEnable();
-    if (ShipEffectsObj != null)
-    {
-      shipRotationObj.transform.localPosition = new Vector3(0, -2, 0);
-    }
-
     InitializeWaterVehicleController();
   }
 
-  public void UpdateShipRotationObj(GameObject? go)
-  {
-    if (!isActiveAndEnabled) return;
-    if (go == null)
-    {
-      shipRotationObj.transform.localRotation = Quaternion.Euler(Vector3.zero);
-      // todo fix shipRotationObj calcs
-      // shipRotationObj.transform.localPosition = Vector3.zero;
-      // shipRotationObj.transform.SetParent(transform);
-      // shipRotationObj.transform.localPosition = FloatColliderObj.transform.localPosition;
-      return;
-    }
-
-    shipRotationObj.transform.localRotation = Quaternion.Euler(
-      go.transform.localRotation.eulerAngles.x, go.transform.localRotation.eulerAngles.y,
-      go.transform.localRotation.eulerAngles.z);
-  }
+  // public void UpdateShipRotationObj(GameObject? go)
+  // {
+  //   if (!isActiveAndEnabled) return;
+  //   if (go == null)
+  //   {
+  //     shipRotationObj.transform.localRotation = Quaternion.Euler(Vector3.zero);
+  //     // todo fix shipRotationObj calcs
+  //     // shipRotationObj.transform.localPosition = Vector3.zero;
+  //     // shipRotationObj.transform.SetParent(transform);
+  //     // shipRotationObj.transform.localPosition = FloatColliderObj.transform.localPosition;
+  //     return;
+  //   }
+  //
+  //   shipRotationObj.transform.localRotation = Quaternion.Euler(
+  //     go.transform.localRotation.eulerAngles.x, go.transform.localRotation.eulerAngles.y,
+  //     go.transform.localRotation.eulerAngles.z);
+  // }
 
   public void FixedUpdate()
   {
@@ -420,11 +407,10 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       return;
     }
 
-    if (!shipRotationObj) return;
-
     if (CustomShipPhysicsEnabled)
     {
-      CustomPhysics();
+      // CustomPhysics();
+      CustomFixedUpdate_Deprecated();
       return;
     }
 
@@ -551,10 +537,11 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   /**
    * TODO this could be set to false for the ship as an override to allow the ship to never remove itself
    */
-// public bool CanBeRemoved()
-// {
-//   return m_players.Count == 0;
-// }
+  public new bool CanBeRemoved()
+  {
+    return m_players.Count == 0;
+  }
+
   private static Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity)
   {
     var zeroVelocity = Vector3.zero;
@@ -601,10 +588,11 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   public void AddForceAtPosition(Vector3 force, Vector3 position,
     ForceMode forceMode)
   {
-    var directionForce = GetDirectionForce();
-    var newForce = new Vector3(directionForce.x * force.x, force.y,
-      directionForce.z * force.z);
-    m_body.AddForceAtPosition(newForce, position, forceMode);
+    m_body.AddForceAtPosition(force, position, forceMode);
+    // var directionForce = GetDirectionForce();
+    // var newForce = new Vector3(directionForce.x * force.x, force.y,
+    //   directionForce.z * force.z);
+    // m_body.AddForceAtPosition(newForce, position, forceMode);
   }
 
   /**
@@ -612,12 +600,15 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
    */
   private float GetFloatSizeFromDirection(Vector3 direction)
   {
-    // either 90 or 270 degress so Sin 90 or Sin 270
-    if (Mathf.Abs((int)Mathf.Sin(shipRotationObj.transform.localEulerAngles.y +
-                                 direction.x * 90)) == 1)
+    if (direction == Vector3.right)
     {
       return m_floatcollider.extents.x;
     }
+    // either 90 or 270 degress so Sin 90 or Sin 270
+    // if (Mathf.Abs((int)Mathf.Sin(shipRotationObj.transform.localEulerAngles.y +
+    //                              direction.x * 90)) == 1)
+    // {
+    // }
 
     return m_floatcollider.extents.z;
   }
@@ -635,8 +626,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
 
     m_body.WakeUp();
-    m_body.AddForceAtPosition(Vector3.up * 0.001f, m_body.worldCenterOfMass,
-      ForceMode.Force);
+    m_body.AddForceAtPosition(Vector3.up * 1f, m_body.worldCenterOfMass,
+      ForceMode.VelocityChange);
   }
 
   public void TestFixedUpdate()
@@ -693,20 +684,20 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     if (!flag && (m_speed == Speed.Slow || m_speed == Speed.Back))
       m_speed = Speed.Stop;
     var worldCenterOfMass = m_body.worldCenterOfMass;
-    var vector = ShipForwardRotation.position +
-                 ShipForwardRotation.forward * GetFloatSizeFromDirection(Vector3.forward);
-    var vector2 = ShipForwardRotation.position -
-                  ShipForwardRotation.forward * GetFloatSizeFromDirection(Vector3.forward);
-    var vector3 = ShipForwardRotation.position -
-                  ShipForwardRotation.right * GetFloatSizeFromDirection(Vector3.right);
-    var vector4 = ShipForwardRotation.position +
-                  ShipForwardRotation.right * GetFloatSizeFromDirection(Vector3.right);
+    var shipForward = ShipForwardRotation.position +
+                      ShipForwardRotation.forward * GetFloatSizeFromDirection(Vector3.forward);
+    var shipBack = ShipForwardRotation.position -
+                   ShipForwardRotation.forward * GetFloatSizeFromDirection(Vector3.forward);
+    var shipLeft = ShipForwardRotation.position -
+                   ShipForwardRotation.right * GetFloatSizeFromDirection(Vector3.right);
+    var shipRight = ShipForwardRotation.position +
+                    ShipForwardRotation.right * GetFloatSizeFromDirection(Vector3.right);
     var waterLevelCenter = Floating.GetWaterLevel(worldCenterOfMass, ref m_previousCenter);
 
-    var waterLevelLeft = Floating.GetWaterLevel(vector3, ref m_previousLeft);
-    var waterLevelRight = Floating.GetWaterLevel(vector4, ref m_previousRight);
-    var waterLevelForward = Floating.GetWaterLevel(vector, ref m_previousForward);
-    var waterLevelBack = Floating.GetWaterLevel(vector2, ref m_previousBack);
+    var waterLevelLeft = Floating.GetWaterLevel(shipLeft, ref m_previousLeft);
+    var waterLevelRight = Floating.GetWaterLevel(shipRight, ref m_previousRight);
+    var waterLevelForward = Floating.GetWaterLevel(shipForward, ref m_previousForward);
+    var waterLevelBack = Floating.GetWaterLevel(shipBack, ref m_previousBack);
     var averageWaterHeight =
       (waterLevelCenter + waterLevelLeft + waterLevelRight + waterLevelForward + waterLevelBack) /
       5f;
@@ -716,10 +707,10 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       _controller.UpdateStats(false);
       m_body.WakeUp();
       UpdateWaterForce(currentDepth, Time.fixedDeltaTime);
-      var vector5 = new Vector3(vector3.x, waterLevelLeft, vector3.z);
-      var vector6 = new Vector3(vector4.x, waterLevelRight, vector4.z);
-      var vector7 = new Vector3(vector.x, waterLevelForward, vector.z);
-      var vector8 = new Vector3(vector2.x, waterLevelBack, vector2.z);
+      var vector5 = new Vector3(shipLeft.x, waterLevelLeft, shipLeft.z);
+      var vector6 = new Vector3(shipRight.x, waterLevelRight, shipRight.z);
+      var vector7 = new Vector3(shipForward.x, waterLevelForward, shipForward.z);
+      var vector8 = new Vector3(shipBack.x, waterLevelBack, shipBack.z);
       var fixedDeltaTime = Time.fixedDeltaTime;
       var deltaForceMultiplier = fixedDeltaTime * 50f;
 
@@ -758,21 +749,22 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
       var num7 = 0.15f;
       var num8 = 0.5f;
-      var f = Mathf.Clamp((vector7.y - vector.y) * num7, 0f - num8, num8);
-      var f2 = Mathf.Clamp((vector8.y - vector2.y) * num7, 0f - num8, num8);
-      var f3 = Mathf.Clamp((vector5.y - vector3.y) * num7, 0f - num8, num8);
-      var f4 = Mathf.Clamp((vector6.y - vector4.y) * num7, 0f - num8, num8);
+      var f = Mathf.Clamp((vector7.y - shipForward.y) * num7, 0f - num8, num8);
+      var f2 = Mathf.Clamp((vector8.y - shipBack.y) * num7, 0f - num8, num8);
+      var f3 = Mathf.Clamp((vector5.y - shipLeft.y) * num7, 0f - num8, num8);
+      var f4 = Mathf.Clamp((vector6.y - shipRight.y) * num7, 0f - num8, num8);
       f = Mathf.Sign(f) * Mathf.Abs(Mathf.Pow(f, 2f));
       f2 = Mathf.Sign(f2) * Mathf.Abs(Mathf.Pow(f2, 2f));
       f3 = Mathf.Sign(f3) * Mathf.Abs(Mathf.Pow(f3, 2f));
       f4 = Mathf.Sign(f4) * Mathf.Abs(Mathf.Pow(f4, 2f));
 
-      AddForceAtPosition(Vector3.up * f * deltaForceMultiplier, vector, ForceMode.VelocityChange);
-      AddForceAtPosition(Vector3.up * f2 * deltaForceMultiplier, vector2,
+      AddForceAtPosition(Vector3.up * f * deltaForceMultiplier, shipForward,
         ForceMode.VelocityChange);
-      AddForceAtPosition(Vector3.up * f3 * deltaForceMultiplier, vector3,
+      AddForceAtPosition(Vector3.up * f2 * deltaForceMultiplier, shipBack,
         ForceMode.VelocityChange);
-      AddForceAtPosition(Vector3.up * f4 * deltaForceMultiplier, vector4,
+      AddForceAtPosition(Vector3.up * f3 * deltaForceMultiplier, shipLeft,
+        ForceMode.VelocityChange);
+      AddForceAtPosition(Vector3.up * f4 * deltaForceMultiplier, shipRight,
         ForceMode.VelocityChange);
 
       ApplySailForce(this, num5);
@@ -845,15 +837,15 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
 
       AddForceAtPosition(Vector3.up * side1force, side1,
-        ForceMode.Force);
+        ForceMode.VelocityChange);
       AddForceAtPosition(Vector3.up * side2force, side2,
-        ForceMode.Force);
+        ForceMode.VelocityChange);
       AddForceAtPosition(Vector3.up * side3force, side3,
-        ForceMode.Force);
+        ForceMode.VelocityChange);
       AddForceAtPosition(Vector3.up * side4force, side4,
-        ForceMode.Force);
+        ForceMode.VelocityChange);
       AddForceAtPosition(Vector3.up * centerforce2, centerpos2,
-        ForceMode.Force);
+        ForceMode.VelocityChange);
 
       var dir = Vector3.Dot(m_body.velocity, ShipForwardRotation.forward);
       ApplySailForce(this, dir);
@@ -959,8 +951,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     float num = Mathf.Lerp(0.25f, 1f, windIntensity);
     float windAngleFactor = GetWindAngleFactor();
     windAngleFactor *= num;
-    Vector3 target = Vector3.Normalize(windDir + ShipForwardRotation.forward) * windAngleFactor *
-                     m_sailForceFactor * sailSize;
+    Vector3 target = Vector3.Normalize(windDir + ShipForwardRotation.forward) *
+                     (windAngleFactor * m_sailForceFactor * sailSize);
     m_sailForce = Vector3.SmoothDamp(m_sailForce, target, ref m_windChangeVelocity, 1f, 99f);
     return m_sailForce;
 
@@ -1032,27 +1024,27 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
                       instance.GetFloatSizeFromDirection(Vector3.forward);
     var num7 = num5 * instance.m_stearVelForceFactor;
     instance.AddForceAtPosition(
-      instance.ShipForwardRotation.right * num7 * (0f - instance.m_rudderValue) *
-      Time.fixedDeltaTime,
+      instance.ShipForwardRotation.right *
+      (num7 * (0f - instance.m_rudderValue) * Time.fixedDeltaTime),
       stearoffset, ForceMode.VelocityChange);
     var stearforce = Vector3.zero;
     switch (instance.m_speed)
     {
       case Speed.Slow:
-        stearforce += instance.ShipForwardRotation.forward * instance.m_backwardForce *
-                      (1f - Mathf.Abs(instance.m_rudderValue));
+        stearforce += instance.ShipForwardRotation.forward *
+                      (instance.m_backwardForce * (1f - Mathf.Abs(instance.m_rudderValue)));
         break;
       case Speed.Back:
-        stearforce += -instance.ShipForwardRotation.forward * instance.m_backwardForce *
-                      (1f - Mathf.Abs(instance.m_rudderValue));
+        stearforce += -instance.ShipForwardRotation.forward *
+                      (instance.m_backwardForce * (1f - Mathf.Abs(instance.m_rudderValue)));
         break;
     }
 
     if (instance.m_speed == Speed.Back || instance.m_speed == Speed.Slow)
     {
       float num6 = instance.m_speed != Speed.Back ? 1 : -1;
-      stearforce += instance.ShipForwardRotation.right * instance.m_stearForce *
-                    (0f - instance.m_rudderValue) * num6;
+      stearforce += instance.ShipForwardRotation.right *
+                    (instance.m_stearForce * (0f - instance.m_rudderValue) * num6);
     }
 
     instance.AddForceAtPosition(stearforce * Time.fixedDeltaTime, stearoffset,

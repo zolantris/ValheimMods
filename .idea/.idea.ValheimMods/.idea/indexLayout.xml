@@ -14,7 +14,7 @@
       <Path>libs</Path>
       <Path>src/ValheimRAFT/Assets/Translations/English/valheimraft.json</Path>
       <Path>src/ValheimRAFT/README.md</Path>
-      <Path>../valheim_extracted</Path>
+      <Path>valheim.targets</Path>
     </explicitIncludes>
     <explicitExcludes />
   </component>

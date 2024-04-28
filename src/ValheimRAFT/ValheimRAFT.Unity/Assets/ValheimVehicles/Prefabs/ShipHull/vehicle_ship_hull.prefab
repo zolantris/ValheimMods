@@ -165,7 +165,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 95e8034110fa5b5408c376188aad1e89, type: 2}
+  - {fileID: 2100000, guid: 36b51383f76de1f448788cc0f8f64e62, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -618,7 +618,7 @@ LODGroup:
     renderers:
     - renderer: {fileID: 853556014040281936}
     - renderer: {fileID: 3392301538507013917}
-  m_Enabled: 0
+  m_Enabled: 1
 --- !u!1 &8255029667724065972
 GameObject:
   m_ObjectHideFlags: 0

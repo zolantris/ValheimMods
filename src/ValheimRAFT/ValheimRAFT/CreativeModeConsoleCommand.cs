@@ -29,7 +29,7 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
 
     if (vehicleShip.Instance != null && (bool)vehicleShip)
     {
-      var vehicleShipController = (WaterVehicleController)vehicleShip.Instance.Controller;
+      var vehicleShipController = (WaterVehicleController)vehicleShip.Instance.VehicleController;
       ToggleMode(player, vehicleShipController);
       return;
     }
