@@ -8,40 +8,23 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
-public class VehicleMovementController : MonoBehaviour, IDoodadController,
-  IRudderControls
+public class VehicleMovementController : MonoBehaviour
 {
   public IVehicleShip ShipInstance { get; set; }
-  public Vector3 m_detachOffset = new Vector3(0f, 0.5f, 0f);
-  [SerializeField] private string hoverText = "$valheim_vehicles_ship_controls";
-
-  public string m_hoverText
-  {
-    get => hoverText;
-    set => hoverText = value;
-  }
-
-  [SerializeField] private float maxUseRange = 10f;
-
-  public float MaxUseRange
-  {
-    get => maxUseRange;
-    set => maxUseRange = value;
-  }
+  public Vector3 detachOffset = new(0f, 0.5f, 0f);
 
   public Transform AttachPoint { get; set; }
 
-  public string m_attachAnimation = "Standing Torch Idle right";
-  public VehicleMovementController m_lastUsedControls;
-  public ZNetView m_nview;
+  public const string m_attachAnimation = "Standing Torch Idle right";
+  public RudderWheelComponent lastUsedWheelComponent;
+  public ZNetView vehicleNetview;
 
   private bool hasRegister = false;
 
   private void Awake()
   {
-    m_nview = GetComponent<ZNetView>();
-    if (m_nview == null || m_nview.m_zdo == null) return;
-
+    vehicleNetview = GetComponent<ZNetView>();
+    if (!vehicleNetview) return;
     InitializeRPC();
   }
 
@@ -51,23 +34,25 @@ public class VehicleMovementController : MonoBehaviour, IDoodadController,
   public void DEPRECATED_InitializeRudderWithShip(IVehicleShip vehicleShip,
     RudderWheelComponent rudderWheel, Ship ship)
   {
-    m_nview = ship.m_nview;
-    ship.m_controlGuiPos = transform;
+    vehicleNetview = ship.m_nview;
+    ship.m_controlGuiPos = rudderWheel.transform;
     var rudderAttachPoint = rudderWheel.transform.Find("attachpoint");
     if (rudderAttachPoint != null)
     {
-      AttachPoint = rudderAttachPoint.transform;
+      AttachPoint = rudderAttachPoint;
     }
+
+    InitializeRPC();
   }
 
   private void InitializeRPC()
   {
-    if (m_nview != null && hasRegister)
+    if (vehicleNetview != null && hasRegister)
     {
       UnRegisterRPCListeners();
     }
 
-    if (m_nview != null && !hasRegister)
+    if (vehicleNetview != null && !hasRegister)
     {
       RegisterRPCListeners();
       hasRegister = true;
@@ -76,17 +61,17 @@ public class VehicleMovementController : MonoBehaviour, IDoodadController,
 
   private void UnRegisterRPCListeners()
   {
-    m_nview.Unregister(nameof(RPC_RequestControl));
-    m_nview.Unregister(nameof(RPC_ReleaseControl));
-    m_nview.Unregister(nameof(RPC_RequestResponse));
+    vehicleNetview.Unregister(nameof(RPC_RequestControl));
+    vehicleNetview.Unregister(nameof(RPC_RequestResponse));
+    vehicleNetview.Unregister(nameof(RPC_ReleaseControl));
     hasRegister = false;
   }
 
   private void RegisterRPCListeners()
   {
-    m_nview.Register<long>(nameof(RPC_RequestControl), RPC_RequestControl);
-    m_nview.Register<long>(nameof(RPC_ReleaseControl), RPC_ReleaseControl);
-    m_nview.Register<bool>(nameof(RPC_RequestResponse), RPC_RequestResponse);
+    vehicleNetview.Register<long>(nameof(RPC_RequestControl), RPC_RequestControl);
+    vehicleNetview.Register<bool>(nameof(RPC_RequestResponse), RPC_RequestResponse);
+    vehicleNetview.Register<long>(nameof(RPC_ReleaseControl), RPC_ReleaseControl);
     hasRegister = true;
   }
 
@@ -101,13 +86,7 @@ public class VehicleMovementController : MonoBehaviour, IDoodadController,
       AttachPoint = rudderAttachPoint.transform;
     }
 
-    m_nview = vehicleShip.Instance.GetComponent<ZNetView>();
-
-    if (m_nview != null && !hasRegister)
-    {
-      RegisterRPCListeners();
-      hasRegister = true;
-    }
+    vehicleNetview = vehicleShip.Instance.m_nview;
   }
 
   private void OnDestroy()
@@ -116,188 +95,143 @@ public class VehicleMovementController : MonoBehaviour, IDoodadController,
     UnRegisterRPCListeners();
   }
 
-  public bool IsValid()
+  // public bool IsValid()
+  // {
+  //   return this;
+  // }
+  //
+  // public bool UseItem(Humanoid user, ItemDrop.ItemData item)
+  // {
+  //   return false;
+  // }
+
+  // public bool Interact(Humanoid character, bool repeat, bool alt)
+  // {
+  //   if (character == Player.m_localPlayer && isActiveAndEnabled)
+  //   {
+  //     var baseVehicle = GetComponentInParent<BaseVehicleController>();
+  //     if (baseVehicle != null)
+  //     {
+  //       baseVehicle.ComputeAllShipContainerItemWeight();
+  //     }
+  //     else
+  //     {
+  //       var baseRoot = GetComponentInParent<MoveableBaseRootComponent>();
+  //       if (baseRoot != null)
+  //       {
+  //         baseRoot.ComputeAllShipContainerItemWeight();
+  //       }
+  //     }
+  //
+  //     lastUsedWheelComponent = this;
+  //   }
+  //
+  //   if (repeat)
+  //   {
+  //     return false;
+  //   }
+  //
+  //   if (vehicleNetview == null) return false;
+  //
+  //   if (!vehicleNetview.IsValid())
+  //   {
+  //     return false;
+  //   }
+  //
+  //   if (!InUseDistance(character))
+  //   {
+  //     return false;
+  //   }
+  //
+  //   var player = character as Player;
+  //
+  //
+  //   var playerOnShipViaShipInstance =
+  //     ShipInstance?.Instance?.GetComponentsInChildren<Player>() ?? null;
+  //
+  //   /*
+  //    * <note /> This logic allows for the player to just look at the Raft and see if the player is a child within it.
+  //    */
+  //   if (playerOnShipViaShipInstance != null)
+  //     foreach (var player1 in playerOnShipViaShipInstance)
+  //     {
+  //       Logger.LogDebug(
+  //         $"Interact PlayerId {player1.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
+  //       if (player1.GetPlayerID() != player.GetPlayerID()) continue;
+  //       vehicleNetview.InvokeRPC(nameof(RPC_RequestControl), player.GetPlayerID());
+  //       return true;
+  //     }
+  //
+  //   if (player == null || player.IsEncumbered())
+  //   {
+  //     return false;
+  //   }
+  //
+  //   var playerOnShip = player.GetStandingOnShip();
+  //
+  //   if (playerOnShip == null)
+  //   {
+  //     Logger.LogDebug("Player is not on Ship");
+  //     return false;
+  //   }
+  //
+  //   vehicleNetview.InvokeRPC(nameof(RPC_RequestControl), player.GetPlayerID());
+  //   return false;
+  // }
+
+  public void FireRequestControl(long playerId, Transform attachTransform)
   {
-    return this;
+    vehicleNetview.InvokeRPC(nameof(RPC_RequestControl), [playerId, attachTransform]);
   }
 
-  public bool UseItem(Humanoid user, ItemDrop.ItemData item)
-  {
-    return false;
-  }
+  // public Component GetControlledComponent()
+  // {
+  //   return ShipInstance?.Instance;
+  // }
 
-  public bool Interact(Humanoid character, bool repeat, bool alt)
-  {
-    var isBaseVehicleParent = false;
-    if (character == Player.m_localPlayer && isActiveAndEnabled)
-    {
-      var baseVehicle = GetComponentInParent<BaseVehicleController>();
-      if (baseVehicle != null)
-      {
-        isBaseVehicleParent = true;
-        baseVehicle.ComputeAllShipContainerItemWeight();
-      }
-      else
-      {
-        var baseRoot = GetComponentInParent<MoveableBaseRootComponent>();
-        if (baseRoot != null)
-        {
-          baseRoot.ComputeAllShipContainerItemWeight();
-        }
-      }
-
-      m_lastUsedControls = this;
-    }
-
-    if (repeat)
-    {
-      return false;
-    }
-
-    if (m_nview == null) return false;
-
-    if (!m_nview.IsValid())
-    {
-      return false;
-    }
-
-    if (!InUseDistance(character))
-    {
-      return false;
-    }
-
-    var player = character as Player;
-
-
-    var playerOnShipViaShipInstance =
-      ShipInstance?.Instance?.GetComponentsInChildren<Player>() ?? null;
-
-    /*
-     * <note /> This logic allows for the player to just look at the Raft and see if the player is a child within it.
-     */
-    if (playerOnShipViaShipInstance != null)
-      foreach (var player1 in playerOnShipViaShipInstance)
-      {
-        Logger.LogDebug(
-          $"Interact PlayerId {player1.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
-        if (player1.GetPlayerID() != player.GetPlayerID()) continue;
-        m_nview.InvokeRPC(nameof(RPC_RequestControl), player.GetPlayerID());
-        return true;
-      }
-
-    if (player == null || player.IsEncumbered())
-    {
-      return false;
-    }
-
-    var playerOnShip = player.GetStandingOnShip();
-
-    if (playerOnShip == null)
-    {
-      Logger.LogDebug("Player is not on Ship");
-      return false;
-    }
-
-    m_nview.InvokeRPC(nameof(RPC_RequestControl), player.GetPlayerID());
-    return true;
-  }
-
-  public Component GetControlledComponent()
-  {
-    return ShipInstance?.Instance;
-  }
-
-  public Vector3 GetPosition()
-  {
-    return base.transform.position;
-  }
-
-  public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run, bool autoRun, bool block)
-  {
-    ShipInstance?.Instance.ApplyControls(moveDir);
-  }
-
-  public string GetHoverText()
-  {
-    var controller = ShipInstance?.VehicleController?.Instance;
-    if (controller == null)
-    {
-      return "";
-    }
-
-    var shipStatsText = "";
-
-    if (ValheimRaftPlugin.Instance.ShowShipStats.Value)
-    {
-      var shipMassToPush = ValheimRaftPlugin.Instance.MassPercentageFactor.Value;
-      shipStatsText += $"\nsailArea: {controller.GetTotalSailArea()}";
-      shipStatsText += $"\ntotalMass: {controller.TotalMass}";
-      shipStatsText +=
-        $"\nshipMass(no-containers): {controller.ShipMass}";
-      shipStatsText += $"\nshipContainerMass: {controller.ShipContainerMass}";
-      shipStatsText +=
-        $"\ntotalMassToPush: {shipMassToPush}% * {controller.TotalMass} = {controller.TotalMass * shipMassToPush / 100f}";
-      shipStatsText +=
-        $"\nshipPropulsion: {controller.GetSailingForce()}";
-
-      /* final formatting */
-      shipStatsText = $"<color=white>{shipStatsText}</color>";
-    }
-
-    var isAnchored =
-      controller.VehicleFlags.HasFlag(WaterVehicleFlags
-        .IsAnchored);
-
-    var anchoredStatus = isAnchored ? "[<color=red><b>$mb_rudder_use_anchored</b></color>]" : "";
-    var anchorText =
-      isAnchored
-        ? "$mb_rudder_use_anchor_disable_detail"
-        : "$mb_rudder_use_anchor_enable_detail";
-    var anchorKey =
-      ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set"
-        ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString()
-        : ZInput.instance.GetBoundKeyString("Run");
-    return Localization.instance.Localize(
-      $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$mb_rudder_use</b></color> {anchoredStatus}\n[<color=yellow><b>{anchorKey}</b></color>] <color=white>{anchorText}</color> {shipStatsText}");
-  }
-
-  public string GetHoverName()
-  {
-    return Localization.instance.Localize(m_hoverText);
-  }
+  // public Vector3 GetPosition()
+  // {
+  //   return base.transform.position;
+  // }
+  //
+  // public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run, bool autoRun, bool block)
+  // {
+  //   ShipInstance?.Instance.ApplyControls(moveDir);
+  // }
+  //
+  // public string GetHoverName()
+  // {
+  //   return Localization.instance.Localize(m_hoverText);
+  // }
 
   private void RPC_RequestControl(long sender, long playerID)
   {
-    var isOwner = m_nview.IsOwner();
+    var attachTransform = lastUsedWheelComponent.AttachPoint;
+
+    var isOwner = vehicleNetview.IsOwner();
     var isInBoat = ShipInstance.IsPlayerInBoat(playerID);
     if (!isOwner || !isInBoat) return;
 
     var isValidUser = false;
     if (GetUser() == playerID || !HaveValidUser())
     {
-      m_nview.GetZDO().Set(ZDOVars.s_user, playerID);
+      vehicleNetview.GetZDO().Set(ZDOVars.s_user, playerID);
       isValidUser = true;
     }
 
-    m_nview.InvokeRPC(sender, nameof(RPC_RequestResponse), isValidUser);
+    vehicleNetview.InvokeRPC(sender, nameof(RPC_RequestResponse), isValidUser);
   }
 
   private void RPC_ReleaseControl(long sender, long playerID)
   {
-    if (m_nview.IsOwner() && GetUser() == playerID)
+    if (vehicleNetview.IsOwner() && GetUser() == playerID)
     {
-      m_nview.GetZDO().Set(ZDOVars.s_user, 0L);
+      vehicleNetview.GetZDO().Set(ZDOVars.s_user, 0L);
     }
   }
 
   private void RPC_RequestResponse(long sender, bool granted)
   {
-    if (this != m_lastUsedControls)
-    {
-      m_lastUsedControls.RPC_RequestResponse(sender, granted);
-      return;
-    }
-
     if (!Player.m_localPlayer)
     {
       return;
@@ -305,14 +239,13 @@ public class VehicleMovementController : MonoBehaviour, IDoodadController,
 
     if (granted)
     {
-      Player.m_localPlayer.StartDoodadControl(this);
-      if (AttachPoint != null)
+      var attachTransform = lastUsedWheelComponent.AttachPoint;
+      Player.m_localPlayer.StartDoodadControl(lastUsedWheelComponent);
+      if (attachTransform != null)
       {
-        Player.m_localPlayer.AttachStart(AttachPoint, null, hideWeapons: false, isBed: false,
-          onShip: true, m_attachAnimation, m_detachOffset);
-        Player.m_localPlayer.SetDoodadControlls(ref Player.m_localPlayer.m_moveDir,
-          ref Player.m_localPlayer.m_lookDir, ref Player.m_localPlayer.m_run,
-          ref Player.m_localPlayer.m_run, false);
+        Player.m_localPlayer.AttachStart(attachTransform, null, hideWeapons: false, isBed: false,
+          onShip: true, m_attachAnimation, detachOffset);
+        ShipInstance.Instance.m_controlGuiPos = lastUsedWheelComponent.wheelTransform;
       }
     }
     else
@@ -321,10 +254,10 @@ public class VehicleMovementController : MonoBehaviour, IDoodadController,
     }
   }
 
-  public void OnUseStop(Player player)
+  public void FireReleaseControl(Player player)
   {
-    if (!m_nview.IsValid()) return;
-    m_nview.InvokeRPC(nameof(RPC_ReleaseControl), player.GetPlayerID());
+    if (!vehicleNetview.IsValid()) return;
+    vehicleNetview.InvokeRPC(nameof(RPC_ReleaseControl), player.GetPlayerID());
     if (AttachPoint != null)
     {
       player.AttachStop();
@@ -339,12 +272,6 @@ public class VehicleMovementController : MonoBehaviour, IDoodadController,
 
   private long GetUser()
   {
-    return !m_nview.IsValid() ? 0L : m_nview.GetZDO().GetLong(ZDOVars.s_user, 0L);
-  }
-
-  private bool InUseDistance(Humanoid human)
-  {
-    if (AttachPoint == null) return false;
-    return Vector3.Distance(human.transform.position, AttachPoint.position) < MaxUseRange;
+    return !vehicleNetview.IsValid() ? 0L : vehicleNetview.GetZDO().GetLong(ZDOVars.s_user, 0L);
   }
 }

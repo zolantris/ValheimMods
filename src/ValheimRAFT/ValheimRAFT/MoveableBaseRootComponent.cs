@@ -52,7 +52,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   internal List<MastComponent> m_mastPieces = new();
   internal List<SailComponent> m_sailPiece = new();
 
-  internal List<RudderWheelComponent> m_rudderPieces = new();
+  internal List<RudderWheelComponent> m_wheelPieces = new();
 
   internal List<ZNetView> m_portals = new();
 
@@ -88,6 +88,9 @@ public class MoveableBaseRootComponent : MonoBehaviour
   private static bool itemsRemovedDuringWait;
   private Coroutine? pendingPiecesCoroutine;
   private Coroutine? server_UpdatePiecesCoroutine;
+
+  // compatibility with v2.
+  public ShipControlls MovementController;
 
   public void Awake()
   {
@@ -371,8 +374,11 @@ public class MoveableBaseRootComponent : MonoBehaviour
         m_mastPieces.Remove(mast);
       }
 
-      var rudder = netView.GetComponent<RudderWheelComponent>();
-      if ((bool)rudder) m_rudderPieces.Remove(rudder);
+      var wheel = netView.GetComponent<RudderWheelComponent>();
+      if ((bool)wheel)
+      {
+        m_wheelPieces.Remove(wheel);
+      }
 
       var ramp = netView.GetComponent<BoardingRampComponent>();
       if ((bool)ramp) m_boardingRamps.Remove(ramp);
@@ -925,11 +931,14 @@ public class MoveableBaseRootComponent : MonoBehaviour
       m_boardingRamps.Add(ramp);
     }
 
-    var rudder = netView.GetComponent<RudderWheelComponent>();
-    if ((bool)rudder)
+    var wheel = netView.GetComponent<RudderWheelComponent>();
+    if ((bool)wheel)
     {
-      rudder.InitializeControls(netView, m_ship);
-      m_rudderPieces.Add(rudder);
+      wheel.DEPRECATED_InitializeControls(netView);
+      if (!wheel.deprecatedShipControls)
+        wheel.deprecatedShipControls = netView.GetComponentInChildren<ShipControlls>();
+      wheel.deprecatedShipControls.m_ship = m_ship;
+      m_wheelPieces.Add(wheel);
     }
 
     var portal = netView.GetComponent<TeleportWorld>();

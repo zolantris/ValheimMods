@@ -675,7 +675,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public void RemovePiece(ZNetView netView)
   {
-    if (netView.name.Contains(PrefabNames.WaterVehicleContainer)) return;
+    if (netView.name.Contains(PrefabNames.WaterVehicleShip)) return;
     if (m_pieces.Remove(netView))
     {
       UpdateMass(netView, true);
@@ -873,7 +873,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   {
     if ((bool)wnt)
     {
-      if (wnt.name.Contains(PrefabNames.WaterVehicleContainer))
+      if (wnt.name.Contains(PrefabNames.WaterVehicleShip))
       {
         // prevents a loop of DestroyPiece being called from WearNTear_Patch
         return;
@@ -1239,7 +1239,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public static void InitPiece(ZNetView netView)
   {
-    if (netView.name == $"{PrefabNames.WaterVehicleContainer}(Clone)")
+    if (netView.name == $"{PrefabNames.WaterVehicleShip}(Clone)")
     {
       return;
     }

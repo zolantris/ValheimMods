@@ -143,7 +143,7 @@ public class WearNTear_Patch
     var bv = __instance.GetComponent<BaseVehicleController>();
 
     // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
-    if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleContainer))
+    if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleShip))
     {
       return false;
     }

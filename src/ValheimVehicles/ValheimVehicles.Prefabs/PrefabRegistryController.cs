@@ -41,7 +41,7 @@ public class PrefabRegistryController : MonoBehaviour
       var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
       foreach (var obj in allObjects)
       {
-        if (obj.name.Contains($"{PrefabNames.WaterVehicleContainer}(Clone)") ||
+        if (obj.name.Contains($"{PrefabNames.WaterVehicleShip}(Clone)") ||
             obj.name.Contains($"{PrefabNames.ShipHullPrefabName}(Clone)"))
         {
           if (ReferenceEquals(obj, ShipHullPrefab.RaftHullPrefabInstance))

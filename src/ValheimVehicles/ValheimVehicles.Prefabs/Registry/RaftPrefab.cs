@@ -76,9 +76,27 @@ public class RaftPrefab : IRegisterPrefab
   // todo likely switch this to a command. This should not be part of release as it likely could cause regressions, better to have an upgrade command.
   public GameObject RegisterRaftV2Compat()
   {
-    var raftPrefab = WaterVehiclePrefab.CreateWaterVehiclePrefab(PrefabNames.m_raft);
+    var raftPrefab =
+      PrefabManager.Instance.CreateClonedPrefab(PrefabNames.m_raft,
+        LoadValheimAssets.vanillaRaftPrefab);
 
-    var piece = raftPrefab.AddComponent<Piece>();
+    // values to destroy in v2.0.0
+    var shipControls = raftPrefab.GetComponentInChildren<ShipControlls>();
+    var wearNTear = raftPrefab.GetComponent<WearNTear>();
+    var ship = raftPrefab.GetComponent<Ship>();
+    var zSyncTransform = raftPrefab.GetComponent<ZSyncTransform>();
+    var rigidbody = raftPrefab.GetComponent<Rigidbody>();
+
+    Object.Destroy(shipControls);
+    Object.Destroy(wearNTear);
+    Object.Destroy(ship);
+    Object.Destroy(zSyncTransform);
+    Object.Destroy(rigidbody);
+
+    var prefab = WaterVehiclePrefab.CreateWaterVehiclePrefab(raftPrefab);
+
+
+    var piece = prefab.AddComponent<Piece>();
     piece.m_waterPiece = true;
     piece.m_icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
     piece.m_name = "$mb_raft";
@@ -86,7 +104,7 @@ public class RaftPrefab : IRegisterPrefab
 
     PrefabRegistryController.AddToRaftPrefabPieces(piece);
 
-    return raftPrefab;
+    return prefab;
   }
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)

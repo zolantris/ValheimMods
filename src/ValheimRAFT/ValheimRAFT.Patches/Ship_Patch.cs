@@ -112,12 +112,12 @@ public class Ship_Patch
       }
     }
 
-    for (var i = 0; i < mb.m_baseRoot.m_rudderPieces.Count; i++)
+    for (var i = 0; i < mb.m_baseRoot.m_wheelPieces.Count; i++)
     {
-      var rudder = mb.m_baseRoot.m_rudderPieces[i];
+      var rudder = mb.m_baseRoot.m_wheelPieces[i];
       if (!rudder)
       {
-        mb.m_baseRoot.m_rudderPieces.RemoveAt(i);
+        mb.m_baseRoot.m_wheelPieces.RemoveAt(i);
         i--;
       }
       else if ((bool)rudder.wheelTransform)

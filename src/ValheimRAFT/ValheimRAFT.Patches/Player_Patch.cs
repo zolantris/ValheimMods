@@ -37,7 +37,7 @@ public class Player_Patch
 
   public static void HidePreviewComponent(ZNetView netView)
   {
-    if (!netView.name.Contains(PrefabNames.WaterVehicleContainer)) return;
+    if (!netView.name.Contains(PrefabNames.WaterVehicleShip)) return;
     var vehicleShip = netView.GetComponent<VehicleShip>();
     if (vehicleShip.GhostContainer != null)
     {
@@ -186,22 +186,23 @@ public class Player_Patch
     PatchSharedData.PlayerLastRayPiece = piece;
   }
 
-
+  // from 1.6.14
   [HarmonyPatch(typeof(Player), "FindHoverObject")]
   [HarmonyPrefix]
-  public static bool FindHoverObject(Player __instance, ref GameObject hover,
+  private static bool FindHoverObject(Player __instance, ref GameObject hover,
     ref Character hoverCreature)
   {
-    var isUnhandled = true;
     hover = null;
     hoverCreature = null;
     var array = Physics.RaycastAll(GameCamera.instance.transform.position,
       GameCamera.instance.transform.forward, 50f, __instance.m_interactMask);
     Array.Sort(array, (RaycastHit x, RaycastHit y) => x.distance.CompareTo(y.distance));
-    foreach (var raycastHit in array.ToList().Where(raycastHit =>
-               !(bool)raycastHit.collider.attachedRigidbody ||
-               raycastHit.collider.attachedRigidbody.gameObject != __instance.gameObject))
+    var array2 = array;
+    for (var i = 0; i < array2.Length; i++)
     {
+      var raycastHit = array2[i];
+      if ((bool)raycastHit.collider.attachedRigidbody &&
+          raycastHit.collider.attachedRigidbody.gameObject == __instance.gameObject) continue;
       if (hoverCreature == null)
       {
         var character = raycastHit.collider.attachedRigidbody
@@ -210,40 +211,21 @@ public class Player_Patch
         if (character != null) hoverCreature = character;
       }
 
-      if (!(Vector3.Distance(__instance.m_eye.position, raycastHit.point) <
-            __instance.m_maxInteractDistance)) continue;
-      var isComponentHoverable = raycastHit.collider.GetComponent<Hoverable>();
-      var isParentHoverable = raycastHit.collider.GetComponentInParent<Hoverable>();
-      if (isComponentHoverable != null)
+      if (Vector3.Distance(__instance.m_eye.position, raycastHit.point) <
+          __instance.m_maxInteractDistance)
       {
-        hover = raycastHit.collider.gameObject;
-        isUnhandled = false;
-        break;
-      }
-
-      if (isParentHoverable != null)
-      {
-        hover = raycastHit.collider.gameObject.transform.parent.gameObject;
-        isUnhandled = false;
-        break;
-      }
-
-      if (raycastHit.collider.attachedRigidbody == null) continue;
-
-      var hitBaseVehicle = raycastHit.collider
-        .attachedRigidbody.GetComponent<BaseVehicleController>();
-      var hitMoveableBaseRoot = raycastHit.collider
-        .attachedRigidbody.GetComponent<MoveableBaseRootComponent>();
-      switch ((bool)raycastHit.collider.attachedRigidbody)
-      {
-        case true when !(bool)hitBaseVehicle:
-        case true when !(bool)hitMoveableBaseRoot:
+        if (raycastHit.collider.GetComponent<Hoverable>() != null)
+          hover = raycastHit.collider.gameObject;
+        else if ((bool)raycastHit.collider.attachedRigidbody && !raycastHit.collider
+                   .attachedRigidbody.GetComponent<MoveableBaseRootComponent>() && !raycastHit
+                   .collider
+                   .attachedRigidbody.GetComponent<BaseVehicleController>())
           hover = raycastHit.collider.attachedRigidbody.gameObject;
-          isUnhandled = false;
-          break;
+        else
+          hover = raycastHit.collider.gameObject;
       }
 
-      if (isUnhandled == false) break;
+      break;
     }
 
     RopeAnchorComponent.m_draggingRopeTo = null;
@@ -251,11 +233,96 @@ public class Player_Patch
     {
       RopeAnchorComponent.m_draggingRopeTo = hover;
       hover = RopeAnchorComponent.m_draggingRopeFrom.gameObject;
-      isUnhandled = false;
     }
 
-    return isUnhandled;
+    return false;
   }
+
+  // [HarmonyPatch(typeof(Player), "FindHoverObject")]
+  // [HarmonyPrefix]
+  // public static bool FindHoverObject(Player __instance, ref GameObject hover,
+  //   ref Character hoverCreature)
+  // {
+  //   var isUnhandled = true;
+  //   hover = null;
+  //   hoverCreature = null;
+  //   var results = new RaycastHit[3];
+  //   var hits = Physics.RaycastNonAlloc(GameCamera.instance.transform.position,
+  //     GameCamera.instance.transform.forward, results, 50f, __instance.m_interactMask);
+  //
+  //   if (hits.Equals(0)) return true;
+  //
+  //   var sortedResults = results.ToArray();
+  //   Array.Sort(sortedResults, (x, y) => x.distance.CompareTo(y.distance));
+  //
+  //   foreach (var rayCastHit in sortedResults)
+  //   {
+  //     if (!(bool)rayCastHit.collider) break;
+  //     if (!(bool)rayCastHit.collider.attachedRigidbody) break;
+  //     if (rayCastHit.collider.attachedRigidbody.gameObject != __instance.gameObject) break;
+  //
+  //     if (hoverCreature == null)
+  //     {
+  //       var character = rayCastHit.collider.attachedRigidbody
+  //         ? rayCastHit.collider.attachedRigidbody.GetComponent<Character>()
+  //         : rayCastHit.collider.GetComponent<Character>();
+  //       if (character != null) hoverCreature = character;
+  //     }
+  //
+  //     if (!(Vector3.Distance(__instance.m_eye.position, rayCastHit.point) <
+  //           __instance.m_maxInteractDistance)) continue;
+  //     var isComponentHoverable = rayCastHit.collider.GetComponent<Hoverable>();
+  //     var isParentHoverable = rayCastHit.collider.GetComponentInParent<Hoverable>();
+  //     if (isComponentHoverable != null)
+  //     {
+  //       hover = rayCastHit.collider.gameObject;
+  //       isUnhandled = false;
+  //       break;
+  //     }
+  //
+  //     if (isParentHoverable != null)
+  //     {
+  //       hover = rayCastHit.collider.gameObject.transform.parent.gameObject;
+  //       isUnhandled = false;
+  //       break;
+  //     }
+  //
+  //     if (rayCastHit.collider.attachedRigidbody == null) continue;
+  //
+  //     var hitBaseVehicle = rayCastHit.collider
+  //       .attachedRigidbody.GetComponent<BaseVehicleController>();
+  //     var hitMoveableBaseRoot = rayCastHit.collider
+  //       .attachedRigidbody.GetComponent<MoveableBaseRootComponent>();
+  //     if (rayCastHit.collider.attachedRigidbody.gameObject.name.StartsWith(PrefabNames
+  //           .VehiclePiecesContainer) ||
+  //         rayCastHit.collider.attachedRigidbody.gameObject.name.StartsWith(PrefabNames
+  //           .WaterVehicleShip))
+  //     {
+  //       return true;
+  //     }
+  //
+  //     // switch ((bool)rayCastHit.collider.attachedRigidbody)
+  //     // {
+  //     //   case true when !(bool)hitBaseVehicle:
+  //     //   case true when !(bool)hitMoveableBaseRoot:
+  //     //     hover = rayCastHit.collider.attachedRigidbody.gameObject;
+  //     //     isUnhandled = false;
+  //     //     break;
+  //     // }
+  //
+  //     if (isUnhandled == false) break;
+  //   }
+  //
+  //   RopeAnchorComponent.m_draggingRopeTo = null;
+  //   if ((bool)hover && (bool)RopeAnchorComponent.m_draggingRopeFrom)
+  //   {
+  //     RopeAnchorComponent.m_draggingRopeTo = hover;
+  //     hover = RopeAnchorComponent.m_draggingRopeFrom.gameObject;
+  //     isUnhandled = false;
+  //   }
+  //
+  //   return isUnhandled;
+  // }
 
   [HarmonyPatch(typeof(Player), "AttachStop")]
   [HarmonyPrefix]
@@ -339,7 +406,7 @@ public class Player_Patch
       {
         __instance.SetDoodadControlls(ref movedir, ref ((Character)__instance).m_lookDir, ref run,
           ref autoRun, blockHold);
-        if (rudder.Controls != null)
+        if ((bool)rudder.Controls)
         {
           // might be a problem....
           var waterVehicleController = rudder.GetComponentInParent<WaterVehicleController>();

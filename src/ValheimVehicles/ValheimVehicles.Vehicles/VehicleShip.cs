@@ -44,17 +44,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   private GameObject _piecesContainer;
   private GameObject _ghostContainer;
-  public VehicleMovementController _movementController;
-
-  public VehicleMovementController MovementController
-  {
-    get => _movementController;
-    set
-    {
-      _movementController = value;
-      m_shipControlls = value;
-    }
-  }
 
   public static bool CustomShipPhysicsEnabled = false;
 
@@ -75,6 +64,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   public ZSyncTransform m_zsyncTransform;
 
   public VehicleDebugHelpers VehicleDebugHelpersInstance { get; private set; }
+
+  public VehicleMovementController MovementController;
 
   public Transform? ShipForwardRotation
   {
@@ -148,6 +139,16 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       var buttonDownDynamic =
         ZInput.GetButtonDown(mainKeyString);
 
+      if (isLeftShiftDown)
+      {
+        Logger.LogDebug("LeftShift down");
+      }
+
+      if (buttonDownDynamic)
+      {
+        Logger.LogDebug($"Dynamic Anchor Button down: {mainKeyString}");
+      }
+
       // Logger.LogDebug($"AnchorKey: leftShift {isLeftShiftDown}, mainKey: {mainKeyString}");
       // Logger.LogDebug(
       //   $"AnchorKey isDown: {ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown()}");
@@ -184,19 +185,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   public void AwakeSetupShipComponents()
   {
-    // if (!VehicleContainer)
-    // {
-    //   Logger.LogError("No VehicleContainer detected, this is a Vehicle Breaking error!");
-    //
-    //   // prevents vehicle from initializing 
-    //   gameObject.SetActive(false);
-    //   return;
-    // }
-    if (!(bool)MovementController)
-    {
-      MovementController = GetComponent<VehicleMovementController>();
-    }
-
     if (!(bool)m_body)
     {
       m_body = GetComponent<Rigidbody>();

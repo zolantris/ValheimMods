@@ -34,7 +34,6 @@ public static class PrefabNames
   public const string VehiclePiecesContainer = $"{ValheimVehiclesPrefix}_{PiecesContainer}";
 
   private const string ValheimVehiclesPrefix = "ValheimVehicles";
-  public const string WaterVehicleContainer = $"{ValheimVehiclesPrefix}_WaterVehicle";
   public const string WaterVehicleShip = $"{ValheimVehiclesPrefix}_WaterVehicleShip";
   public const string ShipHullPrefabName = $"{ValheimVehiclesPrefix}_ShipHull_Wood";
   public const string SailBoxColliderName = $"{ValheimVehiclesPrefix}_SailBoxCollider";
