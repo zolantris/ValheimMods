@@ -143,6 +143,8 @@ public class PrefabRegistryController : MonoBehaviour
    */
   public static void Init()
   {
+    PrefabPieceHelper.Init();
+
     vehicleSharedAssetBundle =
       AssetUtils.LoadAssetBundleFromResources("valheim-vehicles-shared",
         Assembly.GetExecutingAssembly());

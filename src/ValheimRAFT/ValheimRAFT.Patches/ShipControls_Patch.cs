@@ -62,18 +62,20 @@ public class ShipControls_Patch
     var isAnchored =
       baseRoot.shipController.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags
         .IsAnchored);
-    var anchoredStatus = isAnchored ? "[<color=red><b>$mb_rudder_use_anchored</b></color>]" : "";
+    var anchoredStatus = isAnchored
+      ? "[<color=red><b>$valheim_vehicles_wheel_use_anchored</b></color>]"
+      : "";
     var anchorText =
       isAnchored
-        ? "$mb_rudder_use_anchor_disable_detail"
-        : "$mb_rudder_use_anchor_enable_detail";
+        ? "$valheim_vehicles_wheel_use_anchor_disable_detail"
+        : "$valheim_vehicles_wheel_use_anchor_enable_detail";
     var anchorKey =
       ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set"
         ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString()
         : ZInput.instance.GetBoundKeyString("Run");
     __result =
       Localization.instance.Localize(
-        $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$mb_rudder_use</b></color> {anchoredStatus}\n[<color=yellow><b>{anchorKey}</b></color>] <color=white>{anchorText}</color> {shipStatsText}");
+        $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$valheim_vehicles_wheel_use</b></color> {anchoredStatus}\n[<color=yellow><b>{anchorKey}</b></color>] <color=white>{anchorText}</color> {shipStatsText}");
 
     return false;
   }

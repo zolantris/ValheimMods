@@ -33,7 +33,6 @@ public static class PrefabNames
 
   public const string VehiclePiecesContainer = $"{ValheimVehiclesPrefix}_{PiecesContainer}";
 
-  public const string ShipHullCoreWoodHorizontal = "$mb_ship_hull_corewood_0";
   private const string ValheimVehiclesPrefix = "ValheimVehicles";
   public const string WaterVehicleContainer = $"{ValheimVehiclesPrefix}_WaterVehicle";
   public const string WaterVehicleShip = $"{ValheimVehiclesPrefix}_WaterVehicleShip";
@@ -42,6 +41,7 @@ public static class PrefabNames
   public const string ShipRudderBasic = $"{ValheimVehiclesPrefix}_ShipRudderBasic";
   public const string ShipRudderAdvanced = $"{ValheimVehiclesPrefix}_ShipRudderAdvanced";
   public const string ShipSteeringWheel = $"{ValheimVehiclesPrefix}_ShipSteeringWheel";
+  public const string ShipKeel = $"{ValheimVehiclesPrefix}_ShipKeel";
   public const string WaterVehiclePreviewHull = $"{ValheimVehiclesPrefix}_WaterVehiclePreviewHull";
 
   public const string VehicleSail = $"{ValheimVehiclesPrefix}_VehicleSail";
@@ -49,4 +49,5 @@ public static class PrefabNames
   public const string VehicleShipEffects = $"{ValheimVehiclesPrefix}_VehicleShipEffects";
   public const string VehicleSailMast = $"{ValheimVehiclesPrefix}_VehicleSailMast";
   public const string VehicleSailCloth = $"{ValheimVehiclesPrefix}_SailCloth";
+  public const string VehicleToggleSwitch = $"{ValheimVehiclesPrefix}_VehicleToggleSwitch";
 }

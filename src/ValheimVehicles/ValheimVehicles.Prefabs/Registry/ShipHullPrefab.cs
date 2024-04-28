@@ -1,3 +1,4 @@
+using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -15,48 +16,39 @@ public class ShipHullPrefab : IRegisterPrefab
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    RegisterHull(PrefabNames.ShipHullPrefabName, PrefabNames.ShipHullCoreWoodHorizontal,
+    RegisterHull(PrefabNames.ShipHullPrefabName,
       new Vector3(1, 1, 1),
       prefabManager, pieceManager);
   }
 
-
-  // public void RegisterHulls()
-  // {
-  //   RegisterHull("wood_wall_log_4x0.5", ShipHulls.HullMaterial.CoreWood,
-  //     ShipHulls.HullOrientation.Horizontal, new Vector3(1, 1f, 1f));
-  // }
-
   private static void RegisterHull(
-    string prefabName, string pieceName,
+    string prefabName,
     Vector3 pieceScale,
     PrefabManager prefabManager,
     PieceManager pieceManager)
   {
-    var raftHullPrefab =
+    var prefab =
       prefabManager.CreateClonedPrefab(
         prefabName, LoadValheimVehicleAssets.ShipHullAsset);
 
-    if (!(bool)raftHullPrefab) return;
+    if (!(bool)prefab) return;
 
-    PrefabRegistryHelpers.AddNetViewWithPersistence(raftHullPrefab);
-    raftHullPrefab.layer = 0;
-    raftHullPrefab.gameObject.layer = 0;
-    var piece = raftHullPrefab.AddComponent<Piece>();
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    prefab.layer = 0;
+    prefab.gameObject.layer = 0;
+    var piece = PrefabPieceHelper.AddPieceForPrefab(PrefabNames.ShipHullPrefabName, prefab);
 
     // shifting for collider testing
-    raftHullPrefab.transform.localPosition = new Vector3(0, 0, -4);
+    prefab.transform.localPosition = new Vector3(0, 0, -4);
 
 
-    raftHullPrefab.transform.localScale = pieceScale;
-    raftHullPrefab.gameObject.transform.position = Vector3.zero;
-    raftHullPrefab.gameObject.transform.localPosition = Vector3.zero;
+    prefab.transform.localScale = pieceScale;
+    prefab.gameObject.transform.position = Vector3.zero;
+    prefab.gameObject.transform.localPosition = Vector3.zero;
     piece.m_waterPiece = false;
-    piece.m_icon = LoadValheimVehicleAssets.Sprites.GetSprite(SpriteNames.ShipHull);
     piece.m_noClipping = false;
-    piece.m_name = pieceName;
 
-    var wnt = PrefabRegistryHelpers.SetWearNTear(raftHullPrefab);
+    var wnt = PrefabRegistryHelpers.SetWearNTear(prefab);
     PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.HardWood);
     // wnt.m_oldMaterials = LoadValheimAssets.woodFloorPieceWearNTear.m_oldMaterials;
     // wnt.m_oldMaterials = null;
@@ -75,51 +67,23 @@ public class ShipHullPrefab : IRegisterPrefab
 
 
     // this will be used to hide water on the boat
-    raftHullPrefab.AddComponent<ShipHullComponent>();
-    PrefabRegistryHelpers.HoistSnapPointsToPrefab(raftHullPrefab);
+    prefab.AddComponent<ShipHullComponent>();
+    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
 
-    pieceManager.AddPiece(new CustomPiece(raftHullPrefab, false, new PieceConfig
+    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
-      /*
-       * @todo make the name dynamic getter from HullMaterial
-       */
-      Name = piece.m_name,
-      Description = piece.m_description,
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[3]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
-          Amount = 10,
-          Item = "FineWood",
-          Recover = true
-        },
-        new()
-        {
-          Amount = 2,
-          Item = "RoundLog",
-          Recover = true
-        },
-        new()
-        {
-          Amount = 6,
-          Item = "WolfPelt",
+          Amount = 20,
+          Item = "Wood",
           Recover = true
         }
-      }
+      ]
     }));
   }
-
-  // private GameObject RegisterHull(string prefabName, string prefabMaterial,
-  //   ShipHulls.HullOrientation prefabOrientation, Vector3 pieceScale, PrefabManager prefabManager,
-  //   PieceManager pieceManager)
-  // {
-  //   // var woodHorizontalOriginalPrefab = prefabManager.GetPrefab(prefabName);
-  //   // var hullPrefabName = ShipHulls.GetHullPrefabName(prefabMaterial, prefabOrientation);
-  //   // RegisterHullPrefabs(<name>)
-  //   // ShipHulls.GetHullTranslations(prefabMaterial, prefabOrientation)
-  //   return raftHullPrefab;
-  // }
 }

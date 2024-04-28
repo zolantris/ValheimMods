@@ -75,10 +75,8 @@ public class ShipRudderPrefabs : IRegisterPrefab
     PrefabRegistryHelpers.AddNetViewWithPersistence(rudderPrefab);
     rudderPrefab.layer = 0;
     rudderPrefab.gameObject.layer = 0;
-    var piece = rudderPrefab.AddComponent<Piece>();
-    piece.m_name = "$valheim_vehicles_rudder_advanced";
-    piece.m_description = "$valheim_vehicles_rudder_advanced_desc";
-    piece.m_icon = LoadValheimVehicleAssets.Sprites.GetSprite(SpriteNames.ShipRudderAdvancedv2);
+    PrefabPieceHelper.AddPieceForPrefab(PrefabNames.ShipRudderAdvanced, rudderPrefab);
+
 
     var rudderComponent = rudderPrefab.AddComponent<RudderComponent>();
     rudderComponent.PivotPoint = rudderPrefab.transform.Find("rudder_advanced");
@@ -90,34 +88,29 @@ public class ShipRudderPrefabs : IRegisterPrefab
     pieceManager.AddPiece(new CustomPiece(rudderPrefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
-      /*
-       * @todo make the name dynamic getter from HullMaterial
-       */
-      Name = piece.m_name,
-      Description = piece.m_description,
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[3]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 20,
           Item = "FineWood",
           Recover = true
         },
-        new()
+        new RequirementConfig
         {
           Amount = 2,
           Item = "Copper",
           Recover = true
         },
-        new()
+        new RequirementConfig
         {
           Amount = 5,
           Item = "DeerHide",
           Recover = true
         }
-      }
+      ]
     }));
   }
 }

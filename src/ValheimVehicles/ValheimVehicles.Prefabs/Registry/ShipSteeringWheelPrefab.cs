@@ -12,42 +12,40 @@ public class ShipSteeringWheelPrefab : IRegisterPrefab
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    var mbRudderPrefab =
+    var prefab =
       prefabManager.CreateClonedPrefab(PrefabNames.ShipSteeringWheel,
         LoadValheimRaftAssets.steeringWheel);
 
-    var mbRudderPrefabPiece = mbRudderPrefab.AddComponent<Piece>();
-    mbRudderPrefabPiece.m_name = "$mb_rudder";
-    mbRudderPrefabPiece.m_description = "$mb_rudder_desc";
+    var mbRudderPrefabPiece =
+      PrefabPieceHelper.AddPieceForPrefab(PrefabNames.ShipSteeringWheel, prefab);
     mbRudderPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
     PrefabRegistryController.AddToRaftPrefabPieces(mbRudderPrefabPiece);
-    PrefabRegistryHelpers.AddNetViewWithPersistence(mbRudderPrefab);
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
-    var rudderWheelComponent = mbRudderPrefab.AddComponent<RudderWheelComponent>();
+    var rudderWheelComponent = prefab.AddComponent<RudderWheelComponent>();
 
-    rudderWheelComponent.wheelTransform = mbRudderPrefab.transform.Find("controls/wheel");
+    rudderWheelComponent.wheelTransform = prefab.transform.Find("controls/wheel");
     rudderWheelComponent.UpdateSpokes();
 
-    PrefabRegistryHelpers.SetWearNTear(mbRudderPrefab);
+    PrefabRegistryHelpers.SetWearNTear(prefab);
+    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
+    PrefabRegistryHelpers.FixCollisionLayers(prefab);
 
-    PrefabRegistryHelpers.FixCollisionLayers(mbRudderPrefab);
-    pieceManager.AddPiece(new CustomPiece(mbRudderPrefab, false, new PieceConfig
+    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
-      Description = "$mb_rudder_desc",
-      Icon = LoadValheimVehicleSharedAssets.Sprites.GetSprite("steering_wheel"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[1]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 10,
           Item = "Wood",
           Recover = true
         }
-      }
+      ]
     }));
   }
 }
