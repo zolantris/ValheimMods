@@ -109,6 +109,19 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     base.Start();
   }
 
+  public new void OnDestroy()
+  {
+    base.OnDestroy();
+
+    if (_vehicleInstance)
+    {
+      if (_vehicleInstance!.gameObject != null)
+      {
+        Destroy(_vehicleInstance.gameObject);
+      }
+    }
+  }
+
   public void OnEnable()
   {
     ZdoReadyStart();

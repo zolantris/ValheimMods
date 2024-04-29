@@ -30,6 +30,8 @@ public class Hud_Patch
     __instance.m_rudderRight.SetActive(value: false);
     __instance.m_fullSail.SetActive(speedSetting == ValheimBaseGameShip.Speed.Full);
     __instance.m_halfSail.SetActive(speedSetting == ValheimBaseGameShip.Speed.Half);
+
+
     GameObject rudder2 = __instance.m_rudder;
     int active;
     switch (speedSetting)

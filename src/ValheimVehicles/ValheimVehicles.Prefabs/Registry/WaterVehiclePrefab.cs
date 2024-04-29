@@ -44,8 +44,8 @@ public class WaterVehiclePrefab : IRegisterPrefab
     blockingColliderObj.name = PrefabNames.WaterVehicleBlockingCollider;
 
     var blockingBoxCollider = blockingColliderObj.GetComponent<BoxCollider>();
-    var floatBoxCollider = blockingColliderObj.GetComponent<BoxCollider>();
-    var onboardBoxCollider = blockingColliderObj.GetComponent<BoxCollider>();
+    var floatBoxCollider = floatColliderObj.GetComponent<BoxCollider>();
+    var onboardBoxCollider = onboardColliderObj.GetComponent<BoxCollider>();
 
     /*
      * ShipControls were a gameObject with a script attached to them. This approach directly attaches the script instead of having the rudder show.
@@ -80,6 +80,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
     shipInstance.ShipEffectsObj = vehicleShipEffects.gameObject;
     shipInstance.ShipEffects = vehicleShipEffects;
 
+    shipInstance.m_floatcollider = floatBoxCollider;
     shipInstance.FloatCollider = floatBoxCollider;
 
     // wearntear may need to be removed or tweaked

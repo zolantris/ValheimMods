@@ -210,22 +210,22 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     SailCustomAreaTier1Multiplier = Config.Bind("Propulsion",
       "SailCustomAreaTier1Multiplier", SailAreaForce.CustomTier1AreaForceMultiplier,
       CreateConfigDescription(
-        "Manual sets the area multiplier the custom tier1 sail. Currently there is only 1 tier",
+        "Manual sets the sail wind area multiplier the custom tier1 sail. Currently there is only 1 tier",
         true)
     );
 
     SailTier1Area = Config.Bind("Propulsion",
       "SailTier1Area", SailAreaForce.Tier1,
-      CreateConfigDescription("Manual sets the area of the tier 1 sail.", true)
+      CreateConfigDescription("Manual sets the sail wind area of the tier 1 sail.", true)
     );
 
     SailTier2Area = Config.Bind("Propulsion",
       "SailTier2Area", SailAreaForce.Tier2,
-      CreateConfigDescription("Manual sets the area of the tier 2 sail.", true));
+      CreateConfigDescription("Manual sets the sail wind area of the tier 2 sail.", true));
 
     SailTier3Area = Config.Bind("Propulsion",
       "SailTier3Area", SailAreaForce.Tier3,
-      CreateConfigDescription("Manual sets the area of the tier 3 sail.", true));
+      CreateConfigDescription("Manual sets the sail wind area of the tier 3 sail.", true));
   }
 
   private void CreateServerConfig()

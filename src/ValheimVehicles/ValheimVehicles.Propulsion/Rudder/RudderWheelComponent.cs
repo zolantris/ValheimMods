@@ -289,12 +289,16 @@ public class RudderWheelComponent : MonoBehaviour, Hoverable, Interactable, IDoo
 
     if (!m_currentLeftHand)
     {
-      m_currentLeftHand = GetNearestSpoke(base.transform.TransformPoint(m_leftHandPosition));
+      var playerHandTransform = Player.m_localPlayer.transform.TransformPoint(m_leftHandPosition);
+      m_currentLeftHand = GetNearestSpoke(playerHandTransform);
+      // m_currentLeftHand = GetNearestSpoke(base.transform.TransformPoint(m_leftHandPosition));
     }
 
     if (!m_currentRightHand)
     {
-      m_currentRightHand = GetNearestSpoke(base.transform.TransformPoint(m_rightHandPosition));
+      var playerHandTransform = Player.m_localPlayer.transform.TransformPoint(m_leftHandPosition);
+      m_currentRightHand = GetNearestSpoke(playerHandTransform);
+      // m_currentRightHand = GetNearestSpoke(base.transform.TransformPoint(m_rightHandPosition));
     }
 
     if (!m_targetLeftHand && !m_targetRightHand)

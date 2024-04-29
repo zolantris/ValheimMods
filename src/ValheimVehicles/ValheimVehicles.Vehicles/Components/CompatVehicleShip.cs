@@ -38,7 +38,7 @@ public class CompatVehicleShip(Ship ship) : IVehicleShip
     set { }
   }
 
-  public Transform? ShipForwardRotation { get; }
+  public Transform? ShipDirection { get; }
 
   public Transform ControlGuiPosition
   {
