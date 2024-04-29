@@ -54,7 +54,7 @@ public class RudderWheelComponent : MonoBehaviour, Hoverable, Interactable, IDoo
     var controller = ShipInstance?.VehicleController?.Instance;
     if (controller == null)
     {
-      return "$valheim_vehicles_ship_controls";
+      return Localization.instance.Localize("$valheim_vehicles_ship_controls");
     }
 
     var shipStatsText = "";

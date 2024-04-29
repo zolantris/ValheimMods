@@ -88,6 +88,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> EnableMetrics { get; set; }
   public ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
   public ConfigEntry<bool> AutoUpgradeV1Raft { get; set; }
+  public ConfigEntry<bool> ProtectVehiclePiecesOnErrorFromWearNTearDamage { get; set; }
+
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -228,6 +230,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreateServerConfig()
   {
+    ProtectVehiclePiecesOnErrorFromWearNTearDamage = Config.Bind("Server config",
+      "Protect Vehicle pieces from breaking on Error", true,
+      "Protects against crashes breaking raft/vehicle initialization causing raft/vehicles to slowly break pieces attached to it. This will make pieces attached to valid raft ZDOs unbreakable from damage, but still breakable with hammer");
     AdminsCanOnlyBuildRaft = Config.Bind("Server config", "AdminsCanOnlyBuildRaft", false,
       new ConfigDescription(
         "ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart",

@@ -707,9 +707,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       {
         m_rudderPieces.Remove(rudder);
 
-        if (VehicleInstance?.Instance)
+        if (VehicleInstance?.Instance && m_rudderPieces.Count > 0)
         {
-          RebuildBounds();
+          SetShipWakeBounds();
         }
       }
 
@@ -1317,12 +1317,14 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   {
     if (!netView) return false;
 
-    var bvc = netView.GetComponent<Vehicles_BaseVehicleController>();
-    if (!(bool)bvc) return true;
+    var vehicleShip = netView.GetComponent<VehicleShip>();
+    if ((bool)vehicleShip) return false;
+    if (vehicleShip.VehicleController == null) return true;
 
     var hasPendingPieces =
-      m_pendingPieces.TryGetValue(bvc.GetPersistentID(), out var pendingPieces);
-    var hasPieces = bvc.GetPieceCount() != 0;
+      m_pendingPieces.TryGetValue(vehicleShip.VehicleController.Instance.GetPersistentID(),
+        out var pendingPieces);
+    var hasPieces = vehicleShip.VehicleController.Instance.GetPieceCount() != 0;
 
     // if there are pending pieces, do not let vehicle be destroyed
     if (pendingPieces != null && hasPendingPieces && pendingPieces.Count > 0)
@@ -1392,6 +1394,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
 
     Physics.SyncTransforms();
+    RebuildBounds();
 
     totalSailArea = 0;
     m_pieces.Add(netView);
@@ -1415,12 +1418,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var mast = netView.GetComponent<MastComponent>();
     if ((bool)mast)
     {
-      // ReSharper disable once MergeIntoPattern
-      if (VehicleInstance?.Instance && mast.m_allowSailShrinking && mast.m_allowSailShrinking)
-      {
-        // mast.transform.SetParent(VehicleInstance.Instance.m_mastObject.transform);
-      }
-
       m_mastPieces.Add(mast);
     }
 
@@ -1447,17 +1444,24 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if ((bool)rudder)
     {
       m_rudderPieces.Add(rudder);
-      RotateVehicleColliders();
       SetShipWakeBounds();
     }
 
 
-    var rudderWheel = netView.GetComponent<RudderWheelComponent>();
-    if ((bool)rudderWheel)
+    var wheel = netView.GetComponent<RudderWheelComponent>();
+    if ((bool)wheel)
     {
-      m_rudderWheelPieces.Add(rudderWheel);
-      rudderWheel.InitializeControls(netView, VehicleInstance);
-      RotateVehicleColliders();
+      if (m_rudderPieces.Count == 1)
+      {
+        var firstPiece = m_rudderPieces.First();
+        var firstPieceNetView = firstPiece.GetComponent<ZNetView>();
+        RemovePiece(firstPieceNetView);
+      }
+
+      m_rudderWheelPieces.Add(wheel);
+      wheel.InitializeControls(netView, VehicleInstance);
+      VehicleInstance?.Instance.UpdateShipRotation(wheel.transform.localRotation.y);
+      RebuildBounds();
     }
 
     var portal = netView.GetComponent<TeleportWorld>();
@@ -1570,8 +1574,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   private float GetAverageFloatHeightFromHulls()
   {
-    if (m_hullPieces.Count <= 0) return _vehicleBounds.center.y;
-    // if (m_hullPieces.Count <= 0) return 0.2f;
+    // if (m_hullPieces.Count <= 0) return _vehicleBounds.center.y;
+    if (m_hullPieces.Count <= 0) return 0.2f;
 
     foreach (var hullPiece in m_hullPieces)
     {
@@ -1600,32 +1604,27 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
+    if (!VehicleInstance.Instance.ColliderParentObj) return;
+
+    var parentCollider = VehicleInstance.Instance.ColliderParentObj;
     var rotation = Quaternion.Euler(Vector3.zero);
-    if (m_rudderPieces.Count > 0)
-    {
-      var firstPiece = m_rudderPieces.First();
-      rotation = firstPiece.transform.localRotation;
-    }
-    else if (m_rudderWheelPieces.Count > 0)
+    // if (m_rudderPieces.Count > 0)
+    // {
+    //   var firstPiece = m_rudderPieces.First();
+    //   rotation = firstPiece.transform.localRotation;
+    // }
+    if (m_rudderWheelPieces.Count > 0)
     {
       var firstPiece = m_rudderWheelPieces.First();
       rotation = firstPiece.transform.localRotation;
     }
 
-    if (m_floatcollider.transform.localRotation == rotation &&
-        m_blockingcollider.transform.localRotation == rotation &&
-        m_onboardcollider.transform.localRotation == rotation) return;
-
-    m_floatcollider.transform.localRotation = rotation;
-    m_blockingcollider.transform.localRotation = rotation;
-    m_onboardcollider.transform.localRotation = rotation;
+    if (parentCollider.transform.localRotation == rotation) return;
+    parentCollider.transform.localRotation = rotation;
   }
 
   /**
-   * bounds cannot be decapsulated by default so regenerating it seems prudent on piece removal
-   */
-  /**
-   * bounds cannot be decapsulated by default so regenerating it seems prudent on piece removal
+   * bounds cannot be de-encapsulated by default so regenerating it seems prudent on piece removal
    */
   public void RebuildBounds()
   {
@@ -1634,8 +1633,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
+    Physics.SyncTransforms();
     RotateVehicleColliders();
-
     Physics.SyncTransforms();
 
     _vehicleBounds = new Bounds();
@@ -1665,6 +1664,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       Logger.LogDebug($"floatcollider size after {m_floatcollider.size}");
     }
 
+    var rotatedVehicleBounds = GetBoundsWithParentRotation();
+
     /*
      * @description float collider logic
      * - should match all ship colliders at surface level
@@ -1672,9 +1673,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
      */
     var averageFloatHeight = GetAverageFloatHeightFromHulls();
     var floatColliderCenterOffset =
-      new Vector3(_vehicleBounds.center.x, averageFloatHeight, _vehicleBounds.center.z);
-    var floatColliderSize = new Vector3(_vehicleBounds.size.x,
-      m_floatcollider.size.y, _vehicleBounds.size.z);
+      new Vector3(rotatedVehicleBounds.center.x, averageFloatHeight, rotatedVehicleBounds.center.z);
+    var floatColliderSize = new Vector3(rotatedVehicleBounds.size.x,
+      m_floatcollider.size.y, rotatedVehicleBounds.size.z);
 
     /*
      * blocking collider is the collider that prevents the ship from going through objects.
@@ -1683,9 +1684,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
      * - may need an additional size
      * - may need more logic for water masks (hiding water on boat) and other boat magic that has not been added yet.
      */
-    var blockingColliderCenterOffset = new Vector3(_vehicleBounds.center.x,
-      floatColliderCenterOffset.y + 0.2f, _vehicleBounds.center.z);
-    var blockingColliderSize = new Vector3(_vehicleBounds.size.x,
+    var blockingColliderCenterOffset = new Vector3(rotatedVehicleBounds.center.x,
+      floatColliderCenterOffset.y + 0.2f, rotatedVehicleBounds.center.z);
+    var blockingColliderSize = new Vector3(rotatedVehicleBounds.size.x,
       floatColliderSize.y, _vehicleBounds.size.z);
 
     /*
@@ -1700,16 +1701,16 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     const float characterHeightScalar = 1.2f;
     var computedOnboardTriggerSize =
       Math.Min(
-        Math.Max(_vehicleBounds.size.y * characterHeightScalar,
-          _vehicleBounds.size.y + characterTriggerMinHeight),
-        _vehicleBounds.size.y + characterTriggerMaxAddedHeight);
+        Math.Max(rotatedVehicleBounds.size.y * characterHeightScalar,
+          rotatedVehicleBounds.size.y + characterTriggerMinHeight),
+        rotatedVehicleBounds.size.y + characterTriggerMaxAddedHeight);
     var onboardColliderCenter =
-      new Vector3(_vehicleBounds.center.x,
+      new Vector3(rotatedVehicleBounds.center.x,
         computedOnboardTriggerSize / 2f,
-        _vehicleBounds.center.z);
-    var onboardColliderSize = new Vector3(_vehicleBounds.size.x,
+        rotatedVehicleBounds.center.z);
+    var onboardColliderSize = new Vector3(rotatedVehicleBounds.size.x,
       computedOnboardTriggerSize,
-      _vehicleBounds.size.z);
+      rotatedVehicleBounds.size.z);
 
     // Assign all the colliders
     m_blockingcollider.size = blockingColliderSize;
@@ -1824,6 +1825,70 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     return outputBounds;
   }
 
+  /// <summary>
+  /// For Updating colliders based on the 8 vectors that a box collider has.
+  /// The box collider does take in account rotation so these Colliders must encapsulate the global world position point within the BoxCollider component in order to properly update size and other values.
+  ///
+  /// Encapsulation ignores
+  /// </summary>
+  public Bounds GetBoundsWithParentRotation()
+  {
+    if (VehicleInstance == null) return _vehicleBounds;
+    if (!VehicleInstance.Instance.ColliderParentObj) return _vehicleBounds;
+    Physics.SyncTransforms();
+
+
+    var colliderParentObj = VehicleInstance.Instance.ColliderParentObj;
+    var boxCollider = VehicleInstance.Instance.ColliderParentObj.GetComponent<BoxCollider>();
+    boxCollider.center = _vehicleBounds.center;
+    boxCollider.size = _vehicleBounds.size;
+
+    Physics.SyncTransforms();
+    var rotatedBounds = new Bounds();
+    var center = _vehicleBounds.center;
+
+
+    var rightDir = colliderParentObj.transform.right.normalized;
+    var forwardDir = colliderParentObj.transform.forward.normalized;
+    var upDir = colliderParentObj.transform.up.normalized;
+    var size = _vehicleBounds.size;
+    size.x *= colliderParentObj.transform.lossyScale.x;
+    size.y *= colliderParentObj.transform.lossyScale.y;
+    size.z *= colliderParentObj.transform.lossyScale.z;
+    var extents = size / 2f;
+    // var center = tempBoxCollider.transform.position + _vehicleBounds.center;
+
+    // var centerOffset = _vehicleBounds.center;
+    var topMostDir = upDir * extents.y;
+    var rightMostDir = rightDir * extents.x;
+    var forwardMostDir = forwardDir * extents.z;
+
+    var forwardTopRight = center + topMostDir + rightMostDir +
+                          forwardMostDir;
+    var forwardBottomRight = center - topMostDir + rightMostDir + forwardMostDir;
+    var forwardTopLeft = center + topMostDir - rightMostDir + forwardMostDir;
+    var forwardBottomLeft = center - topMostDir - rightMostDir + forwardMostDir;
+
+    var backwardTopRight = center + topMostDir + rightMostDir -
+                           forwardMostDir;
+    var backwardBottomRight = center - topMostDir + rightMostDir - forwardMostDir;
+    var backwardTopLeft = center + topMostDir - rightMostDir - forwardMostDir;
+    var backwardBottomLeft = center - topMostDir - rightMostDir - forwardMostDir;
+
+    List<Vector3> directions =
+    [
+      forwardTopRight, forwardBottomRight, forwardTopLeft, forwardBottomLeft, backwardBottomLeft,
+      backwardBottomRight, backwardTopLeft, backwardTopRight
+    ];
+
+    foreach (var direction in directions)
+    {
+      rotatedBounds.Encapsulate(direction);
+    }
+
+    return rotatedBounds;
+  }
+
 
   private Bounds? EncapsulateColliders(List<Collider> colliders, Vector3 boundsCenter,
     Vector3 boundsSize,
@@ -1832,30 +1897,31 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if (!(bool)m_floatcollider) return null;
     var outputBounds = new Bounds(boundsCenter, boundsSize);
 
+    if (!ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value)
+    {
+      outputBounds.Encapsulate(netView.transform.position);
+      return outputBounds;
+    }
+
     var renderers = netView.GetComponentsInChildren<Renderer>();
     foreach (var renderer in renderers)
     {
-      Bounds? localBounds = null;
+      Bounds? rendererGlobalBounds = null;
       if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value)
       {
-        localBounds =
+        rendererGlobalBounds =
           TransformColliderGlobalBoundsToLocal(renderer);
       }
 
-      if (localBounds == null)
+      if (rendererGlobalBounds == null)
       {
         Logger.LogInfo(
           $"Using fallback localPosition on netView: {netView.name}, collider.name: {renderer.name}");
         continue;
       }
 
-      outputBounds.Encapsulate(localBounds.Value);
+      outputBounds.Encapsulate(rendererGlobalBounds.Value);
     }
-
-    // if (colliders.Count == 0)
-    // {
-    // }
-    outputBounds.Encapsulate(netView.transform.localPosition);
 
     return outputBounds;
   }

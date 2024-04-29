@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
+using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles;
@@ -95,6 +96,28 @@ public class WearNTear_Patch
     return false;
   }
 
+  /*
+   * IF the mod breaks, this is a SAFETY FEATURE
+   * - prevents destruction of ship attached pieces if the ship fails to initialize properly
+   */
+  private static bool PreventDestructionOfItemWithoutInitializedRaft(WearNTear __instance)
+  {
+    if (!ValheimRaftPlugin.Instance.ProtectVehiclePiecesOnErrorFromWearNTearDamage.Value)
+      return false;
+
+    var parentVehicleHash =
+      __instance.m_nview.m_zdo.GetInt(BaseVehicleController.MBParentIdHash, 0);
+
+    var hasParentVehicleHash = parentVehicleHash != 0;
+    if (!hasParentVehicleHash) return false;
+
+    var zdoExists = ZDOPersistentID.Instance.GetZDO(1501427356);
+    if (zdoExists == null) return false;
+
+    __instance.enabled = false;
+    return true;
+  }
+
   [HarmonyPatch(typeof(WearNTear), "Destroy")]
   [HarmonyPrefix]
   private static bool WearNTear_Destroy(WearNTear __instance)
@@ -116,21 +139,6 @@ public class WearNTear_Patch
 
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbr) mbr.DestroyPiece(__instance);
-
-    /*
-     * SAFETY FEATURE
-     * - prevent destruction of ship attached pieces if the ship fails to initialize properly
-     */
-    if (__instance.m_nview && !(bool)mbr && !(bool)bv)
-    {
-      var hasVehicleParent =
-        __instance.m_nview.m_zdo.GetInt(BaseVehicleController.MBParentIdHash, 0);
-      if (hasVehicleParent != 0)
-      {
-        __instance.enabled = false;
-        return false;
-      }
-    }
 
     return true;
   }
@@ -154,7 +162,7 @@ public class WearNTear_Patch
       return false;
     }
 
-    return true;
+    return !PreventDestructionOfItemWithoutInitializedRaft(__instance);
   }
 
   [HarmonyPatch(typeof(WearNTear), "UpdateSupport")]

@@ -370,7 +370,7 @@ public class ValheimBaseGameShip : MonoBehaviour
       m_rudderValue = 0f;
     }
 
-    if (!flag && (m_speed == Speed.Slow || m_speed == Speed.Back))
+    if (!flag && (m_speed != Speed.Stop))
     {
       m_speed = Speed.Stop;
     }

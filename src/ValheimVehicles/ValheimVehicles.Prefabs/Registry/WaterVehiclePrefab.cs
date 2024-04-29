@@ -28,18 +28,15 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var netView = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     netView.m_type = ZDO.ObjectType.Prioritized;
 
-    /*
-     * Add all necessary colliders to the ship prefab
-     * TODO make this a GameObject with a BoxCollider in it
-     */
+    var colliderParentObj = prefab.transform.Find("colliders");
     var floatColliderObj =
-      prefab.transform.Find(
+      colliderParentObj.Find(
         PrefabNames.WaterVehicleFloatCollider);
     var blockingColliderObj =
-      prefab.transform.Find(PrefabNames
+      colliderParentObj.Find(PrefabNames
         .WaterVehicleBlockingCollider);
     var onboardColliderObj =
-      prefab.transform.Find(PrefabNames
+      colliderParentObj.Find(PrefabNames
         .WaterVehicleOnboardCollider);
 
     onboardColliderObj.name = PrefabNames.WaterVehicleOnboardCollider;
@@ -63,6 +60,8 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var shipControls = prefab.AddComponent<VehicleMovementController>();
 
     var shipInstance = prefab.AddComponent<VehicleShip>();
+    shipInstance.ColliderParentObj = colliderParentObj.gameObject;
+    shipInstance.ColliderParentObj.gameObject.AddComponent<BoxCollider>();
     shipInstance.MovementController = shipControls;
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
     shipInstance.m_body = vehicleRigidbody;
@@ -81,7 +80,6 @@ public class WaterVehiclePrefab : IRegisterPrefab
     shipInstance.ShipEffectsObj = vehicleShipEffects.gameObject;
     shipInstance.ShipEffects = vehicleShipEffects;
 
-    shipInstance.FloatColliderObj = floatColliderObj.gameObject;
     shipInstance.FloatCollider = floatBoxCollider;
 
     // wearntear may need to be removed or tweaked

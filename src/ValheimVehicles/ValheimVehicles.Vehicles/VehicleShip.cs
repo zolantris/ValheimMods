@@ -55,6 +55,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     VehicleShipHelpers.GetOrFindObj(_piecesContainer, transform.parent.gameObject,
       PrefabNames.PiecesContainer);
 
+  public GameObject ColliderParentObj;
+
   public IWaterVehicleController VehicleController => _controller;
 
   public GameObject? ShipEffectsObj;
@@ -65,29 +67,25 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   public VehicleDebugHelpers VehicleDebugHelpersInstance { get; private set; }
 
-  public VehicleMovementController MovementController;
+
+  public VehicleMovementController MovementController
+  {
+    get => m_shipControlls;
+    set => m_shipControlls = value;
+  }
+
+  private float _shipRotationOffset = 0f;
+  private GameObject _shipRotationObj = new();
 
   public Transform? ShipForwardRotation
   {
-    get
-    {
-      if ((bool)m_floatcollider)
-      {
-        return m_floatcollider.transform;
-      }
-
-      return transform;
-      // if (!(bool)shipRotationObj || !(bool)shipRotationObj.transform) return transform;
-      // return shipRotationObj.transform;
-    }
+    get => m_floatcollider.transform;
   }
 
   private GameObject _vehiclePiecesContainerInstance;
   private GUIStyle myButtonStyle;
 
   public VehicleShip Instance => this;
-
-  public GameObject FloatColliderObj;
 
   public BoxCollider FloatCollider
   {
@@ -113,6 +111,11 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       Destroy(_vehiclePiecesContainerInstance);
     }
 
+    if ((bool)_shipRotationObj)
+    {
+      Destroy(_shipRotationObj);
+    }
+
     // also destroys the sailcloth
     if ((bool)m_sailObject)
     {
@@ -125,8 +128,22 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
   }
 
-  public double currentRotationOffset = 0;
-  private static readonly List<VehicleShip> s_currentShips = [];
+  public void UpdateShipRotation(float offset)
+  {
+    // _shipRotationOffset = offset;
+    // if (!(bool)m_floatcollider) return;
+    // if (m_floatcollider.transform.position != _shipRotationObj.transform.position)
+    // {
+    //   _shipRotationObj.transform.position = m_floatcollider.transform.position;
+    // }
+    //
+    // var dynamicRotation = new Vector3(
+    //   0,
+    //   _shipRotationOffset,
+    //   0);
+    //
+    // _shipRotationObj.transform.localRotation = Quaternion.Euler(dynamicRotation);
+  }
 
   private static bool GetAnchorKey()
   {
@@ -189,6 +206,13 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     {
       m_body = GetComponent<Rigidbody>();
     }
+
+    if (!(bool)_shipRotationObj)
+    {
+      _shipRotationObj = new GameObject();
+    }
+
+    UpdateShipRotation(_shipRotationOffset);
 
     if (!(bool)m_zsyncTransform)
     {
@@ -266,13 +290,13 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     // called ShipHud, duplicate it and add some more ui stuff.
     if (GUILayout.Button("rotate90 ship"))
     {
-      if (currentRotationOffset > 360)
+      if (_shipRotationOffset > 360)
       {
-        currentRotationOffset = 0;
+        _shipRotationOffset = 0;
       }
       else
       {
-        currentRotationOffset += 90;
+        _shipRotationOffset += 90;
       }
 
       m_floatcollider.transform.Rotate(0, 90, 0);
@@ -311,7 +335,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
         m_body.centerOfMass = wheelPiece.transform.localPosition;
       }
 
-      // FloatCollider.transform.Rotate(0, currentRotationOffset, 0);
+      // FloatCollider.transform.Rotate(0, _shipRotationOffset, 0);
       // _controller.transform.SetParent(null);
       // Instance.transform.rotation = new Quaternion(Instance.transform.rotation.x,
       //   Instance.transform.rotation.y + 90, Instance.transform.rotation.z,

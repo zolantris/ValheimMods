@@ -1004,7 +1004,8 @@ public class MoveableBaseRootComponent : MonoBehaviour
     }
 
     m_blockingcollider.size = new Vector3(m_bounds.size.x,
-      ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value, m_bounds.size.z);
+      Math.Min(ValheimRaftPlugin.Instance.BlockingColliderVerticalSize.Value, m_bounds.size.y / 2),
+      m_bounds.size.z);
     m_blockingcollider.center = new Vector3(m_bounds.center.x,
       ValheimRaftPlugin.Instance.BlockingColliderVerticalCenterOffset.Value, m_bounds.center.z);
     m_floatcollider.size = new Vector3(m_bounds.size.x,
