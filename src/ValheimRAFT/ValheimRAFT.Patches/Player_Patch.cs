@@ -401,7 +401,7 @@ public class Player_Patch
         }
       }
 
-      var rudder = __instance.m_attachPoint.parent.GetComponent<RudderWheelComponent>();
+      var rudder = __instance.m_attachPoint.parent.GetComponent<SteeringWheelComponent>();
       if ((bool)rudder && __instance.m_doodadController != null)
       {
         __instance.SetDoodadControlls(ref movedir, ref ((Character)__instance).m_lookDir, ref run,

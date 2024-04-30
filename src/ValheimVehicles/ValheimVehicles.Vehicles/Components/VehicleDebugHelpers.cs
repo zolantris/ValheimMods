@@ -39,15 +39,23 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   private InvokeBinder repeatInvoke;
 
+  private void FixedUpdate()
+  {
+    if (autoUpdateColliders)
+    {
+      DrawAllColliders();
+    }
+  }
+
   public void StartRenderAllCollidersLoop()
   {
     autoUpdateColliders = !autoUpdateColliders;
-    CancelInvoke(nameof(DrawAllColliders));
-    if (autoUpdateColliders)
-    {
-      InvokeRepeating(nameof(DrawAllColliders), 0f, 0.05f);
-    }
-    else
+    // CancelInvoke(nameof(DrawAllColliders));
+    // if (autoUpdateColliders)
+    // {
+    //   InvokeRepeating(nameof(DrawAllColliders), 0f, 0.05f);
+    // }
+    if (!autoUpdateColliders)
     {
       foreach (var keyValuePair in lines)
       {
@@ -55,7 +63,7 @@ public class VehicleDebugHelpers : MonoBehaviour
         if (data == null) continue;
         foreach (var lineRenderer in keyValuePair.Value.ToList().OfType<LineRenderer>())
         {
-          Destroy(lineRenderer);
+          Destroy(lineRenderer.gameObject);
           data.Remove(lineRenderer);
         }
       }

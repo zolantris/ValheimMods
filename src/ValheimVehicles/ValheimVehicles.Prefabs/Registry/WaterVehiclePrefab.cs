@@ -61,7 +61,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
 
     var shipInstance = prefab.AddComponent<VehicleShip>();
     shipInstance.ColliderParentObj = colliderParentObj.gameObject;
-    shipInstance.ColliderParentObj.gameObject.AddComponent<BoxCollider>();
+
     shipInstance.MovementController = shipControls;
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
     shipInstance.m_body = vehicleRigidbody;

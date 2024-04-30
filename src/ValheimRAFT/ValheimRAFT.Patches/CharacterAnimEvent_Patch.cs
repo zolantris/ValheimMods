@@ -13,7 +13,7 @@ public class CharacterAnimEvent_Patch
     if (__instance.m_character is Player player && player.IsAttached() &&
         (bool)player.m_attachPoint && (bool)player.m_attachPoint.parent)
     {
-      var rudder = player.m_attachPoint.parent.GetComponent<RudderWheelComponent>();
+      var rudder = player.m_attachPoint.parent.GetComponent<SteeringWheelComponent>();
       if ((bool)rudder) rudder.UpdateIK((player).m_animator);
       var ladder = player.m_attachPoint.parent.GetComponent<RopeLadderComponent>();
       if ((bool)ladder)

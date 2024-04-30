@@ -10,7 +10,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Propulsion.Rudder;
 
-public class RudderWheelComponent : MonoBehaviour, Hoverable, Interactable, IDoodadController
+public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, IDoodadController
 {
   private VehicleMovementController _controls;
   public VehicleMovementController? Controls => _controls;
@@ -19,12 +19,13 @@ public class RudderWheelComponent : MonoBehaviour, Hoverable, Interactable, IDoo
   public IVehicleShip ShipInstance;
 
   public Transform? wheelTransform;
+  private Vector3 wheelLocalOffset;
 
   public List<Transform> m_spokes = [];
 
-  public Vector3 m_leftHandPosition = new(0f, 0f, 2f);
+  public Vector3 m_leftHandPosition = new(-0.5f, 0f, 0);
 
-  public Vector3 m_rightHandPosition = new(0f, 0f, -2f);
+  public Vector3 m_rightHandPosition = new(0.5f, 0f, 0);
 
   public float m_holdWheelTime = 0.7f;
 
@@ -36,13 +37,13 @@ public class RudderWheelComponent : MonoBehaviour, Hoverable, Interactable, IDoo
 
   private float m_movingRightAlpha;
 
-  private Transform m_currentLeftHand;
+  private Transform? m_currentLeftHand;
 
-  private Transform m_currentRightHand;
+  private Transform? m_currentRightHand;
 
-  private Transform m_targetLeftHand;
+  private Transform? m_targetLeftHand;
 
-  private Transform m_targetRightHand;
+  private Transform? m_targetRightHand;
 
   public string m_hoverText { get; set; }
 
@@ -98,6 +99,7 @@ public class RudderWheelComponent : MonoBehaviour, Hoverable, Interactable, IDoo
   {
     AttachPoint = transform.Find("attachpoint");
     wheelTransform = transform.Find("controls/wheel");
+    wheelLocalOffset = wheelTransform.position - transform.position;
   }
 
   public string GetHoverName()
@@ -200,31 +202,6 @@ public class RudderWheelComponent : MonoBehaviour, Hoverable, Interactable, IDoo
     return this;
   }
 
-
-  /// <summary>
-  /// pass-through for the single instance of VehicleMovementController on a vehicle
-  /// </summary>
-  /// Updates attachpoint of parent when Interacted with
-  // public bool Interact(Humanoid user, bool hold, bool alt)
-  // {
-  //   if (_controls != null)
-  //   {
-  //     _controls.AttachPoint = AttachPoint;
-  //
-  //     if (ShipInstance?.Instance != null)
-  //     {
-  //       ShipInstance.Instance.ControlGuiPosition = transform;
-  //     }
-  //   }
-  //
-  //   return _controls.Interact(user, hold, alt);
-  // }
-
-  // public bool UseItem(Humanoid user, ItemDrop.ItemData item)
-  // {
-  //   return false;
-  // }
-
   /**
    * @Deprecated for Older ValheimRAFT.MoveableBaseRootComponent compatibility. Likely will just remove the ship controller from the MBRaft.
    */
@@ -280,6 +257,12 @@ public class RudderWheelComponent : MonoBehaviour, Hoverable, Interactable, IDoo
       select k);
   }
 
+  private Vector3 GetWheelHandOffset(float height)
+  {
+    var offset = new Vector3(0f, (height > wheelLocalOffset.y) ? -0.25f : 0.25f, 0f);
+    return offset;
+  }
+
   public void UpdateIK(Animator animator)
   {
     if (!wheelTransform)
@@ -289,44 +272,43 @@ public class RudderWheelComponent : MonoBehaviour, Hoverable, Interactable, IDoo
 
     if (!m_currentLeftHand)
     {
-      var playerHandTransform = Player.m_localPlayer.transform.TransformPoint(m_leftHandPosition);
+      var playerHandTransform = transform.TransformPoint(m_leftHandPosition);
       m_currentLeftHand = GetNearestSpoke(playerHandTransform);
-      // m_currentLeftHand = GetNearestSpoke(base.transform.TransformPoint(m_leftHandPosition));
     }
 
     if (!m_currentRightHand)
     {
       var playerHandTransform = Player.m_localPlayer.transform.TransformPoint(m_leftHandPosition);
       m_currentRightHand = GetNearestSpoke(playerHandTransform);
-      // m_currentRightHand = GetNearestSpoke(base.transform.TransformPoint(m_rightHandPosition));
     }
 
     if (!m_targetLeftHand && !m_targetRightHand)
     {
-      Vector3 left = base.transform.InverseTransformPoint(m_currentLeftHand.position);
-      Vector3 right = base.transform.InverseTransformPoint(m_currentRightHand.position);
-      if (left.z < 0.2f)
+      var left = transform.InverseTransformPoint(m_currentLeftHand.position);
+      var right = transform.InverseTransformPoint(m_currentRightHand.position);
+      var wheelCenter = wheelLocalOffset.y * Vector3.up;
+      if (left.x > 0f)
       {
-        Vector3 offsetY2 = new Vector3(0f, (left.y > 0.5f) ? (-2f) : 2f, 0f);
         m_targetLeftHand =
-          GetNearestSpoke(base.transform.TransformPoint(m_leftHandPosition + offsetY2));
+          GetNearestSpoke(transform.TransformPoint(m_leftHandPosition + GetWheelHandOffset(left.y) +
+                                                   wheelCenter));
         m_movingLeftAlpha = Time.time;
       }
-      else if (right.z > -0.2f)
+      else if (right.x < 0f)
       {
-        Vector3 offsetY = new Vector3(0f, (right.y > 0.5f) ? (-2f) : 2f, 0f);
         m_targetRightHand =
-          GetNearestSpoke(base.transform.TransformPoint(m_rightHandPosition + offsetY));
+          GetNearestSpoke(transform.TransformPoint(m_rightHandPosition +
+                                                   GetWheelHandOffset(right.y) + wheelCenter));
         m_movingRightAlpha = Time.time;
       }
     }
 
-    float leftHandAlpha = Mathf.Clamp01((Time.time - m_movingLeftAlpha) / m_handIKSpeed);
-    float rightHandAlpha = Mathf.Clamp01((Time.time - m_movingRightAlpha) / m_handIKSpeed);
-    float leftHandIKWeight = Mathf.Sin(leftHandAlpha * (float)Math.PI) * (1f - m_holdWheelTime) +
-                             m_holdWheelTime;
-    float rightHandIKWeight = Mathf.Sin(rightHandAlpha * (float)Math.PI) * (1f - m_holdWheelTime) +
-                              m_holdWheelTime;
+    var leftHandAlpha = Mathf.Clamp01((Time.time - m_movingLeftAlpha) / m_handIKSpeed);
+    var rightHandAlpha = Mathf.Clamp01((Time.time - m_movingRightAlpha) / m_handIKSpeed);
+    var leftHandIKWeight = Mathf.Sin(leftHandAlpha * (float)Math.PI) * (1f - m_holdWheelTime) +
+                           m_holdWheelTime;
+    var rightHandIKWeight = Mathf.Sin(rightHandAlpha * (float)Math.PI) * (1f - m_holdWheelTime) +
+                            m_holdWheelTime;
     if ((bool)m_targetLeftHand && leftHandAlpha > 0.99f)
     {
       m_currentLeftHand = m_targetLeftHand;
@@ -339,18 +321,16 @@ public class RudderWheelComponent : MonoBehaviour, Hoverable, Interactable, IDoo
       m_targetRightHand = null;
     }
 
-    Vector3 leftHandPos = (m_targetLeftHand
+
+    var leftHandPos = ((bool)m_targetLeftHand
       ? Vector3.Lerp(m_currentLeftHand.transform.position, m_targetLeftHand.transform.position,
         leftHandAlpha)
       : m_currentLeftHand.transform.position);
-    Vector3 rightHandPos = (m_targetRightHand
+    var rightHandPos = ((bool)m_targetRightHand
       ? Vector3.Lerp(m_currentRightHand.transform.position, m_targetRightHand.transform.position,
         rightHandAlpha)
       : m_currentRightHand.transform.position);
-    Vector3 rightHandRot = (m_targetLeftHand
-      ? Vector3.Slerp(m_currentLeftHand.transform.rotation.eulerAngles,
-        m_targetLeftHand.transform.rotation.eulerAngles, leftHandAlpha)
-      : m_currentLeftHand.transform.rotation.eulerAngles);
+
     animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, leftHandIKWeight);
     animator.SetIKPosition(AvatarIKGoal.LeftHand, leftHandPos);
     animator.SetIKPositionWeight(AvatarIKGoal.RightHand, rightHandIKWeight);

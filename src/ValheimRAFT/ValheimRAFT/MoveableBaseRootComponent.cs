@@ -52,7 +52,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
   internal List<MastComponent> m_mastPieces = new();
   internal List<SailComponent> m_sailPiece = new();
 
-  internal List<RudderWheelComponent> m_wheelPieces = new();
+  internal List<SteeringWheelComponent> m_wheelPieces = new();
 
   internal List<ZNetView> m_portals = new();
 
@@ -374,7 +374,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
         m_mastPieces.Remove(mast);
       }
 
-      var wheel = netView.GetComponent<RudderWheelComponent>();
+      var wheel = netView.GetComponent<SteeringWheelComponent>();
       if ((bool)wheel)
       {
         m_wheelPieces.Remove(wheel);
@@ -931,7 +931,7 @@ public class MoveableBaseRootComponent : MonoBehaviour
       m_boardingRamps.Add(ramp);
     }
 
-    var wheel = netView.GetComponent<RudderWheelComponent>();
+    var wheel = netView.GetComponent<SteeringWheelComponent>();
     if ((bool)wheel)
     {
       wheel.DEPRECATED_InitializeControls(netView);

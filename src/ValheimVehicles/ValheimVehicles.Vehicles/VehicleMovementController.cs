@@ -16,7 +16,7 @@ public class VehicleMovementController : MonoBehaviour
   public Transform AttachPoint { get; set; }
 
   public const string m_attachAnimation = "Standing Torch Idle right";
-  public RudderWheelComponent lastUsedWheelComponent;
+  public SteeringWheelComponent lastUsedWheelComponent;
   public ZNetView vehicleNetview;
 
   private bool hasRegister = false;
@@ -59,11 +59,11 @@ public class VehicleMovementController : MonoBehaviour
    * Will not be supported in v3.x.x
    */
   public void DEPRECATED_InitializeRudderWithShip(IVehicleShip vehicleShip,
-    RudderWheelComponent rudderWheel, Ship ship)
+    SteeringWheelComponent steeringWheel, Ship ship)
   {
     vehicleNetview = ship.m_nview;
-    ship.m_controlGuiPos = rudderWheel.transform;
-    var rudderAttachPoint = rudderWheel.transform.Find("attachpoint");
+    ship.m_controlGuiPos = steeringWheel.transform;
+    var rudderAttachPoint = steeringWheel.transform.Find("attachpoint");
     if (rudderAttachPoint != null)
     {
       AttachPoint = rudderAttachPoint;
@@ -102,12 +102,13 @@ public class VehicleMovementController : MonoBehaviour
     hasRegister = true;
   }
 
-  public void InitializeRudderWithShip(IVehicleShip vehicleShip, RudderWheelComponent rudderWheel)
+  public void InitializeRudderWithShip(IVehicleShip vehicleShip,
+    SteeringWheelComponent steeringWheel)
   {
     ShipInstance = vehicleShip;
     ShipInstance.Instance.m_controlGuiPos = transform;
 
-    var rudderAttachPoint = rudderWheel.transform.Find("attachpoint");
+    var rudderAttachPoint = steeringWheel.transform.Find("attachpoint");
     if (rudderAttachPoint != null)
     {
       AttachPoint = rudderAttachPoint.transform;

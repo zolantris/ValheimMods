@@ -23,7 +23,7 @@ public class ShipSteeringWheelPrefab : IRegisterPrefab
     PrefabRegistryController.AddToRaftPrefabPieces(mbRudderPrefabPiece);
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
-    var rudderWheelComponent = prefab.AddComponent<RudderWheelComponent>();
+    var rudderWheelComponent = prefab.AddComponent<SteeringWheelComponent>();
 
     rudderWheelComponent.wheelTransform = prefab.transform.Find("controls/wheel");
     rudderWheelComponent.UpdateSpokes();

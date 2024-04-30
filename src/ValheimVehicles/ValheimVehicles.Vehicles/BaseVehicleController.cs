@@ -89,7 +89,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   internal List<RudderComponent> m_rudderPieces = [];
 
   // wheels for rudders
-  internal List<RudderWheelComponent> m_rudderWheelPieces = [];
+  internal List<SteeringWheelComponent> m_rudderWheelPieces = [];
 
   internal List<ZNetView> m_portals = [];
 
@@ -713,7 +713,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         }
       }
 
-      var wheel = netView.GetComponent<RudderWheelComponent>();
+      var wheel = netView.GetComponent<SteeringWheelComponent>();
       if ((bool)wheel)
       {
         m_rudderWheelPieces.Remove(wheel);
@@ -1445,7 +1445,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
 
 
-    var wheel = netView.GetComponent<RudderWheelComponent>();
+    var wheel = netView.GetComponent<SteeringWheelComponent>();
     if ((bool)wheel)
     {
       if (m_rudderPieces.Count == 1)

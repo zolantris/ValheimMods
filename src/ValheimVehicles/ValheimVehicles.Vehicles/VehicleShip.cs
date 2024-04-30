@@ -139,9 +139,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     {
       Destroy(m_mastObject);
     }
-
-    var wnt = GetComponent<WearNTear>();
-    if ((bool)wnt) wnt.Destroy();
   }
 
   public void UpdateShipRotation(float offset)
@@ -550,6 +547,10 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     foreach (var ladder in ladders)
       ladder.m_useDistance = 10f;
 
+    var colliderParentBoxCollider =
+      ColliderParentObj.gameObject.AddComponent<BoxCollider>();
+    colliderParentBoxCollider.enabled = false;
+
     var vehiclePiecesContainer = VehiclePiecesPrefab.VehiclePiecesContainer;
     if (!vehiclePiecesContainer) return;
 
@@ -568,6 +569,13 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
     if (VehicleDebugHelpersInstance != null)
     {
+      VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
+      {
+        collider = colliderParentBoxCollider,
+        lineColor = Color.blue,
+        parent = gameObject
+      });
+
       VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
       {
         collider = _controller.m_floatcollider,

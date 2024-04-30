@@ -10,7 +10,7 @@ public class ShipControls_Patch
   [HarmonyPrefix]
   private static bool ShipControlls_Awake(Ship __instance)
   {
-    return !__instance.GetComponentInParent<RudderWheelComponent>();
+    return !__instance.GetComponentInParent<SteeringWheelComponent>();
   }
 
   [HarmonyPatch(typeof(ShipControlls), "Interact")]
