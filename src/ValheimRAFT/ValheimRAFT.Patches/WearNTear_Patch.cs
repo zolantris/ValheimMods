@@ -143,6 +143,78 @@ public class WearNTear_Patch
     return true;
   }
 
+  [HarmonyPatch(typeof(WearNTear), "SetHealthVisual")]
+  [HarmonyPrefix]
+  private static bool WearNTear_SetHealthVisual(WearNTear __instance, float health,
+    bool triggerEffects)
+  {
+    var isHull = __instance.gameObject.name.Contains(PrefabNames.ShipHullPrefabName);
+    if (!isHull) return true;
+
+
+    if (__instance.m_worn == null && __instance.m_broken == null && __instance.m_new == null)
+    {
+      return false;
+    }
+
+    if (health > 0.75f)
+    {
+      if (__instance.m_worn != __instance.m_new)
+      {
+        __instance.m_worn.SetActive(value: false);
+      }
+
+      if (__instance.m_broken != __instance.m_new)
+      {
+        __instance.m_broken.SetActive(value: false);
+      }
+
+      __instance.m_new.SetActive(value: true);
+    }
+    else if (health > 0.25f)
+    {
+      if (triggerEffects && !__instance.m_worn.activeSelf)
+      {
+        __instance.m_switchEffect.Create(__instance.transform.position,
+          __instance.transform.rotation, __instance.transform);
+      }
+
+      if (__instance.m_new != __instance.m_worn)
+      {
+        __instance.m_new.SetActive(value: false);
+      }
+
+      if (__instance.m_broken != __instance.m_worn)
+      {
+        __instance.m_broken.SetActive(value: false);
+      }
+
+      __instance.m_worn.SetActive(value: true);
+    }
+    else
+    {
+      if (triggerEffects && !__instance.m_broken.activeSelf)
+      {
+        __instance.m_switchEffect.Create(__instance.transform.position,
+          __instance.transform.rotation, __instance.transform);
+      }
+
+      if (__instance.m_new != __instance.m_broken)
+      {
+        __instance.m_new.SetActive(value: false);
+      }
+
+      if (__instance.m_worn != __instance.m_broken)
+      {
+        __instance.m_worn.SetActive(value: false);
+      }
+
+      __instance.m_broken.SetActive(value: true);
+    }
+
+    return false;
+  }
+
   [HarmonyPatch(typeof(WearNTear), "ApplyDamage")]
   [HarmonyPrefix]
   private static bool WearNTear_ApplyDamage(WearNTear __instance, float damage)

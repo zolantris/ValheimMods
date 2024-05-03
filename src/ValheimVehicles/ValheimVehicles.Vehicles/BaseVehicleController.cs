@@ -1595,15 +1595,13 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
    */
   private void RotateVehicleColliders()
   {
-    if (VehicleInstance == null || !(bool)m_floatcollider || !(bool)m_onboardcollider ||
-        !(bool)m_blockingcollider)
+    if (VehicleInstance == null)
     {
       return;
     }
 
-    if (!VehicleInstance.Instance.ColliderParentObj) return;
-
-    var parentCollider = VehicleInstance.Instance.ColliderParentObj;
+    if (!VehicleInstance.Instance.ShipMovementOrientation) return;
+    var shipOrientation = VehicleInstance.Instance.ShipMovementOrientation;
     var rotation = Quaternion.Euler(Vector3.zero);
     // if (m_rudderPieces.Count > 0)
     // {
@@ -1616,8 +1614,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       rotation = firstPiece.transform.localRotation;
     }
 
-    if (parentCollider.transform.localRotation == rotation) return;
-    parentCollider.transform.localRotation = rotation;
+    if (shipOrientation.localRotation == rotation) return;
+    shipOrientation.localRotation = rotation;
   }
 
   /**

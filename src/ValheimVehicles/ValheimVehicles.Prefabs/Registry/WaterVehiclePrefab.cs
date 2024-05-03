@@ -1,6 +1,7 @@
 using Jotunn;
 using Jotunn.Configs;
 using Jotunn.Entities;
+using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimRAFT;
@@ -62,6 +63,8 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var shipInstance = prefab.AddComponent<VehicleShip>();
     shipInstance.ColliderParentObj = colliderParentObj.gameObject;
 
+    shipInstance.ShipMovementOrientation =
+      floatColliderObj.FindDeepChild(PrefabNames.VehicleShipMovementOrientation);
     shipInstance.MovementController = shipControls;
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
     shipInstance.m_body = vehicleRigidbody;

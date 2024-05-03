@@ -29,7 +29,7 @@ public class ShipHullPrefab : IRegisterPrefab
   {
     var prefab =
       prefabManager.CreateClonedPrefab(
-        prefabName, LoadValheimVehicleAssets.ShipHullAsset);
+        prefabName, LoadValheimVehicleAssets.ShipHullAdvancedCenterAsset);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     prefab.layer = 0;
@@ -50,19 +50,21 @@ public class ShipHullPrefab : IRegisterPrefab
     PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.HardWood);
     // wnt.m_oldMaterials = LoadValheimAssets.woodFloorPieceWearNTear.m_oldMaterials;
     // wnt.m_oldMaterials = null;
-    wnt.m_onDamaged = null;
+    // wnt.m_onDamaged = null;
     wnt.m_supports = true;
     wnt.m_support = 2000f;
     wnt.m_noSupportWear = true;
     wnt.m_noRoofWear = true;
     wnt.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
+    wnt.m_switchEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_switchEffect;
     wnt.m_hitNoise = LoadValheimAssets.woodFloorPieceWearNTear.m_hitNoise;
-    wnt.m_health = 250f;
-    wnt.m_new = LoadValheimVehicleAssets.ShipHullAsset.transform.Find("new").gameObject;
-    var wornHull = LoadValheimVehicleAssets.ShipHullAsset.transform.Find("worn").gameObject;
+    // todo set back to 1600f after debugging
+    wnt.m_health = 600f;
+    // wnt.m_health = 1600f;
+    wnt.m_new = prefab.transform.Find("new").gameObject;
+    var wornHull = prefab.transform.Find("worn").gameObject;
     wnt.m_worn = wornHull;
     wnt.m_broken = wornHull;
-
 
     // this will be used to hide water on the boat
     prefab.AddComponent<ShipHullComponent>();

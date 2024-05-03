@@ -9,6 +9,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
 {
   // ships
   public static GameObject ShipHullAsset = null!;
+  public static GameObject ShipHullAdvancedCenterAsset = null!;
   public static GameObject ShipRudderBasicAsset = null!;
   public static GameObject ShipRudderAdvancedAsset = null!;
   public static GameObject ShipKeelAsset = null!;
@@ -17,6 +18,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject SteeringWheel;
   public static GameObject VehicleShipAsset = null!;
   public static GameObject VehiclePiecesAsset = null!;
+  public static GameObject VehicleSwitchAsset = null!;
 
   // generic/misc
   public static SpriteAtlas VehicleSprites = null!;
@@ -38,11 +40,14 @@ public class LoadValheimVehicleAssets : ILoadAssets
     SteeringWheel = assetBundle.LoadAsset<GameObject>("steering_wheel.prefab");
     PieceShader = assetBundle.LoadAsset<Shader>("Custom_Piece.shader");
     ShipKeelAsset = assetBundle.LoadAsset<GameObject>("vehicle_ship_keel");
+    VehicleSwitchAsset = assetBundle.LoadAsset<GameObject>("vehicle_switch");
     VehicleShipAsset =
       assetBundle.LoadAsset<GameObject>("vehicle_ship.prefab");
     VehiclePiecesAsset = assetBundle.LoadAsset<GameObject>("vehicle_ship_pieces.prefab");
     ShipHullAsset =
       assetBundle.LoadAsset<GameObject>("vehicle_ship_hull.prefab");
+    ShipHullAdvancedCenterAsset =
+      assetBundle.LoadAsset<GameObject>("vehicle_ship_hull_advanced_center.prefab");
     ShipRudderBasicAsset =
       assetBundle.LoadAsset<GameObject>("vehicle_ship_rudder_basic.prefab");
     ShipRudderAdvancedAsset =

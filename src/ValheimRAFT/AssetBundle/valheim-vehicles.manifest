@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2038999387
+CRC: 1685210228
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 14b2b468ded006f95be3cc883ec49fe6
+    Hash: 25eb4cd16dc2d353ae723d34a6d44c58
   TypeTreeHash:
     serializedVersion: 2
     Hash: 098a234ed9dca3b5bf95ad7b8b64eaa9
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 14b2b468ded006f95be3cc883ec49fe6
+    Hash: 25eb4cd16dc2d353ae723d34a6d44c58
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -50,7 +50,9 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_rudder_advanced.prefab
 - Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
 - Assets/Shader/Custom_Piece.shader
+- Assets/ValheimVehicles/Prefabs/vehicle_ship_hull 1.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_hull.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_switch.prefab
+- Assets/ValheimVehicles/Prefabs/vehicle_ship_hull_advanced_center.prefab
 Dependencies:
 - C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/AssetBundle/valheim-vehicles-shared

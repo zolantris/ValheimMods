@@ -16,6 +16,7 @@ public abstract class PrefabRegistryHelpers
 
   public static readonly Dictionary<string, PieceData> PieceDataDictionary = new();
 
+  /// todo auto generate this from the translations json
   public static void Init()
   {
     PieceDataDictionary.Add(PrefabNames.ShipSteeringWheel, new PieceData()
@@ -57,7 +58,7 @@ public abstract class PrefabRegistryHelpers
     {
       Name = "valheim_vehicles_toggle_switch",
       Description = "valheim_vehicles_toggle_switch_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.Switch)
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.VehicleSwitch)
     });
   }
 

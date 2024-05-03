@@ -130,6 +130,12 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CompatVehicleShip.cs">
             <Link>ValheimVehicles.Vehicles\Components\CompatVehicleShip.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\LeverComponent.cs">
+            <Link>ValheimVehicles.Vehicles\Components\LeverComponent.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\SwitchPrefab.cs">
+            <Link>ValheimVehicles.Prefabs\Registry\SwitchPrefab.cs</Link>
+        </Compile>
     </ItemGroup>
     <PropertyGroup>
         <SentryDSN>https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496</SentryDSN>

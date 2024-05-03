@@ -78,15 +78,12 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   private float _shipRotationOffset = 0f;
   private GameObject _shipRotationObj = new();
 
-  public Transform? ShipDirection => m_floatcollider.transform;
+  public Transform? ShipDirection => ShipMovementOrientation;
 
   private GameObject _vehiclePiecesContainerInstance;
   private GUIStyle myButtonStyle;
 
   public VehicleShip Instance => this;
-
-  private BoxCollider _blockingCollider;
-  private BoxCollider _onboardCollider;
 
   public BoxCollider FloatCollider
   {
@@ -94,17 +91,10 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     set => m_floatcollider = value;
   }
 
-  public BoxCollider BlockingCollider
-  {
-    get => _blockingCollider;
-    set => _blockingCollider = value;
-  }
+  public Transform ShipMovementOrientation { get; set; }
 
-  public BoxCollider OnboardCollider
-  {
-    get => _onboardCollider;
-    set => _onboardCollider = value;
-  }
+  public BoxCollider BlockingCollider { get; set; }
+  public BoxCollider OnboardCollider { get; set; }
 
   public Transform ControlGuiPosition
   {

@@ -109,7 +109,7 @@ public class RaftPrefab : IRegisterPrefab
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    // var raftPrefab = GetTransformedRaft();
+    // var raftPrefab = RegisterRaftV2Compat();
     GameObject raftPrefab;
     raftPrefab = ValheimRaftPlugin.Instance.AutoUpgradeV1Raft.Value
       ? RegisterRaftV2Compat()
@@ -123,7 +123,7 @@ public class RaftPrefab : IRegisterPrefab
       Enabled = true,
       Requirements =
       [
-        new()
+        new RequirementConfig
         {
           Amount = 20,
           Item = "Wood"

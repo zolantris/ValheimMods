@@ -107,9 +107,22 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     return Localization.instance.Localize("$valheim_vehicles_wheel");
   }
 
+  public void SetLastUsedWheel()
+  {
+    if (ShipInstance != null)
+    {
+      ShipInstance.Instance.MovementController.lastUsedWheelComponent = this;
+    }
+  }
+
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
-    if (user == Player.m_localPlayer && isActiveAndEnabled)
+    if (!isActiveAndEnabled)
+    {
+      return false;
+    }
+
+    if (user == Player.m_localPlayer)
     {
       var baseVehicle = GetComponentInParent<BaseVehicleController>();
       if (baseVehicle != null)
@@ -124,8 +137,6 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
           baseRoot.ComputeAllShipContainerItemWeight();
         }
       }
-
-      ShipInstance.Instance.MovementController.lastUsedWheelComponent = this;
     }
 
     var canUse = InUseDistance(user);
@@ -134,6 +145,9 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     {
       return false;
     }
+
+    SetLastUsedWheel();
+
 
     var player = user as Player;
 
