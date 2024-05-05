@@ -26,6 +26,7 @@ public class CircleWindIndicator : MonoBehaviour
 
     OrangeCircle = new GameObject("OrangeCircle")
     {
+      layer = LayerMask.NameToLayer("UI"),
       transform = { parent = transform }
     };
     OrangeCircle.SetActive(false);
@@ -34,6 +35,7 @@ public class CircleWindIndicator : MonoBehaviour
 
     BlackClipCircle = new GameObject("BlackClipCircle")
     {
+      layer = LayerMask.NameToLayer("UI"),
       transform = { parent = transform, localPosition = new Vector3(0, 0, -1f) }
     };
 
@@ -58,11 +60,6 @@ public class CircleWindIndicator : MonoBehaviour
     {
       Destroy(OrangeCircle.gameObject);
     }
-  }
-
-  public void OnDisable()
-  {
-    Cleanup();
   }
 
   public void OnDestroy()

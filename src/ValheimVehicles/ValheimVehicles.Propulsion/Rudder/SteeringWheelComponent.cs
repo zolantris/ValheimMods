@@ -122,6 +122,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
       return false;
     }
 
+    // gameObject.AddComponent<ValheimVehicles.Vehicles.Components.CircleWindIndicator>();
     if (user == Player.m_localPlayer)
     {
       var baseVehicle = GetComponentInParent<BaseVehicleController>();

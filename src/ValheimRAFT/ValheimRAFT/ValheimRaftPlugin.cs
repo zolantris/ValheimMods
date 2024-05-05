@@ -89,6 +89,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
   public ConfigEntry<bool> AutoUpgradeV1Raft { get; set; }
   public ConfigEntry<bool> ProtectVehiclePiecesOnErrorFromWearNTearDamage { get; set; }
+  public ConfigEntry<bool> DebugRemoveStartMenuBackground { get; set; }
 
 
   /**
@@ -280,6 +281,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreateDebugConfig()
   {
+    DebugRemoveStartMenuBackground =
+      Config.Bind("Debug", "DebugRemoveStartMenuBackground", false,
+        "Removes the start scene background");
     DisplacedRaftAutoFix = Config.Bind("Debug",
       "DisplacedRaftAutoFix", false,
       "Automatically fix a displaced glitched out raft if the player is standing on the raft. This will make the player fall into the water briefly but avoid having to run 'raftoffset 0 0 0'");

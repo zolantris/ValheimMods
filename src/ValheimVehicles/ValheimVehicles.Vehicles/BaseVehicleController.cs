@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
 using ValheimRAFT;
 using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
@@ -26,8 +27,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 {
   public ZNetView m_nview { get; set; }
 
-  // negative z and x bounds from m_bounds to center things when building out of symmetrical bounds
-  private static readonly Vector3 CenterNegativeXZMultiplier = new(-1f, 1f, -1f);
   public static readonly KeyValuePair<int, int> MBParentHash = ZDO.GetHashZDOID("MBParent");
 
   public static readonly int MBCharacterParentHash = "MBCharacterParent".GetStableHashCode();
@@ -1374,23 +1373,16 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
   }
 
-  public void OnAddSteeringWheel(ZNetView netView, SteeringWheelComponent steeringWheel)
+  // must call wnt destroy otherwise the piece is removed but not destroyed like a player destroying an item.
+  public void OnAddSteeringWheelDestroyPrevious(ZNetView netView,
+    SteeringWheelComponent steeringWheelComponent)
   {
-    if (_steeringWheelPieces.Count > 0)
+    if (_steeringWheelPieces.Count <= 0) return;
+    foreach (var wnt in _steeringWheelPieces.Select(previousWheel =>
+               previousWheel.GetComponent<WearNTear>()))
     {
-      foreach (var wnt in _steeringWheelPieces.Select(steeringWheel =>
-                 steeringWheel.GetComponent<WearNTear>()))
-      {
-        // must call wnt destroy otherwise the piece is removed but not destroyed like a player destroying an item.
-        wnt.Destroy();
-      }
+      wnt.Destroy();
     }
-
-    steeringWheel.InitializeControls(netView, VehicleInstance);
-
-    // Updates ship rotation to face the wheel forward position
-    var rotation = Quaternion.Euler(0, steeringWheel.transform.localRotation.y, 0);
-    VehicleInstance?.Instance.UpdateShipDirection(rotation);
   }
 
   public void AddPiece(ZNetView netView)
@@ -1402,13 +1394,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
 
     Physics.SyncTransforms();
-    RebuildBounds();
 
     totalSailArea = 0;
     m_pieces.Add(netView);
-
     UpdatePieceCount();
-    EncapsulateBounds(netView.gameObject);
+
     var wnt = netView.GetComponent<WearNTear>();
     if ((bool)wnt && ValheimRaftPlugin.Instance.MakeAllPiecesWaterProof.Value)
       wnt.m_noRoofWear = false;
@@ -1459,8 +1449,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var wheel = netView.GetComponent<SteeringWheelComponent>();
     if ((bool)wheel)
     {
-      OnAddSteeringWheel(netView, wheel);
+      OnAddSteeringWheelDestroyPrevious(netView, wheel);
       _steeringWheelPieces.Add(wheel);
+      wheel.InitializeControls(netView, VehicleInstance);
+      RebuildBounds();
     }
 
     var portal = netView.GetComponent<TeleportWorld>();
@@ -1509,6 +1501,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
         meshRenderer.sharedMaterials = sharedMaterials;
       }
+
+      EncapsulateBounds(netView.gameObject);
     }
 
     UpdateMass(netView);
@@ -1578,7 +1572,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     foreach (var hullPiece in m_hullPieces)
     {
-      var colliders = GetCollidersInPiece(hullPiece.gameObject);
       var newBounds = EncapsulateColliders(_hullBounds.center, _hullBounds.size,
         hullPiece.gameObject);
       if (newBounds == null) continue;
@@ -1604,7 +1597,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     if (_steeringWheelPieces.Count <= 0) return;
     var firstPiece = _steeringWheelPieces.First();
-    if (!firstPiece.isActiveAndEnabled)
+    if (!firstPiece.enabled)
     {
       Logger.LogError("Attempted to rotate the ship with an disabled wheelPiece");
       return;
@@ -1623,8 +1616,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
-    Physics.SyncTransforms();
     RotateVehicleForwardPosition();
+    Physics.SyncTransforms();
 
     _vehicleBounds = new Bounds();
 
@@ -1637,6 +1630,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   }
 
 
+  // todo move this logic to a file that can be tested
   // todo compute the float colliderY transform so it aligns with bounds if player builds underneath boat
   public void OnBoundsChangeUpdateShipColliders()
   {
@@ -1669,23 +1663,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       m_floatcollider.size.y, rotatedVehicleBounds.size.z);
 
     /*
-     * blocking collider is the collider that prevents the ship from going through objects.
-     *
-     * This collider could likely share most of floatcollider settings and sync them
-     * - may need an additional size
-     * - may need more logic for water masks (hiding water on boat) and other boat magic that has not been added yet.
-     */
-    var blockingColliderYSize =
-      m_hullPieces.Count > 0 ? averageFloatHeight : floatColliderSize.y;
-    var blockingColliderCenterY = m_hullPieces.Count > 0
-      ? _hullBounds.max.y - blockingColliderYSize / 2f
-      : floatColliderCenterOffset.y;
-    var blockingColliderCenterOffset = new Vector3(rotatedVehicleBounds.center.x,
-      blockingColliderCenterY, rotatedVehicleBounds.center.z);
-    var blockingColliderSize = new Vector3(rotatedVehicleBounds.size.x, blockingColliderYSize,
-      _vehicleBounds.size.z);
-
-    /*
      * onboard colliders
      * need to be higher than the items placed on the ship.
      *
@@ -1695,18 +1672,35 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     const float characterTriggerMaxAddedHeight = 5f;
     const float characterTriggerMinHeight = 1f;
     const float characterHeightScalar = 1.2f;
-    var computedOnboardTriggerSize =
+    var computedOnboardTriggerHeight =
       Math.Min(
         Math.Max(rotatedVehicleBounds.size.y * characterHeightScalar,
           rotatedVehicleBounds.size.y + characterTriggerMinHeight),
-        rotatedVehicleBounds.size.y + characterTriggerMaxAddedHeight);
+        rotatedVehicleBounds.size.y + characterTriggerMaxAddedHeight) - m_floatcollider.size.y;
     var onboardColliderCenter =
       new Vector3(rotatedVehicleBounds.center.x,
-        computedOnboardTriggerSize / 2f,
+        computedOnboardTriggerHeight / 2f,
         rotatedVehicleBounds.center.z);
     var onboardColliderSize = new Vector3(rotatedVehicleBounds.size.x,
-      computedOnboardTriggerSize,
+      computedOnboardTriggerHeight,
       rotatedVehicleBounds.size.z);
+
+    /*
+     * blocking collider is the collider that prevents the ship from going through objects.
+     * - must start at the float collider and encapsulate only up to the ship deck otherwise the ship becomes unstable due to the collider being used for gravity
+     * This collider could likely share most of floatcollider settings and sync them
+     * - may need an additional size
+     * - may need more logic for water masks (hiding water on boat) and other boat magic that has not been added yet.
+     */
+    var blockingColliderYSize =
+      m_hullPieces.Count > 0 ? averageFloatHeight : floatColliderSize.y;
+    var blockingColliderCenterY = m_hullPieces.Count > 0
+      ? _hullBounds.center.y + floatColliderSize.y / 2
+      : floatColliderCenterOffset.y;
+    var blockingColliderCenterOffset = new Vector3(rotatedVehicleBounds.center.x,
+      blockingColliderCenterY, rotatedVehicleBounds.center.z);
+    var blockingColliderSize = new Vector3(rotatedVehicleBounds.size.x, blockingColliderYSize,
+      _vehicleBounds.size.z);
 
     // Assign all the colliders
     m_blockingcollider.size = blockingColliderSize;
@@ -1735,56 +1729,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         Physics.IgnoreCollision(t, m_onboardcollider, true);
     }
   }
-
-  /**
-   * updating rotation point of object is important as it will properly fix how rotation works at the helm
-   *
-   * Using rigidbody center of mass could also work, but it then breaks physics for objects that are now outside the rigidbody center of mass (since it shifts all colliders)
-   *
-   * todo add a way to toggle this for a specific wheelPiece or rudderPiece based on a saved ZDO flag
-   */
-  // public void OnBoundsChangeUpdateShipRotationPoint()
-  // {
-  //   if (VehicleInstance == null) return;
-  //
-  //   GameObject? shipTransformObj = null;
-  //   if (m_rudderPieces.Count > 0)
-  //   {
-  //     var firstPiece = m_rudderPieces.First();
-  //     shipTransformObj = firstPiece.gameObject;
-  //   }
-  //   else if (m_rudderWheelPieces.Count > 0)
-  //   {
-  //     var firstPiece = m_rudderWheelPieces.First();
-  //     shipTransformObj = firstPiece.gameObject;
-  //   }
-  //
-  //   RotateVehicleColliders(shipTransformObj);
-  // }
-
-  /**
-   * @description alternative heavier approach to detecting bounds
-   * - likely will cause issues if the object is invisible or not supposed to be in a specific layer
-   * - check for layer piece
-   * - check for enabled
-   */
-  public void EncapsulateAllChildrenWithinBounds(ZNetView netView)
-  {
-    if (hasDebug)
-    {
-      Logger.LogDebug(
-        $"called EncapsulateAllChildrenWithinBounds, due to no colliders detected within netview named: {netView.name}");
-    }
-
-    var renderers = netView.GetComponentsInChildren<Renderer>();
-    foreach (var renderer in renderers)
-    {
-      if (renderer == null) continue;
-      if (!renderer.enabled && renderer.gameObject.layer == LayerMask.GetMask("piece"))
-        _vehicleBounds.Encapsulate(renderer.bounds);
-    }
-  }
-
 
   ///
   /// <summary>Parses Collider.bounds and confirm if it's local/ or out of ship bounds</summary>
@@ -1887,10 +1831,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       rotatedBounds.Encapsulate(direction);
     }
 
-    var sizeDelta = transform.TransformPoint(forwardTopRight) -
-                    transform.TransformPoint(backwardBottomLeft);
-    var roughSize = new Bounds(center, sizeDelta);
-
     // assumption is no rotation 0 degrees and reverse is 180.
     // Problematic angles are 90 and 270 for bounds calcs
     var near90Or270 =
@@ -1898,18 +1838,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         Mathf.Cos(colliderParentObj.transform.localRotation.eulerAngles.y * Mathf.Deg2Rad), 0f);
     var degreeMult =
       Mathf.Sin(colliderParentObj.transform.localRotation.eulerAngles.y * Mathf.Deg2Rad);
-    // var boundsZMult =
-    //   Mathf.Sin(colliderParentObj.transform.localRotation.eulerAngles.y * Mathf.Deg2Rad);
-    //
-    // var bX = _vehicleBounds.size.x + (_vehicleBounds.size.x * boundsZMult) +
-    //          (boundsZMult * _vehicleBounds.size.z);
-    //
-    // var isValid = bX == _vehicleBounds.size.y;
-    // var boundsSize = new Vector3(
-    //   _vehicleBounds.size.x + (boundsZMult * _vehicleBounds.size.z),
-    //   _vehicleBounds.size.y,
-    //   _vehicleBounds.size.z + (boundsXMult * _vehicleBounds.size.x));
-    // var guessedBounds = new Bounds(_vehicleBounds.center, boundsSize);
     if (near90Or270)
     {
       var newCenter = new Vector3(_vehicleBounds.center.z * degreeMult, _vehicleBounds.center.y,
@@ -1921,7 +1849,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     return _vehicleBounds;
   }
-
 
   private Bounds? EncapsulateColliders(Vector3 boundsCenter,
     Vector3 boundsSize,

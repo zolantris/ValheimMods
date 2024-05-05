@@ -601,16 +601,16 @@ public class PrefabRegistryController : MonoBehaviour
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Icon = LoadValheimVehicleSharedAssets.SharedSprites.GetSprite("dirtfloor_icon"),
-      Requirements = new RequirementConfig[1]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           // this may cause issues it's just size^2 but Math.Pow returns a double
           Amount = (int)Math.Pow(size, 2),
           Item = "Stone",
           Recover = true
         }
-      }
+      ]
     }));
   }
 }

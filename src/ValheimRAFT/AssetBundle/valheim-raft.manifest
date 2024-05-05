@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3549857890
+CRC: 3498033693
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 2265ea346c4b5dcbf5912c627c1f48a9
+    Hash: 67b0ce98f441551c482c9b1db10c26b8
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 425ad3d99a8801ad38843bdb2921a3b5
+    Hash: 962a6fa09ff7ee44209932c381081484
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 2265ea346c4b5dcbf5912c627c1f48a9
+    Hash: 67b0ce98f441551c482c9b1db10c26b8
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -58,6 +58,8 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 128
   Script: {instanceID: 0}
+- Class: 205
+  Script: {instanceID: 0}
 - Class: 213
   Script: {instanceID: 0}
 - Class: 222
@@ -104,7 +106,6 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/ValheimVehicles/Prefabs/GUI/edit_ramp_panel 1.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_ramp_panel.prefab
-- Assets/ValheimVehicles/Prefabs/dirt_floor 1.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_sail_panel.prefab
 - Assets/ValheimVehicles/Texture/pattern_dot.png
 - Assets/ValheimVehicles/Texture/pattern_stripe.png

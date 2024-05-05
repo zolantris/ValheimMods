@@ -390,9 +390,14 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     // ValheimRaftCustomFixedUpdate();
   }
 
-  public void UpdateShipDirection(Quaternion rotation)
+  public void UpdateShipDirection(Quaternion steeringWheelRotation)
   {
-    if (!(bool)ShipDirection) return;
+    var rotation = Quaternion.Euler(0, steeringWheelRotation.eulerAngles.y, 0);
+    if (!(bool)ShipDirection)
+    {
+      ShipDirection = transform;
+      return;
+    }
 
     if (ShipDirection.localRotation.Equals(rotation)) return;
     ShipDirection.localRotation = rotation;
@@ -481,15 +486,14 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       VehicleDebugHelpersInstance = gameObject.AddComponent<VehicleDebugHelpers>();
     }
 
-
     if (VehicleDebugHelpersInstance != null)
     {
-      VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
-      {
-        collider = colliderParentBoxCollider,
-        lineColor = Color.blue,
-        parent = gameObject
-      });
+      // VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
+      // {
+      //   collider = colliderParentBoxCollider,
+      //   lineColor = Color.blue,
+      //   parent = gameObject
+      // });
 
       VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
       {
@@ -500,7 +504,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
       {
         collider = _controller.m_blockingcollider,
-        lineColor = Color.magenta,
+        lineColor = Color.blue,
         parent = gameObject
       });
       VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()

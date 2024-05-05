@@ -117,6 +117,41 @@ public class VehicleDebugHelpers : MonoBehaviour
     VehicleShipInstance.m_body.isKinematic = false;
   }
 
+  /// <summary>
+  /// Eventually will be used to visualize colliders on ship.
+  /// </summary>
+  ///
+  /// todo fix logic to be accurate
+  /// <param name="controller"></param>
+  public void RenderAllVehicleBoxColliders(BaseVehicleController controller)
+  {
+    // foreach (var instanceMPiece in controller.m_pieces)
+    // {
+    //   var boxColliders = instanceMPiece.GetComponentsInChildren<BoxCollider>();
+    //   foreach (var boxCollider in boxColliders)
+    //   {
+    //     AddColliderToRerender(new DrawTargetColliders()
+    //     {
+    //       collider = boxCollider,
+    //       lineColor = Color.yellow,
+    //       parent = controller.gameObject
+    //     });
+    //   }
+    // }
+  }
+
+  public void MoveShip(Vector3 vector)
+  {
+    if (!(bool)VehicleShipInstance.m_body) return;
+    // flips the x and z axis which act as the boat depth and sides
+    // y axis is boat height. Flipping that would just rotate boat which is why it is omitted
+    VehicleShipInstance.m_body.isKinematic = true;
+    transform.rotation = Quaternion.Euler(0f, VehicleObj.transform.eulerAngles.y,
+      0f);
+    transform.position += vector;
+    VehicleShipInstance.m_body.isKinematic = false;
+  }
+
   private static void DrawLine(Vector3 start, Vector3 end, int index, DrawLineData data)
   {
     var (color, material,

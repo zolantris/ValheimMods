@@ -48,7 +48,7 @@ public class Hud_Patch
     if (windIndicatorCircle?.gameObject)
     {
       DisableVanillaWindIndicator(windIndicatorCircle.gameObject);
-      CreateCustomWindIndicator(windIndicator.gameObject);
+      CreateCustomWindIndicator(windIndicatorCircle.gameObject);
     }
   }
 

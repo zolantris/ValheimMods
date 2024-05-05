@@ -25,31 +25,41 @@ public class CircleLine : MonoBehaviour
 
   public float arc = 360f;
 
-  public LineRenderer LineRendererInstance;
+  public LineRenderer? LineRendererInstance;
 
-  private GameObject m_circleInstance;
+  private GameObject? _circleInstance;
 
   private void Awake()
   {
-    DestroyPreviousComponents();
     CreateCircleLine();
+  }
+
+  private void OnGUI()
+  {
+    GUILayout.BeginArea(new Rect(600, 10, 100, 100));
+    if (GUILayout.Button("ReDraw"))
+    {
+      Draw();
+    }
+
+    GUILayout.EndArea();
   }
 
   private void CreateCircleLine()
   {
-    DestroyPreviousComponents();
     lineRendererMaterial = new Material(LoadValheimVehicleAssets.PieceShader)
     {
       color = MaterialColor
     };
-    m_circleInstance = new GameObject("CircleLine")
+    _circleInstance = new GameObject("CircleLine")
     {
+      layer = LayerMask.NameToLayer("UI"),
       transform = { parent = transform }
     };
-    LineRendererInstance = m_circleInstance.AddComponent<LineRenderer>();
+    LineRendererInstance = _circleInstance.AddComponent<LineRenderer>();
     LineRendererInstance.material = lineRendererMaterial;
-    LineRendererInstance.endWidth = 0.1f;
-    LineRendererInstance.startWidth = 0.1f;
+    LineRendererInstance.endWidth = 10f;
+    LineRendererInstance.startWidth = 10f;
   }
 
   public void Start()
@@ -62,14 +72,15 @@ public class CircleLine : MonoBehaviour
   {
     CheckForUpdates();
 
-    if (LineRendererInstance && m_circleInstance)
+    if (LineRendererInstance != null && _circleInstance != null)
     {
       Draw();
       return;
     }
 
-    DestroyPreviousComponents();
+    // DestroyPreviousComponents();
     CreateCircleLine();
+    Draw();
   }
 
   private void CheckForUpdates()
@@ -87,9 +98,9 @@ public class CircleLine : MonoBehaviour
       Destroy(LineRendererInstance.gameObject);
     }
 
-    if (m_circleInstance)
+    if (_circleInstance)
     {
-      Destroy(m_circleInstance.gameObject);
+      Destroy(_circleInstance.gameObject);
     }
   }
 
@@ -121,13 +132,6 @@ public class CircleLine : MonoBehaviour
 
   public void Draw()
   {
-    // rotate the whole object to align with middle of arc
-    if (arc < 360)
-    {
-      transform.Rotate(0, 0, 180);
-    }
-
-
     var seg = segments;
     if (!LineRendererInstance.loop)
     {
@@ -136,10 +140,7 @@ public class CircleLine : MonoBehaviour
 
     var halfArcRange = arc / 2;
     var startPoint = -halfArcRange;
-    var endPoint = halfArcRange;
     var increment = arc / seg;
-    // -180 0 180
-    //  
     var points = new List<Vector3>();
 
     var currentPoint = startPoint;
@@ -165,8 +166,6 @@ public class CircleLine : MonoBehaviour
 
     var pointsArray = points.ToArray();
     LineRendererInstance.positionCount = seg;
-    // transform.InverseTransformPoints(points);
-    // transform.TransformPoints(pointsArray);
     LineRendererInstance.SetPositions(pointsArray);
   }
 }
