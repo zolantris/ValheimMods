@@ -117,10 +117,11 @@ public class VehicleDebugHelpers : MonoBehaviour
     VehicleShipInstance.m_body.isKinematic = false;
   }
 
-  private static void DrawLine(Vector3 start, Vector3 end, Color color, Material material,
-    GameObject parent, Object collider, List<LineRenderer> lineItems, int index,
-    float width = 0.01f)
+  private static void DrawLine(Vector3 start, Vector3 end, int index, DrawLineData data)
   {
+    var (color, material,
+      parent, collider, lineItems,
+      width) = data;
     if (lineItems == null) throw new ArgumentNullException(nameof(lineItems));
 
     LineRenderer line;
@@ -187,6 +188,27 @@ public class VehicleDebugHelpers : MonoBehaviour
     return true;
   }
 
+  private struct DrawLineData
+  {
+    public Color color;
+    public Material material;
+    public GameObject parent;
+    public BoxCollider boxCollider;
+    public List<LineRenderer>? lineItems;
+    public float width;
+
+    public void Deconstruct(out Color o_color, out Material o_material, out GameObject o_parent,
+      out BoxCollider o_boxCollider, out List<LineRenderer>? o_lineItems, out float o_width)
+    {
+      o_color = color;
+      o_material = material;
+      o_parent = parent;
+      o_boxCollider = boxCollider;
+      o_lineItems = lineItems;
+      o_width = width;
+    }
+  }
+
   /*
    * Debug any boxCollider, graphically visualizes the bounds
    */
@@ -234,104 +256,54 @@ public class VehicleDebugHelpers : MonoBehaviour
       lines.Add(boxCollider.name, colliderItems);
     }
 
+    var lineRendererData = new DrawLineData()
+    {
+      color = color,
+      boxCollider = boxCollider,
+      parent = parent,
+      material = material,
+      lineItems = colliderItems,
+      width = 0.1f
+    };
+
     var index = 0;
     DrawLine(forwardTopRight,
-      forwardTopLeft, color,
-      material, parent, boxCollider, colliderItems, index, width);
+      forwardTopLeft, index, lineRendererData);
     index++;
     DrawLine(forwardBottomRight,
-      forwardBottomLeft, color,
-      material, parent, boxCollider, colliderItems, index, width);
+      forwardBottomLeft, index, lineRendererData);
     index++;
     DrawLine(forwardTopRight,
-      forwardBottomRight, color,
-      material, parent, boxCollider, colliderItems, index, width);
+      forwardBottomRight, index, lineRendererData);
     index++;
     DrawLine(forwardTopLeft,
-      forwardBottomLeft, color,
-      material, parent, boxCollider, colliderItems, index, width);
+      forwardBottomLeft, index, lineRendererData);
     index++;
 
     DrawLine(backwardTopRight,
-      backwardTopLeft, color,
-      material, parent, boxCollider, colliderItems, index, width);
+      backwardTopLeft, index, lineRendererData);
     index++;
     DrawLine(backwardBottomRight,
-      backwardBottomLeft, color,
-      material, parent, boxCollider, colliderItems, index, width);
+      backwardBottomLeft, index, lineRendererData);
     index++;
     DrawLine(backwardTopRight,
-      backwardBottomRight, color,
-      material, parent, boxCollider, colliderItems, index, width);
+      backwardBottomRight, index, lineRendererData);
     index++;
     DrawLine(backwardTopLeft,
-      backwardBottomLeft, color,
-      material, parent, boxCollider, colliderItems, index, width);
+      backwardBottomLeft, index, lineRendererData);
     index++;
 
     DrawLine(backwardTopLeft,
-      forwardTopLeft, color,
-      material, parent, boxCollider, colliderItems, index, width);
+      forwardTopLeft, index, lineRendererData);
     index++;
     DrawLine(backwardBottomLeft,
-      forwardBottomLeft, color,
-      material, parent, boxCollider, colliderItems, index, width);
+      forwardBottomLeft, index, lineRendererData);
     index++;
     DrawLine(backwardTopRight,
-      forwardTopRight, color,
-      material, parent, boxCollider, colliderItems, index, width);
+      forwardTopRight, index, lineRendererData);
     index++;
     DrawLine(backwardBottomRight,
-      forwardBottomRight, color,
-      material, parent, boxCollider, colliderItems, index, width);
-
-    // DrawLine(center + upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f,
-    //   center + upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f, color,
-    //   material, parent, boxCollider, colliderItems, index, width);
-    // index++;
-    // DrawLine(center - upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f,
-    //   center - upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f, color,
-    //   material, parent, boxCollider, colliderItems, index, width);
-    // index++;
-    // DrawLine(center + upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f,
-    //   center - upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f, color,
-    //   material, parent, boxCollider, colliderItems, index, width);
-    // index++;
-    // DrawLine(center + upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f,
-    //   center - upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f, color,
-    //   material, parent, boxCollider, colliderItems, index, width);
-    // index++;
-    // DrawLine(center + upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f,
-    //   center + upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-    //   material, parent, boxCollider, colliderItems, index, width);
-    // index++;
-    // DrawLine(center - upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f,
-    //   center - upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-    //   material, parent, boxCollider, colliderItems, index, width);
-    // index++;
-    // DrawLine(center + upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f,
-    //   center - upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-    //   material, parent, boxCollider, colliderItems, index, width);
-    // index++;
-    // DrawLine(center + upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f,
-    //   center - upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-    //   material, parent, boxCollider, colliderItems, index, width);
-    // index++;
-    // DrawLine(center + upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f,
-    //   center + upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-    //   material, parent, boxCollider, colliderItems, index, width);
-    // index++;
-    // DrawLine(center - upDir * size.y / 2f + rightDir * size.x / 2f + forwardDir * size.z / 2f,
-    //   center - upDir * size.y / 2f + rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-    //   material, parent, boxCollider, colliderItems, index, width);
-    // index++;
-    // DrawLine(center + upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f,
-    //   center + upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-    //   material, parent, boxCollider, colliderItems, index, width);
-    // index++;
-    // DrawLine(center - upDir * size.y / 2f - rightDir * size.x / 2f + forwardDir * size.z / 2f,
-    //   center - upDir * size.y / 2f - rightDir * size.x / 2f - forwardDir * size.z / 2f, color,
-    //   material, parent, boxCollider, colliderItems, index, width);
+      forwardBottomRight, index, lineRendererData);
 
     lines[boxCollider.name] = colliderItems;
   }

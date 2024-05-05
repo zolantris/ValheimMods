@@ -9,6 +9,7 @@ using Registry;
 using UnityEngine;
 using UnityEngine.U2D;
 using ValheimRAFT;
+using ValheimRAFT.Patches;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
@@ -36,6 +37,11 @@ public class PrefabRegistryController : MonoBehaviour
   private void OnGUI()
   {
     GUILayout.BeginArea(new Rect(10, 10, 100, 100));
+    if (GUILayout.Button("Patch HUD"))
+    {
+      Hud_Patch.ApplyVehicleHudPatchGlobally();
+    }
+
     if (GUILayout.Button("Delete All Ships"))
     {
       var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();

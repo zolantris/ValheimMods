@@ -63,7 +63,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var shipInstance = prefab.AddComponent<VehicleShip>();
     shipInstance.ColliderParentObj = colliderParentObj.gameObject;
 
-    shipInstance.ShipMovementOrientation =
+    shipInstance.ShipDirection =
       floatColliderObj.FindDeepChild(PrefabNames.VehicleShipMovementOrientation);
     shipInstance.MovementController = shipControls;
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
@@ -74,6 +74,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
 
     var waterEffects =
       Object.Instantiate(LoadValheimAssets.shipWaterEffects, prefab.transform);
+    waterEffects.name = PrefabNames.VehicleShipEffects;
     var shipEffects = waterEffects.GetComponent<ShipEffects>();
     var vehicleShipEffects = waterEffects.AddComponent<VehicleShipEffects>();
     VehicleShipEffects.CloneShipEffectsToInstance(vehicleShipEffects, shipEffects);

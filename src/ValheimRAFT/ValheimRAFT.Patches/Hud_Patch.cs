@@ -1,12 +1,73 @@
 using HarmonyLib;
+using Jotunn.Extensions;
 using UnityEngine;
+using UnityEngine.UI;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;
 
 [HarmonyPatch]
 public class Hud_Patch
 {
+  public static CircleLine ActiveWindCircle;
+  public static CircleLine InactiveWindCircle;
+  public static GameObject WindCircleComponent;
+  public static Image WindIndicatorImageInstance;
+
+  [HarmonyPatch(typeof(Hud), nameof(Hud.Awake))]
+  [HarmonyPostfix]
+  public static void Hud_Awake(Hud __instance)
+  {
+    VehicleShipHudPatch(__instance);
+  }
+
+  public static void DisableVanillaWindIndicator(GameObject windIndicatorCircle)
+  {
+    WindIndicatorImageInstance = windIndicatorCircle.GetComponent<Image>();
+    if (WindIndicatorImageInstance)
+    {
+      WindIndicatorImageInstance.enabled = false;
+    }
+  }
+
+  public static void CreateCustomWindIndicator(GameObject windIndicatorCircle)
+  {
+    windIndicatorCircle.AddComponent<CircleWindIndicator>();
+  }
+
+  public static void VehicleShipHudPatch(Hud hud)
+  {
+    // fire 3 finds b/c later on these objects will have additional items added to them
+    var shipHud = hud.transform?.FindDeepChild("ShipHud");
+    var windIndicator = shipHud?.Find("WindIndicator");
+
+    var windIndicatorCircle = windIndicator?.Find("Circle");
+
+    if (windIndicatorCircle?.gameObject)
+    {
+      DisableVanillaWindIndicator(windIndicatorCircle.gameObject);
+      CreateCustomWindIndicator(windIndicator.gameObject);
+    }
+  }
+
+  public static void ApplyVehicleHudPatchGlobally()
+  {
+    var allHudObjects = Resources.FindObjectsOfTypeAll<Hud>();
+
+    if (allHudObjects.Length > 1)
+    {
+      Logger.LogWarning(
+        "Multiple Huds detected, ValheimRaft was designed to support a single Hud interface, please consider submitting a bug if there are problems with vehicle hud.");
+    }
+
+    foreach (var hud in allHudObjects)
+    {
+      VehicleShipHudPatch(hud);
+    }
+  }
+
   [HarmonyPatch(typeof(Hud), nameof(Hud.UpdateShipHud))]
   [HarmonyPrefix]
   public static bool UpdateShipHud(Hud __instance, Player player, float dt)

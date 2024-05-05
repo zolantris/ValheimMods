@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Jotunn.Extensions;
 using Jotunn.Managers;
@@ -78,7 +79,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   private float _shipRotationOffset = 0f;
   private GameObject _shipRotationObj = new();
 
-  public Transform? ShipDirection => ShipMovementOrientation;
+  public Transform? ShipDirection { get; set; }
 
   private GameObject _vehiclePiecesContainerInstance;
   private GUIStyle myButtonStyle;
@@ -90,8 +91,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     get => m_floatcollider;
     set => m_floatcollider = value;
   }
-
-  public Transform ShipMovementOrientation { get; set; }
 
   public BoxCollider BlockingCollider { get; set; }
   public BoxCollider OnboardCollider { get; set; }
@@ -129,23 +128,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     {
       Destroy(m_mastObject);
     }
-  }
-
-  public void UpdateShipRotation(float offset)
-  {
-    // _shipRotationOffset = offset;
-    // if (!(bool)m_floatcollider) return;
-    // if (m_floatcollider.transform.position != _shipRotationObj.transform.position)
-    // {
-    //   _shipRotationObj.transform.position = m_floatcollider.transform.position;
-    // }
-    //
-    // var dynamicRotation = new Vector3(
-    //   0,
-    //   _shipRotationOffset,
-    //   0);
-    //
-    // _shipRotationObj.transform.localRotation = Quaternion.Euler(dynamicRotation);
   }
 
   private static bool GetAnchorKey()
@@ -226,6 +208,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     floatColliderObj.name = PrefabNames.WaterVehicleFloatCollider;
     blockingColliderObj.name = PrefabNames.WaterVehicleBlockingCollider;
 
+    ShipDirection = floatColliderObj.Find(PrefabNames.VehicleShipMovementOrientation);
     BlockingCollider = blockingColliderObj.GetComponent<BoxCollider>();
     FloatCollider = floatColliderObj.GetComponent<BoxCollider>();
     OnboardCollider = onboardColliderObj.GetComponent<BoxCollider>();
@@ -234,13 +217,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     {
       m_body = GetComponent<Rigidbody>();
     }
-
-    if (!(bool)_shipRotationObj)
-    {
-      _shipRotationObj = new GameObject();
-    }
-
-    UpdateShipRotation(_shipRotationOffset);
 
     if (!(bool)m_zsyncTransform)
     {
@@ -295,7 +271,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
 
     var waterLevelOffset =
-      GUILayout.TextField(m_waterLevelOffset.ToString(), 25);
+      GUILayout.TextField(m_waterLevelOffset.ToString(CultureInfo.InvariantCulture), 25);
 
     if (waterLevelOffset != null && float.TryParse(waterLevelOffset, out var offset))
     {
@@ -324,51 +300,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       }
       else
       {
-        _shipRotationOffset += 90;
+        ShipDirection.Rotate(0, 90, 0);
       }
-
-      m_floatcollider.transform.Rotate(0, 90, 0);
-      _controller.RebuildBounds();
-
-      // Instance.transform.rotation = new Quaternion(Instance.transform.rotation.x,
-      //   Instance.transform.rotation.y + 90, Instance.transform.rotation.z,
-      //   Instance.transform.rotation.w);
-    }
-
-    // if (GUILayout.Button("rotate based on rudder dir"))
-    // {
-    //   if (_controller.m_rudderPieces.Count > 0)
-    //   {
-    //     var rudderPiece = _controller.m_rudderPieces.First();
-    //     if (rudderPiece.transform.localRotation != shipRotationObj.transform.rotation)
-    //     {
-    //       shipRotationObj.transform.localRotation =
-    //         Quaternion.Euler(0f, rudderPiece.transform.localRotation.y - 180f, 0f);
-    //       m_body.centerOfMass = rudderPiece.transform.localPosition;
-    //     }
-    //   }
-    //   // Instance.transform.rotation = new Quaternion(Instance.transform.rotation.x,
-    //   //   Instance.transform.rotation.y + 90, Instance.transform.rotation.z,
-    //   //   Instance.transform.rotation.w);
-    //   // _controller.transform.rotation = new Quaternion(_controller.transform.rotation.x,
-    //   //   _controller.transform.rotation.y - 90, _controller.transform.rotation.z,
-    //   //   _controller.transform.rotation.w);
-    // }
-
-    if (GUILayout.Button("rotate based on steering"))
-    {
-      if (_controller.m_rudderWheelPieces.Count > 0)
-      {
-        var wheelPiece = _controller.m_rudderWheelPieces.First();
-        m_body.centerOfMass = wheelPiece.transform.localPosition;
-      }
-
-      // FloatCollider.transform.Rotate(0, _shipRotationOffset, 0);
-      // _controller.transform.SetParent(null);
-      // Instance.transform.rotation = new Quaternion(Instance.transform.rotation.x,
-      //   Instance.transform.rotation.y + 90, Instance.transform.rotation.z,
-      //   Instance.transform.rotation.w);
-      // _controller.transform.SetParent(transform);
     }
 
     GUILayout.EndArea();
@@ -430,30 +363,14 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     InitializeWaterVehicleController();
   }
 
-  // public void UpdateShipRotationObj(GameObject? go)
-  // {
-  //   if (!isActiveAndEnabled) return;
-  //   if (go == null)
-  //   {
-  //     shipRotationObj.transform.localRotation = Quaternion.Euler(Vector3.zero);
-  //     // todo fix shipRotationObj calcs
-  //     // shipRotationObj.transform.localPosition = Vector3.zero;
-  //     // shipRotationObj.transform.SetParent(transform);
-  //     // shipRotationObj.transform.localPosition = FloatColliderObj.transform.localPosition;
-  //     return;
-  //   }
-  //
-  //   shipRotationObj.transform.localRotation = Quaternion.Euler(
-  //     go.transform.localRotation.eulerAngles.x, go.transform.localRotation.eulerAngles.y,
-  //     go.transform.localRotation.eulerAngles.z);
-  // }
-
   public void FixedUpdate()
   {
     if (!(bool)_controller || !(bool)m_body || !(bool)m_floatcollider)
     {
       return;
     }
+
+    FixShipRotation();
 
     if (CustomShipPhysicsEnabled)
     {
@@ -471,6 +388,14 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
     TestFixedUpdate();
     // ValheimRaftCustomFixedUpdate();
+  }
+
+  public void UpdateShipDirection(Quaternion rotation)
+  {
+    if (!(bool)ShipDirection) return;
+
+    if (ShipDirection.localRotation.Equals(rotation)) return;
+    ShipDirection.localRotation = rotation;
   }
 
   private void InitHull()
@@ -687,6 +612,26 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     m_body.WakeUp();
     m_body.AddForceAtPosition(Vector3.up * 1f, m_body.worldCenterOfMass,
       ForceMode.VelocityChange);
+  }
+
+  ///
+  /// <summary>Paints / Visualizes GUI for the area it is updating on raft</summary>
+  ///
+  /// Lines created
+  /// - purple = front left
+  /// - blue = front right
+  /// - orange = back left
+  /// - yellow = back right
+  ///
+  public void DebugForceAtVectorPoint()
+  {
+  }
+
+  /**
+   *  Shows velocity numbers with maximum and minimum velocity numbers for raft propulsion debugging
+   */
+  public void UpdateVelocityHud()
+  {
   }
 
   public void TestFixedUpdate()
@@ -943,7 +888,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
   }
 
-  public float GetShipYawAngle()
+  public new float GetShipYawAngle()
   {
     var mainCamera = Utils.GetMainCamera();
     if (mainCamera == null)
@@ -953,14 +898,14 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
     return 0f -
            Utils.YawFromDirection(
-             mainCamera.transform.InverseTransformDirection(ColliderParentObj.transform.forward));
+             mainCamera.transform.InverseTransformDirection(ShipDirection.forward));
   }
 
-  public float GetWindAngle()
+  public new float GetWindAngle()
   {
-    Vector3 windDir = EnvMan.instance.GetWindDir();
+    var windDir = EnvMan.instance.GetWindDir();
     return 0f -
-           Utils.YawFromDirection(ColliderParentObj.transform.InverseTransformDirection(windDir));
+           Utils.YawFromDirection(ShipDirection.InverseTransformDirection(windDir));
   }
 
 
@@ -1011,11 +956,11 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       rudder.PivotPoint.localRotation = newRotation;
     }
 
-    foreach (var wheel in _controller.m_rudderWheelPieces.ToList())
+    foreach (var wheel in _controller._steeringWheelPieces.ToList())
     {
       if (!(bool)wheel)
       {
-        _controller.m_rudderWheelPieces.Remove(wheel);
+        _controller._steeringWheelPieces.Remove(wheel);
       }
       else if ((bool)wheel.wheelTransform)
       {
@@ -1047,7 +992,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   public new float GetWindAngleFactor()
   {
-    float num = Vector3.Dot(EnvMan.instance.GetWindDir(), -ColliderParentObj.transform.forward);
+    float num = Vector3.Dot(EnvMan.instance.GetWindDir(), -ShipDirection.forward);
     float num2 = Mathf.Lerp(0.7f, 1f, 1f - Mathf.Abs(num));
     float num3 = 1f - Utils.LerpStep(0.75f, 0.8f, num);
     return num2 * num3;

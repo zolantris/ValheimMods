@@ -89,7 +89,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   internal List<RudderComponent> m_rudderPieces = [];
 
   // wheels for rudders
-  internal List<SteeringWheelComponent> m_rudderWheelPieces = [];
+  internal List<SteeringWheelComponent> _steeringWheelPieces = [];
 
   internal List<ZNetView> m_portals = [];
 
@@ -684,9 +684,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       var hull = netView.GetComponent<ShipHullComponent>();
       if ((bool)hull)
       {
-        // todo
-        // only rebuilds bounds for hull pieces. If the player does not use a hull it will not increase boat size.
-        // RebuildBounds();
         m_hullPieces.Remove(hull);
       }
 
@@ -716,12 +713,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       var wheel = netView.GetComponent<SteeringWheelComponent>();
       if ((bool)wheel)
       {
-        m_rudderWheelPieces.Remove(wheel);
-
-        if (VehicleInstance?.Instance)
-        {
-          RebuildBounds();
-        }
+        _steeringWheelPieces.Remove(wheel);
       }
 
 
@@ -1382,6 +1374,25 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
   }
 
+  public void OnAddSteeringWheel(ZNetView netView, SteeringWheelComponent steeringWheel)
+  {
+    if (_steeringWheelPieces.Count > 0)
+    {
+      foreach (var wnt in _steeringWheelPieces.Select(steeringWheel =>
+                 steeringWheel.GetComponent<WearNTear>()))
+      {
+        // must call wnt destroy otherwise the piece is removed but not destroyed like a player destroying an item.
+        wnt.Destroy();
+      }
+    }
+
+    steeringWheel.InitializeControls(netView, VehicleInstance);
+
+    // Updates ship rotation to face the wheel forward position
+    var rotation = Quaternion.Euler(0, steeringWheel.transform.localRotation.y, 0);
+    VehicleInstance?.Instance.UpdateShipDirection(rotation);
+  }
+
   public void AddPiece(ZNetView netView)
   {
     if (!(bool)netView)
@@ -1448,17 +1459,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var wheel = netView.GetComponent<SteeringWheelComponent>();
     if ((bool)wheel)
     {
-      if (m_rudderPieces.Count == 1)
-      {
-        var firstPiece = m_rudderPieces.First();
-        var firstPieceNetView = firstPiece.GetComponent<ZNetView>();
-        RemovePiece(firstPieceNetView);
-      }
-
-      m_rudderWheelPieces.Add(wheel);
-      wheel.InitializeControls(netView, VehicleInstance);
-      VehicleInstance?.Instance.UpdateShipRotation(wheel.transform.localRotation.y);
-      RebuildBounds();
+      OnAddSteeringWheel(netView, wheel);
+      _steeringWheelPieces.Add(wheel);
     }
 
     var portal = netView.GetComponent<TeleportWorld>();
@@ -1593,29 +1595,22 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   /**
    * Must fire RebuildBounds after doing this otherwise colliders will not have the correct x z axis when rotating the y
    */
-  private void RotateVehicleColliders()
+  private void RotateVehicleForwardPosition()
   {
     if (VehicleInstance == null)
     {
       return;
     }
 
-    if (!VehicleInstance.Instance.ShipMovementOrientation) return;
-    var shipOrientation = VehicleInstance.Instance.ShipMovementOrientation;
-    var rotation = Quaternion.Euler(Vector3.zero);
-    // if (m_rudderPieces.Count > 0)
-    // {
-    //   var firstPiece = m_rudderPieces.First();
-    //   rotation = firstPiece.transform.localRotation;
-    // }
-    if (m_rudderWheelPieces.Count > 0)
+    if (_steeringWheelPieces.Count <= 0) return;
+    var firstPiece = _steeringWheelPieces.First();
+    if (!firstPiece.isActiveAndEnabled)
     {
-      var firstPiece = m_rudderWheelPieces.First();
-      rotation = firstPiece.transform.localRotation;
+      Logger.LogError("Attempted to rotate the ship with an disabled wheelPiece");
+      return;
     }
 
-    if (shipOrientation.localRotation == rotation) return;
-    shipOrientation.localRotation = rotation;
+    VehicleInstance.Instance.UpdateShipDirection(firstPiece.transform.localRotation);
   }
 
   /**
@@ -1629,8 +1624,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
 
     Physics.SyncTransforms();
-    RotateVehicleColliders();
-    Physics.SyncTransforms();
+    RotateVehicleForwardPosition();
 
     _vehicleBounds = new Bounds();
 

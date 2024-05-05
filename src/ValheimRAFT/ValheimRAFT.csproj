@@ -31,6 +31,7 @@
         <Compile Include="ValheimRAFT.Patches\Player_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\ShipControls_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Ship_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\StartScene_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\ValheimRAFT_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\WearNTear_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\ZDO_Patch.cs"/>
@@ -135,6 +136,27 @@
         </Compile>
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\SwitchPrefab.cs">
             <Link>ValheimVehicles.Prefabs\Registry\SwitchPrefab.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CreateCircle.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CreateCircle.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CircleLine.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CircleLine.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CircleWindColors.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CircleWindColors.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CircleWindIndicator.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CircleWindIndicator.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CircleWindGui\CircleLine.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CircleWindGui\CircleLine.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CircleWindGui\CircleWindColors.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CircleWindGui\CircleWindColors.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CircleWindGui\CircleWindIndicator.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CircleWindGui\CircleWindIndicator.cs</Link>
         </Compile>
     </ItemGroup>
     <PropertyGroup>

@@ -1,3 +1,5 @@
+using ValheimVehicles.Prefabs;
+
 namespace ValheimVehicles.Vehicles.Components;
 
 using System.Collections.Generic;

@@ -29,6 +29,7 @@ internal static class PatchController
     Harmony.PatchAll(typeof(ZNetScene_Patch));
     Harmony.PatchAll(typeof(ZNetView_Patch));
     Harmony.PatchAll(typeof(Hud_Patch));
+    Harmony.PatchAll(typeof(StartScene_Patch));
     /*
      * PlanBuild uses mmmHookgen so it cannot be detected with bepinex
      *
