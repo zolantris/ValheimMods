@@ -106,12 +106,31 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     base.OnTriggerEnter(collider);
   }
 
+  private void RemovePlayersBeforeDestroyingBoat()
+  {
+    foreach (var mPlayer in m_players)
+    {
+      mPlayer.transform.SetParent(null);
+    }
+  }
+
+  /// <summary>
+  /// Unloads the Boat Pieces properly
+  /// </summary>
+  ///
+  /// <description>calling cleanup must be done before Unity starts garbage collecting otherwise positions, ZNetViews and other items may be destroyed</description>
+  /// 
+  public void UnloadPieceContainer()
+  {
+    if (!(bool)_vehiclePiecesContainerInstance) return;
+    RemovePlayersBeforeDestroyingBoat();
+    _controller.CleanUp();
+    Destroy(_controller.gameObject);
+  }
+
   public void OnDestroy()
   {
-    if ((bool)_vehiclePiecesContainerInstance)
-    {
-      Destroy(_vehiclePiecesContainerInstance);
-    }
+    UnloadPieceContainer();
 
     if ((bool)_shipRotationObj)
     {

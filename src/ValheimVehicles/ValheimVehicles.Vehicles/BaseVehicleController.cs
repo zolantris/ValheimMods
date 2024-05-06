@@ -163,19 +163,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       myButtonStyle = new GUIStyle(GUI.skin.button);
       myButtonStyle.fontSize = 50;
     }
-
-    GUILayout.BeginArea(new Rect(150, 10, 100, 100), myButtonStyle);
-    if (GUILayout.Button("activatePendingPieces"))
-    {
-      ActivatePendingPiecesCoroutine();
-    }
-
-    if (GUILayout.Button("rebuild bounds"))
-    {
-      RebuildBounds();
-    }
-
-    GUILayout.EndArea();
   }
 
   /**
@@ -404,11 +391,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       _serverUpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
-  }
-
-  public void OnDestroy()
-  {
-    CleanUp();
   }
 
   public void CleanUp()
@@ -902,6 +884,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var wntVehicle = instance.GetComponent<WearNTear>();
 
     RemovePlayerFromBoat();
+
+    if (!CanDestroyVehicle(m_nview))
+    {
+      return;
+    }
 
     if ((bool)wntVehicle)
       wntVehicle.Destroy();
@@ -1641,15 +1628,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
-    if (hasDebug)
-    {
-      Logger.LogDebug($"floatcollider size before {m_floatcollider.size}");
-      Logger.LogDebug($"floatcollider size after {m_floatcollider.size}");
-    }
-
     // todo this is unstable, but there needs to be a way to adjust float colliders when the rotation happens otherwise the vehicle will not encapsulate correctly
     // var rotatedVehicleBounds = GetBoundsWithParentRotation();
-    var rotatedVehicleBounds = GetBoundsWithParentRotation();
+    var rotatedVehicleBounds = _vehicleBounds;
 
     /*
      * @description float collider logic
@@ -1693,13 +1674,15 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
      * - may need more logic for water masks (hiding water on boat) and other boat magic that has not been added yet.
      */
     var blockingColliderYSize =
-      m_hullPieces.Count > 0 ? averageFloatHeight : floatColliderSize.y;
+      m_hullPieces.Count > 0
+        ? Math.Max(Math.Min(1f, averageFloatHeight), 3f)
+        : floatColliderSize.y;
     var blockingColliderCenterY = m_hullPieces.Count > 0
-      ? _hullBounds.center.y + floatColliderSize.y / 2
+      ? _hullBounds.center.y + Math.Abs(floatColliderSize.y)
       : floatColliderCenterOffset.y;
-    var blockingColliderCenterOffset = new Vector3(rotatedVehicleBounds.center.x,
-      blockingColliderCenterY, rotatedVehicleBounds.center.z);
-    var blockingColliderSize = new Vector3(rotatedVehicleBounds.size.x, blockingColliderYSize,
+    var blockingColliderCenterOffset = new Vector3(_vehicleBounds.center.x,
+      blockingColliderCenterY, _vehicleBounds.center.z);
+    var blockingColliderSize = new Vector3(_vehicleBounds.size.x, blockingColliderYSize,
       _vehicleBounds.size.z);
 
     // Assign all the colliders
@@ -1711,12 +1694,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     m_onboardcollider.size = onboardColliderSize;
     m_onboardcollider.transform.localPosition = onboardColliderCenter;
-
-    if (hasDebug)
-    {
-      Logger.LogDebug($"floatcollider center before {m_floatcollider.center}");
-      Logger.LogDebug($"floatcollider center after {m_floatcollider.center}");
-    }
   }
 
   public void IgnoreShipColliders(List<Collider> colliders)
@@ -1755,8 +1732,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var isOutOfBounds = Mathf.Abs(colliderCenterMagnitude - worldPositionMagnitude) > 5f;
     if (isOutOfBounds)
     {
-      Logger.LogWarning(
-        "Possible out of bounds error, you may need to disable exact collider updates if this makes the ship bounds break.");
+      Logger.LogDebug(
+        "Possible out of bounds error, the collider magnitude compared to it's local point is more than 5 units of difference, calling back with positional center point");
+      return new Bounds(
+        collider.transform.root.transform.InverseTransformPoint(collider.transform.position),
+        collider.bounds.size);
     }
 
     center = collider.transform.root.transform.InverseTransformPoint(collider.bounds.center);
@@ -1906,8 +1886,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var ladder = go.GetComponent<RopeLadderComponent>();
     var rope = go.GetComponent<RopeAnchorComponent>();
 
-    Logger.LogDebug($"previous m_bounds extents: {_vehicleBounds.extents}");
-
     if (!door && !ladder && !rope && !go.name.StartsWith(PrefabNames.Tier1RaftMastName) &&
         !go.name.StartsWith(PrefabNames.Tier1CustomSailName) &&
         !go.name.StartsWith(PrefabNames.Tier2RaftMastName) &&
@@ -1921,9 +1899,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         OnShipBoundsChange();
       }
     }
-
-    Logger.LogDebug($"current m_bounds extents (after Encapsulate): {_vehicleBounds.extents}");
-    Logger.LogDebug($"m_floatcollider bounds: {m_floatcollider.bounds}");
   }
 
   internal int GetPieceCount()
