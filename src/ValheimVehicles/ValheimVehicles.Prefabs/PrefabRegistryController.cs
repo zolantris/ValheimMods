@@ -37,20 +37,19 @@ public class PrefabRegistryController : MonoBehaviour
   private void OnGUI()
   {
     GUILayout.BeginArea(new Rect(10, 10, 100, 100));
-    if (GUILayout.Button("Patch HUD"))
-    {
-      Hud_Patch.ApplyVehicleHudPatchGlobally();
-    }
+    // if (GUILayout.Button("Patch HUD"))
+    // {
+    //   Hud_Patch.ApplyVehicleHudPatchGlobally();
+    // }
 
     if (GUILayout.Button("Delete All Ships"))
     {
       var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
       foreach (var obj in allObjects)
       {
-        if (obj.name.Contains($"{PrefabNames.WaterVehicleShip}(Clone)") ||
-            obj.name.Contains($"{PrefabNames.ShipHullPrefabName}(Clone)"))
+        if (obj.name.Contains($"{PrefabNames.WaterVehicleShip}(Clone)") || ShipHulls.IsHull(obj))
         {
-          if (ReferenceEquals(obj, ShipHullPrefab.RaftHullPrefabInstance))
+          if (ReferenceEquals(obj, ShipHullPrefab.HullWoodPrefabInstance))
           {
             return;
           }

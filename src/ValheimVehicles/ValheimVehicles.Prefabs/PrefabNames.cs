@@ -35,7 +35,16 @@ public static class PrefabNames
 
   private const string ValheimVehiclesPrefix = "ValheimVehicles";
   public const string WaterVehicleShip = $"{ValheimVehiclesPrefix}_WaterVehicleShip";
-  public const string ShipHullPrefabName = $"{ValheimVehiclesPrefix}_ShipHull_Wood";
+
+  public const string ShipHullRibWoodPrefabName = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Wood";
+  public const string ShipHullRibIronPrefabName = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Iron";
+
+  public const string ShipHullCenterIronPrefabName =
+    $"{ValheimVehiclesPrefix}_Ship_Hull_Center_Wood";
+
+  public const string ShipHullCenterWoodPrefabName =
+    $"{ValheimVehiclesPrefix}_Ship_Hull_Center_Iron";
+
   public const string SailBoxColliderName = $"{ValheimVehiclesPrefix}_SailBoxCollider";
   public const string ShipRudderBasic = $"{ValheimVehiclesPrefix}_ShipRudderBasic";
   public const string ShipRudderAdvanced = $"{ValheimVehiclesPrefix}_ShipRudderAdvanced";

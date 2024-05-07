@@ -12,7 +12,7 @@ public class CircleLine : MonoBehaviour
     public int segments = 36;
     public Color MaterialColor = CircleWindColors.ValheimWindGray;
     private Material lineRendererMaterial;
-    private float _radius = 1f; 
+    private float _radius = 300f; 
     public float Radius
     {
         get => _radius;
@@ -27,7 +27,6 @@ public class CircleLine : MonoBehaviour
 
     public LineRenderer LineRendererInstance;
 
-    private GameObject m_circleInstance;
     private void Awake()
     {
         DestroyPreviousComponents();
@@ -42,14 +41,10 @@ public class CircleLine : MonoBehaviour
         {
             color = MaterialColor
         };
-        m_circleInstance = new GameObject("CircleLine")
-        {
-            transform = { parent = transform }
-        };
-        LineRendererInstance = m_circleInstance.AddComponent<LineRenderer>();
+        LineRendererInstance = gameObject.AddComponent<LineRenderer>();
         LineRendererInstance.material = lineRendererMaterial;
-        LineRendererInstance.endWidth = 0.1f;
-        LineRendererInstance.startWidth = 0.1f;
+        LineRendererInstance.endWidth = 5f;
+        LineRendererInstance.startWidth = 5f;
     }
 
     public void Start()
@@ -62,13 +57,13 @@ public class CircleLine : MonoBehaviour
     {
         CheckForUpdates();
         
-        if (LineRendererInstance && m_circleInstance)
+        if (LineRendererInstance)
         {
             Draw();
             return;
         }
 
-        DestroyPreviousComponents();
+        Draw();
         CreateCircleLine();
     }
 
@@ -85,11 +80,6 @@ public class CircleLine : MonoBehaviour
         if (LineRendererInstance)
         {
             Destroy(LineRendererInstance.gameObject);
-        }
-
-        if (m_circleInstance)
-        {
-            Destroy(m_circleInstance.gameObject);
         }
     }
 

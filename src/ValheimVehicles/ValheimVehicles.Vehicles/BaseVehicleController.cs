@@ -424,6 +424,23 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
   }
 
+  public virtual void SyncRigidbodyStats(float drag, float angularDrag)
+  {
+    if (!m_rigidbody || !m_syncRigidbody || m_statsOverride || !VehicleInstance?.Instance)
+    {
+      return;
+    }
+
+    m_rigidbody.angularDrag = angularDrag;
+    m_syncRigidbody.angularDrag = angularDrag;
+
+    m_rigidbody.drag = drag;
+    m_syncRigidbody.drag = drag;
+
+    m_syncRigidbody.mass = TotalMass;
+    m_rigidbody.mass = TotalMass;
+  }
+
   private void Sync()
   {
     if (!(bool)m_syncRigidbody || !(bool)m_rigidbody) return;
@@ -799,9 +816,28 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
 
     // todo figure out hull weight like 20 wood per hull. Also calculate buoyancy from hull wood
-    if (pieceName == PrefabRegistryHelpers.GetPieceNameFromPrefab(PrefabNames.ShipHullPrefabName))
+    if (pieceName ==
+        PrefabRegistryHelpers.GetPieceNameFromPrefab(PrefabNames.ShipHullCenterWoodPrefabName))
     {
       return 20f;
+    }
+
+    if (pieceName ==
+        PrefabRegistryHelpers.GetPieceNameFromPrefab(PrefabNames.ShipHullCenterIronPrefabName))
+    {
+      return 80f;
+    }
+
+    if (pieceName ==
+        PrefabRegistryHelpers.GetPieceNameFromPrefab(PrefabNames.ShipHullRibWoodPrefabName))
+    {
+      return 180f;
+    }
+
+    if (pieceName ==
+        PrefabRegistryHelpers.GetPieceNameFromPrefab(PrefabNames.ShipHullRibIronPrefabName))
+    {
+      return 720f;
     }
 
     if (pieceName == "wood_floor_1x1")

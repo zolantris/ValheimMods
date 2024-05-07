@@ -183,6 +183,7 @@ Previously it only supported Direct3D11.
 ## Attribution
 
 - Sarcen: For creating the initial mod and supporting it until v1.4.8!
+- Zolantris: For supporting and expanding the Raft Mod since v1.5.0.
 - RacerX: For contributing a stag icon for sails. Looks awesome!
 
 ## Support Open Source

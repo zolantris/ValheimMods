@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: iron_metal
+  m_Name: iron_metal_no_tiling
   m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -15,10 +15,10 @@ Material:
   - _NORMALMAP
   m_InvalidKeywords:
   - _ADDRAIN_ON
-  - _ADDSNOW_ON
+  - _CAMCULL_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
-  m_DoubleSidedGI: 0
+  m_DoubleSidedGI: 1
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
@@ -27,7 +27,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BumpMap:
-        m_Texture: {fileID: 2800000, guid: a8473ccfbdc97294cb35f727bdf15949, type: 3}
+        m_Texture: {fileID: 2800000, guid: 115455c1cad91bc43a7961fa99acbc08, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
@@ -44,7 +44,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
         m_Texture: {fileID: 0}
-        m_Scale: {x: 0, y: 0}
+        m_Scale: {x: 5, y: 5}
         m_Offset: {x: 0, y: 0}
     - _EmissiveTex:
         m_Texture: {fileID: 0}
@@ -55,8 +55,8 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: f729a6476e677a04daad76be6790b628, type: 3}
-        m_Scale: {x: 0, y: 0}
+        m_Texture: {fileID: 2800000, guid: bca01db5a5890ee47959468ce4de5aad, type: 3}
+        m_Scale: {x: 5, y: 5}
         m_Offset: {x: 0, y: 0}
     - _MetalTex:
         m_Texture: {fileID: 0}
@@ -67,7 +67,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicTex:
-        m_Texture: {fileID: 2800000, guid: f729a6476e677a04daad76be6790b628, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MossTex:
@@ -89,31 +89,42 @@ Material:
     m_Ints: []
     m_Floats:
     - _AddRain: 1
-    - _AddSnow: 1
-    - _BumpScale: 0.2
+    - _AddSnow: 0
+    - _BumpScale: 1
+    - _CamCull: 1
     - _Cull: 2
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _GlossMapScale: 0.362
-    - _Glossiness: 0.556
+    - _GlossMapScale: 1
+    - _Glossiness: 0.727
     - _GlossyReflections: 1
-    - _MetalGloss: 0
-    - _Metallic: 0.346
+    - _Height: 15
+    - _MetalGloss: 0.414
+    - _Metallic: 1
     - _MetallicAlphaGloss: 0
     - _Mode: 0
-    - _MossAlpha: 1
+    - _MossAlpha: 0
     - _MossBlend: 0
     - _MossGloss: 0
     - _MossNormal: 0.5
     - _MossTransition: 0.1
     - _OcclusionStrength: 1
     - _Parallax: 0.02
+    - _PushClothMode: 0
+    - _PushDistance: 0
+    - _RippleDeadzoneMax: 2
+    - _RippleDeadzoneMin: 0.3
     - _RippleDistance: 0
     - _RippleFreq: 1
+    - _RippleSpeed: 100
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
+    - _SphereNormals: 0
+    - _SphereOffset: 0
     - _SrcBlend: 1
+    - _SwayDistance: 0.5
+    - _SwaySpeed: 15
     - _TriplanarLocalPos: 0
     - _TriplanarMap: 0
     - _TriplanarScale: 1
@@ -125,7 +136,7 @@ Material:
     - _WaterlineOffset: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0.6650944, g: 0.6650944, b: 0.6650944, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _MetalColor: {r: 1, g: 1, b: 1, a: 1}
     - _MossColor: {r: 1, g: 1, b: 1, a: 1}

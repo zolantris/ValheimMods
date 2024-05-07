@@ -11,25 +11,113 @@ public class ShipHullPrefab : IRegisterPrefab
 {
   public static readonly ShipHullPrefab Instance = new();
 
-  public static GameObject? RaftHullPrefabInstance =>
-    PrefabManager.Instance.GetPrefab(PrefabNames.ShipHullPrefabName);
+  public static GameObject? HullWoodPrefabInstance =>
+    PrefabManager.Instance.GetPrefab(PrefabNames.ShipHullCenterWoodPrefabName);
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    RegisterHull(PrefabNames.ShipHullPrefabName,
-      new Vector3(1, 1, 1),
+    // hulls
+    RegisterHull(PrefabNames.ShipHullCenterWoodPrefabName, ShipHulls.HullMaterial.Wood,
+      prefabManager, pieceManager);
+    RegisterHull(PrefabNames.ShipHullCenterIronPrefabName, ShipHulls.HullMaterial.Iron,
+      prefabManager, pieceManager);
+
+    // hull-ribs
+    RegisterHullRib(PrefabNames.ShipHullRibWoodPrefabName, ShipHulls.HullMaterial.Wood,
+      prefabManager, pieceManager);
+    RegisterHullRib(PrefabNames.ShipHullRibIronPrefabName, ShipHulls.HullMaterial.Iron,
       prefabManager, pieceManager);
   }
 
-  private static void RegisterHull(
+  public static RequirementConfig GetRequirements(string material, int materialCount)
+  {
+    var item = "Wood";
+    var amountPerCount = 20;
+
+    switch (material)
+    {
+      case ShipHulls.HullMaterial.Iron:
+        item = "Iron";
+        amountPerCount = 2;
+        break;
+      case ShipHulls.HullMaterial.Wood:
+        item = "Wood";
+        amountPerCount = 20;
+        break;
+    }
+
+    return new RequirementConfig
+    {
+      Amount = amountPerCount * materialCount,
+      Item = item,
+      Recover = true
+    };
+  }
+
+  /// <summary>
+  /// Experimental not ready
+  /// </summary>
+  private static void RegisterHullRib(
     string prefabName,
-    Vector3 pieceScale,
+    string hullMaterial,
     PrefabManager prefabManager,
     PieceManager pieceManager)
   {
     var prefab =
       prefabManager.CreateClonedPrefab(
-        prefabName, LoadValheimVehicleAssets.ShipHullAdvancedCenterAsset);
+        prefabName, GetShipHullRibAssetByMaterial(hullMaterial));
+
+    var wnt = PrefabRegistryHelpers.SetWearNTear(prefab);
+    PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.Iron);
+
+    wnt.m_supports = true;
+    wnt.m_support = 2000f;
+    wnt.m_noSupportWear = true;
+    wnt.m_noRoofWear = true;
+    wnt.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
+    wnt.m_switchEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_switchEffect;
+    wnt.m_hitNoise = LoadValheimAssets.woodFloorPieceWearNTear.m_hitNoise;
+
+    ShipHulls.SetMaterialValues(hullMaterial, wnt, 9);
+    PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
+
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    prefab.layer = 0;
+    prefab.gameObject.layer = 0;
+    var piece = PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab);
+
+    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    {
+      PieceTable = "Hammer",
+      Category = PrefabNames.ValheimRaftMenuName,
+      Enabled = true,
+      Requirements = [GetRequirements(hullMaterial, 9)]
+    }));
+  }
+
+  private static GameObject GetShipHullAssetByMaterial(string hullMaterial)
+  {
+    return hullMaterial.Equals(ShipHulls.HullMaterial.Iron)
+      ? LoadValheimVehicleAssets.ShipHullIronAsset
+      : LoadValheimVehicleAssets.ShipHullWoodAsset;
+  }
+
+  private static GameObject GetShipHullRibAssetByMaterial(string hullMaterial)
+  {
+    return hullMaterial.Equals(ShipHulls.HullMaterial.Iron)
+      ? LoadValheimVehicleAssets.ShipHullRibIronAsset
+      : LoadValheimVehicleAssets.ShipHullRibWoodAsset;
+  }
+
+  private static void RegisterHull(
+    string prefabName,
+    string hullMaterial,
+    PrefabManager prefabManager,
+    PieceManager pieceManager)
+  {
+    var prefab =
+      prefabManager.CreateClonedPrefab(
+        prefabName, GetShipHullAssetByMaterial(hullMaterial));
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     prefab.layer = 0;
@@ -39,18 +127,12 @@ public class ShipHullPrefab : IRegisterPrefab
     // shifting for collider testing
     prefab.transform.localPosition = new Vector3(0, 0, -4);
 
-
-    prefab.transform.localScale = pieceScale;
     prefab.gameObject.transform.position = Vector3.zero;
     prefab.gameObject.transform.localPosition = Vector3.zero;
     piece.m_waterPiece = false;
     piece.m_noClipping = false;
 
     var wnt = PrefabRegistryHelpers.SetWearNTear(prefab);
-    PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.HardWood);
-    // wnt.m_oldMaterials = LoadValheimAssets.woodFloorPieceWearNTear.m_oldMaterials;
-    // wnt.m_oldMaterials = null;
-    // wnt.m_onDamaged = null;
     wnt.m_supports = true;
     wnt.m_support = 2000f;
     wnt.m_noSupportWear = true;
@@ -58,14 +140,9 @@ public class ShipHullPrefab : IRegisterPrefab
     wnt.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
     wnt.m_switchEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_switchEffect;
     wnt.m_hitNoise = LoadValheimAssets.woodFloorPieceWearNTear.m_hitNoise;
-    // todo set back to 1600f after debugging
-    wnt.m_health = 600f;
-    // wnt.m_health = 1600f;
-    wnt.m_new = prefab.transform.Find("new").gameObject;
-    var wornHull = prefab.transform.Find("worn").gameObject;
-    wnt.m_worn = wornHull;
-    wnt.m_broken = wornHull;
 
+    ShipHulls.SetMaterialValues(hullMaterial, wnt, 1);
+    PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
     // this will be used to hide water on the boat
     prefab.AddComponent<ShipHullComponent>();
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
@@ -73,19 +150,9 @@ public class ShipHullPrefab : IRegisterPrefab
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
-      Name = piece.m_name,
-      Description = piece.m_description,
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements =
-      [
-        new RequirementConfig
-        {
-          Amount = 20,
-          Item = "Wood",
-          Recover = true
-        }
-      ]
+      Requirements = [GetRequirements(hullMaterial, 1)]
     }));
   }
 }

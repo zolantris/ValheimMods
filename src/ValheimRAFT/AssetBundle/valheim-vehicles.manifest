@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3683630339
+CRC: 2027681596
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 6c1f8afccd0f1a3af19d1de542925831
+    Hash: cae79e1714c245b0af7965424dc814a8
   TypeTreeHash:
     serializedVersion: 2
     Hash: 098a234ed9dca3b5bf95ad7b8b64eaa9
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 6c1f8afccd0f1a3af19d1de542925831
+    Hash: cae79e1714c245b0af7965424dc814a8
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -50,9 +50,11 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_rudder_advanced.prefab
 - Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
 - Assets/Shader/Custom_Piece.shader
-- Assets/ValheimVehicles/Prefabs/vehicle_ship_hull 1.prefab
-- Assets/ValheimVehicles/Prefabs/vehicle_ship_hull.prefab
+- Assets/ValheimVehicles/Prefabs/hull_rib_iron.prefab
+- Assets/ValheimVehicles/Prefabs/hull_rib_full_iron.prefab
+- Assets/ValheimVehicles/Prefabs/hull_center_iron.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_switch.prefab
-- Assets/ValheimVehicles/Prefabs/vehicle_ship_hull_advanced_center.prefab
+- Assets/ValheimVehicles/Prefabs/hull_rib_wood.prefab
+- Assets/ValheimVehicles/Prefabs/hull_center_wood.prefab
 Dependencies:
 - C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/AssetBundle/valheim-vehicles-shared

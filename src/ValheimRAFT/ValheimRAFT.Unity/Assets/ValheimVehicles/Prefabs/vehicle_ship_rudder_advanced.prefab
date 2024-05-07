@@ -41,7 +41,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1149849451404623230}
   m_Layer: 16
-  m_Name: rudder_advanced
+  m_Name: rudder_rotation
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -190,6 +190,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5077854269718908073}
   - component: {fileID: 5072356786213414956}
+  - component: {fileID: 6014958587188741086}
   m_Layer: 0
   m_Name: vehicle_ship_rudder_advanced
   m_TagString: Untagged
@@ -234,6 +235,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.109202445, y: 2.470037, z: 0.91187894}
   m_Center: {x: 0.041551083, y: -0.9028199, z: -0.5604108}
+--- !u!205 &6014958587188741086
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5706030049292349690}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 0, z: 0}
+  m_Size: 1
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.037536476
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 6684262094753371256}
+  m_Enabled: 1
 --- !u!1 &7895494166254424414
 GameObject:
   m_ObjectHideFlags: 0

@@ -115,6 +115,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3220803765360514847}
+  - component: {fileID: 4109548173543759512}
   m_Layer: 0
   m_Name: vehicle_switch
   m_TagString: Untagged
@@ -139,6 +140,26 @@ Transform:
   - {fileID: 5551673287804661321}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!205 &4109548173543759512
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4281724173091590173}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: -0.0000109523535, y: 0.06755094, z: 0.00024974346}
+  m_Size: 0.70279264
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.07625049
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 5332719989276200640}
+    - renderer: {fileID: 7331847094745076938}
+  m_Enabled: 1
 --- !u!1 &4976785961199370416
 GameObject:
   m_ObjectHideFlags: 0
@@ -266,5 +287,10 @@ PrefabInstance:
 --- !u!4 &5551673287804661321 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9034850503430276771, guid: 1313676adab74204095f40696f59e473, type: 3}
+  m_PrefabInstance: {fileID: 3488528134455142634}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &7331847094745076938 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 6185212282233240608, guid: 1313676adab74204095f40696f59e473, type: 3}
   m_PrefabInstance: {fileID: 3488528134455142634}
   m_PrefabAsset: {fileID: 0}

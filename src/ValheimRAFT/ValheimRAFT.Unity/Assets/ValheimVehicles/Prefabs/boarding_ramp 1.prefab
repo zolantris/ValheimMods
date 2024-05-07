@@ -94,7 +94,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6710916839578019379}
   m_Layer: 2
-  m_Name: _snappoint (3)
+  m_Name: $hud_snappoint_corner 4
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -125,7 +125,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4377594597881986800}
   m_Layer: 2
-  m_Name: _snappoint
+  m_Name: $hud_snappoint_corner 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -469,6 +469,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4096486320254286859}
+  - component: {fileID: -1894183777876032025}
   m_Layer: 2
   m_Name: boarding_ramp 1
   m_TagString: Untagged
@@ -500,6 +501,33 @@ Transform:
   - {fileID: 6710916839578019379}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!205 &-1894183777876032025
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4096486320254287093}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 0, z: 0}
+  m_Size: 1
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.01777619
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 4096486321202538049}
+    - renderer: {fileID: 2654348641794979312}
+    - renderer: {fileID: 4096486320669874722}
+    - renderer: {fileID: 4096486319805161708}
+    - renderer: {fileID: 1073790642992208175}
+    - renderer: {fileID: 4096486321602791420}
+    - renderer: {fileID: 4096486319664678888}
+    - renderer: {fileID: 4096486321008362616}
+    - renderer: {fileID: 4096486320981470663}
+  m_Enabled: 1
 --- !u!1 &4096486320303368994
 GameObject:
   m_ObjectHideFlags: 0
@@ -1243,7 +1271,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3768575189884927638}
   m_Layer: 2
-  m_Name: _snappoint (2)
+  m_Name: $hud_snappoint_corner 3
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1338,7 +1366,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6946349578437909985}
   m_Layer: 2
-  m_Name: _snappoint (1)
+  m_Name: $hud_snappoint_corner 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

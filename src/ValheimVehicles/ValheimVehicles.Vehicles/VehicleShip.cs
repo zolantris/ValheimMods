@@ -45,6 +45,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   private GameObject _piecesContainer;
   private GameObject _ghostContainer;
+  private ImpactEffect _impactEffect;
+
 
   public static bool CustomShipPhysicsEnabled = false;
 
@@ -231,6 +233,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     BlockingCollider = blockingColliderObj.GetComponent<BoxCollider>();
     FloatCollider = floatColliderObj.GetComponent<BoxCollider>();
     OnboardCollider = onboardColliderObj.GetComponent<BoxCollider>();
+
+    _impactEffect = GetComponent<ImpactEffect>();
 
     if (!(bool)m_body)
     {
@@ -435,7 +439,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       return;
     }
 
-    var prefab = PrefabManager.Instance.GetPrefab(PrefabNames.ShipHullPrefabName);
+    var prefab = PrefabManager.Instance.GetPrefab(PrefabNames.ShipHullCenterWoodPrefabName);
     if (!prefab) return;
 
     var hull = Instantiate(prefab, transform.position, transform.rotation);
@@ -657,59 +661,253 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   {
   }
 
-  public void TestFixedUpdate()
+  public void ShipFlyingUpdate()
   {
-    if (!(bool)_controller || !(bool)m_nview || m_nview.m_zdo == null) return;
+    UpdateVehicleStats(true);
 
-    /*
-     * creative mode should not allows movement and applying force on a object will cause errors when the object is kinematic
-     */
-    if (_controller.isCreative)
-    {
-      return;
-    }
-
-    // This could be the spot that causes the raft to fly at spawn
-    _controller.m_targetHeight =
-      m_nview.m_zdo.GetFloat("MBTargetHeight", _controller.m_targetHeight);
-    _controller.VehicleFlags =
-      (WaterVehicleFlags)m_nview.m_zdo.GetInt("MBFlags",
-        (int)_controller.VehicleFlags);
-
-    // This could be the spot that causes the raft to fly at spawn
-    m_zsyncTransform.m_useGravity =
-      _controller.m_targetHeight == 0f;
-    m_body.useGravity = _controller.m_targetHeight == 0f;
-
-    var flag = HaveControllingPlayer();
-
-    UpdateControls(Time.fixedDeltaTime);
-    UpdateSail(Time.fixedDeltaTime);
-    SyncVehicleMastsAndSails();
-    UpdateRudder(Time.fixedDeltaTime, flag);
     if (m_players.Count == 0 ||
-        _controller.VehicleFlags.HasFlag(WaterVehicleFlags
-          .IsAnchored))
+        _controller.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
     {
-      m_speed = Speed.Stop;
-      m_rudderValue = 0f;
-      if (!_controller.VehicleFlags.HasFlag(
-            WaterVehicleFlags.IsAnchored))
-      {
-        _controller.VehicleFlags |=
-          WaterVehicleFlags.IsAnchored;
-        m_nview.m_zdo.Set("MBFlags", (int)_controller.VehicleFlags);
-      }
+      var anchoredVelocity = CalculateAnchorStopVelocity(m_body.velocity);
+      m_body.velocity = anchoredVelocity;
+      m_body.angularVelocity = Vector3.zero;
     }
 
-    if ((bool)m_nview && !m_nview.IsOwner()) return;
+    // prevents angular velocity for flying vehicles. They are uncontrollable with current setup without this
+    m_body.angularVelocity = Vector3.zero;
 
-    if (m_body.isKinematic) return;
-    // don't damage the ship lol
-    // UpdateUpsideDmg(Time.fixedDeltaTime);
 
-    if (!flag && (m_speed == Speed.Slow || m_speed == Speed.Back))
-      m_speed = Speed.Stop;
+    var front = ShipDirection.position +
+                ShipDirection.forward * m_floatcollider.extents.z;
+    var back = ShipDirection.position -
+               ShipDirection.forward * m_floatcollider.extents.z;
+    var left = ShipDirection.position -
+               ShipDirection.right * m_floatcollider.extents.x;
+    var right = ShipDirection.position +
+                ShipDirection.right * m_floatcollider.extents.x;
+
+    var centerpos2 = ShipDirection.position;
+    var frontForce = m_body.GetPointVelocity(front);
+    var backForce = m_body.GetPointVelocity(back);
+    var leftForce = m_body.GetPointVelocity(left);
+    var rightForce = m_body.GetPointVelocity(right);
+
+    var frontUpwardsForce =
+      GetUpwardsForce(_controller.m_targetHeight,
+        front.y + frontForce.y,
+        _controller.m_balanceForce);
+    var backUpwardsForce =
+      GetUpwardsForce(_controller.m_targetHeight,
+        back.y + backForce.y,
+        _controller.m_balanceForce);
+    var leftUpwardsForce =
+      GetUpwardsForce(_controller.m_targetHeight,
+        left.y + leftForce.y,
+        _controller.m_balanceForce);
+    var rightUpwardsForce =
+      GetUpwardsForce(_controller.m_targetHeight,
+        right.y + rightForce.y,
+        _controller.m_balanceForce);
+    var centerUpwardsForce = GetUpwardsForce(_controller.m_targetHeight,
+      centerpos2.y + m_body.velocity.y, _controller.m_liftForce);
+
+
+    AddForceAtPosition(Vector3.up * frontUpwardsForce, front,
+      ForceMode.VelocityChange);
+    AddForceAtPosition(Vector3.up * backUpwardsForce, back,
+      ForceMode.VelocityChange);
+    AddForceAtPosition(Vector3.up * leftUpwardsForce, left,
+      ForceMode.VelocityChange);
+    AddForceAtPosition(Vector3.up * rightUpwardsForce, right,
+      ForceMode.VelocityChange);
+    AddForceAtPosition(Vector3.up * centerUpwardsForce, centerpos2,
+      ForceMode.VelocityChange);
+
+    var dir = Vector3.Dot(m_body.velocity, ShipDirection.forward);
+    ApplySailForce(this, dir);
+  }
+
+  /// <summary>
+  /// Calculates damage from impact using vehicle weight
+  /// </summary>
+  /// <returns></returns>
+  private float GetDamageFromImpact()
+  {
+    if (!(bool)m_body) return 0f;
+
+    const float damagePerPointOfMass = 0.01f;
+    const float baseDamage = 25f;
+    const float maxDamage = 500f;
+
+    var rigidBodyMass = m_body?.mass ?? 1000f;
+    var massDamage = rigidBodyMass * damagePerPointOfMass;
+    var damage = Math.Min(maxDamage, baseDamage + massDamage);
+
+    return damage;
+  }
+
+  private void UpdateVehicleStats(bool flight)
+  {
+    _controller.SyncRigidbodyStats(flight);
+
+    m_angularDamping = (flight ? 5f : 0.8f);
+    m_backwardForce = 1f;
+    m_damping = (flight ? 5f : 0.35f);
+    m_dampingSideway = (flight ? 3f : 0.3f);
+    m_force = 3f;
+    m_forceDistance = 5f;
+    m_sailForceFactor = (flight ? 0.2f : 0.05f);
+    m_stearForce = (flight ? 0.2f : 1f);
+    m_stearVelForceFactor = 1.3f;
+    m_waterImpactDamage = 0f;
+    /*
+     * this may be unstable and require a getter each time...highly doubt it though.
+     */
+    // ImpactEffect impact = ShipInstance.GetComponent<ImpactEffect>();
+    if ((bool)_impactEffect)
+    {
+      _impactEffect.m_interval = 0.1f;
+      _impactEffect.m_minVelocity = 0.1f;
+      _impactEffect.m_damages.m_damage = GetDamageFromImpact();
+    }
+    else
+    {
+      Logger.LogDebug("No Ship ImpactEffect detected, this needs to be added to the custom ship");
+    }
+  }
+
+  public void ShipFloatationUpdate(ShipFloatation shipFloatation)
+  {
+    UpdateVehicleStats(false);
+
+    var shipLeft = shipFloatation.shipLeft;
+    var shipForward = shipFloatation.shipForward;
+    var shipBack = shipFloatation.shipBack;
+    var shipRight = shipFloatation.shipRight;
+    var waterLevelLeft = shipFloatation.waterLevelLeft;
+    var waterLevelRight = shipFloatation.waterLevelRight;
+    var waterLevelForward = shipFloatation.waterLevelForward;
+    var waterLevelBack = shipFloatation.waterLevelBack;
+    var currentDepth = shipFloatation.currentDepth;
+    var worldCenterOfMass = m_body.worldCenterOfMass;
+
+    m_body.WakeUp();
+    UpdateWaterForce(currentDepth, Time.fixedDeltaTime);
+
+    var leftForce = new Vector3(shipLeft.x, waterLevelLeft, shipLeft.z);
+    var rightForce = new Vector3(shipRight.x, waterLevelRight, shipRight.z);
+    var forwardForce = new Vector3(shipForward.x, waterLevelForward, shipForward.z);
+    var backwardForce = new Vector3(shipBack.x, waterLevelBack, shipBack.z);
+
+    var fixedDeltaTime = Time.fixedDeltaTime;
+    var deltaForceMultiplier = fixedDeltaTime * 50f;
+
+    var currentDepthForceMultiplier = Mathf.Clamp01(Mathf.Abs(currentDepth) / m_forceDistance);
+    var upwardForceVector = Vector3.up * m_force * currentDepthForceMultiplier;
+
+    AddForceAtPosition(upwardForceVector * deltaForceMultiplier, worldCenterOfMass,
+      ForceMode.VelocityChange);
+
+    var num5 = Vector3.Dot(m_body.velocity, ShipDirection.forward);
+    var num6 = Vector3.Dot(m_body.velocity, ShipDirection.right);
+    var velocity = m_body.velocity;
+    var value = velocity.y * velocity.y * Mathf.Sign(velocity.y) * m_damping *
+                currentDepthForceMultiplier;
+    var value2 = num5 * num5 * Mathf.Sign(num5) * m_dampingForward * currentDepthForceMultiplier;
+    var value3 = num6 * num6 * Mathf.Sign(num6) * m_dampingSideway * currentDepthForceMultiplier;
+
+    velocity.y -= Mathf.Clamp(value, -1f, 1f);
+    velocity -= ShipDirection.forward * Mathf.Clamp(value2, -1f, 1f);
+    velocity -= ShipDirection.right * Mathf.Clamp(value3, -1f, 1f);
+
+    if (velocity.magnitude > m_body.velocity.magnitude)
+      velocity = velocity.normalized * m_body.velocity.magnitude;
+
+    m_body.velocity = velocity;
+    m_body.angularVelocity -=
+      m_body.angularVelocity * m_angularDamping * currentDepthForceMultiplier;
+
+    if (m_players.Count == 0 ||
+        _controller.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
+    {
+      var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
+      m_body.velocity = anchoredVelocity;
+      m_body.angularVelocity = Vector3.zero;
+    }
+
+    var num7 = 0.15f;
+    var num8 = 0.5f;
+    var f = Mathf.Clamp((forwardForce.y - shipForward.y) * num7, 0f - num8, num8);
+    var f2 = Mathf.Clamp((backwardForce.y - shipBack.y) * num7, 0f - num8, num8);
+    var f3 = Mathf.Clamp((leftForce.y - shipLeft.y) * num7, 0f - num8, num8);
+    var f4 = Mathf.Clamp((rightForce.y - shipRight.y) * num7, 0f - num8, num8);
+    f = Mathf.Sign(f) * Mathf.Abs(Mathf.Pow(f, 2f));
+    f2 = Mathf.Sign(f2) * Mathf.Abs(Mathf.Pow(f2, 2f));
+    f3 = Mathf.Sign(f3) * Mathf.Abs(Mathf.Pow(f3, 2f));
+    f4 = Mathf.Sign(f4) * Mathf.Abs(Mathf.Pow(f4, 2f));
+
+    AddForceAtPosition(Vector3.up * f * deltaForceMultiplier, shipForward,
+      ForceMode.VelocityChange);
+    AddForceAtPosition(Vector3.up * f2 * deltaForceMultiplier, shipBack,
+      ForceMode.VelocityChange);
+    AddForceAtPosition(Vector3.up * f3 * deltaForceMultiplier, shipLeft,
+      ForceMode.VelocityChange);
+    AddForceAtPosition(Vector3.up * f4 * deltaForceMultiplier, shipRight,
+      ForceMode.VelocityChange);
+
+    ApplyEdgeForce(Time.fixedDeltaTime);
+
+    // skips sail force application since the ship is anchored
+    // todo remove this if unused (since this is called earlier in the fixedUpdate)
+    if (UpdateAnchorVelocity(velocity)) return;
+
+    ApplySailForce(this, num5);
+
+    // todo remove if unused
+    // this logic is likely never hit
+    if (_controller.m_targetHeight > 0f)
+    {
+      var centerpos = ShipDirection.position;
+      var centerforce = GetUpwardsForce(_controller.m_targetHeight,
+        centerpos.y + m_body.velocity.y, _controller.m_liftForce);
+      AddForceAtPosition(Vector3.up * centerforce, centerpos,
+        ForceMode.VelocityChange);
+    }
+  }
+
+  /// <summary>
+  /// Used to stop the ship and prevent further velocity calcs if anchored.
+  /// </summary>
+  /// <param name="velocity"></param>
+  /// <returns></returns>
+  public bool UpdateAnchorVelocity(Vector3 velocity)
+  {
+    if (m_players.Count == 0 ||
+        _controller.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
+    {
+      var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
+      m_body.velocity = anchoredVelocity;
+      m_body.angularVelocity = Vector3.zero;
+    }
+  }
+
+  public struct ShipFloatation
+  {
+    public Vector3 shipBack;
+    public Vector3 shipForward;
+    public Vector3 shipLeft;
+    public Vector3 shipRight;
+    public bool isAboveBuoyantLevel;
+    public float currentDepth;
+    public float waterLevelLeft;
+    public float waterLevelRight;
+    public float waterLevelForward;
+    public float waterLevelBack;
+    public float averageWaterHeight;
+  }
+
+  public ShipFloatation GetShipFloatationObj()
+  {
     var worldCenterOfMass = m_body.worldCenterOfMass;
     var shipForward = ShipDirection.position +
                       ShipDirection.forward * GetFloatSizeFromDirection(Vector3.forward);
@@ -731,155 +929,89 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     var currentDepth = worldCenterOfMass.y - averageWaterHeight - m_waterLevelOffset;
     var isAboveBuoyantLevel = currentDepth > m_disableLevel;
 
-    if (!isAboveBuoyantLevel)
+    return new ShipFloatation()
     {
-      _controller.UpdateStats(false);
-      m_body.WakeUp();
-      UpdateWaterForce(currentDepth, Time.fixedDeltaTime);
+      averageWaterHeight = averageWaterHeight,
+      currentDepth = currentDepth,
+      isAboveBuoyantLevel = isAboveBuoyantLevel,
+      shipLeft = shipLeft,
+      shipForward = shipForward,
+      shipBack = shipBack,
+      shipRight = shipRight,
+      waterLevelLeft = waterLevelLeft,
+      waterLevelRight = waterLevelRight,
+      waterLevelForward = waterLevelForward,
+      waterLevelBack = waterLevelBack,
+    };
+  }
 
-      var leftForce = new Vector3(shipLeft.x, waterLevelLeft, shipLeft.z);
-      var rightForce = new Vector3(shipRight.x, waterLevelRight, shipRight.z);
-      var forwardForce = new Vector3(shipForward.x, waterLevelForward, shipForward.z);
-      var backwardForce = new Vector3(shipBack.x, waterLevelBack, shipBack.z);
+  public void UpdateShipSpeed(bool hasControllingPlayer)
+  {
+    if (!hasControllingPlayer && (m_speed == Speed.Slow || m_speed == Speed.Back))
+      m_speed = Speed.Stop;
 
-      var fixedDeltaTime = Time.fixedDeltaTime;
-      var deltaForceMultiplier = fixedDeltaTime * 50f;
+    if (m_players.Count != 0 &&
+        !_controller.VehicleFlags.HasFlag(WaterVehicleFlags
+          .IsAnchored)) return;
 
-      var currentDepthForceMultiplier = Mathf.Clamp01(Mathf.Abs(currentDepth) / m_forceDistance);
-      var upwardForceVector = Vector3.up * m_force * currentDepthForceMultiplier;
+    m_speed = Speed.Stop;
+    m_rudderValue = 0f;
 
-      AddForceAtPosition(upwardForceVector * deltaForceMultiplier, worldCenterOfMass,
-        ForceMode.VelocityChange);
+    if (_controller.VehicleFlags.HasFlag(
+          WaterVehicleFlags.IsAnchored)) return;
 
-      var num5 = Vector3.Dot(m_body.velocity, ShipDirection.forward);
-      var num6 = Vector3.Dot(m_body.velocity, ShipDirection.right);
-      var velocity = m_body.velocity;
-      var value = velocity.y * velocity.y * Mathf.Sign(velocity.y) * m_damping *
-                  currentDepthForceMultiplier;
-      var value2 = num5 * num5 * Mathf.Sign(num5) * m_dampingForward * currentDepthForceMultiplier;
-      var value3 = num6 * num6 * Mathf.Sign(num6) * m_dampingSideway * currentDepthForceMultiplier;
+    _controller.VehicleFlags |=
+      WaterVehicleFlags.IsAnchored;
+    m_nview.m_zdo.Set("MBFlags", (int)_controller.VehicleFlags);
+  }
 
-      velocity.y -= Mathf.Clamp(value, -1f, 1f);
-      velocity -= ShipDirection.forward * Mathf.Clamp(value2, -1f, 1f);
-      velocity -= ShipDirection.right * Mathf.Clamp(value3, -1f, 1f);
+  public void TestFixedUpdate()
+  {
+    if (!(bool)_controller || !(bool)m_nview || m_nview.m_zdo == null ||
+        !(bool)ShipDirection) return;
 
-      if (velocity.magnitude > m_body.velocity.magnitude)
-        velocity = velocity.normalized * m_body.velocity.magnitude;
-
-      m_body.velocity = velocity;
-      m_body.angularVelocity -=
-        m_body.angularVelocity * m_angularDamping * currentDepthForceMultiplier;
-
-      if (m_players.Count == 0 ||
-          _controller.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
-      {
-        var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
-        m_body.velocity = anchoredVelocity;
-        m_body.angularVelocity = Vector3.zero;
-      }
-
-      var num7 = 0.15f;
-      var num8 = 0.5f;
-      var f = Mathf.Clamp((forwardForce.y - shipForward.y) * num7, 0f - num8, num8);
-      var f2 = Mathf.Clamp((backwardForce.y - shipBack.y) * num7, 0f - num8, num8);
-      var f3 = Mathf.Clamp((leftForce.y - shipLeft.y) * num7, 0f - num8, num8);
-      var f4 = Mathf.Clamp((rightForce.y - shipRight.y) * num7, 0f - num8, num8);
-      f = Mathf.Sign(f) * Mathf.Abs(Mathf.Pow(f, 2f));
-      f2 = Mathf.Sign(f2) * Mathf.Abs(Mathf.Pow(f2, 2f));
-      f3 = Mathf.Sign(f3) * Mathf.Abs(Mathf.Pow(f3, 2f));
-      f4 = Mathf.Sign(f4) * Mathf.Abs(Mathf.Pow(f4, 2f));
-
-      AddForceAtPosition(Vector3.up * f * deltaForceMultiplier, shipForward,
-        ForceMode.VelocityChange);
-      AddForceAtPosition(Vector3.up * f2 * deltaForceMultiplier, shipBack,
-        ForceMode.VelocityChange);
-      AddForceAtPosition(Vector3.up * f3 * deltaForceMultiplier, shipLeft,
-        ForceMode.VelocityChange);
-      AddForceAtPosition(Vector3.up * f4 * deltaForceMultiplier, shipRight,
-        ForceMode.VelocityChange);
-
-      ApplySailForce(this, num5);
-      ApplyEdgeForce(Time.fixedDeltaTime);
-      if (_controller.m_targetHeight > 0f)
-      {
-        var centerpos = ShipDirection.position;
-        var centerforce = GetUpwardsForce(_controller.m_targetHeight,
-          centerpos.y + m_body.velocity.y, _controller.m_liftForce);
-        AddForceAtPosition(Vector3.up * centerforce, centerpos,
-          ForceMode.VelocityChange);
-      }
+    if (!m_nview.IsOwner()) return;
+    /*
+     * creative mode should not allows movement and applying force on a object will cause errors when the object is kinematic
+     */
+    if (_controller.isCreative || m_body.isKinematic)
+    {
+      return;
     }
-    else if (_controller.m_targetHeight > 0f)
+
+    // This could be the spot that causes the raft to fly at spawn
+    _controller.m_targetHeight =
+      m_nview.m_zdo.GetFloat("MBTargetHeight", _controller.m_targetHeight);
+    _controller.VehicleFlags =
+      (WaterVehicleFlags)m_nview.m_zdo.GetInt("MBFlags",
+        (int)_controller.VehicleFlags);
+
+    // This could be the spot that causes the raft to fly at spawn
+    m_zsyncTransform.m_useGravity =
+      _controller.m_targetHeight == 0f;
+    m_body.useGravity = _controller.m_targetHeight == 0f;
+
+    var hasControllingPlayer = HaveControllingPlayer();
+
+    UpdateShipSpeed(hasControllingPlayer);
+    UpdateControls(Time.fixedDeltaTime);
+    UpdateSail(Time.fixedDeltaTime);
+    SyncVehicleMastsAndSails();
+    UpdateRudder(Time.fixedDeltaTime, hasControllingPlayer);
+
+    if (UpdateAnchorVelocity(Vector3.zero)) return;
+
+    var shipFloatation = GetShipFloatationObj();
+
+    if (!shipFloatation.isAboveBuoyantLevel)
     {
-      if (m_players.Count == 0 ||
-          _controller.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
-      {
-        var anchoredVelocity = CalculateAnchorStopVelocity(m_body.velocity);
-        m_body.velocity = anchoredVelocity;
-      }
+      ShipFloatationUpdate(shipFloatation);
+      return;
+    }
 
-      _controller.UpdateStats(true);
-
-      var side1 = ShipDirection.position +
-                  ShipDirection.forward * m_floatcollider.extents.z;
-      var side2 = ShipDirection.position -
-                  ShipDirection.forward * m_floatcollider.extents.z;
-      var side3 = ShipDirection.position -
-                  ShipDirection.right * m_floatcollider.extents.x;
-      var side4 = ShipDirection.position +
-                  ShipDirection.right * m_floatcollider.extents.x;
-      var centerpos2 = ShipDirection.position;
-      var corner1curforce = m_body.GetPointVelocity(side1);
-      var corner2curforce = m_body.GetPointVelocity(side2);
-      var corner3curforce = m_body.GetPointVelocity(side3);
-      var corner4curforce = m_body.GetPointVelocity(side4);
-      var side1force =
-        GetUpwardsForce(_controller.m_targetHeight,
-          side1.y + corner1curforce.y,
-          _controller.m_balanceForce);
-      var side2force =
-        GetUpwardsForce(_controller.m_targetHeight,
-          side2.y + corner2curforce.y,
-          _controller.m_balanceForce);
-      var side3force =
-        GetUpwardsForce(_controller.m_targetHeight,
-          side3.y + corner3curforce.y,
-          _controller.m_balanceForce);
-      var side4force =
-        GetUpwardsForce(_controller.m_targetHeight,
-          side4.y + corner4curforce.y,
-          _controller.m_balanceForce);
-      var centerforce2 = GetUpwardsForce(_controller.m_targetHeight,
-        centerpos2.y + m_body.velocity.y, _controller.m_liftForce);
-
-      /**
-       * applies only center force to keep boat stable and not flip
-       */
-      // AddForceAtPosition(Vector3.up * centerforce2, side1,
-      //   ForceMode.VelocityChange);
-      // AddForceAtPosition(Vector3.up * centerforce2, side2,
-      //   ForceMode.VelocityChange);
-      // AddForceAtPosition(Vector3.up * centerforce2, side3,
-      //   ForceMode.VelocityChange);
-      // AddForceAtPosition(Vector3.up * centerforce2, side4,
-      //   ForceMode.VelocityChange);
-      // AddForceAtPosition(Vector3.up * centerforce2, centerpos2,
-      //   ForceMode.VelocityChange);
-
-
-      AddForceAtPosition(Vector3.up * side1force, side1,
-        ForceMode.VelocityChange);
-      AddForceAtPosition(Vector3.up * side2force, side2,
-        ForceMode.VelocityChange);
-      AddForceAtPosition(Vector3.up * side3force, side3,
-        ForceMode.VelocityChange);
-      AddForceAtPosition(Vector3.up * side4force, side4,
-        ForceMode.VelocityChange);
-      AddForceAtPosition(Vector3.up * centerforce2, centerpos2,
-        ForceMode.VelocityChange);
-
-      var dir = Vector3.Dot(m_body.velocity, ShipDirection.forward);
-      ApplySailForce(this, dir);
+    if (_controller.m_targetHeight > 0f)
+    {
+      ShipFlyingUpdate();
     }
   }
 

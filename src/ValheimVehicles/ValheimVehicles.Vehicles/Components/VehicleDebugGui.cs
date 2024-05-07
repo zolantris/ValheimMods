@@ -45,19 +45,14 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       currentInstance.StartRenderAllCollidersLoop();
     }
 
-    // if (GUILayout.Button("Render All BoxColliders"))
-    // {
-    //   var currentInstance = VehicleDebugHelpers.GetVehicleController();
-    //   if (currentInstance != null)
-    //     VehicleDebugHelpers.GetOnboardVehicleDebugHelper()
-    //       ?.RenderAllVehicleBoxColliders(currentInstance);
-    // }
-    //
-
-    ShipMovementOffsetText = GUILayout.TextField(ShipMovementOffsetText);
-    if (GUILayout.Button("MoveShip"))
+    if (GUILayout.Button("activatePendingPieces"))
     {
-      VehicleDebugHelpers.GetOnboardVehicleDebugHelper()?.MoveShip(GetShipMovementOffset());
+      VehicleDebugHelpers.GetVehicleController()?.ActivatePendingPiecesCoroutine();
+    }
+
+    if (GUILayout.Button("rebuild bounds"))
+    {
+      VehicleDebugHelpers.GetVehicleController()?.RebuildBounds();
     }
 
     if (GUILayout.Button("Flip Ship"))

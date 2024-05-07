@@ -56,8 +56,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
   public float m_liftForce = 20f;
 
-  private ImpactEffect _impactEffect;
-
   /*
    * Must be called from
    */
@@ -80,7 +78,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     m_nview = vehicleShip.m_nview;
     m_zsyncTransform = vehicleShip.m_zsyncTransform;
     instance = this;
-    _impactEffect = vehicleShip.GetComponent<ImpactEffect>();
 
     // prevent mass from being set lower than 20f;
     m_rigidbody.mass = Math.Max(TotalMass, 2000f);
@@ -216,44 +213,23 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     m_nview.m_zdo.Set("MBTargetHeight", m_targetHeight);
   }
 
-
-  public void UpdateStats(bool flight)
+  public void SyncRigidbodyStats(bool flight)
   {
-    if (!m_rigidbody || m_statsOverride)
+    var drag = (flight ? 1f : 0f);
+    var angularDrag = (flight ? 1f : 0f);
+
+    if (flight && ValheimRaftPlugin.Instance.FlightNoAngularVelocity.Value)
     {
-      return;
+      angularDrag = 10f;
     }
 
-    // m_rigidbody.mass = TotalMass;
-    m_rigidbody.angularDrag = (flight ? 1f : 0f);
-    m_rigidbody.drag = (flight ? 1f : 0f);
-
-    if (!(bool)_vehicleInstance) return;
-
-    _vehicleInstance.m_angularDamping = (flight ? 5f : 0.8f);
-    _vehicleInstance.m_backwardForce = 1f;
-    _vehicleInstance.m_damping = (flight ? 5f : 0.35f);
-    _vehicleInstance.m_dampingSideway = (flight ? 3f : 0.3f);
-    _vehicleInstance.m_force = 3f;
-    _vehicleInstance.m_forceDistance = 5f;
-    _vehicleInstance.m_sailForceFactor = (flight ? 0.2f : 0.05f);
-    _vehicleInstance.m_stearForce = (flight ? 0.2f : 1f);
-    _vehicleInstance.m_stearVelForceFactor = 1.3f;
-    _vehicleInstance.m_waterImpactDamage = 0f;
-    /*
-     * this may be unstable and require a getter each time...highly doubt it though.
-     */
-    // ImpactEffect impact = ShipInstance.GetComponent<ImpactEffect>();
-    if ((bool)_impactEffect)
+    if (flight && ValheimRaftPlugin.Instance.FlightHasDrag.Value)
     {
-      _impactEffect.m_interval = 0.1f;
-      _impactEffect.m_minVelocity = 0.1f;
-      _impactEffect.m_damages.m_damage = 100f;
+      drag = 10f;
     }
-    else
-    {
-      Logger.LogDebug("No Ship ImpactEffect detected, this needs to be added to the custom ship");
-    }
+
+
+    base.SyncRigidbodyStats(drag, angularDrag);
   }
 
 /*

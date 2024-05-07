@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using HarmonyLib;
+using Jotunn.Extensions;
 using UnityEngine;
 using Logger = Jotunn.Logger;
 
@@ -19,6 +20,35 @@ public abstract class PrefabRegistryHelpers
   /// todo auto generate this from the translations json
   public static void Init()
   {
+    // hull rib variants
+    PieceDataDictionary.Add(PrefabNames.ShipHullRibIronPrefabName, new PieceData()
+    {
+      Name = "valheim_vehicles_hull_rib_iron",
+      Description = "valheim_vehicles_hull_rib_iron_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHull)
+    });
+    PieceDataDictionary.Add(PrefabNames.ShipHullRibWoodPrefabName, new PieceData()
+    {
+      Name = "valheim_vehicles_hull_rib_wood",
+      Description = "valheim_vehicles_hull_rib_wood_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHull)
+    });
+
+    // hull center variants
+    PieceDataDictionary.Add(PrefabNames.ShipHullCenterWoodPrefabName, new PieceData()
+    {
+      Name = "valheim_vehicles_ship_hull_center_wood",
+      Description = "valheim_vehicles_ship_hull_center_wood_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHull)
+    });
+    PieceDataDictionary.Add(PrefabNames.ShipHullCenterIronPrefabName, new PieceData()
+    {
+      Name = "valheim_vehicles_ship_hull_center_iron",
+      Description = "valheim_vehicles_ship_hull_center_iron_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHull)
+    });
+
+
     PieceDataDictionary.Add(PrefabNames.ShipSteeringWheel, new PieceData()
     {
       Name = "valheim_vehicles_wheel",
@@ -31,13 +61,6 @@ public abstract class PrefabRegistryHelpers
       Name = "valheim_vehicles_ship_keel",
       Description = "valheim_vehicles_ship_keel_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipKeel)
-    });
-
-    PieceDataDictionary.Add(PrefabNames.ShipHullPrefabName, new PieceData()
-    {
-      Name = "valheim_vehicles_ship_hull",
-      Description = "valheim_vehicles_ship_hull_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHull)
     });
 
     PieceDataDictionary.Add(PrefabNames.ShipRudderBasic, new PieceData()
@@ -60,6 +83,26 @@ public abstract class PrefabRegistryHelpers
       Description = "valheim_vehicles_toggle_switch_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.VehicleSwitch)
     });
+  }
+
+  /// <summary>
+  /// Auto sets up new, worn, broken for wnt
+  /// </summary>
+  /// <param name="prefab"></param>
+  /// <param name="wnt"></param>
+  public static void AddNewOldPiecesToWearNTear(GameObject prefab, WearNTear wnt)
+  {
+    var wntNew = prefab.transform.FindDeepChild("new");
+    var wntWorn = prefab.transform.FindDeepChild("worn");
+    var wntBroken = prefab.transform.FindDeepChild("broken");
+
+    if (!(bool)wntNew) return;
+    wnt.m_new = wntNew.gameObject;
+    if (!(bool)wntWorn) return;
+    wnt.m_worn = wntWorn.gameObject;
+    wnt.m_broken = wntWorn.gameObject;
+    if (!(bool)wntBroken) return;
+    wnt.m_broken = wntBroken.gameObject;
   }
 
   public static string GetPieceNameFromPrefab(string name)
