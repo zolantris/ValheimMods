@@ -880,15 +880,15 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   /// </summary>
   /// <param name="velocity"></param>
   /// <returns></returns>
-  public bool UpdateAnchorVelocity(Vector3 velocity)
+  private bool UpdateAnchorVelocity(Vector3 velocity)
   {
-    if (m_players.Count == 0 ||
-        _controller.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
-    {
-      var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
-      m_body.velocity = anchoredVelocity;
-      m_body.angularVelocity = Vector3.zero;
-    }
+    if (m_players.Count != 0 &&
+        !_controller.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored)) return false;
+
+    var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
+    m_body.velocity = anchoredVelocity;
+    m_body.angularVelocity = Vector3.zero;
+    return true;
   }
 
   public struct ShipFloatation
