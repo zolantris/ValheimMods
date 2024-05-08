@@ -42,16 +42,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
   internal ShipStats m_shipStats = new ShipStats();
 
-  public float m_targetHeight { get; set; }
-
-  public WaterVehicleFlags VehicleFlags { get; set; }
-
-  public ZSyncTransform m_zsyncTransform
-  {
-    get => VehicleInstance.m_zsyncTransform;
-    set { }
-  }
-
   public float m_balanceForce = 0.03f;
 
   public float m_liftForce = 20f;
@@ -76,7 +66,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
     // connect vvShip properties to this gameobject
     m_nview = vehicleShip.m_nview;
-    m_zsyncTransform = vehicleShip.m_zsyncTransform;
     instance = this;
 
     // prevent mass from being set lower than 20f;
@@ -140,11 +129,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
       Logger.LogError(
         "No ShipInstance detected");
     }
-
-    m_nview.Register("SetAnchor",
-      delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
-    m_nview.Register("SetVisual",
-      delegate(long sender, bool state) { RPC_SetVisual(sender, state); });
   }
 
   public void UpdateVisual()
@@ -157,127 +141,11 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     return m_shipStats;
   }
 
-  public void Ascend()
-  {
-    if (VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
-    {
-      SendSetAnchor(state: false);
-    }
-
-    if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
-    {
-      m_targetHeight = 0f;
-    }
-    else
-    {
-      if (!m_floatcollider)
-      {
-        return;
-      }
-
-      m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y + 1f,
-        ZoneSystem.instance.m_waterLevel, 200f);
-    }
-
-    m_nview.m_zdo.Set("MBTargetHeight", m_targetHeight);
-  }
-
-  public void Descent()
-  {
-    if (VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
-    {
-      SendSetAnchor(state: false);
-    }
-
-    float oldTargetHeight = m_targetHeight;
-    if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
-    {
-      m_targetHeight = 0f;
-    }
-    else
-    {
-      if (!m_floatcollider)
-      {
-        return;
-      }
-
-      m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y - 1f,
-        ZoneSystem.instance.m_waterLevel, 200f);
-      if (m_floatcollider.transform.position.y - 1f <=
-          ZoneSystem.instance.m_waterLevel)
-      {
-        m_targetHeight = 0f;
-      }
-    }
-
-    m_nview.m_zdo.Set("MBTargetHeight", m_targetHeight);
-  }
-
   public void SyncRigidbodyStats(bool flight)
   {
-    var drag = (flight ? 1f : 0f);
-    var angularDrag = (flight ? 1f : 0f);
-
-    if (flight && ValheimRaftPlugin.Instance.FlightNoAngularVelocity.Value)
-    {
-      angularDrag = 10f;
-    }
-
-    if (flight && ValheimRaftPlugin.Instance.FlightHasDrag.Value)
-    {
-      drag = 10f;
-    }
-
-
+    var drag = (flight ? 1f : 0.01f);
+    var angularDrag = (flight ? 1f : 0.01f);
     base.SyncRigidbodyStats(drag, angularDrag);
-  }
-
-/*
- * Toggle the ship anchor and emit the event to other players so their client can update
- */
-  public void ToggleAnchor()
-  {
-    var isAnchored = waterVehicleController.VehicleFlags.HasFlag(
-      WaterVehicleFlags.IsAnchored);
-    VehicleFlags = isAnchored
-      ? (VehicleFlags & ~WaterVehicleFlags.IsAnchored)
-      : (VehicleFlags | WaterVehicleFlags.IsAnchored);
-    m_nview.m_zdo.Set("MBFlags", (int)VehicleFlags);
-    SendSetAnchor(waterVehicleController.VehicleFlags.HasFlag(
-      WaterVehicleFlags.IsAnchored));
-  }
-
-  public void SendSetAnchor(bool state)
-  {
-    m_nview.InvokeRPC("SetAnchor", state);
-  }
-
-  public void RPC_SetAnchor(long sender, bool state)
-  {
-    // if (sender != Player.m_localPlayer.GetZDOID().UserID)
-    // {
-    VehicleFlags = (state
-      ? (VehicleFlags | WaterVehicleFlags.IsAnchored)
-      : (VehicleFlags & ~WaterVehicleFlags.IsAnchored));
-    m_nview.m_zdo.Set("MBFlags", (int)VehicleFlags);
-    // }
-  }
-
-  internal void SetVisual(bool state)
-  {
-    m_nview.InvokeRPC("SetVisual", state);
-  }
-
-  /**
-   * deprecated, not needed
-   */
-  public void RPC_SetVisual(long sender, bool state)
-  {
-    VehicleFlags = (state
-      ? (VehicleFlags | WaterVehicleFlags.HideMesh)
-      : (VehicleFlags & ~WaterVehicleFlags.HideMesh));
-    m_nview.m_zdo.Set("MBFlags", (int)VehicleFlags);
-    UpdateVisual();
   }
 
   public void CalculateSailSpeed()

@@ -29,7 +29,12 @@ internal static class PatchController
     Harmony.PatchAll(typeof(ZNetScene_Patch));
     Harmony.PatchAll(typeof(ZNetView_Patch));
     Harmony.PatchAll(typeof(Hud_Patch));
-    Harmony.PatchAll(typeof(StartScene_Patch));
+
+    if (ValheimRaftPlugin.Instance.DebugRemoveStartMenuBackground.Value)
+    {
+      Harmony.PatchAll(typeof(StartScene_Patch));
+    }
+
     /*
      * PlanBuild uses mmmHookgen so it cannot be detected with bepinex
      *

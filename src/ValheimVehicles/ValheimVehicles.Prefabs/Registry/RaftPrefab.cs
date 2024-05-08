@@ -109,11 +109,11 @@ public class RaftPrefab : IRegisterPrefab
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    // var raftPrefab = RegisterRaftV2Compat();
-    GameObject raftPrefab;
-    raftPrefab = ValheimRaftPlugin.Instance.AutoUpgradeV1Raft.Value
-      ? RegisterRaftV2Compat()
-      : GetTransformedRaft();
+    var raftPrefab = GetTransformedRaft();
+    // GameObject raftPrefab;
+    // raftPrefab = ValheimRaftPlugin.Instance.AutoUpgradeV1Raft.Value
+    //   ? RegisterRaftV2Compat()
+    //   : GetTransformedRaft();
 
     pieceManager.AddPiece(new CustomPiece(raftPrefab, false, new PieceConfig
     {

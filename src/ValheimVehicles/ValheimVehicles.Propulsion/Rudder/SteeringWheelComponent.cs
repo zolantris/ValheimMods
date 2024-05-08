@@ -78,8 +78,8 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     }
 
     var isAnchored =
-      controller.VehicleFlags.HasFlag(WaterVehicleFlags
-        .IsAnchored);
+      controller?.VehicleInstance?.VehicleFlags.HasFlag(WaterVehicleFlags
+        .IsAnchored) ?? false;
 
     var anchoredStatus =
       isAnchored ? "[<color=red><b>$valheim_vehicles_wheel_use_anchored</b></color>]" : "";

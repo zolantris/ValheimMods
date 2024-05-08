@@ -556,17 +556,23 @@ public class ValheimBaseGameShip : MonoBehaviour
     }
   }
 
+  /// <summary>
+  /// This is the base game ship EdgeForce. Needs more information about what it does
+  /// </summary>
+  /// Todo figure out what this does
+  /// <param name="dt"></param>
   internal void ApplyEdgeForce(float dt)
   {
-    float magnitude = base.transform.position.magnitude;
-    float num = 10420f;
-    if (magnitude > num)
-    {
-      Vector3 vector = Vector3.Normalize(base.transform.position);
-      float num2 = Utils.LerpStep(num, 10500f, magnitude) * 8f;
-      Vector3 vector2 = vector * num2;
-      m_body.AddForce(vector2 * dt, ForceMode.VelocityChange);
-    }
+    var magnitude = base.transform.position.magnitude;
+    var num = 10420f;
+
+    if (!(magnitude > num)) return;
+
+    var vector = Vector3.Normalize(base.transform.position);
+    var num2 = Utils.LerpStep(num, 10500f, magnitude) * 8f;
+    var vector2 = vector * num2;
+
+    m_body.AddForce(vector2 * dt, ForceMode.VelocityChange);
   }
 
   internal void FixTilt()

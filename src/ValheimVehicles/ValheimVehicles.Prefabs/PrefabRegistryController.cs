@@ -77,7 +77,7 @@ public class PrefabRegistryController : MonoBehaviour
       var waterVehicleControllers = Resources.FindObjectsOfTypeAll<WaterVehicleController>();
       foreach (var wvc in waterVehicleControllers)
       {
-        wvc.ToggleAnchor();
+        wvc?.VehicleInstance?.ToggleAnchor();
       }
     }
 

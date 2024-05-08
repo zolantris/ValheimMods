@@ -11,6 +11,7 @@ using ValheimRAFT;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Vehicles.Structs;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
@@ -43,9 +44,22 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 {
   public GameObject RudderObject { get; set; }
 
+  // The rudder force multiplier applied to the ship speed
+  private float _rudderForce = 1f;
+
+  // flying mechanics
+  private bool _isAscending;
+  private bool _isDescending;
+
+  // floating mechanics
+  private bool _hasFloatSway = true;
+
   private GameObject _piecesContainer;
   private GameObject _ghostContainer;
   private ImpactEffect _impactEffect;
+  public float m_targetHeight { get; set; }
+  private const float _maxVerticalAccel = 5f;
+  private float _currentVerticalOffset = 1f;
 
 
   public static bool CustomShipPhysicsEnabled = false;
@@ -71,6 +85,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   public VehicleDebugHelpers VehicleDebugHelpersInstance { get; private set; }
 
+  public WaterVehicleFlags VehicleFlags { get; set; }
 
   public VehicleMovementController MovementController
   {
@@ -151,6 +166,297 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
   }
 
+  /*
+   * Toggle the ship anchor and emit the event to other players so their client can update
+   */
+  public void ToggleAnchor()
+  {
+    SetAnchor(!IsAnchored());
+  }
+
+  /// <summary>
+  /// Updates anchor locally and send the same value over network
+  /// </summary>
+  /// <param name="isEnabled"></param>
+  public void SetAnchor(bool isEnabled)
+  {
+    var isAnchored = VehicleFlags.HasFlag(
+      WaterVehicleFlags.IsAnchored);
+
+    // skips setting Flag if it already is set
+    if (isAnchored != isEnabled)
+    {
+      VehicleFlags = isEnabled
+        ? (VehicleFlags & ~WaterVehicleFlags.IsAnchored)
+        : (VehicleFlags | WaterVehicleFlags.IsAnchored);
+      m_nview.m_zdo.Set(VehicleZdoVars.VehicleFlags, (int)VehicleFlags);
+    }
+
+    // always emits the setter to prevent desync
+    SendSetAnchor(isEnabled);
+  }
+
+  public void SendSetAnchor(bool state)
+  {
+    m_nview.InvokeRPC(nameof(RPC_SetAnchor), state);
+  }
+
+  public void RPC_SetAnchor(long sender, bool state)
+  {
+    VehicleFlags = (state
+      ? (VehicleFlags | WaterVehicleFlags.IsAnchored)
+      : (VehicleFlags & ~WaterVehicleFlags.IsAnchored));
+    m_nview.m_zdo.Set(VehicleZdoVars.VehicleFlags, (int)VehicleFlags);
+  }
+
+
+  public void Ascend()
+  {
+    if (VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
+    {
+      SetAnchor(false);
+    }
+
+    if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
+    {
+      m_targetHeight = 0f;
+    }
+    else
+    {
+      if (!m_floatcollider)
+      {
+        return;
+      }
+
+      m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y + _currentVerticalOffset,
+        ZoneSystem.instance.m_waterLevel, 200f);
+    }
+
+    m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
+  }
+
+  public void AutoAscendUpdate()
+  {
+    if (!_isAscending) return;
+
+    m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y + _currentVerticalOffset,
+      ZoneSystem.instance.m_waterLevel, 200f);
+    m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
+  }
+
+  public void AutoDescendUpdate()
+  {
+    if (!_isDescending) return;
+    m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y - _currentVerticalOffset,
+      ZoneSystem.instance.m_waterLevel, 200f);
+    m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
+  }
+
+  public void AutoVerticalFlightUpdate()
+  {
+    if (!ValheimRaftPlugin.Instance.AllowFlight.Value ||
+        !ValheimRaftPlugin.Instance.FlightVerticalToggle.Value || IsAnchored()) return;
+
+    if (Mathf.Approximately(m_targetHeight, 200f) ||
+        Mathf.Approximately(m_targetHeight, ZoneSystem.instance.m_waterLevel))
+    {
+      _isAscending = false;
+      _isDescending = false;
+      return;
+    }
+
+    // AutoAscendUpdate();
+    // AutoDescendUpdate();
+  }
+
+
+  /// <summary>
+  /// Sets the rudderForce and returns it's value
+  /// </summary>
+  /// noting that rudderforce must be negative when speed is Backwards
+  /// <returns></returns>
+  private float GetRudderForcePerSpeed()
+  {
+    if (!ValheimRaftPlugin.Instance.AllowCustomRudderSpeeds.Value)
+    {
+      _rudderForce = 1f;
+      return _rudderForce;
+    }
+
+    switch (m_speed)
+    {
+      case Speed.Stop:
+        _rudderForce = 0f;
+        break;
+      case Speed.Back:
+        _rudderForce =
+          Math.Abs(Math.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedSlow.Value, 10f));
+        break;
+      case Speed.Slow:
+        _rudderForce = Math.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedSlow.Value, 10f);
+        break;
+      case Speed.Half:
+        _rudderForce = Mathf.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedHalf.Value, 10f);
+        break;
+      case Speed.Full:
+        _rudderForce = Mathf.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedFull.Value, 10f);
+        break;
+      default:
+        Logger.LogError($"Speed value could not handle this variant, {m_speed}");
+        _rudderForce = 1f;
+        break;
+    }
+
+    return _rudderForce;
+  }
+
+  /// <summary>
+  /// Updates the rudder turning speed based on the ship speed. Higher speeds will make turning the rudder harder
+  /// </summary>
+  /// m_rudder = rotation speed of rudder icon
+  /// m_rudderValue = position of rudder
+  /// m_rudderSpeed = the force speed applied when moving the ship
+  private void UpdateShipRudderTurningSpeed()
+  {
+    switch (m_speed)
+    {
+      case Speed.Stop:
+      case Speed.Back:
+      case Speed.Slow:
+        m_rudderSpeed = 2f;
+        break;
+      case Speed.Half:
+        m_rudderSpeed = 1f;
+        break;
+      case Speed.Full:
+        m_rudderSpeed = 0.5f;
+        break;
+      default:
+        Logger.LogError($"Speed value could not handle this variant, {m_speed}");
+        m_rudderSpeed = 1f;
+        break;
+    }
+  }
+
+  private void ToggleAutoDescend()
+  {
+    // if the previous toggle target is equal it will stop the automatic descent
+    // (isAscending && _isAscending == isAscending) ||
+    // (isAscending == false && _isDescending)
+    if (m_targetHeight == 0f)
+    {
+      _isAscending = false;
+      _isDescending = false;
+      return;
+    }
+
+    if (!ValheimRaftPlugin.Instance.FlightVerticalToggle.Value) return;
+
+    _isAscending = false;
+    _isDescending = true;
+  }
+
+  private void ToggleAutoAscend()
+  {
+    // if the previous toggle target is equal it will stop the automatic descent
+    // (isAscending && _isAscending == isAscending) ||
+    // (isAscending == false && _isDescending)
+    if (m_targetHeight == 0f)
+    {
+      _isAscending = false;
+      _isDescending = false;
+      return;
+    }
+
+    if (!ValheimRaftPlugin.Instance.FlightVerticalToggle.Value) return;
+
+    _isAscending = true;
+    _isDescending = false;
+  }
+
+  public void Descend()
+  {
+    if (VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
+    {
+      SendSetAnchor(state: false);
+    }
+
+    var oldTargetHeight = m_targetHeight;
+    if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
+    {
+      m_targetHeight = 0f;
+    }
+    else
+    {
+      if (!m_floatcollider)
+      {
+        return;
+      }
+
+      m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y - _currentVerticalOffset,
+        ZoneSystem.instance.m_waterLevel, 200f);
+
+      if (m_floatcollider.transform.position.y - _currentVerticalOffset <=
+          ZoneSystem.instance.m_waterLevel)
+      {
+        m_targetHeight = 0f;
+      }
+    }
+
+    m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
+  }
+
+  public bool IsAnchored()
+  {
+    return VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored);
+  }
+
+  private void OnFlightControls()
+  {
+    if (!ValheimRaftPlugin.Instance.AllowFlight.Value || IsAnchored()) return;
+    if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
+    {
+      CancelInvoke(nameof(ToggleAutoAscend));
+      CancelInvoke(nameof(ToggleAutoDescend));
+      Ascend();
+      Invoke(nameof(ToggleAutoAscend), 1f);
+      return;
+    }
+
+    if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
+    {
+      CancelInvoke(nameof(ToggleAutoAscend));
+      CancelInvoke(nameof(ToggleAutoDescend));
+      Descend();
+      Invoke(nameof(ToggleAutoDescend), 1f);
+    }
+  }
+
+  private void OnAnchorKeyPress()
+  {
+    if (!GetAnchorKey()) return;
+    Logger.LogDebug("Anchor Keydown is pressed");
+    var flag = HaveControllingPlayer();
+    if (flag && Player.m_localPlayer.IsAttached() && Player.m_localPlayer.m_attachPoint &&
+        Player.m_localPlayer.m_doodadController != null)
+    {
+      Logger.LogDebug("toggling vehicleShip anchor");
+      ToggleAnchor();
+    }
+    else
+    {
+      Logger.LogDebug("Player not controlling ship, skipping");
+    }
+  }
+
+  private void OnControllingWithHotKeyPress()
+  {
+    if (!HaveControllingPlayer()) return;
+
+    OnAnchorKeyPress();
+    OnFlightControls();
+  }
+
   private static bool GetAnchorKey()
   {
     if (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "False" &&
@@ -172,9 +478,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
         Logger.LogDebug($"Dynamic Anchor Button down: {mainKeyString}");
       }
 
-      // Logger.LogDebug($"AnchorKey: leftShift {isLeftShiftDown}, mainKey: {mainKeyString}");
-      // Logger.LogDebug(
-      //   $"AnchorKey isDown: {ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown()}");
       return buttonDownDynamic || isLeftShiftDown ||
              ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown();
     }
@@ -182,28 +485,12 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     var isPressingRun = ZInput.GetButtonDown("Run") || ZInput.GetButtonDown("JoyRun");
     var isPressingJoyRun = ZInput.GetButtonDown("JoyRun");
 
-    // Logger.LogDebug(
-    //   $"AnchorKey isPressingRun: {isPressingRun},isPressingJoyRun {isPressingJoyRun} ");
-
     return isPressingRun || isPressingJoyRun;
   }
 
   private void Update()
   {
-    if (!GetAnchorKey()) return;
-    Logger.LogDebug("Anchor Keydown is pressed");
-
-    var flag = HaveControllingPlayer();
-    if (flag && Player.m_localPlayer.IsAttached() && Player.m_localPlayer.m_attachPoint &&
-        Player.m_localPlayer.m_doodadController != null)
-    {
-      Logger.LogDebug("toggling vehicleShip anchor");
-      _controller.ToggleAnchor();
-    }
-    else
-    {
-      Logger.LogDebug("Player not controlling ship, skipping");
-    }
+    OnControllingWithHotKeyPress();
   }
 
   public bool IsReady()
@@ -240,6 +527,11 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     {
       m_body = GetComponent<Rigidbody>();
     }
+
+    // caps the vehicle speeds to these values.
+    m_body.maxAngularVelocity = ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value;
+    // m_body.maxLinearVelocity = ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value * 1.2f;
+
 
     if (!(bool)m_zsyncTransform)
     {
@@ -286,45 +578,9 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
     GUILayout.BeginArea(new Rect(300, 10, 150, 150), myButtonStyle);
 
-    if (GUILayout.Button("Add forward force to ship"))
-    {
-      var directionForce = GetDirectionForce();
-      var forceAmount = Vector3.forward;
-      m_body.AddForceAtPosition(forceAmount, directionForce, ForceMode.Impulse);
-    }
-
-    var waterLevelOffset =
-      GUILayout.TextField(m_waterLevelOffset.ToString(CultureInfo.InvariantCulture), 25);
-
-    if (waterLevelOffset != null && float.TryParse(waterLevelOffset, out var offset))
-    {
-      m_waterLevelOffset = offset;
-    }
-
     if (GUILayout.Button($"customphysics {CustomShipPhysicsEnabled}"))
     {
       CustomShipPhysicsEnabled = !CustomShipPhysicsEnabled;
-    }
-
-    if (GUILayout.Button("Rebuild bounds"))
-    {
-      if ((bool)_controller)
-      {
-        _controller.RebuildBounds();
-      }
-    }
-
-    // called ShipHud, duplicate it and add some more ui stuff.
-    if (GUILayout.Button("rotate90 ship"))
-    {
-      if (_shipRotationOffset > 360)
-      {
-        _shipRotationOffset = 0;
-      }
-      else
-      {
-        ShipDirection.Rotate(0, 90, 0);
-      }
     }
 
     GUILayout.EndArea();
@@ -359,9 +615,33 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
   }
 
+  private void RegisterRPCMethods()
+  {
+    if (!(bool)m_nview) return;
+    VehicleFlags =
+      (WaterVehicleFlags)m_nview.m_zdo.GetInt(VehicleZdoVars.VehicleFlags,
+        (int)VehicleFlags);
+
+    m_nview.Register(nameof(RPC_SetAnchor),
+      delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
+  }
+
+  private void AwakeGetZdoData()
+  {
+    if (!(bool)m_nview) return;
+
+    VehicleFlags =
+      (WaterVehicleFlags)m_nview.m_zdo.GetInt(VehicleZdoVars.VehicleFlags,
+        (int)VehicleFlags);
+  }
+
   private new void Awake()
   {
+    m_nview = GetComponent<ZNetView>();
+
     AwakeSetupShipComponents();
+    AwakeGetZdoData();
+    RegisterRPCMethods();
 
     base.Awake();
 
@@ -386,6 +666,18 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     InitializeWaterVehicleController();
   }
 
+  public void ToggleBoatOceanSway(bool val)
+  {
+    _hasFloatSway = val;
+    m_body.isKinematic = !val;
+    if (!_hasFloatSway)
+    {
+      m_body.velocity = Vector3.zero;
+      m_body.angularVelocity = Vector3.zero;
+      transform.rotation = Quaternion.Euler(0, transform.rotation.y, 0);
+    }
+  }
+
   public void FixedUpdate()
   {
     if (!(bool)_controller || !(bool)m_body || !(bool)m_floatcollider)
@@ -393,24 +685,15 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       return;
     }
 
-    FixShipRotation();
+    // FixShipRotation();
 
-    if (CustomShipPhysicsEnabled)
+    if (!_hasFloatSway)
     {
-      // CustomPhysics();
-      CustomFixedUpdate_Deprecated();
       return;
     }
 
-    // todo remove this if unnecessary
-    // ShipDirectionTransform.position = m_floatcollider.transform.position;
-    // ShipDirectionTransform.rotation = Quaternion.Euler(
-    //   m_floatcollider.transform.rotation.eulerAngles.x,
-    //   ShipDirectionTransform.rotation.eulerAngles.y,
-    //   m_floatcollider.transform.rotation.eulerAngles.z);
-
-    TestFixedUpdate();
-    // ValheimRaftCustomFixedUpdate();
+    // AutoVerticalFlightUpdate();
+    VehiclePhysicsFixedUpdate();
   }
 
   public void UpdateShipDirection(Quaternion steeringWheelRotation)
@@ -626,7 +909,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   public void CustomPhysics()
   {
-    m_body.useGravity = _controller.m_targetHeight == 0f;
+    m_body.useGravity = m_targetHeight == 0f;
 
     var waterLevelAtCenterShip = Floating.GetWaterLevel(m_floatcollider.center, ref m_previousBack);
 
@@ -661,22 +944,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   {
   }
 
-  public void ShipFlyingUpdate()
+  public void UpdateShipBalancingForce()
   {
-    UpdateVehicleStats(true);
-
-    if (m_players.Count == 0 ||
-        _controller.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
-    {
-      var anchoredVelocity = CalculateAnchorStopVelocity(m_body.velocity);
-      m_body.velocity = anchoredVelocity;
-      m_body.angularVelocity = Vector3.zero;
-    }
-
-    // prevents angular velocity for flying vehicles. They are uncontrollable with current setup without this
-    m_body.angularVelocity = Vector3.zero;
-
-
     var front = ShipDirection.position +
                 ShipDirection.forward * m_floatcollider.extents.z;
     var back = ShipDirection.position -
@@ -693,22 +962,22 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     var rightForce = m_body.GetPointVelocity(right);
 
     var frontUpwardsForce =
-      GetUpwardsForce(_controller.m_targetHeight,
+      GetUpwardsForce(m_targetHeight,
         front.y + frontForce.y,
         _controller.m_balanceForce);
     var backUpwardsForce =
-      GetUpwardsForce(_controller.m_targetHeight,
+      GetUpwardsForce(m_targetHeight,
         back.y + backForce.y,
         _controller.m_balanceForce);
     var leftUpwardsForce =
-      GetUpwardsForce(_controller.m_targetHeight,
+      GetUpwardsForce(m_targetHeight,
         left.y + leftForce.y,
         _controller.m_balanceForce);
     var rightUpwardsForce =
-      GetUpwardsForce(_controller.m_targetHeight,
+      GetUpwardsForce(m_targetHeight,
         right.y + rightForce.y,
         _controller.m_balanceForce);
-    var centerUpwardsForce = GetUpwardsForce(_controller.m_targetHeight,
+    var centerUpwardsForce = GetUpwardsForce(m_targetHeight,
       centerpos2.y + m_body.velocity.y, _controller.m_liftForce);
 
 
@@ -722,9 +991,25 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       ForceMode.VelocityChange);
     AddForceAtPosition(Vector3.up * centerUpwardsForce, centerpos2,
       ForceMode.VelocityChange);
+  }
 
-    var dir = Vector3.Dot(m_body.velocity, ShipDirection.forward);
-    ApplySailForce(this, dir);
+  public void UpdateShipFlying()
+  {
+    UpdateVehicleStats(true);
+    // early exit if anchored.
+    if (UpdateAnchorVelocity(m_body.velocity))
+    {
+      return;
+    }
+
+    m_body.WakeUp();
+
+    UpdateShipBalancingForce();
+
+    if (!ValheimRaftPlugin.Instance.FlightHasRudderOnly.Value)
+    {
+      ApplySailForce(this, true);
+    }
   }
 
   /// <summary>
@@ -776,19 +1061,17 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
   }
 
-  public void ShipFloatationUpdate(ShipFloatation shipFloatation)
+  public void UpdateWaterForce(ShipFloatation shipFloatation)
   {
-    UpdateVehicleStats(false);
-
-    var shipLeft = shipFloatation.shipLeft;
-    var shipForward = shipFloatation.shipForward;
-    var shipBack = shipFloatation.shipBack;
-    var shipRight = shipFloatation.shipRight;
-    var waterLevelLeft = shipFloatation.waterLevelLeft;
-    var waterLevelRight = shipFloatation.waterLevelRight;
-    var waterLevelForward = shipFloatation.waterLevelForward;
-    var waterLevelBack = shipFloatation.waterLevelBack;
-    var currentDepth = shipFloatation.currentDepth;
+    var shipLeft = shipFloatation.ShipLeft;
+    var shipForward = shipFloatation.ShipForward;
+    var shipBack = shipFloatation.ShipBack;
+    var shipRight = shipFloatation.ShipRight;
+    var waterLevelLeft = shipFloatation.WaterLevelLeft;
+    var waterLevelRight = shipFloatation.WaterLevelRight;
+    var waterLevelForward = shipFloatation.WaterLevelForward;
+    var waterLevelBack = shipFloatation.WaterLevelBack;
+    var currentDepth = shipFloatation.CurrentDepth;
     var worldCenterOfMass = m_body.worldCenterOfMass;
 
     m_body.WakeUp();
@@ -808,17 +1091,23 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     AddForceAtPosition(upwardForceVector * deltaForceMultiplier, worldCenterOfMass,
       ForceMode.VelocityChange);
 
-    var num5 = Vector3.Dot(m_body.velocity, ShipDirection.forward);
-    var num6 = Vector3.Dot(m_body.velocity, ShipDirection.right);
+    // todo rename variables for this section to something meaningful
+    // todo abstract this to a method
+    var deltaForward = Vector3.Dot(m_body.velocity, ShipDirection.forward);
+    var deltaRight = Vector3.Dot(m_body.velocity, ShipDirection.right);
     var velocity = m_body.velocity;
-    var value = velocity.y * velocity.y * Mathf.Sign(velocity.y) * m_damping *
-                currentDepthForceMultiplier;
-    var value2 = num5 * num5 * Mathf.Sign(num5) * m_dampingForward * currentDepthForceMultiplier;
-    var value3 = num6 * num6 * Mathf.Sign(num6) * m_dampingSideway * currentDepthForceMultiplier;
+    var deltaUp = velocity.y * velocity.y * Mathf.Sign(velocity.y) * m_damping *
+                  currentDepthForceMultiplier;
 
-    velocity.y -= Mathf.Clamp(value, -1f, 1f);
-    velocity -= ShipDirection.forward * Mathf.Clamp(value2, -1f, 1f);
-    velocity -= ShipDirection.right * Mathf.Clamp(value3, -1f, 1f);
+    var deltaForwardClamp = deltaForward * deltaForward * Mathf.Sign(deltaForward) *
+                            m_dampingForward *
+                            currentDepthForceMultiplier;
+    var deltaRightClamp = deltaRight * deltaRight * Mathf.Sign(deltaRight) * m_dampingSideway *
+                          currentDepthForceMultiplier;
+
+    velocity.y -= Mathf.Clamp(deltaUp, -1f, 1f);
+    velocity -= ShipDirection.forward * Mathf.Clamp(deltaForwardClamp, -1f, 1f);
+    velocity -= ShipDirection.right * Mathf.Clamp(deltaRightClamp, -1f, 1f);
 
     if (velocity.magnitude > m_body.velocity.magnitude)
       velocity = velocity.normalized * m_body.velocity.magnitude;
@@ -827,14 +1116,9 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     m_body.angularVelocity -=
       m_body.angularVelocity * m_angularDamping * currentDepthForceMultiplier;
 
-    if (m_players.Count == 0 ||
-        _controller.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
-    {
-      var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
-      m_body.velocity = anchoredVelocity;
-      m_body.angularVelocity = Vector3.zero;
-    }
-
+    // clamps the force to a specific number
+    // todo rename variables for this section to something meaningful
+    // todo abstract to a method
     var num7 = 0.15f;
     var num8 = 0.5f;
     var f = Mathf.Clamp((forwardForce.y - shipForward.y) * num7, 0f - num8, num8);
@@ -854,25 +1138,16 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       ForceMode.VelocityChange);
     AddForceAtPosition(Vector3.up * f4 * deltaForceMultiplier, shipRight,
       ForceMode.VelocityChange);
+  }
 
+  public void UpdateShipFloatation(ShipFloatation shipFloatation)
+  {
+    UpdateVehicleStats(false);
+    UpdateWaterForce(shipFloatation);
     ApplyEdgeForce(Time.fixedDeltaTime);
+    if (UpdateAnchorVelocity(m_body.velocity)) return;
 
-    // skips sail force application since the ship is anchored
-    // todo remove this if unused (since this is called earlier in the fixedUpdate)
-    if (UpdateAnchorVelocity(velocity)) return;
-
-    ApplySailForce(this, num5);
-
-    // todo remove if unused
-    // this logic is likely never hit
-    if (_controller.m_targetHeight > 0f)
-    {
-      var centerpos = ShipDirection.position;
-      var centerforce = GetUpwardsForce(_controller.m_targetHeight,
-        centerpos.y + m_body.velocity.y, _controller.m_liftForce);
-      AddForceAtPosition(Vector3.up * centerforce, centerpos,
-        ForceMode.VelocityChange);
-    }
+    ApplySailForce(this);
   }
 
   /// <summary>
@@ -883,27 +1158,21 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   private bool UpdateAnchorVelocity(Vector3 velocity)
   {
     if (m_players.Count != 0 &&
-        !_controller.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored)) return false;
+        !IsAnchored()) return false;
 
     var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
-    m_body.velocity = anchoredVelocity;
-    m_body.angularVelocity = Vector3.zero;
-    return true;
-  }
+    var anchoredAngularVelocity = CalculateAnchorStopVelocity(m_body.angularVelocity);
 
-  public struct ShipFloatation
-  {
-    public Vector3 shipBack;
-    public Vector3 shipForward;
-    public Vector3 shipLeft;
-    public Vector3 shipRight;
-    public bool isAboveBuoyantLevel;
-    public float currentDepth;
-    public float waterLevelLeft;
-    public float waterLevelRight;
-    public float waterLevelForward;
-    public float waterLevelBack;
-    public float averageWaterHeight;
+    m_body.velocity = anchoredVelocity;
+    m_body.angularVelocity = anchoredAngularVelocity;
+    return true;
+
+    // if (!IsAnchored()) return false;
+    //
+    // var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
+    // // m_body.velocity = anchoredVelocity;
+    // m_body.velocity = Vector3.zero;
+    // m_body.angularVelocity = Vector3.zero;
   }
 
   public ShipFloatation GetShipFloatationObj()
@@ -931,41 +1200,60 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
     return new ShipFloatation()
     {
-      averageWaterHeight = averageWaterHeight,
-      currentDepth = currentDepth,
-      isAboveBuoyantLevel = isAboveBuoyantLevel,
-      shipLeft = shipLeft,
-      shipForward = shipForward,
-      shipBack = shipBack,
-      shipRight = shipRight,
-      waterLevelLeft = waterLevelLeft,
-      waterLevelRight = waterLevelRight,
-      waterLevelForward = waterLevelForward,
-      waterLevelBack = waterLevelBack,
+      AverageWaterHeight = averageWaterHeight,
+      CurrentDepth = currentDepth,
+      IsAboveBuoyantLevel = isAboveBuoyantLevel,
+      ShipLeft = shipLeft,
+      ShipForward = shipForward,
+      ShipBack = shipBack,
+      ShipRight = shipRight,
+      WaterLevelLeft = waterLevelLeft,
+      WaterLevelRight = waterLevelRight,
+      WaterLevelForward = waterLevelForward,
+      WaterLevelBack = waterLevelBack,
     };
   }
 
   public void UpdateShipSpeed(bool hasControllingPlayer)
   {
-    if (!hasControllingPlayer && (m_speed == Speed.Slow || m_speed == Speed.Back))
+    if (IsAnchored() && m_speed != Speed.Stop)
+    {
       m_speed = Speed.Stop;
+      // force resets rudder to 0 degree position
+      m_rudderValue = 0f;
+    }
 
-    if (m_players.Count != 0 &&
-        !_controller.VehicleFlags.HasFlag(WaterVehicleFlags
-          .IsAnchored)) return;
-
-    m_speed = Speed.Stop;
-    m_rudderValue = 0f;
-
-    if (_controller.VehicleFlags.HasFlag(
-          WaterVehicleFlags.IsAnchored)) return;
-
-    _controller.VehicleFlags |=
-      WaterVehicleFlags.IsAnchored;
-    m_nview.m_zdo.Set("MBFlags", (int)_controller.VehicleFlags);
+    if (m_players.Count == 0)
+    {
+      m_speed = Speed.Stop;
+      SetAnchor(false);
+    }
+    else if (!hasControllingPlayer && m_speed is Speed.Slow or Speed.Back)
+    {
+      m_speed = Speed.Stop;
+    }
   }
 
-  public void TestFixedUpdate()
+  // Updates gravity and target height (which is used to compute gravity)
+  public void UpdateGravity()
+  {
+    if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
+    {
+      m_targetHeight = 0f;
+      m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, 0f);
+    }
+    else
+    {
+      m_targetHeight =
+        m_nview.m_zdo.GetFloat(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
+    }
+
+    m_zsyncTransform.m_useGravity =
+      m_targetHeight == 0f;
+    m_body.useGravity = m_targetHeight == 0f;
+  }
+
+  public void VehiclePhysicsFixedUpdate()
   {
     if (!(bool)_controller || !(bool)m_nview || m_nview.m_zdo == null ||
         !(bool)ShipDirection) return;
@@ -979,67 +1267,71 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       return;
     }
 
-    // This could be the spot that causes the raft to fly at spawn
-    _controller.m_targetHeight =
-      m_nview.m_zdo.GetFloat("MBTargetHeight", _controller.m_targetHeight);
-    _controller.VehicleFlags =
-      (WaterVehicleFlags)m_nview.m_zdo.GetInt("MBFlags",
-        (int)_controller.VehicleFlags);
-
-    // This could be the spot that causes the raft to fly at spawn
-    m_zsyncTransform.m_useGravity =
-      _controller.m_targetHeight == 0f;
-    m_body.useGravity = _controller.m_targetHeight == 0f;
+    UpdateGravity();
 
     var hasControllingPlayer = HaveControllingPlayer();
 
+    // Sets values based on m_speed
+    UpdateShipRudderTurningSpeed();
     UpdateShipSpeed(hasControllingPlayer);
+
+    //base ship direction controls
     UpdateControls(Time.fixedDeltaTime);
     UpdateSail(Time.fixedDeltaTime);
-    SyncVehicleMastsAndSails();
+
+    // rudder direction
     UpdateRudder(Time.fixedDeltaTime, hasControllingPlayer);
 
-    if (UpdateAnchorVelocity(Vector3.zero)) return;
+    // raft pieces transforms
+    SyncVehicleMastsAndSails();
+
+    // might need to call this if anchored to zero out initial velocity but ignore other velocity like upwards velocity in other areas.
+    // if (UpdateAnchorVelocity(Vector3.zero)) return;
 
     var shipFloatation = GetShipFloatationObj();
 
-    if (!shipFloatation.isAboveBuoyantLevel)
+    if (!shipFloatation.IsAboveBuoyantLevel)
     {
-      ShipFloatationUpdate(shipFloatation);
-      return;
+      UpdateShipFloatation(shipFloatation);
+    }
+    else if (m_targetHeight > 0f)
+    {
+      UpdateShipFlying();
     }
 
-    if (_controller.m_targetHeight > 0f)
-    {
-      ShipFlyingUpdate();
-    }
+    // both flying and floatation use this
+    ApplyRudderForce();
   }
 
   public new void UpdateSail(float deltaTime)
   {
-    // base.UpdateSail(deltaTime);
-
     UpdateSailSize(deltaTime);
     var windDir = EnvMan.instance.GetWindDir();
     windDir = Vector3.Cross(Vector3.Cross(windDir, ShipDirection.up),
       ShipDirection.up);
-    if (m_speed == Speed.Full || m_speed == Speed.Half)
+    var t = 0.5f + Vector3.Dot(ShipDirection.forward, windDir) * 0.5f;
+    switch (m_speed)
     {
-      float t = 0.5f + Vector3.Dot(ShipDirection.forward, windDir) * 0.5f;
-      Quaternion to = Quaternion.LookRotation(
-        -Vector3.Lerp(windDir, Vector3.Normalize(windDir - ShipDirection.forward), t),
-        ShipDirection.up);
-      m_mastObject.transform.rotation =
-        Quaternion.RotateTowards(m_mastObject.transform.rotation, to, 30f * deltaTime);
-    }
-    else if (m_speed == Speed.Back)
-    {
-      Quaternion from =
-        Quaternion.LookRotation(-ShipDirection.forward, ShipDirection.up);
-      Quaternion to2 = Quaternion.LookRotation(-windDir, ShipDirection.up);
-      to2 = Quaternion.RotateTowards(from, to2, 80f);
-      m_mastObject.transform.rotation =
-        Quaternion.RotateTowards(m_mastObject.transform.rotation, to2, 30f * deltaTime);
+      case Speed.Full:
+      case Speed.Half:
+      {
+        var to = Quaternion.LookRotation(
+          -Vector3.Lerp(windDir, Vector3.Normalize(windDir - ShipDirection.forward), t),
+          ShipDirection.up);
+        m_mastObject.transform.rotation =
+          Quaternion.RotateTowards(m_mastObject.transform.rotation, to, 30f * deltaTime);
+        break;
+      }
+      case Speed.Back:
+      {
+        var from =
+          Quaternion.LookRotation(-ShipDirection.forward, ShipDirection.up);
+        var to2 = Quaternion.LookRotation(-windDir, ShipDirection.up);
+        to2 = Quaternion.RotateTowards(from, to2, 80f);
+        m_mastObject.transform.rotation =
+          Quaternion.RotateTowards(m_mastObject.transform.rotation, to2, 30f * deltaTime);
+        break;
+      }
     }
   }
 
@@ -1069,15 +1361,21 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
    */
   private void SyncVehicleMastsAndSails()
   {
-    if (!(bool)_controller) return;
+    if (!_controller.isActiveAndEnabled) return;
 
     foreach (var mast in _controller.m_mastPieces.ToList())
     {
       if (!(bool)mast)
       {
         _controller.m_mastPieces.Remove(mast);
+        continue;
       }
-      else if (mast.m_allowSailShrinking)
+
+      mast.transform.localRotation = mast.m_allowSailRotation
+        ? m_mastObject.transform.localRotation
+        : Quaternion.Euler(Vector3.zero);
+
+      if (mast.m_allowSailShrinking)
       {
         if (mast.m_sailObject.transform.localScale != m_sailObject.transform.localScale)
           mast.m_sailCloth.enabled = false;
@@ -1128,33 +1426,97 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
   }
 
-  internal Vector3 GetSailForce(float sailSize, float dt)
+  private float GetInterpolatedWindAngleFactor()
   {
-    Vector3 windDir = EnvMan.instance.GetWindDir();
-    float windIntensity = EnvMan.instance.GetWindIntensity();
-    float num = Mathf.Lerp(0.25f, 1f, windIntensity);
-    float windAngleFactor = GetWindAngleFactor();
-    windAngleFactor *= num;
-    Vector3 target = Vector3.Normalize(windDir + ShipDirection.forward) *
-                     (windAngleFactor * m_sailForceFactor * sailSize);
-    m_sailForce = Vector3.SmoothDamp(m_sailForce, target, ref m_windChangeVelocity, 1f, 99f);
-    return m_sailForce;
+    var windIntensity = EnvMan.instance.GetWindIntensity();
+    var interpolatedWindIntensity = Mathf.Lerp(0.25f, 1f, windIntensity);
 
-    // for testing rotation
-    // var unchangedWindForce = new Vector3(-0.0120766945f, -0.00563957961f, 0.0823633149f);
-    // return unchangedWindForce;
+    var windAngleFactor = GetWindAngleFactor();
+    windAngleFactor *= interpolatedWindIntensity;
+    return windAngleFactor;
   }
 
-  public new float GetWindAngleFactor()
+  private float GetSailForceEnergy(float sailSize, float windAngleFactor)
   {
-    float num = Vector3.Dot(EnvMan.instance.GetWindDir(), -ShipDirection.forward);
-    float num2 = Mathf.Lerp(0.7f, 1f, 1f - Mathf.Abs(num));
-    float num3 = 1f - Utils.LerpStep(0.75f, 0.8f, num);
+    return windAngleFactor * m_sailForceFactor * sailSize;
+  }
+
+  private Vector3 GetSailForce(float sailSize, float dt, bool isFlying)
+  {
+    var windDir = EnvMan.instance.GetWindDir();
+    var windAngleFactorInterpolated = GetInterpolatedWindAngleFactor();
+
+    Vector3 target;
+    if (isFlying)
+    {
+      target = Vector3.Normalize(ShipDirection.forward) *
+               (windAngleFactorInterpolated * m_sailForceFactor * sailSize);
+    }
+    else
+    {
+      target = Vector3.Normalize(windDir + ShipDirection.forward) *
+               GetSailForceEnergy(sailSize, windAngleFactorInterpolated);
+    }
+
+    m_sailForce = Vector3.SmoothDamp(m_sailForce, target, ref m_windChangeVelocity, 1f, 99f);
+
+    return Vector3.ClampMagnitude(m_sailForce, 20f);
+  }
+
+  private new float GetWindAngleFactor()
+  {
+    var num = Vector3.Dot(EnvMan.instance.GetWindDir(), -ShipDirection!.forward);
+    var num2 = Mathf.Lerp(0.7f, 1f, 1f - Mathf.Abs(num));
+    var num3 = 1f - Utils.LerpStep(0.75f, 0.8f, num);
     return num2 * num3;
   }
 
-  private static void ApplySailForce(VehicleShip instance, float num5)
+  /// <summary>
+  /// Sets the speed of the ship with rudder speed added to it.
+  /// </summary>
+  /// Does not apply for stopped or anchored states
+  /// 
+  private void ApplyRudderForce()
   {
+    if (m_speed == Speed.Stop || IsAnchored()) return;
+
+    var direction = Vector3.Dot(m_body.velocity, ShipDirection.forward);
+    var rudderForce = GetRudderForcePerSpeed();
+    // steer offset will need to be size x or size z depending on location of rotation.
+    // todo GetFloatSizeFromDirection may not be needed anymore.
+    var steerOffset = ShipDirection.position -
+                      ShipDirection.forward *
+                      GetFloatSizeFromDirection(Vector3.forward);
+
+    var steeringVelocityDirectionFactor = direction * m_stearVelForceFactor;
+    var steerOffsetForce = ShipDirection.right *
+                           (steeringVelocityDirectionFactor * (0f - m_rudderValue) *
+                            Time.fixedDeltaTime);
+
+    AddForceAtPosition(
+      steerOffsetForce,
+      steerOffset, ForceMode.VelocityChange);
+
+    var steerForce = ShipDirection.forward *
+                     (m_backwardForce * rudderForce * (1f - Mathf.Abs(m_rudderValue)));
+
+    var directionMultiplier = ((m_speed != Speed.Back) ? 1 : (-1));
+    steerForce *= directionMultiplier;
+
+    // todo see if this is necessary. This logic is from the Base game Ship
+    if (m_speed is Speed.Back or Speed.Slow)
+    {
+      steerForce += ShipDirection.right * m_stearForce * (0f - m_rudderValue) * directionMultiplier;
+    }
+
+    AddForceAtPosition(steerForce * Time.fixedDeltaTime, steerOffset,
+      ForceMode.VelocityChange);
+  }
+
+  private static void ApplySailForce(VehicleShip instance, bool isFlying = false)
+  {
+    if (!instance || !instance?.m_body || !instance?.ShipDirection) return;
+
     var sailArea = 0f;
 
     if ((bool)instance._controller)
@@ -1173,8 +1535,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
         sailArea *= 0.5f;
         break;
       case Speed.Slow:
-        // sailArea = Math.Min(0.1f, sailArea * 0.1f);
-        // sailArea = 0.1f;
         sailArea = 0;
         break;
       case Speed.Stop:
@@ -1184,54 +1544,19 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
         break;
     }
 
-    if (instance._controller.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
+    if (instance.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
     {
       sailArea = 0f;
     }
 
-    var sailForce = instance.GetSailForce(sailArea, Time.fixedDeltaTime);
+    var sailForce = instance.GetSailForce(sailArea, Time.fixedDeltaTime, isFlying);
 
     var position = instance.m_body.worldCenterOfMass;
 
 
-    //  * Math.Max(0.5f, ValheimRaftPlugin.Instance.RaftSailForceMultiplier.Value)
-    // set the speed, this may need to be converted to a vector for the multiplier
     instance.AddForceAtPosition(
       sailForce,
       position,
-      ForceMode.VelocityChange);
-
-
-    // steer offset will need to be size x or size z depending on location of rotation.
-    var stearoffset = instance.ShipDirection.position -
-                      instance.ShipDirection.forward *
-                      instance.GetFloatSizeFromDirection(Vector3.forward);
-    var num7 = num5 * instance.m_stearVelForceFactor;
-    instance.AddForceAtPosition(
-      instance.ShipDirection.right *
-      (num7 * (0f - instance.m_rudderValue) * Time.fixedDeltaTime),
-      stearoffset, ForceMode.VelocityChange);
-    var stearforce = Vector3.zero;
-    switch (instance.m_speed)
-    {
-      case Speed.Slow:
-        stearforce += instance.ShipDirection.forward *
-                      (instance.m_backwardForce * (1f - Mathf.Abs(instance.m_rudderValue)));
-        break;
-      case Speed.Back:
-        stearforce += -instance.ShipDirection.forward *
-                      (instance.m_backwardForce * (1f - Mathf.Abs(instance.m_rudderValue)));
-        break;
-    }
-
-    if (instance.m_speed == Speed.Back || instance.m_speed == Speed.Slow)
-    {
-      float num6 = instance.m_speed != Speed.Back ? 1 : -1;
-      stearforce += instance.ShipDirection.right *
-                    (instance.m_stearForce * (0f - instance.m_rudderValue) * num6);
-    }
-
-    instance.AddForceAtPosition(stearforce * Time.fixedDeltaTime, stearoffset,
       ForceMode.VelocityChange);
   }
 }

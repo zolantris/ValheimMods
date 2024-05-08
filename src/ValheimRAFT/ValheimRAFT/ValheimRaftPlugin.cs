@@ -44,6 +44,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
 
   public ConfigEntry<bool> AllowFlight { get; set; }
+  public ConfigEntry<bool> AllowCustomRudderSpeeds { get; set; }
 
   public ConfigEntry<string> PluginFolderName { get; set; }
   public ConfigEntry<float> InitialRaftFloorHeight { get; set; }
@@ -61,10 +62,17 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> MaxPropulsionSpeed { get; set; }
   public ConfigEntry<float> MaxSailSpeed { get; set; }
   public ConfigEntry<float> SpeedCapMultiplier { get; set; }
-  public ConfigEntry<bool> FlightVerticalIsToggle { get; set; }
+  public ConfigEntry<float> VehicleRudderSpeedBack { get; set; }
+  public ConfigEntry<float> VehicleRudderSpeedSlow { get; set; }
+  public ConfigEntry<float> VehicleRudderSpeedHalf { get; set; }
+
+  public ConfigEntry<float> VehicleRudderSpeedFull { get; set; }
+
+  public ConfigEntry<bool> FlightVerticalToggle { get; set; }
   public ConfigEntry<bool> FlightVerticalAccelerates { get; set; }
   public ConfigEntry<bool> FlightNoAngularVelocity { get; set; }
   public ConfigEntry<bool> FlightHasDrag { get; set; }
+  public ConfigEntry<bool> FlightHasRudderOnly { get; set; }
 
 
   // for those that want to cruise with rudder
@@ -95,6 +103,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> AutoUpgradeV1Raft { get; set; }
   public ConfigEntry<bool> ProtectVehiclePiecesOnErrorFromWearNTearDamage { get; set; }
   public ConfigEntry<bool> DebugRemoveStartMenuBackground { get; set; }
+  public ConfigEntry<bool> HullCollisionOnly { get; set; }
 
 
   /**
@@ -122,17 +131,17 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    */
   private void CreateVehicleConfig()
   {
-    AutoUpgradeV1Raft = Config.Bind("ValheimVehicles", "Auto Upgrade Raft", false,
+    EnableExactVehicleBounds = Config.Bind("ValheimVehicles", "EnableExactVehicleBounds", true,
       CreateConfigDescription(
-        "Automatically updates the RaftV1 to the new raft. This allows players to update smoothly into the new raft"));
-    EnableExactVehicleBounds = Config.Bind("ValheimVehicles", "EnableExactVehicleBounds", false,
-      CreateConfigDescription(
-        "Ensures that a piece placed within the raft is included in the float collider correctly. This only applies if the piece does not have proper colliders. Likely useful only for compatibility for other mods. Piece bounds of X and Z are considered, no height is factored into floating collider bounds (which controls ship floatation). Height IS factored into the onboard trigger.",
-        false));
+        "Ensures that a piece placed within the raft is included in the float collider correctly. This only applies if the piece does not have proper colliders. Likely useful only for compatibility for other mods. Piece bounds of X and Z are considered, no height is factored into floating collider bounds (which controls ship floatation). Height IS factored into the onboard trigger."));
   }
 
   private void CreateColliderConfig()
   {
+    HullCollisionOnly = Config.Bind("Floatation", "Only Use Hulls For Floatation Collisions", true,
+      CreateConfigDescription(
+        "Makes the Ship Hull prefabs be the sole source of collisions, meaning ships with wider tops will not collide at bottom terrain due to their width above water. Requires a Hull, without a hull it will previous box around all items in ship",
+        false));
     FloatingColliderVerticalCenterOffset = Config.Bind("Debug",
       "FloatingColliderVerticalCenterOffset",
       -0.2f,
@@ -169,9 +178,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private void CreatePropulsionConfig()
   {
     ShowShipStats = Config.Bind("Debug", "ShowShipState", true);
-    MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 18f,
+    MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxPropulsionSpeed", 30f,
       CreateConfigDescription(
-        "Sets the absolute max speed a ship can ever hit. Prevents or enables space launches",
+        "Sets the absolute max speed a ship can ever hit. This is capped on the vehicle, so no forces applied will be able to exceed this value. 20-30f is safe, higher numbers could let the ship fail off the map",
         true));
     MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 10f,
       CreateConfigDescription(
@@ -185,16 +194,17 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         "Sets the speed at which it becomes significantly harder to gain speed per sail area",
         true));
 
-    // RudderSpeed2 = Config.Bind("Propulsion", "RudderSpeed2", 5f,
-    //   CreateConfigDescription(
-    //     "Max speed at rudder speed 2.", true));
-    // RudderSpeed3 = Config.Bind("Propulsion", "RudderSpeed3", 10f,
-    //   CreateConfigDescription(
-    //     "", true));
-    // AllowRudderSpeed = Config.Bind("Propulsion", "AllowRudderSpeed", true,
-    //   CreateConfigDescription(
-    //     "", true));
+    // rudder
+    VehicleRudderSpeedBack = Config.Bind("Propulsion", "Rudder Back Speed", 1f,
+      new ConfigDescription("Set the Back speed of rudder, this will apply with sails"));
+    VehicleRudderSpeedSlow = Config.Bind("Propulsion", "Rudder Slow Speed", 1f,
+      new ConfigDescription("Set the Half speed of rudder, this will apply with sails"));
+    VehicleRudderSpeedHalf = Config.Bind("Propulsion", "Rudder Half Speed", 2f,
+      new ConfigDescription("Set the Slow speed of rudder, this will apply with sails"));
+    VehicleRudderSpeedFull = Config.Bind("Propulsion", "Rudder Full Speed", 4f,
+      new ConfigDescription("Set the Full speed of rudder, this will apply with sails"));
 
+    // ship weight
     HasShipWeightCalculations = Config.Bind("Propulsion", "HasShipWeightCalculations", true,
       CreateConfigDescription(
         "enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less"));
@@ -250,7 +260,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
           }
         }));
 
-    ServerRaftUpdateZoneInterval = Config.Bind<float>("Server config",
+    ServerRaftUpdateZoneInterval = Config.Bind("Server config",
       "ServerRaftUpdateZoneInterval",
       10f,
       new ConfigDescription(
@@ -282,6 +292,15 @@ public class ValheimRaftPlugin : BaseUnityPlugin
             IsAdminOnly = true
           }
         }));
+    AllowCustomRudderSpeeds = Config.Bind("Server config", "AllowCustomRudderSpeeds", true,
+      new ConfigDescription("Allow the raft to use custom rudder speeds set by the player",
+        (AcceptableValueBase)null, new object[1]
+        {
+          (object)new ConfigurationManagerAttributes()
+          {
+            IsAdminOnly = true
+          }
+        }));
   }
 
   private void CreateFlightPropulsionConfig()
@@ -289,7 +308,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     FlightVerticalAccelerates = Config.Bind<bool>("Propulsion",
       "Flight Vertical will increase in speed ever second the toggle is held",
       true, "Slowly accelerates accent and descent.");
-    FlightVerticalIsToggle = Config.Bind<bool>("Propulsion",
+    FlightVerticalToggle = Config.Bind<bool>("Propulsion",
       "Flight Vertical Continues UntilToggled",
       true,
       "Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button");
@@ -301,13 +320,17 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       "Enable Flight Drag",
       true,
       "Makes the forward or backward velocity drop fast when velocity decreases. Makes flying easier");
+    FlightHasRudderOnly = Config.Bind<bool>("Propulsion",
+      "Only allow rudder speeds during flight",
+      true,
+      "Flight allows for different rudder speeds, only use those and ignore sails");
   }
 
   private void CreateDebugConfig()
   {
     DebugRemoveStartMenuBackground =
       Config.Bind("Debug", "DebugRemoveStartMenuBackground", false,
-        "Removes the start scene background");
+        "Removes the start scene background, only use this if you want to speedup start time");
     DisplacedRaftAutoFix = Config.Bind("Debug",
       "DisplacedRaftAutoFix", false,
       "Automatically fix a displaced glitched out raft if the player is standing on the raft. This will make the player fall into the water briefly but avoid having to run 'raftoffset 0 0 0'");
@@ -321,9 +344,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreateBaseConfig()
   {
-    EnableMetrics = Config.Bind("Debug", "enableMetrics", true,
+    EnableMetrics = Config.Bind("Debug", "enableMetrics, (sentryPlugin)", true,
       CreateConfigDescription(
-        "Enable sentry debug logging which will make it easier to troubleshoot raft errors and detect performance bottlenecks. The bare minimum is collected, and only data related to ValheimRaft. See https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT#logging-metrics for more details about what is collected"));
+        "Enable sentry debug logging. Requires sentry logging plugin installed to work. Sentry Logging plugin will make it easier to troubleshoot raft errors and detect performance bottlenecks. The bare minimum is collected, and only data related to ValheimRaft. See https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT#logging-metrics for more details about what is collected"));
     HasDebugBase = Config.Bind("Debug", "HasDebugBase", false,
       CreateConfigDescription(
         "Outputs more debug logs for the MoveableBaseRootComponent. Useful for troubleshooting errors, but may fill logs quicker"));
@@ -408,6 +431,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     // vehicles
     CreateVehicleConfig();
     CreatePropulsionConfig();
+    CreateFlightPropulsionConfig();
   }
 
   internal void ApplyMetricIfAvailable()

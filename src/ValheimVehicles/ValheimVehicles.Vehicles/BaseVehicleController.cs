@@ -1718,7 +1718,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       : floatColliderCenterOffset.y;
     var blockingColliderCenterOffset = new Vector3(_vehicleBounds.center.x,
       blockingColliderCenterY, _vehicleBounds.center.z);
-    var blockingColliderSize = new Vector3(_vehicleBounds.size.x, blockingColliderYSize,
+    var blockingColliderSize = new Vector3(_vehicleBounds.size.x, floatColliderSize.y,
       _vehicleBounds.size.z);
 
     // Assign all the colliders

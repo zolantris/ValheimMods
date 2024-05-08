@@ -122,11 +122,18 @@ public class WearNTear_Patch
   [HarmonyPrefix]
   private static bool WearNTear_Destroy(WearNTear __instance)
   {
-    // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
-    // allows for skipping other checks since this is the ship that needs to be destroyed and not trigger a loop
     if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleShip))
     {
-      return BaseVehicleController.CanDestroyVehicle(__instance.m_nview);
+      try
+      {
+        var canDestroyVehicle = BaseVehicleController.CanDestroyVehicle(__instance.m_nview);
+        return canDestroyVehicle;
+      }
+      catch
+      {
+        // if the mod is crashed it will not delete the raft controlling object to prevent the raft from being deleted if the user had a bad install or the game updated
+        return false;
+      }
     }
 
 

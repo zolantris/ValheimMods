@@ -408,47 +408,43 @@ public class Player_Patch
           ref autoRun, blockHold);
         if ((bool)rudder.Controls)
         {
-          // might be a problem....
-          var waterVehicleController = rudder.GetComponentInParent<WaterVehicleController>();
-          if (waterVehicleController != null)
+          // // might be a problem....
+          // var waterVehicleController = rudder.GetComponentInParent<WaterVehicleController>();
+          // if (waterVehicleController != null)
+          // {
+          //   // if (anchorKey)
+          //   // {
+          //   //   Logger.LogDebug("Anchor button is down setting anchor");
+          //   //
+          //   //   waterVehicleController.VehicleInstance.ToggleAnchor();
+          //   // }
+          //   // else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
+          //   // {
+          //   //   waterVehicleController.VehicleInstance.Ascend();
+          //   // }
+          //   // else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
+          //   // {
+          //   //   waterVehicleController.VehicleInstance.Descend();
+          //   // }
+          // }
+
+          // todo remove deprecated method once MBRaft is using VehicleShip
+          var mb = rudder.GetComponentInParent<MoveableBaseShipComponent>();
+          // may break, this might need GetComponent
+          if ((bool)mb)
           {
             if (anchorKey)
             {
               Logger.LogDebug("Anchor button is down setting anchor");
-
-              waterVehicleController.ToggleAnchor();
+              mb.SetAnchor(!mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored));
             }
             else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
             {
-              waterVehicleController.Ascend();
+              mb.Ascend();
             }
             else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
             {
-              waterVehicleController.Descent();
-            }
-          }
-
-          else
-          {
-            // todo remove deprecated method once MBRaft is using VehicleShip
-
-            var mb = rudder.GetComponentInParent<MoveableBaseShipComponent>();
-            // may break, this might need GetComponent
-            if ((bool)mb)
-            {
-              if (anchorKey)
-              {
-                Logger.LogDebug("Anchor button is down setting anchor");
-                mb.SetAnchor(!mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored));
-              }
-              else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
-              {
-                mb.Ascend();
-              }
-              else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
-              {
-                mb.Descent();
-              }
+              mb.Descent();
             }
           }
         }
