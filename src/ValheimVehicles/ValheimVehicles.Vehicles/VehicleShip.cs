@@ -58,8 +58,9 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   private GameObject _ghostContainer;
   private ImpactEffect _impactEffect;
   public float m_targetHeight { get; set; }
-  private const float _maxVerticalAccel = 5f;
-  private float _currentVerticalOffset = 1f;
+
+  // unfortunately the current approach does not allow increasing this beyond 1f otherwise it causes massive jitters when changing altitude.
+  private float _maxVerticalOffset = 1f;
 
 
   public static bool CustomShipPhysicsEnabled = false;
@@ -228,18 +229,19 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
         return;
       }
 
-      m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y + _currentVerticalOffset,
+      m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y + _maxVerticalOffset,
         ZoneSystem.instance.m_waterLevel, 200f);
     }
 
     m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
+    ToggleShipEffects();
   }
 
   public void AutoAscendUpdate()
   {
     if (!_isAscending) return;
 
-    m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y + _currentVerticalOffset,
+    m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y + _maxVerticalOffset,
       ZoneSystem.instance.m_waterLevel, 200f);
     m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
   }
@@ -247,7 +249,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   public void AutoDescendUpdate()
   {
     if (!_isDescending) return;
-    m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y - _currentVerticalOffset,
+    m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y - _maxVerticalOffset,
       ZoneSystem.instance.m_waterLevel, 200f);
     m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
   }
@@ -393,10 +395,10 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
         return;
       }
 
-      m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y - _currentVerticalOffset,
+      m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y - _maxVerticalOffset,
         ZoneSystem.instance.m_waterLevel, 200f);
 
-      if (m_floatcollider.transform.position.y - _currentVerticalOffset <=
+      if (m_floatcollider.transform.position.y - _maxVerticalOffset <=
           ZoneSystem.instance.m_waterLevel)
       {
         m_targetHeight = 0f;
@@ -404,6 +406,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
 
     m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
+    ToggleShipEffects();
   }
 
   public bool IsAnchored()
@@ -565,6 +568,18 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     {
       ShipEffects = GetComponent<VehicleShipEffects>();
       ShipEffectsObj = ShipEffects.gameObject;
+    }
+  }
+
+  private void ToggleShipEffects()
+  {
+    if (m_targetHeight > 0f)
+    {
+      ShipEffectsObj?.SetActive(false);
+    }
+    else
+    {
+      ShipEffectsObj.SetActive(true);
     }
   }
 
@@ -1507,6 +1522,11 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     if (m_speed is Speed.Back or Speed.Slow)
     {
       steerForce += ShipDirection.right * m_stearForce * (0f - m_rudderValue) * directionMultiplier;
+    }
+
+    if (m_targetHeight > 0)
+    {
+      transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
     }
 
     AddForceAtPosition(steerForce * Time.fixedDeltaTime, steerOffset,
