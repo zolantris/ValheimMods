@@ -1709,10 +1709,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
      * - may need an additional size
      * - may need more logic for water masks (hiding water on boat) and other boat magic that has not been added yet.
      */
-    var blockingColliderYSize =
-      m_hullPieces.Count > 0
-        ? Math.Max(Math.Min(1f, averageFloatHeight), 3f)
-        : floatColliderSize.y;
+    // var blockingColliderYSize =
+    //   m_hullPieces.Count > 0
+    //     ? Math.Max(Math.Min(1f, averageFloatHeight), 3f)
+    //     : floatColliderSize.y;
     var blockingColliderCenterY = m_hullPieces.Count > 0
       ? _hullBounds.center.y + Math.Abs(floatColliderSize.y)
       : floatColliderCenterOffset.y;
@@ -1720,6 +1720,14 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       blockingColliderCenterY, _vehicleBounds.center.z);
     var blockingColliderSize = new Vector3(_vehicleBounds.size.x, floatColliderSize.y,
       _vehicleBounds.size.z);
+
+    if (ValheimRaftPlugin.Instance.HullCollisionOnly.Value)
+    {
+      blockingColliderCenterOffset.x = _hullBounds.center.x;
+      blockingColliderCenterOffset.z = _hullBounds.center.z;
+      blockingColliderSize.x = _hullBounds.size.x;
+      blockingColliderSize.z = _hullBounds.size.z;
+    }
 
     // Assign all the colliders
     m_blockingcollider.size = blockingColliderSize;
