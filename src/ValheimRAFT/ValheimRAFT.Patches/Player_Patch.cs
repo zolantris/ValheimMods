@@ -346,32 +346,9 @@ public class Player_Patch
    * todo migrate to a hotkey handler
    * This way of detecting keys is much more efficient and is not bogged down my Component getters
    */
-  public static bool GetAnchorKey()
+  private static bool GetAnchorKey()
   {
-    return false;
-    // if (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "False" &&
-    //     ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set")
-    // {
-    //   var isLeftShiftDown = ZInput.GetButtonDown("LeftShift");
-    //   var mainKeyString = ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.MainKey
-    //     .ToString();
-    //   var buttonDownDynamic =
-    //     ZInput.GetButtonDown(mainKeyString);
-    //
-    //   // Logger.LogDebug($"AnchorKey: leftShift {isLeftShiftDown}, mainKey: {mainKeyString}");
-    //   // Logger.LogDebug(
-    //   //   $"AnchorKey isDown: {ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown()}");
-    //   return buttonDownDynamic || isLeftShiftDown ||
-    //          ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown();
-    // }
-    //
-    // var isPressingRun = ZInput.GetButtonDown("Run") || ZInput.GetButtonDown("JoyRun");
-    // var isPressingJoyRun = ZInput.GetButtonDown("JoyRun");
-    //
-    // // Logger.LogDebug(
-    // //   $"AnchorKey isPressingRun: {isPressingRun},isPressingJoyRun {isPressingJoyRun} ");
-    //
-    // return isPressingRun || isPressingJoyRun;
+    return VehicleShip.GetAnchorKey();
   }
 
   // Logic for anchor needs to be moved to the Update method instead of fixed update which SetControls is called in
@@ -381,13 +358,9 @@ public class Player_Patch
     bool secondaryAttack, bool block, bool blockHold, bool jump, bool crouch, bool run,
     bool autoRun)
   {
-    var anchorKey = GetAnchorKey();
-
     var isAttached = __instance.IsAttached();
     var shouldHandle = isAttached && (bool)__instance.m_attachPoint &&
                        (bool)__instance.m_attachPoint.parent;
-
-
     if (shouldHandle)
     {
       if (movedir.x == 0f && movedir.y == 0f && !jump && !crouch && !attack && !attackHold &&
@@ -406,45 +379,26 @@ public class Player_Patch
       {
         __instance.SetDoodadControlls(ref movedir, ref ((Character)__instance).m_lookDir, ref run,
           ref autoRun, blockHold);
-        if ((bool)rudder.Controls)
+        if ((bool)rudder.deprecatedShipControls)
         {
-          // // might be a problem....
-          // var waterVehicleController = rudder.GetComponentInParent<WaterVehicleController>();
-          // if (waterVehicleController != null)
-          // {
-          //   // if (anchorKey)
-          //   // {
-          //   //   Logger.LogDebug("Anchor button is down setting anchor");
-          //   //
-          //   //   waterVehicleController.VehicleInstance.ToggleAnchor();
-          //   // }
-          //   // else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
-          //   // {
-          //   //   waterVehicleController.VehicleInstance.Ascend();
-          //   // }
-          //   // else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
-          //   // {
-          //   //   waterVehicleController.VehicleInstance.Descend();
-          //   // }
-          // }
-
           // todo remove deprecated method once MBRaft is using VehicleShip
-          var mb = rudder.GetComponentInParent<MoveableBaseShipComponent>();
-          // may break, this might need GetComponent
+          var mb = rudder.GetComponentInParent<MoveableBaseRootComponent>();
           if ((bool)mb)
           {
+            var anchorKey = GetAnchorKey();
             if (anchorKey)
             {
               Logger.LogDebug("Anchor button is down setting anchor");
-              mb.SetAnchor(!mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored));
+              mb.shipController.SetAnchor(
+                !mb.shipController.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored));
             }
             else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
             {
-              mb.Ascend();
+              mb.shipController.Ascend();
             }
             else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
             {
-              mb.Descent();
+              mb.shipController.Descent();
             }
           }
         }
@@ -516,10 +470,19 @@ public class Player_Patch
   {
     var hasDoodadController = player.m_doodadController != null;
     var isShipWheelControllerValid = player.m_doodadController?.IsValid() ?? false;
+    var controlledComponent = player.m_doodadController?.GetControlledComponent();
+
+    if (controlledComponent != null &&
+        controlledComponent.name.Contains(PrefabNames.m_raft))
+    {
+      return controlledComponent;
+    }
+
     var vvShipResult =
       hasDoodadController && isShipWheelControllerValid
-        ? player.m_doodadController?.GetControlledComponent() as VehicleShip
+        ? controlledComponent as VehicleShip
         : null;
+
     return vvShipResult;
   }
 }

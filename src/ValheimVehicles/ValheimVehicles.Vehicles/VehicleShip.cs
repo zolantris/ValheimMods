@@ -350,9 +350,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   private void ToggleAutoDescend()
   {
-    // if the previous toggle target is equal it will stop the automatic descent
-    // (isAscending && _isAscending == isAscending) ||
-    // (isAscending == false && _isDescending)
     if (m_targetHeight == 0f)
     {
       _isAscending = false;
@@ -494,7 +491,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     OnFlightControls();
   }
 
-  private static bool GetAnchorKey()
+  public static bool GetAnchorKey()
   {
     if (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "False" &&
         ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set")

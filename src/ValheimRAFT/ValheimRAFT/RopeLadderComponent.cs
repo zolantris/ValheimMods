@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 
 namespace ValheimRAFT;
@@ -195,6 +196,12 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
         GameObject go2 = new GameObject();
         go2.transform.SetParent(m_attachPoint);
         m_ghostAttachPoint = go2.AddComponent<LineRenderer>();
+        var unlitColor = LoadValheimVehicleAssets.PieceShader;
+        var material = new Material(unlitColor)
+        {
+          color = Color.green
+        };
+        m_ghostAttachPoint.material = material;
         m_ghostAttachPoint.widthMultiplier = 0.1f;
       }
 

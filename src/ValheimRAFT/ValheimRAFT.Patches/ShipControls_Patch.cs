@@ -8,9 +8,46 @@ public class ShipControls_Patch
 {
   [HarmonyPatch(typeof(ShipControlls), "Awake")]
   [HarmonyPrefix]
-  private static bool ShipControlls_Awake(Ship __instance)
+  private static bool ShipControlls_Awake(ShipControlls __instance)
   {
-    return !__instance.GetComponentInParent<SteeringWheelComponent>();
+    var isSteeringWheelParent = __instance.GetComponentInParent<SteeringWheelComponent>();
+    var mbRoot = isSteeringWheelParent != null
+      ? isSteeringWheelParent.GetComponentInParent<MoveableBaseRootComponent>()
+      : null;
+
+    if (!(bool)isSteeringWheelParent || !(bool)mbRoot) return true;
+
+    __instance.m_nview = __instance.GetComponent<ZNetView>();
+    __instance.m_ship = mbRoot.m_ship;
+
+    return true;
+  }
+
+  [HarmonyPatch(typeof(ShipControlls), "RPC_RequestControl")]
+  [HarmonyPrefix]
+  private static bool ShipControlls_RequestControl(ShipControlls __instance, long sender,
+    long playerID)
+  {
+    if (!__instance.m_nview.IsOwner() || !__instance.m_ship.IsPlayerInBoat(playerID))
+      return false;
+    if (__instance.GetUser() == playerID || !__instance.HaveValidUser())
+    {
+      __instance.m_nview.GetZDO().Set(ZDOVars.s_user, playerID);
+      __instance.m_nview.InvokeRPC(sender, "RequestRespons", (object)true);
+    }
+    else
+      __instance.m_nview.InvokeRPC(sender, "RequestRespons", (object)false);
+
+    return false;
+    // var isSteeringWheelParent = __instance.GetComponentInParent<SteeringWheelComponent>();
+    // var mbRoot = isSteeringWheelParent != null
+    //   ? isSteeringWheelParent.GetComponentInParent<MoveableBaseRootComponent>()
+    //   : null;
+    //
+    // if (!(bool)isSteeringWheelParent || !(bool)mbRoot) return true;
+    //
+    // __instance.m_nview = __instance.GetComponent<ZNetView>();
+    // __instance.m_ship = mbRoot.m_ship;
   }
 
   [HarmonyPatch(typeof(ShipControlls), "Interact")]
@@ -26,7 +63,6 @@ public class ShipControls_Patch
       }
 
       PatchSharedData.PlayerLastUsedControls = __instance;
-      __instance.m_ship.m_controlGuiPos.position = __instance.transform.position;
     }
   }
 

@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
+using ValheimRAFT.Patches;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
@@ -52,6 +53,12 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
   public string GetHoverText()
   {
+    // deprecated MBRaft support
+    if ((bool)deprecatedShipControls)
+    {
+      return deprecatedShipControls.GetHoverText();
+    }
+
     var controller = ShipInstance?.VehicleController?.Instance;
     if (controller == null)
     {
@@ -104,6 +111,11 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
   public string GetHoverName()
   {
+    if ((bool)deprecatedShipControls)
+    {
+      return deprecatedShipControls.GetHoverName();
+    }
+
     return Localization.instance.Localize("$valheim_vehicles_wheel");
   }
 
@@ -112,6 +124,10 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     if (ShipInstance != null)
     {
       ShipInstance.Instance.MovementController.lastUsedWheelComponent = this;
+    }
+    else if ((bool)deprecatedShipControls)
+    {
+      PatchSharedData.PlayerLastUsedControls = deprecatedShipControls;
     }
   }
 
@@ -122,7 +138,13 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
       return false;
     }
 
-    // gameObject.AddComponent<ValheimVehicles.Vehicles.Components.CircleWindIndicator>();
+    // for mbraft
+    if ((bool)deprecatedShipControls)
+    {
+      deprecatedShipControls.Interact(user, hold, alt);
+      deprecatedShipControls.m_ship.m_controlGuiPos.position = transform.position;
+    }
+
     if (user == Player.m_localPlayer)
     {
       var baseVehicle = GetComponentInParent<BaseVehicleController>();
@@ -142,7 +164,8 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
     var canUse = InUseDistance(user);
 
-    if (hold || !ShipInstance?.Instance || !canUse)
+    var noControls = !((bool)deprecatedShipControls || ShipInstance?.Instance);
+    if (hold || noControls || !canUse)
     {
       return false;
     }
@@ -169,6 +192,16 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
           AttachPoint);
         return true;
       }
+    else if ((bool)deprecatedShipControls)
+    {
+      if (player)
+      {
+        player.m_lastGroundBody = deprecatedShipControls.m_ship.m_body;
+      }
+
+      deprecatedShipControls.m_nview.InvokeRPC("RequestControl", (object)player.GetPlayerID());
+      return false;
+    }
 
     if (player == null || player.IsEncumbered())
     {
@@ -194,16 +227,33 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
   public void OnUseStop(Player player)
   {
+    if ((bool)deprecatedShipControls)
+    {
+      deprecatedShipControls.OnUseStop(player);
+      return;
+    }
+
     ShipInstance.Instance.MovementController.FireReleaseControl(player);
   }
 
   public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run, bool autoRun, bool block)
   {
+    if ((bool)deprecatedShipControls)
+    {
+      deprecatedShipControls.ApplyControlls(moveDir, lookDir, run, autoRun, block);
+      return;
+    }
+
     ShipInstance?.Instance.ApplyControls(moveDir);
   }
 
   public Component GetControlledComponent()
   {
+    if ((bool)deprecatedShipControls)
+    {
+      return transform.parent.GetComponent<MoveableBaseRootComponent>().m_ship;
+    }
+
     return ShipInstance.Instance;
   }
 
@@ -218,18 +268,22 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
   }
 
   /**
-   * @Deprecated for Older ValheimRAFT.MoveableBaseRootComponent compatibility. Likely will just remove the ship controller from the MBRaft.
+   * @Deprecated for Older ValheimRAFT.MoveableBaseRootComponent compatibility. Future updates will remove support for MBRaft after a migration script is available.
    */
   public void DEPRECATED_InitializeControls(ZNetView netView)
   {
     if (!(bool)_controls)
     {
-      deprecatedShipControls = netView.gameObject.AddComponent<ShipControlls>();
-      deprecatedShipControls.m_hoverText = "$mb_rudder_use";
+      var mbRoot = transform.parent.GetComponent<MoveableBaseRootComponent>();
+      if (mbRoot == null) return;
+      deprecatedShipControls = mbRoot.m_ship.m_shipControlls;
+      deprecatedShipControls.m_maxUseRange = 10f;
+      deprecatedShipControls.m_hoverText = Localization.instance.Localize("$mb_rudder_use");
       deprecatedShipControls.m_attachPoint =
         AttachPoint ? AttachPoint : transform.Find("attachpoint");
       deprecatedShipControls.m_attachAnimation = "Standing Torch Idle right";
       deprecatedShipControls.m_detachOffset = new Vector3(0f, 0f, 0f);
+      deprecatedShipControls.m_ship = mbRoot.m_ship;
     }
 
     if (!wheelTransform) wheelTransform = netView.transform.Find("controls/wheel");
