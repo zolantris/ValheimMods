@@ -143,8 +143,8 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
   public void SyncRigidbodyStats(bool flight)
   {
-    var drag = (flight ? 1f : 0.01f);
-    var angularDrag = (flight ? 1f : 0.01f);
+    var drag = (flight ? 1f : 0.5f);
+    var angularDrag = (flight ? 1f : 0.5f);
     base.SyncRigidbodyStats(drag, angularDrag);
   }
 

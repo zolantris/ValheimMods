@@ -69,16 +69,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> VehicleRudderSpeedFull { get; set; }
 
   public ConfigEntry<bool> FlightVerticalToggle { get; set; }
-  public ConfigEntry<bool> FlightVerticalAccelerates { get; set; }
-  public ConfigEntry<bool> FlightNoAngularVelocity { get; set; }
-  public ConfigEntry<bool> FlightHasDrag { get; set; }
   public ConfigEntry<bool> FlightHasRudderOnly { get; set; }
 
 
-  // for those that want to cruise with rudder
-  // public ConfigEntry<bool> AllowRudderSpeed { get; set; }
-  // public ConfigEntry<float> RudderSpeed2 { get; set; }
-  // public ConfigEntry<float> RudderSpeed3 { get; set; }
   public ConfigEntry<float> SailTier1Area { get; set; }
   public ConfigEntry<float> SailTier2Area { get; set; }
   public ConfigEntry<float> SailTier3Area { get; set; }
@@ -305,21 +298,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreateFlightPropulsionConfig()
   {
-    FlightVerticalAccelerates = Config.Bind<bool>("Propulsion",
-      "Flight Vertical will increase in speed ever second the toggle is held",
-      true, "Slowly accelerates accent and descent.");
     FlightVerticalToggle = Config.Bind<bool>("Propulsion",
       "Flight Vertical Continues UntilToggled",
       true,
       "Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button");
-    FlightNoAngularVelocity = Config.Bind<bool>("Propulsion",
-      "Flight no angular velocity",
-      true,
-      "Makes the flying vehicle use only foward or backward velocity. This makes the ship less realistic but much more controllable.");
-    FlightHasDrag = Config.Bind<bool>("Propulsion",
-      "Enable Flight Drag",
-      true,
-      "Makes the forward or backward velocity drop fast when velocity decreases. Makes flying easier");
     FlightHasRudderOnly = Config.Bind<bool>("Propulsion",
       "Only allow rudder speeds during flight",
       true,

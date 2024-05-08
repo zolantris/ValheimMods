@@ -76,6 +76,9 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   // The determines the directional movement of the ship 
   public GameObject ColliderParentObj;
 
+  private bool _isHoldingDescend = false;
+  private bool _isHoldingAscend = false;
+
   public IWaterVehicleController VehicleController => _controller;
 
   public GameObject? ShipEffectsObj;
@@ -184,6 +187,12 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     var isAnchored = VehicleFlags.HasFlag(
       WaterVehicleFlags.IsAnchored);
 
+    if (isEnabled)
+    {
+      _isAscending = false;
+      _isDescending = false;
+    }
+
     // skips setting Flag if it already is set
     if (isAnchored != isEnabled)
     {
@@ -239,8 +248,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   public void AutoAscendUpdate()
   {
-    if (!_isAscending) return;
-
+    if (!_isAscending || _isHoldingAscend || _isHoldingDescend) return;
     m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y + _maxVerticalOffset,
       ZoneSystem.instance.m_waterLevel, 200f);
     m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
@@ -248,7 +256,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   public void AutoDescendUpdate()
   {
-    if (!_isDescending) return;
+    if (!_isDescending || _isHoldingDescend || _isHoldingAscend) return;
     m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y - _maxVerticalOffset,
       ZoneSystem.instance.m_waterLevel, 200f);
     m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
@@ -267,8 +275,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       return;
     }
 
-    // AutoAscendUpdate();
-    // AutoDescendUpdate();
+    AutoAscendUpdate();
+    AutoDescendUpdate();
   }
 
 
@@ -354,15 +362,19 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
     if (!ValheimRaftPlugin.Instance.FlightVerticalToggle.Value) return;
 
+    if (!_isHoldingDescend && _isDescending)
+    {
+      _isAscending = false;
+      _isDescending = false;
+      return;
+    }
+
     _isAscending = false;
     _isDescending = true;
   }
 
   private void ToggleAutoAscend()
   {
-    // if the previous toggle target is equal it will stop the automatic descent
-    // (isAscending && _isAscending == isAscending) ||
-    // (isAscending == false && _isDescending)
     if (m_targetHeight == 0f)
     {
       _isAscending = false;
@@ -371,6 +383,13 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
 
     if (!ValheimRaftPlugin.Instance.FlightVerticalToggle.Value) return;
+
+    if (!_isHoldingAscend && _isAscending)
+    {
+      _isAscending = false;
+      _isDescending = false;
+      return;
+    }
 
     _isAscending = true;
     _isDescending = false;
@@ -419,19 +438,34 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     if (!ValheimRaftPlugin.Instance.AllowFlight.Value || IsAnchored()) return;
     if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
     {
-      CancelInvoke(nameof(ToggleAutoAscend));
-      CancelInvoke(nameof(ToggleAutoDescend));
-      Ascend();
-      Invoke(nameof(ToggleAutoAscend), 1f);
-      return;
+      if (_isAscending || _isDescending)
+      {
+        _isAscending = false;
+        _isDescending = false;
+      }
+      else
+      {
+        Ascend();
+        ToggleAutoAscend();
+      }
     }
-
-    if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
+    else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
     {
-      CancelInvoke(nameof(ToggleAutoAscend));
-      CancelInvoke(nameof(ToggleAutoDescend));
-      Descend();
-      Invoke(nameof(ToggleAutoDescend), 1f);
+      if (_isDescending || _isAscending)
+      {
+        _isDescending = false;
+        _isAscending = false;
+      }
+      else
+      {
+        Descend();
+        ToggleAutoDescend();
+      }
+    }
+    else
+    {
+      _isHoldingAscend = false;
+      _isHoldingDescend = false;
     }
   }
 
@@ -494,6 +528,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   private void Update()
   {
     OnControllingWithHotKeyPress();
+    AutoVerticalFlightUpdate();
   }
 
   public bool IsReady()
@@ -700,14 +735,13 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       return;
     }
 
-    // FixShipRotation();
+    FixShipRotation();
 
     if (!_hasFloatSway)
     {
       return;
     }
 
-    // AutoVerticalFlightUpdate();
     VehiclePhysicsFixedUpdate();
   }
 

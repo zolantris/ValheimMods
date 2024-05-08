@@ -1593,6 +1593,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     // if (m_hullPieces.Count <= 0) return _vehicleBounds.center.y;
     if (m_hullPieces.Count <= 0) return 0.2f;
 
+    _hullBounds = new Bounds();
+
     foreach (var hullPiece in m_hullPieces)
     {
       var newBounds = EncapsulateColliders(_hullBounds.center, _hullBounds.size,
@@ -1721,12 +1723,17 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var blockingColliderSize = new Vector3(_vehicleBounds.size.x, floatColliderSize.y,
       _vehicleBounds.size.z);
 
-    if (ValheimRaftPlugin.Instance.HullCollisionOnly.Value)
+    if (ValheimRaftPlugin.Instance.HullCollisionOnly.Value && _hullBounds.size != Vector3.zero)
     {
       blockingColliderCenterOffset.x = _hullBounds.center.x;
       blockingColliderCenterOffset.z = _hullBounds.center.z;
       blockingColliderSize.x = _hullBounds.size.x;
       blockingColliderSize.z = _hullBounds.size.z;
+
+      floatColliderCenterOffset.x = _hullBounds.center.x;
+      floatColliderCenterOffset.z = _hullBounds.center.z;
+      floatColliderSize.x = _hullBounds.size.x;
+      floatColliderSize.z = _hullBounds.size.z;
     }
 
     // Assign all the colliders
