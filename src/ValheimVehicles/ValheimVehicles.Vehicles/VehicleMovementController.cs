@@ -4,22 +4,39 @@ using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
+using ValheimVehicles.Vehicles.Enums;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
-public class VehicleMovementController : MonoBehaviour
+public class VehicleMovementController : MonoBehaviour, IVehicleMovement
 {
   public IVehicleShip ShipInstance { get; set; }
   public Vector3 detachOffset = new(0f, 0.5f, 0f);
 
+  public VehicleMovementFlags MovementFlags { get; set; }
+
+  // flying mechanics
+  private bool _isAscending;
+  private bool _isDescending;
+  private bool _isHoldingDescend = false;
+  private bool _isHoldingAscend = false;
+
+  private const float InitialTargetHeight = 0f;
+  public float TargetHeight { get; set; } = InitialTargetHeight;
   public Transform AttachPoint { get; set; }
 
   public const string m_attachAnimation = "Standing Torch Idle right";
-  public SteeringWheelComponent lastUsedWheelComponent;
-  public ZNetView vehicleNetview;
 
-  private bool hasRegister = false;
+  public SteeringWheelComponent lastUsedWheelComponent;
+
+  public ZNetView NetView;
+  private bool _hasRegister = false;
+
+
+  // unfortunately the current approach does not allow increasing this beyond 1f otherwise it causes massive jitters when changing altitude.
+  private float _maxVerticalOffset = 1f;
+  public bool IsAnchored => MovementFlags.HasFlag(VehicleMovementFlags.IsAnchored);
 
   // public Quaternion VehicleRotation = Quaternion.Euler(Vector3.zero);
   //
@@ -50,18 +67,59 @@ public class VehicleMovementController : MonoBehaviour
 
   private void Awake()
   {
-    vehicleNetview = GetComponent<ZNetView>();
-    if (!vehicleNetview) return;
+    NetView = GetComponent<ZNetView>();
+    if (!NetView) return;
+    MovementFlags =
+      (VehicleMovementFlags)NetView.GetZDO().GetInt(VehicleZdoVars.VehicleFlags,
+        (int)MovementFlags);
     InitializeRPC();
   }
+
+  private void Update()
+  {
+    OnControllingWithHotKeyPress();
+    AutoVerticalFlightUpdate();
+  }
+
+  private void InitializeRPC()
+  {
+    if (NetView != null && _hasRegister)
+    {
+      UnRegisterRPCListeners();
+    }
+
+    if (NetView != null && !_hasRegister)
+    {
+      RegisterRPCListeners();
+      _hasRegister = true;
+    }
+  }
+
+  private void UnRegisterRPCListeners()
+  {
+    NetView.Unregister(nameof(RPC_RequestControl));
+    NetView.Unregister(nameof(RPC_RequestResponse));
+    NetView.Unregister(nameof(RPC_ReleaseControl));
+    _hasRegister = false;
+  }
+
+  private void RegisterRPCListeners()
+  {
+    NetView.Register<long>(nameof(RPC_RequestControl), RPC_RequestControl);
+    NetView.Register<bool>(nameof(RPC_RequestResponse), RPC_RequestResponse);
+    NetView.Register<long>(nameof(RPC_ReleaseControl), RPC_ReleaseControl);
+    NetView.Register(nameof(RPC_SetAnchor),
+      delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
+    _hasRegister = true;
+  }
+
 
   /**
    * Will not be supported in v3.x.x
    */
-  public void DEPRECATED_InitializeRudderWithShip(IVehicleShip vehicleShip,
-    SteeringWheelComponent steeringWheel, Ship ship)
+  public void DEPRECATED_InitializeRudderWithShip(SteeringWheelComponent steeringWheel, Ship ship)
   {
-    vehicleNetview = ship.m_nview;
+    NetView = ship.m_nview;
     ship.m_controlGuiPos = steeringWheel.transform;
     var rudderAttachPoint = steeringWheel.transform.Find("attachpoint");
     if (rudderAttachPoint != null)
@@ -70,36 +128,6 @@ public class VehicleMovementController : MonoBehaviour
     }
 
     InitializeRPC();
-  }
-
-  private void InitializeRPC()
-  {
-    if (vehicleNetview != null && hasRegister)
-    {
-      UnRegisterRPCListeners();
-    }
-
-    if (vehicleNetview != null && !hasRegister)
-    {
-      RegisterRPCListeners();
-      hasRegister = true;
-    }
-  }
-
-  private void UnRegisterRPCListeners()
-  {
-    vehicleNetview.Unregister(nameof(RPC_RequestControl));
-    vehicleNetview.Unregister(nameof(RPC_RequestResponse));
-    vehicleNetview.Unregister(nameof(RPC_ReleaseControl));
-    hasRegister = false;
-  }
-
-  private void RegisterRPCListeners()
-  {
-    vehicleNetview.Register<long>(nameof(RPC_RequestControl), RPC_RequestControl);
-    vehicleNetview.Register<bool>(nameof(RPC_RequestResponse), RPC_RequestResponse);
-    vehicleNetview.Register<long>(nameof(RPC_ReleaseControl), RPC_ReleaseControl);
-    hasRegister = true;
   }
 
   public void InitializeRudderWithShip(IVehicleShip vehicleShip,
@@ -114,148 +142,346 @@ public class VehicleMovementController : MonoBehaviour
       AttachPoint = rudderAttachPoint.transform;
     }
 
-    vehicleNetview = vehicleShip.Instance.m_nview;
+    NetView = vehicleShip.Instance.m_nview;
   }
 
   private void OnDestroy()
   {
-    if (!hasRegister) return;
+    if (!_hasRegister) return;
     UnRegisterRPCListeners();
   }
 
-  // public bool IsValid()
-  // {
-  //   return this;
-  // }
-  //
-  // public bool UseItem(Humanoid user, ItemDrop.ItemData item)
-  // {
-  //   return false;
-  // }
-
-  // public bool Interact(Humanoid character, bool repeat, bool alt)
-  // {
-  //   if (character == Player.m_localPlayer && isActiveAndEnabled)
-  //   {
-  //     var baseVehicle = GetComponentInParent<BaseVehicleController>();
-  //     if (baseVehicle != null)
-  //     {
-  //       baseVehicle.ComputeAllShipContainerItemWeight();
-  //     }
-  //     else
-  //     {
-  //       var baseRoot = GetComponentInParent<MoveableBaseRootComponent>();
-  //       if (baseRoot != null)
-  //       {
-  //         baseRoot.ComputeAllShipContainerItemWeight();
-  //       }
-  //     }
-  //
-  //     lastUsedWheelComponent = this;
-  //   }
-  //
-  //   if (repeat)
-  //   {
-  //     return false;
-  //   }
-  //
-  //   if (vehicleNetview == null) return false;
-  //
-  //   if (!vehicleNetview.IsValid())
-  //   {
-  //     return false;
-  //   }
-  //
-  //   if (!InUseDistance(character))
-  //   {
-  //     return false;
-  //   }
-  //
-  //   var player = character as Player;
-  //
-  //
-  //   var playerOnShipViaShipInstance =
-  //     ShipInstance?.Instance?.GetComponentsInChildren<Player>() ?? null;
-  //
-  //   /*
-  //    * <note /> This logic allows for the player to just look at the Raft and see if the player is a child within it.
-  //    */
-  //   if (playerOnShipViaShipInstance != null)
-  //     foreach (var player1 in playerOnShipViaShipInstance)
-  //     {
-  //       Logger.LogDebug(
-  //         $"Interact PlayerId {player1.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
-  //       if (player1.GetPlayerID() != player.GetPlayerID()) continue;
-  //       vehicleNetview.InvokeRPC(nameof(RPC_RequestControl), player.GetPlayerID());
-  //       return true;
-  //     }
-  //
-  //   if (player == null || player.IsEncumbered())
-  //   {
-  //     return false;
-  //   }
-  //
-  //   var playerOnShip = player.GetStandingOnShip();
-  //
-  //   if (playerOnShip == null)
-  //   {
-  //     Logger.LogDebug("Player is not on Ship");
-  //     return false;
-  //   }
-  //
-  //   vehicleNetview.InvokeRPC(nameof(RPC_RequestControl), player.GetPlayerID());
-  //   return false;
-  // }
-
   public void FireRequestControl(long playerId, Transform attachTransform)
   {
-    vehicleNetview.InvokeRPC(nameof(RPC_RequestControl), [playerId, attachTransform]);
+    NetView.InvokeRPC(nameof(RPC_RequestControl), [playerId, attachTransform]);
   }
-
-  // public Component GetControlledComponent()
-  // {
-  //   return ShipInstance?.Instance;
-  // }
-
-  // public Vector3 GetPosition()
-  // {
-  //   return base.transform.position;
-  // }
-  //
-  // public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run, bool autoRun, bool block)
-  // {
-  //   ShipInstance?.Instance.ApplyControls(moveDir);
-  // }
-  //
-  // public string GetHoverName()
-  // {
-  //   return Localization.instance.Localize(m_hoverText);
-  // }
 
   private void RPC_RequestControl(long sender, long playerID)
   {
     var attachTransform = lastUsedWheelComponent.AttachPoint;
 
-    var isOwner = vehicleNetview.IsOwner();
+    var isOwner = NetView.IsOwner();
     var isInBoat = ShipInstance.IsPlayerInBoat(playerID);
     if (!isOwner || !isInBoat) return;
 
     var isValidUser = false;
     if (GetUser() == playerID || !HaveValidUser())
     {
-      vehicleNetview.GetZDO().Set(ZDOVars.s_user, playerID);
+      NetView.GetZDO().Set(ZDOVars.s_user, playerID);
       isValidUser = true;
     }
 
-    vehicleNetview.InvokeRPC(sender, nameof(RPC_RequestResponse), isValidUser);
+    NetView.InvokeRPC(sender, nameof(RPC_RequestResponse), isValidUser);
   }
 
   private void RPC_ReleaseControl(long sender, long playerID)
   {
-    if (vehicleNetview.IsOwner() && GetUser() == playerID)
+    if (NetView.IsOwner() && GetUser() == playerID)
     {
-      vehicleNetview.GetZDO().Set(ZDOVars.s_user, 0L);
+      NetView.GetZDO().Set(ZDOVars.s_user, 0L);
     }
+  }
+
+  public void Descend()
+  {
+    if (MovementFlags.HasFlag(VehicleMovementFlags.IsAnchored))
+    {
+      SendSetAnchor(state: false);
+    }
+
+    var oldTargetHeight = TargetHeight;
+    if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
+    {
+      TargetHeight = 0f;
+    }
+    else
+    {
+      if (!ShipInstance.FloatCollider)
+      {
+        return;
+      }
+
+      TargetHeight = Mathf.Clamp(
+        ShipInstance.FloatCollider.transform.position.y - _maxVerticalOffset,
+        ZoneSystem.instance.m_waterLevel, 200f);
+
+      if (ShipInstance.FloatCollider.transform.position.y - _maxVerticalOffset <=
+          ZoneSystem.instance.m_waterLevel)
+      {
+        TargetHeight = 0f;
+      }
+    }
+
+    NetView.GetZDO().Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
+    ShipInstance.Instance.ToggleShipEffects();
+  }
+
+  public void Ascend()
+  {
+    if (IsAnchored)
+    {
+      SetAnchor(false);
+    }
+
+    if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
+    {
+      TargetHeight = 0f;
+    }
+    else
+    {
+      if (!ShipInstance.FloatCollider)
+      {
+        return;
+      }
+
+      TargetHeight = Mathf.Clamp(
+        ShipInstance.FloatCollider.transform.position.y + _maxVerticalOffset,
+        ZoneSystem.instance.m_waterLevel, 200f);
+    }
+
+    NetView.GetZDO().Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
+    ShipInstance.Instance.ToggleShipEffects();
+  }
+
+  public void AutoAscendUpdate()
+  {
+    if (!_isAscending || _isHoldingAscend || _isHoldingDescend) return;
+    TargetHeight = Mathf.Clamp(ShipInstance.FloatCollider.transform.position.y + _maxVerticalOffset,
+      ZoneSystem.instance.m_waterLevel, 200f);
+    NetView.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
+  }
+
+  public void AutoDescendUpdate()
+  {
+    if (!_isDescending || _isHoldingDescend || _isHoldingAscend) return;
+    TargetHeight = Mathf.Clamp(ShipInstance.FloatCollider.transform.position.y - _maxVerticalOffset,
+      ZoneSystem.instance.m_waterLevel, 200f);
+    NetView.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
+  }
+
+  public void AutoVerticalFlightUpdate()
+  {
+    if (!ValheimRaftPlugin.Instance.AllowFlight.Value ||
+        !ValheimRaftPlugin.Instance.FlightVerticalToggle.Value || IsAnchored) return;
+
+    if (Mathf.Approximately(TargetHeight, 200f) ||
+        Mathf.Approximately(TargetHeight, ZoneSystem.instance.m_waterLevel))
+    {
+      _isAscending = false;
+      _isDescending = false;
+      return;
+    }
+
+    AutoAscendUpdate();
+    AutoDescendUpdate();
+  }
+
+
+  private void ToggleAutoDescend()
+  {
+    if (TargetHeight == 0f)
+    {
+      _isAscending = false;
+      _isDescending = false;
+      return;
+    }
+
+    if (!ValheimRaftPlugin.Instance.FlightVerticalToggle.Value) return;
+
+    if (!_isHoldingDescend && _isDescending)
+    {
+      _isAscending = false;
+      _isDescending = false;
+      return;
+    }
+
+    _isAscending = false;
+    _isDescending = true;
+  }
+
+  public static bool ShouldHandleControls()
+  {
+    var character = (Character)Player.m_localPlayer;
+    if (!character) return false;
+
+    var isAttachedToShip = character.IsAttachedToShip();
+    var isAttached = character.IsAttached();
+
+    return isAttached && isAttachedToShip;
+  }
+
+  public static void DEPRECATED_OnFlightControls(MoveableBaseShipComponent mbShip)
+  {
+    if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
+    {
+      mbShip.Ascend();
+    }
+    else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
+    {
+      mbShip.Descent();
+    }
+  }
+
+
+  public void OnFlightControls()
+  {
+    if (!ValheimRaftPlugin.Instance.AllowFlight.Value || IsAnchored) return;
+    if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
+    {
+      if (_isAscending || _isDescending)
+      {
+        _isAscending = false;
+        _isDescending = false;
+      }
+      else
+      {
+        Ascend();
+        ToggleAutoAscend();
+      }
+    }
+    else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
+    {
+      if (_isDescending || _isAscending)
+      {
+        _isDescending = false;
+        _isAscending = false;
+      }
+      else
+      {
+        Descend();
+        ToggleAutoDescend();
+      }
+    }
+    else
+    {
+      _isHoldingAscend = false;
+      _isHoldingDescend = false;
+    }
+  }
+
+  public static bool GetAnchorKey()
+  {
+    if (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "False" &&
+        ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set")
+    {
+      var isLeftShiftDown = ZInput.GetButtonDown("LeftShift");
+      var mainKeyString = ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.MainKey
+        .ToString();
+      var buttonDownDynamic =
+        ZInput.GetButtonDown(mainKeyString);
+
+      if (isLeftShiftDown)
+      {
+        Logger.LogDebug("LeftShift down");
+      }
+
+      if (buttonDownDynamic)
+      {
+        Logger.LogDebug($"Dynamic Anchor Button down: {mainKeyString}");
+      }
+
+      return buttonDownDynamic || isLeftShiftDown ||
+             ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown();
+    }
+
+    var isPressingRun = ZInput.GetButtonDown("Run") || ZInput.GetButtonDown("JoyRun");
+    var isPressingJoyRun = ZInput.GetButtonDown("JoyRun");
+
+    return isPressingRun || isPressingJoyRun;
+  }
+
+  private void OnAnchorKeyPress()
+  {
+    if (!GetAnchorKey()) return;
+    Logger.LogDebug("Anchor Keydown is pressed");
+    var flag = ShipInstance.Instance.HaveControllingPlayer();
+    if (flag && Player.m_localPlayer.IsAttached() && Player.m_localPlayer.m_attachPoint &&
+        Player.m_localPlayer.m_doodadController != null)
+    {
+      Logger.LogDebug("toggling vehicleShip anchor");
+      ToggleAnchor();
+    }
+    else
+    {
+      Logger.LogDebug("Player not controlling ship, skipping");
+    }
+  }
+
+  private void OnControllingWithHotKeyPress()
+  {
+    if (!ShipInstance.Instance.HaveControllingPlayer()) return;
+    OnAnchorKeyPress();
+    OnFlightControls();
+  }
+
+
+  /*
+   * Toggle the ship anchor and emit the event to other players so their client can update
+   */
+  public void ToggleAnchor()
+  {
+    SetAnchor(!IsAnchored);
+  }
+
+
+  private void ToggleAutoAscend()
+  {
+    if (TargetHeight == 0f)
+    {
+      _isAscending = false;
+      _isDescending = false;
+      return;
+    }
+
+    if (!ValheimRaftPlugin.Instance.FlightVerticalToggle.Value) return;
+
+    if (!_isHoldingAscend && _isAscending)
+    {
+      _isAscending = false;
+      _isDescending = false;
+      return;
+    }
+
+    _isAscending = true;
+    _isDescending = false;
+  }
+
+  /// <summary>
+  /// Updates anchor locally and send the same value over network
+  /// </summary>
+  /// <param name="isEnabled"></param>
+  public void SetAnchor(bool isEnabled)
+  {
+    if (isEnabled)
+    {
+      _isAscending = false;
+      _isDescending = false;
+    }
+
+    // skips setting Flag if it already is set
+    if (IsAnchored != isEnabled)
+    {
+      MovementFlags = isEnabled
+        ? (MovementFlags & ~VehicleMovementFlags.IsAnchored)
+        : (MovementFlags | VehicleMovementFlags.IsAnchored);
+      NetView.m_zdo.Set(VehicleZdoVars.VehicleFlags, (int)MovementFlags);
+    }
+
+    // always emits the setter to prevent desync
+    SendSetAnchor(isEnabled);
+  }
+
+  public void SendSetAnchor(bool state)
+  {
+    NetView.InvokeRPC(nameof(RPC_SetAnchor), state);
+  }
+
+  public void RPC_SetAnchor(long sender, bool state)
+  {
+    MovementFlags = (state
+      ? (MovementFlags | VehicleMovementFlags.IsAnchored)
+      : (MovementFlags & ~VehicleMovementFlags.IsAnchored));
+    NetView.GetZDO().Set(VehicleZdoVars.VehicleFlags, (int)MovementFlags);
   }
 
   private void RPC_RequestResponse(long sender, bool granted)
@@ -284,8 +510,8 @@ public class VehicleMovementController : MonoBehaviour
 
   public void FireReleaseControl(Player player)
   {
-    if (!vehicleNetview.IsValid()) return;
-    vehicleNetview.InvokeRPC(nameof(RPC_ReleaseControl), player.GetPlayerID());
+    if (!NetView.IsValid()) return;
+    NetView.InvokeRPC(nameof(RPC_ReleaseControl), player.GetPlayerID());
     if (AttachPoint != null)
     {
       player.AttachStop();
@@ -300,6 +526,6 @@ public class VehicleMovementController : MonoBehaviour
 
   private long GetUser()
   {
-    return !vehicleNetview.IsValid() ? 0L : vehicleNetview.GetZDO().GetLong(ZDOVars.s_user, 0L);
+    return !NetView.IsValid() ? 0L : NetView.GetZDO().GetLong(ZDOVars.s_user, 0L);
   }
 }

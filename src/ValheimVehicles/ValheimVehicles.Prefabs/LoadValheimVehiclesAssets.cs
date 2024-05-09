@@ -58,8 +58,10 @@ public class LoadValheimVehicleAssets : ILoadAssets
     // hull rib variants
     ShipHullRibWoodAsset =
       assetBundle.LoadAsset<GameObject>("hull_rib_wood.prefab");
+    // ShipHullRibIronAsset =
+    //   assetBundle.LoadAsset<GameObject>("hull_rib_iron.prefab");
     ShipHullRibIronAsset =
-      assetBundle.LoadAsset<GameObject>("hull_rib_iron.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_ribv2_wip.prefab");
 
     // rudder variants
     ShipRudderBasicAsset =

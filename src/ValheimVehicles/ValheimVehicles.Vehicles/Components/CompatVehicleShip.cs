@@ -47,8 +47,6 @@ public class CompatVehicleShip(Ship ship) : IVehicleShip
   }
 
   public VehicleShip Instance { get; }
-  public WaterVehicleFlags VehicleFlags { get; }
-  public float m_targetHeight { get; set; }
 
   public void SendSetAnchor(bool state)
   {

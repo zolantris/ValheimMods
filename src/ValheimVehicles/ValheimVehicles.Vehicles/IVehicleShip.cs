@@ -15,9 +15,4 @@ public interface IVehicleShip
 
   public Transform ControlGuiPosition { get; set; }
   public VehicleShip Instance { get; }
-  public WaterVehicleFlags VehicleFlags { get; }
-  public float m_targetHeight { get; set; }
-  public void SendSetAnchor(bool state);
-  public void Descend();
-  public void Ascend();
 }

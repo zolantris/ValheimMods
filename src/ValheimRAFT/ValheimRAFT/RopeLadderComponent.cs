@@ -115,11 +115,9 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
   {
     if ((bool)baseVehicleController && (bool)baseVehicleController.waterVehicleController &&
         baseVehicleController?.waterVehicleController?.VehicleInstance &&
-        baseVehicleController?.waterVehicleController?.VehicleInstance?.Instance.m_targetHeight >
+        baseVehicleController?.waterVehicleController?.VehicleInstance?.Instance.TargetHeight >
         0f &&
-        !baseVehicleController.waterVehicleController.VehicleInstance.Instance.VehicleFlags.HasFlag(
-          WaterVehicleFlags
-            .IsAnchored) &&
+        !(baseVehicleController.VehicleInstance.Instance.MovementController.IsAnchored) &&
         hitPoint.y < baseVehicleController.GetColliderBottom())
     {
       return true;

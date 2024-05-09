@@ -286,7 +286,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
           }
         }));
     AllowCustomRudderSpeeds = Config.Bind("Server config", "AllowCustomRudderSpeeds", true,
-      new ConfigDescription("Allow the raft to use custom rudder speeds set by the player",
+      new ConfigDescription(
+        "Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed",
         (AcceptableValueBase)null, new object[1]
         {
           (object)new ConfigurationManagerAttributes()

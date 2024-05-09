@@ -18,14 +18,6 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
-[Flags]
-public enum WaterVehicleFlags
-{
-  None = 0,
-  IsAnchored = 1,
-  HideMesh = 2
-}
-
 public class WaterVehicleController : BaseVehicleController, IWaterVehicleController
 {
   private VehicleShip? _vehicleInstance;
@@ -38,9 +30,7 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
   public WaterVehicleController Instance => this;
 
-  public bool isCreative = false;
-
-  internal ShipStats m_shipStats = new ShipStats();
+  internal ShipStats m_shipStats = new();
 
   public float m_balanceForce = 0.03f;
 

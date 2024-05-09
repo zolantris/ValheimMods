@@ -186,7 +186,6 @@ public class Player_Patch
     PatchSharedData.PlayerLastRayPiece = piece;
   }
 
-  // from 1.6.14
   [HarmonyPatch(typeof(Player), "FindHoverObject")]
   [HarmonyPrefix]
   private static bool FindHoverObject(Player __instance, ref GameObject hover,
@@ -238,92 +237,6 @@ public class Player_Patch
     return false;
   }
 
-  // [HarmonyPatch(typeof(Player), "FindHoverObject")]
-  // [HarmonyPrefix]
-  // public static bool FindHoverObject(Player __instance, ref GameObject hover,
-  //   ref Character hoverCreature)
-  // {
-  //   var isUnhandled = true;
-  //   hover = null;
-  //   hoverCreature = null;
-  //   var results = new RaycastHit[3];
-  //   var hits = Physics.RaycastNonAlloc(GameCamera.instance.transform.position,
-  //     GameCamera.instance.transform.forward, results, 50f, __instance.m_interactMask);
-  //
-  //   if (hits.Equals(0)) return true;
-  //
-  //   var sortedResults = results.ToArray();
-  //   Array.Sort(sortedResults, (x, y) => x.distance.CompareTo(y.distance));
-  //
-  //   foreach (var rayCastHit in sortedResults)
-  //   {
-  //     if (!(bool)rayCastHit.collider) break;
-  //     if (!(bool)rayCastHit.collider.attachedRigidbody) break;
-  //     if (rayCastHit.collider.attachedRigidbody.gameObject != __instance.gameObject) break;
-  //
-  //     if (hoverCreature == null)
-  //     {
-  //       var character = rayCastHit.collider.attachedRigidbody
-  //         ? rayCastHit.collider.attachedRigidbody.GetComponent<Character>()
-  //         : rayCastHit.collider.GetComponent<Character>();
-  //       if (character != null) hoverCreature = character;
-  //     }
-  //
-  //     if (!(Vector3.Distance(__instance.m_eye.position, rayCastHit.point) <
-  //           __instance.m_maxInteractDistance)) continue;
-  //     var isComponentHoverable = rayCastHit.collider.GetComponent<Hoverable>();
-  //     var isParentHoverable = rayCastHit.collider.GetComponentInParent<Hoverable>();
-  //     if (isComponentHoverable != null)
-  //     {
-  //       hover = rayCastHit.collider.gameObject;
-  //       isUnhandled = false;
-  //       break;
-  //     }
-  //
-  //     if (isParentHoverable != null)
-  //     {
-  //       hover = rayCastHit.collider.gameObject.transform.parent.gameObject;
-  //       isUnhandled = false;
-  //       break;
-  //     }
-  //
-  //     if (rayCastHit.collider.attachedRigidbody == null) continue;
-  //
-  //     var hitBaseVehicle = rayCastHit.collider
-  //       .attachedRigidbody.GetComponent<BaseVehicleController>();
-  //     var hitMoveableBaseRoot = rayCastHit.collider
-  //       .attachedRigidbody.GetComponent<MoveableBaseRootComponent>();
-  //     if (rayCastHit.collider.attachedRigidbody.gameObject.name.StartsWith(PrefabNames
-  //           .VehiclePiecesContainer) ||
-  //         rayCastHit.collider.attachedRigidbody.gameObject.name.StartsWith(PrefabNames
-  //           .WaterVehicleShip))
-  //     {
-  //       return true;
-  //     }
-  //
-  //     // switch ((bool)rayCastHit.collider.attachedRigidbody)
-  //     // {
-  //     //   case true when !(bool)hitBaseVehicle:
-  //     //   case true when !(bool)hitMoveableBaseRoot:
-  //     //     hover = rayCastHit.collider.attachedRigidbody.gameObject;
-  //     //     isUnhandled = false;
-  //     //     break;
-  //     // }
-  //
-  //     if (isUnhandled == false) break;
-  //   }
-  //
-  //   RopeAnchorComponent.m_draggingRopeTo = null;
-  //   if ((bool)hover && (bool)RopeAnchorComponent.m_draggingRopeFrom)
-  //   {
-  //     RopeAnchorComponent.m_draggingRopeTo = hover;
-  //     hover = RopeAnchorComponent.m_draggingRopeFrom.gameObject;
-  //     isUnhandled = false;
-  //   }
-  //
-  //   return isUnhandled;
-  // }
-
   [HarmonyPatch(typeof(Player), "AttachStop")]
   [HarmonyPrefix]
   public static bool AttachStop(Player __instance)
@@ -348,7 +261,7 @@ public class Player_Patch
    */
   private static bool GetAnchorKey()
   {
-    return VehicleShip.GetAnchorKey();
+    return VehicleMovementController.GetAnchorKey();
   }
 
   // Logic for anchor needs to be moved to the Update method instead of fixed update which SetControls is called in
@@ -361,53 +274,25 @@ public class Player_Patch
     var isAttached = __instance.IsAttached();
     var shouldHandle = isAttached && (bool)__instance.m_attachPoint &&
                        (bool)__instance.m_attachPoint.parent;
-    if (shouldHandle)
+    if (!shouldHandle) return true;
+    if (movedir.x == 0f && movedir.y == 0f && !jump && !crouch && !attack && !attackHold &&
+        !secondaryAttack && !block)
     {
-      if (movedir.x == 0f && movedir.y == 0f && !jump && !crouch && !attack && !attackHold &&
-          !secondaryAttack && !block)
+      var ladder = __instance.m_attachPoint.parent.GetComponent<RopeLadderComponent>();
+      if ((bool)ladder)
       {
-        var ladder = __instance.m_attachPoint.parent.GetComponent<RopeLadderComponent>();
-        if ((bool)ladder)
-        {
-          ladder.MoveOnLadder(__instance, movedir.z);
-          return false;
-        }
-      }
-
-      var rudder = __instance.m_attachPoint.parent.GetComponent<SteeringWheelComponent>();
-      if ((bool)rudder && __instance.m_doodadController != null)
-      {
-        __instance.SetDoodadControlls(ref movedir, ref ((Character)__instance).m_lookDir, ref run,
-          ref autoRun, blockHold);
-        if ((bool)rudder.deprecatedShipControls)
-        {
-          // todo remove deprecated method once MBRaft is using VehicleShip
-          var mb = rudder.GetComponentInParent<MoveableBaseRootComponent>();
-          if ((bool)mb)
-          {
-            var anchorKey = GetAnchorKey();
-            if (anchorKey)
-            {
-              Logger.LogDebug("Anchor button is down setting anchor");
-              mb.shipController.SetAnchor(
-                !mb.shipController.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored));
-            }
-            else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
-            {
-              mb.shipController.Ascend();
-            }
-            else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
-            {
-              mb.shipController.Descent();
-            }
-          }
-        }
-
+        ladder.MoveOnLadder(__instance, movedir.z);
         return false;
       }
     }
 
-    return true;
+    var rudder = __instance.m_attachPoint.parent.GetComponent<SteeringWheelComponent>();
+
+    if (!(bool)rudder || __instance.m_doodadController == null) return true;
+
+    __instance.SetDoodadControlls(ref movedir, ref ((Character)__instance).m_lookDir, ref run,
+      ref autoRun, blockHold);
+    return false;
   }
 
   [HarmonyPatch(typeof(Player), "UpdatePlacementGhost")]

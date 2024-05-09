@@ -65,6 +65,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.m_id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
     m_rigidbody = GetComponent<Rigidbody>();
     m_baseRoot.m_syncRigidbody = m_rigidbody;
+    m_rigidbody.maxAngularVelocity = ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value;
     m_rigidbody.mass = m_baseRoot.TotalMass;
     m_baseRootObject.transform.SetParent(null);
     Logger.LogDebug("Set baseRoot params from BaseShipComponent");
@@ -160,7 +161,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     }
   }
 
-  internal void Ascend()
+  public void Ascend()
   {
     if (m_flags.HasFlag(MBFlags.IsAnchored))
     {
@@ -185,7 +186,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_nview.m_zdo.Set("MBTargetHeight", m_targetHeight);
   }
 
-  internal void Descent()
+  public void Descent()
   {
     if (m_flags.HasFlag(MBFlags.IsAnchored))
     {
@@ -249,7 +250,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     }
   }
 
-  internal void SetAnchor(bool state)
+  public void SetAnchor(bool state)
   {
     m_nview.InvokeRPC("SetAnchor", state);
   }

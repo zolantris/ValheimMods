@@ -9,9 +9,27 @@ public class VehicleCommands : ConsoleCommand
   private class VehicleCommandArgs
   {
     public const string locate = "locate";
+    public const string rotate = "rotate";
+    public const string move = "move";
     public const string destroy = "destroy";
     public const string debug = "debug";
     public const string help = "help";
+  }
+
+  public override string Help => OnHelp();
+
+  public string OnHelp()
+  {
+    // if (args)
+    return
+      "Runs vehicle commands, each command will require parameters to run use help to see the input values";
+  }
+
+  private class RotateArgs
+  {
+    public const string rotateX = "x";
+    public const string rotateY = "y";
+    public const string rotateZ = "z";
   }
 
   public override void Run(string[] args)
@@ -41,7 +59,4 @@ public class VehicleCommands : ConsoleCommand
 
 
   public override string Name => "vehicle";
-
-  public override string Help =>
-    "Runs vehicle commands, each command will require parameters to run use help to see the input values";
 }

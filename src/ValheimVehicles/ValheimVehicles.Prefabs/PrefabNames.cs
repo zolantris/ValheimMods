@@ -39,10 +39,10 @@ public static class PrefabNames
   public const string ShipHullRibWoodPrefabName = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Wood";
   public const string ShipHullRibIronPrefabName = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Iron";
 
-  public const string ShipHullCenterIronPrefabName =
+  public const string ShipHullCenterWoodPrefabName =
     $"{ValheimVehiclesPrefix}_Ship_Hull_Center_Wood";
 
-  public const string ShipHullCenterWoodPrefabName =
+  public const string ShipHullCenterIronPrefabName =
     $"{ValheimVehiclesPrefix}_Ship_Hull_Center_Iron";
 
   public const string SailBoxColliderName = $"{ValheimVehiclesPrefix}_SailBoxCollider";

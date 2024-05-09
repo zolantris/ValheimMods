@@ -70,48 +70,22 @@ public class ShipControls_Patch
   [HarmonyPrefix]
   public static bool GetRudderHoverText(ShipControlls __instance, ref string __result)
   {
-    var baseRoot = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-    if (!baseRoot)
+    var mbShip = __instance.GetComponentInParent<MoveableBaseShipComponent>();
+    if (!mbShip)
     {
       return true;
     }
 
-    var shipStatsText = "";
-
-    if (ValheimRaftPlugin.Instance.ShowShipStats.Value)
-    {
-      var shipMassToPush = ValheimRaftPlugin.Instance.MassPercentageFactor.Value;
-      shipStatsText += $"\nsailArea: {baseRoot.GetTotalSailArea()}";
-      shipStatsText += $"\ntotalMass: {baseRoot.TotalMass}";
-      shipStatsText +=
-        $"\nshipMass(no-containers): {baseRoot.ShipMass}";
-      shipStatsText += $"\nshipContainerMass: {baseRoot.ShipContainerMass}";
-      shipStatsText +=
-        $"\ntotalMassToPush: {shipMassToPush}% * {baseRoot.TotalMass} = {baseRoot.TotalMass * shipMassToPush / 100f}";
-      shipStatsText +=
-        $"\nshipPropulsion: {baseRoot.GetSailingForce()}";
-
-      // final formatting
-      shipStatsText = $"<color=white>{shipStatsText}</color>";
-    }
-
     var isAnchored =
-      baseRoot.shipController.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags
+      mbShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags
         .IsAnchored);
-    var anchoredStatus = isAnchored
-      ? "[<color=red><b>$valheim_vehicles_wheel_use_anchored</b></color>]"
-      : "";
-    var anchorText =
-      isAnchored
-        ? "$valheim_vehicles_wheel_use_anchor_disable_detail"
-        : "$valheim_vehicles_wheel_use_anchor_enable_detail";
-    var anchorKey =
-      ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set"
-        ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString()
-        : ZInput.instance.GetBoundKeyString("Run");
-    __result =
-      Localization.instance.Localize(
-        $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$valheim_vehicles_wheel_use</b></color> {anchoredStatus}\n[<color=yellow><b>{anchorKey}</b></color>] <color=white>{anchorText}</color> {shipStatsText}");
+
+    var hoverText = SteeringWheelComponent.GetHoverTextFromShip(mbShip.m_baseRoot.totalSailArea,
+      mbShip.m_baseRoot.TotalMass, mbShip.m_baseRoot.ShipMass, mbShip.m_baseRoot.ShipContainerMass,
+      mbShip.m_baseRoot.GetSailingForce(),
+      isAnchored, SteeringWheelComponent.GetAnchorHotkeyString());
+
+    __result = hoverText;
 
     return false;
   }

@@ -16,6 +16,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
   private VehicleMovementController _controls;
   public VehicleMovementController? Controls => _controls;
   public ShipControlls deprecatedShipControls;
+  public MoveableBaseShipComponent deprecatedMBShip;
 
   public IVehicleShip ShipInstance;
 
@@ -51,6 +52,45 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
   private const float maxUseRange = 10f;
   public Transform AttachPoint { get; set; }
 
+  public static string GetAnchorHotkeyString()
+  {
+    return ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set"
+      ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString()
+      : ZInput.instance.GetBoundKeyString("Run");
+  }
+
+  public static string GetHoverTextFromShip(float sailArea, float totalMass, float shipMass,
+    float shipContainerMass, float shipPropulsion, bool isAnchored, string anchorKeyString)
+  {
+    var shipStatsText = "";
+    if (ValheimRaftPlugin.Instance.ShowShipStats.Value)
+    {
+      var shipMassToPush = ValheimRaftPlugin.Instance.MassPercentageFactor.Value;
+      shipStatsText += $"\nsailArea: {sailArea}";
+      shipStatsText += $"\ntotalMass: {totalMass}";
+      shipStatsText +=
+        $"\nshipMass(no-containers): {shipMass}";
+      shipStatsText += $"\nshipContainerMass: {shipContainerMass}";
+      shipStatsText +=
+        $"\ntotalMassToPush: {shipMassToPush}% * {totalMass} = {totalMass * shipMassToPush / 100f}";
+      shipStatsText +=
+        $"\nshipPropulsion: {shipPropulsion}";
+
+      /* final formatting */
+      shipStatsText = $"<color=white>{shipStatsText}</color>";
+    }
+
+    var anchoredStatus =
+      isAnchored ? "[<color=red><b>$valheim_vehicles_wheel_use_anchored</b></color>]" : "";
+    var anchorText =
+      isAnchored
+        ? "$valheim_vehicles_wheel_use_anchor_disable_detail"
+        : "$valheim_vehicles_wheel_use_anchor_enable_detail";
+
+    return Localization.instance.Localize(
+      $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$valheim_vehicles_wheel_use</b></color> {anchoredStatus}\n[<color=yellow><b>{anchorKeyString}</b></color>] <color=white>{anchorText}</color> {shipStatsText}");
+  }
+
   public string GetHoverText()
   {
     // deprecated MBRaft support
@@ -65,41 +105,10 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
       return Localization.instance.Localize("$valheim_vehicles_ship_controls");
     }
 
-    var shipStatsText = "";
-
-    if (ValheimRaftPlugin.Instance.ShowShipStats.Value)
-    {
-      var shipMassToPush = ValheimRaftPlugin.Instance.MassPercentageFactor.Value;
-      shipStatsText += $"\nsailArea: {controller.GetTotalSailArea()}";
-      shipStatsText += $"\ntotalMass: {controller.TotalMass}";
-      shipStatsText +=
-        $"\nshipMass(no-containers): {controller.ShipMass}";
-      shipStatsText += $"\nshipContainerMass: {controller.ShipContainerMass}";
-      shipStatsText +=
-        $"\ntotalMassToPush: {shipMassToPush}% * {controller.TotalMass} = {controller.TotalMass * shipMassToPush / 100f}";
-      shipStatsText +=
-        $"\nshipPropulsion: {controller.GetSailingForce()}";
-
-      /* final formatting */
-      shipStatsText = $"<color=white>{shipStatsText}</color>";
-    }
-
-    var isAnchored =
-      controller?.VehicleInstance?.VehicleFlags.HasFlag(WaterVehicleFlags
-        .IsAnchored) ?? false;
-
-    var anchoredStatus =
-      isAnchored ? "[<color=red><b>$valheim_vehicles_wheel_use_anchored</b></color>]" : "";
-    var anchorText =
-      isAnchored
-        ? "$valheim_vehicles_wheel_use_anchor_disable_detail"
-        : "$valheim_vehicles_wheel_use_anchor_enable_detail";
-    var anchorKey =
-      ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set"
-        ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString()
-        : ZInput.instance.GetBoundKeyString("Run");
-    return Localization.instance.Localize(
-      $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$valheim_vehicles_wheel_use</b></color> {anchoredStatus}\n[<color=yellow><b>{anchorKey}</b></color>] <color=white>{anchorText}</color> {shipStatsText}");
+    var isAnchored = controller.VehicleInstance.MovementController.IsAnchored;
+    var anchorKeyString = GetAnchorHotkeyString();
+    return GetHoverTextFromShip(controller.totalSailArea, controller.TotalMass, controller.ShipMass,
+      controller.ShipContainerMass, controller.GetSailingForce(), isAnchored, anchorKeyString);
   }
 
   private void Awake()
@@ -267,6 +276,29 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     return this;
   }
 
+
+  // Run anchor controls here only if the deprecatedMbShip is used
+  // Otherwise updates for anchor are handled in MovementController
+  public void FixedUpdate()
+  {
+    if (!deprecatedShipControls) return;
+    if (!VehicleMovementController.ShouldHandleControls())
+    {
+      return;
+    }
+
+    if (!deprecatedMBShip) return;
+
+    VehicleMovementController.DEPRECATED_OnFlightControls(deprecatedMBShip);
+
+    var anchorKey = VehicleMovementController.GetAnchorKey();
+    if (!anchorKey) return;
+
+    Logger.LogDebug("Anchor button is down setting anchor");
+    deprecatedMBShip.SetAnchor(
+      !deprecatedMBShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored));
+  }
+
   /**
    * @Deprecated for Older ValheimRAFT.MoveableBaseRootComponent compatibility. Future updates will remove support for MBRaft after a migration script is available.
    */
@@ -276,6 +308,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     {
       var mbRoot = transform.parent.GetComponent<MoveableBaseRootComponent>();
       if (mbRoot == null) return;
+      deprecatedMBShip = mbRoot.shipController;
       deprecatedShipControls = mbRoot.m_ship.m_shipControlls;
       deprecatedShipControls.m_maxUseRange = 10f;
       deprecatedShipControls.m_hoverText = Localization.instance.Localize("$mb_rudder_use");

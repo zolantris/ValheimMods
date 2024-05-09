@@ -144,6 +144,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   public BoxCollider m_blockingcollider = new();
   internal BoxCollider m_floatcollider = new();
   internal BoxCollider m_onboardcollider = new();
+  public bool isCreative = false;
 
   private int _persistentZdoId;
 

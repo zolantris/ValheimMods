@@ -7,6 +7,7 @@ using Jotunn.Extensions;
 using Jotunn.Managers;
 using Registry;
 using UnityEngine;
+using UnityEngine.UI;
 using ValheimRAFT;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
@@ -47,21 +48,20 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   // The rudder force multiplier applied to the ship speed
   private float _rudderForce = 1f;
 
-  // flying mechanics
-  private bool _isAscending;
-  private bool _isDescending;
-
   // floating mechanics
   private bool _hasFloatSway = true;
 
   private GameObject _piecesContainer;
   private GameObject _ghostContainer;
   private ImpactEffect _impactEffect;
-  public float m_targetHeight { get; set; }
+  public float TargetHeight => MovementController.TargetHeight = 0f;
 
-  // unfortunately the current approach does not allow increasing this beyond 1f otherwise it causes massive jitters when changing altitude.
-  private float _maxVerticalOffset = 1f;
+  public bool isCreative = false;
 
+  public void SetCreativeMode(bool val)
+  {
+    isCreative = val;
+  }
 
   public static bool CustomShipPhysicsEnabled = false;
 
@@ -76,9 +76,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   // The determines the directional movement of the ship 
   public GameObject ColliderParentObj;
 
-  private bool _isHoldingDescend = false;
-  private bool _isHoldingAscend = false;
-
   public IWaterVehicleController VehicleController => _controller;
 
   public GameObject? ShipEffectsObj;
@@ -88,8 +85,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   public ZSyncTransform m_zsyncTransform;
 
   public VehicleDebugHelpers VehicleDebugHelpersInstance { get; private set; }
-
-  public WaterVehicleFlags VehicleFlags { get; set; }
 
   public VehicleMovementController MovementController
   {
@@ -170,116 +165,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
   }
 
-  /*
-   * Toggle the ship anchor and emit the event to other players so their client can update
-   */
-  public void ToggleAnchor()
-  {
-    SetAnchor(!IsAnchored());
-  }
-
-  /// <summary>
-  /// Updates anchor locally and send the same value over network
-  /// </summary>
-  /// <param name="isEnabled"></param>
-  public void SetAnchor(bool isEnabled)
-  {
-    var isAnchored = VehicleFlags.HasFlag(
-      WaterVehicleFlags.IsAnchored);
-
-    if (isEnabled)
-    {
-      _isAscending = false;
-      _isDescending = false;
-    }
-
-    // skips setting Flag if it already is set
-    if (isAnchored != isEnabled)
-    {
-      VehicleFlags = isEnabled
-        ? (VehicleFlags & ~WaterVehicleFlags.IsAnchored)
-        : (VehicleFlags | WaterVehicleFlags.IsAnchored);
-      m_nview.m_zdo.Set(VehicleZdoVars.VehicleFlags, (int)VehicleFlags);
-    }
-
-    // always emits the setter to prevent desync
-    SendSetAnchor(isEnabled);
-  }
-
-  public void SendSetAnchor(bool state)
-  {
-    m_nview.InvokeRPC(nameof(RPC_SetAnchor), state);
-  }
-
-  public void RPC_SetAnchor(long sender, bool state)
-  {
-    VehicleFlags = (state
-      ? (VehicleFlags | WaterVehicleFlags.IsAnchored)
-      : (VehicleFlags & ~WaterVehicleFlags.IsAnchored));
-    m_nview.m_zdo.Set(VehicleZdoVars.VehicleFlags, (int)VehicleFlags);
-  }
-
-
-  public void Ascend()
-  {
-    if (VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
-    {
-      SetAnchor(false);
-    }
-
-    if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
-    {
-      m_targetHeight = 0f;
-    }
-    else
-    {
-      if (!m_floatcollider)
-      {
-        return;
-      }
-
-      m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y + _maxVerticalOffset,
-        ZoneSystem.instance.m_waterLevel, 200f);
-    }
-
-    m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
-    ToggleShipEffects();
-  }
-
-  public void AutoAscendUpdate()
-  {
-    if (!_isAscending || _isHoldingAscend || _isHoldingDescend) return;
-    m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y + _maxVerticalOffset,
-      ZoneSystem.instance.m_waterLevel, 200f);
-    m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
-  }
-
-  public void AutoDescendUpdate()
-  {
-    if (!_isDescending || _isHoldingDescend || _isHoldingAscend) return;
-    m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y - _maxVerticalOffset,
-      ZoneSystem.instance.m_waterLevel, 200f);
-    m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
-  }
-
-  public void AutoVerticalFlightUpdate()
-  {
-    if (!ValheimRaftPlugin.Instance.AllowFlight.Value ||
-        !ValheimRaftPlugin.Instance.FlightVerticalToggle.Value || IsAnchored()) return;
-
-    if (Mathf.Approximately(m_targetHeight, 200f) ||
-        Mathf.Approximately(m_targetHeight, ZoneSystem.instance.m_waterLevel))
-    {
-      _isAscending = false;
-      _isDescending = false;
-      return;
-    }
-
-    AutoAscendUpdate();
-    AutoDescendUpdate();
-  }
-
-
   /// <summary>
   /// Sets the rudderForce and returns it's value
   /// </summary>
@@ -348,186 +233,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
   }
 
-  private void ToggleAutoDescend()
-  {
-    if (m_targetHeight == 0f)
-    {
-      _isAscending = false;
-      _isDescending = false;
-      return;
-    }
-
-    if (!ValheimRaftPlugin.Instance.FlightVerticalToggle.Value) return;
-
-    if (!_isHoldingDescend && _isDescending)
-    {
-      _isAscending = false;
-      _isDescending = false;
-      return;
-    }
-
-    _isAscending = false;
-    _isDescending = true;
-  }
-
-  private void ToggleAutoAscend()
-  {
-    if (m_targetHeight == 0f)
-    {
-      _isAscending = false;
-      _isDescending = false;
-      return;
-    }
-
-    if (!ValheimRaftPlugin.Instance.FlightVerticalToggle.Value) return;
-
-    if (!_isHoldingAscend && _isAscending)
-    {
-      _isAscending = false;
-      _isDescending = false;
-      return;
-    }
-
-    _isAscending = true;
-    _isDescending = false;
-  }
-
-  public void Descend()
-  {
-    if (VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
-    {
-      SendSetAnchor(state: false);
-    }
-
-    var oldTargetHeight = m_targetHeight;
-    if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
-    {
-      m_targetHeight = 0f;
-    }
-    else
-    {
-      if (!m_floatcollider)
-      {
-        return;
-      }
-
-      m_targetHeight = Mathf.Clamp(m_floatcollider.transform.position.y - _maxVerticalOffset,
-        ZoneSystem.instance.m_waterLevel, 200f);
-
-      if (m_floatcollider.transform.position.y - _maxVerticalOffset <=
-          ZoneSystem.instance.m_waterLevel)
-      {
-        m_targetHeight = 0f;
-      }
-    }
-
-    m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
-    ToggleShipEffects();
-  }
-
-  public bool IsAnchored()
-  {
-    return VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored);
-  }
-
-  private void OnFlightControls()
-  {
-    if (!ValheimRaftPlugin.Instance.AllowFlight.Value || IsAnchored()) return;
-    if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
-    {
-      if (_isAscending || _isDescending)
-      {
-        _isAscending = false;
-        _isDescending = false;
-      }
-      else
-      {
-        Ascend();
-        ToggleAutoAscend();
-      }
-    }
-    else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
-    {
-      if (_isDescending || _isAscending)
-      {
-        _isDescending = false;
-        _isAscending = false;
-      }
-      else
-      {
-        Descend();
-        ToggleAutoDescend();
-      }
-    }
-    else
-    {
-      _isHoldingAscend = false;
-      _isHoldingDescend = false;
-    }
-  }
-
-  private void OnAnchorKeyPress()
-  {
-    if (!GetAnchorKey()) return;
-    Logger.LogDebug("Anchor Keydown is pressed");
-    var flag = HaveControllingPlayer();
-    if (flag && Player.m_localPlayer.IsAttached() && Player.m_localPlayer.m_attachPoint &&
-        Player.m_localPlayer.m_doodadController != null)
-    {
-      Logger.LogDebug("toggling vehicleShip anchor");
-      ToggleAnchor();
-    }
-    else
-    {
-      Logger.LogDebug("Player not controlling ship, skipping");
-    }
-  }
-
-  private void OnControllingWithHotKeyPress()
-  {
-    if (!HaveControllingPlayer()) return;
-
-    OnAnchorKeyPress();
-    OnFlightControls();
-  }
-
-  public static bool GetAnchorKey()
-  {
-    if (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "False" &&
-        ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set")
-    {
-      var isLeftShiftDown = ZInput.GetButtonDown("LeftShift");
-      var mainKeyString = ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.MainKey
-        .ToString();
-      var buttonDownDynamic =
-        ZInput.GetButtonDown(mainKeyString);
-
-      if (isLeftShiftDown)
-      {
-        Logger.LogDebug("LeftShift down");
-      }
-
-      if (buttonDownDynamic)
-      {
-        Logger.LogDebug($"Dynamic Anchor Button down: {mainKeyString}");
-      }
-
-      return buttonDownDynamic || isLeftShiftDown ||
-             ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown();
-    }
-
-    var isPressingRun = ZInput.GetButtonDown("Run") || ZInput.GetButtonDown("JoyRun");
-    var isPressingJoyRun = ZInput.GetButtonDown("JoyRun");
-
-    return isPressingRun || isPressingJoyRun;
-  }
-
-  private void Update()
-  {
-    OnControllingWithHotKeyPress();
-    AutoVerticalFlightUpdate();
-  }
-
   public bool IsReady()
   {
     var netView = GetComponent<ZNetView>();
@@ -555,6 +260,11 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     BlockingCollider = blockingColliderObj.GetComponent<BoxCollider>();
     FloatCollider = floatColliderObj.GetComponent<BoxCollider>();
     OnboardCollider = onboardColliderObj.GetComponent<BoxCollider>();
+
+    if (!MovementController)
+    {
+      MovementController = GetComponent<VehicleMovementController>();
+    }
 
     _impactEffect = GetComponent<ImpactEffect>();
 
@@ -603,9 +313,9 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
   }
 
-  private void ToggleShipEffects()
+  public void ToggleShipEffects()
   {
-    if (m_targetHeight > 0f)
+    if (TargetHeight > 0f)
     {
       ShipEffectsObj?.SetActive(false);
     }
@@ -662,33 +372,11 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
   }
 
-  private void RegisterRPCMethods()
-  {
-    if (!(bool)m_nview) return;
-    VehicleFlags =
-      (WaterVehicleFlags)m_nview.m_zdo.GetInt(VehicleZdoVars.VehicleFlags,
-        (int)VehicleFlags);
-
-    m_nview.Register(nameof(RPC_SetAnchor),
-      delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
-  }
-
-  private void AwakeGetZdoData()
-  {
-    if (!(bool)m_nview) return;
-
-    VehicleFlags =
-      (WaterVehicleFlags)m_nview.m_zdo.GetInt(VehicleZdoVars.VehicleFlags,
-        (int)VehicleFlags);
-  }
-
   private new void Awake()
   {
     m_nview = GetComponent<ZNetView>();
 
     AwakeSetupShipComponents();
-    AwakeGetZdoData();
-    RegisterRPCMethods();
 
     base.Awake();
 
@@ -955,7 +643,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   public void CustomPhysics()
   {
-    m_body.useGravity = m_targetHeight == 0f;
+    m_body.useGravity = TargetHeight == 0f;
 
     var waterLevelAtCenterShip = Floating.GetWaterLevel(m_floatcollider.center, ref m_previousBack);
 
@@ -1008,22 +696,22 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     var rightForce = m_body.GetPointVelocity(right);
 
     var frontUpwardsForce =
-      GetUpwardsForce(m_targetHeight,
+      GetUpwardsForce(TargetHeight,
         front.y + frontForce.y,
         _controller.m_balanceForce);
     var backUpwardsForce =
-      GetUpwardsForce(m_targetHeight,
+      GetUpwardsForce(TargetHeight,
         back.y + backForce.y,
         _controller.m_balanceForce);
     var leftUpwardsForce =
-      GetUpwardsForce(m_targetHeight,
+      GetUpwardsForce(TargetHeight,
         left.y + leftForce.y,
         _controller.m_balanceForce);
     var rightUpwardsForce =
-      GetUpwardsForce(m_targetHeight,
+      GetUpwardsForce(TargetHeight,
         right.y + rightForce.y,
         _controller.m_balanceForce);
-    var centerUpwardsForce = GetUpwardsForce(m_targetHeight,
+    var centerUpwardsForce = GetUpwardsForce(TargetHeight,
       centerpos2.y + m_body.velocity.y, _controller.m_liftForce);
 
 
@@ -1204,7 +892,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   private bool UpdateAnchorVelocity(Vector3 velocity)
   {
     if (m_players.Count != 0 &&
-        !IsAnchored()) return false;
+        !MovementController.IsAnchored) return false;
 
     var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
     var anchoredAngularVelocity = CalculateAnchorStopVelocity(m_body.angularVelocity);
@@ -1213,7 +901,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     m_body.angularVelocity = anchoredAngularVelocity;
     return true;
 
-    // if (!IsAnchored()) return false;
+    // if (!IsAnchored) return false;
     //
     // var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
     // // m_body.velocity = anchoredVelocity;
@@ -1262,7 +950,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   public void UpdateShipSpeed(bool hasControllingPlayer)
   {
-    if (IsAnchored() && m_speed != Speed.Stop)
+    if (MovementController.IsAnchored && m_speed != Speed.Stop)
     {
       m_speed = Speed.Stop;
       // force resets rudder to 0 degree position
@@ -1272,7 +960,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     if (m_players.Count == 0)
     {
       m_speed = Speed.Stop;
-      SetAnchor(false);
+      MovementController.SetAnchor(false);
     }
     else if (!hasControllingPlayer && m_speed is Speed.Slow or Speed.Back)
     {
@@ -1285,18 +973,18 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   {
     if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
     {
-      m_targetHeight = 0f;
+      MovementController.TargetHeight = 0f;
       m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, 0f);
     }
     else
     {
-      m_targetHeight =
-        m_nview.m_zdo.GetFloat(VehicleZdoVars.VehicleTargetHeight, m_targetHeight);
+      MovementController.TargetHeight =
+        m_nview.m_zdo.GetFloat(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
     }
 
     m_zsyncTransform.m_useGravity =
-      m_targetHeight == 0f;
-    m_body.useGravity = m_targetHeight == 0f;
+      TargetHeight == 0f;
+    m_body.useGravity = TargetHeight == 0f;
   }
 
   public void VehiclePhysicsFixedUpdate()
@@ -1340,7 +1028,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     {
       UpdateShipFloatation(shipFloatation);
     }
-    else if (m_targetHeight > 0f)
+    else if (TargetHeight > 0f)
     {
       UpdateShipFlying();
     }
@@ -1524,7 +1212,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   /// 
   private void ApplyRudderForce()
   {
-    if (m_speed == Speed.Stop || IsAnchored()) return;
+    if (m_speed == Speed.Stop || MovementController.IsAnchored) return;
 
     var direction = Vector3.Dot(m_body.velocity, ShipDirection.forward);
     var rudderForce = GetRudderForcePerSpeed();
@@ -1555,7 +1243,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       steerForce += ShipDirection.right * m_stearForce * (0f - m_rudderValue) * directionMultiplier;
     }
 
-    if (m_targetHeight > 0)
+    if (TargetHeight > 0)
     {
       transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
     }
@@ -1595,7 +1283,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
         break;
     }
 
-    if (instance.VehicleFlags.HasFlag(WaterVehicleFlags.IsAnchored))
+    if (instance.MovementController.IsAnchored)
     {
       sailArea = 0f;
     }
