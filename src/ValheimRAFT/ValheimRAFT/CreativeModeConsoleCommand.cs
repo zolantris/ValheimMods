@@ -76,7 +76,8 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
       ship.SetCreativeMode(true);
 
       ship.m_body.position = directionRaftUpwards;
-      ship.VehicleController.Instance.transform.transform.rotation = rotationWithoutTilt;
+      ship.transform.rotation = rotationWithoutTilt;
+      ship.VehicleController.Instance.transform.rotation = rotationWithoutTilt;
       ship.m_body.transform.rotation = rotationWithoutTilt;
     }
     else

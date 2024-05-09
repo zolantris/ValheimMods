@@ -145,7 +145,8 @@ public class ShipHullPrefab : IRegisterPrefab
     PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
     // this will be used to hide water on the boat
     prefab.AddComponent<ShipHullComponent>();
-    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
+    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
+      ["hull_slab_new", "vehicle_ship_hull_slab"]);
 
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {

@@ -5,21 +5,16 @@ using System.ComponentModel;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
-using UnityEngine.Assertions.Must;
 using ValheimRAFT;
 using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles.Components;
 using static ValheimVehicles.Propulsion.Sail.SailAreaForce;
-using Component = UnityEngine.Component;
 using Logger = Jotunn.Logger;
-using Object = UnityEngine.Object;
 using PrefabNames = ValheimVehicles.Prefabs.PrefabNames;
 
 namespace ValheimVehicles.Vehicles;
-
-using Vehicles_BaseVehicleController = Vehicles.BaseVehicleController;
 
 /// <summary>controller used for all vehicles</summary>
 /// <description> This is a controller used for all vehicles, Currently it must be initialized within a vehicle view IE VehicleShip or upcoming VehicleWheeled, and VehicleFlying instances.</description>
@@ -346,7 +341,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   protected int GetPersistentID()
   {
-    Logger.LogDebug($"GetPersistentID, called {name}");
     if (!(bool)m_nview)
     {
       _persistentZdoId = 0;
@@ -360,7 +354,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
 
     _persistentZdoId = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
-    Logger.LogInfo($"BaseVehicleController _persistentZdoId: {_persistentZdoId}");
     return _persistentZdoId;
   }
 
@@ -397,7 +390,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   public void CleanUp()
   {
     RemovePlayerFromBoat();
-
+    var isUnloading = true;
     if (ActiveInstances.GetValueSafe(_persistentZdoId))
     {
       ActiveInstances.Remove(_persistentZdoId);
@@ -420,7 +413,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       if ((bool)piece)
       {
         piece.transform.SetParent(null);
-        AddInactivePiece(_persistentZdoId, piece);
+        AddInactivePiece(_persistentZdoId, piece, this);
       }
     }
   }
@@ -605,14 +598,18 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
            m_blockingcollider.size.y / 2f;
   }
 
-  public static void AddInactivePiece(int id, ZNetView netView)
+  public static void AddInactivePiece(int id, ZNetView netView, BaseVehicleController? instance)
   {
     if (hasDebug) Logger.LogDebug($"addInactivePiece called with {id} for {netView.name}");
 
-    if (ActiveInstances.TryGetValue(id, out var activeInstance))
+
+    if (instance != null && instance.isActiveAndEnabled)
     {
-      activeInstance.ActivatePiece(netView);
-      return;
+      if (ActiveInstances.TryGetValue(id, out var activeInstance))
+      {
+        activeInstance.ActivatePiece(netView);
+        return;
+      }
     }
 
     if (!m_pendingPieces.TryGetValue(id, out var list))
@@ -970,17 +967,12 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     if (m_nview.GetZDO() == null)
     {
-      Logger.LogDebug("m_zdo is null for activate pending pieces");
       yield return new WaitUntil(() => m_nview.m_zdo != null);
     }
 
-    Logger.LogDebug("ActivatePendingPieces before ID getter");
-
     var id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
-    Logger.LogDebug("ActivatePendingPieces after ID getter");
     m_pendingPieces.TryGetValue(id, out var list);
 
-    // Logger.LogDebug($"mpending pieces list {list.Count}");
     if (list is { Count: > 0 })
     {
       // var stopwatch = new Stopwatch();
@@ -1019,7 +1011,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var objectListHasNoValidItems = true;
     if (objectList is { Count: > 0 })
     {
-      Logger.LogDebug($"m_dynamicObjects is valid: {objectList.Count}");
+      if (hasDebug) Logger.LogDebug($"m_dynamicObjects is valid: {objectList.Count}");
+
       for (var i = 0; i < objectList.Count; i++)
       {
         var go = ZNetScene.instance.FindInstance(objectList[i]);
@@ -1240,7 +1233,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         id = zdoparent == null
           ? ZDOPersistentID.ZDOIDToId(zdoid)
           : ZDOPersistentID.Instance.GetOrCreatePersistentID(zdoparent);
-        Logger.LogDebug($"zdoParent {zdoparent}, id: {id}");
         zdo.Set(MBParentIdHash, id);
         zdo.Set(MBRotationVecHash,
           zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
@@ -1273,15 +1265,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       var vehicleShip = parentObj.GetComponent<VehicleShip>();
       if (vehicleShip == null) return;
-      Logger.LogDebug($"ParentObj {parentObj}");
       if (vehicleShip != null && vehicleShip.VehicleController == null) return;
-      Logger.LogDebug("ActivatingBaseVehicle piece");
-      vehicleShip.VehicleController.Instance.ActivatePiece(netView);
     }
     else
     {
-      Logger.LogDebug($"adding inactive piece, {id} {netView.m_zdo}");
-      AddInactivePiece(id, netView);
+      AddInactivePiece(id, netView, null);
     }
   }
 
@@ -1363,24 +1351,13 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     var previousCount = GetPieceCount();
 
-    Logger.LogDebug($"netView exists {netView.name}");
     netView.transform.SetParent(transform);
-    Logger.LogDebug($"netView set parent");
-    Logger.LogDebug($"ZDOPersistentID instance {ZDOPersistentID.Instance}");
     if (netView.m_zdo != null)
     {
       netView.m_zdo.Set(MBParentIdHash, PersistentZdoId);
-      Logger.LogDebug(
-        $"netView.transform.localRotation.eulerAngles {netView.transform.localRotation.eulerAngles}");
-
       netView.m_zdo.Set(MBRotationVecHash, netView.transform.localRotation.eulerAngles);
-      Logger.LogDebug(
-        $"netView.transform.localPosition {netView.transform.localPosition}");
       netView.m_zdo.Set(MBPositionHash, netView.transform.localPosition);
     }
-
-    Logger.LogDebug($"made it end, about to call addpiece and init zdo");
-
 
     if (netView.GetZDO() == null)
     {
@@ -1540,7 +1517,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     foreach (var rbsItem in rbs)
     {
       if (!rbsItem.isKinematic) continue;
-      Logger.LogDebug($"destroying kinematic rbs");
       Destroy(rbsItem);
     }
 
@@ -1616,6 +1592,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
    */
   private void RotateVehicleForwardPosition()
   {
+    if (!isActiveAndEnabled) return;
     if (VehicleInstance == null)
     {
       return;
@@ -1625,7 +1602,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var firstPiece = _steeringWheelPieces.First();
     if (!firstPiece.enabled)
     {
-      Logger.LogError("Attempted to rotate the ship with an disabled wheelPiece");
       return;
     }
 
@@ -1667,8 +1643,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
-    // todo this is unstable, but there needs to be a way to adjust float colliders when the rotation happens otherwise the vehicle will not encapsulate correctly
-    // var rotatedVehicleBounds = GetBoundsWithParentRotation();
     var rotatedVehicleBounds = _vehicleBounds;
 
     /*
@@ -1784,8 +1758,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var isOutOfBounds = Mathf.Abs(colliderCenterMagnitude - worldPositionMagnitude) > 5f;
     if (isOutOfBounds)
     {
-      Logger.LogDebug(
-        "Possible out of bounds error, the collider magnitude compared to it's local point is more than 5 units of difference, calling back with positional center point");
       return new Bounds(
         collider.transform.root.transform.InverseTransformPoint(collider.transform.position),
         collider.bounds.size);
@@ -1793,93 +1765,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
     center = collider.transform.root.transform.InverseTransformPoint(collider.bounds.center);
     var size = collider.bounds.size;
-    // size.x *= collider.transform.lossyScale.x;
-    // size.y *= collider.transform.lossyScale.y;
-    // size.z *= collider.transform.lossyScale.z;
-
     var outputBounds = new Bounds(center, size);
-
     return outputBounds;
-  }
-
-  /// <summary>
-  /// For Updating colliders based on the 8 vectors that a box collider has.
-  /// The box collider does take in account rotation so these Colliders must encapsulate the global world position point within the BoxCollider component in order to properly update size and other values.
-  ///
-  /// Encapsulation ignores
-  /// </summary>
-  public Bounds GetBoundsWithParentRotation()
-  {
-    if (VehicleInstance == null) return _vehicleBounds;
-    if (!VehicleInstance.Instance.ColliderParentObj) return _vehicleBounds;
-    Physics.SyncTransforms();
-
-
-    var colliderParentObj = VehicleInstance.Instance.ColliderParentObj;
-    var boxCollider = VehicleInstance.Instance.ColliderParentObj.GetComponent<BoxCollider>();
-    boxCollider.center = _vehicleBounds.center;
-    boxCollider.size = _vehicleBounds.size;
-
-    Physics.SyncTransforms();
-    var rotatedBounds = new Bounds();
-    var center = _vehicleBounds.center;
-
-
-    var rightDir = transform.right.normalized;
-    var forwardDir = transform.forward.normalized;
-    var upDir = transform.up.normalized;
-    // var size = _vehicleBounds.size;
-    // size.x *= colliderParentObj.transform.lossyScale.x;
-    // size.y *= colliderParentObj.transform.lossyScale.y;
-    // size.z *= colliderParentObj.transform.lossyScale.z;
-    var extents = _vehicleBounds.extents;
-    // var center = tempBoxCollider.transform.position + _vehicleBounds.center;
-
-    // var centerOffset = _vehicleBounds.center;
-    var topMostDir = upDir * extents.y;
-    var rightMostDir = rightDir * extents.x;
-    var forwardMostDir = forwardDir * extents.z;
-
-    var forwardTopRight = center + topMostDir + rightMostDir +
-                          forwardMostDir;
-    var forwardBottomRight = center - topMostDir + rightMostDir + forwardMostDir;
-    var forwardTopLeft = center + topMostDir - rightMostDir + forwardMostDir;
-    var forwardBottomLeft = center - topMostDir - rightMostDir + forwardMostDir;
-
-    var backwardTopRight = center + topMostDir + rightMostDir -
-                           forwardMostDir;
-    var backwardBottomRight = center - topMostDir + rightMostDir - forwardMostDir;
-    var backwardTopLeft = center + topMostDir - rightMostDir - forwardMostDir;
-    var backwardBottomLeft = center - topMostDir - rightMostDir - forwardMostDir;
-
-    List<Vector3> directions =
-    [
-      forwardTopRight, forwardBottomRight, forwardTopLeft, forwardBottomLeft, backwardBottomLeft,
-      backwardBottomRight, backwardTopLeft, backwardTopRight
-    ];
-
-    foreach (var direction in directions)
-    {
-      rotatedBounds.Encapsulate(direction);
-    }
-
-    // assumption is no rotation 0 degrees and reverse is 180.
-    // Problematic angles are 90 and 270 for bounds calcs
-    var near90Or270 =
-      Mathf.Approximately(
-        Mathf.Cos(colliderParentObj.transform.localRotation.eulerAngles.y * Mathf.Deg2Rad), 0f);
-    var degreeMult =
-      Mathf.Sin(colliderParentObj.transform.localRotation.eulerAngles.y * Mathf.Deg2Rad);
-    if (near90Or270)
-    {
-      var newCenter = new Vector3(_vehicleBounds.center.z * degreeMult, _vehicleBounds.center.y,
-        _vehicleBounds.center.x * degreeMult);
-      var newSize = new Vector3(_vehicleBounds.size.z, _vehicleBounds.size.y,
-        _vehicleBounds.size.x);
-      return new Bounds(newCenter, newSize);
-    }
-
-    return _vehicleBounds;
   }
 
   private Bounds? EncapsulateColliders(Vector3 boundsCenter,
@@ -1907,8 +1794,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
       if (rendererGlobalBounds == null)
       {
-        Logger.LogInfo(
-          $"Using fallback localPosition on netView: {netView.name}, collider.name: {collider.name}");
         continue;
       }
 
@@ -1957,14 +1842,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   {
     if (!m_nview || m_nview.m_zdo == null)
     {
-      Logger.LogDebug(
-        $"GetPieceCount ZNetView or ZDO null {m_pieces.Count}, this could cause boat to self destruct if it returns 0 at destroy piece");
       return m_pieces.Count;
     }
 
     var count = m_nview.m_zdo.GetInt(MBPieceCount, m_pieces.Count);
-
-    Logger.LogDebug($"GetPieceCount() {count}");
     return count;
   }
 }
