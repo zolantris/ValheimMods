@@ -102,7 +102,8 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     var controller = ShipInstance?.VehicleController?.Instance;
     if (controller == null)
     {
-      return Localization.instance.Localize("$valheim_vehicles_ship_controls");
+      return Localization.instance.Localize(
+        "<color=white><b>$valheim_vehicles_wheel_use_error</b></color>");
     }
 
     var isAnchored = controller.VehicleInstance.MovementController.IsAnchored;
