@@ -96,10 +96,10 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _GlossMapScale: 0.362
-    - _Glossiness: 0.556
+    - _Glossiness: 0.66
     - _GlossyReflections: 1
     - _MetalGloss: 0
-    - _Metallic: 0.346
+    - _Metallic: 1
     - _MetallicAlphaGloss: 0
     - _Mode: 0
     - _MossAlpha: 1

@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3715165887456535575}
   - component: {fileID: 1297785890825520983}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: hull_slab_worn_shared
   m_TagString: Untagged
   m_Icon: {fileID: 0}
