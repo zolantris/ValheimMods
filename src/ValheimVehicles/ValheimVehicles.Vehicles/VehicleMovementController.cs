@@ -11,7 +11,7 @@ namespace ValheimVehicles.Vehicles;
 
 public class VehicleMovementController : MonoBehaviour, IVehicleMovement
 {
-  public IVehicleShip ShipInstance { get; set; }
+  public IVehicleShip? ShipInstance { get; set; }
   public Vector3 detachOffset = new(0f, 0.5f, 0f);
 
   public VehicleMovementFlags MovementFlags { get; set; }
@@ -409,6 +409,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
 
   private void OnControllingWithHotKeyPress()
   {
+    if (ShipInstance == null) return;
     if (!ShipInstance.Instance.HaveControllingPlayer()) return;
     OnAnchorKeyPress();
     OnFlightControls();

@@ -42,6 +42,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
   public float m_liftForce = 20f;
 
   public MBFlags m_flags;
+  public bool IsAnchored => m_flags.HasFlag(MBFlags.IsAnchored);
 
   public void Awake()
   {
@@ -163,7 +164,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   public void Ascend()
   {
-    if (m_flags.HasFlag(MBFlags.IsAnchored))
+    if (IsAnchored)
     {
       SetAnchor(state: false);
     }
@@ -188,7 +189,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   public void Descent()
   {
-    if (m_flags.HasFlag(MBFlags.IsAnchored))
+    if (IsAnchored)
     {
       SetAnchor(state: false);
     }

@@ -24,6 +24,9 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject VehiclePiecesAsset = null!;
   public static GameObject VehicleSwitchAsset = null!;
 
+  // hud
+  public static GameObject HudAnchor = null!;
+
   // generic/misc
   public static SpriteAtlas VehicleSprites = null!;
   public static Shader PieceShader = null!;
@@ -69,6 +72,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
     ShipRudderAdvancedAsset =
       assetBundle.LoadAsset<GameObject>(
         "vehicle_ship_rudder_advanced.prefab");
+
+    HudAnchor = assetBundle.LoadAsset<GameObject>("hud_anchor.prefab");
 
     VehicleSprites = assetBundle.LoadAsset<SpriteAtlas>(
       "vehicle_icons.spriteatlasv2");

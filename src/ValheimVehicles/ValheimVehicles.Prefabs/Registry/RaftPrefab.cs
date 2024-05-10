@@ -17,7 +17,7 @@ public class RaftPrefab : IRegisterPrefab
   public GameObject GetTransformedRaft()
   {
     var raftPrefab =
-      PrefabManager.Instance.CreateClonedPrefab(PrefabNames.m_raft,
+      PrefabManager.Instance.CreateClonedPrefab(PrefabNames.MBRaft,
         LoadValheimAssets.vanillaRaftPrefab);
 
     raftPrefab.transform.Find("ship/visual/mast").gameObject.SetActive(false);
@@ -77,7 +77,7 @@ public class RaftPrefab : IRegisterPrefab
   public GameObject RegisterRaftV2Compat()
   {
     var raftPrefab =
-      PrefabManager.Instance.CreateClonedPrefab(PrefabNames.m_raft,
+      PrefabManager.Instance.CreateClonedPrefab(PrefabNames.MBRaft,
         LoadValheimAssets.vanillaRaftPrefab);
 
     // values to destroy in v2.0.0

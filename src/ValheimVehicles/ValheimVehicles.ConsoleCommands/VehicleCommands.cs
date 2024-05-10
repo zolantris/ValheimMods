@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Jotunn.Entities;
+using ValheimRAFT;
+using ValheimVehicles.Vehicles;
 
 namespace ValheimVehicles.ConsoleCommands;
 
@@ -48,8 +50,35 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.locate:
         LocateVehicle.LocateAllVehicles();
         break;
+      case VehicleCommandArgs.debug:
+        ToggleVehicleDebugComponent();
+        break;
     }
   }
+
+  private static void ToggleVehicleDebugComponent()
+  {
+    ValheimRaftPlugin.Instance.ToggleVehicleDebugGui();
+    foreach (var vehicleShip in VehicleShip.AllVehicles)
+    {
+      vehicleShip.InitializeVehicleDebugger();
+    }
+  }
+
+  // private ParseDebugArgs(string[] args)
+  // {
+  //   if (args.Length < 2)
+  //   {
+  //     return;
+  //   }
+  //
+  //   var secondArg = args[1];
+  //
+  //   if (secondArg == VehicleCommandArgs.colliders)
+  //   {
+  //     
+  //   }
+  // }
 
   public override List<string> CommandOptionList() =>
   [

@@ -41,6 +41,7 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   private void FixedUpdate()
   {
+    if (!isActiveAndEnabled) return;
     if (autoUpdateColliders)
     {
       DrawAllColliders();
@@ -50,22 +51,15 @@ public class VehicleDebugHelpers : MonoBehaviour
   public void StartRenderAllCollidersLoop()
   {
     autoUpdateColliders = !autoUpdateColliders;
-    // CancelInvoke(nameof(DrawAllColliders));
-    // if (autoUpdateColliders)
-    // {
-    //   InvokeRepeating(nameof(DrawAllColliders), 0f, 0.05f);
-    // }
-    if (!autoUpdateColliders)
+    if (autoUpdateColliders) return;
+    foreach (var keyValuePair in lines)
     {
-      foreach (var keyValuePair in lines)
+      if (!lines.TryGetValue(keyValuePair.Key, out var data)) continue;
+      if (data == null) continue;
+      foreach (var lineRenderer in keyValuePair.Value.ToList().OfType<LineRenderer>())
       {
-        if (!lines.TryGetValue(keyValuePair.Key, out var data)) continue;
-        if (data == null) continue;
-        foreach (var lineRenderer in keyValuePair.Value.ToList().OfType<LineRenderer>())
-        {
-          Destroy(lineRenderer.gameObject);
-          data.Remove(lineRenderer);
-        }
+        Destroy(lineRenderer.gameObject);
+        data.Remove(lineRenderer);
       }
     }
   }

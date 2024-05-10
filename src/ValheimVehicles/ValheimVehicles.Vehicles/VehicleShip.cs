@@ -51,6 +51,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   // floating mechanics
   private bool _hasFloatSway = true;
 
+  public static List<VehicleShip> AllVehicles = [];
+
   private GameObject _piecesContainer;
   private GameObject _ghostContainer;
   private ImpactEffect _impactEffect;
@@ -100,6 +102,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   private GameObject _vehiclePiecesContainerInstance;
   private GUIStyle myButtonStyle;
 
+  public Transform m_controlGuiPos { get; set; }
   public VehicleShip Instance => this;
 
   public BoxCollider FloatCollider
@@ -147,6 +150,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   public void OnDestroy()
   {
     UnloadPieceContainer();
+    AllVehicles.Remove(this);
 
     if ((bool)_shipRotationObj)
     {
@@ -180,20 +184,20 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
     switch (m_speed)
     {
-      case Speed.Stop:
+      case Ship.Speed.Stop:
         _rudderForce = 0f;
         break;
-      case Speed.Back:
+      case Ship.Speed.Back:
         _rudderForce =
           Math.Abs(Math.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedSlow.Value, 10f));
         break;
-      case Speed.Slow:
+      case Ship.Speed.Slow:
         _rudderForce = Math.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedSlow.Value, 10f);
         break;
-      case Speed.Half:
+      case Ship.Speed.Half:
         _rudderForce = Mathf.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedHalf.Value, 10f);
         break;
-      case Speed.Full:
+      case Ship.Speed.Full:
         _rudderForce = Mathf.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedFull.Value, 10f);
         break;
       default:
@@ -206,7 +210,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   }
 
   /// <summary>
-  /// Updates the rudder turning speed based on the ship speed. Higher speeds will make turning the rudder harder
+  /// Updates the rudder turning speed based on the shipShip.Speed. Higher speeds will make turning the rudder harder
   /// </summary>
   /// m_rudder = rotation speed of rudder icon
   /// m_rudderValue = position of rudder
@@ -215,15 +219,15 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   {
     switch (m_speed)
     {
-      case Speed.Stop:
-      case Speed.Back:
-      case Speed.Slow:
+      case Ship.Speed.Stop:
+      case Ship.Speed.Back:
+      case Ship.Speed.Slow:
         m_rudderSpeed = 2f;
         break;
-      case Speed.Half:
+      case Ship.Speed.Half:
         m_rudderSpeed = 1f;
         break;
-      case Speed.Full:
+      case Ship.Speed.Full:
         m_rudderSpeed = 0.5f;
         break;
       default:
@@ -375,6 +379,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   private new void Awake()
   {
     m_nview = GetComponent<ZNetView>();
+    AllVehicles.Add(this);
 
     AwakeSetupShipComponents();
 
@@ -494,6 +499,33 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     _controller.SetInitComplete();
   }
 
+  public void InitializeVehicleDebugger()
+  {
+    if (VehicleDebugHelpersInstance != null) return;
+    VehicleDebugHelpersInstance = gameObject.AddComponent<VehicleDebugHelpers>();
+
+    VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
+    {
+      collider = _controller.m_floatcollider,
+      lineColor = Color.green,
+      parent = gameObject
+    });
+    VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
+    {
+      collider = _controller.m_blockingcollider,
+      lineColor = Color.blue,
+      parent = gameObject
+    });
+    VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
+    {
+      collider = _controller.m_onboardcollider,
+      lineColor = Color.yellow,
+      parent = gameObject
+    });
+    VehicleDebugHelpersInstance.VehicleObj = gameObject;
+    VehicleDebugHelpersInstance.VehicleShipInstance = this;
+  }
+
   /*
    * Only initializes the controller if the prefab is enabled (when zdo is initialized this happens)
    */
@@ -520,42 +552,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
     _controller = _vehiclePiecesContainerInstance.AddComponent<WaterVehicleController>();
     _controller.InitializeShipValues(Instance);
-
-    if (VehicleDebugHelpersInstance == null && ValheimRaftPlugin.Instance.HasDebugBase.Value)
-    {
-      VehicleDebugHelpersInstance = gameObject.AddComponent<VehicleDebugHelpers>();
-    }
-
-    if (VehicleDebugHelpersInstance != null)
-    {
-      // VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
-      // {
-      //   collider = colliderParentBoxCollider,
-      //   lineColor = Color.blue,
-      //   parent = gameObject
-      // });
-
-      VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
-      {
-        collider = _controller.m_floatcollider,
-        lineColor = Color.green,
-        parent = gameObject
-      });
-      VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
-      {
-        collider = _controller.m_blockingcollider,
-        lineColor = Color.blue,
-        parent = gameObject
-      });
-      VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
-      {
-        collider = _controller.m_onboardcollider,
-        lineColor = Color.yellow,
-        parent = gameObject
-      });
-      VehicleDebugHelpersInstance.VehicleObj = gameObject;
-      VehicleDebugHelpersInstance.VehicleShipInstance = this;
-    }
 
     m_mastObject.transform.SetParent(_controller.transform);
     m_sailObject.transform.SetParent(_controller.transform);
@@ -588,21 +584,21 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
      */
     switch (m_speed)
     {
-      case Speed.Full:
+      case Ship.Speed.Full:
         vectorX *= 0.4f;
         vectorZ *= 0.4f;
         break;
-      case Speed.Half:
+      case Ship.Speed.Half:
         vectorX *= 0.25f;
         vectorZ *= 0.25f;
         break;
-      case Speed.Slow:
+      case Ship.Speed.Slow:
         // sailArea = Math.Min(0.1f, sailArea * 0.1f);
         vectorX *= 0.1f;
         vectorZ *= 0.1f;
         break;
-      case Speed.Stop:
-      case Speed.Back:
+      case Ship.Speed.Stop:
+      case Ship.Speed.Back:
       default:
         vectorX *= 0f;
         vectorZ *= 0f;
@@ -950,21 +946,21 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   public void UpdateShipSpeed(bool hasControllingPlayer)
   {
-    if (MovementController.IsAnchored && m_speed != Speed.Stop)
+    if (MovementController.IsAnchored && m_speed != Ship.Speed.Stop)
     {
-      m_speed = Speed.Stop;
+      m_speed = Ship.Speed.Stop;
       // force resets rudder to 0 degree position
       m_rudderValue = 0f;
     }
 
     if (m_players.Count == 0)
     {
-      m_speed = Speed.Stop;
+      m_speed = Ship.Speed.Stop;
       MovementController.SetAnchor(false);
     }
-    else if (!hasControllingPlayer && m_speed is Speed.Slow or Speed.Back)
+    else if (!hasControllingPlayer && m_speed is Ship.Speed.Slow or Ship.Speed.Back)
     {
-      m_speed = Speed.Stop;
+      m_speed = Ship.Speed.Stop;
     }
   }
 
@@ -1046,8 +1042,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     var t = 0.5f + Vector3.Dot(ShipDirection.forward, windDir) * 0.5f;
     switch (m_speed)
     {
-      case Speed.Full:
-      case Speed.Half:
+      case Ship.Speed.Full:
+      case Ship.Speed.Half:
       {
         var to = Quaternion.LookRotation(
           -Vector3.Lerp(windDir, Vector3.Normalize(windDir - ShipDirection.forward), t),
@@ -1056,7 +1052,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
           Quaternion.RotateTowards(m_mastObject.transform.rotation, to, 30f * deltaTime);
         break;
       }
-      case Speed.Back:
+      case Ship.Speed.Back:
       {
         var from =
           Quaternion.LookRotation(-ShipDirection.forward, ShipDirection.up);
@@ -1212,7 +1208,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   /// 
   private void ApplyRudderForce()
   {
-    if (m_speed == Speed.Stop || MovementController.IsAnchored) return;
+    if (m_speed == Ship.Speed.Stop || MovementController.IsAnchored) return;
 
     var direction = Vector3.Dot(m_body.velocity, ShipDirection.forward);
     var rudderForce = GetRudderForcePerSpeed();
@@ -1234,11 +1230,11 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     var steerForce = ShipDirection.forward *
                      (m_backwardForce * rudderForce * (1f - Mathf.Abs(m_rudderValue)));
 
-    var directionMultiplier = ((m_speed != Speed.Back) ? 1 : (-1));
+    var directionMultiplier = ((m_speed != Ship.Speed.Back) ? 1 : (-1));
     steerForce *= directionMultiplier;
 
     // todo see if this is necessary. This logic is from the Base game Ship
-    if (m_speed is Speed.Back or Speed.Slow)
+    if (m_speed is Ship.Speed.Back or Ship.Speed.Slow)
     {
       steerForce += ShipDirection.right * m_stearForce * (0f - m_rudderValue) * directionMultiplier;
     }
@@ -1268,16 +1264,16 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
      */
     switch (instance.m_speed)
     {
-      case Speed.Full:
+      case Ship.Speed.Full:
         break;
-      case Speed.Half:
+      case Ship.Speed.Half:
         sailArea *= 0.5f;
         break;
-      case Speed.Slow:
+      case Ship.Speed.Slow:
         sailArea = 0;
         break;
-      case Speed.Stop:
-      case Speed.Back:
+      case Ship.Speed.Stop:
+      case Ship.Speed.Back:
       default:
         sailArea = 0f;
         break;

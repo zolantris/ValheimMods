@@ -335,7 +335,7 @@ public class Player_Patch
 
   [HarmonyPatch(typeof(Player), nameof(Player.GetControlledShip))]
   [HarmonyPrefix]
-  public static bool GetControlledShip(Player __instance, object __result)
+  public static bool GetControlledShip(Player __instance, object? __result)
   {
     /*
      * This patch protects against the type case used in the original GetControlledShip which prevents controls overrides from triggering hud.
@@ -351,6 +351,11 @@ public class Player_Patch
     return false;
   }
 
+  public static object? HandleGetControlledShip()
+  {
+    return HandleGetControlledShip(Player.m_localPlayer);
+  }
+
   public static object? HandleGetControlledShip(Player player)
   {
     var hasDoodadController = player.m_doodadController != null;
@@ -358,14 +363,14 @@ public class Player_Patch
     var controlledComponent = player.m_doodadController?.GetControlledComponent();
 
     if (controlledComponent != null &&
-        controlledComponent.name.Contains(PrefabNames.m_raft))
+        controlledComponent.name.Contains(PrefabNames.MBRaft))
     {
       return controlledComponent;
     }
 
     var vvShipResult =
       hasDoodadController && isShipWheelControllerValid
-        ? controlledComponent as VehicleShip
+        ? controlledComponent as IVehicleShip
         : null;
 
     return vvShipResult;

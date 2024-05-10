@@ -17,7 +17,7 @@ public abstract class LocateVehicle
     // var mbRaftShips = ships.Contains()
     List<Ship> mbShips = [];
     mbShips.AddRange(from ship in ships
-      let isMBRaft = ship.name.Contains(PrefabNames.m_raft)
+      let isMBRaft = ship.name.Contains(PrefabNames.MBRaft)
       select ship);
     return mbShips.Count;
   }

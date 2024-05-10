@@ -45,15 +45,6 @@ public class ZNetView_Patch
       if ((bool)mbr)
       {
         mbr.RemovePiece(__instance);
-        if (ValheimRaftPlugin.Instance.DisplacedRaftAutoFix.Value &&
-            (bool)Player.m_localPlayer && Player.m_localPlayer.transform.IsChildOf(mbr.transform))
-        {
-          Logger.LogWarning(
-            "DisplacedRaftAutoFix enabled: automatically regenerating broken since the player was attached it the raft");
-          MoveRaftConsoleCommand.MoveRaft(Player.m_localPlayer, mbr.m_ship, new Vector3(0, 0, 0));
-          // only regenerate if the raft glitches out
-          return false;
-        }
       }
     }
 

@@ -390,7 +390,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   public void CleanUp()
   {
     RemovePlayerFromBoat();
-    var isUnloading = true;
     if (ActiveInstances.GetValueSafe(_persistentZdoId))
     {
       ActiveInstances.Remove(_persistentZdoId);
@@ -991,6 +990,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         }
         else
         {
+          // list.Remove(obj);
           if (hasDebug)
           {
             Logger.LogDebug($"ActivatePendingPieces obj is not valid {obj}");
@@ -1039,6 +1039,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       }
 
       m_dynamicObjects.Remove(_persistentZdoId);
+      yield return null;
     }
 
     /*
@@ -1742,7 +1743,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   ///
   /// Looks like the solution is Physics.SyncTransforms() because on first render before Physics it does not update transforms.
   ///
-  public static Bounds? TransformColliderGlobalBoundsToLocal(Renderer collider)
+  public static Bounds? TransformColliderGlobalBoundsToLocal(Collider collider)
   {
     var colliderCenterMagnitude = collider.bounds.center.magnitude;
     var worldPositionMagnitude = collider.transform.position.magnitude;
@@ -1776,14 +1777,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   {
     if (!(bool)m_floatcollider) return null;
     var outputBounds = new Bounds(boundsCenter, boundsSize);
-
-    if (!ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value)
-    {
-      outputBounds.Encapsulate(netView.transform.position);
-      return outputBounds;
-    }
-
-    var colliders = netView.GetComponentsInChildren<Renderer>();
+    var colliders = netView.GetComponentsInChildren<Collider>();
     foreach (var collider in colliders)
     {
       Bounds? rendererGlobalBounds = null;
@@ -1829,12 +1823,19 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         !go.name.StartsWith(PrefabNames.Tier2RaftMastName) &&
         !go.name.StartsWith(PrefabNames.Tier3RaftMastName))
     {
-      var newBounds =
-        EncapsulateColliders(_vehicleBounds.center, _vehicleBounds.size, go);
-      if (newBounds != null)
+      if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value)
       {
-        _vehicleBounds = newBounds.Value;
-        OnShipBoundsChange();
+        var newBounds =
+          EncapsulateColliders(_vehicleBounds.center, _vehicleBounds.size, go);
+        if (newBounds != null)
+        {
+          _vehicleBounds = newBounds.Value;
+          OnShipBoundsChange();
+        }
+      }
+      else
+      {
+        _vehicleBounds.Encapsulate(go.transform.position);
       }
     }
   }

@@ -39,6 +39,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private bool m_customItemsAdded;
   public PrefabRegistryController prefabController;
 
+  public static VehicleDebugGui _debugGui;
+
   public static ValheimRaftPlugin Instance { get; private set; }
 
   public ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
@@ -97,6 +99,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> ProtectVehiclePiecesOnErrorFromWearNTearDamage { get; set; }
   public ConfigEntry<bool> DebugRemoveStartMenuBackground { get; set; }
   public ConfigEntry<bool> HullCollisionOnly { get; set; }
+  public ConfigEntry<bool> HasVehicleDebug { get; set; }
 
 
   /**
@@ -543,12 +546,28 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     }
   }
 
+  private void AddGuiLayerComponents()
+  {
+    if (HasVehicleDebug.Value)
+    {
+      ToggleVehicleDebugGui();
+    }
+  }
+
   /**
    * todo: move to Vehicles plugin when it is ready
    */
-  private void AddGuiLayerComponents()
+  public void ToggleVehicleDebugGui()
   {
-    gameObject.AddComponent<VehicleDebugGui>();
+    _debugGui = GetComponent<VehicleDebugGui>();
+    if (_debugGui)
+    {
+      Destroy(_debugGui);
+    }
+    else
+    {
+      _debugGui = gameObject.AddComponent<VehicleDebugGui>();
+    }
   }
 
   private void AddCustomPieces()

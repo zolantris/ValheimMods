@@ -16,14 +16,7 @@ namespace ValheimVehicles.Vehicles;
  */
 public class ValheimBaseGameShip : MonoBehaviour
 {
-  public enum Speed
-  {
-    Stop,
-    Back,
-    Slow,
-    Half,
-    Full
-  }
+  public Ship.Speed Speed;
 
   internal bool m_forwardPressed;
 
@@ -92,7 +85,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal Vector3 m_windChangeVelocity = Vector3.zero;
 
-  internal Speed m_speed;
+  internal Ship.Speed m_speed;
 
   internal float m_rudder;
 
@@ -294,26 +287,26 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal void RPC_Stop(long sender)
   {
-    m_speed = Speed.Stop;
+    m_speed = Ship.Speed.Stop;
   }
 
   internal void RPC_Forward(long sender)
   {
     switch (m_speed)
     {
-      case Speed.Stop:
-        m_speed = Speed.Slow;
+      case Ship.Speed.Stop:
+        m_speed = Ship.Speed.Slow;
         break;
-      case Speed.Slow:
-        m_speed = Speed.Half;
+      case Ship.Speed.Slow:
+        m_speed = Ship.Speed.Half;
         break;
-      case Speed.Half:
-        m_speed = Speed.Full;
+      case Ship.Speed.Half:
+        m_speed = Ship.Speed.Full;
         break;
-      case Speed.Back:
-        m_speed = Speed.Stop;
+      case Ship.Speed.Back:
+        m_speed = Ship.Speed.Stop;
         break;
-      case Speed.Full:
+      case Ship.Speed.Full:
         break;
     }
   }
@@ -322,19 +315,19 @@ public class ValheimBaseGameShip : MonoBehaviour
   {
     switch (m_speed)
     {
-      case Speed.Stop:
-        m_speed = Speed.Back;
+      case Ship.Speed.Stop:
+        m_speed = Ship.Speed.Back;
         break;
-      case Speed.Slow:
-        m_speed = Speed.Stop;
+      case Ship.Speed.Slow:
+        m_speed = Ship.Speed.Stop;
         break;
-      case Speed.Half:
-        m_speed = Speed.Slow;
+      case Ship.Speed.Half:
+        m_speed = Ship.Speed.Slow;
         break;
-      case Speed.Full:
-        m_speed = Speed.Half;
+      case Ship.Speed.Full:
+        m_speed = Ship.Speed.Half;
         break;
-      case Speed.Back:
+      case Ship.Speed.Back:
         break;
     }
   }
@@ -366,13 +359,13 @@ public class ValheimBaseGameShip : MonoBehaviour
     UpdateUpsideDmg(Time.fixedDeltaTime);
     if (m_players.Count == 0)
     {
-      m_speed = Speed.Stop;
+      m_speed = Ship.Speed.Stop;
       m_rudderValue = 0f;
     }
 
-    if (!flag && (m_speed != Speed.Stop))
+    if (!flag && (m_speed != Ship.Speed.Stop))
     {
-      m_speed = Speed.Stop;
+      m_speed = Ship.Speed.Stop;
     }
 
     Vector3 worldCenterOfMass = m_body.worldCenterOfMass;
@@ -441,11 +434,11 @@ public class ValheimBaseGameShip : MonoBehaviour
       m_body.AddForceAtPosition(Vector3.up * f3 * num3, vector3, ForceMode.VelocityChange);
       m_body.AddForceAtPosition(Vector3.up * f4 * num3, vector4, ForceMode.VelocityChange);
       float sailSize = 0f;
-      if (m_speed == Speed.Full)
+      if (m_speed == Ship.Speed.Full)
       {
         sailSize = 1f;
       }
-      else if (m_speed == Speed.Half)
+      else if (m_speed == Ship.Speed.Half)
       {
         sailSize = 0.5f;
       }
@@ -460,17 +453,17 @@ public class ValheimBaseGameShip : MonoBehaviour
       Vector3 zero = Vector3.zero;
       switch (m_speed)
       {
-        case Speed.Slow:
+        case Ship.Speed.Slow:
           zero += base.transform.forward * m_backwardForce * (1f - Mathf.Abs(m_rudderValue));
           break;
-        case Speed.Back:
+        case Ship.Speed.Back:
           zero += -base.transform.forward * m_backwardForce * (1f - Mathf.Abs(m_rudderValue));
           break;
       }
 
-      if (m_speed == Speed.Back || m_speed == Speed.Slow)
+      if (m_speed == Ship.Speed.Back || m_speed == Ship.Speed.Slow)
       {
-        float num10 = ((m_speed != Speed.Back) ? 1 : (-1));
+        float num10 = ((m_speed != Ship.Speed.Back) ? 1 : (-1));
         zero += base.transform.right * m_stearForce * (0f - m_rudderValue) * num10;
       }
 
@@ -617,7 +610,7 @@ public class ValheimBaseGameShip : MonoBehaviour
       return;
     }
 
-    m_speed = (Speed)m_nview.GetZDO().GetInt(ZDOVars.s_forward);
+    m_speed = (Ship.Speed)m_nview.GetZDO().GetInt(ZDOVars.s_forward);
     if (Time.time - m_sendRudderTime > 1f)
     {
       m_rudderValue = m_nview.GetZDO().GetFloat(ZDOVars.s_rudder);
@@ -626,9 +619,9 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public bool IsSailUp()
   {
-    if (m_speed != Speed.Half)
+    if (m_speed != Ship.Speed.Half)
     {
-      return m_speed == Speed.Full;
+      return m_speed == Ship.Speed.Full;
     }
 
     return true;
@@ -639,7 +632,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     UpdateSailSize(dt);
     Vector3 windDir = EnvMan.instance.GetWindDir();
     windDir = Vector3.Cross(Vector3.Cross(windDir, base.transform.up), base.transform.up);
-    if (m_speed == Speed.Full || m_speed == Speed.Half)
+    if (m_speed == Ship.Speed.Full || m_speed == Ship.Speed.Half)
     {
       float t = 0.5f + Vector3.Dot(base.transform.forward, windDir) * 0.5f;
       Quaternion to = Quaternion.LookRotation(
@@ -648,7 +641,7 @@ public class ValheimBaseGameShip : MonoBehaviour
       m_mastObject.transform.rotation =
         Quaternion.RotateTowards(m_mastObject.transform.rotation, to, 30f * dt);
     }
-    else if (m_speed == Speed.Back)
+    else if (m_speed == Ship.Speed.Back)
     {
       Quaternion from = Quaternion.LookRotation(-base.transform.forward, base.transform.up);
       Quaternion to2 = Quaternion.LookRotation(-windDir, base.transform.up);
@@ -668,12 +661,12 @@ public class ValheimBaseGameShip : MonoBehaviour
     Quaternion b = Quaternion.Euler(0f, m_rudderRotationMax * (0f - m_rudderValue), 0f);
     if (haveControllingPlayer)
     {
-      if (m_speed == Speed.Slow)
+      if (m_speed == Ship.Speed.Slow)
       {
         m_rudderPaddleTimer += dt;
         b *= Quaternion.Euler(0f, Mathf.Sin(m_rudderPaddleTimer * 6f) * 20f, 0f);
       }
-      else if (m_speed == Speed.Back)
+      else if (m_speed == Ship.Speed.Back)
       {
         m_rudderPaddleTimer += dt;
         b *= Quaternion.Euler(0f, Mathf.Sin(m_rudderPaddleTimer * -3f) * 40f, 0f);
@@ -689,19 +682,19 @@ public class ValheimBaseGameShip : MonoBehaviour
     float num = 0f;
     switch (m_speed)
     {
-      case Speed.Back:
+      case Ship.Speed.Back:
         num = 0.1f;
         break;
-      case Speed.Half:
+      case Ship.Speed.Half:
         num = 0.5f;
         break;
-      case Speed.Full:
+      case Ship.Speed.Full:
         num = 1f;
         break;
-      case Speed.Slow:
+      case Ship.Speed.Slow:
         num = 0.1f;
         break;
-      case Speed.Stop:
+      case Ship.Speed.Stop:
         num = 0.1f;
         break;
     }
@@ -716,7 +709,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
     if ((bool)m_sailCloth)
     {
-      if (m_speed == Speed.Stop || m_speed == Speed.Slow || m_speed == Speed.Back)
+      if (m_speed == Ship.Speed.Stop || m_speed == Ship.Speed.Slow || m_speed == Ship.Speed.Back)
       {
         if (flag && m_sailCloth.enabled)
         {
@@ -894,7 +887,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     return Vector3.Dot(m_body.velocity, base.transform.forward);
   }
 
-  public Speed GetSpeedSetting()
+  public Ship.Speed GetSpeedSetting()
   {
     return m_speed;
   }

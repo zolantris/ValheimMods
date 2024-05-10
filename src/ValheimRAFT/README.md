@@ -79,7 +79,8 @@ The following has been tested:
 - Adds anchors
 - Adds custom sails (requires meshes to be working)
 - Adds ropes (requires meshes to be working)
-- Sails now will each contribute to the total ship speed. Mesh sails do an area
+- Sails now will each contribute to the total shipShip.Speed. Mesh sails do an
+  area
   calculation while tier1-3 sails are
   preset values.
 
@@ -105,7 +106,7 @@ discover other mods.
 | HasShipWeightCalculations          | (propulsion) -> enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less                                                                                                                                  |
 | HasShipContainerWeightCalculations | (propulsion) -> enables ship weight calculations for containers which affects sail-force (sailing speed) and future propulsion calculations. Makes ships with lots of containers require more sails                                                                                                          |
 | MassPercentageFactor               | (propulsion) -> Sets the mass percentage of the ship that will slow down the sails.                                                                                                                                                                                                                          |
-| SpeedCapMultiplier                 | (propulsion) -> Sets the speed at which it becomes significantly harder to gain speed per sail area, the ships will still be capped at their maxSail speed.                                                                                                                                                  |
+| SpeedCapMultiplier                 | (propulsion) -> Sets the speed at which it becomes significantly harder to gain speed per sail area, the ships will still be capped at their maxSailShip.Speed.                                                                                                                                              |
 | MaxPropulsionSpeed                 | (propulsion) -> Sets the absolute max speed a ship can ever hit. Prevents or enables space launches. Will be used as a cap for all propulsion introduced in future versions.                                                                                                                                 |
 | MaxSailSpeed                       | (propulsion) -> Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.                                                                                                                                                            |
 | SailTier1Area                      | (propulsion) -> Sets the tier1 sail area.                                                                                                                                                                                                                                                                    |

@@ -5,8 +5,8 @@ namespace ValheimVehicles.Prefabs;
  */
 public static class PrefabNames
 {
-  public static string m_raft = "MBRaft";
-  public static int m_raftHash = "MBRaft".GetStableHashCode();
+  public const string MBRaft = "MBRaft";
+  public static int m_raftHash = MBRaft.GetStableHashCode();
   public const string Tier1RaftMastName = "MBRaftMast";
   public const string Tier2RaftMastName = "MBKarveMast";
   public const string Tier3RaftMastName = "MBVikingShipMast";
@@ -59,4 +59,5 @@ public static class PrefabNames
   public const string VehicleSailCloth = $"{ValheimVehiclesPrefix}_SailCloth";
   public const string VehicleToggleSwitch = $"{ValheimVehiclesPrefix}_VehicleToggleSwitch";
   public const string VehicleShipMovementOrientation = "VehicleShip_MovementOrientation";
+  public const string VehicleHudAnchorIndicator = $"{ValheimVehiclesPrefix}_HudAnchorIndicator";
 }
