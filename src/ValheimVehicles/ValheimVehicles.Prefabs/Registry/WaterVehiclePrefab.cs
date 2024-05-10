@@ -118,17 +118,12 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var prefab = CreateClonedPrefab(PrefabNames.WaterVehicleShip);
     var waterVehiclePrefab = CreateWaterVehiclePrefab(prefab);
 
-    var piece = waterVehiclePrefab.AddComponent<Piece>();
+    var piece = PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.WaterVehicleShip, prefab);
     piece.m_waterPiece = true;
-    piece.m_description = "$valheim_vehicles_water_vehicle_desc";
-    piece.m_icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
-    piece.m_name = "$valheim_vehicles_water_vehicle";
 
     PieceManager.Instance.AddPiece(new CustomPiece(waterVehiclePrefab, true, new PieceConfig
     {
       PieceTable = "Hammer",
-      Name = piece.m_name,
-      Description = piece.m_description,
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements =
@@ -136,7 +131,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
         new RequirementConfig
         {
           Amount = 20,
-          Item = "FineWood",
+          Item = "Wood",
           Recover = true
         }
       ]

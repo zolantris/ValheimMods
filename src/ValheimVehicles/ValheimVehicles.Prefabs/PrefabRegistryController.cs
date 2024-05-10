@@ -34,60 +34,60 @@ public class PrefabRegistryController : MonoBehaviour
 
   public static Component waterMask;
 
-  private void OnGUI()
-  {
-    GUILayout.BeginArea(new Rect(10, 10, 100, 100));
-    // if (GUILayout.Button("Patch HUD"))
-    // {
-    //   Hud_Patch.ApplyVehicleHudPatchGlobally();
-    // }
-
-    if (GUILayout.Button("Delete All Ships"))
-    {
-      var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
-      foreach (var obj in allObjects)
-      {
-        if (obj.name.Contains($"{PrefabNames.WaterVehicleShip}(Clone)") || ShipHulls.IsHull(obj))
-        {
-          if (ReferenceEquals(obj, ShipHullPrefab.HullWoodPrefabInstance))
-          {
-            return;
-          }
-
-          var wnt = obj.GetComponent<WearNTear>();
-          if ((bool)wnt)
-          {
-            wnt.Destroy();
-          }
-          else
-          {
-            Destroy(obj);
-          }
-        }
-      }
-    }
-
-    if (GUILayout.Button("RegisterWaterVehicle"))
-    {
-      // WaterVehiclePrefab.Instance.Register(prefabManager, pieceManager);
-    }
-
-    if (GUILayout.Button("ToggleAnchors"))
-    {
-      var waterVehicleControllers = Resources.FindObjectsOfTypeAll<WaterVehicleController>();
-      foreach (var wvc in waterVehicleControllers)
-      {
-        wvc?.VehicleInstance?.MovementController.ToggleAnchor();
-      }
-    }
-
-    // if (GUILayout.Button("Force 0"))
-    //   vehicleLOD.ForceLOD(0);
-    //
-    // if (GUILayout.Button("Force 1"))
-    //   vehicleLOD.ForceLOD(1);
-    GUILayout.EndArea();
-  }
+  // private void OnGUI()
+  // {
+  //   GUILayout.BeginArea(new Rect(10, 10, 100, 100));
+  //   // if (GUILayout.Button("Patch HUD"))
+  //   // {
+  //   //   Hud_Patch.ApplyVehicleHudPatchGlobally();
+  //   // }
+  //
+  //   if (GUILayout.Button("Delete All Ships"))
+  //   {
+  //     var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+  //     foreach (var obj in allObjects)
+  //     {
+  //       if (obj.name.Contains($"{PrefabNames.WaterVehicleShip}(Clone)") || ShipHulls.IsHull(obj))
+  //       {
+  //         if (ReferenceEquals(obj, ShipHullPrefab.HullWoodPrefabInstance))
+  //         {
+  //           return;
+  //         }
+  //
+  //         var wnt = obj.GetComponent<WearNTear>();
+  //         if ((bool)wnt)
+  //         {
+  //           wnt.Destroy();
+  //         }
+  //         else
+  //         {
+  //           Destroy(obj);
+  //         }
+  //       }
+  //     }
+  //   }
+  //
+  //   if (GUILayout.Button("RegisterWaterVehicle"))
+  //   {
+  //     // WaterVehiclePrefab.Instance.Register(prefabManager, pieceManager);
+  //   }
+  //
+  //   if (GUILayout.Button("ToggleAnchors"))
+  //   {
+  //     var waterVehicleControllers = Resources.FindObjectsOfTypeAll<WaterVehicleController>();
+  //     foreach (var wvc in waterVehicleControllers)
+  //     {
+  //       wvc?.VehicleInstance?.MovementController.ToggleAnchor();
+  //     }
+  //   }
+  //
+  //   // if (GUILayout.Button("Force 0"))
+  //   //   vehicleLOD.ForceLOD(0);
+  //   //
+  //   // if (GUILayout.Button("Force 1"))
+  //   //   vehicleLOD.ForceLOD(1);
+  //   GUILayout.EndArea();
+  // }
 
   // todo this should come from config
   public static float wearNTearBaseHealth = 250f;

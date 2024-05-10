@@ -126,7 +126,8 @@ public class RaftPrefab : IRegisterPrefab
         new RequirementConfig
         {
           Amount = 20,
-          Item = "Wood"
+          Item = "Wood",
+          Recover = true
         }
       ]
     }));

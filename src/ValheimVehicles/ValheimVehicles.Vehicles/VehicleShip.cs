@@ -139,18 +139,23 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   ///
   /// <description>calling cleanup must be done before Unity starts garbage collecting otherwise positions, ZNetViews and other items may be destroyed</description>
   /// 
-  public void UnloadPieceContainer()
+  public void UnloadAndDestroyPieceContainer()
   {
     if (!(bool)_vehiclePiecesContainerInstance) return;
     RemovePlayersBeforeDestroyingBoat();
     _controller.CleanUp();
-    Destroy(_controller.gameObject);
+    UnityEngine.Object.Destroy(_controller.gameObject);
   }
 
   public void OnDestroy()
   {
-    UnloadPieceContainer();
+    UnloadAndDestroyPieceContainer();
     AllVehicles.Remove(this);
+
+    if (MovementController.isActiveAndEnabled)
+    {
+      Destroy(MovementController.gameObject);
+    }
 
     if ((bool)_shipRotationObj)
     {
@@ -329,24 +334,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
   }
 
-  private void OnGUI()
-  {
-    if (myButtonStyle == null)
-    {
-      myButtonStyle = new GUIStyle(GUI.skin.button);
-      myButtonStyle.fontSize = 50;
-    }
-
-    GUILayout.BeginArea(new Rect(300, 10, 150, 150), myButtonStyle);
-
-    if (GUILayout.Button($"customphysics {CustomShipPhysicsEnabled}"))
-    {
-      CustomShipPhysicsEnabled = !CustomShipPhysicsEnabled;
-    }
-
-    GUILayout.EndArea();
-  }
-
   public void FixShipRotation()
   {
     var eulerAngles = transform.rotation.eulerAngles;
@@ -372,7 +359,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
     if (shouldUpdate)
     {
-      transform.rotation = Quaternion.Euler(transformedX, transform.rotation.y, transformedZ);
+      transform.rotation = Quaternion.Euler(transformedX, eulerY, transformedZ);
     }
   }
 

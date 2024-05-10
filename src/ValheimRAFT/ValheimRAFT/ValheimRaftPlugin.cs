@@ -127,9 +127,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    */
   private void CreateVehicleConfig()
   {
-    EnableExactVehicleBounds = Config.Bind("ValheimVehicles", "EnableExactVehicleBounds", true,
+    EnableExactVehicleBounds = Config.Bind("ValheimVehicles", "EnableExactVehicleBounds", false,
       CreateConfigDescription(
-        "Ensures that a piece placed within the raft is included in the float collider correctly. This only applies if the piece does not have proper colliders. Likely useful only for compatibility for other mods. Piece bounds of X and Z are considered, no height is factored into floating collider bounds (which controls ship floatation). Height IS factored into the onboard trigger."));
+        "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible"));
   }
 
   private void CreateColliderConfig()

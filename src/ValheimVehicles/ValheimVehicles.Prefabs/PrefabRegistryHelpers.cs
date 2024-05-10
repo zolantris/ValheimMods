@@ -20,17 +20,24 @@ public abstract class PrefabRegistryHelpers
   /// todo auto generate this from the translations json
   public static void Init()
   {
+    PieceDataDictionary.Add(PrefabNames.WaterVehicleShip, new PieceData()
+    {
+      Name = "valheim_vehicles_water_vehicle",
+      Description = "valheim_vehicles_water_vehicle_desc",
+      Icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon
+    });
+
     // hull rib variants
     PieceDataDictionary.Add(PrefabNames.ShipHullRibIronPrefabName, new PieceData()
     {
-      Name = "valheim_vehicles_hull_rib_iron",
-      Description = "valheim_vehicles_hull_rib_iron_desc",
+      Name = "valheim_vehicles_ship_hull_rib_iron",
+      Description = "valheim_vehicles_ship_hull_rib_iron_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHull)
     });
     PieceDataDictionary.Add(PrefabNames.ShipHullRibWoodPrefabName, new PieceData()
     {
-      Name = "valheim_vehicles_hull_rib_wood",
-      Description = "valheim_vehicles_hull_rib_wood_desc",
+      Name = "valheim_vehicles_ship_hull_rib_wood",
+      Description = "valheim_vehicles_ship_hull_rib_wood_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHull)
     });
 

@@ -68,7 +68,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   private void Awake()
   {
     NetView = GetComponent<ZNetView>();
-    if (!NetView) return;
+    if (!NetView && NetView.isActiveAndEnabled) return;
     MovementFlags =
       (VehicleMovementFlags)NetView.GetZDO().GetInt(VehicleZdoVars.VehicleFlags,
         (int)MovementFlags);
@@ -130,7 +130,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
     InitializeRPC();
   }
 
-  public void InitializeRudderWithShip(IVehicleShip vehicleShip,
+  public void InitializeWheelWithShip(IVehicleShip vehicleShip,
     SteeringWheelComponent steeringWheel)
   {
     ShipInstance = vehicleShip;

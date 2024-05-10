@@ -23,6 +23,7 @@ public class CircleLine : MonoBehaviour
     }
   }
 
+  // 0-360f
   public float arc = 360f;
 
   public LineRenderer? LineRendererInstance;
@@ -32,17 +33,6 @@ public class CircleLine : MonoBehaviour
   private void Awake()
   {
     CreateCircleLine();
-  }
-
-  private void OnGUI()
-  {
-    GUILayout.BeginArea(new Rect(600, 10, 100, 100));
-    if (GUILayout.Button("ReDraw"))
-    {
-      Draw();
-    }
-
-    GUILayout.EndArea();
   }
 
   private void CreateCircleLine()

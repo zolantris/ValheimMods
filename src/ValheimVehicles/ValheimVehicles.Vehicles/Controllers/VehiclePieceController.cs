@@ -7,6 +7,10 @@ public class VehiclePieceController
   // public ActiveZonesWithVehicles
 
   // Active Vehicles
-  public List<ZDO> activeVehicles;
-  public static Dictionary<int, List<ZDO>> m_allPieces = new();
+  public static List<ZDO> activeVehicles;
+  public static Dictionary<int, List<ZDO>> AllPieces = new();
+  public static Dictionary<int, List<ZDO>> PendingPieces = new();
+  public static Dictionary<int, List<ZDO>> ActivePieces = new();
+
+  private Dictionary<int, List<ZDO>> pieces = new();
 }

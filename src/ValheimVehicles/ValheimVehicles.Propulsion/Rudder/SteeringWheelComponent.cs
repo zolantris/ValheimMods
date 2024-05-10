@@ -59,6 +59,18 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
       : ZInput.instance.GetBoundKeyString("Run");
   }
 
+  /// <summary>
+  /// Gets the hover text info for wheel
+  /// </summary>
+  /// todo cache the localized text.
+  /// <param name="sailArea"></param>
+  /// <param name="totalMass"></param>
+  /// <param name="shipMass"></param>
+  /// <param name="shipContainerMass"></param>
+  /// <param name="shipPropulsion"></param>
+  /// <param name="isAnchored"></param>
+  /// <param name="anchorKeyString"></param>
+  /// <returns></returns>
   public static string GetHoverTextFromShip(float sailArea, float totalMass, float shipMass,
     float shipContainerMass, float shipPropulsion, bool isAnchored, string anchorKeyString)
   {
@@ -343,7 +355,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
     if (_controls != null)
     {
-      _controls.InitializeRudderWithShip(vehicleShip,
+      _controls.InitializeWheelWithShip(vehicleShip,
         this);
       ShipInstance = vehicleShip;
       _controls.enabled = true;

@@ -150,16 +150,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   private Coroutine? _pendingPiecesCoroutine;
   private Coroutine? _serverUpdatePiecesCoroutine;
   private Coroutine? _bedUpdateCoroutine;
-  GUIStyle myButtonStyle;
-
-  private void OnGUI()
-  {
-    if (myButtonStyle == null)
-    {
-      myButtonStyle = new GUIStyle(GUI.skin.button);
-      myButtonStyle.fontSize = 50;
-    }
-  }
 
   /**
    * Side Effect to be used when initialization state changes. This allows for starting the ActivatePendingPiecesCoroutine
@@ -412,9 +402,14 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       if ((bool)piece)
       {
         piece.transform.SetParent(null);
-        AddInactivePiece(_persistentZdoId, piece, this);
+        AddInactivePiece(_persistentZdoId, piece, null);
       }
     }
+
+    var players = Player.GetAllPlayers();
+    for (var j = 0; j < players.Count; j++)
+      if ((bool)players[j] && players[j].transform.parent == transform)
+        players[j].transform.SetParent(null);
   }
 
   public virtual void SyncRigidbodyStats(float drag, float angularDrag)
@@ -560,7 +555,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
  */
   public IEnumerator UpdatePiecesInEachSectorWorker()
   {
-    while (true)
+    while (isActiveAndEnabled)
     {
       /*
        * wait for the pending pieces coroutine to complete before updating
@@ -587,7 +582,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       yield return UpdatePiecesWorker(list);
       yield return new WaitForEndOfFrame();
     }
-    // ReSharper disable once IteratorNeverReturns
   }
 
   // this needs to be connected to ropeladder too.
@@ -674,7 +668,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if (m_pieces.Remove(netView))
     {
       UpdateMass(netView, true);
-      RebuildBounds();
+      CancelInvoke(nameof(RebuildBounds));
+      Invoke(nameof(RebuildBounds), 1f);
 
       var hull = netView.GetComponent<ShipHullComponent>();
       if ((bool)hull)
@@ -1181,6 +1176,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public static void InitZdo(ZDO zdo)
   {
+    if (zdo.m_prefab == PrefabNames.WaterVehicleShip.GetStableHashCode())
+    {
+      return;
+    }
+
     var id = GetParentID(zdo);
     if (id != 0)
     {
@@ -1396,8 +1396,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
-    Physics.SyncTransforms();
-
     totalSailArea = 0;
     m_pieces.Add(netView);
     UpdatePieceCount();
@@ -1455,7 +1453,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       OnAddSteeringWheelDestroyPrevious(netView, wheel);
       _steeringWheelPieces.Add(wheel);
       wheel.InitializeControls(netView, VehicleInstance);
-      RebuildBounds();
     }
 
     var portal = netView.GetComponent<TeleportWorld>();
@@ -1611,6 +1608,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   }
 
   /**
+   * Must be wrapped in a Invoke delay to prevent spamming on unmounting
    * bounds cannot be de-encapsulated by default so regenerating it seems prudent on piece removal
    */
   public void RebuildBounds()
@@ -1827,15 +1825,13 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       {
         var newBounds =
           EncapsulateColliders(_vehicleBounds.center, _vehicleBounds.size, go);
-        if (newBounds != null)
-        {
-          _vehicleBounds = newBounds.Value;
-          OnShipBoundsChange();
-        }
+        if (newBounds == null) return;
+        _vehicleBounds = newBounds.Value;
+        OnShipBoundsChange();
       }
       else
       {
-        _vehicleBounds.Encapsulate(go.transform.position);
+        _vehicleBounds.Encapsulate(go.transform.localPosition);
       }
     }
   }

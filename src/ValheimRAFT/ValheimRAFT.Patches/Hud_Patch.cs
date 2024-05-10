@@ -74,25 +74,26 @@ public class Hud_Patch
     AnchorHud.SetActive(isAnchored);
   }
 
+  /**
+    * Will be used for Wind speed after the ship keel is added in future updates to allow upwind sailing
+    */
+  private static void UpdateShipWindIndicator()
+  {
+    // var windIndicator = shipHud?.Find("WindIndicator");
+    // var windIndicatorCircle = windIndicator?.Find("Circle");
+  }
+
   private static void VehicleShipHudPatch(Hud hud)
   {
     // fire 3 finds b/c later on these objects will have additional items added to them
     var shipHud = hud.transform?.FindDeepChild("ShipHud");
     var shipPowerIcon = shipHud?.Find("PowerIcon");
-    var windIndicator = shipHud?.Find("WindIndicator");
+
     var rudder = shipHud.Find("Rudder");
 
     if (shipPowerIcon)
     {
       AddAnchorGameObject(shipPowerIcon, rudder);
-    }
-
-    var windIndicatorCircle = windIndicator?.Find("Circle");
-
-    if (windIndicatorCircle?.gameObject)
-    {
-      DisableVanillaWindIndicator(windIndicatorCircle.gameObject);
-      CreateCustomWindIndicator(windIndicatorCircle.gameObject);
     }
   }
 
