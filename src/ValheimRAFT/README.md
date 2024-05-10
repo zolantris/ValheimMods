@@ -2,19 +2,23 @@
 
 <img src="./Thunderstore/icon.png" alt="ValheimRAFT Community Made Boat Hjalmere">
 
-A [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork that works
-with latest Valheim. The original mod
-owner [Sarcenzzz](https://www.nexusmods.com/valheim/users/3061574) stopped
-maintaining the mod.
-
-As of 12/25/2023 I got official permission to maintain and open source this mod.
-
-This decompile fork aims to keep the mod functional with future goals of
-expanding functionality.
+This mod aims to continue support for Water based features of the original
+ValheimRAFT mod and incorporate more vehicle items and mechanics within the mod
+and further extends it's capabilities.
 
 ## Build Status
 
 [![ValheimRAFT Build](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml/badge.svg)](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml)
+
+## Background
+
+This repo is a [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork
+that works
+with latest Valheim. The original mod
+owner [Sarcen](https://www.nexusmods.com/valheim/users/3061574) stopped
+maintaining the mod, but gave permission to maintain/improve and open source
+this mod as of
+12/25/2023.
 
 ## Contents
 

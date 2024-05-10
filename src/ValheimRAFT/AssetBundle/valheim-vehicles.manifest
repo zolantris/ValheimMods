@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2889567778
+CRC: 2687834953
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: ae748c370c9012c3e9f18e1c6c74f630
+    Hash: 88a7f008d3bf506b8f3b871920282176
   TypeTreeHash:
     serializedVersion: 2
     Hash: 01508ae4745254c8f3bb355f55c42b78
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: ae748c370c9012c3e9f18e1c6c74f630
+    Hash: 88a7f008d3bf506b8f3b871920282176
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -59,15 +59,15 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/vehicle_ship.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_keel.prefab
 - Assets/ValheimVehicles/vehicle_icons.spriteatlasv2
+- Assets/ValheimVehicles/Prefabs/hull_rib_iron.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_rudder_advanced.prefab
 - Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
 - Assets/Shader/Custom_Piece.shader
-- Assets/ValheimVehicles/Prefabs/hull_rib_iron.prefab
+- Assets/ValheimVehicles/Prefabs/hull_rib_wood.prefab
 - Assets/hull_slab_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_center_iron.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_switch.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/hud_anchor.prefab
-- Assets/ValheimVehicles/Prefabs/hull_rib_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_center_wood.prefab
 Dependencies:

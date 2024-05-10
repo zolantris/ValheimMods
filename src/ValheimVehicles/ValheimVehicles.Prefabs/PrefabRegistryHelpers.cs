@@ -60,13 +60,13 @@ public abstract class PrefabRegistryHelpers
     {
       Name = "valheim_vehicles_ship_hull_center_wood",
       Description = "valheim_vehicles_ship_hull_center_wood_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHullWood)
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullCenterWood)
     });
     PieceDataDictionary.Add(PrefabNames.ShipHullCenterIronPrefabName, new PieceData()
     {
       Name = "valheim_vehicles_ship_hull_center_iron",
       Description = "valheim_vehicles_ship_hull_center_iron_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHullIron)
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullCenterIron)
     });
 
 

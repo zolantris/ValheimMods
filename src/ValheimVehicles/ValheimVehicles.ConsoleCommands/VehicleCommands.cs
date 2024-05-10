@@ -1,8 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
+using BepInEx.Logging;
 using Jotunn.Entities;
 using ValheimRAFT;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
+using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.ConsoleCommands;
 
@@ -10,12 +13,14 @@ public class VehicleCommands : ConsoleCommand
 {
   private class VehicleCommandArgs
   {
-    public const string locate = "locate";
-    public const string rotate = "rotate";
-    public const string move = "move";
-    public const string destroy = "destroy";
+    // public const string locate = "locate";
+    // public const string rotate = "rotate";
+    // public const string move = "move";
+    // public const string destroy = "destroy";
     public const string debug = "debug";
     public const string help = "help";
+    public const string upgradeToV2 = "upgradeShipToV2";
+    public const string downgradeToV1 = "downgradeShipToV1";
   }
 
   public override string Help => OnHelp();
@@ -24,7 +29,7 @@ public class VehicleCommands : ConsoleCommand
   {
     // if (args)
     return
-      "Runs vehicle commands, each command will require parameters to run use help to see the input values";
+      "Runs vehicle commands, each command will require parameters to run use help to see the input values. <debug> will show a menu with options like rotating or debugging vehicle colliders";
   }
 
   private class RotateArgs
@@ -47,12 +52,58 @@ public class VehicleCommands : ConsoleCommand
 
     switch (firstArg)
     {
-      case VehicleCommandArgs.locate:
-        LocateVehicle.LocateAllVehicles();
-        break;
+      // case VehicleCommandArgs.locate:
+      //   LocateVehicle.LocateAllVehicles();
+      //   break;
       case VehicleCommandArgs.debug:
         ToggleVehicleDebugComponent();
         break;
+      case VehicleCommandArgs.upgradeToV2:
+        UpgradeToV2();
+        break;
+      case VehicleCommandArgs.downgradeToV1:
+        DowngradeToV1();
+        break;
+    }
+  }
+
+  private static void DowngradeToV1()
+  {
+    var vehicleController = VehicleDebugHelpers.GetVehicleController();
+    if (!vehicleController)
+    {
+      Logger.LogMessage("No v1 raft detected");
+      return;
+    }
+
+    var currentPrefab = vehicleController?.m_nview?.m_zdo?.m_prefab;
+    if (currentPrefab.Equals(PrefabNames.WaterVehicleShip.GetStableHashCode()))
+    {
+      vehicleController.m_nview.m_zdo.SetPrefab(PrefabNames.MBRaft.GetStableHashCode());
+      Logger.LogMessage(
+        "Downgraded raft to V1, please reload the sector or log out and return to the game");
+    }
+  }
+
+  private static void UpgradeToV2()
+  {
+    var mbRaft = VehicleDebugHelpers.GetMBRaftController();
+    if (!mbRaft)
+    {
+      Logger.LogMessage("No v1 raft detected");
+      return;
+    }
+
+    var currentPrefab = mbRaft.m_nview.m_zdo.m_prefab;
+    if (currentPrefab.Equals(PrefabNames.MBRaft.GetStableHashCode()))
+    {
+      mbRaft.m_nview.m_zdo.SetPrefab(PrefabNames.WaterVehicleShip.GetStableHashCode());
+      Logger.LogMessage(
+        "Updated raft to V2, please reload the sector or log out and return to the game");
+    }
+    else
+    {
+      Logger.LogMessage("RaftPrefab does not match expected name, skipping upgrade");
     }
   }
 
@@ -82,8 +133,12 @@ public class VehicleCommands : ConsoleCommand
 
   public override List<string> CommandOptionList() =>
   [
-    VehicleCommandArgs.locate, VehicleCommandArgs.debug, VehicleCommandArgs.destroy,
-    VehicleCommandArgs.help
+    // VehicleCommandArgs.locate, 
+    // VehicleCommandArgs.destroy,
+    VehicleCommandArgs.debug,
+    VehicleCommandArgs.help,
+    VehicleCommandArgs.upgradeToV2,
+    VehicleCommandArgs.downgradeToV1,
   ];
 
 

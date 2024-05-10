@@ -28,7 +28,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   /*
    * @note keeping this as Sarcen for now since there are low divergences from the original codebase and patches already mapped to sarcen's mod
    */
-  public const string Author = "Zolantris";
+  public const string Author = "zolantris";
   public const string Version = "2.0.0";
   internal const string ModName = "ValheimRAFT";
   public const string BepInGuid = $"{Author}.{ModName}";
@@ -127,6 +127,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    */
   private void CreateVehicleConfig()
   {
+    HasVehicleDebug = Config.Bind("ValheimVehicles", "HasVehicleDebug", false,
+      CreateConfigDescription(
+        "Enables the debug menu, for showing colliders or rotating the ship"));
     EnableExactVehicleBounds = Config.Bind("ValheimVehicles", "EnableExactVehicleBounds", false,
       CreateConfigDescription(
         "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible"));
@@ -152,7 +155,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     BlockingColliderVerticalCenterOffset = Config.Bind("Debug",
       "BlockingColliderVerticalCenterOffset",
-      -1.5f,
+      0.2f,
       CreateConfigDescription(
         "Sets the raft BlockingColliderVerticalCenterOffset which blocks the player or objects passing through. This will trigger physics so if there is an interaction between the boat and player/it can cause the player to push the boat in the direction of interaction",
         false));
@@ -195,9 +198,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       new ConfigDescription("Set the Back speed of rudder, this will apply with sails"));
     VehicleRudderSpeedSlow = Config.Bind("Propulsion", "Rudder Slow Speed", 1f,
       new ConfigDescription("Set the Half speed of rudder, this will apply with sails"));
-    VehicleRudderSpeedHalf = Config.Bind("Propulsion", "Rudder Half Speed", 2f,
+    VehicleRudderSpeedHalf = Config.Bind("Propulsion", "Rudder Half Speed", 0f,
       new ConfigDescription("Set the Slow speed of rudder, this will apply with sails"));
-    VehicleRudderSpeedFull = Config.Bind("Propulsion", "Rudder Full Speed", 4f,
+    VehicleRudderSpeedFull = Config.Bind("Propulsion", "Rudder Full Speed", 0f,
       new ConfigDescription("Set the Full speed of rudder, this will apply with sails"));
 
     // ship weight
@@ -308,7 +311,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       "Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button");
     FlightHasRudderOnly = Config.Bind<bool>("Propulsion",
       "Only allow rudder speeds during flight",
-      true,
+      false,
       "Flight allows for different rudder speeds, only use those and ignore sails");
   }
 
@@ -567,7 +570,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public void ToggleVehicleDebugGui()
   {
     _debugGui = GetComponent<VehicleDebugGui>();
-    if (_debugGui)
+    if ((bool)_debugGui)
     {
       Destroy(_debugGui);
     }

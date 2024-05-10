@@ -432,6 +432,12 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   private void Sync()
   {
     if (!(bool)m_syncRigidbody || !(bool)m_rigidbody) return;
+    if ((bool)m_syncRigidbody.isKinematic)
+    {
+      m_rigidbody.MoveRotation(Quaternion.Euler(0f, m_syncRigidbody.rotation.eulerAngles.y, 0f));
+      return;
+    }
+
     m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
     m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
   }
@@ -662,15 +668,19 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     }
   }
 
+  public void DebouncedRebuildBounds()
+  {
+    CancelInvoke(nameof(RebuildBounds));
+    Invoke(nameof(RebuildBounds), 1f);
+  }
+
   public void RemovePiece(ZNetView netView)
   {
     if (netView.name.Contains(PrefabNames.WaterVehicleShip)) return;
     if (m_pieces.Remove(netView))
     {
       UpdateMass(netView, true);
-      CancelInvoke(nameof(RebuildBounds));
-      Invoke(nameof(RebuildBounds), 1f);
-
+      DebouncedRebuildBounds();
       if (ShipHulls.IsHull(netView.gameObject))
       {
         m_hullPieces.Remove(netView);
@@ -1336,6 +1346,47 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     return !hasPieces;
   }
 
+  public void FixPieceMeshes(ZNetView netView)
+  {
+    /*
+     * Very very important. It fixes shadow flicker on all of valheim's prefabs with boats. If this is removed, the raft is seizure inducing.
+     */
+    var meshes = netView.GetComponentsInChildren<MeshRenderer>(true);
+    foreach (var meshRenderer in meshes)
+    {
+      foreach (var meshRendererMaterial in meshRenderer.materials)
+      {
+        var isBlackMarble = meshRendererMaterial.name.Contains("blackmarble");
+        if (isBlackMarble)
+        {
+          meshRendererMaterial.SetFloat("_TriplanarLocalPos", 1f);
+        }
+      }
+
+      if ((bool)meshRenderer.sharedMaterial)
+      {
+        // todo disable triplanar shader which causes shader to move on black marble
+        var sharedMaterials = meshRenderer.sharedMaterials;
+
+        for (var j = 0; j < sharedMaterials.Length; j++)
+        {
+          var material = new Material(sharedMaterials[j]);
+          var isBlackMarble = sharedMaterials[j].name.Contains("blackmarble");
+          if (isBlackMarble)
+          {
+            material.SetFloat("_TriplanarLocalPos", 1f);
+          }
+
+          material.SetFloat("_RippleDistance", 0f);
+          material.SetFloat("_ValueNoise", 0f);
+          sharedMaterials[j] = material;
+        }
+
+        meshRenderer.sharedMaterials = sharedMaterials;
+      }
+    }
+  }
+
   public void AddNewPiece(ZNetView netView)
   {
     if (!(bool)netView)
@@ -1462,46 +1513,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       ladder.baseVehicleController = instance;
     }
 
-    /*
-     * Very very important. It fixes shadow flicker on all of valheim's prefabs with boats. If this is removed, the raft is seizure inducing.
-     */
-    var meshes = netView.GetComponentsInChildren<MeshRenderer>(true);
-    foreach (var meshRenderer in meshes)
-    {
-      foreach (var meshRendererMaterial in meshRenderer.materials)
-      {
-        var isBlackMarble = meshRendererMaterial.name.Contains("blackmarble");
-        if (isBlackMarble)
-        {
-          meshRendererMaterial.SetFloat("_TriplanarLocalPos", 1f);
-        }
-      }
-
-      if ((bool)meshRenderer.sharedMaterial)
-      {
-        // todo disable triplanar shader which causes shader to move on black marble
-        var sharedMaterials = meshRenderer.sharedMaterials;
-
-        for (var j = 0; j < sharedMaterials.Length; j++)
-        {
-          var material = new Material(sharedMaterials[j]);
-          var isBlackMarble = sharedMaterials[j].name.Contains("blackmarble");
-          if (isBlackMarble)
-          {
-            material.SetFloat("_TriplanarLocalPos", 1f);
-          }
-
-          material.SetFloat("_RippleDistance", 0f);
-          material.SetFloat("_ValueNoise", 0f);
-          sharedMaterials[j] = material;
-        }
-
-        meshRenderer.sharedMaterials = sharedMaterials;
-      }
-    }
-
+    FixPieceMeshes(netView);
     UpdateMass(netView);
-    EncapsulateBounds(netView.gameObject);
+    DebouncedRebuildBounds();
 
     /*
      * @todo investigate why this is called. Determine if it is needed
@@ -1583,7 +1597,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
    */
   private void RotateVehicleForwardPosition()
   {
-    if (!isActiveAndEnabled) return;
     if (VehicleInstance == null)
     {
       return;

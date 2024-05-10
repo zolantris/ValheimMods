@@ -222,6 +222,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   public void LoadFromMaterial()
   {
     var sailMaterial = GetSailMaterial();
+    m_mainColor = sailMaterial.GetColor("_MainColor");
     var mainTex = sailMaterial.GetTexture("_MainTex");
     var mainGroup = CustomTextureGroup.Get("Sails")
       .GetTextureByHash(mainTex.name.GetStableHashCode());

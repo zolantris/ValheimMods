@@ -1,9 +1,7 @@
-using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
-using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;
 
@@ -11,31 +9,23 @@ public class ShipHullPrefab : IRegisterPrefab
 {
   public static readonly ShipHullPrefab Instance = new();
 
-  public static GameObject? HullWoodPrefabInstance =>
-    PrefabManager.Instance.GetPrefab(PrefabNames.ShipHullCenterWoodPrefabName);
-
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
     // hulls
-    RegisterHull(PrefabNames.ShipHullCenterWoodPrefabName, ShipHulls.HullMaterial.Wood,
+    RegisterHull(PrefabNames.ShipHullCenterWoodPrefabName, ShipHulls.HullMaterial.Wood, 2,
       prefabManager, pieceManager);
     RegisterHull(PrefabNames.ShipHullCenterIronPrefabName, ShipHulls.HullMaterial.Iron,
-      prefabManager, pieceManager);
+      2, prefabManager, pieceManager);
 
     RegisterHull(PrefabNames.ShipHullSlabWoodPrefabName, ShipHulls.HullMaterial.Wood,
-      prefabManager, pieceManager);
+      1, prefabManager, pieceManager);
     RegisterHull(PrefabNames.ShipHullSlabIronPrefabName, ShipHulls.HullMaterial.Iron,
-      prefabManager, pieceManager);
+      1, prefabManager, pieceManager);
 
     // hull-ribs
     RegisterHullRib(PrefabNames.ShipHullRibWoodPrefabName, ShipHulls.HullMaterial.Wood,
       prefabManager, pieceManager);
     RegisterHullRib(PrefabNames.ShipHullRibIronPrefabName, ShipHulls.HullMaterial.Iron,
-      prefabManager, pieceManager);
-
-    RegisterHull(PrefabNames.ShipHullCenterWoodPrefabName, ShipHulls.HullMaterial.Wood,
-      prefabManager, pieceManager);
-    RegisterHull(PrefabNames.ShipHullCenterIronPrefabName, ShipHulls.HullMaterial.Iron,
       prefabManager, pieceManager);
   }
 
@@ -130,6 +120,7 @@ public class ShipHullPrefab : IRegisterPrefab
   private static void RegisterHull(
     string prefabName,
     string hullMaterial,
+    int materialCount,
     PrefabManager prefabManager,
     PieceManager pieceManager)
   {
@@ -168,7 +159,7 @@ public class ShipHullPrefab : IRegisterPrefab
       PieceTable = "Hammer",
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = [GetRequirements(hullMaterial, 1)]
+      Requirements = [GetRequirements(hullMaterial, materialCount)]
     }));
   }
 }
