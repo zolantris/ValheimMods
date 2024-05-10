@@ -448,11 +448,18 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     RegisterConsoleCommands();
     RegisterVehicleConsoleCommands();
 
+    HasVehicleDebug.SettingChanged += OnConfigChanged;
+
     /*
      * @todo add a way to skip LoadCustomTextures when on server. This check when used here crashes the Plugin.
      */
     PrefabManager.OnVanillaPrefabsAvailable += LoadCustomTextures;
     PrefabManager.OnVanillaPrefabsAvailable += AddCustomPieces;
+  }
+
+  private void OnConfigChanged(object sender, EventArgs eventArgs)
+  {
+    AddGuiLayerComponents();
   }
 
   public void RegisterConsoleCommands()

@@ -360,8 +360,6 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
       ShipInstance = vehicleShip;
       _controls.enabled = true;
     }
-
-    Logger.LogDebug("added rudder to BaseVehicle");
   }
 
   public void UpdateSpokes()

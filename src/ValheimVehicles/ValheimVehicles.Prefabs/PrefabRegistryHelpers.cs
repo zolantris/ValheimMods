@@ -20,6 +20,20 @@ public abstract class PrefabRegistryHelpers
   /// todo auto generate this from the translations json
   public static void Init()
   {
+    PieceDataDictionary.Add(PrefabNames.ShipHullSlabWoodPrefabName, new PieceData()
+    {
+      Name = "valheim_vehicles_ship_hull_slab_wood",
+      Description = "valheim_vehicles_ship_hull_slab_wood_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullSlabWood)
+    });
+    PieceDataDictionary.Add(PrefabNames.ShipHullSlabIronPrefabName, new PieceData()
+    {
+      Name = "valheim_vehicles_ship_hull_slab_iron",
+      Description = "valheim_vehicles_ship_hull_slab_iron_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullSlabIron)
+    });
+
+
     PieceDataDictionary.Add(PrefabNames.WaterVehicleShip, new PieceData()
     {
       Name = "valheim_vehicles_water_vehicle",
@@ -32,13 +46,13 @@ public abstract class PrefabRegistryHelpers
     {
       Name = "valheim_vehicles_ship_hull_rib_iron",
       Description = "valheim_vehicles_ship_hull_rib_iron_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHull)
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullRibIron)
     });
     PieceDataDictionary.Add(PrefabNames.ShipHullRibWoodPrefabName, new PieceData()
     {
       Name = "valheim_vehicles_ship_hull_rib_wood",
       Description = "valheim_vehicles_ship_hull_rib_wood_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHull)
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullRibWood)
     });
 
     // hull center variants
@@ -46,13 +60,13 @@ public abstract class PrefabRegistryHelpers
     {
       Name = "valheim_vehicles_ship_hull_center_wood",
       Description = "valheim_vehicles_ship_hull_center_wood_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHull)
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHullWood)
     });
     PieceDataDictionary.Add(PrefabNames.ShipHullCenterIronPrefabName, new PieceData()
     {
       Name = "valheim_vehicles_ship_hull_center_iron",
       Description = "valheim_vehicles_ship_hull_center_iron_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHull)
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipHullIron)
     });
 
 

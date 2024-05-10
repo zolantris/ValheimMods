@@ -126,7 +126,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     if ((bool)m_baseRoot)
     {
       m_baseRoot.CleanUp();
-      UnityEngine.Object.Destroy(m_baseRoot.gameObject);
+      Destroy(m_baseRoot.gameObject);
     }
   }
 

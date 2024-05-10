@@ -7,12 +7,17 @@ namespace ValheimVehicles.Prefabs;
 
 public class LoadValheimVehicleAssets : ILoadAssets
 {
-  // ships
+  // hull
   public static GameObject ShipHullWoodAsset = null!;
   public static GameObject ShipHullIronAsset = null!;
 
+  // hull ribs
   public static GameObject ShipHullRibWoodAsset = null!;
   public static GameObject ShipHullRibIronAsset = null!;
+
+  // slabs (act as hulls too)
+  public static GameObject ShipHullSlabWoodAsset = null!;
+  public static GameObject ShipHullSlabIronAsset = null!;
 
   public static GameObject ShipRudderBasicAsset = null!;
   public static GameObject ShipRudderAdvancedAsset = null!;
@@ -52,6 +57,12 @@ public class LoadValheimVehicleAssets : ILoadAssets
       assetBundle.LoadAsset<GameObject>("vehicle_ship.prefab");
     VehiclePiecesAsset = assetBundle.LoadAsset<GameObject>("vehicle_ship_pieces.prefab");
 
+    // hull slabs
+    ShipHullSlabWoodAsset =
+      assetBundle.LoadAsset<GameObject>("hull_slab_wood.prefab");
+    ShipHullSlabIronAsset =
+      assetBundle.LoadAsset<GameObject>("hull_slab_iron.prefab");
+
     // hull center variants
     ShipHullWoodAsset =
       assetBundle.LoadAsset<GameObject>("hull_center_wood.prefab");
@@ -61,10 +72,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
     // hull rib variants
     ShipHullRibWoodAsset =
       assetBundle.LoadAsset<GameObject>("hull_rib_wood.prefab");
-    // ShipHullRibIronAsset =
-    //   assetBundle.LoadAsset<GameObject>("hull_rib_iron.prefab");
     ShipHullRibIronAsset =
-      assetBundle.LoadAsset<GameObject>("hull_ribv2_wip.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_rib_iron.prefab");
 
     // rudder variants
     ShipRudderBasicAsset =

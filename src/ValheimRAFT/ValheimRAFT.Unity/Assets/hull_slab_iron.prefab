@@ -74,7 +74,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3715165887456535575}
   m_Layer: 10
-  m_Name: hull_slab
+  m_Name: hull_slab_iron
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -105,6 +105,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4709332502616149196}
     m_Modifications:
+    - target: {fileID: 1297785890825520983, guid: 7a9f801d96aeac549bb94feb02116269, type: 3}
+      propertyPath: m_Size.z
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3715165887456535575, guid: 7a9f801d96aeac549bb94feb02116269, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -115,7 +119,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3715165887456535575, guid: 7a9f801d96aeac549bb94feb02116269, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3715165887456535575, guid: 7a9f801d96aeac549bb94feb02116269, type: 3}
       propertyPath: m_LocalRotation.w
@@ -149,7 +153,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: hull_slab_worn_shared
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1297785890825520983, guid: 7a9f801d96aeac549bb94feb02116269, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

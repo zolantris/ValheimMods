@@ -38,12 +38,12 @@ public abstract class ShipHulls
   public static bool IsHull(GameObject go)
   {
     var goName = go.name;
-
-    if (go.name.Contains(PrefabNames.ShipHullCenterWoodPrefabName) ||
-        go.name.Contains(PrefabNames.ShipHullCenterIronPrefabName) ||
-        go.name.Contains(PrefabNames.ShipHullRibIronPrefabName) ||
-        go.name.Contains(PrefabNames.ShipHullRibWoodPrefabName)) return true;
-    return false;
+    return goName.Contains(PrefabNames.ShipHullCenterWoodPrefabName) ||
+           goName.Contains(PrefabNames.ShipHullCenterIronPrefabName) ||
+           goName.Contains(PrefabNames.ShipHullRibIronPrefabName) ||
+           goName.Contains(PrefabNames.ShipHullRibWoodPrefabName) ||
+           goName.Contains(PrefabNames.ShipHullSlabIronPrefabName) ||
+           goName.Contains(PrefabNames.ShipHullSlabWoodPrefabName);
   }
 
   public static string GetVanillaPrefab(string hullMaterial, HullOrientation hullOrientation)

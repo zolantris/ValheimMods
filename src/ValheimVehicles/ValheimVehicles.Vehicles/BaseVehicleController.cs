@@ -67,7 +67,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   internal Rigidbody? m_syncRigidbody;
 
   internal List<ZNetView> m_pieces = [];
-  internal List<ShipHullComponent> m_hullPieces = [];
+  internal List<ZNetView> m_hullPieces = [];
 
   internal List<MastComponent> m_mastPieces = [];
 
@@ -671,10 +671,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       CancelInvoke(nameof(RebuildBounds));
       Invoke(nameof(RebuildBounds), 1f);
 
-      var hull = netView.GetComponent<ShipHullComponent>();
-      if ((bool)hull)
+      if (ShipHulls.IsHull(netView.gameObject))
       {
-        m_hullPieces.Remove(hull);
+        m_hullPieces.Remove(netView);
       }
 
       var sail = netView.GetComponent<SailComponent>();
@@ -1404,11 +1403,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if ((bool)wnt && ValheimRaftPlugin.Instance.MakeAllPiecesWaterProof.Value)
       wnt.m_noRoofWear = false;
 
-    var hull = netView.GetComponent<ShipHullComponent>();
-    if ((bool)hull)
+    if (ShipHulls.IsHull(netView.gameObject))
     {
-      hull.SetParentZdoId(PersistentZdoId);
-      m_hullPieces.Add(hull);
+      m_hullPieces.Add(netView);
     }
 
     var cultivatable = netView.GetComponent<CultivatableComponent>();
@@ -1501,11 +1498,10 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
         meshRenderer.sharedMaterials = sharedMaterials;
       }
-
-      EncapsulateBounds(netView.gameObject);
     }
 
     UpdateMass(netView);
+    EncapsulateBounds(netView.gameObject);
 
     /*
      * @todo investigate why this is called. Determine if it is needed
@@ -1566,9 +1562,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   private float GetAverageFloatHeightFromHulls()
   {
-    // if (m_hullPieces.Count <= 0) return _vehicleBounds.center.y;
     if (m_hullPieces.Count <= 0) return 0.2f;
-
     _hullBounds = new Bounds();
 
     foreach (var hullPiece in m_hullPieces)
@@ -1579,8 +1573,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       _hullBounds = newBounds.Value;
     }
 
-    var piecesHeightFromPosition =
-      m_hullPieces.Sum(mHullPiece => mHullPiece.transform.localPosition.y);
     var piecesHeight = _hullBounds.center.y;
     var averagePieceHeight = piecesHeight / m_hullPieces.Count;
     return averagePieceHeight;
