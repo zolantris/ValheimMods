@@ -1265,7 +1265,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       var vehicleShip = parentObj.GetComponent<VehicleShip>();
       if (vehicleShip == null) return;
-      if (vehicleShip != null && vehicleShip.VehicleController == null) return;
+      if (vehicleShip.VehicleController.Instance == null) return;
+      vehicleShip.Instance.VehicleController.Instance.ActivatePiece(netView);
     }
     else
     {
