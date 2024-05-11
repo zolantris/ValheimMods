@@ -74,7 +74,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3715165887456535575}
   m_Layer: 10
-  m_Name: hull_slab_wood
+  m_Name: hull_slab_4x4_wood
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

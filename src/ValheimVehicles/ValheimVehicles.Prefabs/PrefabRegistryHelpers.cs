@@ -8,6 +8,8 @@ namespace ValheimVehicles.Prefabs;
 
 public abstract class PrefabRegistryHelpers
 {
+  public const string SnappointTag = "snappoint";
+
   public struct PieceData
   {
     public string Name;
@@ -204,7 +206,7 @@ public abstract class PrefabRegistryHelpers
     var snappointObj = new GameObject()
     {
       name = name,
-      tag = "snappoint"
+      tag = SnappointTag
     };
     Object.Instantiate(snappointObj, parentObj.transform);
   }
@@ -278,33 +280,38 @@ public abstract class PrefabRegistryHelpers
   {
     var t = r.GetComponentsInChildren<Transform>(true);
     foreach (var t1 in t)
-      if (t1.name.StartsWith("_snappoint"))
-        t1.tag = "snappoint";
+      if (t1.name.StartsWith($"_{SnappointTag}"))
+        t1.tag = SnappointTag;
+  }
+
+  public static void HoistSnapPointsToPrefab(GameObject prefab)
+  {
+    HoistSnapPointsToPrefab(prefab, prefab.transform);
   }
 
   // Use this to work around object resizing requiring repeated movement of child snappoints. This way snappoints can stay in the relative object without issue
-  public static void HoistSnapPointsToPrefab(GameObject prefab, string[]? hoistNames = null)
+  public static void HoistSnapPointsToPrefab(GameObject prefab, Transform parent,
+    string[]? hoistParentNameFilters = null)
   {
-    var transformObjs = prefab.GetComponentsInChildren<Transform>(true);
+    var transformObjs = parent.GetComponentsInChildren<Transform>(true);
     foreach (var transformObj in transformObjs)
-      if (transformObj.tag == "snappoint")
+    {
+      if (transformObj.tag != SnappointTag)
+        continue;
+      if (hoistParentNameFilters != null)
       {
-        if (hoistNames != null)
+        foreach (var hoistName in hoistParentNameFilters)
         {
-          foreach (var hoistName in hoistNames)
-          {
-            if (transformObj.parent.name.Contains(hoistName))
-            {
-              transformObj.SetParent(prefab.transform);
-              transformObj.gameObject.SetActive(false);
-            }
-          }
-        }
-        else
-        {
+          if (!transformObj.parent.name.StartsWith(hoistName)) continue;
           transformObj.SetParent(prefab.transform);
           transformObj.gameObject.SetActive(false);
         }
       }
+      else
+      {
+        transformObj.SetParent(prefab.transform);
+        transformObj.gameObject.SetActive(false);
+      }
+    }
   }
 }

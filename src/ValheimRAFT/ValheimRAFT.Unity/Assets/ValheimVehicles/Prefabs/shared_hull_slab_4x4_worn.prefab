@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3715165887456535575}
   m_Layer: 10
-  m_Name: hull_slab_worn_shared
+  m_Name: shared_hull_slab_4x4_worn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82,7 +82,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4090740829085154989, guid: 9007e8718bbbd2a47943af445fef7d45, type: 3}
       propertyPath: m_Name
-      value: hull_slab_new_shared
+      value: hull_worn
       objectReference: {fileID: 0}
     - target: {fileID: 4535770651959269543, guid: 9007e8718bbbd2a47943af445fef7d45, type: 3}
       propertyPath: m_LocalRotation.w

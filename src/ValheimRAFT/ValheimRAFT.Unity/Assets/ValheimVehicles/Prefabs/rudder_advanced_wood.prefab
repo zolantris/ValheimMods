@@ -192,7 +192,7 @@ GameObject:
   - component: {fileID: 5072356786213414956}
   - component: {fileID: 6014958587188741086}
   m_Layer: 0
-  m_Name: vehicle_ship_rudder_advanced
+  m_Name: rudder_advanced_wood
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

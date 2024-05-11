@@ -15,7 +15,7 @@ public class ShipKeelPrefab : IRegisterPrefab
     var prefab =
       prefabManager.CreateClonedPrefab(PrefabNames.ShipKeel,
         LoadValheimVehicleAssets.ShipKeelAsset);
-    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
+    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab, prefab.transform);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     PrefabRegistryHelpers.SetWearNTear(prefab);

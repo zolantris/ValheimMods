@@ -1,6 +1,7 @@
 using UnityEngine;
 using ValheimVehicles.Utis;
 using ValheimVehicles.Vehicles;
+using Logger = Jotunn.Logger;
 
 namespace Components;
 
@@ -30,6 +31,8 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     GUILayout.BeginArea(new Rect(500, 10, 200, 200), myButtonStyle);
     if (GUILayout.Button("collider debugger"))
     {
+      Logger.LogMessage(
+        "Collider debugger called, \nblue = BlockingCollider for collisions and keeping boat on surface, \ngreen is float collider for pushing the boat upwards, typically it needs to be below or at same level as BlockingCollider to prevent issues, \nYellow is onboardtrigger for calculating if player is onboard");
       var currentInstance = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
 
       if (!currentInstance)

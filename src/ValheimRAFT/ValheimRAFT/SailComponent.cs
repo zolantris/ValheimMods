@@ -75,7 +75,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public static float m_maxDistanceSqr = 1024f;
 
-  private static EditSailComponentPanel m_editPanel = null;
+  private static EditSailComponentPanel? m_editPanel = null;
 
   internal static bool m_sailInit = true;
 
@@ -117,8 +117,22 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   private Color m_mainColor;
 
+  private float m_mistAlpha;
+
   private float m_sailArea = 0f;
   private static bool DebugBoxCollider = true;
+  private static readonly int MistAlpha = Shader.PropertyToID("_MistAlpha");
+  private static readonly int MainColor = Shader.PropertyToID("_MainColor");
+  private static readonly int PatternColor = Shader.PropertyToID("_PatternColor");
+  private static readonly int PatternTex = Shader.PropertyToID("_PatternTex");
+  private static readonly int PatternRotation = Shader.PropertyToID("_PatternRotation");
+  private static readonly int PatternNormal = Shader.PropertyToID("_PatternNormal");
+  private static readonly int MainTex = Shader.PropertyToID("_MainTex");
+  private static readonly int BumpMap = Shader.PropertyToID("_BumpMap");
+  private static readonly int LogoTex = Shader.PropertyToID("_LogoTex");
+  private static readonly int LogoColor = Shader.PropertyToID("_LogoColor");
+  private static readonly int LogoRotation = Shader.PropertyToID("_LogoRotation");
+  private static readonly int LogoNormal = Shader.PropertyToID("_LogoNormal");
 
   public void Awake()
   {
@@ -169,6 +183,11 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     var vector = EnvMan.instance.GetWindForce();
     m_sailCloth.externalAcceleration = vector * m_windMultiplier;
     m_sailCloth.randomAcceleration = vector * (m_windMultiplier * m_clothRandomAccelerationFactor);
+  }
+
+  public void LateUpdate()
+  {
+    UpdateMistAlphaForPlayerCamera();
   }
 
   public void OnDestroy()
@@ -222,33 +241,34 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   public void LoadFromMaterial()
   {
     var sailMaterial = GetSailMaterial();
-    m_mainColor = sailMaterial.GetColor("_MainColor");
-    var mainTex = sailMaterial.GetTexture("_MainTex");
+    m_mainColor = sailMaterial.GetColor(MainColor);
+    m_mistAlpha = sailMaterial.GetFloat(MistAlpha);
+    var mainTex = sailMaterial.GetTexture(MainTex);
     var mainGroup = CustomTextureGroup.Get("Sails")
       .GetTextureByHash(mainTex.name.GetStableHashCode());
     if (mainGroup != null) m_mainHash = mainTex.name.GetStableHashCode();
 
-    m_mainScale = sailMaterial.GetTextureScale("_MainTex");
-    m_mainOffset = sailMaterial.GetTextureOffset("_MainTex");
+    m_mainScale = sailMaterial.GetTextureScale(MainTex);
+    m_mainOffset = sailMaterial.GetTextureOffset(MainTex);
 
-    var patternTex = sailMaterial.GetTexture("_PatternTex");
+    var patternTex = sailMaterial.GetTexture(PatternTex);
     var patternGroup = CustomTextureGroup.Get("Patterns")
       .GetTextureByHash(patternTex.name.GetStableHashCode());
     if (patternGroup != null) m_patternHash = patternTex.name.GetStableHashCode();
 
-    m_patternScale = sailMaterial.GetTextureScale("_PatternTex");
-    m_patternOffset = sailMaterial.GetTextureOffset("_PatternTex");
-    m_patternColor = sailMaterial.GetColor("_PatternColor");
-    m_patternRotation = sailMaterial.GetFloat("_PatternRotation");
-    var logoTex = sailMaterial.GetTexture("_LogoTex");
+    m_patternScale = sailMaterial.GetTextureScale(PatternTex);
+    m_patternOffset = sailMaterial.GetTextureOffset(PatternTex);
+    m_patternColor = sailMaterial.GetColor(PatternColor);
+    m_patternRotation = sailMaterial.GetFloat(PatternRotation);
+    var logoTex = sailMaterial.GetTexture(LogoTex);
     var logoGroup = CustomTextureGroup.Get("Logos")
       .GetTextureByHash(logoTex.name.GetStableHashCode());
     if (logoGroup != null) m_logoHash = logoTex.name.GetStableHashCode();
 
-    m_logoScale = sailMaterial.GetTextureScale("_LogoTex");
-    m_logoOffset = sailMaterial.GetTextureOffset("_LogoTex");
-    m_logoColor = sailMaterial.GetColor("_LogoColor");
-    m_logoRotation = sailMaterial.GetFloat("_LogoRotation");
+    m_logoScale = sailMaterial.GetTextureScale(LogoTex);
+    m_logoOffset = sailMaterial.GetTextureOffset(LogoTex);
+    m_logoColor = sailMaterial.GetColor(LogoColor);
+    m_logoRotation = sailMaterial.GetFloat(LogoRotation);
 
     if (ValheimRaftPlugin.Instance.HasDebugSails.Value)
     {
@@ -276,6 +296,33 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   public Material GetSailMaterial()
   {
     return m_mesh.material;
+  }
+
+  private void UpdateMistAlphaForPlayerCamera()
+  {
+    var player = Player.m_localPlayer;
+    if (!player) return;
+    var isPlayerInsideMister = Mister.InsideMister(player.transform.position);
+    var isSailInsideMister = Mister.InsideMister(transform.position);
+
+    if (isPlayerInsideMister || isSailInsideMister)
+    {
+      var playerDistanceFromSail =
+        Mathf.Clamp(Vector3.Distance(player.transform.position, transform.position), 0f, 20f);
+      var alphaFromDistance = Mathf.Clamp((playerDistanceFromSail - 10f) / 10f, 0, 1);
+      SetMistAlpha(1 - alphaFromDistance);
+    }
+    else
+    {
+      SetMistAlpha(1);
+    }
+  }
+
+  private void SetMistAlpha(float alpha)
+  {
+    if (Mathf.Approximately(m_mistAlpha, alpha)) return;
+    m_mistAlpha = alpha;
+    m_mesh.material.SetFloat(MistAlpha, Mathf.Clamp(alpha, 0, 1));
   }
 
   public void LoadZDO()
@@ -364,7 +411,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
     if (zdo_mainColor != m_mainColor)
       Logger.LogDebug(
-        $"ZDO color: {zdo_mainColor} updated on LoadZDO of mesh color {m_mainColor} from sailMaterialColor: {GetSailMaterial().GetColor("_MainColor")}");
+        $"ZDO color: {zdo_mainColor} updated on LoadZDO of mesh color {m_mainColor} from sailMaterialColor: {GetSailMaterial().GetColor(MainColor)}");
 
     if (ValheimRaftPlugin.Instance.HasDebugSails.Value)
     {
@@ -805,7 +852,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     if (!(m_patternScale == vector2))
     {
       m_patternScale = vector2;
-      m_mesh.material.SetTextureScale("_PatternTex", m_patternScale);
+      m_mesh.material.SetTextureScale(PatternTex, m_patternScale);
     }
   }
 
@@ -814,7 +861,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     if (!(m_patternOffset == vector2))
     {
       m_patternOffset = vector2;
-      m_mesh.material.SetTextureOffset("_PatternTex", m_patternOffset);
+      m_mesh.material.SetTextureOffset(PatternTex, m_patternOffset);
     }
   }
 
@@ -823,7 +870,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     if (!(m_patternColor == color))
     {
       m_patternColor = color;
-      m_mesh.material.SetColor("_PatternColor", color);
+      m_mesh.material.SetColor(PatternColor, color);
     }
   }
 
@@ -832,7 +879,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     if (m_patternRotation != rotation)
     {
       m_patternRotation = rotation;
-      m_mesh.material.SetFloat("_PatternRotation", rotation);
+      m_mesh.material.SetFloat(PatternRotation, rotation);
     }
   }
 
@@ -845,9 +892,9 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
       CustomTextureGroup.Get("Patterns").GetTextureByHash(hash);
     if (customtexture != null && (bool)customtexture.Texture && (bool)m_mesh)
     {
-      m_mesh.material.SetTexture("_PatternTex", customtexture.Texture);
+      m_mesh.material.SetTexture(PatternTex, customtexture.Texture);
       if ((bool)customtexture.Normal)
-        m_mesh.material.SetTexture("_PatternNormal", customtexture.Normal);
+        m_mesh.material.SetTexture(PatternNormal, customtexture.Normal);
     }
   }
 
@@ -856,7 +903,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     if (!(m_mainScale == vector2))
     {
       m_mainScale = vector2;
-      m_mesh.material.SetTextureScale("_MainTex", m_mainScale);
+      m_mesh.material.SetTextureScale(MainTex, m_mainScale);
     }
   }
 
@@ -865,7 +912,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     if (!(m_mainOffset == vector2))
     {
       m_mainOffset = vector2;
-      m_mesh.material.SetTextureOffset("_MainTex", m_mainOffset);
+      m_mesh.material.SetTextureOffset(MainTex, m_mainOffset);
     }
   }
 
@@ -874,7 +921,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     if (!(m_mainColor == color))
     {
       m_mainColor = color;
-      m_mesh.material.SetColor("_MainColor", color);
+      m_mesh.material.SetColor(MainColor, color);
     }
   }
 
@@ -887,9 +934,9 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
       CustomTextureGroup.Get("Sails").GetTextureByHash(hash);
     if (customtexture != null && (bool)customtexture.Texture && (bool)m_mesh)
     {
-      m_mesh.material.SetTexture("_MainTex", customtexture.Texture);
+      m_mesh.material.SetTexture(MainTex, customtexture.Texture);
       if ((bool)customtexture.Normal)
-        m_mesh.material.SetTexture("_BumpMap", customtexture.Normal);
+        m_mesh.material.SetTexture(BumpMap, customtexture.Normal);
     }
   }
 
@@ -898,7 +945,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     if (!(m_logoScale == vector2))
     {
       m_logoScale = vector2;
-      m_mesh.material.SetTextureScale("_LogoTex", m_logoScale);
+      m_mesh.material.SetTextureScale(LogoTex, m_logoScale);
     }
   }
 
@@ -907,7 +954,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     if (!(m_logoOffset == vector2))
     {
       m_logoOffset = vector2;
-      m_mesh.material.SetTextureOffset("_LogoTex", m_logoOffset);
+      m_mesh.material.SetTextureOffset(LogoTex, m_logoOffset);
     }
   }
 
@@ -916,7 +963,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     if (!(m_logoColor == color))
     {
       m_logoColor = color;
-      m_mesh.material.SetColor("_LogoColor", color);
+      m_mesh.material.SetColor(LogoColor, color);
     }
   }
 
@@ -925,7 +972,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     if (m_logoRotation != rotation)
     {
       m_logoRotation = rotation;
-      m_mesh.material.SetFloat("_LogoRotation", rotation);
+      m_mesh.material.SetFloat(LogoRotation, rotation);
     }
   }
 
@@ -938,9 +985,9 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
       CustomTextureGroup.Get("Logos").GetTextureByHash(hash);
     if (customtexture != null && (bool)customtexture.Texture && (bool)m_mesh)
     {
-      m_mesh.material.SetTexture("_LogoTex", customtexture.Texture);
+      m_mesh.material.SetTexture(LogoTex, customtexture.Texture);
       if ((bool)customtexture.Normal)
-        m_mesh.material.SetTexture("_LogoNormal", customtexture.Normal);
+        m_mesh.material.SetTexture(LogoNormal, customtexture.Normal);
     }
   }
 
@@ -967,15 +1014,15 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     if (!m_nview.IsOwner())
     {
-      if (!IsInvoking("TryEdit"))
+      if (!IsInvoking(nameof(TryEdit)))
       {
         m_nview.ClaimOwnership();
-        InvokeRepeating("TryEdit", 0.5f, 0.5f);
+        InvokeRepeating(nameof(TryEdit), 0.5f, 0.5f);
       }
     }
     else
     {
-      CancelInvoke("TryEdit");
+      CancelInvoke(nameof(TryEdit));
       m_editPanel.ShowPanel(this);
     }
   }
@@ -987,11 +1034,11 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   internal void StartEdit()
   {
-    CancelInvoke("LoadZDO");
+    CancelInvoke(nameof(LoadZDO));
   }
 
   internal void EndEdit()
   {
-    InvokeRepeating("LoadZDO", 5f, 5f);
+    InvokeRepeating(nameof(LoadZDO), 5f, 5f);
   }
 }

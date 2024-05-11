@@ -68,7 +68,10 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   private void Awake()
   {
     NetView = GetComponent<ZNetView>();
-    if (!NetView && NetView.isActiveAndEnabled) return;
+
+    if (!NetView) return;
+    if (!NetView.isActiveAndEnabled) return;
+
     MovementFlags =
       (VehicleMovementFlags)NetView.GetZDO().GetInt(VehicleZdoVars.VehicleFlags,
         (int)MovementFlags);

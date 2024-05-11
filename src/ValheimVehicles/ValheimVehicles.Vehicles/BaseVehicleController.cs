@@ -1648,8 +1648,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       return;
     }
 
-    var rotatedVehicleBounds = _vehicleBounds;
-
     /*
      * @description float collider logic
      * - should match all ship colliders at surface level
@@ -1657,9 +1655,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
      */
     var averageFloatHeight = GetAverageFloatHeightFromHulls();
     var floatColliderCenterOffset =
-      new Vector3(rotatedVehicleBounds.center.x, averageFloatHeight, rotatedVehicleBounds.center.z);
-    var floatColliderSize = new Vector3(rotatedVehicleBounds.size.x,
-      m_floatcollider.size.y, rotatedVehicleBounds.size.z);
+      new Vector3(_vehicleBounds.center.x, averageFloatHeight, _vehicleBounds.center.z);
+    var floatColliderSize = new Vector3(Mathf.Max(4f, _vehicleBounds.size.x),
+      m_floatcollider.size.y, Mathf.Max(4f, _vehicleBounds.size.z));
 
     /*
      * onboard colliders
@@ -1673,16 +1671,16 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     const float characterHeightScalar = 1.2f;
     var computedOnboardTriggerHeight =
       Math.Min(
-        Math.Max(rotatedVehicleBounds.size.y * characterHeightScalar,
-          rotatedVehicleBounds.size.y + characterTriggerMinHeight),
-        rotatedVehicleBounds.size.y + characterTriggerMaxAddedHeight) - m_floatcollider.size.y;
+        Math.Max(_vehicleBounds.size.y * characterHeightScalar,
+          _vehicleBounds.size.y + characterTriggerMinHeight),
+        _vehicleBounds.size.y + characterTriggerMaxAddedHeight) - m_floatcollider.size.y;
     var onboardColliderCenter =
-      new Vector3(rotatedVehicleBounds.center.x,
+      new Vector3(_vehicleBounds.center.x,
         computedOnboardTriggerHeight / 2f,
-        rotatedVehicleBounds.center.z);
-    var onboardColliderSize = new Vector3(rotatedVehicleBounds.size.x,
+        _vehicleBounds.center.z);
+    var onboardColliderSize = new Vector3(Mathf.Max(4f, _vehicleBounds.size.x),
       computedOnboardTriggerHeight,
-      rotatedVehicleBounds.size.z);
+      Mathf.Max(4f, _vehicleBounds.size.z));
 
     /*
      * blocking collider is the collider that prevents the ship from going through objects.
@@ -1700,8 +1698,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       : floatColliderCenterOffset.y;
     var blockingColliderCenterOffset = new Vector3(_vehicleBounds.center.x,
       blockingColliderCenterY, _vehicleBounds.center.z);
-    var blockingColliderSize = new Vector3(_vehicleBounds.size.x, floatColliderSize.y,
-      _vehicleBounds.size.z);
+    var blockingColliderSize = new Vector3(Mathf.Max(4, _vehicleBounds.size.x), floatColliderSize.y,
+      Mathf.Max(4f, _vehicleBounds.size.z));
 
     if (ValheimRaftPlugin.Instance.HullCollisionOnly.Value && _hullBounds.size != Vector3.zero)
     {
@@ -1826,18 +1824,17 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         !go.name.StartsWith(PrefabNames.Tier2RaftMastName) &&
         !go.name.StartsWith(PrefabNames.Tier3RaftMastName))
     {
-      if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value)
+      if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value || ShipHulls.IsHull(go))
       {
         var newBounds =
           EncapsulateColliders(_vehicleBounds.center, _vehicleBounds.size, go);
         if (newBounds == null) return;
         _vehicleBounds = newBounds.Value;
         OnShipBoundsChange();
+        return;
       }
-      else
-      {
-        _vehicleBounds.Encapsulate(go.transform.localPosition);
-      }
+
+      _vehicleBounds.Encapsulate(go.transform.localPosition);
     }
   }
 

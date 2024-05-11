@@ -49,7 +49,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   private float _rudderForce = 1f;
 
   // floating mechanics
-  private bool _hasFloatSway = true;
+  private bool _hasBoatSway = true;
 
   public static List<VehicleShip> AllVehicles = [];
 
@@ -59,6 +59,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   public float TargetHeight => MovementController.TargetHeight = 0f;
 
   public bool isCreative = false;
+
+  public static bool HasVehicleDebugger = false;
 
   public void SetCreativeMode(bool val)
   {
@@ -86,7 +88,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   private WaterVehicleController _controller;
   public ZSyncTransform m_zsyncTransform;
 
-  public VehicleDebugHelpers VehicleDebugHelpersInstance { get; private set; }
+  public VehicleDebugHelpers? VehicleDebugHelpersInstance { get; private set; }
 
   public VehicleMovementController MovementController
   {
@@ -385,19 +387,28 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
 
     InitializeWaterVehicleController();
+
+    if (HasVehicleDebugger && _controller)
+    {
+      InitializeVehicleDebugger();
+    }
   }
 
   public override void OnEnable()
   {
     base.OnEnable();
     InitializeWaterVehicleController();
+    if (HasVehicleDebugger && _controller)
+    {
+      InitializeVehicleDebugger();
+    }
   }
 
   public void ToggleBoatOceanSway(bool val)
   {
-    _hasFloatSway = val;
+    _hasBoatSway = val;
     m_body.isKinematic = !val;
-    if (!_hasFloatSway)
+    if (!_hasBoatSway)
     {
       m_body.velocity = Vector3.zero;
       m_body.angularVelocity = Vector3.zero;
@@ -414,7 +425,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
     FixShipRotation();
 
-    if (!_hasFloatSway)
+    if (!_hasBoatSway)
     {
       return;
     }

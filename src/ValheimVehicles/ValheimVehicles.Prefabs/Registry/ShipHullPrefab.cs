@@ -86,6 +86,10 @@ public class ShipHullPrefab : IRegisterPrefab
     prefab.gameObject.layer = 0;
     PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab);
 
+    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
+      prefab.transform.Find("new") ?? prefab.transform,
+      ["hull_slab_top_rib", "hull_rib_iron", "hull_rib_wood"]);
+
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
@@ -152,6 +156,7 @@ public class ShipHullPrefab : IRegisterPrefab
     PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
     // this will be used to hide water on the boat
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
+      prefab.transform.Find("new") ?? prefab.transform,
       ["hull_slab_new", "vehicle_ship_hull_slab"]);
 
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig

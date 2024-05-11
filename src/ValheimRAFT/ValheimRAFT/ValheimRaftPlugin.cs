@@ -558,10 +558,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void AddGuiLayerComponents()
   {
-    if (HasVehicleDebug.Value)
-    {
-      ToggleVehicleDebugGui();
-    }
+    VehicleShip.HasVehicleDebugger = HasVehicleDebug.Value;
+    MoveableBaseShipComponent.HasVehicleDebugger = HasVehicleDebug.Value;
+    ToggleVehicleDebugGui();
   }
 
   /**
