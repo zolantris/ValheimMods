@@ -123,7 +123,7 @@ Material:
     - _InvFade: 1
     - _LogoRotation: 0.5
     - _Metallic: 0
-    - _MistAlpha: 1
+    - _MistAlpha: 0.831
     - _Mode: 0
     - _MossAlpha: 0
     - _MossBlend: 0
