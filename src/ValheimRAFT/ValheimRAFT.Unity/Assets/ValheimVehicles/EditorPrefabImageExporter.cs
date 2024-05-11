@@ -4,23 +4,26 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
- 
 
-[ExecuteInEditMode]
+// [ExecuteInEditMode]
 public class EditorPrefabImageExporter : MonoBehaviour
 {
-    void Start()
+    private void Awake()
     {
-        
+        // gameObject.AddComponent<EditorPrefabImageExporter>();
+        // BuildPrefabImages();
     }
 
+    void Start()
+    {
+        // BuildPrefabImages();
+    }
     // Update is called once per frame
     void Update()
     {
-        
     }
 
-    private List<Texture2D> thumbnails = [];
+    private List<Texture2D> thumbnails = new List<Texture2D>();
     private const int pngDimensions = 64; 
     
     private void WriteFileAsPng(Texture2D texture2d, string objName)
@@ -49,9 +52,13 @@ public class EditorPrefabImageExporter : MonoBehaviour
         {
             if (childObject.parent == transform)
             {
-                var miniThumbnail = AssetPreview.GetMiniThumbnail(childObject);
-                thumbnails.Add(miniThumbnail);
-                WriteFileAsPng(miniThumbnail, childObject.name);
+                var miniThumbnail = AssetPreview.GetAssetPreview(childObject);
+                // var png = miniThumbnail.EncodeToPNG();
+                var pixels = miniThumbnail.GetPixels();
+                Debug.Log(pixels);
+                Debug.Log($"PNG, minithumbnail: {miniThumbnail.isReadable}");
+                // thumbnails.Add(miniThumbnail);
+                // WriteFileAsPng(miniThumbnail, childObject.name);
             }
         }
         

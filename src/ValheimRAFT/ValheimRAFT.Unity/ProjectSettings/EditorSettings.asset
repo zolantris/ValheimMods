@@ -23,7 +23,7 @@ EditorSettings:
   m_EnableTextureStreamingInPlayMode: 1
   m_EnableEditorAsyncCPUTextureLoading: 0
   m_AsyncShaderCompilation: 1
-  m_PrefabModeAllowAutoSave: 1
+  m_PrefabModeAllowAutoSave: 0
   m_EnterPlayModeOptionsEnabled: 0
   m_EnterPlayModeOptions: 3
   m_GameObjectNamingDigits: 1
@@ -34,7 +34,7 @@ EditorSettings:
   m_SerializeInlineMappingsOnOneLine: 1
   m_DisableCookiesInLightmapper: 0
   m_AssetPipelineMode: 1
-  m_RefreshImportMode: 0
+  m_RefreshImportMode: 1
   m_CacheServerMode: 0
   m_CacheServerEndpoint: 
   m_CacheServerNamespacePrefix: default
