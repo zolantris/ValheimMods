@@ -15,8 +15,7 @@ public class PrefabThumbnailGenerator : EditorWindow
     public Object targetSpriteAtlas;
     List<GameObject> objList = new List<GameObject>();
     private Object dirPathObj;
-    string dirPath = "Assets/ValheimVehicles/GeneratedIcons/"; // output dir
-    // string dirPath = "Assets/Captures/"; // output dir
+    static string dirPath = "Assets/ValheimVehicles/GeneratedIcons/"; // output dir
     int width = 100; // image width
     int height = 100; // image height
 
@@ -60,8 +59,10 @@ public class PrefabThumbnailGenerator : EditorWindow
         GUILayout.EndHorizontal();
         EditorGUILayout.Space();
     
-        if (GUILayout.Button(new GUIContent("Capture")))
+        if (GUILayout.Button(new GUIContent("Generated Sprite Icons")))
         {
+            if (!targetSpriteAtlas) return;
+            if (!searchDirectory) return;
             CaptureTexturesForPrefabs();
         }
     }
@@ -92,31 +93,15 @@ public class PrefabThumbnailGenerator : EditorWindow
         foreach (var obj in objList)
         {
             Debug.Log("OBJ :  " + obj.name);
+            
+            // skips shared assets that are not meant for exporting
+            if (obj.name.StartsWith("shared_")) continue;
             Capture(obj);
         }
         
         UpdateSpriteAtlas();
     }
     
-    public static Sprite TextureToSprite(Texture2D texture) => Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 50f, 0, SpriteMeshType.Tight);
- 
-    public Texture2D LoadTexture(string filePath) {
- 
-        // Load a PNG or JPG file from disk to a Texture2D
-        // Returns null if load fails
- 
-        Texture2D Tex2D;
-        byte[] FileData;
- 
-        if (File.Exists(filePath)){
-            FileData = File.ReadAllBytes(filePath);
-            Tex2D = new Texture2D(2, 2);           // Create new "empty" texture
-            if (Tex2D.LoadImage(FileData))           // Load the imagedata into the texture (size is set automatically)
-                return Tex2D;                 // If data = readable -> return texture
-        }  
-        return null;                     // Return null if load failed
-    }
-
     private void UpdateSpriteAtlas()
     {
         Debug.Log($"AssetPath: {spritePaths.Count}");
@@ -128,6 +113,11 @@ public class PrefabThumbnailGenerator : EditorWindow
 
         var spriteAtlas = SpriteAtlasAsset.Load(targetSpriteAtlasPath);
         var spritesList = new List<Object>();
+
+        var packables = spriteAtlas.GetMasterAtlas()?.GetPackables() ?? new Object[]{};
+       
+        spriteAtlas.Remove(packables);
+        
         foreach (var spritePath in spritePaths)
         {
             var obj = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
@@ -141,7 +131,20 @@ public class PrefabThumbnailGenerator : EditorWindow
         AssetDatabase.Refresh();
     }
     
-    public void Capture(GameObject obj)
+    static void DeleteAllFilesInFolder()
+    {
+        string[] trashFolders = {dirPath};
+        foreach (var asset in AssetDatabase.FindAssets("", trashFolders))
+        {
+            var path = AssetDatabase.GUIDToAssetPath(asset);
+            if (path.Contains(".png"))
+            {
+                AssetDatabase.DeleteAsset(path);
+            }
+        }
+    }
+
+    private void Capture(GameObject obj)
     {
         var thumbnail = AssetPreview.GetAssetPreview(obj);
         if (thumbnail == null) return;
