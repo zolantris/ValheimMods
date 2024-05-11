@@ -14,10 +14,11 @@
         _LogoRotation("Logo Rotation", Range(0, 1)) = 0.0
         _LogoColor ("Logo Color", Color) = (1,1,1,1)
 		
+		_MistAlpha("Mist Alpha", Range(0, 1)) = 0.5
 
 		_Glossiness ("Smoothness", Range(0, 1)) = 0.5
 		_Metallic ("Metallic", Range(0, 1)) = 0
-		_Cutoff ("Alpha Cutoff", Range(0, 1)) = 0.5
+		_Cutoff ("Alpha Cutoff", Range(0, 1)) = 0.2
 		_BumpMap ("Normal Map", 2D) = "bump" {}
 		_BumpScale ("Normal scale", Float) = 1
 		[MaterialToggle] _TwoSidedNormals ("Twosided normals", Float) = 0
@@ -52,9 +53,11 @@
 
     float  _Cutoff;
 
+    #define PI 3.14159265359
+
     half _Wet;
+    half _MistAlpha;
     fixed4 _MainColor;
-    fixed4 _Color;
 
     sampler2D _PatternTex;
     sampler2D _PatternNormal;
@@ -69,16 +72,10 @@
     struct Input
     {
         float2 uv_MainTex;
+    	half _MistAlpha;
         float2 uv_PatternTex;
         float2 uv_LogoTex;
     };
-
-    // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
-    // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
-    // #pragma instancing_options assumeuniformscaling
-    // UNITY_INSTANCING_BUFFER_START(Props)
-    //     // put more per-instance properties here
-    // UNITY_INSTANCING_BUFFER_END(Props)
 
     void vert(inout appdata_full v, out Input o) {
         UNITY_INITIALIZE_OUTPUT(Input, o);
@@ -89,20 +86,18 @@
 
     void surf (Input IN, inout SurfaceOutputStandard o)
     {
-        float s = sin ( _PatternRotation * 3.14159265359 * 2 );
-        float c = cos ( _PatternRotation * 3.14159265359 * 2 );
+        float s = sin ( _PatternRotation * PI * 2 );
+        float c = cos ( _PatternRotation * PI * 2 );
         float2x2 rotationMatrix = float2x2( c, -s, s, c);
         IN.uv_PatternTex = mul (IN.uv_PatternTex, rotationMatrix);
 
-        s = sin ( _LogoRotation * 3.14159265359 * 2 );
-        c = cos ( _LogoRotation * 3.14159265359 * 2 );
+        s = sin ( _LogoRotation * PI * 2 );
+        c = cos ( _LogoRotation * PI * 2 );
         rotationMatrix = float2x2( c, -s, s, c);
         IN.uv_LogoTex = mul (IN.uv_LogoTex, rotationMatrix);
         IN.uv_LogoTex.xy += 0.5;
 
         // Albedo comes from a texture tinted by color
-    	// fixed4 mainCol = tex2D (_MainTex, IN.uv_MainTex) * _Color * _MainColor;
-		fixed4 color = tex2D(_MainTex, IN.uv_MainTex) * _Color;
     	fixed4 mainCol = tex2D (_MainTex, IN.uv_MainTex) * _MainColor;
         fixed4 patternCol = tex2D (_PatternTex, IN.uv_PatternTex);
         fixed4 logoCol = tex2D (_LogoTex, IN.uv_LogoTex);
@@ -110,61 +105,36 @@
         o.Albedo = lerp(mainCol.rgb, patternCol.rgb * _PatternColor.rgb, patternCol.r * _PatternColor.a);
         o.Albedo = lerp(o.Albedo, logoCol.rgb * _LogoColor.rgb, logoCol.a * _LogoColor.a);
         // Metallic and smoothness come from slider variables
-        o.Normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));// + tex2D(_PatternNormal, IN.uv_PatternTex) + tex2D(_LogoNormal, IN.uv_LogoTex);
+        o.Normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex)) + tex2D(_PatternNormal, IN.uv_PatternTex) + tex2D(_LogoNormal, IN.uv_LogoTex);
         o.Metallic = 0;
         o.Smoothness = _Wet;
-
-    	// base Valheim will likely override color with FogShaders, this will make the item disappear
-    	o.Alpha = color.a;
-
+    	
+    	o.Alpha = _MainColor.a * _MistAlpha;
     	clip(o.Alpha-_Cutoff);
     }
     ENDCG
-
-	//DummyShaderTextExporter
 	SubShader{
 		
-        Tags { "Queue" = "Transparent" "RenderType" = "Opaque" }
+        Tags { "Queue" = "Transparent" "RenderType" = "Transparent" }
         LOD 200
         Cull Back
+        Blend SrcAlpha OneMinusSrcAlpha
 
         CGPROGRAM
-        // Physically based Standard lighting model, and enable shadows on all light types
-        #pragma surface surf Standard
-
-        // Use shader model 3.0 target, to get nicer looking lighting
-        #pragma target 3.0
-
-        UNITY_INSTANCING_BUFFER_START(Props)
-            // put more per-instance properties here
-        UNITY_INSTANCING_BUFFER_END(Props)
-
+        #pragma surface surf Standard alpha:fade
+        #pragma target 5.0
         ENDCG
 
-        Tags { "Queue" = "Transparent" "RenderType" = "Opaque" }
+        Tags { "Queue" = "Transparent" "RenderType" = "Transparent" }
         LOD 200
         Cull Front
 
+        // vertex vert is used to inverse the normal map on the other side of the sail
         CGPROGRAM
-        // Physically based Standard lighting model, and enable shadows on all light types
-        #pragma surface surf Standard
+        #pragma surface surf Standard alpha:fade
         #pragma vertex vert
-
-        // Use shader model 3.0 target, to get nicer looking lighting
-        #pragma target 3.0
-
-        UNITY_INSTANCING_BUFFER_START(Props)
-            // put more per-instance properties here
-        UNITY_INSTANCING_BUFFER_END(Props)
-
+        #pragma target 5.0
         ENDCG
-
-//		Tags { "RenderType"="Opaque" }
-//        LOD 200
-//        CGPROGRAM
-//		#pragma surface surfVeg Standard
-//		#pragma target 3.0
-//        ENDCG
 	}
-	Fallback "Diffuse"
+//	Fallback "Diffuse"
 }
