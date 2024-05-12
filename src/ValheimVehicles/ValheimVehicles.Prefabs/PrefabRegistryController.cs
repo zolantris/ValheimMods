@@ -34,60 +34,29 @@ public class PrefabRegistryController : MonoBehaviour
 
   public static Component waterMask;
 
-  // private void OnGUI()
-  // {
-  //   GUILayout.BeginArea(new Rect(10, 10, 100, 100));
-  //   // if (GUILayout.Button("Patch HUD"))
-  //   // {
-  //   //   Hud_Patch.ApplyVehicleHudPatchGlobally();
-  //   // }
-  //
-  //   if (GUILayout.Button("Delete All Ships"))
-  //   {
-  //     var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
-  //     foreach (var obj in allObjects)
-  //     {
-  //       if (obj.name.Contains($"{PrefabNames.WaterVehicleShip}(Clone)") || ShipHulls.IsHull(obj))
-  //       {
-  //         if (ReferenceEquals(obj, ShipHullPrefab.HullWoodPrefabInstance))
-  //         {
-  //           return;
-  //         }
-  //
-  //         var wnt = obj.GetComponent<WearNTear>();
-  //         if ((bool)wnt)
-  //         {
-  //           wnt.Destroy();
-  //         }
-  //         else
-  //         {
-  //           Destroy(obj);
-  //         }
-  //       }
-  //     }
-  //   }
-  //
-  //   if (GUILayout.Button("RegisterWaterVehicle"))
-  //   {
-  //     // WaterVehiclePrefab.Instance.Register(prefabManager, pieceManager);
-  //   }
-  //
-  //   if (GUILayout.Button("ToggleAnchors"))
-  //   {
-  //     var waterVehicleControllers = Resources.FindObjectsOfTypeAll<WaterVehicleController>();
-  //     foreach (var wvc in waterVehicleControllers)
-  //     {
-  //       wvc?.VehicleInstance?.MovementController.ToggleAnchor();
-  //     }
-  //   }
-  //
-  //   // if (GUILayout.Button("Force 0"))
-  //   //   vehicleLOD.ForceLOD(0);
-  //   //
-  //   // if (GUILayout.Button("Force 1"))
-  //   //   vehicleLOD.ForceLOD(1);
-  //   GUILayout.EndArea();
-  // }
+  /// <summary>
+  /// For debugging and nuking rafts, not to be included in releases
+  /// </summary>
+  public static void DebugDestroyAllRaftObjects()
+  {
+    var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+    foreach (var obj in allObjects)
+    {
+      if (obj.name.Contains($"{PrefabNames.WaterVehicleShip}(Clone)") ||
+          ShipHulls.IsHull(obj) && obj.name.Contains("(Clone)"))
+      {
+        var wnt = obj.GetComponent<WearNTear>();
+        if ((bool)wnt)
+        {
+          wnt.Destroy();
+        }
+        else
+        {
+          Destroy(obj);
+        }
+      }
+    }
+  }
 
   // todo this should come from config
   public static float wearNTearBaseHealth = 250f;
@@ -166,7 +135,6 @@ public class PrefabRegistryController : MonoBehaviour
     pieceManager = PieceManager.Instance;
 
     LoadValheimAssets.Instance.Init(prefabManager);
-    LoadValheimVehicleSharedAssets.Instance.Init(vehicleSharedAssetBundle);
 
     // dependent on ValheimVehiclesShared
     LoadValheimRaftAssets.Instance.Init(raftAssetBundle);
@@ -267,7 +235,7 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_rope_ladder_desc",
-      Icon = LoadValheimVehicleSharedAssets.SharedSprites.GetSprite("rope_ladder"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("rope_ladder"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[1]
@@ -316,7 +284,7 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_rope_anchor_desc",
-      Icon = LoadValheimVehicleSharedAssets.SharedSprites.GetSprite("rope_anchor"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("rope_anchor"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[2]
@@ -500,7 +468,7 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_boarding_ramp_desc",
-      Icon = LoadValheimVehicleSharedAssets.SharedSprites.GetSprite("boarding_ramp"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("boarding_ramp"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[2]
@@ -548,7 +516,7 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_boarding_ramp_wide_desc",
-      Icon = LoadValheimVehicleSharedAssets.SharedSprites.GetSprite("boarding_ramp"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("boarding_ramp"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[2]
@@ -599,7 +567,7 @@ public class PrefabRegistryController : MonoBehaviour
       Description = $"$mb_dirt_floor_{prefabSizeString}_desc",
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Icon = LoadValheimVehicleSharedAssets.SharedSprites.GetSprite("dirtfloor_icon"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("dirtfloor_icon"),
       Requirements =
       [
         new RequirementConfig

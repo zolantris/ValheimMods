@@ -17,7 +17,7 @@ public abstract class ShipHulls
     public const string CoreWood = "core_wood";
     public const string ElderWood = "elder_wood";
     public const string Wood = "wood";
-    public const string Iron = "Iron";
+    public const string Iron = "iron";
     public const string YggdrasilWood = "yggdrasil_wood";
   }
 

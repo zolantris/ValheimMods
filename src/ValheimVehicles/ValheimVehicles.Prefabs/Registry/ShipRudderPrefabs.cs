@@ -66,7 +66,7 @@ public class ShipRudderPrefabs : IRegisterPrefab
   {
     var prefab =
       prefabManager.CreateClonedPrefab(
-        PrefabNames.ShipRudderAdvanced, LoadValheimVehicleAssets.ShipRudderAdvancedAsset);
+        PrefabNames.ShipRudderAdvanced, LoadValheimVehicleAssets.ShipRudderAdvancedWoodAsset);
     SharedSetup(prefab);
 
 

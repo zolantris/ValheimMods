@@ -190,7 +190,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2314426317429442316}
   m_Layer: 0
-  m_Name: vehicle_ship_rudder_basic
+  m_Name: rudder_basic
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

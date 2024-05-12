@@ -25,7 +25,7 @@ public class VehicleSwitchPrefab : IRegisterPrefab
     {
       PieceTable = "Hammer",
       Description = pieceTranslations.Description,
-      Icon = LoadValheimVehicleSharedAssets.SharedSprites.GetSprite(SpriteNames.ShipKeel),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipKeel),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements =

@@ -5,6 +5,12 @@ namespace ValheimVehicles.Prefabs;
  */
 public static class PrefabNames
 {
+  public enum PrefabSizeVariant
+  {
+    Two,
+    Four,
+  }
+
   public const string MBRaft = "MBRaft";
   public static int m_raftHash = MBRaft.GetStableHashCode();
   public const string Tier1RaftMastName = "MBRaftMast";
@@ -43,6 +49,41 @@ public static class PrefabNames
   // slabs
   public const string ShipHullSlabWoodPrefabName = $"{ValheimVehiclesPrefix}_Ship_Hull_Slab_Wood";
   public const string ShipHullSlabIronPrefabName = $"{ValheimVehiclesPrefix}_Ship_Hull_Slab_Iron";
+
+  // to only be used for matching with generic prefab names
+  public const string HullSlab = $"{ValheimVehiclesPrefix}_Hull_Slab";
+
+  public const string HullWall =
+    $"{ValheimVehiclesPrefix}_Hull_Wall";
+
+  private static string GetMaterialVariantName(string materialVariant)
+  {
+    return materialVariant == ShipHulls.HullMaterial.Iron ? "Iron" : "Wood";
+  }
+
+  private static string GetPrefabSizeVariantName(PrefabSizeVariant prefabSizeVariant)
+  {
+    return prefabSizeVariant == PrefabSizeVariant.Four ? "4x4" : "2x2";
+  }
+
+
+  public static string GetHullSlabVariants(string materialVariant,
+    PrefabSizeVariant prefabSizeVariant)
+  {
+    var sizeVariant = GetPrefabSizeVariantName(prefabSizeVariant);
+    var materialVariantName = GetMaterialVariantName(materialVariant);
+
+    return $"{HullSlab}_{materialVariantName}_{sizeVariant}";
+  }
+
+  public static string GetHullWallVariants(string materialVariant,
+    PrefabSizeVariant prefabSizeVariant)
+  {
+    var sizeVariant = GetPrefabSizeVariantName(prefabSizeVariant);
+    var materialVariantName = GetMaterialVariantName(materialVariant);
+
+    return $"{HullWall}_{materialVariantName}_{sizeVariant}";
+  }
 
   // hull
   public const string ShipHullCenterWoodPrefabName =

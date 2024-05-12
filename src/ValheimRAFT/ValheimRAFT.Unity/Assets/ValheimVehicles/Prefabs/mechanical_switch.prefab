@@ -117,7 +117,7 @@ GameObject:
   - component: {fileID: 3220803765360514847}
   - component: {fileID: 4109548173543759512}
   m_Layer: 0
-  m_Name: vehicle_switch
+  m_Name: mechanical_switch
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

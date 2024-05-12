@@ -112,7 +112,7 @@ public class PrefabThumbnailGenerator : EditorWindow
 
         GetFilesFromSearchPath();
         DeleteAllFilesInOutputFolder();
-        DeleteAndRecreateSpriteAtlas();
+        DeleteCurrentSpritesInTargetAtlas();
         
         foreach (var obj in objList)
         {
@@ -131,28 +131,21 @@ public class PrefabThumbnailGenerator : EditorWindow
             Capture(obj);
         }
         
-        AddAllIconsToSpriteAtlas();
-        UpdateSpriteAtlas();
+        // AddAllIconsToSpriteAtlas();
+        // UpdateSpriteAtlas();
     }
-
-    private void DeleteAndRecreateSpriteAtlas()
+    
+    private void DeleteCurrentSpritesInTargetAtlas()
     {
         var spriteAtlasPath = GetSpriteAtlasPath();
-        AssetDatabase.DeleteAsset(spriteAtlasPath);
-        var newSpriteAtlas = new SpriteAtlas();
-        AssetDatabase.CreateAsset(newSpriteAtlas, spriteAtlasPath);
-        AssetDatabase.SaveAssets();
+        var spriteAtlas = SpriteAtlasAsset.Load(spriteAtlasPath);
+        var spriteAtlasObj = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(spriteAtlasPath);
+        if (!spriteAtlasObj) return;
+        
+        var currentSprites = spriteAtlasObj.GetPackables();
+        spriteAtlas.Remove(currentSprites);
+        SpriteAtlasAsset.Save(spriteAtlas,spriteAtlasPath);
     }
-    // private void DeleteCurrentSpritesInTargetAtlas()
-    // {
-    //     var spriteAtlasPath = GetSpriteAtlasPath();
-    //     var spriteAtlas = SpriteAtlasAsset.Load(spriteAtlasPath);
-    //     var spriteAtlasObj = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(spriteAtlasPath);
-    //     if (!spriteAtlasObj) return;
-    //     
-    //     var currentSprites = spriteAtlasObj.GetPackables();
-    //     spriteAtlas.Remove(currentSprites);
-    // }
 
     private string GetSpriteAtlasPath()
     {

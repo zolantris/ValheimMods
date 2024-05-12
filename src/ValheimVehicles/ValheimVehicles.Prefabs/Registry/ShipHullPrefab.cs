@@ -1,3 +1,4 @@
+using System.Linq;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -11,16 +12,35 @@ public class ShipHullPrefab : IRegisterPrefab
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    // hulls
+    var sizeVariants = new[]
+    {
+      PrefabNames.PrefabSizeVariant.Two,
+      PrefabNames.PrefabSizeVariant.Four
+    };
+    var hullMaterialTypes = new[] { ShipHulls.HullMaterial.Wood, ShipHulls.HullMaterial.Iron };
+
+    // (slabs,walls) (2x2, 4x4) (iron,wood)
+    foreach (var sizeVariant in sizeVariants)
+    {
+      foreach (var hullMaterialType in hullMaterialTypes)
+      {
+        RegisterHull(PrefabNames.GetHullSlabVariants(hullMaterialType, sizeVariant),
+          hullMaterialType,
+          1, sizeVariant, prefabManager, pieceManager);
+
+        RegisterHull(PrefabNames.GetHullWallVariants(hullMaterialType, sizeVariant),
+          hullMaterialType,
+          1, sizeVariant, prefabManager, pieceManager);
+      }
+    }
+
+    // hulls 4x8
     RegisterHull(PrefabNames.ShipHullCenterWoodPrefabName, ShipHulls.HullMaterial.Wood, 2,
+      PrefabNames.PrefabSizeVariant.Four,
       prefabManager, pieceManager);
     RegisterHull(PrefabNames.ShipHullCenterIronPrefabName, ShipHulls.HullMaterial.Iron,
-      2, prefabManager, pieceManager);
+      2, PrefabNames.PrefabSizeVariant.Four, prefabManager, pieceManager);
 
-    RegisterHull(PrefabNames.ShipHullSlabWoodPrefabName, ShipHulls.HullMaterial.Wood,
-      1, prefabManager, pieceManager);
-    RegisterHull(PrefabNames.ShipHullSlabIronPrefabName, ShipHulls.HullMaterial.Iron,
-      1, prefabManager, pieceManager);
 
     // hull-ribs
     RegisterHullRib(PrefabNames.ShipHullRibWoodPrefabName, ShipHulls.HullMaterial.Wood,
@@ -99,14 +119,35 @@ public class ShipHullPrefab : IRegisterPrefab
     }));
   }
 
-  private static GameObject GetShipHullAssetByMaterial(string prefabName, string hullMaterial)
+  private static GameObject GetShipHullAssetByMaterial(string prefabName, string hullMaterial,
+    PrefabNames.PrefabSizeVariant sizeVariant)
   {
-    if (prefabName.Contains(PrefabNames.ShipHullSlabIronPrefabName) ||
-        prefabName.Contains(PrefabNames.ShipHullSlabWoodPrefabName))
+    if (prefabName.Contains(PrefabNames.HullWall))
     {
+      if (sizeVariant == PrefabNames.PrefabSizeVariant.Four)
+      {
+        return hullMaterial.Equals(ShipHulls.HullMaterial.Iron)
+          ? LoadValheimVehicleAssets.ShipHullSlab4X4IronAsset
+          : LoadValheimVehicleAssets.ShipHullSlab2X2IronAsset;
+      }
+
       return hullMaterial.Equals(ShipHulls.HullMaterial.Iron)
-        ? LoadValheimVehicleAssets.ShipHullSlabIronAsset
-        : LoadValheimVehicleAssets.ShipHullSlabWoodAsset;
+        ? LoadValheimVehicleAssets.ShipHullSlab2X2IronAsset
+        : LoadValheimVehicleAssets.ShipHullSlab2X2WoodAsset;
+    }
+
+    if (prefabName.Contains(PrefabNames.HullSlab))
+    {
+      if (sizeVariant == PrefabNames.PrefabSizeVariant.Four)
+      {
+        return hullMaterial.Equals(ShipHulls.HullMaterial.Iron)
+          ? LoadValheimVehicleAssets.ShipHullSlab4X4IronAsset
+          : LoadValheimVehicleAssets.ShipHullSlab2X2IronAsset;
+      }
+
+      return hullMaterial.Equals(ShipHulls.HullMaterial.Iron)
+        ? LoadValheimVehicleAssets.ShipHullSlab2X2IronAsset
+        : LoadValheimVehicleAssets.ShipHullSlab2X2WoodAsset;
     }
 
     return hullMaterial.Equals(ShipHulls.HullMaterial.Iron)
@@ -125,12 +166,13 @@ public class ShipHullPrefab : IRegisterPrefab
     string prefabName,
     string hullMaterial,
     int materialCount,
+    PrefabNames.PrefabSizeVariant prefabSizeVariant,
     PrefabManager prefabManager,
     PieceManager pieceManager)
   {
     var prefab =
       prefabManager.CreateClonedPrefab(
-        prefabName, GetShipHullAssetByMaterial(prefabName, hullMaterial));
+        prefabName, GetShipHullAssetByMaterial(prefabName, hullMaterial, prefabSizeVariant));
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     prefab.layer = 0;
@@ -157,7 +199,7 @@ public class ShipHullPrefab : IRegisterPrefab
     // this will be used to hide water on the boat
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
       prefab.transform.Find("new") ?? prefab.transform,
-      ["hull_slab_new", "vehicle_ship_hull_slab"]);
+      ["new"]);
 
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {

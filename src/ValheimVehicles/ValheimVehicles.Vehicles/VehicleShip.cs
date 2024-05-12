@@ -1085,7 +1085,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
 
   /**
-   * In theory we can just make the sailComponent and mastComponent parents of the masts/sails of the ship. This will make any mutations to those parents in sync with the sail changes
+   * In theory, we can just make the sailComponent and mastComponent parents of the masts/sails of the ship. This will make any mutations to those parents in sync with the sail changes
    */
   private void SyncVehicleMastsAndSails()
   {

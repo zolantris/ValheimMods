@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 168075025344159758}
   m_Layer: 0
-  m_Name: HullRibSingle
+  m_Name: shared_unused_hull_rib_single
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

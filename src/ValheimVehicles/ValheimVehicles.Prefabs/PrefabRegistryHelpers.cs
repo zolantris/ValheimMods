@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using Jotunn.Extensions;
+using Jotunn.Managers;
 using UnityEngine;
 using Logger = Jotunn.Logger;
+using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.Prefabs;
 
@@ -17,24 +20,64 @@ public abstract class PrefabRegistryHelpers
     public Sprite Icon;
   }
 
+  // may use for complex shared variant prefabs
+  // idea is to send in the keys and then register the PieceData
+  public static void RegisterPieceWithVariant(string prefabName, string translationKey,
+    string hullMaterials, PrefabNames.PrefabSizeVariant sizeVariant)
+  {
+  }
+
   public static readonly Dictionary<string, PieceData> PieceDataDictionary = new();
 
+  // todo consider using Jotunn.Manager.RenderManager for these Icon generation
   /// todo auto generate this from the translations json
+  /// 4x4 and 2x2 icons look similar, may remove 4x4
   public static void Init()
   {
-    PieceDataDictionary.Add(PrefabNames.ShipHullSlabWoodPrefabName, new PieceData()
-    {
-      Name = "valheim_vehicles_ship_hull_slab_wood",
-      Description = "valheim_vehicles_ship_hull_slab_wood_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullSlabWood)
-    });
-    PieceDataDictionary.Add(PrefabNames.ShipHullSlabIronPrefabName, new PieceData()
-    {
-      Name = "valheim_vehicles_ship_hull_slab_iron",
-      Description = "valheim_vehicles_ship_hull_slab_iron_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullSlabIron)
-    });
+    var spriteAtlas = LoadValheimVehicleAssets.VehicleSprites;
 
+    // slabs
+    const string slabName = "valheim_vehicles_hull_slab";
+    const string slabDescription = $"{slabName}_desc";
+    PieceDataDictionary.Add(
+      PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Wood,
+        PrefabNames.PrefabSizeVariant.Two), new PieceData()
+      {
+        Name = $"{slabName} $valheim_vehicles_material_wood 2x2",
+        Description = $"{slabDescription}",
+        Icon = spriteAtlas.GetSprite("hull_slab_2x2_wood")
+      });
+
+    PieceDataDictionary.Add(
+      PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Wood,
+        PrefabNames.PrefabSizeVariant.Four), new PieceData()
+      {
+        Name = $"{slabName} $valheim_vehicles_material_wood 4x4",
+        Description = $"{slabDescription}",
+        Icon = spriteAtlas.GetSprite("hull_slab_4x4_wood")
+      });
+
+    // Hull walls
+    const string wallName = "valheim_vehicles_hull_slab";
+    const string wallDescription = $"{wallName}_desc";
+
+    PieceDataDictionary.Add(
+      PrefabNames.GetHullWallVariants(ShipHulls.HullMaterial.Wood,
+        PrefabNames.PrefabSizeVariant.Two), new PieceData()
+      {
+        Name = $"{wallName} 2x2",
+        Description = $"{wallDescription}",
+        Icon = spriteAtlas.GetSprite("hull_wall_2x2_wood")
+      });
+
+    PieceDataDictionary.Add(
+      PrefabNames.GetHullWallVariants(ShipHulls.HullMaterial.Wood,
+        PrefabNames.PrefabSizeVariant.Four), new PieceData()
+      {
+        Name = $"{wallName} 4x4",
+        Description = $"{wallDescription}",
+        Icon = spriteAtlas.GetSprite("hull_wall_4x4_wood")
+      });
 
     PieceDataDictionary.Add(PrefabNames.WaterVehicleShip, new PieceData()
     {
@@ -46,28 +89,30 @@ public abstract class PrefabRegistryHelpers
     // hull rib variants
     PieceDataDictionary.Add(PrefabNames.ShipHullRibIronPrefabName, new PieceData()
     {
-      Name = "valheim_vehicles_ship_hull_rib_iron",
-      Description = "valheim_vehicles_ship_hull_rib_iron_desc",
+      Name = "valheim_vehicles_hull_rib_iron",
+      Description = "valheim_vehicles_hull_rib_iron_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullRibIron)
     });
+
     PieceDataDictionary.Add(PrefabNames.ShipHullRibWoodPrefabName, new PieceData()
     {
-      Name = "valheim_vehicles_ship_hull_rib_wood",
-      Description = "valheim_vehicles_ship_hull_rib_wood_desc",
+      Name = "valheim_vehicles_hull_rib_wood",
+      Description = "valheim_vehicles_hull_rib_wood_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullRibWood)
     });
 
     // hull center variants
     PieceDataDictionary.Add(PrefabNames.ShipHullCenterWoodPrefabName, new PieceData()
     {
-      Name = "valheim_vehicles_ship_hull_center_wood",
-      Description = "valheim_vehicles_ship_hull_center_wood_desc",
+      Name = "valheim_vehicles_hull_center_wood",
+      Description = "valheim_vehicles_hull_center_wood_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullCenterWood)
     });
+
     PieceDataDictionary.Add(PrefabNames.ShipHullCenterIronPrefabName, new PieceData()
     {
-      Name = "valheim_vehicles_ship_hull_center_iron",
-      Description = "valheim_vehicles_ship_hull_center_iron_desc",
+      Name = "$valheim_vehicles_hull_center_iron",
+      Description = "$valheim_vehicles_hull_center_iron_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullCenterIron)
     });
 
@@ -76,13 +121,13 @@ public abstract class PrefabRegistryHelpers
     {
       Name = "valheim_vehicles_wheel",
       Description = "valheim_vehicles_wheel_desc",
-      Icon = LoadValheimVehicleSharedAssets.SharedSprites.GetSprite(SpriteNames.ShipSteeringWheel)
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipSteeringWheel)
     });
 
     PieceDataDictionary.Add(PrefabNames.ShipKeel, new PieceData()
     {
-      Name = "valheim_vehicles_ship_keel",
-      Description = "valheim_vehicles_ship_keel_desc",
+      Name = "valheim_vehicles_keel",
+      Description = "valheim_vehicles_keel_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipKeel)
     });
 
@@ -229,11 +274,11 @@ public abstract class PrefabRegistryHelpers
 
 
   /**
- * todo this needs to be fixed so the mast blocks only with the mast part and ignores the non-sail area.
- * if the collider is too big it also pushes the rigidbody system underwater (IE Raft sinks)
- *
- * May be easier to just get the game object structure for each sail and do a search for the sail and master parts.
- */
+  * todo this needs to be fixed so the mast blocks only with the mast part and ignores the non-sail area.
+  * if the collider is too big it also pushes the rigidbody system underwater (IE Raft sinks)
+  *
+  * May be easier to just get the game object structure for each sail and do a search for the sail and master parts.
+  */
   public static void AddBoundsToAllChildren(string colliderName, GameObject parent,
     GameObject componentToEncapsulate)
   {
@@ -284,12 +329,13 @@ public abstract class PrefabRegistryHelpers
         t1.tag = SnappointTag;
   }
 
+
   public static void HoistSnapPointsToPrefab(GameObject prefab)
   {
     HoistSnapPointsToPrefab(prefab, prefab.transform);
   }
 
-  // Use this to work around object resizing requiring repeated movement of child snappoints. This way snappoints can stay in the relative object without issue
+// Use this to work around object resizing requiring repeated movement of child snappoints. This way snappoints can stay in the relative object without issue
   public static void HoistSnapPointsToPrefab(GameObject prefab, Transform parent,
     string[]? hoistParentNameFilters = null)
   {
