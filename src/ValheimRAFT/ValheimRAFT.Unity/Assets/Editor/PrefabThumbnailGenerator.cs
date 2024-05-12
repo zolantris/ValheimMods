@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor.U2D;
 using UnityEngine.U2D;
+using LinqUtility = Unity.VisualScripting.LinqUtility;
 
 /// <summary>
 /// Add this Class to the Assets/Editor folder in Unity project
@@ -13,11 +14,18 @@ public class PrefabThumbnailGenerator : EditorWindow
 {
     public Object searchDirectory;
     public Object targetSpriteAtlas;
-    List<GameObject> objList = new List<GameObject>();
-    private Object dirPathObj;
-    static string dirPath = "Assets/ValheimVehicles/GeneratedIcons/"; // output dir
+    public string searchDirectoryPath = "Assets/ValheimVehicles/Prefabs/";
+    public string targetSpriteAtlasPath = "Assets/ValheimVehicles/vehicle_icons.spriteatlasv2";
+    private List<GameObject> objList = new();
+    private Object outputDirObj;
+    static string outputDirPath = "Assets/ValheimVehicles/GeneratedIcons/"; // output dir
     int width = 100; // image width
     int height = 100; // image height
+
+    private bool isRunning;
+
+    private static readonly List<string> excludedNames = new()
+        { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "vehicle_ship_keel", "vehicle_ship_rudder", "rudder", "rudder_basic" };
 
     private List<string> spritePaths = new();
  
@@ -26,7 +34,9 @@ public class PrefabThumbnailGenerator : EditorWindow
     {
         GetWindow(typeof(PrefabThumbnailGenerator));
     }
- 
+
+    private GUIContent CaptureRunButtonText =>
+        new GUIContent(isRunning ? "Generating...please wait" : "Generated Sprite Icons");
     private void OnGUI()
     {
         GUILayout.BeginHorizontal();
@@ -43,7 +53,7 @@ public class PrefabThumbnailGenerator : EditorWindow
     
         GUILayout.BeginHorizontal();
         GUILayout.Label("Save directory : ", GUILayout.Width(110));
-        dirPath = EditorGUILayout.TextField(dirPath);
+        outputDirPath = EditorGUILayout.TextField(outputDirPath);
         GUILayout.EndHorizontal();
         EditorGUILayout.Space();
     
@@ -58,28 +68,28 @@ public class PrefabThumbnailGenerator : EditorWindow
         height = EditorGUILayout.IntField(height);
         GUILayout.EndHorizontal();
         EditorGUILayout.Space();
-    
-        if (GUILayout.Button(new GUIContent("Generated Sprite Icons")))
+
+        var runCaptureGuiContent = CaptureRunButtonText;
+        if (GUILayout.Button(runCaptureGuiContent))
         {
-            if (!targetSpriteAtlas) return;
-            if (!searchDirectory) return;
-            CaptureTexturesForPrefabs();
+            isRunning = true;
+            try
+            {
+                CaptureTexturesForPrefabs();
+            }
+            catch
+            {
+                isRunning = false;
+            }
+
+            isRunning = false;
         }
     }
 
-    private void CaptureTexturesForPrefabs()
+    private void GetFilesFromSearchPath()
     {
-        spritePaths.Clear();
-        if (searchDirectory == null) return;
-    
-        if (!Directory.Exists(dirPath))
-        {
-            Directory.CreateDirectory(dirPath);
-        }
-    
         objList.Clear();
-    
-        var replaceDirectoryPath = AssetDatabase.GetAssetPath(searchDirectory);
+        var replaceDirectoryPath = searchDirectory ? AssetDatabase.GetAssetPath(searchDirectory) : searchDirectoryPath;
         var filePaths = Directory.GetFiles(replaceDirectoryPath, "*.*");
         foreach (var filePath in filePaths)
         {
@@ -89,34 +99,83 @@ public class PrefabThumbnailGenerator : EditorWindow
                 objList.Add(obj);
             }
         }
-    
+    }
+
+    private void CaptureTexturesForPrefabs()
+    {
+        spritePaths.Clear();
+        
+        if (!Directory.Exists(outputDirPath))
+        {
+            Directory.CreateDirectory(outputDirPath);
+        }
+
+        GetFilesFromSearchPath();
+        DeleteAllFilesInOutputFolder();
+        DeleteAndRecreateSpriteAtlas();
+        
         foreach (var obj in objList)
         {
             Debug.Log("OBJ :  " + obj.name);
-            
-            // skips shared assets that are not meant for exporting
-            if (obj.name.StartsWith("shared_")) continue;
+
+            var shouldExit = false;
+            foreach (var excludedName in excludedNames)
+            {
+                if (obj.name.Contains(excludedName))
+                {
+                    shouldExit = true;
+                    break;
+                }
+            }
+            if (shouldExit) continue;
             Capture(obj);
         }
         
+        AddAllIconsToSpriteAtlas();
         UpdateSpriteAtlas();
     }
+
+    private void DeleteAndRecreateSpriteAtlas()
+    {
+        var spriteAtlasPath = GetSpriteAtlasPath();
+        AssetDatabase.DeleteAsset(spriteAtlasPath);
+        var newSpriteAtlas = new SpriteAtlas();
+        AssetDatabase.CreateAsset(newSpriteAtlas, spriteAtlasPath);
+        AssetDatabase.SaveAssets();
+    }
+    // private void DeleteCurrentSpritesInTargetAtlas()
+    // {
+    //     var spriteAtlasPath = GetSpriteAtlasPath();
+    //     var spriteAtlas = SpriteAtlasAsset.Load(spriteAtlasPath);
+    //     var spriteAtlasObj = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(spriteAtlasPath);
+    //     if (!spriteAtlasObj) return;
+    //     
+    //     var currentSprites = spriteAtlasObj.GetPackables();
+    //     spriteAtlas.Remove(currentSprites);
+    // }
+
+    private string GetSpriteAtlasPath()
+    {
+        return targetSpriteAtlas ? AssetDatabase.GetAssetPath(targetSpriteAtlas) : this.targetSpriteAtlasPath;
+    }
     
+    // must use the AssetDatabase get the current sprites and nuke them
     private void UpdateSpriteAtlas()
     {
+        AssetDatabase.Refresh();
         Debug.Log($"AssetPath: {spritePaths.Count}");
-
-        // var spriteAssets = new List<Object>();
-        var targetSpriteAtlasPath = AssetDatabase.GetAssetPath(targetSpriteAtlas);
-
+        var spriteAtlasPath = GetSpriteAtlasPath();
+        var spriteAtlas = SpriteAtlasAsset.Load(spriteAtlasPath);
+        
         if (targetSpriteAtlasPath == null) return;
-
-        var spriteAtlas = SpriteAtlasAsset.Load(targetSpriteAtlasPath);
+        
         var spritesList = new List<Object>();
 
-        var packables = spriteAtlas.GetMasterAtlas()?.GetPackables() ?? new Object[]{};
-       
-        spriteAtlas.Remove(packables);
+        if (!spriteAtlas)
+        {
+            Debug.LogWarning("No sprite atlas");
+            return;
+        }
         
         foreach (var spritePath in spritePaths)
         {
@@ -124,16 +183,27 @@ public class PrefabThumbnailGenerator : EditorWindow
             if (obj == null) continue;
             spritesList.Add(obj);
         }
+        
         Debug.Log($"Called UpdateSpriteAtlas {spritesList.Count}");
 
         spriteAtlas.Add(spritesList.ToArray());
-        SpriteAtlasAsset.Save(spriteAtlas, targetSpriteAtlasPath);
+        SpriteAtlasAsset.Save(spriteAtlas, GetSpriteAtlasPath());
         AssetDatabase.Refresh();
     }
-    
-    static void DeleteAllFilesInFolder()
+
+    private void AddAllIconsToSpriteAtlas()
     {
-        string[] trashFolders = {dirPath};
+        var iconAssets = AssetDatabase.FindAssets("", new[] { "Assets/ValheimVehicles/Icons" });
+        foreach (var assetGuid in iconAssets)
+        {
+            var assetPath = AssetDatabase.GUIDToAssetPath(assetGuid);
+            spritePaths.Add(assetPath);
+        }
+    }
+
+    private static void DeleteAllFilesInOutputFolder()
+    {
+        string[] trashFolders = {outputDirPath};
         foreach (var asset in AssetDatabase.FindAssets("", trashFolders))
         {
             var path = AssetDatabase.GUIDToAssetPath(asset);
@@ -144,38 +214,47 @@ public class PrefabThumbnailGenerator : EditorWindow
         }
     }
 
-    private void Capture(GameObject obj)
+    private static void WriteTextureToFile(Texture textureToRead, string texturePath)
     {
-        var thumbnail = AssetPreview.GetAssetPreview(obj);
-        if (thumbnail == null) return;
-        // Create a new readable texture and set its pixels from the existing texture
-        var readableTexture = new Texture2D(thumbnail.width, thumbnail.height);
-        var rt = RenderTexture.GetTemporary(thumbnail.width, thumbnail.height);
-       
-        Graphics.Blit(thumbnail, rt);
+        var readableTexture = new Texture2D(textureToRead.width, textureToRead.height);
+        var renderTexture = RenderTexture.GetTemporary(textureToRead.width, textureToRead.height);
+        
+        Graphics.Blit(textureToRead, renderTexture);
         
         var previous = RenderTexture.active;
-        RenderTexture.active = rt;
+        RenderTexture.active = renderTexture;
         
-        readableTexture.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+        readableTexture.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
         readableTexture.Apply();
         
         RenderTexture.active = previous;
-        RenderTexture.ReleaseTemporary(rt);
- 
+        RenderTexture.ReleaseTemporary(renderTexture);
+        
         // Encode to PNG
         var bytes = readableTexture.EncodeToPNG();
-
-        var fileName = $"{dirPath}{obj.name}";
-        var texturePath = $"{fileName}.png";
-        
-        // sprite.texture.
         File.WriteAllBytes(texturePath, bytes);
+        // DestroyImmediate(readableTexture);
+        // DestroyImmediate(renderTexture);
+    }
+
+    /// <summary>
+    /// Uses RuntimePreviewGenerator to generate assets, does not require injecting in game. Can be run in editor mode
+    /// </summary>
+    ///
+    /// Previously used AssetPreview.GetAssetPreview but this did not allow for transparency so ShippedIcons that were using the default gray background
+    /// <param name="obj"></param>
+    private void Capture(GameObject obj)
+    {
+        // Uses alpha to make transparent, black is good for edges of object that are not perfectly cut
+        RuntimePreviewGenerator.BackgroundColor = new Color(40,40,40,0);
+        var pg = RuntimePreviewGenerator.GenerateModelPreview(obj.transform, width, height);
+        var texturePath = $"{outputDirPath}{obj.name}.png";
+        WriteTextureToFile(pg, texturePath);
         
-        AssetDatabase.Refresh();
+        // AssetDatabase.Refresh();
         AssetDatabase.ImportAsset(texturePath);
         
-        var importer = AssetImporter.GetAtPath(texturePath)as TextureImporter;
+        var importer = AssetImporter.GetAtPath(texturePath) as TextureImporter;
         if (importer != null)
         {
             importer.textureType = TextureImporterType.Sprite;
@@ -185,11 +264,9 @@ public class PrefabThumbnailGenerator : EditorWindow
         {
             Debug.LogWarning("No importer, this will result in the GeneratedIcons not being written as Sprites");
         }
-       
+        
         AssetDatabase.WriteImportSettingsIfDirty(texturePath);
-
+        
         spritePaths.Add(texturePath);
-        // Optionally, destroy the copy to free memory
-        DestroyImmediate(readableTexture);
     }
 }
