@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &181669010087900398
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6015232456486853985}
+  m_Layer: 10
+  m_Name: $hud_snappoint_bottom $hud_snappoint_corner
+  m_TagString: snappoint
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6015232456486853985
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 181669010087900398}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -1, z: -0, w: 0}
+  m_LocalPosition: {x: -0.5, y: -0.25, z: -1.5}
+  m_LocalScale: {x: 1, y: 6, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 3715165887456535575}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &270595895677243550
 GameObject:
   m_ObjectHideFlags: 0
@@ -33,11 +64,6 @@ Transform:
   - {fileID: 6204140660380521049}
   - {fileID: 8241627937584960124}
   - {fileID: 7208771803539556844}
-  - {fileID: 7448215286088440428}
-  - {fileID: 1608600429239898834}
-  - {fileID: 8040892970357214933}
-  - {fileID: 7386813208368598940}
-  - {fileID: 2392473870314262808}
   m_Father: {fileID: 3715165887456535575}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &594741153376596439
@@ -133,7 +159,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2392473870314262808}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner 1
+  m_Name: $hud_snappoint_top $hud_snappoint_corner
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -152,7 +178,7 @@ Transform:
   m_LocalScale: {x: 1, y: 6, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 7599481523249758299}
+  m_Father: {fileID: 3715165887456535575}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &805732590512000845
 GameObject:
@@ -164,7 +190,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1608600429239898834}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner 2
+  m_Name: $hud_snappoint_top $hud_snappoint_corner
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -183,7 +209,38 @@ Transform:
   m_LocalScale: {x: 1, y: 6, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 7599481523249758299}
+  m_Father: {fileID: 3715165887456535575}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &806823111128048833
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6753353508630236182}
+  m_Layer: 10
+  m_Name: $hud_snappoint_bottom $hud_snappoint_corner
+  m_TagString: snappoint
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6753353508630236182
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 806823111128048833}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -1, z: -0, w: 0}
+  m_LocalPosition: {x: 1.5, y: -0.25, z: 0.5}
+  m_LocalScale: {x: 1, y: 6, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 3715165887456535575}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1857515373137021532
 GameObject:
@@ -278,7 +335,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8040892970357214933}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner 3
+  m_Name: $hud_snappoint_top $hud_snappoint_corner
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -297,7 +354,38 @@ Transform:
   m_LocalScale: {x: 1, y: 6, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 7599481523249758299}
+  m_Father: {fileID: 3715165887456535575}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2660460207451228358
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2037986755202196996}
+  m_Layer: 10
+  m_Name: $hud_snappoint_bottom $hud_snappoint_corner
+  m_TagString: snappoint
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2037986755202196996
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2660460207451228358}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -1, z: -0, w: 0}
+  m_LocalPosition: {x: 1.5, y: -0.25, z: -1.5}
+  m_LocalScale: {x: 1, y: 6, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 3715165887456535575}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3314468706903555951
 GameObject:
@@ -328,7 +416,7 @@ Transform:
   m_LocalScale: {x: 1, y: 6, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 7599481523249758299}
+  m_Father: {fileID: 3715165887456535575}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4090740829085154989
 GameObject:
@@ -361,6 +449,16 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7599481523249758299}
+  - {fileID: 7448215286088440428}
+  - {fileID: 1608600429239898834}
+  - {fileID: 8040892970357214933}
+  - {fileID: 7386813208368598940}
+  - {fileID: 2392473870314262808}
+  - {fileID: 2663827776530114275}
+  - {fileID: 6753353508630236182}
+  - {fileID: 2037986755202196996}
+  - {fileID: 6015232456486853985}
+  - {fileID: 6108613122461208361}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &5243727027568368779
@@ -384,6 +482,37 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2, y: 0.5, z: 2}
   m_Center: {x: 0.5, y: 0, z: -0.5}
+--- !u!1 &4267223608269234638
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6108613122461208361}
+  m_Layer: 10
+  m_Name: $hud_snappoint_bottom $hud_snappoint_corner
+  m_TagString: snappoint
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6108613122461208361
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4267223608269234638}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -1, z: -0, w: 0}
+  m_LocalPosition: {x: -0.5, y: -0.25, z: 0.5}
+  m_LocalScale: {x: 1, y: 6, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 3715165887456535575}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4588584784603828912
 GameObject:
   m_ObjectHideFlags: 0
@@ -394,7 +523,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7386813208368598940}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner 4
+  m_Name: $hud_snappoint_top $hud_snappoint_corner
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -413,7 +542,38 @@ Transform:
   m_LocalScale: {x: 1, y: 6, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 7599481523249758299}
+  m_Father: {fileID: 3715165887456535575}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7806348283467806401
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2663827776530114275}
+  m_Layer: 10
+  m_Name: $hud_snappoint_bottom $hud_snappoint_center
+  m_TagString: snappoint
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2663827776530114275
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7806348283467806401}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -1, z: -0, w: 0}
+  m_LocalPosition: {x: 0.5, y: -0.25, z: -0.5}
+  m_LocalScale: {x: 1, y: 6, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 3715165887456535575}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7943597236055468771
 GameObject:

@@ -432,12 +432,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   private void Sync()
   {
     if (!(bool)m_syncRigidbody || !(bool)m_rigidbody) return;
-    if ((bool)m_syncRigidbody.isKinematic)
-    {
-      m_rigidbody.MoveRotation(Quaternion.Euler(0f, m_syncRigidbody.rotation.eulerAngles.y, 0f));
-      return;
-    }
-
     m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
     m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
   }

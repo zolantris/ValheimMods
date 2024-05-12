@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1403989688
+CRC: 1066139221
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 13c4b8b10b977b6d175a8013c26a536a
+    Hash: 00900da5aaf031d9abd2e874ca825b89
   TypeTreeHash:
     serializedVersion: 2
     Hash: 01508ae4745254c8f3bb355f55c42b78
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 13c4b8b10b977b6d175a8013c26a536a
+    Hash: 00900da5aaf031d9abd2e874ca825b89
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -54,6 +54,7 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.MaskableGraphic/CullStateChangedEvent
 Assets:
+- Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_2x2_wood.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_basic.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_ship.prefab

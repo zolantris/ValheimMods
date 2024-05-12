@@ -25,7 +25,7 @@ public class PrefabThumbnailGenerator : EditorWindow
     private bool isRunning;
 
     private static readonly List<string> excludedNames = new()
-        { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "vehicle_ship_keel", "vehicle_ship_rudder", "rudder", "rudder_basic" };
+        { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic" };
 
     private List<string> spritePaths = new();
  

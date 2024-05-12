@@ -18,6 +18,7 @@ public class VehicleCommands : ConsoleCommand
     // public const string move = "move";
     // public const string destroy = "destroy";
     public const string debug = "debug";
+    public const string creative = "creative";
     public const string help = "help";
     public const string upgradeToV2 = "upgradeShipToV2";
     public const string downgradeToV1 = "downgradeShipToV1";
@@ -55,19 +56,22 @@ public class VehicleCommands : ConsoleCommand
       // case VehicleCommandArgs.locate:
       //   LocateVehicle.LocateAllVehicles();
       //   break;
+      case VehicleCommandArgs.creative:
+        CreativeModeConsoleCommand.RunCreativeModeCommand($"{Name} {VehicleCommandArgs.creative}");
+        break;
       case VehicleCommandArgs.debug:
         ToggleVehicleDebugComponent();
         break;
       case VehicleCommandArgs.upgradeToV2:
-        UpgradeToV2();
+        RunUpgradeToV2();
         break;
       case VehicleCommandArgs.downgradeToV1:
-        DowngradeToV1();
+        RunDowngradeToV1();
         break;
     }
   }
 
-  private static void DowngradeToV1()
+  private static void RunDowngradeToV1()
   {
     var vehicleController = VehicleDebugHelpers.GetVehicleController();
     if (!vehicleController)
@@ -85,7 +89,7 @@ public class VehicleCommands : ConsoleCommand
     }
   }
 
-  private static void UpgradeToV2()
+  private static void RunUpgradeToV2()
   {
     var mbRaft = VehicleDebugHelpers.GetMBRaftController();
     if (!mbRaft)
@@ -135,6 +139,7 @@ public class VehicleCommands : ConsoleCommand
   [
     // VehicleCommandArgs.locate, 
     // VehicleCommandArgs.destroy,
+    VehicleCommandArgs.creative,
     VehicleCommandArgs.debug,
     VehicleCommandArgs.help,
     VehicleCommandArgs.upgradeToV2,

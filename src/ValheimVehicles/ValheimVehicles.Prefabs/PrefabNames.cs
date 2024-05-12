@@ -94,7 +94,8 @@ public static class PrefabNames
 
   public const string SailBoxColliderName = $"{ValheimVehiclesPrefix}_SailBoxCollider";
   public const string ShipRudderBasic = $"{ValheimVehiclesPrefix}_ShipRudderBasic";
-  public const string ShipRudderAdvanced = $"{ValheimVehiclesPrefix}_ShipRudderAdvanced";
+  public const string ShipRudderAdvancedWood = $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Wood";
+  public const string ShipRudderAdvancedIron = $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Iron";
   public const string ShipSteeringWheel = $"{ValheimVehiclesPrefix}_ShipSteeringWheel";
   public const string ShipKeel = $"{ValheimVehiclesPrefix}_ShipKeel";
   public const string WaterVehiclePreviewHull = $"{ValheimVehiclesPrefix}_WaterVehiclePreviewHull";

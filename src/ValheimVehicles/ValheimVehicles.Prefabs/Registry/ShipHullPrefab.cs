@@ -108,7 +108,7 @@ public class ShipHullPrefab : IRegisterPrefab
 
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
       prefab.transform.Find("new") ?? prefab.transform,
-      ["hull_slab_top_rib", "hull_rib_iron", "hull_rib_wood"]);
+      ["bottom_connector", "top_connector"]);
 
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
@@ -127,13 +127,13 @@ public class ShipHullPrefab : IRegisterPrefab
       if (sizeVariant == PrefabNames.PrefabSizeVariant.Four)
       {
         return hullMaterial.Equals(ShipHulls.HullMaterial.Iron)
-          ? LoadValheimVehicleAssets.ShipHullSlab4X4IronAsset
-          : LoadValheimVehicleAssets.ShipHullSlab2X2IronAsset;
+          ? LoadValheimVehicleAssets.ShipHullWall4X4IronAsset
+          : LoadValheimVehicleAssets.ShipHullWall4X4WoodAsset;
       }
 
       return hullMaterial.Equals(ShipHulls.HullMaterial.Iron)
-        ? LoadValheimVehicleAssets.ShipHullSlab2X2IronAsset
-        : LoadValheimVehicleAssets.ShipHullSlab2X2WoodAsset;
+        ? LoadValheimVehicleAssets.ShipHullWall2X2IronAsset
+        : LoadValheimVehicleAssets.ShipHullWall2X2WoodAsset;
     }
 
     if (prefabName.Contains(PrefabNames.HullSlab))
@@ -142,7 +142,7 @@ public class ShipHullPrefab : IRegisterPrefab
       {
         return hullMaterial.Equals(ShipHulls.HullMaterial.Iron)
           ? LoadValheimVehicleAssets.ShipHullSlab4X4IronAsset
-          : LoadValheimVehicleAssets.ShipHullSlab2X2IronAsset;
+          : LoadValheimVehicleAssets.ShipHullSlab4X4WoodAsset;
       }
 
       return hullMaterial.Equals(ShipHulls.HullMaterial.Iron)
@@ -182,12 +182,11 @@ public class ShipHullPrefab : IRegisterPrefab
     prefab.gameObject.transform.position = Vector3.zero;
     prefab.gameObject.transform.localPosition = Vector3.zero;
     piece.m_waterPiece = false;
-    piece.m_noClipping = true;
+    piece.m_noClipping = false;
     piece.m_noInWater = false;
 
     var wnt = PrefabRegistryHelpers.SetWearNTear(prefab);
     wnt.m_supports = true;
-    wnt.m_support = 2000f;
     wnt.m_noSupportWear = true;
     wnt.m_noRoofWear = true;
     wnt.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;

@@ -13,10 +13,15 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
 
   public override void Run(string[] args)
   {
+    RunCreativeModeCommand(Name);
+  }
+
+  public static void RunCreativeModeCommand(string comandName)
+  {
     var player = Player.m_localPlayer;
     if (!player)
     {
-      Logger.LogWarning($"Player does not exist, this command {Name} cannot be run");
+      Logger.LogWarning($"Player does not exist, this command {comandName} cannot be run");
       return;
     }
 
@@ -55,10 +60,11 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
       return false;
     }
 
-    ship.m_body.isKinematic = !ship.m_body.isKinematic;
-    ship.m_zsyncTransform.m_isKinematicBody = ship.m_body.isKinematic;
+    var toggledKinematicValue = !ship.m_body.isKinematic;
+    ship.m_body.isKinematic = toggledKinematicValue;
+    ship.m_zsyncTransform.m_isKinematicBody = toggledKinematicValue;
 
-    if (ship.m_body.isKinematic)
+    if (toggledKinematicValue)
     {
       if (player.transform.parent == ship.VehicleController.Instance.transform)
       {

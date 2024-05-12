@@ -40,6 +40,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 3784598169234739585}
     m_Modifications:
+    - target: {fileID: 2430454964025983108, guid: 8e756d977fe26c74a99de2e65081acc7, type: 3}
+      propertyPath: m_Name
+      value: new
+      objectReference: {fileID: 0}
     - target: {fileID: 3715165887456535575, guid: 8e756d977fe26c74a99de2e65081acc7, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -80,12 +84,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3778373004542666620, guid: 8e756d977fe26c74a99de2e65081acc7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4090740829085154989, guid: 8e756d977fe26c74a99de2e65081acc7, type: 3}
       propertyPath: m_Name
       value: hull_slab_4x4_wood
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 3429792601123157553, guid: 8e756d977fe26c74a99de2e65081acc7, type: 3}
+    - {fileID: 397029708439625533, guid: 8e756d977fe26c74a99de2e65081acc7, type: 3}
+    - {fileID: 7218995379942012129, guid: 8e756d977fe26c74a99de2e65081acc7, type: 3}
+    - {fileID: 2977268387532562992, guid: 8e756d977fe26c74a99de2e65081acc7, type: 3}
+    - {fileID: 91246957248083949, guid: 8e756d977fe26c74a99de2e65081acc7, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8e756d977fe26c74a99de2e65081acc7, type: 3}

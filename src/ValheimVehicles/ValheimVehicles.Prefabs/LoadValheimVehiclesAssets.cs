@@ -80,9 +80,9 @@ public class LoadValheimVehicleAssets : ILoadAssets
       assetBundle.LoadAsset<GameObject>("hull_wall_2x2_wood.prefab");
     ShipHullWall2X2IronAsset =
       assetBundle.LoadAsset<GameObject>("hull_wall_2x2_iron.prefab");
-    ShipHullWall2X2WoodAsset =
+    ShipHullWall4X4WoodAsset =
       assetBundle.LoadAsset<GameObject>("hull_wall_4x4_wood.prefab");
-    ShipHullWall2X2IronAsset =
+    ShipHullWall4X4IronAsset =
       assetBundle.LoadAsset<GameObject>("hull_wall_4x4_iron.prefab");
 
     // hull center variants
@@ -103,7 +103,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
     ShipRudderAdvancedWoodAsset =
       assetBundle.LoadAsset<GameObject>(
         "rudder_advanced_wood.prefab");
-    ShipRudderAdvancedWoodAsset =
+    ShipRudderAdvancedIronAsset =
       assetBundle.LoadAsset<GameObject>(
         "rudder_advanced_iron.prefab");
 

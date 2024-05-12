@@ -13,7 +13,7 @@ public class ShipRudderPrefabs : IRegisterPrefab
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
     RegisterShipRudderBasic(prefabManager, pieceManager);
-    RegisterShipRudderAdvanced(prefabManager, pieceManager);
+    RegisterShipRudderAdvanced();
   }
 
   private static void RegisterShipRudderBasic(PrefabManager prefabManager,
@@ -44,8 +44,6 @@ public class ShipRudderPrefabs : IRegisterPrefab
 
   private static void SharedSetup(GameObject prefab)
   {
-    // prefab.layer = 0;
-    // prefab.gameObject.layer = 0;
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     PrefabRegistryHelpers.AddPieceForPrefab(prefab.name, prefab);
     var rudderComponent = prefab.AddComponent<RudderComponent>();
@@ -56,21 +54,15 @@ public class ShipRudderPrefabs : IRegisterPrefab
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
   }
 
-  /**
- * A new ship rudder that pivots 90 degrees starboard/port.
- * - Rudder controls the ship direction.
- * - @TODO Rudder may only work with v2 ships
- */
-  private static void RegisterShipRudderAdvanced(PrefabManager prefabManager,
-    PieceManager pieceManager)
+
+  private static void RegisterAdvancedRudderVariant(string variantName, GameObject prefabAsset)
   {
     var prefab =
-      prefabManager.CreateClonedPrefab(
-        PrefabNames.ShipRudderAdvanced, LoadValheimVehicleAssets.ShipRudderAdvancedWoodAsset);
+      PrefabManager.Instance.CreateClonedPrefab(
+        variantName, prefabAsset);
     SharedSetup(prefab);
 
-
-    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
       Category = PrefabNames.ValheimRaftMenuName,
@@ -85,5 +77,18 @@ public class ShipRudderPrefabs : IRegisterPrefab
         },
       ]
     }));
+  }
+
+  /**
+ * A new ship rudder that pivots 90 degrees starboard/port.
+ * - Rudder controls the ship direction.
+ * - @TODO Rudder may only work with v2 ships
+ */
+  private static void RegisterShipRudderAdvanced()
+  {
+    RegisterAdvancedRudderVariant(PrefabNames.ShipRudderAdvancedWood,
+      LoadValheimVehicleAssets.ShipRudderAdvancedWoodAsset);
+    RegisterAdvancedRudderVariant(PrefabNames.ShipRudderAdvancedIron,
+      LoadValheimVehicleAssets.ShipRudderAdvancedIronAsset);
   }
 }
