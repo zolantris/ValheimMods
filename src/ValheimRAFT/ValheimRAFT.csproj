@@ -24,6 +24,7 @@
         <Compile Include="Properties\CustomAssemblyAttributes.cs"/>
         <Compile Include="ValheimRAFT.Patches\CharacterAnimEvent_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Character_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\Advize_PlantEasily_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Hud_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\PatchSharedData.cs"/>
         <Compile Include="ValheimRAFT.Patches\PatchController.cs"/>

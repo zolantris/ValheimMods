@@ -161,8 +161,6 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
 
   private void RPC_RequestControl(long sender, long playerID)
   {
-    var attachTransform = lastUsedWheelComponent.AttachPoint;
-
     var isOwner = NetView.IsOwner();
     var isInBoat = ShipInstance.IsPlayerInBoat(playerID);
     if (!isOwner || !isInBoat) return;

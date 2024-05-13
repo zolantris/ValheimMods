@@ -326,6 +326,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       _serverUpdatePiecesCoroutine = StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
 
+    ActivatePendingPiecesCoroutine();
+
     // _bedUpdateCoroutine = StartCoroutine(nameof(UpdateBedSpawnWorker));
   }
 
@@ -366,6 +368,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       m_nview = nv;
     }
 
+    ActivatePendingPiecesCoroutine();
+
+
     if (!(bool)ZNet.instance)
     {
       return;
@@ -405,11 +410,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         AddInactivePiece(_persistentZdoId, piece, null);
       }
     }
-
-    var players = Player.GetAllPlayers();
-    for (var j = 0; j < players.Count; j++)
-      if ((bool)players[j] && players[j].transform.parent == transform)
-        players[j].transform.SetParent(null);
   }
 
   public virtual void SyncRigidbodyStats(float drag, float angularDrag)
@@ -439,6 +439,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   public void FixedUpdate()
   {
     Sync();
+    Client_UpdateAllPieces();
   }
 
 /*
@@ -450,7 +451,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if (!(bool)ZNet.instance)
     {
       // prevents NRE from next command
-      Client_UpdateAllPieces();
+      // Client_UpdateAllPieces();
       return;
     }
 
@@ -941,7 +942,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         $"ActivatePendingPiecesCoroutine(): pendingPieces count: {m_pendingPieces.Count}");
     if (_pendingPiecesCoroutine != null)
     {
+      // instead exit, this should not be cancelling the activation process
       StopCoroutine(_pendingPiecesCoroutine);
+      // return;
     }
 
     // do not run if in a Pending or Created state
@@ -1685,10 +1688,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
      * - may need an additional size
      * - may need more logic for water masks (hiding water on boat) and other boat magic that has not been added yet.
      */
-    // var blockingColliderYSize =
-    //   m_hullPieces.Count > 0
-    //     ? Math.Max(Math.Min(1f, averageFloatHeight), 3f)
-    //     : floatColliderSize.y;
     var blockingColliderCenterY = m_hullPieces.Count > 0
       ? _hullBounds.center.y + Math.Abs(floatColliderSize.y)
       : floatColliderCenterOffset.y;
@@ -1782,18 +1781,8 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
         continue;
       }
 
-      Bounds? rendererGlobalBounds = null;
-      if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value)
-      {
-        rendererGlobalBounds =
-          TransformColliderGlobalBoundsToLocal(collider);
-      }
-
-      if (rendererGlobalBounds == null)
-      {
-        continue;
-      }
-
+      var rendererGlobalBounds = TransformColliderGlobalBoundsToLocal(collider);
+      if (rendererGlobalBounds == null) continue;
       outputBounds.Encapsulate(rendererGlobalBounds.Value);
     }
 
@@ -1807,8 +1796,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       ? piece.GetAllColliders()
       : [..netView.GetComponentsInChildren<Collider>()];
   }
-
-  private static readonly string[] prefabsToIgnoreBounds = ["torch"];
 
   /*
    * Functional that updates targetBounds, useful for updating with new items or running off large lists and updating the newBounds value without mutating rigidbody values

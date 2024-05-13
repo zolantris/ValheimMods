@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
@@ -51,7 +52,7 @@ public class Teleport_Patch
     TeleportToObject(player, pos, rotation, zDO.m_uid);
   }
 
-  [HarmonyPatch(typeof(TeleportWorld), "Teleport")]
+  [HarmonyPatch(typeof(TeleportWorld), nameof(TeleportWorld.Teleport))]
   [HarmonyTranspiler]
   public static IEnumerable<CodeInstruction> TeleportWorld_Teleport(
     IEnumerable<CodeInstruction> instructions)
@@ -186,12 +187,50 @@ public class Teleport_Patch
   private static Vector3 GetTeleportPosition(GameObject go)
   {
     TeleportWorld tp = go.GetComponent<TeleportWorld>();
+
+    // Might be required to get updated position
+    Physics.SyncTransforms();
     if ((bool)tp)
     {
       return tp.transform.position + tp.transform.forward * tp.m_exitDistance + Vector3.up;
     }
 
     return go.transform.position;
+  }
+
+  private static IEnumerator DebouncedTeleportCoordinateUpdater(Player __instance,
+    bool isTeleporting, ZDOID zdoid)
+  {
+    var zdo = ZDOMan.instance.GetZDO(zdoid);
+    if (zdo == null)
+    {
+      __instance.m_teleporting = false;
+      m_teleportTarget.Remove(__instance);
+      yield break;
+    }
+
+    ZNetView? go = null;
+
+    var zoneId = ZoneSystem.instance.GetZone(zdo.m_position);
+
+    while (go == null)
+    {
+      go = ZNetScene.instance.FindInstance(zdo);
+      if (go) break;
+      ZNetScene.instance.FindInstance(zdo);
+      zoneId = ZoneSystem.instance.GetZone(zdo.m_position);
+      ZoneSystem.instance.PokeLocalZone(zoneId);
+      yield return new WaitForSeconds(1f);
+    }
+
+    zoneId = ZoneSystem.instance.GetZone(zdo.m_position);
+    ZoneSystem.instance.PokeLocalZone(zoneId);
+    yield return new WaitUntil(() => ZoneSystem.instance.IsZoneLoaded(zoneId));
+
+    var teleportPosition = GetTeleportPosition(go.gameObject);
+    __instance.transform.position = teleportPosition;
+
+    m_teleportTarget.Remove(__instance);
   }
 
   private static void SetIsTeleporting(Player __instance, bool isTeleporting)
@@ -202,20 +241,7 @@ public class Teleport_Patch
       return;
     }
 
-    ZDO zdo = ZDOMan.instance.GetZDO(zdoid);
-    if (zdo != null)
-    {
-      ZNetView go = ZNetScene.instance.FindInstance(zdo);
-      if (!go)
-      {
-        __instance.m_teleportTimer = 8f;
-        __instance.m_teleporting = true;
-        return;
-      }
-
-      __instance.transform.position = GetTeleportPosition(go.gameObject);
-    }
-
-    m_teleportTarget.Remove(__instance);
+    __instance.StopCoroutine(nameof(DebouncedTeleportCoordinateUpdater));
+    __instance.StartCoroutine(DebouncedTeleportCoordinateUpdater(__instance, isTeleporting, zdoid));
   }
 }

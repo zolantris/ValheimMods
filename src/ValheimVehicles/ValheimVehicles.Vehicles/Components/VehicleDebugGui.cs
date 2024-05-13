@@ -1,4 +1,5 @@
 using UnityEngine;
+using ValheimRAFT;
 using ValheimVehicles.Utis;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
@@ -46,6 +47,11 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       }
 
       currentInstance.StartRenderAllCollidersLoop();
+    }
+
+    if (GUILayout.Button("raftcreative"))
+    {
+      CreativeModeConsoleCommand.RunCreativeModeCommand("raftcreative");
     }
 
     if (GUILayout.Button("activatePendingPieces"))

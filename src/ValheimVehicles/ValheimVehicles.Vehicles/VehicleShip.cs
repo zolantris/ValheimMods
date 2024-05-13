@@ -196,16 +196,20 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
         break;
       case Ship.Speed.Back:
         _rudderForce =
-          Math.Abs(Math.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedSlow.Value, 10f));
+          Math.Abs(Math.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedSlow.Value,
+            ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value));
         break;
       case Ship.Speed.Slow:
-        _rudderForce = Math.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedSlow.Value, 10f);
+        _rudderForce = Math.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedSlow.Value,
+          ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value);
         break;
       case Ship.Speed.Half:
-        _rudderForce = Mathf.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedHalf.Value, 10f);
+        _rudderForce = Mathf.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedHalf.Value,
+          ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value);
         break;
       case Ship.Speed.Full:
-        _rudderForce = Mathf.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedFull.Value, 10f);
+        _rudderForce = Mathf.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedFull.Value,
+          ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value);
         break;
       default:
         Logger.LogError($"Speed value could not handle this variant, {m_speed}");
@@ -250,6 +254,13 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     return netView && netView.isActiveAndEnabled;
   }
 
+  public void UpdateVehicleSpeedThrottle()
+  {
+    // caps the vehicle speeds to these values.
+    // m_body.maxAngularVelocity = ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value;
+    // m_body.maxLinearVelocity = ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value * 1.2f;
+  }
+
   public void AwakeSetupShipComponents()
   {
     var colliderParentObj = transform.Find("colliders");
@@ -284,9 +295,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       m_body = GetComponent<Rigidbody>();
     }
 
-    // caps the vehicle speeds to these values.
-    m_body.maxAngularVelocity = ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value;
-    // m_body.maxLinearVelocity = ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value * 1.2f;
+    UpdateVehicleSpeedThrottle();
 
 
     if (!(bool)m_zsyncTransform)
@@ -414,6 +423,16 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
       m_body.angularVelocity = Vector3.zero;
       transform.rotation = Quaternion.Euler(0, transform.rotation.y, 0);
     }
+  }
+
+  public void UpdateShipZdoPosition()
+  {
+    if (!(bool)m_nview || m_nview.GetZDO() == null || m_nview.m_ghost || (bool)_controller ||
+        !isActiveAndEnabled) return;
+    var sector = ZoneSystem.instance.GetZone(transform.position);
+    var zdo = m_nview.GetZDO();
+    zdo.SetPosition(transform.position);
+    zdo.SetSector(sector);
   }
 
   public void FixedUpdate()
@@ -988,7 +1007,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
     if (!m_nview.IsOwner()) return;
     /*
-     * creative mode should not allows movement and applying force on a object will cause errors when the object is kinematic
+     * creative mode should not allow movement and applying force on a object will cause errors when the object is kinematic
      */
     if (_controller.isCreative || m_body.isKinematic)
     {
@@ -1012,9 +1031,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
     // raft pieces transforms
     SyncVehicleMastsAndSails();
-
-    // might need to call this if anchored to zero out initial velocity but ignore other velocity like upwards velocity in other areas.
-    // if (UpdateAnchorVelocity(Vector3.zero)) return;
 
     var shipFloatation = GetShipFloatationObj();
 

@@ -54,7 +54,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> RaftHealth { get; set; }
   public ConfigEntry<float> ServerRaftUpdateZoneInterval { get; set; }
   public ConfigEntry<float> RaftSailForceMultiplier { get; set; }
-  public ConfigEntry<bool> DisplacedRaftAutoFix { get; set; }
   public ConfigEntry<bool> AdminsCanOnlyBuildRaft { get; set; }
   public ConfigEntry<bool> AllowOldV1RaftRecipe { get; set; }
   public ConfigEntry<bool> AllowExperimentalPrefabs { get; set; }
@@ -90,10 +89,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> ShowShipStats { get; set; }
   public ConfigEntry<bool> HasShipContainerWeightCalculations { get; set; }
   public ConfigEntry<float> RaftCreativeHeight { get; set; }
-  public ConfigEntry<float> FloatingColliderVerticalSize { get; set; }
-  public ConfigEntry<float> FloatingColliderVerticalCenterOffset { get; set; }
-  public ConfigEntry<float> BlockingColliderVerticalSize { get; set; }
-  public ConfigEntry<float> BlockingColliderVerticalCenterOffset { get; set; }
   public ConfigEntry<KeyboardShortcut> AnchorKeyboardShortcut { get; set; }
   public ConfigEntry<bool> EnableMetrics { get; set; }
   public ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
@@ -143,28 +138,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       CreateConfigDescription(
         "Makes the Ship Hull prefabs be the sole source of collisions, meaning ships with wider tops will not collide at bottom terrain due to their width above water. Requires a Hull, without a hull it will previous box around all items in ship",
         false));
-    FloatingColliderVerticalCenterOffset = Config.Bind("Debug",
-      "FloatingColliderVerticalCenterOffset",
-      -0.2f,
-      CreateConfigDescription(
-        "Sets the raft vertical collision center location original value is -0.2f. Lower offsets can make the boat more jittery, positive offsets will cause the boat to go underwater in areas",
-        false));
-    FloatingColliderVerticalSize = Config.Bind("Debug", "FloatingColliderVerticalSize",
-      3f,
-      CreateConfigDescription(
-        "Sets the raft floating collider size. Smaller sizes can make the boat more jittery",
-        false));
-
-    BlockingColliderVerticalCenterOffset = Config.Bind("Debug",
-      "BlockingColliderVerticalCenterOffset",
-      0.2f,
-      CreateConfigDescription(
-        "Sets the raft BlockingColliderVerticalCenterOffset which blocks the player or objects passing through. This will trigger physics so if there is an interaction between the boat and player/it can cause the player to push the boat in the direction of interaction",
-        false));
-    BlockingColliderVerticalSize = Config.Bind("Debug", "BlockingColliderVerticalSize",
-      3f,
-      CreateConfigDescription(
-        "Sets sets the raft blocking collider size.", false));
   }
 
   private void CreateCommandConfig()
@@ -340,9 +313,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     DebugRemoveStartMenuBackground =
       Config.Bind("Debug", "DebugRemoveStartMenuBackground", false,
         "Removes the start scene background, only use this if you want to speedup start time");
-    DisplacedRaftAutoFix = Config.Bind("Debug",
-      "DisplacedRaftAutoFix", false,
-      "Automatically fix a displaced glitched out raft if the player is standing on the raft. This will make the player fall into the water briefly but avoid having to run 'raftoffset 0 0 0'");
   }
 
   private void CreatePrefabConfig()
