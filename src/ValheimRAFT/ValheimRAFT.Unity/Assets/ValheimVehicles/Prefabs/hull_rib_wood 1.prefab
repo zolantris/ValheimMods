@@ -43,7 +43,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5940555617446921363}
   m_Layer: 0
-  m_Name: hull_rib_wood
+  m_Name: hull_rib_wood 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -231,10 +231,6 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 95e8034110fa5b5408c376188aad1e89, type: 2}
-    - target: {fileID: 9009198540708270082, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0.51
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

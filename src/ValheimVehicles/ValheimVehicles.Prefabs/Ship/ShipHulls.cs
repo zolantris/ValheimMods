@@ -41,9 +41,8 @@ public abstract class ShipHulls
     return goName.Contains(PrefabNames.ShipHullCenterWoodPrefabName) ||
            goName.Contains(PrefabNames.ShipHullCenterIronPrefabName) ||
            goName.Contains(PrefabNames.ShipHullRibIronPrefabName) ||
-           goName.Contains(PrefabNames.ShipHullRibWoodPrefabName) ||
-           goName.Contains(PrefabNames.ShipHullSlabIronPrefabName) ||
-           goName.Contains(PrefabNames.ShipHullSlabWoodPrefabName);
+           goName.Contains(PrefabNames.ShipHullRibWoodPrefabName)
+           || goName.Contains(PrefabNames.HullWall) || goName.Contains(PrefabNames.HullSlab);
   }
 
   public static string GetVanillaPrefab(string hullMaterial, HullOrientation hullOrientation)

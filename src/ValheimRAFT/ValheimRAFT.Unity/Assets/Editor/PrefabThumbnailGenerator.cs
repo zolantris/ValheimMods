@@ -112,7 +112,7 @@ public class PrefabThumbnailGenerator : EditorWindow
 
         GetFilesFromSearchPath();
         DeleteAllFilesInOutputFolder();
-        DeleteCurrentSpritesInTargetAtlas();
+        // DeleteCurrentSpritesInTargetAtlas();
         
         foreach (var obj in objList)
         {

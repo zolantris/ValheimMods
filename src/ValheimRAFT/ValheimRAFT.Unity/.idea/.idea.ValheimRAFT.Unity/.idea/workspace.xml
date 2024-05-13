@@ -11,25 +11,23 @@
       <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles-shared" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles-shared" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles-shared.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles-shared.manifest" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/bronze_metal.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/bronze_metal.mat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/iron_metal.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/iron_metal.mat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Meshes/ShipHull-2x4.mesh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Meshes/rudder_advanced 2.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Meshes/vehice_ship_hull_advanced_center_2x4.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_rib_iron.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_rib_iron.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_slab_4x4_wood.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_slab_4x4_wood.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_wall_4x4_wood.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_wall_4x4_wood.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/WearNTear_Patch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/WearNTear_Patch.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Editor/PrefabThumbnailGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Editor/PrefabThumbnailGenerator.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Icons/vehicle_ship_keel.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Icons/vehicle_ship_rudder_advanced.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Icons/vehicle_ship_rudder_basic.png" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/shared_hull_rib.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/shared_hull_rib.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/shared_hull_slab_2x2_new.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/shared_hull_slab_2x2_new.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/shared_hull_slab_4x4_new.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/shared_hull_slab_4x4_new.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/CreativeModeConsoleCommand.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/CreativeModeConsoleCommand.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.ConsoleCommands/VehicleCommands.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.ConsoleCommands/VehicleCommands.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/LoadValheimVehiclesAssets.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/LoadValheimVehiclesAssets.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/shared_unused_hull_rib_single.prefab" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Texture/boarding_ramp.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Texture/rope_ladder.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/vehicle_icons.spriteatlasv2" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/vehicle_icons.spriteatlasv2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/ValheimRaftPlugin.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/ValheimRaftPlugin.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabNames.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabNames.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryHelpers.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryHelpers.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/RaftPrefab.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/RaftPrefab.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/ShipHullPrefab.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/ShipHullPrefab.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/ShipRudderPrefabs.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/ShipRudderPrefabs.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/BaseVehicleController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/BaseVehicleController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/SpriteNames.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/SpriteNames.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -180,7 +178,7 @@
       <workItem from="1715419232853" duration="98000" />
       <workItem from="1715433017079" duration="22795000" />
       <workItem from="1715524507126" duration="11002000" />
-      <workItem from="1715537373701" duration="1200000" />
+      <workItem from="1715537373701" duration="2313000" />
     </task>
     <servers />
   </component>

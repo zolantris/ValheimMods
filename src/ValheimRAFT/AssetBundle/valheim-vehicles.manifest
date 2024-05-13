@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1066139221
+CRC: 500173224
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 00900da5aaf031d9abd2e874ca825b89
+    Hash: ead0bbca37fc6b92be52e128e95ba11d
   TypeTreeHash:
     serializedVersion: 2
     Hash: 01508ae4745254c8f3bb355f55c42b78
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 00900da5aaf031d9abd2e874ca825b89
+    Hash: ead0bbca37fc6b92be52e128e95ba11d
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -56,14 +56,17 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_2x2_wood.prefab
+- Assets/ValheimVehicles/Prefabs/shared_hull_rib_curved.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_basic.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_ship.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_2x2_iron.prefab
 - Assets/ValheimVehicles/Prefabs/keel.prefab
+- Assets/shared_backup_hull_center_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_2x2_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_4x4_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_iron.prefab
-- Assets/ValheimVehicles/Prefabs/rudder_advanced_iron.prefab
+- Assets/ValheimVehicles/Prefabs/rudder_advanced_tail_wood.prefab
+- Assets/ValheimVehicles/Prefabs/hull_rib_wood 1.prefab
 - Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
 - Assets/Shader/Custom_Piece.shader
 - Assets/ValheimVehicles/Prefabs/hull_rib_wood.prefab
@@ -77,6 +80,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/GUI/hud_anchor.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_2x2_worn.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_4x4_wood.prefab
+- Assets/ValheimVehicles/Prefabs/shared_hull_rib 1.prefab
 - Assets/ValheimVehicles/Prefabs/hull_center_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_wood.prefab

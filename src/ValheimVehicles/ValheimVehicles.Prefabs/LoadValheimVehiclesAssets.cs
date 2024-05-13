@@ -28,7 +28,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
   public static GameObject ShipRudderBasicAsset = null!;
   public static GameObject ShipRudderAdvancedWoodAsset = null!;
-  public static GameObject ShipRudderAdvancedIronAsset = null!;
+  public static GameObject ShipRudderAdvancedTailWoodAsset = null!;
 
   public static GameObject ShipKeelAsset = null!;
 
@@ -103,9 +103,9 @@ public class LoadValheimVehicleAssets : ILoadAssets
     ShipRudderAdvancedWoodAsset =
       assetBundle.LoadAsset<GameObject>(
         "rudder_advanced_wood.prefab");
-    ShipRudderAdvancedIronAsset =
+    ShipRudderAdvancedTailWoodAsset =
       assetBundle.LoadAsset<GameObject>(
-        "rudder_advanced_iron.prefab");
+        "rudder_advanced_tail_wood.prefab");
 
     HudAnchor = assetBundle.LoadAsset<GameObject>("hud_anchor.prefab");
 

@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6834033822122585439}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_bottom 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -40,7 +40,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 14412335357285335}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_bottom 4
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -71,7 +71,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4499654688320498555}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_bottom 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -102,7 +102,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9113358395355367528}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_bottom 3
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -133,7 +133,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8255029666520749534}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_top 3
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -165,7 +165,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8255029666921226665}
   - component: {fileID: 7812994322811891494}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: dirt_floor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -227,7 +227,7 @@ GameObject:
   - component: {fileID: 8255029666925733963}
   - component: {fileID: 8255029666925734004}
   - component: {fileID: 8255029666925734005}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: mesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -329,7 +329,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8255029667724065931}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_top 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -360,7 +360,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8255029667875808093}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_top 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -391,7 +391,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8255029667945673495}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_top 4
   m_TagString: snappoint
   m_Icon: {fileID: 0}

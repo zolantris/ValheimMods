@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3648972701059603707}
   m_Layer: 0
-  m_Name: $hud_snappoint top
+  m_Name: $hud_snappoint_top
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -41,7 +41,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2848224704836420146}
   m_Layer: 0
-  m_Name: $hud_snappoint bottom
+  m_Name: $hud_snappoint_bottom
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -159,7 +159,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 580ae5285232e8842bf685639ef0ec74, type: 2}
+  - {fileID: 2100000, guid: 95e8034110fa5b5408c376188aad1e89, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -191,7 +191,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4933692101566550898}
   m_Layer: 0
-  m_Name: $hud_snappoint center
+  m_Name: $hud_snappoint_center
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -222,7 +222,7 @@ GameObject:
   m_Component:
   - component: {fileID: 670866534934587927}
   m_Layer: 0
-  m_Name: $hud_snappoint top
+  m_Name: $hud_snappoint_top
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -253,7 +253,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2223055755235886417}
   m_Layer: 0
-  m_Name: $hud_snappoint center
+  m_Name: $hud_snappoint_center
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -338,7 +338,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 580ae5285232e8842bf685639ef0ec74, type: 2}
+  - {fileID: 2100000, guid: 95e8034110fa5b5408c376188aad1e89, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -372,7 +372,7 @@ GameObject:
   - component: {fileID: 5072356786213414956}
   - component: {fileID: 6014958587188741086}
   m_Layer: 0
-  m_Name: rudder_advanced_iron
+  m_Name: rudder_advanced_tail_wood
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -445,7 +445,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5667720811414434588}
   m_Layer: 0
-  m_Name: $hud_snappoint bottom
+  m_Name: $hud_snappoint_bottom
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

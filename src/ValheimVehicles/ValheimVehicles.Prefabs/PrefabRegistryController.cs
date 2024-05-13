@@ -235,18 +235,18 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_rope_ladder_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("rope_ladder"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.RopeLadder),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[1]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 10,
           Item = "Wood",
           Recover = true,
         }
-      }
+      ]
     }));
   }
 
@@ -392,15 +392,15 @@ public class PrefabRegistryController : MonoBehaviour
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Icon = pierWallPrefabPiece.m_icon,
-      Requirements = new RequirementConfig[1]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 12,
           Item = "Stone",
           Recover = true
         }
-      }
+      ]
     });
 
     AddToRaftPrefabPieces(customPiece.Piece);
@@ -468,24 +468,24 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_boarding_ramp_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("boarding_ramp"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.BoardingRamp),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[2]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 10,
           Item = "Wood",
           Recover = true
         },
-        new()
+        new RequirementConfig
         {
           Amount = 4,
           Item = "IronNails",
           Recover = true
         }
-      }
+      ]
     }));
   }
 
@@ -502,7 +502,7 @@ public class PrefabRegistryController : MonoBehaviour
     mbBoardingRampWidePiece.m_description = "$mb_boarding_ramp_wide_desc";
     mbBoardingRampWide.transform.localScale = new Vector3(2f, 1f, 1f);
 
-    PrefabRegistryController.AddToRaftPrefabPieces(mbBoardingRampWidePiece);
+    AddToRaftPrefabPieces(mbBoardingRampWidePiece);
 
     var boardingRamp = mbBoardingRampWide.GetComponent<BoardingRampComponent>();
     boardingRamp.m_stateChangeDuration = 0.3f;
@@ -516,24 +516,24 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_boarding_ramp_wide_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("boarding_ramp"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.BoardingRamp),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[2]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 20,
           Item = "Wood",
           Recover = true
         },
-        new()
+        new RequirementConfig
         {
           Amount = 8,
           Item = "IronNails",
           Recover = true
         }
-      }
+      ]
     }));
   }
 
@@ -552,8 +552,8 @@ public class PrefabRegistryController : MonoBehaviour
     AddToRaftPrefabPieces(mbDirtFloorPrefabPiece);
     PrefabRegistryHelpers.AddNetViewWithPersistence(mbDirtFloorPrefab);
 
-    PrefabRegistryHelpers.SetWearNTear(mbDirtFloorPrefab);
-
+    var wnt = PrefabRegistryHelpers.SetWearNTear(mbDirtFloorPrefab);
+    wnt.m_haveRoof = false;
     // Makes the component cultivatable
     mbDirtFloorPrefab.AddComponent<CultivatableComponent>();
 
@@ -567,7 +567,7 @@ public class PrefabRegistryController : MonoBehaviour
       Description = $"$mb_dirt_floor_{prefabSizeString}_desc",
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("dirtfloor_icon"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.DirtFloor),
       Requirements =
       [
         new RequirementConfig

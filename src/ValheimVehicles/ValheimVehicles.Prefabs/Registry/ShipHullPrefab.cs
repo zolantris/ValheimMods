@@ -1,8 +1,10 @@
 using System.Linq;
+using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
+using ValheimRAFT;
 
 namespace ValheimVehicles.Prefabs.Registry;
 
@@ -196,15 +198,31 @@ public class ShipHullPrefab : IRegisterPrefab
     ShipHulls.SetMaterialValues(hullMaterial, wnt, 1);
     PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
     // this will be used to hide water on the boat
+    var hoistParents = new[] { "new" };
+
+    if (prefabName.Contains(PrefabNames.ShipHullPrefabName))
+    {
+      hoistParents.AddItem("hull_slab_new_shared");
+    }
+
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
-      prefab.transform.Find("new") ?? prefab.transform,
-      ["new"]);
+      prefab.transform.Find("new") ?? prefab.transform, hoistParents
+    );
+
+    // ReSharper disable once ReplaceWithSingleAssignment.True
+    var isEnabled = true;
+
+    if (hullMaterial.Equals(ShipHulls.HullMaterial.Iron) &&
+        !ValheimRaftPlugin.Instance.AllowExperimentalPrefabs.Value)
+    {
+      isEnabled = false;
+    }
 
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
       Category = PrefabNames.ValheimRaftMenuName,
-      Enabled = true,
+      Enabled = isEnabled,
       Requirements = [GetRequirements(hullMaterial, materialCount)]
     }));
   }

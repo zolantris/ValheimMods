@@ -56,6 +56,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> RaftSailForceMultiplier { get; set; }
   public ConfigEntry<bool> DisplacedRaftAutoFix { get; set; }
   public ConfigEntry<bool> AdminsCanOnlyBuildRaft { get; set; }
+  public ConfigEntry<bool> AllowOldV1RaftRecipe { get; set; }
+  public ConfigEntry<bool> AllowExperimentalPrefabs { get; set; }
 
 
   // Propulsion Configs
@@ -258,6 +260,24 @@ public class ValheimRaftPlugin : BaseUnityPlugin
             IsAdminOnly = true
           }
         }));
+    AllowOldV1RaftRecipe = Config.Bind("Server config", "AllowOldV1RaftRecipe", false,
+      new ConfigDescription(
+        "Allows the V1 Raft to be built, this Raft is not performant, but remains in v2.0.0 as a Fallback in case there are problems with the new raft",
+        null, [
+          new ConfigurationManagerAttributes()
+          {
+            IsAdminOnly = true
+          }
+        ]));
+    AllowExperimentalPrefabs = Config.Bind("Server config", "AllowOldV1RaftRecipe", false,
+      new ConfigDescription(
+        "Allows v2.0.0 experimental prefabs such as Iron variants of slabs, hulls, and ribs. They do not look great so they are disabled by default",
+        null, [
+          new ConfigurationManagerAttributes()
+          {
+            IsAdminOnly = true
+          }
+        ]));
 
     ServerRaftUpdateZoneInterval = Config.Bind("Server config",
       "ServerRaftUpdateZoneInterval",

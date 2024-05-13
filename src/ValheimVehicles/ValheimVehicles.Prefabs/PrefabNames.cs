@@ -85,17 +85,22 @@ public static class PrefabNames
     return $"{HullWall}_{materialVariantName}_{sizeVariant}";
   }
 
+  public const string ShipHullPrefabName = "Ship_Hull";
+
   // hull
   public const string ShipHullCenterWoodPrefabName =
-    $"{ValheimVehiclesPrefix}_Ship_Hull_Center_Wood";
+    $"{ValheimVehiclesPrefix}_{ShipHullPrefabName}_Wood";
 
   public const string ShipHullCenterIronPrefabName =
-    $"{ValheimVehiclesPrefix}_Ship_Hull_Center_Iron";
+    $"{ValheimVehiclesPrefix}_{ShipHullPrefabName}_Iron";
 
   public const string SailBoxColliderName = $"{ValheimVehiclesPrefix}_SailBoxCollider";
   public const string ShipRudderBasic = $"{ValheimVehiclesPrefix}_ShipRudderBasic";
   public const string ShipRudderAdvancedWood = $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Wood";
-  public const string ShipRudderAdvancedIron = $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Iron";
+
+  public const string ShipRudderAdvancedTailWood =
+    $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Tail_Wood";
+
   public const string ShipSteeringWheel = $"{ValheimVehiclesPrefix}_ShipSteeringWheel";
   public const string ShipKeel = $"{ValheimVehiclesPrefix}_ShipKeel";
   public const string WaterVehiclePreviewHull = $"{ValheimVehiclesPrefix}_WaterVehiclePreviewHull";

@@ -1421,12 +1421,14 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   }
 
   // must call wnt destroy otherwise the piece is removed but not destroyed like a player destroying an item.
+  // must create a new array to prevent a collection modify error
   public void OnAddSteeringWheelDestroyPrevious(ZNetView netView,
     SteeringWheelComponent steeringWheelComponent)
   {
-    if (_steeringWheelPieces.Count <= 0) return;
-    foreach (var wnt in _steeringWheelPieces.Select(previousWheel =>
-               previousWheel.GetComponent<WearNTear>()))
+    var wheelPieces = _steeringWheelPieces.ToList();
+    if (wheelPieces.Count <= 0) return;
+    foreach (var wnt in wheelPieces.Select(wheel =>
+               wheel.GetComponent<WearNTear>()))
     {
       wnt.Destroy();
     }
@@ -1775,6 +1777,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var colliders = netView.GetComponentsInChildren<Collider>();
     foreach (var collider in colliders)
     {
+      if (collider.gameObject.layer != PrefabRegistryHelpers.PieceLayer)
+      {
+        continue;
+      }
+
       Bounds? rendererGlobalBounds = null;
       if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value)
       {
@@ -1801,9 +1808,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       : [..netView.GetComponentsInChildren<Collider>()];
   }
 
-/*
- * Functional that updates targetBounds, useful for updating with new items or running off large lists and updating the newBounds value without mutating rigidbody values
- */
+  private static readonly string[] prefabsToIgnoreBounds = ["torch"];
+
+  /*
+   * Functional that updates targetBounds, useful for updating with new items or running off large lists and updating the newBounds value without mutating rigidbody values
+   */
   public void EncapsulateBounds(GameObject go)
   {
     var colliders = GetCollidersInPiece(go);

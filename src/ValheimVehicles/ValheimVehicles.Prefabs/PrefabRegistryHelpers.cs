@@ -12,6 +12,7 @@ namespace ValheimVehicles.Prefabs;
 public abstract class PrefabRegistryHelpers
 {
   public const string SnappointTag = "snappoint";
+  public static int PieceLayer = LayerMask.NameToLayer("piece");
 
   public struct PieceData
   {
@@ -182,7 +183,7 @@ public abstract class PrefabRegistryHelpers
       Description = "valheim_vehicles_rudder_advanced_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipRudderAdvancedWood)
     });
-    PieceDataDictionary.Add(PrefabNames.ShipRudderAdvancedIron, new PieceData()
+    PieceDataDictionary.Add(PrefabNames.ShipRudderAdvancedTailWood, new PieceData()
     {
       Name = $"valheim_vehicles_rudder_advanced $valheim_vehicles_material_iron",
       Description = "valheim_vehicles_rudder_advanced_desc",

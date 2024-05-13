@@ -3,13 +3,16 @@ namespace ValheimVehicles.Prefabs;
 public class SpriteNames
 {
   public const string ShipSteeringWheel = "steering_wheel";
-  public const string ShipRudderAdvancedIron = "vehicle_ship_rudder_advanced_iron";
-  public const string ShipRudderAdvancedWood = "vehicle_ship_rudder_advanced_wood";
-  public const string ShipRudderBasic = "vehicle_ship_rudder_basic";
-  public const string ShipKeel = "vehicle_ship_keel";
-  public const string VehicleSwitch = "vehicle_switch";
+  public const string DirtFloor = "dirtfloor_icon";
+  public const string BoardingRamp = "boarding_ramp";
+  public const string ShipRudderAdvancedIron = "rudder_advanced_iron";
+  public const string ShipRudderAdvancedWood = "rudder_advanced_wood";
+  public const string ShipRudderBasic = "rudder_basic";
+  public const string ShipKeel = "keel";
+  public const string VehicleSwitch = "mechanical_switch";
   public const string HullCenterWood = "hull_center_wood";
   public const string HullCenterIron = "hull_center_iron";
+  public const string RopeLadder = "rope_ladder";
 
   public const string HullWall = "hull_wall";
 

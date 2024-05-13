@@ -66,6 +66,28 @@ public class Plantable_Patch
     return (bool)cmp && cmp.isCultivatable;
   }
 
+  [HarmonyPatch(typeof(Plant), nameof(Plant.HaveRoof))]
+  [HarmonyPrefix]
+  private static bool HaveRoof(Plant __instance, bool __result)
+  {
+    if (Plant.m_roofMask == 0)
+    {
+      Plant.m_roofMask = LayerMask.GetMask("Default", "static_solid", "piece");
+    }
+
+    var raycastHit =
+      Physics.RaycastAll(__instance.transform.position, Vector3.up, 100f, Plant.m_roofMask);
+
+    if (Physics.Raycast(__instance.transform.position, Vector3.up, 100f, Plant.m_roofMask))
+    {
+      __result = true;
+      return false;
+    }
+
+    __result = false;
+    return false;
+  }
+
   [HarmonyPatch(typeof(Plant), "Grow")]
   [HarmonyTranspiler]
   private static IEnumerable<CodeInstruction> Plant_Grow(IEnumerable<CodeInstruction> instructions)
