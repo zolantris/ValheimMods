@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 640165338
+CRC: 2199725847
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 7e952587fcfa095d0bd2efc2e264d594
+    Hash: a28df714ed22152c9c237bb36bb71d1c
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 6aa3da45dcf459bd3cbb16ea89ca6092
+    Hash: 962a6fa09ff7ee44209932c381081484
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 7e952587fcfa095d0bd2efc2e264d594
+    Hash: a28df714ed22152c9c237bb36bb71d1c
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -33,13 +33,13 @@ ClassTypes:
 - Class: 65
   Script: {instanceID: 0}
 - Class: 114
-  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 0d0b652f32a2cc243917e4028fa0f046, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
 - Class: 114
@@ -58,13 +58,13 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 128
   Script: {instanceID: 0}
+- Class: 205
+  Script: {instanceID: 0}
 - Class: 213
   Script: {instanceID: 0}
 - Class: 222
   Script: {instanceID: 0}
 - Class: 224
-  Script: {instanceID: 0}
-- Class: 687078895
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.CoreModule
@@ -104,23 +104,22 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.Toggle/ToggleEvent
 Assets:
-- Assets/edit_ramp_panel.prefab
-- Assets/edit_sail_panel.prefab
-- Assets/pattern_dot.png
-- Assets/pattern_stripe.png
-- Assets/Slider.prefab
-- Assets/karvemast.png
-- Assets/SailMat.mat
-- Assets/pattern_checker.png
-- Assets/rope_ladder.prefab
-- Assets/steering_wheel.prefab
-- Assets/raftmast.png
-- Assets/edit_texture_panel.prefab
-- Assets/boarding_ramp.prefab
-- Assets/rope_anchor.prefab
-- Assets/steering_wheel.png
-- Assets/icons.spriteatlas
-- Assets/dirt_floor.prefab
-- Assets/vikingmast.png
+- Assets/ValheimVehicles/Prefabs/GUI/edit_ramp_panel 1.prefab
+- Assets/ValheimVehicles/Prefabs/GUI/edit_ramp_panel.prefab
+- Assets/ValheimVehicles/Prefabs/GUI/edit_sail_panel.prefab
+- Assets/ValheimVehicles/Texture/pattern_dot.png
+- Assets/ValheimVehicles/Texture/pattern_stripe.png
+- Assets/ValheimVehicles/Prefabs/GUI/Slider.prefab
+- Assets/ValheimVehicles/Material/SailMat.mat
+- Assets/ValheimVehicles/Texture/pattern_checker.png
+- Assets/ValheimVehicles/Prefabs/rope_ladder.prefab
+- Assets/ValheimVehicles/Prefabs/GUI/edit_sail_panel 1.prefab
+- Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel 1.prefab
+- Assets/ValheimVehicles/Texture/sail_normal.png
+- Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel.prefab
+- Assets/ValheimVehicles/Prefabs/boarding_ramp.prefab
+- Assets/ValheimVehicles/Prefabs/rope_anchor.prefab
+- Assets/ValheimVehicles/Prefabs/dirt_floor.prefab
+- Assets/ValheimVehicles/Texture/sail.png
 Dependencies:
 - C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/AssetBundle/valheim-vehicles-shared

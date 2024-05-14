@@ -1,6 +1,8 @@
 using System;
+using Components;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;
@@ -17,8 +19,31 @@ public class Ship_Patch
         __instance.name.StartsWith("MBRaft"))
     {
       var ladders = __instance.GetComponentsInChildren<Ladder>();
-      for (var i = 0; i < ladders.Length; i++) ladders[i].m_useDistance = 10f;
-      __instance.gameObject.AddComponent<MoveableBaseShipComponent>();
+      foreach (var t in ladders)
+        t.m_useDistance = 10f;
+
+      var mbShip = __instance.gameObject.AddComponent<MoveableBaseShipComponent>();
+
+      var debugHelpersInstance = mbShip.VehicleDebugHelpersInstance =
+        __instance.gameObject.AddComponent<VehicleDebugHelpers>();
+      debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
+      {
+        collider = mbShip.m_baseRoot.m_floatcollider,
+        lineColor = Color.green,
+        parent = mbShip.m_baseRoot.gameObject
+      });
+      debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
+      {
+        collider = mbShip.m_baseRoot.m_blockingcollider,
+        lineColor = Color.magenta,
+        parent = mbShip.m_baseRoot.gameObject
+      });
+      debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
+      {
+        collider = mbShip.m_baseRoot.m_onboardcollider,
+        lineColor = Color.yellow,
+        parent = mbShip.m_baseRoot.gameObject
+      });
     }
   }
 
@@ -55,6 +80,10 @@ public class Ship_Patch
     }
   }
 
+
+  /**
+   * todo this may not work well with two postfixes, there are two for UpdateSail
+   */
   [HarmonyPatch(typeof(Ship), "UpdateSail")]
   [HarmonyPostfix]
   private static void Ship_UpdateSailSize(Ship __instance)
@@ -83,12 +112,12 @@ public class Ship_Patch
       }
     }
 
-    for (var i = 0; i < mb.m_baseRoot.m_rudderPieces.Count; i++)
+    for (var i = 0; i < mb.m_baseRoot.m_wheelPieces.Count; i++)
     {
-      var rudder = mb.m_baseRoot.m_rudderPieces[i];
+      var rudder = mb.m_baseRoot.m_wheelPieces[i];
       if (!rudder)
       {
-        mb.m_baseRoot.m_rudderPieces.RemoveAt(i);
+        mb.m_baseRoot.m_wheelPieces.RemoveAt(i);
         i--;
       }
       else if ((bool)rudder.wheelTransform)
@@ -130,7 +159,8 @@ public class Ship_Patch
     // This could be the spot that causes the raft to fly at spawn
     mb.m_targetHeight = __instance.m_nview.m_zdo.GetFloat("MBTargetHeight", mb.m_targetHeight);
     mb.m_flags =
-      (MoveableBaseShipComponent.MBFlags)__instance.m_nview.m_zdo.GetInt("MBFlags",
+      (MoveableBaseShipComponent.MBFlags)__instance.m_nview.m_zdo.GetInt(
+        VehicleZdoVars.VehicleFlags,
         (int)mb.m_flags);
 
     // This could be the spot that causes the raft to fly at spawn
@@ -149,7 +179,7 @@ public class Ship_Patch
       if (!mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored))
       {
         mb.m_flags |= MoveableBaseShipComponent.MBFlags.IsAnchored;
-        __instance.m_nview.m_zdo.Set("MBFlags", (int)mb.m_flags);
+        __instance.m_nview.m_zdo.Set(VehicleZdoVars.VehicleFlags, (int)mb.m_flags);
       }
     }
 

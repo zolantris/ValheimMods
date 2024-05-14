@@ -21,6 +21,14 @@ public class VehicleBuildGhost : MonoBehaviour
   private void Awake()
   {
     GetIsInitialized();
+    var netView = GetComponent<ZNetView>();
+    if (!netView) return;
+    if (!netView.m_ghost)
+    {
+      DisableVehicleGhost();
+      return;
+    }
+
     ShouldRenderPlaceholder();
   }
 
@@ -94,6 +102,12 @@ public class VehicleBuildGhost : MonoBehaviour
     }
   }
 
+  public void RenderPlaceholder()
+  {
+    _placeholderInstance =
+      Instantiate(placeholderComponent, transform);
+  }
+
   public void UpdatePlaceholder()
   {
     if ((bool)_placeholderInstance)
@@ -107,8 +121,7 @@ public class VehicleBuildGhost : MonoBehaviour
       return;
     }
 
-    _placeholderInstance =
-      Instantiate(placeholderComponent, transform);
+    RenderPlaceholder();
   }
 
   public void ShouldRenderPlaceholder()

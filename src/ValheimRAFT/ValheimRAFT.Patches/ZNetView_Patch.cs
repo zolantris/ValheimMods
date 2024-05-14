@@ -34,36 +34,19 @@ public class ZNetView_Patch
   [HarmonyPrefix]
   private static bool ZNetView_OnDestroy(ZNetView __instance)
   {
-    var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-    if ((bool)mbr)
-    {
-      mbr.RemovePiece(__instance);
-      if (ValheimRaftPlugin.Instance.DisplacedRaftAutoFix.Value &&
-          (bool)Player.m_localPlayer && Player.m_localPlayer.transform.IsChildOf(mbr.transform))
-      {
-        Logger.LogWarning(
-          "DisplacedRaftAutoFix enabled: automatically regenerating broken since the player was attached it the raft");
-        MoveRaftConsoleCommand.MoveRaft(Player.m_localPlayer, mbr.m_ship, new Vector3(0, 0, 0));
-        // only regenerate if the raft glitches out
-        return false;
-      }
-    }
-
     var bv = __instance.GetComponentInParent<BaseVehicleController>();
     if ((bool)bv)
     {
       bv.RemovePiece(__instance);
-      if (ValheimRaftPlugin.Instance.DisplacedRaftAutoFix.Value &&
-          (bool)Player.m_localPlayer && Player.m_localPlayer.transform.IsChildOf(bv.transform))
+    }
+    else
+    {
+      var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
+      if ((bool)mbr)
       {
-        return false;
+        mbr.RemovePiece(__instance);
       }
     }
-
-    // exit znetview destroy if ship hull is being added
-    // if (__instance.gameObject.name.Contains(PrefabNames.ShipHullPrefabName) ||
-    //     __instance.gameObject.name.Contains(PrefabNames.WaterVehiclePrefabName)) return false;
-
 
     return true;
   }

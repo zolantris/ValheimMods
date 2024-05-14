@@ -1,5 +1,7 @@
+using Jotunn;
 using Jotunn.Configs;
 using Jotunn.Entities;
+using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimRAFT;
@@ -15,90 +17,82 @@ public class WaterVehiclePrefab : IRegisterPrefab
 {
   public static readonly WaterVehiclePrefab Instance = new();
 
-  public void Register(PrefabManager prefabManager, PieceManager pieceManager)
+  public static GameObject CreateClonedPrefab(string prefabName)
   {
-    var waterVehicle = new GameObject()
-    {
-      name = PrefabNames.WaterVehiclePrefabName,
-      layer = 0,
-    };
+    return PrefabManager.Instance.CreateClonedPrefab(prefabName,
+      LoadValheimVehicleAssets.VehicleShipAsset);
+  }
 
-    var buildGhost = waterVehicle.AddComponent<VehicleBuildGhost>();
-    buildGhost.gameObject.layer = 0;
-    buildGhost.placeholderComponent = LoadValheimVehicleAssets.ShipHullAsset;
-    buildGhost.UpdatePlaceholder();
+  public static GameObject CreateWaterVehiclePrefab(
+    GameObject prefab)
+  {
+    var netView = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    netView.m_type = ZDO.ObjectType.Prioritized;
 
-    var _waterVehiclePrefab =
-      prefabManager.CreateClonedPrefab(PrefabNames.WaterVehiclePrefabName, waterVehicle);
-    PrefabRegistryHelpers.AddNetViewWithPersistence(_waterVehiclePrefab);
+    var colliderParentObj = prefab.transform.Find("colliders");
+    var floatColliderObj =
+      colliderParentObj.Find(
+        PrefabNames.WaterVehicleFloatCollider);
+    var blockingColliderObj =
+      colliderParentObj.Find(PrefabNames
+        .WaterVehicleBlockingCollider);
+    var onboardColliderObj =
+      colliderParentObj.Find(PrefabNames
+        .WaterVehicleOnboardCollider);
 
-    _waterVehiclePrefab.layer = 0;
+    onboardColliderObj.name = PrefabNames.WaterVehicleOnboardCollider;
+    floatColliderObj.name = PrefabNames.WaterVehicleFloatCollider;
+    blockingColliderObj.name = PrefabNames.WaterVehicleBlockingCollider;
 
-    /*
-     * Add all necessary colliders to the ship prefab
-     * TODO make this a GameObject with a BoxCollider in it
-     */
-    var floatColliderComponent =
-      LoadValheimAssets.vanillaRaftPrefab.transform.Find("FloatCollider");
-    var blockingColliderComponent =
-      LoadValheimAssets.vanillaRaftPrefab.transform.Find("ship/colliders/Cube");
-    var onboardColliderComponent =
-      LoadValheimAssets.vanillaRaftPrefab.transform.Find("OnboardTrigger");
-    /*
-     * add the colliders to the prefab
-     */
-    var blockingCollider = PrefabRegistryController.Instantiate(blockingColliderComponent,
-      _waterVehiclePrefab.transform);
-    var onboardCollider = PrefabRegistryController.Instantiate(onboardColliderComponent,
-      _waterVehiclePrefab.transform);
-    var floatCollider = PrefabRegistryController.Instantiate(floatColliderComponent,
-      _waterVehiclePrefab.transform);
-
-    onboardCollider.name = PrefabNames.VehicleOnboardCollider;
-    floatCollider.name = PrefabNames.WaterVehicleFloatCollider;
-    blockingCollider.name = PrefabNames.VehicleBlockingCollider;
-
-    blockingCollider.transform.SetParent(_waterVehiclePrefab.transform);
-    onboardCollider.transform.SetParent(_waterVehiclePrefab.transform);
-    floatCollider.transform.SetParent(_waterVehiclePrefab.transform);
-
-    floatCollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    blockingCollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    blockingCollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
-
-    var rigidbody = _waterVehiclePrefab.AddComponent<Rigidbody>();
-    rigidbody.mass = 2000f;
-    rigidbody.angularDrag = 0.1f;
-    rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-    rigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
-    rigidbody.useGravity = true;
-    rigidbody.automaticInertiaTensor = true;
-    rigidbody.automaticCenterOfMass = true;
-    rigidbody.isKinematic = false;
-    // setting to true makes the shadows not vibrate, it may be related to kinematic items triggering too many re-renders or the kinematic item needs to be moved lower
-    // rigidbody.isKinematic = false;
+    var blockingBoxCollider = blockingColliderObj.GetComponent<BoxCollider>();
+    var floatBoxCollider = floatColliderObj.GetComponent<BoxCollider>();
+    var onboardBoxCollider = onboardColliderObj.GetComponent<BoxCollider>();
 
     /*
      * ShipControls were a gameObject with a script attached to them. This approach directly attaches the script instead of having the rudder show.
      */
-    _waterVehiclePrefab.AddComponent<ValheimShipControls>();
-    var shipInstance = _waterVehiclePrefab.AddComponent<VVShip>();
+    var vehicleRigidbody = prefab.GetComponent<Rigidbody>();
+    var zSyncTranform = prefab.AddComponent<ZSyncTransform>();
+    zSyncTranform.m_syncPosition = true;
+    zSyncTranform.m_syncBodyVelocity = true;
+    zSyncTranform.m_syncRotation = true;
+    zSyncTranform.m_body = vehicleRigidbody;
+
+    var shipControls = prefab.AddComponent<VehicleMovementController>();
+
+    var shipInstance = prefab.AddComponent<VehicleShip>();
+    shipInstance.ColliderParentObj = colliderParentObj.gameObject;
+
+    shipInstance.ShipDirection =
+      floatColliderObj.FindDeepChild(PrefabNames.VehicleShipMovementOrientation);
+    shipInstance.MovementController = shipControls;
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    shipInstance.m_body = vehicleRigidbody;
+    shipInstance.m_zsyncTransform = zSyncTranform;
 
-    shipInstance.m_floatcollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
-    shipInstance.FloatCollider = floatColliderComponent.GetComponentInChildren<BoxCollider>();
+    // todo fix ship water effects so they do not cause ship materials to break
 
-    var zSyncTransform = _waterVehiclePrefab.AddComponent<ZSyncTransform>();
-    zSyncTransform.m_syncPosition = true;
-    zSyncTransform.m_syncBodyVelocity = true;
+    var waterEffects =
+      Object.Instantiate(LoadValheimAssets.shipWaterEffects, prefab.transform);
+    waterEffects.name = PrefabNames.VehicleShipEffects;
+    var shipEffects = waterEffects.GetComponent<ShipEffects>();
+    var vehicleShipEffects = waterEffects.AddComponent<VehicleShipEffects>();
+    VehicleShipEffects.CloneShipEffectsToInstance(vehicleShipEffects, shipEffects);
+    Object.Destroy(shipEffects);
+
+    vehicleShipEffects.transform.localPosition = new Vector3(0, -2, 0);
+    shipInstance.ShipEffectsObj = vehicleShipEffects.gameObject;
+    shipInstance.ShipEffects = vehicleShipEffects;
+
+    shipInstance.m_floatcollider = floatBoxCollider;
+    shipInstance.FloatCollider = floatBoxCollider;
 
     // wearntear may need to be removed or tweaked
-    _waterVehiclePrefab.AddComponent<WearNTear>();
+    prefab.AddComponent<WearNTear>();
     var woodWNT = LoadValheimAssets.woodFloorPiece.GetComponent<WearNTear>();
-    var wnt = PrefabRegistryHelpers.SetWearNTear(_waterVehiclePrefab, 1, true);
+    var wnt = PrefabRegistryHelpers.SetWearNTear(prefab, 1, true);
     PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.HardWood);
-    // wnt.m_colliders = woodWNT.m_colliders;
-    // wnt.m_onDamaged += woodWNT.m_onDamaged;
+
     wnt.m_onDestroyed += woodWNT.m_onDestroyed;
     wnt.m_supports = true;
     wnt.m_support = 2000f;
@@ -106,53 +100,46 @@ public class WaterVehiclePrefab : IRegisterPrefab
     wnt.m_noRoofWear = true;
     wnt.enabled = false;
 
-    _waterVehiclePrefab.AddComponent<ImpactEffect>();
-    // AddVehicleLODs(waterVehiclePrefab);
+    prefab.AddComponent<ImpactEffect>();
 
-    var shipControlsGui = new GameObject
-      { name = "ControlGui", layer = 0 };
-    var shipControlsGuiInstance = Object.Instantiate(shipControlsGui,
-      _waterVehiclePrefab.transform);
-    shipControlsGui.transform.SetParent(_waterVehiclePrefab.transform);
+    // var shipControlsGui = new GameObject
+    //   { name = "ControlGui", layer = 0, transform = { parent = prefab.transform } };
+    // shipControlsGui.transform.SetParent(prefab.transform);
+    //
+    // // todo the gui likely does not need these values
+    // shipControlsGui.transform.localPosition = new Vector3(2.154f, 1.027f, -2.162f);
+    // shipInstance.m_controlGuiPos = shipControlsGui.transform;
 
-    // todo the gui likely does not need these values
-    shipControlsGui.transform.localPosition = new Vector3(2.154f, 1.027f, -2.162f);
-    shipInstance.m_controlGuiPos = shipControlsGuiInstance.transform;
+    return prefab;
+  }
 
-    var piece = _waterVehiclePrefab.AddComponent<Piece>();
+  private static void RegisterWaterVehicleShipPrefab()
+  {
+    var prefab = CreateClonedPrefab(PrefabNames.WaterVehicleShip);
+    var waterVehiclePrefab = CreateWaterVehiclePrefab(prefab);
+
+    var piece = PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.WaterVehicleShip, prefab);
     piece.m_waterPiece = true;
-    piece.m_description = "$valheim_vehicles_raft_desc";
-    piece.m_icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
-    piece.m_name = "$valheim_vehicles_raft";
 
-    pieceManager.AddPiece(new CustomPiece(_waterVehiclePrefab, true, new PieceConfig
+    PieceManager.Instance.AddPiece(new CustomPiece(waterVehiclePrefab, true, new PieceConfig
     {
       PieceTable = "Hammer",
-      Name = piece.m_name,
-      Description = piece.m_description,
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[3]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
-          Amount = 10,
-          Item = "FineWood",
-          Recover = true
-        },
-        new()
-        {
-          Amount = 2,
-          Item = "RoundLog",
-          Recover = true
-        },
-        new()
-        {
-          Amount = 6,
-          Item = "WolfPelt",
+          Amount = 20,
+          Item = "Wood",
           Recover = true
         }
-      }
+      ]
     }));
+  }
+
+  public void Register(PrefabManager prefabManager, PieceManager pieceManager)
+  {
+    RegisterWaterVehicleShipPrefab();
   }
 }

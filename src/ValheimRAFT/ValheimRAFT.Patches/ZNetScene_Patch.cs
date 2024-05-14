@@ -28,7 +28,7 @@ public class ZNetScene_Patch
     foreach (ZDO currentDistantObject in currentDistantObjects)
       currentDistantObject.TempRemoveEarmark = num;
     __instance.m_tempRemoved.Clear();
-    foreach (ZNetView znetView in __instance.m_instances.Values)
+    foreach (var znetView in __instance.m_instances.Values)
     {
       if (!(bool)znetView) continue;
       if ((int)znetView.GetZDO().TempRemoveEarmark != (int)num)

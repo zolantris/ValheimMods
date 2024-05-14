@@ -2,19 +2,23 @@
 
 <img src="./Thunderstore/icon.png" alt="ValheimRAFT Community Made Boat Hjalmere">
 
-A [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork that works
-with latest Valheim. The original mod
-owner [Sarcenzzz](https://www.nexusmods.com/valheim/users/3061574) stopped
-maintaining the mod.
-
-As of 12/25/2023 I got official permission to maintain and open source this mod.
-
-This decompile fork aims to keep the mod functional with future goals of
-expanding functionality.
+This mod aims to continue support for Water based features of the original
+ValheimRAFT mod and incorporate more vehicle items and mechanics within the mod
+and further extends it's capabilities.
 
 ## Build Status
 
 [![ValheimRAFT Build](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml/badge.svg)](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml)
+
+## Background
+
+This repo is a [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork
+that works
+with latest Valheim. The original mod
+owner [Sarcen](https://www.nexusmods.com/valheim/users/3061574) stopped
+maintaining the mod, but gave permission to maintain/improve and open source
+this mod as of
+12/25/2023.
 
 ## Contents
 
@@ -79,7 +83,8 @@ The following has been tested:
 - Adds anchors
 - Adds custom sails (requires meshes to be working)
 - Adds ropes (requires meshes to be working)
-- Sails now will each contribute to the total ship speed. Mesh sails do an area
+- Sails now will each contribute to the total shipShip.Speed. Mesh sails do an
+  area
   calculation while tier1-3 sails are
   preset values.
 
@@ -105,7 +110,7 @@ discover other mods.
 | HasShipWeightCalculations          | (propulsion) -> enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less                                                                                                                                  |
 | HasShipContainerWeightCalculations | (propulsion) -> enables ship weight calculations for containers which affects sail-force (sailing speed) and future propulsion calculations. Makes ships with lots of containers require more sails                                                                                                          |
 | MassPercentageFactor               | (propulsion) -> Sets the mass percentage of the ship that will slow down the sails.                                                                                                                                                                                                                          |
-| SpeedCapMultiplier                 | (propulsion) -> Sets the speed at which it becomes significantly harder to gain speed per sail area, the ships will still be capped at their maxSail speed.                                                                                                                                                  |
+| SpeedCapMultiplier                 | (propulsion) -> Sets the speed at which it becomes significantly harder to gain speed per sail area, the ships will still be capped at their maxSailShip.Speed.                                                                                                                                              |
 | MaxPropulsionSpeed                 | (propulsion) -> Sets the absolute max speed a ship can ever hit. Prevents or enables space launches. Will be used as a cap for all propulsion introduced in future versions.                                                                                                                                 |
 | MaxSailSpeed                       | (propulsion) -> Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.                                                                                                                                                            |
 | SailTier1Area                      | (propulsion) -> Sets the tier1 sail area.                                                                                                                                                                                                                                                                    |
@@ -179,6 +184,12 @@ Previously it only supported Direct3D11.
    focused. Larger changes are welcome, but they
    have higher chance of breaking other things and are harder to maintain.
 3. If you want to directly get involved. Reach out on discord.
+
+## Attribution
+
+- Sarcen: For creating the initial mod and supporting it until v1.4.8!
+- Zolantris: For supporting and expanding the Raft Mod since v1.5.0.
+- RacerX: For contributing a stag icon for sails. Looks awesome!
 
 ## Support Open Source
 

@@ -56,7 +56,7 @@ namespace ValheimRAFT.Util
       m_zdoGuidLookup.Remove(id);
     }
 
-    public ZDO GetZDO(int id)
+    public ZDO? GetZDO(int id)
     {
       ZDO zdo;
       return m_zdoGuidLookup.TryGetValue(id, out zdo) ? zdo : null;

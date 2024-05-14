@@ -4432,6 +4432,63 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1001 &1240882208
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5077854269718908073, guid: bd61e27f7c3f79f44bab8468c181323e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2.4551828
+      objectReference: {fileID: 0}
+    - target: {fileID: 5077854269718908073, guid: bd61e27f7c3f79f44bab8468c181323e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -4.997
+      objectReference: {fileID: 0}
+    - target: {fileID: 5077854269718908073, guid: bd61e27f7c3f79f44bab8468c181323e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -2.566
+      objectReference: {fileID: 0}
+    - target: {fileID: 5077854269718908073, guid: bd61e27f7c3f79f44bab8468c181323e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5077854269718908073, guid: bd61e27f7c3f79f44bab8468c181323e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5077854269718908073, guid: bd61e27f7c3f79f44bab8468c181323e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5077854269718908073, guid: bd61e27f7c3f79f44bab8468c181323e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5077854269718908073, guid: bd61e27f7c3f79f44bab8468c181323e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5077854269718908073, guid: bd61e27f7c3f79f44bab8468c181323e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5077854269718908073, guid: bd61e27f7c3f79f44bab8468c181323e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5706030049292349690, guid: bd61e27f7c3f79f44bab8468c181323e, type: 3}
+      propertyPath: m_Name
+      value: vehicle_ship_rudder_advancedv2
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: bd61e27f7c3f79f44bab8468c181323e, type: 3}
 --- !u!1 &1248092010
 GameObject:
   m_ObjectHideFlags: 0
@@ -7924,3 +7981,4 @@ SceneRoots:
   - {fileID: 23905026}
   - {fileID: 8255029666359592811}
   - {fileID: 789149177}
+  - {fileID: 1240882208}

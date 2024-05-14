@@ -5,9 +5,11 @@ using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
+using Registry;
 using UnityEngine;
 using UnityEngine.U2D;
 using ValheimRAFT;
+using ValheimRAFT.Patches;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
@@ -18,6 +20,7 @@ public class PrefabRegistryController : MonoBehaviour
 {
   public static PrefabManager prefabManager;
   public static PieceManager pieceManager;
+  public static int PieceLayer = LayerMask.NameToLayer("piece");
 
   private static SynchronizationManager synchronizationManager;
   private static List<Piece> raftPrefabPieces = new();
@@ -31,42 +34,28 @@ public class PrefabRegistryController : MonoBehaviour
 
   public static Component waterMask;
 
-  private void OnGUI()
+  /// <summary>
+  /// For debugging and nuking rafts, not to be included in releases
+  /// </summary>
+  public static void DebugDestroyAllRaftObjects()
   {
-    GUILayout.BeginArea(new Rect(10, 10, 100, 100));
-    if (GUILayout.Button("Delete All Ships"))
+    var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+    foreach (var obj in allObjects)
     {
-      var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
-      foreach (var obj in allObjects)
+      if (obj.name.Contains($"{PrefabNames.WaterVehicleShip}(Clone)") ||
+          ShipHulls.IsHull(obj) && obj.name.Contains("(Clone)"))
       {
-        if (obj.name.Contains($"{PrefabNames.WaterVehiclePrefabName}(Clone)") ||
-            obj.name.Contains($"{PrefabNames.ShipHullPrefabName}(Clone)"))
+        var wnt = obj.GetComponent<WearNTear>();
+        if ((bool)wnt)
         {
-          if (ReferenceEquals(obj, ShipHullPrefab.RaftHullPrefabInstance))
-          {
-            return;
-          }
-
+          wnt.Destroy();
+        }
+        else
+        {
           Destroy(obj);
         }
       }
     }
-
-    if (GUILayout.Button("ToggleAnchors"))
-    {
-      var waterVehicleControllers = Resources.FindObjectsOfTypeAll<WaterVehicleController>();
-      foreach (var wvc in waterVehicleControllers)
-      {
-        wvc.ToggleAnchor();
-      }
-    }
-
-    // if (GUILayout.Button("Force 0"))
-    //   vehicleLOD.ForceLOD(0);
-    //
-    // if (GUILayout.Button("Force 1"))
-    //   vehicleLOD.ForceLOD(1);
-    GUILayout.EndArea();
   }
 
   // todo this should come from config
@@ -131,8 +120,8 @@ public class PrefabRegistryController : MonoBehaviour
     vehicleSharedAssetBundle =
       AssetUtils.LoadAssetBundleFromResources("valheim-vehicles-shared",
         Assembly.GetExecutingAssembly());
-
     Logger.LogDebug($"valheim-vehicles-shared {vehicleSharedAssetBundle}");
+
     raftAssetBundle =
       AssetUtils.LoadAssetBundleFromResources("valheim-raft", Assembly.GetExecutingAssembly());
     Logger.LogDebug($"valheim-raft {raftAssetBundle}");
@@ -140,14 +129,20 @@ public class PrefabRegistryController : MonoBehaviour
 
     vehicleAssetBundle =
       AssetUtils.LoadAssetBundleFromResources("valheim-vehicles", Assembly.GetExecutingAssembly());
+    Logger.LogDebug($"valheim-vehicles {vehicleAssetBundle}");
 
     prefabManager = PrefabManager.Instance;
     pieceManager = PieceManager.Instance;
 
     LoadValheimAssets.Instance.Init(prefabManager);
-    LoadValheimVehicleSharedAssets.Instance.Init(vehicleSharedAssetBundle);
+
+    // dependent on ValheimVehiclesShared
     LoadValheimRaftAssets.Instance.Init(raftAssetBundle);
+    // dependent on ValheimVehiclesShared and RaftAssetBundle
     LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle);
+
+    // must be called after assets are loaded
+    PrefabRegistryHelpers.Init();
 
     RegisterAllPrefabs();
   }
@@ -165,6 +160,7 @@ public class PrefabRegistryController : MonoBehaviour
     ShipHullPrefab.Instance.Register(prefabManager, pieceManager);
 
     // VehiclePrefabs
+    VehiclePiecesPrefab.Instance.Register(prefabManager, pieceManager);
     WaterVehiclePrefab.Instance.Register(prefabManager, pieceManager);
   }
 
@@ -239,56 +235,57 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_rope_ladder_desc",
-      Icon = LoadValheimRaftAssets.sprites.GetSprite("rope_ladder"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.RopeLadder),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[1]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 10,
           Item = "Wood",
           Recover = true,
         }
-      }
+      ]
     }));
   }
 
   private static void RegisterRopeAnchor()
   {
-    var mbRopeAnchorPrefab =
+    var prefab =
       prefabManager.CreateClonedPrefab("MBRopeAnchor", LoadValheimRaftAssets.rope_anchor);
 
-    var mbRopeAnchorPrefabPiece = mbRopeAnchorPrefab.AddComponent<Piece>();
+    var mbRopeAnchorPrefabPiece = prefab.AddComponent<Piece>();
     mbRopeAnchorPrefabPiece.m_name = "$mb_rope_anchor";
     mbRopeAnchorPrefabPiece.m_description = "$mb_rope_anchor_desc";
     mbRopeAnchorPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
     AddToRaftPrefabPieces(mbRopeAnchorPrefabPiece);
-    PrefabRegistryHelpers.AddNetViewWithPersistence(mbRopeAnchorPrefab);
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
-    var ropeAnchorComponent = mbRopeAnchorPrefab.AddComponent<RopeAnchorComponent>();
+    var ropeAnchorComponent = prefab.AddComponent<RopeAnchorComponent>();
     var baseRope = LoadValheimAssets.raftMast.GetComponentInChildren<LineRenderer>(true);
 
-    ropeAnchorComponent.m_rope = mbRopeAnchorPrefab.AddComponent<LineRenderer>();
+    ropeAnchorComponent.m_rope = prefab.AddComponent<LineRenderer>();
     ropeAnchorComponent.m_rope.material = new Material(baseRope.material);
     ropeAnchorComponent.m_rope.widthMultiplier = 0.05f;
     ropeAnchorComponent.m_rope.enabled = false;
 
-    var ropeAnchorComponentWearNTear = PrefabRegistryHelpers.SetWearNTear(mbRopeAnchorPrefab, 3);
+    var ropeAnchorComponentWearNTear = PrefabRegistryHelpers.SetWearNTear(prefab, 3);
     ropeAnchorComponentWearNTear.m_supports = false;
 
-    PrefabRegistryHelpers.FixCollisionLayers(mbRopeAnchorPrefab);
+    PrefabRegistryHelpers.FixCollisionLayers(prefab);
+    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
 
     /*
      * @todo ropeAnchor recipe may need to be tweaked to require flax or some fiber
      * Maybe a weaker rope could be made as a lower tier with much lower health
      */
-    pieceManager.AddPiece(new CustomPiece(mbRopeAnchorPrefab, false, new PieceConfig
+    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
       Description = "$mb_rope_anchor_desc",
-      Icon = LoadValheimRaftAssets.sprites.GetSprite("rope_anchor"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("rope_anchor"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[2]
@@ -396,15 +393,15 @@ public class PrefabRegistryController : MonoBehaviour
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Icon = pierWallPrefabPiece.m_icon,
-      Requirements = new RequirementConfig[1]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 12,
           Item = "Stone",
           Recover = true
         }
-      }
+      ]
     });
 
     AddToRaftPrefabPieces(customPiece.Piece);
@@ -472,24 +469,24 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_boarding_ramp_desc",
-      Icon = LoadValheimRaftAssets.sprites.GetSprite("boarding_ramp"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.BoardingRamp),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[2]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 10,
           Item = "Wood",
           Recover = true
         },
-        new()
+        new RequirementConfig
         {
           Amount = 4,
           Item = "IronNails",
           Recover = true
         }
-      }
+      ]
     }));
   }
 
@@ -506,7 +503,7 @@ public class PrefabRegistryController : MonoBehaviour
     mbBoardingRampWidePiece.m_description = "$mb_boarding_ramp_wide_desc";
     mbBoardingRampWide.transform.localScale = new Vector3(2f, 1f, 1f);
 
-    PrefabRegistryController.AddToRaftPrefabPieces(mbBoardingRampWidePiece);
+    AddToRaftPrefabPieces(mbBoardingRampWidePiece);
 
     var boardingRamp = mbBoardingRampWide.GetComponent<BoardingRampComponent>();
     boardingRamp.m_stateChangeDuration = 0.3f;
@@ -520,24 +517,24 @@ public class PrefabRegistryController : MonoBehaviour
     {
       PieceTable = "Hammer",
       Description = "$mb_boarding_ramp_wide_desc",
-      Icon = LoadValheimRaftAssets.sprites.GetSprite("boarding_ramp"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.BoardingRamp),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[2]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 20,
           Item = "Wood",
           Recover = true
         },
-        new()
+        new RequirementConfig
         {
           Amount = 8,
           Item = "IronNails",
           Recover = true
         }
-      }
+      ]
     }));
   }
 
@@ -556,8 +553,8 @@ public class PrefabRegistryController : MonoBehaviour
     AddToRaftPrefabPieces(mbDirtFloorPrefabPiece);
     PrefabRegistryHelpers.AddNetViewWithPersistence(mbDirtFloorPrefab);
 
-    PrefabRegistryHelpers.SetWearNTear(mbDirtFloorPrefab);
-
+    var wnt = PrefabRegistryHelpers.SetWearNTear(mbDirtFloorPrefab);
+    wnt.m_haveRoof = false;
     // Makes the component cultivatable
     mbDirtFloorPrefab.AddComponent<CultivatableComponent>();
 
@@ -571,17 +568,17 @@ public class PrefabRegistryController : MonoBehaviour
       Description = $"$mb_dirt_floor_{prefabSizeString}_desc",
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Icon = LoadValheimRaftAssets.sprites.GetSprite("dirtfloor_icon"),
-      Requirements = new RequirementConfig[1]
-      {
-        new()
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.DirtFloor),
+      Requirements =
+      [
+        new RequirementConfig
         {
           // this may cause issues it's just size^2 but Math.Pow returns a double
           Amount = (int)Math.Pow(size, 2),
           Item = "Stone",
           Recover = true
         }
-      }
+      ]
     }));
   }
 }

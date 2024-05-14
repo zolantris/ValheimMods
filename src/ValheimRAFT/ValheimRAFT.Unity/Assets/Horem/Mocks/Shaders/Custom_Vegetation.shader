@@ -1,4 +1,4 @@
-Shader "JVLmock_Custom/Vegetation" {
+Shader "Custom/Vegetation" {
 	Properties {
 		_MainTex ("Albedo (RGB)", 2D) = "white" {}
 		_Color ("Color", Vector) = (1,1,1,1)

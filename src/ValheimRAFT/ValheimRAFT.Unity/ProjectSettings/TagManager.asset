@@ -21,18 +21,18 @@ TagManager:
   - 
   - 
   - 
+  - character_trigger
+  - 
+  - piece_nonsolid
   - 
   - 
   - 
   - 
+  - WaterVolume
   - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - blocker
+  - pathblocker
+  - viewblock
   - 
   - 
   - Vehicle

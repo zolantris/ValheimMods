@@ -11,12 +11,12 @@
     </PropertyGroup>
 
     <Import Project="$(SolutionsDir).props" Condition="Exists('$(SolutionsDir).props')"/>
-    
+
     <PropertyGroup Condition="!Exists('$(SolutionsDir).props')">
         <BepInExPath>$(SolutionDir)libs</BepInExPath>
         <ManagedDataPath>$(SolutionDir)libs</ManagedDataPath>
     </PropertyGroup>
-    
+
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU'">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugSymbols>true</DebugSymbols>
@@ -82,12 +82,12 @@
         <StartWorkingDirectory>$(GamePath)</StartWorkingDirectory>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
-        <StartAction>Program</StartAction>
-        <StartProgram>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server\start_headless_server.bat</StartProgram>
-        <!--        <StartArguments>-console &#45;&#45;doorstop-enable true &#45;&#45;doorstop-target $(HOMEPATH)\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll</StartArguments>-->
-        <StartWorkingDirectory>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</StartWorkingDirectory>
-    </PropertyGroup>
+    <!--    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">-->
+    <!--        <StartAction>Program</StartAction>-->
+    <!--        <StartProgram>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server\start_headless_server.bat</StartProgram>-->
+    <!--        &lt;!&ndash;        <StartArguments>-console &#45;&#45;doorstop-enable true &#45;&#45;doorstop-target $(HOMEPATH)\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll</StartArguments>&ndash;&gt;-->
+    <!--        <StartWorkingDirectory>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</StartWorkingDirectory>-->
+    <!--    </PropertyGroup>-->
 
     <!-- Add BepInEx references -->
     <ItemGroup Label="BepInEx">
@@ -320,8 +320,14 @@
             <HintPath>$(SolutionDir)\libs\PlanBuild.dll</HintPath>
             <Private>False</Private>
         </Reference>
+        <Publicize Include="Advize_PlantEasily"/>
+        <Reference Include="Advize_PlantEasily">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>$(SolutionDir)\libs\Advize_PlantEasily.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
     </ItemGroup>
-    
+
     <!--  Metrics  -->
     <ItemGroup Condition="$(AssemblyName) == 'ValheimRAFT'">
         <Reference Include="SentryUnityWrapper">
@@ -329,21 +335,24 @@
             <Private>False</Private>
         </Reference>
     </ItemGroup>
-    
+
     <!--  Copy/convert commands are top level  -->
     <Target Name="convert_pdb_to_mdb" Condition="'$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU'" BeforeTargets="PostBuildEvent">
-        <Exec Command="$(SolutionDir)pdb2mdb.exe $(TargetPath)" />
+        <Exec Command="$(SolutionDir)pdb2mdb.exe $(TargetPath)"/>
         <!--   Renames the dll.mdb to just mdb     -->
-        <Move SourceFiles="$(OutDir)$(AssemblyName).dll.mdb" DestinationFiles="$(OutDir)$(AssemblyName).mdb" />
+        <Move SourceFiles="$(OutDir)$(AssemblyName).dll.mdb" DestinationFiles="$(OutDir)$(AssemblyName).mdb"/>
     </Target>
     <Target Name="Copy_To_R2ModMan" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="convert_pdb_to_mdb">
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
+
+        <!--  Eventually we need to copy and test this lib over in unity     -->
+        <!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SolutionDir)src\ValheimRAFT\ValheimRAFT.Unity\Assets\Assemblies\$(AssemblyName).dll&quot;"/>-->
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).mdb&quot;"/>
 
-        <Exec Condition="$(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i" />
-        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i" />
-        
+        <Exec Condition="$(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>
+        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>
+
         <Exec Condition="Exists('$(SolutionDir)\Assets\')" Command="xcopy /d &quot;$(SolutionDir)\Assets\&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
         <Exec Condition="Exists('$(SolutionDir)\Assets\Translations\English\')" Command="xcopy /d &quot;$(SolutionDir)\Assets\Translations\English\&quot; &quot;$(PluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>
     </Target>
@@ -385,8 +394,8 @@
         <!-- Copy Assets -->
         <Exec Command="if exist &quot;$(AssetsDir)&quot; xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>
         <Exec Command="if exist $&quot;$(AssetsDir)&quot; del &quot;$(TmpDir)plugins\Assets\*.png.meta&quot;"/>
-<!--   copy all files from outputdir, anything included is something that does not exist in the base game dependencies     -->
-        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(TmpDir)plugins\&quot; /q /s /y /i" />
+        <!--   copy all files from outputdir, anything included is something that does not exist in the base game dependencies     -->
+        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(TmpDir)plugins\&quot; /q /s /y /i"/>
 
         <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>
         <!-- delete duplicate mod version-->
@@ -395,7 +404,7 @@
         <Exec Command="if exist &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot; del /s /q &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot;"/>
 
         <Exec Command="powershell Compress-Archive '$(TmpDir)\*' '$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)'"/>
-        
+
         <!--  For modNexus there needs to be a folder with the modname     -->
         <Exec Command="xcopy /d &quot;$(TmpDir)plugins&quot; &quot;$(TmpDir)$(AssemblyName)&quot; /E/H"/>
         <Exec Command="powershell Compress-Archive '$(TmpDir)$(AssemblyName)' '$(ModOutputDir)$(NexusName)-$(ModNameVersion)'"/>

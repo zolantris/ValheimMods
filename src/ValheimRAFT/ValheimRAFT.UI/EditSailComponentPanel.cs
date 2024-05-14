@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.UI;
+using ValheimVehicles.Prefabs;
 
 namespace ValheimRAFT.UI;
 
@@ -77,15 +78,18 @@ public class EditSailComponentPanel
     m_editPanel.SetActive(true);
   }
 
+  /**
+   * Initializes the edit panel if needed. Will not be loaded in memory unless editing is required.
+   */
   private void InitPanel()
   {
     var parent = GUIManager.CustomGUIFront.transform;
     m_editPanel = Object.Instantiate(
-      ValheimRaftPlugin.m_assetBundle.LoadAsset<GameObject>("edit_sail_panel"),
+      PrefabRegistryController.raftAssetBundle.LoadAsset<GameObject>("edit_sail_panel"),
       parent, false);
     PanelUtil.ApplyPanelStyle(m_editPanel);
     var texturePanel =
-      ValheimRaftPlugin.m_assetBundle.LoadAsset<GameObject>("edit_texture_panel");
+      PrefabRegistryController.raftAssetBundle.LoadAsset<GameObject>("edit_texture_panel");
     PanelUtil.ApplyPanelStyle(texturePanel);
 
     GUIManager.Instance.ApplyDropdownStyle(

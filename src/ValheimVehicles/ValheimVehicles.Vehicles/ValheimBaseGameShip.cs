@@ -4,7 +4,9 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
+using UnityEngine.UIElements;
 using ValheimRAFT;
+using ValheimVehicles.Prefabs;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
@@ -14,14 +16,7 @@ namespace ValheimVehicles.Vehicles;
  */
 public class ValheimBaseGameShip : MonoBehaviour
 {
-  public enum Speed
-  {
-    Stop,
-    Back,
-    Slow,
-    Half,
-    Full
-  }
+  public Ship.Speed Speed;
 
   internal bool m_forwardPressed;
 
@@ -35,7 +30,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public GameObject m_rudderObject;
 
-  public ValheimShipControls m_shipControlls;
+  public VehicleMovementController m_shipControlls;
 
   public Transform? m_controlGuiPos;
 
@@ -90,7 +85,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal Vector3 m_windChangeVelocity = Vector3.zero;
 
-  internal Speed m_speed;
+  internal Ship.Speed m_speed;
 
   internal float m_rudder;
 
@@ -98,7 +93,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal Vector3 m_sailForce = Vector3.zero;
 
-  internal readonly List<Player> m_players = new List<Player>();
+  internal List<Player> m_players = [];
 
   internal WaterVolume m_previousCenter;
 
@@ -149,11 +144,7 @@ public class ValheimBaseGameShip : MonoBehaviour
         "ValheimBaseShip initialized without NetView, or netview is not available yet (ghost mode?)");
     }
 
-    // m_blockingCollider = gameObject.AddComponent<BoxCollider>();
-    // m_blockingCollider.gameObject.layer = 28; // vehicle layer
-    // m_blockingCollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    // m_blockingCollider.transform.localPosition = new Vector3(0f, 0.29f, 0f);
-    var collider = transform.Find("VVFloatCollider");
+    var collider = transform.Find(PrefabNames.WaterVehicleFloatCollider);
 
     if (collider != null)
     {
@@ -161,7 +152,8 @@ public class ValheimBaseGameShip : MonoBehaviour
       var boxColliders = collider.GetComponentsInChildren<BoxCollider>();
 
       var floatBoxCollider =
-        boxColliders?.FirstOrDefault((BoxCollider k) => k.gameObject.name == "VVFloatCollider");
+        boxColliders?.FirstOrDefault((k) =>
+          k.gameObject.name == PrefabNames.WaterVehicleFloatCollider);
       if (floatBoxCollider != null)
       {
         m_floatcollider = floatBoxCollider;
@@ -181,9 +173,9 @@ public class ValheimBaseGameShip : MonoBehaviour
         (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(OnDestroyed));
     }
 
-    m_body = GetComponent<Rigidbody>();
     if (!(bool)m_body)
     {
+      m_body = GetComponent<Rigidbody>();
       Logger.LogError("No rigidbody detected, ship must have a Rigidbody to work");
     }
 
@@ -200,11 +192,11 @@ public class ValheimBaseGameShip : MonoBehaviour
 
     Heightmap.ForceGenerateAll();
 
-    // m_sailCloth = m_sailObject.GetComponentInChildren<Cloth>();
+    m_sailCloth = m_sailObject.GetComponentInChildren<Cloth>();
   }
 
   /**
-   * TODO this could be set to false for the ship as an override to allow the ship to never unrender
+   * TODO this could be set to false for the ship as an override to allow the ship to never un-render
    */
   public bool CanBeRemoved()
   {
@@ -229,7 +221,7 @@ public class ValheimBaseGameShip : MonoBehaviour
   }
 
   /*
-   * Valheim has method mispellings.
+   * Valheim has method misspellings
    */
   public void ApplyControlls(Vector3 dir)
   {
@@ -295,26 +287,26 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal void RPC_Stop(long sender)
   {
-    m_speed = Speed.Stop;
+    m_speed = Ship.Speed.Stop;
   }
 
   internal void RPC_Forward(long sender)
   {
     switch (m_speed)
     {
-      case Speed.Stop:
-        m_speed = Speed.Slow;
+      case Ship.Speed.Stop:
+        m_speed = Ship.Speed.Slow;
         break;
-      case Speed.Slow:
-        m_speed = Speed.Half;
+      case Ship.Speed.Slow:
+        m_speed = Ship.Speed.Half;
         break;
-      case Speed.Half:
-        m_speed = Speed.Full;
+      case Ship.Speed.Half:
+        m_speed = Ship.Speed.Full;
         break;
-      case Speed.Back:
-        m_speed = Speed.Stop;
+      case Ship.Speed.Back:
+        m_speed = Ship.Speed.Stop;
         break;
-      case Speed.Full:
+      case Ship.Speed.Full:
         break;
     }
   }
@@ -323,19 +315,19 @@ public class ValheimBaseGameShip : MonoBehaviour
   {
     switch (m_speed)
     {
-      case Speed.Stop:
-        m_speed = Speed.Back;
+      case Ship.Speed.Stop:
+        m_speed = Ship.Speed.Back;
         break;
-      case Speed.Slow:
-        m_speed = Speed.Stop;
+      case Ship.Speed.Slow:
+        m_speed = Ship.Speed.Stop;
         break;
-      case Speed.Half:
-        m_speed = Speed.Slow;
+      case Ship.Speed.Half:
+        m_speed = Ship.Speed.Slow;
         break;
-      case Speed.Full:
-        m_speed = Speed.Half;
+      case Ship.Speed.Full:
+        m_speed = Ship.Speed.Half;
         break;
-      case Speed.Back:
+      case Ship.Speed.Back:
         break;
     }
   }
@@ -367,13 +359,13 @@ public class ValheimBaseGameShip : MonoBehaviour
     UpdateUpsideDmg(Time.fixedDeltaTime);
     if (m_players.Count == 0)
     {
-      m_speed = Speed.Stop;
+      m_speed = Ship.Speed.Stop;
       m_rudderValue = 0f;
     }
 
-    if (!flag && (m_speed == Speed.Slow || m_speed == Speed.Back))
+    if (!flag && (m_speed != Ship.Speed.Stop))
     {
-      m_speed = Speed.Stop;
+      m_speed = Ship.Speed.Stop;
     }
 
     Vector3 worldCenterOfMass = m_body.worldCenterOfMass;
@@ -442,11 +434,11 @@ public class ValheimBaseGameShip : MonoBehaviour
       m_body.AddForceAtPosition(Vector3.up * f3 * num3, vector3, ForceMode.VelocityChange);
       m_body.AddForceAtPosition(Vector3.up * f4 * num3, vector4, ForceMode.VelocityChange);
       float sailSize = 0f;
-      if (m_speed == Speed.Full)
+      if (m_speed == Ship.Speed.Full)
       {
         sailSize = 1f;
       }
-      else if (m_speed == Speed.Half)
+      else if (m_speed == Ship.Speed.Half)
       {
         sailSize = 0.5f;
       }
@@ -461,17 +453,17 @@ public class ValheimBaseGameShip : MonoBehaviour
       Vector3 zero = Vector3.zero;
       switch (m_speed)
       {
-        case Speed.Slow:
+        case Ship.Speed.Slow:
           zero += base.transform.forward * m_backwardForce * (1f - Mathf.Abs(m_rudderValue));
           break;
-        case Speed.Back:
+        case Ship.Speed.Back:
           zero += -base.transform.forward * m_backwardForce * (1f - Mathf.Abs(m_rudderValue));
           break;
       }
 
-      if (m_speed == Speed.Back || m_speed == Speed.Slow)
+      if (m_speed == Ship.Speed.Back || m_speed == Ship.Speed.Slow)
       {
-        float num10 = ((m_speed != Speed.Back) ? 1 : (-1));
+        float num10 = ((m_speed != Ship.Speed.Back) ? 1 : (-1));
         zero += base.transform.right * m_stearForce * (0f - m_rudderValue) * num10;
       }
 
@@ -557,17 +549,23 @@ public class ValheimBaseGameShip : MonoBehaviour
     }
   }
 
+  /// <summary>
+  /// This is the base game ship EdgeForce. Needs more information about what it does
+  /// </summary>
+  /// Todo figure out what this does
+  /// <param name="dt"></param>
   internal void ApplyEdgeForce(float dt)
   {
-    float magnitude = base.transform.position.magnitude;
-    float num = 10420f;
-    if (magnitude > num)
-    {
-      Vector3 vector = Vector3.Normalize(base.transform.position);
-      float num2 = Utils.LerpStep(num, 10500f, magnitude) * 8f;
-      Vector3 vector2 = vector * num2;
-      m_body.AddForce(vector2 * dt, ForceMode.VelocityChange);
-    }
+    var magnitude = base.transform.position.magnitude;
+    var num = 10420f;
+
+    if (!(magnitude > num)) return;
+
+    var vector = Vector3.Normalize(base.transform.position);
+    var num2 = Utils.LerpStep(num, 10500f, magnitude) * 8f;
+    var vector2 = vector * num2;
+
+    m_body.AddForce(vector2 * dt, ForceMode.VelocityChange);
   }
 
   internal void FixTilt()
@@ -612,7 +610,7 @@ public class ValheimBaseGameShip : MonoBehaviour
       return;
     }
 
-    m_speed = (Speed)m_nview.GetZDO().GetInt(ZDOVars.s_forward);
+    m_speed = (Ship.Speed)m_nview.GetZDO().GetInt(ZDOVars.s_forward);
     if (Time.time - m_sendRudderTime > 1f)
     {
       m_rudderValue = m_nview.GetZDO().GetFloat(ZDOVars.s_rudder);
@@ -621,9 +619,9 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public bool IsSailUp()
   {
-    if (m_speed != Speed.Half)
+    if (m_speed != Ship.Speed.Half)
     {
-      return m_speed == Speed.Full;
+      return m_speed == Ship.Speed.Full;
     }
 
     return true;
@@ -634,7 +632,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     UpdateSailSize(dt);
     Vector3 windDir = EnvMan.instance.GetWindDir();
     windDir = Vector3.Cross(Vector3.Cross(windDir, base.transform.up), base.transform.up);
-    if (m_speed == Speed.Full || m_speed == Speed.Half)
+    if (m_speed == Ship.Speed.Full || m_speed == Ship.Speed.Half)
     {
       float t = 0.5f + Vector3.Dot(base.transform.forward, windDir) * 0.5f;
       Quaternion to = Quaternion.LookRotation(
@@ -643,7 +641,7 @@ public class ValheimBaseGameShip : MonoBehaviour
       m_mastObject.transform.rotation =
         Quaternion.RotateTowards(m_mastObject.transform.rotation, to, 30f * dt);
     }
-    else if (m_speed == Speed.Back)
+    else if (m_speed == Ship.Speed.Back)
     {
       Quaternion from = Quaternion.LookRotation(-base.transform.forward, base.transform.up);
       Quaternion to2 = Quaternion.LookRotation(-windDir, base.transform.up);
@@ -663,12 +661,12 @@ public class ValheimBaseGameShip : MonoBehaviour
     Quaternion b = Quaternion.Euler(0f, m_rudderRotationMax * (0f - m_rudderValue), 0f);
     if (haveControllingPlayer)
     {
-      if (m_speed == Speed.Slow)
+      if (m_speed == Ship.Speed.Slow)
       {
         m_rudderPaddleTimer += dt;
         b *= Quaternion.Euler(0f, Mathf.Sin(m_rudderPaddleTimer * 6f) * 20f, 0f);
       }
-      else if (m_speed == Speed.Back)
+      else if (m_speed == Ship.Speed.Back)
       {
         m_rudderPaddleTimer += dt;
         b *= Quaternion.Euler(0f, Mathf.Sin(m_rudderPaddleTimer * -3f) * 40f, 0f);
@@ -684,19 +682,19 @@ public class ValheimBaseGameShip : MonoBehaviour
     float num = 0f;
     switch (m_speed)
     {
-      case Speed.Back:
+      case Ship.Speed.Back:
         num = 0.1f;
         break;
-      case Speed.Half:
+      case Ship.Speed.Half:
         num = 0.5f;
         break;
-      case Speed.Full:
+      case Ship.Speed.Full:
         num = 1f;
         break;
-      case Speed.Slow:
+      case Ship.Speed.Slow:
         num = 0.1f;
         break;
-      case Speed.Stop:
+      case Ship.Speed.Stop:
         num = 0.1f;
         break;
     }
@@ -711,7 +709,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
     if ((bool)m_sailCloth)
     {
-      if (m_speed == Speed.Stop || m_speed == Speed.Slow || m_speed == Speed.Back)
+      if (m_speed == Ship.Speed.Stop || m_speed == Ship.Speed.Slow || m_speed == Ship.Speed.Back)
       {
         if (flag && m_sailCloth.enabled)
         {
@@ -747,7 +745,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public void OnTriggerEnter(Collider collider)
   {
-    Player component = collider.GetComponent<Player>();
+    var component = collider.GetComponent<Player>();
     if ((bool)component)
     {
       m_players.Add(component);
@@ -758,7 +756,7 @@ public class ValheimBaseGameShip : MonoBehaviour
       }
     }
 
-    Character component2 = collider.GetComponent<Character>();
+    var component2 = collider.GetComponent<Character>();
     if ((bool)component2)
     {
       component2.InNumShipVolumes++;
@@ -771,7 +769,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     if ((bool)component)
     {
       m_players.Remove(component);
-      Jotunn.Logger.LogDebug("Player over board, players left " + m_players.Count);
+      Logger.LogDebug("Player over board, players left " + m_players.Count);
       if (component == Player.m_localPlayer)
       {
         s_currentShips.Remove(this);
@@ -800,8 +798,8 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public bool IsPlayerInBoat(Player player)
   {
-    var currentPlayOnBoat = m_players.Contains(player);
-    return currentPlayOnBoat;
+    var currentPlayerOnBoat = m_players.Contains(player);
+    return currentPlayerOnBoat;
   }
 
   public bool IsPlayerInBoat(long playerID)
@@ -861,6 +859,11 @@ public class ValheimBaseGameShip : MonoBehaviour
    */
   internal bool HaveControllingPlayer()
   {
+    if (m_players == null)
+    {
+      return false;
+    }
+
     if (m_players.Count != 0 && (bool)m_shipControlls)
     {
       return m_shipControlls.HaveValidUser();
@@ -884,7 +887,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     return Vector3.Dot(m_body.velocity, base.transform.forward);
   }
 
-  public Speed GetSpeedSetting()
+  public Ship.Speed GetSpeedSetting()
   {
     return m_speed;
   }

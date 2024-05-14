@@ -10,7 +10,7 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>1.6.14</ApplicationVersion>
+        <ApplicationVersion>2.0.0</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -24,6 +24,7 @@
         <Compile Include="Properties\CustomAssemblyAttributes.cs"/>
         <Compile Include="ValheimRAFT.Patches\CharacterAnimEvent_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Character_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\Advize_PlantEasily_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Hud_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\PatchSharedData.cs"/>
         <Compile Include="ValheimRAFT.Patches\PatchController.cs"/>
@@ -31,6 +32,8 @@
         <Compile Include="ValheimRAFT.Patches\Player_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\ShipControls_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Ship_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\StartScene_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\ValheimRAFT_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\WearNTear_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\ZDO_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\ZNetScene_Patch.cs"/>
@@ -67,7 +70,6 @@
         <Compile Include="ValheimRAFT\RopeAnchorComponent.cs"/>
         <Compile Include="ValheimRAFT\RopeComponent.cs"/>
         <Compile Include="ValheimRAFT\RopeLadderComponent.cs"/>
-        <Compile Include="ValheimRAFT\RudderComponent.cs"/>
         <Compile Include="ValheimRAFT\SailComponent.cs"/>
         <Compile Include="ValheimRAFT\SailCreatorComponent.cs"/>
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\RegisterValheimVehiclePrefabs.cs">
@@ -90,6 +92,72 @@
         </Compile>
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\LoadValheimVehiclesSharedAssets.cs">
             <Link>ValheimVehicles.Prefabs\LoadValheimVehiclesSharedAssets.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\RudderComponent.cs">
+            <Link>ValheimVehicles.Vehicles\Components\RudderComponent.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleHUDComponent.cs">
+            <Link>ValheimVehicles.Vehicles\Components\VehicleHUDComponent.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleHUDComponent.cs">
+            <Link>ValheimVehicles.Vehicles\Components\VehicleHUDComponent.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CustomShipEffects.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CustomShipEffects.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\VehiclePiecesPrefab.cs">
+            <Link>ValheimVehicles.Prefabs\Registry\VehiclePiecesPrefab.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleZoneRenderer.cs">
+            <Link>ValheimVehicles.Vehicles\Components\VehicleZoneRenderer.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleDebugHelpers.cs">
+            <Link>ValheimVehicles.Vehicles\Components\VehicleDebugHelpers.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleDebugHelpers.cs">
+            <Link>ValheimVehicles.Vehicles\Components\VehicleDebugHelpers.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleDebugGui.cs">
+            <Link>ValheimVehicles.Vehicles\Components\VehicleDebugGui.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehiclePhysics.cs">
+            <Link>ValheimVehicles.Vehicles\Components\VehiclePhysics.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\ShipKeelPrefab.cs">
+            <Link>ValheimVehicles.Prefabs\Registry\ShipKeelPrefab.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\PrefabTranslations.cs">
+            <Link>ValheimVehicles.Prefabs\PrefabTranslations.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CompatVehicleShip.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CompatVehicleShip.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\LeverComponent.cs">
+            <Link>ValheimVehicles.Vehicles\Components\LeverComponent.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\SwitchPrefab.cs">
+            <Link>ValheimVehicles.Prefabs\Registry\SwitchPrefab.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CreateCircle.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CreateCircle.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CircleLine.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CircleLine.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CircleWindColors.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CircleWindColors.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CircleWindIndicator.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CircleWindIndicator.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CircleWindGui\CircleLine.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CircleWindGui\CircleLine.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CircleWindGui\CircleWindColors.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CircleWindGui\CircleWindColors.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CircleWindGui\CircleWindIndicator.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CircleWindGui\CircleWindIndicator.cs</Link>
         </Compile>
     </ItemGroup>
     <PropertyGroup>
@@ -147,7 +215,6 @@
             <Link>ValheimVehicles.Utils</Link>
         </Folder>
     </ItemGroup>
-
     <PropertyGroup>
         <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
         <R2ModManPath>AppData\Roaming\r2modmanPlus-local</R2ModManPath>
@@ -157,15 +224,6 @@
         <SandboxieVMPath>C:\Sandbox\fre\DefaultBox</SandboxieVMPath>
         <SandboxieUserPath>$(SandboxieVMPath)\user\current</SandboxieUserPath>
         <SandboxiePluginDeployPath>$(SandboxieUserPath)\$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</SandboxiePluginDeployPath>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' ">
-        <OutputPath>bin\Debug ClientServer\</OutputPath>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' ">
-        <OutputPath>bin\Debug Run Valheim Server\</OutputPath>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
-        <OutputPath>bin\Release Archive\</OutputPath>
     </PropertyGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

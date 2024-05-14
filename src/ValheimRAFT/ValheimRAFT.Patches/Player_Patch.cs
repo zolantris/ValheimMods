@@ -4,9 +4,11 @@ using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
+using Object = System.Object;
 
 namespace ValheimRAFT.Patches;
 
@@ -14,7 +16,7 @@ public class Player_Patch
 {
   [HarmonyPatch(typeof(Player), "PlacePiece")]
   [HarmonyTranspiler]
-  private static IEnumerable<CodeInstruction> PlacePiece(IEnumerable<CodeInstruction> instructions)
+  public static IEnumerable<CodeInstruction> PlacePiece(IEnumerable<CodeInstruction> instructions)
   {
     var list = instructions.ToList();
     for (var i = 0; i < list.Count; i++)
@@ -33,13 +35,33 @@ public class Player_Patch
     return list;
   }
 
-  private static void PlacedPiece(Player player, GameObject gameObject)
+  public static void HidePreviewComponent(ZNetView netView)
+  {
+    if (!netView.name.Contains(PrefabNames.WaterVehicleShip)) return;
+    var vehicleShip = netView.GetComponent<VehicleShip>();
+    if (vehicleShip.GhostContainer != null)
+    {
+      vehicleShip.GhostContainer.SetActive(false);
+    }
+  }
+
+  public static void PlacedPiece(Player player, GameObject gameObject)
   {
     var piece = gameObject.GetComponent<Piece>();
     if (!piece) return;
     var rb = piece.GetComponentInChildren<Rigidbody>();
-    if (((bool)rb && !rb.isKinematic) || !PatchSharedData.PlayerLastRayPiece) return;
     var netView = piece.GetComponent<ZNetView>();
+
+    if ((bool)netView)
+    {
+      HidePreviewComponent(netView);
+    }
+
+    if (((bool)rb && !rb.isKinematic) || !PatchSharedData.PlayerLastRayPiece)
+    {
+      return;
+    }
+
     if ((bool)netView)
     {
       var cul = PatchSharedData.PlayerLastRayPiece.GetComponent<CultivatableComponent>();
@@ -79,7 +101,7 @@ public class Player_Patch
     }
   }
 
-  private static bool HandleGameObjectRayCast(Transform transform, LayerMask layerMask,
+  public static bool HandleGameObjectRayCast(Transform transform, LayerMask layerMask,
     Player __instance, ref bool __result,
     ref Vector3 point,
     ref Vector3 normal, ref Piece piece, ref Heightmap heightmap, ref Collider waterSurface,
@@ -95,18 +117,19 @@ public class Player_Patch
       var end = transform.transform.rotation * localDir * Vector3.forward;
       if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) && (bool)hitInfo.collider)
       {
-        var mbrTarget = hitInfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
-        var bvcTarget = hitInfo.collider.GetComponentInParent<BaseVehicleController>();
-        if ((bool)mbrTarget || (bool)bvcTarget)
-        {
-          point = hitInfo.point;
-          normal = hitInfo.normal;
-          piece = hitInfo.collider.GetComponentInParent<Piece>();
-          heightmap = null;
-          waterSurface = null;
-          __result = true;
-          return false;
-        }
+        Object target;
+        target = hitInfo.collider.GetComponentInParent<BaseVehicleController>() ??
+                 (Object)hitInfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
+
+        if (target == null) return true;
+
+        point = hitInfo.point;
+        normal = hitInfo.normal;
+        piece = hitInfo.collider.GetComponentInParent<Piece>();
+        heightmap = null;
+        waterSurface = null;
+        __result = true;
+        return true;
       }
     }
 
@@ -115,7 +138,7 @@ public class Player_Patch
 
   [HarmonyPatch(typeof(Player), "PieceRayTest")]
   [HarmonyPrefix]
-  private static bool PieceRayTest(Player __instance, ref bool __result, ref Vector3 point,
+  public static bool PieceRayTest(Player __instance, ref bool __result, ref Vector3 point,
     ref Vector3 normal, ref Piece piece, ref Heightmap heightmap, ref Collider waterSurface,
     bool water)
   {
@@ -142,7 +165,7 @@ public class Player_Patch
 
   [HarmonyPatch(typeof(Player), "Save")]
   [HarmonyPrefix]
-  private static void Player_Save(Player __instance, ZPackage pkg)
+  public static void Player_Save(Player __instance, ZPackage pkg)
   {
     if ((bool)((Character)__instance).m_lastGroundCollider &&
         ((Character)__instance).m_lastGroundTouch < 0.3f)
@@ -156,13 +179,12 @@ public class Player_Patch
 
   [HarmonyPatch(typeof(Player), "PieceRayTest")]
   [HarmonyPostfix]
-  private static void PieceRayTestPostfix(Player __instance, ref bool __result, ref Vector3 point,
+  public static void PieceRayTestPostfix(Player __instance, ref bool __result, ref Vector3 point,
     ref Vector3 normal, ref Piece piece, ref Heightmap heightmap, ref Collider waterSurface,
     bool water)
   {
     PatchSharedData.PlayerLastRayPiece = piece;
   }
-
 
   [HarmonyPatch(typeof(Player), "FindHoverObject")]
   [HarmonyPrefix]
@@ -193,10 +215,10 @@ public class Player_Patch
       {
         if (raycastHit.collider.GetComponent<Hoverable>() != null)
           hover = raycastHit.collider.gameObject;
-        else if ((bool)raycastHit.collider.attachedRigidbody && (!(bool)raycastHit.collider
-                   .attachedRigidbody.GetComponent<MoveableBaseRootComponent>() || !(bool)raycastHit
+        else if ((bool)raycastHit.collider.attachedRigidbody && !raycastHit.collider
+                   .attachedRigidbody.GetComponent<MoveableBaseRootComponent>() && !raycastHit
                    .collider
-                   .attachedRigidbody.GetComponent<BaseVehicleController>()))
+                   .attachedRigidbody.GetComponent<BaseVehicleController>())
           hover = raycastHit.collider.attachedRigidbody.gameObject;
         else
           hover = raycastHit.collider.gameObject;
@@ -217,7 +239,7 @@ public class Player_Patch
 
   [HarmonyPatch(typeof(Player), "AttachStop")]
   [HarmonyPrefix]
-  private static void AttachStop(Player __instance)
+  public static bool AttachStop(Player __instance)
   {
     if (__instance.IsAttached() && (bool)__instance.m_attachPoint &&
         (bool)__instance.m_attachPoint.parent)
@@ -229,101 +251,53 @@ public class Player_Patch
       ((Character)__instance).m_animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, 0f);
       ((Character)__instance).m_animator.SetIKRotationWeight(AvatarIKGoal.RightHand, 0f);
     }
+
+    return true;
+  }
+
+  /**
+   * todo migrate to a hotkey handler
+   * This way of detecting keys is much more efficient and is not bogged down my Component getters
+   */
+  private static bool GetAnchorKey()
+  {
+    return VehicleMovementController.GetAnchorKey();
   }
 
   // Logic for anchor needs to be moved to the Update method instead of fixed update which SetControls is called in
   [HarmonyPatch(typeof(Player), "SetControls")]
   [HarmonyPrefix]
-  private static bool SetControls(Player __instance, Vector3 movedir, bool attack, bool attackHold,
+  public static bool SetControls(Player __instance, Vector3 movedir, bool attack, bool attackHold,
     bool secondaryAttack, bool block, bool blockHold, bool jump, bool crouch, bool run,
     bool autoRun)
   {
-    if (__instance.IsAttached() && (bool)__instance.m_attachPoint &&
-        (bool)__instance.m_attachPoint.parent)
+    var isAttached = __instance.IsAttached();
+    var shouldHandle = isAttached && (bool)__instance.m_attachPoint &&
+                       (bool)__instance.m_attachPoint.parent;
+    if (!shouldHandle) return true;
+    if (movedir.x == 0f && movedir.y == 0f && !jump && !crouch && !attack && !attackHold &&
+        !secondaryAttack && !block)
     {
-      if (movedir.x == 0f && movedir.y == 0f && !jump && !crouch && !attack && !attackHold &&
-          !secondaryAttack && !block)
+      var ladder = __instance.m_attachPoint.parent.GetComponent<RopeLadderComponent>();
+      if ((bool)ladder)
       {
-        var ladder = __instance.m_attachPoint.parent.GetComponent<RopeLadderComponent>();
-        if ((bool)ladder)
-        {
-          ladder.MoveOnLadder(__instance, movedir.z);
-          return false;
-        }
-      }
-
-      var rudder = __instance.m_attachPoint.parent.GetComponent<RudderComponent>();
-      if ((bool)rudder && __instance.m_doodadController != null)
-      {
-        __instance.SetDoodadControlls(ref movedir, ref ((Character)__instance).m_lookDir, ref run,
-          ref autoRun, blockHold);
-        if (rudder.Controls != null)
-        {
-          // might be a problem....
-          var waterVehicleController = rudder.GetComponentInParent<WaterVehicleController>();
-          var wvc2 = rudder.GetComponent<WaterVehicleController>();
-          if (waterVehicleController != null)
-          {
-            var anchorKey =
-              (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "False" &&
-               ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set")
-                ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown()
-                : ZInput
-                  .GetButtonDown("Run");
-            if (anchorKey || ZInput.GetButtonDown("JoyRun"))
-            {
-              Logger.LogDebug("Anchor button is down setting anchor");
-
-              waterVehicleController.ToggleAnchor();
-            }
-            else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
-            {
-              waterVehicleController.Ascend();
-            }
-            else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
-            {
-              waterVehicleController.Descent();
-            }
-          }
-        }
-        else if (rudder.Controls != null)
-        {
-          var mb = rudder.GetComponentInParent<MoveableBaseShipComponent>();
-          // may break, this might need GetComponent
-          if ((bool)mb)
-          {
-            var anchorKey =
-              (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "False" &&
-               ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set")
-                ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown()
-                : ZInput
-                  .GetButtonDown("Run");
-            if (anchorKey || ZInput.GetButtonDown("JoyRun"))
-            {
-              Logger.LogDebug("Anchor button is down setting anchor");
-              mb.SetAnchor(!mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored));
-            }
-            else if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
-            {
-              mb.Ascend();
-            }
-            else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
-            {
-              mb.Descent();
-            }
-          }
-        }
-
+        ladder.MoveOnLadder(__instance, movedir.z);
         return false;
       }
     }
 
-    return true;
+    var rudder = __instance.m_attachPoint.parent.GetComponent<SteeringWheelComponent>();
+
+    if (!(bool)rudder || __instance.m_doodadController == null) return true;
+
+    __instance.SetDoodadControlls(ref movedir, ref ((Character)__instance).m_lookDir, ref run,
+      ref autoRun, blockHold);
+    return false;
   }
 
   [HarmonyPatch(typeof(Player), "UpdatePlacementGhost")]
   [HarmonyTranspiler]
-  private static IEnumerable<CodeInstruction> UpdatePlacementGhost(
+  public static IEnumerable<CodeInstruction> UpdatePlacementGhost(
     IEnumerable<CodeInstruction> instructions)
   {
     var list = instructions.ToList();
@@ -339,24 +313,29 @@ public class Player_Patch
     return list;
   }
 
-  private static Quaternion RelativeEuler(float x, float y, float z)
+  public static Quaternion RelativeEuler(float x, float y, float z)
   {
     var rot = Quaternion.Euler(x, y, z);
     if (!PatchSharedData.PlayerLastRayPiece) return rot;
-    var mbr = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
+
     var bvc = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<BaseVehicleController>();
-    if (!mbr && !bvc) return rot;
     if (bvc)
     {
       return bvc.transform.rotation * rot;
     }
 
-    return mbr.transform.rotation * rot;
+    var mbr = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
+    if ((bool)mbr)
+    {
+      return mbr.transform.rotation * rot;
+    }
+
+    return rot;
   }
 
   [HarmonyPatch(typeof(Player), nameof(Player.GetControlledShip))]
   [HarmonyPrefix]
-  public static bool GetControlledShip(Player __instance, object __result)
+  public static bool GetControlledShip(Player __instance, object? __result)
   {
     /*
      * This patch protects against the type case used in the original GetControlledShip which prevents controls overrides from triggering hud.
@@ -372,14 +351,28 @@ public class Player_Patch
     return false;
   }
 
+  public static object? HandleGetControlledShip()
+  {
+    return HandleGetControlledShip(Player.m_localPlayer);
+  }
+
   public static object? HandleGetControlledShip(Player player)
   {
     var hasDoodadController = player.m_doodadController != null;
     var isShipWheelControllerValid = player.m_doodadController?.IsValid() ?? false;
+    var controlledComponent = player.m_doodadController?.GetControlledComponent();
+
+    if (controlledComponent != null &&
+        controlledComponent.name.Contains(PrefabNames.MBRaft))
+    {
+      return controlledComponent;
+    }
+
     var vvShipResult =
       hasDoodadController && isShipWheelControllerValid
-        ? player.m_doodadController?.GetControlledComponent() as VVShip
+        ? controlledComponent as IVehicleShip
         : null;
+
     return vvShipResult;
   }
 }

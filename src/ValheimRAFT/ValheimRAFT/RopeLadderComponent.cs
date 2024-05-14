@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 
 namespace ValheimRAFT;
@@ -112,21 +113,21 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
 
   private bool IsFlyingAndNotAnchored(Vector3 hitPoint)
   {
+    if ((bool)baseVehicleController && (bool)baseVehicleController.waterVehicleController &&
+        baseVehicleController?.waterVehicleController?.VehicleInstance &&
+        baseVehicleController?.waterVehicleController?.VehicleInstance?.Instance.TargetHeight >
+        0f &&
+        !(baseVehicleController.VehicleInstance.Instance.MovementController.IsAnchored) &&
+        hitPoint.y < baseVehicleController.GetColliderBottom())
+    {
+      return true;
+    }
+
     if ((bool)m_mbroot && (bool)m_mbroot.shipController &&
         m_mbroot.shipController.m_targetHeight > 0f &&
         !m_mbroot.shipController.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags
           .IsAnchored) &&
         hitPoint.y < m_mbroot.GetColliderBottom())
-    {
-      return true;
-    }
-
-    if ((bool)baseVehicleController && (bool)baseVehicleController.waterVehicleController &&
-        baseVehicleController.waterVehicleController.m_targetHeight > 0f &&
-        !baseVehicleController.waterVehicleController.VehicleFlags.HasFlag(MoveableBaseShipComponent
-          .MBFlags
-          .IsAnchored) &&
-        hitPoint.y < baseVehicleController.GetColliderBottom())
     {
       return true;
     }
@@ -193,6 +194,12 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
         GameObject go2 = new GameObject();
         go2.transform.SetParent(m_attachPoint);
         m_ghostAttachPoint = go2.AddComponent<LineRenderer>();
+        var unlitColor = LoadValheimVehicleAssets.PieceShader;
+        var material = new Material(unlitColor)
+        {
+          color = Color.green
+        };
+        m_ghostAttachPoint.material = material;
         m_ghostAttachPoint.widthMultiplier = 0.1f;
       }
 

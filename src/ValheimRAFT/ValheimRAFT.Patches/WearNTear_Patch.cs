@@ -4,7 +4,9 @@ using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
+using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
@@ -30,25 +32,130 @@ public class WearNTear_Patch
     return false;
   }
 
+  /*
+   * IF the mod breaks, this is a SAFETY FEATURE
+   * - prevents destruction of ship attached pieces if the ship fails to initialize properly
+   */
+  private static bool PreventDestructionOfItemWithoutInitializedRaft(WearNTear __instance)
+  {
+    if (!ValheimRaftPlugin.Instance.ProtectVehiclePiecesOnErrorFromWearNTearDamage.Value)
+      return false;
+
+    var parentVehicleHash =
+      __instance.m_nview.m_zdo.GetInt(BaseVehicleController.MBParentIdHash, 0);
+
+    var hasParentVehicleHash = parentVehicleHash != 0;
+    if (!hasParentVehicleHash) return false;
+
+    var zdoExists = ZDOPersistentID.Instance.GetZDO(1501427356);
+    if (zdoExists == null) return false;
+
+    __instance.enabled = false;
+    return true;
+  }
+
   [HarmonyPatch(typeof(WearNTear), "Destroy")]
   [HarmonyPrefix]
   private static bool WearNTear_Destroy(WearNTear __instance)
   {
-    // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
-    // allows for skipping other checks since this is the ship that needs to be destroyed and not trigger a loop
-    if (__instance.gameObject.name.Contains(PrefabNames.WaterVehiclePrefabName))
+    if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleShip))
     {
+      try
+      {
+        var canDestroyVehicle = BaseVehicleController.CanDestroyVehicle(__instance.m_nview);
+        return canDestroyVehicle;
+      }
+      catch
+      {
+        // if the mod is crashed it will not delete the raft controlling object to prevent the raft from being deleted if the user had a bad install or the game updated
+        return false;
+      }
+    }
+
+
+    var bv = __instance.GetComponentInParent<BaseVehicleController>();
+    if ((bool)bv)
+    {
+      bv.DestroyPiece(__instance);
       return true;
     }
 
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-    var bv = __instance.GetComponentInParent<BaseVehicleController>();
-
-
     if ((bool)mbr) mbr.DestroyPiece(__instance);
-    if ((bool)bv) bv.DestroyPiece(__instance);
 
     return true;
+  }
+
+  [HarmonyPatch(typeof(WearNTear), "SetHealthVisual")]
+  [HarmonyPrefix]
+  private static bool WearNTear_SetHealthVisual(WearNTear __instance, float health,
+    bool triggerEffects)
+  {
+    var isHull = ShipHulls.IsHull(__instance.gameObject);
+    if (!isHull) return true;
+
+
+    if (__instance.m_worn == null && __instance.m_broken == null && __instance.m_new == null)
+    {
+      return false;
+    }
+
+    if (health > 0.75f)
+    {
+      if (__instance.m_worn != __instance.m_new)
+      {
+        __instance.m_worn.SetActive(value: false);
+      }
+
+      if (__instance.m_broken != __instance.m_new)
+      {
+        __instance.m_broken.SetActive(value: false);
+      }
+
+      __instance.m_new.SetActive(value: true);
+    }
+    else if (health > 0.25f)
+    {
+      if (triggerEffects && !__instance.m_worn.activeSelf)
+      {
+        __instance.m_switchEffect.Create(__instance.transform.position,
+          __instance.transform.rotation, __instance.transform);
+      }
+
+      if (__instance.m_new != __instance.m_worn)
+      {
+        __instance.m_new.SetActive(value: false);
+      }
+
+      if (__instance.m_broken != __instance.m_worn)
+      {
+        __instance.m_broken.SetActive(value: false);
+      }
+
+      __instance.m_worn.SetActive(value: true);
+    }
+    else
+    {
+      if (triggerEffects && !__instance.m_broken.activeSelf)
+      {
+        __instance.m_switchEffect.Create(__instance.transform.position,
+          __instance.transform.rotation, __instance.transform);
+      }
+
+      if (__instance.m_new != __instance.m_broken)
+      {
+        __instance.m_new.SetActive(value: false);
+      }
+
+      if (__instance.m_worn != __instance.m_broken)
+      {
+        __instance.m_worn.SetActive(value: false);
+      }
+
+      __instance.m_broken.SetActive(value: true);
+    }
+
+    return false;
   }
 
   [HarmonyPatch(typeof(WearNTear), "ApplyDamage")]
@@ -59,7 +166,7 @@ public class WearNTear_Patch
     var bv = __instance.GetComponent<BaseVehicleController>();
 
     // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
-    if (__instance.gameObject.name.Contains(PrefabNames.WaterVehiclePrefabName))
+    if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleShip))
     {
       return false;
     }
@@ -70,7 +177,7 @@ public class WearNTear_Patch
       return false;
     }
 
-    return true;
+    return !PreventDestructionOfItemWithoutInitializedRaft(__instance);
   }
 
   [HarmonyPatch(typeof(WearNTear), "UpdateSupport")]

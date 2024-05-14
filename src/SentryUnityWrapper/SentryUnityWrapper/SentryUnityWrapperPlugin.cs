@@ -27,13 +27,13 @@ public class SentryUnityWrapperPlugin : BaseUnityPlugin
   public const string CopyRight = "Copyright © 2024, GNU-v3 licensed";
 
   public static Dictionary<string, SentryClient> RegisteredPluginClients = new();
-  public static List<string> RegisteredPluginNames = new();
+  public static List<string> RegisteredPluginNames = [];
   public static Dictionary<string, Config> RegisteredPluginClientOptions = new();
   public static Dictionary<string, Config> PendingPluginsToRegister = new();
 
   private bool _canAutoRegister = true;
   private float _autoRegisterTime = 10f;
-  private static bool _hasCalledSentryInit = false;
+  private static bool _hasCalledSentryInit;
 
   private void Awake()
   {
@@ -78,6 +78,8 @@ public class SentryUnityWrapperPlugin : BaseUnityPlugin
       {
         RegisterPendingPlugins();
       }
+
+      yield return null;
     }
   }
 
@@ -226,13 +228,16 @@ public class SentryUnityWrapperPlugin : BaseUnityPlugin
       // See https://docs.sentry.io/product/sentry-basics/dsn-explainer/
       // You can set it in the SENTRY_DSN environment variable, or you can set it in code here.
       Dsn = options.GetSentryUnityOptions().Dsn,
-      CacheDirectoryPath = Path.Combine(Paths.PluginPath, options.PluginName),
+      // CacheDirectoryPath = Path.Combine(Paths.PluginPath, SentryUnityWrapperPlugin.ModName,
+      //   options.PluginName),
+      CacheDirectoryPath =
+        Path.Combine(Paths.PluginPath, ModName, options.PluginName),
 
       // When debug is enabled, the Sentry client will emit detailed debugging information to the console.
       // This might be helpful, or might interfere with the normal operation of your application.
       // We enable it here for demonstration purposes when first trying Sentry.
       // You shouldn't do this in your applications unless you're troubleshooting issues with Sentry.
-      Debug = false,
+      Debug = true,
 
       // This option is recommended. It enables Sentry's "Release Health" feature.
       AutoSessionTracking = true,
@@ -243,7 +248,8 @@ public class SentryUnityWrapperPlugin : BaseUnityPlugin
       // This option will enable Sentry's tracing features. You still need to start transactions and spans.
       EnableTracing = true,
 
-      // Example sample rate for your transactions: captures 10% of transactions
+      // Example sample rate for your transactions: captures 100% of transactions
+      // should be lower for production testing, maybe 10% ie 0.1
       TracesSampleRate = 1.0,
     };
 

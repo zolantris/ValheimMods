@@ -1,6 +1,7 @@
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.UI;
+using ValheimVehicles.Prefabs;
 
 namespace ValheimRAFT.UI;
 
@@ -28,11 +29,14 @@ public class EditRampComponent
     m_editPanel.SetActive(value: true);
   }
 
+  /**
+   * Initializes the edit panel if needed. Will not be loaded in memory unless editing is required.
+   */
   private void InitPanel()
   {
     Transform parent = GUIManager.CustomGUIFront.transform;
     m_editPanel = Object.Instantiate(
-      ValheimRaftPlugin.m_assetBundle.LoadAsset<GameObject>("edit_ramp_panel"),
+      PrefabRegistryController.raftAssetBundle.LoadAsset<GameObject>("edit_ramp_panel"),
       parent, worldPositionStays: false);
     PanelUtil.ApplyPanelStyle(m_editPanel);
     m_segmentsInput = m_editPanel.transform.Find("SegmentsInput").GetComponent<InputField>();

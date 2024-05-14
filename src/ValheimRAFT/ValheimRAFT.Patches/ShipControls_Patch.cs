@@ -8,9 +8,46 @@ public class ShipControls_Patch
 {
   [HarmonyPatch(typeof(ShipControlls), "Awake")]
   [HarmonyPrefix]
-  private static bool ShipControlls_Awake(Ship __instance)
+  private static bool ShipControlls_Awake(ShipControlls __instance)
   {
-    return !__instance.GetComponentInParent<RudderComponent>();
+    var isSteeringWheelParent = __instance.GetComponentInParent<SteeringWheelComponent>();
+    var mbRoot = isSteeringWheelParent != null
+      ? isSteeringWheelParent.GetComponentInParent<MoveableBaseRootComponent>()
+      : null;
+
+    if (!(bool)isSteeringWheelParent || !(bool)mbRoot) return true;
+
+    __instance.m_nview = __instance.GetComponent<ZNetView>();
+    __instance.m_ship = mbRoot.m_ship;
+
+    return true;
+  }
+
+  [HarmonyPatch(typeof(ShipControlls), "RPC_RequestControl")]
+  [HarmonyPrefix]
+  private static bool ShipControlls_RequestControl(ShipControlls __instance, long sender,
+    long playerID)
+  {
+    if (!__instance.m_nview.IsOwner() || !__instance.m_ship.IsPlayerInBoat(playerID))
+      return false;
+    if (__instance.GetUser() == playerID || !__instance.HaveValidUser())
+    {
+      __instance.m_nview.GetZDO().Set(ZDOVars.s_user, playerID);
+      __instance.m_nview.InvokeRPC(sender, "RequestRespons", (object)true);
+    }
+    else
+      __instance.m_nview.InvokeRPC(sender, "RequestRespons", (object)false);
+
+    return false;
+    // var isSteeringWheelParent = __instance.GetComponentInParent<SteeringWheelComponent>();
+    // var mbRoot = isSteeringWheelParent != null
+    //   ? isSteeringWheelParent.GetComponentInParent<MoveableBaseRootComponent>()
+    //   : null;
+    //
+    // if (!(bool)isSteeringWheelParent || !(bool)mbRoot) return true;
+    //
+    // __instance.m_nview = __instance.GetComponent<ZNetView>();
+    // __instance.m_ship = mbRoot.m_ship;
   }
 
   [HarmonyPatch(typeof(ShipControlls), "Interact")]
@@ -26,7 +63,6 @@ public class ShipControls_Patch
       }
 
       PatchSharedData.PlayerLastUsedControls = __instance;
-      __instance.m_ship.m_controlGuiPos.position = __instance.transform.position;
     }
   }
 
@@ -34,45 +70,22 @@ public class ShipControls_Patch
   [HarmonyPrefix]
   public static bool GetRudderHoverText(ShipControlls __instance, ref string __result)
   {
-    var baseRoot = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-    if (!baseRoot)
+    var mbShip = __instance.GetComponentInParent<MoveableBaseShipComponent>();
+    if (!mbShip)
     {
       return true;
     }
 
-    var shipStatsText = "";
-
-    if (ValheimRaftPlugin.Instance.ShowShipStats.Value)
-    {
-      var shipMassToPush = ValheimRaftPlugin.Instance.MassPercentageFactor.Value;
-      shipStatsText += $"\nsailArea: {baseRoot.GetTotalSailArea()}";
-      shipStatsText += $"\ntotalMass: {baseRoot.TotalMass}";
-      shipStatsText +=
-        $"\nshipMass(no-containers): {baseRoot.ShipMass}";
-      shipStatsText += $"\nshipContainerMass: {baseRoot.ShipContainerMass}";
-      shipStatsText +=
-        $"\ntotalMassToPush: {shipMassToPush}% * {baseRoot.TotalMass} = {baseRoot.TotalMass * shipMassToPush / 100f}";
-      shipStatsText +=
-        $"\nshipPropulsion: {baseRoot.GetSailingForce()}";
-
-      // final formatting
-      shipStatsText = $"<color=white>{shipStatsText}</color>";
-    }
-
     var isAnchored =
-      baseRoot.shipController.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored);
-    var anchoredStatus = isAnchored ? "[<color=red><b>$mb_rudder_use_anchored</b></color>]" : "";
-    var anchorText =
-      isAnchored
-        ? "$mb_rudder_use_anchor_disable_detail"
-        : "$mb_rudder_use_anchor_enable_detail";
-    var anchorKey =
-      ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() != "Not set"
-        ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString()
-        : ZInput.instance.GetBoundKeyString("Run");
-    __result =
-      Localization.instance.Localize(
-        $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$mb_rudder_use</b></color> {anchoredStatus}\n[<color=yellow><b>{anchorKey}</b></color>] <color=white>{anchorText}</color> {shipStatsText}");
+      mbShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags
+        .IsAnchored);
+
+    var hoverText = SteeringWheelComponent.GetHoverTextFromShip(mbShip.m_baseRoot.totalSailArea,
+      mbShip.m_baseRoot.TotalMass, mbShip.m_baseRoot.ShipMass, mbShip.m_baseRoot.ShipContainerMass,
+      mbShip.m_baseRoot.GetSailingForce(),
+      isAnchored, SteeringWheelComponent.GetAnchorHotkeyString());
+
+    __result = hoverText;
 
     return false;
   }

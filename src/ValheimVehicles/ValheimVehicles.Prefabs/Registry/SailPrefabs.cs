@@ -69,7 +69,7 @@ public class SailPrefabs : IRegisterPrefab
     {
       PieceTable = "Hammer",
       Description = GetTieredSailAreaText(3),
-      Icon = LoadValheimRaftAssets.sprites.GetSprite("vikingmast"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("vikingmast"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[3]
@@ -123,6 +123,9 @@ public class SailPrefabs : IRegisterPrefab
     var sail = mbSailPrefab.AddComponent<SailComponent>();
     sail.m_sailObject = sailObject;
     sail.m_sailCloth = sailObject.AddComponent<Cloth>();
+
+    sail.m_sailCloth.useGravity = true;
+
     sail.m_meshCollider = sailObject.AddComponent<MeshCollider>();
     sail.m_mesh = sailObject.GetComponent<SkinnedMeshRenderer>();
     sail.m_mesh.shadowCastingMode = ShadowCastingMode.TwoSided;
@@ -130,6 +133,7 @@ public class SailPrefabs : IRegisterPrefab
 
     // this is a tier 1 sail
     PrefabRegistryHelpers.SetWearNTear(mbSailPrefab, 1);
+    PrefabRegistryHelpers.FixSnapPoints(mbSailPrefab);
 
     // mast should allowSailShrinking
     var mast = mbSailPrefab.AddComponent<MastComponent>();
@@ -173,8 +177,8 @@ public class SailPrefabs : IRegisterPrefab
     mesh.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
     var sailIcon = sailCount == 3
-      ? LoadValheimRaftAssets.sprites.GetSprite("customsail_tri")
-      : LoadValheimRaftAssets.sprites.GetSprite("customsail");
+      ? LoadValheimVehicleAssets.VehicleSprites.GetSprite("customsail_tri")
+      : LoadValheimVehicleAssets.VehicleSprites.GetSprite("customsail");
 
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
@@ -234,7 +238,7 @@ public class SailPrefabs : IRegisterPrefab
       PieceTable = "Hammer",
       Description =
         GetTieredSailAreaText(1),
-      Icon = LoadValheimRaftAssets.sprites.GetSprite("raftmast"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("raftmast"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[2]
@@ -291,7 +295,7 @@ public class SailPrefabs : IRegisterPrefab
     {
       PieceTable = "Hammer",
       Description = GetTieredSailAreaText(2),
-      Icon = LoadValheimRaftAssets.sprites.GetSprite("karvemast"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("karvemast"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements = new RequirementConfig[3]

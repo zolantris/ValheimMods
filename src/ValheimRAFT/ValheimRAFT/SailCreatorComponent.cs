@@ -1,12 +1,14 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
 public class SailCreatorComponent : MonoBehaviour
 {
-  private static List<SailCreatorComponent> m_sailCreators = new List<SailCreatorComponent>();
+  private List<SailCreatorComponent> m_sailCreators = [];
 
   public static GameObject m_sailPrefab;
 
@@ -17,6 +19,17 @@ public class SailCreatorComponent : MonoBehaviour
     if (ZNetView.m_forceDisableInit)
     {
       return;
+    }
+
+    if (m_sailCreators.Count > 4)
+    {
+      m_sailCreators.Clear();
+      return;
+    }
+
+    foreach (var sailCreator in m_sailCreators.ToList())
+    {
+      if (sailCreator == null) m_sailCreators.Remove(sailCreator);
     }
 
     if (m_sailCreators.Count > 0 &&
@@ -34,11 +47,11 @@ public class SailCreatorComponent : MonoBehaviour
       Vector3 center =
         (m_sailCreators[0].transform.position + m_sailCreators[1].transform.position) / 2f;
       SailComponent.m_sailInit = false;
-      GameObject newSail = Object.Instantiate(m_sailPrefab, center, Quaternion.identity);
+      var newSail = Instantiate(m_sailPrefab, center, Quaternion.identity);
       SailComponent.m_sailInit = true;
-      SailComponent sailcomp = newSail.GetComponent<SailComponent>();
+      var sailcomp = newSail.GetComponent<SailComponent>();
       sailcomp.m_sailCorners = new List<Vector3>();
-      for (int j = 0; j < m_sailSize; j++)
+      for (var j = 0; j < m_sailSize; j++)
       {
         sailcomp.m_sailCorners.Add(m_sailCreators[j].transform.position - center);
       }
@@ -46,22 +59,58 @@ public class SailCreatorComponent : MonoBehaviour
       sailcomp.LoadFromMaterial();
       sailcomp.CreateSailMesh();
       sailcomp.SaveZDO();
-      Piece piece = newSail.GetComponent<Piece>();
+      var piece = newSail.GetComponent<Piece>();
       piece.SetCreator(m_sailCreators[0].GetComponent<Piece>().GetCreator());
-      ZNetView netview = newSail.GetComponent<ZNetView>();
-      MoveableBaseRootComponent mbroot =
-        m_sailCreators[0].GetComponentInParent<MoveableBaseRootComponent>();
-      if ((bool)mbroot)
-      {
-        mbroot.AddNewPiece(netview);
-      }
+      var netview = newSail.GetComponent<ZNetView>();
 
-      for (int i = 0; i < m_sailCreators.Count; i++)
+      AddToVehicle(netview);
+
+      foreach (var t in m_sailCreators)
       {
-        Object.Destroy(m_sailCreators[i].gameObject);
+        Destroy(t.gameObject);
       }
 
       m_sailCreators.Clear();
     }
+  }
+
+  /**
+   * <description/> Delegates to the VehicleController that it is placed within.
+   * - This avoids the additional check if possible.
+   */
+  public void AddToVehicle(ZNetView netView)
+  {
+    if (AddToBasicVehicle(netView))
+    {
+      return;
+    }
+
+    AddToMoveableBaseRoot(netView);
+  }
+
+  public bool AddToMoveableBaseRoot(ZNetView netView)
+  {
+    var mbr =
+      m_sailCreators[0].GetComponentInParent<MoveableBaseRootComponent>();
+    if ((bool)mbr)
+    {
+      mbr.AddNewPiece(netView);
+      return true;
+    }
+
+    return false;
+  }
+
+  public bool AddToBasicVehicle(ZNetView netView)
+  {
+    var baseVehicle =
+      m_sailCreators[0].GetComponentInParent<BaseVehicleController>();
+    if ((bool)baseVehicle)
+    {
+      baseVehicle.AddNewPiece(netView);
+      return true;
+    }
+
+    return false;
   }
 }

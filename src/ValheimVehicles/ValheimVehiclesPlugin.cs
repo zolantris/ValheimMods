@@ -2,12 +2,12 @@
 using BepInEx;
 using Jotunn.Managers;
 using UnityEngine;
-using ValheimVehicles.VehicleUtils;
+using ValheimVehicles.ConsoleCommands;
 
 namespace ValheimVehicles;
 
-[BepInPlugin(Guid, ModName, Version)]
-[BepInDependency(Jotunn.Main.ModGuid)]
+// [BepInPlugin(Guid, ModName, Version)]
+// [BepInDependency(Jotunn.Main.ModGuid)]
 public class ValheimVehiclesPlugin : MonoBehaviour
 {
   public const string Author = "Zolantris";
@@ -21,7 +21,12 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   {
     Instance = this;
 
-    Logger.LogDebug("ValheimVehicles called awake");
-    PrefabManager.OnVanillaPrefabsAvailable += new Action(PrefabRegistry.CreateCustomPrefabs);
+    // Logger.LogDebug("ValheimVehicles called awake");
+    // PrefabManager.OnVanillaPrefabsAvailable += new Action(PrefabRegistry.CreateCustomPrefabs);
+  }
+
+  public void RegisterCommands()
+  {
+    CommandManager.Instance.AddConsoleCommand(new VehicleCommands());
   }
 }

@@ -1,61 +1,81 @@
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
+using UnityEngine;
+using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.Prefabs;
 
 public class ShipRudderPrefabs : IRegisterPrefab
 {
-  public static ShipRudderPrefabs Instance = new();
+  public static readonly ShipRudderPrefabs Instance = new();
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
     RegisterShipRudderBasic(prefabManager, pieceManager);
-    RegisterShipRudderAdvanced(prefabManager, pieceManager);
+    RegisterShipRudderAdvanced();
   }
 
-
-  // todo share most of the registry logic 
-  public static void RegisterShipRudderBasic(PrefabManager prefabManager, PieceManager pieceManager)
+  private static void RegisterShipRudderBasic(PrefabManager prefabManager,
+    PieceManager pieceManager)
   {
-    var rudderPrefab =
+    var prefab =
       prefabManager.CreateClonedPrefab(
         PrefabNames.ShipRudderBasic, LoadValheimVehicleAssets.ShipRudderBasicAsset);
-    PrefabRegistryHelpers.AddNetViewWithPersistence(rudderPrefab);
-    rudderPrefab.layer = 0;
-    rudderPrefab.gameObject.layer = 0;
-    var piece = rudderPrefab.AddComponent<Piece>();
 
-    piece.m_icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
+    SharedSetup(prefab);
 
-
-    PrefabRegistryHelpers.SetWearNTear(rudderPrefab);
-
-    pieceManager.AddPiece(new CustomPiece(rudderPrefab, false, new PieceConfig
+    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
-      /*
-       * @todo make the name dynamic getter from HullMaterial
-       */
-      Name = "$valheim_vehicles_rudder_basic",
-      Description = "$valheim_vehicles_rudder_basic_desc",
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[2]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 10,
           Item = "Wood",
           Recover = true
-        },
-        new()
-        {
-          Amount = 2,
-          Item = "RoundLog",
-          Recover = true
         }
-      }
+      ]
+    }));
+  }
+
+  private static void SharedSetup(GameObject prefab)
+  {
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    PrefabRegistryHelpers.AddPieceForPrefab(prefab.name, prefab);
+    var rudderComponent = prefab.AddComponent<RudderComponent>();
+    rudderComponent.PivotPoint = prefab.transform.Find("rudder_rotation");
+
+    PrefabRegistryHelpers.SetWearNTear(prefab);
+    PrefabRegistryHelpers.FixCollisionLayers(prefab);
+    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
+  }
+
+
+  private static void RegisterAdvancedRudderVariant(string variantName, GameObject prefabAsset)
+  {
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        variantName, prefabAsset);
+    SharedSetup(prefab);
+
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    {
+      PieceTable = "Hammer",
+      Category = PrefabNames.ValheimRaftMenuName,
+      Enabled = true,
+      Requirements =
+      [
+        new RequirementConfig
+        {
+          Amount = 20,
+          Item = "FineWood",
+          Recover = true
+        },
+      ]
     }));
   }
 
@@ -64,54 +84,11 @@ public class ShipRudderPrefabs : IRegisterPrefab
  * - Rudder controls the ship direction.
  * - @TODO Rudder may only work with v2 ships
  */
-  public static void RegisterShipRudderAdvanced(PrefabManager prefabManager,
-    PieceManager pieceManager)
+  private static void RegisterShipRudderAdvanced()
   {
-    var rudderPrefab =
-      prefabManager.CreateClonedPrefab(
-        PrefabNames.ShipRudderAdvanced, LoadValheimVehicleAssets.ShipRudderAdvancedAsset);
-    PrefabRegistryHelpers.AddNetViewWithPersistence(rudderPrefab);
-    rudderPrefab.layer = 0;
-    rudderPrefab.gameObject.layer = 0;
-    var piece = rudderPrefab.AddComponent<Piece>();
-    piece.m_name = "$valheim_vehicles_rudder_advanced";
-    piece.m_description = "$valheim_vehicles_rudder_advanced_desc";
-    piece.m_icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon;
-
-    PrefabRegistryHelpers.SetWearNTear(rudderPrefab);
-
-
-    pieceManager.AddPiece(new CustomPiece(rudderPrefab, false, new PieceConfig
-    {
-      PieceTable = "Hammer",
-      /*
-       * @todo make the name dynamic getter from HullMaterial
-       */
-      Name = piece.m_name,
-      Description = piece.m_description,
-      Category = PrefabNames.ValheimRaftMenuName,
-      Enabled = true,
-      Requirements = new RequirementConfig[3]
-      {
-        new()
-        {
-          Amount = 20,
-          Item = "FineWood",
-          Recover = true
-        },
-        new()
-        {
-          Amount = 2,
-          Item = "Copper",
-          Recover = true
-        },
-        new()
-        {
-          Amount = 5,
-          Item = "DeerHide",
-          Recover = true
-        }
-      }
-    }));
+    RegisterAdvancedRudderVariant(PrefabNames.ShipRudderAdvancedWood,
+      LoadValheimVehicleAssets.ShipRudderAdvancedWoodAsset);
+    RegisterAdvancedRudderVariant(PrefabNames.ShipRudderAdvancedTailWood,
+      LoadValheimVehicleAssets.ShipRudderAdvancedTailWoodAsset);
   }
 }
