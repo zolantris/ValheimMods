@@ -150,8 +150,8 @@ public abstract class PrefabRegistryHelpers
 
     PieceDataDictionary.Add(PrefabNames.ShipHullCenterIronPrefabName, new PieceData()
     {
-      Name = "$valheim_vehicles_hull_center_iron",
-      Description = "$valheim_vehicles_hull_center_iron_desc",
+      Name = "valheim_vehicles_hull_center_iron",
+      Description = "valheim_vehicles_hull_center_iron_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullCenterIron)
     });
 

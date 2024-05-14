@@ -83,14 +83,14 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
     m_nview = GetComponent<ZNetView>();
     m_groundRayMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece",
       "terrain", "blocker", "WaterVolume", "Water");
-    m_ramp = base.transform.Find("Ramp").gameObject;
-    m_segmentObject = base.transform.Find("Ramp/Segment").gameObject;
-    m_rope1 = base.transform.Find("Rope1").GetComponent<LineRenderer>();
-    m_rope2 = base.transform.Find("Rope2").GetComponent<LineRenderer>();
-    m_winch1 = base.transform.Find("Winch1/Cylinder");
-    m_winch2 = base.transform.Find("Winch2/Cylinder");
-    m_winch1Rope = base.transform.Find("Winch1/Pole/RopeAttach");
-    m_winch2Rope = base.transform.Find("Winch2/Pole/RopeAttach");
+    m_ramp = transform.Find("Ramp").gameObject;
+    m_segmentObject = transform.Find("Ramp/Segment").gameObject;
+    m_rope1 = transform.Find("Rope1").GetComponent<LineRenderer>();
+    m_rope2 = transform.Find("Rope2").GetComponent<LineRenderer>();
+    m_winch1 = transform.Find("Winch1/Cylinder");
+    m_winch2 = transform.Find("Winch2/Cylinder");
+    m_winch1Rope = transform.Find("Winch1/Pole/RopeAttach");
+    m_winch2Rope = transform.Find("Winch2/Pole/RopeAttach");
     m_segmentObject.SetActive(ZNetView.m_forceDisableInit);
     if (ZNetView.m_forceDisableInit)
     {

@@ -35,6 +35,12 @@ internal static class PatchController
       Harmony.PatchAll(typeof(StartScene_Patch));
     }
 
+    if (Chainloader.PluginInfos.ContainsKey("advize.PlantEasily"))
+    {
+      Logger.LogInfo("Applying Advize_PlantEasily Patch");
+      Harmony.PatchAll(typeof(Advize_PlantEasily_Patch));
+    }
+
     /*
      * PlanBuild uses mmmHookgen so it cannot be detected with bepinex
      *

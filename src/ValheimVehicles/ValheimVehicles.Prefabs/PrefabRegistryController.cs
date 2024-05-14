@@ -252,35 +252,36 @@ public class PrefabRegistryController : MonoBehaviour
 
   private static void RegisterRopeAnchor()
   {
-    var mbRopeAnchorPrefab =
+    var prefab =
       prefabManager.CreateClonedPrefab("MBRopeAnchor", LoadValheimRaftAssets.rope_anchor);
 
-    var mbRopeAnchorPrefabPiece = mbRopeAnchorPrefab.AddComponent<Piece>();
+    var mbRopeAnchorPrefabPiece = prefab.AddComponent<Piece>();
     mbRopeAnchorPrefabPiece.m_name = "$mb_rope_anchor";
     mbRopeAnchorPrefabPiece.m_description = "$mb_rope_anchor_desc";
     mbRopeAnchorPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
     AddToRaftPrefabPieces(mbRopeAnchorPrefabPiece);
-    PrefabRegistryHelpers.AddNetViewWithPersistence(mbRopeAnchorPrefab);
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
-    var ropeAnchorComponent = mbRopeAnchorPrefab.AddComponent<RopeAnchorComponent>();
+    var ropeAnchorComponent = prefab.AddComponent<RopeAnchorComponent>();
     var baseRope = LoadValheimAssets.raftMast.GetComponentInChildren<LineRenderer>(true);
 
-    ropeAnchorComponent.m_rope = mbRopeAnchorPrefab.AddComponent<LineRenderer>();
+    ropeAnchorComponent.m_rope = prefab.AddComponent<LineRenderer>();
     ropeAnchorComponent.m_rope.material = new Material(baseRope.material);
     ropeAnchorComponent.m_rope.widthMultiplier = 0.05f;
     ropeAnchorComponent.m_rope.enabled = false;
 
-    var ropeAnchorComponentWearNTear = PrefabRegistryHelpers.SetWearNTear(mbRopeAnchorPrefab, 3);
+    var ropeAnchorComponentWearNTear = PrefabRegistryHelpers.SetWearNTear(prefab, 3);
     ropeAnchorComponentWearNTear.m_supports = false;
 
-    PrefabRegistryHelpers.FixCollisionLayers(mbRopeAnchorPrefab);
+    PrefabRegistryHelpers.FixCollisionLayers(prefab);
+    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
 
     /*
      * @todo ropeAnchor recipe may need to be tweaked to require flax or some fiber
      * Maybe a weaker rope could be made as a lower tier with much lower health
      */
-    pieceManager.AddPiece(new CustomPiece(mbRopeAnchorPrefab, false, new PieceConfig
+    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
       Description = "$mb_rope_anchor_desc",

@@ -5,9 +5,25 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9eb05097-9d84-4b87-8e9a-0e73fcf3150e" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-raft" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-raft" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-raft.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-raft.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/Advize_PlantEasily_Patch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/Advize_PlantEasily_Patch.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/PatchController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/PatchController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/Teleport_Patch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/Teleport_Patch.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/SailMat.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/SailMat.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/VehicleSailShader.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/VehicleSailShader.shader" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/BoardingRampComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/BoardingRampComponent.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/CreativeModeConsoleCommand.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/CreativeModeConsoleCommand.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/SailCreatorComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/SailCreatorComponent.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/ValheimRaftPlugin.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/ValheimRaftPlugin.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/BaseVehicleController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/BaseVehicleController.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VehicleMovementController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VehicleMovementController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VehicleShip.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VehicleShip.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../valheim.targets" beforeDir="false" afterPath="$PROJECT_DIR$/../../../valheim.targets" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -158,7 +174,7 @@
       <workItem from="1715419232853" duration="98000" />
       <workItem from="1715433017079" duration="22795000" />
       <workItem from="1715524507126" duration="11002000" />
-      <workItem from="1715537373701" duration="3324000" />
+      <workItem from="1715537373701" duration="4733000" />
     </task>
     <servers />
   </component>

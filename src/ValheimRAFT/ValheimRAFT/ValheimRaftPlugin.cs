@@ -92,10 +92,19 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<KeyboardShortcut> AnchorKeyboardShortcut { get; set; }
   public ConfigEntry<bool> EnableMetrics { get; set; }
   public ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
-  public ConfigEntry<bool> AutoUpgradeV1Raft { get; set; }
   public ConfigEntry<bool> ProtectVehiclePiecesOnErrorFromWearNTearDamage { get; set; }
   public ConfigEntry<bool> DebugRemoveStartMenuBackground { get; set; }
   public ConfigEntry<bool> HullCollisionOnly { get; set; }
+
+  public enum HullFloatation
+  {
+    Average,
+    Center,
+    Bottom,
+    Top,
+  }
+
+  public ConfigEntry<HullFloatation> HullFloatationColliderLocation { get; set; }
   public ConfigEntry<bool> HasVehicleDebug { get; set; }
 
 
@@ -124,10 +133,14 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    */
   private void CreateVehicleConfig()
   {
-    HasVehicleDebug = Config.Bind("ValheimVehicles", "HasVehicleDebug", false,
+    HullFloatationColliderLocation = Config.Bind("Vehicles", "HullFloatationColliderLocation",
+      HullFloatation.Average,
+      CreateConfigDescription(
+        "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship."));
+    HasVehicleDebug = Config.Bind("Vehicles", "HasVehicleDebug", false,
       CreateConfigDescription(
         "Enables the debug menu, for showing colliders or rotating the ship"));
-    EnableExactVehicleBounds = Config.Bind("ValheimVehicles", "EnableExactVehicleBounds", false,
+    EnableExactVehicleBounds = Config.Bind("Vehicles", "EnableExactVehicleBounds", false,
       CreateConfigDescription(
         "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible"));
   }

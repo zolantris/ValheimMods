@@ -172,13 +172,13 @@ public class Teleport_Patch
 
   private static Vector3 GetTeleportTargetPos(Player __instance)
   {
-    if (m_teleportTarget.TryGetValue(__instance, out var zdoid))
+    if (!m_teleportTarget.TryGetValue(__instance, out var zdoid))
+      return __instance.m_teleportTargetPos;
+
+    var go = ZNetScene.instance.FindInstance(zdoid);
+    if ((bool)go)
     {
-      GameObject go = ZNetScene.instance.FindInstance(zdoid);
-      if ((bool)go)
-      {
-        return GetTeleportPosition(go);
-      }
+      return GetTeleportPosition(go);
     }
 
     return __instance.m_teleportTargetPos;
@@ -186,10 +186,10 @@ public class Teleport_Patch
 
   private static Vector3 GetTeleportPosition(GameObject go)
   {
-    TeleportWorld tp = go.GetComponent<TeleportWorld>();
+    var tp = go.GetComponent<TeleportWorld>();
 
     // Might be required to get updated position
-    Physics.SyncTransforms();
+    // Physics.SyncTransforms();
     if ((bool)tp)
     {
       return tp.transform.position + tp.transform.forward * tp.m_exitDistance + Vector3.up;
@@ -217,10 +217,9 @@ public class Teleport_Patch
     {
       go = ZNetScene.instance.FindInstance(zdo);
       if (go) break;
-      ZNetScene.instance.FindInstance(zdo);
       zoneId = ZoneSystem.instance.GetZone(zdo.m_position);
       ZoneSystem.instance.PokeLocalZone(zoneId);
-      yield return new WaitForSeconds(1f);
+      yield return new WaitForFixedUpdate();
     }
 
     zoneId = ZoneSystem.instance.GetZone(zdo.m_position);

@@ -320,9 +320,6 @@
             <HintPath>$(SolutionDir)\libs\PlanBuild.dll</HintPath>
             <Private>False</Private>
         </Reference>
-    </ItemGroup>
-
-    <ItemGroup Label="Community Mod Patches">
         <Publicize Include="Advize_PlantEasily"/>
         <Reference Include="Advize_PlantEasily">
             <SpecificVersion>False</SpecificVersion>

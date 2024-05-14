@@ -38,32 +38,6 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   private float _maxVerticalOffset = 1f;
   public bool IsAnchored => MovementFlags.HasFlag(VehicleMovementFlags.IsAnchored);
 
-  // public Quaternion VehicleRotation = Quaternion.Euler(Vector3.zero);
-  //
-  // public Vector3 Forward
-  // {
-  //   get => VehicleRotation * Vector3.forward;
-  //   set => VehicleRotation = Quaternion.LookRotation(value);
-  // }
-  //
-  // public Vector3 Back
-  // {
-  //   get => VehicleRotation * Vector3.back;
-  //   set => VehicleRotation = Quaternion.LookRotation(value);
-  // }
-  //
-  // public Vector3 Left
-  // {
-  //   get => VehicleRotation * Vector3.left;
-  //   set => VehicleRotation = Quaternion.LookRotation(value);
-  // }
-  //
-  // public Vector3 Right
-  // {
-  //   get => VehicleRotation * Vector3.right;
-  //   set => VehicleRotation = Quaternion.LookRotation(value);
-  // }
-
 
   private void Awake()
   {

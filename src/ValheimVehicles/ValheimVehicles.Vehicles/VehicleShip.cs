@@ -913,19 +913,12 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     m_body.velocity = anchoredVelocity;
     m_body.angularVelocity = anchoredAngularVelocity;
     return true;
-
-    // if (!IsAnchored) return false;
-    //
-    // var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
-    // // m_body.velocity = anchoredVelocity;
-    // m_body.velocity = Vector3.zero;
-    // m_body.angularVelocity = Vector3.zero;
   }
 
   public ShipFloatation GetShipFloatationObj()
   {
     var worldCenterOfMass = m_body.worldCenterOfMass;
-    var shipForward = ShipDirection.position +
+    var shipForward = ShipDirection!.position +
                       ShipDirection.forward * GetFloatSizeFromDirection(Vector3.forward);
     var shipBack = ShipDirection.position -
                    ShipDirection.forward * GetFloatSizeFromDirection(Vector3.forward);

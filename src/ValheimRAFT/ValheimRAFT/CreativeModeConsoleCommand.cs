@@ -73,6 +73,9 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
           player.m_body.transform.position.y +
           ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
           player.m_body.transform.position.z);
+
+        // prevents player from being launched into the sky if the ship hits them when it is moved upwards
+        player.m_body.isKinematic = true;
       }
 
       var directionRaftUpwards = new Vector3(ship.transform.position.x,
@@ -86,6 +89,9 @@ internal class CreativeModeConsoleCommand : ConsoleCommand
       ship.Instance.transform.rotation = rotationWithoutTilt;
       ship.VehicleController.Instance.transform.rotation = rotationWithoutTilt;
       ship.transform.rotation = rotationWithoutTilt;
+
+      // set player back to being controllable
+      player.m_body.isKinematic = false;
     }
     else
     {

@@ -7,12 +7,23 @@ namespace ValheimRAFT.Patches;
 /// </summary>
 public class Advize_PlantEasily_Patch
 {
-  // [HarmonyPatch(typeof(Advize_PlantEasily.PlantEasily), "CheckPlacementStatus")]
-  // [HarmonyPrefix]
-  // private static bool CheckPlacementStatus(Advize_PlantEasily.PlantEasily __instance)
-  // {
-  //  
-  //   return false
-  //   // return PlantEasily.Status;
-  // }
+  private enum Status
+  {
+    Healthy,
+    LackResources,
+    NotCultivated,
+    WrongBiome,
+    NoSpace,
+    NoSun,
+    Invalid,
+  }
+
+  [HarmonyPatch(typeof(Advize_PlantEasily.PlantEasily), "CheckPlacementStatus")]
+  [HarmonyPrefix]
+  private static bool CheckPlacementStatus(Advize_PlantEasily.PlantEasily __instance,
+    object __result)
+  {
+    __result = Status.Healthy;
+    return false;
+  }
 }

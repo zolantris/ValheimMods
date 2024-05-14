@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 using ValheimRAFT.UI;
 using ValheimRAFT.Util;
+using ValheimVehicles.Prefabs;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -244,9 +245,13 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     m_mainColor = sailMaterial.GetColor(MainColor);
     m_mistAlpha = sailMaterial.GetFloat(MistAlpha);
     var mainTex = sailMaterial.GetTexture(MainTex);
-    var mainGroup = CustomTextureGroup.Get("Sails")
-      .GetTextureByHash(mainTex.name.GetStableHashCode());
-    if (mainGroup != null) m_mainHash = mainTex.name.GetStableHashCode();
+
+    var sailTexture = LoadValheimRaftAssets.sailTexture;
+    var sailNormal = LoadValheimRaftAssets.sailTextureNormal;
+
+    // var mainGroup = CustomTextureGroup.Get("Sails")
+    //   .GetTextureByHash(mainTex.name.GetStableHashCode());
+    if (sailTexture != null) m_mainHash = mainTex.name.GetStableHashCode();
 
     m_mainScale = sailMaterial.GetTextureScale(MainTex);
     m_mainOffset = sailMaterial.GetTextureOffset(MainTex);
@@ -930,13 +935,15 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     if (m_mainHash == hash) return;
 
     m_mainHash = hash;
-    var customtexture =
-      CustomTextureGroup.Get("Sails").GetTextureByHash(hash);
-    if (customtexture != null && (bool)customtexture.Texture && (bool)m_mesh)
+    // var customtexture =
+    //   CustomTextureGroup.Get("Sails").GetTextureByHash(hash);
+    var sailTexture = LoadValheimRaftAssets.sailTexture;
+    var sailNormal = LoadValheimRaftAssets.sailTextureNormal;
+    if ((bool)sailNormal)
     {
-      m_mesh.material.SetTexture(MainTex, customtexture.Texture);
-      if ((bool)customtexture.Normal)
-        m_mesh.material.SetTexture(BumpMap, customtexture.Normal);
+      m_mesh.material.SetTexture(MainTex, sailTexture);
+      if ((bool)sailNormal)
+        m_mesh.material.SetTexture(BumpMap, sailNormal);
     }
   }
 

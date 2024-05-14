@@ -1578,17 +1578,28 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     if (m_hullPieces.Count <= 0) return 0.2f;
     _hullBounds = new Bounds();
 
+    var totalHeight = 0f;
     foreach (var hullPiece in m_hullPieces)
     {
       var newBounds = EncapsulateColliders(_hullBounds.center, _hullBounds.size,
         hullPiece.gameObject);
+      totalHeight += hullPiece.transform.localPosition.y;
       if (newBounds == null) continue;
       _hullBounds = newBounds.Value;
     }
 
-    var piecesHeight = _hullBounds.center.y;
-    var averagePieceHeight = piecesHeight / m_hullPieces.Count;
-    return averagePieceHeight;
+    switch (ValheimRaftPlugin.Instance.HullFloatationColliderLocation.Value)
+    {
+      case ValheimRaftPlugin.HullFloatation.Average:
+        return totalHeight / m_hullPieces.Count;
+      case ValheimRaftPlugin.HullFloatation.Bottom:
+        return _hullBounds.min.y;
+      case ValheimRaftPlugin.HullFloatation.Top:
+        return _hullBounds.max.y;
+      case ValheimRaftPlugin.HullFloatation.Center:
+      default:
+        return _hullBounds.center.y;
+    }
   }
 
   /**
@@ -1688,9 +1699,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
      * - may need an additional size
      * - may need more logic for water masks (hiding water on boat) and other boat magic that has not been added yet.
      */
-    var blockingColliderCenterY = m_hullPieces.Count > 0
-      ? _hullBounds.center.y + Math.Abs(floatColliderSize.y)
-      : floatColliderCenterOffset.y;
+    var blockingColliderCenterY = floatColliderCenterOffset.y + 0.2f;
     var blockingColliderCenterOffset = new Vector3(_vehicleBounds.center.x,
       blockingColliderCenterY, _vehicleBounds.center.z);
     var blockingColliderSize = new Vector3(Mathf.Max(4, _vehicleBounds.size.x), floatColliderSize.y,
