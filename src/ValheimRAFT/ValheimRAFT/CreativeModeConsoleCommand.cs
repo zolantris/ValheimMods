@@ -5,7 +5,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
-internal class CreativeModeConsoleCommand : ConsoleCommand
+public class CreativeModeConsoleCommand : ConsoleCommand
 {
   public override string Name => "RaftCreative";
 

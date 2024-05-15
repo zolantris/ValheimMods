@@ -20,8 +20,6 @@ public class PrefabRegistryController : MonoBehaviour
 {
   public static PrefabManager prefabManager;
   public static PieceManager pieceManager;
-  public static int PieceLayer = LayerMask.NameToLayer("piece");
-
   private static SynchronizationManager synchronizationManager;
   private static List<Piece> raftPrefabPieces = new();
   private static bool prefabsEnabled = true;

@@ -25,9 +25,6 @@ namespace ValheimRAFT;
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Patch)]
 public class ValheimRaftPlugin : BaseUnityPlugin
 {
-  /*
-   * @note keeping this as Sarcen for now since there are low divergences from the original codebase and patches already mapped to sarcen's mod
-   */
   public const string Author = "zolantris";
   public const string Version = "2.0.0";
   internal const string ModName = "ValheimRAFT";

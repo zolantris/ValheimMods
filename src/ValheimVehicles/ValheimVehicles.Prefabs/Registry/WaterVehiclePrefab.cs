@@ -23,6 +23,10 @@ public class WaterVehiclePrefab : IRegisterPrefab
       LoadValheimVehicleAssets.VehicleShipAsset);
   }
 
+  /**
+   * todo it's possible this all needs to be done in the Awake method to safely load valheim.
+   * Should test this in development build of valheim
+   */
   public static GameObject CreateWaterVehiclePrefab(
     GameObject prefab)
   {
@@ -44,31 +48,30 @@ public class WaterVehiclePrefab : IRegisterPrefab
     floatColliderObj.name = PrefabNames.WaterVehicleFloatCollider;
     blockingColliderObj.name = PrefabNames.WaterVehicleBlockingCollider;
 
-    var blockingBoxCollider = blockingColliderObj.GetComponent<BoxCollider>();
     var floatBoxCollider = floatColliderObj.GetComponent<BoxCollider>();
-    var onboardBoxCollider = onboardColliderObj.GetComponent<BoxCollider>();
 
     /*
      * ShipControls were a gameObject with a script attached to them. This approach directly attaches the script instead of having the rudder show.
      */
     var vehicleRigidbody = prefab.GetComponent<Rigidbody>();
-    var zSyncTranform = prefab.AddComponent<ZSyncTransform>();
-    zSyncTranform.m_syncPosition = true;
-    zSyncTranform.m_syncBodyVelocity = true;
-    zSyncTranform.m_syncRotation = true;
-    zSyncTranform.m_body = vehicleRigidbody;
+    var zSyncTransform = prefab.AddComponent<ZSyncTransform>();
+    zSyncTransform.m_syncPosition = true;
+    zSyncTransform.m_syncBodyVelocity = true;
+    zSyncTransform.m_syncRotation = true;
+    zSyncTransform.m_body = vehicleRigidbody;
 
-    var shipControls = prefab.AddComponent<VehicleMovementController>();
 
     var shipInstance = prefab.AddComponent<VehicleShip>();
+    var shipControls = prefab.AddComponent<VehicleMovementController>();
     shipInstance.ColliderParentObj = colliderParentObj.gameObject;
 
     shipInstance.ShipDirection =
       floatColliderObj.FindDeepChild(PrefabNames.VehicleShipMovementOrientation);
+    shipInstance.m_shipControlls = shipControls;
     shipInstance.MovementController = shipControls;
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
     shipInstance.m_body = vehicleRigidbody;
-    shipInstance.m_zsyncTransform = zSyncTranform;
+    shipInstance.m_zsyncTransform = zSyncTransform;
 
     // todo fix ship water effects so they do not cause ship materials to break
 

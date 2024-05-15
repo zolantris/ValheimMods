@@ -210,7 +210,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
         Logger.LogDebug(
           $"Interact PlayerId {playerInstance.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
         if (playerInstance.GetPlayerID() != player.GetPlayerID()) continue;
-        ShipInstance.Instance.MovementController.FireRequestControl(playerInstance.GetPlayerID(),
+        ShipInstance?.Instance?.MovementController.FireRequestControl(playerInstance.GetPlayerID(),
           AttachPoint);
         return true;
       }
@@ -237,6 +237,8 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
       Logger.LogDebug("Player is not on Ship");
       return false;
     }
+
+    if (!ShipInstance?.Instance?.MovementController) return false;
 
     ShipInstance.Instance.MovementController.FireRequestControl(player.GetPlayerID(), AttachPoint);
     return true;

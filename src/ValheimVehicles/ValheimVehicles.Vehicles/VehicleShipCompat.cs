@@ -39,6 +39,21 @@ public class VehicleShipCompat : IVehicleShip
     return null;
   }
 
+  public bool IsOwner()
+  {
+    if (IsVehicleShip)
+    {
+      return VehicleShipInstance.IsOwner();
+    }
+
+    if (IsValheimShip)
+    {
+      return ShipInstance.IsOwner();
+    }
+
+    return false;
+  }
+
   private static VehicleShipCompat InitWithVehicleShip(VehicleShip vehicleShip)
   {
     return new VehicleShipCompat()

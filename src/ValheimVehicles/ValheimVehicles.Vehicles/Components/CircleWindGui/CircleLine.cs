@@ -115,8 +115,6 @@ public class CircleLine : MonoBehaviour
       points[i] = new Vector3(Mathf.Cos(rad) * Radius, Mathf.Sin(rad) * -Radius, 0);
     }
 
-    Debug.Log(points);
-
     LineRendererInstance.positionCount = seg;
     LineRendererInstance.SetPositions(points);
   }

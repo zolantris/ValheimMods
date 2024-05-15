@@ -146,7 +146,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     if (!(bool)_vehiclePiecesContainerInstance) return;
     RemovePlayersBeforeDestroyingBoat();
     _controller.CleanUp();
-    UnityEngine.Object.Destroy(_controller.gameObject);
+    Destroy(_controller.gameObject);
   }
 
   public void OnDestroy()
@@ -248,6 +248,16 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
   }
 
+  public new bool HaveControllingPlayer()
+  {
+    if (m_players.Count != 0 && m_shipControlls)
+    {
+      return m_shipControlls.HaveValidUser();
+    }
+
+    return false;
+  }
+
   public bool IsReady()
   {
     var netView = GetComponent<ZNetView>();
@@ -286,6 +296,11 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     if (!MovementController)
     {
       MovementController = GetComponent<VehicleMovementController>();
+    }
+
+    if (MovementController)
+    {
+      MovementController.ShipInstance = this;
     }
 
     _impactEffect = GetComponent<ImpactEffect>();
@@ -956,6 +971,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   public void UpdateShipSpeed(bool hasControllingPlayer)
   {
+    m_speed = Ship.Speed.Stop;
+    return;
     if (MovementController.IsAnchored && m_speed != Ship.Speed.Stop)
     {
       m_speed = Ship.Speed.Stop;

@@ -12,7 +12,7 @@ namespace ValheimVehicles.Prefabs;
 public abstract class PrefabRegistryHelpers
 {
   public const string SnappointTag = "snappoint";
-  public static int PieceLayer = LayerMask.NameToLayer("piece");
+  public static int PieceLayer;
 
   public struct PieceData
   {
@@ -35,6 +35,7 @@ public abstract class PrefabRegistryHelpers
   /// 4x4 and 2x2 icons look similar, may remove 4x4
   public static void Init()
   {
+    PieceLayer = LayerMask.NameToLayer("piece");
     var spriteAtlas = LoadValheimVehicleAssets.VehicleSprites;
 
     // slabs

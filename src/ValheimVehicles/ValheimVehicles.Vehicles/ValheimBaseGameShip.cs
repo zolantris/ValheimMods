@@ -2,10 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine;
-using UnityEngine.PlayerLoop;
-using UnityEngine.UIElements;
-using ValheimRAFT;
 using ValheimVehicles.Prefabs;
 using Logger = Jotunn.Logger;
 
@@ -16,8 +12,6 @@ namespace ValheimVehicles.Vehicles;
  */
 public class ValheimBaseGameShip : MonoBehaviour
 {
-  public Ship.Speed Speed;
-
   internal bool m_forwardPressed;
 
   internal bool m_backwardPressed;
@@ -472,7 +466,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     }
   }
 
-  internal void UpdateUpsideDmg(float dt)
+  public void UpdateUpsideDmg(float dt)
   {
     if (base.transform.up.y >= 0f)
     {
@@ -495,7 +489,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     }
   }
 
-  internal Vector3 GetSailForce(float sailSize, float dt)
+  public Vector3 GetSailForce(float sailSize, float dt)
   {
     Vector3 windDir = EnvMan.instance.GetWindDir();
     float windIntensity = EnvMan.instance.GetWindIntensity();
@@ -516,7 +510,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     return num2 * num3;
   }
 
-  internal void UpdateWaterForce(float depth, float dt)
+  public void UpdateWaterForce(float depth, float dt)
   {
     if (m_lastDepth == -9999f)
     {
@@ -554,7 +548,7 @@ public class ValheimBaseGameShip : MonoBehaviour
   /// </summary>
   /// Todo figure out what this does
   /// <param name="dt"></param>
-  internal void ApplyEdgeForce(float dt)
+  public void ApplyEdgeForce(float dt)
   {
     var magnitude = base.transform.position.magnitude;
     var num = 10420f;
@@ -601,7 +595,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     }
   }
 
-  internal void UpdateControls(float dt)
+  public void UpdateControls(float dt)
   {
     if (m_nview.IsOwner())
     {
@@ -627,7 +621,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     return true;
   }
 
-  internal void UpdateSail(float dt)
+  public void UpdateSail(float dt)
   {
     UpdateSailSize(dt);
     Vector3 windDir = EnvMan.instance.GetWindDir();
@@ -651,7 +645,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     }
   }
 
-  internal void UpdateRudder(float dt, bool haveControllingPlayer)
+  public void UpdateRudder(float dt, bool haveControllingPlayer)
   {
     if (!m_rudderObject)
     {
@@ -677,7 +671,7 @@ public class ValheimBaseGameShip : MonoBehaviour
       Quaternion.Slerp(m_rudderObject.transform.localRotation, b, 0.5f);
   }
 
-  internal void UpdateSailSize(float dt)
+  public void UpdateSailSize(float dt)
   {
     float num = 0f;
     switch (m_speed)
@@ -763,7 +757,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     }
   }
 
-  internal void OnTriggerExit(Collider collider)
+  public void OnTriggerExit(Collider collider)
   {
     Player component = collider.GetComponent<Player>();
     if ((bool)component)
@@ -820,7 +814,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     return m_players.Count > 0;
   }
 
-  internal void OnDestroyed()
+  public void OnDestroyed()
   {
     if (m_nview.IsValid() && m_nview.IsOwner())
     {
@@ -857,14 +851,9 @@ public class ValheimBaseGameShip : MonoBehaviour
    * adds guard for when ship controls do not exist on the ship.
    * - previous ship would assume m_shipControlls was connected because it was part of the base prefab
    */
-  internal bool HaveControllingPlayer()
+  public bool HaveControllingPlayer()
   {
-    if (m_players == null)
-    {
-      return false;
-    }
-
-    if (m_players.Count != 0 && (bool)m_shipControlls)
+    if (m_players.Count != 0 && m_shipControlls)
     {
       return m_shipControlls.HaveValidUser();
     }
@@ -874,6 +863,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public bool IsOwner()
   {
+    if (!m_nview) return false;
     if (m_nview.IsValid())
     {
       return m_nview.IsOwner();

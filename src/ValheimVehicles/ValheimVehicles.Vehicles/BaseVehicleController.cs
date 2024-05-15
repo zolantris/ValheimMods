@@ -245,10 +245,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     {
       m_rigidbody = GetComponent<Rigidbody>();
     }
-
-    Debug.Log("Captured Log"); // Breadcrumb
-    Debug.LogWarning("Captured Warning"); // Breadcrumb
-    Debug.LogError("This is a Test error called within BaseVehicleController.Awake");
   }
 
   public void UpdateBedSpawn()

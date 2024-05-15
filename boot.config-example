@@ -1,0 +1,3 @@
+gfx-enable-gfx-jobs=1
+gfx-enable-native-gfx-jobs=1
+gc-max-time-slice=20
