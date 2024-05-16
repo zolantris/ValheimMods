@@ -99,52 +99,33 @@ public class SailPrefabs : IRegisterPrefab
 
   private void RegisterCustomSail(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    var mbSailPrefab = prefabManager.CreateEmptyPrefab(PrefabNames.Tier1CustomSailName);
-    Object.Destroy(mbSailPrefab.GetComponent<BoxCollider>());
-    Object.Destroy(mbSailPrefab.GetComponent<MeshFilter>());
+    var prefab = prefabManager.CreateClonedPrefab(PrefabNames.Tier1CustomSailName,
+      LoadValheimVehicleAssets.CustomSail);
 
-    var mbSailPrefabPiece = mbSailPrefab.AddComponent<Piece>();
+    var mbSailPrefabPiece = prefab.AddComponent<Piece>();
     mbSailPrefabPiece.m_name = "$mb_sail";
     mbSailPrefabPiece.m_description = "$mb_sail_desc";
     mbSailPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
     PrefabRegistryController.AddToRaftPrefabPieces(mbSailPrefabPiece);
-    PrefabRegistryHelpers.AddNetViewWithPersistence(mbSailPrefab);
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
-    var sailObject = new GameObject("Sail")
-    {
-      transform =
-      {
-        parent = mbSailPrefab.transform
-      },
-      layer = LayerMask.NameToLayer("piece_nonsolid")
-    };
-
-    var sail = mbSailPrefab.AddComponent<SailComponent>();
-    sail.m_sailObject = sailObject;
-    sail.m_sailCloth = sailObject.AddComponent<Cloth>();
-
-    sail.m_sailCloth.useGravity = true;
-
-    sail.m_meshCollider = sailObject.AddComponent<MeshCollider>();
-    sail.m_mesh = sailObject.GetComponent<SkinnedMeshRenderer>();
-    sail.m_mesh.shadowCastingMode = ShadowCastingMode.TwoSided;
-    sail.m_mesh.sharedMaterial = LoadValheimRaftAssets.sailMat;
+    var sail = prefab.AddComponent<SailComponent>();
 
     // this is a tier 1 sail
-    PrefabRegistryHelpers.SetWearNTear(mbSailPrefab, 1);
-    PrefabRegistryHelpers.FixSnapPoints(mbSailPrefab);
+    PrefabRegistryHelpers.SetWearNTear(prefab, 1);
+    PrefabRegistryHelpers.FixSnapPoints(prefab);
 
     // mast should allowSailShrinking
-    var mast = mbSailPrefab.AddComponent<MastComponent>();
-    mast.m_sailObject = sailObject;
+    var mast = prefab.AddComponent<MastComponent>();
+    mast.m_sailObject = prefab;
     mast.m_sailCloth = sail.m_sailCloth;
     mast.m_allowSailRotation = false;
     mast.m_allowSailShrinking = true;
 
-    mbSailPrefab.layer = LayerMask.NameToLayer("piece_nonsolid");
-    SailCreatorComponent.m_sailPrefab = mbSailPrefab;
-    PrefabManager.Instance.AddPrefab(mbSailPrefab);
+    PrefabManager.Instance.AddPrefab(prefab);
+    SailCreatorComponent.sailPrefab =
+      PrefabManager.Instance.GetPrefab(PrefabNames.Tier1CustomSailName);
   }
 
   /**
@@ -174,6 +155,12 @@ public class SailPrefabs : IRegisterPrefab
     sailCreatorComponent.m_sailSize = sailCount;
 
     var mesh = prefab.GetComponent<MeshRenderer>();
+    var unlitColor = LoadValheimVehicleAssets.PieceShader;
+    var material = new Material(unlitColor)
+    {
+      color = Color.green
+    };
+    mesh.sharedMaterial = material;
     mesh.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
     var sailIcon = sailCount == 3

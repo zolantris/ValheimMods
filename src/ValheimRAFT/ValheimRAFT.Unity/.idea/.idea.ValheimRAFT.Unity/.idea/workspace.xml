@@ -5,25 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9eb05097-9d84-4b87-8e9a-0e73fcf3150e" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-raft" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-raft" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-raft.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-raft.manifest" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/Advize_PlantEasily_Patch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/Advize_PlantEasily_Patch.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/PatchController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/PatchController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/Teleport_Patch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/Teleport_Patch.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/SailMat.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/SailMat.mat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/VehicleSailShader.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/VehicleSailShader.shader" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/BoardingRampComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/BoardingRampComponent.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/CreativeModeConsoleCommand.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/CreativeModeConsoleCommand.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/SailCreatorComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/SailCreatorComponent.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/PlanBuild_Patch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/PlanBuild_Patch.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/SailComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/SailComponent.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../ValheimRAFT/ValheimRaftPlugin.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/ValheimRaftPlugin.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/BaseVehicleController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/BaseVehicleController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VehicleMovementController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VehicleMovementController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VehicleShip.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/VehicleShip.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../valheim.targets" beforeDir="false" afterPath="$PROJECT_DIR$/../../../valheim.targets" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -85,29 +70,29 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
-    &quot;Attach to Unity Editor.Attach to Unity Editor.executor&quot;: &quot;Debug&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;XThreadsFramesViewSplitterKey&quot;: &quot;0.56&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feat/v2-sailing-and-prefab-updates&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_ADD_EXTERNAL_FILES": "true",
+    "Attach to Unity Editor.Attach to Unity Editor.executor": "Debug",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "XThreadsFramesViewSplitterKey": "0.56",
+    "git-widget-placeholder": "feat/raft-v2-ashland-compatibility",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;rider.external.source.directories&quot;: [
-      &quot;C:\\Users\\fre\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\DecompilerCache&quot;,
-      &quot;C:\\Users\\fre\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\SourcesCache&quot;,
-      &quot;C:\\Users\\fre\\AppData\\Local\\Symbols\\src&quot;
+  "keyToStringList": {
+    "rider.external.source.directories": [
+      "C:\\Users\\fre\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\DecompilerCache",
+      "C:\\Users\\fre\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\SourcesCache",
+      "C:\\Users\\fre\\AppData\\Local\\Symbols\\src"
     ]
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
     <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
       <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\2022.3.17f1\Editor\Unity.exe" />
@@ -175,6 +160,7 @@
       <workItem from="1715433017079" duration="22795000" />
       <workItem from="1715524507126" duration="11002000" />
       <workItem from="1715537373701" duration="4733000" />
+      <workItem from="1715889567224" duration="865000" />
     </task>
     <servers />
   </component>

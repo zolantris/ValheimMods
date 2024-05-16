@@ -1039,7 +1039,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     UpdateRudder(Time.fixedDeltaTime, hasControllingPlayer);
 
     // raft pieces transforms
-    SyncVehicleMastsAndSails();
+    SyncVehicleRotationDependentItems();
 
     var shipFloatation = GetShipFloatationObj();
 
@@ -1112,7 +1112,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   /**
    * In theory, we can just make the sailComponent and mastComponent parents of the masts/sails of the ship. This will make any mutations to those parents in sync with the sail changes
    */
-  private void SyncVehicleMastsAndSails()
+  private void SyncVehicleRotationDependentItems()
   {
     if (!_controller.isActiveAndEnabled) return;
 
@@ -1124,9 +1124,9 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
         continue;
       }
 
-      mast.transform.localRotation = mast.m_allowSailRotation
-        ? m_mastObject.transform.localRotation
-        : Quaternion.Euler(Vector3.zero);
+      // mast.transform.localRotation = mast.m_allowSailRotation
+      //   ? m_mastObject.transform.localRotation
+      //   : Quaternion.Euler(Vector3.zero);
 
       if (mast.m_allowSailShrinking)
       {

@@ -7,6 +7,9 @@ namespace ValheimVehicles.Prefabs;
 
 public class LoadValheimVehicleAssets : ILoadAssets
 {
+  // CustomSail
+  public static GameObject CustomSail = null!;
+
   // hull
   public static GameObject ShipHullWoodAsset = null!;
   public static GameObject ShipHullIronAsset = null!;
@@ -58,6 +61,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
   public void Init(AssetBundle assetBundle)
   {
+    CustomSail = assetBundle.LoadAsset<GameObject>("custom_sail.prefab");
+
     SteeringWheel = assetBundle.LoadAsset<GameObject>("steering_wheel.prefab");
     PieceShader = assetBundle.LoadAsset<Shader>("Custom_Piece.shader");
     ShipKeelAsset = assetBundle.LoadAsset<GameObject>("keel");

@@ -24,8 +24,6 @@ public class EditSailComponentPanel
 
   private Toggle m_sailShrinkingToggle;
 
-  private Toggle m_sailRotationToggle;
-
   private GameObject m_locksTri;
 
   private GameObject m_locksQuad;
@@ -71,8 +69,6 @@ public class EditSailComponentPanel
       m_editSail.m_sailFlags.HasFlag(SailComponent.SailFlags.AllowSailShrinking));
     m_disableClothToggle.SetIsOnWithoutNotify(
       m_editSail.m_sailFlags.HasFlag(SailComponent.SailFlags.DisableCloth));
-    m_sailRotationToggle.SetIsOnWithoutNotify(
-      m_editSail.m_sailFlags.HasFlag(SailComponent.SailFlags.AllowSailRotation));
 
     GUIManager.BlockInput(true);
     m_editPanel.SetActive(true);
@@ -85,11 +81,10 @@ public class EditSailComponentPanel
   {
     var parent = GUIManager.CustomGUIFront.transform;
     m_editPanel = Object.Instantiate(
-      PrefabRegistryController.raftAssetBundle.LoadAsset<GameObject>("edit_sail_panel"),
+      LoadValheimRaftAssets.editPanel,
       parent, false);
     PanelUtil.ApplyPanelStyle(m_editPanel);
-    var texturePanel =
-      PrefabRegistryController.raftAssetBundle.LoadAsset<GameObject>("edit_texture_panel");
+    var texturePanel = LoadValheimRaftAssets.editTexturePanel;
     PanelUtil.ApplyPanelStyle(texturePanel);
 
     GUIManager.Instance.ApplyDropdownStyle(
@@ -126,11 +121,6 @@ public class EditSailComponentPanel
       m_editSail.SetSailMastSetting(SailComponent.SailFlags.AllowSailShrinking, b);
     });
 
-    m_sailRotationToggle = m_editPanel.transform.Find("SailRotationToggle").GetComponent<Toggle>();
-    m_sailRotationToggle.onValueChanged.AddListener(delegate(bool b)
-    {
-      m_editSail.SetSailMastSetting(SailComponent.SailFlags.AllowSailRotation, b);
-    });
     m_disableClothToggle = m_editPanel.transform.Find("SailClothToggle").GetComponent<Toggle>();
     m_disableClothToggle.onValueChanged.AddListener(delegate(bool b)
     {
@@ -150,8 +140,6 @@ public class EditSailComponentPanel
     var editPatternButton =
       m_editPanel.transform.Find("EditPatternButton").GetComponent<Button>();
     var editLogoButton = m_editPanel.transform.Find("EditLogoButton").GetComponent<Button>();
-    m_editSailPanel.transform.Find("Rotation").gameObject.SetActive(false);
-    m_editSailPanel.transform.Find("RotationLabel").gameObject.SetActive(false);
     editSailButton.onClick.AddListener(delegate
     {
       m_editSailPanel.SetActive(true);
@@ -290,23 +278,22 @@ public class EditSailComponentPanel
 
   private void UpdateSails()
   {
-    if ((bool)m_editSail)
-    {
-      m_editSail.m_lockedSailCorners = SailComponent.SailLockedSide.None;
-      for (var i = 0; i < m_editLockedSailCorners.Length; i++)
-        m_editSail.m_lockedSailCorners |=
-          (SailComponent.SailLockedSide)(m_editLockedSailCorners[i].isOn ? 1 << i : 0);
+    if (!(bool)m_editSail) return;
 
-      m_editSail.m_lockedSailSides = SailComponent.SailLockedSide.None;
-      for (var j = 0; j < m_editLockedSailSides.Length; j++)
-        m_editSail.m_lockedSailSides |=
-          (SailComponent.SailLockedSide)(m_editLockedSailSides[j].isOn ? 1 << j : 0);
+    m_editSail.m_lockedSailCorners = SailComponent.SailLockedSide.None;
+    for (var i = 0; i < m_editLockedSailCorners.Length; i++)
+      m_editSail.m_lockedSailCorners |=
+        (SailComponent.SailLockedSide)(m_editLockedSailCorners[i].isOn ? 1 << i : 0);
 
-      m_editSail.UpdateCoefficients();
-    }
+    m_editSail.m_lockedSailSides = SailComponent.SailLockedSide.None;
+    for (var j = 0; j < m_editLockedSailSides.Length; j++)
+      m_editSail.m_lockedSailSides |=
+        (SailComponent.SailLockedSide)(m_editLockedSailSides[j].isOn ? 1 << j : 0);
+
+    m_editSail.UpdateCoefficients();
   }
 
-  public void CloseEditPanel()
+  private void CloseEditPanel()
   {
     if ((bool)m_editPanel) m_editPanel.SetActive(false);
 
@@ -316,23 +303,23 @@ public class EditSailComponentPanel
     GUIManager.BlockInput(false);
   }
 
-  public void CancelEditPanel()
+  private void CancelEditPanel()
   {
     if ((bool)m_editSail) m_editSail.LoadZDO();
 
     CloseEditPanel();
   }
 
-  public void SaveEditPanel()
+  /**
+   * Loads the current materials, saves the data, then loads the saved data to match what a persistent load does
+   */
+  private void SaveEditPanel()
   {
     if ((bool)m_editSail)
     {
-      // it's possible loadFromMaterial needs to be called after
       m_editSail.LoadFromMaterial();
-      m_editSail.SaveZDO();
-
-      // reloading the zdo after saving should fix the update problems.
-      // m_editSail.LoadZDO();
+      m_editSail.SaveZdo();
+      m_editSail.LoadZDO();
     }
 
     CloseEditPanel();

@@ -43,11 +43,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
 
   public ConfigEntry<bool> AllowFlight { get; set; }
+  public ConfigEntry<bool> Graphics_AllowSailsFadeInFog { get; set; }
   public ConfigEntry<bool> AllowCustomRudderSpeeds { get; set; }
 
   public ConfigEntry<string> PluginFolderName { get; set; }
   public ConfigEntry<float> InitialRaftFloorHeight { get; set; }
-  public ConfigEntry<bool> PatchPlanBuildPositionIssues { get; set; }
+  public ConfigEntry<bool> PlanBuildPatches { get; set; }
   public ConfigEntry<float> RaftHealth { get; set; }
   public ConfigEntry<float> ServerRaftUpdateZoneInterval { get; set; }
   public ConfigEntry<float> RaftSailForceMultiplier { get; set; }
@@ -325,6 +326,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         "Removes the start scene background, only use this if you want to speedup start time");
   }
 
+  private void CreateGraphicsConfig()
+  {
+    Graphics_AllowSailsFadeInFog = Config.Bind("Graphics", "Sails Fade In Fog", true,
+      "Allow sails to fade in fog. Unchecking this will be slightly better FPS but less realistic. Should be fine to keep enabled");
+  }
+
   private void CreatePrefabConfig()
   {
     RaftHealth = Config.Bind<float>("Config", "raftHealth", 500f,
@@ -333,15 +340,18 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreateBaseConfig()
   {
-    EnableMetrics = Config.Bind("Debug", "enableMetrics, (sentryPlugin)", true,
+    EnableMetrics = Config.Bind("Debug", "Enable Sentry Metrics (requires sentryUnityPlugin)", true,
       CreateConfigDescription(
         "Enable sentry debug logging. Requires sentry logging plugin installed to work. Sentry Logging plugin will make it easier to troubleshoot raft errors and detect performance bottlenecks. The bare minimum is collected, and only data related to ValheimRaft. See https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT#logging-metrics for more details about what is collected"));
-    HasDebugBase = Config.Bind("Debug", "HasDebugBase", false,
+
+    HasDebugBase = Config.Bind("Debug", "Debug logging for Vehicle/Raft", false,
       CreateConfigDescription(
-        "Outputs more debug logs for the MoveableBaseRootComponent. Useful for troubleshooting errors, but may fill logs quicker"));
-    PatchPlanBuildPositionIssues = Config.Bind<bool>("Patches",
-      "fixPlanBuildPositionIssues", false, new ConfigDescription(
-        "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT.",
+        "Outputs more debug logs for the Vehicle components. Useful for troubleshooting errors, but will spam logs"));
+
+    PlanBuildPatches = Config.Bind<bool>("Patches",
+      "Enable PlanBuild Patches (required to be on if you installed PlanBuild)", false,
+      new ConfigDescription(
+        "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT. PlanBuild mod can be found here. https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/",
         (AcceptableValueBase)null, new object[1]
         {
           (object)new ConfigurationManagerAttributes()
@@ -350,8 +360,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
           }
         }));
 
-    InitialRaftFloorHeight = Config.Bind<float>("Config",
-      "Initial Floor Height", 0.6f, new ConfigDescription(
+    InitialRaftFloorHeight = Config.Bind<float>("Deprecated Config",
+      "Initial Floor Height (V1 raft)", 0.6f, new ConfigDescription(
         "Allows users to set the raft floor spawn height. 0.45 was the original height in 1.4.9 but it looked a bit too low. Now people can customize it",
         (AcceptableValueBase)null, new object[1]
         {
@@ -421,6 +431,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CreateVehicleConfig();
     CreatePropulsionConfig();
     CreateFlightPropulsionConfig();
+
+    // for graphics QOL but maybe less FPS friendly
+    CreateGraphicsConfig();
   }
 
   internal void ApplyMetricIfAvailable()
