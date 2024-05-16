@@ -8,7 +8,7 @@ namespace ValheimRAFT;
 
 public class SailCreatorComponent : MonoBehaviour
 {
-  private List<SailCreatorComponent> m_sailCreators = [];
+  private static List<SailCreatorComponent> m_sailCreators = [];
 
   public static GameObject m_sailPrefab;
 
