@@ -145,8 +145,11 @@ public class Ship_Patch
   [HarmonyPrefix]
   private static bool Ship_FixedUpdate(Ship __instance)
   {
+    if (!__instance.m_nview || __instance.m_nview.m_zdo == null ||
+        !ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value) return true;
+
     var mb = __instance.GetComponent<MoveableBaseShipComponent>();
-    if (!mb || !__instance.m_nview || __instance.m_nview.m_zdo == null) return true;
+    if (!mb) return true;
 
     /*
      * creative mode should not allows movement and applying force on a object will cause errors when the object is kinematic

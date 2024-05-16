@@ -23,7 +23,7 @@ public class Character_Patch
     return list;
   }
 
-  public static VehicleShipCompat? GetStandingOnShip(Character __instance)
+  public static object? GetStandingOnShip(Character __instance)
   {
     if (__instance.InNumShipVolumes == 0 || !__instance.IsOnGround() ||
         !(bool)__instance.m_lastGroundBody)
@@ -31,17 +31,11 @@ public class Character_Patch
       return null;
     }
 
-    var lastOnWaterVehicle = __instance.m_lastGroundBody.GetComponent<VehicleShip>();
-    if (lastOnWaterVehicle)
-    {
-      return VehicleShipCompat.InitFromUnknown(lastOnWaterVehicle);
-    }
-
     var lastOnShip = __instance.m_lastGroundBody.GetComponent<Ship>();
 
     if (lastOnShip)
     {
-      return VehicleShipCompat.InitFromUnknown(lastOnShip);
+      return lastOnShip;
     }
 
     var bvc = __instance.m_lastGroundBody.GetComponentInParent<BaseVehicleController>();

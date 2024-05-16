@@ -15,6 +15,23 @@ public class VehicleShipCompat : IVehicleShip
   private bool _isValheimShip;
   private bool _isVehicleShip;
 
+  public ZNetView? m_nview => GetNetView();
+
+  public ZNetView? GetNetView()
+  {
+    if (IsVehicleShip)
+    {
+      return VehicleShipInstance.m_nview;
+    }
+
+    if (IsValheimShip)
+    {
+      return ShipInstance.m_nview;
+    }
+
+    return null;
+  }
+
   public bool IsValheimShip => ShipInstance && _isValheimShip;
   public bool IsVehicleShip => VehicleShipInstance && _isVehicleShip;
 

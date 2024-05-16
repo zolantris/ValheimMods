@@ -333,7 +333,7 @@ public class Player_Patch
     return rot;
   }
 
-  [HarmonyPatch(typeof(Player), nameof(Player.GetControlledShip))]
+  [HarmonyPatch(typeof(Player), "GetControlledShip")]
   [HarmonyPrefix]
   public static bool GetControlledShip(Player __instance, object? __result)
   {
