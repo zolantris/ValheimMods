@@ -1165,12 +1165,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var sailForce = speedCapMultiplier * area /
                     (TotalMass / mpFactor);
 
-    if (ValheimRaftPlugin.Instance.HasDebugSails.Value)
-    {
-      Logger.LogDebug(
-        $"GetSailingForce() = speedCapMultiplier * area /(totalMass / mpFactor); {speedCapMultiplier} * ({area}/({TotalMass}/{mpFactor})) = {sailForce}");
-    }
-
     var maxSailForce = Math.Min(ValheimRaftPlugin.Instance.MaxSailSpeed.Value, sailForce);
     var maxPropulsion = Math.Min(ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value, maxSailForce);
     return maxPropulsion;

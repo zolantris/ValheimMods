@@ -230,7 +230,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
       return false;
     }
 
-    var playerOnShip = player.GetStandingOnShip();
+    var playerOnShip = VehicleShipCompat.InitFromUnknown(player.GetStandingOnShip());
 
     if (playerOnShip == null)
     {

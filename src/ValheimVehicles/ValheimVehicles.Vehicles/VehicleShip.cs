@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using Jotunn.Extensions;
 using Jotunn.Managers;
+using Newtonsoft.Json;
 using Registry;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,7 +18,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
-internal static class VehicleShipHelpers
+public static class VehicleShipHelpers
 {
   public static GameObject GetOrFindObj(GameObject returnObj, GameObject searchObj,
     string objectName)
@@ -196,7 +197,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
         break;
       case Ship.Speed.Back:
         _rudderForce =
-          Math.Abs(Math.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedSlow.Value,
+          Math.Abs(Math.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedBack.Value,
             ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value));
         break;
       case Ship.Speed.Slow:
@@ -971,8 +972,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
 
   public void UpdateShipSpeed(bool hasControllingPlayer)
   {
-    m_speed = Ship.Speed.Stop;
-    return;
     if (MovementController.IsAnchored && m_speed != Ship.Speed.Stop)
     {
       m_speed = Ship.Speed.Stop;

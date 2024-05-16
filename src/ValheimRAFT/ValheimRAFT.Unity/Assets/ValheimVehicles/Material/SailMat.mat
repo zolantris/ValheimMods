@@ -14,11 +14,10 @@ Material:
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _ADDRAIN_ON
-  - _ADDSNOW_ON
   - _CAMCULL_ON
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 1
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
@@ -109,7 +108,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AddRain: 1
-    - _AddSnow: 1
+    - _AddSnow: 0
     - _BumpScale: 1
     - _CamCull: 1
     - _Cull: 0
@@ -153,9 +152,9 @@ Material:
     - _AmbientColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _LogoColor: {r: 1, g: 1, b: 1, a: 1}
-    - _MainColor: {r: 0.12549019, g: 0, b: 1, a: 1}
-    - _PatternColor: {r: 1, g: 0.627451, b: 0, a: 1}
+    - _LogoColor: {r: 0.4575472, g: 0.4575472, b: 0.4575472, a: 1}
+    - _MainColor: {r: 0.3820755, g: 0.012615708, b: 0.012615708, a: 1}
+    - _PatternColor: {r: 1, g: 1, b: 1, a: 1}
     - _SailColor: {r: 1, g: 1, b: 1, a: 1}
     - _SpecColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
     - _SunColor: {r: 1, g: 1, b: 1, a: 1}

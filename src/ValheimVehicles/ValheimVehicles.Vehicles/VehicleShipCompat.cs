@@ -22,8 +22,13 @@ public class VehicleShipCompat : IVehicleShip
     ShipInstance != null &&
     ShipInstance.gameObject.name.Contains(PrefabNames.MBRaft);
 
-  public static VehicleShipCompat? InitFromUnknown(object vehicleOrShip)
+  public static VehicleShipCompat? InitFromUnknown(object? vehicleOrShip)
   {
+    if (vehicleOrShip?.GetType() == typeof(VehicleShipCompat))
+    {
+      return vehicleOrShip as VehicleShipCompat;
+    }
+
     var vehicleShip = vehicleOrShip as VehicleShip;
     if (vehicleShip != null)
     {

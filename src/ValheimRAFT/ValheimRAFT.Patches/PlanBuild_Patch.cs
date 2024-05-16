@@ -30,7 +30,7 @@ public class PlanBuild_Patch
   //
   //   return false;
   // }
-  [HarmonyPatch(typeof(PlanPiece), nameof(PlanPiece.CalculateSupported))]
+  [HarmonyPatch(typeof(PlanPiece), "CalculateSupported")]
   [HarmonyPrefix]
   private static bool PlanPiece_CalculateSupported_Prefix(PlanPiece __instance, ref bool __result)
   {
@@ -50,7 +50,7 @@ public class PlanBuild_Patch
     return true;
   }
 
-  [HarmonyPatch(typeof(PlanPiece), nameof(PlanPiece.OnPieceReplaced))]
+  [HarmonyPatch(typeof(PlanPiece), "OnPieceReplaced")]
   [HarmonyPrefix]
   private static void PlanPiece_OnPieceReplaced_Postfix(GameObject originatingPiece,
     GameObject placedPiece)
@@ -70,7 +70,7 @@ public class PlanBuild_Patch
     }
   }
 
-  [HarmonyPatch(typeof(PlacementComponent), nameof(PlacementComponent.OnPiecePlaced))]
+  [HarmonyPatch(typeof(PlacementComponent), "OnPiecePlaced")]
   [HarmonyPrefix]
   private static void BlueprintManager_OnPiecePlaced_Postfix(GameObject placedPiece)
   {
