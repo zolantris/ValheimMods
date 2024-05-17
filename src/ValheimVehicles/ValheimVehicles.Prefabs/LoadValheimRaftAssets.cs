@@ -15,11 +15,15 @@ public class LoadValheimRaftAssets : ILoadAssets
   public static Material sailMat;
   public static Texture sailTextureNormal;
   public static Texture sailTexture;
+  public static GameObject editPanel;
+  public static GameObject editTexturePanel;
 
   public static GameObject? rope_anchor;
 
   public void Init(AssetBundle assetBundle)
   {
+    editPanel = assetBundle.LoadAsset<GameObject>("edit_sail_panel");
+    editTexturePanel = assetBundle.LoadAsset<GameObject>("edit_texture_panel");
     sailTextureNormal = assetBundle.LoadAsset<Texture>("sail_normal.png");
     sailTexture = assetBundle.LoadAsset<Texture>("sail.png");
     rope_anchor =

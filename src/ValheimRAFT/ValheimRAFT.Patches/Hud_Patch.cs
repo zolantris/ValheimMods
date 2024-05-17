@@ -16,9 +16,9 @@ namespace ValheimRAFT.Patches;
 [HarmonyPatch]
 public class Hud_Patch
 {
-  public static CircleLine ActiveWindCircle;
-  public static CircleLine InactiveWindCircle;
-  public static GameObject WindCircleComponent;
+  // public static CircleLine ActiveWindCircle;
+  // public static CircleLine InactiveWindCircle;
+  // public static GameObject WindCircleComponent;
   public static Image WindIndicatorImageInstance;
   public static GameObject AnchorHud;
 
@@ -33,19 +33,19 @@ public class Hud_Patch
     VehicleShipHudPatch(__instance);
   }
 
-  public static void DisableVanillaWindIndicator(GameObject windIndicatorCircle)
-  {
-    WindIndicatorImageInstance = windIndicatorCircle.GetComponent<Image>();
-    if (WindIndicatorImageInstance)
-    {
-      WindIndicatorImageInstance.enabled = false;
-    }
-  }
-
-  public static void CreateCustomWindIndicator(GameObject windIndicatorCircle)
-  {
-    windIndicatorCircle.AddComponent<CircleWindIndicator>();
-  }
+  // public static void DisableVanillaWindIndicator(GameObject windIndicatorCircle)
+  // {
+  //   WindIndicatorImageInstance = windIndicatorCircle.GetComponent<Image>();
+  //   if (WindIndicatorImageInstance)
+  //   {
+  //     WindIndicatorImageInstance.enabled = false;
+  //   }
+  // }
+  //
+  // public static void CreateCustomWindIndicator(GameObject windIndicatorCircle)
+  // {
+  //   windIndicatorCircle.AddComponent<CircleWindIndicator>();
+  // }
 
   public static void AddAnchorGameObject(Transform shipPowerHud, Transform rudderIndicator)
   {
@@ -77,12 +77,11 @@ public class Hud_Patch
   /**
     * Will be used for Wind speed after the ship keel is added in future updates to allow upwind sailing
     */
-  private static void UpdateShipWindIndicator()
-  {
-    // var windIndicator = shipHud?.Find("WindIndicator");
-    // var windIndicatorCircle = windIndicator?.Find("Circle");
-  }
-
+  // private static void UpdateShipWindIndicator()
+  // {
+  //   // var windIndicator = shipHud?.Find("WindIndicator");
+  //   // var windIndicatorCircle = windIndicator?.Find("Circle");
+  // }
   private static void VehicleShipHudPatch(Hud hud)
   {
     // fire 3 finds b/c later on these objects will have additional items added to them
@@ -97,19 +96,20 @@ public class Hud_Patch
     }
   }
 
+
   /// <summary>
-  /// Most of the BaseGame Logic as of 0.217.46
+  /// BaseGameLogic that updates the hud only for vehicle ships
   /// </summary>
   /// <param name="__instance"></param>
   /// <param name="player"></param>
   /// <param name="dt"></param>
   /// <param name="vehicleInterface"></param>
-  private static void Hud_UpdateShipBaseGameLogic(Hud __instance, Player player, float dt,
+  public static void UpdateShipHudV2(Hud __instance, Player player, float dt,
     VehicleShipCompat vehicleInterface)
   {
-    var speedSetting = vehicleInterface.GetSpeedSetting();
-    var rudder = vehicleInterface.GetRudder();
-    var rudderValue = vehicleInterface.GetRudderValue();
+    Ship.Speed speedSetting = vehicleInterface.GetSpeedSetting();
+    float rudder = vehicleInterface.GetRudder();
+    float rudderValue = vehicleInterface.GetRudderValue();
     __instance.m_shipHudRoot.SetActive(value: true);
     __instance.m_rudderSlow.SetActive(speedSetting == Ship.Speed.Slow);
     __instance.m_rudderForward.SetActive(speedSetting == Ship.Speed.Half);
@@ -119,9 +119,7 @@ public class Hud_Patch
     __instance.m_rudderRight.SetActive(value: false);
     __instance.m_fullSail.SetActive(speedSetting == Ship.Speed.Full);
     __instance.m_halfSail.SetActive(speedSetting == Ship.Speed.Half);
-
-
-    var rudder2 = __instance.m_rudder;
+    GameObject rudder2 = __instance.m_rudder;
     int active;
     switch (speedSetting)
     {
@@ -140,8 +138,7 @@ public class Hud_Patch
     rudder2.SetActive((byte)active != 0);
     if ((rudder > 0f && rudderValue < 1f) || (rudder < 0f && rudderValue > -1f))
     {
-      __instance.m_shipRudderIcon.transform.Rotate(new Vector3(0f, 0f,
-        200f * (0f - rudder) * dt));
+      __instance.m_shipRudderIcon.transform.Rotate(new Vector3(0f, 0f, 200f * (0f - rudder) * dt));
     }
 
     if (Mathf.Abs(rudderValue) < 0.02f)
@@ -182,19 +179,16 @@ public class Hud_Patch
   [HarmonyPrefix]
   public static bool UpdateShipHud(Hud __instance, Player player, float dt)
   {
-    var controlledShipObj = Player_Patch.HandleGetControlledShip(player);
+    object? controlledShipObj = Player_Patch.HandleGetControlledShip(player);
     if (controlledShipObj == null)
     {
-      __instance.m_shipHudRoot.gameObject.SetActive(value: false);
-      return false;
+      return true;
     }
 
     var vehicleInterface = VehicleShipCompat.InitFromUnknown(controlledShipObj);
 
     if (vehicleInterface == null)
     {
-      Logger.LogWarning(
-        "ValhiemRaft skipping ship hud initialization and defaulting to base game as no VehicleShip or Ship detected");
       return true;
     }
 
@@ -209,14 +203,15 @@ public class Hud_Patch
     }
     else
     {
-      if (AnchorHud)
-      {
-        AnchorHud.SetActive(false);
-      }
+      return true;
     }
 
-    Hud_UpdateShipBaseGameLogic(__instance, player, dt, vehicleInterface);
+    if (vehicleInterface is { IsVehicleShip: false, IsMbRaft: false })
+    {
+      return true;
+    }
 
+    UpdateShipHudV2(__instance, player, dt, vehicleInterface);
     return false;
   }
 }

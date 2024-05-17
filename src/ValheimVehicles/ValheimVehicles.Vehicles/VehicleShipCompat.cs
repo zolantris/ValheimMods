@@ -15,6 +15,23 @@ public class VehicleShipCompat : IVehicleShip
   private bool _isValheimShip;
   private bool _isVehicleShip;
 
+  public ZNetView? m_nview => GetNetView();
+
+  public ZNetView? GetNetView()
+  {
+    if (IsVehicleShip)
+    {
+      return VehicleShipInstance.m_nview;
+    }
+
+    if (IsValheimShip)
+    {
+      return ShipInstance.m_nview;
+    }
+
+    return null;
+  }
+
   public bool IsValheimShip => ShipInstance && _isValheimShip;
   public bool IsVehicleShip => VehicleShipInstance && _isVehicleShip;
 
@@ -22,8 +39,13 @@ public class VehicleShipCompat : IVehicleShip
     ShipInstance != null &&
     ShipInstance.gameObject.name.Contains(PrefabNames.MBRaft);
 
-  public static VehicleShipCompat? InitFromUnknown(object vehicleOrShip)
+  public static VehicleShipCompat? InitFromUnknown(object? vehicleOrShip)
   {
+    if (vehicleOrShip?.GetType() == typeof(VehicleShipCompat))
+    {
+      return vehicleOrShip as VehicleShipCompat;
+    }
+
     var vehicleShip = vehicleOrShip as VehicleShip;
     if (vehicleShip != null)
     {
@@ -37,6 +59,21 @@ public class VehicleShipCompat : IVehicleShip
     }
 
     return null;
+  }
+
+  public bool IsOwner()
+  {
+    if (IsVehicleShip)
+    {
+      return VehicleShipInstance.IsOwner();
+    }
+
+    if (IsValheimShip)
+    {
+      return ShipInstance.IsOwner();
+    }
+
+    return false;
   }
 
   private static VehicleShipCompat InitWithVehicleShip(VehicleShip vehicleShip)

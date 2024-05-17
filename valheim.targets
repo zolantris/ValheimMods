@@ -75,12 +75,12 @@
     </Choose>
 
     <!-- Set start action -->
-    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
-        <StartAction>Program</StartAction>
-        <StartProgram>$(GamePath)\valheim.exe</StartProgram>
-        <StartArguments>-console --doorstop-enable true --doorstop-target $(HOMEPATH)\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll</StartArguments>
-        <StartWorkingDirectory>$(GamePath)</StartWorkingDirectory>
-    </PropertyGroup>
+    <!--    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">-->
+    <!--        <StartAction>Program</StartAction>-->
+    <!--        <StartProgram>$(GamePath)\valheim.exe</StartProgram>-->
+    <!--        <StartArguments>-console &#45;&#45;doorstop-enable true &#45;&#45;doorstop-target $(HOMEPATH)\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\ashlands\BepInEx\core\BepInEx.Preloader.dll</StartArguments>-->
+    <!--        <StartWorkingDirectory>$(GamePath)</StartWorkingDirectory>-->
+    <!--    </PropertyGroup>-->
 
     <!--    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">-->
     <!--        <StartAction>Program</StartAction>-->
@@ -307,7 +307,8 @@
     <PropertyGroup>
         <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
         <R2ModManPath>%HOMEPATH%\AppData\Roaming\r2modmanPlus-local</R2ModManPath>
-        <R2ModManProfile>Valheim\profiles\valheim_raft_debugging</R2ModManProfile>
+        <R2ModManProfileName>ashlands</R2ModManProfileName>
+        <R2ModManProfile>Valheim\profiles\$(R2ModManProfileName)</R2ModManProfile>
         <PluginDeployTarget>BepInEx\plugins\zolantris-SentryUnityWrapper</PluginDeployTarget>
         <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
     </PropertyGroup>

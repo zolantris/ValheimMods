@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using Jotunn.Extensions;
 using Jotunn.Managers;
+using Newtonsoft.Json;
 using Registry;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,7 +18,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
-internal static class VehicleShipHelpers
+public static class VehicleShipHelpers
 {
   public static GameObject GetOrFindObj(GameObject returnObj, GameObject searchObj,
     string objectName)
@@ -146,7 +147,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     if (!(bool)_vehiclePiecesContainerInstance) return;
     RemovePlayersBeforeDestroyingBoat();
     _controller.CleanUp();
-    UnityEngine.Object.Destroy(_controller.gameObject);
+    Destroy(_controller.gameObject);
   }
 
   public void OnDestroy()
@@ -196,7 +197,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
         break;
       case Ship.Speed.Back:
         _rudderForce =
-          Math.Abs(Math.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedSlow.Value,
+          Math.Abs(Math.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedBack.Value,
             ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value));
         break;
       case Ship.Speed.Slow:
@@ -248,6 +249,16 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
   }
 
+  public new bool HaveControllingPlayer()
+  {
+    if (m_players.Count != 0 && m_shipControlls)
+    {
+      return m_shipControlls.HaveValidUser();
+    }
+
+    return false;
+  }
+
   public bool IsReady()
   {
     var netView = GetComponent<ZNetView>();
@@ -286,6 +297,11 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     if (!MovementController)
     {
       MovementController = GetComponent<VehicleMovementController>();
+    }
+
+    if (MovementController)
+    {
+      MovementController.ShipInstance = this;
     }
 
     _impactEffect = GetComponent<ImpactEffect>();
@@ -1023,7 +1039,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     UpdateRudder(Time.fixedDeltaTime, hasControllingPlayer);
 
     // raft pieces transforms
-    SyncVehicleMastsAndSails();
+    SyncVehicleRotationDependentItems();
 
     var shipFloatation = GetShipFloatationObj();
 
@@ -1096,7 +1112,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   /**
    * In theory, we can just make the sailComponent and mastComponent parents of the masts/sails of the ship. This will make any mutations to those parents in sync with the sail changes
    */
-  private void SyncVehicleMastsAndSails()
+  private void SyncVehicleRotationDependentItems()
   {
     if (!_controller.isActiveAndEnabled) return;
 
@@ -1108,9 +1124,9 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
         continue;
       }
 
-      mast.transform.localRotation = mast.m_allowSailRotation
-        ? m_mastObject.transform.localRotation
-        : Quaternion.Euler(Vector3.zero);
+      // mast.transform.localRotation = mast.m_allowSailRotation
+      //   ? m_mastObject.transform.localRotation
+      //   : Quaternion.Euler(Vector3.zero);
 
       if (mast.m_allowSailShrinking)
       {

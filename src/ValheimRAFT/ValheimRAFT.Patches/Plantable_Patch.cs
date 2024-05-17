@@ -20,7 +20,7 @@ public class Plantable_Patch
     for (int i = 0; i < list.Count; i++)
     {
       if (!list[i].StoresField(AccessTools.Field(typeof(Player),
-            nameof(Player.m_placementStatus))) ||
+            "m_placementStatus")) ||
           !list[i - 1].LoadsConstant(Player.PlacementStatus.NeedCultivated))
       {
         continue;
@@ -28,7 +28,7 @@ public class Plantable_Patch
 
       List<Label> labels = list[i - 2].ExtractLabels();
       object pieceLocalIndex = null;
-      MethodInfo rayPieceMethod = AccessTools.Method(typeof(Player), nameof(Player.PieceRayTest));
+      MethodInfo rayPieceMethod = AccessTools.Method(typeof(Player), "PieceRayTest");
       for (int j = 0; j < list.Count; j++)
       {
         if (list[j].Calls(rayPieceMethod) && list[j - 4].IsLdloc())
@@ -46,7 +46,7 @@ public class Plantable_Patch
       {
         new CodeInstruction(OpCodes.Ldloc, pieceLocalIndex).WithLabels(labels),
         new CodeInstruction(OpCodes.Call,
-          AccessTools.Method(typeof(Plantable_Patch), nameof(IsCultivated))),
+          AccessTools.Method(typeof(Plantable_Patch), "IsCultivated")),
         new CodeInstruction(OpCodes.Brtrue, targetLabel)
       });
       break;
@@ -66,7 +66,7 @@ public class Plantable_Patch
     return (bool)cmp && cmp.isCultivatable;
   }
 
-  [HarmonyPatch(typeof(Plant), nameof(Plant.HaveRoof))]
+  [HarmonyPatch(typeof(Plant), "HaveRoof")]
   [HarmonyPrefix]
   private static bool HaveRoof(Plant __instance, bool __result)
   {

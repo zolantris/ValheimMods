@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2199725847
+CRC: 1802141795
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: a28df714ed22152c9c237bb36bb71d1c
+    Hash: f0e4fcbb81e81dfa5f6c3a8e573ce18e
   TypeTreeHash:
     serializedVersion: 2
     Hash: 962a6fa09ff7ee44209932c381081484
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: a28df714ed22152c9c237bb36bb71d1c
+    Hash: f0e4fcbb81e81dfa5f6c3a8e573ce18e
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -104,7 +104,6 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.Toggle/ToggleEvent
 Assets:
-- Assets/ValheimVehicles/Prefabs/GUI/edit_ramp_panel 1.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_ramp_panel.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_sail_panel.prefab
 - Assets/ValheimVehicles/Texture/pattern_dot.png
@@ -113,7 +112,6 @@ Assets:
 - Assets/ValheimVehicles/Material/SailMat.mat
 - Assets/ValheimVehicles/Texture/pattern_checker.png
 - Assets/ValheimVehicles/Prefabs/rope_ladder.prefab
-- Assets/ValheimVehicles/Prefabs/GUI/edit_sail_panel 1.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel 1.prefab
 - Assets/ValheimVehicles/Texture/sail_normal.png
 - Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel.prefab

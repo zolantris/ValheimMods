@@ -117,24 +117,14 @@
 		
         Tags { "Queue" = "Transparent" "RenderType" = "Transparent" }
         LOD 200
-        Cull Back
+        Cull Off
         Blend SrcAlpha OneMinusSrcAlpha
 
-        CGPROGRAM
-        #pragma surface surf Standard alpha:fade
-        #pragma target 5.0
-        ENDCG
-
-        Tags { "Queue" = "Transparent" "RenderType" = "Transparent" }
-        LOD 200
-        Cull Front
-
-        // vertex vert is used to inverse the normal map on the other side of the sail
         CGPROGRAM
         #pragma surface surf Standard alpha:fade
         #pragma vertex vert
         #pragma target 5.0
         ENDCG
 	}
-//	Fallback "Diffuse"
+	Fallback "Diffuse"
 }

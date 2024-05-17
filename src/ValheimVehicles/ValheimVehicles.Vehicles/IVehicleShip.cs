@@ -15,6 +15,8 @@ public interface IVehicleShip
   public float GetRudderValue();
   public float GetShipYawAngle();
 
+  public bool IsOwner();
+
   public GameObject RudderObject { get; set; }
   public IWaterVehicleController VehicleController { get; }
   public BoxCollider FloatCollider { get; set; }

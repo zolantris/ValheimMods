@@ -369,7 +369,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   {
     if (!GetAnchorKey()) return;
     Logger.LogDebug("Anchor Keydown is pressed");
-    var flag = ShipInstance.Instance.HaveControllingPlayer();
+    var flag = ShipInstance?.Instance?.HaveControllingPlayer() ?? false;
     if (flag && Player.m_localPlayer.IsAttached() && Player.m_localPlayer.m_attachPoint &&
         Player.m_localPlayer.m_doodadController != null)
     {
@@ -384,8 +384,8 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
 
   private void OnControllingWithHotKeyPress()
   {
-    if (ShipInstance == null) return;
-    if (!ShipInstance.Instance.HaveControllingPlayer()) return;
+    var hasControllingPlayer = ShipInstance?.Instance?.HaveControllingPlayer() ?? false;
+    if (!hasControllingPlayer) return;
     OnAnchorKeyPress();
     OnFlightControls();
   }
@@ -497,6 +497,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   public bool HaveValidUser()
   {
     var user = GetUser();
+    if (!ShipInstance?.Instance) return false;
     return user != 0L && ShipInstance.IsPlayerInBoat(user);
   }
 

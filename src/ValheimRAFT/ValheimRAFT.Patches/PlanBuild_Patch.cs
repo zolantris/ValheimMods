@@ -15,22 +15,7 @@ namespace ValheimRAFT.Patches;
 [HarmonyPatch]
 public class PlanBuild_Patch
 {
-  // [HarmonyPatch(typeof(PlanPiece), "CanCreatePlan")]
-  // [HarmonyPrefix]
-  // public static bool CanCreatePlan(Piece piece)
-  // {
-  //   /* Previously the logic had
-  //    * piece.GetComponent<Ship>() == null
-  //    */
-  //   if (piece.GetComponent<Plant>() == null && piece.GetComponent<TerrainOp>() == null &&
-  //       piece.GetComponent<TerrainModifier>() == null && piece.GetComponent<PlanPiece>() == null)
-  //   {
-  //     return !piece.name.Equals("piece_plan_totem");
-  //   }
-  //
-  //   return false;
-  // }
-  [HarmonyPatch(typeof(PlanPiece), nameof(PlanPiece.CalculateSupported))]
+  [HarmonyPatch(typeof(PlanPiece), "CalculateSupported")]
   [HarmonyPrefix]
   private static bool PlanPiece_CalculateSupported_Prefix(PlanPiece __instance, ref bool __result)
   {
@@ -50,7 +35,7 @@ public class PlanBuild_Patch
     return true;
   }
 
-  [HarmonyPatch(typeof(PlanPiece), nameof(PlanPiece.OnPieceReplaced))]
+  [HarmonyPatch(typeof(PlanPiece), "OnPieceReplaced")]
   [HarmonyPrefix]
   private static void PlanPiece_OnPieceReplaced_Postfix(GameObject originatingPiece,
     GameObject placedPiece)
@@ -70,7 +55,7 @@ public class PlanBuild_Patch
     }
   }
 
-  [HarmonyPatch(typeof(PlacementComponent), nameof(PlacementComponent.OnPiecePlaced))]
+  [HarmonyPatch(typeof(PlacementComponent), "OnPiecePlaced")]
   [HarmonyPrefix]
   private static void BlueprintManager_OnPiecePlaced_Postfix(GameObject placedPiece)
   {
@@ -223,10 +208,17 @@ public class PlanBuild_Patch
     {
       Vector3 pos;
       var shipBase = item4.m_nview.GetComponentInParent<MoveableBaseRootComponent>();
+      var vehicleBase = item4.m_nview.GetComponentInParent<BaseVehicleController>();
       if (shipBase)
       {
         Logger.LogDebug(
-          $"used ship calc for position {item4.m_nview.m_zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash, Vector3.zero)}");
+          $"used ValheimRAFT.MoveableBaseRootComponent calc for position {item4.m_nview.m_zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash, Vector3.zero)}");
+        pos = item4.m_nview.transform.localPosition;
+      }
+      else if (vehicleBase)
+      {
+        Logger.LogDebug(
+          $"used ValheimVehicles.BaseVehicleController calc for position {item4.m_nview.m_zdo.GetVec3(BaseVehicleController.MBPositionHash, Vector3.zero)}");
         pos = item4.m_nview.transform.localPosition;
       }
       else
