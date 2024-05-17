@@ -26,7 +26,7 @@ namespace ValheimRAFT;
 public class ValheimRaftPlugin : BaseUnityPlugin
 {
   public const string Author = "zolantris";
-  public const string Version = "2.0.0";
+  public const string Version = "2.0.1";
   internal const string ModName = "ValheimRAFT";
   public const string BepInGuid = $"{Author}.{ModName}";
   private const string HarmonyGuid = $"{Author}.{ModName}";
@@ -93,6 +93,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> ProtectVehiclePiecesOnErrorFromWearNTearDamage { get; set; }
   public ConfigEntry<bool> DebugRemoveStartMenuBackground { get; set; }
   public ConfigEntry<bool> HullCollisionOnly { get; set; }
+
+  // sounds for VehicleShip Effects
+  public ConfigEntry<bool> EnableShipWakeSounds { get; set; }
+  public ConfigEntry<bool> EnableShipInWaterSounds { get; set; }
+  public ConfigEntry<bool> EnableShipSailSounds { get; set; }
 
   public enum HullFloatation
   {
@@ -246,7 +251,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         }));
     AllowOldV1RaftRecipe = Config.Bind("Server config", "AllowOldV1RaftRecipe", false,
       new ConfigDescription(
-        "Allows the V1 Raft to be built, this Raft is not performant, but remains in v2.0.0 as a Fallback in case there are problems with the new raft",
+        "Allows the V1 Raft to be built, this Raft is not performant, but remains in >=v2.0.0 as a Fallback in case there are problems with the new raft",
         null, [
           new ConfigurationManagerAttributes()
           {
@@ -255,7 +260,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         ]));
     AllowExperimentalPrefabs = Config.Bind("Server config", "AllowOldV1RaftRecipe", false,
       new ConfigDescription(
-        "Allows v2.0.0 experimental prefabs such as Iron variants of slabs, hulls, and ribs. They do not look great so they are disabled by default",
+        "Allows >=v2.0.0 experimental prefabs such as Iron variants of slabs, hulls, and ribs. They do not look great so they are disabled by default",
         null, [
           new ConfigurationManagerAttributes()
           {
@@ -330,6 +335,16 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   {
     Graphics_AllowSailsFadeInFog = Config.Bind("Graphics", "Sails Fade In Fog", true,
       "Allow sails to fade in fog. Unchecking this will be slightly better FPS but less realistic. Should be fine to keep enabled");
+  }
+
+  private void CreateSoundConfig()
+  {
+    EnableShipSailSounds = Config.Bind("Sounds", "Ship Sailing Sounds", true,
+      "Toggles the ship sail sounds.");
+    EnableShipWakeSounds = Config.Bind("Sounds", "Ship Wake Sounds", true,
+      "Toggles Ship Wake sounds. Can be pretty loud");
+    EnableShipInWaterSounds = Config.Bind("Sounds", "Ship In-Water Sounds", true,
+      "Toggles ShipInWater Sounds, the sound of the hull hitting water");
   }
 
   private void CreatePrefabConfig()
@@ -434,6 +449,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     // for graphics QOL but maybe less FPS friendly
     CreateGraphicsConfig();
+    CreateSoundConfig();
   }
 
   internal void ApplyMetricIfAvailable()
@@ -465,6 +481,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     RegisterVehicleConsoleCommands();
 
     HasVehicleDebug.SettingChanged += OnConfigChanged;
+    EnableShipSailSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
+    EnableShipWakeSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
+    EnableShipInWaterSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
 
     /*
      * @todo add a way to skip LoadCustomTextures when on server. This check when used here crashes the Plugin.
@@ -573,20 +592,23 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   {
     VehicleShip.HasVehicleDebugger = HasVehicleDebug.Value;
     MoveableBaseShipComponent.HasVehicleDebugger = HasVehicleDebug.Value;
-    ToggleVehicleDebugGui();
+
+    AddRemoveVehicleDebugGui();
   }
 
   /**
    * todo: move to Vehicles plugin when it is ready
    */
-  public void ToggleVehicleDebugGui()
+  public void AddRemoveVehicleDebugGui()
   {
     _debugGui = GetComponent<VehicleDebugGui>();
-    if ((bool)_debugGui)
+
+    if ((bool)_debugGui && !HasVehicleDebug.Value)
     {
       Destroy(_debugGui);
     }
-    else
+
+    if (HasVehicleDebug.Value && !(bool)_debugGui)
     {
       _debugGui = gameObject.AddComponent<VehicleDebugGui>();
     }

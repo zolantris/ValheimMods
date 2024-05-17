@@ -529,7 +529,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     {
       zdo_sailFlags &= ~SailFlags.AllowSailRotation;
       Logger.LogInfo(
-        "ValheimRaft 2.0.0 no longer supports sail rotation, removing it's reference in sail flags.");
+        "ValheimRaft >=2.0.0 no longer supports sail rotation, removing it's reference in sail flags.");
       m_nview.GetZDO().Set(m_sailFlagsHash, (int)zdo_sailFlags);
     }
 

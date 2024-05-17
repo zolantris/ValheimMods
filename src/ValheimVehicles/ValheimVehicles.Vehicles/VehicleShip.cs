@@ -136,6 +136,31 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     }
   }
 
+  private static void UpdateShipSounds(VehicleShip vehicleShip)
+  {
+    if (vehicleShip?.ShipEffects == null) return;
+    vehicleShip.ShipEffects.m_inWaterSoundRoot.SetActive(ValheimRaftPlugin.Instance
+      .EnableShipInWaterSounds.Value);
+    vehicleShip.ShipEffects.m_wakeSoundRoot.SetActive(ValheimRaftPlugin.Instance
+      .EnableShipWakeSounds.Value);
+    // this one is not a gameobject so have to select the gameobject
+    vehicleShip.ShipEffects.m_sailSound.gameObject.SetActive(ValheimRaftPlugin.Instance
+      .EnableShipInWaterSounds.Value);
+  }
+
+  private static void UpdateAllShipSounds()
+  {
+    foreach (var vehicleShip in AllVehicles)
+    {
+      UpdateShipSounds(vehicleShip);
+    }
+  }
+
+  public static void UpdateAllShipSounds(object sender, EventArgs eventArgs)
+  {
+    UpdateAllShipSounds();
+  }
+
   /// <summary>
   /// Unloads the Boat Pieces properly
   /// </summary>
@@ -417,6 +442,8 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     {
       InitializeVehicleDebugger();
     }
+
+    UpdateShipSounds(this);
   }
 
   public override void OnEnable()

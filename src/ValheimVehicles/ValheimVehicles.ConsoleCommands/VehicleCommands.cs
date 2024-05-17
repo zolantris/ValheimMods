@@ -113,7 +113,7 @@ public class VehicleCommands : ConsoleCommand
 
   private static void ToggleVehicleDebugComponent()
   {
-    ValheimRaftPlugin.Instance.ToggleVehicleDebugGui();
+    ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui();
     foreach (var vehicleShip in VehicleShip.AllVehicles)
     {
       vehicleShip.InitializeVehicleDebugger();
