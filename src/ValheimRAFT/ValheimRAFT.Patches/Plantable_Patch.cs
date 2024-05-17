@@ -19,7 +19,8 @@ public class Plantable_Patch
     List<CodeInstruction> list = instructions.ToList();
     for (int i = 0; i < list.Count; i++)
     {
-      if (!list[i].StoresField(AccessTools.Field(typeof(Player), "m_placementStatus")) ||
+      if (!list[i].StoresField(AccessTools.Field(typeof(Player),
+            "m_placementStatus")) ||
           !list[i - 1].LoadsConstant(Player.PlacementStatus.NeedCultivated))
       {
         continue;
@@ -41,7 +42,7 @@ public class Plantable_Patch
       Label sourceJump = (Label)list[i - 3].operand;
       list.Find((CodeInstruction match) => match.labels.Contains(sourceJump)).labels
         .Add(targetLabel);
-      list.InsertRange(i - 2, new CodeInstruction[3]
+      list.InsertRange(i - 2, new[]
       {
         new CodeInstruction(OpCodes.Ldloc, pieceLocalIndex).WithLabels(labels),
         new CodeInstruction(OpCodes.Call,
@@ -65,6 +66,28 @@ public class Plantable_Patch
     return (bool)cmp && cmp.isCultivatable;
   }
 
+  [HarmonyPatch(typeof(Plant), "HaveRoof")]
+  [HarmonyPrefix]
+  private static bool HaveRoof(Plant __instance, bool __result)
+  {
+    if (Plant.m_roofMask == 0)
+    {
+      Plant.m_roofMask = LayerMask.GetMask("Default", "static_solid", "piece");
+    }
+
+    var raycastHit =
+      Physics.RaycastAll(__instance.transform.position, Vector3.up, 100f, Plant.m_roofMask);
+
+    if (Physics.Raycast(__instance.transform.position, Vector3.up, 100f, Plant.m_roofMask))
+    {
+      __result = true;
+      return false;
+    }
+
+    __result = false;
+    return false;
+  }
+
   [HarmonyPatch(typeof(Plant), "Grow")]
   [HarmonyTranspiler]
   private static IEnumerable<CodeInstruction> Plant_Grow(IEnumerable<CodeInstruction> instructions)
@@ -72,11 +95,11 @@ public class Plantable_Patch
     List<CodeInstruction> list = instructions.ToList();
     for (int i = 0; i < list.Count; i++)
     {
-      if (list[i].Calls(AccessTools.Method(typeof(GameObject), "GetComponent", new Type[0],
+      if (list[i].Calls(AccessTools.Method(typeof(GameObject), "GetComponent", Type.EmptyTypes,
             new Type[1] { typeof(ZNetView) })))
       {
         list[i] = new CodeInstruction(OpCodes.Call,
-          AccessTools.Method(typeof(Plantable_Patch), "PlantGrowth"));
+          AccessTools.Method(typeof(Plantable_Patch), nameof(PlantGrowth)));
         list.Insert(i, new CodeInstruction(OpCodes.Ldarg_0));
         break;
       }

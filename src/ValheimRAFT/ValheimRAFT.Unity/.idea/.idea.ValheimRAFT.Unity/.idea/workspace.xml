@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="9eb05097-9d84-4b87-8e9a-0e73fcf3150e" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/PatchController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/PatchController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT.Patches/PlanBuild_Patch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.Patches/PlanBuild_Patch.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/SailComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/SailComponent.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/ValheimRaftPlugin.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/ValheimRaftPlugin.cs" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../.." />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/../../../../../../../../Program Files/Unity/Hub/Editor/2022.3.12f1/Editor/Data/CGIncludes/UnityInstancing.cginc" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../../../../Program Files/Unity/Hub/Editor/2022.3.17f1/Editor/Data/CGIncludes/HLSLSupport.cginc" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/Temp/SandboxFiles/Rococid/Vysusib.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/5e6ebaa7d75c4d5399dc81ecead6b43f952600/09/12cbc37b/AssetImporter.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/5e6ebaa7d75c4d5399dc81ecead6b43f952600/3b/daed60e4/EditorWindow.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/5e6ebaa7d75c4d5399dc81ecead6b43f952600/4a/69f8ed06/SpriteAtlasExtensions.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/5e6ebaa7d75c4d5399dc81ecead6b43f952600/5a/0d092aa0/AssetPreview.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/5e6ebaa7d75c4d5399dc81ecead6b43f952600/96/900ccfd5/AssetDatabase.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/5e6ebaa7d75c4d5399dc81ecead6b43f952600/99/4b324ca7/SpriteAtlasAsset.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/5e6ebaa7d75c4d5399dc81ecead6b43f952600/a2/fb77769b/PreviewRenderUtility.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/5e6ebaa7d75c4d5399dc81ecead6b43f952600/db/f3763eba/TextureImporterCompression.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/5e6ebaa7d75c4d5399dc81ecead6b43f952600/fa/208b5bd2/TextureImporter.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/e4e9310d6e504b9195be7c4cd0c0cfcd574c30/70/ba25e9eb/List`1.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/03/e6fb2970/SpriteAtlas.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/06/d5c88e90/PrimitiveType.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/15/9a9183e1/RenderTexture.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/1b/76213989/ComputeShader.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/45/45df1b0b/Transform.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/46/120a5f98/Texture2D.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/a0/02fb8756/Application.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/a3/f5c3669f/Gradient.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/b0/b91e5516/Object.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/b4/4a0396cc/Color.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/Editor/PrefabThumbnailGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/Editor/PrefabThumbnailGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/Editor/PrefabThumbnailGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/Editor/PrefabThumbnailGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/Editor/PrefabThumbnailGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/Editor/PrefabThumbnailGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/Editor/PrefabThumbnailGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/Editor/PrefabThumbnailGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/Editor/PrefabThumbnailGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/Editor/PrefabThumbnailGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/Editor/PrefabThumbnailGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.assetbundlebrowser@ad2a81ec30/Editor/AssetBundleDataSource/AssetDatabaseABDataSource.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.burst@1.8.11/Editor/LongTextArea.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ugui@1.0.0/Tests/Runtime/Button/ButtonTests.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.visualscripting@1.9.4/Editor/VisualScripting.Core/Interface/Icons/Icons.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.visualscripting@1.9.4/Runtime/VisualScripting.Core/Serialization/SerializeAsAttribute.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.visualscripting@1.9.4/Runtime/VisualScripting.Core/Utilities/LinqUtility.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../unity_repos/valheim_exported_assets/ValheimAssets/Assets/Shader/Custom_Vegetation.shader" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 2
+}</component>
+  <component name="ProjectId" id="2bTykWCw8onDDR3IjvOVjMC3AZr" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_ADD_EXTERNAL_FILES": "true",
+    "Attach to Unity Editor.Attach to Unity Editor.executor": "Debug",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "XThreadsFramesViewSplitterKey": "0.56",
+    "git-widget-placeholder": "feat/raft-v2-ashland-compatibility",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "rider.external.source.directories": [
+      "C:\\Users\\fre\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\DecompilerCache",
+      "C:\\Users\\fre\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\SourcesCache",
+      "C:\\Users\\fre\\AppData\\Local\\Symbols\\src"
+    ]
+  }
+}]]></component>
+  <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
+    <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
+      <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\2022.3.17f1\Editor\Unity.exe" />
+      <option name="PROGRAM_PARAMETERS" value="-projectPath C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT\ValheimRAFT.Unity -debugCodeOptimization" />
+      <option name="WORKING_DIRECTORY" value="C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT\ValheimRAFT.Unity" />
+      <option name="PASS_PARENT_ENVS" value="1" />
+      <option name="USE_EXTERNAL_CONSOLE" value="0" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Unit Tests (batch mode)" type="RunUnityExe" factoryName="Unity Executable">
+      <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\2022.3.17f1\Editor\Unity.exe" />
+      <option name="PROGRAM_PARAMETERS" value="-runTests -batchmode -projectPath C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT\ValheimRAFT.Unity -testResults Logs/results.xml -testPlatform EditMode -debugCodeOptimization" />
+      <option name="WORKING_DIRECTORY" value="C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT\ValheimRAFT.Unity" />
+      <option name="PASS_PARENT_ENVS" value="1" />
+      <option name="USE_EXTERNAL_CONSOLE" value="0" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Attach to Unity Editor &amp; Play" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="UNITY_ATTACH_AND_PLAY" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost">
+      <option name="allowRunningInParallel" value="false" />
+      <option name="listenPortForConnections" value="false" />
+      <option name="pid" />
+      <option name="projectPathOnTarget" />
+      <option name="selectedOptions">
+        <list />
+      </option>
+      <method v="2" />
+    </configuration>
+    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost">
+      <option name="allowRunningInParallel" value="false" />
+      <option name="listenPortForConnections" value="false" />
+      <option name="pid" />
+      <option name="projectPathOnTarget" />
+      <option name="selectedOptions">
+        <list />
+      </option>
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="9eb05097-9d84-4b87-8e9a-0e73fcf3150e" name="Changes" comment="" />
+      <created>1706253507002</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1706253507002</updated>
+      <workItem from="1706253508417" duration="6501000" />
+      <workItem from="1712930866604" duration="1668000" />
+      <workItem from="1712977938716" duration="1148000" />
+      <workItem from="1713049322595" duration="698000" />
+      <workItem from="1713053920412" duration="149000" />
+      <workItem from="1713089921616" duration="908000" />
+      <workItem from="1713262659217" duration="5000" />
+      <workItem from="1713833689463" duration="1368000" />
+      <workItem from="1714102225419" duration="2538000" />
+      <workItem from="1714105161860" duration="817000" />
+      <workItem from="1714108217139" duration="2449000" />
+      <workItem from="1714260089026" duration="605000" />
+      <workItem from="1714594853280" duration="226000" />
+      <workItem from="1714848108522" duration="14607000" />
+      <workItem from="1714876331409" duration="1689000" />
+      <workItem from="1715363862917" duration="78000" />
+      <workItem from="1715411764640" duration="725000" />
+      <workItem from="1715419232853" duration="98000" />
+      <workItem from="1715433017079" duration="22795000" />
+      <workItem from="1715524507126" duration="11002000" />
+      <workItem from="1715537373701" duration="4733000" />
+      <workItem from="1715889567224" duration="865000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnityProjectConfiguration" hasMinimizedUI="true" />
+  <component name="UnityUnitTestConfiguration" currentTestLauncher="Both" />
+  <component name="VcsManagerConfiguration">
+    <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/Assets/ValheimVehicles/scripts/CircleLine.cs</url>
+          <line>137</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT\ValheimRAFT.Unity\Assets\ValheimVehicles\scripts\CircleLine.cs" initialLine="146" containingFunctionPresentation="Method 'Draw'">
+            <startOffsets>
+              <option value="3147" />
+            </startOffsets>
+            <endOffsets>
+              <option value="3248" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+    <pin-to-top-manager>
+      <pinned-members>
+        <PinnedItemInfo parentTag="Frame#PrefabThumbnailGenerator.GetFilesFromSearchPath" memberName="this" />
+      </pinned-members>
+    </pin-to-top-manager>
+  </component>
+</project>

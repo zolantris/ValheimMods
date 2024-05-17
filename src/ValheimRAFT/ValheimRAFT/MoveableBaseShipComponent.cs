@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 using ValheimRAFT.Util;
+using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -15,6 +16,9 @@ public class MoveableBaseShipComponent : MonoBehaviour
     IsAnchored = 1,
     HideMesh = 2
   }
+
+  public VehicleDebugHelpers VehicleDebugHelpersInstance;
+  public static bool HasVehicleDebugger;
 
   internal MoveableBaseRootComponent m_baseRoot;
 
@@ -39,6 +43,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
   public float m_liftForce = 20f;
 
   public MBFlags m_flags;
+  public bool IsAnchored => m_flags.HasFlag(MBFlags.IsAnchored);
 
   public void Awake()
   {
@@ -56,14 +61,16 @@ public class MoveableBaseShipComponent : MonoBehaviour
       delegate(long sender, bool state) { RPC_SetAnchor(sender, state); });
     m_nview.Register("SetVisual",
       delegate(long sender, bool state) { RPC_SetVisual(sender, state); });
-    m_baseRoot.MMoveableBaseShip = this;
+    m_baseRoot.shipController = this;
     m_baseRoot.m_nview = m_nview;
     m_baseRoot.m_ship = ship;
-    m_baseRoot.m_id = ZDOPersistantID.Instance.GetOrCreatePersistantID(m_nview.m_zdo);
+    m_baseRoot.m_id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
     m_rigidbody = GetComponent<Rigidbody>();
     m_baseRoot.m_syncRigidbody = m_rigidbody;
+    m_rigidbody.maxAngularVelocity = ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value;
     m_rigidbody.mass = m_baseRoot.TotalMass;
     m_baseRootObject.transform.SetParent(null);
+    Logger.LogDebug("Set baseRoot params from BaseShipComponent");
 
     m_baseRootObject.transform.position = base.transform.position;
     m_baseRootObject.transform.rotation = base.transform.rotation;
@@ -84,7 +91,8 @@ public class MoveableBaseShipComponent : MonoBehaviour
     }
     else
     {
-      m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+      if (m_baseRoot.m_onboardcollider != null)
+        m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     }
 
     m_baseRoot.m_floatcollider = ship.m_floatCollider;
@@ -103,7 +111,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
   {
     if (m_nview.m_zdo != null)
     {
-      m_flags = (MBFlags)m_nview.m_zdo.GetInt("MBFlags", (int)m_flags);
+      m_flags = (MBFlags)m_nview.m_zdo.GetInt(VehicleZdoVars.VehicleFlags, (int)m_flags);
       var newTransform = m_flags.HasFlag(MBFlags.HideMesh) ? Vector3.zero : Vector3.one;
       /*
        * hide with vector transform instead of active change to prevent NRE spam.
@@ -119,7 +127,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     if ((bool)m_baseRoot)
     {
       m_baseRoot.CleanUp();
-      UnityEngine.Object.Destroy(m_baseRoot.gameObject);
+      Destroy(m_baseRoot.gameObject);
     }
   }
 
@@ -155,9 +163,9 @@ public class MoveableBaseShipComponent : MonoBehaviour
     }
   }
 
-  internal void Ascend()
+  public void Ascend()
   {
-    if (m_flags.HasFlag(MBFlags.IsAnchored))
+    if (IsAnchored)
     {
       SetAnchor(state: false);
     }
@@ -180,9 +188,9 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_nview.m_zdo.Set("MBTargetHeight", m_targetHeight);
   }
 
-  internal void Descent()
+  public void Descent()
   {
-    if (m_flags.HasFlag(MBFlags.IsAnchored))
+    if (IsAnchored)
     {
       SetAnchor(state: false);
     }
@@ -244,7 +252,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     }
   }
 
-  internal void SetAnchor(bool state)
+  public void SetAnchor(bool state)
   {
     m_nview.InvokeRPC("SetAnchor", state);
   }
@@ -252,7 +260,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
   public void RPC_SetAnchor(long sender, bool state)
   {
     m_flags = (state ? (m_flags | MBFlags.IsAnchored) : (m_flags & ~MBFlags.IsAnchored));
-    m_nview.m_zdo.Set("MBFlags", (int)m_flags);
+    m_nview.m_zdo.Set(VehicleZdoVars.VehicleFlags, (int)m_flags);
   }
 
   internal void SetVisual(bool state)
@@ -263,7 +271,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
   public void RPC_SetVisual(long sender, bool state)
   {
     m_flags = (state ? (m_flags | MBFlags.HideMesh) : (m_flags & ~MBFlags.HideMesh));
-    m_nview.m_zdo.Set("MBFlags", (int)m_flags);
+    m_nview.m_zdo.Set(VehicleZdoVars.VehicleFlags, (int)m_flags);
     UpdateVisual();
   }
 }

@@ -4,49 +4,57 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
 using System;
-using System.Collections.Generic;
 using System.Reflection;
+using BepInEx.Bootstrap;
+using Components;
 using Jotunn;
+using Properties;
 using UnityEngine;
-using UnityEngine.Serialization;
 using ValheimRAFT.Patches;
+using ValheimRAFT.Util;
+using ValheimVehicles.ConsoleCommands;
+using ValheimVehicles.Prefabs;
+using ValheimVehicles.Vehicles;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
+// [SentryDSN()]
 [BepInPlugin(BepInGuid, ModName, Version)]
 [BepInDependency(Main.ModGuid)]
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Patch)]
 public class ValheimRaftPlugin : BaseUnityPlugin
 {
-  /*
-   * @note keeping this as Sarcen for now since there are low divergences from the original codebase and patches already mapped to sarcen's mod
-   */
-  public const string Author = "Sarcen";
-  public const string Version = "1.6.14";
+  public const string Author = "zolantris";
+  public const string Version = "2.0.0";
   internal const string ModName = "ValheimRAFT";
-  public const string BepInGuid = $"BepIn.{Author}.{ModName}";
-  private const string HarmonyGuid = $"Harmony.{Author}.{ModName}";
+  public const string BepInGuid = $"{Author}.{ModName}";
+  private const string HarmonyGuid = $"{Author}.{ModName}";
   public const string ModDescription = "Valheim Mod for building on the sea";
-  public const string CopyRight = "Copyright © 2023, GNU-v3 licensed";
-  internal static readonly int CustomRaftLayer = 29;
-  public static AssetBundle m_assetBundle;
+  public const string CopyRight = "Copyright © 2023-2024, GNU-v3 licensed";
+  public static readonly int CustomRaftLayer = 29;
   private bool m_customItemsAdded;
-  public PrefabController prefabController;
+  public PrefabRegistryController prefabController;
+
+  public static VehicleDebugGui _debugGui;
 
   public static ValheimRaftPlugin Instance { get; private set; }
 
   public ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
 
   public ConfigEntry<bool> AllowFlight { get; set; }
+  public ConfigEntry<bool> Graphics_AllowSailsFadeInFog { get; set; }
+  public ConfigEntry<bool> AllowCustomRudderSpeeds { get; set; }
 
   public ConfigEntry<string> PluginFolderName { get; set; }
   public ConfigEntry<float> InitialRaftFloorHeight { get; set; }
-  public ConfigEntry<bool> PatchPlanBuildPositionIssues { get; set; }
+  public ConfigEntry<bool> PlanBuildPatches { get; set; }
   public ConfigEntry<float> RaftHealth { get; set; }
   public ConfigEntry<float> ServerRaftUpdateZoneInterval { get; set; }
   public ConfigEntry<float> RaftSailForceMultiplier { get; set; }
-  public ConfigEntry<bool> DisplacedRaftAutoFix { get; set; }
   public ConfigEntry<bool> AdminsCanOnlyBuildRaft { get; set; }
+  public ConfigEntry<bool> AllowOldV1RaftRecipe { get; set; }
+  public ConfigEntry<bool> AllowExperimentalPrefabs { get; set; }
 
 
   // Propulsion Configs
@@ -55,11 +63,16 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> MaxPropulsionSpeed { get; set; }
   public ConfigEntry<float> MaxSailSpeed { get; set; }
   public ConfigEntry<float> SpeedCapMultiplier { get; set; }
+  public ConfigEntry<float> VehicleRudderSpeedBack { get; set; }
+  public ConfigEntry<float> VehicleRudderSpeedSlow { get; set; }
+  public ConfigEntry<float> VehicleRudderSpeedHalf { get; set; }
 
-  // for those that want to cruise with rudder
-  // public ConfigEntry<bool> AllowRudderSpeed { get; set; }
-  // public ConfigEntry<float> RudderSpeed2 { get; set; }
-  // public ConfigEntry<float> RudderSpeed3 { get; set; }
+  public ConfigEntry<float> VehicleRudderSpeedFull { get; set; }
+
+  public ConfigEntry<bool> FlightVerticalToggle { get; set; }
+  public ConfigEntry<bool> FlightHasRudderOnly { get; set; }
+
+
   public ConfigEntry<float> SailTier1Area { get; set; }
   public ConfigEntry<float> SailTier2Area { get; set; }
   public ConfigEntry<float> SailTier3Area { get; set; }
@@ -74,57 +87,67 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> ShowShipStats { get; set; }
   public ConfigEntry<bool> HasShipContainerWeightCalculations { get; set; }
   public ConfigEntry<float> RaftCreativeHeight { get; set; }
-  public ConfigEntry<float> FloatingColliderVerticalSize { get; set; }
-  public ConfigEntry<float> FloatingColliderVerticalCenterOffset { get; set; }
-  public ConfigEntry<float> BlockingColliderVerticalSize { get; set; }
-  public ConfigEntry<float> BlockingColliderVerticalCenterOffset { get; set; }
   public ConfigEntry<KeyboardShortcut> AnchorKeyboardShortcut { get; set; }
+  public ConfigEntry<bool> EnableMetrics { get; set; }
+  public ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
+  public ConfigEntry<bool> ProtectVehiclePiecesOnErrorFromWearNTearDamage { get; set; }
+  public ConfigEntry<bool> DebugRemoveStartMenuBackground { get; set; }
+  public ConfigEntry<bool> HullCollisionOnly { get; set; }
+
+  public enum HullFloatation
+  {
+    Average,
+    Center,
+    Bottom,
+    Top,
+  }
+
+  public ConfigEntry<HullFloatation> HullFloatationColliderLocation { get; set; }
+  public ConfigEntry<bool> HasVehicleDebug { get; set; }
+
 
   /**
    * These folder names are matched for the CustomTexturesGroup
    */
   public string[] possibleModFolderNames =
-    new[]
-    {
-      $"{Author}-{ModName}", $"zolantris-{ModName}", $"Zolantris-{ModName}", ModName
-    };
+  [
+    $"{Author}-{ModName}", $"zolantris-{ModName}", $"Zolantris-{ModName}", ModName
+  ];
 
   private ConfigDescription CreateConfigDescription(string description, bool isAdmin = false)
   {
     return new ConfigDescription(
       description,
-      (AcceptableValueBase)null, new object[1]
+      null,
+      new ConfigurationManagerAttributes()
       {
-        (object)new ConfigurationManagerAttributes()
-        {
-          IsAdminOnly = true
-        }
-      });
+        IsAdminOnly = true
+      }
+    );
+  }
+
+  /**
+   * @todo will port to valheim vehicles plugin soon.
+   */
+  private void CreateVehicleConfig()
+  {
+    HullFloatationColliderLocation = Config.Bind("Vehicles", "HullFloatationColliderLocation",
+      HullFloatation.Average,
+      CreateConfigDescription(
+        "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship."));
+    HasVehicleDebug = Config.Bind("Vehicles", "HasVehicleDebug", false,
+      CreateConfigDescription(
+        "Enables the debug menu, for showing colliders or rotating the ship"));
+    EnableExactVehicleBounds = Config.Bind("Vehicles", "EnableExactVehicleBounds", false,
+      CreateConfigDescription(
+        "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible"));
   }
 
   private void CreateColliderConfig()
   {
-    FloatingColliderVerticalCenterOffset = Config.Bind("Debug",
-      "FloatingColliderVerticalCenterOffset",
-      -0.65f,
+    HullCollisionOnly = Config.Bind("Floatation", "Only Use Hulls For Floatation Collisions", true,
       CreateConfigDescription(
-        "Sets the raft vertical collision center location original value is -0.2f. Lower offsets can make the boat more jittery, positive offsets will cause the boat to go underwater in areas",
-        false));
-    FloatingColliderVerticalSize = Config.Bind("Debug", "FloatingColliderVerticalSize",
-      1.3f,
-      CreateConfigDescription(
-        "Sets the raft floating collider size. Smaller sizes can make the boat more jittery",
-        false));
-
-    BlockingColliderVerticalSize = Config.Bind("Debug", "BlockingColliderVerticalSize",
-      1.3f,
-      CreateConfigDescription(
-        "Sets sets the raft blocking collider size.", false));
-    BlockingColliderVerticalCenterOffset = Config.Bind("Debug",
-      "BlockingColliderVerticalCenterOffset",
-      -0.65f,
-      CreateConfigDescription(
-        "Sets the raft BlockingColliderVerticalCenterOffset which blocks the player or objects passing through. This will trigger physics so if there is an interaction between the boat and player/it can cause the player to push the boat in the direction of interaction",
+        "Makes the Ship Hull prefabs be the sole source of collisions, meaning ships with wider tops will not collide at bottom terrain due to their width above water. Requires a Hull, without a hull it will previous box around all items in ship",
         false));
   }
 
@@ -140,9 +163,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private void CreatePropulsionConfig()
   {
     ShowShipStats = Config.Bind("Debug", "ShowShipState", true);
-    MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 18f,
+    MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxPropulsionSpeed", 30f,
       CreateConfigDescription(
-        "Sets the absolute max speed a ship can ever hit. Prevents or enables space launches",
+        "Sets the absolute max speed a ship can ever hit. This is capped on the vehicle, so no forces applied will be able to exceed this value. 20-30f is safe, higher numbers could let the ship fail off the map",
         true));
     MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 10f,
       CreateConfigDescription(
@@ -156,16 +179,17 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         "Sets the speed at which it becomes significantly harder to gain speed per sail area",
         true));
 
-    // RudderSpeed2 = Config.Bind("Propulsion", "RudderSpeed2", 5f,
-    //   CreateConfigDescription(
-    //     "Max speed at rudder speed 2.", true));
-    // RudderSpeed3 = Config.Bind("Propulsion", "RudderSpeed3", 10f,
-    //   CreateConfigDescription(
-    //     "", true));
-    // AllowRudderSpeed = Config.Bind("Propulsion", "AllowRudderSpeed", true,
-    //   CreateConfigDescription(
-    //     "", true));
+    // rudder
+    VehicleRudderSpeedBack = Config.Bind("Propulsion", "Rudder Back Speed", 1f,
+      new ConfigDescription("Set the Back speed of rudder, this will apply with sails"));
+    VehicleRudderSpeedSlow = Config.Bind("Propulsion", "Rudder Slow Speed", 1f,
+      new ConfigDescription("Set the Half speed of rudder, this will apply with sails"));
+    VehicleRudderSpeedHalf = Config.Bind("Propulsion", "Rudder Half Speed", 0f,
+      new ConfigDescription("Set the Slow speed of rudder, this will apply with sails"));
+    VehicleRudderSpeedFull = Config.Bind("Propulsion", "Rudder Full Speed", 0f,
+      new ConfigDescription("Set the Full speed of rudder, this will apply with sails"));
 
+    // ship weight
     HasShipWeightCalculations = Config.Bind("Propulsion", "HasShipWeightCalculations", true,
       CreateConfigDescription(
         "enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less"));
@@ -187,26 +211,29 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     SailCustomAreaTier1Multiplier = Config.Bind("Propulsion",
       "SailCustomAreaTier1Multiplier", SailAreaForce.CustomTier1AreaForceMultiplier,
       CreateConfigDescription(
-        "Manual sets the area multiplier the custom tier1 sail. Currently there is only 1 tier",
+        "Manual sets the sail wind area multiplier the custom tier1 sail. Currently there is only 1 tier",
         true)
     );
 
     SailTier1Area = Config.Bind("Propulsion",
       "SailTier1Area", SailAreaForce.Tier1,
-      CreateConfigDescription("Manual sets the area of the tier 1 sail.", true)
+      CreateConfigDescription("Manual sets the sail wind area of the tier 1 sail.", true)
     );
 
     SailTier2Area = Config.Bind("Propulsion",
       "SailTier2Area", SailAreaForce.Tier2,
-      CreateConfigDescription("Manual sets the area of the tier 2 sail.", true));
+      CreateConfigDescription("Manual sets the sail wind area of the tier 2 sail.", true));
 
     SailTier3Area = Config.Bind("Propulsion",
       "SailTier3Area", SailAreaForce.Tier3,
-      CreateConfigDescription("Manual sets the area of the tier 3 sail.", true));
+      CreateConfigDescription("Manual sets the sail wind area of the tier 3 sail.", true));
   }
 
   private void CreateServerConfig()
   {
+    ProtectVehiclePiecesOnErrorFromWearNTearDamage = Config.Bind("Server config",
+      "Protect Vehicle pieces from breaking on Error", true,
+      "Protects against crashes breaking raft/vehicle initialization causing raft/vehicles to slowly break pieces attached to it. This will make pieces attached to valid raft ZDOs unbreakable from damage, but still breakable with hammer");
     AdminsCanOnlyBuildRaft = Config.Bind("Server config", "AdminsCanOnlyBuildRaft", false,
       new ConfigDescription(
         "ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart",
@@ -217,8 +244,26 @@ public class ValheimRaftPlugin : BaseUnityPlugin
             IsAdminOnly = true
           }
         }));
+    AllowOldV1RaftRecipe = Config.Bind("Server config", "AllowOldV1RaftRecipe", false,
+      new ConfigDescription(
+        "Allows the V1 Raft to be built, this Raft is not performant, but remains in v2.0.0 as a Fallback in case there are problems with the new raft",
+        null, [
+          new ConfigurationManagerAttributes()
+          {
+            IsAdminOnly = true
+          }
+        ]));
+    AllowExperimentalPrefabs = Config.Bind("Server config", "AllowOldV1RaftRecipe", false,
+      new ConfigDescription(
+        "Allows v2.0.0 experimental prefabs such as Iron variants of slabs, hulls, and ribs. They do not look great so they are disabled by default",
+        null, [
+          new ConfigurationManagerAttributes()
+          {
+            IsAdminOnly = true
+          }
+        ]));
 
-    ServerRaftUpdateZoneInterval = Config.Bind<float>("Server config",
+    ServerRaftUpdateZoneInterval = Config.Bind("Server config",
       "ServerRaftUpdateZoneInterval",
       10f,
       new ConfigDescription(
@@ -250,13 +295,41 @@ public class ValheimRaftPlugin : BaseUnityPlugin
             IsAdminOnly = true
           }
         }));
+    AllowCustomRudderSpeeds = Config.Bind("Server config", "AllowCustomRudderSpeeds", true,
+      new ConfigDescription(
+        "Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed",
+        (AcceptableValueBase)null, new object[1]
+        {
+          (object)new ConfigurationManagerAttributes()
+          {
+            IsAdminOnly = true
+          }
+        }));
+  }
+
+  private void CreateFlightPropulsionConfig()
+  {
+    FlightVerticalToggle = Config.Bind<bool>("Propulsion",
+      "Flight Vertical Continues UntilToggled",
+      true,
+      "Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button");
+    FlightHasRudderOnly = Config.Bind<bool>("Propulsion",
+      "Only allow rudder speeds during flight",
+      false,
+      "Flight allows for different rudder speeds, only use those and ignore sails");
   }
 
   private void CreateDebugConfig()
   {
-    DisplacedRaftAutoFix = Config.Bind("Debug",
-      "DisplacedRaftAutoFix", false,
-      "Automatically fix a displaced glitched out raft if the player is standing on the raft. This will make the player fall into the water briefly but avoid having to run 'raftoffset 0 0 0'");
+    DebugRemoveStartMenuBackground =
+      Config.Bind("Debug", "DebugRemoveStartMenuBackground", false,
+        "Removes the start scene background, only use this if you want to speedup start time");
+  }
+
+  private void CreateGraphicsConfig()
+  {
+    Graphics_AllowSailsFadeInFog = Config.Bind("Graphics", "Sails Fade In Fog", true,
+      "Allow sails to fade in fog. Unchecking this will be slightly better FPS but less realistic. Should be fine to keep enabled");
   }
 
   private void CreatePrefabConfig()
@@ -267,12 +340,18 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreateBaseConfig()
   {
-    HasDebugBase = Config.Bind("Debug", "HasDebugBase", false,
+    EnableMetrics = Config.Bind("Debug", "Enable Sentry Metrics (requires sentryUnityPlugin)", true,
       CreateConfigDescription(
-        "Outputs more debug logs for the MoveableBaseRootComponent. Useful for troubleshooting errors, but may fill logs quicker"));
-    PatchPlanBuildPositionIssues = Config.Bind<bool>("Patches",
-      "fixPlanBuildPositionIssues", true, new ConfigDescription(
-        "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT.",
+        "Enable sentry debug logging. Requires sentry logging plugin installed to work. Sentry Logging plugin will make it easier to troubleshoot raft errors and detect performance bottlenecks. The bare minimum is collected, and only data related to ValheimRaft. See https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT#logging-metrics for more details about what is collected"));
+
+    HasDebugBase = Config.Bind("Debug", "Debug logging for Vehicle/Raft", false,
+      CreateConfigDescription(
+        "Outputs more debug logs for the Vehicle components. Useful for troubleshooting errors, but will spam logs"));
+
+    PlanBuildPatches = Config.Bind<bool>("Patches",
+      "Enable PlanBuild Patches (required to be on if you installed PlanBuild)", false,
+      new ConfigDescription(
+        "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT. PlanBuild mod can be found here. https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/",
         (AcceptableValueBase)null, new object[1]
         {
           (object)new ConfigurationManagerAttributes()
@@ -281,8 +360,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
           }
         }));
 
-    InitialRaftFloorHeight = Config.Bind<float>("Config",
-      "Initial Floor Height", 0.6f, new ConfigDescription(
+    InitialRaftFloorHeight = Config.Bind<float>("Deprecated Config",
+      "Initial Floor Height (V1 raft)", 0.6f, new ConfigDescription(
         "Allows users to set the raft floor spawn height. 0.45 was the original height in 1.4.9 but it looked a bit too low. Now people can customize it",
         (AcceptableValueBase)null, new object[1]
         {
@@ -338,36 +417,97 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreateConfig()
   {
+    //
+    // Config.SettingChanged += 
     CreateBaseConfig();
     CreatePrefabConfig();
     CreateDebugConfig();
-    CreatePropulsionConfig();
     CreateServerConfig();
     CreateCommandConfig();
     CreateColliderConfig();
     CreateKeyboardSetup();
+
+    // vehicles
+    CreateVehicleConfig();
+    CreatePropulsionConfig();
+    CreateFlightPropulsionConfig();
+
+    // for graphics QOL but maybe less FPS friendly
+    CreateGraphicsConfig();
+  }
+
+  internal void ApplyMetricIfAvailable()
+  {
+    var @namespace = "SentryUnityWrapper";
+    var @pluginClass = "SentryUnityWrapperPlugin";
+    Logger.LogDebug(
+      $"contains sentryunitywrapper: {Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper")}");
+
+    Logger.LogDebug($"plugininfos {Chainloader.PluginInfos}");
+
+    if (!EnableMetrics.Value ||
+        !Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper")) return;
+    Logger.LogDebug("Made it to sentry check");
+    SentryMetrics.ApplyMetrics();
   }
 
   public void Awake()
   {
     Instance = this;
+
+
     CreateConfig();
     PatchController.Apply(HarmonyGuid);
 
     AddPhysicsSettings();
 
-    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new CreativeModeConsoleCommand());
-    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new MoveRaftConsoleCommand());
-    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new HideRaftConsoleCommand());
-    CommandManager.Instance.AddConsoleCommand((ConsoleCommand)new RecoverRaftConsoleCommand());
+    RegisterConsoleCommands();
+    RegisterVehicleConsoleCommands();
+
+    HasVehicleDebug.SettingChanged += OnConfigChanged;
 
     /*
      * @todo add a way to skip LoadCustomTextures when on server. This check when used here crashes the Plugin.
      */
-    PrefabManager.OnVanillaPrefabsAvailable += new Action(LoadCustomTextures);
-    PrefabManager.OnVanillaPrefabsAvailable += new Action(AddCustomPieces);
+    PrefabManager.OnVanillaPrefabsAvailable += LoadCustomTextures;
+    PrefabManager.OnVanillaPrefabsAvailable += AddCustomPieces;
   }
 
+  private void OnConfigChanged(object sender, EventArgs eventArgs)
+  {
+    AddGuiLayerComponents();
+  }
+
+  public void RegisterConsoleCommands()
+  {
+    CommandManager.Instance.AddConsoleCommand(new CreativeModeConsoleCommand());
+    CommandManager.Instance.AddConsoleCommand(new MoveRaftConsoleCommand());
+    CommandManager.Instance.AddConsoleCommand(new HideRaftConsoleCommand());
+    CommandManager.Instance.AddConsoleCommand(new RecoverRaftConsoleCommand());
+  }
+
+
+  // this will be removed when vehicles becomes independent of valheim raft.
+  public void RegisterVehicleConsoleCommands()
+  {
+    CommandManager.Instance.AddConsoleCommand(new VehicleCommands());
+  }
+
+  private void Start()
+  {
+    // SentryLoads after
+    ApplyMetricIfAvailable();
+    AddGuiLayerComponents();
+  }
+
+  /**
+   * Important for raft collisions to only include water and landmass colliders.
+   *
+   * Other collisions on the piece level are not handled on the CustomRaftLayer
+   *
+   * todo remove CustomRaftLayer and use the VehicleLayer instead.
+   * - Requires adding explicit collision ignores for the rigidbody attached to VehicleInstance (m_body)
+   */
   private void AddPhysicsSettings()
   {
     var layer = LayerMask.NameToLayer("vehicle");
@@ -407,41 +547,58 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private void LoadCustomTextures()
   {
     var sails = CustomTextureGroup.Load("Sails");
-    for (var k = 0; k < sails.Textures.Count; k++)
+    foreach (var texture3 in sails.Textures)
     {
-      var texture3 = sails.Textures[k];
       texture3.Texture.wrapMode = TextureWrapMode.Clamp;
       if ((bool)texture3.Normal) texture3.Normal.wrapMode = TextureWrapMode.Clamp;
     }
 
     var patterns = CustomTextureGroup.Load("Patterns");
-    for (var j = 0; j < patterns.Textures.Count; j++)
+    foreach (var texture2 in patterns.Textures)
     {
-      var texture2 = patterns.Textures[j];
       texture2.Texture.filterMode = FilterMode.Point;
       texture2.Texture.wrapMode = TextureWrapMode.Repeat;
       if ((bool)texture2.Normal) texture2.Normal.wrapMode = TextureWrapMode.Repeat;
     }
 
     var logos = CustomTextureGroup.Load("Logos");
-    for (var i = 0; i < logos.Textures.Count; i++)
+    foreach (var texture in logos.Textures)
     {
-      var texture = logos.Textures[i];
       texture.Texture.wrapMode = TextureWrapMode.Clamp;
       if ((bool)texture.Normal) texture.Normal.wrapMode = TextureWrapMode.Clamp;
     }
   }
 
-  internal void AddCustomPieces()
+  private void AddGuiLayerComponents()
+  {
+    VehicleShip.HasVehicleDebugger = HasVehicleDebug.Value;
+    MoveableBaseShipComponent.HasVehicleDebugger = HasVehicleDebug.Value;
+    ToggleVehicleDebugGui();
+  }
+
+  /**
+   * todo: move to Vehicles plugin when it is ready
+   */
+  public void ToggleVehicleDebugGui()
+  {
+    _debugGui = GetComponent<VehicleDebugGui>();
+    if ((bool)_debugGui)
+    {
+      Destroy(_debugGui);
+    }
+    else
+    {
+      _debugGui = gameObject.AddComponent<VehicleDebugGui>();
+    }
+  }
+
+  private void AddCustomPieces()
   {
     if (m_customItemsAdded) return;
+    // Registers all prefabs using ValheimVehicles PrefabRegistryController
+    prefabController = gameObject.AddComponent<PrefabRegistryController>();
+    PrefabRegistryController.Init();
 
     m_customItemsAdded = true;
-    m_assetBundle =
-      AssetUtils.LoadAssetBundleFromResources("valheimraft", Assembly.GetExecutingAssembly());
-
-    // Registers all prefabs
-    prefabController = gameObject.AddComponent<PrefabController>();
-    prefabController.Init();
   }
 }

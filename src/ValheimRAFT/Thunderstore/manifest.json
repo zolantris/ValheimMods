@@ -1,9 +1,9 @@
 ﻿{
   "name": "ValheimRAFT",
-  "version_number": "1.6.14",
+  "version_number": "2.0.0",
   "website_url": "https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT",
-  "description": "ValheimRAFT fork with some QOL stability fixes works with latest Valheim. This mod is open source and actively being developed/supported.",
+  "description": "ValheimRAFT - a water vehicles mod for valheim. V2 has new hulls,walls,slabs.",
   "dependencies": [
-    "ValheimModding-Jotunn-2.15.2"
+    "ValheimModding-Jotunn-2.20.0"
   ]
 }

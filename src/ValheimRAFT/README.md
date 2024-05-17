@@ -2,19 +2,23 @@
 
 <img src="./Thunderstore/icon.png" alt="ValheimRAFT Community Made Boat Hjalmere">
 
-A [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork that works
-with latest Valheim. The original mod
-owner [Sarcenzzz](https://www.nexusmods.com/valheim/users/3061574) stopped
-maintaining the mod.
-
-As of 12/25/2023 I got official permission to maintain and open source this mod.
-
-This decompile fork aims to keep the mod functional with future goals of
-expanding functionality.
+This mod aims to continue support for Water based features of the original
+ValheimRAFT mod and incorporate more vehicle items and mechanics within the mod
+and further extends it's capabilities.
 
 ## Build Status
 
 [![ValheimRAFT Build](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml/badge.svg)](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml)
+
+## Background
+
+This repo is a [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork
+that works
+with latest Valheim. The original mod
+owner [Sarcen](https://www.nexusmods.com/valheim/users/3061574) stopped
+maintaining the mod, but gave permission to maintain/improve and open source
+this mod as of
+12/25/2023.
 
 ## Contents
 
@@ -79,7 +83,8 @@ The following has been tested:
 - Adds anchors
 - Adds custom sails (requires meshes to be working)
 - Adds ropes (requires meshes to be working)
-- Sails now will each contribute to the total ship speed. Mesh sails do an area
+- Sails now will each contribute to the total shipShip.Speed. Mesh sails do an
+  area
   calculation while tier1-3 sails are
   preset values.
 
@@ -105,7 +110,7 @@ discover other mods.
 | HasShipWeightCalculations          | (propulsion) -> enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less                                                                                                                                  |
 | HasShipContainerWeightCalculations | (propulsion) -> enables ship weight calculations for containers which affects sail-force (sailing speed) and future propulsion calculations. Makes ships with lots of containers require more sails                                                                                                          |
 | MassPercentageFactor               | (propulsion) -> Sets the mass percentage of the ship that will slow down the sails.                                                                                                                                                                                                                          |
-| SpeedCapMultiplier                 | (propulsion) -> Sets the speed at which it becomes significantly harder to gain speed per sail area, the ships will still be capped at their maxSail speed.                                                                                                                                                  |
+| SpeedCapMultiplier                 | (propulsion) -> Sets the speed at which it becomes significantly harder to gain speed per sail area, the ships will still be capped at their maxSailShip.Speed.                                                                                                                                              |
 | MaxPropulsionSpeed                 | (propulsion) -> Sets the absolute max speed a ship can ever hit. Prevents or enables space launches. Will be used as a cap for all propulsion introduced in future versions.                                                                                                                                 |
 | MaxSailSpeed                       | (propulsion) -> Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.                                                                                                                                                            |
 | SailTier1Area                      | (propulsion) -> Sets the tier1 sail area.                                                                                                                                                                                                                                                                    |
@@ -180,9 +185,51 @@ Previously it only supported Direct3D11.
    have higher chance of breaking other things and are harder to maintain.
 3. If you want to directly get involved. Reach out on discord.
 
+## Attribution
+
+- Sarcen: For creating the initial mod and supporting it until v1.4.8!
+- Zolantris: For supporting and expanding the Raft Mod since v1.5.0.
+- RacerX: For contributing a stag icon for sails. Looks awesome!
+
 ## Support Open Source
 
 <a href='https://ko-fi.com/zolantris' target='_blank'><img height='35' style='border:0px;height:46px;' src='https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com' />
+
+## Logging Metrics
+
+These packages may contain logging. Logging can be opted out by any user by
+unchecking `enableMetrics`. If you choose to opt-out, please be aware, this will
+make it more difficult to troubleshoot issues.
+
+### What information will be collected
+- 
+
+- Paths related to Valheim Game directory
+- Paths related to ValheimRAFT / ValheimVehicles plugin directory such as
+  symlinked directories from vortex mod installer or directories created by
+  r2modman or thunderstore.
+- Health related to the ValheimRAFT mod. It will track performance, slowdowns,
+  and bottlenecks making it significantly easier to debug.
+
+This logging has yet to be implemented.
+
+## Installing nuget packages
+
+### With Rider
+
+use Rider and click nuget (should be bottom left panel, one of the items), and
+search for the package
+
+### with nuget.exe (not recommended)
+
+1. Install nuget.exe
+2. For installing sentry as an example run.
+    ```powershell
+    ..\..\programs\nuget.exe install Sentry -Version 3.41.3 -OutputDirectory Packages`
+    ```
+
+The example above is if the path for nuget exists 2 directories above this repo
+and within programs folder.
 
 ## Getting Started
 
