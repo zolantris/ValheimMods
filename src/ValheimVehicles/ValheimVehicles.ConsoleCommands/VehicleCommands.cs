@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using BepInEx.Logging;
 using Jotunn.Entities;
+using Jotunn.Managers;
+using UnityEngine;
 using ValheimRAFT;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
@@ -80,13 +82,28 @@ public class VehicleCommands : ConsoleCommand
       return;
     }
 
-    var currentPrefab = vehicleController?.m_nview?.m_zdo?.m_prefab;
-    if (currentPrefab.Equals(PrefabNames.WaterVehicleShip.GetStableHashCode()))
+    var vehicleShip = vehicleController?.VehicleInstance;
+    if (vehicleShip == null)
     {
-      vehicleController.m_nview.m_zdo.SetPrefab(PrefabNames.MBRaft.GetStableHashCode());
-      Logger.LogMessage(
-        "Downgraded raft to V1, please reload the sector or log out and return to the game");
+      Logger.LogMessage("No VehicleShip detected exiting. Without downgrading");
+      return;
     }
+
+    var mbRaftPrefab = PrefabManager.Instance.GetPrefab(PrefabNames.MBRaft);
+    var mbRaftPrefabInstance = Object.Instantiate(mbRaftPrefab,
+      vehicleController.transform.position,
+      vehicleController.transform.rotation, null);
+
+    var mbShip = mbRaftPrefabInstance.GetComponent<MoveableBaseShipComponent>();
+    var piecesInVehicleController = vehicleController.GetCurrentPieces();
+
+    foreach (var zNetView in piecesInVehicleController)
+    {
+      zNetView.m_zdo.Set(MoveableBaseRootComponent.MBParentIdHash,
+        mbShip.GetMbRoot().GetPersistentId());
+    }
+
+    ZNetScene.instance.Destroy(vehicleShip.Instance.gameObject);
   }
 
   private static void RunUpgradeToV2()
@@ -98,17 +115,19 @@ public class VehicleCommands : ConsoleCommand
       return;
     }
 
-    var currentPrefab = mbRaft.m_nview.m_zdo.m_prefab;
-    if (currentPrefab.Equals(PrefabNames.MBRaft.GetStableHashCode()))
+    var vehiclePrefab = PrefabManager.Instance.GetPrefab(PrefabNames.WaterVehicleShip);
+    var vehicleInstance = Object.Instantiate(vehiclePrefab, mbRaft.m_ship.transform.position,
+      mbRaft.m_ship.transform.rotation, null);
+    var vehicleShip = vehicleInstance.GetComponent<VehicleShip>();
+    var vehicleController = vehicleShip.VehicleController;
+
+    var piecesInMBRaft = mbRaft.m_pieces;
+    foreach (var zNetView in piecesInMBRaft)
     {
-      mbRaft.m_nview.m_zdo.SetPrefab(PrefabNames.WaterVehicleShip.GetStableHashCode());
-      Logger.LogMessage(
-        "Updated raft to V2, please reload the sector or log out and return to the game");
+      zNetView.m_zdo.Set(BaseVehicleController.MBParentIdHash, vehicleController.PersistentZdoId);
     }
-    else
-    {
-      Logger.LogMessage("RaftPrefab does not match expected name, skipping upgrade");
-    }
+
+    ZNetScene.instance.Destroy(mbRaft.m_ship.gameObject);
   }
 
   private static void ToggleVehicleDebugComponent()
@@ -119,21 +138,6 @@ public class VehicleCommands : ConsoleCommand
       vehicleShip.InitializeVehicleDebugger();
     }
   }
-
-  // private ParseDebugArgs(string[] args)
-  // {
-  //   if (args.Length < 2)
-  //   {
-  //     return;
-  //   }
-  //
-  //   var secondArg = args[1];
-  //
-  //   if (secondArg == VehicleCommandArgs.colliders)
-  //   {
-  //     
-  //   }
-  // }
 
   public override List<string> CommandOptionList() =>
   [
