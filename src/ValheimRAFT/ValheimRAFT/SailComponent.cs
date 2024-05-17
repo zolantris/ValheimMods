@@ -355,14 +355,20 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
     if (isPlayerInsideMister || isSailInsideMister || isInAshlands)
     {
+      var distance = Vector3.Distance(player.transform.position, transform.position);
+      if (distance > 60f && !isInAshlands)
+      {
+        SetMistAlpha(0);
+        return;
+      }
+
       var playerDistanceFromSail =
-        Mathf.Clamp(Vector3.Distance(player.transform.position, transform.position), 0f, 20f);
+        Mathf.Clamp(distance, 0f, 20f);
 
       // ashlands has a haze (but not much)
       var alphaFromDistance = isInAshlands
         ? Mathf.Clamp((playerDistanceFromSail - 30f) / 10f, 0, 0.2f)
-        : Mathf.Clamp((playerDistanceFromSail * playerDistanceFromSail - 10) / 10, 0, 0.95f);
-
+        : Mathf.Clamp((playerDistanceFromSail * playerDistanceFromSail - 20) / 20f, 0, 0.95f);
       SetMistAlpha(1 - alphaFromDistance);
     }
     else
