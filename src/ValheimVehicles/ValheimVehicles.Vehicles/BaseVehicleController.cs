@@ -151,6 +151,11 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   private Coroutine? _serverUpdatePiecesCoroutine;
   private Coroutine? _bedUpdateCoroutine;
 
+  public List<ZNetView> GetCurrentPieces()
+  {
+    return m_pieces.ToList();
+  }
+
   /**
    * Side Effect to be used when initialization state changes. This allows for starting the ActivatePendingPiecesCoroutine
    */
@@ -1546,20 +1551,21 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   // for increasing ship wake size.
   private void SetShipWakeBounds()
   {
-    var firstRudder = m_rudderPieces.First();
+    if (VehicleInstance?.Instance?.ShipEffectsObj == null) return;
 
+    var firstRudder = m_rudderPieces.First();
     if (firstRudder == null)
     {
       VehicleInstance.Instance.ShipEffectsObj.transform.localPosition =
         new Vector3(m_floatcollider.transform.localPosition.x,
-          VehicleInstance.Instance.ShipEffectsObj.transform.localPosition.y,
+          m_floatcollider.bounds.center.y,
           m_floatcollider.bounds.min.z);
       return;
     }
 
     VehicleInstance.Instance.ShipEffectsObj.transform.localPosition = new Vector3(
       firstRudder.transform.localPosition.x,
-      VehicleInstance.Instance.ShipEffectsObj.transform.localPosition.y,
+      m_floatcollider.bounds.center.y,
       firstRudder.transform.localPosition.z);
   }
 

@@ -52,6 +52,11 @@ public class RaftPrefab : IRegisterPrefab
   {
     var raftPrefab = GetTransformedRaft();
 
+    if (!ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
+    {
+      return;
+    }
+
     pieceManager.AddPiece(new CustomPiece(raftPrefab, false, new PieceConfig
     {
       PieceTable = "Hammer",

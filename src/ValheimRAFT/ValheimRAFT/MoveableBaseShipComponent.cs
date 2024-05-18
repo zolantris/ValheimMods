@@ -20,7 +20,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
   public VehicleDebugHelpers VehicleDebugHelpersInstance;
   public static bool HasVehicleDebugger;
 
-  internal MoveableBaseRootComponent m_baseRoot;
+  public MoveableBaseRootComponent m_baseRoot;
 
   public bool isCreative = false;
 
@@ -44,6 +44,11 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   public MBFlags m_flags;
   public bool IsAnchored => m_flags.HasFlag(MBFlags.IsAnchored);
+
+  public MoveableBaseRootComponent GetMbRoot()
+  {
+    return m_baseRoot;
+  }
 
   public void Awake()
   {

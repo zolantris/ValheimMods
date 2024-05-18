@@ -25,13 +25,17 @@ namespace ValheimRAFT;
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Patch)]
 public class ValheimRaftPlugin : BaseUnityPlugin
 {
+  // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "2.0.1";
-  internal const string ModName = "ValheimRAFT";
+  public const string Version = "2.0.2";
+  public const string ModName = "ValheimRAFT";
   public const string BepInGuid = $"{Author}.{ModName}";
-  private const string HarmonyGuid = $"{Author}.{ModName}";
+  public const string HarmonyGuid = $"{Author}.{ModName}";
   public const string ModDescription = "Valheim Mod for building on the sea";
+
   public const string CopyRight = "Copyright © 2023-2024, GNU-v3 licensed";
+  // ReSharper restore MemberCanBePrivate.Global
+
   public static readonly int CustomRaftLayer = 29;
   private bool m_customItemsAdded;
   public PrefabRegistryController prefabController;
