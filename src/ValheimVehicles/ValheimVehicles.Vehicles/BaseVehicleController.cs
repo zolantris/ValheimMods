@@ -1551,8 +1551,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   // for increasing ship wake size.
   private void SetShipWakeBounds()
   {
-    var firstRudder = m_rudderPieces.First();
+    if (VehicleInstance?.Instance?.ShipEffectsObj == null) return;
 
+    var firstRudder = m_rudderPieces.First();
     if (firstRudder == null)
     {
       VehicleInstance.Instance.ShipEffectsObj.transform.localPosition =

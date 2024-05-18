@@ -24,26 +24,29 @@ public class Ship_Patch
 
       var mbShip = __instance.gameObject.AddComponent<MoveableBaseShipComponent>();
 
-      var debugHelpersInstance = mbShip.VehicleDebugHelpersInstance =
-        __instance.gameObject.AddComponent<VehicleDebugHelpers>();
-      debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
+      if (ValheimRaftPlugin.Instance.HasVehicleDebug.Value)
       {
-        collider = mbShip.m_baseRoot.m_floatcollider,
-        lineColor = Color.green,
-        parent = mbShip.m_baseRoot.gameObject
-      });
-      debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
-      {
-        collider = mbShip.m_baseRoot.m_blockingcollider,
-        lineColor = Color.magenta,
-        parent = mbShip.m_baseRoot.gameObject
-      });
-      debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
-      {
-        collider = mbShip.m_baseRoot.m_onboardcollider,
-        lineColor = Color.yellow,
-        parent = mbShip.m_baseRoot.gameObject
-      });
+        var debugHelpersInstance = mbShip.VehicleDebugHelpersInstance =
+          __instance.gameObject.AddComponent<VehicleDebugHelpers>();
+        debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
+        {
+          collider = mbShip.m_baseRoot.m_floatcollider,
+          lineColor = Color.green,
+          parent = mbShip.m_baseRoot.gameObject
+        });
+        debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
+        {
+          collider = mbShip.m_baseRoot.m_blockingcollider,
+          lineColor = Color.magenta,
+          parent = mbShip.m_baseRoot.gameObject
+        });
+        debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
+        {
+          collider = mbShip.m_baseRoot.m_onboardcollider,
+          lineColor = Color.yellow,
+          parent = mbShip.m_baseRoot.gameObject
+        });
+      }
     }
   }
 

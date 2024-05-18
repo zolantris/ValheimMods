@@ -13,7 +13,7 @@ namespace ValheimVehicles.ConsoleCommands;
 
 public class VehicleCommands : ConsoleCommand
 {
-  private class VehicleCommandArgs
+  private static class VehicleCommandArgs
   {
     // public const string locate = "locate";
     // public const string rotate = "rotate";
@@ -22,6 +22,7 @@ public class VehicleCommands : ConsoleCommand
     public const string debug = "debug";
     public const string creative = "creative";
     public const string help = "help";
+    public const string recover = "recover";
     public const string upgradeToV2 = "upgradeShipToV2";
     public const string downgradeToV1 = "downgradeShipToV1";
   }
@@ -30,9 +31,10 @@ public class VehicleCommands : ConsoleCommand
 
   public string OnHelp()
   {
-    // if (args)
     return
-      "Runs vehicle commands, each command will require parameters to run use help to see the input values. <debug> will show a menu with options like rotating or debugging vehicle colliders";
+      "Runs vehicle commands, each command will require parameters to run use help to see the input values." +
+      "\n<debug> will show a menu with options like rotating or debugging vehicle colliders" +
+      "\n<recover>: will recover any vehicles within range of 1000 and turn them into V2 Vehicles";
   }
 
   private class RotateArgs
@@ -58,6 +60,9 @@ public class VehicleCommands : ConsoleCommand
       // case VehicleCommandArgs.locate:
       //   LocateVehicle.LocateAllVehicles();
       //   break;
+      case VehicleCommandArgs.recover:
+        RecoverRaftConsoleCommand.RecoverRaftWithoutDryRun($"{Name} {VehicleCommandArgs.recover}");
+        break;
       case VehicleCommandArgs.creative:
         CreativeModeConsoleCommand.RunCreativeModeCommand($"{Name} {VehicleCommandArgs.creative}");
         break;
@@ -148,6 +153,7 @@ public class VehicleCommands : ConsoleCommand
     VehicleCommandArgs.help,
     VehicleCommandArgs.upgradeToV2,
     VehicleCommandArgs.downgradeToV1,
+    VehicleCommandArgs.recover
   ];
 
 
