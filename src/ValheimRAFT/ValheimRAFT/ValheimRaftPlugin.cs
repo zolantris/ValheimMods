@@ -22,12 +22,12 @@ namespace ValheimRAFT;
 // [SentryDSN()]
 [BepInPlugin(BepInGuid, ModName, Version)]
 [BepInDependency(Main.ModGuid)]
-[NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Patch)]
+[NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
 public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "2.0.2";
+  public const string Version = "2.0.4";
   public const string ModName = "ValheimRAFT";
   public const string BepInGuid = $"{Author}.{ModName}";
   public const string HarmonyGuid = $"{Author}.{ModName}";

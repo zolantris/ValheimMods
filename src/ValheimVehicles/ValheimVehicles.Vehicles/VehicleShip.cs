@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Linq;
 using Jotunn.Extensions;
 using Jotunn.Managers;
-using Newtonsoft.Json;
 using Registry;
 using UnityEngine;
 using UnityEngine.UI;
