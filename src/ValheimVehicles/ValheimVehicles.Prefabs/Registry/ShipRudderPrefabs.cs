@@ -93,7 +93,7 @@ public class ShipRudderPrefabs : IRegisterPrefab
     RegisterAdvancedRudderVariant(PrefabNames.ShipRudderAdvancedIron,
       LoadValheimVehicleAssets.ShipRudderAdvancedSingleIronAsset);
 
-    RegisterAdvancedRudderVariant(PrefabNames.ShipRudderAdvancedDoubleIron,
+    RegisterAdvancedRudderVariant(PrefabNames.ShipRudderAdvancedDoubleWood,
       LoadValheimVehicleAssets.ShipRudderAdvancedDoubleWoodAsset);
     RegisterAdvancedRudderVariant(PrefabNames.ShipRudderAdvancedDoubleIron,
       LoadValheimVehicleAssets.ShipRudderAdvancedDoubleIronAsset);
