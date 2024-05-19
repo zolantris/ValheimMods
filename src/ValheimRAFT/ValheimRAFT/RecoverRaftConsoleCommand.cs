@@ -83,12 +83,33 @@ public class RecoverRaftConsoleCommand : ConsoleCommand
 
     Logger.LogInfo($"{commandName}: Searching {GameCamera.instance.transform.position}");
 
+    var colliderRoots = new List<Transform>();
+
     foreach (var collider in colliders)
     {
+      if (colliderRoots.Contains(collider.transform.root))
+      {
+        Logger.LogDebug("Skipping collider root that already exists");
+        continue;
+      }
+
+      colliderRoots.Add(collider.transform.root);
+
       var nv = collider.GetComponent<ZNetView>();
       if (!nv)
       {
         nv = collider.GetComponentInParent<ZNetView>();
+      }
+
+      if (!nv)
+      {
+        var rootNv = collider.transform.root.gameObject.GetComponent<ZNetView>();
+        var rootChildrenWithNv = collider.transform.root.GetComponentInChildren<ZNetView>();
+
+        if (rootNv)
+        {
+          nv = rootNv;
+        }
       }
 
       if (nv == null || nv.m_zdo == null) continue;

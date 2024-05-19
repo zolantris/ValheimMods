@@ -23,7 +23,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   private bool _isHoldingAscend = false;
 
   private const float InitialTargetHeight = 0f;
-  public float TargetHeight { get; set; } = InitialTargetHeight;
+  public float TargetHeight { get; private set; }
   public Transform AttachPoint { get; set; }
 
   public const string m_attachAnimation = "Standing Torch Idle right";
@@ -50,12 +50,25 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
       (VehicleMovementFlags)NetView.GetZDO().GetInt(VehicleZdoVars.VehicleFlags,
         (int)MovementFlags);
     InitializeRPC();
+
+    InvokeRepeating(nameof(SyncTargetHeight), 2f, 2f);
   }
 
   private void Update()
   {
     OnControllingWithHotKeyPress();
     AutoVerticalFlightUpdate();
+  }
+
+  private void SyncTargetHeight()
+  {
+    if (ShipInstance?.Instance.m_nview)
+    {
+      var zdoTargetHeight = ShipInstance.Instance.m_nview.m_zdo.GetFloat(
+        VehicleZdoVars.VehicleTargetHeight,
+        TargetHeight);
+      TargetHeight = zdoTargetHeight;
+    }
   }
 
   private void InitializeRPC()
@@ -126,6 +139,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   {
     if (!_hasRegister) return;
     UnRegisterRPCListeners();
+    CancelInvoke(nameof(SyncTargetHeight));
   }
 
   public void FireRequestControl(long playerId, Transform attachTransform)
@@ -428,23 +442,25 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   /// <param name="isEnabled"></param>
   public void SetAnchor(bool isEnabled)
   {
+    SendSetAnchor(isEnabled);
+  }
+
+  /// <summary>
+  /// Setter method for anchor, directly calling this before invoking ZDO call will cause de-syncs so this should only be used in the RPC
+  /// </summary>
+  /// <param name="isEnabled"></param>
+  /// <returns></returns>
+  private VehicleMovementFlags HandleSetAnchor(bool isEnabled)
+  {
     if (isEnabled)
     {
       _isAscending = false;
       _isDescending = false;
     }
 
-    // skips setting Flag if it already is set
-    if (IsAnchored != isEnabled)
-    {
-      MovementFlags = isEnabled
-        ? (MovementFlags & ~VehicleMovementFlags.IsAnchored)
-        : (MovementFlags | VehicleMovementFlags.IsAnchored);
-      NetView.m_zdo.Set(VehicleZdoVars.VehicleFlags, (int)MovementFlags);
-    }
-
-    // always emits the setter to prevent desync
-    SendSetAnchor(isEnabled);
+    return isEnabled
+      ? (MovementFlags | VehicleMovementFlags.IsAnchored)
+      : (MovementFlags & ~VehicleMovementFlags.IsAnchored));
   }
 
   public void SendSetAnchor(bool state)
@@ -454,9 +470,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
 
   public void RPC_SetAnchor(long sender, bool state)
   {
-    MovementFlags = (state
-      ? (MovementFlags | VehicleMovementFlags.IsAnchored)
-      : (MovementFlags & ~VehicleMovementFlags.IsAnchored));
+    MovementFlags = HandleSetAnchor(state);
     NetView.GetZDO().Set(VehicleZdoVars.VehicleFlags, (int)MovementFlags);
   }
 

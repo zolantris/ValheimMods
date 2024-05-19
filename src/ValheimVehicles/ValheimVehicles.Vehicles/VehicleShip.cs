@@ -56,7 +56,7 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   private GameObject _piecesContainer;
   private GameObject _ghostContainer;
   private ImpactEffect _impactEffect;
-  public float TargetHeight => MovementController.TargetHeight = 0f;
+  public float TargetHeight => MovementController.TargetHeight;
 
   public bool isCreative = false;
 
@@ -1019,15 +1019,9 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   // Updates gravity and target height (which is used to compute gravity)
   public void UpdateGravity()
   {
-    if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
+    if (!ValheimRaftPlugin.Instance.AllowFlight.Value && TargetHeight != 0f)
     {
-      MovementController.TargetHeight = 0f;
       m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, 0f);
-    }
-    else
-    {
-      MovementController.TargetHeight =
-        m_nview.m_zdo.GetFloat(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
     }
 
     m_zsyncTransform.m_useGravity =

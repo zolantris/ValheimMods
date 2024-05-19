@@ -28,6 +28,19 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     {
       fontSize = 50
     };
+#if DEBUG
+    GUILayout.BeginArea(new Rect(250, 10, 200, 200), myButtonStyle);
+    if (GUILayout.Button("Debug Delete ShipZDO"))
+    {
+      var currentShip = VehicleDebugHelpers.GetVehicleController();
+      if (currentShip != null)
+      {
+        ZNetScene.instance.Destroy(currentShip.m_nview.gameObject);
+      }
+    }
+
+    GUILayout.EndArea();
+#endif
 
     GUILayout.BeginArea(new Rect(500, 10, 200, 200), myButtonStyle);
     if (GUILayout.Button("collider debugger"))
@@ -46,7 +59,7 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
         return;
       }
 
-      currentInstance.StartRenderAllCollidersLoop();
+      currentInstance?.StartRenderAllCollidersLoop();
     }
 
     if (GUILayout.Button("raftcreative"))
@@ -57,11 +70,6 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     if (GUILayout.Button("activatePendingPieces"))
     {
       VehicleDebugHelpers.GetVehicleController()?.ActivatePendingPiecesCoroutine();
-    }
-
-    if (GUILayout.Button("rebuild bounds"))
-    {
-      VehicleDebugHelpers.GetVehicleController()?.RebuildBounds();
     }
 
     if (GUILayout.Button("Flip Ship"))
