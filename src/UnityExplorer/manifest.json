@@ -1,0 +1,7 @@
+{
+    "name": "UnityExplorer",
+    "version_number": "4.8.2",
+    "website_url": "https://github.com/sinai-dev/UnityExplorer",
+    "description": "An in-game UI for exploring, debugging and modifying Unity games.",
+    "dependencies": []
+}
