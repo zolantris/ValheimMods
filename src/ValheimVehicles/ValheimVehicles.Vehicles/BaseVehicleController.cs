@@ -1185,17 +1185,15 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     var id = GetParentID(zdo);
     if (id != 0)
     {
-      // Logger.LogInfo($"InitZDO for id: {id}");
       if (!m_allPieces.TryGetValue(id, out var list))
       {
         list = [];
         m_allPieces.Add(id, list);
       }
 
+      // important for preventing a list error if the zdo has already been added
       if (list.Contains(zdo))
       {
-        Logger.LogWarning(
-          $"ValheimVehicles.BaseVehicleController: The zdo {zdo.m_uid}, tried to be added when it already exists within the list. Please submit a bug if this issue shows up frequently.");
         return;
       }
 
