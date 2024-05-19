@@ -32,12 +32,11 @@ public class RecoverRaftConsoleCommand : ConsoleCommand
   public override string Help =>
     "Attempts to recover unattached rafts." +
     "\nMust provide a confirm command to recover the rafts." +
-    "default radius is 1000f but the user can supply a number such as 50 if they want to only recover their raft within a smaller area";
+    "default radius is 1000 (units) but the user can supply a number such as 50 units if they want to only recover their raft within a smaller area";
 
   public override void Run(string[] args)
   {
     var radius = 1000f;
-
     foreach (var arg in args)
     {
       try

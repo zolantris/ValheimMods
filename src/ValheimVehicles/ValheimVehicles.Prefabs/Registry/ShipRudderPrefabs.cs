@@ -1,5 +1,6 @@
 using Jotunn.Configs;
 using Jotunn.Entities;
+using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Vehicles.Components;
@@ -47,7 +48,7 @@ public class ShipRudderPrefabs : IRegisterPrefab
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     PrefabRegistryHelpers.AddPieceForPrefab(prefab.name, prefab);
     var rudderComponent = prefab.AddComponent<RudderComponent>();
-    rudderComponent.PivotPoint = prefab.transform.Find("rudder_rotation");
+    rudderComponent.PivotPoint = prefab.transform.FindDeepChild("rudder_rotation");
 
     PrefabRegistryHelpers.SetWearNTear(prefab);
     PrefabRegistryHelpers.FixCollisionLayers(prefab);
@@ -87,8 +88,14 @@ public class ShipRudderPrefabs : IRegisterPrefab
   private static void RegisterShipRudderAdvanced()
   {
     RegisterAdvancedRudderVariant(PrefabNames.ShipRudderAdvancedWood,
-      LoadValheimVehicleAssets.ShipRudderAdvancedWoodAsset);
-    RegisterAdvancedRudderVariant(PrefabNames.ShipRudderAdvancedTailWood,
-      LoadValheimVehicleAssets.ShipRudderAdvancedTailWoodAsset);
+      LoadValheimVehicleAssets.ShipRudderAdvancedSingleWoodAsset);
+
+    RegisterAdvancedRudderVariant(PrefabNames.ShipRudderAdvancedIron,
+      LoadValheimVehicleAssets.ShipRudderAdvancedSingleIronAsset);
+
+    RegisterAdvancedRudderVariant(PrefabNames.ShipRudderAdvancedDoubleWood,
+      LoadValheimVehicleAssets.ShipRudderAdvancedDoubleWoodAsset);
+    RegisterAdvancedRudderVariant(PrefabNames.ShipRudderAdvancedDoubleIron,
+      LoadValheimVehicleAssets.ShipRudderAdvancedDoubleIronAsset);
   }
 }

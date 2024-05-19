@@ -1,15 +1,26 @@
-you might wanna make sure that you have a clean valheim installation first. easiest way to achieve this is by renaming the current valheim installation and then executing the file integrity check in steam.
-for the dev build:
-first things first: head to the new valheim installation and delete the valheim.exe. then head to your unity hub installation, it's probably in program files/unity/hub. don't confuse it with program files/unity hub.
-all the way in C:\Program Files\Unity\Hub\Editor\2022.3.17f1\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_development_mono, there is a WindowsPlayer.exe. copy that into the valheim folder and rename it to valheim.exe
-then copy the UnityPlayer.dll and the WinPixEventRuntime.dll into the same folder, replacing the existing files.
-in your unity installation, there is also a Data folder and inside of that, you will find a managed and a resource folder. copy both of these folders into the valheim_Data folder in your valheim installation, replacing all files.
-inside the valheim_Data folder, there is a boot.config file. open that in any editor and append the following two lines:
+## How to Create a Dev Build
 
-```boot.config
-player-connection-debug=1
-wait-for-managed-debugger=1
-```
+1. Fresh install Valheim. (to make sure things are fully clean)
+2. Install the Unity Version of the target Valheim Game. IE `2022.3.17f1`
+3. Within the install target. C:\Program
+   Files\Unity\Hub\Editor\2022.3.17f1\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_development_mono
+    - Copy `WindowsPlayer.exe` and paste within `<ValheimGameFolder>`.
+    - Rename `WindowsPlayer.exe` to `valheim.exe`.
+    - Copy and paste `UnityPlayer.dll` and `WinPixEventRuntime.dll`
+      within `<ValheimGameFolder>`
+    - Copy `managed` and `resource` folder from `<C:\Program
+      Files\Unity\Hub\Editor\2022.3.17f1\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_development_mono\data\`
+      into the `valheim_Data` folder and overwrite all contents.
+4. Go into `boot.config` and append
+   ```boot.config
+   player-connection-debug=1
+   ```
+    - To wait for debugger connection add `wait-for-managed-debugger=1`
 
-save the file and you are done. you can start valheim to check, if that worked. if it did, it will they development build in the bottom right corner of the start menu.
-if everything is fine, just install bepinex and your mods. start up the game again and check for any errors in your mods. as i said, the dev build is way more strict. fix it, if it finds anything. done.
+## Alternatively using the doorstop 4.x.x
+
+- Install everything like above but skip step 4.
+- Turn on debugging in doorstop.config
+- Make sure doorstop.config exists within the valheim.exe folder
+  IE <ValheimGameFolder> path.
+- Connect to the doorstop debugger instead.

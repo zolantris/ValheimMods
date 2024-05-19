@@ -18,14 +18,14 @@ This guide aims to get you setup in the repo and able to build the code.
     2. Unity -> Open the ValheimRaftUnity folder and install the Unity 2020
        version
     3.
-    Install [AssetBundle Browser](https://github.com/Unity-Technologies/AssetBundles-Browser)
-    from github master url
-    or release url. Since it's not updating master is okay.
-        - copy
-          paste https://github.com/Unity-Technologies/AssetBundles-Browser.git
-          into the input under this interface
-          in Unity. Window > Package Manager > (click plus arrow > click add
-          package from giturl
+   Install [AssetBundle Browser](https://github.com/Unity-Technologies/AssetBundles-Browser)
+   from github master url
+   or release url. Since it's not updating master is okay.
+    - copy
+      paste https://github.com/Unity-Technologies/AssetBundles-Browser.git
+      into the input under this interface
+      in Unity. Window > Package Manager > (click plus arrow > click add
+      package from giturl
 
 ## Compiling
 
@@ -80,3 +80,59 @@ Publicizer for assembly_valheim steps.
 3. Rename the __publicized assemblies back to their original names.
 4. Move those assemblies to the libs folder under ValheimRaft.
 5. Click compile. It should work.
+
+## Installing nuget packages
+
+### With Rider
+
+use Rider and click nuget (should be bottom left panel, one of the items), and
+search for the package
+
+### with nuget.exe (not recommended)
+
+1. Install nuget.exe
+2. For installing sentry as an example run.
+    ```powershell
+    ..\..\programs\nuget.exe install Sentry -Version 3.41.3 -OutputDirectory Packages`
+    ```
+
+The example above is if the path for nuget exists 2 directories above this repo
+and within programs folder.
+
+## Custom Logging for powershell
+
+Add this to your powershell profile. This will allow your to highlight only logs
+from ValheimVehicles and ValheimRAFT mods as well as errors.
+
+These commands are for powershell users. If you are running things on linux
+there are simpler (and similar) commands for syntax highlighting. I advise
+googling them.
+
+```powershell
+function Get-LogColor {
+    Param([Parameter(Position=0)]
+    [String]$LogEntry)
+
+    process {
+        if ($LogEntry.Contains("ValheimRAFT") -or $LogEntry.Contains("ValheimVehicles")){
+          if ($LogEntry.Contains("Debug")) {Return "Green"}
+          elseif ($LogEntry.Contains("Warn")) {Return "Yellow"}
+          elseif ($LogEntry.Contains("Error") -or $LogEntry.Contains("NullReferenceException")) {Return "Red"}
+          else {Return "White"}
+        }
+        if ($LogEntry.Contains("NullReferenceException")) {Return "Red"}
+        else {Return "White"}
+    }
+}
+```
+
+When launching the game just run the following command to output the latest
+logs.
+
+```powershell
+gc -wait -tail 10 C:\Users\fre\AppData\LocalLow\IronGate\Valheim\Player.log | ForEach {Write-Host -ForegroundColor (Get-LogColor $_) $_}
+```
+
+## Dev Builds
+
+Please reference [ValheimDebugging](./ValheimDebugging.md)

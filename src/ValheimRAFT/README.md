@@ -1,24 +1,27 @@
 # ValheimRAFT
 
-<img src="./Thunderstore/icon.png" alt="ValheimRAFT Community Made Boat Hjalmere">
+<img src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/Thunderstore/icon.png" alt="ValheimRAFT Community Made Boat Hjalmere">
 
 This mod aims to continue support for Water based features of the original
 ValheimRAFT mod and incorporate more vehicle items and mechanics within the mod
 and further extends it's capabilities.
 
-## Build Status
+[//]: # (## Build Status)
 
-[![ValheimRAFT Build](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml/badge.svg)](https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml)
+[//]: # ()
+
+[//]: # ([![ValheimRAFT Build]&#40;https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml/badge.svg&#41;]&#40;https://github.com/zolantris/ValheimRaft/actions/workflows/build-release.yml&#41;)
 
 ## Background
 
 This repo is a [ValheimRaft](https://www.nexusmods.com/valheim/mods/1136) fork
 that works
-with latest Valheim. The original mod
+with latest Valheim.
+
+The original mod
 owner [Sarcen](https://www.nexusmods.com/valheim/users/3061574) stopped
-maintaining the mod, but gave permission to maintain/improve and open source
-this mod as of
-12/25/2023.
+maintaining the mod August 2023. They gave permission to maintain and open
+source the mod on 12/25/2023.
 
 ## Contents
 
@@ -26,19 +29,113 @@ this mod as of
 
 * [ValheimRAFT](#valheimraft)
     * [Build Status](#build-status)
+    * [Background](#background)
     * [Contents](#contents)
-    * [Client/Server/SinglePlayer Support](#clientserversingleplayer-support)
     * [Features](#features)
     * [Community](#community)
+    * [Prefabs](#prefabs)
+        * [Custom Sail Assets](#custom-sail-assets)
+            * [Current logos](#current-logos)
+        * [Hull Mechanics](#hull-mechanics)
+    * [Client/Server/SinglePlayer Support](#clientserversingleplayer-support)
     * [Config](#config)
-        * [Meshes](#meshes)
     * [Issues](#issues)
     * [Mod Support](#mod-support)
+    * [Graphics](#graphics)
     * [Contributing](#contributing)
+    * [Maintainers](#maintainers)
+    * [Attribution](#attribution)
     * [Support Open Source](#support-open-source)
-    * [Getting Started](#getting-started)
+    * [Logging Metrics](#logging-metrics)
+    * [### What information will be collected](#-what-information-will-be-collected)
 
 <!-- TOC -->
+
+## Features
+
+- Build a RAFT on the water using Valheim's building prefabs.
+- Adds a climbable ladder
+- Add piers that reach the ocean floor (stone and log)
+- Adds anchors
+- Adds custom sails (requires meshes to be working)
+- Adds ropes (requires meshes to be working)
+- Sails now will each contribute to the total shipShip.Speed. Custom Sails do an
+  area
+  calculation while Tier 1-3 sails are
+  preset values.
+
+## Community
+
+Join us on discord to get the latest information, upcoming features, and
+discover other mods.
+
+[Discord Link](https://discord.gg/jeUcpCvB3z)
+
+## Prefabs
+
+| Name                           | Icon                                                                                                                                                                                                     | Description                                                                                                                                                                                                                                                                                                                                          |
+|--------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Hull (Wood)                    | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_center_wood.png" width="50"/>            | V2 Raft Hull. See more info on [Hull Mechanics][hull-mechanics-link]                                                                                                                                                                                                                                                                                 |
+| Hull (Iron)                    | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_center_iron.png" width="50"/>            | V2 Raft Hull Iron, See more info on [Hull Mechanics][hull-mechanics-link]                                                                                                                                                                                                                                                                            |
+| Hull Slab (Wood)               | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_slab_2x2_wood.png" width="50"/>          | V2 Raft Hull Slab 2x2 and 4x4 variants. See more info on [Hull Mechanics][hull-mechanics-link]                                                                                                                                                                                                                                                       |
+| Hull Slab (Iron)               | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_slab_2x2_iron.png" width="50"/>          | V2 Raft Hull Slab Iron 2x2 and 4x4 variants. See more info on [Hull Mechanics][hull-mechanics-link].                                                                                                                                                                                                                                                 |
+| Hull Wall (Wood)               | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_wall_2x2_wood.png" width="50"/>          | V2 Raft Hull Wall 2x2 and 4x4 variants. See more info on [Hull Mechanics][hull-mechanics-link].                                                                                                                                                                                                                                                      |
+| Hull Wall (Iron)               | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_wall_2x2_iron.png" width="50"/>          | V2 Raft Hull Wall Iron 2x2 and 4x4 variants. See more info on [Hull Mechanics][hull-mechanics-link].                                                                                                                                                                                                                                                 | 
+| Hull Rib (Wood)                | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_wood.png" width="50"/>               | V2 Raft Hull Rib, a curved hull wall going for 0-90 degrees a combo of 3 hull walls. See more info on [Hull Mechanics][hull-mechanics-link].                                                                                                                                                                                                         |
+| Hull Rib (Iron)                | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_iron.png" width="50"/>               | V2 Raft Hull Rib, a curved hull wall going for 0-90 degrees a combo of 3 hull walls. See more info on [Hull Mechanics][hull-mechanics-link].                                                                                                                                                                                                         |
+| Rudder Basic                   | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/rudder_basic.png" width="50"/>                         | Basic Raft Rudder, turns with wheel. First rudder on ship will also move ship's wake effects to it's location. Future updates may add functionality                                                                                                                                                                                                  |
+| Rudder Advanced (Iron)         | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/rudder_advanced_single_iron.png" width="50"/> | Advanced Rudder, a larger rudder that turns with the ship. First rudder on ship will also move ship's wake effects to it's location. No other functionality.                                                                                                                                                                                         |
+| Rudder Advanced (Wood)         | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/rudder_advanced_single_wood.png" width="50"/> | Advanced Rudder, a larger rudder that turns with the ship. First rudder on ship will also move ship's wake effects to it's location. No other functionality.                                                                                                                                                                                         |
+| Rudder Advanced Twin (Wood)    | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/rudder_advanced_double_wood.png" width="50"/> | Advanced Rudder, a larger rudder that turns with the ship. First rudder on ship will also move ship's wake effects to it's location. No other functionality.                                                                                                                                                                                         |
+| Rudder Advanced Twin (Iron)    | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/rudder_advanced_double_iron.png" width="50"/> | Advanced Rudder, a larger rudder that turns with the ship. First rudder on ship will also move ship's wake effects to it's location. No other functionality.                                                                                                                                                                                         |
+| Steering Wheel                 | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/steering_wheel.png" width="50"/>                       | Steer the vehicle. Steering will be fast on slow speed, medium on half speed, and slow on fast speed. Previously all steering was slow. The direction it faces will determine the direction the boat sails.                                                                                                                                          |
+| Raft Sail                      | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/raftmast.png" width="50"/>                             | Tier 1 Raft Sail. Offers modest sailing power.                                                                                                                                                                                                                                                                                                       |
+| Karve Sail                     | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/karvemast.png" width="50"/>                            | Tier 2 Karve Sail offers mid-level sailing power.                                                                                                                                                                                                                                                                                                    |
+| Viking Sail                    | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/vikingmast.png" width="50"/>                           | Tier 3 Viking Sail offers high-level sailing power.                                                                                                                                                                                                                                                                                                  |
+| Custom Sail (3) or (4) corners | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/customsail.png" width="50"/>                           | Tier 1 Custom Sail, Offers a customizable sail of 3 points or 4 point sails. Each sail cubic foot is counted for sailing force. The sails are a balanced at tier1 sailing.                                                                                                                                                                           |
+| Rope Anchor                    | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/rope_anchor.png" width="50"/>                          | Connect an infinite number of ropes from this anchor point to the target prefab's center position. To disconnect grab a rope from the anchor point and re-attach to the already attached prefab. It should disconnect the rope. Ropes will not have any affect on physics. They *do not* anchor the ship.                                            |
+| Rope Ladder                    | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/rope_ladder.png" width="50"/>                          | Connect a rope ladder to a boat or any building to allow for climbing from the ground up to the building. Will automatically extend to seafloor or ground every couple seconds if the terrain changes.                                                                                                                                               |
+| Boarding Ramp (normal, Wide)   | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/boarding_ramp.png" width="50"/>                        | Boarding ramp can extend out from 1 - 50+ units. Each unit adds an additional expanded plank. There are no resource costs to increasing the extension bridge size. Boarding ramps collide with the sea so they will effectively hover over the sea. Ramps require network connection in multiplayer to properly work if the player is not the owner. |
+| Dirty (1x1, 2x2)               | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/dirtfloor_icon.png" width="50"/>                       | Allows for growing vanilla Valheim crops. __Currently does not support mods that utilize heightmaps to determine placement__. Each dirt section is not a heightmap.                                                                                                                                                                                  |
+
+### Installation Guide
+
+:warning: The Raft Mod must be installed correctly in order to resolve Custom
+Sail materials. :warning:
+
+- Folder must be placed within `<ValheimGameFolder>/BepInEx/plugins/`
+- The folder must be named `ValheimRAFT` or `zolantris-ValheimRAFT` and contain
+  a `Assets` folder
+
+Noting that in future updates this may not be required, however loading custom
+textures will always be supported. This allows players to drag and drop their
+favorite logos or custom sail textures and see them in game.
+
+#### Current logos
+
+| Name        | Image                                                                                                                                                                                         |
+|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Stag Logo   | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/stag.png" width="50"/>                      |
+| Pirate Logo | <img height="50" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/pirate_skull_uncompressed.png" width="50"/> |
+
+### Hull Mechanics
+
+These mechanics apply **only** to **V2 WaterVehicles**. The older V1 rafts will
+never support this feature.
+
+Every piece of hull added to a ship will adjust the ship's floatation.
+Floatation is determined by the key `HullFloatationColliderLocation`.
+
+| Value   | Floatation Calculation Description                                                                                                                                                                                                                                                                                    |
+|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Average | Average is the total number of hull pieces height averaged together. <br/><br>Example: 4 pieces are used with 0 height and 1 piece at height 5. The average would be (sum of height)/(number of pieces) or 5/5=1 height. If a hull is 4 pieces high the mid point (top of second piece) would be the floatation point |
+| Center  | The center point between the max height hull piece on a raft and the lowest height hull piece placed on a raft. No quantity will be factored in to determine the center point.                                                                                                                                        |
+| Top     | The ship will float at the top most hull piece. Likely only useful if using hull pieces to make underwater vehicles                                                                                                                                                                                                   |
+| Bottom  | The lowest most hull pieces will determine the floatation point. Placing other prefabs that are not hull pieces can be done, but any hull piece below another one will make the ship float higher.                                                                                                                    |
+
+[//]: # ([image_base_urls]&#40;https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons&#41;)
+
+[//]: # ([image_base_urls_generated]&#40;https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons&#41;)
 
 ## Client/Server/SinglePlayer Support
 
@@ -75,65 +172,10 @@ The following has been tested:
           it renders it's possible a wave could
           briefly flip it and the top part of the ship rolls and hits property.
 
-## Features
-
-- Build a RAFT on the water using Valheim's building prefabs.
-- Adds a climbable ladder
-- Add piers that reach the ocean floor (stone and log)
-- Adds anchors
-- Adds custom sails (requires meshes to be working)
-- Adds ropes (requires meshes to be working)
-- Sails now will each contribute to the total shipShip.Speed. Mesh sails do an
-  area
-  calculation while tier1-3 sails are
-  preset values.
-
-## Community
-
-Join us on discord to get the latest information, upcoming features, and
-discover other mods.
-
-[Discord Link](https://discord.gg/jeUcpCvB3z)
-
 ## Config
 
-| ConfigName                         | Description                                                                                                                                                                                                                                                                                                  |
-|------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| InitialRaftFloorHeight             | Lets you set the height of the floors so they do not clip. Recommended to stay between 0.4 and 0.6.                                                                                                                                                                                                          |
-| ServerRaftUpdateZoneInterval       | Set interval in seconds for the server update to trigger and re-render pieces if in view                                                                                                                                                                                                                     |
-| pluginFolderName                   | Allows you to specify the plugin folder if it's been renamed. See the meshes section below for more details                                                                                                                                                                                                  |
-| raftHealth                         | Set the raft health for wear and tear. I set it to `500` default, but it was originally `10000` which is not balanced                                                                                                                                                                                        |
-| fixPlanBuildPositionIssues         | Turn on/off the patches for PlanBuild, only needed if the user has PlanBuild and it adds support for ValheimRaft coordinates. The planbuild plugins requires a specific naming convention. Make sure in the plugins folder it is named either "MathiasDecrock-PlanBuild" or "PlanBuild"                      |
-| DisplacedRaftAutoFix               | Should automatically regenerate the displaced raft. Only useful if the command raftoffset 0 0 0 works for this issue.                                                                                                                                                                                        |
-| ~~RaftSailForceMultiplier~~        | Removed in 1.6.7. Use the propulsion controls below                                                                                                                                                                                                                                                          |
-| EnableCustomPropulsionConfig       | Enables custom propulsion overrides (For customization and testing)                                                                                                                                                                                                                                          |
-| HasShipWeightCalculations          | (propulsion) -> enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less                                                                                                                                  |
-| HasShipContainerWeightCalculations | (propulsion) -> enables ship weight calculations for containers which affects sail-force (sailing speed) and future propulsion calculations. Makes ships with lots of containers require more sails                                                                                                          |
-| MassPercentageFactor               | (propulsion) -> Sets the mass percentage of the ship that will slow down the sails.                                                                                                                                                                                                                          |
-| SpeedCapMultiplier                 | (propulsion) -> Sets the speed at which it becomes significantly harder to gain speed per sail area, the ships will still be capped at their maxSailShip.Speed.                                                                                                                                              |
-| MaxPropulsionSpeed                 | (propulsion) -> Sets the absolute max speed a ship can ever hit. Prevents or enables space launches. Will be used as a cap for all propulsion introduced in future versions.                                                                                                                                 |
-| MaxSailSpeed                       | (propulsion) -> Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.                                                                                                                                                            |
-| SailTier1Area                      | (propulsion) -> Sets the tier1 sail area.                                                                                                                                                                                                                                                                    |
-| SailTier2Area                      | (propulsion) -> Sets the tier2 sail area.                                                                                                                                                                                                                                                                    |
-| SailTier3Area                      | (propulsion) -> Sets the tier3 sail area.                                                                                                                                                                                                                                                                    |
-| SailCustomAreaTier1Multiplier      | (propulsion) -> sets the area multiplier the custom tier1 sail. Currently there is only 1 tier                                                                                                                                                                                                               |
-| AdminsCanOnlyBuildRaft             | (Server config) -> ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart |
-
-### Meshes
-
-In Mod versions at or lower than `1.4.9` there were problems with the folder
-being renamed. In `>=1.5.0` there is a
-configuration
-manager option to change the path to resolve the ValheimRAFT folder.
-
-If you want meshes (IE sails and ropes ) to render automatically, your mod must
-either be named `ValheimRAFT`
-or `zolantris-ValheimRAFT`.
-
-Otherwise make sure to edit the `pluginFolderName` key and add the folder name
-for ValheimRaft located
-within the BepInEx\Plugins path. Afterwards relaunch the game. There should be
-no mesh issues.
+Please reference
+the [config output auto-generated document](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/ValheimRAFT_AutoDoc.md)
 
 ## Issues
 
@@ -142,7 +184,6 @@ repo's [issues section](https://github.com/zolantris/ValheimMods/issues).
 
 - Please respect the form. Adding the relevant information makes it easier to
   triage the problem.
--
 
 Click [here](https://github.com/zolantris/ValheimRaft/issues/new?assignees=&labels=bug&projects=&template=raft-bug-report.yml)
 to create an issue now.
@@ -160,7 +201,7 @@ items. This easily breaks the Plan save.
 
 - Hopefully this logic can be incorporated within PlanBuild directly. There is a
   config toggle to turn this patch off to
-  future proof things.
+  future-proof things.
 - Alternative approaches for this could be doing a detection if the game object
   is attached to a parent object and
   calculating coordinates of the items **after** all object positions have been
@@ -170,7 +211,101 @@ Noting that Planbuild does not register well with harmony so searching for it is
 not possible (from what I saw). There
 is a path resolution and a config flag to enable coordinate fixes. Disable the
 config value `fixPlanBuildPositionIssues`
-and it should not longer cause errors for not having PlanBuild installed.
+and it should no longer cause errors for not having PlanBuild installed.
+
+## FAQs
+
+Please read these if you are experiencing trouble.
+
+### Help My Raft is A Box
+
+1. Did you install the ValheimRAFT mod correctly?
+    - No? Install it correctly following this guide, otherwise the commands may
+      not work or sails will not be generated.
+2. Did you upgrade from v1.x.x to >=v2.0.0?
+    - Run `vehicle recover` this command works in `>=2.0.2`
+    - v2.0.0 had to make a plugin GUID change which
+      likely
+      broke the prefab registry of the v1 raft. This GUID change was in order to
+      reset older mods from pointing to the updated ValheimRAFT and breaking
+      features.
+3. Are you manually installing?
+    - A: Yes? Don't do it.
+        - Install r2modman and have it manage your mods. This prevent a bunch of
+          installation problems with raft and other mods especially as valheim
+          updates.
+        - https://thunderstore.io/package/ebkr/r2modman/
+    - No: Good Job, debugging the problem should be as simple as unchecking your
+      mods, automatically updating things, and editing your configs.
+4. Did you install a mod that is crashing the bepinex plugins?
+    - Try to remove mods that are older. Many mods are not meant to endure
+      updates from valheim and need a fix to make their code stable again.
+      Disable all older mods and only include ValheimRAFT, Jotunn, and BepInEx.
+5. Did you install a mod that overrides ValheimRAFT code?
+    - Mods that override `Player.PlacePiece` will cause problems with piece
+      placement.
+        - Example Gizmos overrides the rotations and angles of pieces so it is
+          not compatible for a boat in motion. Use `vehicle creative`
+          or `raftcreative` to make the ship stop moving and place pieces.
+    - Mods that override `Player.GetControlledShip` will cause the boat to be
+      unable to interact or update hud or be controlled.
+    - __Mods that adjust or change `Ship` Values from Valheim will no longer
+      affect the V2 WaterVehicle__. This means the Vehicle is much more
+      resilient
+      and more compatible with mods that add new ships but also means it has
+      it's own logic so the ship will not benefit OR break from those mods.
+
+### Help My Raft Turns into a Box when I load the area
+
+1. Are you on a dedicated server?
+    - No? Switch to a dedicated server. The raft mod may not be stable when
+      hosting from a LAN IP. This likely was fixed in >=2.0.0. But will continue
+      to be an issue if you are using a v1 raft.
+    - No, But I'm on single player...
+        - Submit a bug report. Single player should render correctly. If you
+          only have ValheimRAFT + Jotunn and absolutely trust your mod list.
+
+### Help My Raft went underground
+
+- For now there is no command to save your raft.
+
+1. Download [Unity Explorer][unity-explorer-link]
+
+2. Under Object list search for `WaterVehicleShip` it should show up
+   as `ValheimVehicles_WaterVehicleShip`
+
+- `ValheimVehicles` is a prefix for
+  anything related to V2 RAFT/Vehicles mod.
+- If you see multiple ships, make sure you click the green box to Enable/disable
+  them to confirm you are changing the correct ship.
+
+3. Change the height of the vehicle by clicking on the Object and
+   within `inspector` - another pannel, click on local position and change the Y
+   coordinate to +20 height or more.
+    - **Make sure you never change the x or z positions**
+      otherwise the boat might be removed from rendering and be sent to the
+      other
+      side of the world.
+    - Example `Position 1600.084 29.7749 1685.39`
+      Set to `1600.084 50 1685.39`
+
+### Help My Raft Is Sinking When I Build Hulls
+
+1. Please read
+   the [guide on Vehicle Hulls][hull-mechanics-link]?
+   Each Hull affects the floatation
+   of the vehicle.
+2. Select the correct config and add or remove a piece to see the ship update
+   based on the new config value.
+
+### My Bed does not update
+
+**This is a known issue do the following work-around.**
+
+- Every time the raft is moved and then stopped. Rebuild your bed and then set
+  your spawn again.
+
+This may be resolved in future updates.
 
 ## Graphics
 
@@ -184,16 +319,28 @@ Previously it only supported Direct3D11.
    focused. Larger changes are welcome, but they
    have higher chance of breaking other things and are harder to maintain.
 3. If you want to directly get involved. Reach out on discord.
+4. Please read
+   the [Contributing.md](https://github.com/zolantris/ValheimMods/blob/main/docs/CONTRIBUTING.md)
+   document for more information
+
+## Maintainers
+
+| Name      | Date              | Active     |
+|-----------|-------------------|------------|
+| Zolantris | 12-2023 - present | **Active** |
+| Sarcen    | 04-2021 - 08-2023 | Inactive   |
 
 ## Attribution
 
-- Sarcen: For creating the initial mod and supporting it until v1.4.8!
-- Zolantris: For supporting and expanding the Raft Mod since v1.5.0.
-- RacerX: For contributing a stag icon for sails. Looks awesome!
+| Name      | Contributions                                                                                        |
+|-----------|------------------------------------------------------------------------------------------------------|
+| Sarcen    | For creating the initial mod and supporting it until v1.4.8!                                         |
+| Zolantris | For supporting and expanding the Raft Mod since v1.5.0.                                              |
+| RacerX    | For contributing a stag icon for sails - Looks awesome! And for making some other unreleased assets. |
 
 ## Support Open Source
 
-<a href='https://ko-fi.com/zolantris' target='_blank'><img height='35' style='border:0px;height:46px;' src='https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com' />
+<a href='https://ko-fi.com/zolantris' target='_blank'><img height='35' style='border:0px;height:46px;' src='https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com'></a>
 
 ## Logging Metrics
 
@@ -201,8 +348,12 @@ These packages may contain logging. Logging can be opted out by any user by
 unchecking `enableMetrics`. If you choose to opt-out, please be aware, this will
 make it more difficult to troubleshoot issues.
 
+- Logging does not do anything without a SentryUnityPlugin package that has not
+  been made available to the community (yet). In future updates Sentry logging
+  will be recommended to beta testing players so benchmarks can be collected
+  related to Vehicle performance.
+
 ### What information will be collected
-- 
 
 - Paths related to Valheim Game directory
 - Paths related to ValheimRAFT / ValheimVehicles plugin directory such as
@@ -213,58 +364,8 @@ make it more difficult to troubleshoot issues.
 
 This logging has yet to be implemented.
 
-## Installing nuget packages
+[//]: # (Links and shared resources)
 
-### With Rider
+[unity-explorer-link]: https://thunderstore.io/c/valheim/p/sinai-dev/UnityExplorer/
 
-use Rider and click nuget (should be bottom left panel, one of the items), and
-search for the package
-
-### with nuget.exe (not recommended)
-
-1. Install nuget.exe
-2. For installing sentry as an example run.
-    ```powershell
-    ..\..\programs\nuget.exe install Sentry -Version 3.41.3 -OutputDirectory Packages`
-    ```
-
-The example above is if the path for nuget exists 2 directories above this repo
-and within programs folder.
-
-## Getting Started
-
-Please reference the [getting started docs](../../docs/getting-started.md).
-
-## Custom Logging for powershell
-
-Add this to your powershell profile. This will allow your to highlight only logs
-from ValheimVehicles and ValheimRAFT mods as well as errors.
-
-These commands are for powershell users. If you are running things on linux
-there are simpler (and similar) commands for syntax highlighting. I advise
-googling them.
-
-```powershell
-function Get-LogColor {
-    Param([Parameter(Position=0)]
-    [String]$LogEntry)
-
-    process {
-        if ($LogEntry.Contains("ValheimRAFT") -or $LogEntry.Contains("ValheimVehicles")){
-          if ($LogEntry.Contains("Debug")) {Return "Green"}
-          elseif ($LogEntry.Contains("Warn")) {Return "Yellow"}
-          elseif ($LogEntry.Contains("Error") -or $LogEntry.Contains("NullReferenceException")) {Return "Red"}
-          else {Return "White"}
-        }
-        if ($LogEntry.Contains("NullReferenceException")) {Return "Red"}
-        else {Return "White"}
-    }
-}
-```
-
-When launching the game just run the following command to output the latest
-logs.
-
-```powershell
-gc -wait -tail 10 C:\Users\fre\AppData\LocalLow\IronGate\Valheim\Player.log | ForEach {Write-Host -ForegroundColor (Get-LogColor $_) $_}
-```
+[hull-mechanics-link]: https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/README.md#hull-mechanics

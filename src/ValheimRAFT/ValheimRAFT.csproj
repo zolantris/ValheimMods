@@ -193,6 +193,8 @@
     <ItemGroup>
         <Content Include=".gitignore"/>
         <Content Include="Assets\Translations\English\valheimraft.json"/>
+        <Content Include="docs\ConfigOutput.md"/>
+        <Content Include="docs\ValheimRAFT_AutoDoc.md"/>
         <Content Include="src\ValheimRAFT\README.md"/>
         <Content Include="Thunderstore\icon.png"/>
         <Content Include="Thunderstore\manifest.json"/>
