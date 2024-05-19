@@ -113,6 +113,15 @@ favorite logos or custom sail textures and see them in game.
 
 #### Current logos
 
+<style>
+table th:first-of-type {
+    width: 10%;
+}
+table th:nth-of-type(1) {
+    width: 200px;
+}
+</style>
+
 | Name        | Image                                                                                                                                                                                                                           |
 |-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Stag Logo   | <img style="object-fit: scale-down;" height="100" src="https://raw.githubusercontent.com/zolantris/ValheimMods/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons/stag.png" width="100"/>                      |
