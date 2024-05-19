@@ -127,6 +127,14 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
     base.OnTriggerEnter(collider);
   }
 
+  public static void OnAllowFlight(object sender, EventArgs eventArgs)
+  {
+    foreach (var vehicle in AllVehicles)
+    {
+      vehicle.MovementController.OnFlightChangePolling();
+    }
+  }
+
   private void RemovePlayersBeforeDestroyingBoat()
   {
     foreach (var mPlayer in m_players)
@@ -1019,11 +1027,6 @@ public class VehicleShip : ValheimBaseGameShip, IVehicleShip
   // Updates gravity and target height (which is used to compute gravity)
   public void UpdateGravity()
   {
-    if (!ValheimRaftPlugin.Instance.AllowFlight.Value && TargetHeight != 0f)
-    {
-      m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, 0f);
-    }
-
     m_zsyncTransform.m_useGravity =
       TargetHeight == 0f;
     m_body.useGravity = TargetHeight == 0f;

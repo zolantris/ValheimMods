@@ -522,6 +522,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     EnableShipSailSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
     EnableShipWakeSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
     EnableShipInWaterSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
+    AllowFlight.SettingChanged += VehicleShip.OnAllowFlight;
 
     /*
      * @todo add a way to skip LoadCustomTextures when on server. This check when used here crashes the Plugin.

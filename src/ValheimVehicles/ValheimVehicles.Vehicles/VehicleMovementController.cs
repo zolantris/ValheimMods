@@ -51,13 +51,43 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
         (int)MovementFlags);
     InitializeRPC();
 
-    InvokeRepeating(nameof(SyncTargetHeight), 2f, 2f);
+    if (ValheimRaftPlugin.Instance.AllowFlight.Value)
+    {
+      InvokeRepeating(nameof(SyncTargetHeight), 2f, 2f);
+    }
+  }
+
+  public void OnFlightChangePolling()
+  {
+    CancelInvoke(nameof(SyncTargetHeight));
+    if (ValheimRaftPlugin.Instance.AllowFlight.Value)
+    {
+      InvokeRepeating(nameof(SyncTargetHeight), 2f, 2f);
+    }
+    else
+    {
+      TargetHeight = 0f;
+      SetTargetHeight(TargetHeight);
+    }
   }
 
   private void Update()
   {
     OnControllingWithHotKeyPress();
     AutoVerticalFlightUpdate();
+  }
+
+  private void SetTargetHeight(float val)
+  {
+    switch (ValheimRaftPlugin.Instance.AllowFlight.Value)
+    {
+      case false:
+        ShipInstance?.Instance.m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, 0f);
+        break;
+      case true:
+        ShipInstance?.Instance.m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, val);
+        break;
+    }
   }
 
   private void SyncTargetHeight()
@@ -460,7 +490,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
 
     return isEnabled
       ? (MovementFlags | VehicleMovementFlags.IsAnchored)
-      : (MovementFlags & ~VehicleMovementFlags.IsAnchored));
+      : (MovementFlags & ~VehicleMovementFlags.IsAnchored);
   }
 
   public void SendSetAnchor(bool state)
