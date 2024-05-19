@@ -100,10 +100,10 @@ public static class PrefabNames
   public const string ShipRudderAdvancedIron = $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Iron";
 
   public const string ShipRudderAdvancedDoubleWood =
-    $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Double_Wood";
+    $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Tail_Wood";
 
   public const string ShipRudderAdvancedDoubleIron =
-    $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Double_Iron";
+    $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Tail_Iron";
 
   public const string ShipSteeringWheel = $"{ValheimVehiclesPrefix}_ShipSteeringWheel";
   public const string ShipKeel = $"{ValheimVehiclesPrefix}_ShipKeel";
