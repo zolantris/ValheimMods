@@ -7,7 +7,8 @@ public abstract class SpriteNames
   public const string BoardingRamp = "boarding_ramp";
   public const string ShipRudderAdvancedWood = "rudder_advanced_wood";
   public const string ShipRudderAdvancedIron = "rudder_advanced_iron";
-  public const string ShipRudderAdvancedTailIron = "rudder_advanced_tail_wood";
+  public const string ShipRudderAdvancedDoubleWood = "rudder_advanced_double_wood";
+  public const string ShipRudderAdvancedDoubleIron = "rudder_advanced_double_iron";
   public const string ShipRudderBasic = "rudder_basic";
   public const string ShipKeel = "keel";
   public const string VehicleSwitch = "mechanical_switch";

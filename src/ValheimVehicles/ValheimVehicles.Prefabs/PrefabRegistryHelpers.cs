@@ -192,11 +192,20 @@ public abstract class PrefabRegistryHelpers
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .ShipRudderAdvancedIron)
     });
+
+    PieceDataDictionary.Add(PrefabNames.ShipRudderAdvancedDoubleWood, new PieceData()
+    {
+      Name = $"valheim_vehicles_rudder_advanced_double $valheim_vehicles_material_iron",
+      Description = "valheim_vehicles_rudder_advanced_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .ShipRudderAdvancedDoubleWood)
+    });
     PieceDataDictionary.Add(PrefabNames.ShipRudderAdvancedDoubleIron, new PieceData()
     {
-      Name = $"valheim_vehicles_rudder_advanced $valheim_vehicles_material_iron",
+      Name = $"valheim_vehicles_rudder_advanced_double $valheim_vehicles_material_iron",
       Description = "valheim_vehicles_rudder_advanced_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipRudderAdvancedIron)
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .ShipRudderAdvancedDoubleIron)
     });
 
     PieceDataDictionary.Add(PrefabNames.VehicleToggleSwitch, new PieceData()
