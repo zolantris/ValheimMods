@@ -29,14 +29,21 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject ShipHullWall4X4WoodAsset = null!;
   public static GameObject ShipHullWall4X4IronAsset = null!;
 
+  // basic rudders/look like oars
   public static GameObject ShipRudderBasicAsset = null!;
-  public static GameObject ShipRudderAdvancedWoodAsset = null!;
-  public static GameObject ShipRudderAdvancedTailWoodAsset = null!;
+
+  // advanced rudders
+  public static GameObject ShipRudderAdvancedSingleWoodAsset = null!;
+  public static GameObject ShipRudderAdvancedSingleIronAsset = null!;
+
+  // advanced rudder tails (double rudder like a sub)
+  public static GameObject ShipRudderAdvancedDoubleWoodAsset = null!;
+  public static GameObject ShipRudderAdvancedDoubleIronAsset = null!;
 
   public static GameObject ShipKeelAsset = null!;
 
   // vehicles
-  public static GameObject SteeringWheel;
+  public static GameObject SteeringWheel = null!;
   public static GameObject VehicleShipAsset = null!;
   public static GameObject VehiclePiecesAsset = null!;
   public static GameObject VehicleSwitchAsset = null!;
@@ -105,12 +112,20 @@ public class LoadValheimVehicleAssets : ILoadAssets
     // rudder variants
     ShipRudderBasicAsset =
       assetBundle.LoadAsset<GameObject>("rudder_basic.prefab");
-    ShipRudderAdvancedWoodAsset =
+    ShipRudderAdvancedSingleWoodAsset =
       assetBundle.LoadAsset<GameObject>(
-        "rudder_advanced_wood.prefab");
-    ShipRudderAdvancedTailWoodAsset =
+        "rudder_advanced_single_wood.prefab");
+    ShipRudderAdvancedSingleIronAsset = assetBundle.LoadAsset<GameObject>(
+      "rudder_advanced_single_iron.prefab");
+
+
+    ShipRudderAdvancedDoubleWoodAsset =
       assetBundle.LoadAsset<GameObject>(
-        "rudder_advanced_tail_wood.prefab");
+        "rudder_advanced_double_wood.prefab");
+
+    ShipRudderAdvancedDoubleIronAsset =
+      assetBundle.LoadAsset<GameObject>(
+        "rudder_advanced_double_iron.prefab");
 
     HudAnchor = assetBundle.LoadAsset<GameObject>("hud_anchor.prefab");
 

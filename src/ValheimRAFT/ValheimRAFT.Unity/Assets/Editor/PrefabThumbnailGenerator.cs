@@ -25,7 +25,7 @@ public class PrefabThumbnailGenerator : EditorWindow
     private bool isRunning;
 
     private static readonly List<string> excludedNames = new()
-        { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic" };
+        { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail" };
 
     private List<string> spritePaths = new();
  
@@ -239,8 +239,8 @@ public class PrefabThumbnailGenerator : EditorWindow
     private void Capture(GameObject obj)
     {
         // Uses alpha to make transparent, black is good for edges of object that are not perfectly cut
-        RuntimePreviewGenerator.BackgroundColor = new Color(40,40,40,0);
-        var pg = RuntimePreviewGenerator.GenerateModelPreview(obj.transform, width, height);
+        RuntimePreviewGenerator.BackgroundColor = new Color(0,0,0,0);
+        var pg = RuntimePreviewGenerator.GenerateModelPreview(obj.transform, width, height, true);
         var texturePath = $"{outputDirPath}{obj.name}.png";
         WriteTextureToFile(pg, texturePath);
         
