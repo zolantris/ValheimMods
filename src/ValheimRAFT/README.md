@@ -215,6 +215,8 @@ and it should no longer cause errors for not having PlanBuild installed.
 
 ## FAQs
 
+Please read these if you are experiencing trouble.
+
 ### Help My Raft is A Box
 
 1. Did you install the ValheimRAFT mod correctly?
@@ -227,6 +229,65 @@ and it should no longer cause errors for not having PlanBuild installed.
       broke the prefab registry of the v1 raft. This GUID change was in order to
       reset older mods from pointing to the updated ValheimRAFT and breaking
       features.
+3. Are you manually installing?
+    - A: Yes? Don't do it.
+        - Install r2modman and have it manage your mods. This prevent a bunch of
+          installation problems with raft and other mods especially as valheim
+          updates.
+        - https://thunderstore.io/package/ebkr/r2modman/
+    - No: Good Job, debugging the problem should be as simple as unchecking your
+      mods, automatically updating things, and editing your configs.
+4. Did you install a mod that is crashing the bepinex plugins?
+    - Try to remove mods that are older. Many mods are not meant to endure
+      updates from valheim and need a fix to make their code stable again.
+      Disable all older mods and only include ValheimRAFT, Jotunn, and BepInEx.
+5. Did you install a mod that overrides ValheimRAFT code?
+    - Mods that override `Player.PlacePiece` will cause problems with piece
+      placement.
+        - Example Gizmos overrides the rotations and angles of pieces so it is
+          not compatible for a boat in motion. Use `vehicle creative`
+          or `raftcreative` to make the ship stop moving and place pieces.
+    - Mods that override `Player.GetControlledShip` will cause the boat to be
+      unable to interact or update hud or be controlled.
+    - __Mods that adjust or change `Ship` Values from Valheim will no longer
+      affect the V2 WaterVehicle__. This means the Vehicle is much more
+      resilient
+      and more compatible with mods that add new ships but also means it has
+      it's own logic so the ship will not benefit OR break from those mods.
+
+### Help My Raft Turns into a Box when I load the area
+
+1. Are you on a dedicated server?
+    - No? Switch to a dedicated server. The raft mod may not be stable when
+      hosting from a LAN IP. This likely was fixed in >=2.0.0. But will continue
+      to be an issue if you are using a v1 raft.
+    - No, But I'm on single player...
+        - Submit a bug report. Single player should render correctly. If you
+          only have ValheimRAFT + Jotunn and absolutely trust your mod list.
+
+### Help My Raft went underground
+
+- For now there is no command to save your raft.
+
+1. Download [Unity Explorer][unity-explorer-link]
+
+2. Under Object list search for `WaterVehicleShip` it should show up
+   as `ValheimVehicles_WaterVehicleShip`
+
+- `ValheimVehicles` is a prefix for
+  anything related to V2 RAFT/Vehicles mod.
+- If you see multiple ships, make sure you click the green box to Enable/disable
+  them to confirm you are changing the correct ship.
+
+3. Change the height of the vehicle by clicking on the Object and
+   within `inspector` - another pannel, click on local position and change the Y
+   coordinate to +20 height or more.
+    - **Make sure you never change the x or z positions**
+      otherwise the boat might be removed from rendering and be sent to the
+      other
+      side of the world.
+    - Example `Position 1600.084 29.7749 1685.39`
+      Set to `1600.084 50 1685.39`
 
 ### Help My Raft Is Sinking When I Build Hulls
 
@@ -236,6 +297,15 @@ and it should no longer cause errors for not having PlanBuild installed.
    of the vehicle.
 2. Select the correct config and add or remove a piece to see the ship update
    based on the new config value.
+
+### My Bed does not update
+
+**This is a known issue do the following work-around.**
+
+- Every time the raft is moved and then stopped. Rebuild your bed and then set
+  your spawn again.
+
+This may be resolved in future updates.
 
 ## Graphics
 
@@ -295,5 +365,7 @@ make it more difficult to troubleshoot issues.
 This logging has yet to be implemented.
 
 [//]: # (Links and shared resources)
+
+[unity-explorer-link]: https://thunderstore.io/c/valheim/p/sinai-dev/UnityExplorer/
 
 [hull-mechanics-link]: https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/README.md#hull-mechanics
