@@ -195,7 +195,7 @@ public abstract class PrefabRegistryHelpers
 
     PieceDataDictionary.Add(PrefabNames.ShipRudderAdvancedDoubleWood, new PieceData()
     {
-      Name = $"valheim_vehicles_rudder_advanced_double $valheim_vehicles_material_iron",
+      Name = $"valheim_vehicles_rudder_advanced_double $valheim_vehicles_material_wood",
       Description = "valheim_vehicles_rudder_advanced_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .ShipRudderAdvancedDoubleWood)
