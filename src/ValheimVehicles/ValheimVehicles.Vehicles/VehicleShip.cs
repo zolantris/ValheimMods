@@ -18,6 +18,27 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
+public static class VehicleShipHelpers
+{
+  public static GameObject GetOrFindObj(GameObject returnObj, GameObject searchObj,
+    string objectName)
+  {
+    if ((bool)returnObj)
+    {
+      return returnObj;
+    }
+
+    var gameObjTransform = searchObj.transform.FindDeepChild(objectName);
+    if (!gameObjTransform)
+    {
+      return returnObj;
+    }
+
+    returnObj = gameObjTransform.gameObject;
+    return returnObj;
+  }
+}
+
 /*
  * Acts as a Delegate component between the ship physics and the controller
  */
@@ -27,13 +48,20 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 
   // The rudder force multiplier applied to the ship speed
   private float _rudderForce = 1f;
+  
+  public GameObject GhostContainer =>
+    VehicleShipHelpers.GetOrFindObj(_ghostContainer, gameObject,
+      PrefabNames.GhostContainer);
+
+  public GameObject PiecesContainer =>
+    VehicleShipHelpers.GetOrFindObj(_piecesContainer, transform.parent.gameObject,
+      PrefabNames.PiecesContainer);
 
   // floating mechanics
   private bool _hasBoatSway = true;
 
   public static readonly List<VehicleShip> AllVehicles = [];
 
-  public GameObject GhostContainer => _ghostContainer;
   private GameObject _piecesContainer;
   private GameObject _ghostContainer;
   private ImpactEffect _impactEffect;
