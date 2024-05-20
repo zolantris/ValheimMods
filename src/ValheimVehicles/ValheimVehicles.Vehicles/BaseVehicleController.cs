@@ -10,6 +10,7 @@ using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Vehicles.Interfaces;
 using static ValheimVehicles.Propulsion.Sail.SailAreaForce;
 using Logger = Jotunn.Logger;
 using PrefabNames = ValheimVehicles.Prefabs.PrefabNames;
@@ -18,7 +19,7 @@ namespace ValheimVehicles.Vehicles;
 
 /// <summary>controller used for all vehicles</summary>
 /// <description> This is a controller used for all vehicles, Currently it must be initialized within a vehicle view IE VehicleShip or upcoming VehicleWheeled, and VehicleFlying instances.</description>
-public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
+public class BaseVehicleController : MonoBehaviour
 {
   public ZNetView m_nview { get; set; }
 
@@ -129,7 +130,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public float totalSailArea = 0f;
 
-  public virtual IVehicleShip? VehicleInstance { set; get; }
+  public virtual IVehicleShip VehicleInstance { set; get; }
 
 /* end sail calcs  */
   private Vector2i m_sector;
@@ -437,9 +438,23 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
   }
 
+  public void Update()
+  {
+    if (!m_nview) return;
+
+    // owner must sync
+    if (m_nview.IsOwner())
+    {
+      Client_UpdateAllPieces();
+    }
+  }
+
   public void FixedUpdate()
   {
     Sync();
+
+    if (m_nview.IsOwner()) return;
+
     Client_UpdateAllPieces();
   }
 
@@ -448,11 +463,9 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
  */
   public void LateUpdate()
   {
-    // Sync();
+    Sync();
     if (!(bool)ZNet.instance)
     {
-      // prevents NRE from next command
-      // Client_UpdateAllPieces();
       return;
     }
 

@@ -335,12 +335,13 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       if (x.Section != lastSection)
       {
         lastSection = x.Section;
-        sb.Append($"{Environment.NewLine}`{x.Section}`{Environment.NewLine}");
+        sb.Append($"{Environment.NewLine}## {x.Section}{Environment.NewLine}");
       }
 
-      sb.Append($"\n{x.Key} [{Strip(Config[x].Description.Description)}]" +
-                $"{Environment.NewLine}   * {Config[x].Description.Description.Replace("[Synced with Server]", "").Replace("[Not Synced with Server]", "")}" +
-                $"{Environment.NewLine}     * Default Value: {Config[x].GetSerializedValue()}{Environment.NewLine}");
+
+      sb.Append($"\n### {x.Key} [{Strip(Config[x].Description.Description)}]".Replace("[]", "") +
+                $"{Environment.NewLine}    * Description: {Config[x].Description.Description.Replace("[Synced with Server]", "").Replace("[Not Synced with Server]", "")}" +
+                $"{Environment.NewLine}    * Default Value: {Config[x].GetSerializedValue()}{Environment.NewLine}");
     }
 
     File.WriteAllText(
@@ -633,22 +634,22 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     VehicleShip.HasVehicleDebugger = HasVehicleDebug.Value;
     MoveableBaseShipComponent.HasVehicleDebugger = HasVehicleDebug.Value;
 
-    AddRemoveVehicleDebugGui();
+    AddRemoveVehicleDebugGui(HasVehicleDebug.Value);
   }
 
   /**
    * todo: move to Vehicles plugin when it is ready
    */
-  public void AddRemoveVehicleDebugGui()
+  public void AddRemoveVehicleDebugGui(bool hasDebug)
   {
     _debugGui = GetComponent<VehicleDebugGui>();
 
-    if ((bool)_debugGui && !HasVehicleDebug.Value)
+    if ((bool)_debugGui && !hasDebug)
     {
       Destroy(_debugGui);
     }
 
-    if (HasVehicleDebug.Value && !(bool)_debugGui)
+    if (!(bool)_debugGui && hasDebug)
     {
       _debugGui = gameObject.AddComponent<VehicleDebugGui>();
     }

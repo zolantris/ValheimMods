@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ValheimVehicles.Vehicles;
+namespace ValheimVehicles.Vehicles.Interfaces;
 
 public interface IRudderControls
 {

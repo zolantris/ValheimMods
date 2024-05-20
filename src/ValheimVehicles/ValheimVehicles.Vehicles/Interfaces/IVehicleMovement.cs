@@ -1,6 +1,6 @@
 using ValheimVehicles.Vehicles.Enums;
 
-namespace ValheimVehicles.Vehicles;
+namespace ValheimVehicles.Vehicles.Interfaces;
 
 public interface IVehicleMovement
 {

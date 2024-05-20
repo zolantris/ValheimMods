@@ -7,6 +7,7 @@ using UnityEngine;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
 using Object = System.Object;
 

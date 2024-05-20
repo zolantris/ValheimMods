@@ -7,6 +7,7 @@ using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Patches;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Propulsion.Rudder;
@@ -19,7 +20,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
   public MoveableBaseShipComponent deprecatedMBShip;
 
   public IVehicleShip ShipInstance;
-
+  public static readonly int PlayerSteeringAnim = ZSyncAnimation.GetHash("player_steering");
   public Transform? wheelTransform;
   private Vector3 wheelLocalOffset;
 
@@ -51,6 +52,8 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
   private const float maxUseRange = 10f;
   public Transform AttachPoint { get; set; }
+
+  public ZSyncAnimation zAnimation;
 
   public static string GetAnchorHotkeyString()
   {
@@ -129,6 +132,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     AttachPoint = transform.Find("attachpoint");
     wheelTransform = transform.Find("controls/wheel");
     wheelLocalOffset = wheelTransform.position - transform.position;
+    zAnimation = gameObject.AddComponent<ZSyncAnimation>();
   }
 
   public string GetHoverName()
@@ -268,7 +272,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
       return;
     }
 
-    ShipInstance?.Instance.ApplyControls(moveDir);
+    ShipInstance?.Instance.MovementController.ApplyControls(moveDir);
   }
 
   public Component GetControlledComponent()
@@ -309,7 +313,6 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     var anchorKey = VehicleMovementController.GetAnchorKey();
     if (!anchorKey) return;
 
-    Logger.LogDebug("Anchor button is down setting anchor");
     deprecatedMBShip.SetAnchor(
       !deprecatedMBShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored));
   }
@@ -335,8 +338,6 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     }
 
     if (!wheelTransform) wheelTransform = netView.transform.Find("controls/wheel");
-
-    Logger.LogDebug("added rudder to BaseVehicle");
   }
 
   public void InitializeControls(ZNetView netView, IVehicleShip? vehicleShip)

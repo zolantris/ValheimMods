@@ -14,6 +14,7 @@ using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
