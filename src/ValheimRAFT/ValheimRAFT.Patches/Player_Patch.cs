@@ -23,12 +23,13 @@ public class Player_Patch
       if (list[i].operand != null && list[i].operand.ToString() ==
           "UnityEngine.GameObject Instantiate[GameObject](UnityEngine.GameObject, UnityEngine.Vector3, UnityEngine.Quaternion)")
       {
-        list.InsertRange(i + 2, new CodeInstruction[3]
-        {
-          new(OpCodes.Ldarg_0),
-          new(OpCodes.Ldloc_3),
-          new(OpCodes.Call, AccessTools.Method(typeof(Player_Patch), nameof(PlacedPiece)))
-        });
+        // I couldn't find any references to the player instance in your PlacedPiece method so I removed it as an arguement so you don't need to load it via ldarg0
+        // I also removed the instruction ldloc3 since the gameobject you want to affect is already on the top of the evaluation stack
+        // To make sure the result ends up back on the stack though I changed your PlacedPiece method to return the gameObject it was called with
+        // This should fix the compatiability issue with MoreVanillaBuildPrefabs and hopefully be a bit more of a robust approach since you no longer need to rely on 
+        // specific references being at specific positions in the evaluation stack, so long as other transpilers also put the gameObject back onto the stack 
+        // they should all play nice together
+        list.InsertRange(i, new CodeInstruction[1] { new(OpCodes.Call, AccessTools.Method(typeof(Player_Patch), nameof(PlacedPiece))) });
         break;
       }
 
@@ -45,8 +46,13 @@ public class Player_Patch
     }
   }
 
-  public static void PlacedPiece(Player player, GameObject gameObject)
+  /// <summary>
+  ///     Modifies piece and returns GameObject to make sure Instantiated result stays on stack
+  /// </summary>
+  public static GameObject PlacedPiece(GameObject gameObject)
   {
+    // Can get local player via Player.m_localPlayer if you need it in this method
+    // I couldn't find any references to the player instance in this method though
     var piece = gameObject.GetComponent<Piece>();
     if (!piece) return;
     var rb = piece.GetComponentInChildren<Rigidbody>();
@@ -99,6 +105,7 @@ public class Player_Patch
         mb.AddTemporaryPiece(piece);
       }
     }
+    return gameObject;
   }
 
   public static bool HandleGameObjectRayCast(Transform transform, LayerMask layerMask,
