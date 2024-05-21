@@ -76,6 +76,9 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
 
   private float m_lastBridgeProgress = -1f;
 
+  private const string BoardingRampSegmantsKey = "MB_m_segments";
+  private const string BoardingRampStateKey = "MB_m_state";
+
   private static EditRampComponent m_editPanel;
 
   private void Awake()
@@ -101,8 +104,8 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
     }
     else
     {
-      m_nview.Register<int>("RPC_SetState", RPC_SetState);
-      m_nview.Register<int>("RPC_SetSegmentCount", RPC_SetSegmentCount);
+      m_nview.Register<int>(nameof(RPC_SetState), RPC_SetState);
+      m_nview.Register<int>(nameof(RPC_SetSegmentCount), RPC_SetSegmentCount);
       m_updateRamp = true;
       LoadZDO();
     }
@@ -120,8 +123,8 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
   {
     if ((bool)m_nview && m_nview.m_zdo != null)
     {
-      m_state = (BoardingRampState)m_nview.m_zdo.GetInt("MB_m_state");
-      m_segments = m_nview.m_zdo.GetInt("MB_m_segments", 5);
+      m_state = (BoardingRampState)m_nview.m_zdo.GetInt(BoardingRampStateKey);
+      m_segments = m_nview.m_zdo.GetInt(BoardingRampSegmantsKey, 5);
     }
   }
 
@@ -139,12 +142,12 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
     {
       if ((bool)m_nview && !m_nview.IsOwner())
       {
-        m_nview.InvokeRPC("RPC_SetSegmentCount", segmentCount);
+        m_nview.InvokeRPC(nameof(RPC_SetSegmentCount), segmentCount);
       }
       else
       {
         m_segments = segmentCount;
-        m_nview.m_zdo.Set("MB_m_segments", m_segments);
+        m_nview.m_zdo.Set(BoardingRampSegmantsKey, m_segments);
       }
     }
   }
@@ -153,10 +156,10 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
   {
     while (m_segments < m_segmentObjects.Count)
     {
-      int j = m_segmentObjects.Count - 1;
-      Object.Destroy(m_segmentObjects[j]);
-      Object.Destroy(m_ropeAttach1[j]);
-      Object.Destroy(m_ropeAttach2[j]);
+      var j = m_segmentObjects.Count - 1;
+      Destroy(m_segmentObjects[j]);
+      Destroy(m_ropeAttach1[j]);
+      Destroy(m_ropeAttach2[j]);
       m_segmentObjects.RemoveAt(j);
       m_ropeAttach1.RemoveAt(j);
       m_ropeAttach2.RemoveAt(j);
@@ -181,7 +184,7 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
   {
     if ((bool)m_nview && !m_nview.IsOwner())
     {
-      BoardingRampState newState = (BoardingRampState)m_nview.m_zdo.GetInt("MB_m_state");
+      BoardingRampState newState = (BoardingRampState)m_nview.m_zdo.GetInt(BoardingRampStateKey);
       if (newState != m_state)
       {
         if (newState == BoardingRampState.Closed || newState == BoardingRampState.Closing)
@@ -194,7 +197,7 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
         }
       }
 
-      m_segments = m_nview.m_zdo.GetInt("MB_m_segments", 5);
+      m_segments = m_nview.m_zdo.GetInt(BoardingRampSegmantsKey, 5);
     }
 
     if (m_segmentObjects.Count != m_segments)
@@ -242,11 +245,11 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
     {
       if (m_nview.IsOwner())
       {
-        m_nview.m_zdo.Set("MB_m_state", (int)state);
+        m_nview.m_zdo.Set(BoardingRampStateKey, (int)state);
         return;
       }
 
-      m_nview.InvokeRPC("RPC_SetState", (int)state);
+      m_nview.InvokeRPC(nameof(RPC_SetState), (int)state);
     }
   }
 
@@ -426,7 +429,7 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
 
   public string GetHoverText()
   {
-    string stateChangeDesc =
+    var stateChangeDesc =
       ((m_state == BoardingRampState.Open || m_state == BoardingRampState.Opening)
         ? "$mb_boarding_ramp_retract"
         : "$mb_boarding_ramp_extend");

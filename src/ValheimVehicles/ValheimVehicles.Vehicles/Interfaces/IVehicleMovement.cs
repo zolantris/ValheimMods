@@ -1,6 +1,6 @@
 using ValheimVehicles.Vehicles.Enums;
 
-namespace ValheimVehicles.Vehicles;
+namespace ValheimVehicles.Vehicles.Interfaces;
 
 public interface IVehicleMovement
 {
@@ -8,5 +8,5 @@ public interface IVehicleMovement
   public void Descend();
   public void Ascend();
   public VehicleMovementFlags MovementFlags { get; }
-  public float TargetHeight { get; set; }
+  public float TargetHeight { get; }
 }

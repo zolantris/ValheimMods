@@ -357,10 +357,11 @@
         <Exec Condition="Exists('$(SolutionDir)\Assets\')" Command="xcopy /d &quot;$(SolutionDir)\Assets\&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
         <Exec Condition="Exists('$(SolutionDir)\Assets\Translations\English\')" Command="xcopy /d &quot;$(SolutionDir)\Assets\Translations\English\&quot; &quot;$(PluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>
     </Target>
-    <Target Name="Copy_To_R2ModMan_vm" Condition="Exists('$(SandboxiePluginDeployPath)\$(AssemblyName).dll')" AfterTargets="Copy_To_R2ModMan">
+    <Target Name="Copy_To_R2ModMan_vm" Condition="Exists('$(SandboxiePluginDeployPath)\$(AssemblyName).dll') And ('$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU')" AfterTargets="convert_pdb_to_mdb">
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)plugins\$(AssemblyName).mdb&quot;"/>
+        <!-- mdb copy Does not work for some reason -->
+        <!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)plugins\$(AssemblyName).mdb&quot;"/>-->
         <Exec Command="xcopy /d &quot;.\Assets\&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
     </Target>
     <Target KeepDuplicateOutputs="false" Name="Copy_To_Valheim_Server" Condition=" $(AssemblyName) != 'SentryUnityWrapper' And ('$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU')" AfterTargets="convert_pdb_to_mdb">

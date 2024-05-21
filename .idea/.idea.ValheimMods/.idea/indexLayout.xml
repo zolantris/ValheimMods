@@ -11,6 +11,7 @@
     <explicitIncludes>
       <Path>README.md</Path>
       <Path>docs</Path>
+      <Path>gameLauncher.targets</Path>
       <Path>libs</Path>
       <Path>src/ValheimRAFT/Assets/Translations/English/valheimraft.json</Path>
       <Path>src/ValheimRAFT/README.md</Path>

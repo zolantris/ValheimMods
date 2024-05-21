@@ -2,13 +2,14 @@ using System;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Interfaces;
 
 namespace ValheimVehicles.Vehicles;
 
 /// <summary>
 /// Compatibility Class made to remap a ship to VehicleShip and provide the same methods so VehicleShip requires minimal code changes
 /// </summary>
-public class VehicleShipCompat : IVehicleShip
+public class VehicleShipCompat : IVehicleShip, IValheimShip
 {
   public Ship? ShipInstance;
   public VehicleShip? VehicleShipInstance;
@@ -76,6 +77,83 @@ public class VehicleShipCompat : IVehicleShip
     return false;
   }
 
+  public void ApplyControls(Vector3 dir) => ApplyControlls(dir);
+
+  public void ApplyControlls(Vector3 dir)
+  {
+    if (IsVehicleShip)
+    {
+      VehicleShipInstance?.MovementController.ApplyControls(dir);
+      return;
+    }
+
+    if (IsValheimShip)
+    {
+      ShipInstance?.ApplyControlls(dir);
+    }
+  }
+
+  public void Forward()
+  {
+    if (IsVehicleShip)
+    {
+      VehicleShipInstance?.MovementController.SendSpeedChange(VehicleMovementController
+        .DirectionChange.Forward);
+      return;
+    }
+
+    if (IsValheimShip)
+    {
+      ShipInstance?.Forward();
+    }
+  }
+
+  public void Backward()
+  {
+    if (IsVehicleShip)
+    {
+      VehicleShipInstance?.MovementController.SendSpeedChange(VehicleMovementController
+        .DirectionChange.Backward);
+      return;
+    }
+
+    if (IsValheimShip)
+    {
+      ShipInstance?.Backward();
+    }
+  }
+
+  public void Stop()
+  {
+    if (IsVehicleShip)
+    {
+      VehicleShipInstance?.MovementController.SendSpeedChange(VehicleMovementController
+        .DirectionChange.Stop);
+      return;
+    }
+
+    if (IsValheimShip)
+    {
+      ShipInstance?.Stop();
+    }
+  }
+
+  public void UpdateControls(float dt) => UpdateControlls(dt);
+
+  public void UpdateControlls(float dt)
+  {
+    if (IsVehicleShip)
+    {
+      VehicleShipInstance?.MovementController.UpdateControls(dt);
+      return;
+    }
+
+    if (IsValheimShip)
+    {
+      ShipInstance?.UpdateControlls(dt);
+    }
+  }
+
   private static VehicleShipCompat InitWithVehicleShip(VehicleShip vehicleShip)
   {
     return new VehicleShipCompat()
@@ -141,6 +219,11 @@ public class VehicleShipCompat : IVehicleShip
     }
 
     return false;
+  }
+
+  public void UpdateRudder(float dt, bool haveControllingPlayer)
+  {
+    throw new NotImplementedException();
   }
 
   public float GetWindAngle()
@@ -243,5 +326,23 @@ public class VehicleShipCompat : IVehicleShip
   public VehicleShip? Instance
   {
     get => VehicleShipInstance;
+  }
+
+  public ZNetView NetView
+  {
+    get
+    {
+      if (IsVehicleShip)
+      {
+        return VehicleShipInstance.NetView;
+      }
+
+      if (IsValheimShip)
+      {
+        return ShipInstance.m_nview;
+      }
+
+      return null;
+    }
   }
 }

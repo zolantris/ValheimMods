@@ -10,6 +10,7 @@ using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Vehicles.Interfaces;
 using static ValheimVehicles.Propulsion.Sail.SailAreaForce;
 using Logger = Jotunn.Logger;
 using PrefabNames = ValheimVehicles.Prefabs.PrefabNames;
@@ -18,7 +19,7 @@ namespace ValheimVehicles.Vehicles;
 
 /// <summary>controller used for all vehicles</summary>
 /// <description> This is a controller used for all vehicles, Currently it must be initialized within a vehicle view IE VehicleShip or upcoming VehicleWheeled, and VehicleFlying instances.</description>
-public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
+public class BaseVehicleController : MonoBehaviour
 {
   public ZNetView m_nview { get; set; }
 
@@ -129,7 +130,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
   public float totalSailArea = 0f;
 
-  public virtual IVehicleShip? VehicleInstance { set; get; }
+  public virtual IVehicleShip VehicleInstance { set; get; }
 
 /* end sail calcs  */
   private Vector2i m_sector;
@@ -437,6 +438,19 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
     m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
   }
 
+  public void Update()
+  {
+    if (!m_nview) return;
+
+    if (!ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value) return;
+
+    // owner must sync more frequently, this likely is unnecessary but is kept as an option for servers that may be having sync problems during only the FixedUpdate
+    if (m_nview.IsOwner())
+    {
+      Client_UpdateAllPieces();
+    }
+  }
+
   public void FixedUpdate()
   {
     Sync();
@@ -448,15 +462,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
  */
   public void LateUpdate()
   {
-    // Sync();
-    if (!(bool)ZNet.instance)
-    {
-      // prevents NRE from next command
-      // Client_UpdateAllPieces();
-      return;
-    }
-
-    if (ZNet.instance.IsDedicated() == false) Client_UpdateAllPieces();
+    Sync();
   }
 
   /**
@@ -485,7 +491,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
       {
         if (transform.position != nv.transform.position)
         {
-          nv.m_zdo.SetPosition(transform.position);
+          nv.m_zdo?.SetPosition(transform.position);
         }
       }
     }
@@ -529,8 +535,6 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
 
       zdo.SetPosition(pos);
     }
-
-    UpdateBedSpawn();
   }
 
 
@@ -542,7 +546,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   private IEnumerator UpdatePiecesWorker(List<ZDO> list)
   {
     UpdatePieces(list);
-    yield return null;
+    yield return new WaitForFixedUpdate();
   }
 
 /*
@@ -559,21 +563,13 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
   {
     while (isActiveAndEnabled)
     {
-      /*
-       * wait for the pending pieces coroutine to complete before updating
-       */
-      // if (_pendingPiecesCoroutine != null)
-      // {
-      //   
-      // };
       if (!m_nview)
       {
         yield return new WaitUntil(() => (bool)m_nview);
       }
 
-      var time = Time.realtimeSinceStartup;
       var output = m_allPieces.TryGetValue(_persistentZdoId, out var list);
-      if (!output)
+      if (list == null || !output)
       {
         yield return new WaitForSeconds(Math.Max(2f,
           ValheimRaftPlugin.Instance.ServerRaftUpdateZoneInterval
@@ -1049,7 +1045,7 @@ public class BaseVehicleController : MonoBehaviour, IBaseVehicleController
      * @todo make this only apply for boats with no objects in any list
      */
     if (list is { Count: 0 } &&
-        (m_dynamicObjects.Count == 0 || objectListHasNoValidItems)
+        (m_dynamicObjects.Count == 0 || objectListHasNoValidItems) && hasDebug
        )
     {
       Logger.LogError(

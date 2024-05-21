@@ -10,8 +10,13 @@ public class LoadValheimAssets
   public static GameObject vanillaRaftPrefab;
   public static GameObject vikingShipPrefab;
   public static Transform waterMask;
+
   public static Piece woodFloorPiece;
   public static WearNTear woodFloorPieceWearNTear;
+
+  public static Piece stoneFloorPiece;
+  public static WearNTear stoneFloorPieceWearNTear;
+
   public static GameObject raftMast;
   public static GameObject shipWaterEffects;
 
@@ -25,6 +30,11 @@ public class LoadValheimAssets
     raftMast = vanillaRaftPrefab.transform.Find("ship/visual/mast").gameObject;
 
     var woodFloorPrefab = prefabManager.GetPrefab("wood_floor");
+    var stoneFloorPrefab = prefabManager.GetPrefab("stone_floor");
+
+    stoneFloorPiece = stoneFloorPrefab.GetComponent<Piece>();
+    stoneFloorPieceWearNTear = stoneFloorPiece.GetComponent<WearNTear>();
+
     woodFloorPiece = woodFloorPrefab.GetComponent<Piece>();
     woodFloorPieceWearNTear = woodFloorPiece.GetComponent<WearNTear>();
   }

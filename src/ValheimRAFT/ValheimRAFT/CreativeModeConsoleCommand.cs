@@ -70,7 +70,7 @@ public class CreativeModeConsoleCommand : ConsoleCommand
       {
         player.m_body.position = new Vector3(
           player.m_body.transform.position.x,
-          player.m_body.transform.position.y +
+          player.m_body.transform.position.y + 2f +
           ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
           player.m_body.transform.position.z);
 

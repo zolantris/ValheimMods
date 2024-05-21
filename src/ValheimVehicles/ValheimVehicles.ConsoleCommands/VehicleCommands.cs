@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BepInEx.Logging;
+using Components;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
@@ -137,7 +138,8 @@ public class VehicleCommands : ConsoleCommand
 
   private static void ToggleVehicleDebugComponent()
   {
-    ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui();
+    var debugGui = ValheimRaftPlugin.Instance.GetComponent<VehicleDebugGui>();
+    ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui(!(bool)debugGui);
     foreach (var vehicleShip in VehicleShip.AllVehicles)
     {
       vehicleShip.InitializeVehicleDebugger();
