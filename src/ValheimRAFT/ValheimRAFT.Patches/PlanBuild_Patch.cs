@@ -59,7 +59,7 @@ public class PlanBuild_Patch
   [HarmonyPrefix]
   private static void BlueprintManager_OnPiecePlaced_Postfix(GameObject placedPiece)
   {
-    Player_Patch.PlacedPiece(Player.m_localPlayer, placedPiece);
+    Player_Patch.PlacedPiece(placedPiece);
     // ValheimRAFT_Patch.PlacedPiece(Player.m_localPlayer, placedPiece);
   }
 
