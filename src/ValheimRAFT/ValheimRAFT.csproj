@@ -59,7 +59,6 @@
         <Compile Include="ValheimRAFT\MovableBaseZone.cs"/>
         <Compile Include="ValheimRAFT\PrefabController.cs"/>
         <Compile Include="ValheimRAFT\ShipStats.cs"/>
-        <Compile Include="ValheimRAFT\SailAreaForce.cs"/>
         <Compile Include="ValheimRAFT\ValheimRaftPlugin.cs"/>
         <Compile Include="ValheimRAFT\MastComponent.cs"/>
         <Compile Include="ValheimRAFT\MeshHelper.cs"/>

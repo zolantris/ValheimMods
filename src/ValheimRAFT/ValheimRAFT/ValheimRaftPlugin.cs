@@ -17,6 +17,7 @@ using ValheimRAFT.Patches;
 using ValheimRAFT.Util;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Propulsion.Sail;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 

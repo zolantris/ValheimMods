@@ -108,6 +108,9 @@ public class PrefabRegistryController : MonoBehaviour
 
     var tier3 = pieceManager.GetPiece(PrefabNames.Tier3RaftMastName);
     tier3.Piece.m_description = SailPrefabs.GetTieredSailAreaText(3);
+
+    var tier4 = pieceManager.GetPiece(PrefabNames.Tier4RaftMastName);
+    tier4.Piece.m_description = SailPrefabs.GetTieredSailAreaText(4);
   }
 
   /**

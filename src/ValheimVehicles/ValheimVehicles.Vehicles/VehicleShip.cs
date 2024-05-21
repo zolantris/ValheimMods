@@ -1222,7 +1222,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 
   private Vector3 GetSailForce(float sailSize, float dt, bool isFlying)
   {
-    var windDir = EnvMan.instance.GetWindDir();
+    var windDir = IsWindControllActive() ? Vector3.forward : EnvMan.instance.GetWindDir();
     var windAngleFactorInterpolated = GetInterpolatedWindAngleFactor();
 
     Vector3 target;
