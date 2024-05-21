@@ -16,6 +16,7 @@ public static class PrefabNames
   public const string Tier1RaftMastName = "MBRaftMast";
   public const string Tier2RaftMastName = "MBKarveMast";
   public const string Tier3RaftMastName = "MBVikingShipMast";
+  public const string Tier4RaftMastName = $"{ValheimVehiclesPrefix}_DrakkalMast";
   public const string Tier1CustomSailName = "MBSail";
   public const string BoardingRamp = "MBBoardingRamp";
   public const string BoardingRampWide = "MBBoardingRamp_Wide";

@@ -126,6 +126,7 @@ public class BaseVehicleController : MonoBehaviour
   public int numberOfTier1Sails = 0;
   public int numberOfTier2Sails = 0;
   public int numberOfTier3Sails = 0;
+  public int numberOfTier4Sails = 0;
   public float customSailsArea = 0f;
 
   public float totalSailArea = 0f;
@@ -1084,6 +1085,7 @@ public class BaseVehicleController : MonoBehaviour
     numberOfTier1Sails = 0;
     numberOfTier2Sails = 0;
     numberOfTier3Sails = 0;
+    numberOfTier4Sails = 0;
 
     var hasConfigOverride = ValheimRaftPlugin.Instance.EnableCustomPropulsionConfig.Value;
 
@@ -1096,7 +1098,7 @@ public class BaseVehicleController : MonoBehaviour
         continue;
       }
 
-      if (mMastPiece.name.Contains("MBRaftMast"))
+      if (mMastPiece.name.StartsWith(PrefabNames.Tier1RaftMastName))
       {
         ++numberOfTier1Sails;
         var multiplier = hasConfigOverride
@@ -1104,7 +1106,7 @@ public class BaseVehicleController : MonoBehaviour
           : Tier1;
         totalSailArea += numberOfTier1Sails * multiplier;
       }
-      else if (mMastPiece.name.Contains("MBKarveMast"))
+      else if (mMastPiece.name.StartsWith(PrefabNames.Tier2RaftMastName))
       {
         ++numberOfTier2Sails;
         var multiplier = hasConfigOverride
@@ -1112,13 +1114,22 @@ public class BaseVehicleController : MonoBehaviour
           : Tier2;
         totalSailArea += numberOfTier2Sails * multiplier;
       }
-      else if (mMastPiece.name.Contains("MBVikingShipMast"))
+      else if (mMastPiece.name.StartsWith(PrefabNames.Tier3RaftMastName))
       {
         ++numberOfTier3Sails;
         var multiplier = hasConfigOverride
           ? ValheimRaftPlugin.Instance.SailTier3Area.Value
           : Tier3;
         totalSailArea += numberOfTier3Sails * multiplier;
+        ;
+      }
+      else if (mMastPiece.name.StartsWith(PrefabNames.Tier4RaftMastName))
+      {
+        ++numberOfTier4Sails;
+        var multiplier = hasConfigOverride
+          ? ValheimRaftPlugin.Instance.SailTier4Area.Value
+          : Tier4;
+        totalSailArea += numberOfTier4Sails * multiplier;
         ;
       }
     }
@@ -1811,7 +1822,8 @@ public class BaseVehicleController : MonoBehaviour
     if (!door && !ladder && !rope && !go.name.StartsWith(PrefabNames.Tier1RaftMastName) &&
         !go.name.StartsWith(PrefabNames.Tier1CustomSailName) &&
         !go.name.StartsWith(PrefabNames.Tier2RaftMastName) &&
-        !go.name.StartsWith(PrefabNames.Tier3RaftMastName))
+        !go.name.StartsWith(PrefabNames.Tier3RaftMastName) &&
+        !go.name.StartsWith(PrefabNames.Tier4RaftMastName))
     {
       if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value || ShipHulls.IsHull(go))
       {

@@ -1,3 +1,5 @@
+using System.Linq;
+using Jotunn;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -20,6 +22,7 @@ public class SailPrefabs : IRegisterPrefab
     RegisterRaftMast(prefabManager, pieceManager);
     RegisterKarveMast(prefabManager, pieceManager);
     RegisterVikingMast(prefabManager, pieceManager);
+    RegisterDrakkalMast(prefabManager, pieceManager);
     RegisterCustomSail(prefabManager, pieceManager);
     RegisterCustomSailCreator(prefabManager, pieceManager, 3);
     RegisterCustomSailCreator(prefabManager, pieceManager, 4);
@@ -39,7 +42,7 @@ public class SailPrefabs : IRegisterPrefab
     vikingShipMastPrefabPiece.transform.localScale = new Vector3(2f, 2f, 2f);
     vikingShipMastPrefab.transform.localPosition = new Vector3(0, -1, 0);
     vikingShipMastPrefabPiece.m_name = "$mb_vikingship_mast";
-    vikingShipMastPrefabPiece.m_description = "$mb_vikingship_mast_desc";
+    vikingShipMastPrefabPiece.m_description = GetTieredSailAreaText(3);
     vikingShipMastPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
     PrefabRegistryController.AddToRaftPrefabPieces(vikingShipMastPrefabPiece);
 
@@ -47,9 +50,6 @@ public class SailPrefabs : IRegisterPrefab
 
     var vikingShipMastComponent = vikingShipMastPrefab.AddComponent<MastComponent>();
     vikingShipMastComponent.m_sailObject = vikingShipMastPrefab.transform.Find("Sail").gameObject;
-
-    // PrefabRegistryHelpers.AddBoundsToAllChildren(vikingShipMastPrefab, vikingShipMastPrefab);
-
 
     vikingShipMastComponent.m_sailCloth =
       vikingShipMastComponent.m_sailObject.GetComponentInChildren<Cloth>();
@@ -68,31 +68,93 @@ public class SailPrefabs : IRegisterPrefab
     pieceManager.AddPiece(new CustomPiece(vikingShipMastPrefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
-      Description = GetTieredSailAreaText(3),
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("vikingmast"),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.VikingMast),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[3]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 10,
           Item = "FineWood",
           Recover = true
         },
-        new()
+        new RequirementConfig
         {
           Amount = 2,
           Item = "RoundLog",
           Recover = true
         },
-        new()
+        new RequirementConfig
         {
           Amount = 6,
           Item = "WolfPelt",
           Recover = true
         }
-      }
+      ]
+    }));
+  }
+
+  private void RegisterDrakkalMast(PrefabManager prefabManager, PieceManager pieceManager)
+  {
+    var drakkalMast = LoadValheimAssets.drakkarPrefab.transform.Find("ship/visual/Mast")
+      .gameObject;
+
+    var prefab =
+      prefabManager.CreateClonedPrefab(PrefabNames.Tier4RaftMastName, drakkalMast);
+    var vikingShipMastPrefabPiece = prefab.AddComponent<Piece>();
+
+    vikingShipMastPrefabPiece.transform.localScale = new Vector3(1, 1, 1);
+    vikingShipMastPrefabPiece.m_name = "$valheim_vehicles_drakkalship_mast";
+    vikingShipMastPrefabPiece.m_description = GetTieredSailAreaText(4);
+    vikingShipMastPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
+    PrefabRegistryController.AddToRaftPrefabPieces(vikingShipMastPrefabPiece);
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+
+    var mastComponent = prefab.AddComponent<MastComponent>();
+    var clothObj = prefab.GetComponentsInChildren<Cloth>()[0];
+    mastComponent.m_sailObject = clothObj.transform.parent.gameObject;
+
+    mastComponent.m_sailCloth = clothObj;
+    mastComponent.m_allowSailRotation = true;
+    mastComponent.m_allowSailShrinking = true;
+
+    // shipCollider
+    PrefabRegistryHelpers.AddSnapPoint("$hud_snappoint_bottom", prefab);
+
+    // Set wear and tear can be abstracted
+    PrefabRegistryHelpers.SetWearNTear(prefab, 3);
+
+    PrefabRegistryHelpers.FixRopes(prefab);
+    PrefabRegistryHelpers.FixCollisionLayers(prefab);
+
+    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    {
+      PieceTable = "Hammer",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.VikingMast),
+      Category = PrefabNames.ValheimRaftMenuName,
+      Enabled = true,
+      Requirements =
+      [
+        new RequirementConfig
+        {
+          Amount = 10,
+          Item = "FineWood",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 10,
+          Item = "YggdrasilWood",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 20,
+          Item = "LinenThread",
+          Recover = true
+        }
+      ]
     }));
   }
 
@@ -187,6 +249,8 @@ public class SailPrefabs : IRegisterPrefab
         $"$mb_karve_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{ValheimRaftPlugin.Instance.SailTier2Area.Value}</b></color>]",
       3 =>
         $"$mb_vikingship_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{ValheimRaftPlugin.Instance.SailTier3Area.Value}</b></color>]",
+      4 =>
+        $"$valheim_vehicles_drakkalship_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{ValheimRaftPlugin.Instance.SailTier4Area.Value}</b></color>]",
       _ => ""
     };
 
@@ -228,21 +292,21 @@ public class SailPrefabs : IRegisterPrefab
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("raftmast"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[2]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 10,
           Item = "Wood",
           Recover = true
         },
-        new()
+        new RequirementConfig
         {
           Amount = 6,
           Item = "DeerHide",
           Recover = true
         }
-      }
+      ]
     }));
   }
 

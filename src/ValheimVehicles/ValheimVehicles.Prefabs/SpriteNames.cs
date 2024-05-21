@@ -2,6 +2,7 @@ namespace ValheimVehicles.Prefabs;
 
 public abstract class SpriteNames
 {
+  public const string VikingMast = "vikingmast";
   public const string ShipSteeringWheel = "steering_wheel";
   public const string DirtFloor = "dirtfloor_icon";
   public const string BoardingRamp = "boarding_ramp";
