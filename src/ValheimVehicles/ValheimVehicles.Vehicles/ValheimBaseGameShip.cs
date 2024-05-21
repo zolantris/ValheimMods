@@ -186,7 +186,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal void Start()
   {
-    InvokeRepeating("UpdateOwner", 2f, 2f);
+    InvokeRepeating(nameof(UpdateOwner), 2f, 2f);
   }
 
   internal void PrintStats()

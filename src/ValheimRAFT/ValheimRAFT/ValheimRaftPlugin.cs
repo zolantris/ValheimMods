@@ -62,7 +62,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> AdminsCanOnlyBuildRaft { get; set; }
   public ConfigEntry<bool> AllowOldV1RaftRecipe { get; set; }
   public ConfigEntry<bool> AllowExperimentalPrefabs { get; set; }
-
+  public ConfigEntry<bool> ForceShipOwnerUpdatePerFrame { get; set; }
 
   // Propulsion Configs
   public ConfigEntry<bool> EnableCustomPropulsionConfig { get; set; }
@@ -126,14 +126,16 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     $"{Author}-{ModName}", $"zolantris-{ModName}", $"Zolantris-{ModName}", ModName
   ];
 
-  private ConfigDescription CreateConfigDescription(string description, bool isAdmin = false)
+  private ConfigDescription CreateConfigDescription(string description, bool isAdmin = false,
+    bool isAdvanced = false)
   {
     return new ConfigDescription(
       description,
       null,
       new ConfigurationManagerAttributes()
       {
-        IsAdminOnly = true
+        IsAdminOnly = isAdmin,
+        IsAdvanced = isAdvanced,
       }
     );
   }
@@ -149,10 +151,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship."));
     HasVehicleDebug = Config.Bind("Vehicles", "HasVehicleDebug", false,
       CreateConfigDescription(
-        "Enables the debug menu, for showing colliders or rotating the ship"));
+        "Enables the debug menu, for showing colliders or rotating the ship", false, true));
     EnableExactVehicleBounds = Config.Bind("Vehicles", "EnableExactVehicleBounds", false,
       CreateConfigDescription(
-        "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible"));
+        "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible",
+        true, true));
   }
 
   private void CreateColliderConfig()
@@ -160,7 +163,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     HullCollisionOnly = Config.Bind("Floatation", "Only Use Hulls For Floatation Collisions", true,
       CreateConfigDescription(
         "Makes the Ship Hull prefabs be the sole source of collisions, meaning ships with wider tops will not collide at bottom terrain due to their width above water. Requires a Hull, without a hull it will previous box around all items in ship",
-        false));
+        true));
   }
 
   private void CreateCommandConfig()
@@ -193,52 +196,55 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     // rudder
     VehicleRudderSpeedBack = Config.Bind("Propulsion", "Rudder Back Speed", 1f,
-      new ConfigDescription("Set the Back speed of rudder, this will apply with sails"));
+      CreateConfigDescription("Set the Back speed of rudder, this will apply with sails", true));
     VehicleRudderSpeedSlow = Config.Bind("Propulsion", "Rudder Slow Speed", 1f,
-      new ConfigDescription("Set the Half speed of rudder, this will apply with sails"));
+      CreateConfigDescription("Set the Slow speed of rudder, this will apply with sails", true));
     VehicleRudderSpeedHalf = Config.Bind("Propulsion", "Rudder Half Speed", 0f,
-      new ConfigDescription("Set the Slow speed of rudder, this will apply with sails"));
+      CreateConfigDescription("Set the Half speed of rudder, this will apply with sails", true));
     VehicleRudderSpeedFull = Config.Bind("Propulsion", "Rudder Full Speed", 0f,
-      new ConfigDescription("Set the Full speed of rudder, this will apply with sails"));
+      CreateConfigDescription("Set the Full speed of rudder, this will apply with sails", true));
 
     // ship weight
     HasShipWeightCalculations = Config.Bind("Propulsion", "HasShipWeightCalculations", true,
       CreateConfigDescription(
-        "enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less"));
+        "enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less",
+        true));
 
     HasShipContainerWeightCalculations = Config.Bind("Propulsion",
       "HasShipContainerWeightCalculations",
       true,
       CreateConfigDescription(
-        "enables ship weight calculations for containers which affects sail-force (sailing speed) and future propulsion calculations. Makes ships with lots of containers require more sails"));
+        "enables ship weight calculations for containers which affects sail-force (sailing speed) and future propulsion calculations. Makes ships with lots of containers require more sails",
+        true));
 
     HasDebugSails = Config.Bind("Debug", "HasDebugSails", false,
       CreateConfigDescription(
-        "Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only."));
+        "Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only.",
+        false, true));
 
     EnableCustomPropulsionConfig = Config.Bind("Propulsion",
       "EnableCustomPropulsionConfig", SailAreaForce.HasPropulsionConfigOverride,
-      CreateConfigDescription("Enables all custom propulsion values", false));
+      CreateConfigDescription("Enables all custom propulsion values", true, true));
 
     SailCustomAreaTier1Multiplier = Config.Bind("Propulsion",
       "SailCustomAreaTier1Multiplier", SailAreaForce.CustomTier1AreaForceMultiplier,
       CreateConfigDescription(
         "Manual sets the sail wind area multiplier the custom tier1 sail. Currently there is only 1 tier",
-        true)
+        true, true)
     );
 
     SailTier1Area = Config.Bind("Propulsion",
       "SailTier1Area", SailAreaForce.Tier1,
-      CreateConfigDescription("Manual sets the sail wind area of the tier 1 sail.", true)
+      CreateConfigDescription("Manual sets the sail wind area of the tier 1 sail.", true, true)
     );
 
     SailTier2Area = Config.Bind("Propulsion",
       "SailTier2Area", SailAreaForce.Tier2,
-      CreateConfigDescription("Manual sets the sail wind area of the tier 2 sail.", true));
+      CreateConfigDescription("Manual sets the sail wind area of the tier 2 sail.", true, true));
 
     SailTier3Area = Config.Bind("Propulsion",
       "SailTier3Area", SailAreaForce.Tier3,
-      CreateConfigDescription("Manual sets the sail wind area of the tier 3 sail.", true));
+      CreateConfigDescription("Manual sets the sail wind area of the tier 3 sail.", true, true));
   }
 
   private void CreateServerConfig()
@@ -247,25 +253,14 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       "Protect Vehicle pieces from breaking on Error", true,
       "Protects against crashes breaking raft/vehicle initialization causing raft/vehicles to slowly break pieces attached to it. This will make pieces attached to valid raft ZDOs unbreakable from damage, but still breakable with hammer");
     AdminsCanOnlyBuildRaft = Config.Bind("Server config", "AdminsCanOnlyBuildRaft", false,
-      new ConfigDescription(
+      CreateConfigDescription(
         "ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart",
-        (AcceptableValueBase)null, new object[1]
-        {
-          (object)new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = true
-          }
-        }));
+        true, true));
     AllowOldV1RaftRecipe = Config.Bind("Server config", "AllowOldV1RaftRecipe", false,
-      new ConfigDescription(
+      CreateConfigDescription(
         "Allows the V1 Raft to be built, this Raft is not performant, but remains in >=v2.0.0 as a Fallback in case there are problems with the new raft",
-        null, [
-          new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = true
-          }
-        ]));
-    AllowExperimentalPrefabs = Config.Bind("Server config", "AllowOldV1RaftRecipe", false,
+        true, true));
+    AllowExperimentalPrefabs = Config.Bind("Server config", "AllowExperimentalPrefabs", false,
       new ConfigDescription(
         "Allows >=v2.0.0 experimental prefabs such as Iron variants of slabs, hulls, and ribs. They do not look great so they are disabled by default",
         null, [
@@ -275,48 +270,36 @@ public class ValheimRaftPlugin : BaseUnityPlugin
           }
         ]));
 
+    ForceShipOwnerUpdatePerFrame = Config.Bind("Rendering",
+      "Force Ship Owner Piece Update Per Frame", false,
+      new ConfigDescription(
+        "Forces an update during the Update sync of unity meaning it fires every frame for the Ship owner who also owns Physics. This will possibly make updates better for non-boat owners. Noting that the boat owner is determined by the first person on the boat, otherwise the game owns it.",
+        null, [
+          new ConfigurationManagerAttributes()
+          {
+            IsAdminOnly = true,
+            IsAdvanced = true,
+          }
+        ]));
+
     ServerRaftUpdateZoneInterval = Config.Bind("Server config",
       "ServerRaftUpdateZoneInterval",
-      10f,
-      new ConfigDescription(
+      5f,
+      CreateConfigDescription(
         "Allows Server Admin control over the update tick for the RAFT location. Larger Rafts will take much longer and lag out players, but making this ticket longer will make the raft turn into a box from a long distance away.",
-        (AcceptableValueBase)null, new object[1]
-        {
-          (object)new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = true
-          }
-        }));
+        true, true));
 
     MakeAllPiecesWaterProof = Config.Bind<bool>("Server config",
-      "MakeAllPiecesWaterProof", true, new ConfigDescription(
+      "MakeAllPiecesWaterProof", true, CreateConfigDescription(
         "Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.",
-        (AcceptableValueBase)null, new object[1]
-        {
-          (object)new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = true
-          }
-        }));
+        true
+      ));
     AllowFlight = Config.Bind<bool>("Server config", "AllowFlight", false,
-      new ConfigDescription("Allow the raft to fly (jump\\crouch to go up and down)",
-        (AcceptableValueBase)null, new object[1]
-        {
-          (object)new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = true
-          }
-        }));
+      CreateConfigDescription("Allow the raft to fly (jump\\crouch to go up and down)", true));
     AllowCustomRudderSpeeds = Config.Bind("Server config", "AllowCustomRudderSpeeds", true,
-      new ConfigDescription(
+      CreateConfigDescription(
         "Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed",
-        (AcceptableValueBase)null, new object[1]
-        {
-          (object)new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = true
-          }
-        }));
+        true));
   }
 
   private void AutoDoc()

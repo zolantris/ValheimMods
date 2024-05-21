@@ -937,12 +937,15 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     m_body.useGravity = TargetHeight == 0f;
   }
 
+  /// <summary>
+  /// Only Updates for the controlling player. Only players are synced
+  /// </summary>
   public void VehiclePhysicsFixedUpdate()
   {
     if (!(bool)_controller || !(bool)m_nview || m_nview.m_zdo == null ||
         !(bool)ShipDirection) return;
 
-    // if (!m_nview.IsOwner()) return;
+    if (!m_nview.IsOwner()) return;
     /*
      * creative mode should not allow movement and applying force on a object will cause errors when the object is kinematic
      */

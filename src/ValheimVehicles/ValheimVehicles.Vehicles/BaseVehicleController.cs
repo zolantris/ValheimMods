@@ -442,7 +442,9 @@ public class BaseVehicleController : MonoBehaviour
   {
     if (!m_nview) return;
 
-    // owner must sync
+    if (!ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value) return;
+
+    // owner must sync more frequently, this likely is unnecessary but is kept as an option for servers that may be having sync problems during only the FixedUpdate
     if (m_nview.IsOwner())
     {
       Client_UpdateAllPieces();
@@ -452,9 +454,6 @@ public class BaseVehicleController : MonoBehaviour
   public void FixedUpdate()
   {
     Sync();
-
-    if (m_nview.IsOwner()) return;
-
     Client_UpdateAllPieces();
   }
 
@@ -464,12 +463,6 @@ public class BaseVehicleController : MonoBehaviour
   public void LateUpdate()
   {
     Sync();
-    if (!(bool)ZNet.instance)
-    {
-      return;
-    }
-
-    if (ZNet.instance.IsDedicated() == false) Client_UpdateAllPieces();
   }
 
   /**
@@ -542,8 +535,6 @@ public class BaseVehicleController : MonoBehaviour
 
       zdo.SetPosition(pos);
     }
-
-    UpdateBedSpawn();
   }
 
 
@@ -555,7 +546,7 @@ public class BaseVehicleController : MonoBehaviour
   private IEnumerator UpdatePiecesWorker(List<ZDO> list)
   {
     UpdatePieces(list);
-    yield return null;
+    yield return new WaitForFixedUpdate();
   }
 
 /*
@@ -572,21 +563,13 @@ public class BaseVehicleController : MonoBehaviour
   {
     while (isActiveAndEnabled)
     {
-      /*
-       * wait for the pending pieces coroutine to complete before updating
-       */
-      // if (_pendingPiecesCoroutine != null)
-      // {
-      //   
-      // };
       if (!m_nview)
       {
         yield return new WaitUntil(() => (bool)m_nview);
       }
 
-      var time = Time.realtimeSinceStartup;
       var output = m_allPieces.TryGetValue(_persistentZdoId, out var list);
-      if (!output)
+      if (list == null || !output)
       {
         yield return new WaitForSeconds(Math.Max(2f,
           ValheimRaftPlugin.Instance.ServerRaftUpdateZoneInterval
@@ -1062,7 +1045,7 @@ public class BaseVehicleController : MonoBehaviour
      * @todo make this only apply for boats with no objects in any list
      */
     if (list is { Count: 0 } &&
-        (m_dynamicObjects.Count == 0 || objectListHasNoValidItems)
+        (m_dynamicObjects.Count == 0 || objectListHasNoValidItems) && hasDebug
        )
     {
       Logger.LogError(
