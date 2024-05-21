@@ -1129,7 +1129,7 @@ public class BaseVehicleController : MonoBehaviour
         var multiplier = hasConfigOverride
           ? ValheimRaftPlugin.Instance.SailTier4Area.Value
           : Tier4;
-        totalSailArea += numberOfTier3Sails * multiplier;
+        totalSailArea += numberOfTier4Sails * multiplier;
         ;
       }
     }
