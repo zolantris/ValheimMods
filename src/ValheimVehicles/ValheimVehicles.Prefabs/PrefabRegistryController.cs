@@ -546,13 +546,18 @@ public class PrefabRegistryController : MonoBehaviour
     mbDirtFloorPrefab.transform.localScale = new Vector3(size, 1f, size);
 
     var mbDirtFloorPrefabPiece = mbDirtFloorPrefab.AddComponent<Piece>();
-    mbDirtFloorPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
+    mbDirtFloorPrefabPiece.m_placeEffect = LoadValheimAssets.stoneFloorPiece.m_placeEffect;
+    mbDirtFloorPrefabPiece.m_allowedInDungeons = true;
 
     AddToRaftPrefabPieces(mbDirtFloorPrefabPiece);
+
     PrefabRegistryHelpers.AddNetViewWithPersistence(mbDirtFloorPrefab);
 
     var wnt = PrefabRegistryHelpers.SetWearNTear(mbDirtFloorPrefab);
     wnt.m_haveRoof = false;
+    wnt.m_materialType = WearNTear.MaterialType.Stone;
+    wnt.m_destroyedEffect = LoadValheimAssets.stoneFloorPieceWearNTear.m_destroyedEffect;
+
     // Makes the component cultivatable
     mbDirtFloorPrefab.AddComponent<CultivatableComponent>();
 
