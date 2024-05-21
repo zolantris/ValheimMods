@@ -1,3 +1,4 @@
+using Jotunn;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -115,7 +116,8 @@ public class SailPrefabs : IRegisterPrefab
     vikingShipMastComponent.m_sailObject = vikingShipMastPrefab.transform.Find("Sail").gameObject;
 
     vikingShipMastComponent.m_sailCloth =
-      vikingShipMastComponent.m_sailObject.GetComponentInChildren<Cloth>();
+      vikingShipMastComponent.m_sailObject.FindDeepChild("sail_full")
+        .GetComponentInChildren<Cloth>();
     vikingShipMastComponent.m_allowSailRotation = true;
     vikingShipMastComponent.m_allowSailShrinking = true;
 
