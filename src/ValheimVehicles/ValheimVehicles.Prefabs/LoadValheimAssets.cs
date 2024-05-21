@@ -9,6 +9,7 @@ public class LoadValheimAssets
 
   public static GameObject vanillaRaftPrefab;
   public static GameObject vikingShipPrefab;
+  public static GameObject drakkarPrefab;
   public static Transform waterMask;
 
   public static Piece woodFloorPiece;
@@ -24,6 +25,7 @@ public class LoadValheimAssets
   {
     vanillaRaftPrefab = prefabManager.GetPrefab("Raft");
     vikingShipPrefab = prefabManager.GetPrefab("VikingShip");
+    drakkarPrefab = prefabManager.GetPrefab("VikingShip_Ashlands");
     shipWaterEffects = vanillaRaftPrefab.transform.Find("WaterEffects").gameObject;
 
     waterMask = vikingShipPrefab.transform.Find("ship/visual/watermask");

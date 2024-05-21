@@ -83,6 +83,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> SailTier1Area { get; set; }
   public ConfigEntry<float> SailTier2Area { get; set; }
   public ConfigEntry<float> SailTier3Area { get; set; }
+  public ConfigEntry<float> SailTier4Area { get; set; }
   public ConfigEntry<float> SailCustomAreaTier1Multiplier { get; set; }
   public ConfigEntry<float> BoatDragCoefficient { get; set; }
   public ConfigEntry<float> MastShearForceThreshold { get; set; }
@@ -245,6 +246,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     SailTier3Area = Config.Bind("Propulsion",
       "SailTier3Area", SailAreaForce.Tier3,
       CreateConfigDescription("Manual sets the sail wind area of the tier 3 sail.", true, true));
+
+    SailTier4Area = Config.Bind("Propulsion",
+      "SailTier4Area", SailAreaForce.Tier4,
+      CreateConfigDescription("Manual sets the sail wind area of the tier 4 sail.", true, true));
   }
 
   private void CreateServerConfig()
