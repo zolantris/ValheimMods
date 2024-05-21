@@ -1127,8 +1127,9 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
              mainCamera.transform.InverseTransformDirection(ShipDirection.forward));
   }
 
-  public new float GetWindAngle()
+  public float GetWindAngle()
   {
+    // moder power support
     var isWindPowerActive = IsWindControllActive();
 
     var windDir = isWindPowerActive ? ShipDirection.forward : EnvMan.instance.GetWindDir();
@@ -1206,7 +1207,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 
   private float GetInterpolatedWindAngleFactor()
   {
-    var windIntensity = EnvMan.instance.GetWindIntensity();
+    var windIntensity = IsWindControllActive() ? 1f : EnvMan.instance.GetWindIntensity();
     var interpolatedWindIntensity = Mathf.Lerp(0.25f, 1f, windIntensity);
 
     var windAngleFactor = GetWindAngleFactor();
@@ -1243,6 +1244,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 
   private new float GetWindAngleFactor()
   {
+    if (IsWindControllActive()) return 1f;
     var num = Vector3.Dot(EnvMan.instance.GetWindDir(), -ShipDirection!.forward);
     var num2 = Mathf.Lerp(0.7f, 1f, 1f - Mathf.Abs(num));
     var num3 = 1f - Utils.LerpStep(0.75f, 0.8f, num);

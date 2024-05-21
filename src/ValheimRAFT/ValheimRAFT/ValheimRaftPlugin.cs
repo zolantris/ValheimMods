@@ -251,7 +251,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   {
     ProtectVehiclePiecesOnErrorFromWearNTearDamage = Config.Bind("Server config",
       "Protect Vehicle pieces from breaking on Error", true,
-      "Protects against crashes breaking raft/vehicle initialization causing raft/vehicles to slowly break pieces attached to it. This will make pieces attached to valid raft ZDOs unbreakable from damage, but still breakable with hammer");
+      CreateConfigDescription(
+        "Protects against crashes breaking raft/vehicle initialization causing raft/vehicles to slowly break pieces attached to it. This will make pieces attached to valid raft ZDOs unbreakable from damage, but still breakable with hammer",
+        true, true));
     AdminsCanOnlyBuildRaft = Config.Bind("Server config", "AdminsCanOnlyBuildRaft", false,
       CreateConfigDescription(
         "ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart",
@@ -261,26 +263,15 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         "Allows the V1 Raft to be built, this Raft is not performant, but remains in >=v2.0.0 as a Fallback in case there are problems with the new raft",
         true, true));
     AllowExperimentalPrefabs = Config.Bind("Server config", "AllowExperimentalPrefabs", false,
-      new ConfigDescription(
+      CreateConfigDescription(
         "Allows >=v2.0.0 experimental prefabs such as Iron variants of slabs, hulls, and ribs. They do not look great so they are disabled by default",
-        null, [
-          new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = true
-          }
-        ]));
+        true, true));
 
     ForceShipOwnerUpdatePerFrame = Config.Bind("Rendering",
       "Force Ship Owner Piece Update Per Frame", false,
-      new ConfigDescription(
+      CreateConfigDescription(
         "Forces an update during the Update sync of unity meaning it fires every frame for the Ship owner who also owns Physics. This will possibly make updates better for non-boat owners. Noting that the boat owner is determined by the first person on the boat, otherwise the game owns it.",
-        null, [
-          new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = true,
-            IsAdvanced = true,
-          }
-        ]));
+        true, true));
 
     ServerRaftUpdateZoneInterval = Config.Bind("Server config",
       "ServerRaftUpdateZoneInterval",

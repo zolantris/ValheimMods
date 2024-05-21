@@ -438,6 +438,10 @@ public class ValheimBaseGameShip : MonoBehaviour
     s_currentShips.Remove(this);
   }
 
+  /// <summary>
+  /// If moder power is enabled
+  /// </summary>
+  /// <returns></returns>
   public bool IsWindControllActive()
   {
     foreach (Player player in m_players)
