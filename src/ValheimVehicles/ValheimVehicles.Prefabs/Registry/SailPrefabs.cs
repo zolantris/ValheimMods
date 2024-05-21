@@ -41,7 +41,7 @@ public class SailPrefabs : IRegisterPrefab
     vikingShipMastPrefabPiece.transform.localScale = new Vector3(2f, 2f, 2f);
     vikingShipMastPrefab.transform.localPosition = new Vector3(0, -1, 0);
     vikingShipMastPrefabPiece.m_name = "$mb_vikingship_mast";
-    vikingShipMastPrefabPiece.m_description = "$mb_vikingship_mast_desc";
+    vikingShipMastPrefabPiece.m_description = GetTieredSailAreaText(3);
     vikingShipMastPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
     PrefabRegistryController.AddToRaftPrefabPieces(vikingShipMastPrefabPiece);
 
@@ -67,7 +67,6 @@ public class SailPrefabs : IRegisterPrefab
     pieceManager.AddPiece(new CustomPiece(vikingShipMastPrefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
-      Description = GetTieredSailAreaText(3),
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("vikingmast"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
@@ -97,19 +96,18 @@ public class SailPrefabs : IRegisterPrefab
 
   private void RegisterDrakkalMast(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    var vikingShipMast = LoadValheimAssets.drakkarPrefab.transform.Find("ship/visual/Mast")
+    var drakkalMast = LoadValheimAssets.drakkarPrefab.transform.Find("ship/visual/Mast")
       .gameObject;
 
     var vikingShipMastPrefab =
-      prefabManager.CreateClonedPrefab(PrefabNames.Tier3RaftMastName, vikingShipMast);
+      prefabManager.CreateClonedPrefab(PrefabNames.Tier4RaftMastName, drakkalMast);
     var vikingShipMastPrefabPiece = vikingShipMastPrefab.AddComponent<Piece>();
 
-    vikingShipMastPrefabPiece.transform.localScale = new Vector3(2.8f, 2.8f, 2.8f);
+    vikingShipMastPrefabPiece.transform.localScale = new Vector3(1, 1, 1);
     vikingShipMastPrefabPiece.m_name = "$valheim_vehicles_drakkalship_mast";
-    vikingShipMastPrefabPiece.m_description = "$valheim_vehicles_drakkalship_mast_desc";
+    vikingShipMastPrefabPiece.m_description = GetTieredSailAreaText(4);
     vikingShipMastPrefabPiece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
     PrefabRegistryController.AddToRaftPrefabPieces(vikingShipMastPrefabPiece);
-
     PrefabRegistryHelpers.AddNetViewWithPersistence(vikingShipMastPrefab);
 
     var vikingShipMastComponent = vikingShipMastPrefab.AddComponent<MastComponent>();
@@ -133,7 +131,6 @@ public class SailPrefabs : IRegisterPrefab
     pieceManager.AddPiece(new CustomPiece(vikingShipMastPrefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
-      Description = GetTieredSailAreaText(4),
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("vikingmast"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
