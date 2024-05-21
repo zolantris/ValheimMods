@@ -132,7 +132,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     AttachPoint = transform.Find("attachpoint");
     wheelTransform = transform.Find("controls/wheel");
     wheelLocalOffset = wheelTransform.position - transform.position;
-    zAnimation = gameObject.AddComponent<ZSyncAnimation>();
+    // zAnimation = gameObject.AddComponent<ZSyncAnimation>();
   }
 
   public string GetHoverName()
@@ -203,7 +203,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
 
     var playerOnShipViaShipInstance =
-      ShipInstance?.Instance?.GetComponentsInChildren<Player>() ?? null;
+      ShipInstance?.VehicleController?.Instance.GetComponentsInChildren<Player>() ?? null;
 
     /*
      * <note /> This logic allows for the player to just look at the Raft and see if the player is a child within it.
@@ -385,6 +385,8 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     {
       return;
     }
+
+    // zAnimation.m_animator = animator;
 
     if (!m_currentLeftHand)
     {

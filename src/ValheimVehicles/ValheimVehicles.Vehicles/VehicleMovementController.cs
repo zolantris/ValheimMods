@@ -44,7 +44,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
 
   public SteeringWheelComponent lastUsedWheelComponent;
 
-  public ZNetView NetView;
+  public ZNetView NetView { get; set; }
   private bool _hasRegister = false;
 
 
@@ -143,9 +143,9 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
       m_rudderValue = 0f;
     }
 
-    if (playerCount == 0)
+    if (playerCount == 0 && !IsAnchored)
     {
-      SetAnchor(false);
+      SendSetAnchor(true);
     }
     else if (!hasControllingPlayer && vehicleSpeed is Ship.Speed.Slow or Ship.Speed.Back)
     {
@@ -159,6 +159,15 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
     AutoVerticalFlightUpdate();
   }
 
+  private void FixedUpdate()
+  {
+    UpdateShipRudderTurningSpeed();
+  }
+
+  /// <summary>
+  /// Handles updating direction controls, update Controls is called within the FixedUpdate of VehicleShip
+  /// </summary>
+  /// <param name="dt"></param>
   public void UpdateControls(float dt)
   {
     if (NetView.IsOwner())
@@ -168,9 +177,9 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
       return;
     }
 
-    vehicleSpeed = (Ship.Speed)NetView.GetZDO().GetInt(ZDOVars.s_forward);
     if (Time.time - m_sendRudderTime > 1f)
     {
+      vehicleSpeed = (Ship.Speed)NetView.GetZDO().GetInt(ZDOVars.s_forward);
       m_rudderValue = NetView.GetZDO().GetFloat(ZDOVars.s_rudder);
     }
   }
@@ -180,33 +189,27 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
     switch (ValheimRaftPlugin.Instance.AllowFlight.Value)
     {
       case false:
-        ShipInstance?.Instance.m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, 0f);
+        ShipInstance?.NetView.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, 0f);
         break;
       case true:
-        ShipInstance?.Instance.m_nview.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, val);
+        ShipInstance?.NetView.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, val);
         break;
     }
   }
 
   private void SyncTargetHeight()
   {
-    if (ShipInstance?.Instance.m_nview)
-    {
-      var zdoTargetHeight = ShipInstance!.Instance.m_nview.m_zdo.GetFloat(
-        VehicleZdoVars.VehicleTargetHeight,
-        TargetHeight);
-      TargetHeight = zdoTargetHeight;
-    }
+    if (!ShipInstance?.NetView) return;
+
+    var zdoTargetHeight = ShipInstance!.NetView.m_zdo.GetFloat(
+      VehicleZdoVars.VehicleTargetHeight,
+      TargetHeight);
+    TargetHeight = zdoTargetHeight;
   }
 
   private void InitializeRPC()
   {
-    if (NetView != null && _hasRegister)
-    {
-      UnRegisterRPCListeners();
-    }
-
-    if (NetView != null && !_hasRegister)
+    if (NetView && !_hasRegister)
     {
       RegisterRPCListeners();
       _hasRegister = true;
@@ -228,7 +231,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
     // anchor logic
     NetView.Register<bool>(nameof(RPC_SetAnchor), RPC_SetAnchor);
     // rudder direction
-    NetView.Register<float>("Rudder", RPC_Rudder);
+    NetView.Register<float>(nameof(RPC_Rudder), RPC_Rudder);
 
 
     // steering
@@ -268,13 +271,16 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
       AttachPoint = rudderAttachPoint.transform;
     }
 
-    NetView = vehicleShip.Instance.m_nview;
+    NetView = GetComponent<ZNetView>();
   }
 
   private void OnDestroy()
   {
-    if (!_hasRegister) return;
-    UnRegisterRPCListeners();
+    if (_hasRegister)
+    {
+      UnRegisterRPCListeners();
+    }
+
     CancelInvoke(nameof(SyncTargetHeight));
   }
 
@@ -314,7 +320,6 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
       SendSetAnchor(state: false);
     }
 
-    var oldTargetHeight = TargetHeight;
     if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
     {
       TargetHeight = 0f;
@@ -345,7 +350,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   {
     if (IsAnchored)
     {
-      SetAnchor(false);
+      SendSetAnchor(false);
     }
 
     if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
@@ -544,10 +549,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   /*
    * Toggle the ship anchor and emit the event to other players so their client can update
    */
-  public void ToggleAnchor()
-  {
-    SetAnchor(!IsAnchored);
-  }
+  public void ToggleAnchor() => SendSetAnchor(!IsAnchored);
 
 
   private void ToggleAutoAscend()
@@ -574,22 +576,13 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
 
   public void SyncRudder(float rudder)
   {
-    NetView.Invoke(nameof(RPC_Rudder), rudder);
+    NetView.InvokeRPC(nameof(RPC_Rudder), rudder);
   }
 
 
   internal void RPC_Rudder(long sender, float value)
   {
     m_rudderValue = value;
-  }
-
-  /// <summary>
-  /// Updates anchor locally and send the same value over network
-  /// </summary>
-  /// <param name="isEnabled"></param>
-  public void SetAnchor(bool isEnabled)
-  {
-    SendSetAnchor(isEnabled);
   }
 
   /// <summary>
@@ -603,6 +596,8 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
     {
       _isAscending = false;
       _isDescending = false;
+      // only stops speed if anchor is dropped.
+      vehicleSpeed = Ship.Speed.Stop;
     }
 
     return isEnabled
@@ -612,7 +607,21 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
 
   public void SendSetAnchor(bool state)
   {
-    NetView.InvokeRPC(nameof(RPC_SetAnchor), state);
+    NetView.InvokeRPC(0, nameof(RPC_SetAnchor), state);
+    SendSpeedChange(DirectionChange.Stop);
+  }
+
+  private void SyncShip()
+  {
+    SyncAnchor();
+  }
+
+  private void SyncAnchor()
+  {
+    var newFlags =
+      (VehicleMovementFlags)NetView.GetZDO()
+        .GetInt(VehicleZdoVars.VehicleFlags, (int)MovementFlags);
+    MovementFlags = newFlags;
   }
 
   public void RPC_SetAnchor(long sender, bool state)
@@ -621,8 +630,11 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
     MovementFlags = HandleSetAnchor(state);
     if (isOwner)
     {
-      NetView.GetZDO().Set(VehicleZdoVars.VehicleFlags, (int)MovementFlags);
+      var zdo = NetView.GetZDO();
+      zdo.Set(VehicleZdoVars.VehicleFlags, (int)MovementFlags);
     }
+
+    Invoke(nameof(SyncShip), 0.25f);
   }
 
   private void RPC_RequestResponse(long sender, bool granted)
@@ -645,7 +657,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
 
       // TODO this might not be a good idea. Restoring the polling in ValheimBaseGameShip might be a better approach.
       // set owner here is done because the person controlling the ship likely should be the one at the helm
-      NetView.GetZDO().SetOwner(Player.m_localPlayer.GetPlayerID());
+      // NetView.GetZDO().SetOwner(Player.m_localPlayer.GetPlayerID());
     }
     else
     {
@@ -705,7 +717,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
         break;
     }
 
-    NetView.InvokeRPC(nameof(RPC_SpeedChange), (int)vehicleSpeed);
+    NetView.InvokeRPC(0, nameof(RPC_SpeedChange), (int)vehicleSpeed);
   }
 
   internal void RPC_SpeedChange(long sender, int speed)

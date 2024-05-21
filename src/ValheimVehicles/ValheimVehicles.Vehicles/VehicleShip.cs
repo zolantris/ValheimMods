@@ -48,7 +48,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 
   // The rudder force multiplier applied to the ship speed
   private float _rudderForce = 1f;
-  
+
   public GameObject GhostContainer =>
     VehicleShipHelpers.GetOrFindObj(_ghostContainer, gameObject,
       PrefabNames.GhostContainer);
@@ -89,6 +89,8 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
   private WaterVehicleController _controller;
   public ZSyncTransform m_zsyncTransform;
 
+  public ZNetView NetView => m_nview;
+
   public VehicleDebugHelpers? VehicleDebugHelpersInstance { get; private set; }
 
   public VehicleMovementController MovementController
@@ -101,7 +103,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
   private float _shipRotationOffset = 0f;
   private GameObject _shipRotationObj = new();
 
-  public Transform? ShipDirection { get; set; }
+  public Transform ShipDirection { get; set; } = null!;
 
   private GameObject _vehiclePiecesContainerInstance;
   private GUIStyle myButtonStyle;
@@ -139,11 +141,15 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     }
   }
 
+  /// <summary>
+  ///  Removes player from boat if not null, disconnects can make the player null
+  /// </summary>
   private void RemovePlayersBeforeDestroyingBoat()
   {
     foreach (var mPlayer in m_players)
     {
-      mPlayer.transform.SetParent(null);
+      if (!mPlayer) continue;
+      mPlayer?.transform?.SetParent(null);
     }
   }
 
@@ -188,8 +194,8 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 
   public void OnDestroy()
   {
-    UnloadAndDestroyPieceContainer();
     AllVehicles.Remove(this);
+    UnloadAndDestroyPieceContainer();
 
     if (MovementController.isActiveAndEnabled)
     {
@@ -407,7 +413,16 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
   private new void Awake()
   {
     m_nview = GetComponent<ZNetView>();
-    AllVehicles.Add(this);
+
+    if (AllVehicles.Contains(this))
+    {
+      Logger.LogDebug("VehicleShip somehow already registered this component");
+    }
+    else
+    {
+      AllVehicles.Add(this);
+    }
+
 
     AwakeSetupShipComponents();
 
@@ -927,7 +942,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     if (!(bool)_controller || !(bool)m_nview || m_nview.m_zdo == null ||
         !(bool)ShipDirection) return;
 
-    if (!m_nview.IsOwner()) return;
+    // if (!m_nview.IsOwner()) return;
     /*
      * creative mode should not allow movement and applying force on a object will cause errors when the object is kinematic
      */
@@ -1111,7 +1126,9 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 
   public new float GetWindAngle()
   {
-    var windDir = EnvMan.instance.GetWindDir();
+    var isWindPowerActive = IsWindControllActive();
+
+    var windDir = isWindPowerActive ? ShipDirection.forward : EnvMan.instance.GetWindDir();
     return 0f -
            Utils.YawFromDirection(ShipDirection.InverseTransformDirection(windDir));
   }

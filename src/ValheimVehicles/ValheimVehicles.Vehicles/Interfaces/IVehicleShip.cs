@@ -10,4 +10,5 @@ public interface IVehicleShip
   public Transform? ShipDirection { get; }
   public Transform ControlGuiPosition { get; set; }
   public VehicleShip Instance { get; }
+  public ZNetView NetView { get; }
 }

@@ -104,12 +104,6 @@
         <Exec Command="wt.exe -w 2 --title ValheimClient &quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\$(PluginDeployPath)\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
         <!--                <Exec Command="wt.exe -w 1 sp -d &quot;$(ValheimServerPath)&quot; &#45;&#45;title Valheim_Client powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
     </Target>
-    <Target Name="Run_Valheim_vm" Condition="'$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU'" AfterTargets="Copy_To_R2ModMan_vm">
-        <!--        <Exec Command="powershell Stop-Task -Name ValheimClient"/>-->
-        <!--    -console -char ZOL -server 50.39.165.163:2456 -password 12345    -->
-        <!--        <Exec Command="wt.exe -w 3 &#45;&#45;title ValheimClient &quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; &#45;&#45;doorstop-enable true &#45;&#45;doorstop-target &quot;%HOMEPATH%\$(PluginDeployPath)\BepInEx\core\BepInEx.Preloader.dll&quot;"/>-->
-        <!--                <Exec Command="wt.exe -w 1 sp -d &quot;$(ValheimServerPath)&quot; &#45;&#45;title Valheim_Client powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
-    </Target>
     <Target Name="Generate_Mod_Archive" Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'" AfterTargets="PostBuildEvent">
         <PropertyGroup>
             <RepoDir>$(OutDir)..\..\</RepoDir>

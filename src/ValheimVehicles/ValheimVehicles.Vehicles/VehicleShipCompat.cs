@@ -327,4 +327,22 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   {
     get => VehicleShipInstance;
   }
+
+  public ZNetView NetView
+  {
+    get
+    {
+      if (IsVehicleShip)
+      {
+        return VehicleShipInstance.NetView;
+      }
+
+      if (IsValheimShip)
+      {
+        return ShipInstance.m_nview;
+      }
+
+      return null;
+    }
+  }
 }

@@ -337,13 +337,13 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal void UpdateOwner()
   {
-    // if (m_nview.IsValid() && m_nview.IsOwner() && (bool)Player.m_localPlayer &&
-    //     m_players.Count > 0 && !IsPlayerInBoat(Player.m_localPlayer))
-    // {
-    //   long owner = m_players[0].GetOwner();
-    //   m_nview.GetZDO().SetOwner(owner);
-    //   Logger.LogDebug("Changing ship owner to " + owner);
-    // }
+    if (m_nview.IsValid() && m_nview.IsOwner() && (bool)Player.m_localPlayer &&
+        m_players.Count > 0 && !IsPlayerInBoat(Player.m_localPlayer))
+    {
+      long owner = m_players[0].GetOwner();
+      m_nview.GetZDO().SetOwner(owner);
+      Logger.LogDebug("Changing ship owner to " + owner);
+    }
   }
 
   public void OnTriggerEnter(Collider collider)
@@ -488,20 +488,5 @@ public class ValheimBaseGameShip : MonoBehaviour
     return 0f -
            Utils.YawFromDirection(
              mainCamera.transform.InverseTransformDirection(base.transform.forward));
-  }
-
-  public float GetWindAngle()
-  {
-    Vector3 windDir = EnvMan.instance.GetWindDir();
-    return 0f - Utils.YawFromDirection(base.transform.InverseTransformDirection(windDir));
-  }
-
-  internal void OnDrawGizmosSelected()
-  {
-    Gizmos.color = Color.red;
-    Gizmos.DrawWireSphere(base.transform.position + base.transform.forward * m_stearForceOffset,
-      0.25f);
-    Gizmos.color = Color.yellow;
-    Gizmos.DrawWireSphere(base.transform.position + base.transform.up * m_sailForceOffset, 0.25f);
   }
 }

@@ -498,7 +498,7 @@ public class BaseVehicleController : MonoBehaviour
       {
         if (transform.position != nv.transform.position)
         {
-          nv.m_zdo.SetPosition(transform.position);
+          nv.m_zdo?.SetPosition(transform.position);
         }
       }
     }

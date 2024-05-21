@@ -25,6 +25,7 @@
         <Compile Include="ValheimRAFT.Patches\CharacterAnimEvent_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Character_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Advize_PlantEasily_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\GamePause_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Hud_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\PatchSharedData.cs"/>
         <Compile Include="ValheimRAFT.Patches\PatchController.cs"/>
@@ -226,6 +227,8 @@
         <PluginDeployPath>%HOMEPATH%\$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
         <SandboxieVMPath>C:\Sandbox\fre\DefaultBox</SandboxieVMPath>
         <SandboxieUserPath>$(SandboxieVMPath)\user\current</SandboxieUserPath>
+        <SandboxieValheimPath>$(SandboxieVMPath)\drive\C\Program Files (x86)\Steam\steamapps\common\Valheim</SandboxieValheimPath>
+        <SandboxieProfilePath>$(SandboxieUserPath)\$(R2ModManPath)\$(R2ModManProfile)</SandboxieProfilePath>
         <SandboxiePluginDeployPath>$(SandboxieUserPath)\$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</SandboxiePluginDeployPath>
     </PropertyGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
