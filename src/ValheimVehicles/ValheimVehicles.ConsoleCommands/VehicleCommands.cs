@@ -70,7 +70,7 @@ public class VehicleCommands : ConsoleCommand
         VehicleMove(args);
         break;
       case VehicleCommandArgs.toggleOceanSway:
-        VehicleStopOceanSway();
+        VehicleToggleOceanSway();
         break;
       case VehicleCommandArgs.rotate:
         VehicleRotate(args);
@@ -119,7 +119,7 @@ public class VehicleCommands : ConsoleCommand
   /// <summary>
   /// Freezes the Vehicle rotation permenantly until the boat is unloaded similar to raftcreative 
   /// </summary>
-  private static void VehicleStopOceanSway()
+  public static void VehicleToggleOceanSway()
   {
     var vehicleController = VehicleDebugHelpers.GetVehicleController();
     if (!vehicleController)

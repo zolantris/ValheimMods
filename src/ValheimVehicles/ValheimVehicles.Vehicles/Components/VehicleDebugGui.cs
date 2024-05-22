@@ -1,5 +1,6 @@
 using UnityEngine;
 using ValheimRAFT;
+using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Utis;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
@@ -72,9 +73,14 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       VehicleDebugHelpers.GetVehicleController()?.ActivatePendingPiecesCoroutine();
     }
 
-    if (GUILayout.Button("Flip Ship"))
+    if (GUILayout.Button("Zero Ship RotationXZ"))
     {
       VehicleDebugHelpers.GetOnboardVehicleDebugHelper()?.FlipShip();
+    }
+
+    if (GUILayout.Button("Toggle Ocean Sway"))
+    {
+      VehicleCommands.VehicleToggleOceanSway();
     }
 
     GUILayout.EndArea();
