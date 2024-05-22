@@ -217,9 +217,23 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
 
   private void UnRegisterRPCListeners()
   {
+    // ship speed
+    NetView.Unregister(nameof(RPC_SpeedChange));
+
+    // anchor logic
+    NetView.Unregister(nameof(RPC_SetAnchor));
+
+    // rudder direction
+    NetView.Unregister(nameof(RPC_Rudder));
+
+    // boat sway
+    NetView.Unregister(nameof(RPC_SetOceanSway));
+
+    // steering
     NetView.Unregister(nameof(RPC_RequestControl));
     NetView.Unregister(nameof(RPC_RequestResponse));
     NetView.Unregister(nameof(RPC_ReleaseControl));
+
     _hasRegister = false;
   }
 
@@ -227,10 +241,13 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   {
     // ship speed
     NetView.Register<int>(nameof(RPC_SpeedChange), RPC_SpeedChange);
+
     // anchor logic
     NetView.Register<bool>(nameof(RPC_SetAnchor), RPC_SetAnchor);
+
     // rudder direction
     NetView.Register<float>(nameof(RPC_Rudder), RPC_Rudder);
+
     // boat sway
     NetView.Register<bool>(nameof(RPC_SetOceanSway), RPC_SetOceanSway);
 

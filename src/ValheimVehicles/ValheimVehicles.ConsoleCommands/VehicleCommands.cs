@@ -56,7 +56,10 @@ public class VehicleCommands : ConsoleCommand
   {
     var firstArg = args.First();
     if (firstArg == null)
+    {
+      Logger.LogMessage("Must provide a argument for `vehicle` command");
       return;
+    }
 
     switch (firstArg)
     {
@@ -64,7 +67,7 @@ public class VehicleCommands : ConsoleCommand
       //   LocateVehicle.LocateAllVehicles();
       //   break;
       case VehicleCommandArgs.move:
-        VehicleMove();
+        VehicleMove(args);
         break;
       case VehicleCommandArgs.stopOceanSway:
         VehicleStopOceanSway();
