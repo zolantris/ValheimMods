@@ -217,10 +217,12 @@ public class Player_Patch
     if ((bool)((Character)__instance).m_lastGroundCollider &&
         ((Character)__instance).m_lastGroundTouch < 0.3f)
     {
-      MoveableBaseRootComponent.AddDynamicParent((__instance).m_nview,
-        (__instance).m_lastGroundCollider.gameObject);
-      BaseVehicleController.AddDynamicParent((__instance).m_nview,
-        (__instance).m_lastGroundCollider.gameObject);
+      if (!BaseVehicleController.AddDynamicParent((__instance).m_nview,
+            (__instance).m_lastGroundCollider.gameObject))
+      {
+        MoveableBaseRootComponent.AddDynamicParent((__instance).m_nview,
+          (__instance).m_lastGroundCollider.gameObject);
+      }
     }
   }
 
@@ -333,9 +335,9 @@ public class Player_Patch
       }
     }
 
-    var rudder = __instance.m_attachPoint.parent.GetComponent<SteeringWheelComponent>();
+    var wheel = __instance.m_attachPoint.parent.GetComponent<SteeringWheelComponent>();
 
-    if (!(bool)rudder || __instance.m_doodadController == null) return true;
+    if (!(bool)wheel || __instance.m_doodadController == null) return true;
 
     __instance.SetDoodadControlls(ref movedir, ref ((Character)__instance).m_lookDir, ref run,
       ref autoRun, blockHold);
