@@ -16,6 +16,6 @@ public class ValheimRAFT_Patch
   /// <param name="gameObject"></param>
   public static void PlacedPiece(Player player, GameObject gameObject)
   {
-    Player_Patch.PlacedPiece(player, gameObject);
+    Player_Patch.PlacedPiece(gameObject);
   }
 }

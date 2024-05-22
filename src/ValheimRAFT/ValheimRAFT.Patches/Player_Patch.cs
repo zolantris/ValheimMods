@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
@@ -15,25 +16,68 @@ namespace ValheimRAFT.Patches;
 
 public class Player_Patch
 {
-  [HarmonyPatch(typeof(Player), "PlacePiece")]
-  [HarmonyTranspiler]
-  public static IEnumerable<CodeInstruction> PlacePiece(IEnumerable<CodeInstruction> instructions)
+  private static bool HasMatchingParameterTypes(int genericParameterCount, Type[] types,
+    ParameterInfo[] parameters)
   {
-    var list = instructions.ToList();
-    for (var i = 0; i < list.Count; i++)
-      if (list[i].operand != null && list[i].operand.ToString() ==
-          "UnityEngine.GameObject Instantiate[GameObject](UnityEngine.GameObject, UnityEngine.Vector3, UnityEngine.Quaternion)")
-      {
-        list.InsertRange(i + 2, new CodeInstruction[3]
-        {
-          new(OpCodes.Ldarg_0),
-          new(OpCodes.Ldloc_3),
-          new(OpCodes.Call, AccessTools.Method(typeof(Player_Patch), nameof(PlacedPiece)))
-        });
-        break;
-      }
+    if (parameters.Length < genericParameterCount || parameters.Length != types.Length)
+    {
+      return false;
+    }
 
-    return list;
+    var num = 0;
+    for (var i = 0; i < parameters.Length; i++)
+    {
+      if (parameters[i].ParameterType.IsGenericParameter)
+      {
+        num++;
+      }
+      else if (types[i] != parameters[i].ParameterType)
+      {
+        return false;
+      }
+    }
+
+    return num == genericParameterCount;
+  }
+
+  private static MethodInfo GetGenericMethod(Type type, string name, int genericParameterCount,
+    Type[] types)
+  {
+    var methods = type.GetMethods(BindingFlags.Instance | BindingFlags.Static |
+                                  BindingFlags.Public | BindingFlags.NonPublic |
+                                  BindingFlags.GetField | BindingFlags.SetField |
+                                  BindingFlags.GetProperty | BindingFlags.SetProperty);
+    foreach (var methodInfo in methods)
+    {
+      if (methodInfo.IsGenericMethod && methodInfo.ContainsGenericParameters &&
+          methodInfo.Name == name &&
+          HasMatchingParameterTypes(genericParameterCount, types, methodInfo.GetParameters()))
+      {
+        return methodInfo;
+      }
+    }
+
+    return null;
+  }
+
+  [HarmonyTranspiler]
+  [HarmonyPatch(typeof(Player), "PlacePiece")]
+  private static IEnumerable<CodeInstruction> PlacePieceTranspiler(
+    IEnumerable<CodeInstruction> instructions)
+  {
+    var operand = GetGenericMethod(typeof(UnityEngine.Object), "Instantiate", 1, new Type[3]
+    {
+      typeof(Type),
+      typeof(Vector3),
+      typeof(Quaternion)
+    }).MakeGenericMethod(typeof(GameObject));
+    var matches = new CodeMatch[]
+    {
+      new(OpCodes.Call, operand)
+    };
+    return new CodeMatcher(instructions).MatchForward(useEnd: true, matches).Advance(1)
+      .InsertAndAdvance(Transpilers.EmitDelegate<Func<GameObject, GameObject>>(PlacedPiece))
+      .InstructionEnumeration();
   }
 
   public static void HidePreviewComponent(ZNetView netView)
@@ -46,10 +90,10 @@ public class Player_Patch
     }
   }
 
-  public static void PlacedPiece(Player player, GameObject gameObject)
+  public static GameObject PlacedPiece(GameObject gameObject)
   {
     var piece = gameObject.GetComponent<Piece>();
-    if (!piece) return;
+    if (!piece) return gameObject;
     var rb = piece.GetComponentInChildren<Rigidbody>();
     var netView = piece.GetComponent<ZNetView>();
 
@@ -60,7 +104,7 @@ public class Player_Patch
 
     if (((bool)rb && !rb.isKinematic) || !PatchSharedData.PlayerLastRayPiece)
     {
-      return;
+      return gameObject;
     }
 
     if ((bool)netView)
@@ -83,7 +127,7 @@ public class Player_Patch
         bvc.AddTemporaryPiece(piece);
       }
 
-      return;
+      return gameObject;
     }
 
     var mb = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
@@ -100,6 +144,8 @@ public class Player_Patch
         mb.AddTemporaryPiece(piece);
       }
     }
+
+    return gameObject;
   }
 
   public static bool HandleGameObjectRayCast(Transform transform, LayerMask layerMask,
