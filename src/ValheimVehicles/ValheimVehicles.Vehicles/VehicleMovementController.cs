@@ -39,6 +39,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   private const float InitialTargetHeight = 0f;
   public float TargetHeight { get; private set; }
   public Transform AttachPoint { get; set; }
+  public bool HasOceanSwayDisabled { get; set; }
 
   public const string m_attachAnimation = "Standing Torch Idle right";
 
@@ -66,10 +67,8 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
     if (!NetView) return;
     if (!NetView.isActiveAndEnabled) return;
 
-    MovementFlags =
-      (VehicleMovementFlags)NetView.GetZDO().GetInt(VehicleZdoVars.VehicleFlags,
-        (int)MovementFlags);
     InitializeRPC();
+    SyncShip();
 
     if (ValheimRaftPlugin.Instance.AllowFlight.Value)
     {
@@ -232,7 +231,8 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
     NetView.Register<bool>(nameof(RPC_SetAnchor), RPC_SetAnchor);
     // rudder direction
     NetView.Register<float>(nameof(RPC_Rudder), RPC_Rudder);
-
+    // boat sway
+    NetView.Register<bool>(nameof(RPC_SetOceanSway), RPC_SetOceanSway);
 
     // steering
     NetView.Register<long>(nameof(RPC_RequestControl), RPC_RequestControl);
@@ -611,9 +611,35 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
     SendSpeedChange(DirectionChange.Stop);
   }
 
+  public void SendToggleOceanSway()
+  {
+    NetView.InvokeRPC(0, nameof(RPC_SetOceanSway), !HasOceanSwayDisabled);
+  }
+
+  public void RPC_SetOceanSway(long sender, bool state)
+  {
+    var isOwner = NetView.IsOwner();
+    if (isOwner)
+    {
+      var zdo = NetView.GetZDO();
+      zdo.Set(VehicleZdoVars.VehicleOceanSway, state);
+    }
+
+    Invoke(nameof(SyncShip), 0.25f);
+  }
+
   private void SyncShip()
   {
     SyncAnchor();
+    SyncOceanSway();
+  }
+
+  private void SyncOceanSway()
+  {
+    var isEnabled =
+      NetView.GetZDO()
+        .GetBool(VehicleZdoVars.VehicleOceanSway, false);
+    HasOceanSwayDisabled = isEnabled;
   }
 
   private void SyncAnchor()

@@ -455,18 +455,6 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     }
   }
 
-  public void ToggleBoatOceanSway(bool val)
-  {
-    _hasBoatSway = val;
-    m_body.isKinematic = !val;
-    if (!_hasBoatSway)
-    {
-      m_body.velocity = Vector3.zero;
-      m_body.angularVelocity = Vector3.zero;
-      transform.rotation = Quaternion.Euler(0, transform.rotation.y, 0);
-    }
-  }
-
   public void UpdateShipZdoPosition()
   {
     if (!(bool)m_nview || m_nview.GetZDO() == null || m_nview.m_ghost || (bool)_controller ||
@@ -862,6 +850,11 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     UpdateVehicleStats(false);
     UpdateWaterForce(shipFloatation);
     ApplyEdgeForce(Time.fixedDeltaTime);
+    if (MovementController.HasOceanSwayDisabled)
+    {
+      transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
+    }
+
     if (UpdateAnchorVelocity(m_body.velocity)) return;
 
     ApplySailForce(this);
