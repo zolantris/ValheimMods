@@ -1056,15 +1056,15 @@ public class BaseVehicleController : MonoBehaviour
     yield return null;
   }
 
-  public static void AddDynamicParent(ZNetView source, GameObject target)
+  public static bool AddDynamicParent(ZNetView source, GameObject target)
   {
     var bvc = target.GetComponentInParent<BaseVehicleController>();
-    if ((bool)bvc)
-    {
-      source.m_zdo.Set(MBCharacterParentHash, bvc.PersistentZdoId);
-      source.m_zdo.Set(MBCharacterOffsetHash,
-        source.transform.position - bvc.transform.position);
-    }
+    if (!(bool)bvc) return false;
+
+    source.m_zdo.Set(MBCharacterParentHash, bvc.PersistentZdoId);
+    source.m_zdo.Set(MBCharacterOffsetHash,
+      source.transform.position - bvc.transform.position);
+    return true;
   }
 
   /**
