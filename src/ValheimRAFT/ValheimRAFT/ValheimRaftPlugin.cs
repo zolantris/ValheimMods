@@ -31,7 +31,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "2.0.4";
+  public const string Version = "2.1.0";
   public const string ModName = "ValheimRAFT";
   public const string BepInGuid = $"{Author}.{ModName}";
   public const string HarmonyGuid = $"{Author}.{ModName}";
@@ -56,8 +56,15 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   public ConfigEntry<string> PluginFolderName { get; set; }
   public ConfigEntry<float> InitialRaftFloorHeight { get; set; }
+
+  /**
+   * Patches
+   */
   public ConfigEntry<bool> PlanBuildPatches { get; set; }
-  public ConfigEntry<float> RaftHealth { get; set; }
+
+  public ConfigEntry<bool> ShipPausePatch { get; set; }
+
+
   public ConfigEntry<float> ServerRaftUpdateZoneInterval { get; set; }
   public ConfigEntry<float> RaftSailForceMultiplier { get; set; }
   public ConfigEntry<bool> AdminsCanOnlyBuildRaft { get; set; }
@@ -295,7 +302,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       CreateConfigDescription("Allow the raft to fly (jump\\crouch to go up and down)", true));
     AllowCustomRudderSpeeds = Config.Bind("Server config", "AllowCustomRudderSpeeds", true,
       CreateConfigDescription(
-        "Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed",
+        "Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed. See advanced section for the actual speed settings.",
         true));
   }
 
@@ -319,9 +326,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       }
 
 
-      sb.Append($"\n### {x.Key} [{Strip(Config[x].Description.Description)}]".Replace("[]", "") +
-                $"{Environment.NewLine}    * Description: {Config[x].Description.Description.Replace("[Synced with Server]", "").Replace("[Not Synced with Server]", "")}" +
-                $"{Environment.NewLine}    * Default Value: {Config[x].GetSerializedValue()}{Environment.NewLine}");
+      sb.Append(
+        $"\n### {x.Key} [{Strip(Config[x].Description.Description)}]"
+          .Replace("[]",
+            "") +
+        $"{Environment.NewLine}- Description: {Config[x].Description.Description.Replace("[Synced with Server]", "").Replace("[Not Synced with Server]", "")}" +
+        $"{Environment.NewLine}- Default Value: {Config[x].GetSerializedValue()}{Environment.NewLine}");
     }
 
     File.WriteAllText(
@@ -366,12 +376,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       "Toggles ShipInWater Sounds, the sound of the hull hitting water");
   }
 
-  private void CreatePrefabConfig()
-  {
-    RaftHealth = Config.Bind<float>("Config", "raftHealth", 500f,
-      "Set the raft health when used with wearNTear, lowest value is 100f");
-  }
-
   private void CreateBaseConfig()
   {
     EnableMetrics = Config.Bind("Debug", "Enable Sentry Metrics (requires sentryUnityPlugin)", true,
@@ -382,6 +386,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       CreateConfigDescription(
         "Outputs more debug logs for the Vehicle components. Useful for troubleshooting errors, but will spam logs"));
 
+    ShipPausePatch = Config.Bind<bool>("Patches",
+      "Vehicles Prevent Pausing", true,
+      CreateConfigDescription(
+        "Prevents pausing on a boat, pausing causes a TON of desync problems and can make your boat crash or other players crash",
+        true, true));
     PlanBuildPatches = Config.Bind<bool>("Patches",
       "Enable PlanBuild Patches (required to be on if you installed PlanBuild)", false,
       new ConfigDescription(
@@ -451,10 +460,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void CreateConfig()
   {
-    //
-    // Config.SettingChanged += 
     CreateBaseConfig();
-    CreatePrefabConfig();
     CreateDebugConfig();
     CreateServerConfig();
     CreateCommandConfig();

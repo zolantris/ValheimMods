@@ -95,44 +95,4 @@ public class Character_Patch
 
     if (!mbr && !bvc && __instance.transform.parent != null) __instance.transform.SetParent(null);
   }
-
-  [HarmonyPatch(typeof(Character), "OnCollisionStay")]
-  [HarmonyPrefix]
-  private static bool OnCollisionStay(Character __instance, Collision collision)
-  {
-    if (!__instance.m_nview.IsValid() || !__instance.m_nview.IsOwner() ||
-        __instance.m_jumpTimer < 0.1f) return false;
-    var contacts = collision.contacts;
-    for (var i = 0; i < contacts.Length; i++)
-    {
-      var contactPoint = contacts[i];
-      var hitnormal = contactPoint.normal;
-      var hitpoint = contactPoint.point;
-      var hitDistance = Mathf.Abs(hitpoint.y - __instance.transform.position.y);
-      if (!__instance.m_groundContact && hitnormal.y < 0f && hitDistance < 0.1f)
-      {
-        hitnormal *= -1f;
-        hitpoint = __instance.transform.position;
-      }
-
-      if (!(hitnormal.y > 0.1f) || !(hitDistance < __instance.m_collider.radius)) continue;
-      if (hitnormal.y > __instance.m_groundContactNormal.y || !__instance.m_groundContact)
-      {
-        __instance.m_groundContact = true;
-        __instance.m_groundContactNormal = hitnormal;
-        __instance.m_groundContactPoint = hitpoint;
-        __instance.m_lowestContactCollider = collision.collider;
-        continue;
-      }
-
-      var groundContactNormal = Vector3.Normalize(__instance.m_groundContactNormal + hitnormal);
-      if (groundContactNormal.y > __instance.m_groundContactNormal.y)
-      {
-        __instance.m_groundContactNormal = groundContactNormal;
-        __instance.m_groundContactPoint = (__instance.m_groundContactPoint + hitpoint) * 0.5f;
-      }
-    }
-
-    return false;
-  }
 }

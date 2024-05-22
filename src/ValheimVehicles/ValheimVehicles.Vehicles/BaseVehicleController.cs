@@ -1056,15 +1056,15 @@ public class BaseVehicleController : MonoBehaviour
     yield return null;
   }
 
-  public static void AddDynamicParent(ZNetView source, GameObject target)
+  public static bool AddDynamicParent(ZNetView source, GameObject target)
   {
     var bvc = target.GetComponentInParent<BaseVehicleController>();
-    if ((bool)bvc)
-    {
-      source.m_zdo.Set(MBCharacterParentHash, bvc.PersistentZdoId);
-      source.m_zdo.Set(MBCharacterOffsetHash,
-        source.transform.position - bvc.transform.position);
-    }
+    if (!(bool)bvc) return false;
+
+    source.m_zdo.Set(MBCharacterParentHash, bvc.PersistentZdoId);
+    source.m_zdo.Set(MBCharacterOffsetHash,
+      source.transform.position - bvc.transform.position);
+    return true;
   }
 
   /**
@@ -1666,7 +1666,7 @@ public class BaseVehicleController : MonoBehaviour
      */
     var averageFloatHeight = GetAverageFloatHeightFromHulls();
     var floatColliderCenterOffset =
-      new Vector3(_vehicleBounds.center.x, averageFloatHeight, _vehicleBounds.center.z);
+      new Vector3(_vehicleBounds.center.x, averageFloatHeight - 0.2f, _vehicleBounds.center.z);
     var floatColliderSize = new Vector3(Mathf.Max(4f, _vehicleBounds.size.x),
       m_floatcollider.size.y, Mathf.Max(4f, _vehicleBounds.size.z));
 

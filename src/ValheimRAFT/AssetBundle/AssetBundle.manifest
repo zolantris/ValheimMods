@@ -1,17 +1,17 @@
 ManifestFileVersion: 0
-CRC: 1228858736
+CRC: 4268271335
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
-      Name: valheim-raft
-      Dependencies:
-        Dependency_0: valheim-vehicles-shared
-    Info_1:
-      Name: valheim-vehicles
-      Dependencies:
-        Dependency_0: valheim-raft
-        Dependency_1: valheim-vehicles-shared
-    Info_2:
       Name: valheim-vehicles-shared
       Dependencies:
         Dependency_0: valheim-raft
+    Info_1:
+      Name: valheim-vehicles
+      Dependencies:
+        Dependency_0: valheim-vehicles-shared
+        Dependency_1: valheim-raft
+    Info_2:
+      Name: valheim-raft
+      Dependencies:
+        Dependency_0: valheim-vehicles-shared

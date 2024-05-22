@@ -10,7 +10,7 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>2.0.4</ApplicationVersion>
+        <ApplicationVersion>2.1.0</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -57,7 +57,6 @@
         <Compile Include="ValheimRAFT\HideRaftConsoleCommand.cs"/>
         <Compile Include="ValheimRAFT\MaterialWeight.cs"/>
         <Compile Include="ValheimRAFT\MovableBaseZone.cs"/>
-        <Compile Include="ValheimRAFT\PrefabController.cs"/>
         <Compile Include="ValheimRAFT\ShipStats.cs"/>
         <Compile Include="ValheimRAFT\ValheimRaftPlugin.cs"/>
         <Compile Include="ValheimRAFT\MastComponent.cs"/>

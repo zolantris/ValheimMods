@@ -36,7 +36,7 @@ public class RaftPrefab : IRegisterPrefab
 
     var wnt = PrefabRegistryHelpers.GetWearNTearSafe(raftPrefab);
 
-    wnt.m_health = Math.Max(100f, ValheimRaftPlugin.Instance.RaftHealth.Value);
+    wnt.m_health = 500f;
     wnt.m_noRoofWear = false;
 
     var impact = raftPrefab.GetComponent<ImpactEffect>();

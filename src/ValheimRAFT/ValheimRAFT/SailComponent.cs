@@ -633,6 +633,47 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     zdo.Set(HasInitialized, true);
   }
 
+  /// <summary>
+  /// Creates collision mesh, currently breaks for 3 
+  /// </summary>
+  /// todo May need to inflate the mesh
+  /// <param name="size"></param>
+  /// <returns></returns>
+  public Mesh? CreateCollisionMesh(int size)
+  {
+    var collisionMesh = new Mesh();
+    if (size == 3)
+    {
+      collisionMesh.SetVertices(new Vector3[3]
+      {
+        m_sailCorners[0],
+        m_sailCorners[1],
+        m_sailCorners[2]
+      });
+      collisionMesh.SetTriangles(new int[6] { 0, 1, 2, 0, 2, 1 }, 0);
+      collisionMesh.Optimize();
+    }
+
+    if (size == 4)
+    {
+      collisionMesh.SetVertices(new Vector3[4]
+      {
+        m_sailCorners[0],
+        m_sailCorners[1],
+        m_sailCorners[2],
+        m_sailCorners[3]
+      });
+      collisionMesh.SetTriangles(new int[12]
+      {
+        0, 1, 2, 1, 0, 2, 1, 2, 3, 2,
+        1, 3
+      }, 0);
+      collisionMesh.Optimize();
+    }
+
+    return collisionMesh;
+  }
+
   public void CreateSailMesh()
   {
     Logger.LogDebug(
@@ -643,17 +684,8 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     var vertices = new List<Vector3>();
     var uvs = new List<Vector2>();
     var triangles = new List<int>();
-    var collisionMesh = new Mesh();
     if (m_sailCorners.Count == 3)
     {
-      collisionMesh.SetVertices(new Vector3[3]
-      {
-        m_sailCorners[0],
-        m_sailCorners[1],
-        m_sailCorners[2]
-      });
-      collisionMesh.SetTriangles(new int[6] { 0, 1, 2, 0, 2, 1 }, 0);
-      collisionMesh.Optimize();
       vertices.Add(m_sailCorners[0]);
       vertices.Add(m_sailCorners[1]);
       vertices.Add(m_sailCorners[2]);
@@ -678,19 +710,6 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     }
     else if (m_sailCorners.Count == 4)
     {
-      collisionMesh.SetVertices(new Vector3[4]
-      {
-        m_sailCorners[0],
-        m_sailCorners[1],
-        m_sailCorners[2],
-        m_sailCorners[3]
-      });
-      collisionMesh.SetTriangles(new int[12]
-      {
-        0, 1, 2, 1, 0, 2, 1, 2, 3, 2,
-        1, 3
-      }, 0);
-      collisionMesh.Optimize();
       var dx = (m_sailCorners[1] - m_sailCorners[0]).magnitude;
       var dy = (m_sailCorners[2] - m_sailCorners[0]).magnitude;
       var dxs = Mathf.Round(dx / m_sailSubdivision);
@@ -743,7 +762,9 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     mesh.Optimize();
     mesh.RecalculateNormals();
     m_mesh.sharedMesh = mesh;
-    m_meshCollider.sharedMesh = collisionMesh;
+
+    // todo see if the collision mesh can be fixed as it probably is more performant
+    m_meshCollider.sharedMesh = mesh;
     UpdateCoefficients();
   }
 
