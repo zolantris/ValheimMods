@@ -68,15 +68,15 @@ public class CreativeModeConsoleCommand : ConsoleCommand
     {
       var shipYPosition =
         ship.m_body.position.y + ValheimRaftPlugin.Instance.RaftCreativeHeight.Value;
-      if (player.transform.parent == ship.VehicleController.Instance.transform)
+      var playerInBoat = player.transform.parent == ship.VehicleController.Instance.transform;
+      if (playerInBoat)
       {
         player.m_body.isKinematic = true;
         player.m_body.position = new Vector3(
           player.m_body.transform.position.x,
-          player.m_body.transform.position.y + 2f +
+          player.m_body.transform.position.y + 1f +
           ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
           player.m_body.transform.position.z);
-
         // prevents player from being launched into the sky if the ship hits them when it is moved upwards
       }
 
@@ -91,6 +91,11 @@ public class CreativeModeConsoleCommand : ConsoleCommand
       ship.Instance.transform.rotation = rotationWithoutTilt;
       ship.VehicleController.Instance.transform.rotation = rotationWithoutTilt;
       ship.transform.rotation = rotationWithoutTilt;
+
+      if (playerInBoat)
+      {
+        player.m_body.isKinematic = false;
+      }
     }
     else
     {
