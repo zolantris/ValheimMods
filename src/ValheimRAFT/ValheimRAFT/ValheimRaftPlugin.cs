@@ -302,7 +302,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       CreateConfigDescription("Allow the raft to fly (jump\\crouch to go up and down)", true));
     AllowCustomRudderSpeeds = Config.Bind("Server config", "AllowCustomRudderSpeeds", true,
       CreateConfigDescription(
-        "Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed",
+        "Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed. See advanced section for the actual speed settings.",
         true));
   }
 

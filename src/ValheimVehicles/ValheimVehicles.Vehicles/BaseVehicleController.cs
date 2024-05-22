@@ -1666,7 +1666,7 @@ public class BaseVehicleController : MonoBehaviour
      */
     var averageFloatHeight = GetAverageFloatHeightFromHulls();
     var floatColliderCenterOffset =
-      new Vector3(_vehicleBounds.center.x, averageFloatHeight, _vehicleBounds.center.z);
+      new Vector3(_vehicleBounds.center.x, averageFloatHeight - 0.2f, _vehicleBounds.center.z);
     var floatColliderSize = new Vector3(Mathf.Max(4f, _vehicleBounds.size.x),
       m_floatcollider.size.y, Mathf.Max(4f, _vehicleBounds.size.z));
 

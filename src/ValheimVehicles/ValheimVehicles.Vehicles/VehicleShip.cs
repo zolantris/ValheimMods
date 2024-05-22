@@ -128,11 +128,6 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     set => m_controlGuiPos = value;
   }
 
-  public new void OnTriggerEnter(Collider collider)
-  {
-    base.OnTriggerEnter(collider);
-  }
-
   public static void OnAllowFlight(object sender, EventArgs eventArgs)
   {
     foreach (var vehicle in AllVehicles)
