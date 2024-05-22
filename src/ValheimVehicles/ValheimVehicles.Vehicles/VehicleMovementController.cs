@@ -84,6 +84,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
     }
 
     InitializeRPC();
+    SyncShip();
   }
 
   public Ship.Speed GetSpeedSetting() => vehicleSpeed;

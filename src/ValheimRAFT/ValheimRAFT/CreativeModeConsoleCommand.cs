@@ -90,7 +90,7 @@ public class CreativeModeConsoleCommand : ConsoleCommand
         character.m_body.isKinematic = true;
         character.m_body.position = new Vector3(
           character.m_body.transform.position.x,
-          character.m_body.transform.position.y + 1f +
+          character.m_body.transform.position.y + 0.2f +
           ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
           character.m_body.transform.position.z);
 
