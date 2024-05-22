@@ -63,6 +63,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> PlanBuildPatches { get; set; }
 
   public ConfigEntry<bool> ShipPausePatch { get; set; }
+  public ConfigEntry<bool> ShipPausePatchSinglePlayer { get; set; }
 
 
   public ConfigEntry<float> ServerRaftUpdateZoneInterval { get; set; }
@@ -390,6 +391,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       "Vehicles Prevent Pausing", true,
       CreateConfigDescription(
         "Prevents pausing on a boat, pausing causes a TON of desync problems and can make your boat crash or other players crash",
+        true, true));
+    ShipPausePatchSinglePlayer = Config.Bind<bool>("Patches",
+      "Vehicles Prevent Pausing SinglePlayer", true,
+      CreateConfigDescription(
+        "Prevents pausing on a boat during singleplayer. Must have the Vehicle Prevent Pausing patch as well",
         true, true));
     PlanBuildPatches = Config.Bind<bool>("Patches",
       "Enable PlanBuild Patches (required to be on if you installed PlanBuild)", false,
