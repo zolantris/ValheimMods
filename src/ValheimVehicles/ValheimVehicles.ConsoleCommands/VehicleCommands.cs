@@ -29,7 +29,7 @@ public class VehicleCommands : ConsoleCommand
     public const string recover = "recover";
     public const string rotate = "rotate";
     public const string move = "move";
-    public const string stopOceanSway = "stopOceanSway";
+    public const string toggleOceanSway = "toggleOceanSway";
     public const string upgradeToV2 = "upgradeShipToV2";
     public const string downgradeToV1 = "downgradeShipToV1";
   }
@@ -40,11 +40,11 @@ public class VehicleCommands : ConsoleCommand
   {
     return
       "Runs vehicle commands, each command will require parameters to run use help to see the input values." +
-      "\n<debug>: will show a menu with options like rotating or debugging vehicle colliders" +
-      "\n<recover>: will recover any vehicles within range of 1000 and turn them into V2 Vehicles" +
-      "\n<rotate>: defaults to zeroing x and z tilt. Can also provide 3 args: x y z" +
-      "\n<move>: Must provide 3 args: x y z, the movement is relative to those points" +
-      "\n<stopOceanSway>: stops the vehicle from swaying in the water. It will stay at 0 degrees (x and z) tilt and only allow rotating on y axis";
+      $"\n<{VehicleCommandArgs.debug}>: will show a menu with options like rotating or debugging vehicle colliders" +
+      $"\n<{VehicleCommandArgs.recover}>: will recover any vehicles within range of 1000 and turn them into V2 Vehicles" +
+      $"\n<{VehicleCommandArgs.rotate}>: defaults to zeroing x and z tilt. Can also provide 3 args: x y z" +
+      $"\n<{VehicleCommandArgs.move}>: Must provide 3 args: x y z, the movement is relative to those points" +
+      $"\n<{VehicleCommandArgs.toggleOceanSway}>: stops the vehicle from swaying in the water. It will stay at 0 degrees (x and z) tilt and only allow rotating on y axis";
   }
 
   public override void Run(string[] args)
@@ -69,7 +69,7 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.move:
         VehicleMove(args);
         break;
-      case VehicleCommandArgs.stopOceanSway:
+      case VehicleCommandArgs.toggleOceanSway:
         VehicleStopOceanSway();
         break;
       case VehicleCommandArgs.rotate:
@@ -232,7 +232,7 @@ public class VehicleCommands : ConsoleCommand
     // VehicleCommandArgs.locate, 
     // VehicleCommandArgs.destroy,
     VehicleCommandArgs.rotate,
-    VehicleCommandArgs.stopOceanSway,
+    VehicleCommandArgs.toggleOceanSway,
     VehicleCommandArgs.creative,
     VehicleCommandArgs.debug,
     VehicleCommandArgs.help,
