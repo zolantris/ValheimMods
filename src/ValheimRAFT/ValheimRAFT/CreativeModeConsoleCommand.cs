@@ -1,3 +1,4 @@
+using System.Collections;
 using Jotunn.Entities;
 using UnityEngine;
 using ValheimVehicles.Vehicles;
@@ -14,6 +15,14 @@ public class CreativeModeConsoleCommand : ConsoleCommand
   public override void Run(string[] args)
   {
     RunCreativeModeCommand(Name);
+  }
+
+  private static IEnumerator SetPlayerBackOnBoat(Character character)
+  {
+    yield return new WaitForFixedUpdate();
+    character.m_body.velocity = Vector3.zero;
+    character.m_body.angularVelocity = Vector3.zero;
+    character.m_body.isKinematic = false;
   }
 
   public static void RunCreativeModeCommand(string comandName)
@@ -52,7 +61,14 @@ public class CreativeModeConsoleCommand : ConsoleCommand
     }
   }
 
-  private static bool ToggleMode(Character player,
+  /// <summary>
+  /// This moves the ship in the air for ship creation
+  /// </summary>
+  /// todo move all rigidbodies near or on the ship into a non-collision state and then move them back to the ship with the offset. This way this prevents all rigidbodies from being smashed into air
+  /// <param name="character"></param>
+  /// <param name="ship"></param>
+  /// <returns></returns>
+  private static bool ToggleMode(Character character,
     VehicleShip ship)
   {
     if (!(bool)ship)
@@ -68,15 +84,16 @@ public class CreativeModeConsoleCommand : ConsoleCommand
     {
       var shipYPosition =
         ship.m_body.position.y + ValheimRaftPlugin.Instance.RaftCreativeHeight.Value;
-      var playerInBoat = player.transform.parent == ship.VehicleController.Instance.transform;
+      var playerInBoat = character.transform.parent == ship.VehicleController.Instance.transform;
       if (playerInBoat)
       {
-        player.m_body.isKinematic = true;
-        player.m_body.position = new Vector3(
-          player.m_body.transform.position.x,
-          player.m_body.transform.position.y + 1f +
+        character.m_body.isKinematic = true;
+        character.m_body.position = new Vector3(
+          character.m_body.transform.position.x,
+          character.m_body.transform.position.y + 1f +
           ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
-          player.m_body.transform.position.z);
+          character.m_body.transform.position.z);
+
         // prevents player from being launched into the sky if the ship hits them when it is moved upwards
       }
 
@@ -91,11 +108,7 @@ public class CreativeModeConsoleCommand : ConsoleCommand
       ship.Instance.transform.rotation = rotationWithoutTilt;
       ship.VehicleController.Instance.transform.rotation = rotationWithoutTilt;
       ship.transform.rotation = rotationWithoutTilt;
-
-      if (playerInBoat)
-      {
-        player.m_body.isKinematic = false;
-      }
+      character.StartCoroutine(SetPlayerBackOnBoat(character));
     }
     else
     {
@@ -106,7 +119,7 @@ public class CreativeModeConsoleCommand : ConsoleCommand
     return true;
   }
 
-  private static bool ToggleMode(Player player, Ship ship)
+  private static bool ToggleMode(Player character, Ship ship)
   {
     var mb = ship.GetComponent<MoveableBaseShipComponent>();
     if ((bool)mb)
@@ -116,13 +129,13 @@ public class CreativeModeConsoleCommand : ConsoleCommand
       zsync.m_isKinematicBody = mb.m_rigidbody.isKinematic;
       if (mb.m_rigidbody.isKinematic)
       {
-        if (player.transform.parent == mb.m_baseRoot.transform)
+        if (character.transform.parent == mb.m_baseRoot.transform)
         {
-          player.m_body.position = new Vector3(
-            player.m_body.transform.position.x,
-            player.m_body.transform.position.y +
+          character.m_body.position = new Vector3(
+            character.m_body.transform.position.x,
+            character.m_body.transform.position.y +
             ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
-            player.m_body.transform.position.z);
+            character.m_body.transform.position.z);
         }
 
         mb.m_rigidbody.position =
@@ -130,7 +143,7 @@ public class CreativeModeConsoleCommand : ConsoleCommand
             mb.m_rigidbody.position.y + ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
             mb.transform.position.z);
         mb.m_rigidbody.transform.rotation =
-          Quaternion.Euler(0f, mb.m_rigidbody.rotation.eulerAngles.y, 0f);
+          Quaternion.Euler(0, mb.m_rigidbody.rotation.eulerAngles.y, 0);
         mb.isCreative = true;
       }
       else
