@@ -443,6 +443,8 @@ public class BaseVehicleController : MonoBehaviour
   {
     if (!m_nview) return;
 
+    Sync();
+
     if (!ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value) return;
 
     // owner must sync more frequently, this likely is unnecessary but is kept as an option for servers that may be having sync problems during only the FixedUpdate
@@ -502,7 +504,7 @@ public class BaseVehicleController : MonoBehaviour
   {
     if (_serverUpdatePiecesCoroutine != null)
     {
-      StopCoroutine(_serverUpdatePiecesCoroutine);
+      return;
     }
 
     _serverUpdatePiecesCoroutine = StartCoroutine(UpdatePiecesInEachSectorWorker());
@@ -940,9 +942,7 @@ public class BaseVehicleController : MonoBehaviour
         $"ActivatePendingPiecesCoroutine(): pendingPieces count: {m_pendingPieces.Count}");
     if (_pendingPiecesCoroutine != null)
     {
-      // instead exit, this should not be cancelling the activation process
-      StopCoroutine(_pendingPiecesCoroutine);
-      // return;
+      return;
     }
 
     // do not run if in a Pending or Created state
