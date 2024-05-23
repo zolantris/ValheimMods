@@ -50,6 +50,7 @@ public class BaseVehicleController : MonoBehaviour
   public static Dictionary<int, List<ZNetView>> m_pendingPieces = new();
 
   public static Dictionary<int, List<ZDO>> m_allPieces = new();
+  public static List<ZDO> vehicleZdos = new();
 
   public static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
@@ -272,8 +273,6 @@ public class BaseVehicleController : MonoBehaviour
 
   IEnumerable UpdateBedSpawnWorker()
   {
-    UpdateBedSpawn();
-
     yield return new WaitForSeconds(3);
   }
 
@@ -301,7 +300,7 @@ public class BaseVehicleController : MonoBehaviour
 
 
     // Instances allows getting the instance from a ZDO
-    // OR something queryable on a ZDO making it much easier to debug and eventually update items
+    // OR something queryable on a ZDO wmaking it much easier to debug and eventually update items
     if (!ActiveInstances.GetValueSafe(PersistentZdoId))
     {
       ActiveInstances.Add(PersistentZdoId, this);
@@ -387,11 +386,8 @@ public class BaseVehicleController : MonoBehaviour
 
   public void CleanUp()
   {
-    RemovePlayerFromBoat();
-    if (ActiveInstances.GetValueSafe(_persistentZdoId))
-    {
-      ActiveInstances.Remove(_persistentZdoId);
-    }
+    RemovePlayersFromBoat();
+    ActiveInstances.Remove(_persistentZdoId);
 
     if (_pendingPiecesCoroutine != null)
     {
@@ -445,6 +441,7 @@ public class BaseVehicleController : MonoBehaviour
 
     if (!ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value) return;
 
+    Sync();
     // owner must sync more frequently, this likely is unnecessary but is kept as an option for servers that may be having sync problems during only the FixedUpdate
     if (m_nview.IsOwner())
     {
@@ -458,9 +455,6 @@ public class BaseVehicleController : MonoBehaviour
     Client_UpdateAllPieces();
   }
 
-/*
- * @important, server does not have access to lifecycle methods so a coroutine is required to update things
- */
   public void LateUpdate()
   {
     Sync();
@@ -498,11 +492,30 @@ public class BaseVehicleController : MonoBehaviour
     }
   }
 
+  private bool IsPlayerOwnerOfNetview()
+  {
+    var netViewOwnerId = m_nview?.GetZDO()?.GetOwner();
+    if (netViewOwnerId == 0L) return false;
+
+    var playerId = Player.m_localPlayer?.GetPlayerID();
+    if (playerId == 0L) return false;
+
+    return netViewOwnerId == playerId;
+  }
+
+  /// <summary>
+  /// Ran locally in singleplayer or on the machine that owns the netview or on the server.
+  /// </summary>
   public void ServerSyncAllPieces()
   {
+    // var isDedicated = ZNet.instance?.IsDedicated();
+    // var isPlayerTheOwner = IsPlayerOwnerOfNetview();
+    //
+    // if (isDedicated != true && isPlayerTheOwner != true) return;
+
     if (_serverUpdatePiecesCoroutine != null)
     {
-      StopCoroutine(_serverUpdatePiecesCoroutine);
+      return;
     }
 
     _serverUpdatePiecesCoroutine = StartCoroutine(UpdatePiecesInEachSectorWorker());
@@ -538,6 +551,15 @@ public class BaseVehicleController : MonoBehaviour
     }
   }
 
+  private void UpdatePlayers()
+  {
+    if (VehicleInstance?.Instance?.m_players == null) return;
+    var vehiclePlayers = VehicleInstance.Instance.m_players;
+    foreach (var vehiclePlayer in vehiclePlayers)
+    {
+      AddDynamicParentForVehicle(vehiclePlayer.m_nview, this);
+    }
+  }
 
   /**
    * large ships need additional threads to render the ship quickly
@@ -547,6 +569,7 @@ public class BaseVehicleController : MonoBehaviour
   private IEnumerator UpdatePiecesWorker(List<ZDO> list)
   {
     UpdatePieces(list);
+    UpdatePlayers();
     yield return new WaitForFixedUpdate();
   }
 
@@ -899,11 +922,14 @@ public class BaseVehicleController : MonoBehaviour
     }
   }
 
-  public void RemovePlayerFromBoat()
+  public void RemovePlayersFromBoat()
   {
     var players = Player.GetAllPlayers();
     foreach (var t in players.Where(t => (bool)t && t.transform.parent == transform))
+    {
+      AddDynamicParentForVehicle(t.m_nview, this);
       t.transform.SetParent(null);
+    }
   }
 
   /*
@@ -913,7 +939,7 @@ public class BaseVehicleController : MonoBehaviour
   {
     var wntVehicle = instance.GetComponent<WearNTear>();
 
-    RemovePlayerFromBoat();
+    RemovePlayersFromBoat();
 
     if (!CanDestroyVehicle(m_nview))
     {
@@ -1056,15 +1082,63 @@ public class BaseVehicleController : MonoBehaviour
     yield return null;
   }
 
-  public static bool AddDynamicParent(ZNetView source, GameObject target)
+  /// <summary>
+  /// Makes the player no longer attached to the vehicleship
+  /// </summary>
+  /// <param name="source"></param>
+  /// <param name="bvc"></param>
+  public static void RemoveDynamicParentForVehicle(ZNetView source)
   {
-    var bvc = target.GetComponentInParent<BaseVehicleController>();
-    if (!(bool)bvc) return false;
+    if (!source.isActiveAndEnabled)
+    {
+      Logger.LogDebug("Player source Not active");
+      return;
+    }
+
+    source.m_zdo.RemoveInt(MBCharacterParentHash);
+    source.m_zdo.RemoveVec3(MBCharacterOffsetHash);
+  }
+
+  /// <summary>
+  /// Makes the player associated with the vehicle ship, if they spawn they are teleported here.
+  /// </summary>
+  /// <param name="source"></param>
+  /// <param name="bvc"></param>
+  /// <returns></returns>
+  public static bool AddDynamicParentForVehicle(ZNetView source, BaseVehicleController bvc)
+  {
+    if (!source.isActiveAndEnabled)
+    {
+      Logger.LogDebug("Player source Not active");
+      return false;
+    }
 
     source.m_zdo.Set(MBCharacterParentHash, bvc.PersistentZdoId);
     source.m_zdo.Set(MBCharacterOffsetHash,
       source.transform.position - bvc.transform.position);
     return true;
+  }
+
+  public static bool AddDynamicParent(ZNetView source, GameObject target)
+  {
+    var bvc = target.GetComponentInParent<BaseVehicleController>();
+    if (!(bool)bvc) return false;
+    return AddDynamicParentForVehicle(source, bvc);
+  }
+
+  public static int GetParentVehicleId(ZNetView netView)
+  {
+    if (!netView) return 0;
+
+    return netView.GetZDO()?.GetInt(MBCharacterParentHash, 0) ??
+           0;
+  }
+
+  public static Vector3 GetDynamicParentOffset(ZNetView netView)
+  {
+    if (!netView) return Vector3.zero;
+
+    return netView.m_zdo?.GetVec3(MBCharacterOffsetHash, Vector3.zero) ?? Vector3.zero;
   }
 
   /**
@@ -1186,6 +1260,11 @@ public class BaseVehicleController : MonoBehaviour
   {
     if (zdo.m_prefab == PrefabNames.WaterVehicleShip.GetStableHashCode())
     {
+      if (!vehicleZdos.Contains(zdo))
+      {
+        vehicleZdos.Add(zdo);
+      }
+
       return;
     }
 
@@ -1222,6 +1301,16 @@ public class BaseVehicleController : MonoBehaviour
 
   public static void RemoveZDO(ZDO zdo)
   {
+    if (zdo.m_prefab == PrefabNames.WaterVehicleShip.GetStableHashCode())
+    {
+      if (vehicleZdos.Contains(zdo))
+      {
+        vehicleZdos.Remove(zdo);
+      }
+
+      return;
+    }
+
     var id = GetParentID(zdo);
     if (id == 0 || !m_allPieces.TryGetValue(id, out var list)) return;
     list.FastRemove(zdo);

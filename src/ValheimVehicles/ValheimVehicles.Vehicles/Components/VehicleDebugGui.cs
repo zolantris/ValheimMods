@@ -1,5 +1,6 @@
 using UnityEngine;
 using ValheimRAFT;
+using ValheimRAFT.Patches;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Utis;
 using ValheimVehicles.Vehicles;
@@ -81,6 +82,13 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     if (GUILayout.Button("Toggle Ocean Sway"))
     {
       VehicleCommands.VehicleToggleOceanSway();
+    }
+
+    if (GUILayout.Button("Mimic Spawn"))
+    {
+      var playerZdo = Player.m_localPlayer?.m_nview?.GetZDO();
+      if (playerZdo == null) return;
+      StartCoroutine(GamePause_Patch.SetPlayerOnBoat(playerZdo, Player.m_localPlayer));
     }
 
     GUILayout.EndArea();

@@ -10,7 +10,7 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>2.1.0</ApplicationVersion>
+        <ApplicationVersion>2.1.1</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -157,6 +157,75 @@
         </Compile>
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CircleWindGui\CircleWindIndicator.cs">
             <Link>ValheimVehicles.Vehicles\Components\CircleWindGui\CircleWindIndicator.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\PlayerSpawnPrefab.cs">
+            <Link>ValheimVehicles.Prefabs\Registry\PlayerSpawnPrefab.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Structs\VehicleZdoVars.cs">
+          <Link>ValheimVehicles.Vehicles\Structs\VehicleZdoVars.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Structs\VehicleZdoVars.cs">
+          <Link>ValheimVehicles.Vehicles\Structs\VehicleZdoVars.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\AirVehicle.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\AirVehicle.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\AirVehicle.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\AirVehicle.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\BaseVehicleController.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\BaseVehicleController.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\BaseVehicleController.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\BaseVehicleController.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\BaseVehicleItemStorage.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\BaseVehicleItemStorage.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\BaseVehicleItemStorage.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\BaseVehicleItemStorage.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\LandVehicle.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\LandVehicle.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\LandVehicle.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\LandVehicle.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\SubmergedVehicle.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\SubmergedVehicle.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\SubmergedVehicle.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\SubmergedVehicle.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\ValheimBaseGameShip.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\ValheimBaseGameShip.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\ValheimBaseGameShip.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\ValheimBaseGameShip.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleShip.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\VehicleShip.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleShip.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\VehicleShip.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleShipCompat.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\VehicleShipCompat.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleShipCompat.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\VehicleShipCompat.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\WaterVehicleController.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\WaterVehicleController.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\WaterVehicleController.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\WaterVehicleController.cs</Link>
         </Compile>
     </ItemGroup>
     <PropertyGroup>

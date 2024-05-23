@@ -7,6 +7,7 @@ using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
+using ValheimVehicles.Utils;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
@@ -16,6 +17,17 @@ namespace ValheimRAFT.Patches;
 
 public class Player_Patch
 {
+  /// <summary>
+  /// For playing player on a potentially moved raft or on death
+  /// </summary>
+  /// <returns></returns>
+  [HarmonyPatch(typeof(Player), "Awake")]
+  [HarmonyPostfix]
+  private static void PlayerAwakeSpawnPatch(Player __instance)
+  {
+    PlayerSpawnController.CreateSpawnDelegate(__instance);
+  }
+
   private static bool HasMatchingParameterTypes(int genericParameterCount, Type[] types,
     ParameterInfo[] parameters)
   {
@@ -209,6 +221,7 @@ public class Player_Patch
 
     return true;
   }
+
 
   [HarmonyPatch(typeof(Player), "Save")]
   [HarmonyPrefix]

@@ -1,6 +1,10 @@
+using System.Collections;
+using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
+using ValheimRAFT.Util;
 using ValheimVehicles.Vehicles;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;
 
@@ -13,6 +17,43 @@ public class GamePause_Patch
   private static void UpdatePausePostfix()
   {
     PreventTimeFreezeOnShip();
+  }
+
+  public static IEnumerator SetPlayerOnBoat(ZDO zdo, Player player)
+  {
+    var zdoSector = zdo.GetSector();
+    var zdoPosition = zdo.GetPosition();
+    var playerOffsetHash = BaseVehicleController.GetDynamicParentOffset(player.m_nview);
+
+    ZoneSystem.instance.PokeLocalZone(zdoSector);
+    yield return new WaitUntil(() => ZoneSystem.instance.IsZoneLoaded(zdoSector));
+
+    var newPosition = zdoPosition + playerOffsetHash;
+    player.transform.position = newPosition;
+    player.m_nview.GetZDO().SetPosition(newPosition);
+
+    yield return null;
+  }
+
+  [HarmonyPatch(typeof(Game), nameof(Game.SpawnPlayer))]
+  [HarmonyPostfix]
+  private static void OnSpawned(Player __result)
+  {
+    var netView = Player.m_localPlayer.GetComponent<ZNetView>();
+    // var netView = __result.GetComponent<ZNetView>();
+    if (!netView) return;
+
+    var playerVehicleId = BaseVehicleController.GetParentVehicleId(netView);
+    foreach (var zdo in BaseVehicleController.vehicleZdos)
+    {
+      if (ZDOPersistentID.ZDOIDToId(zdo.m_uid) == playerVehicleId)
+      {
+        netView.StartCoroutine(SetPlayerOnBoat(zdo, __result));
+        // __result.transform.position = transform.position + playerOffsetHash;
+        // Logger.LogDebug("Adding player to active boat");
+        break;
+      }
+    }
   }
 
   private static void PreventTimeFreezeOnShip()

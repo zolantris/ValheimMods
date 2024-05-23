@@ -110,66 +110,6 @@ public class Teleport_Patch
     return list;
   }
 
-  // [HarmonyPatch(typeof(Player), "UpdateTeleport")]
-  // [HarmonyPrefix]
-  // public static bool Player_UpdateTeleport(Player __instance, float dt)
-  // {
-  //   if (!__instance.m_teleporting)
-  //   {
-  //     __instance.m_teleportCooldown += dt;
-  //     return false;
-  //   }
-  //
-  //   __instance.m_teleportCooldown = 0f;
-  //   __instance.m_teleportTimer += dt;
-  //   if (!(__instance.m_teleportTimer > 2f))
-  //   {
-  //     return false;
-  //   }
-  //
-  //   Vector3 dir = __instance.m_teleportTargetRot * Vector3.forward;
-  //   __instance.transform.position = __instance.m_teleportTargetPos;
-  //   __instance.transform.rotation = __instance.m_teleportTargetRot;
-  //   __instance.m_body.velocity = Vector3.zero;
-  //   __instance.m_maxAirAltitude = __instance.transform.position.y;
-  //   __instance.SetLookDir(dir);
-  //   if ((!(__instance.m_teleportTimer > 8f) && __instance.m_distantTeleport) ||
-  //       !ZNetScene.instance.IsAreaReady(__instance.m_teleportTargetPos))
-  //   {
-  //     return false;
-  //   }
-  //
-  //   float height = 0f;
-  //   if (ZoneSystem.instance.FindFloor(__instance.m_teleportTargetPos, out height))
-  //   {
-  //     __instance.m_teleportTimer = 0f;
-  //     __instance.m_teleporting = false;
-  //     __instance.ResetCloth();
-  //   }
-  //   else if (__instance.m_teleportTimer > 15f || !__instance.m_distantTeleport)
-  //   {
-  //     if (__instance.m_distantTeleport)
-  //     {
-  //       Vector3 position = __instance.transform.position;
-  //       position.y = ZoneSystem.instance.GetSolidHeight(__instance.m_teleportTargetPos) + 0.5f;
-  //       __instance.transform.position = position;
-  //     }
-  //     else
-  //     {
-  //       __instance.transform.rotation = __instance.m_teleportFromRot;
-  //       __instance.transform.position = __instance.m_teleportFromPos;
-  //       __instance.m_maxAirAltitude = __instance.transform.position.y;
-  //       __instance.Message(MessageHud.MessageType.Center, "$msg_portal_blocked");
-  //     }
-  //
-  //     __instance.m_teleportTimer = 0f;
-  //     __instance.m_teleporting = false;
-  //     __instance.ResetCloth();
-  //   }
-  //
-  //   return false;
-  // }
-
   private static Vector3 GetTeleportTargetPos(Player __instance)
   {
     if (!m_teleportTarget.TryGetValue(__instance, out var zdoid))
@@ -188,8 +128,6 @@ public class Teleport_Patch
   {
     var tp = go.GetComponent<TeleportWorld>();
 
-    // Might be required to get updated position
-    // Physics.SyncTransforms();
     if ((bool)tp)
     {
       return tp.transform.position + tp.transform.forward * tp.m_exitDistance + Vector3.up;

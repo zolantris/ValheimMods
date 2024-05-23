@@ -108,7 +108,10 @@ public class VehicleCommands : ConsoleCommand
       float.TryParse(args[2], out var y);
       float.TryParse(args[3], out var z);
       var offsetVector = new Vector3(x, y, z);
+      vehicleController.VehicleInstance.Instance.m_body.isKinematic = true;
       vehicleController.VehicleInstance.Instance.transform.position += offsetVector;
+      Physics.SyncTransforms();
+      vehicleController.VehicleInstance.Instance.m_body.isKinematic = false;
     }
     else
     {
@@ -150,9 +153,9 @@ public class VehicleCommands : ConsoleCommand
       float.TryParse(args[1], out var x);
       float.TryParse(args[2], out var y);
       float.TryParse(args[3], out var z);
-      vehicleController.VehicleInstance.Instance.transform.rotation = Quaternion.Euler(
+      vehicleController.VehicleInstance.Instance.m_body.MoveRotation(Quaternion.Euler(
         Mathf.Approximately(0f, x) ? 0 : x, Mathf.Approximately(0f, y) ? 0 : y,
-        Mathf.Approximately(0f, z) ? 0 : z);
+        Mathf.Approximately(0f, z) ? 0 : z));
     }
     else
     {
