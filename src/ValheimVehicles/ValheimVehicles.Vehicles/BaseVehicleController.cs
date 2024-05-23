@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
@@ -145,6 +146,9 @@ public class BaseVehicleController : MonoBehaviour
 
   private int _persistentZdoId;
 
+  private Stopwatch vehicleInitializationTimer = new();
+
+
   public int PersistentZdoId => GetPersistentID();
 
   public bool m_statsOverride;
@@ -248,11 +252,14 @@ public class BaseVehicleController : MonoBehaviour
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
 
+    vehicleInitializationTimer.Start();
+
     if (!(bool)m_rigidbody)
     {
       m_rigidbody = GetComponent<Rigidbody>();
     }
   }
+
 
   public void UpdateBedSpawn()
   {
@@ -354,6 +361,7 @@ public class BaseVehicleController : MonoBehaviour
 
   private void OnDisable()
   {
+    vehicleInitializationTimer.Stop();
     if (_serverUpdatePiecesCoroutine != null)
     {
       StopCoroutine(_serverUpdatePiecesCoroutine);
@@ -363,6 +371,7 @@ public class BaseVehicleController : MonoBehaviour
   private void OnEnable()
   {
     GetPersistentID();
+    vehicleInitializationTimer.Restart();
 
     var nv = GetComponent<ZNetView>();
 
@@ -953,107 +962,115 @@ public class BaseVehicleController : MonoBehaviour
 
   public IEnumerator ActivatePendingPieces()
   {
-    if (!(bool)m_nview || m_nview == null)
+    while (vehicleInitializationTimer is { ElapsedMilliseconds: < 50000, IsRunning: true })
     {
-      yield return new WaitUntil(() => (bool)m_nview);
-    }
+      if (!(bool)m_nview || m_nview == null)
+      {
+        yield return new WaitUntil(() => (bool)m_nview);
+      }
 
-    if (BaseVehicleInitState != InitializationState.Complete)
-    {
+      if (BaseVehicleInitState != InitializationState.Complete)
+      {
+        yield return new WaitUntil(() => BaseVehicleInitState == InitializationState.Complete);
+      }
+
+      if (m_nview?.GetZDO() == null)
+      {
+        yield return new WaitUntil(() => m_nview?.GetZDO() != null);
+      }
+
+      var id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
+      m_pendingPieces.TryGetValue(id, out var list);
+
+      if (list is { Count: > 0 })
+      {
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+        foreach (var obj in list)
+        {
+          if ((bool)obj)
+          {
+            if (hasDebug)
+            {
+              Logger.LogDebug($"ActivatePendingPieces obj: {obj} {obj.name}");
+            }
+
+            ActivatePiece(obj);
+            if (ZNetScene.instance.InLoadingScreen() || stopwatch.ElapsedMilliseconds < 10)
+              continue;
+            yield return new WaitForEndOfFrame();
+            stopwatch.Restart();
+          }
+          else
+          {
+            // list.Remove(obj);
+            if (hasDebug)
+            {
+              Logger.LogDebug($"ActivatePendingPieces obj is not valid {obj}");
+            }
+          }
+        }
+
+        // this is commented out b/c it may be triggering the destroy method guard at the bottom.
+        list.Clear();
+        m_pendingPieces.Remove(id);
+      }
+
+      if (hasDebug)
+        Logger.LogDebug(
+          $"Ship Size calc is: m_bounds {_vehicleBounds} bounds size {_vehicleBounds.size}");
+
+      m_dynamicObjects.TryGetValue(_persistentZdoId, out var objectList);
+      var objectListHasNoValidItems = true;
+      if (objectList is { Count: > 0 })
+      {
+        if (hasDebug) Logger.LogDebug($"m_dynamicObjects is valid: {objectList.Count}");
+
+        for (var i = 0; i < objectList.Count; i++)
+        {
+          var go = ZNetScene.instance.FindInstance(objectList[i]);
+
+          if (!go) continue;
+
+          var nv = go.GetComponentInParent<ZNetView>();
+          if (!nv || nv.m_zdo == null)
+            continue;
+          else
+            objectListHasNoValidItems = false;
+
+          if (ZDOExtraData.s_vec3.TryGetValue(nv.m_zdo.m_uid, out var dic))
+          {
+            if (dic.TryGetValue(MBCharacterOffsetHash, out var offset))
+              nv.transform.position = offset + transform.position;
+
+            offset = default;
+          }
+
+          ZDOExtraData.RemoveInt(nv.m_zdo.m_uid, MBCharacterParentHash);
+          ZDOExtraData.RemoveVec3(nv.m_zdo.m_uid, MBCharacterOffsetHash);
+          dic = null;
+        }
+
+        m_dynamicObjects.Remove(_persistentZdoId);
+        yield return null;
+      }
+
+      /*
+       * This prevents empty Prefabs of MBRaft from existing
+       * @todo make this only apply for boats with no objects in any list
+       */
+      if (list is { Count: 0 } &&
+          (m_dynamicObjects.Count == 0 || objectListHasNoValidItems) && hasDebug
+         )
+      {
+        Logger.LogError(
+          $"found boat with _persistentZdoId {_persistentZdoId}, without any items attached");
+      }
+
       yield return null;
     }
 
-    if (m_nview.GetZDO() == null)
-    {
-      yield return new WaitUntil(() => m_nview.m_zdo != null);
-    }
-
-    var id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
-    m_pendingPieces.TryGetValue(id, out var list);
-
-    if (list is { Count: > 0 })
-    {
-      // var stopwatch = new Stopwatch();
-      // stopwatch.Start();
-      for (var j = 0; j < list.Count; j++)
-      {
-        var obj = list[j];
-        if ((bool)obj)
-        {
-          if (hasDebug)
-          {
-            Logger.LogDebug($"ActivatePendingPieces obj: {obj} {obj.name}");
-          }
-
-          ActivatePiece(obj);
-        }
-        else
-        {
-          // list.Remove(obj);
-          if (hasDebug)
-          {
-            Logger.LogDebug($"ActivatePendingPieces obj is not valid {obj}");
-          }
-        }
-      }
-
-      // this is commented out b/c it may be triggering the destroy method guard at the bottom.
-      list.Clear();
-      m_pendingPieces.Remove(id);
-    }
-
-    if (hasDebug)
-      Logger.LogDebug(
-        $"Ship Size calc is: m_bounds {_vehicleBounds} bounds size {_vehicleBounds.size}");
-
-    m_dynamicObjects.TryGetValue(_persistentZdoId, out var objectList);
-    var objectListHasNoValidItems = true;
-    if (objectList is { Count: > 0 })
-    {
-      if (hasDebug) Logger.LogDebug($"m_dynamicObjects is valid: {objectList.Count}");
-
-      for (var i = 0; i < objectList.Count; i++)
-      {
-        var go = ZNetScene.instance.FindInstance(objectList[i]);
-
-        if (!go) continue;
-
-        var nv = go.GetComponentInParent<ZNetView>();
-        if (!nv || nv.m_zdo == null)
-          continue;
-        else
-          objectListHasNoValidItems = false;
-
-        if (ZDOExtraData.s_vec3.TryGetValue(nv.m_zdo.m_uid, out var dic))
-        {
-          if (dic.TryGetValue(MBCharacterOffsetHash, out var offset))
-            nv.transform.position = offset + transform.position;
-
-          offset = default;
-        }
-
-        ZDOExtraData.RemoveInt(nv.m_zdo.m_uid, MBCharacterParentHash);
-        ZDOExtraData.RemoveVec3(nv.m_zdo.m_uid, MBCharacterOffsetHash);
-        dic = null;
-      }
-
-      m_dynamicObjects.Remove(_persistentZdoId);
-      yield return null;
-    }
-
-    /*
-     * This prevents empty Prefabs of MBRaft from existing
-     * @todo make this only apply for boats with no objects in any list
-     */
-    if (list is { Count: 0 } &&
-        (m_dynamicObjects.Count == 0 || objectListHasNoValidItems) && hasDebug
-       )
-    {
-      Logger.LogError(
-        $"found boat with _persistentZdoId {_persistentZdoId}, without any items attached");
-    }
-
-    yield return null;
+    vehicleInitializationTimer.Stop();
   }
 
   public static bool AddDynamicParent(ZNetView source, GameObject target)
