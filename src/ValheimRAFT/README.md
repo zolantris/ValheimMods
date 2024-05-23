@@ -26,34 +26,33 @@ source the mod on 12/25/2023.
 ## Contents
 
 <!-- TOC -->
-
 * [ValheimRAFT](#valheimraft)
-    * [Background](#background)
-    * [Contents](#contents)
-    * [Features](#features)
-    * [Community](#community)
-    * [Prefabs](#prefabs)
-        * [Installation Guide](#installation-guide)
-            * [Current logos](#current-logos)
-        * [Hull Mechanics](#hull-mechanics)
-    * [Client/Server/SinglePlayer Support](#clientserversingleplayer-support)
-    * [Config](#config)
-    * [Issues](#issues)
-    * [Mod Support](#mod-support)
-    * [FAQs](#faqs)
-        * [Help My Raft is A Box](#help-my-raft-is-a-box)
-        * [Help My Raft Turns into a Box when I load the area](#help-my-raft-turns-into-a-box-when-i-load-the-area)
-        * [Help My Raft went underground](#help-my-raft-went-underground)
-        * [Help My Raft Is Sinking When I Build Hulls](#help-my-raft-is-sinking-when-i-build-hulls)
-        * [My Bed does not update](#my-bed-does-not-update)
-    * [Graphics](#graphics)
-    * [Contributing](#contributing)
-    * [Maintainers](#maintainers)
-    * [Attribution](#attribution)
-    * [Support Open Source](#support-open-source)
-    * [Logging Metrics](#logging-metrics)
-        * [What information will be collected](#what-information-will-be-collected)
-
+  * [Background](#background)
+  * [Contents](#contents)
+  * [Features](#features)
+  * [Community](#community)
+  * [Prefabs](#prefabs)
+    * [Installation Guide](#installation-guide)
+      * [Current logos](#current-logos)
+    * [Hull Mechanics](#hull-mechanics)
+  * [Commands](#commands)
+  * [Client/Server/SinglePlayer Support](#clientserversingleplayer-support)
+  * [Config](#config)
+  * [Issues](#issues)
+  * [Mod Support](#mod-support)
+  * [FAQs](#faqs)
+    * [Help My Raft is A Box](#help-my-raft-is-a-box)
+    * [Help My Raft Turns into a Box when I load the area](#help-my-raft-turns-into-a-box-when-i-load-the-area)
+    * [Help My Raft went underground](#help-my-raft-went-underground)
+    * [Help My Raft Is Sinking When I Build Hulls](#help-my-raft-is-sinking-when-i-build-hulls)
+    * [My Bed does not update](#my-bed-does-not-update)
+  * [Graphics](#graphics)
+  * [Contributing](#contributing)
+  * [Maintainers](#maintainers)
+  * [Attribution](#attribution)
+  * [Support Open Source](#support-open-source)
+  * [Logging Metrics](#logging-metrics)
+    * [What information will be collected](#what-information-will-be-collected)
 <!-- TOC -->
 
 ## Features
@@ -141,6 +140,19 @@ Floatation is determined by the key `HullFloatationColliderLocation`.
 [//]: # ([image_base_urls]&#40;https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons&#41;)
 
 [//]: # ([image_base_urls_generated]&#40;https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons&#41;)
+
+## Commands
+
+:warning: All Commands require the player to point at a ship to work. :warning:
+
+| Name                                  | Args | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+|---------------------------------------|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `vehicle creative` aka `raftcreative` | None | Temporarily Enables/disables the vehicles's physics AND move the vehicle up in the air based on the [creative height](https://github.com/zolantris/ValheimMods/blob/main/src/ValheimRAFT/docs/ValheimRAFT_AutoDoc.md#raftcreativeheight) set in the config. The Vehicle will float in the air allowing the user to build on the raft with mods that break (or do not have compatibility) with the piece placement Relative Rotation. IE Gizmos. __The vehicle should have zero rotation for X and Z axis.__ |
+| `vehicle toggleOceanSway`             | None | Permanently Enables/disables the vehicle ocean sway. When disabled it will force the vehicle to only go up or down based on the sea water, it will never sway. <br/>- **Not immersive but QOL fix for the seasick.**                                                                                                                                                                                                                                                                                        |
+| `vehicle recover` aka `raftrecover`   | None | Recovers all vehicles within 1000 units of the player. Only works if the vehicle/raft is broken. If something happened with the render and the vehicle still exists you likely need to restore from a backup. (and also report the issue)                                                                                                                                                                                                                                                                   |
+| `vehicle debug`                       | None | Enables/disables the debugger dynamically for vehicles, debug menu contains shortcuts for `vehicle creative` and `vehicle toggleOceanSway`                                                                                                                                                                                                                                                                                                                                                                  |
+| `vehicle downgradeShipToV1`           | None | Downgrades a V2 ship. If you chose to downgrade due to some issue with the new vehicle...this is not a good idea, but it is provided for compatibility and an option if there are problems with a v2 ship with other mods etc. <br/>*This command will be remove in future updates.*                                                                                                                                                                                                                        |
+| `vehicle upgradeShipToV2`             | None | Upgrades a V1 ship to a V2 ship. (only works if you downgraded first). <br/>*This command will be remove in future updates.*                                                                                                                                                                                                                                                                                                                                                                                |
 
 ## Client/Server/SinglePlayer Support
 

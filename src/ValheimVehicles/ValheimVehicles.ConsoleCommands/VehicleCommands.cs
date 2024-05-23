@@ -117,7 +117,7 @@ public class VehicleCommands : ConsoleCommand
   }
 
   /// <summary>
-  /// Freezes the Vehicle rotation permenantly until the boat is unloaded similar to raftcreative 
+  /// Freezes the Vehicle rotation permanently until the boat is unloaded similar to raftcreative 
   /// </summary>
   private static void VehicleStopOceanSway()
   {
