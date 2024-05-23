@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Jotunn.Managers;
 using UnityEngine;
 using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
@@ -35,6 +36,7 @@ public class PlayerSpawnController : MonoBehaviour
   private void Start()
   {
     Setup();
+    SyncPlayerId();
     InvokeRepeating(nameof(SyncPosition), 5f, 5f);
   }
 
@@ -64,18 +66,6 @@ public class PlayerSpawnController : MonoBehaviour
   private void SyncPosition()
   {
     zdo?.SetPosition(transform.position);
-  }
-
-  public static GameObject CreateSpawnObject(GameObject player)
-  {
-    var go = new GameObject()
-    {
-      name = PrefabNames.PlayerSpawnControllerObj,
-    };
-
-    go.AddComponent<PlayerSpawnController>();
-
-    return go;
   }
 
   /// <summary>
@@ -131,18 +121,30 @@ public class PlayerSpawnController : MonoBehaviour
     yield return null;
   }
 
+  private void SyncPlayerId()
+  {
+    if (playerId == 0 && player != null)
+    {
+      playerId = player.GetPlayerID();
+    }
+
+    if (playerId != 0)
+    {
+      zdo?.Set(_playerIdKey, playerId);
+    }
+  }
+
   public void AddVehicleData(BaseVehicleController baseVehicleController)
   {
     if (zdo == null) return;
 
-    foreach (var mBedPiece in baseVehicleController.m_bedPieces)
+    foreach (var mBedPiece in baseVehicleController.GetBedPieces())
     {
       if (mBedPiece.m_nview.GetZDO().GetOwner() != playerId) continue;
       SyncSpawnPoint(mBedPiece.m_nview);
       break;
     }
 
-    zdo.Set(_playerIdKey, 1);
     zdo.Set(_playerVehicleId, 1);
   }
 
@@ -190,7 +192,14 @@ public class PlayerSpawnController : MonoBehaviour
 
     if (!hasController)
     {
-      player.gameObject.AddComponent<PlayerSpawnController>();
+      var playerSpawnPrefab =
+        PrefabManager.Instance.GetPrefab(PrefabNames.PlayerSpawnControllerObj);
+      if (!playerSpawnPrefab) return;
+      var spawnPrefab = Instantiate(playerSpawnPrefab, player.transform);
+
+      // likely not needed...but could need it
+      // spawnPrefab.transform.position = player.transform.position;
+      // spawnPrefab.transform.localPosition = Vector3.zero;
     }
   }
 }

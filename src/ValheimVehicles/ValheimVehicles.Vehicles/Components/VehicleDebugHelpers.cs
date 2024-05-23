@@ -7,7 +7,7 @@ using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimVehicles.Prefabs;
-using ValheimVehicles.Utis;
+using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 

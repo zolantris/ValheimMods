@@ -154,6 +154,11 @@ public class BaseVehicleController : MonoBehaviour
   private Coroutine? _serverUpdatePiecesCoroutine;
   private Coroutine? _bedUpdateCoroutine;
 
+  public List<Bed> GetBedPieces()
+  {
+    return m_bedPieces;
+  }
+
   public List<ZNetView> GetCurrentPieces()
   {
     return m_pieces.ToList();

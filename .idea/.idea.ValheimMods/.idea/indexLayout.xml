@@ -16,6 +16,7 @@
       <Path>src/ValheimRAFT/Assets/Translations/English/valheimraft.json</Path>
       <Path>src/ValheimRAFT/README.md</Path>
       <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles</Path>
+      <Path>src/ValheimVehicles/ValheimVehicles.Helpers</Path>
       <Path>valheim.targets</Path>
     </explicitIncludes>
     <explicitExcludes />

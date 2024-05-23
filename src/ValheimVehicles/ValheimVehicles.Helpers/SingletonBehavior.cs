@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ValheimVehicles.Utils;
+namespace ValheimVehicles.Helpers;
 
 public class SingletonBehaviour<T> : MonoBehaviour where T : SingletonBehaviour<T>
 {

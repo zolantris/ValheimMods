@@ -2,7 +2,7 @@ using UnityEngine;
 using ValheimRAFT;
 using ValheimRAFT.Patches;
 using ValheimVehicles.ConsoleCommands;
-using ValheimVehicles.Utis;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
