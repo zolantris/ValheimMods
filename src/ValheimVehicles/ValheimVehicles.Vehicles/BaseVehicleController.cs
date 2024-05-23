@@ -1055,19 +1055,7 @@ public class BaseVehicleController : MonoBehaviour
         yield return null;
       }
 
-      /*
-       * This prevents empty Prefabs of MBRaft from existing
-       * @todo make this only apply for boats with no objects in any list
-       */
-      if (list is { Count: 0 } &&
-          (m_dynamicObjects.Count == 0 || objectListHasNoValidItems) && hasDebug
-         )
-      {
-        Logger.LogError(
-          $"found boat with _persistentZdoId {_persistentZdoId}, without any items attached");
-      }
-
-      yield return null;
+      yield return new WaitForSeconds(1);
     }
 
     vehicleInitializationTimer.Stop();
