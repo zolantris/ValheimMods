@@ -10,6 +10,7 @@ using UnityEngine.Assertions.Must;
 using ValheimRAFT;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
@@ -42,8 +43,8 @@ public class VehicleCommands : ConsoleCommand
       "Runs vehicle commands, each command will require parameters to run use help to see the input values." +
       $"\n<{VehicleCommandArgs.debug}>: will show a menu with options like rotating or debugging vehicle colliders" +
       $"\n<{VehicleCommandArgs.recover}>: will recover any vehicles within range of 1000 and turn them into V2 Vehicles" +
-      // $"\n<{VehicleCommandArgs.rotate}>: defaults to zeroing x and z tilt. Can also provide 3 args: x y z" +
-      // $"\n<{VehicleCommandArgs.move}>: Must provide 3 args: x y z, the movement is relative to those points" +
+      $"\n<{VehicleCommandArgs.rotate}>: defaults to zeroing x and z tilt. Can also provide 3 args: x y z" +
+      $"\n<{VehicleCommandArgs.move}>: Must provide 3 args: x y z, the movement is relative to those points" +
       $"\n<{VehicleCommandArgs.toggleOceanSway}>: stops the vehicle from swaying in the water. It will stay at 0 degrees (x and z) tilt and only allow rotating on y axis";
   }
 
@@ -66,14 +67,14 @@ public class VehicleCommands : ConsoleCommand
       // case VehicleCommandArgs.locate:
       //   LocateVehicle.LocateAllVehicles();
       //   break;
-      // case VehicleCommandArgs.move:
-      //   VehicleMove(args);
-      //   break;
-      // case VehicleCommandArgs.rotate:
-      //   VehicleRotate(args);
-      //   break;
+      case VehicleCommandArgs.move:
+        VehicleMove(args);
+        break;
       case VehicleCommandArgs.toggleOceanSway:
-        VehicleStopOceanSway();
+        VehicleToggleOceanSway();
+        break;
+      case VehicleCommandArgs.rotate:
+        VehicleRotate(args);
         break;
       case VehicleCommandArgs.recover:
         RecoverRaftConsoleCommand.RecoverRaftWithoutDryRun($"{Name} {VehicleCommandArgs.recover}");
@@ -108,7 +109,10 @@ public class VehicleCommands : ConsoleCommand
       float.TryParse(args[2], out var y);
       float.TryParse(args[3], out var z);
       var offsetVector = new Vector3(x, y, z);
+      vehicleController.VehicleInstance.Instance.m_body.isKinematic = true;
       vehicleController.VehicleInstance.Instance.transform.position += offsetVector;
+      Physics.SyncTransforms();
+      vehicleController.VehicleInstance.Instance.m_body.isKinematic = false;
     }
     else
     {
@@ -117,9 +121,9 @@ public class VehicleCommands : ConsoleCommand
   }
 
   /// <summary>
-  /// Freezes the Vehicle rotation permanently until the boat is unloaded similar to raftcreative 
+  /// Freezes the Vehicle rotation permenantly until the boat is unloaded similar to raftcreative 
   /// </summary>
-  private static void VehicleStopOceanSway()
+  public static void VehicleToggleOceanSway()
   {
     var vehicleController = VehicleDebugHelpers.GetVehicleController();
     if (!vehicleController)
@@ -150,9 +154,9 @@ public class VehicleCommands : ConsoleCommand
       float.TryParse(args[1], out var x);
       float.TryParse(args[2], out var y);
       float.TryParse(args[3], out var z);
-      vehicleController.VehicleInstance.Instance.transform.rotation = Quaternion.Euler(
+      vehicleController.VehicleInstance.Instance.m_body.MoveRotation(Quaternion.Euler(
         Mathf.Approximately(0f, x) ? 0 : x, Mathf.Approximately(0f, y) ? 0 : y,
-        Mathf.Approximately(0f, z) ? 0 : z);
+        Mathf.Approximately(0f, z) ? 0 : z));
     }
     else
     {
@@ -231,8 +235,7 @@ public class VehicleCommands : ConsoleCommand
   [
     // VehicleCommandArgs.locate, 
     // VehicleCommandArgs.destroy,
-    // VehicleCommandArgs.rotate,
-    // VehicleCommandArgs.move,
+    VehicleCommandArgs.rotate,
     VehicleCommandArgs.toggleOceanSway,
     VehicleCommandArgs.creative,
     VehicleCommandArgs.debug,

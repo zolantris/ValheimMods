@@ -1,3 +1,5 @@
+using ValheimVehicles.Vehicles.Components;
+
 namespace ValheimVehicles.Vehicles.Interfaces;
 
 public interface IBaseVehicleController

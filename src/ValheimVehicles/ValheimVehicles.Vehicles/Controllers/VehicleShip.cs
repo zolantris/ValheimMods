@@ -7,16 +7,13 @@ using Jotunn.Extensions;
 using Jotunn.Managers;
 using Registry;
 using UnityEngine;
-using UnityEngine.UI;
 using ValheimRAFT;
 using ValheimVehicles.Prefabs;
-using ValheimVehicles.Prefabs.Registry;
-using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Interfaces;
 using ValheimVehicles.Vehicles.Structs;
 using Logger = Jotunn.Logger;
 
-namespace ValheimVehicles.Vehicles;
+namespace ValheimVehicles.Vehicles.Components;
 
 public static class VehicleShipHelpers
 {
@@ -144,7 +141,29 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     foreach (var mPlayer in m_players)
     {
       if (!mPlayer) continue;
+      BaseVehicleController.AddDynamicParentForVehicle(mPlayer.m_nview, VehicleController.Instance);
       mPlayer?.transform?.SetParent(null);
+    }
+  }
+
+  public new void OnTriggerExit(Collider collider)
+  {
+    var component = collider.GetComponent<Player>();
+    if ((bool)component)
+    {
+      BaseVehicleController.RemoveDynamicParentForVehicle(component.m_nview);
+      m_players.Remove(component);
+      Logger.LogDebug("Player over board, players left " + m_players.Count);
+      if (component == Player.m_localPlayer)
+      {
+        s_currentShips.Remove(this);
+      }
+    }
+
+    var component2 = collider.GetComponent<Character>();
+    if ((bool)component2)
+    {
+      component2.InNumShipVolumes--;
     }
   }
 

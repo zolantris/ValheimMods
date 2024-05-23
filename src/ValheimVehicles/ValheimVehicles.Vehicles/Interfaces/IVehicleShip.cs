@@ -1,4 +1,5 @@
 using UnityEngine;
+using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.Vehicles.Interfaces;
 
@@ -9,6 +10,6 @@ public interface IVehicleShip
   public BoxCollider FloatCollider { get; set; }
   public Transform? ShipDirection { get; }
   public Transform ControlGuiPosition { get; set; }
-  public VehicleShip Instance { get; }
+  public VehicleShip? Instance { get; }
   public ZNetView NetView { get; }
 }

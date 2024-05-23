@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Interfaces;
 
 namespace ValheimVehicles.Vehicles;

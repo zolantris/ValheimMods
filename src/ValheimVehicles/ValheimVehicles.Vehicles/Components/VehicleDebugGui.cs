@@ -1,10 +1,12 @@
 using UnityEngine;
 using ValheimRAFT;
-using ValheimVehicles.Utis;
+using ValheimRAFT.Patches;
+using ValheimVehicles.ConsoleCommands;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
-namespace Components;
+namespace ValheimVehicles.Vehicles.Components;
 
 public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 {
@@ -37,6 +39,11 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       {
         ZNetScene.instance.Destroy(currentShip.m_nview.gameObject);
       }
+    }
+
+    if (GUILayout.Button("Debug Delete PlayerSpawnController"))
+    {
+      PlayerSpawnController.DestroyAllDynamicSpawnControllers();
     }
 
     GUILayout.EndArea();
@@ -72,9 +79,21 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       VehicleDebugHelpers.GetVehicleController()?.ActivatePendingPiecesCoroutine();
     }
 
-    if (GUILayout.Button("Flip Ship"))
+    if (GUILayout.Button("Zero Ship RotationXZ"))
     {
       VehicleDebugHelpers.GetOnboardVehicleDebugHelper()?.FlipShip();
+    }
+
+    if (GUILayout.Button("Toggle Ocean Sway"))
+    {
+      VehicleCommands.VehicleToggleOceanSway();
+    }
+
+    if (GUILayout.Button("Mimic Spawn"))
+    {
+      var playerZdo = Player.m_localPlayer?.m_nview?.GetZDO();
+      if (playerZdo == null) return;
+      StartCoroutine(GamePause_Patch.SetPlayerOnBoat(playerZdo, Player.m_localPlayer));
     }
 
     GUILayout.EndArea();

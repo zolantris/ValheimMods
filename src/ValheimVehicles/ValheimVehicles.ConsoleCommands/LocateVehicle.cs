@@ -4,6 +4,7 @@ using Jotunn.Entities;
 using ValheimRAFT;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.ConsoleCommands;
 
