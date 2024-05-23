@@ -23,8 +23,8 @@ public class GamePause_Patch
     // not on ship, do nothing
     if (!baseVehicleShip) return;
 
-    var hasPeerConnections = ZNet.instance?.GetPeerConnections() > 0;
-
+    var hasPeerConnections = ZNet.instance?.GetPeerConnections() > 0 ||
+                             ValheimRaftPlugin.Instance.ShipPausePatchSinglePlayer.Value;
     // Previously onPause the time was set to 0 regarless if using multiplayer, which borks ZDOs and Physics updates that are reliant on the controlling player.
     // Also causes issues with Players that are on a ship controlled by another player and the ship moves out of range. The player is forced through the wall or smashed up into the air.
     if (Game.IsPaused())
