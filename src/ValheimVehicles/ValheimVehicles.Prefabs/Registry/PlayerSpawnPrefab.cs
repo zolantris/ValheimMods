@@ -1,6 +1,6 @@
 using Jotunn.Managers;
 using UnityEngine;
-using ValheimVehicles.Utils;
+using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;

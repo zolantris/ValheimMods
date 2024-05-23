@@ -7,16 +7,25 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
-namespace ValheimVehicles.Utils;
+namespace ValheimVehicles.Vehicles.Components;
 
+/// <summary>
+/// This component does the following
+/// - Associates the player id with the vehicle id for logout point
+/// - Associates the player id with the beds on a vehicle if they die
+/// - Unsets / breaks association if player leaves the vehicle for logout point
+/// - Unsets / breaks association if player interacts with a bed that is not within the vehicle
+///
+/// - Syncs all this data on demand to prevent spamming zdo apis.
+/// </summary>
 public class PlayerSpawnController : MonoBehaviour
 {
   // spawn (Beds)
   private static int _playerSpawnIdKey = "playerSpawnKey".GetStableHashCode();
-  private static int _playerSpawnPointOffsetKey = "playerSpawnPointOffsetKey".GetStableHashCode();
+  // private static int _playerSpawnPointOffsetKey = "playerSpawnPointOffsetKey".GetStableHashCode();
 
   // logout
-  private static int _playerLogoutKey = "playerLogoutKey".GetStableHashCode();
+  // private static int _playerLogoutKey = "playerLogoutKey".GetStableHashCode();
   private static int _playerLogoutPointOffsetKey = "playerLogoutPointOffsetKey".GetStableHashCode();
 
   // ids
@@ -65,20 +74,92 @@ public class PlayerSpawnController : MonoBehaviour
   /// </summary>
   private void SyncPosition()
   {
+    if (ZNetView.m_forceDisableInit) return;
     zdo?.SetPosition(transform.position);
   }
 
   /// <summary>
-  /// Only should be called when the bed is interacted on a vehicle
+  /// Sets the spawnPointZdo to the bed it is associated with
+  /// - Only should be called when the bed is interacted on a vehicle
+  /// - This id is used to poke a zone and load it, then teleport the player to their bed like they are spawning
   /// </summary>
   /// <param name="spawnPointObj"></param>
   /// <returns>bool</returns>
   public void SyncSpawnPoint(ZNetView spawnPointObj)
   {
+    // should sync the zdo just in case it doesn't match player
+    SyncPosition();
+
     if (zdo == null) return;
     var spawnPointZdo = spawnPointObj.GetZDO();
     zdo.Set(_playerSpawnIdKey, ZDOPersistentID.ZDOIDToId(spawnPointZdo.m_uid));
-    zdo.Set(_playerSpawnPointOffsetKey, spawnPointObj.transform.localPosition);
+  }
+
+  /// <summary>
+  /// Must be called on logout, but also polled to prevent accidental dsync
+  /// </summary>
+  /// <param name="nv"></param>
+  /// <returns>bool</returns>
+  public void SyncLogoutPoint(GameObject go)
+  {
+    // should sync the zdo just in case it doesn't match player
+    SyncPosition();
+    var bvc = go.transform.root.GetComponent<BaseVehicleController>();
+    if (zdo == null || bvc == null)
+    {
+      RemovePlayerFromVehicles();
+      return;
+    }
+
+    var vehicleZdoId = bvc.PersistentZdoId;
+    if (vehicleZdoId == 0)
+    {
+      Logger.LogDebug("vehicleZdoId is invalid");
+      return;
+    }
+
+    zdo.Set(_playerVehicleId, vehicleZdoId);
+    zdo.Set(_playerLogoutPointOffsetKey, go.transform.localPosition);
+  }
+
+  /// <summary>
+  /// Mostly for debug, but could be used to fix potential issues with player spawn controllers by nuking them all.
+  /// </summary>
+  public static void DestroyAllDynamicSpawnControllers()
+  {
+    var spawnControllers = FindObjectsOfType<PlayerSpawnController>();
+    foreach (var spawnController in spawnControllers)
+    {
+      var controllerZdo = spawnController?.GetComponent<ZNetView>()?.GetZDO();
+      // todo this may need to force load a zone to get the zdo
+      if (controllerZdo == null) continue;
+      var go = ZNetScene.instance.FindInstance(controllerZdo);
+      if (go?.gameObject == null) continue;
+      ZNetScene.instance.Destroy(go.gameObject);
+    }
+  }
+
+  public void RemovePlayerFromVehicles()
+  {
+    zdo?.RemoveVec3(_playerLogoutPointOffsetKey);
+    zdo?.RemoveInt(_playerVehicleId);
+  }
+
+  public void RemoveSpawnPointFromVehicle()
+  {
+    zdo?.RemoveInt(_playerSpawnIdKey);
+  }
+
+  public static void MoveCurrentPlayerToSpawnPoint()
+  {
+    var spawnController = Player.m_localPlayer?.GetComponent<PlayerSpawnController>();
+    if (!spawnController)
+    {
+      Logger.LogDebug("No spawncontroller on player");
+      return;
+    }
+
+    spawnController?.MovePlayerToSpawnPoint();
   }
 
   public void MovePlayerToSpawnPoint()
@@ -88,6 +169,7 @@ public class PlayerSpawnController : MonoBehaviour
 
   public IEnumerable MovePlayerToSpawnPointWorker()
   {
+    yield return new WaitUntil(() => !ZNetView.m_forceDisableInit);
     if (zdo == null) yield break;
     var playerSpawnId = zdo.GetInt(_playerSpawnIdKey);
 
@@ -168,7 +250,7 @@ public class PlayerSpawnController : MonoBehaviour
   {
     var playerId = player.GetPlayerID();
     Logger.LogDebug($"PlayerID {playerId}");
-    var spawnControllers = FindObjectsOfType<PlayerSpawnController>();
+    var spawnControllers = Resources.FindObjectsOfTypeAll<PlayerSpawnController>();
 
     if (playerId == 0L)
     {
@@ -188,6 +270,8 @@ public class PlayerSpawnController : MonoBehaviour
       hasController = true;
       playerSpawnController.gameObject.transform.position = player.transform.position;
       playerSpawnController.gameObject.transform.SetParent(player.transform);
+      MoveCurrentPlayerToSpawnPoint();
+      break;
     }
 
     if (!hasController)
@@ -196,7 +280,6 @@ public class PlayerSpawnController : MonoBehaviour
         PrefabManager.Instance.GetPrefab(PrefabNames.PlayerSpawnControllerObj);
       if (!playerSpawnPrefab) return;
       var spawnPrefab = Instantiate(playerSpawnPrefab, player.transform);
-
       // likely not needed...but could need it
       // spawnPrefab.transform.position = player.transform.position;
       // spawnPrefab.transform.localPosition = Vector3.zero;

@@ -10,6 +10,7 @@ using UnityEngine.Assertions.Must;
 using ValheimRAFT;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 

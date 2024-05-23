@@ -19,6 +19,7 @@ using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Sail;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;

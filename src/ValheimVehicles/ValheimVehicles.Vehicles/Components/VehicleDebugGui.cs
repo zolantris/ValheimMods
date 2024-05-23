@@ -6,7 +6,7 @@ using ValheimVehicles.Helpers;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
-namespace Components;
+namespace ValheimVehicles.Vehicles.Components;
 
 public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 {
@@ -39,6 +39,11 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       {
         ZNetScene.instance.Destroy(currentShip.m_nview.gameObject);
       }
+    }
+
+    if (GUILayout.Button("Debug Delete PlayerSpawnController"))
+    {
+      PlayerSpawnController.DestroyAllDynamicSpawnControllers();
     }
 
     GUILayout.EndArea();

@@ -4,6 +4,7 @@ using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT.Util;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;
@@ -18,6 +19,7 @@ public class GamePause_Patch
   {
     PreventTimeFreezeOnShip();
   }
+
 
   public static IEnumerator SetPlayerOnBoat(ZDO zdo, Player player)
   {
@@ -35,25 +37,56 @@ public class GamePause_Patch
     yield return null;
   }
 
+  [HarmonyPatch(typeof(Bed), "Interact")]
+  [HarmonyPostfix]
+  private static void OnPlayerBedInteract(Bed __instance)
+  {
+    var isCurrent = __instance.IsCurrent();
+    var spawnController = Player.m_localPlayer.GetComponentInChildren<PlayerSpawnController>();
+    if (!spawnController) return;
+
+    if (isCurrent)
+    {
+      spawnController.SyncSpawnPoint(__instance.m_nview);
+    }
+    else
+    {
+      spawnController.RemoveSpawnPointFromVehicle();
+    }
+  }
+
+  [HarmonyPatch(typeof(PlayerProfile), "SaveLogoutPoint")]
+  [HarmonyPostfix]
+  private static void OnSaveLogoutPoint()
+  {
+    var spawnController = Player.m_localPlayer.GetComponentInChildren<PlayerSpawnController>();
+    if (spawnController)
+    {
+      spawnController.SyncLogoutPoint(Player.m_localPlayer.gameObject);
+    }
+  }
+
   [HarmonyPatch(typeof(Game), nameof(Game.SpawnPlayer))]
   [HarmonyPostfix]
   private static void OnSpawned(Player __result)
   {
+    if (ZNetView.m_forceDisableInit) return;
     var netView = Player.m_localPlayer.GetComponent<ZNetView>();
     // var netView = __result.GetComponent<ZNetView>();
     if (!netView) return;
+    PlayerSpawnController.CreateSpawnDelegate(__result);
 
-    var playerVehicleId = BaseVehicleController.GetParentVehicleId(netView);
-    foreach (var zdo in BaseVehicleController.vehicleZdos)
-    {
-      if (ZDOPersistentID.ZDOIDToId(zdo.m_uid) == playerVehicleId)
-      {
-        netView.StartCoroutine(SetPlayerOnBoat(zdo, __result));
-        // __result.transform.position = transform.position + playerOffsetHash;
-        // Logger.LogDebug("Adding player to active boat");
-        break;
-      }
-    }
+    // var playerVehicleId = BaseVehicleController.GetParentVehicleId(netView);
+    // foreach (var zdo in BaseVehicleController.vehicleZdos)
+    // {
+    //   if (ZDOPersistentID.ZDOIDToId(zdo.m_uid) == playerVehicleId)
+    //   {
+    //     netView.StartCoroutine(SetPlayerOnBoat(zdo, __result));
+    //     // __result.transform.position = transform.position + playerOffsetHash;
+    //     // Logger.LogDebug("Adding player to active boat");
+    //     break;
+    //   }
+    // }
   }
 
   private static void PreventTimeFreezeOnShip()
