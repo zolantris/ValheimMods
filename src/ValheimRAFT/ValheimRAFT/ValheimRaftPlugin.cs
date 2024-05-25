@@ -158,8 +158,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   {
     HullFloatationColliderLocation = Config.Bind("Vehicles", "HullFloatationColliderLocation",
       HullFloatation.Average,
-      CreateConfigDescription(
-        "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship."));
+      new ConfigDescription(
+        "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship.",
+        null, new object[]
+        {
+        }));
     HasVehicleDebug = Config.Bind("Vehicles", "HasVehicleDebug", false,
       CreateConfigDescription(
         "Enables the debug menu, for showing colliders or rotating the ship", false, true));

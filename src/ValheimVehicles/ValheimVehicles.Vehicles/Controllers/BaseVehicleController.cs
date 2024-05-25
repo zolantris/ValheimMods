@@ -464,12 +464,13 @@ public class BaseVehicleController : MonoBehaviour
   public void Update()
   {
     if (!m_nview) return;
-
     Sync();
 
-    if (!ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value) return;
+    if (!ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value)
+    {
+      return;
+    }
 
-    Sync();
     // owner must sync more frequently, this likely is unnecessary but is kept as an option for servers that may be having sync problems during only the FixedUpdate
     if (m_nview.IsOwner())
     {
@@ -488,19 +489,12 @@ public class BaseVehicleController : MonoBehaviour
     Sync();
   }
 
-  /**
-   * @warning this must only be called on the client
-   */
-  public void Client_UpdateAllPieces()
+
+  /// <summary>
+  /// This should only be called directly in cases like teleporting or respawning
+  /// </summary>
+  public void ForceUpdateAllPiecePositions()
   {
-    var sector = ZoneSystem.instance.GetZone(transform.position);
-
-    if (sector == m_sector) return;
-
-    if (m_sector != m_serverSector) ServerSyncAllPieces();
-
-    m_sector = sector;
-
     for (var i = 0; i < m_pieces.Count; i++)
     {
       var nv = m_pieces[i];
@@ -518,6 +512,21 @@ public class BaseVehicleController : MonoBehaviour
         }
       }
     }
+  }
+
+  /**
+   * @warning this must only be called on the client
+   */
+  public void Client_UpdateAllPieces()
+  {
+    var sector = ZoneSystem.instance.GetZone(transform.position);
+
+    if (sector == m_sector) return;
+
+    if (m_sector != m_serverSector) ServerSyncAllPieces();
+
+    m_sector = sector;
+    ForceUpdateAllPiecePositions();
   }
 
   private bool IsPlayerOwnerOfNetview()

@@ -122,21 +122,7 @@ public class GamePause_Patch
   private static void OnSpawned(Player __result)
   {
     if (ZNetView.m_forceDisableInit) return;
-    var netView = Player.m_localPlayer.GetComponent<ZNetView>();
-    // var netView = __result.GetComponent<ZNetView>();
-    if (!netView) return;
-    PlayerSpawnController.HandleDynamicRespawnLocation(__result);
-    // var playerVehicleId = BaseVehicleController.GetParentVehicleId(netView);
-    // foreach (var zdo in BaseVehicleController.vehicleZdos)
-    // {
-    //   if (ZDOPersistentID.ZDOIDToId(zdo.m_uid) == playerVehicleId)
-    //   {
-    //     netView.StartCoroutine(SetPlayerOnBoat(zdo, __result));
-    //     // __result.transform.position = transform.position + playerOffsetHash;
-    //     // Logger.LogDebug("Adding player to active boat");
-    //     break;
-    //   }
-    // }
+    __result.gameObject.AddComponent<PlayerSpawnController>();
   }
 
   private static void PreventTimeFreezeOnShip()
