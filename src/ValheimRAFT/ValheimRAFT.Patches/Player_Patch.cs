@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles;
@@ -17,70 +18,18 @@ namespace ValheimRAFT.Patches;
 
 public class Player_Patch
 {
-  /// <summary>
-  /// For playing player on a potentially moved raft or on death
-  /// </summary>
-  /// <returns></returns>
-  // [HarmonyPatch(typeof(Player), "Awake")]
-  // [HarmonyPostfix]
-  // private static void PlayerAwakeSpawnPatch(Player __instance)
-  // {
-  // }
-  private static bool HasMatchingParameterTypes(int genericParameterCount, Type[] types,
-    ParameterInfo[] parameters)
-  {
-    if (parameters.Length < genericParameterCount || parameters.Length != types.Length)
-    {
-      return false;
-    }
-
-    var num = 0;
-    for (var i = 0; i < parameters.Length; i++)
-    {
-      if (parameters[i].ParameterType.IsGenericParameter)
-      {
-        num++;
-      }
-      else if (types[i] != parameters[i].ParameterType)
-      {
-        return false;
-      }
-    }
-
-    return num == genericParameterCount;
-  }
-
-  private static MethodInfo GetGenericMethod(Type type, string name, int genericParameterCount,
-    Type[] types)
-  {
-    var methods = type.GetMethods(BindingFlags.Instance | BindingFlags.Static |
-                                  BindingFlags.Public | BindingFlags.NonPublic |
-                                  BindingFlags.GetField | BindingFlags.SetField |
-                                  BindingFlags.GetProperty | BindingFlags.SetProperty);
-    foreach (var methodInfo in methods)
-    {
-      if (methodInfo.IsGenericMethod && methodInfo.ContainsGenericParameters &&
-          methodInfo.Name == name &&
-          HasMatchingParameterTypes(genericParameterCount, types, methodInfo.GetParameters()))
-      {
-        return methodInfo;
-      }
-    }
-
-    return null;
-  }
-
   [HarmonyTranspiler]
   [HarmonyPatch(typeof(Player), "PlacePiece")]
   private static IEnumerable<CodeInstruction> PlacePieceTranspiler(
     IEnumerable<CodeInstruction> instructions)
   {
-    var operand = GetGenericMethod(typeof(UnityEngine.Object), "Instantiate", 1, new Type[3]
-    {
-      typeof(Type),
-      typeof(Vector3),
-      typeof(Quaternion)
-    }).MakeGenericMethod(typeof(GameObject));
+    var operand = HarmonyPatchMethods.GetGenericMethod(typeof(UnityEngine.Object), "Instantiate", 1,
+      new Type[3]
+      {
+        typeof(Type),
+        typeof(Vector3),
+        typeof(Quaternion)
+      }).MakeGenericMethod(typeof(GameObject));
     var matches = new CodeMatch[]
     {
       new(OpCodes.Call, operand)
@@ -356,22 +305,36 @@ public class Player_Patch
   }
 
   [HarmonyPatch(typeof(Player), "UpdatePlacementGhost")]
-  [HarmonyTranspiler]
-  public static IEnumerable<CodeInstruction> UpdatePlacementGhost(
-    IEnumerable<CodeInstruction> instructions)
+  [HarmonyPostfix]
+  public static void UpdatePlacementGhost(Player __instance)
   {
-    var list = instructions.ToList();
-    for (var i = 0; i < list.Count; i++)
-      if (list[i].Calls(AccessTools.Method(typeof(Quaternion), "Euler", new[]
-          {
-            typeof(float),
-            typeof(float),
-            typeof(float)
-          })))
-        list[i] = new CodeInstruction(OpCodes.Call,
-          AccessTools.Method(typeof(Player_Patch), nameof(RelativeEuler)));
-    return list;
+    if (!__instance?.m_placementGhost) return;
+
+    var eulerAngles = __instance.m_placementGhost.transform.rotation.eulerAngles;
+    var x = eulerAngles.x;
+    var y = eulerAngles.y;
+    var z = eulerAngles.z;
+    __instance.m_placementGhost.transform.rotation =
+      RelativeEuler(x, y, z);
   }
+
+  // [HarmonyPatch(typeof(Player), "UpdatePlacementGhost")]
+  // [HarmonyTranspiler]
+  // public static IEnumerable<CodeInstruction> UpdatePlacementGhost(
+  //   IEnumerable<CodeInstruction> instructions)
+  // {
+  //   var list = instructions.ToList();
+  //   for (var i = 0; i < list.Count; i++)
+  //     if (list[i].Calls(AccessTools.Method(typeof(Quaternion), "Euler", new[]
+  //         {
+  //           typeof(float),
+  //           typeof(float),
+  //           typeof(float)
+  //         })))
+  //       list[i] = new CodeInstruction(OpCodes.Call,
+  //         AccessTools.Method(typeof(Player_Patch), nameof(RelativeEuler)));
+  //   return list;
+  // }
 
   public static Quaternion RelativeEuler(float x, float y, float z)
   {
