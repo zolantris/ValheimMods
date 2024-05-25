@@ -9,6 +9,7 @@
       <Path>../valheim_extracted_versions/0.218.15</Path>
     </attachedFolders>
     <explicitIncludes>
+      <Path>.github</Path>
       <Path>README.md</Path>
       <Path>docs</Path>
       <Path>gameLauncher.targets</Path>

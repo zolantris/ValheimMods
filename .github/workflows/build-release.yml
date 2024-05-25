@@ -3,7 +3,7 @@ name: ValheimRAFT Build
 on:
   push:
     branches: [ "main" ]
-  pull_request: 
+  pull_request:
     branches: [ "main", "develop" ]
   workflow_dispatch:
     inputs:
@@ -30,7 +30,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@3
+      - uses: actions/checkout@v4
         with:
           submodules: true
           token: ${{ secrets.REPO_TOKEN }}
