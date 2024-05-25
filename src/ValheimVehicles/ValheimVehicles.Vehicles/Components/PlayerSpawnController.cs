@@ -1,7 +1,10 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
+using UnityEngine.UI;
 using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
@@ -22,6 +25,8 @@ public class PlayerSpawnController : MonoBehaviour
 {
   // spawn (Beds)
   private static int _playerSpawnIdKey = "playerSpawnKey".GetStableHashCode();
+
+  private const string PlayerSpawnKey = "valheim_vehicles_playerSpawnKey";
   // private static int _playerSpawnPointOffsetKey = "playerSpawnPointOffsetKey".GetStableHashCode();
 
   // logout
@@ -36,10 +41,22 @@ public class PlayerSpawnController : MonoBehaviour
   public long playerId;
   public Player? player;
   public ZDO? zdo;
+  internal Vector3 spawnPoint;
+  internal Vector3 logoutPoint;
+
+  public static Dictionary<long, PlayerSpawnController> Instances = new();
 
   private void Awake()
   {
     Setup();
+  }
+
+  private void FixedUpdate()
+  {
+    if (zdo != null)
+    {
+      SyncPosition();
+    }
   }
 
   private void Start()
@@ -59,14 +76,97 @@ public class PlayerSpawnController : MonoBehaviour
     CancelInvoke(nameof(SyncPosition));
   }
 
+  public void GetSpawnPoint()
+  {
+    if (zdo == null) return;
+    var playerSpawnId = zdo.GetInt(_playerSpawnIdKey, 0);
+    if (playerSpawnId == 0) return;
+    var playerSpawnObj = ZDOPersistentID.Instance.GetGameObject(playerSpawnId);
+    if (playerSpawnObj)
+    {
+      Logger.LogDebug("go playerspawnobj");
+    }
+  }
+
+  public static void OnPlayerDeath()
+  {
+    if (Player.m_localPlayer == null)
+    {
+      return;
+    }
+
+    var playerSpawnController = GetSpawnController(Player.m_localPlayer);
+    playerSpawnController?.transform.SetParent(null);
+  }
+
+  public struct PlayerSpawnData
+  {
+    public int WorldId;
+    public int x;
+    public int y;
+    public int z;
+  }
+
+  private static string MobileSpawnFromWorldId => $"PlayerSpawnKey_{ZNet.instance.GetWorldUID()}";
+
   private void Setup()
   {
     // forceDisableInit prevents running awake commands for znetview when it's not ready
     if (ZNetView.m_forceDisableInit) return;
     NetView = GetComponent<ZNetView>();
-    player = GetComponentInParent<Player>();
-    playerId = player.GetPlayerID();
     zdo = NetView.GetZDO();
+    player = GetComponentInParent<Player>();
+
+    var worldUID = ZNet.instance.GetWorldUID();
+    Logger.LogDebug(worldUID);
+    if (!player.m_customData.TryGetValue(MobileSpawnFromWorldId,
+          out var customPlayerSpawnIdKey))
+    {
+    }
+
+    Logger.LogDebug("listing all player custom keys");
+    foreach (var key in player.m_customData.Keys)
+    {
+      Logger.LogDebug($"key: {key} val: {player.m_customData[key]}");
+    }
+
+    if (player == null)
+    {
+      playerId = zdo.GetInt(_playerIdKey);
+    }
+    else
+    {
+      zdo?.Set(_playerIdKey, playerId);
+    }
+
+    playerId = player?.GetPlayerID() ?? 0;
+
+    if (player != null)
+    {
+      zdo?.SetConnection(ZDOExtraData.ConnectionType.Spawned, player.GetZDOID());
+    }
+
+    if (playerId != 0 && Instances.TryGetValue(playerId, out var instance))
+    {
+      if (instance == null)
+      {
+        Instances.Remove(playerId);
+      }
+    }
+    else if (playerId != 0)
+    {
+      Instances.Add(playerId, this);
+    }
+
+    SyncPosition();
+  }
+
+  private void OnDestroy()
+  {
+    if (playerId != 0)
+    {
+      Instances.Remove(playerId);
+    }
   }
 
   /// <summary>
@@ -90,9 +190,19 @@ public class PlayerSpawnController : MonoBehaviour
     // should sync the zdo just in case it doesn't match player
     SyncPosition();
 
-    if (zdo == null) return;
-    var spawnPointZdo = spawnPointObj.GetZDO();
-    zdo.Set(_playerSpawnIdKey, ZDOPersistentID.ZDOIDToId(spawnPointZdo.m_uid));
+    if (player == null) return;
+
+    player.m_customData[MobileSpawnFromWorldId] = spawnPointObj.GetZDO().m_uid.ToString();
+    // if (!player.m_customData.TryGetValue(MobileSpawnFromWorldId,
+    //       out var customPlayerSpawnIdKey))
+    // {
+    //   
+    // }
+
+
+    // if (zdo == null) return;
+    // var spawnPointZdo = spawnPointObj.GetZDO();
+    // zdo.Set(_playerSpawnIdKey, ZDOPersistentID.ZDOIDToId(spawnPointZdo.m_uid));
   }
 
   /// <summary>
@@ -150,9 +260,27 @@ public class PlayerSpawnController : MonoBehaviour
     zdo?.RemoveInt(_playerSpawnIdKey);
   }
 
-  public static void MoveCurrentPlayerToSpawnPoint()
+  public static PlayerSpawnController? GetSpawnController(Player currentPlayer)
   {
-    var spawnController = Player.m_localPlayer?.GetComponent<PlayerSpawnController>();
+    if (!currentPlayer) return null;
+
+    if (Instances.TryGetValue(currentPlayer.GetPlayerID(), out var instance))
+    {
+      instance.transform.position = currentPlayer.transform.position;
+      instance.transform.SetParent(currentPlayer.transform);
+      return instance;
+    }
+
+    var controllerObj =
+      currentPlayer.transform.FindDeepChild($"{PrefabNames.PlayerSpawnControllerObj}(Clone)");
+    var spawnController = controllerObj?.GetComponent<PlayerSpawnController>();
+
+    return spawnController;
+  }
+
+  public static void MoveCurrentPlayerToSpawnPoint(Player currentPlayer)
+  {
+    var spawnController = GetSpawnController(currentPlayer);
     if (!spawnController)
     {
       Logger.LogDebug("No spawncontroller on player");
@@ -164,7 +292,24 @@ public class PlayerSpawnController : MonoBehaviour
 
   public void MovePlayerToSpawnPoint()
   {
-    StartCoroutine(nameof(MovePlayerToSpawnPointWorker));
+    StartCoroutine(MovePlayerToSpawnPointWorker());
+  }
+
+  public static T FromString<T>(string value)
+  {
+    var result = default(T);
+    if (value != null)
+    {
+      try
+      {
+        result = (T)Convert.ChangeType(value, typeof(T));
+      }
+      catch
+      {
+      }
+    }
+
+    return result;
   }
 
   public IEnumerable MovePlayerToSpawnPointWorker()
@@ -179,6 +324,15 @@ public class PlayerSpawnController : MonoBehaviour
     // var playerSpawnPointOffset = zdo.GetVec3(_playerSpawnPointOffsetKey, Vector3.zero);
 
     // required
+    if (player.m_customData.TryGetValue(MobileSpawnFromWorldId, out var spawnWorldData))
+    {
+      var spawnZdoID = FromString<ZDOID>(spawnWorldData);
+      if (spawnZdoID == null)
+      {
+        Logger.LogDebug("failed to parse to ZDOID");
+      }
+    }
+
     var playerSpawnPointZdoId = ZDOPersistentID.Instance.GetZDO(playerSpawnId);
 
     if (playerSpawnPointZdoId == null)
@@ -214,6 +368,9 @@ public class PlayerSpawnController : MonoBehaviour
     {
       zdo?.Set(_playerIdKey, playerId);
     }
+
+    var owner = player.GetOwner();
+    zdo.SetOwner(owner);
   }
 
   public void AddVehicleData(BaseVehicleController baseVehicleController)
@@ -241,16 +398,42 @@ public class PlayerSpawnController : MonoBehaviour
     zdo.RemoveInt(_playerVehicleId);
   }
 
+  public static void InitZdo(ZDO zdo)
+  {
+    if (zdo.m_prefab == PrefabNames.PlayerSpawnControllerObj.GetStableHashCode())
+    {
+      AttachSpawnControllerToPlayer(zdo);
+    }
+  }
+
+  public static void AttachSpawnControllerToPlayer(ZDO zdo)
+  {
+    var prefabInstance = ZNetScene.instance.FindInstance(zdo);
+    if (!prefabInstance) return;
+
+    var playerSpawnController = prefabInstance.GetComponent<PlayerSpawnController>();
+    var spawnControllerZdo = playerSpawnController?.zdo;
+
+    if (spawnControllerZdo == null) return;
+
+    var spawnControllerPlayerId = spawnControllerZdo?.GetInt(_playerIdKey);
+    var playerFromId = Player.GetPlayer(_playerIdKey);
+    if (spawnControllerPlayerId == 0 || spawnControllerPlayerId == null || !playerFromId) return;
+
+    prefabInstance.transform.position = playerFromId.transform.position;
+    prefabInstance.gameObject.transform.SetParent(playerFromId.transform);
+  }
+
   /// <summary>
   /// Initializes the SpawnController to delegate logout and bed spawning behavior
   /// Meant to be used in Player.Awake to match existing or add a new component
   /// </summary>
   /// <param name="player"></param>
-  public static void CreateSpawnDelegate(Player player)
+  public static void HandleDynamicRespawnLocation(Player player)
   {
+    // don't need this logic
     var playerId = player.GetPlayerID();
     Logger.LogDebug($"PlayerID {playerId}");
-    var spawnControllers = Resources.FindObjectsOfTypeAll<PlayerSpawnController>();
 
     if (playerId == 0L)
     {
@@ -258,31 +441,18 @@ public class PlayerSpawnController : MonoBehaviour
       return;
     }
 
-    var hasController = false;
-    foreach (var playerSpawnController in spawnControllers)
-    {
-      if (playerSpawnController == null) continue;
-      var spawnControllerZdo = playerSpawnController.zdo;
-      var spawnControllerPlayerId = spawnControllerZdo?.GetInt(_playerIdKey);
-      if (spawnControllerPlayerId == 0 || spawnControllerPlayerId == null ||
-          playerId != spawnControllerPlayerId) continue;
+    var controller = GetSpawnController(player);
 
-      hasController = true;
-      playerSpawnController.gameObject.transform.position = player.transform.position;
-      playerSpawnController.gameObject.transform.SetParent(player.transform);
-      MoveCurrentPlayerToSpawnPoint();
-      break;
-    }
-
-    if (!hasController)
+    // should be for first time spawns
+    if (!controller)
     {
       var playerSpawnPrefab =
         PrefabManager.Instance.GetPrefab(PrefabNames.PlayerSpawnControllerObj);
       if (!playerSpawnPrefab) return;
-      var spawnPrefab = Instantiate(playerSpawnPrefab, player.transform);
-      // likely not needed...but could need it
-      // spawnPrefab.transform.position = player.transform.position;
-      // spawnPrefab.transform.localPosition = Vector3.zero;
+      Instantiate(playerSpawnPrefab, player.transform);
+      return;
     }
+
+    controller?.MovePlayerToSpawnPoint();
   }
 }

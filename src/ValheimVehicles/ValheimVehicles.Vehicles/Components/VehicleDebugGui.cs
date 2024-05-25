@@ -3,6 +3,7 @@ using ValheimRAFT;
 using ValheimRAFT.Patches;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
@@ -44,6 +45,18 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     if (GUILayout.Button("Debug Delete PlayerSpawnController"))
     {
       PlayerSpawnController.DestroyAllDynamicSpawnControllers();
+    }
+
+    if (GUILayout.Button("DebugFind PlayerSpawnController"))
+    {
+      var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+      foreach (var obj in allObjects)
+      {
+        if (obj.name.Contains($"{PrefabNames.PlayerSpawnControllerObj}(Clone)"))
+        {
+          Logger.LogDebug("found playerSpawn controller");
+        }
+      }
     }
 
     GUILayout.EndArea();

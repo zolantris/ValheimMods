@@ -163,6 +163,9 @@ public class PrefabRegistryController : MonoBehaviour
     // VehiclePrefabs
     VehiclePiecesPrefab.Instance.Register(prefabManager, pieceManager);
     WaterVehiclePrefab.Instance.Register(prefabManager, pieceManager);
+
+    // PlayerSpawnControllerPrefab
+    DynamicPlayerSpawnPrefab.Instance.Register(prefabManager, pieceManager);
   }
 
   public static void RegisterAllPrefabs()

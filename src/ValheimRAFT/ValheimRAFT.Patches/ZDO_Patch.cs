@@ -1,6 +1,7 @@
 using HarmonyLib;
 using ValheimRAFT.Util;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimRAFT.Patches;
 
@@ -26,6 +27,7 @@ public class ZDO_Patch
     ZDOPersistentID.Instance.Register(zdo);
     MoveableBaseRootComponent.InitZDO(zdo);
     BaseVehicleController.InitZdo(zdo);
+    PlayerSpawnController.InitZdo(zdo);
   }
 
   [HarmonyPatch(typeof(ZDO), "Reset")]

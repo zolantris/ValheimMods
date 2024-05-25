@@ -655,25 +655,30 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
 
   private void SyncOceanSway()
   {
+    if (ZNetView.m_forceDisableInit) return;
     if (!NetView)
     {
       MovementFlags = VehicleMovementFlags.None;
       return;
     }
 
-    var isEnabled =
-      NetView.GetZDO()
-        .GetBool(VehicleZdoVars.VehicleOceanSway, false);
+    var zdo = NetView.GetZDO();
+    if (zdo == null) return;
+
+    var isEnabled = zdo.GetBool(VehicleZdoVars.VehicleOceanSway, false);
     HasOceanSwayDisabled = isEnabled;
   }
 
   private void SyncAnchor()
   {
+    if (ZNetView.m_forceDisableInit) return;
     if (!NetView)
     {
       MovementFlags = VehicleMovementFlags.None;
       return;
     }
+
+    if (NetView?.isActiveAndEnabled != true) return;
 
     var newFlags =
       (VehicleMovementFlags)NetView.GetZDO()

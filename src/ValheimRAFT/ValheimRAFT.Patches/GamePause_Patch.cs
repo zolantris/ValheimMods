@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using HarmonyLib;
+using Jotunn;
 using UnityEngine;
 using ValheimRAFT.Util;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
@@ -42,7 +44,7 @@ public class GamePause_Patch
   private static void OnPlayerBedInteract(Bed __instance)
   {
     var isCurrent = __instance.IsCurrent();
-    var spawnController = Player.m_localPlayer.GetComponentInChildren<PlayerSpawnController>();
+    var spawnController = PlayerSpawnController.GetSpawnController(Player.m_localPlayer);
     if (!spawnController) return;
 
     if (isCurrent)
@@ -66,6 +68,55 @@ public class GamePause_Patch
     }
   }
 
+  /// <summary>
+  /// todo swap to harmony transpiler for Player.OnDeath for this and add a callback for OnPlayerDeath when Game.RequestRespawn is called
+  /// </summary>
+  [HarmonyPatch(typeof(Game), nameof(Game.RequestRespawn))]
+  [HarmonyPrefix]
+  private static void RequestRespawn()
+  {
+    PlayerSpawnController.OnPlayerDeath();
+  }
+
+  [HarmonyPrefix]
+  [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.CreateDistantObjects))]
+  public static bool CreateDistantObjectsWithoutPlayerSpawnController(ZNetScene __instance,
+    List<ZDO> objects, int maxCreatedPerFrame, ref int created)
+  {
+    if (created > maxCreatedPerFrame)
+      return false;
+    foreach (ZDO zdo in objects)
+    {
+      if (!zdo.Created)
+      {
+        if ((UnityEngine.Object)__instance.CreateObject(zdo) != (UnityEngine.Object)null)
+        {
+          ++created;
+          if (created > maxCreatedPerFrame)
+            break;
+        }
+        else if (ZNet.instance.IsServer())
+        {
+          // new code
+          if (zdo.m_prefab == PrefabNames.PlayerSpawnControllerObj.GetStableHashCode())
+          {
+            Logger.LogDebug(
+              $"Destroyed invalid predab ZDO: {zdo.m_uid} prefab hash: {zdo.GetPrefab()}");
+            continue;
+          }
+          // end new code
+
+          zdo.SetOwner(ZDOMan.GetSessionID());
+          ZLog.Log((object)("Destroyed invalid predab ZDO:" + zdo.m_uid.ToString() +
+                            "  prefab hash:" + zdo.GetPrefab().ToString()));
+          ZDOMan.instance.DestroyZDO(zdo);
+        }
+      }
+    }
+
+    return false;
+  }
+
   [HarmonyPatch(typeof(Game), nameof(Game.SpawnPlayer))]
   [HarmonyPostfix]
   private static void OnSpawned(Player __result)
@@ -74,8 +125,7 @@ public class GamePause_Patch
     var netView = Player.m_localPlayer.GetComponent<ZNetView>();
     // var netView = __result.GetComponent<ZNetView>();
     if (!netView) return;
-    PlayerSpawnController.CreateSpawnDelegate(__result);
-
+    PlayerSpawnController.HandleDynamicRespawnLocation(__result);
     // var playerVehicleId = BaseVehicleController.GetParentVehicleId(netView);
     // foreach (var zdo in BaseVehicleController.vehicleZdos)
     // {

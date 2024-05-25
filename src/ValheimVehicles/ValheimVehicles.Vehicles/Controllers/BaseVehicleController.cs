@@ -250,7 +250,7 @@ public class BaseVehicleController : MonoBehaviour
 
   private void HideGhostContainer()
   {
-    VehicleInstance?.Instance.GhostContainer.SetActive(false);
+    VehicleInstance?.Instance?.GhostContainer.SetActive(false);
   }
 
   public void Awake()
@@ -294,7 +294,8 @@ public class BaseVehicleController : MonoBehaviour
    */
   public void InitializeBaseVehicleValuesWhenReady()
   {
-    if (m_nview == null)
+    if (ZNetView.m_forceDisableInit) return;
+    if (!m_nview)
     {
       return;
     }
@@ -313,7 +314,7 @@ public class BaseVehicleController : MonoBehaviour
 
     // Instances allows getting the instance from a ZDO
     // OR something queryable on a ZDO wmaking it much easier to debug and eventually update items
-    if (!ActiveInstances.GetValueSafe(PersistentZdoId))
+    if (!ActiveInstances.ContainsKey(PersistentZdoId))
     {
       ActiveInstances.Add(PersistentZdoId, this);
     }
@@ -365,6 +366,11 @@ public class BaseVehicleController : MonoBehaviour
 
   private void OnDisable()
   {
+    if (ActiveInstances.ContainsKey(PersistentZdoId))
+    {
+      ActiveInstances.Remove(PersistentZdoId);
+    }
+
     vehicleInitializationTimer.Stop();
     if (_serverUpdatePiecesCoroutine != null)
     {
@@ -376,6 +382,10 @@ public class BaseVehicleController : MonoBehaviour
   {
     GetPersistentID();
     vehicleInitializationTimer.Restart();
+    if (!ActiveInstances.ContainsKey(PersistentZdoId))
+    {
+      ActiveInstances.Add(PersistentZdoId, this);
+    }
 
     var nv = GetComponent<ZNetView>();
 
@@ -400,8 +410,10 @@ public class BaseVehicleController : MonoBehaviour
 
   public void CleanUp()
   {
-    RemovePlayersFromBoat();
-    ActiveInstances.Remove(_persistentZdoId);
+    if (ActiveInstances.ContainsKey(PersistentZdoId))
+    {
+      RemovePlayersFromBoat();
+    }
 
     if (_pendingPiecesCoroutine != null)
     {

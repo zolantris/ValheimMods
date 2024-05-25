@@ -8,9 +8,9 @@ namespace ValheimVehicles.Prefabs.Registry;
 /**
  * example registry of a prefab
  */
-public class PlayerSpawnPrefab : IRegisterPrefab
+public class DynamicPlayerSpawnPrefab : IRegisterPrefab
 {
-  public static readonly PlayerSpawnPrefab Instance = new();
+  public static readonly DynamicPlayerSpawnPrefab Instance = new();
 
   private static GameObject CreateSpawnObject()
   {
@@ -30,7 +30,11 @@ public class PlayerSpawnPrefab : IRegisterPrefab
   {
     var prefab =
       prefabManager.CreateClonedPrefab(PrefabNames.PlayerSpawnControllerObj, CreateSpawnObject());
-    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    var netView = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    netView.m_persistent = true;
+    netView.m_distant = true;
+    netView.m_type = ZDO.ObjectType.Prioritized;
+
     prefab.AddComponent<PlayerSpawnController>();
   }
 }

@@ -15,6 +15,7 @@ public class ZNetScene_Patch
     return !PatchSharedData.m_disableCreateDestroy;
   }
 
+#if DEBUG
   // todo remove this unless needed
   // helps unblock develop issues when nuking objects and znetview gets a null value
   [HarmonyPatch(typeof(ZNetScene), "RemoveObjects")]
@@ -50,6 +51,7 @@ public class ZNetScene_Patch
     // always skips this. The ZNetScene is brittle with falsy instances
     return false;
   }
+#endif
 
   [HarmonyPatch(typeof(ZNetScene), "Shutdown")]
   [HarmonyPostfix]
