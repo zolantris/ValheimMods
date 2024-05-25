@@ -3,6 +3,25 @@
 on:
   push:
     tags: [ "v*" ]
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+        type: choice
+        options:
+          - info
+          - warning
+          - debug
+      tags:
+        description: 'Test scenario tags'
+        required: false
+        type: boolean
+      environment:
+        description: 'Environment to run tests against'
+        type: environment
+        required: true
 
 jobs:
   build:
@@ -13,6 +32,12 @@ jobs:
         with:
           submodules: true
           token: ${{ secrets.REPO_TOKEN }}
+      - name: Read Manifest
+        run: |
+          version="$(jq -r '.version_number' ${{env.name}}/Package/${{env.jsonf}})"
+          description="$(jq -r '.description' ${{env.name}}/Package/${{env.jsonf}})"
+          echo "VERSION=${version}" >> $GITHUB_ENV
+          echo "DESCRIPTION=${description}" >> $GITHUB_ENV
 
       - uses: nuget/setup-nuget@v1
         with:
@@ -52,5 +77,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing its ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
           asset_path: ./bin/Release/ModVersions/
-          asset_name: ValheimRAFT-1.5.1.zip
+          asset_name: ValheimRAFT-${{ steps.}}.zip
           asset_content_type: application/zip
