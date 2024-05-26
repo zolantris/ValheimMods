@@ -119,7 +119,7 @@ public class Player_Patch
       var start = localPos + Vector3.up * 2f;
       start = transform.transform.TransformPoint(start);
       var localDir = ((Character)__instance).m_lookYaw * Quaternion.Euler(__instance.m_lookPitch,
-        0f - transform.transform.rotation.eulerAngles.y + PatchSharedData.YawOffset, 0f);
+        0 - transform.transform.rotation.eulerAngles.y + PatchSharedData.YawOffset, 0);
       var end = transform.transform.rotation * localDir * Vector3.forward;
       if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) && (bool)hitInfo.collider)
       {
@@ -255,10 +255,10 @@ public class Player_Patch
     {
       var ladder = __instance.m_attachPoint.parent.GetComponent<RopeLadderComponent>();
       if ((bool)ladder) ladder.StepOffLadder(__instance);
-      ((Character)__instance).m_animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, 0f);
-      ((Character)__instance).m_animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 0f);
-      ((Character)__instance).m_animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, 0f);
-      ((Character)__instance).m_animator.SetIKRotationWeight(AvatarIKGoal.RightHand, 0f);
+      ((Character)__instance).m_animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, 0);
+      ((Character)__instance).m_animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 0);
+      ((Character)__instance).m_animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, 0);
+      ((Character)__instance).m_animator.SetIKRotationWeight(AvatarIKGoal.RightHand, 0);
     }
 
     return true;
@@ -347,7 +347,10 @@ public class Player_Patch
       return bvc.transform.rotation * rot;
     }
 
-    var mbr = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
+    if (!ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value) return rot;
+
+    var mbr = PatchSharedData.PlayerLastRayPiece
+      .GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbr)
     {
       return mbr.transform.rotation * rot;

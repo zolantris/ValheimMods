@@ -29,6 +29,7 @@ internal static class PatchController
     Harmony.PatchAll(typeof(ZNetScene_Patch));
     Harmony.PatchAll(typeof(ZNetView_Patch));
     Harmony.PatchAll(typeof(Hud_Patch));
+    Harmony.PatchAll(typeof(DynamicSpawnAndLogoutPatches));
 
     if (ValheimRaftPlugin.Instance.ShipPausePatch.Value)
     {

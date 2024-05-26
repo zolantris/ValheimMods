@@ -361,8 +361,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private void CreateDebugConfig()
   {
     DebugRemoveStartMenuBackground =
-      Config.Bind("Debug", "DebugRemoveStartMenuBackground", false,
-        "Removes the start scene background, only use this if you want to speedup start time");
+      Config.Bind("Debug", "RemoveStartMenuBackground", false,
+        CreateConfigDescription(
+          "Removes the start scene background, only use this if you want to speedup start time",
+          false, true));
   }
 
   private void CreateGraphicsConfig()

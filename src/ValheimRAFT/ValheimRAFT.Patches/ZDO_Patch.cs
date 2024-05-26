@@ -25,9 +25,13 @@ public class ZDO_Patch
   private static void ZDOLoaded(ZDO zdo)
   {
     ZDOPersistentID.Instance.Register(zdo);
-    MoveableBaseRootComponent.InitZDO(zdo);
     BaseVehicleController.InitZdo(zdo);
-    PlayerSpawnController.InitZdo(zdo);
+
+    // deprecated will remove soon
+    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
+    {
+      MoveableBaseRootComponent.InitZDO(zdo);
+    }
   }
 
   [HarmonyPatch(typeof(ZDO), "Reset")]
@@ -39,7 +43,12 @@ public class ZDO_Patch
 
   public static void ZDOUnload(ZDO zdo)
   {
-    MoveableBaseRootComponent.RemoveZDO(zdo);
+    // deprecated will remove soon
+    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
+    {
+      MoveableBaseRootComponent.RemoveZDO(zdo);
+    }
+
     BaseVehicleController.RemoveZDO(zdo);
     ZDOPersistentID.Instance.Unregister(zdo);
   }

@@ -25,6 +25,7 @@
         <Compile Include="ValheimRAFT.Patches\CharacterAnimEvent_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Character_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Advize_PlantEasily_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\DynamicSpawnAndLogoutPatches.cs"/>
         <Compile Include="ValheimRAFT.Patches\GamePause_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Hud_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\PatchSharedData.cs"/>
@@ -232,6 +233,9 @@
         </Compile>
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\PlayerSpawnController.cs">
             <Link>Components\PlayerSpawnController.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Helpers\HarmonyPatchMethods.cs">
+            <Link>ValheimVehicles.Helpers\HarmonyPatchMethods.cs</Link>
         </Compile>
     </ItemGroup>
     <PropertyGroup>
