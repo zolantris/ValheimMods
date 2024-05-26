@@ -479,6 +479,9 @@ public class PlayerSpawnController : MonoBehaviour
       if (bvc)
       {
         bvc?.ForceUpdateAllPiecePositions();
+        bvc?.SyncAllBeds();
+        Logger.LogDebug(
+          "Called BaseVehicleController.ForceUpdateAllPiecePositions and BaseVehicleController.SyncAllBeds from PlayerSpawnController");
       }
     }
 
