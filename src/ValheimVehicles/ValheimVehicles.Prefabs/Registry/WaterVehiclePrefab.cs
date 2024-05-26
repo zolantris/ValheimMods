@@ -56,7 +56,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var vehicleRigidbody = prefab.GetComponent<Rigidbody>();
     var zSyncTransform = prefab.AddComponent<ZSyncTransform>();
     zSyncTransform.m_syncPosition = true;
-    zSyncTransform.m_syncBodyVelocity = true;
+    zSyncTransform.m_syncBodyVelocity = false;
     zSyncTransform.m_syncRotation = true;
     zSyncTransform.m_body = vehicleRigidbody;
 

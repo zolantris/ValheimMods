@@ -110,6 +110,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
   public ConfigEntry<bool> ProtectVehiclePiecesOnErrorFromWearNTearDamage { get; set; }
   public ConfigEntry<bool> DebugRemoveStartMenuBackground { get; set; }
+  public ConfigEntry<bool> SyncShipPhysicsOnAllClients { get; set; }
   public ConfigEntry<bool> HullCollisionOnly { get; set; }
 
   // sounds for VehicleShip Effects
@@ -365,6 +366,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         CreateConfigDescription(
           "Removes the start scene background, only use this if you want to speedup start time",
           false, true));
+    SyncShipPhysicsOnAllClients =
+      Config.Bind("Debug", "SyncShipPhysicsOnAllClients", false,
+        CreateConfigDescription(
+          "Makes all clients sync physics",
+          true, true));
   }
 
   private void CreateGraphicsConfig()
@@ -403,6 +409,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       CreateConfigDescription(
         "Prevents pausing on a boat during singleplayer. Must have the Vehicle Prevent Pausing patch as well",
         true, true));
+
     PlanBuildPatches = Config.Bind<bool>("Patches",
       "Enable PlanBuild Patches (required to be on if you installed PlanBuild)", false,
       new ConfigDescription(

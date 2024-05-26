@@ -176,9 +176,9 @@ public class RecoverRaftConsoleCommand : ConsoleCommand
       {
         piece.transform.SetParent(vehicleShip.VehicleController.Instance.transform);
         piece.transform.localPosition =
-          piece.m_zdo.GetVec3(BaseVehicleController.MBPositionHash, Vector3.zero);
+          piece.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
         piece.transform.localRotation =
-          Quaternion.Euler(piece.m_zdo.GetVec3(BaseVehicleController.MBRotationVecHash,
+          Quaternion.Euler(piece.m_zdo.GetVec3(VehicleZdoVars.MBRotationVecHash,
             Vector3.zero));
         vehicleShip.VehicleController.Instance.AddNewPiece(piece);
       }

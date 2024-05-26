@@ -58,6 +58,12 @@ public class PlayerSpawnController : MonoBehaviour
       ? ""
       : $"{GetFullPrefix()}_{LogoutParentZdo}_{WorldUID}";
 
+    public static string GetSpawnZdoOffsetKey() =>
+      !ZNet.instance ? "" : $"{GetFullPrefix()}_{LogoutParentZdoOffset}_{WorldUID}";
+
+    public static string GetSpawnZdoKey() =>
+      !ZNet.instance ? "" : $"{GetFullPrefix()}_{SpawnZdo}_{WorldUID}";
+
     private static string ZDOIDToString(ZDOID zdoid)
     {
       var userId = zdoid.UserID;
@@ -103,15 +109,25 @@ public class PlayerSpawnController : MonoBehaviour
     public static ZDOID? GetLogoutZdo(Player player)
     {
       if (!player) return null;
-      var zdoid = StringToZDOID(player.m_customData[GetLogoutZdoKey()]);
+      if (!player.m_customData.TryGetValue(GetLogoutZdoKey(), out var logoutZdoString))
+      {
+        return null;
+      }
+
+      var zdoid = StringToZDOID(logoutZdoString);
       return zdoid;
     }
 
-    public static Vector3? GetLogoutZdoOffset(Player player)
+    public static Vector3 GetLogoutZdoOffset(Player player)
     {
-      if (!player) return null;
-      var offset = StringToVector3(player.m_customData[GetLogoutZdoOffsetKey()]);
-      return offset;
+      if (!player) return Vector3.zero;
+      if (!player.m_customData.TryGetValue(GetLogoutZdoKey(), out var logoutZdoString))
+      {
+        return Vector3.zero;
+      }
+
+      var offset = StringToVector3(logoutZdoString);
+      return offset ?? Vector3.zero;
     }
 
     public static bool SetLogoutZdo(Player player, ZNetView dynamicObj)
@@ -144,11 +160,11 @@ public class PlayerSpawnController : MonoBehaviour
       if (!player) return false;
       if (Vector3.zero == offset)
       {
-        player.m_customData.Remove(GetSpawnZdoKey());
+        player.m_customData.Remove(GetLogoutZdoOffsetKey());
         return false;
       }
 
-      player.m_customData[GetLogoutZdoKey()] = Vector3ToString(offset);
+      player.m_customData[GetLogoutZdoOffsetKey()] = Vector3ToString(offset);
       return true;
     }
 
@@ -160,28 +176,28 @@ public class PlayerSpawnController : MonoBehaviour
       return true;
     }
 
-    /// <summary>
-    /// This key may not exist if the spawn does not need an offset. Will default to a Vector3.zero
-    /// </summary>
-    /// <returns></returns>
-    public static string GetSpawnZdoOffsetKey() =>
-      !ZNet.instance ? "" : $"{GetFullPrefix()}_{LogoutParentZdoOffset}_{WorldUID}";
-
-    public static string GetSpawnZdoKey() =>
-      !ZNet.instance ? "" : $"{GetFullPrefix()}_{SpawnZdo}_{WorldUID}";
-
 
     public static ZDOID? GetSpawnZdo(Player player)
     {
       if (!player) return null;
-      var zdoid = StringToZDOID(player.m_customData[GetSpawnZdoKey()]);
+      if (!player.m_customData.TryGetValue(GetSpawnZdoKey(), out var spawnZdoString))
+      {
+        return null;
+      }
+
+      var zdoid = StringToZDOID(spawnZdoString);
       return zdoid;
     }
 
     public static Vector3 GetSpawnZdoOffset(Player player)
     {
       if (!player) return Vector3.zero;
-      var offset = StringToVector3(player.m_customData[GetSpawnZdoOffsetKey()]) ?? Vector3.zero;
+      if (!player.m_customData.TryGetValue(GetSpawnZdoOffsetKey(), out var offsetString))
+      {
+        return Vector3.zero;
+      }
+
+      var offset = StringToVector3(offsetString) ?? Vector3.zero;
       return offset;
     }
 
@@ -194,7 +210,6 @@ public class PlayerSpawnController : MonoBehaviour
       return true;
     }
 
-
     /// <summary>
     /// Only sets offset if necessary, otherwise scrubs the data
     /// </summary>
@@ -206,7 +221,11 @@ public class PlayerSpawnController : MonoBehaviour
       if (!player) return false;
       if (Vector3.zero == offset)
       {
-        player.m_customData.Remove(GetSpawnZdoKey());
+        if (player.m_customData.TryGetValue(GetSpawnZdoOffsetKey(), out _))
+        {
+          player.m_customData.Remove(GetSpawnZdoOffsetKey());
+        }
+
         return false;
       }
 
@@ -238,19 +257,24 @@ public class PlayerSpawnController : MonoBehaviour
 
   private void Start()
   {
-    // InvokeRepeating(nameof(SyncPosition), 5f, 5f);
+    InvokeRepeating(nameof(SyncLogoutPoint), 5f, 5f);
+    if (MovePlayerToLoginPoint())
+    {
+      return;
+    }
+
     MovePlayerToSpawnPoint();
   }
-//
-// private void OnEnable()
-// {
-//   InvokeRepeating(nameof(SyncPosition), 5f, 5f);
-// }
-//
-// private void OnDisable()
-// {
-//   CancelInvoke(nameof(SyncPosition));
-// }
+
+  private void OnEnable()
+  {
+    InvokeRepeating(nameof(SyncLogoutPoint), 5f, 20);
+  }
+
+  private void OnDisable()
+  {
+    CancelInvoke(nameof(SyncLogoutPoint));
+  }
 
   private void Setup()
   {
@@ -277,16 +301,6 @@ public class PlayerSpawnController : MonoBehaviour
     {
       Instances.Remove(playerId);
     }
-  }
-
-  /// <summary>
-  /// Must sync the position of the 
-  /// </summary>
-  private void SyncPosition(Vector3 newPosition)
-  {
-    if (ZNetView.m_forceDisableInit) return;
-    zdo?.SetPosition(transform.position);
-    transform.position = newPosition;
   }
 
   /// <summary>
@@ -320,7 +334,7 @@ public class PlayerSpawnController : MonoBehaviour
   public void SyncLogoutPoint()
   {
     if (!player || player == null || zdo == null) return;
-    var bvc = player.transform.root.GetComponent<BaseVehicleController>();
+    var bvc = player.GetComponentInParent<BaseVehicleController>();
     if (!bvc)
     {
       DynamicLocations.RemoveLogoutZdo(player);
@@ -373,21 +387,36 @@ public class PlayerSpawnController : MonoBehaviour
     return spawnController;
   }
 
-  public static void MoveCurrentPlayerToSpawnPoint(Player currentPlayer)
+  public bool MovePlayerToLoginPoint()
   {
-    var spawnController = GetSpawnController(currentPlayer);
-    if (!spawnController)
+    if (!player)
     {
-      Logger.LogDebug("No spawncontroller on player");
-      return;
+      Setup();
     }
 
-    spawnController?.MovePlayerToSpawnPoint();
+    if (player == null) return false;
+
+    var loginZdoOffset = DynamicLocations.GetLogoutZdoOffset(player);
+    var loginZdoid = DynamicLocations.GetLogoutZdo(player);
+
+    if (loginZdoid == null)
+    {
+      // when the player is respawning from death this will be null or on first launch with these new keys
+      return false;
+    }
+
+    StartCoroutine(MovePlayerToZdoWorker(loginZdoid, loginZdoOffset));
+
+    // remove logout point after moving the player.
+    DynamicLocations.RemoveLogoutZdo(player);
+    return true;
   }
 
   public void MovePlayerToSpawnPoint()
   {
-    StartCoroutine(nameof(MovePlayerToSpawnPointWorker));
+    var spawnZdoOffset = DynamicLocations.GetSpawnZdoOffset(player);
+    var spawnZdoid = DynamicLocations.GetSpawnZdo(player);
+    StartCoroutine(MovePlayerToZdoWorker(spawnZdoid, spawnZdoOffset));
   }
 
   public IEnumerator LoadGameObjectInSectorFromZdo(ZDOID zdoid)
@@ -413,7 +442,14 @@ public class PlayerSpawnController : MonoBehaviour
     yield return zdoNetViewInstance;
   }
 
-  public IEnumerator MovePlayerToSpawnPointWorker()
+  private void SyncPlayerPosition(Vector3 newPosition)
+  {
+    if (ZNetView.m_forceDisableInit || player == null) return;
+    player.m_nview.GetZDO()?.SetPosition(newPosition);
+    player.transform.position = newPosition;
+  }
+
+  public IEnumerator MovePlayerToZdoWorker(ZDOID? zdoid, Vector3 offset)
   {
     if (player == null)
     {
@@ -423,24 +459,22 @@ public class PlayerSpawnController : MonoBehaviour
 
     if (!player) yield break;
 
-    var spawnZdoOffset = DynamicLocations.GetSpawnZdoOffset(player);
-    var spawnZdoid = DynamicLocations.GetSpawnZdo(player);
-
-    if (spawnZdoid == null)
+    if (zdoid == null)
     {
       yield break;
     }
 
     // for nullable using .Value is required
-    var zdoNetviewInstance = LoadGameObjectInSectorFromZdo(spawnZdoid.Value);
+    var zdoNetviewInstance = LoadGameObjectInSectorFromZdo(zdoid.Value);
     yield return StartCoroutine(zdoNetviewInstance);
     // var zdoInstanceObj = LoadGameObjectInSectorFromZdo(spawnZdoid.Value);
     var isNetView = zdoNetviewInstance.Current?.GetType() == typeof(ZNetView);
     // if (!isNetView) yield break;
     var nv = zdoNetviewInstance.Current as ZNetView;
-    if (nv != null)
+    BaseVehicleController? bvc = null;
+    if (isNetView && nv != null)
     {
-      var bvc = nv
+      bvc = nv
         .GetComponentInParent<BaseVehicleController>();
       if (bvc)
       {
@@ -450,15 +484,27 @@ public class PlayerSpawnController : MonoBehaviour
 
     yield return new WaitForFixedUpdate();
 
+    var spawnZdo = ZDOMan.instance.GetZDO((ZDOID)zdoid);
+    var spawnOffset = spawnZdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+    Logger.LogDebug($"SpawnOffset, {spawnOffset}");
+    nv = ZNetScene.instance.FindInstance(spawnZdo);
+
+    var relativeZdoPos = spawnZdo.GetPosition() + spawnOffset;
+    Logger.LogDebug($"ZDOPos+relative {relativeZdoPos} vs transform.pos {nv?.transform?.position}");
     if (nv != null)
     {
-      player.transform.position = nv.transform.position;
+      SyncPlayerPosition(nv.transform.position);
     }
 
-    yield return new WaitForSeconds(3);
+    yield return new WaitForSeconds(1);
     if (nv != null)
     {
-      player.transform.position = nv.transform.position;
+      spawnZdo = ZDOMan.instance.GetZDO((ZDOID)zdoid);
+      spawnOffset = spawnZdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+      relativeZdoPos = spawnZdo.GetPosition() + spawnOffset;
+      Logger.LogDebug(
+        $"ZDOPos+relative {relativeZdoPos} vs transform.pos {nv?.transform?.position}");
+      SyncPlayerPosition(relativeZdoPos);
     }
   }
 

@@ -218,7 +218,7 @@ public class PlanBuild_Patch
       else if (vehicleBase)
       {
         Logger.LogDebug(
-          $"used ValheimVehicles.BaseVehicleController calc for position {item4.m_nview.m_zdo.GetVec3(BaseVehicleController.MBPositionHash, Vector3.zero)}");
+          $"used ValheimVehicles.BaseVehicleController calc for position {item4.m_nview.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero)}");
         pos = item4.m_nview.transform.localPosition;
       }
       else

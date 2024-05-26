@@ -342,7 +342,8 @@ public class ValheimBaseGameShip : MonoBehaviour
     {
       long owner = m_players[0].GetOwner();
       m_nview.GetZDO().SetOwner(owner);
-      Logger.LogDebug("Changing ship owner to " + owner);
+      Logger.LogDebug("Changing ship owner to " + owner +
+                      $", name: {m_players[0].GetPlayerName()}");
     }
   }
 

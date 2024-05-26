@@ -24,22 +24,6 @@ public class BaseVehicleController : MonoBehaviour
 {
   public ZNetView m_nview { get; set; }
 
-  public static readonly KeyValuePair<int, int> MBParentHash = ZDO.GetHashZDOID("MBParent");
-
-  public static readonly int MBCharacterParentHash = "MBCharacterParent".GetStableHashCode();
-
-  public static readonly int MBCharacterOffsetHash = "MBCharacterOffset".GetStableHashCode();
-
-  public static readonly int MBParentIdHash = "MBParentId".GetStableHashCode();
-
-  public static readonly int MBPositionHash = "MBPosition".GetStableHashCode();
-
-  public static readonly int MBRotationHash = "MBRotation".GetStableHashCode();
-
-  public static readonly int MBRotationVecHash = "MBRotationVec".GetStableHashCode();
-
-  public static readonly int MBPieceCount = "MBPieceCount".GetStableHashCode();
-
   public static readonly string ZdoKeyBaseVehicleInitState =
     "ValheimVehicles_BaseVehicle_Initialized";
 
@@ -68,6 +52,7 @@ public class BaseVehicleController : MonoBehaviour
 
   // for the ship physics without item piece colliders or alternatively access via VehicleInstance.m_body
   internal Rigidbody? m_syncRigidbody;
+  internal ZSyncTransform? zsyncRigidbody;
 
   internal List<ZNetView> m_pieces = [];
   internal List<ZNetView> m_hullPieces = [];
@@ -253,6 +238,14 @@ public class BaseVehicleController : MonoBehaviour
     VehicleInstance?.Instance?.GhostContainer.SetActive(false);
   }
 
+  public void SyncAllBeds()
+  {
+    foreach (var mBedPiece in m_bedPieces)
+    {
+      mBedPiece.m_nview.GetZDO().SetPosition(transform.position);
+    }
+  }
+
   public void Awake()
   {
     instance = this;
@@ -263,7 +256,11 @@ public class BaseVehicleController : MonoBehaviour
     if (!(bool)m_rigidbody)
     {
       m_rigidbody = GetComponent<Rigidbody>();
+      m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
     }
+
+    // important to decouple the vehicle from the VehicleShip after everything is initialized. This lets all the netview and other values needed to be shared to bind properly
+    gameObject.transform.SetParent(null);
   }
 
 
@@ -457,14 +454,23 @@ public class BaseVehicleController : MonoBehaviour
   private void Sync()
   {
     if (!(bool)m_syncRigidbody || !(bool)m_rigidbody) return;
-    m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
-    m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
+
+    if (m_nview.IsOwner())
+    {
+      m_rigidbody.Move(m_syncRigidbody.transform.position, m_syncRigidbody.transform.rotation);
+    }
+
+    // foreach (var instanceMPlayer in VehicleInstance.Instance.m_players)
+    // {
+    //   // VehicleInstance.Instance.m_zsyncTransform.m_characterParentSync = true;
+    //   // VehicleInstance.Instance.m_zsyncTransform.m_nview.m_zdo.SetConnection(ZDOExtraData.ConnectionType.SyncTransform, instanceMPlayer.GetZDOID());
+    // }
+    // VehicleInstance.Instance.m_zsyncTransform.ClientSync(Time.deltaTime);
   }
 
   public void Update()
   {
     if (!m_nview) return;
-    Sync();
 
     if (!ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value)
     {
@@ -523,7 +529,11 @@ public class BaseVehicleController : MonoBehaviour
 
     if (sector == m_sector) return;
 
-    if (m_sector != m_serverSector) ServerSyncAllPieces();
+    if (m_sector != m_serverSector)
+    {
+      ServerSyncAllPieces();
+      return;
+    }
 
     m_sector = sector;
     ForceUpdateAllPiecePositions();
@@ -576,7 +586,7 @@ public class BaseVehicleController : MonoBehaviour
       // This could also be a problem. If the zdo is created but the ship is in part of another sector it gets cut off.
       if (zdo.GetSector() == sector) continue;
 
-      var id = zdo.GetInt(MBParentIdHash);
+      var id = zdo.GetInt(VehicleZdoVars.MBParentIdHash);
       if (id != _persistentZdoId)
       {
         list.FastRemoveAt(i);
@@ -1092,14 +1102,14 @@ public class BaseVehicleController : MonoBehaviour
 
           if (ZDOExtraData.s_vec3.TryGetValue(nv.m_zdo.m_uid, out var dic))
           {
-            if (dic.TryGetValue(MBCharacterOffsetHash, out var offset))
+            if (dic.TryGetValue(VehicleZdoVars.MBCharacterOffsetHash, out var offset))
               nv.transform.position = offset + transform.position;
 
             offset = default;
           }
 
-          ZDOExtraData.RemoveInt(nv.m_zdo.m_uid, MBCharacterParentHash);
-          ZDOExtraData.RemoveVec3(nv.m_zdo.m_uid, MBCharacterOffsetHash);
+          ZDOExtraData.RemoveInt(nv.m_zdo.m_uid, VehicleZdoVars.MBCharacterParentHash);
+          ZDOExtraData.RemoveVec3(nv.m_zdo.m_uid, VehicleZdoVars.MBCharacterOffsetHash);
           dic = null;
         }
 
@@ -1126,8 +1136,8 @@ public class BaseVehicleController : MonoBehaviour
       return;
     }
 
-    source.m_zdo.RemoveInt(MBCharacterParentHash);
-    source.m_zdo.RemoveVec3(MBCharacterOffsetHash);
+    source.m_zdo.RemoveInt(VehicleZdoVars.MBCharacterParentHash);
+    source.m_zdo.RemoveVec3(VehicleZdoVars.MBCharacterOffsetHash);
   }
 
   /// <summary>
@@ -1144,8 +1154,8 @@ public class BaseVehicleController : MonoBehaviour
       return false;
     }
 
-    source.m_zdo.Set(MBCharacterParentHash, bvc.PersistentZdoId);
-    source.m_zdo.Set(MBCharacterOffsetHash,
+    source.m_zdo.Set(VehicleZdoVars.MBCharacterParentHash, bvc.PersistentZdoId);
+    source.m_zdo.Set(VehicleZdoVars.MBCharacterOffsetHash,
       source.transform.position - bvc.transform.position);
     return true;
   }
@@ -1161,7 +1171,7 @@ public class BaseVehicleController : MonoBehaviour
   {
     if (!netView) return 0;
 
-    return netView.GetZDO()?.GetInt(MBCharacterParentHash, 0) ??
+    return netView.GetZDO()?.GetInt(VehicleZdoVars.MBCharacterParentHash, 0) ??
            0;
   }
 
@@ -1169,7 +1179,8 @@ public class BaseVehicleController : MonoBehaviour
   {
     if (!netView) return Vector3.zero;
 
-    return netView.m_zdo?.GetVec3(MBCharacterOffsetHash, Vector3.zero) ?? Vector3.zero;
+    return netView.m_zdo?.GetVec3(VehicleZdoVars.MBCharacterOffsetHash, Vector3.zero) ??
+           Vector3.zero;
   }
 
   /**
@@ -1317,7 +1328,7 @@ public class BaseVehicleController : MonoBehaviour
       list.Add(zdo);
     }
 
-    var cid = zdo.GetInt(MBCharacterParentHash);
+    var cid = zdo.GetInt(VehicleZdoVars.MBCharacterParentHash);
     if (cid != 0)
     {
       if (!m_dynamicObjects.TryGetValue(cid, out var objectList))
@@ -1350,21 +1361,21 @@ public class BaseVehicleController : MonoBehaviour
 
   private static int GetParentID(ZDO zdo)
   {
-    var id = zdo.GetInt(MBParentIdHash);
+    var id = zdo.GetInt(VehicleZdoVars.MBParentIdHash);
     if (id == 0)
     {
-      var zdoid = zdo.GetZDOID(MBParentHash);
+      var zdoid = zdo.GetZDOID(VehicleZdoVars.MBParentHash);
       if (zdoid != ZDOID.None)
       {
         var zdoparent = ZDOMan.instance.GetZDO(zdoid);
         id = zdoparent == null
           ? ZDOPersistentID.ZDOIDToId(zdoid)
           : ZDOPersistentID.Instance.GetOrCreatePersistentID(zdoparent);
-        zdo.Set(MBParentIdHash, id);
-        zdo.Set(MBRotationVecHash,
-          zdo.GetQuaternion(MBRotationHash, Quaternion.identity).eulerAngles);
-        zdo.RemoveZDOID(MBParentHash);
-        ZDOExtraData.s_quats.Remove(zdoid, MBRotationHash);
+        zdo.Set(VehicleZdoVars.MBParentIdHash, id);
+        zdo.Set(VehicleZdoVars.MBRotationVecHash,
+          zdo.GetQuaternion(VehicleZdoVars.MBRotationHash, Quaternion.identity).eulerAngles);
+        zdo.RemoveZDOID(VehicleZdoVars.MBParentHash);
+        ZDOExtraData.s_quats.Remove(zdoid, VehicleZdoVars.MBRotationHash);
       }
     }
 
@@ -1406,9 +1417,10 @@ public class BaseVehicleController : MonoBehaviour
     if ((bool)netView)
     {
       netView.transform.SetParent(transform);
-      netView.transform.localPosition = netView.m_zdo.GetVec3(MBPositionHash, Vector3.zero);
+      netView.transform.localPosition =
+        netView.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
       netView.transform.localRotation =
-        Quaternion.Euler(netView.m_zdo.GetVec3(MBRotationVecHash, Vector3.zero));
+        Quaternion.Euler(netView.m_zdo.GetVec3(VehicleZdoVars.MBRotationVecHash, Vector3.zero));
       var wnt = netView.GetComponent<WearNTear>();
       if ((bool)wnt) wnt.enabled = true;
 
@@ -1523,9 +1535,10 @@ public class BaseVehicleController : MonoBehaviour
     netView.transform.SetParent(transform);
     if (netView.m_zdo != null)
     {
-      netView.m_zdo.Set(MBParentIdHash, PersistentZdoId);
-      netView.m_zdo.Set(MBRotationVecHash, netView.transform.localRotation.eulerAngles);
-      netView.m_zdo.Set(MBPositionHash, netView.transform.localPosition);
+      netView.m_zdo.Set(VehicleZdoVars.MBParentIdHash, PersistentZdoId);
+      netView.m_zdo.Set(VehicleZdoVars.MBRotationVecHash,
+        netView.transform.localRotation.eulerAngles);
+      netView.m_zdo.Set(VehicleZdoVars.MBPositionHash, netView.transform.localPosition);
     }
 
     if (netView.GetZDO() == null)
@@ -1655,7 +1668,8 @@ public class BaseVehicleController : MonoBehaviour
 
   private void UpdatePieceCount()
   {
-    if ((bool)m_nview && m_nview.m_zdo != null) m_nview.m_zdo.Set(MBPieceCount, m_pieces.Count);
+    if ((bool)m_nview && m_nview.m_zdo != null)
+      m_nview.m_zdo.Set(VehicleZdoVars.MBPieceCount, m_pieces.Count);
   }
 
   private void UpdateShipBounds()
@@ -1966,7 +1980,7 @@ public class BaseVehicleController : MonoBehaviour
       return m_pieces.Count;
     }
 
-    var count = m_nview.m_zdo.GetInt(MBPieceCount, m_pieces.Count);
+    var count = m_nview.m_zdo.GetInt(VehicleZdoVars.MBPieceCount, m_pieces.Count);
     return count;
   }
 }

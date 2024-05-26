@@ -121,8 +121,17 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
     var isAnchored = controller.VehicleInstance.MovementController.IsAnchored;
     var anchorKeyString = GetAnchorHotkeyString();
-    return GetHoverTextFromShip(controller.totalSailArea, controller.TotalMass, controller.ShipMass,
+    var hoverText = GetHoverTextFromShip(controller.totalSailArea, controller.TotalMass,
+      controller.ShipMass,
       controller.ShipContainerMass, controller.GetSailingForce(), isAnchored, anchorKeyString);
+#if DEBUG
+    if (controller.VehicleInstance.m_players.Any())
+    {
+      hoverText +=
+        $"\n[<color=red><b>Owner: {controller.m_nview.GetZDO().GetOwner()} and name: {controller.VehicleInstance.m_players[0].GetPlayerName()}</b></color>]";
+    }
+#endif
+    return hoverText;
   }
 
   private void Awake()

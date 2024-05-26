@@ -215,7 +215,7 @@ public class VehicleCommands : ConsoleCommand
     var piecesInMBRaft = mbRaft.m_pieces;
     foreach (var zNetView in piecesInMBRaft)
     {
-      zNetView.m_zdo.Set(BaseVehicleController.MBParentIdHash, vehicleController.PersistentZdoId);
+      zNetView.m_zdo.Set(VehicleZdoVars.MBParentIdHash, vehicleController.PersistentZdoId);
     }
 
     ZNetScene.instance.Destroy(mbRaft.m_ship.gameObject);

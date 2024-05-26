@@ -585,7 +585,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     var vehiclePiecesContainer = VehiclePiecesPrefab.VehiclePiecesContainer;
     if (!vehiclePiecesContainer) return;
 
-    _vehiclePiecesContainerInstance = Instantiate(vehiclePiecesContainer, null);
+    _vehiclePiecesContainerInstance = Instantiate(vehiclePiecesContainer, transform);
     _vehiclePiecesContainerInstance.transform.position = transform.position;
     _vehiclePiecesContainerInstance.transform.rotation = transform.rotation;
 
@@ -594,6 +594,9 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 
     m_mastObject.transform.SetParent(_controller.transform);
     m_sailObject.transform.SetParent(_controller.transform);
+
+    // sets back to unparented to prevent rigidbody from controlling parent physics
+
     InitHull();
   }
 
@@ -939,8 +942,8 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
   // Updates gravity and target height (which is used to compute gravity)
   public void UpdateGravity()
   {
-    m_zsyncTransform.m_useGravity =
-      TargetHeight == 0f;
+    // m_zsyncTransform.m_useGravity =
+    //   TargetHeight == 0f;
     m_body.useGravity = TargetHeight == 0f;
   }
 
@@ -952,7 +955,6 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     if (!(bool)_controller || !(bool)m_nview || m_nview.m_zdo == null ||
         !(bool)ShipDirection) return;
 
-    if (!m_nview.IsOwner()) return;
     /*
      * creative mode should not allow movement and applying force on a object will cause errors when the object is kinematic
      */
@@ -978,6 +980,13 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 
     // raft pieces transforms
     SyncVehicleRotationDependentItems();
+
+    /**
+     * The remaining physics for ship logic must be done only one 1 client to prevent nasty desyncs.
+     */
+    // if (!m_nview.IsOwner()) return;
+    if (!ValheimRaftPlugin.Instance.SyncShipPhysicsOnAllClients.Value && !m_nview.IsOwner()) return;
+
 
     var shipFloatation = GetShipFloatationObj();
 

@@ -54,11 +54,12 @@ public class DynamicSpawnAndLogoutPatches
   private static void OnSpawnPointUpdated(Bed __instance)
   {
     var currentSpawnPoint = Game.instance.GetPlayerProfile().GetCustomSpawnPoint();
-    if (prevCustomSpawnPoint == currentSpawnPoint) return;
+    // if (prevCustomSpawnPoint == currentSpawnPoint) return;
 
     var spawnController = PlayerSpawnController.GetSpawnController(Player.m_localPlayer);
     if (!spawnController) return;
     spawnController?.SyncBedSpawnPoint(__instance.m_nview, __instance);
+    prevCustomSpawnPoint = null;
   }
 
   [HarmonyPatch(typeof(PlayerProfile), "SaveLogoutPoint")]

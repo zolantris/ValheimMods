@@ -304,37 +304,37 @@ public class Player_Patch
     return false;
   }
 
-  [HarmonyPatch(typeof(Player), "UpdatePlacementGhost")]
-  [HarmonyPostfix]
-  public static void UpdatePlacementGhost(Player __instance)
-  {
-    if (!__instance?.m_placementGhost) return;
-
-    var eulerAngles = __instance.m_placementGhost.transform.rotation.eulerAngles;
-    var x = eulerAngles.x;
-    var y = eulerAngles.y;
-    var z = eulerAngles.z;
-    __instance.m_placementGhost.transform.rotation =
-      RelativeEuler(x, y, z);
-  }
-
   // [HarmonyPatch(typeof(Player), "UpdatePlacementGhost")]
-  // [HarmonyTranspiler]
-  // public static IEnumerable<CodeInstruction> UpdatePlacementGhost(
-  //   IEnumerable<CodeInstruction> instructions)
+  // [HarmonyPostfix]
+  // public static void UpdatePlacementGhost(Player __instance)
   // {
-  //   var list = instructions.ToList();
-  //   for (var i = 0; i < list.Count; i++)
-  //     if (list[i].Calls(AccessTools.Method(typeof(Quaternion), "Euler", new[]
-  //         {
-  //           typeof(float),
-  //           typeof(float),
-  //           typeof(float)
-  //         })))
-  //       list[i] = new CodeInstruction(OpCodes.Call,
-  //         AccessTools.Method(typeof(Player_Patch), nameof(RelativeEuler)));
-  //   return list;
+  //   if (!__instance?.m_placementGhost) return;
+  //
+  //   var eulerAngles = __instance.m_placementGhost.transform.rotation.eulerAngles;
+  //   var x = eulerAngles.x;
+  //   var y = eulerAngles.y;
+  //   var z = eulerAngles.z;
+  //   __instance.m_placementGhost.transform.rotation =
+  //     RelativeEuler(x, y, z);
   // }
+
+  [HarmonyPatch(typeof(Player), "UpdatePlacementGhost")]
+  [HarmonyTranspiler]
+  public static IEnumerable<CodeInstruction> UpdatePlacementGhost(
+    IEnumerable<CodeInstruction> instructions)
+  {
+    var list = instructions.ToList();
+    for (var i = 0; i < list.Count; i++)
+      if (list[i].Calls(AccessTools.Method(typeof(Quaternion), "Euler", new[]
+          {
+            typeof(float),
+            typeof(float),
+            typeof(float)
+          })))
+        list[i] = new CodeInstruction(OpCodes.Call,
+          AccessTools.Method(typeof(Player_Patch), nameof(RelativeEuler)));
+    return list;
+  }
 
   public static Quaternion RelativeEuler(float x, float y, float z)
   {
