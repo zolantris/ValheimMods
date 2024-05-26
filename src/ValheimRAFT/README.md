@@ -187,6 +187,19 @@ the [config output auto-generated document](https://github.com/zolantris/Valheim
 If you have a bug, please create an issue under the
 repo's [issues section](https://github.com/zolantris/ValheimMods/issues).
 
+- `Player.log` is required to properly debug many issues. Otherwise, you will
+  not be providing enough information for maintainers to help. Please copy paste
+  the log or
+  /drag drop it into the github issue.
+    - Player.log can be found under the User directory's AppData path for
+      valheim (Same location as worldsaves). This path should work if copy
+      pasting
+      into Windows explorer  `%userprofile%\AppData\LocalLow\IronGate\Valheim\`
+    - Full path
+      example `C:\Users\bob_smith\AppData\LocalLow\IronGate\Valheim\Player.log`
+        - bob_smith - is the example username.
+        - Use the `%userprofile%` to skip having to add your username or drive
+          path before it.
 - Please respect the form. Adding the relevant information makes it easier to
   triage the problem.
 
