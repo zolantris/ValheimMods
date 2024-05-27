@@ -49,6 +49,7 @@ public class BaseVehicleController : MonoBehaviour
 
   // rigidbody for all pieces within the ship. Does not directly contribute to floatation, floatation controlled by m_syncRigidbody and synced to this m_rigidbody
   internal Rigidbody? m_rigidbody;
+  internal ZSyncTransform? _syncTransform;
 
   // for the ship physics without item piece colliders or alternatively access via VehicleInstance.m_body
   internal Rigidbody? m_syncRigidbody;
@@ -250,13 +251,29 @@ public class BaseVehicleController : MonoBehaviour
   {
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
+    if (ZNetView.m_forceDisableInit)
+    {
+      return;
+    }
 
     vehicleInitializationTimer.Start();
 
     if (!(bool)m_rigidbody)
     {
       m_rigidbody = GetComponent<Rigidbody>();
-      m_rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+    }
+
+    if (!(bool)m_nview)
+    {
+      m_nview = GetComponent<ZNetView>();
+      Logger.LogDebug("m_nview, not available, setting within Awake");
+    }
+
+    if ((bool)m_rigidbody && (bool)m_nview)
+    {
+      _syncTransform = gameObject.AddComponent<ZSyncTransform>();
+      _syncTransform.m_syncPosition = true;
+      _syncTransform.m_syncRotation = true;
     }
 
     // important to decouple the vehicle from the VehicleShip after everything is initialized. This lets all the netview and other values needed to be shared to bind properly

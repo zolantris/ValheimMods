@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2381953207
+CRC: 4013434464
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 7041793d8e46a1c31fb69b7d522c3351
+    Hash: e3d99140b1156eb13383b35c09cc7b5a
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 1d2d7c718f47ec9f6b09e29ceb98db3d
+    Hash: 9de5c4e5f8d12d9935b13bf93fed7941
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 7041793d8e46a1c31fb69b7d522c3351
+    Hash: e3d99140b1156eb13383b35c09cc7b5a
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -33,6 +33,8 @@ ClassTypes:
 - Class: 64
   Script: {instanceID: 0}
 - Class: 65
+  Script: {instanceID: 0}
+- Class: 108
   Script: {instanceID: 0}
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
@@ -76,6 +78,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
 - Assets/Shader/Custom_Piece.shader
 - Assets/ValheimVehicles/Prefabs/hull_rib_wood.prefab
+- Assets/ValheimVehicles/Prefabs/shared_nautilus.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_2x2_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_4x4_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_4x4_wood.prefab

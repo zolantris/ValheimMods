@@ -12,6 +12,7 @@ Material:
   m_Parent: {fileID: 2100000, guid: a25cdaf4f7d6a9a47be8f03ef6aee12b, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _DETAIL_MULX2
   - _NORMALMAP
   m_InvalidKeywords:
   - _ADDRAIN_ON
@@ -27,6 +28,14 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 2800000, guid: dbff036d19c6854489c244673c4ee246, type: 3}
+        m_Scale: {x: 0.5, y: 0.5}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
+        m_Texture: {fileID: 2800000, guid: 6a73eed2143f04947aaeaaf1070fb034, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _EmissionMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 0.5, y: 0.5}
@@ -36,6 +45,10 @@ Material:
         m_Scale: {x: 0.5, y: 0.5}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
-    m_Floats: []
-    m_Colors: []
+    m_Floats:
+    - _BumpScale: 1
+    - _Glossiness: 0.571
+    - _Metallic: 0.835
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
