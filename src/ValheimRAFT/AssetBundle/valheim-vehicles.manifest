@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 108460507
+CRC: 2381953207
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 7c83a37314eef21d1d211fb13e1c304d
+    Hash: 7041793d8e46a1c31fb69b7d522c3351
   TypeTreeHash:
     serializedVersion: 2
     Hash: 1d2d7c718f47ec9f6b09e29ceb98db3d
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 7c83a37314eef21d1d211fb13e1c304d
+    Hash: 7041793d8e46a1c31fb69b7d522c3351
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -63,6 +63,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_2x2_wood.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_basic.prefab
+- Assets/ValheimVehicles/Prefabs/nautilus.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_ship.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_2x2_iron.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_iron.prefab

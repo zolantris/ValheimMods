@@ -14,6 +14,9 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject ShipHullWoodAsset = null!;
   public static GameObject ShipHullIronAsset = null!;
 
+  // ships (like nautilus)
+  public static GameObject ShipNautilus = null!;
+
   // hull ribs
   public static GameObject ShipHullRibWoodAsset = null!;
   public static GameObject ShipHullRibIronAsset = null!;
@@ -69,6 +72,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public void Init(AssetBundle assetBundle)
   {
     CustomSail = assetBundle.LoadAsset<GameObject>("custom_sail.prefab");
+
+    ShipNautilus = assetBundle.LoadAsset<GameObject>("nautilus.prefab");
 
     SteeringWheel = assetBundle.LoadAsset<GameObject>("steering_wheel.prefab");
     PieceShader = assetBundle.LoadAsset<Shader>("Custom_Piece.shader");

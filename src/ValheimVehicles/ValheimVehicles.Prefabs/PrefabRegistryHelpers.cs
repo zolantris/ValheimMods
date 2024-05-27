@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using HarmonyLib;
 using Jotunn.Extensions;
 using Jotunn.Managers;
@@ -30,6 +31,19 @@ public abstract class PrefabRegistryHelpers
 
   public static readonly Dictionary<string, PieceData> PieceDataDictionary = new();
 
+  private static void RegisterExternalShips()
+  {
+    const string prefabName = "Nautilus Submarine";
+    const string description = $"Nautilus technology discovered. Have Fun!";
+    PieceDataDictionary.Add(
+      PrefabNames.Nautilus, new PieceData()
+      {
+        Name = prefabName,
+        Description = description,
+        Icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon
+      });
+  }
+
   // todo consider using Jotunn.Manager.RenderManager for these Icon generation
   /// todo auto generate this from the translations json
   /// 4x4 and 2x2 icons look similar, may remove 4x4
@@ -38,6 +52,7 @@ public abstract class PrefabRegistryHelpers
     PieceLayer = LayerMask.NameToLayer("piece");
     var spriteAtlas = LoadValheimVehicleAssets.VehicleSprites;
 
+    RegisterExternalShips();
     // slabs
     const string slabName = "valheim_vehicles_hull_slab";
     const string slabDescription = $"{slabName}_desc";

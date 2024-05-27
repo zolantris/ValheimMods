@@ -14,7 +14,9 @@ public static class PrefabNames
   public const string PlayerSpawnControllerObj =
     $"{ValheimVehiclesPrefix}_PlayerSpawnControllerObj";
 
+
   public const string MBRaft = "MBRaft";
+  public const string Nautilus = $"{ValheimVehiclesPrefix}_VehiclePresets_Nautilus";
   public static int m_raftHash = MBRaft.GetStableHashCode();
   public const string Tier1RaftMastName = "MBRaftMast";
   public const string Tier2RaftMastName = "MBKarveMast";

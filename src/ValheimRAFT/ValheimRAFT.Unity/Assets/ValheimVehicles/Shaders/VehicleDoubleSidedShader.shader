@@ -82,10 +82,10 @@
 
         o.Albedo = lerp(mainCol.rgb, patternCol.rgb * _PatternColor.rgb, patternCol.r * _PatternColor.a);
         o.Albedo = lerp(o.Albedo, logoCol.rgb * _LogoColor.rgb, logoCol.a * _LogoColor.a);
-    	o.Albedo = mainCol;
+    	// o.Albedo = mainCol;
         // Metallic and smoothness come from slider variables
-        // o.Normal = UnpackNormal(tex2D(_MainNormal, IN.uv_MainTex)) + tex2D(_PatternNormal, IN.uv_PatternTex) + tex2D(_LogoNormal, IN.uv_LogoTex);
-    	o.Normal = UnpackNormal(tex2D(_MainNormal, IN.uv_MainTex));
+        o.Normal = UnpackNormal(tex2D(_MainNormal, IN.uv_MainTex)) + tex2D(_PatternNormal, IN.uv_PatternTex) + tex2D(_LogoNormal, IN.uv_LogoTex);
+    	// o.Normal = UnpackNormal(tex2D(_MainNormal, IN.uv_MainTex));
         o.Metallic = _Glossiness;
         o.Smoothness = _Metallic;
     	
@@ -97,6 +97,11 @@
         Tags { "Queue" = "Transparent" "RenderType" = "Transparent" }
         LOD 200
         Cull Off
+        GrabPass
+        {
+        	"Standard"
+        }
+        	
         Pass
         {
         	ColorMaterial AmbientAndDiffuse

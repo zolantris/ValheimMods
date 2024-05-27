@@ -141,8 +141,39 @@ public class WaterVehiclePrefab : IRegisterPrefab
     }));
   }
 
+  private static void RegisterNautilusVehicleShipPrefab()
+  {
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.Nautilus,
+      LoadValheimVehicleAssets.ShipNautilus);
+
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+
+    var piece = PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Nautilus, prefab);
+    piece.m_waterPiece = true;
+
+    var wnt = PrefabRegistryHelpers.SetWearNTear(prefab);
+    wnt.m_materialType = WearNTear.MaterialType.Iron;
+
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    {
+      PieceTable = "Hammer",
+      Category = PrefabNames.ValheimRaftMenuName,
+      Enabled = true,
+      Requirements =
+      [
+        new RequirementConfig
+        {
+          Amount = 200,
+          Item = "Bronze",
+          Recover = true
+        }
+      ]
+    }));
+  }
+
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
     RegisterWaterVehicleShipPrefab();
+    RegisterNautilusVehicleShipPrefab();
   }
 }
