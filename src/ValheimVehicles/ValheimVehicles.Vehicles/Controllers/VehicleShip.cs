@@ -775,7 +775,11 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     /*
      * this may be unstable and require a getter each time...highly doubt it though.
      */
-    // ImpactEffect impact = ShipInstance.GetComponent<ImpactEffect>();
+    if (!_impactEffect)
+    {
+      _impactEffect = GetComponent<ImpactEffect>();
+    }
+
     if ((bool)_impactEffect)
     {
       _impactEffect.m_interval = 0.1f;

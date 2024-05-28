@@ -75,7 +75,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal Vector3 m_sailForce = Vector3.zero;
 
-  internal List<Player> m_players = [];
+  public List<Player> m_players = [];
 
   internal WaterVolume m_previousCenter;
 

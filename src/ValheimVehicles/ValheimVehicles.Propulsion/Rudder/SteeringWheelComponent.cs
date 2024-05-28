@@ -125,7 +125,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
       controller.ShipMass,
       controller.ShipContainerMass, controller.GetSailingForce(), isAnchored, anchorKeyString);
 #if DEBUG
-    if (controller.VehicleInstance.m_players.Any())
+    if ((bool)controller.VehicleInstance?.m_players?.Any())
     {
       hoverText +=
         $"\n[<color=red><b>Owner: {controller.m_nview.GetZDO().GetOwner()} and name: {controller.VehicleInstance.m_players[0].GetPlayerName()}</b></color>]";

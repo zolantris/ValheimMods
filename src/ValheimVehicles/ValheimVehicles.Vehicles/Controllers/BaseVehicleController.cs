@@ -236,7 +236,10 @@ public class BaseVehicleController : MonoBehaviour
 
   private void HideGhostContainer()
   {
-    VehicleInstance?.Instance?.GhostContainer.SetActive(false);
+    // if ((bool)VehicleInstance?.Instance?.GhostContainer?.name?.Contains(PrefabNames.Nautilus))
+    // {
+    // }
+    VehicleInstance?.Instance?.GhostContainer?.SetActive(false);
   }
 
   public void SyncAllBeds()
@@ -464,8 +467,8 @@ public class BaseVehicleController : MonoBehaviour
     m_rigidbody.drag = drag;
     m_syncRigidbody.drag = drag;
 
-    m_syncRigidbody.mass = TotalMass;
-    m_rigidbody.mass = TotalMass;
+    m_syncRigidbody.mass = Math.Min(1000f, TotalMass);
+    m_rigidbody.mass = Math.Min(1000f, TotalMass);
   }
 
   private void Sync()
@@ -475,6 +478,10 @@ public class BaseVehicleController : MonoBehaviour
     if (m_nview.IsOwner())
     {
       m_rigidbody.Move(m_syncRigidbody.transform.position, m_syncRigidbody.transform.rotation);
+    }
+    else
+    {
+      zsyncRigidbody?.SyncNow();
     }
 
     // foreach (var instanceMPlayer in VehicleInstance.Instance.m_players)
@@ -1885,6 +1892,7 @@ public class BaseVehicleController : MonoBehaviour
   {
     foreach (var t in colliders)
     {
+      if (t == null) continue;
       if (m_floatcollider) Physics.IgnoreCollision(t, m_floatcollider, true);
       if (m_blockingcollider) Physics.IgnoreCollision(t, m_blockingcollider, true);
       if (m_onboardcollider)
