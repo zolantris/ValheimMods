@@ -60,7 +60,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Wood,
         PrefabNames.PrefabSizeVariant.Two), new PieceData()
       {
-        Name = $"{slabName} $valheim_vehicles_material_wood 2x2",
+        Name = $"{slabName} 2x2 $valheim_vehicles_material_wood",
         Description = $"{slabDescription}",
         Icon = spriteAtlas.GetSprite("hull_slab_2x2_wood")
       });
@@ -69,7 +69,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Wood,
         PrefabNames.PrefabSizeVariant.Four), new PieceData()
       {
-        Name = $"{slabName} $valheim_vehicles_material_wood 4x4",
+        Name = $"{slabName} 4x4 $valheim_vehicles_material_wood",
         Description = $"{slabDescription}",
         Icon = spriteAtlas.GetSprite("hull_slab_4x4_wood")
       });
@@ -78,7 +78,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Iron,
         PrefabNames.PrefabSizeVariant.Two), new PieceData()
       {
-        Name = $"{slabName} $valheim_vehicles_material_iron 2x2",
+        Name = $"{slabName} 2x2 $valheim_vehicles_material_iron",
         Description = $"{slabDescription}",
         Icon = spriteAtlas.GetSprite("hull_slab_2x2_iron")
       });
@@ -87,7 +87,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Iron,
         PrefabNames.PrefabSizeVariant.Four), new PieceData()
       {
-        Name = $"{slabName} $valheim_vehicles_material_iron 4x4",
+        Name = $"{slabName} 4x4 $valheim_vehicles_material_iron",
         Description = $"{slabDescription}",
         Icon = spriteAtlas.GetSprite("hull_slab_4x4_iron")
       });
@@ -100,7 +100,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullWallVariants(ShipHulls.HullMaterial.Wood,
         PrefabNames.PrefabSizeVariant.Two), new PieceData()
       {
-        Name = $"{wallName} 2x2 ($valheim_vehicles_material_wood)",
+        Name = $"{wallName} 2x2 $valheim_vehicles_material_wood",
         Description = $"{wallDescription}",
         Icon = spriteAtlas.GetSprite("hull_wall_2x2_wood")
       });
@@ -109,7 +109,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullWallVariants(ShipHulls.HullMaterial.Wood,
         PrefabNames.PrefabSizeVariant.Four), new PieceData()
       {
-        Name = $"{wallName} 4x4 ($valheim_vehicles_material_wood)",
+        Name = $"{wallName} 4x4 $valheim_vehicles_material_wood",
         Description = $"{wallDescription}",
         Icon = spriteAtlas.GetSprite("hull_wall_4x4_wood")
       });
@@ -118,7 +118,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullWallVariants(ShipHulls.HullMaterial.Iron,
         PrefabNames.PrefabSizeVariant.Two), new PieceData()
       {
-        Name = $"{wallName} 2x2 ($valheim_vehicles_material_iron)",
+        Name = $"{wallName} 2x2 $valheim_vehicles_material_iron",
         Description = $"{wallDescription}",
         Icon = spriteAtlas.GetSprite("hull_wall_2x2_iron")
       });
@@ -127,7 +127,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullWallVariants(ShipHulls.HullMaterial.Iron,
         PrefabNames.PrefabSizeVariant.Four), new PieceData()
       {
-        Name = $"{wallName} 4x4 ($valheim_vehicles_material_iron)",
+        Name = $"{wallName} 4x4 $valheim_vehicles_material_iron",
         Description = $"{wallDescription}",
         Icon = spriteAtlas.GetSprite("hull_wall_4x4_iron")
       });
