@@ -583,8 +583,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     Physics.IgnoreLayerCollision(CustomRaftLayer, LayerMask.NameToLayer("vehicle"),
       true);
+
     Physics.IgnoreLayerCollision(CustomRaftLayer, LayerMask.NameToLayer("piece"),
-      true);
+      false);
+
     Physics.IgnoreLayerCollision(CustomRaftLayer, LayerMask.NameToLayer("character"),
       true);
     Physics.IgnoreLayerCollision(CustomRaftLayer, LayerMask.NameToLayer("smoke"),

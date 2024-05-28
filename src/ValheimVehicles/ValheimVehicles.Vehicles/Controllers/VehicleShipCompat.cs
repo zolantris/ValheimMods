@@ -17,9 +17,9 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   private bool _isValheimShip;
   private bool _isVehicleShip;
 
-  public ZNetView? m_nview => GetNetView();
+  public ZNetView m_nview;
 
-  public ZNetView? GetNetView()
+  public ZNetView GetNetView()
   {
     if (IsVehicleShip)
     {
@@ -159,6 +159,7 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   {
     return new VehicleShipCompat()
     {
+      m_nview = vehicleShip.m_nview,
       VehicleShipInstance = vehicleShip,
       _isVehicleShip = true,
       _isValheimShip = false,
@@ -170,6 +171,7 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   {
     return new VehicleShipCompat()
     {
+      m_nview = ship.m_nview,
       ShipInstance = ship,
       _isVehicleShip = false,
       _isValheimShip = true,

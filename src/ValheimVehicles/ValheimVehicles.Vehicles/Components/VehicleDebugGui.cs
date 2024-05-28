@@ -25,6 +25,13 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     return new Vector3(x, y, z);
   }
 
+  private PlayerSpawnController? GetCurrentPlayerSpawnController()
+  {
+    if (!Player.m_localPlayer) return null;
+    var spawnController = Player.m_localPlayer.GetComponent<PlayerSpawnController>();
+    return spawnController;
+  }
+
   private void OnGUI()
   {
     myButtonStyle ??= new GUIStyle(GUI.skin.button)
@@ -33,7 +40,7 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     };
 #if DEBUG
     GUILayout.BeginArea(new Rect(250, 10, 200, 200), myButtonStyle);
-    if (GUILayout.Button("Debug Delete ShipZDO"))
+    if (GUILayout.Button("Delete ShipZDO"))
     {
       var currentShip = VehicleDebugHelpers.GetVehicleController();
       if (currentShip != null)
@@ -42,9 +49,36 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       }
     }
 
-    if (GUILayout.Button("Debug Delete PlayerSpawnController"))
+    if (GUILayout.Button("Delete PlayerSpawnController"))
     {
       PlayerSpawnController.DestroyAllDynamicSpawnControllers();
+    }
+
+    if (GUILayout.Button($"PlayerSpawnupdate: {PlayerSpawnController.CanUpdateLogoutPoint}"))
+    {
+      PlayerSpawnController.CanUpdateLogoutPoint = !PlayerSpawnController.CanUpdateLogoutPoint;
+    }
+
+    if (GUILayout.Button("Set logoutpoint"))
+    {
+      PlayerSpawnController.CanUpdateLogoutPoint = true;
+      var spawnController = GetCurrentPlayerSpawnController();
+      spawnController?.SyncLogoutPoint();
+      PlayerSpawnController.CanUpdateLogoutPoint = false;
+    }
+
+    if (GUILayout.Button("Move to current spawn"))
+    {
+      PlayerSpawnController.CanUpdateLogoutPoint = false;
+      var spawnController = GetCurrentPlayerSpawnController();
+      spawnController?.MovePlayerToSpawnPoint();
+      PlayerSpawnController.CanUpdateLogoutPoint = false;
+    }
+
+    if (GUILayout.Button("Move to current logout"))
+    {
+      var spawnController = GetCurrentPlayerSpawnController();
+      spawnController?.MovePlayerToLoginPoint();
     }
 
     if (GUILayout.Button("DebugFind PlayerSpawnController"))

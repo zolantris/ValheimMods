@@ -45,7 +45,7 @@ public class Player_Patch
     var vehicleShip = netView.GetComponent<VehicleShip>();
     if (vehicleShip.GhostContainer != null)
     {
-      vehicleShip.GhostContainer.SetActive(false);
+      vehicleShip.GhostContainer().SetActive(false);
     }
   }
 

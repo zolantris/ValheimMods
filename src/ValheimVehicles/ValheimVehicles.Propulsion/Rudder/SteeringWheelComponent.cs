@@ -211,6 +211,11 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     var playerOnShipViaShipInstance =
       ShipInstance?.VehicleController?.Instance.GetComponentsInChildren<Player>() ?? null;
 
+    if (playerOnShipViaShipInstance?.Length == 0 || playerOnShipViaShipInstance == null)
+    {
+      playerOnShipViaShipInstance = ShipInstance?.Instance?.m_players.ToArray() ?? null;
+    }
+
     /*
      * <note /> This logic allows for the player to just look at the Raft and see if the player is a child within it.
      */

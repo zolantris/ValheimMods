@@ -211,9 +211,9 @@ public class BaseVehicleController : MonoBehaviour
     if (m_blockingcollider != null)
     {
       m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-      m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
-      m_blockingcollider.transform.parent.gameObject.layer =
-        ValheimRaftPlugin.CustomRaftLayer;
+      // m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+      // m_blockingcollider.transform.parent.gameObject.layer =
+      // ValheimRaftPlugin.CustomRaftLayer;
     }
   }
 
@@ -239,7 +239,7 @@ public class BaseVehicleController : MonoBehaviour
     // if ((bool)VehicleInstance?.Instance?.GhostContainer?.name?.Contains(PrefabNames.Nautilus))
     // {
     // }
-    VehicleInstance?.Instance?.GhostContainer?.SetActive(false);
+    VehicleInstance?.Instance?.GhostContainer()?.SetActive(false);
   }
 
   public void SyncAllBeds()
@@ -272,15 +272,18 @@ public class BaseVehicleController : MonoBehaviour
       Logger.LogDebug("m_nview, not available, setting within Awake");
     }
 
-    if ((bool)m_rigidbody && (bool)m_nview)
-    {
-      _syncTransform = gameObject.AddComponent<ZSyncTransform>();
-      _syncTransform.m_syncPosition = true;
-      _syncTransform.m_syncRotation = true;
-    }
+    // TODO commented out until collision physics are figured out
+    // if ((bool)m_rigidbody && (bool)m_nview)
+    // {
+    //   _syncTransform = gameObject.AddComponent<ZSyncTransform>();
+    //   _syncTransform.m_syncPosition = true;
+    //   _syncTransform.m_syncRotation = true;
+    // }
+
+    // experimental, not decoupling could lead to weird physics issues, but decoupling leads to desyncs between the Zsynctransforms on mp and also colliding with piece objects seems to not work.
 
     // important to decouple the vehicle from the VehicleShip after everything is initialized. This lets all the netview and other values needed to be shared to bind properly
-    gameObject.transform.SetParent(null);
+    // gameObject.transform.SetParent(null);
   }
 
 
@@ -467,22 +470,15 @@ public class BaseVehicleController : MonoBehaviour
     m_rigidbody.drag = drag;
     m_syncRigidbody.drag = drag;
 
-    m_syncRigidbody.mass = Math.Min(1000f, TotalMass);
-    m_rigidbody.mass = Math.Min(1000f, TotalMass);
+    m_syncRigidbody.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
+    m_rigidbody.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
   }
 
   private void Sync()
   {
     if (!(bool)m_syncRigidbody || !(bool)m_rigidbody) return;
 
-    if (m_nview.IsOwner())
-    {
-      m_rigidbody.Move(m_syncRigidbody.transform.position, m_syncRigidbody.transform.rotation);
-    }
-    else
-    {
-      zsyncRigidbody?.SyncNow();
-    }
+    m_rigidbody.Move(m_syncRigidbody.transform.position, m_syncRigidbody.transform.rotation);
 
     // foreach (var instanceMPlayer in VehicleInstance.Instance.m_players)
     // {
@@ -1141,6 +1137,9 @@ public class BaseVehicleController : MonoBehaviour
         yield return null;
       }
 
+      // possibly will help force sync if activate pending pieces is going weirdly for client
+      zsyncRigidbody?.SyncNow();
+      // debounces to prevent spamming activation
       yield return new WaitForSeconds(1);
     }
 
@@ -1571,7 +1570,7 @@ public class BaseVehicleController : MonoBehaviour
       return;
     }
 
-    AddPiece(netView);
+    AddPiece(netView, true);
     InitZdo(netView.GetZDO());
 
     if (previousCount == 0 && GetPieceCount() == 1)
@@ -1594,7 +1593,7 @@ public class BaseVehicleController : MonoBehaviour
     }
   }
 
-  public void AddPiece(ZNetView netView)
+  public void AddPiece(ZNetView netView, bool isNew = false)
   {
     if (!(bool)netView)
     {
@@ -1671,7 +1670,16 @@ public class BaseVehicleController : MonoBehaviour
 
     FixPieceMeshes(netView);
     UpdateMass(netView);
-    DebouncedRebuildBounds();
+
+    // Immediately encapsulate for new pieces otherwise debounce especially for re-renders to prevent game from freezing due to recursive calls of Physics updates
+    if (isNew)
+    {
+      EncapsulateBounds(netView.gameObject);
+    }
+    else
+    {
+      DebouncedRebuildBounds();
+    }
 
     /*
      * @todo investigate why this is called. Determine if it is needed
@@ -1803,6 +1811,9 @@ public class BaseVehicleController : MonoBehaviour
     }
 
     OnBoundsChangeUpdateShipColliders();
+
+    // todo determine if this is necessary, might fix a few issues with planters
+    Heightmap.ForceGenerateAll();
   }
 
 

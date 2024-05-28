@@ -56,7 +56,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var vehicleRigidbody = prefab.GetComponent<Rigidbody>();
     var zSyncTransform = prefab.AddComponent<ZSyncTransform>();
     zSyncTransform.m_syncPosition = true;
-    zSyncTransform.m_syncBodyVelocity = false;
+    zSyncTransform.m_syncBodyVelocity = true;
     zSyncTransform.m_syncRotation = true;
     zSyncTransform.m_body = vehicleRigidbody;
 
@@ -103,7 +103,9 @@ public class WaterVehiclePrefab : IRegisterPrefab
     wnt.m_noRoofWear = true;
     wnt.enabled = false;
 
-    prefab.AddComponent<ImpactEffect>();
+    // todo ImpactEffect likely never should have been added like this
+    // todo remove if unnecessary
+    // prefab.AddComponent<ImpactEffect>();
 
     // var shipControlsGui = new GameObject
     //   { name = "ControlGui", layer = 0, transform = { parent = prefab.transform } };

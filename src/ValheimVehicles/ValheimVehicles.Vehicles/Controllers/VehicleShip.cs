@@ -42,15 +42,16 @@ public static class VehicleShipHelpers
 public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 {
   public GameObject RudderObject { get; set; }
+  public const float MinimumRigibodyMass = 1000;
 
   // The rudder force multiplier applied to the ship speed
   private float _rudderForce = 1f;
 
-  public GameObject GhostContainer =>
+  public GameObject GhostContainer() =>
     VehicleShipHelpers.GetOrFindObj(_ghostContainer, gameObject,
       PrefabNames.GhostContainer);
 
-  public GameObject PiecesContainer =>
+  public GameObject PiecesContainer() =>
     VehicleShipHelpers.GetOrFindObj(_piecesContainer, transform.parent.gameObject,
       PrefabNames.PiecesContainer);
 
@@ -146,11 +147,27 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     }
   }
 
+  public new void OnTriggerEnter(Collider collider)
+  {
+    var playerSpawnController = collider.GetComponentInParent<PlayerSpawnController>();
+    playerSpawnController?.SyncLogoutPoint();
+
+    var pieceComponent = collider.GetComponentInParent<Piece>();
+    if ((bool)pieceComponent)
+    {
+      Logger.LogDebug($"collider was a piece, {collider.name} {pieceComponent.name}");
+    }
+
+    base.OnTriggerEnter(collider);
+  }
+
   public new void OnTriggerExit(Collider collider)
   {
     var component = collider.GetComponent<Player>();
     if ((bool)component)
     {
+      var playerSpawnController = component.GetComponent<PlayerSpawnController>();
+      playerSpawnController?.SyncLogoutPoint();
       BaseVehicleController.RemoveDynamicParentForVehicle(component.m_nview);
       m_players.Remove(component);
       Logger.LogDebug("Player over board, players left " + m_players.Count);
@@ -442,7 +459,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 
     base.Awake();
 
-    var excludedLayers = LayerMask.GetMask("piece", "piece_nonsolid");
+    var excludedLayers = LayerMask.GetMask("piece_nonsolid");
     m_body.excludeLayers = excludedLayers;
 
     Logger.LogDebug($"called Awake in {name}, m_body {m_body}");
@@ -585,7 +602,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     var vehiclePiecesContainer = VehiclePiecesPrefab.VehiclePiecesContainer;
     if (!vehiclePiecesContainer) return;
 
-    _vehiclePiecesContainerInstance = Instantiate(vehiclePiecesContainer, transform);
+    _vehiclePiecesContainerInstance = Instantiate(vehiclePiecesContainer, null);
     _vehiclePiecesContainerInstance.transform.position = transform.position;
     _vehiclePiecesContainerInstance.transform.rotation = transform.rotation;
 
@@ -782,7 +799,12 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 
     if ((bool)_impactEffect)
     {
-      _impactEffect.m_interval = 0.1f;
+      if (_impactEffect.m_nview.name.Contains(PrefabNames.WaterVehicleShip))
+      {
+        return;
+      }
+
+      _impactEffect.m_interval = 0.5f;
       _impactEffect.m_minVelocity = 0.1f;
       _impactEffect.m_damages.m_damage = GetDamageFromImpact();
     }
