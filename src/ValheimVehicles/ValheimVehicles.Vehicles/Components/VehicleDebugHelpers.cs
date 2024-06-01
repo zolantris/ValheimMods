@@ -105,10 +105,18 @@ public class VehicleDebugHelpers : MonoBehaviour
     if (!(bool)VehicleShipInstance.m_body) return;
     // flips the x and z axis which act as the boat depth and sides
     // y axis is boat height. Flipping that would just rotate boat which is why it is omitted
-    VehicleShipInstance.m_body.isKinematic = true;
-    transform.rotation = Quaternion.Euler(0f, VehicleObj.transform.eulerAngles.y,
-      0f);
-    VehicleShipInstance.m_body.isKinematic = false;
+    if (!VehicleShipInstance.isCreative)
+    {
+      VehicleShipInstance.m_body.isKinematic = true;
+    }
+
+    transform.rotation = Quaternion.Euler(0, VehicleObj.transform.eulerAngles.y,
+      0);
+
+    if (!VehicleShipInstance.isCreative)
+    {
+      VehicleShipInstance.m_body.isKinematic = false;
+    }
   }
 
   /// <summary>

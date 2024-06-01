@@ -968,9 +968,18 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
   // Updates gravity and target height (which is used to compute gravity)
   public void UpdateGravity()
   {
-    // m_zsyncTransform.m_useGravity =
-    //   TargetHeight == 0f;
+    m_zsyncTransform.m_useGravity =
+      TargetHeight == 0f;
     m_body.useGravity = TargetHeight == 0f;
+  }
+
+  public void EnforceCreativeMode()
+  {
+    if (!_controller) return;
+    if ((!_controller.isCreative || m_body.rotation.eulerAngles.x == 0) &&
+        m_body.rotation.eulerAngles.z == 0) return;
+    var rotationWithoutTilt = Quaternion.Euler(0, m_body.rotation.eulerAngles.y, 0);
+    m_body.rotation = rotationWithoutTilt;
   }
 
   /// <summary>
@@ -986,6 +995,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
      */
     if (_controller.isCreative || m_body.isKinematic)
     {
+      EnforceCreativeMode();
       return;
     }
 

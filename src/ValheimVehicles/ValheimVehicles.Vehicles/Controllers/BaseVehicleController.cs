@@ -272,6 +272,12 @@ public class BaseVehicleController : MonoBehaviour
       Logger.LogDebug("m_nview, not available, setting within Awake");
     }
 
+    if (!(bool)m_nview)
+    {
+      Logger.LogWarning(
+        "Warning netview not detected on vehicle, this means any netview attached events will not bind correctly");
+    }
+
     // TODO commented out until collision physics are figured out
     // if ((bool)m_rigidbody && (bool)m_nview)
     // {
@@ -1138,7 +1144,7 @@ public class BaseVehicleController : MonoBehaviour
       }
 
       // possibly will help force sync if activate pending pieces is going weirdly for client
-      zsyncRigidbody?.SyncNow();
+      // zsyncRigidbody?.SyncNow();
       // debounces to prevent spamming activation
       yield return new WaitForSeconds(1);
     }
@@ -1601,6 +1607,7 @@ public class BaseVehicleController : MonoBehaviour
       return;
     }
 
+    var shouldRebuildBounds = false;
     totalSailArea = 0;
     m_pieces.Add(netView);
     UpdatePieceCount();
@@ -1656,6 +1663,7 @@ public class BaseVehicleController : MonoBehaviour
       OnAddSteeringWheelDestroyPrevious(netView, wheel);
       _steeringWheelPieces.Add(wheel);
       wheel.InitializeControls(netView, VehicleInstance);
+      shouldRebuildBounds = true;
     }
 
     var portal = netView.GetComponent<TeleportWorld>();
@@ -1671,14 +1679,19 @@ public class BaseVehicleController : MonoBehaviour
     FixPieceMeshes(netView);
     UpdateMass(netView);
 
-    // Immediately encapsulate for new pieces otherwise debounce especially for re-renders to prevent game from freezing due to recursive calls of Physics updates
-    if (isNew)
+    switch (isNew)
     {
-      EncapsulateBounds(netView.gameObject);
-    }
-    else
-    {
-      DebouncedRebuildBounds();
+      case true when shouldRebuildBounds:
+        // for rendering wheels and important pieces that require rebuilding bounds
+        RebuildBounds();
+        break;
+      case true:
+        EncapsulateBounds(netView.gameObject);
+        break;
+      case false:
+        // for rendering already build pieces
+        DebouncedRebuildBounds();
+        break;
     }
 
     /*
@@ -1742,7 +1755,7 @@ public class BaseVehicleController : MonoBehaviour
 
   private float GetAverageFloatHeightFromHulls()
   {
-    if (m_hullPieces.Count <= 0) return 0.2f;
+    if (m_hullPieces.Count <= 0) return 0.5f;
     _hullBounds = new Bounds();
 
     var totalHeight = 0f;
@@ -1760,9 +1773,9 @@ public class BaseVehicleController : MonoBehaviour
       case ValheimRaftPlugin.HullFloatation.Average:
         return totalHeight / m_hullPieces.Count;
       case ValheimRaftPlugin.HullFloatation.Bottom:
-        return _hullBounds.min.y;
+        return _hullBounds.min.y + 0.5f;
       case ValheimRaftPlugin.HullFloatation.Top:
-        return _hullBounds.max.y;
+        return _hullBounds.max.y - 0.5f;
       case ValheimRaftPlugin.HullFloatation.Center:
       default:
         return _hullBounds.center.y;
@@ -1821,6 +1834,7 @@ public class BaseVehicleController : MonoBehaviour
   // todo compute the float colliderY transform so it aligns with bounds if player builds underneath boat
   public void OnBoundsChangeUpdateShipColliders()
   {
+    var minColliderSize = 0.1f;
     if (!(bool)m_blockingcollider || !(bool)m_floatcollider || !(bool)m_onboardcollider)
     {
       Logger.LogWarning(
@@ -1835,9 +1849,9 @@ public class BaseVehicleController : MonoBehaviour
      */
     var averageFloatHeight = GetAverageFloatHeightFromHulls();
     var floatColliderCenterOffset =
-      new Vector3(_vehicleBounds.center.x, averageFloatHeight - 0.2f, _vehicleBounds.center.z);
-    var floatColliderSize = new Vector3(Mathf.Max(4f, _vehicleBounds.size.x),
-      m_floatcollider.size.y, Mathf.Max(4f, _vehicleBounds.size.z));
+      new Vector3(_vehicleBounds.center.x, averageFloatHeight, _vehicleBounds.center.z);
+    var floatColliderSize = new Vector3(Mathf.Max(minColliderSize, _vehicleBounds.size.x),
+      m_floatcollider.size.y, Mathf.Max(minColliderSize, _vehicleBounds.size.z));
 
     /*
      * onboard colliders
@@ -1846,8 +1860,8 @@ public class BaseVehicleController : MonoBehaviour
      * todo make this logic exact.
      * - Have a minimum "deck" position and determine height based on the deck. For now this do not need to be done
      */
-    const float characterTriggerMaxAddedHeight = 5f;
-    const float characterTriggerMinHeight = 1f;
+    const float characterTriggerMaxAddedHeight = 5;
+    const float characterTriggerMinHeight = 1;
     const float characterHeightScalar = 1.2f;
     var computedOnboardTriggerHeight =
       Math.Min(
@@ -1856,11 +1870,11 @@ public class BaseVehicleController : MonoBehaviour
         _vehicleBounds.size.y + characterTriggerMaxAddedHeight) - m_floatcollider.size.y;
     var onboardColliderCenter =
       new Vector3(_vehicleBounds.center.x,
-        computedOnboardTriggerHeight / 2f,
+        computedOnboardTriggerHeight / 2,
         _vehicleBounds.center.z);
-    var onboardColliderSize = new Vector3(Mathf.Max(4f, _vehicleBounds.size.x),
+    var onboardColliderSize = new Vector3(Mathf.Max(minColliderSize, _vehicleBounds.size.x),
       computedOnboardTriggerHeight,
-      Mathf.Max(4f, _vehicleBounds.size.z));
+      Mathf.Max(minColliderSize, _vehicleBounds.size.z));
 
     /*
      * blocking collider is the collider that prevents the ship from going through objects.
@@ -1872,8 +1886,9 @@ public class BaseVehicleController : MonoBehaviour
     var blockingColliderCenterY = floatColliderCenterOffset.y + 0.2f;
     var blockingColliderCenterOffset = new Vector3(_vehicleBounds.center.x,
       blockingColliderCenterY, _vehicleBounds.center.z);
-    var blockingColliderSize = new Vector3(Mathf.Max(4, _vehicleBounds.size.x), floatColliderSize.y,
-      Mathf.Max(4f, _vehicleBounds.size.z));
+    var blockingColliderSize = new Vector3(Mathf.Max(minColliderSize, _vehicleBounds.size.x),
+      floatColliderSize.y,
+      Mathf.Max(minColliderSize, _vehicleBounds.size.z));
 
     if (ValheimRaftPlugin.Instance.HullCollisionOnly.Value && _hullBounds.size != Vector3.zero)
     {
@@ -1969,12 +1984,18 @@ public class BaseVehicleController : MonoBehaviour
     return outputBounds;
   }
 
+  /// <summary>
+  /// Gets all colliders even inactive ones, so they can ignore the vehicles colliders that should not interact with pieces aboard a vehicle
+  /// </summary>
+  /// If only including active colliders, this would cause a problem if a WearNTear Piece updated its object and the collider began interacting with the vehicle 
+  /// <param name="netView"></param>
+  /// <returns></returns>
   public static List<Collider> GetCollidersInPiece(GameObject netView)
   {
-    var piece = netView.GetComponent<Piece>();
-    return piece
-      ? piece.GetAllColliders()
-      : [..netView.GetComponentsInChildren<Collider>()];
+    // var piece = netView.GetComponent<Piece>();
+    // return piece
+    //   ? piece.GetAllColliders()
+    return [..netView.GetComponentsInChildren<Collider>(true)];
   }
 
   /*
