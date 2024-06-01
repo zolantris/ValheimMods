@@ -239,6 +239,15 @@ public class PlayerSpawnController : MonoBehaviour
     if (ZNetView.m_forceDisableInit || player == null) return;
     var playerZdo = player.m_nview.GetZDO();
     if (playerZdo == null) return;
+    Logger.LogDebug($"Syncing Player Position and sector, {newPosition}");
+    var isLoaded = ZoneSystem.instance.IsZoneLoaded(ZoneSystem.instance.GetZone(newPosition));
+
+    if (!isLoaded)
+    {
+      Logger.LogDebug($"zone not loaded, exiting SyncPlayerPosition for position: {newPosition}");
+      return;
+    }
+
     playerZdo.SetPosition(newPosition);
     playerZdo.SetSector(ZoneSystem.instance.GetZone(newPosition));
     player.transform.position = newPosition;
@@ -260,24 +269,31 @@ public class PlayerSpawnController : MonoBehaviour
     }
 
     // beginning of LoadGameObjectInSector (which cannot be abstracted easily if the return is required)
+    ZDOMan.instance.RequestZDO((ZDOID)zdoid);
     var spawnZdo = ZDOMan.instance.GetZDO((ZDOID)zdoid);
     ZNetView? zdoNetViewInstance = null;
     Vector2i zoneId = new();
-
-    while (zdoNetViewInstance == null)
+    var isZoneLoaded = false;
+    while (zdoNetViewInstance == null && !isZoneLoaded)
     {
+      ZDOMan.instance.RequestZDO((ZDOID)zdoid);
+      spawnZdo = ZDOMan.instance.GetZDO((ZDOID)zdoid);
+      if (spawnZdo == null) yield return new WaitForFixedUpdate();
       zoneId = ZoneSystem.instance.GetZone(spawnZdo.GetPosition());
       ZoneSystem.instance.PokeLocalZone(zoneId);
       zdoNetViewInstance = ZNetScene.instance.FindInstance(spawnZdo);
 
       if (zdoNetViewInstance) break;
       yield return new WaitForFixedUpdate();
+      if (!ZoneSystem.instance.IsZoneLoaded(zoneId))
+      {
+        yield return null;
+      }
+      else
+      {
+        isZoneLoaded = true;
+      }
     }
-
-    yield return new WaitUntil(() => ZoneSystem.instance.IsZoneLoaded(zoneId));
-    // yield return zdoNetViewInstance;
-    // end 
-
 
     BaseVehicleController? bvc = null;
     if (zdoNetViewInstance)
@@ -318,6 +334,8 @@ public class PlayerSpawnController : MonoBehaviour
     if (zdoNetViewInstance != null)
     {
       spawnZdo = ZDOMan.instance.GetZDO((ZDOID)zdoid);
+      if (spawnZdo == null) yield break;
+
       spawnOffset = spawnZdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
       relativeZdoPos = spawnZdo.GetPosition() + spawnOffset;
       Logger.LogDebug(

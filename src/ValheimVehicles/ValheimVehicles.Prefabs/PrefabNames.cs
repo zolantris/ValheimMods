@@ -2,6 +2,8 @@ namespace ValheimVehicles.Prefabs;
 
 /**
  * @todo register translatable pieceName and pieceDescription based on these names for easy lookups
+ *
+ * @warning Do not rename prefabs, prefabs that are renamed will orphan older gameobjects and will be deleted by valheim meaning it will break/delete pieces on pre-existing ships.
  */
 public static class PrefabNames
 {
@@ -123,4 +125,11 @@ public static class PrefabNames
   public const string VehicleToggleSwitch = $"{ValheimVehiclesPrefix}_VehicleToggleSwitch";
   public const string VehicleShipMovementOrientation = "VehicleShip_MovementOrientation";
   public const string VehicleHudAnchorIndicator = $"{ValheimVehiclesPrefix}_HudAnchorIndicator";
+
+  public static string GetRamBladeName(string val)
+  {
+    return $"{ValheimVehiclesPrefix}_ram_blade_{val.ToLower()}_bronze";
+  }
+
+  public const string RamNose = $"{ValheimVehiclesPrefix}_ram_nose_bronze";
 }

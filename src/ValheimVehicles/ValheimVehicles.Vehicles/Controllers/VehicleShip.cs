@@ -441,6 +441,12 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     }
   }
 
+  private void UpdateRemovePieceCollisionExclusions()
+  {
+    var excludedLayers = LayerMask.GetMask("piece_nonsolid");
+    m_body.excludeLayers = excludedLayers;
+  }
+
   private new void Awake()
   {
     m_nview = GetComponent<ZNetView>();
@@ -459,7 +465,8 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 
     base.Awake();
 
-    var excludedLayers = LayerMask.GetMask("piece_nonsolid");
+    // var excludedLayers = LayerMask.GetMask("piece_nonsolid");
+    var excludedLayers = LayerMask.GetMask("piece", "piece_nonsolid");
     m_body.excludeLayers = excludedLayers;
 
     Logger.LogDebug($"called Awake in {name}, m_body {m_body}");
@@ -479,6 +486,12 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     }
 
     UpdateShipSounds(this);
+  }
+
+  public new void Start()
+  {
+    base.Start();
+    Invoke(nameof(UpdateRemovePieceCollisionExclusions), 5f);
   }
 
   public override void OnEnable()
@@ -762,7 +775,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
   /// <returns></returns>
   private float GetDamageFromImpact()
   {
-    if (!(bool)m_body) return 0f;
+    if (!(bool)m_body) return 50f;
 
     const float damagePerPointOfMass = 0.01f;
     const float baseDamage = 25f;
@@ -797,16 +810,25 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
       _impactEffect = GetComponent<ImpactEffect>();
     }
 
+    if (!_impactEffect)
+    {
+      gameObject.AddComponent<ImpactEffect>();
+    }
+
     if ((bool)_impactEffect)
     {
-      if (_impactEffect.m_nview.name.Contains(PrefabNames.WaterVehicleShip))
-      {
-        return;
-      }
+      // if (_impactEffect.m_nview.name.Contains(PrefabNames.WaterVehicleShip))
+      // {
+      //   return;
+      // }
 
+      _impactEffect.m_nview = m_nview;
+      _impactEffect.m_body = m_body;
+
+      _impactEffect.m_hitType = HitData.HitType.Boat;
       _impactEffect.m_interval = 0.5f;
       _impactEffect.m_minVelocity = 0.1f;
-      _impactEffect.m_damages.m_damage = GetDamageFromImpact();
+      _impactEffect.m_damages.m_blunt = GetDamageFromImpact();
     }
     else
     {

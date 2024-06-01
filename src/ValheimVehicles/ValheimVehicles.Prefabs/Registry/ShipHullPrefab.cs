@@ -21,10 +21,9 @@ public class ShipHullPrefab : IRegisterPrefab
     };
     var hullMaterialTypes = new[] { ShipHulls.HullMaterial.Wood, ShipHulls.HullMaterial.Iron };
 
-    // (slabs,walls) (2x2, 4x4) (iron,wood)
-    foreach (var sizeVariant in sizeVariants)
+    foreach (var hullMaterialType in hullMaterialTypes)
     {
-      foreach (var hullMaterialType in hullMaterialTypes)
+      foreach (var sizeVariant in sizeVariants)
       {
         RegisterHull(PrefabNames.GetHullSlabVariants(hullMaterialType, sizeVariant),
           hullMaterialType,

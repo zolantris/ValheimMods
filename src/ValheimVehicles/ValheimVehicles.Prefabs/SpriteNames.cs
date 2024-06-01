@@ -26,4 +26,16 @@ public abstract class SpriteNames
 
   public const string HullRibWood = "hull_rib_wood";
   public const string HullRibIron = "hull_rib_iron";
+
+  public const string RamNose = "ram_nose";
+
+  /// <summary>
+  /// Can be top,bottom,left,right this helper is likely not needed, but provided for organization
+  /// </summary>
+  /// <param name="dir"></param>
+  /// <returns></returns>
+  public static string GetRamBladeName(string dir)
+  {
+    return $"ram_blade_{dir}";
+  }
 }

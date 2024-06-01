@@ -35,7 +35,6 @@ public class BaseVehicleController : MonoBehaviour
   public static Dictionary<int, List<ZNetView>> m_pendingPieces = new();
 
   public static Dictionary<int, List<ZDO>> m_allPieces = new();
-  public static List<ZDO> vehicleZdos = new();
 
   public static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
@@ -49,7 +48,6 @@ public class BaseVehicleController : MonoBehaviour
 
   // rigidbody for all pieces within the ship. Does not directly contribute to floatation, floatation controlled by m_syncRigidbody and synced to this m_rigidbody
   internal Rigidbody? m_rigidbody;
-  internal ZSyncTransform? _syncTransform;
 
   // for the ship physics without item piece colliders or alternatively access via VehicleInstance.m_body
   internal Rigidbody? m_syncRigidbody;
@@ -184,37 +182,32 @@ public class BaseVehicleController : MonoBehaviour
 
   public void SetColliders(VehicleShip vehicleInstance)
   {
-    var colliders = vehicleInstance.transform.GetComponentsInChildren<BoxCollider>();
+    var colliders = vehicleInstance.transform.Find("colliders")
+      .GetComponentsInChildren<BoxCollider>();
+
+    foreach (var boxCollider in colliders)
+    {
+      if (boxCollider.gameObject.name.Contains(PrefabNames.WaterVehicleOnboardCollider))
+      {
+        m_onboardcollider = boxCollider;
+      }
+
+      if (boxCollider.gameObject.name.Contains(PrefabNames.WaterVehicleBlockingCollider))
+      {
+        m_blockingcollider = boxCollider;
+      }
+    }
 
     // defaults to a new boxcollider if somehow things are not detected
-    m_onboardcollider =
-      colliders.FirstOrDefault(
-        (k) => k.gameObject.name.Contains(PrefabNames.WaterVehicleOnboardCollider)) ??
-      new BoxCollider();
     m_floatcollider = vehicleInstance.FloatCollider;
-    m_blockingcollider =
-      colliders.FirstOrDefault((k) =>
-        k.gameObject.name.Contains(PrefabNames.WaterVehicleBlockingCollider)) ??
-      new BoxCollider();
 
-    // todo the local scales cause issues with floating with new ships until an item is manually placed by the player
-    if (m_onboardcollider != null)
-    {
-      m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    }
-
-    if (m_floatcollider != null)
-    {
-      m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    }
-
-    if (m_blockingcollider != null)
-    {
-      m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-      // m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
-      // m_blockingcollider.transform.parent.gameObject.layer =
-      // ValheimRaftPlugin.CustomRaftLayer;
-    }
+    // todo blockingcollider likely needs to use piece layer so character and other things can get hit by it
+    // if (m_blockingcollider != null)
+    // {
+    //   m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    //   m_blockingcollider.transform.parent.gameObject.layer =
+    //     ValheimRaftPlugin.CustomRaftLayer;
+    // }
   }
 
 
@@ -483,8 +476,9 @@ public class BaseVehicleController : MonoBehaviour
   private void Sync()
   {
     if (!(bool)m_syncRigidbody || !(bool)m_rigidbody) return;
-
-    m_rigidbody.Move(m_syncRigidbody.transform.position, m_syncRigidbody.transform.rotation);
+    m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
+    m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
+    // m_rigidbody.Move(m_syncRigidbody.transform.position, m_syncRigidbody.transform.rotation);
 
     // foreach (var instanceMPlayer in VehicleInstance.Instance.m_players)
     // {
@@ -500,6 +494,7 @@ public class BaseVehicleController : MonoBehaviour
 
     if (!ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value)
     {
+      Sync();
       return;
     }
 
@@ -507,6 +502,7 @@ public class BaseVehicleController : MonoBehaviour
     if (m_nview.IsOwner())
     {
       Client_UpdateAllPieces();
+      Sync();
     }
   }
 
@@ -1331,11 +1327,6 @@ public class BaseVehicleController : MonoBehaviour
   {
     if (zdo.m_prefab == PrefabNames.WaterVehicleShip.GetStableHashCode())
     {
-      if (!vehicleZdos.Contains(zdo))
-      {
-        vehicleZdos.Add(zdo);
-      }
-
       return;
     }
 
@@ -1374,11 +1365,6 @@ public class BaseVehicleController : MonoBehaviour
   {
     if (zdo.m_prefab == PrefabNames.WaterVehicleShip.GetStableHashCode())
     {
-      if (vehicleZdos.Contains(zdo))
-      {
-        vehicleZdos.Remove(zdo);
-      }
-
       return;
     }
 

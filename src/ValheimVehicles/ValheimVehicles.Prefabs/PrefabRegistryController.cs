@@ -164,6 +164,8 @@ public class PrefabRegistryController : MonoBehaviour
     VehiclePiecesPrefab.Instance.Register(prefabManager, pieceManager);
     WaterVehiclePrefab.Instance.Register(prefabManager, pieceManager);
 
+    RamPrefabs.Instance.Register(prefabManager, pieceManager);
+
     // PlayerSpawnControllerPrefab
     DynamicPlayerSpawnPrefab.Instance.Register(prefabManager, pieceManager);
   }
@@ -559,10 +561,8 @@ public class PrefabRegistryController : MonoBehaviour
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(mbDirtFloorPrefab);
 
-    var wnt = PrefabRegistryHelpers.SetWearNTear(mbDirtFloorPrefab);
+    var wnt = PrefabRegistryHelpers.SetWearNTear(mbDirtFloorPrefab, 2);
     wnt.m_haveRoof = false;
-    wnt.m_materialType = WearNTear.MaterialType.Stone;
-    wnt.m_destroyedEffect = LoadValheimAssets.stoneFloorPieceWearNTear.m_destroyedEffect;
 
     // Makes the component cultivatable
     mbDirtFloorPrefab.AddComponent<CultivatableComponent>();

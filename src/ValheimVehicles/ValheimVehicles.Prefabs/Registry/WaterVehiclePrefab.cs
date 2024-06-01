@@ -97,6 +97,9 @@ public class WaterVehiclePrefab : IRegisterPrefab
     PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.HardWood);
 
     wnt.m_onDestroyed += woodWNT.m_onDestroyed;
+    // triggerPrivateArea will damage enemies/pieces when within it
+    wnt.m_triggerPrivateArea = true;
+
     wnt.m_supports = true;
     wnt.m_support = 2000f;
     wnt.m_noSupportWear = true;
@@ -105,7 +108,22 @@ public class WaterVehiclePrefab : IRegisterPrefab
 
     // todo ImpactEffect likely never should have been added like this
     // todo remove if unnecessary
-    // prefab.AddComponent<ImpactEffect>();
+    var impactEffect = prefab.AddComponent<ImpactEffect>();
+    impactEffect.m_triggerMask = LayerMask.GetMask("Default", "character", "piece", "terrain",
+      "static_solid", "Default_small", "character_net", "vehicle", LayerMask.LayerToName(29));
+    impactEffect.m_toolTier = 1000;
+
+    impactEffect.m_damages.m_blunt = 50;
+    impactEffect.m_damages.m_chop = 500;
+    impactEffect.m_damages.m_pickaxe = 500;
+
+    impactEffect.m_interval = 0.5f;
+    impactEffect.m_damagePlayers = true;
+    impactEffect.m_damageToSelf = false;
+    impactEffect.m_damageFish = true;
+    impactEffect.m_hitType = HitData.HitType.Boat;
+    impactEffect.m_minVelocity = 0.1f;
+    impactEffect.m_maxVelocity = 7;
 
     // var shipControlsGui = new GameObject
     //   { name = "ControlGui", layer = 0, transform = { parent = prefab.transform } };
@@ -125,6 +143,9 @@ public class WaterVehiclePrefab : IRegisterPrefab
 
     var piece = PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.WaterVehicleShip, prefab);
     piece.m_waterPiece = true;
+    piece.m_targetNonPlayerBuilt = true;
+    piece.m_primaryTarget = true;
+    piece.m_randomTarget = true;
 
     PieceManager.Instance.AddPiece(new CustomPiece(waterVehiclePrefab, true, new PieceConfig
     {
@@ -153,8 +174,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var piece = PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Nautilus, prefab);
     piece.m_waterPiece = true;
 
-    var wnt = PrefabRegistryHelpers.SetWearNTear(prefab);
-    wnt.m_materialType = WearNTear.MaterialType.Iron;
+    var wnt = PrefabRegistryHelpers.SetWearNTear(prefab, 3);
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {

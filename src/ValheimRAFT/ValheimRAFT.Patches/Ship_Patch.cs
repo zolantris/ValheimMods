@@ -61,6 +61,37 @@ public class Ship_Patch
     return !mb;
   }
 
+  [HarmonyPatch(typeof(Ship), "UpdateWaterForce")]
+  [HarmonyPrefix]
+  private static bool Ship_UpdateWaterForce(Ship __instance, float depth, float time)
+  {
+    double num1 = (double)depth - (double)__instance.m_lastDepth;
+    float num2 = time - __instance.m_lastUpdateWaterForceTime;
+    __instance.m_lastDepth = depth;
+    __instance.m_lastUpdateWaterForceTime = time;
+    double num3 = (double)num2;
+    float f = (float)(num1 / num3);
+    if ((double)f > 0.0 || (double)Utils.Abs(f) <= (double)__instance.m_minWaterImpactForce ||
+        (double)time - (double)__instance.m_lastWaterImpactTime <=
+        (double)__instance.m_minWaterImpactInterval)
+      return false;
+    __instance.m_lastWaterImpactTime = time;
+    __instance.m_waterImpactEffect.Create(__instance.transform.position,
+      __instance.transform.rotation);
+    if (__instance.m_players.Count <= 0)
+      return false;
+    __instance.m_destructible.Damage(new HitData()
+    {
+      m_damage =
+      {
+        m_blunt = __instance.m_waterImpactDamage
+      },
+      m_point = __instance.transform.position,
+      m_dir = Vector3.up
+    });
+    return false;
+  }
+
   [HarmonyPatch(typeof(Ship), "UpdateSail")]
   [HarmonyPostfix]
   private static void Ship_UpdateSail(Ship __instance)

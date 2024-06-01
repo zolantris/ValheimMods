@@ -14,6 +14,12 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject ShipHullWoodAsset = null!;
   public static GameObject ShipHullIronAsset = null!;
 
+  public static GameObject RamNose = null!;
+  public static GameObject RamBladeTop = null!;
+  public static GameObject RamBladeBottom = null!;
+  public static GameObject RamBladeRight = null!;
+  public static GameObject RamBladeLeft = null!;
+
   // ships (like nautilus)
   public static GameObject ShipNautilus = null!;
 
@@ -136,5 +142,22 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
     VehicleSprites = assetBundle.LoadAsset<SpriteAtlas>(
       "vehicle_icons.spriteatlasv2");
+
+    RamNose = assetBundle.LoadAsset<GameObject>(
+      "ram_nose.prefab");
+    ;
+
+    RamBladeTop = assetBundle.LoadAsset<GameObject>(
+      "ram_blade_top.prefab");
+    ;
+    RamBladeBottom = assetBundle.LoadAsset<GameObject>(
+      "ram_blade_bottom.prefab");
+    ;
+    RamBladeRight = assetBundle.LoadAsset<GameObject>(
+      "ram_blade_right.prefab");
+    ;
+    RamBladeLeft = assetBundle.LoadAsset<GameObject>(
+      "ram_blade_left.prefab");
+    ;
   }
 }

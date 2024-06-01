@@ -240,7 +240,7 @@ public class PrefabThumbnailGenerator : EditorWindow
     {
         // Uses alpha to make transparent, black is good for edges of object that are not perfectly cut
         RuntimePreviewGenerator.BackgroundColor = new Color(0,0,0,0);
-        var pg = RuntimePreviewGenerator.GenerateModelPreview(obj.transform, width, height, true);
+        var pg = RuntimePreviewGenerator.GenerateModelPreview(obj.transform, width, height, false);
         var texturePath = $"{outputDirPath}{obj.name}.png";
         WriteTextureToFile(pg, texturePath);
         
@@ -259,6 +259,7 @@ public class PrefabThumbnailGenerator : EditorWindow
         }
         
         AssetDatabase.WriteImportSettingsIfDirty(texturePath);
+        DestroyImmediate(pg);
         
         spritePaths.Add(texturePath);
     }

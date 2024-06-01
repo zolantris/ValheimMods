@@ -5,6 +5,8 @@ using HarmonyLib;
 using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
+using ValheimRAFT;
+using ValheimVehicles.Prefabs.Registry;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
@@ -31,10 +33,40 @@ public abstract class PrefabRegistryHelpers
 
   public static readonly Dictionary<string, PieceData> PieceDataDictionary = new();
 
+  private static void RegisterRamPieces()
+  {
+    var ramNoseIcon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.RamNose);
+
+    PieceDataDictionary.Add(
+      PrefabNames.RamNose, new PieceData()
+      {
+        Name = "valheim_vehicles_ram_nose $valheim_vehicles_material_bronze",
+        Description = "valheim_vehicles_ram_nose_desc",
+        Icon = ramNoseIcon
+      });
+
+    string[] bladeDirs = ["top", "bottom", "left", "right"];
+
+    foreach (var bladeDir in bladeDirs)
+    {
+      PieceDataDictionary.Add(
+        PrefabNames.GetRamBladeName(bladeDir), new PieceData()
+        {
+          Name =
+            $"valheim_vehicles_ram_blade $valheim_vehicles_direction_{bladeDir} $valheim_vehicles_material_bronze",
+          Description = "valheim_vehicles_ram_blade_desc",
+          Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(
+            SpriteNames.GetRamBladeName(bladeDir))
+        });
+    }
+  }
+
   private static void RegisterExternalShips()
   {
+    if (!ValheimRaftPlugin.Instance.AllowExperimentalPrefabs.Value) return;
+
     const string prefabName = "Nautilus Submarine";
-    const string description = $"Nautilus technology discovered. Have Fun!";
+    const string description = $"Experimental Nautilus technology discovered. Have Fun!";
     PieceDataDictionary.Add(
       PrefabNames.Nautilus, new PieceData()
       {
@@ -44,7 +76,7 @@ public abstract class PrefabRegistryHelpers
       });
   }
 
-  // todo consider using Jotunn.Manager.RenderManager for these Icon generation
+// todo consider using Jotunn.Manager.RenderManager for these Icon generation
   /// todo auto generate this from the translations json
   /// 4x4 and 2x2 icons look similar, may remove 4x4
   public static void Init()
@@ -52,6 +84,7 @@ public abstract class PrefabRegistryHelpers
     PieceLayer = LayerMask.NameToLayer("piece");
     var spriteAtlas = LoadValheimVehicleAssets.VehicleSprites;
 
+    RegisterRamPieces();
     RegisterExternalShips();
     // slabs
     const string slabName = "valheim_vehicles_hull_slab";
@@ -311,12 +344,33 @@ public abstract class PrefabRegistryHelpers
     var wearNTearComponent = GetWearNTearSafe(prefabComponent);
 
     wearNTearComponent.m_noSupportWear = canFloat;
-
-    wearNTearComponent.m_health = PrefabRegistryController.wearNTearBaseHealth * tierMultiplier;
-    wearNTearComponent.m_noRoofWear = false;
     wearNTearComponent.m_destroyedEffect =
       LoadValheimAssets.woodFloorPieceWearNTear.m_destroyedEffect;
     wearNTearComponent.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
+
+    if (tierMultiplier == 1)
+    {
+      wearNTearComponent.m_materialType = WearNTear.MaterialType.Wood;
+      wearNTearComponent.m_destroyedEffect =
+        LoadValheimAssets.woodFloorPieceWearNTear.m_destroyedEffect;
+    }
+    else if (tierMultiplier == 2)
+    {
+      wearNTearComponent.m_materialType = WearNTear.MaterialType.Stone;
+      wearNTearComponent.m_destroyedEffect =
+        LoadValheimAssets.stoneFloorPieceWearNTear.m_destroyedEffect;
+      wearNTearComponent.m_hitEffect = LoadValheimAssets.stoneFloorPieceWearNTear.m_hitEffect;
+    }
+    else if (tierMultiplier == 3)
+    {
+      wearNTearComponent.m_materialType = WearNTear.MaterialType.Iron;
+      wearNTearComponent.m_destroyedEffect =
+        LoadValheimAssets.stoneFloorPieceWearNTear.m_destroyedEffect;
+      wearNTearComponent.m_hitEffect = LoadValheimAssets.stoneFloorPieceWearNTear.m_hitEffect;
+    }
+
+    wearNTearComponent.m_health = PrefabRegistryController.wearNTearBaseHealth * tierMultiplier;
+    wearNTearComponent.m_noRoofWear = false;
 
     return wearNTearComponent;
   }
