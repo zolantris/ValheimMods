@@ -363,10 +363,8 @@ public abstract class PrefabRegistryHelpers
     }
     else if (tierMultiplier == 3)
     {
+      // todo add different hit effect and destroy effect
       wearNTearComponent.m_materialType = WearNTear.MaterialType.Iron;
-      wearNTearComponent.m_destroyedEffect =
-        LoadValheimAssets.stoneFloorPieceWearNTear.m_destroyedEffect;
-      wearNTearComponent.m_hitEffect = LoadValheimAssets.stoneFloorPieceWearNTear.m_hitEffect;
     }
 
     wearNTearComponent.m_health = PrefabRegistryController.wearNTearBaseHealth * tierMultiplier;

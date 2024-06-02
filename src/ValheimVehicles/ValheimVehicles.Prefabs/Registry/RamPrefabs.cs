@@ -1,3 +1,4 @@
+using System;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Extensions;
@@ -21,6 +22,15 @@ public class RamPrefabs : IRegisterPrefab
     public GameObject asset;
   }
 
+  private const float minimumHitInterval = 0.5f;
+
+  /// <summary>
+  /// @todo make this a Config JSON or Value in Vehicles config 
+  /// </summary>
+  private const float hitInterval = 2.0f;
+
+  private const float hitRadius = 10;
+
   private Aoe SetupAoeComponent(GameObject colliderObj)
   {
     var aoe = colliderObj.AddComponent<Aoe>();
@@ -31,13 +41,13 @@ public class RamPrefabs : IRegisterPrefab
     aoe.m_hitFriendly = true;
     aoe.m_hitEnemy = true;
     aoe.m_hitParent = false;
-    aoe.m_hitInterval = 0.2f;
+    aoe.m_hitInterval = Mathf.Max(minimumHitInterval, hitInterval);
     // todo need to tweak this
     aoe.m_damageSelf = 0;
     // aoe.m_scaleDamageByDistance = true;
     aoe.m_toolTier = 100;
     aoe.m_attackForce = 5;
-    aoe.m_radius = 10;
+    aoe.m_radius = hitRadius;
     aoe.m_useTriggers = true;
     aoe.m_triggerEnterOnly = false;
     aoe.m_useCollider = null;
@@ -61,7 +71,7 @@ public class RamPrefabs : IRegisterPrefab
     var wnt = PrefabRegistryHelpers.SetWearNTear(prefab, 3);
     PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.RamNose, prefab);
 
-    var noseColliderObj = prefab.transform.FindDeepChild("collider")?.gameObject;
+    var noseColliderObj = prefab.transform.Find("damage_colliders")?.gameObject;
     PrefabRegistryHelpers.SetWearNTear(prefab, 3);
 
     // just a safety check should always work unless and update breaks things
