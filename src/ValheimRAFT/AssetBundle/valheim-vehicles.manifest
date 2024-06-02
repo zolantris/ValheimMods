@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3001155183
+CRC: 2255006181
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: d2e0b58eec2045beab40f593ae0f5b5a
+    Hash: dad4c7359550ccb59e2a681dbdc13a50
   TypeTreeHash:
     serializedVersion: 2
     Hash: 9de5c4e5f8d12d9935b13bf93fed7941
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: d2e0b58eec2045beab40f593ae0f5b5a
+    Hash: dad4c7359550ccb59e2a681dbdc13a50
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -91,9 +91,11 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/mechanical_switch.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/hud_anchor.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_2x2_worn.prefab
+- Assets/ValheimVehicles/Prefabs/hull_window_2x2_wood.prefab
 - Assets/ValheimVehicles/Prefabs/custom_sail.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_4x4_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_rudder_advanced_double.prefab
+- Assets/ValheimVehicles/Prefabs/hull_window_4x4_wood.prefab
 - Assets/ValheimVehicles/Prefabs/ram_nose.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_center_wood.prefab

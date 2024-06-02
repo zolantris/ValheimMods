@@ -75,7 +75,7 @@ Material:
     - _AddRain: 1
     - _BumpScale: 1
     - _Cull: 2
-    - _Cutoff: 0.5
+    - _Cutoff: 0.579
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _GlossMapScale: 1
