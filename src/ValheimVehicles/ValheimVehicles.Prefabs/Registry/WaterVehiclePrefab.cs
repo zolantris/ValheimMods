@@ -114,8 +114,8 @@ public class WaterVehiclePrefab : IRegisterPrefab
     impactEffect.m_toolTier = 1000;
 
     impactEffect.m_damages.m_blunt = 50;
-    impactEffect.m_damages.m_chop = 500;
-    impactEffect.m_damages.m_pickaxe = 500;
+    impactEffect.m_damages.m_chop = 0;
+    impactEffect.m_damages.m_pickaxe = 0;
 
     impactEffect.m_interval = 0.5f;
     impactEffect.m_damagePlayers = true;

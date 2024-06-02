@@ -7,6 +7,7 @@ using Jotunn.Extensions;
 using Jotunn.Managers;
 using Registry;
 using UnityEngine;
+using UnityEngine.UI;
 using ValheimRAFT;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles.Interfaces;
@@ -444,6 +445,10 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
   private void UpdateRemovePieceCollisionExclusions()
   {
     var excludedLayers = LayerMask.GetMask("piece_nonsolid");
+
+    // var physicalLayers = LayerMask.GetMask("Default", "character", "piece", "terrain",
+    //   "static_solid", "Default_small", "character_net", "vehicle", LayerMask.LayerToName(29));
+    // m_body.includeLayers = physicalLayers;
     m_body.excludeLayers = excludedLayers;
   }
 
@@ -802,9 +807,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     m_stearForce = (flight ? 0.2f : 1f);
     m_stearVelForceFactor = 1.3f;
     m_waterImpactDamage = 0f;
-    /*
-     * this may be unstable and require a getter each time...highly doubt it though.
-     */
+
     if (!_impactEffect)
     {
       _impactEffect = GetComponent<ImpactEffect>();
@@ -817,14 +820,8 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 
     if ((bool)_impactEffect)
     {
-      // if (_impactEffect.m_nview.name.Contains(PrefabNames.WaterVehicleShip))
-      // {
-      //   return;
-      // }
-
       _impactEffect.m_nview = m_nview;
       _impactEffect.m_body = m_body;
-
       _impactEffect.m_hitType = HitData.HitType.Boat;
       _impactEffect.m_interval = 0.5f;
       _impactEffect.m_minVelocity = 0.1f;
@@ -1325,6 +1322,12 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     return num2 * num3;
   }
 
+  private Vector3 GetAdditiveSteerForce(float directionMultiplier)
+  {
+    return ShipDirection.right * m_stearForce * (0f - MovementController.m_rudderValue) *
+           directionMultiplier;
+  }
+
   /// <summary>
   /// Sets the speed of the ship with rudder speed added to it.
   /// </summary>
@@ -1364,8 +1367,20 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     // todo see if this is necessary. This logic is from the Base game Ship
     if (VehicleSpeed is Ship.Speed.Back or Ship.Speed.Slow)
     {
-      steerForce += ShipDirection.right * m_stearForce * (0f - MovementController.m_rudderValue) *
-                    directionMultiplier;
+      steerForce += GetAdditiveSteerForce(directionMultiplier);
+    }
+
+    // Same logic as above, just separate to split out rudder custom speed potential divergence
+    if (ValheimRaftPlugin.Instance.AllowCustomRudderSpeeds.Value)
+    {
+      if (
+        (VehicleSpeed is Ship.Speed.Half &&
+         ValheimRaftPlugin.Instance.VehicleRudderSpeedHalf.Value > 0) ||
+        (VehicleSpeed is Ship.Speed.Full &&
+         ValheimRaftPlugin.Instance.VehicleRudderSpeedFull.Value > 0))
+      {
+        steerForce += GetAdditiveSteerForce(directionMultiplier);
+      }
     }
 
     if (TargetHeight > 0)

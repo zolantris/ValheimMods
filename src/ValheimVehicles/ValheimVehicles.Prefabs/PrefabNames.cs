@@ -126,9 +126,11 @@ public static class PrefabNames
   public const string VehicleShipMovementOrientation = "VehicleShip_MovementOrientation";
   public const string VehicleHudAnchorIndicator = $"{ValheimVehiclesPrefix}_HudAnchorIndicator";
 
+  public const string RamBladePrefix = $"{ValheimVehiclesPrefix}_ram_blade";
+
   public static string GetRamBladeName(string val)
   {
-    return $"{ValheimVehiclesPrefix}_ram_blade_{val.ToLower()}_bronze";
+    return $"{RamBladePrefix}_{val.ToLower()}_bronze";
   }
 
   public const string RamNose = $"{ValheimVehiclesPrefix}_ram_nose_bronze";

@@ -8,6 +8,7 @@ using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimRAFT.Util;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles.Components;
@@ -1662,6 +1663,13 @@ public class BaseVehicleController : MonoBehaviour
       ladder.baseVehicleController = instance;
     }
 
+    var isRam = netView.name.StartsWith(PrefabNames.RamBladePrefix);
+    if (isRam)
+    {
+      var vehicleRamAoe = netView.GetComponentInChildren<VehicleRamAoe>();
+      if ((bool)vehicleRamAoe) vehicleRamAoe.vehicle = VehicleInstance.Instance;
+    }
+
     FixPieceMeshes(netView);
     UpdateMass(netView);
 
@@ -1680,16 +1688,19 @@ public class BaseVehicleController : MonoBehaviour
         break;
     }
 
-    /*
-     * @todo investigate why this is called. Determine if it is needed
-     *
-     * - most likely this is to prevent other rigidbody nodes from interacting with unity world physics within the ship
-     */
-    var rbs = netView.GetComponentsInChildren<Rigidbody>();
-    foreach (var rbsItem in rbs)
+
+    if (!isRam)
     {
-      if (!rbsItem.isKinematic) continue;
-      Destroy(rbsItem);
+      /*
+       * Todo Allow Rigidbodies on the boat since they could be just collider managers.
+       * This check is likely not needed, but may be required to prevent other mods from breaking boats, hence why it's kept. Eventually Rigidbodies that attach to the boat could be allowed
+       */
+      var rbs = netView.GetComponentsInChildren<Rigidbody>();
+      foreach (var rbsItem in rbs)
+      {
+        if (!rbsItem.isKinematic || isRam) continue;
+        Destroy(rbsItem);
+      }
     }
 
     if (hasDebug)
