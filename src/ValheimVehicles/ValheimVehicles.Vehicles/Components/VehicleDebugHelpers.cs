@@ -104,7 +104,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   {
     if (!(bool)VehicleShipInstance.m_body) return;
     // flips the x and z axis which act as the boat depth and sides
-    // y axis is boat height. Flipping that would just rotate boat which is why it is omitted
+    // y-axis is boat height. Flipping that would just rotate boat which is why it is omitted
     if (!VehicleShipInstance.isCreative)
     {
       VehicleShipInstance.m_body.isKinematic = true;

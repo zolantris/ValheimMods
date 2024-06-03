@@ -128,7 +128,6 @@ public class BaseVehicleController : MonoBehaviour
   public BoxCollider m_blockingcollider = new();
   internal BoxCollider m_floatcollider = new();
   internal BoxCollider m_onboardcollider = new();
-  public bool isCreative = false;
 
   private int _persistentZdoId;
 
@@ -1174,6 +1173,7 @@ public class BaseVehicleController : MonoBehaviour
   /// <returns></returns>
   public static bool AddDynamicParentForVehicle(ZNetView source, BaseVehicleController bvc)
   {
+    if (source == null) return false;
     if (!source.isActiveAndEnabled)
     {
       Logger.LogDebug("Player source Not active");

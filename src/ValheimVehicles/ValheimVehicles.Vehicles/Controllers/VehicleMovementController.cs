@@ -361,7 +361,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
     }
 
     NetView.GetZDO().Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
-    ShipInstance.Instance.ToggleShipEffects();
+    ShipInstance.Instance.UpdateShipEffects();
   }
 
   public void Ascend()
@@ -388,7 +388,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
     }
 
     NetView.GetZDO().Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
-    ShipInstance.Instance.ToggleShipEffects();
+    ShipInstance.Instance.UpdateShipEffects();
   }
 
   public void AutoAscendUpdate()

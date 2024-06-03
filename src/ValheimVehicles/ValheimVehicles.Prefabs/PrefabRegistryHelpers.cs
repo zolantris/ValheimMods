@@ -72,7 +72,7 @@ public abstract class PrefabRegistryHelpers
       {
         Name = prefabName,
         Description = description,
-        Icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.Nautilus)
       });
   }
 

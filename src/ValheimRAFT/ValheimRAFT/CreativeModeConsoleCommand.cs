@@ -20,6 +20,7 @@ public class CreativeModeConsoleCommand : ConsoleCommand
 
   private static IEnumerator SetPlayerBackOnBoat(Character character)
   {
+    yield return new WaitForSeconds(0.5f);
     yield return new WaitForFixedUpdate();
     character.m_body.velocity = Vector3.zero;
     character.m_body.angularVelocity = Vector3.zero;
@@ -101,14 +102,8 @@ public class CreativeModeConsoleCommand : ConsoleCommand
       var directionRaftUpwards = new Vector3(ship.transform.position.x,
         shipYPosition,
         ship.transform.position.z);
-      var rotationWithoutTilt = Quaternion.Euler(0, ship.m_body.rotation.eulerAngles.y, 0);
-      ship.SetCreativeMode(true);
-
       ship.m_body.position = directionRaftUpwards;
-      ship.m_body.transform.rotation = rotationWithoutTilt;
-      ship.Instance.transform.rotation = rotationWithoutTilt;
-      ship.VehicleController.Instance.transform.rotation = rotationWithoutTilt;
-      ship.transform.rotation = rotationWithoutTilt;
+      ship.SetCreativeMode(true);
       character.StartCoroutine(SetPlayerBackOnBoat(character));
     }
     else

@@ -21,16 +21,18 @@ public abstract class ShipHulls
     public const string YggdrasilWood = "yggdrasil_wood";
   }
 
-  public static void SetMaterialValues(string hullMaterial, WearNTear wnt, int pieces)
+  public static void SetMaterialHealthValues(string hullMaterial, WearNTear wnt, int pieces)
   {
     switch (hullMaterial)
     {
+      // wood health support is 400 for a normal plank but these are extra thick so +200
+      // iron reinforced wood is 2000 health but these are rustic plats but can be made larger and are also slightly weaker since they incorporate bronze out layer
       case HullMaterial.Iron:
         PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.Iron);
-        wnt.m_health = 1200f * pieces;
+        wnt.m_health = 1600 * pieces;
         break;
       case HullMaterial.Wood:
-        wnt.m_health = 600f * pieces;
+        wnt.m_health = 600 * pieces;
         break;
     }
   }

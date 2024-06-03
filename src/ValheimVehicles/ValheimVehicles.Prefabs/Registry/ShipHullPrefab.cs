@@ -25,13 +25,22 @@ public class ShipHullPrefab : IRegisterPrefab
     {
       foreach (var sizeVariant in sizeVariants)
       {
-        RegisterHull(PrefabNames.GetHullSlabVariants(hullMaterialType, sizeVariant),
+        var materialCount = sizeVariant == PrefabNames.PrefabSizeVariant.Two ? 2 ^ 2 : 4 ^ 2;
+        RegisterHull(
+          PrefabNames.GetHullSlabVariants(hullMaterialType, sizeVariant),
           hullMaterialType,
-          1, sizeVariant, prefabManager, pieceManager);
+          materialCount,
+          sizeVariant,
+          prefabManager,
+          pieceManager);
 
-        RegisterHull(PrefabNames.GetHullWallVariants(hullMaterialType, sizeVariant),
+        RegisterHull(
+          PrefabNames.GetHullWallVariants(hullMaterialType, sizeVariant),
           hullMaterialType,
-          1, sizeVariant, prefabManager, pieceManager);
+          materialCount,
+          sizeVariant,
+          prefabManager,
+          pieceManager);
       }
     }
 
@@ -50,29 +59,42 @@ public class ShipHullPrefab : IRegisterPrefab
       prefabManager, pieceManager);
   }
 
-  public static RequirementConfig GetRequirements(string material, int materialCount)
+  public static RequirementConfig[] GetRequirements(string material, int materialCount)
   {
-    var item = "Wood";
-    var amountPerCount = 20;
-
+    RequirementConfig[] requirements = [];
     switch (material)
     {
       case ShipHulls.HullMaterial.Iron:
-        item = "Iron";
-        amountPerCount = 2;
+        requirements.AddItem(new RequirementConfig
+        {
+          Amount = 2 * materialCount,
+          Item = "Iron",
+          Recover = true
+        });
+        requirements.AddItem(new RequirementConfig
+        {
+          Amount = 2 * materialCount,
+          Item = "Bronze",
+          Recover = true
+        });
+        requirements.AddItem(new RequirementConfig
+        {
+          Amount = 10 * materialCount,
+          Item = "BronzeNails",
+          Recover = true
+        });
         break;
       case ShipHulls.HullMaterial.Wood:
-        item = "Wood";
-        amountPerCount = 10;
+        requirements.AddItem(new RequirementConfig
+        {
+          Amount = 10 * materialCount,
+          Item = "Wood",
+          Recover = true
+        });
         break;
     }
 
-    return new RequirementConfig
-    {
-      Amount = amountPerCount * materialCount,
-      Item = item,
-      Recover = true
-    };
+    return requirements;
   }
 
   /// <summary>
@@ -99,7 +121,7 @@ public class ShipHullPrefab : IRegisterPrefab
     wnt.m_switchEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_switchEffect;
     wnt.m_hitNoise = LoadValheimAssets.woodFloorPieceWearNTear.m_hitNoise;
 
-    ShipHulls.SetMaterialValues(hullMaterial, wnt, 9);
+    ShipHulls.SetMaterialHealthValues(hullMaterial, wnt, 9);
     PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
@@ -116,7 +138,7 @@ public class ShipHullPrefab : IRegisterPrefab
       PieceTable = "Hammer",
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = [GetRequirements(hullMaterial, 4)]
+      Requirements = GetRequirements(hullMaterial, 4)
     }));
   }
 
@@ -194,7 +216,7 @@ public class ShipHullPrefab : IRegisterPrefab
     wnt.m_switchEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_switchEffect;
     wnt.m_hitNoise = LoadValheimAssets.woodFloorPieceWearNTear.m_hitNoise;
 
-    ShipHulls.SetMaterialValues(hullMaterial, wnt, 1);
+    ShipHulls.SetMaterialHealthValues(hullMaterial, wnt, materialCount);
     PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
     // this will be used to hide water on the boat
     var hoistParents = new[] { "new" };
@@ -222,7 +244,7 @@ public class ShipHullPrefab : IRegisterPrefab
       PieceTable = "Hammer",
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = isEnabled,
-      Requirements = [GetRequirements(hullMaterial, materialCount)]
+      Requirements = GetRequirements(hullMaterial, materialCount)
     }));
   }
 }

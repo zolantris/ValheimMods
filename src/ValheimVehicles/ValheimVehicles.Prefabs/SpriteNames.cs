@@ -29,6 +29,8 @@ public abstract class SpriteNames
 
   public const string RamNose = "ram_nose";
 
+  public const string Nautilus = "nautilus";
+
   /// <summary>
   /// Can be top,bottom,left,right this helper is likely not needed, but provided for organization
   /// </summary>

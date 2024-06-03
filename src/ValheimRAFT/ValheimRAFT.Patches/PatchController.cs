@@ -10,8 +10,9 @@ namespace ValheimRAFT.Patches;
 
 internal static class PatchController
 {
-  public static string PlanBuildGUID = "marcopogo.PlanBuild";
-
+  private const string PlanBuildGuid = "marcopogo.PlanBuild";
+  private const string ComfyGizmoGuid = "bruce.valheim.comfymods.gizmo";
+  public static bool HasGizmoMod = false;
   private static Harmony? Harmony;
 
   internal static void Apply(string harmonyGuid)
@@ -42,15 +43,15 @@ internal static class PatchController
       Harmony.PatchAll(typeof(StartScene_Patch));
     }
 
-    if (ValheimRaftPlugin.Instance.ComfyGizmoPatches.Value &&
-        Chainloader.PluginInfos.ContainsKey("bruce.valheim.comfymods.gizmo"))
+    HasGizmoMod = Chainloader.PluginInfos.ContainsKey(ComfyGizmoGuid);
+    if (HasGizmoMod && ValheimRaftPlugin.Instance.ComfyGizmoPatches.Value)
     {
       Logger.LogInfo("Patching ComfyGizmo GetRotation");
       Harmony.PatchAll(typeof(ComfyGizmo_Patch));
     }
 
     /*
-     * PlanBuild uses mmmHookgen so it cannot be detected with bepinex
+     * PlanBuild uses mmmHookgen, so it cannot be detected with bepinex
      *
      * The patch flag must be enabled and the folder must be detected otherwise it will not apply to patch a mod that does not exist
      *
@@ -58,7 +59,8 @@ internal static class PatchController
      */
     if (ValheimRaftPlugin.Instance.PlanBuildPatches.Value &&
         (Directory.Exists(Path.Combine(Paths.PluginPath, "MathiasDecrock-PlanBuild")) ||
-         Directory.Exists(Path.Combine(Paths.PluginPath, "PlanBuild"))))
+         Directory.Exists(Path.Combine(Paths.PluginPath, "PlanBuild")) ||
+         Chainloader.PluginInfos.ContainsKey(PlanBuildGuid)))
     {
       Logger.LogInfo("Applying PlanBuild Patch");
       Harmony.PatchAll(typeof(PlanBuild_Patch));

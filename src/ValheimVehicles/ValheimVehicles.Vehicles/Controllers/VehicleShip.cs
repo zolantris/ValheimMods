@@ -9,6 +9,7 @@ using Registry;
 using UnityEngine;
 using UnityEngine.UI;
 using ValheimRAFT;
+using ValheimRAFT.Patches;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles.Interfaces;
 using ValheimVehicles.Vehicles.Structs;
@@ -56,9 +57,6 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     VehicleShipHelpers.GetOrFindObj(_piecesContainer, transform.parent.gameObject,
       PrefabNames.PiecesContainer);
 
-  // floating mechanics
-  private bool _hasBoatSway = true;
-
   public static readonly List<VehicleShip> AllVehicles = [];
 
   private GameObject _piecesContainer;
@@ -66,7 +64,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
   private ImpactEffect _impactEffect;
   public float TargetHeight => MovementController.TargetHeight;
 
-  public bool isCreative = false;
+  public bool isCreative;
 
   public static bool HasVehicleDebugger = false;
 
@@ -74,6 +72,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
   {
     isCreative = val;
     UpdateShipEffects();
+    UpdateShipCreativeModeRotation();
   }
 
   public static bool CustomShipPhysicsEnabled = false;
@@ -527,12 +526,15 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
       return;
     }
 
-    FixShipRotation();
-
-    if (!_hasBoatSway)
+    /*
+     * creative mode should not allow movement and applying force on a object will cause errors when the object is kinematic
+     */
+    if (isCreative || m_body.isKinematic)
     {
       return;
     }
+
+    FixShipRotation();
 
     VehiclePhysicsFixedUpdate();
   }
@@ -993,12 +995,24 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     m_body.useGravity = TargetHeight == 0f;
   }
 
-  public void EnforceCreativeMode()
+  public void UpdateShipCreativeModeRotation()
   {
-    if (!_controller) return;
-    if ((!_controller.isCreative || m_body.rotation.eulerAngles.x == 0) &&
-        m_body.rotation.eulerAngles.z == 0) return;
-    var rotationWithoutTilt = Quaternion.Euler(0, m_body.rotation.eulerAngles.y, 0);
+    if (!isCreative) return;
+    var rotationY = m_body.rotation.eulerAngles.y;
+
+    if (PatchController.HasGizmoMod)
+    {
+      if (ValheimRaftPlugin.Instance.ComfyGizmoPatchCreativeHasNoRotation.Value)
+      {
+        rotationY = 0;
+      }
+      else
+      {
+        rotationY = ComfyGizmo_Patch.GetNearestSnapRotation(m_body.rotation.eulerAngles.y);
+      }
+    }
+
+    var rotationWithoutTilt = Quaternion.Euler(0, rotationY, 0);
     m_body.rotation = rotationWithoutTilt;
   }
 
@@ -1009,15 +1023,6 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
   {
     if (!(bool)_controller || !(bool)m_nview || m_nview.m_zdo == null ||
         !(bool)ShipDirection) return;
-
-    /*
-     * creative mode should not allow movement and applying force on a object will cause errors when the object is kinematic
-     */
-    if (_controller.isCreative || m_body.isKinematic)
-    {
-      EnforceCreativeMode();
-      return;
-    }
 
     UpdateGravity();
 

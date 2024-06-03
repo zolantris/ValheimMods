@@ -327,6 +327,12 @@
             <HintPath>$(SolutionDir)\libs\Advize_PlantEasily.dll</HintPath>
             <Private>False</Private>
         </Reference>
+        <Publicize Include="ComfyGizmo"/>
+        <Reference Include="ComfyGizmo">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>$(SolutionDir)\libs\ComfyGizmo.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
     </ItemGroup>
 
     <!--  Metrics  -->

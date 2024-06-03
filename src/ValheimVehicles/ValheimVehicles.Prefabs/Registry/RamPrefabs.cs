@@ -22,40 +22,10 @@ public class RamPrefabs : IRegisterPrefab
     public GameObject asset;
   }
 
-  private const float minimumHitInterval = 0.5f;
-
-  /// <summary>
-  /// @todo make this a Config JSON or Value in Vehicles config 
-  /// </summary>
-  private const float hitInterval = 2.0f;
-
-  private const float hitRadius = 10;
 
   private VehicleRamAoe SetupAoeComponent(GameObject colliderObj)
   {
     var aoe = colliderObj.AddComponent<VehicleRamAoe>();
-    aoe.m_blockable = false;
-    aoe.m_dodgeable = false;
-    aoe.m_hitTerrain = true;
-    aoe.m_hitProps = true;
-    aoe.m_hitCharacters = true;
-    aoe.m_hitFriendly = true;
-    aoe.m_hitEnemy = true;
-    aoe.m_hitParent = false;
-    aoe.m_hitInterval = Mathf.Max(minimumHitInterval, hitInterval);
-    // todo need to tweak this
-    aoe.m_damageSelf = 0;
-    aoe.m_toolTier = 100;
-    aoe.m_attackForce = 5;
-    aoe.m_radius = hitRadius;
-    aoe.m_useTriggers = true;
-    aoe.m_triggerEnterOnly = true;
-    aoe.m_useCollider = null;
-    aoe.m_useAttackSettings = true;
-    aoe.m_ttl = 0;
-    aoe.m_canRaiseSkill = true;
-    aoe.m_skill = Skills.SkillType.None;
-    aoe.m_backstabBonus = 1;
     return aoe;
   }
 

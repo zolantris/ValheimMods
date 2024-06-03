@@ -64,6 +64,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> PlanBuildPatches { get; set; }
 
   public ConfigEntry<bool> ComfyGizmoPatches { get; set; }
+  public ConfigEntry<bool> ComfyGizmoPatchCreativeHasNoRotation { get; set; }
 
   public ConfigEntry<bool> ShipPausePatch { get; set; }
   public ConfigEntry<bool> ShipPausePatchSinglePlayer { get; set; }
@@ -410,11 +411,14 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       CreateConfigDescription(
         "Outputs more debug logs for the Vehicle components. Useful for troubleshooting errors, but will spam logs"));
 
-    ComfyGizmoPatches = Config.Bind("ComfyGizmoPatches",
-      "Enable Comfy Gizmo Patches", true,
+    ComfyGizmoPatches = Config.Bind("Patches",
+      "ComfyGizmo - Enable Patch", false,
       CreateConfigDescription(
-        "Patches relative rotation allowing for copying rotation and building while the raft is at movement, this toggle is only provided in case patches regress anything in Gizmos and players need a work around.",
-        true, false));
+        "Patches relative rotation allowing for copying rotation and building while the raft is at movement, this toggle is only provided in case patches regress anything in Gizmos and players need a work around."));
+    ComfyGizmoPatchCreativeHasNoRotation = Config.Bind("Patches",
+      "ComfyGizmo - Vehicle Creative zero Y rotation", true,
+      CreateConfigDescription(
+        "Vehicle/Raft Creative mode will set all axises to 0 for rotation instead keeping the turn axis. Gizmo has issues with rotated vehicles, so zeroing things out is much safer. Works regardless of patch if mod exists"));
 
     ShipPausePatch = Config.Bind<bool>("Patches",
       "Vehicles Prevent Pausing", true,

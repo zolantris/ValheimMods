@@ -26,6 +26,7 @@
         <Compile Include="ValheimRAFT.Patches\CharacterAnimEvent_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Character_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Advize_PlantEasily_Patch.cs"/>
+        <Compile Include="ValheimRAFT.Patches\ComfyGizmo_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\DynamicSpawnAndLogoutPatches.cs"/>
         <Compile Include="ValheimRAFT.Patches\GamePause_Patch.cs"/>
         <Compile Include="ValheimRAFT.Patches\Hud_Patch.cs"/>
@@ -243,6 +244,9 @@
         </Compile>
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Helpers\RamAoeComponent.cs">
             <Link>ValheimVehicles.Helpers\RamAoeComponent.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Helpers\RotationManager.cs">
+            <Link>ValheimVehicles.Helpers\RotationManager.cs</Link>
         </Compile>
     </ItemGroup>
     <PropertyGroup>

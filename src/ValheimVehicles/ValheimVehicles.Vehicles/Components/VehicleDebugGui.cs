@@ -25,12 +25,12 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     return new Vector3(x, y, z);
   }
 
-  private PlayerSpawnController? GetCurrentPlayerSpawnController()
-  {
-    if (!Player.m_localPlayer) return null;
-    var spawnController = Player.m_localPlayer.GetComponent<PlayerSpawnController>();
-    return spawnController;
-  }
+  // private PlayerSpawnController? GetCurrentPlayerSpawnController()
+  // {
+  //   if (!Player.m_localPlayer) return null;
+  //   var spawnController = Player.m_localPlayer.GetComponent<PlayerSpawnController>();
+  //   return spawnController;
+  // }
 
   private void OnGUI()
   {
@@ -62,23 +62,20 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     if (GUILayout.Button("Set logoutpoint"))
     {
       PlayerSpawnController.CanUpdateLogoutPoint = true;
-      var spawnController = GetCurrentPlayerSpawnController();
-      spawnController?.SyncLogoutPoint();
+      PlayerSpawnController.Instance?.SyncLogoutPoint();
       PlayerSpawnController.CanUpdateLogoutPoint = false;
     }
 
     if (GUILayout.Button("Move to current spawn"))
     {
       PlayerSpawnController.CanUpdateLogoutPoint = false;
-      var spawnController = GetCurrentPlayerSpawnController();
-      spawnController?.MovePlayerToSpawnPoint();
+      PlayerSpawnController.Instance?.MovePlayerToSpawnPoint();
       PlayerSpawnController.CanUpdateLogoutPoint = false;
     }
 
     if (GUILayout.Button("Move to current logout"))
     {
-      var spawnController = GetCurrentPlayerSpawnController();
-      spawnController?.MovePlayerToLoginPoint();
+      PlayerSpawnController.Instance?.MovePlayerToLoginPoint();
     }
 
     if (GUILayout.Button("DebugFind PlayerSpawnController"))
