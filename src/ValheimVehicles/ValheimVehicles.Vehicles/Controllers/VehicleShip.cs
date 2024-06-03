@@ -73,6 +73,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
   public void SetCreativeMode(bool val)
   {
     isCreative = val;
+    UpdateShipEffects();
   }
 
   public static bool CustomShipPhysicsEnabled = false;
@@ -401,9 +402,9 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     }
   }
 
-  public void ToggleShipEffects()
+  public void UpdateShipEffects()
   {
-    if (TargetHeight > 0f)
+    if (TargetHeight > 0f || isCreative)
     {
       ShipEffectsObj?.SetActive(false);
     }
