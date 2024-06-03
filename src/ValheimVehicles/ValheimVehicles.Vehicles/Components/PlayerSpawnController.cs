@@ -294,12 +294,16 @@ public class PlayerSpawnController : MonoBehaviour
     var zdoRotation = spawnZdo?.GetRotation();
     if (!Player.m_localPlayer || zdoPosition == null || zdoRotation == null) yield break;
 
-    Player.m_localPlayer?.TeleportTo(zdoPosition.Value + offset, zdoRotation.Value,
-      distantTeleport: true);
+    var positionWithOffset = zdoPosition.Value + offset;
+    ZNet.instance.SetReferencePosition(positionWithOffset);
+    SyncPlayerPosition(positionWithOffset);
+
+    // Player.m_localPlayer?.TeleportTo(positionWithOffset, zdoRotation.Value,
+    //   distantTeleport: true);
 
     yield return new WaitUntil(() => ZNetScene.instance.FindInstance(spawnZdo));
     var spawnZdoInstance = ZNetScene.instance.FindInstance(spawnZdo);
-    SyncPlayerPosition(spawnZdoInstance.transform.position);
+    // SyncPlayerPosition(spawnZdoInstance.transform.position);
     // BaseVehicleController? bvc = null;
     // if (zdoNetViewInstance)
     // {
