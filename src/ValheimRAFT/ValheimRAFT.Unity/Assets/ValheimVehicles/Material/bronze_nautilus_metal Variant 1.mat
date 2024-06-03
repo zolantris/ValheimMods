@@ -14,7 +14,6 @@ Material:
   m_ValidKeywords:
   - _NORMALMAP
   m_InvalidKeywords:
-  - _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
   - _TWOSIDEDNORMALS_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -44,9 +43,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _BumpScale: 1
+    - _BumpScale: 0.5
     - _Glossiness: 0.71
-    - _Metallic: 0.794
+    - _Metallic: 0.78
+    - _SmoothnessTextureChannel: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2255006181
+CRC: 4238052342
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: dad4c7359550ccb59e2a681dbdc13a50
+    Hash: 9b59e2ee7b0514767e05fa9e191fc781
   TypeTreeHash:
     serializedVersion: 2
     Hash: 9de5c4e5f8d12d9935b13bf93fed7941
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: dad4c7359550ccb59e2a681dbdc13a50
+    Hash: 9b59e2ee7b0514767e05fa9e191fc781
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -68,16 +68,16 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/ram_blade_left.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_ship.prefab
-- Assets/ValheimVehicles/Prefabs/rudder_basic.prefab
+- Assets/hull_wall_2x2_iron 1.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_2x2_iron.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_iron.prefab
+- Assets/ValheimVehicles/Prefabs/rudder_basic.prefab
+- Assets/ValheimVehicles/Prefabs/hull_wall_4x4_iron.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_double_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_2x2_iron.prefab
-- Assets/ValheimVehicles/Prefabs/hull_wall_4x4_iron.prefab
+- Assets/ValheimVehicles/Prefabs/ram_blade_top.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_iron.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_double_wood.prefab
-- Assets/ValheimVehicles/Prefabs/ram_blade_top.prefab
-- Assets/ValheimVehicles/Prefabs/hull_rib_wood 1.prefab
 - Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
 - Assets/Shader/Custom_Piece.shader
 - Assets/ValheimVehicles/Prefabs/hull_rib_wood.prefab
