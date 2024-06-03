@@ -42,6 +42,12 @@ internal static class PatchController
       Harmony.PatchAll(typeof(StartScene_Patch));
     }
 
+    if (Chainloader.PluginInfos.ContainsKey("bruce.valheim.comfymods.gizmo"))
+    {
+      Logger.LogInfo("Patching ComfyGizmo GetRotation for Vehicles");
+      Harmony.PatchAll(typeof(ComfyGizmo_Patch));
+    }
+
     /*
      * PlanBuild uses mmmHookgen so it cannot be detected with bepinex
      *

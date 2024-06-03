@@ -304,20 +304,6 @@ public class Player_Patch
     return false;
   }
 
-  // [HarmonyPatch(typeof(Player), "UpdatePlacementGhost")]
-  // [HarmonyPostfix]
-  // public static void UpdatePlacementGhost(Player __instance)
-  // {
-  //   if (!__instance?.m_placementGhost) return;
-  //
-  //   var eulerAngles = __instance.m_placementGhost.transform.rotation.eulerAngles;
-  //   var x = eulerAngles.x;
-  //   var y = eulerAngles.y;
-  //   var z = eulerAngles.z;
-  //   __instance.m_placementGhost.transform.rotation =
-  //     RelativeEuler(x, y, z);
-  // }
-
   [HarmonyPatch(typeof(Player), "UpdatePlacementGhost")]
   [HarmonyTranspiler]
   public static IEnumerable<CodeInstruction> UpdatePlacementGhost(
@@ -332,31 +318,9 @@ public class Player_Patch
             typeof(float)
           })))
         list[i] = new CodeInstruction(OpCodes.Call,
-          AccessTools.Method(typeof(Player_Patch), nameof(RelativeEuler)));
+          AccessTools.Method(typeof(VehicleRotionHelpers),
+            nameof(VehicleRotionHelpers.RelativeEuler)));
     return list;
-  }
-
-  public static Quaternion RelativeEuler(float x, float y, float z)
-  {
-    var rot = Quaternion.Euler(x, y, z);
-    if (!PatchSharedData.PlayerLastRayPiece) return rot;
-
-    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<BaseVehicleController>();
-    if (bvc)
-    {
-      return bvc.transform.rotation * rot;
-    }
-
-    if (!ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value) return rot;
-
-    var mbr = PatchSharedData.PlayerLastRayPiece
-      .GetComponentInParent<MoveableBaseRootComponent>();
-    if ((bool)mbr)
-    {
-      return mbr.transform.rotation * rot;
-    }
-
-    return rot;
   }
 
   [HarmonyPatch(typeof(Player), "GetControlledShip")]
