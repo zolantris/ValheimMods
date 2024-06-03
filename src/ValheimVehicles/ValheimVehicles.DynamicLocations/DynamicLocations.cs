@@ -11,6 +11,9 @@ public static class DynamicLocations
   private const string LogoutParentZdoOffset = "LogoutParentZdoOffset";
   private const string LogoutParentZdo = "LogoutParentZdo";
 
+  public static ZDOID? cachedSpawnTarget;
+  public static Vector3? cachedSpawnOffset;
+
   public static string GetPluginPrefix()
   {
     return PluginPrefix;
@@ -154,8 +157,9 @@ public static class DynamicLocations
   }
 
 
-  public static ZDOID? GetSpawnZdo(Player player)
+  public static ZDOID? GetSpawnTargetZdo(Player player)
   {
+    if (cachedSpawnTarget != null) return cachedSpawnTarget;
     if (!player) return null;
     if (!player.m_customData.TryGetValue(GetSpawnZdoKey(), out var spawnZdoString))
     {
@@ -166,8 +170,9 @@ public static class DynamicLocations
     return zdoid;
   }
 
-  public static Vector3 GetSpawnZdoOffset(Player player)
+  public static Vector3 GetSpawnTargetZdoOffset(Player player)
   {
+    if (cachedSpawnOffset != null) return cachedSpawnOffset.Value;
     if (!player) return Vector3.zero;
     if (!player.m_customData.TryGetValue(GetSpawnZdoOffsetKey(), out var offsetString))
     {
@@ -184,6 +189,7 @@ public static class DynamicLocations
     var spawnPointObjZdo = dynamicObj.GetZDO();
     if (spawnPointObjZdo == null) return false;
     player.m_customData[GetSpawnZdoKey()] = ZDOIDToString(spawnPointObjZdo.m_uid);
+    cachedSpawnTarget = spawnPointObjZdo.m_uid;
     return true;
   }
 
@@ -206,7 +212,8 @@ public static class DynamicLocations
       return false;
     }
 
-    player.m_customData[GetSpawnZdoKey()] = Vector3ToString(offset);
+    player.m_customData[GetSpawnZdoOffsetKey()] = Vector3ToString(offset);
+    cachedSpawnOffset = offset;
     return true;
   }
 
