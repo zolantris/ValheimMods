@@ -63,6 +63,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    */
   public ConfigEntry<bool> PlanBuildPatches { get; set; }
 
+  public ConfigEntry<bool> ComfyGizmoPatches { get; set; }
+
   public ConfigEntry<bool> ShipPausePatch { get; set; }
   public ConfigEntry<bool> ShipPausePatchSinglePlayer { get; set; }
 
@@ -124,9 +126,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     Center,
     Bottom,
     Top,
+    Custom,
   }
 
   public ConfigEntry<HullFloatation> HullFloatationColliderLocation { get; set; }
+  public ConfigEntry<float> HullFloatationCustomColliderOffset { get; set; }
   public ConfigEntry<bool> HasVehicleDebug { get; set; }
 
 
@@ -164,6 +168,13 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         null, new object[]
         {
         }));
+    HullFloatationCustomColliderOffset = Config.Bind("Vehicles", "HullFloatation Custom Offset",
+      0f,
+      CreateConfigDescription(
+        "Hull Floatation Collider Customization, set this value and it will always make the ship float at that offset",
+        true, true
+      ));
+
     HasVehicleDebug = Config.Bind("Vehicles", "HasVehicleDebug", false,
       CreateConfigDescription(
         "Enables the debug menu, for showing colliders or rotating the ship", false, true));
@@ -398,6 +409,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     HasDebugBase = Config.Bind("Debug", "Debug logging for Vehicle/Raft", false,
       CreateConfigDescription(
         "Outputs more debug logs for the Vehicle components. Useful for troubleshooting errors, but will spam logs"));
+
+    ComfyGizmoPatches = Config.Bind("ComfyGizmoPatches",
+      "Enable Comfy Gizmo Patches", true,
+      CreateConfigDescription(
+        "Patches relative rotation allowing for copying rotation and building while the raft is at movement, this toggle is only provided in case patches regress anything in Gizmos and players need a work around.",
+        true, false));
 
     ShipPausePatch = Config.Bind<bool>("Patches",
       "Vehicles Prevent Pausing", true,

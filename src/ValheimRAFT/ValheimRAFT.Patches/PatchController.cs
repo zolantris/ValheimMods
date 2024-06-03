@@ -42,9 +42,10 @@ internal static class PatchController
       Harmony.PatchAll(typeof(StartScene_Patch));
     }
 
-    if (Chainloader.PluginInfos.ContainsKey("bruce.valheim.comfymods.gizmo"))
+    if (ValheimRaftPlugin.Instance.ComfyGizmoPatches.Value &&
+        Chainloader.PluginInfos.ContainsKey("bruce.valheim.comfymods.gizmo"))
     {
-      Logger.LogInfo("Patching ComfyGizmo GetRotation for Vehicles");
+      Logger.LogInfo("Patching ComfyGizmo GetRotation");
       Harmony.PatchAll(typeof(ComfyGizmo_Patch));
     }
 
