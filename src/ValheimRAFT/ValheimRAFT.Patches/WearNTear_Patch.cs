@@ -47,7 +47,7 @@ public class WearNTear_Patch
     var hasParentVehicleHash = parentVehicleHash != 0;
     if (!hasParentVehicleHash) return false;
 
-    var zdoExists = ZDOPersistentID.Instance.GetZDO(1501427356);
+    var zdoExists = ZdoPersistManager.Instance.GetZDO(1501427356);
     if (zdoExists == null) return false;
 
     __instance.enabled = false;

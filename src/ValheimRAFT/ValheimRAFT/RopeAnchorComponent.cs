@@ -240,7 +240,8 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     {
       Logger.LogDebug($"AttachRope {index}");
       RopeAttachmentTarget id =
-        new RopeAttachmentTarget(ZDOPersistentID.Instance.GetOrCreatePersistentID(nv.m_zdo), index);
+        new RopeAttachmentTarget(ZdoPersistManager.Instance.GetOrCreatePersistentID(nv.m_zdo),
+          index);
       if (!RemoveRopeWithID(id))
       {
         CreateNewRope(id);
@@ -253,7 +254,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   private void AttachRope(RopeAnchorComponent ropeAnchorComponent)
   {
     int parentid =
-      ZDOPersistentID.Instance.GetOrCreatePersistentID(ropeAnchorComponent.GetParentZDO());
+      ZdoPersistManager.Instance.GetOrCreatePersistentID(ropeAnchorComponent.GetParentZDO());
     if (!RemoveRopeWithID(new RopeAttachmentTarget(parentid, 0)) &&
         !(ropeAnchorComponent == this) &&
         !ropeAnchorComponent.RemoveRopeWithID(new RopeAttachmentTarget(parentid, 0)))
@@ -412,12 +413,12 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
         continue;
       }
 
-      rope.m_ropeTarget = ZDOPersistentID.Instance.GetGameObject(rope.m_ropeAnchorTarget.Id);
+      rope.m_ropeTarget = ZdoPersistManager.Instance.GetGameObject(rope.m_ropeAnchorTarget.Id);
       if (!rope.m_ropeTarget)
       {
         if (ZNet.instance.IsServer())
         {
-          ZDO zdo = ZDOPersistentID.Instance.GetZDO(rope.m_ropeAnchorTarget.Id);
+          ZDO zdo = ZdoPersistManager.Instance.GetZDO(rope.m_ropeAnchorTarget.Id);
           if (zdo == null)
           {
             RemoveRopeAt(i);
@@ -492,10 +493,10 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     ZDO zdoparent = ZDOMan.instance.GetZDO(zdoid);
     if (zdoparent != null)
     {
-      return ZDOPersistentID.Instance.GetOrCreatePersistentID(zdoparent);
+      return ZdoPersistManager.Instance.GetOrCreatePersistentID(zdoparent);
     }
 
-    return ZDOPersistentID.ZDOIDToId(zdoid);
+    return ZdoPersistManager.ZDOIDToId(zdoid);
   }
 
   private void GetRopesFromZDO(ICollection<RopeAttachmentTarget> ropeIds)

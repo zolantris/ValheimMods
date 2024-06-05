@@ -57,6 +57,115 @@ public class VehicleRamAoe : Aoe
     base.Awake();
   }
 
+  public new void CustomFixedUpdate(float fixedDeltaTime)
+  {
+    if ((UnityEngine.Object)m_nview != (UnityEngine.Object)null &&
+        !m_nview.IsOwner())
+      return;
+    if (m_initRun && !m_useTriggers && !m_hitAfterTtl &&
+        (double)m_activationTimer <= 0.0)
+    {
+      m_initRun = false;
+      if ((double)m_hitInterval <= 0.0)
+        Initiate();
+    }
+
+    if ((UnityEngine.Object)m_owner != (UnityEngine.Object)null &&
+        m_attachToCaster)
+    {
+      transform.position =
+        m_owner.transform.TransformPoint(m_offset);
+      transform.rotation = m_owner.transform.rotation * m_localRot;
+    }
+
+    if ((double)m_activationTimer > 0.0)
+      return;
+    if ((double)m_hitInterval > 0.0 && !m_useTriggers)
+    {
+      m_hitTimer -= fixedDeltaTime;
+      if ((double)m_hitTimer <= 0.0)
+      {
+        m_hitTimer = m_hitInterval;
+        Initiate();
+      }
+    }
+
+    if ((double)m_chainStartChance > 0.0 && (double)m_chainDelay >= 0.0)
+    {
+      m_chainDelay -= fixedDeltaTime;
+      if ((double)m_chainDelay <= 0.0 &&
+          (double)UnityEngine.Random.value < (double)m_chainStartChance)
+      {
+        Vector3 position1 = transform.position;
+        FindHits();
+        SortHits();
+        int num1 = UnityEngine.Random.Range(m_chainMinTargets,
+          m_chainMaxTargets + 1);
+        foreach (Collider hit in Aoe.s_hitList)
+        {
+          if ((double)UnityEngine.Random.value < (double)m_chainChancePerTarget)
+          {
+            Vector3 position2 = hit.gameObject.transform.position;
+            bool flag = false;
+            for (int index = 0; index < Aoe.s_chainObjs.Count; ++index)
+            {
+              if ((bool)(UnityEngine.Object)Aoe.s_chainObjs[index])
+              {
+                if ((double)Vector3.Distance(Aoe.s_chainObjs[index].transform.position, position2) <
+                    0.10000000149011612)
+                {
+                  flag = true;
+                  break;
+                }
+              }
+              else
+                Aoe.s_chainObjs.RemoveAt(index);
+            }
+
+            if (!flag)
+            {
+              GameObject gameObject1 =
+                UnityEngine.Object.Instantiate<GameObject>(m_chainObj, position2,
+                  hit.gameObject.transform.rotation);
+              Aoe.s_chainObjs.Add(gameObject1);
+              IProjectile componentInChildren = gameObject1.GetComponentInChildren<IProjectile>();
+              if (componentInChildren != null)
+              {
+                componentInChildren.Setup(m_owner, position1.DirTo(position2), -1f,
+                  m_hitData, m_itemData, m_ammo);
+                if (componentInChildren is Aoe aoe)
+                  aoe.m_chainChance =
+                    m_chainChance * m_chainStartChanceFalloff;
+              }
+
+              --num1;
+              float num2 = Vector3.Distance(position2, transform.position);
+              foreach (GameObject gameObject2 in m_chainEffects.Create(
+                         position1 + Vector3.up,
+                         Quaternion.LookRotation(position1.DirTo(position2 + Vector3.up))))
+                gameObject2.transform.localScale = Vector3.one * num2;
+            }
+          }
+
+          if (num1 <= 0)
+            break;
+        }
+      }
+    }
+
+    if ((double)m_ttl <= 0.0)
+      return;
+    m_ttl -= fixedDeltaTime;
+    if ((double)m_ttl > 0.0)
+      return;
+    if (m_hitAfterTtl)
+      Initiate();
+    if (!(bool)(UnityEngine.Object)ZNetScene.instance)
+      return;
+    ZNetScene.instance.Destroy(gameObject);
+    return;
+  }
+
   public void UpdateReadyForCollisions()
   {
     CancelInvoke(nameof(UpdateReadyForCollisions));

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Jotunn.Extensions;
 using Jotunn.Managers;
@@ -32,6 +33,8 @@ public class PlayerSpawnController : MonoBehaviour
   public static Dictionary<long, PlayerSpawnController> Instances = new();
 
   public static PlayerSpawnController Instance;
+  private Stopwatch UpdateLocationTimer = new();
+  public static Player? player;
 
   private void Awake()
   {
@@ -48,13 +51,13 @@ public class PlayerSpawnController : MonoBehaviour
   {
     // forceDisableInit prevents running awake commands for znetview when it's not ready
     if (ZNetView.m_forceDisableInit) return;
-    if (Player.m_localPlayer == null) return;
+    if (player == null) return;
 
 #if DEBUG
     Logger.LogDebug("listing all player custom keys");
-    foreach (var key in Player.m_localPlayer.m_customData.Keys)
+    foreach (var key in player.m_customData.Keys)
     {
-      Logger.LogDebug($"key: {key} val: {Player.m_localPlayer.m_customData[key]}");
+      Logger.LogDebug($"key: {key} val: {player.m_customData[key]}");
     }
 #endif
   }
@@ -69,7 +72,7 @@ public class PlayerSpawnController : MonoBehaviour
   public void SyncBedSpawnPoint(ZNetView spawnPointObj, Bed bed)
   {
     // should sync the zdo just in case it doesn't match player
-    if (Player.m_localPlayer == null) return;
+    if (player == null) return;
 
     if (!bed.IsMine() && bed.GetOwner() != 0L)
     {
@@ -80,19 +83,22 @@ public class PlayerSpawnController : MonoBehaviour
     var bvc = bed.GetComponentInParent<BaseVehicleController>();
     if (!bvc)
     {
-      DynamicLocations.RemoveSpawnZdo(Player.m_localPlayer);
+      DynamicLocations.RemoveSpawnTargetZdo(player);
       return;
     }
 
-    if (spawnPointObj.transform.position != spawnPointObj.transform.localPosition)
+    if (spawnPointObj.transform.position != spawnPointObj.transform.localPosition &&
+        bvc.transform.position != spawnPointObj.transform.position)
     {
       var offset = spawnPointObj.transform.localPosition;
       // must be parsed to ZDOID after reading from custom player data
-      DynamicLocations.SetSpawnZdoWithOffset(Player.m_localPlayer, spawnPointObj, offset);
+      DynamicLocations.SetSpawnZdoTargetWithOffset(player, bvc.m_nview,
+        offset);
     }
     else
     {
-      DynamicLocations.SetSpawnZdo(Player.m_localPlayer, spawnPointObj);
+      DynamicLocations.SetSpawnZdoTargetWithOffset(player, bvc.m_nview,
+        bvc.transform.position - spawnPointObj.transform.position);
     }
   }
 
@@ -103,11 +109,11 @@ public class PlayerSpawnController : MonoBehaviour
   /// <returns>bool</returns>
   public void SyncLogoutPoint()
   {
-    if (!Player.m_localPlayer || Player.m_localPlayer == null || !CanUpdateLogoutPoint) return;
-    var bvc = Player.m_localPlayer.GetComponentInParent<BaseVehicleController>();
+    if (!player || player == null || !CanUpdateLogoutPoint) return;
+    var bvc = player.GetComponentInParent<BaseVehicleController>();
     if (!bvc)
     {
-      DynamicLocations.RemoveLogoutZdo(Player.m_localPlayer);
+      DynamicLocations.RemoveLogoutZdo(player);
       return;
     }
 
@@ -118,42 +124,23 @@ public class PlayerSpawnController : MonoBehaviour
       return;
     }
 
-    if (Player.m_localPlayer.transform.localPosition != Player.m_localPlayer.transform.position)
+    if (player.transform.localPosition != player.transform.position)
     {
-      DynamicLocations.SetLogoutZdoWithOffset(Player.m_localPlayer, bvc.m_nview,
-        Player.m_localPlayer.transform.localPosition);
+      DynamicLocations.SetLogoutZdoWithOffset(player, bvc.m_nview,
+        player.transform.localPosition);
     }
     else
     {
-      DynamicLocations.SetLogoutZdo(Player.m_localPlayer, bvc.m_nview);
+      DynamicLocations.SetLogoutZdo(player, bvc.m_nview);
     }
 
-    Game.instance.m_playerProfile.SavePlayerData(Player.m_localPlayer);
-  }
-
-  /// <summary>
-  /// Mostly for debug, but could be used to fix potential issues with player spawn controllers by nuking them all.
-  /// </summary>
-  public static void DestroyAllDynamicSpawnControllers()
-  {
-    if (Player.m_localPlayer == null) return;
-
-    var spawnControllers = FindObjectsOfType<PlayerSpawnController>();
-    foreach (var spawnController in spawnControllers)
-    {
-      var controllerZdo = spawnController?.GetComponent<ZNetView>()?.GetZDO();
-      // todo this may need to force load a zone to get the zdo
-      if (controllerZdo == null) continue;
-      var go = ZNetScene.instance.FindInstance(controllerZdo);
-      if (go?.gameObject == null) continue;
-      ZNetScene.instance.Destroy(go.gameObject);
-    }
+    Game.instance.m_playerProfile.SavePlayerData(player);
   }
 
   // public static PlayerSpawnController? GetSpawnController(Player currentPlayer)
   // {
   //   return Instance
-  //   // if (Player.m_localPlayer == null) return null;
+  //   // if (player == null) return null;
   //   // if (!currentPlayer) return null;
   //   //
   //   // if (Instances.TryGetValue(currentPlayer.GetPlayerID(), out var instance))
@@ -170,15 +157,15 @@ public class PlayerSpawnController : MonoBehaviour
 
   public bool MovePlayerToLoginPoint()
   {
-    if (!Player.m_localPlayer)
+    if (!player)
     {
       Setup();
     }
 
-    if (Player.m_localPlayer == null) return false;
+    if (player == null) return false;
 
-    var loginZdoOffset = DynamicLocations.GetLogoutZdoOffset(Player.m_localPlayer);
-    var loginZdoid = DynamicLocations.GetLogoutZdo(Player.m_localPlayer);
+    var loginZdoOffset = DynamicLocations.GetLogoutZdoOffset(player);
+    var loginZdoid = DynamicLocations.GetLogoutZdo(player);
 
     if (loginZdoid == null)
     {
@@ -197,17 +184,18 @@ public class PlayerSpawnController : MonoBehaviour
     Logout
   }
 
-  public IEnumerator UpdateLocation(ZDOID? zdoid, Vector3 offset, LocationTypes locationType)
+  public IEnumerator UpdateLocation(ZDO? zdoid, Vector3 offset, LocationTypes locationType)
   {
+    UpdateLocationTimer.Restart();
     yield return MovePlayerToZdo(zdoid, offset);
-
+    UpdateLocationTimer.Reset();
     // must be another coroutine AND only fired after the Move coroutine completes otherwise it WILL break the move coroutine as it deletes the required key.
     // remove logout point after moving the player.
     if (locationType == LocationTypes.Logout)
     {
       if (CanRemoveLogoutAfterSync)
       {
-        DynamicLocations.RemoveLogoutZdo(Player.m_localPlayer);
+        DynamicLocations.RemoveLogoutZdo(player);
       }
     }
 
@@ -218,16 +206,23 @@ public class PlayerSpawnController : MonoBehaviour
 
   public void MovePlayerToSpawnPoint()
   {
-    var spawnZdoOffset = DynamicLocations.GetSpawnTargetZdoOffset(Player.m_localPlayer);
-    var spawnZdoid = DynamicLocations.GetSpawnTargetZdo(Player.m_localPlayer);
+    var spawnZdoOffset = DynamicLocations.GetSpawnTargetZdoOffset(player);
+    var spawnZdoid = DynamicLocations.GetSpawnTargetZdo(player);
+
     StartCoroutine(UpdateLocation(spawnZdoid, spawnZdoOffset, LocationTypes.Spawn));
   }
 
   private void SyncPlayerPosition(Vector3 newPosition)
   {
-    if (ZNetView.m_forceDisableInit || Player.m_localPlayer == null) return;
-    var playerZdo = Player.m_localPlayer.m_nview.GetZDO();
-    if (playerZdo == null) return;
+    Logger.LogDebug("Running PlayerPosition Sync");
+    if (ZNetView.m_forceDisableInit || player == null) return;
+    var playerZdo = player.m_nview.GetZDO();
+    if (playerZdo == null)
+    {
+      Logger.LogDebug("Player zdo invalid exiting");
+      return;
+    }
+
     Logger.LogDebug($"Syncing Player Position and sector, {newPosition}");
     var isLoaded = ZoneSystem.instance.IsZoneLoaded(ZoneSystem.instance.GetZone(newPosition));
 
@@ -237,49 +232,60 @@ public class PlayerSpawnController : MonoBehaviour
       return;
     }
 
+    ZNet.instance.SetReferencePosition(newPosition);
     playerZdo.SetPosition(newPosition);
     playerZdo.SetSector(ZoneSystem.instance.GetZone(newPosition));
-    Player.m_localPlayer.transform.position = newPosition;
+    player.transform.position = newPosition;
   }
 
-  public IEnumerator MovePlayerToZdo(ZDOID? zdoid, Vector3 offset)
+  /// <summary>
+  /// Does not work, zdoids are not persistent across game and loading content outside a zone does not work well without a reference that persists.
+  /// </summary>
+  /// <param name="zdoid"></param>
+  /// <param name="offset"></param>
+  /// <returns></returns>
+  public IEnumerator MovePlayerToZdo(ZDO? zdo, Vector3 offset)
   {
-    if (Player.m_localPlayer == null)
-    {
-      Setup();
-      yield return null;
-    }
+    Logger.LogDebug("Running MovePlayerToZdo");
+    if (!player) yield break;
 
-    if (!Player.m_localPlayer) yield break;
-
-    if (zdoid == null)
+    if (zdo == null)
     {
       yield break;
     }
 
     // beginning of LoadGameObjectInSector (which cannot be abstracted easily if the return is required)
-    ZDOMan.instance.RequestZDO((ZDOID)zdoid);
-    var spawnZdo = ZDOMan.instance.GetZDO((ZDOID)zdoid);
+    // ZDOMan.instance.RequestZDO(zdo.m_uid);
     ZNetView? zdoNetViewInstance = null;
-    Vector2i zoneId = new();
     var isZoneLoaded = false;
-    while (!isZoneLoaded)
+    while (!isZoneLoaded || zdoNetViewInstance == null)
     {
-      ZDOMan.instance.RequestZDO((ZDOID)zdoid);
-      spawnZdo = ZDOMan.instance.GetZDO((ZDOID)zdoid);
-      if (spawnZdo == null)
+      if (UpdateLocationTimer is { ElapsedMilliseconds: > 10000 })
       {
-        yield return new WaitForFixedUpdate();
-        continue;
+        Logger.LogWarning(
+          $"Timed out: Attempted to spawn player on Boat ZDO expired for {zdo.m_uid}, reason -> spawn zdo was not found");
+        yield break;
       }
 
-      zoneId = ZoneSystem.instance.GetZone(spawnZdo.GetPosition());
+      var zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
       ZoneSystem.instance.PokeLocalZone(zoneId);
 
-      zdoNetViewInstance = ZNetScene.instance.FindInstance(spawnZdo);
+      var tempInstance = ZNetScene.instance.FindInstance(zdo);
+      if (tempInstance != null)
+      {
+        if (tempInstance.GetComponent<WaterVehicleController>())
+        {
+          zdoNetViewInstance = tempInstance;
+        }
+        else
+        {
+          Logger.LogWarning(
+            $"The temp instance named: {tempInstance.name}, -> was not a bed instance gameobject ");
+        }
+      }
 
       if (zdoNetViewInstance) break;
-      yield return new WaitForFixedUpdate();
+      yield return new WaitForEndOfFrame();
       if (!ZoneSystem.instance.IsZoneLoaded(zoneId))
       {
         yield return null;
@@ -290,20 +296,41 @@ public class PlayerSpawnController : MonoBehaviour
       }
     }
 
-    var zdoPosition = spawnZdo?.GetPosition();
-    var zdoRotation = spawnZdo?.GetRotation();
-    if (!Player.m_localPlayer || zdoPosition == null || zdoRotation == null) yield break;
+    var zdoPosition = zdo?.GetPosition();
+    var zdoRotation = zdo?.GetRotation();
+    if (!player || zdoPosition == null || zdoRotation == null) yield break;
 
     var positionWithOffset = zdoPosition.Value + offset;
-    ZNet.instance.SetReferencePosition(positionWithOffset);
-    SyncPlayerPosition(positionWithOffset);
+    // SyncPlayerPosition(positionWithOffset);
 
-    // Player.m_localPlayer?.TeleportTo(positionWithOffset, zdoRotation.Value,
-    //   distantTeleport: true);
+    player?.TeleportTo(positionWithOffset, zdoRotation.Value,
+      distantTeleport: false);
 
-    yield return new WaitUntil(() => ZNetScene.instance.FindInstance(spawnZdo));
-    var spawnZdoInstance = ZNetScene.instance.FindInstance(spawnZdo);
-    // SyncPlayerPosition(spawnZdoInstance.transform.position);
+    // var spawnZdoInstance = ZNetScene.instance.FindInstance(spawnZdo);
+    // while (!spawnZdoInstance && UpdateLocationTimer.ElapsedMilliseconds < 10000)
+    // {
+    //   var tempInstance = ZNetScene.instance.FindInstance(spawnZdo);
+    //   if (tempInstance != null)
+    //   {
+    //     if (tempInstance.GetComponent<Bed>())
+    //     {
+    //       spawnZdoInstance = tempInstance;
+    //     }
+    //     else
+    //     {
+    //       Logger.LogWarning(
+    //         $"The temp instance named: {tempInstance.name}, -> was not a bed instance gameobject ");
+    //     }
+    //   }
+    //
+    //   yield return null;
+    // }
+
+    // Logger.LogDebug("Exited the spawnZdoInstance Loop");
+    // if (spawnZdoInstance)
+    // {
+    //   SyncPlayerPosition(spawnZdoInstance.transform.position);
+    // }
     // BaseVehicleController? bvc = null;
     // if (zdoNetViewInstance)
     // {

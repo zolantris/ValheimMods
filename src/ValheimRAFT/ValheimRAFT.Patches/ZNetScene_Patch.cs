@@ -57,6 +57,6 @@ public class ZNetScene_Patch
   [HarmonyPostfix]
   private static void ZNetScene_Shutdown()
   {
-    ZDOPersistentID.Instance.Reset();
+    ZdoPersistManager.Instance.Reset();
   }
 }

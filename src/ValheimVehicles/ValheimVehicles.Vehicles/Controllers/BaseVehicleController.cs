@@ -52,6 +52,10 @@ public class BaseVehicleController : MonoBehaviour
 
   // for the ship physics without item piece colliders or alternatively access via VehicleInstance.m_body
   internal Rigidbody? m_syncRigidbody;
+
+  /// <summary>
+  /// Future todo to enable zsync transform for objects within the synced raft which is done on clients only.
+  /// </summary>
   internal ZSyncTransform? zsyncRigidbody;
 
   internal List<ZNetView> m_pieces = [];
@@ -198,16 +202,7 @@ public class BaseVehicleController : MonoBehaviour
       }
     }
 
-    // defaults to a new boxcollider if somehow things are not detected
     m_floatcollider = vehicleInstance.FloatCollider;
-
-    // todo blockingcollider likely needs to use piece layer so character and other things can get hit by it
-    // if (m_blockingcollider != null)
-    // {
-    //   m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
-    //   m_blockingcollider.transform.parent.gameObject.layer =
-    //     ValheimRaftPlugin.CustomRaftLayer;
-    // }
   }
 
 
@@ -229,9 +224,6 @@ public class BaseVehicleController : MonoBehaviour
 
   private void HideGhostContainer()
   {
-    // if ((bool)VehicleInstance?.Instance?.GhostContainer?.name?.Contains(PrefabNames.Nautilus))
-    // {
-    // }
     VehicleInstance?.Instance?.GhostContainer()?.SetActive(false);
   }
 
@@ -332,7 +324,7 @@ public class BaseVehicleController : MonoBehaviour
 
 
     // Instances allows getting the instance from a ZDO
-    // OR something queryable on a ZDO wmaking it much easier to debug and eventually update items
+    // OR something queryable on a ZDO making it much easier to debug and eventually update items
     if (!ActiveInstances.ContainsKey(PersistentZdoId))
     {
       ActiveInstances.Add(PersistentZdoId, this);
@@ -379,7 +371,7 @@ public class BaseVehicleController : MonoBehaviour
       return _persistentZdoId;
     }
 
-    _persistentZdoId = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
+    _persistentZdoId = ZdoPersistManager.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
     return _persistentZdoId;
   }
 
@@ -454,6 +446,9 @@ public class BaseVehicleController : MonoBehaviour
         AddInactivePiece(_persistentZdoId, piece, null);
       }
     }
+
+    StopAllCoroutines();
+    CancelInvoke(nameof(DebouncedRebuildBounds));
   }
 
   public virtual void SyncRigidbodyStats(float drag, float angularDrag)
@@ -622,12 +617,12 @@ public class BaseVehicleController : MonoBehaviour
 
   private void UpdatePlayers()
   {
-    if (VehicleInstance?.Instance?.m_players == null) return;
-    var vehiclePlayers = VehicleInstance.Instance.m_players;
-    foreach (var vehiclePlayer in vehiclePlayers)
-    {
-      AddDynamicParentForVehicle(vehiclePlayer.m_nview, this);
-    }
+    // if (VehicleInstance?.Instance?.m_players == null) return;
+    // var vehiclePlayers = VehicleInstance.Instance.m_players;
+    // foreach (var vehiclePlayer in vehiclePlayers)
+    // {
+    //   AddDynamicParentForVehicle(vehiclePlayer.m_nview, this);
+    // }
   }
 
   /**
@@ -638,7 +633,6 @@ public class BaseVehicleController : MonoBehaviour
   private IEnumerator UpdatePiecesWorker(List<ZDO> list)
   {
     UpdatePieces(list);
-    UpdatePlayers();
     yield return new WaitForFixedUpdate();
   }
 
@@ -996,7 +990,6 @@ public class BaseVehicleController : MonoBehaviour
     var players = Player.GetAllPlayers();
     foreach (var t in players.Where(t => (bool)t && t.transform.parent == transform))
     {
-      AddDynamicParentForVehicle(t.m_nview, this);
       t.transform.SetParent(null);
     }
   }
@@ -1063,7 +1056,7 @@ public class BaseVehicleController : MonoBehaviour
         yield return new WaitUntil(() => m_nview?.GetZDO() != null);
       }
 
-      var id = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
+      var id = ZdoPersistManager.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
       m_pendingPieces.TryGetValue(id, out var list);
 
       if (list is { Count: > 0 })
@@ -1180,9 +1173,9 @@ public class BaseVehicleController : MonoBehaviour
       return false;
     }
 
-    source.m_zdo.Set(VehicleZdoVars.MBCharacterParentHash, bvc.PersistentZdoId);
-    source.m_zdo.Set(VehicleZdoVars.MBCharacterOffsetHash,
-      source.transform.position - bvc.transform.position);
+    // source.m_zdo.Set(VehicleZdoVars.MBCharacterParentHash, bvc.PersistentZdoId);
+    // source.m_zdo.Set(VehicleZdoVars.MBCharacterOffsetHash,
+    //   source.transform.position - bvc.transform.position);
     return true;
   }
 
@@ -1385,8 +1378,8 @@ public class BaseVehicleController : MonoBehaviour
       {
         var zdoparent = ZDOMan.instance.GetZDO(zdoid);
         id = zdoparent == null
-          ? ZDOPersistentID.ZDOIDToId(zdoid)
-          : ZDOPersistentID.Instance.GetOrCreatePersistentID(zdoparent);
+          ? ZdoPersistManager.ZDOIDToId(zdoid)
+          : ZdoPersistManager.Instance.GetOrCreatePersistentID(zdoparent);
         zdo.Set(VehicleZdoVars.MBParentIdHash, id);
         zdo.Set(VehicleZdoVars.MBRotationVecHash,
           zdo.GetQuaternion(VehicleZdoVars.MBRotationHash, Quaternion.identity).eulerAngles);
@@ -1414,7 +1407,7 @@ public class BaseVehicleController : MonoBehaviour
     var id = GetParentID(netView.m_zdo);
     if (id == 0) return;
 
-    var parentObj = ZDOPersistentID.Instance.GetGameObject(id);
+    var parentObj = ZdoPersistManager.Instance.GetGameObject(id);
     if ((bool)parentObj)
     {
       var vehicleShip = parentObj.GetComponent<VehicleShip>();
@@ -1626,6 +1619,9 @@ public class BaseVehicleController : MonoBehaviour
     var bed = netView.GetComponent<Bed>();
     if ((bool)bed)
     {
+      // todo use this approach only if the VehicleShip zdo is less easy to use
+      // // ZDO must be persisted in order to teleport directly to this bed. 
+      // ZdoPersistManager.Instance.GetOrCreatePersistentID(netView.GetZDO());
       m_bedPieces.Add(bed);
     }
 

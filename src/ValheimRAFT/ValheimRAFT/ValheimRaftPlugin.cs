@@ -24,9 +24,14 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
+internal abstract class PluginDependencies
+{
+  public const string JotunnModGuid = Jotunn.Main.ModGuid;
+}
+
 // [SentryDSN()]
 [BepInPlugin(BepInGuid, ModName, Version)]
-[BepInDependency(Main.ModGuid)]
+[BepInDependency(PluginDependencies.JotunnModGuid)]
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
 public class ValheimRaftPlugin : BaseUnityPlugin
 {
@@ -209,7 +214,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       CreateConfigDescription(
         "Sets the absolute max speed a ship can ever hit. This is capped on the vehicle, so no forces applied will be able to exceed this value. 20-30f is safe, higher numbers could let the ship fail off the map",
         true));
-    MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 10f,
+    MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 20f,
       CreateConfigDescription(
         "Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.",
         true));

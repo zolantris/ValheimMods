@@ -69,7 +69,7 @@ public class DockComponent : MonoBehaviour
       Rigidbody rb = nv.GetComponent<Rigidbody>();
       if ((bool)rb)
       {
-        int id = ZDOPersistentID.Instance.GetOrCreatePersistentID(nv.m_zdo);
+        int id = ZdoPersistManager.Instance.GetOrCreatePersistentID(nv.m_zdo);
         m_dockedObject = nv.gameObject;
         m_dockedRigidbody = rb;
         m_nview.m_zdo.Set("MBDock_dockedObject", id);

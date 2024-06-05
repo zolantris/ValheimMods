@@ -1,4 +1,6 @@
+using System.IO;
 using UnityEngine;
+using ValheimRAFT.Util;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.ValheimVehicles.DynamicLocations;
@@ -11,8 +13,8 @@ public static class DynamicLocations
   private const string LogoutParentZdoOffset = "LogoutParentZdoOffset";
   private const string LogoutParentZdo = "LogoutParentZdo";
 
-  public static ZDOID? cachedSpawnTarget;
-  public static Vector3? cachedSpawnOffset;
+  public static ZDO? cachedSpawnTarget;
+  public static Vector3? cachedSpawnTargetOffset;
 
   public static string GetPluginPrefix()
   {
@@ -86,7 +88,7 @@ public static class DynamicLocations
     return vector;
   }
 
-  public static ZDOID? GetLogoutZdo(Player player)
+  public static ZDO? GetLogoutZdo(Player player)
   {
     if (!player) return null;
     if (!player.m_customData.TryGetValue(GetLogoutZdoKey(), out var logoutZdoString))
@@ -95,7 +97,12 @@ public static class DynamicLocations
     }
 
     var zdoid = StringToZDOID(logoutZdoString);
-    return zdoid;
+    Logger.LogDebug(
+      $"Retreiving spawnTargetZdo {zdoid} for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
+    var output = zdoid == ZDOID.None ? ZdoPersistManager.ZDOIDToId(zdoid.Value) : 0;
+
+    // each game will create a new set of IDs, but the persistent data will allow for looking up the current game's ID.
+    return ZdoPersistManager.Instance.GetZDO(output);
   }
 
   public static Vector3 GetLogoutZdoOffset(Player player)
@@ -127,7 +134,7 @@ public static class DynamicLocations
     return true;
   }
 
-  public static bool RemoveSpawnZdo(Player player)
+  public static bool RemoveSpawnTargetZdo(Player player)
   {
     if (!ZNet.instance) return false;
     player.m_customData.Remove(GetSpawnZdoKey());
@@ -156,23 +163,55 @@ public static class DynamicLocations
     return true;
   }
 
-
-  public static ZDOID? GetSpawnTargetZdo(Player player)
+  /// <summary>
+  /// Main getter logic for DynamicLocations, uses the player data to lookup a persistent ID saved to the player data for that world.
+  /// </summary>
+  /// <param name="targetKey"></param>
+  /// <param name="player"></param>
+  /// <returns></returns>
+  public static ZDO? GetZDOFromTargetKey(string targetKey, Player player)
   {
     if (cachedSpawnTarget != null) return cachedSpawnTarget;
     if (!player) return null;
-    if (!player.m_customData.TryGetValue(GetSpawnZdoKey(), out var spawnZdoString))
+    if (!player.m_customData.TryGetValue(targetKey, out var zdoString))
     {
       return null;
     }
 
-    var zdoid = StringToZDOID(spawnZdoString);
-    return zdoid;
+    if (!int.TryParse(zdoString, out var zdoUid))
+    {
+      Logger.LogError(
+        $"The targetKey <{targetKey}> zdoKey: <{zdoString}> could not be parsed as an int");
+      return null;
+    }
+
+    Logger.LogDebug(
+      $"Retreiving targetKey <{targetKey}> zdoKey: <{zdoString}> for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
+
+    // each game will create a new set of IDs, but the persistent data will allow for looking up the current game's ID.
+    var output = ZdoPersistManager.Instance.GetZDO(zdoUid);
+
+    // Remove the zdo key from player if it no longer exists in the game (IE it was destroyed)
+    if (output == null)
+    {
+      Logger.LogDebug(
+        $"Removing targetKey as it's ZDO no longer exists");
+      player.m_customData.Remove(targetKey);
+    }
+
+    return output;
+  }
+
+  public static ZDO? GetSpawnTargetZdo(Player player)
+  {
+    if (cachedSpawnTarget != null) return cachedSpawnTarget;
+    cachedSpawnTarget = GetZDOFromTargetKey(GetSpawnZdoKey(), player);
+    return cachedSpawnTarget;
   }
 
   public static Vector3 GetSpawnTargetZdoOffset(Player player)
   {
-    if (cachedSpawnOffset != null) return cachedSpawnOffset.Value;
+    if (cachedSpawnTargetOffset != null) return cachedSpawnTargetOffset.Value;
     if (!player) return Vector3.zero;
     if (!player.m_customData.TryGetValue(GetSpawnZdoOffsetKey(), out var offsetString))
     {
@@ -183,13 +222,23 @@ public static class DynamicLocations
     return offset;
   }
 
-  public static bool SetSpawnZdo(Player player, ZNetView dynamicObj)
+  public static bool SetSpawnZdoTarget(Player player, ZNetView dynamicObj)
   {
     if (!ZNet.instance) return false;
+    cachedSpawnTarget = null;
     var spawnPointObjZdo = dynamicObj.GetZDO();
     if (spawnPointObjZdo == null) return false;
-    player.m_customData[GetSpawnZdoKey()] = ZDOIDToString(spawnPointObjZdo.m_uid);
-    cachedSpawnTarget = spawnPointObjZdo.m_uid;
+    if (!ZdoPersistManager.GetPersistentID(spawnPointObjZdo, out var id))
+    {
+      Logger.LogWarning($"No persitent id found for dynamicObj {dynamicObj.gameObject.name}");
+      return false;
+    }
+
+    player.m_customData[GetSpawnZdoKey()] = id.ToString();
+    Logger.LogDebug(
+      $"Setting spawnTargetZdo {spawnPointObjZdo.m_uid} for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
+    cachedSpawnTarget = spawnPointObjZdo;
+
     return true;
   }
 
@@ -199,8 +248,9 @@ public static class DynamicLocations
   /// <param name="player"></param>
   /// <param name="offset"></param>
   /// <returns></returns>
-  public static bool SetSpawnZdoOffset(Player player, Vector3 offset)
+  public static bool SetSpawnZdoTargetOffset(Player player, Vector3 offset)
   {
+    cachedSpawnTargetOffset = null;
     if (!player) return false;
     if (Vector3.zero == offset)
     {
@@ -213,15 +263,26 @@ public static class DynamicLocations
     }
 
     player.m_customData[GetSpawnZdoOffsetKey()] = Vector3ToString(offset);
-    cachedSpawnOffset = offset;
+    cachedSpawnTargetOffset = offset;
     return true;
   }
 
-  public static bool SetSpawnZdoWithOffset(Player player, ZNetView dynamicObj,
+  public static bool SetSpawnZdoTargetWithOffset(Player player, ZNetView dynamicObj,
     Vector3 offset)
   {
-    if (!SetSpawnZdo(player, dynamicObj)) return false;
-    SetSpawnZdoOffset(player, offset);
+    if (!SetSpawnZdoTarget(player, dynamicObj)) return false;
+    SetSpawnZdoTargetOffset(player, offset);
     return true;
+  }
+
+  public static void SaveWorldData()
+  {
+    var WorldSavePath = World.GetWorldSavePath();
+    var fileName = $"{Game.instance.m_devWorldName}_mod_dynamic_locations.json";
+
+    // File.WriteAllText(
+    //   Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
+    //     $"{ModName}_AutoDoc.md"),
+    //   sb.ToString());
   }
 }

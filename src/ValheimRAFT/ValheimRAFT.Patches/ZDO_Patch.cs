@@ -24,7 +24,7 @@ public class ZDO_Patch
 
   private static void ZDOLoaded(ZDO zdo)
   {
-    ZDOPersistentID.Instance.Register(zdo);
+    ZdoPersistManager.Instance.Register(zdo);
     BaseVehicleController.InitZdo(zdo);
 
     // deprecated will remove soon
@@ -50,6 +50,6 @@ public class ZDO_Patch
     }
 
     BaseVehicleController.RemoveZDO(zdo);
-    ZDOPersistentID.Instance.Unregister(zdo);
+    ZdoPersistManager.Instance.Unregister(zdo);
   }
 }

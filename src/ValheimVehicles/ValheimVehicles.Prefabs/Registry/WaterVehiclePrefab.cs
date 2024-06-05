@@ -143,9 +143,12 @@ public class WaterVehiclePrefab : IRegisterPrefab
 
     var piece = PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.WaterVehicleShip, prefab);
     piece.m_waterPiece = true;
-    piece.m_targetNonPlayerBuilt = true;
-    piece.m_primaryTarget = true;
-    piece.m_randomTarget = true;
+
+
+    // todo likely does nothing
+    // piece.m_targetNonPlayerBuilt = true;
+    // piece.m_primaryTarget = true;
+    // piece.m_randomTarget = true;
 
     PieceManager.Instance.AddPiece(new CustomPiece(waterVehiclePrefab, true, new PieceConfig
     {
