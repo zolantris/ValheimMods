@@ -130,13 +130,6 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       VehicleCommands.VehicleToggleOceanSway();
     }
 
-    if (GUILayout.Button("Mimic Spawn"))
-    {
-      var playerZdo = Player.m_localPlayer?.m_nview?.GetZDO();
-      if (playerZdo == null) return;
-      StartCoroutine(GamePause_Patch.SetPlayerOnBoat(playerZdo, Player.m_localPlayer));
-    }
-
     GUILayout.EndArea();
   }
 }

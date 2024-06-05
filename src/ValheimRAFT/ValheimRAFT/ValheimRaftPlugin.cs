@@ -520,6 +520,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     // for graphics QOL but maybe less FPS friendly
     CreateGraphicsConfig();
     CreateSoundConfig();
+
+    // new way to do things. Makes life easier for config
+    RamConfig.BindConfig(Config);
   }
 
   internal void ApplyMetricIfAvailable()
@@ -540,8 +543,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public void Awake()
   {
     Instance = this;
-
-
     CreateConfig();
     PatchController.Apply(HarmonyGuid);
 

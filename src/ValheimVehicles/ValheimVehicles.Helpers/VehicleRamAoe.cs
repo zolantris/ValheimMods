@@ -1,21 +1,60 @@
 using System;
+using System.Collections.Generic;
 using System.Security.Policy;
+using Microsoft.Win32;
 using UnityEngine;
+using ValheimRAFT;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
+using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Helpers;
 
 public class VehicleRamAoe : Aoe
 {
-  public HitData.DamageTypes baseDamage;
+  public static List<VehicleRamAoe> RamInstances = [];
+
+  public static HitData.DamageTypes baseDamage;
   public float velocityMultiplier = 0;
-  public float massMultiplier = 3;
-  public float velocityThreshold = 0.5f;
+  public float massMultiplier = RamConfig.MaxVelocityMultiplier.Value;
+  public float minimumVelocityToTriggerHit = RamConfig.minimumVelocityToTriggerHit.Value;
   public VehicleShip? vehicle;
-  public static bool MultiplicativeCollisionVelocity = true;
-  public const float MaxVelocityMultiplier = 20f;
+
+  // damages
+  public static int RamDamageToolTier = RamConfig.RamDamageToolTier.Value;
+  public static float RamHitArea = RamConfig.HitRadius.Value;
+  public static float PercentageDamageToSelf = RamConfig.PercentageDamageToSelf.Value;
+  public static float RamBaseSlashDamage => RamConfig.RamBaseSlashDamage.Value;
+  public static float RamBaseBluntDamage => RamConfig.RamBaseBluntDamage.Value;
+  public static float RamBaseChopDamage => RamConfig.RamBaseChopDamage.Value;
+  public static float RamBasePickAxeDamage => RamConfig.RamBasePickAxeDamage.Value;
+  public static float RamBaseMaximumDamage => RamConfig.RamBaseMaximumDamage.Value;
+
+  public static float RamHitInterval = RamConfig.RamHitInterval.Value;
+
+  public static bool AllowContinuousDamage = RamConfig.AllowContinuousDamage.Value;
+
+  // hit booleans
+  public static bool RamsCanHitEnvironmentOrTerrain =
+    RamConfig.CanHitEnvironmentOrTerrain.Value;
+
+  public static bool RamsCanHitEnemies = RamConfig.CanHitEnemies.Value;
+  public static bool RamsCanHitCharacters = RamConfig.CanHitCharacters.Value;
+  public static bool RamsCanHitFriendly = RamConfig.CanHitFriendly.Value;
+
+  public float chopDamageRatio;
+  public float pickaxeDamageRatio;
+  public float slashDamageRatio;
+  public float bluntDamageRatio;
+
+
+  public static float MaxVelocityMultiplier =>
+    RamConfig.MaxVelocityMultiplier.Value;
+
+  public static bool HasMaxDamageCap =>
+    RamConfig.HasMaximumDamageCap.Value;
+
   public bool isReadyForCollisions = false;
 
 
@@ -28,33 +67,70 @@ public class VehicleRamAoe : Aoe
 
   private const float hitRadius = 3;
 
-  public void Awake()
+  public void InitializeFromConfig()
   {
     m_blockable = false;
     m_dodgeable = false;
-    m_hitTerrain = true;
-    m_hitProps = true;
-    m_hitCharacters = true;
-    m_hitFriendly = true;
-    m_hitEnemy = true;
+    m_hitTerrain = RamsCanHitEnvironmentOrTerrain;
+    m_hitProps = RamsCanHitEnvironmentOrTerrain;
+    m_hitCharacters = RamsCanHitCharacters;
+    m_hitFriendly = RamsCanHitFriendly;
+    m_hitEnemy = RamsCanHitEnemies;
+
+    // todo may need this to do damage to wearntear prefab of the ram
     m_hitParent = false;
-    m_hitInterval = Mathf.Max(minimumHitInterval, hitInterval);
+    m_hitInterval = Mathf.Clamp(RamHitInterval, 0.5f, 5f);
 
     // todo need to tweak this
-    m_damageSelf = 10;
-    m_toolTier = 100;
+    m_damageSelf = PercentageDamageToSelf;
+    m_toolTier = RamDamageToolTier;
     m_attackForce = 5;
-    m_radius = hitRadius;
+    m_radius = Mathf.Clamp(RamHitArea, 0.1f, 10f);
     m_useTriggers = true;
-    m_triggerEnterOnly = true;
+    m_triggerEnterOnly = AllowContinuousDamage;
     m_useCollider = null;
     m_useAttackSettings = true;
     m_ttl = 0;
     m_canRaiseSkill = true;
     m_skill = Skills.SkillType.None;
     m_backstabBonus = 1;
+  }
 
+  public void Awake()
+  {
+    if (!RamInstances.Contains(this))
+    {
+      RamInstances.Add(this);
+    }
+
+    InitializeFromConfig();
     base.Awake();
+  }
+
+  private void OnDisable()
+  {
+    if (RamInstances.Contains(this))
+    {
+      RamInstances.Remove(this);
+    }
+
+    base.OnDisable();
+  }
+
+  public void Start()
+  {
+    Invoke(nameof(UpdateReadyForCollisions), 1f);
+  }
+
+  public override void OnEnable()
+  {
+    if (!RamInstances.Contains(this))
+    {
+      RamInstances.Add(this);
+    }
+
+    Invoke(nameof(UpdateReadyForCollisions), 1f);
+    base.OnEnable();
   }
 
   public new void CustomFixedUpdate(float fixedDeltaTime)
@@ -194,20 +270,9 @@ public class VehicleRamAoe : Aoe
     isReadyForCollisions = true;
   }
 
-  public void Start()
+  public bool UpdateDamageFromVelocityCollider(Collider collider)
   {
-    Invoke(nameof(UpdateReadyForCollisions), 1f);
-  }
-
-  public override void OnEnable()
-  {
-    Invoke(nameof(UpdateReadyForCollisions), 1f);
-    base.OnEnable();
-  }
-
-  public void UpdateDamageFromVelocityCollider(Collider collider)
-  {
-    if (!collider) return;
+    if (!collider) return false;
     // reset damage to base damage if one of these is not available, will still recalculate later
     if (!vehicle?.m_body || !collider.attachedRigidbody)
     {
@@ -215,7 +280,7 @@ public class VehicleRamAoe : Aoe
     }
 
     // early exit if both are not valid
-    if (!vehicle?.m_body && !collider.attachedRigidbody) return;
+    if (!vehicle?.m_body && !collider.attachedRigidbody) return false;
 
     // Velocity will significantly increase if the object is moving towards the other object IE collision
     float relativeVelocity;
@@ -231,32 +296,68 @@ public class VehicleRamAoe : Aoe
                           Vector3.zero);
     }
 
-    UpdateDamageFromVelocity(relativeVelocity);
+    return UpdateDamageFromVelocity(relativeVelocity);
   }
 
-  public void UpdateDamageFromVelocity(float relativeVelocityMagnitude)
+  public bool UpdateDamageFromVelocity(float relativeVelocityMagnitude)
   {
+    // exits if the velocity is not within expected damage ranges
+    if (relativeVelocityMagnitude < minimumVelocityToTriggerHit) return false;
+
     var multiplier = Mathf.Min(relativeVelocityMagnitude * 0.5f, MaxVelocityMultiplier);
+
 
     if (Mathf.Approximately(multiplier, 0))
     {
       multiplier = 0;
     }
 
+    var slashDamage = baseDamage.m_slash * multiplier;
+    var bluntDamage = baseDamage.m_blunt * multiplier;
+    var chopDamage = baseDamage.m_chop * multiplier;
+    var pickaxeDamage = baseDamage.m_pickaxe * multiplier;
+
+    if (HasMaxDamageCap)
+    {
+      var nextTotalDamage = slashDamage + bluntDamage + chopDamage + pickaxeDamage;
+      if (nextTotalDamage > RamBaseMaximumDamage)
+      {
+        if (nextTotalDamage <= 0) return false;
+        if (chopDamageRatio == 0)
+        {
+          chopDamageRatio = chopDamage / nextTotalDamage;
+        }
+
+        if (pickaxeDamageRatio == 0)
+        {
+          pickaxeDamageRatio = pickaxeDamage / nextTotalDamage;
+        }
+
+        if (slashDamageRatio == 0)
+        {
+          slashDamageRatio = slashDamage / nextTotalDamage;
+        }
+
+        if (bluntDamageRatio == 0)
+        {
+          bluntDamageRatio = bluntDamage / nextTotalDamage;
+        }
+
+        slashDamage = baseDamage.m_slash * slashDamageRatio;
+        bluntDamage = baseDamage.m_blunt * bluntDamageRatio;
+        chopDamage = baseDamage.m_chop * chopDamageRatio;
+        pickaxeDamage = baseDamage.m_pickaxe * pickaxeDamageRatio;
+      }
+    }
+
     m_damage = new HitData.DamageTypes()
     {
-      m_damage = baseDamage.m_damage * multiplier,
-      m_blunt = baseDamage.m_blunt * multiplier,
-      m_slash = baseDamage.m_slash * multiplier,
-      m_pierce = baseDamage.m_pierce * multiplier,
-      m_chop = baseDamage.m_chop * multiplier,
-      m_pickaxe = baseDamage.m_pickaxe * multiplier,
-      m_fire = baseDamage.m_fire * multiplier,
-      m_frost = baseDamage.m_frost * multiplier,
-      m_lightning = baseDamage.m_lightning * multiplier,
-      m_poison = baseDamage.m_poison * multiplier,
-      m_spirit = baseDamage.m_spirit * multiplier,
+      m_blunt = bluntDamage,
+      m_slash = slashDamage,
+      m_chop = chopDamage,
+      m_pickaxe = pickaxeDamage,
     };
+    return true;
   }
 
   private bool ShouldIgnore(Collider collider)
@@ -278,7 +379,7 @@ public class VehicleRamAoe : Aoe
   {
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collision.collider)) return;
-    UpdateDamageFromVelocity(Vector3.Magnitude(collision.relativeVelocity));
+    if (!UpdateDamageFromVelocity(Vector3.Magnitude(collision.relativeVelocity))) return;
     base.OnCollisionEnter(collision);
   }
 
@@ -286,7 +387,7 @@ public class VehicleRamAoe : Aoe
   {
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collision.collider)) return;
-    UpdateDamageFromVelocity(Vector3.Magnitude(collision.relativeVelocity));
+    if (!UpdateDamageFromVelocity(Vector3.Magnitude(collision.relativeVelocity))) return;
     base.OnCollisionStay(collision);
   }
 
@@ -294,7 +395,7 @@ public class VehicleRamAoe : Aoe
   {
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collider)) return;
-    UpdateDamageFromVelocityCollider(collider);
+    if (!UpdateDamageFromVelocityCollider(collider)) return;
     base.OnTriggerEnter(collider);
   }
 
@@ -302,12 +403,51 @@ public class VehicleRamAoe : Aoe
   {
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collider)) return;
-    UpdateDamageFromVelocityCollider(collider);
+    if (!UpdateDamageFromVelocityCollider(collider)) return;
     base.OnTriggerStay(collider);
   }
 
-  public void SetBaseDamage(HitData.DamageTypes hitData)
+  public void SetBaseDamage(HitData.DamageTypes data)
   {
-    baseDamage = hitData;
+    chopDamageRatio = 0;
+    pickaxeDamageRatio = 0;
+    slashDamageRatio = 0;
+    bluntDamageRatio = 0;
+    baseDamage = data;
+  }
+
+  public void SetBaseDamageFromConfig()
+  {
+    if (gameObject.name.StartsWith(PrefabNames.RamBladePrefix))
+    {
+      Logger.LogDebug("Setting Damage config for Ram");
+      SetBaseDamage(new HitData.DamageTypes()
+      {
+        m_slash = RamBaseSlashDamage,
+        m_blunt = RamBaseBluntDamage,
+        m_chop = RamBaseChopDamage,
+        m_pickaxe = RamBasePickAxeDamage,
+      });
+    }
+    else
+    {
+      Logger.LogWarning("Ram damage config not handled");
+    }
+  }
+
+  public static void OnBaseSettingsChange(object sender, EventArgs eventArgs)
+  {
+    foreach (var vehicleRamAoe in RamInstances)
+    {
+      vehicleRamAoe.InitializeFromConfig();
+    }
+  }
+
+  public static void OnSettingsChanged(object sender, EventArgs eventArgs)
+  {
+    foreach (var instance in RamInstances.ToArray())
+    {
+      instance.SetBaseDamageFromConfig();
+    }
   }
 }

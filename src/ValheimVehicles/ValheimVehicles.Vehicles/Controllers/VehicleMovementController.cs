@@ -122,10 +122,10 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
         m_rudderSpeed = 2f;
         break;
       case Ship.Speed.Half:
-        m_rudderSpeed = 1f;
+        m_rudderSpeed = 1.5f;
         break;
       case Ship.Speed.Full:
-        m_rudderSpeed = 0.5f;
+        m_rudderSpeed = 1f;
         break;
       default:
         Logger.LogError($"Speed value could not handle this variant, {vehicleSpeed}");
@@ -157,11 +157,6 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   {
     OnControllingWithHotKeyPress();
     AutoVerticalFlightUpdate();
-  }
-
-  private void FixedUpdate()
-  {
-    UpdateShipRudderTurningSpeed();
   }
 
   /// <summary>

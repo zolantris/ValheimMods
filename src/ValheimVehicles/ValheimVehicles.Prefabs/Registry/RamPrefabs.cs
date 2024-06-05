@@ -116,13 +116,7 @@ public class RamPrefabs : IRegisterPrefab
       // just a safety check should always work unless and update breaks things
       if (bladeColliderObj != null)
       {
-        var aoe = SetupAoeComponent(bladeColliderObj);
-        aoe.SetBaseDamage(new HitData.DamageTypes()
-        {
-          m_slash = 10,
-          m_chop = 10,
-          m_pickaxe = 10,
-        });
+        SetupAoeComponent(bladeColliderObj);
       }
       else
       {
@@ -150,7 +144,7 @@ public class RamPrefabs : IRegisterPrefab
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    RegisterRamNose();
+    // RegisterRamNose();
     RegisterRamBlade();
   }
 }
