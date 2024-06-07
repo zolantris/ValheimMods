@@ -40,6 +40,7 @@ public class VehicleRamAoe : Aoe
     RamConfig.CanHitEnvironmentOrTerrain.Value;
 
   public static bool RamsCanHitEnemies = RamConfig.CanHitEnemies.Value;
+  public static bool CanDamageSelf = RamConfig.CanDamageSelf.Value;
   public static bool RamsCanHitCharacters = RamConfig.CanHitCharacters.Value;
   public static bool RamsCanHitFriendly = RamConfig.CanHitFriendly.Value;
 
@@ -78,11 +79,11 @@ public class VehicleRamAoe : Aoe
     m_hitEnemy = RamsCanHitEnemies;
 
     // todo may need this to do damage to wearntear prefab of the ram
-    m_hitParent = false;
+    m_hitParent = CanDamageSelf;
     m_hitInterval = Mathf.Clamp(RamHitInterval, 0.5f, 5f);
 
     // todo need to tweak this
-    m_damageSelf = PercentageDamageToSelf;
+    m_damageSelf = !CanDamageSelf ? 0 : 1;
     m_toolTier = RamDamageToolTier;
     m_attackForce = 5;
     m_radius = Mathf.Clamp(RamHitArea, 0.1f, 10f);
@@ -94,6 +95,14 @@ public class VehicleRamAoe : Aoe
     m_canRaiseSkill = true;
     m_skill = Skills.SkillType.None;
     m_backstabBonus = 1;
+
+    SetBaseDamageFromConfig();
+  }
+
+  public float GetTotalDamage(float slashDamage, float bluntDamage, float chopDamage,
+    float pickaxeDamage)
+  {
+    return slashDamage + bluntDamage + chopDamage + pickaxeDamage;
   }
 
   public void Awake()
@@ -104,6 +113,7 @@ public class VehicleRamAoe : Aoe
     }
 
     InitializeFromConfig();
+    SetBaseDamageFromConfig();
     base.Awake();
   }
 
@@ -319,7 +329,8 @@ public class VehicleRamAoe : Aoe
 
     if (HasMaxDamageCap)
     {
-      var nextTotalDamage = slashDamage + bluntDamage + chopDamage + pickaxeDamage;
+      var nextTotalDamage = GetTotalDamage(slashDamage, bluntDamage, chopDamage, pickaxeDamage);
+
       if (nextTotalDamage > RamBaseMaximumDamage)
       {
         if (nextTotalDamage <= 0) return false;
@@ -357,6 +368,16 @@ public class VehicleRamAoe : Aoe
       m_chop = chopDamage,
       m_pickaxe = pickaxeDamage,
     };
+
+    if (!CanDamageSelf)
+    {
+      return true;
+    }
+
+    m_damageSelf =
+      GetTotalDamage(slashDamage, bluntDamage, chopDamage, pickaxeDamage) *
+      PercentageDamageToSelf;
+
     return true;
   }
 
@@ -418,21 +439,14 @@ public class VehicleRamAoe : Aoe
 
   public void SetBaseDamageFromConfig()
   {
-    if (gameObject.name.StartsWith(PrefabNames.RamBladePrefix))
+    Logger.LogDebug("Setting Damage config for Ram");
+    SetBaseDamage(new HitData.DamageTypes()
     {
-      Logger.LogDebug("Setting Damage config for Ram");
-      SetBaseDamage(new HitData.DamageTypes()
-      {
-        m_slash = RamBaseSlashDamage,
-        m_blunt = RamBaseBluntDamage,
-        m_chop = RamBaseChopDamage,
-        m_pickaxe = RamBasePickAxeDamage,
-      });
-    }
-    else
-    {
-      Logger.LogWarning("Ram damage config not handled");
-    }
+      m_slash = RamBaseSlashDamage,
+      m_blunt = RamBaseBluntDamage,
+      m_chop = RamBaseChopDamage,
+      m_pickaxe = RamBasePickAxeDamage,
+    });
   }
 
   public static void OnBaseSettingsChange(object sender, EventArgs eventArgs)

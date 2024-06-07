@@ -19,6 +19,7 @@ public static class RamConfig
   public static ConfigEntry<bool> AllowContinuousDamage { get; set; }
   public static ConfigEntry<bool> CanHitCharacters { get; set; }
   public static ConfigEntry<bool> CanHitFriendly { get; set; }
+  public static ConfigEntry<bool> CanDamageSelf { get; set; }
   public static ConfigEntry<bool> CanHitEnemies { get; set; }
   public static ConfigEntry<float> RamHitInterval { get; set; }
   public static ConfigEntry<bool> CanHitEnvironmentOrTerrain { get; set; }
@@ -90,6 +91,11 @@ public static class RamConfig
       ConfigHelpers.CreateConfigDescription(
         "allows rams to hit friendlies",
         true, true));
+    CanDamageSelf = config.Bind("Rams", "CanDamageSelf", true,
+      ConfigHelpers.CreateConfigDescription(
+        "allows rams to be damaged. The values set for the damage will be calculated",
+        true, true));
+
     CanHitEnvironmentOrTerrain = config.Bind("Rams", "CanHitEnvironmentOrTerrain", true,
       ConfigHelpers.CreateConfigDescription(
         "allows rams to hit friendlies",
@@ -105,7 +111,7 @@ public static class RamConfig
         true, true));
 
     // Physics damage multiplier Config
-    minimumVelocityToTriggerHit = config.Bind("Rams", "RamMaxVelocityMultiplier", 0.5f,
+    minimumVelocityToTriggerHit = config.Bind("Rams", "minimumVelocityToTriggerHit", 0.5f,
       ConfigHelpers.CreateConfigDescription(
         "Minimum velocity required to activate the ram's damage",
         true, true));
@@ -125,6 +131,7 @@ public static class RamConfig
     PercentageDamageToSelf.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     AllowContinuousDamage.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     CanHitCharacters.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
+    CanDamageSelf.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     CanHitFriendly.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     CanHitEnemies.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     RamHitInterval.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
