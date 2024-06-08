@@ -91,10 +91,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
     shipInstance.ShipEffectsObj = vehicleShipEffects.gameObject;
     shipInstance.ShipEffects = vehicleShipEffects;
 
-    shipInstance.m_floatcollider = floatBoxCollider;
-    shipInstance.FloatCollider = floatBoxCollider;
-
-    // wearntear may need to be removed or tweaked
+    // WearNTear may need to be removed or tweaked
     prefab.AddComponent<WearNTear>();
     var woodWNT = LoadValheimAssets.woodFloorPiece.GetComponent<WearNTear>();
     var wnt = PrefabRegistryHelpers.SetWearNTear(prefab, 1, true);

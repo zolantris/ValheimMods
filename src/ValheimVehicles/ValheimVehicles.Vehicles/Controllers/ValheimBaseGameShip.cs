@@ -20,8 +20,6 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public GameObject m_rudderObject;
 
-  public VehicleMovementController m_shipControlls;
-
   public Transform? m_controlGuiPos;
 
   public BoxCollider m_floatcollider;
@@ -89,7 +87,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal static readonly List<ValheimBaseGameShip> s_currentShips = new();
 
-  public Rigidbody m_body;
+  public Rigidbody m_body { get; set; }
 
   internal ZNetView m_nview;
 
