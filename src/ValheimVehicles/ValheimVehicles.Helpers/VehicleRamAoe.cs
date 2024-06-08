@@ -58,6 +58,8 @@ public class VehicleRamAoe : Aoe
 
   public bool isReadyForCollisions = false;
 
+  private Rigidbody rigidbody;
+
 
   private const float minimumHitInterval = 0.5f;
 
@@ -115,6 +117,14 @@ public class VehicleRamAoe : Aoe
     InitializeFromConfig();
     SetBaseDamageFromConfig();
     base.Awake();
+
+    rigidbody = GetComponent<Rigidbody>();
+    // very important otherwise this rigidbody will interfere with physics of the Watervehicle controller due to nesting.
+    // todo to move this rigidbody into a joint and make it a sibling of the WaterVehicle or PieceContainer (doing this would be a large refactor to structure, likely requiring a new prefab)
+    if (rigidbody)
+    {
+      rigidbody.includeLayers = m_rayMask;
+    }
   }
 
   private void OnDisable()

@@ -1587,6 +1587,7 @@ public class BaseVehicleController : MonoBehaviour
       return;
     }
 
+
     var shouldRebuildBounds = false;
     totalSailArea = 0;
     m_pieces.Add(netView);
@@ -1664,6 +1665,7 @@ public class BaseVehicleController : MonoBehaviour
     {
       var vehicleRamAoe = netView.GetComponentInChildren<VehicleRamAoe>();
       if ((bool)vehicleRamAoe) vehicleRamAoe.vehicle = VehicleInstance.Instance;
+      netView.transform.SetParent(VehicleInstance?.Instance?.transform);
     }
 
     FixPieceMeshes(netView);
