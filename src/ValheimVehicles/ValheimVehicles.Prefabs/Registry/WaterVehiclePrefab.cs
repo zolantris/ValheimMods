@@ -33,15 +33,32 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var netView = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     netView.m_type = ZDO.ObjectType.Prioritized;
 
-    var colliderParentObj = prefab.transform.Find("colliders");
+    var vehicleMovementObj = prefab.transform.Find("vehicle_movement");
+
+    // colliders already have a rigidbody on them from unity prefab
+    var vehicleMovementColliders = vehicleMovementObj.transform.Find("colliders");
+    var pieces = vehicleMovementObj.transform.Find("pieces");
+    var movingPieces = vehicleMovementObj.transform.Find("moving_pieces");
+
+    var shipPhysicsNetView = vehicleMovementColliders.gameObject.AddComponent<ZNetView>();
+    shipPhysicsNetView.m_persistent = false;
+    shipPhysicsNetView.m_distant = true;
+
+    var shipPhysicsZSyncTransform =
+      vehicleMovementColliders.gameObject.AddComponent<ZSyncTransform>();
+
+    shipPhysicsZSyncTransform.m_syncPosition = true;
+    shipPhysicsZSyncTransform.m_syncBodyVelocity = true;
+    shipPhysicsZSyncTransform.m_syncRotation = true;
+
     var floatColliderObj =
-      colliderParentObj.Find(
+      vehicleMovementColliders.Find(
         PrefabNames.WaterVehicleFloatCollider);
     var blockingColliderObj =
-      colliderParentObj.Find(PrefabNames
+      vehicleMovementColliders.Find(PrefabNames
         .WaterVehicleBlockingCollider);
     var onboardColliderObj =
-      colliderParentObj.Find(PrefabNames
+      vehicleMovementColliders.Find(PrefabNames
         .WaterVehicleOnboardCollider);
 
     onboardColliderObj.name = PrefabNames.WaterVehicleOnboardCollider;
@@ -54,16 +71,20 @@ public class WaterVehiclePrefab : IRegisterPrefab
      * ShipControls were a gameObject with a script attached to them. This approach directly attaches the script instead of having the rudder show.
      */
     var vehicleRigidbody = prefab.GetComponent<Rigidbody>();
-    var zSyncTransform = prefab.AddComponent<ZSyncTransform>();
+    var piecesSyncNetView = pieces.gameObject.AddComponent<ZNetView>();
+    piecesSyncNetView.m_persistent = false;
+    piecesSyncNetView.m_distant = true;
+    var zSyncTransform = pieces.gameObject.AddComponent<ZSyncTransform>();
+
     zSyncTransform.m_syncPosition = true;
     zSyncTransform.m_syncBodyVelocity = true;
     zSyncTransform.m_syncRotation = true;
     zSyncTransform.m_body = vehicleRigidbody;
 
 
-    var shipInstance = prefab.AddComponent<VehicleShip>();
-    var shipControls = prefab.AddComponent<VehicleMovementController>();
-    shipInstance.ColliderParentObj = colliderParentObj.gameObject;
+    var shipInstance = vehicleMovementObj.gameObject.AddComponent<VehicleShip>();
+    var shipControls = vehicleMovementObj.gameObject.AddComponent<VehicleMovementController>();
+    shipInstance.ColliderParentObj = vehicleMovementColliders.gameObject;
 
     shipInstance.ShipDirection =
       floatColliderObj.FindDeepChild(PrefabNames.VehicleShipMovementOrientation);
@@ -108,7 +129,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
 
     // todo ImpactEffect likely never should have been added like this
     // todo remove if unnecessary
-    var impactEffect = prefab.AddComponent<ImpactEffect>();
+    var impactEffect = vehicleMovementObj.gameObject.AddComponent<ImpactEffect>();
     impactEffect.m_triggerMask = LayerMask.GetMask("Default", "character", "piece", "terrain",
       "static_solid", "Default_small", "character_net", "vehicle", LayerMask.LayerToName(29));
     impactEffect.m_toolTier = 1000;
@@ -124,14 +145,6 @@ public class WaterVehiclePrefab : IRegisterPrefab
     impactEffect.m_hitType = HitData.HitType.Boat;
     impactEffect.m_minVelocity = 0.1f;
     impactEffect.m_maxVelocity = 7;
-
-    // var shipControlsGui = new GameObject
-    //   { name = "ControlGui", layer = 0, transform = { parent = prefab.transform } };
-    // shipControlsGui.transform.SetParent(prefab.transform);
-    //
-    // // todo the gui likely does not need these values
-    // shipControlsGui.transform.localPosition = new Vector3(2.154f, 1.027f, -2.162f);
-    // shipInstance.m_controlGuiPos = shipControlsGui.transform;
 
     return prefab;
   }
