@@ -33,6 +33,28 @@ public abstract class PrefabRegistryHelpers
 
   public static readonly Dictionary<string, PieceData> PieceDataDictionary = new();
 
+  public static ZSyncTransform AddMovementZSyncTransform(GameObject obj)
+  {
+    var zSyncTransform = obj.AddComponent<ZSyncTransform>();
+    zSyncTransform.m_syncPosition = true;
+    zSyncTransform.m_syncBodyVelocity = true;
+    zSyncTransform.m_syncRotation = true;
+    return zSyncTransform;
+  }
+
+  public static ZNetView AddTempNetView(GameObject obj, bool prioritized = false)
+  {
+    var netView = obj.AddComponent<ZNetView>();
+    if (prioritized)
+    {
+      netView.m_type = ZDO.ObjectType.Prioritized;
+    }
+
+    netView.m_persistent = false;
+    netView.m_distant = true;
+    return netView;
+  }
+
   private static void RegisterRamPieces()
   {
     var ramNoseIcon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.RamNose);
@@ -304,7 +326,7 @@ public abstract class PrefabRegistryHelpers
     return piece;
   }
 
-  public static ZNetView AddNetViewWithPersistence(GameObject prefab)
+  public static ZNetView AddNetViewWithPersistence(GameObject prefab, bool prioritized = false)
   {
     var netView = prefab.GetComponent<ZNetView>();
     if (!(bool)netView)
@@ -316,6 +338,11 @@ public abstract class PrefabRegistryHelpers
     {
       Logger.LogError("Unable to register NetView, ValheimRAFT could be broken without netview");
       return netView;
+    }
+
+    if (prioritized)
+    {
+      netView.m_type = ZDO.ObjectType.Prioritized;
     }
 
     netView.m_persistent = true;

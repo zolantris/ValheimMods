@@ -4,6 +4,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimRAFT.Patches;
 
@@ -36,6 +37,12 @@ public class Character_Patch
     if (lastOnShip)
     {
       return lastOnShip;
+    }
+
+    var vehicle = __instance.m_lastGroundBody.GetComponentInParent<VehicleShip>();
+    if ((bool)vehicle)
+    {
+      return VehicleShipCompat.InitFromUnknown(vehicle.VehicleController?.VehicleInstance);
     }
 
     var bvc = __instance.m_lastGroundBody.GetComponentInParent<BaseVehicleController>();
@@ -72,6 +79,17 @@ public class Character_Patch
     {
       if (__instance.transform.parent != null) __instance.transform.SetParent(null);
       return;
+    }
+
+    VehicleShip? vehicleShip = null;
+    if ((bool)__instance.m_lastGroundBody)
+    {
+      vehicleShip = __instance.m_lastGroundBody.GetComponentInParent<VehicleShip>();
+      if ((bool)vehicleShip && __instance.transform.parent != vehicleShip.transform)
+      {
+        __instance.transform.SetParent(vehicleShip.VehicleController.Instance.transform);
+        return;
+      }
     }
 
     BaseVehicleController? bvc = null;

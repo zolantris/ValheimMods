@@ -80,7 +80,7 @@ public class CreativeModeConsoleCommand : ConsoleCommand
 
     var toggledKinematicValue = !ship.m_body.isKinematic;
     ship.m_body.isKinematic = toggledKinematicValue;
-    ship.m_zsyncTransform.m_isKinematicBody = toggledKinematicValue;
+    ship.movementZSyncTransform.m_isKinematicBody = toggledKinematicValue;
 
     if (toggledKinematicValue)
     {

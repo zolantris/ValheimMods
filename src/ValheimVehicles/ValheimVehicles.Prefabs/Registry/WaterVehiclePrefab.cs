@@ -27,38 +27,30 @@ public class WaterVehiclePrefab : IRegisterPrefab
    * todo it's possible this all needs to be done in the Awake method to safely load valheim.
    * Should test this in development build of valheim
    */
-  public static GameObject CreateWaterVehiclePrefab(
+  private static GameObject CreateWaterVehiclePrefab(
     GameObject prefab)
   {
-    var netView = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-    netView.m_type = ZDO.ObjectType.Prioritized;
+    // top level netview must be passed along to other components from VehicleShip
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab, true);
 
-    var vehicleMovementObj = prefab.transform.Find("vehicle_movement");
+    var vehicleMovementObj = VehicleShip.GetVehicleMovementObj(prefab.transform);
+    PrefabRegistryHelpers.AddTempNetView(vehicleMovementObj, true);
+    PrefabRegistryHelpers.AddMovementZSyncTransform(vehicleMovementObj);
 
     // colliders already have a rigidbody on them from unity prefab
-    var vehicleMovementColliders = vehicleMovementObj.transform.Find("colliders");
-    var pieces = vehicleMovementObj.transform.Find("pieces");
-    var movingPieces = vehicleMovementObj.transform.Find("moving_pieces");
-
-    var shipPhysicsNetView = vehicleMovementColliders.gameObject.AddComponent<ZNetView>();
-    shipPhysicsNetView.m_persistent = false;
-    shipPhysicsNetView.m_distant = true;
-
-    var shipPhysicsZSyncTransform =
-      vehicleMovementColliders.gameObject.AddComponent<ZSyncTransform>();
-
-    shipPhysicsZSyncTransform.m_syncPosition = true;
-    shipPhysicsZSyncTransform.m_syncBodyVelocity = true;
-    shipPhysicsZSyncTransform.m_syncRotation = true;
+    var vehicleMovementColliders =
+      VehicleShip.GetVehicleMovementCollidersObj(prefab.transform);
+    var vehiclePiecesObj = VehicleShip.GetVehiclePiecesObj(prefab.transform);
+    var movingPieces = VehicleShip.GetVehicleMovingPiecesObj(prefab.transform);
 
     var floatColliderObj =
-      vehicleMovementColliders.Find(
+      vehicleMovementColliders.transform.Find(
         PrefabNames.WaterVehicleFloatCollider);
     var blockingColliderObj =
-      vehicleMovementColliders.Find(PrefabNames
+      vehicleMovementColliders.transform.Find(PrefabNames
         .WaterVehicleBlockingCollider);
     var onboardColliderObj =
-      vehicleMovementColliders.Find(PrefabNames
+      vehicleMovementColliders.transform.Find(PrefabNames
         .WaterVehicleOnboardCollider);
 
     onboardColliderObj.name = PrefabNames.WaterVehicleOnboardCollider;
@@ -70,20 +62,12 @@ public class WaterVehiclePrefab : IRegisterPrefab
     /*
      * ShipControls were a gameObject with a script attached to them. This approach directly attaches the script instead of having the rudder show.
      */
-    var vehicleRigidbody = prefab.GetComponent<Rigidbody>();
-    var piecesSyncNetView = pieces.gameObject.AddComponent<ZNetView>();
-    piecesSyncNetView.m_persistent = false;
-    piecesSyncNetView.m_distant = true;
-    var zSyncTransform = pieces.gameObject.AddComponent<ZSyncTransform>();
+    var vehicleRigidbody = vehiclePiecesObj.GetComponent<Rigidbody>();
+    PrefabRegistryHelpers.AddTempNetView(vehiclePiecesObj.gameObject, true);
+    vehiclePiecesObj.gameObject.AddComponent<ZSyncTransform>();
 
-    zSyncTransform.m_syncPosition = true;
-    zSyncTransform.m_syncBodyVelocity = true;
-    zSyncTransform.m_syncRotation = true;
-    zSyncTransform.m_body = vehicleRigidbody;
-
-
-    var shipInstance = vehicleMovementObj.gameObject.AddComponent<VehicleShip>();
-    var shipControls = vehicleMovementObj.gameObject.AddComponent<VehicleMovementController>();
+    var shipInstance = prefab.AddComponent<VehicleShip>();
+    var shipControls = vehicleMovementObj.AddComponent<VehicleMovementController>();
     shipInstance.ColliderParentObj = vehicleMovementColliders.gameObject;
 
     shipInstance.ShipDirection =
@@ -92,7 +76,6 @@ public class WaterVehiclePrefab : IRegisterPrefab
     shipInstance.MovementController = shipControls;
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
     shipInstance.m_body = vehicleRigidbody;
-    shipInstance.m_zsyncTransform = zSyncTransform;
 
     // todo fix ship water effects so they do not cause ship materials to break
 
@@ -184,8 +167,6 @@ public class WaterVehiclePrefab : IRegisterPrefab
   {
     var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.Nautilus,
       LoadValheimVehicleAssets.ShipNautilus);
-
-    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
     var piece = PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Nautilus, prefab);
     piece.m_waterPiece = true;

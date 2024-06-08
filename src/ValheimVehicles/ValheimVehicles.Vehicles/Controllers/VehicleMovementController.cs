@@ -2,8 +2,10 @@ using System;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
+using ValheimRAFT.Patches;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
+using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Enums;
 using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
@@ -27,7 +29,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   internal float m_rudder;
   public float m_rudderSpeed = 0.5f;
   internal float m_rudderValue;
-
+  public ZSyncTransform zsyncTransform;
   private Ship.Speed vehicleSpeed;
 
   // flying mechanics
@@ -63,7 +65,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   private void Awake()
   {
     NetView = GetComponent<ZNetView>();
-
+    zsyncTransform = GetComponent<ZSyncTransform>();
     if (!NetView) return;
     if (!NetView.isActiveAndEnabled) return;
 
@@ -85,6 +87,71 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
 
     InitializeRPC();
     SyncShip();
+  }
+
+  public void HandlePlayerHitVehicleBounds(Collider collider, bool isExiting)
+  {
+    if (ShipInstance?.Instance == null) return;
+    var playerComponent = collider.GetComponent<Player>();
+
+    if ((bool)playerComponent)
+    {
+      var containerCharacter = ShipInstance.Instance.m_players.Contains(playerComponent);
+
+      if (containerCharacter && isExiting)
+      {
+        Logger.LogDebug("Player over board, players left " + ShipInstance.Instance.m_players.Count);
+        ShipInstance.Instance.m_players.Remove(playerComponent);
+      }
+
+      if (!containerCharacter && !isExiting)
+      {
+        Logger.LogDebug("Player onboard, total onboard " + ShipInstance.Instance.m_players.Count);
+        ShipInstance.Instance.m_players.Add(playerComponent);
+      }
+
+      if (playerComponent != Player.m_localPlayer) return;
+
+      if (isExiting)
+      {
+        PlayerSpawnController.Instance.SyncLogoutPoint();
+        ValheimBaseGameShip.s_currentShips.Remove(ShipInstance.Instance);
+        Player.m_localPlayer.transform.SetParent(null);
+      }
+
+      if (!isExiting)
+      {
+        ValheimBaseGameShip.s_currentShips.Add(ShipInstance.Instance);
+        Player.m_localPlayer.transform.SetParent(ShipInstance.Instance.VehicleController.Instance
+          .transform);
+      }
+    }
+  }
+
+  public void HandleCharacterHitVehicleBounds(Collider collider, bool isExiting)
+  {
+    var character = collider.GetComponent<Character>();
+    if (!(bool)character) return;
+    if (isExiting)
+    {
+      character.InNumShipVolumes--;
+    }
+    else
+    {
+      character.InNumShipVolumes++;
+    }
+  }
+
+  public void OnTriggerEnter(Collider collider)
+  {
+    HandlePlayerHitVehicleBounds(collider, false);
+    HandleCharacterHitVehicleBounds(collider, false);
+  }
+
+  public void OnTriggerExit(Collider collider)
+  {
+    HandlePlayerHitVehicleBounds(collider, true);
+    HandleCharacterHitVehicleBounds(collider, true);
   }
 
   public Ship.Speed GetSpeedSetting() => vehicleSpeed;
@@ -157,6 +224,11 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
   {
     OnControllingWithHotKeyPress();
     AutoVerticalFlightUpdate();
+  }
+
+  private void FixedUpdate()
+  {
+    UpdateShipRudderTurningSpeed();
   }
 
   /// <summary>
@@ -284,7 +356,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
       AttachPoint = rudderAttachPoint.transform;
     }
 
-    NetView = GetComponent<ZNetView>();
+    NetView = ShipInstance.Instance.m_nview;
   }
 
   private void OnDestroy()
@@ -355,8 +427,8 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
       }
     }
 
-    NetView.GetZDO().Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
-    ShipInstance.Instance.UpdateShipEffects();
+    NetView?.GetZDO()?.Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
+    ShipInstance?.Instance?.UpdateShipEffects();
   }
 
   public void Ascend()
@@ -372,7 +444,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
     }
     else
     {
-      if (!ShipInstance.FloatCollider)
+      if (!ShipInstance?.FloatCollider)
       {
         return;
       }
@@ -383,7 +455,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
     }
 
     NetView.GetZDO().Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
-    ShipInstance.Instance.UpdateShipEffects();
+    ShipInstance?.Instance?.UpdateShipEffects();
   }
 
   public void AutoAscendUpdate()
@@ -856,6 +928,7 @@ public class VehicleMovementController : MonoBehaviour, IVehicleMovement
 
   private long GetUser()
   {
+    if (!NetView) return 0L;
     return !NetView.IsValid() ? 0L : NetView.GetZDO().GetLong(ZDOVars.s_user, 0L);
   }
 }

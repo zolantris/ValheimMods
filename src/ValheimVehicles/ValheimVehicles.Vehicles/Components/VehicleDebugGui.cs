@@ -25,13 +25,6 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     return new Vector3(x, y, z);
   }
 
-  // private PlayerSpawnController? GetCurrentPlayerSpawnController()
-  // {
-  //   if (!Player.m_localPlayer) return null;
-  //   var spawnController = Player.m_localPlayer.GetComponent<PlayerSpawnController>();
-  //   return spawnController;
-  // }
-
   private void OnGUI()
   {
     myButtonStyle ??= new GUIStyle(GUI.skin.button)

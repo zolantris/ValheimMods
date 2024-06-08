@@ -186,7 +186,7 @@ public class BaseVehicleController : MonoBehaviour
 
   public void SetColliders(VehicleShip vehicleInstance)
   {
-    var colliders = vehicleInstance.transform.Find("colliders")
+    var colliders = VehicleShip.GetVehicleMovementCollidersObj(vehicleInstance.transform)
       .GetComponentsInChildren<BoxCollider>();
 
     foreach (var boxCollider in colliders)
@@ -458,14 +458,14 @@ public class BaseVehicleController : MonoBehaviour
       return;
     }
 
-    m_rigidbody.angularDrag = angularDrag;
+    // m_rigidbody.angularDrag = angularDrag;
     m_syncRigidbody.angularDrag = angularDrag;
 
-    m_rigidbody.drag = drag;
+    // m_rigidbody.drag = drag;
     m_syncRigidbody.drag = drag;
 
     m_syncRigidbody.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
-    m_rigidbody.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
+    // m_rigidbody.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
   }
 
   private void Sync()
@@ -489,7 +489,7 @@ public class BaseVehicleController : MonoBehaviour
 
     if (!ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value)
     {
-      Sync();
+      // Sync();
       return;
     }
 
@@ -497,19 +497,19 @@ public class BaseVehicleController : MonoBehaviour
     if (m_nview.IsOwner())
     {
       Client_UpdateAllPieces();
-      Sync();
+      // Sync();
     }
   }
 
   public void FixedUpdate()
   {
-    Sync();
+    // Sync();
     Client_UpdateAllPieces();
   }
 
   public void LateUpdate()
   {
-    Sync();
+    // Sync();
   }
 
 
@@ -1999,7 +1999,10 @@ public class BaseVehicleController : MonoBehaviour
   public void EncapsulateBounds(GameObject go)
   {
     var colliders = GetCollidersInPiece(go);
-    IgnoreShipColliders(colliders);
+    if (!go.name.StartsWith(PrefabNames.RamBladePrefix))
+    {
+      IgnoreShipColliders(colliders);
+    }
 
     var door = go.GetComponentInChildren<Door>();
     var ladder = go.GetComponent<RopeLadderComponent>();
@@ -2009,7 +2012,8 @@ public class BaseVehicleController : MonoBehaviour
         !go.name.StartsWith(PrefabNames.Tier1CustomSailName) &&
         !go.name.StartsWith(PrefabNames.Tier2RaftMastName) &&
         !go.name.StartsWith(PrefabNames.Tier3RaftMastName) &&
-        !go.name.StartsWith(PrefabNames.Tier4RaftMastName))
+        !go.name.StartsWith(PrefabNames.Tier4RaftMastName) &&
+        !go.name.StartsWith(PrefabNames.RamBladePrefix))
     {
       if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value || ShipHulls.IsHull(go))
       {

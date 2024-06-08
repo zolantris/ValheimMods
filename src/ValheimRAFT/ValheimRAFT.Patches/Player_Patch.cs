@@ -43,9 +43,10 @@ public class Player_Patch
   {
     if (!netView.name.Contains(PrefabNames.WaterVehicleShip)) return;
     var vehicleShip = netView.GetComponent<VehicleShip>();
-    if (vehicleShip.GhostContainer != null)
+    var ghostContainer = vehicleShip.GhostContainer();
+    if (ghostContainer != null)
     {
-      vehicleShip.GhostContainer().SetActive(false);
+      ghostContainer.SetActive(false);
     }
   }
 
@@ -72,7 +73,8 @@ public class Player_Patch
       if ((bool)cul) cul.AddNewChild(netView);
     }
 
-    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<BaseVehicleController>();
+    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponent<VehicleShip>()?.VehicleController
+      .Instance;
     if ((bool)bvc)
     {
       if ((bool)netView)
@@ -150,20 +152,31 @@ public class Player_Patch
   {
     var layerMask = __instance.m_placeRayMask;
 
-    var bvc = __instance.GetComponentInParent<BaseVehicleController>();
+    var vehicle = __instance.transform.root.GetComponent<VehicleShip>();
+    if ((bool)vehicle)
+      return HandleGameObjectRayCast(vehicle.transform, layerMask, __instance, ref __result,
+        ref point,
+        ref normal, ref piece,
+        ref heightmap,
+        ref waterSurface, water);
+    var bvc = __instance.transform.root.GetComponent<BaseVehicleController>();
     if ((bool)bvc)
       return HandleGameObjectRayCast(bvc.transform, layerMask, __instance, ref __result, ref point,
         ref normal, ref piece,
         ref heightmap,
         ref waterSurface, water);
 
-    var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-    if ((bool)mbr)
+    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
     {
-      return HandleGameObjectRayCast(mbr.transform, layerMask, __instance, ref __result, ref point,
-        ref normal, ref piece,
-        ref heightmap,
-        ref waterSurface, water);
+      var mbr = __instance.transform.root.GetComponent<MoveableBaseRootComponent>();
+      if ((bool)mbr)
+      {
+        return HandleGameObjectRayCast(mbr.transform, layerMask, __instance, ref __result,
+          ref point,
+          ref normal, ref piece,
+          ref heightmap,
+          ref waterSurface, water);
+      }
     }
 
     return true;

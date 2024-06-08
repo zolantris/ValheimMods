@@ -86,7 +86,8 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
   public VehicleShipEffects? ShipEffects;
 
   private WaterVehicleController _controller;
-  public ZSyncTransform m_zsyncTransform;
+  public ZSyncTransform movementZSyncTransform;
+  public ZSyncTransform piecesZsyncTransform;
 
   public ZNetView NetView => m_nview;
 
@@ -127,6 +128,31 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     set => m_controlGuiPos = value;
   }
 
+  public static GameObject GetVehicleMovingPiecesObj(Transform prefabRoot)
+  {
+    var obj = prefabRoot.Find("vehicle_moving_pieces");
+    return obj.gameObject;
+  }
+
+  public static GameObject GetVehiclePiecesObj(Transform prefabRoot)
+  {
+    var obj = prefabRoot.Find("vehicle_pieces");
+    return obj.gameObject;
+  }
+
+  public static GameObject GetVehicleMovementCollidersObj(Transform prefabRoot)
+  {
+    var obj = prefabRoot.Find("vehicle_movement/colliders");
+    return obj.gameObject;
+  }
+
+
+  public static GameObject GetVehicleMovementObj(Transform prefabRoot)
+  {
+    var obj = prefabRoot.Find("vehicle_movement");
+    return obj.gameObject;
+  }
+
   public static void OnAllowFlight(object sender, EventArgs eventArgs)
   {
     foreach (var vehicle in AllVehicles)
@@ -148,6 +174,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     }
   }
 
+
   public new void OnTriggerEnter(Collider collider)
   {
     var playerSpawnController = collider.GetComponentInParent<PlayerSpawnController>();
@@ -158,8 +185,6 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     {
       Logger.LogDebug($"collider was a piece, {collider.name} {pieceComponent.name}");
     }
-
-    base.OnTriggerEnter(collider);
   }
 
   public new void OnTriggerExit(Collider collider)
@@ -326,15 +351,18 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 
   public void AwakeSetupShipComponents()
   {
-    var colliderParentObj = transform.Find("colliders");
+    var vehicleMovementObj = GetVehicleMovementObj(transform);
+    var vehiclePiecesObj = GetVehiclePiecesObj(transform);
+    var vehicleCollidersParentObj = GetVehicleMovementCollidersObj(transform);
+
     var floatColliderObj =
-      colliderParentObj.Find(
+      vehicleCollidersParentObj.transform.Find(
         PrefabNames.WaterVehicleFloatCollider);
     var blockingColliderObj =
-      colliderParentObj.Find(PrefabNames
+      vehicleCollidersParentObj.transform.Find(PrefabNames
         .WaterVehicleBlockingCollider);
     var onboardColliderObj =
-      colliderParentObj.Find(PrefabNames
+      vehicleCollidersParentObj.transform.Find(PrefabNames
         .WaterVehicleOnboardCollider);
 
     onboardColliderObj.name = PrefabNames.WaterVehicleOnboardCollider;
@@ -346,9 +374,10 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     FloatCollider = floatColliderObj.GetComponent<BoxCollider>();
     OnboardCollider = onboardColliderObj.GetComponent<BoxCollider>();
 
+
     if (!MovementController)
     {
-      MovementController = GetComponent<VehicleMovementController>();
+      MovementController = vehicleMovementObj.GetComponent<VehicleMovementController>();
     }
 
     if (MovementController)
@@ -365,10 +394,14 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
 
     UpdateVehicleSpeedThrottle();
 
-
-    if (!(bool)m_zsyncTransform)
+    if ((bool)vehicleMovementObj && !(bool)movementZSyncTransform)
     {
-      m_zsyncTransform = GetComponent<ZSyncTransform>();
+      movementZSyncTransform = vehicleMovementObj.GetComponent<ZSyncTransform>();
+    }
+
+    if ((bool)vehiclePiecesObj && !(bool)piecesZsyncTransform)
+    {
+      piecesZsyncTransform = vehiclePiecesObj.GetComponent<ZSyncTransform>();
     }
 
     if (!(bool)m_mastObject)
@@ -376,7 +409,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
       m_mastObject = new GameObject()
       {
         name = PrefabNames.VehicleSailMast,
-        transform = { parent = transform }
+        transform = { parent = vehicleMovementObj.transform }
       };
     }
 
@@ -385,13 +418,13 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
       m_sailObject = new GameObject()
       {
         name = PrefabNames.VehicleSail,
-        transform = { parent = transform }
+        transform = { parent = vehicleMovementObj.transform }
       };
     }
 
     if (!(bool)m_sailCloth)
     {
-      m_sailCloth = m_sailObject.AddComponent<Cloth>();
+      m_sailCloth = vehicleMovementObj.AddComponent<Cloth>();
     }
 
     if (!(bool)ShipEffectsObj)
@@ -623,9 +656,10 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
     var vehiclePiecesContainer = VehiclePiecesPrefab.VehiclePiecesContainer;
     if (!vehiclePiecesContainer) return;
 
-    _vehiclePiecesContainerInstance = Instantiate(vehiclePiecesContainer, null);
-    _vehiclePiecesContainerInstance.transform.position = transform.position;
-    _vehiclePiecesContainerInstance.transform.rotation = transform.rotation;
+    _vehiclePiecesContainerInstance = GetVehiclePiecesObj(transform);
+    // _vehiclePiecesContainerInstance = Instantiate(vehiclePiecesContainer, transform);
+    // _vehiclePiecesContainerInstance.transform.position = transform.position;
+    // _vehiclePiecesContainerInstance.transform.rotation = transform.rotation;
 
     _controller = _vehiclePiecesContainerInstance.AddComponent<WaterVehicleController>();
     _controller.InitializeShipValues(Instance);
@@ -990,7 +1024,7 @@ public class VehicleShip : ValheimBaseGameShip, IValheimShip, IVehicleShip
   // Updates gravity and target height (which is used to compute gravity)
   public void UpdateGravity()
   {
-    m_zsyncTransform.m_useGravity =
+    movementZSyncTransform.m_useGravity =
       TargetHeight == 0f;
     m_body.useGravity = TargetHeight == 0f;
   }

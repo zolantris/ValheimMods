@@ -347,51 +347,6 @@ public class ValheimBaseGameShip : MonoBehaviour
     }
   }
 
-  public void OnTriggerEnter(Collider collider)
-  {
-    var component = collider.GetComponent<Player>();
-    if ((bool)component)
-    {
-      if (m_players.Contains(component))
-      {
-        return;
-      }
-
-      m_players.Add(component);
-      Logger.LogDebug("Player onboard, total onboard " + m_players.Count);
-      if (component == Player.m_localPlayer)
-      {
-        s_currentShips.Add(this);
-      }
-    }
-
-    var component2 = collider.GetComponent<Character>();
-    if ((bool)component2)
-    {
-      component2.InNumShipVolumes++;
-    }
-  }
-
-  public void OnTriggerExit(Collider collider)
-  {
-    Player component = collider.GetComponent<Player>();
-    if ((bool)component)
-    {
-      m_players.Remove(component);
-      Logger.LogDebug("Player over board, players left " + m_players.Count);
-      if (component == Player.m_localPlayer)
-      {
-        s_currentShips.Remove(this);
-      }
-    }
-
-    Character component2 = collider.GetComponent<Character>();
-    if ((bool)component2)
-    {
-      component2.InNumShipVolumes--;
-    }
-  }
-
   public bool IsPlayerInBoat(ZDOID zdoid)
   {
     foreach (Player player in m_players)
@@ -413,7 +368,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public bool IsPlayerInBoat(long playerID)
   {
-    foreach (Player player in m_players)
+    foreach (var player in m_players)
     {
       if (player.GetPlayerID() == playerID)
       {

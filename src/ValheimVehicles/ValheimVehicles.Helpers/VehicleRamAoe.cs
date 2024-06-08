@@ -107,7 +107,7 @@ public class VehicleRamAoe : Aoe
     return slashDamage + bluntDamage + chopDamage + pickaxeDamage;
   }
 
-  public void Awake()
+  public new void Awake()
   {
     if (!RamInstances.Contains(this))
     {
@@ -280,7 +280,8 @@ public class VehicleRamAoe : Aoe
     }
 
     // Must be within the BaseVehicleController otherwise this AOE could attempt to damage items within the raft ball
-    var isChildOfBaseVehicle = transform.root.GetComponent<BaseVehicleController>();
+    var isChildOfBaseVehicle = transform.root.name.StartsWith(PrefabNames.WaterVehicleShip) ||
+                               transform.root.name.StartsWith(PrefabNames.PiecesContainer);
     if (!(bool)isChildOfBaseVehicle)
     {
       isReadyForCollisions = false;
@@ -394,7 +395,8 @@ public class VehicleRamAoe : Aoe
   private bool ShouldIgnore(Collider collider)
   {
     if (!collider) return false;
-    if (!collider.transform.root.name.StartsWith(PrefabNames.PiecesContainer) &&
+    if ((!collider.transform.root.name.StartsWith(PrefabNames.PiecesContainer) ||
+         !collider.transform.root.name.StartsWith(PrefabNames.WaterVehicleShip)) &&
         collider.transform.root != transform.root) return false;
 
     var childColliders = GetComponentsInChildren<Collider>();

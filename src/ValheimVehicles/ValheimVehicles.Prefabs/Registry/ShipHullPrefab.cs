@@ -120,6 +120,7 @@ public class ShipHullPrefab : IRegisterPrefab
     wnt.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
     wnt.m_switchEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_switchEffect;
     wnt.m_hitNoise = LoadValheimAssets.woodFloorPieceWearNTear.m_hitNoise;
+    wnt.m_burnable = hullMaterial != ShipHulls.HullMaterial.Iron;
 
     ShipHulls.SetMaterialHealthValues(hullMaterial, wnt, 9);
     PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
@@ -215,6 +216,7 @@ public class ShipHullPrefab : IRegisterPrefab
     wnt.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
     wnt.m_switchEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_switchEffect;
     wnt.m_hitNoise = LoadValheimAssets.woodFloorPieceWearNTear.m_hitNoise;
+    wnt.m_burnable = hullMaterial != ShipHulls.HullMaterial.Iron;
 
     ShipHulls.SetMaterialHealthValues(hullMaterial, wnt, materialCount);
     PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
