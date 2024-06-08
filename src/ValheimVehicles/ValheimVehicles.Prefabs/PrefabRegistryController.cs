@@ -291,21 +291,21 @@ public class PrefabRegistryController : MonoBehaviour
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("rope_anchor"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[2]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 1,
           Item = "Iron",
           Recover = true
         },
-        new()
+        new RequirementConfig
         {
           Amount = 4,
           Item = "IronNails",
           Recover = true
         }
-      }
+      ]
     }));
   }
 
@@ -348,15 +348,15 @@ public class PrefabRegistryController : MonoBehaviour
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Icon = pierPolePrefabPiece.m_icon,
-      Requirements = new RequirementConfig[1]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 4,
           Item = "RoundLog",
           Recover = true
         }
-      }
+      ]
     });
 
     // this could be off with the name since the name is overridden it may not apply until after things are run.
