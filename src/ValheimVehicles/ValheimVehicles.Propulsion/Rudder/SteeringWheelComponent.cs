@@ -119,16 +119,18 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
         "<color=white><b>$valheim_vehicles_wheel_use_error</b></color>");
     }
 
-    var isAnchored = controller.VehicleInstance.MovementController.IsAnchored;
+    var isAnchored = controller?.VehicleInstance?.MovementController.IsAnchored ?? false;
     var anchorKeyString = GetAnchorHotkeyString();
-    var hoverText = GetHoverTextFromShip(controller.totalSailArea, controller.TotalMass,
-      controller.ShipMass,
-      controller.ShipContainerMass, controller.GetSailingForce(), isAnchored, anchorKeyString);
+    var hoverText = GetHoverTextFromShip(controller?.totalSailArea ?? 0,
+      controller?.TotalMass ?? 0,
+      controller?.ShipMass ?? 0,
+      controller?.ShipContainerMass ?? 0, controller?.GetSailingForce() ?? 0, isAnchored,
+      anchorKeyString);
 #if DEBUG
-    if ((bool)controller.VehicleInstance?.m_players?.Any())
+    if ((bool)controller.VehicleInstance?.MovementController.m_players?.Any())
     {
       hoverText +=
-        $"\n[<color=red><b>Owner: {controller.m_nview.GetZDO().GetOwner()} and name: {controller.VehicleInstance.m_players[0].GetPlayerName()}</b></color>]";
+        $"\n[<color=red><b>Owner: {controller.m_nview.GetZDO().GetOwner()} and name: {controller?.VehicleInstance?.MovementController.m_players[0].GetPlayerName()}</b></color>]";
     }
 #endif
     return hoverText;
@@ -213,7 +215,8 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
     if (playerOnShipViaShipInstance?.Length == 0 || playerOnShipViaShipInstance == null)
     {
-      playerOnShipViaShipInstance = ShipInstance?.Instance?.m_players.ToArray() ?? null;
+      playerOnShipViaShipInstance =
+        ShipInstance?.Instance?.MovementController?.m_players.ToArray() ?? null;
     }
 
     /*

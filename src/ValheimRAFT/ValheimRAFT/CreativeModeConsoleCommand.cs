@@ -78,14 +78,15 @@ public class CreativeModeConsoleCommand : ConsoleCommand
       return false;
     }
 
-    var toggledKinematicValue = !ship.m_body.isKinematic;
-    ship.m_body.isKinematic = toggledKinematicValue;
+    var toggledKinematicValue = !ship.MovementController.m_body.isKinematic;
+    ship.MovementController.m_body.isKinematic = toggledKinematicValue;
     ship.movementZSyncTransform.m_isKinematicBody = toggledKinematicValue;
 
     if (toggledKinematicValue)
     {
       var shipYPosition =
-        ship.m_body.position.y + ValheimRaftPlugin.Instance.RaftCreativeHeight.Value;
+        ship.MovementController.m_body.position.y +
+        ValheimRaftPlugin.Instance.RaftCreativeHeight.Value;
       var playerInBoat = character.transform.parent == ship.VehicleController.Instance.transform;
       if (playerInBoat)
       {
@@ -102,7 +103,7 @@ public class CreativeModeConsoleCommand : ConsoleCommand
       var directionRaftUpwards = new Vector3(ship.transform.position.x,
         shipYPosition,
         ship.transform.position.z);
-      ship.m_body.position = directionRaftUpwards;
+      ship.MovementController.m_body.position = directionRaftUpwards;
       ship.SetCreativeMode(true);
       character.StartCoroutine(SetPlayerBackOnBoat(character));
     }

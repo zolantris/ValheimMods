@@ -69,13 +69,11 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var shipInstance = prefab.AddComponent<VehicleShip>();
     var shipControls = vehicleMovementObj.AddComponent<VehicleMovementController>();
     shipInstance.ColliderParentObj = vehicleMovementColliders.gameObject;
-
-    shipInstance.ShipDirection =
+    shipControls.m_body = vehicleRigidbody;
+    shipControls.ShipDirection =
       floatColliderObj.FindDeepChild(PrefabNames.VehicleShipMovementOrientation);
-    shipInstance.m_shipControlls = shipControls;
     shipInstance.MovementController = shipControls;
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
-    shipInstance.m_body = vehicleRigidbody;
 
     // todo fix ship water effects so they do not cause ship materials to break
 

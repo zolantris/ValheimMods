@@ -295,17 +295,17 @@ public class VehicleRamAoe : Aoe
   {
     if (!collider) return false;
     // reset damage to base damage if one of these is not available, will still recalculate later
-    if (!vehicle?.m_body || !collider.attachedRigidbody)
+    if (!vehicle?.MovementController.m_body || !collider.attachedRigidbody)
     {
       m_damage = baseDamage;
     }
 
     // early exit if both are not valid
-    if (!vehicle?.m_body && !collider.attachedRigidbody) return false;
+    if (!vehicle?.MovementController.m_body && !collider.attachedRigidbody) return false;
 
     // Velocity will significantly increase if the object is moving towards the other object IE collision
     float relativeVelocity;
-    if (!vehicle?.m_body)
+    if (!vehicle?.MovementController.m_body)
     {
       relativeVelocity = collider.attachedRigidbody.velocity.magnitude;
     }
@@ -313,7 +313,7 @@ public class VehicleRamAoe : Aoe
     {
       relativeVelocity =
         Vector3.Magnitude(collider?.attachedRigidbody?.velocity ??
-                          Vector3.zero - vehicle?.m_body?.velocity ??
+                          Vector3.zero - vehicle?.MovementController.m_body?.velocity ??
                           Vector3.zero);
     }
 

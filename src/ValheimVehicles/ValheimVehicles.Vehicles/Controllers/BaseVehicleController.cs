@@ -48,7 +48,6 @@ public class BaseVehicleController : MonoBehaviour
   public BaseVehicleController instance;
 
   // rigidbody for all pieces within the ship. Does not directly contribute to floatation, floatation controlled by m_syncRigidbody and synced to this m_rigidbody
-  internal Rigidbody? m_rigidbody;
 
   // for the ship physics without item piece colliders or alternatively access via VehicleInstance.m_body
   internal Rigidbody? m_syncRigidbody;
@@ -105,11 +104,11 @@ public class BaseVehicleController : MonoBehaviour
     }
   }
 
-  internal float ShipContainerMass = 0f;
-  internal float ShipMass = 0f;
+  public float ShipContainerMass = 0f;
+  public float ShipMass = 0f;
   public static bool hasDebug = false;
 
-  internal float TotalMass => ShipContainerMass + ShipMass;
+  public float TotalMass => ShipContainerMass + ShipMass;
 
   /*
    * sail calcs
@@ -202,7 +201,7 @@ public class BaseVehicleController : MonoBehaviour
       }
     }
 
-    m_floatcollider = vehicleInstance.FloatCollider;
+    m_floatcollider = vehicleInstance.MovementController.FloatCollider;
   }
 
 
@@ -245,11 +244,6 @@ public class BaseVehicleController : MonoBehaviour
     }
 
     vehicleInitializationTimer.Start();
-
-    if (!(bool)m_rigidbody)
-    {
-      m_rigidbody = GetComponent<Rigidbody>();
-    }
 
     if (!(bool)m_nview)
     {
@@ -453,7 +447,7 @@ public class BaseVehicleController : MonoBehaviour
 
   public virtual void SyncRigidbodyStats(float drag, float angularDrag)
   {
-    if (!m_rigidbody || !m_syncRigidbody || m_statsOverride || !VehicleInstance?.Instance)
+    if (!m_syncRigidbody || m_statsOverride || !VehicleInstance?.Instance)
     {
       return;
     }
@@ -466,21 +460,6 @@ public class BaseVehicleController : MonoBehaviour
 
     m_syncRigidbody.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
     // m_rigidbody.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
-  }
-
-  private void Sync()
-  {
-    if (!(bool)m_syncRigidbody || !(bool)m_rigidbody) return;
-    m_rigidbody.MovePosition(m_syncRigidbody.transform.position);
-    m_rigidbody.MoveRotation(m_syncRigidbody.transform.rotation);
-    // m_rigidbody.Move(m_syncRigidbody.transform.position, m_syncRigidbody.transform.rotation);
-
-    // foreach (var instanceMPlayer in VehicleInstance.Instance.m_players)
-    // {
-    //   // VehicleInstance.Instance.m_zsyncTransform.m_characterParentSync = true;
-    //   // VehicleInstance.Instance.m_zsyncTransform.m_nview.m_zdo.SetConnection(ZDOExtraData.ConnectionType.SyncTransform, instanceMPlayer.GetZDOID());
-    // }
-    // VehicleInstance.Instance.m_zsyncTransform.ClientSync(Time.deltaTime);
   }
 
   public void Update()
@@ -497,19 +476,12 @@ public class BaseVehicleController : MonoBehaviour
     if (m_nview.IsOwner())
     {
       Client_UpdateAllPieces();
-      // Sync();
     }
   }
 
   public void FixedUpdate()
   {
-    // Sync();
     Client_UpdateAllPieces();
-  }
-
-  public void LateUpdate()
-  {
-    // Sync();
   }
 
 
@@ -734,11 +706,6 @@ public class BaseVehicleController : MonoBehaviour
     else
     {
       ShipMass += pieceWeight;
-    }
-
-    if ((bool)m_rigidbody)
-    {
-      m_rigidbody.mass = 1000f + TotalMass;
     }
 
     if ((bool)m_syncRigidbody)
@@ -1794,7 +1761,8 @@ public class BaseVehicleController : MonoBehaviour
       return;
     }
 
-    VehicleInstance.Instance.UpdateShipDirection(firstPiece.transform.localRotation);
+    VehicleInstance.Instance.MovementController.UpdateShipDirection(firstPiece.transform
+      .localRotation);
   }
 
   /**

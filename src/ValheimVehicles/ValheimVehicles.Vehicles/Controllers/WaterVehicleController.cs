@@ -33,9 +33,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
   internal ShipStats m_shipStats = new();
 
-  public float m_balanceForce = 0.03f;
-
-  public float m_liftForce = 20f;
 
   /*
    * Must be called from
@@ -45,18 +42,13 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     VehicleInstance = vehicleShip;
     base.VehicleInstance = VehicleInstance;
 
-    if (!(bool)m_syncRigidbody)
-    {
-      m_syncRigidbody = vehicleShip.m_body;
-    }
-
     // if (!(bool)m_rigidbody)
     // {
     //   m_rigidbody = GetComponent<Rigidbody>();
     // }
 
     // connect vvShip properties to this gameobject
-    m_nview = vehicleShip.m_nview;
+    m_nview = vehicleShip.NetView;
     instance = this;
 
     // prevent mass from being set lower than 20f;

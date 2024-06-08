@@ -8,5 +8,5 @@ public interface IVehicleShip
   public IWaterVehicleController VehicleController { get; }
   public Transform ControlGuiPosition { get; set; }
   public VehicleShip? Instance { get; }
-  public ZNetView NetView { get; set; }
+  public ZNetView NetView { get; }
 }

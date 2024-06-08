@@ -179,7 +179,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   public void UnloadAndDestroyPieceContainer()
   {
     if (!(bool)_vehiclePiecesContainerInstance) return;
-    RemovePlayersBeforeDestroyingBoat();
     _controller.CleanUp();
     Destroy(_controller.gameObject);
   }
@@ -192,11 +191,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     if (MovementController.isActiveAndEnabled)
     {
       Destroy(MovementController.gameObject);
-    }
-
-    if ((bool)_shipRotationObj)
-    {
-      Destroy(_shipRotationObj);
     }
   }
 
@@ -234,14 +228,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   public void UpdateShipEffects()
   {
-    if (TargetHeight > 0f || isCreative)
-    {
-      ShipEffectsObj?.SetActive(false);
-    }
-    else
-    {
-      ShipEffectsObj.SetActive(true);
-    }
+    ShipEffectsObj?.SetActive(!(TargetHeight > 0f || isCreative));
   }
 
   public void FixShipRotation()
@@ -273,12 +260,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     }
   }
 
-  private void UpdateRemovePieceCollisionExclusions()
-  {
-    var excludedLayers = LayerMask.GetMask("piece_nonsolid");
-    m_body.excludeLayers = excludedLayers;
-  }
-
   private void Awake()
   {
     NetView = GetComponent<ZNetView>();
@@ -295,7 +276,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
     AwakeSetupVehicleShip();
 
-    Logger.LogDebug($"called Awake in {name}, m_body {m_body}");
+    Logger.LogDebug(
+      $"called Awake in {name}, movementControllerRigidbody {_movementControllerRigidbody}");
     if (!NetView)
     {
       NetView = GetComponent<ZNetView>();
@@ -312,11 +294,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     }
 
     UpdateShipSounds(this);
-  }
-
-  public void Start()
-  {
-    Invoke(nameof(UpdateRemovePieceCollisionExclusions), 5f);
   }
 
   public void OnEnable()
@@ -336,19 +313,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     var zdo = NetView.GetZDO();
     zdo.SetPosition(transform.position);
     zdo.SetSector(sector);
-  }
-
-  public void UpdateShipDirection(Quaternion steeringWheelRotation)
-  {
-    var rotation = Quaternion.Euler(0, steeringWheelRotation.eulerAngles.y, 0);
-    if (!(bool)ShipDirection)
-    {
-      ShipDirection = transform;
-      return;
-    }
-
-    if (ShipDirection.localRotation.Equals(rotation)) return;
-    ShipDirection.localRotation = rotation;
   }
 
   private void InitHull()
