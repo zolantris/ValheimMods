@@ -84,12 +84,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   public const float m_liftForce = 20f;
   public static bool CustomShipPhysicsEnabled = false;
 
-  // The determines the directional movement of the ship 
-  public GameObject ColliderParentObj;
-
-  public GameObject? ShipEffectsObj;
-  public VehicleShipEffects? ShipEffects;
-
   public ZNetView NetView => m_nview;
 
   public VehicleDebugHelpers? VehicleDebugHelpersInstance { get; private set; }
@@ -223,6 +217,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   public void AwakeSetupShipComponents()
   {
+    m_nview = GetComponent<ZNetView>();
+    m_body = GetComponent<Rigidbody>();
     var vehicleCollidersParentObj = transform.Find("colliders");
 
     var floatColliderObj =
@@ -284,24 +280,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     {
       m_sailCloth = gameObject.AddComponent<Cloth>();
     }
-
-    if (!(bool)ShipEffectsObj)
-    {
-      ShipEffects = GetComponent<VehicleShipEffects>();
-      ShipEffectsObj = ShipEffects.gameObject;
-    }
-  }
-
-  public void UpdateShipEffects()
-  {
-    if (TargetHeight > 0f || isCreative)
-    {
-      ShipEffectsObj?.SetActive(false);
-    }
-    else
-    {
-      ShipEffectsObj.SetActive(true);
-    }
   }
 
   public void FixShipRotation()
@@ -345,7 +323,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private new void Awake()
   {
-    m_nview = GetComponent<ZNetView>();
     AwakeSetupShipComponents();
     base.Awake();
     // var excludedLayers = LayerMask.GetMask("piece_nonsolid");

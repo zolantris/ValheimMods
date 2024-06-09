@@ -93,7 +93,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   public VehicleDebugHelpers? VehicleDebugHelpersInstance { get; private set; }
 
-  public VehicleMovementController MovementController { get; set; }
+  public VehicleMovementController? MovementController { get; set; }
 
   private GameObject _vehiclePiecesContainerInstance;
   private GUIStyle myButtonStyle;
@@ -188,7 +188,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     AllVehicles.Remove(this);
     UnloadAndDestroyPieceContainer();
 
-    if (MovementController.isActiveAndEnabled)
+    if (MovementController && MovementController != null)
     {
       Destroy(MovementController.gameObject);
     }

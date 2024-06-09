@@ -40,4 +40,10 @@ public abstract class SpriteNames
   {
     return $"ram_blade_{dir}";
   }
+
+  public static string GetRamStakeName(string material, int size)
+  {
+    var sizeString = size == 1 ? "1x2" : "2x4";
+    return $"ram_blade_{material}_{sizeString}";
+  }
 }

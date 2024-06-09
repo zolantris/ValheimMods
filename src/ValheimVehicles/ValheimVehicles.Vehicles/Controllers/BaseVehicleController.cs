@@ -40,6 +40,8 @@ public class BaseVehicleController : MonoBehaviour
   public static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
 
+  public static bool DEBUGAllowActivatePendingPieces = true;
+
   /*
    * @todo make this a generic most likely this all should be in a shared extension api
    * IE: VehicleInstance getter
@@ -990,6 +992,10 @@ public class BaseVehicleController : MonoBehaviour
 
   public void ActivatePendingPiecesCoroutine()
   {
+    // For debugging activation of raft
+#if DEBUG
+    if (!DEBUGAllowActivatePendingPieces) return;
+#endif
     if (hasDebug)
       Logger.LogDebug(
         $"ActivatePendingPiecesCoroutine(): pendingPieces count: {m_pendingPieces.Count}");

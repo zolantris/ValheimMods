@@ -127,11 +127,16 @@ public static class PrefabNames
   public const string VehicleHudAnchorIndicator = $"{ValheimVehiclesPrefix}_HudAnchorIndicator";
 
   public const string RamBladePrefix = $"{ValheimVehiclesPrefix}_ram_blade";
+  public const string RamStakePrefix = $"{ValheimVehiclesPrefix}_ram_stake";
 
   public static string GetRamBladeName(string val)
   {
     return $"{RamBladePrefix}_{val.ToLower()}_bronze";
   }
 
-  public const string RamNose = $"{ValheimVehiclesPrefix}_ram_nose_bronze";
+  public static string GetRamStakeName(string material, int size)
+  {
+    var sizeString = size == 1 ? "1x2" : "2x4";
+    return $"{RamBladePrefix}_{material}_{sizeString}";
+  }
 }

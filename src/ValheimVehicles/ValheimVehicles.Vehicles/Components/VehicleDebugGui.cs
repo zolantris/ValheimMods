@@ -33,6 +33,20 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     };
 #if DEBUG
     GUILayout.BeginArea(new Rect(250, 10, 200, 200), myButtonStyle);
+    if (GUILayout.Button(
+          $"ActivatePendingPieces {BaseVehicleController.DEBUGAllowActivatePendingPieces}"))
+    {
+      BaseVehicleController.DEBUGAllowActivatePendingPieces =
+        !BaseVehicleController.DEBUGAllowActivatePendingPieces;
+      if (BaseVehicleController.DEBUGAllowActivatePendingPieces)
+      {
+        foreach (var baseVehicleController in BaseVehicleController.ActiveInstances.Values)
+        {
+          baseVehicleController.ActivatePendingPiecesCoroutine();
+        }
+      }
+    }
+
     if (GUILayout.Button("Delete ShipZDO"))
     {
       var currentShip = VehicleDebugHelpers.GetVehicleController();

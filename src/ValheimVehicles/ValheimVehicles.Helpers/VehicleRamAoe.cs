@@ -5,6 +5,7 @@ using Microsoft.Win32;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
@@ -20,6 +21,7 @@ public class VehicleRamAoe : Aoe
   public float massMultiplier = RamConfig.MaxVelocityMultiplier.Value;
   public float minimumVelocityToTriggerHit = RamConfig.minimumVelocityToTriggerHit.Value;
   public VehicleShip? vehicle;
+  public RamPrefabs.RamType RamType;
 
   // damages
   public static int RamDamageToolTier = RamConfig.RamDamageToolTier.Value;
@@ -29,6 +31,7 @@ public class VehicleRamAoe : Aoe
   public static float RamBaseBluntDamage => RamConfig.RamBaseBluntDamage.Value;
   public static float RamBaseChopDamage => RamConfig.RamBaseChopDamage.Value;
   public static float RamBasePickAxeDamage => RamConfig.RamBasePickAxeDamage.Value;
+  public static float RamBasePierceDamage => RamConfig.RamBasePierceDamage.Value;
   public static float RamBaseMaximumDamage => RamConfig.RamBaseMaximumDamage.Value;
 
   public static float RamHitInterval = RamConfig.RamHitInterval.Value;
@@ -47,6 +50,7 @@ public class VehicleRamAoe : Aoe
   public float chopDamageRatio;
   public float pickaxeDamageRatio;
   public float slashDamageRatio;
+  public float pierceDamageRatio;
   public float bluntDamageRatio;
 
 
@@ -59,16 +63,6 @@ public class VehicleRamAoe : Aoe
   public bool isReadyForCollisions = false;
 
   private Rigidbody rigidbody;
-
-
-  private const float minimumHitInterval = 0.5f;
-
-  /// <summary>
-  /// @todo make this a Config JSON or Value in Vehicles config 
-  /// </summary>
-  private const float hitInterval = 2.0f;
-
-  private const float hitRadius = 3;
 
   public void InitializeFromConfig()
   {
@@ -102,9 +96,9 @@ public class VehicleRamAoe : Aoe
   }
 
   public float GetTotalDamage(float slashDamage, float bluntDamage, float chopDamage,
-    float pickaxeDamage)
+    float pickaxeDamage, float pierceDamage)
   {
-    return slashDamage + bluntDamage + chopDamage + pickaxeDamage;
+    return slashDamage + bluntDamage + chopDamage + pickaxeDamage + pierceDamage;
   }
 
   public new void Awake()
@@ -333,14 +327,28 @@ public class VehicleRamAoe : Aoe
       multiplier = 0;
     }
 
-    var slashDamage = baseDamage.m_slash * multiplier;
     var bluntDamage = baseDamage.m_blunt * multiplier;
-    var chopDamage = baseDamage.m_chop * multiplier;
     var pickaxeDamage = baseDamage.m_pickaxe * multiplier;
+    float slashDamage = 0;
+    float chopDamage = 0;
+    float pierceDamage = 0;
+
+    if (RamType == RamPrefabs.RamType.Stake)
+    {
+      pierceDamage = baseDamage.m_pierce * multiplier;
+    }
+
+    if (RamType == RamPrefabs.RamType.Blade)
+    {
+      slashDamage = baseDamage.m_slash * multiplier;
+      chopDamage = baseDamage.m_chop * multiplier;
+    }
+
 
     if (HasMaxDamageCap)
     {
-      var nextTotalDamage = GetTotalDamage(slashDamage, bluntDamage, chopDamage, pickaxeDamage);
+      var nextTotalDamage =
+        GetTotalDamage(slashDamage, bluntDamage, chopDamage, pickaxeDamage, pierceDamage);
 
       if (nextTotalDamage > RamBaseMaximumDamage)
       {
@@ -369,12 +377,14 @@ public class VehicleRamAoe : Aoe
         bluntDamage = baseDamage.m_blunt * bluntDamageRatio;
         chopDamage = baseDamage.m_chop * chopDamageRatio;
         pickaxeDamage = baseDamage.m_pickaxe * pickaxeDamageRatio;
+        pierceDamage = baseDamage.m_pierce * pierceDamageRatio;
       }
     }
 
     m_damage = new HitData.DamageTypes()
     {
       m_blunt = bluntDamage,
+      m_pierce = pierceDamage,
       m_slash = slashDamage,
       m_chop = chopDamage,
       m_pickaxe = pickaxeDamage,
@@ -386,7 +396,7 @@ public class VehicleRamAoe : Aoe
     }
 
     m_damageSelf =
-      GetTotalDamage(slashDamage, bluntDamage, chopDamage, pickaxeDamage) *
+      GetTotalDamage(slashDamage, bluntDamage, chopDamage, pickaxeDamage, pierceDamage) *
       PercentageDamageToSelf;
 
     return true;
@@ -445,6 +455,7 @@ public class VehicleRamAoe : Aoe
     chopDamageRatio = 0;
     pickaxeDamageRatio = 0;
     slashDamageRatio = 0;
+    pierceDamageRatio = 0;
     bluntDamageRatio = 0;
     baseDamage = data;
   }
@@ -455,6 +466,7 @@ public class VehicleRamAoe : Aoe
     SetBaseDamage(new HitData.DamageTypes()
     {
       m_slash = RamBaseSlashDamage,
+      m_pierce = RamBasePierceDamage,
       m_blunt = RamBaseBluntDamage,
       m_chop = RamBaseChopDamage,
       m_pickaxe = RamBasePickAxeDamage,

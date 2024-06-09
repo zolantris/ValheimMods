@@ -57,15 +57,23 @@ public abstract class PrefabRegistryHelpers
 
   private static void RegisterRamPieces()
   {
-    var ramNoseIcon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.RamNose);
-
-    PieceDataDictionary.Add(
-      PrefabNames.RamNose, new PieceData()
+    int[] ramSizes = [1, 2];
+    string[] ramMaterials = ["wood", "iron"];
+    foreach (var ramMaterial in ramMaterials)
+    {
+      foreach (var ramSize in ramSizes)
       {
-        Name = "valheim_vehicles_ram_nose $valheim_vehicles_material_bronze",
-        Description = "valheim_vehicles_ram_nose_desc",
-        Icon = ramNoseIcon
-      });
+        PieceDataDictionary.Add(
+          PrefabNames.GetRamStakeName(ramMaterial, ramSize), new PieceData()
+          {
+            Name =
+              $"valheim_vehicles_ram_stake $valheim_vehicles_material_bronze",
+            Description = "valheim_vehicles_ram_blade_desc",
+            Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(
+              SpriteNames.GetRamStakeName(ramMaterial, ramSize))
+          });
+      }
+    }
 
     string[] bladeDirs = ["top", "bottom", "left", "right"];
 

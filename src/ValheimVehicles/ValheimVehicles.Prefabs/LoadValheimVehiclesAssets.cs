@@ -14,7 +14,11 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject ShipHullWoodAsset = null!;
   public static GameObject ShipHullIronAsset = null!;
 
-  public static GameObject RamNose = null!;
+  public static GameObject RamStakeWood1X2 = null!;
+  public static GameObject RamStakeWood2X4 = null!;
+  public static GameObject RamStakeIron1X2 = null!;
+  public static GameObject RamStakeIron2X4 = null!;
+
   public static GameObject RamBladeTop = null!;
   public static GameObject RamBladeBottom = null!;
   public static GameObject RamBladeRight = null!;
@@ -143,9 +147,11 @@ public class LoadValheimVehicleAssets : ILoadAssets
     VehicleSprites = assetBundle.LoadAsset<SpriteAtlas>(
       "vehicle_icons.spriteatlasv2");
 
-    RamNose = assetBundle.LoadAsset<GameObject>(
-      "ram_nose.prefab");
-    ;
+    RamStakeWood1X2 = assetBundle.LoadAsset<GameObject>("ram_stake_wood_1x2");
+    RamStakeWood2X4 = assetBundle.LoadAsset<GameObject>("ram_stake_wood_2x4");
+    RamStakeIron1X2 = assetBundle.LoadAsset<GameObject>("ram_stake_iron_1x2");
+    RamStakeIron2X4 = assetBundle.LoadAsset<GameObject>("ram_stake_iron_2x4");
+
 
     RamBladeTop = assetBundle.LoadAsset<GameObject>(
       "ram_blade_top.prefab");

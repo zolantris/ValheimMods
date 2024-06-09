@@ -13,6 +13,7 @@ public static class RamConfig
   public static ConfigEntry<float> RamBaseBluntDamage { get; set; }
   public static ConfigEntry<float> RamBaseChopDamage { get; set; }
   public static ConfigEntry<float> RamBasePickAxeDamage { get; set; }
+  public static ConfigEntry<float> RamBasePierceDamage { get; set; }
   public static ConfigEntry<float> RamBaseMaximumDamage { get; set; }
   public static ConfigEntry<bool> HasMaximumDamageCap { get; set; }
   public static ConfigEntry<float> PercentageDamageToSelf { get; set; }
@@ -47,25 +48,29 @@ public static class RamConfig
         "enable damage caps",
         true, true));
 
-    RamBaseSlashDamage = config.Bind("Rams", "slashDamage", 5f,
+    RamBaseSlashDamage = config.Bind("Rams", "slashDamage", 0f,
       ConfigHelpers.CreateConfigDescription(
-        $"slashDamage {damageDescription}",
+        $"slashDamage for Ram Blades. {damageDescription}",
         true, true));
-    RamBaseBluntDamage = config.Bind("Rams", "bluntDamage", 5f,
+    RamBaseBluntDamage = config.Bind("Rams", "bluntDamage", 10f,
       ConfigHelpers.CreateConfigDescription(
         $"bluntDamage {damageDescription}",
         true, true));
     RamBaseChopDamage = config.Bind("Rams", "chopDamage", 5f,
       ConfigHelpers.CreateConfigDescription(
-        $"chopDamage {damageDescription}. Will damage trees dependending on tool tier settings",
+        $"chopDamage for Ram Blades excludes Ram Stakes. {damageDescription}. Will damage trees dependending on tool tier settings",
         true, true));
     RamBasePickAxeDamage = config.Bind("Rams", "pickaxeDamage", 20f,
       ConfigHelpers.CreateConfigDescription(
         $"pickDamage {damageDescription} Will damage rocks as well as other entities",
         true, true));
+    RamBasePierceDamage = config.Bind("Rams", "pierceDamage", 20f,
+      ConfigHelpers.CreateConfigDescription(
+        $"Pierce damage for Ram Stakes. {damageDescription} Will damage rocks as well as other entities",
+        true, true));
     PercentageDamageToSelf = config.Bind("Rams", "percentageDamageToSelf", 1f,
       ConfigHelpers.CreateConfigDescription(
-        $"Percentage Damage applied to the Ram piece.",
+        $"Percentage Damage applied to the Ram piece per hit.",
         true, true));
 
     AllowContinuousDamage = config.Bind("Rams", "AllowContinuousDamage", true,
@@ -103,7 +108,7 @@ public static class RamConfig
 
     HitRadius = config.Bind("Rams", "HitRadius", 5f,
       ConfigHelpers.CreateConfigDescription(
-        "The ram hit radius area, this will hit all pieces within this radius, capped between 0.1 and 10 for balance and framerate stability",
+        "The base ram hit radius area. Stakes are always half the size, this will hit all pieces within this radius, capped between 0.1 and 10 for balance and framerate stability",
         true, true));
     RamHitInterval = config.Bind("Rams", "RamHitInterval", 0.5f,
       ConfigHelpers.CreateConfigDescription(
@@ -144,6 +149,7 @@ public static class RamConfig
 
     // Must update damage values only
     RamBaseSlashDamage.SettingChanged += VehicleRamAoe.OnSettingsChanged;
+    RamBasePierceDamage.SettingChanged += VehicleRamAoe.OnSettingsChanged;
     RamBaseBluntDamage.SettingChanged += VehicleRamAoe.OnSettingsChanged;
     RamBaseChopDamage.SettingChanged += VehicleRamAoe.OnSettingsChanged;
     RamBasePickAxeDamage.SettingChanged += VehicleRamAoe.OnSettingsChanged;
