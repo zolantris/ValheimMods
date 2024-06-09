@@ -53,7 +53,10 @@ public class Player_Patch
   public static GameObject PlacedPiece(GameObject gameObject)
   {
     var piece = gameObject.GetComponent<Piece>();
+
     if (!piece) return gameObject;
+    if (piece.name.StartsWith(PrefabNames.WaterVehicleShip)) return gameObject;
+
     var rb = piece.GetComponentInChildren<Rigidbody>();
     var netView = piece.GetComponent<ZNetView>();
 

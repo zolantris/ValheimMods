@@ -78,7 +78,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
     // todo fix ship water effects so they do not cause ship materials to break
 
     var waterEffects =
-      Object.Instantiate(LoadValheimAssets.shipWaterEffects, prefab.transform);
+      Object.Instantiate(LoadValheimAssets.shipWaterEffects, vehicleMovementObj.transform);
     waterEffects.name = PrefabNames.VehicleShipEffects;
     var shipEffects = waterEffects.GetComponent<ShipEffects>();
     var vehicleShipEffects = waterEffects.AddComponent<VehicleShipEffects>();

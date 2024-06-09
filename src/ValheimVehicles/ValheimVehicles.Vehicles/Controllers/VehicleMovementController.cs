@@ -97,16 +97,16 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   private GameObject _vehiclePiecesContainerInstance;
   private GUIStyle myButtonStyle;
 
-  public bool IsPlayerInBoat(long playerID)
-  {
-    throw new NotImplementedException();
-  }
-
   public Transform m_controlGuiPos { get; set; }
 
   public BoxCollider BlockingCollider { get; set; }
   public BoxCollider OnboardCollider { get; set; }
-  public BoxCollider FloatCollider { get; set; }
+
+  public BoxCollider FloatCollider
+  {
+    get => m_floatcollider;
+    set => m_floatcollider = value;
+  }
 
   public Transform ControlGuiPosition
   {
@@ -128,18 +128,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       if (!mPlayer) continue;
       mPlayer?.transform?.SetParent(null);
     }
-  }
-
-  /// <summary>
-  /// Unloads the Boat Pieces properly
-  /// </summary>
-  ///
-  /// <description>calling cleanup must be done before Unity starts garbage collecting otherwise positions, ZNetViews and other items may be destroyed</description>
-  /// 
-  public void UnloadAndDestroyPieceContainer()
-  {
-    if (!(bool)_vehiclePiecesContainerInstance) return;
-    RemovePlayersBeforeDestroyingBoat();
   }
 
   /// <summary>
@@ -217,8 +205,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   public void AwakeSetupShipComponents()
   {
-    m_nview = GetComponent<ZNetView>();
-    m_body = GetComponent<Rigidbody>();
     var vehicleCollidersParentObj = transform.Find("colliders");
 
     var floatColliderObj =
@@ -324,8 +310,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   private new void Awake()
   {
     AwakeSetupShipComponents();
-    base.Awake();
-    // var excludedLayers = LayerMask.GetMask("piece_nonsolid");
+
+    m_body = GetComponent<Rigidbody>();
+    m_nview = GetComponent<ZNetView>();
+
     var excludedLayers = LayerMask.GetMask("piece", "piece_nonsolid");
     m_body.excludeLayers = excludedLayers;
 
@@ -346,6 +334,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     {
       InvokeRepeating(nameof(SyncTargetHeight), 2f, 2f);
     }
+
+    base.Awake();
   }
 
   public new void Start()
@@ -355,6 +345,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     if (!m_nview)
     {
       m_nview = GetComponent<ZNetView>();
+    }
+
+    if (!m_body)
+    {
+      m_body = GetComponent<Rigidbody>();
     }
 
     InitializeRPC();
@@ -1463,6 +1458,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     {
       UnRegisterRPCListeners();
     }
+
+    RemovePlayersBeforeDestroyingBoat();
 
     CancelInvoke(nameof(SyncTargetHeight));
   }

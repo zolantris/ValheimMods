@@ -131,12 +131,12 @@ public static class PrefabNames
 
   public static string GetRamBladeName(string val)
   {
-    return $"{RamBladePrefix}_{val.ToLower()}_bronze";
+    return $"{RamBladePrefix}_{val.ToLower()}_{PrefabTiers.Tier3}";
   }
 
-  public static string GetRamStakeName(string material, int size)
+  public static string GetRamStakeName(string tier, int size)
   {
     var sizeString = size == 1 ? "1x2" : "2x4";
-    return $"{RamBladePrefix}_{material}_{sizeString}";
+    return $"{RamStakePrefix}_{tier}_{sizeString}";
   }
 }

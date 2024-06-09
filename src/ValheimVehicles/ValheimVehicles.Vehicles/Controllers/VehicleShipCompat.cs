@@ -4,6 +4,7 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Interfaces;
+using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
@@ -224,7 +225,7 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
 
   public void UpdateRudder(float dt, bool haveControllingPlayer)
   {
-    throw new NotImplementedException();
+    Logger.LogError("Called UpdateRudder but not implemented in vehicle compat");
   }
 
   public float GetWindAngle()

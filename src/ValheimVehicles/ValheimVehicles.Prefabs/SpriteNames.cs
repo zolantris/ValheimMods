@@ -27,8 +27,6 @@ public abstract class SpriteNames
   public const string HullRibWood = "hull_rib_wood";
   public const string HullRibIron = "hull_rib_iron";
 
-  public const string RamNose = "ram_nose";
-
   public const string Nautilus = "nautilus";
 
   /// <summary>
@@ -44,6 +42,6 @@ public abstract class SpriteNames
   public static string GetRamStakeName(string material, int size)
   {
     var sizeString = size == 1 ? "1x2" : "2x4";
-    return $"ram_blade_{material}_{sizeString}";
+    return $"ram_stake_{material}_{sizeString}";
   }
 }

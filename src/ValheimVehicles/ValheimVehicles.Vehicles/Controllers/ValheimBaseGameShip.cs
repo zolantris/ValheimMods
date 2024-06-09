@@ -124,7 +124,7 @@ public class ValheimBaseGameShip : MonoBehaviour
         "ValheimBaseShip initialized without NetView, or netview is not available yet (ghost mode?)");
     }
 
-    var collider = transform.Find(PrefabNames.WaterVehicleFloatCollider);
+    var collider = transform.Find($"colliders/{PrefabNames.WaterVehicleFloatCollider}");
 
     if (collider != null)
     {
@@ -146,16 +146,17 @@ public class ValheimBaseGameShip : MonoBehaviour
       Logger.LogError("No float collider exists for ship, this is a prefab setup issue.");
     }
 
-    var wnt = GetComponent<WearNTear>();
+    // looks at the top level of the Watervehicle (this component gameobject is within a child)
+    var wnt = GetComponentInParent<WearNTear>();
     if ((bool)wnt)
     {
       wnt.m_onDestroyed =
         (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(OnDestroyed));
     }
 
-    if (!(bool)m_body)
+    m_body = GetComponent<Rigidbody>();
+    if (!m_body)
     {
-      m_body = GetComponent<Rigidbody>();
       Logger.LogError("No rigidbody detected, ship must have a Rigidbody to work");
     }
 

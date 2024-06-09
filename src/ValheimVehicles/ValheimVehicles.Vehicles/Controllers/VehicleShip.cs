@@ -221,8 +221,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
     if (!(bool)ShipEffectsObj)
     {
-      ShipEffects = GetComponent<VehicleShipEffects>();
-      ShipEffectsObj = ShipEffects.gameObject;
+      ShipEffects = MovementController?.GetComponent<VehicleShipEffects>();
+      ShipEffectsObj = ShipEffects?.gameObject;
     }
   }
 

@@ -58,17 +58,18 @@ public abstract class PrefabRegistryHelpers
   private static void RegisterRamPieces()
   {
     int[] ramSizes = [1, 2];
-    string[] ramMaterials = ["wood", "iron"];
+    string[] ramMaterials = [PrefabTiers.Tier1, PrefabTiers.Tier3];
     foreach (var ramMaterial in ramMaterials)
     {
+      var materialTranslation = PrefabTiers.GetTierMaterialTranslation(ramMaterial);
       foreach (var ramSize in ramSizes)
       {
         PieceDataDictionary.Add(
           PrefabNames.GetRamStakeName(ramMaterial, ramSize), new PieceData()
           {
             Name =
-              $"valheim_vehicles_ram_stake $valheim_vehicles_material_bronze",
-            Description = "valheim_vehicles_ram_blade_desc",
+              $"valheim_vehicles_ram_stake {materialTranslation}",
+            Description = "valheim_vehicles_ram_stake_desc",
             Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(
               SpriteNames.GetRamStakeName(ramMaterial, ramSize))
           });

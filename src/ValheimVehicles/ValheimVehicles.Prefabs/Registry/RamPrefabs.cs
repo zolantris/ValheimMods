@@ -45,28 +45,28 @@ public class RamPrefabs : IRegisterPrefab
       {
         asset = LoadValheimVehicleAssets.RamStakeWood1X2,
         prefabName = "1x2",
-        material = ShipHulls.HullMaterial.CoreWood,
+        material = PrefabTiers.Tier1,
         size = 1
       },
       new RamVariant()
       {
         asset = LoadValheimVehicleAssets.RamStakeWood2X4,
         prefabName = "2x4",
-        material = ShipHulls.HullMaterial.CoreWood,
+        material = PrefabTiers.Tier1,
         size = 2
       },
       new RamVariant()
       {
         asset = LoadValheimVehicleAssets.RamStakeIron1X2,
         prefabName = "1x2",
-        material = ShipHulls.HullMaterial.Iron,
+        material = PrefabTiers.Tier3,
         size = 1
       },
       new RamVariant()
       {
         asset = LoadValheimVehicleAssets.RamStakeIron2X4,
         prefabName = "2x4",
-        material = ShipHulls.HullMaterial.Iron,
+        material = PrefabTiers.Tier3,
         size = 2
       },
     ];
@@ -78,8 +78,8 @@ public class RamPrefabs : IRegisterPrefab
       var prefab = PrefabManager.Instance.CreateClonedPrefab(prefabFullName, variant.asset);
       PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
       PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-      var isCoreWood = variant.material == ShipHulls.HullMaterial.CoreWood;
-      var wnt = PrefabRegistryHelpers.SetWearNTear(prefab, isCoreWood ? 1 : 3);
+      var wnt = PrefabRegistryHelpers.SetWearNTear(prefab,
+        PrefabTiers.GetTierValue(variant.material));
       PrefabRegistryHelpers.AddPieceForPrefab(prefabFullName, prefab);
       var bladeColliderObj = prefab.transform.FindDeepChild("damage_colliders")?.gameObject;
 
@@ -182,6 +182,12 @@ public class RamPrefabs : IRegisterPrefab
           },
           new RequirementConfig
           {
+            Amount = 70,
+            Item = "BronzeNails",
+            Recover = true,
+          },
+          new RequirementConfig
+          {
             Amount = 2,
             Item = "Iron",
             Recover = true,
@@ -193,7 +199,7 @@ public class RamPrefabs : IRegisterPrefab
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    // RegisterRamNose();
+    RegisterRamStake();
     RegisterRamBlade();
   }
 }
