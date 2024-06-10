@@ -2,7 +2,7 @@ using BepInEx.Configuration;
 using ComfyLib;
 using ValheimVehicles.Helpers;
 
-namespace ValheimRAFT;
+namespace ValheimVehicles.Config;
 
 public static class RamConfig
 {

@@ -42,7 +42,7 @@ public class Character_Patch
     var vehicle = __instance.m_lastGroundBody.GetComponentInParent<VehicleShip>();
     if ((bool)vehicle)
     {
-      return VehicleShipCompat.InitFromUnknown(vehicle.VehicleController?.VehicleInstance);
+      return VehicleShipCompat.InitFromUnknown(vehicle.VehiclePiecesController?.VehicleInstance);
     }
 
     var bvc = __instance.m_lastGroundBody.GetComponentInParent<BaseVehicleController>();
@@ -87,7 +87,7 @@ public class Character_Patch
       vehicleShip = __instance.m_lastGroundBody.GetComponentInParent<VehicleShip>();
       if ((bool)vehicleShip && __instance.transform.parent != vehicleShip.transform)
       {
-        __instance.transform.SetParent(vehicleShip.VehicleController.Instance.transform);
+        __instance.transform.SetParent(vehicleShip.VehiclePiecesController.Instance.transform);
         return;
       }
     }

@@ -1,6 +1,6 @@
 using BepInEx.Configuration;
 
-namespace ValheimRAFT;
+namespace ValheimVehicles.Config;
 
 public static class ConfigHelpers
 {

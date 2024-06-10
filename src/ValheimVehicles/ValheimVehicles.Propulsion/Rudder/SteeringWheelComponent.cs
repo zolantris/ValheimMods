@@ -112,7 +112,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
       return deprecatedShipControls.GetHoverText();
     }
 
-    var controller = ShipInstance?.VehicleController?.Instance;
+    var controller = ShipInstance?.VehiclePiecesController?.Instance;
     if (controller == null)
     {
       return Localization.instance.Localize(
@@ -211,7 +211,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
 
     var playerOnShipViaShipInstance =
-      ShipInstance?.VehicleController?.Instance.GetComponentsInChildren<Player>() ?? null;
+      ShipInstance?.VehiclePiecesController?.Instance.GetComponentsInChildren<Player>() ?? null;
 
     if (playerOnShipViaShipInstance?.Length == 0 || playerOnShipViaShipInstance == null)
     {
@@ -372,8 +372,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
     if (_controls != null)
     {
-      _controls.InitializeWheelWithShip(vehicleShip,
-        this);
+      _controls.InitializeWheelWithShip(this);
       ShipInstance = vehicleShip;
       _controls.enabled = true;
     }

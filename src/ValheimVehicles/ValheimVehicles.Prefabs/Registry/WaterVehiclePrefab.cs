@@ -35,13 +35,11 @@ public class WaterVehiclePrefab : IRegisterPrefab
 
     var vehicleMovementObj = VehicleShip.GetVehicleMovementObj(prefab.transform);
     PrefabRegistryHelpers.AddTempNetView(vehicleMovementObj, true);
-    PrefabRegistryHelpers.AddMovementZSyncTransform(vehicleMovementObj);
+    PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(vehicleMovementObj);
 
     // colliders already have a rigidbody on them from unity prefab
     var vehicleMovementColliders =
       VehicleShip.GetVehicleMovementCollidersObj(prefab.transform);
-    var vehiclePiecesObj = VehicleShip.GetVehiclePiecesObj(prefab.transform);
-    var movingPieces = VehicleShip.GetVehicleMovingPiecesObj(prefab.transform);
 
     var floatColliderObj =
       vehicleMovementColliders.transform.Find(
@@ -57,19 +55,13 @@ public class WaterVehiclePrefab : IRegisterPrefab
     floatColliderObj.name = PrefabNames.WaterVehicleFloatCollider;
     blockingColliderObj.name = PrefabNames.WaterVehicleBlockingCollider;
 
-    var floatBoxCollider = floatColliderObj.GetComponent<BoxCollider>();
-
     /*
      * ShipControls were a gameObject with a script attached to them. This approach directly attaches the script instead of having the rudder show.
      */
-    var vehicleRigidbody = vehiclePiecesObj.GetComponent<Rigidbody>();
-    PrefabRegistryHelpers.AddTempNetView(vehiclePiecesObj.gameObject, true);
-    vehiclePiecesObj.gameObject.AddComponent<ZSyncTransform>();
 
     var shipInstance = prefab.AddComponent<VehicleShip>();
-    var shipControls = vehicleMovementObj.AddComponent<VehicleMovementController>();
+    var shipControls = prefab.AddComponent<VehicleMovementController>();
     shipInstance.ColliderParentObj = vehicleMovementColliders.gameObject;
-    shipControls.m_body = vehicleRigidbody;
     shipControls.ShipDirection =
       floatColliderObj.FindDeepChild(PrefabNames.VehicleShipMovementOrientation);
     shipInstance.MovementController = shipControls;
@@ -78,7 +70,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
     // todo fix ship water effects so they do not cause ship materials to break
 
     var waterEffects =
-      Object.Instantiate(LoadValheimAssets.shipWaterEffects, vehicleMovementObj.transform);
+      Object.Instantiate(LoadValheimAssets.shipWaterEffects, prefab.transform);
     waterEffects.name = PrefabNames.VehicleShipEffects;
     var shipEffects = waterEffects.GetComponent<ShipEffects>();
     var vehicleShipEffects = waterEffects.AddComponent<VehicleShipEffects>();
@@ -91,11 +83,11 @@ public class WaterVehiclePrefab : IRegisterPrefab
 
     // WearNTear may need to be removed or tweaked
     prefab.AddComponent<WearNTear>();
-    var woodWNT = LoadValheimAssets.woodFloorPiece.GetComponent<WearNTear>();
+    var woodWnt = LoadValheimAssets.woodFloorPiece.GetComponent<WearNTear>();
     var wnt = PrefabRegistryHelpers.SetWearNTear(prefab, 1, true);
     PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.HardWood);
 
-    wnt.m_onDestroyed += woodWNT.m_onDestroyed;
+    wnt.m_onDestroyed += woodWnt.m_onDestroyed;
     // triggerPrivateArea will damage enemies/pieces when within it
     wnt.m_triggerPrivateArea = true;
 
@@ -107,7 +99,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
 
     // todo ImpactEffect likely never should have been added like this
     // todo remove if unnecessary
-    var impactEffect = vehicleMovementObj.gameObject.AddComponent<ImpactEffect>();
+    var impactEffect = prefab.AddComponent<ImpactEffect>();
     impactEffect.m_triggerMask = LayerMask.GetMask("Default", "character", "piece", "terrain",
       "static_solid", "Default_small", "character_net", "vehicle", LayerMask.LayerToName(29));
     impactEffect.m_toolTier = 1000;
@@ -135,12 +127,6 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var piece = PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.WaterVehicleShip, prefab);
     piece.m_waterPiece = true;
 
-
-    // todo likely does nothing
-    // piece.m_targetNonPlayerBuilt = true;
-    // piece.m_primaryTarget = true;
-    // piece.m_randomTarget = true;
-
     PieceManager.Instance.AddPiece(new CustomPiece(waterVehiclePrefab, true, new PieceConfig
     {
       PieceTable = "Hammer",
@@ -163,10 +149,10 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.Nautilus,
       LoadValheimVehicleAssets.ShipNautilus);
 
-    var piece = PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Nautilus, prefab);
-    piece.m_waterPiece = true;
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Nautilus, prefab);
 
     var wnt = PrefabRegistryHelpers.SetWearNTear(prefab, 3);
+    wnt.m_health = 5000;
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {

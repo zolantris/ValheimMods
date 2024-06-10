@@ -211,7 +211,7 @@ public class VehicleCommands : ConsoleCommand
     var vehicleInstance = Object.Instantiate(vehiclePrefab, mbRaft.m_ship.transform.position,
       mbRaft.m_ship.transform.rotation, null);
     var vehicleShip = vehicleInstance.GetComponent<VehicleShip>();
-    var vehicleController = vehicleShip.VehicleController;
+    var vehicleController = vehicleShip.VehiclePiecesController;
 
     var piecesInMBRaft = mbRaft.m_pieces;
     foreach (var zNetView in piecesInMBRaft)

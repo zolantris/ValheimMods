@@ -35,25 +35,19 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
 
 
   /*
-   * Must be called from
+   * Must be called from the component that instantiates this Component's gameobject IE VehicleShip
    */
-  public void InitializeShipValues(VehicleShip vehicleShip)
+  public new void InitFromShip(VehicleShip vehicleShip)
   {
-    VehicleInstance = vehicleShip;
-    base.VehicleInstance = VehicleInstance;
-
+    waterVehicleController = this;
     instance = this;
-
-    ZdoReadyStart();
-    LoadInitState();
+    base.InitFromShip(vehicleShip);
   }
 
   public new void Awake()
   {
     waterVehicleController = this;
     base.Awake();
-
-    ZdoReadyStart();
   }
 
   public override void Start()
@@ -67,40 +61,12 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     base.Start();
   }
 
-  public void OnEnable()
-  {
-    ZdoReadyStart();
-  }
-
   public void OnDisable()
   {
     m_nview.Unregister("SetAnchor");
 
     // todo this likely is not needed for boat v2. Maybe only used for water effects
     m_nview.Unregister("SetVisual");
-  }
-
-  private void ZdoReadyStart()
-  {
-    if (!(bool)m_nview) return;
-
-    Logger.LogDebug($"ZdoReadyAwake called, zdo is: {m_nview.GetZDO()}");
-    if (m_nview.GetZDO() == null)
-    {
-      return;
-    }
-
-    // this may get called twice.
-    GetPersistentID();
-
-    // vital for vehicle
-    InitializeBaseVehicleValuesWhenReady();
-
-    if (base.VehicleInstance == null)
-    {
-      Logger.LogError(
-        "No ShipInstance detected");
-    }
   }
 
   public void UpdateVisual()

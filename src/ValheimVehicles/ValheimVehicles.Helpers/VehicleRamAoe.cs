@@ -4,6 +4,7 @@ using System.Security.Policy;
 using Microsoft.Win32;
 using UnityEngine;
 using ValheimRAFT;
+using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles;

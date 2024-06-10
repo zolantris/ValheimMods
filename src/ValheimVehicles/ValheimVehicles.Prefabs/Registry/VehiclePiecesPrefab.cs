@@ -1,6 +1,7 @@
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Vehicles;
 
 namespace Registry;
 
@@ -11,9 +12,23 @@ public class VehiclePiecesPrefab : IRegisterPrefab
   public static GameObject VehiclePiecesContainer =>
     PrefabManager.Instance.GetPrefab(PrefabNames.VehiclePiecesContainer);
 
+
+  /// <summary>
+  /// PiecesContainer is an object that has a rigidbody and a FixedJoint that attaches to the MovementController's Rigidbody. This allows all pieces to be in sync and also able to use a ZsyncTransform without having issues
+  /// </summary>
+  /// <param name="prefabManager"></param>
+  public void RegisterPiecesContainer(PrefabManager prefabManager)
+  {
+    var prefab = prefabManager.CreateClonedPrefab(PrefabNames.VehiclePiecesContainer,
+      LoadValheimVehicleAssets.VehiclePiecesAsset);
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab, true);
+    PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(prefab);
+  }
+
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    prefabManager.CreateClonedPrefab(PrefabNames.VehiclePiecesContainer,
-      LoadValheimVehicleAssets.VehiclePiecesAsset);
+    RegisterPiecesContainer(prefabManager);
+    // todo to add a dynamic register for anything that needs to be a rigidbody added to this vehicle
+    // RegisterStaticPiecesContainer(prefabManager);
   }
 }

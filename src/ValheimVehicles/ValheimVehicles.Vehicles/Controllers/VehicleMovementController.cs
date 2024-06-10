@@ -34,7 +34,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   public SteeringWheelComponent lastUsedWheelComponent;
 
-  public IVehicleShip? ShipInstance { get; set; }
+  public IVehicleShip? ShipInstance => vehicleShip;
+
+  private VehicleShip vehicleShip;
   public Vector3 detachOffset = new(0f, 0.5f, 0f);
 
   public VehicleMovementFlags MovementFlags { get; set; }
@@ -206,7 +208,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   public void AwakeSetupShipComponents()
   {
-    var vehicleCollidersParentObj = transform.Find("colliders");
+    vehicleShip = GetComponent<VehicleShip>();
+    var vehicleCollidersParentObj = VehicleShip.GetVehicleMovementCollidersObj(transform);
 
     var floatColliderObj =
       vehicleCollidersParentObj.transform.Find(
@@ -237,11 +240,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       _impactEffect.m_toolTier = 1000;
     }
 
-    zsyncTransform = GetComponent<ZSyncTransform>();
-    if (!(bool)zsyncTransform)
-    {
-      zsyncTransform = PrefabRegistryHelpers.AddMovementZSyncTransform(gameObject);
-    }
+    zsyncTransform = PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(gameObject);
 
     UpdateVehicleSpeedThrottle();
 
@@ -522,7 +521,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private void UpdateVehicleStats(bool flight)
   {
-    ShipInstance?.VehicleController.Instance.SyncRigidbodyStats(flight);
+    ShipInstance?.VehiclePiecesController.Instance.SyncRigidbodyStats(flight);
 
     m_angularDamping = (flight ? 5f : 0.8f);
     m_backwardForce = 1f;
@@ -745,7 +744,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   /// </summary>
   public void VehiclePhysicsFixedUpdate()
   {
-    if (!(bool)ShipInstance?.VehicleController.Instance || !(bool)m_nview ||
+    if (!(bool)ShipInstance?.VehiclePiecesController.Instance || !(bool)m_nview ||
         m_nview.m_zdo == null ||
         !(bool)ShipDirection) return;
 
@@ -952,11 +951,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     if (!isActiveAndEnabled) return;
 
-    foreach (var mast in ShipInstance.VehicleController.Instance.m_mastPieces.ToList())
+    foreach (var mast in ShipInstance.VehiclePiecesController.Instance.m_mastPieces.ToList())
     {
       if (!(bool)mast)
       {
-        ShipInstance.VehicleController.Instance.m_mastPieces.Remove(mast);
+        ShipInstance.VehiclePiecesController.Instance.m_mastPieces.Remove(mast);
         continue;
       }
 
@@ -974,11 +973,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       }
     }
 
-    foreach (var rudder in ShipInstance.VehicleController.Instance.m_rudderPieces.ToList())
+    foreach (var rudder in ShipInstance.VehiclePiecesController.Instance.m_rudderPieces.ToList())
     {
       if (!(bool)rudder)
       {
-        ShipInstance.VehicleController.Instance.m_rudderPieces.Remove(rudder);
+        ShipInstance.VehiclePiecesController.Instance.m_rudderPieces.Remove(rudder);
         continue;
       }
 
@@ -995,11 +994,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       rudder.PivotPoint.localRotation = newRotation;
     }
 
-    foreach (var wheel in ShipInstance.VehicleController.Instance._steeringWheelPieces.ToList())
+    foreach (var wheel in ShipInstance.VehiclePiecesController.Instance._steeringWheelPieces
+               .ToList())
     {
       if (!(bool)wheel)
       {
-        ShipInstance.VehicleController.Instance._steeringWheelPieces.Remove(wheel);
+        ShipInstance.VehiclePiecesController.Instance._steeringWheelPieces.Remove(wheel);
       }
       else if (wheel.wheelTransform != null)
       {
@@ -1134,9 +1134,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
     var sailArea = 0f;
 
-    if (instance?.ShipInstance?.VehicleController != null)
+    if (instance?.ShipInstance?.VehiclePiecesController != null)
     {
-      sailArea = instance.ShipInstance.VehicleController.Instance.GetSailingForce();
+      sailArea = instance.ShipInstance.VehiclePiecesController.Instance.GetSailingForce();
     }
 
     /*
@@ -1222,7 +1222,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       if (!isExiting)
       {
         s_currentShips.Add(this);
-        Player.m_localPlayer.transform.SetParent(ShipInstance.Instance.VehicleController.Instance
+        Player.m_localPlayer.transform.SetParent(ShipInstance.Instance.VehiclePiecesController
+          .Instance
           .transform);
       }
     }
@@ -1439,11 +1440,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     InitializeRPC();
   }
 
-  public void InitializeWheelWithShip(IVehicleShip vehicleShip,
+  public void InitializeWheelWithShip(
     SteeringWheelComponent steeringWheel)
   {
-    ShipInstance = vehicleShip;
-    ShipInstance.Instance.m_controlGuiPos = transform;
+    vehicleShip.m_controlGuiPos = transform;
 
     var rudderAttachPoint = steeringWheel.transform.Find("attachpoint");
     if (rudderAttachPoint != null)

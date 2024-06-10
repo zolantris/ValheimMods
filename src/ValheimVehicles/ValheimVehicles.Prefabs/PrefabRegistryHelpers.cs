@@ -33,9 +33,14 @@ public abstract class PrefabRegistryHelpers
 
   public static readonly Dictionary<string, PieceData> PieceDataDictionary = new();
 
-  public static ZSyncTransform AddMovementZSyncTransform(GameObject obj)
+  public static ZSyncTransform GetOrAddMovementZSyncTransform(GameObject obj)
   {
-    var zSyncTransform = obj.AddComponent<ZSyncTransform>();
+    var zSyncTransform = obj.GetComponent<ZSyncTransform>();
+    if (!(bool)zSyncTransform)
+    {
+      zSyncTransform = obj.AddComponent<ZSyncTransform>();
+    }
+
     zSyncTransform.m_syncPosition = true;
     zSyncTransform.m_syncBodyVelocity = true;
     zSyncTransform.m_syncRotation = true;
@@ -44,7 +49,12 @@ public abstract class PrefabRegistryHelpers
 
   public static ZNetView AddTempNetView(GameObject obj, bool prioritized = false)
   {
-    var netView = obj.AddComponent<ZNetView>();
+    var netView = obj.GetComponent<ZNetView>();
+    if (!(bool)netView)
+    {
+      netView = obj.AddComponent<ZNetView>();
+    }
+
     if (prioritized)
     {
       netView.m_type = ZDO.ObjectType.Prioritized;

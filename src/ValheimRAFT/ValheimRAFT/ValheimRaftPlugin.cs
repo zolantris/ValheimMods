@@ -15,6 +15,7 @@ using Properties;
 using UnityEngine;
 using ValheimRAFT.Patches;
 using ValheimRAFT.Util;
+using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Sail;
@@ -523,6 +524,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     // new way to do things. Makes life easier for config
     RamConfig.BindConfig(Config);
+    PrefabConfig.BindConfig(Config);
   }
 
   internal void ApplyMetricIfAvailable()

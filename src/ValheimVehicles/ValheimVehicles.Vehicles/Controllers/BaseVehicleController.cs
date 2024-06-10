@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT;
@@ -24,7 +25,7 @@ namespace ValheimVehicles.Vehicles;
 public class BaseVehicleController : MonoBehaviour
 {
   public ZNetView m_nview =>
-    VehicleInstance.NetView ? VehicleInstance.NetView : GetComponent<ZNetView>();
+    VehicleInstance?.NetView ? VehicleInstance.NetView : GetComponent<ZNetView>();
 
   public static readonly string ZdoKeyBaseVehicleInitState =
     "ValheimVehicles_BaseVehicle_Initialized";
@@ -53,12 +54,13 @@ public class BaseVehicleController : MonoBehaviour
   // rigidbody for all pieces within the ship. Does not directly contribute to floatation, floatation controlled by m_syncRigidbody and synced to this m_rigidbody
 
   // for the ship physics without item piece colliders or alternatively access via VehicleInstance.m_body
-  internal Rigidbody? m_syncRigidbody;
-
   /// <summary>
   /// Future todo to enable zsync transform for objects within the synced raft which is done on clients only.
   /// </summary>
-  internal ZSyncTransform? zsyncRigidbody;
+  internal ZSyncTransform? zsyncTransform;
+
+  internal Rigidbody m_body;
+  internal FixedJoint m_joint;
 
   internal List<ZNetView> m_pieces = [];
   internal List<ZNetView> m_hullPieces = [];
@@ -128,7 +130,8 @@ public class BaseVehicleController : MonoBehaviour
   public float totalSailArea = 0f;
 
   public virtual IVehicleShip VehicleInstance { set; get; }
-  private VehicleShip vehicleShip;
+
+  public VehicleMovementController? MovementController;
 
 /* end sail calcs  */
   private Vector2i m_sector;
@@ -137,9 +140,9 @@ public class BaseVehicleController : MonoBehaviour
   private Bounds _hullBounds;
 
 
-  internal BoxCollider m_blockingcollider => VehicleInstance.MovementController.BlockingCollider;
-  internal BoxCollider m_floatcollider => VehicleInstance.MovementController.BlockingCollider;
-  internal BoxCollider m_onboardcollider => VehicleInstance.MovementController.BlockingCollider;
+  internal BoxCollider m_blockingcollider => MovementController.BlockingCollider;
+  internal BoxCollider m_floatcollider => MovementController.BlockingCollider;
+  internal BoxCollider m_onboardcollider => MovementController.BlockingCollider;
 
   private int _persistentZdoId;
 
@@ -176,9 +179,12 @@ public class BaseVehicleController : MonoBehaviour
 
   public void LoadInitState()
   {
-    if (!m_nview)
+    if (!m_nview || !VehicleInstance.Instance || !MovementController)
     {
+      Logger.LogDebug(
+        $"Vehicle setting state to Pending as it is not ready, must have netview: {m_nview}, VehicleInstance {VehicleInstance.Instance}, MovementController {MovementController}");
       BaseVehicleInitState = InitializationState.Pending;
+      return;
     }
 
     var initialized = m_nview.GetZDO().GetBool(ZdoKeyBaseVehicleInitState);
@@ -222,11 +228,57 @@ public class BaseVehicleController : MonoBehaviour
     }
   }
 
-  private void InitVehicleShip()
+  /// <summary>
+  /// Coroutine to init vehicle just in case things break
+  /// </summary>
+  /// <param name="vehicleShip"></param>
+  /// <returns></returns>
+  private IEnumerator InitVehicle(VehicleShip vehicleShip)
   {
-    vehicleShip = GetComponent<VehicleShip>();
+    while (!(m_nview || !MovementController) &&
+           vehicleInitializationTimer.ElapsedMilliseconds < 5000)
+      if (!m_nview || !MovementController)
+      {
+        MovementController = vehicleShip.MovementController;
+        VehicleInstance = vehicleShip;
+        yield return ZdoReadyStart();
+      }
+  }
+
+  /// <summary>
+  /// Method to be called from the Parent Component that adds this VehiclePiecesController
+  /// </summary>
+  public void InitFromShip(VehicleShip vehicleShip)
+  {
+    MovementController = vehicleShip.MovementController;
     VehicleInstance = vehicleShip;
-    LoadInitState();
+    if (!InitializeBaseVehicleValuesWhenReady())
+    {
+      StartCoroutine(InitVehicle(vehicleShip));
+    }
+  }
+
+  private IEnumerator ZdoReadyStart()
+  {
+    if (!(bool)m_nview)
+    {
+      yield return null;
+    }
+
+    Logger.LogDebug($"ZdoReadyAwake called, zdo is: {m_nview.GetZDO()}");
+    if (m_nview.GetZDO() == null)
+    {
+      yield return null;
+    }
+
+    // vital for vehicle
+    InitializeBaseVehicleValuesWhenReady();
+
+    if (VehicleInstance == null)
+    {
+      Logger.LogError(
+        "No ShipInstance detected");
+    }
   }
 
   public void Awake()
@@ -239,12 +291,14 @@ public class BaseVehicleController : MonoBehaviour
       return;
     }
 
-    InitVehicleShip();
-
-    piecesContainer = VehicleShip.GetVehiclePiecesObj(transform).transform;
+    piecesContainer = transform;
     movingPiecesContainer = VehicleShip.GetVehicleMovingPiecesObj(transform).transform;
+    m_body = GetComponent<Rigidbody>();
+    m_joint = GetComponent<FixedJoint>();
 
-    vehicleInitializationTimer.Start();
+
+    zsyncTransform = GetComponent<ZSyncTransform>();
+    LoadInitState();
 
     if (!(bool)m_nview)
     {
@@ -257,18 +311,23 @@ public class BaseVehicleController : MonoBehaviour
         "Warning netview not detected on vehicle, this means any netview attached events will not bind correctly");
     }
 
-    // TODO commented out until collision physics are figured out
-    // if ((bool)m_rigidbody && (bool)m_nview)
-    // {
-    //   _syncTransform = gameObject.AddComponent<ZSyncTransform>();
-    //   _syncTransform.m_syncPosition = true;
-    //   _syncTransform.m_syncRotation = true;
-    // }
+    vehicleInitializationTimer.Start();
+  }
 
-    // experimental, not decoupling could lead to weird physics issues, but decoupling leads to desyncs between the Zsynctransforms on mp and also colliding with piece objects seems to not work.
+  private void LinkFixedJoint()
+  {
+    if (MovementController == null) return;
+    if (m_joint == null)
+    {
+      m_joint = GetComponent<FixedJoint>();
+    }
 
-    // important to decouple the vehicle from the VehicleShip after everything is initialized. This lets all the netview and other values needed to be shared to bind properly
-    // gameObject.transform.SetParent(null);
+    if (!m_joint)
+    {
+      Logger.LogError("No FixedJoint found. This means the vehicle is not syncing positions");
+    }
+
+    m_joint.connectedBody = MovementController.m_body;
   }
 
 
@@ -297,12 +356,12 @@ public class BaseVehicleController : MonoBehaviour
    * Possible alternatives to this approach:
    * - Add a setter that triggers initializeBaseVehicleValues when the zdo is falsy -> truthy
    */
-  public void InitializeBaseVehicleValuesWhenReady()
+  private bool InitializeBaseVehicleValuesWhenReady()
   {
-    if (ZNetView.m_forceDisableInit) return;
+    if (ZNetView.m_forceDisableInit) return false;
     if (!m_nview)
     {
-      return;
+      return false;
     }
 
     if (_persistentZdoId == 0)
@@ -313,16 +372,15 @@ public class BaseVehicleController : MonoBehaviour
     LoadInitState();
 
     HideGhostContainer();
-    // encapsulate ensures that the float collider will never be smaller than the boat hull size IE the initial objects
-    // m_bounds.Encapsulate(m_nview.transform.localPosition);
 
-
-    // Instances allows getting the instance from a ZDO
-    // OR something queryable on a ZDO making it much easier to debug and eventually update items
     if (!ActiveInstances.ContainsKey(PersistentZdoId))
     {
       ActiveInstances.Add(PersistentZdoId, this);
     }
+
+    LinkFixedJoint();
+
+    return true;
   }
 
   public virtual void Start()
@@ -440,18 +498,18 @@ public class BaseVehicleController : MonoBehaviour
 
   public virtual void SyncRigidbodyStats(float drag, float angularDrag)
   {
-    if (!m_syncRigidbody || m_statsOverride || !VehicleInstance?.Instance)
-    {
-      return;
-    }
+    // if (!vehicleShip || m_statsOverride || !VehicleInstance?.Instance)
+    // {
+    //   return;
+    // }
 
     // m_rigidbody.angularDrag = angularDrag;
-    m_syncRigidbody.angularDrag = angularDrag;
+    // m_syncRigidbody.angularDrag = angularDrag;
 
     // m_rigidbody.drag = drag;
-    m_syncRigidbody.drag = drag;
+    // m_syncRigidbody.drag = drag;
 
-    m_syncRigidbody.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
+    // m_syncRigidbody.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
     // m_rigidbody.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
   }
 
@@ -700,11 +758,11 @@ public class BaseVehicleController : MonoBehaviour
     {
       ShipMass += pieceWeight;
     }
-
-    if ((bool)m_syncRigidbody)
-    {
-      m_syncRigidbody.mass = 1000f + TotalMass;
-    }
+    //
+    // if ((bool)m_syncRigidbody)
+    // {
+    //   m_syncRigidbody.mass = 1000f + TotalMass;
+    // }
   }
 
   public void DebouncedRebuildBounds()
@@ -1376,8 +1434,8 @@ public class BaseVehicleController : MonoBehaviour
     {
       var vehicleShip = parentObj.GetComponent<VehicleShip>();
       if (vehicleShip == null) return;
-      if (vehicleShip.VehicleController.Instance == null) return;
-      vehicleShip.Instance.VehicleController.Instance.ActivatePiece(netView);
+      if (vehicleShip.VehiclePiecesController.Instance == null) return;
+      vehicleShip.Instance.VehiclePiecesController.Instance.ActivatePiece(netView);
     }
     else
     {
@@ -1435,9 +1493,9 @@ public class BaseVehicleController : MonoBehaviour
     var vehicleShip = netView.GetComponent<VehicleShip>();
 
     var hasPendingPieces =
-      m_pendingPieces.TryGetValue(vehicleShip.VehicleController.Instance.GetPersistentID(),
+      m_pendingPieces.TryGetValue(vehicleShip.VehiclePiecesController.Instance.GetPersistentID(),
         out var pendingPieces);
-    var hasPieces = vehicleShip.VehicleController.Instance.GetPieceCount() != 0;
+    var hasPieces = vehicleShip.VehiclePiecesController.Instance.GetPieceCount() != 0;
 
     // if there are pending pieces, do not let vehicle be destroyed
     if (pendingPieces != null && hasPendingPieces && pendingPieces.Count > 0)

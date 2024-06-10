@@ -76,7 +76,8 @@ public class Player_Patch
       if ((bool)cul) cul.AddNewChild(netView);
     }
 
-    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponent<VehicleShip>()?.VehicleController
+    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponent<VehicleShip>()
+      ?.VehiclePiecesController
       .Instance;
     if ((bool)bvc)
     {
