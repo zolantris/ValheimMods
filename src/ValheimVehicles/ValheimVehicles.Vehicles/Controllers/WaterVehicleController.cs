@@ -42,19 +42,8 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     VehicleInstance = vehicleShip;
     base.VehicleInstance = VehicleInstance;
 
-    // if (!(bool)m_rigidbody)
-    // {
-    //   m_rigidbody = GetComponent<Rigidbody>();
-    // }
-
-    // connect vvShip properties to this gameobject
-    m_nview = vehicleShip.NetView;
     instance = this;
 
-    // prevent mass from being set lower than 20f;
-    // m_rigidbody.mass = Math.Max(TotalMass, 2000f);
-
-    SetColliders(vehicleShip);
     ZdoReadyStart();
     LoadInitState();
   }

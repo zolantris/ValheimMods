@@ -390,7 +390,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     // _vehiclePiecesContainerInstance.transform.position = transform.position;
     // _vehiclePiecesContainerInstance.transform.rotation = transform.rotation;
 
-    _controller = _vehiclePiecesContainerInstance.AddComponent<WaterVehicleController>();
+    _controller = gameObject.AddComponent<WaterVehicleController>();
     _controller.InitializeShipValues(Instance);
 
     // sets back to unparented to prevent rigidbody from controlling parent physics

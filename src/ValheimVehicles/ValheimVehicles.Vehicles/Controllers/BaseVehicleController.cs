@@ -23,7 +23,8 @@ namespace ValheimVehicles.Vehicles;
 /// <description> This is a controller used for all vehicles, Currently it must be initialized within a vehicle view IE VehicleShip or upcoming VehicleWheeled, and VehicleFlying instances.</description>
 public class BaseVehicleController : MonoBehaviour
 {
-  public ZNetView m_nview { get; set; }
+  public ZNetView m_nview =>
+    VehicleInstance.NetView ? VehicleInstance.NetView : GetComponent<ZNetView>();
 
   public static readonly string ZdoKeyBaseVehicleInitState =
     "ValheimVehicles_BaseVehicle_Initialized";
@@ -84,6 +85,9 @@ public class BaseVehicleController : MonoBehaviour
 
   internal List<BoardingRampComponent> m_boardingRamps = [];
 
+  private Transform piecesContainer;
+  private Transform movingPiecesContainer;
+
   internal enum InitializationState
   {
     Pending, // when the ship has a pending state
@@ -124,15 +128,18 @@ public class BaseVehicleController : MonoBehaviour
   public float totalSailArea = 0f;
 
   public virtual IVehicleShip VehicleInstance { set; get; }
+  private VehicleShip vehicleShip;
 
 /* end sail calcs  */
   private Vector2i m_sector;
   private Vector2i m_serverSector;
   private Bounds _vehicleBounds;
   private Bounds _hullBounds;
-  public BoxCollider m_blockingcollider = new();
-  internal BoxCollider m_floatcollider = new();
-  internal BoxCollider m_onboardcollider = new();
+
+
+  internal BoxCollider m_blockingcollider => VehicleInstance.MovementController.BlockingCollider;
+  internal BoxCollider m_floatcollider => VehicleInstance.MovementController.BlockingCollider;
+  internal BoxCollider m_onboardcollider => VehicleInstance.MovementController.BlockingCollider;
 
   private int _persistentZdoId;
 
@@ -185,27 +192,6 @@ public class BaseVehicleController : MonoBehaviour
     BaseVehicleInitState = InitializationState.Complete;
   }
 
-  public void SetColliders(VehicleShip vehicleInstance)
-  {
-    var colliders = VehicleShip.GetVehicleMovementCollidersObj(vehicleInstance.transform)
-      .GetComponentsInChildren<BoxCollider>();
-
-    foreach (var boxCollider in colliders)
-    {
-      if (boxCollider.gameObject.name.Contains(PrefabNames.WaterVehicleOnboardCollider))
-      {
-        m_onboardcollider = boxCollider;
-      }
-
-      if (boxCollider.gameObject.name.Contains(PrefabNames.WaterVehicleBlockingCollider))
-      {
-        m_blockingcollider = boxCollider;
-      }
-    }
-
-    m_floatcollider = vehicleInstance.MovementController.FloatCollider;
-  }
-
 
   public void FireErrorOnNull(Collider obj, string name)
   {
@@ -236,20 +222,32 @@ public class BaseVehicleController : MonoBehaviour
     }
   }
 
+  private void InitVehicleShip()
+  {
+    vehicleShip = GetComponent<VehicleShip>();
+    VehicleInstance = vehicleShip;
+    LoadInitState();
+  }
+
   public void Awake()
   {
     instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
+
     if (ZNetView.m_forceDisableInit)
     {
       return;
     }
 
+    InitVehicleShip();
+
+    piecesContainer = VehicleShip.GetVehiclePiecesObj(transform).transform;
+    movingPiecesContainer = VehicleShip.GetVehicleMovingPiecesObj(transform).transform;
+
     vehicleInitializationTimer.Start();
 
     if (!(bool)m_nview)
     {
-      m_nview = GetComponent<ZNetView>();
       Logger.LogDebug("m_nview, not available, setting within Awake");
     }
 
@@ -392,13 +390,6 @@ public class BaseVehicleController : MonoBehaviour
     if (!ActiveInstances.ContainsKey(PersistentZdoId))
     {
       ActiveInstances.Add(PersistentZdoId, this);
-    }
-
-    var nv = GetComponent<ZNetView>();
-
-    if (nv)
-    {
-      m_nview = nv;
     }
 
     ActivatePendingPiecesCoroutine();
@@ -1398,7 +1389,7 @@ public class BaseVehicleController : MonoBehaviour
   {
     if ((bool)netView)
     {
-      netView.transform.SetParent(transform);
+      netView.transform.SetParent(piecesContainer);
       netView.transform.localPosition =
         netView.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
       netView.transform.localRotation =
@@ -1412,7 +1403,7 @@ public class BaseVehicleController : MonoBehaviour
 
   public void AddTemporaryPiece(Piece piece)
   {
-    piece.transform.SetParent(transform);
+    piece.transform.SetParent(piecesContainer);
   }
 
   public void AddNewPiece(Piece piece)
@@ -1514,7 +1505,7 @@ public class BaseVehicleController : MonoBehaviour
 
     var previousCount = GetPieceCount();
 
-    netView.transform.SetParent(transform);
+    netView.transform.SetParent(piecesContainer);
     if (netView.m_zdo != null)
     {
       netView.m_zdo.Set(VehicleZdoVars.MBParentIdHash, PersistentZdoId);
@@ -1638,7 +1629,8 @@ public class BaseVehicleController : MonoBehaviour
     {
       var vehicleRamAoe = netView.GetComponentInChildren<VehicleRamAoe>();
       if ((bool)vehicleRamAoe) vehicleRamAoe.vehicle = VehicleInstance.Instance;
-      netView.transform.SetParent(VehicleInstance?.Instance?.transform);
+      // todo may need to set to moving pieces. Only if the rigidbody within here is being used as non-kinematic
+      // netView.transform.SetParent();
     }
 
     FixPieceMeshes(netView);

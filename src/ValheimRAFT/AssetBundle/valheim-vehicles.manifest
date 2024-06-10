@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3793942929
+CRC: 2601871983
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 9a02e925eaacee2f89061016f607b039
+    Hash: 62eb6b9daf9dec860c4d9e90493d28b1
   TypeTreeHash:
     serializedVersion: 2
     Hash: c06587813f50b4ac49249ee2d68a3382
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 9a02e925eaacee2f89061016f607b039
+    Hash: 62eb6b9daf9dec860c4d9e90493d28b1
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -64,47 +64,48 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.MaskableGraphic/CullStateChangedEvent
 Assets:
-- Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab
-- Assets/ValheimVehicles/Prefabs/hull_slab_2x2_wood.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_right.prefab
-- Assets/ValheimVehicles/Prefabs/ram_blade_left.prefab
-- Assets/ValheimVehicles/Prefabs/nautilus.prefab
-- Assets/ValheimVehicles/Prefabs/vehicle_ship.prefab
-- Assets/hull_wall_2x2_iron 1.prefab
-- Assets/ValheimVehicles/Prefabs/hull_wall_2x2_iron.prefab
-- Assets/ValheimVehicles/Prefabs/rudder_advanced_single_iron.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_basic.prefab
+- Assets/ValheimVehicles/Prefabs/vehicle_ship.prefab
+- Assets/ValheimVehicles/Prefabs/hull_wall_2x2_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_4x4_iron.prefab
-- Assets/ValheimVehicles/Prefabs/ram_stake_tier3_2x4.prefab
-- Assets/ValheimVehicles/Prefabs/rudder_advanced_double_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_2x2_iron.prefab
-- Assets/ValheimVehicles/Prefabs/ram_blade_top.prefab
-- Assets/ValheimVehicles/Prefabs/hull_rib_iron.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_double_wood.prefab
-- Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier3_1x2.prefab
-- Assets/ValheimVehicles/Prefabs/hull_rib_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_nautilus.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_bottom.prefab
-- Assets/ValheimVehicles/Prefabs/hull_wall_2x2_wood.prefab
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_1x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_4x4_iron.prefab
-- Assets/ValheimVehicles/Prefabs/hull_wall_4x4_wood.prefab
-- Assets/ValheimVehicles/vehicle_icons.spriteatlasv2
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_2x4.prefab
 - Assets/ValheimVehicles/Prefabs/hull_center_iron.prefab
+- Assets/ValheimVehicles/Prefabs/hull_window_2x2_wood.prefab
+- Assets/ValheimVehicles/Prefabs/hull_slab_4x4_wood.prefab
+- Assets/ValheimVehicles/Prefabs/hull_center_wood.prefab
+- Assets/ValheimVehicles/Prefabs/shared_hull_rib.prefab
+- Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab
+- Assets/ValheimVehicles/Prefabs/hull_slab_2x2_wood.prefab
+- Assets/ValheimVehicles/Prefabs/ram_blade_left.prefab
+- Assets/ValheimVehicles/Prefabs/nautilus.prefab
+- Assets/hull_wall_2x2_iron 1.prefab
+- Assets/ValheimVehicles/Prefabs/rudder_advanced_single_iron.prefab
+- Assets/ValheimVehicles/Prefabs/ram_stake_tier3_2x4.prefab
+- Assets/ValheimVehicles/Prefabs/rudder_advanced_double_iron.prefab
+- Assets/ValheimVehicles/Prefabs/ram_blade_top.prefab
+- Assets/ValheimVehicles/Prefabs/hull_rib_iron.prefab
+- Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
+- Assets/Shader/Custom_Piece.shader
+- Assets/ValheimVehicles/Prefabs/hull_rib_wood.prefab
+- Assets/ValheimVehicles/Prefabs/hull_wall_2x2_wood.prefab
+- Assets/ValheimVehicles/Prefabs/hull_wall_4x4_wood.prefab
+- Assets/ValheimVehicles/vehicle_icons.spriteatlasv2
 - Assets/ValheimVehicles/Prefabs/mechanical_switch.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/hud_anchor.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_2x2_worn.prefab
-- Assets/ValheimVehicles/Prefabs/hull_window_2x2_wood.prefab
-- Assets/ValheimVehicles/Prefabs/custom_sail.prefab
-- Assets/ValheimVehicles/Prefabs/hull_slab_4x4_wood.prefab
-- Assets/ValheimVehicles/Prefabs/shared_rudder_advanced_double.prefab
 - Assets/ValheimVehicles/Prefabs/hull_window_4x4_wood.prefab
+- Assets/ValheimVehicles/Prefabs/custom_sail.prefab
+- Assets/ValheimVehicles/Prefabs/shared_rudder_advanced_double.prefab
 - Assets/ValheimVehicles/Prefabs/ram_nose.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_wood.prefab
-- Assets/ValheimVehicles/Prefabs/hull_center_wood.prefab
-- Assets/ValheimVehicles/Prefabs/shared_hull_rib.prefab
 - Assets/ValheimVehicles/Prefabs/shared_rudder_advanced_single.prefab
 Dependencies:
 - C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/AssetBundle/valheim-raft
