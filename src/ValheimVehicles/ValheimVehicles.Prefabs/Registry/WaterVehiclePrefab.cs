@@ -34,7 +34,6 @@ public class WaterVehiclePrefab : IRegisterPrefab
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab, true);
 
     var vehicleMovementObj = VehicleShip.GetVehicleMovementObj(prefab.transform);
-    PrefabRegistryHelpers.AddTempNetView(vehicleMovementObj, true);
     PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(vehicleMovementObj);
 
     // colliders already have a rigidbody on them from unity prefab

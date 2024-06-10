@@ -97,9 +97,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   public static BaseVehicleController? GetVehicleController()
   {
     var rayCastHitInfo = RaycastToPiecesUnderPlayerCamera();
-    return rayCastHitInfo?.collider.transform.root.GetComponent<VehicleShip>()
-      ?.VehiclePiecesController
-      .Instance;
+    return rayCastHitInfo?.collider.transform.root.GetComponent<BaseVehicleController>();
   }
 
   public void FlipShip()

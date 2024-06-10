@@ -49,12 +49,7 @@ public abstract class PrefabRegistryHelpers
 
   public static ZNetView AddTempNetView(GameObject obj, bool prioritized = false)
   {
-    var netView = obj.GetComponent<ZNetView>();
-    if (!(bool)netView)
-    {
-      netView = obj.AddComponent<ZNetView>();
-    }
-
+    var netView = obj.AddComponent<ZNetView>();
     if (prioritized)
     {
       netView.m_type = ZDO.ObjectType.Prioritized;
