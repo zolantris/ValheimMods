@@ -12,9 +12,9 @@ public static class PrefabConfig
 
   public enum VehicleShipInitPiece
   {
-    Hull_4x8,
-    HullFloor_2x2,
-    HullFloor_4x4,
+    Hull4X8,
+    HullFloor2X2,
+    HullFloor4X4,
     WoodFloor2X2,
     Nautilus
   }
@@ -22,7 +22,7 @@ public static class PrefabConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
-    StartingPiece = config.Bind("PrefabConfig", "startingPiece", VehicleShipInitPiece.Hull_4x8,
+    StartingPiece = config.Bind("PrefabConfig", "startingPiece", VehicleShipInitPiece.Hull4X8,
       ConfigHelpers.CreateConfigDescription(
         "Allows you to customize what piece the raft initializes with. Admins only as this can be overpowered.",
         true, true));

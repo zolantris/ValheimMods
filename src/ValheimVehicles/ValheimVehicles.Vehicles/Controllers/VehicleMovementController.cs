@@ -87,7 +87,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   public static bool CustomShipPhysicsEnabled = false;
 
   // The top level netview is preserved but the lower level ones are kept for playering syncing for physics objects AND do not interact with top level netviews
-  public ZNetView? ShipNetView => ShipInstance?.NetView;
+  public ZNetView? ShipNetView => m_nview;
 
   public VehicleDebugHelpers? VehicleDebugHelpersInstance { get; private set; }
 
@@ -120,6 +120,17 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   private Rigidbody _movementControllerRigidbody;
 
   public Rigidbody m_body { get; set; }
+
+  public Rigidbody GetRigidbody()
+  {
+    if (m_body) return m_body;
+    if (!m_body)
+    {
+      m_body = GetComponent<Rigidbody>();
+    }
+
+    return m_body;
+  }
 
   /// <summary>
   ///  Removes player from boat if not null, disconnects can make the player null
@@ -301,17 +312,25 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     var excludedLayers = LayerMask.GetMask("piece_nonsolid");
 
-    // var physicalLayers = LayerMask.GetMask("Default", "character", "piece", "terrain",
-    //   "static_solid", "Default_small", "character_net", "vehicle", LayerMask.LayerToName(29));
-    // m_body.includeLayers = physicalLayers;
-    m_body.excludeLayers = excludedLayers;
+    if (!m_body)
+    {
+      GetRigidbody();
+    }
+
+    if (m_body)
+    {
+      // var physicalLayers = LayerMask.GetMask("Default", "character", "piece", "terrain",
+      //   "static_solid", "Default_small", "character_net", "vehicle", LayerMask.LayerToName(29));
+      // m_body.includeLayers = physicalLayers;
+      m_body.excludeLayers = excludedLayers;
+    }
   }
 
   private new void Awake()
   {
     AwakeSetupShipComponents();
 
-    m_body = GetComponent<Rigidbody>();
+    GetRigidbody();
     m_nview = GetComponent<ZNetView>();
 
     var excludedLayers = LayerMask.GetMask("piece", "piece_nonsolid");
@@ -324,7 +343,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     }
 
     FixShipRotation();
-    if (!ShipNetView) return;
 
     InitializeRPC();
     SyncShip();

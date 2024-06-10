@@ -321,11 +321,11 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     string selectedPrefab;
     switch (StartingPiece.Value)
     {
-      case VehicleShipInitPiece.HullFloor_2x2:
+      case VehicleShipInitPiece.HullFloor2X2:
         selectedPrefab = PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Wood,
           PrefabNames.PrefabSizeVariant.Two);
         break;
-      case VehicleShipInitPiece.HullFloor_4x4:
+      case VehicleShipInitPiece.HullFloor4X4:
         selectedPrefab = PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Wood,
           PrefabNames.PrefabSizeVariant.Four);
         break;
@@ -335,7 +335,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       case VehicleShipInitPiece.WoodFloor2X2:
         selectedPrefab = "wood_floor";
         break;
-      case VehicleShipInitPiece.Hull_4x8:
+      case VehicleShipInitPiece.Hull4X8:
       default:
         selectedPrefab = PrefabNames.ShipHullCenterWoodPrefabName;
         break;

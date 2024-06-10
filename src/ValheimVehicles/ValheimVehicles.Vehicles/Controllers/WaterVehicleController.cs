@@ -40,7 +40,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
   public new void InitFromShip(VehicleShip vehicleShip)
   {
     waterVehicleController = this;
-    instance = this;
     base.InitFromShip(vehicleShip);
   }
 

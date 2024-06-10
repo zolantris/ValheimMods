@@ -49,7 +49,6 @@ public class BaseVehicleController : MonoBehaviour
    * IE: VehicleInstance getter
    */
   public WaterVehicleController waterVehicleController;
-  public BaseVehicleController instance;
 
   // rigidbody for all pieces within the ship. Does not directly contribute to floatation, floatation controlled by m_syncRigidbody and synced to this m_rigidbody
 
@@ -87,8 +86,7 @@ public class BaseVehicleController : MonoBehaviour
 
   internal List<BoardingRampComponent> m_boardingRamps = [];
 
-  private Transform piecesContainer;
-  private Transform movingPiecesContainer;
+  private Transform? _piecesContainer;
 
   internal enum InitializationState
   {
@@ -179,10 +177,10 @@ public class BaseVehicleController : MonoBehaviour
 
   public void LoadInitState()
   {
-    if (!m_nview || !VehicleInstance.Instance || !MovementController)
+    if (!m_nview || !VehicleInstance?.Instance || !MovementController)
     {
       Logger.LogDebug(
-        $"Vehicle setting state to Pending as it is not ready, must have netview: {m_nview}, VehicleInstance {VehicleInstance.Instance}, MovementController {MovementController}");
+        $"Vehicle setting state to Pending as it is not ready, must have netview: {m_nview}, VehicleInstance {VehicleInstance?.Instance}, MovementController {MovementController}");
       BaseVehicleInitState = InitializationState.Pending;
       return;
     }
@@ -283,7 +281,6 @@ public class BaseVehicleController : MonoBehaviour
 
   public void Awake()
   {
-    instance = this;
     hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
 
     if (ZNetView.m_forceDisableInit)
@@ -291,8 +288,7 @@ public class BaseVehicleController : MonoBehaviour
       return;
     }
 
-    piecesContainer = transform;
-    movingPiecesContainer = VehicleShip.GetVehicleMovingPiecesObj(transform).transform;
+    _piecesContainer = transform;
     m_body = GetComponent<Rigidbody>();
     m_joint = GetComponent<FixedJoint>();
 
@@ -327,7 +323,7 @@ public class BaseVehicleController : MonoBehaviour
       Logger.LogError("No FixedJoint found. This means the vehicle is not syncing positions");
     }
 
-    m_joint.connectedBody = MovementController.m_body;
+    m_joint.connectedBody = MovementController.GetRigidbody();
   }
 
 
@@ -1017,7 +1013,7 @@ public class BaseVehicleController : MonoBehaviour
    */
   public void DestroyVehicle()
   {
-    var wntVehicle = instance.GetComponent<WearNTear>();
+    var wntVehicle = GetComponent<WearNTear>();
 
     RemovePlayersFromBoat();
 
@@ -1028,12 +1024,7 @@ public class BaseVehicleController : MonoBehaviour
 
     if ((bool)wntVehicle)
       wntVehicle.Destroy();
-    else if (instance)
-    {
-      Destroy(instance);
-    }
-
-    if (instance.gameObject != gameObject)
+    else if (gameObject)
     {
       Destroy(gameObject);
     }
@@ -1447,7 +1438,7 @@ public class BaseVehicleController : MonoBehaviour
   {
     if ((bool)netView)
     {
-      netView.transform.SetParent(piecesContainer);
+      netView.transform.SetParent(_piecesContainer);
       netView.transform.localPosition =
         netView.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
       netView.transform.localRotation =
@@ -1461,7 +1452,7 @@ public class BaseVehicleController : MonoBehaviour
 
   public void AddTemporaryPiece(Piece piece)
   {
-    piece.transform.SetParent(piecesContainer);
+    piece.transform.SetParent(_piecesContainer);
   }
 
   public void AddNewPiece(Piece piece)
@@ -1563,7 +1554,7 @@ public class BaseVehicleController : MonoBehaviour
 
     var previousCount = GetPieceCount();
 
-    netView.transform.SetParent(piecesContainer);
+    netView.transform.SetParent(_piecesContainer);
     if (netView.m_zdo != null)
     {
       netView.m_zdo.Set(VehicleZdoVars.MBParentIdHash, PersistentZdoId);
@@ -1679,7 +1670,7 @@ public class BaseVehicleController : MonoBehaviour
     if ((bool)ladder)
     {
       m_ladders.Add(ladder);
-      ladder.baseVehicleController = instance;
+      ladder.baseVehicleController = this;
     }
 
     var isRam = netView.name.StartsWith(PrefabNames.RamBladePrefix);

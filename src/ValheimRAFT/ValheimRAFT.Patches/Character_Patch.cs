@@ -32,6 +32,12 @@ public class Character_Patch
       return null;
     }
 
+    var bvc = __instance.m_lastGroundBody.GetComponentInParent<BaseVehicleController>();
+    if ((bool)bvc)
+    {
+      return VehicleShipCompat.InitFromUnknown(bvc?.VehicleInstance);
+    }
+
     var lastOnShip = __instance.m_lastGroundBody.GetComponent<Ship>();
 
     if (lastOnShip)
@@ -39,16 +45,9 @@ public class Character_Patch
       return lastOnShip;
     }
 
-    var vehicle = __instance.m_lastGroundBody.GetComponentInParent<VehicleShip>();
-    if ((bool)vehicle)
+    if (!ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
     {
-      return VehicleShipCompat.InitFromUnknown(vehicle.VehiclePiecesController?.VehicleInstance);
-    }
-
-    var bvc = __instance.m_lastGroundBody.GetComponentInParent<BaseVehicleController>();
-    if ((bool)bvc)
-    {
-      return VehicleShipCompat.InitFromUnknown(bvc?.VehicleInstance);
+      return null;
     }
 
     /*

@@ -76,9 +76,7 @@ public class Player_Patch
       if ((bool)cul) cul.AddNewChild(netView);
     }
 
-    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponent<VehicleShip>()
-      ?.VehiclePiecesController
-      .Instance;
+    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<BaseVehicleController>();
     if ((bool)bvc)
     {
       if ((bool)netView)
@@ -156,14 +154,13 @@ public class Player_Patch
   {
     var layerMask = __instance.m_placeRayMask;
 
-    var vehicle = __instance.transform.root.GetComponent<VehicleShip>();
-    if ((bool)vehicle)
-      return HandleGameObjectRayCast(vehicle.transform, layerMask, __instance, ref __result,
-        ref point,
-        ref normal, ref piece,
-        ref heightmap,
-        ref waterSurface, water);
-    var bvc = __instance.transform.root.GetComponent<BaseVehicleController>();
+    var bvc = __instance.GetComponentInParent<BaseVehicleController>();
+
+    if (!(bool)bvc)
+    {
+      bvc = __instance.transform.root.GetComponent<BaseVehicleController>();
+    }
+
     if ((bool)bvc)
       return HandleGameObjectRayCast(bvc.transform, layerMask, __instance, ref __result, ref point,
         ref normal, ref piece,

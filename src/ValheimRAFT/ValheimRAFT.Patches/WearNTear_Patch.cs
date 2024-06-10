@@ -163,8 +163,8 @@ public class WearNTear_Patch
   [HarmonyPrefix]
   private static bool WearNTear_ApplyDamage(WearNTear __instance, float damage)
   {
-    var mbr = __instance.GetComponent<MoveableBaseShipComponent>();
-    var bv = __instance.GetComponent<BaseVehicleController>();
+    var mbr = __instance.GetComponentInParent<MoveableBaseShipComponent>();
+    var bv = __instance.GetComponentInParent<BaseVehicleController>();
 
     // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
     if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleShip))
