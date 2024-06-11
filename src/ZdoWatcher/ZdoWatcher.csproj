@@ -1,0 +1,5 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="..\..\base.targets"/>
+    <Import Project="..\..\valheim.targets"/>
+    <Import Project="..\..\gameLauncher.targets"/>
+</Project>

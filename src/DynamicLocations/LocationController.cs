@@ -1,11 +1,11 @@
 using System.IO;
 using UnityEngine;
-using ValheimRAFT.Util;
+using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
-namespace ValheimVehicles.ValheimVehicles.DynamicLocations;
+namespace DynamicLocations;
 
-public static class DynamicLocations
+public static class LocationController
 {
   private static string PluginPrefix = "valheim_vehicles";
   private const string DynamicPrefix = "Dynamic";
@@ -99,10 +99,10 @@ public static class DynamicLocations
     var zdoid = StringToZDOID(logoutZdoString);
     Logger.LogDebug(
       $"Retreiving spawnTargetZdo {zdoid} for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
-    var output = zdoid == ZDOID.None ? ZdoPersistManager.ZDOIDToId(zdoid.Value) : 0;
+    var output = zdoid == ZDOID.None ? ZdoWatchManager.ZdoIdToId(zdoid.Value) : 0;
 
     // each game will create a new set of IDs, but the persistent data will allow for looking up the current game's ID.
-    return ZdoPersistManager.Instance.GetZDO(output);
+    return ZdoWatchManager.Instance.GetZDO(output);
   }
 
   public static Vector3 GetLogoutZdoOffset(Player player)
@@ -189,7 +189,7 @@ public static class DynamicLocations
       $"Retreiving targetKey <{targetKey}> zdoKey: <{zdoString}> for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
 
     // each game will create a new set of IDs, but the persistent data will allow for looking up the current game's ID.
-    var output = ZdoPersistManager.Instance.GetZDO(zdoUid);
+    var output = ZdoWatchManager.Instance.GetZDO(zdoUid);
 
     // Remove the zdo key from player if it no longer exists in the game (IE it was destroyed)
     if (output == null)
@@ -228,7 +228,7 @@ public static class DynamicLocations
     cachedSpawnTarget = null;
     var spawnPointObjZdo = dynamicObj.GetZDO();
     if (spawnPointObjZdo == null) return false;
-    if (!ZdoPersistManager.GetPersistentID(spawnPointObjZdo, out var id))
+    if (!ZdoWatchManager.GetPersistentID(spawnPointObjZdo, out var id))
     {
       Logger.LogWarning($"No persitent id found for dynamicObj {dynamicObj.gameObject.name}");
       return false;

@@ -1,5 +1,7 @@
 using System;
-using ValheimVehicles.Vehicles.Components;
+using DynamicLocations;
+
+namespace DynamicLocations.Structs;
 
 public struct DynamicLocation
 {

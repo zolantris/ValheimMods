@@ -1,19 +1,11 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using Jotunn.Extensions;
-using Jotunn.Managers;
 using UnityEngine;
-using UnityEngine.UI;
-using ValheimRAFT.Util;
-using ValheimVehicles.Prefabs;
-using ValheimVehicles.ValheimVehicles.DynamicLocations;
-using ValheimVehicles.Vehicles;
+using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
-namespace ValheimVehicles.Vehicles.Components;
+namespace DynamicLocations;
 
 /// <summary>
 /// This component does the following
@@ -80,25 +72,31 @@ public class PlayerSpawnController : MonoBehaviour
       return;
     }
 
-    var bvc = bed.GetComponentInParent<BaseVehicleController>();
-    if (!bvc)
+    var netView = player.GetComponentInParent<ZNetView>();
+    if (!ZdoWatchManager.GetPersistentID(netView.GetZDO(), out var persistentId))
     {
-      DynamicLocations.RemoveSpawnTargetZdo(player);
+      LocationController.RemoveSpawnTargetZdo(player);
+      return;
+    }
+
+    if (persistentId == 0)
+    {
+      Logger.LogDebug("No persistent ID returned");
       return;
     }
 
     if (spawnPointObj.transform.position != spawnPointObj.transform.localPosition &&
-        bvc.transform.position != spawnPointObj.transform.position)
+        netView.transform.position != spawnPointObj.transform.position)
     {
       var offset = spawnPointObj.transform.localPosition;
       // must be parsed to ZDOID after reading from custom player data
-      DynamicLocations.SetSpawnZdoTargetWithOffset(player, bvc.m_nview,
+      LocationController.SetSpawnZdoTargetWithOffset(player, netView,
         offset);
     }
     else
     {
-      DynamicLocations.SetSpawnZdoTargetWithOffset(player, bvc.m_nview,
-        bvc.transform.position - spawnPointObj.transform.position);
+      LocationController.SetSpawnZdoTargetWithOffset(player, netView,
+        netView.transform.position - spawnPointObj.transform.position);
     }
   }
 
@@ -110,15 +108,14 @@ public class PlayerSpawnController : MonoBehaviour
   public void SyncLogoutPoint()
   {
     if (!player || player == null || !CanUpdateLogoutPoint) return;
-    var bvc = player.GetComponentInParent<BaseVehicleController>();
-    if (!bvc)
+    var netView = player.GetComponentInParent<ZNetView>();
+    if (!ZdoWatchManager.GetPersistentID(netView.GetZDO(), out var persistentId))
     {
-      DynamicLocations.RemoveLogoutZdo(player);
+      LocationController.RemoveLogoutZdo(player);
       return;
     }
 
-    var vehicleZdoId = bvc.PersistentZdoId;
-    if (vehicleZdoId == 0)
+    if (persistentId == 0)
     {
       Logger.LogDebug("vehicleZdoId is invalid");
       return;
@@ -126,12 +123,12 @@ public class PlayerSpawnController : MonoBehaviour
 
     if (player.transform.localPosition != player.transform.position)
     {
-      DynamicLocations.SetLogoutZdoWithOffset(player, bvc.m_nview,
+      LocationController.SetLogoutZdoWithOffset(player, netView,
         player.transform.localPosition);
     }
     else
     {
-      DynamicLocations.SetLogoutZdo(player, bvc.m_nview);
+      LocationController.SetLogoutZdo(player, netView);
     }
 
     Game.instance.m_playerProfile.SavePlayerData(player);
@@ -164,8 +161,8 @@ public class PlayerSpawnController : MonoBehaviour
 
     if (player == null) return false;
 
-    var loginZdoOffset = DynamicLocations.GetLogoutZdoOffset(player);
-    var loginZdoid = DynamicLocations.GetLogoutZdo(player);
+    var loginZdoOffset = LocationController.GetLogoutZdoOffset(player);
+    var loginZdoid = LocationController.GetLogoutZdo(player);
 
     if (loginZdoid == null)
     {
@@ -195,7 +192,7 @@ public class PlayerSpawnController : MonoBehaviour
     {
       if (CanRemoveLogoutAfterSync)
       {
-        DynamicLocations.RemoveLogoutZdo(player);
+        LocationController.RemoveLogoutZdo(player);
       }
     }
 
@@ -206,8 +203,8 @@ public class PlayerSpawnController : MonoBehaviour
 
   public void MovePlayerToSpawnPoint()
   {
-    var spawnZdoOffset = DynamicLocations.GetSpawnTargetZdoOffset(player);
-    var spawnZdoid = DynamicLocations.GetSpawnTargetZdo(player);
+    var spawnZdoOffset = LocationController.GetSpawnTargetZdoOffset(player);
+    var spawnZdoid = LocationController.GetSpawnTargetZdo(player);
 
     StartCoroutine(UpdateLocation(spawnZdoid, spawnZdoOffset, LocationTypes.Spawn));
   }
@@ -271,17 +268,15 @@ public class PlayerSpawnController : MonoBehaviour
       ZoneSystem.instance.PokeLocalZone(zoneId);
 
       var tempInstance = ZNetScene.instance.FindInstance(zdo);
-      if (tempInstance != null)
+      if (tempInstance == null)
       {
-        if (tempInstance.GetComponent<WaterVehicleController>())
-        {
-          zdoNetViewInstance = tempInstance;
-        }
-        else
-        {
-          Logger.LogWarning(
-            $"The temp instance named: {tempInstance.name}, -> was not a bed instance gameobject ");
-        }
+        Logger.LogWarning(
+          $"The zdo instance not found ");
+      }
+      else
+      {
+        Logger.LogWarning(
+          $"The zdo instance named: {tempInstance.name}, -> was found ");
       }
 
       if (zdoNetViewInstance) break;

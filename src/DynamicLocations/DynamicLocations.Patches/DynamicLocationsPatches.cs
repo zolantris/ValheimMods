@@ -4,13 +4,10 @@ using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
-using ValheimVehicles.Helpers;
-using ValheimVehicles.ValheimVehicles.DynamicLocations;
-using ValheimVehicles.Vehicles.Components;
 
-namespace ValheimRAFT.Patches;
+namespace DynamicLocations.Patches;
 
-public class DynamicSpawnAndLogoutPatches
+public class DynamicLocationsPatches
 {
   [HarmonyPatch(typeof(Bed), "Interact")]
   [HarmonyPostfix]
@@ -43,7 +40,7 @@ public class DynamicSpawnAndLogoutPatches
       return;
     }
 
-    DynamicLocations.RemoveLogoutZdo(__instance);
+    LocationController.RemoveLogoutZdo(__instance);
   }
 
   // [HarmonyPatch(typeof(Game), "FindSpawnPoint")]
