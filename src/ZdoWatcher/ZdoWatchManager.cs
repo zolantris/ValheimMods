@@ -7,9 +7,9 @@ namespace ZdoWatcher;
 
 public class ZdoWatchManager
 {
-  public static Action<ZDO> OnDeserialize;
-  public static Action<ZDO> OnLoad;
-  public static Action<ZDO> OnReset;
+  public static Action<ZDO>? OnDeserialize = null;
+  public static Action<ZDO>? OnLoad = null;
+  public static Action<ZDO>? OnReset = null;
 
   public static ZdoWatchManager Instance = new();
   private Dictionary<int, ZDO> m_zdoGuidLookup = new();
@@ -42,7 +42,7 @@ public class ZdoWatchManager
   public static int ZdoIdToId(ZDOID zdoid) =>
     (int)zdoid.UserID + (int)zdoid.ID;
 
-  public int GetOrCreatePersistentID(ZDO zdo)
+  public int GetOrCreatePersistentID(ZDO? zdo)
   {
     zdo ??= new ZDO();
 
@@ -80,20 +80,45 @@ public class ZdoWatchManager
 
   public void Deserialize(ZDO zdo)
   {
-    OnDeserialize(zdo);
     HandleRegisterPersistentId(zdo);
+
+    if (OnDeserialize == null) return;
+    try
+    {
+      OnDeserialize(zdo);
+    }
+    catch
+    {
+      Logger.LogError("OnDeserialize had an error");
+    }
   }
 
   public void Load(ZDO zdo)
   {
-    OnLoad(zdo);
     HandleRegisterPersistentId(zdo);
+    if (OnLoad == null) return;
+    try
+    {
+      OnLoad(zdo);
+    }
+    catch
+    {
+      Logger.LogError("OnLoad had an error");
+    }
   }
 
   public void Reset(ZDO zdo)
   {
-    OnReset(zdo);
     HandleDeregisterPersistentId(zdo);
+    if (OnReset == null) return;
+    try
+    {
+      OnReset(zdo);
+    }
+    catch
+    {
+      Logger.LogError("OnReset had an error");
+    }
   }
 
   /// <summary>
@@ -101,23 +126,22 @@ public class ZdoWatchManager
   /// </summary>
   /// <param name="id"></param>
   /// <returns>ZDO|null</returns>
-  public ZDO? GetZDO(int id)
+  public ZDO? GetZdo(int id)
   {
-    ZDO zdo;
-    return m_zdoGuidLookup.TryGetValue(id, out zdo) ? zdo : null;
+    return m_zdoGuidLookup.TryGetValue(id, out var zdo) ? zdo : null;
   }
 
-  public GameObject GetGameObject(int id)
+  public GameObject? GetGameObject(int id)
   {
     var instance = GetInstance(id);
     return instance
-      ? instance.gameObject
+      ? instance?.gameObject
       : null;
   }
 
-  public ZNetView GetInstance(int id)
+  public ZNetView? GetInstance(int id)
   {
-    var zdo = GetZDO(id);
+    var zdo = GetZdo(id);
     return zdo != null ? ZNetScene.instance.FindInstance(zdo) : null;
   }
 }

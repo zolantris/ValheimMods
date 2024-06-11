@@ -80,7 +80,8 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   public static VehicleDebugHelpers GetOnboardVehicleDebugHelper()
   {
-    return GetVehicleController()?.VehicleInstance.Instance.VehicleDebugHelpersInstance;
+    var helper = GetVehicleController()?.VehicleInstance?.Instance?.VehicleDebugHelpersInstance;
+    return helper;
   }
 
   public static VehicleDebugHelpers? GetOnboardMBRaftDebugHelper()
@@ -102,7 +103,9 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   public void FlipShip()
   {
-    if (!(bool)VehicleShipInstance.MovementController.m_body) return;
+    if (!(bool)VehicleShipInstance?.MovementController?.m_body) return;
+    if (VehicleShipInstance == null) return;
+    if (VehicleShipInstance.MovementController == null) return;
     // flips the x and z axis which act as the boat depth and sides
     // y-axis is boat height. Flipping that would just rotate boat which is why it is omitted
     if (!VehicleShipInstance.isCreative)
@@ -110,7 +113,10 @@ public class VehicleDebugHelpers : MonoBehaviour
       VehicleShipInstance.MovementController.m_body.isKinematic = true;
     }
 
-    transform.rotation = Quaternion.Euler(0, VehicleObj.transform.eulerAngles.y,
+    // transform.rotation = Quaternion.Euler(0, VehicleObj.transform.eulerAngles.y,
+    //   0);
+    VehicleShipInstance.MovementController.m_body.rotation = Quaternion.Euler(0,
+      VehicleObj.transform.eulerAngles.y,
       0);
 
     if (!VehicleShipInstance.isCreative)

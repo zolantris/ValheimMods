@@ -10,9 +10,6 @@ public static class VehicleZdoVars
 
   public static readonly KeyValuePair<int, int> MBParentHash = ZDO.GetHashZDOID("MBParent");
 
-  public static readonly int DynamicLocationSpawn = "DynamicLocation_Spawn".GetStableHashCode();
-  public static readonly int DynamicLocationLogout = "DynamicLocation_Logout".GetStableHashCode();
-
   public static readonly int MBCharacterParentHash = "MBCharacterParent".GetStableHashCode();
 
   public static readonly int MBCharacterOffsetHash = "MBCharacterOffset".GetStableHashCode();

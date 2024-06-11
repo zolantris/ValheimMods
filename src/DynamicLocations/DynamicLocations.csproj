@@ -1,36 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <LangVersion>12</LangVersion>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
-
-    <ItemGroup>
-        <Compile Include=".\.*cs"/>
-        <Compile Include="Properties\.*cs"/>
-    </ItemGroup>
+    <Import Project="..\..\base.targets"/>
     <Import Project="..\..\valheim.targets"/>
     <Import Project="..\..\gameLauncher.targets"/>
-    <!--    <ItemGroup>-->
-    <!--        <Reference Include="ZdoWatcherl">-->
-    <!--            <SpecificVersion>False</SpecificVersion>-->
-    <!--            <HintPath>..\ZdoWatcher\bin\Debug\*.dll</HintPath>-->
-    <!--            <Private>False</Private>-->
-    <!--        </Reference>-->
-    <!--    </ItemGroup>-->
     <ItemGroup>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
     </ItemGroup>
-    <!--    <ItemGroup>-->
-    <!--        <LibReferenceSearchPathFiles Include="..\ZdoWatcher\bin\Debug\*.dll">-->
-    <!--            <InProject>false</InProject>-->
-    <!--        </LibReferenceSearchPathFiles>-->
-    <!--    </ItemGroup>-->
-    <!--    <Target Name="BeforeResolveReferences">-->
-    <!--        <RemoveDuplicates Inputs="@(LibReferenceSearchPathFiles->'%(RootDir)%(Directory)')">-->
-    <!--            <Output TaskParameter="Filtered" ItemName="LibReferenceSearchPath"/>-->
-    <!--        </RemoveDuplicates>-->
-    <!--        <CreateProperty Value="@(LibReferenceSearchPath);$(AssemblySearchPaths)">-->
-    <!--            <Output TaskParameter="Value" PropertyName="AssemblySearchPaths"/>-->
-    <!--        </CreateProperty>-->
-    <!--    </Target>-->
 </Project>

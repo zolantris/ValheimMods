@@ -1,22 +1,25 @@
 using System;
+using System.Collections.Generic;
 using ZdoWatcher;
 
 namespace DynamicLocations;
 
-public class ZdoWatcherDelegate
+internal class ZdoWatcherDelegate
 {
   // var playerSpawn = zdo.GetInt(VehicleZdoVars.DynamicLocationSpawn, -1);
   // var playerLocation = zdo.GetInt(VehicleZdoVars.DynamicLocationLogout);
   public static readonly int DynamicLocationSpawn = "DynamicLocation_Spawn".GetStableHashCode();
   public static readonly int DynamicLocationLogout = "DynamicLocation_Logout".GetStableHashCode();
-  public static ZdoWatchManager Watcher;
+
+  public static Dictionary<int, ZDOID> DynamicSpawns;
 
   public void RegisterToZdoManager()
   {
-    ZdoWatchManager.OnDeserialize += (zdo => OnZdoRegister(zdo));
+    ZdoWatchManager.OnDeserialize += (OnZdoRegister);
+    ZdoWatchManager.OnLoad += (OnZdoRegister);
   }
 
-  public static void OnZdoRegister(ZDO zdo)
+  private static void OnZdoRegister(ZDO zdo)
   {
   }
 

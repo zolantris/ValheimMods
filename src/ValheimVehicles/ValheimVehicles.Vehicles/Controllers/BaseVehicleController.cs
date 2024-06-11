@@ -14,6 +14,7 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Interfaces;
+using ZdoWatcher;
 using static ValheimVehicles.Propulsion.Sail.SailAreaForce;
 using Logger = Jotunn.Logger;
 using PrefabNames = ValheimVehicles.Prefabs.PrefabNames;
@@ -24,8 +25,7 @@ namespace ValheimVehicles.Vehicles;
 /// <description> This is a controller used for all vehicles, Currently it must be initialized within a vehicle view IE VehicleShip or upcoming VehicleWheeled, and VehicleFlying instances.</description>
 public class BaseVehicleController : MonoBehaviour
 {
-  public ZNetView m_nview =>
-    VehicleInstance?.NetView ? VehicleInstance.NetView : GetComponent<ZNetView>();
+  public ZNetView m_nview { get; private set; }
 
   public static readonly string ZdoKeyBaseVehicleInitState =
     "ValheimVehicles_BaseVehicle_Initialized";
@@ -260,7 +260,8 @@ public class BaseVehicleController : MonoBehaviour
   {
     if (!(bool)m_nview)
     {
-      yield return null;
+      m_nview = GetComponent<ZNetView>();
+      if (!m_nview) yield return null;
     }
 
     Logger.LogDebug($"ZdoReadyAwake called, zdo is: {m_nview.GetZDO()}");
@@ -287,6 +288,9 @@ public class BaseVehicleController : MonoBehaviour
     {
       return;
     }
+
+    Heightmap.ForceGenerateAll();
+    m_nview = GetComponent<ZNetView>();
 
     _piecesContainer = transform;
     m_body = GetComponent<Rigidbody>();
@@ -419,7 +423,7 @@ public class BaseVehicleController : MonoBehaviour
       return _persistentZdoId;
     }
 
-    _persistentZdoId = ZdoPersistManager.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
+    _persistentZdoId = ZdoWatchManager.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
     return _persistentZdoId;
   }
 
@@ -1069,7 +1073,7 @@ public class BaseVehicleController : MonoBehaviour
         yield return new WaitUntil(() => m_nview?.GetZDO() != null);
       }
 
-      var id = ZdoPersistManager.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
+      var id = ZdoWatchManager.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
       m_pendingPieces.TryGetValue(id, out var list);
 
       if (list is { Count: > 0 })
@@ -1391,8 +1395,8 @@ public class BaseVehicleController : MonoBehaviour
       {
         var zdoparent = ZDOMan.instance.GetZDO(zdoid);
         id = zdoparent == null
-          ? ZdoPersistManager.ZDOIDToId(zdoid)
-          : ZdoPersistManager.Instance.GetOrCreatePersistentID(zdoparent);
+          ? ZdoWatchManager.ZdoIdToId(zdoid)
+          : ZdoWatchManager.Instance.GetOrCreatePersistentID(zdoparent);
         zdo.Set(VehicleZdoVars.MBParentIdHash, id);
         zdo.Set(VehicleZdoVars.MBRotationVecHash,
           zdo.GetQuaternion(VehicleZdoVars.MBRotationHash, Quaternion.identity).eulerAngles);
@@ -1420,7 +1424,7 @@ public class BaseVehicleController : MonoBehaviour
     var id = GetParentID(netView.m_zdo);
     if (id == 0) return;
 
-    var parentObj = ZdoPersistManager.Instance.GetGameObject(id);
+    var parentObj = ZdoWatchManager.Instance.GetGameObject(id);
     if ((bool)parentObj)
     {
       var vehicleShip = parentObj.GetComponent<VehicleShip>();
@@ -1635,7 +1639,7 @@ public class BaseVehicleController : MonoBehaviour
     {
       // todo use this approach only if the VehicleShip zdo is less easy to use
       // // ZDO must be persisted in order to teleport directly to this bed. 
-      // ZdoPersistManager.Instance.GetOrCreatePersistentID(netView.GetZDO());
+      // ZdoWatchManager.Instance.GetOrCreatePersistentID(netView.GetZDO());
       m_bedPieces.Add(bed);
     }
 

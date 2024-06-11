@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DynamicLocations;
 using Jotunn.Managers;
 using Registry;
 using UnityEngine;
@@ -217,9 +218,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     // m_body.maxLinearVelocity = ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value * 1.2f;
   }
 
-  public void AwakeSetupShipComponents()
+  public void InitColliders()
   {
-    vehicleShip = GetComponent<VehicleShip>();
     var vehicleCollidersParentObj = VehicleShip.GetVehicleMovementCollidersObj(transform);
 
     var floatColliderObj =
@@ -240,8 +240,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     BlockingCollider = blockingColliderObj.GetComponent<BoxCollider>();
     FloatCollider = floatColliderObj.GetComponent<BoxCollider>();
     OnboardCollider = onboardColliderObj.GetComponent<BoxCollider>();
+  }
 
+  public void AwakeSetupShipComponents()
+  {
+    vehicleShip = GetComponent<VehicleShip>();
     _impactEffect = GetComponent<ImpactEffect>();
+
+    InitColliders();
 
     if (!(bool)_impactEffect)
     {
@@ -453,13 +459,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   public void UpdateShipBalancingForce()
   {
     var front = ShipDirection.position +
-                ShipDirection.forward * m_floatcollider.extents.z;
+                ShipDirection.forward * m_floatcollider.size.z / 2f;
     var back = ShipDirection.position -
-               ShipDirection.forward * m_floatcollider.extents.z;
+               ShipDirection.forward * m_floatcollider.size.z / 2f;
     var left = ShipDirection.position -
-               ShipDirection.right * m_floatcollider.extents.x;
+               ShipDirection.right * m_floatcollider.size.x / 2f;
     var right = ShipDirection.position +
-                ShipDirection.right * m_floatcollider.extents.x;
+                ShipDirection.right * m_floatcollider.size.x / 2f;
 
     var centerpos2 = ShipDirection.position;
     var frontForce = m_body.GetPointVelocity(front);
@@ -660,6 +666,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     UpdateVehicleStats(false);
     UpdateWaterForce(shipFloatation);
+    UpdateShipBalancingForce();
     ApplyEdgeForce(Time.fixedDeltaTime);
     if (HasOceanSwayDisabled)
     {

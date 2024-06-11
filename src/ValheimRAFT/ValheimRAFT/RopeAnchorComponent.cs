@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using ValheimRAFT.Util;
+using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -239,8 +240,8 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     if ((bool)nv && nv.m_zdo != null)
     {
       Logger.LogDebug($"AttachRope {index}");
-      RopeAttachmentTarget id =
-        new RopeAttachmentTarget(ZdoPersistManager.Instance.GetOrCreatePersistentID(nv.m_zdo),
+      var id =
+        new RopeAttachmentTarget(ZdoWatchManager.Instance.GetOrCreatePersistentID(nv.m_zdo),
           index);
       if (!RemoveRopeWithID(id))
       {
@@ -253,8 +254,8 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
   private void AttachRope(RopeAnchorComponent ropeAnchorComponent)
   {
-    int parentid =
-      ZdoPersistManager.Instance.GetOrCreatePersistentID(ropeAnchorComponent.GetParentZDO());
+    var parentid =
+      ZdoWatchManager.Instance.GetOrCreatePersistentID(ropeAnchorComponent.GetParentZDO());
     if (!RemoveRopeWithID(new RopeAttachmentTarget(parentid, 0)) &&
         !(ropeAnchorComponent == this) &&
         !ropeAnchorComponent.RemoveRopeWithID(new RopeAttachmentTarget(parentid, 0)))
@@ -267,7 +268,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
   private void CreateNewRope(RopeAttachmentTarget target)
   {
-    Rope newRope = new Rope();
+    var newRope = new Rope();
     newRope.m_ropeAnchorTarget = target;
     newRope.m_ropeObject = new GameObject("MBRope");
     newRope.m_ropeObject.layer = LayerMask.NameToLayer("piece_nonsolid");
@@ -311,7 +312,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   {
     if ((bool)m_nview && m_nview.m_zdo != null)
     {
-      ZPackage pkg = new ZPackage();
+      var pkg = new ZPackage();
       byte version = 2;
       pkg.Write(version);
       for (int i = 0; i < m_ropes.Count; i++)
@@ -413,12 +414,12 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
         continue;
       }
 
-      rope.m_ropeTarget = ZdoPersistManager.Instance.GetGameObject(rope.m_ropeAnchorTarget.Id);
+      rope.m_ropeTarget = ZdoWatchManager.Instance.GetGameObject(rope.m_ropeAnchorTarget.Id);
       if (!rope.m_ropeTarget)
       {
         if (ZNet.instance.IsServer())
         {
-          ZDO zdo = ZdoPersistManager.Instance.GetZDO(rope.m_ropeAnchorTarget.Id);
+          ZDO zdo = ZdoWatchManager.Instance.GetZdo(rope.m_ropeAnchorTarget.Id);
           if (zdo == null)
           {
             RemoveRopeAt(i);
@@ -493,10 +494,10 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     ZDO zdoparent = ZDOMan.instance.GetZDO(zdoid);
     if (zdoparent != null)
     {
-      return ZdoPersistManager.Instance.GetOrCreatePersistentID(zdoparent);
+      return ZdoWatchManager.Instance.GetOrCreatePersistentID(zdoparent);
     }
 
-    return ZdoPersistManager.ZDOIDToId(zdoid);
+    return ZdoWatchManager.ZdoIdToId(zdoid);
   }
 
   private void GetRopesFromZDO(ICollection<RopeAttachmentTarget> ropeIds)

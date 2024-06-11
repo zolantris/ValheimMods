@@ -52,11 +52,4 @@ public class ZNetScene_Patch
     return false;
   }
 #endif
-
-  [HarmonyPatch(typeof(ZNetScene), "Shutdown")]
-  [HarmonyPostfix]
-  private static void ZNetScene_Shutdown()
-  {
-    ZdoPersistManager.Instance.Reset();
-  }
 }

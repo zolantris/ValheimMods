@@ -20,7 +20,10 @@ public class VehicleRamAoe : Aoe
   public static HitData.DamageTypes baseDamage;
   public float velocityMultiplier = 0;
   public float massMultiplier = RamConfig.MaxVelocityMultiplier.Value;
-  public float minimumVelocityToTriggerHit = RamConfig.minimumVelocityToTriggerHit.Value;
+
+  public float minimumVelocityToTriggerHit => RamConfig.minimumVelocityToTriggerHit.Value *
+                                              (RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f);
+
   public VehicleShip? vehicle;
   public RamPrefabs.RamType RamType;
 
@@ -83,7 +86,10 @@ public class VehicleRamAoe : Aoe
     m_damageSelf = !CanDamageSelf ? 0 : 1;
     m_toolTier = RamDamageToolTier;
     m_attackForce = 5;
+
     m_radius = Mathf.Clamp(RamHitArea, 0.1f, 10f);
+    m_radius *= RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f;
+
     m_useTriggers = true;
     m_triggerEnterOnly = AllowContinuousDamage;
     m_useCollider = null;

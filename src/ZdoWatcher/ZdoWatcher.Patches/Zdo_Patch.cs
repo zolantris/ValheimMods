@@ -1,10 +1,9 @@
 using HarmonyLib;
-using ZdoWatcher;
 
-namespace ValheimRAFT.Patches;
+namespace ZdoWatcher.Patches;
 
 [HarmonyPatch]
-public class ZDO_Patch
+public class ZdoPatch
 {
   [HarmonyPatch(typeof(ZDO), "Deserialize")]
   [HarmonyPostfix]

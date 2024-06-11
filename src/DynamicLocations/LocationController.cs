@@ -7,7 +7,6 @@ namespace DynamicLocations;
 
 public static class LocationController
 {
-  private static string PluginPrefix = "valheim_vehicles";
   private const string DynamicPrefix = "Dynamic";
   private const string SpawnZdo = "SpawnZdo";
   private const string LogoutParentZdoOffset = "LogoutParentZdoOffset";
@@ -18,12 +17,12 @@ public static class LocationController
 
   public static string GetPluginPrefix()
   {
-    return PluginPrefix;
+    return DynamicLocationsPlugin.ModName;
   }
 
   public static string GetFullPrefix()
   {
-    return $"{PluginPrefix}_{DynamicPrefix}";
+    return $"{GetPluginPrefix()}_{DynamicPrefix}";
   }
 
   /// <summary>
@@ -31,7 +30,6 @@ public static class LocationController
   /// </summary>
   private static long WorldUID => ZNet.instance?.GetWorldUID() ?? 0;
 
-  public static bool IsValid(string key) => key.StartsWith(PluginPrefix);
 
   public static string GetLogoutZdoOffsetKey() =>
     !ZNet.instance ? "" : $"{GetFullPrefix()}_{LogoutParentZdoOffset}_{WorldUID}";
@@ -102,7 +100,7 @@ public static class LocationController
     var output = zdoid == ZDOID.None ? ZdoWatchManager.ZdoIdToId(zdoid.Value) : 0;
 
     // each game will create a new set of IDs, but the persistent data will allow for looking up the current game's ID.
-    return ZdoWatchManager.Instance.GetZDO(output);
+    return ZdoWatchManager.Instance.GetZdo(output);
   }
 
   public static Vector3 GetLogoutZdoOffset(Player player)
@@ -189,7 +187,7 @@ public static class LocationController
       $"Retreiving targetKey <{targetKey}> zdoKey: <{zdoString}> for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
 
     // each game will create a new set of IDs, but the persistent data will allow for looking up the current game's ID.
-    var output = ZdoWatchManager.Instance.GetZDO(zdoUid);
+    var output = ZdoWatchManager.Instance.GetZdo(zdoUid);
 
     // Remove the zdo key from player if it no longer exists in the game (IE it was destroyed)
     if (output == null)

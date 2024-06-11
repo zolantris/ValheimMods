@@ -30,7 +30,7 @@ public abstract class SentryMetrics
       "https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.us.sentry.io/4506613652586496";
     Logger.LogDebug($"DSN FOR sentry {Dsn}");
     SentryUnityWrapperPlugin.RegisterPluginAsync(
-      new Config(ValheimRaftPlugin.BepInGuid, ValheimRaftPlugin.ModName, ValheimRaftPlugin.Version,
+      new Config(ValheimRaftPlugin.ModGuid, ValheimRaftPlugin.ModName, ValheimRaftPlugin.Version,
         Dsn));
 
 

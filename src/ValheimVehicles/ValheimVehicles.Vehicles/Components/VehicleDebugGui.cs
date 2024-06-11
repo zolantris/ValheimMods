@@ -1,3 +1,4 @@
+using DynamicLocations;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimRAFT.Patches;

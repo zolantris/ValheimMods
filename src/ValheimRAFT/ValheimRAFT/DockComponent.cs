@@ -1,5 +1,6 @@
 using UnityEngine;
 using ValheimRAFT.Util;
+using ZdoWatcher;
 
 namespace ValheimRAFT;
 
@@ -69,7 +70,7 @@ public class DockComponent : MonoBehaviour
       Rigidbody rb = nv.GetComponent<Rigidbody>();
       if ((bool)rb)
       {
-        int id = ZdoPersistManager.Instance.GetOrCreatePersistentID(nv.m_zdo);
+        int id = ZdoWatchManager.Instance.GetOrCreatePersistentID(nv.m_zdo);
         m_dockedObject = nv.gameObject;
         m_dockedRigidbody = rb;
         m_nview.m_zdo.Set("MBDock_dockedObject", id);

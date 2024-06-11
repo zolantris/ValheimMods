@@ -32,9 +32,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
   {
     // top level netview must be passed along to other components from VehicleShip
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab, true);
-
-    var vehicleMovementObj = VehicleShip.GetVehicleMovementObj(prefab.transform);
-    PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(vehicleMovementObj);
+    PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(prefab);
 
     // colliders already have a rigidbody on them from unity prefab
     var vehicleMovementColliders =
@@ -104,9 +102,6 @@ public class WaterVehiclePrefab : IRegisterPrefab
     impactEffect.m_toolTier = 1000;
 
     impactEffect.m_damages.m_blunt = 50;
-    impactEffect.m_damages.m_chop = 0;
-    impactEffect.m_damages.m_pickaxe = 0;
-
     impactEffect.m_interval = 0.5f;
     impactEffect.m_damagePlayers = true;
     impactEffect.m_damageToSelf = false;

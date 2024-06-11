@@ -1,6 +1,5 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
-using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
 using System;
@@ -9,18 +8,16 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using BepInEx.Bootstrap;
-using Components;
-using Jotunn;
-using Properties;
 using UnityEngine;
 using ValheimRAFT.Patches;
 using ValheimRAFT.Util;
+using ValheimVehicles;
 using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Sail;
-using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
+using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -31,7 +28,8 @@ internal abstract class PluginDependencies
 }
 
 // [SentryDSN()]
-[BepInPlugin(BepInGuid, ModName, Version)]
+[BepInPlugin(ModGuid, ModName, Version)]
+[BepInDependency(ZdoWatcherPlugin.ModGuid, BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency(PluginDependencies.JotunnModGuid)]
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
 public class ValheimRaftPlugin : BaseUnityPlugin
@@ -40,7 +38,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public const string Author = "zolantris";
   public const string Version = "2.1.1";
   public const string ModName = "ValheimRAFT";
-  public const string BepInGuid = $"{Author}.{ModName}";
+  public const string ModGuid = $"{Author}.{ModName}";
   public const string HarmonyGuid = $"{Author}.{ModName}";
   public const string ModDescription = "Valheim Mod for building on the sea";
 
@@ -564,6 +562,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
      */
     PrefabManager.OnVanillaPrefabsAvailable += LoadCustomTextures;
     PrefabManager.OnVanillaPrefabsAvailable += AddCustomPieces;
+
+    ValheimVehicles.ZdoWatcherDelegate.RegisterToZdoManager();
   }
 
   private void OnConfigChanged(object sender, EventArgs eventArgs)

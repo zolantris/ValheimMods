@@ -8,6 +8,7 @@ using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles;
+using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;
@@ -47,8 +48,8 @@ public class WearNTear_Patch
     var hasParentVehicleHash = parentVehicleHash != 0;
     if (!hasParentVehicleHash) return false;
 
-    var id = ZdoPersistManager.ZDOIDToId(__instance.m_nview.GetZDO().m_uid);
-    var zdoExists = ZdoPersistManager.Instance.GetZDO(id);
+    var id = ZdoWatchManager.ZdoIdToId(__instance.m_nview.GetZDO().m_uid);
+    var zdoExists = ZdoWatchManager.Instance.GetZdo(id);
     if (zdoExists == null) return false;
 
     __instance.enabled = false;

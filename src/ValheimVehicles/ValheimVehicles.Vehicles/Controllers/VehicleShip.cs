@@ -274,7 +274,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       AllVehicles.Add(this);
     }
 
-
     AwakeSetupVehicleShip();
 
     Logger.LogDebug(
@@ -285,16 +284,17 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     }
 
     FixShipRotation();
-
-
     InitializeWaterVehicleController();
 
+    UpdateShipSounds(this);
+  }
+
+  public void Start()
+  {
     if (HasVehicleDebugger && _piecesController)
     {
       InitializeVehicleDebugger();
     }
-
-    UpdateShipSounds(this);
   }
 
   public void OnEnable()
@@ -371,23 +371,32 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   public void InitializeVehicleDebugger()
   {
     if (VehicleDebugHelpersInstance != null) return;
+    if (MovementController == null || !MovementController.FloatCollider ||
+        !MovementController.BlockingCollider || !MovementController.OnboardCollider)
+    {
+      CancelInvoke(nameof(InitializeVehicleDebugger));
+      Invoke(nameof(InitializeVehicleDebugger), 1);
+      return;
+    }
+
     VehicleDebugHelpersInstance = gameObject.AddComponent<VehicleDebugHelpers>();
+
 
     VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
     {
-      collider = _piecesController.m_floatcollider,
+      collider = MovementController.FloatCollider,
       lineColor = Color.green,
       parent = gameObject
     });
     VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
     {
-      collider = _piecesController.m_blockingcollider,
+      collider = MovementController.BlockingCollider,
       lineColor = Color.blue,
       parent = gameObject
     });
     VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
     {
-      collider = _piecesController.m_onboardcollider,
+      collider = MovementController.OnboardCollider,
       lineColor = Color.yellow,
       parent = gameObject
     });

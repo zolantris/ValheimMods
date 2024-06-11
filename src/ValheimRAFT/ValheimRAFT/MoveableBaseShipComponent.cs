@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using ValheimRAFT.Util;
 using ValheimVehicles.Vehicles;
+using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -69,7 +70,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.shipController = this;
     m_baseRoot.m_nview = m_nview;
     m_baseRoot.m_ship = ship;
-    m_baseRoot.m_id = ZdoPersistManager.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
+    m_baseRoot.m_id = ZdoWatchManager.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
     m_rigidbody = GetComponent<Rigidbody>();
     m_baseRoot.m_syncRigidbody = m_rigidbody;
     m_rigidbody.maxAngularVelocity = ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value;

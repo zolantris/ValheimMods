@@ -68,9 +68,9 @@ public static class RamConfig
       ConfigHelpers.CreateConfigDescription(
         $"Pierce damage for Ram Stakes. {damageDescription} Will damage rocks as well as other entities",
         true, true));
-    PercentageDamageToSelf = config.Bind("Rams", "percentageDamageToSelf", 1f,
+    PercentageDamageToSelf = config.Bind("Rams", "percentageDamageToSelf", 0.05f,
       ConfigHelpers.CreateConfigDescription(
-        $"Percentage Damage applied to the Ram piece per hit.",
+        $"Percentage Damage applied to the Ram piece per hit. Number between 0-1.",
         true, true));
 
     AllowContinuousDamage = config.Bind("Rams", "AllowContinuousDamage", true,

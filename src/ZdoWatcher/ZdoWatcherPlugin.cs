@@ -1,17 +1,20 @@
 ﻿using BepInEx;
+using HarmonyLib;
 using Jotunn.Utils;
+using ZdoWatcher.Patches;
 
 namespace ZdoWatcher;
 
-[BepInPlugin(BepInGuid, ModName, Version)]
+[BepInPlugin(ModGuid, ModName, Version)]
 [NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
 public class ZdoWatcherPlugin : BaseUnityPlugin
 {
   public const string Author = "zolantris";
   public const string Version = "1.0.0";
   public const string ModName = "ZdoWatcher";
-  public const string BepInGuid = $"{Author}.{ModName}";
+  public const string ModGuid = $"{Author}.{ModName}";
   public const string HarmonyGuid = $"{Author}.{ModName}";
+  private static Harmony _harmony;
 
   public const string ModDescription =
     "Valheim Mod made to share Zdo Changes and side effect through one shareable interface";
@@ -23,5 +26,9 @@ public class ZdoWatcherPlugin : BaseUnityPlugin
   private void Awake()
   {
     Instance = this;
+
+    _harmony = new Harmony(HarmonyGuid);
+    _harmony.PatchAll(typeof(ZdoPatch));
+    _harmony.PatchAll(typeof(ZNetScene_Patch));
   }
 }

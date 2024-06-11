@@ -1,4 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
     <Import Project="..\..\base.targets"/>
     <Import Project="..\..\valheim.targets"/>
     <Import Project="..\..\gameLauncher.targets"/>

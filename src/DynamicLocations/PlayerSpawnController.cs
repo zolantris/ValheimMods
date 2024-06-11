@@ -203,6 +203,13 @@ public class PlayerSpawnController : MonoBehaviour
 
   public void MovePlayerToSpawnPoint()
   {
+    if (player == null)
+    {
+      player = Player.m_localPlayer;
+    }
+
+    if (!player) return;
+
     var spawnZdoOffset = LocationController.GetSpawnTargetZdoOffset(player);
     var spawnZdoid = LocationController.GetSpawnTargetZdo(player);
 
