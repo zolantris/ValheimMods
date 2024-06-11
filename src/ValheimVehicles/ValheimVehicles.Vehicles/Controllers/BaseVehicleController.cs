@@ -513,13 +513,39 @@ public class BaseVehicleController : MonoBehaviour
     // m_rigidbody.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
   }
 
+  public static bool ForceKinematic = true;
+
+  public void Sync()
+  {
+    if (ForceKinematic)
+    {
+      if (!m_body.isKinematic)
+      {
+        m_body.isKinematic = true;
+      }
+    }
+
+    if (!(bool)m_body || !(bool)VehicleInstance.MovementController.m_body)
+    {
+      return;
+    }
+
+    if (m_body.isKinematic)
+    {
+      m_body.isKinematic = false;
+    }
+
+    m_body.Move(VehicleInstance.MovementController.m_body.position,
+      VehicleInstance.MovementController.m_body.rotation);
+  }
+
   public void Update()
   {
     if (!m_nview) return;
 
     if (!ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value)
     {
-      // Sync();
+      Sync();
       return;
     }
 
@@ -533,6 +559,12 @@ public class BaseVehicleController : MonoBehaviour
   public void FixedUpdate()
   {
     Client_UpdateAllPieces();
+    Sync();
+  }
+
+  private void LateUpdate()
+  {
+    Sync();
   }
 
 

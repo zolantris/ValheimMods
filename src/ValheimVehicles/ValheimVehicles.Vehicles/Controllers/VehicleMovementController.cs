@@ -456,7 +456,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       ForceMode.VelocityChange);
   }
 
-  public void UpdateShipBalancingForce()
+  public void BROKEN_UpdateShipBalancingForce()
   {
     var front = ShipDirection.position +
                 ShipDirection.forward * m_floatcollider.size.z / 2f;
@@ -516,7 +516,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
     m_body.WakeUp();
 
-    UpdateShipBalancingForce();
+    BROKEN_UpdateShipBalancingForce();
 
     if (!ValheimRaftPlugin.Instance.FlightHasRudderOnly.Value)
     {
@@ -666,7 +666,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     UpdateVehicleStats(false);
     UpdateWaterForce(shipFloatation);
-    UpdateShipBalancingForce();
+    // BROKEN_UpdateShipBalancingForce();
     ApplyEdgeForce(Time.fixedDeltaTime);
     if (HasOceanSwayDisabled)
     {
@@ -1239,7 +1239,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
       if (isExiting)
       {
-        PlayerSpawnController.Instance.SyncLogoutPoint();
+        PlayerSpawnController.Instance?.SyncLogoutPoint();
         s_currentShips.Remove(this);
         Player.m_localPlayer.transform.SetParent(null);
       }

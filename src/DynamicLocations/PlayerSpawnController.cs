@@ -24,7 +24,7 @@ public class PlayerSpawnController : MonoBehaviour
 
   public static Dictionary<long, PlayerSpawnController> Instances = new();
 
-  public static PlayerSpawnController Instance;
+  public static PlayerSpawnController? Instance;
   private Stopwatch UpdateLocationTimer = new();
   public static Player? player;
 
