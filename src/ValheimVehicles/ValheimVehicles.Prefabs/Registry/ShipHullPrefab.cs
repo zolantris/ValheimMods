@@ -25,7 +25,7 @@ public class ShipHullPrefab : IRegisterPrefab
     {
       foreach (var sizeVariant in sizeVariants)
       {
-        var materialCount = sizeVariant == PrefabNames.PrefabSizeVariant.Two ? 2 ^ 2 : 4 ^ 2;
+        var materialCount = sizeVariant == PrefabNames.PrefabSizeVariant.Two ? 2 : 4;
         RegisterHull(
           PrefabNames.GetHullSlabVariants(hullMaterialType, sizeVariant),
           hullMaterialType,
@@ -45,11 +45,11 @@ public class ShipHullPrefab : IRegisterPrefab
     }
 
     // hulls 4x8
-    RegisterHull(PrefabNames.ShipHullCenterWoodPrefabName, ShipHulls.HullMaterial.Wood, 2,
+    RegisterHull(PrefabNames.ShipHullCenterWoodPrefabName, ShipHulls.HullMaterial.Wood, 8,
       PrefabNames.PrefabSizeVariant.Four,
       prefabManager, pieceManager);
     RegisterHull(PrefabNames.ShipHullCenterIronPrefabName, ShipHulls.HullMaterial.Iron,
-      2, PrefabNames.PrefabSizeVariant.Four, prefabManager, pieceManager);
+      8, PrefabNames.PrefabSizeVariant.Four, prefabManager, pieceManager);
 
 
     // hull-ribs
@@ -65,33 +65,37 @@ public class ShipHullPrefab : IRegisterPrefab
     switch (material)
     {
       case ShipHulls.HullMaterial.Iron:
-        requirements.AddItem(new RequirementConfig
-        {
-          Amount = 2 * materialCount,
-          Item = "Iron",
-          Recover = true
-        });
-        requirements.AddItem(new RequirementConfig
-        {
-          Amount = 2 * materialCount,
-          Item = "Bronze",
-          Recover = true
-        });
-        requirements.AddItem(new RequirementConfig
-        {
-          Amount = 10 * materialCount,
-          Item = "BronzeNails",
-          Recover = true
-        });
-        break;
+        return
+        [
+          new RequirementConfig
+          {
+            Amount = materialCount,
+            Item = "Iron",
+            Recover = true
+          },
+          new RequirementConfig
+          {
+            Amount = materialCount,
+            Item = "Bronze",
+            Recover = true
+          },
+          new RequirementConfig
+          {
+            Amount = 10 * materialCount,
+            Item = "BronzeNails",
+            Recover = true
+          }
+        ];
       case ShipHulls.HullMaterial.Wood:
-        requirements.AddItem(new RequirementConfig
-        {
-          Amount = 10 * materialCount,
-          Item = "Wood",
-          Recover = true
-        });
-        break;
+        return
+        [
+          new RequirementConfig
+          {
+            Amount = 5 * materialCount,
+            Item = "Wood",
+            Recover = true
+          }
+        ];
     }
 
     return requirements;

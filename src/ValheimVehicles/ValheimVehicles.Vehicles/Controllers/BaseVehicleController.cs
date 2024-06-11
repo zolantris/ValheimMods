@@ -11,6 +11,7 @@ using ValheimRAFT;
 using ValheimRAFT.Util;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Interfaces;
@@ -466,9 +467,10 @@ public class BaseVehicleController : MonoBehaviour
 
   public void CleanUp()
   {
+    RemovePlayersFromBoat();
     if (ActiveInstances.ContainsKey(PersistentZdoId))
     {
-      RemovePlayersFromBoat();
+      ActiveInstances.Remove(_persistentZdoId);
     }
 
     if (_pendingPiecesCoroutine != null)
@@ -498,19 +500,21 @@ public class BaseVehicleController : MonoBehaviour
 
   public virtual void SyncRigidbodyStats(float drag, float angularDrag)
   {
-    // if (!vehicleShip || m_statsOverride || !VehicleInstance?.Instance)
-    // {
-    //   return;
-    // }
+    if (!VehicleInstance?.MovementController?.m_body || m_statsOverride ||
+        !VehicleInstance?.Instance)
+    {
+      return;
+    }
 
-    // m_rigidbody.angularDrag = angularDrag;
-    // m_syncRigidbody.angularDrag = angularDrag;
+    m_body.angularDrag = angularDrag;
+    VehicleInstance.MovementController.m_body.angularDrag = angularDrag;
 
-    // m_rigidbody.drag = drag;
-    // m_syncRigidbody.drag = drag;
+    m_body.drag = drag;
+    VehicleInstance.MovementController.m_body.drag = drag;
 
-    // m_syncRigidbody.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
-    // m_rigidbody.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
+    VehicleInstance.MovementController.m_body.mass =
+      Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
+    m_body.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
   }
 
   public static bool ForceKinematic = true;
@@ -1709,7 +1713,7 @@ public class BaseVehicleController : MonoBehaviour
       ladder.baseVehicleController = this;
     }
 
-    var isRam = netView.name.StartsWith(PrefabNames.RamBladePrefix);
+    var isRam = RamPrefabs.IsRam(netView.name);
     if (isRam)
     {
       var vehicleRamAoe = netView.GetComponentInChildren<VehicleRamAoe>();
@@ -1818,9 +1822,9 @@ public class BaseVehicleController : MonoBehaviour
       case ValheimRaftPlugin.HullFloatation.Average:
         return totalHeight / m_hullPieces.Count;
       case ValheimRaftPlugin.HullFloatation.Bottom:
-        return _hullBounds.min.y + 0.5f;
+        return _hullBounds.min.y;
       case ValheimRaftPlugin.HullFloatation.Top:
-        return _hullBounds.max.y - 0.5f;
+        return _hullBounds.max.y;
       case ValheimRaftPlugin.HullFloatation.Center:
       default:
         return _hullBounds.center.y;
@@ -1870,9 +1874,6 @@ public class BaseVehicleController : MonoBehaviour
     }
 
     OnBoundsChangeUpdateShipColliders();
-
-    // todo determine if this is necessary, might fix a few issues with planters
-    Heightmap.ForceGenerateAll();
   }
 
 
@@ -1896,6 +1897,9 @@ public class BaseVehicleController : MonoBehaviour
     var averageFloatHeight = GetAverageFloatHeightFromHulls();
     var floatColliderCenterOffset =
       new Vector3(_vehicleBounds.center.x, averageFloatHeight, _vehicleBounds.center.z);
+    // var floatColliderSize = new Vector3(Mathf.Max(minColliderSize, _vehicleBounds.size.x),
+    // m_floatcollider.size.y, Mathf.Max(minColliderSize, _vehicleBounds.size.z));
+
     var floatColliderSize = new Vector3(Mathf.Max(minColliderSize, _vehicleBounds.size.x),
       m_floatcollider.size.y, Mathf.Max(minColliderSize, _vehicleBounds.size.z));
 
@@ -2050,7 +2054,7 @@ public class BaseVehicleController : MonoBehaviour
   public void EncapsulateBounds(GameObject go)
   {
     var colliders = GetCollidersInPiece(go);
-    if (!go.name.StartsWith(PrefabNames.RamBladePrefix))
+    if (!RamPrefabs.IsRam(go.name))
     {
       IgnoreShipColliders(colliders);
     }
@@ -2064,7 +2068,8 @@ public class BaseVehicleController : MonoBehaviour
         !go.name.StartsWith(PrefabNames.Tier2RaftMastName) &&
         !go.name.StartsWith(PrefabNames.Tier3RaftMastName) &&
         !go.name.StartsWith(PrefabNames.Tier4RaftMastName) &&
-        !go.name.StartsWith(PrefabNames.RamBladePrefix))
+        !go.name.StartsWith(PrefabNames.RamBladePrefix) &&
+        !go.name.StartsWith(PrefabNames.RamStakePrefix))
     {
       if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value || ShipHulls.IsHull(go))
       {
