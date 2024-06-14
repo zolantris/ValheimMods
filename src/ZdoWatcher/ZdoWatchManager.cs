@@ -12,9 +12,9 @@ public class ZdoWatchManager
   public static Action<ZDO>? OnReset = null;
 
   public static ZdoWatchManager Instance = new();
-  private Dictionary<int, ZDO> m_zdoGuidLookup = new();
+  internal readonly Dictionary<int, ZDO> _mZdoGuidLookup = new();
 
-  public void Reset() => m_zdoGuidLookup.Clear();
+  public void Reset() => _mZdoGuidLookup.Clear();
 
   /// <summary>
   /// PersistentIds have migrated to a safer structure so players cannot potentially break their dictionaries with duplicate ZDOIDs
@@ -34,8 +34,6 @@ public class ZdoWatchManager
   public static bool GetPersistentID(ZDO zdo, out int id)
   {
     id = zdo.GetInt(ZdoVarManager.PersistentUidHash, 0);
-
-    id = zdo.GetInt(ZdoVarManager.PersistentUidHash, 0);
     return id != 0;
   }
 
@@ -51,11 +49,11 @@ public class ZdoWatchManager
     id = ZdoIdToId(zdo.m_uid);
 
     // If the ZDO is not unique/exists in the dictionary, this number must be incremented to prevent a collision
-    while (m_zdoGuidLookup.ContainsKey(id))
+    while (_mZdoGuidLookup.ContainsKey(id))
       ++id;
     zdo.Set(ZdoVarManager.PersistentUidHash, id, false);
 
-    m_zdoGuidLookup[id] = zdo;
+    _mZdoGuidLookup[id] = zdo;
 
     return id;
   }
@@ -67,7 +65,7 @@ public class ZdoWatchManager
       return;
     }
 
-    m_zdoGuidLookup[id] = zdo;
+    _mZdoGuidLookup[id] = zdo;
   }
 
   private void HandleDeregisterPersistentId(ZDO zdo)
@@ -75,7 +73,7 @@ public class ZdoWatchManager
     if (!GetPersistentID(zdo, out var id))
       return;
 
-    m_zdoGuidLookup.Remove(id);
+    _mZdoGuidLookup.Remove(id);
   }
 
   public void Deserialize(ZDO zdo)
@@ -128,7 +126,7 @@ public class ZdoWatchManager
   /// <returns>ZDO|null</returns>
   public ZDO? GetZdo(int id)
   {
-    return m_zdoGuidLookup.TryGetValue(id, out var zdo) ? zdo : null;
+    return _mZdoGuidLookup.TryGetValue(id, out var zdo) ? zdo : null;
   }
 
   public GameObject? GetGameObject(int id)
