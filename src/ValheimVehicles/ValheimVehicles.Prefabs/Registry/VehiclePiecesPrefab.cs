@@ -9,8 +9,8 @@ public class VehiclePiecesPrefab : IRegisterPrefab
 {
   public static readonly VehiclePiecesPrefab Instance = new();
 
-  public static GameObject VehiclePiecesContainer =>
-    PrefabManager.Instance.GetPrefab(PrefabNames.VehiclePiecesContainer);
+  public static GameObject VehiclePiecesContainer = null!;
+  // PrefabManager.Instance.GetPrefab(PrefabNames.VehiclePiecesContainer);
 
 
   /// <summary>
@@ -19,10 +19,10 @@ public class VehiclePiecesPrefab : IRegisterPrefab
   /// <param name="prefabManager"></param>
   public void RegisterPiecesContainer(PrefabManager prefabManager)
   {
-    var prefab = prefabManager.CreateClonedPrefab(PrefabNames.VehiclePiecesContainer,
+    VehiclePiecesContainer = prefabManager.CreateClonedPrefab(PrefabNames.VehiclePiecesContainer,
       LoadValheimVehicleAssets.VehiclePiecesAsset);
-    PrefabRegistryHelpers.AddTempNetView(prefab, true);
-    PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(prefab);
+    PrefabRegistryHelpers.AddTempNetView(VehiclePiecesContainer);
+    PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(VehiclePiecesContainer);
   }
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)

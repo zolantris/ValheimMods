@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 
@@ -17,17 +18,31 @@ public class InvalidZNetScenePatch
     foreach (ZDO currentDistantObject in currentDistantObjects)
       currentDistantObject.TempRemoveEarmark = num;
     __instance.m_tempRemoved.Clear();
-    foreach (var znetView in __instance.m_instances.Values)
+    foreach (var instanceKeyValPair in __instance.m_instances.Values)
     {
-      if (!(bool)znetView) continue;
-      if ((int)znetView.GetZDO().TempRemoveEarmark != (int)num)
-        __instance.m_tempRemoved.Add(znetView);
+      if (!(bool)instanceKeyValPair)
+      {
+        // if (instanceKeyValPair.Key != null)
+        // {
+        //   __instance.m_instances.Remove(instanceKeyValPair.Key);
+        // }
+        continue;
+      }
+
+      if ((int)instanceKeyValPair.GetZDO().TempRemoveEarmark != (int)num)
+        __instance.m_tempRemoved.Add(instanceKeyValPair);
     }
 
     for (int index = 0; index < __instance.m_tempRemoved.Count; ++index)
     {
       ZNetView znetView = __instance.m_tempRemoved[index];
-      if (!(bool)znetView) continue;
+      // Fix zNetremoval if invalid
+      if (!(bool)znetView)
+      {
+        // __instance.m_tempRemoved.Remove(__instance.m_tempRemoved[index]);
+        continue;
+      }
+
       ZDO zdo = znetView.GetZDO();
       znetView.ResetZDO();
       UnityEngine.Object.Destroy((UnityEngine.Object)znetView.gameObject);

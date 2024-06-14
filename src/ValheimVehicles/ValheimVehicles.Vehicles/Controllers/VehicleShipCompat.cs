@@ -348,4 +348,9 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
       return null;
     }
   }
+
+  public int PersistentZdoId
+  {
+    get => 0;
+  }
 }

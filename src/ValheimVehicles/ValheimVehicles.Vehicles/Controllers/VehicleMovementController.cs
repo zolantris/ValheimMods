@@ -70,7 +70,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   public const string m_attachAnimation = "Standing Torch Idle right";
 
   public GameObject RudderObject { get; set; }
-  public const float MinimumRigibodyMass = 1000;
 
   // The rudder force multiplier applied to the ship speed
   private float _rudderForce = 1f;
@@ -81,17 +80,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   public bool isCreative => ShipInstance?.Instance?.isCreative ?? false;
 
-  public static bool HasVehicleDebugger = false;
   public const float m_balanceForce = 0.03f;
 
   public const float m_liftForce = 20f;
-  public static bool CustomShipPhysicsEnabled = false;
-
-  public VehicleDebugHelpers? VehicleDebugHelpersInstance { get; private set; }
 
   private Ship.Speed VehicleSpeed => GetSpeedSetting();
-  private float _shipRotationOffset = 0f;
-  private GameObject _shipRotationObj = new();
 
   public Transform ShipDirection { get; set; } = null!;
 
@@ -288,6 +281,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     if (!(bool)m_sailCloth)
     {
       m_sailCloth = gameObject.AddComponent<Cloth>();
+      m_sailCloth.enabled = false;
     }
   }
 
@@ -550,7 +544,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private void UpdateVehicleStats(bool flight)
   {
-    ShipInstance?.VehiclePiecesController.Instance.SyncRigidbodyStats(flight);
+    ShipInstance?.VehiclePiecesController?.Instance.SyncRigidbodyStats(flight);
 
     m_angularDamping = (flight ? 5f : 0.8f);
     m_backwardForce = 1f;
@@ -989,6 +983,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     if (!isActiveAndEnabled) return;
 
+    if (!ShipInstance?.VehiclePiecesController?.Instance) return;
     foreach (var mast in ShipInstance.VehiclePiecesController.Instance.m_mastPieces.ToList())
     {
       if (!(bool)mast)

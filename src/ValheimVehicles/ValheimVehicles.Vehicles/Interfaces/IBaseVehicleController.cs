@@ -7,5 +7,4 @@ public interface IBaseVehicleController
   // this may need to be omitted
   public void CleanUp();
   public VehicleShip VehicleInstance { get; }
-  public int PersistentZdoId { get; }
 }

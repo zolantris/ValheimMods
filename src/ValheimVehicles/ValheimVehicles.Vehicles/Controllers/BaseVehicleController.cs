@@ -122,7 +122,7 @@ public class BaseVehicleController : MonoBehaviour
 
   public float ShipContainerMass = 0f;
   public float ShipMass = 0f;
-  public static bool hasDebug = false;
+  public static bool hasDebug => ValheimRaftPlugin.Instance.HasDebugBase.Value;
 
   public float TotalMass => ShipContainerMass + ShipMass;
 
@@ -151,18 +151,15 @@ public class BaseVehicleController : MonoBehaviour
   internal BoxCollider m_floatcollider => MovementController.FloatCollider;
   internal BoxCollider m_onboardcollider => MovementController.OnboardCollider;
 
-  private int _persistentZdoId;
-
   private Stopwatch vehicleInitializationTimer = new();
-
-
-  public int PersistentZdoId => GetPersistentID();
 
   public bool m_statsOverride;
   private static bool itemsRemovedDuringWait;
   private Coroutine? _pendingPiecesCoroutine;
   private Coroutine? _serverUpdatePiecesCoroutine;
   private Coroutine? _bedUpdateCoroutine;
+
+  private int rebuildBoundsPromise;
 
   public List<Bed> GetBedPieces()
   {
@@ -186,7 +183,7 @@ public class BaseVehicleController : MonoBehaviour
 
   public void LoadInitState()
   {
-    if (!VehicleInstance.NetView || !VehicleInstance?.Instance || !MovementController)
+    if (!VehicleInstance?.NetView || !VehicleInstance?.Instance || !MovementController)
     {
       Logger.LogDebug(
         $"Vehicle setting state to Pending as it is not ready, must have netview: {VehicleInstance.NetView}, VehicleInstance {VehicleInstance?.Instance}, MovementController {MovementController}");
@@ -281,8 +278,6 @@ public class BaseVehicleController : MonoBehaviour
 
   public void Awake()
   {
-    hasDebug = ValheimRaftPlugin.Instance.HasDebugBase.Value;
-
     if (ZNetView.m_forceDisableInit)
     {
       return;
@@ -292,13 +287,6 @@ public class BaseVehicleController : MonoBehaviour
     m_body = GetComponent<Rigidbody>();
     m_fixedJoint = GetComponent<FixedJoint>();
     zsyncTransform = GetComponent<ZSyncTransform>();
-    LoadInitState();
-
-    if (!(bool)VehicleInstance.NetView)
-    {
-      Logger.LogWarning(
-        "Warning netview not detected on vehicle, this means any netview attached events will not bind correctly");
-    }
 
     vehicleInitializationTimer.Start();
     Heightmap.ForceGenerateAll();
@@ -350,27 +338,16 @@ public class BaseVehicleController : MonoBehaviour
   {
     if (ZNetView.m_forceDisableInit) return false;
     // vehicleInstance is the persistent ID, the pieceContainer only has a netView for syncing ship position
-    if (!VehicleInstance.NetView)
+    if (VehicleInstance?.NetView == null)
     {
+      Logger.LogWarning(
+        "Warning netview not detected on vehicle, this means any netview attached events will not bind correctly");
       return false;
     }
 
-    if (_persistentZdoId == 0)
-    {
-      _persistentZdoId = GetPersistentID();
-    }
-
     LoadInitState();
-
     HideGhostContainer();
-
-    if (!ActiveInstances.ContainsKey(PersistentZdoId))
-    {
-      ActiveInstances.Add(PersistentZdoId, this);
-    }
-
     LinkFixedJoint();
-
     return true;
   }
 
@@ -396,36 +373,10 @@ public class BaseVehicleController : MonoBehaviour
     }
 
     ActivatePendingPiecesCoroutine();
-
-    // _bedUpdateCoroutine = StartCoroutine(nameof(UpdateBedSpawnWorker));
-  }
-
-  protected int GetPersistentID()
-  {
-    if (!(bool)VehicleInstance.NetView)
-    {
-      _persistentZdoId = 0;
-      return _persistentZdoId;
-    }
-
-    if (VehicleInstance.NetView.GetZDO() == null)
-    {
-      _persistentZdoId = 0;
-      return _persistentZdoId;
-    }
-
-    _persistentZdoId =
-      ZdoWatchManager.Instance.GetOrCreatePersistentID(VehicleInstance.NetView.GetZDO());
-    return _persistentZdoId;
   }
 
   private void OnDisable()
   {
-    if (ActiveInstances.ContainsKey(PersistentZdoId))
-    {
-      ActiveInstances.Remove(PersistentZdoId);
-    }
-
     vehicleInitializationTimer.Stop();
     if (_serverUpdatePiecesCoroutine != null)
     {
@@ -435,16 +386,8 @@ public class BaseVehicleController : MonoBehaviour
 
   private void OnEnable()
   {
-    GetPersistentID();
     vehicleInitializationTimer.Restart();
-    if (!ActiveInstances.ContainsKey(PersistentZdoId))
-    {
-      ActiveInstances.Add(PersistentZdoId, this);
-    }
-
     ActivatePendingPiecesCoroutine();
-
-
     if (!(bool)ZNet.instance)
     {
       return;
@@ -459,10 +402,6 @@ public class BaseVehicleController : MonoBehaviour
   public void CleanUp()
   {
     RemovePlayersFromBoat();
-    if (ActiveInstances.ContainsKey(PersistentZdoId))
-    {
-      ActiveInstances.Remove(_persistentZdoId);
-    }
 
     if (_pendingPiecesCoroutine != null)
     {
@@ -474,14 +413,19 @@ public class BaseVehicleController : MonoBehaviour
       StopCoroutine(_serverUpdatePiecesCoroutine);
     }
 
-    if (!ZNetScene.instance || _persistentZdoId == 0) return;
+    if (VehicleInstance.Instance == null)
+    {
+      Logger.LogError("Cleanup called but there is no valid VehicleInstance");
+    }
+
+    if (!ZNetScene.instance || VehicleInstance.PersistentZdoId == 0) return;
 
     foreach (var piece in m_pieces)
     {
       if ((bool)piece)
       {
         piece.transform.SetParent(null);
-        AddInactivePiece(_persistentZdoId, piece, null);
+        AddInactivePiece(VehicleInstance.PersistentZdoId, piece, null);
       }
     }
 
@@ -665,7 +609,7 @@ public class BaseVehicleController : MonoBehaviour
       if (zdo.GetSector() == sector) continue;
 
       var id = zdo.GetInt(VehicleZdoVars.MBParentIdHash);
-      if (id != _persistentZdoId)
+      if (id != VehicleInstance.PersistentZdoId)
       {
         list.FastRemoveAt(i);
         i--;
@@ -716,7 +660,7 @@ public class BaseVehicleController : MonoBehaviour
         yield return new WaitUntil(() => (bool)VehicleInstance.NetView);
       }
 
-      var output = m_allPieces.TryGetValue(_persistentZdoId, out var list);
+      var output = m_allPieces.TryGetValue(VehicleInstance.PersistentZdoId, out var list);
       if (list == null || !output)
       {
         yield return new WaitForSeconds(Math.Max(2f,
@@ -753,7 +697,7 @@ public class BaseVehicleController : MonoBehaviour
 
     if (!m_pendingPieces.TryGetValue(id, out var list))
     {
-      list = new List<ZNetView>();
+      list = [];
       m_pendingPieces.Add(id, list);
     }
 
@@ -796,77 +740,80 @@ public class BaseVehicleController : MonoBehaviour
     {
       ShipMass += pieceWeight;
     }
-    //
-    // if ((bool)m_syncRigidbody)
-    // {
-    //   m_syncRigidbody.mass = 1000f + TotalMass;
-    // }
   }
 
   public void DebouncedRebuildBounds()
   {
-    CancelInvoke(nameof(RebuildBounds));
+    try
+    {
+      CancelInvoke(nameof(RebuildBounds));
+    }
+    catch
+    {
+      Logger.LogMessage("Error calling cancel invoke on RebuildBounds");
+    }
+
     Invoke(nameof(RebuildBounds), 1f);
   }
 
   public void RemovePiece(ZNetView netView)
   {
     if (netView.name.Contains(PrefabNames.WaterVehicleShip)) return;
-    if (m_pieces.Remove(netView))
+    if (!m_pieces.Remove(netView)) return;
+
+    UpdateMass(netView, true);
+    DebouncedRebuildBounds();
+
+    if (ShipHulls.IsHull(netView.gameObject))
     {
-      UpdateMass(netView, true);
-      DebouncedRebuildBounds();
-      if (ShipHulls.IsHull(netView.gameObject))
+      m_hullPieces.Remove(netView);
+    }
+
+    var sail = netView.GetComponent<SailComponent>();
+    if ((bool)sail)
+    {
+      m_sailPieces.Remove(sail);
+    }
+
+    var mast = netView.GetComponent<MastComponent>();
+    if ((bool)mast)
+    {
+      m_mastPieces.Remove(mast);
+    }
+
+    var rudder = netView.GetComponent<RudderComponent>();
+    if ((bool)rudder)
+    {
+      m_rudderPieces.Remove(rudder);
+
+      if (VehicleInstance?.Instance && m_rudderPieces.Count > 0)
       {
-        m_hullPieces.Remove(netView);
+        SetShipWakeBounds();
       }
+    }
 
-      var sail = netView.GetComponent<SailComponent>();
-      if ((bool)sail)
-      {
-        m_sailPieces.Remove(sail);
-      }
-
-      var mast = netView.GetComponent<MastComponent>();
-      if ((bool)mast)
-      {
-        m_mastPieces.Remove(mast);
-      }
-
-      var rudder = netView.GetComponent<RudderComponent>();
-      if ((bool)rudder)
-      {
-        m_rudderPieces.Remove(rudder);
-
-        if (VehicleInstance?.Instance && m_rudderPieces.Count > 0)
-        {
-          SetShipWakeBounds();
-        }
-      }
-
-      var wheel = netView.GetComponent<SteeringWheelComponent>();
-      if ((bool)wheel)
-      {
-        _steeringWheelPieces.Remove(wheel);
-      }
+    var wheel = netView.GetComponent<SteeringWheelComponent>();
+    if ((bool)wheel)
+    {
+      _steeringWheelPieces.Remove(wheel);
+    }
 
 
-      var bed = netView.GetComponent<Bed>();
-      if ((bool)bed) m_bedPieces.Remove(bed);
+    var bed = netView.GetComponent<Bed>();
+    if ((bool)bed) m_bedPieces.Remove(bed);
 
-      var ramp = netView.GetComponent<BoardingRampComponent>();
-      if ((bool)ramp) m_boardingRamps.Remove(ramp);
+    var ramp = netView.GetComponent<BoardingRampComponent>();
+    if ((bool)ramp) m_boardingRamps.Remove(ramp);
 
-      var portal = netView.GetComponent<TeleportWorld>();
-      if ((bool)portal) m_portals.Remove(netView);
+    var portal = netView.GetComponent<TeleportWorld>();
+    if ((bool)portal) m_portals.Remove(netView);
 
-      var ladder = netView.GetComponent<RopeLadderComponent>();
-      if ((bool)ladder)
-      {
-        m_ladders.Remove(ladder);
-        ladder.m_mbroot = null;
-        ladder.baseVehicleController = null;
-      }
+    var ladder = netView.GetComponent<RopeLadderComponent>();
+    if ((bool)ladder)
+    {
+      m_ladders.Remove(ladder);
+      ladder.m_mbroot = null;
+      ladder.baseVehicleController = null;
     }
   }
 
@@ -900,19 +847,16 @@ public class BaseVehicleController : MonoBehaviour
   private float ComputeContainerWeight(Container container, bool isRemoving = false)
   {
     var inventory = container.GetInventory();
-    if (inventory != null)
-    {
-      var containerWeight = inventory.GetTotalWeight();
-      if (hasDebug) Logger.LogDebug($"containerWeight {containerWeight} name: {container.name}");
-      if (isRemoving)
-      {
-        return -containerWeight;
-      }
+    if (inventory == null) return 0f;
 
-      return containerWeight;
+    var containerWeight = inventory.GetTotalWeight();
+    if (hasDebug) Logger.LogDebug($"containerWeight {containerWeight} name: {container.name}");
+    if (isRemoving)
+    {
+      return -containerWeight;
     }
 
-    return 0f;
+    return containerWeight;
   }
 
 /*
@@ -1113,10 +1057,7 @@ public class BaseVehicleController : MonoBehaviour
   {
     while (vehicleInitializationTimer is { ElapsedMilliseconds: < 50000, IsRunning: true })
     {
-      if (!(bool)VehicleInstance.NetView || VehicleInstance.NetView == null)
-      {
-        yield return new WaitUntil(() => (bool)VehicleInstance.NetView);
-      }
+      yield return new WaitUntil(() => (bool)VehicleInstance?.NetView);
 
       if (BaseVehicleInitState != InitializationState.Complete)
       {
@@ -1169,7 +1110,7 @@ public class BaseVehicleController : MonoBehaviour
         Logger.LogDebug(
           $"Ship Size calc is: m_bounds {_vehicleBounds} bounds size {_vehicleBounds.size}");
 
-      m_dynamicObjects.TryGetValue(_persistentZdoId, out var objectList);
+      m_dynamicObjects.TryGetValue(VehicleInstance.PersistentZdoId, out var objectList);
       var objectListHasNoValidItems = true;
       if (objectList is { Count: > 0 })
       {
@@ -1200,7 +1141,7 @@ public class BaseVehicleController : MonoBehaviour
           dic = null;
         }
 
-        m_dynamicObjects.Remove(_persistentZdoId);
+        m_dynamicObjects.Remove(VehicleInstance.PersistentZdoId);
         yield return null;
       }
 
@@ -1463,13 +1404,24 @@ public class BaseVehicleController : MonoBehaviour
     return id;
   }
 
+  public static bool IsExcludedPrefab(GameObject netView)
+  {
+    if (netView.name.StartsWith(PrefabNames.WaterVehicleShip) ||
+        netView.name.StartsWith(PrefabNames.VehiclePiecesContainer))
+    {
+      return true;
+    }
+
+    return false;
+  }
+
   public static void InitPiece(ZNetView netView)
   {
-    if (netView.name == $"{PrefabNames.WaterVehicleShip}(Clone)")
+    var isPiecesOrWaterVehicle = IsExcludedPrefab(netView.gameObject);
+    if (isPiecesOrWaterVehicle)
     {
       return;
     }
-
 
     var rb = netView.GetComponentInChildren<Rigidbody>();
     if ((bool)rb && !rb.isKinematic)
@@ -1481,17 +1433,17 @@ public class BaseVehicleController : MonoBehaviour
     if (id == 0) return;
 
     var parentObj = ZdoWatchManager.Instance.GetGameObject(id);
-    if ((bool)parentObj)
+    if (parentObj != null)
     {
       var vehicleShip = parentObj.GetComponent<VehicleShip>();
-      if (vehicleShip == null) return;
-      if (vehicleShip.VehiclePiecesController.Instance == null) return;
-      vehicleShip.Instance.VehiclePiecesController.Instance.ActivatePiece(netView);
+      if (vehicleShip != null || vehicleShip?.PiecesController != null)
+      {
+        vehicleShip.PiecesController.Instance.ActivatePiece(netView);
+        return;
+      }
     }
-    else
-    {
-      AddInactivePiece(id, netView, null);
-    }
+
+    AddInactivePiece(id, netView, null);
   }
 
   public void ActivatePiece(ZNetView netView)
@@ -1538,15 +1490,14 @@ public class BaseVehicleController : MonoBehaviour
    *
    * this could also be used to force a re-render if the user attempts to destroy a raft with pending pieces, might as well run activate pending pieces.
    */
-  public static bool CanDestroyVehicle(ZNetView netView)
+  public static bool CanDestroyVehicle(ZNetView? netView)
   {
-    if (!netView) return false;
+    if (!netView || netView == null) return false;
     var vehicleShip = netView.GetComponent<VehicleShip>();
-
     var hasPendingPieces =
-      m_pendingPieces.TryGetValue(vehicleShip.VehiclePiecesController.Instance.GetPersistentID(),
+      m_pendingPieces.TryGetValue(vehicleShip.PersistentZdoId,
         out var pendingPieces);
-    var hasPieces = vehicleShip.VehiclePiecesController.Instance.GetPieceCount() != 0;
+    var hasPieces = vehicleShip.PiecesController.Instance.GetPieceCount() != 0;
 
     // if there are pending pieces, do not let vehicle be destroyed
     if (pendingPieces != null && hasPendingPieces && pendingPieces.Count > 0)
@@ -1617,7 +1568,7 @@ public class BaseVehicleController : MonoBehaviour
     netView.transform.SetParent(_piecesContainer);
     if (netView.m_zdo != null)
     {
-      netView.m_zdo.Set(VehicleZdoVars.MBParentIdHash, PersistentZdoId);
+      netView.m_zdo.Set(VehicleZdoVars.MBParentIdHash, VehicleInstance.PersistentZdoId);
       netView.m_zdo.Set(VehicleZdoVars.MBRotationVecHash,
         netView.transform.localRotation.eulerAngles);
       netView.m_zdo.Set(VehicleZdoVars.MBPositionHash, netView.transform.localPosition);
@@ -1638,8 +1589,8 @@ public class BaseVehicleController : MonoBehaviour
     }
   }
 
-  // must call wnt destroy otherwise the piece is removed but not destroyed like a player destroying an item.
-  // must create a new array to prevent a collection modify error
+// must call wnt destroy otherwise the piece is removed but not destroyed like a player destroying an item.
+// must create a new array to prevent a collection modify error
   public void OnAddSteeringWheelDestroyPrevious(ZNetView netView,
     SteeringWheelComponent steeringWheelComponent)
   {
@@ -1801,7 +1752,7 @@ public class BaseVehicleController : MonoBehaviour
   }
 
 
-  // for increasing ship wake size.
+// for increasing ship wake size.
   private void SetShipWakeBounds()
   {
     if (VehicleInstance?.Instance?.ShipEffectsObj == null) return;
@@ -1897,8 +1848,8 @@ public class BaseVehicleController : MonoBehaviour
   }
 
 
-  // todo move this logic to a file that can be tested
-  // todo compute the float colliderY transform so it aligns with bounds if player builds underneath boat
+// todo move this logic to a file that can be tested
+// todo compute the float colliderY transform so it aligns with bounds if player builds underneath boat
   public void OnBoundsChangeUpdateShipColliders()
   {
     var minColliderSize = 0.1f;
@@ -2068,9 +2019,9 @@ public class BaseVehicleController : MonoBehaviour
     return [..netView.GetComponentsInChildren<Collider>(true)];
   }
 
-  /*
-   * Functional that updates targetBounds, useful for updating with new items or running off large lists and updating the newBounds value without mutating rigidbody values
-   */
+/*
+ * Functional that updates targetBounds, useful for updating with new items or running off large lists and updating the newBounds value without mutating rigidbody values
+ */
   public void EncapsulateBounds(GameObject go)
   {
     var colliders = GetCollidersInPiece(go);

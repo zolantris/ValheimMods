@@ -195,7 +195,7 @@ public class VehicleCommands : ConsoleCommand
         mbShip.GetMbRoot().GetPersistentId());
     }
 
-    ZNetScene.instance.Destroy(vehicleShip.Instance.gameObject);
+    if (vehicleShip.Instance != null) ZNetScene.instance.Destroy(vehicleShip.Instance.gameObject);
   }
 
   private static void RunUpgradeToV2()
@@ -208,15 +208,17 @@ public class VehicleCommands : ConsoleCommand
     }
 
     var vehiclePrefab = PrefabManager.Instance.GetPrefab(PrefabNames.WaterVehicleShip);
+
+    if (mbRaft == null) return;
+
     var vehicleInstance = Object.Instantiate(vehiclePrefab, mbRaft.m_ship.transform.position,
       mbRaft.m_ship.transform.rotation, null);
     var vehicleShip = vehicleInstance.GetComponent<VehicleShip>();
-    var vehicleController = vehicleShip.VehiclePiecesController;
 
-    var piecesInMBRaft = mbRaft.m_pieces;
-    foreach (var zNetView in piecesInMBRaft)
+    var piecesInMbRaft = mbRaft.m_pieces;
+    foreach (var zNetView in piecesInMbRaft)
     {
-      zNetView.m_zdo.Set(VehicleZdoVars.MBParentIdHash, vehicleController.PersistentZdoId);
+      zNetView.m_zdo.Set(VehicleZdoVars.MBParentIdHash, vehicleShip.PersistentZdoId);
     }
 
     ZNetScene.instance.Destroy(mbRaft.m_ship.gameObject);
@@ -228,7 +230,7 @@ public class VehicleCommands : ConsoleCommand
     ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui(!(bool)debugGui);
     foreach (var vehicleShip in VehicleShip.AllVehicles)
     {
-      vehicleShip.InitializeVehicleDebugger();
+      vehicleShip.Value?.InitializeVehicleDebugger();
     }
   }
 

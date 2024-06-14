@@ -36,7 +36,7 @@ public abstract class PrefabRegistryHelpers
   public static ZSyncTransform GetOrAddMovementZSyncTransform(GameObject obj)
   {
     var zSyncTransform = obj.GetComponent<ZSyncTransform>();
-    if (!(bool)zSyncTransform)
+    if (zSyncTransform == null)
     {
       zSyncTransform = obj.AddComponent<ZSyncTransform>();
     }
@@ -52,7 +52,10 @@ public abstract class PrefabRegistryHelpers
     var netView = obj.GetComponent<ZNetView>();
     if (netView == null)
     {
+      var prefVal = ZNetView.m_useInitZDO;
+      ZNetView.m_useInitZDO = false;
       netView = obj.AddComponent<ZNetView>();
+      ZNetView.m_useInitZDO = prefVal;
     }
 
     if (prioritized)
