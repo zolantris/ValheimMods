@@ -4,6 +4,9 @@ namespace ValheimVehicles.Vehicles;
 
 public static class VehicleZdoVars
 {
+  public const string ZdoKeyBaseVehicleInitState =
+    "ValheimVehicles_BaseVehicle_Initialized";
+
   public static readonly int VehicleFlags = "VehicleFlags".GetStableHashCode();
   public static readonly int VehicleTargetHeight = "VehicleTargetHeight".GetStableHashCode();
   public static readonly int VehicleOceanSway = "VehicleOceanSway".GetStableHashCode();

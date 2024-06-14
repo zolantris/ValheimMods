@@ -22,8 +22,6 @@ namespace ValheimVehicles.Vehicles;
 public class WaterVehicleController : BaseVehicleController, IWaterVehicleController
 {
   private VehicleShip? _vehicleInstance;
-  public ZNetView m_nview;
-
 
   public VehicleShip? VehicleInstance
   {
@@ -48,7 +46,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
   public new void Awake()
   {
     waterVehicleController = this;
-    m_nview = GetComponent<ZNetView>();
     base.Awake();
   }
 
@@ -61,15 +58,6 @@ public class WaterVehicleController : BaseVehicleController, IWaterVehicleContro
     }
 
     base.Start();
-  }
-
-  public void OnDisable()
-  {
-    if (!m_nview) return;
-    m_nview?.Unregister("SetAnchor");
-
-    // todo this likely is not needed for boat v2. Maybe only used for water effects
-    m_nview?.Unregister("SetVisual");
   }
 
   public void UpdateVisual()

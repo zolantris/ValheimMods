@@ -26,11 +26,6 @@ namespace ValheimVehicles.Vehicles;
 /// <description> This is a controller used for all vehicles, Currently it must be initialized within a vehicle view IE VehicleShip or upcoming VehicleWheeled, and VehicleFlying instances.</description>
 public class BaseVehicleController : MonoBehaviour
 {
-  public ZNetView m_nview { get; private set; }
-
-  public static readonly string ZdoKeyBaseVehicleInitState =
-    "ValheimVehicles_BaseVehicle_Initialized";
-
   /*
    * Get all the instances statically
    */
@@ -43,7 +38,21 @@ public class BaseVehicleController : MonoBehaviour
   public static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
 
-  public static bool DEBUGAllowActivatePendingPieces = true;
+  private static bool _allowPendingPiecesToActivate = true;
+
+  public static bool DEBUGAllowActivatePendingPieces
+  {
+    get => _allowPendingPiecesToActivate;
+    set
+    {
+      if (value)
+      {
+        ActivateAllPendingPieces();
+      }
+
+      _allowPendingPiecesToActivate = value;
+    }
+  }
 
   /*
    * @todo make this a generic most likely this all should be in a shared extension api
@@ -138,7 +147,6 @@ public class BaseVehicleController : MonoBehaviour
   private Bounds _vehicleBounds;
   private Bounds _hullBounds;
 
-
   internal BoxCollider m_blockingcollider => MovementController.BlockingCollider;
   internal BoxCollider m_floatcollider => MovementController.FloatCollider;
   internal BoxCollider m_onboardcollider => MovementController.OnboardCollider;
@@ -178,22 +186,23 @@ public class BaseVehicleController : MonoBehaviour
 
   public void LoadInitState()
   {
-    if (!m_nview || !VehicleInstance?.Instance || !MovementController)
+    if (!VehicleInstance.NetView || !VehicleInstance?.Instance || !MovementController)
     {
       Logger.LogDebug(
-        $"Vehicle setting state to Pending as it is not ready, must have netview: {m_nview}, VehicleInstance {VehicleInstance?.Instance}, MovementController {MovementController}");
+        $"Vehicle setting state to Pending as it is not ready, must have netview: {VehicleInstance.NetView}, VehicleInstance {VehicleInstance?.Instance}, MovementController {MovementController}");
       BaseVehicleInitState = InitializationState.Pending;
       return;
     }
 
-    var initialized = m_nview.GetZDO().GetBool(ZdoKeyBaseVehicleInitState);
+    var initialized = VehicleInstance.NetView.GetZDO()
+      .GetBool(VehicleZdoVars.ZdoKeyBaseVehicleInitState);
 
     BaseVehicleInitState = initialized ? InitializationState.Complete : InitializationState.Created;
   }
 
   public void SetInitComplete()
   {
-    m_nview.GetZDO().Set(ZdoKeyBaseVehicleInitState, true);
+    VehicleInstance.NetView.GetZDO().Set(VehicleZdoVars.ZdoKeyBaseVehicleInitState, true);
     BaseVehicleInitState = InitializationState.Complete;
   }
 
@@ -234,9 +243,9 @@ public class BaseVehicleController : MonoBehaviour
   /// <returns></returns>
   private IEnumerator InitVehicle(VehicleShip vehicleShip)
   {
-    while (!(m_nview || !MovementController) &&
+    while (!(VehicleInstance.NetView || !MovementController) &&
            vehicleInitializationTimer.ElapsedMilliseconds < 5000)
-      if (!m_nview || !MovementController)
+      if (!VehicleInstance.NetView || !MovementController)
       {
         MovementController = vehicleShip.MovementController;
         VehicleInstance = vehicleShip;
@@ -259,19 +268,6 @@ public class BaseVehicleController : MonoBehaviour
 
   private IEnumerator ZdoReadyStart()
   {
-    if (!(bool)m_nview)
-    {
-      m_nview = GetComponent<ZNetView>();
-      if (!m_nview) yield return null;
-    }
-
-    Logger.LogDebug($"ZdoReadyAwake called, zdo is: {m_nview.GetZDO()}");
-    if (m_nview.GetZDO() == null)
-    {
-      yield return null;
-    }
-
-    // vital for vehicle
     InitializeBaseVehicleValuesWhenReady();
 
     if (VehicleInstance == null)
@@ -279,6 +275,8 @@ public class BaseVehicleController : MonoBehaviour
       Logger.LogError(
         "No ShipInstance detected");
     }
+
+    yield return null;
   }
 
   public void Awake()
@@ -290,21 +288,13 @@ public class BaseVehicleController : MonoBehaviour
       return;
     }
 
-    Heightmap.ForceGenerateAll();
-    m_nview = GetComponent<ZNetView>();
-
     _piecesContainer = transform;
     m_body = GetComponent<Rigidbody>();
     m_fixedJoint = GetComponent<FixedJoint>();
     zsyncTransform = GetComponent<ZSyncTransform>();
     LoadInitState();
 
-    if (!(bool)m_nview)
-    {
-      Logger.LogDebug("m_nview, not available, setting within Awake");
-    }
-
-    if (!(bool)m_nview)
+    if (!(bool)VehicleInstance.NetView)
     {
       Logger.LogWarning(
         "Warning netview not detected on vehicle, this means any netview attached events will not bind correctly");
@@ -359,7 +349,8 @@ public class BaseVehicleController : MonoBehaviour
   private bool InitializeBaseVehicleValuesWhenReady()
   {
     if (ZNetView.m_forceDisableInit) return false;
-    if (!m_nview)
+    // vehicleInstance is the persistent ID, the pieceContainer only has a netView for syncing ship position
+    if (!VehicleInstance.NetView)
     {
       return false;
     }
@@ -411,19 +402,20 @@ public class BaseVehicleController : MonoBehaviour
 
   protected int GetPersistentID()
   {
-    if (!(bool)m_nview)
+    if (!(bool)VehicleInstance.NetView)
     {
       _persistentZdoId = 0;
       return _persistentZdoId;
     }
 
-    if (m_nview.GetZDO() == null)
+    if (VehicleInstance.NetView.GetZDO() == null)
     {
       _persistentZdoId = 0;
       return _persistentZdoId;
     }
 
-    _persistentZdoId = ZdoWatchManager.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
+    _persistentZdoId =
+      ZdoWatchManager.Instance.GetOrCreatePersistentID(VehicleInstance.NetView.GetZDO());
     return _persistentZdoId;
   }
 
@@ -555,7 +547,7 @@ public class BaseVehicleController : MonoBehaviour
 
   public void Update()
   {
-    if (!m_nview) return;
+    if (!VehicleInstance.NetView) return;
 
     if (!ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value)
     {
@@ -564,7 +556,7 @@ public class BaseVehicleController : MonoBehaviour
     }
 
     // owner must sync more frequently, this likely is unnecessary but is kept as an option for servers that may be having sync problems during only the FixedUpdate
-    if (m_nview.IsOwner())
+    if (VehicleInstance.NetView.IsOwner())
     {
       Client_UpdateAllPieces();
     }
@@ -627,7 +619,7 @@ public class BaseVehicleController : MonoBehaviour
 
   private bool IsPlayerOwnerOfNetview()
   {
-    var netViewOwnerId = m_nview?.GetZDO()?.GetOwner();
+    var netViewOwnerId = VehicleInstance.NetView?.GetZDO()?.GetOwner();
     if (netViewOwnerId == 0L) return false;
 
     var playerId = Player.m_localPlayer?.GetPlayerID();
@@ -719,9 +711,9 @@ public class BaseVehicleController : MonoBehaviour
   {
     while (isActiveAndEnabled)
     {
-      if (!m_nview)
+      if (!VehicleInstance.NetView)
       {
-        yield return new WaitUntil(() => (bool)m_nview);
+        yield return new WaitUntil(() => (bool)VehicleInstance.NetView);
       }
 
       var output = m_allPieces.TryGetValue(_persistentZdoId, out var list);
@@ -1041,12 +1033,11 @@ public class BaseVehicleController : MonoBehaviour
 
     var pieceCount = GetPieceCount();
 
-    if (pieceCount > 0 || m_nview == null) return;
-    if (VehicleInstance?.Instance != null)
-    {
-      var wntShip = VehicleInstance.Instance.GetComponent<WearNTear>();
-      if ((bool)wntShip) wntShip.Destroy();
-    }
+    if (pieceCount > 0 || VehicleInstance.NetView == null) return;
+    if (VehicleInstance?.Instance == null) return;
+
+    var wntShip = VehicleInstance.Instance.GetComponent<WearNTear>();
+    if ((bool)wntShip) wntShip.Destroy();
   }
 
   public void RemovePlayersFromBoat()
@@ -1067,7 +1058,7 @@ public class BaseVehicleController : MonoBehaviour
 
     RemovePlayersFromBoat();
 
-    if (!CanDestroyVehicle(m_nview))
+    if (!CanDestroyVehicle(VehicleInstance.NetView))
     {
       return;
     }
@@ -1077,6 +1068,14 @@ public class BaseVehicleController : MonoBehaviour
     else if (gameObject)
     {
       Destroy(gameObject);
+    }
+  }
+
+  public static void ActivateAllPendingPieces()
+  {
+    foreach (var baseVehicleController in ActiveInstances)
+    {
+      baseVehicleController.Value.ActivatePendingPiecesCoroutine();
     }
   }
 
@@ -1100,21 +1099,23 @@ public class BaseVehicleController : MonoBehaviour
     _pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
   }
 
-  private void OnDestroy()
-  {
-    if (m_nview)
-    {
-      Destroy(m_nview);
-    }
-  }
+  // private void OnDestroy()
+  // {
+  //   // destroys the piece netview just in case it causes a double ZNetView
+  //   // todo confirm this after fixing persistance
+  //   if (VehicleInstance.NetView)
+  //   {
+  //     Destroy(VehicleInstance.NetView);
+  //   }
+  // }
 
   public IEnumerator ActivatePendingPieces()
   {
     while (vehicleInitializationTimer is { ElapsedMilliseconds: < 50000, IsRunning: true })
     {
-      if (!(bool)m_nview || m_nview == null)
+      if (!(bool)VehicleInstance.NetView || VehicleInstance.NetView == null)
       {
-        yield return new WaitUntil(() => (bool)m_nview);
+        yield return new WaitUntil(() => (bool)VehicleInstance.NetView);
       }
 
       if (BaseVehicleInitState != InitializationState.Complete)
@@ -1122,12 +1123,12 @@ public class BaseVehicleController : MonoBehaviour
         yield return new WaitUntil(() => BaseVehicleInitState == InitializationState.Complete);
       }
 
-      if (m_nview?.GetZDO() == null)
+      if (VehicleInstance.NetView?.GetZDO() == null)
       {
-        yield return new WaitUntil(() => m_nview?.GetZDO() != null);
+        yield return new WaitUntil(() => VehicleInstance.NetView?.GetZDO() != null);
       }
 
-      var id = ZdoWatchManager.Instance.GetOrCreatePersistentID(m_nview.GetZDO());
+      var id = ZdoWatchManager.Instance.GetOrCreatePersistentID(VehicleInstance.NetView?.GetZDO());
       m_pendingPieces.TryGetValue(id, out var list);
 
       if (list is { Count: > 0 })
@@ -1781,8 +1782,8 @@ public class BaseVehicleController : MonoBehaviour
 
   private void UpdatePieceCount()
   {
-    if ((bool)m_nview && m_nview.m_zdo != null)
-      m_nview.m_zdo.Set(VehicleZdoVars.MBPieceCount, m_pieces.Count);
+    if ((bool)VehicleInstance.NetView && VehicleInstance.NetView.m_zdo != null)
+      VehicleInstance.NetView.m_zdo.Set(VehicleZdoVars.MBPieceCount, m_pieces.Count);
   }
 
   private void UpdateShipBounds()
@@ -2106,12 +2107,12 @@ public class BaseVehicleController : MonoBehaviour
 
   internal int GetPieceCount()
   {
-    if (!m_nview || m_nview.m_zdo == null)
+    if (!VehicleInstance.NetView || VehicleInstance.NetView.m_zdo == null)
     {
       return m_pieces.Count;
     }
 
-    var count = m_nview.m_zdo.GetInt(VehicleZdoVars.MBPieceCount, m_pieces.Count);
+    var count = VehicleInstance.NetView.m_zdo.GetInt(VehicleZdoVars.MBPieceCount, m_pieces.Count);
     return count;
   }
 }

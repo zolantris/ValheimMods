@@ -2,6 +2,7 @@
 using HarmonyLib;
 using Jotunn.Utils;
 using ZdoWatcher.Patches;
+using ZdoWatcher.ZdoWatcher.Config;
 
 namespace ZdoWatcher;
 
@@ -21,14 +22,19 @@ public class ZdoWatcherPlugin : BaseUnityPlugin
 
   public const string CopyRight = "Copyright © 2023-2024, GNU-v3 licensed";
 
-  public static ZdoWatcherPlugin Instance;
-
   private void Awake()
   {
-    Instance = this;
+    ZdoWatcherConfig.BindConfig(Config);
 
     _harmony = new Harmony(HarmonyGuid);
     _harmony.PatchAll(typeof(ZdoPatch));
     _harmony.PatchAll(typeof(ZNetScene_Patch));
+
+
+    if (ZdoWatcherConfig.GuardAgainstInvalidZNetSceneSpam != null &&
+        ZdoWatcherConfig.GuardAgainstInvalidZNetSceneSpam.Value)
+    {
+      _harmony.PatchAll(typeof(InvalidZNetScenePatch));
+    }
   }
 }

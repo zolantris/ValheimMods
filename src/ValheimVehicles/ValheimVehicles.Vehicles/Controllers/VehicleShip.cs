@@ -47,6 +47,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   public GameObject RudderObject { get; set; }
   public const float MinimumRigibodyMass = 1000;
 
+  public static bool CanInitHullPiece = true;
+
   // The rudder force multiplier applied to the ship speed
   private float _rudderForce = 1f;
 
@@ -344,10 +346,39 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     return PrefabManager.Instance.GetPrefab(selectedPrefab);
   }
 
+  /**
+   * toggle VehicleShip ability to init pieces
+   */
+  public static VehicleShip? InitWithoutStarterPiece(Transform obj)
+  {
+    CanInitHullPiece = false;
+    try
+    {
+      var shipPrefab = PrefabManager.Instance.GetPrefab(PrefabNames.WaterVehicleShip);
+      var ship = Instantiate(shipPrefab, obj.position,
+        obj.rotation, null);
+
+      CanInitHullPiece = true;
+      return ship.GetComponent<VehicleShip>();
+    }
+    catch
+    {
+      CanInitHullPiece = true;
+    }
+
+    return null;
+  }
+
   private void InitStarterPiece()
   {
+    if (!CanInitHullPiece)
+    {
+      NetView.GetZDO().Set(VehicleZdoVars.ZdoKeyBaseVehicleInitState, true);
+      return;
+    }
+
     var pieceCount = _piecesController.GetPieceCount();
-    if (pieceCount != 0 || !_piecesController.m_nview)
+    if (pieceCount != 0)
     {
       return;
     }

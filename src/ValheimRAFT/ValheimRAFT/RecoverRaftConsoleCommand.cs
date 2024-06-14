@@ -168,10 +168,7 @@ public class RecoverRaftConsoleCommand : ConsoleCommand
     foreach (var id in unattachedVehicleNetViews.Keys)
     {
       var list = unattachedVehicleNetViews[id];
-      var shipPrefab = PrefabManager.Instance.GetPrefab(PrefabNames.WaterVehicleShip);
-      var ship = Object.Instantiate(shipPrefab, list[0].transform.position,
-        list[0].transform.rotation, null);
-      var vehicleShip = ship.GetComponent<VehicleShip>();
+      var vehicleShip = VehicleShip.InitWithoutStarterPiece(list[0].transform);
       foreach (var piece in list)
       {
         piece.transform.SetParent(vehicleShip.VehiclePiecesController.Instance.transform);

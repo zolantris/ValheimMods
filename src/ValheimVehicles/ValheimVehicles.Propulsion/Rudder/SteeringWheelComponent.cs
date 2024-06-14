@@ -131,7 +131,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     if ((bool)controller?.MovementController?.m_players?.Any())
     {
       hoverText +=
-        $"\n[<color=red><b>Owner: {controller?.m_nview.GetZDO().GetOwner()} and name: {controller?.MovementController?.m_players[0].GetPlayerName()}</b></color>]";
+        $"\n[<color=red><b>Owner: {controller?.VehicleInstance?.NetView.GetZDO().GetOwner()} and name: {controller?.MovementController?.m_players[0].GetPlayerName()}</b></color>]";
     }
 #endif
     return hoverText;

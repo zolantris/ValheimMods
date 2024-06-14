@@ -60,7 +60,7 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       var currentShip = VehicleDebugHelpers.GetVehicleController();
       if (currentShip != null)
       {
-        ZNetScene.instance.Destroy(currentShip.m_nview.gameObject);
+        ZNetScene.instance.Destroy(currentShip.VehicleInstance.NetView.gameObject);
       }
     }
 
