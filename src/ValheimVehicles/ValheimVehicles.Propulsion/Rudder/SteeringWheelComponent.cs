@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Patches;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
@@ -141,6 +142,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     AttachPoint = transform.Find("attachpoint");
     wheelTransform = transform.Find("controls/wheel");
     wheelLocalOffset = wheelTransform.position - transform.position;
+    PrefabRegistryHelpers.IgnoreCameraCollisions(gameObject);
   }
 
   public string GetHoverName()

@@ -27,7 +27,6 @@ public static class PrefabNames
   public const string Tier1CustomSailName = "MBSail";
   public const string BoardingRamp = "MBBoardingRamp";
   public const string BoardingRampWide = "MBBoardingRamp_Wide";
-  public const string ValheimVehiclesShipName = "ValheimVehicles_Ship";
   public const string WaterVehicleFloatCollider = "VehicleShip_FloatCollider";
   public const string WaterVehicleBlockingCollider = "VehicleShip_BlockingCollider";
   public const string WaterVehicleOnboardCollider = "VehicleShip_OnboardTriggerCollider";

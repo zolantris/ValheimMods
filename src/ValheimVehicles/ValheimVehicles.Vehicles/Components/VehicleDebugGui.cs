@@ -48,6 +48,13 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       }
     }
 
+    if (GUILayout.Button(
+          $"Toggle Sync Physics {BaseVehicleController.ForceKinematic}"))
+    {
+      BaseVehicleController.ForceKinematic =
+        !BaseVehicleController.ForceKinematic;
+    }
+
     if (GUILayout.Button("Delete ShipZDO"))
     {
       var currentShip = VehicleDebugHelpers.GetVehicleController();

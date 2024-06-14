@@ -239,11 +239,20 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     OnboardCollider = onboardColliderObj.GetComponent<BoxCollider>();
   }
 
+  public void SetupImpactEffect()
+  {
+    _impactEffect = GetComponent<ImpactEffect>();
+    _impactEffect.m_nview = m_nview;
+    _impactEffect.m_body = m_body;
+    _impactEffect.m_hitType = HitData.HitType.Boat;
+    _impactEffect.m_interval = 1f;
+    _impactEffect.m_minVelocity = 0.1f;
+  }
+
   public void AwakeSetupShipComponents()
   {
     vehicleShip = GetComponent<VehicleShip>();
-    _impactEffect = GetComponent<ImpactEffect>();
-
+    SetupImpactEffect();
     InitColliders();
 
     if (!(bool)_impactEffect)
@@ -356,6 +365,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     }
 
     base.Awake();
+    Heightmap.ForceGenerateAll();
   }
 
   public new void Start()
@@ -455,51 +465,51 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   public void BROKEN_UpdateShipBalancingForce()
   {
-    var front = ShipDirection.position +
-                ShipDirection.forward * m_floatcollider.size.z / 2f;
-    var back = ShipDirection.position -
-               ShipDirection.forward * m_floatcollider.size.z / 2f;
-    var left = ShipDirection.position -
-               ShipDirection.right * m_floatcollider.size.x / 2f;
-    var right = ShipDirection.position +
-                ShipDirection.right * m_floatcollider.size.x / 2f;
+    // var front = ShipDirection.position +
+    //             ShipDirection.forward * m_floatcollider.size.z / 2f;
+    // var back = ShipDirection.position -
+    //            ShipDirection.forward * m_floatcollider.size.z / 2f;
+    // var left = ShipDirection.position -
+    //            ShipDirection.right * m_floatcollider.size.x / 2f;
+    // var right = ShipDirection.position +
+    //             ShipDirection.right * m_floatcollider.size.x / 2f;
+    //
+    // var centerpos2 = ShipDirection.position;
+    // var frontForce = m_body.GetPointVelocity(front);
+    // var backForce = m_body.GetPointVelocity(back);
+    // var leftForce = m_body.GetPointVelocity(left);
+    // var rightForce = m_body.GetPointVelocity(right);
+    //
+    // var frontUpwardsForce =
+    //   GetUpwardsForce(TargetHeight,
+    //     front.y + frontForce.y,
+    //     m_balanceForce);
+    // var backUpwardsForce =
+    //   GetUpwardsForce(TargetHeight,
+    //     back.y + backForce.y,
+    //     m_balanceForce);
+    // var leftUpwardsForce =
+    //   GetUpwardsForce(TargetHeight,
+    //     left.y + leftForce.y,
+    //     m_balanceForce);
+    // var rightUpwardsForce =
+    //   GetUpwardsForce(TargetHeight,
+    //     right.y + rightForce.y,
+    //     m_balanceForce);
+    // var centerUpwardsForce = GetUpwardsForce(TargetHeight,
+    //   centerpos2.y + m_body.velocity.y, m_liftForce);
 
-    var centerpos2 = ShipDirection.position;
-    var frontForce = m_body.GetPointVelocity(front);
-    var backForce = m_body.GetPointVelocity(back);
-    var leftForce = m_body.GetPointVelocity(left);
-    var rightForce = m_body.GetPointVelocity(right);
 
-    var frontUpwardsForce =
-      GetUpwardsForce(TargetHeight,
-        front.y + frontForce.y,
-        m_balanceForce);
-    var backUpwardsForce =
-      GetUpwardsForce(TargetHeight,
-        back.y + backForce.y,
-        m_balanceForce);
-    var leftUpwardsForce =
-      GetUpwardsForce(TargetHeight,
-        left.y + leftForce.y,
-        m_balanceForce);
-    var rightUpwardsForce =
-      GetUpwardsForce(TargetHeight,
-        right.y + rightForce.y,
-        m_balanceForce);
-    var centerUpwardsForce = GetUpwardsForce(TargetHeight,
-      centerpos2.y + m_body.velocity.y, m_liftForce);
-
-
-    AddForceAtPosition(Vector3.up * frontUpwardsForce, front,
-      ForceMode.VelocityChange);
-    AddForceAtPosition(Vector3.up * backUpwardsForce, back,
-      ForceMode.VelocityChange);
-    AddForceAtPosition(Vector3.up * leftUpwardsForce, left,
-      ForceMode.VelocityChange);
-    AddForceAtPosition(Vector3.up * rightUpwardsForce, right,
-      ForceMode.VelocityChange);
-    AddForceAtPosition(Vector3.up * centerUpwardsForce, centerpos2,
-      ForceMode.VelocityChange);
+    // AddForceAtPosition(Vector3.up * frontUpwardsForce, front,
+    //   ForceMode.VelocityChange);
+    // AddForceAtPosition(Vector3.up * backUpwardsForce, back,
+    //   ForceMode.VelocityChange);
+    // AddForceAtPosition(Vector3.up * leftUpwardsForce, left,
+    //   ForceMode.VelocityChange);
+    // AddForceAtPosition(Vector3.up * rightUpwardsForce, right,
+    //   ForceMode.VelocityChange);
+    // AddForceAtPosition(Vector3.up * centerUpwardsForce, centerpos2,
+    //   ForceMode.VelocityChange);
   }
 
   public void UpdateShipFlying()
@@ -512,8 +522,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     }
 
     m_body.WakeUp();
-
-    BROKEN_UpdateShipBalancingForce();
 
     if (!ValheimRaftPlugin.Instance.FlightHasRudderOnly.Value)
     {
@@ -567,11 +575,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
     if ((bool)_impactEffect)
     {
-      _impactEffect.m_nview = m_nview;
-      _impactEffect.m_body = m_body;
-      _impactEffect.m_hitType = HitData.HitType.Boat;
-      _impactEffect.m_interval = 0.5f;
-      _impactEffect.m_minVelocity = 0.1f;
       _impactEffect.m_damages.m_blunt = GetDamageFromImpact();
     }
     else
@@ -592,6 +595,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     var waterLevelBack = shipFloatation.WaterLevelBack;
     var currentDepth = shipFloatation.CurrentDepth;
     var worldCenterOfMass = m_body.worldCenterOfMass;
+
+    if (shipFloatation.IsAboveBuoyantLevel)
+    {
+      return;
+    }
 
     m_body.WakeUp();
     UpdateWaterForce(currentDepth, Time.fixedDeltaTime);
@@ -714,7 +722,15 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       (waterLevelCenter + waterLevelLeft + waterLevelRight + waterLevelForward + waterLevelBack) /
       5f;
     var currentDepth = worldCenterOfMass.y - averageWaterHeight - m_waterLevelOffset;
-    var isAboveBuoyantLevel = currentDepth > m_disableLevel;
+    var isInvalid = false;
+    if (averageWaterHeight <= -10000 || averageWaterHeight < m_disableLevel)
+    {
+      Logger.LogDebug("currentDepth is invalid, likely on land or heightmaps broke");
+      currentDepth = 30;
+      isInvalid = true;
+    }
+
+    var isAboveBuoyantLevel = currentDepth > m_disableLevel || isInvalid;
 
     return new ShipFloatation()
     {
@@ -735,9 +751,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   // Updates gravity and target height (which is used to compute gravity)
   public void UpdateGravity()
   {
-    zsyncTransform.m_useGravity =
-      TargetHeight == 0f;
-    m_body.useGravity = TargetHeight == 0f;
+    var isGravityEnabled = Mathf.Approximately(TargetHeight, 0f);
+    zsyncTransform.m_useGravity = isGravityEnabled;
+    m_body.useGravity = isGravityEnabled;
   }
 
   public void UpdateShipCreativeModeRotation()

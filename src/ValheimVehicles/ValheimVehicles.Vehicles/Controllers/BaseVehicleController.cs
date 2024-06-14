@@ -60,7 +60,7 @@ public class BaseVehicleController : MonoBehaviour
   internal ZSyncTransform? zsyncTransform;
 
   internal Rigidbody m_body;
-  internal FixedJoint m_joint;
+  internal FixedJoint m_fixedJoint;
 
   internal List<ZNetView> m_pieces = [];
   internal List<ZNetView> m_hullPieces = [];
@@ -140,8 +140,8 @@ public class BaseVehicleController : MonoBehaviour
 
 
   internal BoxCollider m_blockingcollider => MovementController.BlockingCollider;
-  internal BoxCollider m_floatcollider => MovementController.BlockingCollider;
-  internal BoxCollider m_onboardcollider => MovementController.BlockingCollider;
+  internal BoxCollider m_floatcollider => MovementController.FloatCollider;
+  internal BoxCollider m_onboardcollider => MovementController.OnboardCollider;
 
   private int _persistentZdoId;
 
@@ -295,9 +295,7 @@ public class BaseVehicleController : MonoBehaviour
 
     _piecesContainer = transform;
     m_body = GetComponent<Rigidbody>();
-    m_joint = GetComponent<FixedJoint>();
-
-
+    m_fixedJoint = GetComponent<FixedJoint>();
     zsyncTransform = GetComponent<ZSyncTransform>();
     LoadInitState();
 
@@ -313,22 +311,23 @@ public class BaseVehicleController : MonoBehaviour
     }
 
     vehicleInitializationTimer.Start();
+    Heightmap.ForceGenerateAll();
   }
 
   private void LinkFixedJoint()
   {
     if (MovementController == null) return;
-    if (m_joint == null)
+    if (m_fixedJoint == null)
     {
-      m_joint = GetComponent<FixedJoint>();
+      m_fixedJoint = GetComponent<FixedJoint>();
     }
 
-    if (!m_joint)
+    if (!m_fixedJoint)
     {
       Logger.LogError("No FixedJoint found. This means the vehicle is not syncing positions");
     }
 
-    m_joint.connectedBody = MovementController.GetRigidbody();
+    m_fixedJoint.connectedBody = MovementController.GetRigidbody();
   }
 
 
@@ -521,16 +520,25 @@ public class BaseVehicleController : MonoBehaviour
 
   public void Sync()
   {
+    if (!(bool)m_body || !(bool)VehicleInstance.MovementController.m_body)
+    {
+      return;
+    }
+
     if (ForceKinematic)
     {
       if (!m_body.isKinematic)
       {
         m_body.isKinematic = true;
       }
-    }
 
-    if (!(bool)m_body || !(bool)VehicleInstance.MovementController.m_body)
-    {
+      if (m_fixedJoint.connectedBody)
+      {
+        m_fixedJoint.connectedBody = null;
+      }
+
+      m_body.Move(VehicleInstance.MovementController.m_body.position,
+        VehicleInstance.MovementController.m_body.rotation);
       return;
     }
 
@@ -539,8 +547,10 @@ public class BaseVehicleController : MonoBehaviour
       m_body.isKinematic = false;
     }
 
-    m_body.Move(VehicleInstance.MovementController.m_body.position,
-      VehicleInstance.MovementController.m_body.rotation);
+    if (m_fixedJoint.connectedBody == null)
+    {
+      LinkFixedJoint();
+    }
   }
 
   public void Update()
@@ -1090,6 +1100,14 @@ public class BaseVehicleController : MonoBehaviour
     _pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
   }
 
+  private void OnDestroy()
+  {
+    if (m_nview)
+    {
+      Destroy(m_nview);
+    }
+  }
+
   public IEnumerator ActivatePendingPieces()
   {
     while (vehicleInitializationTimer is { ElapsedMilliseconds: < 50000, IsRunning: true })
@@ -1450,6 +1468,7 @@ public class BaseVehicleController : MonoBehaviour
     {
       return;
     }
+
 
     var rb = netView.GetComponentInChildren<Rigidbody>();
     if ((bool)rb && !rb.isKinematic)

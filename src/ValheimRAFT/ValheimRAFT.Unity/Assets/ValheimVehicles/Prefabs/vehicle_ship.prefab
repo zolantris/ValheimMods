@@ -179,7 +179,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8320004948750224550}
-  m_Layer: 0
+  m_Layer: 29
   m_Name: colliders
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -298,7 +298,7 @@ GameObject:
   m_Component:
   - component: {fileID: 370483867695338920}
   - component: {fileID: 491688074500453359}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: vehicle_ship
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -80,16 +80,16 @@ public class Character_Patch
       return;
     }
 
-    VehicleShip? vehicleShip = null;
-    if ((bool)__instance.m_lastGroundBody)
-    {
-      vehicleShip = __instance.m_lastGroundBody.GetComponentInParent<VehicleShip>();
-      if ((bool)vehicleShip && __instance.transform.parent != vehicleShip.transform)
-      {
-        __instance.transform.SetParent(vehicleShip.VehiclePiecesController.Instance.transform);
-        return;
-      }
-    }
+    // VehicleShip? vehicleShip = null;
+    // if ((bool)__instance.m_lastGroundBody)
+    // {
+    //   vehicleShip = __instance.m_lastGroundBody.GetComponentInParent<VehicleShip>();
+    //   if ((bool)vehicleShip && __instance.transform.parent != vehicleShip.transform)
+    //   {
+    //     __instance.transform.SetParent(vehicleShip.VehiclePiecesController.Instance.transform);
+    //     return;
+    //   }
+    // }
 
     BaseVehicleController? bvc = null;
     if ((bool)__instance.m_lastGroundBody)

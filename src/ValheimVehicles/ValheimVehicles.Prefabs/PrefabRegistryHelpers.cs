@@ -305,6 +305,18 @@ public abstract class PrefabRegistryHelpers
     });
   }
 
+  public static void IgnoreCameraCollisions(GameObject go)
+  {
+    var cameraMask = GameCamera.instance.m_blockCameraMask;
+    if (cameraMask == null) return;
+    var colliders = go.GetComponentsInChildren<Collider>();
+
+    foreach (var collider in colliders)
+    {
+      collider.excludeLayers = cameraMask;
+    }
+  }
+
   /// <summary>
   /// Auto sets up new, worn, broken for wnt
   /// </summary>
