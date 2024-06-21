@@ -9,7 +9,7 @@
     - Copy and paste `UnityPlayer.dll` and `WinPixEventRuntime.dll`
       within `<ValheimGameFolder>`
     - Copy `managed` and `resource` folder from `<C:\Program
-      Files\Unity\Hub\Editor\2022.3.17f1\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_development_mono\data\`
+      Files\Unity\Hub\Editor\2022.3.17f1\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_development_mono\Data\`
       into the `valheim_Data` folder and overwrite all contents.
 4. Go into `boot.config` and append
    ```boot.config

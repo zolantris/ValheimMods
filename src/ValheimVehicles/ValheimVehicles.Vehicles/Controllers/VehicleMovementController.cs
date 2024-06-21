@@ -63,7 +63,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   private bool _isHoldingAscend = false;
 
   private const float InitialTargetHeight = 0f;
-  public float TargetHeight { get; private set; }
+  public float TargetHeight { get; private set; } = 0f;
   public Transform AttachPoint { get; set; }
   public bool HasOceanSwayDisabled { get; set; }
 
@@ -256,7 +256,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       _impactEffect.m_toolTier = 1000;
     }
 
-    zsyncTransform = PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(gameObject);
+    zsyncTransform = GetComponent<ZSyncTransform>();
 
     UpdateVehicleSpeedThrottle();
 
@@ -359,7 +359,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     }
 
     base.Awake();
-    Heightmap.ForceGenerateAll();
+    // Heightmap.ForceGenerateAll();
   }
 
   public new void Start()
@@ -1405,8 +1405,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   private void SyncTargetHeight()
   {
     if (!ShipInstance?.NetView) return;
+    if (ShipInstance.NetView == null) return;
 
-    var zdoTargetHeight = ShipInstance!.NetView.m_zdo.GetFloat(
+    var zdoTargetHeight = ShipInstance.NetView.m_zdo.GetFloat(
       VehicleZdoVars.VehicleTargetHeight,
       TargetHeight);
     TargetHeight = zdoTargetHeight;

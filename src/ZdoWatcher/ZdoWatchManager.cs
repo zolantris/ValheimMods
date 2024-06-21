@@ -11,13 +11,13 @@ public class ZdoWatchManager
   public static Action<ZDO>? OnLoad = null;
   public static Action<ZDO>? OnReset = null;
 
-  public static ZdoWatchManager Instance = new();
-  internal readonly Dictionary<int, ZDO> _mZdoGuidLookup = new();
+  public static readonly ZdoWatchManager Instance = new();
+  private readonly Dictionary<int, ZDO> _zdoGuidLookup = new();
 
-  public void Reset() => _mZdoGuidLookup.Clear();
+  public void Reset() => _zdoGuidLookup.Clear();
 
   /// <summary>
-  /// PersistentIds have migrated to a safer structure so players cannot potentially break their dictionaries with duplicate ZDOIDs
+  /// PersistentIds many need to migrate to a safer structure such as using uuid.v4 or similar logic for larger longer lasting games
   /// </summary>
   /// <returns></returns>
   // public static int ParsePersistentIdString(string persistentString)
@@ -49,11 +49,11 @@ public class ZdoWatchManager
     id = ZdoIdToId(zdo.m_uid);
 
     // If the ZDO is not unique/exists in the dictionary, this number must be incremented to prevent a collision
-    while (_mZdoGuidLookup.ContainsKey(id))
+    while (_zdoGuidLookup.ContainsKey(id))
       ++id;
     zdo.Set(ZdoVarManager.PersistentUidHash, id, false);
 
-    _mZdoGuidLookup[id] = zdo;
+    _zdoGuidLookup[id] = zdo;
 
     return id;
   }
@@ -65,7 +65,7 @@ public class ZdoWatchManager
       return;
     }
 
-    _mZdoGuidLookup[id] = zdo;
+    _zdoGuidLookup[id] = zdo;
   }
 
   private void HandleDeregisterPersistentId(ZDO zdo)
@@ -73,7 +73,7 @@ public class ZdoWatchManager
     if (!GetPersistentID(zdo, out var id))
       return;
 
-    _mZdoGuidLookup.Remove(id);
+    _zdoGuidLookup.Remove(id);
   }
 
   public void Deserialize(ZDO zdo)
@@ -126,7 +126,7 @@ public class ZdoWatchManager
   /// <returns>ZDO|null</returns>
   public ZDO? GetZdo(int id)
   {
-    return _mZdoGuidLookup.TryGetValue(id, out var zdo) ? zdo : null;
+    return _zdoGuidLookup.TryGetValue(id, out var zdo) ? zdo : null;
   }
 
   public GameObject? GetGameObject(int id)

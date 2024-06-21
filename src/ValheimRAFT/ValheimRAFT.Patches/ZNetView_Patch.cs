@@ -25,18 +25,14 @@ public class ZNetView_Patch
   [HarmonyPostfix]
   private static void ZNetView_Awake(ZNetView __instance)
   {
-    if (!ZNetView.m_forceDisableInit)
-    {
-      if (__instance.m_zdo != null)
-      {
-        BaseVehicleController.InitPiece(__instance);
-        CultivatableComponent.InitPiece(__instance);
+    if (ZNetView.m_forceDisableInit || __instance == null) return;
+    if (__instance.m_zdo == null) return;
+    BaseVehicleController.InitPiece(__instance);
+    CultivatableComponent.InitPiece(__instance);
 
-        if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
-        {
-          MoveableBaseRootComponent.InitPiece(__instance);
-        }
-      }
+    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
+    {
+      MoveableBaseRootComponent.InitPiece(__instance);
     }
   }
 

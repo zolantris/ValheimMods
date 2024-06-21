@@ -68,6 +68,8 @@ public class BaseVehicleController : MonoBehaviour
   /// </summary>
   internal ZSyncTransform? zsyncTransform;
 
+  internal ZNetView m_nview;
+
   internal Rigidbody m_body;
   internal FixedJoint m_fixedJoint;
 
@@ -139,7 +141,7 @@ public class BaseVehicleController : MonoBehaviour
 
   public virtual IVehicleShip VehicleInstance { set; get; }
 
-  public VehicleMovementController? MovementController;
+  public VehicleMovementController? MovementController => VehicleInstance.MovementController;
 
 /* end sail calcs  */
   private Vector2i m_sector;
@@ -147,9 +149,9 @@ public class BaseVehicleController : MonoBehaviour
   private Bounds _vehicleBounds;
   private Bounds _hullBounds;
 
-  internal BoxCollider m_blockingcollider => MovementController.BlockingCollider;
-  internal BoxCollider m_floatcollider => MovementController.FloatCollider;
-  internal BoxCollider m_onboardcollider => MovementController.OnboardCollider;
+  private BoxCollider m_blockingcollider => MovementController?.BlockingCollider ?? new();
+  private BoxCollider m_floatcollider => MovementController?.FloatCollider ?? new();
+  private BoxCollider m_onboardcollider => MovementController?.OnboardCollider ?? new();
 
   private Stopwatch vehicleInitializationTimer = new();
 
@@ -242,12 +244,15 @@ public class BaseVehicleController : MonoBehaviour
   {
     while (!(VehicleInstance.NetView || !MovementController) &&
            vehicleInitializationTimer.ElapsedMilliseconds < 5000)
+    {
       if (!VehicleInstance.NetView || !MovementController)
       {
-        MovementController = vehicleShip.MovementController;
         VehicleInstance = vehicleShip;
         yield return ZdoReadyStart();
       }
+
+      yield return new WaitForFixedUpdate();
+    }
   }
 
   /// <summary>
@@ -255,7 +260,6 @@ public class BaseVehicleController : MonoBehaviour
   /// </summary>
   public void InitFromShip(VehicleShip vehicleShip)
   {
-    MovementController = vehicleShip.MovementController;
     VehicleInstance = vehicleShip;
     if (!InitializeBaseVehicleValuesWhenReady())
     {
@@ -285,11 +289,12 @@ public class BaseVehicleController : MonoBehaviour
 
     _piecesContainer = transform;
     m_body = GetComponent<Rigidbody>();
+    m_nview = GetComponent<ZNetView>();
     m_fixedJoint = GetComponent<FixedJoint>();
     zsyncTransform = GetComponent<ZSyncTransform>();
 
     vehicleInitializationTimer.Start();
-    Heightmap.ForceGenerateAll();
+    // Heightmap.ForceGenerateAll();
   }
 
   private void LinkFixedJoint()
@@ -430,7 +435,6 @@ public class BaseVehicleController : MonoBehaviour
     }
 
     StopAllCoroutines();
-    CancelInvoke(nameof(DebouncedRebuildBounds));
   }
 
   public virtual void SyncRigidbodyStats(float drag, float angularDrag)
@@ -456,7 +460,7 @@ public class BaseVehicleController : MonoBehaviour
 
   public void Sync()
   {
-    if (!(bool)m_body || !(bool)VehicleInstance.MovementController.m_body)
+    if (!(bool)m_body || !(bool)VehicleInstance?.MovementControllerRigidbody)
     {
       return;
     }
@@ -742,18 +746,26 @@ public class BaseVehicleController : MonoBehaviour
     }
   }
 
+  private Coroutine? _rebuildBoundsTimer = null;
+
   public void DebouncedRebuildBounds()
   {
-    try
+    if (ZNetView.m_forceDisableInit) return;
+    if (!m_nview) return;
+    if (!m_nview.isActiveAndEnabled) return;
+    if (_rebuildBoundsTimer != null)
     {
-      CancelInvoke(nameof(RebuildBounds));
-    }
-    catch
-    {
-      Logger.LogMessage("Error calling cancel invoke on RebuildBounds");
+      return;
     }
 
-    Invoke(nameof(RebuildBounds), 1f);
+    _rebuildBoundsTimer = StartCoroutine(DebounceRebuildBoundRoutine());
+  }
+
+  private IEnumerator DebounceRebuildBoundRoutine()
+  {
+    yield return new WaitForSeconds(1f);
+    RebuildBounds();
+    _rebuildBoundsTimer = null;
   }
 
   public void RemovePiece(ZNetView netView)
@@ -1055,7 +1067,8 @@ public class BaseVehicleController : MonoBehaviour
 
   public IEnumerator ActivatePendingPieces()
   {
-    while (vehicleInitializationTimer is { ElapsedMilliseconds: < 50000, IsRunning: true })
+    while (vehicleInitializationTimer is { ElapsedMilliseconds: < 50000, IsRunning: true } &&
+           enabled)
     {
       yield return new WaitUntil(() => (bool)VehicleInstance?.NetView);
 
@@ -1076,7 +1089,7 @@ public class BaseVehicleController : MonoBehaviour
       {
         var stopwatch = new Stopwatch();
         stopwatch.Start();
-        foreach (var obj in list)
+        foreach (var obj in list.ToList())
         {
           if ((bool)obj)
           {
@@ -1116,9 +1129,9 @@ public class BaseVehicleController : MonoBehaviour
       {
         if (hasDebug) Logger.LogDebug($"m_dynamicObjects is valid: {objectList.Count}");
 
-        for (var i = 0; i < objectList.Count; i++)
+        foreach (var t in objectList.ToList())
         {
-          var go = ZNetScene.instance.FindInstance(objectList[i]);
+          var go = ZNetScene.instance.FindInstance(t);
 
           if (!go) continue;
 
@@ -1417,6 +1430,8 @@ public class BaseVehicleController : MonoBehaviour
 
   public static void InitPiece(ZNetView netView)
   {
+    if (!netView) return;
+
     var isPiecesOrWaterVehicle = IsExcludedPrefab(netView.gameObject);
     if (isPiecesOrWaterVehicle)
     {
@@ -1796,6 +1811,7 @@ public class BaseVehicleController : MonoBehaviour
         return _hullBounds.min.y;
       case ValheimRaftPlugin.HullFloatation.Top:
         return _hullBounds.max.y;
+      case ValheimRaftPlugin.HullFloatation.Custom:
       case ValheimRaftPlugin.HullFloatation.Center:
       default:
         return _hullBounds.center.y;
@@ -1807,7 +1823,7 @@ public class BaseVehicleController : MonoBehaviour
    */
   private void RotateVehicleForwardPosition()
   {
-    if (VehicleInstance == null)
+    if (VehicleInstance.MovementController == null)
     {
       return;
     }
@@ -1819,12 +1835,12 @@ public class BaseVehicleController : MonoBehaviour
       return;
     }
 
-    VehicleInstance.Instance.MovementController.UpdateShipDirection(firstPiece.transform
+    VehicleInstance?.Instance?.MovementController?.UpdateShipDirection(firstPiece.transform
       .localRotation);
   }
 
   /**
-   * Must be wrapped in a Invoke delay to prevent spamming on unmounting
+   * Must be wrapped in an Invoke delay to prevent spamming on unmounting
    * bounds cannot be de-encapsulated by default so regenerating it seems prudent on piece removal
    */
   public void RebuildBounds()
@@ -1937,7 +1953,7 @@ public class BaseVehicleController : MonoBehaviour
 
   public void IgnoreShipColliders(List<Collider> colliders)
   {
-    foreach (var t in colliders)
+    foreach (var t in colliders.ToList())
     {
       if (t == null) continue;
       if (m_floatcollider) Physics.IgnoreCollision(t, m_floatcollider, true);

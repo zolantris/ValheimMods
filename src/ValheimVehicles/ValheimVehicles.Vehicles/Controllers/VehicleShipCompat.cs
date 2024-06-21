@@ -321,6 +321,7 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   public GameObject RudderObject { get; set; }
   public IWaterVehicleController VehiclePiecesController { get; }
   public VehicleMovementController MovementController { get; }
+  public Rigidbody? MovementControllerRigidbody { get; }
   public BoxCollider FloatCollider { get; set; }
   public Transform? ShipDirection { get; }
   public Transform ControlGuiPosition { get; set; }
