@@ -57,7 +57,7 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
     if (GUILayout.Button("Delete ShipZDO"))
     {
-      var currentShip = VehicleDebugHelpers.GetVehicleController();
+      var currentShip = VehicleDebugHelpers.GetVehiclePieceController();
       if (currentShip != null)
       {
         ZNetScene.instance.Destroy(currentShip.VehicleInstance.NetView.gameObject);
@@ -132,7 +132,7 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
     if (GUILayout.Button("activatePendingPieces"))
     {
-      VehicleDebugHelpers.GetVehicleController()?.ActivatePendingPiecesCoroutine();
+      VehicleDebugHelpers.GetVehiclePieceController()?.ActivatePendingPiecesCoroutine();
     }
 
     if (GUILayout.Button("Zero Ship RotationXZ"))

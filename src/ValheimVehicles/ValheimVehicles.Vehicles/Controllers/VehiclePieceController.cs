@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.Remoting.Messaging;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 using ValheimRAFT;
 using ValheimRAFT.Util;
 using ValheimVehicles.Helpers;
@@ -97,6 +98,7 @@ public class VehiclePieceController : MonoBehaviour
   internal List<BoardingRampComponent> m_boardingRamps = [];
 
   private Transform? _piecesContainer;
+  private Transform? _movingPiecesContainer;
 
   internal enum InitializationState
   {
@@ -165,6 +167,11 @@ public class VehiclePieceController : MonoBehaviour
   public List<Bed> GetBedPieces()
   {
     return m_bedPieces;
+  }
+
+  public Bounds GetVehicleBounds()
+  {
+    return _vehicleBounds;
   }
 
   public List<ZNetView> GetCurrentPieces()
@@ -271,6 +278,16 @@ public class VehiclePieceController : MonoBehaviour
     yield return null;
   }
 
+  public Transform GetPiecesContainer()
+  {
+    return transform.Find("pieces");
+  }
+
+  public Transform GetMovingPiecesContainer()
+  {
+    return transform.Find("moving_pieces");
+  }
+
   public void Awake()
   {
     if (ZNetView.m_forceDisableInit)
@@ -278,13 +295,11 @@ public class VehiclePieceController : MonoBehaviour
       return;
     }
 
-    _piecesContainer = transform;
-    m_body = GetComponent<Rigidbody>();
-    m_fixedJoint = GetComponent<FixedJoint>();
-    // zsyncTransform = GetComponent<ZSyncTransform>();
-
+    _piecesContainer = GetPiecesContainer();
+    _movingPiecesContainer = GetMovingPiecesContainer();
+    m_body = _piecesContainer.GetComponent<Rigidbody>();
+    m_fixedJoint = _piecesContainer.GetComponent<FixedJoint>();
     vehicleInitializationTimer.Start();
-    // Heightmap.ForceGenerateAll();
   }
 
   private void LinkFixedJoint()
@@ -1437,23 +1452,34 @@ public class VehiclePieceController : MonoBehaviour
 
   public void ActivatePiece(ZNetView netView)
   {
-    if ((bool)netView)
-    {
-      netView.transform.SetParent(_piecesContainer);
-      netView.transform.localPosition =
-        netView.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
-      netView.transform.localRotation =
-        Quaternion.Euler(netView.m_zdo.GetVec3(VehicleZdoVars.MBRotationVecHash, Vector3.zero));
-      var wnt = netView.GetComponent<WearNTear>();
-      if ((bool)wnt) wnt.enabled = true;
+    if (!(bool)netView) return;
 
-      AddPiece(netView);
-    }
+    SetPieceToParent(netView.transform);
+    netView.transform.localPosition =
+      netView.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+    netView.transform.localRotation =
+      Quaternion.Euler(netView.m_zdo.GetVec3(VehicleZdoVars.MBRotationVecHash, Vector3.zero));
+
+    var wnt = netView.GetComponent<WearNTear>();
+    if ((bool)wnt) wnt.enabled = true;
+
+    AddPiece(netView);
+  }
+
+  /// <summary>
+  /// Rams are rigidbodies and thus must not be controlled by a RigidBody
+  /// </summary>
+  /// <param name="targetTransform"></param>
+  public void SetPieceToParent(Transform targetTransform)
+  {
+    targetTransform.SetParent(RamPrefabs.IsRam(targetTransform.name)
+      ? _movingPiecesContainer
+      : _piecesContainer);
   }
 
   public void AddTemporaryPiece(Piece piece)
   {
-    piece.transform.SetParent(_piecesContainer);
+    SetPieceToParent(piece.transform);
   }
 
   public void AddNewPiece(Piece piece)
@@ -1554,7 +1580,8 @@ public class VehiclePieceController : MonoBehaviour
 
     var previousCount = GetPieceCount();
 
-    netView.transform.SetParent(_piecesContainer);
+    SetPieceToParent(netView.transform);
+
     if (netView.m_zdo != null)
     {
       netView.m_zdo.Set(VehicleZdoVars.MBParentIdHash, VehicleInstance.PersistentZdoId);
@@ -1678,8 +1705,6 @@ public class VehiclePieceController : MonoBehaviour
     {
       var vehicleRamAoe = netView.GetComponentInChildren<VehicleRamAoe>();
       if ((bool)vehicleRamAoe) vehicleRamAoe.vehicle = VehicleInstance.Instance;
-      // todo may need to set to moving pieces. Only if the rigidbody within here is being used as non-kinematic
-      // netView.transform.SetParent();
     }
 
     FixPieceMeshes(netView);
@@ -1722,7 +1747,7 @@ public class VehiclePieceController : MonoBehaviour
 
   private void UpdatePieceCount()
   {
-    if ((bool)VehicleInstance.NetView && VehicleInstance.NetView.m_zdo != null)
+    if ((bool)VehicleInstance.NetView && VehicleInstance?.NetView?.m_zdo != null)
       VehicleInstance.NetView.m_zdo.Set(VehicleZdoVars.MBPieceCount, m_pieces.Count);
   }
 
@@ -1937,6 +1962,16 @@ public class VehiclePieceController : MonoBehaviour
     }
   }
 
+  public void IgnoreCameraCollision(List<Collider> colliders)
+  {
+    var cameraMask = GameCamera.instance.m_blockCameraMask;
+    foreach (var t in colliders.ToList())
+    {
+      if (t == null) continue;
+      t.excludeLayers |= cameraMask;
+    }
+  }
+
   ///
   /// <summary>Parses Collider.bounds and confirm if it's local/ or out of ship bounds</summary>
   /// - Collider.bounds should be global but it may not be returning the correct value when instantiated
@@ -2018,6 +2053,9 @@ public class VehiclePieceController : MonoBehaviour
     if (!RamPrefabs.IsRam(go.name))
     {
       IgnoreShipColliders(colliders);
+
+      // todo This should only apply for wheels and other gadgets that should not block camera
+      IgnoreCameraCollision(colliders);
     }
 
     var door = go.GetComponentInChildren<Door>();

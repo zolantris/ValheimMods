@@ -244,35 +244,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     ShipEffectsObj?.SetActive(!(TargetHeight > 0f || isCreative));
   }
 
-  public void FixShipRotation()
-  {
-    var eulerAngles = transform.rotation.eulerAngles;
-    var eulerX = eulerAngles.x;
-    var eulerY = eulerAngles.y;
-    var eulerZ = eulerAngles.z;
-
-    var transformedX = eulerX;
-    var transformedZ = eulerZ;
-    var shouldUpdate = false;
-
-    if (eulerX is > 60 and < 300)
-    {
-      transformedX = 0;
-      shouldUpdate = true;
-    }
-
-    if (eulerZ is > 60 and < 300)
-    {
-      transformedZ = 0;
-      shouldUpdate = true;
-    }
-
-    if (shouldUpdate)
-    {
-      transform.rotation = Quaternion.Euler(transformedX, eulerY, transformedZ);
-    }
-  }
-
   private int GetPersistentID()
   {
     if (ZdoWatchManager.Instance == null)
@@ -333,7 +304,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       NetView = GetComponent<ZNetView>();
     }
 
-    FixShipRotation();
     InitializeWaterVehicleController();
 
     UpdateShipSounds(this);

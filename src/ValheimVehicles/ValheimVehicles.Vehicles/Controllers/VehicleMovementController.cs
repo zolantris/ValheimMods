@@ -85,6 +85,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   public const float m_liftForce = 20f;
 
+  public bool isBeached = false;
   private Ship.Speed VehicleSpeed => GetSpeedSetting();
 
   public Transform ShipDirection { get; set; } = null!;
@@ -108,10 +109,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     get => m_controlGuiPos;
     set => m_controlGuiPos = value;
   }
-
-  private Rigidbody _movementControllerRigidbody;
-
-  public Rigidbody m_body { get; set; }
 
   public Rigidbody GetRigidbody()
   {
@@ -286,9 +283,44 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     }
   }
 
+  /// <summary>
+  /// This will autofix vehicles stuck underground on spawn
+  /// </summary>
+  /// bounds are based on the vehicle position which is the same as the MovementController transform.position
   public void FixShipPosition()
   {
-    vehicleShip.PiecesController.vehicl
+    var vehicleBounds = vehicleShip.PiecesController.GetVehicleBounds();
+    var currentLowestHeight = transform.position.y - vehicleBounds.extents.y;
+    var groundHeight = ZoneSystem.instance.GetGroundHeight(transform.position);
+    var floatColliderLowestPoint = FloatCollider.transform.position.y - FloatCollider.size.y;
+
+    // approximateGroundHeight used so add a buffer so this only applies if the vehicle is stuck within the ground
+    var approximateGroundHeight = groundHeight - 2f;
+    var isFloatingBelowGround = floatColliderLowestPoint < approximateGroundHeight;
+    var isBelowGround = currentLowestHeight < approximateGroundHeight;
+
+    if (!(isBelowGround ||
+          isFloatingBelowGround)) return;
+
+    var waterLevel = Floating.GetWaterLevel(transform.position, ref m_previousCenter);
+
+    if (waterLevel < groundHeight)
+    {
+      // prevents movement when above water when a ship is stuck on land.
+      isBeached = !(PropulsionConfig.EnableLandVehicles.Value ||
+                    ValheimRaftPlugin.Instance.AllowFlight.Value);
+
+      // makes your vehicle literally float on the land and also prevents the vehicle from being embedded in the ground
+      transform.position = new Vector3(transform.position.x,
+        transform.position.y + vehicleBounds.extents.y, transform.position.z);
+      return;
+    }
+
+    if (waterLevel > m_disableLevel && waterLevel > groundHeight)
+    {
+      transform.position = new Vector3(transform.position.x,
+        transform.position.y + waterLevel, transform.position.z);
+    }
   }
 
   public void FixShipRotation()
@@ -406,7 +438,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     FixShipRotation();
     FixShipPosition();
 
-    VehiclePhysicsFixedUpdate();
+    VehiclePhysicsFixedUpdateAllClients();
+    VehicleMovementUpdatesOwnerOnly();
   }
 
   public void UpdateShipDirection(Quaternion steeringWheelRotation)
@@ -451,7 +484,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     m_body.useGravity = TargetHeight == 0f;
 
-    var waterLevelAtCenterShip = Floating.GetWaterLevel(m_floatcollider.center, ref m_previousBack);
+    var waterLevelAtCenterShip =
+      Floating.GetWaterLevel(m_floatcollider.center, ref m_previousCenter);
 
     // above the water
     if (waterLevelAtCenterShip < m_body.centerOfMass.y)
@@ -781,9 +815,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   /// <summary>
   /// Only Updates for the controlling player. Only players are synced
   /// </summary>
-  public void VehiclePhysicsFixedUpdate()
+  public void VehiclePhysicsFixedUpdateAllClients()
   {
-    if (!(bool)ShipInstance?.VehiclePiecesController.Instance || !(bool)m_nview ||
+    if (!(bool)ShipInstance?.VehiclePiecesController?.Instance || !(bool)m_nview ||
         m_nview.m_zdo == null ||
         !(bool)ShipDirection) return;
 
@@ -804,13 +838,19 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
     // raft pieces transforms
     SyncVehicleRotationDependentItems();
+  }
 
-    /**
-     * The remaining physics for ship logic must be done only one 1 client to prevent nasty desyncs.
-     */
-    // if (!m_nview.IsOwner()) return;
-    if (!ValheimRaftPlugin.Instance.SyncShipPhysicsOnAllClients.Value && !m_nview.IsOwner()) return;
-
+  /// <summary>
+  /// The owner of the vehicle netview will only be able to fire these updates
+  /// </summary>
+  ///
+  /// Physics syncs on 1 client are better otherwise the ships will desync across clients and both will stutter
+  public void VehicleMovementUpdatesOwnerOnly()
+  {
+    if (!m_nview) return;
+    var owner = m_nview.IsOwner();
+    if (!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner &&
+        !isBeached) return;
 
     var shipFloatation = GetShipFloatationObj();
 

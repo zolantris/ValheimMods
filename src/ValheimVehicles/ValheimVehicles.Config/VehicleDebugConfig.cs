@@ -10,6 +10,7 @@ public static class VehicleDebugConfig
 
   public static ConfigEntry<bool> AutoShowVehicleColliders { get; private set; } = null!;
   public static ConfigEntry<bool> VehicleDebugMenuEnabled { get; private set; } = null!;
+  public static ConfigEntry<bool> SyncShipPhysicsOnAllClients { get; private set; } = null!;
 
 
   private const string SectionName = "Vehicle Debugging";
@@ -32,6 +33,12 @@ public static class VehicleDebugConfig
       ConfigHelpers.CreateConfigDescription(
         "Enable the VehicleDebugMenu. This shows a GUI menu which has a few shortcuts to debugging/controlling vehicles.",
         true, true));
+
+    SyncShipPhysicsOnAllClients =
+      Config.Bind("Debug", "SyncShipPhysicsOnAllClients", false,
+        ConfigHelpers.CreateConfigDescription(
+          "Makes all clients sync physics",
+          true, true));
 
     // onChanged
     AutoShowVehicleColliders.SettingChanged += OnShowVehicleDebugMenuChange;

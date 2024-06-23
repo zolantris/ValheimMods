@@ -6,8 +6,9 @@ public static class PropulsionConfig
 {
   public static ConfigFile? Config { get; private set; }
 
-  public static ConfigEntry<float> TurnPowerNoRudder { get; set; }
-  public static ConfigEntry<float> TurnPowerWithRudder { get; set; }
+  public static ConfigEntry<float> TurnPowerNoRudder { get; private set; } = null!;
+  public static ConfigEntry<float> TurnPowerWithRudder { get; private set; } = null!;
+  public static ConfigEntry<bool> EnableLandVehicles { get; private set; } = null!;
 
   private const string SectionName = "Propulsion";
 
@@ -18,11 +19,18 @@ public static class PropulsionConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
+
     TurnPowerNoRudder = Config.Bind(SectionName, "turningPowerNoRudder", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the base turning power of the steering wheel", true));
+
     TurnPowerWithRudder = Config.Bind(SectionName, "turningPowerWithRudder", 3f,
       ConfigHelpers.CreateConfigDescription(
         "Set the turning power with a rudder", true));
+
+    EnableLandVehicles = Config.Bind(SectionName, "enableLandVehicles", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Vehicles can now float on land. What is realism. Experimental only until wheels are invented. Must use rudder speeds to move forwards.",
+        true));
   }
 }

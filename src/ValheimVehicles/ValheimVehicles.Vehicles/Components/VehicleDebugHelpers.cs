@@ -81,7 +81,8 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   public static VehicleDebugHelpers GetOnboardVehicleDebugHelper()
   {
-    var helper = GetVehicleController()?.VehicleInstance?.Instance?.VehicleDebugHelpersInstance;
+    var helper = GetVehiclePieceController()?.VehicleInstance?.Instance
+      ?.VehicleDebugHelpersInstance;
     return helper;
   }
 
@@ -96,7 +97,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     return rayCastHitInfo?.collider.GetComponentInParent<MoveableBaseRootComponent>();
   }
 
-  public static VehiclePieceController? GetVehicleController()
+  public static VehiclePieceController? GetVehiclePieceController()
   {
     var rayCastHitInfo = RaycastToPiecesUnderPlayerCamera();
     return rayCastHitInfo?.collider.transform.root.GetComponent<VehiclePieceController>();
