@@ -1,8 +1,6 @@
 using System;
 using BepInEx.Configuration;
-using ComfyLib;
 using ValheimRAFT;
-using ValheimVehicles.Helpers;
 
 namespace ValheimVehicles.Config;
 
@@ -14,7 +12,7 @@ public static class VehicleDebugConfig
   public static ConfigEntry<bool> VehicleDebugMenuEnabled { get; private set; } = null!;
 
 
-  private const string section = "Vehicle Debugging";
+  private const string SectionName = "Vehicle Debugging";
 
   private static void OnShowVehicleDebugMenuChange(object sender, EventArgs eventArgs)
   {
@@ -24,12 +22,12 @@ public static class VehicleDebugConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
-    AutoShowVehicleColliders = config.Bind(section, "Always Show Vehicle Colliders",
+    AutoShowVehicleColliders = config.Bind(SectionName, "Always Show Vehicle Colliders",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Automatically shows the vehicle colliders useful for debugging the vehicle",
         true, true));
-    VehicleDebugMenuEnabled = config.Bind(section, "Vehicle Debug Menu",
+    VehicleDebugMenuEnabled = config.Bind(SectionName, "Vehicle Debug Menu",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Enable the VehicleDebugMenu. This shows a GUI menu which has a few shortcuts to debugging/controlling vehicles.",

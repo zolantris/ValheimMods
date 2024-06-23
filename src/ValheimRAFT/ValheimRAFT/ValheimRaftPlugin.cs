@@ -136,8 +136,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   public ConfigEntry<HullFloatation> HullFloatationColliderLocation { get; set; }
   public ConfigEntry<float> HullFloatationCustomColliderOffset { get; set; }
-  public ConfigEntry<bool> HasVehicleDebug { get; set; }
-
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -180,9 +178,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         true, true
       ));
 
-    HasVehicleDebug = Config.Bind("Vehicles", "HasVehicleDebug", false,
-      CreateConfigDescription(
-        "Enables the debug menu, for showing colliders or rotating the ship", false, true));
     EnableExactVehicleBounds = Config.Bind("Vehicles", "EnableExactVehicleBounds", false,
       CreateConfigDescription(
         "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible",
@@ -524,6 +519,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     RamConfig.BindConfig(Config);
     PrefabConfig.BindConfig(Config);
     VehicleDebugConfig.BindConfig(Config);
+    PropulsionConfig.BindConfig(Config);
   }
 
   internal void ApplyMetricIfAvailable()

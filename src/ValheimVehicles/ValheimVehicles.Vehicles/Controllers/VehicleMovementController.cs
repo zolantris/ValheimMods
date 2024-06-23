@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Patches;
+using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles.Components;
@@ -387,7 +388,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       return;
     }
 
-    UpdateShipRudderTurningSpeed();
+    UpdateShipWheelTurningSpeed();
 
     /*
      * creative mode should not allow movement and applying force on a object will cause errors when the object is kinematic
@@ -785,7 +786,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     var hasControllingPlayer = HaveControllingPlayer();
 
     // Sets values based on m_speed
-    UpdateShipRudderTurningSpeed();
+    UpdateShipWheelTurningSpeed();
     UpdateShipSpeed(hasControllingPlayer, m_players.Count);
 
     //base ship direction controls
@@ -1093,8 +1094,20 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private Vector3 GetAdditiveSteerForce(float directionMultiplier)
   {
-    return ShipDirection.right *
-           (m_stearForce * (0f - m_rudderValue) * directionMultiplier);
+    var shipAdditiveSteerForce = ShipDirection.right *
+                                 (m_stearForce * (0f - m_rudderValue) * directionMultiplier);
+
+    // Adds additional speeds to turning
+    if (vehicleShip.PiecesController.m_rudderPieces.Count > 0)
+    {
+      shipAdditiveSteerForce *= PropulsionConfig.TurnPowerWithRudder.Value;
+    }
+    else
+    {
+      shipAdditiveSteerForce *= PropulsionConfig.TurnPowerNoRudder.Value;
+    }
+
+    return shipAdditiveSteerForce;
   }
 
   /// <summary>
@@ -1342,7 +1355,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   /// m_rudder = rotation speed of rudder icon
   /// m_rudderValue = position of rudder
   /// m_rudderSpeed = the force speed applied when moving the ship
-  public void UpdateShipRudderTurningSpeed()
+  public void UpdateShipWheelTurningSpeed()
   {
     switch (GetSpeedSetting())
     {
@@ -1540,7 +1553,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private void RPC_RequestControl(long sender, long playerID)
   {
-    ShipInstance?.VehiclePiecesController.Instance.RebuildBounds();
+    vehicleShip.PiecesController.RebuildBounds();
     var isOwner = m_nview?.IsOwner() ?? false;
     var isInBoat = IsPlayerInBoat(playerID);
     if (!isOwner || !isInBoat) return;
