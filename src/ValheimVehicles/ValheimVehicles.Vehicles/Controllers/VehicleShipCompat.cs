@@ -18,9 +18,9 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   private bool _isValheimShip;
   private bool _isVehicleShip;
 
-  public ZNetView m_nview => GetNetView();
+  public ZNetView? m_nview => GetNetView();
 
-  public ZNetView GetNetView()
+  public ZNetView? GetNetView()
   {
     if (IsVehicleShip)
     {
@@ -332,7 +332,7 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
     get => VehicleShipInstance;
   }
 
-  public ZNetView NetView
+  public ZNetView? NetView
   {
     get
     {

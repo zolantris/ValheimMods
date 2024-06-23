@@ -6,6 +6,7 @@ using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT;
+using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
@@ -42,7 +43,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   private void FixedUpdate()
   {
     if (!isActiveAndEnabled) return;
-    if (autoUpdateColliders)
+    if (autoUpdateColliders || VehicleDebugConfig.AutoShowVehicleColliders.Value)
     {
       DrawAllColliders();
     }

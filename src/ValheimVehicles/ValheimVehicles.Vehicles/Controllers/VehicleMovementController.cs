@@ -1220,6 +1220,20 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     SendSpeedChange(DirectionChange.Stop);
 
 
+  public void SyncBounds()
+  {
+    m_nview?.InvokeRPC(0, nameof(RPC_SyncBounds));
+  }
+
+  /// <summary>
+  /// Forces a resync of bounds for all players on the ship, this may need to be only from host but then would require syncing all collider data that updates in the OnBoundsUpdate
+  /// </summary>
+  public void RPC_SyncBounds(long sender)
+  {
+    if (!vehicleShip.PiecesController) return;
+    vehicleShip.PiecesController.RebuildBounds();
+  }
+
   public void UpdateControlls(float dt) => UpdateControls(dt);
 
   public void HandlePlayerHitVehicleBounds(Collider collider, bool isExiting)
@@ -1239,6 +1253,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
       if (!containerCharacter && !isExiting)
       {
+        if (Player.m_localPlayer == playerComponent)
+        {
+          // only call if you are the player, otherwise it will call for all players
+          SyncBounds();
+        }
+
         m_players.Add(playerComponent);
         Logger.LogDebug("Player onboard, total onboard " + m_players.Count);
       }
@@ -1424,6 +1444,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private void UnRegisterRPCListeners()
   {
+    // ship piece bounds syncing
+    m_nview.Unregister(nameof(RPC_SyncBounds));
+
     // ship speed
     m_nview.Unregister(nameof(RPC_SpeedChange));
 
@@ -1446,6 +1469,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private void RegisterRPCListeners()
   {
+    // ship piece bounds syncing
+    m_nview.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
+
     // ship speed
     m_nview.Register<int>(nameof(RPC_SpeedChange), RPC_SpeedChange);
 
@@ -1514,6 +1540,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private void RPC_RequestControl(long sender, long playerID)
   {
+    ShipInstance?.VehiclePiecesController.Instance.RebuildBounds();
     var isOwner = m_nview?.IsOwner() ?? false;
     var isInBoat = IsPlayerInBoat(playerID);
     if (!isOwner || !isInBoat) return;
@@ -1904,7 +1931,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       zdo.Set(VehicleZdoVars.VehicleFlags, (int)MovementFlags);
     }
 
-    Invoke(nameof(SyncShip), 0.25f);
+    SyncShip();
   }
 
   private void RPC_RequestResponse(long sender, bool granted)
@@ -1916,6 +1943,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
     if (granted)
     {
+      m_nview.GetZDO().SetOwner(Player.m_localPlayer.GetPlayerID());
       var attachTransform = lastUsedWheelComponent.AttachPoint;
       Player.m_localPlayer.StartDoodadControl(lastUsedWheelComponent);
       if (attachTransform != null)

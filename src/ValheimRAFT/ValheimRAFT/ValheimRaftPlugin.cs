@@ -523,6 +523,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     // new way to do things. Makes life easier for config
     RamConfig.BindConfig(Config);
     PrefabConfig.BindConfig(Config);
+    VehicleDebugConfig.BindConfig(Config);
   }
 
   internal void ApplyMetricIfAvailable()
@@ -551,7 +552,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     RegisterConsoleCommands();
     RegisterVehicleConsoleCommands();
 
-    HasVehicleDebug.SettingChanged += OnConfigChanged;
     EnableShipSailSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
     EnableShipWakeSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
     EnableShipInWaterSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
@@ -564,11 +564,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     PrefabManager.OnVanillaPrefabsAvailable += AddCustomPieces;
 
     ValheimVehicles.ZdoWatcherDelegate.RegisterToZdoManager();
-  }
-
-  private void OnConfigChanged(object sender, EventArgs eventArgs)
-  {
-    AddGuiLayerComponents();
   }
 
   public void RegisterConsoleCommands()
@@ -667,10 +662,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void AddGuiLayerComponents()
   {
-    VehicleShip.HasVehicleDebugger = HasVehicleDebug.Value;
-    MoveableBaseShipComponent.HasVehicleDebugger = HasVehicleDebug.Value;
-
-    AddRemoveVehicleDebugGui(HasVehicleDebug.Value);
+    AddRemoveVehicleDebugGui(VehicleDebugConfig.VehicleDebugMenuEnabled.Value);
   }
 
   /**

@@ -19,7 +19,6 @@ public class MoveableBaseShipComponent : MonoBehaviour
   }
 
   public VehicleDebugHelpers VehicleDebugHelpersInstance;
-  public static bool HasVehicleDebugger;
 
   public MoveableBaseRootComponent m_baseRoot;
 

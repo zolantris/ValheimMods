@@ -68,8 +68,6 @@ public class BaseVehicleController : MonoBehaviour
   /// </summary>
   internal ZSyncTransform? zsyncTransform;
 
-  internal ZNetView m_nview;
-
   internal Rigidbody m_body;
   internal FixedJoint m_fixedJoint;
 
@@ -122,6 +120,7 @@ public class BaseVehicleController : MonoBehaviour
     }
   }
 
+  private Coroutine? _rebuildBoundsTimer = null;
   public float ShipContainerMass = 0f;
   public float ShipMass = 0f;
   public static bool hasDebug => ValheimRaftPlugin.Instance.HasDebugBase.Value;
@@ -227,14 +226,6 @@ public class BaseVehicleController : MonoBehaviour
     VehicleInstance?.Instance?.GhostContainer()?.SetActive(false);
   }
 
-  public void SyncAllBeds()
-  {
-    foreach (var mBedPiece in m_bedPieces)
-    {
-      mBedPiece.m_nview.GetZDO().SetPosition(transform.position);
-    }
-  }
-
   /// <summary>
   /// Coroutine to init vehicle just in case things break
   /// </summary>
@@ -289,9 +280,8 @@ public class BaseVehicleController : MonoBehaviour
 
     _piecesContainer = transform;
     m_body = GetComponent<Rigidbody>();
-    m_nview = GetComponent<ZNetView>();
     m_fixedJoint = GetComponent<FixedJoint>();
-    zsyncTransform = GetComponent<ZSyncTransform>();
+    // zsyncTransform = GetComponent<ZSyncTransform>();
 
     vehicleInitializationTimer.Start();
     // Heightmap.ForceGenerateAll();
@@ -496,18 +486,16 @@ public class BaseVehicleController : MonoBehaviour
   public void Update()
   {
     if (!VehicleInstance.NetView) return;
-
     if (!ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value)
     {
       Sync();
-      return;
     }
 
-    // owner must sync more frequently, this likely is unnecessary but is kept as an option for servers that may be having sync problems during only the FixedUpdate
-    if (VehicleInstance.NetView.IsOwner())
-    {
-      Client_UpdateAllPieces();
-    }
+    // // owner must sync more frequently, this likely is unnecessary but is kept as an option for servers that may be having sync problems during only the FixedUpdate
+    // if (VehicleInstance.NetView?.IsOwner() == true)
+    // {
+    //   Client_UpdateAllPieces();
+    // }
   }
 
   public void FixedUpdate()
@@ -581,10 +569,10 @@ public class BaseVehicleController : MonoBehaviour
   /// </summary>
   public void ServerSyncAllPieces()
   {
-    // var isDedicated = ZNet.instance?.IsDedicated();
-    // var isPlayerTheOwner = IsPlayerOwnerOfNetview();
-    //
-    // if (isDedicated != true && isPlayerTheOwner != true) return;
+    var isDedicated = ZNet.instance?.IsDedicated();
+    var isPlayerTheOwner = IsPlayerOwnerOfNetview();
+
+    if (isDedicated != true && isPlayerTheOwner != true) return;
 
     if (_serverUpdatePiecesCoroutine != null)
     {
@@ -746,13 +734,9 @@ public class BaseVehicleController : MonoBehaviour
     }
   }
 
-  private Coroutine? _rebuildBoundsTimer = null;
-
   public void DebouncedRebuildBounds()
   {
     if (ZNetView.m_forceDisableInit) return;
-    if (!m_nview) return;
-    if (!m_nview.isActiveAndEnabled) return;
     if (_rebuildBoundsTimer != null)
     {
       return;
@@ -1054,16 +1038,6 @@ public class BaseVehicleController : MonoBehaviour
 
     _pendingPiecesCoroutine = StartCoroutine(nameof(ActivatePendingPieces));
   }
-
-  // private void OnDestroy()
-  // {
-  //   // destroys the piece netview just in case it causes a double ZNetView
-  //   // todo confirm this after fixing persistance
-  //   if (VehicleInstance.NetView)
-  //   {
-  //     Destroy(VehicleInstance.NetView);
-  //   }
-  // }
 
   public IEnumerator ActivatePendingPieces()
   {

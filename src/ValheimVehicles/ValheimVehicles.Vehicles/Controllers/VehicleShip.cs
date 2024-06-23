@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using ValheimRAFT;
 using ValheimRAFT.Patches;
+using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles.Interfaces;
 using ValheimVehicles.Vehicles.Structs;
@@ -73,7 +74,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   public bool isCreative;
 
-  public static bool HasVehicleDebugger = false;
+  public static bool HasVehicleDebugger => VehicleDebugConfig.VehicleDebugMenuEnabled.Value;
 
   public void SetCreativeMode(bool val)
   {
@@ -226,10 +227,10 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       MovementController = GetComponent<VehicleMovementController>();
     }
 
-    if (!movementZSyncTransform)
-    {
-      movementZSyncTransform = GetComponent<ZSyncTransform>();
-    }
+    // if (!movementZSyncTransform)
+    // {
+    //   movementZSyncTransform = GetComponent<ZSyncTransform>();
+    // }
 
     if (!(bool)ShipEffectsObj)
     {

@@ -52,10 +52,10 @@ public abstract class PrefabRegistryHelpers
     var netView = obj.GetComponent<ZNetView>();
     if (netView == null)
     {
-      var prefVal = ZNetView.m_useInitZDO;
-      ZNetView.m_useInitZDO = false;
+      // var prevVal = ZNetView.m_useInitZDO;
+      // ZNetView.m_useInitZDO = false;
       netView = obj.AddComponent<ZNetView>();
-      ZNetView.m_useInitZDO = prefVal;
+      // ZNetView.m_useInitZDO = prevVal;
     }
 
     if (prioritized)
