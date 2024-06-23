@@ -16,7 +16,7 @@ public abstract class ZdoWatcherDelegate
 
   private static void OnZdoLoad(ZDO zdo)
   {
-    BaseVehicleController.InitZdo(zdo);
+    VehiclePieceController.InitZdo(zdo);
 
     if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
     {
@@ -26,7 +26,7 @@ public abstract class ZdoWatcherDelegate
 
   public static void OnZdoReset(ZDO zdo)
   {
-    BaseVehicleController.RemoveZDO(zdo);
+    VehiclePieceController.RemoveZDO(zdo);
 
     if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
     {

@@ -76,7 +76,7 @@ public class Player_Patch
       if ((bool)cul) cul.AddNewChild(netView);
     }
 
-    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<BaseVehicleController>();
+    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<VehiclePieceController>();
     if ((bool)bvc)
     {
       if ((bool)netView)
@@ -128,7 +128,7 @@ public class Player_Patch
       if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) && (bool)hitInfo.collider)
       {
         Object target;
-        target = hitInfo.collider.GetComponentInParent<BaseVehicleController>() ??
+        target = hitInfo.collider.GetComponentInParent<VehiclePieceController>() ??
                  (Object)hitInfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
 
         if (target == null) return true;
@@ -154,11 +154,11 @@ public class Player_Patch
   {
     var layerMask = __instance.m_placeRayMask;
 
-    var bvc = __instance.GetComponentInParent<BaseVehicleController>();
+    var bvc = __instance.GetComponentInParent<VehiclePieceController>();
 
     if (!(bool)bvc)
     {
-      bvc = __instance.transform.root.GetComponent<BaseVehicleController>();
+      bvc = __instance.transform.root.GetComponent<VehiclePieceController>();
     }
 
     if ((bool)bvc)
@@ -191,7 +191,7 @@ public class Player_Patch
     if ((bool)((Character)__instance).m_lastGroundCollider &&
         ((Character)__instance).m_lastGroundTouch < 0.3f)
     {
-      if (!BaseVehicleController.AddDynamicParent((__instance).m_nview,
+      if (!VehiclePieceController.AddDynamicParent((__instance).m_nview,
             (__instance).m_lastGroundCollider.gameObject))
       {
         MoveableBaseRootComponent.AddDynamicParent((__instance).m_nview,
@@ -241,7 +241,7 @@ public class Player_Patch
         else if ((bool)raycastHit.collider.attachedRigidbody && !raycastHit.collider
                    .attachedRigidbody.GetComponent<MoveableBaseRootComponent>() && !raycastHit
                    .collider
-                   .attachedRigidbody.GetComponent<BaseVehicleController>())
+                   .attachedRigidbody.GetComponent<VehiclePieceController>())
           hover = raycastHit.collider.attachedRigidbody.gameObject;
         else
           hover = raycastHit.collider.gameObject;

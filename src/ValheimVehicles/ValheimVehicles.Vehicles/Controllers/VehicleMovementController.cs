@@ -286,6 +286,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     }
   }
 
+  public void FixShipPosition()
+  {
+    vehicleShip.PiecesController.vehicl
+  }
+
   public void FixShipRotation()
   {
     var eulerAngles = transform.rotation.eulerAngles;
@@ -399,6 +404,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     }
 
     FixShipRotation();
+    FixShipPosition();
 
     VehiclePhysicsFixedUpdate();
   }

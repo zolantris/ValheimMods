@@ -96,10 +96,10 @@ public class VehicleDebugHelpers : MonoBehaviour
     return rayCastHitInfo?.collider.GetComponentInParent<MoveableBaseRootComponent>();
   }
 
-  public static BaseVehicleController? GetVehicleController()
+  public static VehiclePieceController? GetVehicleController()
   {
     var rayCastHitInfo = RaycastToPiecesUnderPlayerCamera();
-    return rayCastHitInfo?.collider.transform.root.GetComponent<BaseVehicleController>();
+    return rayCastHitInfo?.collider.transform.root.GetComponent<VehiclePieceController>();
   }
 
   public void FlipShip()
@@ -132,7 +132,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   ///
   /// todo fix logic to be accurate
   /// <param name="controller"></param>
-  public void RenderAllVehicleBoxColliders(BaseVehicleController controller)
+  public void RenderAllVehicleBoxColliders(VehiclePieceController controller)
   {
     // foreach (var instanceMPiece in controller.m_pieces)
     // {

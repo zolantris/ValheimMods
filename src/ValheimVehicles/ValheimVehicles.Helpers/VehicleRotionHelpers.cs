@@ -34,7 +34,7 @@ public class VehicleRotionHelpers
     var rot = Quaternion.Euler(x, y, z);
     if (!PatchSharedData.PlayerLastRayPiece) return rot;
 
-    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<BaseVehicleController>();
+    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<VehiclePieceController>();
     if (bvc)
     {
       return bvc.transform.rotation * rot;

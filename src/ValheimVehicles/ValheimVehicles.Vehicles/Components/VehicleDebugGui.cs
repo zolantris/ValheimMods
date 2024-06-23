@@ -35,24 +35,24 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 #if DEBUG
     GUILayout.BeginArea(new Rect(250, 10, 200, 200), myButtonStyle);
     if (GUILayout.Button(
-          $"ActivatePendingPieces {BaseVehicleController.DEBUGAllowActivatePendingPieces}"))
+          $"ActivatePendingPieces {VehiclePieceController.DEBUGAllowActivatePendingPieces}"))
     {
-      BaseVehicleController.DEBUGAllowActivatePendingPieces =
-        !BaseVehicleController.DEBUGAllowActivatePendingPieces;
-      if (BaseVehicleController.DEBUGAllowActivatePendingPieces)
+      VehiclePieceController.DEBUGAllowActivatePendingPieces =
+        !VehiclePieceController.DEBUGAllowActivatePendingPieces;
+      if (VehiclePieceController.DEBUGAllowActivatePendingPieces)
       {
-        foreach (var baseVehicleController in BaseVehicleController.ActiveInstances.Values)
+        foreach (var vehiclePieceController in VehiclePieceController.ActiveInstances.Values)
         {
-          baseVehicleController.ActivatePendingPiecesCoroutine();
+          vehiclePieceController.ActivatePendingPiecesCoroutine();
         }
       }
     }
 
     if (GUILayout.Button(
-          $"Toggle Sync Physics {BaseVehicleController.ForceKinematic}"))
+          $"Toggle Sync Physics {VehiclePieceController.ForceKinematic}"))
     {
-      BaseVehicleController.ForceKinematic =
-        !BaseVehicleController.ForceKinematic;
+      VehiclePieceController.ForceKinematic =
+        !VehiclePieceController.ForceKinematic;
     }
 
     if (GUILayout.Button("Delete ShipZDO"))
