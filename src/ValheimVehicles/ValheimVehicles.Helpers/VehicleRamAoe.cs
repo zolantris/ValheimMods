@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Policy;
 using Microsoft.Win32;
 using UnityEngine;
@@ -117,6 +118,12 @@ public class VehicleRamAoe : Aoe
 
     InitializeFromConfig();
     SetBaseDamageFromConfig();
+
+    if (RamType == RamPrefabs.RamType.Stake)
+    {
+      IgnoreNestedCollider();
+    }
+
     base.Awake();
 
     rigidbody = GetComponent<Rigidbody>();
@@ -409,9 +416,26 @@ public class VehicleRamAoe : Aoe
     return true;
   }
 
+  private void IgnoreNestedCollider()
+  {
+    var childColliders = GetComponentsInChildren<Collider>();
+    var colliderFrontPhysicalOnly =
+      childColliders.First((collider) => collider.name == "collider_front_physical");
+    if (!colliderFrontPhysicalOnly) return;
+    foreach (var childCollider in childColliders)
+    {
+      if (childCollider.name == "collider_front_physical")
+      {
+        continue;
+      }
+
+      Physics.IgnoreCollision(childCollider, colliderFrontPhysicalOnly, true);
+    }
+  }
+
   private bool ShouldIgnore(Collider collider)
   {
-    if (!collider) return false;
+    if (!collider) return true;
     if ((!collider.transform.root.name.StartsWith(PrefabNames.PiecesContainer) ||
          !collider.transform.root.name.StartsWith(PrefabNames.WaterVehicleShip)) &&
         collider.transform.root != transform.root) return false;

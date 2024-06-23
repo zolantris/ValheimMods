@@ -1457,7 +1457,7 @@ public class VehiclePiecesController : MonoBehaviour
     }
 
     var rb = netView.GetComponentInChildren<Rigidbody>();
-    if ((bool)rb && !rb.isKinematic)
+    if ((bool)rb && !rb.isKinematic && !RamPrefabs.IsRam((netView.name)))
     {
       return;
     }
