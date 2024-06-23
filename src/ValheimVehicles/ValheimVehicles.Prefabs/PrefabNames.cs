@@ -38,6 +38,9 @@ public static class PrefabNames
   public const string PiecesContainer =
     "piecesContainer";
 
+  public const string MovingPiecesContainer =
+    "movingPiecesContainer";
+
   public const string GhostContainer =
     "ghostContainer";
 
@@ -45,6 +48,9 @@ public static class PrefabNames
     "vehicleContainer";
 
   public const string VehiclePiecesContainer = $"{ValheimVehiclesPrefix}_{PiecesContainer}";
+
+  public const string VehicleMovingPiecesContainer =
+    $"{ValheimVehiclesPrefix}_{MovingPiecesContainer}";
 
   private const string ValheimVehiclesPrefix = "ValheimVehicles";
   public const string WaterVehicleShip = $"{ValheimVehiclesPrefix}_WaterVehicleShip";

@@ -280,12 +280,24 @@ public class VehiclePieceController : MonoBehaviour
 
   public Transform GetPiecesContainer()
   {
-    return transform.Find("pieces");
+    // return transform.Find("pieces");
+    return transform;
   }
 
-  public Transform GetMovingPiecesContainer()
+  private GameObject _movingPiecesContainerObj;
+
+  private Transform CreateMovingPiecesContainer()
   {
-    return transform.Find("moving_pieces");
+    if (_movingPiecesContainer) return _movingPiecesContainerObj.transform;
+
+    var mpc = new GameObject()
+    {
+      name = $"{PrefabNames.VehicleMovingPiecesContainer}",
+      transform = { position = transform.position, rotation = transform.rotation }
+    };
+    _movingPiecesContainerObj = mpc;
+
+    return mpc.transform;
   }
 
   public void Awake()
@@ -296,7 +308,7 @@ public class VehiclePieceController : MonoBehaviour
     }
 
     _piecesContainer = GetPiecesContainer();
-    _movingPiecesContainer = GetMovingPiecesContainer();
+    _movingPiecesContainer = CreateMovingPiecesContainer();
     m_body = _piecesContainer.GetComponent<Rigidbody>();
     m_fixedJoint = _piecesContainer.GetComponent<FixedJoint>();
     vehicleInitializationTimer.Start();
@@ -463,12 +475,29 @@ public class VehiclePieceController : MonoBehaviour
 
   public static bool ForceKinematic = true;
 
+  private void SyncMovingPiecesContainer()
+  {
+    if (_movingPiecesContainer == null) return;
+    if (_movingPiecesContainer.position != transform.position)
+    {
+      _movingPiecesContainer.position = transform.position;
+    }
+
+    if (_movingPiecesContainer.rotation != transform.rotation)
+    {
+      _movingPiecesContainer.rotation = transform.rotation;
+    }
+  }
+
+
   public void Sync()
   {
     if (!(bool)m_body || !(bool)VehicleInstance?.MovementControllerRigidbody)
     {
       return;
     }
+
+    SyncMovingPiecesContainer();
 
     if (ForceKinematic)
     {
