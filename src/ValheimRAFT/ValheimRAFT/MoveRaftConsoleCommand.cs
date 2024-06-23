@@ -3,6 +3,7 @@ using Jotunn;
 using Jotunn.Entities;
 using UnityEngine;
 using ValheimRAFT.Util;
+using ZdoWatcher;
 
 namespace ValheimRAFT;
 
@@ -68,7 +69,7 @@ internal class MoveRaftConsoleCommand : ConsoleCommand
     {
       Stopwatch stopWatch = new Stopwatch();
       stopWatch.Start();
-      int id = ZDOPersistentID.Instance.GetOrCreatePersistentID(mb.m_baseRoot.m_nview.m_zdo);
+      int id = ZdoWatchManager.Instance.GetOrCreatePersistentID(mb.m_baseRoot.m_nview.m_zdo);
       foreach (ZDO zdo in ZDOMan.instance.m_objectsByID.Values)
       {
         int zdoid = zdo.GetInt(MoveableBaseRootComponent.MBParentIdHash);

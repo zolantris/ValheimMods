@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimRAFT.Util;
+using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -64,7 +65,7 @@ public class CultivatableComponent : MonoBehaviour
 
   private void OnDestroyed()
   {
-    int myid = ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
+    var myid = ZdoWatchManager.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
     if (!m_childObjects.TryGetValue(myid, out var list))
     {
       return;
@@ -72,7 +73,7 @@ public class CultivatableComponent : MonoBehaviour
 
     for (int i = 0; i < list.Count; i++)
     {
-      ZDO zdo = ZDOPersistentID.Instance.GetZDO(list[i]);
+      var zdo = ZdoWatchManager.Instance.GetZdo(list[i]);
       if (zdo == null)
       {
         continue;
@@ -88,14 +89,14 @@ public class CultivatableComponent : MonoBehaviour
           continue;
         }
 
-        WearNTear wnt = obj.GetComponent<WearNTear>();
+        var wnt = obj.GetComponent<WearNTear>();
         if ((bool)wnt)
         {
           wnt.Destroy();
           continue;
         }
 
-        ZNetView netview = obj.GetComponent<ZNetView>();
+        var netview = obj.GetComponent<ZNetView>();
         if ((bool)netview)
         {
           netview.Destroy();
@@ -132,7 +133,7 @@ public class CultivatableComponent : MonoBehaviour
 
   public void AddNewChild(ZNetView child)
   {
-    AddNewChild(ZDOPersistentID.Instance.GetOrCreatePersistentID(m_nview.m_zdo), child);
+    AddNewChild(ZdoWatchManager.Instance.GetOrCreatePersistentID(m_nview.m_zdo), child);
   }
 
   public static void InitPiece(ZNetView netview)
@@ -154,8 +155,8 @@ public class CultivatableComponent : MonoBehaviour
       {
         ZDO zdoparent = ZDOMan.instance.GetZDO(zdoid);
         id = ((zdoparent == null)
-          ? ZDOPersistentID.ZDOIDToId(zdoid)
-          : ZDOPersistentID.Instance.GetOrCreatePersistentID(zdoparent));
+          ? ZdoWatchManager.ZdoIdToId(zdoid)
+          : ZdoWatchManager.Instance.GetOrCreatePersistentID(zdoparent));
         netview.m_zdo.Set(MBCultivatableParentIdHash, id);
       }
     }
@@ -177,7 +178,7 @@ public class CultivatableComponent : MonoBehaviour
       UnityEngine.Object.Destroy(sp);
     }
 
-    AddChild(parent, ZDOPersistentID.Instance.GetOrCreatePersistentID(child.m_zdo));
+    AddChild(parent, ZdoWatchManager.Instance.GetOrCreatePersistentID(child.m_zdo));
   }
 
   private static void AddChild(int parent, int child)

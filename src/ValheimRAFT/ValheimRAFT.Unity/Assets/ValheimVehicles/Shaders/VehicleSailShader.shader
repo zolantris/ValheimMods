@@ -1,17 +1,19 @@
 ﻿Shader "Custom/VehicleSailShader" {
 	Properties {
-		_Color ("Color", Vector) = (1,1,1,1)
         _MainTex ("Albedo (RGB)", 2D) = "white" {}
 		_MainColor ("Color", Color) = (1,1,1,1)
+		_MainColorNormal ("Main Normal Map", 2D) = "bump" {}
 
         _Wet ("Wet", Range(0,1)) = 0.0
 
         _PatternTex ("Pattern", 2D) = "white" {}
         _PatternRotation("Pattern Rotation", Range(0, 1)) = 0.0
         _PatternColor ("Pattern Color", Color) = (1,1,1,1)
+		_PatternNormal ("Pattern Normal Map", 2D) = "bump" {}
         
         _LogoTex ("Logo", 2D) = "white" {}
         _LogoRotation("Logo Rotation", Range(0, 1)) = 0.0
+		_LogoNormal ("Logo Normal Map", 2D) = "bump" {}
         _LogoColor ("Logo Color", Color) = (1,1,1,1)
 		
 		_MistAlpha("Mist Alpha", Range(0, 1)) = 0.5
@@ -19,7 +21,6 @@
 		_Glossiness ("Smoothness", Range(0, 1)) = 0.5
        _Metallic ("Metallic", Range(0, 1)) = 0
        _Cutoff ("Alpha Cutoff", Range(0, 1)) = 0.5
-       _BumpMap ("Normal Map", 2D) = "bump" {}
        _BumpScale ("Normal scale", Float) = 1
        [MaterialToggle] _TwoSidedNormals ("Twosided normals", Float) = 0
        _SphereNormals ("Spherical Normal", Range(0, 1)) = 0
@@ -49,13 +50,14 @@
 	CGINCLUDE
     #include <UnityPBSLighting.cginc>
     sampler2D _MainTex;
-    sampler2D _BumpMap;
+    sampler2D _MainNormal;
 
     float  _Cutoff;
 
     #define PI 3.14159265359
 
     half _Wet;
+    half _Glossiness;
     half _MistAlpha;
     fixed4 _MainColor;
 
@@ -105,8 +107,8 @@
         o.Albedo = lerp(mainCol.rgb, patternCol.rgb * _PatternColor.rgb, patternCol.r * _PatternColor.a);
         o.Albedo = lerp(o.Albedo, logoCol.rgb * _LogoColor.rgb, logoCol.a * _LogoColor.a);
         // Metallic and smoothness come from slider variables
-        o.Normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex)) + tex2D(_PatternNormal, IN.uv_PatternTex) + tex2D(_LogoNormal, IN.uv_LogoTex);
-        o.Metallic = 0;
+        o.Normal = UnpackNormal(tex2D(_MainNormal, IN.uv_MainTex)) + tex2D(_PatternNormal, IN.uv_PatternTex) + tex2D(_LogoNormal, IN.uv_LogoTex);
+        o.Metallic = _Glossiness;
         o.Smoothness = _Wet;
     	
     	o.Alpha = _MainColor.a * _MistAlpha;
@@ -114,11 +116,10 @@
     }
     ENDCG
 	SubShader{
-		
         Tags { "Queue" = "Transparent" "RenderType" = "Transparent" }
         LOD 200
         Cull Off
-        Blend SrcAlpha OneMinusSrcAlpha
+		Blend SrcAlpha OneMinusSrcAlpha
 
         CGPROGRAM
         #pragma surface surf Standard alpha:fade

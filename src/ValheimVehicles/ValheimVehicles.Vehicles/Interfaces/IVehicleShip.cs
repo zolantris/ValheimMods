@@ -1,14 +1,15 @@
 using UnityEngine;
+using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.Vehicles.Interfaces;
 
 public interface IVehicleShip
 {
-  public GameObject RudderObject { get; set; }
-  public IWaterVehicleController VehicleController { get; }
-  public BoxCollider FloatCollider { get; set; }
-  public Transform? ShipDirection { get; }
+  public IWaterVehicleController? VehiclePiecesController { get; }
+  public VehicleMovementController? MovementController { get; }
+  public Rigidbody? MovementControllerRigidbody { get; }
   public Transform ControlGuiPosition { get; set; }
-  public VehicleShip Instance { get; }
-  public ZNetView NetView { get; }
+  public VehicleShip? Instance { get; }
+  public ZNetView? NetView { get; }
+  public int PersistentZdoId { get; }
 }

@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6015232456486853985}
   m_Layer: 10
-  m_Name: $hud_snappoint_bottom $hud_snappoint_corner
+  m_Name: $hud_snappoint_bottom $hud_snappoint_corner 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -127,7 +127,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 0a782efb2d546b440ab80eb7882eb516, type: 2}
+  - {fileID: 2100000, guid: 46114245fd48be04a92dc292d4bbeaae, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -159,7 +159,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2392473870314262808}
   m_Layer: 10
-  m_Name: $hud_snappoint_top $hud_snappoint_corner
+  m_Name: $hud_snappoint_top $hud_snappoint_corner 3
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -190,7 +190,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1608600429239898834}
   m_Layer: 10
-  m_Name: $hud_snappoint_top $hud_snappoint_corner
+  m_Name: $hud_snappoint_top $hud_snappoint_corner 4
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -221,7 +221,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6753353508630236182}
   m_Layer: 10
-  m_Name: $hud_snappoint_bottom $hud_snappoint_corner
+  m_Name: $hud_snappoint_bottom $hud_snappoint_corner 4
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -303,7 +303,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 0a782efb2d546b440ab80eb7882eb516, type: 2}
+  - {fileID: 2100000, guid: 46114245fd48be04a92dc292d4bbeaae, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -335,7 +335,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8040892970357214933}
   m_Layer: 10
-  m_Name: $hud_snappoint_top $hud_snappoint_corner
+  m_Name: $hud_snappoint_top $hud_snappoint_corner 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -366,7 +366,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2037986755202196996}
   m_Layer: 10
-  m_Name: $hud_snappoint_bottom $hud_snappoint_corner
+  m_Name: $hud_snappoint_bottom $hud_snappoint_corner 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -449,16 +449,16 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7599481523249758299}
-  - {fileID: 7448215286088440428}
-  - {fileID: 1608600429239898834}
-  - {fileID: 8040892970357214933}
   - {fileID: 7386813208368598940}
+  - {fileID: 8040892970357214933}
+  - {fileID: 1608600429239898834}
   - {fileID: 2392473870314262808}
-  - {fileID: 2663827776530114275}
-  - {fileID: 6753353508630236182}
-  - {fileID: 2037986755202196996}
   - {fileID: 6015232456486853985}
+  - {fileID: 2037986755202196996}
   - {fileID: 6108613122461208361}
+  - {fileID: 6753353508630236182}
+  - {fileID: 7448215286088440428}
+  - {fileID: 2663827776530114275}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &5243727027568368779
@@ -492,7 +492,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6108613122461208361}
   m_Layer: 10
-  m_Name: $hud_snappoint_bottom $hud_snappoint_corner
+  m_Name: $hud_snappoint_bottom $hud_snappoint_corner 3
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -523,7 +523,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7386813208368598940}
   m_Layer: 10
-  m_Name: $hud_snappoint_top $hud_snappoint_corner
+  m_Name: $hud_snappoint_top $hud_snappoint_corner 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -636,7 +636,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 0a782efb2d546b440ab80eb7882eb516, type: 2}
+  - {fileID: 2100000, guid: 46114245fd48be04a92dc292d4bbeaae, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -719,7 +719,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 0a782efb2d546b440ab80eb7882eb516, type: 2}
+  - {fileID: 2100000, guid: 46114245fd48be04a92dc292d4bbeaae, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

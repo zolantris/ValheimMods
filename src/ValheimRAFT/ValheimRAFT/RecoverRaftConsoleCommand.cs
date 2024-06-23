@@ -6,6 +6,7 @@ using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
@@ -167,19 +168,16 @@ public class RecoverRaftConsoleCommand : ConsoleCommand
     foreach (var id in unattachedVehicleNetViews.Keys)
     {
       var list = unattachedVehicleNetViews[id];
-      var shipPrefab = PrefabManager.Instance.GetPrefab(PrefabNames.WaterVehicleShip);
-      var ship = Object.Instantiate(shipPrefab, list[0].transform.position,
-        list[0].transform.rotation, null);
-      var vehicleShip = ship.GetComponent<VehicleShip>();
+      var vehicleShip = VehicleShip.InitWithoutStarterPiece(list[0].transform);
       foreach (var piece in list)
       {
-        piece.transform.SetParent(vehicleShip.VehicleController.Instance.transform);
+        piece.transform.SetParent(vehicleShip.VehiclePiecesController.Instance.transform);
         piece.transform.localPosition =
-          piece.m_zdo.GetVec3(BaseVehicleController.MBPositionHash, Vector3.zero);
+          piece.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
         piece.transform.localRotation =
-          Quaternion.Euler(piece.m_zdo.GetVec3(BaseVehicleController.MBRotationVecHash,
+          Quaternion.Euler(piece.m_zdo.GetVec3(VehicleZdoVars.MBRotationVecHash,
             Vector3.zero));
-        vehicleShip.VehicleController.Instance.AddNewPiece(piece);
+        vehicleShip.VehiclePiecesController.Instance.AddNewPiece(piece);
       }
 
       Logger.LogInfo($"Completed, RecoverShip for {id}, recovering {list.Count} pieces");

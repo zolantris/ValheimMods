@@ -14,6 +14,19 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject ShipHullWoodAsset = null!;
   public static GameObject ShipHullIronAsset = null!;
 
+  public static GameObject RamStakeWood1X2 = null!;
+  public static GameObject RamStakeWood2X4 = null!;
+  public static GameObject RamStakeIron1X2 = null!;
+  public static GameObject RamStakeIron2X4 = null!;
+
+  public static GameObject RamBladeTop = null!;
+  public static GameObject RamBladeBottom = null!;
+  public static GameObject RamBladeRight = null!;
+  public static GameObject RamBladeLeft = null!;
+
+  // ships (like nautilus)
+  public static GameObject ShipNautilus = null!;
+
   // hull ribs
   public static GameObject ShipHullRibWoodAsset = null!;
   public static GameObject ShipHullRibIronAsset = null!;
@@ -66,9 +79,14 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject GetVehicleContainer(GameObject obj) =>
     obj.FindDeepChild(PrefabNames.VehicleContainer).gameObject;
 
+  public static AssetBundle bundle;
+
   public void Init(AssetBundle assetBundle)
   {
+    bundle = assetBundle;
     CustomSail = assetBundle.LoadAsset<GameObject>("custom_sail.prefab");
+
+    ShipNautilus = assetBundle.LoadAsset<GameObject>("nautilus.prefab");
 
     SteeringWheel = assetBundle.LoadAsset<GameObject>("steering_wheel.prefab");
     PieceShader = assetBundle.LoadAsset<Shader>("Custom_Piece.shader");
@@ -131,5 +149,24 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
     VehicleSprites = assetBundle.LoadAsset<SpriteAtlas>(
       "vehicle_icons.spriteatlasv2");
+
+    RamStakeWood1X2 = assetBundle.LoadAsset<GameObject>($"ram_stake_{PrefabTiers.Tier1}_1x2");
+    RamStakeWood2X4 = assetBundle.LoadAsset<GameObject>($"ram_stake_{PrefabTiers.Tier1}_2x4");
+    RamStakeIron1X2 = assetBundle.LoadAsset<GameObject>($"ram_stake_{PrefabTiers.Tier3}_1x2");
+    RamStakeIron2X4 = assetBundle.LoadAsset<GameObject>($"ram_stake_{PrefabTiers.Tier3}_2x4");
+
+
+    RamBladeTop = assetBundle.LoadAsset<GameObject>(
+      "ram_blade_top.prefab");
+    ;
+    RamBladeBottom = assetBundle.LoadAsset<GameObject>(
+      "ram_blade_bottom.prefab");
+    ;
+    RamBladeRight = assetBundle.LoadAsset<GameObject>(
+      "ram_blade_right.prefab");
+    ;
+    RamBladeLeft = assetBundle.LoadAsset<GameObject>(
+      "ram_blade_left.prefab");
+    ;
   }
 }

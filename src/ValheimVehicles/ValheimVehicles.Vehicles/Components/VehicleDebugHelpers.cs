@@ -6,8 +6,9 @@ using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT;
+using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
-using ValheimVehicles.Utis;
+using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
@@ -42,7 +43,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   private void FixedUpdate()
   {
     if (!isActiveAndEnabled) return;
-    if (autoUpdateColliders)
+    if (autoUpdateColliders || VehicleDebugConfig.AutoShowVehicleColliders.Value)
     {
       DrawAllColliders();
     }
@@ -80,7 +81,8 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   public static VehicleDebugHelpers GetOnboardVehicleDebugHelper()
   {
-    return GetVehicleController()?.VehicleInstance.Instance.VehicleDebugHelpersInstance;
+    var helper = GetVehicleController()?.VehicleInstance?.Instance?.VehicleDebugHelpersInstance;
+    return helper;
   }
 
   public static VehicleDebugHelpers? GetOnboardMBRaftDebugHelper()
@@ -97,18 +99,31 @@ public class VehicleDebugHelpers : MonoBehaviour
   public static BaseVehicleController? GetVehicleController()
   {
     var rayCastHitInfo = RaycastToPiecesUnderPlayerCamera();
-    return rayCastHitInfo?.collider.GetComponentInParent<BaseVehicleController>();
+    return rayCastHitInfo?.collider.transform.root.GetComponent<BaseVehicleController>();
   }
 
   public void FlipShip()
   {
-    if (!(bool)VehicleShipInstance.m_body) return;
+    if (!(bool)VehicleShipInstance?.MovementController?.m_body) return;
+    if (VehicleShipInstance == null) return;
+    if (VehicleShipInstance.MovementController == null) return;
     // flips the x and z axis which act as the boat depth and sides
-    // y axis is boat height. Flipping that would just rotate boat which is why it is omitted
-    VehicleShipInstance.m_body.isKinematic = true;
-    transform.rotation = Quaternion.Euler(0f, VehicleObj.transform.eulerAngles.y,
-      0f);
-    VehicleShipInstance.m_body.isKinematic = false;
+    // y-axis is boat height. Flipping that would just rotate boat which is why it is omitted
+    if (!VehicleShipInstance.isCreative)
+    {
+      VehicleShipInstance.MovementController.m_body.isKinematic = true;
+    }
+
+    // transform.rotation = Quaternion.Euler(0, VehicleObj.transform.eulerAngles.y,
+    //   0);
+    VehicleShipInstance.MovementController.m_body.rotation = Quaternion.Euler(0,
+      VehicleObj.transform.eulerAngles.y,
+      0);
+
+    if (!VehicleShipInstance.isCreative)
+    {
+      VehicleShipInstance.MovementController.m_body.isKinematic = false;
+    }
   }
 
   /// <summary>
@@ -136,14 +151,14 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   public void MoveShip(Vector3 vector)
   {
-    if (!(bool)VehicleShipInstance.m_body) return;
+    if (!(bool)VehicleShipInstance.MovementController.m_body) return;
     // flips the x and z axis which act as the boat depth and sides
     // y axis is boat height. Flipping that would just rotate boat which is why it is omitted
-    VehicleShipInstance.m_body.isKinematic = true;
+    VehicleShipInstance.MovementController.m_body.isKinematic = true;
     transform.rotation = Quaternion.Euler(0f, VehicleObj.transform.eulerAngles.y,
       0f);
     transform.position += vector;
-    VehicleShipInstance.m_body.isKinematic = false;
+    VehicleShipInstance.MovementController.m_body.isKinematic = false;
   }
 
   private static void DrawLine(Vector3 start, Vector3 end, int index, DrawLineData data)

@@ -13,20 +13,26 @@ public class ZNetView_Patch
   [HarmonyPrefix]
   private static bool ZNetView_ResetZDO(ZNetView __instance)
   {
-    if (__instance.m_zdo == null) return false;
+    if (!ZNetView.m_forceDisableInit)
+    {
+      return true;
+    }
 
-    return true;
+    return __instance?.m_zdo != null;
   }
 
   [HarmonyPatch(typeof(ZNetView), "Awake")]
   [HarmonyPostfix]
   private static void ZNetView_Awake(ZNetView __instance)
   {
-    if (__instance.m_zdo != null)
+    if (__instance.m_zdo == null) return;
+
+    BaseVehicleController.InitPiece(__instance);
+    CultivatableComponent.InitPiece(__instance);
+
+    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
     {
       MoveableBaseRootComponent.InitPiece(__instance);
-      BaseVehicleController.InitPiece(__instance);
-      CultivatableComponent.InitPiece(__instance);
     }
   }
 
@@ -38,8 +44,10 @@ public class ZNetView_Patch
     if ((bool)bv)
     {
       bv.RemovePiece(__instance);
+      return true;
     }
-    else
+
+    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
     {
       var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
       if ((bool)mbr)

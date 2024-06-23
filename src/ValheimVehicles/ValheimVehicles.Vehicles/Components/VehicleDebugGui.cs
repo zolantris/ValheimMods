@@ -1,10 +1,14 @@
+using DynamicLocations;
 using UnityEngine;
 using ValheimRAFT;
-using ValheimVehicles.Utis;
+using ValheimRAFT.Patches;
+using ValheimVehicles.ConsoleCommands;
+using ValheimVehicles.Helpers;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
-namespace Components;
+namespace ValheimVehicles.Vehicles.Components;
 
 public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 {
@@ -30,12 +34,71 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     };
 #if DEBUG
     GUILayout.BeginArea(new Rect(250, 10, 200, 200), myButtonStyle);
-    if (GUILayout.Button("Debug Delete ShipZDO"))
+    if (GUILayout.Button(
+          $"ActivatePendingPieces {BaseVehicleController.DEBUGAllowActivatePendingPieces}"))
+    {
+      BaseVehicleController.DEBUGAllowActivatePendingPieces =
+        !BaseVehicleController.DEBUGAllowActivatePendingPieces;
+      if (BaseVehicleController.DEBUGAllowActivatePendingPieces)
+      {
+        foreach (var baseVehicleController in BaseVehicleController.ActiveInstances.Values)
+        {
+          baseVehicleController.ActivatePendingPiecesCoroutine();
+        }
+      }
+    }
+
+    if (GUILayout.Button(
+          $"Toggle Sync Physics {BaseVehicleController.ForceKinematic}"))
+    {
+      BaseVehicleController.ForceKinematic =
+        !BaseVehicleController.ForceKinematic;
+    }
+
+    if (GUILayout.Button("Delete ShipZDO"))
     {
       var currentShip = VehicleDebugHelpers.GetVehicleController();
       if (currentShip != null)
       {
-        ZNetScene.instance.Destroy(currentShip.m_nview.gameObject);
+        ZNetScene.instance.Destroy(currentShip.VehicleInstance.NetView.gameObject);
+      }
+    }
+
+    if (GUILayout.Button($"PlayerSpawnupdate: {PlayerSpawnController.CanUpdateLogoutPoint}"))
+    {
+      PlayerSpawnController.CanUpdateLogoutPoint = !PlayerSpawnController.CanUpdateLogoutPoint;
+    }
+
+    if (GUILayout.Button("Set logoutpoint"))
+    {
+      PlayerSpawnController.CanUpdateLogoutPoint = true;
+      PlayerSpawnController.Instance?.SyncLogoutPoint();
+      PlayerSpawnController.CanUpdateLogoutPoint = false;
+    }
+
+    if (GUILayout.Button("Move to current spawn"))
+    {
+      PlayerSpawnController.CanUpdateLogoutPoint = false;
+      PlayerSpawnController.player = Player.m_localPlayer;
+      PlayerSpawnController.Instance?.MovePlayerToSpawnPoint();
+      PlayerSpawnController.CanUpdateLogoutPoint = false;
+    }
+
+    if (GUILayout.Button("Move to current logout"))
+    {
+      PlayerSpawnController.player = Player.m_localPlayer;
+      PlayerSpawnController.Instance?.MovePlayerToLoginPoint();
+    }
+
+    if (GUILayout.Button("DebugFind PlayerSpawnController"))
+    {
+      var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+      foreach (var obj in allObjects)
+      {
+        if (obj.name.Contains($"{PrefabNames.PlayerSpawnControllerObj}(Clone)"))
+        {
+          Logger.LogDebug("found playerSpawn controller");
+        }
       }
     }
 
@@ -72,9 +135,14 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       VehicleDebugHelpers.GetVehicleController()?.ActivatePendingPiecesCoroutine();
     }
 
-    if (GUILayout.Button("Flip Ship"))
+    if (GUILayout.Button("Zero Ship RotationXZ"))
     {
       VehicleDebugHelpers.GetOnboardVehicleDebugHelper()?.FlipShip();
+    }
+
+    if (GUILayout.Button("Toggle Ocean Sway"))
+    {
+      VehicleCommands.VehicleToggleOceanSway();
     }
 
     GUILayout.EndArea();

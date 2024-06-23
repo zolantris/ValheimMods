@@ -38,6 +38,8 @@
     <!--        </PropertyGroup>-->
     <ItemGroup>
         <Compile Include="Patches\Zone_Patch.cs"/>
+        <Compile Include="ValheimVehicles.Config\ConfigHelpers.cs"/>
+        <Compile Include="ValheimVehicles.Config\RamConfig.cs"/>
         <Compile Include="ValheimVehicles.ConsoleCommands\LocateVehicle.cs"/>
         <Compile Include="ValheimVehicles.ConsoleCommands\VehicleCommands.cs"/>
         <Compile Include="ValheimVehicles.Prefabs\PrefabNames.cs"/>
@@ -50,12 +52,15 @@
         <Compile Include="Properties\AssemblyInfo.cs"/>
     </ItemGroup>
     <ItemGroup>
+        <Folder Include="ValheimVehicles.DynamicLocations\"/>
         <Folder Include="ValheimVehicles.Propulsion\Sailing\"/>
         <Folder Include="ValheimVehicles.Utils\"/>
+        <Folder Include="ValheimVehicles.Vehicles\"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\SentryUnityWrapper\SentryUnityWrapper.csproj"/>
         <ProjectReference Include="..\ValheimRAFT\ValheimRAFT.csproj"/>
+        <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

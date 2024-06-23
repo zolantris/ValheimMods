@@ -4,6 +4,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimRAFT.Patches;
 
@@ -31,6 +32,12 @@ public class Character_Patch
       return null;
     }
 
+    var bvc = __instance.m_lastGroundBody.GetComponentInParent<BaseVehicleController>();
+    if ((bool)bvc)
+    {
+      return VehicleShipCompat.InitFromUnknown(bvc?.VehicleInstance);
+    }
+
     var lastOnShip = __instance.m_lastGroundBody.GetComponent<Ship>();
 
     if (lastOnShip)
@@ -38,10 +45,9 @@ public class Character_Patch
       return lastOnShip;
     }
 
-    var bvc = __instance.m_lastGroundBody.GetComponentInParent<BaseVehicleController>();
-    if ((bool)bvc)
+    if (!ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
     {
-      return VehicleShipCompat.InitFromUnknown(bvc?.VehicleInstance);
+      return null;
     }
 
     /*
@@ -73,6 +79,17 @@ public class Character_Patch
       if (__instance.transform.parent != null) __instance.transform.SetParent(null);
       return;
     }
+
+    // VehicleShip? vehicleShip = null;
+    // if ((bool)__instance.m_lastGroundBody)
+    // {
+    //   vehicleShip = __instance.m_lastGroundBody.GetComponentInParent<VehicleShip>();
+    //   if ((bool)vehicleShip && __instance.transform.parent != vehicleShip.transform)
+    //   {
+    //     __instance.transform.SetParent(vehicleShip.VehiclePiecesController.Instance.transform);
+    //     return;
+    //   }
+    // }
 
     BaseVehicleController? bvc = null;
     if ((bool)__instance.m_lastGroundBody)

@@ -5,9 +5,11 @@ using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
 using Object = System.Object;
@@ -16,61 +18,18 @@ namespace ValheimRAFT.Patches;
 
 public class Player_Patch
 {
-  private static bool HasMatchingParameterTypes(int genericParameterCount, Type[] types,
-    ParameterInfo[] parameters)
-  {
-    if (parameters.Length < genericParameterCount || parameters.Length != types.Length)
-    {
-      return false;
-    }
-
-    var num = 0;
-    for (var i = 0; i < parameters.Length; i++)
-    {
-      if (parameters[i].ParameterType.IsGenericParameter)
-      {
-        num++;
-      }
-      else if (types[i] != parameters[i].ParameterType)
-      {
-        return false;
-      }
-    }
-
-    return num == genericParameterCount;
-  }
-
-  private static MethodInfo GetGenericMethod(Type type, string name, int genericParameterCount,
-    Type[] types)
-  {
-    var methods = type.GetMethods(BindingFlags.Instance | BindingFlags.Static |
-                                  BindingFlags.Public | BindingFlags.NonPublic |
-                                  BindingFlags.GetField | BindingFlags.SetField |
-                                  BindingFlags.GetProperty | BindingFlags.SetProperty);
-    foreach (var methodInfo in methods)
-    {
-      if (methodInfo.IsGenericMethod && methodInfo.ContainsGenericParameters &&
-          methodInfo.Name == name &&
-          HasMatchingParameterTypes(genericParameterCount, types, methodInfo.GetParameters()))
-      {
-        return methodInfo;
-      }
-    }
-
-    return null;
-  }
-
   [HarmonyTranspiler]
   [HarmonyPatch(typeof(Player), "PlacePiece")]
   private static IEnumerable<CodeInstruction> PlacePieceTranspiler(
     IEnumerable<CodeInstruction> instructions)
   {
-    var operand = GetGenericMethod(typeof(UnityEngine.Object), "Instantiate", 1, new Type[3]
-    {
-      typeof(Type),
-      typeof(Vector3),
-      typeof(Quaternion)
-    }).MakeGenericMethod(typeof(GameObject));
+    var operand = HarmonyPatchMethods.GetGenericMethod(typeof(UnityEngine.Object), "Instantiate", 1,
+      new Type[3]
+      {
+        typeof(Type),
+        typeof(Vector3),
+        typeof(Quaternion)
+      }).MakeGenericMethod(typeof(GameObject));
     var matches = new CodeMatch[]
     {
       new(OpCodes.Call, operand)
@@ -84,16 +43,20 @@ public class Player_Patch
   {
     if (!netView.name.Contains(PrefabNames.WaterVehicleShip)) return;
     var vehicleShip = netView.GetComponent<VehicleShip>();
-    if (vehicleShip.GhostContainer != null)
+    var ghostContainer = vehicleShip.GhostContainer();
+    if (ghostContainer != null)
     {
-      vehicleShip.GhostContainer.SetActive(false);
+      ghostContainer.SetActive(false);
     }
   }
 
   public static GameObject PlacedPiece(GameObject gameObject)
   {
     var piece = gameObject.GetComponent<Piece>();
+
     if (!piece) return gameObject;
+    if (piece.name.StartsWith(PrefabNames.WaterVehicleShip)) return gameObject;
+
     var rb = piece.GetComponentInChildren<Rigidbody>();
     var netView = piece.GetComponent<ZNetView>();
 
@@ -160,7 +123,7 @@ public class Player_Patch
       var start = localPos + Vector3.up * 2f;
       start = transform.transform.TransformPoint(start);
       var localDir = ((Character)__instance).m_lookYaw * Quaternion.Euler(__instance.m_lookPitch,
-        0f - transform.transform.rotation.eulerAngles.y + PatchSharedData.YawOffset, 0f);
+        0 - transform.transform.rotation.eulerAngles.y + PatchSharedData.YawOffset, 0);
       var end = transform.transform.rotation * localDir * Vector3.forward;
       if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) && (bool)hitInfo.collider)
       {
@@ -192,23 +155,34 @@ public class Player_Patch
     var layerMask = __instance.m_placeRayMask;
 
     var bvc = __instance.GetComponentInParent<BaseVehicleController>();
+
+    if (!(bool)bvc)
+    {
+      bvc = __instance.transform.root.GetComponent<BaseVehicleController>();
+    }
+
     if ((bool)bvc)
       return HandleGameObjectRayCast(bvc.transform, layerMask, __instance, ref __result, ref point,
         ref normal, ref piece,
         ref heightmap,
         ref waterSurface, water);
 
-    var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-    if ((bool)mbr)
+    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
     {
-      return HandleGameObjectRayCast(mbr.transform, layerMask, __instance, ref __result, ref point,
-        ref normal, ref piece,
-        ref heightmap,
-        ref waterSurface, water);
+      var mbr = __instance.transform.root.GetComponent<MoveableBaseRootComponent>();
+      if ((bool)mbr)
+      {
+        return HandleGameObjectRayCast(mbr.transform, layerMask, __instance, ref __result,
+          ref point,
+          ref normal, ref piece,
+          ref heightmap,
+          ref waterSurface, water);
+      }
     }
 
     return true;
   }
+
 
   [HarmonyPatch(typeof(Player), "Save")]
   [HarmonyPrefix]
@@ -295,10 +269,10 @@ public class Player_Patch
     {
       var ladder = __instance.m_attachPoint.parent.GetComponent<RopeLadderComponent>();
       if ((bool)ladder) ladder.StepOffLadder(__instance);
-      ((Character)__instance).m_animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, 0f);
-      ((Character)__instance).m_animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 0f);
-      ((Character)__instance).m_animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, 0f);
-      ((Character)__instance).m_animator.SetIKRotationWeight(AvatarIKGoal.RightHand, 0f);
+      ((Character)__instance).m_animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, 0);
+      ((Character)__instance).m_animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 0);
+      ((Character)__instance).m_animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, 0);
+      ((Character)__instance).m_animator.SetIKRotationWeight(AvatarIKGoal.RightHand, 0);
     }
 
     return true;
@@ -358,28 +332,9 @@ public class Player_Patch
             typeof(float)
           })))
         list[i] = new CodeInstruction(OpCodes.Call,
-          AccessTools.Method(typeof(Player_Patch), nameof(RelativeEuler)));
+          AccessTools.Method(typeof(VehicleRotionHelpers),
+            nameof(VehicleRotionHelpers.RelativeEuler)));
     return list;
-  }
-
-  public static Quaternion RelativeEuler(float x, float y, float z)
-  {
-    var rot = Quaternion.Euler(x, y, z);
-    if (!PatchSharedData.PlayerLastRayPiece) return rot;
-
-    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<BaseVehicleController>();
-    if (bvc)
-    {
-      return bvc.transform.rotation * rot;
-    }
-
-    var mbr = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
-    if ((bool)mbr)
-    {
-      return mbr.transform.rotation * rot;
-    }
-
-    return rot;
   }
 
   [HarmonyPatch(typeof(Player), "GetControlledShip")]

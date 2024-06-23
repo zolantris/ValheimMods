@@ -130,13 +130,13 @@ public class VehicleShipEffects : MonoBehaviour
     SetWake(flag, deltaTime);
     if ((bool)m_sailSound)
     {
-      float target = (m_ship.IsSailUp() ? m_sailBaseVol : 0f);
+      float target = (m_ship.MovementController.IsSailUp() ? m_sailBaseVol : 0f);
       FadeSound(m_sailSound, target, m_sailFadeDuration, deltaTime);
     }
 
     if (m_splashEffects != null)
     {
-      m_splashEffects.SetActive(m_ship.HasPlayerOnboard());
+      m_splashEffects.SetActive(m_ship.MovementController.HasPlayerOnboard());
     }
   }
 

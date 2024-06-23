@@ -2,6 +2,8 @@ namespace ValheimVehicles.Prefabs;
 
 /**
  * @todo register translatable pieceName and pieceDescription based on these names for easy lookups
+ *
+ * @warning Do not rename prefabs, prefabs that are renamed will orphan older gameobjects and will be deleted by valheim meaning it will break/delete pieces on pre-existing ships.
  */
 public static class PrefabNames
 {
@@ -11,7 +13,12 @@ public static class PrefabNames
     Four,
   }
 
+  public const string PlayerSpawnControllerObj =
+    $"{ValheimVehiclesPrefix}_PlayerSpawnControllerObj";
+
+
   public const string MBRaft = "MBRaft";
+  public const string Nautilus = $"{ValheimVehiclesPrefix}_VehiclePresets_Nautilus";
   public static int m_raftHash = MBRaft.GetStableHashCode();
   public const string Tier1RaftMastName = "MBRaftMast";
   public const string Tier2RaftMastName = "MBKarveMast";
@@ -20,7 +27,6 @@ public static class PrefabNames
   public const string Tier1CustomSailName = "MBSail";
   public const string BoardingRamp = "MBBoardingRamp";
   public const string BoardingRampWide = "MBBoardingRamp_Wide";
-  public const string ValheimVehiclesShipName = "ValheimVehicles_Ship";
   public const string WaterVehicleFloatCollider = "VehicleShip_FloatCollider";
   public const string WaterVehicleBlockingCollider = "VehicleShip_BlockingCollider";
   public const string WaterVehicleOnboardCollider = "VehicleShip_OnboardTriggerCollider";
@@ -118,4 +124,18 @@ public static class PrefabNames
   public const string VehicleToggleSwitch = $"{ValheimVehiclesPrefix}_VehicleToggleSwitch";
   public const string VehicleShipMovementOrientation = "VehicleShip_MovementOrientation";
   public const string VehicleHudAnchorIndicator = $"{ValheimVehiclesPrefix}_HudAnchorIndicator";
+
+  public const string RamBladePrefix = $"{ValheimVehiclesPrefix}_ram_blade";
+  public const string RamStakePrefix = $"{ValheimVehiclesPrefix}_ram_stake";
+
+  public static string GetRamBladeName(string val)
+  {
+    return $"{RamBladePrefix}_{val.ToLower()}_{PrefabTiers.Tier3}";
+  }
+
+  public static string GetRamStakeName(string tier, int size)
+  {
+    var sizeString = size == 1 ? "1x2" : "2x4";
+    return $"{RamStakePrefix}_{tier}_{sizeString}";
+  }
 }

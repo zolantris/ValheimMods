@@ -15,30 +15,30 @@ TagManager:
   - UI
   - depthmask
   - 
-  - 
+  - effect
   - character
   - piece
-  - 
-  - 
-  - 
+  - terrain
+  - item
+  - ghost
   - character_trigger
-  - 
+  - static_solid
   - piece_nonsolid
-  - 
-  - 
-  - 
-  - 
+  - character_ghost
+  - hitbox
+  - skybox
+  - Default_small
   - WaterVolume
-  - 
+  - weapon
   - blocker
   - pathblocker
   - viewblock
-  - 
-  - 
-  - Vehicle
+  - character_net
+  - character_noenv
+  - vehicle
   - CustomVehicleLayer
   - 
-  - 
+  - smoke
   m_SortingLayers:
   - name: Default
     uniqueID: 0

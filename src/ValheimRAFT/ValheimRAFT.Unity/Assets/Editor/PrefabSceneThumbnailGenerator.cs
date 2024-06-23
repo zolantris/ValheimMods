@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
-using UnityEditor.U2D;
 using UnityEngine;
 using UnityEngine.U2D;
 
@@ -99,14 +98,14 @@ namespace ValheimVehicles.scripts
 
         private void DeleteCurrentSpritesInTargetAtlas()
         {
-            var spriteAtlasPath = GetSpriteAtlasPath();
-            var spriteAtlas = SpriteAtlasAsset.Load(spriteAtlasPath);
-            var spriteAtlasObj = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(spriteAtlasPath);
-            if (!spriteAtlasObj) return;
-            
-            var currentSprites = spriteAtlasObj.GetPackables();
-            spriteAtlas.Remove(currentSprites);
-            SpriteAtlasAsset.Save(spriteAtlas,spriteAtlasPath);
+            // var spriteAtlasPath = GetSpriteAtlasPath();
+            // var spriteAtlas = SpriteAtlasAsset.Load(spriteAtlasPath);
+            // var spriteAtlasObj = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(spriteAtlasPath);
+            // if (!spriteAtlasObj) return;
+            //
+            // var currentSprites = spriteAtlasObj.GetPackables();
+            // spriteAtlas.Remove(currentSprites);
+            // SpriteAtlasAsset.Save(spriteAtlas,spriteAtlasPath);
         }
 
         private string GetSpriteAtlasPath()
@@ -117,33 +116,33 @@ namespace ValheimVehicles.scripts
         // must use the AssetDatabase get the current sprites and nuke them
         private void UpdateSpriteAtlas()
         {
-            AssetDatabase.Refresh();
-            Debug.Log($"AssetPath: {spritePaths.Count}");
-            var spriteAtlasPath = GetSpriteAtlasPath();
-            var spriteAtlas = SpriteAtlasAsset.Load(spriteAtlasPath);
-            
-            if (targetSpriteAtlasPath == null) return;
-            
-            var spritesList = new List<Object>();
-
-            if (!spriteAtlas)
-            {
-                Debug.LogWarning("No sprite atlas");
-                return;
-            }
-            
-            foreach (var spritePath in spritePaths)
-            {
-                var obj = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
-                if (obj == null) continue;
-                spritesList.Add(obj);
-            }
-            
-            Debug.Log($"Called UpdateSpriteAtlas {spritesList.Count}");
-
-            spriteAtlas.Add(spritesList.ToArray());
-            SpriteAtlasAsset.Save(spriteAtlas, GetSpriteAtlasPath());
-            AssetDatabase.Refresh();
+            // AssetDatabase.Refresh();
+            // Debug.Log($"AssetPath: {spritePaths.Count}");
+            // var spriteAtlasPath = GetSpriteAtlasPath();
+            // var spriteAtlas = SpriteAtlasAsset.Load(spriteAtlasPath);
+            //
+            // if (targetSpriteAtlasPath == null) return;
+            //
+            // var spritesList = new List<Object>();
+            //
+            // if (!spriteAtlas)
+            // {
+            //     Debug.LogWarning("No sprite atlas");
+            //     return;
+            // }
+            //
+            // foreach (var spritePath in spritePaths)
+            // {
+            //     var obj = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+            //     if (obj == null) continue;
+            //     spritesList.Add(obj);
+            // }
+            //
+            // Debug.Log($"Called UpdateSpriteAtlas {spritesList.Count}");
+            //
+            // spriteAtlas.Add(spritesList.ToArray());
+            // SpriteAtlasAsset.Save(spriteAtlas, GetSpriteAtlasPath());
+            // AssetDatabase.Refresh();
         }
 
         private void AddAllIconsToSpriteAtlas()
@@ -202,7 +201,7 @@ namespace ValheimVehicles.scripts
         {
             // Uses alpha to make transparent, black is good for edges of object that are not perfectly cut
             RuntimePreviewGenerator.BackgroundColor = new Color(0,0,0,0);
-            var pg = RuntimePreviewGenerator.GenerateModelPreview(obj.transform, width, height, true);
+            var pg = RuntimePreviewGenerator.GenerateModelPreview(obj.transform, width, height, false);
             var texturePath = $"{outputDirPath}{obj.name}.png";
             WriteTextureToFile(pg, texturePath);
             

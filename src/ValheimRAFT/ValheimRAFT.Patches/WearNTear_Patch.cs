@@ -8,6 +8,7 @@ using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles;
+using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;
@@ -42,12 +43,13 @@ public class WearNTear_Patch
       return false;
 
     var parentVehicleHash =
-      __instance.m_nview.m_zdo.GetInt(BaseVehicleController.MBParentIdHash, 0);
+      __instance.m_nview.m_zdo.GetInt(VehicleZdoVars.MBParentIdHash, 0);
 
     var hasParentVehicleHash = parentVehicleHash != 0;
     if (!hasParentVehicleHash) return false;
 
-    var zdoExists = ZDOPersistentID.Instance.GetZDO(1501427356);
+    var id = ZdoWatchManager.ZdoIdToId(__instance.m_nview.GetZDO().m_uid);
+    var zdoExists = ZdoWatchManager.Instance.GetZdo(id);
     if (zdoExists == null) return false;
 
     __instance.enabled = false;
@@ -162,8 +164,8 @@ public class WearNTear_Patch
   [HarmonyPrefix]
   private static bool WearNTear_ApplyDamage(WearNTear __instance, float damage)
   {
-    var mbr = __instance.GetComponent<MoveableBaseShipComponent>();
-    var bv = __instance.GetComponent<BaseVehicleController>();
+    var mbr = __instance.GetComponentInParent<MoveableBaseShipComponent>();
+    var bv = __instance.GetComponentInParent<BaseVehicleController>();
 
     // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
     if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleShip))

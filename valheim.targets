@@ -327,6 +327,12 @@
             <HintPath>$(SolutionDir)\libs\Advize_PlantEasily.dll</HintPath>
             <Private>False</Private>
         </Reference>
+        <Publicize Include="ComfyGizmo"/>
+        <Reference Include="ComfyGizmo">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>$(SolutionDir)\libs\ComfyGizmo.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
     </ItemGroup>
 
     <!--  Metrics  -->
@@ -357,9 +363,10 @@
         <Exec Condition="Exists('$(SolutionDir)\Assets\')" Command="xcopy /d &quot;$(SolutionDir)\Assets\&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
         <Exec Condition="Exists('$(SolutionDir)\Assets\Translations\English\')" Command="xcopy /d &quot;$(SolutionDir)\Assets\Translations\English\&quot; &quot;$(PluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>
     </Target>
-    <Target Name="Copy_To_R2ModMan_vm" Condition="Exists('$(SandboxiePluginDeployPath)\$(AssemblyName).dll') And ('$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU')" AfterTargets="convert_pdb_to_mdb">
+    <Target Name="Copy_To_R2ModMan_vm" Condition="$(AssemblyName) == 'ValheimRAFT' And Exists('$(SandboxiePluginDeployPath)')" AfterTargets="convert_pdb_to_mdb">
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>
+        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>
         <!-- mdb copy Does not work for some reason -->
         <!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)plugins\$(AssemblyName).mdb&quot;"/>-->
         <Exec Command="xcopy /d &quot;.\Assets\&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>

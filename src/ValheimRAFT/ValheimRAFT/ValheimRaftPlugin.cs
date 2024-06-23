@@ -1,6 +1,5 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
-using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
 using System;
@@ -9,23 +8,29 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using BepInEx.Bootstrap;
-using Components;
-using Jotunn;
-using Properties;
 using UnityEngine;
 using ValheimRAFT.Patches;
 using ValheimRAFT.Util;
+using ValheimVehicles;
+using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Sail;
-using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
+using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
 
+internal abstract class PluginDependencies
+{
+  public const string JotunnModGuid = Jotunn.Main.ModGuid;
+}
+
 // [SentryDSN()]
-[BepInPlugin(BepInGuid, ModName, Version)]
-[BepInDependency(Main.ModGuid)]
+[BepInPlugin(ModGuid, ModName, Version)]
+[BepInDependency(ZdoWatcherPlugin.ModGuid, BepInDependency.DependencyFlags.SoftDependency)]
+[BepInDependency(PluginDependencies.JotunnModGuid)]
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
 public class ValheimRaftPlugin : BaseUnityPlugin
 {
@@ -33,7 +38,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public const string Author = "zolantris";
   public const string Version = "2.1.1";
   public const string ModName = "ValheimRAFT";
-  public const string BepInGuid = $"{Author}.{ModName}";
+  public const string ModGuid = $"{Author}.{ModName}";
   public const string HarmonyGuid = $"{Author}.{ModName}";
   public const string ModDescription = "Valheim Mod for building on the sea";
 
@@ -61,6 +66,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    * Patches
    */
   public ConfigEntry<bool> PlanBuildPatches { get; set; }
+
+  public ConfigEntry<bool> ComfyGizmoPatches { get; set; }
+  public ConfigEntry<bool> ComfyGizmoPatchCreativeHasNoRotation { get; set; }
 
   public ConfigEntry<bool> ShipPausePatch { get; set; }
   public ConfigEntry<bool> ShipPausePatchSinglePlayer { get; set; }
@@ -109,6 +117,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
   public ConfigEntry<bool> ProtectVehiclePiecesOnErrorFromWearNTearDamage { get; set; }
   public ConfigEntry<bool> DebugRemoveStartMenuBackground { get; set; }
+  public ConfigEntry<bool> SyncShipPhysicsOnAllClients { get; set; }
   public ConfigEntry<bool> HullCollisionOnly { get; set; }
 
   // sounds for VehicleShip Effects
@@ -122,9 +131,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     Center,
     Bottom,
     Top,
+    Custom,
   }
 
   public ConfigEntry<HullFloatation> HullFloatationColliderLocation { get; set; }
+  public ConfigEntry<float> HullFloatationCustomColliderOffset { get; set; }
   public ConfigEntry<bool> HasVehicleDebug { get; set; }
 
 
@@ -157,8 +168,18 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   {
     HullFloatationColliderLocation = Config.Bind("Vehicles", "HullFloatationColliderLocation",
       HullFloatation.Average,
+      new ConfigDescription(
+        "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship.",
+        null, new object[]
+        {
+        }));
+    HullFloatationCustomColliderOffset = Config.Bind("Vehicles", "HullFloatation Custom Offset",
+      0f,
       CreateConfigDescription(
-        "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship."));
+        "Hull Floatation Collider Customization, set this value and it will always make the ship float at that offset",
+        true, true
+      ));
+
     HasVehicleDebug = Config.Bind("Vehicles", "HasVehicleDebug", false,
       CreateConfigDescription(
         "Enables the debug menu, for showing colliders or rotating the ship", false, true));
@@ -192,7 +213,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       CreateConfigDescription(
         "Sets the absolute max speed a ship can ever hit. This is capped on the vehicle, so no forces applied will be able to exceed this value. 20-30f is safe, higher numbers could let the ship fail off the map",
         true));
-    MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 10f,
+    MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 20f,
       CreateConfigDescription(
         "Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.",
         true));
@@ -357,8 +378,15 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private void CreateDebugConfig()
   {
     DebugRemoveStartMenuBackground =
-      Config.Bind("Debug", "DebugRemoveStartMenuBackground", false,
-        "Removes the start scene background, only use this if you want to speedup start time");
+      Config.Bind("Debug", "RemoveStartMenuBackground", false,
+        CreateConfigDescription(
+          "Removes the start scene background, only use this if you want to speedup start time",
+          false, true));
+    SyncShipPhysicsOnAllClients =
+      Config.Bind("Debug", "SyncShipPhysicsOnAllClients", false,
+        CreateConfigDescription(
+          "Makes all clients sync physics",
+          true, true));
   }
 
   private void CreateGraphicsConfig()
@@ -387,6 +415,15 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       CreateConfigDescription(
         "Outputs more debug logs for the Vehicle components. Useful for troubleshooting errors, but will spam logs"));
 
+    ComfyGizmoPatches = Config.Bind("Patches",
+      "ComfyGizmo - Enable Patch", false,
+      CreateConfigDescription(
+        "Patches relative rotation allowing for copying rotation and building while the raft is at movement, this toggle is only provided in case patches regress anything in Gizmos and players need a work around."));
+    ComfyGizmoPatchCreativeHasNoRotation = Config.Bind("Patches",
+      "ComfyGizmo - Vehicle Creative zero Y rotation", true,
+      CreateConfigDescription(
+        "Vehicle/Raft Creative mode will set all axises to 0 for rotation instead keeping the turn axis. Gizmo has issues with rotated vehicles, so zeroing things out is much safer. Works regardless of patch if mod exists"));
+
     ShipPausePatch = Config.Bind<bool>("Patches",
       "Vehicles Prevent Pausing", true,
       CreateConfigDescription(
@@ -397,6 +434,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       CreateConfigDescription(
         "Prevents pausing on a boat during singleplayer. Must have the Vehicle Prevent Pausing patch as well",
         true, true));
+
     PlanBuildPatches = Config.Bind<bool>("Patches",
       "Enable PlanBuild Patches (required to be on if you installed PlanBuild)", false,
       new ConfigDescription(
@@ -481,6 +519,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     // for graphics QOL but maybe less FPS friendly
     CreateGraphicsConfig();
     CreateSoundConfig();
+
+    // new way to do things. Makes life easier for config
+    RamConfig.BindConfig(Config);
+    PrefabConfig.BindConfig(Config);
+    VehicleDebugConfig.BindConfig(Config);
   }
 
   internal void ApplyMetricIfAvailable()
@@ -501,8 +544,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public void Awake()
   {
     Instance = this;
-
-
     CreateConfig();
     PatchController.Apply(HarmonyGuid);
 
@@ -511,7 +552,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     RegisterConsoleCommands();
     RegisterVehicleConsoleCommands();
 
-    HasVehicleDebug.SettingChanged += OnConfigChanged;
     EnableShipSailSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
     EnableShipWakeSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
     EnableShipInWaterSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
@@ -522,11 +562,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
      */
     PrefabManager.OnVanillaPrefabsAvailable += LoadCustomTextures;
     PrefabManager.OnVanillaPrefabsAvailable += AddCustomPieces;
-  }
 
-  private void OnConfigChanged(object sender, EventArgs eventArgs)
-  {
-    AddGuiLayerComponents();
+    ValheimVehicles.ZdoWatcherDelegate.RegisterToZdoManager();
   }
 
   public void RegisterConsoleCommands()
@@ -570,8 +607,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     Physics.IgnoreLayerCollision(CustomRaftLayer, LayerMask.NameToLayer("vehicle"),
       true);
+
     Physics.IgnoreLayerCollision(CustomRaftLayer, LayerMask.NameToLayer("piece"),
-      true);
+      false);
+
     Physics.IgnoreLayerCollision(CustomRaftLayer, LayerMask.NameToLayer("character"),
       true);
     Physics.IgnoreLayerCollision(CustomRaftLayer, LayerMask.NameToLayer("smoke"),
@@ -623,10 +662,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void AddGuiLayerComponents()
   {
-    VehicleShip.HasVehicleDebugger = HasVehicleDebug.Value;
-    MoveableBaseShipComponent.HasVehicleDebugger = HasVehicleDebug.Value;
-
-    AddRemoveVehicleDebugGui(HasVehicleDebug.Value);
+    AddRemoveVehicleDebugGui(VehicleDebugConfig.VehicleDebugMenuEnabled.Value);
   }
 
   /**

@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Patches;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
@@ -112,17 +113,28 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
       return deprecatedShipControls.GetHoverText();
     }
 
-    var controller = ShipInstance?.VehicleController?.Instance;
+    var controller = ShipInstance?.VehiclePiecesController?.Instance;
     if (controller == null)
     {
       return Localization.instance.Localize(
         "<color=white><b>$valheim_vehicles_wheel_use_error</b></color>");
     }
 
-    var isAnchored = controller.VehicleInstance.MovementController.IsAnchored;
+    var isAnchored = controller?.VehicleInstance?.MovementController.IsAnchored ?? false;
     var anchorKeyString = GetAnchorHotkeyString();
-    return GetHoverTextFromShip(controller.totalSailArea, controller.TotalMass, controller.ShipMass,
-      controller.ShipContainerMass, controller.GetSailingForce(), isAnchored, anchorKeyString);
+    var hoverText = GetHoverTextFromShip(controller?.totalSailArea ?? 0,
+      controller?.TotalMass ?? 0,
+      controller?.ShipMass ?? 0,
+      controller?.ShipContainerMass ?? 0, controller?.GetSailingForce() ?? 0, isAnchored,
+      anchorKeyString);
+#if DEBUG
+    if ((bool)controller?.MovementController?.m_players?.Any())
+    {
+      hoverText +=
+        $"\n[<color=red><b>Owner: {controller?.VehicleInstance?.NetView.GetZDO().GetOwner()} and name: {controller?.MovementController?.m_players[0].GetPlayerName()}</b></color>]";
+    }
+#endif
+    return hoverText;
   }
 
   private void Awake()
@@ -130,6 +142,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
     AttachPoint = transform.Find("attachpoint");
     wheelTransform = transform.Find("controls/wheel");
     wheelLocalOffset = wheelTransform.position - transform.position;
+    PrefabRegistryHelpers.IgnoreCameraCollisions(gameObject);
   }
 
   public string GetHoverName()
@@ -200,7 +213,13 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
 
     var playerOnShipViaShipInstance =
-      ShipInstance?.VehicleController?.Instance.GetComponentsInChildren<Player>() ?? null;
+      ShipInstance?.VehiclePiecesController?.Instance.GetComponentsInChildren<Player>() ?? null;
+
+    if (playerOnShipViaShipInstance?.Length == 0 || playerOnShipViaShipInstance == null)
+    {
+      playerOnShipViaShipInstance =
+        ShipInstance?.Instance?.MovementController?.m_players.ToArray() ?? null;
+    }
 
     /*
      * <note /> This logic allows for the player to just look at the Raft and see if the player is a child within it.
@@ -355,8 +374,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
     if (_controls != null)
     {
-      _controls.InitializeWheelWithShip(vehicleShip,
-        this);
+      _controls.InitializeWheelWithShip(this);
       ShipInstance = vehicleShip;
       _controls.enabled = true;
     }

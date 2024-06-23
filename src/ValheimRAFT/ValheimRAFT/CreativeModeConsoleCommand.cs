@@ -2,6 +2,7 @@ using System.Collections;
 using Jotunn.Entities;
 using UnityEngine;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -19,6 +20,7 @@ public class CreativeModeConsoleCommand : ConsoleCommand
 
   private static IEnumerator SetPlayerBackOnBoat(Character character)
   {
+    yield return new WaitForSeconds(0.5f);
     yield return new WaitForFixedUpdate();
     character.m_body.velocity = Vector3.zero;
     character.m_body.angularVelocity = Vector3.zero;
@@ -76,15 +78,17 @@ public class CreativeModeConsoleCommand : ConsoleCommand
       return false;
     }
 
-    var toggledKinematicValue = !ship.m_body.isKinematic;
-    ship.m_body.isKinematic = toggledKinematicValue;
-    ship.m_zsyncTransform.m_isKinematicBody = toggledKinematicValue;
+    var toggledKinematicValue = !ship.MovementController.m_body.isKinematic;
+    ship.MovementController.m_body.isKinematic = toggledKinematicValue;
+    ship.movementZSyncTransform.m_isKinematicBody = toggledKinematicValue;
 
     if (toggledKinematicValue)
     {
       var shipYPosition =
-        ship.m_body.position.y + ValheimRaftPlugin.Instance.RaftCreativeHeight.Value;
-      var playerInBoat = character.transform.parent == ship.VehicleController.Instance.transform;
+        ship.MovementController.m_body.position.y +
+        ValheimRaftPlugin.Instance.RaftCreativeHeight.Value;
+      var playerInBoat =
+        character.transform.parent == ship.VehiclePiecesController.Instance.transform;
       if (playerInBoat)
       {
         character.m_body.isKinematic = true;
@@ -100,14 +104,8 @@ public class CreativeModeConsoleCommand : ConsoleCommand
       var directionRaftUpwards = new Vector3(ship.transform.position.x,
         shipYPosition,
         ship.transform.position.z);
-      var rotationWithoutTilt = Quaternion.Euler(0, ship.m_body.rotation.eulerAngles.y, 0);
+      ship.MovementController.m_body.position = directionRaftUpwards;
       ship.SetCreativeMode(true);
-
-      ship.m_body.position = directionRaftUpwards;
-      ship.m_body.transform.rotation = rotationWithoutTilt;
-      ship.Instance.transform.rotation = rotationWithoutTilt;
-      ship.VehicleController.Instance.transform.rotation = rotationWithoutTilt;
-      ship.transform.rotation = rotationWithoutTilt;
       character.StartCoroutine(SetPlayerBackOnBoat(character));
     }
     else

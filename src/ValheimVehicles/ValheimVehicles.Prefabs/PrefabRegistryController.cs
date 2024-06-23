@@ -163,6 +163,8 @@ public class PrefabRegistryController : MonoBehaviour
     // VehiclePrefabs
     VehiclePiecesPrefab.Instance.Register(prefabManager, pieceManager);
     WaterVehiclePrefab.Instance.Register(prefabManager, pieceManager);
+
+    RamPrefabs.Instance.Register(prefabManager, pieceManager);
   }
 
   public static void RegisterAllPrefabs()
@@ -289,21 +291,21 @@ public class PrefabRegistryController : MonoBehaviour
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("rope_anchor"),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
-      Requirements = new RequirementConfig[2]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 1,
           Item = "Iron",
           Recover = true
         },
-        new()
+        new RequirementConfig
         {
           Amount = 4,
           Item = "IronNails",
           Recover = true
         }
-      }
+      ]
     }));
   }
 
@@ -346,15 +348,15 @@ public class PrefabRegistryController : MonoBehaviour
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Icon = pierPolePrefabPiece.m_icon,
-      Requirements = new RequirementConfig[1]
-      {
-        new()
+      Requirements =
+      [
+        new RequirementConfig
         {
           Amount = 4,
           Item = "RoundLog",
           Recover = true
         }
-      }
+      ]
     });
 
     // this could be off with the name since the name is overridden it may not apply until after things are run.
@@ -556,10 +558,8 @@ public class PrefabRegistryController : MonoBehaviour
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(mbDirtFloorPrefab);
 
-    var wnt = PrefabRegistryHelpers.SetWearNTear(mbDirtFloorPrefab);
+    var wnt = PrefabRegistryHelpers.SetWearNTear(mbDirtFloorPrefab, 2);
     wnt.m_haveRoof = false;
-    wnt.m_materialType = WearNTear.MaterialType.Stone;
-    wnt.m_destroyedEffect = LoadValheimAssets.stoneFloorPieceWearNTear.m_destroyedEffect;
 
     // Makes the component cultivatable
     mbDirtFloorPrefab.AddComponent<CultivatableComponent>();

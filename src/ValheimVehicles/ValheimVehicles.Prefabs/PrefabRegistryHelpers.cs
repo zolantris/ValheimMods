@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using HarmonyLib;
 using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
+using ValheimRAFT;
+using ValheimVehicles.Prefabs.Registry;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
@@ -30,7 +33,94 @@ public abstract class PrefabRegistryHelpers
 
   public static readonly Dictionary<string, PieceData> PieceDataDictionary = new();
 
-  // todo consider using Jotunn.Manager.RenderManager for these Icon generation
+  public static ZSyncTransform GetOrAddMovementZSyncTransform(GameObject obj)
+  {
+    var zSyncTransform = obj.GetComponent<ZSyncTransform>();
+    if (zSyncTransform == null)
+    {
+      zSyncTransform = obj.AddComponent<ZSyncTransform>();
+    }
+
+    zSyncTransform.m_syncPosition = true;
+    zSyncTransform.m_syncBodyVelocity = true;
+    zSyncTransform.m_syncRotation = true;
+    return zSyncTransform;
+  }
+
+  public static ZNetView AddTempNetView(GameObject obj, bool prioritized = false)
+  {
+    var netView = obj.GetComponent<ZNetView>();
+    if (netView == null)
+    {
+      // var prevVal = ZNetView.m_useInitZDO;
+      // ZNetView.m_useInitZDO = false;
+      netView = obj.AddComponent<ZNetView>();
+      // ZNetView.m_useInitZDO = prevVal;
+    }
+
+    if (prioritized)
+    {
+      netView.m_type = ZDO.ObjectType.Prioritized;
+    }
+
+    netView.m_persistent = false;
+    netView.m_distant = true;
+    return netView;
+  }
+
+  private static void RegisterRamPieces()
+  {
+    int[] ramSizes = [1, 2];
+    string[] ramMaterials = [PrefabTiers.Tier1, PrefabTiers.Tier3];
+    foreach (var ramMaterial in ramMaterials)
+    {
+      var materialTranslation = PrefabTiers.GetTierMaterialTranslation(ramMaterial);
+      foreach (var ramSize in ramSizes)
+      {
+        PieceDataDictionary.Add(
+          PrefabNames.GetRamStakeName(ramMaterial, ramSize), new PieceData()
+          {
+            Name =
+              $"valheim_vehicles_ram_stake {materialTranslation}",
+            Description = "valheim_vehicles_ram_stake_desc",
+            Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(
+              SpriteNames.GetRamStakeName(ramMaterial, ramSize))
+          });
+      }
+    }
+
+    string[] bladeDirs = ["top", "bottom", "left", "right"];
+
+    foreach (var bladeDir in bladeDirs)
+    {
+      PieceDataDictionary.Add(
+        PrefabNames.GetRamBladeName(bladeDir), new PieceData()
+        {
+          Name =
+            $"valheim_vehicles_ram_blade $valheim_vehicles_direction_{bladeDir} $valheim_vehicles_material_bronze",
+          Description = "valheim_vehicles_ram_blade_desc",
+          Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(
+            SpriteNames.GetRamBladeName(bladeDir))
+        });
+    }
+  }
+
+  private static void RegisterExternalShips()
+  {
+    if (!ValheimRaftPlugin.Instance.AllowExperimentalPrefabs.Value) return;
+
+    const string prefabName = "Nautilus Submarine";
+    const string description = $"Experimental Nautilus technology discovered. Have Fun!";
+    PieceDataDictionary.Add(
+      PrefabNames.Nautilus, new PieceData()
+      {
+        Name = prefabName,
+        Description = description,
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.Nautilus)
+      });
+  }
+
+// todo consider using Jotunn.Manager.RenderManager for these Icon generation
   /// todo auto generate this from the translations json
   /// 4x4 and 2x2 icons look similar, may remove 4x4
   public static void Init()
@@ -38,6 +128,8 @@ public abstract class PrefabRegistryHelpers
     PieceLayer = LayerMask.NameToLayer("piece");
     var spriteAtlas = LoadValheimVehicleAssets.VehicleSprites;
 
+    RegisterRamPieces();
+    RegisterExternalShips();
     // slabs
     const string slabName = "valheim_vehicles_hull_slab";
     const string slabDescription = $"{slabName}_desc";
@@ -45,7 +137,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Wood,
         PrefabNames.PrefabSizeVariant.Two), new PieceData()
       {
-        Name = $"{slabName} $valheim_vehicles_material_wood 2x2",
+        Name = $"{slabName} 2x2 $valheim_vehicles_material_wood",
         Description = $"{slabDescription}",
         Icon = spriteAtlas.GetSprite("hull_slab_2x2_wood")
       });
@@ -54,7 +146,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Wood,
         PrefabNames.PrefabSizeVariant.Four), new PieceData()
       {
-        Name = $"{slabName} $valheim_vehicles_material_wood 4x4",
+        Name = $"{slabName} 4x4 $valheim_vehicles_material_wood",
         Description = $"{slabDescription}",
         Icon = spriteAtlas.GetSprite("hull_slab_4x4_wood")
       });
@@ -63,7 +155,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Iron,
         PrefabNames.PrefabSizeVariant.Two), new PieceData()
       {
-        Name = $"{slabName} $valheim_vehicles_material_iron 2x2",
+        Name = $"{slabName} 2x2 $valheim_vehicles_material_iron",
         Description = $"{slabDescription}",
         Icon = spriteAtlas.GetSprite("hull_slab_2x2_iron")
       });
@@ -72,7 +164,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Iron,
         PrefabNames.PrefabSizeVariant.Four), new PieceData()
       {
-        Name = $"{slabName} $valheim_vehicles_material_iron 4x4",
+        Name = $"{slabName} 4x4 $valheim_vehicles_material_iron",
         Description = $"{slabDescription}",
         Icon = spriteAtlas.GetSprite("hull_slab_4x4_iron")
       });
@@ -85,7 +177,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullWallVariants(ShipHulls.HullMaterial.Wood,
         PrefabNames.PrefabSizeVariant.Two), new PieceData()
       {
-        Name = $"{wallName} 2x2 ($valheim_vehicles_material_wood)",
+        Name = $"{wallName} 2x2 $valheim_vehicles_material_wood",
         Description = $"{wallDescription}",
         Icon = spriteAtlas.GetSprite("hull_wall_2x2_wood")
       });
@@ -94,7 +186,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullWallVariants(ShipHulls.HullMaterial.Wood,
         PrefabNames.PrefabSizeVariant.Four), new PieceData()
       {
-        Name = $"{wallName} 4x4 ($valheim_vehicles_material_wood)",
+        Name = $"{wallName} 4x4 $valheim_vehicles_material_wood",
         Description = $"{wallDescription}",
         Icon = spriteAtlas.GetSprite("hull_wall_4x4_wood")
       });
@@ -103,7 +195,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullWallVariants(ShipHulls.HullMaterial.Iron,
         PrefabNames.PrefabSizeVariant.Two), new PieceData()
       {
-        Name = $"{wallName} 2x2 ($valheim_vehicles_material_iron)",
+        Name = $"{wallName} 2x2 $valheim_vehicles_material_iron",
         Description = $"{wallDescription}",
         Icon = spriteAtlas.GetSprite("hull_wall_2x2_iron")
       });
@@ -112,7 +204,7 @@ public abstract class PrefabRegistryHelpers
       PrefabNames.GetHullWallVariants(ShipHulls.HullMaterial.Iron,
         PrefabNames.PrefabSizeVariant.Four), new PieceData()
       {
-        Name = $"{wallName} 4x4 ($valheim_vehicles_material_iron)",
+        Name = $"{wallName} 4x4 $valheim_vehicles_material_iron",
         Description = $"{wallDescription}",
         Icon = spriteAtlas.GetSprite("hull_wall_4x4_iron")
       });
@@ -216,6 +308,18 @@ public abstract class PrefabRegistryHelpers
     });
   }
 
+  public static void IgnoreCameraCollisions(GameObject go)
+  {
+    var cameraMask = GameCamera.instance.m_blockCameraMask;
+    if (cameraMask == null) return;
+    var colliders = go.GetComponentsInChildren<Collider>();
+
+    foreach (var collider in colliders)
+    {
+      collider.excludeLayers = cameraMask;
+    }
+  }
+
   /// <summary>
   /// Auto sets up new, worn, broken for wnt
   /// </summary>
@@ -256,7 +360,7 @@ public abstract class PrefabRegistryHelpers
     return piece;
   }
 
-  public static ZNetView AddNetViewWithPersistence(GameObject prefab)
+  public static ZNetView AddNetViewWithPersistence(GameObject prefab, bool prioritized = false)
   {
     var netView = prefab.GetComponent<ZNetView>();
     if (!(bool)netView)
@@ -268,6 +372,11 @@ public abstract class PrefabRegistryHelpers
     {
       Logger.LogError("Unable to register NetView, ValheimRAFT could be broken without netview");
       return netView;
+    }
+
+    if (prioritized)
+    {
+      netView.m_type = ZDO.ObjectType.Prioritized;
     }
 
     netView.m_persistent = true;
@@ -296,12 +405,31 @@ public abstract class PrefabRegistryHelpers
     var wearNTearComponent = GetWearNTearSafe(prefabComponent);
 
     wearNTearComponent.m_noSupportWear = canFloat;
-
-    wearNTearComponent.m_health = PrefabRegistryController.wearNTearBaseHealth * tierMultiplier;
-    wearNTearComponent.m_noRoofWear = false;
     wearNTearComponent.m_destroyedEffect =
       LoadValheimAssets.woodFloorPieceWearNTear.m_destroyedEffect;
     wearNTearComponent.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
+
+    if (tierMultiplier == 1)
+    {
+      wearNTearComponent.m_materialType = WearNTear.MaterialType.Wood;
+      wearNTearComponent.m_destroyedEffect =
+        LoadValheimAssets.woodFloorPieceWearNTear.m_destroyedEffect;
+    }
+    else if (tierMultiplier == 2)
+    {
+      wearNTearComponent.m_materialType = WearNTear.MaterialType.Stone;
+      wearNTearComponent.m_destroyedEffect =
+        LoadValheimAssets.stoneFloorPieceWearNTear.m_destroyedEffect;
+      wearNTearComponent.m_hitEffect = LoadValheimAssets.stoneFloorPieceWearNTear.m_hitEffect;
+    }
+    else if (tierMultiplier == 3)
+    {
+      // todo add different hit effect and destroy effect
+      wearNTearComponent.m_materialType = WearNTear.MaterialType.Iron;
+    }
+
+    wearNTearComponent.m_health = PrefabRegistryController.wearNTearBaseHealth * tierMultiplier;
+    wearNTearComponent.m_noRoofWear = false;
 
     return wearNTearComponent;
   }
