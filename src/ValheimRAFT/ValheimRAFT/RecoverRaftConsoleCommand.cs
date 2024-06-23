@@ -116,7 +116,7 @@ public class RecoverRaftConsoleCommand : ConsoleCommand
       if (nv == null || nv.m_zdo == null) continue;
 
       var withinMBRoot = (bool)nv.GetComponentInParent<MoveableBaseRootComponent>();
-      var withinVehicleRoot = (bool)nv.GetComponentInParent<VehiclePieceController>();
+      var withinVehicleRoot = (bool)nv.GetComponentInParent<VehiclePiecesController>();
       if (withinMBRoot || withinVehicleRoot)
       {
         continue;

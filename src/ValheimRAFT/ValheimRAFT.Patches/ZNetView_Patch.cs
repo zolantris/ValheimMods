@@ -27,7 +27,7 @@ public class ZNetView_Patch
   {
     if (__instance.m_zdo == null) return;
 
-    VehiclePieceController.InitPiece(__instance);
+    VehiclePiecesController.InitPiece(__instance);
     CultivatableComponent.InitPiece(__instance);
 
     if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
@@ -40,7 +40,7 @@ public class ZNetView_Patch
   [HarmonyPrefix]
   private static bool ZNetView_OnDestroy(ZNetView __instance)
   {
-    var bv = __instance.GetComponentInParent<VehiclePieceController>();
+    var bv = __instance.GetComponentInParent<VehiclePiecesController>();
     if ((bool)bv)
     {
       bv.RemovePiece(__instance);

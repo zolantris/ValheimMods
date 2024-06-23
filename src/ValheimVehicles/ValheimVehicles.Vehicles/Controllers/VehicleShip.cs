@@ -413,7 +413,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       return;
     }
 
-    if (PiecesController.BaseVehicleInitState != VehiclePieceController.InitializationState.Created)
+    if (PiecesController.BaseVehicleInitState != Vehicles.VehiclePiecesController.InitializationState.Created)
     {
       return;
     }

@@ -32,7 +32,7 @@ public class Character_Patch
       return null;
     }
 
-    var bvc = __instance.m_lastGroundBody.GetComponentInParent<VehiclePieceController>();
+    var bvc = __instance.m_lastGroundBody.GetComponentInParent<VehiclePiecesController>();
     if ((bool)bvc)
     {
       return VehicleShipCompat.InitFromUnknown(bvc?.VehicleInstance);
@@ -91,10 +91,10 @@ public class Character_Patch
     //   }
     // }
 
-    VehiclePieceController? bvc = null;
+    VehiclePiecesController? bvc = null;
     if ((bool)__instance.m_lastGroundBody)
     {
-      bvc = __instance.m_lastGroundBody.GetComponentInParent<VehiclePieceController>();
+      bvc = __instance.m_lastGroundBody.GetComponentInParent<VehiclePiecesController>();
       if ((bool)bvc && __instance.transform.parent != bvc.transform)
       {
         __instance.transform.SetParent(bvc.transform);

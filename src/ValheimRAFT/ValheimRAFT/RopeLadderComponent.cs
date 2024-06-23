@@ -17,7 +17,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
   public Transform m_attachPoint;
 
   public MoveableBaseRootComponent m_mbroot;
-  public VehiclePieceController vehiclePieceController;
+  public VehiclePiecesController vehiclePiecesController;
 
   public float m_stepDistance = 0.5f;
 
@@ -113,12 +113,12 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
 
   private bool IsFlyingAndNotAnchored(Vector3 hitPoint)
   {
-    if ((bool)vehiclePieceController && (bool)vehiclePieceController.waterVehicleController &&
-        vehiclePieceController?.waterVehicleController?.VehicleInstance &&
-        vehiclePieceController?.waterVehicleController?.VehicleInstance?.Instance.TargetHeight >
+    if ((bool)vehiclePiecesController && (bool)vehiclePiecesController.waterVehicleController &&
+        vehiclePiecesController?.waterVehicleController?.VehicleInstance &&
+        vehiclePiecesController?.waterVehicleController?.VehicleInstance?.Instance.TargetHeight >
         0f &&
-        !(vehiclePieceController.VehicleInstance.Instance.MovementController.IsAnchored) &&
-        hitPoint.y < vehiclePieceController.GetColliderBottom())
+        !(vehiclePiecesController.VehicleInstance.Instance.MovementController.IsAnchored) &&
+        hitPoint.y < vehiclePiecesController.GetColliderBottom())
     {
       return true;
     }

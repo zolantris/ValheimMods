@@ -46,11 +46,11 @@ public class CreativeModeConsoleCommand : ConsoleCommand
       return;
     }
 
-    var vehiclePieceController = hitinfo.collider.GetComponentInParent<VehiclePieceController>();
+    var vehiclePiecesController = hitinfo.collider.GetComponentInParent<VehiclePiecesController>();
 
-    if ((bool)vehiclePieceController?.VehicleInstance?.Instance)
+    if ((bool)vehiclePiecesController?.VehicleInstance?.Instance)
     {
-      var vehicleShipController = vehiclePieceController?.VehicleInstance?.Instance;
+      var vehicleShipController = vehiclePiecesController?.VehicleInstance?.Instance;
       ToggleMode(player, vehicleShipController);
       return;
     }

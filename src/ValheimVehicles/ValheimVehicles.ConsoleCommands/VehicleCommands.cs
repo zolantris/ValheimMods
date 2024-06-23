@@ -96,7 +96,7 @@ public class VehicleCommands : ConsoleCommand
 
   public void VehicleMove(string[] args)
   {
-    var vehicleController = VehicleDebugHelpers.GetVehiclePieceController();
+    var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
     if (vehicleController == null)
     {
       Logger.LogMessage("No VehicleController Detected");
@@ -125,7 +125,7 @@ public class VehicleCommands : ConsoleCommand
   /// </summary>
   public static void VehicleToggleOceanSway()
   {
-    var vehicleController = VehicleDebugHelpers.GetVehiclePieceController();
+    var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
     if (!vehicleController)
     {
       Logger.LogMessage("No VehicleController Detected");
@@ -137,7 +137,7 @@ public class VehicleCommands : ConsoleCommand
 
   private static void VehicleRotate(string[] args)
   {
-    var vehicleController = VehicleDebugHelpers.GetVehiclePieceController();
+    var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
     if (!vehicleController)
     {
       Logger.LogMessage("No VehicleController Detected");
@@ -167,7 +167,7 @@ public class VehicleCommands : ConsoleCommand
 
   private static void RunDowngradeToV1()
   {
-    var vehicleController = VehicleDebugHelpers.GetVehiclePieceController();
+    var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
     if (!vehicleController)
     {
       Logger.LogMessage("No v1 raft detected");

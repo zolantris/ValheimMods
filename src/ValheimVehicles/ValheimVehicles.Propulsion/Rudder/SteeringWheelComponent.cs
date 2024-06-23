@@ -183,7 +183,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
     if (user == Player.m_localPlayer)
     {
-      var baseVehicle = GetComponentInParent<VehiclePieceController>();
+      var baseVehicle = GetComponentInParent<VehiclePiecesController>();
       if (baseVehicle != null)
       {
         baseVehicle.ComputeAllShipContainerItemWeight();

@@ -25,12 +25,12 @@ namespace ValheimVehicles.Vehicles;
 
 /// <summary>controller used for all vehicles</summary>
 /// <description> This is a controller used for all vehicles, Currently it must be initialized within a vehicle view IE VehicleShip or upcoming VehicleWheeled, and VehicleFlying instances.</description>
-public class VehiclePieceController : MonoBehaviour
+public class VehiclePiecesController : MonoBehaviour
 {
   /*
    * Get all the instances statically
    */
-  public static Dictionary<int, VehiclePieceController> ActiveInstances = new();
+  public static Dictionary<int, VehiclePiecesController> ActiveInstances = new();
 
   public static Dictionary<int, List<ZNetView>> m_pendingPieces = new();
 
@@ -717,7 +717,7 @@ public class VehiclePieceController : MonoBehaviour
            m_blockingcollider.size.y / 2f;
   }
 
-  public static void AddInactivePiece(int id, ZNetView netView, VehiclePieceController? instance)
+  public static void AddInactivePiece(int id, ZNetView netView, VehiclePiecesController? instance)
   {
     if (hasDebug) Logger.LogDebug($"addInactivePiece called with {id} for {netView.name}");
 
@@ -853,7 +853,7 @@ public class VehiclePieceController : MonoBehaviour
     {
       m_ladders.Remove(ladder);
       ladder.m_mbroot = null;
-      ladder.vehiclePieceController = null;
+      ladder.vehiclePiecesController = null;
     }
   }
 
@@ -1208,7 +1208,7 @@ public class VehiclePieceController : MonoBehaviour
   /// <param name="source"></param>
   /// <param name="bvc"></param>
   /// <returns></returns>
-  public static bool AddDynamicParentForVehicle(ZNetView source, VehiclePieceController bvc)
+  public static bool AddDynamicParentForVehicle(ZNetView source, VehiclePiecesController bvc)
   {
     if (source == null) return false;
     if (!source.isActiveAndEnabled)
@@ -1225,7 +1225,7 @@ public class VehiclePieceController : MonoBehaviour
 
   public static bool AddDynamicParent(ZNetView source, GameObject target)
   {
-    var bvc = target.GetComponentInParent<VehiclePieceController>();
+    var bvc = target.GetComponentInParent<VehiclePiecesController>();
     if (!(bool)bvc) return false;
     return AddDynamicParentForVehicle(source, bvc);
   }
@@ -1726,7 +1726,7 @@ public class VehiclePieceController : MonoBehaviour
     if ((bool)ladder)
     {
       m_ladders.Add(ladder);
-      ladder.vehiclePieceController = this;
+      ladder.vehiclePiecesController = this;
     }
 
     var isRam = RamPrefabs.IsRam(netView.name);
@@ -1883,8 +1883,14 @@ public class VehiclePieceController : MonoBehaviour
 
     _vehicleBounds = new Bounds();
 
-    foreach (var netView in m_pieces)
+    foreach (var netView in m_pieces.ToList())
     {
+      if (!netView)
+      {
+        m_pieces.Remove(netView);
+        continue;
+      }
+
       EncapsulateBounds(netView.gameObject);
     }
 

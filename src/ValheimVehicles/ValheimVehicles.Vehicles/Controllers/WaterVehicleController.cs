@@ -19,7 +19,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
-public class WaterVehicleController : VehiclePieceController, IWaterVehicleController
+public class WaterVehicleController : VehiclePiecesController, IWaterVehicleController
 {
   private VehicleShip? _vehicleInstance;
 
