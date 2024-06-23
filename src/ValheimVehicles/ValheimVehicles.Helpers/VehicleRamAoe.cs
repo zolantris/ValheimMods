@@ -421,16 +421,10 @@ public class VehicleRamAoe : Aoe
     var childColliders = GetComponentsInChildren<Collider>();
     var colliderFrontPhysicalOnly =
       childColliders.First((collider) => collider.name == "collider_front_physical");
-    if (!colliderFrontPhysicalOnly) return;
-    foreach (var childCollider in childColliders)
-    {
-      if (childCollider.name == "collider_front_physical")
-      {
-        continue;
-      }
-
-      Physics.IgnoreCollision(childCollider, colliderFrontPhysicalOnly, true);
-    }
+    var damageCollider =
+      childColliders.First((collider) => collider.name == "collider_front");
+    if (!colliderFrontPhysicalOnly || !damageCollider) return;
+    Physics.IgnoreCollision(damageCollider, colliderFrontPhysicalOnly);
   }
 
   private bool ShouldIgnore(Collider collider)

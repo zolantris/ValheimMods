@@ -34,13 +34,13 @@ public class RamPrefabs : IRegisterPrefab
                                               objName.StartsWith(PrefabNames.RamStakePrefix);
 
 
-  private VehicleRamAoe SetupAoeComponent(GameObject colliderObj)
+  private static VehicleRamAoe SetupAoeComponent(GameObject colliderObj)
   {
     var aoe = colliderObj.AddComponent<VehicleRamAoe>();
     return aoe;
   }
 
-  private void RegisterRamStake()
+  private static void RegisterRamStake()
   {
     RamVariant[] loadedAssets =
     [
@@ -122,7 +122,7 @@ public class RamPrefabs : IRegisterPrefab
     }
   }
 
-  private void RegisterRamBlade()
+  private static void RegisterRamBlade()
   {
     RamVariant[] loadedAssets =
     [

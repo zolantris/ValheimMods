@@ -2085,25 +2085,18 @@ public class VehiclePiecesController : MonoBehaviour
   public void EncapsulateBounds(GameObject go)
   {
     var colliders = GetCollidersInPiece(go);
-    if (!RamPrefabs.IsRam(go.name))
-    {
-      IgnoreShipColliders(colliders);
 
-      // todo This should only apply for wheels and other gadgets that should not block camera
-      IgnoreCameraCollision(colliders);
-    }
+    IgnoreShipColliders(colliders);
+    // todo This should only apply for wheels and other gadgets that should not block camera
+    IgnoreCameraCollision(colliders);
+
 
     var door = go.GetComponentInChildren<Door>();
     var ladder = go.GetComponent<RopeLadderComponent>();
     var rope = go.GetComponent<RopeAnchorComponent>();
 
-    if (!door && !ladder && !rope && !go.name.StartsWith(PrefabNames.Tier1RaftMastName) &&
-        !go.name.StartsWith(PrefabNames.Tier1CustomSailName) &&
-        !go.name.StartsWith(PrefabNames.Tier2RaftMastName) &&
-        !go.name.StartsWith(PrefabNames.Tier3RaftMastName) &&
-        !go.name.StartsWith(PrefabNames.Tier4RaftMastName) &&
-        !go.name.StartsWith(PrefabNames.RamBladePrefix) &&
-        !go.name.StartsWith(PrefabNames.RamStakePrefix))
+    if (!door && !ladder && !rope && SailPrefabs.IsSail(go.name)
+        && !RamPrefabs.IsRam(go.name))
     {
       if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value || ShipHulls.IsHull(go))
       {
