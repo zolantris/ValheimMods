@@ -105,6 +105,20 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
       $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$valheim_vehicles_wheel_use</b></color> {anchoredStatus}\n[<color=yellow><b>{anchorKeyString}</b></color>] <color=white>{anchorText}</color> {shipStatsText}");
   }
 
+
+  private string GetOwnerHoverText()
+  {
+    var controller = ShipInstance?.VehiclePiecesController?.Instance;
+    return controller == null
+      ? ""
+      : $"\n[<color=red><b>Owner: {controller?.VehicleInstance?.NetView.GetZDO().GetOwner()} and name: {controller?.MovementController?.m_players[0].GetPlayerName()}</b></color>]";
+  }
+
+  private string GetBeachedHoverText()
+  {
+    return $"\n[<color=red><b>$valheim_vehicles_gui_vehicle_is_beached</b></color>]";
+  }
+
   public string GetHoverText()
   {
     // deprecated MBRaft support
@@ -127,14 +141,17 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
       controller?.ShipMass ?? 0,
       controller?.ShipContainerMass ?? 0, controller?.GetSailingForce() ?? 0, isAnchored,
       anchorKeyString);
-#if DEBUG
     if ((bool)controller?.MovementController?.m_players?.Any())
     {
-      hoverText +=
-        $"\n[<color=red><b>Owner: {controller?.VehicleInstance?.NetView.GetZDO().GetOwner()} and name: {controller?.MovementController?.m_players[0].GetPlayerName()}</b></color>]";
+      hoverText += GetOwnerHoverText();
     }
-#endif
-    return hoverText;
+
+    if ((bool)controller?.MovementController?.isBeached)
+    {
+      hoverText += GetBeachedHoverText();
+    }
+
+    return Localization.instance.Localize(hoverText);
   }
 
   private void Awake()
@@ -183,7 +200,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
     if (user == Player.m_localPlayer)
     {
-      var baseVehicle = GetComponentInParent<BaseVehicleController>();
+      var baseVehicle = GetComponentInParent<VehiclePiecesController>();
       if (baseVehicle != null)
       {
         baseVehicle.ComputeAllShipContainerItemWeight();

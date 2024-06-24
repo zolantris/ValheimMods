@@ -2,6 +2,7 @@ using System;
 using Components;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.Config;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
@@ -24,7 +25,7 @@ public class Ship_Patch
 
       var mbShip = __instance.gameObject.AddComponent<MoveableBaseShipComponent>();
 
-      if (ValheimRaftPlugin.Instance.HasVehicleDebug.Value)
+      if (VehicleDebugConfig.VehicleDebugMenuEnabled.Value)
       {
         var debugHelpersInstance = mbShip.VehicleDebugHelpersInstance =
           __instance.gameObject.AddComponent<VehicleDebugHelpers>();

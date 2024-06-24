@@ -35,29 +35,29 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 #if DEBUG
     GUILayout.BeginArea(new Rect(250, 10, 200, 200), myButtonStyle);
     if (GUILayout.Button(
-          $"ActivatePendingPieces {BaseVehicleController.DEBUGAllowActivatePendingPieces}"))
+          $"ActivatePendingPieces {VehiclePiecesController.DEBUGAllowActivatePendingPieces}"))
     {
-      BaseVehicleController.DEBUGAllowActivatePendingPieces =
-        !BaseVehicleController.DEBUGAllowActivatePendingPieces;
-      if (BaseVehicleController.DEBUGAllowActivatePendingPieces)
+      VehiclePiecesController.DEBUGAllowActivatePendingPieces =
+        !VehiclePiecesController.DEBUGAllowActivatePendingPieces;
+      if (VehiclePiecesController.DEBUGAllowActivatePendingPieces)
       {
-        foreach (var baseVehicleController in BaseVehicleController.ActiveInstances.Values)
+        foreach (var vehiclePiecesController in VehiclePiecesController.ActiveInstances.Values)
         {
-          baseVehicleController.ActivatePendingPiecesCoroutine();
+          vehiclePiecesController.ActivatePendingPiecesCoroutine();
         }
       }
     }
 
     if (GUILayout.Button(
-          $"Toggle Sync Physics {BaseVehicleController.ForceKinematic}"))
+          $"Toggle Sync Physics {VehiclePiecesController.ForceKinematic}"))
     {
-      BaseVehicleController.ForceKinematic =
-        !BaseVehicleController.ForceKinematic;
+      VehiclePiecesController.ForceKinematic =
+        !VehiclePiecesController.ForceKinematic;
     }
 
     if (GUILayout.Button("Delete ShipZDO"))
     {
-      var currentShip = VehicleDebugHelpers.GetVehicleController();
+      var currentShip = VehicleDebugHelpers.GetVehiclePiecesController();
       if (currentShip != null)
       {
         ZNetScene.instance.Destroy(currentShip.VehicleInstance.NetView.gameObject);
@@ -132,7 +132,7 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
     if (GUILayout.Button("activatePendingPieces"))
     {
-      VehicleDebugHelpers.GetVehicleController()?.ActivatePendingPiecesCoroutine();
+      VehicleDebugHelpers.GetVehiclePiecesController()?.ActivatePendingPiecesCoroutine();
     }
 
     if (GUILayout.Button("Zero Ship RotationXZ"))

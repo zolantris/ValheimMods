@@ -72,6 +72,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5005962368596029461}
     m_Modifications:
+    - target: {fileID: 1684913042525598010, guid: aab32cce2ea559c4f82a49b09afb2d93, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3561694535735155634, guid: aab32cce2ea559c4f82a49b09afb2d93, type: 3}
       propertyPath: m_Name
       value: shared_nautilus

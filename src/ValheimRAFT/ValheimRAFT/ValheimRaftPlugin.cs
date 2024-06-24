@@ -36,7 +36,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "2.1.1";
+  public const string Version = "2.2.0";
   public const string ModName = "ValheimRAFT";
   public const string ModGuid = $"{Author}.{ModName}";
   public const string HarmonyGuid = $"{Author}.{ModName}";
@@ -117,7 +117,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
   public ConfigEntry<bool> ProtectVehiclePiecesOnErrorFromWearNTearDamage { get; set; }
   public ConfigEntry<bool> DebugRemoveStartMenuBackground { get; set; }
-  public ConfigEntry<bool> SyncShipPhysicsOnAllClients { get; set; }
   public ConfigEntry<bool> HullCollisionOnly { get; set; }
 
   // sounds for VehicleShip Effects
@@ -136,8 +135,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   public ConfigEntry<HullFloatation> HullFloatationColliderLocation { get; set; }
   public ConfigEntry<float> HullFloatationCustomColliderOffset { get; set; }
-  public ConfigEntry<bool> HasVehicleDebug { get; set; }
-
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -180,9 +177,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         true, true
       ));
 
-    HasVehicleDebug = Config.Bind("Vehicles", "HasVehicleDebug", false,
-      CreateConfigDescription(
-        "Enables the debug menu, for showing colliders or rotating the ship", false, true));
     EnableExactVehicleBounds = Config.Bind("Vehicles", "EnableExactVehicleBounds", false,
       CreateConfigDescription(
         "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible",
@@ -382,11 +376,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         CreateConfigDescription(
           "Removes the start scene background, only use this if you want to speedup start time",
           false, true));
-    SyncShipPhysicsOnAllClients =
-      Config.Bind("Debug", "SyncShipPhysicsOnAllClients", false,
-        CreateConfigDescription(
-          "Makes all clients sync physics",
-          true, true));
   }
 
   private void CreateGraphicsConfig()
@@ -524,6 +513,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     RamConfig.BindConfig(Config);
     PrefabConfig.BindConfig(Config);
     VehicleDebugConfig.BindConfig(Config);
+    PropulsionConfig.BindConfig(Config);
   }
 
   internal void ApplyMetricIfAvailable()

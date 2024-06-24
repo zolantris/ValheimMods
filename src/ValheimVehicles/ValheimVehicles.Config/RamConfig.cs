@@ -1,5 +1,4 @@
 using BepInEx.Configuration;
-using ComfyLib;
 using ValheimVehicles.Helpers;
 
 namespace ValheimVehicles.Config;

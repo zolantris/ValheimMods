@@ -93,6 +93,22 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal Cloth m_sailCloth;
 
+  public Cloth? GetSailCloth()
+  {
+    if (!m_sailObject) return null;
+    if (!m_sailCloth)
+    {
+      m_sailCloth = m_sailObject.GetComponent<Cloth>();
+    }
+
+    if (!m_sailCloth)
+    {
+      m_sailCloth = m_sailObject.AddComponent<Cloth>();
+    }
+
+    return m_sailCloth;
+  }
+
   internal float m_lastDepth = -9999f;
 
   internal float m_lastWaterImpactTime;
@@ -172,7 +188,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
     Heightmap.ForceGenerateAll();
 
-    m_sailCloth = m_sailObject.GetComponentInChildren<Cloth>();
+    // m_sailCloth = m_sailObject.GetComponent<Cloth>();
   }
 
   /**

@@ -24,6 +24,14 @@ public class Character_Patch
     return list;
   }
 
+  [HarmonyPatch(typeof(Character), "InWater")]
+  [HarmonyPostfix]
+  public static void InWater(Character __instance, bool __result)
+  {
+    var vpc = __instance.transform.root.GetComponent<VehiclePiecesController>();
+    if (vpc) __result = false;
+  }
+
   public static object? GetStandingOnShip(Character __instance)
   {
     if (__instance.InNumShipVolumes == 0 || !__instance.IsOnGround() ||
@@ -32,7 +40,7 @@ public class Character_Patch
       return null;
     }
 
-    var bvc = __instance.m_lastGroundBody.GetComponentInParent<BaseVehicleController>();
+    var bvc = __instance.m_lastGroundBody.GetComponentInParent<VehiclePiecesController>();
     if ((bool)bvc)
     {
       return VehicleShipCompat.InitFromUnknown(bvc?.VehicleInstance);
@@ -91,10 +99,10 @@ public class Character_Patch
     //   }
     // }
 
-    BaseVehicleController? bvc = null;
+    VehiclePiecesController? bvc = null;
     if ((bool)__instance.m_lastGroundBody)
     {
-      bvc = __instance.m_lastGroundBody.GetComponentInParent<BaseVehicleController>();
+      bvc = __instance.m_lastGroundBody.GetComponentInParent<VehiclePiecesController>();
       if ((bool)bvc && __instance.transform.parent != bvc.transform)
       {
         __instance.transform.SetParent(bvc.transform);

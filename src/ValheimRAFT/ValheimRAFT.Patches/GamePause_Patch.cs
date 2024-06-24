@@ -29,7 +29,7 @@ public class GamePause_Patch
   {
     var zdoSector = zdo.GetSector();
     var zdoPosition = zdo.GetPosition();
-    var playerOffsetHash = BaseVehicleController.GetDynamicParentOffset(player.m_nview);
+    var playerOffsetHash = VehiclePiecesController.GetDynamicParentOffset(player.m_nview);
 
     ZoneSystem.instance.PokeLocalZone(zdoSector);
     yield return new WaitUntil(() => ZoneSystem.instance.IsZoneLoaded(zdoSector));
@@ -44,7 +44,7 @@ public class GamePause_Patch
   private static void PreventTimeFreezeOnShip()
   {
     if (!Player.m_localPlayer) return;
-    var baseVehicleShip = Player.m_localPlayer?.GetComponentInParent<BaseVehicleController>();
+    var baseVehicleShip = Player.m_localPlayer?.GetComponentInParent<VehiclePiecesController>();
 
     // not on ship, do nothing
     if (!baseVehicleShip) return;

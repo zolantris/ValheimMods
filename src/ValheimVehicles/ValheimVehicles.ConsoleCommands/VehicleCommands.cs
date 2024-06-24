@@ -96,7 +96,7 @@ public class VehicleCommands : ConsoleCommand
 
   public void VehicleMove(string[] args)
   {
-    var vehicleController = VehicleDebugHelpers.GetVehicleController();
+    var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
     if (vehicleController == null)
     {
       Logger.LogMessage("No VehicleController Detected");
@@ -125,7 +125,7 @@ public class VehicleCommands : ConsoleCommand
   /// </summary>
   public static void VehicleToggleOceanSway()
   {
-    var vehicleController = VehicleDebugHelpers.GetVehicleController();
+    var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
     if (!vehicleController)
     {
       Logger.LogMessage("No VehicleController Detected");
@@ -137,7 +137,7 @@ public class VehicleCommands : ConsoleCommand
 
   private static void VehicleRotate(string[] args)
   {
-    var vehicleController = VehicleDebugHelpers.GetVehicleController();
+    var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
     if (!vehicleController)
     {
       Logger.LogMessage("No VehicleController Detected");
@@ -146,7 +146,7 @@ public class VehicleCommands : ConsoleCommand
 
     if (args.Length == 1)
     {
-      vehicleController.VehicleInstance.Instance.FixShipRotation();
+      vehicleController?.VehicleInstance?.MovementController?.FixShipRotation();
     }
 
     if (args.Length == 4)
@@ -154,7 +154,7 @@ public class VehicleCommands : ConsoleCommand
       float.TryParse(args[1], out var x);
       float.TryParse(args[2], out var y);
       float.TryParse(args[3], out var z);
-      vehicleController?.VehicleInstance?.Instance?.MovementController.m_body.MoveRotation(
+      vehicleController?.VehicleInstance?.Instance?.MovementController?.m_body.MoveRotation(
         Quaternion.Euler(
           Mathf.Approximately(0f, x) ? 0 : x, Mathf.Approximately(0f, y) ? 0 : y,
           Mathf.Approximately(0f, z) ? 0 : z));
@@ -167,7 +167,7 @@ public class VehicleCommands : ConsoleCommand
 
   private static void RunDowngradeToV1()
   {
-    var vehicleController = VehicleDebugHelpers.GetVehicleController();
+    var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
     if (!vehicleController)
     {
       Logger.LogMessage("No v1 raft detected");

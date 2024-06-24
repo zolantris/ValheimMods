@@ -19,7 +19,7 @@ public class PlanBuild_Patch
   [HarmonyPrefix]
   private static bool PlanPiece_CalculateSupported_Prefix(PlanPiece __instance, ref bool __result)
   {
-    if (__instance.GetComponentInParent<BaseVehicleController>())
+    if (__instance.GetComponentInParent<VehiclePiecesController>())
     {
       __result = true;
       return false;
@@ -40,7 +40,7 @@ public class PlanBuild_Patch
   private static void PlanPiece_OnPieceReplaced_Postfix(GameObject originatingPiece,
     GameObject placedPiece)
   {
-    var baseVehicle = originatingPiece.GetComponentInParent<BaseVehicleController>();
+    var baseVehicle = originatingPiece.GetComponentInParent<VehiclePiecesController>();
 
     if (baseVehicle)
     {
@@ -208,7 +208,7 @@ public class PlanBuild_Patch
     {
       Vector3 pos;
       var shipBase = item4.m_nview.GetComponentInParent<MoveableBaseRootComponent>();
-      var vehicleBase = item4.m_nview.GetComponentInParent<BaseVehicleController>();
+      var vehicleBase = item4.m_nview.GetComponentInParent<VehiclePiecesController>();
       if (shipBase)
       {
         Logger.LogDebug(

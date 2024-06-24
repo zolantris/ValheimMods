@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3078520770756774571}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: ram_stake_tier3_1x2
   m_TagString: Untagged
   m_Icon: {fileID: 0}

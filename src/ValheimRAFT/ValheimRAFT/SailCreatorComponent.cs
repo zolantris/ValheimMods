@@ -115,7 +115,7 @@ public class SailCreatorComponent : MonoBehaviour
   private bool AddToBasicVehicle(ZNetView netView)
   {
     var baseVehicle =
-      m_sailCreators[0].GetComponentInParent<BaseVehicleController>();
+      m_sailCreators[0].GetComponentInParent<VehiclePiecesController>();
     if ((bool)baseVehicle)
     {
       baseVehicle.AddNewPiece(netView);

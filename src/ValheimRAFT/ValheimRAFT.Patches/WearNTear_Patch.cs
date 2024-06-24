@@ -64,7 +64,7 @@ public class WearNTear_Patch
     {
       try
       {
-        var canDestroyVehicle = BaseVehicleController.CanDestroyVehicle(__instance.m_nview);
+        var canDestroyVehicle = VehiclePiecesController.CanDestroyVehicle(__instance.m_nview);
         return canDestroyVehicle;
       }
       catch
@@ -75,7 +75,7 @@ public class WearNTear_Patch
     }
 
 
-    var bv = __instance.GetComponentInParent<BaseVehicleController>();
+    var bv = __instance.GetComponentInParent<VehiclePiecesController>();
     if ((bool)bv)
     {
       bv.DestroyPiece(__instance);
@@ -165,7 +165,7 @@ public class WearNTear_Patch
   private static bool WearNTear_ApplyDamage(WearNTear __instance, float damage)
   {
     var mbr = __instance.GetComponentInParent<MoveableBaseShipComponent>();
-    var bv = __instance.GetComponentInParent<BaseVehicleController>();
+    var bv = __instance.GetComponentInParent<VehiclePiecesController>();
 
     // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
     if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleShip))
@@ -208,7 +208,7 @@ public class WearNTear_Patch
   {
     if (!__instance.isActiveAndEnabled) return false;
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-    var baseVehicle = __instance.GetComponentInParent<BaseVehicleController>();
+    var baseVehicle = __instance.GetComponentInParent<VehiclePiecesController>();
     if (!(bool)mbr && !(bool)baseVehicle) return true;
     // if (__instance.transform.localPosition.y > 1f) return true;
 
@@ -225,7 +225,7 @@ public class WearNTear_Patch
     var rb = collider.attachedRigidbody;
     if (!rb) return null;
     var mbr = rb.GetComponent<MoveableBaseRootComponent>();
-    var bvc = rb.GetComponent<BaseVehicleController>();
+    var bvc = rb.GetComponent<VehiclePiecesController>();
     if ((bool)mbr || bvc) return null;
     return rb;
   }

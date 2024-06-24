@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Policy;
 using Microsoft.Win32;
 using UnityEngine;
@@ -117,6 +118,7 @@ public class VehicleRamAoe : Aoe
 
     InitializeFromConfig();
     SetBaseDamageFromConfig();
+
     base.Awake();
 
     rigidbody = GetComponent<Rigidbody>();
@@ -282,8 +284,11 @@ public class VehicleRamAoe : Aoe
 
     // Must be within the BaseVehicleController otherwise this AOE could attempt to damage items within the raft ball
     var isChildOfBaseVehicle = transform.root.name.StartsWith(PrefabNames.WaterVehicleShip) ||
-                               transform.root.name.StartsWith(PrefabNames.PiecesContainer);
-    if (!(bool)isChildOfBaseVehicle)
+                               transform.root.name.StartsWith(PrefabNames.VehiclePiecesContainer) ||
+                               transform.root.name.StartsWith(
+                                 PrefabNames
+                                   .VehicleMovingPiecesContainer);
+    if (!isChildOfBaseVehicle)
     {
       isReadyForCollisions = false;
       return;
@@ -412,9 +417,9 @@ public class VehicleRamAoe : Aoe
   private bool ShouldIgnore(Collider collider)
   {
     if (!collider) return false;
-    if ((!collider.transform.root.name.StartsWith(PrefabNames.PiecesContainer) ||
-         !collider.transform.root.name.StartsWith(PrefabNames.WaterVehicleShip)) &&
-        collider.transform.root != transform.root) return false;
+    // if ((!collider.transform.root.name.StartsWith(PrefabNames.PiecesContainer) ||
+    //      !collider.transform.root.name.StartsWith(PrefabNames.WaterVehicleShip))) return false;
+    if (collider.transform.root != transform.root) return false;
 
     var childColliders = GetComponentsInChildren<Collider>();
     foreach (var childCollider in childColliders)
