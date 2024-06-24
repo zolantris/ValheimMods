@@ -1040,7 +1040,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
         continue;
       }
 
-      if (mast.m_allowSailRotation)
+      if (mast.m_allowSailRotation && PropulsionConfig.AllowBaseGameSailRotation.Value)
       {
         var newRotation = m_mastObject.transform.localRotation;
         mast.transform.localRotation = newRotation;

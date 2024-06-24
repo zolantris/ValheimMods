@@ -12,6 +12,7 @@ public static class PropulsionConfig
 
   public static ConfigEntry<bool> ShouldLiftAnchorOnSpeedChange { get; private set; } = null!;
 
+  public static ConfigEntry<bool> AllowBaseGameSailRotation { get; private set; } = null!;
 
   private const string SectionName = "Propulsion";
 
@@ -34,6 +35,11 @@ public static class PropulsionConfig
     EnableLandVehicles = Config.Bind(SectionName, "enableLandVehicles", false,
       ConfigHelpers.CreateConfigDescription(
         "Vehicles can now float on land. What is realism. Experimental only until wheels are invented. Must use rudder speeds to move forwards.",
+        true));
+
+    AllowBaseGameSailRotation = Config.Bind(SectionName, "enableBaseGameSailRotation", true,
+      ConfigHelpers.CreateConfigDescription(
+        "Lets the baseGame sails Tiers1-4 to rotate based on wind direction",
         true));
 
     ShouldLiftAnchorOnSpeedChange = Config.Bind(SectionName, "shouldLiftAnchorOnSpeedChange", false,
