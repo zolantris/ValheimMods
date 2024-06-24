@@ -119,11 +119,6 @@ public class VehicleRamAoe : Aoe
     InitializeFromConfig();
     SetBaseDamageFromConfig();
 
-    if (RamType == RamPrefabs.RamType.Stake)
-    {
-      IgnoreNestedCollider();
-    }
-
     base.Awake();
 
     rigidbody = GetComponent<Rigidbody>();
@@ -289,8 +284,11 @@ public class VehicleRamAoe : Aoe
 
     // Must be within the BaseVehicleController otherwise this AOE could attempt to damage items within the raft ball
     var isChildOfBaseVehicle = transform.root.name.StartsWith(PrefabNames.WaterVehicleShip) ||
-                               transform.root.name.StartsWith(PrefabNames.PiecesContainer);
-    if (!(bool)isChildOfBaseVehicle)
+                               transform.root.name.StartsWith(PrefabNames.VehiclePiecesContainer) ||
+                               transform.root.name.StartsWith(
+                                 PrefabNames
+                                   .VehicleMovingPiecesContainer);
+    if (!isChildOfBaseVehicle)
     {
       isReadyForCollisions = false;
       return;
@@ -416,23 +414,12 @@ public class VehicleRamAoe : Aoe
     return true;
   }
 
-  private void IgnoreNestedCollider()
-  {
-    var childColliders = GetComponentsInChildren<Collider>();
-    var colliderFrontPhysicalOnly =
-      childColliders.First((collider) => collider.name == "collider_front_physical");
-    var damageCollider =
-      childColliders.First((collider) => collider.name == "collider_front");
-    if (!colliderFrontPhysicalOnly || !damageCollider) return;
-    Physics.IgnoreCollision(damageCollider, colliderFrontPhysicalOnly);
-  }
-
   private bool ShouldIgnore(Collider collider)
   {
-    if (!collider) return true;
-    if ((!collider.transform.root.name.StartsWith(PrefabNames.PiecesContainer) ||
-         !collider.transform.root.name.StartsWith(PrefabNames.WaterVehicleShip)) &&
-        collider.transform.root != transform.root) return false;
+    if (!collider) return false;
+    // if ((!collider.transform.root.name.StartsWith(PrefabNames.PiecesContainer) ||
+    //      !collider.transform.root.name.StartsWith(PrefabNames.WaterVehicleShip))) return false;
+    if (collider.transform.root != transform.root) return false;
 
     var childColliders = GetComponentsInChildren<Collider>();
     foreach (var childCollider in childColliders)

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Extensions;
@@ -40,6 +41,17 @@ public class RamPrefabs : IRegisterPrefab
     return aoe;
   }
 
+  private static void IgnoreNestedCollider(GameObject go)
+  {
+    var childColliders = go.GetComponentsInChildren<Collider>();
+    var colliderFrontPhysicalOnly =
+      childColliders.FirstOrDefault((collider) => collider.name == "collider_front_physical");
+    var damageCollider =
+      childColliders.FirstOrDefault((collider) => collider.name == "collider_front");
+    if (!colliderFrontPhysicalOnly || !damageCollider) return;
+    Physics.IgnoreCollision(damageCollider, colliderFrontPhysicalOnly, true);
+  }
+
   private static void RegisterRamStake()
   {
     RamVariant[] loadedAssets =
@@ -74,6 +86,7 @@ public class RamPrefabs : IRegisterPrefab
       },
     ];
 
+
     foreach (var variant in loadedAssets)
     {
       var size = variant.size;
@@ -83,6 +96,8 @@ public class RamPrefabs : IRegisterPrefab
       PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
       var wnt = PrefabRegistryHelpers.SetWearNTear(prefab,
         PrefabTiers.GetTierValue(variant.material));
+      IgnoreNestedCollider(prefab.gameObject);
+
       PrefabRegistryHelpers.AddPieceForPrefab(prefabFullName, prefab);
       var bladeColliderObj = prefab.transform.FindDeepChild("damage_colliders")?.gameObject;
 

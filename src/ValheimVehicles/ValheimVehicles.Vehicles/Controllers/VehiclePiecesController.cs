@@ -1501,9 +1501,13 @@ public class VehiclePiecesController : MonoBehaviour
   /// <param name="targetTransform"></param>
   public void SetPieceToParent(Transform targetTransform)
   {
-    targetTransform.SetParent(RamPrefabs.IsRam(targetTransform.name)
-      ? _movingPiecesContainer
-      : _piecesContainer);
+    if (RamPrefabs.IsRam(targetTransform.name))
+    {
+      targetTransform.SetParent(_movingPiecesContainer);
+      return;
+    }
+
+    targetTransform.SetParent(_piecesContainer);
   }
 
   public void AddTemporaryPiece(Piece piece)
@@ -2095,7 +2099,7 @@ public class VehiclePiecesController : MonoBehaviour
     var ladder = go.GetComponent<RopeLadderComponent>();
     var rope = go.GetComponent<RopeAnchorComponent>();
 
-    if (!door && !ladder && !rope && SailPrefabs.IsSail(go.name)
+    if (!door && !ladder && !rope && !SailPrefabs.IsSail(go.name)
         && !RamPrefabs.IsRam(go.name))
     {
       if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value || ShipHulls.IsHull(go))

@@ -292,10 +292,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     var vehicleBounds = vehicleShip.PiecesController.GetVehicleBounds();
     var currentLowestHeight = transform.position.y - vehicleBounds.extents.y;
     var groundHeight = ZoneSystem.instance.GetGroundHeight(transform.position);
-    var floatColliderLowestPoint = FloatCollider.transform.position.y - FloatCollider.size.y;
+    var floatColliderLowestPoint = FloatCollider.transform.position.y - FloatCollider.size.y / 2;
 
     // approximateGroundHeight used so add a buffer so this only applies if the vehicle is stuck within the ground
-    var approximateGroundHeight = groundHeight - 2f;
+    var approximateGroundHeight = groundHeight - Math.Max(2,
+      VehicleDebugConfig.VehicleAutoFixPositionGroundHeightThreshold.Value);
     var isFloatingBelowGround = floatColliderLowestPoint < approximateGroundHeight;
     var isBelowGround = currentLowestHeight < approximateGroundHeight;
 
@@ -363,9 +364,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
     if (m_body)
     {
-      // var physicalLayers = LayerMask.GetMask("Default", "character", "piece", "terrain",
-      //   "static_solid", "Default_small", "character_net", "vehicle", LayerMask.LayerToName(29));
-      // m_body.includeLayers = physicalLayers;
+      var physicalLayers = LayerMask.GetMask("Default", "character", "piece", "terrain",
+        "static_solid", "Default_small", "character_net", "vehicle", LayerMask.LayerToName(29));
+      m_body.includeLayers = physicalLayers;
       m_body.excludeLayers = excludedLayers;
     }
   }
@@ -2002,6 +2003,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
     if (granted)
     {
+      // the person controlling the ship should control physics
       m_nview.GetZDO().SetOwner(Player.m_localPlayer.GetPlayerID());
       var attachTransform = lastUsedWheelComponent.AttachPoint;
       Player.m_localPlayer.StartDoodadControl(lastUsedWheelComponent);
@@ -2011,10 +2013,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
           onShip: true, m_attachAnimation, detachOffset);
         ShipInstance.Instance.m_controlGuiPos = lastUsedWheelComponent.wheelTransform;
       }
-
-      // TODO this might not be a good idea. Restoring the polling in ValheimBaseGameShip might be a better approach.
-      // set owner here is done because the person controlling the ship likely should be the one at the helm
-      // NetView.GetZDO().SetOwner(Player.m_localPlayer.GetPlayerID());
     }
     else
     {
@@ -2086,7 +2084,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private void SetForward()
   {
-    if (IsAnchored)
+    if (IsAnchored && !PropulsionConfig.ShouldLiftAnchorOnSpeedChange.Value)
     {
       vehicleSpeed = Ship.Speed.Stop;
       return;
@@ -2107,6 +2105,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
         vehicleSpeed = Ship.Speed.Stop;
         break;
       case Ship.Speed.Full:
+        break;
+      default:
+        Logger.LogWarning($"Recieved a unknown Ship.Speed, {vehicleSpeed}");
         break;
     }
   }

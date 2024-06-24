@@ -10,6 +10,9 @@ public static class PropulsionConfig
   public static ConfigEntry<float> TurnPowerWithRudder { get; private set; } = null!;
   public static ConfigEntry<bool> EnableLandVehicles { get; private set; } = null!;
 
+  public static ConfigEntry<bool> ShouldLiftAnchorOnSpeedChange { get; private set; } = null!;
+
+
   private const string SectionName = "Propulsion";
 
   /// <summary>
@@ -24,7 +27,7 @@ public static class PropulsionConfig
       ConfigHelpers.CreateConfigDescription(
         "Set the base turning power of the steering wheel", true));
 
-    TurnPowerWithRudder = Config.Bind(SectionName, "turningPowerWithRudder", 3f,
+    TurnPowerWithRudder = Config.Bind(SectionName, "turningPowerWithRudder", 6f,
       ConfigHelpers.CreateConfigDescription(
         "Set the turning power with a rudder", true));
 
@@ -32,5 +35,9 @@ public static class PropulsionConfig
       ConfigHelpers.CreateConfigDescription(
         "Vehicles can now float on land. What is realism. Experimental only until wheels are invented. Must use rudder speeds to move forwards.",
         true));
+
+    ShouldLiftAnchorOnSpeedChange = Config.Bind(SectionName, "shouldLiftAnchorOnSpeedChange", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Lifts the anchor when using a speed change key, this is a QOL to prevent anchor from being required to be pressed when attempting to change the ship speed"));
   }
 }

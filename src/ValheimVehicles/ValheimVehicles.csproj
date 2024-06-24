@@ -37,6 +37,7 @@
     <!--            <WarningLevel>4</WarningLevel>-->
     <!--        </PropertyGroup>-->
     <ItemGroup>
+        <Compile Include="Patches\GameCamera_VehiclePiecesPatch.cs"/>
         <Compile Include="Patches\Zone_Patch.cs"/>
         <Compile Include="ValheimVehicles.Config\ConfigHelpers.cs"/>
         <Compile Include="ValheimVehicles.Config\RamConfig.cs"/>

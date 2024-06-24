@@ -24,6 +24,14 @@ public class Character_Patch
     return list;
   }
 
+  [HarmonyPatch(typeof(Character), "InWater")]
+  [HarmonyPostfix]
+  public static void InWater(Character __instance, bool __result)
+  {
+    var vpc = __instance.transform.root.GetComponent<VehiclePiecesController>();
+    if (vpc) __result = false;
+  }
+
   public static object? GetStandingOnShip(Character __instance)
   {
     if (__instance.InNumShipVolumes == 0 || !__instance.IsOnGround() ||
