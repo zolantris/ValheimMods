@@ -92,7 +92,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   public VehicleShipEffects? ShipEffects;
 
   public WaterVehicleController PiecesController;
-  public ZSyncTransform movementZSyncTransform;
   public ZSyncTransform piecesZsyncTransform;
 
   public ZNetView NetView { get; set; }
@@ -226,11 +225,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     {
       MovementController = GetComponent<VehicleMovementController>();
     }
-
-    // if (!movementZSyncTransform)
-    // {
-    //   movementZSyncTransform = GetComponent<ZSyncTransform>();
-    // }
 
     if (!(bool)ShipEffectsObj)
     {
@@ -413,7 +407,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       return;
     }
 
-    if (PiecesController.BaseVehicleInitState != Vehicles.VehiclePiecesController.InitializationState.Created)
+    if (PiecesController.BaseVehicleInitState !=
+        Vehicles.VehiclePiecesController.InitializationState.Created)
     {
       return;
     }

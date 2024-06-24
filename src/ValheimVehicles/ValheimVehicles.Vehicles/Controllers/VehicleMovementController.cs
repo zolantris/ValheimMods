@@ -1298,7 +1298,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   public void RPC_SyncBounds(long sender)
   {
     if (!vehicleShip.PiecesController) return;
-    vehicleShip.PiecesController.RebuildBounds();
+    vehicleShip.PiecesController.DebouncedRebuildBounds();
   }
 
   public void UpdateControlls(float dt) => UpdateControls(dt);
@@ -1320,12 +1320,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
       if (!containerCharacter && !isExiting)
       {
-        if (Player.m_localPlayer == playerComponent)
-        {
-          // only call if you are the player, otherwise it will call for all players
-          SyncBounds();
-        }
-
         m_players.Add(playerComponent);
         Logger.LogDebug("Player onboard, total onboard " + m_players.Count);
       }
@@ -2016,6 +2010,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     {
       // the person controlling the ship should control physics
       m_nview.GetZDO().SetOwner(Player.m_localPlayer.GetPlayerID());
+      // Sync the bounds
+      SyncBounds();
       var attachTransform = lastUsedWheelComponent.AttachPoint;
       Player.m_localPlayer.StartDoodadControl(lastUsedWheelComponent);
       if (attachTransform != null)
