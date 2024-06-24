@@ -1223,7 +1223,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private static void ApplySailForce(VehicleMovementController instance, bool isFlying = false)
   {
-    if (!instance || !instance?.m_body || !instance?.ShipDirection) return;
+    if (!instance || !instance?.m_body || !instance?.ShipDirection || instance.IsAnchored) return;
 
     var sailArea = 0f;
 
@@ -1252,6 +1252,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
         break;
     }
 
+    // backup guard, inTheory not possible to get here
     if (instance.IsAnchored)
     {
       sailArea = 0f;
@@ -1920,7 +1921,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   public void SendSetAnchor(bool state)
   {
     m_nview.InvokeRPC(0, nameof(RPC_SetAnchor), state);
-    SendSpeedChange(DirectionChange.Stop);
   }
 
   public void SendToggleOceanSway()
@@ -2031,6 +2031,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     var isForward = (double)dir.z > 0.5;
     var isBackward = (double)dir.z < -0.5;
 
+    if (PropulsionConfig.ShouldLiftAnchorOnSpeedChange.Value)
+    {
+      SendSetAnchor(false);
+    }
+
     if (isForward && !m_forwardPressed)
     {
       SendSpeedChange(DirectionChange.Forward);
@@ -2078,6 +2083,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   internal void RPC_SpeedChange(long sender, int speed)
   {
+    if (IsAnchored && PropulsionConfig.ShouldLiftAnchorOnSpeedChange.Value)
+    {
+      HandleSetAnchor(false);
+    }
+
     vehicleSpeed = (Ship.Speed)speed;
   }
 
@@ -2114,7 +2124,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private void SetBackward()
   {
-    if (IsAnchored)
+    if (IsAnchored && !PropulsionConfig.ShouldLiftAnchorOnSpeedChange.Value)
     {
       vehicleSpeed = Ship.Speed.Stop;
       return;
