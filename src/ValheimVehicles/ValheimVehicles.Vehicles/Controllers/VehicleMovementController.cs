@@ -1991,6 +1991,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       zdo.Set(VehicleZdoVars.VehicleFlags, (int)MovementFlags);
     }
 
+    if (state)
+    {
+      vehicleSpeed = Ship.Speed.Stop;
+    }
+
     SyncShip();
   }
 
