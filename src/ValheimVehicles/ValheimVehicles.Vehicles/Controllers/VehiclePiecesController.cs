@@ -2016,7 +2016,7 @@ public class VehiclePiecesController : MonoBehaviour
 
   ///
   /// <summary>Parses Collider.bounds and confirm if it's local/ or out of ship bounds</summary>
-  /// - Collider.bounds should be global but it may not be returning the correct value when instantiated
+  /// - Collider.bounds should be global, but it may not be returning the correct value when instantiated
   /// - world position bounds will desync when the vehicle moves
   /// - Using global position bounds with a local bounds will cause the center to extend to the global position and break the raft
   ///
@@ -2030,7 +2030,9 @@ public class VehiclePiecesController : MonoBehaviour
     Vector3 center;
 
     /*
-     * <summary>confirms that the magnitude is near zero when subtracting a guaranteed world-position coordinate with a bounds.center coordinate that could be local or global.</summary>
+     * <summary>
+     * confirms that the magnitude is near zero when subtracting a guaranteed world-position coordinate with a bounds.center coordinate that could be local or global.
+     * </summary>
      *
      * - if magnitude is above 5f (or probably even 1f) it is very likely a local position subtracted against a global position.
      *

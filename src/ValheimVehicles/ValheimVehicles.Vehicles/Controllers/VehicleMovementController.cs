@@ -294,7 +294,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     var groundHeight = ZoneSystem.instance.GetGroundHeight(transform.position);
     var floatColliderLowestPoint = FloatCollider.transform.position.y - FloatCollider.size.y / 2;
 
-    // approximateGroundHeight used so add a buffer so this only applies if the vehicle is stuck within the ground
+    // approximateGroundHeight used so add a buffer, so this only applies if the vehicle is stuck within the ground
     var approximateGroundHeight = groundHeight - Math.Max(2,
       VehicleDebugConfig.VehicleAutoFixPositionGroundHeightThreshold.Value);
     var isFloatingBelowGround = floatColliderLowestPoint < approximateGroundHeight;
@@ -1915,7 +1915,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     {
       _isAscending = false;
       _isDescending = false;
-      // only stops speed if anchor is dropped.
+      // only stops speed if the anchor is dropped.
       vehicleSpeed = Ship.Speed.Stop;
     }
 
@@ -2091,7 +2091,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     if (IsAnchored && PropulsionConfig.ShouldLiftAnchorOnSpeedChange.Value)
     {
-      HandleSetAnchor(false);
+      MovementFlags = HandleSetAnchor(false);
     }
 
     vehicleSpeed = (Ship.Speed)speed;
