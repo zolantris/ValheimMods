@@ -5,6 +5,7 @@ using BepInEx.Bootstrap;
 using HarmonyLib;
 using Jotunn;
 using ValheimRAFT.Util;
+using ValheimVehicles.Patches;
 
 namespace ValheimRAFT.Patches;
 
@@ -29,6 +30,12 @@ internal static class PatchController
     Harmony.PatchAll(typeof(ZNetScene_Patch));
     Harmony.PatchAll(typeof(ZNetView_Patch));
     Harmony.PatchAll(typeof(Hud_Patch));
+
+
+// #if DEBUG
+//     // Debug only for now, this needs to be refined to ignore collisions with ship colliders
+//     Harmony.PatchAll(typeof(GameCamera_VehiclePiecesPatch));
+// #endif
 
     if (ValheimRaftPlugin.Instance.ShipPausePatch.Value)
     {
