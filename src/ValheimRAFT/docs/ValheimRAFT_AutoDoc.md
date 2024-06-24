@@ -149,7 +149,7 @@
 
 ### Rudder Back Speed
 - Description: Set the Back speed of rudder, this will apply with sails
-- Default Value: 55
+- Default Value: 10
 
 ### Rudder Slow Speed
 - Description: Set the Slow speed of rudder, this will apply with sails
@@ -157,11 +157,11 @@
 
 ### Rudder Half Speed
 - Description: Set the Half speed of rudder, this will apply with sails
-- Default Value: 10
+- Default Value: 0
 
 ### Rudder Full Speed
 - Description: Set the Full speed of rudder, this will apply with sails
-- Default Value: 50
+- Default Value: 0
 
 ### HasShipWeightCalculations
 - Description: enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less
@@ -323,7 +323,7 @@
 
 ### Always Show Vehicle Colliders
 - Description: Automatically shows the vehicle colliders useful for debugging the vehicle
-- Default Value: true
+- Default Value: false
 
 ### Vehicle Debug Menu
 - Description: Enable the VehicleDebugMenu. This shows a GUI menu which has a few shortcuts to debugging/controlling vehicles.
@@ -351,6 +351,10 @@
 
 ### enableLandVehicles
 - Description: Vehicles can now float on land. What is realism. Experimental only until wheels are invented. Must use rudder speeds to move forwards.
+- Default Value: true
+
+### enableBaseGameSailRotation
+- Description: Lets the baseGame sails Tiers1-4 to rotate based on wind direction
 - Default Value: true
 
 ### shouldLiftAnchorOnSpeedChange
