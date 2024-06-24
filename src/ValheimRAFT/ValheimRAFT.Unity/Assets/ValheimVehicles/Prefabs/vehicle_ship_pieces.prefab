@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 370483867695338920}
   - component: {fileID: 6223762886225816425}
   - component: {fileID: 2730767645089586560}
-  m_Layer: 29
+  m_Layer: 10
   m_Name: vehicle_ship_pieces
   m_TagString: Untagged
   m_Icon: {fileID: 0}

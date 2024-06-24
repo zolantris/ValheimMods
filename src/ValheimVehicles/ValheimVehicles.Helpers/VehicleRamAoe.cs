@@ -73,26 +73,24 @@ public class VehicleRamAoe : Aoe
   {
     m_blockable = false;
     m_dodgeable = false;
-    m_hitTerrain = RamsCanHitEnvironmentOrTerrain;
-    m_hitProps = RamsCanHitEnvironmentOrTerrain;
-    m_hitCharacters = RamsCanHitCharacters;
-    m_hitFriendly = RamsCanHitFriendly;
-    m_hitEnemy = RamsCanHitEnemies;
+    m_hitTerrain = true;
+    m_hitProps = true;
+    m_hitCharacters = true;
+    m_hitFriendly = true;
+    m_hitEnemy = true;
+    m_hitParent = true;
 
-    // todo may need this to do damage to wearntear prefab of the ram
-    m_hitParent = CanDamageSelf;
     m_hitInterval = Mathf.Clamp(RamHitInterval, 0.5f, 5f);
 
     // todo need to tweak this
-    m_damageSelf = !CanDamageSelf ? 0 : 1;
     m_toolTier = RamDamageToolTier;
-    m_attackForce = 5;
+    m_attackForce = 50;
 
     m_radius = Mathf.Clamp(RamHitArea, 0.1f, 10f);
     m_radius *= RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f;
 
     m_useTriggers = true;
-    m_triggerEnterOnly = AllowContinuousDamage;
+    m_triggerEnterOnly = true;
     m_useCollider = null;
     m_useAttackSettings = true;
     m_ttl = 0;
@@ -109,6 +107,11 @@ public class VehicleRamAoe : Aoe
     return slashDamage + bluntDamage + chopDamage + pickaxeDamage + pierceDamage;
   }
 
+  public void InitAoe()
+  {
+    base.Awake();
+  }
+
   public new void Awake()
   {
     if (!RamInstances.Contains(this))
@@ -119,7 +122,7 @@ public class VehicleRamAoe : Aoe
     InitializeFromConfig();
     SetBaseDamageFromConfig();
 
-    base.Awake();
+    InitAoe();
 
     rigidbody = GetComponent<Rigidbody>();
     // very important otherwise this rigidbody will interfere with physics of the Watervehicle controller due to nesting.
@@ -282,7 +285,7 @@ public class VehicleRamAoe : Aoe
       return;
     }
 
-    // Must be within the BaseVehicleController otherwise this AOE could attempt to damage items within the raft ball
+    // Must be within the BaseVehiclePieces after initialization otherwise this AOE could attempt to damage items within the raft ball
     var isChildOfBaseVehicle = transform.root.name.StartsWith(PrefabNames.WaterVehicleShip) ||
                                transform.root.name.StartsWith(PrefabNames.VehiclePiecesContainer) ||
                                transform.root.name.StartsWith(
@@ -301,13 +304,12 @@ public class VehicleRamAoe : Aoe
   {
     if (!collider) return false;
     // reset damage to base damage if one of these is not available, will still recalculate later
+    // exit to apply damage that has no velocity
     if (!vehicle?.MovementController.m_body || !collider.attachedRigidbody)
     {
       m_damage = baseDamage;
+      return true;
     }
-
-    // early exit if both are not valid
-    if (!vehicle?.MovementController.m_body && !collider.attachedRigidbody) return false;
 
     // Velocity will significantly increase if the object is moving towards the other object IE collision
     float relativeVelocity;
@@ -421,11 +423,11 @@ public class VehicleRamAoe : Aoe
     //      !collider.transform.root.name.StartsWith(PrefabNames.WaterVehicleShip))) return false;
     if (collider.transform.root != transform.root) return false;
 
-    var childColliders = GetComponentsInChildren<Collider>();
-    foreach (var childCollider in childColliders)
-    {
-      Physics.IgnoreCollision(childCollider, collider, true);
-    }
+    // var childColliders = GetComponentsInChildren<Collider>();
+    // foreach (var childCollider in childColliders)
+    // {
+    //   Physics.IgnoreCollision(childCollider, collider, true);
+    // }
 
     return true;
   }
@@ -487,9 +489,10 @@ public class VehicleRamAoe : Aoe
 
   public static void OnBaseSettingsChange(object sender, EventArgs eventArgs)
   {
-    foreach (var vehicleRamAoe in RamInstances)
+    foreach (var instance in RamInstances)
     {
-      vehicleRamAoe.InitializeFromConfig();
+      instance.InitializeFromConfig();
+      instance.InitAoe();
     }
   }
 
@@ -498,6 +501,7 @@ public class VehicleRamAoe : Aoe
     foreach (var instance in RamInstances.ToArray())
     {
       instance.SetBaseDamageFromConfig();
+      instance.InitAoe();
     }
   }
 }

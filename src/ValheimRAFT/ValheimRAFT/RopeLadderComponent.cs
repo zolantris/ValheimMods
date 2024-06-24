@@ -113,9 +113,11 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
 
   private bool IsFlyingAndNotAnchored(Vector3 hitPoint)
   {
-    if ((bool)vehiclePiecesController && (bool)vehiclePiecesController.waterVehicleController &&
-        vehiclePiecesController?.waterVehicleController?.VehicleInstance &&
-        vehiclePiecesController?.waterVehicleController?.VehicleInstance?.Instance.TargetHeight >
+    if ((bool)vehiclePiecesController &&
+        (bool)vehiclePiecesController.waterVehiclePiecesPiecesController &&
+        vehiclePiecesController?.waterVehiclePiecesPiecesController?.VehicleInstance &&
+        vehiclePiecesController?.waterVehiclePiecesPiecesController?.VehicleInstance?.Instance
+          .TargetHeight >
         0f &&
         !(vehiclePiecesController.VehicleInstance.Instance.MovementController.IsAnchored) &&
         hitPoint.y < vehiclePiecesController.GetColliderBottom())
