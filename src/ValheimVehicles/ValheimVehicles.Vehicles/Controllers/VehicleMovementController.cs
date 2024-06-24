@@ -276,11 +276,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       };
     }
 
-    if (!(bool)m_sailCloth)
-    {
-      m_sailCloth = gameObject.AddComponent<Cloth>();
-      m_sailCloth.enabled = false;
-    }
+    // if (!(bool)m_sailCloth)
+    // {
+    //   m_sailCloth = GetSailCloth();
+    //   m_sailCloth.enabled = false;
+    // }
   }
 
   /// <summary>
@@ -937,27 +937,27 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       m_sailObject.transform.localScale = localScale;
     }
 
-    if ((bool)m_sailCloth)
-    {
-      if (speed == Ship.Speed.Stop || speed == Ship.Speed.Slow || speed == Ship.Speed.Back)
-      {
-        if (flag && m_sailCloth.enabled)
-        {
-          m_sailCloth.enabled = false;
-        }
-      }
-      else if (flag)
-      {
-        if (!m_sailWasInPosition)
-        {
-          Utils.RecreateComponent(ref m_sailCloth);
-        }
-      }
-      else
-      {
-        m_sailCloth.enabled = true;
-      }
-    }
+    // if ((bool)m_sailCloth)
+    // {
+    //   if (speed == Ship.Speed.Stop || speed == Ship.Speed.Slow || speed == Ship.Speed.Back)
+    //   {
+    //     if (flag && m_sailCloth.enabled)
+    //     {
+    //       m_sailCloth.enabled = false;
+    //     }
+    //   }
+    //   else if (flag)
+    //   {
+    //     if (!m_sailWasInPosition)
+    //     {
+    //       Utils.RecreateComponent(ref m_sailCloth);
+    //     }
+    //   }
+    //   else
+    //   {
+    //     m_sailCloth.enabled = true;
+    //   }
+    // }
 
     m_sailWasInPosition = flag;
   }
@@ -1040,12 +1040,18 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
         continue;
       }
 
+      if (mast.m_allowSailRotation)
+      {
+        var newRotation = m_mastObject.transform.localRotation;
+        mast.transform.localRotation = newRotation;
+      }
+
       if (mast.m_allowSailShrinking)
       {
         if (mast.m_sailObject.transform.localScale != m_sailObject.transform.localScale)
           mast.m_sailCloth.enabled = false;
         mast.m_sailObject.transform.localScale = m_sailObject.transform.localScale;
-        mast.m_sailCloth.enabled = m_sailCloth.enabled;
+        mast.m_sailCloth.enabled = true;
       }
       else
       {
@@ -2035,11 +2041,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     var isForward = (double)dir.z > 0.5;
     var isBackward = (double)dir.z < -0.5;
-
-    if (PropulsionConfig.ShouldLiftAnchorOnSpeedChange.Value)
-    {
-      SendSetAnchor(false);
-    }
 
     if (isForward && !m_forwardPressed)
     {

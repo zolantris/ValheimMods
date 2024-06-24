@@ -1822,8 +1822,11 @@ public class VehiclePiecesController : MonoBehaviour
 
   private float GetAverageFloatHeightFromHulls()
   {
-    if (m_hullPieces.Count <= 0) return 0.5f;
     _hullBounds = new Bounds();
+    if (m_hullPieces.Count <= 0)
+    {
+      return 0.5f;
+    }
 
     var totalHeight = 0f;
     foreach (var hullPiece in m_hullPieces)
