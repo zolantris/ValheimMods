@@ -427,7 +427,7 @@ public class VehicleRamAoe : Aoe
     if (collider.transform.root != transform.root) return false;
     if (vehicle != null)
     {
-      // allows for hitting other vehicles but not internally hitting current vehicle
+      // allows for hitting other vehicles, excludes hitting current vehicle
       if (collider.transform.root != vehicle.transform.root)
       {
         return false;
