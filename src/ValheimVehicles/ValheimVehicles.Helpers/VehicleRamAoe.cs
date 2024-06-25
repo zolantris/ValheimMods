@@ -424,15 +424,21 @@ public class VehicleRamAoe : Aoe
   private bool ShouldIgnore(Collider collider)
   {
     if (!collider) return false;
-    // if ((!collider.transform.root.name.StartsWith(PrefabNames.PiecesContainer) ||
-    //      !collider.transform.root.name.StartsWith(PrefabNames.WaterVehicleShip))) return false;
     if (collider.transform.root != transform.root) return false;
+    if (vehicle != null)
+    {
+      // allows for hitting other vehicles but not internally hitting current vehicle
+      if (collider.transform.root != vehicle.transform.root)
+      {
+        return false;
+      }
+    }
 
-    // var childColliders = GetComponentsInChildren<Collider>();
-    // foreach (var childCollider in childColliders)
-    // {
-    //   Physics.IgnoreCollision(childCollider, collider, true);
-    // }
+    var childColliders = GetComponentsInChildren<Collider>();
+    foreach (var childCollider in childColliders)
+    {
+      Physics.IgnoreCollision(childCollider, collider, true);
+    }
 
     return true;
   }
