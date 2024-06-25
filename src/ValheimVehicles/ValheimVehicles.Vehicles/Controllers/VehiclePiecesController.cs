@@ -59,7 +59,7 @@ public class VehiclePiecesController : MonoBehaviour
    * @todo make this a generic most likely this all should be in a shared extension api
    * IE: VehicleInstance getter
    */
-  public WaterVehicleController waterVehicleController;
+  public WaterVehiclePiecesController waterVehiclePiecesController;
 
   // rigidbody for all pieces within the ship. Does not directly contribute to floatation, floatation controlled by m_syncRigidbody and synced to this m_rigidbody
 

@@ -19,7 +19,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
-public class WaterVehicleController : VehiclePiecesController, IWaterVehicleController
+public class WaterVehiclePiecesController : VehiclePiecesController, IWaterVehiclePiecesController
 {
   private VehicleShip? _vehicleInstance;
 
@@ -29,7 +29,7 @@ public class WaterVehicleController : VehiclePiecesController, IWaterVehicleCont
     set => _vehicleInstance = value;
   }
 
-  public WaterVehicleController Instance => this;
+  public WaterVehiclePiecesController Instance => this;
 
   internal ShipStats m_shipStats = new();
 
@@ -39,19 +39,19 @@ public class WaterVehicleController : VehiclePiecesController, IWaterVehicleCont
    */
   public new void InitFromShip(VehicleShip vehicleShip)
   {
-    waterVehicleController = this;
+    waterVehiclePiecesController = this;
     base.InitFromShip(vehicleShip);
   }
 
   public new void Awake()
   {
-    waterVehicleController = this;
+    waterVehiclePiecesController = this;
     base.Awake();
   }
 
   public override void Start()
   {
-    if (BaseVehicleInitState == InitializationState.Pending || !(bool)waterVehicleController)
+    if (BaseVehicleInitState == InitializationState.Pending || !(bool)waterVehiclePiecesController)
     {
       Logger.LogError("not initialized, exiting ship logic to prevent crash");
       return;
