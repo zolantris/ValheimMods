@@ -67,6 +67,7 @@ public class VehiclePiecesController : MonoBehaviour
   internal FixedJoint m_fixedJoint;
 
   internal List<ZNetView> m_pieces = [];
+  internal List<ZNetView> m_ramPieces = [];
   internal List<ZNetView> m_hullPieces = [];
 
   internal List<MastComponent> m_mastPieces = [];
@@ -832,6 +833,12 @@ public class VehiclePiecesController : MonoBehaviour
       _steeringWheelPieces.Remove(wheel);
     }
 
+    var isRam = RamPrefabs.IsRam(netView.name);
+    if (isRam)
+    {
+      m_ramPieces.Remove(netView);
+    }
+
 
     var bed = netView.GetComponent<Bed>();
     if ((bool)bed) m_bedPieces.Remove(bed);
@@ -1497,7 +1504,7 @@ public class VehiclePiecesController : MonoBehaviour
   {
     if (RamPrefabs.IsRam(targetTransform.name))
     {
-      targetTransform.SetParent(_movingPiecesContainer);
+      targetTransform.SetParent(VehicleInstance?.Instance?.transform);
       return;
     }
 
@@ -1654,6 +1661,7 @@ public class VehiclePiecesController : MonoBehaviour
       return;
     }
 
+    IgnoreCollidersForAllRamPieces(netView);
 
     var shouldRebuildBounds = false;
     totalSailArea = 0;
@@ -1730,8 +1738,12 @@ public class VehiclePiecesController : MonoBehaviour
     var isRam = RamPrefabs.IsRam(netView.name);
     if (isRam)
     {
+      m_ramPieces.Add(netView);
       var vehicleRamAoe = netView.GetComponentInChildren<VehicleRamAoe>();
-      if ((bool)vehicleRamAoe) vehicleRamAoe.vehicle = VehicleInstance.Instance;
+      if ((bool)vehicleRamAoe)
+      {
+        vehicleRamAoe.vehicle = VehicleInstance.Instance;
+      }
     }
 
     FixPieceMeshes(netView);
@@ -1986,6 +1998,48 @@ public class VehiclePiecesController : MonoBehaviour
     m_onboardcollider.transform.localPosition = onboardColliderCenter;
   }
 
+  public void IgnoreCollidersForAllRamPieces(ZNetView netView)
+  {
+    if (m_ramPieces.Count <= 0) return;
+    var colliders = netView.GetComponentsInChildren<Collider>();
+    foreach (var mRamPiece in m_ramPieces)
+    {
+      var ramColliders = mRamPiece.GetComponentsInChildren<Collider>();
+
+      foreach (var collider in colliders)
+      {
+        foreach (var ramCollider in ramColliders)
+        {
+          Physics.IgnoreCollision(collider, ramCollider, true);
+        }
+      }
+    }
+  }
+
+  /// <summary>
+  /// Ignore all colliders on the vehicleShip for a placed ram so it doesn't make the Vehicle Freak out
+  /// </summary>
+  /// <param name="ramColliders">Colliders from a Ram</param>
+  public void IgnoreCollidersOnShipForRams(List<Collider> ramColliders)
+  {
+    foreach (var t in ramColliders)
+    {
+      if (t == null) continue;
+      if (m_floatcollider) Physics.IgnoreCollision(t, m_floatcollider, true);
+      if (m_blockingcollider) Physics.IgnoreCollision(t, m_blockingcollider, true);
+      if (m_onboardcollider)
+        Physics.IgnoreCollision(t, m_onboardcollider, true);
+      foreach (var nv in m_pieces)
+      {
+        var nvColliders = nv.GetComponentsInChildren<Collider>();
+        foreach (var nvCollider in nvColliders)
+        {
+          Physics.IgnoreCollision(t, nvCollider, true);
+        }
+      }
+    }
+  }
+
   public void IgnoreShipColliders(List<Collider> colliders)
   {
     foreach (var t in colliders.ToList())
@@ -1998,6 +2052,11 @@ public class VehiclePiecesController : MonoBehaviour
     }
   }
 
+  /// <summary>
+  /// Should ignore camera jitter, however it does not work yet
+  /// </summary>
+  /// TODO fix this or add a patch to ignore camera collision in roofed boats or when paning and colliding with wheel
+  /// <param name="colliders"></param>
   public void IgnoreCameraCollision(List<Collider> colliders)
   {
     var cameraMask = GameCamera.instance.m_blockCameraMask;
@@ -2089,10 +2148,12 @@ public class VehiclePiecesController : MonoBehaviour
   {
     var colliders = GetCollidersInPiece(go);
 
-    IgnoreShipColliders(colliders);
-    // todo This should only apply for wheels and other gadgets that should not block camera
-    IgnoreCameraCollision(colliders);
+    if (RamPrefabs.IsRam(go.name))
+    {
+      IgnoreCollidersOnShipForRams(colliders);
+    }
 
+    IgnoreShipColliders(colliders);
 
     var door = go.GetComponentInChildren<Door>();
     var ladder = go.GetComponent<RopeLadderComponent>();
