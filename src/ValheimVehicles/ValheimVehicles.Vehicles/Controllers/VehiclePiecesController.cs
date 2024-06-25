@@ -528,16 +528,14 @@ public class VehiclePiecesController : MonoBehaviour
   public void Update()
   {
     if (!VehicleInstance.NetView) return;
-    if (!ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value)
+    if (ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value) return;
+    // // owner must sync more frequently, this likely is unnecessary but is kept as an option for servers that may be having sync problems during only the FixedUpdate
+    if (VehicleInstance.NetView?.IsOwner() == true)
     {
-      Sync();
+      Client_UpdateAllPieces();
     }
 
-    // // owner must sync more frequently, this likely is unnecessary but is kept as an option for servers that may be having sync problems during only the FixedUpdate
-    // if (VehicleInstance.NetView?.IsOwner() == true)
-    // {
-    //   Client_UpdateAllPieces();
-    // }
+    Sync();
   }
 
   public void FixedUpdate()

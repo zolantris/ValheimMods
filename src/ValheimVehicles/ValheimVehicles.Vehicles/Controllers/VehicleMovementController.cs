@@ -1968,18 +1968,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   public void RPC_SetAnchor(long sender, bool state)
   {
-    var isOwner = m_nview.IsOwner();
     MovementFlags = HandleSetAnchor(state);
-    if (isOwner)
-    {
-      var zdo = m_nview.GetZDO();
-      zdo.Set(VehicleZdoVars.VehicleFlags, (int)MovementFlags);
-    }
-
-    if (state)
-    {
-      vehicleSpeed = Ship.Speed.Stop;
-    }
+    var zdo = m_nview.GetZDO();
+    zdo.Set(VehicleZdoVars.VehicleFlags, (int)MovementFlags);
 
     SyncShip();
   }
