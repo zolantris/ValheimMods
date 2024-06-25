@@ -55,12 +55,6 @@ public class VehiclePiecesController : MonoBehaviour
     }
   }
 
-  /*
-   * @todo make this a generic most likely this all should be in a shared extension api
-   * IE: VehicleInstance getter
-   */
-  public WaterVehiclePiecesController waterVehiclePiecesController;
-
   // rigidbody for all pieces within the ship. Does not directly contribute to floatation, floatation controlled by m_syncRigidbody and synced to this m_rigidbody
 
   // for the ship physics without item piece colliders or alternatively access via VehicleInstance.m_body
@@ -1471,7 +1465,7 @@ public class VehiclePiecesController : MonoBehaviour
       var vehicleShip = parentObj.GetComponent<VehicleShip>();
       if (vehicleShip != null || vehicleShip?.PiecesController != null)
       {
-        vehicleShip.PiecesController.Instance.ActivatePiece(netView);
+        vehicleShip.PiecesController.ActivatePiece(netView);
         return;
       }
     }
@@ -1545,7 +1539,7 @@ public class VehiclePiecesController : MonoBehaviour
     var hasPendingPieces =
       m_pendingPieces.TryGetValue(vehicleShip.PersistentZdoId,
         out var pendingPieces);
-    var hasPieces = vehicleShip.PiecesController.Instance.GetPieceCount() != 0;
+    var hasPieces = vehicleShip.PiecesController.GetPieceCount() != 0;
 
     // if there are pending pieces, do not let vehicle be destroyed
     if (pendingPieces != null && hasPendingPieces && pendingPieces.Count > 0)

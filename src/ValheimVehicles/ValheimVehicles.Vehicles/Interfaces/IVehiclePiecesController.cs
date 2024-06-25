@@ -2,7 +2,7 @@ using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.Vehicles.Interfaces;
 
-public interface IBaseVehicleController
+public interface IVehiclePiecesController
 {
   // this may need to be omitted
   public void CleanUp();

@@ -106,12 +106,23 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
   }
 
 
+  /// <summary>
+  /// Gets the owner name
+  /// </summary>
+  /// TODO possibly cache this ownerName value,
+  /// - listen for ZNetView owner change and fire the update then
+  /// <returns>String</returns>
   private string GetOwnerHoverText()
   {
-    var controller = ShipInstance?.VehiclePiecesController?.Instance;
-    return controller == null
-      ? ""
-      : $"\n[<color=red><b>Owner: {controller?.VehicleInstance?.NetView.GetZDO().GetOwner()} and name: {controller?.MovementController?.m_players[0].GetPlayerName()}</b></color>]";
+    var controller = ShipInstance?.VehiclePiecesController?.VehicleInstance;
+    if (controller?.NetView?.GetZDO() == null) return "";
+    var ownerId = controller.NetView.GetZDO().GetOwner();
+    var matchingOwnerInPlayers =
+      controller?.MovementController?.m_players.FirstOrDefault((player) =>
+        player.GetPlayerID() == ownerId);
+    var ownerName = matchingOwnerInPlayers?.GetPlayerName() ?? "N/A";
+    return
+      $"\n[<color=green><b>Owner: {ownerName}</b></color>]";
   }
 
   private string GetBeachedHoverText()
@@ -127,14 +138,14 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
       return deprecatedShipControls.GetHoverText();
     }
 
-    var controller = ShipInstance?.VehiclePiecesController?.Instance;
+    var controller = ShipInstance?.VehiclePiecesController;
     if (controller == null)
     {
       return Localization.instance.Localize(
         "<color=white><b>$valheim_vehicles_wheel_use_error</b></color>");
     }
 
-    var isAnchored = controller?.VehicleInstance?.MovementController.IsAnchored ?? false;
+    var isAnchored = controller?.VehicleInstance?.MovementController?.IsAnchored ?? false;
     var anchorKeyString = GetAnchorHotkeyString();
     var hoverText = GetHoverTextFromShip(controller?.totalSailArea ?? 0,
       controller?.TotalMass ?? 0,
@@ -230,7 +241,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
 
     var playerOnShipViaShipInstance =
-      ShipInstance?.VehiclePiecesController?.Instance.GetComponentsInChildren<Player>() ?? null;
+      ShipInstance?.VehiclePiecesController?.GetComponentsInChildren<Player>() ?? null;
 
     if (playerOnShipViaShipInstance?.Length == 0 || playerOnShipViaShipInstance == null)
     {

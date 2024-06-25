@@ -91,14 +91,14 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   public GameObject? ShipEffectsObj;
   public VehicleShipEffects? ShipEffects;
 
-  public WaterVehiclePiecesController PiecesController;
+  public VehiclePiecesController PiecesController;
   public ZSyncTransform piecesZsyncTransform;
 
   public ZNetView NetView { get; set; }
 
   public VehicleDebugHelpers? VehicleDebugHelpersInstance { get; private set; }
 
-  public IWaterVehiclePiecesController VehiclePiecesController => PiecesController;
+  public VehiclePiecesController? VehiclePiecesController => PiecesController;
 
   private VehicleMovementController? _movementController;
 
@@ -298,7 +298,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       NetView = GetComponent<ZNetView>();
     }
 
-    InitializeWaterVehiclePiecesController();
+    InitializeVehiclePiecesController();
 
     UpdateShipSounds(this);
   }
@@ -325,7 +325,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       AllVehicles.Add(PersistentZdoId, this);
     }
 
-    InitializeWaterVehiclePiecesController();
+    InitializeVehiclePiecesController();
     if (HasVehicleDebugger && PiecesController)
     {
       InitializeVehicleDebugger();
@@ -466,7 +466,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   /// <note>
   /// this must be added instead of on the prefab otherwise PlacedPiece cannot get the data in time
   /// </note>
-  private void InitializeWaterVehiclePiecesController()
+  private void InitializeVehiclePiecesController()
   {
     if (ZNetView.m_forceDisableInit) return;
     if (!(bool)NetView || NetView.GetZDO() == null || NetView.m_ghost ||
@@ -485,7 +485,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       Instantiate(vehiclePiecesContainer, transform.position, transform.rotation, null);
     ZNetView.m_useInitZDO = prevValue;
 
-    PiecesController = _vehiclePiecesContainerInstance.AddComponent<WaterVehiclePiecesController>();
+    PiecesController = _vehiclePiecesContainerInstance.AddComponent<VehiclePiecesController>();
     PiecesController.InitFromShip(Instance);
 
     InitStarterPiece();

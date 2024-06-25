@@ -172,13 +172,13 @@ public class RecoverRaftConsoleCommand : ConsoleCommand
       foreach (var piece in list)
       {
         piece.transform.SetParent(
-          vehicleShip.VehiclePiecesController.Instance.transform);
+          vehicleShip?.VehiclePiecesController?.transform);
         piece.transform.localPosition =
           piece.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
         piece.transform.localRotation =
           Quaternion.Euler(piece.m_zdo.GetVec3(VehicleZdoVars.MBRotationVecHash,
             Vector3.zero));
-        vehicleShip.VehiclePiecesController.Instance.AddNewPiece(piece);
+        vehicleShip?.VehiclePiecesController?.AddNewPiece(piece);
       }
 
       Logger.LogInfo($"Completed, RecoverShip for {id}, recovering {list.Count} pieces");

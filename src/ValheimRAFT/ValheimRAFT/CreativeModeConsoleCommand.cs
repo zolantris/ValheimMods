@@ -94,7 +94,7 @@ public class CreativeModeConsoleCommand : ConsoleCommand
         ship.MovementController.m_body.position.y +
         ValheimRaftPlugin.Instance.RaftCreativeHeight.Value;
       var playerInBoat =
-        character.transform.parent == ship.VehiclePiecesController.Instance.transform;
+        character.transform.parent == ship.VehiclePiecesController?.transform;
       if (playerInBoat)
       {
         character.m_body.isKinematic = true;
