@@ -8,6 +8,7 @@ using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
@@ -74,6 +75,11 @@ public class WearNTear_Patch
       }
     }
 
+    if (RamPrefabs.IsRam(__instance.name))
+    {
+      var vehicle = __instance.GetComponentInParent<VehicleShip>();
+      vehicle?.VehiclePiecesController?.DestroyPiece(__instance);
+    }
 
     var bv = __instance.GetComponentInParent<VehiclePiecesController>();
     if ((bool)bv)
@@ -84,7 +90,6 @@ public class WearNTear_Patch
 
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbr) mbr.DestroyPiece(__instance);
-
     return true;
   }
 

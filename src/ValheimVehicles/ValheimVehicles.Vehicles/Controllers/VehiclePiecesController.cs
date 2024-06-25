@@ -437,13 +437,16 @@ public class VehiclePiecesController : MonoBehaviour
 
     if (!ZNetScene.instance || VehicleInstance.PersistentZdoId == 0) return;
 
-    foreach (var piece in m_pieces)
+    foreach (var piece in m_pieces.ToList())
     {
-      if ((bool)piece)
+      if (!piece)
       {
-        piece.transform.SetParent(null);
-        AddInactivePiece(VehicleInstance.PersistentZdoId, piece, null);
+        m_pieces.Remove(piece);
+        continue;
       }
+
+      piece.transform.SetParent(null);
+      AddInactivePiece(VehicleInstance.PersistentZdoId, piece, null);
     }
 
     StopAllCoroutines();
@@ -554,21 +557,18 @@ public class VehiclePiecesController : MonoBehaviour
   /// </summary>
   public void ForceUpdateAllPiecePositions()
   {
-    for (var i = 0; i < m_pieces.Count; i++)
+    foreach (var nv in m_pieces.ToList())
     {
-      var nv = m_pieces[i];
       if (!nv)
       {
-        Logger.LogError($"Error found with m_pieces: netview {nv}");
-        m_pieces.RemoveAt(i);
-        i--;
+        Logger.LogError($"Error found with m_pieces: netview {nv}, save removing the piece");
+        m_pieces.Remove(nv);
+        continue;
       }
-      else
+
+      if (transform.position != nv.transform.position)
       {
-        if (transform.position != nv.transform.position)
-        {
-          nv.m_zdo?.SetPosition(transform.position);
-        }
+        nv.m_zdo?.SetPosition(transform.position);
       }
     }
   }
@@ -2029,8 +2029,14 @@ public class VehiclePiecesController : MonoBehaviour
       if (m_blockingcollider) Physics.IgnoreCollision(t, m_blockingcollider, true);
       if (m_onboardcollider)
         Physics.IgnoreCollision(t, m_onboardcollider, true);
-      foreach (var nv in m_pieces)
+      foreach (var nv in m_pieces.ToList())
       {
+        if (!nv)
+        {
+          m_pieces.Remove(nv);
+          continue;
+        }
+
         var nvColliders = nv.GetComponentsInChildren<Collider>();
         foreach (var nvCollider in nvColliders)
         {
