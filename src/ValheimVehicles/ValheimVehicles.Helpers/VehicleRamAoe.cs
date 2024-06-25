@@ -19,7 +19,6 @@ public class VehicleRamAoe : Aoe
   public static List<VehicleRamAoe> RamInstances = [];
 
   public static HitData.DamageTypes baseDamage;
-  public float velocityMultiplier = 0;
   public float massMultiplier = RamConfig.MaxVelocityMultiplier.Value;
 
   public float minimumVelocityToTriggerHit => RamConfig.minimumVelocityToTriggerHit.Value *
@@ -73,32 +72,38 @@ public class VehicleRamAoe : Aoe
   {
     m_blockable = false;
     m_dodgeable = false;
-    m_hitTerrain = true;
-    m_hitProps = true;
-    m_hitCharacters = true;
-    m_hitFriendly = true;
-    m_hitEnemy = true;
-    m_hitParent = true;
+    m_hitTerrain = RamsCanHitEnvironmentOrTerrain;
+    m_hitProps = RamsCanHitEnvironmentOrTerrain;
+    m_hitCharacters = RamsCanHitCharacters;
+    m_hitFriendly = RamsCanHitFriendly;
+    m_hitEnemy = RamsCanHitEnemies;
+    m_hitParent = CanDamageSelf;
+
+    // todo may need this to do damage to wearntear prefab of the ram
+    // m_hitTerrain = true;
+    // m_hitProps = true;
+    // m_hitCharacters = true;
+    // m_hitFriendly = true;
+    // m_hitEnemy = true;
+    // m_hitParent = true;
 
     m_hitInterval = Mathf.Clamp(RamHitInterval, 0.5f, 5f);
 
     // todo need to tweak this
+    m_damageSelf = !CanDamageSelf ? 0 : 1;
     m_toolTier = RamDamageToolTier;
+    m_attackForce = 5;
     m_attackForce = 50;
 
     m_radius = Mathf.Clamp(RamHitArea, 0.1f, 10f);
     m_radius *= RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f;
 
     m_useTriggers = true;
+    m_triggerEnterOnly = AllowContinuousDamage;
     m_triggerEnterOnly = true;
     m_useCollider = null;
     m_useAttackSettings = true;
     m_ttl = 0;
-    m_canRaiseSkill = true;
-    m_skill = Skills.SkillType.None;
-    m_backstabBonus = 1;
-
-    SetBaseDamageFromConfig();
   }
 
   public float GetTotalDamage(float slashDamage, float bluntDamage, float chopDamage,
@@ -489,8 +494,14 @@ public class VehicleRamAoe : Aoe
 
   public static void OnBaseSettingsChange(object sender, EventArgs eventArgs)
   {
-    foreach (var instance in RamInstances)
+    foreach (var instance in RamInstances.ToList())
     {
+      if (!instance)
+      {
+        RamInstances.Remove(instance);
+        continue;
+      }
+
       instance.InitializeFromConfig();
       instance.InitAoe();
     }
@@ -500,6 +511,12 @@ public class VehicleRamAoe : Aoe
   {
     foreach (var instance in RamInstances.ToArray())
     {
+      if (!instance)
+      {
+        RamInstances.Remove(instance);
+        continue;
+      }
+
       instance.SetBaseDamageFromConfig();
       instance.InitAoe();
     }

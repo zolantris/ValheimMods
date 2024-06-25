@@ -123,7 +123,6 @@ public static class RamConfig
       ConfigHelpers.CreateConfigDescription(
         "Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.",
         true, true));
-    ;
     ShipMassMaxMultiplier = config.Bind("Rams", "ShipMassMaxMultiplier", 0.01f,
       ConfigHelpers.CreateConfigDescription(
         "Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.",
