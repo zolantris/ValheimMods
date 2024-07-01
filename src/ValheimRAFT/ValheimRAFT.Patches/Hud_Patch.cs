@@ -69,7 +69,7 @@ public class Hud_Patch
   private static void ToggleAnchorHud(VehicleShip vehicleShip)
   {
     if (!vehicleShip) return;
-    var isAnchored = vehicleShip.MovementController.IsAnchored;
+    var isAnchored = vehicleShip.MovementController.isAnchored;
     AnchorHud.SetActive(isAnchored);
   }
 

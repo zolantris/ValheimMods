@@ -116,7 +116,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
     var targetHeight = vehiclePiecesController?.VehicleInstance?.Instance?.TargetHeight;
     if (targetHeight != null && vehiclePiecesController?.VehicleInstance?.Instance?.TargetHeight >
         0f &&
-        !(vehiclePiecesController?.MovementController?.IsAnchored ?? false) &&
+        !(vehiclePiecesController?.MovementController?.isAnchored ?? false) &&
         hitPoint.y < vehiclePiecesController?.GetColliderBottom())
     {
       return true;

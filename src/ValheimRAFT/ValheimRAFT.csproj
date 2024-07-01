@@ -32,6 +32,9 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Config\PropulsionConfig.cs">
             <Link>ValheimVehicles.Config\VehiclePropulsionConfig.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleOnboardController.cs">
+            <Link>Controllers\VehicleOnboardController.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup>
         <Compile Include="ValheimRAFT\*.cs"/>

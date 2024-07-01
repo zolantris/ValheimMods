@@ -106,6 +106,9 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
   }
 
 
+  private long? _currentOwner;
+  private string? _currentPlayerName;
+
   /// <summary>
   /// Gets the owner name
   /// </summary>
@@ -116,13 +119,22 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
   {
     var controller = ShipInstance?.VehiclePiecesController?.VehicleInstance;
     if (controller?.NetView?.GetZDO() == null) return "";
+
     var ownerId = controller.NetView.GetZDO().GetOwner();
-    var matchingOwnerInPlayers =
-      controller?.MovementController?.m_players.FirstOrDefault((player) =>
-        player.GetPlayerID() == ownerId);
-    var ownerName = matchingOwnerInPlayers?.GetPlayerName() ?? "N/A";
+    if (ownerId != _currentOwner || _currentPlayerName == null)
+    {
+      var matchingOwnerInPlayers =
+        controller?.MovementController?.m_players.FirstOrDefault((player) =>
+        {
+          var playerOwnerId = player.GetOwner();
+          return ownerId == playerOwnerId;
+        });
+      _currentOwner = matchingOwnerInPlayers?.GetOwner();
+      _currentPlayerName = matchingOwnerInPlayers?.GetPlayerName() ?? "Server";
+    }
+
     return
-      $"\n[<color=green><b>Owner: {ownerName}</b></color>]";
+      $"\n[<color=green><b>Physics Owner: {_currentPlayerName}</b></color>]";
   }
 
   private string GetBeachedHoverText()
@@ -145,7 +157,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
         "<color=white><b>$valheim_vehicles_wheel_use_error</b></color>");
     }
 
-    var isAnchored = controller?.VehicleInstance?.MovementController?.IsAnchored ?? false;
+    var isAnchored = controller?.VehicleInstance?.MovementController?.isAnchored ?? false;
     var anchorKeyString = GetAnchorHotkeyString();
     var hoverText = GetHoverTextFromShip(controller?.totalSailArea ?? 0,
       controller?.TotalMass ?? 0,
@@ -236,12 +248,15 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
     SetLastUsedWheel();
 
-
     var player = user as Player;
-
 
     var playerOnShipViaShipInstance =
       ShipInstance?.VehiclePiecesController?.GetComponentsInChildren<Player>() ?? null;
+
+    if (player != null)
+    {
+      ShipInstance?.MovementController?.AddPlayerIfMissing(player);
+    }
 
     if (playerOnShipViaShipInstance?.Length == 0 || playerOnShipViaShipInstance == null)
     {
@@ -258,7 +273,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
         Logger.LogDebug(
           $"Interact PlayerId {playerInstance.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
         if (playerInstance.GetPlayerID() != player.GetPlayerID()) continue;
-        ShipInstance?.Instance?.MovementController.FireRequestControl(playerInstance.GetPlayerID(),
+        ShipInstance?.Instance?.MovementController.SendRequestControl(playerInstance.GetPlayerID(),
           AttachPoint);
         return true;
       }
@@ -288,7 +303,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
     if (!ShipInstance?.Instance?.MovementController) return false;
 
-    ShipInstance.Instance.MovementController.FireRequestControl(player.GetPlayerID(), AttachPoint);
+    ShipInstance.Instance.MovementController.SendRequestControl(player.GetPlayerID(), AttachPoint);
     return true;
   }
 
@@ -354,7 +369,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
     VehicleMovementController.DEPRECATED_OnFlightControls(deprecatedMBShip);
 
-    var anchorKey = VehicleMovementController.GetAnchorKey();
+    var anchorKey = VehicleMovementController.GetAnchorKeyDown();
     if (!anchorKey) return;
 
     deprecatedMBShip.SetAnchor(

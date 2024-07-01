@@ -3,6 +3,7 @@ using BepInEx.Configuration;
 using Jotunn.Managers;
 using Jotunn.Utils;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -144,12 +145,13 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     $"{Author}-{ModName}", $"zolantris-{ModName}", $"Zolantris-{ModName}", ModName
   ];
 
-  private ConfigDescription CreateConfigDescription(string description, bool isAdmin = false,
-    bool isAdvanced = false)
+  private ConfigDescription CreateConfigDescription(string description,
+    bool isAdmin = false,
+    bool isAdvanced = false, AcceptableValueBase? acceptableValues = null)
   {
     return new ConfigDescription(
       description,
-      null,
+      acceptableValues,
       new ConfigurationManagerAttributes()
       {
         IsAdminOnly = isAdmin,
@@ -166,15 +168,15 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     HullFloatationColliderLocation = Config.Bind("Vehicles", "HullFloatationColliderLocation",
       HullFloatation.Average,
       new ConfigDescription(
-        "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship.",
+        "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20",
         null, new object[]
         {
         }));
     HullFloatationCustomColliderOffset = Config.Bind("Vehicles", "HullFloatation Custom Offset",
       0f,
       CreateConfigDescription(
-        "Hull Floatation Collider Customization, set this value and it will always make the ship float at that offset",
-        true, true
+        "Hull Floatation Collider Customization, set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom",
+        true, true, new AcceptableValueRange<float>(-20, 20)
       ));
 
     EnableExactVehicleBounds = Config.Bind("Vehicles", "EnableExactVehicleBounds", false,

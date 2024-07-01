@@ -9,6 +9,7 @@ public static class PropulsionConfig
   public static ConfigEntry<float> TurnPowerNoRudder { get; private set; } = null!;
   public static ConfigEntry<float> TurnPowerWithRudder { get; private set; } = null!;
   public static ConfigEntry<bool> EnableLandVehicles { get; private set; } = null!;
+  public static ConfigEntry<bool> SlowAndReverseWithoutControls { get; private set; } = null!;
 
   public static ConfigEntry<bool> ShouldLiftAnchorOnSpeedChange { get; private set; } = null!;
 
@@ -31,6 +32,11 @@ public static class PropulsionConfig
     TurnPowerWithRudder = Config.Bind(SectionName, "turningPowerWithRudder", 6f,
       ConfigHelpers.CreateConfigDescription(
         "Set the turning power with a rudder", true));
+
+    SlowAndReverseWithoutControls = Config.Bind(SectionName, "slowAndReverseWithoutControls", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Vehicles do not require controls while in slow and reverse with a person on them",
+        true));
 
     EnableLandVehicles = Config.Bind(SectionName, "enableLandVehicles", false,
       ConfigHelpers.CreateConfigDescription(

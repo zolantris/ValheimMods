@@ -63,7 +63,7 @@ public class VehiclePiecesController : MonoBehaviour
   /// </summary>
   internal ZSyncTransform? zsyncTransform;
 
-  internal Rigidbody m_body;
+  public Rigidbody m_body;
   internal FixedJoint m_fixedJoint;
 
   internal List<ZNetView> m_pieces = [];
@@ -525,28 +525,19 @@ public class VehiclePiecesController : MonoBehaviour
     }
   }
 
-  public void Update()
-  {
-    if (!VehicleInstance.NetView) return;
-    if (ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value) return;
-    // // owner must sync more frequently, this likely is unnecessary but is kept as an option for servers that may be having sync problems during only the FixedUpdate
-    if (VehicleInstance.NetView?.IsOwner() == true)
-    {
-      Client_UpdateAllPieces();
-    }
-
-    Sync();
-  }
-
   public void FixedUpdate()
   {
-    Client_UpdateAllPieces();
     Sync();
   }
 
   private void LateUpdate()
   {
     Sync();
+    VehicleInstance?.MovementController?.zsyncTransform.SyncNow();
+    if (!ZNet.instance.IsServer())
+    {
+      Client_UpdateAllPieces();
+    }
   }
 
 
@@ -578,11 +569,13 @@ public class VehiclePiecesController : MonoBehaviour
   {
     var sector = ZoneSystem.instance.GetZone(transform.position);
 
-    if (sector == m_sector) return;
-
-    if (m_sector != m_serverSector)
+    if (sector == m_sector)
     {
-      ServerSyncAllPieces();
+      if (ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value)
+      {
+        ForceUpdateAllPiecePositions();
+      }
+
       return;
     }
 
@@ -590,15 +583,13 @@ public class VehiclePiecesController : MonoBehaviour
     ForceUpdateAllPiecePositions();
   }
 
+  /// <summary>
+  /// Abstract for this getter, coherces to false
+  /// </summary>
+  /// <returns></returns>
   private bool IsPlayerOwnerOfNetview()
   {
-    var netViewOwnerId = VehicleInstance.NetView?.GetZDO()?.GetOwner();
-    if (netViewOwnerId == 0L) return false;
-
-    var playerId = Player.m_localPlayer?.GetPlayerID();
-    if (playerId == 0L) return false;
-
-    return netViewOwnerId == playerId;
+    return VehicleInstance.NetView?.GetZDO()?.IsOwner() ?? false;
   }
 
   /// <summary>
@@ -607,9 +598,7 @@ public class VehiclePiecesController : MonoBehaviour
   public void ServerSyncAllPieces()
   {
     var isDedicated = ZNet.instance?.IsDedicated();
-    var isPlayerTheOwner = IsPlayerOwnerOfNetview();
-
-    if (isDedicated != true && isPlayerTheOwner != true) return;
+    if (isDedicated != true) return;
 
     if (_serverUpdatePiecesCoroutine != null)
     {
@@ -666,6 +655,7 @@ public class VehiclePiecesController : MonoBehaviour
    */
   private IEnumerator UpdatePiecesWorker(List<ZDO> list)
   {
+    Logger.LogDebug("called UpdatePiecesWorker");
     UpdatePieces(list);
     yield return new WaitForFixedUpdate();
   }
