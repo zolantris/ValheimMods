@@ -16,6 +16,7 @@ using ValheimVehicles;
 using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Propulsion.Sail;
 using ValheimVehicles.Vehicles.Components;
 using ZdoWatcher;
@@ -548,6 +549,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     EnableShipWakeSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
     EnableShipInWaterSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
     AllowFlight.SettingChanged += VehicleShip.OnAllowFlight;
+    AllowExperimentalPrefabs.SettingChanged +=
+      WaterVehiclePrefab.Instance.OnExperimentalPrefabSettingsChange;
 
     /*
      * @todo add a way to skip LoadCustomTextures when on server. This check when used here crashes the Plugin.

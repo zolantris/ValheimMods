@@ -479,11 +479,11 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     var vehiclePiecesContainer = VehiclePiecesPrefab.VehiclePiecesContainer;
     if (!vehiclePiecesContainer) return;
 
-    var prevValue = ZNetView.m_useInitZDO;
-    ZNetView.m_useInitZDO = false;
+    // var prevValue = ZNetView.m_useInitZDO;
+    // ZNetView.m_useInitZDO = false;
     _vehiclePiecesContainerInstance =
-      Instantiate(vehiclePiecesContainer, transform.position, transform.rotation, null);
-    ZNetView.m_useInitZDO = prevValue;
+      Instantiate(vehiclePiecesContainer, transform.position, transform.rotation);
+    // ZNetView.m_useInitZDO = prevValue;
 
     PiecesController = _vehiclePiecesContainerInstance.AddComponent<VehiclePiecesController>();
     PiecesController.InitFromShip(Instance);

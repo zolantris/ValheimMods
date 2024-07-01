@@ -16,10 +16,11 @@ namespace ValheimVehicles.Helpers;
 
 public class VehicleRamAoe : Aoe
 {
+  // Typeof PrefabTiers
+  public string materialTier;
   public static List<VehicleRamAoe> RamInstances = [];
 
   public static HitData.DamageTypes baseDamage;
-  public float massMultiplier = RamConfig.MaxVelocityMultiplier.Value;
 
   public float minimumVelocityToTriggerHit => RamConfig.minimumVelocityToTriggerHit.Value *
                                               (RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f);
@@ -57,6 +58,8 @@ public class VehicleRamAoe : Aoe
   public float pierceDamageRatio;
   public float bluntDamageRatio;
 
+  public static float DamageIncreasePercentagePerTier =>
+    RamConfig.DamageIncreasePercentagePerTier.Value;
 
   public static float MaxVelocityMultiplier =>
     RamConfig.MaxVelocityMultiplier.Value;
@@ -340,6 +343,10 @@ public class VehicleRamAoe : Aoe
 
     var multiplier = Mathf.Min(relativeVelocityMagnitude * 0.5f, MaxVelocityMultiplier);
 
+    if (materialTier == PrefabTiers.Tier3)
+    {
+      multiplier *= Mathf.Clamp(1 + DamageIncreasePercentagePerTier * 2, 1, 4);
+    }
 
     if (Mathf.Approximately(multiplier, 0))
     {

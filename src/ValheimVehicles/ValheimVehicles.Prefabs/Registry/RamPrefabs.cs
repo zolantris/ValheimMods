@@ -105,6 +105,7 @@ public class RamPrefabs : IRegisterPrefab
       if (bladeColliderObj != null)
       {
         var ramAoe = SetupAoeComponent(bladeColliderObj);
+        ramAoe.materialTier = variant.material;
         ramAoe.RamType = RamType.Stake;
       }
       else
@@ -178,6 +179,7 @@ public class RamPrefabs : IRegisterPrefab
       {
         var ramAoe = SetupAoeComponent(bladeColliderObj);
         ramAoe.RamType = RamType.Blade;
+        ramAoe.materialTier = variant.material;
       }
       else
       {

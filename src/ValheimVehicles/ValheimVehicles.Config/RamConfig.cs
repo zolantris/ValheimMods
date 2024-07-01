@@ -8,6 +8,7 @@ public static class RamConfig
   public static ConfigFile Config { get; private set; }
 
   public static ConfigEntry<bool> RamDamageEnabled { get; set; }
+  public static ConfigEntry<float> DamageIncreasePercentagePerTier { get; set; }
   public static ConfigEntry<float> HitRadius { get; set; }
   public static ConfigEntry<float> RamBaseSlashDamage { get; set; }
   public static ConfigEntry<float> RamBaseBluntDamage { get; set; }
@@ -73,10 +74,10 @@ public static class RamConfig
       ConfigHelpers.CreateConfigDescription(
         $"Pierce damage for Ram Stakes. {damageDescription} Will damage rocks as well as other entities",
         true, true));
-    PercentageDamageToSelf = config.Bind(SectionName, "percentageDamageToSelf", 0.05f,
+    PercentageDamageToSelf = config.Bind(SectionName, "percentageDamageToSelf", 0.01f,
       ConfigHelpers.CreateConfigDescription(
         $"Percentage Damage applied to the Ram piece per hit. Number between 0-1.",
-        true, true));
+        true, true, new AcceptableValueRange<float>(0, 1)));
 
     AllowContinuousDamage = config.Bind(SectionName, "AllowContinuousDamage", true,
       ConfigHelpers.CreateConfigDescription(
@@ -115,16 +116,16 @@ public static class RamConfig
       ConfigHelpers.CreateConfigDescription(
         "The base ram hit radius area. Stakes are always half the size, this will hit all pieces within this radius, capped between 0.1 and 10 for balance and framerate stability",
         true, true));
-    RamHitInterval = config.Bind(SectionName, "RamHitInterval", 0.5f,
+    RamHitInterval = config.Bind(SectionName, "RamHitInterval", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Every X seconds, the ram will apply this damage",
-        true, true));
+        true, true, new AcceptableValueRange<float>(0.5f, 20f)));
 
     // Physics damage multiplier Config
-    minimumVelocityToTriggerHit = config.Bind(SectionName, "minimumVelocityToTriggerHit", 0.5f,
+    minimumVelocityToTriggerHit = config.Bind(SectionName, "minimumVelocityToTriggerHit", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Minimum velocity required to activate the ram's damage",
-        true, true));
+        true, true, new AcceptableValueRange<float>(0f, 100f)));
     MaxVelocityMultiplier = config.Bind(SectionName, "RamMaxVelocityMultiplier", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.",
@@ -134,10 +135,20 @@ public static class RamConfig
         "Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.",
         true, true));
 
+    const int tierDiff = 2;
+    const float defaultDamagePerTier = .25f;
+    const int baseDamage = 1;
+    DamageIncreasePercentagePerTier = config.Bind(SectionName, "DamageIncreasePercentagePerTier",
+      0.25f,
+      ConfigHelpers.CreateConfigDescription(
+        $"Damage Multiplier per tier. So far only HardWood (Tier1) Iron (Tier3) available. With base value 1 a Tier 3 mult at 25% additive additional damage would be 1.5. IE ({baseDamage} * {defaultDamagePerTier} * {tierDiff} + {baseDamage}) = {baseDamage * defaultDamagePerTier * tierDiff + baseDamage}",
+        true, true, new AcceptableValueRange<float>(0, 4f)));
+
     // Disables/Enables itself when this value updates
     RamDamageEnabled.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
 
     // Must re-initialize config called in Awake
+    DamageIncreasePercentagePerTier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     HitRadius.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     PercentageDamageToSelf.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     AllowContinuousDamage.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;

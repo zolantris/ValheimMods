@@ -281,7 +281,16 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     vehicleShip = GetComponent<VehicleShip>();
     GetRigidbody();
+
     zsyncTransform = GetComponent<ZSyncTransform>();
+    zsyncTransform.m_syncPosition = true;
+    zsyncTransform.m_syncBodyVelocity = true;
+    zsyncTransform.m_syncRotation = true;
+
+    if (!zsyncTransform.m_body)
+    {
+      zsyncTransform.m_body = GetRigidbody();
+    }
 
     SetupImpactEffect();
     InitColliders();
@@ -890,8 +899,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   public void UpdateRudder(float dt, bool haveControllingPlayer)
   {
-    // must be owner
-    if (!m_nview.IsOwner()) return;
     if (!m_rudderObject)
     {
       return;

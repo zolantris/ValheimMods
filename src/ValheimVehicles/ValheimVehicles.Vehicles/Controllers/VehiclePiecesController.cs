@@ -455,7 +455,7 @@ public class VehiclePiecesController : MonoBehaviour
   public virtual void SyncRigidbodyStats(float drag, float angularDrag)
   {
     if (!VehicleInstance?.MovementController?.m_body || m_statsOverride ||
-        !VehicleInstance?.Instance)
+        !VehicleInstance?.Instance || !m_body)
     {
       return;
     }
@@ -490,7 +490,8 @@ public class VehiclePiecesController : MonoBehaviour
 
   public void Sync()
   {
-    if (!(bool)m_body || !(bool)VehicleInstance?.MovementControllerRigidbody)
+    if (!(bool)m_body || !(bool)VehicleInstance?.MovementControllerRigidbody ||
+        VehicleInstance?.MovementController == null)
     {
       return;
     }
@@ -509,7 +510,8 @@ public class VehiclePiecesController : MonoBehaviour
         m_fixedJoint.connectedBody = null;
       }
 
-      m_body.Move(VehicleInstance.MovementController.m_body.position,
+      m_body.MovePosition(VehicleInstance.MovementController.m_body.position);
+      m_body.MoveRotation(
         VehicleInstance.MovementController.m_body.rotation);
       return;
     }
@@ -525,6 +527,13 @@ public class VehiclePiecesController : MonoBehaviour
     }
   }
 
+  private void Update()
+  {
+    Client_UpdateAllPieces();
+
+    Sync();
+  }
+
   public void FixedUpdate()
   {
     Sync();
@@ -533,7 +542,6 @@ public class VehiclePiecesController : MonoBehaviour
   private void LateUpdate()
   {
     Sync();
-    VehicleInstance?.MovementController?.zsyncTransform.SyncNow();
     if (!ZNet.instance.IsServer())
     {
       Client_UpdateAllPieces();
@@ -567,6 +575,7 @@ public class VehiclePiecesController : MonoBehaviour
    */
   public void Client_UpdateAllPieces()
   {
+    Physics.SyncTransforms();
     var sector = ZoneSystem.instance.GetZone(transform.position);
 
     if (sector == m_sector)
@@ -689,7 +698,7 @@ public class VehiclePiecesController : MonoBehaviour
       }
 
       yield return UpdatePiecesWorker(list);
-      yield return new WaitForEndOfFrame();
+      yield return new WaitForFixedUpdate();
     }
   }
 
@@ -1440,6 +1449,7 @@ public class VehiclePiecesController : MonoBehaviour
     if (!netView) return;
 
     var isPiecesOrWaterVehicle = IsExcludedPrefab(netView.gameObject);
+
     if (isPiecesOrWaterVehicle)
     {
       return;
@@ -1545,10 +1555,11 @@ public class VehiclePiecesController : MonoBehaviour
     return !hasPieces;
   }
 
-  public void FixPieceMeshes(ZNetView netView)
+  public static void FixPieceMeshes(ZNetView netView)
   {
     /*
-     * Very very important. It fixes shadow flicker on all of valheim's prefabs with boats. If this is removed, the raft is seizure inducing.
+     * It fixes shadow flicker on all of valheim's prefabs with boats
+     * If this is removed, the raft is seizure inducing.
      */
     var meshes = netView.GetComponentsInChildren<MeshRenderer>(true);
     foreach (var meshRenderer in meshes)
@@ -1649,6 +1660,7 @@ public class VehiclePiecesController : MonoBehaviour
       return;
     }
 
+    FixPieceMeshes(netView);
     IgnoreCollidersForAllRamPieces(netView);
 
     var shouldRebuildBounds = false;
@@ -1734,7 +1746,6 @@ public class VehiclePiecesController : MonoBehaviour
       }
     }
 
-    FixPieceMeshes(netView);
     UpdateMass(netView);
 
     switch (isNew)
@@ -1932,9 +1943,9 @@ public class VehiclePiecesController : MonoBehaviour
      * todo make this logic exact.
      * - Have a minimum "deck" position and determine height based on the deck. For now this do not need to be done
      */
-    const float characterTriggerMaxAddedHeight = 5;
-    const float characterTriggerMinHeight = 1;
-    const float characterHeightScalar = 1.2f;
+    const float characterTriggerMaxAddedHeight = 10;
+    const float characterTriggerMinHeight = 4;
+    const float characterHeightScalar = 1.15f;
     var computedOnboardTriggerHeight =
       Math.Min(
         Math.Max(_vehicleBounds.size.y * characterHeightScalar,
