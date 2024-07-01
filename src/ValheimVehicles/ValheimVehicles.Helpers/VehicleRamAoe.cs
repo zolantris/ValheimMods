@@ -138,7 +138,7 @@ public class VehicleRamAoe : Aoe
     }
   }
 
-  private void OnDisable()
+  private new void OnDisable()
   {
     if (RamInstances.Contains(this))
     {
@@ -508,8 +508,16 @@ public class VehicleRamAoe : Aoe
         continue;
       }
 
-      instance.InitializeFromConfig();
-      instance.InitAoe();
+      if (RamConfig.RamsEnabled.Value)
+      {
+        instance.InitializeFromConfig();
+        instance.InitAoe();
+        instance.gameObject.SetActive(true);
+      }
+      else
+      {
+        instance.gameObject.SetActive(false);
+      }
     }
   }
 
