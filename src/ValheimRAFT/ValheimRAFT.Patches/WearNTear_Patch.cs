@@ -169,21 +169,28 @@ public class WearNTear_Patch
   [HarmonyPrefix]
   private static bool WearNTear_ApplyDamage(WearNTear __instance, float damage)
   {
-    var mbr = __instance.GetComponentInParent<MoveableBaseShipComponent>();
-    var bv = __instance.GetComponentInParent<VehiclePiecesController>();
-
-    // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
+    // watervehicleship should receive no wearntear damage
     if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleShip))
     {
       return false;
     }
 
-    // vehicles ignore WNT for now...
-    if ((bool)mbr || (bool)bv)
+    var bv = __instance.GetComponentInParent<VehiclePiecesController>();
+    if ((bool)bv)
     {
-      return false;
+      return true;
     }
 
+    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
+    {
+      var mbr = __instance.GetComponentInParent<MoveableBaseShipComponent>();
+      if ((bool)mbr)
+      {
+        return true;
+      }
+    }
+
+    // scans all the items to see if there is a vehicle reference.
     return !PreventDestructionOfItemWithoutInitializedRaft(__instance);
   }
 
