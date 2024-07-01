@@ -13,6 +13,9 @@ public static class PrefabNames
     Four,
   }
 
+  private const string ValheimVehiclesPrefix = "ValheimVehicles";
+
+
   public const string PlayerSpawnControllerObj =
     $"{ValheimVehiclesPrefix}_PlayerSpawnControllerObj";
 
@@ -52,7 +55,6 @@ public static class PrefabNames
   public const string VehicleMovingPiecesContainer =
     $"{ValheimVehiclesPrefix}_{MovingPiecesContainer}";
 
-  private const string ValheimVehiclesPrefix = "ValheimVehicles";
   public const string WaterVehicleShip = $"{ValheimVehiclesPrefix}_WaterVehicleShip";
 
   // hull ribs
@@ -143,5 +145,12 @@ public static class PrefabNames
   {
     var sizeString = size == 1 ? "1x2" : "2x4";
     return $"{RamStakePrefix}_{tier}_{sizeString}";
+  }
+
+  public static bool IsVehicleCollider(string objName)
+  {
+    return objName.StartsWith(WaterVehicleBlockingCollider) ||
+           objName.StartsWith(WaterVehicleFloatCollider) ||
+           objName.StartsWith(WaterVehicleOnboardCollider);
   }
 }

@@ -421,9 +421,29 @@ public class VehicleRamAoe : Aoe
     return true;
   }
 
+  private void IgnoreCollider(Collider collider)
+  {
+    var childColliders = GetComponentsInChildren<Collider>();
+    foreach (var childCollider in childColliders)
+    {
+      Physics.IgnoreCollision(childCollider, collider, true);
+    }
+  }
+
+  /// <summary>
+  /// Ignores anything within the current vehicle and other vehicle movement/float/onboard colliders 
+  /// </summary>
+  /// <param name="collider"></param>
+  /// <returns></returns>
   private bool ShouldIgnore(Collider collider)
   {
     if (!collider) return false;
+    if (PrefabNames.IsVehicleCollider(collider.name))
+    {
+      IgnoreCollider(collider);
+      return true;
+    }
+
     if (collider.transform.root != transform.root) return false;
     if (vehicle != null)
     {
@@ -434,12 +454,7 @@ public class VehicleRamAoe : Aoe
       }
     }
 
-    var childColliders = GetComponentsInChildren<Collider>();
-    foreach (var childCollider in childColliders)
-    {
-      Physics.IgnoreCollision(childCollider, collider, true);
-    }
-
+    IgnoreCollider(collider);
     return true;
   }
 
@@ -508,7 +523,7 @@ public class VehicleRamAoe : Aoe
         continue;
       }
 
-      if (RamConfig.RamsEnabled.Value)
+      if (RamConfig.RamDamageEnabled.Value)
       {
         instance.InitializeFromConfig();
         instance.InitAoe();

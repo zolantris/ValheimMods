@@ -7,7 +7,7 @@ public static class RamConfig
 {
   public static ConfigFile Config { get; private set; }
 
-  public static ConfigEntry<bool> RamsEnabled { get; set; }
+  public static ConfigEntry<bool> RamDamageEnabled { get; set; }
   public static ConfigEntry<float> HitRadius { get; set; }
   public static ConfigEntry<float> RamBaseSlashDamage { get; set; }
   public static ConfigEntry<float> RamBaseBluntDamage { get; set; }
@@ -36,9 +36,9 @@ public static class RamConfig
     var damageDescription =
       "the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass.";
 
-    RamsEnabled = config.Bind(SectionName, "ramsEnabled", true,
+    RamDamageEnabled = config.Bind(SectionName, "ramDamageEnabled", true,
       ConfigHelpers.CreateConfigDescription(
-        "Will keep the prefab available for aethetics only, will not do any damage nor will it initialize anything related to damage.",
+        "Will keep the prefab available for aethetics only, will not do any damage nor will it initialize anything related to damage. Alternatives are using the damage tweaks.",
         true, true));
 
     // damage
@@ -135,7 +135,7 @@ public static class RamConfig
         true, true));
 
     // Disables/Enables itself when this value updates
-    RamsEnabled.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
+    RamDamageEnabled.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
 
     // Must re-initialize config called in Awake
     HitRadius.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
