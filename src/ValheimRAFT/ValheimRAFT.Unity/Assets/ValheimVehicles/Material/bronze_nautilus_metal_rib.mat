@@ -116,12 +116,12 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _GlossMapScale: 0.489
-    - _Glossiness: 0.763
+    - _Glossiness: 0.694
     - _GlossyReflections: 1
     - _Height: 15
     - _LogoRotation: 0
     - _MainRotation: 0
-    - _Metallic: 1
+    - _Metallic: 0.761
     - _MetallicAlphaGloss: 0
     - _MistAlpha: 1
     - _Mode: 0

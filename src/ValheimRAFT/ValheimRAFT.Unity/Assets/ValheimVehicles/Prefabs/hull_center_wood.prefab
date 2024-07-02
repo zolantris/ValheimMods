@@ -108,7 +108,7 @@ GameObject:
   - component: {fileID: 1416193380831239375}
   - component: {fileID: 8933104275165422261}
   m_Layer: 0
-  m_Name: Mesh5
+  m_Name: hull_keel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -267,7 +267,7 @@ Transform:
   m_GameObject: {fileID: 2042457336206810700}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -1.01, z: -4}
+  m_LocalPosition: {x: 0, y: -0.51, z: -4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -286,14 +286,14 @@ BoxCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 1040
+    m_Bits: 336629249
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2, y: 1.0226581, z: 8.034607}
-  m_Center: {x: 0.0013661385, y: -0.47240162, z: 4.005974}
+  m_Size: {x: 0.49023068, y: 1.0226581, z: 8.034607}
+  m_Center: {x: 0.027715623, y: -0.47240162, z: 4.005974}
 --- !u!1 &3156440502361413405
 GameObject:
   m_ObjectHideFlags: 0
@@ -762,8 +762,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 4, y: 0.5, z: 8.034607}
-  m_Center: {x: 0.0013661385, y: -0.25, z: 4.005974}
+  m_Size: {x: 4, y: 0.63240635, z: 8.034607}
+  m_Center: {x: 0.0013661385, y: -0.31620318, z: 4.005974}
 --- !u!1 &8869183489611337921
 GameObject:
   m_ObjectHideFlags: 0

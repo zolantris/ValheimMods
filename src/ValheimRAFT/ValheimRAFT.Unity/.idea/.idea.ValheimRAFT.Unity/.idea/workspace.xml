@@ -10,13 +10,10 @@
       <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Shaders/Custom_Piece.shader" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/vehicle_ship.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/vehicle_ship.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/BaseVehicleController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/BaseVehicleController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleShip.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleShip.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/WaterVehicleController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/WaterVehicleController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_center_wood.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_center_wood.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/shared_hull_rib.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/shared_hull_rib.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryHelpers.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryHelpers.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/ShipHullPrefab.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/ShipHullPrefab.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -76,7 +73,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "XThreadsFramesViewSplitterKey": "0.56",
-    "git-widget-placeholder": "epic/decouple-ship-physics",
+    "git-widget-placeholder": "chore/release-2.2.0-stability-fixes",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -168,6 +165,7 @@
       <workItem from="1716759816407" duration="2211000" />
       <workItem from="1717224535994" duration="2897000" />
       <workItem from="1717976844741" duration="1406000" />
+      <workItem from="1719908602497" duration="190000" />
     </task>
     <servers />
   </component>

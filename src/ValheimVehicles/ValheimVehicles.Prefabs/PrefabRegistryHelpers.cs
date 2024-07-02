@@ -331,6 +331,8 @@ public abstract class PrefabRegistryHelpers
     var wntWorn = prefab.transform.FindDeepChild("worn");
     var wntBroken = prefab.transform.FindDeepChild("broken");
 
+    // do not assign objects if worn and wnt broken do not exist
+    if (!(bool)wntWorn && !(bool)wntBroken) return;
     if (!(bool)wntNew) return;
     wnt.m_new = wntNew.gameObject;
     if (!(bool)wntWorn) return;

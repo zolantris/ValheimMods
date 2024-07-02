@@ -8,17 +8,18 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: wood_piece_rib_bg_valheim_wood
-  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
+  m_Shader: {fileID: 4800000, guid: 5a017bb1d1e8f7142bcb05f77a8be48e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _DETAIL_MULX2
-  - _NORMALMAP
-  - _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+  m_ValidKeywords: []
   m_InvalidKeywords:
   - _ADDRAIN_ON
   - _ADDSNOW_ON
   - _CAMCULL_ON
+  - _DETAIL_MULX2
+  - _NORMALMAP
+  - _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+  - _VALUENOISEVERTEX_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
@@ -70,7 +71,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NoiseTex:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 29c172b79817bdb4ba070f876c465e81, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
@@ -108,8 +109,8 @@ Material:
     - _PushDistance: 0
     - _RippleDeadzoneMax: 2
     - _RippleDeadzoneMin: 0.3
-    - _RippleDistance: 0
-    - _RippleFreq: 1
+    - _RippleDistance: 0.03
+    - _RippleFreq: 2
     - _RippleSpeed: 100
     - _SmoothnessTextureChannel: 1
     - _SpecularHighlights: 1
@@ -123,8 +124,8 @@ Material:
     - _TriplanarScale: 1
     - _TwoSidedNormals: 0
     - _UVSec: 0
-    - _ValueNoise: 0.5
-    - _ValueNoiseVertex: 0
+    - _ValueNoise: 1
+    - _ValueNoiseVertex: 1
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

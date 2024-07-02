@@ -136,7 +136,7 @@ public class ShipHullPrefab : IRegisterPrefab
 
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
       prefab.transform.Find("new") ?? prefab.transform,
-      ["bottom_connector", "top_connector"]);
+      ["shared_hull_rib", "mesh"]);
 
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
