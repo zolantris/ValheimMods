@@ -42,95 +42,16 @@ LODGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2051688328104020181}
   serializedVersion: 2
-  m_LocalReferencePoint: {x: 2.0112612, y: 2.1417487, z: 1.4996955}
-  m_Size: 4.3853736
+  m_LocalReferencePoint: {x: -0.53, y: 2.235, z: -2}
+  m_Size: 4
   m_FadeMode: 0
   m_AnimateCrossFading: 0
   m_LastLODIsBillboard: 0
   m_LODs:
-  - screenRelativeHeight: 0.023401026
+  - screenRelativeHeight: 0.14115268
     fadeTransitionWidth: 0
     renderers:
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
-    - renderer: {fileID: 0}
+    - renderer: {fileID: 3316098496895371001}
   m_Enabled: 1
 --- !u!1 &4382303424164076086
 GameObject:
@@ -414,6 +335,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
+--- !u!23 &3316098496895371001 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5482314245486236137, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
+  m_PrefabInstance: {fileID: 7066202520592488208}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &3486109493035701123 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5940555617446921363, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}

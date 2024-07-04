@@ -195,7 +195,7 @@ public abstract class PrefabRegistryHelpers
 
     foreach (var directionVariant in directionVariants)
     {
-      var sizeName = PrefabNames.GetDirectionName(directionVariant);
+      var directionName = PrefabNames.GetDirectionName(directionVariant);
       foreach (var materialVariant in materialVariants)
       {
         var materialName = materialVariant.ToLower();
@@ -203,9 +203,10 @@ public abstract class PrefabRegistryHelpers
           directionVariant);
         var pieceData = new PieceData()
         {
-          Name = $"{pieceBaseName} $valheim_vehicles_material_{materialName} {sizeName}",
+          Name =
+            $"{pieceBaseName} $valheim_vehicles_material_{materialName} $valheim_vehicles_direction_{directionName}",
           Description = pieceDescription,
-          Icon = spriteAtlas.GetSprite($"{iconBaseName}_{materialName}_{sizeName}")
+          Icon = spriteAtlas.GetSprite($"{iconBaseName}_{directionName}_{materialName}")
         };
 
         PieceDataDictionary.Add(prefabName, pieceData);

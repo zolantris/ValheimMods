@@ -177,6 +177,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5940555617446921363}
+  - component: {fileID: 8979986375098800848}
   m_Layer: 0
   m_Name: shared_hull_rib
   m_TagString: Untagged
@@ -202,6 +203,25 @@ Transform:
   - {fileID: 2142233004852714180}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!205 &8979986375098800848
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2051688328104020181}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: -1, y: 2.0249999, z: -2}
+  m_Size: 4
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.10891056
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 5482314245486236137}
+  m_Enabled: 1
 --- !u!1 &6049387191862319436
 GameObject:
   m_ObjectHideFlags: 0
