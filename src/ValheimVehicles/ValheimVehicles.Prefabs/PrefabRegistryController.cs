@@ -41,7 +41,7 @@ public class PrefabRegistryController : MonoBehaviour
     foreach (var obj in allObjects)
     {
       if (obj.name.Contains($"{PrefabNames.WaterVehicleShip}(Clone)") ||
-          ShipHulls.IsHull(obj) && obj.name.Contains("(Clone)"))
+          PrefabNames.IsHull(obj) && obj.name.Contains("(Clone)"))
       {
         var wnt = obj.GetComponent<WearNTear>();
         if ((bool)wnt)

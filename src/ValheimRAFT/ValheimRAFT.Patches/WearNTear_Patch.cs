@@ -98,7 +98,7 @@ public class WearNTear_Patch
   private static bool WearNTear_SetHealthVisual(WearNTear __instance, float health,
     bool triggerEffects)
   {
-    var isHull = ShipHulls.IsHull(__instance.gameObject);
+    var isHull = PrefabNames.IsHull(__instance.gameObject);
     if (!isHull) return true;
 
 

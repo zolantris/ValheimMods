@@ -10,6 +10,7 @@ public abstract class PrefabTiers
   public const string Tier5 = "tier5"; // blackmetal
   public const string Tier6 = "tier6"; // mistlands
   public const string Tier7 = "tier7"; // ashlands
+  public const string Tier8 = "tier8"; // deepnorth TBD
 
   public static int GetTierValue(string val)
   {

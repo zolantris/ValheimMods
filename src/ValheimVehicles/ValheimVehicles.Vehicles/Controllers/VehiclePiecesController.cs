@@ -796,7 +796,7 @@ public class VehiclePiecesController : MonoBehaviour
     UpdateMass(netView, true);
     DebouncedRebuildBounds();
 
-    if (ShipHulls.IsHull(netView.gameObject))
+    if (PrefabNames.IsHull(netView.gameObject))
     {
       m_hullPieces.Remove(netView);
     }
@@ -1672,7 +1672,7 @@ public class VehiclePiecesController : MonoBehaviour
     if ((bool)wnt && ValheimRaftPlugin.Instance.MakeAllPiecesWaterProof.Value)
       wnt.m_noRoofWear = false;
 
-    if (ShipHulls.IsHull(netView.gameObject))
+    if (PrefabNames.IsHull(netView.gameObject))
     {
       m_hullPieces.Add(netView);
     }
@@ -2167,7 +2167,7 @@ public class VehiclePiecesController : MonoBehaviour
     if (!door && !ladder && !rope && !SailPrefabs.IsSail(go.name)
         && !RamPrefabs.IsRam(go.name))
     {
-      if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value || ShipHulls.IsHull(go))
+      if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value || PrefabNames.IsHull(go))
       {
         var newBounds =
           EncapsulateColliders(_vehicleBounds.center, _vehicleBounds.size, go);

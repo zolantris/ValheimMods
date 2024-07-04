@@ -348,12 +348,12 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     switch (StartingPiece?.Value)
     {
       case VehicleShipInitPiece.HullFloor2X2:
-        selectedPrefab = PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Wood,
-          PrefabNames.PrefabSizeVariant.Two);
+        selectedPrefab = PrefabNames.GetHullSlabName(ShipHulls.HullMaterial.Wood,
+          PrefabNames.PrefabSizeVariant.TwoByTwo);
         break;
       case VehicleShipInitPiece.HullFloor4X4:
-        selectedPrefab = PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Wood,
-          PrefabNames.PrefabSizeVariant.Four);
+        selectedPrefab = PrefabNames.GetHullSlabName(ShipHulls.HullMaterial.Wood,
+          PrefabNames.PrefabSizeVariant.FourByFour);
         break;
       case VehicleShipInitPiece.Nautilus:
         selectedPrefab = PrefabNames.Nautilus;
