@@ -832,7 +832,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3784598169234739585}
   m_Layer: 0
-  m_Name: hull_window_4x4_wood
+  m_Name: hull_window_wood_4x4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

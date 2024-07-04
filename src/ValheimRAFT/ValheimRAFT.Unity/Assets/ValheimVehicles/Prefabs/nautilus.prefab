@@ -80,6 +80,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: shared_nautilus
       objectReference: {fileID: 0}
+    - target: {fileID: 6246074581526747795, guid: aab32cce2ea559c4f82a49b09afb2d93, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 6246074581526747795, guid: aab32cce2ea559c4f82a49b09afb2d93, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 100
+      objectReference: {fileID: 0}
     - target: {fileID: 9169174059981306904, guid: aab32cce2ea559c4f82a49b09afb2d93, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

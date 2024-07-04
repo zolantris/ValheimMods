@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 3715165887456535575}
   - component: {fileID: 2768140620527865613}
   m_Layer: 10
-  m_Name: hull_slab_4x4_iron
+  m_Name: hull_slab_iron_4x4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

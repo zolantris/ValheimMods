@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5721838593751922162}
   m_Layer: 0
-  m_Name: hull_prow_2x2_iron
+  m_Name: hull_rib_prow_wood_2x2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -40,22 +40,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5721838593751922162}
     m_Modifications:
-    - target: {fileID: 3998560546274225563, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2100000, guid: 933500a2325fe8c4683bc50c42636a99, type: 2}
     - target: {fileID: 4179269162098430418, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
       propertyPath: m_Name
       value: shared_hull_rib_forward_2x2
       objectReference: {fileID: 0}
-    - target: {fileID: 5601851497950198800, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5601851497950198800, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2100000, guid: 933500a2325fe8c4683bc50c42636a99, type: 2}
     - target: {fileID: 5721838593751922162, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

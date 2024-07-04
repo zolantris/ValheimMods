@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5721838593751922162}
   m_Layer: 0
-  m_Name: hull_rib_side_left_wood
+  m_Name: hull_rib_corner_left_wood
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -103,7 +103,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3784598169234739585}
   m_Layer: 0
-  m_Name: hull_wall_2x2_wood
+  m_Name: hull_wall_wood_2x2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
