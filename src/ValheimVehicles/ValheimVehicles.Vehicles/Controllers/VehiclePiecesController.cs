@@ -946,16 +946,14 @@ public class VehiclePiecesController : MonoBehaviour
       return 80f;
     }
 
-    if (pieceName ==
-        PrefabRegistryHelpers.GetPieceNameFromPrefab(PrefabNames.ShipHullRibWoodPrefabName))
+    if (pieceName.StartsWith(PrefabNames.HullRib))
     {
-      return 180f;
-    }
+      if (pieceName.Contains(ShipHulls.HullMaterial.Iron))
+      {
+        return 720f;
+      }
 
-    if (pieceName ==
-        PrefabRegistryHelpers.GetPieceNameFromPrefab(PrefabNames.ShipHullRibIronPrefabName))
-    {
-      return 720f;
+      return 180f;
     }
 
     if (pieceName == "wood_floor_1x1")

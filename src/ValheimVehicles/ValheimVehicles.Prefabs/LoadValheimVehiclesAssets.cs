@@ -102,7 +102,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject GetShipHullRibCorner(string hullMaterial,
     PrefabNames.DirectionVariant directionVariant)
   {
-    var directionName = PrefabNames.DirectionToName(directionVariant);
+    var directionName = PrefabNames.GetDirectionName(directionVariant);
     const string baseName = "hull_rib_corner";
     var assetNameToLoad = $"{baseName}_{directionName}_{hullMaterial}.prefab";
     return _bundle.LoadAsset<GameObject>(assetNameToLoad);
@@ -111,7 +111,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject GetShipHullRib(string hullMaterial)
   {
     const string baseName = "hull_rib";
-    var assetNameToLoad = $"{baseName}_${hullMaterial}.prefab";
+    var assetNameToLoad = $"{baseName}_{hullMaterial}.prefab";
     return _bundle.LoadAsset<GameObject>(assetNameToLoad);
   }
 
@@ -139,22 +139,22 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
     // hull slabs
     ShipHullSlab2X2WoodAsset =
-      assetBundle.LoadAsset<GameObject>("hull_slab_2x2_wood.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_slab_wood_2x2.prefab");
     ShipHullSlab2X2IronAsset =
-      assetBundle.LoadAsset<GameObject>("hull_slab_2x2_iron.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_slab_iron_2x2.prefab");
     ShipHullSlab4X4WoodAsset =
-      assetBundle.LoadAsset<GameObject>("hull_slab_4x4_wood.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_slab_wood_4x4.prefab");
     ShipHullSlab4X4IronAsset =
-      assetBundle.LoadAsset<GameObject>("hull_slab_4x4_iron.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_slab_iron_4x4.prefab");
 
     ShipHullWall2X2WoodAsset =
-      assetBundle.LoadAsset<GameObject>("hull_wall_2x2_wood.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_wall_wood_2x2.prefab");
     ShipHullWall2X2IronAsset =
-      assetBundle.LoadAsset<GameObject>("hull_wall_2x2_iron.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_wall_iron_2x2.prefab");
     ShipHullWall4X4WoodAsset =
-      assetBundle.LoadAsset<GameObject>("hull_wall_4x4_wood.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_wall_wood_4x4.prefab");
     ShipHullWall4X4IronAsset =
-      assetBundle.LoadAsset<GameObject>("hull_wall_4x4_iron.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_wall_iron_4x4.prefab");
 
     // hull center variants
     ShipHullWoodAsset =

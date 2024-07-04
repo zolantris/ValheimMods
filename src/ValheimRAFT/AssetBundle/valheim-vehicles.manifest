@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3625144272
+CRC: 3652450027
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 369279121871a0d363513807d5dec2ab
+    Hash: 9a7363f1c9bb9774374ac978ec6702e9
   TypeTreeHash:
     serializedVersion: 2
     Hash: a317724a8cc8b787d65edf925aff78cb
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 369279121871a0d363513807d5dec2ab
+    Hash: 9a7363f1c9bb9774374ac978ec6702e9
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -78,7 +78,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_double_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_iron_4x4.prefab
-- Assets/ValheimVehicles/Prefabs/hull_prow_iron_2x2.prefab
+- Assets/ValheimVehicles/Prefabs/hull_rib_prow_iron_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/shared_nautilus.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_bottom.prefab
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_1x2.prefab
@@ -104,7 +104,7 @@ Assets:
 - Assets/Shader/Custom_Piece.shader
 - Assets/ValheimVehicles/Prefabs/hull_rib_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_2x2.prefab
-- Assets/ValheimVehicles/Prefabs/hull_wall_4x4_wood.prefab
+- Assets/ValheimVehicles/Prefabs/hull_wall_wood_4x4.prefab
 - Assets/ValheimVehicles/vehicle_icons.spriteatlasv2
 - Assets/ValheimVehicles/Prefabs/mechanical_switch.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/hud_anchor.prefab

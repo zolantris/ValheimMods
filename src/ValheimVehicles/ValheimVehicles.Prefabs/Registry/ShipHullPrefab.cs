@@ -1,11 +1,8 @@
-using System.Collections.Generic;
-using System.Linq;
 using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
-using ValheimRAFT;
 using static ValheimVehicles.Prefabs.PrefabNames;
 
 namespace ValheimVehicles.Prefabs.Registry;
@@ -32,15 +29,15 @@ public class ShipHullPrefab : IRegisterPrefab
     foreach (var hullMaterialType in hullMaterialTypes)
     {
       RegisterHull(GetShipHullCenterName(hullMaterialType), hullMaterialType, 8,
-        PrefabSizeVariant.FourByFour,
+        PrefabSizeVariant.FourByFour);
+
+      RegisterHullRib(GetHullRibName(hullMaterialType), hullMaterialType,
         prefabManager, pieceManager);
 
       // does not have a size variant
       foreach (var ribDirection in ribDirections)
       {
         RegisterHullRibCorner(
-          GetHullRibCornerName(ShipHulls.HullMaterial.Wood,
-            DirectionVariant.Left),
           hullMaterialType,
           ribDirection,
           prefabManager,
@@ -54,39 +51,18 @@ public class ShipHullPrefab : IRegisterPrefab
           GetHullSlabName(hullMaterialType, sizeVariant),
           hullMaterialType,
           materialCount,
-          sizeVariant,
-          prefabManager,
-          pieceManager);
+          sizeVariant);
 
         RegisterHull(
-          GetHullWallVariants(hullMaterialType, sizeVariant),
+          GetHullWallName(hullMaterialType, sizeVariant),
           hullMaterialType,
           materialCount,
-          sizeVariant,
-          prefabManager,
-          pieceManager);
+          sizeVariant);
 
         // hull-prow
-        RegisterHullRibProw(GetHullProwVariants(hullMaterialType, sizeVariant),
-          hullMaterialType,
-          materialCount,
-          sizeVariant,
-          prefabManager,
-          pieceManager);
+        RegisterHullRibProw(hullMaterialType, sizeVariant);
       }
     }
-
-    // hulls 4x8
-
-    RegisterHull(ShipHullCenterIronPrefabName, ShipHulls.HullMaterial.Iron,
-      8, PrefabSizeVariant.FourByFour, prefabManager, pieceManager);
-
-
-    // hull-ribs
-    RegisterHullRib(ShipHullRibWoodPrefabName, ShipHulls.HullMaterial.Wood,
-      prefabManager, pieceManager);
-    RegisterHullRib(ShipHullRibIronPrefabName, ShipHulls.HullMaterial.Iron,
-      prefabManager, pieceManager);
   }
 
   public static RequirementConfig[] GetRequirements(string material, int materialCount)
@@ -123,44 +99,44 @@ public class ShipHullPrefab : IRegisterPrefab
     wnt.m_burnable = hullMaterial != ShipHulls.HullMaterial.Iron;
   }
 
-  public void RegisterHullRibCorner(string prefabName,
+  public void RegisterHullRibCorner(
     string hullMaterial,
     DirectionVariant directionVariant,
     PrefabManager prefabManager,
     PieceManager pieceManager)
   {
+    var prefabName = GetHullRibCornerName(hullMaterial,
+      directionVariant);
     var prefabAsset = LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial, directionVariant);
     var prefab =
       prefabManager.CreateClonedPrefab(
         prefabName, prefabAsset);
 
     SetupHullPrefab(prefab, prefabName,
-      hullMaterial,
-      pieceManager);
+      hullMaterial, 8);
   }
 
-  public void RegisterHullRibProw(string prefabName,
+  public void RegisterHullRibProw(
     string hullMaterial,
-    int materialCount,
-    PrefabSizeVariant prefabSizeVariant,
-    PrefabManager prefabManager,
-    PieceManager pieceManager)
+    PrefabSizeVariant prefabSizeVariant)
   {
+    var prefabName = GetHullProwVariants(hullMaterial, prefabSizeVariant);
     var prefabAsset = LoadValheimVehicleAssets.GetShipHullRibProw(hullMaterial, prefabSizeVariant);
     var prefab =
-      prefabManager.CreateClonedPrefab(
+      PrefabManager.Instance.CreateClonedPrefab(
         prefabName, prefabAsset);
 
     SetupHullPrefab(prefab, prefabName,
       hullMaterial,
-      pieceManager);
+      8);
   }
 
   private static void SetupHullPrefab(
     GameObject prefab,
     string prefabName,
     string hullMaterial,
-    PieceManager pieceManager, Transform? hoistParent = null, string[]? hoistFilters = null)
+    int materialCount,
+    Transform? hoistParent = null, string[]? hoistFilters = null)
   {
     var wnt = PrefabRegistryHelpers.SetWearNTear(prefab);
     PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.Iron);
@@ -178,12 +154,12 @@ public class ShipHullPrefab : IRegisterPrefab
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab, hoistParent ?? prefab.transform,
       hoistFilters);
 
-    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
       Category = ValheimRaftMenuName,
       Enabled = true,
-      Requirements = GetRequirements(hullMaterial, 4)
+      Requirements = GetRequirements(hullMaterial, materialCount)
     }));
   }
 
@@ -202,7 +178,7 @@ public class ShipHullPrefab : IRegisterPrefab
 
     SetupHullPrefab(prefab, prefabName,
       hullMaterial,
-      pieceManager,
+      8,
       prefab.transform.Find("new") ?? prefab.transform,
       ["shared_hull_rib", "mesh"]);
   }
@@ -254,13 +230,13 @@ public class ShipHullPrefab : IRegisterPrefab
     string prefabName,
     string hullMaterial,
     int materialCount,
-    PrefabSizeVariant prefabSizeVariant,
-    PrefabManager prefabManager,
-    PieceManager pieceManager)
+    PrefabSizeVariant prefabSizeVariant)
   {
+    var prefabClone = GetShipHullAssetByMaterial(prefabName, hullMaterial, prefabSizeVariant);
+
     var prefab =
-      prefabManager.CreateClonedPrefab(
-        prefabName, GetShipHullAssetByMaterial(prefabName, hullMaterial, prefabSizeVariant));
+      PrefabManager.Instance.CreateClonedPrefab(
+        prefabName, prefabClone);
 
     var hoistParents = new[] { "new" };
 
@@ -271,12 +247,12 @@ public class ShipHullPrefab : IRegisterPrefab
 
     SetupHullPrefab(prefab, prefabName,
       hullMaterial,
-      pieceManager,
+      materialCount,
       prefab.transform.Find("new") ?? prefab.transform,
       hoistParents
     );
 
-    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
       Category = ValheimRaftMenuName,

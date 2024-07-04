@@ -46,7 +46,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 933500a2325fe8c4683bc50c42636a99, type: 2}
     - target: {fileID: 4179269162098430418, guid: 28afe4b79e8708c42948c6f6f9bd2fab, type: 3}
       propertyPath: m_Name
-      value: shared_hull_rib_forward_4x4
+      value: new
       objectReference: {fileID: 0}
     - target: {fileID: 5601851497950198800, guid: 28afe4b79e8708c42948c6f6f9bd2fab, type: 3}
       propertyPath: m_Materials.Array.data[0]

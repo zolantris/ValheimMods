@@ -41,7 +41,7 @@ public static class PrefabNames
     };
   }
 
-  public static string DirectionToName(DirectionVariant directionVariant)
+  public static string GetDirectionName(DirectionVariant directionVariant)
   {
     return directionVariant switch
     {
@@ -113,14 +113,8 @@ public static class PrefabNames
   public const string WaterVehicleShip = $"{ValheimVehiclesPrefix}_WaterVehicleShip";
 
   public const string HullProw = $"{ValheimVehiclesPrefix}_Ship_Hull_Prow";
-
-  // hull ribs
-  public const string ShipHullRibWoodPrefabName = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Wood";
-  public const string ShipHullRibIronPrefabName = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Iron";
-
-  // slabs
-  public const string ShipHullSlabWoodPrefabName = $"{ValheimVehiclesPrefix}_Ship_Hull_Slab_Wood";
-  public const string ShipHullSlabIronPrefabName = $"{ValheimVehiclesPrefix}_Ship_Hull_Slab_Iron";
+  public const string HullRibCorner = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Corner";
+  public const string HullRib = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib";
 
   // to only be used for matching with generic prefab names
   public const string HullSlab = $"{ValheimVehiclesPrefix}_Hull_Slab";
@@ -147,13 +141,20 @@ public static class PrefabNames
     return $"{HullProw}_{materialVariantName}_{sizeVariant}";
   }
 
+  public static string GetHullRibName(string materialVariant)
+  {
+    var materialVariantName = GetMaterialVariantName(materialVariant);
+
+    return $"{HullRib}_{materialVariantName}";
+  }
+
   public static string GetHullRibCornerName(string materialVariant,
     DirectionVariant directionVariant)
   {
-    var directionName = DirectionToName(directionVariant);
+    var directionName = GetDirectionName(directionVariant);
     var materialName = GetMaterialVariantName(materialVariant);
 
-    return $"{HullSlab}_{materialName}_{directionName}";
+    return $"{HullRibCorner}_{materialName}_{directionName}";
   }
 
   public static string GetHullSlabName(string materialVariant,
@@ -165,7 +166,7 @@ public static class PrefabNames
     return $"{HullSlab}_{materialVariantName}_{sizeVariant}";
   }
 
-  public static string GetHullWallVariants(string materialVariant,
+  public static string GetHullWallName(string materialVariant,
     PrefabSizeVariant prefabSizeVariant)
   {
     var sizeVariant = GetPrefabSizeVariantName(prefabSizeVariant);
@@ -249,8 +250,8 @@ public static class PrefabNames
     var goName = go.name;
     return goName.StartsWith(ShipHullCenterWoodPrefabName) ||
            goName.StartsWith(ShipHullCenterIronPrefabName) ||
-           goName.StartsWith(ShipHullRibIronPrefabName) ||
-           goName.StartsWith(ShipHullRibWoodPrefabName)
+           goName.StartsWith(HullRib) ||
+           goName.StartsWith(HullRibCorner)
            || goName.StartsWith(HullWall) || goName.StartsWith(HullSlab) ||
            goName.StartsWith(HullProw);
   }

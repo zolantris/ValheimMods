@@ -42,7 +42,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4179269162098430418, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
       propertyPath: m_Name
-      value: shared_hull_rib_forward_2x2
+      value: new
       objectReference: {fileID: 0}
     - target: {fileID: 5721838593751922162, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
       propertyPath: m_LocalPosition.x

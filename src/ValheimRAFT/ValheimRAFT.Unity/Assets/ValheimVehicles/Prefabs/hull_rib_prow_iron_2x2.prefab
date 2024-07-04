@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5721838593751922162}
   m_Layer: 0
-  m_Name: hull_prow_iron_2x2
+  m_Name: hull_rib_prow_iron_2x2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
