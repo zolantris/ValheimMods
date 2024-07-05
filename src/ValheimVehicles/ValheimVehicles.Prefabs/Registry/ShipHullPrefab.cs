@@ -28,7 +28,7 @@ public class ShipHullPrefab : IRegisterPrefab
 
     foreach (var hullMaterialType in hullMaterialTypes)
     {
-      RegisterHull(GetShipHullCenterName(hullMaterialType), hullMaterialType, 8,
+      RegisterHull(GetShipHullCenterName(hullMaterialType), hullMaterialType, 16 + 16 + 4,
         PrefabSizeVariant.FourByFour);
 
       RegisterHullRib(GetHullRibName(hullMaterialType), hullMaterialType,
@@ -39,9 +39,7 @@ public class ShipHullPrefab : IRegisterPrefab
       {
         RegisterHullRibCorner(
           hullMaterialType,
-          ribDirection,
-          prefabManager,
-          pieceManager);
+          ribDirection);
       }
 
       foreach (var sizeVariant in sizeVariants)
@@ -72,16 +70,24 @@ public class ShipHullPrefab : IRegisterPrefab
     {
       ShipHulls.HullMaterial.Iron =>
       [
-        new RequirementConfig { Amount = materialCount, Item = "Iron", Recover = true },
-        new RequirementConfig { Amount = materialCount, Item = "Bronze", Recover = true },
         new RequirementConfig
         {
-          Amount = 10 * materialCount, Item = "BronzeNails", Recover = true
+          Amount = Mathf.RoundToInt(Mathf.Clamp(materialCount / 4f, 1, 10)), Item = "Iron",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = Mathf.RoundToInt(Mathf.Clamp(materialCount / 4f, 1, 10)), Item = "Bronze",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 2 * materialCount, Item = "BronzeNails", Recover = true
         }
       ],
       ShipHulls.HullMaterial.Wood =>
       [
-        new RequirementConfig { Amount = 5 * materialCount, Item = "Wood", Recover = true }
+        new RequirementConfig { Amount = 2 * materialCount, Item = "Wood", Recover = true }
       ],
       _ => requirements
     };
@@ -101,15 +107,13 @@ public class ShipHullPrefab : IRegisterPrefab
 
   public void RegisterHullRibCorner(
     string hullMaterial,
-    DirectionVariant directionVariant,
-    PrefabManager prefabManager,
-    PieceManager pieceManager)
+    DirectionVariant directionVariant)
   {
     var prefabName = GetHullRibCornerName(hullMaterial,
       directionVariant);
     var prefabAsset = LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial, directionVariant);
     var prefab =
-      prefabManager.CreateClonedPrefab(
+      PrefabManager.Instance.CreateClonedPrefab(
         prefabName, prefabAsset);
 
     SetupHullPrefab(prefab, prefabName,
@@ -118,17 +122,19 @@ public class ShipHullPrefab : IRegisterPrefab
 
   public void RegisterHullRibProw(
     string hullMaterial,
-    PrefabSizeVariant prefabSizeVariant)
+    PrefabSizeVariant sizeVariant)
   {
-    var prefabName = GetHullProwVariants(hullMaterial, prefabSizeVariant);
-    var prefabAsset = LoadValheimVehicleAssets.GetShipHullRibProw(hullMaterial, prefabSizeVariant);
+    var prefabName = GetHullProwVariants(hullMaterial, sizeVariant);
+    var prefabAsset = LoadValheimVehicleAssets.GetShipHullRibProw(hullMaterial, sizeVariant);
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
         prefabName, prefabAsset);
 
+    var materialCount = GetPrefabSizeArea(sizeVariant);
+
     SetupHullPrefab(prefab, prefabName,
       hullMaterial,
-      8);
+      materialCount);
   }
 
   private static void SetupHullPrefab(
@@ -147,8 +153,8 @@ public class ShipHullPrefab : IRegisterPrefab
     PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-    prefab.layer = 0;
-    prefab.gameObject.layer = 0;
+    // prefab.layer = 0;
+    // prefab.gameObject.layer = 0;
     PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab);
 
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab, hoistParent ?? prefab.transform,
@@ -178,9 +184,8 @@ public class ShipHullPrefab : IRegisterPrefab
 
     SetupHullPrefab(prefab, prefabName,
       hullMaterial,
-      8,
-      prefab.transform.Find("new") ?? prefab.transform,
-      ["shared_hull_rib", "mesh"]);
+      6,
+      prefab.transform.Find("new") ?? prefab.transform);
   }
 
   /// <summary>

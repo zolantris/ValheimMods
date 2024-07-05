@@ -120,8 +120,8 @@ Material:
     - _MossBlend: 6.65
     - _MossNormal: 0
     - _MossTransition: 0.1
-    - _OcclusionStrength: 0.573
-    - _Parallax: 0.0252
+    - _OcclusionStrength: 0.389
+    - _Parallax: 0.08
     - _PatternRotation: 1
     - _PushClothMode: 0
     - _PushDistance: 0

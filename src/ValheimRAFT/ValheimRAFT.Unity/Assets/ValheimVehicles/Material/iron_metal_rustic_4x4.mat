@@ -12,6 +12,7 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _METALLICGLOSSMAP
   - _NORMALMAP
   m_InvalidKeywords:
   - _TWOSIDEDNORMALS_ON
@@ -26,7 +27,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BumpMap:
-        m_Texture: {fileID: 2800000, guid: d155bdc045facd946b38145d26e4bc8c, type: 3}
+        m_Texture: {fileID: 2800000, guid: 6a73eed2143f04947aaeaaf1070fb034, type: 3}
         m_Scale: {x: 5, y: 5}
         m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
@@ -70,7 +71,7 @@ Material:
         m_Scale: {x: 5, y: 5}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: d155bdc045facd946b38145d26e4bc8c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MossTex:
@@ -101,13 +102,13 @@ Material:
     m_Floats:
     - _AddRain: 0
     - _AddSnow: 0
-    - _BumpScale: 0.2
+    - _BumpScale: 1
     - _CamCull: 0
     - _Cull: 0
     - _Cutoff: 0
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _GlossMapScale: 1
+    - _GlossMapScale: 0.602
     - _Glossiness: 0.319
     - _GlossyReflections: 1
     - _Height: 0
