@@ -113,6 +113,7 @@ public class PrefabThumbnailGenerator : EditorWindow
 
     private void CaptureTexturesForPrefabs()
     {
+        AssetDatabase.DisallowAutoRefresh();
         spritePaths.Clear();
         
         if (!Directory.Exists(outputDirPath))
@@ -155,7 +156,8 @@ public class PrefabThumbnailGenerator : EditorWindow
                 Debug.LogWarning($"Issue occurred while snapshotting {obj.name}");
             }
         }
-        
+        AssetDatabase.AllowAutoRefresh();
+
         // AddAllIconsToSpriteAtlas();
         // UpdateSpriteAtlas();
     }
