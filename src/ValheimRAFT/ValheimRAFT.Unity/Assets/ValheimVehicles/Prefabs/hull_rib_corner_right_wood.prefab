@@ -43,7 +43,7 @@ PrefabInstance:
     - target: {fileID: 3719833045634283741, guid: ebce0810bab296c40bf4b6882e11b246, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 9f50f724d23916f488cd6f8f04b115b5, type: 2}
+      objectReference: {fileID: 2100000, guid: 584392d646d05f54cb1c6a3017322ab6, type: 2}
     - target: {fileID: 4179269162098430418, guid: ebce0810bab296c40bf4b6882e11b246, type: 3}
       propertyPath: m_Name
       value: shared_hull_rib_side_right

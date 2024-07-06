@@ -265,7 +265,7 @@ Transform:
   m_GameObject: {fileID: 4866528053681046693}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8, y: -1.505, z: 3}
+  m_LocalPosition: {x: 9, y: -2.255, z: 3}
   m_LocalScale: {x: 2, y: 1, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -278,7 +278,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4866528053681046693}
-  m_Mesh: {fileID: 6320000259446333544, guid: b7b1844ebc8fdd744aa853e608c80db4, type: 3}
+  m_Mesh: {fileID: 7059488439374195479, guid: 66815e8fb7eb7d74c84347705ef587c4, type: 3}
 --- !u!23 &699767817767242727
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -299,7 +299,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 853385369568c98479d8345c48eb9dc7, type: 2}
+  - {fileID: 2100000, guid: 9f50f724d23916f488cd6f8f04b115b5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -501,7 +501,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8255029666921226665}
-  - component: {fileID: 5824623074048672182}
   m_Layer: 10
   m_Name: hull_center_iron
   m_TagString: Untagged
@@ -526,25 +525,6 @@ Transform:
   - {fileID: 3394545304892636746}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!205 &5824623074048672182
-LODGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8255029666921226666}
-  serializedVersion: 2
-  m_LocalReferencePoint: {x: 1.9994701, y: -0.34881285, z: -5}
-  m_Size: 8
-  m_FadeMode: 0
-  m_AnimateCrossFading: 0
-  m_LastLODIsBillboard: 0
-  m_LODs:
-  - screenRelativeHeight: 0.0000024063572
-    fadeTransitionWidth: 0
-    renderers:
-    - renderer: {fileID: 699767817767242727}
-  m_Enabled: 1
 --- !u!1 &8255029667724065972
 GameObject:
   m_ObjectHideFlags: 0

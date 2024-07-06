@@ -82,7 +82,8 @@ public class ShipHullPrefab : IRegisterPrefab
         new RequirementConfig
         {
           Amount = 2 * materialCount, Item = "BronzeNails", Recover = true
-        }
+        },
+        new RequirementConfig { Amount = 1 * materialCount, Item = "YggdrasilWood", Recover = true }
       ],
       ShipHulls.HullMaterial.Wood =>
       [
