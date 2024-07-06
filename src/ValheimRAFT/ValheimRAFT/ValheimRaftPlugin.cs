@@ -31,7 +31,7 @@ internal abstract class PluginDependencies
 
 // [SentryDSN()]
 [BepInPlugin(ModGuid, ModName, Version)]
-[BepInDependency(ZdoWatcherPlugin.ModGuid, BepInDependency.DependencyFlags.SoftDependency)]
+[BepInDependency(ZdoWatcherPlugin.ModGuid)]
 [BepInDependency(PluginDependencies.JotunnModGuid)]
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
 public class ValheimRaftPlugin : BaseUnityPlugin

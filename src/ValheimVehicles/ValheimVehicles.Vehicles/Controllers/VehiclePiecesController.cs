@@ -2163,7 +2163,7 @@ public class VehiclePiecesController : MonoBehaviour
     var rope = go.GetComponent<RopeAnchorComponent>();
 
     if (!door && !ladder && !rope && !SailPrefabs.IsSail(go.name)
-        && !RamPrefabs.IsRam(go.name))
+        && !RamPrefabs.IsRam(go.name) && !go.name.StartsWith(PrefabNames.HullProw))
     {
       if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value || PrefabNames.IsHull(go))
       {

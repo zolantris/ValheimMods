@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5482195425014939976}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_top
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -40,7 +40,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7868349793666379062}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: rudder_rotation
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -72,7 +72,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9170257940010281249}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_mid
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -105,7 +105,7 @@ GameObject:
   - component: {fileID: 2183907421939428108}
   - component: {fileID: 1442791218621702706}
   - component: {fileID: 2594190075613009015}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: rudder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -189,7 +189,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2314426317429442316}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: rudder_basic
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -222,7 +222,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7609607559263764286}
   - component: {fileID: 7249955372476985991}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
