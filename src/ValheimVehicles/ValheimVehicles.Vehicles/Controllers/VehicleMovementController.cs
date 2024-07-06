@@ -337,7 +337,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     var isWaterNearGroundHeight =
       waterLevel - 3f < groundHeight && waterLevel + 3f > groundHeight;
 
-    if (!isFloatingBelowGround || (!isWaterNearGroundHeight && isVehicleBelowGround)) return;
+    // Vehicle is not below the ground near float collider nor is the lowest part of the vehicle embedded in the ground
+    if (!isFloatingBelowGround && (isWaterNearGroundHeight || !isVehicleBelowGround)) return;
 
     if (waterLevel < groundHeight)
     {
@@ -354,7 +355,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     if (waterLevel > m_disableLevel && waterLevel > groundHeight)
     {
       transform.position = new Vector3(transform.position.x,
-        transform.position.y + waterLevel, transform.position.z);
+        waterLevel + vehicleBounds.extents.y, transform.position.z);
     }
   }
 

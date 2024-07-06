@@ -49,10 +49,10 @@ public static class VehicleDebugConfig
         true, true));
     PositionAutoFixThreshold = config.Bind(SectionName,
       "positionAutoFixThreshold",
-      10f,
+      5f,
       ConfigHelpers.CreateConfigDescription(
         "Threshold for autofixing stuck vehicles. Large values are less accurate but smaller values may trigger the autofix too frequently",
-        true, true));
+        true, true, new AcceptableValueRange<float>(0, 10f)));
 
     SyncShipPhysicsOnAllClients =
       Config.Bind("Debug", "SyncShipPhysicsOnAllClients", false,
