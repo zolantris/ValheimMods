@@ -272,7 +272,7 @@ public abstract class PrefabRegistryHelpers
       Icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon
     });
 
-    var woodMatDesc = ShipHulls.GetHullMaterialDescription(ShipHulls.HullMaterial.Wood)
+    var woodMatDesc = ShipHulls.GetHullMaterialDescription(ShipHulls.HullMaterial.Wood);
     var ironMatDesc = ShipHulls.GetHullMaterialDescription(ShipHulls.HullMaterial.Iron);
 
     // hull rib variants
