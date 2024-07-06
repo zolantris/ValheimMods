@@ -6,57 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="9eb05097-9d84-4b87-8e9a-0e73fcf3150e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/../../../libs" beforeDir="false" afterPath="$PROJECT_DIR$/../../../libs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Editor/PrefabThumbnailGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Editor/PrefabThumbnailGenerator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/boarding_ramp.png" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/boarding_ramp.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/bottom_stand.png" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/bottom_stand.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_center_iron.png" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_center_iron.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_center_wood.png" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_center_wood.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_left_iron.png" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_left_iron.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_left_wood.png" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_left_wood.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_right_iron.png" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_right_iron.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_right_wood.png" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_right_wood.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_iron.png" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_iron.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_iron_2x2.png" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_iron_2x2.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_iron_4x4.png" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_iron_4x4.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_wood_2x2.png" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_wood_2x2.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_wood_4x4.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_rib_wood.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_slab_iron_2x2.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_slab_iron_4x4.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_slab_wood_2x2.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_slab_wood_4x4.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_wall_hybrid_wood_iron_2x2.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_wall_iron_2x2.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_wall_iron_4x4.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_wall_iron_alternative_4x4.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_wall_wood_2x2.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_wall_wood_4x4.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_window_wood_2x2.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/hull_window_wood_4x4.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/mechanical_switch.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/nautilus.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/nautilus_bridge.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/nautilus_hatch.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/ram_blade_bottom.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/ram_blade_left.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/ram_blade_right.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/ram_blade_top.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/ram_nose.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/ram_stake_tier1_1x2.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/ram_stake_tier1_2x4.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/ram_stake_tier3_1x2.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/ram_stake_tier3_2x4.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/rudder_advanced_double_iron.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/rudder_advanced_double_wood.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/rudder_advanced_single_iron.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/rudder_advanced_single_wood.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/side_ram.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/GeneratedIcons/vehicle_ship.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_rib_iron.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_rib_iron.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_4x4.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_4x4.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/keel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/keel.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/vehicle_ship.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/vehicle_ship.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabNames.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabNames.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -109,29 +59,29 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
-    &quot;Attach to Unity Editor.Attach to Unity Editor.executor&quot;: &quot;Debug&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;XThreadsFramesViewSplitterKey&quot;: &quot;0.56&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;chore/release-2.2.0-stability-fixes&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_ADD_EXTERNAL_FILES": "true",
+    "Attach to Unity Editor.Attach to Unity Editor.executor": "Debug",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "XThreadsFramesViewSplitterKey": "0.56",
+    "git-widget-placeholder": "feat/release-2.2-0-bugfixes",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;rider.external.source.directories&quot;: [
-      &quot;C:\\Users\\fre\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\DecompilerCache&quot;,
-      &quot;C:\\Users\\fre\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\SourcesCache&quot;,
-      &quot;C:\\Users\\fre\\AppData\\Local\\Symbols\\src&quot;
+  "keyToStringList": {
+    "rider.external.source.directories": [
+      "C:\\Users\\fre\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\DecompilerCache",
+      "C:\\Users\\fre\\AppData\\Roaming\\JetBrains\\Rider2023.3\\resharper-host\\SourcesCache",
+      "C:\\Users\\fre\\AppData\\Local\\Symbols\\src"
     ]
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
     <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
       <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\2022.3.17f1\Editor\Unity.exe" />
@@ -209,7 +159,7 @@
       <workItem from="1717224535994" duration="2897000" />
       <workItem from="1717976844741" duration="1406000" />
       <workItem from="1719908602497" duration="190000" />
-      <workItem from="1720275959192" duration="2942000" />
+      <workItem from="1720275959192" duration="3833000" />
     </task>
     <servers />
   </component>
