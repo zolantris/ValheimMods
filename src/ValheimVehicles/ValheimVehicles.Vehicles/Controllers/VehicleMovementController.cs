@@ -338,7 +338,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       waterLevel - 3f < groundHeight && waterLevel + 3f > groundHeight;
 
     // Vehicle is not below the ground near float collider nor is the lowest part of the vehicle embedded in the ground
+    // and not above the ground significantly where isVehicleBelowGround becomes inaccurate for landvehicles
     if (!isFloatingBelowGround && (isWaterNearGroundHeight || !isVehicleBelowGround)) return;
+    if (!isFloatingBelowGround && approximateGroundHeight - 10f > waterLevel) return;
 
     if (waterLevel < groundHeight)
     {
@@ -808,7 +810,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     var isInvalid = false;
     if (averageWaterHeight <= -10000 || averageWaterHeight < m_disableLevel)
     {
-      Logger.LogDebug("currentDepth is invalid, likely on land or heightmaps broke");
       currentDepth = 30;
       isInvalid = true;
     }

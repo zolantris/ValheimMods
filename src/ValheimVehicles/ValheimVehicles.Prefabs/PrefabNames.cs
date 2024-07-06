@@ -16,6 +16,7 @@ public static class PrefabNames
     TwoByTwo,
     TwoByThree,
     FourByFour,
+    FourByEight,
   }
 
   public enum DirectionVariant
