@@ -4,10 +4,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
 using HarmonyLib;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 using ValheimRAFT;
 using ValheimRAFT.Util;
 using ValheimVehicles.Helpers;
@@ -135,9 +133,9 @@ public class VehiclePiecesController : MonoBehaviour
 
   public float totalSailArea = 0f;
 
-  public virtual IVehicleShip VehicleInstance { set; get; }
+  public virtual IVehicleShip? VehicleInstance { set; get; }
 
-  public VehicleMovementController? MovementController => VehicleInstance.MovementController;
+  public VehicleMovementController? MovementController => VehicleInstance?.MovementController;
 
 /* end sail calcs  */
   private Vector2i m_sector;
@@ -381,6 +379,11 @@ public class VehiclePiecesController : MonoBehaviour
     Logger.LogInfo($"pendingPieces {m_pendingPieces.Count}");
     Logger.LogInfo($"allPieces {m_allPieces.Count}");
 
+    if (VehicleInstance != null)
+    {
+      ActiveInstances.Add(VehicleInstance.PersistentZdoId, this);
+    }
+
     /*
      * This should work on both client and server, but the garbage collecting should only apply if the ZDOs are not persistent
      */
@@ -394,6 +397,11 @@ public class VehiclePiecesController : MonoBehaviour
 
   private void OnDisable()
   {
+    if (ActiveInstances.GetValueSafe(VehicleInstance.PersistentZdoId))
+    {
+      ActiveInstances.Remove(VehicleInstance.PersistentZdoId);
+    }
+
     vehicleInitializationTimer.Stop();
     if (_serverUpdatePiecesCoroutine != null)
     {
@@ -404,6 +412,12 @@ public class VehiclePiecesController : MonoBehaviour
   private void OnEnable()
   {
     vehicleInitializationTimer.Restart();
+
+    if (!ActiveInstances.GetValueSafe(VehicleInstance.PersistentZdoId))
+    {
+      ActiveInstances.Add(VehicleInstance.PersistentZdoId, this);
+    }
+
     ActivatePendingPiecesCoroutine();
     if (!(bool)ZNet.instance)
     {
@@ -683,7 +697,7 @@ public class VehiclePiecesController : MonoBehaviour
   {
     while (isActiveAndEnabled)
     {
-      if (!VehicleInstance.NetView)
+      if (!VehicleInstance?.NetView)
       {
         yield return new WaitUntil(() => (bool)VehicleInstance.NetView);
       }
@@ -1013,7 +1027,7 @@ public class VehiclePiecesController : MonoBehaviour
 
     var pieceCount = GetPieceCount();
 
-    if (pieceCount > 0 || VehicleInstance.NetView == null) return;
+    if (pieceCount > 0 || VehicleInstance?.NetView == null) return;
     if (VehicleInstance?.Instance == null) return;
 
     var wntShip = VehicleInstance.Instance.GetComponent<WearNTear>();
@@ -1029,16 +1043,13 @@ public class VehiclePiecesController : MonoBehaviour
     }
   }
 
-  /*
-   * TODO figure out why this is exiting too early when there are items
-   */
   public void DestroyVehicle()
   {
     var wntVehicle = GetComponent<WearNTear>();
 
     RemovePlayersFromBoat();
 
-    if (!CanDestroyVehicle(VehicleInstance.NetView))
+    if (!CanDestroyVehicle(VehicleInstance?.NetView))
     {
       return;
     }
@@ -1091,12 +1102,12 @@ public class VehiclePiecesController : MonoBehaviour
         yield return new WaitUntil(() => BaseVehicleInitState == InitializationState.Complete);
       }
 
-      if (VehicleInstance.NetView?.GetZDO() == null)
+      if (VehicleInstance?.NetView?.GetZDO() == null)
       {
-        yield return new WaitUntil(() => VehicleInstance.NetView?.GetZDO() != null);
+        yield return new WaitUntil(() => VehicleInstance?.NetView?.GetZDO() != null);
       }
 
-      var id = ZdoWatchManager.Instance.GetOrCreatePersistentID(VehicleInstance.NetView?.GetZDO());
+      var id = ZdoWatchManager.Instance.GetOrCreatePersistentID(VehicleInstance?.NetView?.GetZDO());
       m_pendingPieces.TryGetValue(id, out var list);
 
       if (list is { Count: > 0 })
@@ -1137,7 +1148,7 @@ public class VehiclePiecesController : MonoBehaviour
         Logger.LogDebug(
           $"Ship Size calc is: m_bounds {_vehicleBounds} bounds size {_vehicleBounds.size}");
 
-      m_dynamicObjects.TryGetValue(VehicleInstance.PersistentZdoId, out var objectList);
+      m_dynamicObjects.TryGetValue(VehicleInstance?.PersistentZdoId ?? 0, out var objectList);
       var objectListHasNoValidItems = true;
       if (objectList is { Count: > 0 })
       {
@@ -1168,7 +1179,11 @@ public class VehiclePiecesController : MonoBehaviour
           dic = null;
         }
 
-        m_dynamicObjects.Remove(VehicleInstance.PersistentZdoId);
+        if (VehicleInstance != null)
+        {
+          m_dynamicObjects.Remove(VehicleInstance.PersistentZdoId);
+        }
+
         yield return null;
       }
 

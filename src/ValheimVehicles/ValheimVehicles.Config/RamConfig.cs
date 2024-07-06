@@ -24,11 +24,19 @@ public static class RamConfig
   public static ConfigEntry<bool> CanDamageSelf { get; set; }
   public static ConfigEntry<bool> CanHitEnemies { get; set; }
   public static ConfigEntry<float> RamHitInterval { get; set; }
+
+  public static ConfigEntry<bool> CanRepairRams { get; set; }
   public static ConfigEntry<bool> CanHitEnvironmentOrTerrain { get; set; }
   public static ConfigEntry<float> minimumVelocityToTriggerHit { get; set; }
+
   public static ConfigEntry<float> MaxVelocityMultiplier { get; set; }
-  public static ConfigEntry<float> ShipMassMaxMultiplier { get; set; }
+
+  /// <summary>
+  /// TODO possibly enable this after initial release of rams
+  /// </summary>
+  // public static ConfigEntry<float> ShipMassMaxMultiplier { get; set; }
   public static ConfigEntry<int> RamDamageToolTier { get; set; }
+
   private const string SectionName = "Rams";
 
   public static void BindConfig(ConfigFile config)
@@ -121,6 +129,9 @@ public static class RamConfig
         "Every X seconds, the ram will apply this damage",
         true, true, new AcceptableValueRange<float>(0.5f, 20f)));
 
+    CanRepairRams = config.Bind(SectionName, "RamsCanBeRepaired", false,
+      ConfigHelpers.CreateConfigDescription("Allows rams to be repaired", true));
+
     // Physics damage multiplier Config
     minimumVelocityToTriggerHit = config.Bind(SectionName, "minimumVelocityToTriggerHit", 1f,
       ConfigHelpers.CreateConfigDescription(
@@ -130,10 +141,10 @@ public static class RamConfig
       ConfigHelpers.CreateConfigDescription(
         "Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.",
         true, true));
-    ShipMassMaxMultiplier = config.Bind(SectionName, "ShipMassMaxMultiplier", 0.01f,
-      ConfigHelpers.CreateConfigDescription(
-        "Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.",
-        true, true));
+    // ShipMassMaxMultiplier = config.Bind(SectionName, "ShipMassMaxMultiplier", 0.01f,
+    //   ConfigHelpers.CreateConfigDescription(
+    //     "Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.",
+    //     true, true));
 
     const int tierDiff = 2;
     const float defaultDamagePerTier = .25f;
@@ -160,7 +171,7 @@ public static class RamConfig
     CanHitEnvironmentOrTerrain.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     minimumVelocityToTriggerHit.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     MaxVelocityMultiplier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
-    ShipMassMaxMultiplier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
+    // ShipMassMaxMultiplier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     RamDamageToolTier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
 
     // Must update damage values only
