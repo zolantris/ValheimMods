@@ -21,6 +21,13 @@ public abstract class ShipHulls
     public const string YggdrasilWood = "yggdrasil_wood";
   }
 
+  public static string GetHullMaterialDescription(string materialVariant)
+  {
+    return materialVariant == ShipHulls.HullMaterial.Wood
+      ? "$valheim_vehicles_material_wood_desc"
+      : "$valheim_vehicles_material_iron_yggdrassil_desc";
+  }
+
   public static void SetMaterialHealthValues(string hullMaterial, WearNTear wnt, int pieces)
   {
     switch (hullMaterial)
