@@ -4,7 +4,25 @@
 
 This mod aims to continue support for Water based features of the original
 ValheimRAFT mod and incorporate more vehicle items and mechanics within the mod
-and further extends it's capabilities.
+and further extends its capabilities.
+
+------
+
+:warning: Warning. If you are reading this readme on the
+[ValheimMods/ValheimRAFT](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT)
+repo :warning:
+
+- There likely will
+  be features listed that do not yet exist within the game.
+- Always read the readme
+  from the latest official releases instead
+    - [thunderstore page](https://thunderstore.io/c/valheim/p/zolantris/ValheimRAFT/)
+      Quickest way is to look at the last readme post on thunderstore.
+    - [Releases](https://github.com/zolantris/ValheimMods/releases)
+      Alternatively look at the release source code. TBD this may be made
+      easier.
+
+------
 
 [//]: # (## Build Status)
 
