@@ -604,6 +604,23 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     }
   }
 
+  public void UpdateShipLandSpeed()
+  {
+    UpdateVehicleStats(false);
+    // early exit if anchored.
+    if (UpdateAnchorVelocity(m_body.velocity))
+    {
+      return;
+    }
+
+    m_body.WakeUp();
+
+    if (!ValheimRaftPlugin.Instance.AllowFlight.Value && PropulsionConfig.EnableLandVehicles.Value)
+    {
+      ApplySailForce(this);
+    }
+  }
+
   /// <summary>
   /// Calculates damage from impact using vehicle weight
   /// </summary>
@@ -880,8 +897,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     if (!m_nview) return;
     var owner = m_nview.IsOwner();
-    if (!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner &&
-        !isBeached) return;
+    if ((!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner) ||
+        isBeached) return;
 
     var shipFloatation = GetShipFloatationObj();
 
@@ -892,6 +909,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     else if (TargetHeight > 0f)
     {
       UpdateShipFlying();
+    }
+    else if (PropulsionConfig.EnableLandVehicles.Value)
+    {
+      UpdateShipLandSpeed();
     }
 
     // both flying and floatation use this
