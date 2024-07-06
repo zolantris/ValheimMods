@@ -284,7 +284,7 @@ public class Player_Patch
    */
   private static bool GetAnchorKey()
   {
-    return VehicleMovementController.GetAnchorKey();
+    return VehicleMovementController.GetAnchorKeyDown();
   }
 
   // Logic for anchor needs to be moved to the Update method instead of fixed update which SetControls is called in

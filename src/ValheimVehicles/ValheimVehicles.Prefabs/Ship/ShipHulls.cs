@@ -21,6 +21,13 @@ public abstract class ShipHulls
     public const string YggdrasilWood = "yggdrasil_wood";
   }
 
+  public static string GetHullMaterialDescription(string materialVariant)
+  {
+    return materialVariant == ShipHulls.HullMaterial.Wood
+      ? "$valheim_vehicles_material_wood_desc"
+      : "$valheim_vehicles_material_iron_yggdrassil_desc";
+  }
+
   public static void SetMaterialHealthValues(string hullMaterial, WearNTear wnt, int pieces)
   {
     switch (hullMaterial)
@@ -29,21 +36,11 @@ public abstract class ShipHulls
       // iron reinforced wood is 2000 health but these are rustic plats but can be made larger and are also slightly weaker since they incorporate bronze out layer
       case HullMaterial.Iron:
         PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.Iron);
-        wnt.m_health = 1600 * pieces;
+        wnt.m_health = 500 * pieces;
         break;
       case HullMaterial.Wood:
-        wnt.m_health = 600 * pieces;
+        wnt.m_health = 100 * pieces;
         break;
     }
-  }
-
-  public static bool IsHull(GameObject go)
-  {
-    var goName = go.name;
-    return goName.Contains(PrefabNames.ShipHullCenterWoodPrefabName) ||
-           goName.Contains(PrefabNames.ShipHullCenterIronPrefabName) ||
-           goName.Contains(PrefabNames.ShipHullRibIronPrefabName) ||
-           goName.Contains(PrefabNames.ShipHullRibWoodPrefabName)
-           || goName.Contains(PrefabNames.HullWall) || goName.Contains(PrefabNames.HullSlab);
   }
 }

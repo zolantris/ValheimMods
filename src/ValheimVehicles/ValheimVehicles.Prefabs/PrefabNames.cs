@@ -1,3 +1,7 @@
+using System;
+using UnityEngine;
+using Logger = Jotunn.Logger;
+
 namespace ValheimVehicles.Prefabs;
 
 /**
@@ -9,9 +13,63 @@ public static class PrefabNames
 {
   public enum PrefabSizeVariant
   {
-    Two,
-    Four,
+    TwoByTwo,
+    TwoByThree,
+    FourByFour,
   }
+
+  public enum DirectionVariant
+  {
+    Left,
+    Right,
+  }
+
+  /// <summary>
+  /// For usage with icons and other prefab registrations
+  /// </summary>
+  /// <param name="variant"></param>
+  /// <returns></returns>
+  /// <exception cref="ArgumentOutOfRangeException"></exception>
+  public static string GetPrefabSizeName(PrefabSizeVariant variant)
+  {
+    return variant switch
+    {
+      PrefabSizeVariant.TwoByTwo => "2x2",
+      PrefabSizeVariant.TwoByThree => "2x3",
+      PrefabSizeVariant.FourByFour => "4x4",
+      _ => throw new ArgumentOutOfRangeException(nameof(variant), variant, null)
+    };
+  }
+
+  public static string GetDirectionName(DirectionVariant directionVariant)
+  {
+    return directionVariant switch
+    {
+      DirectionVariant.Left => "left",
+      DirectionVariant.Right => "right",
+      _ => throw new ArgumentOutOfRangeException(nameof(directionVariant), directionVariant, null)
+    };
+  }
+
+  /// <summary> 
+  /// Calculated from the variant name
+  /// </summary>
+  /// <param name="variant"></param>
+  /// <returns></returns>
+  /// <exception cref="ArgumentOutOfRangeException"></exception>
+  public static int GetPrefabSizeArea(PrefabSizeVariant variant)
+  {
+    return variant switch
+    {
+      PrefabSizeVariant.TwoByTwo => 2 * 2,
+      PrefabSizeVariant.TwoByThree => 2 * 3,
+      PrefabSizeVariant.FourByFour => 4 * 4,
+      _ => throw new ArgumentOutOfRangeException(nameof(variant), variant, null)
+    };
+  }
+
+  private const string ValheimVehiclesPrefix = "ValheimVehicles";
+
 
   public const string PlayerSpawnControllerObj =
     $"{ValheimVehiclesPrefix}_PlayerSpawnControllerObj";
@@ -52,16 +110,11 @@ public static class PrefabNames
   public const string VehicleMovingPiecesContainer =
     $"{ValheimVehiclesPrefix}_{MovingPiecesContainer}";
 
-  private const string ValheimVehiclesPrefix = "ValheimVehicles";
   public const string WaterVehicleShip = $"{ValheimVehiclesPrefix}_WaterVehicleShip";
 
-  // hull ribs
-  public const string ShipHullRibWoodPrefabName = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Wood";
-  public const string ShipHullRibIronPrefabName = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Iron";
-
-  // slabs
-  public const string ShipHullSlabWoodPrefabName = $"{ValheimVehiclesPrefix}_Ship_Hull_Slab_Wood";
-  public const string ShipHullSlabIronPrefabName = $"{ValheimVehiclesPrefix}_Ship_Hull_Slab_Iron";
+  public const string HullProw = $"{ValheimVehiclesPrefix}_Ship_Hull_Prow";
+  public const string HullRibCorner = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Corner";
+  public const string HullRib = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib";
 
   // to only be used for matching with generic prefab names
   public const string HullSlab = $"{ValheimVehiclesPrefix}_Hull_Slab";
@@ -76,11 +129,36 @@ public static class PrefabNames
 
   private static string GetPrefabSizeVariantName(PrefabSizeVariant prefabSizeVariant)
   {
-    return prefabSizeVariant == PrefabSizeVariant.Four ? "4x4" : "2x2";
+    return prefabSizeVariant == PrefabSizeVariant.FourByFour ? "4x4" : "2x2";
   }
 
+  public static string GetHullProwVariants(string materialVariant,
+    PrefabSizeVariant prefabSizeVariant)
+  {
+    var sizeVariant = GetPrefabSizeVariantName(prefabSizeVariant);
+    var materialVariantName = GetMaterialVariantName(materialVariant);
 
-  public static string GetHullSlabVariants(string materialVariant,
+    return $"{HullProw}_{materialVariantName}_{sizeVariant}";
+  }
+
+  public static string GetHullRibName(string materialVariant)
+  {
+    var materialVariantName = GetMaterialVariantName(materialVariant);
+
+    return $"{HullRib}_{materialVariantName}";
+  }
+
+  // material names are always second to last after size names. Direction names are important so they are first
+  public static string GetHullRibCornerName(string materialVariant,
+    DirectionVariant directionVariant)
+  {
+    var directionName = GetDirectionName(directionVariant);
+    var materialName = GetMaterialVariantName(materialVariant);
+
+    return $"{HullRibCorner}_{directionName}_{materialName}";
+  }
+
+  public static string GetHullSlabName(string materialVariant,
     PrefabSizeVariant prefabSizeVariant)
   {
     var sizeVariant = GetPrefabSizeVariantName(prefabSizeVariant);
@@ -89,7 +167,7 @@ public static class PrefabNames
     return $"{HullSlab}_{materialVariantName}_{sizeVariant}";
   }
 
-  public static string GetHullWallVariants(string materialVariant,
+  public static string GetHullWallName(string materialVariant,
     PrefabSizeVariant prefabSizeVariant)
   {
     var sizeVariant = GetPrefabSizeVariantName(prefabSizeVariant);
@@ -106,6 +184,22 @@ public static class PrefabNames
 
   public const string ShipHullCenterIronPrefabName =
     $"{ValheimVehiclesPrefix}_{ShipHullPrefabName}_Iron";
+
+  public static string GetShipHullCenterName(string hullMaterial)
+  {
+    if (hullMaterial == ShipHulls.HullMaterial.Iron)
+    {
+      return ShipHullCenterIronPrefabName;
+    }
+
+    if (hullMaterial == ShipHulls.HullMaterial.Wood)
+    {
+      return ShipHullCenterWoodPrefabName;
+    }
+
+    Logger.LogError("No hull of this name, this is an error registering a hull");
+    return "";
+  }
 
   public const string ShipRudderBasic = $"{ValheimVehiclesPrefix}_ShipRudderBasic";
 
@@ -143,5 +237,23 @@ public static class PrefabNames
   {
     var sizeString = size == 1 ? "1x2" : "2x4";
     return $"{RamStakePrefix}_{tier}_{sizeString}";
+  }
+
+  public static bool IsVehicleCollider(string objName)
+  {
+    return objName.StartsWith(WaterVehicleBlockingCollider) ||
+           objName.StartsWith(WaterVehicleFloatCollider) ||
+           objName.StartsWith(WaterVehicleOnboardCollider);
+  }
+
+  public static bool IsHull(GameObject go)
+  {
+    var goName = go.name;
+    return goName.StartsWith(ShipHullCenterWoodPrefabName) ||
+           goName.StartsWith(ShipHullCenterIronPrefabName) ||
+           goName.StartsWith(HullRib) ||
+           goName.StartsWith(HullRibCorner)
+           || goName.StartsWith(HullWall) || goName.StartsWith(HullSlab) ||
+           goName.StartsWith(HullProw);
   }
 }

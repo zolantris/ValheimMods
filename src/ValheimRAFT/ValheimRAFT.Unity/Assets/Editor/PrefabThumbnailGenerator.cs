@@ -1,10 +1,13 @@
+using System;
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor.U2D;
 using UnityEngine.U2D;
 using LinqUtility = Unity.VisualScripting.LinqUtility;
+using Object = UnityEngine.Object;
 
 /// <summary>
 /// Add this Class to the Assets/Editor folder in Unity project
@@ -86,23 +89,31 @@ public class PrefabThumbnailGenerator : EditorWindow
         }
     }
 
-    private void GetFilesFromSearchPath()
+    private List<GameObject> GetFilesFromSearchPath()
     {
         objList.Clear();
         var replaceDirectoryPath = searchDirectory ? AssetDatabase.GetAssetPath(searchDirectory) : searchDirectoryPath;
         var filePaths = Directory.GetFiles(replaceDirectoryPath, "*.*");
+        List<GameObject> localList = new();
         foreach (var filePath in filePaths)
         {
             var obj = AssetDatabase.LoadAssetAtPath(filePath, typeof(GameObject)) as GameObject;
+            var isTruthy = obj != null;
+            Debug.Log($"filePath {filePath}, obj {obj} isTruthy{isTruthy}");
             if (obj != null)
             {
                 objList.Add(obj);
+                localList.Add(obj);
             }
         }
+        
+        Debug.Log($"localList count {localList.Count}, objList count {objList.Count}");
+        return localList;
     }
 
     private void CaptureTexturesForPrefabs()
     {
+        AssetDatabase.DisallowAutoRefresh();
         spritePaths.Clear();
         
         if (!Directory.Exists(outputDirPath))
@@ -110,11 +121,19 @@ public class PrefabThumbnailGenerator : EditorWindow
             Directory.CreateDirectory(outputDirPath);
         }
 
-        GetFilesFromSearchPath();
+        var tempObjList = GetFilesFromSearchPath();
         DeleteAllFilesInOutputFolder();
         // DeleteCurrentSpritesInTargetAtlas();
+        Debug.Log($"TEMP OBJ LIST, {tempObjList.Count}");
+
+        // for (int i = 0; i < tempObjList.Count; i++)
+        // {
+        //     var tmpObj = tempObjList[i];
+        //     Debug.Log($"TEMP OBJ ITEM, {tmpObj}");
+        //     // Capture(tmpObj);
+        // }
         
-        foreach (var obj in objList)
+        foreach (var obj in tempObjList.ToArray())
         {
             Debug.Log("OBJ :  " + obj.name);
 
@@ -128,9 +147,17 @@ public class PrefabThumbnailGenerator : EditorWindow
                 }
             }
             if (shouldExit) continue;
-            Capture(obj);
+            try
+            {
+                Capture(obj);
+            }
+            catch (Exception)
+            {
+                Debug.LogWarning($"Issue occurred while snapshotting {obj.name}");
+            }
         }
-        
+        AssetDatabase.AllowAutoRefresh();
+
         // AddAllIconsToSpriteAtlas();
         // UpdateSpriteAtlas();
     }
@@ -238,13 +265,13 @@ public class PrefabThumbnailGenerator : EditorWindow
     /// <param name="obj"></param>
     private void Capture(GameObject obj)
     {
+        Debug.Log($"called capture for obj {obj.name}");
         // Uses alpha to make transparent, black is good for edges of object that are not perfectly cut
         RuntimePreviewGenerator.BackgroundColor = new Color(0,0,0,0);
         var pg = RuntimePreviewGenerator.GenerateModelPreview(obj.transform, width, height, false);
         var texturePath = $"{outputDirPath}{obj.name}.png";
         WriteTextureToFile(pg, texturePath);
         
-        // AssetDatabase.Refresh();
         AssetDatabase.ImportAsset(texturePath);
         
         var importer = AssetImporter.GetAtPath(texturePath) as TextureImporter;
@@ -260,7 +287,5 @@ public class PrefabThumbnailGenerator : EditorWindow
         
         AssetDatabase.WriteImportSettingsIfDirty(texturePath);
         DestroyImmediate(pg);
-        
-        spritePaths.Add(texturePath);
     }
 }

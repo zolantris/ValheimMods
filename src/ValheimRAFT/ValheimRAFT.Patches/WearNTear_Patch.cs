@@ -8,6 +8,7 @@ using ValheimRAFT.Util;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
@@ -74,6 +75,11 @@ public class WearNTear_Patch
       }
     }
 
+    if (RamPrefabs.IsRam(__instance.name))
+    {
+      var vehicle = __instance.GetComponentInParent<VehicleShip>();
+      vehicle?.VehiclePiecesController?.DestroyPiece(__instance);
+    }
 
     var bv = __instance.GetComponentInParent<VehiclePiecesController>();
     if ((bool)bv)
@@ -84,7 +90,6 @@ public class WearNTear_Patch
 
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mbr) mbr.DestroyPiece(__instance);
-
     return true;
   }
 
@@ -93,7 +98,7 @@ public class WearNTear_Patch
   private static bool WearNTear_SetHealthVisual(WearNTear __instance, float health,
     bool triggerEffects)
   {
-    var isHull = ShipHulls.IsHull(__instance.gameObject);
+    var isHull = PrefabNames.IsHull(__instance.gameObject);
     if (!isHull) return true;
 
 
@@ -164,21 +169,28 @@ public class WearNTear_Patch
   [HarmonyPrefix]
   private static bool WearNTear_ApplyDamage(WearNTear __instance, float damage)
   {
-    var mbr = __instance.GetComponentInParent<MoveableBaseShipComponent>();
-    var bv = __instance.GetComponentInParent<VehiclePiecesController>();
-
-    // todo to find a better way to omit hull damage on item creation, most likely it's a collider problem triggering extreme damage.
+    // watervehicleship should receive no wearntear damage
     if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleShip))
     {
       return false;
     }
 
-    // vehicles ignore WNT for now...
-    if ((bool)mbr || (bool)bv)
+    var bv = __instance.GetComponentInParent<VehiclePiecesController>();
+    if ((bool)bv)
     {
-      return false;
+      return true;
     }
 
+    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
+    {
+      var mbr = __instance.GetComponentInParent<MoveableBaseShipComponent>();
+      if ((bool)mbr)
+      {
+        return true;
+      }
+    }
+
+    // scans all the items to see if there is a vehicle reference.
     return !PreventDestructionOfItemWithoutInitializedRaft(__instance);
   }
 

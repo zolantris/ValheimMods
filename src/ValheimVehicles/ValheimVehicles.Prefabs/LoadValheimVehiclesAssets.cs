@@ -1,3 +1,4 @@
+using System;
 using Jotunn;
 using Jotunn.Managers;
 using UnityEngine;
@@ -79,11 +80,51 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject GetVehicleContainer(GameObject obj) =>
     obj.FindDeepChild(PrefabNames.VehicleContainer).gameObject;
 
-  public static AssetBundle bundle;
+  private static AssetBundle _bundle = null!;
 
+  private static GameObject GetShipProwAssetByMaterial(string hullMaterial,
+    PrefabNames.PrefabSizeVariant sizeVariant)
+  {
+    var sizeName = PrefabNames.GetPrefabSizeName(sizeVariant);
+    var assetNameToLoad = $"hull_rib_prow_{hullMaterial}_{sizeName}.prefab";
+    return _bundle.LoadAsset<GameObject>(assetNameToLoad);
+  }
+
+  public static GameObject GetShipHullRibProw(string hullMaterial,
+    PrefabNames.PrefabSizeVariant sizeVariant)
+  {
+    var sizeName = PrefabNames.GetPrefabSizeName(sizeVariant);
+    const string baseName = "hull_rib_prow";
+    var assetNameToLoad = $"{baseName}_{hullMaterial}_{sizeName}.prefab";
+    return _bundle.LoadAsset<GameObject>(assetNameToLoad);
+  }
+
+  public static GameObject GetShipHullRibCorner(string hullMaterial,
+    PrefabNames.DirectionVariant directionVariant)
+  {
+    var directionName = PrefabNames.GetDirectionName(directionVariant);
+    const string baseName = "hull_rib_corner";
+    var assetNameToLoad = $"{baseName}_{directionName}_{hullMaterial}.prefab";
+    return _bundle.LoadAsset<GameObject>(assetNameToLoad);
+  }
+
+  public static GameObject GetShipHullRib(string hullMaterial)
+  {
+    const string baseName = "hull_rib";
+    var assetNameToLoad = $"{baseName}_{hullMaterial}.prefab";
+    return _bundle.LoadAsset<GameObject>(assetNameToLoad);
+  }
+
+  /// <summary>
+  /// This loads all the assets
+  /// </summary>
+  /// todo investigate if it's cleaner to do this load within the registration process.
+  /// todo this approach retains the asset in memory adding a unnecessary (small) burden to valheim. Possibly swap this out for a dynamic name generator so things do not need to be hardcoded
+  /// <param name="assetBundle"></param>
   public void Init(AssetBundle assetBundle)
   {
-    bundle = assetBundle;
+    _bundle = assetBundle;
+
     CustomSail = assetBundle.LoadAsset<GameObject>("custom_sail.prefab");
 
     ShipNautilus = assetBundle.LoadAsset<GameObject>("nautilus.prefab");
@@ -98,34 +139,28 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
     // hull slabs
     ShipHullSlab2X2WoodAsset =
-      assetBundle.LoadAsset<GameObject>("hull_slab_2x2_wood.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_slab_wood_2x2.prefab");
     ShipHullSlab2X2IronAsset =
-      assetBundle.LoadAsset<GameObject>("hull_slab_2x2_iron.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_slab_iron_2x2.prefab");
     ShipHullSlab4X4WoodAsset =
-      assetBundle.LoadAsset<GameObject>("hull_slab_4x4_wood.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_slab_wood_4x4.prefab");
     ShipHullSlab4X4IronAsset =
-      assetBundle.LoadAsset<GameObject>("hull_slab_4x4_iron.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_slab_iron_4x4.prefab");
 
     ShipHullWall2X2WoodAsset =
-      assetBundle.LoadAsset<GameObject>("hull_wall_2x2_wood.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_wall_wood_2x2.prefab");
     ShipHullWall2X2IronAsset =
-      assetBundle.LoadAsset<GameObject>("hull_wall_2x2_iron.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_wall_iron_2x2.prefab");
     ShipHullWall4X4WoodAsset =
-      assetBundle.LoadAsset<GameObject>("hull_wall_4x4_wood.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_wall_wood_4x4.prefab");
     ShipHullWall4X4IronAsset =
-      assetBundle.LoadAsset<GameObject>("hull_wall_4x4_iron.prefab");
+      assetBundle.LoadAsset<GameObject>("hull_wall_iron_4x4.prefab");
 
     // hull center variants
     ShipHullWoodAsset =
       assetBundle.LoadAsset<GameObject>("hull_center_wood.prefab");
     ShipHullIronAsset =
       assetBundle.LoadAsset<GameObject>("hull_center_iron.prefab");
-
-    // hull rib variants
-    ShipHullRibWoodAsset =
-      assetBundle.LoadAsset<GameObject>("hull_rib_wood.prefab");
-    ShipHullRibIronAsset =
-      assetBundle.LoadAsset<GameObject>("hull_rib_iron.prefab");
 
     // rudder variants
     ShipRudderBasicAsset =

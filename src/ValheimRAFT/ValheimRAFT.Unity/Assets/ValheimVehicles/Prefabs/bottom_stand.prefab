@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1044091649284107078}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_bottom $hud_snappoint_edge
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -40,7 +40,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9034850503430276771}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: bottom_stand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -72,7 +72,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8856010782149044642}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_bottom $hud_snappoint_inner
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -103,7 +103,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5346451435287216084}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_bottom $hud_snappoint_corner 3
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -134,7 +134,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5427737973244866828}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_bottom $hud_snappoint_corner 4
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -167,7 +167,7 @@ GameObject:
   - component: {fileID: 6402042670252871441}
   - component: {fileID: 3857361422424862869}
   - component: {fileID: 6185212282233240608}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: bottom_stand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -223,7 +223,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 36b51383f76de1f448788cc0f8f64e62, type: 2}
+  - {fileID: 2100000, guid: c782f3a2a5a2fd840b3146d1c20b5f81, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -254,7 +254,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3162729664305780095}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_bottom $hud_snappoint_corner 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -285,7 +285,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6917194348163551998}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_bottom $hud_snappoint_corner 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}

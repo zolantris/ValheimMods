@@ -16,11 +16,11 @@ namespace ValheimVehicles.Helpers;
 
 public class VehicleRamAoe : Aoe
 {
+  // Typeof PrefabTiers
+  public string materialTier;
   public static List<VehicleRamAoe> RamInstances = [];
 
   public static HitData.DamageTypes baseDamage;
-  public float velocityMultiplier = 0;
-  public float massMultiplier = RamConfig.MaxVelocityMultiplier.Value;
 
   public float minimumVelocityToTriggerHit => RamConfig.minimumVelocityToTriggerHit.Value *
                                               (RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f);
@@ -58,6 +58,8 @@ public class VehicleRamAoe : Aoe
   public float pierceDamageRatio;
   public float bluntDamageRatio;
 
+  public static float DamageIncreasePercentagePerTier =>
+    RamConfig.DamageIncreasePercentagePerTier.Value;
 
   public static float MaxVelocityMultiplier =>
     RamConfig.MaxVelocityMultiplier.Value;
@@ -78,35 +80,44 @@ public class VehicleRamAoe : Aoe
     m_hitCharacters = RamsCanHitCharacters;
     m_hitFriendly = RamsCanHitFriendly;
     m_hitEnemy = RamsCanHitEnemies;
+    m_hitParent = CanDamageSelf;
 
     // todo may need this to do damage to wearntear prefab of the ram
-    m_hitParent = CanDamageSelf;
+    // m_hitTerrain = true;
+    // m_hitProps = true;
+    // m_hitCharacters = true;
+    // m_hitFriendly = true;
+    // m_hitEnemy = true;
+    // m_hitParent = true;
+
     m_hitInterval = Mathf.Clamp(RamHitInterval, 0.5f, 5f);
 
     // todo need to tweak this
     m_damageSelf = !CanDamageSelf ? 0 : 1;
     m_toolTier = RamDamageToolTier;
     m_attackForce = 5;
+    m_attackForce = 50;
 
     m_radius = Mathf.Clamp(RamHitArea, 0.1f, 10f);
     m_radius *= RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f;
 
     m_useTriggers = true;
     m_triggerEnterOnly = AllowContinuousDamage;
+    m_triggerEnterOnly = true;
     m_useCollider = null;
     m_useAttackSettings = true;
     m_ttl = 0;
-    m_canRaiseSkill = true;
-    m_skill = Skills.SkillType.None;
-    m_backstabBonus = 1;
-
-    SetBaseDamageFromConfig();
   }
 
   public float GetTotalDamage(float slashDamage, float bluntDamage, float chopDamage,
     float pickaxeDamage, float pierceDamage)
   {
     return slashDamage + bluntDamage + chopDamage + pickaxeDamage + pierceDamage;
+  }
+
+  public void InitAoe()
+  {
+    base.Awake();
   }
 
   public new void Awake()
@@ -119,7 +130,7 @@ public class VehicleRamAoe : Aoe
     InitializeFromConfig();
     SetBaseDamageFromConfig();
 
-    base.Awake();
+    InitAoe();
 
     rigidbody = GetComponent<Rigidbody>();
     // very important otherwise this rigidbody will interfere with physics of the Watervehicle controller due to nesting.
@@ -130,7 +141,7 @@ public class VehicleRamAoe : Aoe
     }
   }
 
-  private void OnDisable()
+  private new void OnDisable()
   {
     if (RamInstances.Contains(this))
     {
@@ -282,7 +293,7 @@ public class VehicleRamAoe : Aoe
       return;
     }
 
-    // Must be within the BaseVehicleController otherwise this AOE could attempt to damage items within the raft ball
+    // Must be within the BaseVehiclePieces after initialization otherwise this AOE could attempt to damage items within the raft ball
     var isChildOfBaseVehicle = transform.root.name.StartsWith(PrefabNames.WaterVehicleShip) ||
                                transform.root.name.StartsWith(PrefabNames.VehiclePiecesContainer) ||
                                transform.root.name.StartsWith(
@@ -301,13 +312,12 @@ public class VehicleRamAoe : Aoe
   {
     if (!collider) return false;
     // reset damage to base damage if one of these is not available, will still recalculate later
+    // exit to apply damage that has no velocity
     if (!vehicle?.MovementController.m_body || !collider.attachedRigidbody)
     {
       m_damage = baseDamage;
+      return true;
     }
-
-    // early exit if both are not valid
-    if (!vehicle?.MovementController.m_body && !collider.attachedRigidbody) return false;
 
     // Velocity will significantly increase if the object is moving towards the other object IE collision
     float relativeVelocity;
@@ -333,6 +343,10 @@ public class VehicleRamAoe : Aoe
 
     var multiplier = Mathf.Min(relativeVelocityMagnitude * 0.5f, MaxVelocityMultiplier);
 
+    if (materialTier == PrefabTiers.Tier3)
+    {
+      multiplier *= Mathf.Clamp(1 + DamageIncreasePercentagePerTier * 2, 1, 4);
+    }
 
     if (Mathf.Approximately(multiplier, 0))
     {
@@ -414,19 +428,40 @@ public class VehicleRamAoe : Aoe
     return true;
   }
 
-  private bool ShouldIgnore(Collider collider)
+  private void IgnoreCollider(Collider collider)
   {
-    if (!collider) return false;
-    // if ((!collider.transform.root.name.StartsWith(PrefabNames.PiecesContainer) ||
-    //      !collider.transform.root.name.StartsWith(PrefabNames.WaterVehicleShip))) return false;
-    if (collider.transform.root != transform.root) return false;
-
     var childColliders = GetComponentsInChildren<Collider>();
     foreach (var childCollider in childColliders)
     {
       Physics.IgnoreCollision(childCollider, collider, true);
     }
+  }
 
+  /// <summary>
+  /// Ignores anything within the current vehicle and other vehicle movement/float/onboard colliders 
+  /// </summary>
+  /// <param name="collider"></param>
+  /// <returns></returns>
+  private bool ShouldIgnore(Collider collider)
+  {
+    if (!collider) return false;
+    if (PrefabNames.IsVehicleCollider(collider.name))
+    {
+      IgnoreCollider(collider);
+      return true;
+    }
+
+    if (collider.transform.root != transform.root) return false;
+    if (vehicle != null)
+    {
+      // allows for hitting other vehicles, excludes hitting current vehicle
+      if (collider.transform.root != vehicle.transform.root)
+      {
+        return false;
+      }
+    }
+
+    IgnoreCollider(collider);
     return true;
   }
 
@@ -487,9 +522,24 @@ public class VehicleRamAoe : Aoe
 
   public static void OnBaseSettingsChange(object sender, EventArgs eventArgs)
   {
-    foreach (var vehicleRamAoe in RamInstances)
+    foreach (var instance in RamInstances.ToList())
     {
-      vehicleRamAoe.InitializeFromConfig();
+      if (!instance)
+      {
+        RamInstances.Remove(instance);
+        continue;
+      }
+
+      if (RamConfig.RamDamageEnabled.Value)
+      {
+        instance.InitializeFromConfig();
+        instance.InitAoe();
+        instance.gameObject.SetActive(true);
+      }
+      else
+      {
+        instance.gameObject.SetActive(false);
+      }
     }
   }
 
@@ -497,7 +547,14 @@ public class VehicleRamAoe : Aoe
   {
     foreach (var instance in RamInstances.ToArray())
     {
+      if (!instance)
+      {
+        RamInstances.Remove(instance);
+        continue;
+      }
+
       instance.SetBaseDamageFromConfig();
+      instance.InitAoe();
     }
   }
 }

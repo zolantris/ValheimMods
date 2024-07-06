@@ -91,15 +91,14 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   public GameObject? ShipEffectsObj;
   public VehicleShipEffects? ShipEffects;
 
-  public WaterVehicleController PiecesController;
-  public ZSyncTransform movementZSyncTransform;
+  public VehiclePiecesController PiecesController;
   public ZSyncTransform piecesZsyncTransform;
 
   public ZNetView NetView { get; set; }
 
   public VehicleDebugHelpers? VehicleDebugHelpersInstance { get; private set; }
 
-  public IWaterVehicleController VehiclePiecesController => PiecesController;
+  public VehiclePiecesController? VehiclePiecesController => PiecesController;
 
   private VehicleMovementController? _movementController;
 
@@ -227,11 +226,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       MovementController = GetComponent<VehicleMovementController>();
     }
 
-    // if (!movementZSyncTransform)
-    // {
-    //   movementZSyncTransform = GetComponent<ZSyncTransform>();
-    // }
-
     if (!(bool)ShipEffectsObj)
     {
       ShipEffects = MovementController?.GetComponent<VehicleShipEffects>();
@@ -304,7 +298,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       NetView = GetComponent<ZNetView>();
     }
 
-    InitializeWaterVehicleController();
+    InitializeVehiclePiecesController();
 
     UpdateShipSounds(this);
   }
@@ -331,7 +325,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       AllVehicles.Add(PersistentZdoId, this);
     }
 
-    InitializeWaterVehicleController();
+    InitializeVehiclePiecesController();
     if (HasVehicleDebugger && PiecesController)
     {
       InitializeVehicleDebugger();
@@ -354,12 +348,12 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     switch (StartingPiece?.Value)
     {
       case VehicleShipInitPiece.HullFloor2X2:
-        selectedPrefab = PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Wood,
-          PrefabNames.PrefabSizeVariant.Two);
+        selectedPrefab = PrefabNames.GetHullSlabName(ShipHulls.HullMaterial.Wood,
+          PrefabNames.PrefabSizeVariant.TwoByTwo);
         break;
       case VehicleShipInitPiece.HullFloor4X4:
-        selectedPrefab = PrefabNames.GetHullSlabVariants(ShipHulls.HullMaterial.Wood,
-          PrefabNames.PrefabSizeVariant.Four);
+        selectedPrefab = PrefabNames.GetHullSlabName(ShipHulls.HullMaterial.Wood,
+          PrefabNames.PrefabSizeVariant.FourByFour);
         break;
       case VehicleShipInitPiece.Nautilus:
         selectedPrefab = PrefabNames.Nautilus;
@@ -413,7 +407,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       return;
     }
 
-    if (PiecesController.BaseVehicleInitState != Vehicles.VehiclePiecesController.InitializationState.Created)
+    if (PiecesController.BaseVehicleInitState !=
+        Vehicles.VehiclePiecesController.InitializationState.Created)
     {
       return;
     }
@@ -471,7 +466,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   /// <note>
   /// this must be added instead of on the prefab otherwise PlacedPiece cannot get the data in time
   /// </note>
-  private void InitializeWaterVehicleController()
+  private void InitializeVehiclePiecesController()
   {
     if (ZNetView.m_forceDisableInit) return;
     if (!(bool)NetView || NetView.GetZDO() == null || NetView.m_ghost ||
@@ -484,13 +479,13 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     var vehiclePiecesContainer = VehiclePiecesPrefab.VehiclePiecesContainer;
     if (!vehiclePiecesContainer) return;
 
-    var prevValue = ZNetView.m_useInitZDO;
-    ZNetView.m_useInitZDO = false;
+    // var prevValue = ZNetView.m_useInitZDO;
+    // ZNetView.m_useInitZDO = false;
     _vehiclePiecesContainerInstance =
-      Instantiate(vehiclePiecesContainer, transform.position, transform.rotation, null);
-    ZNetView.m_useInitZDO = prevValue;
+      Instantiate(vehiclePiecesContainer, transform.position, transform.rotation);
+    // ZNetView.m_useInitZDO = prevValue;
 
-    PiecesController = _vehiclePiecesContainerInstance.AddComponent<WaterVehicleController>();
+    PiecesController = _vehiclePiecesContainerInstance.AddComponent<VehiclePiecesController>();
     PiecesController.InitFromShip(Instance);
 
     InitStarterPiece();

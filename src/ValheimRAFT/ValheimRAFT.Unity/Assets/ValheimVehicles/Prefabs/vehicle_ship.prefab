@@ -75,7 +75,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 2131984
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -159,7 +159,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 16384
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 866190455
@@ -350,7 +350,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 1
+  m_CollisionDetection: 0
 --- !u!1 &8963461256992483694
 GameObject:
   m_ObjectHideFlags: 0
@@ -466,6 +466,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6535037035360283912}
     m_Modifications:
+    - target: {fileID: 5824623074048672182, guid: 67b15c415e2a7e34d8a11b31863f3898, type: 3}
+      propertyPath: m_LODs.Array.data[0].renderers.Array.data[1].renderer
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 8255029666921226665, guid: 67b15c415e2a7e34d8a11b31863f3898, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -511,7 +515,8 @@ PrefabInstance:
       value: hull_center_wood
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 1161980290542483708, guid: 67b15c415e2a7e34d8a11b31863f3898, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 67b15c415e2a7e34d8a11b31863f3898, type: 3}

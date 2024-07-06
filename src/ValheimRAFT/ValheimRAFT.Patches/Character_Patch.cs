@@ -88,17 +88,6 @@ public class Character_Patch
       return;
     }
 
-    // VehicleShip? vehicleShip = null;
-    // if ((bool)__instance.m_lastGroundBody)
-    // {
-    //   vehicleShip = __instance.m_lastGroundBody.GetComponentInParent<VehicleShip>();
-    //   if ((bool)vehicleShip && __instance.transform.parent != vehicleShip.transform)
-    //   {
-    //     __instance.transform.SetParent(vehicleShip.VehiclePiecesController.Instance.transform);
-    //     return;
-    //   }
-    // }
-
     VehiclePiecesController? bvc = null;
     if ((bool)__instance.m_lastGroundBody)
     {
@@ -111,7 +100,7 @@ public class Character_Patch
     }
 
     MoveableBaseRootComponent? mbr = null;
-    if ((bool)__instance.m_lastGroundBody)
+    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value && (bool)__instance.m_lastGroundBody)
     {
       mbr = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
       if ((bool)mbr && __instance.transform.parent != mbr.transform)

@@ -5,7 +5,7 @@ namespace ValheimVehicles.Vehicles.Interfaces;
 
 public interface IVehicleShip
 {
-  public IWaterVehicleController? VehiclePiecesController { get; }
+  public VehiclePiecesController? VehiclePiecesController { get; }
   public VehicleMovementController? MovementController { get; }
   public Rigidbody? MovementControllerRigidbody { get; }
   public Transform ControlGuiPosition { get; set; }

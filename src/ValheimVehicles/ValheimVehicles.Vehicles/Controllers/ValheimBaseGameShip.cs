@@ -140,30 +140,7 @@ public class ValheimBaseGameShip : MonoBehaviour
         "ValheimBaseShip initialized without NetView, or netview is not available yet (ghost mode?)");
     }
 
-    var collider = transform.Find($"colliders/{PrefabNames.WaterVehicleFloatCollider}");
-
-    if (collider != null)
-    {
-      collider.SetParent(transform);
-      var boxColliders = collider.GetComponentsInChildren<BoxCollider>();
-
-      var floatBoxCollider =
-        boxColliders?.FirstOrDefault((k) =>
-          k.gameObject.name == PrefabNames.WaterVehicleFloatCollider);
-      if (floatBoxCollider != null)
-      {
-        m_floatcollider = floatBoxCollider;
-      }
-    }
-
-
-    if (!m_floatcollider)
-    {
-      Logger.LogError("No float collider exists for ship, this is a prefab setup issue.");
-    }
-
-    // looks at the top level of the Watervehicle (this component gameobject is within a child)
-    var wnt = GetComponentInParent<WearNTear>();
+    var wnt = GetComponent<WearNTear>();
     if ((bool)wnt)
     {
       wnt.m_onDestroyed =
@@ -199,10 +176,10 @@ public class ValheimBaseGameShip : MonoBehaviour
     return m_players.Count == 0;
   }
 
-  internal void Start()
-  {
-    InvokeRepeating(nameof(UpdateOwner), 2f, 2f);
-  }
+  // internal void Start()
+  // {
+  //   InvokeRepeating(nameof(UpdateOwner), 2f, 2f);
+  // }
 
   internal void PrintStats()
   {

@@ -55,12 +55,6 @@ public class VehiclePiecesController : MonoBehaviour
     }
   }
 
-  /*
-   * @todo make this a generic most likely this all should be in a shared extension api
-   * IE: VehicleInstance getter
-   */
-  public WaterVehicleController waterVehicleController;
-
   // rigidbody for all pieces within the ship. Does not directly contribute to floatation, floatation controlled by m_syncRigidbody and synced to this m_rigidbody
 
   // for the ship physics without item piece colliders or alternatively access via VehicleInstance.m_body
@@ -69,10 +63,11 @@ public class VehiclePiecesController : MonoBehaviour
   /// </summary>
   internal ZSyncTransform? zsyncTransform;
 
-  internal Rigidbody m_body;
+  public Rigidbody m_body;
   internal FixedJoint m_fixedJoint;
 
   internal List<ZNetView> m_pieces = [];
+  internal List<ZNetView> m_ramPieces = [];
   internal List<ZNetView> m_hullPieces = [];
 
   internal List<MastComponent> m_mastPieces = [];
@@ -442,13 +437,16 @@ public class VehiclePiecesController : MonoBehaviour
 
     if (!ZNetScene.instance || VehicleInstance.PersistentZdoId == 0) return;
 
-    foreach (var piece in m_pieces)
+    foreach (var piece in m_pieces.ToList())
     {
-      if ((bool)piece)
+      if (!piece)
       {
-        piece.transform.SetParent(null);
-        AddInactivePiece(VehicleInstance.PersistentZdoId, piece, null);
+        m_pieces.Remove(piece);
+        continue;
       }
+
+      piece.transform.SetParent(null);
+      AddInactivePiece(VehicleInstance.PersistentZdoId, piece, null);
     }
 
     StopAllCoroutines();
@@ -457,7 +455,7 @@ public class VehiclePiecesController : MonoBehaviour
   public virtual void SyncRigidbodyStats(float drag, float angularDrag)
   {
     if (!VehicleInstance?.MovementController?.m_body || m_statsOverride ||
-        !VehicleInstance?.Instance)
+        !VehicleInstance?.Instance || !m_body)
     {
       return;
     }
@@ -492,7 +490,8 @@ public class VehiclePiecesController : MonoBehaviour
 
   public void Sync()
   {
-    if (!(bool)m_body || !(bool)VehicleInstance?.MovementControllerRigidbody)
+    if (!(bool)m_body || !(bool)VehicleInstance?.MovementControllerRigidbody ||
+        VehicleInstance?.MovementController == null)
     {
       return;
     }
@@ -511,7 +510,8 @@ public class VehiclePiecesController : MonoBehaviour
         m_fixedJoint.connectedBody = null;
       }
 
-      m_body.Move(VehicleInstance.MovementController.m_body.position,
+      m_body.MovePosition(VehicleInstance.MovementController.m_body.position);
+      m_body.MoveRotation(
         VehicleInstance.MovementController.m_body.rotation);
       return;
     }
@@ -527,30 +527,25 @@ public class VehiclePiecesController : MonoBehaviour
     }
   }
 
-  public void Update()
+  private void Update()
   {
-    if (!VehicleInstance.NetView) return;
-    if (!ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value)
-    {
-      Sync();
-    }
+    Client_UpdateAllPieces();
 
-    // // owner must sync more frequently, this likely is unnecessary but is kept as an option for servers that may be having sync problems during only the FixedUpdate
-    // if (VehicleInstance.NetView?.IsOwner() == true)
-    // {
-    //   Client_UpdateAllPieces();
-    // }
+    Sync();
   }
 
   public void FixedUpdate()
   {
-    Client_UpdateAllPieces();
     Sync();
   }
 
   private void LateUpdate()
   {
     Sync();
+    if (!ZNet.instance.IsServer())
+    {
+      Client_UpdateAllPieces();
+    }
   }
 
 
@@ -559,21 +554,18 @@ public class VehiclePiecesController : MonoBehaviour
   /// </summary>
   public void ForceUpdateAllPiecePositions()
   {
-    for (var i = 0; i < m_pieces.Count; i++)
+    foreach (var nv in m_pieces.ToList())
     {
-      var nv = m_pieces[i];
       if (!nv)
       {
-        Logger.LogError($"Error found with m_pieces: netview {nv}");
-        m_pieces.RemoveAt(i);
-        i--;
+        Logger.LogError($"Error found with m_pieces: netview {nv}, save removing the piece");
+        m_pieces.Remove(nv);
+        continue;
       }
-      else
+
+      if (transform.position != nv.transform.position)
       {
-        if (transform.position != nv.transform.position)
-        {
-          nv.m_zdo?.SetPosition(transform.position);
-        }
+        nv.m_zdo?.SetPosition(transform.position);
       }
     }
   }
@@ -583,13 +575,16 @@ public class VehiclePiecesController : MonoBehaviour
    */
   public void Client_UpdateAllPieces()
   {
+    Physics.SyncTransforms();
     var sector = ZoneSystem.instance.GetZone(transform.position);
 
-    if (sector == m_sector) return;
-
-    if (m_sector != m_serverSector)
+    if (sector == m_sector)
     {
-      ServerSyncAllPieces();
+      if (ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value)
+      {
+        ForceUpdateAllPiecePositions();
+      }
+
       return;
     }
 
@@ -597,15 +592,13 @@ public class VehiclePiecesController : MonoBehaviour
     ForceUpdateAllPiecePositions();
   }
 
+  /// <summary>
+  /// Abstract for this getter, coherces to false
+  /// </summary>
+  /// <returns></returns>
   private bool IsPlayerOwnerOfNetview()
   {
-    var netViewOwnerId = VehicleInstance.NetView?.GetZDO()?.GetOwner();
-    if (netViewOwnerId == 0L) return false;
-
-    var playerId = Player.m_localPlayer?.GetPlayerID();
-    if (playerId == 0L) return false;
-
-    return netViewOwnerId == playerId;
+    return VehicleInstance.NetView?.GetZDO()?.IsOwner() ?? false;
   }
 
   /// <summary>
@@ -614,9 +607,7 @@ public class VehiclePiecesController : MonoBehaviour
   public void ServerSyncAllPieces()
   {
     var isDedicated = ZNet.instance?.IsDedicated();
-    var isPlayerTheOwner = IsPlayerOwnerOfNetview();
-
-    if (isDedicated != true && isPlayerTheOwner != true) return;
+    if (isDedicated != true) return;
 
     if (_serverUpdatePiecesCoroutine != null)
     {
@@ -673,6 +664,7 @@ public class VehiclePiecesController : MonoBehaviour
    */
   private IEnumerator UpdatePiecesWorker(List<ZDO> list)
   {
+    Logger.LogDebug("called UpdatePiecesWorker");
     UpdatePieces(list);
     yield return new WaitForFixedUpdate();
   }
@@ -706,7 +698,7 @@ public class VehiclePiecesController : MonoBehaviour
       }
 
       yield return UpdatePiecesWorker(list);
-      yield return new WaitForEndOfFrame();
+      yield return new WaitForFixedUpdate();
     }
   }
 
@@ -804,7 +796,7 @@ public class VehiclePiecesController : MonoBehaviour
     UpdateMass(netView, true);
     DebouncedRebuildBounds();
 
-    if (ShipHulls.IsHull(netView.gameObject))
+    if (PrefabNames.IsHull(netView.gameObject))
     {
       m_hullPieces.Remove(netView);
     }
@@ -836,6 +828,12 @@ public class VehiclePiecesController : MonoBehaviour
     if ((bool)wheel)
     {
       _steeringWheelPieces.Remove(wheel);
+    }
+
+    var isRam = RamPrefabs.IsRam(netView.name);
+    if (isRam)
+    {
+      m_ramPieces.Remove(netView);
     }
 
 
@@ -948,16 +946,14 @@ public class VehiclePiecesController : MonoBehaviour
       return 80f;
     }
 
-    if (pieceName ==
-        PrefabRegistryHelpers.GetPieceNameFromPrefab(PrefabNames.ShipHullRibWoodPrefabName))
+    if (pieceName.StartsWith(PrefabNames.HullRib))
     {
-      return 180f;
-    }
+      if (pieceName.Contains(ShipHulls.HullMaterial.Iron))
+      {
+        return 720f;
+      }
 
-    if (pieceName ==
-        PrefabRegistryHelpers.GetPieceNameFromPrefab(PrefabNames.ShipHullRibIronPrefabName))
-    {
-      return 720f;
+      return 180f;
     }
 
     if (pieceName == "wood_floor_1x1")
@@ -1451,6 +1447,7 @@ public class VehiclePiecesController : MonoBehaviour
     if (!netView) return;
 
     var isPiecesOrWaterVehicle = IsExcludedPrefab(netView.gameObject);
+
     if (isPiecesOrWaterVehicle)
     {
       return;
@@ -1471,7 +1468,7 @@ public class VehiclePiecesController : MonoBehaviour
       var vehicleShip = parentObj.GetComponent<VehicleShip>();
       if (vehicleShip != null || vehicleShip?.PiecesController != null)
       {
-        vehicleShip.PiecesController.Instance.ActivatePiece(netView);
+        vehicleShip.PiecesController.ActivatePiece(netView);
         return;
       }
     }
@@ -1503,7 +1500,7 @@ public class VehiclePiecesController : MonoBehaviour
   {
     if (RamPrefabs.IsRam(targetTransform.name))
     {
-      targetTransform.SetParent(_movingPiecesContainer);
+      targetTransform.SetParent(VehicleInstance?.Instance?.transform);
       return;
     }
 
@@ -1545,7 +1542,7 @@ public class VehiclePiecesController : MonoBehaviour
     var hasPendingPieces =
       m_pendingPieces.TryGetValue(vehicleShip.PersistentZdoId,
         out var pendingPieces);
-    var hasPieces = vehicleShip.PiecesController.Instance.GetPieceCount() != 0;
+    var hasPieces = vehicleShip.PiecesController.GetPieceCount() != 0;
 
     // if there are pending pieces, do not let vehicle be destroyed
     if (pendingPieces != null && hasPendingPieces && pendingPieces.Count > 0)
@@ -1556,10 +1553,11 @@ public class VehiclePiecesController : MonoBehaviour
     return !hasPieces;
   }
 
-  public void FixPieceMeshes(ZNetView netView)
+  public static void FixPieceMeshes(ZNetView netView)
   {
     /*
-     * Very very important. It fixes shadow flicker on all of valheim's prefabs with boats. If this is removed, the raft is seizure inducing.
+     * It fixes shadow flicker on all of valheim's prefabs with boats
+     * If this is removed, the raft is seizure inducing.
      */
     var meshes = netView.GetComponentsInChildren<MeshRenderer>(true);
     foreach (var meshRenderer in meshes)
@@ -1660,6 +1658,8 @@ public class VehiclePiecesController : MonoBehaviour
       return;
     }
 
+    FixPieceMeshes(netView);
+    IgnoreCollidersForAllRamPieces(netView);
 
     var shouldRebuildBounds = false;
     totalSailArea = 0;
@@ -1670,7 +1670,7 @@ public class VehiclePiecesController : MonoBehaviour
     if ((bool)wnt && ValheimRaftPlugin.Instance.MakeAllPiecesWaterProof.Value)
       wnt.m_noRoofWear = false;
 
-    if (ShipHulls.IsHull(netView.gameObject))
+    if (PrefabNames.IsHull(netView.gameObject))
     {
       m_hullPieces.Add(netView);
     }
@@ -1736,11 +1736,14 @@ public class VehiclePiecesController : MonoBehaviour
     var isRam = RamPrefabs.IsRam(netView.name);
     if (isRam)
     {
+      m_ramPieces.Add(netView);
       var vehicleRamAoe = netView.GetComponentInChildren<VehicleRamAoe>();
-      if ((bool)vehicleRamAoe) vehicleRamAoe.vehicle = VehicleInstance.Instance;
+      if ((bool)vehicleRamAoe)
+      {
+        vehicleRamAoe.vehicle = VehicleInstance.Instance;
+      }
     }
 
-    FixPieceMeshes(netView);
     UpdateMass(netView);
 
     switch (isNew)
@@ -1938,9 +1941,9 @@ public class VehiclePiecesController : MonoBehaviour
      * todo make this logic exact.
      * - Have a minimum "deck" position and determine height based on the deck. For now this do not need to be done
      */
-    const float characterTriggerMaxAddedHeight = 5;
-    const float characterTriggerMinHeight = 1;
-    const float characterHeightScalar = 1.2f;
+    const float characterTriggerMaxAddedHeight = 10;
+    const float characterTriggerMinHeight = 4;
+    const float characterHeightScalar = 1.15f;
     var computedOnboardTriggerHeight =
       Math.Min(
         Math.Max(_vehicleBounds.size.y * characterHeightScalar,
@@ -1992,6 +1995,54 @@ public class VehiclePiecesController : MonoBehaviour
     m_onboardcollider.transform.localPosition = onboardColliderCenter;
   }
 
+  public void IgnoreCollidersForAllRamPieces(ZNetView netView)
+  {
+    if (m_ramPieces.Count <= 0) return;
+    var colliders = netView.GetComponentsInChildren<Collider>();
+    foreach (var mRamPiece in m_ramPieces)
+    {
+      var ramColliders = mRamPiece.GetComponentsInChildren<Collider>();
+
+      foreach (var collider in colliders)
+      {
+        foreach (var ramCollider in ramColliders)
+        {
+          Physics.IgnoreCollision(collider, ramCollider, true);
+        }
+      }
+    }
+  }
+
+  /// <summary>
+  /// Ignore all colliders on the vehicleShip for a placed ram so it doesn't make the Vehicle Freak out
+  /// </summary>
+  /// <param name="ramColliders">Colliders from a Ram</param>
+  public void IgnoreCollidersOnShipForRams(List<Collider> ramColliders)
+  {
+    foreach (var t in ramColliders)
+    {
+      if (t == null) continue;
+      if (m_floatcollider) Physics.IgnoreCollision(t, m_floatcollider, true);
+      if (m_blockingcollider) Physics.IgnoreCollision(t, m_blockingcollider, true);
+      if (m_onboardcollider)
+        Physics.IgnoreCollision(t, m_onboardcollider, true);
+      foreach (var nv in m_pieces.ToList())
+      {
+        if (!nv)
+        {
+          m_pieces.Remove(nv);
+          continue;
+        }
+
+        var nvColliders = nv.GetComponentsInChildren<Collider>();
+        foreach (var nvCollider in nvColliders)
+        {
+          Physics.IgnoreCollision(t, nvCollider, true);
+        }
+      }
+    }
+  }
+
   public void IgnoreShipColliders(List<Collider> colliders)
   {
     foreach (var t in colliders.ToList())
@@ -2004,6 +2055,11 @@ public class VehiclePiecesController : MonoBehaviour
     }
   }
 
+  /// <summary>
+  /// Should ignore camera jitter, however it does not work yet
+  /// </summary>
+  /// TODO fix this or add a patch to ignore camera collision in roofed boats or when paning and colliding with wheel
+  /// <param name="colliders"></param>
   public void IgnoreCameraCollision(List<Collider> colliders)
   {
     var cameraMask = GameCamera.instance.m_blockCameraMask;
@@ -2016,7 +2072,7 @@ public class VehiclePiecesController : MonoBehaviour
 
   ///
   /// <summary>Parses Collider.bounds and confirm if it's local/ or out of ship bounds</summary>
-  /// - Collider.bounds should be global but it may not be returning the correct value when instantiated
+  /// - Collider.bounds should be global, but it may not be returning the correct value when instantiated
   /// - world position bounds will desync when the vehicle moves
   /// - Using global position bounds with a local bounds will cause the center to extend to the global position and break the raft
   ///
@@ -2030,7 +2086,9 @@ public class VehiclePiecesController : MonoBehaviour
     Vector3 center;
 
     /*
-     * <summary>confirms that the magnitude is near zero when subtracting a guaranteed world-position coordinate with a bounds.center coordinate that could be local or global.</summary>
+     * <summary>
+     * confirms that the magnitude is near zero when subtracting a guaranteed world-position coordinate with a bounds.center coordinate that could be local or global.
+     * </summary>
      *
      * - if magnitude is above 5f (or probably even 1f) it is very likely a local position subtracted against a global position.
      *
@@ -2093,10 +2151,12 @@ public class VehiclePiecesController : MonoBehaviour
   {
     var colliders = GetCollidersInPiece(go);
 
-    IgnoreShipColliders(colliders);
-    // todo This should only apply for wheels and other gadgets that should not block camera
-    IgnoreCameraCollision(colliders);
+    if (RamPrefabs.IsRam(go.name))
+    {
+      IgnoreCollidersOnShipForRams(colliders);
+    }
 
+    IgnoreShipColliders(colliders);
 
     var door = go.GetComponentInChildren<Door>();
     var ladder = go.GetComponent<RopeLadderComponent>();
@@ -2105,7 +2165,7 @@ public class VehiclePiecesController : MonoBehaviour
     if (!door && !ladder && !rope && !SailPrefabs.IsSail(go.name)
         && !RamPrefabs.IsRam(go.name))
     {
-      if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value || ShipHulls.IsHull(go))
+      if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value || PrefabNames.IsHull(go))
       {
         var newBounds =
           EncapsulateColliders(_vehicleBounds.center, _vehicleBounds.size, go);

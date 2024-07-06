@@ -18,6 +18,12 @@ public class CreativeModeConsoleCommand : ConsoleCommand
     RunCreativeModeCommand(Name);
   }
 
+  /// <summary>
+  /// Prevents player from being launched into the sky.
+  /// This can happen when the ship hits them when it is moved upwards.
+  /// </summary>
+  /// <param name="character"></param>
+  /// <returns></returns>
   private static IEnumerator SetPlayerBackOnBoat(Character character)
   {
     yield return new WaitForSeconds(0.5f);
@@ -73,14 +79,14 @@ public class CreativeModeConsoleCommand : ConsoleCommand
   private static bool ToggleMode(Character character,
     VehicleShip ship)
   {
-    if (!(bool)ship)
+    if (!(bool)ship || ship.MovementController == null)
     {
       return false;
     }
 
     var toggledKinematicValue = !ship.MovementController.m_body.isKinematic;
     ship.MovementController.m_body.isKinematic = toggledKinematicValue;
-    ship.movementZSyncTransform.m_isKinematicBody = toggledKinematicValue;
+    ship.MovementController.zsyncTransform.m_isKinematicBody = toggledKinematicValue;
 
     if (toggledKinematicValue)
     {
@@ -88,7 +94,7 @@ public class CreativeModeConsoleCommand : ConsoleCommand
         ship.MovementController.m_body.position.y +
         ValheimRaftPlugin.Instance.RaftCreativeHeight.Value;
       var playerInBoat =
-        character.transform.parent == ship.VehiclePiecesController.Instance.transform;
+        character.transform.parent == ship.VehiclePiecesController?.transform;
       if (playerInBoat)
       {
         character.m_body.isKinematic = true;
@@ -97,8 +103,6 @@ public class CreativeModeConsoleCommand : ConsoleCommand
           character.m_body.transform.position.y + 0.2f +
           ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
           character.m_body.transform.position.z);
-
-        // prevents player from being launched into the sky if the ship hits them when it is moved upwards
       }
 
       var directionRaftUpwards = new Vector3(ship.transform.position.x,

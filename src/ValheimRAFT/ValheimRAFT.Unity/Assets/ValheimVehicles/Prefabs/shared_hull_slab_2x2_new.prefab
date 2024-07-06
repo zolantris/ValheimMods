@@ -11,11 +11,11 @@ GameObject:
   - component: {fileID: 6015232456486853985}
   m_Layer: 10
   m_Name: $hud_snappoint_bottom $hud_snappoint_corner 1
-  m_TagString: snappoint
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &6015232456486853985
 Transform:
   m_ObjectHideFlags: 0
@@ -127,7 +127,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 46114245fd48be04a92dc292d4bbeaae, type: 2}
+  - {fileID: 2100000, guid: 1c80cbe309cab584f8979db65874052d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -222,11 +222,11 @@ GameObject:
   - component: {fileID: 6753353508630236182}
   m_Layer: 10
   m_Name: $hud_snappoint_bottom $hud_snappoint_corner 4
-  m_TagString: snappoint
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &6753353508630236182
 Transform:
   m_ObjectHideFlags: 0
@@ -303,7 +303,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 46114245fd48be04a92dc292d4bbeaae, type: 2}
+  - {fileID: 2100000, guid: 1c80cbe309cab584f8979db65874052d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -367,11 +367,11 @@ GameObject:
   - component: {fileID: 2037986755202196996}
   m_Layer: 10
   m_Name: $hud_snappoint_bottom $hud_snappoint_corner 2
-  m_TagString: snappoint
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2037986755202196996
 Transform:
   m_ObjectHideFlags: 0
@@ -398,11 +398,11 @@ GameObject:
   - component: {fileID: 7448215286088440428}
   m_Layer: 10
   m_Name: $hud_snappoint_top $hud_snappoint_center
-  m_TagString: snappoint
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &7448215286088440428
 Transform:
   m_ObjectHideFlags: 0
@@ -493,11 +493,11 @@ GameObject:
   - component: {fileID: 6108613122461208361}
   m_Layer: 10
   m_Name: $hud_snappoint_bottom $hud_snappoint_corner 3
-  m_TagString: snappoint
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &6108613122461208361
 Transform:
   m_ObjectHideFlags: 0
@@ -555,11 +555,11 @@ GameObject:
   - component: {fileID: 2663827776530114275}
   m_Layer: 10
   m_Name: $hud_snappoint_bottom $hud_snappoint_center
-  m_TagString: snappoint
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2663827776530114275
 Transform:
   m_ObjectHideFlags: 0
@@ -636,7 +636,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 46114245fd48be04a92dc292d4bbeaae, type: 2}
+  - {fileID: 2100000, guid: 1c80cbe309cab584f8979db65874052d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -719,7 +719,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 46114245fd48be04a92dc292d4bbeaae, type: 2}
+  - {fileID: 2100000, guid: 1c80cbe309cab584f8979db65874052d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
