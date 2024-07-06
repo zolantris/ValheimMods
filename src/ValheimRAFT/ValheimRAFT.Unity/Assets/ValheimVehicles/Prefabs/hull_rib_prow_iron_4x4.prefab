@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 937589829632962500}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: iron_pieces
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -45,7 +45,7 @@ GameObject:
   - component: {fileID: 3327911114463717276}
   - component: {fileID: 7117093199478978211}
   - component: {fileID: 4782552882592896657}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: iron_brace 5
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -148,7 +148,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7036842959748304155}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: braces
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -372,7 +372,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5721838593751922162}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: hull_rib_prow_iron_4x4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -408,7 +408,7 @@ GameObject:
   - component: {fileID: 2880642674651746765}
   - component: {fileID: 6573913055876022436}
   - component: {fileID: 7497413678169682545}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: iron_brace 5_3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -514,7 +514,7 @@ GameObject:
   - component: {fileID: 2299186636803235736}
   - component: {fileID: 1007750743093366779}
   - component: {fileID: 8490033204567813770}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: iron_brace 5_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -700,7 +700,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 484840977414962128}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: bands
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -737,7 +737,7 @@ GameObject:
   - component: {fileID: 3137313164504467292}
   - component: {fileID: 641647612697634436}
   - component: {fileID: 5580477175632916601}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: iron_brace 5_4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -843,7 +843,7 @@ GameObject:
   - component: {fileID: 5732983031348844502}
   - component: {fileID: 2398984607056194442}
   - component: {fileID: 2244588876043340005}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: iron_brace 5_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -945,14 +945,50 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5721838593751922162}
     m_Modifications:
+    - target: {fileID: 2422547476293812804, guid: 596c7cfef1608ee468e3e522c46b5316, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 2690493353881912677, guid: 596c7cfef1608ee468e3e522c46b5316, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 2705518139088321033, guid: 596c7cfef1608ee468e3e522c46b5316, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 2856369208168115532, guid: 596c7cfef1608ee468e3e522c46b5316, type: 3}
       propertyPath: m_Name
       value: new
+      objectReference: {fileID: 0}
+    - target: {fileID: 2856369208168115532, guid: 596c7cfef1608ee468e3e522c46b5316, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 2868346618245622937, guid: 596c7cfef1608ee468e3e522c46b5316, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 2963894267098386693, guid: 596c7cfef1608ee468e3e522c46b5316, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 9f50f724d23916f488cd6f8f04b115b5, type: 2}
+    - target: {fileID: 3651547325147228865, guid: 596c7cfef1608ee468e3e522c46b5316, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974264014305304995, guid: 596c7cfef1608ee468e3e522c46b5316, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5094117293943910510, guid: 596c7cfef1608ee468e3e522c46b5316, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5489112103383074497, guid: 596c7cfef1608ee468e3e522c46b5316, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 5851423186957257068, guid: 596c7cfef1608ee468e3e522c46b5316, type: 3}
       propertyPath: m_LocalPosition.y
       value: 0
@@ -993,6 +1029,18 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 9f50f724d23916f488cd6f8f04b115b5, type: 2}
+    - target: {fileID: 6226958136707964492, guid: 596c7cfef1608ee468e3e522c46b5316, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8569987545906773991, guid: 596c7cfef1608ee468e3e522c46b5316, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8664281742393332733, guid: 596c7cfef1608ee468e3e522c46b5316, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

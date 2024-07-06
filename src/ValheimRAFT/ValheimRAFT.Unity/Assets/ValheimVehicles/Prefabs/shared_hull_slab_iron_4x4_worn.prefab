@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7822402868691204280}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: shared_hull_slab_iron_4x4_worn
   m_TagString: Untagged
   m_Icon: {fileID: 0}

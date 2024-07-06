@@ -12,6 +12,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: shared_hull_slab_iron_2x2_new
       objectReference: {fileID: 0}
+    - target: {fileID: 385631728708239502, guid: e3317fb0c4607bb42873410a8d896bf9, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 2743939044512500733, guid: e3317fb0c4607bb42873410a8d896bf9, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.9
@@ -67,6 +71,14 @@ PrefabInstance:
     - target: {fileID: 5805466187747324875, guid: e3317fb0c4607bb42873410a8d896bf9, type: 3}
       propertyPath: m_LocalScale.z
       value: 0.105
+      objectReference: {fileID: 0}
+    - target: {fileID: 7638299386848743423, guid: e3317fb0c4607bb42873410a8d896bf9, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 7745060353324483880, guid: e3317fb0c4607bb42873410a8d896bf9, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 7822402868691204280, guid: e3317fb0c4607bb42873410a8d896bf9, type: 3}
       propertyPath: m_LocalScale.x

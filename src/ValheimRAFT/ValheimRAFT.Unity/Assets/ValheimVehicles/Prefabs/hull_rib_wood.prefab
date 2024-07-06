@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5940555617446921363}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: hull_rib_wood
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -41,7 +41,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 399221076645916209}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: new
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -72,9 +72,17 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 399221076645916209}
     m_Modifications:
+    - target: {fileID: 1805066049097548374, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 2051688328104020181, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
       propertyPath: m_Name
       value: shared_hull_rib
+      objectReference: {fileID: 0}
+    - target: {fileID: 2051688328104020181, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 5940555617446921363, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
       propertyPath: m_LocalPosition.x
@@ -115,6 +123,10 @@ PrefabInstance:
     - target: {fileID: 5940555617446921363, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7397926414063671586, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

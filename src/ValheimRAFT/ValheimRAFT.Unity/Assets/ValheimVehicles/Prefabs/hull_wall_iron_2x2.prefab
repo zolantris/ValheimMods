@@ -40,7 +40,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3784598169234739585}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: hull_wall_iron_2x2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -175,6 +175,10 @@ PrefabInstance:
     - target: {fileID: 6265102599747344754, guid: a702c9f99a3324e4c91312a6ec4d6c98, type: 3}
       propertyPath: m_Name
       value: hull_slab_2x2_iron
+      objectReference: {fileID: 0}
+    - target: {fileID: 6265102599747344754, guid: a702c9f99a3324e4c91312a6ec4d6c98, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 7302726913151746414, guid: a702c9f99a3324e4c91312a6ec4d6c98, type: 3}
       propertyPath: m_LocalScale.y

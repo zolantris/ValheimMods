@@ -92,7 +92,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3784598169234739585}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: hull_wall_iron_alternative_4x4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -380,6 +380,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 644619197330657008, guid: 409d822031ddb584f800a91d8ecac815, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 706295334347244419, guid: 409d822031ddb584f800a91d8ecac815, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -488,10 +492,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: hull_wall_2x2_iron
       objectReference: {fileID: 0}
+    - target: {fileID: 5107264316775730461, guid: 409d822031ddb584f800a91d8ecac815, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 5177649890306465629, guid: 409d822031ddb584f800a91d8ecac815, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 0a782efb2d546b440ab80eb7882eb516, type: 2}
+    - target: {fileID: 5385844281065701612, guid: 409d822031ddb584f800a91d8ecac815, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 5771925133766606628, guid: 409d822031ddb584f800a91d8ecac815, type: 3}
       propertyPath: m_LocalScale.z
       value: 0.6

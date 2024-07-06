@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1911158933539869882}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: bands
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -46,7 +46,7 @@ GameObject:
   - component: {fileID: 8907850308116409489}
   - component: {fileID: 3939989578750462529}
   - component: {fileID: 3734767520785517203}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: iron_brace 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -149,7 +149,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5940555617446921363}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: hull_rib_iron
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -184,7 +184,7 @@ GameObject:
   - component: {fileID: 2997912683625862275}
   - component: {fileID: 7254162889624744374}
   - component: {fileID: 1330964440552454594}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: iron_brace 5
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -290,7 +290,7 @@ GameObject:
   - component: {fileID: 8648741184200499984}
   - component: {fileID: 3677125046176918357}
   - component: {fileID: 3237367113730810763}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: iron_brace 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -396,7 +396,7 @@ GameObject:
   - component: {fileID: 3318643138379778829}
   - component: {fileID: 5180158518597926316}
   - component: {fileID: 7951629377124164149}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: iron_brace 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -582,7 +582,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4567526982463564828}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: braces
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -619,7 +619,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2084948141674580937}
   - component: {fileID: 3603298145165071754}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: new
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -871,7 +871,7 @@ GameObject:
   - component: {fileID: 5419643309176793084}
   - component: {fileID: 5160561010753286855}
   - component: {fileID: 7769679958193486809}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: iron_brace 4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -973,9 +973,17 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2084948141674580937}
     m_Modifications:
+    - target: {fileID: 1805066049097548374, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 2051688328104020181, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
       propertyPath: m_Name
       value: shared_hull_rib
+      objectReference: {fileID: 0}
+    - target: {fileID: 2051688328104020181, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 5482314245486236137, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -1020,6 +1028,10 @@ PrefabInstance:
     - target: {fileID: 5940555617446921363, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7397926414063671586, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 8979986375098800848, guid: b281c377ca2f0e942a2041ab71bc5643, type: 3}
