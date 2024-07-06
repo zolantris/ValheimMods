@@ -31,8 +31,7 @@ public class ShipHullPrefab : IRegisterPrefab
       RegisterHull(GetShipHullCenterName(hullMaterialType), hullMaterialType, 16 + 16 + 4,
         PrefabSizeVariant.FourByFour);
 
-      RegisterHullRib(GetHullRibName(hullMaterialType), hullMaterialType,
-        prefabManager, pieceManager);
+      RegisterHullRib(GetHullRibName(hullMaterialType), hullMaterialType);
 
       // does not have a size variant
       foreach (var ribDirection in ribDirections)
@@ -149,7 +148,7 @@ public class ShipHullPrefab : IRegisterPrefab
 
     SetHullWnt(wnt, hullMaterial);
 
-    ShipHulls.SetMaterialHealthValues(hullMaterial, wnt, 9);
+    ShipHulls.SetMaterialHealthValues(hullMaterial, wnt, materialCount);
     PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
@@ -174,17 +173,15 @@ public class ShipHullPrefab : IRegisterPrefab
   /// </summary>
   private static void RegisterHullRib(
     string prefabName,
-    string hullMaterial,
-    PrefabManager prefabManager,
-    PieceManager pieceManager)
+    string hullMaterial)
   {
     var prefab =
-      prefabManager.CreateClonedPrefab(
+      PrefabManager.Instance.CreateClonedPrefab(
         prefabName, LoadValheimVehicleAssets.GetShipHullRib(hullMaterial));
 
     SetupHullPrefab(prefab, prefabName,
       hullMaterial,
-      6,
+      8,
       prefab.transform.Find("new") ?? prefab.transform);
   }
 

@@ -29,10 +29,10 @@ public abstract class ShipHulls
       // iron reinforced wood is 2000 health but these are rustic plats but can be made larger and are also slightly weaker since they incorporate bronze out layer
       case HullMaterial.Iron:
         PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.Iron);
-        wnt.m_health = 800 * pieces;
+        wnt.m_health = 500 * pieces;
         break;
       case HullMaterial.Wood:
-        wnt.m_health = 200 * pieces;
+        wnt.m_health = 100 * pieces;
         break;
     }
   }
