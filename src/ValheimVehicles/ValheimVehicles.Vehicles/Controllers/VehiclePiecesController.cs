@@ -594,17 +594,15 @@ public class VehiclePiecesController : MonoBehaviour
         nv.GetZDO().SetSector(currentPieceControllerSector);
       }
 
-      var positionFromCenterBounds = transform.position + _vehicleBounds.center;
-
       if (zdo != null && currentPieceControllerSector != zdo?.GetSector())
       {
         nv.m_zdo?.SetPosition(transform.position);
-        VehicleInstance?.NetView?.m_zdo.SetPosition(positionFromCenterBounds);
+        VehicleInstance?.NetView?.m_zdo.SetPosition(transform.position);
       }
 
       if (transform.position != nv.transform.position)
       {
-        nv.m_zdo?.SetPosition(positionFromCenterBounds);
+        nv.m_zdo?.SetPosition(transform.position);
       }
     }
   }
