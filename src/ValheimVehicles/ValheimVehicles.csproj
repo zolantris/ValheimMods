@@ -56,7 +56,6 @@
         <Folder Include="ValheimVehicles.DynamicLocations\"/>
         <Folder Include="ValheimVehicles.Propulsion\Sailing\"/>
         <Folder Include="ValheimVehicles.Utils\"/>
-        <Folder Include="ValheimVehicles.Vehicles\"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\SentryUnityWrapper\SentryUnityWrapper.csproj"/>

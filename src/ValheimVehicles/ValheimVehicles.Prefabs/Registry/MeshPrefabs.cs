@@ -29,6 +29,15 @@ public class MeshPrefabs : IRegisterPrefab
     piece.m_description = $"$valheim_vehicles_water_mesh_mask_desc";
     piece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
+    var mesh = prefab.GetComponent<MeshRenderer>();
+    var unlitColor = LoadValheimVehicleAssets.PieceShader;
+    var material = new Material(unlitColor)
+    {
+      color = Color.green
+    };
+    mesh.sharedMaterial = material;
+    mesh.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+
     prefab.layer = LayerMask.NameToLayer("piece");
     PrefabRegistryHelpers.SetWearNTear(prefab);
 

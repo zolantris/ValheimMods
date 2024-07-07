@@ -68,6 +68,7 @@ public class LeverComponent : MonoBehaviour, Hoverable, Interactable
 
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
+    selectedAction = LeverAction.ToggleWaterMaskController;
     var output = OnActionTrigger();
     return output;
   }
