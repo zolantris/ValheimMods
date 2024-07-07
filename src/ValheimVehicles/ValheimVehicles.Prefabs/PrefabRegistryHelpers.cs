@@ -125,7 +125,7 @@ public abstract class PrefabRegistryHelpers
     var spriteAtlas = LoadValheimVehicleAssets.VehicleSprites;
 
     const string pieceBaseName = "valheim_vehicles_hull_slab";
-    const string pieceDescription = $"{pieceBaseName}_desc";
+    const string pieceDescription = $"${pieceBaseName}_desc";
     const string iconBaseName = "hull_slab";
 
     List<PrefabNames.PrefabSizeVariant> sizeVariants =
@@ -155,7 +155,7 @@ public abstract class PrefabRegistryHelpers
   {
     var spriteAtlas = LoadValheimVehicleAssets.VehicleSprites;
     const string pieceBaseName = "$valheim_vehicles_hull_wall";
-    const string pieceDescription = $"{pieceBaseName}_desc";
+    const string pieceDescription = $"${pieceBaseName}_desc";
     const string iconBaseName = "hull_wall";
 
     List<PrefabNames.PrefabSizeVariant> sizeVariants =
@@ -185,7 +185,7 @@ public abstract class PrefabRegistryHelpers
   {
     var spriteAtlas = LoadValheimVehicleAssets.VehicleSprites;
     const string pieceBaseName = "$valheim_vehicles_hull_rib_corner";
-    const string pieceDescription = $"{pieceBaseName}_desc";
+    const string pieceDescription = $"${pieceBaseName}_desc";
     const string iconBaseName = "hull_rib_corner";
 
     List<PrefabNames.DirectionVariant> directionVariants =
@@ -218,7 +218,7 @@ public abstract class PrefabRegistryHelpers
   {
     var spriteAtlas = LoadValheimVehicleAssets.VehicleSprites;
     const string pieceBaseName = "$valheim_vehicles_hull_rib_prow";
-    const string pieceDescription = $"{pieceBaseName}_desc";
+    const string pieceDescription = $"${pieceBaseName}_desc";
     const string iconBaseName = "hull_rib_prow";
 
     List<PrefabNames.PrefabSizeVariant> sizeVariants =
@@ -267,8 +267,8 @@ public abstract class PrefabRegistryHelpers
 
     PieceDataDictionary.Add(PrefabNames.WaterVehicleShip, new PieceData()
     {
-      Name = "valheim_vehicles_water_vehicle",
-      Description = "valheim_vehicles_water_vehicle_desc",
+      Name = "$valheim_vehicles_water_vehicle",
+      Description = "$valheim_vehicles_water_vehicle_desc",
       Icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon
     });
 
@@ -278,29 +278,29 @@ public abstract class PrefabRegistryHelpers
     // hull rib variants
     PieceDataDictionary.Add(PrefabNames.GetHullRibName(ShipHulls.HullMaterial.Wood), new PieceData()
     {
-      Name = "valheim_vehicles_hull_rib_side ($valheim_vehicles_material_wood)",
-      Description = $"valheim_vehicles_hull_rib_side_desc {woodMatDesc}",
+      Name = "$valheim_vehicles_hull_rib_side $valheim_vehicles_material_wood",
+      Description = $"$valheim_vehicles_hull_rib_side_desc {woodMatDesc}",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullRibWood)
     });
     PieceDataDictionary.Add(PrefabNames.GetHullRibName(ShipHulls.HullMaterial.Iron), new PieceData()
     {
-      Name = "valheim_vehicles_hull_rib_side ($valheim_vehicles_material_iron)",
+      Name = "$valheim_vehicles_hull_rib_side $valheim_vehicles_material_iron",
       Description =
-        $"valheim_vehicles_hull_rib_side_desc {ironMatDesc}",
+        $"$valheim_vehicles_hull_rib_side_desc {ironMatDesc}",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullRibIron)
     });
 
     // hull center variants
     PieceDataDictionary.Add(PrefabNames.ShipHullCenterWoodPrefabName, new PieceData()
     {
-      Name = "valheim_vehicles_hull_center",
-      Description = $"valheim_vehicles_hull_center_desc {woodMatDesc}",
+      Name = "$valheim_vehicles_hull_center",
+      Description = $"$valheim_vehicles_hull_center_desc {woodMatDesc}",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullCenterWood)
     });
 
     PieceDataDictionary.Add(PrefabNames.ShipHullCenterIronPrefabName, new PieceData()
     {
-      Name = "valheim_vehicles_hull_center",
+      Name = "$valheim_vehicles_hull_center",
       Description = $"valheim_vehicles_hull_center_desc {ironMatDesc}",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullCenterIron)
     });
