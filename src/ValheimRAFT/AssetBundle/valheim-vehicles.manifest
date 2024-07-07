@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 4020482301
+CRC: 3621743462
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 6a80a8738d377b7861078809eff727f4
+    Hash: 33d8e4db557919d117ab62511084709e
   TypeTreeHash:
     serializedVersion: 2
     Hash: c06587813f50b4ac49249ee2d68a3382
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 6a80a8738d377b7861078809eff727f4
+    Hash: 33d8e4db557919d117ab62511084709e
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -105,7 +105,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_4x4.prefab
 - Assets/ValheimVehicles/vehicle_icons.spriteatlasv2
-- Assets/ValheimVehicles/Prefabs/mechanical_switch.prefab
+- Assets/ValheimVehicles/Prefabs/mechanical_lever_switch.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/hud_anchor.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_2x2_worn.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_right_iron.prefab

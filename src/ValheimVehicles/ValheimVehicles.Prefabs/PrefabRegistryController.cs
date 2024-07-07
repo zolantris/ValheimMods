@@ -164,6 +164,9 @@ public class PrefabRegistryController : MonoBehaviour
     VehiclePiecesPrefab.Instance.Register(prefabManager, pieceManager);
     WaterVehiclePrefab.Instance.Register(prefabManager, pieceManager);
 
+    VehicleSwitchPrefab.Instance.Register(prefabManager, pieceManager);
+    MeshPrefabs.Instance.Register(prefabManager, pieceManager);
+
     RamPrefabs.Instance.Register(prefabManager, pieceManager);
   }
 

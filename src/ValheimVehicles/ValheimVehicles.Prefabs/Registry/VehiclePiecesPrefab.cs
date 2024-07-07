@@ -2,6 +2,7 @@ using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 
 namespace Registry;
 
@@ -21,8 +22,8 @@ public class VehiclePiecesPrefab : IRegisterPrefab
   {
     VehiclePiecesContainer = prefabManager.CreateClonedPrefab(PrefabNames.VehiclePiecesContainer,
       LoadValheimVehicleAssets.VehiclePiecesAsset);
-    // PrefabRegistryHelpers.AddTempNetView(VehiclePiecesContainer);
-    // PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(VehiclePiecesContainer);
+    VehiclePiecesContainer.AddComponent<VehiclePiecesController>();
+    VehiclePiecesContainer.AddComponent<VehicleMeshMaskManager>();
   }
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)

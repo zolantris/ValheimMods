@@ -12,7 +12,7 @@ public abstract class SpriteNames
   public const string ShipRudderAdvancedDoubleIron = "rudder_advanced_double_iron";
   public const string ShipRudderBasic = "rudder_basic";
   public const string ShipKeel = "keel";
-  public const string VehicleSwitch = "mechanical_switch";
+  public const string VehicleSwitch = "mechanical_lever_switch";
   public const string HullCenterWood = "hull_center_wood";
   public const string HullCenterIron = "hull_center_iron";
   public const string RopeLadder = "rope_ladder";

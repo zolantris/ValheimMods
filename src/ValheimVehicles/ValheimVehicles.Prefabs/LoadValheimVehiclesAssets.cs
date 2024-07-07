@@ -132,7 +132,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
     SteeringWheel = assetBundle.LoadAsset<GameObject>("steering_wheel.prefab");
     PieceShader = assetBundle.LoadAsset<Shader>("Custom_Piece.shader");
     ShipKeelAsset = assetBundle.LoadAsset<GameObject>("keel");
-    VehicleSwitchAsset = assetBundle.LoadAsset<GameObject>("vehicle_switch");
+    VehicleSwitchAsset = assetBundle.LoadAsset<GameObject>("mechanical_lever_switch");
     VehicleShipAsset =
       assetBundle.LoadAsset<GameObject>("vehicle_ship.prefab");
     VehiclePiecesAsset = assetBundle.LoadAsset<GameObject>("vehicle_ship_pieces.prefab");

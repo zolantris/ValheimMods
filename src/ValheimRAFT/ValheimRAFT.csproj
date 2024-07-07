@@ -43,6 +43,15 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleOnboardController.cs">
             <Link>Controllers\VehicleOnboardController.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\MeshPrefabs.cs">
+            <Link>ValheimVehicles.Prefabs\Registry\MeshPrefabs.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleMeshCreator.cs">
+            <Link>Components\VehicleMeshCreator.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleMeshMaskCreator.cs">
+            <Link>Components\VehicleMeshMaskCreator.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup>
         <Compile Include="ValheimRAFT\*.cs"/>

@@ -592,13 +592,14 @@ public class VehiclePiecesController : MonoBehaviour
 
       if (zdo != null && currentPieceControllerSector != zdo?.GetSector())
       {
-        nv.m_zdo?.SetPosition(transform.position);
-        VehicleInstance?.NetView?.m_zdo.SetPosition(transform.position);
+        nv.m_zdo?.SetPosition(VehicleInstance.MovementController.rigidbody.transform.position);
+        VehicleInstance?.NetView?.m_zdo.SetPosition(VehicleInstance.MovementController.rigidbody
+          .transform.position);
       }
 
       if (transform.position != nv.transform.position)
       {
-        nv.m_zdo?.SetPosition(transform.position);
+        nv.m_zdo?.SetPosition(VehicleInstance.MovementController.rigidbody.transform.position);
       }
     }
   }
@@ -675,7 +676,7 @@ public class VehiclePiecesController : MonoBehaviour
         continue;
       }
 
-      zdo.SetPosition(pos);
+      zdo.SetPosition(VehicleInstance.MovementController.rigidbody.transform.position);
     }
   }
 

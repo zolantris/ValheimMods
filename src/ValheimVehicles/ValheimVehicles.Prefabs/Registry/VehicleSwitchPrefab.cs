@@ -1,3 +1,4 @@
+using Components;
 using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Entities;
@@ -14,18 +15,17 @@ public class VehicleSwitchPrefab : IRegisterPrefab
   public static readonly VehicleSwitchPrefab Instance = new();
 
   // ToggleSwitch and possibly a register multi-level switches
-  private void RegisterToggleSwitch(PrefabManager prefabManager, PieceManager pieceManager)
+  private void RegisterLeverSwitch(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    var prefab = prefabManager.CreateClonedPrefab(PrefabNames.VehicleToggleSwitch,
+    var prefab = prefabManager.CreateClonedPrefab(PrefabNames.VehicleLeverSwitch,
       LoadValheimVehicleAssets.VehicleSwitchAsset);
-    var pieceTranslations =
-      PrefabRegistryHelpers.PieceDataDictionary.GetValueSafe(PrefabNames.VehicleToggleSwitch);
+
+    prefab.AddComponent<LeverComponent>();
+    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.VehicleLeverSwitch, prefab);
 
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = "Hammer",
-      Description = pieceTranslations.Description,
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipKeel),
       Category = PrefabNames.ValheimRaftMenuName,
       Enabled = true,
       Requirements =
@@ -42,6 +42,6 @@ public class VehicleSwitchPrefab : IRegisterPrefab
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    RegisterToggleSwitch(prefabManager, pieceManager);
+    RegisterLeverSwitch(prefabManager, pieceManager);
   }
 }

@@ -485,7 +485,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       Instantiate(vehiclePiecesContainer, transform.position, transform.rotation);
     // ZNetView.m_useInitZDO = prevValue;
 
-    PiecesController = _vehiclePiecesContainerInstance.AddComponent<VehiclePiecesController>();
+    PiecesController = _vehiclePiecesContainerInstance.GetComponent<VehiclePiecesController>();
     PiecesController.InitFromShip(Instance);
 
     InitStarterPiece();

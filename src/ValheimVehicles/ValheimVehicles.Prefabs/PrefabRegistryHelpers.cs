@@ -255,12 +255,25 @@ public abstract class PrefabRegistryHelpers
     }
   }
 
+  public static void RegisterLeverPiece()
+  {
+    const string baseName = "valheim_vehicles_lever_switch";
+    PieceDataDictionary.Add(PrefabNames.VehicleLeverSwitch, new PieceData()
+    {
+      Name = $"${baseName}",
+      Description = $"{baseName}_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.VehicleSwitch)
+    });
+  }
+
 // todo consider using Jotunn.Manager.RenderManager for these Icon generation
   /// todo auto generate this from the translations json
   /// 4x4 and 2x2 icons look similar, may remove 4x4
   public static void Init()
   {
     PieceLayer = LayerMask.NameToLayer("piece");
+
+    RegisterLeverPiece();
 
     RegisterRamPieces();
     RegisterExternalShips();
@@ -360,13 +373,6 @@ public abstract class PrefabRegistryHelpers
       Description = $"$valheim_vehicles_rudder_advanced_desc {ironMatDesc}",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .ShipRudderAdvancedDoubleIron)
-    });
-
-    PieceDataDictionary.Add(PrefabNames.VehicleToggleSwitch, new PieceData()
-    {
-      Name = "$valheim_vehicles_toggle_switch",
-      Description = "$valheim_vehicles_toggle_switch_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.VehicleSwitch)
     });
   }
 
