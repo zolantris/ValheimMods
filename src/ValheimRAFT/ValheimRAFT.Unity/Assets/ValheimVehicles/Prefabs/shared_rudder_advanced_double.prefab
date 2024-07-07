@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3648972701059603707}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_top
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -40,7 +40,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2848224704836420146}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_bottom
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -71,7 +71,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1149849451404623230}
-  m_Layer: 16
+  m_Layer: 10
   m_Name: rudder_rotation
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -106,7 +106,7 @@ GameObject:
   - component: {fileID: 5226394821237344097}
   - component: {fileID: 4528501954264796800}
   - component: {fileID: 4323123208927652278}
-  m_Layer: 16
+  m_Layer: 10
   m_Name: rudder_top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -190,7 +190,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4933692101566550898}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_center
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -221,7 +221,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 670866534934587927}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_top
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -252,7 +252,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2223055755235886417}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_center
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -285,7 +285,7 @@ GameObject:
   - component: {fileID: 2270176176690278139}
   - component: {fileID: 2969759586780876320}
   - component: {fileID: 6684262094753371256}
-  m_Layer: 16
+  m_Layer: 10
   m_Name: rudder_bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -371,7 +371,7 @@ GameObject:
   - component: {fileID: 5077854269718908073}
   - component: {fileID: 5072356786213414956}
   - component: {fileID: 6014958587188741086}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: shared_rudder_advanced_double
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -413,8 +413,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.109202445, y: 2.470037, z: 0.91187894}
-  m_Center: {x: 0.041551083, y: -0.9028199, z: -0.5604108}
+  m_Size: {x: 0.109202445, y: 4.9801707, z: 0.51436734}
+  m_Center: {x: 0.041551083, y: 0.352247, z: -0.36165488}
 --- !u!205 &6014958587188741086
 LODGroup:
   m_ObjectHideFlags: 0
@@ -444,7 +444,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5667720811414434588}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_bottom
   m_TagString: snappoint
   m_Icon: {fileID: 0}

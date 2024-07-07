@@ -16,6 +16,7 @@ public static class PrefabNames
     TwoByTwo,
     TwoByThree,
     FourByFour,
+    FourByEight,
   }
 
   public enum DirectionVariant
@@ -64,6 +65,7 @@ public static class PrefabNames
       PrefabSizeVariant.TwoByTwo => 2 * 2,
       PrefabSizeVariant.TwoByThree => 2 * 3,
       PrefabSizeVariant.FourByFour => 4 * 4,
+      PrefabSizeVariant.FourByEight => 4 * 8,
       _ => throw new ArgumentOutOfRangeException(nameof(variant), variant, null)
     };
   }

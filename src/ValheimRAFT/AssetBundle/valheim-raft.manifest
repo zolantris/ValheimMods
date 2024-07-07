@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 325949807
+CRC: 4080763974
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 6ebf70f9c7e602588365d598506e3c58
+    Hash: a75ef38750e9bf47b7fbb0b04af7c752
   TypeTreeHash:
     serializedVersion: 2
     Hash: b14c0469088ad3fc0572cdc4f2350ceb
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 6ebf70f9c7e602588365d598506e3c58
+    Hash: a75ef38750e9bf47b7fbb0b04af7c752
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -120,4 +120,5 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/dirt_floor.prefab
 - Assets/ValheimVehicles/Texture/sail.png
 Dependencies:
+- C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/AssetBundle/valheim-vehicles
 - C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/AssetBundle/valheim-vehicles-shared

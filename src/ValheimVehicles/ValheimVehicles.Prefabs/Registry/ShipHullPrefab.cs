@@ -29,7 +29,7 @@ public class ShipHullPrefab : IRegisterPrefab
     foreach (var hullMaterialType in hullMaterialTypes)
     {
       RegisterHull(GetShipHullCenterName(hullMaterialType), hullMaterialType, 16 + 16 + 4,
-        PrefabSizeVariant.FourByFour);
+        PrefabSizeVariant.FourByEight);
 
       RegisterHullRib(GetHullRibName(hullMaterialType), hullMaterialType);
 
@@ -254,13 +254,5 @@ public class ShipHullPrefab : IRegisterPrefab
       prefab.transform.Find("new") ?? prefab.transform,
       hoistParents
     );
-
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, false, new PieceConfig
-    {
-      PieceTable = "Hammer",
-      Category = ValheimRaftMenuName,
-      Enabled = true,
-      Requirements = GetRequirements(hullMaterial, materialCount)
-    }));
   }
 }

@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5721838593751922162}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: hull_rib_prow_wood_4x4
   m_TagString: Untagged
   m_Icon: {fileID: 0}

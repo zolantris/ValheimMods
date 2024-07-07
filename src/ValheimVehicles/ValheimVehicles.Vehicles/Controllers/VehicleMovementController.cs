@@ -323,6 +323,18 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     if (!VehicleDebugConfig.PositionAutoFix.Value) return;
 
+    // Heavier but more accurate player check
+    var playersOnboard = vehicleShip.PiecesController.GetComponentsInChildren<Player>();
+    if (playersOnboard.Length < 1 || m_players.Count < 1)
+    {
+      if (!playersOnboard.ToList().Equals(m_players))
+      {
+        m_players = playersOnboard.ToList();
+      }
+
+      SendSetAnchor(true);
+    }
+
     var vehicleBounds = vehicleShip.PiecesController.GetVehicleBounds();
     var currentLowestHeight = transform.position.y - vehicleBounds.extents.y;
     var groundHeight = ZoneSystem.instance.GetGroundHeight(transform.position);
@@ -337,7 +349,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     var isWaterNearGroundHeight =
       waterLevel - 3f < groundHeight && waterLevel + 3f > groundHeight;
 
-    if (!isFloatingBelowGround || (!isWaterNearGroundHeight && isVehicleBelowGround)) return;
+    // Vehicle is not below the ground near float collider nor is the lowest part of the vehicle embedded in the ground
+    // and not above the ground significantly where isVehicleBelowGround becomes inaccurate for landvehicles
+    if (!isFloatingBelowGround && (isWaterNearGroundHeight || !isVehicleBelowGround)) return;
+    if (!isFloatingBelowGround && approximateGroundHeight - 10f > waterLevel) return;
 
     if (waterLevel < groundHeight)
     {
@@ -354,7 +369,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     if (waterLevel > m_disableLevel && waterLevel > groundHeight)
     {
       transform.position = new Vector3(transform.position.x,
-        transform.position.y + waterLevel, transform.position.z);
+        waterLevel + vehicleBounds.extents.y, transform.position.z);
     }
   }
 
@@ -603,6 +618,23 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     }
   }
 
+  public void UpdateShipLandSpeed()
+  {
+    UpdateVehicleStats(false);
+    // early exit if anchored.
+    if (UpdateAnchorVelocity(m_body.velocity))
+    {
+      return;
+    }
+
+    m_body.WakeUp();
+
+    if (!ValheimRaftPlugin.Instance.AllowFlight.Value && PropulsionConfig.EnableLandVehicles.Value)
+    {
+      ApplySailForce(this);
+    }
+  }
+
   /// <summary>
   /// Calculates damage from impact using vehicle weight
   /// </summary>
@@ -790,7 +822,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     var isInvalid = false;
     if (averageWaterHeight <= -10000 || averageWaterHeight < m_disableLevel)
     {
-      Logger.LogDebug("currentDepth is invalid, likely on land or heightmaps broke");
       currentDepth = 30;
       isInvalid = true;
     }
@@ -879,8 +910,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     if (!m_nview) return;
     var owner = m_nview.IsOwner();
-    if (!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner &&
-        !isBeached) return;
+    if ((!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner) ||
+        isBeached) return;
 
     var shipFloatation = GetShipFloatationObj();
 
@@ -891,6 +922,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     else if (TargetHeight > 0f)
     {
       UpdateShipFlying();
+    }
+    else if (PropulsionConfig.EnableLandVehicles.Value)
+    {
+      UpdateShipLandSpeed();
     }
 
     // both flying and floatation use this
@@ -1557,13 +1592,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   private new void OnEnable()
   {
     base.OnEnable();
-    StartCoroutine(nameof(FixShipRotation));
+    StartCoroutine(nameof(ShipFixRoutine));
   }
 
   private new void OnDisable()
   {
     base.OnDisable();
-    StopCoroutine(nameof(FixShipRotation));
+    StopCoroutine(nameof(ShipFixRoutine));
   }
 
   private void OnDestroy()
@@ -2075,6 +2110,29 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     SetAnchor(state);
   }
 
+  private void OnControlsHandOff()
+  {
+    if (!Player.m_localPlayer || !ShipInstance?.Instance)
+    {
+      return;
+    }
+
+    // the person controlling the ship should control physics
+    var playerOwner = Player.m_localPlayer.GetOwner();
+    m_nview.GetZDO().SetOwner(playerOwner);
+    Logger.LogDebug("Changing ship owner to " + playerOwner +
+                    $", name: {Player.m_localPlayer.GetPlayerName()}");
+    SyncVehicleBounds();
+    var attachTransform = lastUsedWheelComponent.AttachPoint;
+    Player.m_localPlayer.StartDoodadControl(lastUsedWheelComponent);
+    if (attachTransform != null)
+    {
+      Player.m_localPlayer.AttachStart(attachTransform, null, hideWeapons: false, isBed: false,
+        onShip: true, m_attachAnimation, detachOffset);
+      ShipInstance.Instance.m_controlGuiPos = lastUsedWheelComponent.wheelTransform;
+    }
+  }
+
   private void RPC_RequestResponse(long sender, bool granted)
   {
     if (!Player.m_localPlayer || !ShipInstance?.Instance)
@@ -2084,20 +2142,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
     if (granted)
     {
-      // the person controlling the ship should control physics
-      var playerOwner = Player.m_localPlayer.GetOwner();
-      m_nview.GetZDO().SetOwner(playerOwner);
-      Logger.LogDebug("Changing ship owner to " + playerOwner +
-                      $", name: {Player.m_localPlayer.GetPlayerName()}");
-      SyncVehicleBounds();
-      var attachTransform = lastUsedWheelComponent.AttachPoint;
-      Player.m_localPlayer.StartDoodadControl(lastUsedWheelComponent);
-      if (attachTransform != null)
-      {
-        Player.m_localPlayer.AttachStart(attachTransform, null, hideWeapons: false, isBed: false,
-          onShip: true, m_attachAnimation, detachOffset);
-        ShipInstance.Instance.m_controlGuiPos = lastUsedWheelComponent.wheelTransform;
-      }
+      OnControlsHandOff();
     }
     else
     {

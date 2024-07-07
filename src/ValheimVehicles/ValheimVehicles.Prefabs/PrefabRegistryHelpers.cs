@@ -241,7 +241,7 @@ public abstract class PrefabRegistryHelpers
 
         var pieceData = new PieceData()
         {
-          Name = $"{pieceBaseName} $valheim_vehicles_material_{materialName} {sizeName}",
+          Name = $"${pieceBaseName} $valheim_vehicles_material_{materialName} {sizeName}",
           Description = variantDescription,
           Icon = spriteAtlas.GetSprite($"{iconBaseName}_{materialName}_{sizeName}")
         };
@@ -272,7 +272,7 @@ public abstract class PrefabRegistryHelpers
       Icon = LoadValheimAssets.vanillaRaftPrefab.GetComponent<Piece>().m_icon
     });
 
-    var woodMatDesc = ShipHulls.GetHullMaterialDescription(ShipHulls.HullMaterial.Wood)
+    var woodMatDesc = ShipHulls.GetHullMaterialDescription(ShipHulls.HullMaterial.Wood);
     var ironMatDesc = ShipHulls.GetHullMaterialDescription(ShipHulls.HullMaterial.Iron);
 
     // hull rib variants

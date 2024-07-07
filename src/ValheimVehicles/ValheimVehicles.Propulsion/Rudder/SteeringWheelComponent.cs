@@ -273,7 +273,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
         Logger.LogDebug(
           $"Interact PlayerId {playerInstance.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
         if (playerInstance.GetPlayerID() != player.GetPlayerID()) continue;
-        ShipInstance?.Instance?.MovementController.SendRequestControl(playerInstance.GetPlayerID(),
+        ShipInstance?.Instance?.MovementController?.SendRequestControl(playerInstance.GetPlayerID(),
           AttachPoint);
         return true;
       }

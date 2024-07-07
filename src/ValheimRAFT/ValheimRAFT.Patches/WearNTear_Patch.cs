@@ -5,6 +5,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT.Util;
+using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Vehicles;
@@ -31,6 +32,16 @@ public class WearNTear_Patch
       $"WearNTear heightmap not found, this could be a problem with a prefab layer type not being a piece, netview name: {__instance.m_nview.name}");
 
     __instance.m_connectedHeightMap = hInstance;
+    return false;
+  }
+
+  [HarmonyPatch(typeof(WearNTear), "Repair")]
+  [HarmonyPrefix]
+  private static bool WearNTear_Repair(WearNTear __instance, ref bool __result)
+  {
+    if (RamConfig.CanRepairRams.Value || !RamPrefabs.IsRam(__instance.gameObject.name)) return true;
+
+    __result = false;
     return false;
   }
 

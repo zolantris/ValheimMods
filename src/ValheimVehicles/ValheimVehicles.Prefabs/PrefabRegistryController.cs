@@ -466,7 +466,6 @@ public class PrefabRegistryController : MonoBehaviour
     mbBoardingRampWearNTear.m_supports = false;
 
     PrefabRegistryHelpers.FixCollisionLayers(mbBoardingRamp);
-    PrefabRegistryHelpers.FixSnapPoints(mbBoardingRamp);
 
     pieceManager.AddPiece(new CustomPiece(mbBoardingRamp, false, new PieceConfig
     {

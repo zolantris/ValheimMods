@@ -18,10 +18,18 @@
     </PropertyGroup>
     <Import Project="..\..\valheim.targets"/>
     <!--  gameLauncher launches the game on different paths and clients/servers only put this in the project that should be built  -->
+    <!--    Condition="'$(Configuration)|$(Platform)' != 'Release Archive|AnyCPU'"-->
     <ItemGroup>
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
     </ItemGroup>
+    <!--    <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'">-->
+    <!--        <Compile Include="..\DynamicLocations\**.cs"/>-->
+    <!--        <Compile Include="..\ZdoWatcher\**\*.cs"/>-->
+    <!--        <Folder Include="..\ZdoWatcher\ZdoWatcher.Patches\">-->
+    <!--            <Link>ZdoWatcher.Patches</Link>-->
+    <!--        </Folder>-->
+    <!--    </ItemGroup>-->
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup>
         <Compile Include="Properties\AssemblyInfo.cs"/>
@@ -95,9 +103,6 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Folder Include="..\ValheimVehicles\ValheimVehicles.DynamicLocations\">
-            <Link>ValheimVehicles.DynamicLocations</Link>
-        </Folder>
         <Folder Include="..\ValheimVehicles\ValheimVehicles.Utils\">
             <Link>ValheimVehicles.Utils</Link>
         </Folder>

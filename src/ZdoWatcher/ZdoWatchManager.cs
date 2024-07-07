@@ -140,7 +140,8 @@ public class ZdoWatchManager
   public ZNetView? GetInstance(int id)
   {
     var zdo = GetZdo(id);
+    if (zdo == null) return null;
     var output = ZNetScene.instance.FindInstance(zdo);
-    return zdo != null ? output : null;
+    return output;
   }
 }
