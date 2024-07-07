@@ -12,6 +12,14 @@ PrefabInstance:
       propertyPath: m_LocalScale.x
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 2988999892127407421, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 3238234857965082207, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 3535645048268034391, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
       propertyPath: m_LocalPosition.y
       value: 0.197
@@ -20,9 +28,33 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 584392d646d05f54cb1c6a3017322ab6, type: 2}
+    - target: {fileID: 4148388708403335175, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 4179269162098430418, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
       propertyPath: m_Name
       value: shared_hull_rib_prow_4x4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4179269162098430418, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4254475525835733499, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4312071204360570519, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4594513401088409306, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5203622322704130770, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 5601851497950198800, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -67,6 +99,22 @@ PrefabInstance:
     - target: {fileID: 5721838593751922162, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5940632601706658399, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 6407939679824710896, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 7377412782442393443, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 7544327364275929977, guid: 9c1024920fb8fab49a638ca8cd5f6583, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

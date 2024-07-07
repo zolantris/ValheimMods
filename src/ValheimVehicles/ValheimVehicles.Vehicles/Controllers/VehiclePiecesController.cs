@@ -227,19 +227,24 @@ public class VehiclePiecesController : MonoBehaviour
   }
 
   /// <summary>
-  /// Coroutine to init vehicle just in case things break
+  /// Coroutine to init vehicle just in case things get delayed or desync. This allows for it to wait until things are ready without skipping critical initialization
   /// </summary>
   /// <param name="vehicleShip"></param>
   /// <returns></returns>
   private IEnumerator InitVehicle(VehicleShip vehicleShip)
   {
-    while (!(VehicleInstance.NetView || !MovementController) &&
+    while (!(VehicleInstance?.NetView || !MovementController) &&
            vehicleInitializationTimer.ElapsedMilliseconds < 5000)
     {
       if (!VehicleInstance.NetView || !MovementController)
       {
         VehicleInstance = vehicleShip;
         yield return ZdoReadyStart();
+      }
+
+      if (!ActiveInstances.GetValueSafe(vehicleShip.PersistentZdoId))
+      {
+        ActiveInstances.Add(vehicleShip.PersistentZdoId, this);
       }
 
       yield return new WaitForFixedUpdate();
@@ -252,6 +257,7 @@ public class VehiclePiecesController : MonoBehaviour
   public void InitFromShip(VehicleShip vehicleShip)
   {
     VehicleInstance = vehicleShip;
+
     if (!InitializeBaseVehicleValuesWhenReady())
     {
       StartCoroutine(InitVehicle(vehicleShip));
@@ -413,11 +419,6 @@ public class VehiclePiecesController : MonoBehaviour
   {
     vehicleInitializationTimer.Restart();
 
-    if (!ActiveInstances.GetValueSafe(VehicleInstance.PersistentZdoId))
-    {
-      ActiveInstances.Add(VehicleInstance.PersistentZdoId, this);
-    }
-
     ActivatePendingPiecesCoroutine();
     if (!(bool)ZNet.instance)
     {
@@ -444,12 +445,14 @@ public class VehiclePiecesController : MonoBehaviour
       StopCoroutine(_serverUpdatePiecesCoroutine);
     }
 
-    if (VehicleInstance.Instance == null)
+    if (VehicleInstance?.Instance == null)
     {
       Logger.LogError("Cleanup called but there is no valid VehicleInstance");
     }
 
-    if (!ZNetScene.instance || VehicleInstance.PersistentZdoId == 0) return;
+    if (!ZNetScene.instance || VehicleInstance?.PersistentZdoId == null ||
+        VehicleInstance?.PersistentZdoId == 0) return;
+
 
     foreach (var piece in m_pieces.ToList())
     {
@@ -460,7 +463,7 @@ public class VehiclePiecesController : MonoBehaviour
       }
 
       piece.transform.SetParent(null);
-      AddInactivePiece(VehicleInstance.PersistentZdoId, piece, null);
+      AddInactivePiece(VehicleInstance!.PersistentZdoId, piece, null);
     }
 
     StopAllCoroutines();
@@ -568,6 +571,9 @@ public class VehiclePiecesController : MonoBehaviour
   /// </summary>
   public void ForceUpdateAllPiecePositions()
   {
+    Physics.SyncTransforms();
+    var currentPieceControllerSector = ZoneSystem.instance.GetZone(transform.position);
+
     foreach (var nv in m_pieces.ToList())
     {
       if (!nv)
@@ -575,6 +581,19 @@ public class VehiclePiecesController : MonoBehaviour
         Logger.LogError($"Error found with m_pieces: netview {nv}, save removing the piece");
         m_pieces.Remove(nv);
         continue;
+      }
+
+      var zdo = VehicleInstance?.NetView?.GetZDO();
+
+      if (currentPieceControllerSector != nv.GetZDO().GetSector())
+      {
+        nv.GetZDO().SetSector(currentPieceControllerSector);
+      }
+
+      if (zdo != null && currentPieceControllerSector != zdo?.GetSector())
+      {
+        nv.m_zdo?.SetPosition(transform.position);
+        VehicleInstance?.NetView?.m_zdo.SetPosition(transform.position);
       }
 
       if (transform.position != nv.transform.position)
@@ -589,7 +608,6 @@ public class VehiclePiecesController : MonoBehaviour
    */
   public void Client_UpdateAllPieces()
   {
-    Physics.SyncTransforms();
     var sector = ZoneSystem.instance.GetZone(transform.position);
 
     if (sector == m_sector)
@@ -612,7 +630,7 @@ public class VehiclePiecesController : MonoBehaviour
   /// <returns></returns>
   private bool IsPlayerOwnerOfNetview()
   {
-    return VehicleInstance.NetView?.GetZDO()?.IsOwner() ?? false;
+    return VehicleInstance?.NetView?.GetZDO()?.IsOwner() ?? false;
   }
 
   /// <summary>
@@ -650,7 +668,7 @@ public class VehiclePiecesController : MonoBehaviour
       if (zdo.GetSector() == sector) continue;
 
       var id = zdo.GetInt(VehicleZdoVars.MBParentIdHash);
-      if (id != VehicleInstance.PersistentZdoId)
+      if (id != VehicleInstance?.PersistentZdoId)
       {
         list.FastRemoveAt(i);
         i--;
@@ -2127,6 +2145,7 @@ public class VehiclePiecesController : MonoBehaviour
     Vector3 boundsSize,
     GameObject netView)
   {
+    if (netView.name.StartsWith(PrefabNames.HullProw)) return null;
     if (!(bool)m_floatcollider) return null;
     var outputBounds = new Bounds(boundsCenter, boundsSize);
     var colliders = netView.GetComponentsInChildren<Collider>();

@@ -323,6 +323,18 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     if (!VehicleDebugConfig.PositionAutoFix.Value) return;
 
+    // Heavier but more accurate player check
+    var playersOnboard = vehicleShip.PiecesController.GetComponentsInChildren<Player>();
+    if (playersOnboard.Length < 1 || m_players.Count < 1)
+    {
+      if (!playersOnboard.ToList().Equals(m_players))
+      {
+        m_players = playersOnboard.ToList();
+      }
+
+      SendSetAnchor(true);
+    }
+
     var vehicleBounds = vehicleShip.PiecesController.GetVehicleBounds();
     var currentLowestHeight = transform.position.y - vehicleBounds.extents.y;
     var groundHeight = ZoneSystem.instance.GetGroundHeight(transform.position);
@@ -1580,13 +1592,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   private new void OnEnable()
   {
     base.OnEnable();
-    StartCoroutine(nameof(FixShipRotation));
+    StartCoroutine(nameof(ShipFixRoutine));
   }
 
   private new void OnDisable()
   {
     base.OnDisable();
-    StopCoroutine(nameof(FixShipRotation));
+    StopCoroutine(nameof(ShipFixRoutine));
   }
 
   private void OnDestroy()
@@ -2098,6 +2110,29 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     SetAnchor(state);
   }
 
+  private void OnControlsHandOff()
+  {
+    if (!Player.m_localPlayer || !ShipInstance?.Instance)
+    {
+      return;
+    }
+
+    // the person controlling the ship should control physics
+    var playerOwner = Player.m_localPlayer.GetOwner();
+    m_nview.GetZDO().SetOwner(playerOwner);
+    Logger.LogDebug("Changing ship owner to " + playerOwner +
+                    $", name: {Player.m_localPlayer.GetPlayerName()}");
+    SyncVehicleBounds();
+    var attachTransform = lastUsedWheelComponent.AttachPoint;
+    Player.m_localPlayer.StartDoodadControl(lastUsedWheelComponent);
+    if (attachTransform != null)
+    {
+      Player.m_localPlayer.AttachStart(attachTransform, null, hideWeapons: false, isBed: false,
+        onShip: true, m_attachAnimation, detachOffset);
+      ShipInstance.Instance.m_controlGuiPos = lastUsedWheelComponent.wheelTransform;
+    }
+  }
+
   private void RPC_RequestResponse(long sender, bool granted)
   {
     if (!Player.m_localPlayer || !ShipInstance?.Instance)
@@ -2107,20 +2142,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
     if (granted)
     {
-      // the person controlling the ship should control physics
-      var playerOwner = Player.m_localPlayer.GetOwner();
-      m_nview.GetZDO().SetOwner(playerOwner);
-      Logger.LogDebug("Changing ship owner to " + playerOwner +
-                      $", name: {Player.m_localPlayer.GetPlayerName()}");
-      SyncVehicleBounds();
-      var attachTransform = lastUsedWheelComponent.AttachPoint;
-      Player.m_localPlayer.StartDoodadControl(lastUsedWheelComponent);
-      if (attachTransform != null)
-      {
-        Player.m_localPlayer.AttachStart(attachTransform, null, hideWeapons: false, isBed: false,
-          onShip: true, m_attachAnimation, detachOffset);
-        ShipInstance.Instance.m_controlGuiPos = lastUsedWheelComponent.wheelTransform;
-      }
+      OnControlsHandOff();
     }
     else
     {

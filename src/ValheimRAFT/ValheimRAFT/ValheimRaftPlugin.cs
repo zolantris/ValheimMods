@@ -240,7 +240,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     HasShipContainerWeightCalculations = Config.Bind("Propulsion",
       "HasShipContainerWeightCalculations",
-      true,
+      false,
       CreateConfigDescription(
         "enables ship weight calculations for containers which affects sail-force (sailing speed) and future propulsion calculations. Makes ships with lots of containers require more sails",
         true));
@@ -558,7 +558,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     PrefabManager.OnVanillaPrefabsAvailable += LoadCustomTextures;
     PrefabManager.OnVanillaPrefabsAvailable += AddCustomPieces;
 
-    ValheimVehicles.ZdoWatcherDelegate.RegisterToZdoManager();
+    ZdoWatcherDelegate.RegisterToZdoManager();
   }
 
   public void RegisterConsoleCommands()

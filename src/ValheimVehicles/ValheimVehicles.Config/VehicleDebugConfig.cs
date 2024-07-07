@@ -10,6 +10,9 @@ public static class VehicleDebugConfig
 
   public static ConfigEntry<bool> AutoShowVehicleColliders { get; private set; } = null!;
 
+  // public static ConfigEntry<bool>
+  //   ForceTakeoverShipControls { get; private set; } = null!;
+
   public static ConfigEntry<bool>
     PositionAutoFix { get; private set; } = null!;
 
@@ -30,6 +33,12 @@ public static class VehicleDebugConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
+    // ForceTakeoverShipControls = config.Bind(SectionName, "ForceTakeoverShipControls",
+    //   true,
+    //   ConfigHelpers.CreateConfigDescription(
+    //     "Allows user to takeover ship and ship physics immediately before the request for control is complete. Helpful for disconnecting owners of the boat. This will prevent lockout",
+    //     false, false));
+
     AutoShowVehicleColliders = config.Bind(SectionName, "Always Show Vehicle Colliders",
       false,
       ConfigHelpers.CreateConfigDescription(

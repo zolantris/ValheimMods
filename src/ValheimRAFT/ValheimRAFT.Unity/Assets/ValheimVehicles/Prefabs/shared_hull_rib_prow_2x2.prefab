@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1257460425712950061}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: center_right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -41,7 +41,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3534602037438667797}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: center_left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -73,7 +73,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 704263582389224322}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: hull_pieces
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -112,7 +112,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5721838593751922162}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: shared_hull_rib_prow_2x2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -144,7 +144,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 499482036661772172}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_top 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -175,7 +175,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3330403225994363993}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_top 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -207,7 +207,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3535645048268034391}
   - component: {fileID: 8747266797313419926}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: placement_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -262,7 +262,7 @@ GameObject:
   - component: {fileID: 5067237561732967786}
   - component: {fileID: 3998560546274225563}
   - component: {fileID: 4080317021600953602}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Mesh1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -365,7 +365,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5486575604711768200}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_bottom 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -396,7 +396,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5406365675565511192}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_bottom 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
@@ -430,7 +430,7 @@ GameObject:
   - component: {fileID: 4808534764386307702}
   - component: {fileID: 5601851497950198800}
   - component: {fileID: 956517485176691236}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Mesh2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -533,7 +533,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2702362596081638689}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: $hud_snappoint_top $hud_snappoint_front
   m_TagString: snappoint
   m_Icon: {fileID: 0}

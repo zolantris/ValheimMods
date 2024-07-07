@@ -241,7 +241,7 @@ public abstract class PrefabRegistryHelpers
 
         var pieceData = new PieceData()
         {
-          Name = $"{pieceBaseName} $valheim_vehicles_material_{materialName} {sizeName}",
+          Name = $"${pieceBaseName} $valheim_vehicles_material_{materialName} {sizeName}",
           Description = variantDescription,
           Icon = spriteAtlas.GetSprite($"{iconBaseName}_{materialName}_{sizeName}")
         };
