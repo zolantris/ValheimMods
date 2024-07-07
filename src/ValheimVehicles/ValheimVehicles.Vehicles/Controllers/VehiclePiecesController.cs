@@ -2145,7 +2145,7 @@ public class VehiclePiecesController : MonoBehaviour
     Vector3 boundsSize,
     GameObject netView)
   {
-    if (netView.name.StartsWith(PrefabNames.HullProw)) return null;
+    if (ShipHulls.GetExcludedBoundsPrefabs(netView.name)) return null;
     if (!(bool)m_floatcollider) return null;
     var outputBounds = new Bounds(boundsCenter, boundsSize);
     var colliders = netView.GetComponentsInChildren<Collider>();
@@ -2197,7 +2197,7 @@ public class VehiclePiecesController : MonoBehaviour
     var rope = go.GetComponent<RopeAnchorComponent>();
 
     if (!door && !ladder && !rope && !SailPrefabs.IsSail(go.name)
-        && !RamPrefabs.IsRam(go.name) && !go.name.StartsWith(PrefabNames.HullProw))
+        && !RamPrefabs.IsRam(go.name) && !ShipHulls.GetExcludedBoundsPrefabs(go.name))
     {
       if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value || PrefabNames.IsHull(go))
       {
