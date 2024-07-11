@@ -84,7 +84,7 @@
         </Folder>
     </ItemGroup>
     <PropertyGroup>
-        <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
+        <ValheimServerPath>C:\Program Files (x8 g6)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
         <R2ModManPath>AppData\Roaming\r2modmanPlus-local</R2ModManPath>
         <R2ModManProfileName>ashlands</R2ModManProfileName>
         <R2ModManProfile>Valheim\profiles\$(R2ModManProfileName)</R2ModManProfile>

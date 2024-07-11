@@ -10,8 +10,6 @@
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Test|AnyCPU' ">
         <OutputPath>bin\Test\</OutputPath>
     </PropertyGroup>
-    <Import Project="..\..\base.targets" />
-    <Import Project="..\..\valheim.targets"/>
     <!--  really just needs unity and bepinex  -->
     <ItemGroup>
         <!--  Metrics  -->
@@ -33,5 +31,4 @@
         <Content Include="Thunderstore\icon.png"/>
         <Content Include="Thunderstore\manifest.json"/>
     </ItemGroup>
-    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

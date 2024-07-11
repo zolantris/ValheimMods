@@ -3,10 +3,11 @@
         <PreferredToolArchitecture>true</PreferredToolArchitecture>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <OutputType>Library</OutputType>
         <TargetFramework>net8.0</TargetFramework>
-        <AssemblyName>$(ProjectName)</AssemblyName>
-        <RootNamespace>$(ProjectName)</RootNamespace>
+        <AssemblyName>$(MSBuildProjectName)</AssemblyName>
+        <RootNamespace>$(MSBuildProjectName)</RootNamespace>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
         <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
@@ -18,11 +19,25 @@
         <Compile Include="$(AssemblyDir)\.*cs"/>
         <Compile Include="$(AssemblyDir)\Properties\.*cs"/>
     </ItemGroup>
-
-    <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
-        <OutputPath>$(SolutionDir)bin\Debug</OutputPath>
+    <PropertyGroup Condition="$(Configuration.StartsWith('Debug'))">
+        <OutputPath>$(SolutionDir)bin\$(MSBuildProjectName)\Debug</OutputPath>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <PropertyGroup Condition="$(Configuration.Contains('Release'))">
-        <OutputPath>$(SolutionDir)bin\Release</OutputPath>
+    <PropertyGroup Condition="$(Configuration.StartsWith('Release'))">
+        <OutputPath>$(SolutionDir)bin\$(MSBuildProjectName)\Release</OutputPath>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 </Project>
