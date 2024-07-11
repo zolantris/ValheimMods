@@ -34,8 +34,8 @@ public class DynamicMeshGeneratorOld : MonoBehaviour
       Vector3 mousePosition = Input.mousePosition;
       mousePosition.z = 10f; // Distance from camera to the mesh (adjust as needed)
 
-      Vector3 worldPosition = Camera.main.ScreenToWorldPoint(mousePosition);
-      AddVertex(worldPosition);
+      // Vector3 worldPosition = Camera.main.ScreenToWorldPoint(mousePosition);
+      // AddVertex(worldPosition);
     }
 
     // Example: Rebuild mesh when vertices change

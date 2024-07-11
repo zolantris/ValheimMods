@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using ValheimVehicles.Prefabs;
 using Logger = Jotunn.Logger;
+using Random = UnityEngine.Random;
 
 namespace ValheimVehicles.Vehicles.Components;
 
@@ -14,15 +15,17 @@ public class VehicleMeshMaskManager : MonoBehaviour
   private ZNetView m_nview;
   private VehicleShip vehicleShip;
 
-  private List<Vector3> meshCoordinates = [new Vector3(0, 0, 0), new Vector3(0, 20, 0)];
+  private List<GameObject> meshCoordinateItems = [];
 
   private GameObject? currentPanel;
   private List<GameObject> buttonItems = [];
   private GameObject scrollViewObj;
   private GameObject? prevDemoMesh;
 
-  public int numberOfVertices = 10000;
-  public Vector3 bounds = new Vector3(200, 50, 200);
+  private List<GameObject> generatedMeshItems = [];
+
+  public int numberOfVertices = 10;
+  public Vector3 defaultBoundsMax = new Vector3(20, 5, 20);
   public Material meshMaterial;
 
   private void Awake()
@@ -35,18 +38,18 @@ public class VehicleMeshMaskManager : MonoBehaviour
     vehicleShip = vehicle;
   }
 
-  public void AddPoint(Vector3 point)
+  public void AddCoordinateItem(GameObject item)
   {
-    meshCoordinates.Add(point);
+    meshCoordinateItems.Add(item);
 
     if (buttonItems.Count > 0)
     {
-      foreach (var item in buttonItems.ToList())
+      foreach (var buttonItem in buttonItems.ToList())
       {
-        buttonItems.Remove(item);
-        if (item != null)
+        buttonItems.Remove(buttonItem);
+        if (buttonItem != null)
         {
-          Destroy(item);
+          Destroy(buttonItem);
         }
       }
     }
@@ -71,6 +74,32 @@ public class VehicleMeshMaskManager : MonoBehaviour
       Jotunn.Managers.GUIManager.Instance.CreateScrollView(currentPanel.transform, false, true, 50,
         5, ColorBlock.defaultColorBlock, Color.gray, 500, 500);
 
+    var guiButtonClearGo = guiMan.CreateButton($"Clear", currentPanel.transform, Vector2.zero,
+      Vector2.zero, new Vector2(150, 100));
+    var guiButtonClear = guiButtonClearGo.GetComponent<Button>();
+
+    guiButtonClear.onClick.AddListener(() =>
+    {
+      foreach (var meshCoordinateGo in meshCoordinateItems.ToList())
+      {
+        if (meshCoordinateGo != null)
+        {
+          Destroy(meshCoordinateGo);
+        }
+      }
+
+      foreach (var generatedMeshItem in generatedMeshItems)
+      {
+        if (generatedMeshItem != null)
+        {
+          Destroy(generatedMeshItem);
+        }
+      }
+
+      generatedMeshItems = [];
+      meshCoordinateItems = [];
+    });
+
     var guiButtonGo = guiMan.CreateButton($"Close", currentPanel.transform, Vector2.zero,
       Vector2.zero, new Vector2(50, 50));
     var guiButton = guiButtonGo.GetComponent<Button>();
@@ -87,20 +116,28 @@ public class VehicleMeshMaskManager : MonoBehaviour
       // scrollView.SetActive(!scrollView.activeInHierarchy);
     });
 
-    var guiPreviewButtonGo = guiMan.CreateButton($"Close", currentPanel.transform, Vector2.zero,
-      Vector2.zero, new Vector2(50, 50));
+    var previewRandomButtonGo = guiMan.CreateButton($"Build Random Mesh", currentPanel.transform,
+      Vector2.zero,
+      Vector2.zero, new Vector2(200, 300));
+    var previewRandomButton = previewRandomButtonGo.GetComponent<Button>();
+
+    previewRandomButton.onClick.AddListener(() => { OnPreview(true); });
+
+    var guiPreviewButtonGo = guiMan.CreateButton($"Build Mesh", currentPanel.transform,
+      Vector2.zero,
+      Vector2.zero, new Vector2(200, 200));
     var onPreviewButton = guiPreviewButtonGo.GetComponent<Button>();
 
     onPreviewButton.onClick.AddListener(() =>
     {
       Logger.LogMessage("ClickedButton");
-      OnPreview();
+      OnPreview(false);
     });
 
     AddButtonsForMeshPoints();
   }
 
-  public void CreateWaterMaskMesh()
+  public void CreateWaterMaskMesh(bool isRandom)
   {
     if (prevDemoMesh)
     {
@@ -108,7 +145,8 @@ public class VehicleMeshMaskManager : MonoBehaviour
       prevDemoMesh = null;
     }
 
-    var go = new GameObject("Mesh", typeof(MeshFilter), typeof(MeshRenderer));
+    var go = new GameObject("GeneratedMesh", typeof(MeshFilter), typeof(MeshRenderer));
+    generatedMeshItems.Add(go);
 
     go.transform.position = transform.position;
     go.transform.rotation = transform.rotation;
@@ -120,35 +158,82 @@ public class VehicleMeshMaskManager : MonoBehaviour
     var wmMaterial = LoadValheimAssets.waterMask.GetComponent<MeshRenderer>().material;
     var wm_material = LoadValheimAssets.waterMask.GetComponent<Material>();
 
-    var generatedMesh = new Mesh();
+    // var generatedMesh = new Mesh();
 
-    var vertices = new List<Vector3>();
-    var uvs = new List<Vector2>();
+    // var vertices = new List<Vector3>();
+    // var uvs = new List<Vector2>();
 
     // 3 triangles per polygon...so a square of 2 triangles requires 2*3 = 6 triangles
     // triangles must be clockwise in order for them to display on camera...
     // https://www.youtube.com/watch?v=gmuHI_wsOgI
-    var triangles = new List<int>();
+    // var triangles = new List<int>();
 
-    meshRenderer.material = wm_material;
-    meshFilter.mesh = generatedMesh;
+    // meshRenderer.material = wm_material;
+    // meshFilter.mesh = generatedMesh;
+
+    var unlitColor = LoadValheimVehicleAssets.PieceShader;
+    // var twoSidedShader =
+    //   PrefabRegistryController.vehicleSharedAssetBundle
+    //     .LoadAsset<Shader>("Standard TwoSided.shader");
+
+    var material = new Material(unlitColor)
+    {
+      color = Color.green
+    };
+    meshRenderer.sharedMaterial = material;
+    meshRenderer.material = material;
 
     var wmShader = wmMaterial?.shader;
-    meshRenderer.material = wmMaterial;
+    // meshRenderer.material = wmMaterial;
+    // meshRenderer.sharedMaterial = wmMaterial;
+    List<Vector3> vertices =
+      isRandom
+        ? GenerateRandomVertices(numberOfVertices, defaultBoundsMax)
+        : meshCoordinateItems.ConvertAll<Vector3>(item => item.transform.position);
 
-    var mesh = GenerateMeshesFromPoints(meshCoordinates);
-    mesh.SetVertices(vertices);
-    mesh.SetTriangles(triangles, 0);
-    mesh.SetUVs(0, uvs);
-    mesh.Optimize();
-    mesh.RecalculateNormals();
+    var bounds = isRandom
+      ? new Bounds(transform.position, defaultBoundsMax)
+      : GetBoundsFromPoints(vertices);
 
-    meshFilter.sharedMesh = mesh;
+    var mesh = GenerateMeshesFromPoints(vertices, bounds);
+    // var mesh = GenerateMeshesFromPoints(meshCoordinates);
+    // mesh.SetVertices(vertices);
+    // mesh.SetTriangles(triangles, 0);
+    // mesh.SetUVs(0, uvs);
+    // mesh.Optimize();
+    // mesh.RecalculateNormals();
+    meshFilter.mesh = mesh;
+    // meshFilter.sharedMesh = mesh;
   }
 
-  public Mesh GenerateMeshesFromPoints(List<Vector3> vertices)
+  public Bounds GetBoundsFromPoints(List<Vector3> points)
   {
-    var triangles = PerformDelaunayTriangulation(vertices);
+    var bounds = new Bounds(points[0], Vector3.zero);
+    foreach (var point in points)
+    {
+      bounds.Encapsulate(point);
+    }
+
+    return bounds;
+  }
+
+  List<Vector3> GenerateRandomVertices(int count, Vector3 bounds)
+  {
+    List<Vector3> vertices = new List<Vector3>();
+    for (int i = 0; i < count; i++)
+    {
+      float x = Random.Range(0, bounds.x);
+      float y = Random.Range(0, bounds.y);
+      float z = Random.Range(0, bounds.z);
+      vertices.Add(new Vector3(x, y, z));
+    }
+
+    return vertices;
+  }
+
+  public Mesh GenerateMeshesFromPoints(List<Vector3> vertices, Bounds bounds)
+  {
+    var triangles = PerformDelaunayTriangulation(vertices, bounds);
     var delaunayMesh = GenerateUnityMesh(vertices, triangles);
     return delaunayMesh;
   }
@@ -167,12 +252,12 @@ public class VehicleMeshMaskManager : MonoBehaviour
   //   return vertices;
   // }
 
-  List<Triangle> PerformDelaunayTriangulation(List<Vector3> vertices)
+  List<Triangle> PerformDelaunayTriangulation(List<Vector3> vertices, Bounds bounds)
   {
     // Create a super triangle
-    float maxX = bounds.x * 10;
-    float maxY = bounds.y * 10;
-    float maxZ = bounds.z * 10;
+    float maxX = bounds.max.x * 10;
+    float maxY = bounds.max.y * 10;
+    float maxZ = bounds.max.z * 10;
 
     Vector3 v1 = new Vector3(-maxX, -maxY, -maxZ);
     Vector3 v2 = new Vector3(maxX, -maxY, -maxZ);
@@ -345,19 +430,22 @@ public class VehicleMeshMaskManager : MonoBehaviour
   {
   }
 
-  public void OnPreview()
+  public void OnPreview(bool isRandom)
   {
+    CreateWaterMaskMesh(isRandom);
   }
 
   private void AddButtonsForMeshPoints()
   {
+    if (!scrollViewObj) return;
     var guiMan = Jotunn.Managers.GUIManager.Instance;
     var pos = 0;
     buttonItems = [];
-    foreach (var meshCoordinate in meshCoordinates)
+
+    foreach (var meshCoordinate in meshCoordinateItems)
     {
       buttonItems.Add(guiMan.CreateButton(
-        $"Coordinate: (x,y,z) {meshCoordinate.x}, {meshCoordinate.y}, {meshCoordinate.z}",
+        $"{meshCoordinate.transform.position.x}, {meshCoordinate.transform.position.y}, {meshCoordinate.transform.position.z}",
         scrollViewObj.transform, Vector2.zero,
         Vector2.zero, new Vector2(0, pos)));
       pos += 50;

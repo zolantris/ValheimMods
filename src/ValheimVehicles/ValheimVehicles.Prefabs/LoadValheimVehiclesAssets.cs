@@ -130,7 +130,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
     ShipNautilus = assetBundle.LoadAsset<GameObject>("nautilus.prefab");
 
     SteeringWheel = assetBundle.LoadAsset<GameObject>("steering_wheel.prefab");
-    PieceShader = assetBundle.LoadAsset<Shader>("Custom_Piece.shader");
+
+
     ShipKeelAsset = assetBundle.LoadAsset<GameObject>("keel");
     VehicleSwitchAsset = assetBundle.LoadAsset<GameObject>("mechanical_lever_switch");
     VehicleShipAsset =
@@ -202,6 +203,10 @@ public class LoadValheimVehicleAssets : ILoadAssets
     ;
     RamBladeLeft = assetBundle.LoadAsset<GameObject>(
       "ram_blade_left.prefab");
-    ;
+
+    PieceShader = assetBundle.LoadAsset<Shader>("Custom_Piece.shader");
+    // comes from shared bundle
+    // PieceShader =
+    //   PrefabRegistryController.vehicleSharedAssetBundle.LoadAsset<Shader>("Custom_Piece.shader");
   }
 }

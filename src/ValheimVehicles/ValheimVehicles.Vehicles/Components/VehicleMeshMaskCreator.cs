@@ -22,6 +22,6 @@ public class VehicleMeshMaskCreator : MonoBehaviour
       _meshMaskManager = GetComponentInParent<VehicleMeshMaskManager>();
     }
 
-    _meshMaskManager?.AddPoint(transform.position);
+    _meshMaskManager?.AddCoordinateItem(gameObject);
   }
 }
