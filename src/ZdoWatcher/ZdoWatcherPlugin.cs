@@ -15,7 +15,7 @@ public class ZdoWatcherPlugin : BaseUnityPlugin
   public const string ModName = "ZdoWatcher";
   public const string ModGuid = $"{Author}.{ModName}";
   public const string HarmonyGuid = $"{Author}.{ModName}";
-  private static Harmony _harmony = null!;
+  private static Harmony _harmony;
 
   public const string ModDescription =
     "Valheim Mod made to share Zdo Changes and side effect through one shareable interface";
