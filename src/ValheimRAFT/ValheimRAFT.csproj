@@ -1,5 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk" DefaultTargets="Build">
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+    <Import Project="..\..\base.targets" />
+    <Import Project="..\..\valheim.targets"/>
+    <Import Project="..\..\gameLauncher.targets"/>
     <PropertyGroup>
         <ProjectGuid>{6015B165-2627-40A7-8CA1-3E6B6CD7CB49}</ProjectGuid>
         <ApplicationVersion>2.2.1</ApplicationVersion>
@@ -96,8 +100,4 @@
         <SandboxieProfilePath>$(SandboxieUserPath)\$(R2ModManPath)\$(R2ModManProfile)</SandboxieProfilePath>
         <SandboxiePluginDeployPath>$(SandboxieUserPath)\$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</SandboxiePluginDeployPath>
     </PropertyGroup>
-
-    <Import Project="..\..\base.targets" />
-    <Import Project="..\..\valheim.targets"/>
-    <Import Project="..\..\gameLauncher.targets"/>
 </Project>

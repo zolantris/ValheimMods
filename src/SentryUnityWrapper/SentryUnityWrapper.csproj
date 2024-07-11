@@ -4,7 +4,7 @@
     <Import Project="..\..\valheim.targets"/>
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-        <ProjectGuid>{64841F32-084A-437C-9A15-34D8354B3ED1}</ProjectGuid>
+        <ProjectGuid>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectGuid>
         <ApplicationVersion>1.8.0</ApplicationVersion>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Test|AnyCPU' ">

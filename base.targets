@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
         <PreferredToolArchitecture>true</PreferredToolArchitecture>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
@@ -14,15 +15,15 @@
         <LangVersion>12</LangVersion>
         <Nullable>enable</Nullable>
     </PropertyGroup>
-    <ItemGroup>
-        <Compile Include="$(AssemblyDir)\.*cs"/>
-        <Compile Include="$(AssemblyDir)\Properties\.*cs"/>
-    </ItemGroup>
+<!--    <ItemGroup>-->
+<!--        <Compile Include="$(AssemblyDir)\.*cs"/>-->
+<!--        <Compile Include="$(AssemblyDir)\Properties\.*cs"/>-->
+<!--    </ItemGroup>-->
 
-    <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
-        <OutputPath>$(SolutionDir)bin\Debug</OutputPath>
-    </PropertyGroup>
-    <PropertyGroup Condition="$(Configuration.Contains('Release'))">
-        <OutputPath>$(SolutionDir)bin\Release</OutputPath>
-    </PropertyGroup>
+<!--    <PropertyGroup Condition="$(Configuration.StartsWith('Debug'))">-->
+<!--        <OutputPath>$(SolutionDir)bin\Debug</OutputPath>-->
+<!--    </PropertyGroup>-->
+<!--    <PropertyGroup Condition="$(Configuration.StartsWith('Release'))">-->
+<!--        <OutputPath>$(SolutionDir)bin\Release</OutputPath>-->
+<!--    </PropertyGroup>-->
 </Project>
