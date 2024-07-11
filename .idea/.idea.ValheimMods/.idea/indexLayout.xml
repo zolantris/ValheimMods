@@ -11,6 +11,7 @@
     <explicitIncludes>
       <Path>.github</Path>
       <Path>README.md</Path>
+      <Path>base.targets</Path>
       <Path>docs</Path>
       <Path>gameLauncher.targets</Path>
       <Path>libs</Path>

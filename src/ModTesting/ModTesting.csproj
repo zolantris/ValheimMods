@@ -14,7 +14,7 @@
         <AppDesignerFolder>Properties</AppDesignerFolder>
         <RootNamespace>ModTesting</RootNamespace>
         <AssemblyName>ModTesting</AssemblyName>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFramework>netstandard2.1</TargetFramework>
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
     </PropertyGroup>
@@ -742,7 +742,6 @@
         <PackageReference Include="NUnit.Engine.Api" Version="3.17.0"/>
         <PackageReference Include="nunit.engine.netstandard" Version="3.11.1"/>
     </ItemGroup>
-    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
          Other similar extension points exist, see Microsoft.Common.targets.
     <Target Name="BeforeBuild">
@@ -750,4 +749,5 @@
     <Target Name="AfterBuild">
     </Target>
     -->
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

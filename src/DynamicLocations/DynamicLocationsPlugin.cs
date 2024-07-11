@@ -5,6 +5,7 @@ using Jotunn.Utils;
 namespace DynamicLocations;
 
 [BepInPlugin(BepInGuid, ModName, Version)]
+[BepInDependency(Jotunn.Main.ModGuid)]
 [NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
 public class DynamicLocationsPlugin : BaseUnityPlugin
 {

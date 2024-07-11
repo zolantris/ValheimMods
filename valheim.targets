@@ -1,20 +1,12 @@
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <PropertyGroup>
-        <PreferredToolArchitecture>true</PreferredToolArchitecture>
-        <AssemblyName>$(ProjectName)</AssemblyName>
-        <RootNamespace>$(ProjectName)</RootNamespace>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-        <Platforms>AnyCPU</Platforms>
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </PropertyGroup>
-
+<Project>
     <Import Project="$(SolutionsDir).props" Condition="Exists('$(SolutionsDir).props')"/>
-
     <PropertyGroup Condition="!Exists('$(SolutionsDir).props')">
-        <BepInExPath>$(SolutionDir)libs</BepInExPath>
+<!--        <BepInExPath>$(SolutionDir)libs</BepInExPath>-->
+        <BaseGamePath>/Users/fre/Library/Application%20Support/Steam/steamapps/common/Valheim</BaseGamePath>
         <ManagedDataPath>$(SolutionDir)libs</ManagedDataPath>
+<!--        <ManagedDataPath>$(BaseGamePath)/Valheim.app/Contents/Resources/Data/Managed</ManagedDataPath>-->
+        <BepInExPath>$(BaseGamePath)/BepinEx/core</BepInExPath>
+<!--        <BepInExPath>/Users/fre/Downloads/BepInEx_macos_x64_5.4.23.2/BepInEx/core</BepInExPath>-->
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU'">
@@ -74,21 +66,6 @@
         </When>
     </Choose>
 
-    <!-- Set start action -->
-    <!--    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">-->
-    <!--        <StartAction>Program</StartAction>-->
-    <!--        <StartProgram>$(GamePath)\valheim.exe</StartProgram>-->
-    <!--        <StartArguments>-console &#45;&#45;doorstop-enable true &#45;&#45;doorstop-target $(HOMEPATH)\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\ashlands\BepInEx\core\BepInEx.Preloader.dll</StartArguments>-->
-    <!--        <StartWorkingDirectory>$(GamePath)</StartWorkingDirectory>-->
-    <!--    </PropertyGroup>-->
-
-    <!--    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">-->
-    <!--        <StartAction>Program</StartAction>-->
-    <!--        <StartProgram>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server\start_headless_server.bat</StartProgram>-->
-    <!--        &lt;!&ndash;        <StartArguments>-console &#45;&#45;doorstop-enable true &#45;&#45;doorstop-target $(HOMEPATH)\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll</StartArguments>&ndash;&gt;-->
-    <!--        <StartWorkingDirectory>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</StartWorkingDirectory>-->
-    <!--    </PropertyGroup>-->
-
     <!-- Add BepInEx references -->
     <ItemGroup Label="BepInEx">
         <Reference Include="0Harmony">
@@ -111,11 +88,11 @@
             <HintPath>$(ManagedDataPath)\assembly_valheim.dll</HintPath>
             <Private>False</Private>
         </Reference>
-        <Reference Include="assembly_googleanalytics">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\assembly_googleanalytics.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
+<!--        <Reference Include="assembly_googleanalytics">-->
+<!--            <SpecificVersion>False</SpecificVersion>-->
+<!--            <HintPath>$(ManagedDataPath)\assembly_googleanalytics.dll</HintPath>-->
+<!--            <Private>False</Private>-->
+<!--        </Reference>-->
         <Reference Include="assembly_guiutils">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>$(ManagedDataPath)\assembly_guiutils.dll</HintPath>
@@ -327,8 +304,8 @@
             <HintPath>$(SolutionDir)\libs\Advize_PlantEasily.dll</HintPath>
             <Private>False</Private>
         </Reference>
-        <Publicize Include="ComfyGizmo"/>
-        <Reference Include="ComfyGizmo">
+        <Publicize Condition="Exists('$(SolutionDir)libs\ComfyGizmo.dll')" Include="ComfyGizmo"/>
+        <Reference  Condition="Exists('$(SolutionDir)libs\ComfyGizmo.dll')" Include="ComfyGizmo">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>$(SolutionDir)\libs\ComfyGizmo.dll</HintPath>
             <Private>False</Private>
@@ -430,5 +407,4 @@
         <ZipDirectory SourceDirectory="$(TargetDir)..\Release" DestinationFile="$(ProjectDir)\bin\$(TargetName).zip"/>
         <RemoveDir Directories="$(TargetDir)..\Release"/>
     </Target> -->
-    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>
