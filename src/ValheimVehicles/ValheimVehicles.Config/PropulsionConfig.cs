@@ -6,6 +6,8 @@ public static class PropulsionConfig
 {
   public static ConfigFile? Config { get; private set; }
 
+  public static ConfigEntry<float> VehicleFlightClimbingSpeed { get; private set; } = null!;
+
   public static ConfigEntry<float> TurnPowerNoRudder { get; private set; } = null!;
   public static ConfigEntry<float> TurnPowerWithRudder { get; private set; } = null!;
   public static ConfigEntry<bool> EnableLandVehicles { get; private set; } = null!;
@@ -51,5 +53,10 @@ public static class PropulsionConfig
     ShouldLiftAnchorOnSpeedChange = Config.Bind(SectionName, "shouldLiftAnchorOnSpeedChange", false,
       ConfigHelpers.CreateConfigDescription(
         "Lifts the anchor when using a speed change key, this is a QOL to prevent anchor from being required to be pressed when attempting to change the ship speed"));
+
+    VehicleFlightClimbingSpeed = Config.Bind(SectionName, "FlightClimbingSpeed", 5f,
+      ConfigHelpers.CreateConfigDescription(
+        "Ascent and Descent speed for the vehicle in the air. Numbers above 1 require turning the synced rigidbody for vehicle into another joint rigidbody.",
+        true, true, new AcceptableValueRange<float>(1, 10)));
   }
 }

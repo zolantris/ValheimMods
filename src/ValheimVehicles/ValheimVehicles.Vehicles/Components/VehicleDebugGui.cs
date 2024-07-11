@@ -49,10 +49,12 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     }
 
     if (GUILayout.Button(
-          $"Toggle Sync Physics {VehiclePiecesController.ForceKinematic}"))
+          $"Toggle Sync Physics"))
     {
-      VehiclePiecesController.ForceKinematic =
-        !VehiclePiecesController.ForceKinematic;
+      foreach (var vehiclePiecesController in VehiclePiecesController.ActiveInstances)
+      {
+        vehiclePiecesController.Value?.ToggleVehiclePhysicsType();
+      }
     }
 
     if (GUILayout.Button("Delete ShipZDO"))

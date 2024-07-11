@@ -21,7 +21,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   private bool _hasRegister = false;
 
   // unfortunately, the current approach does not allow increasing this beyond 1f otherwise it causes massive jitters when changing altitude.
-  private float _maxVerticalOffset = 1f;
+  private float _maxVerticalOffset => PropulsionConfig.VehicleFlightClimbingSpeed.Value;
 
   public bool isAnchored;
 
@@ -87,6 +87,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   public const float m_balanceForce = 0.03f;
 
   public const float m_liftForce = 20f;
+
+  // combo of Z and X enum
+  public const RigidbodyConstraints FreezeBothXZ = (RigidbodyConstraints)80;
 
   public bool isBeached = false;
   private Ship.Speed VehicleSpeed => GetSpeedSetting();
@@ -435,6 +438,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       m_nview = GetComponent<ZNetView>();
     }
 
+    if (ValheimRaftPlugin.Instance.AllowFlight.Value)
+    {
+      OnFlightChangePolling();
+    }
+
     base.Awake();
   }
 
@@ -554,51 +562,51 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   public void BROKEN_UpdateShipBalancingForce()
   {
-    // var front = ShipDirection.position +
-    //             ShipDirection.forward * m_floatcollider.size.z / 2f;
-    // var back = ShipDirection.position -
-    //            ShipDirection.forward * m_floatcollider.size.z / 2f;
-    // var left = ShipDirection.position -
-    //            ShipDirection.right * m_floatcollider.size.x / 2f;
-    // var right = ShipDirection.position +
-    //             ShipDirection.right * m_floatcollider.size.x / 2f;
-    //
-    // var centerpos2 = ShipDirection.position;
-    // var frontForce = m_body.GetPointVelocity(front);
-    // var backForce = m_body.GetPointVelocity(back);
-    // var leftForce = m_body.GetPointVelocity(left);
-    // var rightForce = m_body.GetPointVelocity(right);
-    //
-    // var frontUpwardsForce =
-    //   GetUpwardsForce(TargetHeight,
-    //     front.y + frontForce.y,
-    //     m_balanceForce);
-    // var backUpwardsForce =
-    //   GetUpwardsForce(TargetHeight,
-    //     back.y + backForce.y,
-    //     m_balanceForce);
-    // var leftUpwardsForce =
-    //   GetUpwardsForce(TargetHeight,
-    //     left.y + leftForce.y,
-    //     m_balanceForce);
-    // var rightUpwardsForce =
-    //   GetUpwardsForce(TargetHeight,
-    //     right.y + rightForce.y,
-    //     m_balanceForce);
-    // var centerUpwardsForce = GetUpwardsForce(TargetHeight,
-    //   centerpos2.y + m_body.velocity.y, m_liftForce);
+    var front = ShipDirection.position +
+                ShipDirection.forward * m_floatcollider.size.z / 2f;
+    var back = ShipDirection.position -
+               ShipDirection.forward * m_floatcollider.size.z / 2f;
+    var left = ShipDirection.position -
+               ShipDirection.right * m_floatcollider.size.x / 2f;
+    var right = ShipDirection.position +
+                ShipDirection.right * m_floatcollider.size.x / 2f;
+
+    var centerpos2 = ShipDirection.position;
+    var frontForce = m_body.GetPointVelocity(front);
+    var backForce = m_body.GetPointVelocity(back);
+    var leftForce = m_body.GetPointVelocity(left);
+    var rightForce = m_body.GetPointVelocity(right);
+
+    var frontUpwardsForce =
+      GetUpwardsForce(TargetHeight,
+        front.y + frontForce.y,
+        m_balanceForce);
+    var backUpwardsForce =
+      GetUpwardsForce(TargetHeight,
+        back.y + backForce.y,
+        m_balanceForce);
+    var leftUpwardsForce =
+      GetUpwardsForce(TargetHeight,
+        left.y + leftForce.y,
+        m_balanceForce);
+    var rightUpwardsForce =
+      GetUpwardsForce(TargetHeight,
+        right.y + rightForce.y,
+        m_balanceForce);
+    var centerUpwardsForce = GetUpwardsForce(TargetHeight,
+      centerpos2.y + m_body.velocity.y, m_liftForce);
 
 
-    // AddForceAtPosition(Vector3.up * frontUpwardsForce, front,
-    //   ForceMode.VelocityChange);
-    // AddForceAtPosition(Vector3.up * backUpwardsForce, back,
-    //   ForceMode.VelocityChange);
-    // AddForceAtPosition(Vector3.up * leftUpwardsForce, left,
-    //   ForceMode.VelocityChange);
-    // AddForceAtPosition(Vector3.up * rightUpwardsForce, right,
-    //   ForceMode.VelocityChange);
-    // AddForceAtPosition(Vector3.up * centerUpwardsForce, centerpos2,
-    //   ForceMode.VelocityChange);
+    AddForceAtPosition(Vector3.up * frontUpwardsForce, front,
+      ForceMode.VelocityChange);
+    AddForceAtPosition(Vector3.up * backUpwardsForce, back,
+      ForceMode.VelocityChange);
+    AddForceAtPosition(Vector3.up * leftUpwardsForce, left,
+      ForceMode.VelocityChange);
+    AddForceAtPosition(Vector3.up * rightUpwardsForce, right,
+      ForceMode.VelocityChange);
+    AddForceAtPosition(Vector3.up * centerUpwardsForce, centerpos2,
+      ForceMode.VelocityChange);
   }
 
   public void UpdateShipFlying()
@@ -610,7 +618,17 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       return;
     }
 
+
     m_body.WakeUp();
+    m_body.constraints = FreezeBothXZ;
+    BROKEN_UpdateShipBalancingForce();
+
+    var prevAngularVelocity = m_body.angularVelocity;
+    if (m_body.velocity.magnitude < prevAngularVelocity.magnitude)
+    {
+      m_body.velocity = prevAngularVelocity;
+      m_body.angularVelocity = Vector3.zero;
+    }
 
     if (!ValheimRaftPlugin.Instance.FlightHasRudderOnly.Value)
     {
@@ -662,12 +680,15 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     m_dampingSideway = (flight ? 3f : 0.3f);
     m_force = 3f;
     m_forceDistance = 5f;
-    m_sailForceFactor = (flight ? 0.2f : 0.05f);
-    m_stearForce = (flight ? 0.2f : 1f);
+    m_sailForceFactor = 0.05f;
+    m_stearForce = 1f;
     m_stearVelForceFactor = 1.3f;
     m_waterImpactDamage = 0f;
 
-    ShipInstance?.VehiclePiecesController?.SyncRigidbodyStats(0.2f, 0.2f);
+    var drag = 0.1f;
+    var angularDrag = flight ? 3f : 0.1f;
+
+    ShipInstance?.VehiclePiecesController?.SyncRigidbodyStats(drag, angularDrag, flight);
 
 
     if ((bool)_impactEffect)
@@ -914,6 +935,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
         isBeached) return;
 
     var shipFloatation = GetShipFloatationObj();
+
+    if (!shipFloatation.IsAboveBuoyantLevel || TargetHeight == 0f)
+    {
+      if (m_body.constraints != RigidbodyConstraints.None)
+      {
+        m_body.constraints = RigidbodyConstraints.None;
+      }
+    }
 
     if (!shipFloatation.IsAboveBuoyantLevel)
     {
@@ -1494,6 +1523,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     if (!ShipInstance?.NetView) return;
     if (ShipInstance.NetView == null) return;
+    // owners own the logic, they do not sync (which would revert to previous state)
+    if (ShipInstance.NetView.IsOwner()) return;
 
     var zdoTargetHeight = ShipInstance.NetView.m_zdo.GetFloat(
       VehicleZdoVars.VehicleTargetHeight,

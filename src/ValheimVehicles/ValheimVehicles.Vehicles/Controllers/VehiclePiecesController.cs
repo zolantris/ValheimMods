@@ -8,6 +8,7 @@ using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimRAFT.Util;
+using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
@@ -469,12 +470,22 @@ public class VehiclePiecesController : MonoBehaviour
     StopAllCoroutines();
   }
 
-  public virtual void SyncRigidbodyStats(float drag, float angularDrag)
+  public virtual void SyncRigidbodyStats(float drag, float angularDrag, bool flight)
   {
     if (!VehicleInstance?.MovementController?.m_body || m_statsOverride ||
         !VehicleInstance?.Instance || !m_body)
     {
       return;
+    }
+
+    if (flight && SelectedPhysicsMode == PhysicsMode.SyncedRigidbody)
+    {
+      ToggleVehiclePhysicsType();
+    }
+
+    if (!flight && SelectedPhysicsMode == PhysicsMode.DesyncedJointRigidbodyBody)
+    {
+      ToggleVehiclePhysicsType();
     }
 
     m_body.angularDrag = angularDrag;
@@ -488,7 +499,7 @@ public class VehiclePiecesController : MonoBehaviour
     m_body.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
   }
 
-  public static bool ForceKinematic = true;
+  public PhysicsMode SelectedPhysicsMode = PhysicsMode.SyncedRigidbody;
 
   private void SyncMovingPiecesContainer()
   {
@@ -504,6 +515,27 @@ public class VehiclePiecesController : MonoBehaviour
     }
   }
 
+  public enum PhysicsMode
+  {
+    SyncedRigidbody,
+    DesyncedJointRigidbodyBody,
+  }
+
+  public void ToggleVehiclePhysicsType()
+  {
+    if (SelectedPhysicsMode == PhysicsMode.SyncedRigidbody)
+    {
+      SelectedPhysicsMode = PhysicsMode.DesyncedJointRigidbodyBody;
+      return;
+    }
+
+    if (SelectedPhysicsMode == PhysicsMode.DesyncedJointRigidbodyBody)
+    {
+      SelectedPhysicsMode = PhysicsMode.SyncedRigidbody;
+      return;
+    }
+  }
+
 
   public void Sync()
   {
@@ -515,7 +547,7 @@ public class VehiclePiecesController : MonoBehaviour
 
     SyncMovingPiecesContainer();
 
-    if (ForceKinematic)
+    if (SelectedPhysicsMode == PhysicsMode.SyncedRigidbody)
     {
       if (!m_body.isKinematic)
       {
@@ -533,14 +565,18 @@ public class VehiclePiecesController : MonoBehaviour
       return;
     }
 
-    if (m_body.isKinematic)
+    // safety check only
+    if (SelectedPhysicsMode == PhysicsMode.DesyncedJointRigidbodyBody)
     {
-      m_body.isKinematic = false;
-    }
+      if (m_body.isKinematic)
+      {
+        m_body.isKinematic = false;
+      }
 
-    if (m_fixedJoint.connectedBody == null)
-    {
-      LinkFixedJoint();
+      if (m_fixedJoint.connectedBody == null)
+      {
+        LinkFixedJoint();
+      }
     }
   }
 
@@ -1859,9 +1895,10 @@ public class VehiclePiecesController : MonoBehaviour
   private float GetAverageFloatHeightFromHulls()
   {
     _hullBounds = new Bounds();
-    if (m_hullPieces.Count <= 0)
+
+    if (m_hullPieces.Count <= 0 || !ValheimRaftPlugin.Instance.HullCollisionOnly.Value)
     {
-      return 0.5f;
+      return ValheimRaftPlugin.Instance.HullFloatationCustomColliderOffset.Value;
     }
 
     var totalHeight = 0f;
@@ -1883,6 +1920,7 @@ public class VehiclePiecesController : MonoBehaviour
       case ValheimRaftPlugin.HullFloatation.Top:
         return _hullBounds.max.y;
       case ValheimRaftPlugin.HullFloatation.Custom:
+        return ValheimRaftPlugin.Instance.HullFloatationCustomColliderOffset.Value;
       case ValheimRaftPlugin.HullFloatation.Center:
       default:
         return _hullBounds.center.y;
