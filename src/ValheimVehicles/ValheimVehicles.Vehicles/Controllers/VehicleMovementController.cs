@@ -102,7 +102,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   private GUIStyle myButtonStyle;
   private IMonoUpdater _monoUpdaterImplementation;
 
-  public static List<IMonoUpdater> Instances { get; } = [];
+  public static List<IMonoUpdater> MonoUpdaterInstances { get; } = [];
 
   public Transform m_controlGuiPos { get; set; }
 
@@ -210,11 +210,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     return netView && netView.isActiveAndEnabled;
   }
 
+  /// <summary>
+  /// caps the vehicle speeds to these values
+  /// </summary>
   public void UpdateVehicleSpeedThrottle()
   {
-    // caps the vehicle speeds to these values.
     m_body.maxAngularVelocity = ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value;
-    m_body.maxLinearVelocity = ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value * 1.2f;
+    m_body.maxLinearVelocity = ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value;
   }
 
   public void InitColliders()
@@ -256,7 +258,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     _impactEffect = GetComponent<ImpactEffect>();
 
-    // If it's somehow missing
+    // fallback assignment
     if (!_impactEffect)
     {
       _impactEffect = gameObject.AddComponent<ImpactEffect>();
@@ -268,7 +270,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     _impactEffect.m_nview = m_nview;
     _impactEffect.m_body = m_body;
     _impactEffect.m_hitType = HitData.HitType.Boat;
-    _impactEffect.m_interval = 1f;
+    _impactEffect.m_interval = 0.5f;
     _impactEffect.m_minVelocity = 0.1f;
   }
 
@@ -478,14 +480,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     SyncShip();
   }
 
-  // public void CustomUpdate(float deltaTime, float time)
-  // {
-  // }
-  //
-  // public void CustomLateUpdate(float deltaTime)
-  // {
-  // }
-
   public void CustomFixedUpdate(float deltaTime)
   {
     ((IMonoUpdater)zsyncTransform).CustomFixedUpdate(deltaTime);
@@ -514,14 +508,17 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     VehicleMovementUpdatesOwnerOnly();
   }
 
+  /// <summary>
+  /// Unused, but required for IMonoUpdaters which Valheim uses to sync client and server lifecycle updates
+  /// </summary>
+  /// <param name="deltaTime"></param>
+  /// <param name="time"></param>
   public void CustomUpdate(float deltaTime, float time)
   {
-    ((IMonoUpdater)zsyncTransform).CustomUpdate(deltaTime, time);
   }
 
   public void CustomLateUpdate(float deltaTime)
   {
-    zsyncTransform.CustomLateUpdate(deltaTime);
     SyncShip();
   }
 
@@ -630,6 +627,24 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       ForceMode.VelocityChange);
   }
 
+  public void UpdateAndFreezeRotation()
+  {
+    var isAproxZeroX = Mathf.Approximately(m_body.rotation.eulerAngles.x, 0);
+    var isApproxZeroZ = Mathf.Approximately(m_body.rotation.eulerAngles.z, 0);
+
+    if (!isAproxZeroX || !isApproxZeroZ)
+    {
+      m_body.constraints = RigidbodyConstraints.None;
+      var newRotation = Quaternion.Euler(0, m_body.rotation.eulerAngles.y, 0);
+      m_body.MoveRotation(newRotation);
+    }
+
+    if (m_body.constraints != FreezeBothXZ)
+    {
+      m_body.constraints = FreezeBothXZ;
+    }
+  }
+
   public void UpdateShipFlying()
   {
     UpdateVehicleStats(true);
@@ -639,19 +654,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       return;
     }
 
-
     m_body.WakeUp();
-    m_body.constraints = FreezeBothXZ;
+    UpdateAndFreezeRotation();
     Flying_UpdateShipBalancingForce();
-
-    var prevAngularVelocity = m_body.angularVelocity;
-    if (m_body.velocity.magnitude < prevAngularVelocity.magnitude)
-    {
-      m_body.velocity = prevAngularVelocity;
-      m_body.angularVelocity = Vector3.zero;
-    }
-
-    m_body.angularVelocity = Vector3.zero;
 
     if (!ValheimRaftPlugin.Instance.FlightHasRudderOnly.Value)
     {
@@ -695,21 +700,28 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     return damage;
   }
 
+  public float flightAngularDamping = 5f;
+  public float flightSidewaysDamping = 5f;
+  public float flightSteerForce = 1f;
+  public float flightSailForceFactor = 0.2f;
+  public float flightDrag = 0.5f;
+  public float flightAngularDrag = 0.5f;
+
   private void UpdateVehicleStats(bool flight)
   {
-    m_angularDamping = (flight ? 0.9f : 0.8f);
+    m_angularDamping = flight ? flightAngularDamping : 0.8f;
     m_backwardForce = 1f;
-    m_damping = (flight ? 0.40f : 0.35f);
-    m_dampingSideway = (flight ? 0.4f : 0.3f);
+    m_damping = flight ? 0.40f : 0.35f;
+    m_dampingSideway = flight ? flightSidewaysDamping : 0.3f;
     m_force = 3f;
     m_forceDistance = 5f;
-    m_sailForceFactor = 0.05f;
-    m_stearForce = 1f;
+    m_sailForceFactor = flight ? flightSailForceFactor : 0.05f;
+    m_stearForce = flight ? flightSteerForce : 1f;
     m_stearVelForceFactor = 1.3f;
     m_waterImpactDamage = 0f;
 
-    var drag = 0.1f;
-    var angularDrag = flight ? 3f : 0.1f;
+    var drag = flight ? flightDrag : 0.2f;
+    var angularDrag = flight ? flightAngularDrag : 0.2f;
 
     ShipInstance?.VehiclePiecesController?.SyncRigidbodyStats(drag, angularDrag, flight);
 
@@ -1345,7 +1357,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private static void ApplySailForce(VehicleMovementController instance, bool isFlying = false)
   {
-    if (!instance || !instance?.m_body || !instance?.ShipDirection || instance.isAnchored) return;
+    if (!instance?.m_body || !instance?.ShipDirection ||
+        instance.isAnchored) return;
 
     var sailArea = 0f;
 
@@ -1354,9 +1367,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       sailArea = instance.ShipInstance.VehiclePiecesController.GetSailingForce();
     }
 
-    /*
-     * Computed sailSpeed based on the rudder settings.
-     */
+    // intellij seems to think 1370 does not have enough guards if this check is at the top of the function.
+    if (instance == null) return;
+
     switch (instance.VehicleSpeed)
     {
       case Ship.Speed.Full:
@@ -1546,8 +1559,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     if (!ShipInstance?.NetView) return;
     if (ShipInstance.NetView == null) return;
-    // owners own the logic, they do not sync (which would revert to previous state)
-    if (ShipInstance.NetView.IsOwner()) return;
 
     var zdoTargetHeight = ShipInstance.NetView.m_zdo.GetFloat(
       VehicleZdoVars.VehicleTargetHeight,
@@ -1645,13 +1656,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private new void OnEnable()
   {
-    Instances.Add(this);
+    MonoUpdaterInstances.Add(this);
     StartCoroutine(nameof(ShipFixRoutine));
   }
 
   private new void OnDisable()
   {
-    Instances.Remove(this);
+    MonoUpdaterInstances.Remove(this);
     StopCoroutine(nameof(ShipFixRoutine));
   }
 

@@ -8,7 +8,6 @@ using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimRAFT.Util;
-using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
@@ -24,7 +23,7 @@ namespace ValheimVehicles.Vehicles;
 
 /// <summary>controller used for all vehicles</summary>
 /// <description> This is a controller used for all vehicles, Currently it must be initialized within a vehicle view IE VehicleShip or upcoming VehicleWheeled, and VehicleFlying instances.</description>
-public class VehiclePiecesController : MonoBehaviour
+public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 {
   /*
    * Get all the instances statically
@@ -37,6 +36,8 @@ public class VehiclePiecesController : MonoBehaviour
 
   public static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
+
+  public static List<IMonoUpdater> MonoUpdaterInstances = [];
 
   private static bool _allowPendingPiecesToActivate = true;
 
@@ -404,7 +405,12 @@ public class VehiclePiecesController : MonoBehaviour
 
   private void OnDisable()
   {
-    if (ActiveInstances.GetValueSafe(VehicleInstance.PersistentZdoId))
+    if (MonoUpdaterInstances.Contains(this))
+    {
+      MonoUpdaterInstances.Remove(this);
+    }
+
+    if (VehicleInstance != null && ActiveInstances.GetValueSafe(VehicleInstance.PersistentZdoId))
     {
       ActiveInstances.Remove(VehicleInstance.PersistentZdoId);
     }
@@ -418,6 +424,7 @@ public class VehiclePiecesController : MonoBehaviour
 
   private void OnEnable()
   {
+    MonoUpdaterInstances.Add(this);
     vehicleInitializationTimer.Restart();
 
     ActivatePendingPiecesCoroutine();
@@ -580,19 +587,19 @@ public class VehiclePiecesController : MonoBehaviour
     }
   }
 
-  private void Update()
+  public void CustomUpdate(float deltaTime, float time)
   {
     Client_UpdateAllPieces();
 
     Sync();
   }
 
-  public void FixedUpdate()
+  public void CustomFixedUpdate(float deltaTime)
   {
     Sync();
   }
 
-  private void LateUpdate()
+  public void CustomLateUpdate(float deltaTime)
   {
     Sync();
     if (!ZNet.instance.IsServer())
