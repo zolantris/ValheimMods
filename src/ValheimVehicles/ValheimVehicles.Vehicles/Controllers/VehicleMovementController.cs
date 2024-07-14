@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using ValheimRAFT;
@@ -16,7 +17,8 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
 
-public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, IValheimShip
+public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, IValheimShip,
+  IMonoUpdater
 {
   private bool _hasRegister = false;
 
@@ -98,6 +100,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private GameObject _vehiclePiecesContainerInstance;
   private GUIStyle myButtonStyle;
+  private IMonoUpdater _monoUpdaterImplementation;
+
+  public static List<IMonoUpdater> Instances { get; } = [];
 
   public Transform m_controlGuiPos { get; set; }
 
@@ -473,8 +478,18 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     SyncShip();
   }
 
-  public void FixedUpdate()
+  // public void CustomUpdate(float deltaTime, float time)
+  // {
+  // }
+  //
+  // public void CustomLateUpdate(float deltaTime)
+  // {
+  // }
+
+  public void CustomFixedUpdate(float deltaTime)
   {
+    ((IMonoUpdater)zsyncTransform).CustomFixedUpdate(deltaTime);
+
     if (!(bool)m_body || !(bool)m_floatcollider)
     {
       return;
@@ -499,8 +514,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     VehicleMovementUpdatesOwnerOnly();
   }
 
-  public void LateUpdate()
+  public void CustomUpdate(float deltaTime, float time)
   {
+    ((IMonoUpdater)zsyncTransform).CustomUpdate(deltaTime, time);
+  }
+
+  public void CustomLateUpdate(float deltaTime)
+  {
+    zsyncTransform.CustomLateUpdate(deltaTime);
     SyncShip();
   }
 
@@ -560,7 +581,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       ForceMode.VelocityChange);
   }
 
-  public void BROKEN_UpdateShipBalancingForce()
+  public void Flying_UpdateShipBalancingForce()
   {
     var front = ShipDirection.position +
                 ShipDirection.forward * m_floatcollider.size.z / 2f;
@@ -621,7 +642,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
     m_body.WakeUp();
     m_body.constraints = FreezeBothXZ;
-    BROKEN_UpdateShipBalancingForce();
+    Flying_UpdateShipBalancingForce();
 
     var prevAngularVelocity = m_body.angularVelocity;
     if (m_body.velocity.magnitude < prevAngularVelocity.magnitude)
@@ -629,6 +650,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
       m_body.velocity = prevAngularVelocity;
       m_body.angularVelocity = Vector3.zero;
     }
+
+    m_body.angularVelocity = Vector3.zero;
 
     if (!ValheimRaftPlugin.Instance.FlightHasRudderOnly.Value)
     {
@@ -674,10 +697,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private void UpdateVehicleStats(bool flight)
   {
-    m_angularDamping = (flight ? 5f : 0.8f);
+    m_angularDamping = (flight ? 0.9f : 0.8f);
     m_backwardForce = 1f;
-    m_damping = (flight ? 5f : 0.35f);
-    m_dampingSideway = (flight ? 3f : 0.3f);
+    m_damping = (flight ? 0.40f : 0.35f);
+    m_dampingSideway = (flight ? 0.4f : 0.3f);
     m_force = 3f;
     m_forceDistance = 5f;
     m_sailForceFactor = 0.05f;
@@ -869,8 +892,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   public void UpdateGravity()
   {
     var isGravityEnabled = Mathf.Approximately(TargetHeight, 0f);
-    zsyncTransform.m_useGravity = isGravityEnabled;
     m_body.useGravity = isGravityEnabled;
+    zsyncTransform.m_useGravity = isGravityEnabled;
   }
 
   public void UpdateShipCreativeModeRotation()
@@ -1622,13 +1645,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private new void OnEnable()
   {
-    base.OnEnable();
+    Instances.Add(this);
     StartCoroutine(nameof(ShipFixRoutine));
   }
 
   private new void OnDisable()
   {
-    base.OnDisable();
+    Instances.Remove(this);
     StopCoroutine(nameof(ShipFixRoutine));
   }
 

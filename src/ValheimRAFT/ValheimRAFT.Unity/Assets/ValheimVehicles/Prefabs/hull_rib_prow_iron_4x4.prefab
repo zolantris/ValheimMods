@@ -44,7 +44,6 @@ GameObject:
   - component: {fileID: 2819566329052804105}
   - component: {fileID: 3327911114463717276}
   - component: {fileID: 7117093199478978211}
-  - component: {fileID: 4782552882592896657}
   m_Layer: 10
   m_Name: iron_brace 5
   m_TagString: Untagged
@@ -117,28 +116,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &4782552882592896657
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2749422513409971219}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 6320000259446333544, guid: 66815e8fb7eb7d74c84347705ef587c4, type: 3}
 --- !u!1 &2882941227998417648
 GameObject:
   m_ObjectHideFlags: 0
@@ -389,7 +366,6 @@ GameObject:
   - component: {fileID: 3985678877049646287}
   - component: {fileID: 2880642674651746765}
   - component: {fileID: 6573913055876022436}
-  - component: {fileID: 7497413678169682545}
   m_Layer: 10
   m_Name: iron_brace 5_3
   m_TagString: Untagged
@@ -462,28 +438,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &7497413678169682545
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5000886483712499714}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 6320000259446333544, guid: 66815e8fb7eb7d74c84347705ef587c4, type: 3}
 --- !u!1 &5209528557795340250
 GameObject:
   m_ObjectHideFlags: 0
@@ -557,7 +511,6 @@ GameObject:
   - component: {fileID: 9164425352768386861}
   - component: {fileID: 2299186636803235736}
   - component: {fileID: 1007750743093366779}
-  - component: {fileID: 8490033204567813770}
   m_Layer: 10
   m_Name: iron_brace 5_2
   m_TagString: Untagged
@@ -630,28 +583,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &8490033204567813770
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5285427656834765929}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 6320000259446333544, guid: 66815e8fb7eb7d74c84347705ef587c4, type: 3}
 --- !u!1 &6594804194593126734
 GameObject:
   m_ObjectHideFlags: 0
@@ -873,7 +804,6 @@ GameObject:
   - component: {fileID: 2434432300279717877}
   - component: {fileID: 3137313164504467292}
   - component: {fileID: 641647612697634436}
-  - component: {fileID: 5580477175632916601}
   m_Layer: 10
   m_Name: iron_brace 5_4
   m_TagString: Untagged
@@ -946,28 +876,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &5580477175632916601
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8040164742831899722}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 6320000259446333544, guid: 66815e8fb7eb7d74c84347705ef587c4, type: 3}
 --- !u!1 &8612702873017316960
 GameObject:
   m_ObjectHideFlags: 0
@@ -979,7 +887,6 @@ GameObject:
   - component: {fileID: 8934166675409924113}
   - component: {fileID: 5732983031348844502}
   - component: {fileID: 2398984607056194442}
-  - component: {fileID: 2244588876043340005}
   m_Layer: 10
   m_Name: iron_brace 5_1
   m_TagString: Untagged
@@ -1052,28 +959,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &2244588876043340005
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8612702873017316960}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 6320000259446333544, guid: 66815e8fb7eb7d74c84347705ef587c4, type: 3}
 --- !u!1001 &7912529359306486487
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -117,18 +117,6 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal float m_rudderPaddleTimer;
 
-  public static List<ValheimBaseGameShip> Instances { get; } = new();
-
-  public virtual void OnEnable()
-  {
-    Instances.Add(this);
-  }
-
-  public virtual void OnDisable()
-  {
-    Instances.Remove(this);
-  }
-
 
   internal void Awake()
   {
