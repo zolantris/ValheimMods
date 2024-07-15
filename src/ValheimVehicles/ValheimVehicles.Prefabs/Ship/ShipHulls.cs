@@ -21,7 +21,12 @@ public abstract class ShipHulls
     public const string YggdrasilWood = "yggdrasil_wood";
   }
 
-  public static bool GetExcludedBoundsPrefabs(string prefabName) =>
+  /// <summary>
+  /// Used to exclude Prefabs from bounds inclusion, can be deleted soon...
+  /// </summary>
+  /// <param name="prefabName"></param>
+  /// <returns></returns>
+  public static bool GetExcludedBoundsPrefabCollider(string prefabName) =>
     prefabName.StartsWith(PrefabNames.HullProw) || prefabName.StartsWith(PrefabNames.HullRibCorner);
 
   public static string GetHullMaterialDescription(string materialVariant)

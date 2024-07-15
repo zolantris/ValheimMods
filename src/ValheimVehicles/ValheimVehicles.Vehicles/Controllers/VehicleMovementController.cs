@@ -164,19 +164,19 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
         break;
       case Ship.Speed.Back:
         _rudderForce =
-          Math.Abs(Math.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedBack.Value,
-            ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value));
+          Mathf.Clamp(ValheimRaftPlugin.Instance.VehicleRudderSpeedBack.Value, 0,
+            ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value);
         break;
       case Ship.Speed.Slow:
-        _rudderForce = Math.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedSlow.Value,
+        _rudderForce = Mathf.Clamp(ValheimRaftPlugin.Instance.VehicleRudderSpeedSlow.Value, 0,
           ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value);
         break;
       case Ship.Speed.Half:
-        _rudderForce = Mathf.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedHalf.Value,
+        _rudderForce = Mathf.Clamp(ValheimRaftPlugin.Instance.VehicleRudderSpeedHalf.Value, 0,
           ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value);
         break;
       case Ship.Speed.Full:
-        _rudderForce = Mathf.Min(ValheimRaftPlugin.Instance.VehicleRudderSpeedFull.Value,
+        _rudderForce = Mathf.Clamp(ValheimRaftPlugin.Instance.VehicleRudderSpeedFull.Value, 0,
           ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value);
         break;
       default:
@@ -1275,8 +1275,15 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private Vector3 GetAdditiveSteerForce(float directionMultiplier)
   {
+    if (_rudderForce == 0 || VehicleSpeed == Ship.Speed.Stop || isAnchored) return Vector3.zero;
+
     var shipAdditiveSteerForce = ShipDirection.right *
                                  (m_stearForce * (0f - m_rudderValue) * directionMultiplier);
+
+    if (ValheimRaftPlugin.Instance.AllowCustomRudderSpeeds.Value)
+    {
+      shipAdditiveSteerForce *= Mathf.Clamp(_rudderForce, 1f, 10f);
+    }
 
     // Adds additional speeds to turning
     if (vehicleShip.PiecesController.m_rudderPieces.Count > 0)
@@ -1328,23 +1335,16 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     steerForce *= directionMultiplier;
 
     // todo see if this is necessary. This logic is from the Base game Ship
-    if (VehicleSpeed is Ship.Speed.Back or Ship.Speed.Slow)
+
+    if (ValheimRaftPlugin.Instance.AllowCustomRudderSpeeds.Value)
+    {
+      steerForce += GetAdditiveSteerForce(directionMultiplier);
+    }
+    else if (VehicleSpeed is Ship.Speed.Back or Ship.Speed.Slow)
     {
       steerForce += GetAdditiveSteerForce(directionMultiplier);
     }
 
-    // Same logic as above, just separate to split out rudder custom speed potential divergence
-    if (ValheimRaftPlugin.Instance.AllowCustomRudderSpeeds.Value)
-    {
-      if (
-        (VehicleSpeed is Ship.Speed.Half &&
-         ValheimRaftPlugin.Instance.VehicleRudderSpeedHalf.Value > 0) ||
-        (VehicleSpeed is Ship.Speed.Full &&
-         ValheimRaftPlugin.Instance.VehicleRudderSpeedFull.Value > 0))
-      {
-        steerForce += GetAdditiveSteerForce(directionMultiplier);
-      }
-    }
 
     if (TargetHeight > 0)
     {
