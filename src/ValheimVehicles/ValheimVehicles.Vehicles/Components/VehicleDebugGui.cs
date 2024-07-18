@@ -26,6 +26,8 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     return new Vector3(x, y, z);
   }
 
+  public static bool vehicleDebugPhysicsSync = true;
+
   private void OnGUI()
   {
     myButtonStyle ??= new GUIStyle(GUI.skin.button)
@@ -46,6 +48,14 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
           vehiclePiecesController.ActivatePendingPiecesCoroutine();
         }
       }
+    }
+
+    if (GUILayout.Button(
+          $"SyncPiecesPhysics {vehicleDebugPhysicsSync}"))
+    {
+      vehicleDebugPhysicsSync = !vehicleDebugPhysicsSync;
+      VehicleMovementController.SetPhysicsSyncTarget(
+        vehicleDebugPhysicsSync);
     }
 
     if (GUILayout.Button(

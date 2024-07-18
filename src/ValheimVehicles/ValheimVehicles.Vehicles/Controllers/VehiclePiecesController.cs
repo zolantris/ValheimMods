@@ -508,6 +508,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public PhysicsMode SelectedPhysicsMode = PhysicsMode.SyncedRigidbody;
 
+  /// <summary>
+  /// Deprecated, for now. Will not be used unless this can be leveraged as a fix for some physics objects that need a kinematic rigidbody
+  /// </summary>
   private void SyncMovingPiecesContainer()
   {
     if (_movingPiecesContainer == null) return;
@@ -543,47 +546,85 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
   }
 
+  public void KinematicSync()
+  {
+    if (VehicleInstance?.MovementController == null) return;
+    if (!m_body.isKinematic)
+    {
+      m_body.isKinematic = true;
+    }
 
+    if (m_fixedJoint.connectedBody)
+    {
+      m_fixedJoint.connectedBody = null;
+    }
+
+    m_body.MovePosition(VehicleInstance.MovementController.m_body.position);
+    m_body.MoveRotation(
+      VehicleInstance.MovementController.m_body.rotation);
+  }
+
+  public void JointSync()
+  {
+    if (m_body.isKinematic)
+    {
+      m_body.isKinematic = false;
+    }
+
+    if (m_fixedJoint.connectedBody == null)
+    {
+      LinkFixedJoint();
+    }
+  }
+
+  /// <summary>
+  /// Client should use the Synced rigidbody by default.
+  ///
+  /// If pieceSync is enabled it runs only that logic
+  ///
+  /// Physics.SyncRigidbody is a performant way to sync the position of the pieces with the parent container that is applying physics
+  /// Cons
+  /// - The client(s) that do not own the boat physics suffer from mild-extreme shaking based on boat speed and turning velocity
+  ///
+  /// PhysicsMode.DesyncedJointRigidbodyBody -> A high quality way to do physics syncing by using a joint for the pieces container. Downsides are no concav meshes are allowed for physics. Will not work with nautilus (until there are custom colliders created).
+  /// Cons
+  /// - Clients all using their own calcs can have the pieces container desync from the parent boat sync they do not own the physics.
+  ///
+  /// HasPieceSyncTarget
+  /// - Client will use synced rigibody only if they are owner PhysicsMode.SyncedRigidbody
+  /// - Clients who are not the owner use the PhysicsMode.DesyncedJointRigidbodyBody
+  /// </summary>
   public void Sync()
   {
     if (!(bool)m_body || !(bool)VehicleInstance?.MovementControllerRigidbody ||
-        VehicleInstance?.MovementController == null)
+        VehicleInstance?.MovementController == null || VehicleInstance.NetView == null)
     {
       return;
     }
 
-    SyncMovingPiecesContainer();
+    if (VehicleMovementController.HasPieceSyncTarget)
+    {
+      var vehiclePhysicsOwner = VehicleInstance.NetView.IsOwner();
+      if (vehiclePhysicsOwner)
+      {
+        KinematicSync();
+      }
+      else
+      {
+        JointSync();
+      }
+
+      return;
+    }
 
     if (SelectedPhysicsMode == PhysicsMode.SyncedRigidbody)
     {
-      if (!m_body.isKinematic)
-      {
-        m_body.isKinematic = true;
-      }
-
-      if (m_fixedJoint.connectedBody)
-      {
-        m_fixedJoint.connectedBody = null;
-      }
-
-      m_body.MovePosition(VehicleInstance.MovementController.m_body.position);
-      m_body.MoveRotation(
-        VehicleInstance.MovementController.m_body.rotation);
-      return;
+      KinematicSync();
     }
 
-    // safety check only
     if (SelectedPhysicsMode == PhysicsMode.DesyncedJointRigidbodyBody)
     {
-      if (m_body.isKinematic)
-      {
-        m_body.isKinematic = false;
-      }
-
-      if (m_fixedJoint.connectedBody == null)
-      {
-        LinkFixedJoint();
-      }
+      JointSync();
     }
   }
 

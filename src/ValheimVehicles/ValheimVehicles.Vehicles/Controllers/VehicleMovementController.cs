@@ -100,7 +100,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   private GameObject _vehiclePiecesContainerInstance;
   private GUIStyle myButtonStyle;
-  private IMonoUpdater _monoUpdaterImplementation;
+
+  public static List<VehicleMovementController> Instances { get; } = [];
 
   public static List<IMonoUpdater> MonoUpdaterInstances { get; } = [];
 
@@ -287,21 +288,67 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     }
   }
 
-  public void AwakeSetupShipComponents()
+  public enum PhysicsTarget
   {
-    vehicleShip = GetComponent<VehicleShip>();
-    GetRigidbody();
+    VehicleShip,
+    VehiclePieces,
+  }
 
+  public static PhysicsTarget PhysicsSyncTarget = PhysicsTarget.VehicleShip;
+  public static bool HasPieceSyncTarget => PhysicsSyncTarget == PhysicsTarget.VehiclePieces;
+
+  public void SetupPhysicsSync()
+  {
+    if (!zsyncTransform)
+    {
+      zsyncTransform =
+        GetComponent<ZSyncTransform>();
+    }
+
+    switch (PhysicsSyncTarget)
+    {
+      case PhysicsTarget.VehicleShip:
+        zsyncTransform.m_body = GetRigidbody();
+        return;
+      case PhysicsTarget.VehiclePieces:
+      {
+        if (ShipInstance != null)
+        {
+          zsyncTransform.m_body =
+            ShipInstance?.VehiclePiecesController?.m_body ??
+            GetRigidbody();
+        }
+
+        break;
+      }
+    }
+  }
+
+  public static void SetPhysicsSyncTarget(bool val)
+  {
+    PhysicsSyncTarget = val
+      ? PhysicsTarget.VehiclePieces
+      : PhysicsTarget.VehicleShip;
+    foreach (var vehicleMovementController in Instances)
+    {
+      vehicleMovementController.SetupPhysicsSync();
+    }
+  }
+
+  public void SetupZsyncTransform()
+  {
     zsyncTransform = GetComponent<ZSyncTransform>();
     zsyncTransform.m_syncPosition = true;
     zsyncTransform.m_syncBodyVelocity = true;
     zsyncTransform.m_syncRotation = true;
+  }
 
-    if (!zsyncTransform.m_body)
-    {
-      zsyncTransform.m_body = GetRigidbody();
-    }
-
+  public void AwakeSetupShipComponents()
+  {
+    vehicleShip = GetComponent<VehicleShip>();
+    GetRigidbody();
+    SetupZsyncTransform();
+    SetupPhysicsSync();
     SetupImpactEffect();
     InitColliders();
     UpdateVehicleSpeedThrottle();
@@ -900,7 +947,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     };
   }
 
-  // Updates gravity and target height (which is used to compute gravity)
+// Updates gravity and target height (which is used to compute gravity)
   public void UpdateGravity()
   {
     var isGravityEnabled = Mathf.Approximately(TargetHeight, 0f);
@@ -1654,14 +1701,16 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     }
   }
 
-  private new void OnEnable()
+  private void OnEnable()
   {
+    Instances.Add(this);
     MonoUpdaterInstances.Add(this);
     StartCoroutine(nameof(ShipFixRoutine));
   }
 
-  private new void OnDisable()
+  private void OnDisable()
   {
+    Instances.Remove(this);
     MonoUpdaterInstances.Remove(this);
     StopCoroutine(nameof(ShipFixRoutine));
   }

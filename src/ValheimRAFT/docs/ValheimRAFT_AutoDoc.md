@@ -85,7 +85,7 @@
 
 ### AllowFlight 
 - Description: Allow the raft to fly (jump\crouch to go up and down)
-- Default Value: false
+- Default Value: true
 
 ### AllowCustomRudderSpeeds 
 - Description: Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed. See advanced section for the actual speed settings.
@@ -113,10 +113,10 @@
 
 ### HullFloatationColliderLocation 
 - Description: Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20
-- Default Value: Center
+- Default Value: Custom
 
 ### HullFloatation Custom Offset 
-- Description: Hull Floatation Collider Customization, set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom
+- Description: Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
 - Default Value: 0
 
 ### EnableExactVehicleBounds 
@@ -133,11 +133,11 @@
 
 ### MaxPropulsionSpeed 
 - Description: Sets the absolute max speed a ship can ever hit. This is capped on the vehicle, so no forces applied will be able to exceed this value. 20-30f is safe, higher numbers could let the ship fail off the map
-- Default Value: 45
+- Default Value: 200
 
 ### MaxSailSpeed 
 - Description: Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.
-- Default Value: 35
+- Default Value: 163.4272
 
 ### MassPercentage 
 - Description: Sets the mass percentage of the ship that will slow down the sails
@@ -149,19 +149,19 @@
 
 ### Rudder Back Speed 
 - Description: Set the Back speed of rudder, this will apply with sails
-- Default Value: 1
+- Default Value: 5
 
 ### Rudder Slow Speed 
 - Description: Set the Slow speed of rudder, this will apply with sails
-- Default Value: 15
+- Default Value: 5
 
 ### Rudder Half Speed 
 - Description: Set the Half speed of rudder, this will apply with sails
-- Default Value: 40
+- Default Value: 50
 
 ### Rudder Full Speed 
 - Description: Set the Full speed of rudder, this will apply with sails
-- Default Value: 5
+- Default Value: 20
 
 ### HasShipWeightCalculations 
 - Description: enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less
@@ -205,7 +205,7 @@
 
 ### Flight Vertical Continues UntilToggled 
 - Description: Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button
-- Default Value: true
+- Default Value: false
 
 ### Only allow rudder speeds during flight 
 - Description: Flight allows for different rudder speeds, only use those and ignore sails
@@ -255,7 +255,7 @@
 
 ### chopDamage 
 - Description: chopDamage for Ram Blades excludes Ram Stakes. the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass.. Will damage trees dependending on tool tier settings
-- Default Value: 5
+- Default Value: 50
 
 ### pickaxeDamage 
 - Description: pickDamage the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass. Will damage rocks as well as other entities
@@ -353,6 +353,10 @@
 
 ## Propulsion
 
+### ExperimentalJitterFix 
+- Description: Makes the client owner of the ship physics the only client that force syncs the Vehicle Pieces. Makes all vehicle updates on non-physics owners utilize a kinematic rigidbody which makes the client appear much less janky and mostly removes camera shake especially during turning and high speeds. This config flag is expirimental so if your ship gets weird in multiplayer you may want to set this to false.
+- Default Value: true
+
 ### turningPowerNoRudder 
 - Description: Set the base turning power of the steering wheel
 - Default Value: 1
@@ -363,7 +367,7 @@
 
 ### slowAndReverseWithoutControls 
 - Description: Vehicles do not require controls while in slow and reverse with a person on them
-- Default Value: false
+- Default Value: true
 
 ### enableLandVehicles 
 - Description: Vehicles can now float on land. What is realism. Experimental only until wheels are invented. Must use rudder speeds to move forwards.
@@ -376,3 +380,7 @@
 ### shouldLiftAnchorOnSpeedChange 
 - Description: Lifts the anchor when using a speed change key, this is a QOL to prevent anchor from being required to be pressed when attempting to change the ship speed
 - Default Value: false
+
+### FlightClimbingSpeed 
+- Description: Ascent and Descent speed for the vehicle in the air. Numbers above 1 require turning the synced rigidbody for vehicle into another joint rigidbody.
+- Default Value: 8.43662
