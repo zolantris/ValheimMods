@@ -23,7 +23,7 @@ namespace ValheimVehicles.Vehicles;
 
 /// <summary>controller used for all vehicles</summary>
 /// <description> This is a controller used for all vehicles, Currently it must be initialized within a vehicle view IE VehicleShip or upcoming VehicleWheeled, and VehicleFlying instances.</description>
-public class VehiclePiecesController : MonoBehaviour
+public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 {
   /*
    * Get all the instances statically
@@ -36,6 +36,8 @@ public class VehiclePiecesController : MonoBehaviour
 
   public static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
+
+  public static List<IMonoUpdater> MonoUpdaterInstances = [];
 
   private static bool _allowPendingPiecesToActivate = true;
 
@@ -403,7 +405,12 @@ public class VehiclePiecesController : MonoBehaviour
 
   private void OnDisable()
   {
-    if (ActiveInstances.GetValueSafe(VehicleInstance.PersistentZdoId))
+    if (MonoUpdaterInstances.Contains(this))
+    {
+      MonoUpdaterInstances.Remove(this);
+    }
+
+    if (VehicleInstance != null && ActiveInstances.GetValueSafe(VehicleInstance.PersistentZdoId))
     {
       ActiveInstances.Remove(VehicleInstance.PersistentZdoId);
     }
@@ -417,6 +424,7 @@ public class VehiclePiecesController : MonoBehaviour
 
   private void OnEnable()
   {
+    MonoUpdaterInstances.Add(this);
     vehicleInitializationTimer.Restart();
 
     ActivatePendingPiecesCoroutine();
@@ -469,12 +477,22 @@ public class VehiclePiecesController : MonoBehaviour
     StopAllCoroutines();
   }
 
-  public virtual void SyncRigidbodyStats(float drag, float angularDrag)
+  public virtual void SyncRigidbodyStats(float drag, float angularDrag, bool flight)
   {
     if (!VehicleInstance?.MovementController?.m_body || m_statsOverride ||
         !VehicleInstance?.Instance || !m_body)
     {
       return;
+    }
+
+    if (flight && SelectedPhysicsMode == PhysicsMode.SyncedRigidbody)
+    {
+      ToggleVehiclePhysicsType();
+    }
+
+    if (!flight && SelectedPhysicsMode == PhysicsMode.DesyncedJointRigidbodyBody)
+    {
+      ToggleVehiclePhysicsType();
     }
 
     m_body.angularDrag = angularDrag;
@@ -488,8 +506,11 @@ public class VehiclePiecesController : MonoBehaviour
     m_body.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
   }
 
-  public static bool ForceKinematic = true;
+  public PhysicsMode SelectedPhysicsMode = PhysicsMode.SyncedRigidbody;
 
+  /// <summary>
+  /// Deprecated, for now. Will not be used unless this can be leveraged as a fix for some physics objects that need a kinematic rigidbody
+  /// </summary>
   private void SyncMovingPiecesContainer()
   {
     if (_movingPiecesContainer == null) return;
@@ -504,35 +525,47 @@ public class VehiclePiecesController : MonoBehaviour
     }
   }
 
-
-  public void Sync()
+  public enum PhysicsMode
   {
-    if (!(bool)m_body || !(bool)VehicleInstance?.MovementControllerRigidbody ||
-        VehicleInstance?.MovementController == null)
+    SyncedRigidbody,
+    DesyncedJointRigidbodyBody,
+  }
+
+  public void ToggleVehiclePhysicsType()
+  {
+    if (SelectedPhysicsMode == PhysicsMode.SyncedRigidbody)
     {
+      SelectedPhysicsMode = PhysicsMode.DesyncedJointRigidbodyBody;
       return;
     }
 
-    SyncMovingPiecesContainer();
-
-    if (ForceKinematic)
+    if (SelectedPhysicsMode == PhysicsMode.DesyncedJointRigidbodyBody)
     {
-      if (!m_body.isKinematic)
-      {
-        m_body.isKinematic = true;
-      }
-
-      if (m_fixedJoint.connectedBody)
-      {
-        m_fixedJoint.connectedBody = null;
-      }
-
-      m_body.MovePosition(VehicleInstance.MovementController.m_body.position);
-      m_body.MoveRotation(
-        VehicleInstance.MovementController.m_body.rotation);
+      SelectedPhysicsMode = PhysicsMode.SyncedRigidbody;
       return;
     }
+  }
 
+  public void KinematicSync()
+  {
+    if (VehicleInstance?.MovementController == null) return;
+    if (!m_body.isKinematic)
+    {
+      m_body.isKinematic = true;
+    }
+
+    if (m_fixedJoint.connectedBody)
+    {
+      m_fixedJoint.connectedBody = null;
+    }
+
+    m_body.MovePosition(VehicleInstance.MovementController.m_body.position);
+    m_body.MoveRotation(
+      VehicleInstance.MovementController.m_body.rotation);
+  }
+
+  public void JointSync()
+  {
     if (m_body.isKinematic)
     {
       m_body.isKinematic = false;
@@ -544,19 +577,71 @@ public class VehiclePiecesController : MonoBehaviour
     }
   }
 
-  private void Update()
+  /// <summary>
+  /// Client should use the Synced rigidbody by default.
+  ///
+  /// If pieceSync is enabled it runs only that logic
+  ///
+  /// Physics.SyncRigidbody is a performant way to sync the position of the pieces with the parent container that is applying physics
+  /// Cons
+  /// - The client(s) that do not own the boat physics suffer from mild-extreme shaking based on boat speed and turning velocity
+  ///
+  /// PhysicsMode.DesyncedJointRigidbodyBody -> A high quality way to do physics syncing by using a joint for the pieces container. Downsides are no concav meshes are allowed for physics. Will not work with nautilus (until there are custom colliders created).
+  /// Cons
+  /// - Clients all using their own calcs can have the pieces container desync from the parent boat sync they do not own the physics.
+  ///
+  /// HasPieceSyncTarget
+  /// - Client will use synced rigibody only if they are owner PhysicsMode.SyncedRigidbody
+  /// - Clients who are not the owner use the PhysicsMode.DesyncedJointRigidbodyBody
+  /// </summary>
+  public void Sync()
+  {
+    if (!(bool)m_body || !(bool)VehicleInstance?.MovementControllerRigidbody ||
+        VehicleInstance?.MovementController == null || VehicleInstance.NetView == null ||
+        VehicleInstance.Instance == null)
+    {
+      return;
+    }
+
+    var isNotFlying = Mathf.Approximately(VehicleInstance.Instance.TargetHeight, 0f);
+
+    if (VehicleMovementController.HasPieceSyncTarget && isNotFlying)
+    {
+      var vehiclePhysicsOwner = VehicleInstance.NetView.IsOwner();
+      if (vehiclePhysicsOwner)
+      {
+        KinematicSync();
+      }
+      else
+      {
+        JointSync();
+      }
+
+      return;
+    }
+
+    if (SelectedPhysicsMode == PhysicsMode.DesyncedJointRigidbodyBody || !isNotFlying)
+    {
+      JointSync();
+      return;
+    }
+
+    KinematicSync();
+  }
+
+  public void CustomUpdate(float deltaTime, float time)
   {
     Client_UpdateAllPieces();
 
     Sync();
   }
 
-  public void FixedUpdate()
+  public void CustomFixedUpdate(float deltaTime)
   {
     Sync();
   }
 
-  private void LateUpdate()
+  public void CustomLateUpdate(float deltaTime)
   {
     Sync();
     if (!ZNet.instance.IsServer())
@@ -1859,9 +1944,10 @@ public class VehiclePiecesController : MonoBehaviour
   private float GetAverageFloatHeightFromHulls()
   {
     _hullBounds = new Bounds();
-    if (m_hullPieces.Count <= 0)
+
+    if (m_hullPieces.Count <= 0 || !ValheimRaftPlugin.Instance.HullCollisionOnly.Value)
     {
-      return 0.5f;
+      return ValheimRaftPlugin.Instance.HullFloatationCustomColliderOffset.Value;
     }
 
     var totalHeight = 0f;
@@ -1883,6 +1969,7 @@ public class VehiclePiecesController : MonoBehaviour
       case ValheimRaftPlugin.HullFloatation.Top:
         return _hullBounds.max.y;
       case ValheimRaftPlugin.HullFloatation.Custom:
+        return ValheimRaftPlugin.Instance.HullFloatationCustomColliderOffset.Value;
       case ValheimRaftPlugin.HullFloatation.Center:
       default:
         return _hullBounds.center.y;
@@ -2145,13 +2232,13 @@ public class VehiclePiecesController : MonoBehaviour
     Vector3 boundsSize,
     GameObject netView)
   {
-    if (ShipHulls.GetExcludedBoundsPrefabs(netView.name)) return null;
     if (!(bool)m_floatcollider) return null;
     var outputBounds = new Bounds(boundsCenter, boundsSize);
     var colliders = netView.GetComponentsInChildren<Collider>();
     foreach (var collider in colliders)
     {
-      if (collider.gameObject.layer != PrefabRegistryHelpers.PieceLayer)
+      if (collider.gameObject.layer != PrefabRegistryHelpers.PieceLayer ||
+          collider.gameObject.name.StartsWith(PrefabNames.KeelColliderPrefix))
       {
         continue;
       }
@@ -2197,7 +2284,7 @@ public class VehiclePiecesController : MonoBehaviour
     var rope = go.GetComponent<RopeAnchorComponent>();
 
     if (!door && !ladder && !rope && !SailPrefabs.IsSail(go.name)
-        && !RamPrefabs.IsRam(go.name) && !ShipHulls.GetExcludedBoundsPrefabs(go.name))
+        && !RamPrefabs.IsRam(go.name))
     {
       if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value || PrefabNames.IsHull(go))
       {

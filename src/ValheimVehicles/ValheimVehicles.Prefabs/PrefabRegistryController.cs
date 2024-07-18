@@ -138,9 +138,9 @@ public class PrefabRegistryController : MonoBehaviour
     LoadValheimAssets.Instance.Init(prefabManager);
 
     // dependent on ValheimVehiclesShared
-    LoadValheimRaftAssets.Instance.Init(raftAssetBundle);
+    LoadValheimRaftAssets.Instance.Init(raftAssetBundle, vehicleSharedAssetBundle);
     // dependent on ValheimVehiclesShared and RaftAssetBundle
-    LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle);
+    LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle, vehicleSharedAssetBundle);
 
     // must be called after assets are loaded
     PrefabRegistryHelpers.Init();

@@ -20,7 +20,7 @@ public class LoadValheimRaftAssets : ILoadAssets
 
   public static GameObject? rope_anchor;
 
-  public void Init(AssetBundle assetBundle)
+  public void Init(AssetBundle assetBundle, AssetBundle sharedAssetBundle)
   {
     editPanel = assetBundle.LoadAsset<GameObject>("edit_sail_panel");
     editTexturePanel = assetBundle.LoadAsset<GameObject>("edit_texture_panel");

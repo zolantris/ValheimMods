@@ -178,6 +178,8 @@ public static class PrefabNames
     return $"{HullWall}_{materialVariantName}_{sizeVariant}";
   }
 
+  public const string KeelColliderPrefix = "keel_collider";
+
   public const string ShipHullPrefabName = "Ship_Hull";
 
   // hull

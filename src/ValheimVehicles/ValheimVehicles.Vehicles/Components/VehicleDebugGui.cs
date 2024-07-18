@@ -26,6 +26,8 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     return new Vector3(x, y, z);
   }
 
+  public static bool vehicleDebugPhysicsSync = true;
+
   private void OnGUI()
   {
     myButtonStyle ??= new GUIStyle(GUI.skin.button)
@@ -49,10 +51,20 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     }
 
     if (GUILayout.Button(
-          $"Toggle Sync Physics {VehiclePiecesController.ForceKinematic}"))
+          $"SyncPiecesPhysics {vehicleDebugPhysicsSync}"))
     {
-      VehiclePiecesController.ForceKinematic =
-        !VehiclePiecesController.ForceKinematic;
+      vehicleDebugPhysicsSync = !vehicleDebugPhysicsSync;
+      VehicleMovementController.SetPhysicsSyncTarget(
+        vehicleDebugPhysicsSync);
+    }
+
+    if (GUILayout.Button(
+          $"Toggle Sync Physics"))
+    {
+      foreach (var vehiclePiecesController in VehiclePiecesController.ActiveInstances)
+      {
+        vehiclePiecesController.Value?.ToggleVehiclePhysicsType();
+      }
     }
 
     if (GUILayout.Button("Delete ShipZDO"))

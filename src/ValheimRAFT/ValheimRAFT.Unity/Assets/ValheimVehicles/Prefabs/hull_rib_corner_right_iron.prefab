@@ -43,7 +43,6 @@ GameObject:
   - component: {fileID: 5030831400157368848}
   - component: {fileID: 3945230610782772347}
   - component: {fileID: 3854031241531347475}
-  - component: {fileID: 1476550263802168276}
   m_Layer: 10
   m_Name: iron_brace 5
   m_TagString: Untagged
@@ -60,8 +59,8 @@ Transform:
   m_GameObject: {fileID: 5759904968371650259}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -1, z: -0, w: 0}
-  m_LocalPosition: {x: -7.001, y: 0, z: -4.043}
-  m_LocalScale: {x: 1.01, y: 1, z: 0.01}
+  m_LocalPosition: {x: -7.001, y: -0.019, z: -4.043}
+  m_LocalScale: {x: 1.01, y: 1.01, z: 0.01}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7486246323030745406}
@@ -116,28 +115,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &1476550263802168276
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5759904968371650259}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 6320000259446333544, guid: 66815e8fb7eb7d74c84347705ef587c4, type: 3}
 --- !u!1001 &5678286940039010727
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -237,6 +214,30 @@ PrefabInstance:
     - target: {fileID: 8846114474742255218, guid: ebce0810bab296c40bf4b6882e11b246, type: 3}
       propertyPath: m_Layer
       value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8994084182216717445, guid: ebce0810bab296c40bf4b6882e11b246, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8994084182216717445, guid: ebce0810bab296c40bf4b6882e11b246, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8994084182216717445, guid: ebce0810bab296c40bf4b6882e11b246, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8994084182216717445, guid: ebce0810bab296c40bf4b6882e11b246, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.2889683
+      objectReference: {fileID: 0}
+    - target: {fileID: 8994084182216717445, guid: ebce0810bab296c40bf4b6882e11b246, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.0040056705
+      objectReference: {fileID: 0}
+    - target: {fileID: 8994084182216717445, guid: ebce0810bab296c40bf4b6882e11b246, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 9.682932
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -38,7 +38,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "2.2.1";
+  public const string Version = "2.2.2";
   public const string ModName = "ValheimRAFT";
   public const string ModGuid = $"{Author}.{ModName}";
   public const string HarmonyGuid = $"{Author}.{ModName}";
@@ -176,7 +176,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     HullFloatationCustomColliderOffset = Config.Bind("Vehicles", "HullFloatation Custom Offset",
       0f,
       CreateConfigDescription(
-        "Hull Floatation Collider Customization, set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom",
+        "Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.",
         true, true, new AcceptableValueRange<float>(-20, 20)
       ));
 
@@ -206,14 +206,14 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private void CreatePropulsionConfig()
   {
     ShowShipStats = Config.Bind("Debug", "ShowShipState", true);
-    MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxPropulsionSpeed", 30f,
+    MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxPropulsionSpeed", 45f,
       CreateConfigDescription(
         "Sets the absolute max speed a ship can ever hit. This is capped on the vehicle, so no forces applied will be able to exceed this value. 20-30f is safe, higher numbers could let the ship fail off the map",
-        true));
-    MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 20f,
+        true, false, new AcceptableValueRange<float>(10, 200)));
+    MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 30f,
       CreateConfigDescription(
         "Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.",
-        true));
+        true, false, new AcceptableValueRange<float>(10, 200)));
     MassPercentageFactor = Config.Bind("Propulsion", "MassPercentage", 55f, CreateConfigDescription(
       "Sets the mass percentage of the ship that will slow down the sails",
       true));

@@ -1,10 +1,15 @@
+using System;
 using BepInEx.Configuration;
+using ComfyLib;
+using ValheimVehicles.Vehicles;
 
 namespace ValheimVehicles.Config;
 
 public static class PropulsionConfig
 {
   public static ConfigFile? Config { get; private set; }
+
+  public static ConfigEntry<float> VehicleFlightClimbingSpeed { get; private set; } = null!;
 
   public static ConfigEntry<float> TurnPowerNoRudder { get; private set; } = null!;
   public static ConfigEntry<float> TurnPowerWithRudder { get; private set; } = null!;
@@ -15,6 +20,9 @@ public static class PropulsionConfig
 
   public static ConfigEntry<bool> AllowBaseGameSailRotation { get; private set; } = null!;
 
+  public static ConfigEntry<bool> EnableExperimentalMultiplayerJitterFix { get; private set; } =
+    null!;
+
   private const string SectionName = "Propulsion";
 
   /// <summary>
@@ -24,6 +32,11 @@ public static class PropulsionConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
+
+    EnableExperimentalMultiplayerJitterFix = Config.Bind(SectionName, "ExperimentalJitterFix", true,
+      ConfigHelpers.CreateConfigDescription(
+        "Makes the client owner of the ship physics the only client that force syncs the Vehicle Pieces. Makes all vehicle updates on non-physics owners utilize a kinematic rigidbody which makes the client appear much less janky and mostly removes camera shake especially during turning and high speeds. This config flag is expirimental so if your ship gets weird in multiplayer you may want to set this to false.",
+        true));
 
     TurnPowerNoRudder = Config.Bind(SectionName, "turningPowerNoRudder", 1f,
       ConfigHelpers.CreateConfigDescription(
@@ -51,5 +64,18 @@ public static class PropulsionConfig
     ShouldLiftAnchorOnSpeedChange = Config.Bind(SectionName, "shouldLiftAnchorOnSpeedChange", false,
       ConfigHelpers.CreateConfigDescription(
         "Lifts the anchor when using a speed change key, this is a QOL to prevent anchor from being required to be pressed when attempting to change the ship speed"));
+
+    VehicleFlightClimbingSpeed = Config.Bind(SectionName, "FlightClimbingSpeed", 5f,
+      ConfigHelpers.CreateConfigDescription(
+        "Ascent and Descent speed for the vehicle in the air. Numbers above 1 require turning the synced rigidbody for vehicle into another joint rigidbody.",
+        true, true, new AcceptableValueRange<float>(1, 10)));
+
+    EnableExperimentalMultiplayerJitterFix.SettingChanged +=
+      (sender, args) =>
+        VehicleMovementController.SetPhysicsSyncTarget(EnableExperimentalMultiplayerJitterFix
+          .Value);
+
+    // setters that must be called on init
+    VehicleMovementController.SetPhysicsSyncTarget(EnableExperimentalMultiplayerJitterFix.Value);
   }
 }
