@@ -597,12 +597,15 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void Sync()
   {
     if (!(bool)m_body || !(bool)VehicleInstance?.MovementControllerRigidbody ||
-        VehicleInstance?.MovementController == null || VehicleInstance.NetView == null)
+        VehicleInstance?.MovementController == null || VehicleInstance.NetView == null ||
+        VehicleInstance.Instance == null)
     {
       return;
     }
 
-    if (VehicleMovementController.HasPieceSyncTarget)
+    var isNotFlying = Mathf.Approximately(VehicleInstance.Instance.TargetHeight, 0f);
+
+    if (VehicleMovementController.HasPieceSyncTarget && isNotFlying)
     {
       var vehiclePhysicsOwner = VehicleInstance.NetView.IsOwner();
       if (vehiclePhysicsOwner)
