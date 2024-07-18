@@ -620,15 +620,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       return;
     }
 
-    if (SelectedPhysicsMode == PhysicsMode.SyncedRigidbody)
-    {
-      KinematicSync();
-    }
-
-    if (SelectedPhysicsMode == PhysicsMode.DesyncedJointRigidbodyBody)
+    if (SelectedPhysicsMode == PhysicsMode.DesyncedJointRigidbodyBody || !isNotFlying)
     {
       JointSync();
+      return;
     }
+
+    KinematicSync();
   }
 
   public void CustomUpdate(float deltaTime, float time)

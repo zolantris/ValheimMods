@@ -601,10 +601,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   {
     if (direction == Vector3.right)
     {
-      return m_floatcollider.extents.x;
+      return m_floatcollider.size.x / 2;
     }
 
-    return m_floatcollider.extents.z;
+    return m_floatcollider.size.z / 2;
   }
 
   public void CustomPhysics()
