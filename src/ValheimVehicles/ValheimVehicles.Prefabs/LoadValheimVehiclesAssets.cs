@@ -121,7 +121,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   /// todo investigate if it's cleaner to do this load within the registration process.
   /// todo this approach retains the asset in memory adding a unnecessary (small) burden to valheim. Possibly swap this out for a dynamic name generator so things do not need to be hardcoded
   /// <param name="assetBundle"></param>
-  public void Init(AssetBundle assetBundle)
+  public void Init(AssetBundle assetBundle, AssetBundle sharedAssetBundle)
   {
     _bundle = assetBundle;
 
@@ -130,7 +130,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
     ShipNautilus = assetBundle.LoadAsset<GameObject>("nautilus.prefab");
 
     SteeringWheel = assetBundle.LoadAsset<GameObject>("steering_wheel.prefab");
-    PieceShader = assetBundle.LoadAsset<Shader>("Custom_Piece.shader");
+    PieceShader = sharedAssetBundle.LoadAsset<Shader>("Custom_Piece.shader");
     ShipKeelAsset = assetBundle.LoadAsset<GameObject>("keel");
     VehicleSwitchAsset = assetBundle.LoadAsset<GameObject>("vehicle_switch");
     VehicleShipAsset =
