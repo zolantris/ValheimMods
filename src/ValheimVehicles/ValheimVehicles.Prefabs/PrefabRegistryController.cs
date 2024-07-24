@@ -199,7 +199,7 @@ public class PrefabRegistryController : MonoBehaviour
   private static void RegisterRopeLadder()
   {
     var mbRopeLadderPrefab =
-      prefabManager.CreateClonedPrefab("MBRopeLadder", LoadValheimRaftAssets.ropeLadder);
+      prefabManager.CreateClonedPrefab(PrefabNames.MBRopeLadder, LoadValheimRaftAssets.ropeLadder);
 
     var mbRopeLadderPrefabPiece = mbRopeLadderPrefab.AddComponent<Piece>();
     mbRopeLadderPrefabPiece.m_name = "$mb_rope_ladder";

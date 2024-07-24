@@ -529,8 +529,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   public void CustomFixedUpdate(float deltaTime)
   {
-    ((IMonoUpdater)zsyncTransform).CustomFixedUpdate(deltaTime);
-
     if (!(bool)m_body || !(bool)m_floatcollider)
     {
       return;

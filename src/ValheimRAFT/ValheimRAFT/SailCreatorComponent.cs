@@ -28,13 +28,14 @@ public class SailCreatorComponent : MonoBehaviour
       return;
     }
 
-    foreach (var sailCreator in m_sailCreators.ToList())
+    if (m_sailCreators.ToList().Any(sailCreator => sailCreator == null))
     {
-      if (sailCreator == null) m_sailCreators.Remove(sailCreator);
+      m_sailCreators.Clear();
+      return;
     }
 
     if (m_sailCreators.Count > 0 &&
-        (m_sailCreators[0].transform.position - base.transform.position).sqrMagnitude >
+        (m_sailCreators[0].transform.position - transform.position).sqrMagnitude >
         SailComponent.m_maxDistanceSqr)
     {
       Logger.LogDebug("Sail creator corner distance too far.");
@@ -51,11 +52,12 @@ public class SailCreatorComponent : MonoBehaviour
 
   public void CreateSailFromCorners()
   {
+    if (m_sailCreators.Count < 1) return;
+    if (!sailPrefab) return;
     Logger.LogDebug($"Creating new sail {m_sailCreators.Count}/{m_sailSize}");
 
     var center =
       (m_sailCreators[0].transform.position + m_sailCreators[1].transform.position) / 2f;
-    if (!sailPrefab) return;
 
     // must switch initialization state to false otherwise LoadZDO will run and see the ZDO is erroring and delete itself
     var sailPrefabInstance = Instantiate(sailPrefab, center, Quaternion.identity);

@@ -21,8 +21,13 @@ public class LoadValheimAssets
   public static GameObject raftMast;
   public static GameObject shipWaterEffects;
 
+  public static Shader CustomPieceShader;
+
   public void Init(PrefabManager prefabManager)
   {
+    // should come directly from JVLCache
+    CustomPieceShader = PrefabManager.Cache.GetPrefab<Shader>("Custom/Piece");
+
     vanillaRaftPrefab = prefabManager.GetPrefab("Raft");
     vikingShipPrefab = prefabManager.GetPrefab("VikingShip");
     drakkarPrefab = prefabManager.GetPrefab("VikingShip_Ashlands");

@@ -2133,6 +2133,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
   }
 
+
   /// <summary>
   /// Ignore all colliders on the vehicleShip for a placed ram so it doesn't make the Vehicle Freak out
   /// </summary>
@@ -2281,9 +2282,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     var door = go.GetComponentInChildren<Door>();
     var ladder = go.GetComponent<RopeLadderComponent>();
-    var rope = go.GetComponent<RopeAnchorComponent>();
+    var isRope = go.name.Equals(PrefabNames.MBRopeLadder);
 
-    if (!door && !ladder && !rope && !SailPrefabs.IsSail(go.name)
+    if (!door && !ladder && !isRope && !SailPrefabs.IsSail(go.name)
         && !RamPrefabs.IsRam(go.name))
     {
       if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value || PrefabNames.IsHull(go))

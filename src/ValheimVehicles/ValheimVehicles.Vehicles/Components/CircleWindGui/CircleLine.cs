@@ -37,7 +37,7 @@ public class CircleLine : MonoBehaviour
 
   private void CreateCircleLine()
   {
-    lineRendererMaterial = new Material(LoadValheimVehicleAssets.PieceShader)
+    lineRendererMaterial = new Material(LoadValheimAssets.CustomPieceShader)
     {
       color = MaterialColor
     };

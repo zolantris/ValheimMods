@@ -241,10 +241,20 @@ public class EditSailComponentPanel
         mat.SetTextureScale(parameterName + "Tex", textureScale);
       }
     });
-    rot.onValueChanged.AddListener(delegate(string str)
+    var rotationShaderValue = parameterName + "Rotation";
+    if (mat.HasProperty(rotationShaderValue))
     {
-      if (float.TryParse(str, out var result)) mat.SetFloat(parameterName + "Rotation", result);
-    });
+      rot.gameObject.SetActive(true);
+      rot.onValueChanged.AddListener(delegate(string str)
+      {
+        if (float.TryParse(str, out var result)) mat.SetFloat(parameterName + "Rotation", result);
+      });
+    }
+    else
+    {
+      rot.gameObject.SetActive(false);
+    }
+
     var tex = mat.GetTexture(parameterName + "Tex");
     var customtex =
       group.GetTextureByHash(tex.name.GetStableHashCode());
