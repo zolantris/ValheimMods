@@ -2136,11 +2136,16 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     if (m_ramPieces.Count <= 0 && m_boardingRamps.Count <= 0) return;
     var colliders = netView.GetComponentsInChildren<Collider>();
-    foreach (var mRamPiece in m_ramPieces)
+    foreach (var mRamPiece in m_ramPieces.ToList())
     {
+      if (!mRamPiece)
+      {
+        continue;
+      }
+
       var ramColliders = mRamPiece.GetComponentsInChildren<Collider>();
 
-      foreach (var collider in colliders)
+      foreach (var collider in colliders.ToList())
       {
         foreach (var ramCollider in ramColliders)
         {
@@ -2149,8 +2154,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       }
     }
 
-    foreach (var ramp in m_boardingRamps)
+    foreach (var ramp in m_boardingRamps.ToList())
     {
+      if (!ramp)
+      {
+        continue;
+      }
+
       var rampColliders = ramp.GetComponentsInChildren<Collider>();
 
       foreach (var collider in colliders)

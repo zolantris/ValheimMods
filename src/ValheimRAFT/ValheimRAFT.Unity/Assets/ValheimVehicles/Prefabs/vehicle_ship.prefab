@@ -266,7 +266,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2128912450813892024}
-  m_Layer: 29
+  m_Layer: 10
   m_Name: vehicle_moving_pieces
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -376,7 +376,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6770470994868771219}
   - component: {fileID: 4370862714703113808}
-  m_Layer: 29
+  m_Layer: 10
   m_Name: vehicle_movement
   m_TagString: Untagged
   m_Icon: {fileID: 0}
