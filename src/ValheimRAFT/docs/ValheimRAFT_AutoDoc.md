@@ -113,7 +113,7 @@
 
 ### HullFloatationColliderLocation 
 - Description: Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20
-- Default Value: Custom
+- Default Value: Bottom
 
 ### HullFloatation Custom Offset 
 - Description: Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
@@ -121,7 +121,7 @@
 
 ### EnableExactVehicleBounds 
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible
-- Default Value: false
+- Default Value: true
 
 ## Debug
 
@@ -327,11 +327,19 @@
 - Description: Allows you to customize what piece the raft initializes with. Admins only as this can be overpowered.
 - Default Value: Hull4X8
 
+### ropeLadderRunClimbSpeedMult 
+- Description: Allows you to customize how fast you can climb a ladder when in run mode
+- Default Value: 2
+
+### ropeLadderHints 
+- Description: Shows the controls required to auto ascend/descend and run to speedup ladder
+- Default Value: true
+
 ## Vehicle Debugging
 
 ### Always Show Vehicle Colliders 
 - Description: Automatically shows the vehicle colliders useful for debugging the vehicle
-- Default Value: false
+- Default Value: true
 
 ### Vehicle Debug Menu 
 - Description: Enable the VehicleDebugMenu. This shows a GUI menu which has a few shortcuts to debugging/controlling vehicles.
@@ -383,4 +391,4 @@
 
 ### FlightClimbingSpeed 
 - Description: Ascent and Descent speed for the vehicle in the air. Numbers above 1 require turning the synced rigidbody for vehicle into another joint rigidbody.
-- Default Value: 8.43662
+- Default Value: 5.690141
