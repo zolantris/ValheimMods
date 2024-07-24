@@ -8,6 +8,8 @@ namespace ValheimVehicles.Prefabs;
  * @todo register translatable pieceName and pieceDescription based on these names for easy lookups
  *
  * @warning Do not rename prefabs, prefabs that are renamed will orphan older gameobjects and will be deleted by valheim meaning it will break/delete pieces on pre-existing ships.
+ *
+ * @note anything prefixed with MB should be considered a deprecated compatibility name. Changing names to have the new prefix should only be done in a major version bump. Also a name remapper should be provided (for orphaned zdo pieces).
  */
 public static class PrefabNames
 {
@@ -77,6 +79,7 @@ public static class PrefabNames
     $"{ValheimVehiclesPrefix}_PlayerSpawnControllerObj";
 
 
+  public const string MBRopeLadder = "MBRopeLadder";
   public const string MBRaft = "MBRaft";
   public const string Nautilus = $"{ValheimVehiclesPrefix}_VehiclePresets_Nautilus";
   public static int m_raftHash = MBRaft.GetStableHashCode();

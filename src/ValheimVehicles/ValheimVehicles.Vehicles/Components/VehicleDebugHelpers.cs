@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using HarmonyLib;
+using Jotunn.Managers;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimVehicles.Config;
@@ -263,8 +264,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     var color = lineColor ?? LineColorDefault;
 
     if (boxCollider == null) return;
-    var unlitColor = LoadValheimVehicleAssets.PieceShader;
-    var material = new Material(unlitColor)
+    var material = new Material(LoadValheimAssets.CustomPieceShader)
     {
       color = color
     };

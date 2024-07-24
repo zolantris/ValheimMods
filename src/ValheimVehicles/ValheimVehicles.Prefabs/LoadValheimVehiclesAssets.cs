@@ -67,7 +67,6 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
   // generic/misc
   public static SpriteAtlas VehicleSprites = null!;
-  public static Shader PieceShader = null!;
 
   public static readonly LoadValheimVehicleAssets Instance = new();
 
@@ -130,7 +129,6 @@ public class LoadValheimVehicleAssets : ILoadAssets
     ShipNautilus = assetBundle.LoadAsset<GameObject>("nautilus.prefab");
 
     SteeringWheel = assetBundle.LoadAsset<GameObject>("steering_wheel.prefab");
-    PieceShader = sharedAssetBundle.LoadAsset<Shader>("Custom_Piece.shader");
     ShipKeelAsset = assetBundle.LoadAsset<GameObject>("keel");
     VehicleSwitchAsset = assetBundle.LoadAsset<GameObject>("vehicle_switch");
     VehicleShipAsset =

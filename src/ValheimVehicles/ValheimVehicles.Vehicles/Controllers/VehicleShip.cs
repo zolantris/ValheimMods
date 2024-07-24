@@ -233,6 +233,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     }
   }
 
+  // updates the vehicle water effects if flying/not flying
   public void UpdateShipEffects()
   {
     ShipEffectsObj?.SetActive(!(TargetHeight > 0f || isCreative));
@@ -299,8 +300,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     }
 
     InitializeVehiclePiecesController();
-
-    UpdateShipSounds(this);
   }
 
   public void Start()
@@ -309,6 +308,9 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     {
       InitializeVehicleDebugger();
     }
+
+    UpdateShipSounds(this);
+    UpdateShipEffects();
   }
 
   public void OnEnable()

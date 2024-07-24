@@ -223,19 +223,18 @@ public class SailPrefabs : IRegisterPrefab
     sailCreatorComponent.m_sailSize = sailCount;
 
     var mesh = prefab.GetComponent<MeshRenderer>();
-    var unlitColor = LoadValheimVehicleAssets.PieceShader;
-    var material = new Material(unlitColor)
+    var material = new Material(LoadValheimAssets.CustomPieceShader)
     {
       color = Color.green
     };
-    mesh.sharedMaterial = material;
+    mesh.material = material;
     mesh.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
     var sailIcon = sailCount == 3
       ? LoadValheimVehicleAssets.VehicleSprites.GetSprite("customsail_tri")
       : LoadValheimVehicleAssets.VehicleSprites.GetSprite("customsail");
 
-    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    pieceManager.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = "Hammer",
       Description = $"$mb_sail_{sailCount}_desc",

@@ -529,8 +529,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
 
   public void CustomFixedUpdate(float deltaTime)
   {
-    ((IMonoUpdater)zsyncTransform).CustomFixedUpdate(deltaTime);
-
     if (!(bool)m_body || !(bool)m_floatcollider)
     {
       return;
@@ -695,6 +693,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
   public void UpdateShipFlying()
   {
     UpdateVehicleStats(true);
+    UpdateAndFreezeRotation();
     // early exit if anchored.
     if (UpdateAnchorVelocity(m_body.velocity))
     {
@@ -702,7 +701,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement, 
     }
 
     m_body.WakeUp();
-    UpdateAndFreezeRotation();
     Flying_UpdateShipBalancingForce();
 
     if (!ValheimRaftPlugin.Instance.FlightHasRudderOnly.Value)
