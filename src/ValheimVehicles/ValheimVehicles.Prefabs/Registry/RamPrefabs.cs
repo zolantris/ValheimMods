@@ -31,9 +31,6 @@ public class RamPrefabs : IRegisterPrefab
     public int size;
   }
 
-  public static bool IsRam(string objName) => objName.StartsWith(PrefabNames.RamBladePrefix) ||
-                                              objName.StartsWith(PrefabNames.RamStakePrefix);
-
 
   private static VehicleRamAoe SetupAoeComponent(GameObject colliderObj)
   {

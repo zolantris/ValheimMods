@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
@@ -89,7 +90,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public Rigidbody m_body { get; set; }
 
-  internal ZNetView m_nview;
+  public ZNetView m_nview;
 
   internal Cloth m_sailCloth;
 
@@ -135,7 +136,11 @@ public class ValheimBaseGameShip : MonoBehaviour
         (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(OnDestroyed));
     }
 
-    m_body = GetComponent<Rigidbody>();
+    if (!m_body)
+    {
+      m_body = VehicleShip.GetVehicleMovingPiecesObj(transform).GetComponent<Rigidbody>();
+    }
+
     if (!m_body)
     {
       Logger.LogError("No rigidbody detected, ship must have a Rigidbody to work");
@@ -150,10 +155,7 @@ public class ValheimBaseGameShip : MonoBehaviour
       enabled = false;
     }
 
-
     Heightmap.ForceGenerateAll();
-
-    // m_sailCloth = m_sailObject.GetComponent<Cloth>();
   }
 
   /**
@@ -164,10 +166,10 @@ public class ValheimBaseGameShip : MonoBehaviour
     return m_players.Count == 0;
   }
 
-  // internal void Start()
-  // {
-  //   InvokeRepeating(nameof(UpdateOwner), 2f, 2f);
-  // }
+  internal void Start()
+  {
+    InvokeRepeating(nameof(UpdateOwner), 2f, 2f);
+  }
 
   internal void PrintStats()
   {

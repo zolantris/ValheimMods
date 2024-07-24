@@ -1,6 +1,7 @@
 using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Patches;
@@ -94,5 +95,37 @@ public class VehicleMovementPatches
     {
       Logger.LogError("DeltaTime is out of sync even with synchronous calls");
     }
+  }
+
+  // TODO patch only ZSyncTransform getter for m_body value
+  [HarmonyPatch(typeof(ZSyncTransform), nameof(ZSyncTransform.Awake))]
+  [HarmonyPrefix]
+  public static bool ZsyncTransformAwake(ZSyncTransform __instance)
+  {
+    var vehicleShip = __instance.GetComponent<VehicleShip>();
+    if (!vehicleShip) return true;
+
+    __instance.m_nview = __instance.GetComponent<ZNetView>();
+
+    __instance.m_body = VehicleShip.GetVehicleMovingPiecesObj(__instance.transform)
+      .GetComponent<Rigidbody>();
+    __instance.m_projectile = __instance.GetComponent<Projectile>();
+    __instance.m_character = __instance.GetComponent<Character>();
+    if (__instance.m_nview.GetZDO() == null)
+    {
+      __instance.enabled = false;
+    }
+    else
+    {
+      if ((bool)(Object)__instance.m_body)
+      {
+        __instance.m_isKinematicBody = __instance.m_body.isKinematic;
+        __instance.m_useGravity = __instance.m_body.useGravity;
+      }
+
+      __instance.m_wasOwner = __instance.m_nview.GetZDO().IsOwner();
+    }
+
+    return false;
   }
 }

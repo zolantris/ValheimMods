@@ -39,7 +39,8 @@ public class WearNTear_Patch
   [HarmonyPrefix]
   private static bool WearNTear_Repair(WearNTear __instance, ref bool __result)
   {
-    if (RamConfig.CanRepairRams.Value || !RamPrefabs.IsRam(__instance.gameObject.name)) return true;
+    if (RamConfig.CanRepairRams.Value || !PrefabNames.IsRam(__instance.gameObject.name))
+      return true;
 
     __result = false;
     return false;
@@ -86,7 +87,7 @@ public class WearNTear_Patch
       }
     }
 
-    if (RamPrefabs.IsRam(__instance.name))
+    if (PrefabNames.IsRam(__instance.name))
     {
       var vehicle = __instance.GetComponentInParent<VehicleShip>();
       vehicle?.VehiclePiecesController?.DestroyPiece(__instance);

@@ -232,6 +232,9 @@ public static class PrefabNames
   public const string VehicleShipMovementOrientation = "VehicleShip_MovementOrientation";
   public const string VehicleHudAnchorIndicator = $"{ValheimVehiclesPrefix}_HudAnchorIndicator";
 
+  public static bool IsRamp(string name) =>
+    name.StartsWith(BoardingRamp) || name.StartsWith(BoardingRampWide);
+
   public const string RamBladePrefix = $"{ValheimVehiclesPrefix}_ram_blade";
   public const string RamStakePrefix = $"{ValheimVehiclesPrefix}_ram_stake";
 
@@ -252,6 +255,9 @@ public static class PrefabNames
            objName.StartsWith(WaterVehicleFloatCollider) ||
            objName.StartsWith(WaterVehicleOnboardCollider);
   }
+
+  public static bool IsRam(string objName) => objName.StartsWith(RamBladePrefix) ||
+                                              objName.StartsWith(RamStakePrefix);
 
   public static bool IsHull(GameObject go)
   {

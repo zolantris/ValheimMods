@@ -7,21 +7,21 @@ public class LoadValheimAssets
 {
   public static readonly LoadValheimAssets Instance = new();
 
-  public static GameObject vanillaRaftPrefab;
-  public static GameObject vikingShipPrefab;
-  public static GameObject drakkarPrefab;
-  public static Transform waterMask;
+  public static GameObject vanillaRaftPrefab = null!;
+  public static GameObject vikingShipPrefab = null!;
+  public static GameObject drakkarPrefab = null!;
+  public static Transform waterMask = null!;
 
-  public static Piece woodFloorPiece;
-  public static WearNTear woodFloorPieceWearNTear;
+  public static Piece woodFloorPiece = null!;
+  public static WearNTear woodFloorPieceWearNTear = null!;
 
-  public static Piece stoneFloorPiece;
-  public static WearNTear stoneFloorPieceWearNTear;
+  public static Piece stoneFloorPiece = null!;
+  public static WearNTear stoneFloorPieceWearNTear = null!;
 
-  public static GameObject raftMast;
-  public static GameObject shipWaterEffects;
+  public static GameObject raftMast = null!;
+  public static GameObject shipWaterEffects = null!;
 
-  public static Shader CustomPieceShader;
+  public static Shader CustomPieceShader = null!;
 
   public void Init(PrefabManager prefabManager)
   {

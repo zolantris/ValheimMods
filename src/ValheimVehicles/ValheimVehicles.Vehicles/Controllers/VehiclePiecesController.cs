@@ -947,7 +947,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       _steeringWheelPieces.Remove(wheel);
     }
 
-    var isRam = RamPrefabs.IsRam(netView.name);
+    var isRam = PrefabNames.IsRam(netView.name);
     if (isRam)
     {
       m_ramPieces.Remove(netView);
@@ -1572,7 +1572,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
 
     var rb = netView.GetComponentInChildren<Rigidbody>();
-    if ((bool)rb && !rb.isKinematic && !RamPrefabs.IsRam((netView.name)))
+    if ((bool)rb && !rb.isKinematic && !PrefabNames.IsRam((netView.name)))
     {
       return;
     }
@@ -1616,10 +1616,21 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   /// <param name="targetTransform"></param>
   public void SetPieceToParent(Transform targetTransform)
   {
-    if (RamPrefabs.IsRam(targetTransform.name))
+    var movingPiecesTransform = VehicleInstance?.Instance?.movingPiecesContainer.transform;
+
+    if (movingPiecesTransform != null)
     {
-      targetTransform.SetParent(VehicleInstance?.Instance?.transform);
-      return;
+      if (PrefabNames.IsRam(targetTransform.name))
+      {
+        targetTransform.SetParent(movingPiecesTransform);
+        return;
+      }
+
+      if (PrefabNames.IsRamp(targetTransform.name))
+      {
+        targetTransform.SetParent(movingPiecesTransform);
+        return;
+      }
     }
 
     targetTransform.SetParent(_piecesContainer);
@@ -1731,15 +1742,16 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     SetPieceToParent(netView.transform);
 
-    if (netView.m_zdo != null)
+    var nvZdo = netView.GetZDO();
+
+    if (nvZdo != null)
     {
       netView.m_zdo.Set(VehicleZdoVars.MBParentIdHash, VehicleInstance.PersistentZdoId);
       netView.m_zdo.Set(VehicleZdoVars.MBRotationVecHash,
         netView.transform.localRotation.eulerAngles);
       netView.m_zdo.Set(VehicleZdoVars.MBPositionHash, netView.transform.localPosition);
     }
-
-    if (netView.GetZDO() == null)
+    else
     {
       Logger.LogError("NetView has no valid ZDO returning");
       return;
@@ -1777,7 +1789,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
 
     FixPieceMeshes(netView);
-    IgnoreCollidersForAllRamPieces(netView);
+    IgnoreCollidersForAllMovementPieces(netView);
 
     var shouldRebuildBounds = false;
     totalSailArea = 0;
@@ -1851,7 +1863,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       ladder.vehiclePiecesController = this;
     }
 
-    var isRam = RamPrefabs.IsRam(netView.name);
+    var isRam = PrefabNames.IsRam(netView.name);
     if (isRam)
     {
       m_ramPieces.Add(netView);
@@ -2115,9 +2127,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     m_onboardcollider.transform.localPosition = onboardColliderCenter;
   }
 
-  public void IgnoreCollidersForAllRamPieces(ZNetView netView)
+  /// <summary>
+  /// ramps, and rams must both be ignored since they exist outside the vehicle ship pieces controller and need a physics engine. More pieces will be added if they containe physics elements.
+  /// </summary>
+  /// This must be called per component otherwise returning/re-rendering the vehicle will cause a collision
+  /// <param name="netView"></param>
+  public void IgnoreCollidersForAllMovementPieces(ZNetView netView)
   {
-    if (m_ramPieces.Count <= 0) return;
+    if (m_ramPieces.Count <= 0 && m_boardingRamps.Count <= 0) return;
     var colliders = netView.GetComponentsInChildren<Collider>();
     foreach (var mRamPiece in m_ramPieces)
     {
@@ -2131,16 +2148,24 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         }
       }
     }
+
+    foreach (var ramp in m_boardingRamps)
+    {
+      var rampColliders = ramp.GetComponentsInChildren<Collider>();
+
+      foreach (var collider in colliders)
+      {
+        foreach (var rampCollider in rampColliders)
+        {
+          Physics.IgnoreCollision(collider, rampCollider, true);
+        }
+      }
+    }
   }
 
-
-  /// <summary>
-  /// Ignore all colliders on the vehicleShip for a placed ram so it doesn't make the Vehicle Freak out
-  /// </summary>
-  /// <param name="ramColliders">Colliders from a Ram</param>
-  public void IgnoreCollidersOnShipForRams(List<Collider> ramColliders)
+  public void IgnoreCollidersOnShipForVehicleMovingPrefabs(List<Collider> movingColliders)
   {
-    foreach (var t in ramColliders)
+    foreach (var t in movingColliders)
     {
       if (t == null) continue;
       if (m_floatcollider) Physics.IgnoreCollision(t, m_floatcollider, true);
@@ -2273,19 +2298,22 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     var colliders = GetCollidersInPiece(go);
 
-    if (RamPrefabs.IsRam(go.name))
+    if (PrefabNames.IsRam(go.name) || PrefabNames.IsRamp(go.name))
     {
-      IgnoreCollidersOnShipForRams(colliders);
+      IgnoreCollidersOnShipForVehicleMovingPrefabs(colliders);
+    }
+    else
+    {
+      IgnoreShipColliders(colliders);
     }
 
-    IgnoreShipColliders(colliders);
 
     var door = go.GetComponentInChildren<Door>();
     var ladder = go.GetComponent<RopeLadderComponent>();
     var isRope = go.name.Equals(PrefabNames.MBRopeLadder);
 
     if (!door && !ladder && !isRope && !SailPrefabs.IsSail(go.name)
-        && !RamPrefabs.IsRam(go.name))
+        && !PrefabNames.IsRam(go.name) || PrefabNames.IsRamp(go.name))
     {
       if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value || PrefabNames.IsHull(go))
       {

@@ -162,8 +162,6 @@ public class PrefabRegistryController : MonoBehaviour
 
     // VehiclePrefabs
     VehiclePiecesPrefab.Instance.Register(prefabManager, pieceManager);
-    WaterVehiclePrefab.Instance.Register(prefabManager, pieceManager);
-
     RamPrefabs.Instance.Register(prefabManager, pieceManager);
   }
 
@@ -171,6 +169,8 @@ public class PrefabRegistryController : MonoBehaviour
   {
     // Critical Items
     RaftPrefab.Instance.Register(prefabManager, pieceManager);
+    WaterVehiclePrefab.Instance.Register(prefabManager, pieceManager);
+
     ShipSteeringWheelPrefab.Instance.Register(prefabManager, pieceManager);
 
     // ValheimVehicle Prefabs

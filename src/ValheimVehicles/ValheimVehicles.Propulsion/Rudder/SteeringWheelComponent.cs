@@ -303,7 +303,8 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable, ID
 
     if (!ShipInstance?.Instance?.MovementController) return false;
 
-    ShipInstance.Instance.MovementController.SendRequestControl(player.GetPlayerID(), AttachPoint);
+    ShipInstance?.Instance?.MovementController?.SendRequestControl(player.GetPlayerID(),
+      AttachPoint);
     return true;
   }
 

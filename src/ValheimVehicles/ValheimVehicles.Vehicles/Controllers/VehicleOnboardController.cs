@@ -34,15 +34,19 @@ public class VehicleOnboardController : MonoBehaviour
     {
       StartCoroutine(RemovePlayersRoutine());
     }
+
+    InvokeRepeating(nameof(UpdateOwner), 2f, 2f);
   }
 
   private void OnEnable()
   {
+    InvokeRepeating(nameof(UpdateOwner), 2f, 2f);
     StartCoroutine(RemovePlayersRoutine());
   }
 
   private void OnDisable()
   {
+    CancelInvoke(nameof(UpdateOwner));
     StopCoroutine(nameof(RemovePlayersRoutine));
   }
 
@@ -51,6 +55,50 @@ public class VehicleOnboardController : MonoBehaviour
   public void SetMovementController(VehicleMovementController val)
   {
     _movementController = val;
+  }
+
+  private void UpdateOwner()
+  {
+    if (_movementController.m_nview.IsValid() && _movementController.m_nview.IsOwner() &&
+        !(Player.m_localPlayer == null) && _movementController.m_players.Count > 0 &&
+        !_movementController.IsPlayerInBoat(Player.m_localPlayer))
+    {
+      RefreshPlayerList();
+      long newOwnerID = GetNewOwnerID();
+      _movementController.m_nview.GetZDO().SetOwner(newOwnerID);
+      Logger.LogDebug("Changing ship owner to " + newOwnerID);
+    }
+  }
+
+  private long GetNewOwnerID()
+  {
+    long num = 0L;
+    for (int i = 0; i < _movementController.m_players.Count; i++)
+    {
+      num = _movementController.m_players[i].GetOwner();
+      if (num != 0L)
+      {
+        break;
+      }
+    }
+
+    if (num == 0L)
+    {
+      num = ZDOMan.GetSessionID();
+    }
+
+    return num;
+  }
+
+  private void RefreshPlayerList()
+  {
+    for (int i = 0; i < _movementController.m_players.Count; i++)
+    {
+      if (_movementController.m_players[i].GetOwner() == 0L)
+      {
+        _movementController.m_players.RemoveAt(i);
+      }
+    }
   }
 
   public void OnTriggerEnter(Collider collider)
@@ -110,6 +158,13 @@ public class VehicleOnboardController : MonoBehaviour
     {
       Logger.LogWarning(
         $"Player {player.GetPlayerName()} detected leaving ship, but not within the ship's player list");
+    }
+
+    var zdo = _movementController.m_nview.GetZDO();
+
+    if (zdo.GetOwner() == player.GetOwner())
+    {
+      zdo.SetOwner(0);
     }
 
     player.transform.SetParent(null);

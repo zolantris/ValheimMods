@@ -67,6 +67,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   public static readonly Dictionary<int, VehicleShip> AllVehicles = new();
 
+  public GameObject movingPiecesContainer;
+  public GameObject vehicleMovementContainer;
   private GameObject _piecesContainer;
   private GameObject _ghostContainer;
   private ImpactEffect _impactEffect;
@@ -92,7 +94,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   public VehicleShipEffects? ShipEffects;
 
   public VehiclePiecesController PiecesController;
-  public ZSyncTransform piecesZsyncTransform;
 
   public ZNetView NetView { get; set; }
 
@@ -273,8 +274,12 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   private void Awake()
   {
+    movingPiecesContainer = GetVehicleMovingPiecesObj(transform);
+    vehicleMovementContainer = GetVehicleMovementObj(transform);
     if (ZNetView.m_forceDisableInit) return;
+
     NetView = GetComponent<ZNetView>();
+
     GetPersistentID();
 
     if (PersistentZdoId == 0)
@@ -346,7 +351,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   private GameObject GetStarterPiece()
   {
-    string selectedPrefab;
+    var selectedPrefab = PrefabNames.ShipHullCenterWoodPrefabName;
+
     switch (StartingPiece?.Value)
     {
       case VehicleShipInitPiece.HullFloor2X2:
@@ -358,7 +364,11 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
           PrefabNames.PrefabSizeVariant.FourByFour);
         break;
       case VehicleShipInitPiece.Nautilus:
-        selectedPrefab = PrefabNames.Nautilus;
+        if (ValheimRaftPlugin.Instance.AllowExperimentalPrefabs.Value)
+        {
+          selectedPrefab = PrefabNames.Nautilus;
+        }
+
         break;
       case VehicleShipInitPiece.WoodFloor2X2:
         selectedPrefab = "wood_floor";
@@ -481,11 +491,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     var vehiclePiecesContainer = VehiclePiecesPrefab.VehiclePiecesContainer;
     if (!vehiclePiecesContainer) return;
 
-    // var prevValue = ZNetView.m_useInitZDO;
-    // ZNetView.m_useInitZDO = false;
     _vehiclePiecesContainerInstance =
       Instantiate(vehiclePiecesContainer, transform.position, transform.rotation);
-    // ZNetView.m_useInitZDO = prevValue;
 
     PiecesController = _vehiclePiecesContainerInstance.AddComponent<VehiclePiecesController>();
     PiecesController.InitFromShip(Instance);
