@@ -20,8 +20,11 @@ public static class PropulsionConfig
 
   public static ConfigEntry<bool> AllowBaseGameSailRotation { get; private set; } = null!;
 
-  public static ConfigEntry<bool> EnableExperimentalMultiplayerJitterFix { get; private set; } =
-    null!;
+  public static ConfigEntry<VehiclePiecesController.PhysicsMode> VehiclePhysicsMode
+  {
+    get;
+    private set;
+  } = null!;
 
   private const string SectionName = "Propulsion";
 
@@ -33,9 +36,12 @@ public static class PropulsionConfig
   {
     Config = config;
 
-    EnableExperimentalMultiplayerJitterFix = Config.Bind(SectionName, "ExperimentalJitterFix", true,
+    VehiclePhysicsMode = Config.Bind(SectionName, "VehiclePhysicsMode",
+      VehiclePiecesController.PhysicsMode.ForceSyncedRigidbody,
       ConfigHelpers.CreateConfigDescription(
-        "Makes the client owner of the ship physics the only client that force syncs the Vehicle Pieces. Makes all vehicle updates on non-physics owners utilize a kinematic rigidbody which makes the client appear much less janky and mostly removes camera shake especially during turning and high speeds. This config flag is expirimental so if your ship gets weird in multiplayer you may want to set this to false.",
+        "SyncedRigidbody = Clients will be synced but jittery (flying will not use this)" +
+        "DesyncedJointRigidbodyBody = Clients will be synced in space, but they will leverage their internal interpolation making FPS and jitter much less. Possible issues with other collisions within the raft." +
+        "ForceSyncedRigidbody = All clients will use the sync logic regardless if they are flying or not. Likely not ideal for flying with height ascend/descend values above 1",
         true));
 
     TurnPowerNoRudder = Config.Bind(SectionName, "turningPowerNoRudder", 1f,
@@ -70,12 +76,12 @@ public static class PropulsionConfig
         "Ascent and Descent speed for the vehicle in the air. Numbers above 1 require turning the synced rigidbody for vehicle into another joint rigidbody.",
         true, true, new AcceptableValueRange<float>(1, 10)));
 
-    EnableExperimentalMultiplayerJitterFix.SettingChanged +=
+    VehiclePhysicsMode.SettingChanged +=
       (sender, args) =>
-        VehicleMovementController.SetPhysicsSyncTarget(EnableExperimentalMultiplayerJitterFix
+        VehicleMovementController.SetPhysicsSyncTarget(VehiclePhysicsMode
           .Value);
 
     // setters that must be called on init
-    VehicleMovementController.SetPhysicsSyncTarget(EnableExperimentalMultiplayerJitterFix.Value);
+    VehicleMovementController.SetPhysicsSyncTarget(VehiclePhysicsMode.Value);
   }
 }

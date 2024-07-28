@@ -8,6 +8,7 @@ using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimRAFT.Util;
+using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
@@ -529,10 +530,17 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     SyncedRigidbody,
     DesyncedJointRigidbodyBody,
+    ForceSyncedRigidbody,
   }
 
   public void ToggleVehiclePhysicsType()
   {
+    if (PropulsionConfig.VehiclePhysicsMode.Value == PhysicsMode.ForceSyncedRigidbody)
+    {
+      SelectedPhysicsMode = PhysicsMode.ForceSyncedRigidbody;
+      return;
+    }
+
     if (SelectedPhysicsMode == PhysicsMode.SyncedRigidbody)
     {
       SelectedPhysicsMode = PhysicsMode.DesyncedJointRigidbodyBody;
@@ -586,7 +594,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   /// Cons
   /// - The client(s) that do not own the boat physics suffer from mild-extreme shaking based on boat speed and turning velocity
   ///
-  /// PhysicsMode.DesyncedJointRigidbodyBody -> A high quality way to do physics syncing by using a joint for the pieces container. Downsides are no concav meshes are allowed for physics. Will not work with nautilus (until there are custom colliders created).
+  /// PhysicsMode.DesyncedJointRigidbodyBody -> A high quality way to do physics syncing by using a joint for the pieces' container. Downsides are no concav meshes are allowed for physics. Will not work with nautilus (until there are custom colliders created).
   /// Cons
   /// - Clients all using their own calcs can have the pieces container desync from the parent boat sync they do not own the physics.
   ///
@@ -600,6 +608,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         VehicleInstance?.MovementController == null || VehicleInstance.NetView == null ||
         VehicleInstance.Instance == null)
     {
+      return;
+    }
+
+    if (SelectedPhysicsMode == PhysicsMode.ForceSyncedRigidbody)
+    {
+      KinematicSync();
       return;
     }
 
@@ -631,9 +645,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public void CustomUpdate(float deltaTime, float time)
   {
-    Client_UpdateAllPieces();
-
-    Sync();
   }
 
   public void CustomFixedUpdate(float deltaTime)
