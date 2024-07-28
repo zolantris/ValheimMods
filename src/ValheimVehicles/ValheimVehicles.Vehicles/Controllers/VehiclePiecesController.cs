@@ -471,8 +471,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       }
 
       piece.transform.SetParent(null);
+      piece.GetZDO()?.SetPosition(_vehicleBounds.center);
       AddInactivePiece(VehicleInstance!.PersistentZdoId, piece, null);
     }
+
+    // sets vehicle to center so on regeneration all pieces will be spawning around the center instead of the raftball being far away from the actual pieces
+    VehicleInstance?.NetView?.GetZDO()?.SetPosition(_vehicleBounds.center);
 
     StopAllCoroutines();
   }
@@ -737,8 +741,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public void UpdatePieces(List<ZDO> list)
   {
-    var pos = transform.position;
-    var sector = ZoneSystem.instance.GetZone(pos);
+    // var pos = transform.position;
+    var positionFromCenterBounds = transform.position + _vehicleBounds.center;
+    var sector = ZoneSystem.instance.GetZone(positionFromCenterBounds);
 
     if (m_serverSector == sector) return;
     if (!sector.Equals(m_sector)) m_sector = sector;
@@ -760,7 +765,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         continue;
       }
 
-      zdo.SetPosition(pos);
+      zdo.SetPosition(positionFromCenterBounds);
     }
   }
 
