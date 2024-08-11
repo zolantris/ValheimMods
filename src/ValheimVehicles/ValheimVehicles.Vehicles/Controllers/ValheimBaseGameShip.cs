@@ -138,12 +138,14 @@ public class ValheimBaseGameShip : MonoBehaviour
 
     if (!m_body)
     {
-      m_body = VehicleShip.GetVehicleMovingPiecesObj(transform).GetComponent<Rigidbody>();
+      m_body = VehicleShip.GetVehicleMovingPiecesObj(transform)
+        .GetComponent<Rigidbody>();
     }
 
     if (!m_body)
     {
-      Logger.LogError("No rigidbody detected, ship must have a Rigidbody to work");
+      Logger.LogError(
+        "No rigidbody detected, ship must have a Rigidbody to work");
     }
 
     m_body.mass = 2000f;
@@ -179,7 +181,8 @@ public class ValheimBaseGameShip : MonoBehaviour
     }
   }
 
-  internal static float GetUpwardsForce(float targetY, float currentY, float maxForce)
+  internal static float GetUpwardsForce(float targetY, float currentY,
+    float maxForce)
   {
     var dist = targetY - currentY;
     if (dist == 0f) return 0f;
@@ -218,15 +221,18 @@ public class ValheimBaseGameShip : MonoBehaviour
     float num = Mathf.Lerp(0.25f, 1f, windIntensity);
     float windAngleFactor = GetWindAngleFactor();
     windAngleFactor *= num;
-    Vector3 target = Vector3.Normalize(windDir + base.transform.forward) * windAngleFactor *
+    Vector3 target = Vector3.Normalize(windDir + base.transform.forward) *
+                     windAngleFactor *
                      m_sailForceFactor * sailSize;
-    m_sailForce = Vector3.SmoothDamp(m_sailForce, target, ref m_windChangeVelocity, 1f, 99f);
+    m_sailForce = Vector3.SmoothDamp(m_sailForce, target,
+      ref m_windChangeVelocity, 1f, 99f);
     return m_sailForce;
   }
 
   public float GetWindAngleFactor()
   {
-    float num = Vector3.Dot(EnvMan.instance.GetWindDir(), -base.transform.forward);
+    float num =
+      Vector3.Dot(EnvMan.instance.GetWindDir(), -base.transform.forward);
     float num2 = Mathf.Lerp(0.7f, 1f, 1f - Mathf.Abs(num));
     float num3 = 1f - Utils.LerpStep(0.75f, 0.8f, num);
     return num2 * num3;
@@ -234,7 +240,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public void UpdateWaterForce(float depth, float dt)
   {
-    if (m_lastDepth == -9999f)
+    if (Mathf.Approximately(m_lastDepth, -9999f))
     {
       m_lastDepth = depth;
       return;
@@ -250,7 +256,8 @@ public class ValheimBaseGameShip : MonoBehaviour
     }
 
     m_lastWaterImpactTime = Time.time;
-    m_waterImpactEffect.Create(base.transform.position, base.transform.rotation);
+    m_waterImpactEffect.Create(base.transform.position,
+      base.transform.rotation);
     if (m_players.Count > 0)
     {
       IDestructible component = GetComponent<IDestructible>();
@@ -292,12 +299,14 @@ public class ValheimBaseGameShip : MonoBehaviour
     {
       if (num > 0f)
       {
-        base.transform.RotateAround(base.transform.position, base.transform.forward,
+        base.transform.RotateAround(base.transform.position,
+          base.transform.forward,
           (0f - Time.fixedDeltaTime) * 20f);
       }
       else
       {
-        base.transform.RotateAround(base.transform.position, base.transform.forward,
+        base.transform.RotateAround(base.transform.position,
+          base.transform.forward,
           Time.fixedDeltaTime * 20f);
       }
     }
@@ -306,12 +315,14 @@ public class ValheimBaseGameShip : MonoBehaviour
     {
       if (num2 > 0f)
       {
-        base.transform.RotateAround(base.transform.position, base.transform.right,
+        base.transform.RotateAround(base.transform.position,
+          base.transform.right,
           (0f - Time.fixedDeltaTime) * 20f);
       }
       else
       {
-        base.transform.RotateAround(base.transform.position, base.transform.right,
+        base.transform.RotateAround(base.transform.position,
+          base.transform.right,
           Time.fixedDeltaTime * 20f);
       }
     }
@@ -384,7 +395,8 @@ public class ValheimBaseGameShip : MonoBehaviour
   {
     foreach (Player player in m_players)
     {
-      if (player.GetSEMan().HaveStatusAttribute(StatusEffect.StatusAttribute.SailingPower))
+      if (player.GetSEMan()
+          .HaveStatusAttribute(StatusEffect.StatusAttribute.SailingPower))
       {
         return true;
       }
@@ -429,6 +441,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
     return 0f -
            Utils.YawFromDirection(
-             mainCamera.transform.InverseTransformDirection(base.transform.forward));
+             mainCamera.transform.InverseTransformDirection(base.transform
+               .forward));
   }
 }
