@@ -23,7 +23,8 @@ public class Player_Patch
   private static IEnumerable<CodeInstruction> PlacePieceTranspiler(
     IEnumerable<CodeInstruction> instructions)
   {
-    var operand = HarmonyPatchMethods.GetGenericMethod(typeof(UnityEngine.Object), "Instantiate", 1,
+    var operand = HarmonyPatchMethods.GetGenericMethod(
+      typeof(UnityEngine.Object), "Instantiate", 1,
       new Type[3]
       {
         typeof(Type),
@@ -34,8 +35,10 @@ public class Player_Patch
     {
       new(OpCodes.Call, operand)
     };
-    return new CodeMatcher(instructions).MatchForward(useEnd: true, matches).Advance(1)
-      .InsertAndAdvance(Transpilers.EmitDelegate<Func<GameObject, GameObject>>(PlacedPiece))
+    return new CodeMatcher(instructions).MatchForward(useEnd: true, matches)
+      .Advance(1)
+      .InsertAndAdvance(
+        Transpilers.EmitDelegate<Func<GameObject, GameObject>>(PlacedPiece))
       .InstructionEnumeration();
   }
 
@@ -72,16 +75,19 @@ public class Player_Patch
 
     if ((bool)netView)
     {
-      var cul = PatchSharedData.PlayerLastRayPiece.GetComponent<CultivatableComponent>();
+      var cul = PatchSharedData.PlayerLastRayPiece
+        .GetComponent<CultivatableComponent>();
       if ((bool)cul) cul.AddNewChild(netView);
     }
 
-    var bvc = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<VehiclePiecesController>();
+    var bvc = PatchSharedData.PlayerLastRayPiece
+      .GetComponentInParent<VehiclePiecesController>();
     if ((bool)bvc)
     {
       if ((bool)netView)
       {
-        Logger.LogDebug($"BaseVehicleController: adding new piece {piece.name} {gameObject.name}");
+        Logger.LogDebug(
+          $"BaseVehicleController: adding new piece {piece.name} {gameObject.name}");
         bvc.AddNewPiece(netView);
       }
       else
@@ -93,7 +99,8 @@ public class Player_Patch
       return gameObject;
     }
 
-    var mb = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<MoveableBaseRootComponent>();
+    var mb = PatchSharedData.PlayerLastRayPiece
+      .GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mb)
     {
       if ((bool)netView)
@@ -111,25 +118,34 @@ public class Player_Patch
     return gameObject;
   }
 
-  public static bool HandleGameObjectRayCast(Transform transform, LayerMask layerMask,
+  public static bool HandleGameObjectRayCast(Transform transform,
+    LayerMask layerMask,
     Player __instance, ref bool __result,
     ref Vector3 point,
-    ref Vector3 normal, ref Piece piece, ref Heightmap heightmap, ref Collider waterSurface,
+    ref Vector3 normal, ref Piece piece, ref Heightmap heightmap,
+    ref Collider waterSurface,
     bool water)
   {
     if ((bool)transform)
     {
-      var localPos = transform.transform.InverseTransformPoint(__instance.transform.position);
+      var localPos =
+        transform.transform.InverseTransformPoint(__instance.transform
+          .position);
       var start = localPos + Vector3.up * 2f;
       start = transform.transform.TransformPoint(start);
-      var localDir = ((Character)__instance).m_lookYaw * Quaternion.Euler(__instance.m_lookPitch,
-        0 - transform.transform.rotation.eulerAngles.y + PatchSharedData.YawOffset, 0);
+      var localDir = ((Character)__instance).m_lookYaw * Quaternion.Euler(
+        __instance.m_lookPitch,
+        0 - transform.transform.rotation.eulerAngles.y +
+        PatchSharedData.YawOffset, 0);
       var end = transform.transform.rotation * localDir * Vector3.forward;
-      if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) && (bool)hitInfo.collider)
+      if (Physics.Raycast(start, end, out var hitInfo, 10f, layerMask) &&
+          (bool)hitInfo.collider)
       {
         Object target;
-        target = hitInfo.collider.GetComponentInParent<VehiclePiecesController>() ??
-                 (Object)hitInfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
+        target =
+          hitInfo.collider.GetComponentInParent<VehiclePiecesController>() ??
+          (Object)hitInfo.collider
+            .GetComponentInParent<MoveableBaseRootComponent>();
 
         if (target == null) return true;
 
@@ -148,8 +164,10 @@ public class Player_Patch
 
   [HarmonyPatch(typeof(Player), "PieceRayTest")]
   [HarmonyPrefix]
-  public static bool PieceRayTest(Player __instance, ref bool __result, ref Vector3 point,
-    ref Vector3 normal, ref Piece piece, ref Heightmap heightmap, ref Collider waterSurface,
+  public static bool PieceRayTest(Player __instance, ref bool __result,
+    ref Vector3 point,
+    ref Vector3 normal, ref Piece piece, ref Heightmap heightmap,
+    ref Collider waterSurface,
     bool water)
   {
     var layerMask = __instance.m_placeRayMask;
@@ -162,17 +180,20 @@ public class Player_Patch
     }
 
     if ((bool)bvc)
-      return HandleGameObjectRayCast(bvc.transform, layerMask, __instance, ref __result, ref point,
+      return HandleGameObjectRayCast(bvc.transform, layerMask, __instance,
+        ref __result, ref point,
         ref normal, ref piece,
         ref heightmap,
         ref waterSurface, water);
 
     if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
     {
-      var mbr = __instance.transform.root.GetComponent<MoveableBaseRootComponent>();
+      var mbr = __instance.transform.root
+        .GetComponent<MoveableBaseRootComponent>();
       if ((bool)mbr)
       {
-        return HandleGameObjectRayCast(mbr.transform, layerMask, __instance, ref __result,
+        return HandleGameObjectRayCast(mbr.transform, layerMask, __instance,
+          ref __result,
           ref point,
           ref normal, ref piece,
           ref heightmap,
@@ -202,12 +223,29 @@ public class Player_Patch
 
   [HarmonyPatch(typeof(Player), "PieceRayTest")]
   [HarmonyPostfix]
-  public static void PieceRayTestPostfix(Player __instance, ref bool __result, ref Vector3 point,
-    ref Vector3 normal, ref Piece piece, ref Heightmap heightmap, ref Collider waterSurface,
+  public static void PieceRayTestPostfix(Player __instance, ref bool __result,
+    ref Vector3 point,
+    ref Vector3 normal, ref Piece piece, ref Heightmap heightmap,
+    ref Collider waterSurface,
     bool water)
   {
     PatchSharedData.PlayerLastRayPiece = piece;
   }
+
+  private static bool HasHoverableParent(RaycastHit raycastHit,
+    out GameObject? parent)
+  {
+    var hasHoverable = raycastHit.collider.GetComponentInParent<Hoverable>();
+    if (hasHoverable != null)
+    {
+      parent = raycastHit.collider.transform.parent.gameObject;
+      return true;
+    }
+
+    parent = null;
+    return false;
+  }
+
 
   [HarmonyPatch(typeof(Player), "FindHoverObject")]
   [HarmonyPrefix]
@@ -218,13 +256,15 @@ public class Player_Patch
     hoverCreature = null;
     var array = Physics.RaycastAll(GameCamera.instance.transform.position,
       GameCamera.instance.transform.forward, 50f, __instance.m_interactMask);
-    Array.Sort(array, (RaycastHit x, RaycastHit y) => x.distance.CompareTo(y.distance));
+    Array.Sort(array,
+      (RaycastHit x, RaycastHit y) => x.distance.CompareTo(y.distance));
     var array2 = array;
     for (var i = 0; i < array2.Length; i++)
     {
       var raycastHit = array2[i];
       if ((bool)raycastHit.collider.attachedRigidbody &&
-          raycastHit.collider.attachedRigidbody.gameObject == __instance.gameObject) continue;
+          raycastHit.collider.attachedRigidbody.gameObject ==
+          __instance.gameObject) continue;
       if (hoverCreature == null)
       {
         var character = raycastHit.collider.attachedRigidbody
@@ -238,8 +278,15 @@ public class Player_Patch
       {
         if (raycastHit.collider.GetComponent<Hoverable>() != null)
           hover = raycastHit.collider.gameObject;
-        else if ((bool)raycastHit.collider.attachedRigidbody && !raycastHit.collider
-                   .attachedRigidbody.GetComponent<MoveableBaseRootComponent>() && !raycastHit
+        else if (HasHoverableParent(raycastHit, out var parent) &&
+                 parent != null)
+        {
+          hover = parent;
+        }
+        else if ((bool)raycastHit.collider.attachedRigidbody && !raycastHit
+                   .collider
+                   .attachedRigidbody
+                   .GetComponent<MoveableBaseRootComponent>() && !raycastHit
                    .collider
                    .attachedRigidbody.GetComponent<VehiclePiecesController>())
           hover = raycastHit.collider.attachedRigidbody.gameObject;
@@ -267,12 +314,17 @@ public class Player_Patch
     if (__instance.IsAttached() && (bool)__instance.m_attachPoint &&
         (bool)__instance.m_attachPoint.parent)
     {
-      var ladder = __instance.m_attachPoint.parent.GetComponent<RopeLadderComponent>();
+      var ladder = __instance.m_attachPoint.parent
+        .GetComponent<RopeLadderComponent>();
       if ((bool)ladder) ladder.StepOffLadder(__instance);
-      ((Character)__instance).m_animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, 0);
-      ((Character)__instance).m_animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 0);
-      ((Character)__instance).m_animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, 0);
-      ((Character)__instance).m_animator.SetIKRotationWeight(AvatarIKGoal.RightHand, 0);
+      ((Character)__instance).m_animator.SetIKPositionWeight(
+        AvatarIKGoal.LeftHand, 0);
+      ((Character)__instance).m_animator.SetIKPositionWeight(
+        AvatarIKGoal.RightHand, 0);
+      ((Character)__instance).m_animator.SetIKRotationWeight(
+        AvatarIKGoal.LeftHand, 0);
+      ((Character)__instance).m_animator.SetIKRotationWeight(
+        AvatarIKGoal.RightHand, 0);
     }
 
     return true;
@@ -287,21 +339,25 @@ public class Player_Patch
     return VehicleMovementController.GetAnchorKeyDown();
   }
 
-  // Logic for anchor needs to be moved to the Update method instead of fixed update which SetControls is called in
+// Logic for anchor needs to be moved to the Update method instead of fixed update which SetControls is called in
   [HarmonyPatch(typeof(Player), "SetControls")]
   [HarmonyPrefix]
-  public static bool SetControls(Player __instance, Vector3 movedir, bool attack, bool attackHold,
-    bool secondaryAttack, bool block, bool blockHold, bool jump, bool crouch, bool run,
+  public static bool SetControls(Player __instance, Vector3 movedir,
+    bool attack, bool attackHold,
+    bool secondaryAttack, bool block, bool blockHold, bool jump, bool crouch,
+    bool run,
     bool autoRun)
   {
     var isAttached = __instance.IsAttached();
     var shouldHandle = isAttached && (bool)__instance.m_attachPoint &&
                        (bool)__instance.m_attachPoint.parent;
     if (!shouldHandle) return true;
-    if (movedir.x == 0f && movedir.y == 0f && !jump && !crouch && !attack && !attackHold &&
+    if (movedir.x == 0f && movedir.y == 0f && !jump && !crouch && !attack &&
+        !attackHold &&
         !secondaryAttack && !block)
     {
-      var ladder = __instance.m_attachPoint.parent.GetComponent<RopeLadderComponent>();
+      var ladder = __instance.m_attachPoint.parent
+        .GetComponent<RopeLadderComponent>();
       if ((bool)ladder)
       {
         ladder.MoveOnLadder(__instance, movedir.z);
@@ -309,11 +365,13 @@ public class Player_Patch
       }
     }
 
-    var wheel = __instance.m_attachPoint.parent.GetComponent<SteeringWheelComponent>();
+    var wheel = __instance.m_attachPoint.parent
+      .GetComponent<SteeringWheelComponent>();
 
     if (!(bool)wheel || __instance.m_doodadController == null) return true;
 
-    __instance.SetDoodadControlls(ref movedir, ref ((Character)__instance).m_lookDir, ref run,
+    __instance.SetDoodadControlls(ref movedir,
+      ref ((Character)__instance).m_lookDir, ref run,
       ref autoRun, blockHold);
     return false;
   }
@@ -363,8 +421,10 @@ public class Player_Patch
   public static object? HandleGetControlledShip(Player player)
   {
     var hasDoodadController = player.m_doodadController != null;
-    var isShipWheelControllerValid = player.m_doodadController?.IsValid() ?? false;
-    var controlledComponent = player.m_doodadController?.GetControlledComponent();
+    var isShipWheelControllerValid =
+      player.m_doodadController?.IsValid() ?? false;
+    var controlledComponent =
+      player.m_doodadController?.GetControlledComponent();
 
     if (controlledComponent != null &&
         controlledComponent.name.Contains(PrefabNames.MBRaft))

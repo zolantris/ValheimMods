@@ -2261,6 +2261,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     {
       if (!ramp)
       {
+        m_boardingRamps.Remove(ramp);
         continue;
       }
 
