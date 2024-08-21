@@ -19,10 +19,14 @@ public class VehiclePiecesPrefab : IRegisterPrefab
   /// <param name="prefabManager"></param>
   public void RegisterPiecesContainer(PrefabManager prefabManager)
   {
-    VehiclePiecesContainer = prefabManager.CreateClonedPrefab(PrefabNames.VehiclePiecesContainer,
+    VehiclePiecesContainer = prefabManager.CreateClonedPrefab(
+      PrefabNames.VehiclePiecesContainer,
       LoadValheimVehicleAssets.VehiclePiecesAsset);
-    // PrefabRegistryHelpers.AddTempNetView(VehiclePiecesContainer);
-    // PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(VehiclePiecesContainer);
+    // PrefabRegistryHelpers.AddTempNetView(VehiclePiecesContainer, true);
+    // var zSyncTransform = VehiclePiecesContainer.AddComponent<ZSyncTransform>();
+    // zSyncTransform.m_syncRotation = true;
+    // zSyncTransform.m_syncPosition = true;
+    // zSyncTransform.m_syncBodyVelocity = true; // PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(VehiclePiecesContainer);
   }
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
