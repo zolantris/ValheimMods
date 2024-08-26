@@ -137,9 +137,9 @@ public class WaterVehiclePrefab : IRegisterPrefab
       [
         new RequirementConfig
         {
-          Amount = 20,
+          Amount = 16,
           Item = "Wood",
-          Recover = true
+          Recover = false,
         }
       ]
     }));

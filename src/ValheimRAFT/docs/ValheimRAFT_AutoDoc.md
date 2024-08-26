@@ -113,7 +113,7 @@
 
 ### HullFloatationColliderLocation 
 - Description: Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20
-- Default Value: Bottom
+- Default Value: Custom
 
 ### HullFloatation Custom Offset 
 - Description: Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
@@ -339,15 +339,15 @@
 
 ### Always Show Vehicle Colliders 
 - Description: Automatically shows the vehicle colliders useful for debugging the vehicle
-- Default Value: true
+- Default Value: false
 
 ### Vehicle Debug Menu 
 - Description: Enable the VehicleDebugMenu. This shows a GUI menu which has a few shortcuts to debugging/controlling vehicles.
 - Default Value: true
 
-### positionAutoFix 
-- Description: Automatically moves the vehicle if buried/stuck underground. The close to 0 the closer it will be to teleporting the vehicle above the ground. The higher the number the more lenient it is. Recommended to keep this number above 10. Lower can make the vehicle trigger an infinite loop of teleporting upwards and then falling and re-telporting while gaining velocity
-- Default Value: true
+### UNSTABLE_PositionAutoFix 
+- Description: UNSTABLE due to vehicle center point shifting and not being in center of actual vehicle pieces - Automatically moves the vehicle if buried/stuck underground. The close to 0 the closer it will be to teleporting the vehicle above the ground. The higher the number the more lenient it is. Recommended to keep this number above 10. Lower can make the vehicle trigger an infinite loop of teleporting upwards and then falling and re-telporting while gaining velocity
+- Default Value: false
 
 ### positionAutoFixThreshold 
 - Description: Threshold for autofixing stuck vehicles. Large values are less accurate but smaller values may trigger the autofix too frequently
@@ -357,13 +357,15 @@
 
 ### SyncShipPhysicsOnAllClients 
 - Description: Makes all clients sync physics
-- Default Value: false
+- Default Value: true
 
 ## Propulsion
 
-### ExperimentalJitterFix 
-- Description: Makes the client owner of the ship physics the only client that force syncs the Vehicle Pieces. Makes all vehicle updates on non-physics owners utilize a kinematic rigidbody which makes the client appear much less janky and mostly removes camera shake especially during turning and high speeds. This config flag is expirimental so if your ship gets weird in multiplayer you may want to set this to false.
-- Default Value: true
+### VehiclePhysicsMode 
+- Description: SyncRigidbody - Accurately syncs physics across clients, it causes jitters during high speed.
+ForceSyncedRigidbody ignores all allowances that toggle SyncRigidbody related to flight. This will require a flight ascend value of 1 otherwise flight will be broken. Use this is there is problems with SyncRigidbody
+DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config that allows the player to smoothly move around the raft at high speeds even if they are not the host. Can cause the ship to glitch with anything that has to do with physics including ramps and other mods that add moving parts that could be added to the boat.
+- Default Value: SyncedRigidbody
 
 ### turningPowerNoRudder 
 - Description: Set the base turning power of the steering wheel
@@ -387,7 +389,7 @@
 
 ### shouldLiftAnchorOnSpeedChange 
 - Description: Lifts the anchor when using a speed change key, this is a QOL to prevent anchor from being required to be pressed when attempting to change the ship speed
-- Default Value: false
+- Default Value: true
 
 ### FlightClimbingSpeed 
 - Description: Ascent and Descent speed for the vehicle in the air. Numbers above 1 require turning the synced rigidbody for vehicle into another joint rigidbody.

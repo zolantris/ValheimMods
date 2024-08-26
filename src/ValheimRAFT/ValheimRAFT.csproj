@@ -10,7 +10,7 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>2.2.3</ApplicationVersion>
+        <ApplicationVersion>2.2.4</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -42,6 +42,9 @@
         </Compile>
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleOnboardController.cs">
             <Link>Controllers\VehicleOnboardController.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Enums\VehiclePhysicsMode.cs">
+            <Link>Enums\VehiclePhysicsMode.cs</Link>
         </Compile>
     </ItemGroup>
     <ItemGroup>

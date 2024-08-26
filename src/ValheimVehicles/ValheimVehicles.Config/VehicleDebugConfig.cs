@@ -8,7 +8,8 @@ public static class VehicleDebugConfig
 {
   public static ConfigFile? Config { get; private set; }
 
-  public static ConfigEntry<bool> AutoShowVehicleColliders { get; private set; } = null!;
+  public static ConfigEntry<bool>
+    AutoShowVehicleColliders { get; private set; } = null!;
 
   // public static ConfigEntry<bool>
   //   ForceTakeoverShipControls { get; private set; } = null!;
@@ -19,27 +20,31 @@ public static class VehicleDebugConfig
   public static ConfigEntry<float>
     PositionAutoFixThreshold { get; private set; } = null!;
 
-  public static ConfigEntry<bool> VehicleDebugMenuEnabled { get; private set; } = null!;
-  public static ConfigEntry<bool> SyncShipPhysicsOnAllClients { get; private set; } = null!;
+  public static ConfigEntry<bool>
+    VehicleDebugMenuEnabled { get; private set; } = null!;
+
+  public static ConfigEntry<bool> SyncShipPhysicsOnAllClients
+  {
+    get;
+    private set;
+  } = null!;
 
 
   private const string SectionName = "Vehicle Debugging";
 
-  private static void OnShowVehicleDebugMenuChange(object sender, EventArgs eventArgs)
+  private static void OnShowVehicleDebugMenuChange(object sender,
+    EventArgs eventArgs)
   {
-    ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui(VehicleDebugMenuEnabled.Value);
+    ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui(VehicleDebugMenuEnabled
+      .Value);
   }
 
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
-    // ForceTakeoverShipControls = config.Bind(SectionName, "ForceTakeoverShipControls",
-    //   true,
-    //   ConfigHelpers.CreateConfigDescription(
-    //     "Allows user to takeover ship and ship physics immediately before the request for control is complete. Helpful for disconnecting owners of the boat. This will prevent lockout",
-    //     false, false));
 
-    AutoShowVehicleColliders = config.Bind(SectionName, "Always Show Vehicle Colliders",
+    AutoShowVehicleColliders = config.Bind(SectionName,
+      "Always Show Vehicle Colliders",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Automatically shows the vehicle colliders useful for debugging the vehicle",
@@ -51,10 +56,10 @@ public static class VehicleDebugConfig
         true, true));
 
     PositionAutoFix = config.Bind(SectionName,
-      "positionAutoFix",
-      true,
+      "UNSTABLE_PositionAutoFix",
+      false,
       ConfigHelpers.CreateConfigDescription(
-        "Automatically moves the vehicle if buried/stuck underground. The close to 0 the closer it will be to teleporting the vehicle above the ground. The higher the number the more lenient it is. Recommended to keep this number above 10. Lower can make the vehicle trigger an infinite loop of teleporting upwards and then falling and re-telporting while gaining velocity",
+        "UNSTABLE due to vehicle center point shifting and not being in center of actual vehicle pieces - Automatically moves the vehicle if buried/stuck underground. The close to 0 the closer it will be to teleporting the vehicle above the ground. The higher the number the more lenient it is. Recommended to keep this number above 10. Lower can make the vehicle trigger an infinite loop of teleporting upwards and then falling and re-telporting while gaining velocity",
         true, true));
     PositionAutoFixThreshold = config.Bind(SectionName,
       "positionAutoFixThreshold",
