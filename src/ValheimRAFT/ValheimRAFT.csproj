@@ -43,6 +43,9 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleOnboardController.cs">
             <Link>Controllers\VehicleOnboardController.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Enums\VehiclePhysicsMode.cs">
+            <Link>Enums\VehiclePhysicsMode.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup>
         <Compile Include="ValheimRAFT\*.cs"/>

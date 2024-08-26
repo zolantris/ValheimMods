@@ -6,6 +6,7 @@ using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Enums;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles.Components;
@@ -43,42 +44,48 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
         !VehiclePiecesController.DEBUGAllowActivatePendingPieces;
       if (VehiclePiecesController.DEBUGAllowActivatePendingPieces)
       {
-        foreach (var vehiclePiecesController in VehiclePiecesController.ActiveInstances.Values)
+        foreach (var vehiclePiecesController in VehiclePiecesController
+                   .ActiveInstances.Values)
         {
           vehiclePiecesController.ActivatePendingPiecesCoroutine();
         }
       }
     }
 
-    if (GUILayout.Button(
-          $"SyncPiecesPhysics {vehicleDebugPhysicsSync}"))
-    {
-      vehicleDebugPhysicsSync = !vehicleDebugPhysicsSync;
-      VehicleMovementController.SetPhysicsSyncTarget(
-        vehicleDebugPhysicsSync);
-    }
-
-    if (GUILayout.Button(
-          $"Toggle Sync Physics"))
-    {
-      foreach (var vehiclePiecesController in VehiclePiecesController.ActiveInstances)
-      {
-        vehiclePiecesController.Value?.ToggleVehiclePhysicsType();
-      }
-    }
+    // if (GUILayout.Button(
+    //       $"SyncPiecesPhysics {vehicleDebugPhysicsSync}"))
+    // {
+    //   vehicleDebugPhysicsSync = !vehicleDebugPhysicsSync;
+    //   VehicleMovementController.SetPhysicsSyncTarget(
+    //     vehicleDebugPhysicsSync);
+    // }
+    //
+    // if (GUILayout.Button(
+    //       $"Toggle Sync Physics"))
+    // {
+    //   foreach (var vehiclePiecesController in VehiclePiecesController
+    //              .ActiveInstances)
+    //   {
+    //     vehiclePiecesController.Value?.SetVehiclePhysicsType(VehiclePhysicsMode
+    //       .ForceSyncedRigidbody);
+    //   }
+    // }
 
     if (GUILayout.Button("Delete ShipZDO"))
     {
       var currentShip = VehicleDebugHelpers.GetVehiclePiecesController();
       if (currentShip != null)
       {
-        ZNetScene.instance.Destroy(currentShip.VehicleInstance.NetView.gameObject);
+        ZNetScene.instance.Destroy(currentShip?.VehicleInstance?.NetView?
+          .gameObject);
       }
     }
 
-    if (GUILayout.Button($"PlayerSpawnupdate: {PlayerSpawnController.CanUpdateLogoutPoint}"))
+    if (GUILayout.Button(
+          $"PlayerSpawnupdate: {PlayerSpawnController.CanUpdateLogoutPoint}"))
     {
-      PlayerSpawnController.CanUpdateLogoutPoint = !PlayerSpawnController.CanUpdateLogoutPoint;
+      PlayerSpawnController.CanUpdateLogoutPoint =
+        !PlayerSpawnController.CanUpdateLogoutPoint;
     }
 
     if (GUILayout.Button("Set logoutpoint"))
@@ -144,7 +151,8 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
     if (GUILayout.Button("activatePendingPieces"))
     {
-      VehicleDebugHelpers.GetVehiclePiecesController()?.ActivatePendingPiecesCoroutine();
+      VehicleDebugHelpers.GetVehiclePiecesController()
+        ?.ActivatePendingPiecesCoroutine();
     }
 
     if (GUILayout.Button("Zero Ship RotationXZ"))
