@@ -274,7 +274,7 @@ Please read these if you are experiencing trouble.
     - No? Install it correctly following this guide, otherwise the commands may
       not work or sails will not be generated.
 2. Did you upgrade from v1.x.x to >=v2.0.0?
-    - Run `vehicle recontain` this command works in `>=2.0.2`
+    - Run `vehicle recover` this command works in `>=2.0.2`
     - v2.0.0 had to make a plugin GUID change which
       likely
       broke the prefab registry of the v1 raft. This GUID change was in order to
