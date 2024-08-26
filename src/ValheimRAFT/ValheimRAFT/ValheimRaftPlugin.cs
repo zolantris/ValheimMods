@@ -192,7 +192,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       0f,
       CreateConfigDescription(
         "Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.",
-        true, true, new AcceptableValueRange<float>(-20, 20)
+        true, true, new AcceptableValueRange<float>(-10, 10)
       ));
 
     EnableExactVehicleBounds = Config.Bind("Vehicles",
