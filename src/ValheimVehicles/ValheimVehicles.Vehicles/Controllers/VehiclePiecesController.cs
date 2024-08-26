@@ -406,9 +406,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       return;
     }
 
-    Logger.LogInfo($"pieces {m_pieces.Count}");
-    Logger.LogInfo($"pendingPieces {m_pendingPieces.Count}");
-    Logger.LogInfo($"allPieces {m_allPieces.Count}");
+    if (hasDebug)
+    {
+      Logger.LogInfo($"pieces {m_pieces.Count}");
+      Logger.LogInfo($"pendingPieces {m_pendingPieces.Count}");
+      Logger.LogInfo($"allPieces {m_allPieces.Count}");
+    }
 
     if (VehicleInstance != null)
     {

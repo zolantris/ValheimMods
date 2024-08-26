@@ -351,9 +351,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // }
   }
 
-  public static void SetPhysicsSyncTarget(bool val)
+  /// <summary>
+  /// Meant to change physics targets when config is updated
+  /// </summary>
+  /// <param name="val"></param>
+  public static void SetPhysicsSyncTarget(VehiclePhysicsMode val)
   {
-    PhysicsSyncTarget = val
+    PhysicsSyncTarget = val == VehiclePhysicsMode.DesyncedJointRigidbodyBody
       ? PhysicsTarget.VehiclePieces
       : PhysicsTarget.VehicleShip;
     foreach (var vehicleMovementController in Instances)

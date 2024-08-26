@@ -43,13 +43,6 @@ public static class PropulsionConfig
     private set;
   } = null!;
 
-  public static ConfigEntry<bool> EnableExperimentalMultiplayerJitterFix
-  {
-    get;
-    private set;
-  } =
-    null!;
-
   public static ConfigEntry<VehiclePhysicsMode> DefaultPhysicsMode = null!;
 
   private const string SectionName = "Propulsion";
@@ -63,7 +56,7 @@ public static class PropulsionConfig
     Config = config;
 
     DefaultPhysicsMode = Config.Bind(SectionName,
-      "ExperimentalJitterFix", VehiclePhysicsMode.SyncedRigidbody,
+      "VehiclePhysicsMode", VehiclePhysicsMode.SyncedRigidbody,
       ConfigHelpers.CreateConfigDescription(
         "SyncRigidbody - Accurately syncs physics across clients, it causes jitters during high speed.\n" +
         "ForceSyncedRigidbody ignores all allowances that toggle SyncRigidbody related to flight. This will require a flight ascend value of 1 otherwise flight will be broken. Use this is there is problems with SyncRigidbody\n" +
@@ -106,14 +99,14 @@ public static class PropulsionConfig
         "Ascent and Descent speed for the vehicle in the air. Numbers above 1 require turning the synced rigidbody for vehicle into another joint rigidbody.",
         true, true, new AcceptableValueRange<float>(1, 10)));
 
-    EnableExperimentalMultiplayerJitterFix.SettingChanged +=
+    DefaultPhysicsMode.SettingChanged +=
       (sender, args) =>
         VehicleMovementController.SetPhysicsSyncTarget(
-          EnableExperimentalMultiplayerJitterFix
+          DefaultPhysicsMode
             .Value);
 
     // setters that must be called on init
     VehicleMovementController.SetPhysicsSyncTarget(
-      EnableExperimentalMultiplayerJitterFix.Value);
+      DefaultPhysicsMode.Value);
   }
 }
