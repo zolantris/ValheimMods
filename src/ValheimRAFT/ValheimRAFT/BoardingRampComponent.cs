@@ -84,7 +84,8 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
   private void Awake()
   {
     m_nview = GetComponent<ZNetView>();
-    m_groundRayMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece",
+    m_groundRayMask = LayerMask.GetMask("Default", "static_solid",
+      "Default_small", "piece",
       "terrain", "blocker", "WaterVolume", "Water");
     m_ramp = transform.Find("Ramp").gameObject;
     m_segmentObject = transform.Find("Ramp/Segment").gameObject;
@@ -165,13 +166,15 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
       m_ropeAttach2.RemoveAt(j);
     }
 
-    for (int i = m_segmentObjects.Count; i < m_segments; i++)
+    for (var i = m_segmentObjects.Count; i < m_segments; i++)
     {
-      GameObject go = Object.Instantiate(m_segmentObject,
-        base.transform.position + new Vector3(0f, (0f - m_segmentHeight) * (float)i,
+      GameObject go = Instantiate(m_segmentObject,
+        base.transform.position + new Vector3(0f,
+          (0f - m_segmentHeight) * (float)i,
           m_segmentLength * (float)i), Quaternion.identity, m_ramp.transform);
       go.transform.localRotation = Quaternion.identity;
-      go.transform.localScale = new Vector3(1f + (float)i * 0.0001f, 1f + (float)i * 0.0001f,
+      go.transform.localScale = new Vector3(1f + (float)i * 0.0001f,
+        1f + (float)i * 0.0001f,
         1f + (float)i * 0.0001f);
       m_segmentObjects.Add(go);
       m_ropeAttach1.Add(go.transform.Find("SegmentAnchor/Pole1/RopeAttach"));
@@ -184,14 +187,17 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
   {
     if ((bool)m_nview && !m_nview.IsOwner())
     {
-      BoardingRampState newState = (BoardingRampState)m_nview.m_zdo.GetInt(BoardingRampStateKey);
+      BoardingRampState newState =
+        (BoardingRampState)m_nview.m_zdo.GetInt(BoardingRampStateKey);
       if (newState != m_state)
       {
-        if (newState == BoardingRampState.Closed || newState == BoardingRampState.Closing)
+        if (newState == BoardingRampState.Closed ||
+            newState == BoardingRampState.Closing)
         {
           m_state = BoardingRampState.Closing;
         }
-        else if (newState == BoardingRampState.Open || newState == BoardingRampState.Opening)
+        else if (newState == BoardingRampState.Open ||
+                 newState == BoardingRampState.Opening)
         {
           m_state = BoardingRampState.Opening;
         }
@@ -210,7 +216,8 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
     if (m_state == BoardingRampState.Closing)
     {
       m_stateProgress = Mathf.Clamp01(m_stateProgress -
-                                      Time.deltaTime / (m_stateChangeDuration * (float)m_segments));
+                                      Time.deltaTime / (m_stateChangeDuration *
+                                        (float)m_segments));
       UpdateRamp();
       if (m_stateProgress <= 0f)
       {
@@ -220,7 +227,8 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
     else if (m_state == BoardingRampState.Opening)
     {
       m_stateProgress = Mathf.Clamp01(m_stateProgress +
-                                      Time.deltaTime / (m_stateChangeDuration * (float)m_segments));
+                                      Time.deltaTime / (m_stateChangeDuration *
+                                        (float)m_segments));
       UpdateRamp();
       if (m_stateProgress >= 1f)
       {
@@ -259,15 +267,18 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
     return RaycastNonSelf(start, d.normalized, d.magnitude, out hit);
   }
 
-  private bool RaycastNonSelf(Vector3 start, Vector3 dir, float dist, out RaycastHit hit)
+  private bool RaycastNonSelf(Vector3 start, Vector3 dir, float dist,
+    out RaycastHit hit)
   {
-    int hitCount = Physics.RaycastNonAlloc(start, dir, m_rayHits, dist, m_groundRayMask,
+    var hitCount = Physics.RaycastNonAlloc(start, dir, m_rayHits, dist,
+      m_groundRayMask,
       QueryTriggerInteraction.Ignore);
-    int hitIndex = 0;
-    bool found = false;
+    var hitIndex = 0;
+    var found = false;
     for (int i = 0; i < hitCount; i++)
     {
-      if (!m_rayHits[i].transform.IsChildOf(base.transform.parent ?? base.transform) &&
+      if (!m_rayHits[i].transform
+            .IsChildOf(base.transform.parent ?? base.transform) &&
           (!found || m_rayHits[hitIndex].distance > m_rayHits[i].distance))
       {
         hitIndex = i;
@@ -281,65 +292,73 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
 
   private void CheckRampFloor()
   {
-    if (m_state == BoardingRampState.Closed || m_state == BoardingRampState.Closing)
+#if !DEBUG
+    if (m_state == BoardingRampState.Closed ||
+        m_state == BoardingRampState.Closing)
     {
       m_updateRamp |= m_state == BoardingRampState.Closing ||
                       m_ramp.transform.eulerAngles.x != -90f;
+      return;
+    }
+    if (m_state != BoardingRampState.Opening &&
+        m_state != BoardingRampState.Open)
+    {
+      return;
+    }
+#endif
+
+
+    m_updateRamp = true;
+    var dist = m_segmentLength * (float)m_segments;
+    var lineLen = 1f * (m_segmentLength - m_segmentOverlap) *
+                  (float)m_segments;
+    var p =
+      m_ramp.transform.TransformPoint(new Vector3(0f,
+        (0f - m_segmentHeight) * (float)m_segments,
+        lineLen));
+    var lineStart = m_ramp.transform.position;
+    var forward = (p - lineStart).normalized;
+    var up = m_ramp.transform.up;
+    if (LinecastNonSelf(lineStart, p, out var hitInfo))
+    {
+      m_hitColor = Color.green;
+      m_hitDistance = hitInfo.distance / lineLen;
+      if (dist * 0.94f > hitInfo.distance)
+      {
+        m_hitColor = Color.black;
+        LinecastNonSelf(hitInfo.point + forward * 0.1f + up,
+          hitInfo.point + forward * 0.1f - up,
+          out hitInfo);
+      }
+
+      if ((double)Vector3.Dot(hitInfo.normal, Vector3.up) < 0.5)
+      {
+        m_hitColor = Color.white;
+        LinecastNonSelf(hitInfo.point + up, hitInfo.point - up, out hitInfo);
+      }
+
+      m_lastHitRamp = true;
+      m_hitPosition = hitInfo.point;
+      m_updateRamp = true;
+    }
+    else if (m_lastHitRamp && LinecastNonSelf(lineStart - up * 0.3f,
+               p - up * 0.3f, out hitInfo))
+    {
+      m_hitColor = Color.magenta;
+    }
+    else if (!m_lastHitRamp &&
+             RaycastNonSelf(p + new Vector3(0f, 5f, 0f), Vector3.down, 1000f,
+               out hitInfo))
+    {
+      m_hitColor = Color.blue;
+      m_hitPosition = hitInfo.point;
+      m_hitDistance = 1f;
+      m_updateRamp = true;
+      m_lastHitRamp = false;
     }
     else
     {
-      if (m_state != BoardingRampState.Opening && m_state != BoardingRampState.Open)
-      {
-        return;
-      }
-
-      m_updateRamp = true;
-      float dist = m_segmentLength * (float)m_segments;
-      float lineLen = 1f * (m_segmentLength - m_segmentOverlap) * (float)m_segments;
-      Vector3 p =
-        m_ramp.transform.TransformPoint(new Vector3(0f, (0f - m_segmentHeight) * (float)m_segments,
-          lineLen));
-      Vector3 lineStart = m_ramp.transform.position;
-      Vector3 forward = (p - lineStart).normalized;
-      Vector3 up = m_ramp.transform.up;
-      if (LinecastNonSelf(lineStart, p, out var hitInfo))
-      {
-        m_hitColor = Color.green;
-        m_hitDistance = hitInfo.distance / lineLen;
-        if (dist * 0.94f > hitInfo.distance)
-        {
-          m_hitColor = Color.black;
-          LinecastNonSelf(hitInfo.point + forward * 0.1f + up, hitInfo.point + forward * 0.1f - up,
-            out hitInfo);
-        }
-
-        if ((double)Vector3.Dot(hitInfo.normal, Vector3.up) < 0.5)
-        {
-          m_hitColor = Color.white;
-          LinecastNonSelf(hitInfo.point + up, hitInfo.point - up, out hitInfo);
-        }
-
-        m_lastHitRamp = true;
-        m_hitPosition = hitInfo.point;
-        m_updateRamp = true;
-      }
-      else if (m_lastHitRamp && LinecastNonSelf(lineStart - up * 0.3f, p - up * 0.3f, out hitInfo))
-      {
-        m_hitColor = Color.magenta;
-      }
-      else if (!m_lastHitRamp &&
-               RaycastNonSelf(p + new Vector3(0f, 5f, 0f), Vector3.down, 1000f, out hitInfo))
-      {
-        m_hitColor = Color.blue;
-        m_hitPosition = hitInfo.point;
-        m_hitDistance = 1f;
-        m_updateRamp = true;
-        m_lastHitRamp = false;
-      }
-      else
-      {
-        m_lastHitRamp = false;
-      }
+      m_lastHitRamp = false;
     }
   }
 
@@ -357,7 +376,8 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
     }
 
     m_updateRamp = false;
-    if (m_state == BoardingRampState.Closed || m_state == BoardingRampState.Closing)
+    if (m_state == BoardingRampState.Closed ||
+        m_state == BoardingRampState.Closing)
     {
       m_desiredRotation = ((m_stateProgress < 1f / (float)m_segments)
         ? Quaternion.Euler(-90f, 0f, 0f)
@@ -366,17 +386,26 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
     }
     else
     {
-      m_desiredRotation = Quaternion.LookRotation((m_hitPosition - (base.transform.position -
-        new Vector3(0f, m_hitDistance * m_segmentHeight * (float)m_segments, 0f))).normalized);
+      m_desiredRotation = Quaternion.LookRotation((m_hitPosition -
+                                                   (base.transform.position -
+                                                    new Vector3(0f,
+                                                      m_hitDistance *
+                                                      m_segmentHeight *
+                                                      (float)m_segments, 0f)))
+        .normalized);
       m_desiredRotation =
         Quaternion.Euler(
-          (Quaternion.Inverse(base.transform.rotation) * m_desiredRotation).eulerAngles.x, 0f, 0f);
+          (Quaternion.Inverse(base.transform.rotation) * m_desiredRotation)
+          .eulerAngles.x, 0f, 0f);
       m_rotSpeed =
-        Mathf.Clamp(Quaternion.Angle(m_ramp.transform.localRotation, m_desiredRotation) * 5f, 0f,
+        Mathf.Clamp(
+          Quaternion.Angle(m_ramp.transform.localRotation, m_desiredRotation) *
+          5f, 0f,
           90f);
     }
 
-    m_ramp.transform.localRotation = Quaternion.RotateTowards(m_ramp.transform.localRotation,
+    m_ramp.transform.localRotation = Quaternion.RotateTowards(
+      m_ramp.transform.localRotation,
       m_desiredRotation, Time.deltaTime * m_rotSpeed);
     m_winch1.transform.localRotation =
       Quaternion.Euler(m_stateProgress * 1000f * (float)m_segments, 0f, -90f);
@@ -389,10 +418,12 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
       for (int i = 1; i < m_segmentObjects.Count; i++)
       {
         float segmentProgress =
-          Mathf.Clamp01(bridgeProgress * (float)m_segmentObjects.Count / (float)i);
-        m_segmentObjects[i].transform.position = m_ramp.transform.TransformPoint(new Vector3(0f,
-          (0f - m_segmentHeight) * (float)i,
-          segmentProgress * (m_segmentLength - m_segmentOverlap) * (float)i));
+          Mathf.Clamp01(bridgeProgress * (float)m_segmentObjects.Count /
+                        (float)i);
+        m_segmentObjects[i].transform.position =
+          m_ramp.transform.TransformPoint(new Vector3(0f,
+            (0f - m_segmentHeight) * (float)i,
+            segmentProgress * (m_segmentLength - m_segmentOverlap) * (float)i));
       }
     }
 
@@ -430,11 +461,13 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
   public string GetHoverText()
   {
     var stateChangeDesc =
-      ((m_state == BoardingRampState.Open || m_state == BoardingRampState.Opening)
+      ((m_state == BoardingRampState.Open ||
+        m_state == BoardingRampState.Opening)
         ? "$mb_boarding_ramp_retract"
         : "$mb_boarding_ramp_extend");
-    return Localization.instance.Localize("[<color=yellow><b>$KEY_Use</b></color>] " +
-                                          stateChangeDesc) +
+    return Localization.instance.Localize(
+             "[<color=yellow><b>$KEY_Use</b></color>] " +
+             stateChangeDesc) +
            Localization.instance.Localize(
              "\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] $mb_boarding_ramp_edit");
   }
@@ -454,11 +487,13 @@ public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
 
     if (!hold)
     {
-      if (m_state == BoardingRampState.Open || m_state == BoardingRampState.Opening)
+      if (m_state == BoardingRampState.Open ||
+          m_state == BoardingRampState.Opening)
       {
         SetState(BoardingRampState.Closing);
       }
-      else if (m_state == BoardingRampState.Closing || m_state == BoardingRampState.Closed)
+      else if (m_state == BoardingRampState.Closing ||
+               m_state == BoardingRampState.Closed)
       {
         SetState(BoardingRampState.Opening);
       }

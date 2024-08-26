@@ -142,7 +142,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     if (m_body) return m_body;
 
-    var rb = VehicleShip?.vehicleMovementContainer.GetComponent<Rigidbody>();
+    var rb = GetComponent<Rigidbody>();
+    // var rb = VehicleShip?.vehicleMovementContainer.GetComponent<Rigidbody>();
     if (rb != null)
     {
       m_body = rb;
@@ -544,7 +545,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     base.Awake();
   }
 
-  public void Start()
+  public new void Start()
   {
     // this delay is added to prevent added items from causing collisions in the brief moment they are not ignoring collisions.
     Invoke(nameof(UpdateRemovePieceCollisionExclusions), 5f);
@@ -1566,13 +1567,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// </summary>
   public void RPC_SyncBounds(long sender)
   {
-    if (!VehicleShip.PiecesController) return;
+    if (!VehicleShip?.PiecesController) return;
     SyncVehicleBounds();
   }
 
   public void SyncVehicleBounds()
   {
-    VehicleShip.PiecesController.DebouncedRebuildBounds();
+    VehicleShip?.PiecesController.DebouncedRebuildBounds();
   }
 
   public void UpdateControlls(float dt) => UpdateControls(dt);
@@ -1788,7 +1789,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public void InitializeWheelWithShip(
     SteeringWheelComponent steeringWheel)
   {
-    VehicleShip.m_controlGuiPos = transform;
+    if (!VehicleShip) return;
+    VehicleShip!.m_controlGuiPos = transform;
 
     var rudderAttachPoint = steeringWheel.transform.Find("attachpoint");
     if (rudderAttachPoint != null)

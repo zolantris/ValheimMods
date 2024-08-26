@@ -120,5 +120,11 @@
         <SandboxieProfilePath>$(SandboxieUserPath)\$(R2ModManPath)\$(R2ModManProfile)</SandboxieProfilePath>
         <SandboxiePluginDeployPath>$(SandboxieUserPath)\$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</SandboxiePluginDeployPath>
     </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' ">
+        <OutputPath>bin\Debug ClientServer\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' ">
+        <OutputPath>bin\Debug Run Valheim\</OutputPath>
+    </PropertyGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

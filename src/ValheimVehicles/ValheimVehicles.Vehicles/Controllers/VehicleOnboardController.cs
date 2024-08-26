@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DynamicLocations;
 using UnityEngine;
+using ValheimVehicles.Config;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles.Controllers;
@@ -35,12 +36,15 @@ public class VehicleOnboardController : MonoBehaviour
       StartCoroutine(RemovePlayersRoutine());
     }
 
-    InvokeRepeating(nameof(UpdateOwner), 2f, 2f);
+    InvokeRepeating(nameof(UpdateOwner), 2f,
+      VehicleDebugConfig.BoatOwnerUpdateFrequency.Value);
   }
 
   private void OnEnable()
   {
-    InvokeRepeating(nameof(UpdateOwner), 2f, 2f);
+    CancelInvoke(nameof(UpdateOwner));
+    InvokeRepeating(nameof(UpdateOwner), 2f,
+      VehicleDebugConfig.BoatOwnerUpdateFrequency.Value);
     StartCoroutine(RemovePlayersRoutine());
   }
 
@@ -50,7 +54,8 @@ public class VehicleOnboardController : MonoBehaviour
     StopCoroutine(nameof(RemovePlayersRoutine));
   }
 
-  public VehicleMovementController GetMovementController() => _movementController;
+  public VehicleMovementController GetMovementController() =>
+    _movementController;
 
   public void SetMovementController(VehicleMovementController val)
   {
@@ -59,8 +64,10 @@ public class VehicleOnboardController : MonoBehaviour
 
   private void UpdateOwner()
   {
-    if (_movementController.m_nview.IsValid() && _movementController.m_nview.IsOwner() &&
-        !(Player.m_localPlayer == null) && _movementController.m_players.Count > 0 &&
+    if (_movementController.m_nview.IsValid() &&
+        _movementController.m_nview.IsOwner() &&
+        !(Player.m_localPlayer == null) &&
+        _movementController.m_players.Count > 0 &&
         !_movementController.IsPlayerInBoat(Player.m_localPlayer))
     {
       RefreshPlayerList();
@@ -72,10 +79,10 @@ public class VehicleOnboardController : MonoBehaviour
 
   private long GetNewOwnerID()
   {
-    long num = 0L;
-    for (int i = 0; i < _movementController.m_players.Count; i++)
+    var num = 0L;
+    foreach (var t in _movementController.m_players)
     {
-      num = _movementController.m_players[i].GetOwner();
+      num = t.GetOwner();
       if (num != 0L)
       {
         break;
@@ -92,7 +99,7 @@ public class VehicleOnboardController : MonoBehaviour
 
   private void RefreshPlayerList()
   {
-    for (int i = 0; i < _movementController.m_players.Count; i++)
+    for (var i = 0; i < _movementController.m_players.Count; i++)
     {
       if (_movementController.m_players[i].GetOwner() == 0L)
       {
@@ -172,7 +179,8 @@ public class VehicleOnboardController : MonoBehaviour
 
   private void SetPlayerOnShip(Player player)
   {
-    var piecesTransform = _movementController.ShipInstance?.Instance?.VehiclePiecesController?
+    var piecesTransform = _movementController.ShipInstance?.Instance
+      ?.VehiclePiecesController?
       .transform;
 
 
@@ -237,7 +245,7 @@ public class VehicleOnboardController : MonoBehaviour
   }
 
   /// <summary>
-  /// Coroutine to update players if they logout or desync, this will remove them every 30 seconds
+  /// Coroutine to update players if they log out or desync, this will remove them every 30 seconds
   /// </summary>
   /// <returns></returns>
   private IEnumerator<WaitForSeconds?> RemovePlayersRoutine()
@@ -246,7 +254,9 @@ public class VehicleOnboardController : MonoBehaviour
     {
       yield return new WaitForSeconds(15);
 
-      var playersOnboard = _movementController?.ShipInstance?.VehiclePiecesController?
+      // expensive but accurate way to get the players within the boat
+      var playersOnboard = _movementController?.ShipInstance
+        ?.VehiclePiecesController?
         .GetComponentsInChildren<Player>();
       List<Player> validPlayers = [];
 

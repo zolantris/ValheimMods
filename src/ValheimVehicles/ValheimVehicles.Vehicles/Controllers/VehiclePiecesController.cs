@@ -207,7 +207,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
 
     var initialized = VehicleInstance.NetView.GetZDO()
-      .GetBool(VehicleZdoVars.ZdoKeyBaseVehicleInitState);
+      .GetBool(VehicleZdoVars.HasPreviouslyInitializedVehiclePiece);
 
     BaseVehicleInitState = initialized
       ? InitializationState.Complete
@@ -217,7 +217,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void SetInitComplete()
   {
     VehicleInstance.NetView.GetZDO()
-      .Set(VehicleZdoVars.ZdoKeyBaseVehicleInitState, true);
+      .Set(VehicleZdoVars.HasPreviouslyInitializedVehiclePiece, true);
     BaseVehicleInitState = InitializationState.Complete;
   }
 

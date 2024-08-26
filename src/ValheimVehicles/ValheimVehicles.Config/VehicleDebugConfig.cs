@@ -8,10 +8,14 @@ public static class VehicleDebugConfig
 {
   public static ConfigFile? Config { get; private set; }
 
-  public static ConfigEntry<bool> AutoShowVehicleColliders { get; private set; } = null!;
+  public static ConfigEntry<bool>
+    AutoShowVehicleColliders { get; private set; } = null!;
 
   // public static ConfigEntry<bool>
   //   ForceTakeoverShipControls { get; private set; } = null!;
+
+  public static ConfigEntry<float>
+    BoatOwnerUpdateFrequency { get; private set; } = null!;
 
   public static ConfigEntry<bool>
     PositionAutoFix { get; private set; } = null!;
@@ -19,27 +23,37 @@ public static class VehicleDebugConfig
   public static ConfigEntry<float>
     PositionAutoFixThreshold { get; private set; } = null!;
 
-  public static ConfigEntry<bool> VehicleDebugMenuEnabled { get; private set; } = null!;
-  public static ConfigEntry<bool> SyncShipPhysicsOnAllClients { get; private set; } = null!;
+  public static ConfigEntry<bool>
+    VehicleDebugMenuEnabled { get; private set; } = null!;
+
+  public static ConfigEntry<bool> SyncShipPhysicsOnAllClients
+  {
+    get;
+    private set;
+  } = null!;
 
 
   private const string SectionName = "Vehicle Debugging";
 
-  private static void OnShowVehicleDebugMenuChange(object sender, EventArgs eventArgs)
+  private static void OnShowVehicleDebugMenuChange(object sender,
+    EventArgs eventArgs)
   {
-    ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui(VehicleDebugMenuEnabled.Value);
+    ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui(VehicleDebugMenuEnabled
+      .Value);
   }
 
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
-    // ForceTakeoverShipControls = config.Bind(SectionName, "ForceTakeoverShipControls",
-    //   true,
-    //   ConfigHelpers.CreateConfigDescription(
-    //     "Allows user to takeover ship and ship physics immediately before the request for control is complete. Helpful for disconnecting owners of the boat. This will prevent lockout",
-    //     false, false));
+    BoatOwnerUpdateFrequency = config.Bind(SectionName,
+      "boatOwnerUpdateFrequency",
+      20f,
+      ConfigHelpers.CreateConfigDescription(
+        "The sync frequency in seconds of when the boat will change owners if the owner leaves the vehicle area, mostly meant for debugging, but this could allow for more accurate physics transitions",
+        true, true, new AcceptableValueRange<float>(0.5f, 60)));
 
-    AutoShowVehicleColliders = config.Bind(SectionName, "Always Show Vehicle Colliders",
+    AutoShowVehicleColliders = config.Bind(SectionName,
+      "Always Show Vehicle Colliders",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Automatically shows the vehicle colliders useful for debugging the vehicle",

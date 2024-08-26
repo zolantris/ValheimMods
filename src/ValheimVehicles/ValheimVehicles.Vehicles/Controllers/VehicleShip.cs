@@ -22,7 +22,8 @@ namespace ValheimVehicles.Vehicles.Components;
 
 public static class VehicleShipHelpers
 {
-  public static GameObject GetOrFindObj(GameObject returnObj, GameObject searchObj,
+  public static GameObject GetOrFindObj(GameObject returnObj,
+    GameObject searchObj,
     string objectName)
   {
     if ((bool)returnObj)
@@ -56,13 +57,16 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   // The rudder force multiplier applied to the ship speed
   private float _rudderForce = 1f;
 
+  private bool _hasPreviouslyInitializedVehiclePiece = false;
+
 
   public GameObject GhostContainer() =>
     VehicleShipHelpers.GetOrFindObj(_ghostContainer, gameObject,
       PrefabNames.GhostContainer);
 
   public GameObject PiecesContainer() =>
-    VehicleShipHelpers.GetOrFindObj(_piecesContainer, transform.parent.gameObject,
+    VehicleShipHelpers.GetOrFindObj(_piecesContainer,
+      transform.parent.gameObject,
       PrefabNames.PiecesContainer);
 
   public static readonly Dictionary<int, VehicleShip> AllVehicles = new();
@@ -76,7 +80,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   public bool isCreative;
 
-  public static bool HasVehicleDebugger => VehicleDebugConfig.VehicleDebugMenuEnabled.Value;
+  public static bool HasVehicleDebugger =>
+    VehicleDebugConfig.VehicleDebugMenuEnabled.Value;
 
   public void SetCreativeMode(bool val)
   {
@@ -85,6 +90,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     UpdateShipEffects();
   }
 
+  private GameObject? _ghostPiece;
   public static bool CustomShipPhysicsEnabled = false;
 
   // The determines the directional movement of the ship 
@@ -170,12 +176,14 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   private static void UpdateShipSounds(VehicleShip vehicleShip)
   {
     if (vehicleShip?.ShipEffects == null) return;
-    vehicleShip.ShipEffects.m_inWaterSoundRoot.SetActive(ValheimRaftPlugin.Instance
+    vehicleShip.ShipEffects.m_inWaterSoundRoot.SetActive(ValheimRaftPlugin
+      .Instance
       .EnableShipInWaterSounds.Value);
     vehicleShip.ShipEffects.m_wakeSoundRoot.SetActive(ValheimRaftPlugin.Instance
       .EnableShipWakeSounds.Value);
     // this one is not a gameobject so have to select the gameobject
-    vehicleShip.ShipEffects.m_sailSound.gameObject.SetActive(ValheimRaftPlugin.Instance
+    vehicleShip.ShipEffects.m_sailSound.gameObject.SetActive(ValheimRaftPlugin
+      .Instance
       .EnableShipInWaterSounds.Value);
   }
 
@@ -207,6 +215,12 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   public void OnDestroy()
   {
+    // delete the ghost piece VehicleShip is destroyed. Only applies if the piece is not build
+    if (_ghostPiece)
+    {
+      ZNetScene.instance.Destroy(_ghostPiece);
+    }
+
     UnloadAndDestroyPieceContainer();
 
     if (PersistentZdoId != 0 && AllVehicles.ContainsKey(PersistentZdoId))
@@ -244,7 +258,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   {
     if (ZdoWatchManager.Instance == null)
     {
-      Logger.LogWarning("No ZdoWatchManager instance, this means something went wrong");
+      Logger.LogWarning(
+        "No ZdoWatchManager instance, this means something went wrong");
     }
 
     if (_persistentZdoId != 0)
@@ -276,10 +291,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   {
     movingPiecesContainer = GetVehicleMovingPiecesObj(transform);
     vehicleMovementContainer = GetVehicleMovementObj(transform);
-    if (ZNetView.m_forceDisableInit) return;
-
     NetView = GetComponent<ZNetView>();
-
     GetPersistentID();
 
     if (PersistentZdoId == 0)
@@ -298,12 +310,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
     AwakeSetupVehicleShip();
 
-    if (!NetView)
-    {
-      Logger.LogWarning("No NetView but tried to set it before");
-      NetView = GetComponent<ZNetView>();
-    }
-
     InitializeVehiclePiecesController();
   }
 
@@ -314,6 +320,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       InitializeVehicleDebugger();
     }
 
+    TryCreateGhostPiece();
     UpdateShipSounds(this);
     UpdateShipEffects();
   }
@@ -326,6 +333,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     }
 
     GetPersistentID();
+    TryCreateGhostPiece();
 
     if (PersistentZdoId != 0 && !AllVehicles.ContainsKey(PersistentZdoId))
     {
@@ -339,14 +347,20 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     }
   }
 
-  public void UpdateShipZdoPosition()
+  public void TryCreateGhostPiece()
   {
-    if (!(bool)NetView || NetView.GetZDO() == null || NetView.m_ghost || (bool)PiecesController ||
-        !isActiveAndEnabled) return;
-    var sector = ZoneSystem.instance.GetZone(transform.position);
-    var zdo = NetView.GetZDO();
-    zdo.SetPosition(transform.position);
-    zdo.SetSector(sector);
+    if (NetView?.GetZDO() == null) return;
+
+    _hasPreviouslyInitializedVehiclePiece =
+      NetView.GetZDO()
+        ?.GetBool(VehicleZdoVars.HasPreviouslyInitializedVehiclePiece) ?? false;
+
+
+    if (_hasPreviouslyInitializedVehiclePiece && !_ghostPiece)
+    {
+      Player.m_localPlayer.m_placementGhost =
+        Instantiate(GetStarterPiece());
+    }
   }
 
   private GameObject GetStarterPiece()
@@ -356,11 +370,13 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     switch (StartingPiece?.Value)
     {
       case VehicleShipInitPiece.HullFloor2X2:
-        selectedPrefab = PrefabNames.GetHullSlabName(ShipHulls.HullMaterial.Wood,
+        selectedPrefab = PrefabNames.GetHullSlabName(
+          ShipHulls.HullMaterial.Wood,
           PrefabNames.PrefabSizeVariant.TwoByTwo);
         break;
       case VehicleShipInitPiece.HullFloor4X4:
-        selectedPrefab = PrefabNames.GetHullSlabName(ShipHulls.HullMaterial.Wood,
+        selectedPrefab = PrefabNames.GetHullSlabName(
+          ShipHulls.HullMaterial.Wood,
           PrefabNames.PrefabSizeVariant.FourByFour);
         break;
       case VehicleShipInitPiece.Nautilus:
@@ -390,7 +406,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     CanInitHullPiece = false;
     try
     {
-      var shipPrefab = PrefabManager.Instance.GetPrefab(PrefabNames.WaterVehicleShip);
+      var shipPrefab =
+        PrefabManager.Instance.GetPrefab(PrefabNames.WaterVehicleShip);
       var ship = Instantiate(shipPrefab, obj.position,
         obj.rotation, null);
 
@@ -405,11 +422,15 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     return null;
   }
 
+  /// <summary>
+  /// Converts the ghostPiece into a real piece
+  /// </summary>
   private void InitStarterPiece()
   {
     if (!CanInitHullPiece)
     {
-      NetView.GetZDO().Set(VehicleZdoVars.ZdoKeyBaseVehicleInitState, true);
+      NetView.GetZDO().Set(VehicleZdoVars.HasPreviouslyInitializedVehiclePiece,
+        true);
       return;
     }
 
@@ -420,18 +441,29 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     }
 
     if (PiecesController.BaseVehicleInitState !=
-        Vehicles.VehiclePiecesController.InitializationState.Created)
+        VehiclePiecesController.InitializationState.Created)
     {
       return;
     }
 
-    var prefab = GetStarterPiece();
-    if (!prefab) return;
+    ZNetView hullNetView;
+    if (_ghostPiece == null)
+    {
+      var prefab = GetStarterPiece();
+      var hull = Instantiate(prefab, transform.position, transform.rotation);
+      hullNetView = hull.GetComponent<ZNetView>();
+    }
+    else
+    {
+      _ghostPiece.transform.SetParent(null);
+      _ghostPiece.transform.position = transform.position;
+      _ghostPiece.transform.rotation = transform.rotation;
+      hullNetView = _ghostPiece.GetComponent<ZNetView>();
+      _ghostPiece = null;
+    }
 
-    var hull = Instantiate(prefab, transform.position, transform.rotation);
-    if (hull == null) return;
+    if (!hullNetView) return;
 
-    var hullNetView = hull.GetComponent<ZNetView>();
     PiecesController.AddNewPiece(hullNetView);
     PiecesController.SetInitComplete();
   }
@@ -440,14 +472,16 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   {
     if (VehicleDebugHelpersInstance != null) return;
     if (MovementController == null || !MovementController.FloatCollider ||
-        !MovementController.BlockingCollider || !MovementController.OnboardCollider)
+        !MovementController.BlockingCollider ||
+        !MovementController.OnboardCollider)
     {
       CancelInvoke(nameof(InitializeVehicleDebugger));
       Invoke(nameof(InitializeVehicleDebugger), 1);
       return;
     }
 
-    VehicleDebugHelpersInstance = gameObject.AddComponent<VehicleDebugHelpers>();
+    VehicleDebugHelpersInstance =
+      gameObject.AddComponent<VehicleDebugHelpers>();
 
 
     VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
@@ -492,9 +526,11 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     if (!vehiclePiecesContainer) return;
 
     _vehiclePiecesContainerInstance =
-      Instantiate(vehiclePiecesContainer, transform.position, transform.rotation);
+      Instantiate(vehiclePiecesContainer, transform.position,
+        transform.rotation);
 
-    PiecesController = _vehiclePiecesContainerInstance.AddComponent<VehiclePiecesController>();
+    PiecesController = _vehiclePiecesContainerInstance
+      .AddComponent<VehiclePiecesController>();
     PiecesController.InitFromShip(Instance);
 
     InitStarterPiece();
