@@ -72,15 +72,6 @@
     </Target>
     -->
 
-    <PropertyGroup>
-        <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
-        <R2ModManPath>%HOMEPATH%\AppData\Roaming\r2modmanPlus-local</R2ModManPath>
-        <R2ModManProfileName>ashlands</R2ModManProfileName>
-        <R2ModManProfile>Valheim\profiles\$(R2ModManProfileName)</R2ModManProfile>
-        <PluginDeployTarget>BepInEx\plugins\zolantris-ValheimVehicles</PluginDeployTarget>
-        <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
-    </PropertyGroup>
-
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' ">
         <OutputPath>bin\Debug ClientServer\</OutputPath>
     </PropertyGroup>
@@ -97,19 +88,19 @@
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>
     </Target>
-    <Target Name="Run_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' " AfterTargets="Copy_To_Valheim_Server">
-        <!--        <Exec Command="cd &quot;$(ValheimServerPath)&quot;-->
-        <!--        powershell Start-Process -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
-        <!--    Windows Terminal    -->
-        <!--        <Exec Command="powershell Stop-Task -Name ValheimServer"/>-->
-        <Exec Command="wt.exe -w 1 --focus -d &quot;$(ValheimServerPath)&quot; --title ValheimServer powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>
-    </Target>
-    <Target Name="Run_Valheim" Condition="'$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="Copy_To_R2ModMan">
-        <!--        <Exec Command="powershell Stop-Task -Name ValheimClient"/>-->
-        <!--    -console -char ZOL -server 50.39.165.163:2456 -password 12345    -->
-        <Exec Command="wt.exe -w 2 --title ValheimClient &quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\$(PluginDeployPath)\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
-        <!--                <Exec Command="wt.exe -w 1 sp -d &quot;$(ValheimServerPath)&quot; &#45;&#45;title Valheim_Client powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
-    </Target>
+<!--    <Target Name="Run_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' " AfterTargets="Copy_To_Valheim_Server">-->
+<!--        &lt;!&ndash;        <Exec Command="cd &quot;$(ValheimServerPath)&quot;&ndash;&gt;-->
+<!--        &lt;!&ndash;        powershell Start-Process -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>&ndash;&gt;-->
+<!--        &lt;!&ndash;    Windows Terminal  https://learn.microsoft.com/en-us/windows/terminal/  &ndash;&gt;-->
+<!--        &lt;!&ndash;        <Exec Command="powershell Stop-Task -Name ValheimServer"/>&ndash;&gt;-->
+<!--        <Exec Command="wt.exe -w 1 &#45;&#45;focus -d &quot;$(ValheimServerPath)&quot; &#45;&#45;title ValheimServer powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
+<!--    </Target>-->
+<!--    <Target Name="Run_Valheim" Condition="'$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="Copy_To_R2ModMan">-->
+<!--        &lt;!&ndash;        <Exec Command="powershell Stop-Task -Name ValheimClient"/>&ndash;&gt;-->
+<!--        &lt;!&ndash;    -console -char ZOL -server 50.39.165.163:2456 -password 12345    &ndash;&gt;-->
+<!--        <Exec Command="wt.exe -w 2 &#45;&#45;title ValheimClient &quot;$(GamePath)\valheim.exe&quot; -console &#45;&#45;doorstop-enable true &#45;&#45;doorstop-target &quot;$(BepInExPath)\BepInEx.Preloader.dll&quot;"/>-->
+<!--        &lt;!&ndash;                <Exec Command="wt.exe -w 1 sp -d &quot;$(ValheimServerPath)&quot; &#45;&#45;title Valheim_Client powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>&ndash;&gt;-->
+<!--    </Target>-->
     <Target Name="Generate_Mod_Archive" Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'" AfterTargets="PostBuildEvent">
         <PropertyGroup>
             <RepoDir>$(OutDir)..\..\</RepoDir>

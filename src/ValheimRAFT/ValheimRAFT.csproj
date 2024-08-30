@@ -111,12 +111,6 @@
         </Folder>
     </ItemGroup>
     <PropertyGroup>
-        <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
-        <R2ModManPath>AppData\Roaming\r2modmanPlus-local</R2ModManPath>
-        <R2ModManProfileName>ashlands</R2ModManProfileName>
-        <R2ModManProfile>Valheim\profiles\$(R2ModManProfileName)</R2ModManProfile>
-        <PluginDeployTarget>BepInEx\plugins\zolantris-ValheimRAFT</PluginDeployTarget>
-        <PluginDeployPath>%HOMEPATH%\$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
         <SandboxieVMPath>C:\Sandbox\fre\DefaultBox</SandboxieVMPath>
         <SandboxieUserPath>$(SandboxieVMPath)\user\current</SandboxieUserPath>
         <SandboxieValheimPath>$(SandboxieVMPath)\drive\C\Program Files (x86)\Steam\steamapps\common\Valheim</SandboxieValheimPath>
