@@ -10,9 +10,9 @@
         <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </PropertyGroup>
 
-    <Import Project="$(SolutionsDir).props" Condition="Exists('$(SolutionsDir).props')"/>
+    <Import Project="$(SolutionDir).props" Condition="Exists('$(SolutionDir).props')"/>
 
-    <PropertyGroup Condition="!Exists('$(SolutionsDir).props')">
+    <PropertyGroup Condition="!Exists('$(SolutionDir).props')">
         <BepInExPath>$(SolutionDir)libs</BepInExPath>
         <ManagedDataPath>$(SolutionDir)libs</ManagedDataPath>
     </PropertyGroup>
@@ -55,24 +55,6 @@
         <PublicizerClearCacheOnClean>true</PublicizerClearCacheOnClean>
         <PublicizerLogFilePath>.\Logs\publicizer.txt</PublicizerLogFilePath>
     </PropertyGroup>
-    <!-- Find GamePath -->
-    <Choose>
-        <When Condition="($(OS) == 'Unix' OR $(OS) == 'OSX') AND $(GamePath) == ''">
-            <PropertyGroup>
-                <GamePath Condition="!Exists('$(GamePath)')">$(HOME)/.steam/steam/steamapps/common/Valheim</GamePath>
-                <GamePath Condition="!Exists('$(GamePath)')">$(HOME)/Library/Application Support/Steam/steamapps/common/Valheim/Contents/MacOS</GamePath>
-            </PropertyGroup>
-        </When>
-        <When Condition="($(OS) == 'Windows_NT') AND $(GamePath) == ''">
-            <PropertyGroup>
-                <GamePath Condition="!Exists('$(GamePath)')">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 892970', 'InstallLocation', null, RegistryView.Registry64, RegistryView.Registry32))</GamePath>
-                <_SteamLibraryPath>$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Valve\Steam', 'SteamPath', null, RegistryView.Registry32))</_SteamLibraryPath>
-                <GamePath Condition="!Exists('$(GamePath)') AND '$(_SteamLibraryPath)' != ''">$(_SteamLibraryPath)\steamapps\common\Valheim</GamePath>
-                <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files\Steam\steamapps\common\Valheim</GamePath>
-                <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files (x86)\Steam\steamapps\common\Valheim</GamePath>
-            </PropertyGroup>
-        </When>
-    </Choose>
 
     <!-- Set start action -->
     <!--    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">-->
@@ -85,7 +67,7 @@
     <!--    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">-->
     <!--        <StartAction>Program</StartAction>-->
     <!--        <StartProgram>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server\start_headless_server.bat</StartProgram>-->
-    <!--        &lt;!&ndash;        <StartArguments>-console &#45;&#45;doorstop-enable true &#45;&#45;doorstop-target $(HOMEPATH)\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll</StartArguments>&ndash;&gt;-->
+    <!--        <StartArguments>-console &#45;&#45;doorstop-enable true &#45;&#45;doorstop-target $(HOMEPATH)\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll</StartArguments>-->
     <!--        <StartWorkingDirectory>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</StartWorkingDirectory>-->
     <!--    </PropertyGroup>-->
 
@@ -304,14 +286,6 @@
         </Reference>
     </ItemGroup>
 
-    <PropertyGroup>
-        <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
-        <R2ModManPath>%HOMEPATH%\AppData\Roaming\r2modmanPlus-local</R2ModManPath>
-        <R2ModManProfileName>ashlands</R2ModManProfileName>
-        <R2ModManProfile>Valheim\profiles\$(R2ModManProfileName)</R2ModManProfile>
-        <PluginDeployTarget>BepInEx\plugins\zolantris-SentryUnityWrapper</PluginDeployTarget>
-        <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
-    </PropertyGroup>
     <!-- Patches for community mods -->
     <!-- Todo this may be moved direcly into repos that require this mod -->
     <ItemGroup Label="Community Mod Patches">
@@ -353,7 +327,7 @@
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
 
         <!--  Eventually we need to copy and test this lib over in unity     -->
-        <!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SolutionDir)src\ValheimRAFT\ValheimRAFT.Unity\Assets\Assemblies\$(AssemblyName).dll&quot;"/>-->
+<!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SolutionDir)src\ValheimRAFT\ValheimRAFT.Unity\Assets\Assemblies\$(AssemblyName).dll&quot;"/>-->
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).mdb&quot;"/>
 
@@ -368,7 +342,7 @@
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>
         <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>
         <!-- mdb copy Does not work for some reason -->
-        <!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)plugins\$(AssemblyName).mdb&quot;"/>-->
+<!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)plugins\$(AssemblyName).mdb&quot;"/>-->
         <Exec Command="xcopy /d &quot;.\Assets\&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
     </Target>
     <Target KeepDuplicateOutputs="false" Name="Copy_To_Valheim_Server" Condition=" $(AssemblyName) != 'SentryUnityWrapper' And ('$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU')" AfterTargets="convert_pdb_to_mdb">

@@ -50,14 +50,27 @@ This guide aims to get you setup in the repo and able to build the code.
 Add the following data.
 
 ```xml
+    <!-- basically, this is needed to run valheim through the configuration -->
+    <PropertyGroup Label="ValheimPaths">
+        <!-- use GamePath property if the game is not located in the steam root folder -->
+        <GamePath><Steam_Library_Path>\steamapps\common\Valheim</GamePath>
+        <ValheimServerPath>$(GamePath) dedicated server</ValheimServerPath>
+        <R2ModManPath>%APPDATA%\r2modmanPlus-local</R2ModManPath>
+        <R2ModManProfileName>profile-name</R2ModManProfileName>
+        <R2ModManProfile>Valheim\profiles\$(R2ModManProfileName)</R2ModManProfile>
+        <PluginDeployTarget>BepInEx\plugins\Dev-ValheimRAFT</PluginDeployTarget>
+        <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
+    </PropertyGroup>
     <PropertyGroup Label="LocalPaths">
-        <BepInExPath><USER_HOME_DIR>\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_raft_debugging\BepInEx\core</BepInExPath>
-        <ManagedDataPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed</ManagedDataPath>
+        <BepInExPath>$(R2ModManPath)\$(R2ModManProfile)\BepInEx\core</BepInExPath>
+        <ManagedDataPath>$(GamePath)\valheim_Data\Managed</ManagedDataPath>
     </PropertyGroup>
 ```
 
 Alternatively copy pasting the Valheim\valheim_Data\Managed and other require
 dependencies into "libs" will make this step unnecessary.
+
+> Note: if you still see a lot of errors after importing all the libraries, this may be due to the fact that your IDE does not support the latest version of C#. Support depends on the version of the NET SDK [(see)](https://dotnet.microsoft.com/en-us/download).
 
 ## Publicizing
 
@@ -73,7 +86,7 @@ package then you may need to run `nuget restore`
 
 Publicizer for assembly_valheim steps.
 
-1. Alternatively To publicize, copy all the dependencies required into a
+1. Alternatively to publicize, copy all the dependencies required into a
    separate folder.
 2. Install https://github.com/CabbageCrow/AssemblyPublicizer and run the GUI
    tool on that folder.
@@ -102,7 +115,7 @@ and within programs folder.
 ## Custom Logging for powershell
 
 Add this to your powershell profile. This will allow your to highlight only logs
-from ValheimVehicles and ValheimRAFT mods as well as errors.
+from ValheimVehicles and ValheimRAFT mods as well as errors. [(about profiles)](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_profiles)
 
 These commands are for powershell users. If you are running things on linux
 there are simpler (and similar) commands for syntax highlighting. I advise
@@ -130,7 +143,7 @@ When launching the game just run the following command to output the latest
 logs.
 
 ```powershell
-gc -wait -tail 10 C:\Users\fre\AppData\LocalLow\IronGate\Valheim\Player.log | ForEach {Write-Host -ForegroundColor (Get-LogColor $_) $_}
+gc -wait -tail 10 C:\Users\__username__\AppData\LocalLow\IronGate\Valheim\Player.log | ForEach {Write-Host -ForegroundColor (Get-LogColor $_) $_}
 ```
 
 ## Dev Builds

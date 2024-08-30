@@ -227,12 +227,12 @@ repo's [issues section](https://github.com/zolantris/ValheimMods/issues).
     - Player.log can be found under the User directory's AppData path for
       valheim (Same location as worldsaves). This path should work if copy
       pasting
-      into Windows explorer  `%userprofile%\AppData\LocalLow\IronGate\Valheim\`
+      into Windows explorer  `%USERPROFILE%\AppData\LocalLow\IronGate\Valheim\`
     - Full path
       example `C:\Users\bob_smith\AppData\LocalLow\IronGate\Valheim\Player.log`
         - bob_smith - is the example username.
-        - Use the `%userprofile%` to skip having to add your username or drive
-          path before it.
+        - Use the `%USERPROFILE%` to skip having to add your username or drive
+          path before it. [(more detailed)](https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid#requirements)
 - Please respect the form. Adding the relevant information makes it easier to
   triage the problem.
 
