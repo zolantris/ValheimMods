@@ -19,9 +19,6 @@
         <Nullable>enable</Nullable>
         <ApplicationVersion>1.8.0</ApplicationVersion>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Test|AnyCPU' ">
-        <OutputPath>bin\Test\</OutputPath>
-    </PropertyGroup>
     <Import Project="..\..\valheim.targets"/>
     <!--  really just needs unity and bepinex  -->
     <ItemGroup>
