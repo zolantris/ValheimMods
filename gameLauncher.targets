@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <ProjectConfigMatcher>'$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Client Server|AnyCPU'</ProjectConfigMatcher>
+        <ProjectConfigMatcher> '$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run ClientServer|AnyCPU'</ProjectConfigMatcher>
     </PropertyGroup>
     <!-- Find GamePath -->
     <Choose>
@@ -24,10 +24,17 @@
     
     <!--    Windows Terminal  https://learn.microsoft.com/en-us/windows/terminal/  -->
     <Target Name="Run_Valheim_Server" AfterTargets="Copy_To_Valheim_Server"
-            Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run ClientServer|AnyCPU' ">
+            Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Server|AnyCPU'
+                        Or '$(Configuration)|$(Platform)' == 'Release Run Server|AnyCPU'
+                        Or '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU'
+                        Or '$(Configuration)|$(Platform)' == 'Release Run ClientServer|AnyCPU' ">
         <Exec Command="wt.exe -w 2 -d &quot;$(ValheimServerPath)&quot; --title ValheimServer powershell &quot;Start-Process -NoNewWindow -FilePath 'start_headless_server.bat' -ArgumentList '--doorstop-enable', 'true', '--doorstop-target', '$(ValheimServerPath)\BepInEx\core\BepInEx.Preloader.dll'&quot;;wt.exe -w 2 --title &quot;ValheimServer [Logger]&quot; powershell -NoProfile -NoExit -File &quot;$(SolutionDir)logValheim.ps1&quot; --LogPath &quot;$(ValheimServerPath)\BepInEx\LogOutput.log&quot;"/>
     </Target>
-    <Target Name="Run_Valheim" AfterTargets="Copy_To_R2ModMan" Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run ClientServer|AnyCPU' ">
+    <Target Name="Run_Valheim" AfterTargets="Copy_To_R2ModMan"
+            Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU'
+                        Or '$(Configuration)|$(Platform)' == 'Release Run Client|AnyCPU'
+                        Or '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU'
+                        Or '$(Configuration)|$(Platform)' == 'Release Run ClientServer|AnyCPU' ">
         <!--       doorstop >=4.0.0         -->
         <Exec Command="wt.exe -w 2 --title ValheimClient $(GamePath)\valheim.exe -console --doorstop-enable true --doorstop-target &quot;$(BepInExPath)\BepInEx.Preloader.dll&quot;;wt.exe -w 2 --title &quot;ValheimClient [Logger]&quot; powershell -NoProfile -NoExit -File &quot;$(SolutionDir)logValheim.ps1&quot; --LogPath &quot;%USERPROFILE%\AppData\LocalLow\IronGate\Valheim\Player.log&quot;"/>
     </Target>
