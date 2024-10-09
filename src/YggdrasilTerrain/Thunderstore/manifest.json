@@ -1,0 +1,9 @@
+﻿{
+  "name": "YggdrasilTerrain",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/zolantris/ValheimMods/tree/main/src/YggdrasilTerrain",
+  "description": "Yggdrasil Terrain - allows for building on the great yggdrasil branch in the sky",
+  "dependencies": [
+    "ValheimModding-Jotunn-2.20.0"
+  ]
+}
