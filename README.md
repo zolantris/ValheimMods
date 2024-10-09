@@ -82,6 +82,6 @@ gc-max-time-slice=20
 ```
 
 [ValheimRAFT_Dir]: src/ValheimRAFT
-[YggdrassilTerrain_Dir]: src/YggdrassilTerrain
+[YggdrassilTerrain_Dir]: src/YggdrasilTerrain
 
 [BuildingDamageModExtended_Dir]: src/ValheimRAFT
