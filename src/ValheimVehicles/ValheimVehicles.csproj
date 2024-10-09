@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"
             Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
@@ -17,25 +17,7 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
     <Import Project="$(SolutionDir)/valheim.targets"/>
-    <!--        <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">-->
-    <!--            <PlatformTarget>AnyCPU</PlatformTarget>-->
-    <!--            <DebugSymbols>true</DebugSymbols>-->
-    <!--            <DebugType>full</DebugType>-->
-    <!--            <Optimize>false</Optimize>-->
-    <!--            <OutputPath>bin\Debug\</OutputPath>-->
-    <!--            <DefineConstants>DEBUG;TRACE</DefineConstants>-->
-    <!--            <ErrorReport>prompt</ErrorReport>-->
-    <!--            <WarningLevel>4</WarningLevel>-->
-    <!--        </PropertyGroup>-->
-    <!--        <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">-->
-    <!--            <PlatformTarget>AnyCPU</PlatformTarget>-->
-    <!--            <DebugType>pdbonly</DebugType>-->
-    <!--            <Optimize>true</Optimize>-->
-    <!--            <OutputPath>bin\Release\</OutputPath>-->
-    <!--            <DefineConstants>TRACE</DefineConstants>-->
-    <!--            <ErrorReport>prompt</ErrorReport>-->
-    <!--            <WarningLevel>4</WarningLevel>-->
-    <!--        </PropertyGroup>-->
+    
     <ItemGroup>
         <Compile Include="ValheimVehicles.Patches\GameCamera_VehiclePiecesPatch.cs"/>
         <Compile Include="ValheimVehicles.Patches\Zone_Patch.cs"/>
@@ -72,84 +54,67 @@
     </Target>
     -->
 
-    <PropertyGroup>
-        <ValheimServerPath>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</ValheimServerPath>
-        <R2ModManPath>%HOMEPATH%\AppData\Roaming\r2modmanPlus-local</R2ModManPath>
-        <R2ModManProfileName>ashlands</R2ModManProfileName>
-        <R2ModManProfile>Valheim\profiles\$(R2ModManProfileName)</R2ModManProfile>
-        <PluginDeployTarget>BepInEx\plugins\zolantris-ValheimVehicles</PluginDeployTarget>
-        <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
-    </PropertyGroup>
+<!--    <Target Name="Copy_To_R2ModMan" Condition=" '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU' " AfterTargets="PostBuildEvent">-->
+<!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>-->
+<!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>-->
+<!--    </Target>-->
+<!--    <Target KeepDuplicateOutputs="false" Name="Copy_To_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Client Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client Server|AnyCPU' " AfterTargets="PostBuildEvent">-->
+<!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>-->
+<!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>-->
+<!--    </Target>-->
+<!--    <Target Name="Run_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Client Server|AnyCPU' " AfterTargets="Copy_To_Valheim_Server">-->
+<!--        &lt;!&ndash;        <Exec Command="cd &quot;$(ValheimServerPath)&quot;&ndash;&gt;-->
+<!--        &lt;!&ndash;        powershell Start-Process -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>&ndash;&gt;-->
+<!--        &lt;!&ndash;    Windows Terminal  https://learn.microsoft.com/en-us/windows/terminal/  &ndash;&gt;-->
+<!--        &lt;!&ndash;        <Exec Command="powershell Stop-Task -Name ValheimServer"/>&ndash;&gt;-->
+<!--        <Exec Command="wt.exe -w 1 &#45;&#45;focus -d &quot;$(ValheimServerPath)&quot; &#45;&#45;title ValheimServer powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
+<!--    </Target>-->
+<!--    <Target Name="Run_Valheim" Condition="'$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU' " AfterTargets="Copy_To_R2ModMan">-->
+<!--        &lt;!&ndash;        <Exec Command="powershell Stop-Task -Name ValheimClient"/>&ndash;&gt;-->
+<!--        &lt;!&ndash;    -console -char ZOL -server 50.39.165.163:2456 -password 12345    &ndash;&gt;-->
+<!--        <Exec Command="wt.exe -w 2 &#45;&#45;title ValheimClient &quot;$(GamePath)\valheim.exe&quot; -console &#45;&#45;doorstop-enable true &#45;&#45;doorstop-target &quot;$(BepInExPath)\BepInEx.Preloader.dll&quot;"/>-->
+<!--        &lt;!&ndash;                <Exec Command="wt.exe -w 1 sp -d &quot;$(ValheimServerPath)&quot; &#45;&#45;title Valheim_Client powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>&ndash;&gt;-->
+<!--    </Target>-->
+<!--    <Target Name="Generate_Mod_Archive" Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'" AfterTargets="PostBuildEvent">-->
+<!--        <PropertyGroup>-->
+<!--            <RepoDir>$(OutDir)..\..\</RepoDir>-->
+<!--            <AssetsDir>$(RepoDir)Assets\</AssetsDir>-->
+<!--            <ModOutputDir>$(OutDir)ModVersions\</ModOutputDir>-->
+<!--            <TmpDir>$(OutDir)tmp\</TmpDir>-->
+<!--            <ThunderStoreDir>$(RepoDir)ThunderStore\</ThunderStoreDir>-->
+<!--            <ThunderStoreName>Thunderstore</ThunderStoreName>-->
+<!--            <NexusName>Nexus</NexusName>-->
+<!--            <ModNameVersion>$(AssemblyName)-$(ApplicationVersion).zip</ModNameVersion>-->
+<!--        </PropertyGroup>-->
+<!--        <Exec Command="if exist &quot;$(TmpDir)plugins\Assets&quot; rd /s /q &quot;$(TmpDir)plugins\Assets&quot;"/>-->
+<!--        <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>-->
 
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' ">
-        <OutputPath>bin\Debug ClientServer\</OutputPath>
-    </PropertyGroup>
+<!--        <Exec Command="if not exist &quot;$(ModOutputDir)&quot; mkdir &quot;$(ModOutputDir)&quot;"/>-->
+<!--        <Exec Command="if not exist &quot;$(TmpDir)&quot; mkdir &quot;$(TmpDir)&quot;"/>-->
+<!--        <Exec Command="if not exist &quot;$(TmpDir)plugins&quot; mkdir &quot;$(TmpDir)plugins&quot;"/>-->
 
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Test|AnyCPU' ">
-        <OutputPath>bin\Test\</OutputPath>
-    </PropertyGroup>
+<!--        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(TmpDir)plugins\ValheimRAFT.dll&quot;"/>-->
+<!--        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(TmpDir)plugins\ValheimRAFT.pdb&quot;"/>-->
+<!--        <Exec Command="copy &quot;$(RepoDir)README.md&quot; &quot;$(TmpDir)README.md&quot;"/>-->
 
-    <Target Name="Copy_To_R2ModMan" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="PostBuildEvent">
-        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
-    </Target>
-    <Target KeepDuplicateOutputs="false" Name="Copy_To_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' " AfterTargets="PostBuildEvent">
-        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>
-    </Target>
-    <Target Name="Run_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim Server|AnyCPU' " AfterTargets="Copy_To_Valheim_Server">
-        <!--        <Exec Command="cd &quot;$(ValheimServerPath)&quot;-->
-        <!--        powershell Start-Process -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
-        <!--    Windows Terminal    -->
-        <!--        <Exec Command="powershell Stop-Task -Name ValheimServer"/>-->
-        <Exec Command="wt.exe -w 1 --focus -d &quot;$(ValheimServerPath)&quot; --title ValheimServer powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>
-    </Target>
-    <Target Name="Run_Valheim" Condition="'$(Configuration)|$(Platform)' == 'Debug ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Valheim|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Valheim|AnyCPU' " AfterTargets="Copy_To_R2ModMan">
-        <!--        <Exec Command="powershell Stop-Task -Name ValheimClient"/>-->
-        <!--    -console -char ZOL -server 50.39.165.163:2456 -password 12345    -->
-        <Exec Command="wt.exe -w 2 --title ValheimClient &quot;C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim.exe&quot; --doorstop-enable true --doorstop-target &quot;%HOMEPATH%\$(PluginDeployPath)\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
-        <!--                <Exec Command="wt.exe -w 1 sp -d &quot;$(ValheimServerPath)&quot; &#45;&#45;title Valheim_Client powershell Start-Process -NoNewWindow -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>-->
-    </Target>
-    <Target Name="Generate_Mod_Archive" Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'" AfterTargets="PostBuildEvent">
-        <PropertyGroup>
-            <RepoDir>$(OutDir)..\..\</RepoDir>
-            <AssetsDir>$(RepoDir)Assets\</AssetsDir>
-            <ModOutputDir>$(OutDir)ModVersions\</ModOutputDir>
-            <TmpDir>$(OutDir)tmp\</TmpDir>
-            <ThunderStoreDir>$(RepoDir)ThunderStore\</ThunderStoreDir>
-            <ThunderStoreName>Thunderstore</ThunderStoreName>
-            <NexusName>Nexus</NexusName>
-            <ModNameVersion>$(AssemblyName)-$(ApplicationVersion).zip</ModNameVersion>
-        </PropertyGroup>
-        <Exec Command="if exist &quot;$(TmpDir)plugins\Assets&quot; rd /s /q &quot;$(TmpDir)plugins\Assets&quot;"/>
-        <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>
-
-        <Exec Command="if not exist &quot;$(ModOutputDir)&quot; mkdir &quot;$(ModOutputDir)&quot;"/>
-        <Exec Command="if not exist &quot;$(TmpDir)&quot; mkdir &quot;$(TmpDir)&quot;"/>
-        <Exec Command="if not exist &quot;$(TmpDir)plugins&quot; mkdir &quot;$(TmpDir)plugins&quot;"/>
-
-        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.dll&quot; &quot;$(TmpDir)plugins\ValheimRAFT.dll&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)ValheimRAFT.pdb&quot; &quot;$(TmpDir)plugins\ValheimRAFT.pdb&quot;"/>
-        <Exec Command="copy &quot;$(RepoDir)README.md&quot; &quot;$(TmpDir)README.md&quot;"/>
-
-        <!-- Copy Assets -->
-        <Exec Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>
-        <Exec Command="del &quot;$(TmpDir)plugins\Assets\*.png.meta&quot;"/>
+<!--        &lt;!&ndash; Copy Assets &ndash;&gt;-->
+<!--        <Exec Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>-->
+<!--        <Exec Command="del &quot;$(TmpDir)plugins\Assets\*.png.meta&quot;"/>-->
 
 
-        <!--  Thunderstore and Nexus store may need different deploys  -->
+<!--        &lt;!&ndash;  Thunderstore and Nexus store may need different deploys  &ndash;&gt;-->
 
-        <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>
+<!--        <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>-->
 
-        <!-- delete duplicate mod version-->
-        <Exec Command="if exist &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot;"/>
-        <Exec Command="if exist &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot;"/>
-        <Exec Command="if exist &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot; del /s /q &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot;"/>
+<!--        &lt;!&ndash; delete duplicate mod version&ndash;&gt;-->
+<!--        <Exec Command="if exist &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot;"/>-->
+<!--        <Exec Command="if exist &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot;"/>-->
+<!--        <Exec Command="if exist &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot; del /s /q &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot;"/>-->
 
 
-        <Exec Command="powershell Compress-Archive '$(TmpDir)\*' '$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)'"/>
-        <Exec Command="powershell Compress-Archive '$(TmpDir)\plugins\*' '$(ModOutputDir)$(NexusName)-$(ModNameVersion)'"/>
-        <Exec Command="powershell Compress-Archive '$(RepoDir)libs\*' '$(ModOutputDir)libs-$(ApplicationVersion).zip'"/>
-    </Target>
+<!--        <Exec Command="powershell Compress-Archive '$(TmpDir)\*' '$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)'"/>-->
+<!--        <Exec Command="powershell Compress-Archive '$(TmpDir)\plugins\*' '$(ModOutputDir)$(NexusName)-$(ModNameVersion)'"/>-->
+<!--        <Exec Command="powershell Compress-Archive '$(RepoDir)libs\*' '$(ModOutputDir)libs-$(ApplicationVersion).zip'"/>-->
+<!--    </Target>-->
 
 </Project>
