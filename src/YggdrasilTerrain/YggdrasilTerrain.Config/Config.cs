@@ -37,10 +37,15 @@ public static class YggdrasilConfig
   private static readonly int DefaultCollisionMask =
     LayerMask.GetMask(collisionLayerNames.ToArray());
 
-  private const string DefaultCollisionLayer = "terrain";
+  private const string DefaultCollisionLayer = "piece";
 
   private const string ConfigSection = "Main";
-  private const string OverridesSection = "Mod Overrides";
+  private const string LayersSection = "Layers";
+
+  private const string LayerOverridesName = "LayerOverridesEnabled";
+
+  private const string LayersSectionSharedDescription =
+    $"Will not apply an override unless {LayersSection}.${LayerOverridesName} = true";
 
   public static void BindConfig(ConfigFile config)
   {
@@ -66,24 +71,22 @@ public static class YggdrasilConfig
         "Enables debug logging and features, useful for debugging the mod, does NOT allow exploits.",
         true, true));
 
-    OverridesSectionEnabled = config.Bind(OverridesSection,
-      "Enabled", false,
+    OverridesSectionEnabled = config.Bind(LayersSection,
+      LayerOverridesName, false,
       ConfigHelpers.CreateConfigDescription(
         "Enables allows overrides for collisions and other values for mod compatibility. Do not enable this unless you need to otherwise values set within overrides will require a reset of the config.",
         true, true));
 
-    var overridesSharedDescription =
-      $"Will not apply an override unless {OverridesSection}.Enabled = true";
 
-    BranchCollisionLayerMask = config.Bind(OverridesSection,
+    BranchCollisionLayerMask = config.Bind(LayersSection,
       "BranchCollisionLayerMask", DefaultCollisionMask,
       ConfigHelpers.CreateConfigDescription(
-        $"Controls what game layers can be set as collisions. {overridesSharedDescription}",
+        $"Controls what game layers can be set as collisions. {LayersSectionSharedDescription}",
         true, true));
-    BranchLayer = config.Bind(OverridesSection,
+    BranchLayer = config.Bind(LayersSection,
       "BranchLayer", LayerMask.NameToLayer(DefaultCollisionLayer),
       new ConfigDescription(
-        $"Controls what layer the branch is on. This will affect building, do not change this unless you know what you are doing. Default should be terrain. {overridesSharedDescription}",
+        $"Controls what layer the branch is on. This will affect building, do not change this unless you know what you are doing. Default should be {DefaultCollisionLayer}. {LayersSectionSharedDescription}",
         new AcceptableValueRange<int>(0, 31),
         new ConfigurationManagerAttributes()
           { IsAdminOnly = true, IsAdvanced = true }));
@@ -93,7 +96,7 @@ public static class YggdrasilConfig
       BranchCollisionLayerMask.Value = DefaultCollisionMask;
 
       BranchLayer.Value =
-        defaultCollisionLayerInt >= 0 ? defaultCollisionLayerInt : 0;
+        defaultCollisionLayerInt >= 0 ? defaultCollisionLayerInt : 10;
     }
 
     AllowCollisionsOnYggdrasilBranch.SettingChanged += YggdrasilBranch
