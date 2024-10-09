@@ -9,6 +9,7 @@ using YggdrasilTerrain.Patches;
 namespace YggdrasilTerrain;
 
 [BepInPlugin(ModGuid, ModName, Version)]
+[BepInDependency(Jotunn.Main.ModGuid)]
 [NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod,
   VersionStrictness.Minor)]
 public class YggdrasilTerrainPlugin : BaseUnityPlugin
