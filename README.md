@@ -21,6 +21,7 @@ The following statuses will be used to label repos.
 | Mod Name                                                   | Status     | Description                                                                                                   | 
 |------------------------------------------------------------|------------|---------------------------------------------------------------------------------------------------------------|
 | [ValheimRAFT][ValheimRAFT_Dir]                             | **Active** | Allows Valheim Build system on the water, similar to the Raft Game                                            |
+| [YggdrasilTerrain][YggdrassilTerrain_Dir]                             | **Active** | Allows for walking, building, and colliding with the Yggdrasil Branch. Adds teleport commands and collision config to futureproof it.                                           |
 | [BuildingDamageModExtended][BuildingDamageModExtended_Dir] | **LTS**    | Allows setting building damage multipliers based on entity types and also additionally allows for damage caps |
 
 ## Contributing
@@ -81,5 +82,6 @@ gc-max-time-slice=20
 ```
 
 [ValheimRAFT_Dir]: src/ValheimRAFT
+[YggdrassilTerrain_Dir]: src/YggdrassilTerrain
 
 [BuildingDamageModExtended_Dir]: src/ValheimRAFT
