@@ -53,12 +53,12 @@ Add the following data.
     <!-- basically, this is needed to run valheim through the configuration -->
     <PropertyGroup Label="ValheimPaths">
         <!-- use GamePath property if the game is not located in the steam root folder -->
-        <GamePath><Steam_Library_Path>\steamapps\common\Valheim</GamePath>
+        <GamePath>%Steam_Library_Path%\steamapps\common\Valheim</GamePath>
         <ValheimServerPath>$(GamePath) dedicated server</ValheimServerPath>
         <R2ModManPath>%APPDATA%\r2modmanPlus-local</R2ModManPath>
         <R2ModManProfileName>profile-name</R2ModManProfileName>
         <R2ModManProfile>Valheim\profiles\$(R2ModManProfileName)</R2ModManProfile>
-        <PluginDeployTarget>BepInEx\plugins\Dev-ValheimRAFT</PluginDeployTarget>
+        <PluginDeployTarget>BepInEx\plugins\zolantris-ValheimRAFT</PluginDeployTarget>
         <PluginDeployPath>$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</PluginDeployPath>
     </PropertyGroup>
     <PropertyGroup Label="LocalPaths">
@@ -70,7 +70,11 @@ Add the following data.
 Alternatively copy pasting the Valheim\valheim_Data\Managed and other require
 dependencies into "libs" will make this step unnecessary.
 
-> Note: if you still see a lot of errors after importing all the libraries, this may be due to the fact that your IDE does not support the latest version of C#. Support depends on the version of the NET SDK [(see)](https://dotnet.microsoft.com/en-us/download).
+> Note: if you still see a lot of errors after importing all the libraries, this
+> may be due to the fact that your IDE does not support the latest version of
+> C#.
+> Support depends on the version of the NET
+> SDK [(see)](https://dotnet.microsoft.com/en-us/download).
 
 ## Publicizing
 
@@ -115,7 +119,8 @@ and within programs folder.
 ## Custom Logging for powershell
 
 Add this to your powershell profile. This will allow your to highlight only logs
-from ValheimVehicles and ValheimRAFT mods as well as errors. [(about profiles)](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_profiles)
+from ValheimVehicles and ValheimRAFT mods as well as
+errors. [(about profiles)](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_profiles)
 
 These commands are for powershell users. If you are running things on linux
 there are simpler (and similar) commands for syntax highlighting. I advise
