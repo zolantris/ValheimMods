@@ -10,8 +10,10 @@
     </attachedFolders>
     <explicitIncludes>
       <Path>.github</Path>
+      <Path>.gitignore</Path>
       <Path>.props</Path>
       <Path>README.md</Path>
+      <Path>base.targets</Path>
       <Path>boot.config-example</Path>
       <Path>docs</Path>
       <Path>gameLauncher.targets</Path>

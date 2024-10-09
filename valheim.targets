@@ -38,7 +38,7 @@
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    
+
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Test|AnyCPU' ">
         <OutputPath>bin\Test\</OutputPath>
     </PropertyGroup>
@@ -59,21 +59,6 @@
         <PublicizerClearCacheOnClean>true</PublicizerClearCacheOnClean>
         <PublicizerLogFilePath>.\Logs\publicizer.txt</PublicizerLogFilePath>
     </PropertyGroup>
-
-    <!-- Set start action -->
-    <!--    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">-->
-    <!--        <StartAction>Program</StartAction>-->
-    <!--        <StartProgram>$(GamePath)\valheim.exe</StartProgram>-->
-    <!--        <StartArguments>-console &#45;&#45;doorstop-enable true &#45;&#45;doorstop-target $(HOMEPATH)\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\ashlands\BepInEx\core\BepInEx.Preloader.dll</StartArguments>-->
-    <!--        <StartWorkingDirectory>$(GamePath)</StartWorkingDirectory>-->
-    <!--    </PropertyGroup>-->
-
-    <!--    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">-->
-    <!--        <StartAction>Program</StartAction>-->
-    <!--        <StartProgram>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server\start_headless_server.bat</StartProgram>-->
-    <!--        <StartArguments>-console &#45;&#45;doorstop-enable true &#45;&#45;doorstop-target $(HOMEPATH)\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\valheim_mod_debugging\BepInEx\core\BepInEx.Preloader.dll</StartArguments>-->
-    <!--        <StartWorkingDirectory>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server</StartWorkingDirectory>-->
-    <!--    </PropertyGroup>-->
 
     <!-- Add BepInEx references -->
     <ItemGroup Label="BepInEx">
@@ -330,8 +315,8 @@
             <CheckValheimServerPath Include="$(ValheimServerPath)"/>
         </ItemGroup>
         <Error Condition="!Exists('@(CheckValheimServerPath)')"/>
-        
-        <MakeDir Directories="$(ValheimServerPath)\$(PluginDeployTarget)" />
+
+        <MakeDir Directories="$(ValheimServerPath)\$(PluginDeployTarget)"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).mdb&quot;"/>
@@ -342,17 +327,17 @@
         <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Assets\Translations\English\&quot; /E/H/Y"/>
     </Target>
     <Target Name="Copy_To_R2ModMan" AfterTargets="convert_pdb_to_mdb" Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run ClientServer|AnyCPU' ">
-        
+
 
         <!--  Eventually we need to copy and test this lib over in unity     -->
-<!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SolutionDir)src\ValheimRAFT\ValheimRAFT.Unity\Assets\Assemblies\$(AssemblyName).dll&quot;"/>-->
+        <!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SolutionDir)src\ValheimRAFT\ValheimRAFT.Unity\Assets\Assemblies\$(AssemblyName).dll&quot;"/>-->
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).mdb&quot;"/>
 
         <Exec Condition="$(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>
         <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>
-        
+
         <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
         <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(PluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>
     </Target>
@@ -361,7 +346,7 @@
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>
         <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>
         <!-- mdb copy Does not work for some reason -->
-<!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)plugins\$(AssemblyName).mdb&quot;"/>-->
+        <!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)plugins\$(AssemblyName).mdb&quot;"/>-->
         <Exec Command="xcopy /d &quot;$(AssetsDir)\&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
     </Target>
     <Target Name="Generate_Mod_Archive" AfterTargets="PostBuildEvent" Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
