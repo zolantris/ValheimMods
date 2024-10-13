@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using BepInEx.Bootstrap;
+using DynamicLocations.Controllers;
 using UnityEngine;
 using ValheimRAFT.Config;
 using ValheimRAFT.Patches;
@@ -564,9 +565,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     PrefabManager.OnVanillaPrefabsAvailable += AddCustomPieces;
 
     ZdoWatcherDelegate.RegisterToZdoManager();
-    ZdoVarManager.RegisterPublicVar(this,
-      VehicleZdoVars.VehicleParentIdHash,
-      VehicleZdoVars.MBParentIdHash);
+    PlayerSpawnController.PlayerMoveToVehicleCallback =
+      VehiclePiecesController.OnPlayerSpawnInVehicle;
+    // ZdoVarManager.RegisterPublicVar(this,
+    //   VehicleZdoVars.VehicleParentIdHash,
+    //   VehicleZdoVars.MBParentIdHash);
   }
 
   public void RegisterConsoleCommands()

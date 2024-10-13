@@ -13,6 +13,7 @@ public static class DynamicLocationsConfig
   // public static ConfigEntry<bool>
   //   DynamicSpawnPointGameObjects { get; private set; } = null!;
 
+  public static ConfigEntry<int> RespawnHeightOffset { get; set; } = null!;
 
   public static ConfigEntry<bool>
     EnableDynamicSpawnPoint { get; private set; } = null!;
@@ -45,6 +46,15 @@ public static class DynamicLocationsConfig
         null,
         new ConfigurationManagerAttributes()
           { IsAdminOnly = true, IsAdvanced = true }));
+
+    RespawnHeightOffset = config.Bind(ConfigSection,
+      "respawnHeightOffset",
+      0,
+      new ConfigDescription(
+        $"Sets the respawn height for beds. Useful if the player is spawning within the bed instead of above it",
+        new AcceptableValueRange<int>(-5, 10),
+        new ConfigurationManagerAttributes()
+          { IsAdminOnly = false, IsAdvanced = true }));
 
     Debug = config.Bind(ConfigSection,
       "debug",

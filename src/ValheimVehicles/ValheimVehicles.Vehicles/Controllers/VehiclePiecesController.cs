@@ -325,6 +325,23 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     return mpc.transform;
   }
 
+  public static IEnumerator OnPlayerSpawnInVehicle(ZNetView? zNetView)
+  {
+    var vpc = zNetView?.GetComponentInParent<VehiclePiecesController>();
+    if (vpc == null)
+    {
+      yield return false;
+    }
+    else
+    {
+      if (vpc.IsActivationComplete) yield return true;
+      else
+      {
+        yield return new WaitUntil(() => vpc.IsActivationComplete);
+      }
+    }
+  }
+
   public void Awake()
   {
     if (ZNetView.m_forceDisableInit)

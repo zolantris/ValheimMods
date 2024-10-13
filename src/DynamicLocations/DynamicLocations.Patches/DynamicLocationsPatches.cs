@@ -39,6 +39,18 @@ public class DynamicLocationsPatches
     LocationController.RemoveLogoutZdo(__instance);
   }
 
+  [HarmonyPatch(typeof(Player), "ShowTeleportAnimation")]
+  [HarmonyPostfix]
+  private static void ShowTeleportAnimation(bool __result)
+  {
+    var isRespawnTeleporting =
+      PlayerSpawnController.Instance?.IsTeleportingToDynamicLocation ?? false;
+    if (isRespawnTeleporting)
+    {
+      __result = false;
+    }
+  }
+
   // [HarmonyPatch(typeof(Game), "FindSpawnPoint")]
   // [HarmonyPrefix]
   // private static bool FindSpawnPoint(Game __instance, bool __result, out Vector3 point,

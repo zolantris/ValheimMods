@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using DynamicLocations.Config;
 using DynamicLocations.DynamicLocations.Interfaces;
 using UnityEngine;
 using ZdoWatcher;
@@ -23,6 +25,7 @@ public class PlayerSpawnController : MonoBehaviour
   // spawn (Beds)
   public static bool CanUpdateLogoutPoint = true;
   public static bool CanRemoveLogoutAfterSync = false;
+  public bool IsTeleportingToDynamicLocation = false;
 
   public static Dictionary<long, PlayerSpawnController> Instances = new();
 
@@ -38,6 +41,7 @@ public class PlayerSpawnController : MonoBehaviour
 
   private void OnDisable()
   {
+    IsTeleportingToDynamicLocation = false;
     StopAllCoroutines();
   }
 
@@ -172,13 +176,13 @@ public class PlayerSpawnController : MonoBehaviour
 
   public bool MovePlayerToLoginPoint()
   {
+    IsTeleportingToDynamicLocation = false;
     if (!player)
     {
       Setup();
     }
 
     if (player == null) return false;
-
     var loginZdoOffset = LocationController.GetLogoutZdoOffset(player);
     var loginZdoid = LocationController.GetLogoutZdo(player);
 
@@ -205,6 +209,7 @@ public class PlayerSpawnController : MonoBehaviour
   {
     UpdateLocationTimer.Restart();
     yield return MovePlayerToZdo(zdoid, offset);
+    IsTeleportingToDynamicLocation = false;
     UpdateLocationTimer.Reset();
     // must be another coroutine AND only fired after the Move coroutine completes otherwise it WILL break the move coroutine as it deletes the required key.
     // remove logout point after moving the player.
@@ -261,17 +266,29 @@ public class PlayerSpawnController : MonoBehaviour
     player.transform.position = newPosition;
   }
 
-  private bool isWithinRaft()
+  // add a callback that ValheimRAFT/Vehicles can bind to and delegate it's classes to.
+  // public Interpolate.Function IsWithinVehicleCallback;
+
+  // private bool IsWithinVehicle()
+  // {
+  //   return true;
+  // }
+
+  public delegate TResult Func<in T, out TResult>(T arg);
+
+  // Meant for being overridden by the ValheimRAFT mod
+  public static Func<ZNetView?, IEnumerator> PlayerMoveToVehicleCallback =
+    OnPlayerMoveToVehiclePlaceholder;
+
+  private static IEnumerator OnPlayerMoveToVehiclePlaceholder(ZNetView? obj)
   {
-    return true;
+    yield return null;
   }
 
-  public IVehiclePiecesController? GetVehiclePiecesController(ZNetView nView)
+  private static IEnumerator OnPlayerMoveToVehicle(ZNetView? netView)
   {
-    return nView.GetComponents<MonoBehaviour>()
-        .Where(component =>
-          component.name.Contains("VehiclePiecesController")) as
-      IVehiclePiecesController;
+    var output = PlayerMoveToVehicleCallback(netView);
+    yield return output;
   }
 
   /// <summary>
@@ -290,23 +307,31 @@ public class PlayerSpawnController : MonoBehaviour
       yield break;
     }
 
+    IsTeleportingToDynamicLocation = true;
+    player?.TeleportTo(zdo.GetPosition() + Vector3.up *
+      DynamicLocationsConfig.RespawnHeightOffset.Value, zdo.GetRotation(),
+      distantTeleport: true);
+
     // beginning of LoadGameObjectInSector (which cannot be abstracted easily if the return is required)
     // ZDOMan.instance.RequestZDO(zdo.m_uid);
     ZNetView? zdoNetViewInstance = null;
     var isZoneLoaded = false;
+    var zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
+
     while (!isZoneLoaded || zdoNetViewInstance == null)
     {
-      if (UpdateLocationTimer is { ElapsedTicks: > 10000 })
+      if (UpdateLocationTimer is { ElapsedMilliseconds: > 10000 })
       {
         Logger.LogWarning(
           $"Timed out: Attempted to spawn player on Boat ZDO expired for {zdo.m_uid}, reason -> spawn zdo was not found");
         yield break;
       }
 
-      var zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
+      zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
       ZoneSystem.instance.PokeLocalZone(zoneId);
 
       var tempInstance = ZNetScene.instance.FindInstance(zdo);
+
       if (tempInstance == null)
       {
         Logger.LogWarning(
@@ -331,130 +356,30 @@ public class PlayerSpawnController : MonoBehaviour
       }
     }
 
-    var parentNv = zdoNetViewInstance?.GetComponentInParent<ZNetView>();
+    yield return OnPlayerMoveToVehicle(zdoNetViewInstance);
 
-    if (parentNv != null)
+
+    var zdoPosition = zdo.GetPosition();
+    var zdoRotation = zdo.GetRotation();
+    if (!player) yield break;
+    // (-2335.91064, 33.813118, -5291.97412)
+    // var positionWithOffset = zdoPosition.Value + offset;
+    var positionWithOffset =
+      zdoNetViewInstance?.transform.position;
+
+    yield return new WaitUntil(() =>
+      Player.m_localPlayer.IsTeleporting() == false);
+
+    // SyncPlayerPosition(positionWithOffset);
+    // -2275.258 32.3295 -5309.554
+    // this might not be needed, but as a backup this is good b/c it avoids teleporting to wrong area especially if the zone suddenly unloads
+    if (player != null)
     {
-      var vehiclePiecesController = GetVehiclePiecesController(parentNv);
-      if (vehiclePiecesController != null)
-      {
-        yield return
-          new WaitUntil(() => vehiclePiecesController.IsActivationComplete);
-      }
+      player.TeleportTo((positionWithOffset ?? zdoPosition) + Vector3.up *
+        DynamicLocationsConfig.RespawnHeightOffset.Value, zdo.GetRotation(),
+        false);
     }
 
-
-    var zdoPosition = zdo?.GetPosition();
-    var zdoRotation = zdo?.GetRotation();
-    if (!player || zdoPosition == null || zdoRotation == null) yield break;
-
-    var positionWithOffset = zdoPosition.Value + offset;
-    // SyncPlayerPosition(positionWithOffset);
-
-    player?.TeleportTo(positionWithOffset, zdoRotation.Value,
-      distantTeleport: false);
-
-    // var spawnZdoInstance = ZNetScene.instance.FindInstance(spawnZdo);
-    // while (!spawnZdoInstance && UpdateLocationTimer.ElapsedMilliseconds < 10000)
-    // {
-    //   var tempInstance = ZNetScene.instance.FindInstance(spawnZdo);
-    //   if (tempInstance != null)
-    //   {
-    //     if (tempInstance.GetComponent<Bed>())
-    //     {
-    //       spawnZdoInstance = tempInstance;
-    //     }
-    //     else
-    //     {
-    //       Logger.LogWarning(
-    //         $"The temp instance named: {tempInstance.name}, -> was not a bed instance gameobject ");
-    //     }
-    //   }
-    //
-    //   yield return null;
-    // }
-
-    // Logger.LogDebug("Exited the spawnZdoInstance Loop");
-    // if (spawnZdoInstance)
-    // {
-    //   SyncPlayerPosition(spawnZdoInstance.transform.position);
-    // }
-    // BaseVehicleController? bvc = null;
-    // if (zdoNetViewInstance)
-    // {
-    //   bvc = zdoNetViewInstance
-    //     .GetComponentInParent<BaseVehicleController>();
-    //   if (bvc)
-    //   {
-    //     bvc?.ForceUpdateAllPiecePositions();
-    //     bvc?.SyncAllBeds();
-    //     Logger.LogDebug(
-    //       "Called BaseVehicleController.ForceUpdateAllPiecePositions and BaseVehicleController.SyncAllBeds from PlayerSpawnController");
-    //   }
-    // }
-    //
-    // yield return new WaitForFixedUpdate();
-    //
-    // if (zdoid == ZDOID.None) yield break;
-    //
-    // spawnZdo = ZDOMan.instance.GetZDO((ZDOID)zdoid);
-    //
-    // if (spawnZdo == null) yield break;
-    //
-    // var spawnOffset =
-    //   spawnZdo?.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero) ?? Vector3.zero;
-    // Logger.LogDebug($"SpawnOffset, {spawnOffset}");
-    // zdoNetViewInstance = ZNetScene.instance.FindInstance(spawnZdo);
-    //
-    // var globalZdoPositionWithOffset = spawnZdo.GetPosition() + spawnOffset;
-    // Logger.LogDebug(
-    //   $"ZDOPos+relative {globalZdoPositionWithOffset} vs transform.pos {zdoNetViewInstance?.transform?.position}");
-    // if (zdoNetViewInstance != null)
-    // {
-    //   SyncPlayerPosition(zdoNetViewInstance.transform.position);
-    // }
-    //
-    // yield return new WaitForSeconds(1);
-    // if (zdoNetViewInstance != null)
-    // {
-    //   spawnZdo = ZDOMan.instance.GetZDO((ZDOID)zdoid);
-    //   if (spawnZdo == null) yield break;
-    //
-    //   spawnOffset = spawnZdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
-    //   globalZdoPositionWithOffset = spawnZdo.GetPosition() + spawnOffset;
-    //   Logger.LogDebug(
-    //     $"ZDOPos+relative {globalZdoPositionWithOffset} vs transform.pos {zdoNetViewInstance?.transform?.position}");
-    //   SyncPlayerPosition(globalZdoPositionWithOffset);
-    // }
+    IsTeleportingToDynamicLocation = false;
   }
-
-  /// <summary>
-  /// Initializes the SpawnController to delegate logout and bed spawning behavior
-  /// Meant to be used in Player.Awake to match existing or add a new component
-  /// </summary>
-  /// <param name="player"></param>
-  // public static void HandleDynamicRespawnLocation(Player player)
-  // {
-  //   // don't need this logic
-  //   var playerId = player.GetPlayerID();
-  //   Logger.LogDebug($"PlayerID {playerId}");
-  //
-  //   if (playerId == 0L)
-  //   {
-  //     Logger.LogDebug("PlayerId is 0L skipping");
-  //     return;
-  //   }
-  //
-  //   var controller = GetSpawnController(player);
-  //
-  //   // should be for first time spawns
-  //   if (!controller)
-  //   {
-  //     var playerSpawnPrefab =
-  //       PrefabManager.Instance.GetPrefab(PrefabNames.PlayerSpawnControllerObj);
-  //     if (!playerSpawnPrefab) return;
-  //     Instantiate(playerSpawnPrefab, player.transform);
-  //     return;
-  //   }
-  // }
 }
