@@ -3,7 +3,7 @@ using UnityEngine;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
-namespace DynamicLocations;
+namespace DynamicLocations.Controllers;
 
 public static class LocationController
 {

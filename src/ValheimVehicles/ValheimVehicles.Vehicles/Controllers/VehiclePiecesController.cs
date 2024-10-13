@@ -45,6 +45,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   private static bool _allowPendingPiecesToActivate = true;
 
+  public bool IsActivationComplete = false;
+
   public static bool DEBUGAllowActivatePendingPieces
   {
     get => _allowPendingPiecesToActivate;
@@ -1252,6 +1254,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public IEnumerator ActivatePendingPieces()
   {
+    IsActivationComplete = false;
+
     while (vehicleInitializationTimer is
              { ElapsedMilliseconds: < 50000, IsRunning: true } &&
            enabled)
@@ -1358,13 +1362,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         yield return null;
       }
 
-      // possibly will help force sync if activate pending pieces is going weirdly for client
-      // zsyncRigidbody?.SyncNow();
       // debounces to prevent spamming activation
       yield return new WaitForSeconds(1);
     }
 
     vehicleInitializationTimer.Stop();
+    IsActivationComplete = true;
   }
 
   /// <summary>
@@ -1813,8 +1816,18 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     if (netView.m_zdo != null)
     {
-      netView.m_zdo.Set(VehicleZdoVars.MBParentIdHash,
-        VehicleInstance.PersistentZdoId);
+      if (VehicleInstance?.PersistentZdoId != null)
+      {
+        netView.m_zdo.Set(VehicleZdoVars.MBParentIdHash,
+          VehicleInstance.PersistentZdoId);
+      }
+      else
+      {
+        // We should not reach this, but this would be a critical issue and should be tracked.
+        Logger.LogError(
+          "Potential update error detected: Ship parent ZDO is invalid but added a Piece to the ship");
+      }
+
       netView.m_zdo.Set(VehicleZdoVars.MBRotationVecHash,
         netView.transform.localRotation.eulerAngles);
       netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,

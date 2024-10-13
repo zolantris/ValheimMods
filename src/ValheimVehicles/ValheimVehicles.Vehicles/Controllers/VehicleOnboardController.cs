@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DynamicLocations;
+using DynamicLocations.Controllers;
 using UnityEngine;
 using Logger = Jotunn.Logger;
 

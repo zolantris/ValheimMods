@@ -1,9 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
+using DynamicLocations.Controllers;
 using HarmonyLib;
-using UnityEngine;
 
 namespace DynamicLocations.Patches;
 
@@ -14,7 +10,8 @@ public class DynamicLocationsPatches
   private static void OnSpawnPointUpdated(Bed __instance)
   {
     // todo compare if the current bed zdo is the players otherwise update it.
-    var currentSpawnPoint = Game.instance.GetPlayerProfile().GetCustomSpawnPoint();
+    var currentSpawnPoint =
+      Game.instance.GetPlayerProfile().GetCustomSpawnPoint();
 
     var spawnController = PlayerSpawnController.Instance;
     if (!spawnController) return;
@@ -25,7 +22,6 @@ public class DynamicLocationsPatches
   [HarmonyPostfix]
   private static void OnSaveLogoutPoint()
   {
-    PlayerSpawnController.player = Player.m_localPlayer;
     PlayerSpawnController.Instance.SyncLogoutPoint();
   }
 
@@ -103,7 +99,6 @@ public class DynamicLocationsPatches
 
     if (__instance.m_respawnAfterDeath)
     {
-      PlayerSpawnController.player = __result;
       PlayerSpawnController.Instance.MovePlayerToSpawnPoint();
     }
     else

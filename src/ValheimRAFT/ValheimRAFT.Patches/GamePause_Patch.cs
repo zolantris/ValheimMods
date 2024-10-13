@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using HarmonyLib;
 using Jotunn;
 using UnityEngine;
+using ValheimRAFT.Config;
 using ValheimRAFT.Util;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
@@ -29,10 +30,12 @@ public class GamePause_Patch
   {
     var zdoSector = zdo.GetSector();
     var zdoPosition = zdo.GetPosition();
-    var playerOffsetHash = VehiclePiecesController.GetDynamicParentOffset(player.m_nview);
+    var playerOffsetHash =
+      VehiclePiecesController.GetDynamicParentOffset(player.m_nview);
 
     ZoneSystem.instance.PokeLocalZone(zdoSector);
-    yield return new WaitUntil(() => ZoneSystem.instance.IsZoneLoaded(zdoSector));
+    yield return new WaitUntil(
+      () => ZoneSystem.instance.IsZoneLoaded(zdoSector));
 
     var newPosition = zdoPosition + playerOffsetHash;
     player.transform.position = newPosition;
@@ -44,13 +47,14 @@ public class GamePause_Patch
   private static void PreventTimeFreezeOnShip()
   {
     if (!Player.m_localPlayer) return;
-    var baseVehicleShip = Player.m_localPlayer?.GetComponentInParent<VehiclePiecesController>();
+    var baseVehicleShip = Player.m_localPlayer
+      ?.GetComponentInParent<VehiclePiecesController>();
 
     // not on ship, do nothing
     if (!baseVehicleShip) return;
 
     var hasPeerConnections = ZNet.instance?.GetPeerConnections() > 0 ||
-                             ValheimRaftPlugin.Instance.ShipPausePatchSinglePlayer.Value;
+                             PatchConfig.ShipPausePatchSinglePlayer.Value;
     // Previously onPause the time was set to 0 regarless if using multiplayer, which borks ZDOs and Physics updates that are reliant on the controlling player.
     // Also causes issues with Players that are on a ship controlled by another player and the ship moves out of range. The player is forced through the wall or smashed up into the air.
     if (Game.IsPaused())

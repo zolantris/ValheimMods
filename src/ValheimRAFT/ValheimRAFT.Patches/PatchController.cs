@@ -4,6 +4,7 @@ using BepInEx;
 using BepInEx.Bootstrap;
 using HarmonyLib;
 using Jotunn;
+using ValheimRAFT.Config;
 using ValheimRAFT.Util;
 using ValheimVehicles.Patches;
 
@@ -38,7 +39,7 @@ internal static class PatchController
 //     Harmony.PatchAll(typeof(GameCamera_VehiclePiecesPatch));
 // #endif
 
-    if (ValheimRaftPlugin.Instance.ShipPausePatch.Value)
+    if (PatchConfig.ShipPausePatch.Value)
     {
       Harmony.PatchAll(typeof(GamePause_Patch));
     }
@@ -49,7 +50,7 @@ internal static class PatchController
     }
 
     HasGizmoMod = Chainloader.PluginInfos.ContainsKey(ComfyGizmoGuid);
-    if (HasGizmoMod && ValheimRaftPlugin.Instance.ComfyGizmoPatches.Value)
+    if (HasGizmoMod && PatchConfig.ComfyGizmoPatches.Value)
     {
       Logger.LogInfo("Patching ComfyGizmo GetRotation");
       Harmony.PatchAll(typeof(ComfyGizmo_Patch));
@@ -62,8 +63,9 @@ internal static class PatchController
      *
      * So it does not show up on Chainloader.PluginInfos.ContainsKey(PlanBuildGUID)
      */
-    if (ValheimRaftPlugin.Instance.PlanBuildPatches.Value &&
-        (Directory.Exists(Path.Combine(Paths.PluginPath, "MathiasDecrock-PlanBuild")) ||
+    if (PatchConfig.PlanBuildPatches.Value &&
+        (Directory.Exists(Path.Combine(Paths.PluginPath,
+           "MathiasDecrock-PlanBuild")) ||
          Directory.Exists(Path.Combine(Paths.PluginPath, "PlanBuild")) ||
          Chainloader.PluginInfos.ContainsKey(PlanBuildGuid)))
     {

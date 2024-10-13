@@ -1,5 +1,5 @@
 using System;
-using DynamicLocations;
+using DynamicLocations.Controllers;
 
 namespace DynamicLocations.Structs;
 

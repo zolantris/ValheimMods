@@ -49,6 +49,8 @@
         </Compile>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="ValheimRAFT.Config\IConfigSection.cs"/>
+        <Compile Include="ValheimRAFT.Config\PatchConfig.cs"/>
         <Compile Include="ValheimRAFT\*.cs"/>
         <Compile Include="ValheimRAFT.Patches\*.cs"/>
         <Compile Include="ValheimRAFT.UI\*.cs"/>
@@ -120,6 +122,9 @@
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <OutputPath>bin\Release Archive\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' ">
+        <OutputPath>bin\Debug Run ClientServer\</OutputPath>
     </PropertyGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

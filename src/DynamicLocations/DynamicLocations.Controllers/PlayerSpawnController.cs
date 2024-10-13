@@ -1,11 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using DynamicLocations.DynamicLocations.Interfaces;
 using UnityEngine;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
-namespace DynamicLocations;
+namespace DynamicLocations.Controllers;
 
 /// <summary>
 /// This component does the following
@@ -26,7 +28,7 @@ public class PlayerSpawnController : MonoBehaviour
 
   public static PlayerSpawnController? Instance;
   private Stopwatch UpdateLocationTimer = new();
-  public static Player? player;
+  public static Player? player => Player.m_localPlayer;
 
   private void Awake()
   {
@@ -55,6 +57,30 @@ public class PlayerSpawnController : MonoBehaviour
   }
 
   /// <summary>
+  /// Persists beds across sessions, requires the bed netview input
+  /// </summary>
+  /// <param name="netView"></param>
+  /// <returns></returns>
+  public ZNetView? PersistBedZdo(Bed bed)
+  {
+    var netView = bed.GetComponent<ZNetView>();
+    if (!netView) return null;
+    // Beds must be persisted when syncing spawns otherwise they cannot be retrieved directly across sessions / on server shutdown and would require a deep search of all objects.
+    var persistentId =
+      ZdoWatchManager.Instance.GetOrCreatePersistentID(netView.GetZDO());
+
+    if (persistentId == 0)
+    {
+      Logger.LogError(
+        "No persistent ID returned for bed, this should not be possible. Please report this error");
+      LocationController.RemoveSpawnTargetZdo(player);
+      return null;
+    }
+
+    return netView;
+  }
+
+  /// <summary>
   /// Sets or removes the spawnPointZdo to the bed it is associated with a moving zdo
   /// - Only should be called when the bed is interacted with
   /// - This id is used to poke a zone and load it, then teleport the player to their bed like they are spawning
@@ -72,20 +98,11 @@ public class PlayerSpawnController : MonoBehaviour
       return;
     }
 
-    var netView = player.GetComponentInParent<ZNetView>();
-    if (!ZdoWatchManager.GetPersistentID(netView.GetZDO(), out var persistentId))
-    {
-      LocationController.RemoveSpawnTargetZdo(player);
-      return;
-    }
+    var netView = PersistBedZdo(bed);
+    if (netView == null) return;
 
-    if (persistentId == 0)
-    {
-      Logger.LogDebug("No persistent ID returned");
-      return;
-    }
-
-    if (spawnPointObj.transform.position != spawnPointObj.transform.localPosition &&
+    if (spawnPointObj.transform.position !=
+        spawnPointObj.transform.localPosition &&
         netView.transform.position != spawnPointObj.transform.position)
     {
       var offset = spawnPointObj.transform.localPosition;
@@ -109,7 +126,8 @@ public class PlayerSpawnController : MonoBehaviour
   {
     if (!player || player == null || !CanUpdateLogoutPoint) return;
     var netView = player.GetComponentInParent<ZNetView>();
-    if (!ZdoWatchManager.GetPersistentID(netView.GetZDO(), out var persistentId))
+    if (!ZdoWatchManager.GetPersistentID(netView.GetZDO(),
+          out var persistentId))
     {
       LocationController.RemoveLogoutZdo(player);
       return;
@@ -170,7 +188,8 @@ public class PlayerSpawnController : MonoBehaviour
       return false;
     }
 
-    StartCoroutine(UpdateLocation(loginZdoid, loginZdoOffset, LocationTypes.Logout));
+    StartCoroutine(UpdateLocation(loginZdoid, loginZdoOffset,
+      LocationTypes.Logout));
 
     return true;
   }
@@ -181,7 +200,8 @@ public class PlayerSpawnController : MonoBehaviour
     Logout
   }
 
-  public IEnumerator UpdateLocation(ZDO? zdoid, Vector3 offset, LocationTypes locationType)
+  public IEnumerator UpdateLocation(ZDO? zdoid, Vector3 offset,
+    LocationTypes locationType)
   {
     UpdateLocationTimer.Restart();
     yield return MovePlayerToZdo(zdoid, offset);
@@ -203,17 +223,13 @@ public class PlayerSpawnController : MonoBehaviour
 
   public void MovePlayerToSpawnPoint()
   {
-    if (player == null)
-    {
-      player = Player.m_localPlayer;
-    }
-
     if (!player) return;
 
     var spawnZdoOffset = LocationController.GetSpawnTargetZdoOffset(player);
     var spawnZdoid = LocationController.GetSpawnTargetZdo(player);
 
-    StartCoroutine(UpdateLocation(spawnZdoid, spawnZdoOffset, LocationTypes.Spawn));
+    StartCoroutine(UpdateLocation(spawnZdoid, spawnZdoOffset,
+      LocationTypes.Spawn));
   }
 
   private void SyncPlayerPosition(Vector3 newPosition)
@@ -228,11 +244,14 @@ public class PlayerSpawnController : MonoBehaviour
     }
 
     Logger.LogDebug($"Syncing Player Position and sector, {newPosition}");
-    var isLoaded = ZoneSystem.instance.IsZoneLoaded(ZoneSystem.instance.GetZone(newPosition));
+    var isLoaded =
+      ZoneSystem.instance.IsZoneLoaded(
+        ZoneSystem.instance.GetZone(newPosition));
 
     if (!isLoaded)
     {
-      Logger.LogDebug($"zone not loaded, exiting SyncPlayerPosition for position: {newPosition}");
+      Logger.LogDebug(
+        $"zone not loaded, exiting SyncPlayerPosition for position: {newPosition}");
       return;
     }
 
@@ -240,6 +259,19 @@ public class PlayerSpawnController : MonoBehaviour
     playerZdo.SetPosition(newPosition);
     playerZdo.SetSector(ZoneSystem.instance.GetZone(newPosition));
     player.transform.position = newPosition;
+  }
+
+  private bool isWithinRaft()
+  {
+    return true;
+  }
+
+  public IVehiclePiecesController? GetVehiclePiecesController(ZNetView nView)
+  {
+    return nView.GetComponents<MonoBehaviour>()
+        .Where(component =>
+          component.name.Contains("VehiclePiecesController")) as
+      IVehiclePiecesController;
   }
 
   /// <summary>
@@ -264,7 +296,7 @@ public class PlayerSpawnController : MonoBehaviour
     var isZoneLoaded = false;
     while (!isZoneLoaded || zdoNetViewInstance == null)
     {
-      if (UpdateLocationTimer is { ElapsedMilliseconds: > 10000 })
+      if (UpdateLocationTimer is { ElapsedTicks: > 10000 })
       {
         Logger.LogWarning(
           $"Timed out: Attempted to spawn player on Boat ZDO expired for {zdo.m_uid}, reason -> spawn zdo was not found");
@@ -284,6 +316,7 @@ public class PlayerSpawnController : MonoBehaviour
       {
         Logger.LogWarning(
           $"The zdo instance named: {tempInstance.name}, -> was found ");
+        zdoNetViewInstance = tempInstance;
       }
 
       if (zdoNetViewInstance) break;
@@ -297,6 +330,19 @@ public class PlayerSpawnController : MonoBehaviour
         isZoneLoaded = true;
       }
     }
+
+    var parentNv = zdoNetViewInstance?.GetComponentInParent<ZNetView>();
+
+    if (parentNv != null)
+    {
+      var vehiclePiecesController = GetVehiclePiecesController(parentNv);
+      if (vehiclePiecesController != null)
+      {
+        yield return
+          new WaitUntil(() => vehiclePiecesController.IsActivationComplete);
+      }
+    }
+
 
     var zdoPosition = zdo?.GetPosition();
     var zdoRotation = zdo?.GetRotation();
