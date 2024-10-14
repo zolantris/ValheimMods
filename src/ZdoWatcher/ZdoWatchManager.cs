@@ -14,16 +14,21 @@ public class ZdoWatchManager : MonoBehaviour
   public static Action<ZDO>? OnLoad = null;
   public static Action<ZDO>? OnReset = null;
 
-  public static readonly ZdoWatchManager Instance = new();
+  public static ZdoWatchManager Instance;
   private readonly Dictionary<int, ZDO> _zdoGuidLookup = new();
 
   private CustomRPC RPC_RequestPersistentIdInstance;
+  private CustomRPC RPC_ClientSyncInstance;
 
   public void Awake()
   {
+    // RPC_ClientSyncInstance = RPC_RequestPersistentIdInstance =
+    //   NetworkManager.Instance.AddRPC(
+    //     "RPC_ClientSync",
+    //     null, RPC_ClientSync);
     RPC_RequestPersistentIdInstance = NetworkManager.Instance.AddRPC(
-      nameof(RPC_RequestPersistentId),
-      RequestPersistentIdRPCServerReceive, RPC_RecieveZdoid);
+      "RPC_RequestSync",
+      RequestPersistentIdRPCServerReceive, RPC_ClientSync);
   }
 
   // React to the RPC call on a server
@@ -39,20 +44,19 @@ public class ZdoWatchManager : MonoBehaviour
     var serverZdo = GetZdo(requestedZdoId);
     // var zdoid = serverZdo?.m_uid ?? ZDOID.None;
     //
-    var serverZDOIds = GetAllServerZdoIds();
-    // var zPackage = new ZPackage();
-    // zPackage.Write(zdoid);
+    var serverZdoIdPackage = GetAllServerZdoIds();
 
     Logger.LogMessage($"Broadcasting to all clients");
-    RPC_RequestPersistentIdInstance.SendPackage(ZNet.instance.m_peers,
-      serverZDOIds);
+    RPC_RequestPersistentIdInstance.SendPackage(sender,
+      serverZdoIdPackage);
     yield return null;
   }
 
   public void WriteAllZdoIdsToLocalStore(ZPackage package)
   {
     var pos = 0;
-    while (package.Size() >= pos)
+    var packageSize = package.Size();
+    while (packageSize > pos)
     {
       package.SetPos(pos);
       var zdoid = package.ReadZDOID();
@@ -62,7 +66,7 @@ public class ZdoWatchManager : MonoBehaviour
         GetOrCreatePersistentID(zdo);
       }
 
-      pos++;
+      pos = package.GetPos();
     }
   }
 
@@ -74,6 +78,8 @@ public class ZdoWatchManager : MonoBehaviour
   {
     var zPackage = new ZPackage();
 
+    Logger.LogMessage(
+      $"Writing {_zdoGuidLookup.Values.Count} zdos to a ZPackage");
     foreach (var zdoValue in _zdoGuidLookup.Values)
     {
       zPackage.Write(zdoValue.m_uid);
@@ -86,7 +92,7 @@ public class ZdoWatchManager : MonoBehaviour
   /// todo would be cleaner with promises, but this should work.
   /// </summary>
   /// <param name="persistentId">The persistent ZDOID int which is the int return of ZdoWatchManager.ZdoIdToId()</param>
-  /// <returns>int</returns>
+  /// <returns>ZDO</returns>
   public IEnumerator GetZdoFromServer(int persistentId)
   {
     if (ZNet.instance.IsServer())
@@ -106,23 +112,32 @@ public class ZdoWatchManager : MonoBehaviour
 
       var package = new ZPackage();
       package.Write(persistentId);
-      RPC_RequestPersistentIdInstance.SendPackage(0, package);
+      var serverPeer = ZRoutedRpc.instance.GetServerPeerID();
+      RPC_RequestPersistentIdInstance.SendPackage(serverPeer, package);
 
       // todo add expiration, this should be quick, but not having a timer would possibly cause huge problems
       yield return new WaitUntil(() =>
         RPC_RequestPersistentIdInstance.IsSending == false);
       yield return new WaitUntil(() =>
-        _zdoGuidLookup[persistentId] != null);
-      // var persistentZdo = PendingPersistentIdQueries[persistentId];
-      PendingPersistentIdQueries.Remove(persistentId);
+        _zdoGuidLookup.TryGetValue(persistentId, out _));
+      if (PendingPersistentIdQueries.ContainsKey(persistentId))
+      {
+        PendingPersistentIdQueries.Remove(persistentId);
+      }
 
       yield return GetZdo(persistentId);
     }
   }
 
   // React to the RPC call on a client
-  private IEnumerator RPC_RecieveZdoid(long sender, ZPackage package)
+  private IEnumerator RPC_ClientSync(long sender, ZPackage package)
   {
+    if (ZNet.instance.IsServer())
+    {
+      Logger.LogMessage("Skipping Server call for RPC_ClientSync");
+      yield break;
+    }
+
     Logger.LogMessage(
       $"Client received blob from sender: {sender}, processing");
     // var requestedZdoId = package.ReadZDOID();

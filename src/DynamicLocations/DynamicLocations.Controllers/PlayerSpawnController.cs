@@ -249,14 +249,12 @@ public class PlayerSpawnController : MonoBehaviour
 
   public void MovePlayerToSpawnPoint()
   {
-    if (!player) return;
-
-    StartCoroutine(UpdateLocation(spawnZdoid, spawnZdoOffset,
-      LocationTypes.Spawn));
+    StartCoroutine(UpdateSpawnLocation());
   }
 
-  public IEnumerator UpdateSpawnLocation()
+  private IEnumerator UpdateSpawnLocation()
   {
+    if (player == null) yield break;
     var spawnZdoOffset = LocationController.GetSpawnTargetZdoOffset(player);
     var spawnZdoid = LocationController.GetSpawnTargetZdo(player);
     yield return spawnZdoid;

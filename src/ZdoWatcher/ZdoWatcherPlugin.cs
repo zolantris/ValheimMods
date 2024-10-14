@@ -7,11 +7,12 @@ using ZdoWatcher.ZdoWatcher.Config;
 namespace ZdoWatcher;
 
 [BepInPlugin(ModGuid, ModName, Version)]
-[NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
+[NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod,
+  VersionStrictness.Minor)]
 public class ZdoWatcherPlugin : BaseUnityPlugin
 {
   public const string Author = "zolantris";
-  public const string Version = "1.0.0";
+  public const string Version = "1.1.0";
   public const string ModName = "ZdoWatcher";
   public const string ModGuid = $"{Author}.{ModName}";
   public const string HarmonyGuid = $"{Author}.{ModName}";
@@ -36,5 +37,7 @@ public class ZdoWatcherPlugin : BaseUnityPlugin
     {
       _harmony.PatchAll(typeof(InvalidZNetScenePatch));
     }
+
+    ZdoWatchManager.Instance = gameObject.AddComponent<ZdoWatchManager>();
   }
 }

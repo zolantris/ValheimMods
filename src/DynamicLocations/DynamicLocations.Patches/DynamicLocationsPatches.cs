@@ -1,3 +1,4 @@
+using DynamicLocations.Config;
 using DynamicLocations.Controllers;
 using HarmonyLib;
 
@@ -109,13 +110,17 @@ public class DynamicLocationsPatches
       __instance.gameObject.AddComponent<PlayerSpawnController>();
     }
 
-    if (__instance.m_respawnAfterDeath)
+    if (__instance.m_respawnAfterDeath &&
+        DynamicLocationsConfig.EnableDynamicSpawnPoint.Value)
     {
-      PlayerSpawnController.Instance.MovePlayerToSpawnPoint();
+      PlayerSpawnController.Instance?.MovePlayerToSpawnPoint();
     }
     else
     {
-      PlayerSpawnController.Instance.MovePlayerToLoginPoint();
+      if (DynamicLocationsConfig.EnableDynamicLogoutPoint.Value)
+      {
+        PlayerSpawnController.Instance?.MovePlayerToLoginPoint();
+      }
     }
   }
 }

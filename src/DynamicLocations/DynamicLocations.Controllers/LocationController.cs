@@ -207,7 +207,7 @@ public static class LocationController
     // each game will create a new set of IDs, but the persistent data will allow for looking up the current game's ID.
     var output = ZdoWatchManager.Instance.GetZdoFromServer(zdoUid);
     yield return output;
-    yield return new WaitUntil(() => output.Current is int);
+    yield return new WaitUntil(() => output.Current is ZDO);
 
     var zdoOutput = output.Current as ZDO;
     // ZDOs are not truely unique with ZdoWatcher and therefore must have a unique key for spawn / login objects so we know the ZDO returned is of this type instead of any ZDO matching especially if a ZDO was deleted.
