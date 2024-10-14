@@ -334,6 +334,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
     else
     {
+      yield return new WaitUntil(() =>
+        Player.m_localPlayer.IsTeleporting() == false);
+      Physics.SyncTransforms();
       if (vpc.IsActivationComplete) yield return true;
       else
       {
@@ -696,8 +699,22 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     Sync();
   }
 
+  private void UpdateBedPiece(Bed mBedPiece)
+  {
+    mBedPiece.m_nview.m_zdo.SetPosition(mBedPiece.m_nview.transform.position);
+  }
+
+  public void UpdateBedPieces()
+  {
+    foreach (var mBedPiece in m_bedPieces)
+    {
+      UpdateBedPiece(mBedPiece);
+    }
+  }
+
   public void CustomFixedUpdate(float deltaTime)
   {
+    UpdateBedPieces();
     Sync();
   }
 
@@ -720,6 +737,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var currentPieceControllerSector =
       ZoneSystem.instance.GetZone(transform.position);
 
+    VehicleInstance?.NetView?.m_zdo.SetPosition(transform.position);
+
+
     foreach (var nv in m_pieces.ToList())
     {
       if (!nv)
@@ -731,16 +751,16 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       }
 
       var zdo = VehicleInstance?.NetView?.GetZDO();
-
-      if (currentPieceControllerSector != nv.GetZDO().GetSector())
+      var bedComponent = nv.GetComponent<Bed>();
+      if (bedComponent)
       {
-        nv.GetZDO().SetSector(currentPieceControllerSector);
+        UpdateBedPiece(bedComponent);
+        continue;
       }
 
       if (zdo != null && currentPieceControllerSector != zdo?.GetSector())
       {
         nv.m_zdo?.SetPosition(transform.position);
-        VehicleInstance?.NetView?.m_zdo.SetPosition(transform.position);
       }
 
       if (transform.position != nv.transform.position)

@@ -1,11 +1,14 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using Jotunn.Entities;
+using Jotunn.Managers;
 using UnityEngine;
 using Logger = Jotunn.Logger;
 
 namespace ZdoWatcher;
 
-public class ZdoWatchManager
+public class ZdoWatchManager : MonoBehaviour
 {
   public static Action<ZDO>? OnDeserialize = null;
   public static Action<ZDO>? OnLoad = null;
@@ -13,6 +16,121 @@ public class ZdoWatchManager
 
   public static readonly ZdoWatchManager Instance = new();
   private readonly Dictionary<int, ZDO> _zdoGuidLookup = new();
+
+  private CustomRPC RPC_RequestPersistentIdInstance;
+
+  public void Awake()
+  {
+    RPC_RequestPersistentIdInstance = NetworkManager.Instance.AddRPC(
+      nameof(RPC_RequestPersistentId),
+      RequestPersistentIdRPCServerReceive, RPC_RecieveZdoid);
+  }
+
+  // React to the RPC call on a server
+  private IEnumerator RequestPersistentIdRPCServerReceive(long sender,
+    ZPackage package)
+  {
+    Logger.LogMessage(
+      $"Received request for persistentZDOID, processing");
+
+    var requestedZdoId = package.ReadInt();
+
+    // this zdoid must then be retreived on client with a call of ZDOMan.instance
+    var serverZdo = GetZdo(requestedZdoId);
+    // var zdoid = serverZdo?.m_uid ?? ZDOID.None;
+    //
+    var serverZDOIds = GetAllServerZdoIds();
+    // var zPackage = new ZPackage();
+    // zPackage.Write(zdoid);
+
+    Logger.LogMessage($"Broadcasting to all clients");
+    RPC_RequestPersistentIdInstance.SendPackage(ZNet.instance.m_peers,
+      serverZDOIds);
+    yield return null;
+  }
+
+  public void WriteAllZdoIdsToLocalStore(ZPackage package)
+  {
+    var pos = 0;
+    while (package.Size() >= pos)
+    {
+      package.SetPos(pos);
+      var zdoid = package.ReadZDOID();
+      var zdo = ZDOMan.instance.GetZDO(zdoid);
+      if (zdo != null)
+      {
+        GetOrCreatePersistentID(zdo);
+      }
+
+      pos++;
+    }
+  }
+
+  public Dictionary<int, ZDO?> PendingPersistentIdQueries = new();
+
+  // sends all the persisted zdoid to the client
+  // likely better approach then individual sending which is more likely to desync.
+  public ZPackage GetAllServerZdoIds()
+  {
+    var zPackage = new ZPackage();
+
+    foreach (var zdoValue in _zdoGuidLookup.Values)
+    {
+      zPackage.Write(zdoValue.m_uid);
+    }
+
+    return zPackage;
+  }
+
+  /// <summary>
+  /// todo would be cleaner with promises, but this should work.
+  /// </summary>
+  /// <param name="persistentId">The persistent ZDOID int which is the int return of ZdoWatchManager.ZdoIdToId()</param>
+  /// <returns>int</returns>
+  public IEnumerator GetZdoFromServer(int persistentId)
+  {
+    if (ZNet.instance.IsServer())
+    {
+      yield return GetZdo(persistentId);
+    }
+    else
+    {
+      if (PendingPersistentIdQueries.ContainsKey(persistentId))
+      {
+        Logger.LogWarning(
+          "RequestPersistentID called for ongoing operation, exiting to prevent duplicate side effect issues");
+        yield break;
+      }
+
+      PendingPersistentIdQueries.Add(persistentId, null);
+
+      var package = new ZPackage();
+      package.Write(persistentId);
+      RPC_RequestPersistentIdInstance.SendPackage(0, package);
+
+      // todo add expiration, this should be quick, but not having a timer would possibly cause huge problems
+      yield return new WaitUntil(() =>
+        RPC_RequestPersistentIdInstance.IsSending == false);
+      yield return new WaitUntil(() =>
+        _zdoGuidLookup[persistentId] != null);
+      // var persistentZdo = PendingPersistentIdQueries[persistentId];
+      PendingPersistentIdQueries.Remove(persistentId);
+
+      yield return GetZdo(persistentId);
+    }
+  }
+
+  // React to the RPC call on a client
+  private IEnumerator RPC_RecieveZdoid(long sender, ZPackage package)
+  {
+    Logger.LogMessage(
+      $"Client received blob from sender: {sender}, processing");
+    // var requestedZdoId = package.ReadZDOID();
+    WriteAllZdoIdsToLocalStore(package);
+    Logger.LogMessage("Synced zdo store -> success");
+    // var zdo = ZDOMan.instance.GetZDO(requestedZdoId);
+    yield return true;
+  }
 
   public void Reset() => _zdoGuidLookup.Clear();
 
@@ -35,6 +153,22 @@ public class ZdoWatchManager
   {
     id = zdo.GetInt(ZdoVarManager.PersistentUidHash, 0);
     return id != 0;
+  }
+
+  /// <summary>
+  /// Requests for a persistent ID, meant for cross server support IE LAN peer or any peer connecting to dedicated which would not have a reference to the ZDOID unless it was loaded in their area. Logoff would clear these so it's necessary to request a zdo from the server which holds the references indefinitely.
+  /// </summary>
+  public static void RPC_RequestPersistentId()
+  {
+    if (ZNet.instance.IsDedicated())
+    {
+      return;
+    }
+  }
+
+  // sends the persistentID to the peer if on a dedicated server which would not have the ID reference
+  public static void RPC_SendPersistentId()
+  {
   }
 
   public static int ZdoIdToId(ZDOID zdoid) =>

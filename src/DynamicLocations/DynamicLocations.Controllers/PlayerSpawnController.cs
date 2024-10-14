@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using DynamicLocations.Config;
+using DynamicLocations.DynamicLocations.Constants;
 using DynamicLocations.DynamicLocations.Interfaces;
 using UnityEngine;
+using UnityEngine.UIElements;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
@@ -69,6 +71,7 @@ public class PlayerSpawnController : MonoBehaviour
   {
     var netView = bed.GetComponent<ZNetView>();
     if (!netView) return null;
+
     // Beds must be persisted when syncing spawns otherwise they cannot be retrieved directly across sessions / on server shutdown and would require a deep search of all objects.
     var persistentId =
       ZdoWatchManager.Instance.GetOrCreatePersistentID(netView.GetZDO());
@@ -80,6 +83,10 @@ public class PlayerSpawnController : MonoBehaviour
       LocationController.RemoveSpawnTargetZdo(player);
       return null;
     }
+
+    // required for setting a persistent bed. Without this value set it will persist the ID but the actual item will not be known so if the bed is deleted during session it would not match
+    netView.GetZDO().Set(ZdoVarKeys.DynamicLocationsPoint, 1);
+
 
     return netView;
   }
@@ -156,6 +163,20 @@ public class PlayerSpawnController : MonoBehaviour
     Game.instance.m_playerProfile.SavePlayerData(player);
   }
 
+  private bool SpawnTeleport(Vector3 position, Quaternion rotation)
+  {
+    if (player == null) return false;
+
+    player.m_teleportCooldown = 15;
+    player.m_teleporting = false;
+
+    return player.TeleportTo(
+      position,
+      rotation,
+      DynamicLocationsConfig
+        .DebugDistancePortal.Value);
+  }
+
   // public static PlayerSpawnController? GetSpawnController(Player currentPlayer)
   // {
   //   return Instance
@@ -230,11 +251,17 @@ public class PlayerSpawnController : MonoBehaviour
   {
     if (!player) return;
 
-    var spawnZdoOffset = LocationController.GetSpawnTargetZdoOffset(player);
-    var spawnZdoid = LocationController.GetSpawnTargetZdo(player);
-
     StartCoroutine(UpdateLocation(spawnZdoid, spawnZdoOffset,
       LocationTypes.Spawn));
+  }
+
+  public IEnumerator UpdateSpawnLocation()
+  {
+    var spawnZdoOffset = LocationController.GetSpawnTargetZdoOffset(player);
+    var spawnZdoid = LocationController.GetSpawnTargetZdo(player);
+    yield return spawnZdoid;
+    yield return UpdateLocation(spawnZdoid.Current as ZDO, spawnZdoOffset,
+      LocationTypes.Spawn);
   }
 
   private void SyncPlayerPosition(Vector3 newPosition)
@@ -299,7 +326,11 @@ public class PlayerSpawnController : MonoBehaviour
   /// <returns></returns>
   public IEnumerator MovePlayerToZdo(ZDO? zdo, Vector3 offset)
   {
-    Logger.LogDebug("Running MovePlayerToZdo");
+    if (DynamicLocationsConfig.IsDebug)
+    {
+      Logger.LogDebug("Running MovePlayerToZdo");
+    }
+
     if (!player) yield break;
 
     if (zdo == null)
@@ -307,23 +338,48 @@ public class PlayerSpawnController : MonoBehaviour
       yield break;
     }
 
-    IsTeleportingToDynamicLocation = true;
-    player?.TeleportTo(zdo.GetPosition() + Vector3.up *
-      DynamicLocationsConfig.RespawnHeightOffset.Value, zdo.GetRotation(),
-      distantTeleport: true);
+    var teleportHeightOffset = Vector3.up * DynamicLocationsConfig
+      .RespawnHeightOffset.Value;
+    var teleportPosition = zdo.GetPosition() + teleportHeightOffset;
 
-    // beginning of LoadGameObjectInSector (which cannot be abstracted easily if the return is required)
-    // ZDOMan.instance.RequestZDO(zdo.m_uid);
+    var zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
+    ZoneSystem.instance.PokeLocalZone(zoneId);
+
+    yield return new WaitUntil(() => ZoneSystem.instance.IsZoneLoaded(zoneId));
+    var item = new WaitUntil(() => ZNetScene.instance.FindInstance(zdo));
+    yield return item;
+    // TODO add check for item and confirm it has a valid ZDO DynamicLocationPoint var
+
+    IsTeleportingToDynamicLocation =
+      SpawnTeleport(teleportPosition, zdo.GetRotation());
+
+    if (!IsTeleportingToDynamicLocation)
+    {
+      Logger.LogError(
+        "Teleport command failed for player, exiting dynamic spawn MovePlayerToZdo.");
+      yield break;
+    }
+
+    var character = player?.GetComponent<Character>();
+    if (DynamicLocationsConfig.FreezePlayerPosition.Value && character != null)
+    {
+      character.m_body.isKinematic = true;
+    }
+
     ZNetView? zdoNetViewInstance = null;
     var isZoneLoaded = false;
-    var zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
 
+    zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
     while (!isZoneLoaded || zdoNetViewInstance == null)
     {
       if (UpdateLocationTimer is { ElapsedMilliseconds: > 10000 })
       {
-        Logger.LogWarning(
-          $"Timed out: Attempted to spawn player on Boat ZDO expired for {zdo.m_uid}, reason -> spawn zdo was not found");
+        if (DynamicLocationsConfig.IsDebug)
+        {
+          Logger.LogWarning(
+            $"Timed out: Attempted to spawn player on Boat ZDO expired for {zdo.m_uid}, reason -> spawn zdo was not found");
+        }
+
         yield break;
       }
 
@@ -334,13 +390,20 @@ public class PlayerSpawnController : MonoBehaviour
 
       if (tempInstance == null)
       {
-        Logger.LogWarning(
-          $"The zdo instance not found ");
+        if (DynamicLocationsConfig.IsDebug)
+        {
+          Logger.LogInfo(
+            $"The zdo instance not found ");
+        }
       }
       else
       {
-        Logger.LogWarning(
-          $"The zdo instance named: {tempInstance.name}, -> was found ");
+        if (DynamicLocationsConfig.IsDebug)
+        {
+          Logger.LogInfo(
+            $"The zdo instance named: {tempInstance.name}, -> was found ");
+        }
+
         zdoNetViewInstance = tempInstance;
       }
 
@@ -358,28 +421,31 @@ public class PlayerSpawnController : MonoBehaviour
 
     yield return OnPlayerMoveToVehicle(zdoNetViewInstance);
 
-
-    var zdoPosition = zdo.GetPosition();
-    var zdoRotation = zdo.GetRotation();
     if (!player) yield break;
-    // (-2335.91064, 33.813118, -5291.97412)
-    // var positionWithOffset = zdoPosition.Value + offset;
-    var positionWithOffset =
-      zdoNetViewInstance?.transform.position;
 
     yield return new WaitUntil(() =>
       Player.m_localPlayer.IsTeleporting() == false);
-
-    // SyncPlayerPosition(positionWithOffset);
-    // -2275.258 32.3295 -5309.554
-    // this might not be needed, but as a backup this is good b/c it avoids teleporting to wrong area especially if the zone suddenly unloads
-    if (player != null)
+    if (DynamicLocationsConfig.FreezePlayerPosition.Value && character != null)
     {
-      player.TeleportTo((positionWithOffset ?? zdoPosition) + Vector3.up *
-        DynamicLocationsConfig.RespawnHeightOffset.Value, zdo.GetRotation(),
-        false);
+      character.m_body.isKinematic = false;
     }
 
-    IsTeleportingToDynamicLocation = false;
+    if (DynamicLocationsConfig.DebugForceUpdatePositionAfterTeleport.Value &&
+        DynamicLocationsConfig.DebugForceUpdatePositionDelay.Value > 0f)
+    {
+      yield return new WaitForSeconds(DynamicLocationsConfig
+        .DebugForceUpdatePositionDelay.Value);
+    }
+
+    if (player != null && DynamicLocationsConfig
+          .DebugForceUpdatePositionAfterTeleport.Value)
+    {
+      var positionWithOffset =
+        zdoNetViewInstance?.transform.position;
+      teleportPosition = (positionWithOffset ?? zdo.GetPosition()) +
+                         Vector3.up *
+                         DynamicLocationsConfig.RespawnHeightOffset.Value;
+      player.transform.position = teleportPosition;
+    }
   }
 }

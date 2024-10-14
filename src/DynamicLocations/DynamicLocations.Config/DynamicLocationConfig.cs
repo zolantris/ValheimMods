@@ -21,15 +21,76 @@ public static class DynamicLocationsConfig
   public static ConfigEntry<bool>
     EnableDynamicLogoutPoint { get; private set; } = null!;
 
-  public static ConfigEntry<bool> Debug { get; private set; } = null!;
+  public static ConfigEntry<bool> FreezePlayerPosition { get; private set; } =
+    null!;
 
-  private const string ConfigSection = "Main";
+
+  public static ConfigEntry<bool> Debug { get; private set; } = null!;
+  public static bool IsDebug => Debug.Value;
+
+  public static ConfigEntry<bool> DebugDistancePortal { get; private set; } =
+    null!;
+
+  public static ConfigEntry<float> DebugForceUpdatePositionDelay
+  {
+    get;
+    private set;
+  } =
+    null!;
+
+  public static ConfigEntry<bool> DebugForceUpdatePositionAfterTeleport
+  {
+    get;
+    private set;
+  } =
+    null!;
+
+  private const string MainSection = "Main";
+  private const string DebugSection = "Debug";
 
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
 
-    EnableDynamicSpawnPoint = config.Bind(ConfigSection,
+    FreezePlayerPosition = config.Bind(MainSection,
+      "FreezePlayerPosition",
+      false,
+      new ConfigDescription(
+        $"Freezes the player position until the teleport and vehicle is fully loaded, prevents falling through",
+        null,
+        new ConfigurationManagerAttributes()
+          { IsAdminOnly = false, IsAdvanced = false }));
+
+    DebugDistancePortal = config.Bind(DebugSection,
+      "DebugDistancePortal",
+      false,
+      new ConfigDescription(
+        $"distance portal enabled, disabling this could break portals",
+        null,
+        new ConfigurationManagerAttributes()
+          { IsAdminOnly = true, IsAdvanced = true }));
+
+
+    DebugForceUpdatePositionDelay = config.Bind(DebugSection,
+      "DebugForceUpdatePositionDelay",
+      0f,
+      new ConfigDescription(
+        $"distance portal enabled, disabling this could break portals",
+        new AcceptableValueRange<float>(0, 5f),
+        new ConfigurationManagerAttributes()
+          { IsAdminOnly = true, IsAdvanced = true }));
+
+
+    DebugForceUpdatePositionAfterTeleport = config.Bind(DebugSection,
+      "DebugForceUpdatePositionAfterTeleport",
+      false,
+      new ConfigDescription(
+        $"distance portal enabled, disabling this could break portals",
+        null,
+        new ConfigurationManagerAttributes()
+          { IsAdminOnly = true, IsAdvanced = true }));
+
+    EnableDynamicSpawnPoint = config.Bind(MainSection,
       "enableDynamicSpawnPoints",
       true,
       new ConfigDescription(
@@ -38,7 +99,7 @@ public static class DynamicLocationsConfig
         new ConfigurationManagerAttributes()
           { IsAdminOnly = true, IsAdvanced = true }));
 
-    EnableDynamicLogoutPoint = config.Bind(ConfigSection,
+    EnableDynamicLogoutPoint = config.Bind(MainSection,
       "enableDynamicLogoutPoints",
       true,
       new ConfigDescription(
@@ -47,7 +108,7 @@ public static class DynamicLocationsConfig
         new ConfigurationManagerAttributes()
           { IsAdminOnly = true, IsAdvanced = true }));
 
-    RespawnHeightOffset = config.Bind(ConfigSection,
+    RespawnHeightOffset = config.Bind(MainSection,
       "respawnHeightOffset",
       0,
       new ConfigDescription(
@@ -56,7 +117,7 @@ public static class DynamicLocationsConfig
         new ConfigurationManagerAttributes()
           { IsAdminOnly = false, IsAdvanced = true }));
 
-    Debug = config.Bind(ConfigSection,
+    Debug = config.Bind(MainSection,
       "debug",
       false,
       new ConfigDescription(
