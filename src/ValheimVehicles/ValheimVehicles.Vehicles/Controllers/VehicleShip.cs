@@ -241,7 +241,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   private int GetPersistentID()
   {
-    if (ZdoWatchManager.Instance == null)
+    if (ZdoWatchController.Instance == null)
     {
       Logger.LogWarning("No ZdoWatchManager instance, this means something went wrong");
     }
@@ -267,7 +267,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     }
 
     _persistentZdoId =
-      ZdoWatchManager.Instance?.GetOrCreatePersistentID(NetView.GetZDO()) ?? 0;
+      ZdoWatchController.Instance?.GetOrCreatePersistentID(NetView.GetZDO()) ?? 0;
     return _persistentZdoId;
   }
 

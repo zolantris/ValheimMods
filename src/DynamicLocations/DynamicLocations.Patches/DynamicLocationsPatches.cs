@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
+using DynamicLocations.Config;
+using DynamicLocations.Controllers;
 using HarmonyLib;
-using UnityEngine;
 
 namespace DynamicLocations.Patches;
 
@@ -14,7 +11,8 @@ public class DynamicLocationsPatches
   private static void OnSpawnPointUpdated(Bed __instance)
   {
     // todo compare if the current bed zdo is the players otherwise update it.
-    var currentSpawnPoint = Game.instance.GetPlayerProfile().GetCustomSpawnPoint();
+    var currentSpawnPoint =
+      Game.instance.GetPlayerProfile().GetCustomSpawnPoint();
 
     var spawnController = PlayerSpawnController.Instance;
     if (!spawnController) return;
@@ -25,7 +23,6 @@ public class DynamicLocationsPatches
   [HarmonyPostfix]
   private static void OnSaveLogoutPoint()
   {
-    PlayerSpawnController.player = Player.m_localPlayer;
     PlayerSpawnController.Instance.SyncLogoutPoint();
   }
 
@@ -41,6 +38,18 @@ public class DynamicLocationsPatches
     }
 
     LocationController.RemoveLogoutZdo(__instance);
+  }
+
+  [HarmonyPatch(typeof(Player), "ShowTeleportAnimation")]
+  [HarmonyPostfix]
+  private static void ShowTeleportAnimation(bool __result)
+  {
+    var isRespawnTeleporting =
+      PlayerSpawnController.Instance?.IsTeleportingToDynamicLocation ?? false;
+    if (isRespawnTeleporting)
+    {
+      __result = false;
+    }
   }
 
   // [HarmonyPatch(typeof(Game), "FindSpawnPoint")]
@@ -93,6 +102,7 @@ public class DynamicLocationsPatches
 #if DEBUG
     // speed up debugging.
     Game.instance.m_fadeTimeDeath = 0;
+    Player.m_localPlayer.m_flyFastSpeed = 60;
 #endif
     if (ZNetView.m_forceDisableInit) return;
     if (!PlayerSpawnController.Instance)
@@ -101,14 +111,17 @@ public class DynamicLocationsPatches
       __instance.gameObject.AddComponent<PlayerSpawnController>();
     }
 
-    if (__instance.m_respawnAfterDeath)
+    if (__instance.m_respawnAfterDeath &&
+        DynamicLocationsConfig.EnableDynamicSpawnPoint.Value)
     {
-      PlayerSpawnController.player = __result;
-      PlayerSpawnController.Instance.MovePlayerToSpawnPoint();
+      PlayerSpawnController.Instance?.MovePlayerToSpawnPoint();
     }
     else
     {
-      PlayerSpawnController.Instance.MovePlayerToLoginPoint();
+      if (DynamicLocationsConfig.EnableDynamicLogoutPoint.Value)
+      {
+        PlayerSpawnController.Instance?.MovePlayerToLoginPoint();
+      }
     }
   }
 }

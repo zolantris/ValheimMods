@@ -1,4 +1,5 @@
 using DynamicLocations;
+using DynamicLocations.Controllers;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimRAFT.Patches;
@@ -98,14 +99,12 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     if (GUILayout.Button("Move to current spawn"))
     {
       PlayerSpawnController.CanUpdateLogoutPoint = false;
-      PlayerSpawnController.player = Player.m_localPlayer;
       PlayerSpawnController.Instance?.MovePlayerToSpawnPoint();
       PlayerSpawnController.CanUpdateLogoutPoint = false;
     }
 
     if (GUILayout.Button("Move to current logout"))
     {
-      PlayerSpawnController.player = Player.m_localPlayer;
       PlayerSpawnController.Instance?.MovePlayerToLoginPoint();
     }
 

@@ -60,8 +60,8 @@ public class WearNTear_Patch
     var hasParentVehicleHash = parentVehicleHash != 0;
     if (!hasParentVehicleHash) return false;
 
-    var id = ZdoWatchManager.ZdoIdToId(__instance.m_nview.GetZDO().m_uid);
-    var zdoExists = ZdoWatchManager.Instance.GetZdo(id);
+    var id = ZdoWatchController.ZdoIdToId(__instance.m_nview.GetZDO().m_uid);
+    var zdoExists = ZdoWatchController.Instance.GetZdo(id);
     if (zdoExists == null) return false;
 
     __instance.enabled = false;

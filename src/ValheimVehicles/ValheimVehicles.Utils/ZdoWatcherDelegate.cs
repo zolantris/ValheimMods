@@ -9,9 +9,9 @@ public abstract class ZdoWatcherDelegate
   public static void RegisterToZdoManager()
   {
     // call same method for both actions as it doesn't matter here
-    ZdoWatchManager.OnDeserialize += (OnZdoLoad);
-    ZdoWatchManager.OnLoad += (OnZdoLoad);
-    ZdoWatchManager.OnReset += (OnZdoReset);
+    ZdoWatchController.OnDeserialize += (OnZdoLoad);
+    ZdoWatchController.OnLoad += (OnZdoLoad);
+    ZdoWatchController.OnReset += (OnZdoReset);
   }
 
   private static void OnZdoLoad(ZDO zdo)

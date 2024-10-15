@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using ValheimRAFT;
+using ValheimRAFT.Config;
 using ValheimRAFT.Patches;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
@@ -1026,7 +1027,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (PatchController.HasGizmoMod)
     {
-      if (ValheimRaftPlugin.Instance.ComfyGizmoPatchCreativeHasNoRotation.Value)
+      if (PatchConfig.ComfyGizmoPatchCreativeHasNoRotation.Value)
       {
         rotationY = 0;
       }
