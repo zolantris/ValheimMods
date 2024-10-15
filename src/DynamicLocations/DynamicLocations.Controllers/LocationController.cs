@@ -106,11 +106,11 @@ public static class LocationController
     Logger.LogDebug(
       $"Retreiving spawnTargetZdo {zdoid} for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
     var output = zdoid == ZDOID.None
-      ? ZdoWatchManager.ZdoIdToId(zdoid.Value)
+      ? ZdoWatchController.ZdoIdToId(zdoid.Value)
       : 0;
 
     // each game will create a new set of IDs, but the persistent data will allow for looking up the current game's ID.
-    return ZdoWatchManager.Instance.GetZdo(output);
+    return ZdoWatchController.Instance.GetZdo(output);
   }
 
   public static Vector3 GetLogoutZdoOffset(Player player)
@@ -205,7 +205,7 @@ public static class LocationController
       $"Retreiving targetKey <{targetKey}> zdoKey: <{zdoString}> for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
 
     // each game will create a new set of IDs, but the persistent data will allow for looking up the current game's ID.
-    var output = ZdoWatchManager.Instance.GetZdoFromServer(zdoUid);
+    var output = ZdoWatchController.Instance.GetZdoFromServer(zdoUid);
     yield return output;
     yield return new WaitUntil(() => output.Current is ZDO);
 
@@ -262,7 +262,7 @@ public static class LocationController
     cachedSpawnTarget = null;
     var spawnPointObjZdo = dynamicObj.GetZDO();
     if (spawnPointObjZdo == null) return false;
-    if (!ZdoWatchManager.GetPersistentID(spawnPointObjZdo, out var id))
+    if (!ZdoWatchController.GetPersistentID(spawnPointObjZdo, out var id))
     {
       Logger.LogWarning(
         $"No persitent id found for dynamicObj {dynamicObj.gameObject.name}");

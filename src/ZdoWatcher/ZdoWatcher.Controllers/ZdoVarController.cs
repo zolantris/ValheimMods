@@ -4,7 +4,7 @@ using Jotunn;
 
 namespace ZdoWatcher;
 
-public static class ZdoVarManager
+public static class ZdoVarController
 {
   private static readonly Dictionary<string, string> ZdoVariables = new();
 

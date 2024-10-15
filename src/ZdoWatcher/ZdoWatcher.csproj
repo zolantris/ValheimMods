@@ -4,9 +4,6 @@
         <Configurations>Debug;Release</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
-    <ItemGroup>
-        <Folder Include="ZdoWatcher.Controllers\"/>
-    </ItemGroup>
     <Import Project="..\..\base.targets"/>
     <Import Project="..\..\valheim.targets"/>
     <Import Project="..\..\gameLauncher.targets"/>

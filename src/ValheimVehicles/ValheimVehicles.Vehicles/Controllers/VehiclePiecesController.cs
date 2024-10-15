@@ -1312,7 +1312,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       }
 
       var id =
-        ZdoWatchManager.Instance.GetOrCreatePersistentID(
+        ZdoWatchController.Instance.GetOrCreatePersistentID(
           VehicleInstance?.NetView?.GetZDO());
       m_pendingPieces.TryGetValue(id, out var list);
 
@@ -1654,8 +1654,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       {
         var zdoparent = ZDOMan.instance.GetZDO(zdoid);
         id = zdoparent == null
-          ? ZdoWatchManager.ZdoIdToId(zdoid)
-          : ZdoWatchManager.Instance.GetOrCreatePersistentID(zdoparent);
+          ? ZdoWatchController.ZdoIdToId(zdoid)
+          : ZdoWatchController.Instance.GetOrCreatePersistentID(zdoparent);
         zdo.Set(VehicleZdoVars.MBParentIdHash, id);
         zdo.Set(VehicleZdoVars.MBRotationVecHash,
           zdo.GetQuaternion(VehicleZdoVars.MBRotationHash, Quaternion.identity)
@@ -1699,7 +1699,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var id = GetParentID(netView.m_zdo);
     if (id == 0) return;
 
-    var parentObj = ZdoWatchManager.Instance.GetGameObject(id);
+    var parentObj = ZdoWatchController.Instance.GetGameObject(id);
     if (parentObj != null)
     {
       var vehicleShip = parentObj.GetComponent<VehicleShip>();

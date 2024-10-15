@@ -38,6 +38,6 @@ public class ZdoWatcherPlugin : BaseUnityPlugin
       _harmony.PatchAll(typeof(InvalidZNetScenePatch));
     }
 
-    ZdoWatchManager.Instance = gameObject.AddComponent<ZdoWatchManager>();
+    ZdoWatchController.Instance = gameObject.AddComponent<ZdoWatchController>();
   }
 }

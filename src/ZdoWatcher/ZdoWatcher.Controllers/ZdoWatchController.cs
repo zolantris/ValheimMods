@@ -8,13 +8,13 @@ using Logger = Jotunn.Logger;
 
 namespace ZdoWatcher;
 
-public class ZdoWatchManager : MonoBehaviour
+public class ZdoWatchController : MonoBehaviour
 {
   public static Action<ZDO>? OnDeserialize = null;
   public static Action<ZDO>? OnLoad = null;
   public static Action<ZDO>? OnReset = null;
 
-  public static ZdoWatchManager Instance;
+  public static ZdoWatchController Instance;
   private readonly Dictionary<int, ZDO> _zdoGuidLookup = new();
 
   private CustomRPC RPC_RequestPersistentIdInstance;
@@ -180,7 +180,7 @@ public class ZdoWatchManager : MonoBehaviour
   // }
   public static bool GetPersistentID(ZDO zdo, out int id)
   {
-    id = zdo.GetInt(ZdoVarManager.PersistentUidHash, 0);
+    id = zdo.GetInt(ZdoVarController.PersistentUidHash, 0);
     return id != 0;
   }
 
@@ -207,14 +207,14 @@ public class ZdoWatchManager : MonoBehaviour
   {
     zdo ??= new ZDO();
 
-    var id = zdo.GetInt(ZdoVarManager.PersistentUidHash, 0);
+    var id = zdo.GetInt(ZdoVarController.PersistentUidHash, 0);
     if (id != 0) return id;
     id = ZdoIdToId(zdo.m_uid);
 
     // If the ZDO is not unique/exists in the dictionary, this number must be incremented to prevent a collision
     while (_zdoGuidLookup.ContainsKey(id))
       ++id;
-    zdo.Set(ZdoVarManager.PersistentUidHash, id, false);
+    zdo.Set(ZdoVarController.PersistentUidHash, id, false);
 
     _zdoGuidLookup[id] = zdo;
 

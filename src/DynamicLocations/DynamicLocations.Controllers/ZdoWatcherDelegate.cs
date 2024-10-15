@@ -18,8 +18,8 @@ internal class ZdoWatcherDelegate
 
   public void RegisterToZdoManager()
   {
-    ZdoWatchManager.OnDeserialize += (OnZdoRegister);
-    ZdoWatchManager.OnLoad += (OnZdoRegister);
+    ZdoWatchController.OnDeserialize += (OnZdoRegister);
+    ZdoWatchController.OnLoad += (OnZdoRegister);
   }
 
   private static void OnZdoRegister(ZDO zdo)

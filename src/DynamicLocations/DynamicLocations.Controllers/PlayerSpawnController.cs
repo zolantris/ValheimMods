@@ -74,7 +74,7 @@ public class PlayerSpawnController : MonoBehaviour
 
     // Beds must be persisted when syncing spawns otherwise they cannot be retrieved directly across sessions / on server shutdown and would require a deep search of all objects.
     var persistentId =
-      ZdoWatchManager.Instance.GetOrCreatePersistentID(netView.GetZDO());
+      ZdoWatchController.Instance.GetOrCreatePersistentID(netView.GetZDO());
 
     if (persistentId == 0)
     {
@@ -137,7 +137,7 @@ public class PlayerSpawnController : MonoBehaviour
   {
     if (!player || player == null || !CanUpdateLogoutPoint) return;
     var netView = player.GetComponentInParent<ZNetView>();
-    if (!ZdoWatchManager.GetPersistentID(netView.GetZDO(),
+    if (!ZdoWatchController.GetPersistentID(netView.GetZDO(),
           out var persistentId))
     {
       LocationController.RemoveLogoutZdo(player);
