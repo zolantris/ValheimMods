@@ -102,6 +102,7 @@ public class DynamicLocationsPatches
 #if DEBUG
     // speed up debugging.
     Game.instance.m_fadeTimeDeath = 0;
+    Player.m_localPlayer.m_flyFastSpeed = 60;
 #endif
     if (ZNetView.m_forceDisableInit) return;
     if (!PlayerSpawnController.Instance)

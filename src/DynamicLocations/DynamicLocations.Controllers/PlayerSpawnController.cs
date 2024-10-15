@@ -343,9 +343,9 @@ public class PlayerSpawnController : MonoBehaviour
     var zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
     ZoneSystem.instance.PokeLocalZone(zoneId);
 
-    yield return new WaitUntil(() => ZoneSystem.instance.IsZoneLoaded(zoneId));
-    var item = new WaitUntil(() => ZNetScene.instance.FindInstance(zdo));
-    yield return item;
+    // yield return new WaitUntil(() => ZoneSystem.instance.IsZoneLoaded(zoneId));
+    // var item = new WaitUntil(() => ZNetScene.instance.FindInstance(zdo));
+    // yield return item;
     // TODO add check for item and confirm it has a valid ZDO DynamicLocationPoint var
 
     IsTeleportingToDynamicLocation =
@@ -368,65 +368,64 @@ public class PlayerSpawnController : MonoBehaviour
     var isZoneLoaded = false;
 
     zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
-    while (!isZoneLoaded || zdoNetViewInstance == null)
-    {
-      if (UpdateLocationTimer is { ElapsedMilliseconds: > 10000 })
-      {
-        if (DynamicLocationsConfig.IsDebug)
-        {
-          Logger.LogWarning(
-            $"Timed out: Attempted to spawn player on Boat ZDO expired for {zdo.m_uid}, reason -> spawn zdo was not found");
-        }
-
-        yield break;
-      }
-
-      zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
-      ZoneSystem.instance.PokeLocalZone(zoneId);
-
-      var tempInstance = ZNetScene.instance.FindInstance(zdo);
-
-      if (tempInstance == null)
-      {
-        if (DynamicLocationsConfig.IsDebug)
-        {
-          Logger.LogInfo(
-            $"The zdo instance not found ");
-        }
-      }
-      else
-      {
-        if (DynamicLocationsConfig.IsDebug)
-        {
-          Logger.LogInfo(
-            $"The zdo instance named: {tempInstance.name}, -> was found ");
-        }
-
-        zdoNetViewInstance = tempInstance;
-      }
-
-      if (zdoNetViewInstance) break;
-      yield return new WaitForEndOfFrame();
-      if (!ZoneSystem.instance.IsZoneLoaded(zoneId))
-      {
-        yield return null;
-      }
-      else
-      {
-        isZoneLoaded = true;
-      }
-    }
-
-    yield return OnPlayerMoveToVehicle(zdoNetViewInstance);
-
-    if (!player) yield break;
-
+    // while (!isZoneLoaded || zdoNetViewInstance == null)
+    // {
+    //   if (UpdateLocationTimer is { ElapsedMilliseconds: > 10000 })
+    //   {
+    //     if (DynamicLocationsConfig.IsDebug)
+    //     {
+    //       Logger.LogWarning(
+    //         $"Timed out: Attempted to spawn player on Boat ZDO expired for {zdo.m_uid}, reason -> spawn zdo was not found");
+    //     }
+    //
+    //     yield break;
+    //   }
+    //
+    //   zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
+    //   ZoneSystem.instance.PokeLocalZone(zoneId);
+    //
+    //   var tempInstance = ZNetScene.instance.FindInstance(zdo);
+    //
+    //   if (tempInstance == null)
+    //   {
+    //     if (DynamicLocationsConfig.IsDebug)
+    //     {
+    //       Logger.LogInfo(
+    //         $"The zdo instance not found ");
+    //     }
+    //   }
+    //   else
+    //   {
+    //     if (DynamicLocationsConfig.IsDebug)
+    //     {
+    //       Logger.LogInfo(
+    //         $"The zdo instance named: {tempInstance.name}, -> was found ");
+    //     }
+    //
+    //     zdoNetViewInstance = tempInstance;
+    //   }
+    //
+    //   if (zdoNetViewInstance) break;
+    //   yield return new WaitForEndOfFrame();
+    //   if (!ZoneSystem.instance.IsZoneLoaded(zoneId))
+    //   {
+    //     yield return null;
+    //   }
+    //   else
+    //   {
+    //     isZoneLoaded = true;
+    //   }
+    // }
     yield return new WaitUntil(() =>
       Player.m_localPlayer.IsTeleporting() == false);
+    zdoNetViewInstance = ZNetScene.instance.FindInstance(zdo);
+
     if (DynamicLocationsConfig.FreezePlayerPosition.Value && character != null)
     {
       character.m_body.isKinematic = false;
     }
+
+    yield return OnPlayerMoveToVehicle(zdoNetViewInstance);
 
     if (DynamicLocationsConfig.DebugForceUpdatePositionAfterTeleport.Value &&
         DynamicLocationsConfig.DebugForceUpdatePositionDelay.Value > 0f)

@@ -52,21 +52,31 @@ public class ZdoWatchManager : MonoBehaviour
     yield return null;
   }
 
-  public void WriteAllZdoIdsToLocalStore(ZPackage package)
+  public IEnumerator RequestAllPersistentZDOs(ZPackage package)
   {
     var pos = 0;
     var packageSize = package.Size();
+    List<ZDOID> zdoIdList = [];
     while (packageSize > pos)
     {
       package.SetPos(pos);
       var zdoid = package.ReadZDOID();
-      var zdo = ZDOMan.instance.GetZDO(zdoid);
+      zdoIdList.Add(zdoid);
+      ZDOMan.s_instance.RequestZDO(zdoid);
+      // var zdo = ZDOMan.instance.GetZDO(zdoid);
+      pos = package.GetPos();
+    }
+
+    var zdoIndex = 0;
+    while (zdoIndex < zdoIdList.Count)
+    {
+      yield return new WaitUntil(() =>
+        ZDOMan.instance.GetZDO(zdoIdList[zdoIndex]) != null);
+      var zdo = ZDOMan.instance.GetZDO(zdoIdList[zdoIndex]);
       if (zdo != null)
       {
         GetOrCreatePersistentID(zdo);
       }
-
-      pos = package.GetPos();
     }
   }
 
@@ -103,9 +113,9 @@ public class ZdoWatchManager : MonoBehaviour
     {
       if (PendingPersistentIdQueries.ContainsKey(persistentId))
       {
-        Logger.LogWarning(
-          "RequestPersistentID called for ongoing operation, exiting to prevent duplicate side effect issues");
-        yield break;
+        // Logger.LogWarning(
+        //   "RequestPersistentID called for ongoing operation, exiting to prevent duplicate side effect issues");
+        // yield break;
       }
 
       PendingPersistentIdQueries.Add(persistentId, null);
@@ -138,10 +148,14 @@ public class ZdoWatchManager : MonoBehaviour
       yield break;
     }
 
+    // VERY Expensive...need to optimize to send only for correct peer
+    Logger.LogMessage(ZDOMan.instance.m_peers.ToString());
+    ZDOMan.s_instance.FlushClientObjects();
+
     Logger.LogMessage(
       $"Client received blob from sender: {sender}, processing");
     // var requestedZdoId = package.ReadZDOID();
-    WriteAllZdoIdsToLocalStore(package);
+    yield return RequestAllPersistentZDOs(package);
     Logger.LogMessage("Synced zdo store -> success");
     // var zdo = ZDOMan.instance.GetZDO(requestedZdoId);
     yield return true;

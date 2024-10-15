@@ -12,6 +12,11 @@ public class ZdoPatch
     ZdoWatchManager.Instance.Deserialize(__instance);
   }
 
+  [HarmonyPatch(typeof(ZDOMan), nameof(ZDOMan.ForceSendZDO))]
+  private static void ZDOMan_ForceSendZDO(ZDOMan __instance)
+  {
+  }
+
   [HarmonyPatch(typeof(ZDO), "Load")]
   [HarmonyPostfix]
   private static void ZDO_Load(ZDO __instance, ZPackage pkg, int version)
