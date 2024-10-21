@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using DynamicLocations.DynamicLocations.Constants;
+using DynamicLocations.Constants;
 using UnityEngine;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;

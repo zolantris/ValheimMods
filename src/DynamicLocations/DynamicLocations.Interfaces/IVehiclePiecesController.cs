@@ -1,4 +1,4 @@
-namespace DynamicLocations.DynamicLocations.Interfaces;
+namespace DynamicLocations.Interfaces;
 
 public interface IVehiclePiecesController
 {

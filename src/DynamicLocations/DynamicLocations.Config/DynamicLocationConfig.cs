@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using BepInEx.Configuration;
+using DynamicLocations.Controllers;
 using UnityEngine;
 using Logger = Jotunn.Logger;
 
@@ -13,6 +14,13 @@ public static class DynamicLocationsConfig
   // public static ConfigEntry<bool>
   //   DynamicSpawnPointGameObjects { get; private set; } = null!;
 
+  public static ConfigEntry<List<string>> DisabledLoginApiIntegrations
+  {
+    get;
+    set;
+  } =
+    null!;
+
   public static ConfigEntry<int> RespawnHeightOffset { get; set; } = null!;
 
   public static ConfigEntry<bool>
@@ -24,8 +32,7 @@ public static class DynamicLocationsConfig
   public static ConfigEntry<bool> FreezePlayerPosition { get; private set; } =
     null!;
 
-
-  public static ConfigEntry<bool> Debug { get; private set; } = null!;
+  private static ConfigEntry<bool> Debug { get; set; } = null!;
   public static bool IsDebug => Debug.Value;
 
   public static ConfigEntry<bool> DebugDistancePortal { get; private set; } =
@@ -52,7 +59,16 @@ public static class DynamicLocationsConfig
   {
     Config = config;
 
-    FreezePlayerPosition = config.Bind(MainSection,
+    DisabledLoginApiIntegrations = Config.Bind(MainSection,
+      "DisabledLoginApiIntegrations",
+      new List<string>(),
+      new ConfigDescription(
+        $"A list of disabled plugins by GUID or name. This list will force disable any plugins matching either the guid or name. e.g. if you don't want ValheimRAFT to be enabling dynamic locations login integrations add \"zolantris.ValheimRAFT\" or \"ValheimRAFT.2.3.0\".",
+        null,
+        new ConfigurationManagerAttributes()
+          { IsAdminOnly = false, IsAdvanced = false }));
+
+    FreezePlayerPosition = Config.Bind(MainSection,
       "FreezePlayerPosition",
       false,
       new ConfigDescription(
@@ -61,7 +77,7 @@ public static class DynamicLocationsConfig
         new ConfigurationManagerAttributes()
           { IsAdminOnly = false, IsAdvanced = false }));
 
-    DebugDistancePortal = config.Bind(DebugSection,
+    DebugDistancePortal = Config.Bind(DebugSection,
       "DebugDistancePortal",
       false,
       new ConfigDescription(
@@ -71,7 +87,7 @@ public static class DynamicLocationsConfig
           { IsAdminOnly = true, IsAdvanced = true }));
 
 
-    DebugForceUpdatePositionDelay = config.Bind(DebugSection,
+    DebugForceUpdatePositionDelay = Config.Bind(DebugSection,
       "DebugForceUpdatePositionDelay",
       0f,
       new ConfigDescription(
@@ -81,7 +97,7 @@ public static class DynamicLocationsConfig
           { IsAdminOnly = true, IsAdvanced = true }));
 
 
-    DebugForceUpdatePositionAfterTeleport = config.Bind(DebugSection,
+    DebugForceUpdatePositionAfterTeleport = Config.Bind(DebugSection,
       "DebugForceUpdatePositionAfterTeleport",
       false,
       new ConfigDescription(
@@ -90,7 +106,7 @@ public static class DynamicLocationsConfig
         new ConfigurationManagerAttributes()
           { IsAdminOnly = true, IsAdvanced = true }));
 
-    EnableDynamicSpawnPoint = config.Bind(MainSection,
+    EnableDynamicSpawnPoint = Config.Bind(MainSection,
       "enableDynamicSpawnPoints",
       true,
       new ConfigDescription(
@@ -99,7 +115,7 @@ public static class DynamicLocationsConfig
         new ConfigurationManagerAttributes()
           { IsAdminOnly = true, IsAdvanced = true }));
 
-    EnableDynamicLogoutPoint = config.Bind(MainSection,
+    EnableDynamicLogoutPoint = Config.Bind(MainSection,
       "enableDynamicLogoutPoints",
       true,
       new ConfigDescription(
@@ -108,7 +124,7 @@ public static class DynamicLocationsConfig
         new ConfigurationManagerAttributes()
           { IsAdminOnly = true, IsAdvanced = true }));
 
-    RespawnHeightOffset = config.Bind(MainSection,
+    RespawnHeightOffset = Config.Bind(MainSection,
       "respawnHeightOffset",
       0,
       new ConfigDescription(
@@ -117,7 +133,7 @@ public static class DynamicLocationsConfig
         new ConfigurationManagerAttributes()
           { IsAdminOnly = false, IsAdvanced = true }));
 
-    Debug = config.Bind(MainSection,
+    Debug = Config.Bind(MainSection,
       "debug",
       false,
       new ConfigDescription(
@@ -127,7 +143,9 @@ public static class DynamicLocationsConfig
           { IsAdminOnly = true, IsAdvanced = true }));
 
     // Debug.SettingChanged += 
-    //   .OnBranchCollisionChange;
+    //   class.Callback;
+    DisabledLoginApiIntegrations.SettingChanged += (sender, args) =>
+      LoginAPIController.UpdateIntegrations();
 
     if (Debug.Value)
     {

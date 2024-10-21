@@ -23,6 +23,7 @@ using ValheimVehicles.Propulsion.Sail;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ZdoWatcher;
+using Zolantris.Shared.BepInExAutoDoc;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -353,42 +354,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         true));
   }
 
-  private void AutoDoc()
-  {
-#if DEBUG
-    // Store Regex to get all characters after a [
-    Regex regex = new(@"\[(.*?)\]");
-
-    // Strip using the regex above from Config[x].Description.Description
-    string Strip(string x) => regex.Match(x).Groups[1].Value;
-    StringBuilder sb = new();
-    var lastSection = "";
-    foreach (var x in Config.Keys)
-    {
-      // skip first line
-      if (x.Section != lastSection)
-      {
-        lastSection = x.Section;
-        sb.Append($"{Environment.NewLine}## {x.Section}{Environment.NewLine}");
-      }
-
-
-      sb.Append(
-        $"\n### {x.Key} [{Strip(Config[x].Description.Description)}]"
-          .Replace("[]",
-            "") +
-        $"{Environment.NewLine}- Description: {Config[x].Description.Description.Replace("[Synced with Server]", "").Replace("[Not Synced with Server]", "")}" +
-        $"{Environment.NewLine}- Default Value: {Config[x].GetSerializedValue()}{Environment.NewLine}");
-    }
-
-    File.WriteAllText(
-      Path.Combine(
-        Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
-        $"{ModName}_AutoDoc.md"),
-      sb.ToString());
-#endif
-  }
-
   private void CreateFlightPropulsionConfig()
   {
     FlightVerticalToggle = Config.Bind<bool>("Propulsion",
@@ -592,7 +557,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     // SentryLoads after
     ApplyMetricIfAvailable();
     AddGuiLayerComponents();
-    AutoDoc();
+    new BepInExConfigAutoDoc().Generate(this, Config);
   }
 
   /**

@@ -5,7 +5,7 @@ using Jotunn.Managers;
 using UnityEngine;
 using Logger = Jotunn.Logger;
 
-namespace DynamicLocations.DynamicLocations.Commands;
+namespace DynamicLocations.Commands;
 
 public class DynamicLocationsCommands : ConsoleCommand
 {

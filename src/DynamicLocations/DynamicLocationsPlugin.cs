@@ -1,6 +1,6 @@
 ﻿using BepInEx;
 using DynamicLocations.Config;
-using DynamicLocations.DynamicLocations.Commands;
+using DynamicLocations.Commands;
 using DynamicLocations.Patches;
 using HarmonyLib;
 using Jotunn.Managers;

@@ -1,4 +1,4 @@
-namespace DynamicLocations.DynamicLocations.Constants;
+namespace DynamicLocations.Constants;
 
 public static class ZdoVarKeys
 {
