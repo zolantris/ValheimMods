@@ -111,16 +111,21 @@ public class DynamicLocationsPatches
       __instance.gameObject.AddComponent<PlayerSpawnController>();
     }
 
+    Character character = __result;
+
+
     if (__instance.m_respawnAfterDeath &&
-        DynamicLocationsConfig.EnableDynamicSpawnPoint.Value)
+        DynamicLocationsConfig.EnableDynamicSpawnPoint.Value &&
+        !character.InIntro())
     {
       PlayerSpawnController.Instance?.MovePlayerToSpawnPoint();
     }
     else
     {
-      if (DynamicLocationsConfig.EnableDynamicLogoutPoint.Value)
+      if (DynamicLocationsConfig.EnableDynamicLogoutPoint.Value &&
+          !character.InInterior() && !character.InIntro())
       {
-        PlayerSpawnController.Instance?.MovePlayerToLoginPoint();
+        PlayerSpawnController.Instance?.MovePlayerToLogoutPoint();
       }
     }
   }

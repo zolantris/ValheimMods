@@ -177,46 +177,9 @@ public class PlayerSpawnController : MonoBehaviour
         .DebugDistancePortal.Value);
   }
 
-  // public static PlayerSpawnController? GetSpawnController(Player currentPlayer)
-  // {
-  //   return Instance
-  //   // if (player == null) return null;
-  //   // if (!currentPlayer) return null;
-  //   //
-  //   // if (Instances.TryGetValue(currentPlayer.GetPlayerID(), out var instance))
-  //   // {
-  //   //   instance.transform.position = currentPlayer.transform.position;
-  //   //   instance.transform.SetParent(currentPlayer.transform);
-  //   //   return instance;
-  //   // }
-  //   //
-  //   // var spawnController = currentPlayer.GetComponent<PlayerSpawnController>();
-  //   //
-  //   // return spawnController;
-  // }
-
-  public bool MovePlayerToLoginPoint()
+  public Coroutine MovePlayerToLogoutPoint()
   {
-    IsTeleportingToDynamicLocation = false;
-    if (!player)
-    {
-      Setup();
-    }
-
-    if (player == null) return false;
-    var loginZdoOffset = LocationController.GetLogoutZdoOffset(player);
-    var loginZdoid = LocationController.GetLogoutZdo(player);
-
-    if (loginZdoid == null)
-    {
-      // when the player is respawning from death this will be null or on first launch with these new keys
-      return false;
-    }
-
-    StartCoroutine(UpdateLocation(loginZdoid, loginZdoOffset,
-      LocationTypes.Logout));
-
-    return true;
+    return StartCoroutine(UpdateLocation(LocationTypes.Logout));
   }
 
   public enum LocationTypes
@@ -225,41 +188,61 @@ public class PlayerSpawnController : MonoBehaviour
     Logout
   }
 
-  public IEnumerator UpdateLocation(ZDO? zdoid, Vector3 offset,
-    LocationTypes locationType)
+  private IEnumerator UpdateLocation(LocationTypes locationType)
   {
+    var offset = GetZdoOffsetForType(locationType);
+    var zdoid = GetZdoidForType(locationType);
     UpdateLocationTimer.Restart();
+    IsTeleportingToDynamicLocation = false;
     yield return MovePlayerToZdo(zdoid, offset);
     IsTeleportingToDynamicLocation = false;
     UpdateLocationTimer.Reset();
-    // must be another coroutine AND only fired after the Move coroutine completes otherwise it WILL break the move coroutine as it deletes the required key.
-    // remove logout point after moving the player.
-    if (locationType == LocationTypes.Logout)
+
+    switch (locationType)
     {
-      if (CanRemoveLogoutAfterSync)
+      // must be another coroutine AND only fired after the Move coroutine completes otherwise it WILL break the move coroutine as it deletes the required key.
+      // remove logout point after moving the player.
+      case LocationTypes.Logout when player != null:
       {
-        LocationController.RemoveLogoutZdo(player);
+        if (CanRemoveLogoutAfterSync)
+        {
+          yield return LocationController.RemoveLogoutZdo(player);
+        }
+
+        break;
       }
+      case LocationTypes.Spawn:
+        break;
     }
 
-    if (locationType == LocationTypes.Spawn)
-    {
-    }
+    yield return true;
   }
 
   public void MovePlayerToSpawnPoint()
   {
-    StartCoroutine(UpdateSpawnLocation());
+    StartCoroutine(UpdateLocation(LocationTypes.Spawn));
   }
 
-  private IEnumerator UpdateSpawnLocation()
+  private static Vector3 GetZdoOffsetForType(LocationTypes locationTypes)
   {
-    if (player == null) yield break;
-    var spawnZdoOffset = LocationController.GetSpawnTargetZdoOffset(player);
-    var spawnZdoid = LocationController.GetSpawnTargetZdo(player);
-    yield return spawnZdoid;
-    yield return UpdateLocation(spawnZdoid.Current as ZDO, spawnZdoOffset,
-      LocationTypes.Spawn);
+    return locationTypes switch
+    {
+      LocationTypes.Spawn => LocationController.GetSpawnTargetZdoOffset(player),
+      LocationTypes.Logout => LocationController.GetLogoutZdoOffset(player),
+      _ => throw new ArgumentOutOfRangeException(nameof(locationTypes),
+        locationTypes, null)
+    };
+  }
+
+  private static IEnumerator GetZdoidForType(LocationTypes locationTypes)
+  {
+    yield return locationTypes switch
+    {
+      LocationTypes.Spawn => LocationController.GetSpawnTargetZdo(player),
+      LocationTypes.Logout => LocationController.GetLogoutZdo(player),
+      _ => throw new ArgumentOutOfRangeException(nameof(locationTypes),
+        locationTypes, null)
+    };
   }
 
   private void SyncPlayerPosition(Vector3 newPosition)
@@ -291,14 +274,6 @@ public class PlayerSpawnController : MonoBehaviour
     player.transform.position = newPosition;
   }
 
-  // add a callback that ValheimRAFT/Vehicles can bind to and delegate it's classes to.
-  // public Interpolate.Function IsWithinVehicleCallback;
-
-  // private bool IsWithinVehicle()
-  // {
-  //   return true;
-  // }
-
   public delegate TResult Func<in T, out TResult>(T arg);
 
   // Meant for being overridden by the ValheimRAFT mod
@@ -316,13 +291,17 @@ public class PlayerSpawnController : MonoBehaviour
     yield return output;
   }
 
+  private bool HasExpiredTimer => UpdateLocationTimer is
+    { ElapsedMilliseconds: > 10000 };
+
   /// <summary>
   /// Does not work, zdoids are not persistent across game and loading content outside a zone does not work well without a reference that persists.
   /// </summary>
   /// <param name="zdoid"></param>
+  /// <param name="zdo"></param>
   /// <param name="offset"></param>
   /// <returns></returns>
-  public IEnumerator MovePlayerToZdo(ZDO? zdo, Vector3 offset)
+  private IEnumerator MovePlayerToZdo(ZDO? zdo, Vector3 offset)
   {
     if (DynamicLocationsConfig.IsDebug)
     {
@@ -417,7 +396,7 @@ public class PlayerSpawnController : MonoBehaviour
     //   }
     // }
     yield return new WaitUntil(() =>
-      Player.m_localPlayer.IsTeleporting() == false);
+      Player.m_localPlayer.IsTeleporting() == false || HasExpiredTimer);
     zdoNetViewInstance = ZNetScene.instance.FindInstance(zdo);
 
     if (DynamicLocationsConfig.FreezePlayerPosition.Value && character != null)

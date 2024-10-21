@@ -105,7 +105,7 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
     if (GUILayout.Button("Move to current logout"))
     {
-      PlayerSpawnController.Instance?.MovePlayerToLoginPoint();
+      PlayerSpawnController.Instance?.MovePlayerToLogoutPoint();
     }
 
     if (GUILayout.Button("DebugFind PlayerSpawnController"))

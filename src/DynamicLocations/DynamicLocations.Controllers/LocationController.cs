@@ -93,29 +93,38 @@ public static class LocationController
     return vector;
   }
 
-  public static ZDO? GetLogoutZdo(Player player)
+  // if (!player) yield break;
+  // if (!player.m_customData.TryGetValue(GetLogoutZdoKey(),
+  //       out var logoutZdoString))
+  // {
+  //   yield break;
+  // }
+  //
+  // var zdo = GetZDOFromTargetKey(GetLogoutZdoKey(), player);
+  //
+  //
+  // var zdoid = StringToZDOID(logoutZdoString);
+  // Logger.LogDebug(
+  //   $"Retreiving LogoutZdo {zdoid} for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
+  // var output = zdoid == ZDOID.None
+  //   ? ZdoWatchController.ZdoIdToId(zdoid.Value)
+  //   : 0;
+  //
+  // // each game will create a new set of IDs, but the persistent data will allow for looking up the current game's ID.
+  // yield return ZdoWatchController.Instance.GetZdoFromServer(output);
+  public static IEnumerator GetLogoutZdo(Player? player)
   {
-    if (!player) return null;
-    if (!player.m_customData.TryGetValue(GetLogoutZdoKey(),
-          out var logoutZdoString))
-    {
-      return null;
-    }
+    if (player == null) yield break;
+    var zdo = GetZDOFromTargetKey(GetLogoutZdoKey(), player);
+    yield return zdo;
 
-    var zdoid = StringToZDOID(logoutZdoString);
-    Logger.LogDebug(
-      $"Retreiving spawnTargetZdo {zdoid} for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
-    var output = zdoid == ZDOID.None
-      ? ZdoWatchController.ZdoIdToId(zdoid.Value)
-      : 0;
-
-    // each game will create a new set of IDs, but the persistent data will allow for looking up the current game's ID.
-    return ZdoWatchController.Instance.GetZdo(output);
+    var logoutZdo = zdo.Current as ZDO;
+    yield return logoutZdo;
   }
 
-  public static Vector3 GetLogoutZdoOffset(Player player)
+  public static Vector3 GetLogoutZdoOffset(Player? player)
   {
-    if (!player) return Vector3.zero;
+    if (player == null) return Vector3.zero;
     if (!player.m_customData.TryGetValue(GetLogoutZdoKey(),
           out var logoutZdoString))
     {
@@ -183,7 +192,6 @@ public static class LocationController
   public static IEnumerator GetZDOFromTargetKey(string targetKey,
     Player player)
   {
-    // if (cachedSpawnTarget != null) return cachedSpawnTarget;
     if (!player)
     {
       yield break;
@@ -232,9 +240,10 @@ public static class LocationController
     yield return zdoOutput;
   }
 
-  public static IEnumerator GetSpawnTargetZdo(Player player)
+  public static IEnumerator GetSpawnTargetZdo(Player? player)
   {
-    // if (cachedSpawnTarget != null) return cachedSpawnTarget;
+    if (player == null) yield break;
+
     var zdo = GetZDOFromTargetKey(GetSpawnZdoKey(), player);
     yield return zdo;
 
@@ -242,10 +251,10 @@ public static class LocationController
     yield return cachedSpawnTarget;
   }
 
-  public static Vector3 GetSpawnTargetZdoOffset(Player player)
+  public static Vector3 GetSpawnTargetZdoOffset(Player? player)
   {
     // if (cachedSpawnTargetOffset != null) return cachedSpawnTargetOffset.Value;
-    if (!player) return Vector3.zero;
+    if (player == null) return Vector3.zero;
     if (!player.m_customData.TryGetValue(GetSpawnZdoOffsetKey(),
           out var offsetString))
     {

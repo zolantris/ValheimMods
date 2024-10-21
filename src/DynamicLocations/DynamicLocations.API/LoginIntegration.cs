@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using BepInEx;
 using DynamicLocations.Controllers;
 using DynamicLocations.Interfaces;
+using Jotunn;
 
 namespace DynamicLocations.API;
 
@@ -34,9 +35,11 @@ public class LoginIntegration : IModLoginAPI
     throw new System.NotImplementedException();
   }
 
-
+  // Basic default implementation
   public bool IsLoginZdo(ZDO zdo)
   {
-    throw new System.NotImplementedException();
+    // should never be 0
+    if (LoginPrefabHashCode == 0) return false;
+    return zdo.GetPrefab() == LoginPrefabHashCode;
   }
 }
