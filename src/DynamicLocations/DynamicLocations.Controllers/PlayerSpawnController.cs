@@ -41,11 +41,23 @@ public class PlayerSpawnController : MonoBehaviour
     Setup();
   }
 
-  public void DEBUG_MoveToLogoutPoint()
+  public void DEBUG_MoveTo(LocationTypes locationType)
   {
     CanUpdateLogoutPoint = true;
+    switch (locationType)
+    {
+      case LocationTypes.Spawn:
+        Instance?.MovePlayerToSpawnPoint();
+        break;
+      case LocationTypes.Logout:
+        Instance?.MovePlayerToLogoutPoint();
+        break;
+      default:
+        throw new ArgumentOutOfRangeException(nameof(locationType),
+          locationType, null);
+    }
+
     CanUpdateLogoutPoint = false;
-    Instance?.MovePlayerToLogoutPoint();
   }
 
   public void RestartTimer()
@@ -111,7 +123,7 @@ public class PlayerSpawnController : MonoBehaviour
     {
       Logger.LogError(
         "No persistent ID returned for bed, this should not be possible. Please report this error");
-      LocationController.RemoveSpawnTargetZdo(player);
+      LocationController.RemoveZdoTarget(LocationTypes.Spawn, player);
       return null;
     }
 
@@ -144,22 +156,28 @@ public class PlayerSpawnController : MonoBehaviour
     var netView = PersistBedZdo(bed);
     if (netView == null) return false;
 
-    if (spawnPointObj.transform.position !=
-        spawnPointObj.transform.localPosition &&
-        netView.transform.position != spawnPointObj.transform.position)
-    {
-      var offset = spawnPointObj.transform.localPosition;
-      // must be parsed to ZDOID after reading from custom player data
-      LocationController.SetOffset(LocationTypes.Spawn, player,
-        offset);
-    }
-    else
-    {
-      LocationController.SetOffset(LocationTypes.Spawn, player,
-        netView.transform.position - spawnPointObj.transform.position);
-    }
+    LocationController.SetZdo(LocationTypes.Spawn, player, netView);
 
-    return false;
+    var wasSuccessful = LocationController.SetLocationTypeData(
+      LocationTypes.Spawn, player, netView,
+      spawnPointObj.transform.position - player.transform.position);
+
+    // if (spawnPointObj.transform.position !=
+    //     spawnPointObj.transform.localPosition &&
+    //     netView.transform.position != spawnPointObj.transform.position)
+    // {
+    //   var offset = spawnPointObj.transform.localPosition;
+    //   // must be parsed to ZDOID after reading from custom player data
+    //   LocationController.SetOffset(LocationTypes.Spawn, player,
+    //     offset);
+    // }
+    // else
+    // {
+    //   LocationController.SetOffset(LocationTypes.Spawn, player,
+    //     netView.transform.position - spawnPointObj.transform.position);
+    // }
+
+    return wasSuccessful;
   }
 
   /// <summary>
@@ -174,7 +192,7 @@ public class PlayerSpawnController : MonoBehaviour
     if (!ZdoWatchController.GetPersistentID(netView.GetZDO(),
           out var persistentId))
     {
-      LocationController.RemoveLogoutZdo(player);
+      LocationController.RemoveZdoTarget(LocationTypes.Logout, player);
       return;
     }
 
@@ -310,7 +328,7 @@ public class PlayerSpawnController : MonoBehaviour
 
     if (HasExpiredTimer || dynamicZdo.Current == null)
     {
-      UpdateLocationTimer.Reset();
+      IsTeleportingToDynamicLocation = false;
       yield break;
     }
 
@@ -330,7 +348,8 @@ public class PlayerSpawnController : MonoBehaviour
       {
         if (CanRemoveLogoutAfterSync)
         {
-          yield return LocationController.RemoveLogoutZdo(player);
+          yield return LocationController.RemoveZdoTarget(LocationTypes.Logout,
+            player);
         }
 
         break;

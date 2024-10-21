@@ -101,6 +101,11 @@ public class LocationController : MonoBehaviour
   public static string GetSpawnZdoKey() =>
     !ZNet.instance ? "" : $"{GetFullPrefix()}_{SpawnZdo}_{WorldUID}";
 
+  /// <summary>
+  /// Todo see if this is needed
+  /// </summary>
+  /// <param name="zdoid"></param>
+  /// <returns></returns>
   private static string ZDOIDToString(ZDOID zdoid)
   {
     var userId = zdoid.UserID;
@@ -108,6 +113,11 @@ public class LocationController : MonoBehaviour
     return $"{userId},{id}";
   }
 
+  /// <summary>
+  /// Todo see if this is needed
+  /// </summary>
+  /// <param name="zdoidString"></param>
+  /// <returns></returns>
   private static ZDOID? StringToZDOID(string zdoidString)
   {
     var zdoIdStringArray = zdoidString.Split(',');
@@ -143,56 +153,44 @@ public class LocationController : MonoBehaviour
     return vector;
   }
 
-  public static IEnumerator GetLogoutZdo(Player? player)
+  /// <summary>
+  /// For debugging and scripts
+  /// </summary>
+  internal static void DEBUG_RemoveAllDynamicLocationKeys()
   {
-    if (player == null) yield break;
-    var zdo = GetZdoFromStore(GetLogoutZdoKey(), player);
-    yield return zdo;
-
-    var logoutZdo = zdo.Current as ZDO;
-    yield return logoutZdo;
+    foreach (var keyValuePair in Player.m_localPlayer.m_customData)
+    {
+      if (keyValuePair.Key.Contains(GetFullPrefix()))
+      {
+        Logger.LogDebug(
+          $"Removing: Key: {keyValuePair.Key} Value: {keyValuePair.Value}");
+        Player.m_localPlayer.m_customData.Remove(keyValuePair.Key);
+      }
+    }
   }
 
-  public static Vector3 GetLogoutZdoOffset(Player? player)
+
+  public static bool RemoveZdoTarget(
+    PlayerSpawnController.LocationTypes locationType, Player? player)
   {
-    if (player == null) return Vector3.zero;
-    if (!player.m_customData.TryGetValue(GetLogoutZdoKey(),
-          out var logoutZdoString))
+    if (player == null)
+      return false;
+
+    var selectedZdoKey = GetZdoStorageKey(locationType);
+    var selectedOffsetKey = GetZdoStorageKey(locationType);
+    if (!ZNet.instance) return false;
+
+    if (player.m_customData.ContainsKey(selectedOffsetKey))
     {
-      return Vector3.zero;
+      player.m_customData.Remove(selectedOffsetKey);
     }
 
-    var offset = StringToVector3(logoutZdoString);
-    return offset ?? Vector3.zero;
-  }
-
-  public static bool RemoveLogoutZdo(Player player)
-  {
-    if (!ZNet.instance) return false;
-    player.m_customData.Remove(GetLogoutZdoKey());
-    player.m_customData.Remove(GetLogoutZdoOffsetKey());
-    return true;
-  }
-
-  public static bool RemoveSpawnTargetZdo(Player player)
-  {
-    if (!ZNet.instance) return false;
-    player.m_customData.Remove(GetSpawnZdoKey());
-    player.m_customData.Remove(GetSpawnZdoOffsetKey());
-    return true;
-  }
-
-  public static Vector3? SetLogoutZdoOffset(Player player, Vector3 offset)
-  {
-    if (!player) return null;
-    if (Vector3.zero == offset)
+    if (player.m_customData.ContainsKey(selectedZdoKey))
     {
-      player.m_customData.Remove(GetLogoutZdoOffsetKey());
-      return null;
+      player.m_customData.Remove(selectedZdoKey);
     }
 
-    player.m_customData[GetLogoutZdoOffsetKey()] = Vector3ToString(offset);
-    return offset;
+    return true;
   }
 
   public static IEnumerator GetZdoFromStore(
@@ -310,9 +308,15 @@ public class LocationController : MonoBehaviour
 
     spawnPointObjZdo.Set(ZdoVarKeys.DynamicLocationsPoint, 1);
 
-    player.m_customData[saveKey] = id.ToString();
+    if (player.m_customData.TryGetValue(saveKey, out var zdoString))
+    {
+      player.m_customData[saveKey] = id.ToString();
+    }
+    else
+    {
+      player.m_customData.Add(saveKey, id.ToString());
+    }
 
-    player.m_customData.TryGetValue(saveKey, out var zdoString);
 
     if (zdoString == null)
     {
@@ -378,7 +382,7 @@ public class LocationController : MonoBehaviour
     return locationType switch
     {
       PlayerSpawnController.LocationTypes.Spawn => GetSpawnZdoKey(),
-      PlayerSpawnController.LocationTypes.Logout => GetSpawnZdoOffsetKey(),
+      PlayerSpawnController.LocationTypes.Logout => GetLogoutZdoKey(),
       _ => throw new ArgumentOutOfRangeException(nameof(locationType),
         locationType, null)
     };

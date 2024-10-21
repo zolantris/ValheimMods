@@ -120,7 +120,7 @@ public class LoginAPIController
   internal static void UpdateIntegrations()
   {
     foreach (var disableLoginApiIntegrationConfigItem in DynamicLocationsConfig
-               .DisabledLoginApiIntegrations.Value)
+               .DisabledLoginApiIntegrations)
     {
       if (LoginIntegrations.ContainsKey(disableLoginApiIntegrationConfigItem))
       {
@@ -132,7 +132,7 @@ public class LoginAPIController
     {
       var isMatch = false;
       foreach (var disableLoginApiIntegrationConfigItem in
-               DynamicLocationsConfig.DisabledLoginApiIntegrations.Value)
+               DynamicLocationsConfig.DisabledLoginApiIntegrations)
       {
         if (DisabledLoginIntegrations.ContainsKey(
               disableLoginApiIntegrationConfigItem))

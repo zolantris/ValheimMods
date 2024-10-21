@@ -225,11 +225,11 @@
             <HintPath>$(ManagedDataPath)\UnityEngine.TerrainModule.dll</HintPath>
             <Private>False</Private>
         </Reference>
-        <Reference Include="UnityEngine.TextCoreModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.TextCoreModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
+        <!--        <Reference Include="UnityEngine.TextCoreModule">-->
+        <!--            <SpecificVersion>False</SpecificVersion>-->
+        <!--            <HintPath>$(ManagedDataPath)\UnityEngine.TextCoreModule.dll</HintPath>-->
+        <!--            <Private>False</Private>-->
+        <!--        </Reference>-->
         <Reference Include="UnityEngine.TextRenderingModule">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>$(ManagedDataPath)\UnityEngine.TextRenderingModule.dll</HintPath>

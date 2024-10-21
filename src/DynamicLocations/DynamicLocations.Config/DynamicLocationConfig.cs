@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using BepInEx.Configuration;
 using DynamicLocations.Controllers;
 using UnityEngine;
@@ -14,12 +15,15 @@ public static class DynamicLocationsConfig
   // public static ConfigEntry<bool>
   //   DynamicSpawnPointGameObjects { get; private set; } = null!;
 
-  public static ConfigEntry<List<string>> DisabledLoginApiIntegrations
+  public static ConfigEntry<string> DisabledLoginApiIntegrationsString
   {
     get;
     private set;
   } =
     null!;
+
+  public static List<string> DisabledLoginApiIntegrations =>
+    DisabledLoginApiIntegrationsString?.Value.Split(',').ToList() ?? [];
 
   public static ConfigEntry<bool> HasCustomSpawnDelay { get; private set; } =
     null!;
@@ -83,11 +87,11 @@ public static class DynamicLocationsConfig
         new ConfigurationManagerAttributes()
           { IsAdminOnly = true, IsAdvanced = false }));
 
-    DisabledLoginApiIntegrations = Config.Bind(MainSection,
+    DisabledLoginApiIntegrationsString = Config.Bind(MainSection,
       "DisabledLoginApiIntegrations",
-      new List<string>(),
+      "",
       new ConfigDescription(
-        $"A list of disabled plugins by GUID or name. This list will force disable any plugins matching either the guid or name. e.g. if you don't want ValheimRAFT to be enabling dynamic locations login integrations add \"zolantris.ValheimRAFT\" or \"ValheimRAFT.2.3.0\".",
+        $"A list of disabled plugins by GUID or name. Each item must be separated by a comma. This list will force disable any plugins matching either the guid or name. e.g. if you don't want ValheimRAFT to be enabling dynamic locations login integrations add \"zolantris.ValheimRAFT\" or \"ValheimRAFT.2.3.0\".",
         null,
         new ConfigurationManagerAttributes()
           { IsAdminOnly = false, IsAdvanced = false }));
@@ -168,7 +172,7 @@ public static class DynamicLocationsConfig
 
     // Debug.SettingChanged += 
     //   class.Callback;
-    DisabledLoginApiIntegrations.SettingChanged += (sender, args) =>
+    DisabledLoginApiIntegrationsString.SettingChanged += (sender, args) =>
       LoginAPIController.UpdateIntegrations();
 
     if (Debug.Value)

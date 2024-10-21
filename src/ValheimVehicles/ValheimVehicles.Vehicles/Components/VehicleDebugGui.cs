@@ -89,12 +89,14 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
     if (GUILayout.Button("Move to current spawn"))
     {
-      PlayerSpawnController.Instance?.DEBUG_MoveToLogoutPoint();
+      PlayerSpawnController.Instance?.DEBUG_MoveTo(PlayerSpawnController
+        .LocationTypes.Spawn);
     }
 
     if (GUILayout.Button("Move to current logout"))
     {
-      PlayerSpawnController.Instance?.MovePlayerToLogoutPoint();
+      PlayerSpawnController.Instance?.DEBUG_MoveTo(PlayerSpawnController
+        .LocationTypes.Logout);
     }
 
     if (GUILayout.Button("DebugFind PlayerSpawnController"))
