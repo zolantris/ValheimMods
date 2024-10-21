@@ -24,33 +24,64 @@ namespace DynamicLocations.Controllers;
 /// </summary>
 public class PlayerSpawnController : MonoBehaviour
 {
-  // spawn (Beds)
-  public static bool CanUpdateLogoutPoint = true;
-  public static bool CanRemoveLogoutAfterSync = false;
-  public bool IsTeleportingToDynamicLocation = false;
+  // mostly for debugging, this should not be kept other it will retain the logout point even when it's possible the point could be inaccurate.
+  internal bool CanUpdateLogoutPoint = true;
+  internal bool CanRemoveLogoutAfterSync = true;
+  internal bool IsTeleportingToDynamicLocation = false;
+  private bool IsRunningFindDynamicZdo = false;
 
   public static Dictionary<long, PlayerSpawnController> Instances = new();
 
   public static PlayerSpawnController? Instance;
-  private Stopwatch UpdateLocationTimer = new();
-  public static Player? player => Player.m_localPlayer;
+  internal Stopwatch UpdateLocationTimer = new();
+  private static Player? player => Player.m_localPlayer;
 
   private void Awake()
   {
-    Instance = this;
     Setup();
+  }
+
+  public void DEBUG_MoveToLogoutPoint()
+  {
+    CanUpdateLogoutPoint = true;
+    CanUpdateLogoutPoint = false;
+    Instance?.MovePlayerToLogoutPoint();
+  }
+
+  public void RestartTimer()
+  {
+    if (DynamicLocationsConfig.IsDebug)
+    {
+      Logger.LogDebug("External api called reset on timer");
+    }
+
+    UpdateLocationTimer.Restart();
+  }
+
+  internal void Reset()
+  {
+    UpdateLocationTimer.Reset();
+    IsRunningFindDynamicZdo = false;
+    IsTeleportingToDynamicLocation = false;
+    CanUpdateLogoutPoint = true;
+    CanRemoveLogoutAfterSync = true;
+  }
+
+  private void OnDestroy()
+  {
+    Reset();
+    Logger.LogDebug("Called onDestroy");
   }
 
   private void OnDisable()
   {
-    IsTeleportingToDynamicLocation = false;
+    Reset();
     StopAllCoroutines();
   }
 
   private void Setup()
   {
-    // forceDisableInit prevents running awake commands for znetview when it's not ready
-    if (ZNetView.m_forceDisableInit) return;
+    Instance = this;
     if (player == null) return;
 
 #if DEBUG
@@ -97,20 +128,21 @@ public class PlayerSpawnController : MonoBehaviour
   /// - This id is used to poke a zone and load it, then teleport the player to their bed like they are spawning
   /// </summary>
   /// <param name="spawnPointObj"></param>
+  /// <param name="bed"></param>
   /// <returns>bool</returns>
-  public void SyncBedSpawnPoint(ZNetView spawnPointObj, Bed bed)
+  public bool SyncBedSpawnPoint(ZNetView spawnPointObj, Bed bed)
   {
     // should sync the zdo just in case it doesn't match player
-    if (player == null) return;
+    if (player == null) return false;
 
     if (!bed.IsMine() && bed.GetOwner() != 0L)
     {
       // exit b/c this is another player's bed, this should not set as a spawn
-      return;
+      return false;
     }
 
     var netView = PersistBedZdo(bed);
-    if (netView == null) return;
+    if (netView == null) return false;
 
     if (spawnPointObj.transform.position !=
         spawnPointObj.transform.localPosition &&
@@ -118,18 +150,20 @@ public class PlayerSpawnController : MonoBehaviour
     {
       var offset = spawnPointObj.transform.localPosition;
       // must be parsed to ZDOID after reading from custom player data
-      LocationController.SetSpawnZdoTargetWithOffset(player, netView,
+      LocationController.SetOffset(LocationTypes.Spawn, player,
         offset);
     }
     else
     {
-      LocationController.SetSpawnZdoTargetWithOffset(player, netView,
+      LocationController.SetOffset(LocationTypes.Spawn, player,
         netView.transform.position - spawnPointObj.transform.position);
     }
+
+    return false;
   }
 
   /// <summary>
-  /// Must be called on logout, but also polled to prevent accidental dsync
+  /// Must be called on logout, and should be fired optimistically to avoid desync if crashes happen.
   /// </summary>
   /// <param name="nv"></param>
   /// <returns>bool</returns>
@@ -152,12 +186,12 @@ public class PlayerSpawnController : MonoBehaviour
 
     if (player.transform.localPosition != player.transform.position)
     {
-      LocationController.SetLogoutZdoWithOffset(player, netView,
+      LocationController.SetOffset(LocationTypes.Logout, player,
         player.transform.localPosition);
     }
     else
     {
-      LocationController.SetLogoutZdo(player, netView);
+      LocationController.SetZdo(LocationTypes.Logout, player, netView);
     }
 
     Game.instance.m_playerProfile.SavePlayerData(player);
@@ -177,9 +211,9 @@ public class PlayerSpawnController : MonoBehaviour
         .DebugDistancePortal.Value);
   }
 
-  public Coroutine MovePlayerToLogoutPoint()
+  public void MovePlayerToLogoutPoint()
   {
-    return StartCoroutine(UpdateLocation(LocationTypes.Logout));
+    StartCoroutine(UpdateLocation(LocationTypes.Logout));
   }
 
   public enum LocationTypes
@@ -188,13 +222,103 @@ public class PlayerSpawnController : MonoBehaviour
     Logout
   }
 
-  private IEnumerator UpdateLocation(LocationTypes locationType)
+  public ZDO? PlayerSpawnPointZDO = null;
+
+
+  /// <summary>
+  /// This method might not be necessary. It is written to prevent cachine issues
+  /// todo determine if this is needed.
+  /// </summary>
+  /// <returns></returns>
+  public IEnumerator GetDynamicZdo()
   {
-    var offset = GetZdoOffsetForType(locationType);
-    var zdoid = GetZdoidForType(locationType);
+    var spawnZdo = PlayerSpawnPointZDO;
+    if (spawnZdo != null)
+    {
+      yield return spawnZdo;
+      yield break;
+    }
+
+    if (spawnZdo == null)
+    {
+      var pendingZdo = FindDynamicZdo(
+        PlayerSpawnController
+          .LocationTypes.Logout, true);
+      yield return pendingZdo;
+      spawnZdo = pendingZdo.Current;
+    }
+
+    yield return spawnZdo;
+  }
+
+  /// <summary>
+  /// Looks for the ZDO (mostly performant)
+  /// </summary>
+  /// <param name="locationType"></param>
+  /// <param name="shouldAdjustReferencePoint"></param>
+  /// <returns></returns>
+  public IEnumerator<ZDO?> FindDynamicZdo(LocationTypes locationType,
+    bool shouldAdjustReferencePoint = false)
+  {
+    IsRunningFindDynamicZdo = true;
+    UpdateLocationTimer.Restart();
+    var maybeZdo = LocationController.GetZdoFromStore(locationType, player);
+
+    while (maybeZdo.Current == null && !HasExpiredTimer)
+    {
+      yield return null;
+    }
+
+    var zdo = maybeZdo.Current as ZDO;
+    yield return zdo;
+    if (shouldAdjustReferencePoint && ZNet.instance != null && zdo != null)
+    {
+      ZNet.instance.SetReferencePosition(zdo.GetPosition());
+    }
+
+    PlayerSpawnPointZDO = zdo;
+
+    IsRunningFindDynamicZdo = false;
+  }
+
+
+  /// <summary>
+  /// Returns a vector3 or null. Null if the position is invalid for the zdo too. This way the bed position can be used as a fallback.
+  /// </summary>
+  /// <param name="locationType"></param>
+  /// <returns></returns>
+  public Vector3? OnFindSpawnPoint(LocationTypes locationType)
+  {
+    if (IsRunningFindDynamicZdo || PlayerSpawnPointZDO != null)
+    {
+      var pos = PlayerSpawnPointZDO?.GetPosition();
+      return pos == Vector3.zero ? null : pos;
+    }
+
+    StartCoroutine(FindDynamicZdo(locationType));
+    return null;
+  }
+
+  internal IEnumerator UpdateLocation(LocationTypes locationType)
+  {
     UpdateLocationTimer.Restart();
     IsTeleportingToDynamicLocation = false;
-    yield return MovePlayerToZdo(zdoid, offset);
+
+    var offset = LocationController.GetOffset(locationType, player);
+    var dynamicZdo = FindDynamicZdo(locationType);
+    yield return dynamicZdo;
+
+    if (HasExpiredTimer || dynamicZdo.Current == null)
+    {
+      UpdateLocationTimer.Reset();
+      yield break;
+    }
+
+    var handled = LoginAPIController.API_OnLoginMoveToZdo(dynamicZdo.Current,
+      offset,
+      this);
+    yield return handled;
+
     IsTeleportingToDynamicLocation = false;
     UpdateLocationTimer.Reset();
 
@@ -213,6 +337,9 @@ public class PlayerSpawnController : MonoBehaviour
       }
       case LocationTypes.Spawn:
         break;
+      default:
+        throw new ArgumentOutOfRangeException(nameof(locationType),
+          locationType, null);
     }
 
     yield return true;
@@ -223,26 +350,16 @@ public class PlayerSpawnController : MonoBehaviour
     StartCoroutine(UpdateLocation(LocationTypes.Spawn));
   }
 
-  private static Vector3 GetZdoOffsetForType(LocationTypes locationTypes)
+  public static LocationTypes GetLocationType(Game game)
   {
-    return locationTypes switch
-    {
-      LocationTypes.Spawn => LocationController.GetSpawnTargetZdoOffset(player),
-      LocationTypes.Logout => LocationController.GetLogoutZdoOffset(player),
-      _ => throw new ArgumentOutOfRangeException(nameof(locationTypes),
-        locationTypes, null)
-    };
+    return game.m_respawnAfterDeath
+      ? LocationTypes.Spawn
+      : LocationTypes.Logout;
   }
 
-  private static IEnumerator GetZdoidForType(LocationTypes locationTypes)
+  private static IEnumerator GetZdo(LocationTypes locationType)
   {
-    yield return locationTypes switch
-    {
-      LocationTypes.Spawn => LocationController.GetSpawnTargetZdo(player),
-      LocationTypes.Logout => LocationController.GetLogoutZdo(player),
-      _ => throw new ArgumentOutOfRangeException(nameof(locationTypes),
-        locationTypes, null)
-    };
+    yield return LocationController.GetZdoFromStore(locationType, player);
   }
 
   private void SyncPlayerPosition(Vector3 newPosition)
@@ -291,8 +408,9 @@ public class PlayerSpawnController : MonoBehaviour
     yield return output;
   }
 
-  private bool HasExpiredTimer => UpdateLocationTimer is
-    { ElapsedMilliseconds: > 10000 };
+  public bool HasExpiredTimer => !UpdateLocationTimer.IsRunning ||
+                                 UpdateLocationTimer is
+                                   { ElapsedMilliseconds: > 10000 };
 
   /// <summary>
   /// Does not work, zdoids are not persistent across game and loading content outside a zone does not work well without a reference that persists.
@@ -301,7 +419,7 @@ public class PlayerSpawnController : MonoBehaviour
   /// <param name="zdo"></param>
   /// <param name="offset"></param>
   /// <returns></returns>
-  private IEnumerator MovePlayerToZdo(ZDO? zdo, Vector3 offset)
+  public IEnumerator MovePlayerToZdo(ZDO? zdo, Vector3? offset)
   {
     if (DynamicLocationsConfig.IsDebug)
     {

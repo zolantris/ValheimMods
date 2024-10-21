@@ -1,6 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Reflection.Emit;
 using DynamicLocations.Config;
 using DynamicLocations.Controllers;
 using HarmonyLib;
+using UnityEngine;
 
 namespace DynamicLocations.Patches;
 
@@ -87,14 +92,89 @@ public class DynamicLocationsPatches
   //   return true;
   // }
 
-  [HarmonyPatch(typeof(Game), "Awake")]
+  [HarmonyPatch(typeof(ZNetScene), "Awake")]
   [HarmonyPostfix]
   private static void AddSpawnController(Game __instance)
   {
+    __instance.gameObject.AddComponent<LocationController>();
     __instance.gameObject.AddComponent<PlayerSpawnController>();
   }
 
+  [HarmonyPatch(typeof(ZNetScene), "Destroy")]
+  [HarmonyPostfix]
+  private static void ResetSpawnController(ZNetScene __instance)
+  {
+    LocationController.ResetCachedValues();
+    // may not need to call this provided ZNetScene already calls onDestroy
+    Object.Destroy(PlayerSpawnController.Instance);
+  }
 
+
+  [HarmonyPatch(typeof(Game), nameof(Game.FindSpawnPoint))]
+  [HarmonyPostfix]
+  private static void OnFindSpawnPoint(Game __instance)
+  {
+    var spawnType = PlayerSpawnController.GetLocationType(__instance);
+    var output = PlayerSpawnController.Instance?.OnFindSpawnPoint(spawnType);
+    if (output != null)
+    {
+      __instance.m_respawnAfterDeath = true;
+    }
+  }
+
+
+  /// <summary>
+  /// Patches request respawn so the respawn time is customized and much faster.
+  /// </summary>
+  /// <notes>GPT-4 Generated</notes>
+  /// <param name="instructions"></param>
+  /// <returns></returns>
+  [HarmonyPatch(typeof(Game), nameof(Game.RequestRespawn))]
+  [HarmonyTranspiler]
+  // The transpiler method
+  public static IEnumerable<CodeInstruction> Transpiler(
+    IEnumerable<CodeInstruction> instructions)
+  {
+    var codes = new List<CodeInstruction>(instructions);
+
+    // bails if the config is disabled.
+    if (!DynamicLocationsConfig.HasCustomSpawnDelay.Value) return codes;
+
+    // Loop through instructions to find the Invoke call
+    for (var i = 0; i < codes.Count; i++)
+    {
+      // Look for the Invoke call
+      if (codes[i].opcode == OpCodes.Call &&
+          codes[i].operand is MethodInfo methodInfo &&
+          methodInfo.Name == "Invoke")
+      {
+        // Replace the delay argument before the Invoke call
+        // Assuming the delay is the second argument, we replace it with 0
+        // Move back two instructions: ldarg.1 (delay) and replace it with ldc.r4 0
+
+        // Insert the 0 before the Invoke call
+        codes.Insert(i - 1,
+          new CodeInstruction(OpCodes.Ldc_R4,
+            DynamicLocationsConfig.CustomSpawnDelay.Value));
+
+        // The original delay argument will still be on the stack, so we need to remove it
+        codes.RemoveAt(i); // Remove the call to Invoke
+        break; // No need to continue searching after we've modified
+      }
+    }
+
+    return codes.AsEnumerable();
+  }
+
+
+  /// <summary>
+  /// Noting that I could override Game.FindSpawnPoint and PlayerProfile.HaveLogoutPoint to return the updated data. Updating this would then force the game to load in the correct location.
+  ///
+  /// Limitations
+  /// - requested point would have to be accurate but since the check runs ever FixedUpdate, it could not have asynchronous task data, meaning it still needs a coroutine for loading the ZDO + setting the area to load   
+  /// </summary>
+  /// <param name="__instance"></param>
+  /// <param name="__result"></param>
   [HarmonyPatch(typeof(Game), nameof(Game.SpawnPlayer))]
   [HarmonyPostfix]
   private static void OnSpawned(Game __instance, Player __result)
@@ -104,15 +184,9 @@ public class DynamicLocationsPatches
     Game.instance.m_fadeTimeDeath = 0;
     Player.m_localPlayer.m_flyFastSpeed = 60;
 #endif
+
     if (ZNetView.m_forceDisableInit) return;
-    if (!PlayerSpawnController.Instance)
-    {
-      // adds to Game instead of Player which is destroyed on Spawn
-      __instance.gameObject.AddComponent<PlayerSpawnController>();
-    }
-
     Character character = __result;
-
 
     if (__instance.m_respawnAfterDeath &&
         DynamicLocationsConfig.EnableDynamicSpawnPoint.Value &&

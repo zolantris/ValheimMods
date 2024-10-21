@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using BepInEx;
 using DynamicLocations.Controllers;
 using DynamicLocations.Interfaces;
-using Jotunn;
+using UnityEngine;
 
 namespace DynamicLocations.API;
 
-public class LoginIntegration : IModLoginAPI
+/// <summary>
+/// Can be used with minimal config effort in other mods
+/// </summary>
+public class DefaultLoginIntegration : IModLoginAPI
 {
   public PluginInfo PluginInfo { get; }
   public bool UseDefaultCallbacks => true;
@@ -23,20 +26,20 @@ public class LoginIntegration : IModLoginAPI
   /// </summary>
   /// <param name="pluginInfo"></param>
   /// <param name="loginPrefabHashCode"></param>
-  private LoginIntegration(PluginInfo pluginInfo, int loginPrefabHashCode)
+  private DefaultLoginIntegration(PluginInfo pluginInfo,
+    int loginPrefabHashCode)
   {
     PluginInfo = pluginInfo;
     LoginPrefabHashCode = loginPrefabHashCode;
   }
 
-  public IEnumerator OnLoginMoveToZDO(
+  public IEnumerator OnLoginMoveToZDO(ZDO zdo, Vector3? offset,
     PlayerSpawnController playerSpawnController)
   {
     throw new System.NotImplementedException();
   }
 
-  // Basic default implementation
-  public bool IsLoginZdo(ZDO zdo)
+  public bool OnLoginMatchZdoPrefab(ZDO zdo)
   {
     // should never be 0
     if (LoginPrefabHashCode == 0) return false;

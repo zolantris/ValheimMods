@@ -5,8 +5,9 @@ using BepInEx;
 using BepInEx.Bootstrap;
 using DynamicLocations.Config;
 using DynamicLocations.Interfaces;
-using Jotunn;
 using Jotunn.Managers;
+using UnityEngine;
+using Logger = Jotunn.Logger;
 
 namespace DynamicLocations.Controllers;
 
@@ -14,7 +15,7 @@ namespace DynamicLocations.Controllers;
 /// This controller will take the Input of IModLoginAPI instances and then finalize the callbacks through here.
 /// </summary>
 /// <warning>Do not override / patch this, please create a class extending IModeLoginAPI or use the default DynamicLocations.API.LoginIntegrations</warning>
-public class LoginAPIController : IModLoginAPI
+public class LoginAPIController
 {
   private readonly IModLoginAPI _loginAPI;
   public PluginInfo PluginInfo => _loginAPI.PluginInfo;
@@ -154,40 +155,6 @@ public class LoginAPIController : IModLoginAPI
       Logger.LogInfo(
         $"item ----> name:{item.PluginInfo.Metadata.Name}, guid: {item.PluginInfo.Metadata.GUID}, priority: {item.Priority}");
     }
-    //
-    // var integrationOrder =
-    //   LoginIntegrations.OrderBy(x => x.Value.Priority);
-
-
-    // TODO add support for beforeEach and afterEach logic
-    // foreach (var keyValuePair in integrationOrder)
-    // {
-    //   if ()
-    // }
-
-    // var listByRunAfter = new List<string>();
-    // var listByRunBefore = new List<string>();
-
-    // foreach (var integration in integrationOrder.ToArray())
-    // {
-    //   var currentIntegration = integration.Key;
-    //   if (integration.Value.RunAfterPlugins.Count > 0)
-    //   {
-    //     // integrationOrder.Remove(integration);
-    //
-    //     // integrationOrder.FindAll(x => );
-    //     integrationIndex = integrationOrder.IndexOf(integration)
-    //     foreach (var valueRunAfterPlugin in integration.Value.RunAfterPlugins)
-    //     {
-    //       var isBeforeDependency = 
-    //       // listByRunAfter.Add(integrationOrder);
-    //     }
-    //   }
-    //
-    //   if (integration.Value.RunBeforePlugins.Count > 0)
-    //   {
-    //   }
-    // }
   }
 
   private bool AddLoginApiIntegration(
@@ -242,29 +209,66 @@ public class LoginAPIController : IModLoginAPI
     AddLoginApiIntegration(loginAPI);
   }
 
-  public IEnumerator OnLoginMoveToZDO(
-    ZDO targetZdo,
+  public static IEnumerator API_OnLoginMoveToZdo(ZDO zdo, Vector3? offset,
     PlayerSpawnController playerSpawnController)
   {
-    if (_loginAPI.UseDefaultCallbacks)
+    IEnumerator? handled = null;
+    IModLoginAPI? matchingApi = null;
+    foreach (var modLoginAPI in from modLoginAPI in LoginIntegrationPriority
+             let isZdoMatch = modLoginAPI.OnLoginMatchZdoPrefab(zdo)
+             where isZdoMatch
+             select modLoginAPI)
     {
-      yield return _loginAPI.OnLoginMoveToZDO(playerSpawnController);
+      matchingApi = modLoginAPI;
+      handled =
+        OnLoginMoveToZDO(matchingApi, zdo, offset, playerSpawnController);
+      yield return handled;
+    }
+
+    if (LoginIntegrationPriority.Count == 0 || handled == null)
+    {
+      Logger.LogDebug(
+        "Not handled by custom handler, running MovePlayerToZdo default call");
+      yield return playerSpawnController.MovePlayerToZdo(zdo, offset);
+    }
+
+    if (!DynamicLocationsConfig.IsDebug) yield break;
+    if (handled == null && matchingApi != null)
+    {
+      Logger.LogWarning("Dynamic location not handled but ModApi matched");
     }
     else
     {
-      foreach (var loginAPI in LoginAPIController.LoginIntegrationPriority)
-      {
-        var isMatch = loginAPI.IsLoginZdo(targetZdo);
-        var result = _playerSpawnController.MovePlayerToLogoutPoint();
-        yield return result;
-        yield break;
-      }
+      Logger.LogDebug(
+        matchingApi != null
+          ? $"Successfully handled ModApi {matchingApi.PluginInfo.Metadata.Name} matched"
+          : "No matches found for registered integrations");
     }
   }
 
-  public bool IsLoginZdo(ZDO zdo)
+  public static IEnumerator OnLoginMoveToZDO(
+    IModLoginAPI loginAPIInstance,
+    ZDO zdo,
+    Vector3? offset,
+    PlayerSpawnController playerSpawnController)
   {
-    return _loginAPI.IsLoginZdo(zdo);
+    var isMatch = loginAPIInstance.OnLoginMatchZdoPrefab(zdo);
+    if (!isMatch) yield break;
+
+    if (loginAPIInstance.UseDefaultCallbacks)
+    {
+      yield return null;
+    }
+    else
+    {
+      yield return loginAPIInstance.OnLoginMoveToZDO(zdo, offset,
+        playerSpawnController);
+    }
+  }
+
+  public bool OnLoginMatchZdoPrefab(ZDO zdo)
+  {
+    return _loginAPI.OnLoginMatchZdoPrefab(zdo);
   }
 
   // guards

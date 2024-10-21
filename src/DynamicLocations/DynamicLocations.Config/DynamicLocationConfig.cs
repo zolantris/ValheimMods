@@ -17,8 +17,14 @@ public static class DynamicLocationsConfig
   public static ConfigEntry<List<string>> DisabledLoginApiIntegrations
   {
     get;
-    set;
+    private set;
   } =
+    null!;
+
+  public static ConfigEntry<bool> HasCustomSpawnDelay { get; private set; } =
+    null!;
+
+  public static ConfigEntry<float> CustomSpawnDelay { get; private set; } =
     null!;
 
   public static ConfigEntry<int> RespawnHeightOffset { get; set; } = null!;
@@ -59,6 +65,24 @@ public static class DynamicLocationsConfig
   {
     Config = config;
 
+    HasCustomSpawnDelay = Config.Bind(MainSection,
+      "HasCustomSpawnDelay",
+      false,
+      new ConfigDescription(
+        $"Enables custom spawn delay. This is meant to speed-up the game.",
+        null,
+        new ConfigurationManagerAttributes()
+          { IsAdminOnly = true, IsAdvanced = false }));
+
+    CustomSpawnDelay = Config.Bind(MainSection,
+      "CustomSpawnDelay",
+      1f,
+      new ConfigDescription(
+        $"Will significantly speed-up respawn and login process. This mod will NOT support respawn delays above default(10) seconds, this is too punishing for players. Try to make other consequences instead of preventing people from playing.",
+        new AcceptableValueRange<float>(0, 10),
+        new ConfigurationManagerAttributes()
+          { IsAdminOnly = true, IsAdvanced = false }));
+
     DisabledLoginApiIntegrations = Config.Bind(MainSection,
       "DisabledLoginApiIntegrations",
       new List<string>(),
@@ -72,7 +96,7 @@ public static class DynamicLocationsConfig
       "FreezePlayerPosition",
       false,
       new ConfigDescription(
-        $"Freezes the player position until the teleport and vehicle is fully loaded, prevents falling through",
+        $"Freezes the player position until the portal and vehicle is fully loaded, prevents falling through the empty bed position into the water.",
         null,
         new ConfigurationManagerAttributes()
           { IsAdminOnly = false, IsAdvanced = false }));

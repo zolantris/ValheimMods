@@ -1,21 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
 using BepInEx;
-using Jotunn;
 using ValheimVehicles.Vehicles.Components;
 using DynamicLocations.API;
 using DynamicLocations.Controllers;
 using DynamicLocations.Interfaces;
+using UnityEngine;
+using UnityEngine.UI;
+using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.ModSupport;
 
 public class DynamicLocationsLoginIntegration : IModLoginAPI
 {
-  public IEnumerator OnLoginMoveToZDO()
-  {
-    throw new System.NotImplementedException();
-  }
-
   public PluginInfo PluginInfo { get; }
   public bool UseDefaultCallbacks { get; }
   public int MovementTimeout { get; }
@@ -35,7 +32,41 @@ public class DynamicLocationsLoginIntegration : IModLoginAPI
     throw new System.NotImplementedException();
   }
 
-  public bool IsLoginZdo(ZDO zdo)
+  public IEnumerator OnLoginMoveToZDO(ZDO zdo, Vector3? offset,
+    PlayerSpawnController playerSpawnController)
+  {
+    var spawnZdo = playerSpawnController.PlayerSpawnPointZDO;
+    if (spawnZdo == null)
+    {
+      var pendingZdo = playerSpawnController.FindDynamicZdo(
+        PlayerSpawnController
+          .LocationTypes.Logout, true);
+      yield return pendingZdo;
+      spawnZdo = pendingZdo.Current;
+    }
+
+    var vehicle = GetVehicleFromZdo(zdo);
+    while (vehicle == null || playerSpawnController.HasExpiredTimer)
+    {
+      yield return new WaitForFixedUpdate();
+      vehicle = GetVehicleFromZdo(zdo);
+    }
+
+    if (vehicle == null) yield break;
+
+
+    yield return new WaitUntil(() =>
+      vehicle.Instance.PiecesController.IsActivationComplete ||
+      playerSpawnController.HasExpiredTimer);
+    Logger.LogDebug(
+      $"Waiting completed, IsActivationComplete {vehicle.Instance.PiecesController.IsActivationComplete} HasExpiredTimer: {playerSpawnController.HasExpiredTimer}");
+
+    // resetting timer gives the player a bit more time to get to their location if there are slowdowns.
+    playerSpawnController.RestartTimer();
+    yield return playerSpawnController.MovePlayerToZdo(zdo, offset);
+  }
+
+  public bool OnLoginMatchZdoPrefab(ZDO zdo)
   {
     var isMatch = zdo.GetPrefab() == LoginPrefabHashCode;
     if (!isMatch)

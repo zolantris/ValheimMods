@@ -82,25 +82,14 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       }
     }
 
-    if (GUILayout.Button(
-          $"PlayerSpawnupdate: {PlayerSpawnController.CanUpdateLogoutPoint}"))
-    {
-      PlayerSpawnController.CanUpdateLogoutPoint =
-        !PlayerSpawnController.CanUpdateLogoutPoint;
-    }
-
     if (GUILayout.Button("Set logoutpoint"))
     {
-      PlayerSpawnController.CanUpdateLogoutPoint = true;
       PlayerSpawnController.Instance?.SyncLogoutPoint();
-      PlayerSpawnController.CanUpdateLogoutPoint = false;
     }
 
     if (GUILayout.Button("Move to current spawn"))
     {
-      PlayerSpawnController.CanUpdateLogoutPoint = false;
-      PlayerSpawnController.Instance?.MovePlayerToSpawnPoint();
-      PlayerSpawnController.CanUpdateLogoutPoint = false;
+      PlayerSpawnController.Instance?.DEBUG_MoveToLogoutPoint();
     }
 
     if (GUILayout.Button("Move to current logout"))

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using BepInEx;
 using DynamicLocations.Controllers;
+using UnityEngine;
 
 namespace DynamicLocations.Interfaces;
 
@@ -41,7 +42,7 @@ public interface IModLoginAPI
   /// - the instanceof playerSpawnController is exposed as an API, allowing the integration to call MovePlayerToLoginPoint when needed or use completely custom logic.
   /// </summary>
   /// <returns></returns>
-  public IEnumerator OnLoginMoveToZDO(
+  public IEnumerator OnLoginMoveToZDO(ZDO zdo, Vector3? offset,
     PlayerSpawnController playerSpawnController);
 
   /// <summary>
@@ -52,5 +53,5 @@ public interface IModLoginAPI
   /// Default LoginPrefabHashCode as a pre-computed variable { get; } = PrefabStringName.GetHashCode()
   /// </optimizations>
   /// <returns></returns>
-  public bool IsLoginZdo(ZDO zdo);
+  public bool OnLoginMatchZdoPrefab(ZDO zdo);
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -8,15 +9,64 @@ using Logger = Jotunn.Logger;
 
 namespace DynamicLocations.Controllers;
 
-public static class LocationController
+public interface ICachedLocation
+{
+  Vector3? Offset { get; set; }
+  ZDO Zdo { get; set; }
+}
+
+public class CacheLocationItem : ICachedLocation
+{
+  public Vector3? Offset { get; set; }
+  public ZDO Zdo { get; set; }
+}
+
+public class LocationController : MonoBehaviour
 {
   private const string DynamicPrefix = "Dynamic";
   private const string SpawnZdo = "SpawnZdo";
   private const string LogoutParentZdoOffset = "LogoutParentZdoOffset";
   private const string LogoutParentZdo = "LogoutParentZdo";
 
-  public static ZDO? cachedSpawnTarget;
-  public static Vector3? cachedSpawnTargetOffset;
+  // todo determine if having to re-request is a heavy performance hit when it already exists
+  private static
+    Dictionary<PlayerSpawnController.LocationTypes, ICachedLocation>
+    _cachedLocations = new();
+
+  public static LocationController Instance;
+
+  public void Awake()
+  {
+    Instance = this;
+  }
+
+  public void OnDestroy()
+  {
+    _cachedLocations.Clear();
+  }
+
+  public static ICachedLocation? GetCachedDynamicLocation(
+    PlayerSpawnController.LocationTypes locationType)
+  {
+    _cachedLocations.TryGetValue(locationType, out var cachedLocation);
+    return cachedLocation;
+  }
+
+  public static bool SetCachedDynamicLocation(
+    PlayerSpawnController.LocationTypes locationType,
+    CacheLocationItem cachedLocationItem)
+  {
+    if (GetCachedDynamicLocation(locationType) != null)
+    {
+      _cachedLocations[locationType] = cachedLocationItem;
+    }
+    else
+    {
+      _cachedLocations.Add(locationType, cachedLocationItem);
+    }
+
+    return true;
+  }
 
   public static string GetPluginPrefix()
   {
@@ -93,29 +143,10 @@ public static class LocationController
     return vector;
   }
 
-  // if (!player) yield break;
-  // if (!player.m_customData.TryGetValue(GetLogoutZdoKey(),
-  //       out var logoutZdoString))
-  // {
-  //   yield break;
-  // }
-  //
-  // var zdo = GetZDOFromTargetKey(GetLogoutZdoKey(), player);
-  //
-  //
-  // var zdoid = StringToZDOID(logoutZdoString);
-  // Logger.LogDebug(
-  //   $"Retreiving LogoutZdo {zdoid} for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
-  // var output = zdoid == ZDOID.None
-  //   ? ZdoWatchController.ZdoIdToId(zdoid.Value)
-  //   : 0;
-  //
-  // // each game will create a new set of IDs, but the persistent data will allow for looking up the current game's ID.
-  // yield return ZdoWatchController.Instance.GetZdoFromServer(output);
   public static IEnumerator GetLogoutZdo(Player? player)
   {
     if (player == null) yield break;
-    var zdo = GetZDOFromTargetKey(GetLogoutZdoKey(), player);
+    var zdo = GetZdoFromStore(GetLogoutZdoKey(), player);
     yield return zdo;
 
     var logoutZdo = zdo.Current as ZDO;
@@ -135,17 +166,6 @@ public static class LocationController
     return offset ?? Vector3.zero;
   }
 
-  public static bool SetLogoutZdo(Player player, ZNetView dynamicObj)
-  {
-    if (!ZNet.instance) return false;
-    var logoutPointZdo = dynamicObj.GetZDO();
-    if (logoutPointZdo == null) return false;
-    logoutPointZdo.Set(ZdoVarKeys.DynamicLocationsPoint, 1);
-    player.m_customData[GetLogoutZdoKey()] =
-      ZDOIDToString(logoutPointZdo.m_uid);
-    return true;
-  }
-
   public static bool RemoveLogoutZdo(Player player)
   {
     if (!ZNet.instance) return false;
@@ -162,25 +182,24 @@ public static class LocationController
     return true;
   }
 
-  public static bool SetLogoutZdoOffset(Player player, Vector3 offset)
+  public static Vector3? SetLogoutZdoOffset(Player player, Vector3 offset)
   {
-    if (!player) return false;
+    if (!player) return null;
     if (Vector3.zero == offset)
     {
       player.m_customData.Remove(GetLogoutZdoOffsetKey());
-      return false;
+      return null;
     }
 
     player.m_customData[GetLogoutZdoOffsetKey()] = Vector3ToString(offset);
-    return true;
+    return offset;
   }
 
-  public static bool SetLogoutZdoWithOffset(Player player, ZNetView dynamicObj,
-    Vector3 offset)
+  public static IEnumerator GetZdoFromStore(
+    PlayerSpawnController.LocationTypes locationType, Player? player)
   {
-    if (!SetLogoutZdo(player, dynamicObj)) return false;
-    SetLogoutZdoOffset(player, offset);
-    return true;
+    var targetKey = GetZdoStorageKey(locationType);
+    yield return GetZdoFromStore(targetKey, player);
   }
 
   /// <summary>
@@ -189,10 +208,10 @@ public static class LocationController
   /// <param name="targetKey"></param>
   /// <param name="player"></param>
   /// <returns></returns>
-  public static IEnumerator GetZDOFromTargetKey(string targetKey,
-    Player player)
+  public static IEnumerator GetZdoFromStore(string targetKey,
+    Player? player)
   {
-    if (!player)
+    if (player == null)
     {
       yield break;
     }
@@ -240,22 +259,19 @@ public static class LocationController
     yield return zdoOutput;
   }
 
-  public static IEnumerator GetSpawnTargetZdo(Player? player)
+  public static void ResetCachedValues()
   {
-    if (player == null) yield break;
-
-    var zdo = GetZDOFromTargetKey(GetSpawnZdoKey(), player);
-    yield return zdo;
-
-    cachedSpawnTarget = zdo.Current as ZDO;
-    yield return cachedSpawnTarget;
+    _cachedLocations.Clear();
   }
 
-  public static Vector3 GetSpawnTargetZdoOffset(Player? player)
+  public static Vector3 GetOffset(
+    PlayerSpawnController.LocationTypes locationType, Player? player) =>
+    GetOffset(GetOffsetStorageKey(locationType), player);
+
+  public static Vector3 GetOffset(string key, Player? player)
   {
-    // if (cachedSpawnTargetOffset != null) return cachedSpawnTargetOffset.Value;
     if (player == null) return Vector3.zero;
-    if (!player.m_customData.TryGetValue(GetSpawnZdoOffsetKey(),
+    if (!player.m_customData.TryGetValue(key,
           out var offsetString))
     {
       return Vector3.zero;
@@ -265,24 +281,38 @@ public static class LocationController
     return offset;
   }
 
-  public static bool SetSpawnZdoTarget(Player player, ZNetView dynamicObj)
+
+  public static ZDO? SetZdo(PlayerSpawnController.LocationTypes locationType,
+    Player? player,
+    ZNetView dynamicObj) =>
+    SetZdo(GetZdoStorageKey(locationType), player, dynamicObj);
+
+  /// <summary>
+  /// This method is meant to be called when the ZDO is already loaded.
+  /// </summary>
+  /// <param name="saveKey"></param>
+  /// <param name="player"></param>
+  /// <param name="dynamicObj"></param>
+  /// <returns></returns>
+  public static ZDO? SetZdo(string saveKey, Player? player,
+    ZNetView dynamicObj)
   {
-    if (!ZNet.instance) return false;
-    cachedSpawnTarget = null;
+    if (player == null) return null;
+    if (!ZNet.instance) return null;
     var spawnPointObjZdo = dynamicObj.GetZDO();
-    if (spawnPointObjZdo == null) return false;
+    if (spawnPointObjZdo == null) return null;
     if (!ZdoWatchController.GetPersistentID(spawnPointObjZdo, out var id))
     {
       Logger.LogWarning(
-        $"No persitent id found for dynamicObj {dynamicObj.gameObject.name}");
-      return false;
+        $"No persistent id found for dynamicObj {dynamicObj.gameObject.name}");
+      return null;
     }
 
     spawnPointObjZdo.Set(ZdoVarKeys.DynamicLocationsPoint, 1);
 
-    player.m_customData[GetSpawnZdoKey()] = id.ToString();
+    player.m_customData[saveKey] = id.ToString();
 
-    player.m_customData.TryGetValue(GetSpawnZdoKey(), out string zdoString);
+    player.m_customData.TryGetValue(saveKey, out var zdoString);
 
     if (zdoString == null)
     {
@@ -290,8 +320,7 @@ public static class LocationController
     }
 
     Logger.LogDebug(
-      $"Setting spawnTargetZdo {spawnPointObjZdo.m_uid} for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
-    cachedSpawnTarget = spawnPointObjZdo;
+      $"Setting key: {saveKey}, uid: {spawnPointObjZdo.m_uid} for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
 
     // likely not needed
     Game.instance.m_playerProfile.SavePlayerData(player);
@@ -299,40 +328,75 @@ public static class LocationController
     // required to write to disk unfortunately due to logout not actually triggering a save meaning the player customData is not mutated and logging in resets to the previous player state
     Game.instance.m_playerProfile.Save();
 
-    return true;
+    return spawnPointObjZdo;
   }
+
+  public static Vector3? SetOffset(
+    PlayerSpawnController.LocationTypes locationType, Player player,
+    Vector3 offset) =>
+    SetOffset(GetOffsetStorageKey(locationType), player, offset);
 
   /// <summary>
   /// Only sets offset if necessary, otherwise scrubs the data
   /// </summary>
+  /// <param name="key"></param>
   /// <param name="player"></param>
   /// <param name="offset"></param>
   /// <returns></returns>
-  public static bool SetSpawnZdoTargetOffset(Player player, Vector3 offset)
+  public static Vector3? SetOffset(string key, Player player, Vector3 offset)
   {
-    cachedSpawnTargetOffset = null;
-    if (!player) return false;
+    if (!player) return null;
     if (Vector3.zero == offset)
     {
-      if (player.m_customData.TryGetValue(GetSpawnZdoOffsetKey(), out _))
+      if (player.m_customData.TryGetValue(key, out _))
       {
-        player.m_customData.Remove(GetSpawnZdoOffsetKey());
+        player.m_customData.Remove(key);
       }
 
-      return false;
+      return null;
     }
 
-    player.m_customData[GetSpawnZdoOffsetKey()] = Vector3ToString(offset);
-    cachedSpawnTargetOffset = offset;
-    return true;
+    player.m_customData[key] = Vector3ToString(offset);
+    return offset;
   }
 
-  public static bool SetSpawnZdoTargetWithOffset(Player player,
+  public static string GetOffsetStorageKey(
+    PlayerSpawnController.LocationTypes locationType)
+  {
+    return locationType switch
+    {
+      PlayerSpawnController.LocationTypes.Spawn => GetSpawnZdoOffsetKey(),
+      PlayerSpawnController.LocationTypes.Logout => GetLogoutZdoOffsetKey(),
+      _ => throw new ArgumentOutOfRangeException(nameof(locationType),
+        locationType, null)
+    };
+  }
+
+  public static string GetZdoStorageKey(
+    PlayerSpawnController.LocationTypes locationType)
+  {
+    return locationType switch
+    {
+      PlayerSpawnController.LocationTypes.Spawn => GetSpawnZdoKey(),
+      PlayerSpawnController.LocationTypes.Logout => GetSpawnZdoOffsetKey(),
+      _ => throw new ArgumentOutOfRangeException(nameof(locationType),
+        locationType, null)
+    };
+  }
+
+  public static bool SetLocationTypeData(
+    PlayerSpawnController.LocationTypes locationType,
+    Player player,
     ZNetView dynamicObj,
     Vector3 offset)
   {
-    if (!SetSpawnZdoTarget(player, dynamicObj)) return false;
-    SetSpawnZdoTargetOffset(player, offset);
+    var locationOffset =
+      SetOffset(GetOffsetStorageKey(locationType), player, offset);
+    var locationZdo =
+      SetZdo(GetZdoStorageKey(locationType), player, dynamicObj);
+    if (locationZdo == null) return false;
+    SetCachedDynamicLocation(locationType,
+      new CacheLocationItem() { Zdo = locationZdo, Offset = locationOffset });
     return true;
   }
 
