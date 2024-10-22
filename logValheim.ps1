@@ -19,7 +19,7 @@ function Get-LogColor {
   )
 
   process {
-    if ($LogEntry.Contains("ValheimRAFT") -or $LogEntry.Contains("ValheimVehicles")){
+    if ($LogEntry.Contains("ValheimRAFT") -or $LogEntry.Contains("ValheimVehicles") -or $LogEntry.Contains("DynamicLocations") -or $LogEntry.Contains("ZdoWatcher")){
       if ($LogEntry.Contains("Debug")) {Return "Green"}
       elseif ($LogEntry.Contains("Warn")) {Return "Yellow"}
       elseif ($LogEntry.Contains("Error") -or $LogEntry.Contains("NullReferenceException")) {Return "Red"}
