@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -100,14 +101,17 @@ public class DynamicLoginIntegration
     PlayerSpawnController playerSpawnController)
   {
     OnStart();
-    _onLoginMoveToZdoCoroutine = playerSpawnController.StartCoroutine(
-      OnLoginMoveToZDO(zdo, offset,
-        playerSpawnController));
+    _onLoginMoveToZdoCoroutine =
+      playerSpawnController.StartCoroutine(
+        OnLoginMoveToZDO(zdo, offset,
+          playerSpawnController));
     yield return _onLoginMoveToZdoCoroutine;
     yield return new WaitUntil(() =>
       _onLoginMoveToZdoCoroutine is null ||
       timerInstance.ElapsedMilliseconds >= GetMovementTimeout());
     OnComplete();
+
+    yield return true;
   }
 
   /// <summary>

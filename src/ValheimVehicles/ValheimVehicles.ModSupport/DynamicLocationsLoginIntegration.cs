@@ -26,18 +26,8 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
     PlayerSpawnController playerSpawnController)
   {
     var localTimer = Zolantris.Shared.Debug.DebugSafeTimer.StartNew();
-    var spawnZdo =
-      LocationController
-        .GetCachedDynamicLocation(LocationVariation.Logout)
-        ?.Zdo;
-    if (spawnZdo == null)
-    {
-      var pendingZdo = playerSpawnController.FindDynamicZdo(
-        LocationVariation.Logout, true);
-      yield return new WaitUntil(() =>
-        pendingZdo.Current is ZDO || localTimer.ElapsedMilliseconds > 5000);
-      spawnZdo = pendingZdo.Current as ZDO;
-    }
+
+    ZNet.instance.SetReferencePosition(zdo.GetPosition());
 
     var vehicle = GetVehicleFromZdo(zdo);
     while (vehicle == null ||
@@ -53,9 +43,10 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
     yield return new WaitUntil(() =>
       vehicle.Instance.PiecesController.IsActivationComplete ||
       localTimer.ElapsedMilliseconds > 5000);
+
     Logger.LogDebug(
       $"Waiting completed, IsActivationComplete {vehicle.Instance.PiecesController.IsActivationComplete} HasExpiredTimer: {PlayerSpawnController.HasExpiredTimer}");
-    ;
+
     yield return playerSpawnController.MovePlayerToZdo(zdo, offset);
   }
 

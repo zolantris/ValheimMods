@@ -483,7 +483,6 @@ public class PlayerSpawnController : MonoBehaviour
   /// Does not work, zdoids are not persistent across game and loading content outside a zone does not work well without a reference that persists.
   /// </summary>
   /// <remarks>Whenever calling yield break call OnMovePlayerToZdoComplete() otherwise there is no way to check if this has completed its run</remarks>
-  /// <param name="zdoid"></param>
   /// <param name="zdo"></param>
   /// <param name="offset"></param>
   /// <returns></returns>
