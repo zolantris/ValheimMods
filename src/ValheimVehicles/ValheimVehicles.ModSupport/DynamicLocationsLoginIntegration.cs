@@ -25,7 +25,7 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
   protected override IEnumerator OnLoginMoveToZDO(ZDO zdo, Vector3? offset,
     PlayerSpawnController playerSpawnController)
   {
-    var localTimer = Stopwatch.StartNew();
+    var localTimer = Zolantris.Shared.Debug.DebugSafeTimer.StartNew();
     var spawnZdo =
       LocationController
         .GetCachedDynamicLocation(DynamicLocationVariation.Logout)
@@ -40,7 +40,8 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
     }
 
     var vehicle = GetVehicleFromZdo(zdo);
-    while (vehicle == null || PlayerSpawnController.HasExpiredTimer)
+    while (vehicle == null ||
+           PlayerSpawnController.HasExpiredTimer(localTimer, 5000))
     {
       yield return new WaitForFixedUpdate();
       vehicle = GetVehicleFromZdo(zdo);
@@ -51,12 +52,10 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
 
     yield return new WaitUntil(() =>
       vehicle.Instance.PiecesController.IsActivationComplete ||
-      PlayerSpawnController.HasExpiredTimer);
+      localTimer.ElapsedMilliseconds > 5000);
     Logger.LogDebug(
       $"Waiting completed, IsActivationComplete {vehicle.Instance.PiecesController.IsActivationComplete} HasExpiredTimer: {PlayerSpawnController.HasExpiredTimer}");
-
-    // resetting timer gives the player a bit more time to get to their location if there are slowdowns.
-    playerSpawnController.RestartTimer();
+    ;
     yield return playerSpawnController.MovePlayerToZdo(zdo, offset);
   }
 

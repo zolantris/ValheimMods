@@ -43,6 +43,7 @@
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\SentryUnityWrapper\SentryUnityWrapper.csproj"/>
+        <ProjectReference Include="..\Shared\Shared.csproj"/>
         <ProjectReference Include="..\ValheimRAFT\ValheimRAFT.csproj"/>
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>

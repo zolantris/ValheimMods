@@ -5,7 +5,6 @@ using BepInEx;
 using BepInEx.Bootstrap;
 using JetBrains.Annotations;
 using Jotunn;
-using Mono.Cecil;
 
 namespace DynamicLocations.Structs;
 

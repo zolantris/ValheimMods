@@ -5,13 +5,12 @@
     <Import Project="..\..\base.targets"/>
     <Import Project="..\..\valheim.targets"/>
     <Import Project="..\..\gameLauncher.targets"/>
+    <!-- Compiled Shared items  -->
     <ItemGroup>
         <ProjectReference Include="..\Shared\Shared.csproj"/>
-        <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
     </ItemGroup>
+    <!--  requires zdowatcher  -->
     <ItemGroup>
-        <Reference Include="Mono.Cecil">
-            <HintPath>..\..\..\..\..\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\ashlands\BepInEx\core\Mono.Cecil.dll</HintPath>
-        </Reference>
+        <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
     </ItemGroup>
 </Project>
