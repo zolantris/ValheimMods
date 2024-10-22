@@ -400,11 +400,14 @@ public class PlayerSpawnController : MonoBehaviour
     yield return true;
   }
 
-  public void MovePlayerToSpawnPoint()
+  public Coroutine MovePlayerToSpawnPoint()
   {
     ResetRoutine(ref MoveToSpawnRoutine);
+    // logout routine if activated must be cancelled as respawn takes priority
+    ResetRoutine(ref MoveToLogoutRoutine);
     MoveToSpawnRoutine =
       StartCoroutine(UpdateLocation(LocationVariation.Spawn));
+    return MoveToSpawnRoutine;
   }
 
   public static LocationVariation GetLocationType(Game game)

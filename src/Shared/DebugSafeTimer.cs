@@ -46,6 +46,7 @@ public class DebugSafeTimer
   /// <param name="list"></param>
   public static void UpdateTimersFromList(List<DebugSafeTimer> list)
   {
+    if (list.Count == 0) return;
     foreach (var debugSafeTimer in list.ToArray())
     {
       if (debugSafeTimer != null)
