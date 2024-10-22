@@ -85,18 +85,25 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
     if (GUILayout.Button("Set logoutpoint"))
     {
-      PlayerSpawnController.Instance?.SyncLogoutPoint();
+      var zdo = Player.m_localPlayer
+        .GetComponentInParent<VehiclePiecesController>()?.VehicleInstance
+        ?.NetView?
+        .GetZDO();
+      if (zdo != null)
+      {
+        PlayerSpawnController.Instance?.SyncLogoutPoint(zdo);
+      }
     }
 
     if (GUILayout.Button("Move to current spawn"))
     {
-      PlayerSpawnController.Instance?.DEBUG_MoveTo(DynamicLocationVariation
+      PlayerSpawnController.Instance?.DEBUG_MoveTo(LocationVariation
         .Spawn);
     }
 
     if (GUILayout.Button("Move to current logout"))
     {
-      PlayerSpawnController.Instance?.DEBUG_MoveTo(DynamicLocationVariation
+      PlayerSpawnController.Instance?.DEBUG_MoveTo(LocationVariation
         .Logout);
     }
 

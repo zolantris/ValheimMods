@@ -28,12 +28,12 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
     var localTimer = Zolantris.Shared.Debug.DebugSafeTimer.StartNew();
     var spawnZdo =
       LocationController
-        .GetCachedDynamicLocation(DynamicLocationVariation.Logout)
+        .GetCachedDynamicLocation(LocationVariation.Logout)
         ?.Zdo;
     if (spawnZdo == null)
     {
       var pendingZdo = playerSpawnController.FindDynamicZdo(
-        DynamicLocationVariation.Logout, true);
+        LocationVariation.Logout, true);
       yield return new WaitUntil(() =>
         pendingZdo.Current is ZDO || localTimer.ElapsedMilliseconds > 5000);
       spawnZdo = pendingZdo.Current as ZDO;

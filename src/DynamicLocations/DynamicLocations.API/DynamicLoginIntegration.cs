@@ -103,6 +103,7 @@ public class DynamicLoginIntegration
     _onLoginMoveToZdoCoroutine = playerSpawnController.StartCoroutine(
       OnLoginMoveToZDO(zdo, offset,
         playerSpawnController));
+    yield return _onLoginMoveToZdoCoroutine;
     yield return new WaitUntil(() =>
       _onLoginMoveToZdoCoroutine is null ||
       timerInstance.ElapsedMilliseconds >= GetMovementTimeout());

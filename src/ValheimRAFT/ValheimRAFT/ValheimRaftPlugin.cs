@@ -537,13 +537,18 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     ZdoWatcherDelegate.RegisterToZdoManager();
     // PlayerSpawnController.PlayerMoveToVehicleCallback =
     // VehiclePiecesController.OnPlayerSpawnInVehicle;
+    AddModSupport();
   }
 
-  public void ModSupport()
+  public void AddModSupport()
   {
+    AddModSupportDynamicLocations();
   }
 
-  public void ModSupportDynamicLocations()
+  /// <summary>
+  /// DynamicLocations to allow for respawning on moving boats, or be placed on the boat when logging in.
+  /// </summary>
+  public void AddModSupportDynamicLocations()
   {
     var dynamicLocationLoginIntegrationConfig =
       DynamicLoginIntegration.CreateConfig(this, PrefabNames.WaterVehicleShip);

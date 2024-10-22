@@ -1,6 +1,6 @@
 namespace DynamicLocations.Constants;
 
-public enum DynamicLocationVariation
+public enum LocationVariation
 {
   Spawn,
   Logout

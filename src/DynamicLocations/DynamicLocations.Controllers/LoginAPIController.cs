@@ -208,17 +208,16 @@ public class LoginAPIController
     foreach (var loginIntegration in loginIntegrationsByPriority)
     {
       var isZdoMatch = loginIntegration.OnLoginMatchZdoPrefab(zdo);
-
-      // Do not call yield within an iterator.
       if (isZdoMatch == false) continue;
 
       selectedIntegration = loginIntegration;
       handled =
         loginIntegration.API_OnLoginMoveToZDO(zdo, offset,
           playerSpawnController);
-      // Do not call yield within an iterator.
       break;
     }
+
+    yield return handled;
 
     // this checks to see if the handler is not an enumerator
     if (selectedIntegration != null)

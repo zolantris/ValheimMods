@@ -56,7 +56,7 @@ public class DynamicLocationsPatches
     }
 
     LocationController.RemoveZdoTarget(
-      DynamicLocationVariation.Logout, __instance);
+      LocationVariation.Logout, __instance);
   }
 
   [HarmonyPatch(typeof(Player), "ShowTeleportAnimation")]
@@ -106,7 +106,7 @@ public class DynamicLocationsPatches
   //   return true;
   // }
 
-  [HarmonyPatch(typeof(Game), "Awake")]
+  [HarmonyPatch(typeof(Game), nameof(Game.Awake))]
   [HarmonyPostfix]
   private static void AddSpawnController(Game __instance)
   {

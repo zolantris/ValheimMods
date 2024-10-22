@@ -2,7 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using DynamicLocations.Config;
 using DynamicLocations.Constants;
+using Jotunn.Managers;
 using UnityEngine;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
@@ -30,7 +33,7 @@ public class LocationController : MonoBehaviour
 
   // todo determine if having to re-request is a heavy performance hit when it already exists
   private static
-    Dictionary<DynamicLocationVariation, ICachedLocation>
+    Dictionary<LocationVariation, ICachedLocation>
     _cachedLocations = new();
 
   public static LocationController Instance;
@@ -46,14 +49,14 @@ public class LocationController : MonoBehaviour
   }
 
   public static ICachedLocation? GetCachedDynamicLocation(
-    DynamicLocationVariation locationVariationType)
+    LocationVariation locationVariationType)
   {
     _cachedLocations.TryGetValue(locationVariationType, out var cachedLocation);
     return cachedLocation;
   }
 
   public static bool SetCachedDynamicLocation(
-    DynamicLocationVariation locationVariationType,
+    LocationVariation locationVariationType,
     CacheLocationItem cachedLocationItem)
   {
     if (GetCachedDynamicLocation(locationVariationType) != null)
@@ -158,9 +161,19 @@ public class LocationController : MonoBehaviour
   /// </summary>
   internal static void DEBUG_RemoveAllDynamicLocationKeys()
   {
-    foreach (var keyValuePair in Player.m_localPlayer.m_customData)
+    foreach (var keyValuePair in Player.m_localPlayer.m_customData.ToArray())
     {
       if (keyValuePair.Key.Contains(GetFullPrefix()))
+      {
+        Logger.LogDebug(
+          $"Removing: Key: {keyValuePair.Key} Value: {keyValuePair.Value}");
+        Player.m_localPlayer.m_customData.Remove(keyValuePair.Key);
+      }
+
+      // this was a local change
+      // todo remove this
+      if (keyValuePair.Key.Contains("valheim_vehicles") &&
+          DynamicLocationsConfig.IsDebug)
       {
         Logger.LogDebug(
           $"Removing: Key: {keyValuePair.Key} Value: {keyValuePair.Value}");
@@ -171,7 +184,7 @@ public class LocationController : MonoBehaviour
 
 
   public static bool RemoveZdoTarget(
-    DynamicLocationVariation locationVariationType, Player? player)
+    LocationVariation locationVariationType, Player? player)
   {
     if (player == null)
       return false;
@@ -200,7 +213,7 @@ public class LocationController : MonoBehaviour
   /// <param name="player"></param>
   /// <returns></returns>
   public static IEnumerator GetZdoFromStore(
-    DynamicLocationVariation locationVariationType,
+    LocationVariation locationVariationType,
     Player? player)
   {
     var targetKey = GetZdoStorageKey(locationVariationType);
@@ -258,7 +271,7 @@ public class LocationController : MonoBehaviour
   }
 
   public static Vector3 GetOffset(
-    DynamicLocationVariation locationVariationType, Player? player) =>
+    LocationVariation locationVariationType, Player? player) =>
     GetOffset(GetOffsetStorageKey(locationVariationType), player);
 
   public static Vector3 GetOffset(string key, Player? player)
@@ -274,34 +287,29 @@ public class LocationController : MonoBehaviour
     return offset;
   }
 
-
-  public static ZDO? SetZdo(DynamicLocationVariation locationVariationType,
-    Player? player,
-    ZNetView dynamicObj) =>
-    SetZdo(GetZdoStorageKey(locationVariationType), player, dynamicObj);
-
   /// <summary>
   /// This method is meant to be called when the ZDO is already loaded.
   /// </summary>
-  /// <param name="saveKey"></param>
+  /// <param name="locationVaration"></param>
   /// <param name="player"></param>
-  /// <param name="dynamicObj"></param>
+  /// <param name="zdo"></param>
   /// <returns></returns>
-  public static ZDO? SetZdo(string saveKey, Player? player,
-    ZNetView dynamicObj)
+  public static ZDO? SetZdo(LocationVariation locationVaration,
+    Player? player,
+    ZDO? zdo)
   {
     if (player == null) return null;
     if (!ZNet.instance) return null;
-    var spawnPointObjZdo = dynamicObj.GetZDO();
-    if (spawnPointObjZdo == null) return null;
-    if (!ZdoWatchController.GetPersistentID(spawnPointObjZdo, out var id))
+    if (zdo == null) return null;
+    var saveKey = GetZdoStorageKey(locationVaration);
+    if (!ZdoWatchController.GetPersistentID(zdo, out var id))
     {
       Logger.LogWarning(
-        $"No persistent id found for dynamicObj {dynamicObj.gameObject.name}");
+        $"No persistent id found for dynamicObj {zdo}");
       return null;
     }
 
-    spawnPointObjZdo.Set(ZdoVarKeys.DynamicLocationsPoint, 1);
+    zdo.Set(ZdoVarKeys.DynamicLocationsPoint, 1);
 
     if (player.m_customData.TryGetValue(saveKey, out var zdoString))
     {
@@ -313,13 +321,13 @@ public class LocationController : MonoBehaviour
     }
 
 
-    if (zdoString == null)
+    if (!player.m_customData.ContainsKey(saveKey))
     {
       Logger.LogError("Zdo string failed to set on player.customData");
     }
 
     Logger.LogDebug(
-      $"Setting key: {saveKey}, uid: {spawnPointObjZdo.m_uid} for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
+      $"Setting key: {saveKey}, uid: {zdo.m_uid} for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
 
     // likely not needed
     Game.instance.m_playerProfile.SavePlayerData(player);
@@ -327,11 +335,11 @@ public class LocationController : MonoBehaviour
     // required to write to disk unfortunately due to logout not actually triggering a save meaning the player customData is not mutated and logging in resets to the previous player state
     Game.instance.m_playerProfile.Save();
 
-    return spawnPointObjZdo;
+    return zdo;
   }
 
   public static Vector3? SetOffset(
-    DynamicLocationVariation locationVariationType, Player player,
+    LocationVariation locationVariationType, Player player,
     Vector3 offset) =>
     SetOffset(GetOffsetStorageKey(locationVariationType), player, offset);
 
@@ -360,41 +368,41 @@ public class LocationController : MonoBehaviour
   }
 
   public static string GetOffsetStorageKey(
-    DynamicLocationVariation locationVariationType)
+    LocationVariation locationVariationType)
   {
     return locationVariationType switch
     {
-      DynamicLocationVariation.Spawn => GetSpawnZdoOffsetKey(),
-      DynamicLocationVariation.Logout => GetLogoutZdoOffsetKey(),
+      LocationVariation.Spawn => GetSpawnZdoOffsetKey(),
+      LocationVariation.Logout => GetLogoutZdoOffsetKey(),
       _ => throw new ArgumentOutOfRangeException(nameof(locationVariationType),
         locationVariationType, null)
     };
   }
 
   public static string GetZdoStorageKey(
-    DynamicLocationVariation locationVariationType)
+    LocationVariation locationVariationType)
   {
     return locationVariationType switch
     {
-      DynamicLocationVariation.Spawn => GetSpawnZdoKey(),
-      DynamicLocationVariation.Logout => GetLogoutZdoKey(),
+      LocationVariation.Spawn => GetSpawnZdoKey(),
+      LocationVariation.Logout => GetLogoutZdoKey(),
       _ => throw new ArgumentOutOfRangeException(nameof(locationVariationType),
         locationVariationType, null)
     };
   }
 
   public static bool SetLocationTypeData(
-    DynamicLocationVariation locationVariationType,
+    LocationVariation locationVariation,
     Player player,
-    ZNetView dynamicObj,
+    ZDO zdo,
     Vector3 offset)
   {
     var locationOffset =
-      SetOffset(GetOffsetStorageKey(locationVariationType), player, offset);
+      SetOffset(GetOffsetStorageKey(locationVariation), player, offset);
     var locationZdo =
-      SetZdo(GetZdoStorageKey(locationVariationType), player, dynamicObj);
+      SetZdo(locationVariation, player, zdo);
     if (locationZdo == null) return false;
-    SetCachedDynamicLocation(locationVariationType,
+    SetCachedDynamicLocation(locationVariation,
       new CacheLocationItem() { Zdo = locationZdo, Offset = locationOffset });
     return true;
   }
