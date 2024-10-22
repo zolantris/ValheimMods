@@ -22,6 +22,13 @@ public static class DynamicLocationsConfig
   } =
     null!;
 
+  public static ConfigEntry<int> LocationControlsTimeoutInMs
+  {
+    get;
+    private set;
+  } =
+    null!;
+
   public static List<string> DisabledLoginApiIntegrations =>
     DisabledLoginApiIntegrationsString?.Value.Split(',').ToList() ?? [];
 
@@ -68,6 +75,15 @@ public static class DynamicLocationsConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
+
+    LocationControlsTimeoutInMs = Config.Bind(MainSection,
+      "LocationControls Timeout In Ms",
+      20000,
+      new ConfigDescription(
+        "Allows for setting the delay in which the spawn will exit logic to prevent degraded performance.",
+        new AcceptableValueRange<int>(1000, 40000),
+        new ConfigurationManagerAttributes()
+          { IsAdminOnly = true, IsAdvanced = false }));
 
     HasCustomSpawnDelay = Config.Bind(MainSection,
       "HasCustomSpawnDelay",

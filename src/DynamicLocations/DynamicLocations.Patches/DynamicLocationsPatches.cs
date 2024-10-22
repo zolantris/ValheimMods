@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using DynamicLocations.Config;
+using DynamicLocations.Constants;
 using DynamicLocations.Controllers;
 using HarmonyLib;
 using UnityEngine;
@@ -55,7 +56,7 @@ public class DynamicLocationsPatches
     }
 
     LocationController.RemoveZdoTarget(
-      PlayerSpawnController.LocationTypes.Logout, __instance);
+      DynamicLocationVariation.Logout, __instance);
   }
 
   [HarmonyPatch(typeof(Player), "ShowTeleportAnimation")]

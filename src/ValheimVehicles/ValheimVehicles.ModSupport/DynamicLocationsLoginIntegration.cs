@@ -1,52 +1,46 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using BepInEx;
 using ValheimVehicles.Vehicles.Components;
 using DynamicLocations.API;
+using DynamicLocations.Constants;
 using DynamicLocations.Controllers;
 using DynamicLocations.Interfaces;
+using DynamicLocations.Structs;
 using UnityEngine;
 using UnityEngine.UI;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.ModSupport;
 
-public class DynamicLocationsLoginIntegration : IModLoginAPI
+public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
 {
-  public PluginInfo PluginInfo { get; }
-  public bool UseDefaultCallbacks { get; }
-  public int MovementTimeout { get; }
-  public bool ShouldFreezePlayer { get; }
-
-  public int LoginPrefabHashCode { get; } = Prefabs.PrefabNames
-    .WaterVehicleShip
-    .GetHashCode();
-
-  public int Priority { get; }
-  public List<string> RunBeforePlugins { get; }
-  public List<string> RunAfterPlugins { get; }
-
-  public IEnumerator OnLoginMoveToZDO(
-    PlayerSpawnController playerSpawnController)
+  /// <inheritdoc />
+  public DynamicLocationsLoginIntegration(IntegrationConfig config) :
+    base(config)
   {
-    throw new System.NotImplementedException();
   }
 
-  public IEnumerator OnLoginMoveToZDO(ZDO zdo, Vector3? offset,
+  protected override IEnumerator OnLoginMoveToZDO(ZDO zdo, Vector3? offset,
     PlayerSpawnController playerSpawnController)
   {
-    var spawnZdo = playerSpawnController.PlayerSpawnPointZDO;
+    var localTimer = Stopwatch.StartNew();
+    var spawnZdo =
+      LocationController
+        .GetCachedDynamicLocation(DynamicLocationVariation.Logout)
+        ?.Zdo;
     if (spawnZdo == null)
     {
       var pendingZdo = playerSpawnController.FindDynamicZdo(
-        PlayerSpawnController
-          .LocationTypes.Logout, true);
-      yield return pendingZdo;
-      spawnZdo = pendingZdo.Current;
+        DynamicLocationVariation.Logout, true);
+      yield return new WaitUntil(() =>
+        pendingZdo.Current is ZDO || localTimer.ElapsedMilliseconds > 5000);
+      spawnZdo = pendingZdo.Current as ZDO;
     }
 
     var vehicle = GetVehicleFromZdo(zdo);
-    while (vehicle == null || playerSpawnController.HasExpiredTimer)
+    while (vehicle == null || PlayerSpawnController.HasExpiredTimer)
     {
       yield return new WaitForFixedUpdate();
       vehicle = GetVehicleFromZdo(zdo);
@@ -57,24 +51,13 @@ public class DynamicLocationsLoginIntegration : IModLoginAPI
 
     yield return new WaitUntil(() =>
       vehicle.Instance.PiecesController.IsActivationComplete ||
-      playerSpawnController.HasExpiredTimer);
+      PlayerSpawnController.HasExpiredTimer);
     Logger.LogDebug(
-      $"Waiting completed, IsActivationComplete {vehicle.Instance.PiecesController.IsActivationComplete} HasExpiredTimer: {playerSpawnController.HasExpiredTimer}");
+      $"Waiting completed, IsActivationComplete {vehicle.Instance.PiecesController.IsActivationComplete} HasExpiredTimer: {PlayerSpawnController.HasExpiredTimer}");
 
     // resetting timer gives the player a bit more time to get to their location if there are slowdowns.
     playerSpawnController.RestartTimer();
     yield return playerSpawnController.MovePlayerToZdo(zdo, offset);
-  }
-
-  public bool OnLoginMatchZdoPrefab(ZDO zdo)
-  {
-    var isMatch = zdo.GetPrefab() == LoginPrefabHashCode;
-    if (!isMatch)
-    {
-      Logger.LogDebug("VehicleShip not detected for Login ZDO");
-    }
-
-    return isMatch;
   }
 
   // Internal Methods

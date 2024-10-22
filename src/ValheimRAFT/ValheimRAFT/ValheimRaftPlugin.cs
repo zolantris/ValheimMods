@@ -9,7 +9,10 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using BepInEx.Bootstrap;
+using DynamicLocations;
+using DynamicLocations.API;
 using DynamicLocations.Controllers;
+using DynamicLocations.Structs;
 using UnityEngine;
 using ValheimRAFT.Config;
 using ValheimRAFT.Patches;
@@ -17,6 +20,7 @@ using ValheimRAFT.Util;
 using ValheimVehicles;
 using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
+using ValheimVehicles.ModSupport;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Propulsion.Sail;
@@ -36,6 +40,7 @@ internal abstract class PluginDependencies
 // [SentryDSN()]
 [BepInPlugin(ModGuid, ModName, Version)]
 [BepInDependency(ZdoWatcherPlugin.ModGuid)]
+[BepInDependency(DynamicLocationsPlugin.BepInGuid, "1.2.0")]
 [BepInDependency(PluginDependencies.JotunnModGuid)]
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod,
   VersionStrictness.Minor)]
@@ -46,7 +51,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public const string Version = "2.3.0";
   public const string ModName = "ValheimRAFT";
   public const string ModGuid = $"{Author}.{ModName}";
-  public const string HarmonyGuid = $"{Author}.{ModName}";
+  public static string HarmonyGuid => ModGuid;
 
   public const string ModDescription =
     "Valheim Mod for building on the sea, requires Jotunn to be installed.";
@@ -530,11 +535,23 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     PrefabManager.OnVanillaPrefabsAvailable += AddCustomPieces;
 
     ZdoWatcherDelegate.RegisterToZdoManager();
-    PlayerSpawnController.PlayerMoveToVehicleCallback =
-      VehiclePiecesController.OnPlayerSpawnInVehicle;
-    // ZdoVarManager.RegisterPublicVar(this,
-    //   VehicleZdoVars.VehicleParentIdHash,
-    //   VehicleZdoVars.MBParentIdHash);
+    // PlayerSpawnController.PlayerMoveToVehicleCallback =
+    // VehiclePiecesController.OnPlayerSpawnInVehicle;
+  }
+
+  public void ModSupport()
+  {
+  }
+
+  public void ModSupportDynamicLocations()
+  {
+    var dynamicLocationLoginIntegrationConfig =
+      DynamicLoginIntegration.CreateConfig(this, PrefabNames.WaterVehicleShip);
+    var integrationInstance =
+      new DynamicLocationsLoginIntegration(
+        dynamicLocationLoginIntegrationConfig);
+    LoginAPIController.AddLoginApiIntegration(
+      integrationInstance);
   }
 
   public void RegisterConsoleCommands()

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BepInEx;
 using BepInEx.Bootstrap;
+using DynamicLocations.API;
 using DynamicLocations.Config;
 using DynamicLocations.Interfaces;
 using Jotunn.Managers;
@@ -12,69 +13,47 @@ using Logger = Jotunn.Logger;
 namespace DynamicLocations.Controllers;
 
 /// <summary>
-/// This controller will take the Input of IModLoginAPI instances and then finalize the callbacks through here.
+/// This controller will take the Input of DynamicLoginIntegration instances and then finalize the callbacks through here.
 /// </summary>
 /// <warning>Do not override / patch this, please create a class extending IModeLoginAPI or use the default DynamicLocations.API.LoginIntegrations</warning>
 public class LoginAPIController
 {
-  private readonly IModLoginAPI _loginAPI;
-  public PluginInfo PluginInfo => _loginAPI.PluginInfo;
-  public bool UseDefaultCallbacks => _loginAPI.UseDefaultCallbacks;
-
-  private readonly PlayerSpawnController _playerSpawnController;
-
-  /// <summary>
-  /// miliseconds
-  /// </summary>
-  private const int DefaultMovementTimeout = 5000;
-
-  public int MovementTimeout => GetMovementTimeout();
-
-  public bool ShouldFreezePlayer => _loginAPI.ShouldFreezePlayer;
-
-  public int LoginPrefabHashCode => _loginAPI.LoginPrefabHashCode;
-
-  public int Priority =>
-    _loginAPI.Priority > 0 ? _loginAPI.Priority : 999;
-
-  public List<string> RunBeforePlugins { get; } = [];
-  public List<string> RunAfterPlugins { get; } = [];
-
-
-  // Non interface values.
-  public string LoginPluginId = "Invalid Plugin";
+  private PlayerSpawnController? _playerSpawnController =>
+    PlayerSpawnController.Instance;
 
   // static
-  public static readonly Dictionary<string, IModLoginAPI> LoginIntegrations =
-    new();
+  public static readonly Dictionary<string, DynamicLoginIntegration>
+    LoginIntegrations =
+      new();
 
-  public static readonly Dictionary<string, IModLoginAPI>
+  public static readonly Dictionary<string, DynamicLoginIntegration>
     DisabledLoginIntegrations =
       new();
 
-  public static List<IModLoginAPI> LoginIntegrationPriority = [];
+  public static List<DynamicLoginIntegration> loginIntegrationsByPriority = [];
 
-  private static string? GetModIntegrationId(PluginInfo plugin)
+  private static string? GetModIntegrationId(
+    DynamicLoginIntegration integration)
   {
-    if (plugin.Metadata.Name != "") return plugin.Metadata.GUID;
+    if (integration.Guid != "") return integration.Guid;
     Logger.LogWarning(
       "Invalid guid detected, make sure the BepInPlugin guid is a valid number");
     return null;
   }
 
-  public static List<IModLoginAPI> OrderItems(List<IModLoginAPI> items)
+  public static List<DynamicLoginIntegration> OrderItems(
+    List<DynamicLoginIntegration> items)
   {
     // Create a dictionary for quick lookup of items by name
-    var itemLookup = items.ToDictionary(i => i.PluginInfo.Metadata.GUID);
-
+    var itemLookup = items.ToDictionary(i => i.Guid);
     // Prepare a result list
-    var result = new List<IModLoginAPI>();
+    var result = new List<DynamicLoginIntegration>();
 
     // A set to track which items are already placed in the result
     var placed = new HashSet<string>();
 
     // First, add items that have no dependencies
-    foreach (var item in items.OrderBy(i => i.Priority))
+    foreach (var item in items.OrderBy(i => i.Guid))
     {
       AddItemWithDependencies(item, itemLookup, result, placed);
     }
@@ -82,12 +61,13 @@ public class LoginAPIController
     return result;
   }
 
-  private static void AddItemWithDependencies(IModLoginAPI item,
-    Dictionary<string, IModLoginAPI> itemLookup, List<IModLoginAPI> result,
+  private static void AddItemWithDependencies(DynamicLoginIntegration item,
+    Dictionary<string, DynamicLoginIntegration> itemLookup,
+    List<DynamicLoginIntegration> result,
     HashSet<string> placed)
   {
     // Check if this item has already been placed
-    if (placed.Contains(item.PluginInfo.Metadata.GUID))
+    if (placed.Contains(item.Guid))
       return;
 
     // First, add the items this one must come after
@@ -101,7 +81,7 @@ public class LoginAPIController
 
     // Then, add this item itself
     result.Add(item);
-    placed.Add(item.PluginInfo.Metadata.GUID);
+    placed.Add(item.Guid);
 
     // Finally, add the items this one must come before
     foreach (var before in item.RunBeforePlugins)
@@ -148,134 +128,105 @@ public class LoginAPIController
       }
     }
 
-    LoginIntegrationPriority = OrderItems(LoginIntegrations.Values.ToList());
+    loginIntegrationsByPriority = OrderItems(LoginIntegrations.Values.ToList());
 
-    foreach (var item in LoginIntegrationPriority)
+    foreach (var item in loginIntegrationsByPriority)
     {
       Logger.LogInfo(
-        $"item ----> name:{item.PluginInfo.Metadata.Name}, guid: {item.PluginInfo.Metadata.GUID}, priority: {item.Priority}");
+        $"item ----> name:{item.Name}, guid: {item.Guid}, priority: {item.Priority}");
     }
   }
 
-  private bool AddLoginApiIntegration(
-    IModLoginAPI loginAPI)
+  public static bool AddLoginApiIntegration(
+    DynamicLoginIntegration loginIntegration)
   {
-    var pluginId = GetModIntegrationId(loginAPI.PluginInfo);
-    if (pluginId == null) return false;
+    var pluginGuid = GetModIntegrationId(loginIntegration);
+    if (pluginGuid == null) return false;
 
-    if (!LoginIntegrations.ContainsKey(pluginId))
+    if (!LoginIntegrations.ContainsKey(pluginGuid))
     {
-      LoginIntegrations.Add(pluginId, loginAPI);
-      LoginPluginId = pluginId;
+      LoginIntegrations.Add(pluginGuid, loginIntegration);
       UpdateIntegrations();
       return true;
     }
 
-    Logger.LogError(
-      "Could not integrate component due to collision in registered plugin GUID and plugin_version, this ModAPI plugin will not be loaded. Make sure your plugin only creates 1 instance of ModLoginApi and that your plugin GUID or plugin.Name_plugin_Version are unique.");
-    return false;
-  }
-
-  // Extends from the shared loginAPI, will protect against API incompatibility issues
-  private LoginAPIController(IModLoginAPI loginAPI,
-    PlayerSpawnController playerSpawnController)
-  {
-    _loginAPI = loginAPI;
-    _playerSpawnController = playerSpawnController;
-
-    // todo add more guards for other data types that could be invalid. Maybe add a Prefab.instance.getPrefab() to output the name returned
-    if (loginAPI.LoginPrefabHashCode == 0)
+    if (loginIntegration.LoginPrefabHashCode == 0)
     {
       Logger.LogWarning(
-        $"LoginIntegration provided invalid prefab identifier, the hashcode was {loginAPI.LoginPrefabHashCode}.");
+        $"LoginIntegration provided invalid prefab identifier, the hashcode was {loginIntegration.LoginPrefabHashCode}.");
     }
 
     // todo might be easier/cleaner to provide a prefab name and then convert to stablehashcode and use jotunn prefabmanager.instance.getPrefab()
     if (DynamicLocationsConfig.IsDebug)
     {
       if (!ZNetScene.instance.m_namedPrefabs.TryGetValue(
-            loginAPI.LoginPrefabHashCode, out var prefab))
+            loginIntegration.LoginPrefabHashCode, out var prefab))
       {
         Logger.LogError(
-          $"Prefab not found for stableHashCode {loginAPI.LoginPrefabHashCode}");
+          $"Prefab not found for stableHashCode {loginIntegration.LoginPrefabHashCode}");
       }
       else
       {
         Logger.LogDebug(
-          $"Found prefab for stableHashCode {loginAPI.LoginPrefabHashCode} name {prefab.name}");
+          $"Found prefab for stableHashCode {loginIntegration.LoginPrefabHashCode} name {prefab.name}");
       }
     }
 
-    AddLoginApiIntegration(loginAPI);
+
+    Logger.LogError(
+      "Could not integrate component due to collision in registered plugin GUID and plugin_version, this ModAPI plugin will not be loaded. Make sure your plugin only creates 1 instance of ModLoginApi and that your plugin GUID or plugin.Name_plugin_Version are unique.");
+    return false;
   }
 
-  public static IEnumerator API_OnLoginMoveToZdo(ZDO zdo, Vector3? offset,
-    PlayerSpawnController playerSpawnController)
+  private static void LogResults(DynamicLoginIntegration? selectedIntegration)
   {
-    IEnumerator? handled = null;
-    IModLoginAPI? matchingApi = null;
-    foreach (var modLoginAPI in from modLoginAPI in LoginIntegrationPriority
-             let isZdoMatch = modLoginAPI.OnLoginMatchZdoPrefab(zdo)
-             where isZdoMatch
-             select modLoginAPI)
-    {
-      matchingApi = modLoginAPI;
-      handled =
-        OnLoginMoveToZDO(matchingApi, zdo, offset, playerSpawnController);
-      yield return handled;
-    }
-
-    if (LoginIntegrationPriority.Count == 0 || handled == null)
-    {
-      Logger.LogDebug(
-        "Not handled by custom handler, running MovePlayerToZdo default call");
-      yield return playerSpawnController.MovePlayerToZdo(zdo, offset);
-    }
-
-    if (!DynamicLocationsConfig.IsDebug) yield break;
-    if (handled == null && matchingApi != null)
-    {
-      Logger.LogWarning("Dynamic location not handled but ModApi matched");
-    }
-    else
-    {
-      Logger.LogDebug(
-        matchingApi != null
-          ? $"Successfully handled ModApi {matchingApi.PluginInfo.Metadata.Name} matched"
-          : "No matches found for registered integrations");
-    }
+    if (!DynamicLocationsConfig.IsDebug) return;
+    Logger.LogDebug(
+      selectedIntegration != null
+        ? $"Successfully handled ModApi {selectedIntegration.Name} matched"
+        : "No matches found for registered integrations");
+    // if (selectedIntegration != null)
+    // {
+    //   Logger.LogWarning("Dynamic location not handled but ModApi matched");
+    // }
+    // else
+    // {
+    //
+    // }
   }
 
-  public static IEnumerator OnLoginMoveToZDO(
-    IModLoginAPI loginAPIInstance,
-    ZDO zdo,
+  public static IEnumerator RunAllIntegrations_OnLoginMoveToZdo(ZDO zdo,
     Vector3? offset,
     PlayerSpawnController playerSpawnController)
   {
-    var isMatch = loginAPIInstance.OnLoginMatchZdoPrefab(zdo);
-    if (!isMatch) yield break;
+    // early exit so apis do not need to null check unless they do not exit properly.
+    if (playerSpawnController == null) yield break;
 
-    if (loginAPIInstance.UseDefaultCallbacks)
+    IEnumerator? handled = null;
+    DynamicLoginIntegration? selectedIntegration = null;
+
+    foreach (var loginIntegration in loginIntegrationsByPriority)
     {
-      yield return null;
+      var isZdoMatch = loginIntegration.OnLoginMatchZdoPrefab(zdo);
+
+      // Do not call yield within an iterator.
+      if (isZdoMatch == false) continue;
+
+      selectedIntegration = loginIntegration;
+      handled =
+        loginIntegration.API_OnLoginMoveToZDO(zdo, offset,
+          playerSpawnController);
+      // Do not call yield within an iterator.
+      break;
     }
-    else
+
+    // this checks to see if the handler is not an enumerator
+    if (selectedIntegration != null)
     {
-      yield return loginAPIInstance.OnLoginMoveToZDO(zdo, offset,
-        playerSpawnController);
+      yield return new WaitUntil(() =>
+        selectedIntegration.IsComplete);
     }
-  }
 
-  public bool OnLoginMatchZdoPrefab(ZDO zdo)
-  {
-    return _loginAPI.OnLoginMatchZdoPrefab(zdo);
-  }
-
-  // guards
-  private int GetMovementTimeout()
-  {
-    return _loginAPI.MovementTimeout is >= 5 and <= 20
-      ? _loginAPI.MovementTimeout
-      : DefaultMovementTimeout;
+    LogResults(selectedIntegration);
   }
 }

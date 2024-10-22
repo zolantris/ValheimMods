@@ -16,10 +16,10 @@ namespace DynamicLocations;
 public class DynamicLocationsPlugin : BaseUnityPlugin
 {
   public const string Author = "zolantris";
-  public const string Version = "1.1.0";
+  public const string Version = "1.2.0";
   public const string ModName = "DynamicLocations";
   public const string BepInGuid = $"{Author}.{ModName}";
-  public const string HarmonyGuid = $"{Author}.{ModName}";
+  public static string HarmonyGuid => BepInGuid;
   private static Harmony _harmony;
 
   public const string ModDescription =

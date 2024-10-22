@@ -9,11 +9,11 @@ namespace DynamicLocations.Interfaces;
 /// <summary>
 /// This interface is provided for other mod APIs, however I highly recommend using ModLoginApi class directly as the class has some critical guards
 /// </summary>
-public interface IModLoginAPI
+internal interface IModLoginAPI
 {
   // Required for determining the mod that is being integrated.
   // This information is used to allow players to manually disable specific integrations if they destabilize the mod.
-  PluginInfo PluginInfo { get; }
+  BaseUnityPlugin Plugin { get; set; }
 
   // Will ignore values provided to IsLoginZdo and LoginPrefabHashCode
   public bool UseDefaultCallbacks { get; }
