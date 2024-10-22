@@ -15,7 +15,7 @@ public class ZdoWatcherPlugin : BaseUnityPlugin
   public const string Version = "1.1.0";
   public const string ModName = "ZdoWatcher";
   public const string ModGuid = $"{Author}.{ModName}";
-  public const string HarmonyGuid = $"{Author}.{ModName}";
+  public static string HarmonyGuid => ModGuid;
   private static Harmony _harmony;
 
   public const string ModDescription =
