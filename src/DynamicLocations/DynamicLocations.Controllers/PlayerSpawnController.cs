@@ -55,6 +55,7 @@ public class PlayerSpawnController : MonoBehaviour
   public void DEBUG_MoveTo(LocationVariation locationVariationType)
   {
     CanUpdateLogoutPoint = true;
+    CanRemoveLogoutAfterSync = false;
     switch (locationVariationType)
     {
       case LocationVariation.Spawn:
@@ -67,8 +68,6 @@ public class PlayerSpawnController : MonoBehaviour
         throw new ArgumentOutOfRangeException(nameof(locationVariationType),
           locationVariationType, null);
     }
-
-    CanUpdateLogoutPoint = false;
   }
 
   internal void Reset()

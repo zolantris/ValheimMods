@@ -15,7 +15,7 @@ public class DebugSafeTimer
   private bool isRunning = false;
 
   private float _elapsedTime = 0;
-  public float ElapsedMilliseconds => _elapsedTime;
+  public float ElapsedMilliseconds => _elapsedTime / 1000;
 
   public static DebugSafeTimer StartNew()
   {
