@@ -74,8 +74,9 @@ Add this to `valheim_Data/boot.config folder. This should allow script heavy
 mods to run on more threads without bottlenecking the game UI so fps will be
 much higher.
 
-The gc-max-time-slice takes a integer that should be the number of threads
-available on your machine. Example below for a machine with 20 threads
+The gc-max-time-slice takes a integer that should be the number of (seconds?) before garbage collecting on the machine. This essentially freeze up your machine to do thing without worry until you get near max memory and then it will garbage collect anyways.
+
+Example below for a machine with 20 seconds before force attempting to garbage collect even when low on memory. 20 seems to be a nice fps boost of 30-60fps. 
 
 ```
 gc-max-time-slice=20
