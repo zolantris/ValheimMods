@@ -341,13 +341,34 @@
         <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
         <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(PluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>
     </Target>
-    <Target Name="Copy_To_R2ModMan_vm" AfterTargets="convert_pdb_to_mdb" Condition=" $(AssemblyName) == 'ValheimRAFT' And Exists('$(SandboxiePluginDeployPath)') And '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
-        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>
-        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>
-        <!-- mdb copy Does not work for some reason -->
-        <!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)plugins\$(AssemblyName).mdb&quot;"/>-->
-        <Exec Command="xcopy /d &quot;$(AssetsDir)\&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
+
+    <PropertyGroup Label="SandboxieFiles">
+        <FilesToCheck>
+            $(SandboxiePluginDeployPath)\$(AssemblyName).dll;
+            $(SandboxiePluginDeployPath)\$(AssemblyName).pdb;
+            $(SandboxiePluginDeployPath)\$(AssemblyName).mdb
+        </FilesToCheck>
+        <PowerShellScript>$(MSBuildProjectDirectory)\CheckFilesLocked.ps1</PowerShellScript>
+    </PropertyGroup>
+    <!--     Condition=" $(AssemblyName) == 'ValheimRAFT' And Exists('$(SandboxiePluginDeployPath)') And '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' "-->
+    <Target Name="Copy_To_R2ModMan_vm" AfterTargets="Copy_To_R2ModMan">
+        <Message Text="Checking if files are locked..." Importance="high"/>
+        <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(PowerShellScript)&quot; &quot;$(FilesToCheck)&quot;"
+              IgnoreExitCode="true">
+            <Output TaskParameter="ExitCode" PropertyName="FilesCheckExitCode"/>
+        </Exec>
+
+
+        <!--   Will only run if the above passes     -->
+        <Exec Condition="'$(FilesCheckExitCode)' == '0' And Exists('$(OutDir)$(AssemblyName).dll')" Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>
+        <Exec Condition="'$(FilesCheckExitCode)' == '0' And Exists('$(OutDir)$(AssemblyName).pdb')" Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>
+        <Exec Condition="'$(FilesCheckExitCode)' == '0' And Exists('$(OutDir)$(AssemblyName).mdb')" Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).mdb&quot;"/>
+
+        <Exec Condition="'$(FilesCheckExitCode)' == '0' And $(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>
+        <Exec Condition="'$(FilesCheckExitCode)' == '0'" Command="xcopy &quot;$(TargetDir)&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>
+
+        <Exec Condition="'$(FilesCheckExitCode)' == '0' And Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(SandboxiePluginDeployPath)\Assets\&quot; /E/H/Y"/>
+        <Exec Condition="'$(FilesCheckExitCode)' == '0' And Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(SandboxiePluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>
     </Target>
     <Target Name="Generate_Mod_Archive" AfterTargets="PostBuildEvent" Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <PropertyGroup>

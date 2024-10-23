@@ -67,6 +67,17 @@ Add the following data.
     </PropertyGroup>
 ```
 
+With SandboxieVm for running two games at same time with two steam users.
+
+```xml
+    <PropertyGroup Label="SandBoxie">
+        <SandboxieVMPath>C:\Sandbox\%user%\steambox</SandboxieVMPath>
+        <SandboxieR2ModManPath>user\current\AppData\Roaming\r2modmanPlus-local</SandboxieR2ModManPath>
+        <SandboxieValheimPath>drive\D\steam\steamapps\common\Valheim</SandboxieValheimPath>
+        <SandboxiePluginDeployPath>$(SandboxieVMPath)\$(SandboxieR2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</SandboxiePluginDeployPath>
+    </PropertyGroup>
+```
+
 Alternatively copy pasting the Valheim\valheim_Data\Managed and other require
 dependencies into "libs" will make this step unnecessary.
 
@@ -118,7 +129,7 @@ and within programs folder.
 
 ## Custom Logging for powershell
 
-Add this to your powershell profile. This will allow your to highlight only logs
+Add this to your powershell profile. This will allow you to highlight only logs
 from ValheimVehicles and ValheimRAFT mods as well as
 errors. [(about profiles)](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_profiles)
 
