@@ -427,7 +427,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
         m_players = playersOnboard.ToList();
       }
 
-      SendSetAnchor(true);
+      SendDelayedAnchor();
     }
 
     var vehicleBounds = vehicleShip.PiecesController.GetVehicleBounds();
@@ -1637,6 +1637,35 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
+  private bool HasPendingAnchor = false;
+
+  /// <summary>
+  /// Meant for realism and testing but will allow the ship to continue for a bit even when the player is logged out on server.
+  /// </summary>
+  public void DelayedAnchor()
+  {
+    HasPendingAnchor = false;
+    SendSetAnchor(true);
+  }
+
+  /// <summary>
+  /// Will always send true for anchor state. Not meant to remove anchor on delay
+  /// </summary>
+  public void SendDelayedAnchor()
+  {
+    if (VehicleDebugConfig.HasAutoAnchorDelay.Value)
+    {
+      var autoDelayInMS = VehicleDebugConfig.AutoAnchorDelayTime.Value * 1000f;
+      Invoke(nameof(DelayedAnchor),
+        autoDelayInMS);
+      HasPendingAnchor = true;
+      return;
+    }
+
+    SendSetAnchor(true);
+  }
+
+
   public void UpdateShipSpeed(bool hasControllingPlayer, int playerCount)
   {
     if (isAnchored && vehicleSpeed != Ship.Speed.Stop)
@@ -1646,14 +1675,23 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       m_rudderValue = 0f;
     }
 
-    if (playerCount == 0 && !isAnchored)
+    var isNotAnchoredWithNobodyOnboard = playerCount == 0 && !isAnchored;
+
+    if (isNotAnchoredWithNobodyOnboard)
     {
+      // exits
+      if (VehicleDebugConfig.HasAutoAnchorDelay.Value) return;
       SendSetAnchor(true);
       SendSpeedChange(DirectionChange.Stop);
+      return;
     }
-    else if (!hasControllingPlayer &&
-             vehicleSpeed is Ship.Speed.Slow or Ship.Speed.Back &&
-             !PropulsionConfig.SlowAndReverseWithoutControls.Value)
+
+    var isUncontrolledRowing = !hasControllingPlayer &&
+                               vehicleSpeed is Ship.Speed.Slow
+                                 or Ship.Speed.Back &&
+                               !PropulsionConfig.SlowAndReverseWithoutControls
+                                 .Value;
+    if (isUncontrolledRowing)
     {
       SendSpeedChange(DirectionChange.Stop);
     }
@@ -1680,6 +1718,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (Time.time - m_sendRudderTime > 1f)
     {
+      if (HasPendingAnchor) return;
       vehicleSpeed = (Ship.Speed)m_nview.GetZDO().GetInt(ZDOVars.s_forward);
       m_rudderValue = m_nview.GetZDO().GetFloat(ZDOVars.s_rudder);
     }
@@ -2242,7 +2281,19 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       return;
     }
 
+    if (HasPendingAnchor)
+    {
+      // Might need to rethink this if it's heavy performance hit. Maybe a coroutine if calling cancel invoke is constant.
+      CancelInvoke(nameof(DelayedAnchor));
+      HasPendingAnchor = false;
+    }
+
     SetAnchor(state);
+    if (state)
+    {
+      SendSpeedChange(DirectionChange.Stop);
+    }
+
     m_nview.InvokeRPC(nameof(RPC_SetAnchor), state);
   }
 

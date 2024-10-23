@@ -8,12 +8,15 @@ using DynamicLocations.Constants;
 using DynamicLocations.Controllers;
 using DynamicLocations.Interfaces;
 using DynamicLocations.Structs;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UI;
+using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.ModSupport;
 
+[UsedImplicitly]
 public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
 {
   /// <inheritdoc />
@@ -25,7 +28,7 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
   protected override IEnumerator OnLoginMoveToZDO(ZDO zdo, Vector3? offset,
     PlayerSpawnController playerSpawnController)
   {
-    var localTimer = Zolantris.Shared.Debug.DebugSafeTimer.StartNew();
+    var localTimer = Stopwatch.StartNew();
 
     ZNet.instance.SetReferencePosition(zdo.GetPosition());
 
@@ -45,7 +48,7 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
       localTimer.ElapsedMilliseconds > 5000);
 
     Logger.LogDebug(
-      $"Waiting completed, IsActivationComplete {vehicle.Instance.PiecesController.IsActivationComplete} HasExpiredTimer: {PlayerSpawnController.HasExpiredTimer}");
+      $"Waiting completed, IsActivationComplete {vehicle.Instance.PiecesController.IsActivationComplete} timer: {localTimer.ElapsedMilliseconds}");
 
     yield return playerSpawnController.MovePlayerToZdo(zdo, offset);
   }

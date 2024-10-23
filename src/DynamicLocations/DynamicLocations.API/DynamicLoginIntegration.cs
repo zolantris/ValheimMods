@@ -1,7 +1,5 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using BepInEx;
 using DynamicLocations.Config;
 using DynamicLocations.Controllers;
@@ -32,7 +30,7 @@ public class DynamicLoginIntegration
   public int MovementTimeoutMs => GetMovementTimeout();
 
   private const int DefaultMovementTimeoutMs = 5000;
-  private DebugSafeTimer timerInstance;
+  private readonly DebugSafeTimer _timerInstance = new();
 
   // State values
   private bool _isRunningOnLoginMoveToZdo = false;
@@ -73,8 +71,7 @@ public class DynamicLoginIntegration
   /// </summary>
   private void OnStart()
   {
-    timerInstance =
-      DebugSafeTimer.StartNew(PlayerSpawnController.Timers);
+    _timerInstance.Restart();
     PlayerSpawnController.ResetRoutine(ref _onLoginMoveToZdoCoroutine);
     _hasCompleted = false;
     _isRunningOnLoginMoveToZdo = true;
@@ -82,7 +79,7 @@ public class DynamicLoginIntegration
 
   private void OnComplete()
   {
-    timerInstance.Delete();
+    _timerInstance.Reset();
     PlayerSpawnController.ResetRoutine(ref _onLoginMoveToZdoCoroutine);
     _isRunningOnLoginMoveToZdo = false;
     _hasCompleted = true;
@@ -108,7 +105,7 @@ public class DynamicLoginIntegration
     yield return _onLoginMoveToZdoCoroutine;
     yield return new WaitUntil(() =>
       _onLoginMoveToZdoCoroutine is null ||
-      timerInstance.ElapsedMilliseconds >= GetMovementTimeout());
+      _timerInstance.ElapsedMilliseconds >= GetMovementTimeout());
     OnComplete();
 
     yield return true;

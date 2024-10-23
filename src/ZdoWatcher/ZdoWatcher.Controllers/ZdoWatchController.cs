@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
@@ -31,28 +32,46 @@ public class ZdoWatchController : MonoBehaviour
       RequestPersistentIdRPCServerReceive, RPC_ClientSync);
   }
 
+  // ReSharper disable once InconsistentNaming
+  public void SyncToPeer(ZDOMan.ZDOPeer? zdoPeer)
+  {
+    if (!ZNet.instance.IsServer())
+    {
+      // Non-servers will not send data to players.
+      return;
+    }
+
+    if (zdoPeer == null) return;
+    var uid = zdoPeer.m_peer.m_uid;
+    var playerName = zdoPeer.m_peer.m_playerName;
+
+    Logger.LogDebug(
+      $"A Peer was added, the server will not attempt to sync data down to the peer {playerName}");
+
+    var serverZdoIdPackage = GetAllServerZdoIds();
+    RPC_RequestPersistentIdInstance.SendPackage(uid,
+      serverZdoIdPackage);
+  }
+
   // React to the RPC call on a server
-  private IEnumerator RequestPersistentIdRPCServerReceive(long sender,
+  internal IEnumerator RequestPersistentIdRPCServerReceive(long sender,
     ZPackage package)
   {
-    Logger.LogMessage(
+    Logger.LogDebug(
       $"Received request for persistentZDOID, processing");
-
-    var requestedZdoId = package.ReadInt();
-
-    // this zdoid must then be retreived on client with a call of ZDOMan.instance
-    var serverZdo = GetZdo(requestedZdoId);
-    // var zdoid = serverZdo?.m_uid ?? ZDOID.None;
-    //
     var serverZdoIdPackage = GetAllServerZdoIds();
 
-    Logger.LogMessage($"Broadcasting to all clients");
+    var player = Player.GetPlayer(sender);
+    Logger.LogDebug(
+      $"Broadcasting to sender {sender}, name: {player?.GetPlayerName()}");
+
     RPC_RequestPersistentIdInstance.SendPackage(sender,
       serverZdoIdPackage);
     yield return null;
   }
 
-  public IEnumerator RequestAllPersistentZDOs(ZPackage package)
+  // ReSharper disable once InconsistentNaming
+  public IEnumerator Client_RequestAllPersistentZDOs(ZPackage package)
   {
     var pos = 0;
     var packageSize = package.Size();
@@ -68,16 +87,25 @@ public class ZdoWatchController : MonoBehaviour
     }
 
     var zdoIndex = 0;
+    var currentTimer = Stopwatch.StartNew();
     while (zdoIndex < zdoIdList.Count)
     {
-      yield return new WaitUntil(() =>
-        ZDOMan.instance.GetZDO(zdoIdList[zdoIndex]) != null);
       var zdo = ZDOMan.instance.GetZDO(zdoIdList[zdoIndex]);
+      // keeps waiting until the zdos exist.
+      if (currentTimer.ElapsedMilliseconds < 5000)
+      {
+        continue;
+      }
+
+      // yield return new WaitUntil(() =>
+      // ZDOMan.instance.GetZDO(zdoIdList[zdoIndex]) != null);
       if (zdo != null)
       {
         GetOrCreatePersistentID(zdo);
       }
     }
+
+    yield return true;
   }
 
   public Dictionary<int, ZDO?> PendingPersistentIdQueries = new();
@@ -105,17 +133,20 @@ public class ZdoWatchController : MonoBehaviour
   /// <returns>ZDO</returns>
   public IEnumerator GetZdoFromServer(int persistentId)
   {
+    var timer = Stopwatch.StartNew();
     if (ZNet.instance.IsServer())
     {
-      yield return GetZdo(persistentId);
+      var zdo = GetZdo(persistentId);
+      Logger.LogWarning(
+        $"Called GetZdoFromServer for {persistentId} on the server. This should not happen");
+      yield return zdo;
     }
     else
     {
       if (PendingPersistentIdQueries.ContainsKey(persistentId))
       {
-        // Logger.LogWarning(
-        //   "RequestPersistentID called for ongoing operation, exiting to prevent duplicate side effect issues");
-        // yield break;
+        Logger.LogWarning(
+          $"RequestPersistentID called for ongoing operation on id: {persistentId}");
       }
 
       PendingPersistentIdQueries.Add(persistentId, null);
@@ -125,17 +156,22 @@ public class ZdoWatchController : MonoBehaviour
       var serverPeer = ZRoutedRpc.instance.GetServerPeerID();
       RPC_RequestPersistentIdInstance.SendPackage(serverPeer, package);
 
-      // todo add expiration, this should be quick, but not having a timer would possibly cause huge problems
+      // todo determine expiration time
       yield return new WaitUntil(() =>
-        RPC_RequestPersistentIdInstance.IsSending == false);
+        RPC_RequestPersistentIdInstance.IsSending == false ||
+        timer.ElapsedMilliseconds > 5000);
       yield return new WaitUntil(() =>
-        _zdoGuidLookup.TryGetValue(persistentId, out _));
+        _zdoGuidLookup.TryGetValue(persistentId, out _) ||
+        timer.ElapsedMilliseconds > 5000);
+
       if (PendingPersistentIdQueries.ContainsKey(persistentId))
       {
         PendingPersistentIdQueries.Remove(persistentId);
       }
 
       yield return GetZdo(persistentId);
+      Logger.LogDebug(
+        $"Completed timer in: {timer.ElapsedMilliseconds} milliseconds");
     }
   }
 
@@ -150,12 +186,12 @@ public class ZdoWatchController : MonoBehaviour
 
     // VERY Expensive...need to optimize to send only for correct peer
     Logger.LogMessage(ZDOMan.instance.m_peers.ToString());
-    ZDOMan.s_instance.FlushClientObjects();
+    // ZDOMan.s_instance.FlushClientObjects();
 
     Logger.LogMessage(
       $"Client received blob from sender: {sender}, processing");
     // var requestedZdoId = package.ReadZDOID();
-    yield return RequestAllPersistentZDOs(package);
+    yield return Client_RequestAllPersistentZDOs(package);
     Logger.LogMessage("Synced zdo store -> success");
     // var zdo = ZDOMan.instance.GetZDO(requestedZdoId);
     yield return true;

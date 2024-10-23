@@ -120,13 +120,6 @@
             <Link>ValheimVehicles.Utils</Link>
         </Folder>
     </ItemGroup>
-    <PropertyGroup>
-        <SandboxieVMPath>C:\Sandbox\fre\DefaultBox</SandboxieVMPath>
-        <SandboxieUserPath>$(SandboxieVMPath)\user\current</SandboxieUserPath>
-        <SandboxieValheimPath>$(SandboxieVMPath)\drive\C\Program Files (x86)\Steam\steamapps\common\Valheim</SandboxieValheimPath>
-        <SandboxieProfilePath>$(SandboxieUserPath)\$(R2ModManPath)\$(R2ModManProfile)</SandboxieProfilePath>
-        <SandboxiePluginDeployPath>$(SandboxieUserPath)\$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</SandboxiePluginDeployPath>
-    </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <OutputPath>bin\Release Archive\</OutputPath>
     </PropertyGroup>

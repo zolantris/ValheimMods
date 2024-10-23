@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using JetBrains.Annotations;
 using UnityEngine;
 using Logger = Jotunn.Logger;
 
@@ -11,11 +12,10 @@ namespace Zolantris.Shared.Debug;
 /// </summary>
 public class DebugSafeTimer
 {
-  private Stopwatch stopwatch;
-  private bool isRunning = false;
+  private bool _isRunning;
 
-  private float _elapsedTime = 0;
-  public float ElapsedMilliseconds => _elapsedTime / 1000;
+  private float _elapsedTime;
+  public float ElapsedMilliseconds => _elapsedTime * 1000;
 
   public static DebugSafeTimer StartNew()
   {
@@ -24,7 +24,7 @@ public class DebugSafeTimer
     return timer;
   }
 
-  private List<DebugSafeTimer>? listRef = null;
+  private List<DebugSafeTimer>? _listRef = null;
 
   /// <summary>
   /// For running and updating within a list which then would be iterated from
@@ -36,7 +36,7 @@ public class DebugSafeTimer
     var timer = new DebugSafeTimer();
     timer.Start();
     list.Add(timer);
-    timer.listRef = list;
+    timer._listRef = list;
     return timer;
   }
 
@@ -64,48 +64,63 @@ public class DebugSafeTimer
     }
   }
 
+  [UsedImplicitly]
   public void Start()
   {
-    isRunning = true;
+    if (_listRef != null && !_listRef.Contains(this))
+    {
+      _listRef.Add(this);
+    }
+
+    _isRunning = true;
   }
 
+  [UsedImplicitly]
   public void Stop()
   {
-    isRunning = false;
+    _isRunning = false;
   }
 
+  [UsedImplicitly]
   public void Reset()
   {
+    if (_listRef != null && _listRef.Contains(this))
+    {
+      _listRef.Remove(this);
+    }
+
     _elapsedTime = 0;
-    isRunning = false;
+    Stop();
   }
 
+  [UsedImplicitly]
   public void Restart()
   {
     _elapsedTime = 0;
-    isRunning = true;
+    Start();
   }
 
-  public void Delete()
+  [UsedImplicitly]
+  public void Clear()
   {
-    isRunning = false;
-    if (listRef == null)
+    Reset();
+    if (_listRef == null)
     {
       Logger.LogWarning("Called delete but listRef did not exist");
       return;
     }
 
     // should be fine to call without a Contains check
-    listRef?.Remove(this);
+    _listRef?.Remove(this);
   }
-
 
   /// <summary>
   /// To be run in a Monobehavior
   /// </summary>
+  [UsedImplicitly]
   private void Update()
   {
-    if (isRunning)
+    if (_isRunning)
     {
       _elapsedTime += Time.deltaTime;
     }

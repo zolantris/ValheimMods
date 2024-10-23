@@ -325,26 +325,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     return mpc.transform;
   }
 
-  public static IEnumerator OnPlayerSpawnInVehicle(ZNetView? zNetView)
-  {
-    var vpc = zNetView?.GetComponentInParent<VehiclePiecesController>();
-    if (vpc == null)
-    {
-      yield return false;
-    }
-    else
-    {
-      yield return new WaitUntil(() =>
-        Player.m_localPlayer.IsTeleporting() == false);
-      Physics.SyncTransforms();
-      if (vpc.IsActivationComplete) yield return true;
-      else
-      {
-        yield return new WaitUntil(() => vpc.IsActivationComplete);
-      }
-    }
-  }
-
   public void Awake()
   {
     if (ZNetView.m_forceDisableInit)
@@ -600,6 +580,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     if (!m_body.isKinematic)
     {
       m_body.isKinematic = true;
+    }
+
+    if (m_body.collisionDetectionMode !=
+        CollisionDetectionMode.ContinuousDynamic)
+    {
+      m_body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
     }
 
     if (m_fixedJoint.connectedBody)
@@ -1882,8 +1868,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void OnAddSteeringWheelDestroyPrevious(ZNetView netView,
     SteeringWheelComponent steeringWheelComponent)
   {
-    var wheelPieces = _steeringWheelPieces.ToList();
+    var wheelPieces = _steeringWheelPieces;
     if (wheelPieces.Count <= 0) return;
+
     foreach (var wnt in wheelPieces.Select(wheel =>
                wheel.GetComponent<WearNTear>()))
     {

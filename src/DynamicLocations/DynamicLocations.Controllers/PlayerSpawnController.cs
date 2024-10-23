@@ -196,19 +196,16 @@ public class PlayerSpawnController : MonoBehaviour
     return wasSuccessful;
   }
 
-  public bool SyncLogoutPoint(ZNetView netView)
-  {
-    if (!player || player == null || !CanUpdateLogoutPoint) return false;
-    return SyncLogoutPoint(netView.GetZDO());
-  }
-
   /// <summary>
   /// Must be called on logout, and should be fired optimistically to avoid desync if crashes happen.
   /// </summary>
   /// <returns>bool</returns>
-  public bool SyncLogoutPoint(ZDO zdo)
+  public bool SyncLogoutPoint(ZDO zdo, bool shouldRemove = false)
   {
-    if (!ZdoWatchController.GetPersistentID(zdo,
+    var canRemove = shouldRemove &&
+                    DynamicLocationsConfig.ShouldRemoveLoginPoint.Value;
+
+    if (canRemove || !ZdoWatchController.GetPersistentID(zdo,
           out var persistentId))
     {
       LocationController.RemoveZdoTarget(LocationVariation.Logout,
@@ -309,7 +306,7 @@ public class PlayerSpawnController : MonoBehaviour
     }
 
     IsRunningFindDynamicZdo = false;
-    timer.Delete();
+    timer.Clear();
   }
 
 
@@ -380,7 +377,8 @@ public class PlayerSpawnController : MonoBehaviour
       // remove logout point after moving the player.
       case LocationVariation.Logout when player != null:
       {
-        if (CanRemoveLogoutAfterSync)
+        if (CanRemoveLogoutAfterSync &&
+            DynamicLocationsConfig.ShouldRemoveLoginPoint.Value)
         {
           yield return LocationController.RemoveZdoTarget(
             LocationVariation.Logout,
@@ -396,7 +394,7 @@ public class PlayerSpawnController : MonoBehaviour
           locationVariationType, null);
     }
 
-    timer.Delete();
+    timer.Clear();
     yield return true;
   }
 
@@ -469,6 +467,17 @@ public class PlayerSpawnController : MonoBehaviour
   //   var output = PlayerMoveToVehicleCallback(netView);
   //   yield return output;
   // }
+
+  public static bool HasExpiredTimer(Stopwatch timer, int timeInMs = 1000)
+  {
+    var time = timeInMs > 1000
+      ? timeInMs
+      : DynamicLocationsConfig.LocationControlsTimeoutInMs.Value;
+
+    var hasExpiredTimer = timer.ElapsedMilliseconds > time;
+
+    return hasExpiredTimer;
+  }
 
   public static bool HasExpiredTimer(DebugSafeTimer timer, int timeInMs = 1000)
   {
@@ -588,6 +597,20 @@ public class PlayerSpawnController : MonoBehaviour
         DynamicLocationsConfig.LocationControlsTimeoutInMs.Value));
 
     zdoNetViewInstance = ZNetScene.instance.FindInstance(zdo);
+
+    yield return new WaitUntil(() =>
+    {
+      zdoNetViewInstance = ZNetScene.instance.FindInstance(zdo);
+      return zdoNetViewInstance != null || HasExpiredTimer(timer,
+        DynamicLocationsConfig.LocationControlsTimeoutInMs.Value);
+    });
+
+    if (HasExpiredTimer(timer,
+          DynamicLocationsConfig.LocationControlsTimeoutInMs.Value))
+    {
+      Logger.LogError("Error attempting to find NetView instance of the ZDO");
+      yield break;
+    }
 
     if (DynamicLocationsConfig.FreezePlayerPosition.Value && character != null)
     {

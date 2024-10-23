@@ -30,6 +30,7 @@ public class ZdoWatcherPlugin : BaseUnityPlugin
     _harmony = new Harmony(HarmonyGuid);
     _harmony.PatchAll(typeof(ZdoPatch));
     _harmony.PatchAll(typeof(ZNetScene_Patch));
+    _harmony.PatchAll(typeof(ZDOMan_Patch));
 
 
     if (ZdoWatcherConfig.GuardAgainstInvalidZNetSceneSpam != null &&

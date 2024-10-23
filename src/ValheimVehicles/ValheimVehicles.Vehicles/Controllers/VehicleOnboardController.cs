@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DynamicLocations;
 using DynamicLocations.Controllers;
 using UnityEngine;
+using ValheimVehicles.Config;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles.Controllers;
@@ -185,8 +186,9 @@ public class VehicleOnboardController : MonoBehaviour
 
     if (playerInList == Player.m_localPlayer && vehicleZdo != null)
     {
-      ValheimBaseGameShip.s_currentShips.Remove(_movementController);
-      PlayerSpawnController.Instance?.SyncLogoutPoint(vehicleZdo);
+      // Todo figure out why I had this enabled, it looks like it could cause a ton of issues.
+      // ValheimBaseGameShip.s_currentShips.Remove(_movementController);
+      PlayerSpawnController.Instance?.SyncLogoutPoint(vehicleZdo, true);
     }
   }
 
@@ -218,7 +220,7 @@ public class VehicleOnboardController : MonoBehaviour
         _movementController.m_players = validPlayers;
         if (validPlayers.Count == 0)
         {
-          _movementController.SetAnchor(true);
+          _movementController.SendDelayedAnchor();
         }
       }
 

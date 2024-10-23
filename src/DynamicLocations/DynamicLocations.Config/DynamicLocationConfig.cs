@@ -15,6 +15,7 @@ public static class DynamicLocationsConfig
   // public static ConfigEntry<bool>
   //   DynamicSpawnPointGameObjects { get; private set; } = null!;
 
+
   public static ConfigEntry<string> DisabledLoginApiIntegrationsString
   {
     get;
@@ -33,6 +34,9 @@ public static class DynamicLocationsConfig
     DisabledLoginApiIntegrationsString?.Value.Split(',').ToList() ?? [];
 
   public static ConfigEntry<bool> HasCustomSpawnDelay { get; private set; } =
+    null!;
+
+  public static ConfigEntry<bool> ShouldRemoveLoginPoint { get; private set; } =
     null!;
 
   public static ConfigEntry<float> CustomSpawnDelay { get; private set; } =
@@ -75,6 +79,15 @@ public static class DynamicLocationsConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
+
+    ShouldRemoveLoginPoint = Config.Bind(MainSection,
+      "ShouldRemoveLoginPoint",
+      true,
+      new ConfigDescription(
+        "Debug only command to prevent login point removal. This will force the player to always return to their last set dynamic login point. Not good for logouts in dungeons or anywhere else",
+        null,
+        new ConfigurationManagerAttributes()
+          { IsAdminOnly = true, IsAdvanced = true }));
 
     LocationControlsTimeoutInMs = Config.Bind(MainSection,
       "LocationControls Timeout In Ms",
