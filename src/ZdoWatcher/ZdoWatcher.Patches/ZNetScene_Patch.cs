@@ -9,6 +9,6 @@ public class ZNetScene_Patch
   [HarmonyPostfix]
   private static void ZNetScene_Shutdown()
   {
-    ZdoWatchManager.Instance.Reset();
+    ZdoWatchController.Instance.Reset();
   }
 }

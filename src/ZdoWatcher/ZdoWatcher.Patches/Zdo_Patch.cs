@@ -9,20 +9,20 @@ public class ZdoPatch
   [HarmonyPostfix]
   private static void ZDO_Deserialize(ZDO __instance, ZPackage pkg)
   {
-    ZdoWatchManager.Instance.Deserialize(__instance);
+    ZdoWatchController.Instance.Deserialize(__instance);
   }
 
   [HarmonyPatch(typeof(ZDO), "Load")]
   [HarmonyPostfix]
   private static void ZDO_Load(ZDO __instance, ZPackage pkg, int version)
   {
-    ZdoWatchManager.Instance.Load(__instance);
+    ZdoWatchController.Instance.Load(__instance);
   }
 
   [HarmonyPatch(typeof(ZDO), "Reset")]
   [HarmonyPrefix]
   private static void ZDO_Reset(ZDO __instance)
   {
-    ZdoWatchManager.Instance.Reset(__instance);
+    ZdoWatchController.Instance.Reset(__instance);
   }
 }

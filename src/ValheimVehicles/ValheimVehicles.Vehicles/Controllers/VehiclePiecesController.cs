@@ -45,6 +45,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   private static bool _allowPendingPiecesToActivate = true;
 
+  public bool IsActivationComplete = false;
+
   public static bool DEBUGAllowActivatePendingPieces
   {
     get => _allowPendingPiecesToActivate;
@@ -580,6 +582,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       m_body.isKinematic = true;
     }
 
+    if (m_body.collisionDetectionMode !=
+        CollisionDetectionMode.ContinuousDynamic)
+    {
+      m_body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+    }
+
     if (m_fixedJoint.connectedBody)
     {
       m_fixedJoint.connectedBody = null;
@@ -677,8 +685,22 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     Sync();
   }
 
+  private void UpdateBedPiece(Bed mBedPiece)
+  {
+    mBedPiece.m_nview.m_zdo.SetPosition(mBedPiece.m_nview.transform.position);
+  }
+
+  public void UpdateBedPieces()
+  {
+    foreach (var mBedPiece in m_bedPieces)
+    {
+      UpdateBedPiece(mBedPiece);
+    }
+  }
+
   public void CustomFixedUpdate(float deltaTime)
   {
+    UpdateBedPieces();
     Sync();
   }
 
@@ -701,6 +723,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var currentPieceControllerSector =
       ZoneSystem.instance.GetZone(transform.position);
 
+    VehicleInstance?.NetView?.m_zdo.SetPosition(transform.position);
+
+
     foreach (var nv in m_pieces.ToList())
     {
       if (!nv)
@@ -711,23 +736,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         continue;
       }
 
-      var zdo = VehicleInstance?.NetView?.GetZDO();
-
-      if (currentPieceControllerSector != nv.GetZDO().GetSector())
+      var bedComponent = nv.GetComponent<Bed>();
+      if (bedComponent)
       {
-        nv.GetZDO().SetSector(currentPieceControllerSector);
+        UpdateBedPiece(bedComponent);
+        continue;
       }
 
-      if (zdo != null && currentPieceControllerSector != zdo?.GetSector())
-      {
-        nv.m_zdo?.SetPosition(transform.position);
-        VehicleInstance?.NetView?.m_zdo.SetPosition(transform.position);
-      }
-
-      if (transform.position != nv.transform.position)
-      {
-        nv.m_zdo?.SetPosition(transform.position);
-      }
+      nv.m_zdo?.SetPosition(transform.position);
     }
   }
 
@@ -1252,6 +1268,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public IEnumerator ActivatePendingPieces()
   {
+    IsActivationComplete = false;
+
     while (vehicleInitializationTimer is
              { ElapsedMilliseconds: < 50000, IsRunning: true } &&
            enabled)
@@ -1271,7 +1289,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       }
 
       var id =
-        ZdoWatchManager.Instance.GetOrCreatePersistentID(
+        ZdoWatchController.Instance.GetOrCreatePersistentID(
           VehicleInstance?.NetView?.GetZDO());
       m_pendingPieces.TryGetValue(id, out var list);
 
@@ -1358,13 +1376,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         yield return null;
       }
 
-      // possibly will help force sync if activate pending pieces is going weirdly for client
-      // zsyncRigidbody?.SyncNow();
       // debounces to prevent spamming activation
       yield return new WaitForSeconds(1);
     }
 
     vehicleInitializationTimer.Stop();
+    IsActivationComplete = true;
   }
 
   /// <summary>
@@ -1614,8 +1631,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       {
         var zdoparent = ZDOMan.instance.GetZDO(zdoid);
         id = zdoparent == null
-          ? ZdoWatchManager.ZdoIdToId(zdoid)
-          : ZdoWatchManager.Instance.GetOrCreatePersistentID(zdoparent);
+          ? ZdoWatchController.ZdoIdToId(zdoid)
+          : ZdoWatchController.Instance.GetOrCreatePersistentID(zdoparent);
         zdo.Set(VehicleZdoVars.MBParentIdHash, id);
         zdo.Set(VehicleZdoVars.MBRotationVecHash,
           zdo.GetQuaternion(VehicleZdoVars.MBRotationHash, Quaternion.identity)
@@ -1659,7 +1676,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var id = GetParentID(netView.m_zdo);
     if (id == 0) return;
 
-    var parentObj = ZdoWatchManager.Instance.GetGameObject(id);
+    var parentObj = ZdoWatchController.Instance.GetGameObject(id);
     if (parentObj != null)
     {
       var vehicleShip = parentObj.GetComponent<VehicleShip>();
@@ -1813,8 +1830,18 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     if (netView.m_zdo != null)
     {
-      netView.m_zdo.Set(VehicleZdoVars.MBParentIdHash,
-        VehicleInstance.PersistentZdoId);
+      if (VehicleInstance?.PersistentZdoId != null)
+      {
+        netView.m_zdo.Set(VehicleZdoVars.MBParentIdHash,
+          VehicleInstance.PersistentZdoId);
+      }
+      else
+      {
+        // We should not reach this, but this would be a critical issue and should be tracked.
+        Logger.LogError(
+          "Potential update error detected: Ship parent ZDO is invalid but added a Piece to the ship");
+      }
+
       netView.m_zdo.Set(VehicleZdoVars.MBRotationVecHash,
         netView.transform.localRotation.eulerAngles);
       netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
@@ -1841,8 +1868,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void OnAddSteeringWheelDestroyPrevious(ZNetView netView,
     SteeringWheelComponent steeringWheelComponent)
   {
-    var wheelPieces = _steeringWheelPieces.ToList();
+    var wheelPieces = _steeringWheelPieces;
     if (wheelPieces.Count <= 0) return;
+
     foreach (var wnt in wheelPieces.Select(wheel =>
                wheel.GetComponent<WearNTear>()))
     {

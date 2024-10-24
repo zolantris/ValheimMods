@@ -62,7 +62,8 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var shipControls = prefab.AddComponent<VehicleMovementController>();
     shipInstance.ColliderParentObj = vehicleMovementColliders.gameObject;
     shipControls.ShipDirection =
-      floatColliderObj.FindDeepChild(PrefabNames.VehicleShipMovementOrientation);
+      floatColliderObj.FindDeepChild(PrefabNames
+        .VehicleShipMovementOrientation);
     shipInstance.MovementController = shipControls;
     shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
 
@@ -73,7 +74,8 @@ public class WaterVehiclePrefab : IRegisterPrefab
     waterEffects.name = PrefabNames.VehicleShipEffects;
     var shipEffects = waterEffects.GetComponent<ShipEffects>();
     var vehicleShipEffects = waterEffects.AddComponent<VehicleShipEffects>();
-    VehicleShipEffects.CloneShipEffectsToInstance(vehicleShipEffects, shipEffects);
+    VehicleShipEffects.CloneShipEffectsToInstance(vehicleShipEffects,
+      shipEffects);
     Object.Destroy(shipEffects);
 
     vehicleShipEffects.transform.localPosition = new Vector3(0, -2, 0);
@@ -84,7 +86,8 @@ public class WaterVehiclePrefab : IRegisterPrefab
     prefab.AddComponent<WearNTear>();
     var woodWnt = LoadValheimAssets.woodFloorPiece.GetComponent<WearNTear>();
     var wnt = PrefabRegistryHelpers.SetWearNTear(prefab, 1, true);
-    PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.HardWood);
+    PrefabRegistryHelpers.SetWearNTearSupport(wnt,
+      WearNTear.MaterialType.HardWood);
 
     wnt.m_onDestroyed += woodWnt.m_onDestroyed;
     // triggerPrivateArea will damage enemies/pieces when within it
@@ -99,8 +102,10 @@ public class WaterVehiclePrefab : IRegisterPrefab
     // todo ImpactEffect likely never should have been added like this
     // todo remove if unnecessary
     var impactEffect = prefab.AddComponent<ImpactEffect>();
-    impactEffect.m_triggerMask = LayerMask.GetMask("Default", "character", "piece", "terrain",
-      "static_solid", "Default_small", "character_net", "vehicle", LayerMask.LayerToName(29));
+    impactEffect.m_triggerMask = LayerMask.GetMask("Default", "character",
+      "piece", "terrain",
+      "static_solid", "Default_small", "character_net", "vehicle",
+      LayerMask.LayerToName(29));
     impactEffect.m_toolTier = 1000;
 
     impactEffect.m_damages.m_blunt = 50;
@@ -120,7 +125,9 @@ public class WaterVehiclePrefab : IRegisterPrefab
     var prefab = CreateClonedPrefab(PrefabNames.WaterVehicleShip);
     var waterVehiclePrefab = CreateWaterVehiclePrefab(prefab);
 
-    var piece = PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.WaterVehicleShip, prefab);
+    var piece =
+      PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.WaterVehicleShip,
+        prefab);
     piece.m_primaryTarget = true;
     piece.m_randomTarget = true;
     piece.m_targetNonPlayerBuilt = true;
@@ -128,21 +135,22 @@ public class WaterVehiclePrefab : IRegisterPrefab
     piece.m_noClipping = true;
     piece.m_canRotate = true;
 
-    PieceManager.Instance.AddPiece(new CustomPiece(waterVehiclePrefab, true, new PieceConfig
-    {
-      PieceTable = "Hammer",
-      Category = PrefabNames.ValheimRaftMenuName,
-      Enabled = true,
-      Requirements =
-      [
-        new RequirementConfig
-        {
-          Amount = 16,
-          Item = "Wood",
-          Recover = false,
-        }
-      ]
-    }));
+    PieceManager.Instance.AddPiece(new CustomPiece(waterVehiclePrefab, true,
+      new PieceConfig
+      {
+        PieceTable = "Hammer",
+        Category = PrefabNames.ValheimRaftMenuName,
+        Enabled = true,
+        Requirements =
+        [
+          new RequirementConfig
+          {
+            Amount = 16,
+            Item = "Wood",
+            Recover = false,
+          }
+        ]
+      }));
   }
 
   private static void RegisterNautilusVehicleShipPrefab()
@@ -185,7 +193,8 @@ public class WaterVehiclePrefab : IRegisterPrefab
     }));
   }
 
-  public void OnExperimentalPrefabSettingsChange(object sender, EventArgs eventArgs)
+  public void OnExperimentalPrefabSettingsChange(object sender,
+    EventArgs eventArgs)
   {
     if (PrefabManager.Instance == null || PieceManager.Instance == null) return;
     RegisterNautilus();
@@ -193,9 +202,10 @@ public class WaterVehiclePrefab : IRegisterPrefab
 
   public void RegisterNautilus()
   {
-    var shouldEnable = ValheimRaftPlugin.Instance.AllowExperimentalPrefabs.Value;
+    var shouldEnable =
+      ValheimRaftPlugin.Instance.AllowExperimentalPrefabs.Value;
 
-    var nautilus = PrefabManager.Instance.GetPrefab(PrefabNames.Nautilus);
+    var nautilus = PrefabManager.Instance?.GetPrefab(PrefabNames.Nautilus);
 
     if (shouldEnable && !nautilus)
     {
@@ -204,8 +214,11 @@ public class WaterVehiclePrefab : IRegisterPrefab
 
     if (!shouldEnable && nautilus)
     {
-      var piece = PieceManager.Instance.GetPiece(PrefabNames.Nautilus);
-      piece.Piece.enabled = false;
+      var piece = PieceManager.Instance?.GetPiece(PrefabNames.Nautilus);
+      if (piece != null)
+      {
+        piece.Piece.enabled = false;
+      }
     }
   }
 

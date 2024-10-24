@@ -12,6 +12,7 @@
       <Path>.github</Path>
       <Path>.gitignore</Path>
       <Path>.props</Path>
+      <Path>CheckFileLocked.ps1</Path>
       <Path>README.md</Path>
       <Path>base.targets</Path>
       <Path>boot.config-example</Path>

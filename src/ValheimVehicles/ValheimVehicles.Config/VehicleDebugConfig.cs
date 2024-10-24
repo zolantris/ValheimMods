@@ -11,6 +11,12 @@ public static class VehicleDebugConfig
   public static ConfigEntry<bool>
     AutoShowVehicleColliders { get; private set; } = null!;
 
+  public static ConfigEntry<bool>
+    HasAutoAnchorDelay { get; private set; } = null!;
+
+  public static ConfigEntry<float> AutoAnchorDelayTime { get; private set; } =
+    null!;
+
   // public static ConfigEntry<bool>
   //   ForceTakeoverShipControls { get; private set; } = null!;
 
@@ -42,6 +48,18 @@ public static class VehicleDebugConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
+
+    HasAutoAnchorDelay = config.Bind(SectionName, "HasAutoAnchorDelay",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "For realism, the ship continues even when nobody is onboard. This is meant for debugging logout points but also could be useful for realism",
+        true, true));
+    AutoAnchorDelayTime = config.Bind(SectionName,
+      "AutoAnchorDelayTimeInSeconds",
+      10f,
+      ConfigHelpers.CreateConfigDescription(
+        "For realism, the ship continues for X amount of time until it either unrenders or a player stops it.",
+        true, true, new AcceptableValueRange<float>(0f, 60f)));
 
     AutoShowVehicleColliders = config.Bind(SectionName,
       "Always Show Vehicle Colliders",

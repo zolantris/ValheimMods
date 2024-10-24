@@ -3,6 +3,12 @@
     <PropertyGroup>
         <ProjectConfigMatcher>'$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run ClientServer|AnyCPU'</ProjectConfigMatcher>
     </PropertyGroup>
+
+    <PropertyGroup Label="Prevents running server start tasks multiple times">
+        <!-- Property to track if the task has already run -->
+        <TaskHasRun Condition="'$(HasRunValheimStartScripts)' == ''">false</TaskHasRun>
+    </PropertyGroup>
+
     <!-- Find GamePath -->
     <Choose>
         <When Condition="($(OS) == 'Unix' OR $(OS) == 'OSX') AND $(GamePath) == ''">
@@ -23,21 +29,24 @@
     </Choose>
 
     <!--    Windows Terminal  https://learn.microsoft.com/en-us/windows/terminal/  -->
-    <Target Name="Run_Valheim_Server" AfterTargets="Copy_To_Valheim_Server"
-            Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Server|AnyCPU'
-                        Or '$(Configuration)|$(Platform)' == 'Release Run Server|AnyCPU'
-                        Or '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU'
-                        Or '$(Configuration)|$(Platform)' == 'Release Run ClientServer|AnyCPU' ">
+    <Target Name="Run_Valheim_Server" AfterTargets="copy_to_valheim_server"
+            Condition="'$(IsRunnableClientServer)' == 'true' or '$(IsRunnableServer)' == 'true'">
         <Exec Command="wt.exe -w 2 -d &quot;$(ValheimServerPath)&quot; --title ValheimServer powershell &quot;Start-Process -NoNewWindow -FilePath 'start_headless_server.bat' -ArgumentList '--doorstop-enable', 'true', '--doorstop-target', '$(ValheimServerPath)\BepInEx\core\BepInEx.Preloader.dll'&quot;;wt.exe -w 2 --title &quot;ValheimServer [Logger]&quot; powershell -NoProfile -NoExit -File &quot;$(SolutionDir)logValheim.ps1&quot; --LogPath &quot;$(ValheimServerPath)\BepInEx\LogOutput.log&quot;"/>
     </Target>
     <Target Name="Run_Valheim" AfterTargets="Copy_To_R2ModMan"
-            Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU'
-                        Or '$(Configuration)|$(Platform)' == 'Release Run Client|AnyCPU'
-                        Or '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU'
-                        Or '$(Configuration)|$(Platform)' == 'Release Run ClientServer|AnyCPU' ">
+            Condition="'$(IsRunnableClientServer)' == 'true' or '$(IsRunnableClient)' == 'true'">
         <!--       doorstop >=4.0.0 requires doorstop-target-assembly flag vs doorstop-target in v3       -->
         <Exec Command="wt.exe -w 2 --title ValheimClient $(GamePath)\valheim.exe -console --doorstop-enable true --doorstop-target-assembly &quot;$(BepInExPath)\BepInEx.Preloader.dll&quot;;wt.exe -w 2 --title &quot;ValheimClient [Logger]&quot; powershell -NoProfile -NoExit -File &quot;$(SolutionDir)logValheim.ps1&quot; --LogPath &quot;%USERPROFILE%\AppData\LocalLow\IronGate\Valheim\Player.log&quot;"/>
     </Target>
+
+<!--    <Target Name="Run_Valheim_vm" Condition="('$(IsRunnableClientServer)' == 'true' or '$(IsRunnableClient)' == 'true') And $(SandboxieVMExists) == 'true'">-->
+<!--        <Exec Command="wt.exe -w 2 &#45;&#45;title ValheimSandboxieVM &quot;$(SandboxieValheimPath)valheim.exe&quot; -console &#45;&#45;doorstop-target-assembly &quot;$(SandboxieProfilePath)\BepInEx\core\BepInEx.Preloader.dll&quot;"/>-->
+<!--    </Target>-->
+
+    <!-- Set the property to indicate the task has run -->
+    <PropertyGroup>
+        <HasRunValheimStartScripts>true</HasRunValheimStartScripts>
+    </PropertyGroup>
     <!--    <Target Name="Run_Valheim_vm" Condition="'$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU'" AfterTargets="Copy_To_R2ModMan_vm">-->
     <!--        <Exec Command="wt.exe -w 2 &#45;&#45;title ValheimClient &quot;$(SandboxieValheimPath)valheim.exe&quot; -console &#45;&#45;doorstop-target-assembly &quot;$(SandboxieProfilePath)\BepInEx\core\BepInEx.Preloader.dll&quot;"/>-->
     <!--    </Target>-->

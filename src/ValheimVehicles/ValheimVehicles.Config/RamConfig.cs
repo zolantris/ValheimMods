@@ -7,35 +7,42 @@ public static class RamConfig
 {
   public static ConfigFile Config { get; private set; }
 
-  public static ConfigEntry<bool> RamDamageEnabled { get; set; }
-  public static ConfigEntry<float> DamageIncreasePercentagePerTier { get; set; }
-  public static ConfigEntry<float> HitRadius { get; set; }
-  public static ConfigEntry<float> RamBaseSlashDamage { get; set; }
-  public static ConfigEntry<float> RamBaseBluntDamage { get; set; }
-  public static ConfigEntry<float> RamBaseChopDamage { get; set; }
-  public static ConfigEntry<float> RamBasePickAxeDamage { get; set; }
-  public static ConfigEntry<float> RamBasePierceDamage { get; set; }
-  public static ConfigEntry<float> RamBaseMaximumDamage { get; set; }
-  public static ConfigEntry<bool> HasMaximumDamageCap { get; set; }
-  public static ConfigEntry<float> PercentageDamageToSelf { get; set; }
-  public static ConfigEntry<bool> AllowContinuousDamage { get; set; }
-  public static ConfigEntry<bool> CanHitCharacters { get; set; }
-  public static ConfigEntry<bool> CanHitFriendly { get; set; }
-  public static ConfigEntry<bool> CanDamageSelf { get; set; }
-  public static ConfigEntry<bool> CanHitEnemies { get; set; }
-  public static ConfigEntry<float> RamHitInterval { get; set; }
+  public static ConfigEntry<bool> RamDamageEnabled { get; set; } = null!;
 
-  public static ConfigEntry<bool> CanRepairRams { get; set; }
-  public static ConfigEntry<bool> CanHitEnvironmentOrTerrain { get; set; }
-  public static ConfigEntry<float> minimumVelocityToTriggerHit { get; set; }
+  public static ConfigEntry<float>
+    DamageIncreasePercentagePerTier { get; set; } = null!;
 
-  public static ConfigEntry<float> MaxVelocityMultiplier { get; set; }
+  public static ConfigEntry<float> HitRadius { get; set; } = null!;
+  public static ConfigEntry<float> RamBaseSlashDamage { get; set; } = null!;
+  public static ConfigEntry<float> RamBaseBluntDamage { get; set; } = null!;
+  public static ConfigEntry<float> RamBaseChopDamage { get; set; } = null!;
+  public static ConfigEntry<float> RamBasePickAxeDamage { get; set; } = null!;
+  public static ConfigEntry<float> RamBasePierceDamage { get; set; } = null!;
+  public static ConfigEntry<float> RamBaseMaximumDamage { get; set; } = null!;
+  public static ConfigEntry<bool> HasMaximumDamageCap { get; set; } = null!;
+  public static ConfigEntry<float> PercentageDamageToSelf { get; set; } = null!;
+  public static ConfigEntry<bool> AllowContinuousDamage { get; set; } = null!;
+  public static ConfigEntry<bool> CanHitCharacters { get; set; } = null!;
+  public static ConfigEntry<bool> CanHitFriendly { get; set; } = null!;
+  public static ConfigEntry<bool> CanDamageSelf { get; set; } = null!;
+  public static ConfigEntry<bool> CanHitEnemies { get; set; } = null!;
+  public static ConfigEntry<float> RamHitInterval { get; set; } = null!;
+
+  public static ConfigEntry<bool> CanRepairRams { get; set; } = null!;
+
+  public static ConfigEntry<bool> CanHitEnvironmentOrTerrain { get; set; } =
+    null!;
+
+  public static ConfigEntry<float> minimumVelocityToTriggerHit { get; set; } =
+    null!;
+
+  public static ConfigEntry<float> MaxVelocityMultiplier { get; set; } = null!;
 
   /// <summary>
   /// TODO possibly enable this after initial release of rams
   /// </summary>
-  // public static ConfigEntry<float> ShipMassMaxMultiplier { get; set; }
-  public static ConfigEntry<int> RamDamageToolTier { get; set; }
+  // public static ConfigEntry<float> ShipMassMaxMultiplier { get; set; }  = null!;
+  public static ConfigEntry<int> RamDamageToolTier { get; set; } = null!;
 
   private const string SectionName = "Rams";
 
@@ -82,12 +89,14 @@ public static class RamConfig
       ConfigHelpers.CreateConfigDescription(
         $"Pierce damage for Ram Stakes. {damageDescription} Will damage rocks as well as other entities",
         true, true));
-    PercentageDamageToSelf = config.Bind(SectionName, "percentageDamageToSelf", 0.01f,
+    PercentageDamageToSelf = config.Bind(SectionName, "percentageDamageToSelf",
+      0.01f,
       ConfigHelpers.CreateConfigDescription(
         $"Percentage Damage applied to the Ram piece per hit. Number between 0-1.",
         true, true, new AcceptableValueRange<float>(0, 1)));
 
-    AllowContinuousDamage = config.Bind(SectionName, "AllowContinuousDamage", true,
+    AllowContinuousDamage = config.Bind(SectionName, "AllowContinuousDamage",
+      true,
       ConfigHelpers.CreateConfigDescription(
         "Rams will continue to apply damage based on their velocity even after the initial impact",
         true, true));
@@ -115,7 +124,8 @@ public static class RamConfig
         "allows rams to be damaged. The values set for the damage will be calculated",
         true, true));
 
-    CanHitEnvironmentOrTerrain = config.Bind(SectionName, "CanHitEnvironmentOrTerrain", true,
+    CanHitEnvironmentOrTerrain = config.Bind(SectionName,
+      "CanHitEnvironmentOrTerrain", true,
       ConfigHelpers.CreateConfigDescription(
         "allows rams to hit friendlies",
         true, true));
@@ -130,14 +140,17 @@ public static class RamConfig
         true, true, new AcceptableValueRange<float>(0.5f, 20f)));
 
     CanRepairRams = config.Bind(SectionName, "RamsCanBeRepaired", false,
-      ConfigHelpers.CreateConfigDescription("Allows rams to be repaired", true));
+      ConfigHelpers.CreateConfigDescription("Allows rams to be repaired",
+        true));
 
     // Physics damage multiplier Config
-    minimumVelocityToTriggerHit = config.Bind(SectionName, "minimumVelocityToTriggerHit", 1f,
+    minimumVelocityToTriggerHit = config.Bind(SectionName,
+      "minimumVelocityToTriggerHit", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Minimum velocity required to activate the ram's damage",
         true, true, new AcceptableValueRange<float>(0f, 100f)));
-    MaxVelocityMultiplier = config.Bind(SectionName, "RamMaxVelocityMultiplier", 1f,
+    MaxVelocityMultiplier = config.Bind(SectionName, "RamMaxVelocityMultiplier",
+      1f,
       ConfigHelpers.CreateConfigDescription(
         "Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.",
         true, true));
@@ -149,7 +162,8 @@ public static class RamConfig
     const int tierDiff = 2;
     const float defaultDamagePerTier = .25f;
     const int baseDamage = 1;
-    DamageIncreasePercentagePerTier = config.Bind(SectionName, "DamageIncreasePercentagePerTier",
+    DamageIncreasePercentagePerTier = config.Bind(SectionName,
+      "DamageIncreasePercentagePerTier",
       0.25f,
       ConfigHelpers.CreateConfigDescription(
         $"Damage Multiplier per tier. So far only HardWood (Tier1) Iron (Tier3) available. With base value 1 a Tier 3 mult at 25% additive additional damage would be 1.5. IE ({baseDamage} * {defaultDamagePerTier} * {tierDiff} + {baseDamage}) = {baseDamage * defaultDamagePerTier * tierDiff + baseDamage}",
@@ -159,7 +173,8 @@ public static class RamConfig
     RamDamageEnabled.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
 
     // Must re-initialize config called in Awake
-    DamageIncreasePercentagePerTier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
+    DamageIncreasePercentagePerTier.SettingChanged +=
+      VehicleRamAoe.OnBaseSettingsChange;
     HitRadius.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     PercentageDamageToSelf.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     AllowContinuousDamage.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
@@ -168,8 +183,10 @@ public static class RamConfig
     CanHitFriendly.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     CanHitEnemies.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     RamHitInterval.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
-    CanHitEnvironmentOrTerrain.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
-    minimumVelocityToTriggerHit.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
+    CanHitEnvironmentOrTerrain.SettingChanged +=
+      VehicleRamAoe.OnBaseSettingsChange;
+    minimumVelocityToTriggerHit.SettingChanged +=
+      VehicleRamAoe.OnBaseSettingsChange;
     MaxVelocityMultiplier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     // ShipMassMaxMultiplier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     RamDamageToolTier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
