@@ -61,11 +61,11 @@
     <!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>-->
     <!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>-->
     <!--    </Target>-->
-    <!--    <Target KeepDuplicateOutputs="false" Name="Copy_To_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Client Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client Server|AnyCPU' " AfterTargets="PostBuildEvent">-->
+    <!--    <Target KeepDuplicateOutputs="false" Name="copy_to_valheim_server" Condition=" '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Client Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client Server|AnyCPU' " AfterTargets="PostBuildEvent">-->
     <!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll&quot;"/>-->
     <!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>-->
     <!--    </Target>-->
-    <!--    <Target Name="Run_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Client Server|AnyCPU' " AfterTargets="Copy_To_Valheim_Server">-->
+    <!--    <Target Name="Run_Valheim_Server" Condition=" '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Client Server|AnyCPU' " AfterTargets="copy_to_valheim_server">-->
     <!--        &lt;!&ndash;        <Exec Command="cd &quot;$(ValheimServerPath)&quot;&ndash;&gt;-->
     <!--        &lt;!&ndash;        powershell Start-Process -FilePath '$(ValheimServerPath)\start_headless_server.bat'"/>&ndash;&gt;-->
     <!--        &lt;!&ndash;    Windows Terminal  https://learn.microsoft.com/en-us/windows/terminal/  &ndash;&gt;-->
