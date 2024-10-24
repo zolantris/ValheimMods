@@ -84,7 +84,7 @@ below on flags.
 Other flags according to chatGPT 4.0. These are nested unity flags. Apparently
 no aggregate spot for them.
 
-[Full GPT output of flags](unity-flags-from-chatgpt-4.md)
+[Full GPT output of flags](./docs/unity-flags-from-chatgpt-4.md)
 
 [ValheimRAFT_Dir]: src/ValheimRAFT
 

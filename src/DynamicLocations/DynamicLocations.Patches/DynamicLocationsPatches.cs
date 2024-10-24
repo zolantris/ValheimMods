@@ -35,7 +35,7 @@ public class DynamicLocationsPatches
 
     var spawnController = PlayerSpawnController.Instance;
     if (!spawnController) return;
-    spawnController?.SyncBedSpawnPoint(__instance.m_nview, __instance);
+    spawnController?.SyncBedSpawnPoint(__instance.m_nview.GetZDO(), __instance);
   }
 
   // [HarmonyPatch(typeof(PlayerProfile), "SetLogoutPoint")]

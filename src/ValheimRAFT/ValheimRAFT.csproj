@@ -129,5 +129,14 @@
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU' ">
         <OutputPath>bin\Debug Run Client\</OutputPath>
     </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Server|AnyCPU' ">
+        <OutputPath>bin\Debug Run Server\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <OutputPath>bin\Debug\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <OutputPath>bin\Release\</OutputPath>
+    </PropertyGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

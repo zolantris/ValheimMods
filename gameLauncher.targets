@@ -39,9 +39,9 @@
         <Exec Command="wt.exe -w 2 --title ValheimClient $(GamePath)\valheim.exe -console --doorstop-enable true --doorstop-target-assembly &quot;$(BepInExPath)\BepInEx.Preloader.dll&quot;;wt.exe -w 2 --title &quot;ValheimClient [Logger]&quot; powershell -NoProfile -NoExit -File &quot;$(SolutionDir)logValheim.ps1&quot; --LogPath &quot;%USERPROFILE%\AppData\LocalLow\IronGate\Valheim\Player.log&quot;"/>
     </Target>
 
-    <Target Name="Run_Valheim_vm" Condition="('$(IsRunnableClientServer)' == 'true' or '$(IsRunnableClient)' == 'true') And $(SandboxieVMExists) == 'true'">
-        <Exec Command="wt.exe -w 2 --title ValheimSandboxieVM &quot;$(SandboxieValheimPath)valheim.exe&quot; -console --doorstop-target-assembly &quot;$(SandboxieProfilePath)\BepInEx\core\BepInEx.Preloader.dll&quot;"/>
-    </Target>
+<!--    <Target Name="Run_Valheim_vm" Condition="('$(IsRunnableClientServer)' == 'true' or '$(IsRunnableClient)' == 'true') And $(SandboxieVMExists) == 'true'">-->
+<!--        <Exec Command="wt.exe -w 2 &#45;&#45;title ValheimSandboxieVM &quot;$(SandboxieValheimPath)valheim.exe&quot; -console &#45;&#45;doorstop-target-assembly &quot;$(SandboxieProfilePath)\BepInEx\core\BepInEx.Preloader.dll&quot;"/>-->
+<!--    </Target>-->
 
     <!-- Set the property to indicate the task has run -->
     <PropertyGroup>

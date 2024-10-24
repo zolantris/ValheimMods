@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using DynamicLocations.Config;
@@ -8,6 +9,7 @@ using DynamicLocations.Constants;
 using Jotunn.Managers;
 using UnityEngine;
 using ZdoWatcher;
+using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 
 namespace DynamicLocations.Controllers;
@@ -27,9 +29,10 @@ public class CacheLocationItem : ICachedLocation
 public class LocationController : MonoBehaviour
 {
   private const string DynamicPrefix = "Dynamic";
-  private const string SpawnZdo = "SpawnZdo";
-  private const string LogoutParentZdoOffset = "LogoutParentZdoOffset";
-  private const string LogoutParentZdo = "LogoutParentZdo";
+  private const string SpawnZdoPrefix = "SpawnZdo";
+  private const string SpawnZdoOffsetPrefix = "SpawnZdoOffset";
+  private const string LogoutParentZdoOffsetPrefix = "LogoutParentZdoOffset";
+  private const string LogoutParentZdoPrefix = "LogoutParentZdo";
 
   // todo determine if having to re-request is a heavy performance hit when it already exists
   private static
@@ -82,27 +85,33 @@ public class LocationController : MonoBehaviour
   }
 
   /// <summary>
-  /// must be guarded
+  /// Allows for overriding the world if attempting to query other world data.
   /// </summary>
-  private static long WorldUID => ZNet.instance?.GetWorldUID() ?? 0;
+  private static long CurrentWorldId => WorldIdOverride != 0
+    ? WorldIdOverride
+    : ZNet.instance?.GetWorldUID() ?? 0;
 
+  internal static long WorldIdOverride = 0;
 
   public static string GetLogoutZdoOffsetKey() =>
     !ZNet.instance
       ? ""
-      : $"{GetFullPrefix()}_{LogoutParentZdoOffset}_{WorldUID}";
+      : $"{GetFullPrefix()}_{LogoutParentZdoOffsetPrefix}_{CurrentWorldId}";
 
-  public static string GetLogoutZdoKey() => !ZNet.instance
-    ? ""
-    : $"{GetFullPrefix()}_{LogoutParentZdo}_{WorldUID}";
+  public static string GetLogoutZdoKey() =>
+    !ZNet.instance
+      ? ""
+      : $"{GetFullPrefix()}_{LogoutParentZdoPrefix}_{CurrentWorldId}";
 
   public static string GetSpawnZdoOffsetKey() =>
     !ZNet.instance
       ? ""
-      : $"{GetFullPrefix()}_{LogoutParentZdoOffset}_{WorldUID}";
+      : $"{GetFullPrefix()}_{SpawnZdoOffsetPrefix}_{CurrentWorldId}";
 
   public static string GetSpawnZdoKey() =>
-    !ZNet.instance ? "" : $"{GetFullPrefix()}_{SpawnZdo}_{WorldUID}";
+    !ZNet.instance
+      ? ""
+      : $"{GetFullPrefix()}_{SpawnZdoPrefix}_{CurrentWorldId}";
 
   /// <summary>
   /// Todo see if this is needed
@@ -172,6 +181,7 @@ public class LocationController : MonoBehaviour
 
       // this was a local change
       // todo remove this
+#if DEBUG
       if (keyValuePair.Key.Contains("valheim_vehicles") &&
           DynamicLocationsConfig.IsDebug)
       {
@@ -179,31 +189,136 @@ public class LocationController : MonoBehaviour
           $"Removing: Key: {keyValuePair.Key} Value: {keyValuePair.Value}");
         Player.m_localPlayer.m_customData.Remove(keyValuePair.Key);
       }
+#endif
     }
+
+    // Game.instance.SavePlayerProfile(false);
+  }
+
+  internal static void DEBUGCOMMAND_RemoveLogout()
+  {
+    var logoutKey = GetLogoutZdoKey();
+    Logger.LogInfo(Player.m_localPlayer.m_customData.Remove(logoutKey)
+      ? $"Removing logout key: {logoutKey}"
+      : "No logout key found");
+  }
+
+  internal static void DEBUGCOMMAND_ListAllKeys()
+  {
+    var playerKeys = Player.m_localPlayer.m_customData.ToArray();
+    var logoutKeys = new List<string>();
+    var logoutOffsetKeys = new List<string>();
+    var spawnKeys = new List<string>();
+    var spawnOffsetKeys = new List<string>();
+    var currentWorldItems =
+      (from keyValuePair in Player.m_localPlayer.m_customData.ToArray()
+        where keyValuePair.Key.Contains($"{CurrentWorldId}")
+        select keyValuePair.Value)
+      .ToArray(); // Convert to array for stringifying later
+
+
+    foreach (var keyValuePair in playerKeys)
+    {
+      if (!keyValuePair.Key.Contains(GetFullPrefix()))
+      {
+        continue;
+      }
+
+      if (keyValuePair.Key.Contains(SpawnZdoOffsetPrefix))
+      {
+        spawnOffsetKeys.Add(keyValuePair.Value);
+      }
+      else if (keyValuePair.Key.Contains(SpawnZdoPrefix))
+      {
+        spawnKeys.Add(keyValuePair.Value);
+      }
+      else if (keyValuePair.Key.Contains(LogoutParentZdoOffsetPrefix))
+      {
+        logoutOffsetKeys.Add(keyValuePair.Value);
+      }
+      else if (keyValuePair.Key.Contains(LogoutParentZdoPrefix))
+      {
+        logoutKeys.Add(keyValuePair.Value);
+      }
+    }
+
+    Logger.LogInfo(
+      $"currentWorldItems: {string.Join(", ", currentWorldItems)}");
+    Logger.LogInfo($"spawnKeys: {string.Join(", ", spawnKeys)}");
+    Logger.LogInfo($"spawnOffsetKeys: {string.Join(", ", spawnOffsetKeys)}");
+    Logger.LogInfo($"logoutKeys: {string.Join(", ", logoutKeys)}");
+    Logger.LogInfo($"logoutOffsetKeys: {string.Join(", ", logoutOffsetKeys)}");
   }
 
 
   public static bool RemoveZdoTarget(
     LocationVariation locationVariationType, Player? player)
   {
-    if (player == null)
-      return false;
-
-    var selectedZdoKey = GetZdoStorageKey(locationVariationType);
-    var selectedOffsetKey = GetZdoStorageKey(locationVariationType);
-    if (!ZNet.instance) return false;
-
-    if (player.m_customData.ContainsKey(selectedOffsetKey))
-    {
-      player.m_customData.Remove(selectedOffsetKey);
-    }
-
-    if (player.m_customData.ContainsKey(selectedZdoKey))
-    {
-      player.m_customData.Remove(selectedZdoKey);
-    }
-
+    RemoveTargetKey(locationVariationType, player);
     return true;
+  }
+
+  public static int? GetZdoFromStore(
+    LocationVariation locationVariationType,
+    Player? player)
+  {
+    var targetKey = GetZdoStorageKey(locationVariationType);
+    if (player == null)
+    {
+      return null;
+    }
+
+    if (!player.m_customData.TryGetValue(targetKey, out var zdoString))
+    {
+      return null;
+    }
+
+    if (!int.TryParse(zdoString, out var zdoidInt))
+    {
+      Logger.LogError(
+        $"The targetKey <{targetKey}> zdoKey: <{zdoString}> could not be parsed as an int");
+      return null;
+    }
+
+    Logger.LogDebug(
+      $"Retreiving targetKey <{targetKey}> zdoKey: <{zdoString}> for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
+    return zdoidInt;
+  }
+
+  public static bool TryGetWorldUidFromKey(string storageKey, out long worldUid)
+  {
+    var udidString = storageKey.Split('_').Last();
+    long.TryParse(udidString, out var worldUidLong);
+    worldUid = worldUidLong;
+    return worldUidLong == CurrentWorldId;
+  }
+
+
+  public static void RemoveTargetKey(LocationVariation locationVariationType,
+    Player? player)
+  {
+    if (player == null) return;
+    if (ZNet.instance == null) return;
+
+#if DEBUG
+    // for debugging
+    if (DynamicLocationsConfig.DEBUG_ShouldNotRemoveTargetKey.Value) return;
+#endif
+    var targetKey = GetZdoStorageKey(locationVariationType);
+    var targetKeyOffset = GetOffsetStorageKey(locationVariationType);
+
+    if (!TryGetWorldUidFromKey(targetKey, out var uid))
+    {
+      Logger.LogWarning(
+        $"Skipping key deletion due to current world {CurrentWorldId} not matching key worldUid {uid}");
+      return;
+    }
+
+
+    player.m_customData.Remove(targetKey);
+    player.m_customData.Remove(targetKeyOffset);
+
+    Game.instance.m_playerProfile.SavePlayerData(player);
   }
 
   /// <summary>
@@ -212,57 +327,38 @@ public class LocationController : MonoBehaviour
   /// <param name="targetKey"></param>
   /// <param name="player"></param>
   /// <returns></returns>
-  public static IEnumerator GetZdoFromStore(
+  public static IEnumerator GetZdoFromStoreAsync(
     LocationVariation locationVariationType,
-    Player? player)
+    Player? player, Action<ZDO?> onComplete, int timeoutInMs = 1000)
   {
-    var targetKey = GetZdoStorageKey(locationVariationType);
-    if (player == null)
-    {
-      yield break;
-    }
+    var timer = Stopwatch.StartNew();
+    var zdoIdIntOutput = GetZdoFromStore(locationVariationType, player);
 
-    if (!player.m_customData.TryGetValue(targetKey, out var zdoString))
-    {
-      yield break;
-    }
-
-    if (!int.TryParse(zdoString, out var zdoUid))
-    {
-      Logger.LogError(
-        $"The targetKey <{targetKey}> zdoKey: <{zdoString}> could not be parsed as an int");
-      yield break;
-    }
-
-    Logger.LogDebug(
-      $"Retreiving targetKey <{targetKey}> zdoKey: <{zdoString}> for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
-
+    if (zdoIdIntOutput == null) yield break;
     // each game will create a new set of IDs, but the persistent data will allow for looking up the current game's ID.
-    var output = ZdoWatchController.Instance.GetZdoFromServer(zdoUid);
-    yield return output;
-    yield return new WaitUntil(() => output.Current is ZDO);
+    ZDO? zdoOutput = null;
+    yield return ZdoWatchController.Instance.GetZdoFromServerAsync(
+      zdoIdIntOutput.Value,
+      (output) => { zdoOutput = output; });
 
-    var zdoOutput = output.Current as ZDO;
-    // ZDOs are not truely unique with ZdoWatcher and therefore must have a unique key for spawn / login objects so we know the ZDO returned is of this type instead of any ZDO matching especially if a ZDO was deleted.
-    if (zdoOutput != null)
-    {
-      var dynamicLocationsObject =
-        (zdoOutput).GetInt(ZdoVarKeys.DynamicLocationsPoint);
-      if (dynamicLocationsObject == 0)
-      {
-        output = null;
-      }
-    }
-
-    // Remove the zdo key from player if it no longer exists in the game (IE it was destroyed)
     if (zdoOutput == null)
     {
       Logger.LogDebug(
         $"Removing targetKey as it's ZDO no longer exists");
-      player.m_customData.Remove(targetKey);
+      RemoveTargetKey(locationVariationType, player);
+      yield break;
     }
 
-    yield return zdoOutput;
+    var dynamicLocationsObject =
+      (zdoOutput).GetInt(ZdoVarKeys.DynamicLocationsPoint);
+
+    // these zdos must be setup corretly, if they do not have this key it should be considered invalid / unstable
+    if (dynamicLocationsObject == 0)
+    {
+      yield break;
+    }
+
+    onComplete(zdoOutput);
   }
 
   public static void ResetCachedValues()
@@ -329,11 +425,8 @@ public class LocationController : MonoBehaviour
     Logger.LogDebug(
       $"Setting key: {saveKey}, uid: {zdo.m_uid} for name: {player.GetPlayerName()} id: {player.GetPlayerID()}");
 
-    // likely not needed
+    // required to write to disk. unfortunately due to logout not actually triggering a save meaning the player customData is not mutated and logging in resets to the previous player state
     Game.instance.m_playerProfile.SavePlayerData(player);
-
-    // required to write to disk unfortunately due to logout not actually triggering a save meaning the player customData is not mutated and logging in resets to the previous player state
-    Game.instance.m_playerProfile.Save();
 
     return zdo;
   }

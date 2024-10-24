@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -201,23 +202,17 @@ public class LoginAPIController
   {
     // early exit so apis do not need to null check unless they do not exit properly.
     if (playerSpawnController == null) yield break;
-
-    IEnumerator? handled = null;
     DynamicLoginIntegration? selectedIntegration = null;
-
     foreach (var loginIntegration in loginIntegrationsByPriority)
     {
       var isZdoMatch = loginIntegration.OnLoginMatchZdoPrefab(zdo);
       if (isZdoMatch == false) continue;
 
       selectedIntegration = loginIntegration;
-      handled =
-        loginIntegration.API_OnLoginMoveToZDO(zdo, offset,
-          playerSpawnController);
+      yield return loginIntegration.API_OnLoginMoveToZDO(zdo, offset,
+        playerSpawnController);
       break;
     }
-
-    yield return handled;
 
     // this checks to see if the handler is not an enumerator
     if (selectedIntegration != null)

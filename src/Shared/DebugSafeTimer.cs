@@ -114,6 +114,14 @@ public class DebugSafeTimer
     _listRef?.Remove(this);
   }
 
+  private void OnUpdateAutoExpire()
+  {
+    if (ElapsedMilliseconds > 20000)
+    {
+      Clear();
+    }
+  }
+
   /// <summary>
   /// To be run in a Monobehavior
   /// </summary>
@@ -124,5 +132,7 @@ public class DebugSafeTimer
     {
       _elapsedTime += Time.deltaTime;
     }
+
+    OnUpdateAutoExpire();
   }
 }

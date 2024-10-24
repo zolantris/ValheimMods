@@ -14,19 +14,21 @@ public class DynamicLocationsCommands : ConsoleCommand
 
   private const string playerClearAllCommand = "playerClearAll";
 
-  private const string playerClearDynamicLoginCommand =
-    "playerClearDynamicLogin";
+  private const string playerClearSpawnCommand =
+    "playerClearSpawn";
 
-  private const string playerClearDynamicSpawnCommand =
-    "playerClearDynamicSpawn";
+  private const string playerClearLogoutCommand = "playerClearLogout";
 
+  private const string playerListAllCommand = "playerListAllKeys";
   private const string serverClearAllCommand = "serverClearAll";
 
   private static string OnHelp()
   {
     return
       "DynamicLocationsCLI Mod CLI: " +
-      $"\n<{playerClearAllCommand}>: clears all dynamicLogin and dynamicSpawn points for a player for the corresponding world";
+      $"\n<{playerClearLogoutCommand}>: removes logout for the current world, will not change other worlds" +
+      $"\n<{playerClearAllCommand}>: clears all dynamicLogin and dynamicSpawn points for a player for the corresponding world" +
+      $"\n<{playerListAllCommand}>: Lists all keys related to this mod";
     // $"\n<{playerClearDynamicSpawnCommand}>: clears dynamicSpawn points for a player for the corresponding world" +
     // $"\n<{playerClearDynamicLoginCommand}>: clears dynamicLogin points for a player for the corresponding world" +
     // $"\n<{serverClearAllCommand}>: clears all dynamicLogin and dynamicSpawn points for all players";
@@ -50,6 +52,12 @@ public class DynamicLocationsCommands : ConsoleCommand
     {
       case playerClearAllCommand:
         PlayerClearAll(args.Skip(1).ToArray());
+        break;
+      case playerListAllCommand:
+        PlayerListAllDynamicLocationKeys();
+        break;
+      case playerClearLogoutCommand:
+        PlayerClearLogout();
         break;
     }
   }
@@ -78,8 +86,20 @@ public class DynamicLocationsCommands : ConsoleCommand
     }
   }
 
+  public void PlayerListAllDynamicLocationKeys()
+  {
+    LocationController.DEBUGCOMMAND_ListAllKeys();
+  }
+
+  public static void PlayerClearLogout()
+  {
+    LocationController.DEBUGCOMMAND_RemoveLogout();
+  }
+
   public override List<string> CommandOptionList() =>
   [
+    playerClearLogoutCommand,
+    playerListAllCommand,
     playerClearAllCommand,
     // playerClearDynamicLoginCommand,
     // playerClearDynamicSpawnCommand

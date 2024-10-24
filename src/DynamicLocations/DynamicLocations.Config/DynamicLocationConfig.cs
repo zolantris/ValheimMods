@@ -36,7 +36,11 @@ public static class DynamicLocationsConfig
   public static ConfigEntry<bool> HasCustomSpawnDelay { get; private set; } =
     null!;
 
-  public static ConfigEntry<bool> ShouldRemoveLoginPoint { get; private set; } =
+  public static ConfigEntry<bool> DEBUG_ShouldNotRemoveTargetKey
+  {
+    get;
+    private set;
+  } =
     null!;
 
   public static ConfigEntry<float> CustomSpawnDelay { get; private set; } =
@@ -50,13 +54,21 @@ public static class DynamicLocationsConfig
   public static ConfigEntry<bool>
     EnableDynamicLogoutPoint { get; private set; } = null!;
 
-  public static ConfigEntry<bool> FreezePlayerPosition { get; private set; } =
+  public static ConfigEntry<bool> DebugDisableFreezePlayerTeleportMechanics
+  {
+    get;
+    private set;
+  } =
     null!;
 
   private static ConfigEntry<bool> Debug { get; set; } = null!;
   public static bool IsDebug => Debug.Value;
 
-  public static ConfigEntry<bool> DebugDistancePortal { get; private set; } =
+  public static ConfigEntry<bool> DebugDisableDistancePortal
+  {
+    get;
+    private set;
+  } =
     null!;
 
   public static ConfigEntry<float> DebugForceUpdatePositionDelay
@@ -80,11 +92,11 @@ public static class DynamicLocationsConfig
   {
     Config = config;
 
-    ShouldRemoveLoginPoint = Config.Bind(MainSection,
-      "ShouldRemoveLoginPoint",
+    DEBUG_ShouldNotRemoveTargetKey = Config.Bind(MainSection,
+      "DEBUG_ShouldNotRemoveTargetKey",
       true,
       new ConfigDescription(
-        "Debug only command to prevent login point removal. This will force the player to always return to their last set dynamic login point. Not good for logouts in dungeons or anywhere else",
+        "Debug only command: will prevent removing of data on the player. This is meant to debug issues with the player spawn points. Should not be enabled in production builds.",
         null,
         new ConfigurationManagerAttributes()
           { IsAdminOnly = true, IsAdvanced = true }));
@@ -125,16 +137,16 @@ public static class DynamicLocationsConfig
         new ConfigurationManagerAttributes()
           { IsAdminOnly = false, IsAdvanced = false }));
 
-    FreezePlayerPosition = Config.Bind(MainSection,
-      "FreezePlayerPosition",
+    DebugDisableFreezePlayerTeleportMechanics = Config.Bind(DebugSection,
+      "DEBUG_DisableFreezePlayerMechanics",
       false,
       new ConfigDescription(
-        $"Freezes the player position until the portal and vehicle is fully loaded, prevents falling through the empty bed position into the water.",
+        $"This will disable freezing of players from integrations. Do not disable this unless you know what you are doing. Freezing is used to prevent physics happening during teleport.",
         null,
         new ConfigurationManagerAttributes()
           { IsAdminOnly = false, IsAdvanced = false }));
 
-    DebugDistancePortal = Config.Bind(DebugSection,
+    DebugDisableDistancePortal = Config.Bind(DebugSection,
       "DebugDistancePortal",
       false,
       new ConfigDescription(

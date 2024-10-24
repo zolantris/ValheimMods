@@ -2,12 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using DynamicLocations.Config;
 using DynamicLocations.Constants;
-using DynamicLocations.Interfaces;
+using JetBrains.Annotations;
 using UnityEngine;
-using UnityEngine.UIElements;
 using ZdoWatcher;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
@@ -135,31 +133,49 @@ public class PlayerSpawnController : MonoBehaviour
   /// <summary>
   /// Persists beds across sessions, requires the bed netview input
   /// </summary>
-  /// <param name="netView"></param>
+  /// <param name="zdo"></param>
+  /// <param name="locationVariationType"></param>
   /// <returns></returns>
-  public ZNetView? PersistBedZdo(Bed bed)
+  public bool PersistDynamicPoint(ZDO zdo,
+    LocationVariation locationVariationType, out int id)
   {
-    var netView = bed.GetComponent<ZNetView>();
-    if (!netView) return null;
-
     // Beds must be persisted when syncing spawns otherwise they cannot be retrieved directly across sessions / on server shutdown and would require a deep search of all objects.
-    var persistentId =
-      ZdoWatchController.Instance.GetOrCreatePersistentID(netView.GetZDO());
 
-    if (persistentId == 0)
+    var hasPersistentID =
+      ZdoWatchController.GetPersistentID(zdo, out var persistentId);
+    id = persistentId;
+
+    if (!hasPersistentID)
     {
       Logger.LogError(
         "No persistent ID returned for bed, this should not be possible. Please report this error");
-      LocationController.RemoveZdoTarget(LocationVariation.Spawn,
-        player);
-      return null;
+      RemoveDynamicPoint(zdo, locationVariationType);
+      return false;
     }
 
-    // required for setting a persistent bed. Without this value set it will persist the ID but the actual item will not be known so if the bed is deleted during session it would not match
-    netView.GetZDO().Set(ZdoVarKeys.DynamicLocationsPoint, 1);
+    AddDynamicPoint(zdo, locationVariationType);
+    return true;
+  }
 
+  // required for setting a persistent bed. Without this value set it will persist the ID but the actual item will not be known so if the bed is deleted during session it would not match
+  public void AddDynamicPoint(ZDO zdo, LocationVariation locationVariationType)
+  {
+    zdo.Set(ZdoVarKeys.DynamicLocationsPoint, 1);
+  }
 
-    return netView;
+  public void RemoveDynamicPoint(ZDO zdo,
+    LocationVariation locationVariationType)
+  {
+    LocationController.RemoveZdoTarget(LocationVariation.Logout,
+      player);
+
+#if DEBUG
+    if (DynamicLocationsConfig.DEBUG_ShouldNotRemoveTargetKey.Value)
+    {
+      return;
+    }
+#endif
+    zdo.RemoveInt(ZdoVarKeys.DynamicLocationsPoint);
   }
 
   /// <summary>
@@ -167,10 +183,10 @@ public class PlayerSpawnController : MonoBehaviour
   /// - Only should be called when the bed is interacted with
   /// - This id is used to poke a zone and load it, then teleport the player to their bed like they are spawning
   /// </summary>
-  /// <param name="spawnPointObj"></param>
+  /// <param name="zdo"></param>
   /// <param name="bed"></param>
   /// <returns>bool</returns>
-  public bool SyncBedSpawnPoint(ZNetView spawnPointObj, Bed bed)
+  public bool SyncBedSpawnPoint(ZDO zdo, Bed bed)
   {
     // should sync the zdo just in case it doesn't match player
     if (player == null) return false;
@@ -181,17 +197,11 @@ public class PlayerSpawnController : MonoBehaviour
       return false;
     }
 
-    var netView = PersistBedZdo(bed);
-    if (netView == null) return false;
-    var zdo = netView.GetZDO();
-
-    LocationController.SetZdo(LocationVariation.Spawn, player,
-      zdo);
+    PersistDynamicPoint(zdo, LocationVariation.Spawn, out _);
 
     var wasSuccessful = LocationController.SetLocationTypeData(
       LocationVariation.Spawn, player, zdo,
-      spawnPointObj.transform.position - player.transform.position);
-
+      bed.transform.position - player.transform.position);
 
     return wasSuccessful;
   }
@@ -200,22 +210,37 @@ public class PlayerSpawnController : MonoBehaviour
   /// Must be called on logout, and should be fired optimistically to avoid desync if crashes happen.
   /// </summary>
   /// <returns>bool</returns>
-  public bool SyncLogoutPoint(ZDO zdo, bool shouldRemove = false)
+  public bool SyncLogoutPoint(ZDO? zdo, bool shouldRemove = false)
   {
-    var canRemove = shouldRemove &&
-                    DynamicLocationsConfig.ShouldRemoveLoginPoint.Value;
-
-    if (canRemove || !ZdoWatchController.GetPersistentID(zdo,
-          out var persistentId))
+    if (ZNet.instance == null) return false;
+    if (zdo == null)
     {
-      LocationController.RemoveZdoTarget(LocationVariation.Logout,
-        player);
+      Logger.LogError(
+        "ZDO not found for netview, this likely means something is wrong with the are it is being called in");
       return false;
     }
 
-    if (persistentId == 0)
+    if (shouldRemove)
+    {
+      RemoveDynamicPoint(zdo, LocationVariation.Logout);
+      Game.instance.m_playerProfile.SavePlayerData(player);
+      return true;
+    }
+
+    var isPersistent =
+      PersistDynamicPoint(zdo, LocationVariation.Logout, out var id);
+    if (!shouldRemove && !isPersistent)
     {
       Logger.LogDebug("vehicleZdoId is invalid");
+      return false;
+    }
+
+    var storedPersistentZdo =
+      LocationController.GetZdoFromStore(LocationVariation.Logout, player);
+    if (storedPersistentZdo == id)
+    {
+      Logger.LogDebug(
+        "Matching ZDOID found already stored, skipping sync/save");
       return false;
     }
 
@@ -234,7 +259,8 @@ public class PlayerSpawnController : MonoBehaviour
     return true;
   }
 
-  private bool SpawnTeleport(Vector3 position, Quaternion rotation)
+  [UsedImplicitly]
+  public bool DynamicTeleport(Vector3 position, Quaternion rotation)
   {
     if (player == null) return false;
 
@@ -244,8 +270,8 @@ public class PlayerSpawnController : MonoBehaviour
     return player.TeleportTo(
       position,
       rotation,
-      DynamicLocationsConfig
-        .DebugDistancePortal.Value);
+      !DynamicLocationsConfig
+        .DebugDisableDistancePortal.Value);
   }
 
   public void MovePlayerToLogoutPoint()
@@ -254,79 +280,36 @@ public class PlayerSpawnController : MonoBehaviour
       StartCoroutine(UpdateLocation(LocationVariation.Logout));
   }
 
-  // /// <summary>
-  // /// This method might not be necessary. It is written to prevent cachine issues
-  // /// todo determine if this is needed.
-  // /// </summary>
-  // /// <returns></returns>
-  // public IEnumerator GetDynamicZdo()
-  // {
-  //   var spawnZdo = PlayerSpawnPointZDO;
-  //   if (spawnZdo != null)
-  //   {
-  //     yield return spawnZdo;
-  //     yield break;
-  //   }
-  //
-  //   if (spawnZdo == null)
-  //   {
-  //     var pendingZdo = FindDynamicZdo(
-  //       PlayerSpawnController
-  //         .DynamicLocationVariant.Logout, true);
-  //     yield return pendingZdo;
-  //     spawnZdo = pendingZdo.Current;
-  //   }
-  //
-  //   yield return spawnZdo;
-  // }
-
   /// <summary>
   /// Looks for the ZDO (mostly performant)
   /// </summary>
   /// <param name="locationVariationType"></param>
+  /// <param name="onComplete"></param>
   /// <param name="shouldAdjustReferencePoint"></param>
   /// <returns></returns>
   public IEnumerator FindDynamicZdo(
-    LocationVariation locationVariationType,
+    LocationVariation locationVariationType, Action<ZDO?> onComplete,
     bool shouldAdjustReferencePoint = false)
   {
-    var timer = DebugSafeTimer.StartNew(Timers);
     IsRunningFindDynamicZdo = true;
-    var maybeZdo =
-      LocationController.GetZdoFromStore(locationVariationType, player);
-    yield return maybeZdo;
-    yield return new WaitUntil(() =>
-      maybeZdo.Current is ZDO || HasExpiredTimer(timer));
 
-    var zdo = maybeZdo.Current as ZDO;
-    yield return zdo;
-    if (shouldAdjustReferencePoint && ZNet.instance != null && zdo != null)
+    ZDO? zdoOutput = null;
+    yield return LocationController.GetZdoFromStoreAsync(locationVariationType,
+      player,
+      (output) => { zdoOutput = output; });
+
+    onComplete(zdoOutput);
+
+    if (shouldAdjustReferencePoint && ZNet.instance != null &&
+        zdoOutput != null)
     {
-      ZNet.instance.SetReferencePosition(zdo.GetPosition());
+      ZNet.instance.SetReferencePosition(zdoOutput.GetPosition());
     }
 
     IsRunningFindDynamicZdo = false;
-    timer.Clear();
   }
 
-
-  /// <summary>
-  /// Returns a vector3 or null. Null if the position is invalid for the zdo too. This way the bed position can be used as a fallback.
-  /// </summary>
-  /// <param name="locationVariationType"></param>
-  /// <returns></returns>
-  // public Vector3? OnFindSpawnPoint(DynamicLocationVariant locationType)
-  // {
-  //   if (IsRunningFindDynamicZdo || PlayerSpawnPointZDO != null)
-  //   {
-  //     var pos = PlayerSpawnPointZDO?.GetPosition();
-  //     return pos == Vector3.zero ? null : pos;
-  //   }
-  //
-  //   StartCoroutine(FindDynamicZdo(locationType));
-  //   return null;
-  // }
-  internal IEnumerator UpdateLocation(
+  private IEnumerator UpdateLocation(
     LocationVariation locationVariationType)
   {
     var timer = DebugSafeTimer.StartNew(Timers);
@@ -334,35 +317,27 @@ public class PlayerSpawnController : MonoBehaviour
     IsTeleportingToDynamicLocation = false;
 
     var offset = LocationController.GetOffset(locationVariationType, player);
-    var maybeZdo = FindDynamicZdo(locationVariationType);
-    yield return maybeZdo;
-    yield return new WaitUntil(() => maybeZdo.Current is ZDO || HasExpiredTimer(
-      timer,
-      DynamicLocationsConfig.LocationControlsTimeoutInMs.Value));
-    var zdo = maybeZdo.Current as ZDO;
-    if (zdo == null)
-    {
-      throw new NullReferenceException("zdo, should be ZDO");
-    }
+    ZDO? zdoOutput = null;
+    yield return FindDynamicZdo(locationVariationType,
+      output => { zdoOutput = output; });
 
     if (
-      maybeZdo.Current == null)
+      zdoOutput == null)
     {
-      OnMovePlayerToZdoComplete(false, "Zdo is null");
+      OnMovePlayerToZdoComplete(false, "zdo, should be valid. Received null");
       yield break;
     }
 
     switch (locationVariationType)
     {
       case LocationVariation.Spawn:
-        yield return MovePlayerToZdo(zdo, offset);
+        yield return MovePlayerToZdo(zdoOutput, offset);
         break;
       case LocationVariation.Logout:
-        var handled = LoginAPIController.RunAllIntegrations_OnLoginMoveToZdo(
-          zdo,
+        yield return LoginAPIController.RunAllIntegrations_OnLoginMoveToZdo(
+          zdoOutput,
           offset,
           this);
-        yield return handled;
         break;
       default:
         throw new ArgumentOutOfRangeException(nameof(locationVariationType),
@@ -378,9 +353,9 @@ public class PlayerSpawnController : MonoBehaviour
       case LocationVariation.Logout when player != null:
       {
         if (CanRemoveLogoutAfterSync &&
-            DynamicLocationsConfig.ShouldRemoveLoginPoint.Value)
+            DynamicLocationsConfig.DEBUG_ShouldNotRemoveTargetKey.Value)
         {
-          yield return LocationController.RemoveZdoTarget(
+          LocationController.RemoveZdoTarget(
             LocationVariation.Logout,
             player);
         }
@@ -406,20 +381,6 @@ public class PlayerSpawnController : MonoBehaviour
     MoveToSpawnRoutine =
       StartCoroutine(UpdateLocation(LocationVariation.Spawn));
     return MoveToSpawnRoutine;
-  }
-
-  public static LocationVariation GetLocationType(Game game)
-  {
-    return game.m_respawnAfterDeath
-      ? LocationVariation.Spawn
-      : LocationVariation.Logout;
-  }
-
-  private static IEnumerator GetZdo(
-    LocationVariation locationVariationType)
-  {
-    yield return LocationController.GetZdoFromStore(locationVariationType,
-      player);
   }
 
   private void SyncPlayerPosition(Vector3 newPosition)
@@ -490,33 +451,42 @@ public class PlayerSpawnController : MonoBehaviour
     return hasExpiredTimer;
   }
 
+  [UsedImplicitly]
+  public bool CanFreezePlayer(bool val)
+  {
+    return !DynamicLocationsConfig.DebugDisableFreezePlayerTeleportMechanics
+      .Value && val;
+  }
+
   /// <summary>
   /// Does not work, zdoids are not persistent across game and loading content outside a zone does not work well without a reference that persists.
   /// </summary>
   /// <remarks>Whenever calling yield break call OnMovePlayerToZdoComplete() otherwise there is no way to check if this has completed its run</remarks>
   /// <param name="zdo"></param>
   /// <param name="offset"></param>
+  /// <param name="freezePlayerOnTeleport"></param>
+  /// <param name="shouldKeepPlayerFrozen"></param>
   /// <returns></returns>
-  public IEnumerator MovePlayerToZdo(ZDO? zdo, Vector3? offset)
+  public IEnumerator MovePlayerToZdo(ZDO? zdo, Vector3? offset,
+    bool freezePlayerOnTeleport = false, bool shouldKeepPlayerFrozen = false)
   {
-    var timer = DebugSafeTimer.StartNew();
-    if (DynamicLocationsConfig.IsDebug)
-    {
-      Logger.LogDebug("Running MovePlayerToZdo");
-    }
-
     if (!player || zdo == null)
     {
       OnMovePlayerToZdoComplete();
       yield break;
     }
 
+    var timer = DebugSafeTimer.StartNew();
+    var hasKinematicPlayerFreeze = CanFreezePlayer(freezePlayerOnTeleport);
+    var hasKeepPlayerFrozen = CanFreezePlayer(shouldKeepPlayerFrozen);
+    if (DynamicLocationsConfig.IsDebug)
+    {
+      Logger.LogDebug("Running MovePlayerToZdo");
+    }
+
     var teleportHeightOffset = Vector3.up * DynamicLocationsConfig
       .RespawnHeightOffset.Value;
     var teleportPosition = zdo.GetPosition() + teleportHeightOffset;
-
-    var zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
-    ZoneSystem.instance.PokeLocalZone(zoneId);
 
     // yield return new WaitUntil(() => ZoneSystem.instance.IsZoneLoaded(zoneId));
     // var item = new WaitUntil(() => ZNetScene.instance.FindInstance(zdo));
@@ -524,7 +494,20 @@ public class PlayerSpawnController : MonoBehaviour
     // TODO add check for item and confirm it has a valid ZDO DynamicLocationPoint var
 
     IsTeleportingToDynamicLocation =
-      SpawnTeleport(teleportPosition, zdo.GetRotation());
+      DynamicTeleport(teleportPosition, zdo.GetRotation());
+
+    // probably not necessary, but helps with loading some heavier things.
+    var zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
+    ZoneSystem.instance.PokeLocalZone(zoneId);
+
+    var zoneIsNotLoaded = false;
+    while (zoneIsNotLoaded == false)
+    {
+      zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
+      zoneIsNotLoaded = ZoneSystem.instance.IsZoneLoaded(zoneId);
+      yield return new WaitForFixedUpdate();
+    }
+
 
     if (!IsTeleportingToDynamicLocation)
     {
@@ -534,64 +517,20 @@ public class PlayerSpawnController : MonoBehaviour
       yield break;
     }
 
-    var character = player?.GetComponent<Character>();
-    if (DynamicLocationsConfig.FreezePlayerPosition.Value && character != null)
+    if (player != null && CanFreezePlayer(freezePlayerOnTeleport))
     {
-      character.m_body.isKinematic = true;
+      if (player.IsDebugFlying())
+      {
+        player.ToggleDebugFly();
+      }
     }
 
     ZNetView? zdoNetViewInstance = null;
     var isZoneLoaded = false;
 
     zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
-    // while (!isZoneLoaded || zdoNetViewInstance == null)
-    // {
-    //   if (UpdateLocationTimer is { ElapsedMilliseconds: > 10000 })
-    //   {
-    //     if (DynamicLocationsConfig.IsDebug)
-    //     {
-    //       Logger.LogWarning(
-    //         $"Timed out: Attempted to spawn player on Boat ZDO expired for {zdo.m_uid}, reason -> spawn zdo was not found");
-    //     }
-    //
-    //     yield break;
-    //   }
-    //
-    //   zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
-    //   ZoneSystem.instance.PokeLocalZone(zoneId);
-    //
-    //   var tempInstance = ZNetScene.instance.FindInstance(zdo);
-    //
-    //   if (tempInstance == null)
-    //   {
-    //     if (DynamicLocationsConfig.IsDebug)
-    //     {
-    //       Logger.LogInfo(
-    //         $"The zdo instance not found ");
-    //     }
-    //   }
-    //   else
-    //   {
-    //     if (DynamicLocationsConfig.IsDebug)
-    //     {
-    //       Logger.LogInfo(
-    //         $"The zdo instance named: {tempInstance.name}, -> was found ");
-    //     }
-    //
-    //     zdoNetViewInstance = tempInstance;
-    //   }
-    //
-    //   if (zdoNetViewInstance) break;
-    //   yield return new WaitForEndOfFrame();
-    //   if (!ZoneSystem.instance.IsZoneLoaded(zoneId))
-    //   {
-    //     yield return null;
-    //   }
-    //   else
-    //   {
-    //     isZoneLoaded = true;
-    //   }
-    // }
+    ZoneSystem.instance.PokeLocalZone(zoneId);
+
     yield return new WaitUntil(() =>
       Player.m_localPlayer.IsTeleporting() == false || HasExpiredTimer(timer,
         DynamicLocationsConfig.LocationControlsTimeoutInMs.Value));
@@ -612,12 +551,13 @@ public class PlayerSpawnController : MonoBehaviour
       yield break;
     }
 
-    if (DynamicLocationsConfig.FreezePlayerPosition.Value && character != null)
+    if (player != null && hasKinematicPlayerFreeze && !hasKeepPlayerFrozen)
     {
-      character.m_body.isKinematic = false;
+      if (player.IsDebugFlying())
+      {
+        player.ToggleDebugFly();
+      }
     }
-
-    // yield return OnPlayerMoveToVehicle(zdoNetViewInstance);
 
     if (DynamicLocationsConfig.DebugForceUpdatePositionAfterTeleport.Value &&
         DynamicLocationsConfig.DebugForceUpdatePositionDelay.Value > 0f)
@@ -636,5 +576,8 @@ public class PlayerSpawnController : MonoBehaviour
                          DynamicLocationsConfig.RespawnHeightOffset.Value;
       player.transform.position = teleportPosition;
     }
+
+    timer.Clear();
+    yield return null;
   }
 }

@@ -492,6 +492,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     PrefabConfig.BindConfig(Config);
     VehicleDebugConfig.BindConfig(Config);
     PropulsionConfig.BindConfig(Config);
+    ModSupportConfig.BindConfig(Config);
   }
 
   internal void ApplyMetricIfAvailable()

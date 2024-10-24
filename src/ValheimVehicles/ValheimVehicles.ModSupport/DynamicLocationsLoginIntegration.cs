@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using BepInEx;
 using ValheimVehicles.Vehicles.Components;
 using DynamicLocations.API;
@@ -9,8 +10,10 @@ using DynamicLocations.Controllers;
 using DynamicLocations.Interfaces;
 using DynamicLocations.Structs;
 using JetBrains.Annotations;
+using Jotunn;
 using UnityEngine;
 using UnityEngine.UI;
+using ValheimVehicles.Config;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 
@@ -30,27 +33,75 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
   {
     var localTimer = Stopwatch.StartNew();
 
-    ZNet.instance.SetReferencePosition(zdo.GetPosition());
+    yield return playerSpawnController.MovePlayerToZdo(zdo, offset, true, true);
 
     var vehicle = GetVehicleFromZdo(zdo);
-    while (vehicle == null ||
-           PlayerSpawnController.HasExpiredTimer(localTimer, 5000))
+    while (vehicle == null &&
+           localTimer.ElapsedMilliseconds < 5000)
     {
       yield return new WaitForFixedUpdate();
       vehicle = GetVehicleFromZdo(zdo);
     }
 
-    if (vehicle == null) yield break;
+    if (vehicle == null)
+    {
+      if (Player.m_localPlayer.IsDebugFlying())
+      {
+        Player.m_localPlayer.ToggleDebugFly();
+      }
+
+      yield break;
+    }
 
 
     yield return new WaitUntil(() =>
       vehicle.Instance.PiecesController.IsActivationComplete ||
       localTimer.ElapsedMilliseconds > 5000);
 
+    if (ModSupportConfig.DynamicLocationsShouldSkipMovingPlayerToBed.Value)
+    {
+      MovePlayerToBedOnShip(vehicle);
+    }
+
+    Player.m_localPlayer.m_body.isKinematic = false;
+
+
+    // todo Add move player to ship login point prefab
+
     Logger.LogDebug(
       $"Waiting completed, IsActivationComplete {vehicle.Instance.PiecesController.IsActivationComplete} timer: {localTimer.ElapsedMilliseconds}");
+  }
 
-    yield return playerSpawnController.MovePlayerToZdo(zdo, offset);
+  private static void PlayerMoveToTransformSafe(Transform bedTransform)
+  {
+    if (Player.m_localPlayer == null) return;
+    if (Player.m_localPlayer.IsDebugFlying())
+    {
+      Player.m_localPlayer.ToggleDebugFly();
+    }
+
+    Player.m_localPlayer.transform.position =
+      bedTransform.position + Vector3.up * 1.5f;
+  }
+
+  private bool MovePlayerToBedOnShip(VehicleShip vehicle)
+  {
+    var bedPieces = vehicle.Instance.PiecesController.GetBedPieces();
+    if (bedPieces.Count < 1) return false;
+    if (bedPieces.Count == 1)
+    {
+      PlayerMoveToTransformSafe(bedPieces[0].transform);
+      return true;
+    }
+
+    var bedPlacedByPlayer = bedPieces.Find((p) => p.IsMine());
+    var selectedPiece = bedPlacedByPlayer != null
+      ? bedPlacedByPlayer
+      : bedPieces.First();
+    if (selectedPiece == null) return false;
+
+    PlayerMoveToTransformSafe(selectedPiece.transform);
+    return true;
   }
 
   // Internal Methods
