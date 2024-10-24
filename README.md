@@ -18,11 +18,11 @@ The following statuses will be used to label repos.
 
 ### Supported Mods
 
-| Mod Name                                                   | Status     | Description                                                                                                   | 
-|------------------------------------------------------------|------------|---------------------------------------------------------------------------------------------------------------|
-| [ValheimRAFT][ValheimRAFT_Dir]                             | **Active** | Allows Valheim Build system on the water, similar to the Raft Game                                            |
-| [YggdrasilTerrain][YggdrassilTerrain_Dir]                             | **Active** | Allows for walking, building, and colliding with the Yggdrasil Branch. Adds teleport commands and collision config to futureproof it.                                           |
-| [BuildingDamageModExtended][BuildingDamageModExtended_Dir] | **LTS**    | Allows setting building damage multipliers based on entity types and also additionally allows for damage caps |
+| Mod Name                                                   | Status     | Description                                                                                                                           | 
+|------------------------------------------------------------|------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| [ValheimRAFT][ValheimRAFT_Dir]                             | **Active** | Allows Valheim Build system on the water, similar to the Raft Game                                                                    |
+| [YggdrasilTerrain][YggdrassilTerrain_Dir]                  | **Active** | Allows for walking, building, and colliding with the Yggdrasil Branch. Adds teleport commands and collision config to futureproof it. |
+| [BuildingDamageModExtended][BuildingDamageModExtended_Dir] | **LTS**    | Allows setting building damage multipliers based on entity types and also additionally allows for damage caps                         |
 
 ## Contributing
 
@@ -74,15 +74,20 @@ Add this to `valheim_Data/boot.config folder. This should allow script heavy
 mods to run on more threads without bottlenecking the game UI so fps will be
 much higher.
 
-The gc-max-time-slice takes a integer that should be the number of (seconds?) before garbage collecting on the machine. This essentially freeze up your machine to do thing without worry until you get near max memory and then it will garbage collect anyways.
-
-Example below for a machine with 20 seconds before force attempting to garbage collect even when low on memory. 20 seems to be a nice fps boost of 30-60fps. 
-
-```
+```ini
 gc-max-time-slice=20
 ```
 
+Want more details on max-time-slice or other flags? Go to the GPT-4 document
+below on flags.
+
+Other flags according to chatGPT 4.0. These are nested unity flags. Apparently
+no aggregate spot for them.
+
+[Full GPT output of flags](unity-flags-from-chatgpt-4.md)
+
 [ValheimRAFT_Dir]: src/ValheimRAFT
+
 [YggdrassilTerrain_Dir]: src/YggdrasilTerrain
 
 [BuildingDamageModExtended_Dir]: src/ValheimRAFT
