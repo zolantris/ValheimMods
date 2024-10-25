@@ -14,6 +14,9 @@ namespace ValheimRAFT.Patches;
 [HarmonyPatch]
 public class Character_Patch
 {
+  public static bool IsUnderWaterInVehicle = false;
+
+
   [HarmonyPatch(typeof(Character), "ApplyGroundForce")]
   [HarmonyTranspiler]
   public static IEnumerable<CodeInstruction> Character_Patch_ApplyGroundForce(
@@ -36,6 +39,7 @@ public class Character_Patch
   {
     var vpc = __instance.transform.root.GetComponent<VehiclePiecesController>();
     if (vpc) __result = false;
+    IsUnderWaterInVehicle = (bool)vpc;
   }
 
 

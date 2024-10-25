@@ -3,6 +3,7 @@ using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
+using ValheimVehicles.Vehicles.Components;
 using static ValheimVehicles.Prefabs.PrefabNames;
 
 namespace ValheimVehicles.Prefabs.Registry;
@@ -10,7 +11,7 @@ namespace ValheimVehicles.Prefabs.Registry;
 public class ShipHullPrefab : IRegisterPrefab
 {
   public static readonly ShipHullPrefab Instance = new();
-  private static readonly int WaterColor = Shader.PropertyToID("_WaterColor");
+
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
@@ -28,13 +29,20 @@ public class ShipHullPrefab : IRegisterPrefab
       DirectionVariant.Right
     ];
     var greenish = new Color(0.1f, 0.5f, 0.5f, 0.3f);
-    var transparent = new Color(0.5f, 0.5f, 0.5f, 0.0f);
     var maskShader = LoadValheimAssets.waterMask.GetComponent<MeshRenderer>()
       .sharedMaterial.shader;
+    var waterLiquid = PrefabManager.Instance.GetPrefab("WaterSurface");
+    var waterLiquidMaterial =
+      waterLiquid.GetComponent<MeshRenderer>().sharedMaterial;
+
     AddTransparentWaterMaskPrefab("InverseMask",
-      LoadValheimVehicleAssets.InvertedWaterMask,
-      transparent);
-    AddTransparentWaterMaskPrefab("PureMask", maskShader, greenish);
+      new Material(LoadValheimVehicleAssets.InvertedWaterMask),
+      greenish);
+    AddTransparentWaterMaskPrefab("PureMask", new Material(maskShader),
+      greenish);
+    AddTransparentWaterMaskPrefab("MaskWithWater", waterLiquidMaterial,
+      greenish);
+
 
     foreach (var hullMaterialType in hullMaterialTypes)
     {
@@ -73,8 +81,9 @@ public class ShipHullPrefab : IRegisterPrefab
     }
   }
 
+
   public static void AddTransparentWaterMaskPrefab(string prefabName,
-    Shader shader, Color color)
+    Material material, Color color)
   {
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(
@@ -85,26 +94,18 @@ public class ShipHullPrefab : IRegisterPrefab
     piece.m_description = "$valheim_vehicles_water_mask_desc";
     piece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
     piece.gameObject.layer = LayerMask.NameToLayer("piece_nonsolid");
-
+    piece.m_allowRotatedOverlap = true;
+    piece.m_clipEverything = true;
 
     var prefabMeshRenderer = prefab.GetComponent<MeshRenderer>();
     prefabMeshRenderer.transform.localScale = Vector3.one * 4;
+    prefabMeshRenderer.sharedMaterial = material;
 
-    // Resources.FindObjectsOfTypeAll<Mesh>();
-
-
-    var waterLiquid = PrefabManager.Instance.GetPrefab("WaterSurface");
-    var waterLiquidMaterial =
-      waterLiquid.GetComponent<MeshRenderer>().sharedMaterial;
-    // var waterLiquid = PrefabManager.Instance.GetPrefab("WaterLiquid");
-
-    var newMaterial = new Material(shader);
-    if (shader.name == LoadValheimVehicleAssets.InvertedWaterMask.name)
+    if (material.shader.name == LoadValheimVehicleAssets.InvertedWaterMask.name)
     {
-      newMaterial.SetColor(WaterColor, color);
+      var waterMaskDisplacement = prefab.AddComponent<WaterMaskDisplacement>();
+      waterMaskDisplacement.waterColor = color;
     }
-
-    prefabMeshRenderer.sharedMaterial = newMaterial;
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig

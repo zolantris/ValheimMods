@@ -35,6 +35,8 @@ internal static class PatchController
     Harmony.PatchAll(typeof(VehicleMovementPatches));
 
 #if DEBUG
+    Harmony.PatchAll(typeof(WaterVolumePatch));
+    Harmony.PatchAll(typeof(GameCameraPatch));
     Harmony.PatchAll(typeof(QuickStartWorld_Patch));
 #endif
 // #if DEBUG

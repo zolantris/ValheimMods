@@ -2,14 +2,18 @@ Shader "Custom/InvertWaterMask"
 {
     Properties
     {
+        _WaterLevel ("Water Level", Float) = 0.0
         _MaskPosition ("Mask Position", Vector) = (0,0,0,0)
         _MaskSize ("Mask Size", Vector) = (1,1,1,0)
         _WaterColor ("Water Color", Color) = (0,0.5,0.7,1)
+        _Transparency ("Transparency Outside Mask", Range(0,1)) = 0.7
     }
     SubShader
     {
         Tags { "Queue" = "Transparent" }
         Blend SrcAlpha OneMinusSrcAlpha
+        Cull Off // Double-sided rendering
+        ZWrite On // Enable depth writing to avoid flickering
         Pass
         {
             CGPROGRAM
@@ -31,6 +35,8 @@ Shader "Custom/InvertWaterMask"
             float4 _MaskPosition;
             float4 _MaskSize;
             float4 _WaterColor;
+            float _Transparency;
+            float _WaterLevel;
 
             v2f vert (appdata v)
             {
@@ -42,23 +48,26 @@ Shader "Custom/InvertWaterMask"
 
             float4 frag (v2f i) : SV_Target
             {
-                // Calculate bounds
+                // Calculate mask bounds
                 float3 minBounds = _MaskPosition.xyz - _MaskSize.xyz * 0.5;
                 float3 maxBounds = _MaskPosition.xyz + _MaskSize.xyz * 0.5;
 
-                // Check if pixel is outside mask bounds
-                if (i.worldPos.x < minBounds.x || i.worldPos.x > maxBounds.x ||
-                    i.worldPos.y < minBounds.y || i.worldPos.y > maxBounds.y ||
-                    i.worldPos.z < minBounds.z || i.worldPos.z > maxBounds.z)
+                // Inside the mask volume, make fully transparent
+                if (i.worldPos.x > minBounds.x && i.worldPos.x < maxBounds.x &&
+                    i.worldPos.y > minBounds.y && i.worldPos.y < maxBounds.y &&
+                    i.worldPos.z > minBounds.z && i.worldPos.z < maxBounds.z)
                 {
-                    // Render water color outside the mask area
-                    return _WaterColor;
+                    return float4(0, 0, 0, 0); // Fully transparent inside
                 }
-                else
+                
+                // Render water color only on submerged walls
+                if (i.worldPos.y <= _WaterLevel)
                 {
-                    // Transparent return color if inside the mask area
-                    return float4(0, 0, 0, 0); // RGBA transparent
+                    return float4(_WaterColor.rgb, _Transparency); // Water color below water level
                 }
+                
+                // Fully transparent above the water level
+                return float4(0, 0, 0, 0);
             }
             ENDCG
         }

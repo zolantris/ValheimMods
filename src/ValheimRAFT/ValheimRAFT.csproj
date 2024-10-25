@@ -54,6 +54,9 @@
         <Compile Update="..\ValheimVehicles\**">
             <Link>Enums\VehiclePhysicsMode.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\WaterMaskDisplacement.cs">
+            <Link>Components\WaterMaskDisplacement.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup>
         <Compile Include="ValheimRAFT.Config\IConfigSection.cs"/>

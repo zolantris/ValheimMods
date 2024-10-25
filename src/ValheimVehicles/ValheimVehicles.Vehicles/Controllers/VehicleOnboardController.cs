@@ -14,18 +14,18 @@ namespace ValheimVehicles.Vehicles.Controllers;
 /// </summary>
 public class VehicleOnboardController : MonoBehaviour
 {
-  private VehicleMovementController _movementController = null!;
+  internal VehicleMovementController MovementController = null!;
 
   public static Dictionary<ZDOID, Character?> CharactersOnboard = new();
 
   public static Dictionary<ZDOID, VehicleOnboardController?>
     CharacterOnVehiclePieces = new();
 
-  public Collider onboardCollider => _movementController.OnboardCollider;
+  public Collider onboardCollider => MovementController.OnboardCollider;
 
   private void Awake()
   {
-    _movementController = GetComponentInParent<VehicleMovementController>();
+    MovementController = GetComponentInParent<VehicleMovementController>();
     InvokeRepeating(nameof(ValidateCharactersAreOnShip), 1f, 30f);
   }
 
@@ -121,23 +121,23 @@ public class VehicleOnboardController : MonoBehaviour
   }
 
   public VehicleMovementController GetMovementController() =>
-    _movementController;
+    MovementController;
 
   public void SetMovementController(VehicleMovementController val)
   {
-    _movementController = val;
+    MovementController = val;
   }
 
   public void OnTriggerEnter(Collider collider)
   {
-    if (_movementController == null) return;
+    if (MovementController == null) return;
     OnEnterVehicleBounds(collider);
     HandleCharacterHitVehicleBounds(collider, false);
   }
 
   public void OnTriggerExit(Collider collider)
   {
-    if (_movementController == null) return;
+    if (MovementController == null) return;
     OnExitVehicleBounds(collider);
     HandleCharacterHitVehicleBounds(collider, true);
   }
@@ -170,7 +170,7 @@ public class VehicleOnboardController : MonoBehaviour
   /// <returns></returns>
   private Player? GetPlayerComponent(Collider collider)
   {
-    if (_movementController.ShipInstance?.Instance == null) return null;
+    if (MovementController.ShipInstance?.Instance == null) return null;
     var playerComponent = collider.GetComponent<Player>();
     if (!playerComponent) return null;
 
@@ -183,10 +183,10 @@ public class VehicleOnboardController : MonoBehaviour
 
   private void RemovePlayerOnShip(Player player)
   {
-    var isPlayerInList = _movementController.m_players.Contains(player);
+    var isPlayerInList = MovementController.m_players.Contains(player);
     if (isPlayerInList)
     {
-      _movementController.m_players.Remove(player);
+      MovementController.m_players.Remove(player);
     }
     else
     {
@@ -199,7 +199,7 @@ public class VehicleOnboardController : MonoBehaviour
 
   private void SetPlayerOnShip(Player player)
   {
-    var piecesTransform = _movementController.ShipInstance?.Instance
+    var piecesTransform = MovementController.ShipInstance?.Instance
       ?.VehiclePiecesController?
       .transform;
 
@@ -210,13 +210,13 @@ public class VehicleOnboardController : MonoBehaviour
       return;
     }
 
-    var isPlayerInList = _movementController.m_players.Contains(player);
+    var isPlayerInList = MovementController.m_players.Contains(player);
 
     player.transform.SetParent(piecesTransform);
 
     if (!isPlayerInList)
     {
-      _movementController.m_players.Add(player);
+      MovementController.m_players.Add(player);
     }
     else
     {
@@ -231,17 +231,17 @@ public class VehicleOnboardController : MonoBehaviour
     if (playerInList == null) return;
 
     Logger.LogDebug(
-      $"Player: {playerInList.GetPlayerName()} on-board, total onboard {_movementController.m_players.Count}");
+      $"Player: {playerInList.GetPlayerName()} on-board, total onboard {MovementController.m_players.Count}");
 
     // All clients should do this
     SetPlayerOnShip(playerInList);
 
-    var vehicleZdo = _movementController
+    var vehicleZdo = MovementController
       .ShipInstance?.NetView?.GetZDO();
 
     if (playerInList == Player.m_localPlayer && vehicleZdo != null)
     {
-      ValheimBaseGameShip.s_currentShips.Add(_movementController);
+      ValheimBaseGameShip.s_currentShips.Add(MovementController);
       PlayerSpawnController.Instance?.SyncLogoutPoint(vehicleZdo);
     }
   }
@@ -256,11 +256,11 @@ public class VehicleOnboardController : MonoBehaviour
 
     RemovePlayerOnShip(playerInList);
 
-    var remainingPlayers = _movementController.m_players.Count;
+    var remainingPlayers = MovementController.m_players.Count;
     Logger.LogDebug(
       $"Player: {playerInList.GetPlayerName()} over-board, players remaining {remainingPlayers}");
 
-    var vehicleZdo = _movementController
+    var vehicleZdo = MovementController
       .ShipInstance?.NetView?.GetZDO();
 
     if (playerInList == Player.m_localPlayer && vehicleZdo != null)
@@ -281,7 +281,7 @@ public class VehicleOnboardController : MonoBehaviour
     {
       yield return new WaitForSeconds(15);
 
-      var playersOnboard = _movementController?.ShipInstance
+      var playersOnboard = MovementController?.ShipInstance
         ?.VehiclePiecesController?
         .GetComponentsInChildren<Player>();
       List<Player> validPlayers = [];
@@ -294,12 +294,12 @@ public class VehicleOnboardController : MonoBehaviour
         validPlayers.Add(player);
       }
 
-      if (_movementController != null)
+      if (MovementController != null)
       {
-        _movementController.m_players = validPlayers;
+        MovementController.m_players = validPlayers;
         if (validPlayers.Count == 0)
         {
-          _movementController.SendDelayedAnchor();
+          MovementController.SendDelayedAnchor();
         }
       }
 
