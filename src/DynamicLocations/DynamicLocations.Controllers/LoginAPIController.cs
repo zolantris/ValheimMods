@@ -23,15 +23,16 @@ public class LoginAPIController
     PlayerSpawnController.Instance;
 
   // static
-  public static readonly Dictionary<string, DynamicLoginIntegration>
+  internal static readonly Dictionary<string, DynamicLoginIntegration>
     LoginIntegrations =
       new();
 
-  public static readonly Dictionary<string, DynamicLoginIntegration>
+  internal static readonly Dictionary<string, DynamicLoginIntegration>
     DisabledLoginIntegrations =
       new();
 
-  public static List<DynamicLoginIntegration> loginIntegrationsByPriority = [];
+  internal static List<DynamicLoginIntegration>
+    loginIntegrationsByPriority = [];
 
   private static string? GetModIntegrationId(
     DynamicLoginIntegration integration)
