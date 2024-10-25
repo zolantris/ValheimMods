@@ -17,7 +17,24 @@
         <ManagedDataPath>$(SolutionDir)libs</ManagedDataPath>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' ">
+    <PropertyGroup Label="VM properties">
+        <SandboxieVMExists Condition="Exists('$(SandboxiePluginDeployPath)')">true</SandboxieVMExists>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Runnables and Project Booleans">
+        <!-- Runnable variants execute Valheim server or client process after building -->
+        <IsRunnableDebug Condition="'$(Configuration)' == 'Debug Run Client' or '$(Configuration)' == 'Debug Run Server' or '$(Configuration)' == 'Debug Run ClientServer'">true</IsRunnableDebug>
+        <IsRunnableRelease Condition="'$(Configuration)' == 'Release Run Client' or '$(Configuration)' == 'Release Run Server' or '$(Configuration)' == 'Release Run ClientServer'">true</IsRunnableRelease>
+        <IsRunnableClientServer Condition="'$(Configuration)' == 'Release Run ClientServer' or '$(Configuration)' == 'Debug Run ClientServer'">true</IsRunnableClientServer>
+        <IsRunnableServer Condition="'$(Configuration)' == 'Release Run Server' or '$(Configuration)' == 'Debug Run Server'">true</IsRunnableServer>
+        <IsRunnableClient Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnableClient>
+        <IsRunnable Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnable>
+        <IsDebug Condition="'$(Configuration)' == 'Debug' or '$(IsRunnableDebug)' == 'true'">true</IsDebug>
+        <IsRelease Condition="'$(Configuration)' == 'Release' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
+        <IsNotArchive Condition="'$(Configuration)' != 'Release Archive'">true</IsNotArchive>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(IsDebug)' == 'true'">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugSymbols>true</DebugSymbols>
         <DebugType>full</DebugType>
@@ -28,7 +45,7 @@
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
+    <PropertyGroup Condition="'$(IsRelease)' == 'true' or '$(Configuration)' == 'Release Archive'">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugType>pdbonly</DebugType>
         <Optimize>true</Optimize>
@@ -225,11 +242,11 @@
             <HintPath>$(ManagedDataPath)\UnityEngine.TerrainModule.dll</HintPath>
             <Private>False</Private>
         </Reference>
-        <Reference Include="UnityEngine.TextCoreModule">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>$(ManagedDataPath)\UnityEngine.TextCoreModule.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
+        <!--        <Reference Include="UnityEngine.TextCoreModule">-->
+        <!--            <SpecificVersion>False</SpecificVersion>-->
+        <!--            <HintPath>$(ManagedDataPath)\UnityEngine.TextCoreModule.dll</HintPath>-->
+        <!--            <Private>False</Private>-->
+        <!--        </Reference>-->
         <Reference Include="UnityEngine.TextRenderingModule">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>$(ManagedDataPath)\UnityEngine.TextRenderingModule.dll</HintPath>
@@ -304,13 +321,46 @@
         <AssetsDir>$(SolutionDir)src\ValheimRAFT\Assets\</AssetsDir>
     </PropertyGroup>
 
-    <!--  Copy/convert commands are top level  -->
-    <Target Name="convert_pdb_to_mdb" BeforeTargets="PostBuildEvent" Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run ClientServer|AnyCPU' ">
+    <PropertyGroup Label="FileLockValidation">
+
+        <ServerFileToValidate>$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).dll</ServerFileToValidate>
+        <ServerFileExitCode>1</ServerFileExitCode>
+
+        <ClientFileToValidate>$(PluginDeployPath)\$(AssemblyName)\$(AssemblyName).dll</ClientFileToValidate>
+        <ClientFileExitCode>1</ClientFileExitCode>
+
+        <SandBoxieFileToValidate>$(SandboxiePluginDeployPath)\$(AssemblyName).dll</SandBoxieFileToValidate>
+        <SandBoxieFileExitCode>1</SandBoxieFileExitCode>
+
+        <PowerShellScript>$(SolutionDir)\CheckFilesLocked.ps1</PowerShellScript>
+    </PropertyGroup>
+
+    <Target Name="file_lock_check" BeforeTargets="PostBuildEvent">
+        <Message Text="Checking if files are locked...in distinations" Importance="high"/>
+        <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(PowerShellScript)&quot; &quot;$(ClientFileToValidate)&quot;"
+              IgnoreExitCode="true">
+            <Output TaskParameter="ExitCode" PropertyName="ClientFileExitCode"/>
+        </Exec>
+        <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(PowerShellScript)&quot; &quot;$(ServerFileToValidate)&quot;"
+              IgnoreExitCode="true">
+            <Output TaskParameter="ExitCode" PropertyName="ServerFileExitCode"/>
+        </Exec>
+        <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(PowerShellScript)&quot; &quot;$(SandBoxieFileToValidate)&quot;"
+              IgnoreExitCode="true">
+            <Output TaskParameter="ExitCode" PropertyName="SandBoxieFileExitCode"/>
+        </Exec>
+        <Message Text="Results: ServerFileExitCode: $(ServerFileExitCode), ClientFileExitCode: $(ClientFileExitCode), SandBoxieFileExitCode: $(SandBoxieFileExitCode)," Importance="high"/>
+    </Target>
+
+    <Target Name="convert_pdb_to_mdb" AfterTargets="file_lock_check">
+        <!--  Copy/convert commands are top level  -->
         <Exec Command="$(SolutionDir)pdb2mdb.exe $(TargetPath)"/>
         <!--   Renames the dll.mdb to just mdb     -->
         <Move SourceFiles="$(OutDir)$(AssemblyName).dll.mdb" DestinationFiles="$(OutDir)$(AssemblyName).mdb"/>
     </Target>
-    <Target Name="Copy_To_Valheim_Server" AfterTargets="convert_pdb_to_mdb" KeepDuplicateOutputs="false" Condition=" $(AssemblyName) != 'SentryUnityWrapper' And ( '$(Configuration)|$(Platform)' == 'Debug Run Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Server|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run ClientServer|AnyCPU' ) ">
+
+    <!--     and $(IsRunnableClientServer) == 'true' or '$(IsRunnableServer)' == 'true'-->
+    <Target Name="copy_to_valheim_server" AfterTargets="convert_pdb_to_mdb" KeepDuplicateOutputs="false" Condition="$(AssemblyName) != 'SentryUnityWrapper' and '$(ServerFileExitCode)' == '0'">
         <ItemGroup>
             <CheckValheimServerPath Include="$(ValheimServerPath)"/>
         </ItemGroup>
@@ -323,14 +373,12 @@
 
         <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\&quot; /q /s /y /i"/>
 
-        <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Assets\&quot; /E/H/Y"/>
-        <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Assets\Translations\English\&quot; /E/H/Y"/>
+        <!--        <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Assets\&quot; /E/H/Y"/>-->
+        <!--        <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Assets\Translations\English\&quot; /E/H/Y"/>-->
     </Target>
-    <Target Name="Copy_To_R2ModMan" AfterTargets="convert_pdb_to_mdb" Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run Client|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Release Run ClientServer|AnyCPU' ">
-
-
+    <Target Name="Copy_To_R2ModMan" AfterTargets="convert_pdb_to_mdb" Condition="'$(IsNotArchive)' == 'true' and '$(IsRunnableServer)' != 'true' and '$(ClientFileExitCode)' == '0'">
         <!--  Eventually we need to copy and test this lib over in unity     -->
-        <!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SolutionDir)src\ValheimRAFT\ValheimRAFT.Unity\Assets\Assemblies\$(AssemblyName).dll&quot;"/>-->
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SolutionDir)src\ValheimRAFT\ValheimRAFT.Unity\Assets\Assemblies\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).mdb&quot;"/>
@@ -338,16 +386,21 @@
         <Exec Condition="$(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>
         <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>
 
-        <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
+        <!--        <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>-->
         <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(PluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>
     </Target>
-    <Target Name="Copy_To_R2ModMan_vm" AfterTargets="convert_pdb_to_mdb" Condition=" $(AssemblyName) == 'ValheimRAFT' And Exists('$(SandboxiePluginDeployPath)') And '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
-        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>
-        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>
-        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>
-        <!-- mdb copy Does not work for some reason -->
-        <!--        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)plugins\$(AssemblyName).mdb&quot;"/>-->
-        <Exec Command="xcopy /d &quot;$(AssetsDir)\&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
+    <!--     Condition=" $(AssemblyName) == 'ValheimRAFT' And Exists('$(SandboxiePluginDeployPath)') And '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' "-->
+    <Target Name="Copy_To_R2ModMan_vm" AfterTargets="Copy_To_R2ModMan" Condition="'$(IsRunnable)' == 'true' and '$(SandBoxieFileExitCode)' == '0'">
+        <!--   Will only run if the above passes     -->
+        <Exec Condition="'$(FilesCheckExitCode)' == '0' And Exists('$(OutDir)$(AssemblyName).dll')" Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).dll&quot;"/>
+        <Exec Condition="'$(FilesCheckExitCode)' == '0' And Exists('$(OutDir)$(AssemblyName).pdb')" Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).pdb&quot;"/>
+        <Exec Condition="'$(FilesCheckExitCode)' == '0' And Exists('$(OutDir)$(AssemblyName).mdb')" Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).mdb&quot;"/>
+
+        <Exec Condition="'$(FilesCheckExitCode)' == '0' And $(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>
+        <Exec Condition="'$(FilesCheckExitCode)' == '0'" Command="xcopy &quot;$(TargetDir)&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>
+
+        <Exec Condition="'$(FilesCheckExitCode)' == '0' And Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(SandboxiePluginDeployPath)\Assets\&quot; /E/H/Y"/>
+        <Exec Condition="'$(FilesCheckExitCode)' == '0' And Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(SandboxiePluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>
     </Target>
     <Target Name="Generate_Mod_Archive" AfterTargets="PostBuildEvent" Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <PropertyGroup>

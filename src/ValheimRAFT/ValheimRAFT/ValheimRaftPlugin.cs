@@ -9,17 +9,25 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using BepInEx.Bootstrap;
+using DynamicLocations;
+using DynamicLocations.API;
+using DynamicLocations.Controllers;
+using DynamicLocations.Structs;
 using UnityEngine;
+using ValheimRAFT.Config;
 using ValheimRAFT.Patches;
 using ValheimRAFT.Util;
 using ValheimVehicles;
 using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
+using ValheimVehicles.ModSupport;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Propulsion.Sail;
+using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ZdoWatcher;
+using Zolantris.Shared.BepInExAutoDoc;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT;
@@ -32,6 +40,7 @@ internal abstract class PluginDependencies
 // [SentryDSN()]
 [BepInPlugin(ModGuid, ModName, Version)]
 [BepInDependency(ZdoWatcherPlugin.ModGuid)]
+[BepInDependency(DynamicLocationsPlugin.BepInGuid, "1.2.0")]
 [BepInDependency(PluginDependencies.JotunnModGuid)]
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod,
   VersionStrictness.Minor)]
@@ -39,11 +48,13 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "2.2.4";
+  public const string Version = "2.3.0";
   public const string ModName = "ValheimRAFT";
   public const string ModGuid = $"{Author}.{ModName}";
-  public const string HarmonyGuid = $"{Author}.{ModName}";
-  public const string ModDescription = "Valheim Mod for building on the sea";
+  public static string HarmonyGuid => ModGuid;
+
+  public const string ModDescription =
+    "Valheim Mod for building on the sea, requires Jotunn to be installed.";
 
   public const string CopyRight = "Copyright © 2023-2024, GNU-v3 licensed";
   // ReSharper restore MemberCanBePrivate.Global
@@ -64,18 +75,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   public ConfigEntry<string> PluginFolderName { get; set; }
   public ConfigEntry<float> InitialRaftFloorHeight { get; set; }
-
-  /**
-   * Patches
-   */
-  public ConfigEntry<bool> PlanBuildPatches { get; set; }
-
-  public ConfigEntry<bool> ComfyGizmoPatches { get; set; }
-  public ConfigEntry<bool> ComfyGizmoPatchCreativeHasNoRotation { get; set; }
-
-  public ConfigEntry<bool> ShipPausePatch { get; set; }
-  public ConfigEntry<bool> ShipPausePatchSinglePlayer { get; set; }
-
 
   public ConfigEntry<float> ServerRaftUpdateZoneInterval { get; set; }
   public ConfigEntry<float> RaftSailForceMultiplier { get; set; }
@@ -360,41 +359,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         true));
   }
 
-  private void AutoDoc()
-  {
-#if DEBUG
-    // Store Regex to get all characters after a [
-    Regex regex = new(@"\[(.*?)\]");
-
-    // Strip using the regex above from Config[x].Description.Description
-    string Strip(string x) => regex.Match(x).Groups[1].Value;
-    StringBuilder sb = new();
-    var lastSection = "";
-    foreach (var x in Config.Keys)
-    {
-      // skip first line
-      if (x.Section != lastSection)
-      {
-        lastSection = x.Section;
-        sb.Append($"{Environment.NewLine}## {x.Section}{Environment.NewLine}");
-      }
-
-
-      sb.Append(
-        $"\n### {x.Key} [{Strip(Config[x].Description.Description)}]"
-          .Replace("[]",
-            "") +
-        $"{Environment.NewLine}- Description: {Config[x].Description.Description.Replace("[Synced with Server]", "").Replace("[Not Synced with Server]", "")}" +
-        $"{Environment.NewLine}- Default Value: {Config[x].GetSerializedValue()}{Environment.NewLine}");
-    }
-
-    File.WriteAllText(
-      Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
-        $"{ModName}_AutoDoc.md"),
-      sb.ToString());
-#endif
-  }
-
   private void CreateFlightPropulsionConfig()
   {
     FlightVerticalToggle = Config.Bind<bool>("Propulsion",
@@ -445,38 +409,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       CreateConfigDescription(
         "Outputs more debug logs for the Vehicle components. Useful for troubleshooting errors, but will spam logs"));
 
-    ComfyGizmoPatches = Config.Bind("Patches",
-      "ComfyGizmo - Enable Patch", false,
-      CreateConfigDescription(
-        "Patches relative rotation allowing for copying rotation and building while the raft is at movement, this toggle is only provided in case patches regress anything in Gizmos and players need a work around."));
-    ComfyGizmoPatchCreativeHasNoRotation = Config.Bind("Patches",
-      "ComfyGizmo - Vehicle Creative zero Y rotation", true,
-      CreateConfigDescription(
-        "Vehicle/Raft Creative mode will set all axises to 0 for rotation instead keeping the turn axis. Gizmo has issues with rotated vehicles, so zeroing things out is much safer. Works regardless of patch if mod exists"));
-
-    ShipPausePatch = Config.Bind<bool>("Patches",
-      "Vehicles Prevent Pausing", true,
-      CreateConfigDescription(
-        "Prevents pausing on a boat, pausing causes a TON of desync problems and can make your boat crash or other players crash",
-        true, true));
-    ShipPausePatchSinglePlayer = Config.Bind<bool>("Patches",
-      "Vehicles Prevent Pausing SinglePlayer", true,
-      CreateConfigDescription(
-        "Prevents pausing on a boat during singleplayer. Must have the Vehicle Prevent Pausing patch as well",
-        true, true));
-
-    PlanBuildPatches = Config.Bind<bool>("Patches",
-      "Enable PlanBuild Patches (required to be on if you installed PlanBuild)",
-      false,
-      new ConfigDescription(
-        "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT. PlanBuild mod can be found here. https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/",
-        (AcceptableValueBase)null, new object[1]
-        {
-          (object)new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = false
-          }
-        }));
 
     InitialRaftFloorHeight = Config.Bind<float>("Deprecated Config",
       "Initial Floor Height (V1 raft)", 0.6f, new ConfigDescription(
@@ -553,11 +485,14 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CreateGraphicsConfig();
     CreateSoundConfig();
 
+
     // new way to do things. Makes life easier for config
+    PatchConfig.BindConfig(Config);
     RamConfig.BindConfig(Config);
     PrefabConfig.BindConfig(Config);
     VehicleDebugConfig.BindConfig(Config);
     PropulsionConfig.BindConfig(Config);
+    ModSupportConfig.BindConfig(Config);
   }
 
   internal void ApplyMetricIfAvailable()
@@ -601,6 +536,28 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     PrefabManager.OnVanillaPrefabsAvailable += AddCustomPieces;
 
     ZdoWatcherDelegate.RegisterToZdoManager();
+    // PlayerSpawnController.PlayerMoveToVehicleCallback =
+    // VehiclePiecesController.OnPlayerSpawnInVehicle;
+    AddModSupport();
+  }
+
+  public void AddModSupport()
+  {
+    AddModSupportDynamicLocations();
+  }
+
+  /// <summary>
+  /// DynamicLocations to allow for respawning on moving boats, or be placed on the boat when logging in.
+  /// </summary>
+  public void AddModSupportDynamicLocations()
+  {
+    var dynamicLocationLoginIntegrationConfig =
+      DynamicLoginIntegration.CreateConfig(this, PrefabNames.WaterVehicleShip);
+    var integrationInstance =
+      new DynamicLocationsLoginIntegration(
+        dynamicLocationLoginIntegrationConfig);
+    LoginAPIController.AddLoginApiIntegration(
+      integrationInstance);
   }
 
   public void RegisterConsoleCommands()
@@ -623,7 +580,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     // SentryLoads after
     ApplyMetricIfAvailable();
     AddGuiLayerComponents();
-    AutoDoc();
+    new BepInExConfigAutoDoc().Generate(this, Config);
   }
 
   /**

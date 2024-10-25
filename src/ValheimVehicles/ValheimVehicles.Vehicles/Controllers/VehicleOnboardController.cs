@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using DynamicLocations;
+using DynamicLocations.Controllers;
 using UnityEngine;
+using ValheimVehicles.Config;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles.Controllers;
@@ -46,7 +48,8 @@ public class VehicleOnboardController : MonoBehaviour
     StopCoroutine(nameof(RemovePlayersRoutine));
   }
 
-  public VehicleMovementController GetMovementController() => _movementController;
+  public VehicleMovementController GetMovementController() =>
+    _movementController;
 
   public void SetMovementController(VehicleMovementController val)
   {
@@ -117,7 +120,8 @@ public class VehicleOnboardController : MonoBehaviour
 
   private void SetPlayerOnShip(Player player)
   {
-    var piecesTransform = _movementController.ShipInstance?.Instance?.VehiclePiecesController?
+    var piecesTransform = _movementController.ShipInstance?.Instance
+      ?.VehiclePiecesController?
       .transform;
 
 
@@ -153,10 +157,13 @@ public class VehicleOnboardController : MonoBehaviour
     // All clients should do this
     SetPlayerOnShip(playerInList);
 
-    if (playerInList == Player.m_localPlayer)
+    var vehicleZdo = _movementController
+      .ShipInstance?.NetView?.GetZDO();
+
+    if (playerInList == Player.m_localPlayer && vehicleZdo != null)
     {
       ValheimBaseGameShip.s_currentShips.Add(_movementController);
-      PlayerSpawnController.Instance?.SyncLogoutPoint();
+      PlayerSpawnController.Instance?.SyncLogoutPoint(vehicleZdo);
     }
   }
 
@@ -174,10 +181,14 @@ public class VehicleOnboardController : MonoBehaviour
     Logger.LogDebug(
       $"Player: {playerInList.GetPlayerName()} over-board, players remaining {remainingPlayers}");
 
-    if (playerInList == Player.m_localPlayer)
+    var vehicleZdo = _movementController
+      .ShipInstance?.NetView?.GetZDO();
+
+    if (playerInList == Player.m_localPlayer && vehicleZdo != null)
     {
-      ValheimBaseGameShip.s_currentShips.Remove(_movementController);
-      PlayerSpawnController.Instance?.SyncLogoutPoint();
+      // Todo figure out why I had this enabled, it looks like it could cause a ton of issues.
+      // ValheimBaseGameShip.s_currentShips.Remove(_movementController);
+      PlayerSpawnController.Instance?.SyncLogoutPoint(vehicleZdo, true);
     }
   }
 
@@ -191,7 +202,8 @@ public class VehicleOnboardController : MonoBehaviour
     {
       yield return new WaitForSeconds(15);
 
-      var playersOnboard = _movementController?.ShipInstance?.VehiclePiecesController?
+      var playersOnboard = _movementController?.ShipInstance
+        ?.VehiclePiecesController?
         .GetComponentsInChildren<Player>();
       List<Player> validPlayers = [];
 
@@ -208,7 +220,7 @@ public class VehicleOnboardController : MonoBehaviour
         _movementController.m_players = validPlayers;
         if (validPlayers.Count == 0)
         {
-          _movementController.SetAnchor(true);
+          _movementController.SendDelayedAnchor();
         }
       }
 

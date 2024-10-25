@@ -22,8 +22,9 @@ public class VehicleRamAoe : Aoe
 
   public static HitData.DamageTypes baseDamage;
 
-  public float minimumVelocityToTriggerHit => RamConfig.minimumVelocityToTriggerHit.Value *
-                                              (RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f);
+  public float minimumVelocityToTriggerHit =>
+    RamConfig.minimumVelocityToTriggerHit.Value *
+    (RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f);
 
   public VehicleShip? vehicle;
   public RamPrefabs.RamType RamType;
@@ -31,17 +32,27 @@ public class VehicleRamAoe : Aoe
   // damages
   public static int RamDamageToolTier = RamConfig.RamDamageToolTier.Value;
   public static float RamHitArea = RamConfig.HitRadius.Value;
-  public static float PercentageDamageToSelf = RamConfig.PercentageDamageToSelf.Value;
+
+  public static float PercentageDamageToSelf =
+    RamConfig.PercentageDamageToSelf.Value;
+
   public static float RamBaseSlashDamage => RamConfig.RamBaseSlashDamage.Value;
   public static float RamBaseBluntDamage => RamConfig.RamBaseBluntDamage.Value;
   public static float RamBaseChopDamage => RamConfig.RamBaseChopDamage.Value;
-  public static float RamBasePickAxeDamage => RamConfig.RamBasePickAxeDamage.Value;
-  public static float RamBasePierceDamage => RamConfig.RamBasePierceDamage.Value;
-  public static float RamBaseMaximumDamage => RamConfig.RamBaseMaximumDamage.Value;
+
+  public static float RamBasePickAxeDamage =>
+    RamConfig.RamBasePickAxeDamage.Value;
+
+  public static float RamBasePierceDamage =>
+    RamConfig.RamBasePierceDamage.Value;
+
+  public static float RamBaseMaximumDamage =>
+    RamConfig.RamBaseMaximumDamage.Value;
 
   public static float RamHitInterval = RamConfig.RamHitInterval.Value;
 
-  public static bool AllowContinuousDamage = RamConfig.AllowContinuousDamage.Value;
+  public static bool AllowContinuousDamage =
+    RamConfig.AllowContinuousDamage.Value;
 
   // hit booleans
   public static bool RamsCanHitEnvironmentOrTerrain =
@@ -109,10 +120,12 @@ public class VehicleRamAoe : Aoe
     m_ttl = 0;
   }
 
-  public float GetTotalDamage(float slashDamage, float bluntDamage, float chopDamage,
+  public float GetTotalDamage(float slashDamage, float bluntDamage,
+    float chopDamage,
     float pickaxeDamage, float pierceDamage)
   {
-    return slashDamage + bluntDamage + chopDamage + pickaxeDamage + pierceDamage;
+    return slashDamage + bluntDamage + chopDamage + pickaxeDamage +
+           pierceDamage;
   }
 
   public void InitAoe()
@@ -221,7 +234,8 @@ public class VehicleRamAoe : Aoe
             {
               if ((bool)(UnityEngine.Object)Aoe.s_chainObjs[index])
               {
-                if ((double)Vector3.Distance(Aoe.s_chainObjs[index].transform.position, position2) <
+                if ((double)Vector3.Distance(
+                      Aoe.s_chainObjs[index].transform.position, position2) <
                     0.10000000149011612)
                 {
                   flag = true;
@@ -235,13 +249,16 @@ public class VehicleRamAoe : Aoe
             if (!flag)
             {
               GameObject gameObject1 =
-                UnityEngine.Object.Instantiate<GameObject>(m_chainObj, position2,
+                UnityEngine.Object.Instantiate<GameObject>(m_chainObj,
+                  position2,
                   hit.gameObject.transform.rotation);
               Aoe.s_chainObjs.Add(gameObject1);
-              IProjectile componentInChildren = gameObject1.GetComponentInChildren<IProjectile>();
+              IProjectile componentInChildren =
+                gameObject1.GetComponentInChildren<IProjectile>();
               if (componentInChildren != null)
               {
-                componentInChildren.Setup(m_owner, position1.DirTo(position2), -1f,
+                componentInChildren.Setup(m_owner, position1.DirTo(position2),
+                  -1f,
                   m_hitData, m_itemData, m_ammo);
                 if (componentInChildren is Aoe aoe)
                   aoe.m_chainChance =
@@ -252,7 +269,8 @@ public class VehicleRamAoe : Aoe
               float num2 = Vector3.Distance(position2, transform.position);
               foreach (GameObject gameObject2 in m_chainEffects.Create(
                          position1 + Vector3.up,
-                         Quaternion.LookRotation(position1.DirTo(position2 + Vector3.up))))
+                         Quaternion.LookRotation(
+                           position1.DirTo(position2 + Vector3.up))))
                 gameObject2.transform.localScale = Vector3.one * num2;
             }
           }
@@ -294,11 +312,12 @@ public class VehicleRamAoe : Aoe
     }
 
     // Must be within the BaseVehiclePieces after initialization otherwise this AOE could attempt to damage items within the raft ball
-    var isChildOfBaseVehicle = transform.root.name.StartsWith(PrefabNames.WaterVehicleShip) ||
-                               transform.root.name.StartsWith(PrefabNames.VehiclePiecesContainer) ||
-                               transform.root.name.StartsWith(
-                                 PrefabNames
-                                   .VehicleMovingPiecesContainer);
+    var isChildOfBaseVehicle =
+      transform.root.name.StartsWith(PrefabNames.WaterVehicleShip) ||
+      transform.root.name.StartsWith(PrefabNames.VehiclePiecesContainer) ||
+      transform.root.name.StartsWith(
+        PrefabNames
+          .VehicleMovingPiecesContainer);
     if (!isChildOfBaseVehicle)
     {
       isReadyForCollisions = false;
@@ -329,7 +348,8 @@ public class VehicleRamAoe : Aoe
     {
       relativeVelocity =
         Vector3.Magnitude(collider?.attachedRigidbody?.velocity ??
-                          Vector3.zero - vehicle?.MovementController.m_body?.velocity ??
+                          Vector3.zero - vehicle?.MovementController.m_body
+                            ?.velocity ??
                           Vector3.zero);
     }
 
@@ -341,7 +361,8 @@ public class VehicleRamAoe : Aoe
     // exits if the velocity is not within expected damage ranges
     if (relativeVelocityMagnitude < minimumVelocityToTriggerHit) return false;
 
-    var multiplier = Mathf.Min(relativeVelocityMagnitude * 0.5f, MaxVelocityMultiplier);
+    var multiplier = Mathf.Min(relativeVelocityMagnitude * 0.5f,
+      MaxVelocityMultiplier);
 
     if (materialTier == PrefabTiers.Tier3)
     {
@@ -374,7 +395,8 @@ public class VehicleRamAoe : Aoe
     if (HasMaxDamageCap)
     {
       var nextTotalDamage =
-        GetTotalDamage(slashDamage, bluntDamage, chopDamage, pickaxeDamage, pierceDamage);
+        GetTotalDamage(slashDamage, bluntDamage, chopDamage, pickaxeDamage,
+          pierceDamage);
 
       if (nextTotalDamage > RamBaseMaximumDamage)
       {
@@ -422,7 +444,8 @@ public class VehicleRamAoe : Aoe
     }
 
     m_damageSelf =
-      GetTotalDamage(slashDamage, bluntDamage, chopDamage, pickaxeDamage, pierceDamage) *
+      GetTotalDamage(slashDamage, bluntDamage, chopDamage, pickaxeDamage,
+        pierceDamage) *
       PercentageDamageToSelf;
 
     return true;
@@ -469,7 +492,8 @@ public class VehicleRamAoe : Aoe
   {
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collision.collider)) return;
-    if (!UpdateDamageFromVelocity(Vector3.Magnitude(collision.relativeVelocity))) return;
+    if (!UpdateDamageFromVelocity(
+          Vector3.Magnitude(collision.relativeVelocity))) return;
     base.OnCollisionEnter(collision);
   }
 
@@ -477,7 +501,8 @@ public class VehicleRamAoe : Aoe
   {
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collision.collider)) return;
-    if (!UpdateDamageFromVelocity(Vector3.Magnitude(collision.relativeVelocity))) return;
+    if (!UpdateDamageFromVelocity(
+          Vector3.Magnitude(collision.relativeVelocity))) return;
     base.OnCollisionStay(collision);
   }
 

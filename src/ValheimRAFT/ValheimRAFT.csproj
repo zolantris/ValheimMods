@@ -10,7 +10,7 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>2.2.4</ApplicationVersion>
+        <ApplicationVersion>2.3.0</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -23,6 +23,10 @@
     <ItemGroup>
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
+    </ItemGroup>
+    <!-- Compiled Shared items  -->
+    <ItemGroup>
+        <ProjectReference Include="..\Shared\Shared.csproj"/>
     </ItemGroup>
     <!--    <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'">-->
     <!--        <Compile Include="..\DynamicLocations\**.cs"/>-->
@@ -47,8 +51,13 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Enums\VehiclePhysicsMode.cs">
             <Link>Enums\VehiclePhysicsMode.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\**">
+            <Link>Enums\VehiclePhysicsMode.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="ValheimRAFT.Config\IConfigSection.cs"/>
+        <Compile Include="ValheimRAFT.Config\PatchConfig.cs"/>
         <Compile Include="ValheimRAFT\*.cs"/>
         <Compile Include="ValheimRAFT.Patches\*.cs"/>
         <Compile Include="ValheimRAFT.UI\*.cs"/>
@@ -111,15 +120,23 @@
             <Link>ValheimVehicles.Utils</Link>
         </Folder>
     </ItemGroup>
-    <PropertyGroup>
-        <SandboxieVMPath>C:\Sandbox\fre\DefaultBox</SandboxieVMPath>
-        <SandboxieUserPath>$(SandboxieVMPath)\user\current</SandboxieUserPath>
-        <SandboxieValheimPath>$(SandboxieVMPath)\drive\C\Program Files (x86)\Steam\steamapps\common\Valheim</SandboxieValheimPath>
-        <SandboxieProfilePath>$(SandboxieUserPath)\$(R2ModManPath)\$(R2ModManProfile)</SandboxieProfilePath>
-        <SandboxiePluginDeployPath>$(SandboxieUserPath)\$(R2ModManPath)\$(R2ModManProfile)\$(PluginDeployTarget)</SandboxiePluginDeployPath>
-    </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <OutputPath>bin\Release Archive\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run ClientServer|AnyCPU' ">
+        <OutputPath>bin\Debug Run ClientServer\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Client|AnyCPU' ">
+        <OutputPath>bin\Debug Run Client\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Run Server|AnyCPU' ">
+        <OutputPath>bin\Debug Run Server\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <OutputPath>bin\Debug\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <OutputPath>bin\Release\</OutputPath>
     </PropertyGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

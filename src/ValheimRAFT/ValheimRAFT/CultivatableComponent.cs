@@ -65,7 +65,7 @@ public class CultivatableComponent : MonoBehaviour
 
   private void OnDestroyed()
   {
-    var myid = ZdoWatchManager.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
+    var myid = ZdoWatchController.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
     if (!m_childObjects.TryGetValue(myid, out var list))
     {
       return;
@@ -73,7 +73,7 @@ public class CultivatableComponent : MonoBehaviour
 
     for (int i = 0; i < list.Count; i++)
     {
-      var zdo = ZdoWatchManager.Instance.GetZdo(list[i]);
+      var zdo = ZdoWatchController.Instance.GetZdo(list[i]);
       if (zdo == null)
       {
         continue;
@@ -133,7 +133,7 @@ public class CultivatableComponent : MonoBehaviour
 
   public void AddNewChild(ZNetView child)
   {
-    AddNewChild(ZdoWatchManager.Instance.GetOrCreatePersistentID(m_nview.m_zdo), child);
+    AddNewChild(ZdoWatchController.Instance.GetOrCreatePersistentID(m_nview.m_zdo), child);
   }
 
   public static void InitPiece(ZNetView netview)
@@ -155,8 +155,8 @@ public class CultivatableComponent : MonoBehaviour
       {
         ZDO zdoparent = ZDOMan.instance.GetZDO(zdoid);
         id = ((zdoparent == null)
-          ? ZdoWatchManager.ZdoIdToId(zdoid)
-          : ZdoWatchManager.Instance.GetOrCreatePersistentID(zdoparent));
+          ? ZdoWatchController.ZdoIdToId(zdoid)
+          : ZdoWatchController.Instance.GetOrCreatePersistentID(zdoparent));
         netview.m_zdo.Set(MBCultivatableParentIdHash, id);
       }
     }
@@ -178,7 +178,7 @@ public class CultivatableComponent : MonoBehaviour
       UnityEngine.Object.Destroy(sp);
     }
 
-    AddChild(parent, ZdoWatchManager.Instance.GetOrCreatePersistentID(child.m_zdo));
+    AddChild(parent, ZdoWatchController.Instance.GetOrCreatePersistentID(child.m_zdo));
   }
 
   private static void AddChild(int parent, int child)

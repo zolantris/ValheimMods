@@ -1,10 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Nullable>enable</Nullable>
+        <Configurations>Debug;Release;Release Archive</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <Import Project="..\..\base.targets"/>
     <Import Project="..\..\valheim.targets"/>
     <Import Project="..\..\gameLauncher.targets"/>
+    <!-- Compiled Shared items  -->
+    <ItemGroup>
+        <ProjectReference Include="..\Shared\Shared.csproj"/>
+    </ItemGroup>
+    <!--  requires zdowatcher  -->
     <ItemGroup>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
     </ItemGroup>

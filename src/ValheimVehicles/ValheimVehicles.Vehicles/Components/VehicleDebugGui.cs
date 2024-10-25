@@ -1,4 +1,6 @@
 using DynamicLocations;
+using DynamicLocations.Constants;
+using DynamicLocations.Controllers;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimRAFT.Patches;
@@ -81,32 +83,28 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       }
     }
 
-    if (GUILayout.Button(
-          $"PlayerSpawnupdate: {PlayerSpawnController.CanUpdateLogoutPoint}"))
-    {
-      PlayerSpawnController.CanUpdateLogoutPoint =
-        !PlayerSpawnController.CanUpdateLogoutPoint;
-    }
-
     if (GUILayout.Button("Set logoutpoint"))
     {
-      PlayerSpawnController.CanUpdateLogoutPoint = true;
-      PlayerSpawnController.Instance?.SyncLogoutPoint();
-      PlayerSpawnController.CanUpdateLogoutPoint = false;
+      var zdo = Player.m_localPlayer
+        .GetComponentInParent<VehiclePiecesController>()?.VehicleInstance
+        ?.NetView?
+        .GetZDO();
+      if (zdo != null)
+      {
+        PlayerSpawnController.Instance?.SyncLogoutPoint(zdo);
+      }
     }
 
     if (GUILayout.Button("Move to current spawn"))
     {
-      PlayerSpawnController.CanUpdateLogoutPoint = false;
-      PlayerSpawnController.player = Player.m_localPlayer;
-      PlayerSpawnController.Instance?.MovePlayerToSpawnPoint();
-      PlayerSpawnController.CanUpdateLogoutPoint = false;
+      PlayerSpawnController.Instance?.DEBUG_MoveTo(LocationVariation
+        .Spawn);
     }
 
     if (GUILayout.Button("Move to current logout"))
     {
-      PlayerSpawnController.player = Player.m_localPlayer;
-      PlayerSpawnController.Instance?.MovePlayerToLoginPoint();
+      PlayerSpawnController.Instance?.DEBUG_MoveTo(LocationVariation
+        .Logout);
     }
 
     if (GUILayout.Button("DebugFind PlayerSpawnController"))
