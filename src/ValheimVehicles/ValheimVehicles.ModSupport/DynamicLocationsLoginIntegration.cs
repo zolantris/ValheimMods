@@ -80,8 +80,9 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
       Player.m_localPlayer.ToggleDebugFly();
     }
 
-    Player.m_localPlayer.transform.position =
-      bedTransform.position + Vector3.up * 1.5f;
+    var offset = bedTransform.position + Vector3.up * 1.5f;
+    PlayerSpawnController.Instance?.DynamicTeleport(offset,
+      Player.m_localPlayer.transform.rotation);
   }
 
   private bool MovePlayerToBedOnShip(VehicleShip vehicle)

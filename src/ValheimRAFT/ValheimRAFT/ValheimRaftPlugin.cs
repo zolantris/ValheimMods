@@ -493,6 +493,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     VehicleDebugConfig.BindConfig(Config);
     PropulsionConfig.BindConfig(Config);
     ModSupportConfig.BindConfig(Config);
+
+#if DEBUG
+    // Meant for only being run in debug builds for testing quickly
+    QuickStartWorldConfig.BindConfig(Config);
+#endif
   }
 
   internal void ApplyMetricIfAvailable()

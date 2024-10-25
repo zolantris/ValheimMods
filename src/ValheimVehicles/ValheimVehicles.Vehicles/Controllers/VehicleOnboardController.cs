@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DynamicLocations;
 using DynamicLocations.Controllers;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimVehicles.Config;
 using Logger = Jotunn.Logger;
 
@@ -15,9 +16,80 @@ public class VehicleOnboardController : MonoBehaviour
 {
   private VehicleMovementController _movementController = null!;
 
+  public static Dictionary<ZDOID, Character?> CharactersOnboard = new();
+
+  public static Dictionary<ZDOID, VehicleOnboardController?>
+    CharacterOnVehiclePieces = new();
+
+  public Collider onboardCollider => _movementController.OnboardCollider;
+
   private void Awake()
   {
     _movementController = GetComponentInParent<VehicleMovementController>();
+    InvokeRepeating(nameof(ValidateCharactersAreOnShip), 1f, 30f);
+  }
+
+  private void ValidateCharactersAreOnShip()
+  {
+    var itemsToRemove = new List<Character>();
+    var keysToRemove = new List<ZDOID>();
+
+    foreach (var keyValuePair in CharactersOnboard)
+    {
+      if (keyValuePair.Value == null || keyValuePair.Value.enabled != true)
+      {
+        keysToRemove.Add(keyValuePair.Key);
+        continue;
+      }
+
+
+      if (keyValuePair.Value.transform.root
+            .GetComponentInParent<VehiclePiecesController>() == null)
+      {
+        itemsToRemove.Add(keyValuePair.Value);
+      }
+    }
+
+    foreach (var zdoid in keysToRemove)
+    {
+      RemoveByZdoid(zdoid);
+    }
+
+    foreach (var character in itemsToRemove)
+    {
+      RemoveCharacter(character);
+    }
+  }
+
+  private static void RemoveByZdoid(ZDOID zdoid)
+  {
+    CharactersOnboard.Remove(zdoid);
+    CharacterOnVehiclePieces.Remove(zdoid);
+  }
+
+  private static void RemoveCharacter(Character character)
+  {
+    var zdoid = character.GetZDOID();
+    CharactersOnboard.Remove(zdoid);
+    CharacterOnVehiclePieces.Remove(zdoid);
+  }
+
+  private void AddCharacter(Character character)
+  {
+    var zdoid = character.GetZDOID();
+    CharactersOnboard.Add(zdoid, character);
+    CharacterOnVehiclePieces.Add(zdoid, this);
+  }
+
+  public static bool CharacterIsOnboard(Character character)
+  {
+    return CharactersOnboard.ContainsKey(character.GetZDOID());
+  }
+
+  public static bool GetCharacterVehicleMovementController(ZDOID zdoid,
+    out VehicleOnboardController controller)
+  {
+    return CharacterOnVehiclePieces.TryGetValue(zdoid, out controller);
   }
 
   /// <summary>
@@ -74,14 +146,21 @@ public class VehicleOnboardController : MonoBehaviour
   {
     var character = collider.GetComponent<Character>();
     if (!(bool)character) return;
+
     if (isExiting)
     {
-      character.InNumShipVolumes--;
+      if (CharactersOnboard.ContainsKey(character.GetZDOID()))
+      {
+        RemoveCharacter(character);
+        character.InNumShipVolumes--;
+      }
+
+      return;
     }
-    else
-    {
-      character.InNumShipVolumes++;
-    }
+
+    if (CharactersOnboard.ContainsKey(character.GetZDOID())) return;
+    AddCharacter(character);
+    character.InNumShipVolumes++;
   }
 
   /// <summary>

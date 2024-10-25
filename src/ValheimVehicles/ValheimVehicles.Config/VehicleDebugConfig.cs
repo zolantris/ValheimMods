@@ -8,11 +8,18 @@ public static class VehicleDebugConfig
 {
   public static ConfigFile? Config { get; private set; }
 
+  public static ConfigEntry<float>
+    BoatLiquidDepthOverride { get; private set; } = null!;
+
+  public static ConfigEntry<bool>
+    HasBoatLiquidDepthOverride { get; private set; } = null!;
+
   public static ConfigEntry<bool>
     AutoShowVehicleColliders { get; private set; } = null!;
 
   public static ConfigEntry<bool>
     HasAutoAnchorDelay { get; private set; } = null!;
+
 
   public static ConfigEntry<float> AutoAnchorDelayTime { get; private set; } =
     null!;
@@ -48,6 +55,20 @@ public static class VehicleDebugConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
+
+    HasBoatLiquidDepthOverride = config.Bind(SectionName,
+      "HasBoatLiquidDepthOverride",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Enables liquid depth overrides",
+        true, true));
+    BoatLiquidDepthOverride = config.Bind(SectionName,
+      "BoatLiquidDepthOverride",
+      -100f,
+      ConfigHelpers.CreateConfigDescription(
+        "Force Overrides the liquid depth for character on boats. Values below -100f will disable it.",
+        true, true));
+
 
     HasAutoAnchorDelay = config.Bind(SectionName, "HasAutoAnchorDelay",
       false,

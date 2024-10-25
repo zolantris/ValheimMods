@@ -2,9 +2,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
+using JetBrains.Annotations;
 using UnityEngine;
+using ValheimVehicles.Config;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Vehicles.Controllers;
 
 namespace ValheimRAFT.Patches;
 
@@ -18,13 +21,81 @@ public class Character_Patch
   {
     var list = instructions.ToList();
     for (var i = 0; i < list.Count; i++)
-      if (list[i].Calls(AccessTools.Method(typeof(Character), "GetStandingOnShip")))
+      if (list[i]
+          .Calls(AccessTools.Method(typeof(Character), "GetStandingOnShip")))
         list[i] = new CodeInstruction(OpCodes.Call,
-          AccessTools.Method(typeof(Character_Patch), nameof(GetStandingOnShip)));
+          AccessTools.Method(typeof(Character_Patch),
+            nameof(GetStandingOnShip)));
     return list;
   }
 
-  [HarmonyPatch(typeof(Character), "InWater")]
+  [HarmonyPatch(typeof(Character), nameof(Character.InLiquid))]
+  [HarmonyPrefix]
+  public static void Character_InLiquid(Character __instance,
+    ref bool __result)
+  {
+    var vpc = __instance.transform.root.GetComponent<VehiclePiecesController>();
+    if (vpc) __result = false;
+  }
+
+
+  [HarmonyPatch(typeof(Character), nameof(Character.CalculateLiquidDepth))]
+  [HarmonyPrefix]
+  public static bool Character_CalculateLiquidDepth(Character __instance)
+  {
+    if (VehicleOnboardController.GetCharacterVehicleMovementController(
+          __instance.GetZDOID(), out var controller))
+    {
+      var liquidDepth = VehicleDebugConfig.HasBoatLiquidDepthOverride.Value
+        ? VehicleDebugConfig.BoatLiquidDepthOverride.Value
+        : controller.onboardCollider.bounds.min.y;
+      __instance.m_liquidLevel = liquidDepth;
+      // the vehicle onboard collider controls the water level for players. So they can go below sea level
+      __instance.m_cashedInLiquidDepth = liquidDepth;
+
+      // __instance.m_cashedInLiquidDepth = Mathf.Max(0.0f,
+      //   __instance.GetLiquidLevel() - __instance.transform.position.y);
+      return true;
+    }
+
+    return false;
+  }
+
+  [HarmonyPatch(typeof(Character), nameof(Character.SetLiquidLevel))]
+  [HarmonyPrefix]
+  public static bool Character_SetLiquidLevel(Character __instance)
+  {
+    if (VehicleOnboardController.GetCharacterVehicleMovementController(
+          __instance.GetZDOID(), out var controller))
+    {
+      var liquidDepth = VehicleDebugConfig.HasBoatLiquidDepthOverride.Value
+        ? VehicleDebugConfig.BoatLiquidDepthOverride.Value
+        : controller.onboardCollider.bounds.min.y;
+      __instance.m_liquidLevel = liquidDepth;
+      __instance.m_waterLevel = liquidDepth;
+      // the vehicle onboard collider controls the water level for players. So they can go below sea level
+      __instance.m_cashedInLiquidDepth = liquidDepth;
+
+      // game calls this.
+      // this.m_liquidLevel = Mathf.Max(this.m_waterLevel, this.m_tarLevel);
+
+      return true;
+    }
+
+    return false;
+  }
+
+
+  [HarmonyPatch(typeof(Character), nameof(Character.IsOnGround))]
+  [HarmonyPostfix]
+  public static void Character_IsOnGround(Character __instance,
+    ref bool __result)
+  {
+    var vpc = __instance.transform.root.GetComponent<VehiclePiecesController>();
+    if (vpc) __result = true;
+  }
+
+  [HarmonyPatch(typeof(Character), nameof(Character.InWater))]
   [HarmonyPostfix]
   public static void InWater(Character __instance, bool __result)
   {
@@ -40,7 +111,8 @@ public class Character_Patch
       return null;
     }
 
-    var bvc = __instance.m_lastGroundBody.GetComponentInParent<VehiclePiecesController>();
+    var bvc = __instance.m_lastGroundBody
+      .GetComponentInParent<VehiclePiecesController>();
     if ((bool)bvc)
     {
       return VehicleShipCompat.InitFromUnknown(bvc?.VehicleInstance);
@@ -61,7 +133,8 @@ public class Character_Patch
     /*
      * @deprecated old ship logic
      */
-    var mb = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
+    var mb = __instance.m_lastGroundBody
+      .GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mb && (bool)mb.m_ship)
     {
       return VehicleShipCompat.InitFromUnknown(mb.m_ship);
@@ -72,7 +145,8 @@ public class Character_Patch
 
   [HarmonyPatch(typeof(Character), "GetStandingOnShip")]
   [HarmonyPrefix]
-  private static bool Character_GetStandingOnShip(Character __instance, ref object? __result)
+  private static bool Character_GetStandingOnShip(Character __instance,
+    ref object? __result)
   {
     __result = GetStandingOnShip(__instance);
     return false;
@@ -84,14 +158,16 @@ public class Character_Patch
   {
     if (__instance is Player { m_debugFly: not false })
     {
-      if (__instance.transform.parent != null) __instance.transform.SetParent(null);
+      if (__instance.transform.parent != null)
+        __instance.transform.SetParent(null);
       return;
     }
 
     VehiclePiecesController? bvc = null;
     if ((bool)__instance.m_lastGroundBody)
     {
-      bvc = __instance.m_lastGroundBody.GetComponentInParent<VehiclePiecesController>();
+      bvc = __instance.m_lastGroundBody
+        .GetComponentInParent<VehiclePiecesController>();
       if ((bool)bvc && __instance.transform.parent != bvc.transform)
       {
         __instance.transform.SetParent(bvc.transform);
@@ -100,14 +176,17 @@ public class Character_Patch
     }
 
     MoveableBaseRootComponent? mbr = null;
-    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value && (bool)__instance.m_lastGroundBody)
+    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value &&
+        (bool)__instance.m_lastGroundBody)
     {
-      mbr = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
+      mbr = __instance.m_lastGroundBody
+        .GetComponentInParent<MoveableBaseRootComponent>();
       if ((bool)mbr && __instance.transform.parent != mbr.transform)
         __instance.transform.SetParent(mbr.transform);
     }
 
-    if (!mbr && !bvc && __instance.transform.parent != null) __instance.transform.SetParent(null);
+    if (!mbr && !bvc && __instance.transform.parent != null)
+      __instance.transform.SetParent(null);
   }
 
   /// <summary>
@@ -135,8 +214,10 @@ public class Character_Patch
         hitpoint = __instance.transform.position;
       }
 
-      if (!(hitnormal.y > 0.1f) || !(hitDistance < __instance.m_collider.radius)) continue;
-      if (hitnormal.y > __instance.m_groundContactNormal.y || !__instance.m_groundContact)
+      if (!(hitnormal.y > 0.1f) ||
+          !(hitDistance < __instance.m_collider.radius)) continue;
+      if (hitnormal.y > __instance.m_groundContactNormal.y ||
+          !__instance.m_groundContact)
       {
         __instance.m_groundContact = true;
         __instance.m_groundContactNormal = hitnormal;
@@ -145,11 +226,13 @@ public class Character_Patch
         continue;
       }
 
-      var groundContactNormal = Vector3.Normalize(__instance.m_groundContactNormal + hitnormal);
+      var groundContactNormal =
+        Vector3.Normalize(__instance.m_groundContactNormal + hitnormal);
       if (groundContactNormal.y > __instance.m_groundContactNormal.y)
       {
         __instance.m_groundContactNormal = groundContactNormal;
-        __instance.m_groundContactPoint = (__instance.m_groundContactPoint + hitpoint) * 0.5f;
+        __instance.m_groundContactPoint =
+          (__instance.m_groundContactPoint + hitpoint) * 0.5f;
       }
     }
 

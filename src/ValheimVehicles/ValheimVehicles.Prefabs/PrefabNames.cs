@@ -50,7 +50,8 @@ public static class PrefabNames
     {
       DirectionVariant.Left => "left",
       DirectionVariant.Right => "right",
-      _ => throw new ArgumentOutOfRangeException(nameof(directionVariant), directionVariant, null)
+      _ => throw new ArgumentOutOfRangeException(nameof(directionVariant),
+        directionVariant, null)
     };
   }
 
@@ -74,6 +75,8 @@ public static class PrefabNames
 
   private const string ValheimVehiclesPrefix = "ValheimVehicles";
 
+  public const string VehicleWaterMask = $"{ValheimVehiclesPrefix}_WaterMask";
+
 
   public const string PlayerSpawnControllerObj =
     $"{ValheimVehiclesPrefix}_PlayerSpawnControllerObj";
@@ -81,18 +84,28 @@ public static class PrefabNames
 
   public const string MBRopeLadder = "MBRopeLadder";
   public const string MBRaft = "MBRaft";
-  public const string Nautilus = $"{ValheimVehiclesPrefix}_VehiclePresets_Nautilus";
+
+  public const string Nautilus =
+    $"{ValheimVehiclesPrefix}_VehiclePresets_Nautilus";
+
   public static int m_raftHash = MBRaft.GetStableHashCode();
   public const string Tier1RaftMastName = "MBRaftMast";
   public const string Tier2RaftMastName = "MBKarveMast";
   public const string Tier3RaftMastName = "MBVikingShipMast";
-  public const string Tier4RaftMastName = $"{ValheimVehiclesPrefix}_DrakkalMast";
+
+  public const string Tier4RaftMastName =
+    $"{ValheimVehiclesPrefix}_DrakkalMast";
+
   public const string Tier1CustomSailName = "MBSail";
   public const string BoardingRamp = "MBBoardingRamp";
   public const string BoardingRampWide = "MBBoardingRamp_Wide";
   public const string WaterVehicleFloatCollider = "VehicleShip_FloatCollider";
-  public const string WaterVehicleBlockingCollider = "VehicleShip_BlockingCollider";
-  public const string WaterVehicleOnboardCollider = "VehicleShip_OnboardTriggerCollider";
+
+  public const string WaterVehicleBlockingCollider =
+    "VehicleShip_BlockingCollider";
+
+  public const string WaterVehicleOnboardCollider =
+    "VehicleShip_OnboardTriggerCollider";
 
   public const string ValheimRaftMenuName = "Raft";
 
@@ -110,15 +123,20 @@ public static class PrefabNames
   public const string VehicleContainer =
     "vehicleContainer";
 
-  public const string VehiclePiecesContainer = $"{ValheimVehiclesPrefix}_{PiecesContainer}";
+  public const string VehiclePiecesContainer =
+    $"{ValheimVehiclesPrefix}_{PiecesContainer}";
 
   public const string VehicleMovingPiecesContainer =
     $"{ValheimVehiclesPrefix}_{MovingPiecesContainer}";
 
-  public const string WaterVehicleShip = $"{ValheimVehiclesPrefix}_WaterVehicleShip";
+  public const string WaterVehicleShip =
+    $"{ValheimVehiclesPrefix}_WaterVehicleShip";
 
   public const string HullProw = $"{ValheimVehiclesPrefix}_Ship_Hull_Prow";
-  public const string HullRibCorner = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Corner";
+
+  public const string HullRibCorner =
+    $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Corner";
+
   public const string HullRib = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib";
 
   // to only be used for matching with generic prefab names
@@ -132,7 +150,8 @@ public static class PrefabNames
     return materialVariant == ShipHulls.HullMaterial.Iron ? "Iron" : "Wood";
   }
 
-  private static string GetPrefabSizeVariantName(PrefabSizeVariant prefabSizeVariant)
+  private static string GetPrefabSizeVariantName(
+    PrefabSizeVariant prefabSizeVariant)
   {
     return prefabSizeVariant == PrefabSizeVariant.FourByFour ? "4x4" : "2x2";
   }
@@ -204,14 +223,19 @@ public static class PrefabNames
       return ShipHullCenterWoodPrefabName;
     }
 
-    Logger.LogError("No hull of this name, this is an error registering a hull");
+    Logger.LogError(
+      "No hull of this name, this is an error registering a hull");
     return "";
   }
 
-  public const string ShipRudderBasic = $"{ValheimVehiclesPrefix}_ShipRudderBasic";
+  public const string ShipRudderBasic =
+    $"{ValheimVehiclesPrefix}_ShipRudderBasic";
 
-  public const string ShipRudderAdvancedWood = $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Wood";
-  public const string ShipRudderAdvancedIron = $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Iron";
+  public const string ShipRudderAdvancedWood =
+    $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Wood";
+
+  public const string ShipRudderAdvancedIron =
+    $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Iron";
 
   public const string ShipRudderAdvancedDoubleWood =
     $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Tail_Wood";
@@ -219,18 +243,35 @@ public static class PrefabNames
   public const string ShipRudderAdvancedDoubleIron =
     $"{ValheimVehiclesPrefix}_ShipRudderAdvanced_Tail_Iron";
 
-  public const string ShipSteeringWheel = $"{ValheimVehiclesPrefix}_ShipSteeringWheel";
+  public const string ShipSteeringWheel =
+    $"{ValheimVehiclesPrefix}_ShipSteeringWheel";
+
   public const string ShipKeel = $"{ValheimVehiclesPrefix}_ShipKeel";
-  public const string WaterVehiclePreviewHull = $"{ValheimVehiclesPrefix}_WaterVehiclePreviewHull";
+
+  public const string WaterVehiclePreviewHull =
+    $"{ValheimVehiclesPrefix}_WaterVehiclePreviewHull";
 
   public const string VehicleSail = $"{ValheimVehiclesPrefix}_VehicleSail";
-  public const string VehicleShipTransform = $"{ValheimVehiclesPrefix}_VehicleShipTransform";
-  public const string VehicleShipEffects = $"{ValheimVehiclesPrefix}_VehicleShipEffects";
-  public const string VehicleSailMast = $"{ValheimVehiclesPrefix}_VehicleSailMast";
+
+  public const string VehicleShipTransform =
+    $"{ValheimVehiclesPrefix}_VehicleShipTransform";
+
+  public const string VehicleShipEffects =
+    $"{ValheimVehiclesPrefix}_VehicleShipEffects";
+
+  public const string VehicleSailMast =
+    $"{ValheimVehiclesPrefix}_VehicleSailMast";
+
   public const string VehicleSailCloth = $"{ValheimVehiclesPrefix}_SailCloth";
-  public const string VehicleToggleSwitch = $"{ValheimVehiclesPrefix}_VehicleToggleSwitch";
-  public const string VehicleShipMovementOrientation = "VehicleShip_MovementOrientation";
-  public const string VehicleHudAnchorIndicator = $"{ValheimVehiclesPrefix}_HudAnchorIndicator";
+
+  public const string VehicleToggleSwitch =
+    $"{ValheimVehiclesPrefix}_VehicleToggleSwitch";
+
+  public const string VehicleShipMovementOrientation =
+    "VehicleShip_MovementOrientation";
+
+  public const string VehicleHudAnchorIndicator =
+    $"{ValheimVehiclesPrefix}_HudAnchorIndicator";
 
   public const string RamBladePrefix = $"{ValheimVehiclesPrefix}_ram_blade";
   public const string RamStakePrefix = $"{ValheimVehiclesPrefix}_ram_stake";

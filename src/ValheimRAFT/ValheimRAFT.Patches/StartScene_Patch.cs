@@ -1,5 +1,7 @@
+using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.ModSupport;
 
 namespace ValheimRAFT.Patches;
 

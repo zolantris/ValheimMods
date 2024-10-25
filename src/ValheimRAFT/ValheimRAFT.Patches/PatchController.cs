@@ -6,6 +6,7 @@ using HarmonyLib;
 using Jotunn;
 using ValheimRAFT.Config;
 using ValheimRAFT.Util;
+using ValheimVehicles.ModSupport;
 using ValheimVehicles.Patches;
 
 namespace ValheimRAFT.Patches;
@@ -33,7 +34,9 @@ internal static class PatchController
     Harmony.PatchAll(typeof(Hud_Patch));
     Harmony.PatchAll(typeof(VehicleMovementPatches));
 
-
+#if DEBUG
+    Harmony.PatchAll(typeof(QuickStartWorld_Patch));
+#endif
 // #if DEBUG
 //     // Debug only for now, this needs to be refined to ignore collisions with ship colliders
 //     Harmony.PatchAll(typeof(GameCamera_VehiclePiecesPatch));

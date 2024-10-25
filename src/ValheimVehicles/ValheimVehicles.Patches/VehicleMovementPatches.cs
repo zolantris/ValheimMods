@@ -41,7 +41,8 @@ public class VehicleMovementPatches
     var deltaTime = Time.deltaTime;
     var time = Time.time;
 
-    __instance.m_update.CustomUpdate(VehiclePiecesController.MonoUpdaterInstances,
+    __instance.m_update.CustomUpdate(
+      VehiclePiecesController.MonoUpdaterInstances,
       VehiclePiecesControllerUpdate,
       deltaTime, time);
 
@@ -62,11 +63,13 @@ public class VehicleMovementPatches
   public static void FixedUpdate(MonoUpdaters __instance)
   {
     var deltaTime = Time.fixedDeltaTime;
-    __instance.m_update.CustomFixedUpdate(VehicleMovementController.MonoUpdaterInstances,
+    __instance.m_update.CustomFixedUpdate(
+      VehicleMovementController.MonoUpdaterInstances,
       VehicleMovementControllerFixedUpdate,
       deltaTime);
 
-    __instance.m_update.CustomFixedUpdate(VehiclePiecesController.MonoUpdaterInstances,
+    __instance.m_update.CustomFixedUpdate(
+      VehiclePiecesController.MonoUpdaterInstances,
       VehiclePiecesControllerFixedUpdate,
       deltaTime);
 
@@ -82,11 +85,13 @@ public class VehicleMovementPatches
   {
     var deltaTime = Time.deltaTime;
 
-    __instance.m_update.CustomLateUpdate(VehicleMovementController.MonoUpdaterInstances,
+    __instance.m_update.CustomLateUpdate(
+      VehicleMovementController.MonoUpdaterInstances,
       VehicleMovementControllerLateUpdate,
       deltaTime);
 
-    __instance.m_update.CustomLateUpdate(VehiclePiecesController.MonoUpdaterInstances,
+    __instance.m_update.CustomLateUpdate(
+      VehiclePiecesController.MonoUpdaterInstances,
       VehiclePiecesControllerLateUpdate,
       deltaTime);
 

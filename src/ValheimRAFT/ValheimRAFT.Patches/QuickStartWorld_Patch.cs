@@ -4,7 +4,7 @@ using ValheimVehicles.ModSupport;
 
 namespace ValheimRAFT.Patches;
 
-public class QuickWorldStart_Patch
+public class QuickStartWorld_Patch
 {
 #if DEBUG
   /// <summary>

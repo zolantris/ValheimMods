@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1470494226
+CRC: 77008379
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 4804043a455a674cff906164a39df519
+    Hash: d796a855e0861ee049f99672bad5ba1d
   TypeTreeHash:
     serializedVersion: 2
     Hash: c06587813f50b4ac49249ee2d68a3382
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 4804043a455a674cff906164a39df519
+    Hash: d796a855e0861ee049f99672bad5ba1d
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -81,9 +81,10 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier3_1x2.prefab
 - Assets/ValheimVehicles/Prefabs/shared_nautilus.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_bottom.prefab
-- Assets/ValheimVehicles/Prefabs/ram_stake_tier1_1x2.prefab
+- Assets/ValheimVehicles/Shaders/InvertWaterMask.shader
 - Assets/ValheimVehicles/Prefabs/hull_slab_iron_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_2x4.prefab
+- Assets/ValheimVehicles/Prefabs/ram_stake_tier1_1x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_center_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_window_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_2x2.prefab

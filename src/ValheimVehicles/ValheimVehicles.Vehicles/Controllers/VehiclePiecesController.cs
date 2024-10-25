@@ -2194,7 +2194,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       m_floatcollider.size.y;
     var onboardColliderCenter =
       new Vector3(_vehicleBounds.center.x,
-        computedOnboardTriggerHeight / 2,
+        computedOnboardTriggerHeight * .25f,
         _vehicleBounds.center.z);
     var onboardColliderSize = new Vector3(
       Mathf.Max(minColliderSize, _vehicleBounds.size.x),
