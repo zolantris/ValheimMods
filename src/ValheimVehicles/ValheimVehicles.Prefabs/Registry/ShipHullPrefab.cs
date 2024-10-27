@@ -12,6 +12,7 @@ public class ShipHullPrefab : IRegisterPrefab
 {
   public static readonly ShipHullPrefab Instance = new();
 
+  public static Shader MaskShader = null!;
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
@@ -29,18 +30,25 @@ public class ShipHullPrefab : IRegisterPrefab
       DirectionVariant.Right
     ];
     var greenish = new Color(0.1f, 0.5f, 0.5f, 0.3f);
-    var maskShader = LoadValheimAssets.waterMask.GetComponent<MeshRenderer>()
+    MaskShader = LoadValheimAssets.waterMask.GetComponent<MeshRenderer>()
       .sharedMaterial.shader;
     var waterLiquid = PrefabManager.Instance.GetPrefab("WaterSurface");
     var waterLiquidMaterial =
       waterLiquid.GetComponent<MeshRenderer>().sharedMaterial;
 
     AddTransparentWaterMaskPrefab("InverseMask",
-      new Material(LoadValheimVehicleAssets.InvertedWaterMask),
+      new Material(LoadValheimVehicleAssets.SelectiveMask),
+      new Color(0f, 0f, 0f, 0f));
+    AddTransparentWaterMaskPrefab("InverseMask2",
+      new Material(LoadValheimVehicleAssets.SelectiveMaskMat),
       greenish);
-    AddTransparentWaterMaskPrefab("PureMask", new Material(maskShader),
+    AddTransparentWaterMaskPrefab("PureMask", new Material(MaskShader),
       greenish);
-    AddTransparentWaterMaskPrefab("MaskWithWater", waterLiquidMaterial,
+    AddTransparentWaterMaskPrefab("WaterPlane",
+      new Material(waterLiquidMaterial),
+      greenish);
+    AddTransparentWaterMaskPrefab("MaskWithWater",
+      new Material(MaskShader),
       greenish);
 
 
@@ -81,6 +89,10 @@ public class ShipHullPrefab : IRegisterPrefab
     }
   }
 
+  public static void Test()
+  {
+  }
+
 
   public static void AddTransparentWaterMaskPrefab(string prefabName,
     Material material, Color color)
@@ -98,13 +110,31 @@ public class ShipHullPrefab : IRegisterPrefab
     piece.m_clipEverything = true;
 
     var prefabMeshRenderer = prefab.GetComponent<MeshRenderer>();
-    prefabMeshRenderer.transform.localScale = Vector3.one * 4;
+    prefabMeshRenderer.transform.localScale =
+      prefabName == "WaterPlane"
+        ? new Vector3(4f, 0.05f, 4f)
+        : Vector3.one * 4;
+    if (prefabName == "WaterPlane")
+    {
+      piece.gameObject.layer = 29;
+    }
+
+    prefabMeshRenderer.transform.rotation = Quaternion.Euler(90, 0, 0);
     prefabMeshRenderer.sharedMaterial = material;
 
-    if (material.shader.name == LoadValheimVehicleAssets.InvertedWaterMask.name)
+    if (material.shader.name == LoadValheimVehicleAssets.SelectiveMask.name)
     {
-      var waterMaskDisplacement = prefab.AddComponent<WaterMaskDisplacement>();
-      waterMaskDisplacement.waterColor = color;
+      if (prefabName == "InverseMask2")
+      {
+        prefabMeshRenderer.transform.localScale = Vector3.one * 3.9f;
+      }
+
+      // prefabMeshRenderer.material =
+      //   new Material(LoadValheimVehicleAssets.SelectiveMask);
+      var cube = prefab.AddComponent<CustomCube>();
+      cube.color = color;
+      // var waterMaskDisplacement = prefab.AddComponent<WaterMaskDisplacement>();
+      // waterMaskDisplacement.waterColor = color;
     }
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
@@ -113,18 +143,9 @@ public class ShipHullPrefab : IRegisterPrefab
         Name = VehicleWaterMask,
         PieceTable = "Hammer",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-          .BoardingRamp),
+          .WaterOpacityBucket),
         Category = ValheimRaftMenuName,
         Enabled = true,
-        Requirements =
-        [
-          new RequirementConfig
-          {
-            Amount = 1,
-            Item = "Wood",
-            Recover = true
-          },
-        ]
       }));
   }
 

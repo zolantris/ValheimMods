@@ -1,159 +1,180 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using ValheimVehicles.Prefabs;
 
-[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-public class ScalableDoubleSidedCube : MonoBehaviour
+namespace ValheimVehicles.Vehicles.Components;
+
+// [ExecuteInEditMode]
+[RequireComponent(typeof(Transform))]
+public class CustomCube : MonoBehaviour
 {
-    public Vector3 CubeSize = new Vector3(1, 1, 1);
-    private List<MeshFilter> faceMeshes;
+  public float
+    cubeSize = 1f; // This should match the local scale of a Unity cube
 
-    private void Awake()
+  // public Material InnerSelectiveMask;
+  // public Material SurfaceWaterMaskMaterial;
+
+  private static Color greenish = new Color(0.15f, 0.5f, 0.3f, 0.2f);
+  private static readonly int ColorId = Shader.PropertyToID("_Color");
+  private static readonly int MaxHeight = Shader.PropertyToID("_MaxHeight");
+
+  public Color color = greenish;
+  private List<GameObject> cubeObjs = new List<GameObject>();
+  private List<Renderer> cubeRenders = new List<Renderer>();
+  private GameObject Cube;
+  public bool CanRenderTopOfCube = false;
+  private LayerMask NonSolidLayer => LayerMask.NameToLayer("piece_nonsolid");
+
+  private void Awake()
+  {
+    // var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+    // cube.transform.position = transform.position;
+    // cube.transform.SetParent(transform);
+    gameObject.layer = NonSolidLayer;
+    var meshRender = GetComponent<MeshRenderer>();
+    meshRender.sharedMaterial = LoadValheimVehicleAssets.SelectiveMaskMat;
+    meshRender.sharedMaterial.renderQueue = 1000;
+    meshRender.gameObject.layer = NonSolidLayer;
+
+    CreateCubeFaces();
+  }
+
+  private WaterVolume prevLiquidLevel = new WaterVolume();
+
+  /// <summary>
+  ///  This is pretty heavy. Likely will need to not call as much by doing some optimistic checks instead of setting shader every time.
+  /// </summary>
+  private void FixedUpdate()
+  {
+    foreach (var cubeRender in cubeRenders)
     {
-        GenerateCubeFaces();
-        UpdateFacePositions();
+      WaterVolume previousAndOut = null;
+      var waterLevel =
+        Floating.GetWaterLevel(transform.position, ref prevLiquidLevel);
+      cubeRender.material.SetFloat(MaxHeight, waterLevel);
+      if (cubeRender.material.color != color)
+      {
+        cubeRender.material.SetColor(ColorId, color);
+      }
+    }
+  }
+
+  private void SafeDestroy(GameObject obj)
+  {
+    if (!Application.isPlaying)
+    {
+      DestroyImmediate(obj);
+    }
+    else
+    {
+      Destroy(obj);
+    }
+  }
+
+  public void Cleanup()
+  {
+    if (Cube != null) SafeDestroy(Cube);
+    cubeRenders.Clear();
+    foreach (var cubeObj in cubeObjs)
+    {
+      if (cubeObj == null) continue;
+      SafeDestroy(cubeObj);
     }
 
-    private void Update()
+    cubeObjs.Clear();
+  }
+
+  private void OnDestroy()
+  {
+    Cleanup();
+  }
+
+  private void OnDisable()
+  {
+    Cleanup();
+  }
+
+  private void CreateCubeFaces()
+  {
+    float halfSize = cubeSize / 2f;
+
+    // Define face directions and positions
+    Vector3[] directions =
     {
-        UpdateFacePositions();
-    }
-
-    private void GenerateCubeFaces()
+      Vector3.up, Vector3.down, Vector3.forward, Vector3.back, Vector3.left,
+      Vector3.right
+    };
+    Vector3[] positions =
     {
-        faceMeshes = new List<MeshFilter>();
-        
-        for (int i = 0; i < 6; i++)  // 6 faces of the cube
-        {
-            // Create two meshes per face for double-sided rendering
-            for (int j = 0; j < 2; j++) 
-            {
-                var face = new GameObject($"Face_{i}_{j}", typeof(MeshFilter), typeof(MeshRenderer));
-                face.transform.SetParent(transform);
-                
-                var meshFilter = face.GetComponent<MeshFilter>();
-                var meshRenderer = face.GetComponent<MeshRenderer>();
-                
-                meshRenderer.sharedMaterial = GetComponent<MeshRenderer>().sharedMaterial;
-                
-                meshFilter.mesh = CreateFaceMesh(i, j == 1);
-                faceMeshes.Add(meshFilter);
-            }
-        }
-    }
-
-    private Mesh CreateFaceMesh(int faceIndex, bool isFlipped)
+      new Vector3(0, halfSize, 0), new Vector3(0, -halfSize, 0),
+      new Vector3(0, 0, halfSize), new Vector3(0, 0, -halfSize),
+      new Vector3(-halfSize, 0, 0), new Vector3(halfSize, 0, 0)
+    };
+    Vector3[] rotations =
     {
-        Vector3[] vertices = new Vector3[4];
-        int[] triangles = isFlipped ? new int[] { 0, 2, 1, 2, 0, 3 } : new int[] { 0, 1, 2, 0, 2, 3 };
-        Vector2[] uv = new Vector2[4];
+      new Vector3(90, 0, 0), new Vector3(-90, 0, 0),
+      new Vector3(0, 0, 0), new Vector3(0, 180, 0),
+      new Vector3(0, -90, 0), new Vector3(0, 90, 0)
+    };
 
-        uv[0] = new Vector2(0, 0);
-        uv[1] = new Vector2(1, 0);
-        uv[2] = new Vector2(1, 1);
-        uv[3] = new Vector2(0, 1);
-
-        // Define vertices for each face
-        switch (faceIndex)
-        {
-            case 0: // Front
-                vertices[0] = new Vector3(-0.5f, -0.5f, 0.5f);
-                vertices[1] = new Vector3(0.5f, -0.5f, 0.5f);
-                vertices[2] = new Vector3(0.5f, 0.5f, 0.5f);
-                vertices[3] = new Vector3(-0.5f, 0.5f, 0.5f);
-                break;
-            case 1: // Back
-                vertices[0] = new Vector3(0.5f, -0.5f, -0.5f);
-                vertices[1] = new Vector3(-0.5f, -0.5f, -0.5f);
-                vertices[2] = new Vector3(-0.5f, 0.5f, -0.5f);
-                vertices[3] = new Vector3(0.5f, 0.5f, -0.5f);
-                break;
-            case 2: // Left
-                vertices[0] = new Vector3(-0.5f, -0.5f, -0.5f);
-                vertices[1] = new Vector3(-0.5f, -0.5f, 0.5f);
-                vertices[2] = new Vector3(-0.5f, 0.5f, 0.5f);
-                vertices[3] = new Vector3(-0.5f, 0.5f, -0.5f);
-                break;
-            case 3: // Right
-                vertices[0] = new Vector3(0.5f, -0.5f, 0.5f);
-                vertices[1] = new Vector3(0.5f, -0.5f, -0.5f);
-                vertices[2] = new Vector3(0.5f, 0.5f, -0.5f);
-                vertices[3] = new Vector3(0.5f, 0.5f, 0.5f);
-                break;
-            case 4: // Top
-                vertices[0] = new Vector3(-0.5f, 0.5f, 0.5f);
-                vertices[1] = new Vector3(0.5f, 0.5f, 0.5f);
-                vertices[2] = new Vector3(0.5f, 0.5f, -0.5f);
-                vertices[3] = new Vector3(-0.5f, 0.5f, -0.5f);
-                break;
-            case 5: // Bottom
-                vertices[0] = new Vector3(-0.5f, -0.5f, -0.5f);
-                vertices[1] = new Vector3(0.5f, -0.5f, -0.5f);
-                vertices[2] = new Vector3(0.5f, -0.5f, 0.5f);
-                vertices[3] = new Vector3(-0.5f, -0.5f, 0.5f);
-                break;
-        }
-
-        Mesh mesh = new Mesh
-        {
-            vertices = vertices,
-            triangles = triangles,
-            uv = uv
-        };
-        mesh.RecalculateNormals();
-        return mesh;
-    }
-
-    private void UpdateFacePositions()
+    // Create each face with two meshes for double-sided rendering
+    for (int i = 0; i < 6; i++)
     {
-        Vector3 halfSize = CubeSize * 0.5f;
-        
-        for (int i = 0; i < 6; i++) 
-        {
-            Vector3 facePosition;
-            Vector3 faceScale;
-            Quaternion faceRotation;
+      // Omit the top face based on the boolean
+      if (i == 1 &&
+          !CanRenderTopOfCube) // i == 0 corresponds to the top face i==1 is bottom, but we flip the cube so shader worldY works better so it's top.
+        continue;
 
-            // Calculate the face position, rotation, and scale
-            switch (i)
-            {
-                case 0: // Front
-                    facePosition = new Vector3(0, 0, halfSize.z);
-                    faceRotation = Quaternion.identity;
-                    break;
-                case 1: // Back
-                    facePosition = new Vector3(0, 0, -halfSize.z);
-                    faceRotation = Quaternion.Euler(0, 180, 0);
-                    break;
-                case 2: // Left
-                    facePosition = new Vector3(-halfSize.x, 0, 0);
-                    faceRotation = Quaternion.Euler(0, -90, 0);
-                    break;
-                case 3: // Right
-                    facePosition = new Vector3(halfSize.x, 0, 0);
-                    faceRotation = Quaternion.Euler(0, 90, 0);
-                    break;
-                case 4: // Top
-                    facePosition = new Vector3(0, halfSize.y, 0);
-                    faceRotation = Quaternion.Euler(90, 0, 0);
-                    break;
-                case 5: // Bottom
-                    facePosition = new Vector3(0, -halfSize.y, 0);
-                    faceRotation = Quaternion.Euler(-90, 0, 0);
-                    break;
-                default:
-                    facePosition = Vector3.zero;
-                    faceRotation = Quaternion.identity;
-                    break;
-            }
+      // Front side of the face
+      CreateFaceMesh(positions[i], Quaternion.Euler(rotations[i]),
+        directions[i]);
 
-            faceScale = new Vector3(CubeSize.x, CubeSize.y, 1);
-            faceMeshes[i * 2].transform.localPosition = facePosition;
-            faceMeshes[i * 2].transform.localRotation = faceRotation;
-            faceMeshes[i * 2].transform.localScale = faceScale;
-
-            faceMeshes[i * 2 + 1].transform.localPosition = facePosition;
-            faceMeshes[i * 2 + 1].transform.localRotation = faceRotation;
-            faceMeshes[i * 2 + 1].transform.localScale = faceScale;
-        }
+      // Back side of the face (flip normal)
+      // CreateFaceMesh(positions[i], Quaternion.Euler(rotations[i] + new Vector3(0, 180, 0)), -directions[i]);
     }
+  }
+
+  private void CreateFaceMesh(Vector3 position, Quaternion rotation,
+    Vector3 normal)
+  {
+    var face = new GameObject("CubeFace");
+    face.layer = NonSolidLayer;
+    face.transform.SetParent(transform);
+    face.transform.localPosition = position;
+    face.transform.localRotation = rotation;
+    face.transform.localScale = Vector3.one * cubeSize;
+
+    // Mesh setup
+    var mesh = new Mesh
+    {
+      vertices = new Vector3[]
+      {
+        new Vector3(-0.5f, -0.5f, 0),
+        new Vector3(0.5f, -0.5f, 0),
+        new Vector3(-0.5f, 0.5f, 0),
+        new Vector3(0.5f, 0.5f, 0)
+      },
+      triangles = new int[]
+      {
+        0, 2, 1, 2, 3, 1 // Single face with two triangles
+      },
+      normals = new Vector3[]
+      {
+        normal, normal, normal, normal
+      }
+    };
+
+    MeshRenderer renderer = face.AddComponent<MeshRenderer>();
+    MeshFilter filter = face.AddComponent<MeshFilter>();
+    filter.mesh = mesh;
+    renderer.sharedMaterial =
+      new Material(LoadValheimVehicleAssets.VisibleShaderInMaskMat);
+    renderer.material.SetColor(ColorId, color);
+    renderer.material.renderQueue = 5;
+
+    cubeRenders.Add(renderer);
+    cubeObjs.Add(face);
+  }
 }

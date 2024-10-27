@@ -7,14 +7,15 @@ Shader "Custom/MaskedMaterial"
     SubShader
     {
         Tags { "RenderType"="Transparent" }
-        ColorMask RGBA
+        ColorMask 0  // No color output, just stencil
         ZWrite On
+        Cull Off
         Blend SrcAlpha OneMinusSrcAlpha // Alpha blending for transparency
 
         // Stencil settings to read and ignore the masked area
         Stencil
         {
-            Ref 1 // Stencil reference value to compare against
+            Ref 9833 // Stencil reference value to compare against
             Comp NotEqual // Render only if stencil buffer does not match Ref
         }
 

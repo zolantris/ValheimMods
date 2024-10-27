@@ -12,6 +12,11 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject CustomSail = null!;
 
   public static Shader InvertedWaterMask = null!;
+  public static Shader MaskedMaterial = null!;
+  public static Shader SelectiveMask = null!;
+
+  public static Material SelectiveMaskMat = null!;
+  public static Material VisibleShaderInMaskMat = null!;
 
   // hull
   public static GameObject ShipHullWoodAsset = null!;
@@ -125,9 +130,17 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public void Init(AssetBundle assetBundle, AssetBundle sharedAssetBundle)
   {
     _bundle = assetBundle;
+    VisibleShaderInMaskMat =
+      assetBundle.LoadAsset<Material>("VisibleShaderInMaskMat.mat");
+    SelectiveMaskMat =
+      assetBundle.LoadAsset<Material>("SelectiveMaskMat.mat");
 
     InvertedWaterMask =
       assetBundle.LoadAsset<Shader>("InvertWaterMask.shader");
+    SelectiveMask =
+      assetBundle.LoadAsset<Shader>("SelectiveMask.shader");
+    MaskedMaterial =
+      assetBundle.LoadAsset<Shader>("MaskedMaterial.shader");
 
     CustomSail = assetBundle.LoadAsset<GameObject>("custom_sail.prefab");
 

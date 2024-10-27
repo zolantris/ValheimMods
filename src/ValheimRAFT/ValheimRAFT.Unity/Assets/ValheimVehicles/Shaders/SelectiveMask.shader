@@ -13,7 +13,7 @@ Shader "Custom/SelectiveMask"
         // Stencil settings for marking the mask area
         Stencil
         {
-            Ref 1 // Stencil reference value to mark mask area
+            Ref 9833 // Stencil reference value to mark mask area
             Comp Always // Always write to the stencil buffer
             Pass Replace // Replace the stencil buffer value with Ref
         }

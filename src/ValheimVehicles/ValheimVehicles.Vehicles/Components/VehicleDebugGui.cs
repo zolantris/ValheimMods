@@ -49,7 +49,7 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
         foreach (var vehiclePiecesController in VehiclePiecesController
                    .ActiveInstances.Values)
         {
-          vehiclePiecesController.ActivatePendingPiecesCoroutine();
+          vehiclePiecesController.StartActivatePendingPieces();
         }
       }
     }
@@ -150,7 +150,7 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     if (GUILayout.Button("activatePendingPieces"))
     {
       VehicleDebugHelpers.GetVehiclePiecesController()
-        ?.ActivatePendingPiecesCoroutine();
+        ?.StartActivatePendingPieces();
     }
 
     if (GUILayout.Button("Zero Ship RotationXZ"))

@@ -16,19 +16,38 @@ namespace ValheimVehicles.Scene
     public Material InnerSelectiveMask;
     public Material SurfaceWaterMaskMaterial;
     
-    private static Color greenish = new Color(0.15f, 0.5f, 0.3f, 0.4f);
+    private static Color greenish = new Color(0.15f, 0.5f, 0.3f, 0.2f);
     private static readonly int Color1 = Shader.PropertyToID("_Color");
     
     public Color color = greenish;
-    private List<GameObject> cubeFace = new List<GameObject>();
-    private GameObject Cube; 
-    private void Start()
+    private List<GameObject> cubeObjs = new List<GameObject>();
+    private List<Renderer> cubeRenders = new List<Renderer>();
+    private GameObject Cube;
+    public bool CanRenderTopOfCube = false;
+    private void Awake()
     {
+      transform.rotation = Quaternion.Euler(180, 0, 0);
       var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
       cube.transform.position = transform.position;
       cube.transform.SetParent(transform);
-      cube.GetComponent<MeshRenderer>().sharedMaterial = InnerSelectiveMask;
+      var meshRender = cube.GetComponent<MeshRenderer>();
+        meshRender.sharedMaterial = InnerSelectiveMask;
+        meshRender.sharedMaterial.renderQueue = 1000;
       CreateCubeFaces();
+    }
+    
+    private void Update()
+    {
+      foreach (var cubeRender in cubeRenders)
+      {
+        // cubeRender.material.SetFloat("_MaxHeight", 0);
+      }
+      // if (material != null)
+      // {
+      //   // Update the _MaxHeight based on the object's local Y position
+      //   float localY = transform.localPosition.y + maxHeightOffset;
+      //   material.SetFloat("_MaxHeight", localY);
+      // }
     }
 
     // private void OnUpdate()
@@ -50,14 +69,26 @@ namespace ValheimVehicles.Scene
       }
     }
 
-    private void OnDestroy()
+    public void Cleanup()
     {
       if (Cube != null) SafeDestroy(Cube);
-      foreach (var face in cubeFace)
+      cubeRenders.Clear();
+      foreach (var cubeObj in cubeObjs)
       {
-        if (face == null) continue;
-        SafeDestroy(face);
+        if (cubeObj == null) continue;
+        SafeDestroy(cubeObj);
       }
+      cubeObjs.Clear();
+    }
+
+    private void OnDestroy()
+    {
+      Cleanup();
+    }
+
+    private void OnDisable()
+    {
+      Cleanup();
     }
 
     private void CreateCubeFaces()
@@ -86,13 +117,15 @@ namespace ValheimVehicles.Scene
       // Create each face with two meshes for double-sided rendering
       for (int i = 0; i < 6; i++)
       {
+        // Omit the top face based on the boolean
+        if (i == 1 && !CanRenderTopOfCube) // i == 0 corresponds to the top face i==1 is bottom, but we flip the cube so shader worldY works better so it's top.
+          continue;
+
         // Front side of the face
-        CreateFaceMesh(positions[i], Quaternion.Euler(rotations[i]),
-          directions[i]);
+        CreateFaceMesh(positions[i], Quaternion.Euler(rotations[i]), directions[i]);
+
         // Back side of the face (flip normal)
-        CreateFaceMesh(positions[i],
-          Quaternion.Euler(rotations[i] + new Vector3(0, 180, 0)),
-          -directions[i]);
+        // CreateFaceMesh(positions[i], Quaternion.Euler(rotations[i] + new Vector3(0, 180, 0)), -directions[i]);
       }
     }
 
@@ -103,7 +136,7 @@ namespace ValheimVehicles.Scene
       face.transform.SetParent(transform);
       face.transform.localPosition = position;
       face.transform.localRotation = rotation;
-      face.transform.localScale = Vector3.one * cubeSize * 1.1f;
+      face.transform.localScale = Vector3.one * cubeSize;
 
       // Mesh setup
       Mesh mesh = new Mesh();
@@ -127,18 +160,11 @@ namespace ValheimVehicles.Scene
       MeshFilter filter = face.AddComponent<MeshFilter>();
       filter.mesh = mesh;
       renderer.sharedMaterial = SurfaceWaterMaskMaterial;
-      renderer.material.SetColor(Color1, color);
-      
-      cubeFace.Add(face);
-    }
+      renderer.sharedMaterial.SetColor(Color1, color);
+      renderer.sharedMaterial.renderQueue = 5;
 
-    private void Update()
-    {
-      // Sync faces with the cube size if it changes
-      foreach (Transform face in transform)
-      {
-        face.localScale = Vector3.one * cubeSize;
-      }
+      cubeRenders.Add(renderer);
+      cubeObjs.Add(face);
     }
   }
 

@@ -1,4 +1,4 @@
-Shader "Custom/MaskedMaterial"
+Shader "Custom/InvertWaterMask"
 {
     Properties
     {
