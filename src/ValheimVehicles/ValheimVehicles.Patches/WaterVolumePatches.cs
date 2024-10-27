@@ -11,18 +11,18 @@ namespace ValheimVehicles.Patches
     public static bool IsCameraAboveWater;
     public static bool IsFlipped = false;
 
-    [HarmonyPatch(typeof(WaterVolume), "TrochSin")]
-    [HarmonyPrefix]
-    public static bool FlippedTrochSin(float __result, float x, float k)
-    {
-      if (IsFlipped)
-      {
-        __result =
-          1.0f - (float)((Mathf.Sin(x - Mathf.Cos(x) * k) * 0.5) + 0.5);
-      }
-
-      return IsFlipped;
-    }
+    // [HarmonyPatch(typeof(WaterVolume), "TrochSin")]
+    // [HarmonyPrefix]
+    // public static bool FlippedTrochSin(float __result, float x, float k)
+    // {
+    //   if (IsFlipped)
+    //   {
+    //     __result =
+    //       1.0f - (float)((Mathf.Sin(x - Mathf.Cos(x) * k) * 0.5) + 0.5);
+    //   }
+    //
+    //   return IsFlipped;
+    // }
 
     private static float currentWaveHeight = 0f;
 
@@ -137,8 +137,8 @@ namespace ValheimVehicles.Patches
       float[] normalizedDepth, bool isFlipped)
     {
       float[] depthValues = isFlipped
-        ? new float[]
-        {
+        ?
+        [
           // normalizedDepth[2],
           // normalizedDepth[0],
           // normalizedDepth[3],
@@ -147,14 +147,16 @@ namespace ValheimVehicles.Patches
           // 1 - normalizedDepth[1],
           // 1 - normalizedDepth[2],
           // 1 - normalizedDepth[3]
-          -normalizedDepth[0], -normalizedDepth[1], -normalizedDepth[2],
+          -normalizedDepth[0],
+          -normalizedDepth[1],
+          -normalizedDepth[2],
           -normalizedDepth[3]
-        }
+        ]
         : normalizedDepth;
 
 
       __instance.m_waterSurface.material.SetFloatArray(
-        Shader.PropertyToID("_depth"), normalizedDepth);
+        Shader.PropertyToID("_depth"), depthValues);
       __instance.m_waterSurface.material.SetFloat(
         Shader.PropertyToID("_UseGlobalWind"),
         __instance.m_useGlobalWind ? 1f : 0f);

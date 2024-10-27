@@ -60,6 +60,22 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\ScalableDoubleSidedCube.cs">
             <Link>Components\CustomWaterMeshCube.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CustomMeshCreatorComponent.cs">
+            <Link>Components\CustomMeshCreatorComponent.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\WaterMaskComponent.cs">
+            <Link>Components\WaterMaskComponent.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\CustomMeshPrefabs.cs">
+            <Link>ValheimVehicles.Prefabs\Registry\CustomMeshPrefabs.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Helpers\LayerHelpers.cs">
+            <Link>ValheimVehicles.Helpers\LayerHelpers.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Helpers\LayerHelpers.cs">
+            <Link>ValheimVehicles.Helpers\LayerHelpers.cs</Link>
+        </Compile>
+        <Compile Remove="..\ValheimVehicles\ValheimVehicles.Utils\**"/>
     </ItemGroup>
     <ItemGroup>
         <Compile Include="ValheimRAFT.Config\IConfigSection.cs"/>
@@ -121,11 +137,11 @@
             <Private>False</Private>
         </Reference>
     </ItemGroup>
-    <ItemGroup>
-        <Folder Include="..\ValheimVehicles\ValheimVehicles.Utils\">
-            <Link>ValheimVehicles.Utils</Link>
-        </Folder>
-    </ItemGroup>
+    <!--    <ItemGroup>-->
+    <!--        <Folder Include="..\ValheimVehicles\ValheimVehicles.Utils\">-->
+    <!--            <Link>ValheimVehicles.Utils</Link>-->
+    <!--        </Folder>-->
+    <!--    </ItemGroup>-->
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <OutputPath>bin\Release Archive\</OutputPath>
     </PropertyGroup>

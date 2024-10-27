@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Rendering;
+using ValheimVehicles.LayerUtils;
 using ValheimVehicles.Prefabs;
 
 namespace ValheimVehicles.Vehicles.Components;
@@ -15,31 +17,47 @@ public class CustomCube : MonoBehaviour
 
   // public Material InnerSelectiveMask;
   // public Material SurfaceWaterMaskMaterial;
+  public Material CubeMaskMaterial;
+
+  public Material CubeVisibleSurfaceMaterial;
 
   private static Color greenish = new Color(0.15f, 0.5f, 0.3f, 0.2f);
   private static readonly int ColorId = Shader.PropertyToID("_Color");
   private static readonly int MaxHeight = Shader.PropertyToID("_MaxHeight");
+  private static readonly int DstBlend = Shader.PropertyToID("_DstBlend");
 
   public Color color = greenish;
   private List<GameObject> cubeObjs = new List<GameObject>();
   private List<Renderer> cubeRenders = new List<Renderer>();
   private GameObject Cube;
   public bool CanRenderTopOfCube = false;
-  private LayerMask NonSolidLayer => LayerMask.NameToLayer("piece_nonsolid");
 
-  private void Awake()
+  private BlendMode SelectedDestinationBlend = BlendMode.OneMinusSrcAlpha;
+
+  private void Start()
   {
+    InitCubes();
+  }
+
+  public void InitCubes()
+  {
+    if (CubeMaskMaterial == null || CubeVisibleSurfaceMaterial == null)
+    {
+      return;
+    }
+
     // var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
     // cube.transform.position = transform.position;
     // cube.transform.SetParent(transform);
-    gameObject.layer = NonSolidLayer;
     var meshRender = GetComponent<MeshRenderer>();
-    meshRender.sharedMaterial = LoadValheimVehicleAssets.SelectiveMaskMat;
+    meshRender.gameObject.layer = LayerHelpers.NonSolidLayer;
+    meshRender.sharedMaterial = CubeMaskMaterial;
     meshRender.sharedMaterial.renderQueue = 1000;
-    meshRender.gameObject.layer = NonSolidLayer;
+    meshRender.gameObject.layer = LayerHelpers.NonSolidLayer;
 
     CreateCubeFaces();
   }
+
 
   private WaterVolume prevLiquidLevel = new WaterVolume();
 
@@ -52,12 +70,19 @@ public class CustomCube : MonoBehaviour
     {
       WaterVolume previousAndOut = null;
       var waterLevel =
-        Floating.GetWaterLevel(transform.position, ref prevLiquidLevel);
+        Floating.GetWaterLevel(cubeRender.transform.position,
+          ref prevLiquidLevel);
       cubeRender.material.SetFloat(MaxHeight, waterLevel);
       if (cubeRender.material.color != color)
       {
         cubeRender.material.SetColor(ColorId, color);
       }
+
+      // if (!Mathf.Approximately(cubeRender.material.GetFloat(DstBlend),
+      //       (float)SelectedDestinationBlend))
+      // {
+      //   cubeRender.material.SetFloat(DstBlend, (float)SelectedDestinationBlend);
+      // }
     }
   }
 
@@ -169,8 +194,7 @@ public class CustomCube : MonoBehaviour
     MeshRenderer renderer = face.AddComponent<MeshRenderer>();
     MeshFilter filter = face.AddComponent<MeshFilter>();
     filter.mesh = mesh;
-    renderer.sharedMaterial =
-      new Material(LoadValheimVehicleAssets.VisibleShaderInMaskMat);
+    renderer.sharedMaterial = CubeVisibleSurfaceMaterial;
     renderer.material.SetColor(ColorId, color);
     renderer.material.renderQueue = 5;
 

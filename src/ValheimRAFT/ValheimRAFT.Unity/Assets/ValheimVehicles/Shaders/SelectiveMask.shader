@@ -2,20 +2,21 @@ Shader "Custom/SelectiveMask"
 {
     Properties
     {
-        _Color("Color", Color) = (1, 1, 1, 1)
+        _Color("Color", Color) = (1, 1, 1, 0) // Adjustable color and transparency
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
-        ColorMask 0 // Disables color output
-        ZWrite On // Writes to the depth buffer
+        Tags { "RenderType"="Transparent" }
+        ColorMask 0  // No color output, just stencil
+        ZWrite On
+        Cull Off
 
-        // Stencil settings for marking the mask area
+        // Stencil settings to read and ignore the masked area
         Stencil
         {
-            Ref 9833 // Stencil reference value to mark mask area
-            Comp Always // Always write to the stencil buffer
-            Pass Replace // Replace the stencil buffer value with Ref
+            Ref 9833 // Stencil reference value to compare against
+            Comp Always // Write to the stencil buffer
+            Pass Replace // Replace stencil value
         }
 
         Pass
@@ -34,6 +35,8 @@ Shader "Custom/SelectiveMask"
                 float4 pos : SV_POSITION;
             };
 
+            float4 _Color;
+
             v2f vert(appdata v)
             {
                 v2f o;
@@ -41,9 +44,9 @@ Shader "Custom/SelectiveMask"
                 return o;
             }
 
-            fixed4 frag() : SV_Target
+            fixed4 frag(v2f i) : SV_Target
             {
-                return fixed4(0, 0, 0, 0); // Output no color
+                return _Color; // Render the specified color outside the mask volume
             }
             ENDCG
         }

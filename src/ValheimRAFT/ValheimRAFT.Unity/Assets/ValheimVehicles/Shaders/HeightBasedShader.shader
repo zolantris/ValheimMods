@@ -10,7 +10,6 @@ Shader "Custom/WorldHeightBasedShader"
     {
         Tags { "RenderType" = "Transparent" }
         LOD 100
-        
         Cull Off
 
         Blend SrcAlpha OneMinusSrcAlpha // Enable transparency

@@ -75,7 +75,11 @@ public static class PrefabNames
 
   private const string ValheimVehiclesPrefix = "ValheimVehicles";
 
-  public const string VehicleWaterMask = $"{ValheimVehiclesPrefix}_WaterMask";
+  public const string CustomWaterMask =
+    $"{ValheimVehiclesPrefix}_CustomWaterMask";
+
+  public const string CustomWaterMaskCreator =
+    $"{ValheimVehiclesPrefix}_CustomWaterMaskCreator";
 
 
   public const string PlayerSpawnControllerObj =

@@ -5,37 +5,48 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9eb05097-9d84-4b87-8e9a-0e73fcf3150e" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/TestDefaultMaterial.mat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/CombinedHeightBasedShader.shader" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Helpers/LayerHelpers.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/CustomMeshPrefabs.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/CustomMeshCreatorComponent.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/WaterMaskComponent.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../../libs" beforeDir="false" afterPath="$PROJECT_DIR$/../../../libs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ModTesting/ModTesting.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/../../ModTesting/ModTesting.csproj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles-shared" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles-shared" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles-shared.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles-shared.manifest" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Assets/Translations/English/valheimraft.json" beforeDir="false" afterPath="$PROJECT_DIR$/../Assets/Translations/English/valheimraft.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Assemblies/DynamicLocations.dll" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Assemblies/Shared.dll" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Assemblies/ValheimRAFT.dll" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Assemblies/ZdoWatcher.dll" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/MaskedMaterial.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/SelectiveMask.mat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Horem/Mocks/Shaders/Standard TwoSided.shader" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/MaskedMaterial 1.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/WaterMaskMaterial.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/SelectiveMaskMat.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/SelectiveMaskMat.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/VisibleShaderInMaskMat.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/VisibleShaderInMaskMat.mat" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/ScalableDoubleSidedCube.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/ScalableDoubleSidedCube.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/WaterDisplacement.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/WaterDisplacement.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/InvertWaterMask.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/InvertWaterMask.shader" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/MaskedMaterial.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/MaskedMaterial.shader" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/HeightBasedShader.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/HeightBasedShader.shader" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/MaskedMaterial.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/WaterMask.shader" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/SelectiveMask.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/SelectiveMask.shader" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/VisibleShader.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/VisibleShader.shader" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/VisibleShader.shader" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ProjectSettings/GraphicsSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/GraphicsSettings.asset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../ValheimRAFT.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Config/VehicleDebugConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Config/VehicleDebugConfig.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.ConsoleCommands/VehicleCommands.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.ConsoleCommands/VehicleCommands.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Patches/GameCamera_VehiclePiecesPatch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Patches/GameCamera_VehiclePiecesPatch.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Patches/WaterVolumePatches.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Patches/WaterVolumePatches.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/LoadValheimAssets.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/LoadValheimAssets.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/LoadValheimVehiclesAssets.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/LoadValheimVehiclesAssets.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabNames.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabNames.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryHelpers.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryHelpers.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/ShipHullPrefab.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/ShipHullPrefab.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Utils/ZdoWatcherDelegate.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.ModSupport/ZdoWatcherDelegate.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/ScalableDoubleSidedCube.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/ScalableDoubleSidedCube.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugGui.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugGui.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/WaterMaskDisplacement.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/WaterMaskDisplacement.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehiclePiecesController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehiclePiecesController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../valheim.targets" beforeDir="false" afterPath="$PROJECT_DIR$/../../../valheim.targets" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Structs/VehicleZdoVars.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Structs/VehicleZdoVars.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.csproj" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,6 +66,7 @@
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.assetbundlebrowser@ad2a81ec30/Editor/InspectTab/AssetBundleInspectTab.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.burst@1.8.11/Editor/LongTextArea.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ide.rider@3.0.27/Rider/Editor/RiderScriptEditor.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.render-pipelines.universal@14.0.9/Runtime/RenderingLayerUtils.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ugui@1.0.0/Runtime/UI/Core/IMaskable.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ugui@1.0.0/Runtime/UI/Core/Utility/VertexHelper.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ugui@1.0.0/Tests/Editor/RectMask2D/RectMask2DCulling.cs" root0="SKIP_HIGHLIGHTING" />
@@ -175,6 +187,8 @@
       <workItem from="1729949122282" duration="1430000" />
       <workItem from="1729953191548" duration="14814000" />
       <workItem from="1729969675963" duration="1000" />
+      <workItem from="1729971961660" duration="8992000" />
+      <workItem from="1730060254642" duration="2579000" />
     </task>
     <servers />
   </component>

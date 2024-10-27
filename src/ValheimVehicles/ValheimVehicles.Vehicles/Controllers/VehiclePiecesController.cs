@@ -187,6 +187,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public bool m_statsOverride;
   private static bool itemsRemovedDuringWait;
+
+  private static readonly int TriplanarLocalPos =
+    Shader.PropertyToID("_TriplanarLocalPos");
+
+  private static readonly int RippleDistance =
+    Shader.PropertyToID("_RippleDistance");
+
+  private static readonly int ValueNoise = Shader.PropertyToID("_ValueNoise");
   private Coroutine? _pendingPiecesCoroutine;
   private Coroutine? _serverUpdatePiecesCoroutine;
   private Coroutine? _bedUpdateCoroutine;
@@ -1310,39 +1318,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     vehicleInstance.AddPendingPieceToActiveVehicle(vehicleId, piece);
   }
 
-  private IEnumerator ActivatePendingPiecesCoroutine(int vehicleId)
-  {
-    do
-    {
-      _pendingPiecesDirty = false;
-
-      if (m_pendingPieces.TryGetValue(vehicleId, out var pieces))
-      {
-        // Process each pending piece, yielding periodically to avoid frame spikes
-        foreach (var piece in pieces.ToList())
-        {
-          // Activate each piece (e.g., instantiate or enable)
-
-          yield return
-            null; // Yield after each piece or batch for smoother frame rates
-        }
-
-        // Clear processed items and add any newly queued items
-        pieces.Clear();
-        if (_newPendingPiecesQueue.Count > 0)
-        {
-          pieces.AddRange(_newPendingPiecesQueue);
-          _newPendingPiecesQueue.Clear();
-          _pendingPiecesDirty = true; // Mark dirty to re-run coroutine
-        }
-      }
-    } while
-      (_pendingPiecesDirty); // Loop if new items were added during this run
-
-    // Cleanup: reset coroutine handle when done
-    _pendingPiecesCoroutine = null;
-  }
-
   public static void ActivateAllPendingPieces()
   {
     foreach (var pieceController in ActiveInstances)
@@ -1906,6 +1881,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void ActivatePiece(ZNetView netView)
   {
     if (!(bool)netView) return;
+    if (netView.m_zdo == null) return;
 
     SetPieceToParent(netView.transform);
     netView.transform.localPosition =
@@ -1981,6 +1957,24 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     return !hasPieces;
   }
 
+  /// <summary>
+  /// Must return a new material
+  /// </summary>
+  /// <param name="material"></param>
+  /// <returns></returns>
+  public static Material FixMaterial(Material material)
+  {
+    var isBlackMarble = material.name.Contains("blackmarble");
+    if (isBlackMarble)
+    {
+      material.SetFloat(TriplanarLocalPos, 1f);
+    }
+
+    material.SetFloat(RippleDistance, 0f);
+    material.SetFloat(ValueNoise, 0f);
+    return new Material(material);
+  }
+
   public static void FixPieceMeshes(ZNetView netView)
   {
     /*
@@ -1992,11 +1986,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     {
       foreach (var meshRendererMaterial in meshRenderer.materials)
       {
-        var isBlackMarble = meshRendererMaterial.name.Contains("blackmarble");
-        if (isBlackMarble)
-        {
-          meshRendererMaterial.SetFloat("_TriplanarLocalPos", 1f);
-        }
+        FixMaterial(meshRendererMaterial);
       }
 
       if ((bool)meshRenderer.sharedMaterial)
@@ -2006,16 +1996,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
         for (var j = 0; j < sharedMaterials.Length; j++)
         {
-          var material = new Material(sharedMaterials[j]);
-          var isBlackMarble = sharedMaterials[j].name.Contains("blackmarble");
-          if (isBlackMarble)
-          {
-            material.SetFloat("_TriplanarLocalPos", 1f);
-          }
-
-          material.SetFloat("_RippleDistance", 0f);
-          material.SetFloat("_ValueNoise", 0f);
-          sharedMaterials[j] = material;
+          sharedMaterials[j] = FixMaterial(sharedMaterials[j]);
         }
 
         meshRenderer.sharedMaterials = sharedMaterials;

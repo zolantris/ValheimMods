@@ -28,6 +28,7 @@ public class VehicleCommands : ConsoleCommand
     public const string reportInfo = "report-info";
     public const string debug = "debug";
     public const string creative = "creative";
+    public const string colliderEditMode = "colliderEditMode";
     public const string help = "help";
     public const string recover = "recover";
     public const string rotate = "rotate";
@@ -48,7 +49,8 @@ public class VehicleCommands : ConsoleCommand
       $"\n<{VehicleCommandArgs.rotate}>: defaults to zeroing x and z tilt. Can also provide 3 args: x y z" +
       $"\n<{VehicleCommandArgs.move}>: Must provide 3 args: x y z, the movement is relative to those points" +
       $"\n<{VehicleCommandArgs.toggleOceanSway}>: stops the vehicle from swaying in the water. It will stay at 0 degrees (x and z) tilt and only allow rotating on y axis" +
-      $"\n<{VehicleCommandArgs.reportInfo}>: outputs information related to the vehicle the player is on or near. This is meant for error reprots";
+      $"\n<{VehicleCommandArgs.reportInfo}>: outputs information related to the vehicle the player is on or near. This is meant for error reports" +
+      $"\n<{VehicleCommandArgs.colliderEditMode}>: Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items";
   }
 
   public override void Run(string[] args)
@@ -95,6 +97,9 @@ public class VehicleCommands : ConsoleCommand
         break;
       case VehicleCommandArgs.downgradeToV1:
         RunDowngradeToV1();
+        break;
+      case VehicleCommandArgs.colliderEditMode:
+        ToggleColliderEditMode();
         break;
     }
   }
@@ -296,7 +301,17 @@ public class VehicleCommands : ConsoleCommand
       vehiclePendingPiecesCount,
       $"vehiclePendingPieces: {string.Join(",", vehiclePendingPieces ?? [])}",
       $"vehiclePendingPiecesCount, {vehiclePendingPiecesCount}",
-      $"currentPendingState {currentPendingState}"));
+      $"currentPendingState {currentPendingState}",
+      $"playerPosition: {Player.m_localPlayer.transform.position}",
+      $"vehiclePosition {shipInstance.transform.position}"
+    ));
+  }
+
+  public static void ToggleColliderEditMode()
+  {
+    CreativeModeColliderComponent.ToggleEditMode();
+    WaterMaskComponent.OnToggleEditMode(CreativeModeColliderComponent
+      .IsEditMode);
   }
 
   public override List<string> CommandOptionList() =>
@@ -312,6 +327,7 @@ public class VehicleCommands : ConsoleCommand
     VehicleCommandArgs.downgradeToV1,
     VehicleCommandArgs.recover,
     VehicleCommandArgs.reportInfo,
+    VehicleCommandArgs.colliderEditMode,
   ];
 
 

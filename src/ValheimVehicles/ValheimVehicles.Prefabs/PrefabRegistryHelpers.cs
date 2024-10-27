@@ -71,6 +71,18 @@ public abstract class PrefabRegistryHelpers
     return netView;
   }
 
+  private static void RegisterCustomMeshPieces()
+  {
+    PieceDataDictionary.Add(PrefabNames.CustomWaterMaskCreator,
+      new PieceData
+      {
+        Name = "$valheim_vehicles_water_mask",
+        Description = "$valheim_vehicles_water_mask_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .WaterOpacityBucket),
+      });
+  }
+
   private static void RegisterRamPieces()
   {
     int[] ramSizes = [1, 2];
@@ -285,6 +297,7 @@ public abstract class PrefabRegistryHelpers
   {
     PieceLayer = LayerMask.NameToLayer("piece");
 
+    RegisterCustomMeshPieces();
     RegisterRamPieces();
     RegisterExternalShips();
 

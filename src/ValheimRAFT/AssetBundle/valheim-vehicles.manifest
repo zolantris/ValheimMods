@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 841125139
+CRC: 227957461
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: f78d57c1136b4ceca2af24bf2a0ef2d4
+    Hash: 6c30a4bd5fd3f0906c8d605a121cfde1
   TypeTreeHash:
     serializedVersion: 2
     Hash: c06587813f50b4ac49249ee2d68a3382
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: f78d57c1136b4ceca2af24bf2a0ef2d4
+    Hash: 6c30a4bd5fd3f0906c8d605a121cfde1
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -86,6 +86,7 @@ Assets:
 - Assets/ValheimVehicles/Shaders/InvertWaterMask.shader
 - Assets/ValheimVehicles/Prefabs/hull_slab_iron_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_2x4.prefab
+- Assets/ValheimVehicles/Material/WaterMaskMaterial.mat
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_1x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_center_iron.prefab
 - Assets/Horem/Mocks/Shaders/Custom_WaterMask.shader
@@ -107,7 +108,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_2x2.prefab
-- Assets/ValheimVehicles/Shaders/MaskedMaterial.shader
+- Assets/ValheimVehicles/Shaders/WaterMask.shader
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_4x4.prefab
 - Assets/ValheimVehicles/vehicle_icons.spriteatlasv2
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_right_iron.prefab

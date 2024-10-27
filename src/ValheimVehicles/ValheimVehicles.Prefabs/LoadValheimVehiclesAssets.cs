@@ -14,7 +14,10 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static Shader InvertedWaterMask = null!;
   public static Shader MaskedMaterial = null!;
   public static Shader SelectiveMask = null!;
+  public static Shader StandardTwoSidedShader = null!;
+  public static Shader WaterMaskShader = null!;
 
+  public static Material WaterMaskMaterial = null!;
   public static Material SelectiveMaskMat = null!;
   public static Material VisibleShaderInMaskMat = null!;
 
@@ -86,7 +89,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject GetVehicleContainer(GameObject obj) =>
     obj.FindDeepChild(PrefabNames.VehicleContainer).gameObject;
 
-  private static AssetBundle _bundle = null!;
+  internal static AssetBundle _bundle = null!;
 
   private static GameObject GetShipProwAssetByMaterial(string hullMaterial,
     PrefabNames.PrefabSizeVariant sizeVariant)
@@ -129,12 +132,18 @@ public class LoadValheimVehicleAssets : ILoadAssets
   /// <param name="assetBundle"></param>
   public void Init(AssetBundle assetBundle, AssetBundle sharedAssetBundle)
   {
+    StandardTwoSidedShader =
+      sharedAssetBundle.LoadAsset<Shader>("StandardTwoSided.shader");
+
     _bundle = assetBundle;
     VisibleShaderInMaskMat =
       assetBundle.LoadAsset<Material>("VisibleShaderInMaskMat.mat");
     SelectiveMaskMat =
       assetBundle.LoadAsset<Material>("SelectiveMaskMat.mat");
 
+    WaterMaskShader = assetBundle.LoadAsset<Shader>("WaterMask.shader");
+    WaterMaskMaterial =
+      assetBundle.LoadAsset<Material>("WaterMaskMaterial.mat");
     InvertedWaterMask =
       assetBundle.LoadAsset<Shader>("InvertWaterMask.shader");
     SelectiveMask =

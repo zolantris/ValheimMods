@@ -1,6 +1,7 @@
 using System;
 using BepInEx.Configuration;
 using ValheimRAFT;
+using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.Config;
 
