@@ -14,9 +14,6 @@ namespace ValheimRAFT.Patches;
 [HarmonyPatch]
 public class Character_Patch
 {
-  public static bool IsUnderWaterInVehicle = false;
-
-
   [HarmonyPatch(typeof(Character), "ApplyGroundForce")]
   [HarmonyTranspiler]
   public static IEnumerable<CodeInstruction> Character_Patch_ApplyGroundForce(
@@ -32,64 +29,6 @@ public class Character_Patch
     return list;
   }
 
-  [HarmonyPatch(typeof(Character), nameof(Character.InLiquid))]
-  [HarmonyPrefix]
-  public static void Character_InLiquid(Character __instance,
-    ref bool __result)
-  {
-    var vpc = __instance.transform.root.GetComponent<VehiclePiecesController>();
-    if (vpc) __result = false;
-    IsUnderWaterInVehicle = (bool)vpc;
-  }
-
-
-  [HarmonyPatch(typeof(Character), nameof(Character.CalculateLiquidDepth))]
-  [HarmonyPrefix]
-  public static bool Character_CalculateLiquidDepth(Character __instance)
-  {
-    if (VehicleOnboardController.GetCharacterVehicleMovementController(
-          __instance.GetZDOID(), out var controller))
-    {
-      var liquidDepth = VehicleDebugConfig.HasBoatLiquidDepthOverride.Value
-        ? VehicleDebugConfig.BoatLiquidDepthOverride.Value
-        : controller.onboardCollider.bounds.min.y;
-      __instance.m_liquidLevel = liquidDepth;
-      // the vehicle onboard collider controls the water level for players. So they can go below sea level
-      __instance.m_cashedInLiquidDepth = liquidDepth;
-
-      // __instance.m_cashedInLiquidDepth = Mathf.Max(0.0f,
-      //   __instance.GetLiquidLevel() - __instance.transform.position.y);
-      return true;
-    }
-
-    return false;
-  }
-
-  [HarmonyPatch(typeof(Character), nameof(Character.SetLiquidLevel))]
-  [HarmonyPrefix]
-  public static bool Character_SetLiquidLevel(Character __instance)
-  {
-    if (VehicleOnboardController.GetCharacterVehicleMovementController(
-          __instance.GetZDOID(), out var controller))
-    {
-      var liquidDepth = VehicleDebugConfig.HasBoatLiquidDepthOverride.Value
-        ? VehicleDebugConfig.BoatLiquidDepthOverride.Value
-        : controller.onboardCollider.bounds.min.y;
-      __instance.m_liquidLevel = liquidDepth;
-      __instance.m_waterLevel = liquidDepth;
-      // the vehicle onboard collider controls the water level for players. So they can go below sea level
-      __instance.m_cashedInLiquidDepth = liquidDepth;
-
-      // game calls this.
-      // this.m_liquidLevel = Mathf.Max(this.m_waterLevel, this.m_tarLevel);
-
-      return true;
-    }
-
-    return false;
-  }
-
-
   [HarmonyPatch(typeof(Character), nameof(Character.IsOnGround))]
   [HarmonyPostfix]
   public static void Character_IsOnGround(Character __instance,
@@ -97,14 +36,6 @@ public class Character_Patch
   {
     var vpc = __instance.transform.root.GetComponent<VehiclePiecesController>();
     if (vpc) __result = true;
-  }
-
-  [HarmonyPatch(typeof(Character), nameof(Character.InWater))]
-  [HarmonyPostfix]
-  public static void InWater(Character __instance, bool __result)
-  {
-    var vpc = __instance.transform.root.GetComponent<VehiclePiecesController>();
-    if (vpc) __result = false;
   }
 
   public static object? GetStandingOnShip(Character __instance)

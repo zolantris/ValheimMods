@@ -12,6 +12,7 @@ using ValheimRAFT;
 using ValheimRAFT.Patches;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Vehicles.Controllers;
 using ValheimVehicles.Vehicles.Interfaces;
 using ValheimVehicles.Vehicles.Structs;
 using ZdoWatcher;
@@ -119,13 +120,15 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     set => _movementController = value;
   }
 
+  public VehicleOnboardController? OnboardController =>
+    MovementController?.OnboardController;
+
+  public VehicleShip Instance => this;
+
   private GameObject _vehiclePiecesContainerInstance;
   private GUIStyle myButtonStyle;
 
   public Transform m_controlGuiPos { get; set; }
-
-
-  public VehicleShip Instance => this;
 
   public Transform ControlGuiPosition
   {

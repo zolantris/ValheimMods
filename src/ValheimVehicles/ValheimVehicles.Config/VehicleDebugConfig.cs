@@ -10,7 +10,7 @@ public static class VehicleDebugConfig
   public static ConfigFile? Config { get; private set; }
 
   public static ConfigEntry<float>
-    BoatLiquidDepthOverride { get; private set; } = null!;
+    VehicleLiquidDepthOverride { get; private set; } = null!;
 
   public static ConfigEntry<bool>
     HasBoatLiquidDepthOverride { get; private set; } = null!;
@@ -63,7 +63,7 @@ public static class VehicleDebugConfig
       ConfigHelpers.CreateConfigDescription(
         "Enables liquid depth overrides",
         true, true));
-    BoatLiquidDepthOverride = config.Bind(SectionName,
+    VehicleLiquidDepthOverride = config.Bind(SectionName,
       "BoatLiquidDepthOverride",
       -100f,
       ConfigHelpers.CreateConfigDescription(

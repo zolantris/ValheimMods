@@ -5,6 +5,8 @@ using DynamicLocations.Controllers;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimVehicles.Config;
+using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Vehicles.Enums;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles.Controllers;
@@ -16,10 +18,14 @@ public class VehicleOnboardController : MonoBehaviour
 {
   internal VehicleMovementController MovementController = null!;
 
-  public static Dictionary<ZDOID, Character?> CharactersOnboard = new();
+  // public static Dictionary<ZDOID, Character?> CharactersOnboard = new();
+  //
+  // public static Dictionary<ZDOID, VehicleOnboardController?>
+  //   CharacterOnVehiclePieces = new();
 
-  public static Dictionary<ZDOID, VehicleOnboardController?>
-    CharacterOnVehiclePieces = new();
+  public static Dictionary<ZDOID, CharacterOnboardData>
+    CharacterOnboardDataItems =
+      new();
 
   public Collider onboardCollider => MovementController.OnboardCollider;
 
@@ -29,24 +35,29 @@ public class VehicleOnboardController : MonoBehaviour
     InvokeRepeating(nameof(ValidateCharactersAreOnShip), 1f, 30f);
   }
 
+  private bool IsValidCharacter(Character character)
+  {
+    return character != null && character.enabled;
+  }
+
   private void ValidateCharactersAreOnShip()
   {
     var itemsToRemove = new List<Character>();
     var keysToRemove = new List<ZDOID>();
 
-    foreach (var keyValuePair in CharactersOnboard)
+    foreach (var keyValuePair in CharacterOnboardDataItems)
     {
-      if (keyValuePair.Value == null || keyValuePair.Value.enabled != true)
+      // todo maybe add a check to see if character is connected.
+      if (!IsValidCharacter(keyValuePair.Value.character))
       {
         keysToRemove.Add(keyValuePair.Key);
         continue;
       }
 
-
-      if (keyValuePair.Value.transform.root
+      if (keyValuePair.Value.character.transform.root
             .GetComponentInParent<VehiclePiecesController>() == null)
       {
-        itemsToRemove.Add(keyValuePair.Value);
+        itemsToRemove.Add(keyValuePair.Value.character);
       }
     }
 
@@ -63,33 +74,56 @@ public class VehicleOnboardController : MonoBehaviour
 
   private static void RemoveByZdoid(ZDOID zdoid)
   {
-    CharactersOnboard.Remove(zdoid);
-    CharacterOnVehiclePieces.Remove(zdoid);
+    CharacterOnboardDataItems.Remove(zdoid);
   }
 
   private static void RemoveCharacter(Character character)
   {
     var zdoid = character.GetZDOID();
-    CharactersOnboard.Remove(zdoid);
-    CharacterOnVehiclePieces.Remove(zdoid);
+    RemoveByZdoid(zdoid);
   }
 
   private void AddCharacter(Character character)
   {
     var zdoid = character.GetZDOID();
-    CharactersOnboard.Add(zdoid, character);
-    CharacterOnVehiclePieces.Add(zdoid, this);
+    var onboardDataItem = new CharacterOnboardData(character, this);
+    CharacterOnboardDataItems.Add(zdoid, onboardDataItem);
   }
 
-  public static bool CharacterIsOnboard(Character character)
+  public static bool IsCharacterOnboard(Character character)
   {
-    return CharactersOnboard.ContainsKey(character.GetZDOID());
+    return CharacterOnboardDataItems.ContainsKey(character.GetZDOID());
+  }
+
+  public static void UpdateUnderwaterState(Character character, bool? val)
+  {
+    var characterData = GetOnboardCharacterData(character);
+    characterData?.UpdateUnderwaterStatus(val);
+  }
+
+  public static CharacterOnboardData? GetOnboardCharacterData(
+    Character character)
+  {
+    if (CharacterOnboardDataItems.TryGetValue(character.GetZDOID(),
+          out var data))
+    {
+      return data;
+    }
+
+    return null;
   }
 
   public static bool GetCharacterVehicleMovementController(ZDOID zdoid,
-    out VehicleOnboardController controller)
+    out VehicleOnboardController? controller)
   {
-    return CharacterOnVehiclePieces.TryGetValue(zdoid, out controller);
+    if (CharacterOnboardDataItems.TryGetValue(zdoid, out var data))
+    {
+      controller = data.controller;
+      return true;
+    }
+
+    controller = null;
+    return false;
   }
 
   /// <summary>
@@ -147,18 +181,20 @@ public class VehicleOnboardController : MonoBehaviour
     var character = collider.GetComponent<Character>();
     if (!(bool)character) return;
 
+    var characterZdo = character.GetZDOID();
+    var exists = CharacterOnboardDataItems.ContainsKey(characterZdo);
+
     if (isExiting)
     {
-      if (CharactersOnboard.ContainsKey(character.GetZDOID()))
-      {
-        RemoveCharacter(character);
-        character.InNumShipVolumes--;
-      }
+      if (!exists) return;
 
+      RemoveCharacter(character);
+      character.InNumShipVolumes--;
       return;
     }
 
-    if (CharactersOnboard.ContainsKey(character.GetZDOID())) return;
+    if (exists) return;
+    // do not increment or add character if already exists in object. This could be a race condition
     AddCharacter(character);
     character.InNumShipVolumes++;
   }

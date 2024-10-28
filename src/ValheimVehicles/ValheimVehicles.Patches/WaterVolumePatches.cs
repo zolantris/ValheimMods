@@ -1,6 +1,7 @@
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Rendering;
+using ValheimVehicles.Config;
 
 namespace ValheimVehicles.Patches
 {
@@ -11,18 +12,21 @@ namespace ValheimVehicles.Patches
     public static bool IsCameraAboveWater;
     public static bool IsFlipped = false;
 
-    // [HarmonyPatch(typeof(WaterVolume), "TrochSin")]
-    // [HarmonyPrefix]
-    // public static bool FlippedTrochSin(float __result, float x, float k)
-    // {
-    //   if (IsFlipped)
-    //   {
-    //     __result =
-    //       1.0f - (float)((Mathf.Sin(x - Mathf.Cos(x) * k) * 0.5) + 0.5);
-    //   }
-    //
-    //   return IsFlipped;
-    // }
+    [HarmonyPatch(typeof(WaterVolume), "TrochSin")]
+    [HarmonyPrefix]
+    public static bool FlippedTrochSin(float __result, float x, float k)
+    {
+      if (WaterConfig.UnderwaterAccessMode.Value ==
+          WaterConfig.UnderwaterAccessModeType.Disabled) return false;
+
+      if (IsFlipped)
+      {
+        __result =
+          1.0f - (float)((Mathf.Sin(x - Mathf.Cos(x) * k) * 0.5) + 0.5);
+      }
+
+      return IsFlipped;
+    }
 
     private static float currentWaveHeight = 0f;
 
@@ -33,20 +37,23 @@ namespace ValheimVehicles.Patches
       Vector3 point,
       float waveFactor = 1f)
     {
-      float num = 0.0f;
+      if (WaterConfig.UnderwaterAccessMode.Value ==
+          WaterConfig.UnderwaterAccessModeType.Disabled) return false;
+
+      var num = 0.0f;
       if (__instance.m_useGlobalWind)
       {
-        float wrappedDayTimeSeconds = WaterVolume.s_wrappedDayTimeSeconds;
-        float depth = __instance.Depth(point);
+        var wrappedDayTimeSeconds = WaterVolume.s_wrappedDayTimeSeconds;
+        var depth = __instance.Depth(point);
 
         // Smoothly adjust wave height based on depth
-        float waveHeight = Mathf.Lerp(currentWaveHeight,
+        var waveHeight = Mathf.Lerp(__instance.m_forceDepth,
           __instance.CalcWave(point, depth, wrappedDayTimeSeconds, waveFactor),
           0.1f);
         num += waveHeight;
       }
 
-      float waterSurface =
+      var waterSurface =
         __instance.transform.position.y + num + __instance.m_surfaceOffset;
       if ((double)__instance.m_forceDepth < 0.0 &&
           (double)Utils.LengthXZ(point) > 10500.0)
@@ -63,6 +70,8 @@ namespace ValheimVehicles.Patches
     public static void WaterVolumeUpdatePatchWaterVolume(WaterVolume __instance,
       ref float[] ___m_normalizedDepth)
     {
+      if (WaterConfig.UnderwaterAccessMode.Value ==
+          WaterConfig.UnderwaterAccessModeType.Disabled) return;
       UpdateWaterLevel(__instance);
       AdjustWaterSurface(__instance, ___m_normalizedDepth);
     }
@@ -74,18 +83,12 @@ namespace ValheimVehicles.Patches
         WaterLevelCamera =
           __instance.GetWaterSurface(GameCamera.instance.transform.position);
       }
-
-      if (Player.m_localPlayer)
-      {
-        WaterLevelCamera =
-          __instance.GetWaterSurface(Player.m_localPlayer.transform.position);
-      }
     }
 
     private static void AdjustWaterSurface(WaterVolume __instance,
       float[] normalizedDepth)
     {
-      IsCameraAboveWater = GameCameraPatch.CameraPositionY < WaterLevelCamera;
+      IsCameraAboveWater = GameCameraPatch.CameraPositionY > WaterLevelCamera;
       Transform waterSurfaceTransform = __instance.m_waterSurface.transform;
       IsFlipped =
         waterSurfaceTransform.rotation.eulerAngles.y.Equals(180f);
@@ -99,7 +102,7 @@ namespace ValheimVehicles.Patches
       {
         UnflipWaterSurface(__instance, normalizedDepth);
         SetWaterSurfacePosition(waterSurfaceTransform,
-          30f); // Reset to a specific height
+          WaterLevelCamera);
       }
     }
 
@@ -143,14 +146,14 @@ namespace ValheimVehicles.Patches
           // normalizedDepth[0],
           // normalizedDepth[3],
           // normalizedDepth[1],
-          // 1 - normalizedDepth[0],
-          // 1 - normalizedDepth[1],
-          // 1 - normalizedDepth[2],
-          // 1 - normalizedDepth[3]
-          -normalizedDepth[0],
-          -normalizedDepth[1],
-          -normalizedDepth[2],
-          -normalizedDepth[3]
+          1 - normalizedDepth[0],
+          1 - normalizedDepth[1],
+          1 - normalizedDepth[2],
+          1 - normalizedDepth[3]
+          // -normalizedDepth[0],
+          // -normalizedDepth[1],
+          // -normalizedDepth[2],
+          // -normalizedDepth[3]
         ]
         : normalizedDepth;
 

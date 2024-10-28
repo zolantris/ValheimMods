@@ -76,6 +76,15 @@
             <Link>ValheimVehicles.Helpers\LayerHelpers.cs</Link>
         </Compile>
         <Compile Remove="..\ValheimVehicles\ValheimVehicles.Utils\**"/>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Config\UnderwaterConfig.cs">
+            <Link>ValheimVehicles.Config\UnderwaterConfig.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Structs\WaterCharacter.cs">
+            <Link>Structs\WaterCharacter.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CharacterOnboardData.cs">
+            <Link>Components\CharacterOnboardData.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup>
         <Compile Include="ValheimRAFT.Config\IConfigSection.cs"/>

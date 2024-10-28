@@ -23,6 +23,7 @@ internal static class PatchController
     Harmony = new Harmony(harmonyGuid);
     Harmony.PatchAll(typeof(Character_Patch));
     Harmony.PatchAll(typeof(CharacterAnimEvent_Patch));
+    Harmony.PatchAll(typeof(Character_WaterPatches));
     Harmony.PatchAll(typeof(Plantable_Patch));
     Harmony.PatchAll(typeof(Player_Patch));
     Harmony.PatchAll(typeof(Ship_Patch));
@@ -33,10 +34,10 @@ internal static class PatchController
     Harmony.PatchAll(typeof(ZNetView_Patch));
     Harmony.PatchAll(typeof(Hud_Patch));
     Harmony.PatchAll(typeof(VehicleMovementPatches));
-
-#if DEBUG
     Harmony.PatchAll(typeof(WaterVolumePatch));
     Harmony.PatchAll(typeof(GameCameraPatch));
+
+#if DEBUG
     Harmony.PatchAll(typeof(QuickStartWorld_Patch));
 #endif
 // #if DEBUG

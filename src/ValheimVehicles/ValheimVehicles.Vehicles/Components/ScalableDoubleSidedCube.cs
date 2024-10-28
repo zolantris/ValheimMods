@@ -10,7 +10,7 @@ namespace ValheimVehicles.Vehicles.Components;
 
 // [ExecuteInEditMode]
 [RequireComponent(typeof(Transform))]
-public class CustomCube : MonoBehaviour
+public class ScalableDoubleSidedCube : MonoBehaviour
 {
   public float
     cubeSize = 1f; // This should match the local scale of a Unity cube
@@ -164,12 +164,12 @@ public class CustomCube : MonoBehaviour
   private void CreateFaceMesh(Vector3 position, Quaternion rotation,
     Vector3 normal)
   {
-    var face = new GameObject("CubeFace");
-    face.layer = NonSolidLayer;
-    face.transform.SetParent(transform);
-    face.transform.localPosition = position;
-    face.transform.localRotation = rotation;
-    face.transform.localScale = Vector3.one * cubeSize;
+    var cubeFace = new GameObject("CubeFace");
+    cubeFace.layer = LayerHelpers.NonSolidLayer;
+    cubeFace.transform.SetParent(transform);
+    cubeFace.transform.localPosition = position;
+    cubeFace.transform.localRotation = rotation;
+    cubeFace.transform.localScale = Vector3.one * cubeSize;
 
     // Mesh setup
     var mesh = new Mesh
@@ -191,14 +191,14 @@ public class CustomCube : MonoBehaviour
       }
     };
 
-    MeshRenderer renderer = face.AddComponent<MeshRenderer>();
-    MeshFilter filter = face.AddComponent<MeshFilter>();
+    MeshRenderer renderer = cubeFace.AddComponent<MeshRenderer>();
+    MeshFilter filter = cubeFace.AddComponent<MeshFilter>();
     filter.mesh = mesh;
     renderer.sharedMaterial = CubeVisibleSurfaceMaterial;
     renderer.material.SetColor(ColorId, color);
     renderer.material.renderQueue = 5;
 
     cubeRenders.Add(renderer);
-    cubeObjs.Add(face);
+    cubeObjs.Add(cubeFace);
   }
 }

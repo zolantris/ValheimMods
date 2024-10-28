@@ -493,6 +493,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     VehicleDebugConfig.BindConfig(Config);
     PropulsionConfig.BindConfig(Config);
     ModSupportConfig.BindConfig(Config);
+    CustomMeshConfig.BindConfig(Config);
+    WaterConfig.BindConfig(Config);
 
 #if DEBUG
     // Meant for only being run in debug builds for testing quickly

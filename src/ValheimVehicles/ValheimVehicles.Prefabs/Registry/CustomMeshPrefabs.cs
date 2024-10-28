@@ -109,7 +109,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
   }
 
   public void AddTestPrefab(string prefabName,
-    Material material)
+    Material material, bool shouldAddCubeComponent = false)
   {
     var name = $"{PrefabNames.CustomWaterMask}_{prefabName}";
     var prefab =
@@ -127,6 +127,14 @@ public class CustomMeshPrefabs : IRegisterPrefab
     var prefabMeshRenderer = prefab.GetComponent<MeshRenderer>();
     prefabMeshRenderer.transform.localScale = new Vector3(4f, 4f, 4f);
     prefabMeshRenderer.sharedMaterial = material;
+
+    if (shouldAddCubeComponent)
+    {
+      var specialCube = prefab.AddComponent<ScalableDoubleSidedCube>();
+      specialCube.CubeMaskMaterial = LoadValheimVehicleAssets.WaterMaskMaterial;
+      specialCube.CubeVisibleSurfaceMaterial =
+        new Material(LoadValheimVehicleAssets.SelectiveMask);
+    }
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig
