@@ -20,6 +20,8 @@ public class CustomCube : MonoBehaviour
 
     public Material CubeVisibleSurfaceMaterial;
 
+    public int RenderQueueCube = 2000;
+    public int RenderQueueSide = 2000;
     private static Color greenish = new Color(0.15f, 0.5f, 0.3f, 0.2f);
     private static readonly int ColorId = Shader.PropertyToID("_Color");
     private static readonly int MaxHeight = Shader.PropertyToID("_MaxHeight");
@@ -52,7 +54,7 @@ public class CustomCube : MonoBehaviour
       gameObject.layer = NonSolidLayer;
       var meshRender = cube.GetComponent<MeshRenderer>();
       meshRender.sharedMaterial = CubeMaskMaterial;
-      meshRender.sharedMaterial.renderQueue = 1000;
+      meshRender.sharedMaterial.renderQueue = RenderQueueCube;
       meshRender.gameObject.layer = NonSolidLayer;
 
       CreateCubeFaces();
@@ -164,39 +166,43 @@ public class CustomCube : MonoBehaviour
     private void CreateFaceMesh(Vector3 position, Quaternion rotation,
       Vector3 normal)
     {
-      var face = new GameObject("CubeFace");
+      // var face = new GameObject("CubeFace");
+      var face = GameObject.CreatePrimitive(PrimitiveType.Cube);
       face.layer = NonSolidLayer;
+      face.name = "CubeFace";
       face.transform.SetParent(transform);
       face.transform.localPosition = position;
       face.transform.localRotation = rotation;
-      face.transform.localScale = Vector3.one * cubeSize;
+      // face.transform.localScale = Vector3.one * cubeSize;
+      face.transform.localScale = new Vector3(1f,1f,0.01f);
 
       // Mesh setup
-      var mesh = new Mesh
-      {
-        vertices = new Vector3[]
-        {
-          new Vector3(-0.5f, -0.5f, 0),
-          new Vector3(0.5f, -0.5f, 0),
-          new Vector3(-0.5f, 0.5f, 0),
-          new Vector3(0.5f, 0.5f, 0)
-        },
-        triangles = new int[]
-        {
-          0, 2, 1, 2, 3, 1 // Single face with two triangles
-        },
-        normals = new Vector3[]
-        {
-          normal, normal, normal, normal
-        }
-      };
+      // var mesh = new Mesh
+      // {
+      //   vertices = new Vector3[]
+      //   {
+      //     new Vector3(-0.5f, -0.5f, 0),
+      //     new Vector3(0.5f, -0.5f, 0),
+      //     new Vector3(-0.5f, 0.5f, 0),
+      //     new Vector3(0.5f, 0.5f, 0)
+      //   },
+      //   triangles = new int[]
+      //   {
+      //     0, 2, 1, 2, 3, 1 // Single face with two triangles
+      //   },
+      //   normals = new Vector3[]
+      //   {
+      //     normal, normal, normal, normal
+      //   }
+      // };
 
-      MeshRenderer renderer = face.AddComponent<MeshRenderer>();
-      MeshFilter filter = face.AddComponent<MeshFilter>();
-      filter.mesh = mesh;
+      // MeshRenderer renderer = face.AddComponent<MeshRenderer>();
+      // MeshFilter filter = face.AddComponent<MeshFilter>();
+      // filter.mesh = mesh;
+      var renderer = face.GetComponent<MeshRenderer>();
       renderer.sharedMaterial = CubeVisibleSurfaceMaterial;
       renderer.material.SetColor(ColorId, color);
-      renderer.material.renderQueue = 5;
+      renderer.material.renderQueue = RenderQueueSide;
 
       cubeRenders.Add(renderer);
       cubeObjs.Add(face);

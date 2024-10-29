@@ -2,6 +2,7 @@ using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
+using ValheimVehicles.Config;
 using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 
@@ -18,7 +19,11 @@ public class CustomMeshPrefabs : IRegisterPrefab
   {
     RegisterWaterMaskCreator();
     RegisterWaterMaskPrefab();
-    RegisterTestComponents();
+
+    if (CustomMeshConfig.EnableCustomWaterMeshTestPrefabs.Value)
+    {
+      RegisterTestComponents();
+    }
   }
 
   public void RegisterWaterMaskCreator()
@@ -69,6 +74,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
     WaterMaskComponent.WaterMaskMaterial =
       new Material(LoadValheimAssets.waterMaskShader);
     prefab.AddComponent<WaterMaskComponent>();
+    prefab.AddComponent<ScalableDoubleSidedCube>();
     PrefabManager.Instance.AddPrefab(prefab);
   }
 

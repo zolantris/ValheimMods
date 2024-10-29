@@ -2,7 +2,7 @@ Shader "Custom/WaterShader"
 {
     Properties
     {
-        _Color ("Water Color", Color) = (0, 0, 1, 1) // Water color
+        _Color ("Water Color", Color) = (0, 0, 1, 0.5) // Water color
         _MainTex ("Texture", 2D) = "white" {}
     }
     SubShader
@@ -44,7 +44,7 @@ Shader "Custom/WaterShader"
 
             fixed4 frag (v2f i) : SV_Target
             {
-                return _Color; // Returns the water color
+                return fixed4(_Color.rgb, _Color.a); // Return the color with alpha
             }
             ENDCG
         }

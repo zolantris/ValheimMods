@@ -6,47 +6,78 @@ Shader "Custom/SelectiveMask"
     }
     SubShader
     {
-        Tags { "RenderType"="Transparent" }
-        ColorMask 0  // No color output, just stencil
+        Tags { "RenderType"="Opaque" }
         ZWrite On
-        Cull Off
-
-        // Stencil settings to read and ignore the masked area
+        ColorMask 0
+//        ZTest LEqual
+        
         Stencil
         {
-            Ref 9833 // Stencil reference value to compare against
+            Ref 1 // Stencil reference value to compare against
             Comp Always // Write to the stencil buffer
             Pass Replace // Replace stencil value
         }
 
         Pass
         {
+         
+//            ZTest Always
+//            Stencil
+//            {
+//                Ref 2 // Match the stencil reference value in SelectiveMask
+//                Comp GEqual  // Render where stencil value is NOT equal to Ref
+//                Pass Keep
+//            }
+            
+            Blend SrcColor OneMinusSrcAlpha
+//            ZTest LEqual
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #include "UnityCG.cginc"
 
-            struct appdata
+            sampler2D _MainTex;
+            fixed4 _Color;
+            float _MaxHeight;
+
+            struct appdata_t
             {
                 float4 vertex : POSITION;
+                float2 uv : TEXCOORD0;
             };
 
             struct v2f
             {
-                float4 pos : SV_POSITION;
+                float2 uv : TEXCOORD0;
+                float4 vertex : SV_POSITION;
+                float worldY : TEXCOORD1; 
             };
 
-            float4 _Color;
-
-            v2f vert(appdata v)
+            v2f vert(appdata_t v)
             {
                 v2f o;
-                o.pos = UnityObjectToClipPos(v.vertex);
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.uv = v.uv;
+
+                float4 worldPosition = mul(unity_ObjectToWorld, v.vertex);
+                o.worldY = worldPosition.y;
+
                 return o;
             }
 
             fixed4 frag(v2f i) : SV_Target
             {
-                return _Color; // Render the specified color outside the mask volume
+                // Check if the world Y position is above the maximum height
+                // if (i.worldY > _MaxHeight)
+                // {
+                //     return fixed4(0, 0, 0, 0); // Fully transparent
+                // }
+                if (_Color.a == 0)
+                {
+                    return fixed4(0,0,0,0);
+                }
+
+                return fixed4(_Color.rgb, _Color.a); // Return the color with alpha
             }
             ENDCG
         }
