@@ -1,15 +1,14 @@
+// Test water mask
 Shader "Custom/WaterMask"
 {
-    Properties
-    {
-        _Color("Color", Color) = (0, 0, 1, 0) // Semi-transparent blue
-    }
     SubShader
     {
-        Tags { "RenderType"="Geometry" }
-        ZWrite On
-        ZTest LEqual
-        ColorMask 0
+        Tags {
+            "RenderType"="Transparent"
+            "RenderQueue"="Transparent-1"
+        }
+        ZTest LEqual // renders only at layer and lower
+        ColorMask 0 // no colors to render
         Cull Off // Cull back faces for inside-out effect
 
         Stencil
@@ -19,37 +18,8 @@ Shader "Custom/WaterMask"
             Pass Replace // Replace the stencil buffer value with Ref
         }
 
-        Pass
-        {
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma fragment frag
-
-            struct appdata
-            {
-                float4 vertex : POSITION;
-            };
-
-            struct v2f
-            {
-                float4 pos : SV_POSITION;
-            };
-
-            float4 _Color;
-
-            v2f vert(appdata v)
-            {
-                v2f o;
-                o.pos = UnityObjectToClipPos(v.vertex);
-                return o;
-            }
-
-            fixed4 frag(v2f i) : SV_Target
-            {
-                return _Color; // Not actually used, but needed for the pass
-            }
-            ENDCG
-        }
+        // do nothing
+        Pass {}
     }
     Fallback "Diffuse"
 }
