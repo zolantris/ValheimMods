@@ -531,7 +531,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var excludedLayers = LayerMask.GetMask("piece", "piece_nonsolid");
     m_body.excludeLayers = excludedLayers;
 
-    Logger.LogDebug($"called Awake in {name}, m_body {m_body}");
     if (!m_nview)
     {
       m_nview = GetComponent<ZNetView>();

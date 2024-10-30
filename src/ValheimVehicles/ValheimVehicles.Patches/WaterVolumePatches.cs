@@ -93,12 +93,13 @@ namespace ValheimVehicles.Patches
       IsFlipped =
         waterSurfaceTransform.rotation.eulerAngles.y.Equals(180f);
 
-      if (IsCameraAboveWater && !IsFlipped)
+      if (!IsCameraAboveWater && !IsFlipped)
       {
         FlipWaterSurface(__instance, normalizedDepth);
         SetWaterSurfacePosition(waterSurfaceTransform, WaterLevelCamera);
       }
-      else if (!IsCameraAboveWater && IsFlipped)
+
+      if (IsCameraAboveWater && IsFlipped)
       {
         UnflipWaterSurface(__instance, normalizedDepth);
         SetWaterSurfacePosition(waterSurfaceTransform,

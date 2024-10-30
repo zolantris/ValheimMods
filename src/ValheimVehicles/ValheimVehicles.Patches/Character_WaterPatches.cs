@@ -48,13 +48,13 @@ public class Character_WaterPatches
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return false;
-    if (__instance.gameObject.name != "Player(Clone)") return false;
+    if (!WaterConfig.IsAllowedUnderwater(__instance)) return false;
     if (VehicleOnboardController.GetCharacterVehicleMovementController(
           __instance.GetZDOID(), out var controller))
     {
       var liquidDepth = VehicleDebugConfig.HasBoatLiquidDepthOverride.Value
         ? VehicleDebugConfig.VehicleLiquidDepthOverride.Value
-        : controller.onboardCollider.bounds.min.y;
+        : controller?.onboardCollider.bounds.min.y ?? __instance.m_waterLevel;
       __instance.m_liquidLevel = liquidDepth;
       __instance.m_waterLevel = liquidDepth;
       // the vehicle onboard collider controls the water level for players. So they can go below sea level
