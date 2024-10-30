@@ -17,7 +17,8 @@ public class ScalableDoubleSidedCube : MonoBehaviour
 
   // public Material InnerSelectiveMask;
   // public Material SurfaceWaterMaskMaterial;
-  public Material CubeMaskMaterial = LoadValheimVehicleAssets.WaterMaskMaterial;
+  public Material CubeMaskMaterial =
+    LoadValheimVehicleAssets.TransparentDepthMaskMaterial;
 
   public Material CubeVisibleSurfaceMaterial =
     LoadValheimVehicleAssets.WaterHeightMaterial;

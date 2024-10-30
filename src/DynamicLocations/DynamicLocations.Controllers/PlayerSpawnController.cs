@@ -397,7 +397,7 @@ public class PlayerSpawnController : MonoBehaviour
     Logger.LogDebug($"Syncing Player Position and sector, {newPosition}");
     var isLoaded =
       ZoneSystem.instance.IsZoneLoaded(
-        ZoneSystem.instance.GetZone(newPosition));
+        ZoneSystem.GetZone(newPosition));
 
     if (!isLoaded)
     {
@@ -408,7 +408,7 @@ public class PlayerSpawnController : MonoBehaviour
 
     ZNet.instance.SetReferencePosition(newPosition);
     playerZdo.SetPosition(newPosition);
-    playerZdo.SetSector(ZoneSystem.instance.GetZone(newPosition));
+    playerZdo.SetSector(ZoneSystem.GetZone(newPosition));
     player.transform.position = newPosition;
   }
 
@@ -497,13 +497,13 @@ public class PlayerSpawnController : MonoBehaviour
       DynamicTeleport(teleportPosition, zdo.GetRotation());
 
     // probably not necessary, but helps with loading some heavier things.
-    var zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
+    var zoneId = ZoneSystem.GetZone(zdo.GetPosition());
     ZoneSystem.instance.PokeLocalZone(zoneId);
 
     var zoneIsNotLoaded = false;
     while (zoneIsNotLoaded == false)
     {
-      zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
+      zoneId = ZoneSystem.GetZone(zdo.GetPosition());
       zoneIsNotLoaded = ZoneSystem.instance.IsZoneLoaded(zoneId);
       yield return new WaitForFixedUpdate();
     }
@@ -528,7 +528,7 @@ public class PlayerSpawnController : MonoBehaviour
     ZNetView? zdoNetViewInstance = null;
     var isZoneLoaded = false;
 
-    zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
+    zoneId = ZoneSystem.GetZone(zdo.GetPosition());
     ZoneSystem.instance.PokeLocalZone(zoneId);
 
     yield return new WaitUntil(() =>

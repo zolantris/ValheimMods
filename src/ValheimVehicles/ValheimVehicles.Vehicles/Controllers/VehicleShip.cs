@@ -349,7 +349,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     if (!(bool)NetView || NetView.GetZDO() == null || NetView.m_ghost ||
         (bool)PiecesController ||
         !isActiveAndEnabled) return;
-    var sector = ZoneSystem.instance.GetZone(transform.position);
+    var sector = ZoneSystem.GetZone(transform.position);
     var zdo = NetView.GetZDO();
     zdo.SetPosition(transform.position);
     zdo.SetSector(sector);
