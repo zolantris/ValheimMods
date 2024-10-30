@@ -6,26 +6,23 @@
   <component name="ChangeListManager">
     <list default="true" id="9eb05097-9d84-4b87-8e9a-0e73fcf3150e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/../../../libs" beforeDir="false" afterPath="$PROJECT_DIR$/../../../libs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Material/pixel_lit_opaque.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Material/pixel_lit_opaque.mat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Icons/water_opacity_bucket 1.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Icons/water_opacity_bucket.png" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Icons/water_opacity_bucket.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/SelectiveMaskMat.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/VisibleShaderInMaskMat.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/VisibleShaderInMaskMat.mat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/wood_piece.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/wood_piece.mat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/BendingShader.shader" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/CornerBendingShader.shader" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/Exp1WaterMaskShader.shader" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/StencilMask.shader" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/TargetMaterial.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/TargetMaterial.mat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/TargetShader.shader" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/TestDefaultMaterial.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/TestDefaultMaterial.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/TransparentDepthMask.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/TransparentDepthMask.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/TransparentDepthMaskLayer3000.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/TransparentDepthMaskLayer3000.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/VisibleShaderInMaskMat.mat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/ScalableDoubleSidedCube.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/ScalableDoubleSidedCube.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/WaterDisplacement.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/WaterDisplacement.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/WaterShaderMaterial Variant.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/WaterShaderMaterial Variant.mat" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/CombinedHeightBasedShader.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/CombinedHeightBasedShader.shader" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/SelectiveMask.shader" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/TestWaterShader.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/TestWaterShader.shader" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/WaterMask.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/WaterMask.shader" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/DepthMask.shader" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Shaders/DepthMask.shader" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Helpers/LayerHelpers.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Helpers/LayerHelpers.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/LoadValheimVehiclesAssets.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/LoadValheimVehiclesAssets.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/CustomMeshPrefabs.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/CustomMeshPrefabs.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/ScalableDoubleSidedCube.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/ScalableDoubleSidedCube.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/WaterMaskComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/WaterMaskComponent.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,6 +38,7 @@
     <setting file="file://$PROJECT_DIR$/../../../../../../../../Program Files/Unity/Hub/Editor/2022.3.17f1/Editor/Data/CGIncludes/UnityCustomRenderTexture.cginc" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../../../Program Files/Unity/Hub/Editor/2022.3.17f1/Editor/Data/CGIncludes/UnityShaderUtilities.cginc" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/73/e1df8cf7/GameObject.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/SourcesCache/3ea01e77be99618395f448b16bd7cc2bd4248bd9e5d8474964b2d97f39c5d74/System.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Assets/ValheimVehicles/Scene/BendingController.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Assets/ValheimVehicles/Scene/WaterMaskController.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.assetbundlebrowser@ad2a81ec30/Editor/AssetBundleDataSource/AssetDatabaseABDataSource.cs" root0="SKIP_HIGHLIGHTING" />
@@ -173,7 +171,7 @@
       <workItem from="1730065363796" duration="306000" />
       <workItem from="1730126555483" duration="16044000" />
       <workItem from="1730240812458" duration="8000" />
-      <workItem from="1730240978180" duration="14916000" />
+      <workItem from="1730240978180" duration="24430000" />
     </task>
     <servers />
   </component>
@@ -187,6 +185,17 @@
     <option name="unityProjectFolder" value="true" />
   </component>
   <component name="UnityUnitTestConfiguration" currentTestLauncher="Both" />
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
   </component>

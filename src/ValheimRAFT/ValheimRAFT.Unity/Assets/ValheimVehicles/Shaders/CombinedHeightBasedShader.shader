@@ -11,7 +11,7 @@ Shader "Custom/CombinedHeightBasedShader"
     {
         Tags {
             "RenderType"="Transparent"
-            "Queue"="Transparent-2"
+            "Queue"="Transparent"
         }
         LOD 100
         Cull Off
@@ -20,9 +20,11 @@ Shader "Custom/CombinedHeightBasedShader"
 
         Stencil
         {
-            Ref 2 // Stencil reference value to compare against
+            Ref 3 // Stencil reference value to compare against
             Comp Always // Write to the stencil buffer
             Pass Keep // Replace stencil value
+//            Fail DecrSat
+//            ZFail DecrSat
         }
 
         Pass
@@ -31,11 +33,12 @@ Shader "Custom/CombinedHeightBasedShader"
             {
                 Ref 1 // Match the stencil reference value in SelectiveMask
                 Comp Equal  // Render where stencil value is NOT equal to Ref
-                Pass IncrSat // Keep the existing stencil value
-                Fail DecrSat
-                ZFail DecrSat
+                Pass Keep // Keep the existing stencil value
+//                Fail IncrSat
+//                ZFail IncrSat
             }
-            ZTest Always
+             ZTest LEqual
+//            ZTest Equal
 //            ZTest GEqual
 //            ZClip On
 //            ZWrite On
@@ -46,49 +49,9 @@ Shader "Custom/CombinedHeightBasedShader"
             Cull Off // Render both sides
 
             CGPROGRAM
+            #include "SharedHeightShader.cginc"
             #pragma vertex vert
             #pragma fragment frag
-            #include "UnityCG.cginc"
-
-            sampler2D _MainTex;
-            fixed4 _Color;
-            float _MaxHeight;
-
-            struct appdata_t
-            {
-                float4 vertex : POSITION;
-                float2 uv : TEXCOORD0;
-            };
-
-            struct v2f
-            {
-                float2 uv : TEXCOORD0;
-                float4 vertex : SV_POSITION;
-                float worldY : TEXCOORD1; 
-            };
-
-            v2f vert(appdata_t v)
-            {
-                v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = v.uv;
-
-                float4 worldPosition = mul(unity_ObjectToWorld, v.vertex);
-                o.worldY = worldPosition.y;
-
-                return o;
-            }
-
-            fixed4 frag(v2f i) : SV_Target
-            {
-                // Check if the world Y position is above the maximum height
-                if (i.worldY > _MaxHeight)
-                {
-                    return fixed4(0, 0, 0, 0); // Fully transparent
-                }
-
-                return fixed4(_Color.rgb, _Color.a); // Return the color with alpha
-            }
             ENDCG
         }
 
@@ -97,70 +60,50 @@ Shader "Custom/CombinedHeightBasedShader"
         {
             Stencil
             {
-                Ref 1 // Match the stencil reference value in SelectiveMask
-                Comp GEqual  // Render where stencil value is NOT equal to Ref
+                Ref 2 // Match the stencil reference value in SelectiveMask
+                Comp Equal  // Render where stencil value is NOT equal to Ref
                 Pass Keep // Keep the existing stencil value
             }
-            ZTest Always
+            ZTest GEqual
 
             CGPROGRAM
+            #include "SharedHeightShader.cginc"
             #pragma vertex vert
             #pragma fragment frag
+            ENDCG
+        }
 
-            #include "UnityCG.cginc"
-
-            sampler2D _MainTex;
-            fixed4 _Color;
-            float _MaxHeight;
-
-            struct appdata_t
+       Pass
+        {
+            Stencil
             {
-                float4 vertex : POSITION;
-                float2 uv : TEXCOORD0;
-            };
-
-            struct v2f
-            {
-                float2 uv : TEXCOORD0;
-                float4 vertex : SV_POSITION;
-                float worldY : TEXCOORD1; 
-            };
-            
-            struct Input
-            {
-                float2 uv_MainTex;
-            };
-
-            // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
-            // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
-            // #pragma instancing_options assumeuniformscaling
-            UNITY_INSTANCING_BUFFER_START(Props)
-                // put more per-instance properties here
-            UNITY_INSTANCING_BUFFER_END(Props)
-
-            v2f vert(appdata_t v)
-            {
-                v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = v.uv;
-
-                float4 worldPosition = mul(unity_ObjectToWorld, v.vertex);
-                o.worldY = worldPosition.y;
-
-                return o;
+                Ref 5 // Match the stencil reference value in SelectiveMask
+                Comp Greater  // Render where stencil value is NOT equal to Ref
+                Pass DecrWrap // Keep the existing stencil value
             }
+            ZTest LEqual
 
-            fixed4 frag(v2f i) : SV_Target
+            CGPROGRAM
+            #include "SharedHeightShader.cginc"
+            #pragma vertex vert
+            #pragma fragment frag
+            ENDCG
+        }
+
+       Pass
+        {
+            Stencil
             {
-                // Check if the world Y position is above the maximum height
-                if (i.worldY > _MaxHeight)
-                {
-                    return fixed4(0, 0, 0, 0); // Fully transparent
-                }
-
-                fixed4 c = tex2D (_MainTex, i.uv) * _Color;
-                return c * _Color.a;
+                Ref 4 // Match the stencil reference value in SelectiveMask
+                Comp Equal  // Render where stencil value is NOT equal to Ref
+                Pass Keep // Keep the existing stencil value
             }
+             ZTest Always
+
+            CGPROGRAM
+            #include "SharedHeightShader.cginc"
+            #pragma vertex vert
+            #pragma fragment frag
             ENDCG
         }
     }

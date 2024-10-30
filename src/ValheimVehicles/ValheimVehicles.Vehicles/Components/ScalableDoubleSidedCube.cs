@@ -17,11 +17,12 @@ public class ScalableDoubleSidedCube : MonoBehaviour
 
   // public Material InnerSelectiveMask;
   // public Material SurfaceWaterMaskMaterial;
-  public Material CubeMaskMaterial;
+  public Material CubeMaskMaterial = LoadValheimVehicleAssets.WaterMaskMaterial;
 
-  public Material CubeVisibleSurfaceMaterial;
+  public Material CubeVisibleSurfaceMaterial =
+    LoadValheimVehicleAssets.WaterHeightMaterial;
 
-  private static Color greenish = new Color(0.15f, 0.5f, 0.3f, 0.2f);
+  private static Color greenish = new Color(0.15f, 1.0f, 0.5f, 0.2f);
   private static readonly int ColorId = Shader.PropertyToID("_Color");
   private static readonly int MaxHeight = Shader.PropertyToID("_MaxHeight");
   private static readonly int DstBlend = Shader.PropertyToID("_DstBlend");
@@ -31,8 +32,17 @@ public class ScalableDoubleSidedCube : MonoBehaviour
   private List<Renderer> cubeRenders = new List<Renderer>();
   private GameObject Cube;
   public bool CanRenderTopOfCube = false;
+  public int CubeLayer = 16;
+  public int MaskRenderQueue = 2999;
+
+  public int SideRenderQueue = 3000;
+
+  // This should be only enabled for non-doublesided shaders
+  public bool RenderDoubleSided = false;
+  public bool RenderMaskOnSecondFace = false;
 
   private BlendMode SelectedDestinationBlend = BlendMode.OneMinusSrcAlpha;
+  private GameObject? _cubeMaskObj = null;
 
   private void Start()
   {
@@ -46,43 +56,64 @@ public class ScalableDoubleSidedCube : MonoBehaviour
       return;
     }
 
-    // var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-    // cube.transform.position = transform.position;
-    // cube.transform.SetParent(transform);
-    var meshRender = GetComponent<MeshRenderer>();
-    meshRender.gameObject.layer = LayerHelpers.NonSolidLayer;
-    meshRender.sharedMaterial = CubeMaskMaterial;
-    meshRender.sharedMaterial.renderQueue = 1000;
-    meshRender.gameObject.layer = LayerHelpers.NonSolidLayer;
-
     CreateCubeFaces();
   }
 
 
-  private WaterVolume prevLiquidLevel = new WaterVolume();
+  private WaterVolume? _prevLiquidLevel = null;
+
+  private void AlignTopOfCubeWithWater(float waterHeight)
+  {
+    var cubeSizeOffset = cubeSize / 2;
+    var bottomOfCube = transform.position.y - cubeSizeOffset;
+    var topOfCube = transform.position.y + cubeSizeOffset;
+    if (_cubeMaskObj == null) return;
+    // Moving the gameobject out of bounds should never happen.
+    if (waterHeight < bottomOfCube || waterHeight > topOfCube)
+    {
+      return;
+    }
+
+    _cubeMaskObj.transform.position = new Vector3(transform.position.x,
+      waterHeight, transform.position.z);
+  }
 
   /// <summary>
   ///  This is pretty heavy. Likely will need to not call as much by doing some optimistic checks instead of setting shader every time.
   /// </summary>
   private void FixedUpdate()
   {
+    if (ZNetView.m_forceDisableInit) return;
+    var waterLevel =
+      Floating.GetWaterLevel(transform.position,
+        ref _prevLiquidLevel);
+    AlignTopOfCubeWithWater(waterLevel);
+
+    if (transform.gameObject.layer != CubeLayer)
+    {
+      transform.gameObject.layer = CubeLayer;
+    }
+
+    if (_cubeMaskObj != null && _cubeMaskObj.gameObject.layer != CubeLayer)
+    {
+      _cubeMaskObj.gameObject.layer = CubeLayer;
+    }
+
     foreach (var cubeRender in cubeRenders)
     {
-      WaterVolume previousAndOut = null;
-      var waterLevel =
-        Floating.GetWaterLevel(cubeRender.transform.position,
-          ref prevLiquidLevel);
+      waterLevel =
+        Floating.GetWaterLevel(transform.position,
+          ref _prevLiquidLevel);
       cubeRender.material.SetFloat(MaxHeight, waterLevel);
       if (cubeRender.material.color != color)
       {
         cubeRender.material.SetColor(ColorId, color);
       }
 
-      // if (!Mathf.Approximately(cubeRender.material.GetFloat(DstBlend),
-      //       (float)SelectedDestinationBlend))
-      // {
-      //   cubeRender.material.SetFloat(DstBlend, (float)SelectedDestinationBlend);
-      // }
+      if (cubeRender.gameObject.layer != CubeLayer)
+      {
+        cubeRender.gameObject.layer = CubeLayer;
+      }
     }
   }
 
@@ -125,27 +156,45 @@ public class ScalableDoubleSidedCube : MonoBehaviour
   {
     float halfSize = cubeSize / 2f;
 
+    var topDirection = Vector3.up;
+    var topPosition = new Vector3(0, halfSize, 0);
+    var topRotation = new Vector3(90, 0, 0);
+
     // Define face directions and positions
     Vector3[] directions =
     {
-      Vector3.up, Vector3.down, Vector3.forward, Vector3.back, Vector3.left,
+      topDirection,
+      Vector3.down, Vector3.forward, Vector3.back, Vector3.left,
       Vector3.right
     };
+
     Vector3[] positions =
     {
-      new Vector3(0, halfSize, 0), new Vector3(0, -halfSize, 0),
-      new Vector3(0, 0, halfSize), new Vector3(0, 0, -halfSize),
-      new Vector3(-halfSize, 0, 0), new Vector3(halfSize, 0, 0)
+      topPosition,
+      new(0, -halfSize, 0),
+      new(0, 0, halfSize),
+      new(0, 0, -halfSize),
+      new(-halfSize, 0, 0),
+      new(halfSize, 0, 0)
     };
     Vector3[] rotations =
     {
-      new Vector3(90, 0, 0), new Vector3(-90, 0, 0),
-      new Vector3(0, 0, 0), new Vector3(0, 180, 0),
-      new Vector3(0, -90, 0), new Vector3(0, 90, 0)
+      topRotation,
+      new(-90, 0, 0),
+      new(0, 0, 0),
+      new(0, 180, 0),
+      new(0, -90, 0),
+      new(0, 90, 0)
     };
 
+    if (!CanRenderTopOfCube)
+    {
+      CreateFaceMesh(topPosition, Quaternion.Euler(topRotation),
+        topDirection, CubeFaceType.MaskFace);
+    }
+
     // Create each face with two meshes for double-sided rendering
-    for (int i = 0; i < 6; i++)
+    for (var i = 0; i < positions.Length; i++)
     {
       // Omit the top face based on the boolean
       if (i == 1 &&
@@ -154,51 +203,89 @@ public class ScalableDoubleSidedCube : MonoBehaviour
 
       // Front side of the face
       CreateFaceMesh(positions[i], Quaternion.Euler(rotations[i]),
-        directions[i]);
+        directions[i], CubeFaceType.HeightFace);
 
       // Back side of the face (flip normal)
-      // CreateFaceMesh(positions[i], Quaternion.Euler(rotations[i] + new Vector3(0, 180, 0)), -directions[i]);
+      if (RenderDoubleSided || RenderMaskOnSecondFace)
+      {
+        CreateFaceMesh(positions[i],
+          Quaternion.Euler(rotations[i] + new Vector3(0, 180, 0)),
+          -directions[i], CubeFaceType.MaskFace);
+      }
     }
   }
 
-  private void CreateFaceMesh(Vector3 position, Quaternion rotation,
-    Vector3 normal)
+  enum CubeFaceType
   {
-    var cubeFace = new GameObject("CubeFace");
-    cubeFace.layer = LayerHelpers.NonSolidLayer;
+    MaskFace,
+    HeightFace
+  }
+
+  private void CreateCubeMesh(Vector3 position, Quaternion rotation,
+    Vector3 direction, CubeFaceType faceType)
+  {
+    //
+    // // Mesh setup
+    // var mesh = new Mesh
+    // {
+    //   vertices = new Vector3[]
+    //   {
+    //     new Vector3(-0.5f, -0.5f, 0),
+    //     new Vector3(0.5f, -0.5f, 0),
+    //     new Vector3(-0.5f, 0.5f, 0),
+    //     new Vector3(0.5f, 0.5f, 0)
+    //   },
+    //   triangles = new int[]
+    //   {
+    //     0, 2, 1, 2, 3, 1 // Single face with two triangles
+    //   },
+    //   normals = new Vector3[]
+    //   {
+    //     normal, normal, normal, normal
+    //   }
+    // };
+    //
+    // MeshRenderer renderer = cubeFace.AddComponent<MeshRenderer>();
+    // MeshFilter filter = cubeFace.AddComponent<MeshFilter>();
+    // filter.mesh = mesh;
+  }
+
+  private void CreateFaceMesh(Vector3 position, Quaternion rotation,
+    Vector3 normal, CubeFaceType faceType)
+  {
+    var primitiveType = faceType == CubeFaceType.HeightFace
+      ? PrimitiveType.Quad
+      : PrimitiveType.Cube;
+    var cubeFace = GameObject.CreatePrimitive(primitiveType);
+    cubeFace.name = $"Quad {Enum.GetName(typeof(CubeFaceType), (int)faceType)}";
+    cubeFace.layer = CubeLayer;
     cubeFace.transform.SetParent(transform);
     cubeFace.transform.localPosition = position;
     cubeFace.transform.localRotation = rotation;
-    cubeFace.transform.localScale = Vector3.one * cubeSize;
-
-    // Mesh setup
-    var mesh = new Mesh
+    if (faceType == CubeFaceType.MaskFace)
     {
-      vertices = new Vector3[]
-      {
-        new Vector3(-0.5f, -0.5f, 0),
-        new Vector3(0.5f, -0.5f, 0),
-        new Vector3(-0.5f, 0.5f, 0),
-        new Vector3(0.5f, 0.5f, 0)
-      },
-      triangles = new int[]
-      {
-        0, 2, 1, 2, 3, 1 // Single face with two triangles
-      },
-      normals = new Vector3[]
-      {
-        normal, normal, normal, normal
-      }
-    };
+      cubeFace.transform.localScale =
+        new Vector3(cubeSize, cubeSize, 0.02f);
+    }
+    else
+    {
+      cubeFace.transform.localScale = Vector3.one * cubeSize;
+    }
 
-    MeshRenderer renderer = cubeFace.AddComponent<MeshRenderer>();
-    MeshFilter filter = cubeFace.AddComponent<MeshFilter>();
-    filter.mesh = mesh;
-    renderer.sharedMaterial = CubeVisibleSurfaceMaterial;
-    renderer.material.SetColor(ColorId, color);
-    renderer.material.renderQueue = 5;
+    var componentRenderer = cubeFace.GetComponent<MeshRenderer>();
+    componentRenderer.sharedMaterial = faceType == CubeFaceType.HeightFace
+      ? CubeVisibleSurfaceMaterial
+      : CubeMaskMaterial;
 
-    cubeRenders.Add(renderer);
-    cubeObjs.Add(cubeFace);
+    if (faceType == CubeFaceType.HeightFace)
+    {
+      componentRenderer.material.SetColor(ColorId, color);
+      cubeRenders.Add(componentRenderer);
+      cubeObjs.Add(cubeFace);
+    }
+    else
+    {
+      _cubeMaskObj = cubeFace;
+    }
   }
 }

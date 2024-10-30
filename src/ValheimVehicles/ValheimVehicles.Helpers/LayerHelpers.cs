@@ -12,6 +12,9 @@ public static class LayerHelpers
     "static_solid", "Default_small", "character_net", "vehicle",
     LayerMask.LayerToName(29));
 
-  public static LayerMask NonSolidLayer =
+  public static int NonSolidLayer =
     LayerMask.NameToLayer("piece_nonsolid");
+
+  public static int IgnoreRaycastLayer =
+    LayerMask.NameToLayer("Ignore Raycast");
 }

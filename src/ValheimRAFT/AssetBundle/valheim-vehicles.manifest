@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 227957461
+CRC: 3321323721
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 6c30a4bd5fd3f0906c8d605a121cfde1
+    Hash: 383d5b3b1fe3823f36fa67622611a4e8
   TypeTreeHash:
     serializedVersion: 2
     Hash: c06587813f50b4ac49249ee2d68a3382
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 6c30a4bd5fd3f0906c8d605a121cfde1
+    Hash: 383d5b3b1fe3823f36fa67622611a4e8
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -69,10 +69,10 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib_iron.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_basic.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_ship.prefab
-- Assets/ValheimVehicles/Shaders/SelectiveMask.shader
+- Assets/ValheimVehicles/Shaders/DepthMask.shader
 - Assets/ValheimVehicles/Prefabs/hull_wall_iron_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_right_wood.prefab
-- Assets/ValheimVehicles/Material/SelectiveMaskMat.mat
+- Assets/ValheimVehicles/Material/TransparentDepthMask.mat
 - Assets/ValheimVehicles/Prefabs/hull_wall_iron_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_left_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_iron_2x2.prefab
@@ -93,7 +93,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_window_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_wood_4x4.prefab
-- Assets/ValheimVehicles/Material/VisibleShaderInMaskMat.mat
+- Assets/ValheimVehicles/Material/WaterHeightMaterial.mat
 - Assets/ValheimVehicles/Prefabs/hull_center_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab

@@ -3,6 +3,7 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Config;
+using ValheimVehicles.LayerUtils;
 using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 
@@ -59,8 +60,14 @@ public class CustomMeshPrefabs : IRegisterPrefab
 
   public static void RegisterWaterMaskPrefab()
   {
+    var waterMaskPrefab = new GameObject("WaterMaskPrefab")
+    {
+      layer = LayerHelpers.NonSolidLayer
+    };
+
     var prefab =
-      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.CustomWaterMask);
+      PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CustomWaterMask,
+        waterMaskPrefab);
 
     var piece = prefab.AddComponent<Piece>();
     piece.m_name = "Water Mask";
@@ -71,10 +78,8 @@ public class CustomMeshPrefabs : IRegisterPrefab
 
     PrefabRegistryHelpers.SetWearNTear(prefab, 1);
 
-    WaterMaskComponent.WaterMaskMaterial =
-      new Material(LoadValheimAssets.waterMaskShader);
+    // WaterMaskComponent.WaterMaskMaterial = LoadValheimVehicleAssets.VisibleShaderInMaskMat;
     prefab.AddComponent<WaterMaskComponent>();
-    prefab.AddComponent<ScalableDoubleSidedCube>();
     PrefabManager.Instance.AddPrefab(prefab);
   }
 
@@ -85,10 +90,11 @@ public class CustomMeshPrefabs : IRegisterPrefab
     var maskMaterial = new Material(maskShader);
     AddTestPrefab("Test1", maskMaterial);
     AddTestPrefab("Test2",
-      new Material(LoadValheimVehicleAssets.WaterMaskShader));
-    AddTestPrefab("Test3", LoadValheimVehicleAssets.WaterMaskMaterial);
+      new Material(LoadValheimVehicleAssets.TransparentDepthMaskMaterial));
+    AddTestPrefab("Test3",
+      LoadValheimVehicleAssets.TransparentDepthMaskMaterial);
     var renderqueueLower =
-      new Material(LoadValheimVehicleAssets.WaterMaskMaterial)
+      new Material(LoadValheimVehicleAssets.TransparentDepthMaskMaterial)
       {
         renderQueue = 7
       };
@@ -137,9 +143,10 @@ public class CustomMeshPrefabs : IRegisterPrefab
     if (shouldAddCubeComponent)
     {
       var specialCube = prefab.AddComponent<ScalableDoubleSidedCube>();
-      specialCube.CubeMaskMaterial = LoadValheimVehicleAssets.WaterMaskMaterial;
+      specialCube.CubeMaskMaterial =
+        LoadValheimVehicleAssets.TransparentDepthMaskMaterial;
       specialCube.CubeVisibleSurfaceMaterial =
-        new Material(LoadValheimVehicleAssets.SelectiveMask);
+        new Material(LoadValheimVehicleAssets.WaterHeightMaterial);
     }
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,

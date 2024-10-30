@@ -11,15 +11,17 @@ public class LoadValheimVehicleAssets : ILoadAssets
   // CustomSail
   public static GameObject CustomSail = null!;
 
-  public static Shader InvertedWaterMask = null!;
-  public static Shader MaskedMaterial = null!;
-  public static Shader SelectiveMask = null!;
-  public static Shader StandardTwoSidedShader = null!;
-  public static Shader WaterMaskShader = null!;
+  // public static Shader InvertedWaterMask = null!;
 
-  public static Material WaterMaskMaterial = null!;
-  public static Material SelectiveMaskMat = null!;
-  public static Material VisibleShaderInMaskMat = null!;
+  // public static Shader SelectiveMask = null!;
+  public static Shader StandardTwoSidedShader = null!;
+  // public static Shader WaterMaskShader = null!;
+
+  // public static Material WaterMaskMaterial = null!;
+  // public static Material SelectiveMaskMat = null!;
+
+  public static Material TransparentDepthMaskMaterial = null!;
+  public static Material WaterHeightMaterial = null!;
 
   // hull
   public static GameObject ShipHullWoodAsset = null!;
@@ -136,20 +138,20 @@ public class LoadValheimVehicleAssets : ILoadAssets
       sharedAssetBundle.LoadAsset<Shader>("StandardTwoSided.shader");
 
     _bundle = assetBundle;
-    VisibleShaderInMaskMat =
-      assetBundle.LoadAsset<Material>("VisibleShaderInMaskMat.mat");
-    SelectiveMaskMat =
-      assetBundle.LoadAsset<Material>("SelectiveMaskMat.mat");
-
-    WaterMaskShader = assetBundle.LoadAsset<Shader>("WaterMask.shader");
-    WaterMaskMaterial =
-      assetBundle.LoadAsset<Material>("WaterMaskMaterial.mat");
-    InvertedWaterMask =
-      assetBundle.LoadAsset<Shader>("InvertWaterMask.shader");
-    SelectiveMask =
-      assetBundle.LoadAsset<Shader>("SelectiveMask.shader");
-    MaskedMaterial =
-      assetBundle.LoadAsset<Shader>("MaskedMaterial.shader");
+    WaterHeightMaterial =
+      assetBundle.LoadAsset<Material>("WaterHeightMaterial.mat");
+    // SelectiveMaskMat =
+    //   assetBundle.LoadAsset<Material>("SelectiveMaskMat.mat");
+    //
+    // WaterMaskShader = assetBundle.LoadAsset<Shader>("WaterMask.shader");
+    // WaterMaskMaterial =
+    //   assetBundle.LoadAsset<Material>("WaterMaskMaterial.mat");
+    // InvertedWaterMask =
+    //   assetBundle.LoadAsset<Shader>("InvertWaterMask.shader");
+    // SelectiveMask =
+    //   assetBundle.LoadAsset<Shader>("SelectiveMask.shader");
+    TransparentDepthMaskMaterial =
+      assetBundle.LoadAsset<Material>("TransparentDepthMask.mat");
 
     CustomSail = assetBundle.LoadAsset<GameObject>("custom_sail.prefab");
 

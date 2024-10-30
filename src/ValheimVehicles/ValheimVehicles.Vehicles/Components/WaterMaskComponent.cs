@@ -66,6 +66,7 @@ public class WaterMaskComponent : CreativeModeColliderComponent
   public ZNetView netView;
   private MeshRenderer _meshRenderer;
   public static List<WaterMaskComponent> Instances = new();
+  public ScalableDoubleSidedCube DoubleSidedCube;
 
   private void Start()
   {
@@ -74,10 +75,9 @@ public class WaterMaskComponent : CreativeModeColliderComponent
       return;
     }
 
-    _meshRenderer = GetComponent<MeshRenderer>();
     Instances.Add(this);
     netView = GetComponent<ZNetView>();
-    UpdateMaskFromNetview();
+    InitMaskFromNetview();
   }
 
   private new void OnDestroy()
@@ -106,28 +106,31 @@ public class WaterMaskComponent : CreativeModeColliderComponent
   /// </summary>
   public void UseDebugMaterial()
   {
-    var material =
-      new Material(LoadValheimVehicleAssets.StandardTwoSidedShader)
-      {
-        color = new Color(0, 1f, 1f, 0.4f)
-      };
-    VehiclePiecesController.FixMaterial(material);
-    _meshRenderer.material = material;
-    _meshRenderer.rendererPriority = 3000;
+    // var material =
+    //   new Material(LoadValheimVehicleAssets.StandardTwoSidedShader)
+    //   {
+    //     color = new Color(0, 1f, 1f, 0.4f)
+    //   };
+    // VehiclePiecesController.FixMaterial(material);
+    // _meshRenderer.material = material;
+    // _meshRenderer.rendererPriority = 3000;
     // can break, but can walk through.
-    gameObject.layer = LayerMask.NameToLayer("piece_nonsolid");
+    gameObject.layer = LayerHelpers.NonSolidLayer;
+    DoubleSidedCube.CubeLayer = LayerHelpers.NonSolidLayer;
   }
 
   public void UseMaskMaterial()
   {
     // Untouchable
-    gameObject.layer = LayerMask.NameToLayer("Ignore Raycast");
-    _meshRenderer.material = WaterMaskMaterial;
-    _meshRenderer.rendererPriority = RenderPriority;
+    gameObject.layer = LayerHelpers.IgnoreRaycastLayer;
+    DoubleSidedCube.CubeLayer = LayerHelpers.IgnoreRaycastLayer;
+    // _meshRenderer.material = WaterMaskMaterial;
+    // _meshRenderer.rendererPriority = RenderPriority;
   }
 
-  public void UpdateMaskFromNetview()
+  public void InitMaskFromNetview()
   {
+    DoubleSidedCube = gameObject.AddComponent<ScalableDoubleSidedCube>();
     UseMaskMaterial();
     var zdo = netView.GetZDO();
     var size = zdo.GetVec3(VehicleZdoVars.CustomMeshScale, Vector3.zero);
