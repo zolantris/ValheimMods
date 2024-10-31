@@ -58,7 +58,11 @@ public static class WaterConfig
       return true;
     }
 
-    return AllowList.Any(x => character.gameObject.name.Contains(x));
+    return AllowList.Any(x =>
+    {
+      if (x == "") return false;
+      return x == character.gameObject.name;
+    });
   }
 
   private static void OnAllowListUpdate()

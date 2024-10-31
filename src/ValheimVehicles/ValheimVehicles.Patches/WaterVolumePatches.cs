@@ -65,6 +65,9 @@ namespace ValheimVehicles.Patches
     [HarmonyPostfix]
     private static void CreateWave(WaterVolume __instance, float __result)
     {
+      if (WaterConfig.UnderwaterAccessMode.Value ==
+          WaterConfig.UnderwaterAccessModeType.Disabled) return;
+
       __result *= WaterConfig.WaveSizeMultiplier.Value;
     }
 
@@ -83,7 +86,6 @@ namespace ValheimVehicles.Patches
           case CameraWaterStateTypes.ToBelow:
             CameraWaterState = CameraWaterStateTypes.ToAbove;
             GameCameraPatch.RequestUpdate();
-            GameCameraPatch.UpdateFogSettings();
             return;
         }
       }
@@ -98,9 +100,8 @@ namespace ValheimVehicles.Patches
             return;
           case CameraWaterStateTypes.AboveWater:
           case CameraWaterStateTypes.ToAbove:
-            CameraWaterState = CameraWaterStateTypes.ToAbove;
+            CameraWaterState = CameraWaterStateTypes.ToBelow;
             GameCameraPatch.RequestUpdate();
-            GameCameraPatch.UpdateFogSettings();
             return;
         }
       }
@@ -113,7 +114,12 @@ namespace ValheimVehicles.Patches
     private static void AdjustWaterSurface(WaterVolume __instance,
       float[] normalizedDepth)
     {
-      UpdateCameraState(GameCameraPatch.CameraPositionY <= WaterLevelCamera);
+      if (WaterConfig.UnderwaterAccessMode.Value ==
+          WaterConfig.UnderwaterAccessModeType.Disabled) return;
+
+      var isCurrentCameraAboveWater =
+        GameCameraPatch.CameraPositionY > WaterLevelCamera;
+      UpdateCameraState(isCurrentCameraAboveWater);
 
       var waterSurfaceTransform = __instance.m_waterSurface.transform;
       IsFlipped =

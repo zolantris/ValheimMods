@@ -166,7 +166,7 @@ public class PlayerSpawnController : MonoBehaviour
   public void RemoveDynamicPoint(ZDO zdo,
     LocationVariation locationVariationType)
   {
-    LocationController.RemoveZdoTarget(LocationVariation.Logout,
+    LocationController.RemoveZdoTarget(locationVariationType,
       player);
 
 #if DEBUG

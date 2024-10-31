@@ -89,6 +89,9 @@ internal class GameCameraPatch
     MustUpdateCamera = true;
   }
 
+  // todo fix jitters with low headroom at water level
+  // [HarmonyPostfix(typeof(GameCamera), nameof(GameCamera.UpdateNearClipping))]
+
 
   [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.UpdateCamera))]
   [HarmonyPostfix]
@@ -104,7 +107,7 @@ internal class GameCameraPatch
 
     UpdateFogSettings();
     CameraPositionY = ___m_camera.gameObject.transform.position.y;
-    __instance.m_waterClipping = false;
+    // __instance.m_waterClipping = true;
 
     // This is the most important flag, it prevents camera smashing into the watermesh.
     // negative value due to it allowing zoom further out
@@ -120,17 +123,17 @@ internal class GameCameraPatch
     }
 
     // Do not do anything if your player is swimming, as this is only related to player perspective.
-    if (Player.m_localPlayer.IsSwimming())
-    {
-      __instance.m_minWaterDistance = 5f;
-      return;
-    }
+    // if (Player.m_localPlayer.IsSwimming())
+    // {
+    //   __instance.m_minWaterDistance = 5f;
+    //   return;
+    // }
 
-
-    if (WaterVolumePatch.IsCameraAboveWater && MustUpdateCamera)
-    {
-      __instance.m_maxDistance = 20f;
-    }
+    //
+    // if (WaterVolumePatch.IsCameraAboveWater && MustUpdateCamera)
+    // {
+    //   __instance.m_maxDistance = 20f;
+    // }
 
     // if (!MustUpdateCamera) return;
     //

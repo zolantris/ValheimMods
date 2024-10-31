@@ -64,17 +64,14 @@ public class Character_WaterPatches
   public static bool Character_SetLiquidLevel(Character __instance,
     LiquidType type, Component liquidObj)
   {
-    if (type == LiquidType.Tar) return false;
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return false;
+    if (type == LiquidType.Tar) return false;
     if (!WaterConfig.IsAllowedUnderwater(__instance)) return false;
     if (__instance == null) return false;
     var handled = UpdateLiquidDepth(__instance);
     return handled;
   }
-
-  // the level the player will sink to.
-  private static float LowestDiveDepth;
 
   // the vehicle onboard collider controls the water level for players. So they can go below sea level
   public static void UpdateLiquidDepthValues(Character character,
@@ -98,7 +95,8 @@ public class Character_WaterPatches
         WaterConfig.UnderwaterAccessModeType.Everywhere)
     {
       // we do not need to set liquid level to anything besides 0
-      UpdateLiquidDepthValues(character, 0);
+      // 2 is swim level, so higher allows for swimming in theory
+      UpdateLiquidDepthValues(character, 3);
       return true;
     }
 
@@ -185,6 +183,8 @@ public class Character_WaterPatches
   private static void SetIsUnderWaterInVehicle(Character characterInstance,
     ref bool result)
   {
+    if (WaterConfig.UnderwaterAccessMode.Value ==
+        WaterConfig.UnderwaterAccessModeType.Disabled) return;
     if (!WaterConfig.IsAllowedUnderwater(characterInstance)) return;
     var vpcController = characterInstance.transform.root
       .GetComponent<VehiclePiecesController>();
