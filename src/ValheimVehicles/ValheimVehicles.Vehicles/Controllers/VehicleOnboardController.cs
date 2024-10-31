@@ -28,6 +28,11 @@ public class VehicleOnboardController : MonoBehaviour
     CharacterOnboardDataItems =
       new();
 
+  private static readonly Dictionary<ZDOID, Player> DelayedExitSubscriptions =
+    [];
+
+  private static bool _hasExitSubscriptionDelay = false;
+
   public Collider? OnboardCollider => MovementController?.OnboardCollider;
 
   private void Awake()
@@ -168,6 +173,7 @@ public class VehicleOnboardController : MonoBehaviour
 
   private void OnEnable()
   {
+    _hasExitSubscriptionDelay = true;
     StartCoroutine(RemovePlayersRoutine());
   }
 
@@ -222,7 +228,7 @@ public class VehicleOnboardController : MonoBehaviour
       if (!exists) return;
       RemoveCharacter(character);
       character.InNumShipVolumes--;
-      Character_WaterPatches.UpdateLiquidDepth(character);
+      Character_WaterPatches.UpdateWaterDepth(character);
       return;
     }
 
@@ -242,7 +248,7 @@ public class VehicleOnboardController : MonoBehaviour
       }
     }
 
-    Character_WaterPatches.UpdateLiquidDepth(character);
+    Character_WaterPatches.UpdateWaterDepth(character);
   }
 
   /// <summary>
@@ -328,6 +334,38 @@ public class VehicleOnboardController : MonoBehaviour
     }
   }
 
+  public void DebounceExitVehicleBounds()
+  {
+    if (_hasExitSubscriptionDelay) return;
+    var localList = DelayedExitSubscriptions.ToList();
+
+    // allows new items to be added while this is running
+    DelayedExitSubscriptions.Clear();
+
+    foreach (var delayedExitSubscription in localList)
+    {
+      RemovePlayerOnShip(delayedExitSubscription.Value);
+
+      var remainingPlayers = MovementController.m_players.Count;
+      Logger.LogDebug(
+        $"Player: {delayedExitSubscription.Value.GetPlayerName()} over-board, players remaining {remainingPlayers}");
+
+      var vehicleZdo = MovementController
+        .ShipInstance?.NetView?.GetZDO();
+
+      if (delayedExitSubscription.Value == Player.m_localPlayer &&
+          vehicleZdo != null)
+      {
+        // Todo figure out why I had this enabled, it looks like it could cause a ton of issues.
+        // ValheimBaseGameShip.s_currentShips.Remove(_movementController);
+        PlayerSpawnController.Instance?.SyncLogoutPoint(vehicleZdo, true);
+      }
+    }
+
+    _hasExitSubscriptionDelay = false;
+  }
+
+
   public void OnExitVehicleBounds(Collider collider)
   {
     var playerInList = GetPlayerComponent(collider);
@@ -336,20 +374,15 @@ public class VehicleOnboardController : MonoBehaviour
       return;
     }
 
-    RemovePlayerOnShip(playerInList);
-
-    var remainingPlayers = MovementController.m_players.Count;
-    Logger.LogDebug(
-      $"Player: {playerInList.GetPlayerName()} over-board, players remaining {remainingPlayers}");
-
-    var vehicleZdo = MovementController
-      .ShipInstance?.NetView?.GetZDO();
-
-    if (playerInList == Player.m_localPlayer && vehicleZdo != null)
+    var playerZdoid = playerInList.GetZDOID();
+    if (!DelayedExitSubscriptions.ContainsKey(playerZdoid))
     {
-      // Todo figure out why I had this enabled, it looks like it could cause a ton of issues.
-      // ValheimBaseGameShip.s_currentShips.Remove(_movementController);
-      PlayerSpawnController.Instance?.SyncLogoutPoint(vehicleZdo, true);
+      DelayedExitSubscriptions.Add(playerZdoid, playerInList);
+    }
+
+    if (!_hasExitSubscriptionDelay)
+    {
+      Invoke(nameof(DebounceExitVehicleBounds), 0.5f);
     }
   }
 

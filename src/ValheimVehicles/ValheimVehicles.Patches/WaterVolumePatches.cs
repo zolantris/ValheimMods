@@ -3,6 +3,7 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Rendering;
 using ValheimVehicles.Config;
+using ValheimVehicles.Vehicles.Controllers;
 
 namespace ValheimVehicles.Patches
 {
@@ -19,7 +20,28 @@ namespace ValheimVehicles.Patches
 
     public static float WaterLevelCamera = 0f;
     public static CameraWaterStateTypes CameraWaterState;
-    public static bool IsFlipped = false;
+
+    public static bool IsCameraAboveWater =>
+      CameraWaterState is CameraWaterStateTypes.AboveWater
+        or CameraWaterStateTypes.ToAbove;
+
+    public static bool IsCameraBelowWater =>
+      CameraWaterState is CameraWaterStateTypes.BelowWater
+        or CameraWaterStateTypes.ToBelow;
+
+    public static bool IsFlipped()
+    {
+      return WaterConfig.FlipWatermeshMode.Value switch
+      {
+        WaterConfig.WaterMeshFlipModeType.Disabled => false,
+        WaterConfig.WaterMeshFlipModeType.Everywhere => IsCameraBelowWater,
+        WaterConfig.WaterMeshFlipModeType.ExcludeOnboard =>
+          IsCameraBelowWater &&
+          !VehicleOnboardController.IsCharacterOnboard(Player.m_localPlayer),
+        _ => throw new ArgumentOutOfRangeException()
+      };
+    }
+
     private static int DepthProperty = Shader.PropertyToID("_depth");
 
     private static int GlobalWindProperty =
@@ -27,18 +49,19 @@ namespace ValheimVehicles.Patches
 
     [HarmonyPatch(typeof(WaterVolume), "TrochSin")]
     [HarmonyPrefix]
-    public static bool FlippedTrochSin(float __result, float x, float k)
+    public static bool FlippedTrochSin(ref float __result, float x, float k)
     {
       if (WaterConfig.UnderwaterAccessMode.Value ==
           WaterConfig.UnderwaterAccessModeType.Disabled) return false;
 
-      if (IsFlipped)
+      if (IsFlipped())
       {
         __result =
           1.0f - (float)((Mathf.Sin(x - Mathf.Cos(x) * k) * 0.5) + 0.5);
+        return false;
       }
 
-      return IsFlipped;
+      return true;
     }
 
     [HarmonyPatch(typeof(WaterVolume), "UpdateMaterials")]
@@ -54,6 +77,8 @@ namespace ValheimVehicles.Patches
 
     private static void UpdateWaterLevel(WaterVolume __instance)
     {
+      if (WaterConfig.UnderwaterAccessMode.Value ==
+          WaterConfig.UnderwaterAccessModeType.Disabled) return;
       if (GameCamera.instance)
       {
         WaterLevelCamera =
@@ -107,10 +132,6 @@ namespace ValheimVehicles.Patches
       }
     }
 
-    public static bool IsCameraAboveWater =>
-      CameraWaterState is CameraWaterStateTypes.AboveWater
-        or CameraWaterStateTypes.ToAbove;
-
     private static void AdjustWaterSurface(WaterVolume __instance,
       float[] normalizedDepth)
     {
@@ -122,20 +143,25 @@ namespace ValheimVehicles.Patches
       UpdateCameraState(isCurrentCameraAboveWater);
 
       var waterSurfaceTransform = __instance.m_waterSurface.transform;
-      IsFlipped =
+      var isCurrentlyFlipped =
         waterSurfaceTransform.rotation.eulerAngles.y.Equals(180f);
 
-      if (!IsCameraAboveWater && !IsFlipped)
+      // will flip the surface if camera is below it.
+      if (IsCameraAboveWater && isCurrentlyFlipped ||
+          IsCameraBelowWater && !isCurrentlyFlipped)
       {
-        FlipWaterSurface(__instance, normalizedDepth);
-        SetWaterSurfacePosition(waterSurfaceTransform, WaterLevelCamera);
-      }
+        if (!isCurrentlyFlipped)
+        {
+          FlipWaterSurface(__instance, normalizedDepth);
+          SetWaterSurfacePosition(waterSurfaceTransform, WaterLevelCamera);
+        }
 
-      if (IsCameraAboveWater && IsFlipped)
-      {
-        UnflipWaterSurface(__instance, normalizedDepth);
-        SetWaterSurfacePosition(waterSurfaceTransform,
-          WaterLevelCamera);
+        if (isCurrentlyFlipped)
+        {
+          UnflipWaterSurface(__instance, normalizedDepth);
+          SetWaterSurfacePosition(waterSurfaceTransform,
+            WaterLevelCamera);
+        }
       }
     }
 
@@ -175,18 +201,18 @@ namespace ValheimVehicles.Patches
       var depthValues = isFlipped
         ?
         [
-          // normalizedDepth[0],
-          // normalizedDepth[0],
-          // normalizedDepth[0],
-          // normalizedDepth[0]
-          // normalizedDepth[2],
-          // normalizedDepth[0],
-          // normalizedDepth[3],
-          // normalizedDepth[1],
-          // 1 - normalizedDepth[0],
-          // 1 - normalizedDepth[1],
-          // 1 - normalizedDepth[2],
-          // 1 - normalizedDepth[3]
+          //     // normalizedDepth[0],
+          //     // normalizedDepth[0],
+          //     // normalizedDepth[0],
+          //     // normalizedDepth[0]
+          //     // normalizedDepth[2],
+          //     // normalizedDepth[0],
+          //     // normalizedDepth[3],
+          //     // normalizedDepth[1],
+          //     // 1 - normalizedDepth[0],
+          //     // 1 - normalizedDepth[1],
+          //     // 1 - normalizedDepth[2],
+          //     // 1 - normalizedDepth[3]
           -normalizedDepth[0],
           -normalizedDepth[1],
           -normalizedDepth[2],
@@ -194,12 +220,11 @@ namespace ValheimVehicles.Patches
         ]
         : normalizedDepth;
 
-
       __instance.m_waterSurface.material.SetFloatArray(DepthProperty
         , depthValues);
-      __instance.m_waterSurface.material.SetFloat(
-        GlobalWindProperty,
-        __instance.m_useGlobalWind ? 1f : 0f);
+      // __instance.m_waterSurface.material.SetFloat(
+      //   GlobalWindProperty,
+      //   __instance.m_useGlobalWind ? 1f : 0f);
     }
   }
 }

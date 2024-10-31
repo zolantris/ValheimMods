@@ -29,19 +29,35 @@ public class Character_Patch
     return list;
   }
 
+  public static bool IsOnboard(Character character)
+  {
+    if (VehicleOnboardController.IsCharacterOnboard(character))
+    {
+      return true;
+    }
+
+    var vpc = character.transform.root.GetComponent<VehiclePiecesController>();
+    return vpc != null;
+  }
+
+  // on vehicle = not swimming
+  [HarmonyPatch(typeof(Character), nameof(Character.InWater))]
+  [HarmonyPostfix]
+  public static void Character_IsInWater(Character __instance,
+    ref bool __result)
+  {
+    var isOnboard = IsOnboard(__instance);
+    if (isOnboard) __result = false;
+  }
+
+  // on vehicle = on ground.
   [HarmonyPatch(typeof(Character), nameof(Character.IsOnGround))]
   [HarmonyPostfix]
   public static void Character_IsOnGround(Character __instance,
     ref bool __result)
   {
-    if (VehicleOnboardController.IsCharacterOnboard(__instance))
-    {
-      __result = true;
-      return;
-    }
-
-    var vpc = __instance.transform.root.GetComponent<VehiclePiecesController>();
-    if (vpc) __result = true;
+    var isOnboard = IsOnboard(__instance);
+    if (isOnboard) __result = true;
   }
 
   public static object? GetStandingOnShip(Character __instance)
@@ -105,7 +121,8 @@ public class Character_Patch
     }
 
     VehiclePiecesController? bvc = null;
-    if ((bool)__instance.m_lastGroundBody)
+    if ((bool)__instance.m_lastGroundBody &&
+        VehicleOnboardController.IsCharacterOnboard(__instance))
     {
       bvc = __instance.m_lastGroundBody
         .GetComponentInParent<VehiclePiecesController>();

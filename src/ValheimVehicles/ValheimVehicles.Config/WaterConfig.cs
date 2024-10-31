@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting.Channels;
 using BepInEx.Configuration;
 using ComfyLib;
 using UnityEngine;
@@ -15,6 +16,22 @@ public static class WaterConfig
     OnboardOnly,
     // WaterZoneOnly // would require mesh collider, not ready
   }
+
+  public enum WaterMeshFlipModeType
+  {
+    Disabled,
+    Everywhere,
+    ExcludeOnboard,
+  }
+
+  public static ConfigEntry<WaterMeshFlipModeType>
+    FlipWatermeshMode { get; private set; } = null!;
+
+  public static ConfigEntry<float>
+    DEBUG_LiquidDepthOverride { get; private set; } = null!;
+
+  public static ConfigEntry<bool>
+    DEBUG_HasLiquidDepthOverride { get; private set; } = null!;
 
   public static ConfigEntry<UnderwaterAccessModeType> UnderwaterAccessMode =
     null!;
@@ -45,6 +62,7 @@ public static class WaterConfig
 
 
   private const string SectionKey = "Underwater";
+  private const string SectionKeyDebug = $"{SectionKey}: Debug";
 
   private static ConfigFile Config { get; set; } = null!;
 
@@ -76,9 +94,39 @@ public static class WaterConfig
     }
   }
 
+  private static void OnCharacterWaterModeUpdate()
+  {
+    foreach (var sCharacter in Character.s_characters)
+    {
+      sCharacter.InvalidateCachedLiquidDepth();
+    }
+  }
+
+
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
+
+    DEBUG_HasLiquidDepthOverride = config.Bind(SectionKeyDebug,
+      "DEBUG_HasLiquidDepthOverride",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Enables liquid depth overrides",
+        true, true));
+    DEBUG_LiquidDepthOverride = config.Bind(SectionKeyDebug,
+      "DEBUG_LiquidDepthOverride",
+      15f,
+      ConfigHelpers.CreateConfigDescription(
+        "Force Overrides the liquid depth for character on boats. Likely will cause bobbing effect as it fights the onboard collider if it is below it.",
+        true, true, new AcceptableValueRange<float>(0f, 30f)));
+
+    FlipWatermeshMode = Config.Bind(
+      SectionKey,
+      "FlipWatermeshMode",
+      WaterMeshFlipModeType.Disabled,
+      ConfigHelpers.CreateConfigDescription(
+        "Flips the water mesh underwater. This can cause some jitters. Turn it on at your own risk. It's improve immersion. Recommended to keep off for now while onboard to prevent underwater jitters due to camera colliding rapidly when water flips",
+        true, true));
 
     UnderwaterMaxDiveDepth = Config.Bind(
       SectionKey,
@@ -159,6 +207,8 @@ public static class WaterConfig
 
     AllowedEntiesList.SettingChanged +=
       (sender, args) => OnAllowListUpdate();
+    UnderwaterAccessMode.SettingChanged +=
+      (sender, args) => OnCharacterWaterModeUpdate();
     OnAllowListUpdate();
   }
 }

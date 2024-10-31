@@ -1,3 +1,4 @@
+using System;
 using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Config;
@@ -9,6 +10,12 @@ namespace ValheimVehicles.Patches;
 
 public class Character_WaterPatches
 {
+  // Allows player model to be inside bound collider
+  internal static float PlayerOffset = 5f;
+  private static WaterVolume? _previousWaterVolume = null;
+
+  // Patches
+
   [HarmonyPatch(typeof(Character), nameof(Character.InWater))]
   [HarmonyPostfix]
   public static void InWater(Character __instance, bool __result)
@@ -22,6 +29,17 @@ public class Character_WaterPatches
     ref bool __result)
   {
     SetIsUnderWaterInVehicle(__instance, ref __result);
+  }
+
+  [HarmonyPatch(typeof(Character), nameof(Character.InTar))]
+  [HarmonyPrefix]
+  public static void Character_InTar(Character __instance, ref bool __result)
+  {
+    if (VehicleOnboardController.IsCharacterOnboard(__instance))
+    {
+      __instance.m_tarLevel = -10000f;
+      __result = false;
+    }
   }
 
   [HarmonyPatch(typeof(Character), nameof(Character.InLiquidSwimDepth), [])]
@@ -61,48 +79,92 @@ public class Character_WaterPatches
   /// <returns></returns>
   [HarmonyPatch(typeof(Character), nameof(Character.SetLiquidLevel))]
   [HarmonyPrefix]
-  public static bool Character_SetLiquidLevel(Character __instance,
+  public static bool Character_SetLiquidLevel(Character __instance, float level,
     LiquidType type, Component liquidObj)
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
-        WaterConfig.UnderwaterAccessModeType.Disabled) return false;
-    if (type == LiquidType.Tar) return false;
-    if (!WaterConfig.IsAllowedUnderwater(__instance)) return false;
-    if (__instance == null) return false;
-    var handled = UpdateLiquidDepth(__instance);
+        WaterConfig.UnderwaterAccessModeType.Disabled) return true;
+    if (type == LiquidType.Tar) return true;
+    if (!WaterConfig.IsAllowedUnderwater(__instance)) return true;
+    if (__instance == null) return true;
+    if (!VehicleOnboardController.IsCharacterOnboard(__instance))
+    {
+      return true;
+    }
+
+    var success = UpdateLiquidDepth(__instance, level, type);
+    // needs to return false since we are handling this.
+    var handled = !success;
     return handled;
   }
 
+  // helpers
+
   // the vehicle onboard collider controls the water level for players. So they can go below sea level
   public static void UpdateLiquidDepthValues(Character character,
-    float liquidLevel)
+    float liquidLevel, LiquidType liquidType = LiquidType.Water,
+    bool cacheBust = false)
   {
+    switch (liquidType)
+    {
+      case LiquidType.Water:
+        character.m_waterLevel = Mathf.Max(
+          WaterConfig.UnderwaterMaxDiveDepth.Value,
+          liquidLevel);
+        break;
+      case LiquidType.Tar:
+        break;
+      case LiquidType.All:
+        break;
+      default:
+        throw new ArgumentOutOfRangeException(nameof(liquidType), liquidType,
+          null);
+    }
+
     character.m_liquidLevel = Mathf.Max(
       WaterConfig.UnderwaterMaxDiveDepth.Value,
       liquidLevel);
-    character.m_waterLevel = Mathf.Max(WaterConfig.UnderwaterMaxDiveDepth.Value,
-      liquidLevel);
-    character.m_cashedInLiquidDepth =
-      Mathf.Max(WaterConfig.UnderwaterMaxCachedDiveDepth.Value, liquidLevel);
+
+    if (cacheBust)
+    {
+      character.m_cashedInLiquidDepth = 0f;
+    }
+
     GameCameraPatch.RequestUpdate();
   }
 
-  private static WaterVolume? _previousWaterVolume = null;
 
-  public static bool UpdateLiquidDepth(Character character)
+  public static bool UpdateWaterDepth(Character character)
+  {
+    var waterHeight = Floating.GetWaterLevel(character.transform.position,
+      ref _previousWaterVolume);
+    return UpdateLiquidDepth(character, waterHeight, LiquidType.Water);
+  }
+
+  private static float GetDepthFromOnboardCollider(Collider onboardCollider)
+  {
+    return onboardCollider.transform.position.y -
+      onboardCollider.bounds.extents.y + PlayerOffset;
+  }
+
+  public static bool UpdateLiquidDepth(Character character,
+    float level = -10000f,
+    LiquidType type = LiquidType.Water)
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Everywhere)
     {
       // we do not need to set liquid level to anything besides 0
       // 2 is swim level, so higher allows for swimming in theory
-      UpdateLiquidDepthValues(character, 3);
+      // todo confirm this works
+      UpdateLiquidDepthValues(character, type == LiquidType.Water ? 3f : level,
+        type);
       return true;
     }
 
-
     if (WaterConfig.UnderwaterAccessMode.Value !=
-        WaterConfig.UnderwaterAccessModeType.OnboardOnly) return false;
+        WaterConfig.UnderwaterAccessModeType.OnboardOnly)
+      return false;
 
     float liquidDepth = 0;
     var isOnVehicle =
@@ -119,27 +181,30 @@ public class Character_WaterPatches
       return true;
     }
 
-    if (VehicleDebugConfig.HasBoatLiquidDepthOverride.Value)
+    if (WaterConfig.DEBUG_HasLiquidDepthOverride.Value)
     {
-      liquidDepth = VehicleDebugConfig.VehicleLiquidDepthOverride.Value;
+      liquidDepth = WaterConfig.DEBUG_LiquidDepthOverride.Value;
     }
     else
     {
       if (WaterConfig.UnderwaterAccessMode.Value ==
           WaterConfig.UnderwaterAccessModeType.OnboardOnly)
       {
-        liquidDepth = controller.OnboardCollider.transform.position.y -
-                      controller.OnboardCollider.bounds.extents.y;
+        liquidDepth = GetDepthFromOnboardCollider(controller.OnboardCollider);
       }
     }
 
-    if (liquidDepth == 0)
+    // return false here as a safety measure and reset caches
+    if (Mathf.Approximately(liquidDepth, 0f))
     {
+      // possibly unnecessary
+      // character.InvalidateCachedLiquidDepth();
+
       var waterHeight = Floating.GetWaterLevel(character.transform.position,
         ref _previousWaterVolume);
       UpdateLiquidDepthValues(character, waterHeight);
 
-      return true;
+      return false;
     }
 
     UpdateLiquidDepthValues(character, liquidDepth);
@@ -153,19 +218,15 @@ public class Character_WaterPatches
   public static float GetLiquidDepthFromBounds(
     VehicleOnboardController controller, Character character)
   {
-    if (VehicleDebugConfig.HasBoatLiquidDepthOverride.Value)
+    if (WaterConfig.DEBUG_HasLiquidDepthOverride.Value)
     {
-      return VehicleDebugConfig.VehicleLiquidDepthOverride.Value;
+      return WaterConfig.DEBUG_LiquidDepthOverride.Value;
     }
 
     if (controller.OnboardCollider?.bounds == null)
       return character.m_cashedInLiquidDepth;
 
-    var extentsY = controller.OnboardCollider.bounds.extents.y;
-    var onboardColliderPositionY =
-      controller.OnboardCollider.transform.position.y;
-
-    return onboardColliderPositionY - extentsY;
+    return GetDepthFromOnboardCollider(controller.OnboardCollider);
   }
 
   [HarmonyPatch(typeof(Character), nameof(Character.CalculateLiquidDepth))]
@@ -173,7 +234,7 @@ public class Character_WaterPatches
   public static bool Character_CalculateLiquidDepth(Character __instance)
   {
     var data = VehicleOnboardController.GetOnboardCharacterData(__instance);
-    if (data?.controller is null) return false;
+    if (data?.controller is null) return true;
     if (__instance.IsTeleporting() ||
         (UnityEngine.Object)__instance.GetStandingOnShip() !=
         (UnityEngine.Object)null || __instance.IsAttachedToShip())
@@ -184,13 +245,15 @@ public class Character_WaterPatches
 
     var liquidDepth = GetLiquidDepthFromBounds(data.controller, __instance);
     UpdateLiquidDepthValues(__instance, liquidDepth);
-    return true;
+    return false;
   }
 
   // ignores other character types, in future might be worth checking for other types too.
   private static void SetIsUnderWaterInVehicle(Character characterInstance,
     ref bool result)
   {
+    // do nothing if false already
+    if (result == false) return;
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
     if (!WaterConfig.IsAllowedUnderwater(characterInstance)) return;

@@ -296,14 +296,31 @@ public class VehicleCommands : ConsoleCommand
       pieceController?.GetCurrentPendingPieces();
     var vehiclePendingPiecesCount = vehiclePendingPieces?.Count ?? -1;
     var currentPendingState = pieceController!.PendingPiecesState;
+    var pendingPiecesString =
+      string.Join(",", vehiclePendingPieces?.Select(x => x.name) ?? []);
+    if (pendingPiecesString == string.Empty)
+    {
+      pendingPiecesString = "None";
+    }
+
+    var piecesString = string.Join(",",
+      pieceController.m_pieces?.Select(x => x.name) ?? []);
+
+    // todo swap all m_players to OnboardController.characterData check instead.
+    var playersOnVehicle =
+      string.Join(",", shipInstance?.MovementController?.m_players.Select((x) =>
+        x?.GetPlayerName() ?? "Null Player") ?? []);
 
     Logger.LogMessage(string.Join("\n",
       vehiclePendingPiecesCount,
-      $"vehiclePendingPieces: {string.Join(",", vehiclePendingPieces ?? [])}",
+      $"vehiclePieces, {vehiclePendingPiecesCount}",
+      $"vehiclePiecesCount, {piecesString}",
+      $"PendingPiecesState {currentPendingState}",
+      $"vehiclePendingPieces: {pendingPiecesString}",
       $"vehiclePendingPiecesCount, {vehiclePendingPiecesCount}",
-      $"currentPendingState {currentPendingState}",
       $"playerPosition: {Player.m_localPlayer.transform.position}",
-      $"vehiclePosition {shipInstance.transform.position}"
+      $"PlayersOnVehicle: {playersOnVehicle}",
+      $"vehiclePosition {shipInstance?.transform.position}"
     ));
   }
 
