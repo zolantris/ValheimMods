@@ -162,10 +162,10 @@ public class Character_WaterPatches
       return character.m_cashedInLiquidDepth;
 
     var extentsY = controller.OnboardCollider.bounds.extents.y;
-    var oboardColliderPositionY =
+    var onboardColliderPositionY =
       controller.OnboardCollider.transform.position.y;
 
-    return oboardColliderPositionY - extentsY;
+    return onboardColliderPositionY - extentsY;
   }
 
   [HarmonyPatch(typeof(Character), nameof(Character.CalculateLiquidDepth))]
@@ -174,6 +174,14 @@ public class Character_WaterPatches
   {
     var data = VehicleOnboardController.GetOnboardCharacterData(__instance);
     if (data?.controller is null) return false;
+    if (__instance.IsTeleporting() ||
+        (UnityEngine.Object)__instance.GetStandingOnShip() !=
+        (UnityEngine.Object)null || __instance.IsAttachedToShip())
+      __instance.m_cashedInLiquidDepth = 0.0f;
+    else
+      __instance.m_cashedInLiquidDepth = Mathf.Max(0.0f,
+        __instance.GetLiquidLevel() - __instance.transform.position.y);
+
     var liquidDepth = GetLiquidDepthFromBounds(data.controller, __instance);
     UpdateLiquidDepthValues(__instance, liquidDepth);
     return true;

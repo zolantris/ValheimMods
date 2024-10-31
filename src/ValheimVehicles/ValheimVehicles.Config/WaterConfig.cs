@@ -28,8 +28,8 @@ public static class WaterConfig
   public static ConfigEntry<bool> UnderwaterFogEnabled =
     null!;
 
-  public static ConfigEntry<bool> AllowNonPlayerCharactersUnderwater =
-    null!;
+  // public static ConfigEntry<bool> AllowNonPlayerCharactersUnderwater =
+  //   null!;
 
   public static ConfigEntry<Color> UnderWaterFogColor =
     null!;
@@ -69,9 +69,10 @@ public static class WaterConfig
   {
     AllowList.Clear();
     var listItems = AllowedEntiesList.Value.Split(',');
-    if (listItems.Length > 0)
+    foreach (var listItem in listItems)
     {
-      AllowList.AddRange(listItems);
+      if (listItem == "") continue;
+      AllowList.Add(listItem);
     }
   }
 
@@ -98,13 +99,13 @@ public static class WaterConfig
       "WaveSizeMultiplier",
       1f,
       ConfigHelpers.CreateConfigDescription(
-        "Make the big waves.",
-        false, false, new AcceptableValueRange<float>(0, 50f)));
+        "Make the big waves. This is a direct multiplier to height",
+        false, false, new AcceptableValueRange<float>(0, 5f)));
 
     UnderwaterShipCameraZoom = Config.Bind(
       SectionKey,
       "UnderwaterShipCameraZoom",
-      500f,
+      5000f,
       ConfigHelpers.CreateConfigDescription(
         "Zoom value to allow for underwater zooming. Will allow camera to go underwater at values above 0. 0 will reset camera back to default.",
         false, false, new AcceptableValueRange<float>(0, 5000f)));
@@ -117,13 +118,13 @@ public static class WaterConfig
         "List separated by comma for entities that are allowed on the ship",
         true, true));
 
-    AllowNonPlayerCharactersUnderwater = Config.Bind(
-      SectionKey,
-      "AllowNonPlayerCharactersUnderwater",
-      true,
-      ConfigHelpers.CreateConfigDescription(
-        "Adds entities not considered players into the underwater onboard checks. This can cause performance issues, but if you are bringing animals it's important. Side-effects could include serpants and other water entites do not behave correctly",
-        true));
+    // AllowNonPlayerCharactersUnderwater = Config.Bind(
+    //   SectionKey,
+    //   "AllowNonPlayerCharactersUnderwater",
+    //   true,
+    //   ConfigHelpers.CreateConfigDescription(
+    //     "Adds entities not considered players into the underwater onboard checks. This can cause performance issues, but if you are bringing animals it's important. Side-effects could include serpants and other water entites do not behave correctly",
+    //     true));
 
     UnderwaterFogEnabled = Config.Bind(
       SectionKey,
@@ -151,9 +152,9 @@ public static class WaterConfig
     UnderwaterAccessMode = Config.Bind(
       SectionKey,
       "UnderwaterAccessMode",
-      UnderwaterAccessModeType.OnboardOnly,
+      UnderwaterAccessModeType.Disabled,
       ConfigHelpers.CreateConfigDescription(
-        "Allows for walking underwater anywhere. If this is enabled it will override other walking flags.",
+        "Allows for walking underwater, anywhere, or onship, or eventually within the water displaced area only. Disabled with remove all water logic.",
         true));
 
     AllowedEntiesList.SettingChanged +=
