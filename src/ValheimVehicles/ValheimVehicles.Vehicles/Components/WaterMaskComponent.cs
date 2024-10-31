@@ -17,7 +17,6 @@ public class CreativeModeColliderComponent : MonoBehaviour
   public BoxCollider collider;
   private static List<CreativeModeColliderComponent> Instances = new();
   public static bool IsEditMode = false;
-  public static int RenderPriority = 1000;
 
   internal void Awake()
   {
@@ -27,13 +26,8 @@ public class CreativeModeColliderComponent : MonoBehaviour
     }
 
     Instances.Add(this);
-    collider = GetComponent<BoxCollider>();
-    if (!collider)
-    {
-      throw new Exception("WaterMaskComponent requires a boxCollider");
-    }
-
     SetMode(IsEditMode);
+    collider = GetComponent<BoxCollider>();
   }
 
   internal void OnDestroy()
@@ -47,7 +41,12 @@ public class CreativeModeColliderComponent : MonoBehaviour
   /// <param name="val"></param>
   public void SetMode(bool val)
   {
+    if (collider == null) return;
     collider.excludeLayers = LayerHelpers.PhysicalLayers;
+  }
+
+  public virtual void OnToggleEditMode()
+  {
   }
 
   public static void ToggleEditMode()
@@ -56,6 +55,7 @@ public class CreativeModeColliderComponent : MonoBehaviour
     foreach (var creativeModeColliderComponent in Instances)
     {
       creativeModeColliderComponent.SetMode(IsEditMode);
+      creativeModeColliderComponent.OnToggleEditMode();
     }
   }
 }
@@ -63,10 +63,17 @@ public class CreativeModeColliderComponent : MonoBehaviour
 public class WaterMaskComponent : CreativeModeColliderComponent
 {
   public static Material WaterMaskMaterial;
-  public ZNetView netView;
+  public ZNetView? netView;
   private MeshRenderer _meshRenderer;
   public static List<WaterMaskComponent> Instances = new();
   public ScalableDoubleSidedCube DoubleSidedCube;
+
+  public Vector3 DefaultSize = Vector3.one;
+
+  void Awake()
+  {
+    _meshRenderer = GetComponent<MeshRenderer>();
+  }
 
   private void Start()
   {
@@ -103,42 +110,56 @@ public class WaterMaskComponent : CreativeModeColliderComponent
 
   /// <summary>
   /// Meant to show the mask in a "Debug mode" by swapping shaders
+  /// Makes the component breakable
   /// </summary>
   public void UseDebugMaterial()
   {
-    // var material =
-    //   new Material(LoadValheimVehicleAssets.StandardTwoSidedShader)
-    //   {
-    //     color = new Color(0, 1f, 1f, 0.4f)
-    //   };
+    var material =
+      new Material(LoadValheimVehicleAssets.WaterHeightMaterial)
+      {
+        color = new Color(0, 0.5f, 1f, 0.4f)
+      };
     // VehiclePiecesController.FixMaterial(material);
-    // _meshRenderer.material = material;
+    _meshRenderer.material = material;
     // _meshRenderer.rendererPriority = 3000;
     // can break, but can walk through.
     gameObject.layer = LayerHelpers.NonSolidLayer;
     DoubleSidedCube.CubeLayer = LayerHelpers.NonSolidLayer;
   }
 
+  /// <summary>
+  /// Makes the component untouchable.
+  /// </summary>
   public void UseMaskMaterial()
   {
-    // Untouchable
     gameObject.layer = LayerHelpers.IgnoreRaycastLayer;
     DoubleSidedCube.CubeLayer = LayerHelpers.IgnoreRaycastLayer;
-    // _meshRenderer.material = WaterMaskMaterial;
-    // _meshRenderer.rendererPriority = RenderPriority;
+    _meshRenderer.material = WaterMaskMaterial;
   }
 
   public void InitMaskFromNetview()
   {
+    if (ZNetView.m_forceDisableInit || netView?.GetZDO() == null) return;
     DoubleSidedCube = gameObject.AddComponent<ScalableDoubleSidedCube>();
-    UseMaskMaterial();
+
+    if (IsEditMode)
+    {
+      UseDebugMaterial();
+    }
+    else
+    {
+      UseMaskMaterial();
+    }
+
     var zdo = netView.GetZDO();
-    var size = zdo.GetVec3(VehicleZdoVars.CustomMeshScale, Vector3.zero);
+    if (zdo == null) return;
+    var size = zdo.GetVec3(VehicleZdoVars.CustomMeshScale, DefaultSize);
     if (size == Vector3.zero)
     {
       return;
     }
 
-    _meshRenderer.transform.localScale = size;
+    // likely not required
+    DoubleSidedCube.UpdateScale(DefaultSize);
   }
 }

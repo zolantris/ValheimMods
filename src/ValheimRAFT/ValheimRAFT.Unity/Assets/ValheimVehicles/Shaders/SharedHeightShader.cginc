@@ -1,4 +1,5 @@
 #pragma once
+#include "UnityCG.cginc"
 
 sampler2D _MainTex;
 fixed4 _Color;

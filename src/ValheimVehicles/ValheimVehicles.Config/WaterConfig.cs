@@ -6,17 +6,23 @@ using UnityEngine;
 
 namespace ValheimVehicles.Config;
 
-public class WaterConfig
+public static class WaterConfig
 {
   public enum UnderwaterAccessModeType
   {
     Disabled,
-    Everywhere,
+    Everywhere, // would require nothing, but you could die when falling.
     OnboardOnly,
-    WaterZoneOnly,
+    // WaterZoneOnly // would require mesh collider, not ready
   }
 
   public static ConfigEntry<UnderwaterAccessModeType> UnderwaterAccessMode =
+    null!;
+
+  public static ConfigEntry<float> UnderwaterMaxCachedDiveDepth =
+    null!;
+
+  public static ConfigEntry<float> UnderwaterMaxDiveDepth =
     null!;
 
   public static ConfigEntry<bool> UnderwaterFogEnabled =
@@ -31,7 +37,11 @@ public class WaterConfig
   public static ConfigEntry<float> UnderWaterFogIntensity =
     null!;
 
+  public static ConfigEntry<float> WaveSizeMultiplier =
+    null!;
+
   public static ConfigEntry<string> AllowedEntiesList = null!;
+  public static ConfigEntry<float> UnderwaterShipCameraZoom = null!;
 
 
   private const string SectionKey = "Underwater";
@@ -42,6 +52,7 @@ public class WaterConfig
 
   public static bool IsAllowedUnderwater(Character character)
   {
+    if (character == null || character.gameObject == null) return false;
     if (character.gameObject.name == "Player(Clone)")
     {
       return true;
@@ -63,6 +74,36 @@ public class WaterConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
+
+    UnderwaterMaxDiveDepth = Config.Bind(
+      SectionKey,
+      "UnderwaterMaxDiveDepth",
+      0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Enforce a max depth for diving values higher will force the player to float to that value.",
+        false, false, new AcceptableValueRange<float>(0, 50f)));
+    UnderwaterMaxCachedDiveDepth = Config.Bind(
+      SectionKey,
+      "UnderwaterMaxCachedDiveDepth",
+      0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Enforce a max sinking depth for diving. Higher values can make the player swim to the depth instead of fall through the water. Recommended lower than 20",
+        false, false, new AcceptableValueRange<float>(0, 50f)));
+    WaveSizeMultiplier = Config.Bind(
+      SectionKey,
+      "WaveSizeMultiplier",
+      1f,
+      ConfigHelpers.CreateConfigDescription(
+        "Make the big waves.",
+        false, false, new AcceptableValueRange<float>(0, 50f)));
+
+    UnderwaterShipCameraZoom = Config.Bind(
+      SectionKey,
+      "UnderwaterShipCameraZoom",
+      500f,
+      ConfigHelpers.CreateConfigDescription(
+        "Zoom value to allow for underwater zooming. Will allow camera to go underwater at values above 0. 0 will reset camera back to default.",
+        false, false, new AcceptableValueRange<float>(0, 5000f)));
 
     AllowedEntiesList = Config.Bind(
       SectionKey,
@@ -90,7 +131,7 @@ public class WaterConfig
     UnderWaterFogColor = Config.Bind(
       SectionKey,
       "Underwater fog color",
-      new Color(0f, 0.5f, 1f, 0.1f),
+      new Color(0f, 0.57f, 0.6f),
       ConfigHelpers.CreateConfigDescription(
         "Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.",
         true));
@@ -106,7 +147,7 @@ public class WaterConfig
     UnderwaterAccessMode = Config.Bind(
       SectionKey,
       "UnderwaterAccessMode",
-      UnderwaterAccessModeType.WaterZoneOnly,
+      UnderwaterAccessModeType.OnboardOnly,
       ConfigHelpers.CreateConfigDescription(
         "Allows for walking underwater anywhere. If this is enabled it will override other walking flags.",
         true));

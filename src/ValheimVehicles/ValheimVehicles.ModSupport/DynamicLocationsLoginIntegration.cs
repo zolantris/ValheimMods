@@ -14,6 +14,7 @@ using Jotunn;
 using UnityEngine;
 using UnityEngine.UI;
 using ValheimVehicles.Config;
+using ValheimVehicles.Vehicles.Controllers;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 
@@ -32,6 +33,15 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
     PlayerSpawnController playerSpawnController)
   {
     var localTimer = Stopwatch.StartNew();
+    var onboardData =
+      VehicleOnboardController.GetOnboardCharacterData(Player.m_localPlayer);
+
+    // character is already onboard a vehicle. We assume it's the same one...
+    if (onboardData != null)
+    {
+      if (onboardData.controller)
+        yield break;
+    }
 
     yield return playerSpawnController.MovePlayerToZdo(zdo, offset, true, true);
 

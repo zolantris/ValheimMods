@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DynamicLocations;
 using DynamicLocations.Controllers;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimVehicles.Config;
+using ValheimVehicles.Patches;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Enums;
+using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles.Controllers;
@@ -16,18 +20,15 @@ namespace ValheimVehicles.Vehicles.Controllers;
 /// </summary>
 public class VehicleOnboardController : MonoBehaviour
 {
-  internal VehicleMovementController MovementController = null!;
+  public VehicleMovementController MovementController = null!;
+  public IVehicleShip? VehicleInstance => MovementController?.ShipInstance;
 
-  // public static Dictionary<ZDOID, Character?> CharactersOnboard = new();
-  //
-  // public static Dictionary<ZDOID, VehicleOnboardController?>
-  //   CharacterOnVehiclePieces = new();
-
-  public static Dictionary<ZDOID, CharacterOnboardData>
+  [UsedImplicitly]
+  public static readonly Dictionary<ZDOID, CharacterOnboardData>
     CharacterOnboardDataItems =
       new();
 
-  public Collider onboardCollider => MovementController.OnboardCollider;
+  public Collider? OnboardCollider => MovementController?.OnboardCollider;
 
   private void Awake()
   {
@@ -107,6 +108,12 @@ public class VehicleOnboardController : MonoBehaviour
     if (CharacterOnboardDataItems.TryGetValue(character.GetZDOID(),
           out var data))
     {
+      if (data.controller == null)
+      {
+        CharacterOnboardDataItems.Remove(character.GetZDOID());
+        return null;
+      }
+
       return data;
     }
 
@@ -116,8 +123,23 @@ public class VehicleOnboardController : MonoBehaviour
   public static bool GetCharacterVehicleMovementController(ZDOID zdoid,
     out VehicleOnboardController? controller)
   {
+    controller = null;
     if (CharacterOnboardDataItems.TryGetValue(zdoid, out var data))
     {
+      if (data.controller == null)
+      {
+        data.controller =
+          VehiclePiecesController
+            .GetPieceControllerFromPlayer(data.character.gameObject)?
+            .VehicleInstance?.OnboardController;
+      }
+
+      if (data.controller == null)
+      {
+        CharacterOnboardDataItems.Remove(zdoid);
+        return false;
+      }
+
       controller = data.controller;
       return true;
     }
@@ -151,6 +173,15 @@ public class VehicleOnboardController : MonoBehaviour
 
   private void OnDisable()
   {
+    // protect character so it removes this list on unmount of onboard controller
+    foreach (var character in CharacterOnboardDataItems.Values.ToList())
+    {
+      if (character.controller == this)
+      {
+        CharacterOnboardDataItems.Remove(character.zdoid);
+      }
+    }
+
     StopCoroutine(nameof(RemovePlayersRoutine));
   }
 
@@ -182,21 +213,36 @@ public class VehicleOnboardController : MonoBehaviour
     if (!(bool)character) return;
 
     var characterZdo = character.GetZDOID();
-    var exists = CharacterOnboardDataItems.ContainsKey(characterZdo);
+    var exists =
+      CharacterOnboardDataItems.TryGetValue(characterZdo,
+        out var characterInstance);
 
     if (isExiting)
     {
       if (!exists) return;
-
       RemoveCharacter(character);
       character.InNumShipVolumes--;
+      Character_WaterPatches.UpdateLiquidDepth(character);
       return;
     }
 
-    if (exists) return;
     // do not increment or add character if already exists in object. This could be a race condition
-    AddCharacter(character);
-    character.InNumShipVolumes++;
+    if (!exists)
+    {
+      AddCharacter(character);
+      character.InNumShipVolumes++;
+    }
+    else if (characterInstance != null)
+    {
+      if (characterInstance.controller != this ||
+          characterInstance.controller != null &&
+          characterInstance.controller.transform.parent == null)
+      {
+        characterInstance.controller = this;
+      }
+    }
+
+    Character_WaterPatches.UpdateLiquidDepth(character);
   }
 
   /// <summary>

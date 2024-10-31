@@ -16,6 +16,8 @@ Shader "Custom/CombinedHeightBasedShader"
         LOD 100
         Cull Off
         ZClip Off
+        ZWrite Off
+        ZTest LEqual
         Blend SrcColor OneMinusSrcAlpha
 
         Stencil
@@ -49,9 +51,9 @@ Shader "Custom/CombinedHeightBasedShader"
             Cull Off // Render both sides
 
             CGPROGRAM
-            #include "SharedHeightShader.cginc"
             #pragma vertex vert
             #pragma fragment frag
+            #include "SharedHeightShader.cginc"
             ENDCG
         }
 
@@ -67,9 +69,9 @@ Shader "Custom/CombinedHeightBasedShader"
             ZTest GEqual
 
             CGPROGRAM
-            #include "SharedHeightShader.cginc"
             #pragma vertex vert
             #pragma fragment frag
+            #include "SharedHeightShader.cginc"
             ENDCG
         }
 
@@ -84,9 +86,9 @@ Shader "Custom/CombinedHeightBasedShader"
             ZTest LEqual
 
             CGPROGRAM
-            #include "SharedHeightShader.cginc"
             #pragma vertex vert
             #pragma fragment frag
+            #include "SharedHeightShader.cginc"
             ENDCG
         }
 
@@ -101,9 +103,9 @@ Shader "Custom/CombinedHeightBasedShader"
              ZTest Always
 
             CGPROGRAM
-            #include "SharedHeightShader.cginc"
             #pragma vertex vert
             #pragma fragment frag
+            #include "SharedHeightShader.cginc"
             ENDCG
         }
     }

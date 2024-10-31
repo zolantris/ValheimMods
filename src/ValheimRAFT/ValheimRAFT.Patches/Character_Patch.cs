@@ -34,6 +34,12 @@ public class Character_Patch
   public static void Character_IsOnGround(Character __instance,
     ref bool __result)
   {
+    if (VehicleOnboardController.IsCharacterOnboard(__instance))
+    {
+      __result = true;
+      return;
+    }
+
     var vpc = __instance.transform.root.GetComponent<VehiclePiecesController>();
     if (vpc) __result = true;
   }

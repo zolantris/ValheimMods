@@ -3203,7 +3203,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1417458819}
-  - component: {fileID: 1417458818}
+  - component: {fileID: 1417458820}
   m_Layer: 6
   m_Name: Fake Cube
   m_TagString: Untagged
@@ -3211,7 +3211,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1417458818
+--- !u!4 &1417458819
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1417458817}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -4.293, y: -0.498, z: -141}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1417458820
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3226,25 +3241,13 @@ MonoBehaviour:
   cubeSize: 1
   CubeMaskMaterial: {fileID: 2100000, guid: f9e1891f70ae8b64aaf5b6d5aaa71048, type: 2}
   CubeVisibleSurfaceMaterial: {fileID: 2100000, guid: 9ae0a04cedae31445a47303ff3b06840, type: 2}
-  RenderQueueCube: 2450
-  RenderQueueSide: 2449
-  color: {r: 0.15, g: 0.5, b: 0.3, a: 0.8666667}
+  color: {r: 0, g: 0.85490197, b: 0.36078432, a: 0.38039216}
   CanRenderTopOfCube: 0
---- !u!4 &1417458819
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1417458817}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -4.293, y: 0, z: -141}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  CubeLayer: 16
+  MaskRenderQueue: 2999
+  SideRenderQueue: 3000
+  RenderDoubleSided: 0
+  RenderMaskOnSecondFace: 0
 --- !u!1 &1419120544
 GameObject:
   m_ObjectHideFlags: 0

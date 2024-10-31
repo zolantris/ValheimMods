@@ -249,6 +249,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   private int GetPersistentID()
   {
+    if (ZNetView.m_forceDisableInit || ZNetScene.instance == null) return 0;
     if (ZdoWatchController.Instance == null)
     {
       Logger.LogWarning(

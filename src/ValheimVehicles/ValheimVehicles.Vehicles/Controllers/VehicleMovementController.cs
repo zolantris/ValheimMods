@@ -325,7 +325,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
         GetComponent<ZSyncTransform>();
     }
 
-    zsyncTransform.m_body = GetRigidbody();
+    if (zsyncTransform)
+    {
+      zsyncTransform.m_body = GetRigidbody();
+    }
   }
 
   /// <summary>
@@ -370,6 +373,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public void SetupZsyncTransform()
   {
     zsyncTransform = GetComponent<ZSyncTransform>();
+    if (zsyncTransform == null) return;
     zsyncTransform.m_syncPosition = true;
     zsyncTransform.m_syncBodyVelocity = true;
     zsyncTransform.m_syncRotation = true;

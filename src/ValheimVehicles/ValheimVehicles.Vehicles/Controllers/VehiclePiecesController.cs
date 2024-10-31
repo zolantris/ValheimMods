@@ -331,6 +331,19 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     yield return null;
   }
 
+  public static VehiclePiecesController? GetPieceControllerFromPlayer(
+    GameObject playerGo)
+  {
+    var controller =
+      playerGo.transform.root.GetComponent<VehiclePiecesController>();
+    if (!controller)
+    {
+      controller = playerGo.GetComponentInParent<VehiclePiecesController>();
+    }
+
+    return controller != null ? controller : null;
+  }
+
   /// <summary>
   /// Currently only exist within the top level transform but this may change so there is a getter
   /// </summary>
@@ -550,7 +563,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       }
 
       piece.transform.SetParent(null);
-      AddInactivePiece(VehicleInstance!.PersistentZdoId, piece, null);
+      AddInactivePiece(VehicleInstance!.PersistentZdoId, piece, null, true);
     }
   }
 
@@ -935,7 +948,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   }
 
   public static void AddInactivePiece(int id, ZNetView netView,
-    VehiclePiecesController? instance)
+    VehiclePiecesController? instance, bool skipActivation = false)
   {
     if (hasDebug)
       Logger.LogDebug($"addInactivePiece called with {id} for {netView.name}");
@@ -956,8 +969,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var wnt = netView.GetComponent<WearNTear>();
     if ((bool)wnt) wnt.enabled = false;
 
-    // This will queue up a re-run of ActivatePendingPieces if there are any
-    instance?.Invoke(nameof(StartActivatePendingPieces), 1f);
+    if (!skipActivation && instance != null && instance.isActiveAndEnabled)
+    {
+      // This will queue up a re-run of ActivatePendingPieces if there are any
+      instance?.Invoke(nameof(StartActivatePendingPieces), 1f);
+    }
   }
 
 /*
@@ -1282,7 +1298,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
   }
 
-  public void AddPendingPieceToActiveVehicle(int vehicleId, ZNetView piece)
+  public void AddPendingPieceToActiveVehicle(int vehicleId, ZNetView piece,
+    bool skipActivation = false)
   {
     _pendingPiecesState = PendingPieceStateEnum.Scheduled;
     if (_pendingPiecesCoroutine != null)
@@ -1292,12 +1309,22 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       return;
     }
 
-    // may need to guard
-    m_pendingPieces[vehicleId].Add(piece);
+    if (!m_pendingPieces.TryGetValue(vehicleId, out var list))
+    {
+      list = [];
+      m_pendingPieces.Add(vehicleId, list);
+    }
+
+    list.Add(piece);
     _pendingPiecesDirty = true;
 
-    // delegates to coroutine activation logic
-    StartActivatePendingPieces();
+
+    if (!skipActivation && isActiveAndEnabled && piece != null &&
+        piece.isActiveAndEnabled)
+    {
+      // delegates to coroutine activation logic
+      StartActivatePendingPieces();
+    }
   }
 
   private static void AddPendingPiece(int vehicleId, ZNetView piece)

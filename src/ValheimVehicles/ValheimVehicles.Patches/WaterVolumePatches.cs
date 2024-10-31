@@ -1,3 +1,4 @@
+using System;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -8,9 +9,21 @@ namespace ValheimVehicles.Patches
   [HarmonyPatch]
   internal class WaterVolumePatch
   {
+    public enum CameraWaterStateTypes
+    {
+      AboveWater,
+      BelowWater,
+      ToBelow,
+      ToAbove,
+    }
+
     public static float WaterLevelCamera = 0f;
-    public static bool IsCameraAboveWater;
+    public static CameraWaterStateTypes CameraWaterState;
     public static bool IsFlipped = false;
+    private static int DepthProperty = Shader.PropertyToID("_depth");
+
+    private static int GlobalWindProperty =
+      Shader.PropertyToID("_UseGlobalWind");
 
     [HarmonyPatch(typeof(WaterVolume), "TrochSin")]
     [HarmonyPrefix]
@@ -27,43 +40,6 @@ namespace ValheimVehicles.Patches
 
       return IsFlipped;
     }
-
-    private static float currentWaveHeight = 0f;
-
-    // This will replace the original GetWaterSurface
-    [HarmonyPatch(typeof(WaterVolume), "GetWaterSurface")]
-    [HarmonyPrefix]
-    public static bool GetWaterSurface(WaterVolume __instance, float __result,
-      Vector3 point,
-      float waveFactor = 1f)
-    {
-      if (WaterConfig.UnderwaterAccessMode.Value ==
-          WaterConfig.UnderwaterAccessModeType.Disabled) return false;
-
-      var num = 0.0f;
-      if (__instance.m_useGlobalWind)
-      {
-        var wrappedDayTimeSeconds = WaterVolume.s_wrappedDayTimeSeconds;
-        var depth = __instance.Depth(point);
-
-        // Smoothly adjust wave height based on depth
-        var waveHeight = Mathf.Lerp(__instance.m_forceDepth,
-          __instance.CalcWave(point, depth, wrappedDayTimeSeconds, waveFactor),
-          0.1f);
-        num += waveHeight;
-      }
-
-      var waterSurface =
-        __instance.transform.position.y + num + __instance.m_surfaceOffset;
-      if ((double)__instance.m_forceDepth < 0.0 &&
-          (double)Utils.LengthXZ(point) > 10500.0)
-        waterSurface -= 100f;
-
-      currentWaveHeight = waterSurface;
-      __result = waterSurface;
-      return true;
-    }
-
 
     [HarmonyPatch(typeof(WaterVolume), "UpdateMaterials")]
     [HarmonyPrefix]
@@ -85,11 +61,61 @@ namespace ValheimVehicles.Patches
       }
     }
 
+    [HarmonyPatch(typeof(WaterVolume), nameof(WaterVolume.CreateWave))]
+    [HarmonyPostfix]
+    private static void CreateWave(WaterVolume __instance, float __result)
+    {
+      __result *= WaterConfig.WaveSizeMultiplier.Value;
+    }
+
+    private static void UpdateCameraState(bool isAbove)
+    {
+      if (isAbove)
+      {
+        switch (CameraWaterState)
+        {
+          case CameraWaterStateTypes.AboveWater:
+            return;
+          case CameraWaterStateTypes.ToAbove:
+            CameraWaterState = CameraWaterStateTypes.AboveWater;
+            return;
+          case CameraWaterStateTypes.BelowWater:
+          case CameraWaterStateTypes.ToBelow:
+            CameraWaterState = CameraWaterStateTypes.ToAbove;
+            GameCameraPatch.RequestUpdate();
+            GameCameraPatch.UpdateFogSettings();
+            return;
+        }
+      }
+      else if (!isAbove)
+      {
+        switch (CameraWaterState)
+        {
+          case CameraWaterStateTypes.BelowWater:
+            return;
+          case CameraWaterStateTypes.ToBelow:
+            CameraWaterState = CameraWaterStateTypes.BelowWater;
+            return;
+          case CameraWaterStateTypes.AboveWater:
+          case CameraWaterStateTypes.ToAbove:
+            CameraWaterState = CameraWaterStateTypes.ToAbove;
+            GameCameraPatch.RequestUpdate();
+            GameCameraPatch.UpdateFogSettings();
+            return;
+        }
+      }
+    }
+
+    public static bool IsCameraAboveWater =>
+      CameraWaterState is CameraWaterStateTypes.AboveWater
+        or CameraWaterStateTypes.ToAbove;
+
     private static void AdjustWaterSurface(WaterVolume __instance,
       float[] normalizedDepth)
     {
-      IsCameraAboveWater = GameCameraPatch.CameraPositionY > WaterLevelCamera;
-      Transform waterSurfaceTransform = __instance.m_waterSurface.transform;
+      UpdateCameraState(GameCameraPatch.CameraPositionY <= WaterLevelCamera);
+
+      var waterSurfaceTransform = __instance.m_waterSurface.transform;
       IsFlipped =
         waterSurfaceTransform.rotation.eulerAngles.y.Equals(180f);
 
@@ -140,29 +166,33 @@ namespace ValheimVehicles.Patches
     private static void SetDepthForWaterSurface(WaterVolume __instance,
       float[] normalizedDepth, bool isFlipped)
     {
-      float[] depthValues = isFlipped
+      var depthValues = isFlipped
         ?
         [
+          // normalizedDepth[0],
+          // normalizedDepth[0],
+          // normalizedDepth[0],
+          // normalizedDepth[0]
           // normalizedDepth[2],
           // normalizedDepth[0],
           // normalizedDepth[3],
           // normalizedDepth[1],
-          1 - normalizedDepth[0],
-          1 - normalizedDepth[1],
-          1 - normalizedDepth[2],
-          1 - normalizedDepth[3]
-          // -normalizedDepth[0],
-          // -normalizedDepth[1],
-          // -normalizedDepth[2],
-          // -normalizedDepth[3]
+          // 1 - normalizedDepth[0],
+          // 1 - normalizedDepth[1],
+          // 1 - normalizedDepth[2],
+          // 1 - normalizedDepth[3]
+          -normalizedDepth[0],
+          -normalizedDepth[1],
+          -normalizedDepth[2],
+          -normalizedDepth[3]
         ]
         : normalizedDepth;
 
 
-      __instance.m_waterSurface.material.SetFloatArray(
-        Shader.PropertyToID("_depth"), depthValues);
+      __instance.m_waterSurface.material.SetFloatArray(DepthProperty
+        , depthValues);
       __instance.m_waterSurface.material.SetFloat(
-        Shader.PropertyToID("_UseGlobalWind"),
+        GlobalWindProperty,
         __instance.m_useGlobalWind ? 1f : 0f);
     }
   }

@@ -2,9 +2,16 @@ Shader "Custom/DepthMask"
 {
     SubShader
     {
-        Tags { "Queue"="Overlay" }
+        Tags {
+            "RenderType"="Transparent"
+            "Queue"="Transparent"
+        }
+        LOD 100
         ZClip Off
         Cull Off
+        ZTest LEqual
+        ZWrite On
+        
         ColorMask 0
         Stencil
         {

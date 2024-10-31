@@ -9,8 +9,11 @@ namespace ValheimVehicles.Vehicles.Components;
 public class CharacterOnboardData
 {
   public Character character;
+
   public ZDOID zdoid = ZDOID.None;
-  public VehicleOnboardController controller;
+
+  // can turn null
+  public VehicleOnboardController? controller;
   public bool IsUnderwater = false;
   private WaterVolume? _prevWaterVolume;
 

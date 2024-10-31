@@ -7,7 +7,6 @@ using UnityEngine.Serialization;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
-using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.Vehicles.Components;
 
@@ -55,11 +54,20 @@ public class CustomMeshCreatorComponent : MonoBehaviour
 
     foreach (var customMeshCreatorComponent in instance.ToList())
     {
-      Object.Destroy(customMeshCreatorComponent.meshRenderer);
-      Object.Destroy(customMeshCreatorComponent);
+      customMeshCreatorComponent.DestroySelf();
     }
 
     instance.Clear();
+  }
+
+  public void DestroySelf()
+  {
+    if (Instances.TryGetValue(selectedCreatorType, out var instance))
+    {
+      instance.Remove(this);
+    }
+
+    Destroy(gameObject);
   }
 
 
@@ -74,21 +82,26 @@ public class CustomMeshCreatorComponent : MonoBehaviour
       return false;
     }
 
+    if (list.Count == expectedCount)
+    {
+      return true;
+    }
+
 
     // early exit, we just add the component
-    if (expectedCount > list.Count)
+    if (list.Count < expectedCount)
     {
       return false;
     }
 
     // should never exceed expected count
-    if (expectedCount < list.Count)
+    if (list.Count > expectedCount)
     {
       DestroyAll(selectedCreatorType);
       return false;
     }
 
-    return true;
+    return false;
   }
 
   private void Awake()
@@ -133,7 +146,7 @@ public class CustomMeshCreatorComponent : MonoBehaviour
 
   public void OnDestroy()
   {
-    DestroyAll(selectedCreatorType);
+    DestroySelf();
   }
 
   private void CreateMeshComponent()
@@ -207,8 +220,9 @@ public class CustomMeshCreatorComponent : MonoBehaviour
 
 
     // Needs testing...
-    // var rotation = GetRotationFromBounds(bounds);
-    var rotation = transform.parent.rotation * RotationOffset;
+    var rotation = transform.parent
+      ? transform.parent.rotation * RotationOffset
+      : GetRotationFromBounds(bounds);
 
     Logger.LogDebug(
       $"Creating water mask at {bounds.center} size: {bounds.size} rotation: {transform.parent.rotation.eulerAngles}");
@@ -218,12 +232,19 @@ public class CustomMeshCreatorComponent : MonoBehaviour
     Logger.LogDebug(
       $"Created: water mask position: {meshComponent.transform.position} rotation: {meshComponent.transform.rotation}");
 
-    var netView = meshComponent.GetComponent<ZNetView>();
-    var zdo = netView.GetZDO();
-    zdo.Set(VehicleZdoVars.CustomMeshId, (int)selectedCreatorType);
-    zdo.Set(VehicleZdoVars.CustomMeshScale, bounds.size);
+    try
+    {
+      var netView = meshComponent.GetComponent<ZNetView>();
+      var zdo = netView.GetZDO();
+      zdo.Set(VehicleZdoVars.CustomMeshId, (int)selectedCreatorType);
+      zdo.Set(VehicleZdoVars.CustomMeshScale, bounds.size);
 
-    AddToVehicle(netView);
+      AddToVehicle(netView);
+    }
+    catch
+    {
+      Logger.LogError("error creating Mesh");
+    }
 
     DestroyAll(selectedCreatorType);
   }

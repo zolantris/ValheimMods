@@ -9,28 +9,6 @@
 - Description: Outputs more debug logs for the Vehicle components. Useful for troubleshooting errors, but will spam logs
 - Default Value: false
 
-## Patches
-
-### ComfyGizmo - Enable Patch 
-- Description: Patches relative rotation allowing for copying rotation and building while the raft is at movement, this toggle is only provided in case patches regress anything in Gizmos and players need a work around.
-- Default Value: false
-
-### ComfyGizmo - Vehicle Creative zero Y rotation 
-- Description: Vehicle/Raft Creative mode will set all axises to 0 for rotation instead keeping the turn axis. Gizmo has issues with rotated vehicles, so zeroing things out is much safer. Works regardless of patch if mod exists
-- Default Value: true
-
-### Vehicles Prevent Pausing 
-- Description: Prevents pausing on a boat, pausing causes a TON of desync problems and can make your boat crash or other players crash
-- Default Value: true
-
-### Vehicles Prevent Pausing SinglePlayer 
-- Description: Prevents pausing on a boat during singleplayer. Must have the Vehicle Prevent Pausing patch as well
-- Default Value: true
-
-### Enable PlanBuild Patches (required to be on if you installed PlanBuild) 
-- Description: Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT. PlanBuild mod can be found here. https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/
-- Default Value: false
-
 ## Deprecated Config
 
 ### Initial Floor Height (V1 raft) 
@@ -113,15 +91,15 @@
 
 ### HullFloatationColliderLocation 
 - Description: Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20
-- Default Value: Custom
+- Default Value: Center
 
 ### HullFloatation Custom Offset 
 - Description: Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
-- Default Value: 0
+- Default Value: 7.13615
 
 ### EnableExactVehicleBounds 
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible
-- Default Value: true
+- Default Value: false
 
 ## Debug
 
@@ -231,6 +209,32 @@
 - Description: Toggles ShipInWater Sounds, the sound of the hull hitting water
 - Default Value: true
 
+## Patches
+
+### DynamicLocations 
+- Description: Enables DynamicLocations mod to access ValheimRAFT/Vehicles identifiers.
+- Default Value: true
+
+### ComfyGizmo - Enable Patch 
+- Description: Patches relative rotation allowing for copying rotation and building while the raft is at movement, this toggle is only provided in case patches regress anything in Gizmos and players need a work around.
+- Default Value: false
+
+### ComfyGizmo - Vehicle Creative zero Y rotation 
+- Description: Vehicle/Raft Creative mode will set all axises to 0 for rotation instead keeping the turn axis. Gizmo has issues with rotated vehicles, so zeroing things out is much safer. Works regardless of patch if mod exists
+- Default Value: true
+
+### Vehicles Prevent Pausing 
+- Description: Prevents pausing on a boat, pausing causes a TON of desync problems and can make your boat crash or other players crash
+- Default Value: true
+
+### Vehicles Prevent Pausing SinglePlayer 
+- Description: Prevents pausing on a boat during singleplayer. Must have the Vehicle Prevent Pausing patch as well
+- Default Value: false
+
+### Enable PlanBuild Patches (required to be on if you installed PlanBuild) 
+- Description: Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT. PlanBuild mod can be found here. https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/
+- Default Value: false
+
 ## Rams
 
 ### ramDamageEnabled 
@@ -337,6 +341,22 @@
 
 ## Vehicle Debugging
 
+### HasBoatLiquidDepthOverride 
+- Description: Enables liquid depth overrides
+- Default Value: false
+
+### BoatLiquidDepthOverride 
+- Description: Force Overrides the liquid depth for character on boats. Values below -100f will disable it.
+- Default Value: 20
+
+### HasAutoAnchorDelay 
+- Description: For realism, the ship continues even when nobody is onboard. This is meant for debugging logout points but also could be useful for realism
+- Default Value: true
+
+### AutoAnchorDelayTimeInSeconds 
+- Description: For realism, the ship continues for X amount of time until it either unrenders or a player stops it.
+- Default Value: 10
+
 ### Always Show Vehicle Colliders 
 - Description: Automatically shows the vehicle colliders useful for debugging the vehicle
 - Default Value: false
@@ -347,11 +367,11 @@
 
 ### UNSTABLE_PositionAutoFix 
 - Description: UNSTABLE due to vehicle center point shifting and not being in center of actual vehicle pieces - Automatically moves the vehicle if buried/stuck underground. The close to 0 the closer it will be to teleporting the vehicle above the ground. The higher the number the more lenient it is. Recommended to keep this number above 10. Lower can make the vehicle trigger an infinite loop of teleporting upwards and then falling and re-telporting while gaining velocity
-- Default Value: false
+- Default Value: true
 
 ### positionAutoFixThreshold 
 - Description: Threshold for autofixing stuck vehicles. Large values are less accurate but smaller values may trigger the autofix too frequently
-- Default Value: 5
+- Default Value: 10
 
 ## Debug
 
@@ -365,7 +385,7 @@
 - Description: SyncRigidbody - Accurately syncs physics across clients, it causes jitters during high speed.
 ForceSyncedRigidbody ignores all allowances that toggle SyncRigidbody related to flight. This will require a flight ascend value of 1 otherwise flight will be broken. Use this is there is problems with SyncRigidbody
 DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config that allows the player to smoothly move around the raft at high speeds even if they are not the host. Can cause the ship to glitch with anything that has to do with physics including ramps and other mods that add moving parts that could be added to the boat.
-- Default Value: SyncedRigidbody
+- Default Value: DesyncedJointRigidbodyBody
 
 ### turningPowerNoRudder 
 - Description: Set the base turning power of the steering wheel
@@ -394,3 +414,71 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 ### FlightClimbingSpeed 
 - Description: Ascent and Descent speed for the vehicle in the air. Numbers above 1 require turning the synced rigidbody for vehicle into another joint rigidbody.
 - Default Value: 5.690141
+
+## ModSupport:DynamicLocations
+
+### DynamicLocationLoginMovesPlayerToBed 
+- Description: login/logoff point moves player to last interacted bed or first bed on ship
+- Default Value: true
+
+## CustomMesh
+
+### Water Mask Prefabs Enabled 
+- Description: Allows placing a dynamically sized cube that removes all water meshes intersecting with it. This also removes all water meshes when looking through it. So use it wisely, it's not perfect
+- Default Value: true
+
+### Enable Testing 4x4 Water Mask Prefabs, these are meant for demoing water obstruction. 
+- Description: login/logoff point moves player to last interacted bed or first bed on ship
+- Default Value: true
+
+## Underwater
+
+### WaveSizeMultiplier 
+- Description: Make the big waves.
+- Default Value: 2
+
+### UnderwaterShipCameraZoom 
+- Description: Zoom value to allow for underwater zooming. Will allow camera to go underwater at values above 0. 0 will reset camera back to default.
+- Default Value: 500
+
+### AllowedEntiesList 
+- Description: List separated by comma for entities that are allowed on the ship
+- Default Value: 
+
+### AllowNonPlayerCharactersUnderwater 
+- Description: Adds entities not considered players into the underwater onboard checks. This can cause performance issues, but if you are bringing animals it's important. Side-effects could include serpants and other water entites do not behave correctly
+- Default Value: true
+
+### Use Underwater Fog 
+- Description: Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.
+- Default Value: true
+
+### Underwater fog color 
+- Description: Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.
+- Default Value: 009099FF
+
+### Underwater Fog Intensity 
+- Description: Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.
+- Default Value: 0.02
+
+### UnderwaterAccessMode 
+- Description: Allows for walking underwater anywhere. If this is enabled it will override other walking flags.
+- Default Value: WaterZoneOnly
+
+## Quick Start (DEBUG-ONLY)
+
+### QuickStartWorldName 
+- Description: Set the quick start World Name
+- Default Value: ZolVehicles
+
+### QuickStartWorldPassword 
+- Description: Set the quick start world password
+- Default Value: 123456
+
+### QuickStartEnabled 
+- Description: Enable Quick start
+- Default Value: true
+
+### QuickStartWorldPlayerName 
+- Description: Quick start player name. Must be valid to start the quick start
+- Default Value: Zol

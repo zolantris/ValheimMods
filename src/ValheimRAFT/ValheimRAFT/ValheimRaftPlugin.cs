@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using BepInEx.Bootstrap;
@@ -40,7 +41,8 @@ internal abstract class PluginDependencies
 // [SentryDSN()]
 [BepInPlugin(ModGuid, ModName, Version)]
 [BepInDependency(ZdoWatcherPlugin.ModGuid)]
-[BepInDependency(DynamicLocationsPlugin.BepInGuid, "1.2.0")]
+[BepInDependency(DynamicLocationsPlugin.BepInGuid,
+  DynamicLocationsPlugin.Version)]
 [BepInDependency(PluginDependencies.JotunnModGuid)]
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod,
   VersionStrictness.Minor)]
@@ -48,7 +50,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "2.3.0";
+  public const string Version = "2.4.0";
   public const string ModName = "ValheimRAFT";
   public const string ModGuid = $"{Author}.{ModName}";
   public static string HarmonyGuid => ModGuid;

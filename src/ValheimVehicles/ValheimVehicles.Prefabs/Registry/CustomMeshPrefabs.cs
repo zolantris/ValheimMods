@@ -37,10 +37,10 @@ public class CustomMeshPrefabs : IRegisterPrefab
     var mesh = prefab.GetComponent<MeshRenderer>();
     var material = new Material(LoadValheimAssets.CustomPieceShader)
     {
-      color = new Color(0.3f, 0.4f, 1)
+      color = new Color(0.3f, 0.4f, 1, 0.8f)
     };
     mesh.material = material;
-    mesh.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+    prefab.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
     var creatorComponent = prefab.AddComponent<CustomMeshCreatorComponent>();
     creatorComponent.SetCreatorType(CustomMeshCreatorComponent
@@ -60,14 +60,10 @@ public class CustomMeshPrefabs : IRegisterPrefab
 
   public static void RegisterWaterMaskPrefab()
   {
-    var waterMaskPrefab = new GameObject("WaterMaskPrefab")
-    {
-      layer = LayerHelpers.NonSolidLayer
-    };
-
     var prefab =
-      PrefabManager.Instance.CreateClonedPrefab(PrefabNames.CustomWaterMask,
-        waterMaskPrefab);
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.CustomWaterMask);
+
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
     var piece = prefab.AddComponent<Piece>();
     piece.m_name = "Water Mask";
@@ -75,12 +71,42 @@ public class CustomMeshPrefabs : IRegisterPrefab
       "Vehicle Water Mask component, this requires the water mask creator to work. You should not see this message unless using a mod to expose this prefab";
     piece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
-
-    PrefabRegistryHelpers.SetWearNTear(prefab, 1);
-
-    // WaterMaskComponent.WaterMaskMaterial = LoadValheimVehicleAssets.VisibleShaderInMaskMat;
+    WaterMaskComponent.WaterMaskMaterial =
+      LoadValheimVehicleAssets.TransparentDepthMaskMaterial;
     prefab.AddComponent<WaterMaskComponent>();
     PrefabManager.Instance.AddPrefab(prefab);
+  }
+
+  public void AddTestCube(string prefabName, Vector3 size)
+  {
+    // var waterMaskPrefab = new GameObject("WaterMaskPrefab")
+    // {
+    //   layer = LayerHelpers.NonSolidLayer
+    // };
+
+    var prefab =
+      PrefabManager.Instance.CreateEmptyPrefab($"{
+        PrefabNames.CustomWaterMask}_{prefabName}");
+    var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    var piece = prefab.AddComponent<Piece>();
+    piece.m_name = $"WM Test {prefabName}";
+    piece.m_description =
+      $"TestComponent: {prefabName}";
+    piece.m_placeEffect =
+      LoadValheimAssets.woodFloorPiece.m_placeEffect;
+    var waterMaskComponent = prefab.AddComponent<WaterMaskComponent>();
+    waterMaskComponent.DefaultSize = size;
+
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
+      new PieceConfig
+      {
+        Name = piece.name,
+        PieceTable = "Hammer",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .WaterOpacityBucket),
+        Category = PrefabNames.ValheimRaftMenuName,
+        Enabled = true,
+      }));
   }
 
   public void RegisterTestComponents()
@@ -88,36 +114,12 @@ public class CustomMeshPrefabs : IRegisterPrefab
     var maskShader = LoadValheimAssets.waterMask.GetComponent<MeshRenderer>()
       .sharedMaterial.shader;
     var maskMaterial = new Material(maskShader);
-    AddTestPrefab("Test1", maskMaterial);
-    AddTestPrefab("Test2",
-      new Material(LoadValheimVehicleAssets.TransparentDepthMaskMaterial));
-    AddTestPrefab("Test3",
+    AddTestPrefab("Default_water_mask", maskMaterial);
+    AddTestPrefab("Custom_watermask",
       LoadValheimVehicleAssets.TransparentDepthMaskMaterial);
-    var renderqueueLower =
-      new Material(LoadValheimVehicleAssets.TransparentDepthMaskMaterial)
-      {
-        renderQueue = 7
-      };
-    AddTestPrefab("Test4", renderqueueLower);
-    // var waterLiquid = PrefabManager.Instance.GetPrefab("WaterSurface");
-    // var waterLiquidMaterial =
-    //   waterLiquid.GetComponent<MeshRenderer>().sharedMaterial;
-
-
-    // AddTransparentWaterMaskPrefab("InverseMask",
-    //   new Material(LoadValheimVehicleAssets.SelectiveMask),
-    //   new Color(0f, 0f, 0f, 0f));
-    // AddTransparentWaterMaskPrefab("InverseMask2",
-    //   new Material(LoadValheimVehicleAssets.SelectiveMaskMat),
-    //   greenish);
-    // AddTransparentWaterMaskPrefab("PureMask", new Material(MaskShader),
-    //   greenish);
-    // AddTransparentWaterMaskPrefab("WaterPlane",
-    //   new Material(waterLiquidMaterial),
-    //   greenish);
-    // AddTransparentWaterMaskPrefab("MaskWithWater",
-    //   new Material(MaskShader),
-    //   greenish);
+    AddTestCube("Test2", Vector3.one * 4);
+    AddTestCube("Test3", Vector3.one * 2);
+    AddTestCube("Test4", Vector3.one * 8);
   }
 
   public void AddTestPrefab(string prefabName,
