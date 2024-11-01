@@ -40,20 +40,79 @@ public static class WaterZoneHelper
   {
     var isCharacterWithinOnboardCollider =
       VehicleOnboardController.IsCharacterOnboard(character);
+
+    if (!isCharacterWithinOnboardCollider)
+    {
+      var piecesController =
+        character.transform.root.GetComponent<VehiclePiecesController>();
+      if (piecesController)
+      {
+        isCharacterWithinOnboardCollider = true;
+      }
+    }
+
     var isCharacterStandingOnVehicle =
       HasShipUnderneath(character);
     return isCharacterWithinOnboardCollider && isCharacterStandingOnVehicle;
   }
 
+  /// <summary>
+  /// Used to evaluate if character is within a covered hull area. This is cached heavily.
+  /// </summary>
+  /// <param name="character"></param>
+  /// <returns></returns>
+  [GameCacheValue(intervalInSeconds: 2f)]
+  public static bool IsWithinHull(Character character)
+  {
+    var hasPieceBelowHull =
+      HasShipUnderneath(character);
+    var hasPieceToLeft =
+      HasShipToLeft(character);
+    var hasPieceToRight =
+      HasShipToRight(character);
+    return hasPieceBelowHull && hasPieceToLeft && hasPieceToRight;
+  }
 
-  [MeasureTime]
+  [GameCacheValue(intervalInSeconds: 0.5f)]
+  public static bool HasShipToRight(Character character)
+  {
+    return HasShipInDirection(character.transform.position,
+      character.transform.TransformDirection(Vector3.right));
+  }
+
+  [GameCacheValue(intervalInSeconds: 0.5f)]
+  public static bool HasShipToLeft(Character character)
+  {
+    return HasShipInDirection(character.transform.position,
+      character.transform.TransformDirection(Vector3.left));
+  }
+
+  [GameCacheValue(intervalInSeconds: 0.5f)]
   public static bool HasShipUnderneath(Character character)
   {
+    return HasShipInDirection(character.transform.position,
+      character.transform.TransformDirection(Vector3.down));
+  }
+
+  public static bool IsCharacterTheLocalPlayer(Character character)
+  {
+    return character.GetZDOID() == Player.m_localPlayer.GetZDOID();
+  }
+
+  /// <summary>
+  /// cannot cache this as it need to be dynamic
+  /// </summary>
+  /// <param name="position"></param>
+  /// <param name="direction"></param>
+  /// <returns></returns>
+  [MeasureTime]
+  public static bool HasShipInDirection(Vector3 position, Vector3 direction)
+  {
     var maxDistance =
-      Mathf.Clamp(character.transform.position.y, 10, 100); // Adjust as needed
+      Mathf.Clamp(position.y, 10, 100); // Adjust as needed
     var results = new RaycastHit[5];
-    var size = Physics.RaycastNonAlloc(character.transform.position,
-      Vector3.down, results, maxDistance, LayerMask.GetMask("piece"));
+    var size = Physics.RaycastNonAlloc(position,
+      direction, results, maxDistance, LayerMask.GetMask("piece"));
 
     var isValid = false;
     // Perform the raycast
@@ -109,7 +168,10 @@ public static class WaterZoneHelper
       character.m_cashedInLiquidDepth = 0f;
     }
 
-    GameCameraPatch.RequestUpdate();
+    if (IsCharacterTheLocalPlayer(character))
+    {
+      WaterVolumePatch.UpdateCameraState();
+    }
   }
 
   [MeasureTime]
@@ -138,12 +200,10 @@ public static class WaterZoneHelper
         Mathf.Min(
           onboardCollider.transform.position.y -
           onboardCollider.bounds.extents.y, currentDepth);
-      return RoundToNearestMultipleOfThree(
-        Mathf.Clamp(boundsInWater, 2f, currentDepth));
+      return Mathf.Clamp(boundsInWater, 2f, currentDepth);
     }
 
     return 0f;
-    // return RoundToNearestMultipleOfThree(currentDepth);
   }
 
   public static float RoundToNearestMultipleOfThree(float value)

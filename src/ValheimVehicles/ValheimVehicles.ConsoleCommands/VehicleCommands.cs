@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using BepInEx.Logging;
 using Components;
@@ -279,7 +280,35 @@ public class VehicleCommands : ConsoleCommand
     return vehicleShipController;
   }
 
-  public static void OnReportInfo()
+  public static string GetPlayerPathInfo()
+  {
+    try
+    {
+      var playerFolderLocation =
+        PlayerProfile.GetCharacterFolderPath(Game.instance.m_playerProfile
+          .m_fileSource);
+      var worldFolderLocation =
+        World.GetWorldSavePath(Game.instance.m_playerProfile.m_fileSource);
+
+
+      var logFile = PlayerProfile.GetPath(
+                      Game.instance.m_playerProfile
+                        .m_fileSource,
+                      "Player.log") ??
+                    $"Possible issue findingpath: guessing path is -> {Path.Combine(playerFolderLocation, "../Player.log")}";
+
+      return string.Join("\n",
+        $"PlayerProfile location: {playerFolderLocation}",
+        $"Player.log location: {logFile}",
+        $"WorldFolder location(may be N/A): {worldFolderLocation}");
+    }
+    catch
+    {
+      return "";
+    }
+  }
+
+  private static void OnReportInfo()
   {
     var shipInstance =
       GetNearestVehicleShip(Player.m_localPlayer.transform.position);
@@ -311,7 +340,14 @@ public class VehicleCommands : ConsoleCommand
       string.Join(",", shipInstance?.MovementController?.m_players.Select((x) =>
         x?.GetPlayerName() ?? "Null Player") ?? []);
 
+    var separatorDecorator = "================";
+    var logSeparatorStart =
+      $"{separatorDecorator} ValheimRaft/Vehicles report-info START {separatorDecorator}";
+    var logSeparatorEnd =
+      $"{separatorDecorator} ValheimRaft/Vehicles report-info END {separatorDecorator}";
+
     Logger.LogMessage(string.Join("\n",
+      logSeparatorStart,
       vehiclePendingPiecesCount,
       $"vehiclePieces, {vehiclePendingPiecesCount}",
       $"vehiclePiecesCount, {piecesString}",
@@ -320,7 +356,9 @@ public class VehicleCommands : ConsoleCommand
       $"vehiclePendingPiecesCount, {vehiclePendingPiecesCount}",
       $"playerPosition: {Player.m_localPlayer.transform.position}",
       $"PlayersOnVehicle: {playersOnVehicle}",
-      $"vehiclePosition {shipInstance?.transform.position}"
+      $"vehiclePosition {shipInstance?.transform.position}",
+      GetPlayerPathInfo(),
+      logSeparatorEnd
     ));
   }
 

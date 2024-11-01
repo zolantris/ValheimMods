@@ -18,8 +18,10 @@ namespace ValheimVehicles.Patches
       ToAbove,
     }
 
-    public static float WaterLevelCamera = 0f;
-    public static CameraWaterStateTypes CameraWaterState;
+    public static float WaterLevelCamera = -10000f;
+
+    public static CameraWaterStateTypes CameraWaterState =
+      CameraWaterStateTypes.AboveWater;
 
     public static bool IsCameraAboveWater =>
       CameraWaterState is CameraWaterStateTypes.AboveWater
@@ -79,8 +81,9 @@ namespace ValheimVehicles.Patches
       __result *= WaterConfig.WaveSizeMultiplier.Value;
     }
 
-    private static void UpdateCameraState(bool isAbove)
+    public static void UpdateCameraState()
     {
+      var isAbove = IsCameraAboveWater;
       if (isAbove)
       {
         switch (CameraWaterState)
@@ -95,25 +98,30 @@ namespace ValheimVehicles.Patches
             CameraWaterState = CameraWaterStateTypes.ToAbove;
             GameCameraPatch.RequestUpdate();
             return;
+          default:
+            throw new ArgumentOutOfRangeException();
         }
       }
-      else if (!isAbove)
+
+      switch (CameraWaterState)
       {
-        switch (CameraWaterState)
-        {
-          case CameraWaterStateTypes.BelowWater:
-            return;
-          case CameraWaterStateTypes.ToBelow:
-            CameraWaterState = CameraWaterStateTypes.BelowWater;
-            return;
-          case CameraWaterStateTypes.AboveWater:
-          case CameraWaterStateTypes.ToAbove:
-            CameraWaterState = CameraWaterStateTypes.ToBelow;
-            GameCameraPatch.RequestUpdate();
-            return;
-        }
+        case CameraWaterStateTypes.BelowWater:
+          return;
+        case CameraWaterStateTypes.ToBelow:
+          CameraWaterState = CameraWaterStateTypes.BelowWater;
+          return;
+        case CameraWaterStateTypes.AboveWater:
+        case CameraWaterStateTypes.ToAbove:
+          CameraWaterState = CameraWaterStateTypes.ToBelow;
+          GameCameraPatch.RequestUpdate();
+          return;
+        default:
+          throw new ArgumentOutOfRangeException();
       }
     }
+
+    public static bool IsCurrentCameraAboveWater =>
+      GameCameraPatch.CameraPositionY > WaterLevelCamera;
 
     private static void AdjustWaterSurface(WaterVolume __instance,
       float[] normalizedDepth)
@@ -123,9 +131,7 @@ namespace ValheimVehicles.Patches
           WaterConfig.FlipWatermeshMode.Value ==
           WaterConfig.WaterMeshFlipModeType.Disabled) return;
 
-      var isCurrentCameraAboveWater =
-        GameCameraPatch.CameraPositionY > WaterLevelCamera;
-      UpdateCameraState(isCurrentCameraAboveWater);
+      UpdateCameraState();
 
       var waterSurfaceTransform = __instance.m_waterSurface.transform;
       var isCurrentlyFlipped =

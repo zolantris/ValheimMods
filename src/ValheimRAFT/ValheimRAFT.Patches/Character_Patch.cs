@@ -30,24 +30,13 @@ public class Character_Patch
     return list;
   }
 
-  public static bool IsOnboard(Character character)
-  {
-    if ()
-    {
-      return true;
-    }
-
-    var vpc = character.transform.root.GetComponent<VehiclePiecesController>();
-    return vpc != null;
-  }
-
   // on vehicle = not swimming
   [HarmonyPatch(typeof(Character), nameof(Character.InWater))]
   [HarmonyPostfix]
   public static void Character_IsInWater(Character __instance,
     ref bool __result)
   {
-    var isOnboard = IsOnboard(__instance);
+    var isOnboard = WaterZoneHelper.IsOnboard(__instance);
     if (isOnboard) __result = false;
   }
 
@@ -57,7 +46,7 @@ public class Character_Patch
   public static void Character_IsOnGround(Character __instance,
     ref bool __result)
   {
-    var isOnboard = IsOnboard(__instance);
+    var isOnboard = WaterZoneHelper.IsOnboard(__instance);
     if (isOnboard) __result = true;
   }
 

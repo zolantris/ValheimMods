@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using HarmonyLib;
 using Jotunn.Extensions;
 using Jotunn.Managers;
@@ -19,9 +20,28 @@ public abstract class PrefabRegistryHelpers
 
   public struct PieceData
   {
-    public string Name;
-    public string Description;
+    private string _name;
+    private string _description;
+
+    public string Name
+    {
+      get => _name;
+      set => _name = NormalizeTranslationKeys(value);
+    }
+
+    public string Description
+    {
+      get => _description;
+      set => _description = NormalizeTranslationKeys(value);
+    }
+
     public Sprite Icon;
+  }
+
+  public static string NormalizeTranslationKeys(string localizableString)
+  {
+    return new Regex(@"((?<!\$)\b\w+_\w+\b)").Replace(localizableString,
+      match => "$" + match.Value);
   }
 
   // may use for complex shared variant prefabs

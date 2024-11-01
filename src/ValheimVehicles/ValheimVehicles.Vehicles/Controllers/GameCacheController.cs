@@ -5,6 +5,7 @@ using System.Text;
 using UnityEngine;
 using ValheimVehicles.Attributes;
 using ValheimVehicles.Vehicles.Structs;
+using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles.Controllers;
 
@@ -28,6 +29,13 @@ public class GameCacheController : MonoBehaviour
       {
         // Create a delegate for the method, handling any return type and parameters
         var parameters = method.GetParameters();
+        if (_cacheValues.ContainsKey(attribute.Name))
+        {
+          Logger.LogError(
+            $"GameCacheController attempted to register a duplicate key {attribute.Name} to cache. This should not be allowed. This registration will be skipped.");
+          return;
+        }
+
         if (parameters.Length == 0)
         {
           // Handle methods with no parameters
