@@ -84,19 +84,44 @@ public class Character_WaterPatches
         WaterConfig.UnderwaterAccessModeType.Disabled) return true;
 
     var data = VehicleOnboardController.GetOnboardCharacterData(__instance);
-    if (data?.OnboardController is null) return true;
+    // if (data?.OnboardController is null) ;
     if (__instance.IsTeleporting() ||
         (UnityEngine.Object)__instance.GetStandingOnShip() !=
         (UnityEngine.Object)null || __instance.IsAttachedToShip())
       __instance.m_cashedInLiquidDepth = 0.0f;
-
     // this might be required to avoid the tar bug
     __instance.m_cashedInLiquidDepth = 0.0f;
 
     var liquidDepth =
-      GetLiquidDepthFromBounds(data.OnboardController, __instance);
+      GetLiquidDepthFromBounds(data!.OnboardController!, __instance);
     UpdateLiquidDepthValues(__instance, liquidDepth);
     return false;
+  }
+
+  private static bool HasShipUnderneath(Character character)
+  {
+    var maxDistance =
+      Mathf.Clamp(character.transform.position.y, 10, 100); // Adjust as needed
+    var results = new RaycastHit[5];
+    var size = Physics.RaycastNonAlloc(character.transform.position,
+      Vector3.down, results, maxDistance, LayerMask.GetMask("piece"));
+
+    var isValid = false;
+    // Perform the raycast
+    if (size > 0)
+    {
+      for (var i = 0; i < size; i++)
+      {
+        var resultItem = results[i];
+        var piecesController = resultItem.transform.root
+          .GetComponent<VehiclePiecesController>();
+        if (piecesController)
+        {
+          isValid = true;
+          break;
+        }
+      }
+    }
   }
 
   [HarmonyPatch(typeof(Character), nameof(Character.InLiquid))]
@@ -233,42 +258,82 @@ public class Character_WaterPatches
     return UpdateLiquidDepth(character, waterHeight, LiquidType.Water);
   }
 
+
+  private static float _currentDepth; // Current smoothed depth
+  private static float _smoothDepthVelocity; // Velocity for SmoothDamp
+
   private static float GetDepthFromOnboardCollider(Character character,
     float currentDepth, Collider onboardCollider)
   {
-    var maxDistance =
-      Mathf.Clamp(character.transform.position.y, 10,
-        100); // You can set this to a specific value if needed
-    var results = new RaycastHit[5];
-    var size = Physics.RaycastNonAlloc(character.transform.position,
-      Vector3.down, results, maxDistance, LayerMask.GetMask("piece"));
+    var isValid = HasShipUnderneath(character);
 
-
-    var isValid = false;
-    // Perform the raycast
-    if (size > 0)
-    {
-      foreach (var raycastHit in results)
-      {
-        var piecesController = raycastHit.transform.root
-          .GetComponent<VehiclePiecesController>();
-        if (piecesController)
-        {
-          isValid = true;
-          break;
-        }
-      }
-    }
-
-    // may have to check the difference between current depth and onboard collider.
+    // Check the difference between current depth and onboard collider.
     if (isValid)
     {
-      return onboardCollider.transform.position.y -
-        onboardCollider.bounds.extents.y + PlayerOffset;
+      var boundsInWater =
+        Mathf.Min(
+          onboardCollider.transform.position.y -
+          onboardCollider.bounds.extents.y, currentDepth);
+      return RoundToNearestMultipleOfThree(
+        Mathf.Clamp(boundsInWater, 2f, currentDepth));
     }
 
-    return currentDepth;
+    return 0f;
+    // return RoundToNearestMultipleOfThree(currentDepth);
   }
+
+  public static float RoundToNearestMultipleOfThree(float value)
+  {
+    return Mathf.Round(value / 3f) * 3f;
+  }
+
+  public static float SmoothDepthUpdate(float targetDepth, float smoothTime)
+  {
+    // Smooth the transition to the target depth over time
+    _currentDepth = Mathf.SmoothDamp(_currentDepth, targetDepth,
+      ref _smoothDepthVelocity, smoothTime);
+    return _currentDepth;
+  }
+
+  // private static float GetDepthFromOnboardCollider(Character character,
+  //   float currentDepth, Collider onboardCollider)
+  // {
+  //   var maxDistance =
+  //     Mathf.Clamp(character.transform.position.y, 10,
+  //       100); // You can set this to a specific value if needed
+  //   var results = new RaycastHit[5];
+  //   var size = Physics.RaycastNonAlloc(character.transform.position,
+  //     Vector3.down, results, maxDistance, LayerMask.GetMask("piece"));
+  //
+  //
+  //   var isValid = false;
+  //   // Perform the raycast
+  //   if (size > 0)
+  //   {
+  //     for (var i = 0; i < size; i++)
+  //     {
+  //       var resultItem = results[i];
+  //       var piecesController = resultItem.transform.root
+  //         .GetComponent<VehiclePiecesController>();
+  //       if (piecesController)
+  //       {
+  //         isValid = true;
+  //         break;
+  //       }
+  //     }
+  //   }
+  //
+  //   // may have to check the difference between current depth and onboard collider.
+  //   if (isValid)
+  //   {
+  //     var boundsInWater = Mathf.Min(onboardCollider.transform.position.y -
+  //                                   onboardCollider.bounds.extents.y,
+  //       currentDepth);
+  //     return Mathf.Clamp(onboardCollider.bounds.min.y, 2f, currentDepth);
+  //   }
+  //
+  //   return currentDepth;
+  // }
 
   public static bool UpdateLiquidDepth(Character character,
     float level,
@@ -333,9 +398,9 @@ public class Character_WaterPatches
     // return false here as a safety measure and reset caches
     if (Mathf.Approximately(liquidDepth, 0f))
     {
-      var waterHeight = Floating.GetWaterLevel(character.transform.position,
-        ref _previousWaterVolume);
-      UpdateLiquidDepthValues(character, waterHeight);
+      // var waterHeight = Floating.GetWaterLevel(character.transform.position,
+      //   ref _previousWaterVolume);
+      // UpdateLiquidDepthValues(character, waterHeight);
 
       return true;
     }
@@ -349,18 +414,18 @@ public class Character_WaterPatches
   /// </summary>
   /// <param name="controller"></param>
   public static float GetLiquidDepthFromBounds(
-    VehicleOnboardController controller, Character character)
+    VehicleOnboardController? controller, Character character)
   {
     if (WaterConfig.DEBUG_HasLiquidDepthOverride.Value)
     {
       return WaterConfig.DEBUG_LiquidDepthOverride.Value;
     }
 
-    if (controller.OnboardCollider?.bounds == null)
-      return character.m_cashedInLiquidDepth;
-
     var waterHeight = Floating.GetWaterLevel(character.transform.position,
       ref _previousWaterVolume);
+
+    if (controller?.OnboardCollider?.bounds == null)
+      return waterHeight;
 
     return GetDepthFromOnboardCollider(character, waterHeight,
       controller.OnboardCollider);
