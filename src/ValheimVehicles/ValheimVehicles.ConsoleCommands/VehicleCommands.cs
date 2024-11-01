@@ -327,7 +327,7 @@ public class VehicleCommands : ConsoleCommand
   public static void ToggleColliderEditMode()
   {
     CreativeModeColliderComponent.ToggleEditMode();
-    WaterMaskComponent.OnToggleEditMode(CreativeModeColliderComponent
+    WaterZoneController.OnToggleEditMode(CreativeModeColliderComponent
       .IsEditMode);
   }
 

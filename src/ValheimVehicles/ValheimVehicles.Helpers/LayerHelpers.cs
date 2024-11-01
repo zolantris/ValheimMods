@@ -17,4 +17,6 @@ public static class LayerHelpers
 
   public static int IgnoreRaycastLayer =
     LayerMask.NameToLayer("Ignore Raycast");
+
+  public static int CharacterLayer = LayerMask.NameToLayer("character");
 }

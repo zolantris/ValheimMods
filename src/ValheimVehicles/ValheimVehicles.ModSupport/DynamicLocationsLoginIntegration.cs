@@ -39,7 +39,7 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
     // character is already onboard a vehicle. We assume it's the same one...
     if (onboardData != null)
     {
-      if (onboardData.controller)
+      if (onboardData.OnboardController)
         yield break;
     }
 

@@ -4,6 +4,7 @@ using System.Linq;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Serialization;
+using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
@@ -238,6 +239,8 @@ public class CustomMeshCreatorComponent : MonoBehaviour
       var zdo = netView.GetZDO();
       zdo.Set(VehicleZdoVars.CustomMeshId, (int)selectedCreatorType);
       zdo.Set(VehicleZdoVars.CustomMeshScale, bounds.size);
+      zdo.Set(VehicleZdoVars.CustomMeshPrimitiveType,
+        (int)WaterConfig.DEBUG_WaterDisplacementMeshPrimitive.Value);
 
       AddToVehicle(netView);
     }

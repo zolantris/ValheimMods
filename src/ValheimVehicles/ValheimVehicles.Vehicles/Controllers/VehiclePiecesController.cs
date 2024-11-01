@@ -59,6 +59,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public InitializationState BaseVehicleInitState =>
     _baseVehicleInitializationState;
 
+  public bool IsInitialActivationComplete = false;
 
   public bool IsActivationComplete =>
     _pendingPiecesState is not PendingPieceStateEnum.Failure
@@ -228,6 +229,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     if (state != InitializationState.Complete) return;
 
     StartActivatePendingPieces();
+  }
+
+  public static bool GetIsActivationComplete(
+    VehiclePiecesController? piecesController)
+  {
+    return piecesController != null && piecesController.IsActivationComplete;
   }
 
   public void LoadInitState()
@@ -1399,6 +1406,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     _pendingPiecesCoroutine = null;
     _pendingPiecesState = pieceStateEnum;
     PendingPiecesTimer.Reset();
+
+    if (!IsInitialActivationComplete)
+    {
+      IsInitialActivationComplete = true;
+    }
 
     if (pieceStateEnum == PendingPieceStateEnum.ForceReset)
     {

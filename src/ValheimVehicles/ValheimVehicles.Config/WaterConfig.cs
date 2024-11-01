@@ -13,8 +13,8 @@ public static class WaterConfig
   {
     Disabled,
     Everywhere, // would require nothing, but you could die when falling.
-    OnboardOnly,
-    // WaterZoneOnly // would require mesh collider, not ready
+    OnboardOnly, // everything on or near the vehicle is considered
+    WaterZoneOnly // everything inside a waterzone is considered. Does not require a vehicle
   }
 
   public enum WaterMeshFlipModeType
@@ -23,6 +23,9 @@ public static class WaterConfig
     Everywhere,
     ExcludeOnboard,
   }
+
+  public static ConfigEntry<PrimitiveType>
+    DEBUG_WaterDisplacementMeshPrimitive { get; private set; } = null!;
 
   public static ConfigEntry<WaterMeshFlipModeType>
     FlipWatermeshMode { get; private set; } = null!;
@@ -106,6 +109,14 @@ public static class WaterConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
+
+
+    DEBUG_WaterDisplacementMeshPrimitive = config.Bind(SectionKeyDebug,
+      "DEBUG_WaterDisplacementMeshPrimitive",
+      PrimitiveType.Cube,
+      ConfigHelpers.CreateConfigDescription(
+        "Lets you choose from the water displacement mesh primitives. These will be stored as ZDOs. Not super user friendly yet...",
+        true, true));
 
     DEBUG_HasLiquidDepthOverride = config.Bind(SectionKeyDebug,
       "DEBUG_HasLiquidDepthOverride",

@@ -582,6 +582,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       return;
     }
 
+    if (VehiclePiecesController.GetIsActivationComplete(vehicleShip
+          .PiecesController))
+    {
+      m_body.isKinematic = true;
+      return;
+    }
+
     if (ValheimRaftPlugin.Instance.AllowFlight.Value)
     {
       SyncTargetHeight();
@@ -592,9 +599,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     /*
      * creative mode should not allow movement, and applying force on an object will cause errors, when the object is kinematic
      */
-    if (isCreative || m_body.isKinematic)
+    if (isCreative)
     {
       return;
+    }
+
+    if (m_body.isKinematic)
+    {
+      m_body.isKinematic = false;
     }
 
     VehiclePhysicsFixedUpdateAllClients();

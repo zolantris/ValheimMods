@@ -15,18 +15,20 @@ using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.Vehicles;
 
-public interface IDrawTargetColliders
+public struct DrawTargetColliders
 {
-  public BoxCollider collider { get; set; }
-  public Color lineColor { get; set; }
-  public GameObject parent { get; set; }
-}
+  public DrawTargetColliders()
+  {
+    collider = null;
+    lineColor = default;
+    parent = null;
+    width = 1f;
+  }
 
-public struct DrawTargetColliders : IDrawTargetColliders
-{
   public BoxCollider collider { get; set; }
   public Color lineColor { get; set; }
   public GameObject parent { get; set; }
+  public float width { get; set; }
 }
 
 public class VehicleDebugHelpers : MonoBehaviour
@@ -34,7 +36,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   private Dictionary<string, List<LineRenderer>> lines = new();
 
   public bool autoUpdateColliders = false;
-  private List<IDrawTargetColliders> targetColliders = [];
+  private List<DrawTargetColliders> targetColliders = [];
   public GameObject VehicleObj;
   public VehicleShip VehicleShipInstance;
   private Coroutine? _drawColliderCoroutine = null;
@@ -44,7 +46,8 @@ public class VehicleDebugHelpers : MonoBehaviour
   private void FixedUpdate()
   {
     if (!isActiveAndEnabled) return;
-    if (autoUpdateColliders || VehicleDebugConfig.AutoShowVehicleColliders.Value)
+    if (autoUpdateColliders ||
+        VehicleDebugConfig.AutoShowVehicleColliders.Value)
     {
       DrawAllColliders();
     }
@@ -58,7 +61,8 @@ public class VehicleDebugHelpers : MonoBehaviour
     {
       if (!lines.TryGetValue(keyValuePair.Key, out var data)) continue;
       if (data == null) continue;
-      foreach (var lineRenderer in keyValuePair.Value.ToList().OfType<LineRenderer>())
+      foreach (var lineRenderer in keyValuePair.Value.ToList()
+                 .OfType<LineRenderer>())
       {
         Destroy(lineRenderer.gameObject);
         data.Remove(lineRenderer);
@@ -75,7 +79,8 @@ public class VehicleDebugHelpers : MonoBehaviour
     }
 
     if (!Physics.Raycast(
-          GameCamera.instance.transform.position, GameCamera.instance.transform.forward,
+          GameCamera.instance.transform.position,
+          GameCamera.instance.transform.forward,
           out var rayCastHitInfo, 50f, LayerMask.GetMask("piece"))) return null;
     return rayCastHitInfo;
   }
@@ -95,13 +100,15 @@ public class VehicleDebugHelpers : MonoBehaviour
   public static MoveableBaseRootComponent? GetMBRaftController()
   {
     var rayCastHitInfo = RaycastToPiecesUnderPlayerCamera();
-    return rayCastHitInfo?.collider.GetComponentInParent<MoveableBaseRootComponent>();
+    return rayCastHitInfo?.collider
+      .GetComponentInParent<MoveableBaseRootComponent>();
   }
 
   public static VehiclePiecesController? GetVehiclePiecesController()
   {
     var rayCastHitInfo = RaycastToPiecesUnderPlayerCamera();
-    return rayCastHitInfo?.collider.transform.root.GetComponent<VehiclePiecesController>();
+    return rayCastHitInfo?.collider.transform.root
+      .GetComponent<VehiclePiecesController>();
   }
 
   public void FlipShip()
@@ -128,42 +135,21 @@ public class VehicleDebugHelpers : MonoBehaviour
     }
   }
 
-  /// <summary>
-  /// Eventually will be used to visualize colliders on ship.
-  /// </summary>
-  ///
-  /// todo fix logic to be accurate
-  /// <param name="controller"></param>
-  public void RenderAllVehicleBoxColliders(VehiclePiecesController controller)
-  {
-    // foreach (var instanceMPiece in controller.m_pieces)
-    // {
-    //   var boxColliders = instanceMPiece.GetComponentsInChildren<BoxCollider>();
-    //   foreach (var boxCollider in boxColliders)
-    //   {
-    //     AddColliderToRerender(new DrawTargetColliders()
-    //     {
-    //       collider = boxCollider,
-    //       lineColor = Color.yellow,
-    //       parent = controller.gameObject
-    //     });
-    //   }
-    // }
-  }
-
   public void MoveShip(Vector3 vector)
   {
     if (!(bool)VehicleShipInstance.MovementController.m_body) return;
     // flips the x and z axis which act as the boat depth and sides
     // y axis is boat height. Flipping that would just rotate boat which is why it is omitted
     VehicleShipInstance.MovementController.m_body.isKinematic = true;
-    transform.rotation = Quaternion.Euler(0f, VehicleObj.transform.eulerAngles.y,
+    transform.rotation = Quaternion.Euler(0f,
+      VehicleObj.transform.eulerAngles.y,
       0f);
     transform.position += vector;
     VehicleShipInstance.MovementController.m_body.isKinematic = false;
   }
 
-  private static void DrawLine(Vector3 start, Vector3 end, int index, DrawLineData data)
+  private static void DrawLine(Vector3 start, Vector3 end, int index,
+    DrawLineData data)
   {
     var (color, material,
       parent, collider, lineItems,
@@ -205,7 +191,7 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   private static readonly Color LineColorDefault = Color.green;
 
-  public void AddColliderToRerender(IDrawTargetColliders drawTargetColliders)
+  public void AddColliderToRerender(DrawTargetColliders drawTargetColliders)
   {
     targetColliders.Add(drawTargetColliders);
   }
@@ -243,8 +229,10 @@ public class VehicleDebugHelpers : MonoBehaviour
     public List<LineRenderer>? lineItems;
     public float width;
 
-    public void Deconstruct(out Color o_color, out Material o_material, out GameObject o_parent,
-      out BoxCollider o_boxCollider, out List<LineRenderer>? o_lineItems, out float o_width)
+    public void Deconstruct(out Color o_color, out Material o_material,
+      out GameObject o_parent,
+      out BoxCollider o_boxCollider, out List<LineRenderer>? o_lineItems,
+      out float o_width)
     {
       o_color = color;
       o_material = material;
@@ -285,15 +273,18 @@ public class VehicleDebugHelpers : MonoBehaviour
 
     var forwardTopRight = center + topMostDir + rightMostDir +
                           forwardMostDir;
-    var forwardBottomRight = center - topMostDir + rightMostDir + forwardMostDir;
+    var forwardBottomRight =
+      center - topMostDir + rightMostDir + forwardMostDir;
     var forwardTopLeft = center + topMostDir - rightMostDir + forwardMostDir;
     var forwardBottomLeft = center - topMostDir - rightMostDir + forwardMostDir;
 
     var backwardTopRight = center + topMostDir + rightMostDir -
                            forwardMostDir;
-    var backwardBottomRight = center - topMostDir + rightMostDir - forwardMostDir;
+    var backwardBottomRight =
+      center - topMostDir + rightMostDir - forwardMostDir;
     var backwardTopLeft = center + topMostDir - rightMostDir - forwardMostDir;
-    var backwardBottomLeft = center - topMostDir - rightMostDir - forwardMostDir;
+    var backwardBottomLeft =
+      center - topMostDir - rightMostDir - forwardMostDir;
 
     if (!lines.TryGetValue(boxCollider.name, out var colliderItems))
     {

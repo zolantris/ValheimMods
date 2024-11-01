@@ -23,6 +23,62 @@ public class Character_WaterPatches
     SetIsUnderWaterInVehicle(__instance, ref __result);
   }
 
+  [HarmonyPatch(typeof(Character), nameof(Character.UpdateWater))]
+  [HarmonyPrefix]
+  public static bool Character_UpdateWater(Character __instance, float dt)
+  {
+    __instance.m_swimTimer += dt;
+    float depth = __instance.InLiquidDepth();
+    if (__instance.m_canSwim && __instance.InLiquidSwimDepth(depth))
+      __instance.m_swimTimer = 0.0f;
+    if (!__instance.m_nview.IsOwner() || !__instance.InLiquidWetDepth(depth))
+      return false;
+    if (VehicleOnboardController.IsCharacterOnboard(__instance))
+    {
+      if (__instance.m_tarEffects.HasEffects())
+      {
+        __instance.m_seman.GetStatusEffect(SEMan.s_statusEffectTared);
+      }
+
+      return false;
+    }
+
+    if ((double)__instance.m_waterLevel > (double)__instance.m_tarLevel)
+    {
+      __instance.m_seman.AddStatusEffect(SEMan.s_statusEffectWet, true);
+      return false;
+    }
+    else
+    {
+      if ((double)__instance.m_tarLevel <= (double)__instance.m_waterLevel ||
+          __instance.m_tolerateTar)
+        return false;
+      __instance.m_seman.AddStatusEffect(SEMan.s_statusEffectTared, true);
+    }
+
+    return false;
+  }
+
+  [HarmonyPatch(typeof(Character), nameof(Character.CalculateLiquidDepth))]
+  [HarmonyPrefix]
+  public static bool Character_CalculateLiquidDepth(Character __instance)
+  {
+    var data = VehicleOnboardController.GetOnboardCharacterData(__instance);
+    if (data?.OnboardController is null) return true;
+    if (__instance.IsTeleporting() ||
+        (UnityEngine.Object)__instance.GetStandingOnShip() !=
+        (UnityEngine.Object)null || __instance.IsAttachedToShip())
+      __instance.m_cashedInLiquidDepth = 0.0f;
+
+    // this might be required to avoid the tar bug
+    __instance.m_cashedInLiquidDepth = 0.0f;
+
+    var liquidDepth =
+      GetLiquidDepthFromBounds(data.OnboardController, __instance);
+    UpdateLiquidDepthValues(__instance, liquidDepth);
+    return false;
+  }
+
   [HarmonyPatch(typeof(Character), nameof(Character.InLiquid))]
   [HarmonyPrefix]
   public static void Character_InLiquid(Character __instance,
@@ -37,7 +93,7 @@ public class Character_WaterPatches
   {
     if (VehicleOnboardController.IsCharacterOnboard(__instance))
     {
-      __instance.m_tarLevel = -10000f;
+      // __instance.m_tarLevel = -10000f;
       __result = false;
     }
   }
@@ -65,7 +121,7 @@ public class Character_WaterPatches
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
 
     if (!WaterConfig.IsAllowedUnderwater(character)) return;
-    if (VehicleOnboardController.IsCharacterOnboard(character))
+    if (WaterZoneController.IsCharacterInWaterFreeZone(character))
     {
       result = false;
       character.m_swimTimer = 999f;
@@ -108,9 +164,13 @@ public class Character_WaterPatches
     switch (liquidType)
     {
       case LiquidType.Water:
-        character.m_waterLevel = Mathf.Max(
-          WaterConfig.UnderwaterMaxDiveDepth.Value,
-          liquidLevel);
+        character.m_waterLevel = liquidLevel;
+        if (character.m_tarLevel > character.m_waterLevel &&
+            WaterZoneController.IsCharacterInWaterFreeZone(character))
+        {
+          character.m_tarLevel = -10000f;
+        }
+
         break;
       case LiquidType.Tar:
         break;
@@ -148,7 +208,7 @@ public class Character_WaterPatches
   }
 
   public static bool UpdateLiquidDepth(Character character,
-    float level = -10000f,
+    float level,
     LiquidType type = LiquidType.Water)
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
@@ -159,6 +219,17 @@ public class Character_WaterPatches
       // todo confirm this works
       UpdateLiquidDepthValues(character, type == LiquidType.Water ? 3f : level,
         type);
+      return true;
+    }
+
+    if (WaterConfig.UnderwaterAccessMode.Value ==
+        WaterConfig.UnderwaterAccessModeType.WaterZoneOnly)
+    {
+      var isInWaterFreeZone =
+        WaterZoneController.IsCharacterInWaterFreeZone(character);
+      if (!isInWaterFreeZone) return false;
+      // setting to 0 depth for water free zone. Might be inaccurate for a partial underwater base...will fix in future
+      UpdateLiquidDepthValues(character, 0f, type);
       return true;
     }
 
@@ -227,25 +298,6 @@ public class Character_WaterPatches
       return character.m_cashedInLiquidDepth;
 
     return GetDepthFromOnboardCollider(controller.OnboardCollider);
-  }
-
-  [HarmonyPatch(typeof(Character), nameof(Character.CalculateLiquidDepth))]
-  [HarmonyPrefix]
-  public static bool Character_CalculateLiquidDepth(Character __instance)
-  {
-    var data = VehicleOnboardController.GetOnboardCharacterData(__instance);
-    if (data?.controller is null) return true;
-    if (__instance.IsTeleporting() ||
-        (UnityEngine.Object)__instance.GetStandingOnShip() !=
-        (UnityEngine.Object)null || __instance.IsAttachedToShip())
-      __instance.m_cashedInLiquidDepth = 0.0f;
-    else
-      __instance.m_cashedInLiquidDepth = Mathf.Max(0.0f,
-        __instance.GetLiquidLevel() - __instance.transform.position.y);
-
-    var liquidDepth = GetLiquidDepthFromBounds(data.controller, __instance);
-    UpdateLiquidDepthValues(__instance, liquidDepth);
-    return false;
   }
 
   // ignores other character types, in future might be worth checking for other types too.

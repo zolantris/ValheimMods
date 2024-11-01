@@ -27,7 +27,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
     }
   }
 
-  public void RegisterWaterMaskCreator()
+  private void RegisterWaterMaskCreator()
   {
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(
@@ -58,7 +58,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
       }));
   }
 
-  public static void RegisterWaterMaskPrefab()
+  private static void RegisterWaterMaskPrefab()
   {
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.CustomWaterMask);
@@ -71,9 +71,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
       "Vehicle Water Mask component, this requires the water mask creator to work. You should not see this message unless using a mod to expose this prefab";
     piece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
-    WaterMaskComponent.WaterMaskMaterial =
-      LoadValheimVehicleAssets.TransparentDepthMaskMaterial;
-    prefab.AddComponent<WaterMaskComponent>();
+    prefab.AddComponent<WaterZoneController>();
     PrefabManager.Instance.AddPrefab(prefab);
   }
 
@@ -94,8 +92,8 @@ public class CustomMeshPrefabs : IRegisterPrefab
       $"TestComponent: {prefabName}";
     piece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
-    var waterMaskComponent = prefab.AddComponent<WaterMaskComponent>();
-    waterMaskComponent.DefaultSize = size;
+    var waterMaskComponent = prefab.AddComponent<WaterZoneController>();
+    waterMaskComponent.defaultScale = size;
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig
@@ -144,11 +142,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
 
     if (shouldAddCubeComponent)
     {
-      var specialCube = prefab.AddComponent<ScalableDoubleSidedCube>();
-      specialCube.CubeMaskMaterial =
-        LoadValheimVehicleAssets.TransparentDepthMaskMaterial;
-      specialCube.CubeVisibleSurfaceMaterial =
-        new Material(LoadValheimVehicleAssets.WaterHeightMaterial);
+      prefab.AddComponent<ScalableDoubleSidedCube>();
     }
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,

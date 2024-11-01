@@ -85,6 +85,15 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CharacterOnboardData.cs">
             <Link>Components\CharacterOnboardData.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\WaterMaskZoneComponent.cs">
+            <Link>Components\WaterMaskZoneComponent.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\WaterZoneController.cs">
+            <Link>Controllers\WaterMaskComponent.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CreativeModeColliderComponent.cs">
+            <Link>Components\CreativeModeCompnent.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup>
         <Compile Include="ValheimRAFT.Config\IConfigSection.cs"/>

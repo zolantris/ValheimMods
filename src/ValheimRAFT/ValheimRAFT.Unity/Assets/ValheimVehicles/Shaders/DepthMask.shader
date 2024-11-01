@@ -11,6 +11,7 @@ Shader "Custom/DepthMask"
         Cull Off
         ZTest LEqual
         ZWrite On
+        Lighting Off
         
         ColorMask 0
         Stencil

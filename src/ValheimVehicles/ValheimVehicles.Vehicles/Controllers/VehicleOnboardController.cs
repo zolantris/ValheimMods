@@ -24,7 +24,7 @@ public class VehicleOnboardController : MonoBehaviour
   public IVehicleShip? VehicleInstance => MovementController?.ShipInstance;
 
   [UsedImplicitly]
-  public static readonly Dictionary<ZDOID, CharacterOnboardData>
+  public static readonly Dictionary<ZDOID, WaterZoneCharacterData>
     CharacterOnboardDataItems =
       new();
 
@@ -92,7 +92,7 @@ public class VehicleOnboardController : MonoBehaviour
   private void AddCharacter(Character character)
   {
     var zdoid = character.GetZDOID();
-    var onboardDataItem = new CharacterOnboardData(character, this);
+    var onboardDataItem = new WaterZoneCharacterData(character, this);
     CharacterOnboardDataItems.Add(zdoid, onboardDataItem);
   }
 
@@ -107,15 +107,21 @@ public class VehicleOnboardController : MonoBehaviour
     characterData?.UpdateUnderwaterStatus(val);
   }
 
-  public static CharacterOnboardData? GetOnboardCharacterData(
+  public static WaterZoneCharacterData? GetOnboardCharacterData(
     Character character)
   {
-    if (CharacterOnboardDataItems.TryGetValue(character.GetZDOID(),
+    return GetOnboardCharacterData(character.GetZDOID());
+  }
+
+  public static WaterZoneCharacterData? GetOnboardCharacterData(
+    ZDOID zdoid)
+  {
+    if (CharacterOnboardDataItems.TryGetValue(zdoid,
           out var data))
     {
-      if (data.controller == null)
+      if (data.OnboardController == null)
       {
-        CharacterOnboardDataItems.Remove(character.GetZDOID());
+        CharacterOnboardDataItems.Remove(zdoid);
         return null;
       }
 
@@ -131,21 +137,21 @@ public class VehicleOnboardController : MonoBehaviour
     controller = null;
     if (CharacterOnboardDataItems.TryGetValue(zdoid, out var data))
     {
-      if (data.controller == null)
+      if (data.OnboardController == null)
       {
-        data.controller =
+        data.OnboardController =
           VehiclePiecesController
             .GetPieceControllerFromPlayer(data.character.gameObject)?
             .VehicleInstance?.OnboardController;
       }
 
-      if (data.controller == null)
+      if (data.OnboardController == null)
       {
         CharacterOnboardDataItems.Remove(zdoid);
         return false;
       }
 
-      controller = data.controller;
+      controller = data.OnboardController;
       return true;
     }
 
@@ -182,9 +188,9 @@ public class VehicleOnboardController : MonoBehaviour
     // protect character so it removes this list on unmount of onboard controller
     foreach (var character in CharacterOnboardDataItems.Values.ToList())
     {
-      if (character.controller == this)
+      if (character.OnboardController == this)
       {
-        CharacterOnboardDataItems.Remove(character.zdoid);
+        CharacterOnboardDataItems.Remove(character.zdoId);
       }
     }
 
@@ -205,6 +211,16 @@ public class VehicleOnboardController : MonoBehaviour
     OnEnterVehicleBounds(collider);
     HandleCharacterHitVehicleBounds(collider, false);
   }
+
+  // todo might refactor this, but water zone controllers will be from the controller instead of delegated here.
+  // public static void OnTriggerEnterReceived(Collider collider)
+  // {
+  //   OnEnterVehicleBounds(collider);
+  // }
+  //
+  // public static void OnTriggerExitReceived()
+  // {
+  // }
 
   public void OnTriggerExit(Collider collider)
   {
@@ -240,11 +256,11 @@ public class VehicleOnboardController : MonoBehaviour
     }
     else if (characterInstance != null)
     {
-      if (characterInstance.controller != this ||
-          characterInstance.controller != null &&
-          characterInstance.controller.transform.parent == null)
+      if (characterInstance.OnboardController != this ||
+          characterInstance.OnboardController != null &&
+          characterInstance.OnboardController.transform.parent == null)
       {
-        characterInstance.controller = this;
+        characterInstance.OnboardController = this;
       }
     }
 

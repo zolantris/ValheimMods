@@ -47,22 +47,22 @@ namespace ValheimVehicles.Patches
     private static int GlobalWindProperty =
       Shader.PropertyToID("_UseGlobalWind");
 
-    [HarmonyPatch(typeof(WaterVolume), "TrochSin")]
-    [HarmonyPrefix]
-    public static bool FlippedTrochSin(ref float __result, float x, float k)
-    {
-      if (WaterConfig.UnderwaterAccessMode.Value ==
-          WaterConfig.UnderwaterAccessModeType.Disabled) return false;
-
-      if (IsFlipped())
-      {
-        __result =
-          1.0f - (float)((Mathf.Sin(x - Mathf.Cos(x) * k) * 0.5) + 0.5);
-        return false;
-      }
-
-      return true;
-    }
+    // [HarmonyPatch(typeof(WaterVolume), "TrochSin")]
+    // [HarmonyPrefix]
+    // public static bool FlippedTrochSin(ref float __result, float x, float k)
+    // {
+    //   if (WaterConfig.UnderwaterAccessMode.Value ==
+    //       WaterConfig.UnderwaterAccessModeType.Disabled) return false;
+    //
+    //   if (IsFlipped())
+    //   {
+    //     __result =
+    //       1.0f - (float)((Mathf.Sin(x - Mathf.Cos(x) * k) * 0.5) + 0.5);
+    //     return false;
+    //   }
+    //
+    //   return true;
+    // }
 
     [HarmonyPatch(typeof(WaterVolume), "UpdateMaterials")]
     [HarmonyPrefix]

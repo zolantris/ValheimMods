@@ -12,6 +12,9 @@ public static class VehicleZdoVars
 
   public static string CustomMeshScale = "ValheimVehicles_CustomMeshSize";
 
+  public static string CustomMeshPrimitiveType =
+    "ValheimVehicles_CustomMeshPrimitiveType";
+
   public static readonly int VehicleFlags = "VehicleFlags".GetStableHashCode();
 
   public static readonly int VehicleTargetHeight =
