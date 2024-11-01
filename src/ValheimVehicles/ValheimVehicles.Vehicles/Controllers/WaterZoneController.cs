@@ -117,8 +117,9 @@ public class WaterZoneController : CreativeModeColliderComponent
       WaterConfig.UnderwaterAccessModeType.Everywhere => true,
       WaterConfig.UnderwaterAccessModeType.OnboardOnly =>
         VehicleOnboardController.IsCharacterOnboard(character),
-      WaterConfig.UnderwaterAccessModeType.WaterZoneOnly => IsInWaterFreeZone(
-        character),
+      WaterConfig.UnderwaterAccessModeType.DEBUG_WaterZoneOnly =>
+        IsInWaterFreeZone(
+          character),
       _ => throw new ArgumentOutOfRangeException()
     };
   }
@@ -144,7 +145,7 @@ public class WaterZoneController : CreativeModeColliderComponent
         waterZoneData =
           VehicleOnboardController.GetOnboardCharacterData(character);
         return waterZoneData != null;
-      case WaterConfig.UnderwaterAccessModeType.WaterZoneOnly:
+      case WaterConfig.UnderwaterAccessModeType.DEBUG_WaterZoneOnly:
         waterZoneData = GetCharacterWaterZoneData(character);
         return waterZoneData != null;
       default:

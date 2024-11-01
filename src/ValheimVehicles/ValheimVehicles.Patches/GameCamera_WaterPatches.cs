@@ -109,24 +109,6 @@ internal class GameCameraPatch
     UpdateFogSettings();
     CameraPositionY = ___m_camera.gameObject.transform.position.y;
 
-    // some of these are optimized to avoid calculating each time when an would prevent reaching an area.
-    if (WaterConfig.FlipWatermeshMode.Value ==
-        WaterConfig.WaterMeshFlipModeType.Disabled)
-    {
-      __instance.m_minWaterDistance = 0.3f;
-      return;
-    }
-
-    if (WaterConfig.FlipWatermeshMode.Value ==
-        WaterConfig.WaterMeshFlipModeType.ExcludeOnboard)
-    {
-      if (!VehicleOnboardController.IsCharacterOnboard(Player.m_localPlayer))
-      {
-        __instance.m_minWaterDistance = 0.3f;
-        return;
-      }
-    }
-
     // This is the most important flag, it prevents camera smashing into the watermesh.
     // negative value due to it allowing zoom further out
     // fallthrough logic

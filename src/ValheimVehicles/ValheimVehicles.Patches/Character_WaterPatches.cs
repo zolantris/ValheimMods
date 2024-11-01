@@ -2,16 +2,18 @@ using System;
 using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Config;
+using ValheimVehicles.LayerUtils;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Controllers;
+using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Patches;
 
 public class Character_WaterPatches
 {
   // Allows player model to be inside bound collider
-  internal static float PlayerOffset = 5f;
+  internal static float PlayerOffset = 0f;
   private static WaterVolume? _previousWaterVolume = null;
 
   // Patches
@@ -223,15 +225,49 @@ public class Character_WaterPatches
 
   public static bool UpdateWaterDepth(Character character)
   {
+    if (WaterConfig.UnderwaterAccessMode.Value ==
+        WaterConfig.UnderwaterAccessModeType.Disabled) return false;
+
     var waterHeight = Floating.GetWaterLevel(character.transform.position,
       ref _previousWaterVolume);
     return UpdateLiquidDepth(character, waterHeight, LiquidType.Water);
   }
 
-  private static float GetDepthFromOnboardCollider(Collider onboardCollider)
+  private static float GetDepthFromOnboardCollider(Character character,
+    float currentDepth, Collider onboardCollider)
   {
-    return onboardCollider.transform.position.y -
-      onboardCollider.bounds.extents.y + PlayerOffset;
+    var maxDistance =
+      Mathf.Clamp(character.transform.position.y, 10,
+        100); // You can set this to a specific value if needed
+    var results = new RaycastHit[5];
+    var size = Physics.RaycastNonAlloc(character.transform.position,
+      Vector3.down, results, maxDistance, LayerMask.GetMask("piece"));
+
+
+    var isValid = false;
+    // Perform the raycast
+    if (size > 0)
+    {
+      foreach (var raycastHit in results)
+      {
+        var piecesController = raycastHit.transform.root
+          .GetComponent<VehiclePiecesController>();
+        if (piecesController)
+        {
+          isValid = true;
+          break;
+        }
+      }
+    }
+
+    // may have to check the difference between current depth and onboard collider.
+    if (isValid)
+    {
+      return onboardCollider.transform.position.y -
+        onboardCollider.bounds.extents.y + PlayerOffset;
+    }
+
+    return currentDepth;
   }
 
   public static bool UpdateLiquidDepth(Character character,
@@ -250,7 +286,7 @@ public class Character_WaterPatches
     }
 
     if (WaterConfig.UnderwaterAccessMode.Value ==
-        WaterConfig.UnderwaterAccessModeType.WaterZoneOnly)
+        WaterConfig.UnderwaterAccessModeType.DEBUG_WaterZoneOnly)
     {
       var isInWaterFreeZone =
         WaterZoneController.IsCharacterInWaterFreeZone(character);
@@ -272,10 +308,10 @@ public class Character_WaterPatches
     // these apparently need to be manually set
     if (!isOnVehicle || controller?.OnboardCollider?.bounds == null)
     {
-      var waterHeight = Floating.GetWaterLevel(character.transform.position,
-        ref _previousWaterVolume);
+      // var waterHeight = Floating.GetWaterLevel(character.transform.position,
+      //   ref _previousWaterVolume);
 
-      UpdateLiquidDepthValues(character, waterHeight);
+      UpdateLiquidDepthValues(character, level);
       return true;
     }
 
@@ -288,21 +324,20 @@ public class Character_WaterPatches
       if (WaterConfig.UnderwaterAccessMode.Value ==
           WaterConfig.UnderwaterAccessModeType.OnboardOnly)
       {
-        liquidDepth = GetDepthFromOnboardCollider(controller.OnboardCollider);
+        liquidDepth =
+          GetDepthFromOnboardCollider(character, level,
+            controller.OnboardCollider);
       }
     }
 
     // return false here as a safety measure and reset caches
     if (Mathf.Approximately(liquidDepth, 0f))
     {
-      // possibly unnecessary
-      // character.InvalidateCachedLiquidDepth();
-
       var waterHeight = Floating.GetWaterLevel(character.transform.position,
         ref _previousWaterVolume);
       UpdateLiquidDepthValues(character, waterHeight);
 
-      return false;
+      return true;
     }
 
     UpdateLiquidDepthValues(character, liquidDepth);
@@ -324,7 +359,11 @@ public class Character_WaterPatches
     if (controller.OnboardCollider?.bounds == null)
       return character.m_cashedInLiquidDepth;
 
-    return GetDepthFromOnboardCollider(controller.OnboardCollider);
+    var waterHeight = Floating.GetWaterLevel(character.transform.position,
+      ref _previousWaterVolume);
+
+    return GetDepthFromOnboardCollider(character, waterHeight,
+      controller.OnboardCollider);
   }
 
   // ignores other character types, in future might be worth checking for other types too.

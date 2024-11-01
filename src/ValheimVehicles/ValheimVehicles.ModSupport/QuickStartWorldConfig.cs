@@ -1,4 +1,6 @@
 using BepInEx.Configuration;
+using ComfyLib;
+using ValheimRAFT.Patches;
 using ValheimVehicles.Config;
 
 namespace ValheimVehicles.ModSupport;
@@ -21,6 +23,18 @@ public static class QuickStartWorldConfig
 
   public static ConfigEntry<string>
     QuickStartWorldPlayerName { get; private set; } = null!;
+
+  public static void OnQuickStartEnabled()
+  {
+    if (FejdStartup.instance == null) return;
+    if (ZNet.instance.IsServer()) return;
+    if (ZNet.instance.IsDedicated()) return;
+    if (ZNetScene.instance != null) return;
+    if (QuickStartEnabled.Value)
+    {
+      QuickStartWorld_Patch.DirectPlayExtended(FejdStartup.instance);
+    }
+  }
 
   public static void BindConfig(ConfigFile config)
   {
@@ -53,5 +67,6 @@ public static class QuickStartWorldConfig
       ConfigHelpers.CreateConfigDescription(
         "Quick start player name. Must be valid to start the quick start",
         false, false));
+    QuickStartEnabled.SettingChanged += (sender, args) => OnQuickStartEnabled();
   }
 }

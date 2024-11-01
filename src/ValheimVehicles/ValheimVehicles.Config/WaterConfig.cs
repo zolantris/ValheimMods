@@ -14,7 +14,7 @@ public static class WaterConfig
     Disabled,
     Everywhere, // would require nothing, but you could die when falling.
     OnboardOnly, // everything on or near the vehicle is considered
-    WaterZoneOnly // everything inside a waterzone is considered. Does not require a vehicle
+    DEBUG_WaterZoneOnly // everything inside a waterzone is considered. Does not require a vehicle. Not ready
   }
 
   public enum WaterMeshFlipModeType
@@ -102,6 +102,11 @@ public static class WaterConfig
     foreach (var sCharacter in Character.s_characters)
     {
       sCharacter.InvalidateCachedLiquidDepth();
+    }
+
+    if (UnderwaterAccessMode.Value == UnderwaterAccessModeType.Disabled)
+    {
+      GameCamera.instance.m_minWaterDistance = 0.3f;
     }
   }
 
@@ -213,8 +218,8 @@ public static class WaterConfig
       "UnderwaterAccessMode",
       UnderwaterAccessModeType.Disabled,
       ConfigHelpers.CreateConfigDescription(
-        "Allows for walking underwater, anywhere, or onship, or eventually within the water displaced area only. Disabled with remove all water logic.",
-        true));
+        "Allows for walking underwater, anywhere, or onship, or eventually within the water displaced area only. Disabled with remove all water logic. DEBUG_WaterZoneOnly is not supported yet",
+        true, true));
 
     AllowedEntiesList.SettingChanged +=
       (sender, args) => OnAllowListUpdate();
