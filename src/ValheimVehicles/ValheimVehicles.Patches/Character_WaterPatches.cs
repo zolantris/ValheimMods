@@ -33,7 +33,8 @@ public class Character_WaterPatches
       __instance.m_swimTimer = 0.0f;
     if (!__instance.m_nview.IsOwner() || !__instance.InLiquidWetDepth(depth))
       return false;
-    if (VehicleOnboardController.IsCharacterOnboard(__instance))
+    if (WaterConfig.IsAllowedUnderwater(__instance) &&
+        VehicleOnboardController.IsCharacterOnboard(__instance))
     {
       if (__instance.m_tarEffects.HasEffects())
       {

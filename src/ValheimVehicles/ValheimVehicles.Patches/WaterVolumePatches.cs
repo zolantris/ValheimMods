@@ -47,23 +47,6 @@ namespace ValheimVehicles.Patches
     private static int GlobalWindProperty =
       Shader.PropertyToID("_UseGlobalWind");
 
-    // [HarmonyPatch(typeof(WaterVolume), "TrochSin")]
-    // [HarmonyPrefix]
-    // public static bool FlippedTrochSin(ref float __result, float x, float k)
-    // {
-    //   if (WaterConfig.UnderwaterAccessMode.Value ==
-    //       WaterConfig.UnderwaterAccessModeType.Disabled) return false;
-    //
-    //   if (IsFlipped())
-    //   {
-    //     __result =
-    //       1.0f - (float)((Mathf.Sin(x - Mathf.Cos(x) * k) * 0.5) + 0.5);
-    //     return false;
-    //   }
-    //
-    //   return true;
-    // }
-
     [HarmonyPatch(typeof(WaterVolume), "UpdateMaterials")]
     [HarmonyPrefix]
     public static void WaterVolumeUpdatePatchWaterVolume(WaterVolume __instance,
@@ -136,7 +119,9 @@ namespace ValheimVehicles.Patches
       float[] normalizedDepth)
     {
       if (WaterConfig.UnderwaterAccessMode.Value ==
-          WaterConfig.UnderwaterAccessModeType.Disabled) return;
+          WaterConfig.UnderwaterAccessModeType.Disabled ||
+          WaterConfig.FlipWatermeshMode.Value ==
+          WaterConfig.WaterMeshFlipModeType.Disabled) return;
 
       var isCurrentCameraAboveWater =
         GameCameraPatch.CameraPositionY > WaterLevelCamera;
@@ -150,7 +135,11 @@ namespace ValheimVehicles.Patches
       if (IsCameraAboveWater && isCurrentlyFlipped ||
           IsCameraBelowWater && !isCurrentlyFlipped)
       {
-        if (!isCurrentlyFlipped)
+        if (!isCurrentlyFlipped && WaterConfig.FlipWatermeshMode.Value ==
+            WaterConfig.WaterMeshFlipModeType.Everywhere ||
+            WaterConfig.FlipWatermeshMode.Value ==
+            WaterConfig.WaterMeshFlipModeType.ExcludeOnboard &&
+            VehicleOnboardController.IsCharacterOnboard(Player.m_localPlayer))
         {
           FlipWaterSurface(__instance, normalizedDepth);
           SetWaterSurfacePosition(waterSurfaceTransform, WaterLevelCamera);
