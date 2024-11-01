@@ -699,7 +699,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     Physics.SyncTransforms();
     var currentPieceControllerSector =
-      ZoneSystem.instance.GetZone(transform.position);
+      ZoneSystem.GetZone(transform.position);
 
     foreach (var nv in m_pieces.ToList())
     {
@@ -736,7 +736,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
    */
   public void Client_UpdateAllPieces()
   {
-    var sector = ZoneSystem.instance.GetZone(transform.position);
+    var sector = ZoneSystem.GetZone(transform.position);
 
     if (sector == m_sector)
     {
@@ -782,7 +782,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void UpdatePieces(List<ZDO> list)
   {
     var pos = transform.position;
-    var sector = ZoneSystem.instance.GetZone(pos);
+    var sector = ZoneSystem.GetZone(pos);
 
     if (m_serverSector == sector) return;
     if (!sector.Equals(m_sector)) m_sector = sector;

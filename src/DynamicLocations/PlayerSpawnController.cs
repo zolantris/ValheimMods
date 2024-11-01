@@ -73,7 +73,8 @@ public class PlayerSpawnController : MonoBehaviour
     }
 
     var netView = player.GetComponentInParent<ZNetView>();
-    if (!ZdoWatchManager.GetPersistentID(netView.GetZDO(), out var persistentId))
+    if (!ZdoWatchManager.GetPersistentID(netView.GetZDO(),
+          out var persistentId))
     {
       LocationController.RemoveSpawnTargetZdo(player);
       return;
@@ -85,7 +86,8 @@ public class PlayerSpawnController : MonoBehaviour
       return;
     }
 
-    if (spawnPointObj.transform.position != spawnPointObj.transform.localPosition &&
+    if (spawnPointObj.transform.position !=
+        spawnPointObj.transform.localPosition &&
         netView.transform.position != spawnPointObj.transform.position)
     {
       var offset = spawnPointObj.transform.localPosition;
@@ -109,7 +111,8 @@ public class PlayerSpawnController : MonoBehaviour
   {
     if (!player || player == null || !CanUpdateLogoutPoint) return;
     var netView = player.GetComponentInParent<ZNetView>();
-    if (!ZdoWatchManager.GetPersistentID(netView.GetZDO(), out var persistentId))
+    if (!ZdoWatchManager.GetPersistentID(netView.GetZDO(),
+          out var persistentId))
     {
       LocationController.RemoveLogoutZdo(player);
       return;
@@ -170,7 +173,8 @@ public class PlayerSpawnController : MonoBehaviour
       return false;
     }
 
-    StartCoroutine(UpdateLocation(loginZdoid, loginZdoOffset, LocationTypes.Logout));
+    StartCoroutine(UpdateLocation(loginZdoid, loginZdoOffset,
+      LocationTypes.Logout));
 
     return true;
   }
@@ -181,7 +185,8 @@ public class PlayerSpawnController : MonoBehaviour
     Logout
   }
 
-  public IEnumerator UpdateLocation(ZDO? zdoid, Vector3 offset, LocationTypes locationType)
+  public IEnumerator UpdateLocation(ZDO? zdoid, Vector3 offset,
+    LocationTypes locationType)
   {
     UpdateLocationTimer.Restart();
     yield return MovePlayerToZdo(zdoid, offset);
@@ -213,7 +218,8 @@ public class PlayerSpawnController : MonoBehaviour
     var spawnZdoOffset = LocationController.GetSpawnTargetZdoOffset(player);
     var spawnZdoid = LocationController.GetSpawnTargetZdo(player);
 
-    StartCoroutine(UpdateLocation(spawnZdoid, spawnZdoOffset, LocationTypes.Spawn));
+    StartCoroutine(UpdateLocation(spawnZdoid, spawnZdoOffset,
+      LocationTypes.Spawn));
   }
 
   private void SyncPlayerPosition(Vector3 newPosition)
@@ -228,17 +234,19 @@ public class PlayerSpawnController : MonoBehaviour
     }
 
     Logger.LogDebug($"Syncing Player Position and sector, {newPosition}");
-    var isLoaded = ZoneSystem.instance.IsZoneLoaded(ZoneSystem.instance.GetZone(newPosition));
+    var isLoaded =
+      ZoneSystem.instance.IsZoneLoaded(ZoneSystem.GetZone(newPosition));
 
     if (!isLoaded)
     {
-      Logger.LogDebug($"zone not loaded, exiting SyncPlayerPosition for position: {newPosition}");
+      Logger.LogDebug(
+        $"zone not loaded, exiting SyncPlayerPosition for position: {newPosition}");
       return;
     }
 
     ZNet.instance.SetReferencePosition(newPosition);
     playerZdo.SetPosition(newPosition);
-    playerZdo.SetSector(ZoneSystem.instance.GetZone(newPosition));
+    playerZdo.SetSector(ZoneSystem.GetZone(newPosition));
     player.transform.position = newPosition;
   }
 
@@ -271,7 +279,7 @@ public class PlayerSpawnController : MonoBehaviour
         yield break;
       }
 
-      var zoneId = ZoneSystem.instance.GetZone(zdo.GetPosition());
+      var zoneId = ZoneSystem.GetZone(zdo.GetPosition());
       ZoneSystem.instance.PokeLocalZone(zoneId);
 
       var tempInstance = ZNetScene.instance.FindInstance(zdo);

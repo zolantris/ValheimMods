@@ -149,18 +149,18 @@ public class Teleport_Patch
 
     ZNetView? go = null;
 
-    var zoneId = ZoneSystem.instance.GetZone(zdo.m_position);
+    var zoneId = ZoneSystem.GetZone(zdo.m_position);
 
     while (go == null)
     {
       go = ZNetScene.instance.FindInstance(zdo);
       if (go) break;
-      zoneId = ZoneSystem.instance.GetZone(zdo.m_position);
+      zoneId = ZoneSystem.GetZone(zdo.m_position);
       ZoneSystem.instance.PokeLocalZone(zoneId);
       yield return new WaitForFixedUpdate();
     }
 
-    zoneId = ZoneSystem.instance.GetZone(zdo.m_position);
+    zoneId = ZoneSystem.GetZone(zdo.m_position);
     ZoneSystem.instance.PokeLocalZone(zoneId);
     yield return new WaitUntil(() => ZoneSystem.instance.IsZoneLoaded(zoneId));
 
