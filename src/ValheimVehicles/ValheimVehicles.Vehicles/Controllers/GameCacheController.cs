@@ -4,8 +4,7 @@ using System.Reflection;
 using System.Text;
 using UnityEngine;
 using ValheimVehicles.Attributes;
-using ValheimVehicles.Helpers;
-using ValheimVehicles.Vehicles.Enums;
+using ValheimVehicles.Vehicles.Structs;
 
 namespace ValheimVehicles.Vehicles.Controllers;
 
@@ -59,7 +58,7 @@ public class CacheController : MonoBehaviour
       sb.AppendLine($"    Interval: {cacheValue.IntervalInSeconds} seconds");
       sb.AppendLine($"    Is Cached: {cacheValue.IsCached}");
       sb.AppendLine(
-        $"    Cached Value: {cacheValue.GetCachedValue()}"); // Assuming Character can be null; replace with valid instance if needed
+        $"    Cached Value: {cacheValue.CachedValue}"); // Assuming Character can be null; replace with valid instance if needed
     }
 
     return sb.ToString();
