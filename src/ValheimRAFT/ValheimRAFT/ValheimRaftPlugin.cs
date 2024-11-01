@@ -28,6 +28,7 @@ using ValheimVehicles.Propulsion.Sail;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ZdoWatcher;
+using Zolantris.Shared;
 using Zolantris.Shared.BepInExAutoDoc;
 using Logger = Jotunn.Logger;
 
@@ -523,6 +524,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public void Awake()
   {
     Instance = this;
+    gameObject.AddComponent<BatchedLogger>();
+
     CreateConfig();
     PatchController.Apply(HarmonyGuid);
 

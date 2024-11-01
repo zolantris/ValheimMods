@@ -7,6 +7,7 @@ using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimVehicles.Config;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Patches;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Enums;
@@ -243,7 +244,7 @@ public class VehicleOnboardController : MonoBehaviour
       if (!exists) return;
       RemoveCharacter(character);
       character.InNumShipVolumes--;
-      Character_WaterPatches.UpdateWaterDepth(character);
+      WaterZoneHelper.UpdateWaterDepth(character);
       return;
     }
 
@@ -263,7 +264,7 @@ public class VehicleOnboardController : MonoBehaviour
       }
     }
 
-    Character_WaterPatches.UpdateWaterDepth(character);
+    WaterZoneHelper.UpdateWaterDepth(character);
   }
 
   /// <summary>

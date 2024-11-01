@@ -94,6 +94,18 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CreativeModeColliderComponent.cs">
             <Link>Components\CreativeModeCompnent.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Helpers\WaterZoneHelper.cs">
+            <Link>ValheimVehicles.Helpers\WaterZoneHelper.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleCacheController.cs">
+            <Link>Controllers\VehicleCacheController.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleGameCacheComponent.cs">
+            <Link>Components\VehicleCacheController.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\CacheController.cs">
+            <Link>Controllers\CacheController.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup>
         <Compile Include="ValheimRAFT.Config\IConfigSection.cs"/>

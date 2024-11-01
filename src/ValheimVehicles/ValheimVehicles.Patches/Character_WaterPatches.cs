@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Config;
@@ -6,25 +7,24 @@ using ValheimVehicles.LayerUtils;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Controllers;
+using Zolantris.Shared;
 using Logger = Jotunn.Logger;
+using ValheimVehicles.Helpers;
 
 namespace ValheimVehicles.Patches;
 
+/// <summary>
+/// Just WaterPatches, please reference WaterZoneHelpers for most of the logic
+/// </summary>
 public class Character_WaterPatches
 {
-  // Allows player model to be inside bound collider
-  internal static float PlayerOffset = 0f;
-  private static WaterVolume? _previousWaterVolume = null;
-
-  // Patches
-
   [HarmonyPatch(typeof(Character), nameof(Character.InWater))]
   [HarmonyPostfix]
   public static void InWater(Character __instance, bool __result)
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
-    SetIsUnderWaterInVehicle(__instance, ref __result);
+    WaterZoneHelper.SetIsUnderWaterInVehicle(__instance, ref __result);
   }
 
   /// <summary>
@@ -82,6 +82,7 @@ public class Character_WaterPatches
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return true;
+    if (!WaterConfig.IsAllowedUnderwater(__instance)) return true;
 
     var data = VehicleOnboardController.GetOnboardCharacterData(__instance);
     // if (data?.OnboardController is null) ;
@@ -93,35 +94,10 @@ public class Character_WaterPatches
     __instance.m_cashedInLiquidDepth = 0.0f;
 
     var liquidDepth =
-      GetLiquidDepthFromBounds(data!.OnboardController!, __instance);
-    UpdateLiquidDepthValues(__instance, liquidDepth);
+      WaterZoneHelper.GetLiquidDepthFromBounds(data?.OnboardController,
+        __instance);
+    WaterZoneHelper.UpdateLiquidDepthValues(__instance, liquidDepth);
     return false;
-  }
-
-  private static bool HasShipUnderneath(Character character)
-  {
-    var maxDistance =
-      Mathf.Clamp(character.transform.position.y, 10, 100); // Adjust as needed
-    var results = new RaycastHit[5];
-    var size = Physics.RaycastNonAlloc(character.transform.position,
-      Vector3.down, results, maxDistance, LayerMask.GetMask("piece"));
-
-    var isValid = false;
-    // Perform the raycast
-    if (size > 0)
-    {
-      for (var i = 0; i < size; i++)
-      {
-        var resultItem = results[i];
-        var piecesController = resultItem.transform.root
-          .GetComponent<VehiclePiecesController>();
-        if (piecesController)
-        {
-          isValid = true;
-          break;
-        }
-      }
-    }
   }
 
   [HarmonyPatch(typeof(Character), nameof(Character.InLiquid))]
@@ -131,7 +107,7 @@ public class Character_WaterPatches
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
-    SetIsUnderWaterInVehicle(__instance, ref __result);
+    WaterZoneHelper.SetIsUnderWaterInVehicle(__instance, ref __result);
   }
 
   [HarmonyPatch(typeof(Character), nameof(Character.InTar))]
@@ -155,7 +131,7 @@ public class Character_WaterPatches
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
-    IsInLiquidSwimDepth(__instance, ref __result);
+    WaterZoneHelper.IsInLiquidSwimDepth(__instance, ref __result);
   }
 
   [HarmonyPatch(typeof(Character), nameof(Character.InLiquidSwimDepth),
@@ -166,20 +142,7 @@ public class Character_WaterPatches
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
-    IsInLiquidSwimDepth(__instance, ref __result);
-  }
-
-  public static void IsInLiquidSwimDepth(Character character, ref bool result)
-  {
-    if (WaterConfig.UnderwaterAccessMode.Value ==
-        WaterConfig.UnderwaterAccessModeType.Disabled) return;
-
-    if (!WaterConfig.IsAllowedUnderwater(character)) return;
-    if (WaterZoneController.IsCharacterInWaterFreeZone(character))
-    {
-      result = false;
-      character.m_swimTimer = 999f;
-    }
+    WaterZoneHelper.IsInLiquidSwimDepth(__instance, ref __result);
   }
 
   /// <summary>
@@ -202,250 +165,9 @@ public class Character_WaterPatches
       return true;
     }
 
-    var success = UpdateLiquidDepth(__instance, level, type);
+    var success = WaterZoneHelper.UpdateLiquidDepth(__instance, level, type);
     // needs to return false since we are handling this.
     var handled = !success;
     return handled;
-  }
-
-  // helpers
-
-  // the vehicle onboard collider controls the water level for players. So they can go below sea level
-  public static void UpdateLiquidDepthValues(Character character,
-    float liquidLevel, LiquidType liquidType = LiquidType.Water,
-    bool cacheBust = false)
-  {
-    switch (liquidType)
-    {
-      case LiquidType.Water:
-        character.m_waterLevel = liquidLevel;
-        if (character.m_tarLevel > character.m_waterLevel &&
-            WaterZoneController.IsCharacterInWaterFreeZone(character))
-        {
-          character.m_tarLevel = -10000f;
-        }
-
-        break;
-      case LiquidType.Tar:
-        break;
-      case LiquidType.All:
-        break;
-      default:
-        throw new ArgumentOutOfRangeException(nameof(liquidType), liquidType,
-          null);
-    }
-
-    character.m_liquidLevel = Mathf.Max(
-      WaterConfig.UnderwaterMaxDiveDepth.Value,
-      liquidLevel);
-
-    if (cacheBust)
-    {
-      character.m_cashedInLiquidDepth = 0f;
-    }
-
-    GameCameraPatch.RequestUpdate();
-  }
-
-
-  public static bool UpdateWaterDepth(Character character)
-  {
-    if (WaterConfig.UnderwaterAccessMode.Value ==
-        WaterConfig.UnderwaterAccessModeType.Disabled) return false;
-
-    var waterHeight = Floating.GetWaterLevel(character.transform.position,
-      ref _previousWaterVolume);
-    return UpdateLiquidDepth(character, waterHeight, LiquidType.Water);
-  }
-
-
-  private static float _currentDepth; // Current smoothed depth
-  private static float _smoothDepthVelocity; // Velocity for SmoothDamp
-
-  private static float GetDepthFromOnboardCollider(Character character,
-    float currentDepth, Collider onboardCollider)
-  {
-    var isValid = HasShipUnderneath(character);
-
-    // Check the difference between current depth and onboard collider.
-    if (isValid)
-    {
-      var boundsInWater =
-        Mathf.Min(
-          onboardCollider.transform.position.y -
-          onboardCollider.bounds.extents.y, currentDepth);
-      return RoundToNearestMultipleOfThree(
-        Mathf.Clamp(boundsInWater, 2f, currentDepth));
-    }
-
-    return 0f;
-    // return RoundToNearestMultipleOfThree(currentDepth);
-  }
-
-  public static float RoundToNearestMultipleOfThree(float value)
-  {
-    return Mathf.Round(value / 3f) * 3f;
-  }
-
-  public static float SmoothDepthUpdate(float targetDepth, float smoothTime)
-  {
-    // Smooth the transition to the target depth over time
-    _currentDepth = Mathf.SmoothDamp(_currentDepth, targetDepth,
-      ref _smoothDepthVelocity, smoothTime);
-    return _currentDepth;
-  }
-
-  // private static float GetDepthFromOnboardCollider(Character character,
-  //   float currentDepth, Collider onboardCollider)
-  // {
-  //   var maxDistance =
-  //     Mathf.Clamp(character.transform.position.y, 10,
-  //       100); // You can set this to a specific value if needed
-  //   var results = new RaycastHit[5];
-  //   var size = Physics.RaycastNonAlloc(character.transform.position,
-  //     Vector3.down, results, maxDistance, LayerMask.GetMask("piece"));
-  //
-  //
-  //   var isValid = false;
-  //   // Perform the raycast
-  //   if (size > 0)
-  //   {
-  //     for (var i = 0; i < size; i++)
-  //     {
-  //       var resultItem = results[i];
-  //       var piecesController = resultItem.transform.root
-  //         .GetComponent<VehiclePiecesController>();
-  //       if (piecesController)
-  //       {
-  //         isValid = true;
-  //         break;
-  //       }
-  //     }
-  //   }
-  //
-  //   // may have to check the difference between current depth and onboard collider.
-  //   if (isValid)
-  //   {
-  //     var boundsInWater = Mathf.Min(onboardCollider.transform.position.y -
-  //                                   onboardCollider.bounds.extents.y,
-  //       currentDepth);
-  //     return Mathf.Clamp(onboardCollider.bounds.min.y, 2f, currentDepth);
-  //   }
-  //
-  //   return currentDepth;
-  // }
-
-  public static bool UpdateLiquidDepth(Character character,
-    float level,
-    LiquidType type = LiquidType.Water)
-  {
-    if (WaterConfig.UnderwaterAccessMode.Value ==
-        WaterConfig.UnderwaterAccessModeType.Everywhere)
-    {
-      // we do not need to set liquid level to anything besides 0
-      // 2 is swim level, so higher allows for swimming in theory
-      // todo confirm this works
-      UpdateLiquidDepthValues(character, type == LiquidType.Water ? 3f : level,
-        type);
-      return true;
-    }
-
-    if (WaterConfig.UnderwaterAccessMode.Value ==
-        WaterConfig.UnderwaterAccessModeType.DEBUG_WaterZoneOnly)
-    {
-      var isInWaterFreeZone =
-        WaterZoneController.IsCharacterInWaterFreeZone(character);
-      if (!isInWaterFreeZone) return false;
-      // setting to 0 depth for water free zone. Might be inaccurate for a partial underwater base...will fix in future
-      UpdateLiquidDepthValues(character, 0f, type);
-      return true;
-    }
-
-    if (WaterConfig.UnderwaterAccessMode.Value !=
-        WaterConfig.UnderwaterAccessModeType.OnboardOnly)
-      return false;
-
-    float liquidDepth = 0;
-    var isOnVehicle =
-      VehicleOnboardController.GetCharacterVehicleMovementController(
-        character.GetZDOID(), out var controller);
-
-    // these apparently need to be manually set
-    if (!isOnVehicle || controller?.OnboardCollider?.bounds == null)
-    {
-      // var waterHeight = Floating.GetWaterLevel(character.transform.position,
-      //   ref _previousWaterVolume);
-
-      UpdateLiquidDepthValues(character, level);
-      return true;
-    }
-
-    if (WaterConfig.DEBUG_HasLiquidDepthOverride.Value)
-    {
-      liquidDepth = WaterConfig.DEBUG_LiquidDepthOverride.Value;
-    }
-    else
-    {
-      if (WaterConfig.UnderwaterAccessMode.Value ==
-          WaterConfig.UnderwaterAccessModeType.OnboardOnly)
-      {
-        liquidDepth =
-          GetDepthFromOnboardCollider(character, level,
-            controller.OnboardCollider);
-      }
-    }
-
-    // return false here as a safety measure and reset caches
-    if (Mathf.Approximately(liquidDepth, 0f))
-    {
-      // var waterHeight = Floating.GetWaterLevel(character.transform.position,
-      //   ref _previousWaterVolume);
-      // UpdateLiquidDepthValues(character, waterHeight);
-
-      return true;
-    }
-
-    UpdateLiquidDepthValues(character, liquidDepth);
-    return true;
-  }
-
-  /// <summary>
-  /// Collider is centered by world position. We need to subtract the lowest position to get the value of the lowest point for water.
-  /// </summary>
-  /// <param name="controller"></param>
-  public static float GetLiquidDepthFromBounds(
-    VehicleOnboardController? controller, Character character)
-  {
-    if (WaterConfig.DEBUG_HasLiquidDepthOverride.Value)
-    {
-      return WaterConfig.DEBUG_LiquidDepthOverride.Value;
-    }
-
-    var waterHeight = Floating.GetWaterLevel(character.transform.position,
-      ref _previousWaterVolume);
-
-    if (controller?.OnboardCollider?.bounds == null)
-      return waterHeight;
-
-    return GetDepthFromOnboardCollider(character, waterHeight,
-      controller.OnboardCollider);
-  }
-
-  // ignores other character types, in future might be worth checking for other types too.
-  private static void SetIsUnderWaterInVehicle(Character characterInstance,
-    ref bool result)
-  {
-    // do nothing if false already
-    if (result == false) return;
-    if (WaterConfig.UnderwaterAccessMode.Value ==
-        WaterConfig.UnderwaterAccessModeType.Disabled) return;
-    if (!WaterConfig.IsAllowedUnderwater(characterInstance)) return;
-    var vpcController = characterInstance.transform.root
-      .GetComponent<VehiclePiecesController>();
-    if (!(bool)vpcController) return;
-
-    result = false;
-    VehicleOnboardController.UpdateUnderwaterState(
-      characterInstance, true);
   }
 }

@@ -5,6 +5,7 @@ using HarmonyLib;
 using JetBrains.Annotations;
 using UnityEngine;
 using ValheimVehicles.Config;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Controllers;
@@ -31,7 +32,7 @@ public class Character_Patch
 
   public static bool IsOnboard(Character character)
   {
-    if (VehicleOnboardController.IsCharacterOnboard(character))
+    if ()
     {
       return true;
     }

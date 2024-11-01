@@ -19,4 +19,16 @@ public static class LayerHelpers
     LayerMask.NameToLayer("Ignore Raycast");
 
   public static int CharacterLayer = LayerMask.NameToLayer("character");
+
+  /// <summary>
+  /// Shortcut to combining masks
+  /// </summary>
+  /// <param name="originalMask"></param>
+  /// <param name="layerToAdd"></param>
+  /// <returns></returns>
+  public static LayerMask CombineLayerMask(LayerMask originalMask,
+    int layerToAdd)
+  {
+    return originalMask | (1 << layerToAdd);
+  }
 }

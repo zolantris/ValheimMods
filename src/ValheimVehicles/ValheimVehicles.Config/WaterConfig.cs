@@ -110,6 +110,9 @@ public static class WaterConfig
     }
   }
 
+  public static bool IsDisabled => UnderwaterAccessMode.Value ==
+                                   UnderwaterAccessModeType.Disabled;
+
 
   public static void BindConfig(ConfigFile config)
   {
