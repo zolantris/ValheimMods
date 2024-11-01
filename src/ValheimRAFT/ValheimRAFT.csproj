@@ -106,6 +106,12 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\CacheController.cs">
             <Link>Controllers\CacheController.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Enums\GameCacheValue.cs">
+            <Link>Enums\GameCacheValue.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Structs\GameCacheValue.cs">
+            <Link>Structs\GameCacheValue.cs</Link>
+        </Compile>
     </ItemGroup>
     <ItemGroup>
         <Compile Include="ValheimRAFT.Config\IConfigSection.cs"/>

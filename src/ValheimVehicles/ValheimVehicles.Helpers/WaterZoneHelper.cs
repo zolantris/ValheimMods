@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using ValheimVehicles.Attributes;
 using ValheimVehicles.Config;
 using ValheimVehicles.Patches;
 using ValheimVehicles.Vehicles;
@@ -29,11 +30,21 @@ public static class WaterZoneHelper
     }
   }
 
-  [GameCacheValue]
+  /// <summary>
+  /// Super optimized cached way to get onboard status without thrashing the game.
+  /// </summary>
+  /// <param name="character"></param>
+  /// <returns></returns>
+  [GameCacheValue(name: "IsOnboard", intervalInSeconds: 1f)]
   public static bool IsOnboard(Character character)
   {
-    return CacheController.CachedOnboard.GetValue(character);
+    var isCharacterWithinOnboardCollider =
+      VehicleOnboardController.IsCharacterOnboard(character);
+    var isCharacterStandingOnVehicle =
+      HasShipUnderneath(character);
+    return isCharacterWithinOnboardCollider && isCharacterStandingOnVehicle;
   }
+
 
   [MeasureTime]
   public static bool HasShipUnderneath(Character character)

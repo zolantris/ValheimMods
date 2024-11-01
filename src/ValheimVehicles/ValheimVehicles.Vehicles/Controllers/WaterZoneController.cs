@@ -4,6 +4,7 @@ using System.Linq;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Serialization;
+using ValheimVehicles.Attributes;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.LayerUtils;
@@ -109,6 +110,7 @@ public class WaterZoneController : CreativeModeColliderComponent
   /// <param name="character"></param>
   /// <returns></returns>
   /// <exception cref="ArgumentOutOfRangeException"></exception>
+  [GameCacheValue("")]
   public static bool IsCharacterInWaterFreeZone(Character character)
   {
     return WaterConfig.UnderwaterAccessMode.Value switch

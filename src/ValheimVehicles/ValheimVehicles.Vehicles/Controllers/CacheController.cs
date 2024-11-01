@@ -1,70 +1,78 @@
 using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Text;
 using UnityEngine;
+using ValheimVehicles.Attributes;
 using ValheimVehicles.Helpers;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Vehicles.Enums;
 
 namespace ValheimVehicles.Vehicles.Controllers;
 
-public struct GameCacheValue<TCachedResult, TParams>(
-  string name,
-  float intervalInSeconds,
-  Func<TParams, TCachedResult?> callback)
-{
-  public string Name { get; set; } = name;
-  private float IntervalInSeconds { get; set; } = intervalInSeconds;
-  public bool IsCached { get; set; } = false;
-  private float _timer { get; set; } = 0f;
-  private TCachedResult? _cachedValue = default(TCachedResult);
-
-  private Func<TParams, TCachedResult?> GetValueUncached { get; set; } =
-    callback;
-
-  public TCachedResult? GetValue(TParams @params)
-  {
-    return IsCached ? _cachedValue : GetValueUncached(@params);
-  }
-
-  private void ResetCache()
-  {
-    IsCached = false;
-  }
-
-  public void SyncCache(float deltaSeconds)
-  {
-    _timer += deltaSeconds;
-    if (!(_timer >= IntervalInSeconds)) return;
-
-    ResetCache();
-  }
-
-  private void SetCached()
-  {
-    IsCached = true;
-  }
-}
-
+/// <summary>
+/// This uses attributes to create a cache list and then each method that is calling will have a cache value and will not update within the time interval.
+/// - This allows for all the cached logic to exist outside of this cache controller allowing for more organization.
+/// </summary>
 public class CacheController : MonoBehaviour
 {
-  private static bool IsOnboardUncached(Character character)
+  private Dictionary<string, GameCacheValue<bool, Character>> _cacheValues =
+    new();
+
+  private void Awake()
   {
-    var isCharacterWithinOnboardCollider =
-      VehicleOnboardController.IsCharacterOnboard(character);
-    var isCharacterStandingOnVehicle =
-      WaterZoneHelper.HasShipUnderneath(character);
-    return isCharacterWithinOnboardCollider && isCharacterStandingOnVehicle;
+    // Use reflection to find all methods decorated with the GameCacheValueAttribute
+    var methods = GetType().GetMethods(System.Reflection.BindingFlags.Static |
+                                       System.Reflection.BindingFlags.Public);
+    foreach (var method in methods)
+    {
+      var attribute = method.GetCustomAttribute<GameCacheValueAttribute>();
+      if (attribute != null)
+      {
+        string methodName = method.Name;
+        string className = method.DeclaringType?.Name;
+        string name =
+          attribute.Name ??
+          $"{className}.{methodName}"; // Default to "<ClassName>.<MethodName>"
+
+        // Create a GameCacheValue for each decorated method
+        var cacheValue = new GameCacheValue<bool, Character>(
+          name,
+          attribute.IntervalInSeconds,
+          (Func<Character, bool>)Delegate.CreateDelegate(
+            typeof(Func<Character, bool>), method)
+        );
+
+        _cacheValues[name] = cacheValue;
+      }
+    }
   }
 
-  public static GameCacheValue<bool, Character> CachedOnboard =
-    new("Onboard", 1f, IsOnboardUncached);
+  public string ListCachedMethods()
+  {
+    var sb = new StringBuilder();
+    sb.AppendLine("Cached Methods:");
 
-  /// <summary>
-  /// Syncs caches per fixed update. This can be much more performant that any other callbacks of values that are not in fixed update
-  /// </summary>
+    foreach (var kvp in _cacheValues)
+    {
+      var cacheValue = kvp.Value;
+      sb.AppendLine($"  Name: {cacheValue.Name}");
+      sb.AppendLine($"    Interval: {cacheValue.IntervalInSeconds} seconds");
+      sb.AppendLine($"    Is Cached: {cacheValue.IsCached}");
+      sb.AppendLine(
+        $"    Cached Value: {cacheValue.GetCachedValue()}"); // Assuming Character can be null; replace with valid instance if needed
+    }
+
+    return sb.ToString();
+  }
+
   private void FixedUpdate()
   {
     if (ZNet.m_instance == null) return;
     if (ZNetView.m_forceDisableInit) return;
 
-    CachedOnboard.SyncCache(Time.deltaTime);
+    foreach (var cacheValue in _cacheValues.Values)
+    {
+      cacheValue.SyncCache(Time.deltaTime);
+    }
   }
 }
