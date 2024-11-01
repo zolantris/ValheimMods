@@ -27,6 +27,18 @@
       <Path>src/YggdrassilTerrain</Path>
       <Path>valheim.targets</Path>
     </explicitIncludes>
-    <explicitExcludes />
+    <explicitExcludes>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Alternative_Prefabs</Path>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/BlenderImports</Path>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/ExternalAssets</Path>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons</Path>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons</Path>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/IconsDeprecated</Path>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material</Path>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs</Path>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene</Path>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Shaders</Path>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Texture</Path>
+    </explicitExcludes>
   </component>
 </project>
