@@ -1,0 +1,96 @@
+name: 🐞 Bug Report
+description: Report an unwanted behavior in ValheimRAFT, ZDOWatcher, DynamicLocations or other mods.
+labels: [ bug ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your bug report! 📝
+        This report is for issues **in ValheimRAFT**. If your issue is with another mod, please contact the mod developer first.
+
+  - type: dropdown
+    id: affected_mod
+    attributes:
+      label: Affected Mod
+      description: Select the mod related to this issue.
+      options:
+        - ValheimRAFT
+        - DynamicLocations
+        - ZDOWatcher
+        - YggdrasilTerrain
+        - Other
+
+  - type: textarea
+    id: basic_description
+    attributes:
+      label: What happened? 🤔
+      description: Briefly describe the bug.
+      placeholder: Describe the issue you see!
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce 🔄
+      description: If applicable, list the steps to reproduce the issue.
+      placeholder: |
+        1. In this game...
+        2. With this config...
+        3. Do this...
+        4. See the error...
+    validations:
+      required: false
+
+  - type: textarea
+    id: vehicle_info
+    attributes:
+      label: Vehicle Info 🚗
+      description: Provide output from `vehicle report-info`. Press F5 to open the console and type "vehicle report-info".
+      placeholder: |
+        `vehicle report-info` logs provided. I understand this issue may be deprioritized.
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log Outputs 📜
+      placeholder: No logs provided. I understand this issue may be deprioritized.
+      description: |
+        Please paste relevant log outputs. You can use:
+        
+        - BepInEx Log: `BepInEx/LogOutput.log`
+        - Preloader Log: `preloader_<date>.log`
+        - Unity Player Log: `output_log.txt` or `Player.log`
+        - BepInEx console output (if enabled)
+        
+        Paste only the logs; they will be formatted into code blocks.
+      render: txt
+    validations:
+      required: true
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment 🌍
+      description: |
+        Provide details about your setup:
+        - **OS**: Windows 11 | Ubuntu 20.04
+        - **Graphics**: DX11 (or Vulkan)
+        - **BepInEx**: 5.4.2202
+        - **Jotunn**: 2.15.2
+        - **ValheimRAFT**: Major.Minor.Patch
+        
+        Check the ValheimRAFT version in `zolantris-ValheimRAFT/ValheimRAFT.dll` or from your download source.
+      value: |
+        OS:
+        - **OS**: Windows 11 | Ubuntu 20.04
+        - **Graphics**: DX11 (or Vulkan)
+        Mods:
+        - **BepInEx**: 5.4.2202
+        - **Jotunn**: 2.15.2
+        - **ValheimRAFT**: Major.Minor.Patch
+      render: markdown
+    validations:
+      required: true

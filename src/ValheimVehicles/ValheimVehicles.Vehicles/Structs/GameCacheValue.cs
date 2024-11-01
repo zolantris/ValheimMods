@@ -11,36 +11,33 @@ public struct GameCacheValue<TCachedResult, TParams>(
   Func<TParams, TCachedResult?> callback)
 {
   public string Name { get; set; } = name;
-  private float IntervalInSeconds { get; set; } = intervalInSeconds;
+  internal float IntervalInSeconds { get; set; } = intervalInSeconds;
   public bool IsCached { get; set; } = false;
   private float _timer { get; set; } = 0f;
-  private TCachedResult? _cachedValue = default;
+  internal TCachedResult? CachedValue = default;
 
   private Func<TParams, TCachedResult?> GetValueUncached { get; set; } =
     callback;
 
-  // Retrieves the cached value or computes it if not cached
   public TCachedResult? GetValue(TParams @params)
   {
-    return IsCached ? _cachedValue : GetValueUncachedAndCache(@params);
+    return IsCached ? CachedValue : GetValueUncachedAndCache(@params);
   }
 
-  // Retrieves the value, optionally flushing the cache
   public TCachedResult? GetValue(TParams @params, bool flushCache)
   {
     if (flushCache)
     {
-      // Bypass cache and return fresh value
-      return GetValueUncachedAndCache(@params); // Always retrieves fresh value
+      return GetValueUncachedAndCache(@params);
     }
 
-    return GetValue(@params); // Regular cached call
+    return GetValue(@params);
   }
 
   private TCachedResult? GetValueUncachedAndCache(TParams @params)
   {
     var value = GetValueUncached(@params);
-    SetCached(value); // Cache the new value
+    SetCached(value);
     return value;
   }
 
@@ -60,7 +57,7 @@ public struct GameCacheValue<TCachedResult, TParams>(
 
   private void SetCached(TCachedResult? value)
   {
-    _cachedValue = value;
+    CachedValue = value;
     IsCached = true;
   }
 }

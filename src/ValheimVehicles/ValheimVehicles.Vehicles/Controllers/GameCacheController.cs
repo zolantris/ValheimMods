@@ -12,38 +12,62 @@ namespace ValheimVehicles.Vehicles.Controllers;
 /// This uses attributes to create a cache list and then each method that is calling will have a cache value and will not update within the time interval.
 /// - This allows for all the cached logic to exist outside of this cache controller allowing for more organization.
 /// </summary>
-public class CacheController : MonoBehaviour
+public class GameCacheController : MonoBehaviour
 {
-  private Dictionary<string, GameCacheValue<bool, Character>> _cacheValues =
+  private Dictionary<string, GameCacheValue<object, object>> _cacheValues =
     new();
 
   private void Awake()
   {
-    // Use reflection to find all methods decorated with the GameCacheValueAttribute
-    var methods = GetType().GetMethods(System.Reflection.BindingFlags.Static |
-                                       System.Reflection.BindingFlags.Public);
-    foreach (var method in methods)
+    // Use reflection to find all methods with the GameCacheValue attribute
+    foreach (MethodInfo method in GetType().GetMethods(BindingFlags.Instance |
+               BindingFlags.Public | BindingFlags.NonPublic))
     {
       var attribute = method.GetCustomAttribute<GameCacheValueAttribute>();
       if (attribute != null)
       {
-        string methodName = method.Name;
-        string className = method.DeclaringType?.Name;
-        string name =
-          attribute.Name ??
-          $"{className}.{methodName}"; // Default to "<ClassName>.<MethodName>"
-
-        // Create a GameCacheValue for each decorated method
-        var cacheValue = new GameCacheValue<bool, Character>(
-          name,
-          attribute.IntervalInSeconds,
-          (Func<Character, bool>)Delegate.CreateDelegate(
-            typeof(Func<Character, bool>), method)
-        );
-
-        _cacheValues[name] = cacheValue;
+        // Create a delegate for the method, handling any return type and parameters
+        var parameters = method.GetParameters();
+        if (parameters.Length == 0)
+        {
+          // Handle methods with no parameters
+          var callback =
+            (Func<object>)Delegate.CreateDelegate(typeof(Func<object>), this,
+              method);
+          var cacheValue = CreateCacheValue(attribute.Name,
+            attribute.IntervalInSeconds, callback);
+          _cacheValues[attribute.Name] = cacheValue;
+        }
+        else
+        {
+          // Handle methods with parameters
+          var callbackType =
+            typeof(Func<,>).MakeGenericType(parameters[0].ParameterType,
+              method.ReturnType);
+          var callback = Delegate.CreateDelegate(callbackType, this, method);
+          var cacheValue = CreateCacheValue(attribute.Name,
+            attribute.IntervalInSeconds, callback);
+          _cacheValues[attribute.Name] = cacheValue;
+        }
       }
     }
+  }
+
+  private GameCacheValue<object, object> CreateCacheValue(string name,
+    float intervalInSeconds,
+    Delegate callback)
+  {
+    var cacheValueType = typeof(GameCacheValue<object, object>).MakeGenericType(
+      callback.Method.ReturnType,
+      callback.Method.GetParameters()[0].ParameterType);
+    var cacheValueInstance = Activator.CreateInstance(cacheValueType, name,
+      intervalInSeconds, callback);
+    return (GameCacheValue<object, object>)cacheValueInstance;
+  }
+
+  private void OnDestroy()
+  {
+    _cacheValues.Clear();
   }
 
   public string ListCachedMethods()
