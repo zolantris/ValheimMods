@@ -20,19 +20,50 @@ public class Character_WaterPatches
   [HarmonyPostfix]
   public static void InWater(Character __instance, bool __result)
   {
+    if (WaterConfig.UnderwaterAccessMode.Value ==
+        WaterConfig.UnderwaterAccessModeType.Disabled) return;
     SetIsUnderWaterInVehicle(__instance, ref __result);
   }
 
+  /// <summary>
+  /// Could be mostly a postfix. Can remove the tar effect if it appears this way.
+  /// </summary>
+  /// <param name="__instance"></param>
+  /// <param name="dt"></param>
+  /// <returns></returns>
+  // [HarmonyPatch(typeof(Character), nameof(Character.UpdateWater))]
+  // [HarmonyPrefix]
+  // public static bool Character_UpdateWater(Character __instance, float dt)
+  // {
+  //   if (WaterConfig.UnderwaterAccessMode.Value ==
+  //       WaterConfig.UnderwaterAccessModeType.Disabled) return true;
+  //
+  //   __instance.m_swimTimer += dt;
+  //   float depth = __instance.InLiquidDepth();
+  //   if (__instance.m_canSwim && __instance.InLiquidSwimDepth(depth))
+  //     __instance.m_swimTimer = 0.0f;
+  //   if (!__instance.m_nview.IsOwner() || !__instance.InLiquidWetDepth(depth))
+  //     return false;
+  //
+  //   if ((double)__instance.m_waterLevel > (double)__instance.m_tarLevel)
+  //   {
+  //     __instance.m_seman.AddStatusEffect(SEMan.s_statusEffectWet, true);
+  //     return false;
+  //   }
+  //   else
+  //   {
+  //     if ((double)__instance.m_tarLevel <= (double)__instance.m_waterLevel ||
+  //         __instance.m_tolerateTar)
+  //       return false;
+  //     __instance.m_seman.AddStatusEffect(SEMan.s_statusEffectTared, true);
+  //   }
+  //
+  //   return false;
+  // }
   [HarmonyPatch(typeof(Character), nameof(Character.UpdateWater))]
-  [HarmonyPrefix]
-  public static bool Character_UpdateWater(Character __instance, float dt)
+  [HarmonyPostfix]
+  public static void Character_RemoveThatTar(Character __instance)
   {
-    __instance.m_swimTimer += dt;
-    float depth = __instance.InLiquidDepth();
-    if (__instance.m_canSwim && __instance.InLiquidSwimDepth(depth))
-      __instance.m_swimTimer = 0.0f;
-    if (!__instance.m_nview.IsOwner() || !__instance.InLiquidWetDepth(depth))
-      return false;
     if (WaterConfig.IsAllowedUnderwater(__instance) &&
         VehicleOnboardController.IsCharacterOnboard(__instance))
     {
@@ -40,30 +71,16 @@ public class Character_WaterPatches
       {
         __instance.m_seman.GetStatusEffect(SEMan.s_statusEffectTared);
       }
-
-      return false;
     }
-
-    if ((double)__instance.m_waterLevel > (double)__instance.m_tarLevel)
-    {
-      __instance.m_seman.AddStatusEffect(SEMan.s_statusEffectWet, true);
-      return false;
-    }
-    else
-    {
-      if ((double)__instance.m_tarLevel <= (double)__instance.m_waterLevel ||
-          __instance.m_tolerateTar)
-        return false;
-      __instance.m_seman.AddStatusEffect(SEMan.s_statusEffectTared, true);
-    }
-
-    return false;
   }
 
   [HarmonyPatch(typeof(Character), nameof(Character.CalculateLiquidDepth))]
   [HarmonyPrefix]
   public static bool Character_CalculateLiquidDepth(Character __instance)
   {
+    if (WaterConfig.UnderwaterAccessMode.Value ==
+        WaterConfig.UnderwaterAccessModeType.Disabled) return true;
+
     var data = VehicleOnboardController.GetOnboardCharacterData(__instance);
     if (data?.OnboardController is null) return true;
     if (__instance.IsTeleporting() ||
@@ -85,6 +102,8 @@ public class Character_WaterPatches
   public static void Character_InLiquid(Character __instance,
     ref bool __result)
   {
+    if (WaterConfig.UnderwaterAccessMode.Value ==
+        WaterConfig.UnderwaterAccessModeType.Disabled) return;
     SetIsUnderWaterInVehicle(__instance, ref __result);
   }
 
@@ -92,6 +111,9 @@ public class Character_WaterPatches
   [HarmonyPrefix]
   public static void Character_InTar(Character __instance, ref bool __result)
   {
+    if (WaterConfig.UnderwaterAccessMode.Value ==
+        WaterConfig.UnderwaterAccessModeType.Disabled) return;
+
     if (VehicleOnboardController.IsCharacterOnboard(__instance))
     {
       // __instance.m_tarLevel = -10000f;
@@ -104,6 +126,8 @@ public class Character_WaterPatches
   public static void Character_InLiquidSwimDepth1(Character __instance,
     ref bool __result)
   {
+    if (WaterConfig.UnderwaterAccessMode.Value ==
+        WaterConfig.UnderwaterAccessModeType.Disabled) return;
     IsInLiquidSwimDepth(__instance, ref __result);
   }
 
@@ -113,6 +137,8 @@ public class Character_WaterPatches
   public static void Character_InLiquidSwimDepth2(Character __instance,
     ref bool __result)
   {
+    if (WaterConfig.UnderwaterAccessMode.Value ==
+        WaterConfig.UnderwaterAccessModeType.Disabled) return;
     IsInLiquidSwimDepth(__instance, ref __result);
   }
 

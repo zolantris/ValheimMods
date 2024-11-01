@@ -1,484 +1,498 @@
 
 ## Debug
 
-### Enable Sentry Metrics (requires sentryUnityPlugin) 
+### Enable Sentry Metrics (requires sentryUnityPlugin)
 - Description: Enable sentry debug logging. Requires sentry logging plugin installed to work. Sentry Logging plugin will make it easier to troubleshoot raft errors and detect performance bottlenecks. The bare minimum is collected, and only data related to ValheimRaft. See https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT#logging-metrics for more details about what is collected
 - Default Value: true
 
-### Debug logging for Vehicle/Raft 
+### Debug logging for Vehicle/Raft
 - Description: Outputs more debug logs for the Vehicle components. Useful for troubleshooting errors, but will spam logs
 - Default Value: false
 
 ## Deprecated Config
 
-### Initial Floor Height (V1 raft) 
+### Initial Floor Height (V1 raft)
 - Description: Allows users to set the raft floor spawn height. 0.45 was the original height in 1.4.9 but it looked a bit too low. Now people can customize it
 - Default Value: 0.6
 
 ## Config
 
-### pluginFolderName 
+### pluginFolderName
 - Description: Users can leave this empty. If they do not, the mod will attempt to match the folder string. Allows users to set the folder search name if their manager renames the folder, r2modman has a fallback case added to search for zolantris-ValheimRAFTDefault search values are an ordered list first one is always matching non-empty strings from this pluginFolderName.Folder Matches are:  zolantris-ValheimRAFT, zolantris-ValheimRAFT Zolantris-ValheimRAFT, and ValheimRAFT
-- Default Value: 
+- Default Value:
 
 ## Debug
 
-### RemoveStartMenuBackground 
+### RemoveStartMenuBackground
 - Description: Removes the start scene background, only use this if you want to speedup start time
 - Default Value: true
 
 ## Server config
 
-### Protect Vehicle pieces from breaking on Error 
+### Protect Vehicle pieces from breaking on Error
 - Description: Protects against crashes breaking raft/vehicle initialization causing raft/vehicles to slowly break pieces attached to it. This will make pieces attached to valid raft ZDOs unbreakable from damage, but still breakable with hammer
 - Default Value: true
 
-### AdminsCanOnlyBuildRaft 
+### AdminsCanOnlyBuildRaft
 - Description: ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart
 - Default Value: false
 
-### AllowOldV1RaftRecipe 
+### AllowOldV1RaftRecipe
 - Description: Allows the V1 Raft to be built, this Raft is not performant, but remains in >=v2.0.0 as a Fallback in case there are problems with the new raft
 - Default Value: false
 
-### AllowExperimentalPrefabs 
+### AllowExperimentalPrefabs
 - Description: Allows >=v2.0.0 experimental prefabs such as Iron variants of slabs, hulls, and ribs. They do not look great so they are disabled by default
 - Default Value: false
 
 ## Rendering
 
-### Force Ship Owner Piece Update Per Frame 
+### Force Ship Owner Piece Update Per Frame
 - Description: Forces an update during the Update sync of unity meaning it fires every frame for the Ship owner who also owns Physics. This will possibly make updates better for non-boat owners. Noting that the boat owner is determined by the first person on the boat, otherwise the game owns it.
 - Default Value: false
 
 ## Server config
 
-### ServerRaftUpdateZoneInterval 
+### ServerRaftUpdateZoneInterval
 - Description: Allows Server Admin control over the update tick for the RAFT location. Larger Rafts will take much longer and lag out players, but making this ticket longer will make the raft turn into a box from a long distance away.
 - Default Value: 5
 
-### MakeAllPiecesWaterProof 
+### MakeAllPiecesWaterProof
 - Description: Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.
 - Default Value: true
 
-### AllowFlight 
+### AllowFlight
 - Description: Allow the raft to fly (jump\crouch to go up and down)
 - Default Value: true
 
-### AllowCustomRudderSpeeds 
+### AllowCustomRudderSpeeds
 - Description: Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed. See advanced section for the actual speed settings.
 - Default Value: true
 
 ## Config
 
-### RaftCreativeHeight 
+### RaftCreativeHeight
 - Description: Sets the raftcreative command height, raftcreative is relative to the current height of the ship, negative numbers will sink your ship temporarily
 - Default Value: 5
 
 ## Floatation
 
-### Only Use Hulls For Floatation Collisions 
+### Only Use Hulls For Floatation Collisions
 - Description: Makes the Ship Hull prefabs be the sole source of collisions, meaning ships with wider tops will not collide at bottom terrain due to their width above water. Requires a Hull, without a hull it will previous box around all items in ship
 - Default Value: true
 
 ## Config
 
-### AnchorKeyboardShortcut 
+### AnchorKeyboardShortcut
 - Description: Anchor keyboard hotkey. Only applies to keyboard
 - Default Value: LeftShift
 
 ## Vehicles
 
-### HullFloatationColliderLocation 
+### HullFloatationColliderLocation
 - Description: Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20
 - Default Value: Center
 
-### HullFloatation Custom Offset 
+### HullFloatation Custom Offset
 - Description: Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
 - Default Value: 7.13615
 
-### EnableExactVehicleBounds 
+### EnableExactVehicleBounds
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible
-- Default Value: false
+- Default Value: true
 
 ## Debug
 
-### ShowShipState 
-- Description: 
+### ShowShipState
+- Description:
 - Default Value: true
 
 ## Propulsion
 
-### MaxPropulsionSpeed 
+### MaxPropulsionSpeed
 - Description: Sets the absolute max speed a ship can ever hit. This is capped on the vehicle, so no forces applied will be able to exceed this value. 20-30f is safe, higher numbers could let the ship fail off the map
 - Default Value: 200
 
-### MaxSailSpeed 
+### MaxSailSpeed
 - Description: Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.
 - Default Value: 163.4272
 
-### MassPercentage 
+### MassPercentage
 - Description: Sets the mass percentage of the ship that will slow down the sails
 - Default Value: 10
 
-### SpeedCapMultiplier 
+### SpeedCapMultiplier
 - Description: Sets the speed at which it becomes significantly harder to gain speed per sail area
 - Default Value: 3
 
-### Rudder Back Speed 
+### Rudder Back Speed
 - Description: Set the Back speed of rudder, this will apply with sails
 - Default Value: 5
 
-### Rudder Slow Speed 
+### Rudder Slow Speed
 - Description: Set the Slow speed of rudder, this will apply with sails
 - Default Value: 5
 
-### Rudder Half Speed 
+### Rudder Half Speed
 - Description: Set the Half speed of rudder, this will apply with sails
 - Default Value: 50
 
-### Rudder Full Speed 
+### Rudder Full Speed
 - Description: Set the Full speed of rudder, this will apply with sails
 - Default Value: 20
 
-### HasShipWeightCalculations 
+### HasShipWeightCalculations
 - Description: enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less
 - Default Value: true
 
-### HasShipContainerWeightCalculations 
+### HasShipContainerWeightCalculations
 - Description: enables ship weight calculations for containers which affects sail-force (sailing speed) and future propulsion calculations. Makes ships with lots of containers require more sails
 - Default Value: false
 
 ## Debug
 
-### HasDebugSails 
+### HasDebugSails
 - Description: Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only.
 - Default Value: false
 
 ## Propulsion
 
-### EnableCustomPropulsionConfig 
+### EnableCustomPropulsionConfig
 - Description: Enables all custom propulsion values
 - Default Value: false
 
-### SailCustomAreaTier1Multiplier 
+### SailCustomAreaTier1Multiplier
 - Description: Manual sets the sail wind area multiplier the custom tier1 sail. Currently there is only 1 tier
 - Default Value: 0.5
 
-### SailTier1Area 
+### SailTier1Area
 - Description: Manual sets the sail wind area of the tier 1 sail.
 - Default Value: 10
 
-### SailTier2Area 
+### SailTier2Area
 - Description: Manual sets the sail wind area of the tier 2 sail.
 - Default Value: 20
 
-### SailTier3Area 
+### SailTier3Area
 - Description: Manual sets the sail wind area of the tier 3 sail.
 - Default Value: 30
 
-### SailTier4Area 
+### SailTier4Area
 - Description: Manual sets the sail wind area of the tier 4 sail.
 - Default Value: 50
 
-### Flight Vertical Continues UntilToggled 
+### Flight Vertical Continues UntilToggled
 - Description: Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button
 - Default Value: false
 
-### Only allow rudder speeds during flight 
+### Only allow rudder speeds during flight
 - Description: Flight allows for different rudder speeds, only use those and ignore sails
 - Default Value: false
 
 ## Graphics
 
-### Sails Fade In Fog 
+### Sails Fade In Fog
 - Description: Allow sails to fade in fog. Unchecking this will be slightly better FPS but less realistic. Should be fine to keep enabled
 - Default Value: true
 
 ## Sounds
 
-### Ship Sailing Sounds 
+### Ship Sailing Sounds
 - Description: Toggles the ship sail sounds.
 - Default Value: true
 
-### Ship Wake Sounds 
+### Ship Wake Sounds
 - Description: Toggles Ship Wake sounds. Can be pretty loud
 - Default Value: true
 
-### Ship In-Water Sounds 
+### Ship In-Water Sounds
 - Description: Toggles ShipInWater Sounds, the sound of the hull hitting water
 - Default Value: true
 
 ## Patches
 
-### DynamicLocations 
+### DynamicLocations
 - Description: Enables DynamicLocations mod to access ValheimRAFT/Vehicles identifiers.
 - Default Value: true
 
-### ComfyGizmo - Enable Patch 
+### ComfyGizmo - Enable Patch
 - Description: Patches relative rotation allowing for copying rotation and building while the raft is at movement, this toggle is only provided in case patches regress anything in Gizmos and players need a work around.
 - Default Value: false
 
-### ComfyGizmo - Vehicle Creative zero Y rotation 
+### ComfyGizmo - Vehicle Creative zero Y rotation
 - Description: Vehicle/Raft Creative mode will set all axises to 0 for rotation instead keeping the turn axis. Gizmo has issues with rotated vehicles, so zeroing things out is much safer. Works regardless of patch if mod exists
 - Default Value: true
 
-### Vehicles Prevent Pausing 
+### Vehicles Prevent Pausing
 - Description: Prevents pausing on a boat, pausing causes a TON of desync problems and can make your boat crash or other players crash
 - Default Value: true
 
-### Vehicles Prevent Pausing SinglePlayer 
+### Vehicles Prevent Pausing SinglePlayer
 - Description: Prevents pausing on a boat during singleplayer. Must have the Vehicle Prevent Pausing patch as well
 - Default Value: false
 
-### Enable PlanBuild Patches (required to be on if you installed PlanBuild) 
+### Enable PlanBuild Patches (required to be on if you installed PlanBuild)
 - Description: Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT. PlanBuild mod can be found here. https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/
 - Default Value: false
 
 ## Rams
 
-### ramDamageEnabled 
+### ramDamageEnabled
 - Description: Will keep the prefab available for aethetics only, will not do any damage nor will it initialize anything related to damage. Alternatives are using the damage tweaks.
 - Default Value: true
 
-### maximumDamage 
+### maximumDamage
 - Description: Maximum damage for all damages combined. This will throttle any calcs based on each damage value. The throttling is balanced and will fit the ratio of every damage value set. This allows for velocity to increase ram damage but still prevent total damage over specific values
 - Default Value: 200
 
-### maxDamageCap 
+### maxDamageCap
 - Description: enable damage caps
 - Default Value: true
 
-### slashDamage 
+### slashDamage
 - Description: slashDamage for Ram Blades. the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass.
 - Default Value: 0
 
-### bluntDamage 
+### bluntDamage
 - Description: bluntDamage the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass.
 - Default Value: 10
 
-### chopDamage 
+### chopDamage
 - Description: chopDamage for Ram Blades excludes Ram Stakes. the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass.. Will damage trees dependending on tool tier settings
 - Default Value: 50
 
-### pickaxeDamage 
+### pickaxeDamage
 - Description: pickDamage the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass. Will damage rocks as well as other entities
 - Default Value: 20
 
-### pierceDamage 
+### pierceDamage
 - Description: Pierce damage for Ram Stakes. the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass. Will damage rocks as well as other entities
 - Default Value: 20
 
-### percentageDamageToSelf 
+### percentageDamageToSelf
 - Description: Percentage Damage applied to the Ram piece per hit. Number between 0-1.
 - Default Value: 0.01
 
-### AllowContinuousDamage 
+### AllowContinuousDamage
 - Description: Rams will continue to apply damage based on their velocity even after the initial impact
 - Default Value: true
 
-### RamDamageToolTier 
+### RamDamageToolTier
 - Description: allows rams to damage both rocks, ores, and higher tier trees and/or prefabs. Tier 1 is bronze. Setting to 100 will allow damage to all types of materials
 - Default Value: 100
 
-### CanHitCharacters 
+### CanHitCharacters
 - Description: allows rams to hit characters/entities
 - Default Value: true
 
-### CanHitEnemies 
+### CanHitEnemies
 - Description: allows rams to hit enemies
 - Default Value: true
 
-### CanHitFriendly 
+### CanHitFriendly
 - Description: allows rams to hit friendlies
 - Default Value: true
 
-### CanDamageSelf 
+### CanDamageSelf
 - Description: allows rams to be damaged. The values set for the damage will be calculated
 - Default Value: true
 
-### CanHitEnvironmentOrTerrain 
+### CanHitEnvironmentOrTerrain
 - Description: allows rams to hit friendlies
 - Default Value: true
 
-### HitRadius 
+### HitRadius
 - Description: The base ram hit radius area. Stakes are always half the size, this will hit all pieces within this radius, capped between 0.1 and 10 for balance and framerate stability
 - Default Value: 5
 
-### RamHitInterval 
+### RamHitInterval
 - Description: Every X seconds, the ram will apply this damage
 - Default Value: 1
 
-### RamsCanBeRepaired 
+### RamsCanBeRepaired
 - Description: Allows rams to be repaired
 - Default Value: false
 
-### minimumVelocityToTriggerHit 
+### minimumVelocityToTriggerHit
 - Description: Minimum velocity required to activate the ram's damage
 - Default Value: 1
 
-### RamMaxVelocityMultiplier 
+### RamMaxVelocityMultiplier
 - Description: Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.
 - Default Value: 1
 
-### DamageIncreasePercentagePerTier 
+### DamageIncreasePercentagePerTier
 - Description: Damage Multiplier per tier. So far only HardWood (Tier1) Iron (Tier3) available. With base value 1 a Tier 3 mult at 25% additive additional damage would be 1.5. IE (1 * 0.25 * 2 + 1) = 1.5
 - Default Value: 0.25
 
 ## PrefabConfig
 
-### startingPiece 
+### startingPiece
 - Description: Allows you to customize what piece the raft initializes with. Admins only as this can be overpowered.
 - Default Value: Hull4X8
 
-### ropeLadderRunClimbSpeedMult 
+### ropeLadderRunClimbSpeedMult
 - Description: Allows you to customize how fast you can climb a ladder when in run mode
 - Default Value: 2
 
-### ropeLadderHints 
+### ropeLadderHints
 - Description: Shows the controls required to auto ascend/descend and run to speedup ladder
 - Default Value: true
 
 ## Vehicle Debugging
 
-### HasBoatLiquidDepthOverride 
-- Description: Enables liquid depth overrides
-- Default Value: false
-
-### BoatLiquidDepthOverride 
-- Description: Force Overrides the liquid depth for character on boats. Values below -100f will disable it.
-- Default Value: 20
-
-### HasAutoAnchorDelay 
+### HasAutoAnchorDelay
 - Description: For realism, the ship continues even when nobody is onboard. This is meant for debugging logout points but also could be useful for realism
 - Default Value: true
 
-### AutoAnchorDelayTimeInSeconds 
+### AutoAnchorDelayTimeInSeconds
 - Description: For realism, the ship continues for X amount of time until it either unrenders or a player stops it.
 - Default Value: 10
 
-### Always Show Vehicle Colliders 
+### Always Show Vehicle Colliders
 - Description: Automatically shows the vehicle colliders useful for debugging the vehicle
 - Default Value: false
 
-### Vehicle Debug Menu 
+### Vehicle Debug Menu
 - Description: Enable the VehicleDebugMenu. This shows a GUI menu which has a few shortcuts to debugging/controlling vehicles.
 - Default Value: true
 
-### UNSTABLE_PositionAutoFix 
+### UNSTABLE_PositionAutoFix
 - Description: UNSTABLE due to vehicle center point shifting and not being in center of actual vehicle pieces - Automatically moves the vehicle if buried/stuck underground. The close to 0 the closer it will be to teleporting the vehicle above the ground. The higher the number the more lenient it is. Recommended to keep this number above 10. Lower can make the vehicle trigger an infinite loop of teleporting upwards and then falling and re-telporting while gaining velocity
 - Default Value: true
 
-### positionAutoFixThreshold 
+### positionAutoFixThreshold
 - Description: Threshold for autofixing stuck vehicles. Large values are less accurate but smaller values may trigger the autofix too frequently
 - Default Value: 10
 
 ## Debug
 
-### SyncShipPhysicsOnAllClients 
+### SyncShipPhysicsOnAllClients
 - Description: Makes all clients sync physics
 - Default Value: true
 
 ## Propulsion
 
-### VehiclePhysicsMode 
+### VehiclePhysicsMode
 - Description: SyncRigidbody - Accurately syncs physics across clients, it causes jitters during high speed.
-ForceSyncedRigidbody ignores all allowances that toggle SyncRigidbody related to flight. This will require a flight ascend value of 1 otherwise flight will be broken. Use this is there is problems with SyncRigidbody
-DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config that allows the player to smoothly move around the raft at high speeds even if they are not the host. Can cause the ship to glitch with anything that has to do with physics including ramps and other mods that add moving parts that could be added to the boat.
-- Default Value: DesyncedJointRigidbodyBody
+  ForceSyncedRigidbody ignores all allowances that toggle SyncRigidbody related to flight. This will require a flight ascend value of 1 otherwise flight will be broken. Use this is there is problems with SyncRigidbody
+  DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config that allows the player to smoothly move around the raft at high speeds even if they are not the host. Can cause the ship to glitch with anything that has to do with physics including ramps and other mods that add moving parts that could be added to the boat.
+- Default Value: SyncedRigidbody
 
-### turningPowerNoRudder 
+### turningPowerNoRudder
 - Description: Set the base turning power of the steering wheel
 - Default Value: 1
 
-### turningPowerWithRudder 
+### turningPowerWithRudder
 - Description: Set the turning power with a rudder
 - Default Value: 6
 
-### slowAndReverseWithoutControls 
+### slowAndReverseWithoutControls
 - Description: Vehicles do not require controls while in slow and reverse with a person on them
 - Default Value: true
 
-### enableLandVehicles 
+### enableLandVehicles
 - Description: Vehicles can now float on land. What is realism. Experimental only until wheels are invented. Must use rudder speeds to move forwards.
 - Default Value: false
 
-### enableBaseGameSailRotation 
+### enableBaseGameSailRotation
 - Description: Lets the baseGame sails Tiers1-4 to rotate based on wind direction
 - Default Value: true
 
-### shouldLiftAnchorOnSpeedChange 
+### shouldLiftAnchorOnSpeedChange
 - Description: Lifts the anchor when using a speed change key, this is a QOL to prevent anchor from being required to be pressed when attempting to change the ship speed
 - Default Value: true
 
-### FlightClimbingSpeed 
+### FlightClimbingSpeed
 - Description: Ascent and Descent speed for the vehicle in the air. Numbers above 1 require turning the synced rigidbody for vehicle into another joint rigidbody.
 - Default Value: 5.690141
 
 ## ModSupport:DynamicLocations
 
-### DynamicLocationLoginMovesPlayerToBed 
+### DynamicLocationLoginMovesPlayerToBed
 - Description: login/logoff point moves player to last interacted bed or first bed on ship
 - Default Value: true
 
 ## CustomMesh
 
-### Water Mask Prefabs Enabled 
+### Water Mask Prefabs Enabled
 - Description: Allows placing a dynamically sized cube that removes all water meshes intersecting with it. This also removes all water meshes when looking through it. So use it wisely, it's not perfect
 - Default Value: true
 
-### Enable Testing 4x4 Water Mask Prefabs, these are meant for demoing water obstruction. 
+### Enable Testing 4x4 Water Mask Prefabs, these are meant for demoing water obstruction.
 - Description: login/logoff point moves player to last interacted bed or first bed on ship
 - Default Value: true
 
+## Underwater: Debug
+
+### DEBUG_WaterDisplacementMeshPrimitive
+- Description: Lets you choose from the water displacement mesh primitives. These will be stored as ZDOs. Not super user friendly yet...
+- Default Value: Cube
+
+### DEBUG_HasLiquidDepthOverride
+- Description: Enables liquid depth overrides
+- Default Value: false
+
+### DEBUG_LiquidDepthOverride
+- Description: Force Overrides the liquid depth for character on boats. Likely will cause bobbing effect as it fights the onboard collider if it is below it.
+- Default Value: 15
+
 ## Underwater
 
-### WaveSizeMultiplier 
-- Description: Make the big waves.
-- Default Value: 2
+### FlipWatermeshMode
+- Description: Flips the water mesh underwater. This can cause some jitters. Turn it on at your own risk. It's improve immersion. Recommended to keep off for now while onboard to prevent underwater jitters due to camera colliding rapidly when water flips
+- Default Value: Disabled
 
-### UnderwaterShipCameraZoom 
+### UnderwaterMaxDiveDepth
+- Description: Enforce a max depth for diving values higher will force the player to float to that value.
+- Default Value: 0
+
+### UnderwaterMaxCachedDiveDepth
+- Description: Enforce a max sinking depth for diving. Higher values can make the player swim to the depth instead of fall through the water. Recommended lower than 20
+- Default Value: 0
+
+### WaveSizeMultiplier
+- Description: Make the big waves. This is a direct multiplier to height
+- Default Value: 0
+
+### UnderwaterShipCameraZoom
 - Description: Zoom value to allow for underwater zooming. Will allow camera to go underwater at values above 0. 0 will reset camera back to default.
-- Default Value: 500
+- Default Value: 5000
 
-### AllowedEntiesList 
+### AllowedEntiesList
 - Description: List separated by comma for entities that are allowed on the ship
-- Default Value: 
+- Default Value:
 
-### AllowNonPlayerCharactersUnderwater 
-- Description: Adds entities not considered players into the underwater onboard checks. This can cause performance issues, but if you are bringing animals it's important. Side-effects could include serpants and other water entites do not behave correctly
-- Default Value: true
-
-### Use Underwater Fog 
+### Use Underwater Fog
 - Description: Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.
 - Default Value: true
 
-### Underwater fog color 
+### Underwater fog color
 - Description: Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.
 - Default Value: 009099FF
 
-### Underwater Fog Intensity 
+### Underwater Fog Intensity
 - Description: Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.
 - Default Value: 0.02
 
-### UnderwaterAccessMode 
-- Description: Allows for walking underwater anywhere. If this is enabled it will override other walking flags.
+### UnderwaterAccessMode
+- Description: Allows for walking underwater, anywhere, or onship, or eventually within the water displaced area only. Disabled with remove all water logic.
 - Default Value: WaterZoneOnly
 
 ## Quick Start (DEBUG-ONLY)
 
-### QuickStartWorldName 
+### QuickStartWorldName
 - Description: Set the quick start World Name
 - Default Value: ZolVehicles
 
-### QuickStartWorldPassword 
+### QuickStartWorldPassword
 - Description: Set the quick start world password
 - Default Value: 123456
 
-### QuickStartEnabled 
+### QuickStartEnabled
 - Description: Enable Quick start
-- Default Value: true
+- Default Value: false
 
-### QuickStartWorldPlayerName 
+### QuickStartWorldPlayerName
 - Description: Quick start player name. Must be valid to start the quick start
 - Default Value: Zol

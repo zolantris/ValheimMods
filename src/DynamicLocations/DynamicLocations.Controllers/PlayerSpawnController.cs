@@ -163,7 +163,7 @@ public class PlayerSpawnController : MonoBehaviour
     zdo.Set(ZdoVarKeys.DynamicLocationsPoint, 1);
   }
 
-  public void RemoveDynamicPoint(ZDO zdo,
+  public void RemoveDynamicPoint(ZDO? zdo,
     LocationVariation locationVariationType)
   {
     LocationController.RemoveZdoTarget(locationVariationType,
@@ -175,7 +175,7 @@ public class PlayerSpawnController : MonoBehaviour
       return;
     }
 #endif
-    zdo.RemoveInt(ZdoVarKeys.DynamicLocationsPoint);
+    zdo?.RemoveInt(ZdoVarKeys.DynamicLocationsPoint);
   }
 
   /// <summary>
@@ -213,7 +213,7 @@ public class PlayerSpawnController : MonoBehaviour
   public bool SyncLogoutPoint(ZDO? zdo, bool shouldRemove = false)
   {
     if (ZNet.instance == null) return false;
-    if (zdo == null)
+    if (zdo == null && !shouldRemove)
     {
       Logger.LogError(
         "ZDO not found for netview, this likely means something is wrong with the are it is being called in");

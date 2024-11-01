@@ -3,6 +3,7 @@ using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT.Patches;
 using ValheimVehicles.Config;
+using ValheimVehicles.Vehicles.Controllers;
 
 namespace ValheimVehicles.Patches;
 
@@ -107,10 +108,28 @@ internal class GameCameraPatch
 
     UpdateFogSettings();
     CameraPositionY = ___m_camera.gameObject.transform.position.y;
-    // __instance.m_waterClipping = true;
+
+    // some of these are optimized to avoid calculating each time when an would prevent reaching an area.
+    if (WaterConfig.FlipWatermeshMode.Value ==
+        WaterConfig.WaterMeshFlipModeType.Disabled)
+    {
+      __instance.m_minWaterDistance = 0.3f;
+      return;
+    }
+
+    if (WaterConfig.FlipWatermeshMode.Value ==
+        WaterConfig.WaterMeshFlipModeType.ExcludeOnboard)
+    {
+      if (!VehicleOnboardController.IsCharacterOnboard(Player.m_localPlayer))
+      {
+        __instance.m_minWaterDistance = 0.3f;
+        return;
+      }
+    }
 
     // This is the most important flag, it prevents camera smashing into the watermesh.
     // negative value due to it allowing zoom further out
+    // fallthrough logic
     if (WaterConfig.UnderwaterShipCameraZoom.Value != 0)
     {
       __instance.m_minWaterDistance =
@@ -121,22 +140,5 @@ internal class GameCameraPatch
       // default
       __instance.m_minWaterDistance = 5f;
     }
-
-    // Do not do anything if your player is swimming, as this is only related to player perspective.
-    // if (Player.m_localPlayer.IsSwimming())
-    // {
-    //   __instance.m_minWaterDistance = 5f;
-    //   return;
-    // }
-
-    //
-    // if (WaterVolumePatch.IsCameraAboveWater && MustUpdateCamera)
-    // {
-    //   __instance.m_maxDistance = 20f;
-    // }
-
-    // if (!MustUpdateCamera) return;
-    //
-    // MustUpdateCamera = false;
   }
 }

@@ -37,6 +37,11 @@ internal static class PatchController
     Harmony.PatchAll(typeof(WaterVolumePatch));
     Harmony.PatchAll(typeof(GameCameraPatch));
 
+    if (Chainloader.PluginInfos.ContainsKey("zolantris.DynamicLocations"))
+    {
+      Harmony.PatchAll(typeof(DynamicLocations_Game_LogoutPatch));
+    }
+
 #if DEBUG
     Harmony.PatchAll(typeof(QuickStartWorld_Patch));
 #endif

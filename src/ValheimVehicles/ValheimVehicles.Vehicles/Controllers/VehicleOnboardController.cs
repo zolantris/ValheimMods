@@ -179,7 +179,6 @@ public class VehicleOnboardController : MonoBehaviour
 
   private void OnEnable()
   {
-    _hasExitSubscriptionDelay = true;
     StartCoroutine(RemovePlayersRoutine());
   }
 
@@ -352,7 +351,7 @@ public class VehicleOnboardController : MonoBehaviour
 
   public void DebounceExitVehicleBounds()
   {
-    if (_hasExitSubscriptionDelay) return;
+    _hasExitSubscriptionDelay = true;
     var localList = DelayedExitSubscriptions.ToList();
 
     // allows new items to be added while this is running
@@ -372,8 +371,6 @@ public class VehicleOnboardController : MonoBehaviour
       if (delayedExitSubscription.Value == Player.m_localPlayer &&
           vehicleZdo != null)
       {
-        // Todo figure out why I had this enabled, it looks like it could cause a ton of issues.
-        // ValheimBaseGameShip.s_currentShips.Remove(_movementController);
         PlayerSpawnController.Instance?.SyncLogoutPoint(vehicleZdo, true);
       }
     }
@@ -398,6 +395,7 @@ public class VehicleOnboardController : MonoBehaviour
 
     if (!_hasExitSubscriptionDelay)
     {
+      _hasExitSubscriptionDelay = true;
       Invoke(nameof(DebounceExitVehicleBounds), 0.5f);
     }
   }
