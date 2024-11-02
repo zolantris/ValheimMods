@@ -1,0 +1,7 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <UsingTask TaskName="GenerateCodeTask" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll"/>
+
+    <Target Name="GenerateCode" BeforeTargets="Build">
+        <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(SolutionDir)runGenerator.ps1&quot; -SolutionPath &quot;$(SolutionPath)&quot; -GeneratorProjectPath &quot;$(GeneratorProjectPath)&quot; -ConsoleAppProjectPath &quot;$(ConsoleAppProjectPath)&quot; -OutputPath &quot;$(OutputPath)&quot;"/>
+    </Target>
+</Project>

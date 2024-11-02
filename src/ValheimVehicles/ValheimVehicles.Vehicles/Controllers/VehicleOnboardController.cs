@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DynamicLocations;
@@ -208,8 +209,20 @@ public class VehicleOnboardController : MonoBehaviour
   public void OnTriggerEnter(Collider collider)
   {
     if (MovementController == null) return;
-    OnEnterVehicleBounds(collider);
-    HandleCharacterHitVehicleBounds(collider, false);
+    var character = HandleCharacterHitVehicleBounds(collider, false);
+    OnEnterVehicleBounds(character);
+  }
+
+  public IEnumerator OnTriggerStay(Collider other)
+  {
+    var character = GetComponent<Character>();
+    if (!character) yield break;
+    if (IsCharacterOnboard(character)) yield break;
+    if (WaterZoneHelpers.HasShipUnderneath(character))
+    {
+      AddCharacter(character);
+      yield return null;
+    }
   }
 
   // todo might refactor this, but water zone controllers will be from the controller instead of delegated here.
@@ -225,14 +238,15 @@ public class VehicleOnboardController : MonoBehaviour
   public void OnTriggerExit(Collider collider)
   {
     if (MovementController == null) return;
-    OnExitVehicleBounds(collider);
-    HandleCharacterHitVehicleBounds(collider, true);
+    var character = HandleCharacterHitVehicleBounds(collider, true);
+    OnExitVehicleBounds(character);
   }
 
-  public void HandleCharacterHitVehicleBounds(Collider collider, bool isExiting)
+  public Character? HandleCharacterHitVehicleBounds(Collider collider,
+    bool isExiting)
   {
     var character = collider.GetComponent<Character>();
-    if (!(bool)character) return;
+    if (!(bool)character) return null;
 
     var characterZdo = character.GetZDOID();
     var exists =
@@ -241,11 +255,11 @@ public class VehicleOnboardController : MonoBehaviour
 
     if (isExiting)
     {
-      if (!exists) return;
+      if (!exists) return character;
       RemoveCharacter(character);
       character.InNumShipVolumes--;
-      WaterZoneHelper.UpdateWaterDepth(character);
-      return;
+      WaterZoneHelpers.UpdateWaterDepth(character);
+      return character;
     }
 
     // do not increment or add character if already exists in object. This could be a race condition
@@ -264,7 +278,8 @@ public class VehicleOnboardController : MonoBehaviour
       }
     }
 
-    WaterZoneHelper.UpdateWaterDepth(character);
+    WaterZoneHelpers.UpdateWaterDepth(character);
+    return character;
   }
 
   /// <summary>
@@ -329,9 +344,11 @@ public class VehicleOnboardController : MonoBehaviour
     }
   }
 
-  public void OnEnterVehicleBounds(Collider collider)
+  public void OnEnterVehicleBounds(Character? character)
   {
-    var playerInList = GetPlayerComponent(collider);
+    if (character == null) return;
+    if (!character.IsPlayer()) return;
+    var playerInList = character as Player ?? null;
     if (playerInList == null) return;
 
     Logger.LogDebug(
@@ -343,7 +360,8 @@ public class VehicleOnboardController : MonoBehaviour
     var vehicleZdo = MovementController
       .ShipInstance?.NetView?.GetZDO();
 
-    if (playerInList == Player.m_localPlayer && vehicleZdo != null)
+    if (playerInList.GetZDOID() == Player.m_localPlayer.GetZDOID() &&
+        vehicleZdo != null)
     {
       ValheimBaseGameShip.s_currentShips.Add(MovementController);
       PlayerSpawnController.Instance?.SyncLogoutPoint(vehicleZdo);
@@ -380,9 +398,10 @@ public class VehicleOnboardController : MonoBehaviour
   }
 
 
-  public void OnExitVehicleBounds(Collider collider)
+  public void OnExitVehicleBounds(Character? character)
   {
-    var playerInList = GetPlayerComponent(collider);
+    if (character == null) return;
+    var playerInList = character as Player ?? null;
     if (playerInList == null)
     {
       return;

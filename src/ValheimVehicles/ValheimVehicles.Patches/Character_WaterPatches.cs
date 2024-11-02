@@ -24,7 +24,7 @@ public class Character_WaterPatches
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
-    WaterZoneHelper.SetIsUnderWaterInVehicle(__instance, ref __result);
+    WaterZoneHelpers.SetIsUnderWaterInVehicle(__instance, ref __result);
   }
 
   /// <summary>
@@ -94,9 +94,9 @@ public class Character_WaterPatches
     __instance.m_cashedInLiquidDepth = 0.0f;
 
     var liquidDepth =
-      WaterZoneHelper.GetLiquidDepthFromBounds(data?.OnboardController,
+      WaterZoneHelpers.GetLiquidDepthFromBounds(data?.OnboardController,
         __instance);
-    WaterZoneHelper.UpdateLiquidDepthValues(__instance, liquidDepth);
+    WaterZoneHelpers.UpdateLiquidDepthValues(__instance, liquidDepth);
     return false;
   }
 
@@ -107,7 +107,7 @@ public class Character_WaterPatches
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
-    WaterZoneHelper.SetIsUnderWaterInVehicle(__instance, ref __result);
+    WaterZoneHelpers.SetIsUnderWaterInVehicle(__instance, ref __result);
   }
 
   [HarmonyPatch(typeof(Character), nameof(Character.InTar))]
@@ -131,7 +131,7 @@ public class Character_WaterPatches
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
-    WaterZoneHelper.IsInLiquidSwimDepth(__instance, ref __result);
+    WaterZoneHelpers.IsInLiquidSwimDepth(__instance, ref __result);
   }
 
   [HarmonyPatch(typeof(Character), nameof(Character.InLiquidSwimDepth),
@@ -142,7 +142,7 @@ public class Character_WaterPatches
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
-    WaterZoneHelper.IsInLiquidSwimDepth(__instance, ref __result);
+    WaterZoneHelpers.IsInLiquidSwimDepth(__instance, ref __result);
   }
 
   /// <summary>
@@ -165,7 +165,7 @@ public class Character_WaterPatches
       return true;
     }
 
-    var success = WaterZoneHelper.UpdateLiquidDepth(__instance, level, type);
+    var success = WaterZoneHelpers.UpdateLiquidDepth(__instance, level, type);
     // needs to return false since we are handling this.
     var handled = !success;
     return handled;

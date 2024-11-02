@@ -36,7 +36,7 @@ public class Character_Patch
   public static void Character_IsInWater(Character __instance,
     ref bool __result)
   {
-    var isOnboard = WaterZoneHelper.IsOnboard(__instance);
+    var isOnboard = GameCacheController.IsOnboard(__instance);
     if (isOnboard) __result = false;
   }
 
@@ -46,7 +46,7 @@ public class Character_Patch
   public static void Character_IsOnGround(Character __instance,
     ref bool __result)
   {
-    var isOnboard = WaterZoneHelper.IsOnboard(__instance);
+    var isOnboard = WaterZoneHelpers.IsOnboard(__instance);
     if (isOnboard) __result = true;
   }
 

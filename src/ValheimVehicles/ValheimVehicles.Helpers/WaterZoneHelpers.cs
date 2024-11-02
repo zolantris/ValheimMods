@@ -11,7 +11,7 @@ using Zolantris.Shared;
 
 namespace ValheimVehicles.Helpers;
 
-public static class WaterZoneHelper
+public static class WaterZoneHelpers
 {
   // Allows player model to be inside bound collider
   internal static float PlayerOffset = 0f;
@@ -38,22 +38,29 @@ public static class WaterZoneHelper
   [GameCacheValue(name: "IsOnboard", intervalInSeconds: 1f)]
   public static bool IsOnboard(Character character)
   {
-    var isCharacterWithinOnboardCollider =
-      VehicleOnboardController.IsCharacterOnboard(character);
-
-    if (!isCharacterWithinOnboardCollider)
+    // GameCacheValueGenerator.IsOnboard(character);
+    if (character.IsPlayer() || character.IsTamed())
     {
-      var piecesController =
-        character.transform.root.GetComponent<VehiclePiecesController>();
-      if (piecesController)
+      var isCharacterWithinOnboardCollider =
+        VehicleOnboardController.IsCharacterOnboard(character);
+
+      if (!isCharacterWithinOnboardCollider)
       {
-        isCharacterWithinOnboardCollider = true;
+        var piecesController =
+          character.transform.root.GetComponent<VehiclePiecesController>();
+        if (piecesController)
+        {
+          isCharacterWithinOnboardCollider = true;
+        }
       }
+
+      var isCharacterStandingOnVehicle =
+        HasShipUnderneath(character);
+      return isCharacterWithinOnboardCollider && isCharacterStandingOnVehicle;
     }
 
-    var isCharacterStandingOnVehicle =
-      HasShipUnderneath(character);
-    return isCharacterWithinOnboardCollider && isCharacterStandingOnVehicle;
+    return character.transform.root.GetComponent<VehiclePiecesController>() !=
+           null;
   }
 
   /// <summary>
@@ -88,7 +95,8 @@ public static class WaterZoneHelper
   }
 
   [GameCacheValue(intervalInSeconds: 0.5f)]
-  public static bool HasShipUnderneath(Character character)
+  public static bool HasShipUnderneath(
+    Character character)
   {
     return HasShipInDirection(character.transform.position,
       character.transform.TransformDirection(Vector3.down));

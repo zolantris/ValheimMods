@@ -3,8 +3,6 @@ using BepInEx;
 using BepInEx.Bootstrap;
 using HarmonyLib;
 using Jotunn;
-using PlanBuild.ModCompat;
-using PlanBuild.Plans;
 
 namespace ValheimVehicles.Patches;
 

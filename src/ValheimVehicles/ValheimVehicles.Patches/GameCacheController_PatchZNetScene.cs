@@ -3,7 +3,7 @@ using ValheimVehicles.Vehicles.Controllers;
 
 namespace ValheimVehicles.Patches;
 
-public class GameCacheController_Patch
+public class GameCacheController_PatchZNetScene
 {
   private static GameCacheController cacheControlerInstance;
 

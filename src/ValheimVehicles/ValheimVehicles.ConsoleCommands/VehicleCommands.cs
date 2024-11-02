@@ -26,6 +26,7 @@ public class VehicleCommands : ConsoleCommand
     // public const string rotate = "rotate";
     // public const string move = "move";
     // public const string destroy = "destroy";
+    public const string listCachedMethods = "listCachedMethods";
     public const string reportInfo = "report-info";
     public const string debug = "debug";
     public const string creative = "creative";
@@ -51,7 +52,8 @@ public class VehicleCommands : ConsoleCommand
       $"\n<{VehicleCommandArgs.move}>: Must provide 3 args: x y z, the movement is relative to those points" +
       $"\n<{VehicleCommandArgs.toggleOceanSway}>: stops the vehicle from swaying in the water. It will stay at 0 degrees (x and z) tilt and only allow rotating on y axis" +
       $"\n<{VehicleCommandArgs.reportInfo}>: outputs information related to the vehicle the player is on or near. This is meant for error reports" +
-      $"\n<{VehicleCommandArgs.colliderEditMode}>: Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items";
+      $"\n<{VehicleCommandArgs.colliderEditMode}>: Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items" +
+      $"\n<{VehicleCommandArgs.listCachedMethods}>: lists cached methods. Mostly for development debugging";
   }
 
   public override void Run(string[] args)
@@ -101,6 +103,9 @@ public class VehicleCommands : ConsoleCommand
         break;
       case VehicleCommandArgs.colliderEditMode:
         ToggleColliderEditMode();
+        break;
+      case VehicleCommandArgs.listCachedMethods:
+        GameCacheController.ListCachedMethods();
         break;
     }
   }
@@ -316,10 +321,16 @@ public class VehicleCommands : ConsoleCommand
     {
       Logger.LogMessage(
         "No ship found, please run this command near the ship that needs to be reported.");
+      return;
     }
 
-    var pieceController = shipInstance!.VehiclePiecesController;
-    if (pieceController == null) return;
+    var pieceController = shipInstance.VehiclePiecesController;
+    if (pieceController == null)
+    {
+      Logger.LogMessage(
+        "No valid PieceController found on ship, report cannot be generated.");
+      return;
+    }
 
     var vehiclePendingPieces =
       pieceController?.GetCurrentPendingPieces();
@@ -383,6 +394,7 @@ public class VehicleCommands : ConsoleCommand
     VehicleCommandArgs.recover,
     VehicleCommandArgs.reportInfo,
     VehicleCommandArgs.colliderEditMode,
+    VehicleCommandArgs.listCachedMethods,
   ];
 
 
