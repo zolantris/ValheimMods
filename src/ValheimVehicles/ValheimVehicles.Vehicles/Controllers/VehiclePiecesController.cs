@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -67,27 +68,38 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public bool HasRunCleanup = false;
 
-  private ZNetView _currentLowestPiece = null;
+  private Vector3 _currentLowestLocalPosition = Vector3.zero;
 
-  public float LowestPieceHeight => transform.position.y +
-    _currentLowestPiece?.transform.localPosition.y ?? 0;
+  public Vector3 LowestPiecePoint =>
+    transform.position + _currentLowestLocalPosition;
 
   /// <summary>
   /// Persists the collider after it has been set to prevent auto-balast feature from losing the origin point.
+  /// todo might be optional.
   /// </summary>
   public Vector3 FloatColliderDefaultPosition = Vector3.zero;
+
+  private static readonly string[] IgnoredPrefabNames =
+  [
+    PrefabNames.CustomWaterMask,
+    PrefabNames.CustomWaterMaskCreator
+  ];
+
+  private static readonly Regex IgnoredAveragePointRegexp = new(
+    $"^({string.Join("|", IgnoredPrefabNames.Select(Regex.Escape))})",
+    RegexOptions.Compiled);
 
   /// <summary>
   /// For water access. This will accurately set the lowest relative netview on the ship. This netview position will then be computed in LowestPointOnVehicle.
   /// </summary>
   public void UpdateLowestAveragePoint(ZNetView pieceNetView)
   {
-    if (_currentLowestPiece == null ||
-        _currentLowestPiece.transform.localPosition.y >
-        pieceNetView.transform.localPosition.y)
-    {
-      _currentLowestPiece = pieceNetView;
-    }
+    if (IgnoredAveragePointRegexp.IsMatch(pieceNetView.name))
+      if (_currentLowestLocalPosition.y >
+          pieceNetView.transform.localPosition.y)
+      {
+        _currentLowestLocalPosition = pieceNetView.transform.localPosition;
+      }
   }
 
 
@@ -2451,7 +2463,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     //   m_floatcollider.size.y;
     var onboardColliderCenter =
       new Vector3(_vehicleBounds.center.x,
-        _vehicleBounds.size.y * 0.5f,
+        _vehicleBounds.center.x,
         _vehicleBounds.center.z);
     var onboardColliderSize = new Vector3(
       Mathf.Max(minColliderSize, _vehicleBounds.size.x),

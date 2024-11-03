@@ -53,6 +53,13 @@ public class VehicleDebugHelpers : MonoBehaviour
     }
   }
 
+  private void OnDestroy()
+  {
+    lines.Values.ToList()
+      .ForEach(x => x.ForEach(Destroy));
+    lines.Clear();
+  }
+
   public void StartRenderAllCollidersLoop()
   {
     autoUpdateColliders = !autoUpdateColliders;

@@ -671,21 +671,29 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return m_floatcollider.size.z / 2;
   }
 
+  public static float
+    BalastSmoothtime = 0.1f;
+
+  private float _previousBalastOffset = 0f;
+  private float _currentBalastOffset = 0f;
+
   /// <summary>
   /// Adds additional "fake" water height when the lowest piece scraps the bottom of the ocean.
+  /// Allows for land travel without guards.
   /// </summary>
-  /// <param name="currentWaterHeight"></param>
-  public float UpdateBalastOffset(float currentWaterHeight)
+  private float UpdateBalastOffset()
   {
-    if (PiecesController == null) return 0f;
-    if (PiecesController.LowestPieceHeight < currentWaterHeight)
-    {
-      var heightDifference =
-        currentWaterHeight - PiecesController.LowestPieceHeight;
-      return currentWaterHeight + heightDifference;
-    }
+    if (!WaterConfig.AutoBallast.Value || PiecesController == null)
+      return 0f;
+    var groundHeight =
+      ZoneSystem.instance.GetGroundHeight(PiecesController.LowestPiecePoint);
+    _previousBalastOffset = _currentBalastOffset;
+    _currentBalastOffset =
+      Math.Max(0f, groundHeight - PiecesController.LowestPiecePoint.y);
 
-    return 0f;
+    return Mathf.Lerp(_previousBalastOffset,
+      _currentBalastOffset + WaterConfig.AutoBallastAdditionalOffset.Value,
+      Time.fixedDeltaTime);
   }
 
   public void CustomPhysics()
@@ -1021,8 +1029,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       (waterLevelCenter + waterLevelLeft + waterLevelRight + waterLevelForward +
        waterLevelBack) /
       5f;
+    var currentDepthOffset = UpdateBalastOffset();
+
     var currentDepth =
-      worldCenterOfMass.y - averageWaterHeight - m_waterLevelOffset;
+      worldCenterOfMass.y - averageWaterHeight - m_waterLevelOffset -
+      currentDepthOffset;
     var isInvalid = false;
     if (averageWaterHeight <= -10000 || averageWaterHeight < m_disableLevel)
     {
@@ -1030,8 +1041,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       isInvalid = true;
     }
 
-    var currentDepthOffset = UpdateBalastOffset(currentDepth);
-
+    // todo may need to offset this too.
     var isAboveBuoyantLevel = currentDepth > m_disableLevel || isInvalid;
 
     return new ShipFloatation()
@@ -2495,6 +2505,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     m_rudder = dir.x * num;
     m_rudderValue += m_rudder * m_rudderSpeed * fixedDeltaTime;
     m_rudderValue = Mathf.Clamp(m_rudderValue, -1f, 1f);
+    // deadzone logic to allow rudder to be centered.
+    if (m_rudderValue is >= 0.49f and <= 0.51f)
+    {
+      m_rudderValue = 0.5f;
+    }
 
     if (Time.time - m_sendRudderTime > 0.2f)
     {

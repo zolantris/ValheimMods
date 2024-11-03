@@ -324,8 +324,6 @@ public class PlayerSpawnController : MonoBehaviour
     if (
       zdoOutput == null)
     {
-      OnMovePlayerToZdoComplete(false,
-        $"zdo, should be valid. type: {locationVariationType} Received null zdo");
       yield break;
     }
 

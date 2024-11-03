@@ -123,6 +123,15 @@ namespace ValheimVehicles.Patches
     public static bool IsCurrentCameraAboveWater =>
       GameCameraPatch.CameraPositionY > WaterLevelCamera;
 
+    public static bool CanFlipOnlyOffboard =>
+      WaterConfig.FlipWatermeshMode.Value ==
+      WaterConfig.WaterMeshFlipModeType
+        .ExcludeOnboard;
+
+    public static bool CanFlipEverywhere =>
+      WaterConfig.FlipWatermeshMode.Value ==
+      WaterConfig.WaterMeshFlipModeType.Everywhere;
+
     private static void AdjustWaterSurface(WaterVolume __instance,
       float[] normalizedDepth)
     {
@@ -141,11 +150,9 @@ namespace ValheimVehicles.Patches
       if (IsCameraAboveWater && isCurrentlyFlipped ||
           IsCameraBelowWater && !isCurrentlyFlipped)
       {
-        if (!isCurrentlyFlipped && WaterConfig.FlipWatermeshMode.Value ==
-            WaterConfig.WaterMeshFlipModeType.Everywhere ||
-            WaterConfig.FlipWatermeshMode.Value ==
-            WaterConfig.WaterMeshFlipModeType.ExcludeOnboard &&
-            VehicleOnboardController.IsCharacterOnboard(Player.m_localPlayer))
+        if (!isCurrentlyFlipped && (CanFlipEverywhere || CanFlipOnlyOffboard &&
+              !VehicleOnboardController.IsCharacterOnboard(
+                Player.m_localPlayer)))
         {
           FlipWaterSurface(__instance, normalizedDepth);
           SetWaterSurfacePosition(waterSurfaceTransform, WaterLevelCamera);

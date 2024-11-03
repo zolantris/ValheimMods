@@ -84,8 +84,10 @@ public static class WaterConfig
   public static ConfigEntry<float> UnderWaterFogIntensity =
     null!;
 
-  public static ConfigEntry<bool> AutoBalastNearShore =
+  public static ConfigEntry<bool> AutoBallast =
     null!;
+
+  public static ConfigEntry<float> AutoBallastAdditionalOffset = null!;
 
   /// <summary>
   /// Other vars
@@ -179,12 +181,19 @@ public static class WaterConfig
 
     BindDebugConfig(Config);
 
-    AutoBalastNearShore = Config.Bind(
+    AutoBallast = Config.Bind(
       SectionKey,
-      "AutoBalastNearShore",
+      "AutoBallast",
       true,
       ConfigHelpers.CreateConfigDescription(
         "Force moves the ship's float collider to the lowest section of the boat if that section is going to smash the ground",
+        true, true));
+    AutoBallastAdditionalOffset = Config.Bind(
+      SectionKey,
+      "AutoBallastAdditionalOffset",
+      0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Adds more balast offset",
         true, true));
 
 

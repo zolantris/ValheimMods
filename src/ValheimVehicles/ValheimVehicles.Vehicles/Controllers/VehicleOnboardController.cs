@@ -247,7 +247,7 @@ public class VehicleOnboardController : MonoBehaviour
       if (!exists) return;
       RemoveCharacter(character);
       character.InNumShipVolumes--;
-      WaterZoneUtils.UpdateWaterDepth(character);
+      WaterZoneUtils.UpdateDepthValues(character);
       return;
     }
 
@@ -267,7 +267,7 @@ public class VehicleOnboardController : MonoBehaviour
       }
     }
 
-    WaterZoneUtils.UpdateWaterDepth(character);
+    WaterZoneUtils.UpdateDepthValues(character, LiquidType.Water);
   }
 
   /// <summary>
@@ -329,6 +329,30 @@ public class VehicleOnboardController : MonoBehaviour
     {
       Logger.LogWarning(
         "Player detected entering ship, but they are already added within the list of ship players");
+    }
+  }
+
+  /// <summary>
+  /// Protects against the vehicle smashing the player out of the world on spawn.
+  /// </summary>
+  /// <param name="character"></param>
+  public void OnEnterVolatileVehicle(Character character)
+  {
+    if (PiecesController == null) return;
+    if (!PiecesController.IsActivationComplete)
+    {
+      character.m_body.isKinematic = true;
+    }
+  }
+
+  public static void OnVehicleReady()
+  {
+    foreach (var characterOnboardDataItem in CharacterOnboardDataItems)
+    {
+      if (characterOnboardDataItem.Value.character.m_body.isKinematic)
+      {
+        characterOnboardDataItem.Value.character.m_body.isKinematic = false;
+      }
     }
   }
 

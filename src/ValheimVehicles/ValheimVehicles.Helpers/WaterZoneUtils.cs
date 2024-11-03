@@ -18,6 +18,11 @@ public static class WaterZoneUtils
   // Allows player model to be inside bound collider
   internal static float PlayerOffset = 0f;
 
+  private static readonly Regex _waterZoneRegexDefault =
+    new(@"^Player\(Clone\)$");
+
+  private static Regex _underwaterAllowList = _waterZoneRegexDefault;
+
   // helpers
   public static void IsInLiquidSwimDepth(Character character, ref bool result)
   {
@@ -31,11 +36,6 @@ public static class WaterZoneUtils
       character.m_swimTimer = 999f;
     }
   }
-
-  private static readonly Regex _waterZoneRegexDefault =
-    new(@"^Player\(Clone\)$");
-
-  private static Regex _underwaterAllowList = _waterZoneRegexDefault;
 
   public static void UpdateAllowList(List<string> allowList)
   {
@@ -201,10 +201,105 @@ public static class WaterZoneUtils
     return isValid;
   }
 
+  public static void UpdateSwimDepth(Character character, bool isOnboard)
+  {
+    if (isOnboard)
+    {
+      character.m_swimDepth = character.m_liquidLevel - 2f;
+      return;
+    }
+
+    character.m_swimDepth = 2f;
+  }
+
+  public static bool UpdateDepthValues(Character character,
+    LiquidType liquidType = LiquidType.Water)
+  {
+    if (WaterConfig.UnderwaterAccessMode.Value ==
+        WaterConfig.UnderwaterAccessModeType.Disabled) return true;
+
+    var isOnboard =
+      IsOnboard(character, out var waterZoneData);
+    var liquidDepth =
+      GetLiquidDepthFromBounds(waterZoneData?.OnboardController,
+        character);
+    return UpdateDepthValues(character, liquidDepth, liquidType, isOnboard);
+  }
+
+  public static bool UpdateDepthValues(Character character,
+    float liquidLevel, LiquidType liquidType)
+  {
+    if (WaterConfig.UnderwaterAccessMode.Value ==
+        WaterConfig.UnderwaterAccessModeType.Disabled) return false;
+
+    var onboard = IsOnboard(character);
+    return UpdateDepthValues(character, liquidLevel, liquidType, onboard);
+  }
+
+  /// <summary>
+  /// Main updater for all depth values.
+  /// </summary>
+  /// <param name="character"></param>
+  /// <param name="liquidLevel"></param>
+  /// <param name="isOnboard"></param>
+  public static bool UpdateDepthValues(Character character,
+    float liquidLevel, LiquidType liquidType,
+    bool isOnboard)
+  {
+    UpdateSwimDepth(character, isOnboard);
+    UpdateCachedLiquid(character, isOnboard);
+    UpdateLiquidDepthValues(character, liquidLevel, liquidType);
+
+    if (WaterConfig.DEBUG_HasDepthOverrides.Value)
+    {
+      character.m_waterLevel = WaterConfig.DEBUG_LiquidDepthOverride.Value;
+      character.m_liquidLevel = WaterConfig.DEBUG_LiquidDepthOverride.Value;
+      character.m_cashedInLiquidDepth =
+        WaterConfig.DEBUG_LiquidCacheDepthOverride.Value;
+      character.m_swimDepth = WaterConfig.DEBUG_SwimDepthOverride.Value;
+    }
+
+    if (IsCharacterTheLocalPlayer(character))
+    {
+      WaterVolumePatch.UpdateCameraState();
+    }
+
+    return false;
+  }
+
+
+  /// <summary>
+  /// The liquid cache must be 0f to allow underwater access. Higher values will force player to the surface without updating swim values.
+  /// </summary>
+  /// todo this logic might need to be merged with a single update for all levels.
+  /// FYI: WaterLiquid is spelled wrong "cashed" vs "cached"
+  /// <param name="character"></param>
+  /// <param name="isOnboard"></param>
+  public static void UpdateCachedLiquid(Character character, bool isOnboard)
+  {
+    if (character.IsTeleporting() ||
+        character.GetStandingOnShip() !=
+        null || character.IsAttachedToShip())
+    {
+      character.m_cashedInLiquidDepth = 0f;
+      return;
+    }
+
+    if (isOnboard)
+    {
+      character.m_cashedInLiquidDepth =
+        Math.Max(0f, character.m_swimDepth - 2f);
+      return;
+    }
+
+    character.m_cashedInLiquidDepth = Mathf.Max(0.0f,
+      character.GetLiquidLevel() - character.transform.position.y);
+  }
+
+
   // the vehicle onboard collider controls the water level for players. So they can go below sea level
   public static void UpdateLiquidDepthValues(Character character,
-    float liquidLevel, LiquidType liquidType = LiquidType.Water,
-    bool cacheBust = false)
+    float liquidLevel, LiquidType liquidType)
   {
     switch (liquidType)
     {
@@ -225,40 +320,32 @@ public static class WaterZoneUtils
 
     character.m_liquidLevel =
       Mathf.Max(character.m_waterLevel, character.m_tarLevel);
-
-    if (WaterConfig.DEBUG_HasDepthOverrides.Value)
-    {
-      character.m_waterLevel = WaterConfig.DEBUG_LiquidDepthOverride.Value;
-      character.m_liquidLevel = WaterConfig.DEBUG_LiquidDepthOverride.Value;
-      character.m_cashedInLiquidDepth =
-        WaterConfig.DEBUG_LiquidCacheDepthOverride.Value;
-      character.m_swimDepth = WaterConfig.DEBUG_SwimDepthOverride.Value;
-    }
-
-    if (cacheBust)
-    {
-      character.m_cashedInLiquidDepth = 0f;
-    }
-
-    if (IsCharacterTheLocalPlayer(character))
-    {
-      WaterVolumePatch.UpdateCameraState();
-    }
-  }
-
-  [MeasureTime]
-  public static bool UpdateWaterDepth(Character character)
-  {
-    if (WaterConfig.UnderwaterAccessMode.Value ==
-        WaterConfig.UnderwaterAccessModeType.Disabled) return false;
-
-    var waterHeight = GetWaterHeightFromWaterVolume(character);
-    return UpdateLiquidDepth(character, waterHeight, LiquidType.Water);
   }
 
 
   private static float _currentDepth; // Current smoothed depth
   private static float _smoothDepthVelocity; // Velocity for SmoothDamp
+
+  /// <summary>
+  /// Placeholder for all depth properties controlled under this section.
+  /// </summary>
+  private static void UpdateAllDepthProperties()
+  {
+    // var lowestPieceHeight =
+    //   onboardController?.PiecesController?.LowestPiecePoint.y ?? 0f;
+    //
+    // // determine if the character is somehow below the limit. If so reverts to floating logic with anything above 0f
+    // if (character.transform.position.y - 1f < lowestPieceHeight)
+    // {
+    //   lowestPieceHeight = character.transform.position.y;
+    // }
+    // else
+    // {
+    //   lowestPieceHeight = 0f;
+    // }
+    //
+    // return Mathf.Clamp(lowestPieceHeight, 0f, currentDepth);
+  }
 
   private static float GetLowestDepthFromVehicle(Character character,
     float currentDepth, VehicleOnboardController onboardController)
@@ -268,20 +355,7 @@ public static class WaterZoneUtils
     // Check the difference between current depth and onboard collider.
     if (isValid)
     {
-      var lowestPieceHeight =
-        onboardController?.PiecesController?.LowestPieceHeight ?? 0f;
-
-      // determine if the character is somehow below the limit. If so reverts to floating logic with anything above 0f
-      if (character.transform.position.y - 1f < lowestPieceHeight)
-      {
-        lowestPieceHeight = character.transform.position.y;
-      }
-      else
-      {
-        lowestPieceHeight = 0f;
-      }
-
-      return Mathf.Clamp(lowestPieceHeight, 0f, currentDepth);
+      return 0f;
     }
 
     return currentDepth;
@@ -346,7 +420,7 @@ public static class WaterZoneUtils
   //   return currentDepth;
   // }
 
-  public static bool UpdateLiquidDepth(Character character,
+  public static bool UpdateDepthFromMode(Character character,
     float level,
     LiquidType type = LiquidType.Water)
   {
@@ -357,8 +431,7 @@ public static class WaterZoneUtils
       // we do not need to set liquid level to anything besides 0
       // 2 is swim level, so higher allows for swimming in theory
       // todo confirm this works
-      UpdateLiquidDepthValues(character, type == LiquidType.Water ? 3f : level,
-        type);
+      UpdateDepthValues(character, 0);
       return true;
     }
 
@@ -369,14 +442,13 @@ public static class WaterZoneUtils
         WaterZoneController.IsCharacterInWaterFreeZone(character);
       if (!isInWaterFreeZone) return false;
       // setting to 0 depth for water free zone. Might be inaccurate for a partial underwater base...will fix in future
-      UpdateLiquidDepthValues(character, 0f, type);
+      UpdateDepthValues(character, 0f, type);
       return true;
     }
 
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.OnboardOnly)
     {
-      float liquidDepth = 0;
       var isOnVehicle =
         VehicleOnboardController.GetCharacterVehicleMovementController(
           character.GetZDOID(), out var controller);
@@ -384,24 +456,14 @@ public static class WaterZoneUtils
       // these apparently need to be manually set
       if (!isOnVehicle || controller?.OnboardCollider?.bounds == null)
       {
-        UpdateLiquidDepthValues(character, level);
+        UpdateDepthValues(character, level, LiquidType.Water, false);
         return true;
       }
 
-      if (WaterConfig.DEBUG_HasDepthOverrides.Value)
-      {
-        liquidDepth = WaterConfig.DEBUG_LiquidDepthOverride.Value;
-      }
-      else
-      {
-        if (WaterConfig.UnderwaterAccessMode.Value ==
-            WaterConfig.UnderwaterAccessModeType.OnboardOnly)
-        {
-          liquidDepth =
-            GetLowestDepthFromVehicle(character, level,
-              controller);
-        }
-      }
+      var liquidDepth =
+        GetLowestDepthFromVehicle(character, level,
+          controller);
+
 
       // TODO determine if need to update the water or if should leave alone in this block
       if (Mathf.Approximately(liquidDepth, 0f))
@@ -409,7 +471,7 @@ public static class WaterZoneUtils
         return true;
       }
 
-      UpdateLiquidDepthValues(character, liquidDepth);
+      UpdateLiquidDepthValues(character, liquidDepth, LiquidType.Water);
       return true;
     }
 

@@ -116,6 +116,7 @@
     <ItemGroup>
         <Compile Include="ValheimRAFT.Config\IConfigSection.cs"/>
         <Compile Include="ValheimRAFT.Config\PatchConfig.cs"/>
+        <Compile Include="ValheimRAFT.Unity\Assets\ValheimVehicles\Scene\CustomMeshGenerator.cs"/>
         <Compile Include="ValheimRAFT\*.cs"/>
         <Compile Include="ValheimRAFT.Patches\*.cs"/>
         <Compile Include="ValheimRAFT.UI\*.cs"/>
@@ -171,6 +172,9 @@
         <Reference Include="PlanBuild">
             <HintPath>$(SolutionDir)\libs\PlanBuild.dll</HintPath>
             <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEditor.CoreModule">
+            <HintPath>..\..\..\..\..\..\..\Program Files\Unity\Hub\Editor\2022.3.17f1\Editor\Data\Managed\UnityEngine\UnityEditor.CoreModule.dll</HintPath>
         </Reference>
     </ItemGroup>
     <!--    <ItemGroup>-->

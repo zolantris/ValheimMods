@@ -324,17 +324,22 @@ public class LocationController : MonoBehaviour
   /// <summary>
   /// Main getter logic for DynamicLocations, uses the player data to lookup a persistent ID saved to the player data for that world.
   /// </summary>
-  /// <param name="targetKey"></param>
+  /// <param name="locationVariationType"></param>
   /// <param name="player"></param>
+  /// <param name="onComplete"></param>
   /// <returns></returns>
   public static IEnumerator GetZdoFromStoreAsync(
     LocationVariation locationVariationType,
-    Player? player, Action<ZDO?> onComplete, int timeoutInMs = 1000)
+    Player? player, Action<ZDO?> onComplete)
   {
-    var timer = Stopwatch.StartNew();
     var zdoIdIntOutput = GetZdoFromStore(locationVariationType, player);
 
-    if (zdoIdIntOutput == null) yield break;
+    if (zdoIdIntOutput == null)
+    {
+      onComplete(null);
+      yield break;
+    }
+
     // each game will create a new set of IDs, but the persistent data will allow for looking up the current game's ID.
     ZDO? zdoOutput = null;
     yield return ZdoWatchController.Instance.GetZdoFromServerAsync(

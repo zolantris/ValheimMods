@@ -47,28 +47,6 @@ public class Character_WaterPatches
     }
   }
 
-  /// <summary>
-  /// The liquid cache must be 0f to allow underwater access. Higher values will force player to the surface. 
-  /// </summary>
-  /// todo this logic might need to be merged with a single update for all levels.
-  /// FYI: WaterLiquid is spelled wrong "cashed" vs "cached"
-  /// <param name="character"></param>
-  /// <param name="isOnboard"></param>
-  public static void UpdateCachedLiquid(Character character, bool isOnboard)
-  {
-    if (character.IsTeleporting() ||
-        character.GetStandingOnShip() !=
-        null || character.IsAttachedToShip())
-    {
-      character.m_cashedInLiquidDepth = 0f;
-      return;
-    }
-
-    character.m_cashedInLiquidDepth = 0.0f;
-    character.m_cashedInLiquidDepth = Mathf.Max(0.0f,
-      character.GetLiquidLevel() - character.transform.position.y);
-  }
-
   [HarmonyPatch(typeof(Character), nameof(Character.CalculateLiquidDepth))]
   [HarmonyPrefix]
   public static bool Character_CalculateLiquidDepth(Character __instance)
@@ -76,16 +54,7 @@ public class Character_WaterPatches
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return true;
     if (!WaterZoneUtils.IsAllowedUnderwater(__instance)) return true;
-
-    var isOnboard =
-      WaterZoneUtils.IsOnboard(__instance, out var waterZoneData);
-
-    var liquidDepth =
-      WaterZoneUtils.GetLiquidDepthFromBounds(waterZoneData?.OnboardController,
-        __instance);
-    UpdateCachedLiquid(__instance, isOnboard);
-
-    WaterZoneUtils.UpdateLiquidDepthValues(__instance, liquidDepth);
+    WaterZoneUtils.UpdateDepthValues(__instance, LiquidType.Water);
     return false;
   }
 
@@ -151,7 +120,7 @@ public class Character_WaterPatches
     if (__instance == null) return true;
 
     var wasHandled =
-      WaterZoneUtils.UpdateLiquidDepth(__instance, level, type);
+      WaterZoneUtils.UpdateDepthFromMode(__instance, level, type);
     return !wasHandled;
   }
 }
