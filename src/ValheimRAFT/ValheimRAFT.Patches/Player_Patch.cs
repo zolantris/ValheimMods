@@ -63,7 +63,7 @@ public class Player_Patch
     var rb = piece.GetComponentInChildren<Rigidbody>();
     var netView = piece.GetComponent<ZNetView>();
 
-    if ((bool)netView)
+    if (netView != null)
     {
       HidePreviewComponent(netView);
     }
@@ -73,18 +73,18 @@ public class Player_Patch
       return gameObject;
     }
 
-    if ((bool)netView)
+    if (netView != null)
     {
-      var cul = PatchSharedData.PlayerLastRayPiece
+      var cul = PatchSharedData.PlayerLastRayPiece?
         .GetComponent<CultivatableComponent>();
-      if ((bool)cul) cul.AddNewChild(netView);
+      if (cul != null) cul.AddNewChild(netView);
     }
 
-    var bvc = PatchSharedData.PlayerLastRayPiece
-      .GetComponentInParent<VehiclePiecesController>();
-    if ((bool)bvc)
+    var bvc = PatchSharedData.PlayerLastRayPiece?.transform?.parent?
+      .GetComponent<VehiclePiecesController>() ?? null;
+    if (bvc != null)
     {
-      if ((bool)netView)
+      if (netView != null)
       {
         Logger.LogDebug(
           $"BaseVehicleController: adding new piece {piece.name} {gameObject.name}");
@@ -101,9 +101,9 @@ public class Player_Patch
 
     var mb = PatchSharedData.PlayerLastRayPiece
       .GetComponentInParent<MoveableBaseRootComponent>();
-    if ((bool)mb)
+    if (mb != null)
     {
-      if ((bool)netView)
+      if (netView != null)
       {
         Logger.LogDebug($"adding new piece {piece.name} {gameObject.name}");
         mb.AddNewPiece(netView);
@@ -282,18 +282,18 @@ public class Player_Patch
 
     return false;
   }
-
-  [HarmonyPatch(typeof(Player), nameof(Player.IsAttachedToShip))]
-  [HarmonyPostfix]
-  public static void Player_IsAttachedToShip(Player __instance,
-    ref bool __result)
-  {
-    if (__result) return;
-    if (WaterZoneUtils.IsOnboard(__instance))
-    {
-      __result = true;
-    }
-  }
+  //
+  // [HarmonyPatch(typeof(Player), nameof(Player.IsAttachedToShip))]
+  // [HarmonyPostfix]
+  // public static void Player_IsAttachedToShip(Player __instance,
+  //   ref bool __result)
+  // {
+  //   if (__result) return;
+  //   if (WaterZoneUtils.IsOnboard(__instance))
+  //   {
+  //     __result = true;
+  //   }
+  // }
 
   [HarmonyPatch(typeof(Player), "AttachStop")]
   [HarmonyPrefix]

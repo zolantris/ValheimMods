@@ -77,14 +77,14 @@ public class CustomMeshPrefabs : IRegisterPrefab
 
   public void AddTestCube(string prefabName, Vector3 size)
   {
-    // var waterMaskPrefab = new GameObject("WaterMaskPrefab")
-    // {
-    //   layer = LayerHelpers.NonSolidLayer
-    // };
+    var waterMaskPrefab = new GameObject("WaterMaskPrefab")
+    {
+      layer = LayerHelpers.NonSolidLayer
+    };
 
     var prefab =
-      PrefabManager.Instance.CreateEmptyPrefab($"{
-        PrefabNames.CustomWaterMask}_{prefabName}");
+      PrefabManager.Instance.CreateClonedPrefab($"{
+        PrefabNames.CustomWaterMask}_{prefabName}", waterMaskPrefab);
     var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     var piece = prefab.AddComponent<Piece>();
     piece.m_name = $"WM Test {prefabName}";
@@ -115,9 +115,9 @@ public class CustomMeshPrefabs : IRegisterPrefab
     AddTestPrefab("Default_water_mask", maskMaterial);
     AddTestPrefab("Custom_watermask",
       LoadValheimVehicleAssets.TransparentDepthMaskMaterial);
-    AddTestCube("Test2", Vector3.one * 4);
-    AddTestCube("Test3", Vector3.one * 2);
-    AddTestCube("Test4", Vector3.one * 8);
+    // AddTestCube("Test2", Vector3.one * 4);
+    // AddTestCube("Test3", Vector3.one * 2);
+    // AddTestCube("Test4", Vector3.one * 8);
   }
 
   public void AddTestPrefab(string prefabName,

@@ -8,7 +8,7 @@ public static class PatchSharedData
   /// <summary>
   /// for controlling the local player's last placed piece
   /// </summary>
-  public static Piece PlayerLastRayPiece;
+  public static Piece? PlayerLastRayPiece;
 
   /*
    * todo remove this

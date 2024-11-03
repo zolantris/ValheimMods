@@ -27,41 +27,7 @@ public class Character_WaterPatches
     WaterZoneUtils.SetIsUnderWaterInVehicle(__instance, ref __result);
   }
 
-  /// <summary>
-  /// Could be mostly a postfix. Can remove the tar effect if it appears this way.
-  /// </summary>
-  /// <param name="__instance"></param>
-  /// <param name="dt"></param>
-  /// <returns></returns>
-  // [HarmonyPatch(typeof(Character), nameof(Character.UpdateWater))]
-  // [HarmonyPrefix]
-  // public static bool Character_UpdateWater(Character __instance, float dt)
-  // {
-  //   if (WaterConfig.UnderwaterAccessMode.Value ==
-  //       WaterConfig.UnderwaterAccessModeType.Disabled) return true;
-  //
-  //   __instance.m_swimTimer += dt;
-  //   float depth = __instance.InLiquidDepth();
-  //   if (__instance.m_canSwim && __instance.InLiquidSwimDepth(depth))
-  //     __instance.m_swimTimer = 0.0f;
-  //   if (!__instance.m_nview.IsOwner() || !__instance.InLiquidWetDepth(depth))
-  //     return false;
-  //
-  //   if ((double)__instance.m_waterLevel > (double)__instance.m_tarLevel)
-  //   {
-  //     __instance.m_seman.AddStatusEffect(SEMan.s_statusEffectWet, true);
-  //     return false;
-  //   }
-  //   else
-  //   {
-  //     if ((double)__instance.m_tarLevel <= (double)__instance.m_waterLevel ||
-  //         __instance.m_tolerateTar)
-  //       return false;
-  //     __instance.m_seman.AddStatusEffect(SEMan.s_statusEffectTared, true);
-  //   }
-  //
-  //   return false;
-  // }
+
   [HarmonyPatch(typeof(Character), nameof(Character.UpdateWater))]
   [HarmonyPostfix]
   public static void Character_RemoveThatTar(Character __instance)
@@ -71,28 +37,36 @@ public class Character_WaterPatches
     {
       if (__instance.m_tarEffects.HasEffects())
       {
-        __instance.m_seman.GetStatusEffect(SEMan.s_statusEffectTared);
+        var tared =
+          __instance.m_seman.GetStatusEffect(SEMan.s_statusEffectTared);
+        if (tared != null)
+        {
+          __instance.m_seman.RemoveStatusEffect(SEMan.s_statusEffectTared);
+        }
       }
     }
   }
 
   /// <summary>
-  /// 
+  /// The liquid cache must be 0f to allow underwater access. Higher values will force player to the surface. 
   /// </summary>
+  /// todo this logic might need to be merged with a single update for all levels.
   /// FYI: WaterLiquid is spelled wrong "cashed" vs "cached"
   /// <param name="character"></param>
   /// <param name="isOnboard"></param>
   public static void UpdateCachedLiquid(Character character, bool isOnboard)
   {
     if (character.IsTeleporting() ||
-        (UnityEngine.Object)character.GetStandingOnShip() !=
-        (UnityEngine.Object)null || character.IsAttachedToShip())
-      character.m_cashedInLiquidDepth = 0.0f;
-    else if (!isOnboard)
+        character.GetStandingOnShip() !=
+        null || character.IsAttachedToShip())
     {
-      character.m_cashedInLiquidDepth = Mathf.Max(0.0f,
-        character.GetLiquidLevel() - character.transform.position.y);
+      character.m_cashedInLiquidDepth = 0f;
+      return;
     }
+
+    character.m_cashedInLiquidDepth = 0.0f;
+    character.m_cashedInLiquidDepth = Mathf.Max(0.0f,
+      character.GetLiquidLevel() - character.transform.position.y);
   }
 
   [HarmonyPatch(typeof(Character), nameof(Character.CalculateLiquidDepth))]
@@ -106,11 +80,11 @@ public class Character_WaterPatches
     var isOnboard =
       WaterZoneUtils.IsOnboard(__instance, out var waterZoneData);
 
-    UpdateCachedLiquid(__instance, isOnboard);
-
     var liquidDepth =
       WaterZoneUtils.GetLiquidDepthFromBounds(waterZoneData?.OnboardController,
         __instance);
+    UpdateCachedLiquid(__instance, isOnboard);
+
     WaterZoneUtils.UpdateLiquidDepthValues(__instance, liquidDepth);
     return false;
   }
@@ -175,14 +149,9 @@ public class Character_WaterPatches
     if (type == LiquidType.Tar) return true;
     if (!WaterZoneUtils.IsAllowedUnderwater(__instance)) return true;
     if (__instance == null) return true;
-    // if (!VehicleOnboardController.IsCharacterOnboard(__instance))
-    // {
-    //   return true;
-    // } 
 
-    var success = WaterZoneUtils.UpdateLiquidDepth(__instance, level, type);
-    // needs to return false since we are handling this.
-    var handled = !success;
-    return handled;
+    var wasHandled =
+      WaterZoneUtils.UpdateLiquidDepth(__instance, level, type);
+    return !wasHandled;
   }
 }

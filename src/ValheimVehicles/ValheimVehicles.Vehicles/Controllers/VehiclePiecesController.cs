@@ -69,14 +69,18 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   private ZNetView _currentLowestPiece = null;
 
-  public float LowestPieceHeight => transform.position.y -
+  public float LowestPieceHeight => transform.position.y +
     _currentLowestPiece?.transform.localPosition.y ?? 0;
+
+  /// <summary>
+  /// Persists the collider after it has been set to prevent auto-balast feature from losing the origin point.
+  /// </summary>
+  public Vector3 FloatColliderDefaultPosition = Vector3.zero;
 
   /// <summary>
   /// For water access. This will accurately set the lowest relative netview on the ship. This netview position will then be computed in LowestPointOnVehicle.
   /// </summary>
-  public void UpdateLowestAveragePoint(float localYOffset,
-    ZNetView pieceNetView)
+  public void UpdateLowestAveragePoint(ZNetView pieceNetView)
   {
     if (_currentLowestPiece == null ||
         _currentLowestPiece.transform.localPosition.y >
@@ -2391,6 +2395,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         continue;
       }
 
+      UpdateLowestAveragePoint(netView);
       EncapsulateBounds(netView.gameObject);
     }
 
@@ -2488,6 +2493,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     m_floatcollider.size = floatColliderSize;
     m_floatcollider.transform.localPosition = floatColliderCenterOffset;
+    FloatColliderDefaultPosition = m_floatcollider.transform.localPosition;
 
     m_onboardcollider.size = onboardColliderSize;
     m_onboardcollider.transform.localPosition = onboardColliderCenter;

@@ -36,40 +36,45 @@ public class Character_Patch
   public static void Character_IsInWater(Character __instance,
     ref bool __result)
   {
-    var isOnboard = WaterZoneUtils.IsOnboard(__instance);
-    if (isOnboard) __result = false;
+    var vpc = __instance.transform.root.GetComponent<VehiclePiecesController>();
+    if (vpc) __result = false;
+    // var isOnboard = WaterZoneUtils.IsOnboard(__instance);
+    // if (isOnboard) __result = false;
   }
 
-  // on vehicle = on ground.
-  [HarmonyPatch(typeof(Character), nameof(Character.IsOnGround))]
-  [HarmonyPostfix]
-  public static void Character_IsOnGround(Character __instance,
-    ref bool __result)
-  {
-    var isOnboard = WaterZoneUtils.IsOnboard(__instance);
-    if (isOnboard) __result = true;
-  }
+//   // on vehicle = on ground.
+//   [HarmonyPatch(typeof(Character), nameof(Character.IsOnGround))]
+//   [HarmonyPostfix]
+//   public static void Character_IsOnGround(Character __instance,
+//     ref bool __result)
+//   {
+// #if DEBUG
+//     // TODO remove
+//     // useful for debugging as it skips other characters, but this needs to be off in multiplayer
+//     if (!__instance.IsPlayer()) return;
+// #endif
+//
+//     if (__instance.m_lastGroundBody == null)
+//     {
+//       return;
+//     }
+//
+//     var isOnboard = WaterZoneUtils.IsOnboard(__instance);
+//     if (isOnboard) __result = true;
+//   }
 
   public static object? GetStandingOnShip(Character __instance)
   {
     if (__instance.InNumShipVolumes == 0 || !__instance.IsOnGround() ||
-        !(bool)__instance.m_lastGroundBody)
+        __instance.m_lastGroundBody == null)
     {
       return null;
     }
 
-    // More powerful/accurate way to do things
     if (WaterZoneUtils.IsOnboard(__instance, out var data))
     {
       return VehicleShipCompat.InitFromUnknown(data?.VehicleShip);
     }
-
-    // var bvc = __instance.m_lastGroundBody
-    //   .GetComponentInParent<VehiclePiecesController>();
-    // if ((bool)bvc)
-    // {
-    //   return VehicleShipCompat.InitFromUnknown(bvc?.VehicleInstance);
-    // }
 
     var lastOnShip = __instance.m_lastGroundBody.GetComponent<Ship>();
 
@@ -125,8 +130,9 @@ public class Character_Patch
       if ((bool)bvc && __instance.transform.parent != bvc.transform)
       {
         __instance.transform.SetParent(bvc.transform);
-        return;
       }
+
+      return;
     }
 
     MoveableBaseRootComponent? mbr = null;

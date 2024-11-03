@@ -37,14 +37,17 @@ public static class WaterConfig
   public static ConfigEntry<float>
     DEBUG_LiquidDepthOverride { get; private set; } = null!;
 
+  public static ConfigEntry<float>
+    DEBUG_WaterDepthOverride { get; private set; } = null!;
+
+  public static ConfigEntry<float>
+    DEBUG_LiquidCacheDepthOverride { get; private set; } = null!;
+
+  public static ConfigEntry<float>
+    DEBUG_SwimDepthOverride { get; private set; } = null!;
+
   public static ConfigEntry<bool>
-    DEBUG_HasLiquidDepthOverride { get; private set; } = null!;
-
-  public static ConfigEntry<float> DEBUG_UnderwaterMaxCachedDiveDepth =
-    null!;
-
-  public static ConfigEntry<float> DEBUG_UnderwaterMaxDiveDepth =
-    null!;
+    DEBUG_HasDepthOverrides { get; private set; } = null!;
 
   /// <summary>
   /// Modes
@@ -79,6 +82,9 @@ public static class WaterConfig
     null!;
 
   public static ConfigEntry<float> UnderWaterFogIntensity =
+    null!;
+
+  public static ConfigEntry<bool> AutoBalastNearShore =
     null!;
 
   /// <summary>
@@ -121,12 +127,8 @@ public static class WaterConfig
   public static bool IsDisabled => UnderwaterAccessMode.Value ==
                                    UnderwaterAccessModeType.Disabled;
 
-
-  public static void BindConfig(ConfigFile config)
+  public static void BindDebugConfig(ConfigFile config)
   {
-    Config = config;
-
-
     DEBUG_WaterDisplacementMeshPrimitive = config.Bind(SectionKeyDebug,
       "DEBUG_WaterDisplacementMeshPrimitive",
       PrimitiveType.Cube,
@@ -134,18 +136,57 @@ public static class WaterConfig
         "Lets you choose from the water displacement mesh primitives. These will be stored as ZDOs. Not super user friendly yet...",
         true, true));
 
-    DEBUG_HasLiquidDepthOverride = config.Bind(SectionKeyDebug,
-      "DEBUG_HasLiquidDepthOverride",
+    var depthRanges = new AcceptableValueRange<float>(-10000f, 50f);
+
+    DEBUG_HasDepthOverrides = config.Bind(SectionKeyDebug,
+      "DEBUG_HasDepthOverrides",
       false,
       ConfigHelpers.CreateConfigDescription(
-        "Enables liquid depth overrides",
+        "Enables depth overrides",
         true, true));
+    DEBUG_WaterDepthOverride = config.Bind(SectionKeyDebug,
+      "DEBUG_WaterDepthOverride",
+      30f,
+      ConfigHelpers.CreateConfigDescription(
+        "Force Overrides the WATER depth for character on boats. Useful for testing how a player can swim to the lowest depth (liquid depth).",
+        true, true, depthRanges));
+
+    DEBUG_LiquidCacheDepthOverride = config.Bind(SectionKeyDebug,
+      "DEBUG_LiquidCacheDepthOverride",
+      0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Force Overrides the liquid CACHED depth for character on boats.",
+        true, true, depthRanges));
+
     DEBUG_LiquidDepthOverride = config.Bind(SectionKeyDebug,
       "DEBUG_LiquidDepthOverride",
       15f,
       ConfigHelpers.CreateConfigDescription(
-        "Force Overrides the liquid depth for character on boats. Likely will cause bobbing effect as it fights the onboard collider if it is below it.",
-        true, true, new AcceptableValueRange<float>(0f, 30f)));
+        "Force Overrides the LIQUID depth for character on boats.",
+        true, true, depthRanges));
+
+    DEBUG_SwimDepthOverride = config.Bind(SectionKeyDebug,
+      "DEBUG_SwimDepthOverride",
+      15f,
+      ConfigHelpers.CreateConfigDescription(
+        "Force Overrides the Swim depth for character on boats. Values above the swim depth force the player into a swim animation.",
+        true, true, depthRanges));
+  }
+
+  public static void BindConfig(ConfigFile config)
+  {
+    Config = config;
+
+    BindDebugConfig(Config);
+
+    AutoBalastNearShore = Config.Bind(
+      SectionKey,
+      "AutoBalastNearShore",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "Force moves the ship's float collider to the lowest section of the boat if that section is going to smash the ground",
+        true, true));
+
 
     AllowTamedEntiesUnderwater = Config.Bind(
       SectionKey,
@@ -163,20 +204,6 @@ public static class WaterConfig
         "Flips the water mesh underwater. This can cause some jitters. Turn it on at your own risk. It's improve immersion. Recommended to keep off for now while onboard to prevent underwater jitters due to camera colliding rapidly when water flips",
         true, true));
 
-    DEBUG_UnderwaterMaxDiveDepth = Config.Bind(
-      SectionKey,
-      "DEBUG_UnderwaterMaxDiveDepth",
-      0f,
-      ConfigHelpers.CreateConfigDescription(
-        "Enforce a max depth for diving values higher will force the player to float to that value.",
-        false, false, new AcceptableValueRange<float>(0, 50f)));
-    DEBUG_UnderwaterMaxCachedDiveDepth = Config.Bind(
-      SectionKey,
-      "DEBUG_UnderwaterMaxCachedDiveDepth",
-      0f,
-      ConfigHelpers.CreateConfigDescription(
-        "Enforce a max sinking depth for diving. Higher values can make the player swim to the depth instead of fall through the water. Recommended lower than 20",
-        false, false, new AcceptableValueRange<float>(0, 50f)));
     WaveSizeMultiplier = Config.Bind(
       SectionKey,
       "WaveSizeMultiplier",

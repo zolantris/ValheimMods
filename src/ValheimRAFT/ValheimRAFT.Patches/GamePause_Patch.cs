@@ -22,6 +22,8 @@ public class GamePause_Patch
   [HarmonyPostfix]
   private static void UpdatePausePostfix()
   {
+    // stops the dumb rotation.
+    Game.m_pauseRotateFade = 0.0f;
     PreventTimeFreezeOnShip();
   }
 

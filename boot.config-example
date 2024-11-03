@@ -1,3 +1,10 @@
 gfx-enable-gfx-jobs=1
 gfx-enable-native-gfx-jobs=1
 gc-max-time-slice=20
+
+
+
+// 
+// use-animated-hybrid-loop=1
+// scripting-runtime-version=latest
+// gc-incremental=1

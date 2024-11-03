@@ -44,6 +44,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public IVehicleShip? ShipInstance => vehicleShip;
 
+  public VehiclePiecesController? PiecesController =>
+    vehicleShip?.PiecesController;
+
   private VehicleShip vehicleShip;
   public Vector3 detachOffset = new(0f, 0.5f, 0f);
 
@@ -419,11 +422,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return;
 #endif
 
+    if (PiecesController == null) return;
+
     if (!VehicleDebugConfig.PositionAutoFix.Value) return;
 
     // Heavier but more accurate player check
     var playersOnboard =
-      vehicleShip.PiecesController.GetComponentsInChildren<Player>();
+      PiecesController.GetComponentsInChildren<Player>() ?? [];
     if (playersOnboard.Length < 1 || m_players.Count < 1)
     {
       if (!playersOnboard.ToList().Equals(m_players))
@@ -434,7 +439,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       SendDelayedAnchor();
     }
 
-    var vehicleBounds = vehicleShip.PiecesController.GetVehicleBounds();
+    var vehicleBounds = PiecesController.GetVehicleBounds();
     var currentLowestHeight = transform.position.y - vehicleBounds.extents.y;
     var groundHeight = ZoneSystem.instance.GetGroundHeight(transform.position);
     var floatColliderLowestPoint = FloatCollider.transform.position.y -
@@ -666,12 +671,29 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return m_floatcollider.size.z / 2;
   }
 
+  /// <summary>
+  /// Adds additional "fake" water height when the lowest piece scraps the bottom of the ocean.
+  /// </summary>
+  /// <param name="currentWaterHeight"></param>
+  public float UpdateBalastOffset(float currentWaterHeight)
+  {
+    if (PiecesController == null) return 0f;
+    if (PiecesController.LowestPieceHeight < currentWaterHeight)
+    {
+      var heightDifference =
+        currentWaterHeight - PiecesController.LowestPieceHeight;
+      return currentWaterHeight + heightDifference;
+    }
+
+    return 0f;
+  }
+
   public void CustomPhysics()
   {
     m_body.useGravity = IsNotFlying;
 
     var waterLevelAtCenterShip =
-      Floating.GetWaterLevel(m_floatcollider.center, ref m_previousCenter);
+      Floating.GetWaterLevel(FloatCollider.center, ref m_previousCenter);
 
     // above the water
     if (waterLevelAtCenterShip < m_body.centerOfMass.y)
@@ -989,7 +1011,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
                     GetFloatSizeFromDirection(Vector3.right);
     var waterLevelCenter =
       Floating.GetWaterLevel(worldCenterOfMass, ref m_previousCenter);
-
     var waterLevelLeft = Floating.GetWaterLevel(shipLeft, ref m_previousLeft);
     var waterLevelRight =
       Floating.GetWaterLevel(shipRight, ref m_previousRight);
@@ -1009,21 +1030,23 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       isInvalid = true;
     }
 
+    var currentDepthOffset = UpdateBalastOffset(currentDepth);
+
     var isAboveBuoyantLevel = currentDepth > m_disableLevel || isInvalid;
 
     return new ShipFloatation()
     {
-      AverageWaterHeight = averageWaterHeight,
-      CurrentDepth = currentDepth,
+      AverageWaterHeight = averageWaterHeight + currentDepthOffset,
+      CurrentDepth = currentDepth + currentDepthOffset,
       IsAboveBuoyantLevel = isAboveBuoyantLevel,
       ShipLeft = shipLeft,
       ShipForward = shipForward,
       ShipBack = shipBack,
       ShipRight = shipRight,
-      WaterLevelLeft = waterLevelLeft,
-      WaterLevelRight = waterLevelRight,
-      WaterLevelForward = waterLevelForward,
-      WaterLevelBack = waterLevelBack,
+      WaterLevelLeft = waterLevelLeft + currentDepthOffset,
+      WaterLevelRight = waterLevelRight + currentDepthOffset,
+      WaterLevelForward = waterLevelForward + currentDepthOffset,
+      WaterLevelBack = waterLevelBack + currentDepthOffset,
     };
   }
 
@@ -1438,7 +1461,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
 
     // Adds additional speeds to turning
-    if (vehicleShip.PiecesController.m_rudderPieces.Count > 0)
+    if (PiecesController.m_rudderPieces.Count > 0)
     {
       shipAdditiveSteerForce *= PropulsionConfig.TurnPowerWithRudder.Value;
     }
@@ -1582,13 +1605,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// </summary>
   public void RPC_SyncBounds(long sender)
   {
-    if (!vehicleShip.PiecesController) return;
+    if (!PiecesController) return;
     SyncVehicleBounds();
   }
 
   public void SyncVehicleBounds()
   {
-    vehicleShip.PiecesController.DebouncedRebuildBounds();
+    PiecesController?.DebouncedRebuildBounds();
   }
 
   public void UpdateControlls(float dt) => UpdateControls(dt);
