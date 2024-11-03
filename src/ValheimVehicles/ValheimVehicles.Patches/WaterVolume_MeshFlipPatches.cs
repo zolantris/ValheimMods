@@ -83,7 +83,7 @@ namespace ValheimVehicles.Patches
 
     public static void UpdateCameraState()
     {
-      var isAbove = IsCameraAboveWater;
+      var isAbove = GameCamera.instance.transform.position.y > WaterLevelCamera;
       if (isAbove)
       {
         switch (CameraWaterState)

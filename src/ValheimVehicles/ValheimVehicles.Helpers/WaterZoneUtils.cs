@@ -318,8 +318,9 @@ public static class WaterZoneUtils
         break;
     }
 
+    // Minus 1 so the character is not considered in the liquid
     character.m_liquidLevel =
-      Mathf.Max(character.m_waterLevel, character.m_tarLevel);
+      Mathf.Max(character.m_waterLevel - 1f, character.m_tarLevel);
   }
 
 

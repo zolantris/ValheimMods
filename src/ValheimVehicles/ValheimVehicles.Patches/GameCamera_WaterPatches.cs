@@ -23,9 +23,8 @@ internal class GameCameraPatch
   public static Vector2i? prevFogZone = Vector2i.zero;
 
   // Meant to be updated by WaterVolumePatches
-  public static bool MustRestorePrevValues;
-  public static bool MustUpdateCamera;
-
+  public static bool CanUpdateFog;
+  public static WaterVolumePatch.CameraWaterStateTypes PrevState;
 
   public static void UpdateFogBasedOnEnvironment()
   {
@@ -47,7 +46,7 @@ internal class GameCameraPatch
   public static void UpdateFogSettings()
   {
     if (!WaterConfig.UnderwaterFogEnabled.Value) return;
-    if (!MustRestorePrevValues) return;
+    if (!CanUpdateFog) return;
     var currentZone = GetCurrentZone();
     if (WaterVolumePatch.IsCameraAboveWater)
     {
@@ -81,13 +80,30 @@ internal class GameCameraPatch
       RenderSettings.fog = WaterConfig.UnderwaterFogEnabled.Value;
     }
 
-    MustRestorePrevValues = false;
+    CanUpdateFog = false;
   }
 
-  public static void RequestUpdate()
+  public static bool IsCameraSurfaceChanged(
+    WaterVolumePatch.CameraWaterStateTypes stateTypes)
   {
-    MustRestorePrevValues = true;
-    MustUpdateCamera = true;
+    return PrevState == WaterVolumePatch.CameraWaterStateTypes.ToAbove &&
+           stateTypes == WaterVolumePatch.CameraWaterStateTypes.ToBelow ||
+           PrevState == WaterVolumePatch.CameraWaterStateTypes.ToBelow &&
+           stateTypes == WaterVolumePatch.CameraWaterStateTypes.ToAbove;
+  }
+
+  public static void RequestUpdate(
+    WaterVolumePatch.CameraWaterStateTypes stateTypes)
+  {
+    if (IsCameraSurfaceChanged(stateTypes))
+    {
+      CanUpdateFog = true;
+      // It's ToAbove or ToBelow
+      PrevState = stateTypes;
+      return;
+    }
+
+    CanUpdateFog = false;
   }
 
   // todo fix jitters with low headroom at water level

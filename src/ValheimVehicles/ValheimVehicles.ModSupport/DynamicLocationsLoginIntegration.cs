@@ -65,8 +65,9 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
 
 
     yield return new WaitUntil(() =>
+      vehicle.Instance.PiecesController.isInitialActivationComplete ||
       vehicle.Instance.PiecesController.IsActivationComplete ||
-      localTimer.ElapsedMilliseconds > 5000);
+      localTimer.ElapsedMilliseconds > 2000);
 
     if (ModSupportConfig.DynamicLocationsShouldSkipMovingPlayerToBed.Value)
     {

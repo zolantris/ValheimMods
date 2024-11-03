@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Config;
 using ValheimRAFT.Patches;
@@ -677,23 +678,56 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private float _previousBalastOffset = 0f;
   private float _currentBalastOffset = 0f;
 
+  public float groundHeightPaddingOffset = 2f;
+
   /// <summary>
   /// Adds additional "fake" water height when the lowest piece scraps the bottom of the ocean.
   /// Allows for land travel without guards.
   /// </summary>
-  private float UpdateBalastOffset()
+  private void UpdateBalastOffset()
   {
     if (!WaterConfig.AutoBallast.Value || PiecesController == null)
-      return 0f;
+    {
+      // if (PiecesController != null &&
+      //     PiecesController.FloatColliderDefaultPosition !=
+      //     FloatCollider.transform.localPosition)
+      // {
+      //   FloatCollider.transform.position =
+      //     PiecesController.FloatColliderDefaultPosition;
+      // }
+
+      return;
+    }
+
     var groundHeight =
       ZoneSystem.instance.GetGroundHeight(PiecesController.LowestPiecePoint);
     _previousBalastOffset = _currentBalastOffset;
-    _currentBalastOffset =
-      Math.Max(0f, groundHeight - PiecesController.LowestPiecePoint.y);
+    var groundHeightAndOffset = groundHeight + groundHeightPaddingOffset;
 
-    return Mathf.Lerp(_previousBalastOffset,
-      _currentBalastOffset + WaterConfig.AutoBallastAdditionalOffset.Value,
+    _currentBalastOffset = 0f;
+    // only apply this if groundheight + offset is higher.
+    if (groundHeightAndOffset >
+        PiecesController.LowestPiecePoint.y)
+    {
+      _currentBalastOffset = PiecesController.LowestPiecePoint.y -
+                             groundHeightAndOffset;
+    }
+
+    _currentBalastOffset =
+      Mathf.Clamp(_currentBalastOffset, 0f, 20f);
+
+    var nextIncrement = Mathf.Lerp(_previousBalastOffset,
+      _currentBalastOffset,
       Time.fixedDeltaTime);
+
+    FloatCollider.transform.localPosition = new Vector3(
+      PiecesController.FloatColliderDefaultPosition.x,
+      PiecesController.FloatColliderDefaultPosition.y - nextIncrement,
+      PiecesController.FloatColliderDefaultPosition.z);
+    BlockingCollider.transform.localPosition = new Vector3(
+      PiecesController.BlockingColliderDefaultPosition.x,
+      PiecesController.BlockingColliderDefaultPosition.y - nextIncrement,
+      PiecesController.BlockingColliderDefaultPosition.z);
   }
 
   public void CustomPhysics()
@@ -1029,11 +1063,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       (waterLevelCenter + waterLevelLeft + waterLevelRight + waterLevelForward +
        waterLevelBack) /
       5f;
-    var currentDepthOffset = UpdateBalastOffset();
 
     var currentDepth =
-      worldCenterOfMass.y - averageWaterHeight - m_waterLevelOffset -
-      currentDepthOffset;
+      worldCenterOfMass.y - averageWaterHeight - m_waterLevelOffset;
     var isInvalid = false;
     if (averageWaterHeight <= -10000 || averageWaterHeight < m_disableLevel)
     {
@@ -1046,17 +1078,17 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     return new ShipFloatation()
     {
-      AverageWaterHeight = averageWaterHeight + currentDepthOffset,
-      CurrentDepth = currentDepth + currentDepthOffset,
+      AverageWaterHeight = averageWaterHeight,
+      CurrentDepth = currentDepth,
       IsAboveBuoyantLevel = isAboveBuoyantLevel,
       ShipLeft = shipLeft,
       ShipForward = shipForward,
       ShipBack = shipBack,
       ShipRight = shipRight,
-      WaterLevelLeft = waterLevelLeft + currentDepthOffset,
-      WaterLevelRight = waterLevelRight + currentDepthOffset,
-      WaterLevelForward = waterLevelForward + currentDepthOffset,
-      WaterLevelBack = waterLevelBack + currentDepthOffset,
+      WaterLevelLeft = waterLevelLeft,
+      WaterLevelRight = waterLevelRight,
+      WaterLevelForward = waterLevelForward,
+      WaterLevelBack = waterLevelBack,
     };
   }
 
@@ -1130,6 +1162,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var owner = m_nview.IsOwner();
     if ((!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner) ||
         isBeached) return;
+
+
+    UpdateBalastOffset();
 
     var shipFloatation = GetShipFloatationObj();
 

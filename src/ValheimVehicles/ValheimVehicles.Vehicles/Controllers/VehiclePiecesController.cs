@@ -60,7 +60,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public InitializationState BaseVehicleInitState =>
     _baseVehicleInitializationState;
 
-  public bool IsInitialActivationComplete = false;
+  public bool isInitialActivationComplete = false;
 
   public bool IsActivationComplete =>
     _pendingPiecesState is not PendingPieceStateEnum.Failure
@@ -77,6 +77,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   /// Persists the collider after it has been set to prevent auto-balast feature from losing the origin point.
   /// todo might be optional.
   /// </summary>
+  public Vector3 BlockingColliderDefaultPosition = Vector3.zero;
+
   public Vector3 FloatColliderDefaultPosition = Vector3.zero;
 
   private static readonly string[] IgnoredPrefabNames =
@@ -1442,9 +1444,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     _pendingPiecesState = pieceStateEnum;
     PendingPiecesTimer.Reset();
 
-    if (!IsInitialActivationComplete)
+    if (!isInitialActivationComplete)
     {
-      IsInitialActivationComplete = true;
+      isInitialActivationComplete = true;
     }
 
     if (pieceStateEnum == PendingPieceStateEnum.ForceReset)
@@ -2463,7 +2465,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     //   m_floatcollider.size.y;
     var onboardColliderCenter =
       new Vector3(_vehicleBounds.center.x,
-        _vehicleBounds.center.x,
+        _vehicleBounds.center.y,
         _vehicleBounds.center.z);
     var onboardColliderSize = new Vector3(
       Mathf.Max(minColliderSize, _vehicleBounds.size.x),
@@ -2505,10 +2507,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     m_floatcollider.size = floatColliderSize;
     m_floatcollider.transform.localPosition = floatColliderCenterOffset;
-    FloatColliderDefaultPosition = m_floatcollider.transform.localPosition;
 
     m_onboardcollider.size = onboardColliderSize;
     m_onboardcollider.transform.localPosition = onboardColliderCenter;
+
+    FloatColliderDefaultPosition = m_floatcollider.transform.localPosition;
+    BlockingColliderDefaultPosition =
+      m_blockingcollider.transform.localPosition;
   }
 
   public void IgnoreCollidersForAllRamPieces(ZNetView netView)
