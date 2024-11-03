@@ -67,6 +67,25 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public bool HasRunCleanup = false;
 
+  private ZNetView _currentLowestPiece = null;
+
+  public float LowestPieceHeight => transform.position.y -
+    _currentLowestPiece?.transform.localPosition.y ?? 0;
+
+  /// <summary>
+  /// For water access. This will accurately set the lowest relative netview on the ship. This netview position will then be computed in LowestPointOnVehicle.
+  /// </summary>
+  public void UpdateLowestAveragePoint(float localYOffset,
+    ZNetView pieceNetView)
+  {
+    if (_currentLowestPiece == null ||
+        _currentLowestPiece.transform.localPosition.y >
+        pieceNetView.transform.localPosition.y)
+    {
+      _currentLowestPiece = pieceNetView;
+    }
+  }
+
 
   public static bool DEBUGAllowActivatePendingPieces
   {
@@ -2419,19 +2438,19 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     const float characterTriggerMaxAddedHeight = 10;
     const float characterTriggerMinHeight = 4;
     const float characterHeightScalar = 1.15f;
-    var computedOnboardTriggerHeight =
-      Math.Min(
-        Math.Max(_vehicleBounds.size.y * characterHeightScalar,
-          _vehicleBounds.size.y + characterTriggerMinHeight),
-        _vehicleBounds.size.y + characterTriggerMaxAddedHeight) -
-      m_floatcollider.size.y;
+    // var computedOnboardTriggerHeight =
+    //   Math.Min(
+    //     Math.Max(_vehicleBounds.size.y * characterHeightScalar,
+    //       _vehicleBounds.size.y + characterTriggerMinHeight),
+    //     _vehicleBounds.size.y + characterTriggerMaxAddedHeight) -
+    //   m_floatcollider.size.y;
     var onboardColliderCenter =
       new Vector3(_vehicleBounds.center.x,
-        computedOnboardTriggerHeight * .25f,
+        _vehicleBounds.size.y * 0.5f,
         _vehicleBounds.center.z);
     var onboardColliderSize = new Vector3(
       Mathf.Max(minColliderSize, _vehicleBounds.size.x),
-      computedOnboardTriggerHeight,
+      Mathf.Max(minColliderSize, _vehicleBounds.size.y),
       Mathf.Max(minColliderSize, _vehicleBounds.size.z));
 
     /*

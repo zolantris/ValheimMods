@@ -36,7 +36,7 @@ public class Character_Patch
   public static void Character_IsInWater(Character __instance,
     ref bool __result)
   {
-    var isOnboard = WaterZoneHelper.IsOnboard(__instance);
+    var isOnboard = WaterZoneUtils.IsOnboard(__instance);
     if (isOnboard) __result = false;
   }
 
@@ -46,7 +46,7 @@ public class Character_Patch
   public static void Character_IsOnGround(Character __instance,
     ref bool __result)
   {
-    var isOnboard = WaterZoneHelper.IsOnboard(__instance);
+    var isOnboard = WaterZoneUtils.IsOnboard(__instance);
     if (isOnboard) __result = true;
   }
 
@@ -58,12 +58,18 @@ public class Character_Patch
       return null;
     }
 
-    var bvc = __instance.m_lastGroundBody
-      .GetComponentInParent<VehiclePiecesController>();
-    if ((bool)bvc)
+    // More powerful/accurate way to do things
+    if (WaterZoneUtils.IsOnboard(__instance, out var data))
     {
-      return VehicleShipCompat.InitFromUnknown(bvc?.VehicleInstance);
+      return VehicleShipCompat.InitFromUnknown(data?.VehicleShip);
     }
+
+    // var bvc = __instance.m_lastGroundBody
+    //   .GetComponentInParent<VehiclePiecesController>();
+    // if ((bool)bvc)
+    // {
+    //   return VehicleShipCompat.InitFromUnknown(bvc?.VehicleInstance);
+    // }
 
     var lastOnShip = __instance.m_lastGroundBody.GetComponent<Ship>();
 

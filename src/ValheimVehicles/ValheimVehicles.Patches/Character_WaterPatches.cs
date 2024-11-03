@@ -24,7 +24,7 @@ public class Character_WaterPatches
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
-    WaterZoneHelper.SetIsUnderWaterInVehicle(__instance, ref __result);
+    WaterZoneUtils.SetIsUnderWaterInVehicle(__instance, ref __result);
   }
 
   /// <summary>
@@ -66,7 +66,7 @@ public class Character_WaterPatches
   [HarmonyPostfix]
   public static void Character_RemoveThatTar(Character __instance)
   {
-    if (WaterConfig.IsAllowedUnderwater(__instance) &&
+    if (WaterZoneUtils.IsAllowedUnderwater(__instance) &&
         VehicleOnboardController.IsCharacterOnboard(__instance))
     {
       if (__instance.m_tarEffects.HasEffects())
@@ -76,27 +76,42 @@ public class Character_WaterPatches
     }
   }
 
+  /// <summary>
+  /// 
+  /// </summary>
+  /// FYI: WaterLiquid is spelled wrong "cashed" vs "cached"
+  /// <param name="character"></param>
+  /// <param name="isOnboard"></param>
+  public static void UpdateCachedLiquid(Character character, bool isOnboard)
+  {
+    if (character.IsTeleporting() ||
+        (UnityEngine.Object)character.GetStandingOnShip() !=
+        (UnityEngine.Object)null || character.IsAttachedToShip())
+      character.m_cashedInLiquidDepth = 0.0f;
+    else if (!isOnboard)
+    {
+      character.m_cashedInLiquidDepth = Mathf.Max(0.0f,
+        character.GetLiquidLevel() - character.transform.position.y);
+    }
+  }
+
   [HarmonyPatch(typeof(Character), nameof(Character.CalculateLiquidDepth))]
   [HarmonyPrefix]
   public static bool Character_CalculateLiquidDepth(Character __instance)
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return true;
-    if (!WaterConfig.IsAllowedUnderwater(__instance)) return true;
+    if (!WaterZoneUtils.IsAllowedUnderwater(__instance)) return true;
 
-    var data = VehicleOnboardController.GetOnboardCharacterData(__instance);
-    // if (data?.OnboardController is null) ;
-    if (__instance.IsTeleporting() ||
-        (UnityEngine.Object)__instance.GetStandingOnShip() !=
-        (UnityEngine.Object)null || __instance.IsAttachedToShip())
-      __instance.m_cashedInLiquidDepth = 0.0f;
-    // this might be required to avoid the tar bug
-    __instance.m_cashedInLiquidDepth = 0.0f;
+    var isOnboard =
+      WaterZoneUtils.IsOnboard(__instance, out var waterZoneData);
+
+    UpdateCachedLiquid(__instance, isOnboard);
 
     var liquidDepth =
-      WaterZoneHelper.GetLiquidDepthFromBounds(data?.OnboardController,
+      WaterZoneUtils.GetLiquidDepthFromBounds(waterZoneData?.OnboardController,
         __instance);
-    WaterZoneHelper.UpdateLiquidDepthValues(__instance, liquidDepth);
+    WaterZoneUtils.UpdateLiquidDepthValues(__instance, liquidDepth);
     return false;
   }
 
@@ -107,7 +122,7 @@ public class Character_WaterPatches
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
-    WaterZoneHelper.SetIsUnderWaterInVehicle(__instance, ref __result);
+    WaterZoneUtils.SetIsUnderWaterInVehicle(__instance, ref __result);
   }
 
   [HarmonyPatch(typeof(Character), nameof(Character.InTar))]
@@ -131,7 +146,7 @@ public class Character_WaterPatches
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
-    WaterZoneHelper.IsInLiquidSwimDepth(__instance, ref __result);
+    WaterZoneUtils.IsInLiquidSwimDepth(__instance, ref __result);
   }
 
   [HarmonyPatch(typeof(Character), nameof(Character.InLiquidSwimDepth),
@@ -142,7 +157,7 @@ public class Character_WaterPatches
   {
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
-    WaterZoneHelper.IsInLiquidSwimDepth(__instance, ref __result);
+    WaterZoneUtils.IsInLiquidSwimDepth(__instance, ref __result);
   }
 
   /// <summary>
@@ -158,14 +173,14 @@ public class Character_WaterPatches
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return true;
     if (type == LiquidType.Tar) return true;
-    if (!WaterConfig.IsAllowedUnderwater(__instance)) return true;
+    if (!WaterZoneUtils.IsAllowedUnderwater(__instance)) return true;
     if (__instance == null) return true;
-    if (!VehicleOnboardController.IsCharacterOnboard(__instance))
-    {
-      return true;
-    }
+    // if (!VehicleOnboardController.IsCharacterOnboard(__instance))
+    // {
+    //   return true;
+    // } 
 
-    var success = WaterZoneHelper.UpdateLiquidDepth(__instance, level, type);
+    var success = WaterZoneUtils.UpdateLiquidDepth(__instance, level, type);
     // needs to return false since we are handling this.
     var handled = !success;
     return handled;

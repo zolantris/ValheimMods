@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text;
 using UnityEngine;
 using ValheimVehicles.Attributes;
+using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Structs;
 using Logger = Jotunn.Logger;
 
@@ -18,47 +19,58 @@ public class GameCacheController : MonoBehaviour
   private Dictionary<string, GameCacheValue<object, object>> _cacheValues =
     new();
 
-  private void Awake()
-  {
-    // Use reflection to find all methods with the GameCacheValue attribute
-    foreach (MethodInfo method in GetType().GetMethods(BindingFlags.Instance |
-               BindingFlags.Public | BindingFlags.NonPublic))
-    {
-      var attribute = method.GetCustomAttribute<GameCacheValueAttribute>();
-      if (attribute != null)
-      {
-        // Create a delegate for the method, handling any return type and parameters
-        var parameters = method.GetParameters();
-        if (_cacheValues.ContainsKey(attribute.Name))
-        {
-          Logger.LogError(
-            $"GameCacheController attempted to register a duplicate key {attribute.Name} to cache. This should not be allowed. This registration will be skipped.");
-          return;
-        }
+  // todo add a way to basically cache every callback within WaterZoneCharacterData as a "GameCacheValue" so it only updates per unique character instance per XYZ time.
+  private Dictionary<ZDOID, WaterZoneCharacterData> WaterZoneCharacterDatas =
+    new();
 
-        if (parameters.Length == 0)
-        {
-          // Handle methods with no parameters
-          var callback =
-            (Func<object>)Delegate.CreateDelegate(typeof(Func<object>), this,
-              method);
-          var cacheValue = CreateCacheValue(attribute.Name,
-            attribute.IntervalInSeconds, callback);
-          _cacheValues[attribute.Name] = cacheValue;
-        }
-        else
-        {
-          // Handle methods with parameters
-          var callbackType =
-            typeof(Func<,>).MakeGenericType(parameters[0].ParameterType,
-              method.ReturnType);
-          var callback = Delegate.CreateDelegate(callbackType, this, method);
-          var cacheValue = CreateCacheValue(attribute.Name,
-            attribute.IntervalInSeconds, callback);
-          _cacheValues[attribute.Name] = cacheValue;
-        }
-      }
-    }
+  // private void Awake()
+  // {
+  //   // Use reflection to find all methods with the GameCacheValue attribute
+  //   foreach (MethodInfo method in GetType().GetMethods(BindingFlags.Instance |
+  //              BindingFlags.Public | BindingFlags.NonPublic))
+  //   {
+  //     var attribute = method.GetCustomAttribute<GameCacheValueAttribute>();
+  //     if (attribute != null)
+  //     {
+  //       // Create a delegate for the method, handling any return type and parameters
+  //       var parameters = method.GetParameters();
+  //       if (_cacheValues.ContainsKey(attribute.Name))
+  //       {
+  //         Logger.LogError(
+  //           $"GameCacheController attempted to register a duplicate key {attribute.Name} to cache. This should not be allowed. This registration will be skipped.");
+  //         return;
+  //       }
+  //
+  //       if (parameters.Length == 0)
+  //       {
+  //         // Handle methods with no parameters
+  //         var callback =
+  //           (Func<object>)Delegate.CreateDelegate(typeof(Func<object>), this,
+  //             method);
+  //         var cacheValue = CreateCacheValue(attribute.Name,
+  //           attribute.IntervalInSeconds, callback);
+  //         _cacheValues[attribute.Name] = cacheValue;
+  //       }
+  //       else
+  //       {
+  //         // Handle methods with parameters
+  //         var callbackType =
+  //           typeof(Func<,>).MakeGenericType(parameters[0].ParameterType,
+  //             method.ReturnType);
+  //         var callback = Delegate.CreateDelegate(callbackType, this, method);
+  //         var cacheValue = CreateCacheValue(attribute.Name,
+  //           attribute.IntervalInSeconds, callback);
+  //         _cacheValues[attribute.Name] = cacheValue;
+  //       }
+  //     }
+  //   }
+  // }
+  public static object? WithCached(Func<object, object> cachedFunction)
+  {
+    if (cachedFunction == null)
+      throw new Exception("No cached function provided");
+
+    return null;
   }
 
   private GameCacheValue<object, object> CreateCacheValue(string name,

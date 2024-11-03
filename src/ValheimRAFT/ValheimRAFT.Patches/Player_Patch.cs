@@ -283,6 +283,18 @@ public class Player_Patch
     return false;
   }
 
+  [HarmonyPatch(typeof(Player), nameof(Player.IsAttachedToShip))]
+  [HarmonyPostfix]
+  public static void Player_IsAttachedToShip(Player __instance,
+    ref bool __result)
+  {
+    if (__result) return;
+    if (WaterZoneUtils.IsOnboard(__instance))
+    {
+      __result = true;
+    }
+  }
+
   [HarmonyPatch(typeof(Player), "AttachStop")]
   [HarmonyPrefix]
   public static bool AttachStop(Player __instance)

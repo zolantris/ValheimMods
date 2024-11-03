@@ -36,6 +36,9 @@ public class VehicleOnboardController : MonoBehaviour
 
   public Collider? OnboardCollider => MovementController?.OnboardCollider;
 
+  public VehiclePiecesController? PiecesController =>
+    MovementController?.ShipInstance?.VehiclePiecesController;
+
   private void Awake()
   {
     MovementController = GetComponentInParent<VehicleMovementController>();
@@ -244,7 +247,7 @@ public class VehicleOnboardController : MonoBehaviour
       if (!exists) return;
       RemoveCharacter(character);
       character.InNumShipVolumes--;
-      WaterZoneHelper.UpdateWaterDepth(character);
+      WaterZoneUtils.UpdateWaterDepth(character);
       return;
     }
 
@@ -264,7 +267,7 @@ public class VehicleOnboardController : MonoBehaviour
       }
     }
 
-    WaterZoneHelper.UpdateWaterDepth(character);
+    WaterZoneUtils.UpdateWaterDepth(character);
   }
 
   /// <summary>

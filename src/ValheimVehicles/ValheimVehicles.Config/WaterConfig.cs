@@ -4,6 +4,7 @@ using System.Runtime.Remoting.Channels;
 using BepInEx.Configuration;
 using ComfyLib;
 using UnityEngine;
+using ValheimVehicles.Helpers;
 
 namespace ValheimVehicles.Config;
 
@@ -24,6 +25,9 @@ public static class WaterConfig
     ExcludeOnboard,
   }
 
+  /// <summary>
+  /// Debug
+  /// </summary>
   public static ConfigEntry<PrimitiveType>
     DEBUG_WaterDisplacementMeshPrimitive { get; private set; } = null!;
 
@@ -36,20 +40,40 @@ public static class WaterConfig
   public static ConfigEntry<bool>
     DEBUG_HasLiquidDepthOverride { get; private set; } = null!;
 
+  public static ConfigEntry<float> DEBUG_UnderwaterMaxCachedDiveDepth =
+    null!;
+
+  public static ConfigEntry<float> DEBUG_UnderwaterMaxDiveDepth =
+    null!;
+
+  /// <summary>
+  /// Modes
+  /// </summary>
   public static ConfigEntry<UnderwaterAccessModeType> UnderwaterAccessMode =
     null!;
 
-  public static ConfigEntry<float> UnderwaterMaxCachedDiveDepth =
+
+  /// <summary>
+  /// Waves
+  /// </summary>
+  public static ConfigEntry<float> WaveSizeMultiplier =
     null!;
 
-  public static ConfigEntry<float> UnderwaterMaxDiveDepth =
-    null!;
+  /// <summary>
+  /// Entities
+  /// </summary>
+  public static ConfigEntry<string> AllowedEntiesList = null!;
+
+  public static ConfigEntry<bool> AllowTamedEntiesUnderwater = null!;
+
+
+  /// <summary>
+  /// Camera
+  /// </summary>
+  public static ConfigEntry<float> UnderwaterShipCameraZoom = null!;
 
   public static ConfigEntry<bool> UnderwaterFogEnabled =
     null!;
-
-  // public static ConfigEntry<bool> AllowNonPlayerCharactersUnderwater =
-  //   null!;
 
   public static ConfigEntry<Color> UnderWaterFogColor =
     null!;
@@ -57,34 +81,16 @@ public static class WaterConfig
   public static ConfigEntry<float> UnderWaterFogIntensity =
     null!;
 
-  public static ConfigEntry<float> WaveSizeMultiplier =
-    null!;
-
-  public static ConfigEntry<string> AllowedEntiesList = null!;
-  public static ConfigEntry<float> UnderwaterShipCameraZoom = null!;
-
-
+  /// <summary>
+  /// Other vars
+  /// </summary>
   private const string SectionKey = "Underwater";
+
   private const string SectionKeyDebug = $"{SectionKey}: Debug";
 
   private static ConfigFile Config { get; set; } = null!;
 
   public static List<string> AllowList = new();
-
-  public static bool IsAllowedUnderwater(Character character)
-  {
-    if (character == null || character.gameObject == null) return false;
-    if (character.gameObject.name == "Player(Clone)")
-    {
-      return true;
-    }
-
-    return AllowList.Any(x =>
-    {
-      if (x == "") return false;
-      return x == character.gameObject.name;
-    });
-  }
 
   private static void OnAllowListUpdate()
   {
@@ -95,6 +101,8 @@ public static class WaterConfig
       if (listItem == "") continue;
       AllowList.Add(listItem);
     }
+
+    WaterZoneUtils.UpdateAllowList(AllowList);
   }
 
   private static void OnCharacterWaterModeUpdate()
@@ -139,6 +147,14 @@ public static class WaterConfig
         "Force Overrides the liquid depth for character on boats. Likely will cause bobbing effect as it fights the onboard collider if it is below it.",
         true, true, new AcceptableValueRange<float>(0f, 30f)));
 
+    AllowTamedEntiesUnderwater = Config.Bind(
+      SectionKey,
+      "AllowTamedEntiesUnderwater",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Lets tamed animals underwater too. Could break or kill them depending on config.",
+        true, true));
+
     FlipWatermeshMode = Config.Bind(
       SectionKey,
       "FlipWatermeshMode",
@@ -147,16 +163,16 @@ public static class WaterConfig
         "Flips the water mesh underwater. This can cause some jitters. Turn it on at your own risk. It's improve immersion. Recommended to keep off for now while onboard to prevent underwater jitters due to camera colliding rapidly when water flips",
         true, true));
 
-    UnderwaterMaxDiveDepth = Config.Bind(
+    DEBUG_UnderwaterMaxDiveDepth = Config.Bind(
       SectionKey,
-      "UnderwaterMaxDiveDepth",
+      "DEBUG_UnderwaterMaxDiveDepth",
       0f,
       ConfigHelpers.CreateConfigDescription(
         "Enforce a max depth for diving values higher will force the player to float to that value.",
         false, false, new AcceptableValueRange<float>(0, 50f)));
-    UnderwaterMaxCachedDiveDepth = Config.Bind(
+    DEBUG_UnderwaterMaxCachedDiveDepth = Config.Bind(
       SectionKey,
-      "UnderwaterMaxCachedDiveDepth",
+      "DEBUG_UnderwaterMaxCachedDiveDepth",
       0f,
       ConfigHelpers.CreateConfigDescription(
         "Enforce a max sinking depth for diving. Higher values can make the player swim to the depth instead of fall through the water. Recommended lower than 20",

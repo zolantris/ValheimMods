@@ -105,12 +105,12 @@ public class WaterZoneController : CreativeModeColliderComponent
   }
 
   /// <summary>
-  /// To be shared
+  /// Main calc for checking zones where player can be underwater
   /// </summary>
   /// <param name="character"></param>
   /// <returns></returns>
   /// <exception cref="ArgumentOutOfRangeException"></exception>
-  [GameCacheValue("")]
+  [GameCacheValue]
   public static bool IsCharacterInWaterFreeZone(Character character)
   {
     return WaterConfig.UnderwaterAccessMode.Value switch

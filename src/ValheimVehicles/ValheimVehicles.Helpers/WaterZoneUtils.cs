@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using ValheimVehicles.Attributes;
 using ValheimVehicles.Config;
@@ -11,7 +13,7 @@ using Zolantris.Shared;
 
 namespace ValheimVehicles.Helpers;
 
-public static class WaterZoneHelper
+public static class WaterZoneUtils
 {
   // Allows player model to be inside bound collider
   internal static float PlayerOffset = 0f;
@@ -22,7 +24,7 @@ public static class WaterZoneHelper
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
 
-    if (!WaterConfig.IsAllowedUnderwater(character)) return;
+    if (!WaterZoneUtils.IsAllowedUnderwater(character)) return;
     if (WaterZoneController.IsCharacterInWaterFreeZone(character))
     {
       result = false;
@@ -30,30 +32,93 @@ public static class WaterZoneHelper
     }
   }
 
+  private static readonly Regex _waterZoneRegexDefault =
+    new(@"^Player\(Clone\)$");
+
+  private static Regex _underwaterAllowList = _waterZoneRegexDefault;
+
+  public static void UpdateAllowList(List<string> allowList)
+  {
+    if (allowList.Count == 0)
+    {
+      _underwaterAllowList = _waterZoneRegexDefault;
+    }
+
+    var pattern =
+      string.Join("|",
+        allowList.Select(Regex.Escape)); // Escape strings for regex
+    _underwaterAllowList = new Regex($"^(?:{pattern})$", RegexOptions.Compiled);
+  }
+
+  public static bool IsAllowedUnderwater(Character character)
+  {
+    if (character == null || character.gameObject == null) return false;
+    if (character.IsPlayer())
+    {
+      return true;
+    }
+
+    if (WaterConfig.AllowTamedEntiesUnderwater.Value && character.IsTamed())
+    {
+      return true;
+    }
+
+    return _underwaterAllowList.IsMatch(character.gameObject.name);
+  }
+
   /// <summary>
-  /// Super optimized cached way to get onboard status without thrashing the game.
+  /// This is for any character. Meaning animals/enemies etc. Should not be used for player floatation or displacement checks directly. Please refer to IsOnboard which is a more extensive check for character.IsPlayer types.
+  /// </summary>
+  /// <param name="character"></param>
+  /// <returns></returns>
+  private static bool IsInVehicleShipBounds(Character character)
+  {
+    var piecesController =
+      character.transform.root.GetComponent<VehiclePiecesController>();
+    return piecesController != null;
+  }
+
+  /// <summary>
+  /// todo integrate the CacheController to optimized caching per character check so these calls do not need to be done per frame or even fixedUpdate
+  /// </summary>
+  /// <param name="character"></param>
+  /// <param name="waterZoneData"></param>
+  /// <returns></returns>
+  [GameCacheValue(name: "IsOnboard", intervalInSeconds: 1f)]
+  public static bool IsOnboard(Character character,
+    out WaterZoneCharacterData? waterZoneData)
+  {
+    waterZoneData = null;
+    var isAllowedUnderwater = IsAllowedUnderwater(character);
+    if (!isAllowedUnderwater)
+    {
+      return IsInVehicleShipBounds(character);
+    }
+
+    waterZoneData =
+      VehicleOnboardController.GetOnboardCharacterData(character);
+    var isCharacterOnboard = waterZoneData != null;
+
+    // if (waterZoneData == null)
+    // {
+    //   return IsInVehicleShipBounds(character);
+    // }
+
+    var isCharacterStandingOnVehicle =
+      HasShipUnderneath(character);
+    return isCharacterOnboard && isCharacterStandingOnVehicle;
+  }
+
+
+  /// <summary>
+  /// todo integrate the CacheController to optimized caching per character check so these calls do not need to be done per frame or even fixedUpdate
   /// </summary>
   /// <param name="character"></param>
   /// <returns></returns>
   [GameCacheValue(name: "IsOnboard", intervalInSeconds: 1f)]
   public static bool IsOnboard(Character character)
   {
-    var isCharacterWithinOnboardCollider =
-      VehicleOnboardController.IsCharacterOnboard(character);
-
-    if (!isCharacterWithinOnboardCollider)
-    {
-      var piecesController =
-        character.transform.root.GetComponent<VehiclePiecesController>();
-      if (piecesController)
-      {
-        isCharacterWithinOnboardCollider = true;
-      }
-    }
-
-    var isCharacterStandingOnVehicle =
-      HasShipUnderneath(character);
-    return isCharacterWithinOnboardCollider && isCharacterStandingOnVehicle;
+    return IsOnboard(character, out _);
   }
 
   /// <summary>
@@ -160,7 +225,7 @@ public static class WaterZoneHelper
     }
 
     character.m_liquidLevel = Mathf.Max(
-      WaterConfig.UnderwaterMaxDiveDepth.Value,
+      WaterConfig.DEBUG_UnderwaterMaxDiveDepth.Value,
       liquidLevel);
 
     if (cacheBust)
@@ -188,22 +253,23 @@ public static class WaterZoneHelper
   private static float _currentDepth; // Current smoothed depth
   private static float _smoothDepthVelocity; // Velocity for SmoothDamp
 
-  private static float GetDepthFromOnboardCollider(Character character,
-    float currentDepth, Collider onboardCollider)
+  private static float GetLowestDepthFromVehicle(Character character,
+    float currentDepth, VehicleOnboardController onboardController)
   {
     var isValid = HasShipUnderneath(character);
 
     // Check the difference between current depth and onboard collider.
     if (isValid)
     {
+      // In theory this should work. But it does not since the collider does not align.
       var boundsInWater =
         Mathf.Min(
-          onboardCollider.transform.position.y -
-          onboardCollider.bounds.extents.y, currentDepth);
+          onboardController?.PiecesController?.LowestPieceHeight ?? 0f,
+          character.transform.position.y);
       return Mathf.Clamp(boundsInWater, 2f, currentDepth);
     }
 
-    return 0f;
+    return currentDepth;
   }
 
   public static float RoundToNearestMultipleOfThree(float value)
@@ -318,8 +384,8 @@ public static class WaterZoneHelper
           WaterConfig.UnderwaterAccessModeType.OnboardOnly)
       {
         liquidDepth =
-          GetDepthFromOnboardCollider(character, level,
-            controller.OnboardCollider);
+          GetLowestDepthFromVehicle(character, level,
+            controller.VehicleInstance);
       }
     }
 
@@ -366,7 +432,7 @@ public static class WaterZoneHelper
     if (controller?.OnboardCollider?.bounds == null)
       return waterHeight;
 
-    return GetDepthFromOnboardCollider(character, waterHeight,
+    return GetLowestDepthFromVehicle(character, waterHeight,
       controller.OnboardCollider);
   }
 
@@ -375,7 +441,7 @@ public static class WaterZoneHelper
     ref bool result)
   {
     if (!result || WaterConfig.IsDisabled) return;
-    if (!WaterConfig.IsAllowedUnderwater(characterInstance)) return;
+    if (!WaterZoneUtils.IsAllowedUnderwater(characterInstance)) return;
 
     var piecesController = characterInstance.transform.root
       .GetComponent<VehiclePiecesController>();

@@ -9,18 +9,7 @@
         <PlatformTarget>AnyCPU</PlatformTarget>
         <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </PropertyGroup>
-
     <Import Project="$(SolutionDir).props" Condition="Exists('$(SolutionDir).props')"/>
-
-    <PropertyGroup Condition="!Exists('$(SolutionDir).props')">
-        <BepInExPath>$(SolutionDir)libs</BepInExPath>
-        <ManagedDataPath>$(SolutionDir)libs</ManagedDataPath>
-    </PropertyGroup>
-
-    <PropertyGroup Label="VM properties">
-        <SandboxieVMExists Condition="Exists('$(SandboxiePluginDeployPath)')">true</SandboxieVMExists>
-    </PropertyGroup>
-
     <PropertyGroup Label="Runnables and Project Booleans">
         <!-- Runnable variants execute Valheim server or client process after building -->
         <IsRunnableDebug Condition="'$(Configuration)' == 'Debug Run Client' or '$(Configuration)' == 'Debug Run Server' or '$(Configuration)' == 'Debug Run ClientServer'">true</IsRunnableDebug>
@@ -33,7 +22,6 @@
         <IsRelease Condition="'$(Configuration)' == 'Release' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
         <IsNotArchive Condition="'$(Configuration)' != 'Release Archive'">true</IsNotArchive>
     </PropertyGroup>
-
     <PropertyGroup Condition="'$(IsDebug)' == 'true'">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugSymbols>true</DebugSymbols>
@@ -54,6 +42,14 @@
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    <PropertyGroup Condition="!Exists('$(SolutionDir).props')">
+        <BepInExPath>$(SolutionDir)libs</BepInExPath>
+        <ManagedDataPath>$(SolutionDir)libs</ManagedDataPath>
+    </PropertyGroup>
+
+    <PropertyGroup Label="VM properties">
+        <SandboxieVMExists Condition="Exists('$(SandboxiePluginDeployPath)')">true</SandboxieVMExists>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Test|AnyCPU' ">
