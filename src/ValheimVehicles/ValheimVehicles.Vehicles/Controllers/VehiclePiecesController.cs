@@ -21,7 +21,9 @@ using ValheimVehicles.Vehicles.Enums;
 using ValheimVehicles.Vehicles.Interfaces;
 using ZdoWatcher;
 using static ValheimVehicles.Propulsion.Sail.SailAreaForce;
+using Component = UnityEngine.Component;
 using Logger = Jotunn.Logger;
+using Object = System.Object;
 using PrefabNames = ValheimVehicles.Prefabs.PrefabNames;
 
 namespace ValheimVehicles.Vehicles;
@@ -39,6 +41,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public static Dictionary<int, List<ZNetView>> m_pendingPieces = new();
 
   private List<ZNetView> _newPendingPiecesQueue = [];
+
+  /// <summary>
+  /// ZDOID of the fire component. Since these are nested it's much heavier to find it.
+  /// </summary>
+  public readonly Dictionary<ZDOID, EffectArea>
+    cachedVehicleBurningEffectAreas = new();
 
   public static Dictionary<int, List<ZDO>> m_allPieces = new();
 
@@ -201,6 +209,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public float totalSailArea = 0f;
 
   public virtual IVehicleShip? VehicleInstance { set; get; }
+  public int PersistentZdoId => VehicleInstance?.PersistentZdoId ?? 0;
 
   public VehicleMovementController? MovementController =>
     VehicleInstance?.MovementController;
@@ -1087,58 +1096,127 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       m_hullPieces.Remove(netView);
     }
 
-    var sail = netView.GetComponent<SailComponent>();
-    if ((bool)sail)
-    {
-      m_sailPieces.Remove(sail);
-    }
-
-    var mast = netView.GetComponent<MastComponent>();
-    if ((bool)mast)
-    {
-      m_mastPieces.Remove(mast);
-    }
-
-    var rudder = netView.GetComponent<RudderComponent>();
-    if ((bool)rudder)
-    {
-      m_rudderPieces.Remove(rudder);
-
-      if (VehicleInstance?.Instance && m_rudderPieces.Count > 0)
-      {
-        SetShipWakeBounds();
-      }
-    }
-
-    var wheel = netView.GetComponent<SteeringWheelComponent>();
-    if ((bool)wheel)
-    {
-      _steeringWheelPieces.Remove(wheel);
-    }
-
     var isRam = RamPrefabs.IsRam(netView.name);
     if (isRam)
     {
       m_ramPieces.Remove(netView);
     }
 
+    var components = netView.GetComponents<Component>();
 
-    var bed = netView.GetComponent<Bed>();
-    if ((bool)bed) m_bedPieces.Remove(bed);
-
-    var ramp = netView.GetComponent<BoardingRampComponent>();
-    if ((bool)ramp) m_boardingRamps.Remove(ramp);
-
-    var portal = netView.GetComponent<TeleportWorld>();
-    if ((bool)portal) m_portals.Remove(netView);
-
-    var ladder = netView.GetComponent<RopeLadderComponent>();
-    if ((bool)ladder)
+    foreach (var component in components)
     {
-      m_ladders.Remove(ladder);
-      ladder.m_mbroot = null;
-      ladder.vehiclePiecesController = null;
+      switch (component)
+      {
+        case SailComponent sail:
+          m_sailPieces.Remove(sail);
+          break;
+
+        case Fireplace fireplace:
+          if (netView.m_zdo != null)
+          {
+            cachedVehicleBurningEffectAreas.Remove(netView.m_zdo.m_uid);
+          }
+
+          break;
+        case MastComponent mast:
+          m_mastPieces.Remove(mast);
+          break;
+
+        case RudderComponent rudder:
+          m_rudderPieces.Remove(rudder);
+          if (VehicleInstance?.Instance && m_rudderPieces.Count > 0)
+          {
+            SetShipWakeBounds();
+          }
+
+          break;
+
+        case SteeringWheelComponent wheel:
+          _steeringWheelPieces.Remove(wheel);
+          break;
+
+        case Bed bed:
+          m_bedPieces.Remove(bed);
+          break;
+
+        case BoardingRampComponent ramp:
+          m_boardingRamps.Remove(ramp);
+          break;
+
+        case TeleportWorld portal:
+          m_portals.Remove(netView);
+          break;
+
+        case RopeLadderComponent ladder:
+          m_ladders.Remove(ladder);
+          ladder.m_mbroot = null;
+          ladder.vehiclePiecesController = null;
+          break;
+        default:
+          break;
+      }
     }
+
+    //
+    // var effectsArea = netView.GetComponent<EffectArea>();
+    // if (effectsArea != null)
+    // {
+    //   cachedVehicleEffectAreas.Add(effectsArea);
+    // }
+    //
+    // var sail = netView.GetComponent<SailComponent>();
+    // if ((bool)sail)
+    // {
+    //   m_sailPieces.Remove(sail);
+    // }
+    //
+    // var mast = netView.GetComponent<MastComponent>();
+    // if ((bool)mast)
+    // {
+    //   m_mastPieces.Remove(mast);
+    // }
+    //
+    // var rudder = netView.GetComponent<RudderComponent>();
+    // if ((bool)rudder)
+    // {
+    //   m_rudderPieces.Remove(rudder);
+    //
+    //   if (VehicleInstance?.Instance && m_rudderPieces.Count > 0)
+    //   {
+    //     SetShipWakeBounds();
+    //   }
+    // }
+    //
+    // var wheel = netView.GetComponent<SteeringWheelComponent>();
+    // if ((bool)wheel)
+    // {
+    //   _steeringWheelPieces.Remove(wheel);
+    // }
+    //
+    // var isRam = RamPrefabs.IsRam(netView.name);
+    // if (isRam)
+    // {
+    //   m_ramPieces.Remove(netView);
+    // }
+    //
+    //
+    // var bed = netView.GetComponent<Bed>();
+    // if ((bool)bed) m_bedPieces.Remove(bed);
+    //
+    // var ramp = netView.GetComponent<BoardingRampComponent>();
+    // if ((bool)ramp) m_boardingRamps.Remove(ramp);
+    //
+    // var portal = netView.GetComponent<TeleportWorld>();
+    // if ((bool)portal) m_portals.Remove(netView);
+    //
+    // var ladder = netView.GetComponent<RopeLadderComponent>();
+    // if ((bool)ladder)
+    // {
+    //   m_ladders.Remove(ladder);
+    //   ladder.m_mbroot = null;
+    //   ladder.vehiclePiecesController = null;
+    // }
   }
 
   private void UpdateStats()
@@ -1648,11 +1726,28 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   //
   //   OnActivatePendingPiecesComplete(PendingPieceStateEnum.Complete);
   // }
-  public static bool
-    IsWithinPieceController(Transform objTransform)
+
+
+  /// <summary>
+  /// A bit heavy for iteration, likely better than raycast logic, allows for accurately detecting if in vehicle area. But it could be inaccurate since the point is not technically a part of the pieces list.
+  /// </summary>
+  /// - Used for fires and other Effects Area logic which requires movement support for static struct of bounds.
+  /// <param name="p"></param>
+  /// <returns></returns>
+  public static bool IsPointWithin(Vector3 p,
+    out VehiclePiecesController? controller)
   {
-    var (isValid, _) = Within(objTransform);
-    return isValid;
+    controller = null;
+    foreach (var instance in ActiveInstances.Values)
+    {
+      if (instance.m_onboardcollider.bounds.Contains(p))
+      {
+        controller = instance;
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /// <summary>
@@ -1660,13 +1755,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   /// </summary>
   /// <summary>May be cleaner than an out var approach. This is experimental syntax. Does not match other patterns yet. </summary>
   /// <param name="objTransform"></param>
+  /// <param name="controller"></param>
   /// <returns></returns>
-  public static (bool, VehiclePiecesController? controller)
-    Within(Transform objTransform)
+  public static bool
+    IsWithin(Transform objTransform, out VehiclePiecesController controller)
   {
-    var controller = objTransform.transform.root
+    controller = objTransform.transform.root
       .GetComponent<VehiclePiecesController>();
-    return (controller != null, controller);
+    return controller != null;
   }
 
   /// <summary>
@@ -2169,6 +2265,34 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
   }
 
+  /// <summary>
+  /// Likely not needed
+  /// </summary>
+  /// <deprecated>Use fireplace component check</deprecated>
+  /// <param name="obj"></param>
+  /// <returns></returns>
+  public bool IsBurningEffectAreaComponent(ZNetView obj)
+  {
+    return obj.name == "fire_pit(Clone)" ||
+           obj.name == "hearth_clone";
+  }
+
+  /// <summary>
+  /// We can actually assume all "fireplace" components will have the EffectArea nested in them. So doing a query on them is actually pretty efficient. Name checks are more prone to breaks or mod incompatibility so skipping this.
+  /// </summary>
+  /// <param name="netView"></param>
+  public void AddFireEffectAreaComponent(ZNetView netView)
+  {
+    var effectAreaItems = netView.GetComponentsInChildren<EffectArea>();
+    foreach (var effectAreaItem in effectAreaItems)
+    {
+      if (effectAreaItem.m_type != EffectArea.Type.Burning) continue;
+      cachedVehicleBurningEffectAreas.Add(netView.m_zdo.m_uid,
+        effectAreaItem);
+      break;
+    }
+  }
+
   public void AddPiece(ZNetView netView, bool isNew = false)
   {
     if (!(bool)netView)
@@ -2185,75 +2309,65 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     m_pieces.Add(netView);
     UpdatePieceCount();
 
-    var wnt = netView.GetComponent<WearNTear>();
-    if ((bool)wnt && ValheimRaftPlugin.Instance.MakeAllPiecesWaterProof.Value)
-      wnt.m_noRoofWear = false;
+    // Cache components
+    var components = netView.GetComponents<Component>();
 
-    if (PrefabNames.IsHull(netView.gameObject))
+    foreach (var component in components)
     {
-      m_hullPieces.Add(netView);
+      switch (component)
+      {
+        case WearNTear wnt
+          when ValheimRaftPlugin.Instance.MakeAllPiecesWaterProof.Value:
+          wnt.m_noRoofWear = false;
+          break;
+        case Fireplace fireplace:
+          AddFireEffectAreaComponent(netView);
+          break;
+        case CultivatableComponent cultivatable:
+          cultivatable.UpdateMaterial();
+          break;
+
+        case MastComponent mast:
+          m_mastPieces.Add(mast);
+          break;
+
+        case SailComponent sail:
+          m_sailPieces.Add(sail);
+          break;
+
+        case Bed bed:
+          m_bedPieces.Add(bed);
+          break;
+
+        case BoardingRampComponent ramp:
+          ramp.ForceRampUpdate();
+          m_boardingRamps.Add(ramp);
+          break;
+
+        case RudderComponent rudder:
+          m_rudderPieces.Add(rudder);
+          SetShipWakeBounds();
+          break;
+
+        case SteeringWheelComponent wheel:
+          OnAddSteeringWheelDestroyPrevious(netView, wheel);
+          _steeringWheelPieces.Add(wheel);
+          wheel.InitializeControls(netView, VehicleInstance);
+          shouldRebuildBounds = true;
+          break;
+
+        case TeleportWorld portal:
+          m_portals.Add(netView);
+          break;
+
+        case RopeLadderComponent ladder:
+          m_ladders.Add(ladder);
+          ladder.vehiclePiecesController = this;
+          break;
+      }
     }
 
-    var cultivatable = netView.GetComponent<CultivatableComponent>();
-    if ((bool)cultivatable) cultivatable.UpdateMaterial();
-
-    var mast = netView.GetComponent<MastComponent>();
-    if ((bool)mast)
-    {
-      m_mastPieces.Add(mast);
-    }
-
-    var sail = netView.GetComponent<SailComponent>();
-    if ((bool)sail)
-    {
-      m_sailPieces.Add(sail);
-    }
-
-    var bed = netView.GetComponent<Bed>();
-    if ((bool)bed)
-    {
-      // todo use this approach only if the VehicleShip zdo is less easy to use
-      // // ZDO must be persisted in order to teleport directly to this bed. 
-      // ZdoWatchManager.Instance.GetOrCreatePersistentID(netView.GetZDO());
-      m_bedPieces.Add(bed);
-    }
-
-    var ramp = netView.GetComponent<BoardingRampComponent>();
-    if ((bool)ramp)
-    {
-      ramp.ForceRampUpdate();
-      m_boardingRamps.Add(ramp);
-    }
-
-    var rudder = netView.GetComponent<RudderComponent>();
-    if ((bool)rudder)
-    {
-      m_rudderPieces.Add(rudder);
-      SetShipWakeBounds();
-    }
-
-
-    var wheel = netView.GetComponent<SteeringWheelComponent>();
-    if ((bool)wheel)
-    {
-      OnAddSteeringWheelDestroyPrevious(netView, wheel);
-      _steeringWheelPieces.Add(wheel);
-      wheel.InitializeControls(netView, VehicleInstance);
-      shouldRebuildBounds = true;
-    }
-
-    var portal = netView.GetComponent<TeleportWorld>();
-    if ((bool)portal) m_portals.Add(netView);
-
-    var ladder = netView.GetComponent<RopeLadderComponent>();
-    if ((bool)ladder)
-    {
-      m_ladders.Add(ladder);
-      ladder.vehiclePiecesController = this;
-    }
-
-    var isRam = RamPrefabs.IsRam(netView.name);
-    if (isRam)
+    if (RamPrefabs.IsRam(netView.name))
     {
       m_ramPieces.Add(netView);
       var vehicleRamAoe = netView.GetComponentInChildren<VehicleRamAoe>();
@@ -2263,42 +2377,40 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       }
     }
 
+    // Remove non-kinematic rigidbodies if not a ram
+    if (!RamPrefabs.IsRam(netView.name))
+    {
+      var rbs = netView.GetComponentsInChildren<Rigidbody>();
+      foreach (var rbsItem in rbs)
+      {
+        if (!rbsItem.isKinematic)
+          Destroy(rbsItem);
+      }
+    }
+
     UpdateMass(netView);
 
+    // Handle bounds rebuilding
     switch (isNew)
     {
       case true when shouldRebuildBounds:
-        // for rendering wheels and important pieces that require rebuilding bounds
         RebuildBounds();
         break;
       case true:
         EncapsulateBounds(netView.gameObject);
         break;
       case false:
-        // for rendering already build pieces
         DebouncedRebuildBounds();
         break;
     }
 
-
-    if (!isRam)
-    {
-      /*
-       * Todo Allow Rigidbodies on the boat since they could be just collider managers.
-       * This check is likely not needed, but may be required to prevent other mods from breaking boats, hence why it's kept. Eventually Rigidbodies that attach to the boat could be allowed
-       */
-      var rbs = netView.GetComponentsInChildren<Rigidbody>();
-      foreach (var rbsItem in rbs)
-      {
-        if (!rbsItem.isKinematic || isRam) continue;
-        Destroy(rbsItem);
-      }
-    }
-
     if (hasDebug)
+    {
       Logger.LogDebug(
         $"After Adding Piece: {netView.name}, Ship Size calc is: m_bounds {_vehicleBounds} bounds size {_vehicleBounds.size}");
+    }
   }
+
 
   private void UpdatePieceCount()
   {
