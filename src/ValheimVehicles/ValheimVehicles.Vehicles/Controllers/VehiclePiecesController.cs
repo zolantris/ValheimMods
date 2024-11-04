@@ -74,7 +74,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     transform.position + _currentLowestLocalPosition;
 
   /// <summary>
-  /// Persists the collider after it has been set to prevent auto-balast feature from losing the origin point.
+  /// Persists the collider after it has been set to prevent auto-ballast feature from losing the origin point.
   /// todo might be optional.
   /// </summary>
   public Vector3 BlockingColliderDefaultPosition = Vector3.zero;
@@ -1574,78 +1574,99 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       }
 
       // Clear processed items and add any newly queued items
-      currentPieces.Clear();
-      if (_newPendingPiecesQueue.Count > 0)
-      {
-        currentPieces.AddRange(_newPendingPiecesQueue);
-        _newPendingPiecesQueue.Clear();
-        _pendingPiecesDirty = true; // Mark dirty to re-run coroutine
-      }
+      currentPieces?.Clear();
+      if (_newPendingPiecesQueue.Count <= 0) continue;
+      currentPieces ??= [];
+      currentPieces.AddRange(_newPendingPiecesQueue);
+      _newPendingPiecesQueue.Clear();
+      _pendingPiecesDirty = true; // Mark dirty to re-run coroutine
     } while
       (_pendingPiecesDirty); // Loop if new items were added during this run
-  }
-
-  private IEnumerator DEPRECATED_activatePendingPiecesCoroutine()
-  {
-    // It will wait for the vehicle to be initialized before attempting to run.
-
-
-    // yield return new WaitUntil(() =>
-    //   (bool)VehicleInstance?.NetView ||
-    //   BaseVehicleInitState != InitializationState.Complete ||
-    //   PendingPiecesTimer.ElapsedMilliseconds > 50000);
-    //
-    // if (VehicleInstance?.NetView?.GetZDO() == null)
-    // {
-    //   yield return new WaitUntil(() =>
-    //     VehicleInstance?.NetView?.GetZDO() != null);
-    // }
-
-    var persistentZdoId = VehicleInstance?.PersistentZdoId;
-    if (!persistentZdoId.HasValue)
-    {
-      OnActivatePendingPiecesComplete(PendingPieceStateEnum.Failure,
-        "No persistentID found on Vehicle instance");
-      yield break;
-    }
-
-    var currentPieces = GetShipActiveInstances(persistentZdoId);
-
-    if (currentPieces is { Count: > 0 })
-    {
-      var stopwatch = Stopwatch.StartNew();
-      foreach (var obj in currentPieces.ToList())
-      {
-        if ((bool)obj)
-        {
-          if (hasDebug)
-          {
-            Logger.LogDebug($"ActivatePendingPieces obj: {obj} {obj.name}");
-          }
-
-          ActivatePiece(obj);
-          if (ZNetScene.instance.InLoadingScreen() ||
-              stopwatch.ElapsedMilliseconds < 10)
-            continue;
-          yield return new WaitForEndOfFrame();
-          stopwatch.Restart();
-        }
-        else
-        {
-          currentPieces.FastRemove(obj);
-          if (hasDebug)
-          {
-            Logger.LogDebug($"ActivatePendingPieces obj is not valid {obj}");
-          }
-        }
-      }
-
-      // this is commented out b/c it may be triggering the destroy method guard at the bottom.
-      currentPieces.Clear();
-      m_pendingPieces.Remove(persistentZdoId.Value);
-    }
 
     OnActivatePendingPiecesComplete(PendingPieceStateEnum.Complete);
+  }
+
+  // private IEnumerator DEPRECATED_activatePendingPiecesCoroutine()
+  // {
+  //   // It will wait for the vehicle to be initialized before attempting to run.
+  //
+  //
+  //   // yield return new WaitUntil(() =>
+  //   //   (bool)VehicleInstance?.NetView ||
+  //   //   BaseVehicleInitState != InitializationState.Complete ||
+  //   //   PendingPiecesTimer.ElapsedMilliseconds > 50000);
+  //   //
+  //   // if (VehicleInstance?.NetView?.GetZDO() == null)
+  //   // {
+  //   //   yield return new WaitUntil(() =>
+  //   //     VehicleInstance?.NetView?.GetZDO() != null);
+  //   // }
+  //
+  //   var persistentZdoId = VehicleInstance?.PersistentZdoId;
+  //   if (!persistentZdoId.HasValue)
+  //   {
+  //     OnActivatePendingPiecesComplete(PendingPieceStateEnum.Failure,
+  //       "No persistentID found on Vehicle instance");
+  //     yield break;
+  //   }
+  //
+  //   var currentPieces = GetShipActiveInstances(persistentZdoId);
+  //
+  //   if (currentPieces is { Count: > 0 })
+  //   {
+  //     var stopwatch = Stopwatch.StartNew();
+  //     foreach (var obj in currentPieces.ToList())
+  //     {
+  //       if ((bool)obj)
+  //       {
+  //         if (hasDebug)
+  //         {
+  //           Logger.LogDebug($"ActivatePendingPieces obj: {obj} {obj.name}");
+  //         }
+  //
+  //         ActivatePiece(obj);
+  //         if (ZNetScene.instance.InLoadingScreen() ||
+  //             stopwatch.ElapsedMilliseconds < 10)
+  //           continue;
+  //         yield return new WaitForEndOfFrame();
+  //         stopwatch.Restart();
+  //       }
+  //       else
+  //       {
+  //         currentPieces.FastRemove(obj);
+  //         if (hasDebug)
+  //         {
+  //           Logger.LogDebug($"ActivatePendingPieces obj is not valid {obj}");
+  //         }
+  //       }
+  //     }
+  //
+  //     // this is commented out b/c it may be triggering the destroy method guard at the bottom.
+  //     currentPieces.Clear();
+  //     m_pendingPieces.Remove(persistentZdoId.Value);
+  //   }
+  //
+  //   OnActivatePendingPiecesComplete(PendingPieceStateEnum.Complete);
+  // }
+  public static bool
+    IsWithinPieceController(Transform objTransform)
+  {
+    var (isValid, _) = Within(objTransform);
+    return isValid;
+  }
+
+  /// <summary>
+  /// Way to check if within PieceController
+  /// </summary>
+  /// <summary>May be cleaner than an out var approach. This is experimental syntax. Does not match other patterns yet. </summary>
+  /// <param name="objTransform"></param>
+  /// <returns></returns>
+  public static (bool, VehiclePiecesController? controller)
+    Within(Transform objTransform)
+  {
+    var controller = objTransform.transform.root
+      .GetComponent<VehiclePiecesController>();
+    return (controller != null, controller);
   }
 
   /// <summary>

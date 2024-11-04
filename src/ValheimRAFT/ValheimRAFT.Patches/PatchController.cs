@@ -36,6 +36,7 @@ internal static class PatchController
     Harmony.PatchAll(typeof(VehicleMovementPatches));
     Harmony.PatchAll(typeof(WaterVolumePatch));
     Harmony.PatchAll(typeof(GameCameraPatch));
+    Harmony.PatchAll(typeof(EffectsArea_VehiclePatches));
 
     if (Chainloader.PluginInfos.ContainsKey("zolantris.DynamicLocations"))
     {

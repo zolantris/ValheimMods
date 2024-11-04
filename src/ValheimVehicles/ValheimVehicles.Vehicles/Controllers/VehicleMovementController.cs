@@ -588,7 +588,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       return;
     }
 
-    if (VehiclePiecesController.GetIsActivationComplete(vehicleShip
+    if (!VehiclePiecesController.GetIsActivationComplete(vehicleShip
           .PiecesController))
     {
       m_body.isKinematic = true;
@@ -673,10 +673,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   }
 
   public static float
-    BalastSmoothtime = 0.1f;
+    BallastSmoothtime = 0.1f;
 
-  private float _previousBalastOffset = 0f;
-  private float _currentBalastOffset = 0f;
+  private float _previousBallastOffset = 0f;
+  private float _currentBallastOffset = 0f;
 
   public float groundHeightPaddingOffset = 2f;
 
@@ -684,7 +684,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// Adds additional "fake" water height when the lowest piece scraps the bottom of the ocean.
   /// Allows for land travel without guards.
   /// </summary>
-  private void UpdateBalastOffset()
+  private void UpdateBallastOffset()
   {
     if (!WaterConfig.AutoBallast.Value || PiecesController == null)
     {
@@ -701,24 +701,24 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     var groundHeight =
       ZoneSystem.instance.GetGroundHeight(PiecesController.LowestPiecePoint);
-    _previousBalastOffset = _currentBalastOffset;
+    _previousBallastOffset = _currentBallastOffset;
     var groundHeightAndOffset = groundHeight + groundHeightPaddingOffset;
 
-    _currentBalastOffset = 0f;
+    _currentBallastOffset = 0f;
     // only apply this if groundheight + offset is higher.
     if (groundHeightAndOffset >
         PiecesController.LowestPiecePoint.y)
     {
-      _currentBalastOffset = PiecesController.LowestPiecePoint.y -
-                             groundHeightAndOffset;
+      _currentBallastOffset = PiecesController.LowestPiecePoint.y -
+                              groundHeightAndOffset;
     }
 
-    _currentBalastOffset =
-      Mathf.Clamp(_currentBalastOffset, 0f, 20f);
+    _currentBallastOffset =
+      Mathf.Clamp(_currentBallastOffset, 0f, 20f);
 
-    var nextIncrement = Mathf.Lerp(_previousBalastOffset,
-      _currentBalastOffset,
-      Time.fixedDeltaTime);
+    var nextIncrement = Mathf.Lerp(_previousBallastOffset,
+      _currentBallastOffset,
+      Time.fixedDeltaTime * 0.1f);
 
     FloatCollider.transform.localPosition = new Vector3(
       PiecesController.FloatColliderDefaultPosition.x,
@@ -1164,7 +1164,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
         isBeached) return;
 
 
-    UpdateBalastOffset();
+    UpdateBallastOffset();
 
     var shipFloatation = GetShipFloatationObj();
 

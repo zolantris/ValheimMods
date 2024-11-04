@@ -24,7 +24,6 @@ public class VehicleCommands : ConsoleCommand
   {
     // public const string locate = "locate";
     // public const string rotate = "rotate";
-    // public const string move = "move";
     // public const string destroy = "destroy";
     public const string reportInfo = "report-info";
     public const string debug = "debug";
@@ -33,6 +32,7 @@ public class VehicleCommands : ConsoleCommand
     public const string help = "help";
     public const string recover = "recover";
     public const string rotate = "rotate";
+    public const string moveUp = "moveUp";
     public const string move = "move";
     public const string toggleOceanSway = "toggleOceanSway";
     public const string upgradeToV2 = "upgradeShipToV2";
@@ -51,6 +51,7 @@ public class VehicleCommands : ConsoleCommand
       $"\n<{VehicleCommandArgs.move}>: Must provide 3 args: x y z, the movement is relative to those points" +
       $"\n<{VehicleCommandArgs.toggleOceanSway}>: stops the vehicle from swaying in the water. It will stay at 0 degrees (x and z) tilt and only allow rotating on y axis" +
       $"\n<{VehicleCommandArgs.reportInfo}>: outputs information related to the vehicle the player is on or near. This is meant for error reports" +
+      $"\n<{VehicleCommandArgs.moveUp}>: Moves the vehicle within 50 units upwards by the value provided. Capped at 30 units to be safe. And Capped at 10 units lowest world position." +
       $"\n<{VehicleCommandArgs.colliderEditMode}>: Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items";
   }
 
@@ -61,6 +62,13 @@ public class VehicleCommands : ConsoleCommand
 
   private void ParseFirstArg(string[] args)
   {
+    if (args.Length < 1)
+    {
+      Logger.LogMessage(
+        "Must provide a argument for `vehicle` command, type vehicle help to see all commands");
+      return;
+    }
+
     var firstArg = args.First();
     if (firstArg == null)
     {
@@ -68,10 +76,12 @@ public class VehicleCommands : ConsoleCommand
       return;
     }
 
+    var nextArgs = args.Skip(1).ToArray();
+
     switch (firstArg)
     {
       case VehicleCommandArgs.move:
-        VehicleMove(args);
+        VehicleMove(nextArgs);
         break;
       case VehicleCommandArgs.toggleOceanSway:
         VehicleToggleOceanSway();
@@ -102,38 +112,109 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.colliderEditMode:
         ToggleColliderEditMode();
         break;
+      case VehicleCommandArgs.moveUp:
+        VehicleMoveVertically(nextArgs);
+        break;
     }
   }
 
+  public static void FloatArgErrorMessage(string arg)
+  {
+    var message =
+      $"The arg provided {arg} was not a float. Example -10, 0, 15.5, 30.1 are all accepted. (positive/negative). Values above 50.0 locked at 50. Values that would put the vehicle below the map are prevented if you want to do that, use Unity Explorer.";
+    Logger.LogMessage(arg);
+  }
+
+  /// <summary>
+  /// Handles vertical movement for vehicles. Can be merged with VehicleMove for shared functionality.
+  /// </summary>
+  /// <param name="args">Command arguments.</param>
+  public static void VehicleMoveVertically(string[]? args)
+  {
+    if (args == null || args.Length < 1 ||
+        !float.TryParse(args[0], out var offset))
+    {
+      FloatArgErrorMessage(args?[0]);
+      return;
+    }
+
+    var shipInstance =
+      GetNearestVehicleShip(Player.m_localPlayer.transform.position);
+    MoveVehicle(shipInstance, Vector3.up * Mathf.Max(offset, 50f));
+  }
+
+  /// <summary>
+  /// Moves the vehicle based on the provided offset vector.
+  /// </summary>
+  /// <param name="vehicleInstance">The vehicle instance to move.</param>
+  /// <param name="offset">The offset vector to apply.</param>
+  private static void MoveVehicle(VehicleShip? vehicleInstance,
+    Vector3 offset)
+  {
+    if (vehicleInstance?.MovementController == null)
+    {
+      Logger.LogMessage("No vehicle found near the player");
+      return;
+    }
+
+    vehicleInstance.isCreative = true;
+    vehicleInstance.MovementController.m_body.isKinematic = true;
+
+    // Ensure Y position does not go below 1
+    offset.y =
+      Mathf.Max(
+        vehicleInstance.MovementController.transform.position.y + offset.y, 1f);
+    vehicleInstance.MovementController.m_body.MovePosition(offset);
+
+    vehicleInstance.isCreative = false;
+    vehicleInstance.MovementController.m_body.isKinematic = false;
+  }
+
+  /// <summary>
+  /// Clamps the components of a vector between specified minimum and maximum values.
+  /// </summary>
+  /// <param name="vector">The vector to clamp.</param>
+  /// <param name="min">The minimum value for each component.</param>
+  /// <param name="max">The maximum value for each component.</param>
+  /// <returns>A new vector with clamped components.</returns>
+  private static Vector3 ClampVector(Vector3 vector, float min, float max)
+  {
+    return new Vector3(
+      Mathf.Clamp(vector.x, min, max),
+      Mathf.Clamp(vector.y, min, max),
+      Mathf.Clamp(vector.z, min, max)
+    );
+  }
+
+  /// <summary>
+  /// Moves the vehicle based on the provided x, y, z parameters.
+  /// </summary>
+  /// <param name="args">Command arguments.</param>
   public void VehicleMove(string[] args)
   {
-    var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
-    if (vehicleController == null)
+    var shipInstance =
+      GetNearestVehicleShip(Player.m_localPlayer.transform.position);
+    if (shipInstance == null)
     {
       Logger.LogMessage("No VehicleController Detected");
       return;
     }
 
-    if (args.Length == 4 && vehicleController.VehicleInstance.Instance != null)
+    if (args.Length == 4 &&
+        float.TryParse(args[1], out var x) &&
+        float.TryParse(args[2], out var y) &&
+        float.TryParse(args[3], out var z))
     {
-      float.TryParse(args[1], out var x);
-      float.TryParse(args[2], out var y);
-      float.TryParse(args[3], out var z);
-      var offsetVector = new Vector3(x, y, z);
-      vehicleController.VehicleInstance.Instance.MovementController.m_body
-        .isKinematic = true;
-      vehicleController.VehicleInstance.Instance.transform.position +=
-        offsetVector;
-      Physics.SyncTransforms();
-      vehicleController.VehicleInstance.Instance.MovementController.m_body
-        .isKinematic = false;
+      var offsetVector = ClampVector(new Vector3(x, y, z), -50f, 50f);
+      MoveVehicle(shipInstance, offsetVector);
     }
     else
     {
       Logger.LogMessage(
-        "Must provide x y z parameters, IE: vehicle rotate 0.5 0 10");
+        "Must provide x y z parameters, e.g., vehicle move 0.5 0 10");
     }
   }
+
 
   /// <summary>
   /// Freezes the Vehicle rotation permenantly until the boat is unloaded similar to raftcreative 

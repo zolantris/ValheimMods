@@ -7,7 +7,6 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </PropertyGroup>
     <Import Project="$(SolutionDir).props" Condition="Exists('$(SolutionDir).props')"/>
     <PropertyGroup Label="Runnables and Project Booleans">
