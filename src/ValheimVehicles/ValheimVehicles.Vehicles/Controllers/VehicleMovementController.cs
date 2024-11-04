@@ -588,8 +588,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       return;
     }
 
-    if (!VehiclePiecesController.GetIsActivationComplete(vehicleShip
-          .PiecesController))
+    if (!vehicleShip
+          .PiecesController.isInitialActivationComplete)
     {
       m_body.isKinematic = true;
       return;
@@ -688,14 +688,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     if (!WaterConfig.AutoBallast.Value || PiecesController == null)
     {
-      // if (PiecesController != null &&
-      //     PiecesController.FloatColliderDefaultPosition !=
-      //     FloatCollider.transform.localPosition)
-      // {
-      //   FloatCollider.transform.position =
-      //     PiecesController.FloatColliderDefaultPosition;
-      // }
-
       return;
     }
 

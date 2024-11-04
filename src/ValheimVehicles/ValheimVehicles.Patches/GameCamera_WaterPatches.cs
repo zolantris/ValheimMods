@@ -11,7 +11,7 @@ namespace ValheimVehicles.Patches;
 /// from vikings do swim might get things working 
 /// </summary>
 [HarmonyPatch]
-internal class GameCameraPatch
+internal class GameCamera_WaterPatches
 {
   public static float CameraPositionY = 0f;
 
@@ -24,7 +24,7 @@ internal class GameCameraPatch
 
   // Meant to be updated by WaterVolumePatches
   public static bool CanUpdateFog;
-  public static WaterVolumePatch.CameraWaterStateTypes PrevState;
+  public static WaterVolume_WaterPatches.CameraWaterStateTypes PrevState;
 
   public static void UpdateFogBasedOnEnvironment()
   {
@@ -48,7 +48,7 @@ internal class GameCameraPatch
     if (!WaterConfig.UnderwaterFogEnabled.Value) return;
     if (!CanUpdateFog) return;
     var currentZone = GetCurrentZone();
-    if (WaterVolumePatch.IsCameraAboveWater)
+    if (WaterVolume_WaterPatches.IsCameraAboveWater)
     {
       if (prevFogZone == currentZone)
       {
@@ -66,8 +66,8 @@ internal class GameCameraPatch
       prevFogZone = null;
     }
 
-    if (WaterVolumePatch.CameraWaterState ==
-        WaterVolumePatch.CameraWaterStateTypes.ToBelow &&
+    if (WaterVolume_WaterPatches.CameraWaterState ==
+        WaterVolume_WaterPatches.CameraWaterStateTypes.ToBelow &&
         WaterConfig.UnderwaterFogEnabled.Value)
     {
       prevFogDensity = RenderSettings.fogDensity;
@@ -84,16 +84,19 @@ internal class GameCameraPatch
   }
 
   public static bool IsCameraSurfaceChanged(
-    WaterVolumePatch.CameraWaterStateTypes stateTypes)
+    WaterVolume_WaterPatches.CameraWaterStateTypes stateTypes)
   {
-    return PrevState == WaterVolumePatch.CameraWaterStateTypes.ToAbove &&
-           stateTypes == WaterVolumePatch.CameraWaterStateTypes.ToBelow ||
-           PrevState == WaterVolumePatch.CameraWaterStateTypes.ToBelow &&
-           stateTypes == WaterVolumePatch.CameraWaterStateTypes.ToAbove;
+    return PrevState ==
+           WaterVolume_WaterPatches.CameraWaterStateTypes.ToAbove &&
+           stateTypes ==
+           WaterVolume_WaterPatches.CameraWaterStateTypes.ToBelow ||
+           PrevState ==
+           WaterVolume_WaterPatches.CameraWaterStateTypes.ToBelow &&
+           stateTypes == WaterVolume_WaterPatches.CameraWaterStateTypes.ToAbove;
   }
 
   public static void RequestUpdate(
-    WaterVolumePatch.CameraWaterStateTypes stateTypes)
+    WaterVolume_WaterPatches.CameraWaterStateTypes stateTypes)
   {
     if (IsCameraSurfaceChanged(stateTypes))
     {

@@ -5,6 +5,8 @@ using BepInEx.Configuration;
 using ComfyLib;
 using UnityEngine;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.Config;
 
@@ -113,6 +115,33 @@ public static class WaterConfig
     WaterZoneUtils.UpdateAllowList(AllowList);
   }
 
+  private static void OnAutoBallastToggle()
+  {
+    foreach (var keyValuePair in VehicleShip.AllVehicles)
+    {
+      var piecesController = keyValuePair.Value.PiecesController;
+      var movementController = keyValuePair.Value.MovementController;
+      if (piecesController != null && movementController != null)
+      {
+        if (piecesController != null &&
+            piecesController.FloatColliderDefaultPosition !=
+            movementController.FloatCollider.transform.localPosition)
+        {
+          movementController.FloatCollider.transform.position =
+            piecesController.FloatColliderDefaultPosition;
+        }
+
+        if (piecesController != null &&
+            piecesController.BlockingColliderDefaultPosition !=
+            movementController.BlockingCollider.transform.localPosition)
+        {
+          movementController.BlockingCollider.transform.position =
+            piecesController.BlockingColliderDefaultPosition;
+        }
+      }
+    }
+  }
+
   private static void OnCharacterWaterModeUpdate()
   {
     foreach (var sCharacter in Character.s_characters)
@@ -188,6 +217,9 @@ public static class WaterConfig
       ConfigHelpers.CreateConfigDescription(
         "Force moves the ship's float collider to the lowest section of the boat if that section is going to smash the ground",
         true, true));
+
+    AutoBallast.SettingChanged += (sender, args) => OnAutoBallastToggle();
+
     AutoBallastAdditionalOffset = Config.Bind(
       SectionKey,
       "AutoBallastAdditionalOffset",

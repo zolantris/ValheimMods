@@ -7,7 +7,7 @@ using ValheimVehicles.Vehicles.Controllers;
 
 namespace ValheimVehicles.Patches;
 
-internal class WaterVolumePatch
+internal class WaterVolume_WaterPatches
 {
   public enum CameraWaterStateTypes
   {
@@ -95,7 +95,7 @@ internal class WaterVolumePatch
         case CameraWaterStateTypes.BelowWater:
         case CameraWaterStateTypes.ToBelow:
           CameraWaterState = CameraWaterStateTypes.ToAbove;
-          GameCameraPatch.RequestUpdate(CameraWaterState);
+          GameCamera_WaterPatches.RequestUpdate(CameraWaterState);
           return;
         default:
           throw new ArgumentOutOfRangeException();
@@ -112,7 +112,7 @@ internal class WaterVolumePatch
       case CameraWaterStateTypes.AboveWater:
       case CameraWaterStateTypes.ToAbove:
         CameraWaterState = CameraWaterStateTypes.ToBelow;
-        GameCameraPatch.RequestUpdate(CameraWaterState);
+        GameCamera_WaterPatches.RequestUpdate(CameraWaterState);
         return;
       default:
         throw new ArgumentOutOfRangeException();
@@ -120,7 +120,7 @@ internal class WaterVolumePatch
   }
 
   public static bool IsCurrentCameraAboveWater =>
-    GameCameraPatch.CameraPositionY > WaterLevelCamera;
+    GameCamera_WaterPatches.CameraPositionY > WaterLevelCamera;
 
   public static bool CanFlipOnlyOffboard =>
     WaterConfig.FlipWatermeshMode.Value ==

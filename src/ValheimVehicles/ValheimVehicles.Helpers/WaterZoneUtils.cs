@@ -261,7 +261,7 @@ public static class WaterZoneUtils
 
     if (IsCharacterTheLocalPlayer(character))
     {
-      WaterVolumePatch.UpdateCameraState();
+      WaterVolume_WaterPatches.UpdateCameraState();
     }
 
     return false;

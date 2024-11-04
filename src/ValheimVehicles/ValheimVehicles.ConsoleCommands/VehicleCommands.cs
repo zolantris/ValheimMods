@@ -48,10 +48,10 @@ public class VehicleCommands : ConsoleCommand
       $"\n<{VehicleCommandArgs.debug}>: will show a menu with options like rotating or debugging vehicle colliders" +
       $"\n<{VehicleCommandArgs.recover}>: will recover any vehicles within range of 1000 and turn them into V2 Vehicles" +
       $"\n<{VehicleCommandArgs.rotate}>: defaults to zeroing x and z tilt. Can also provide 3 args: x y z" +
-      $"\n<{VehicleCommandArgs.move}>: Must provide 3 args: x y z, the movement is relative to those points" +
       $"\n<{VehicleCommandArgs.toggleOceanSway}>: stops the vehicle from swaying in the water. It will stay at 0 degrees (x and z) tilt and only allow rotating on y axis" +
       $"\n<{VehicleCommandArgs.reportInfo}>: outputs information related to the vehicle the player is on or near. This is meant for error reports" +
       $"\n<{VehicleCommandArgs.moveUp}>: Moves the vehicle within 50 units upwards by the value provided. Capped at 30 units to be safe. And Capped at 10 units lowest world position." +
+      $"\n<{VehicleCommandArgs.move}>: Must provide 3 args: x y z, the movement is relative to those points" +
       $"\n<{VehicleCommandArgs.colliderEditMode}>: Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items";
   }
 
@@ -115,6 +115,9 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.moveUp:
         VehicleMoveVertically(nextArgs);
         break;
+      case VehicleCommandArgs.help:
+        Logger.LogMessage(OnHelp());
+        break;
     }
   }
 
@@ -131,10 +134,15 @@ public class VehicleCommands : ConsoleCommand
   /// <param name="args">Command arguments.</param>
   public static void VehicleMoveVertically(string[]? args)
   {
-    if (args == null || args.Length < 1 ||
-        !float.TryParse(args[0], out var offset))
+    if (args == null || args.Length < 1)
     {
-      FloatArgErrorMessage(args?[0]);
+      FloatArgErrorMessage("No args provided");
+      return;
+    }
+
+    if (!float.TryParse(args[0], out var offset))
+    {
+      FloatArgErrorMessage(args[0]);
       return;
     }
 
@@ -200,10 +208,10 @@ public class VehicleCommands : ConsoleCommand
       return;
     }
 
-    if (args.Length == 4 &&
-        float.TryParse(args[1], out var x) &&
-        float.TryParse(args[2], out var y) &&
-        float.TryParse(args[3], out var z))
+    if (args.Length == 3 &&
+        float.TryParse(args[0], out var x) &&
+        float.TryParse(args[1], out var y) &&
+        float.TryParse(args[2], out var z))
     {
       var offsetVector = ClampVector(new Vector3(x, y, z), -50f, 50f);
       MoveVehicle(shipInstance, offsetVector);
@@ -464,6 +472,8 @@ public class VehicleCommands : ConsoleCommand
     VehicleCommandArgs.recover,
     VehicleCommandArgs.reportInfo,
     VehicleCommandArgs.colliderEditMode,
+    VehicleCommandArgs.move,
+    VehicleCommandArgs.moveUp,
   ];
 
 
