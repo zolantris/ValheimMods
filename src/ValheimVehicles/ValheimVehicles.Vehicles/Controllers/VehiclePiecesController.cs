@@ -76,10 +76,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public bool HasRunCleanup = false;
 
-  private Vector3 _currentLowestLocalPosition = Vector3.zero;
+  public ZNetView? LowestPiece = null;
 
   public Vector3 LowestPiecePoint =>
-    transform.position + _currentLowestLocalPosition;
+    LowestPiece?.transform.position ?? transform.position;
 
   /// <summary>
   /// Persists the collider after it has been set to prevent auto-ballast feature from losing the origin point.
@@ -104,12 +104,19 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   /// </summary>
   public void UpdateLowestAveragePoint(ZNetView pieceNetView)
   {
-    if (IgnoredAveragePointRegexp.IsMatch(pieceNetView.name))
-      if (_currentLowestLocalPosition.y >
-          pieceNetView.transform.localPosition.y)
-      {
-        _currentLowestLocalPosition = pieceNetView.transform.localPosition;
-      }
+    if (IgnoredAveragePointRegexp.IsMatch(pieceNetView.name)) return;
+
+    if (LowestPiece == null)
+    {
+      LowestPiece = pieceNetView;
+      return;
+    }
+
+    if (LowestPiece.transform.position.y >
+        pieceNetView.transform.localPosition.y)
+    {
+      LowestPiece = pieceNetView;
+    }
   }
 
 
@@ -793,7 +800,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void CustomUpdate(float deltaTime, float time)
   {
     Client_UpdateAllPieces();
-
     Sync();
   }
 
@@ -2258,9 +2264,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var wheelPieces = _steeringWheelPieces;
     if (wheelPieces.Count <= 0) return;
 
-    foreach (var wnt in wheelPieces.Select(wheel =>
-               wheel.GetComponent<WearNTear>()))
+    foreach (var wheelPiece in wheelPieces)
     {
+      if (wheelPiece == null) return;
+      var wnt = wheelPiece.GetComponent<WearNTear>();
+      if (wnt == null) return;
       wnt.Destroy();
     }
   }
@@ -2308,6 +2316,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     totalSailArea = 0;
     m_pieces.Add(netView);
     UpdatePieceCount();
+    UpdateLowestAveragePoint(netView);
 
     // Cache components
     var components = netView.GetComponents<Component>();

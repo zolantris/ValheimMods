@@ -89,7 +89,8 @@ public static class WaterConfig
   public static ConfigEntry<bool> AutoBallast =
     null!;
 
-  public static ConfigEntry<float> AutoBallastAdditionalOffset = null!;
+  public static ConfigEntry<float> DEBUG_AutoBallastOffsetMultiplier = null!;
+  public static ConfigEntry<float> AutoBallastSpeed = null!;
 
   /// <summary>
   /// Other vars
@@ -202,6 +203,14 @@ public static class WaterConfig
       ConfigHelpers.CreateConfigDescription(
         "Force Overrides the Swim depth for character on boats. Values above the swim depth force the player into a swim animation.",
         true, true, depthRanges));
+
+    DEBUG_AutoBallastOffsetMultiplier = Config.Bind(
+      SectionKeyDebug,
+      "DEBUG_AutoBallastOffsetMultiplier",
+      1f,
+      ConfigHelpers.CreateConfigDescription(
+        "Adds more balast offset",
+        true, true));
   }
 
   public static void BindConfig(ConfigFile config)
@@ -220,13 +229,13 @@ public static class WaterConfig
 
     AutoBallast.SettingChanged += (sender, args) => OnAutoBallastToggle();
 
-    AutoBallastAdditionalOffset = Config.Bind(
+    AutoBallastSpeed = Config.Bind(
       SectionKey,
-      "AutoBallastAdditionalOffset",
-      0f,
+      "AutoBallastSpeed",
+      0.1f,
       ConfigHelpers.CreateConfigDescription(
         "Adds more balast offset",
-        true, true));
+        true, true, new AcceptableValueRange<float>(0.001f, 1)));
 
 
     AllowTamedEntiesUnderwater = Config.Bind(

@@ -230,13 +230,13 @@ public class VehicleCommands : ConsoleCommand
   public static void VehicleToggleOceanSway()
   {
     var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
-    if (!vehicleController)
+    if (vehicleController == null)
     {
       Logger.LogMessage("No VehicleController Detected");
       return;
     }
 
-    vehicleController?.VehicleInstance.Instance.MovementController
+    vehicleController.MovementController?
       .SendToggleOceanSway();
   }
 
