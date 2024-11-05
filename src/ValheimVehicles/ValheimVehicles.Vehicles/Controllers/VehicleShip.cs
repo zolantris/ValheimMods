@@ -229,6 +229,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   public void AwakeSetupVehicleShip()
   {
+    if (!isActiveAndEnabled) return;
     if (!_movementController)
     {
       MovementController = GetComponent<VehicleMovementController>();

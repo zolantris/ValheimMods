@@ -113,7 +113,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
 
     if (LowestPiece.transform.position.y >
-        pieceNetView.transform.localPosition.y)
+        pieceNetView.transform.position.y)
     {
       LowestPiece = pieceNetView;
     }
@@ -841,7 +841,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var currentPieceControllerSector =
       ZoneSystem.GetZone(transform.position);
 
-    VehicleInstance?.NetView?.m_zdo.SetPosition(transform.position);
+    VehicleInstance?.NetView?.m_zdo?.SetPosition(transform.position);
 
 
     foreach (var nv in m_pieces.ToList())

@@ -717,56 +717,87 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var isFloatColliderNearGround =
       IsFloatPointNearGround(shipFloatation, out var highestResult);
 
-    if (isFloatColliderNearGround)
-    {
-      HandleBallastNearGround(highestResult);
-    }
-    else if (!HandleBallastInShallowWater(highestResult))
+    var isHandledNearGround = HandleBallastNearGround(highestResult);
+    var isInShallowWater = HandleBallastInShallowWater(highestResult);
+    if (!isInShallowWater)
     {
       HandleBallastInDeepWater();
     }
 
-    // Smooth transition of ballast offset
-    _currentBallastOffset = Mathf.Lerp(_previousBallastOffset,
-      _currentBallastOffset,
-      Time.fixedDeltaTime * WaterConfig.AutoBallastSpeed.Value);
+    if (_previousBallastOffset < highestResult)
+    {
+      _previousBallastOffset = highestResult;
+      // _currentBallastOffset = highestResult + 2f;
+      if (_previousBallastOffset > _currentBallastOffset)
+      {
+        _currentBallastOffset = _previousBallastOffset + 1f;
+      }
+    }
+
+
+    if (!WaterConfig.DEBUG_ManualBallastOffsetEnabled.Value)
+    {
+      var minVal = OnboardCollider.bounds.min.y;
+      var maxVal = OnboardCollider.bounds.max.y;
+      _currentBallastOffset = Mathf.Clamp(_currentBallastOffset,
+        minVal,
+        maxVal);
+    }
+
+    if (!WaterConfig.DEBUG_ManualBallastOffsetEnabled.Value)
+    {
+      // Smooth transition of ballast offset
+      _currentBallastOffset = Mathf.Lerp(_previousBallastOffset,
+        _currentBallastOffset,
+        Time.fixedDeltaTime * WaterConfig.AutoBallastSpeed.Value);
+    }
+    else
+    {
+      _currentBallastOffset = Mathf.Lerp(_previousBallastOffset,
+        WaterConfig.DEBUG_ManualBallastOffset.Value,
+        Time.fixedDeltaTime * WaterConfig.AutoBallastSpeed.Value);
+    }
 
     UpdateColliderPositions();
   }
 
-  private void HandleBallastNearGround(float highestResult)
+  public static float HighestResultBuffer = 1f;
+
+  private bool HandleBallastNearGround(float highestResult)
   {
-    if (highestResult > FloatCollider.transform.position.y)
+    var floatHeightBuffer = FloatCollider.transform.position.y - 3f;
+    if (highestResult > floatHeightBuffer)
     {
+      // offset should help avoid collider hitting ocean floor.
+      var highestResultPlusBuffer = highestResult + HighestResultBuffer;
       _currentBallastOffset =
-        highestResult - FloatCollider.transform.position.y;
+        highestResultPlusBuffer - FloatCollider.transform.position.y;
+      return true;
     }
-    else
-    {
-      _currentBallastOffset = +0.1f;
-    }
+
+    return false;
   }
 
   private void HandleBallastInDeepWater()
   {
-    _currentBallastOffset = Mathf.Lerp(_previousBallastOffset, 0f,
-      50f * Time.fixedDeltaTime);
+    _currentBallastOffset =
+      PiecesController?.FloatColliderDefaultPosition.y ??
+      0f; // Or adjust as needed for your logic
   }
 
   private bool HandleBallastInShallowWater(float highestResult)
   {
-    if (PiecesController.LowestPiecePoint.y < highestResult &&
+    if (PiecesController == null) return false;
+    if (PiecesController.LowestPiecePoint.y < highestResult ||
         PiecesController.LowestPiecePoint.y <
         FloatCollider.transform.position.y)
     {
       var deltaDistance = PiecesController.LowestPiecePoint.y -
                           FloatCollider.transform.position.y;
 
+
       // Clamp to prevent exceeding vehicle boundaries
-      _currentBallastOffset = Mathf.Clamp(deltaDistance,
-        -50f,
-        OnboardCollider.bounds.extents.y *
-        WaterConfig.DEBUG_AutoBallastOffsetMultiplier.Value);
+      _currentBallastOffset = deltaDistance;
       return true;
     }
 
@@ -775,15 +806,17 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   private void UpdateColliderPositions()
   {
+    if (PiecesController == null) return;
+
     FloatCollider.transform.localPosition = new Vector3(
-      PiecesController.FloatColliderDefaultPosition.x,
-      PiecesController.FloatColliderDefaultPosition.y + _currentBallastOffset,
-      PiecesController.FloatColliderDefaultPosition.z);
+      FloatCollider.transform.localPosition.x,
+      PiecesController.FloatColliderDefaultPosition.y,
+      FloatCollider.transform.localPosition.z);
     BlockingCollider.transform.localPosition = new Vector3(
-      PiecesController.BlockingColliderDefaultPosition.x,
+      BlockingCollider.transform.localPosition.x,
       PiecesController.BlockingColliderDefaultPosition.y +
       _currentBallastOffset,
-      PiecesController.BlockingColliderDefaultPosition.z);
+      BlockingCollider.transform.localPosition.z);
   }
 
   /// <summary>

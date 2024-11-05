@@ -28,6 +28,7 @@
       <Path>valheim.targets</Path>
     </explicitIncludes>
     <explicitExcludes>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity</Path>
       <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Alternative_Prefabs</Path>
       <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/BlenderImports</Path>
       <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/ExternalAssets</Path>

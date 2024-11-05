@@ -51,6 +51,12 @@ public static class WaterConfig
   public static ConfigEntry<bool>
     DEBUG_HasDepthOverrides { get; private set; } = null!;
 
+  public static ConfigEntry<float>
+    DEBUG_ManualBallastOffset { get; private set; } = null!;
+
+  public static ConfigEntry<bool>
+    DEBUG_ManualBallastOffsetEnabled { get; private set; } = null!;
+
   /// <summary>
   /// Modes
   /// </summary>
@@ -161,6 +167,19 @@ public static class WaterConfig
 
   public static void BindDebugConfig(ConfigFile config)
   {
+    DEBUG_ManualBallastOffsetEnabled = config.Bind(SectionKeyDebug,
+      "DEBUG_ManualBallastOffsetEnabled",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "Enable manual ballast testing.",
+        true, true));
+    DEBUG_ManualBallastOffset = config.Bind(SectionKeyDebug,
+      "DEBUG_ManualBallastOffset",
+      0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Lets you test how ballast works by setting a value.",
+        true, true, new AcceptableValueRange<float>(-100f, 100f)));
+
     DEBUG_WaterDisplacementMeshPrimitive = config.Bind(SectionKeyDebug,
       "DEBUG_WaterDisplacementMeshPrimitive",
       PrimitiveType.Cube,
