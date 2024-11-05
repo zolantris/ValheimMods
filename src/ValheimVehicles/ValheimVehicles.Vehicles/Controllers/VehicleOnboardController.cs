@@ -18,6 +18,8 @@ namespace ValheimVehicles.Vehicles.Controllers;
 
 /// <summary>
 /// A Controller placed directly on the VehicleOnboardCollider GameObject, meant to detect collisions only on that component
+///
+/// TODO in multiplayer make sure that not only the host, but all clients add all Characters that are players to the VehiclePieces controller. This way there is no jitters
 /// </summary>
 public class VehicleOnboardController : MonoBehaviour
 {

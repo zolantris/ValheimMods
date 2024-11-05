@@ -675,17 +675,18 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public static float
     BallastSmoothtime = 0.1f;
 
+  private float _previousBallastTargetOffset = 0f; // lerp value
+  private float _currentBallastTargetOffset = 0f; // lerp value
   private float _previousBallastOffset = 0f;
   private float _currentBallastOffset = 0f;
 
   public float groundHeightPaddingOffset = 2f;
 
-  private bool IsFloatPointNearGround(ShipFloatation shipFloatation,
-    out float highestResult)
+  private bool HandleLowestBallast(ShipFloatation shipFloatation,
+    float highestResult)
   {
     var floatHeightPosition = FloatCollider.transform.position.y +
                               groundHeightPaddingOffset;
-    highestResult = GetHighestGroundPoint(shipFloatation);
     return floatHeightPosition < highestResult;
   }
 
@@ -712,43 +713,47 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       return;
     }
 
+    var highestResult = GetHighestGroundPoint(shipFloatation);
+
+    // Swap values
     _previousBallastOffset = _currentBallastOffset;
+    _previousBallastTargetOffset = _currentBallastTargetOffset;
 
-    var isFloatColliderNearGround =
-      IsFloatPointNearGround(shipFloatation, out var highestResult);
-
-    var isHandledNearGround = HandleBallastNearGround(highestResult);
-    var isInShallowWater = HandleBallastInShallowWater(highestResult);
-    if (!isInShallowWater)
-    {
-      HandleBallastInDeepWater();
-    }
-
-    if (_previousBallastOffset < highestResult)
-    {
-      _previousBallastOffset = highestResult;
-      // _currentBallastOffset = highestResult + 2f;
-      if (_previousBallastOffset > _currentBallastOffset)
-      {
-        _currentBallastOffset = _previousBallastOffset + 1f;
-      }
-    }
-
-
+    // clamps previous value in case exceeding it. But this is the lerp clamp
     if (!WaterConfig.DEBUG_ManualBallastOffsetEnabled.Value)
     {
-      var minVal = OnboardCollider.bounds.min.y;
-      var maxVal = OnboardCollider.bounds.max.y;
-      _currentBallastOffset = Mathf.Clamp(_currentBallastOffset,
-        minVal,
-        maxVal);
+      // These likely need to be extents
+      var minNegativeVal = OnboardCollider.transform.localPosition.y -
+                           OnboardCollider.bounds.extents.y;
+      var maxPostiveVal = OnboardCollider.transform.localPosition.y +
+                          OnboardCollider.bounds.extents.y;
+      _previousBallastOffset = Mathf.Clamp(_previousBallastOffset,
+        minNegativeVal,
+        maxPostiveVal);
     }
+
+    if (!WaterConfig.DEBUG_ManualBallastOffsetEnabled.Value &&
+        FloatCollider.transform.position.y <
+        highestResult)
+    {
+      _previousBallastOffset =
+        highestResult - FloatCollider.transform.position.y;
+    }
+
+    // Short-circuits for logic
+    var isAtLowestBallast =
+      HandleLowestBallast(shipFloatation, highestResult);
+    var isHandledNearGround =
+      !isAtLowestBallast && HandleBallastNearGround(highestResult);
+    var isInShallowWater = HandleBallastInShallowWater(highestResult);
+    var isInDeepWater = !isInShallowWater && HandleBallastInDeepWater();
 
     if (!WaterConfig.DEBUG_ManualBallastOffsetEnabled.Value)
     {
       // Smooth transition of ballast offset
+      // uses the previous lerp instance instead of target b/c this is the actual current value to compare with.
       _currentBallastOffset = Mathf.Lerp(_previousBallastOffset,
-        _currentBallastOffset,
+        _currentBallastTargetOffset,
         Time.fixedDeltaTime * WaterConfig.AutoBallastSpeed.Value);
     }
     else
@@ -765,58 +770,86 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   private bool HandleBallastNearGround(float highestResult)
   {
-    var floatHeightBuffer = FloatCollider.transform.position.y - 3f;
+    var floatHeightBuffer = FloatCollider.transform.position.y;
     if (highestResult > floatHeightBuffer)
     {
-      // offset should help avoid collider hitting ocean floor.
-      var highestResultPlusBuffer = highestResult + HighestResultBuffer;
-      _currentBallastOffset =
-        highestResultPlusBuffer - FloatCollider.transform.position.y;
+      if (highestResult + 4f > floatHeightBuffer)
+      {
+        var highestResultPlusBuffer = highestResult + HighestResultBuffer;
+        _currentBallastTargetOffset =
+          highestResultPlusBuffer - floatHeightBuffer;
+      }
+      else
+      {
+        // offset should help avoid collider hitting ocean floor.
+        _currentBallastTargetOffset = _previousBallastOffset;
+      }
+
       return true;
     }
 
     return false;
   }
 
-  private void HandleBallastInDeepWater()
+  private bool HandleBallastInDeepWater()
   {
-    _currentBallastOffset =
-      PiecesController?.FloatColliderDefaultPosition.y ??
-      0f; // Or adjust as needed for your logic
+    // _currentBallastOffset =
+    //   PiecesController?.FloatColliderDefaultPosition.y ?? 0f;
+
+    // Set to zero as the default center + the offset is used in the setter calc. So approaching zero is equivalent to no ballast
+    _currentBallastTargetOffset = 0f;
+    return true;
+  }
+
+  private float GetLowestPositionPointOnShip()
+  {
+    return OnboardCollider.bounds.min.y;
+    // return OnboardCollider.bounds.extents.y +
+    //        OnboardCollider.transform.localPosition.y;
   }
 
   private bool HandleBallastInShallowWater(float highestResult)
   {
     if (PiecesController == null) return false;
-    if (PiecesController.LowestPiecePoint.y < highestResult ||
-        PiecesController.LowestPiecePoint.y <
-        FloatCollider.transform.position.y)
+    var lowestPointOnShip = GetLowestPositionPointOnShip();
+    var floatMinPoint = FloatCollider.bounds.min.y;
+
+    // ||
+    // matches too much, so not used var hasFloatColliderReachedLowestPoint = lowestPointOnShip < floatMinPoint
+    if (lowestPointOnShip < highestResult)
     {
-      var deltaDistance = PiecesController.LowestPiecePoint.y -
-                          FloatCollider.transform.position.y;
+      // may need to use FloatCenterPoint.
+      var deltaDistance = lowestPointOnShip -
+                          floatMinPoint;
 
 
       // Clamp to prevent exceeding vehicle boundaries
-      _currentBallastOffset = deltaDistance;
+      _currentBallastTargetOffset = deltaDistance;
       return true;
     }
 
     return false;
+  }
+
+  public static void UpdateYPosition(Transform targetTransform,
+    float newYPosition)
+  {
+    var localPosition = targetTransform.localPosition;
+    targetTransform.localPosition =
+      new Vector3(localPosition.x, newYPosition, localPosition.z);
   }
 
   private void UpdateColliderPositions()
   {
     if (PiecesController == null) return;
 
-    FloatCollider.transform.localPosition = new Vector3(
-      FloatCollider.transform.localPosition.x,
-      PiecesController.FloatColliderDefaultPosition.y,
-      FloatCollider.transform.localPosition.z);
-    BlockingCollider.transform.localPosition = new Vector3(
-      BlockingCollider.transform.localPosition.x,
-      PiecesController.BlockingColliderDefaultPosition.y +
-      _currentBallastOffset,
-      BlockingCollider.transform.localPosition.z);
+    var floatPositionY = PiecesController.FloatColliderDefaultPosition.y +
+                         _currentBallastOffset;
+    var blockingPositionY = PiecesController.BlockingColliderDefaultPosition.y +
+                            _currentBallastOffset;
+
+    UpdateYPosition(FloatCollider.transform, floatPositionY);
+    UpdateYPosition(BlockingCollider.transform, blockingPositionY);
   }
 
   /// <summary>

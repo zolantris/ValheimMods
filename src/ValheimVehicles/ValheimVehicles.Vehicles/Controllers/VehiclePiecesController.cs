@@ -7,6 +7,7 @@ using System.Dynamic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using HarmonyLib;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
@@ -50,8 +51,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public static Dictionary<int, List<ZDO>> m_allPieces = new();
 
+  /// <summary>
+  /// These are materials or players that will not be persisted via ZDOs but are "on" the ship and will be added as a child of the ship
+  /// </summary>
   public static Dictionary<int, List<ZDOID>>
     m_dynamicObjects = new();
+
+  // public static Dictionary<ZDOID, ZNetView> temporaryMaterials = new();
 
   public static List<IMonoUpdater> MonoUpdaterInstances = [];
 
@@ -76,10 +82,21 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public bool HasRunCleanup = false;
 
-  public ZNetView? LowestPiece = null;
+  // public ZNetView? LowestPiece = null;
 
-  public Vector3 LowestPiecePoint =>
-    LowestPiece?.transform.position ?? transform.position;
+  // public Vector3? GetLowestPiecePoint()
+  // {
+  //   if (!isActiveAndEnabled) return null;
+  //   return transform.position;
+  //   // if (LowestPiece == null) return null;
+  //   // if (!LowestPiece.isActiveAndEnabled) return null;
+  // }
+  //
+  // /// <summary>
+  // /// May need to make this nullable and just exit.
+  // /// </summary>
+  // public Vector3 LowestPiecePoint =>
+  //   LowestPiece?.transform?.position ?? transform?.position ?? Vector3.zero;
 
   /// <summary>
   /// Persists the collider after it has been set to prevent auto-ballast feature from losing the origin point.
@@ -99,25 +116,25 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     $"^({string.Join("|", IgnoredPrefabNames.Select(Regex.Escape))})",
     RegexOptions.Compiled);
 
-  /// <summary>
-  /// For water access. This will accurately set the lowest relative netview on the ship. This netview position will then be computed in LowestPointOnVehicle.
-  /// </summary>
-  public void UpdateLowestAveragePoint(ZNetView pieceNetView)
-  {
-    if (IgnoredAveragePointRegexp.IsMatch(pieceNetView.name)) return;
-
-    if (LowestPiece == null)
-    {
-      LowestPiece = pieceNetView;
-      return;
-    }
-
-    if (LowestPiece.transform.position.y >
-        pieceNetView.transform.position.y)
-    {
-      LowestPiece = pieceNetView;
-    }
-  }
+  // /// <summary>
+  // /// For water access. This will accurately set the lowest relative netview on the ship. This netview position will then be computed in LowestPointOnVehicle.
+  // /// </summary>
+  // public void UpdateLowestAveragePoint(ZNetView pieceNetView)
+  // {
+  //   if (IgnoredAveragePointRegexp.IsMatch(pieceNetView.name)) return;
+  //
+  //   if (LowestPiece == null)
+  //   {
+  //     LowestPiece = pieceNetView;
+  //     return;
+  //   }
+  //
+  //   if (LowestPiece.transform.localPosition.y >
+  //       pieceNetView.transform.localPosition.y)
+  //   {
+  //     LowestPiece = pieceNetView;
+  //   }
+  // }
 
 
   public static bool DEBUGAllowActivatePendingPieces
@@ -145,7 +162,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public Rigidbody m_body;
   internal FixedJoint m_fixedJoint;
 
-  internal List<ZNetView> m_pieces = [];
+  public List<ZNetView> m_pieces = [];
   internal List<ZNetView> m_ramPieces = [];
   internal List<ZNetView> m_hullPieces = [];
 
@@ -2316,7 +2333,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     totalSailArea = 0;
     m_pieces.Add(netView);
     UpdatePieceCount();
-    UpdateLowestAveragePoint(netView);
+    // UpdateLowestAveragePoint(netView);
 
     // Cache components
     var components = netView.GetComponents<Component>();
@@ -2551,7 +2568,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         continue;
       }
 
-      UpdateLowestAveragePoint(netView);
+      // This may need to be called within the encapsulation section to validate the bounds.min.y + transform.position is the true lowest section.
+      // UpdateLowestAveragePoint(netView);
       EncapsulateBounds(netView.gameObject);
     }
 

@@ -220,7 +220,8 @@ public class VehicleDebugHelpers : MonoBehaviour
   {
     foreach (var drawTargetColliders in targetColliders)
     {
-      DrawColliders(drawTargetColliders.collider, drawTargetColliders.parent,
+      DrawColliders(drawTargetColliders.collider,
+        drawTargetColliders.collider.gameObject,
         drawTargetColliders.lineColor);
     }
 
