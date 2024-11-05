@@ -723,10 +723,21 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (!WaterConfig.DEBUG_ManualBallastOffsetEnabled.Value)
     {
       // These likely need to be extents
-      var minNegativeVal = OnboardCollider.transform.localPosition.y -
-                           OnboardCollider.bounds.extents.y;
-      var maxPostiveVal = OnboardCollider.transform.localPosition.y +
-                          OnboardCollider.bounds.extents.y;
+      var minNegativeVal = OnboardCollider.bounds.min.y;
+      var maxPostiveVal = OnboardCollider.bounds.max.y;
+      if (maxPostiveVal < 30)
+      {
+        maxPostiveVal = 30f;
+      }
+
+      var waterHeight =
+        Floating.GetWaterLevel(transform.position, ref m_previousCenter);
+      if (maxPostiveVal <
+          waterHeight)
+      {
+        maxPostiveVal = waterHeight;
+      }
+
       _previousBallastOffset = Mathf.Clamp(_previousBallastOffset,
         minNegativeVal,
         maxPostiveVal);
@@ -770,21 +781,21 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   private bool HandleBallastNearGround(float highestResult)
   {
-    var floatHeightBuffer = FloatCollider.transform.position.y;
-    if (highestResult > floatHeightBuffer)
+    var floatBoundMinY = FloatCollider.bounds.min.y - 0.01f;
+    if (highestResult > floatBoundMinY)
     {
-      if (highestResult + 4f > floatHeightBuffer)
+      if (highestResult + 2f > floatBoundMinY)
       {
-        var highestResultPlusBuffer = highestResult + HighestResultBuffer;
-        _currentBallastTargetOffset =
-          highestResultPlusBuffer - floatHeightBuffer;
+        var highestResultPlusBuffer = highestResult + 2f;
+        var floatToHeight = highestResultPlusBuffer - floatBoundMinY;
+        _currentBallastTargetOffset = floatToHeight;
       }
       else
       {
         // offset should help avoid collider hitting ocean floor.
-        _currentBallastTargetOffset = _previousBallastOffset;
+        _currentBallastTargetOffset = _previousBallastOffset - 0.25f;
       }
-
+  
       return true;
     }
 
@@ -798,7 +809,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // Set to zero as the default center + the offset is used in the setter calc. So approaching zero is equivalent to no ballast
     _currentBallastTargetOffset = Mathf.Lerp(_currentBallastTargetOffset, 0f,
-      0.1f * Time.fixedDeltaTime);
+      Time.fixedDeltaTime * WaterConfig.AutoBallastSpeed.Value);
     return true;
   }
 
@@ -817,11 +828,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // ||
     // matches too much, so not used var hasFloatColliderReachedLowestPoint = lowestPointOnShip < floatMinPoint
-    if (lowestPointOnShip < highestResult)
+    if (lowestPointOnShip < highestResult + 1f)
     {
       // may need to use FloatCenterPoint.
       var deltaDistance = lowestPointOnShip -
-                          floatMinPoint;
+                          FloatCollider.transform.position.y;
 
 
       // Clamp to prevent exceeding vehicle boundaries
