@@ -797,7 +797,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     //   PiecesController?.FloatColliderDefaultPosition.y ?? 0f;
 
     // Set to zero as the default center + the offset is used in the setter calc. So approaching zero is equivalent to no ballast
-    _currentBallastTargetOffset = 0f;
+    _currentBallastTargetOffset = Mathf.Lerp(_currentBallastTargetOffset, 0f,
+      0.1f * Time.fixedDeltaTime);
     return true;
   }
 
