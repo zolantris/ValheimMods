@@ -304,7 +304,7 @@ public class Player_Patch
     {
       var ladder = __instance.m_attachPoint.parent
         .GetComponent<RopeLadderComponent>();
-      if ((bool)ladder) ladder.StepOffLadder(__instance);
+      if ((bool)ladder) ladder.OnStepOffLadder(__instance);
       ((Character)__instance).m_animator.SetIKPositionWeight(
         AvatarIKGoal.LeftHand, 0);
       ((Character)__instance).m_animator.SetIKPositionWeight(
