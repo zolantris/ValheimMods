@@ -369,13 +369,13 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private void CreateFlightPropulsionConfig()
   {
     FlightVerticalToggle = Config.Bind<bool>("Propulsion",
-      "Flight Vertical Continues UntilToggled",
+      "FlightVerticalToggle",
       true,
-      "Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button");
+      "Flight Vertical Continues UntilToggled: Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button");
     FlightHasRudderOnly = Config.Bind<bool>("Propulsion",
-      "Only allow rudder speeds during flight",
+      "FlightHasRudderOnly",
       false,
-      "Flight allows for different rudder speeds, only use those and ignore sails");
+      "Flight allows for different rudder speeds. Use rudder speed only. Do not use sail speed.");
   }
 
   private void CreateDebugConfig()

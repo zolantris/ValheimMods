@@ -95,8 +95,12 @@ public static class WaterConfig
   public static ConfigEntry<bool> AutoBallast =
     null!;
 
+  public static ConfigEntry<bool> ManualBallast =
+    null!;
+
   public static ConfigEntry<float> DEBUG_AutoBallastOffsetMultiplier = null!;
   public static ConfigEntry<float> AutoBallastSpeed = null!;
+  // public ConfigEntry<KeyboardShortcut> ManualBallastModifierKey { get; set; }
 
   /// <summary>
   /// Other vars
@@ -237,6 +241,14 @@ public static class WaterConfig
     Config = config;
 
     BindDebugConfig(Config);
+
+    ManualBallast = Config.Bind(
+      SectionKey,
+      "ManualBallast",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "Similar to flight mechanics but at sea. Defaults with Space/Jump to increase height and Sneak/Shift to decrease height uses the same flight comamnds.",
+        true, true));
 
     AutoBallast = Config.Bind(
       SectionKey,
