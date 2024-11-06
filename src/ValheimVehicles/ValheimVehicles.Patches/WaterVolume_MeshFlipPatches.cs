@@ -1,4 +1,5 @@
 using System;
+using System.Dynamic;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -80,6 +81,43 @@ internal class WaterVolume_WaterPatches
     __result *= WaterConfig.WaveSizeMultiplier.Value;
   }
 
+  private static float lastFlippedAllInvoke = 0f;
+
+  private static CameraWaterStateTypes lastFlippedAllState =
+    CameraWaterState = CameraWaterStateTypes.AboveWater;
+
+  /// <summary>
+  /// Updates all meshes to prevent them from getting out of sync
+  /// </summary>
+  public static void FlipAllWaterVolumes()
+  {
+    if (lastFlippedAllInvoke > 1f)
+    {
+      lastFlippedAllInvoke = 0f;
+    }
+
+    if (lastFlippedAllInvoke > 0f)
+    {
+      lastFlippedAllInvoke += Time.fixedTime;
+      return;
+    }
+
+    if (lastFlippedAllState == CameraWaterState)
+    {
+      return;
+    }
+
+
+    foreach (var waterVolume in WaterVolume.Instances)
+    {
+      UpdateMesh(waterVolume, waterVolume.m_normalizedDepth);
+    }
+
+    lastFlippedAllInvoke += Time.fixedTime;
+    lastFlippedAllState = CameraWaterState;
+  }
+
+
   public static void UpdateCameraState()
   {
     var isAbove = GameCamera.instance.transform.position.y > WaterLevelCamera;
@@ -88,6 +126,7 @@ internal class WaterVolume_WaterPatches
       switch (CameraWaterState)
       {
         case CameraWaterStateTypes.AboveWater:
+          FlipAllWaterVolumes();
           return;
         case CameraWaterStateTypes.ToAbove:
           CameraWaterState = CameraWaterStateTypes.AboveWater;
@@ -95,7 +134,6 @@ internal class WaterVolume_WaterPatches
         case CameraWaterStateTypes.BelowWater:
         case CameraWaterStateTypes.ToBelow:
           CameraWaterState = CameraWaterStateTypes.ToAbove;
-          GameCamera_WaterPatches.RequestUpdate(CameraWaterState);
           return;
         default:
           throw new ArgumentOutOfRangeException();
@@ -105,6 +143,7 @@ internal class WaterVolume_WaterPatches
     switch (CameraWaterState)
     {
       case CameraWaterStateTypes.BelowWater:
+        FlipAllWaterVolumes();
         return;
       case CameraWaterStateTypes.ToBelow:
         CameraWaterState = CameraWaterStateTypes.BelowWater;
@@ -112,7 +151,6 @@ internal class WaterVolume_WaterPatches
       case CameraWaterStateTypes.AboveWater:
       case CameraWaterStateTypes.ToAbove:
         CameraWaterState = CameraWaterStateTypes.ToBelow;
-        GameCamera_WaterPatches.RequestUpdate(CameraWaterState);
         return;
       default:
         throw new ArgumentOutOfRangeException();
@@ -140,7 +178,12 @@ internal class WaterVolume_WaterPatches
         WaterConfig.WaterMeshFlipModeType.Disabled) return;
 
     UpdateCameraState();
+    UpdateMesh(__instance, normalizedDepth);
+  }
 
+  private static void UpdateMesh(WaterVolume __instance,
+    float[] normalizedDepth)
+  {
     var waterSurfaceTransform = __instance.m_waterSurface.transform;
     var isCurrentlyFlipped =
       waterSurfaceTransform.rotation.eulerAngles.y.Equals(180f);
@@ -190,30 +233,12 @@ internal class WaterVolume_WaterPatches
     SetDepthForWaterSurface(__instance, normalizedDepth, false);
   }
 
-  // possibly most accurate order
-  // normalizedDepth[2],
-  // normalizedDepth[0],
-  // normalizedDepth[3],
-  // normalizedDepth[1],
-
   private static void SetDepthForWaterSurface(WaterVolume __instance,
     float[] normalizedDepth, bool isFlipped)
   {
     var depthValues = isFlipped
       ?
       [
-        //     // normalizedDepth[0],
-        //     // normalizedDepth[0],
-        //     // normalizedDepth[0],
-        //     // normalizedDepth[0]
-        //     // normalizedDepth[2],
-        //     // normalizedDepth[0],
-        //     // normalizedDepth[3],
-        //     // normalizedDepth[1],
-        //     // 1 - normalizedDepth[0],
-        //     // 1 - normalizedDepth[1],
-        //     // 1 - normalizedDepth[2],
-        //     // 1 - normalizedDepth[3]
         -normalizedDepth[0],
         -normalizedDepth[1],
         -normalizedDepth[2],
@@ -223,8 +248,10 @@ internal class WaterVolume_WaterPatches
 
     __instance.m_waterSurface.material.SetFloatArray(DepthProperty
       , depthValues);
-    // __instance.m_waterSurface.material.SetFloat(
-    //   GlobalWindProperty,
-    //   __instance.m_useGlobalWind ? 1f : 0f);
+
+    // likely not necesssary
+    __instance.m_waterSurface.material.SetFloat(
+      GlobalWindProperty,
+      __instance.m_useGlobalWind ? 1f : 0f);
   }
 }

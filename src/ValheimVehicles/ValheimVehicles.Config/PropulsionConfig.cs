@@ -10,7 +10,10 @@ public static class PropulsionConfig
 {
   public static ConfigFile? Config { get; private set; }
 
-  public static ConfigEntry<float> VehicleFlightClimbingSpeed
+  public static ConfigEntry<float> FlightClimbingOffset { get; private set; } =
+    null!;
+
+  public static ConfigEntry<float> UnderwaterClimbingOffset
   {
     get;
     private set;
@@ -93,10 +96,18 @@ public static class PropulsionConfig
       ConfigHelpers.CreateConfigDescription(
         "Lifts the anchor when using a speed change key, this is a QOL to prevent anchor from being required to be pressed when attempting to change the ship speed"));
 
-    VehicleFlightClimbingSpeed = Config.Bind(SectionName, "FlightClimbingSpeed",
+    FlightClimbingOffset = Config.Bind(SectionName,
+      "FlightClimbingOffset",
       5f,
       ConfigHelpers.CreateConfigDescription(
-        "Ascent and Descent speed for the vehicle in the air. Numbers above 1 require turning the synced rigidbody for vehicle into another joint rigidbody.",
+        "Ascent and Descent speed for the vehicle in the air. This value is interpolated to prevent jitters.",
+        true, true, new AcceptableValueRange<float>(1, 10)));
+
+    UnderwaterClimbingOffset = Config.Bind(SectionName,
+      "UnderwaterClimbingOffset",
+      5f,
+      ConfigHelpers.CreateConfigDescription(
+        "Ascent and Descent speed for the vehicle in the water. This value is interpolated to prevent jitters.",
         true, true, new AcceptableValueRange<float>(1, 10)));
 
     DefaultPhysicsMode.SettingChanged +=

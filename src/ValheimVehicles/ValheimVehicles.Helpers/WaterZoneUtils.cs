@@ -472,7 +472,7 @@ public static class WaterZoneUtils
         return true;
       }
 
-      UpdateLiquidDepthValues(character, liquidDepth, LiquidType.Water);
+      UpdateDepthValues(character, liquidDepth, LiquidType.Water);
       return true;
     }
 

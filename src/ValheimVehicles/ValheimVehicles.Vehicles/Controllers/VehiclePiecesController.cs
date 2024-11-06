@@ -647,7 +647,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public virtual void SyncRigidbodyStats(float drag, float angularDrag,
     bool flight)
   {
-    if (!VehicleInstance?.MovementController?.m_body || m_statsOverride ||
+    if (!isActiveAndEnabled) return;
+    if (MovementController?.m_body == null || m_statsOverride ||
         !VehicleInstance?.Instance || !m_body)
     {
       return;
@@ -673,15 +674,15 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       SetVehiclePhysicsType(VehiclePhysicsMode.SyncedRigidbody);
     }
 
+    var mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
+
     m_body.angularDrag = angularDrag;
-    VehicleInstance.MovementController.m_body.angularDrag = angularDrag;
-
     m_body.drag = drag;
-    VehicleInstance.MovementController.m_body.drag = drag;
+    m_body.mass = mass;
 
-    VehicleInstance.MovementController.m_body.mass =
-      Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
-    m_body.mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
+    MovementController.m_body.angularDrag = angularDrag;
+    MovementController.m_body.drag = drag;
+    MovementController.m_body.mass = mass;
   }
 
   public VehiclePhysicsMode localVehiclePhysicsMode =
@@ -1630,6 +1631,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public IEnumerator ActivatePendingPiecesCoroutine()
   {
+    if (_baseVehicleInitializationState !=
+        InitializationState.Complete) yield break;
+
     OnStartActivatePendingPieces();
 
     var persistentZdoId = VehicleInstance?.PersistentZdoId;

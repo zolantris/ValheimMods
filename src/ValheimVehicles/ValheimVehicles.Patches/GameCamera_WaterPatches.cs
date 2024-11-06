@@ -16,15 +16,13 @@ internal class GameCamera_WaterPatches
   public static float CameraPositionY = 0f;
 
   public static float? prevFogDensity;
-  public static bool? PrevCameraAboveWater = false;
   public static bool? prevFog;
   public static Color? prevFogColor;
-  public static bool? hasPrevValues = false;
   public static Vector2i? prevFogZone = Vector2i.zero;
 
   // Meant to be updated by WaterVolumePatches
   public static bool CanUpdateFog;
-  public static WaterVolume_WaterPatches.CameraWaterStateTypes PrevState;
+  public static bool previousSurfaceState;
 
   public static void UpdateFogBasedOnEnvironment()
   {
@@ -46,7 +44,6 @@ internal class GameCamera_WaterPatches
   public static void UpdateFogSettings()
   {
     if (!WaterConfig.UnderwaterFogEnabled.Value) return;
-    if (!CanUpdateFog) return;
     var currentZone = GetCurrentZone();
     if (WaterVolume_WaterPatches.IsCameraAboveWater)
     {
@@ -65,10 +62,7 @@ internal class GameCamera_WaterPatches
       prevFogColor = null;
       prevFogZone = null;
     }
-
-    if (WaterVolume_WaterPatches.CameraWaterState ==
-        WaterVolume_WaterPatches.CameraWaterStateTypes.ToBelow &&
-        WaterConfig.UnderwaterFogEnabled.Value)
+    else
     {
       prevFogDensity = RenderSettings.fogDensity;
       prevFog = RenderSettings.fog;
@@ -83,30 +77,15 @@ internal class GameCamera_WaterPatches
     CanUpdateFog = false;
   }
 
-  public static bool IsCameraSurfaceChanged(
-    WaterVolume_WaterPatches.CameraWaterStateTypes stateTypes)
-  {
-    return PrevState ==
-           WaterVolume_WaterPatches.CameraWaterStateTypes.ToAbove &&
-           stateTypes ==
-           WaterVolume_WaterPatches.CameraWaterStateTypes.ToBelow ||
-           PrevState ==
-           WaterVolume_WaterPatches.CameraWaterStateTypes.ToBelow &&
-           stateTypes == WaterVolume_WaterPatches.CameraWaterStateTypes.ToAbove;
-  }
-
   public static void RequestUpdate(
-    WaterVolume_WaterPatches.CameraWaterStateTypes stateTypes)
+    bool isAboveWater)
   {
-    if (IsCameraSurfaceChanged(stateTypes))
+    if (isAboveWater != previousSurfaceState)
     {
       CanUpdateFog = true;
-      // It's ToAbove or ToBelow
-      PrevState = stateTypes;
-      return;
     }
 
-    CanUpdateFog = false;
+    previousSurfaceState = isAboveWater;
   }
 
   // todo fix jitters with low headroom at water level
