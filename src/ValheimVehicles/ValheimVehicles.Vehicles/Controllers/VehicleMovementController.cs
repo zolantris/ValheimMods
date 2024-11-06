@@ -710,157 +710,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return _lastHighestGroundPoint;
   }
 
-  private void UpdateBallastOffset(ShipFloatation shipFloatation)
-  {
-    if (!WaterConfig.AutoBallast.Value || PiecesController == null)
-    {
-      return;
-    }
-
-    var highestResult = GetHighestGroundPoint(shipFloatation);
-
-    // Swap values
-    _previousBallastOffset = _currentBallastOffset;
-    _previousBallastTargetOffset = _currentBallastTargetOffset;
-
-    // clamps previous value in case exceeding it. But this is the lerp clamp
-    if (!WaterConfig.DEBUG_ManualBallastOffsetEnabled.Value)
-    {
-      // These likely need to be extents
-      var minNegativeVal = OnboardCollider.bounds.min.y;
-      var maxPostiveVal = OnboardCollider.bounds.max.y;
-      if (maxPostiveVal < 30)
-      {
-        maxPostiveVal = 30f;
-      }
-
-      var waterHeight =
-        Floating.GetWaterLevel(transform.position, ref m_previousCenter);
-      if (maxPostiveVal <
-          waterHeight)
-      {
-        maxPostiveVal = waterHeight;
-      }
-
-      _previousBallastOffset = Mathf.Clamp(_previousBallastOffset,
-        minNegativeVal,
-        maxPostiveVal);
-    }
-
-    if (!WaterConfig.DEBUG_ManualBallastOffsetEnabled.Value &&
-        FloatCollider.transform.position.y <
-        highestResult)
-    {
-      _previousBallastOffset =
-        highestResult - FloatCollider.transform.position.y;
-    }
-
-    // Short-circuits for logic
-    var isAtLowestBallast =
-      HandleLowestBallast(shipFloatation, highestResult);
-    var isHandledNearGround =
-      !isAtLowestBallast && HandleBallastNearGround(highestResult);
-    var isInShallowWater = HandleBallastInShallowWater(highestResult);
-    var isInDeepWater = !isInShallowWater && HandleBallastInDeepWater();
-
-    if (!WaterConfig.DEBUG_ManualBallastOffsetEnabled.Value)
-    {
-      // Smooth transition of ballast offset
-      // uses the previous lerp instance instead of target b/c this is the actual current value to compare with.
-      _currentBallastOffset = Mathf.Lerp(_previousBallastOffset,
-        _currentBallastTargetOffset,
-        Time.fixedDeltaTime * WaterConfig.AutoBallastSpeed.Value);
-    }
-    else
-    {
-      _currentBallastOffset = Mathf.Lerp(_previousBallastOffset,
-        WaterConfig.DEBUG_ManualBallastOffset.Value,
-        Time.fixedDeltaTime * WaterConfig.AutoBallastSpeed.Value);
-    }
-
-    UpdateColliderPositions();
-  }
-
-  public static float HighestResultBuffer = 1f;
-
-  private bool HandleBallastNearGround(float highestResult)
-  {
-    var floatBoundMinY = FloatCollider.bounds.min.y - 0.01f;
-    if (highestResult > floatBoundMinY)
-    {
-      if (highestResult + 2f > floatBoundMinY)
-      {
-        var highestResultPlusBuffer = highestResult + 2f;
-        var floatToHeight = highestResultPlusBuffer - floatBoundMinY;
-        _currentBallastTargetOffset = floatToHeight;
-      }
-      else
-      {
-        // offset should help avoid collider hitting ocean floor.
-        _currentBallastTargetOffset = _previousBallastOffset - 0.25f;
-      }
-
-      return true;
-    }
-
-    return false;
-  }
-
-  private float _ballastLastTimeSinceUpdate = 0f;
-
-  private void OnBallastKeyDown()
-  {
-    if (_ballastLastTimeSinceUpdate > 0.2f)
-    {
-      _ballastLastTimeSinceUpdate = 0f;
-    }
-    else
-    {
-      _ballastLastTimeSinceUpdate += Time.fixedDeltaTime;
-    }
-  }
-
-  private bool HandleBallastInDeepWater()
-  {
-    // _currentBallastOffset =
-    //   PiecesController?.FloatColliderDefaultPosition.y ?? 0f;
-
-    // Set to zero as the default center + the offset is used in the setter calc. So approaching zero is equivalent to no ballast
-    _currentBallastTargetOffset = Mathf.Lerp(_currentBallastTargetOffset, 0f,
-      Time.fixedDeltaTime * WaterConfig.AutoBallastSpeed.Value);
-    return true;
-  }
-
-  private float GetLowestPositionPointOnShip()
-  {
-    return OnboardCollider.bounds.min.y;
-    // return OnboardCollider.bounds.extents.y +
-    //        OnboardCollider.transform.localPosition.y;
-  }
-
-  private bool HandleBallastInShallowWater(float highestResult)
-  {
-    if (PiecesController == null) return false;
-    var lowestPointOnShip = GetLowestPositionPointOnShip();
-    var floatMinPoint = FloatCollider.bounds.min.y;
-
-    // ||
-    // matches too much, so not used var hasFloatColliderReachedLowestPoint = lowestPointOnShip < floatMinPoint
-    if (lowestPointOnShip < highestResult + 1f)
-    {
-      // may need to use FloatCenterPoint.
-      var deltaDistance = lowestPointOnShip -
-                          FloatCollider.transform.position.y;
-
-
-      // Clamp to prevent exceeding vehicle boundaries
-      _currentBallastTargetOffset = deltaDistance;
-      return true;
-    }
-
-    return false;
-  }
-
   public static void UpdateYPosition(Transform targetTransform,
     float newYPosition)
   {
@@ -932,124 +781,16 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // UpdateCenterOfMass();
   }
 
-  /// <summary>
-  /// Adds additional "fake" water height when the lowest piece scraps the bottom of the ocean.
-  /// Allows for land travel without guards.
-  ///
-  /// Switching feature flags/enabling/disabling will reset the collider within that section. This area will then be skipped to simplify logic.
-  /// </summary>
-  // private void UpdateBallastOffset(ShipFloatation shipFloatation)
-  // {
-  //   if (!WaterConfig.AutoBallast.Value || PiecesController == null)
-  //   {
-  //     return;
-  //   }
-  //
-  //   _previousBallastOffset = _currentBallastOffset;
-  //   // Must never be hitting ground otherwise the ship will freeze up.
-  //   var isFloatColliderNearGround =
-  //     IsFloatPointNearGround(shipFloatation, out var highestResult);
-  //
-  //   if (isFloatColliderNearGround)
-  //   {
-  //     if (highestResult > FloatCollider.transform.position.y)
-  //     {
-  //       _currentBallastOffset =
-  //         Mathf.Lerp(_previousBallastOffset,
-  //           highestResult - FloatCollider.transform.position.y,
-  //           0.1f * Time.fixedDeltaTime);
-  //     }
-  //     else
-  //     {
-  //       _currentBallastOffset = Mathf.Lerp(_previousBallastOffset,
-  //         _previousBallastOffset + 0.1f,
-  //         0.1f * Time.fixedDeltaTime);
-  //     }
-  //     // _currentBallastOffset =
-  //     //   highestResult - FloatCollider.transform.position.y;
-  //   }
-  //   else if (PiecesController.LowestPiecePoint.y < highestResult + 5f &&
-  //            PiecesController.LowestPiecePoint.y <
-  //            FloatCollider.transform.position.y + 5f)
-  //   {
-  //     var deltaDistance = PiecesController.FloatColliderDefaultPosition.y +
-  //                         _previousBallastOffset + 2f;
-  //     // negative value means this pushes ship upwards
-  //     var floatDirectionOffset =
-  //       PiecesController.LowestPiecePoint.y - deltaDistance;
-  //
-  //     // never exceed the vehicle's bounding character trigger box. (fits the whole vehicle)
-  //     _currentBallastOffset = Mathf.Clamp(floatDirectionOffset,
-  //       -OnboardCollider.bounds.extents.y *
-  //       WaterConfig.DEBUG_AutoBallastOffsetMultiplier.Value,
-  //       OnboardCollider.bounds.extents.y *
-  //       WaterConfig.DEBUG_AutoBallastOffsetMultiplier.Value);
-  //   }
-  //   else
-  //   {
-  //     _currentBallastOffset = Mathf.Lerp(_previousBallastOffset, 0f,
-  //       0.05f * Time.fixedDeltaTime);
-  //   }
-  //
-  //   // Requires additional height otherwise it will look at layers lower than first ground layer
-  //   // var groundHeight =
-  //   //   ZoneSystem.instance.GetGroundHeight(new Vector3(
-  //   //     PiecesController.LowestPiecePoint.x,
-  //   //     PiecesController.LowestPiecePoint.y + 50f,
-  //   //     PiecesController.LowestPiecePoint.z));
-  //   // var groundHeightAndOffset =
-  //   //   shipFloatation.GroundLevelCenter + groundHeightPaddingOffset;
-  //
-  //   // eg. 6 - 20 = -14f so it chooses 0f
-  //   // Must be clamped at 0 otherwise it would keep increasing height infinitely.
-  //   // but if ground is
-  //   // 20 and the piece is now scrapping at 16f. 20-16=4f. This value then would subtract against the floatation. Dropping the float collider and blocking collider lower pushing the ship upwards.
-  //   // var amountNeededToFloatAboveGround =
-  //   //   Math.Max(groundHeightAndOffset - PiecesController.LowestPiecePoint.y, 0f);
-  //   // var waterSurface =
-  //   //   m_previousCenter?.GetWaterSurface(PiecesController.LowestPiecePoint) ??
-  //   //   30f;
-  //
-  //   // amountNeededToFloatAboveGround = Mathf.Clamp(amountNeededToFloatAboveGround,
-  //   //   groundHeight + 5f,
-  //   //   waterSurface);
-  //   // _currentBallastOffset = amountNeededToFloatAboveGround;
-  //   // only apply this if groundheight + offset is higher.
-  //   // if (groundHeightAndOffset >
-  //   //     PiecesController.LowestPiecePoint.y)
-  //   // {
-  //   //   _currentBallastOffset = Mathf.Clamp(
-  //   //     PiecesController.LowestPiecePoint.y + groundHeightAndOffset,
-  //   //     groundHeightAndOffset, 100f);
-  //   // }
-  //
-  //   // _currentBallastOffset =
-  //   //   Mathf.Clamp(_currentBallastOffset, -50, 50f);
-  //
-  //   _currentBallastOffset = Mathf.Lerp(_previousBallastOffset,
-  //     _currentBallastOffset,
-  //     Time.fixedDeltaTime * WaterConfig.AutoBallastSpeed.Value);
-  //
-  //   FloatCollider.transform.localPosition = new Vector3(
-  //     PiecesController.FloatColliderDefaultPosition.x,
-  //     PiecesController.FloatColliderDefaultPosition.y + _currentBallastOffset,
-  //     PiecesController.FloatColliderDefaultPosition.z);
-  //   BlockingCollider.transform.localPosition = new Vector3(
-  //     PiecesController.BlockingColliderDefaultPosition.x,
-  //     PiecesController.BlockingColliderDefaultPosition.y +
-  //     _currentBallastOffset,
-  //     PiecesController.BlockingColliderDefaultPosition.z);
-  // }
   public void Flying_UpdateShipBalancingForce()
   {
     var front = ShipDirection.position +
-                ShipDirection.forward * m_floatcollider.size.z / 2f;
+                ShipDirection.forward * OnboardCollider.size.z / 2f;
     var back = ShipDirection.position -
-               ShipDirection.forward * m_floatcollider.size.z / 2f;
+               ShipDirection.forward * OnboardCollider.size.z / 2f;
     var left = ShipDirection.position -
-               ShipDirection.right * m_floatcollider.size.x / 2f;
+               ShipDirection.right * OnboardCollider.size.x / 2f;
     var right = ShipDirection.position +
-                ShipDirection.right * m_floatcollider.size.x / 2f;
+                ShipDirection.right * OnboardCollider.size.x / 2f;
 
     var centerpos2 = ShipDirection.position;
     var frontForce = m_body.GetPointVelocity(front);
@@ -1497,13 +1238,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     _currentShipFloatation = GetShipFloatationObj();
 
-    // Possibly deprecated. Or alternatively we keep it and add this onto the current TargetHeight. Seems more complicated.
-    // Combining TargetHeight of flight into a relative offset of the water height + current value makes more sense.
-    if (WaterConfig.AutoBallast.Value)
-    {
-      UpdateBallastOffset(ShipFloatationObj);
-    }
-    else if (IsNotFlying)
+    if (IsNotFlying)
     {
       UpdateColliderPositions();
     }
