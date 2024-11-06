@@ -208,12 +208,14 @@ public class CustomMeshCreatorComponent : MonoBehaviour
   {
     if (!Instances.TryGetValue(selectedCreatorType, out var activeMeshList))
       return;
+    transform.rotation = Quaternion.identity;
 
     // must be from the first coordinate otherwise bounds would start from zero and be off
-    var bounds = new Bounds(activeMeshList[0].transform.position, Vector3.zero);
-    foreach (var customMeshCreatorComponent in activeMeshList)
+    var bounds = new Bounds(activeMeshList[0].transform.localPosition,
+      Vector3.zero);
+    foreach (var customMeshCreatorComponent in activeMeshList.Skip(0).ToArray())
     {
-      bounds.Encapsulate(customMeshCreatorComponent.transform.position);
+      bounds.Encapsulate(customMeshCreatorComponent.transform.localPosition);
     }
 
     var prefabToCreate = GetMeshPrefab();
@@ -227,8 +229,8 @@ public class CustomMeshCreatorComponent : MonoBehaviour
 
     Logger.LogDebug(
       $"Creating water mask at {bounds.center} size: {bounds.size} rotation: {transform.parent.rotation.eulerAngles}");
-    var meshComponent = Instantiate(prefabToCreate, bounds.center,
-      rotation);
+    var meshComponent = Instantiate(prefabToCreate, transform.parent);
+    meshComponent.transform.localPosition = bounds.center;
 
     Logger.LogDebug(
       $"Created: water mask position: {meshComponent.transform.position} rotation: {meshComponent.transform.rotation}");
