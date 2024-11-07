@@ -47,6 +47,25 @@ public class VehicleOnboardController : MonoBehaviour
     InvokeRepeating(nameof(ValidateCharactersAreOnShip), 1f, 30f);
   }
 
+  public List<Player> GetPlayersOnShip()
+  {
+    var characterList = new List<Player>();
+    foreach (var characterOnboardDataItem in CharacterOnboardDataItems)
+    {
+      if (characterOnboardDataItem.Value == null) continue;
+      if (characterOnboardDataItem.Value.character == null) continue;
+      if (!characterOnboardDataItem.Value.character.IsPlayer()) continue;
+      var piecesController = characterOnboardDataItem.Value.character.transform
+        .parent.GetComponent<VehiclePiecesController>();
+      if (piecesController == PiecesController)
+      {
+        characterList.Add(characterOnboardDataItem.Value.character as Player);
+      }
+    }
+
+    return characterList;
+  }
+
   private bool IsValidCharacter(Character character)
   {
     return character != null && character.enabled;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,6 +10,7 @@ using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
 using ValheimRAFT;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
@@ -146,9 +148,17 @@ public class VehicleCommands : ConsoleCommand
       return;
     }
 
-    var shipInstance =
+    var vehicleInstance =
       GetNearestVehicleShip(Player.m_localPlayer.transform.position);
-    MoveVehicle(shipInstance, Vector3.up * Mathf.Max(offset, 50f));
+
+    if (vehicleInstance?.MovementController == null)
+    {
+      Logger.LogMessage("No vehicle found near the player");
+      return;
+    }
+
+    Player.m_localPlayer.StartCoroutine(MoveVehicle(vehicleInstance,
+      Vector3.up * Mathf.Clamp(offset, -100f, 100f)));
   }
 
   /// <summary>
@@ -156,42 +166,59 @@ public class VehicleCommands : ConsoleCommand
   /// </summary>
   /// <param name="vehicleInstance">The vehicle instance to move.</param>
   /// <param name="offset">The offset vector to apply.</param>
-  private static void MoveVehicle(VehicleShip? vehicleInstance,
+  private static IEnumerator MoveVehicle(VehicleShip? vehicleInstance,
     Vector3 offset)
   {
-    if (vehicleInstance?.MovementController == null)
+    if (vehicleInstance == null) yield break;
+
+    vehicleInstance.SetCreativeMode(true);
+
+    var playersOnShip = vehicleInstance.OnboardController.GetPlayersOnShip();
+    if (playersOnShip.Count > 0)
     {
-      Logger.LogMessage("No vehicle found near the player");
-      return;
+      foreach (var player in playersOnShip)
+      {
+        if (player.IsDebugFlying())
+        {
+          continue;
+        }
+
+        player.ToggleDebugFly();
+      }
     }
 
-    vehicleInstance.isCreative = true;
-    vehicleInstance.MovementController.m_body.isKinematic = true;
+    if (!Player.m_localPlayer.IsDebugFlying())
+    {
+      Player.m_localPlayer.ToggleDebugFly();
+    }
 
     // Ensure Y position does not go below 1
-    offset.y =
-      Mathf.Max(
-        vehicleInstance.MovementController.transform.position.y + offset.y, 1f);
-    vehicleInstance.MovementController.m_body.MovePosition(offset);
+    // vehicleInstance.transform.position.y + offset.y;
+    vehicleInstance.transform.position =
+      VectorUtils.MergeVectors(vehicleInstance.transform.position, offset);
 
-    vehicleInstance.isCreative = false;
-    vehicleInstance.MovementController.m_body.isKinematic = false;
-  }
+    yield return new WaitForFixedUpdate();
 
-  /// <summary>
-  /// Clamps the components of a vector between specified minimum and maximum values.
-  /// </summary>
-  /// <param name="vector">The vector to clamp.</param>
-  /// <param name="min">The minimum value for each component.</param>
-  /// <param name="max">The maximum value for each component.</param>
-  /// <returns>A new vector with clamped components.</returns>
-  private static Vector3 ClampVector(Vector3 vector, float min, float max)
-  {
-    return new Vector3(
-      Mathf.Clamp(vector.x, min, max),
-      Mathf.Clamp(vector.y, min, max),
-      Mathf.Clamp(vector.z, min, max)
-    );
+    if (playersOnShip.Count > 0)
+    {
+      foreach (var player in playersOnShip)
+      {
+        if (!player.IsDebugFlying())
+        {
+          continue;
+        }
+
+        player.ToggleDebugFly();
+      }
+    }
+
+    if (Player.m_localPlayer.IsDebugFlying())
+    {
+      Player.m_localPlayer.ToggleDebugFly();
+    }
+
+    vehicleInstance.SetCreativeMode(false);
+    yield return null;
   }
 
   /// <summary>
@@ -213,8 +240,11 @@ public class VehicleCommands : ConsoleCommand
         float.TryParse(args[1], out var y) &&
         float.TryParse(args[2], out var z))
     {
-      var offsetVector = ClampVector(new Vector3(x, y, z), -50f, 50f);
-      MoveVehicle(shipInstance, offsetVector);
+      var offsetVector =
+        VectorUtils.ClampVector(new Vector3(x, y, z), -100f, 100f);
+
+      Player.m_localPlayer.StartCoroutine(MoveVehicle(shipInstance,
+        offsetVector));
     }
     else
     {

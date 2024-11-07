@@ -113,6 +113,8 @@ public class CustomMeshCreatorComponent : MonoBehaviour
       return;
     }
 
+    transform.rotation = Quaternion.identity;
+
     meshRenderer = GetComponent<MeshRenderer>();
 
     canRunInit = true;
@@ -123,6 +125,7 @@ public class CustomMeshCreatorComponent : MonoBehaviour
   /// </summary>
   public void Start()
   {
+    transform.rotation = Quaternion.identity;
     if (ZNetView.m_forceDisableInit || !canRunInit)
     {
       return;
@@ -191,14 +194,6 @@ public class CustomMeshCreatorComponent : MonoBehaviour
 
   public Quaternion RotationOffset = Quaternion.Euler(0, 0, 0);
 
-  // public byte[] VectorPointsToBytes(List<Vector3> list)
-  // {
-  //   byte[] byteArray = [];
-  //   foreach (var vector3 in list)
-  //   {
-  //     byteArray.Append(vector3.toByte)
-  //   }
-  // }
   /// <summary>
   /// Generates a WaterDisplacementPrefab which can be edited / deleted in creative mode only.
   /// - Prefab will fit a square within all points provided.
@@ -208,9 +203,8 @@ public class CustomMeshCreatorComponent : MonoBehaviour
   {
     if (!Instances.TryGetValue(selectedCreatorType, out var activeMeshList))
       return;
-    transform.rotation = Quaternion.identity;
-
     // must be from the first coordinate otherwise bounds would start from zero and be off
+    transform.rotation = Quaternion.identity;
     var bounds = new Bounds(activeMeshList[0].transform.localPosition,
       Vector3.zero);
     foreach (var customMeshCreatorComponent in activeMeshList.Skip(0).ToArray())
@@ -228,9 +222,16 @@ public class CustomMeshCreatorComponent : MonoBehaviour
       : GetRotationFromBounds(bounds);
 
     Logger.LogDebug(
-      $"Creating water mask at {bounds.center} size: {bounds.size} rotation: {transform.parent.rotation.eulerAngles}");
-    var meshComponent = Instantiate(prefabToCreate, transform.parent);
-    meshComponent.transform.localPosition = bounds.center;
+      $"Creating water mask at {bounds.center} size: {bounds.size}");
+    var meshComponent = Instantiate(prefabToCreate, transform.position,
+      Quaternion.identity);
+
+    if (transform.parent != null)
+    {
+      meshComponent.transform.SetParent(transform.parent);
+      meshComponent.transform.localPosition = bounds.center;
+    }
+
 
     Logger.LogDebug(
       $"Created: water mask position: {meshComponent.transform.position} rotation: {meshComponent.transform.rotation}");

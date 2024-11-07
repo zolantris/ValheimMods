@@ -1,6 +1,7 @@
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
+using UnityEditor;
 using UnityEngine;
 using ValheimVehicles.Config;
 using ValheimVehicles.LayerUtils;
@@ -46,8 +47,10 @@ public class CustomMeshPrefabs : IRegisterPrefab
     creatorComponent.SetCreatorType(CustomMeshCreatorComponent
       .MeshCreatorTypeEnum.WaterMask);
 
-    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.CustomWaterMaskCreator,
+    var piece = PrefabRegistryHelpers.AddPieceForPrefab(
+      PrefabNames.CustomWaterMaskCreator,
       prefab);
+    piece.m_canRotate = false;
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig

@@ -38,7 +38,8 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       fontSize = 50
     };
 #if DEBUG
-    GUILayout.BeginArea(new Rect(250, 10, 200, 200), myButtonStyle);
+    GUILayout.BeginArea(new Rect(250, Screen.height - 510, 200, 200),
+      myButtonStyle);
     if (GUILayout.Button(
           $"ActivatePendingPieces {VehiclePiecesController.DEBUGAllowActivatePendingPieces}"))
     {
@@ -122,7 +123,8 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     GUILayout.EndArea();
 #endif
 
-    GUILayout.BeginArea(new Rect(500, 10, 200, 200), myButtonStyle);
+    GUILayout.BeginArea(new Rect(500, Screen.height - 510, 200, 500),
+      myButtonStyle);
     if (GUILayout.Button("collider debugger"))
     {
       Logger.LogMessage(

@@ -36,6 +36,9 @@
         <!--            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>-->
         <!--        </ProjectReference>-->
         <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Helpers\VectorUtils.cs">
+            <Link>ValheimVehicles.Helpers\VectorUtils.cs</Link>
+        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup>
@@ -69,6 +72,9 @@
         <None Remove="AssetBundle\valheim-vehicles.manifest"/>
         <None Remove="AssetBundle\valheim-vehicles-shared.manifest"/>
         <None Remove="AssetBundle\AssetBundle.manifest"/>
+
+        <!--  TODO to embed assets, but this needs a refactor and inflates dll size, not worth adding now      -->
+        <!--        <EmbeddedResource Include="Assets\**"/>-->
         <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="AssetBundle"/>
         <EmbeddedResource Include="AssetBundle\valheim-vehicles-shared" LogicalName="valheim-vehicles-shared"/>
         <EmbeddedResource Include="AssetBundle\valheim-raft" LogicalName="valheim-raft"/>

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Configuration;
 using HarmonyLib;
 using UnityEngine;
@@ -87,9 +88,6 @@ internal class GameCamera_WaterPatches
 
     previousSurfaceState = isAboveWater;
   }
-
-  // todo fix jitters with low headroom at water level
-  // [HarmonyPostfix(typeof(GameCamera), nameof(GameCamera.UpdateNearClipping))]
 
 
   [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.UpdateCamera))]
