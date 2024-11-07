@@ -71,8 +71,7 @@ Go [here](docs/CONTRIBUTING.md) for more information.
 ## Want Valheim To Run Faster?
 
 Add this to `valheim_Data/boot.config folder. This should allow script heavy
-mods to run on more threads without bottlenecking the game UI so fps will be
-much higher.
+mods to run garbage collecting every 20ms instead of every 3 ms. Big gains especially for larger GPUs and multithreaded CPUs which do not need to be forced to garbage collect.
 
 ```ini
 gc-max-time-slice=20
