@@ -1,9 +1,11 @@
-namespace ValheimRAFT.Unity.Assets.ValheimVehicles.Scene;
 
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 
+namespace ValheimRAFT.Unity.Assets.ValheimVehicles.Scene
+{
+    
 public class ConvexMeshGenerator : MonoBehaviour
 {
     public List<Transform> points; // Assign points in the inspector
@@ -77,16 +79,17 @@ public class ConvexMeshGenerator : MonoBehaviour
     }
 }
 
-[CustomEditor(typeof(ConvexMeshGenerator))]
-public class ConvexMeshGeneratorEditor : Editor
-{
-    public override void OnInspectorGUI()
-    {
-        DrawDefaultInspector();
-
-        if (GUILayout.Button("Generate Convex Mesh"))
-        {
-            ((ConvexMeshGenerator)target).GenerateConvexMesh();
-        }
-    }
+// [CustomEditor(typeof(ConvexMeshGenerator))]
+// public class ConvexMeshGeneratorEditor : Editor
+// {
+//     public override void OnInspectorGUI()
+//     {
+//         DrawDefaultInspector();
+//
+//         if (GUILayout.Button("Generate Convex Mesh"))
+//         {
+//             ((ConvexMeshGenerator)target).GenerateConvexMesh();
+//         }
+//     }
+// }
 }

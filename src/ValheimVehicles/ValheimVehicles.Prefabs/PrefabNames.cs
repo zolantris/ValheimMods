@@ -268,8 +268,8 @@ public static class PrefabNames
 
   public const string VehicleSailCloth = $"{ValheimVehiclesPrefix}_SailCloth";
 
-  public const string VehicleToggleSwitch =
-    $"{ValheimVehiclesPrefix}_VehicleToggleSwitch";
+  public const string ToggleSwitch =
+    $"{ValheimVehiclesPrefix}_ToggleSwitch";
 
   public const string VehicleShipMovementOrientation =
     "VehicleShip_MovementOrientation";

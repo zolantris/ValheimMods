@@ -72,7 +72,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject SteeringWheel = null!;
   public static GameObject VehicleShipAsset = null!;
   public static GameObject VehiclePiecesAsset = null!;
-  public static GameObject VehicleSwitchAsset = null!;
+  public static GameObject MechanicalSwitch = null!;
 
   // hud
   public static GameObject HudAnchor = null!;
@@ -159,7 +159,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
     SteeringWheel = assetBundle.LoadAsset<GameObject>("steering_wheel.prefab");
     ShipKeelAsset = assetBundle.LoadAsset<GameObject>("keel");
-    VehicleSwitchAsset = assetBundle.LoadAsset<GameObject>("vehicle_switch");
+    MechanicalSwitch = assetBundle.LoadAsset<GameObject>("mechanical_switch");
     VehicleShipAsset =
       assetBundle.LoadAsset<GameObject>("vehicle_ship.prefab");
     VehiclePiecesAsset =

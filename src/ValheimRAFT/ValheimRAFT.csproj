@@ -39,6 +39,12 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Helpers\VectorUtils.cs">
             <Link>ValheimVehicles.Helpers\VectorUtils.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\LeverPrefabs.cs">
+            <Link>ValheimVehicles.Prefabs\Registry\LeverPrefabs.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CustomToggleSwitch.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CustomToggleSwitch.cs</Link>
+        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup>

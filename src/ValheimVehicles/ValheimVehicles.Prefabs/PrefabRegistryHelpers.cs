@@ -439,7 +439,7 @@ public abstract class PrefabRegistryHelpers
           .ShipRudderAdvancedDoubleIron)
       });
 
-    PieceDataDictionary.Add(PrefabNames.VehicleToggleSwitch, new PieceData()
+    PieceDataDictionary.Add(PrefabNames.ToggleSwitch, new PieceData()
     {
       Name = "$valheim_vehicles_toggle_switch",
       Description = "$valheim_vehicles_toggle_switch_desc",

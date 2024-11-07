@@ -173,6 +173,8 @@ public class PrefabRegistryController : MonoBehaviour
     VehiclePiecesPrefab.Instance.Register(prefabManager, pieceManager);
 
     RamPrefabs.Instance.Register(prefabManager, pieceManager);
+
+    SwitchAndLeverPrefabs.Instance.Register(prefabManager, pieceManager);
   }
 
   public static void RegisterAllPrefabs()

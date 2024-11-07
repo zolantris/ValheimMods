@@ -224,7 +224,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public bool IsReady()
   {
     var netView = GetComponent<ZNetView>();
-    return netView && netView.isActiveAndEnabled;
+    if (netView == null) return false;
+    return netView?.isActiveAndEnabled ?? false;
   }
 
   /// <summary>
@@ -743,6 +744,19 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var expectedLowestBlockingColliderPoint =
       BlockingCollider.transform.position.y - BlockingCollider.bounds.extents.y;
 
+    if (IsFlying())
+    {
+      var flyingFloatPositionY =
+        PiecesController.FloatColliderDefaultPosition.y +
+        -ZoneSystem.instance.m_waterLevel;
+      var flyingBlockingPositionY =
+        PiecesController.BlockingColliderDefaultPosition.y +
+        -ZoneSystem.instance.m_waterLevel;
+      UpdateYPosition(FloatCollider.transform, flyingFloatPositionY);
+      UpdateYPosition(BlockingCollider.transform, flyingBlockingPositionY);
+      return;
+    }
+
     // ForceUpdates TargetPosition in case the blocking collider is below the ground. This would cause issues, as the vehicle would then not be able to ascend properly.
     if (_lastHighestGroundPoint > expectedLowestBlockingColliderPoint)
     {
@@ -781,6 +795,18 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // UpdateCenterOfMass();
   }
 
+  public float GetFlyingTargetHeight() => TargetHeight * -1;
+
+  private float prevFrontUpwardForce = 0f;
+  private float prevBackUpwardsForce = 0f;
+  private float prevLeftUpwardsForce = 0f;
+  private float prevRightUpwardsForce = 0f;
+  private float prevCenterUpwardsForce = 0f;
+
+// Optional: Define a smooth time for smoothing the damping
+  public float
+    smoothTime = 0.3f; // Adjust this value to control the smoothing speed
+
   public void Flying_UpdateShipBalancingForce()
   {
     var front = ShipDirection.position +
@@ -791,33 +817,40 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
                ShipDirection.right * OnboardCollider.size.x / 2f;
     var right = ShipDirection.position +
                 ShipDirection.right * OnboardCollider.size.x / 2f;
-
     var centerpos2 = ShipDirection.position;
+
     var frontForce = m_body.GetPointVelocity(front);
     var backForce = m_body.GetPointVelocity(back);
     var leftForce = m_body.GetPointVelocity(left);
     var rightForce = m_body.GetPointVelocity(right);
 
-    var frontUpwardsForce =
-      GetUpwardsForce(TargetHeight,
-        front.y + frontForce.y,
-        m_balanceForce);
-    var backUpwardsForce =
-      GetUpwardsForce(TargetHeight,
-        back.y + backForce.y,
-        m_balanceForce);
-    var leftUpwardsForce =
-      GetUpwardsForce(TargetHeight,
-        left.y + leftForce.y,
-        m_balanceForce);
-    var rightUpwardsForce =
-      GetUpwardsForce(TargetHeight,
-        right.y + rightForce.y,
-        m_balanceForce);
-    var centerUpwardsForce = GetUpwardsForce(TargetHeight,
+    var flyingTargetHeight = GetFlyingTargetHeight();
+
+    // Calculate the target upwards forces for each position
+    var frontUpwardsForce = GetUpwardsForce(flyingTargetHeight,
+      front.y + frontForce.y, m_balanceForce);
+    var backUpwardsForce = GetUpwardsForce(flyingTargetHeight,
+      back.y + backForce.y, m_balanceForce);
+    var leftUpwardsForce = GetUpwardsForce(flyingTargetHeight,
+      left.y + leftForce.y, m_balanceForce);
+    var rightUpwardsForce = GetUpwardsForce(flyingTargetHeight,
+      right.y + rightForce.y, m_balanceForce);
+    var centerUpwardsForce = GetUpwardsForce(flyingTargetHeight,
       centerpos2.y + m_body.velocity.y, m_liftForce);
 
+    // Smoothly transition the forces towards the target values using SmoothDamp
+    frontUpwardsForce = Mathf.SmoothDamp(prevFrontUpwardForce,
+      frontUpwardsForce, ref prevFrontUpwardForce, smoothTime);
+    backUpwardsForce = Mathf.SmoothDamp(prevBackUpwardsForce, backUpwardsForce,
+      ref prevBackUpwardsForce, smoothTime);
+    leftUpwardsForce = Mathf.SmoothDamp(prevLeftUpwardsForce, leftUpwardsForce,
+      ref prevLeftUpwardsForce, smoothTime);
+    rightUpwardsForce = Mathf.SmoothDamp(prevRightUpwardsForce,
+      rightUpwardsForce, ref prevRightUpwardsForce, smoothTime);
+    centerUpwardsForce = Mathf.SmoothDamp(prevCenterUpwardsForce,
+      centerUpwardsForce, ref prevCenterUpwardsForce, smoothTime);
 
+    // Apply the smoothed forces at the corresponding positions
     AddForceAtPosition(Vector3.up * frontUpwardsForce, front,
       ForceMode.VelocityChange);
     AddForceAtPosition(Vector3.up * backUpwardsForce, back,
@@ -848,9 +881,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
-  public void UpdateShipFlying()
+  public void UpdateFlying()
   {
-    UpdateVehicleStats(true);
+    UpdateVehicleStats(true, false);
     UpdateAndFreezeRotation();
     // early exit if anchored.
     if (UpdateAnchorVelocity(m_body.velocity))
@@ -869,7 +902,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void UpdateShipLandSpeed()
   {
-    UpdateVehicleStats(false);
+    UpdateVehicleStats(false, false);
     // early exit if anchored.
     if (UpdateAnchorVelocity(m_body.velocity))
     {
@@ -906,43 +939,126 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   // todo move these to a physics variant struct
   // flight
-  public float flightAngularDamping = 5f;
-  public float flightSidewaysDamping = 5f;
-  public float flightDamping = 5f;
-  public float flightSteerForce = 1f;
-  public float flightSailForceFactor = 0.1f;
-  public float flightDrag = 0.5f;
-  public float flightAngularDrag = 0.5f;
+  public static float flightAngularDamping =>
+    PhysicsConfig.flightAngularDamping.Value;
+
+  public static float flightSidewaysDamping =>
+    PhysicsConfig.flightSidewaysDamping.Value;
+
+  public static float flightDamping => PhysicsConfig.flightDamping.Value;
+  public static float flightSteerForce => PhysicsConfig.flightSteerForce.Value;
+
+  public static float flightSailForceFactor =>
+    PhysicsConfig.flightSailForceFactor.Value;
+
+  public static float flightDrag => PhysicsConfig.flightDrag.Value;
+
+  public static float flightAngularDrag =>
+    PhysicsConfig.flightAngularDrag.Value;
 
   // water
-  public float waterAngularDamping = 0.8f;
-  public float waterSidewaysDamping = 0.8f;
-  public float waterDamping = 5f;
-  public float waterSteerForce = 1f;
-  public float waterSailForceFactor = 0.05f;
-  public float waterDrag = 0.4f;
-  public float waterAngularDrag = 0.4f;
+  public static float waterAngularDamping =>
+    PhysicsConfig.waterAngularDamping.Value;
 
-  private void UpdateVehicleStats(bool flight)
+  public static float waterSidewaysDamping =>
+    PhysicsConfig.waterSidewaysDamping.Value;
+
+  public static float waterSteerForce => PhysicsConfig.waterSteerForce.Value;
+  public static float waterDamping => PhysicsConfig.waterDamping.Value;
+
+  public static float waterSailForceFactor =>
+    PhysicsConfig.waterSailForceFactor.Value;
+
+  public static float waterDrag => PhysicsConfig.waterDrag.Value;
+  public static float waterAngularDrag => PhysicsConfig.waterAngularDrag.Value;
+
+  private void UpdateFlightStats()
   {
-    m_angularDamping =
-      flight ? flightAngularDamping : waterAngularDamping;
-    m_backwardForce = 1f;
-    m_damping = flight ? flightDamping : waterDamping;
-    m_dampingSideway = flight ? flightSidewaysDamping : waterSidewaysDamping;
-    m_force = 3f;
-    m_forceDistance = 5f;
-    m_sailForceFactor = flight ? flightSailForceFactor : waterSailForceFactor;
-    m_stearForce = flight ? flightSteerForce : waterSteerForce;
-    m_stearVelForceFactor = 1.3f;
-    m_waterImpactDamage = 0f;
+    m_angularDamping = PhysicsConfig.flightSteerForce.Value;
+    m_damping = PhysicsConfig.flightDamping.Value;
+    m_dampingSideway = PhysicsConfig.flightSidewaysDamping.Value;
+    m_sailForceFactor = PhysicsConfig.flightSailForceFactor.Value;
+    m_stearForce = PhysicsConfig.flightSteerForce.Value;
 
-    var drag = flight ? flightDrag : waterDrag;
-    var angularDrag = flight ? flightAngularDrag : waterAngularDrag;
+    var drag = PhysicsConfig.flightDrag.Value;
+    var angularDrag = PhysicsConfig.flightAngularDrag.Value;
 
     ShipInstance?.VehiclePiecesController?.SyncRigidbodyStats(drag, angularDrag,
-      flight);
+      true);
+  }
 
+  public void UpdateSubmergedStats()
+  {
+    m_angularDamping =
+      PhysicsConfig.submersibleAngularDamping.Value;
+    m_damping = PhysicsConfig.submersibleDamping.Value;
+    m_dampingSideway = PhysicsConfig.submersibleSidewaysDamping.Value;
+    m_sailForceFactor = PhysicsConfig.submersibleSailForceFactor.Value;
+    m_stearForce = PhysicsConfig.submersibleSteerForce.Value;
+
+    var drag = PhysicsConfig.submersibleDrag.Value;
+    var angularDrag = PhysicsConfig.submersibleAngularDrag.Value;
+
+    ShipInstance?.VehiclePiecesController?.SyncRigidbodyStats(drag, angularDrag,
+      true);
+  }
+
+  public void UpdateWaterStats()
+  {
+    m_angularDamping = PhysicsConfig.flightAngularDamping.Value;
+    m_damping = PhysicsConfig.waterDamping.Value;
+    m_dampingSideway = PhysicsConfig.waterSidewaysDamping.Value;
+    m_sailForceFactor = PhysicsConfig.waterSailForceFactor.Value;
+    m_stearForce = PhysicsConfig.waterSteerForce.Value;
+
+    var drag = PhysicsConfig.waterDrag.Value;
+    var angularDrag = PhysicsConfig.waterAngularDrag.Value;
+
+    ShipInstance?.VehiclePiecesController?.SyncRigidbodyStats(drag, angularDrag,
+      true);
+  }
+
+  private float vehicleStatSyncTimer = 1.0f;
+  private bool previousSyncFlight = false;
+  private bool previousSyncSubmerged = false;
+
+  /// <summary>
+  /// Updates all physics stats. Calls alot but should not do much
+  /// </summary>
+  /// Todo debounce this when values do not change
+  /// <param name="flight"></param>
+  /// <param name="submerged"></param>
+  private void UpdateVehicleStats(bool flight, bool submerged)
+  {
+    vehicleStatSyncTimer += Time.deltaTime;
+    if (vehicleStatSyncTimer < 0.8f && previousSyncFlight == flight &&
+        previousSyncSubmerged == submerged)
+    {
+      return;
+    }
+
+    vehicleStatSyncTimer = 0f;
+    previousSyncFlight = flight;
+    previousSyncSubmerged = submerged;
+
+    if (flight)
+    {
+      UpdateFlightStats();
+    }
+    else if (submerged)
+    {
+      UpdateSubmergedStats();
+    }
+    else
+    {
+      UpdateWaterStats();
+    }
+
+    m_force = 3f;
+    m_forceDistance = 5f;
+    m_stearVelForceFactor = 1.3f;
+    m_waterImpactDamage = 0f;
+    m_backwardForce = 1f;
 
     if ((bool)_impactEffect)
     {
@@ -1052,14 +1168,20 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void UpdateShipFloatation(ShipFloatation shipFloatation)
   {
-    UpdateVehicleStats(false);
+    UpdateVehicleStats(false, TargetHeight > 5f);
     UpdateWaterForce(shipFloatation);
     // BROKEN_UpdateShipBalancingForce();
     ApplyEdgeForce(Time.fixedDeltaTime);
     if (HasOceanSwayDisabled)
     {
-      transform.rotation =
-        Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
+      UpdateAndFreezeRotation();
+    }
+    else
+    {
+      if (m_body.constraints == FreezeBothXZ)
+      {
+        m_body.constraints = RigidbodyConstraints.None;
+      }
     }
 
     if (UpdateAnchorVelocity(m_body.velocity)) return;
@@ -1163,8 +1285,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 // Updates gravity and target height (which is used to compute gravity)
   public void UpdateGravity()
   {
-    var isGravityEnabled = WaterConfig.ManualBallast.Value ||
-                           Mathf.Approximately(TargetHeight, 0f);
+    var isGravityEnabled = !IsFlying();
     if (_prevGravity == isGravityEnabled && m_body.useGravity == _prevGravity &&
         zsyncTransform.m_useGravity == _prevGravity) return;
     _prevGravity = isGravityEnabled;
@@ -1238,10 +1359,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     _currentShipFloatation = GetShipFloatationObj();
 
-    if (IsNotFlying)
-    {
-      UpdateColliderPositions();
-    }
+    UpdateColliderPositions();
 
 
     if (!ShipFloatationObj.IsAboveBuoyantLevel || IsNotFlying)
@@ -1258,7 +1376,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
     else if (IsFlying())
     {
-      UpdateShipFlying();
+      UpdateFlying();
     }
     else if (PropulsionConfig.EnableLandVehicles.Value)
     {
@@ -1592,7 +1710,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
 
     // Adds additional speeds to turning
-    if (PiecesController.m_rudderPieces.Count > 0)
+    if (PiecesController?.m_rudderPieces.Count > 0)
     {
       shipAdditiveSteerForce *= PropulsionConfig.TurnPowerWithRudder.Value;
     }
@@ -1652,7 +1770,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
 
 
-    if (TargetHeight > 0)
+    if (IsFlying())
     {
       transform.rotation =
         Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
@@ -2208,7 +2326,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     var canForceUpdate = lastForceUpdateTimer == 0f && forceUpdate;
     var timeMult = canForceUpdate
-      ? 1f
+      ? 0.5f
       : Time.fixedDeltaTime * WaterConfig.AutoBallastSpeed.Value;
 
     TargetHeight = Mathf.Lerp(_previousTargetHeight, clampedValue, timeMult);
@@ -2605,13 +2723,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private void SyncAnchor()
   {
     if (ZNetView.m_forceDisableInit) return;
-    if (!m_nview)
+    if (!isActiveAndEnabled) return;
+    if (m_nview == null)
     {
       MovementFlags = VehicleMovementFlags.None;
       return;
     }
 
-    if (m_nview?.isActiveAndEnabled != true) return;
+    if (m_nview.isActiveAndEnabled != true) return;
 
     var newFlags =
       (VehicleMovementFlags)m_nview.GetZDO()
@@ -2720,13 +2839,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     m_rudderValue += m_rudder * m_rudderSpeed * fixedDeltaTime;
     m_rudderValue = Mathf.Clamp(m_rudderValue, -1f, 1f);
     // deadzone logic to allow rudder to be centered.
-    if (m_rudderValue is >= 0.49f and <= 0.51f)
+    if (Time.fixedDeltaTime - m_sendRudderTime > 0.2f)
     {
-      m_rudderValue = 0.5f;
-    }
+      // allows updating rudder but zeros it out quickly in a deadzone.
+      if (m_rudderValue is >= -0.1f and < 0.1f)
+      {
+        m_rudderValue = 0.0f;
+      }
 
-    if (Time.time - m_sendRudderTime > 0.2f)
-    {
       m_sendRudderTime = Time.time;
       SyncRudder(m_rudderValue);
     }

@@ -502,6 +502,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     ModSupportConfig.BindConfig(Config);
     CustomMeshConfig.BindConfig(Config);
     WaterConfig.BindConfig(Config);
+    PhysicsConfig.BindConfig(Config);
 
 #if DEBUG
     // Meant for only being run in debug builds for testing quickly

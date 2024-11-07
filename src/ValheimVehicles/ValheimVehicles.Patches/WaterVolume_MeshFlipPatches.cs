@@ -91,7 +91,7 @@ internal class WaterVolume_WaterPatches
   /// </summary>
   public static void FlipAllWaterVolumes()
   {
-    if (lastFlippedAllInvoke > 1f)
+    if (lastFlippedAllInvoke > 0.2f)
     {
       lastFlippedAllInvoke = 0f;
     }
@@ -120,33 +120,37 @@ internal class WaterVolume_WaterPatches
 
   public static void UpdateCameraState()
   {
+    if (GameCamera.instance == null) return;
+
     var isAbove = GameCamera.instance.transform.position.y > WaterLevelCamera;
     if (isAbove)
     {
       switch (CameraWaterState)
       {
         case CameraWaterStateTypes.AboveWater:
-          FlipAllWaterVolumes();
-          return;
+          break;
         case CameraWaterStateTypes.ToAbove:
           CameraWaterState = CameraWaterStateTypes.AboveWater;
-          return;
+          FlipAllWaterVolumes();
+          break;
         case CameraWaterStateTypes.BelowWater:
         case CameraWaterStateTypes.ToBelow:
           CameraWaterState = CameraWaterStateTypes.ToAbove;
-          return;
+          break;
         default:
           throw new ArgumentOutOfRangeException();
       }
+
+      return;
     }
 
     switch (CameraWaterState)
     {
       case CameraWaterStateTypes.BelowWater:
-        FlipAllWaterVolumes();
         return;
       case CameraWaterStateTypes.ToBelow:
         CameraWaterState = CameraWaterStateTypes.BelowWater;
+        FlipAllWaterVolumes();
         return;
       case CameraWaterStateTypes.AboveWater:
       case CameraWaterStateTypes.ToAbove:
@@ -178,7 +182,7 @@ internal class WaterVolume_WaterPatches
         WaterConfig.WaterMeshFlipModeType.Disabled) return;
 
     UpdateCameraState();
-    UpdateMesh(__instance, normalizedDepth);
+    // UpdateMesh(__instance, normalizedDepth);
   }
 
   private static void UpdateMesh(WaterVolume __instance,

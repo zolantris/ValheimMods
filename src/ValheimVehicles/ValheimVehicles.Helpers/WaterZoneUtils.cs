@@ -203,6 +203,7 @@ public static class WaterZoneUtils
 
   public static void UpdateSwimDepth(Character character, bool isOnboard)
   {
+    // todo set the swim or liquid level based on onboard collider
     if (isOnboard)
     {
       character.m_swimDepth = character.m_liquidLevel - 2f;
@@ -354,9 +355,9 @@ public static class WaterZoneUtils
     var isValid = HasShipUnderneath(character);
 
     // Check the difference between current depth and onboard collider.
-    if (isValid)
+    if (isValid && onboardController.OnboardCollider != null)
     {
-      return 0f;
+      return onboardController.OnboardCollider.bounds.min.y;
     }
 
     return currentDepth;
@@ -509,8 +510,10 @@ public static class WaterZoneUtils
     }
 
     var waterHeight = GetWaterHeightFromWaterVolume(character);
-    if (controller?.OnboardCollider?.bounds == null)
+    if (controller?.OnboardCollider == null)
+    {
       return waterHeight;
+    }
 
     return GetLowestDepthFromVehicle(character, waterHeight,
       controller);

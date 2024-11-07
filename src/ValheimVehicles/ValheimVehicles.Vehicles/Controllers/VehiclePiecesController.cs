@@ -2285,7 +2285,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var wheelPieces = _steeringWheelPieces;
     if (wheelPieces.Count <= 0) return;
 
-    foreach (var wheelPiece in wheelPieces)
+    foreach (var wheelPiece in wheelPieces.ToList())
     {
       if (wheelPiece == null) return;
       var wnt = wheelPiece.GetComponent<WearNTear>();
