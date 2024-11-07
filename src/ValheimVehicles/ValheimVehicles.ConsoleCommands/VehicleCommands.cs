@@ -174,12 +174,14 @@ public class VehicleCommands : ConsoleCommand
     vehicleInstance.SetCreativeMode(true);
 
     var playersOnShip = vehicleInstance.OnboardController.GetPlayersOnShip();
+    var wasDebugFlyingPlayers = new List<Player>();
     if (playersOnShip.Count > 0)
     {
       foreach (var player in playersOnShip)
       {
         if (player.IsDebugFlying())
         {
+          wasDebugFlyingPlayers.Add(player);
           continue;
         }
 
@@ -187,7 +189,8 @@ public class VehicleCommands : ConsoleCommand
       }
     }
 
-    if (!Player.m_localPlayer.IsDebugFlying())
+    var wasDebugFlying = Player.m_localPlayer.IsDebugFlying();
+    if (!wasDebugFlying)
     {
       Player.m_localPlayer.ToggleDebugFly();
     }
@@ -203,6 +206,11 @@ public class VehicleCommands : ConsoleCommand
     {
       foreach (var player in playersOnShip)
       {
+        if (wasDebugFlyingPlayers.Contains(player))
+        {
+          continue;
+        }
+
         if (!player.IsDebugFlying())
         {
           continue;
@@ -212,7 +220,7 @@ public class VehicleCommands : ConsoleCommand
       }
     }
 
-    if (Player.m_localPlayer.IsDebugFlying())
+    if (!wasDebugFlying && Player.m_localPlayer.IsDebugFlying())
     {
       Player.m_localPlayer.ToggleDebugFly();
     }
