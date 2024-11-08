@@ -90,7 +90,7 @@ source the mod on 12/25/2023.
   preset values.
 - Vehicles can be made to Fly.
 - Vehicles can go underwater [>=2.4.0]
-- There are tools to hide water. It looks pretty cool, but unrealistic for now.
+- There are tools to hide water. It looks pretty cool, but unrealistic for now
 
 ## Community
 
@@ -447,7 +447,14 @@ Previously it only supported Direct3D11.
 
 <a href='https://ko-fi.com/zolantris' target='_blank'><img height='35' style='border:0px;height:46px;' src='https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com'></a>
 
+## Videos and Promos
+
+- [2.4.0 ValheimRAFT Water overhaul nautilus](https://www.youtube.com/watch?v=qlB_sWbFfEA)
+- [2.4.0 ValheimRAFT Water overhaul demo](https://studio.youtube.com/video/yoPz0H5kZcc/edit)
+
 ## Logging Metrics
+
+**NOT APPLICABLE YET**.
 
 These packages may contain logging. Logging can be opted out by any user by
 unchecking `enableMetrics`. If you choose to opt-out, please be aware, this will
