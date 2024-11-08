@@ -81,11 +81,16 @@ source the mod on 12/25/2023.
 - Add piers that reach the ocean floor (stone and log)
 - Adds anchors
 - Adds custom sails (requires meshes to be working)
+    - Players can add their own patterns to the meshes folder FYI, you can have
+      more than the stack or pirate logo, just add what you want.
 - Adds ropes (requires meshes to be working)
 - Sails now will each contribute to the total shipShip.Speed. Custom Sails do an
   area
   calculation while Tier 1-3 sails are
   preset values.
+- Vehicles can be made to Fly.
+- Vehicles can go underwater [>=2.4.0]
+- There are tools to hide water. It looks pretty cool, but unrealistic for now.
 
 ## Community
 
@@ -213,8 +218,54 @@ The following has been tested:
 
 ## Config
 
-Please reference
-the [config output auto-generated document](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/ValheimRAFT_AutoDoc.md)
+ValheimRAFT has **extensive** config. _If you do not like the current balance,
+you are capable of editing this config and setting thing the way you like._
+
+Please feel free to share the config if you feel it is more balanced than
+default. Maintainers will need to test it before accepting it as
+the default though.
+
+Please download the
+mod [Official BepInEx Configuration Manager](https://thunderstore.io/c/valheim/p/Azumatt/Official_BepInEx_ConfigurationManager/)
+to be able to **edit ValheimRAFT config while playing**. Most of the config can
+be set
+while playing.
+
+Excludes
+
+- prefabs
+- patches
+- zone related content or first render content
+
+There is auto-documentation for this config at this link. Please go here to read
+up on all the
+config. [config auto-generated document](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT/docs/ValheimRAFT_AutoDoc.md)
+
+## Commands
+
+ValheimRAFT has many commands. Please read below to see what is possible. All
+Commands start with `vehicle` and then have a argument. IE `vehicle debug` will
+open some debug menus.
+
+I highly recommend
+installing [Server DevCommands](https://thunderstore.io/c/valheim/p/JereKuusela/Server_devcommands/)
+by Jere if you want to get code completion for these scripts. (I believe it's
+this mod that does this. Also allows flight and other hacks on servers and
+automating it if you want to debug a build.)
+
+| name                  | description                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `creative`            | Must be fired on or near a ship, will place the ship in edit mode above the water. Height can be configured in the config menu. Can and will hit the player so if the players are not on the ship and not the one running the command beware of this.                                                                                                                                                                                                  |
+| `debug`               | opens the debug menu. Has some more ways to debug the vehicle.                                                                                                                                                                                                                                                                                                                                                                                         |
+| `report-info`         | Formats a report of the current vehicle with some metrics added to it. Helpful for when submitting a bug. Also, could be helpful for users if they want to know why their raft is broken.                                                                                                                                                                                                                                                              |
+| `recover`             | Will recover any vanilla pieces on a raft. Pieces that are non-vanilla can be lost due to them not registering before the mod crashes and then the game deletes them as invalid content. Raft has a way to prevent this, but if raft bugs out it's going to not protect users.                                                                                                                                                                         |
+| `move`                | Will teleport the raft and protect the players on the raft from being smashed out of the world...all players on the raft. If you are in the water outside the raft in the landing zone, you will die or get hit into space. Takes the arguements of `X Y Z` in decimal format. IE `0.0 0 -50` all work. And would take you zero (x) zero (y) and move you backwards by 50. Rembemer raft is relative so this will be relative coordinates to the raft. |
+| `move-up`             | Same as teleport but will allow moving the raft in the area upwards.                                                                                                                                                                                                                                                                                                                                                                                   |
+| `rotate`              | Will will attempt to force rotate the vehicle. This command may not work in 2.2.x - 2.4.0.                                                                                                                                                                                                                                                                                                                                                             |
+| `toggleOceanSway`     | Toggles ocean sway of vehicles. No more lurches only up and down. For those that are sea sick...or want to build but be moving.                                                                                                                                                                                                                                                                                                                        |
+| `upgradeShipToV2`     | Upgrades an older ValheimRAFT world ship to the V2 ship. This will fix a broken ship. V1 ships are deprecated and will be removed soon. Do not use them. They probably do not work for ashlands anymore either.                                                                                                                                                                                                                                        |
+| `downgradeToShipToV1` | Downgrades to an older v1 ship. Not supported. Do not do this. Support will be removed soon IE `3.x.x`.                                                                                                                                                                                                                                                                                                                                                |
+| `colliderEditMode`    | A new command added in 2.4.0 watermesh overhaul. This will allow editing the invisible / non-colliding (with build hammer) water mesh colliders. Running it again will hide the generated squares around the water meshes.                                                                                                                                                                                                                             |
 
 ## Issues
 
