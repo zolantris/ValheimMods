@@ -229,13 +229,12 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   public void AwakeSetupVehicleShip()
   {
-    if (!isActiveAndEnabled) return;
-    if (!_movementController)
+    if (_movementController == null)
     {
       MovementController = GetComponent<VehicleMovementController>();
     }
 
-    if (!(bool)ShipEffectsObj)
+    if (ShipEffectsObj == null && _movementController != null)
     {
       ShipEffects = MovementController?.GetComponent<VehicleShipEffects>();
       ShipEffectsObj = ShipEffects?.gameObject;

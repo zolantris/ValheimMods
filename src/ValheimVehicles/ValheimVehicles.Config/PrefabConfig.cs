@@ -1,4 +1,5 @@
 using BepInEx.Configuration;
+using UnityEngine;
 
 namespace ValheimVehicles.Config;
 
@@ -6,10 +7,19 @@ public static class PrefabConfig
 {
   public static ConfigFile? Config { get; private set; }
 
-  public static ConfigEntry<VehicleShipInitPiece>? StartingPiece { get; private set; }
+  public static ConfigEntry<VehicleShipInitPiece>? StartingPiece
+  {
+    get;
+    private set;
+  }
 
-  public static ConfigEntry<int> RopeLadderRunMultiplier { get; private set; } = null!;
+  public static ConfigEntry<int> RopeLadderRunMultiplier { get; private set; } =
+    null!;
+
   public static ConfigEntry<bool> RopeLadderHints { get; private set; } = null!;
+
+  public static ConfigEntry<Vector3>
+    RopeLadderEjectionOffset { get; private set; } = null!;
 
   public enum VehicleShipInitPiece
   {
@@ -25,11 +35,17 @@ public static class PrefabConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
-    StartingPiece = config.Bind(SectionKey, "startingPiece", VehicleShipInitPiece.Hull4X8,
+    RopeLadderEjectionOffset = config.Bind(SectionKey,
+      "RopeLadderEjectionPoint", new Vector3(0f, 0.25f, 0.5f),
+      "The place the player is placed after they leave the ladder. Defaults to Y +0.25 and Z +0.5 meaning you are placed forwards of the ladder.");
+
+    StartingPiece = config.Bind(SectionKey, "startingPiece",
+      VehicleShipInitPiece.Hull4X8,
       ConfigHelpers.CreateConfigDescription(
         "Allows you to customize what piece the raft initializes with. Admins only as this can be overpowered.",
         true, true));
-    RopeLadderRunMultiplier = config.Bind(SectionKey, "ropeLadderRunClimbSpeedMult", 2,
+    RopeLadderRunMultiplier = config.Bind(SectionKey,
+      "ropeLadderRunClimbSpeedMult", 2,
       ConfigHelpers.CreateConfigDescription(
         "Allows you to customize how fast you can climb a ladder when in run mode",
         false, true, new AcceptableValueRange<int>(1, 10)));

@@ -19,6 +19,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
   public BoxCollider m_collider;
 
   public Transform m_attachPoint;
+  public Transform m_exitPoint;
 
   public MoveableBaseRootComponent m_mbroot;
   public VehiclePiecesController vehiclePiecesController;
@@ -119,6 +120,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
   {
     m_stepObject = transform.Find("step").gameObject;
     m_ropeLine = GetComponent<LineRenderer>();
+    m_exitPoint = transform.Find("exitpoint");
     m_collider = GetComponentInChildren<BoxCollider>();
     m_ghostObject = ZNetView.m_forceDisableInit;
     m_attachPoint = transform.Find("attachpoint");
@@ -129,8 +131,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
 
   private Vector3 GetExitOffset()
   {
-    return transform.forward * LadderExitOffsetMult +
-           transform.up * LadderExitOffsetMult;
+    return m_exitPoint.position + PrefabConfig.RopeLadderEjectionOffset.Value;
   }
 
   private void ClimbLadder(Player player)
@@ -502,7 +503,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
   /// <param name="player"></param>
   public void OnNearTopExitForwards(Player player)
   {
-    var deltaY = player.transform.position.y - transform.position.y;
+    var deltaY = player.transform.position.y - m_exitPoint.position.y;
     if (deltaY < 1f)
     {
       player.transform.position += GetExitOffset();

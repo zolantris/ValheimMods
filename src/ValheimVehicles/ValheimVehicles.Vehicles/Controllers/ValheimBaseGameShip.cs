@@ -73,6 +73,9 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal Vector3 m_sailForce = Vector3.zero;
 
+  /// <summary>
+  /// todo This field must be migrated to VehicleOnboardController. Does not make sense to decouple the logic from OnboardController and have to sync two interfaces, especially if the character api is better for most things and has been extended.
+  /// </summary>
   public List<Player> m_players = [];
 
   internal WaterVolume m_previousCenter;

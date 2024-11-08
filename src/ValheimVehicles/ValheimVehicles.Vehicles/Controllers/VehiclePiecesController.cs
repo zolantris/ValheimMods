@@ -730,9 +730,33 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       m_fixedJoint.connectedBody = null;
     }
 
+    var lastOffset = VehicleInstance.MovementController.m_body.position -
+                     m_body.position;
+    var lastPlayersPosition =
+      MovementController?.m_players.Select(x => x.transform.localPosition)
+        .ToList();
+
     m_body.MovePosition(VehicleInstance.MovementController.m_body.position);
     m_body.MoveRotation(
       VehicleInstance.MovementController.m_body.rotation);
+
+    // In theory should make the players sync properly while moving at speed. No more jittery
+    if (MovementController?.m_players != null && lastPlayersPosition != null)
+    {
+      for (var i = 0; i < MovementController.m_players.Count; i++)
+      {
+        var expectedOffset = lastPlayersPosition[i] + lastOffset;
+        if (Mathf.Approximately(expectedOffset.magnitude,
+              MovementController.m_players[i].transform.localPosition
+                .magnitude))
+        {
+          continue;
+        }
+
+        MovementController.m_players[i].transform.localPosition =
+          expectedOffset;
+      }
+    }
   }
 
   public void JointSync()
@@ -2665,19 +2689,28 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       floatColliderSize.z = _hullBounds.size.z;
     }
 
-    // Assign all the colliders
+    // asign defaults immediately
+    FloatColliderDefaultPosition = floatColliderCenterOffset;
+    BlockingColliderDefaultPosition =
+      blockingColliderCenterOffset;
+
+    var targetHeightVector = Vector3.up *
+      VehicleInstance?
+        .MovementController?
+        .TargetHeight ?? Vector3.zero;
+
+    // Assign all the colliders And include offset to avoid Jumps in height if below ocean or flying
     m_blockingcollider.size = blockingColliderSize;
-    m_blockingcollider.transform.localPosition = blockingColliderCenterOffset;
+    m_blockingcollider.transform.localPosition =
+      blockingColliderCenterOffset + targetHeightVector;
 
     m_floatcollider.size = floatColliderSize;
-    m_floatcollider.transform.localPosition = floatColliderCenterOffset;
+    m_floatcollider.transform.localPosition =
+      floatColliderCenterOffset + targetHeightVector;
 
-    m_onboardcollider.size = onboardColliderSize;
+    m_onboardcollider.size =
+      onboardColliderSize;
     m_onboardcollider.transform.localPosition = onboardColliderCenter;
-
-    FloatColliderDefaultPosition = m_floatcollider.transform.localPosition;
-    BlockingColliderDefaultPosition =
-      m_blockingcollider.transform.localPosition;
   }
 
   public void IgnoreCollidersForAllRamPieces(ZNetView netView)

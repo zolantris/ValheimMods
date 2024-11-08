@@ -377,6 +377,10 @@ public class VehicleOnboardController : MonoBehaviour
     }
   }
 
+  public static void RPC_PlayerOnboardSync()
+  {
+  }
+
   public void OnEnterVehicleBounds(Collider collider)
   {
     var playerInList = GetPlayerComponent(collider);
