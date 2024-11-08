@@ -1000,7 +1000,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var angularDrag = PhysicsConfig.submersibleAngularDrag.Value;
 
     ShipInstance?.VehiclePiecesController?.SyncRigidbodyStats(drag, angularDrag,
-      true);
+      false);
   }
 
   public void UpdateWaterStats()
@@ -1015,7 +1015,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var angularDrag = PhysicsConfig.waterAngularDrag.Value;
 
     ShipInstance?.VehiclePiecesController?.SyncRigidbodyStats(drag, angularDrag,
-      true);
+      false);
   }
 
   private float vehicleStatSyncTimer = 1.0f;
@@ -1031,7 +1031,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private void UpdateVehicleStats(bool flight, bool submerged)
   {
     vehicleStatSyncTimer += Time.deltaTime;
-    if (vehicleStatSyncTimer < 0.8f && previousSyncFlight == flight &&
+    if (vehicleStatSyncTimer < 30f && previousSyncFlight == flight &&
         previousSyncSubmerged == submerged)
     {
       return;

@@ -22,6 +22,7 @@
 
     <!-- Until ValheimVehicles is published, RAFT will directly pull in it's dependencies -->
     <ItemGroup Label="Embedded Resources">
+        <Folder Include="obj\"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
@@ -110,9 +111,6 @@
         <Reference Include="PlanBuild">
             <HintPath>$(SolutionDir)\libs\PlanBuild.dll</HintPath>
             <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEditor.CoreModule">
-            <HintPath>..\..\..\..\..\..\..\Program Files\Unity\Hub\Editor\2022.3.17f1\Editor\Data\Managed\UnityEngine\UnityEditor.CoreModule.dll</HintPath>
         </Reference>
     </ItemGroup>
     <!--    <ItemGroup>-->
