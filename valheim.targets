@@ -381,7 +381,7 @@
         <Exec Condition="$(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>
         <!--        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>-->
 
-        <!--        <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>-->
+        <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>
         <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(PluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>
     </Target>
     <!--     Condition=" $(AssemblyName) == 'ValheimRAFT' And Exists('$(SandboxiePluginDeployPath)') And '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' "-->

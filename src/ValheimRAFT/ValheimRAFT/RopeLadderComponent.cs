@@ -189,6 +189,12 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
       return;
     }
 
+    if (Mathf.Abs(transform.rotation.eulerAngles.x) > 40 ||
+        Mathf.Abs(transform.rotation.eulerAngles.z) > 40)
+    {
+      return;
+    }
+
     if (rayMask == 0)
     {
       rayMask = LayerMask.GetMask("Default", "static_solid", "Default_small",
@@ -504,9 +510,9 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
   public void OnNearTopExitForwards(Player player)
   {
     var deltaY = player.transform.position.y - m_exitPoint.position.y;
-    if (deltaY < 1f)
+    if (Mathf.Abs(deltaY) < 1f)
     {
-      player.transform.position += GetExitOffset();
+      player.transform.position = GetExitOffset();
     }
   }
 

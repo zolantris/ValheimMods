@@ -460,6 +460,23 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     VehicleDebugHelpersInstance =
       gameObject.AddComponent<VehicleDebugHelpers>();
 
+    // if (_movementController != null &&
+    //     _movementController.DebugTargetHeightObj == null)
+    // {
+    //   MovementController.DEBUG_VisualizeFloatPoint();
+    // }
+
+    // if (MovementController.DebugTargetHeightObj)
+    // {
+    //   VehicleDebugHelpersInstance.AddColliderToRerender(
+    //     new DrawTargetColliders()
+    //     {
+    //       collider = MovementController.DebugTargetHeightObj
+    //         .GetComponent<BoxCollider>(),
+    //       lineColor = Color.orange,
+    //       parent = gameObject
+    //     });
+    // }
 
     VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
     {

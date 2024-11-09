@@ -54,6 +54,10 @@ public class SwitchAndLeverPrefabs : IRegisterPrefab
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
+    // Not registering prefabs in production as this does nothing for now.
+
+#if DEBUG
     RegisterToggleSwitch(prefabManager, pieceManager);
+#endif
   }
 }

@@ -247,9 +247,10 @@ public static class WaterZoneUtils
     float liquidLevel, LiquidType liquidType,
     bool isOnboard)
   {
+    UpdateLiquidDepthValues(character, liquidLevel, liquidType, isOnboard);
+    // must be call after liquid level updates
     UpdateSwimDepth(character, isOnboard);
     UpdateCachedLiquid(character, isOnboard);
-    UpdateLiquidDepthValues(character, liquidLevel, liquidType);
 
     if (WaterConfig.DEBUG_HasDepthOverrides.Value)
     {
@@ -288,8 +289,7 @@ public static class WaterZoneUtils
 
     if (isOnboard)
     {
-      character.m_cashedInLiquidDepth =
-        Math.Max(0f, character.m_swimDepth - 2f);
+      character.m_cashedInLiquidDepth = 0f;
       return;
     }
 
@@ -300,18 +300,28 @@ public static class WaterZoneUtils
 
   // the vehicle onboard collider controls the water level for players. So they can go below sea level
   public static void UpdateLiquidDepthValues(Character character,
-    float liquidLevel, LiquidType liquidType)
+    float liquidLevel, LiquidType liquidType, bool isOnboard)
   {
     switch (liquidType)
     {
       case LiquidType.Water:
-        character.m_waterLevel = liquidLevel;
+        if (isOnboard)
+        {
+          character.m_waterLevel = 0f;
+        }
+        else
+        {
+          character.m_waterLevel = liquidLevel;
+        }
+
         if (character.m_tarLevel > character.m_waterLevel &&
             WaterZoneController.IsCharacterInWaterFreeZone(character))
         {
           character.m_tarLevel = -10000f;
         }
 
+        character.m_liquidLevel =
+          Mathf.Max(character.m_waterLevel, character.m_tarLevel);
         break;
       case LiquidType.Tar:
         break;
@@ -320,8 +330,8 @@ public static class WaterZoneUtils
     }
 
     // Minus 1 so the character is not considered in the liquid
-    character.m_liquidLevel =
-      Mathf.Max(character.m_waterLevel - 1f, character.m_tarLevel);
+    // character.m_liquidLevel =
+    //   Mathf.Max(character.m_waterLevel - 1f, character.m_tarLevel);
   }
 
 
@@ -433,7 +443,7 @@ public static class WaterZoneUtils
       // we do not need to set liquid level to anything besides 0
       // 2 is swim level, so higher allows for swimming in theory
       // todo confirm this works
-      UpdateDepthValues(character, 0);
+      UpdateDepthValues(character, 0, LiquidType.Water);
       return true;
     }
 
@@ -473,7 +483,7 @@ public static class WaterZoneUtils
         return true;
       }
 
-      UpdateDepthValues(character, liquidDepth, LiquidType.Water);
+      UpdateDepthValues(character, 0f, LiquidType.Water);
       return true;
     }
 

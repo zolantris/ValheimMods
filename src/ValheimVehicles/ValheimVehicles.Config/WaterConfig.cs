@@ -33,6 +33,9 @@ public static class WaterConfig
   public static ConfigEntry<PrimitiveType>
     DEBUG_WaterDisplacementMeshPrimitive { get; private set; } = null!;
 
+  public static ConfigEntry<float>
+    BlockingColliderOffset { get; private set; } = null!;
+
   public static ConfigEntry<WaterMeshFlipModeType>
     FlipWatermeshMode { get; private set; } = null!;
 
@@ -99,7 +102,7 @@ public static class WaterConfig
     null!;
 
   public static ConfigEntry<float> DEBUG_AutoBallastOffsetMultiplier = null!;
-  public static ConfigEntry<float> AutoBallastSpeed = null!;
+  public static ConfigEntry<float> BallastSpeed = null!;
   // public ConfigEntry<KeyboardShortcut> ManualBallastModifierKey { get; set; }
 
   /// <summary>
@@ -260,10 +263,18 @@ public static class WaterConfig
 
     AutoBallast.SettingChanged += (sender, args) => OnAutoBallastToggle();
 
-    AutoBallastSpeed = Config.Bind(
+    BlockingColliderOffset = Config.Bind(
       SectionKey,
-      "AutoBallastSpeed",
-      0.1f,
+      "BlockingColliderOffset",
+      0.2f,
+      ConfigHelpers.CreateConfigDescription(
+        "Sets the relative offset from the float collider. Can be negative or positive. Recommended is near the float collider. Slightly above it.",
+        true, true, new AcceptableValueRange<float>(-10f, 10f)));
+
+    BallastSpeed = Config.Bind(
+      SectionKey,
+      "BallastSpeed",
+      0.5f,
       ConfigHelpers.CreateConfigDescription(
         "Adds more balast offset",
         true, true, new AcceptableValueRange<float>(0.001f, 1)));
