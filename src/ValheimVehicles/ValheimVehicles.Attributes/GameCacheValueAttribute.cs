@@ -2,6 +2,9 @@ using System;
 
 namespace ValheimVehicles.Attributes;
 
+/// <summary>
+/// Does nothing for now. But eventually this would be a way to mark methods as cacheable maybe via parent extension
+/// </summary>
 [AttributeUsage(AttributeTargets.Method)]
 public class GameCacheValueAttribute : Attribute
 {

@@ -93,8 +93,8 @@ public class PhysicsConfig
 
     waterSidewaysDamping =
       Config.Bind(SectionKey, "waterSidewaysDamping", 0.05f);
-    waterAngularDamping = Config.Bind(SectionKey, "waterAngularDamping", 0.01f);
-    waterDamping = Config.Bind(SectionKey, "waterDamping", 0.01f);
+    waterAngularDamping = Config.Bind(SectionKey, "waterAngularDamping", 0.05f);
+    waterDamping = Config.Bind(SectionKey, "waterDamping", 0.05f);
 
     waterSailForceFactor =
       Config.Bind(SectionKey, "waterSailForceFactor", 0.05f);

@@ -248,7 +248,7 @@ public static class WaterConfig
     ManualBallast = Config.Bind(
       SectionKey,
       "ManualBallast",
-      true,
+      false,
       ConfigHelpers.CreateConfigDescription(
         "Similar to flight mechanics but at sea. Defaults with Space/Jump to increase height and Sneak/Shift to decrease height uses the same flight comamnds.",
         true, true));
@@ -338,7 +338,7 @@ public static class WaterConfig
     UnderWaterFogColor = Config.Bind(
       SectionKey,
       "Underwater fog color",
-      new Color(0f, 0.57f, 0.6f),
+      new Color(0.10f, 0.23f, 0.07f, 1.00f),
       ConfigHelpers.CreateConfigDescription(
         "Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.",
         true));
@@ -346,7 +346,7 @@ public static class WaterConfig
     UnderWaterFogIntensity = Config.Bind(
       SectionKey,
       "Underwater Fog Intensity",
-      0.2f,
+      0.03f,
       ConfigHelpers.CreateConfigDescription(
         "Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.",
         true));

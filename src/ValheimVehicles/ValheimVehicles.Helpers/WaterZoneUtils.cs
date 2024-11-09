@@ -86,7 +86,7 @@ public static class WaterZoneUtils
   /// <param name="character"></param>
   /// <param name="waterZoneData"></param>
   /// <returns></returns>
-  [GameCacheValue(name: "IsOnboard", intervalInSeconds: 1f)]
+  // [GameCacheValue(name: "IsOnboard", intervalInSeconds: 1f)]
   public static bool IsOnboard(Character character,
     out WaterZoneCharacterData? waterZoneData)
   {

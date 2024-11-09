@@ -17,14 +17,14 @@ public class PlanBuild_Patch
 {
   [HarmonyPatch(typeof(PlanPiece), "CalculateSupported")]
   [HarmonyPrefix]
-  private static bool PlanPiece_CalculateSupported_Prefix(PlanPiece __instance, ref bool __result)
+  private static bool PlanPiece_CalculateSupported_Prefix(PlanPiece __instance,
+    ref bool __result)
   {
     if (__instance.GetComponentInParent<VehiclePiecesController>())
     {
       __result = true;
       return false;
     }
-
 
     if (__instance.GetComponentInParent<MoveableBaseRootComponent>())
     {
@@ -37,10 +37,12 @@ public class PlanBuild_Patch
 
   [HarmonyPatch(typeof(PlanPiece), "OnPieceReplaced")]
   [HarmonyPrefix]
-  private static void PlanPiece_OnPieceReplaced_Postfix(GameObject originatingPiece,
+  private static void PlanPiece_OnPieceReplaced_Postfix(
+    GameObject originatingPiece,
     GameObject placedPiece)
   {
-    var baseVehicle = originatingPiece.GetComponentInParent<VehiclePiecesController>();
+    var baseVehicle =
+      originatingPiece.GetComponentInParent<VehiclePiecesController>();
 
     if (baseVehicle)
     {
@@ -48,7 +50,8 @@ public class PlanBuild_Patch
       return;
     }
 
-    var moveableBaseRoot = originatingPiece.GetComponentInParent<MoveableBaseRootComponent>();
+    var moveableBaseRoot =
+      originatingPiece.GetComponentInParent<MoveableBaseRootComponent>();
     if (moveableBaseRoot)
     {
       moveableBaseRoot.AddNewPiece(placedPiece.GetComponent<Piece>());
@@ -57,7 +60,8 @@ public class PlanBuild_Patch
 
   [HarmonyPatch(typeof(PlacementComponent), "OnPiecePlaced")]
   [HarmonyPrefix]
-  private static void BlueprintManager_OnPiecePlaced_Postfix(GameObject placedPiece)
+  private static void BlueprintManager_OnPiecePlaced_Postfix(
+    GameObject placedPiece)
   {
     Player_Patch.PlacedPiece(placedPiece);
     // ValheimRAFT_Patch.PlacedPiece(Player.m_localPlayer, placedPiece);
@@ -66,7 +70,8 @@ public class PlanBuild_Patch
 
   [HarmonyPatch(typeof(Blueprint), "Capture")]
   [HarmonyPrefix]
-  public static bool Capture(Blueprint __instance, ref bool __result, Selection selection,
+  public static bool Capture(Blueprint __instance, ref bool __result,
+    Selection selection,
     bool captureCurrentSnapPoints = false, bool keepMarkers = false)
   {
     Logger.LogDebug("Using ValheimRAFT patch for: PlanBuild.Blueprint.Capture");
@@ -80,7 +85,8 @@ public class PlanBuild_Patch
     >();
     foreach (ZDOID item2 in selection)
     {
-      GameObject gameObject = BlueprintManager.GetGameObject(item2, required: true);
+      GameObject gameObject =
+        BlueprintManager.GetGameObject(item2, required: true);
       Logger.LogDebug($"GameObject {gameObject.name}");
       if (gameObject.name.StartsWith("piece_bpsnappoint"))
       {
@@ -137,7 +143,8 @@ public class PlanBuild_Patch
       Piece component4 = gameObject.GetComponent<Piece>();
       if (!BlueprintManager.CanCapture(component4))
       {
-        Jotunn.Logger.LogWarning($"Ignoring piece {component4}, not able to make blueprint");
+        Jotunn.Logger.LogWarning(
+          $"Ignoring piece {component4}, not able to make blueprint");
         continue;
       }
 
@@ -190,7 +197,8 @@ public class PlanBuild_Patch
     }
 
     IOrderedEnumerable<Piece> orderedEnumerable = from x in list
-      orderby x.transform.position.y, x.transform.position.x, x.transform.position.z
+      orderby x.transform.position.y, x.transform.position.x, x.transform
+        .position.z
       select x;
     int num5 = orderedEnumerable.Count();
     if (__instance.PieceEntries == null)
@@ -199,7 +207,8 @@ public class PlanBuild_Patch
     }
     else if (__instance.PieceEntries.Length != 0)
     {
-      Array.Clear(__instance.PieceEntries, 0, __instance.PieceEntries.Length - 1);
+      Array.Clear(__instance.PieceEntries, 0,
+        __instance.PieceEntries.Length - 1);
       Array.Resize(ref __instance.PieceEntries, num5);
     }
 
@@ -207,8 +216,10 @@ public class PlanBuild_Patch
     foreach (Piece item4 in orderedEnumerable)
     {
       Vector3 pos;
-      var shipBase = item4.m_nview.GetComponentInParent<MoveableBaseRootComponent>();
-      var vehicleBase = item4.m_nview.GetComponentInParent<VehiclePiecesController>();
+      var shipBase =
+        item4.m_nview.GetComponentInParent<MoveableBaseRootComponent>();
+      var vehicleBase =
+        item4.m_nview.GetComponentInParent<VehiclePiecesController>();
       if (shipBase)
       {
         Logger.LogDebug(
@@ -257,10 +268,13 @@ public class PlanBuild_Patch
       }
 
       ItemStand component6 = item4.GetComponent<ItemStand>();
-      if (component6 != null && component6.HaveAttachment() && (bool)component6.m_nview)
+      if (component6 != null && component6.HaveAttachment() &&
+          (bool)component6.m_nview)
       {
-        text = string.Format("{0}:{1}:{2}", component6.m_nview.m_zdo.GetString("item"),
-          component6.m_nview.m_zdo.GetInt("variant"), component6.m_nview.m_zdo.GetInt("quality"));
+        text = string.Format("{0}:{1}:{2}",
+          component6.m_nview.m_zdo.GetString("item"),
+          component6.m_nview.m_zdo.GetInt("variant"),
+          component6.m_nview.m_zdo.GetInt("quality"));
       }
 
       ArmorStand component7 = item4.GetComponent<ArmorStand>();
@@ -283,7 +297,8 @@ public class PlanBuild_Patch
       PrivateArea component9 = item4.GetComponent<PrivateArea>();
       if (component9 != null && (bool)component9.m_nview)
       {
-        text = string.Format("{0}", component9.m_nview.m_zdo.GetBool("enabled"));
+        text = string.Format("{0}",
+          component9.m_nview.m_zdo.GetBool("enabled"));
       }
 
       Container component10 = item4.GetComponent<Container>();
@@ -297,7 +312,8 @@ public class PlanBuild_Patch
       ZNetView component11 = item4.gameObject.GetComponent<ZNetView>();
       if ((object)component11 != null && component11.m_zdo != null)
       {
-        GameObject prefab = ZNetScene.instance.GetPrefab(component11.m_zdo.m_prefab);
+        GameObject prefab =
+          ZNetScene.instance.GetPrefab(component11.m_zdo.m_prefab);
         if ((object)prefab != null)
         {
           text2 = prefab.name;
@@ -309,7 +325,8 @@ public class PlanBuild_Patch
         text2 = text2.Replace("_planned", null);
       }
 
-      __instance.PieceEntries[num6++] = new PieceEntry(text2, item4.m_category.ToString(), pos,
+      __instance.PieceEntries[num6++] = new PieceEntry(text2,
+        item4.m_category.ToString(), pos,
         rotation, text, localScale);
     }
 
@@ -347,7 +364,8 @@ public class PlanBuild_Patch
     foreach (TerrainModEntry item5 in list3)
     {
       __instance.TerrainMods[num7++] = new TerrainModEntry(item5.shape,
-        item5.GetPosition() - vector, item5.radius, item5.rotation, item5.smooth, item5.paint);
+        item5.GetPosition() - vector, item5.radius, item5.rotation,
+        item5.smooth, item5.paint);
     }
 
     __result = true;

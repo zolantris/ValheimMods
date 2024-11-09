@@ -8,6 +8,7 @@ using ValheimRAFT;
 using ValheimRAFT.Config;
 using ValheimRAFT.Patches;
 using ValheimVehicles.Config;
+using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.LayerUtils;
 using ValheimVehicles.Prefabs;
@@ -808,6 +809,18 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       UpdateTargetHeight(TargetHeight - heightDifference, true);
     }
 
+    // super stuck. do a direct update. But protect the players from being launched. Yikes.
+    if (_lastHighestGroundPoint > BlockingCollider.transform.position.y)
+    {
+      UpdateTargetHeight(0, forceUpdate: true);
+
+      UpdateYPosition(FloatCollider.transform,
+        -FloatCollider.transform.localPosition.y);
+      UpdateYPosition(BlockingCollider.transform,
+        -BlockingCollider.transform.localPosition.y);
+      return;
+    }
+
     var floatPositionY =
       PiecesController.FloatColliderDefaultPosition.y + TargetHeight;
     var blockingPositionY = PiecesController.BlockingColliderDefaultPosition.y +
@@ -854,18 +867,23 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var leftForce = m_body.GetPointVelocity(left);
     var rightForce = m_body.GetPointVelocity(right);
 
-    // var flyingTargetHeight = GetFlyingTargetHeight();
+    var flyingTargetHeight = GetFlyingTargetHeight();
 
     // Calculate the target upwards forces for each position
-    var frontUpwardsForce = GetUpwardsForce(FloatCollider.center.y,
+    var frontUpwardsForce = GetUpwardsForce(
+      flyingTargetHeight,
       front.y + frontForce.y, m_balanceForce);
-    var backUpwardsForce = GetUpwardsForce(FloatCollider.center.y,
+    var backUpwardsForce = GetUpwardsForce(
+      flyingTargetHeight,
       back.y + backForce.y, m_balanceForce);
-    var leftUpwardsForce = GetUpwardsForce(FloatCollider.center.y,
+    var leftUpwardsForce = GetUpwardsForce(
+      flyingTargetHeight,
       left.y + leftForce.y, m_balanceForce);
-    var rightUpwardsForce = GetUpwardsForce(FloatCollider.center.y,
+    var rightUpwardsForce = GetUpwardsForce(
+      flyingTargetHeight,
       right.y + rightForce.y, m_balanceForce);
-    var centerUpwardsForce = GetUpwardsForce(FloatCollider.center.y,
+    var centerUpwardsForce = GetUpwardsForce(
+      flyingTargetHeight,
       centerpos2.y + m_body.velocity.y, m_liftForce);
 
     // Smoothly transition the forces towards the target values using SmoothDamp
@@ -1693,7 +1711,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public bool IsFlying()
   {
     if (!ValheimRaftPlugin.Instance.AllowFlight.Value) return false;
-    return TargetHeight < -ZoneSystem.instance.m_waterLevel;
+    return FloatCollider.transform.position.y >
+           -ZoneSystem.instance.m_waterLevel;
   }
 
   private Vector3 GetSailForce(float sailSize, float dt, bool isFlying)

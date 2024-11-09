@@ -36,7 +36,7 @@ public class Character_Patch
   public static void Character_IsInWater(Character __instance,
     ref bool __result)
   {
-    var vpc = __instance.transform.root.GetComponent<VehiclePiecesController>();
+    var vpc = WaterZoneUtils.IsOnboard(__instance);
     if (vpc) __result = false;
     // var isOnboard = WaterZoneUtils.IsOnboard(__instance);
     // if (isOnboard) __result = false;
