@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using HarmonyLib;
 using Jotunn.Extensions;
 using Jotunn.Managers;
@@ -19,9 +20,28 @@ public abstract class PrefabRegistryHelpers
 
   public struct PieceData
   {
-    public string Name;
-    public string Description;
+    private string _name;
+    private string _description;
+
+    public string Name
+    {
+      get => _name;
+      set => _name = NormalizeTranslationKeys(value);
+    }
+
+    public string Description
+    {
+      get => _description;
+      set => _description = NormalizeTranslationKeys(value);
+    }
+
     public Sprite Icon;
+  }
+
+  public static string NormalizeTranslationKeys(string localizableString)
+  {
+    return new Regex(@"((?<!\$)\b\w+_\w+\b)").Replace(localizableString,
+      match => "$" + match.Value);
   }
 
   // may use for complex shared variant prefabs
@@ -69,6 +89,18 @@ public abstract class PrefabRegistryHelpers
     netView.m_persistent = false;
     netView.m_distant = true;
     return netView;
+  }
+
+  private static void RegisterCustomMeshPieces()
+  {
+    PieceDataDictionary.Add(PrefabNames.CustomWaterMaskCreator,
+      new PieceData
+      {
+        Name = "$valheim_vehicles_water_mask",
+        Description = "$valheim_vehicles_water_mask_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .WaterOpacityBucket),
+      });
   }
 
   private static void RegisterRamPieces()
@@ -285,6 +317,7 @@ public abstract class PrefabRegistryHelpers
   {
     PieceLayer = LayerMask.NameToLayer("piece");
 
+    RegisterCustomMeshPieces();
     RegisterRamPieces();
     RegisterExternalShips();
 
@@ -406,7 +439,7 @@ public abstract class PrefabRegistryHelpers
           .ShipRudderAdvancedDoubleIron)
       });
 
-    PieceDataDictionary.Add(PrefabNames.VehicleToggleSwitch, new PieceData()
+    PieceDataDictionary.Add(PrefabNames.ToggleSwitch, new PieceData()
     {
       Name = "$valheim_vehicles_toggle_switch",
       Description = "$valheim_vehicles_toggle_switch_desc",

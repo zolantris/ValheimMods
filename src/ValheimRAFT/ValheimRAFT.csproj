@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.8" DefaultTargets="Build">
+<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="4.8" DefaultTargets="Build">
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
         <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -10,16 +10,20 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>2.3.0</ApplicationVersion>
+        <ApplicationVersion>2.4.0</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
+        <Configurations>Debug;Release;Release Archive;Debug Run ClientServer;Debug Run Client</Configurations>
     </PropertyGroup>
     <Import Project="..\..\base.targets"/>
     <Import Project="..\..\valheim.targets"/>
-    <!--  gameLauncher launches the game on different paths and clients/servers only put this in the project that should be built  -->
-    <!--    Condition="'$(Configuration)|$(Platform)' != 'Release Archive|AnyCPU'"-->
+
+    <!-- Until ValheimVehicles is published, RAFT will directly pull in it's dependencies -->
+    <ItemGroup Label="Embedded Resources">
+        <Folder Include="obj\"/>
+    </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
@@ -28,40 +32,35 @@
     <ItemGroup>
         <ProjectReference Include="..\Shared\Shared.csproj"/>
     </ItemGroup>
-    <!--    <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU'">-->
-    <!--        <Compile Include="..\DynamicLocations\**.cs"/>-->
-    <!--        <Compile Include="..\ZdoWatcher\**\*.cs"/>-->
-    <!--        <Folder Include="..\ZdoWatcher\ZdoWatcher.Patches\">-->
-    <!--            <Link>ZdoWatcher.Patches</Link>-->
-    <!--        </Folder>-->
-    <!--    </ItemGroup>-->
-    <Import Project="..\..\gameLauncher.targets"/>
-    <ItemGroup>
-        <Compile Include="Properties\AssemblyInfo.cs"/>
-        <Compile Include="Properties\CustomAssemblyAttributes.cs"/>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Config\VehicleDebugConfig.cs">
-            <Link>ValheimVehicles.Config\VehicleDebugConfig.cs</Link>
+    <ItemGroup Label="Embedded ValheimVehicles">
+        <!--        <ProjectReference Include="..\ValheimVehicles\ValheimVehicles.csproj">-->
+        <!--            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>-->
+        <!--        </ProjectReference>-->
+        <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Helpers\VectorUtils.cs">
+            <Link>ValheimVehicles.Helpers\VectorUtils.cs</Link>
         </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Config\PropulsionConfig.cs">
-            <Link>ValheimVehicles.Config\VehiclePropulsionConfig.cs</Link>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\LeverPrefabs.cs">
+            <Link>ValheimVehicles.Prefabs\Registry\LeverPrefabs.cs</Link>
         </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleOnboardController.cs">
-            <Link>Controllers\VehicleOnboardController.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Enums\VehiclePhysicsMode.cs">
-            <Link>Enums\VehiclePhysicsMode.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\**">
-            <Link>Enums\VehiclePhysicsMode.cs</Link>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CustomToggleSwitch.cs">
+            <Link>ValheimVehicles.Vehicles\Components\CustomToggleSwitch.cs</Link>
         </Compile>
     </ItemGroup>
+    <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup>
-        <Compile Include="ValheimRAFT.Config\IConfigSection.cs"/>
-        <Compile Include="ValheimRAFT.Config\PatchConfig.cs"/>
-        <Compile Include="ValheimRAFT\*.cs"/>
-        <Compile Include="ValheimRAFT.Patches\*.cs"/>
-        <Compile Include="ValheimRAFT.UI\*.cs"/>
-        <Compile Include="ValheimRAFT.Util\*.cs"/>
+        <!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->
+        <!--        <Compile Include="Properties\CustomAssemblyAttributes.cs"/>-->
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Remove="ValheimRAFT.Unity\**\*"/>
+        <!--        <Compile Include="ValheimRAFT.Config\IConfigSection.cs"/>-->
+        <!--        <Compile Include="ValheimRAFT.Config\PatchConfig.cs"/>-->
+        <!--        <Compile Include="ValheimRAFT.Unity\Assets\ValheimVehicles\Scene\CustomMeshGenerator.cs"/>-->
+        <!--        <Compile Include="ValheimRAFT\*.cs"/>-->
+        <!--        <Compile Include="ValheimRAFT.Patches\*.cs"/>-->
+        <!--        <Compile Include="ValheimRAFT.UI\*.cs"/>-->
+        <!--        <Compile Include="ValheimRAFT.Util\*.cs"/>-->
     </ItemGroup>
     <PropertyGroup>
         <SentryDSN>https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496</SentryDSN>
@@ -70,10 +69,6 @@
         <AssemblyAttribute Include="Properties.CustomAssemblyAttributes">
             <_Parameter1>"$(SentryDSN)"</_Parameter1>
         </AssemblyAttribute>
-    </ItemGroup>
-    <!-- Until ValheimVehicles is published, RAFT will directly pull in it's dependencies -->
-    <ItemGroup>
-        <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>
     </ItemGroup>
     <ItemGroup>
         <None Remove="AssetBundle\AssetBundle"/>
@@ -84,6 +79,9 @@
         <None Remove="AssetBundle\valheim-vehicles.manifest"/>
         <None Remove="AssetBundle\valheim-vehicles-shared.manifest"/>
         <None Remove="AssetBundle\AssetBundle.manifest"/>
+
+        <!--  TODO to embed assets, but this needs a refactor and inflates dll size, not worth adding now      -->
+        <!--        <EmbeddedResource Include="Assets\**"/>-->
         <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="AssetBundle"/>
         <EmbeddedResource Include="AssetBundle\valheim-vehicles-shared" LogicalName="valheim-vehicles-shared"/>
         <EmbeddedResource Include="AssetBundle\valheim-raft" LogicalName="valheim-raft"/>
@@ -96,8 +94,8 @@
     <ItemGroup>
         <Content Include=".gitignore"/>
         <Content Include="Assets\Translations\English\valheimraft.json"/>
-        <Content Include="docs\ConfigOutput.md"/>
         <Content Include="docs\ValheimRAFT_AutoDoc.md"/>
+        <Content Include="docs\ConfigOutput.md"/>
         <Content Include="src\ValheimRAFT\README.md"/>
         <Content Include="Thunderstore\icon.png"/>
         <Content Include="Thunderstore\manifest.json"/>
@@ -115,11 +113,11 @@
             <Private>False</Private>
         </Reference>
     </ItemGroup>
-    <ItemGroup>
-        <Folder Include="..\ValheimVehicles\ValheimVehicles.Utils\">
-            <Link>ValheimVehicles.Utils</Link>
-        </Folder>
-    </ItemGroup>
+    <!--    <ItemGroup>-->
+    <!--        <Folder Include="..\ValheimVehicles\ValheimVehicles.Utils\">-->
+    <!--            <Link>ValheimVehicles.Utils</Link>-->
+    <!--        </Folder>-->
+    <!--    </ItemGroup>-->
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Archive|AnyCPU' ">
         <OutputPath>bin\Release Archive\</OutputPath>
     </PropertyGroup>

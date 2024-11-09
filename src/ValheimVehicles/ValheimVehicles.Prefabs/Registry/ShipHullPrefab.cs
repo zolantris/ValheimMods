@@ -3,6 +3,7 @@ using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
+using ValheimVehicles.Vehicles.Components;
 using static ValheimVehicles.Prefabs.PrefabNames;
 
 namespace ValheimVehicles.Prefabs.Registry;
@@ -11,6 +12,8 @@ public class ShipHullPrefab : IRegisterPrefab
 {
   public static readonly ShipHullPrefab Instance = new();
 
+  public static Shader MaskShader = null!;
+
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
     var sizeVariants = new[]
@@ -18,7 +21,8 @@ public class ShipHullPrefab : IRegisterPrefab
       PrefabSizeVariant.TwoByTwo,
       PrefabSizeVariant.FourByFour
     };
-    var hullMaterialTypes = new[] { ShipHulls.HullMaterial.Wood, ShipHulls.HullMaterial.Iron };
+    var hullMaterialTypes = new[]
+      { ShipHulls.HullMaterial.Wood, ShipHulls.HullMaterial.Iron };
 
     DirectionVariant[] ribDirections =
     [
@@ -28,7 +32,8 @@ public class ShipHullPrefab : IRegisterPrefab
 
     foreach (var hullMaterialType in hullMaterialTypes)
     {
-      RegisterHull(GetShipHullCenterName(hullMaterialType), hullMaterialType, 16 + 16 + 4,
+      RegisterHull(GetShipHullCenterName(hullMaterialType), hullMaterialType,
+        16 + 16 + 4,
         PrefabSizeVariant.FourByEight);
 
       RegisterHullRib(GetHullRibName(hullMaterialType), hullMaterialType);
@@ -62,7 +67,13 @@ public class ShipHullPrefab : IRegisterPrefab
     }
   }
 
-  public static RequirementConfig[] GetRequirements(string material, int materialCount)
+  public static void Test()
+  {
+  }
+
+
+  public static RequirementConfig[] GetRequirements(string material,
+    int materialCount)
   {
     RequirementConfig[] requirements = [];
     return material switch
@@ -71,23 +82,27 @@ public class ShipHullPrefab : IRegisterPrefab
       [
         new RequirementConfig
         {
-          Amount = Mathf.RoundToInt(Mathf.Clamp(materialCount / 4f, 1, 10)), Item = "Iron",
+          Amount = Mathf.RoundToInt(Mathf.Clamp(materialCount / 4f, 1, 10)),
+          Item = "Iron",
           Recover = true
         },
         new RequirementConfig
         {
-          Amount = Mathf.RoundToInt(Mathf.Clamp(materialCount / 4f, 1, 10)), Item = "Bronze",
+          Amount = Mathf.RoundToInt(Mathf.Clamp(materialCount / 4f, 1, 10)),
+          Item = "Bronze",
           Recover = true
         },
         new RequirementConfig
         {
           Amount = 2 * materialCount, Item = "BronzeNails", Recover = true
         },
-        new RequirementConfig { Amount = 1 * materialCount, Item = "YggdrasilWood", Recover = true }
+        new RequirementConfig
+          { Amount = 1 * materialCount, Item = "YggdrasilWood", Recover = true }
       ],
       ShipHulls.HullMaterial.Wood =>
       [
-        new RequirementConfig { Amount = 2 * materialCount, Item = "Wood", Recover = true }
+        new RequirementConfig
+          { Amount = 2 * materialCount, Item = "Wood", Recover = true }
       ],
       _ => requirements
     };
@@ -100,7 +115,8 @@ public class ShipHullPrefab : IRegisterPrefab
     wnt.m_noSupportWear = true;
     wnt.m_noRoofWear = true;
     wnt.m_hitEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_hitEffect;
-    wnt.m_switchEffect = LoadValheimAssets.woodFloorPieceWearNTear.m_switchEffect;
+    wnt.m_switchEffect =
+      LoadValheimAssets.woodFloorPieceWearNTear.m_switchEffect;
     wnt.m_hitNoise = LoadValheimAssets.woodFloorPieceWearNTear.m_hitNoise;
     wnt.m_burnable = hullMaterial != ShipHulls.HullMaterial.Iron;
   }
@@ -111,7 +127,9 @@ public class ShipHullPrefab : IRegisterPrefab
   {
     var prefabName = GetHullRibCornerName(hullMaterial,
       directionVariant);
-    var prefabAsset = LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial, directionVariant);
+    var prefabAsset =
+      LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial,
+        directionVariant);
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
         prefabName, prefabAsset);
@@ -125,7 +143,8 @@ public class ShipHullPrefab : IRegisterPrefab
     PrefabSizeVariant sizeVariant)
   {
     var prefabName = GetHullProwVariants(hullMaterial, sizeVariant);
-    var prefabAsset = LoadValheimVehicleAssets.GetShipHullRibProw(hullMaterial, sizeVariant);
+    var prefabAsset =
+      LoadValheimVehicleAssets.GetShipHullRibProw(hullMaterial, sizeVariant);
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
         prefabName, prefabAsset);
@@ -157,16 +176,18 @@ public class ShipHullPrefab : IRegisterPrefab
     // prefab.gameObject.layer = 0;
     PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab);
 
-    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab, hoistParent ?? prefab.transform,
+    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
+      hoistParent ?? prefab.transform,
       hoistFilters);
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, false, new PieceConfig
-    {
-      PieceTable = "Hammer",
-      Category = ValheimRaftMenuName,
-      Enabled = true,
-      Requirements = GetRequirements(hullMaterial, materialCount)
-    }));
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
+      new PieceConfig
+      {
+        PieceTable = "Hammer",
+        Category = ValheimRaftMenuName,
+        Enabled = true,
+        Requirements = GetRequirements(hullMaterial, materialCount)
+      }));
   }
 
   /// <summary>
@@ -193,7 +214,8 @@ public class ShipHullPrefab : IRegisterPrefab
   /// <param name="hullMaterial"></param>
   /// <param name="sizeVariant"></param>
   /// <returns></returns>
-  private static GameObject GetShipHullAssetByMaterial(string prefabName, string hullMaterial,
+  private static GameObject GetShipHullAssetByMaterial(string prefabName,
+    string hullMaterial,
     PrefabSizeVariant sizeVariant)
   {
     if (prefabName.Contains(HullWall))
@@ -235,7 +257,8 @@ public class ShipHullPrefab : IRegisterPrefab
     int materialCount,
     PrefabSizeVariant prefabSizeVariant)
   {
-    var prefabClone = GetShipHullAssetByMaterial(prefabName, hullMaterial, prefabSizeVariant);
+    var prefabClone =
+      GetShipHullAssetByMaterial(prefabName, hullMaterial, prefabSizeVariant);
 
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(

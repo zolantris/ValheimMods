@@ -6,6 +6,7 @@ using HarmonyLib;
 using Jotunn;
 using ValheimRAFT.Config;
 using ValheimRAFT.Util;
+using ValheimVehicles.ModSupport;
 using ValheimVehicles.Patches;
 
 namespace ValheimRAFT.Patches;
@@ -32,8 +33,22 @@ internal static class PatchController
     Harmony.PatchAll(typeof(ZNetView_Patch));
     Harmony.PatchAll(typeof(Hud_Patch));
     Harmony.PatchAll(typeof(VehicleMovementPatches));
+    Harmony.PatchAll(typeof(EffectsArea_VehiclePatches));
 
+    // water effects
+    Harmony.PatchAll(typeof(WaterVolume_WaterPatches));
+    Harmony.PatchAll(typeof(GameCamera_WaterPatches));
+    Harmony.PatchAll(typeof(Character_WaterPatches));
+    Harmony.PatchAll(typeof(Fireplace_WaterPatches));
 
+    if (Chainloader.PluginInfos.ContainsKey("zolantris.DynamicLocations"))
+    {
+      Harmony.PatchAll(typeof(DynamicLocations_Game_LogoutPatch));
+    }
+
+#if DEBUG
+    Harmony.PatchAll(typeof(QuickStartWorld_Patch));
+#endif
 // #if DEBUG
 //     // Debug only for now, this needs to be refined to ignore collisions with ship colliders
 //     Harmony.PatchAll(typeof(GameCamera_VehiclePiecesPatch));

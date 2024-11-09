@@ -48,7 +48,7 @@ namespace ValheimRAFT
         {
             m_sailComponents.Remove(this);
         }
-
+        
         public void LoadZDO()
         {
             if (!m_znetview || m_znetview.m_zdo == null)

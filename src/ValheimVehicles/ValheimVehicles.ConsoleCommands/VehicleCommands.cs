@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using BepInEx.Logging;
 using Components;
@@ -8,9 +10,11 @@ using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
 using ValheimRAFT;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Vehicles.Controllers;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
@@ -22,13 +26,15 @@ public class VehicleCommands : ConsoleCommand
   {
     // public const string locate = "locate";
     // public const string rotate = "rotate";
-    // public const string move = "move";
     // public const string destroy = "destroy";
+    public const string reportInfo = "report-info";
     public const string debug = "debug";
     public const string creative = "creative";
+    public const string colliderEditMode = "colliderEditMode";
     public const string help = "help";
     public const string recover = "recover";
     public const string rotate = "rotate";
+    public const string moveUp = "moveUp";
     public const string move = "move";
     public const string toggleOceanSway = "toggleOceanSway";
     public const string upgradeToV2 = "upgradeShipToV2";
@@ -44,8 +50,11 @@ public class VehicleCommands : ConsoleCommand
       $"\n<{VehicleCommandArgs.debug}>: will show a menu with options like rotating or debugging vehicle colliders" +
       $"\n<{VehicleCommandArgs.recover}>: will recover any vehicles within range of 1000 and turn them into V2 Vehicles" +
       $"\n<{VehicleCommandArgs.rotate}>: defaults to zeroing x and z tilt. Can also provide 3 args: x y z" +
+      $"\n<{VehicleCommandArgs.toggleOceanSway}>: stops the vehicle from swaying in the water. It will stay at 0 degrees (x and z) tilt and only allow rotating on y axis" +
+      $"\n<{VehicleCommandArgs.reportInfo}>: outputs information related to the vehicle the player is on or near. This is meant for error reports" +
+      $"\n<{VehicleCommandArgs.moveUp}>: Moves the vehicle within 50 units upwards by the value provided. Capped at 30 units to be safe. And Capped at 10 units lowest world position." +
       $"\n<{VehicleCommandArgs.move}>: Must provide 3 args: x y z, the movement is relative to those points" +
-      $"\n<{VehicleCommandArgs.toggleOceanSway}>: stops the vehicle from swaying in the water. It will stay at 0 degrees (x and z) tilt and only allow rotating on y axis";
+      $"\n<{VehicleCommandArgs.colliderEditMode}>: Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items";
   }
 
   public override void Run(string[] args)
@@ -55,6 +64,13 @@ public class VehicleCommands : ConsoleCommand
 
   private void ParseFirstArg(string[] args)
   {
+    if (args.Length < 1)
+    {
+      Logger.LogMessage(
+        "Must provide a argument for `vehicle` command, type vehicle help to see all commands");
+      return;
+    }
+
     var firstArg = args.First();
     if (firstArg == null)
     {
@@ -62,13 +78,12 @@ public class VehicleCommands : ConsoleCommand
       return;
     }
 
+    var nextArgs = args.Skip(1).ToArray();
+
     switch (firstArg)
     {
-      // case VehicleCommandArgs.locate:
-      //   LocateVehicle.LocateAllVehicles();
-      //   break;
       case VehicleCommandArgs.move:
-        VehicleMove(args);
+        VehicleMove(nextArgs);
         break;
       case VehicleCommandArgs.toggleOceanSway:
         VehicleToggleOceanSway();
@@ -77,10 +92,12 @@ public class VehicleCommands : ConsoleCommand
         VehicleRotate(args);
         break;
       case VehicleCommandArgs.recover:
-        RecoverRaftConsoleCommand.RecoverRaftWithoutDryRun($"{Name} {VehicleCommandArgs.recover}");
+        RecoverRaftConsoleCommand.RecoverRaftWithoutDryRun(
+          $"{Name} {VehicleCommandArgs.recover}");
         break;
       case VehicleCommandArgs.creative:
-        CreativeModeConsoleCommand.RunCreativeModeCommand($"{Name} {VehicleCommandArgs.creative}");
+        CreativeModeConsoleCommand.RunCreativeModeCommand(
+          $"{Name} {VehicleCommandArgs.creative}");
         break;
       case VehicleCommandArgs.debug:
         ToggleVehicleDebugComponent();
@@ -88,13 +105,167 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.upgradeToV2:
         RunUpgradeToV2();
         break;
+      case VehicleCommandArgs.reportInfo:
+        OnReportInfo();
+        break;
       case VehicleCommandArgs.downgradeToV1:
         RunDowngradeToV1();
+        break;
+      case VehicleCommandArgs.colliderEditMode:
+        ToggleColliderEditMode();
+        break;
+      case VehicleCommandArgs.moveUp:
+        VehicleMoveVertically(nextArgs);
+        break;
+      case VehicleCommandArgs.help:
+        Logger.LogMessage(OnHelp());
         break;
     }
   }
 
+  public static void FloatArgErrorMessage(string arg)
+  {
+    var message =
+      $"The arg provided {arg} was not a float. Example -10, 0, 15.5, 30.1 are all accepted. (positive/negative). Values above 50.0 locked at 50. Values that would put the vehicle below the map are prevented if you want to do that, use Unity Explorer.";
+    Logger.LogMessage(arg);
+  }
+
+  /// <summary>
+  /// Handles vertical movement for vehicles. Can be merged with VehicleMove for shared functionality.
+  /// </summary>
+  /// <param name="args">Command arguments.</param>
+  public static void VehicleMoveVertically(string[]? args)
+  {
+    if (args == null || args.Length < 1)
+    {
+      FloatArgErrorMessage("No args provided");
+      return;
+    }
+
+    if (!float.TryParse(args[0], out var offset))
+    {
+      FloatArgErrorMessage(args[0]);
+      return;
+    }
+
+    var vehicleInstance =
+      GetNearestVehicleShip(Player.m_localPlayer.transform.position);
+
+    if (vehicleInstance?.MovementController == null)
+    {
+      Logger.LogMessage("No vehicle found near the player");
+      return;
+    }
+
+    Player.m_localPlayer.StartCoroutine(MoveVehicle(vehicleInstance,
+      Vector3.up * Mathf.Clamp(offset, -100f, 100f)));
+  }
+
+  /// <summary>
+  /// Moves the vehicle based on the provided offset vector.
+  /// </summary>
+  /// <param name="vehicleInstance">The vehicle instance to move.</param>
+  /// <param name="offset">The offset vector to apply.</param>
+  private static IEnumerator MoveVehicle(VehicleShip? vehicleInstance,
+    Vector3 offset)
+  {
+    if (vehicleInstance == null) yield break;
+
+    vehicleInstance.SetCreativeMode(true);
+
+    var playersOnShip = vehicleInstance.OnboardController.GetPlayersOnShip();
+    var wasDebugFlyingPlayers = new List<Player>();
+    if (playersOnShip.Count > 0)
+    {
+      foreach (var player in playersOnShip)
+      {
+        if (player.IsDebugFlying())
+        {
+          wasDebugFlyingPlayers.Add(player);
+          continue;
+        }
+
+        player.ToggleDebugFly();
+      }
+    }
+
+    var wasDebugFlying = Player.m_localPlayer.IsDebugFlying();
+    if (!wasDebugFlying)
+    {
+      Player.m_localPlayer.ToggleDebugFly();
+    }
+
+    // Ensure Y position does not go below 1
+    // vehicleInstance.transform.position.y + offset.y;
+    vehicleInstance.transform.position =
+      VectorUtils.MergeVectors(vehicleInstance.transform.position, offset);
+
+    yield return new WaitForFixedUpdate();
+
+    if (playersOnShip.Count > 0)
+    {
+      foreach (var player in playersOnShip)
+      {
+        if (wasDebugFlyingPlayers.Contains(player))
+        {
+          continue;
+        }
+
+        if (!player.IsDebugFlying())
+        {
+          continue;
+        }
+
+        player.ToggleDebugFly();
+      }
+    }
+
+    if (!wasDebugFlying && Player.m_localPlayer.IsDebugFlying())
+    {
+      Player.m_localPlayer.ToggleDebugFly();
+    }
+
+    vehicleInstance.SetCreativeMode(false);
+    yield return null;
+  }
+
+  /// <summary>
+  /// Moves the vehicle based on the provided x, y, z parameters.
+  /// </summary>
+  /// <param name="args">Command arguments.</param>
   public void VehicleMove(string[] args)
+  {
+    var shipInstance =
+      GetNearestVehicleShip(Player.m_localPlayer.transform.position);
+    if (shipInstance == null)
+    {
+      Logger.LogMessage("No VehicleController Detected");
+      return;
+    }
+
+    if (args.Length == 3 &&
+        float.TryParse(args[0], out var x) &&
+        float.TryParse(args[1], out var y) &&
+        float.TryParse(args[2], out var z))
+    {
+      var offsetVector =
+        VectorUtils.ClampVector(new Vector3(x, y, z), -100f, 100f);
+
+      Player.m_localPlayer.StartCoroutine(MoveVehicle(shipInstance,
+        offsetVector));
+    }
+    else
+    {
+      Logger.LogMessage(
+        "Must provide x y z parameters, e.g., vehicle move 0.5 0 10");
+    }
+  }
+
+
+  /// <summary>
+  /// Freezes the Vehicle rotation permenantly until the boat is unloaded similar to raftcreative 
+  /// </summary>
+  public static void VehicleToggleOceanSway()
   {
     var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
     if (vehicleController == null)
@@ -103,36 +274,8 @@ public class VehicleCommands : ConsoleCommand
       return;
     }
 
-    if (args.Length == 4 && vehicleController.VehicleInstance.Instance != null)
-    {
-      float.TryParse(args[1], out var x);
-      float.TryParse(args[2], out var y);
-      float.TryParse(args[3], out var z);
-      var offsetVector = new Vector3(x, y, z);
-      vehicleController.VehicleInstance.Instance.MovementController.m_body.isKinematic = true;
-      vehicleController.VehicleInstance.Instance.transform.position += offsetVector;
-      Physics.SyncTransforms();
-      vehicleController.VehicleInstance.Instance.MovementController.m_body.isKinematic = false;
-    }
-    else
-    {
-      Logger.LogMessage("Must provide x y z parameters, IE: vehicle rotate 0.5 0 10");
-    }
-  }
-
-  /// <summary>
-  /// Freezes the Vehicle rotation permenantly until the boat is unloaded similar to raftcreative 
-  /// </summary>
-  public static void VehicleToggleOceanSway()
-  {
-    var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
-    if (!vehicleController)
-    {
-      Logger.LogMessage("No VehicleController Detected");
-      return;
-    }
-
-    vehicleController?.VehicleInstance.Instance.MovementController.SendToggleOceanSway();
+    vehicleController.MovementController?
+      .SendToggleOceanSway();
   }
 
   private static void VehicleRotate(string[] args)
@@ -154,14 +297,17 @@ public class VehicleCommands : ConsoleCommand
       float.TryParse(args[1], out var x);
       float.TryParse(args[2], out var y);
       float.TryParse(args[3], out var z);
-      vehicleController?.VehicleInstance?.Instance?.MovementController?.m_body.MoveRotation(
-        Quaternion.Euler(
-          Mathf.Approximately(0f, x) ? 0 : x, Mathf.Approximately(0f, y) ? 0 : y,
-          Mathf.Approximately(0f, z) ? 0 : z));
+      vehicleController?.VehicleInstance?.Instance?.MovementController?.m_body
+        .MoveRotation(
+          Quaternion.Euler(
+            Mathf.Approximately(0f, x) ? 0 : x,
+            Mathf.Approximately(0f, y) ? 0 : y,
+            Mathf.Approximately(0f, z) ? 0 : z));
     }
     else
     {
-      Logger.LogMessage("Must provide x y z parameters, IE: vehicle rotate 0.5 0 10");
+      Logger.LogMessage(
+        "Must provide x y z parameters, IE: vehicle rotate 0.5 0 10");
     }
   }
 
@@ -187,7 +333,7 @@ public class VehicleCommands : ConsoleCommand
       vehicleController.transform.rotation, null);
 
     var mbShip = mbRaftPrefabInstance.GetComponent<MoveableBaseShipComponent>();
-    var piecesInVehicleController = vehicleController.GetCurrentPieces();
+    var piecesInVehicleController = vehicleController.GetCurrentPendingPieces();
 
     foreach (var zNetView in piecesInVehicleController)
     {
@@ -195,7 +341,8 @@ public class VehicleCommands : ConsoleCommand
         mbShip.GetMbRoot().GetPersistentId());
     }
 
-    if (vehicleShip.Instance != null) ZNetScene.instance.Destroy(vehicleShip.Instance.gameObject);
+    if (vehicleShip.Instance != null)
+      ZNetScene.instance.Destroy(vehicleShip.Instance.gameObject);
   }
 
   private static void RunUpgradeToV2()
@@ -207,18 +354,21 @@ public class VehicleCommands : ConsoleCommand
       return;
     }
 
-    var vehiclePrefab = PrefabManager.Instance.GetPrefab(PrefabNames.WaterVehicleShip);
+    var vehiclePrefab =
+      PrefabManager.Instance.GetPrefab(PrefabNames.WaterVehicleShip);
 
     if (mbRaft == null) return;
 
-    var vehicleInstance = Object.Instantiate(vehiclePrefab, mbRaft.m_ship.transform.position,
+    var vehicleInstance = Object.Instantiate(vehiclePrefab,
+      mbRaft.m_ship.transform.position,
       mbRaft.m_ship.transform.rotation, null);
     var vehicleShip = vehicleInstance.GetComponent<VehicleShip>();
 
     var piecesInMbRaft = mbRaft.m_pieces;
     foreach (var zNetView in piecesInMbRaft)
     {
-      zNetView.m_zdo.Set(VehicleZdoVars.MBParentIdHash, vehicleShip.PersistentZdoId);
+      zNetView.m_zdo.Set(VehicleZdoVars.MBParentIdHash,
+        vehicleShip.PersistentZdoId);
     }
 
     ZNetScene.instance.Destroy(mbRaft.m_ship.gameObject);
@@ -234,6 +384,118 @@ public class VehicleCommands : ConsoleCommand
     }
   }
 
+  public static VehicleShip? GetNearestVehicleShip(Vector3 position)
+  {
+    if (!Physics.Raycast(
+          GameCamera.instance.transform.position,
+          GameCamera.instance.transform.forward,
+          out var hitinfo, 50f,
+          LayerMask.GetMask("piece") + LayerMask.GetMask("CustomVehicleLayer")))
+    {
+      Logger.LogWarning(
+        $"boat not detected within 50f, get nearer to the boat and look directly at the boat");
+      return null;
+    }
+
+    var vehiclePiecesController =
+      hitinfo.collider.GetComponentInParent<VehiclePiecesController>();
+
+    if (!(bool)vehiclePiecesController?.VehicleInstance?.Instance) return null;
+
+    var vehicleShipController =
+      vehiclePiecesController?.VehicleInstance?.Instance;
+    return vehicleShipController;
+  }
+
+  public static string GetPlayerPathInfo()
+  {
+    try
+    {
+      var playerFolderLocation =
+        PlayerProfile.GetCharacterFolderPath(Game.instance.m_playerProfile
+          .m_fileSource);
+      var worldFolderLocation =
+        World.GetWorldSavePath(Game.instance.m_playerProfile.m_fileSource);
+
+
+      var logFile = PlayerProfile.GetPath(
+                      Game.instance.m_playerProfile
+                        .m_fileSource,
+                      "Player.log") ??
+                    $"Possible issue findingpath: guessing path is -> {Path.Combine(playerFolderLocation, "../Player.log")}";
+
+      return string.Join("\n",
+        $"PlayerProfile location: {playerFolderLocation}",
+        $"Player.log location: {logFile}",
+        $"WorldFolder location(may be N/A): {worldFolderLocation}");
+    }
+    catch
+    {
+      return "";
+    }
+  }
+
+  private static void OnReportInfo()
+  {
+    var shipInstance =
+      GetNearestVehicleShip(Player.m_localPlayer.transform.position);
+    if (shipInstance == null)
+    {
+      Logger.LogMessage(
+        "No ship found, please run this command near the ship that needs to be reported.");
+    }
+
+    var pieceController = shipInstance!.VehiclePiecesController;
+    if (pieceController == null) return;
+
+    var vehiclePendingPieces =
+      pieceController?.GetCurrentPendingPieces();
+    var vehiclePendingPiecesCount = vehiclePendingPieces?.Count ?? -1;
+    var currentPendingState = pieceController!.PendingPiecesState;
+    var pendingPiecesString =
+      string.Join(",", vehiclePendingPieces?.Select(x => x.name) ?? []);
+    if (pendingPiecesString == string.Empty)
+    {
+      pendingPiecesString = "None";
+    }
+
+    var piecesString = string.Join(",",
+      pieceController.m_pieces?.Select(x => x.name) ?? []);
+
+    // todo swap all m_players to OnboardController.characterData check instead.
+    var playersOnVehicle =
+      string.Join(",", shipInstance?.MovementController?.m_players.Select((x) =>
+        x?.GetPlayerName() ?? "Null Player") ?? []);
+
+    var separatorDecorator = "================";
+    var logSeparatorStart =
+      $"{separatorDecorator} ValheimRaft/Vehicles report-info START {separatorDecorator}";
+    var logSeparatorEnd =
+      $"{separatorDecorator} ValheimRaft/Vehicles report-info END {separatorDecorator}";
+
+    Logger.LogMessage(string.Join("\n",
+      logSeparatorStart,
+      vehiclePendingPiecesCount,
+      $"vehiclePieces, {vehiclePendingPiecesCount}",
+      $"vehiclePiecesCount, {piecesString}",
+      $"PendingPiecesState {currentPendingState}",
+      $"vehiclePendingPieces: {pendingPiecesString}",
+      $"vehiclePendingPiecesCount, {vehiclePendingPiecesCount}",
+      $"playerPosition: {Player.m_localPlayer.transform.position}",
+      $"PlayersOnVehicle: {playersOnVehicle}",
+      $"vehiclePosition {shipInstance?.transform.position}",
+      GetPlayerPathInfo(),
+      logSeparatorEnd
+    ));
+  }
+
+  public static void ToggleColliderEditMode()
+  {
+    CreativeModeColliderComponent.ToggleEditMode();
+    WaterZoneController.OnToggleEditMode(CreativeModeColliderComponent
+      .IsEditMode);
+  }
+
   public override List<string> CommandOptionList() =>
   [
     // VehicleCommandArgs.locate, 
@@ -245,7 +507,11 @@ public class VehicleCommands : ConsoleCommand
     VehicleCommandArgs.help,
     VehicleCommandArgs.upgradeToV2,
     VehicleCommandArgs.downgradeToV1,
-    VehicleCommandArgs.recover
+    VehicleCommandArgs.recover,
+    VehicleCommandArgs.reportInfo,
+    VehicleCommandArgs.colliderEditMode,
+    VehicleCommandArgs.move,
+    VehicleCommandArgs.moveUp,
   ];
 
 

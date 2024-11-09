@@ -11,6 +11,18 @@ public class LoadValheimVehicleAssets : ILoadAssets
   // CustomSail
   public static GameObject CustomSail = null!;
 
+  // public static Shader InvertedWaterMask = null!;
+
+  // public static Shader SelectiveMask = null!;
+  public static Shader StandardTwoSidedShader = null!;
+  // public static Shader WaterMaskShader = null!;
+
+  // public static Material WaterMaskMaterial = null!;
+  // public static Material SelectiveMaskMat = null!;
+
+  public static Material TransparentDepthMaskMaterial = null!;
+  public static Material WaterHeightMaterial = null!;
+
   // hull
   public static GameObject ShipHullWoodAsset = null!;
   public static GameObject ShipHullIronAsset = null!;
@@ -60,7 +72,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject SteeringWheel = null!;
   public static GameObject VehicleShipAsset = null!;
   public static GameObject VehiclePiecesAsset = null!;
-  public static GameObject VehicleSwitchAsset = null!;
+  public static GameObject MechanicalSwitch = null!;
 
   // hud
   public static GameObject HudAnchor = null!;
@@ -79,7 +91,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject GetVehicleContainer(GameObject obj) =>
     obj.FindDeepChild(PrefabNames.VehicleContainer).gameObject;
 
-  private static AssetBundle _bundle = null!;
+  internal static AssetBundle _bundle = null!;
 
   private static GameObject GetShipProwAssetByMaterial(string hullMaterial,
     PrefabNames.PrefabSizeVariant sizeVariant)
@@ -122,7 +134,24 @@ public class LoadValheimVehicleAssets : ILoadAssets
   /// <param name="assetBundle"></param>
   public void Init(AssetBundle assetBundle, AssetBundle sharedAssetBundle)
   {
+    StandardTwoSidedShader =
+      sharedAssetBundle.LoadAsset<Shader>("StandardTwoSided.shader");
+
     _bundle = assetBundle;
+    WaterHeightMaterial =
+      assetBundle.LoadAsset<Material>("WaterHeightMaterial.mat");
+    // SelectiveMaskMat =
+    //   assetBundle.LoadAsset<Material>("SelectiveMaskMat.mat");
+    //
+    // WaterMaskShader = assetBundle.LoadAsset<Shader>("WaterMask.shader");
+    // WaterMaskMaterial =
+    //   assetBundle.LoadAsset<Material>("WaterMaskMaterial.mat");
+    // InvertedWaterMask =
+    //   assetBundle.LoadAsset<Shader>("InvertWaterMask.shader");
+    // SelectiveMask =
+    //   assetBundle.LoadAsset<Shader>("SelectiveMask.shader");
+    TransparentDepthMaskMaterial =
+      assetBundle.LoadAsset<Material>("TransparentDepthMask.mat");
 
     CustomSail = assetBundle.LoadAsset<GameObject>("custom_sail.prefab");
 
@@ -130,10 +159,11 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
     SteeringWheel = assetBundle.LoadAsset<GameObject>("steering_wheel.prefab");
     ShipKeelAsset = assetBundle.LoadAsset<GameObject>("keel");
-    VehicleSwitchAsset = assetBundle.LoadAsset<GameObject>("vehicle_switch");
+    MechanicalSwitch = assetBundle.LoadAsset<GameObject>("mechanical_switch");
     VehicleShipAsset =
       assetBundle.LoadAsset<GameObject>("vehicle_ship.prefab");
-    VehiclePiecesAsset = assetBundle.LoadAsset<GameObject>("vehicle_ship_pieces.prefab");
+    VehiclePiecesAsset =
+      assetBundle.LoadAsset<GameObject>("vehicle_ship_pieces.prefab");
 
     // hull slabs
     ShipHullSlab2X2WoodAsset =
@@ -183,10 +213,14 @@ public class LoadValheimVehicleAssets : ILoadAssets
     VehicleSprites = assetBundle.LoadAsset<SpriteAtlas>(
       "vehicle_icons.spriteatlasv2");
 
-    RamStakeWood1X2 = assetBundle.LoadAsset<GameObject>($"ram_stake_{PrefabTiers.Tier1}_1x2");
-    RamStakeWood2X4 = assetBundle.LoadAsset<GameObject>($"ram_stake_{PrefabTiers.Tier1}_2x4");
-    RamStakeIron1X2 = assetBundle.LoadAsset<GameObject>($"ram_stake_{PrefabTiers.Tier3}_1x2");
-    RamStakeIron2X4 = assetBundle.LoadAsset<GameObject>($"ram_stake_{PrefabTiers.Tier3}_2x4");
+    RamStakeWood1X2 =
+      assetBundle.LoadAsset<GameObject>($"ram_stake_{PrefabTiers.Tier1}_1x2");
+    RamStakeWood2X4 =
+      assetBundle.LoadAsset<GameObject>($"ram_stake_{PrefabTiers.Tier1}_2x4");
+    RamStakeIron1X2 =
+      assetBundle.LoadAsset<GameObject>($"ram_stake_{PrefabTiers.Tier3}_1x2");
+    RamStakeIron2X4 =
+      assetBundle.LoadAsset<GameObject>($"ram_stake_{PrefabTiers.Tier3}_2x4");
 
 
     RamBladeTop = assetBundle.LoadAsset<GameObject>(

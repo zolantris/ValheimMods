@@ -159,22 +159,22 @@ public class WaterVehiclePrefab : IRegisterPrefab
       LoadValheimVehicleAssets.ShipNautilus);
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
-    PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Nautilus, prefab);
-
-    var wnt = PrefabRegistryHelpers.SetWearNTear(prefab, 3);
-    wnt.m_health = 7000f;
-    wnt.m_burnable = false;
-    wnt.m_supports = true;
-    wnt.m_damages = new HitData.DamageModifiers()
-    {
-      m_slash = HitData.DamageModifier.Resistant,
-      m_blunt = HitData.DamageModifier.Resistant,
-      m_pierce = HitData.DamageModifier.VeryWeak,
-      m_lightning = HitData.DamageModifier.VeryWeak,
-      m_poison = HitData.DamageModifier.Immune,
-      m_frost = HitData.DamageModifier.Immune,
-      m_fire = HitData.DamageModifier.Resistant,
-    };
+    var piece =
+      PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.Nautilus, prefab);
+    // var wnt = PrefabRegistryHelpers.SetWearNTear(prefab, 3);
+    // wnt.m_health = 7000f;
+    // wnt.m_burnable = false;
+    // wnt.m_supports = true;
+    // wnt.m_damages = new HitData.DamageModifiers()
+    // {
+    //   m_slash = HitData.DamageModifier.Resistant,
+    //   m_blunt = HitData.DamageModifier.Resistant,
+    //   m_pierce = HitData.DamageModifier.VeryWeak,
+    //   m_lightning = HitData.DamageModifier.VeryWeak,
+    //   m_poison = HitData.DamageModifier.Immune,
+    //   m_frost = HitData.DamageModifier.Immune,
+    //   m_fire = HitData.DamageModifier.Resistant,
+    // };
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {

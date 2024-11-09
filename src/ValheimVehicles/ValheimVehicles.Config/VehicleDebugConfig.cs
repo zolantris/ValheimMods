@@ -1,6 +1,8 @@
 using System;
 using BepInEx.Configuration;
 using ValheimRAFT;
+using ValheimVehicles.Vehicles.Components;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Config;
 
@@ -13,6 +15,13 @@ public static class VehicleDebugConfig
 
   public static ConfigEntry<bool>
     HasAutoAnchorDelay { get; private set; } = null!;
+
+  public static ConfigEntry<bool>
+    DebugMetricsEnabled { get; private set; } = null!;
+
+  public static ConfigEntry<float>
+    DebugMetricsTimer { get; private set; } = null!;
+
 
   public static ConfigEntry<float> AutoAnchorDelayTime { get; private set; } =
     null!;
@@ -38,16 +47,35 @@ public static class VehicleDebugConfig
 
   private const string SectionName = "Vehicle Debugging";
 
-  private static void OnShowVehicleDebugMenuChange(object sender,
-    EventArgs eventArgs)
+  private static void OnShowVehicleDebugMenuChange()
   {
     ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui(VehicleDebugMenuEnabled
       .Value);
   }
 
+  private static void OnMetricsUpdate()
+  {
+    BatchedLogger.IsLoggingEnabled = DebugMetricsEnabled.Value;
+    if (BatchedLogger.IsLoggingEnabled)
+    {
+      BatchedLogger.BatchIntervalFrequencyInSeconds = DebugMetricsTimer.Value;
+    }
+  }
+
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
+
+    DebugMetricsEnabled = config.Bind(SectionName, "DebugMetricsEnabled",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Will locally log metrics for ValheimVehicles mods. Meant for debugging functional delays",
+        false, true));
+    DebugMetricsTimer = config.Bind(SectionName, "DebugMetricsTimer",
+      1f,
+      ConfigHelpers.CreateConfigDescription(
+        "The interval in seconds that the logs output. Lower is performance heavy. Do not have this set to a low value. Requires EnableDebugMetrics to be enabled to update.",
+        false, true));
 
     HasAutoAnchorDelay = config.Bind(SectionName, "HasAutoAnchorDelay",
       false,
@@ -93,6 +121,10 @@ public static class VehicleDebugConfig
           true, true));
 
     // onChanged
-    AutoShowVehicleColliders.SettingChanged += OnShowVehicleDebugMenuChange;
+    AutoShowVehicleColliders.SettingChanged +=
+      (_, _) => OnShowVehicleDebugMenuChange();
+    DebugMetricsEnabled.SettingChanged += (_, _) => OnMetricsUpdate();
+    DebugMetricsTimer.SettingChanged +=
+      (_, _) => OnMetricsUpdate();
   }
 }

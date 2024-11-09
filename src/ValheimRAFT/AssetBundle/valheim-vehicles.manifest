@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1470494226
+CRC: 1540433686
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 4804043a455a674cff906164a39df519
+    Hash: 666b8ec2078dd81b7ddd88d011f8afff
   TypeTreeHash:
     serializedVersion: 2
     Hash: c06587813f50b4ac49249ee2d68a3382
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 4804043a455a674cff906164a39df519
+    Hash: 666b8ec2078dd81b7ddd88d011f8afff
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -69,8 +69,10 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib_iron.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_basic.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_ship.prefab
-- Assets/ValheimVehicles/Prefabs/hull_rib_corner_right_wood.prefab
+- Assets/ValheimVehicles/Shaders/DepthMask.shader
 - Assets/ValheimVehicles/Prefabs/hull_wall_iron_2x2.prefab
+- Assets/ValheimVehicles/Prefabs/hull_rib_corner_right_wood.prefab
+- Assets/ValheimVehicles/Material/TransparentDepthMask.mat
 - Assets/ValheimVehicles/Prefabs/hull_wall_iron_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_left_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_iron_2x2.prefab
@@ -81,13 +83,17 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier3_1x2.prefab
 - Assets/ValheimVehicles/Prefabs/shared_nautilus.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_bottom.prefab
-- Assets/ValheimVehicles/Prefabs/ram_stake_tier1_1x2.prefab
+- Assets/ValheimVehicles/Shaders/InvertWaterMask.shader
 - Assets/ValheimVehicles/Prefabs/hull_slab_iron_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_2x4.prefab
+- Assets/ValheimVehicles/Material/WaterMaskMaterial.mat
+- Assets/ValheimVehicles/Prefabs/ram_stake_tier1_1x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_center_iron.prefab
+- Assets/Horem/Mocks/Shaders/Custom_WaterMask.shader
 - Assets/ValheimVehicles/Prefabs/hull_window_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_wood_4x4.prefab
+- Assets/ValheimVehicles/Material/WaterHeightMaterial.mat
 - Assets/ValheimVehicles/Prefabs/hull_center_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab
@@ -102,8 +108,10 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_2x2.prefab
+- Assets/ValheimVehicles/Shaders/WaterMask.shader
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_4x4.prefab
 - Assets/ValheimVehicles/vehicle_icons.spriteatlasv2
+- Assets/ValheimVehicles/Prefabs/mechanical_switch.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_right_iron.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/hud_anchor.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_2x2_worn.prefab

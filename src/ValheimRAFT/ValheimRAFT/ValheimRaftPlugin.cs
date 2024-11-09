@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using BepInEx.Bootstrap;
@@ -27,6 +28,7 @@ using ValheimVehicles.Propulsion.Sail;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ZdoWatcher;
+using Zolantris.Shared;
 using Zolantris.Shared.BepInExAutoDoc;
 using Logger = Jotunn.Logger;
 
@@ -40,7 +42,8 @@ internal abstract class PluginDependencies
 // [SentryDSN()]
 [BepInPlugin(ModGuid, ModName, Version)]
 [BepInDependency(ZdoWatcherPlugin.ModGuid)]
-[BepInDependency(DynamicLocationsPlugin.BepInGuid, "1.2.0")]
+[BepInDependency(DynamicLocationsPlugin.BepInGuid,
+  DynamicLocationsPlugin.Version)]
 [BepInDependency(PluginDependencies.JotunnModGuid)]
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod,
   VersionStrictness.Minor)]
@@ -48,7 +51,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "2.3.0";
+  public const string Version = "2.4.0";
   public const string ModName = "ValheimRAFT";
   public const string ModGuid = $"{Author}.{ModName}";
   public static string HarmonyGuid => ModGuid;
@@ -178,6 +181,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
    */
   private void CreateVehicleConfig()
   {
+    var hullFloatationRange = new AcceptableValueRange<float>(-20f, 20f);
+#if DEBUG
+    hullFloatationRange = new AcceptableValueRange<float>(-50f, 50f);
+#endif
     HullFloatationColliderLocation = Config.Bind("Vehicles",
       "HullFloatationColliderLocation",
       HullFloatation.Average,
@@ -191,7 +198,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       0f,
       CreateConfigDescription(
         "Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.",
-        true, true, new AcceptableValueRange<float>(-10, 10)
+        true, true, hullFloatationRange
       ));
 
     EnableExactVehicleBounds = Config.Bind("Vehicles",
@@ -362,13 +369,13 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private void CreateFlightPropulsionConfig()
   {
     FlightVerticalToggle = Config.Bind<bool>("Propulsion",
-      "Flight Vertical Continues UntilToggled",
+      "FlightVerticalToggle",
       true,
-      "Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button");
+      "Flight Vertical Continues UntilToggled: Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button");
     FlightHasRudderOnly = Config.Bind<bool>("Propulsion",
-      "Only allow rudder speeds during flight",
+      "FlightHasRudderOnly",
       false,
-      "Flight allows for different rudder speeds, only use those and ignore sails");
+      "Flight allows for different rudder speeds. Use rudder speed only. Do not use sail speed.");
   }
 
   private void CreateDebugConfig()
@@ -493,6 +500,14 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     VehicleDebugConfig.BindConfig(Config);
     PropulsionConfig.BindConfig(Config);
     ModSupportConfig.BindConfig(Config);
+    CustomMeshConfig.BindConfig(Config);
+    WaterConfig.BindConfig(Config);
+    PhysicsConfig.BindConfig(Config);
+
+#if DEBUG
+    // Meant for only being run in debug builds for testing quickly
+    QuickStartWorldConfig.BindConfig(Config);
+#endif
   }
 
   internal void ApplyMetricIfAvailable()
@@ -514,6 +529,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public void Awake()
   {
     Instance = this;
+    gameObject.AddComponent<BatchedLogger>();
+
     CreateConfig();
     PatchController.Apply(HarmonyGuid);
 

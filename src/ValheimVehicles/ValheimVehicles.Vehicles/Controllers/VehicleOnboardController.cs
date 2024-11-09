@@ -1,23 +1,187 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DynamicLocations;
 using DynamicLocations.Controllers;
+using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimVehicles.Config;
+using ValheimVehicles.Helpers;
+using ValheimVehicles.Patches;
+using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Vehicles.Enums;
+using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles.Controllers;
 
 /// <summary>
 /// A Controller placed directly on the VehicleOnboardCollider GameObject, meant to detect collisions only on that component
+///
+/// TODO in multiplayer make sure that not only the host, but all clients add all Characters that are players to the VehiclePieces controller. This way there is no jitters
 /// </summary>
 public class VehicleOnboardController : MonoBehaviour
 {
-  private VehicleMovementController _movementController = null!;
+  public VehicleMovementController MovementController = null!;
+  public IVehicleShip? VehicleInstance => MovementController?.ShipInstance;
+
+  [UsedImplicitly]
+  public static readonly Dictionary<ZDOID, WaterZoneCharacterData>
+    CharacterOnboardDataItems =
+      new();
+
+  private static readonly Dictionary<ZDOID, Player> DelayedExitSubscriptions =
+    [];
+
+  private static bool _hasExitSubscriptionDelay = false;
+
+  public Collider? OnboardCollider => MovementController?.OnboardCollider;
+
+  public VehiclePiecesController? PiecesController =>
+    MovementController?.ShipInstance?.VehiclePiecesController;
 
   private void Awake()
   {
-    _movementController = GetComponentInParent<VehicleMovementController>();
+    MovementController = GetComponentInParent<VehicleMovementController>();
+    InvokeRepeating(nameof(ValidateCharactersAreOnShip), 1f, 30f);
+  }
+
+  public List<Player> GetPlayersOnShip()
+  {
+    var characterList = new List<Player>();
+    foreach (var characterOnboardDataItem in CharacterOnboardDataItems)
+    {
+      if (characterOnboardDataItem.Value == null) continue;
+      if (characterOnboardDataItem.Value.character == null) continue;
+      if (!characterOnboardDataItem.Value.character.IsPlayer()) continue;
+      var piecesController = characterOnboardDataItem.Value.character.transform
+        .parent.GetComponent<VehiclePiecesController>();
+      if (piecesController == PiecesController)
+      {
+        characterList.Add(characterOnboardDataItem.Value.character as Player);
+      }
+    }
+
+    return characterList;
+  }
+
+  private bool IsValidCharacter(Character character)
+  {
+    return character != null && character.enabled;
+  }
+
+  private void ValidateCharactersAreOnShip()
+  {
+    var itemsToRemove = new List<Character>();
+    var keysToRemove = new List<ZDOID>();
+
+    foreach (var keyValuePair in CharacterOnboardDataItems)
+    {
+      // todo maybe add a check to see if character is connected.
+      if (!IsValidCharacter(keyValuePair.Value.character))
+      {
+        keysToRemove.Add(keyValuePair.Key);
+        continue;
+      }
+
+      if (keyValuePair.Value.character.transform.root
+            .GetComponentInParent<VehiclePiecesController>() == null)
+      {
+        itemsToRemove.Add(keyValuePair.Value.character);
+      }
+    }
+
+    foreach (var zdoid in keysToRemove)
+    {
+      RemoveByZdoid(zdoid);
+    }
+
+    foreach (var character in itemsToRemove)
+    {
+      RemoveCharacter(character);
+    }
+  }
+
+  private static void RemoveByZdoid(ZDOID zdoid)
+  {
+    CharacterOnboardDataItems.Remove(zdoid);
+  }
+
+  private static void RemoveCharacter(Character character)
+  {
+    var zdoid = character.GetZDOID();
+    RemoveByZdoid(zdoid);
+  }
+
+  private void AddCharacter(Character character)
+  {
+    var zdoid = character.GetZDOID();
+    var onboardDataItem = new WaterZoneCharacterData(character, this);
+    CharacterOnboardDataItems.Add(zdoid, onboardDataItem);
+  }
+
+  public static bool IsCharacterOnboard(Character character)
+  {
+    return CharacterOnboardDataItems.ContainsKey(character.GetZDOID());
+  }
+
+  public static void UpdateUnderwaterState(Character character, bool? val)
+  {
+    var characterData = GetOnboardCharacterData(character);
+    characterData?.UpdateUnderwaterStatus(val);
+  }
+
+  public static WaterZoneCharacterData? GetOnboardCharacterData(
+    Character character)
+  {
+    return GetOnboardCharacterData(character.GetZDOID());
+  }
+
+  public static WaterZoneCharacterData? GetOnboardCharacterData(
+    ZDOID zdoid)
+  {
+    if (CharacterOnboardDataItems.TryGetValue(zdoid,
+          out var data))
+    {
+      if (data.OnboardController == null)
+      {
+        CharacterOnboardDataItems.Remove(zdoid);
+        return null;
+      }
+
+      return data;
+    }
+
+    return null;
+  }
+
+  public static bool GetCharacterVehicleMovementController(ZDOID zdoid,
+    out VehicleOnboardController? controller)
+  {
+    controller = null;
+    if (CharacterOnboardDataItems.TryGetValue(zdoid, out var data))
+    {
+      if (data.OnboardController == null)
+      {
+        data.OnboardController =
+          VehiclePiecesController
+            .GetPieceControllerFromPlayer(data.character.gameObject)?
+            .VehicleInstance?.OnboardController;
+      }
+
+      if (data.OnboardController == null)
+      {
+        CharacterOnboardDataItems.Remove(zdoid);
+        return false;
+      }
+
+      controller = data.OnboardController;
+      return true;
+    }
+
+    controller = null;
+    return false;
   }
 
   /// <summary>
@@ -45,27 +209,46 @@ public class VehicleOnboardController : MonoBehaviour
 
   private void OnDisable()
   {
+    // protect character so it removes this list on unmount of onboard controller
+    foreach (var character in CharacterOnboardDataItems.Values.ToList())
+    {
+      if (character.OnboardController == this)
+      {
+        CharacterOnboardDataItems.Remove(character.zdoId);
+      }
+    }
+
     StopCoroutine(nameof(RemovePlayersRoutine));
   }
 
   public VehicleMovementController GetMovementController() =>
-    _movementController;
+    MovementController;
 
   public void SetMovementController(VehicleMovementController val)
   {
-    _movementController = val;
+    MovementController = val;
   }
 
   public void OnTriggerEnter(Collider collider)
   {
-    if (_movementController == null) return;
+    if (MovementController == null) return;
     OnEnterVehicleBounds(collider);
     HandleCharacterHitVehicleBounds(collider, false);
   }
 
+  // todo might refactor this, but water zone controllers will be from the controller instead of delegated here.
+  // public static void OnTriggerEnterReceived(Collider collider)
+  // {
+  //   OnEnterVehicleBounds(collider);
+  // }
+  //
+  // public static void OnTriggerExitReceived()
+  // {
+  // }
+
   public void OnTriggerExit(Collider collider)
   {
-    if (_movementController == null) return;
+    if (MovementController == null) return;
     OnExitVehicleBounds(collider);
     HandleCharacterHitVehicleBounds(collider, true);
   }
@@ -74,14 +257,38 @@ public class VehicleOnboardController : MonoBehaviour
   {
     var character = collider.GetComponent<Character>();
     if (!(bool)character) return;
+
+    var characterZdo = character.GetZDOID();
+    var exists =
+      CharacterOnboardDataItems.TryGetValue(characterZdo,
+        out var characterInstance);
+
     if (isExiting)
     {
+      if (!exists) return;
+      RemoveCharacter(character);
       character.InNumShipVolumes--;
+      WaterZoneUtils.UpdateDepthValues(character);
+      return;
     }
-    else
+
+    // do not increment or add character if already exists in object. This could be a race condition
+    if (!exists)
     {
+      AddCharacter(character);
       character.InNumShipVolumes++;
     }
+    else if (characterInstance != null)
+    {
+      if (characterInstance.OnboardController != this ||
+          characterInstance.OnboardController != null &&
+          characterInstance.OnboardController.transform.parent == null)
+      {
+        characterInstance.OnboardController = this;
+      }
+    }
+
+    WaterZoneUtils.UpdateDepthValues(character, LiquidType.Water);
   }
 
   /// <summary>
@@ -91,7 +298,7 @@ public class VehicleOnboardController : MonoBehaviour
   /// <returns></returns>
   private Player? GetPlayerComponent(Collider collider)
   {
-    if (_movementController.ShipInstance?.Instance == null) return null;
+    if (MovementController.ShipInstance?.Instance == null) return null;
     var playerComponent = collider.GetComponent<Player>();
     if (!playerComponent) return null;
 
@@ -104,10 +311,10 @@ public class VehicleOnboardController : MonoBehaviour
 
   private void RemovePlayerOnShip(Player player)
   {
-    var isPlayerInList = _movementController.m_players.Contains(player);
+    var isPlayerInList = MovementController.m_players.Contains(player);
     if (isPlayerInList)
     {
-      _movementController.m_players.Remove(player);
+      MovementController.m_players.Remove(player);
     }
     else
     {
@@ -120,7 +327,7 @@ public class VehicleOnboardController : MonoBehaviour
 
   private void SetPlayerOnShip(Player player)
   {
-    var piecesTransform = _movementController.ShipInstance?.Instance
+    var piecesTransform = MovementController.ShipInstance?.Instance
       ?.VehiclePiecesController?
       .transform;
 
@@ -131,13 +338,13 @@ public class VehicleOnboardController : MonoBehaviour
       return;
     }
 
-    var isPlayerInList = _movementController.m_players.Contains(player);
+    var isPlayerInList = MovementController.m_players.Contains(player);
 
     player.transform.SetParent(piecesTransform);
 
     if (!isPlayerInList)
     {
-      _movementController.m_players.Add(player);
+      MovementController.m_players.Add(player);
     }
     else
     {
@@ -146,26 +353,84 @@ public class VehicleOnboardController : MonoBehaviour
     }
   }
 
+  /// <summary>
+  /// Protects against the vehicle smashing the player out of the world on spawn.
+  /// </summary>
+  /// <param name="character"></param>
+  public void OnEnterVolatileVehicle(Character character)
+  {
+    if (PiecesController == null) return;
+    if (!PiecesController.IsActivationComplete)
+    {
+      character.m_body.isKinematic = true;
+    }
+  }
+
+  public static void OnVehicleReady()
+  {
+    foreach (var characterOnboardDataItem in CharacterOnboardDataItems)
+    {
+      if (characterOnboardDataItem.Value.character.m_body.isKinematic)
+      {
+        characterOnboardDataItem.Value.character.m_body.isKinematic = false;
+      }
+    }
+  }
+
+  public static void RPC_PlayerOnboardSync()
+  {
+  }
+
   public void OnEnterVehicleBounds(Collider collider)
   {
     var playerInList = GetPlayerComponent(collider);
     if (playerInList == null) return;
 
     Logger.LogDebug(
-      $"Player: {playerInList.GetPlayerName()} on-board, total onboard {_movementController.m_players.Count}");
+      $"Player: {playerInList.GetPlayerName()} on-board, total onboard {MovementController.m_players.Count}");
 
     // All clients should do this
     SetPlayerOnShip(playerInList);
 
-    var vehicleZdo = _movementController
+    var vehicleZdo = MovementController
       .ShipInstance?.NetView?.GetZDO();
 
     if (playerInList == Player.m_localPlayer && vehicleZdo != null)
     {
-      ValheimBaseGameShip.s_currentShips.Add(_movementController);
+      ValheimBaseGameShip.s_currentShips.Add(MovementController);
       PlayerSpawnController.Instance?.SyncLogoutPoint(vehicleZdo);
     }
   }
+
+  public void DebounceExitVehicleBounds()
+  {
+    _hasExitSubscriptionDelay = true;
+    var localList = DelayedExitSubscriptions.ToList();
+
+    // allows new items to be added while this is running
+    DelayedExitSubscriptions.Clear();
+
+    foreach (var delayedExitSubscription in localList)
+    {
+      RemovePlayerOnShip(delayedExitSubscription.Value);
+
+      var remainingPlayers = MovementController.m_players.Count;
+      Logger.LogDebug(
+        $"Player: {delayedExitSubscription.Value.GetPlayerName()} over-board, players remaining {remainingPlayers}");
+
+      var vehicleZdo = MovementController
+        .ShipInstance?.NetView?.GetZDO();
+
+      if (delayedExitSubscription.Value == Player.m_localPlayer &&
+          vehicleZdo != null)
+      {
+        PlayerSpawnController.Instance?.SyncLogoutPoint(vehicleZdo, true);
+      }
+    }
+
+    _hasExitSubscriptionDelay = false;
+  }
+
 
   public void OnExitVehicleBounds(Collider collider)
   {
@@ -175,20 +440,16 @@ public class VehicleOnboardController : MonoBehaviour
       return;
     }
 
-    RemovePlayerOnShip(playerInList);
-
-    var remainingPlayers = _movementController.m_players.Count;
-    Logger.LogDebug(
-      $"Player: {playerInList.GetPlayerName()} over-board, players remaining {remainingPlayers}");
-
-    var vehicleZdo = _movementController
-      .ShipInstance?.NetView?.GetZDO();
-
-    if (playerInList == Player.m_localPlayer && vehicleZdo != null)
+    var playerZdoid = playerInList.GetZDOID();
+    if (!DelayedExitSubscriptions.ContainsKey(playerZdoid))
     {
-      // Todo figure out why I had this enabled, it looks like it could cause a ton of issues.
-      // ValheimBaseGameShip.s_currentShips.Remove(_movementController);
-      PlayerSpawnController.Instance?.SyncLogoutPoint(vehicleZdo, true);
+      DelayedExitSubscriptions.Add(playerZdoid, playerInList);
+    }
+
+    if (!_hasExitSubscriptionDelay)
+    {
+      _hasExitSubscriptionDelay = true;
+      Invoke(nameof(DebounceExitVehicleBounds), 0.5f);
     }
   }
 
@@ -202,7 +463,7 @@ public class VehicleOnboardController : MonoBehaviour
     {
       yield return new WaitForSeconds(15);
 
-      var playersOnboard = _movementController?.ShipInstance
+      var playersOnboard = MovementController?.ShipInstance
         ?.VehiclePiecesController?
         .GetComponentsInChildren<Player>();
       List<Player> validPlayers = [];
@@ -215,12 +476,12 @@ public class VehicleOnboardController : MonoBehaviour
         validPlayers.Add(player);
       }
 
-      if (_movementController != null)
+      if (MovementController != null)
       {
-        _movementController.m_players = validPlayers;
+        MovementController.m_players = validPlayers;
         if (validPlayers.Count == 0)
         {
-          _movementController.SendDelayedAnchor();
+          MovementController.SendDelayedAnchor();
         }
       }
 

@@ -7,20 +7,8 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </PropertyGroup>
-
     <Import Project="$(SolutionDir).props" Condition="Exists('$(SolutionDir).props')"/>
-
-    <PropertyGroup Condition="!Exists('$(SolutionDir).props')">
-        <BepInExPath>$(SolutionDir)libs</BepInExPath>
-        <ManagedDataPath>$(SolutionDir)libs</ManagedDataPath>
-    </PropertyGroup>
-
-    <PropertyGroup Label="VM properties">
-        <SandboxieVMExists Condition="Exists('$(SandboxiePluginDeployPath)')">true</SandboxieVMExists>
-    </PropertyGroup>
-
     <PropertyGroup Label="Runnables and Project Booleans">
         <!-- Runnable variants execute Valheim server or client process after building -->
         <IsRunnableDebug Condition="'$(Configuration)' == 'Debug Run Client' or '$(Configuration)' == 'Debug Run Server' or '$(Configuration)' == 'Debug Run ClientServer'">true</IsRunnableDebug>
@@ -33,7 +21,6 @@
         <IsRelease Condition="'$(Configuration)' == 'Release' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
         <IsNotArchive Condition="'$(Configuration)' != 'Release Archive'">true</IsNotArchive>
     </PropertyGroup>
-
     <PropertyGroup Condition="'$(IsDebug)' == 'true'">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugSymbols>true</DebugSymbols>
@@ -54,6 +41,14 @@
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    <PropertyGroup Condition="!Exists('$(SolutionDir).props')">
+        <BepInExPath>$(SolutionDir)libs</BepInExPath>
+        <ManagedDataPath>$(SolutionDir)libs</ManagedDataPath>
+    </PropertyGroup>
+
+    <PropertyGroup Label="VM properties">
+        <SandboxieVMExists Condition="Exists('$(SandboxiePluginDeployPath)')">true</SandboxieVMExists>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Test|AnyCPU' ">
@@ -371,20 +366,20 @@
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\$(AssemblyName).mdb&quot;"/>
 
-        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\&quot; /q /s /y /i"/>
+        <!--        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\&quot; /q /s /y /i"/>-->
 
         <!--        <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Assets\&quot; /E/H/Y"/>-->
         <!--        <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(ValheimServerPath)\$(PluginDeployTarget)\Assets\Translations\English\&quot; /E/H/Y"/>-->
     </Target>
     <Target Name="Copy_To_R2ModMan" AfterTargets="convert_pdb_to_mdb" Condition="'$(IsNotArchive)' == 'true' and '$(IsRunnableServer)' != 'true' and '$(ClientFileExitCode)' == '0'">
         <!--  Eventually we need to copy and test this lib over in unity     -->
-        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SolutionDir)src\ValheimRAFT\ValheimRAFT.Unity\Assets\Assemblies\$(AssemblyName).dll&quot;"/>
+        <!--        <Exec Condition="'$(IsRelease)' == 'true'" Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(SolutionDir)src\ValheimRAFT\ValheimRAFT.Unity\Assets\Assemblies\$(AssemblyName).dll&quot;"/>-->
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginDeployPath)\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(PluginDeployPath)\$(AssemblyName).mdb&quot;"/>
 
         <Exec Condition="$(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>
-        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>
+        <!--        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(PluginDeployPath)\&quot; /q /s /y /i"/>-->
 
         <!--        <Exec Condition="Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(PluginDeployPath)\Assets\&quot; /E/H/Y"/>-->
         <Exec Condition="Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(PluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>
@@ -397,7 +392,7 @@
         <Exec Condition="'$(FilesCheckExitCode)' == '0' And Exists('$(OutDir)$(AssemblyName).mdb')" Command="copy &quot;$(OutDir)$(AssemblyName).mdb&quot; &quot;$(SandboxiePluginDeployPath)\$(AssemblyName).mdb&quot;"/>
 
         <Exec Condition="'$(FilesCheckExitCode)' == '0' And $(AssemblyName) == 'SentryUnityWrapper'" Command="xcopy &quot;$(SolutionDir)\SentryUnity\1.8.0\runtime&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>
-        <Exec Condition="'$(FilesCheckExitCode)' == '0'" Command="xcopy &quot;$(TargetDir)&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>
+        <!--        <Exec Condition="'$(FilesCheckExitCode)' == '0'" Command="xcopy &quot;$(TargetDir)&quot; &quot;$(SandboxiePluginDeployPath)\&quot; /q /s /y /i"/>-->
 
         <Exec Condition="'$(FilesCheckExitCode)' == '0' And Exists('$(AssetsDir)')" Command="xcopy /d &quot;$(AssetsDir)&quot; &quot;$(SandboxiePluginDeployPath)\Assets\&quot; /E/H/Y"/>
         <Exec Condition="'$(FilesCheckExitCode)' == '0' And Exists('$(AssetsDir)Translations\English\')" Command="xcopy /d &quot;$(AssetsDir)Translations\English\&quot; &quot;$(SandboxiePluginDeployPath)\Assets\Translations\English\&quot; /E/H/Y"/>
@@ -428,8 +423,9 @@
         <!-- Copy Assets -->
         <Exec Command="if exist &quot;$(AssetsDir)&quot; xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>
         <Exec Command="if exist $&quot;$(AssetsDir)&quot; del &quot;$(TmpDir)plugins\Assets\*.png.meta&quot;"/>
-        <!--   copy all files from outputdir, anything included is something that does not exist in the base game dependencies     -->
-        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(TmpDir)plugins\&quot; /q /s /y /i"/>
+
+        <!--   copy all files from outputdir, anything included is something that does not exist in the base game dependencies...this copies too many things, including dev only deps fyi. dont use it for production     -->
+        <!--        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(TmpDir)plugins\&quot; /q /s /y /i"/>-->
 
         <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>
         <!-- delete duplicate mod version-->

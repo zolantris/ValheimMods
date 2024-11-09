@@ -12,6 +12,7 @@ using ValheimRAFT;
 using ValheimRAFT.Patches;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Vehicles.Controllers;
 using ValheimVehicles.Vehicles.Interfaces;
 using ValheimVehicles.Vehicles.Structs;
 using ZdoWatcher;
@@ -119,13 +120,15 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     set => _movementController = value;
   }
 
+  public VehicleOnboardController? OnboardController =>
+    MovementController?.OnboardController;
+
+  public VehicleShip Instance => this;
+
   private GameObject _vehiclePiecesContainerInstance;
   private GUIStyle myButtonStyle;
 
   public Transform m_controlGuiPos { get; set; }
-
-
-  public VehicleShip Instance => this;
 
   public Transform ControlGuiPosition
   {
@@ -226,12 +229,12 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   public void AwakeSetupVehicleShip()
   {
-    if (!_movementController)
+    if (_movementController == null)
     {
       MovementController = GetComponent<VehicleMovementController>();
     }
 
-    if (!(bool)ShipEffectsObj)
+    if (ShipEffectsObj == null && _movementController != null)
     {
       ShipEffects = MovementController?.GetComponent<VehicleShipEffects>();
       ShipEffectsObj = ShipEffects?.gameObject;
@@ -246,6 +249,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   private int GetPersistentID()
   {
+    if (ZNetView.m_forceDisableInit || ZNetScene.instance == null) return 0;
     if (ZdoWatchController.Instance == null)
     {
       Logger.LogWarning(
@@ -346,7 +350,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     if (!(bool)NetView || NetView.GetZDO() == null || NetView.m_ghost ||
         (bool)PiecesController ||
         !isActiveAndEnabled) return;
-    var sector = ZoneSystem.instance.GetZone(transform.position);
+    var sector = ZoneSystem.GetZone(transform.position);
     var zdo = NetView.GetZDO();
     zdo.SetPosition(transform.position);
     zdo.SetSector(sector);

@@ -7,6 +7,14 @@ public static class VehicleZdoVars
   public const string ZdoKeyBaseVehicleInitState =
     "ValheimVehicles_BaseVehicle_Initialized";
 
+  public static string CustomMeshId =
+    "ValheimVehicles_CustomMesh";
+
+  public static string CustomMeshScale = "ValheimVehicles_CustomMeshSize";
+
+  public static string CustomMeshPrimitiveType =
+    "ValheimVehicles_CustomMeshPrimitiveType";
+
   public static readonly int VehicleFlags = "VehicleFlags".GetStableHashCode();
 
   public static readonly int VehicleTargetHeight =

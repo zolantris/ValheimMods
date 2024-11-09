@@ -3,6 +3,7 @@ using UnityEngine;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Vehicles.Controllers;
 using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
 
@@ -99,8 +100,9 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   {
     if (IsVehicleShip)
     {
-      VehicleShipInstance?.MovementController.SendSpeedChange(VehicleMovementController
-        .DirectionChange.Forward);
+      VehicleShipInstance?.MovementController.SendSpeedChange(
+        VehicleMovementController
+          .DirectionChange.Forward);
       return;
     }
 
@@ -114,8 +116,9 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   {
     if (IsVehicleShip)
     {
-      VehicleShipInstance?.MovementController.SendSpeedChange(VehicleMovementController
-        .DirectionChange.Backward);
+      VehicleShipInstance?.MovementController.SendSpeedChange(
+        VehicleMovementController
+          .DirectionChange.Backward);
       return;
     }
 
@@ -129,8 +132,9 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   {
     if (IsVehicleShip)
     {
-      VehicleShipInstance?.MovementController.SendSpeedChange(VehicleMovementController
-        .DirectionChange.Stop);
+      VehicleShipInstance?.MovementController.SendSpeedChange(
+        VehicleMovementController
+          .DirectionChange.Stop);
       return;
     }
 
@@ -225,7 +229,8 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
 
   public void UpdateRudder(float dt, bool haveControllingPlayer)
   {
-    Logger.LogError("Called UpdateRudder but not implemented in vehicle compat");
+    Logger.LogError(
+      "Called UpdateRudder but not implemented in vehicle compat");
   }
 
   public float GetWindAngle()
@@ -321,6 +326,7 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   public GameObject RudderObject { get; set; }
   public VehiclePiecesController? VehiclePiecesController { get; }
   public VehicleMovementController MovementController { get; }
+  public VehicleOnboardController? OnboardController { get; }
   public Rigidbody? MovementControllerRigidbody { get; }
   public BoxCollider FloatCollider { get; set; }
   public Transform? ShipDirection { get; }

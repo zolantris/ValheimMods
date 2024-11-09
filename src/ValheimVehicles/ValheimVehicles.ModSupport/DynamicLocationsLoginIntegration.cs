@@ -14,6 +14,7 @@ using Jotunn;
 using UnityEngine;
 using UnityEngine.UI;
 using ValheimVehicles.Config;
+using ValheimVehicles.Vehicles.Controllers;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 
@@ -32,6 +33,15 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
     PlayerSpawnController playerSpawnController)
   {
     var localTimer = Stopwatch.StartNew();
+    var onboardData =
+      VehicleOnboardController.GetOnboardCharacterData(Player.m_localPlayer);
+
+    // character is already onboard a vehicle. We assume it's the same one...
+    if (onboardData != null)
+    {
+      if (onboardData.OnboardController)
+        yield break;
+    }
 
     yield return playerSpawnController.MovePlayerToZdo(zdo, offset, true, true);
 
@@ -55,8 +65,9 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
 
 
     yield return new WaitUntil(() =>
+      vehicle.Instance.PiecesController.isInitialActivationComplete ||
       vehicle.Instance.PiecesController.IsActivationComplete ||
-      localTimer.ElapsedMilliseconds > 5000);
+      localTimer.ElapsedMilliseconds > 2000);
 
     if (ModSupportConfig.DynamicLocationsShouldSkipMovingPlayerToBed.Value)
     {
@@ -80,8 +91,9 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
       Player.m_localPlayer.ToggleDebugFly();
     }
 
-    Player.m_localPlayer.transform.position =
-      bedTransform.position + Vector3.up * 1.5f;
+    var offset = bedTransform.position + Vector3.up * 1.5f;
+    PlayerSpawnController.Instance?.DynamicTeleport(offset,
+      Player.m_localPlayer.transform.rotation);
   }
 
   private bool MovePlayerToBedOnShip(VehicleShip vehicle)

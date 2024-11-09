@@ -114,5 +114,7 @@
   "valheim_vehicles_ram_blade_desc": "Used to shred enemies and terrain. Deals concussive pickaxe damage damage to rocks and can slash enemies. Can hurt trees",
   "valheim_vehicles_ram_nose": "Ram Nose",
   "valheim_vehicles_ram_nose_desc": "Use to smash terrain and enemies",
-  "valheim_vehicles_gui_vehicle_is_beached": "The Vehicle is beached. Dig until your vehicle can reach water."
+  "valheim_vehicles_gui_vehicle_is_beached": "The Vehicle is beached. Dig until your vehicle can reach water.",
+  "valheim_vehicles_water_mask": "Water Mask creator",
+  "valheim_vehicles_water_mask_desc": "Use this to hide water on the ship. Requires 8 pieces placed to make a cube around the area. This will not bend the water, but it will make the ship clear of water where it's put."
 }

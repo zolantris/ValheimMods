@@ -15,4 +15,9 @@ public struct ShipFloatation
   public float WaterLevelForward;
   public float WaterLevelBack;
   public float AverageWaterHeight;
+  public float GroundLevelLeft;
+  public float GroundLevelRight;
+  public float GroundLevelForward;
+  public float GroundLevelBack;
+  public float GroundLevelCenter;
 }

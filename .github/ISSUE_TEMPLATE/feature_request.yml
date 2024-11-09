@@ -1,0 +1,55 @@
+name: 🆕 Feature Request
+description: Suggest an idea for a Valheim mod or enhancement
+title: "[Feature Request] "
+labels: feature
+assignees: 'zolantris'
+body:
+  - type: markdown
+    attributes:
+      value: "### 🚀 Feature Description"
+  - type: textarea
+    id: feature_description
+    attributes:
+      label: "Please describe the feature you would like to see."
+      description: "_A clear and concise description of the feature._"
+      placeholder: "Enter feature description here..."
+
+  - type: markdown
+    attributes:
+      value: "### 🤔 Why is this feature necessary?"
+  - type: textarea
+    id: feature_necessity
+    attributes:
+      label: "Why is this feature necessary?"
+      description: "_Explain the problem that the feature solves or the benefit it provides._"
+      placeholder: "Enter your explanation here..."
+
+  - type: markdown
+    attributes:
+      value: "### 🔧 Pre-existing Mod"
+  - type: textarea
+    id: pre_existing_mod
+    attributes:
+      label: "If your request relates to an existing mod, please specify which one:"
+      description: "_Options: ValheimRAFT, DynamicLocations, ZDOWatcher, YggdrasilTerrain, Other:_"
+      placeholder: "Enter the mod name or 'Other' if applicable..."
+
+  - type: markdown
+    attributes:
+      value: "### 📝 Additional Context"
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: "Additional context"
+      description: "_Add any other context, screenshots, or information that would help us understand your request better._"
+      placeholder: "Enter additional context here..."
+
+  - type: markdown
+    attributes:
+      value: "### 💡 Proposed Solution"
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: "Proposed Solution"
+      description: "_If applicable, describe your idea for how to implement this feature._"
+      placeholder: "Enter your proposed solution here..."

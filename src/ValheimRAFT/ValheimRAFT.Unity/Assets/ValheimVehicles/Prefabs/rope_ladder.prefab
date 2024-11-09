@@ -33,6 +33,7 @@ Transform:
   m_Children:
   - {fileID: 4943009466123143406}
   - {fileID: 3154865336530877984}
+  - {fileID: 50186493764581143}
   - {fileID: 846597118088586246}
   - {fileID: 2585109746104176112}
   - {fileID: 3643700029909554041}
@@ -175,7 +176,7 @@ GameObject:
   - component: {fileID: 2585109746104176112}
   m_Layer: 0
   m_Name: snappoint (1)
-  m_TagString: Untagged
+  m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -278,6 +279,37 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &3157454295646411984
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 50186493764581143}
+  m_Layer: 0
+  m_Name: exitpoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &50186493764581143
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3157454295646411984}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.948, z: 0.279}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5842013364165614576}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4064512907672887155
 GameObject:
   m_ObjectHideFlags: 0
@@ -289,7 +321,7 @@ GameObject:
   - component: {fileID: 846597118088586246}
   m_Layer: 0
   m_Name: snappoint
-  m_TagString: Untagged
+  m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

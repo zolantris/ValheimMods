@@ -1,5 +1,4 @@
 using HarmonyLib;
-using ZdoWatcher;
 
 namespace ZdoWatcher.Patches;
 

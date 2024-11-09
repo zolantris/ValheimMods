@@ -68,11 +68,11 @@
             <Private>False</Private>
         </Reference>
     </ItemGroup>
-    <ItemGroup>
-        <Folder Include="..\ValheimVehicles\ValheimVehicles.Utils\">
-            <Link>ValheimVehicles.Utils</Link>
-        </Folder>
-    </ItemGroup>
+    <!--    <ItemGroup>-->
+    <!--        <Folder Include="..\ValheimVehicles\ValheimVehicles.Utils\">-->
+    <!--            <Link>ValheimVehicles.Utils</Link>-->
+    <!--        </Folder>-->
+    <!--    </ItemGroup>-->
     <!-- Add Unity references -->
     <ItemGroup>
         <Reference Include="UnityEngine">

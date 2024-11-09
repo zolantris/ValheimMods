@@ -1,8 +1,13 @@
+using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.ModSupport;
 
 namespace ValheimRAFT.Patches;
 
+/// <summary>
+/// Meant only to be applied if DebugRemoveStartMenuBackground = true
+/// </summary>
 public class StartScene_Patch
 {
   [HarmonyPatch(typeof(MenuScene), "Awake")]

@@ -6,5 +6,6 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/libs" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../valheim_extracted_versions/0.219.1" vcs="Git" />
   </component>
 </project>

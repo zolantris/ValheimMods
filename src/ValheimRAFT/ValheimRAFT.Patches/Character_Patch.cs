@@ -2,9 +2,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
+using JetBrains.Annotations;
 using UnityEngine;
+using ValheimVehicles.Config;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Vehicles.Controllers;
 
 namespace ValheimRAFT.Patches;
 
@@ -18,32 +22,58 @@ public class Character_Patch
   {
     var list = instructions.ToList();
     for (var i = 0; i < list.Count; i++)
-      if (list[i].Calls(AccessTools.Method(typeof(Character), "GetStandingOnShip")))
+      if (list[i]
+          .Calls(AccessTools.Method(typeof(Character), "GetStandingOnShip")))
         list[i] = new CodeInstruction(OpCodes.Call,
-          AccessTools.Method(typeof(Character_Patch), nameof(GetStandingOnShip)));
+          AccessTools.Method(typeof(Character_Patch),
+            nameof(GetStandingOnShip)));
     return list;
   }
 
-  [HarmonyPatch(typeof(Character), "InWater")]
+  // on vehicle = not swimming
+  [HarmonyPatch(typeof(Character), nameof(Character.InWater))]
   [HarmonyPostfix]
-  public static void InWater(Character __instance, bool __result)
+  public static void Character_IsInWater(Character __instance,
+    ref bool __result)
   {
     var vpc = __instance.transform.root.GetComponent<VehiclePiecesController>();
     if (vpc) __result = false;
+    // var isOnboard = WaterZoneUtils.IsOnboard(__instance);
+    // if (isOnboard) __result = false;
   }
+
+//   // on vehicle = on ground.
+//   [HarmonyPatch(typeof(Character), nameof(Character.IsOnGround))]
+//   [HarmonyPostfix]
+//   public static void Character_IsOnGround(Character __instance,
+//     ref bool __result)
+//   {
+// #if DEBUG
+//     // TODO remove
+//     // useful for debugging as it skips other characters, but this needs to be off in multiplayer
+//     if (!__instance.IsPlayer()) return;
+// #endif
+//
+//     if (__instance.m_lastGroundBody == null)
+//     {
+//       return;
+//     }
+//
+//     var isOnboard = WaterZoneUtils.IsOnboard(__instance);
+//     if (isOnboard) __result = true;
+//   }
 
   public static object? GetStandingOnShip(Character __instance)
   {
     if (__instance.InNumShipVolumes == 0 || !__instance.IsOnGround() ||
-        !(bool)__instance.m_lastGroundBody)
+        __instance.m_lastGroundBody == null)
     {
       return null;
     }
 
-    var bvc = __instance.m_lastGroundBody.GetComponentInParent<VehiclePiecesController>();
-    if ((bool)bvc)
+    if (WaterZoneUtils.IsOnboard(__instance, out var data))
     {
-      return VehicleShipCompat.InitFromUnknown(bvc?.VehicleInstance);
+      return VehicleShipCompat.InitFromUnknown(data?.VehicleShip);
     }
 
     var lastOnShip = __instance.m_lastGroundBody.GetComponent<Ship>();
@@ -61,7 +91,8 @@ public class Character_Patch
     /*
      * @deprecated old ship logic
      */
-    var mb = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
+    var mb = __instance.m_lastGroundBody
+      .GetComponentInParent<MoveableBaseRootComponent>();
     if ((bool)mb && (bool)mb.m_ship)
     {
       return VehicleShipCompat.InitFromUnknown(mb.m_ship);
@@ -72,7 +103,8 @@ public class Character_Patch
 
   [HarmonyPatch(typeof(Character), "GetStandingOnShip")]
   [HarmonyPrefix]
-  private static bool Character_GetStandingOnShip(Character __instance, ref object? __result)
+  private static bool Character_GetStandingOnShip(Character __instance,
+    ref object? __result)
   {
     __result = GetStandingOnShip(__instance);
     return false;
@@ -84,30 +116,37 @@ public class Character_Patch
   {
     if (__instance is Player { m_debugFly: not false })
     {
-      if (__instance.transform.parent != null) __instance.transform.SetParent(null);
+      if (__instance.transform.parent != null)
+        __instance.transform.SetParent(null);
       return;
     }
 
     VehiclePiecesController? bvc = null;
-    if ((bool)__instance.m_lastGroundBody)
+    if ((bool)__instance.m_lastGroundBody &&
+        VehicleOnboardController.IsCharacterOnboard(__instance))
     {
-      bvc = __instance.m_lastGroundBody.GetComponentInParent<VehiclePiecesController>();
+      bvc = __instance.m_lastGroundBody
+        .GetComponentInParent<VehiclePiecesController>();
       if ((bool)bvc && __instance.transform.parent != bvc.transform)
       {
         __instance.transform.SetParent(bvc.transform);
-        return;
       }
+
+      return;
     }
 
     MoveableBaseRootComponent? mbr = null;
-    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value && (bool)__instance.m_lastGroundBody)
+    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value &&
+        (bool)__instance.m_lastGroundBody)
     {
-      mbr = __instance.m_lastGroundBody.GetComponentInParent<MoveableBaseRootComponent>();
+      mbr = __instance.m_lastGroundBody
+        .GetComponentInParent<MoveableBaseRootComponent>();
       if ((bool)mbr && __instance.transform.parent != mbr.transform)
         __instance.transform.SetParent(mbr.transform);
     }
 
-    if (!mbr && !bvc && __instance.transform.parent != null) __instance.transform.SetParent(null);
+    if (!mbr && !bvc && __instance.transform.parent != null)
+      __instance.transform.SetParent(null);
   }
 
   /// <summary>
@@ -135,8 +174,10 @@ public class Character_Patch
         hitpoint = __instance.transform.position;
       }
 
-      if (!(hitnormal.y > 0.1f) || !(hitDistance < __instance.m_collider.radius)) continue;
-      if (hitnormal.y > __instance.m_groundContactNormal.y || !__instance.m_groundContact)
+      if (!(hitnormal.y > 0.1f) ||
+          !(hitDistance < __instance.m_collider.radius)) continue;
+      if (hitnormal.y > __instance.m_groundContactNormal.y ||
+          !__instance.m_groundContact)
       {
         __instance.m_groundContact = true;
         __instance.m_groundContactNormal = hitnormal;
@@ -145,11 +186,13 @@ public class Character_Patch
         continue;
       }
 
-      var groundContactNormal = Vector3.Normalize(__instance.m_groundContactNormal + hitnormal);
+      var groundContactNormal =
+        Vector3.Normalize(__instance.m_groundContactNormal + hitnormal);
       if (groundContactNormal.y > __instance.m_groundContactNormal.y)
       {
         __instance.m_groundContactNormal = groundContactNormal;
-        __instance.m_groundContactPoint = (__instance.m_groundContactPoint + hitpoint) * 0.5f;
+        __instance.m_groundContactPoint =
+          (__instance.m_groundContactPoint + hitpoint) * 0.5f;
       }
     }
 

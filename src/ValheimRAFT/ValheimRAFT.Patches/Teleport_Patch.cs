@@ -12,9 +12,11 @@ namespace ValheimRAFT.Patches;
 [HarmonyPatch]
 public class Teleport_Patch
 {
-  public static Dictionary<Player, ZDOID> m_teleportTarget = new Dictionary<Player, ZDOID>();
+  public static Dictionary<Player, ZDOID> m_teleportTarget =
+    new Dictionary<Player, ZDOID>();
 
-  public static void TeleportToObject(Player __instance, Vector3 pos, Quaternion rot,
+  public static void TeleportToObject(Player __instance, Vector3 pos,
+    Quaternion rot,
     ZDOID objectId)
   {
     if (__instance.TeleportTo(pos, rot, distantTeleport: true))
@@ -23,10 +25,12 @@ public class Teleport_Patch
     }
   }
 
-  public static void TeleportToActivePosition(TeleportWorld __instance, ZDOID playerId)
+  public static void TeleportToActivePosition(TeleportWorld __instance,
+    ZDOID playerId)
   {
     var zDO = ZDOMan.instance.GetZDO(
-      __instance.m_nview.m_zdo.GetConnectionZDOID(ZDOExtraData.ConnectionType.Portal));
+      __instance.m_nview.m_zdo.GetConnectionZDOID(ZDOExtraData.ConnectionType
+        .Portal));
     if (zDO == null)
     {
       return;
@@ -64,7 +68,8 @@ public class Teleport_Patch
       if (list[i].Calls(AccessTools.Method(typeof(Character), "TeleportTo")))
       {
         list[i] = new CodeInstruction(OpCodes.Call,
-          AccessTools.Method(typeof(Teleport_Patch), nameof(Player_TeleportTo)));
+          AccessTools.Method(typeof(Teleport_Patch),
+            nameof(Player_TeleportTo)));
         list.Insert(i, new CodeInstruction(OpCodes.Ldarg_0));
         found = true;
         break;
@@ -79,10 +84,12 @@ public class Teleport_Patch
     return list;
   }
 
-  public static bool Player_TeleportTo(Player player, Vector3 pos, Quaternion rot,
+  public static bool Player_TeleportTo(Player player, Vector3 pos,
+    Quaternion rot,
     bool distantTeleport, TeleportWorld __instance)
   {
-    TeleportToActivePosition(__instance, ((Character)player).m_nview.m_zdo.m_uid);
+    TeleportToActivePosition(__instance,
+      ((Character)player).m_nview.m_zdo.m_uid);
     return true;
   }
 
@@ -94,13 +101,16 @@ public class Teleport_Patch
     var list = instructions.ToList();
     for (int i = 0; i < list.Count; i++)
     {
-      if (list[i].LoadsField(AccessTools.Field(typeof(Player), "m_teleportTargetPos")))
+      if (list[i]
+          .LoadsField(AccessTools.Field(typeof(Player), "m_teleportTargetPos")))
       {
         list[i] = new CodeInstruction(OpCodes.Call,
-          AccessTools.Method(typeof(Teleport_Patch), nameof(GetTeleportTargetPos)));
+          AccessTools.Method(typeof(Teleport_Patch),
+            nameof(GetTeleportTargetPos)));
       }
 
-      if (list[i].StoresField(AccessTools.Field(typeof(Player), "m_teleporting")))
+      if (list[i]
+          .StoresField(AccessTools.Field(typeof(Player), "m_teleporting")))
       {
         list[i] = new CodeInstruction(OpCodes.Call,
           AccessTools.Method(typeof(Teleport_Patch), nameof(SetIsTeleporting)));
@@ -130,13 +140,15 @@ public class Teleport_Patch
 
     if ((bool)tp)
     {
-      return tp.transform.position + tp.transform.forward * tp.m_exitDistance + Vector3.up;
+      return tp.transform.position + tp.transform.forward * tp.m_exitDistance +
+             Vector3.up;
     }
 
     return go.transform.position;
   }
 
-  private static IEnumerator DebouncedTeleportCoordinateUpdater(Player __instance,
+  private static IEnumerator DebouncedTeleportCoordinateUpdater(
+    Player __instance,
     bool isTeleporting, ZDOID zdoid)
   {
     var zdo = ZDOMan.instance.GetZDO(zdoid);
@@ -149,18 +161,18 @@ public class Teleport_Patch
 
     ZNetView? go = null;
 
-    var zoneId = ZoneSystem.instance.GetZone(zdo.m_position);
+    var zoneId = ZoneSystem.GetZone(zdo.m_position);
 
     while (go == null)
     {
       go = ZNetScene.instance.FindInstance(zdo);
       if (go) break;
-      zoneId = ZoneSystem.instance.GetZone(zdo.m_position);
+      zoneId = ZoneSystem.GetZone(zdo.m_position);
       ZoneSystem.instance.PokeLocalZone(zoneId);
       yield return new WaitForFixedUpdate();
     }
 
-    zoneId = ZoneSystem.instance.GetZone(zdo.m_position);
+    zoneId = ZoneSystem.GetZone(zdo.m_position);
     ZoneSystem.instance.PokeLocalZone(zoneId);
     yield return new WaitUntil(() => ZoneSystem.instance.IsZoneLoaded(zoneId));
 
@@ -173,12 +185,14 @@ public class Teleport_Patch
   private static void SetIsTeleporting(Player __instance, bool isTeleporting)
   {
     __instance.m_teleporting = isTeleporting;
-    if (isTeleporting || !m_teleportTarget.TryGetValue(__instance, out var zdoid))
+    if (isTeleporting ||
+        !m_teleportTarget.TryGetValue(__instance, out var zdoid))
     {
       return;
     }
 
     __instance.StopCoroutine(nameof(DebouncedTeleportCoordinateUpdater));
-    __instance.StartCoroutine(DebouncedTeleportCoordinateUpdater(__instance, isTeleporting, zdoid));
+    __instance.StartCoroutine(
+      DebouncedTeleportCoordinateUpdater(__instance, isTeleporting, zdoid));
   }
 }
