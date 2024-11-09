@@ -8,6 +8,8 @@ using ValheimRAFT;
 using ValheimRAFT.Config;
 using ValheimRAFT.Patches;
 using ValheimVehicles.Config;
+using ValheimVehicles.Helpers;
+using ValheimVehicles.LayerUtils;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles.Components;
@@ -583,11 +585,40 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     SyncShip();
   }
 
+  private GameObject TargetHeightObj;
+
+  public void DEBUG_VisualizeFloatPoint()
+  {
+    TargetHeightObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+    TargetHeightObj.name = "DEBUG_TargetHeightObj";
+    TargetHeightObj.transform.SetParent(transform);
+
+    var meshRenderer = TargetHeightObj.GetComponent<MeshRenderer>();
+    var material = new Material(meshRenderer.material)
+    {
+      color = Color.yellow
+    };
+    meshRenderer.sharedMaterial = material;
+    TargetHeightObj.layer = LayerHelpers.NonSolidLayer;
+
+    TargetHeightObj.transform.rotation = FloatCollider.transform.rotation;
+    TargetHeightObj.transform.localScale = FloatCollider?.size ?? Vector3.one;
+  }
+
   public void CustomFixedUpdate(float deltaTime)
   {
     if (!(bool)m_body || !(bool)m_floatcollider)
     {
       return;
+    }
+
+    if (VehicleDebugConfig.AutoShowVehicleColliders.Value &&
+        TargetHeightObj != null)
+    {
+      TargetHeightObj.transform.position =
+        VectorUtils.MergeVectors(transform.position,
+          Vector3.up * TargetHeight);
+      TargetHeightObj.transform.localScale = FloatCollider?.size ?? Vector3.one;
     }
 
     if (!vehicleShip
@@ -740,6 +771,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private void UpdateColliderPositions()
   {
     if (PiecesController == null) return;
+    return;
 
     var expectedLowestBlockingColliderPoint =
       BlockingCollider.transform.position.y - BlockingCollider.bounds.extents.y;
@@ -747,11 +779,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (IsFlying())
     {
       var flyingFloatPositionY =
-        PiecesController.FloatColliderDefaultPosition.y +
-        -ZoneSystem.instance.m_waterLevel;
+        PiecesController.FloatColliderDefaultPosition.y;
       var flyingBlockingPositionY =
-        PiecesController.BlockingColliderDefaultPosition.y +
-        -ZoneSystem.instance.m_waterLevel;
+        PiecesController.BlockingColliderDefaultPosition.y;
       UpdateYPosition(FloatCollider.transform, flyingFloatPositionY);
       UpdateYPosition(BlockingCollider.transform, flyingBlockingPositionY);
       return;
@@ -779,9 +809,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
 
     var floatPositionY =
-      PiecesController.FloatColliderDefaultPosition.y + TargetHeight;
-    var blockingPositionY = PiecesController.BlockingColliderDefaultPosition.y +
-                            TargetHeight;
+      PiecesController.FloatColliderDefaultPosition.y;
+    var blockingPositionY = PiecesController.BlockingColliderDefaultPosition.y;
 
     // Flying logic does not update float collider
     if (floatPositionY <= -ZoneSystem.instance.m_waterLevel ||
@@ -809,56 +838,56 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void Flying_UpdateShipBalancingForce()
   {
-    var front = ShipDirection.position +
-                ShipDirection.forward * OnboardCollider.size.z / 2f;
-    var back = ShipDirection.position -
-               ShipDirection.forward * OnboardCollider.size.z / 2f;
-    var left = ShipDirection.position -
-               ShipDirection.right * OnboardCollider.size.x / 2f;
-    var right = ShipDirection.position +
-                ShipDirection.right * OnboardCollider.size.x / 2f;
+    // var front = ShipDirection.position +
+    //             ShipDirection.forward * FloatCollider.size.z / 2f;
+    // var back = ShipDirection.position -
+    //            ShipDirection.forward * FloatCollider.size.z / 2f;
+    // var left = ShipDirection.position -
+    //            ShipDirection.right * FloatCollider.size.x / 2f;
+    // var right = ShipDirection.position +
+    //             ShipDirection.right * FloatCollider.size.x / 2f;
     var centerpos2 = ShipDirection.position;
 
-    var frontForce = m_body.GetPointVelocity(front);
-    var backForce = m_body.GetPointVelocity(back);
-    var leftForce = m_body.GetPointVelocity(left);
-    var rightForce = m_body.GetPointVelocity(right);
-
-    var flyingTargetHeight = GetFlyingTargetHeight();
+    // var frontForce = m_body.GetPointVelocity(front);
+    // var backForce = m_body.GetPointVelocity(back);
+    // var leftForce = m_body.GetPointVelocity(left);
+    // var rightForce = m_body.GetPointVelocity(right);
+    //
+    // var flyingTargetHeight = GetFlyingTargetHeight();
 
     // Calculate the target upwards forces for each position
-    var frontUpwardsForce = GetUpwardsForce(flyingTargetHeight,
-      front.y + frontForce.y, m_balanceForce);
-    var backUpwardsForce = GetUpwardsForce(flyingTargetHeight,
-      back.y + backForce.y, m_balanceForce);
-    var leftUpwardsForce = GetUpwardsForce(flyingTargetHeight,
-      left.y + leftForce.y, m_balanceForce);
-    var rightUpwardsForce = GetUpwardsForce(flyingTargetHeight,
-      right.y + rightForce.y, m_balanceForce);
-    var centerUpwardsForce = GetUpwardsForce(flyingTargetHeight,
+    // var frontUpwardsForce = GetUpwardsForce(FloatCollider.center.y,
+    //   front.y + frontForce.y, m_balanceForce);
+    // var backUpwardsForce = GetUpwardsForce(FloatCollider.center.y,
+    //   back.y + backForce.y, m_balanceForce);
+    // var leftUpwardsForce = GetUpwardsForce(FloatCollider.center.y,
+    //   left.y + leftForce.y, m_balanceForce);
+    // var rightUpwardsForce = GetUpwardsForce(FloatCollider.center.y,
+    //   right.y + rightForce.y, m_balanceForce);
+    var centerUpwardsForce = GetUpwardsForce(FloatCollider.center.y,
       centerpos2.y + m_body.velocity.y, m_liftForce);
 
     // Smoothly transition the forces towards the target values using SmoothDamp
-    frontUpwardsForce = Mathf.SmoothDamp(prevFrontUpwardForce,
-      frontUpwardsForce, ref prevFrontUpwardForce, smoothTime);
-    backUpwardsForce = Mathf.SmoothDamp(prevBackUpwardsForce, backUpwardsForce,
-      ref prevBackUpwardsForce, smoothTime);
-    leftUpwardsForce = Mathf.SmoothDamp(prevLeftUpwardsForce, leftUpwardsForce,
-      ref prevLeftUpwardsForce, smoothTime);
-    rightUpwardsForce = Mathf.SmoothDamp(prevRightUpwardsForce,
-      rightUpwardsForce, ref prevRightUpwardsForce, smoothTime);
+    // frontUpwardsForce = Mathf.SmoothDamp(prevFrontUpwardForce,
+    //   frontUpwardsForce, ref prevFrontUpwardForce, smoothTime);
+    // backUpwardsForce = Mathf.SmoothDamp(prevBackUpwardsForce, backUpwardsForce,
+    //   ref prevBackUpwardsForce, smoothTime);
+    // leftUpwardsForce = Mathf.SmoothDamp(prevLeftUpwardsForce, leftUpwardsForce,
+    //   ref prevLeftUpwardsForce, smoothTime);
+    // rightUpwardsForce = Mathf.SmoothDamp(prevRightUpwardsForce,
+    //   rightUpwardsForce, ref prevRightUpwardsForce, smoothTime);
     centerUpwardsForce = Mathf.SmoothDamp(prevCenterUpwardsForce,
       centerUpwardsForce, ref prevCenterUpwardsForce, smoothTime);
 
     // Apply the smoothed forces at the corresponding positions
-    AddForceAtPosition(Vector3.up * frontUpwardsForce, front,
-      ForceMode.VelocityChange);
-    AddForceAtPosition(Vector3.up * backUpwardsForce, back,
-      ForceMode.VelocityChange);
-    AddForceAtPosition(Vector3.up * leftUpwardsForce, left,
-      ForceMode.VelocityChange);
-    AddForceAtPosition(Vector3.up * rightUpwardsForce, right,
-      ForceMode.VelocityChange);
+    // AddForceAtPosition(Vector3.up * frontUpwardsForce, front,
+    //   ForceMode.VelocityChange);
+    // AddForceAtPosition(Vector3.up * backUpwardsForce, back,
+    //   ForceMode.VelocityChange);
+    // AddForceAtPosition(Vector3.up * leftUpwardsForce, left,
+    //   ForceMode.VelocityChange);
+    // AddForceAtPosition(Vector3.up * rightUpwardsForce, right,
+    //   ForceMode.VelocityChange);
     AddForceAtPosition(Vector3.up * centerUpwardsForce, centerpos2,
       ForceMode.VelocityChange);
   }
@@ -1248,7 +1277,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
 
     var currentDepth =
-      worldCenterOfMass.y - averageWaterHeight - m_waterLevelOffset;
+      worldCenterOfMass.y - averageWaterHeight - m_waterLevelOffset +
+      TargetHeight;
     var isInvalid = false;
     if (averageWaterHeight <= -10000 || averageWaterHeight < m_disableLevel)
     {
@@ -1736,9 +1766,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var rudderForce = GetRudderForcePerSpeed();
     // steer offset will need to be size x or size z depending on location of rotation.
     // todo GetFloatSizeFromDirection may not be needed anymore.
-    var steerOffset = ShipDirection.position -
-                      ShipDirection.forward *
-                      GetFloatSizeFromDirection(Vector3.forward);
+    // This needs to use blocking collider otherwise the float collider pushes the vehicle upwards but the blocking collider cannot push downwards.
+    var steerOffset = VectorUtils.MergeVectors(
+      new Vector3(0, BlockingCollider.center.y, 0), ShipDirection.position -
+                                                    ShipDirection.forward *
+                                                    GetFloatSizeFromDirection(
+                                                      Vector3.forward));
 
     var steeringVelocityDirectionFactor = direction * m_stearVelForceFactor;
     var steerOffsetForce = ShipDirection.right *
