@@ -23,16 +23,13 @@ public class ZdoWatchController : MonoBehaviour
 
   private CustomRPC RPC_RequestPersistentIdInstance;
 
+  // In theory, we only need to hit the server then iterate and force send the zdos directly to the peer instead of the other way around.
+  // We call SyncToPeer when which does this.
   public void Awake()
   {
     RPC_RequestPersistentIdInstance = NetworkManager.Instance.AddRPC(
       "RPC_RequestSync",
       RequestPersistentIdRPCServerReceive, null);
-    // In theory, we only need to hit the server then iterate and force send the zdos directly to the peer instead of the other way around.
-    // RPC_RequestPersistentIdInstance = NetworkManager.Instance.AddRPC(
-    //   "RPC_RequestSync",
-    //   RequestPersistentIdRPCServerReceive, RPC_ClientSync);
-    //
   }
 
   /// <summary>
@@ -48,7 +45,6 @@ public class ZdoWatchController : MonoBehaviour
     DebugSafeTimer.UpdateTimersFromList(_timers);
   }
 
-  // ReSharper disable once InconsistentNaming
   public void SyncToPeer(ZDOMan.ZDOPeer? zdoPeer)
   {
     if (!ZNet.instance.IsServer() || zdoPeer == null)
@@ -82,61 +78,8 @@ public class ZdoWatchController : MonoBehaviour
       SyncToPeer(zdoPeer);
     }
 
-    // Logger.LogDebug(
-    //   $"Received request for persistentZDOID, processing");
-    // var serverZdoIdPackage = GetAllServerZdoIds();
-    //
-    Logger.LogMessage(
-      "RequestPersistentIdRPCServerReceive called syncing persistent peer packages");
-    // SyncToPeer(zdoPeer);
-
-    // var player = Player.GetPlayer(sender);
-    // Logger.LogDebug(
-    //   $"Broadcasting to sender {sender}, name: {player?.GetPlayerName()}");
-
-
-    // RPC_RequestPersistentIdInstance.SendPackage(sender,
-    //   serverZdoIdPackage);
     yield return null;
   }
-
-  // ReSharper disable once InconsistentNaming
-  // public IEnumerator Client_RequestAllPersistentZDOs(ZPackage package)
-  // {
-  //   var pos = 0;
-  //   var packageSize = package.Size();
-  //   List<ZDOID> zdoIdList = [];
-  //   while (packageSize > pos)
-  //   {
-  //     package.SetPos(pos);
-  //     var zdoid = package.ReadZDOID();
-  //     zdoIdList.Add(zdoid);
-  //     ZDOMan.s_instance.RequestZDO(zdoid);
-  //     // var zdo = ZDOMan.instance.GetZDO(zdoid);
-  //     pos = package.GetPos();
-  //   }
-  //
-  //   var zdoIndex = 0;
-  //   var currentTimer = Stopwatch.StartNew();
-  //   while (zdoIndex < zdoIdList.Count)
-  //   {
-  //     var zdo = ZDOMan.instance.GetZDO(zdoIdList[zdoIndex]);
-  //     // keeps waiting until the zdos exist.
-  //     if (currentTimer.ElapsedMilliseconds < 5000)
-  //     {
-  //       continue;
-  //     }
-  //
-  //     // yield return new WaitUntil(() =>
-  //     // ZDOMan.instance.GetZDO(zdoIdList[zdoIndex]) != null);
-  //     if (zdo != null)
-  //     {
-  //       GetOrCreatePersistentID(zdo);
-  //     }
-  //   }
-  //
-  //   yield return true;
-  // }
 
   public Dictionary<int, ZDO?> PendingPersistentIdQueries = new();
 
@@ -253,65 +196,13 @@ public class ZdoWatchController : MonoBehaviour
     onComplete(targetZdo);
   }
 
-  // // The client receives the ZDOs it must request. This allows the user to request the specific ZDOs it needs from the server.
-  // private IEnumerator RPC_ClientSync(long sender, ZPackage package)
-  // {
-  //   if (ZNet.instance.IsServer())
-  //   {
-  //     Logger.LogMessage("Skipping Server call for RPC_ClientSync");
-  //     yield break;
-  //   }
-  //
-  //   // VERY Expensive...need to optimize to send only for correct peer
-  //   Logger.LogMessage(ZDOMan.instance.m_peers.ToString());
-  //   // ZDOMan.s_instance.FlushClientObjects();
-  //
-  //   Logger.LogMessage(
-  //     $"Client received blob from sender: {sender}, processing");
-  //   // var requestedZdoId = package.ReadZDOID();
-  //   yield return Client_RequestAllPersistentZDOs(package);
-  //   Logger.LogMessage("Synced zdo store -> success");
-  //   // var zdo = ZDOMan.instance.GetZDO(requestedZdoId);
-  //   yield return true;
-  // }
 
   public void Reset() => _zdoGuidLookup.Clear();
 
-  /// <summary>
-  /// PersistentIds many need to migrate to a safer structure such as using uuid.v4 or similar logic for larger longer lasting games
-  /// </summary>
-  /// <returns></returns>
-  // public static int ParsePersistentIdString(string persistentString)
-  // {
-  //   // if (id == 0)
-  //   // {
-  //   //   // var outputString = zdo.GetString(PersistentUidHash, "");
-  //   //   // if (outputString != "")
-  //   //   // {
-  //   //   //   id = ParsePersistentIdString(outputString);
-  //   //   // }
-  //   // }
-  // }
   public static bool GetPersistentID(ZDO zdo, out int id)
   {
     id = zdo.GetInt(ZdoVarController.PersistentUidHash, 0);
     return id != 0;
-  }
-
-  /// <summary>
-  /// Requests for a persistent ID, meant for cross server support IE LAN peer or any peer connecting to dedicated which would not have a reference to the ZDOID unless it was loaded in their area. Logoff would clear these so it's necessary to request a zdo from the server which holds the references indefinitely.
-  /// </summary>
-  public static void RPC_RequestPersistentId()
-  {
-    if (ZNet.instance.IsDedicated())
-    {
-      return;
-    }
-  }
-
-  // sends the persistentID to the peer if on a dedicated server which would not have the ID reference
-  public static void RPC_SendPersistentId()
-  {
   }
 
   public static int ZdoIdToId(ZDOID zdoid) =>
