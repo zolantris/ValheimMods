@@ -161,19 +161,15 @@ public class VehicleCommands : ConsoleCommand
       Vector3.up * Mathf.Clamp(offset, -100f, 100f)));
   }
 
-  /// <summary>
-  /// Moves the vehicle based on the provided offset vector.
-  /// </summary>
-  /// <param name="vehicleInstance">The vehicle instance to move.</param>
-  /// <param name="offset">The offset vector to apply.</param>
-  private static IEnumerator MoveVehicle(VehicleShip? vehicleInstance,
-    Vector3 offset)
+  public static SafeMovePlayerData? SafeMovePlayerBefore(
+    VehicleOnboardController? vehicleOnboardController)
   {
-    if (vehicleInstance == null) yield break;
+    if (vehicleOnboardController == null)
+    {
+      return null;
+    }
 
-    vehicleInstance.SetCreativeMode(true);
-
-    var playersOnShip = vehicleInstance.OnboardController.GetPlayersOnShip();
+    var playersOnShip = vehicleOnboardController.GetPlayersOnShip();
     var wasDebugFlyingPlayers = new List<Player>();
     if (playersOnShip.Count > 0)
     {
@@ -195,18 +191,29 @@ public class VehicleCommands : ConsoleCommand
       Player.m_localPlayer.ToggleDebugFly();
     }
 
-    // Ensure Y position does not go below 1
-    // vehicleInstance.transform.position.y + offset.y;
-    vehicleInstance.transform.position =
-      VectorUtils.MergeVectors(vehicleInstance.transform.position, offset);
-
-    yield return new WaitForFixedUpdate();
-
-    if (playersOnShip.Count > 0)
+    return new SafeMovePlayerData()
     {
-      foreach (var player in playersOnShip)
+      PlayersOnShip = playersOnShip,
+      PlayersWithDebugOnShip = wasDebugFlyingPlayers,
+      IsLocalPlayerDebugFlying = wasDebugFlying,
+    };
+  }
+
+  public struct SafeMovePlayerData
+  {
+    public List<Player> PlayersOnShip;
+    public List<Player> PlayersWithDebugOnShip;
+    public bool IsLocalPlayerDebugFlying;
+  }
+
+  public static void SafeMovePlayerAfter(SafeMovePlayerData? data)
+  {
+    if (data == null) return;
+    if (data.Value.PlayersOnShip.Count > 0)
+    {
+      foreach (var player in data.Value.PlayersOnShip)
       {
-        if (wasDebugFlyingPlayers.Contains(player))
+        if (data.Value.PlayersWithDebugOnShip.Contains(player))
         {
           continue;
         }
@@ -220,10 +227,42 @@ public class VehicleCommands : ConsoleCommand
       }
     }
 
-    if (!wasDebugFlying && Player.m_localPlayer.IsDebugFlying())
+    if (!data.Value.IsLocalPlayerDebugFlying &&
+        Player.m_localPlayer.IsDebugFlying())
     {
       Player.m_localPlayer.ToggleDebugFly();
     }
+  }
+
+  // todo add a wrapper for this so we can call before first then when the callback is called after
+  // public static IEnumerator SafeMovePlayer(Action<bool> continueCallback)
+  // {
+  //   var result = false;
+  //   yield return new WaitUntil()
+  // }
+
+  /// <summary>
+  /// Moves the vehicle based on the provided offset vector.
+  /// </summary>
+  /// <param name="vehicleInstance">The vehicle instance to move.</param>
+  /// <param name="offset">The offset vector to apply.</param>
+  private static IEnumerator MoveVehicle(VehicleShip? vehicleInstance,
+    Vector3 offset)
+  {
+    if (vehicleInstance == null) yield break;
+
+    vehicleInstance.SetCreativeMode(true);
+
+    var safeMoveData = SafeMovePlayerBefore(vehicleInstance.OnboardController);
+
+    // Ensure Y position does not go below 1
+    // vehicleInstance.transform.position.y + offset.y;
+    vehicleInstance.transform.position =
+      VectorUtils.MergeVectors(vehicleInstance.transform.position, offset);
+
+    yield return new WaitForFixedUpdate();
+
+    SafeMovePlayerAfter(safeMoveData);
 
     vehicleInstance.SetCreativeMode(false);
     yield return null;
