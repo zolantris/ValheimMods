@@ -1,4 +1,5 @@
 using BepInEx.Configuration;
+using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.Config;
 
@@ -35,10 +36,21 @@ public class MinimapConfig
         "The interval in seconds at which vehicle pins are synced to the client.",
         false, false, new AcceptableValueRange<float>(1f, 200f)));
 
+    VehiclePinSyncInterval.SettingChanged += (sender, args) =>
+    {
+      MapPinSync.Instance.StartVehiclePinSync();
+    };
+
+    BedPinSyncInterval.SettingChanged += (sender, args) =>
+    {
+      MapPinSync.Instance.StartSpawnPinSync();
+    };
+
     VehicleNameTag = Config.Bind(SectionKey, "VehicleNameTag", "Vehicle",
       "Set the name of the vehicle icon.");
 
-    ShowAllVehiclesOnMap = Config.Bind(SectionKey, "ShowAllVehiclesOnMap", true,
+    ShowAllVehiclesOnMap = Config.Bind(SectionKey, "ShowAllVehiclesOnMap",
+      false,
       ConfigHelpers.CreateConfigDescription(
         "Shows all vehicles on global map. All vehicles will update their position.",
         true, true));

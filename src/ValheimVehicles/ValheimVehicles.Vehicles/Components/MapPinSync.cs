@@ -2,11 +2,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using DynamicLocations.Constants;
 using DynamicLocations.Controllers;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Config;
+using ValheimVehicles.Prefabs;
 using ZdoWatcher;
 
 namespace ValheimVehicles.Vehicles.Components;
@@ -20,6 +22,7 @@ public class MapPinSync : MonoBehaviour
   }
 
   Dictionary<Vector3, CustomPinZdoData> _vehiclePins = new();
+  public static MapPinSync Instance;
 
   public string GetOwnerNameFromZdo(ZDO zdo)
   {
@@ -29,8 +32,9 @@ public class MapPinSync : MonoBehaviour
 
   public void Awake()
   {
+    Instance = this;
     if (ZNet.instance.IsDedicated()) return;
-    MinimapManager.OnVanillaMapDataLoaded += HandleMapSync;
+    MinimapManager.OnVanillaMapDataLoaded += OnMapReady;
     ZdoWatchController.Instance.GetAllZdoGuids();
   }
 
@@ -40,10 +44,22 @@ public class MapPinSync : MonoBehaviour
     StopCoroutine(nameof(RefreshDynamicSpawnPin));
   }
 
-  private void HandleMapSync()
+  private void OnMapReady()
   {
-    InvokeRepeating(nameof(RefreshVehiclePins), 2f,
+    StartVehiclePinSync();
+    StartSpawnPinSync();
+  }
+
+  public void StartVehiclePinSync()
+  {
+    CancelInvoke(nameof(RefreshVehiclePins));
+    InvokeRepeating(nameof(RefreshVehiclePins), 0f,
       MinimapConfig.VehiclePinSyncInterval.Value);
+  }
+
+  public void StartSpawnPinSync()
+  {
+    StopCoroutine(nameof(RefreshDynamicSpawnPin));
     StartCoroutine(RefreshDynamicSpawnPin());
   }
 
@@ -64,11 +80,6 @@ public class MapPinSync : MonoBehaviour
 
   private void ClearSpawnPin(Minimap.PinData? pinData)
   {
-    // var locationPins = Minimap.instance.m_locationPins;
-    // if (point != null && .ContainsKey(
-    //       cachedLastBedVector.Value))
-    // {
-    // }
     if (pinData != null)
     {
       Minimap.instance.RemovePin(pinData);
@@ -109,9 +120,9 @@ public class MapPinSync : MonoBehaviour
       yield break;
     }
 
-    Minimap.instance.AddPin(nextPosition,
+    cachedLastBedPinData = Minimap.instance.AddPin(nextPosition,
       Minimap.PinType.Bed,
-      "DynamicSpawn", false, false, Player.m_localPlayer.GetOwner());
+      "Spawn", false, false, Player.m_localPlayer.GetOwner());
     cachedLastBedVector = nextPosition;
   }
 
@@ -127,16 +138,21 @@ public class MapPinSync : MonoBehaviour
   private void UpdateVehiclePins()
   {
     var guids = ZdoWatchController.Instance.GetAllZdoGuids();
-    var locationPins = Minimap.instance.m_locationPins;
+    var vehicleZdos = guids.Select(x => x.Value).Where(x =>
+      ZNetScene.instance.GetPrefab(x.GetPrefab()).name
+        .Contains(PrefabNames.WaterVehicleShip)).ToHashSet();
+
+    var allPins = Minimap.instance.m_pins;
     var pinZdosToSkip = new HashSet<ZDO>();
 
     // Update existing pins
     foreach (var vehiclePin in _vehiclePins)
     {
-      if (locationPins.ContainsKey(vehiclePin.Key))
+      var getPin = allPins.Find(pin => pin.m_pos == vehiclePin.Key);
+      if (getPin != null)
       {
         var zdoPosition = vehiclePin.Value.zdo.GetPosition();
-        locationPins[vehiclePin.Key].m_pos = zdoPosition;
+        getPin.m_pos = zdoPosition;
         var isVisible = IsWithinVisibleRadius(zdoPosition);
         // Update the key in _vehiclePins without removing and re-adding
         if (!vehiclePin.Key.Equals(zdoPosition))
@@ -154,7 +170,7 @@ public class MapPinSync : MonoBehaviour
     }
 
     // Add new pins for ZDOs not already processed
-    foreach (var zdo in guids.Values)
+    foreach (var zdo in vehicleZdos)
     {
       if (pinZdosToSkip.Contains(zdo)) continue;
 
@@ -164,8 +180,8 @@ public class MapPinSync : MonoBehaviour
       {
         var zdoOwner = zdo.GetOwner();
         var pinData = Minimap.instance.AddPin(position,
-          Minimap.PinType.Bed,
-          $"Vehicle_{GetOwnerNameFromZdo(zdo)}", false, false, zdoOwner);
+          Minimap.PinType.Icon4,
+          $"Vehicle", false, false, zdoOwner);
 
         _vehiclePins[position] = new CustomPinZdoData
           { pinData = pinData, zdo = zdo };
