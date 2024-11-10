@@ -7,6 +7,7 @@ using System.Linq;
 using BepInEx.Logging;
 using ComfyGizmo;
 using Components;
+using HarmonyLib;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
@@ -178,7 +179,8 @@ public class VehicleCommands : ConsoleCommand
   }
 
   public static SafeMoveData? SafeMovePlayerBefore(
-    VehicleOnboardController? vehicleOnboardController)
+    VehicleOnboardController? vehicleOnboardController,
+    bool shouldSkipPlayer = true)
   {
     if (vehicleOnboardController == null)
     {
@@ -186,40 +188,40 @@ public class VehicleCommands : ConsoleCommand
     }
 
     var playersOnShip = vehicleOnboardController.GetPlayersOnShip();
-    var playerData = new List<SafeMovePlayerData>
+    var playerData = new List<SafeMovePlayerData>();
+
+    if (!shouldSkipPlayer)
     {
-      new SafeMovePlayerData()
+      playerData.Add(new SafeMovePlayerData()
       {
         player = Player.m_localPlayer,
         IsDebugFlying = Player.m_localPlayer.IsDebugFlying(),
         lastLocalOffset = Player.m_localPlayer.transform.parent != null
           ? Player.m_localPlayer.transform.localPosition
           : Vector3.zero
-      }
-    };
+      });
+    }
 
     // excludes current player to avoid double toggling.
     if (playersOnShip.Count > 0)
     {
-      playerData.AddRange(
-        playersOnShip.Where(x => x != Player.m_localPlayer).Select(player =>
+      foreach (var player in playersOnShip)
+      {
+        var isDebugFlying = player.IsDebugFlying();
+        if (!isDebugFlying)
         {
-          var isDebugFlying = player.IsDebugFlying();
-          if (!isDebugFlying)
-          {
-            player.m_body.isKinematic = true;
-          }
+          player.m_body.isKinematic = true;
+        }
 
-          player.transform.SetParent(null);
-
-          return new SafeMovePlayerData()
-          {
-            player = player, IsDebugFlying = isDebugFlying,
-            lastLocalOffset = player.transform.parent != null
-              ? player.transform.localPosition
-              : Vector3.zero
-          };
-        }));
+        player.transform.SetParent(null);
+        playerData.Add(new SafeMovePlayerData()
+        {
+          player = player, IsDebugFlying = isDebugFlying,
+          lastLocalOffset = player.transform.parent != null
+            ? player.transform.localPosition
+            : Vector3.zero
+        });
+      }
     }
 
     var wasDebugFlying = Player.m_localPlayer.IsDebugFlying();
@@ -241,15 +243,17 @@ public class VehicleCommands : ConsoleCommand
   /// Allows for passing a ShipUpdateCallback which is the part that can kill a player when the ship moves it's physics rapidly. 
   /// </summary>
   /// <param name="onboardController"></param>
+  /// <param name="shouldMoveLocalPlayerOffship">Meant for commands if the player is outside the range they can still follow the vehicle</param>
   /// <param name="completeCallback">The final position</param>
   /// <param name="coroutineFunc">A method that may need to be called before running complete</param>
   /// <returns></returns>
   public static IEnumerator SafeMovePlayer(
     VehicleOnboardController onboardController,
+    bool shouldMoveLocalPlayerOffship,
     Func<Vector3> completeCallback, IEnumerator? coroutineFunc)
   {
     var safeMoveData =
-      SafeMovePlayerBefore(onboardController);
+      SafeMovePlayerBefore(onboardController, shouldMoveLocalPlayerOffship);
     yield return new WaitForFixedUpdate();
 
     if (coroutineFunc != null)
@@ -421,6 +425,7 @@ public class VehicleCommands : ConsoleCommand
 
   /// <summary>
   /// Moves the vehicle based on the provided offset vector.
+  /// - Must be only called via commands. This is meant to move the player even if they are not attached to the vehicle.
   /// </summary>
   /// <param name="vehicleInstance">The vehicle instance to move.</param>
   /// <param name="offset">The offset vector to apply.</param>
@@ -434,7 +439,7 @@ public class VehicleCommands : ConsoleCommand
     yield return new WaitForFixedUpdate();
 
     Vector3? finalPosition = null;
-    yield return SafeMovePlayer(vehicleInstance.OnboardController,
+    yield return SafeMovePlayer(vehicleInstance.OnboardController, true,
       () =>
       {
         return finalPosition ??

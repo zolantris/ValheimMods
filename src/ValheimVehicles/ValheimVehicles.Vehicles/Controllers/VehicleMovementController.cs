@@ -475,12 +475,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (shouldUpdate)
     {
-      yield return VehicleCommands.SafeMovePlayer(OnboardController, () =>
-      {
-        transform.rotation =
-          Quaternion.Euler(transformedX, eulerY, transformedZ);
-        return transform.position;
-      }, null);
+      yield return VehicleCommands.SafeMovePlayer(OnboardController, false,
+        () =>
+        {
+          transform.rotation =
+            Quaternion.Euler(transformedX, eulerY, transformedZ);
+          return transform.position;
+        }, null);
     }
 
     yield return null;
