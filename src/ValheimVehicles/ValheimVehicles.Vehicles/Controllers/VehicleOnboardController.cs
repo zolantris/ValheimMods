@@ -352,8 +352,6 @@ public class VehicleOnboardController : MonoBehaviour
 
     var isPlayerInList = MovementController.m_players.Contains(player);
 
-    MovementController.AssignShipControls(player);
-
     player.transform.SetParent(piecesTransform);
 
     if (!isPlayerInList)

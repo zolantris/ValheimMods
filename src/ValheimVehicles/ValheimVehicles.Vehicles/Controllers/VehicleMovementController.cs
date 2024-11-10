@@ -2141,16 +2141,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
-  public static void UpdateAllShipControls(IDoodadController controller,
-    VehicleMovementController? vehicleMovementController)
-  {
-    if (vehicleMovementController == null) return;
-    foreach (var mPlayer in vehicleMovementController.m_players)
-    {
-      mPlayer.m_doodadController = controller;
-    }
-  }
-
+  /// <summary>
+  /// Generic nuke for all controllers if the wheel is removed.
+  /// </summary>
+  /// <param name="vehicleMovementController"></param>
   public static void RemoveAllShipControls(
     VehicleMovementController? vehicleMovementController)
   {

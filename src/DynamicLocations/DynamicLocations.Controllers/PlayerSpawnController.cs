@@ -139,13 +139,13 @@ public class PlayerSpawnController : MonoBehaviour
   public bool PersistDynamicPoint(ZDO zdo,
     LocationVariation locationVariationType, out int id)
   {
+    id = 0;
+    if (ZdoWatchController.Instance == null) return false;
     // Beds must be persisted when syncing spawns otherwise they cannot be retrieved directly across sessions / on server shutdown and would require a deep search of all objects.
 
-    var hasPersistentID =
-      ZdoWatchController.GetPersistentID(zdo, out var persistentId);
-    id = persistentId;
+    id = ZdoWatchController.Instance.GetOrCreatePersistentID(zdo);
 
-    if (!hasPersistentID)
+    if (id != 0)
     {
       Logger.LogError(
         "No persistent ID returned for bed, this should not be possible. Please report this error");

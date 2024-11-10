@@ -432,9 +432,6 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
 
     ShipInstance = vehicleShip;
 
-    VehicleMovementController.UpdateAllShipControls(this,
-      ShipInstance.MovementController);
-
     if (!(bool)_controls)
     {
       _controls =

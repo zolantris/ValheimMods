@@ -89,8 +89,6 @@ public class MapPinSync : MonoBehaviour
           data => { cachedPlayerSpawnZdo = data; }));
     }
 
-    var locationPins = Minimap.instance.m_locationPins;
-
     if (cachedPlayerSpawnZdo == null)
     {
       ClearSpawnPin(cachedLastBedPinData);
@@ -106,7 +104,7 @@ public class MapPinSync : MonoBehaviour
     }
 
     // make sure the key does not already exist/not point to update it if so.
-    if (locationPins.ContainsKey(nextPosition))
+    if (Minimap.instance.m_pins.Contains(cachedLastBedPinData))
     {
       yield break;
     }
@@ -129,36 +127,36 @@ public class MapPinSync : MonoBehaviour
   private void UpdateVehiclePins()
   {
     var guids = ZdoWatchController.Instance.GetAllZdoGuids();
-    // var locationPins = Minimap.instance.m_locationPins;
-    // var pinZdosToSkip = new HashSet<ZDO>();
+    var locationPins = Minimap.instance.m_locationPins;
+    var pinZdosToSkip = new HashSet<ZDO>();
 
     // Update existing pins
-    // foreach (var vehiclePin in _vehiclePins)
-    // {
-    //   if (locationPins.ContainsKey(vehiclePin.Key))
-    //   {
-    //     var zdoPosition = vehiclePin.Value.zdo.GetPosition();
-    //     locationPins[vehiclePin.Key].m_pos = zdoPosition;
-    //     var isVisible = IsWithinVisibleRadius(zdoPosition);
-    //     // Update the key in _vehiclePins without removing and re-adding
-    //     if (!vehiclePin.Key.Equals(zdoPosition))
-    //     {
-    //       if (isVisible)
-    //       {
-    //         _vehiclePins[zdoPosition] = vehiclePin.Value;
-    //       }
-    //
-    //       _vehiclePins.Remove(vehiclePin.Key);
-    //     }
-    //
-    //     pinZdosToSkip.Add(vehiclePin.Value.zdo);
-    //   }
-    // }
+    foreach (var vehiclePin in _vehiclePins)
+    {
+      if (locationPins.ContainsKey(vehiclePin.Key))
+      {
+        var zdoPosition = vehiclePin.Value.zdo.GetPosition();
+        locationPins[vehiclePin.Key].m_pos = zdoPosition;
+        var isVisible = IsWithinVisibleRadius(zdoPosition);
+        // Update the key in _vehiclePins without removing and re-adding
+        if (!vehiclePin.Key.Equals(zdoPosition))
+        {
+          if (isVisible)
+          {
+            _vehiclePins[zdoPosition] = vehiclePin.Value;
+          }
+
+          _vehiclePins.Remove(vehiclePin.Key);
+        }
+
+        pinZdosToSkip.Add(vehiclePin.Value.zdo);
+      }
+    }
 
     // Add new pins for ZDOs not already processed
     foreach (var zdo in guids.Values)
     {
-      // if (pinZdosToSkip.Contains(zdo)) continue;
+      if (pinZdosToSkip.Contains(zdo)) continue;
 
       var position = zdo.GetPosition();
       var isVisible = IsWithinVisibleRadius(position);
