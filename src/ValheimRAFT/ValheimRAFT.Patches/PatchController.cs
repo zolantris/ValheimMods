@@ -40,6 +40,7 @@ internal static class PatchController
     Harmony.PatchAll(typeof(GameCamera_WaterPatches));
     Harmony.PatchAll(typeof(Character_WaterPatches));
     Harmony.PatchAll(typeof(Fireplace_WaterPatches));
+    Harmony.PatchAll(typeof(Minimap_VehicleIcons));
 
     if (Chainloader.PluginInfos.ContainsKey("zolantris.DynamicLocations"))
     {
@@ -87,5 +88,10 @@ internal static class PatchController
       Logger.LogInfo("Applying PlanBuild Patch");
       Harmony.PatchAll(typeof(PlanBuild_Patch));
     }
+  }
+
+  public static void UnpatchSelf()
+  {
+    Harmony?.UnpatchSelf();
   }
 }

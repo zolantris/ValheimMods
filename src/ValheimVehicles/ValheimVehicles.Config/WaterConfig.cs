@@ -79,6 +79,7 @@ public static class WaterConfig
   public static ConfigEntry<string> AllowedEntiesList = null!;
 
   public static ConfigEntry<bool> AllowTamedEntiesUnderwater = null!;
+  public static ConfigEntry<bool> AllowMonsterEntitesUnderwater = null!;
 
 
   /// <summary>
@@ -95,15 +96,17 @@ public static class WaterConfig
   public static ConfigEntry<float> UnderWaterFogIntensity =
     null!;
 
-  public static ConfigEntry<bool> AutoBallast =
+  public static ConfigEntry<bool> WaterBallastEnabled =
     null!;
 
-  public static ConfigEntry<bool> ManualBallast =
-    null!;
-
-  public static ConfigEntry<float> DEBUG_AutoBallastOffsetMultiplier = null!;
   public static ConfigEntry<float> BallastSpeed = null!;
   // public ConfigEntry<KeyboardShortcut> ManualBallastModifierKey { get; set; }
+
+  public static ConfigEntry<bool>
+    EXPERIMENTAL_AboveSurfaceBallastUsesShipMass = null!;
+
+  public static ConfigEntry<float>
+    AboveSurfaceBallastMaxShipSizeAboveWater = null!;
 
   /// <summary>
   /// Other vars
@@ -230,14 +233,6 @@ public static class WaterConfig
         "Force Overrides the Swim depth for character on boats. Values above the swim depth force the player into a swim animation.",
         true, true, depthRanges));
 
-    DEBUG_AutoBallastOffsetMultiplier = Config.Bind(
-      SectionKeyDebug,
-      "DEBUG_AutoBallastOffsetMultiplier",
-      1f,
-      ConfigHelpers.CreateConfigDescription(
-        "Adds more balast offset",
-        true, true));
-
     DEBUG_WaveSizeMultiplier = Config.Bind(
       SectionKey,
       "DEBUG_WaveSizeMultiplier",
@@ -247,29 +242,38 @@ public static class WaterConfig
         false, false, new AcceptableValueRange<float>(0, 5f)));
   }
 
+  private const string aboveSurfaceConfigKey =
+    "EXPERIMENTAL_AboveSurfaceBallastUsesShipMass";
+
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
 
     BindDebugConfig(Config);
 
-    ManualBallast = Config.Bind(
+    WaterBallastEnabled = Config.Bind(
       SectionKey,
-      "ManualBallast",
+      "WaterBallastEnabled",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Similar to flight mechanics but at sea. Defaults with Space/Jump to increase height and Sneak/Shift to decrease height uses the same flight comamnds.",
         true, true));
 
-    AutoBallast = Config.Bind(
+    AboveSurfaceBallastMaxShipSizeAboveWater = Config.Bind(
       SectionKey,
-      "AutoBallast",
-      true,
+      "AboveSurfaceBallastMaxShipSizeAboveWater",
+      0.75f,
       ConfigHelpers.CreateConfigDescription(
-        "Force moves the ship's float collider to the lowest section of the boat if that section is going to smash the ground",
-        true, true));
+        $"Ships a fixed value to set for all ships. Will not be applied if config <{aboveSurfaceConfigKey}> is enabled and the ship weight is more than this value.",
+        true, true, new AcceptableValueRange<float>(0f, 1f)));
 
-    AutoBallast.SettingChanged += (sender, args) => OnAutoBallastToggle();
+    EXPERIMENTAL_AboveSurfaceBallastUsesShipMass = Config.Bind(
+      SectionKey,
+      "EXPERIMENTAL_AboveSurfaceBallastUsesShipMass",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Ships with high mass to volume will not be able to ballast well above the surface. This adds a ship mass to onboard volume calculation. The calculation is experimental so it might be inaccurate.",
+        true, true));
 
     BlockingColliderOffset = Config.Bind(
       SectionKey,
@@ -312,6 +316,14 @@ public static class WaterConfig
         "Zoom value to allow for underwater zooming. Will allow camera to go underwater at values above 0. 0 will reset camera back to default.",
         false, false, new AcceptableValueRange<float>(0, 5000f)));
 
+    AllowMonsterEntitesUnderwater = Config.Bind(
+      SectionKey,
+      "AllowMonsterEntitesUnderwater",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "Allows Monster entities onto the ship and underwater. This means they can go underwater similar to player.",
+        true, true));
+
     AllowedEntiesList = Config.Bind(
       SectionKey,
       "AllowedEntiesList",
@@ -319,14 +331,6 @@ public static class WaterConfig
       ConfigHelpers.CreateConfigDescription(
         "List separated by comma for entities that are allowed on the ship",
         true, true));
-
-    // AllowNonPlayerCharactersUnderwater = Config.Bind(
-    //   SectionKey,
-    //   "AllowNonPlayerCharactersUnderwater",
-    //   true,
-    //   ConfigHelpers.CreateConfigDescription(
-    //     "Adds entities not considered players into the underwater onboard checks. This can cause performance issues, but if you are bringing animals it's important. Side-effects could include serpants and other water entites do not behave correctly",
-    //     true));
 
     UnderwaterFogEnabled = Config.Bind(
       SectionKey,

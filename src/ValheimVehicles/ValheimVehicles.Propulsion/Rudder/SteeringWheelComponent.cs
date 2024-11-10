@@ -355,7 +355,8 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
 
   public Component GetControlledComponent()
   {
-    if ((bool)deprecatedShipControls)
+    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value &&
+        (bool)deprecatedShipControls)
     {
       return transform.parent.GetComponent<MoveableBaseRootComponent>().m_ship;
     }

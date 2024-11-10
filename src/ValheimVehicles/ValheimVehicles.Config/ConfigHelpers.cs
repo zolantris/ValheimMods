@@ -4,7 +4,8 @@ namespace ValheimVehicles.Config;
 
 public static class ConfigHelpers
 {
-  public static ConfigDescription CreateConfigDescription(string description, bool isAdmin = false,
+  public static ConfigDescription CreateConfigDescription(string description,
+    bool isAdmin = false,
     bool isAdvanced = false, AcceptableValueBase? acceptableValues = null)
   {
     return new ConfigDescription(

@@ -5,6 +5,7 @@ using Jotunn.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -61,6 +62,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   public const string CopyRight = "Copyright © 2023-2024, GNU-v3 licensed";
   // ReSharper restore MemberCanBePrivate.Global
+
+  public MapPinSync MapPinSync;
 
   public static readonly int CustomRaftLayer = 29;
   private bool m_customItemsAdded;
@@ -503,6 +506,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CustomMeshConfig.BindConfig(Config);
     WaterConfig.BindConfig(Config);
     PhysicsConfig.BindConfig(Config);
+    MinimapConfig.BindConfig(Config);
 
 #if DEBUG
     // Meant for only being run in debug builds for testing quickly
@@ -552,10 +556,17 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     PrefabManager.OnVanillaPrefabsAvailable += LoadCustomTextures;
     PrefabManager.OnVanillaPrefabsAvailable += AddCustomPieces;
 
+    MapPinSync = gameObject.AddComponent<MapPinSync>();
+
     ZdoWatcherDelegate.RegisterToZdoManager();
     // PlayerSpawnController.PlayerMoveToVehicleCallback =
     // VehiclePiecesController.OnPlayerSpawnInVehicle;
     AddModSupport();
+  }
+
+  private void OnDestroy()
+  {
+    PatchController.UnpatchSelf();
   }
 
   public void AddModSupport()

@@ -18,6 +18,7 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Vehicles.Controllers;
 using ValheimVehicles.Vehicles.Enums;
 using ValheimVehicles.Vehicles.Interfaces;
 using ZdoWatcher;
@@ -851,38 +852,48 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
   }
 
-
   /// <summary>
-  /// This should only be called directly in cases like teleporting or respawning
+  /// This should only be called directly in cases of force moving the vehicle with a command
   /// </summary>
-  public void ForceUpdateAllPiecePositions()
+  public static void ForceUpdateAllPiecePositions(
+    VehiclePiecesController controller, Vector3 position)
   {
     Physics.SyncTransforms();
     var currentPieceControllerSector =
-      ZoneSystem.GetZone(transform.position);
+      ZoneSystem.GetZone(position);
 
-    VehicleInstance?.NetView?.m_zdo?.SetPosition(transform.position);
+    controller.VehicleInstance?.NetView?.m_zdo?.SetPosition(position);
 
 
-    foreach (var nv in m_pieces.ToList())
+    foreach (var nv in controller.m_pieces.ToList())
     {
       if (!nv)
       {
         Logger.LogError(
           $"Error found with m_pieces: netview {nv}, save removing the piece");
-        m_pieces.Remove(nv);
+        controller.m_pieces.Remove(nv);
         continue;
       }
 
       var bedComponent = nv.GetComponent<Bed>();
       if (bedComponent)
       {
-        UpdateBedPiece(bedComponent);
+        controller.UpdateBedPiece(bedComponent);
         continue;
       }
 
-      nv.m_zdo?.SetPosition(transform.position);
+      nv.m_zdo?.SetPosition(position);
     }
+  }
+
+
+  /// <summary>
+  /// This should only be called directly in cases like teleporting or respawning
+  /// </summary>
+  public void ForceUpdateAllPiecePositions()
+  {
+    ForceUpdateAllPiecePositions(this,
+      VehicleInstance?.Instance?.transform.position ?? transform.position);
   }
 
   /**
@@ -1160,6 +1171,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
         case SteeringWheelComponent wheel:
           _steeringWheelPieces.Remove(wheel);
+          VehicleMovementController.RemoveAllShipControls(VehicleInstance
+            ?.MovementController);
           break;
 
         case Bed bed:

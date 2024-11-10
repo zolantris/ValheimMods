@@ -1,10 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using BepInEx.Logging;
+using ComfyGizmo;
 using Components;
+using HarmonyLib;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
@@ -157,76 +160,312 @@ public class VehicleCommands : ConsoleCommand
       return;
     }
 
-    Player.m_localPlayer.StartCoroutine(MoveVehicle(vehicleInstance,
+    Game.instance.StartCoroutine(MoveVehicle(vehicleInstance,
       Vector3.up * Mathf.Clamp(offset, -100f, 100f)));
   }
 
-  /// <summary>
-  /// Moves the vehicle based on the provided offset vector.
-  /// </summary>
-  /// <param name="vehicleInstance">The vehicle instance to move.</param>
-  /// <param name="offset">The offset vector to apply.</param>
-  private static IEnumerator MoveVehicle(VehicleShip? vehicleInstance,
-    Vector3 offset)
+  public struct SafeMovePlayerData
   {
-    if (vehicleInstance == null) yield break;
+    public Vector3 lastLocalOffset;
+    public Player player;
+    public bool IsDebugFlying;
+  }
 
-    vehicleInstance.SetCreativeMode(true);
+  public struct SafeMoveData
+  {
+    public List<SafeMovePlayerData> playersOnShip;
+    public bool IsLocalPlayerDebugFlying;
+    public VehicleOnboardController OnboardController;
+  }
 
-    var playersOnShip = vehicleInstance.OnboardController.GetPlayersOnShip();
-    var wasDebugFlyingPlayers = new List<Player>();
+  public static SafeMoveData? SafeMovePlayerBefore(
+    VehicleOnboardController? vehicleOnboardController,
+    bool shouldSkipPlayer = true)
+  {
+    if (vehicleOnboardController == null)
+    {
+      return null;
+    }
+
+    var playersOnShip = vehicleOnboardController.GetPlayersOnShip();
+    var playerData = new List<SafeMovePlayerData>();
+
+    if (!shouldSkipPlayer)
+    {
+      playerData.Add(new SafeMovePlayerData()
+      {
+        player = Player.m_localPlayer,
+        IsDebugFlying = Player.m_localPlayer.IsDebugFlying(),
+        lastLocalOffset = Player.m_localPlayer.transform.parent != null
+          ? Player.m_localPlayer.transform.localPosition
+          : Vector3.zero
+      });
+    }
+
+    // excludes current player to avoid double toggling.
     if (playersOnShip.Count > 0)
     {
       foreach (var player in playersOnShip)
       {
-        if (player.IsDebugFlying())
+        var isDebugFlying = player.IsDebugFlying();
+        if (!isDebugFlying)
         {
-          wasDebugFlyingPlayers.Add(player);
-          continue;
+          player.m_body.isKinematic = true;
         }
 
-        player.ToggleDebugFly();
+        player.transform.SetParent(null);
+        playerData.Add(new SafeMovePlayerData()
+        {
+          player = player, IsDebugFlying = isDebugFlying,
+          lastLocalOffset = player.transform.parent != null
+            ? player.transform.localPosition
+            : Vector3.zero
+        });
       }
     }
 
     var wasDebugFlying = Player.m_localPlayer.IsDebugFlying();
     if (!wasDebugFlying)
     {
-      Player.m_localPlayer.ToggleDebugFly();
+      Player.m_localPlayer.m_body.isKinematic = true;
     }
 
-    // Ensure Y position does not go below 1
-    // vehicleInstance.transform.position.y + offset.y;
-    vehicleInstance.transform.position =
-      VectorUtils.MergeVectors(vehicleInstance.transform.position, offset);
+    return new SafeMoveData()
+    {
+      playersOnShip = playerData,
+      IsLocalPlayerDebugFlying = wasDebugFlying,
+      OnboardController = vehicleOnboardController,
+    };
+  }
 
+  /// <summary>
+  /// Protects the player so they do not die mid-transit if the ship needs to fix itself.
+  /// Allows for passing a ShipUpdateCallback which is the part that can kill a player when the ship moves it's physics rapidly. 
+  /// </summary>
+  /// <param name="onboardController"></param>
+  /// <param name="shouldMoveLocalPlayerOffship">Meant for commands if the player is outside the range they can still follow the vehicle</param>
+  /// <param name="completeCallback">The final position</param>
+  /// <param name="coroutineFunc">A method that may need to be called before running complete</param>
+  /// <returns></returns>
+  public static IEnumerator SafeMovePlayer(
+    VehicleOnboardController onboardController,
+    bool shouldMoveLocalPlayerOffship,
+    Func<Vector3> completeCallback, IEnumerator? coroutineFunc)
+  {
+    var safeMoveData =
+      SafeMovePlayerBefore(onboardController, shouldMoveLocalPlayerOffship);
     yield return new WaitForFixedUpdate();
 
-    if (playersOnShip.Count > 0)
+    if (coroutineFunc != null)
     {
-      foreach (var player in playersOnShip)
+      yield return coroutineFunc;
+    }
+
+    var nextPosition = completeCallback();
+    yield return SafeMovePlayerAfter(safeMoveData, nextPosition);
+    yield return new WaitForFixedUpdate();
+  }
+
+  public static void ResetPlayerVelocities(Player player)
+  {
+    if (player.m_body.isKinematic)
+    {
+      player.m_body.isKinematic = false;
+    }
+
+    player.m_body.angularVelocity = Vector3.zero;
+    player.m_body.velocity = Vector3.zero;
+    player.m_fallTimer = 0f;
+    player.m_maxAirAltitude = -10000f;
+  }
+
+  public static void TeleportImmediately(Player player, Vector3 toPosition)
+  {
+    // reset teleporting
+    player.m_teleporting = false;
+    player.m_teleportTimer = 999f;
+    player.TeleportTo(toPosition, player.transform.rotation, false);
+  }
+
+  /// <summary>
+  /// Moves player back to non debug mode.
+  /// - todo move players to original position.
+  /// </summary>
+  /// <param name="data"></param>
+  /// <param name="nextPosition"></param>
+  public static IEnumerator SafeMovePlayerAfter(SafeMoveData? data,
+    Vector3 nextPosition)
+  {
+    if (data == null) yield break;
+    if (data.Value.playersOnShip.Count <= 0) yield break;
+    var piecesController =
+      data.Value.OnboardController?.PiecesController?.transform;
+    var zdo = data.Value.OnboardController?.VehicleInstance?.NetView?.m_zdo;
+
+    foreach (var safeMovePlayerData in data.Value.playersOnShip)
+    {
+      var targetLocation = nextPosition + safeMovePlayerData.lastLocalOffset;
+      if (piecesController != null && zdo != null)
       {
-        if (wasDebugFlyingPlayers.Contains(player))
+        var deltaX = safeMovePlayerData.player.transform.position.x -
+                     piecesController.transform.position.x;
+        var deltaY = safeMovePlayerData.player.transform.position.y -
+                     piecesController.transform.position.y;
+        var deltaZ = safeMovePlayerData.player.transform.position.z -
+                     piecesController.transform.position.z;
+        // If moving player to the vehicle exceeds the range, they need to be force teleported.
+        if (Mathf.Abs(deltaX) > 50f || Mathf.Abs(deltaY) > 50f ||
+            Mathf.Abs(deltaZ) > 50f)
         {
-          continue;
+          targetLocation = data.Value.OnboardController.VehicleInstance.NetView
+                             .m_zdo
+                             .GetPosition() +
+                           safeMovePlayerData.lastLocalOffset;
         }
 
-        if (!player.IsDebugFlying())
-        {
-          continue;
-        }
-
-        player.ToggleDebugFly();
+        TeleportImmediately(safeMovePlayerData.player,
+          targetLocation);
       }
     }
 
-    if (!wasDebugFlying && Player.m_localPlayer.IsDebugFlying())
+    yield return new WaitForFixedUpdate();
+
+    var timer = Stopwatch.StartNew();
+    var complete = false;
+    while (timer.ElapsedMilliseconds < 5000 && complete == false)
     {
-      Player.m_localPlayer.ToggleDebugFly();
+      if (complete) break;
+
+      var isSuccess = true;
+      foreach (var playerData in data.Value.playersOnShip)
+      {
+        if (playerData.player.IsTeleporting())
+        {
+          isSuccess = false;
+          continue;
+        }
+
+        if (piecesController != null)
+        {
+          if (!playerData.IsDebugFlying)
+          {
+            playerData.player.transform.SetParent(piecesController
+              .transform);
+            playerData.player.transform.localPosition =
+              playerData.lastLocalOffset;
+          }
+          else
+          {
+            playerData.player.transform.position =
+              piecesController.transform.position +
+              playerData.lastLocalOffset;
+          }
+        }
+
+        ResetPlayerVelocities(playerData.player);
+      }
+
+      yield return new WaitForFixedUpdate();
+
+      complete = isSuccess;
     }
 
-    vehicleInstance.SetCreativeMode(false);
+    if (!complete)
+    {
+      foreach (var playerData in data.Value.playersOnShip)
+      {
+        ResetPlayerVelocities(playerData.player);
+      }
+    }
+
+    timer.Restart();
+    // keep running this for the first 5 seconds to prevent falldamage while the ship recovers it's physics and the player lands on the ship.
+    while (timer.ElapsedMilliseconds < 5000)
+    {
+      foreach (var playerData in data.Value.playersOnShip)
+      {
+        playerData.player.m_fallTimer = 0f;
+        playerData.player.m_maxAirAltitude = -10000f;
+      }
+
+      yield return new WaitForFixedUpdate();
+    }
+
     yield return null;
+  }
+
+  private static IEnumerator MoveVehicleIntoFarZone(VehicleShip vehicleInstance,
+    Vector3 offset, Action<Vector3> onPositionReady)
+  {
+    var newLocation =
+      VectorUtils.MergeVectors(vehicleInstance.transform.position, offset);
+
+    // attempts to for the ship to move here.
+    var zoneToMoveTo = ZoneSystem.GetZone(newLocation);
+    if (!ZoneSystem.instance.PokeLocalZone(zoneToMoveTo))
+    {
+      if (!ZoneSystem.instance.SpawnZone(zoneToMoveTo,
+            ZoneSystem.SpawnMode.Full, out _))
+      {
+        ZoneSystem.instance.CreateLocalZones(newLocation);
+      }
+    }
+
+    var timer = Stopwatch.StartNew();
+    yield return new WaitUntil(() =>
+      ZoneSystem.instance.IsZoneLoaded(newLocation) ||
+      timer.ElapsedMilliseconds > 5000);
+
+    vehicleInstance.transform.position = newLocation;
+    vehicleInstance.NetView.m_zdo.SetPosition(newLocation);
+    VehiclePiecesController.ForceUpdateAllPiecePositions(
+      vehicleInstance.PiecesController, newLocation);
+    onPositionReady(vehicleInstance.transform.position);
+  }
+
+  /// <summary>
+  /// Moves the vehicle based on the provided offset vector.
+  /// - Must be only called via commands. This is meant to move the player even if they are not attached to the vehicle.
+  /// </summary>
+  /// <param name="vehicleInstance">The vehicle instance to move.</param>
+  /// <param name="offset">The offset vector to apply.</param>
+  private static IEnumerator MoveVehicle(VehicleShip? vehicleInstance,
+    Vector3 offset)
+  {
+    if (vehicleInstance?.OnboardController == null)
+      yield break;
+
+    vehicleInstance.SetCreativeMode(true);
+    yield return new WaitForFixedUpdate();
+
+    Vector3? finalPosition = null;
+    yield return SafeMovePlayer(vehicleInstance.OnboardController, true,
+      () =>
+      {
+        return finalPosition ??
+               vehicleInstance.OnboardController.transform.position;
+      },
+      MoveVehicleIntoFarZone(vehicleInstance, offset,
+        (pos) => { finalPosition = pos; }));
+
+    if (vehicleInstance != null)
+    {
+      vehicleInstance.SetCreativeMode(false);
+    }
+  }
+
+  public Vector3 ClampFromPermissions(Vector3 position)
+  {
+    if (!SynchronizationManager.Instance.PlayerIsAdmin)
+    {
+      Logger.LogMessage(
+        "Clamping to 50 units in any direction for any point if not admin");
+      return VectorUtils.ClampVector(position, -50, 50f);
+    }
+
+    Logger.LogMessage("Clamping to -5000f and 5000f units for all vectors");
+
+    return VectorUtils.ClampVector(position, -5000f, 5000f);
   }
 
   /// <summary>
@@ -248,10 +487,10 @@ public class VehicleCommands : ConsoleCommand
         float.TryParse(args[1], out var y) &&
         float.TryParse(args[2], out var z))
     {
-      var offsetVector =
-        VectorUtils.ClampVector(new Vector3(x, y, z), -100f, 100f);
+      var offsetVector = ClampFromPermissions(new Vector3(x, y, z));
 
-      Player.m_localPlayer.StartCoroutine(MoveVehicle(shipInstance,
+
+      Game.instance.StartCoroutine(MoveVehicle(shipInstance,
         offsetVector));
     }
     else
@@ -289,7 +528,8 @@ public class VehicleCommands : ConsoleCommand
 
     if (args.Length == 1)
     {
-      vehicleController?.VehicleInstance?.MovementController?.FixShipRotation();
+      Game.instance.StartCoroutine(vehicleController?.VehicleInstance
+        ?.MovementController?.FixShipRotation());
     }
 
     if (args.Length == 4)
@@ -513,7 +753,6 @@ public class VehicleCommands : ConsoleCommand
     VehicleCommandArgs.move,
     VehicleCommandArgs.moveUp,
   ];
-
 
   public override string Name => "vehicle";
 }

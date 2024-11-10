@@ -63,7 +63,7 @@
 
 ### AllowFlight 
 - Description: Allow the raft to fly (jump\crouch to go up and down)
-- Default Value: true
+- Default Value: false
 
 ### AllowCustomRudderSpeeds 
 - Description: Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed. See advanced section for the actual speed settings.
@@ -91,7 +91,7 @@
 
 ### HullFloatationColliderLocation 
 - Description: Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20
-- Default Value: Bottom
+- Default Value: Custom
 
 ### HullFloatation Custom Offset 
 - Description: Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
@@ -99,7 +99,7 @@
 
 ### EnableExactVehicleBounds 
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible
-- Default Value: false
+- Default Value: true
 
 ## Debug
 
@@ -139,7 +139,7 @@
 
 ### Rudder Full Speed 
 - Description: Set the Full speed of rudder, this will apply with sails
-- Default Value: 40
+- Default Value: 30
 
 ### HasShipWeightCalculations 
 - Description: enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less
@@ -397,7 +397,7 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### turningPowerWithRudder 
 - Description: Set the turning power with a rudder
-- Default Value: 6
+- Default Value: 2
 
 ### slowAndReverseWithoutControls 
 - Description: Vehicles do not require controls while in slow and reverse with a person on them
@@ -417,11 +417,11 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### FlightClimbingOffset 
 - Description: Ascent and Descent speed for the vehicle in the air. This value is interpolated to prevent jitters.
-- Default Value: 5
+- Default Value: 1
 
 ### UnderwaterClimbingOffset 
 - Description: Ascent and Descent speed for the vehicle in the water. This value is interpolated to prevent jitters.
-- Default Value: 5
+- Default Value: 1
 
 ## ModSupport:DynamicLocations
 
@@ -473,19 +473,23 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: Force Overrides the Swim depth for character on boats. Values above the swim depth force the player into a swim animation.
 - Default Value: 15
 
-### DEBUG_AutoBallastOffsetMultiplier 
-- Description: Adds more balast offset
-- Default Value: 1
-
 ## Underwater
 
-### ManualBallast 
+### DEBUG_WaveSizeMultiplier 
+- Description: Make the big waves applies to DEBUG builds only. This is a direct multiplier to height might not work as expected. Debug value for fun
+- Default Value: 1
+
+### WaterBallastEnabled 
 - Description: Similar to flight mechanics but at sea. Defaults with Space/Jump to increase height and Sneak/Shift to decrease height uses the same flight comamnds.
 - Default Value: true
 
-### AutoBallast 
-- Description: Force moves the ship's float collider to the lowest section of the boat if that section is going to smash the ground
-- Default Value: true
+### AboveSurfaceBallastMaxShipSizeAboveWater 
+- Description: Ships a fixed value to set for all ships. Will not be applied if config <EXPERIMENTAL_AboveSurfaceBallastUsesShipMass> is enabled and the ship weight is more than this value.
+- Default Value: 0.5164319
+
+### EXPERIMENTAL_AboveSurfaceBallastUsesShipMass 
+- Description: Ships with high mass to volume will not be able to ballast well above the surface. This adds a ship mass to onboard volume calculation. The calculation is experimental so it might be inaccurate.
+- Default Value: false
 
 ### BlockingColliderOffset 
 - Description: Sets the relative offset from the float collider. Can be negative or positive. Recommended is near the float collider. Slightly above it.
@@ -500,16 +504,16 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Default Value: false
 
 ### FlipWatermeshMode 
-- Description: Flips the water mesh underwater. This can cause some jitters. Turn it on at your own risk. It's improve immersion. Recommended to keep off for now while onboard to prevent underwater jitters due to camera colliding rapidly when water flips
+- Description: Flips the water mesh underwater. This can cause some jitters. Turn it on at your own risk. It's improve immersion. Recommended to keep off if you dislike seeing a bit of tearing in the water meshes. Flipping camera above to below surface should fix things.
 - Default Value: Everywhere
-
-### WaveSizeMultiplier 
-- Description: Make the big waves. This is a direct multiplier to height
-- Default Value: 1
 
 ### UnderwaterShipCameraZoom 
 - Description: Zoom value to allow for underwater zooming. Will allow camera to go underwater at values above 0. 0 will reset camera back to default.
 - Default Value: 5000
+
+### AllowMonsterEntitesUnderwater 
+- Description: Allows Monster entities onto the ship and underwater. This means they can go underwater similar to player.
+- Default Value: true
 
 ### AllowedEntiesList 
 - Description: List separated by comma for entities that are allowed on the ship
@@ -529,7 +533,7 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### UnderwaterAccessMode 
 - Description: Allows for walking underwater, anywhere, or onship, or eventually within the water displaced area only. Disabled with remove all water logic. DEBUG_WaterZoneOnly is not supported yet
-- Default Value: Everywhere
+- Default Value: OnboardOnly
 
 ## Vehicle Physics
 
@@ -616,6 +620,32 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 ### submersibleAngularDrag 
 - Description: 
 - Default Value: 2
+
+## MinimapConfig
+
+### BedPinSyncInterval 
+- Description: The interval in seconds at which DynamicSpawn Player pins are synced to the client.
+- Default Value: 3
+
+### VehiclePinSyncInterval 
+- Description: The interval in seconds at which vehicle pins are synced to the client.
+- Default Value: 3
+
+### VehicleNameTag 
+- Description: Set the name of the vehicle icon.
+- Default Value: Vehicle
+
+### ShowAllVehiclesOnMap 
+- Description: Shows all vehicles on global map. All vehicles will update their position.
+- Default Value: false
+
+### VisibleVehicleRadius 
+- Description: A radius in which all vehicles are revealed. This is more balanced than ShowAllVehicles.
+- Default Value: 50
+
+### ShowBedsOnVehicles 
+- Description: Will show your bed on you vehicle. This requires DynamicLocations to be enabled. This config may be migrated to dynamic locations.
+- Default Value: true
 
 ## Quick Start (DEBUG-ONLY)
 

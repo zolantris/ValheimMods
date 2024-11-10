@@ -58,6 +58,12 @@ public static class WaterZoneUtils
       return true;
     }
 
+    if (WaterConfig.AllowMonsterEntitesUnderwater.Value &&
+        character.IsMonsterFaction(Time.time))
+    {
+      return true;
+    }
+
     if (WaterConfig.AllowTamedEntiesUnderwater.Value && character.IsTamed())
     {
       return true;
@@ -163,6 +169,7 @@ public static class WaterZoneUtils
 
   public static bool IsCharacterTheLocalPlayer(Character character)
   {
+    if (Player.m_localPlayer == null) return false;
     return character.GetZDOID() == Player.m_localPlayer.GetZDOID();
   }
 
