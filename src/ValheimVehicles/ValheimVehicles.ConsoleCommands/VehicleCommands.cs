@@ -373,6 +373,17 @@ public class VehicleCommands : ConsoleCommand
       }
     }
 
+    // keep running this for the first 5 seconds to prevent falldamage while the ship recovers it's physics and the player lands on the ship.
+    while (timer.ElapsedMilliseconds < 5000)
+    {
+      foreach (var playerData in data.Value.playersOnShip)
+      {
+        playerData.player.m_fallTimer = 0f;
+      }
+
+      yield return new WaitForFixedUpdate();
+    }
+
     yield return null;
   }
 
