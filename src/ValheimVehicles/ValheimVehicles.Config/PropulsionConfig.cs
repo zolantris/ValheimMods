@@ -105,10 +105,10 @@ public static class PropulsionConfig
 
     UnderwaterClimbingOffset = Config.Bind(SectionName,
       "UnderwaterClimbingOffset",
-      5f,
+      1f,
       ConfigHelpers.CreateConfigDescription(
         "Ascent and Descent speed for the vehicle in the water. This value is interpolated to prevent jitters.",
-        true, true, new AcceptableValueRange<float>(1, 10)));
+        true, true, new AcceptableValueRange<float>(0.01f, 10)));
 
     DefaultPhysicsMode.SettingChanged +=
       (sender, args) =>

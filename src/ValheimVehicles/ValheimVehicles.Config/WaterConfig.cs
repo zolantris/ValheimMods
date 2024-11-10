@@ -355,14 +355,6 @@ public static class WaterConfig
         "List separated by comma for entities that are allowed on the ship",
         true, true));
 
-    // AllowNonPlayerCharactersUnderwater = Config.Bind(
-    //   SectionKey,
-    //   "AllowNonPlayerCharactersUnderwater",
-    //   true,
-    //   ConfigHelpers.CreateConfigDescription(
-    //     "Adds entities not considered players into the underwater onboard checks. This can cause performance issues, but if you are bringing animals it's important. Side-effects could include serpants and other water entites do not behave correctly",
-    //     true));
-
     UnderwaterFogEnabled = Config.Bind(
       SectionKey,
       "Use Underwater Fog",
