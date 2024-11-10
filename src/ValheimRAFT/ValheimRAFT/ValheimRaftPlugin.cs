@@ -5,6 +5,7 @@ using Jotunn.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -551,11 +552,17 @@ public class ValheimRaftPlugin : BaseUnityPlugin
      */
     PrefabManager.OnVanillaPrefabsAvailable += LoadCustomTextures;
     PrefabManager.OnVanillaPrefabsAvailable += AddCustomPieces;
+    MinimapManager.OnVanillaMapDataLoaded += AddRaftPins;
 
     ZdoWatcherDelegate.RegisterToZdoManager();
     // PlayerSpawnController.PlayerMoveToVehicleCallback =
     // VehiclePiecesController.OnPlayerSpawnInVehicle;
     AddModSupport();
+  }
+
+  private void OnDestroy()
+  {
+    PatchController.UnpatchSelf();
   }
 
   public void AddModSupport()
@@ -702,6 +709,70 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     {
       _debugGui = gameObject.AddComponent<VehicleDebugGui>();
     }
+  }
+
+  public struct CustomPinZdoData
+  {
+    public Minimap.PinData pinData;
+    public ZDO zdo;
+  }
+
+  Dictionary<Vector3, CustomPinZdoData> _vehiclePins = new();
+
+  public string GetOwnerNameFromZdo(ZDO zdo)
+  {
+    return CensorShittyWords.FilterUGC(zdo.GetString(ZDOVars.s_ownerName),
+      UGCType.CharacterName, Player.m_localPlayer.GetOwner().ToString());
+  }
+
+  private void UpdateVehiclePins()
+  {
+    var guids = ZdoWatchController.Instance.GetAllZdoGuids();
+
+    // search for already added pins and remove them or update them if the zdo exists or not.
+    // Minimap.instance.
+    var pinZdosToSkip = new List<ZDO>();
+
+    if (_vehiclePins.Count > 0)
+    {
+      foreach (var vehiclePin in _vehiclePins.ToList())
+      {
+        var hasPin =
+          Minimap.instance.m_locationPins.ContainsKey(vehiclePin.Key);
+        if (!hasPin) continue;
+
+        var zdoPosition = vehiclePin.Value.zdo.GetPosition();
+        Minimap.instance.m_locationPins[vehiclePin.Key].m_pos =
+          zdoPosition;
+        _vehiclePins.Remove(vehiclePin.Key);
+        _vehiclePins.Add(zdoPosition,
+          new CustomPinZdoData()
+            { pinData = vehiclePin.Value.pinData, zdo = vehiclePin.Value.zdo });
+        pinZdosToSkip.Add(_vehiclePins[vehiclePin.Key].zdo);
+      }
+    }
+
+    foreach (var zdo in guids.Values)
+    {
+      if (pinZdosToSkip.Contains(zdo)) continue;
+      var zdoOwner = zdo.GetOwner();
+      var position = zdo.GetPosition();
+      if (_vehiclePins.TryGetValue(position, out var vehiclePin))
+      {
+        continue;
+      }
+
+      var pinData = Minimap.instance.AddPin(position,
+        Minimap.PinType.Bed,
+        $"Vehicle_{GetOwnerNameFromZdo(zdo)}", false, false, zdoOwner);
+      _vehiclePins.Add(position,
+        new CustomPinZdoData() { pinData = pinData, zdo = zdo });
+    }
+  }
+
+  private void AddRaftPins()
+  {
+    InvokeRepeating(nameof(UpdateVehiclePins), 2f, 2f);
   }
 
   private void AddCustomPieces()

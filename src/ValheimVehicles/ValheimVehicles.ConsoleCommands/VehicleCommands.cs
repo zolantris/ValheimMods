@@ -272,6 +272,7 @@ public class VehicleCommands : ConsoleCommand
     player.m_body.angularVelocity = Vector3.zero;
     player.m_body.velocity = Vector3.zero;
     player.m_fallTimer = 0f;
+    player.m_maxAirAltitude = -10000f;
   }
 
   public static void TeleportImmediately(Player player, Vector3 toPosition)
@@ -373,12 +374,14 @@ public class VehicleCommands : ConsoleCommand
       }
     }
 
+    timer.Restart();
     // keep running this for the first 5 seconds to prevent falldamage while the ship recovers it's physics and the player lands on the ship.
     while (timer.ElapsedMilliseconds < 5000)
     {
       foreach (var playerData in data.Value.playersOnShip)
       {
         playerData.player.m_fallTimer = 0f;
+        playerData.player.m_maxAirAltitude = -10000f;
       }
 
       yield return new WaitForFixedUpdate();

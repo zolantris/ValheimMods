@@ -575,6 +575,49 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       FloatCollider?.size ?? Vector3.one;
   }
 
+  public Vector3 lastPosition = Vector3.zero;
+  public float lastPositionUpdate = 0f;
+
+  public const string vehicleKeyPrefix = "valheim_vehicle";
+
+  public string vehicleMapKey = "";
+
+  public string GetVehicleMapKey()
+  {
+    return $"{vehicleKeyPrefix}_{m_nview.GetZDO().GetOwner()}";
+  }
+
+  public void UpdateVehicleLocation(float deltaTime)
+  {
+    if (lastPositionUpdate < 3)
+    {
+      lastPositionUpdate += deltaTime;
+    }
+    else
+    {
+      lastPositionUpdate = deltaTime;
+    }
+
+    if (Vector3.Distance(lastPosition, transform.position) < 3f)
+    {
+      return;
+    }
+
+    Minimap.MapMode mode = Minimap.m_instance.m_mode;
+    if (vehicleMapKey != "")
+    {
+      ZoneSystem.m_instance.RemoveGlobalKey(vehicleMapKey);
+    }
+
+    vehicleMapKey = GetVehicleMapKey();
+
+    if (vehicleMapKey != "")
+    {
+      ZoneSystem.m_instance.SetGlobalKey(vehicleMapKey);
+      Minimap.m_instance.SetMapMode(mode);
+    }
+  }
+
   public void CustomFixedUpdate(float deltaTime)
   {
     if (!(bool)m_body || !(bool)m_floatcollider)

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
@@ -32,6 +33,14 @@ public class ZdoWatchController : MonoBehaviour
     //   "RPC_RequestSync",
     //   RequestPersistentIdRPCServerReceive, RPC_ClientSync);
     //
+  }
+
+  /// <summary>
+  /// This will not allow mutation. This should be locked down if there is risk of the original source being destroyed.
+  /// </summary>
+  public Dictionary<int, ZDO> GetAllZdoGuids()
+  {
+    return _zdoGuidLookup.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
   }
 
   public void Update()
