@@ -70,7 +70,7 @@ public static class WaterConfig
   /// <summary>
   /// Waves
   /// </summary>
-  public static ConfigEntry<float> WaveSizeMultiplier =
+  public static ConfigEntry<float> DEBUG_WaveSizeMultiplier =
     null!;
 
   /// <summary>
@@ -237,6 +237,14 @@ public static class WaterConfig
       ConfigHelpers.CreateConfigDescription(
         "Adds more balast offset",
         true, true));
+
+    DEBUG_WaveSizeMultiplier = Config.Bind(
+      SectionKey,
+      "DEBUG_WaveSizeMultiplier",
+      1f,
+      ConfigHelpers.CreateConfigDescription(
+        "Make the big waves applies to DEBUG builds only. This is a direct multiplier to height might not work as expected. Debug value for fun",
+        false, false, new AcceptableValueRange<float>(0, 5f)));
   }
 
   public static void BindConfig(ConfigFile config)
@@ -293,16 +301,8 @@ public static class WaterConfig
       "FlipWatermeshMode",
       WaterMeshFlipModeType.Disabled,
       ConfigHelpers.CreateConfigDescription(
-        "Flips the water mesh underwater. This can cause some jitters. Turn it on at your own risk. It's improve immersion. Recommended to keep off for now while onboard to prevent underwater jitters due to camera colliding rapidly when water flips",
+        "Flips the water mesh underwater. This can cause some jitters. Turn it on at your own risk. It's improve immersion. Recommended to keep off if you dislike seeing a bit of tearing in the water meshes. Flipping camera above to below surface should fix things.",
         true, true));
-
-    WaveSizeMultiplier = Config.Bind(
-      SectionKey,
-      "WaveSizeMultiplier",
-      1f,
-      ConfigHelpers.CreateConfigDescription(
-        "Make the big waves. This is a direct multiplier to height",
-        false, false, new AcceptableValueRange<float>(0, 5f)));
 
     UnderwaterShipCameraZoom = Config.Bind(
       SectionKey,

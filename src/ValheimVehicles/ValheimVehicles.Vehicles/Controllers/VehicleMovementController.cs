@@ -792,10 +792,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (_lastHighestGroundPoint > expectedLowestBlockingColliderPoint)
     {
       // will be a positive number.
-      var heightDifference = (_lastHighestGroundPoint + 1f) -
+      var heightDifference = (_lastHighestGroundPoint) -
                              BlockingCollider.transform.position.y;
       // we force update it.
-      UpdateTargetHeight(TargetHeight - (heightDifference + 1f), false);
+      UpdateTargetHeight(TargetHeight - (heightDifference), false);
     }
 
     // ForceUpdateIfBelowGround, this can happen if driving the vehicle forwards into the ground.
@@ -806,19 +806,18 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       var heightDifference = _lastHighestGroundPoint -
                              OnboardCollider.bounds.min.y;
       // we force update it.
-      UpdateTargetHeight(TargetHeight - heightDifference, true);
+      UpdateTargetHeight(TargetHeight - heightDifference, false);
     }
 
     // super stuck. do a direct update. But protect the players from being launched. Yikes.
     if (_lastHighestGroundPoint > BlockingCollider.transform.position.y)
     {
-      UpdateTargetHeight(0, forceUpdate: true);
-
-      UpdateYPosition(FloatCollider.transform,
-        -FloatCollider.transform.localPosition.y);
-      UpdateYPosition(BlockingCollider.transform,
-        -BlockingCollider.transform.localPosition.y);
-      return;
+      // force updates the vehicle to this position.
+      transform.position = new Vector3(transform.position.x,
+        transform.position.y + (_lastHighestGroundPoint -
+                                BlockingCollider.transform.position.y),
+        transform.position.z);
+      UpdateTargetHeight(0, forceUpdate: false);
     }
 
     var floatPositionY =
@@ -1711,7 +1710,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public bool IsFlying()
   {
     if (!ValheimRaftPlugin.Instance.AllowFlight.Value) return false;
-    return FloatCollider.transform.position.y >
+    var pieceOffset =
+      TargetHeight + PiecesController?.FloatColliderDefaultPosition.y;
+    return pieceOffset <
            -ZoneSystem.instance.m_waterLevel;
   }
 
@@ -1792,11 +1793,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // steer offset will need to be size x or size z depending on location of rotation.
     // todo GetFloatSizeFromDirection may not be needed anymore.
     // This needs to use blocking collider otherwise the float collider pushes the vehicle upwards but the blocking collider cannot push downwards.
+    // todo set this to the rudder point
     var steerOffset = VectorUtils.MergeVectors(
-      new Vector3(0, BlockingCollider.center.y, 0), ShipDirection.position -
-                                                    ShipDirection.forward *
-                                                    GetFloatSizeFromDirection(
-                                                      Vector3.forward));
+      m_body.worldCenterOfMass,
+      ShipDirection.position -
+      ShipDirection.forward *
+      GetFloatSizeFromDirection(
+        Vector3.forward));
 
     var steeringVelocityDirectionFactor = direction * m_stearVelForceFactor;
     var steerOffsetForce = ShipDirection.right *
