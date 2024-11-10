@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimVehicles.Attributes;
 using ValheimVehicles.Config;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.LayerUtils;
 using ValheimVehicles.Vehicles;
@@ -118,7 +119,7 @@ public class WaterZoneController : CreativeModeColliderComponent
       WaterConfig.UnderwaterAccessModeType.Disabled => false,
       WaterConfig.UnderwaterAccessModeType.Everywhere => true,
       WaterConfig.UnderwaterAccessModeType.OnboardOnly =>
-        VehicleOnboardController.IsCharacterOnboard(character),
+        WaterZoneUtils.IsOnboard(character),
       WaterConfig.UnderwaterAccessModeType.DEBUG_WaterZoneOnly =>
         IsInWaterFreeZone(
           character),

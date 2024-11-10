@@ -33,6 +33,9 @@ public static class WaterConfig
   public static ConfigEntry<PrimitiveType>
     DEBUG_WaterDisplacementMeshPrimitive { get; private set; } = null!;
 
+  public static ConfigEntry<float>
+    BlockingColliderOffset { get; private set; } = null!;
+
   public static ConfigEntry<WaterMeshFlipModeType>
     FlipWatermeshMode { get; private set; } = null!;
 
@@ -67,7 +70,7 @@ public static class WaterConfig
   /// <summary>
   /// Waves
   /// </summary>
-  public static ConfigEntry<float> WaveSizeMultiplier =
+  public static ConfigEntry<float> DEBUG_WaveSizeMultiplier =
     null!;
 
   /// <summary>
@@ -99,7 +102,7 @@ public static class WaterConfig
     null!;
 
   public static ConfigEntry<float> DEBUG_AutoBallastOffsetMultiplier = null!;
-  public static ConfigEntry<float> AutoBallastSpeed = null!;
+  public static ConfigEntry<float> BallastSpeed = null!;
   // public ConfigEntry<KeyboardShortcut> ManualBallastModifierKey { get; set; }
 
   /// <summary>
@@ -234,6 +237,14 @@ public static class WaterConfig
       ConfigHelpers.CreateConfigDescription(
         "Adds more balast offset",
         true, true));
+
+    DEBUG_WaveSizeMultiplier = Config.Bind(
+      SectionKey,
+      "DEBUG_WaveSizeMultiplier",
+      1f,
+      ConfigHelpers.CreateConfigDescription(
+        "Make the big waves applies to DEBUG builds only. This is a direct multiplier to height might not work as expected. Debug value for fun",
+        false, false, new AcceptableValueRange<float>(0, 5f)));
   }
 
   public static void BindConfig(ConfigFile config)
@@ -245,7 +256,7 @@ public static class WaterConfig
     ManualBallast = Config.Bind(
       SectionKey,
       "ManualBallast",
-      true,
+      false,
       ConfigHelpers.CreateConfigDescription(
         "Similar to flight mechanics but at sea. Defaults with Space/Jump to increase height and Sneak/Shift to decrease height uses the same flight comamnds.",
         true, true));
@@ -260,10 +271,18 @@ public static class WaterConfig
 
     AutoBallast.SettingChanged += (sender, args) => OnAutoBallastToggle();
 
-    AutoBallastSpeed = Config.Bind(
+    BlockingColliderOffset = Config.Bind(
       SectionKey,
-      "AutoBallastSpeed",
-      0.1f,
+      "BlockingColliderOffset",
+      0.2f,
+      ConfigHelpers.CreateConfigDescription(
+        "Sets the relative offset from the float collider. Can be negative or positive. Recommended is near the float collider. Slightly above it.",
+        true, true, new AcceptableValueRange<float>(-10f, 10f)));
+
+    BallastSpeed = Config.Bind(
+      SectionKey,
+      "BallastSpeed",
+      0.5f,
       ConfigHelpers.CreateConfigDescription(
         "Adds more balast offset",
         true, true, new AcceptableValueRange<float>(0.001f, 1)));
@@ -282,16 +301,8 @@ public static class WaterConfig
       "FlipWatermeshMode",
       WaterMeshFlipModeType.Disabled,
       ConfigHelpers.CreateConfigDescription(
-        "Flips the water mesh underwater. This can cause some jitters. Turn it on at your own risk. It's improve immersion. Recommended to keep off for now while onboard to prevent underwater jitters due to camera colliding rapidly when water flips",
+        "Flips the water mesh underwater. This can cause some jitters. Turn it on at your own risk. It's improve immersion. Recommended to keep off if you dislike seeing a bit of tearing in the water meshes. Flipping camera above to below surface should fix things.",
         true, true));
-
-    WaveSizeMultiplier = Config.Bind(
-      SectionKey,
-      "WaveSizeMultiplier",
-      1f,
-      ConfigHelpers.CreateConfigDescription(
-        "Make the big waves. This is a direct multiplier to height",
-        false, false, new AcceptableValueRange<float>(0, 5f)));
 
     UnderwaterShipCameraZoom = Config.Bind(
       SectionKey,
@@ -327,7 +338,7 @@ public static class WaterConfig
     UnderWaterFogColor = Config.Bind(
       SectionKey,
       "Underwater fog color",
-      new Color(0f, 0.57f, 0.6f),
+      new Color(0.10f, 0.23f, 0.07f, 1.00f),
       ConfigHelpers.CreateConfigDescription(
         "Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.",
         true));
@@ -335,7 +346,7 @@ public static class WaterConfig
     UnderWaterFogIntensity = Config.Bind(
       SectionKey,
       "Underwater Fog Intensity",
-      0.2f,
+      0.03f,
       ConfigHelpers.CreateConfigDescription(
         "Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.",
         true));

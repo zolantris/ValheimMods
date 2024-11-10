@@ -77,10 +77,11 @@ public class PhysicsConfig
   {
     Config = config;
 
-    flightAngularDamping = Config.Bind(SectionKey, "flightAngularDamping", 5f);
+    flightAngularDamping = Config.Bind(SectionKey, "flightAngularDamping", 1f);
     flightSidewaysDamping =
-      Config.Bind(SectionKey, "flightSidewaysDamping", 5f);
-    flightDamping = Config.Bind(SectionKey, "flightDamping", 5f);
+      Config.Bind(SectionKey, "flightSidewaysDamping", 1f);
+    flightDamping = Config.Bind(SectionKey, "flightDamping", 1f);
+
     flightSteerForce = Config.Bind(SectionKey, "flightSteerForce", 1f);
     flightSailForceFactor =
       Config.Bind(SectionKey, "flightSailForceFactor", 0.1f);
@@ -88,10 +89,13 @@ public class PhysicsConfig
     flightAngularDrag = Config.Bind(SectionKey, "flightAngularDrag", 1.2f);
 
     // water
-    waterAngularDamping = Config.Bind(SectionKey, "waterAngularDamping", 1f);
-    waterSidewaysDamping = Config.Bind(SectionKey, "waterSidewaysDamping", 1f);
     waterSteerForce = Config.Bind(SectionKey, "waterSteerForce", 1f);
-    waterDamping = Config.Bind(SectionKey, "waterDamping", 5f);
+
+    waterSidewaysDamping =
+      Config.Bind(SectionKey, "waterSidewaysDamping", 0.05f);
+    waterAngularDamping = Config.Bind(SectionKey, "waterAngularDamping", 0.05f);
+    waterDamping = Config.Bind(SectionKey, "waterDamping", 0.05f);
+
     waterSailForceFactor =
       Config.Bind(SectionKey, "waterSailForceFactor", 0.05f);
     waterDrag = Config.Bind(SectionKey, "waterDrag", 0.8f);
@@ -102,9 +106,10 @@ public class PhysicsConfig
       Config.Bind(SectionKey, "submersibleAngularDamping", 0.5f);
     submersibleSidewaysDamping =
       Config.Bind(SectionKey, "submersibleSidewaysDamping", 0.5f);
+    submersibleDamping = Config.Bind(SectionKey, "submersibleDamping", 0.5f);
+
     submersibleSteerForce =
       Config.Bind(SectionKey, "submersibleSteerForce", 0.5f);
-    submersibleDamping = Config.Bind(SectionKey, "submersibleDamping", 0.5f);
     submersibleSailForceFactor =
       Config.Bind(SectionKey, "submersibleSailForceFactor", 0f);
     submersibleDrag = Config.Bind(SectionKey, "submersibleDrag", 1.5f);

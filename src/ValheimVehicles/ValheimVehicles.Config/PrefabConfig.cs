@@ -36,7 +36,7 @@ public static class PrefabConfig
   {
     Config = config;
     RopeLadderEjectionOffset = config.Bind(SectionKey,
-      "RopeLadderEjectionPoint", new Vector3(0f, 0.25f, 0.5f),
+      "RopeLadderEjectionPoint", Vector3.zero,
       "The place the player is placed after they leave the ladder. Defaults to Y +0.25 and Z +0.5 meaning you are placed forwards of the ladder.");
 
     StartingPiece = config.Bind(SectionKey, "startingPiece",

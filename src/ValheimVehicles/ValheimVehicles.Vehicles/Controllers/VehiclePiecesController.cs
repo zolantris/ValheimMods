@@ -720,9 +720,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
 
     if (m_body.collisionDetectionMode !=
-        CollisionDetectionMode.ContinuousDynamic)
+        CollisionDetectionMode.Discrete)
     {
-      m_body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+      m_body.collisionDetectionMode =
+        CollisionDetectionMode.Discrete;
     }
 
     if (m_fixedJoint.connectedBody)
@@ -730,33 +731,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       m_fixedJoint.connectedBody = null;
     }
 
-    var lastOffset = VehicleInstance.MovementController.m_body.position -
-                     m_body.position;
-    var lastPlayersPosition =
-      MovementController?.m_players.Select(x => x.transform.localPosition)
-        .ToList();
-
-    m_body.MovePosition(VehicleInstance.MovementController.m_body.position);
-    m_body.MoveRotation(
-      VehicleInstance.MovementController.m_body.rotation);
-
-    // In theory should make the players sync properly while moving at speed. No more jittery
-    if (MovementController?.m_players != null && lastPlayersPosition != null)
-    {
-      for (var i = 0; i < MovementController.m_players.Count; i++)
-      {
-        var expectedOffset = lastPlayersPosition[i] + lastOffset;
-        if (Mathf.Approximately(expectedOffset.magnitude,
-              MovementController.m_players[i].transform.localPosition
-                .magnitude))
-        {
-          continue;
-        }
-
-        MovementController.m_players[i].transform.localPosition =
-          expectedOffset;
-      }
-    }
+    m_body.Move(
+      VehicleInstance.MovementController.m_body.position,
+      VehicleInstance.MovementController.m_body.rotation
+    );
   }
 
   public void JointSync()
@@ -773,7 +751,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   }
 
   private bool IsNotFlying =>
-    Mathf.Approximately(VehicleInstance?.Instance?.TargetHeight ?? 0f, 0f) ||
+    !VehicleInstance?.MovementController?.IsFlying() ?? false ||
     ValheimRaftPlugin.Instance.AllowFlight.Value == false;
 
   private bool IsPhysicsForceSynced =
@@ -2667,7 +2645,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
      * - may need an additional size
      * - may need more logic for water masks (hiding water on boat) and other boat magic that has not been added yet.
      */
-    var blockingColliderCenterY = floatColliderCenterOffset.y + 0.2f;
+    var blockingColliderCenterY = floatColliderCenterOffset.y +
+                                  WaterConfig.BlockingColliderOffset.Value;
     var blockingColliderCenterOffset = new Vector3(_vehicleBounds.center.x,
       blockingColliderCenterY, _vehicleBounds.center.z);
     var blockingColliderSize = new Vector3(

@@ -17,8 +17,13 @@ namespace ValheimRAFT.Patches;
 
 public class Player_Patch
 {
+  /// <summary>
+  /// TODO may need to add a TryPlacePiece patch to override if blocked by water on boat.
+  /// </summary>
+  /// <param name="instructions"></param>
+  /// <returns></returns>
   [HarmonyTranspiler]
-  [HarmonyPatch(typeof(Player), "PlacePiece")]
+  [HarmonyPatch(typeof(Player), nameof(Player.PlacePiece))]
   private static IEnumerable<CodeInstruction> PlacePieceTranspiler(
     IEnumerable<CodeInstruction> instructions)
   {

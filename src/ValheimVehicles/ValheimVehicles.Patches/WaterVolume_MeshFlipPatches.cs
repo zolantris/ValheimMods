@@ -66,11 +66,15 @@ internal class WaterVolume_WaterPatches
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
     if (GameCamera.instance)
     {
-      WaterLevelCamera =
+      var currentSurfaceLevel =
         __instance.GetWaterSurface(GameCamera.instance.transform.position);
+      WaterLevelCamera = currentSurfaceLevel > ZoneSystem.instance.m_waterLevel
+        ? ZoneSystem.instance.m_waterLevel
+        : currentSurfaceLevel;
     }
   }
 
+#if DEBUG
   [HarmonyPatch(typeof(WaterVolume), nameof(WaterVolume.CreateWave))]
   [HarmonyPostfix]
   private static void CreateWave(WaterVolume __instance, float __result)
@@ -78,8 +82,9 @@ internal class WaterVolume_WaterPatches
     if (WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled) return;
 
-    __result *= WaterConfig.WaveSizeMultiplier.Value;
+    __result *= WaterConfig.DEBUG_WaveSizeMultiplier.Value;
   }
+#endif
 
   private static float lastFlippedAllInvoke = 0f;
 
@@ -182,7 +187,7 @@ internal class WaterVolume_WaterPatches
         WaterConfig.WaterMeshFlipModeType.Disabled) return;
 
     UpdateCameraState();
-    // UpdateMesh(__instance, normalizedDepth);
+    UpdateMesh(__instance, normalizedDepth);
   }
 
   private static void UpdateMesh(WaterVolume __instance,

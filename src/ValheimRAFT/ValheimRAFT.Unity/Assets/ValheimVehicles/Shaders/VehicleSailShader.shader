@@ -22,7 +22,7 @@
        _Metallic ("Metallic", Range(0, 1)) = 0
        _Cutoff ("Alpha Cutoff", Range(0, 1)) = 0.5
        _BumpScale ("Normal scale", Float) = 1
-       [MaterialToggle] _TwoSidedNormals ("Twosided normals", Float) = 0
+       [MaterialToggle] _TwoSidedNormals ("Twosided normals", Float) = 1
        _SphereNormals ("Spherical Normal", Range(0, 1)) = 0
        _SphereOffset ("Spherical offset", Float) = 0
        _EmissiveTex ("Emissive (RGB)", 2D) = "white" {}
