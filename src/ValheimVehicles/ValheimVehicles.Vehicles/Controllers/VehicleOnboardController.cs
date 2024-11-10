@@ -322,6 +322,8 @@ public class VehicleOnboardController : MonoBehaviour
   private void RemovePlayerOnShip(Player player)
   {
     var isPlayerInList = MovementController.m_players.Contains(player);
+    player.m_doodadController = null;
+
     if (isPlayerInList)
     {
       MovementController.m_players.Remove(player);
@@ -349,6 +351,8 @@ public class VehicleOnboardController : MonoBehaviour
     }
 
     var isPlayerInList = MovementController.m_players.Contains(player);
+
+    MovementController.AssignShipControls(player);
 
     player.transform.SetParent(piecesTransform);
 

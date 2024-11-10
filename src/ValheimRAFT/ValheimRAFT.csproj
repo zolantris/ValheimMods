@@ -46,6 +46,12 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CustomToggleSwitch.cs">
             <Link>ValheimVehicles.Vehicles\Components\CustomToggleSwitch.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\MapPinSync.cs">
+            <Link>ValheimVehicles.Vehicles\Components\MapPinSync.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Config\MinimapConfig.cs">
+            <Link>ValheimVehicles.Config\MiniMapConfig.cs</Link>
+        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup>

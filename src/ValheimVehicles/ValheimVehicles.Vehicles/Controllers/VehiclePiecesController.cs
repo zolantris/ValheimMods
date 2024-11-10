@@ -18,6 +18,7 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Vehicles.Controllers;
 using ValheimVehicles.Vehicles.Enums;
 using ValheimVehicles.Vehicles.Interfaces;
 using ZdoWatcher;
@@ -1170,6 +1171,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
         case SteeringWheelComponent wheel:
           _steeringWheelPieces.Remove(wheel);
+          VehicleMovementController.RemoveAllShipControls(VehicleInstance
+            ?.MovementController);
           break;
 
         case Bed bed:

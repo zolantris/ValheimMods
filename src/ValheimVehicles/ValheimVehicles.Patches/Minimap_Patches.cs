@@ -1,11 +1,33 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
+using ValheimRAFT.Patches;
+using ValheimVehicles.Vehicles.Components;
+using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.Patches;
 
 public class Minimap_VehicleIcons
 {
+  public static MapPinSync PinSyncInstance = null;
+
+  [HarmonyPatch(typeof(Minimap), "Start")]
+  [HarmonyPostfix]
+  public static void InjectMapUpdater(Minimap __instance)
+  {
+    __instance.gameObject.AddComponent<MapPinSync>();
+  }
+
+  [HarmonyPatch(typeof(Minimap), "OnDestroy")]
+  [HarmonyPrefix]
+  public static void DestroyInjecter(Minimap __instance)
+  {
+    Object.Destroy(PinSyncInstance);
+  }
+
   // [HarmonyPatch(typeof(Minimap), nameof(Minimap.Start))]
   // [HarmonyPostfix]
   // public static void ForceUpdateIconSpriteSize(Minimap __instance)
@@ -47,7 +69,7 @@ public class Minimap_VehicleIcons
       __instance.m_smallShipMarker.rotation = Quaternion.Euler(0.0f, 0.0f,
         -controlledShip.transform.rotation.eulerAngles.y);
       if (__instance.m_mode != Minimap.MapMode.Large)
-        return;
+        return false;
       __instance.m_largeShipMarker.gameObject.SetActive(true);
       float mx;
       float my;
@@ -66,4 +88,26 @@ public class Minimap_VehicleIcons
 
     return false;
   }
+
+  // [HarmonyPatch(typeof(Minimap), nameof(Minimap.UpdatePlayerMarker))]
+  // static IEnumerable<CodeInstruction> Transpiler(
+  //   IEnumerable<CodeInstruction> instructions)
+  // {
+  //   var codes = new List<CodeInstruction>(instructions);
+  //   var getControlledShipMethod = AccessTools.Method(typeof(Player),
+  //     nameof(Player.GetControlledShip));
+  //   var customCheckMethod = AccessTools.Method(typeof(Player_Patch),
+  //     nameof(Player_Patch.HandleGetControlledShip), [typeof(Player)]);
+  //
+  //   for (int i = 0; i < codes.Count; i++)
+  //   {
+  //     if (codes[i].Calls(getControlledShipMethod))
+  //     {
+  //       // Replace the call to GetControlledShip with MyCustomGetControlledShipCheck
+  //       codes[i] = new CodeInstruction(OpCodes.Call, customCheckMethod);
+  //     }
+  //   }
+  //
+  //   return codes.AsEnumerable();
+  // }
 }

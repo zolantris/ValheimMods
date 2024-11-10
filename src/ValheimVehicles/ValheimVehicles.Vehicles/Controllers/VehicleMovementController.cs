@@ -2133,6 +2133,34 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     InitializeRPC();
   }
 
+  public void AssignShipControls(Player player)
+  {
+    if (PiecesController?._steeringWheelPieces.Count > 0)
+    {
+      player.m_doodadController = PiecesController._steeringWheelPieces[0];
+    }
+  }
+
+  public static void UpdateAllShipControls(IDoodadController controller,
+    VehicleMovementController? vehicleMovementController)
+  {
+    if (vehicleMovementController == null) return;
+    foreach (var mPlayer in vehicleMovementController.m_players)
+    {
+      mPlayer.m_doodadController = controller;
+    }
+  }
+
+  public static void RemoveAllShipControls(
+    VehicleMovementController? vehicleMovementController)
+  {
+    if (vehicleMovementController == null) return;
+    foreach (var mPlayer in vehicleMovementController.m_players)
+    {
+      mPlayer.m_doodadController = null;
+    }
+  }
+
   public void InitializeWheelWithShip(
     SteeringWheelComponent steeringWheel)
   {
