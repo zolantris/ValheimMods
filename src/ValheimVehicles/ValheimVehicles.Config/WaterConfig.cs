@@ -79,6 +79,7 @@ public static class WaterConfig
   public static ConfigEntry<string> AllowedEntiesList = null!;
 
   public static ConfigEntry<bool> AllowTamedEntiesUnderwater = null!;
+  public static ConfigEntry<bool> AllowMonsterEntitesUnderwater = null!;
 
 
   /// <summary>
@@ -95,7 +96,7 @@ public static class WaterConfig
   public static ConfigEntry<float> UnderWaterFogIntensity =
     null!;
 
-  public static ConfigEntry<bool> AutoBallast =
+  public static ConfigEntry<bool> AutoBallastNearShore =
     null!;
 
   public static ConfigEntry<bool> ManualBallast =
@@ -104,6 +105,12 @@ public static class WaterConfig
   public static ConfigEntry<float> DEBUG_AutoBallastOffsetMultiplier = null!;
   public static ConfigEntry<float> BallastSpeed = null!;
   // public ConfigEntry<KeyboardShortcut> ManualBallastModifierKey { get; set; }
+
+  public static ConfigEntry<bool>
+    EXPERIMENTAL_AboveSurfaceBallastUsesShipMass = null!;
+
+  public static ConfigEntry<float>
+    AboveSurfaceBallastMaxShipSizeAboveWater = null!;
 
   /// <summary>
   /// Other vars
@@ -247,6 +254,9 @@ public static class WaterConfig
         false, false, new AcceptableValueRange<float>(0, 5f)));
   }
 
+  private const string aboveSurfaceConfigKey =
+    "EXPERIMENTAL_AboveSurfaceBallastUsesShipMass";
+
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
@@ -261,7 +271,23 @@ public static class WaterConfig
         "Similar to flight mechanics but at sea. Defaults with Space/Jump to increase height and Sneak/Shift to decrease height uses the same flight comamnds.",
         true, true));
 
-    AutoBallast = Config.Bind(
+    AboveSurfaceBallastMaxShipSizeAboveWater = Config.Bind(
+      SectionKey,
+      "AboveSurfaceBallastMaxShipSizeAboveWater",
+      0.75f,
+      ConfigHelpers.CreateConfigDescription(
+        $"Ships a fixed value to set for all ships. Will not be applied if config <{aboveSurfaceConfigKey}> is enabled and the ship weight is more than this value.",
+        true, true, new AcceptableValueRange<float>(0f, 1f)));
+
+    EXPERIMENTAL_AboveSurfaceBallastUsesShipMass = Config.Bind(
+      SectionKey,
+      "EXPERIMENTAL_AboveSurfaceBallastUsesShipMass",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Ships with high mass to volume will not be able to ballast well above the surface. This adds a ship mass to onboard volume calculation. The calculation is experimental so it might be inaccurate.",
+        true, true));
+
+    AutoBallastNearShore = Config.Bind(
       SectionKey,
       "AutoBallast",
       true,
@@ -269,7 +295,8 @@ public static class WaterConfig
         "Force moves the ship's float collider to the lowest section of the boat if that section is going to smash the ground",
         true, true));
 
-    AutoBallast.SettingChanged += (sender, args) => OnAutoBallastToggle();
+    AutoBallastNearShore.SettingChanged +=
+      (sender, args) => OnAutoBallastToggle();
 
     BlockingColliderOffset = Config.Bind(
       SectionKey,
@@ -311,6 +338,14 @@ public static class WaterConfig
       ConfigHelpers.CreateConfigDescription(
         "Zoom value to allow for underwater zooming. Will allow camera to go underwater at values above 0. 0 will reset camera back to default.",
         false, false, new AcceptableValueRange<float>(0, 5000f)));
+
+    AllowMonsterEntitesUnderwater = Config.Bind(
+      SectionKey,
+      "AllowMonsterEntitesUnderwater",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "Allows Monster entities onto the ship and underwater. This means they can go underwater similar to player.",
+        true, true));
 
     AllowedEntiesList = Config.Bind(
       SectionKey,

@@ -19,6 +19,7 @@
     <Import Project="$(SolutionDir)/valheim.targets"/>
 
     <ItemGroup>
+        <Compile Include="Plugins\ConvexHullCalculator.cs"/>
         <Compile Include="ValheimVehicles.Attributes\GameCacheValueAttribute.cs"/>
         <Compile Include="ValheimVehicles.ModSupport\DynamicLocationsLoginIntegration.cs"/>
         <Compile Include="ValheimVehicles.Patches\GameCamera_VehiclePiecesPatch.cs"/>

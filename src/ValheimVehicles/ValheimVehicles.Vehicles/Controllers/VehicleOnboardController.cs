@@ -59,7 +59,9 @@ public class VehicleOnboardController : MonoBehaviour
         .parent.GetComponent<VehiclePiecesController>();
       if (piecesController == PiecesController)
       {
-        characterList.Add(characterOnboardDataItem.Value.character as Player);
+        var player = characterOnboardDataItem.Value.character as Player;
+        if (player == null) continue;
+        characterList.Add(player);
       }
     }
 

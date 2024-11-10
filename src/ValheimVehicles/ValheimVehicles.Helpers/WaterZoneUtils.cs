@@ -58,6 +58,13 @@ public static class WaterZoneUtils
       return true;
     }
 
+    MonsterAI
+    if (WaterConfig.AllowMonsterEntitesUnderwater.Value &&
+        character.IsMonsterFaction(Time.time))
+    {
+      return true;
+    }
+
     if (WaterConfig.AllowTamedEntiesUnderwater.Value && character.IsTamed())
     {
       return true;

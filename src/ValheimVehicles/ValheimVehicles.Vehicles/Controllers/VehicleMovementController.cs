@@ -309,8 +309,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     while (isActiveAndEnabled)
     {
-      FixShipRotation();
-      FixShipPosition();
+      yield return FixShipRotation();
+      // FixShipPosition();
       yield return new WaitForSeconds(5f);
     }
   }
@@ -338,30 +338,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     {
       zsyncTransform.m_body = GetRigidbody();
     }
-  }
-
-  /// <summary>
-  /// disabled/unused for now. The code below attempted to sync the rigidbody with the piece controller but it likely is the cause of some nasty desync problems for players 
-  /// </summary>
-  public void UNSTABLE_SetupPhysicsSync()
-  {
-    // switch (PhysicsSyncTarget)
-    // {
-    //   case PhysicsTarget.VehicleShip:
-    //     zsyncTransform.m_body = GetRigidbody();
-    //     return;
-    //   case PhysicsTarget.VehiclePieces:
-    //   {
-    //     if (ShipInstance != null)
-    //     {
-    //       zsyncTransform.m_body =
-    //         ShipInstance?.VehiclePiecesController?.m_body ??
-    //         GetRigidbody();
-    //     }
-    //
-    //     break;
-    //   }
-    // }
   }
 
   /// <summary>
@@ -421,74 +397,60 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// This will autofix vehicles stuck underground on spawn
   /// </summary>
   /// bounds are based on the vehicle position which is the same as the MovementController transform.position
-  public void FixShipPosition()
-  {
-#if !DEBUG
-    // early exit for release variants so this code does not cause issues
-    return;
-#endif
-
-    if (PiecesController == null) return;
-
-    if (!VehicleDebugConfig.PositionAutoFix.Value) return;
-
-    // Heavier but more accurate player check
-    var playersOnboard =
-      PiecesController.GetComponentsInChildren<Player>() ?? [];
-    if (playersOnboard.Length < 1 || m_players.Count < 1)
-    {
-      if (!playersOnboard.ToList().Equals(m_players))
-      {
-        m_players = playersOnboard.ToList();
-      }
-
-      SendDelayedAnchor();
-    }
-
-    var vehicleBounds = PiecesController.GetVehicleBounds();
-    var currentLowestHeight = transform.position.y - vehicleBounds.extents.y;
-    var groundHeight = ZoneSystem.instance.GetGroundHeight(transform.position);
-    var floatColliderLowestPoint = FloatCollider.transform.position.y -
-                                   FloatCollider.size.y / 2;
-
-    // approximateGroundHeight used so add a buffer, so this only applies if the vehicle is stuck within the ground
-    var approximateGroundHeight = groundHeight - Math.Max(2,
-      VehicleDebugConfig.PositionAutoFixThreshold.Value);
-    var isFloatingBelowGround =
-      floatColliderLowestPoint < approximateGroundHeight;
-    var isVehicleBelowGround = currentLowestHeight < approximateGroundHeight;
-    var waterLevel =
-      Floating.GetWaterLevel(transform.position, ref m_previousCenter);
-    var isWaterNearGroundHeight =
-      waterLevel - 3f < groundHeight && waterLevel + 3f > groundHeight;
-
-    // Vehicle is not below the ground near float collider nor is the lowest part of the vehicle embedded in the ground
-    // and not above the ground significantly where isVehicleBelowGround becomes inaccurate for landvehicles
-    if (!isFloatingBelowGround &&
-        (isWaterNearGroundHeight || !isVehicleBelowGround)) return;
-    if (!isFloatingBelowGround &&
-        approximateGroundHeight - 10f > waterLevel) return;
-
-    if (waterLevel < groundHeight)
-    {
-      // prevents movement when above water when a ship is stuck on land.
-      isBeached = !(PropulsionConfig.EnableLandVehicles.Value ||
-                    ValheimRaftPlugin.Instance.AllowFlight.Value);
-
-      // makes your vehicle literally float on the land and also prevents the vehicle from being embedded in the ground
-      transform.position = new Vector3(transform.position.x,
-        transform.position.y + vehicleBounds.extents.y, transform.position.z);
-      return;
-    }
-
-    if (waterLevel > m_disableLevel && waterLevel > groundHeight)
-    {
-      transform.position = new Vector3(transform.position.x,
-        waterLevel + vehicleBounds.extents.y, transform.position.z);
-    }
-  }
-
-  public void FixShipRotation()
+//   public void FixShipPosition()
+//   {
+// #if !DEBUG
+//     // early exit for release variants so this code does not cause issues
+//     return;
+// #endif
+//
+//     if (PiecesController == null) return;
+//
+//     if (!VehicleDebugConfig.PositionAutoFix.Value) return;
+//
+//     var vehicleBounds = PiecesController.GetVehicleBounds();
+//     var currentLowestHeight = transform.position.y - vehicleBounds.extents.y;
+//     var groundHeight = ZoneSystem.instance.GetGroundHeight(transform.position);
+//     var floatColliderLowestPoint = FloatCollider.transform.position.y -
+//                                    FloatCollider.size.y / 2;
+//
+//     // approximateGroundHeight used so add a buffer, so this only applies if the vehicle is stuck within the ground
+//     var approximateGroundHeight = groundHeight - Math.Max(2,
+//       VehicleDebugConfig.PositionAutoFixThreshold.Value);
+//     var isFloatingBelowGround =
+//       floatColliderLowestPoint < approximateGroundHeight;
+//     var isVehicleBelowGround = currentLowestHeight < approximateGroundHeight;
+//     var waterLevel =
+//       Floating.GetWaterLevel(transform.position, ref m_previousCenter);
+//     var isWaterNearGroundHeight =
+//       waterLevel - 3f < groundHeight && waterLevel + 3f > groundHeight;
+//
+//     // Vehicle is not below the ground near float collider nor is the lowest part of the vehicle embedded in the ground
+//     // and not above the ground significantly where isVehicleBelowGround becomes inaccurate for landvehicles
+//     if (!isFloatingBelowGround &&
+//         (isWaterNearGroundHeight || !isVehicleBelowGround)) return;
+//     if (!isFloatingBelowGround &&
+//         approximateGroundHeight - 10f > waterLevel) return;
+//
+//     if (waterLevel < groundHeight)
+//     {
+//       // prevents movement when above water when a ship is stuck on land.
+//       isBeached = !(PropulsionConfig.EnableLandVehicles.Value ||
+//                     ValheimRaftPlugin.Instance.AllowFlight.Value);
+//
+//       // makes your vehicle literally float on the land and also prevents the vehicle from being embedded in the ground
+//       transform.position = new Vector3(transform.position.x,
+//         transform.position.y + vehicleBounds.extents.y, transform.position.z);
+//       return;
+//     }
+//
+//     if (waterLevel > m_disableLevel && waterLevel > groundHeight)
+//     {
+//       transform.position = new Vector3(transform.position.x,
+//         waterLevel + vehicleBounds.extents.y, transform.position.z);
+//     }
+//   }
+  public IEnumerator FixShipRotation()
   {
     var eulerAngles = transform.rotation.eulerAngles;
     var eulerX = eulerAngles.x;
@@ -513,6 +475,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (shouldUpdate)
     {
+      VehicleCommands.
       transform.rotation = Quaternion.Euler(transformedX, eulerY, transformedZ);
     }
   }
@@ -983,41 +946,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     return damage;
   }
-
-  // todo move these to a physics variant struct
-  // flight
-  public static float flightAngularDamping =>
-    PhysicsConfig.flightAngularDamping.Value;
-
-  public static float flightSidewaysDamping =>
-    PhysicsConfig.flightSidewaysDamping.Value;
-
-  public static float flightDamping => PhysicsConfig.flightDamping.Value;
-  public static float flightSteerForce => PhysicsConfig.flightSteerForce.Value;
-
-  public static float flightSailForceFactor =>
-    PhysicsConfig.flightSailForceFactor.Value;
-
-  public static float flightDrag => PhysicsConfig.flightDrag.Value;
-
-  public static float flightAngularDrag =>
-    PhysicsConfig.flightAngularDrag.Value;
-
-  // water
-  public static float waterAngularDamping =>
-    PhysicsConfig.waterAngularDamping.Value;
-
-  public static float waterSidewaysDamping =>
-    PhysicsConfig.waterSidewaysDamping.Value;
-
-  public static float waterSteerForce => PhysicsConfig.waterSteerForce.Value;
-  public static float waterDamping => PhysicsConfig.waterDamping.Value;
-
-  public static float waterSailForceFactor =>
-    PhysicsConfig.waterSailForceFactor.Value;
-
-  public static float waterDrag => PhysicsConfig.waterDrag.Value;
-  public static float waterAngularDrag => PhysicsConfig.waterAngularDrag.Value;
 
   private void UpdateFlightStats()
   {
@@ -1795,7 +1723,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // This needs to use blocking collider otherwise the float collider pushes the vehicle upwards but the blocking collider cannot push downwards.
     // todo set this to the rudder point
     var steerOffset = VectorUtils.MergeVectors(
-      m_body.worldCenterOfMass,
+      new Vector3(0, FloatCollider.center.y, 0),
       ShipDirection.position -
       ShipDirection.forward *
       GetFloatSizeFromDirection(
@@ -2336,6 +2264,51 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   }
 
   /// <summary>
+  /// Simple surface offset.
+  /// - This should always return a positive value. This value will be the converted to negative in the offset for TargetHeight
+  /// </summary>
+  /// <returns></returns>
+  public float GetMaxAboveSurfaceFromOnboardExtents()
+  {
+    return OnboardCollider.bounds.extents.y *
+           WaterConfig.AboveSurfaceBallastMaxShipSizeAboveWater.Value;
+  }
+
+  /// <summary> 
+  /// More complex surface offset including mass calculation
+  /// This should always return a positive value. This value will be the converted to negative in the offset for TargetHeight
+  /// </summary>
+  /// <returns></returns>
+  public float GetMaxAboveSurfaceFromShipWeight()
+  {
+    var TotalMass = PiecesController?.TotalMass ?? 1000f;
+
+    // prevents divison of zero
+    if (TotalMass <= 0f)
+    {
+      TotalMass = 1000f;
+    }
+
+    // prevent zero value
+    var volumeOfShip = Mathf.Max(OnboardCollider.bounds.size.x *
+                                 OnboardCollider.bounds.size.y *
+                                 OnboardCollider.bounds.size.z, 1f);
+
+    // we assume the ship actually only occupies a smaller volume
+    volumeOfShip *= 0.8f;
+
+    // as the total mass to Volume number approaches zero it will allow almost 100% of the ship above the surface
+    // if the ship is extremely heavy it will sink up to it's full height.
+    var totalMassToVolume = Mathf.Clamp(TotalMass / volumeOfShip, 0f, 2f);
+
+    // gives us a negative number if the mass is larger than the volume.
+    var multiplier = 1 - totalMassToVolume;
+    return GetMaxAboveSurfaceFromOnboardExtents() * multiplier;
+  }
+
+  private const float MaxFlightOffset = -10000f;
+
+  /// <summary>
   /// A negative offset pushing collider lower, forcing ship higher
   /// todo This will need to be leverage for calculating ship high in flight too
   /// </summary>
@@ -2347,12 +2320,21 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (ValheimRaftPlugin.Instance.AllowFlight.Value)
     {
       // fly up to 2000f in the sky.
-      return -2000f;
+      return MaxFlightOffset;
     }
+
+#if DEBUG
+    if (WaterConfig.EXPERIMENTAL_AboveSurfaceBallastUsesShipMass.Value)
+    {
+      var aboveSurfaceVal = GetMaxAboveSurfaceFromShipWeight() * -1f;
+      return aboveSurfaceVal;
+    }
+#endif
 
     if (WaterConfig.ManualBallast.Value)
     {
-      return -OnboardCollider.bounds.extents.y;
+      var aboveSurfaceVal = GetMaxAboveSurfaceFromOnboardExtents() * -1f;
+      return aboveSurfaceVal;
     }
 
     return 0f;

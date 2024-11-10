@@ -2,12 +2,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
-using JetBrains.Annotations;
 using UnityEngine;
-using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Vehicles;
-using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Controllers;
 
 namespace ValheimRAFT.Patches;
@@ -38,30 +35,7 @@ public class Character_Patch
   {
     var vpc = WaterZoneUtils.IsOnboard(__instance);
     if (vpc) __result = false;
-    // var isOnboard = WaterZoneUtils.IsOnboard(__instance);
-    // if (isOnboard) __result = false;
   }
-
-//   // on vehicle = on ground.
-//   [HarmonyPatch(typeof(Character), nameof(Character.IsOnGround))]
-//   [HarmonyPostfix]
-//   public static void Character_IsOnGround(Character __instance,
-//     ref bool __result)
-//   {
-// #if DEBUG
-//     // TODO remove
-//     // useful for debugging as it skips other characters, but this needs to be off in multiplayer
-//     if (!__instance.IsPlayer()) return;
-// #endif
-//
-//     if (__instance.m_lastGroundBody == null)
-//     {
-//       return;
-//     }
-//
-//     var isOnboard = WaterZoneUtils.IsOnboard(__instance);
-//     if (isOnboard) __result = true;
-//   }
 
   public static object? GetStandingOnShip(Character __instance)
   {
