@@ -96,13 +96,9 @@ public static class WaterConfig
   public static ConfigEntry<float> UnderWaterFogIntensity =
     null!;
 
-  public static ConfigEntry<bool> AutoBallastNearShore =
+  public static ConfigEntry<bool> WaterBallastEnabled =
     null!;
 
-  public static ConfigEntry<bool> ManualBallast =
-    null!;
-
-  public static ConfigEntry<float> DEBUG_AutoBallastOffsetMultiplier = null!;
   public static ConfigEntry<float> BallastSpeed = null!;
   // public ConfigEntry<KeyboardShortcut> ManualBallastModifierKey { get; set; }
 
@@ -237,14 +233,6 @@ public static class WaterConfig
         "Force Overrides the Swim depth for character on boats. Values above the swim depth force the player into a swim animation.",
         true, true, depthRanges));
 
-    DEBUG_AutoBallastOffsetMultiplier = Config.Bind(
-      SectionKeyDebug,
-      "DEBUG_AutoBallastOffsetMultiplier",
-      1f,
-      ConfigHelpers.CreateConfigDescription(
-        "Adds more balast offset",
-        true, true));
-
     DEBUG_WaveSizeMultiplier = Config.Bind(
       SectionKey,
       "DEBUG_WaveSizeMultiplier",
@@ -263,9 +251,9 @@ public static class WaterConfig
 
     BindDebugConfig(Config);
 
-    ManualBallast = Config.Bind(
+    WaterBallastEnabled = Config.Bind(
       SectionKey,
-      "ManualBallast",
+      "WaterBallastEnabled",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Similar to flight mechanics but at sea. Defaults with Space/Jump to increase height and Sneak/Shift to decrease height uses the same flight comamnds.",
@@ -286,17 +274,6 @@ public static class WaterConfig
       ConfigHelpers.CreateConfigDescription(
         "Ships with high mass to volume will not be able to ballast well above the surface. This adds a ship mass to onboard volume calculation. The calculation is experimental so it might be inaccurate.",
         true, true));
-
-    AutoBallastNearShore = Config.Bind(
-      SectionKey,
-      "AutoBallast",
-      true,
-      ConfigHelpers.CreateConfigDescription(
-        "Force moves the ship's float collider to the lowest section of the boat if that section is going to smash the ground",
-        true, true));
-
-    AutoBallastNearShore.SettingChanged +=
-      (sender, args) => OnAutoBallastToggle();
 
     BlockingColliderOffset = Config.Bind(
       SectionKey,

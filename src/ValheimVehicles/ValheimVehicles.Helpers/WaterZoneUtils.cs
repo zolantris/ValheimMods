@@ -58,7 +58,6 @@ public static class WaterZoneUtils
       return true;
     }
 
-    MonsterAI
     if (WaterConfig.AllowMonsterEntitesUnderwater.Value &&
         character.IsMonsterFaction(Time.time))
     {
@@ -170,6 +169,7 @@ public static class WaterZoneUtils
 
   public static bool IsCharacterTheLocalPlayer(Character character)
   {
+    if (Player.m_localPlayer == null) return false;
     return character.GetZDOID() == Player.m_localPlayer.GetZDOID();
   }
 

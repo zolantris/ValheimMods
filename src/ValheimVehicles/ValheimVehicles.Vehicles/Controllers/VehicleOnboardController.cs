@@ -49,23 +49,31 @@ public class VehicleOnboardController : MonoBehaviour
 
   public List<Player> GetPlayersOnShip()
   {
-    var characterList = new List<Player>();
-    foreach (var characterOnboardDataItem in CharacterOnboardDataItems)
+    var playerList = new List<Player>();
+    var characterList = CharacterOnboardDataItems.Values
+      .ToList();
+    foreach (var characterOnboardDataItem in characterList)
     {
-      if (characterOnboardDataItem.Value == null) continue;
-      if (characterOnboardDataItem.Value.character == null) continue;
-      if (!characterOnboardDataItem.Value.character.IsPlayer()) continue;
-      var piecesController = characterOnboardDataItem.Value.character.transform
-        .parent.GetComponent<VehiclePiecesController>();
+      if (characterOnboardDataItem == null) continue;
+      if (characterOnboardDataItem.character == null) continue;
+      if (!characterOnboardDataItem.character.IsPlayer()) continue;
+      var piecesController = characterOnboardDataItem?.OnboardController
+        ?.PiecesController;
+      if (!piecesController && characterOnboardDataItem?.zdoId != null)
+      {
+        CharacterOnboardDataItems.Remove(characterOnboardDataItem.zdoId);
+        continue;
+      }
+
       if (piecesController == PiecesController)
       {
-        var player = characterOnboardDataItem.Value.character as Player;
+        var player = characterOnboardDataItem.character as Player;
         if (player == null) continue;
-        characterList.Add(player);
+        playerList.Add(player);
       }
     }
 
-    return characterList;
+    return playerList;
   }
 
   private bool IsValidCharacter(Character character)

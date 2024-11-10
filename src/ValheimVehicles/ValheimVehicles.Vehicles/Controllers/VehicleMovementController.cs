@@ -461,13 +461,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var transformedZ = eulerZ;
     var shouldUpdate = false;
 
-    if (eulerX is > 60 and < 300)
+    if (Mathf.Abs(eulerX) is > 60 and < 300)
     {
       transformedX = 0;
       shouldUpdate = true;
     }
 
-    if (eulerZ is > 60 and < 300)
+    if (Mathf.Abs(eulerZ) is > 60 and < 300)
     {
       transformedZ = 0;
       shouldUpdate = true;
@@ -475,9 +475,15 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (shouldUpdate)
     {
-      VehicleCommands.
-      transform.rotation = Quaternion.Euler(transformedX, eulerY, transformedZ);
+      yield return VehicleCommands.SafeMovePlayer(OnboardController, () =>
+      {
+        transform.rotation =
+          Quaternion.Euler(transformedX, eulerY, transformedZ);
+        return transform.position;
+      }, null);
     }
+
+    yield return null;
   }
 
   private void UpdateRemovePieceCollisionExclusions()
@@ -594,7 +600,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
 
     if (ValheimRaftPlugin.Instance.AllowFlight.Value ||
-        WaterConfig.ManualBallast.Value)
+        WaterConfig.WaterBallastEnabled.Value)
     {
       SyncTargetHeight();
     }
@@ -671,24 +677,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return m_floatcollider.size.z / 2;
   }
 
-  public static float
-    BallastSmoothtime = 0.1f;
-
-  private float _previousBallastTargetOffset = 0f; // lerp value
-  private float _currentBallastTargetOffset = 0f; // lerp value
-  private float _previousBallastOffset = 0f;
-  private float _currentBallastOffset = 0f;
-
   public float groundHeightPaddingOffset = 2f;
-
-  private bool HandleLowestBallast(ShipFloatation shipFloatation,
-    float highestResult)
-  {
-    var floatHeightPosition = FloatCollider.transform.position.y +
-                              groundHeightPaddingOffset;
-    return floatHeightPosition < highestResult;
-  }
-
   private float _lastHighestGroundPoint = 0f;
 
   private float GetHighestGroundPoint(ShipFloatation shipFloatation)
@@ -2216,7 +2205,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     _previousTargetHeight = TargetHeight;
 
     if (!ValheimRaftPlugin.Instance.AllowFlight.Value &&
-        !WaterConfig.ManualBallast.Value)
+        !WaterConfig.WaterBallastEnabled.Value)
     {
       UpdateTargetHeight(0f);
     }
@@ -2230,7 +2219,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       UpdateTargetHeight(TargetHeight + _maxVerticalOffset);
 
       if (FloatCollider.transform.position.y - _maxVerticalOffset <=
-          ZoneSystem.instance.m_waterLevel && !WaterConfig.ManualBallast.Value)
+          ZoneSystem.instance.m_waterLevel &&
+          !WaterConfig.WaterBallastEnabled.Value)
       {
         Logger.LogMessage("Vehicle below the collision zone");
         // UpdateTargetHeight(0f);
@@ -2331,7 +2321,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
 #endif
 
-    if (WaterConfig.ManualBallast.Value)
+    if (WaterConfig.WaterBallastEnabled.Value)
     {
       var aboveSurfaceVal = GetMaxAboveSurfaceFromOnboardExtents() * -1f;
       return aboveSurfaceVal;
@@ -2468,7 +2458,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public static bool IsBallastAndFlightDisabled =>
     !ValheimRaftPlugin.Instance.AllowFlight.Value &&
-    !WaterConfig.ManualBallast.Value;
+    !WaterConfig.WaterBallastEnabled.Value;
 
   public void OnFlightControls()
   {
