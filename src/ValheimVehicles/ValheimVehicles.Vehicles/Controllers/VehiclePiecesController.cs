@@ -745,6 +745,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       m_body.isKinematic = false;
     }
 
+    if (MovementController != null &&
+        MovementController.m_body.rotation != m_body.rotation)
+    {
+      m_body.MoveRotation(MovementController.m_body.rotation);
+    }
+
     if (m_fixedJoint.connectedBody == null)
     {
       LinkFixedJoint();

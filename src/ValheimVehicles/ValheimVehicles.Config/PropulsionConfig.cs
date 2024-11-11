@@ -13,6 +13,10 @@ public static class PropulsionConfig
   public static ConfigEntry<float> FlightClimbingOffset { get; private set; } =
     null!;
 
+  public static ConfigEntry<float>
+    FlightClimbDampingTime { get; private set; } =
+    null!;
+
   public static ConfigEntry<float> UnderwaterClimbingOffset
   {
     get;
@@ -102,6 +106,13 @@ public static class PropulsionConfig
       ConfigHelpers.CreateConfigDescription(
         "Ascent and Descent speed for the vehicle in the air. This value is interpolated to prevent jitters.",
         true, true, new AcceptableValueRange<float>(1, 10)));
+
+    FlightClimbDampingTime = Config.Bind(SectionName,
+      "FlightClimbDampingTime",
+      5f,
+      ConfigHelpers.CreateConfigDescription(
+        "How much time it takes to go from 1 target value to another target value. Higher is more smooth. Lower can cause huge jitters.",
+        true, true, new AcceptableValueRange<float>(0.1f, 50f)));
 
     UnderwaterClimbingOffset = Config.Bind(SectionName,
       "UnderwaterClimbingOffset",

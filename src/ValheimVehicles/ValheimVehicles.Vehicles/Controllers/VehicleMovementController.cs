@@ -883,15 +883,18 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // Smoothly transition the forces towards the target values using SmoothDamp
     frontUpwardsForce = Mathf.SmoothDamp(prevFrontUpwardForce,
-      frontUpwardsForce, ref prevFrontUpwardForce, smoothTime);
+      frontUpwardsForce, ref prevFrontUpwardForce,
+      PropulsionConfig.FlightClimbDampingTime.Value);
     backUpwardsForce = Mathf.SmoothDamp(prevBackUpwardsForce, backUpwardsForce,
-      ref prevBackUpwardsForce, smoothTime);
+      ref prevBackUpwardsForce, PropulsionConfig.FlightClimbDampingTime.Value);
     leftUpwardsForce = Mathf.SmoothDamp(prevLeftUpwardsForce, leftUpwardsForce,
-      ref prevLeftUpwardsForce, smoothTime);
+      ref prevLeftUpwardsForce, PropulsionConfig.FlightClimbDampingTime.Value);
     rightUpwardsForce = Mathf.SmoothDamp(prevRightUpwardsForce,
-      rightUpwardsForce, ref prevRightUpwardsForce, smoothTime);
+      rightUpwardsForce, ref prevRightUpwardsForce,
+      PropulsionConfig.FlightClimbDampingTime.Value);
     centerUpwardsForce = Mathf.SmoothDamp(prevCenterUpwardsForce,
-      centerUpwardsForce, ref prevCenterUpwardsForce, smoothTime);
+      centerUpwardsForce, ref prevCenterUpwardsForce,
+      PropulsionConfig.FlightClimbDampingTime.Value);
 
     // Apply the smoothed forces at the corresponding positions
     AddForceAtPosition(Vector3.up * frontUpwardsForce, front,
@@ -1180,7 +1183,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     UpdateVehicleStats(false, TargetHeight > 5f);
     UpdateWaterForce(shipFloatation);
-    // BROKEN_UpdateShipBalancingForce();
     ApplyEdgeForce(Time.fixedDeltaTime);
     if (HasOceanSwayDisabled)
     {
@@ -1664,17 +1666,41 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return windAngleFactor * m_sailForceFactor * sailSize;
   }
 
+  public float lastFlyingDt = 0f;
+  public bool cachedFlyingValue = false;
+
   /// <summary>
   /// Considered flying when below the negative waterLevel target height. The FloatCollider/Blocking will not update below these values.
   /// </summary>
+  /// We cache this to avoid flying state infinitely when near the boarder of flying/not flight
   /// <returns></returns>
   public bool IsFlying()
   {
-    if (!ValheimRaftPlugin.Instance.AllowFlight.Value) return false;
+    if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
+    {
+      return false;
+    }
+
+    // this allows for the check to run the first time.
+    if (lastFlyingDt is > 0f and < 2f)
+    {
+      lastFlyingDt += Time.fixedDeltaTime;
+      return cachedFlyingValue;
+    }
+
+    lastFlyingDt = Time.fixedDeltaTime;
+
     var pieceOffset =
       TargetHeight + PiecesController?.FloatColliderDefaultPosition.y;
-    return pieceOffset <
-           -ZoneSystem.instance.m_waterLevel;
+    cachedFlyingValue = pieceOffset <
+                        -ZoneSystem.instance.m_waterLevel;
+
+    return cachedFlyingValue;
+  }
+
+  public bool IsSubmerged()
+  {
+    return WaterConfig.WaterBallastEnabled.Value && TargetHeight > 0f;
   }
 
   private Vector3 GetSailForce(float sailSize, float dt, bool isFlying)
@@ -2565,7 +2591,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       return;
     }
 
-    if (CanDescend && GetDescendKeyPress)
+    var isDescendKeyPressed = GetDescendKeyPress;
+    if (!CanDescend && isDescendKeyPressed && TargetHeight != 0f)
+    {
+      UpdateTargetHeight(0f, false);
+      return;
+    }
+
+    if (CanDescend && isDescendKeyPressed)
     {
       Descend();
       ToggleAutoDescend();
