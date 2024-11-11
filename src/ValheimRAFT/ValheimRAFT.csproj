@@ -21,9 +21,8 @@
     <Import Project="..\..\valheim.targets"/>
 
     <!-- Until ValheimVehicles is published, RAFT will directly pull in it's dependencies -->
-    <ItemGroup Label="Embedded Resources">
-        <Folder Include="obj\"/>
-    </ItemGroup>
+    <!--    <ItemGroup Label="Embedded Resources">-->
+    <!--    </ItemGroup>-->
     <ItemGroup>
         <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
         <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
