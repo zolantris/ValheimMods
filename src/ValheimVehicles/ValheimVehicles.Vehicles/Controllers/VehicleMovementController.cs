@@ -475,13 +475,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (shouldUpdate)
     {
-      yield return VehicleCommands.SafeMovePlayer(OnboardController, false,
-        () =>
-        {
-          transform.rotation =
-            Quaternion.Euler(transformedX, eulerY, transformedZ);
-          return transform.position;
-        }, null);
+      transform.rotation =
+        Quaternion.Euler(transformedX, eulerY, transformedZ);
     }
 
     yield return null;
@@ -819,8 +814,15 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// - Adds waterlevel offset to target height as increasing this height should be the target height + waterheight
   /// </summary>
   /// <returns></returns>
-  public float GetFlyingTargetHeight() =>
-    ZoneSystem.instance?.m_waterLevel ?? 30f + TargetHeight;
+  public float GetFlyingTargetHeight()
+  {
+    if (TargetHeight > 30f)
+    {
+      return TargetHeight;
+    }
+
+    return BlockingCollider.transform.position.y;
+  }
 
   private float prevFrontUpwardForce = 0f;
   private float prevBackUpwardsForce = 0f;
@@ -1687,7 +1689,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // The vehicle is out of the water.
     // var pieceOffset =
     //   TargetHeight + OnboardCollider.bounds.min.y;
-    cachedFlyingValue = TargetHeight > GetSurfaceOffsetWaterVehicleOnly();
+    cachedFlyingValue = TargetHeight > ZoneSystem.instance.m_waterLevel +
+      GetSurfaceOffsetWaterVehicleOnly();
 
     return cachedFlyingValue;
   }
