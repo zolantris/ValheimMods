@@ -106,18 +106,18 @@ public static class PropulsionConfig
       5f,
       ConfigHelpers.CreateConfigDescription(
         "Ascent and Descent speed for the vehicle in the air. This value is interpolated to prevent jitters.",
-        true, true, new AcceptableValueRange<float>(1, 10)));
+        true, true, new AcceptableValueRange<float>(1, 15)));
 
     BallastClimbingOffset = Config.Bind(SectionName,
       "BallastClimbingOffset",
-      1f,
+      2f,
       ConfigHelpers.CreateConfigDescription(
         "Ascent and Descent speed for the vehicle in the water. This value is interpolated to prevent jitters.",
         true, true, new AcceptableValueRange<float>(0.01f, 10)));
 
     VerticalSmoothingSpeed = Config.Bind(SectionName,
       "VerticalSmoothingSpeed",
-      0.2f,
+      0.5f,
       ConfigHelpers.CreateConfigDescription(
         "This applies to both Ballast and Flight modes. The vehicle will use this value to interpolate the climbing offset. Meaning low value will be slower climbing/ballast and high values will be instant and match the offset. High values will result in jitters and potentially could throw people off the vehicle. Expect values of 0.01 and 1. IE 1% and 100%",
         true, true, new AcceptableValueRange<float>(0.01f, 1f)));

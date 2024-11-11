@@ -29,10 +29,20 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private bool _hasRegister = false;
 
   // unfortunately, the current approach does not allow increasing this beyond 1f otherwise it causes massive jitters when changing altitude.
-  private float _maxVerticalOffset =>
-    IsNotFlying
-      ? PropulsionConfig.BallastClimbingOffset.Value
-      : PropulsionConfig.FlightClimbingOffset.Value;
+  private float GetMaxVerticalOffset()
+  {
+    if (ValheimRaftPlugin.Instance.AllowFlight.Value)
+    {
+      if (IsFlying() ||
+          OnboardCollider.bounds.max.y > ZoneSystem.instance.m_waterLevel ||
+          TargetHeight - 2f > GetSurfaceOffsetWaterVehicleOnly())
+      {
+        return PropulsionConfig.FlightClimbingOffset.Value;
+      }
+    }
+
+    return PropulsionConfig.BallastClimbingOffset.Value;
+  }
 
   public bool isAnchored;
 
@@ -2311,16 +2321,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
         return;
       }
 
-      UpdateTargetHeight(TargetHeight - _maxVerticalOffset);
-
-      // todo see if this is still valid
-      if (FloatCollider.transform.position.y - _maxVerticalOffset <=
-          ZoneSystem.instance.m_waterLevel &&
-          !WaterConfig.WaterBallastEnabled.Value)
-      {
-        Logger.LogMessage("Vehicle below the collision zone");
-        // UpdateTargetHeight(0f);
-      }
+      var maxVerticalOffset = GetMaxVerticalOffset();
+      UpdateTargetHeight(TargetHeight - maxVerticalOffset);
     }
   }
 
@@ -2342,7 +2344,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
         return;
       }
 
-      UpdateTargetHeight(TargetHeight + _maxVerticalOffset);
+      var maxVerticalOffset = GetMaxVerticalOffset();
+
+      UpdateTargetHeight(TargetHeight + maxVerticalOffset);
     }
   }
 
@@ -2572,26 +2576,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     _isDescending = false;
   }
 
-  public bool OnAutoFlyingControlsStatusCleared()
-  {
-    if (_isAscending || _isDescending)
-    {
-      ClearAutoClimbState();
-      return true;
-    }
-
-    return false;
-  }
-
   public void OnFlightControls()
   {
     if (IsBallastAndFlightDisabled || isAnchored) return;
-
-    // early exit if the flight controls are in auto mode. Next press should set the next mode
-    if (OnAutoFlyingControlsStatusCleared())
-    {
-      return;
-    }
 
     if (GetAscendKeyPress)
     {
