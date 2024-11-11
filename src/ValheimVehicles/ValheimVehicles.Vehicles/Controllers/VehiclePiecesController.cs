@@ -2693,23 +2693,19 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     BlockingColliderDefaultPosition =
       blockingColliderCenterOffset;
 
-    var targetHeightVector = Vector3.up *
-      VehicleInstance?
-        .MovementController?
-        .TargetHeight ?? Vector3.zero;
-
     // Assign all the colliders And include offset to avoid Jumps in height if below ocean or flying
     m_blockingcollider.size = blockingColliderSize;
     m_blockingcollider.transform.localPosition =
-      blockingColliderCenterOffset + targetHeightVector;
+      blockingColliderCenterOffset;
 
     m_floatcollider.size = floatColliderSize;
     m_floatcollider.transform.localPosition =
-      floatColliderCenterOffset + targetHeightVector;
+      floatColliderCenterOffset;
 
     m_onboardcollider.size =
       onboardColliderSize;
     m_onboardcollider.transform.localPosition = onboardColliderCenter;
+    Physics.SyncTransforms();
   }
 
   public void IgnoreCollidersForAllRamPieces(ZNetView netView)

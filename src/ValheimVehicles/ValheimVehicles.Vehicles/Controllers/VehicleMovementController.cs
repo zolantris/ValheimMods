@@ -816,12 +816,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// <returns></returns>
   public float GetFlyingTargetHeight()
   {
-    if (TargetHeight > 30f)
-    {
-      return TargetHeight;
-    }
-
-    return BlockingCollider.transform.position.y;
+    return TargetHeight;
+    // if (TargetHeight > 30f)
+    // {
+    //   return TargetHeight;
+    // }
+    //
+    // return BlockingCollider.transform.position.y;
   }
 
   private float prevFrontUpwardForce = 0f;
