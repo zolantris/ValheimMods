@@ -31,7 +31,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   // unfortunately, the current approach does not allow increasing this beyond 1f otherwise it causes massive jitters when changing altitude.
   private float _maxVerticalOffset =>
     IsNotFlying
-      ? PropulsionConfig.UnderwaterClimbingOffset.Value
+      ? PropulsionConfig.BallastClimbingOffset.Value
       : PropulsionConfig.FlightClimbingOffset.Value;
 
   public bool isAnchored;
@@ -766,6 +766,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
+  /// <summary>
+  /// This functionality adds guards for target height. If it detects the vehicle in a stuck state or nearing the bottom where it could collide it will push the vehicle upwards.
+  /// </summary>
   private void UpdateColliderPositions()
   {
     if (PiecesController == null) return;
@@ -775,12 +778,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (IsFlying() || !WaterConfig.WaterBallastEnabled.Value)
     {
-      var flyingFloatPositionY =
-        PiecesController.FloatColliderDefaultPosition.y;
-      var flyingBlockingPositionY =
-        PiecesController.BlockingColliderDefaultPosition.y;
-      UpdateYPosition(FloatCollider.transform, flyingFloatPositionY);
-      UpdateYPosition(BlockingCollider.transform, flyingBlockingPositionY);
       return;
     }
 
@@ -791,7 +788,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       var heightDifference = (_lastHighestGroundPoint) -
                              BlockingCollider.transform.position.y;
       // we force update it.
-      UpdateTargetHeight(TargetHeight - (heightDifference), false);
+      UpdateTargetHeight(TargetHeight + (heightDifference), false);
     }
 
     // ForceUpdateIfBelowGround, this can happen if driving the vehicle forwards into the ground.
@@ -802,7 +799,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       var heightDifference = _lastHighestGroundPoint -
                              OnboardCollider.bounds.min.y;
       // we force update it.
-      UpdateTargetHeight(TargetHeight - heightDifference, false);
+      UpdateTargetHeight(TargetHeight + heightDifference, false);
     }
 
     // super stuck. do a direct update. But protect the players from being launched. Yikes.
@@ -815,35 +812,21 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
         transform.position.z);
       UpdateTargetHeight(0, forceUpdate: false);
     }
-
-    var floatPositionY =
-      PiecesController.FloatColliderDefaultPosition.y + TargetHeight;
-    var blockingPositionY = PiecesController.BlockingColliderDefaultPosition.y +
-                            TargetHeight;
-
-    // Flying logic does not update float collider
-    if (floatPositionY <= -ZoneSystem.instance.m_waterLevel ||
-        blockingPositionY <= -ZoneSystem.instance.m_waterLevel)
-    {
-      return;
-    }
-
-    UpdateYPosition(FloatCollider.transform, floatPositionY);
-    UpdateYPosition(BlockingCollider.transform, blockingPositionY);
-    // UpdateCenterOfMass();
   }
 
-  public float GetFlyingTargetHeight() => TargetHeight * -1;
+  /// <summary>
+  /// Abstraction in case this needs padding to prevent conflict with ballast height.
+  /// - Adds waterlevel offset to target height as increasing this height should be the target height + waterheight
+  /// </summary>
+  /// <returns></returns>
+  public float GetFlyingTargetHeight() =>
+    ZoneSystem.instance?.m_waterLevel ?? 30f + TargetHeight;
 
   private float prevFrontUpwardForce = 0f;
   private float prevBackUpwardsForce = 0f;
   private float prevLeftUpwardsForce = 0f;
   private float prevRightUpwardsForce = 0f;
   private float prevCenterUpwardsForce = 0f;
-
-// Optional: Define a smooth time for smoothing the damping
-  public float
-    smoothTime = 0.3f; // Adjust this value to control the smoothing speed
 
   public void Flying_UpdateShipBalancingForce()
   {
@@ -881,20 +864,23 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       flyingTargetHeight,
       centerpos2.y + m_body.velocity.y, m_liftForce);
 
+    // Smooth time must always be greater than 3f
+    var smoothValue = 3f + PropulsionConfig.VerticalSmoothingSpeed.Value * 10f;
+
     // Smoothly transition the forces towards the target values using SmoothDamp
     frontUpwardsForce = Mathf.SmoothDamp(prevFrontUpwardForce,
       frontUpwardsForce, ref prevFrontUpwardForce,
-      PropulsionConfig.FlightClimbDampingTime.Value);
+      smoothValue);
     backUpwardsForce = Mathf.SmoothDamp(prevBackUpwardsForce, backUpwardsForce,
-      ref prevBackUpwardsForce, PropulsionConfig.FlightClimbDampingTime.Value);
+      ref prevBackUpwardsForce, smoothValue);
     leftUpwardsForce = Mathf.SmoothDamp(prevLeftUpwardsForce, leftUpwardsForce,
-      ref prevLeftUpwardsForce, PropulsionConfig.FlightClimbDampingTime.Value);
+      ref prevLeftUpwardsForce, smoothValue);
     rightUpwardsForce = Mathf.SmoothDamp(prevRightUpwardsForce,
       rightUpwardsForce, ref prevRightUpwardsForce,
-      PropulsionConfig.FlightClimbDampingTime.Value);
+      smoothValue);
     centerUpwardsForce = Mathf.SmoothDamp(prevCenterUpwardsForce,
       centerUpwardsForce, ref prevCenterUpwardsForce,
-      PropulsionConfig.FlightClimbDampingTime.Value);
+      smoothValue);
 
     // Apply the smoothed forces at the corresponding positions
     AddForceAtPosition(Vector3.up * frontUpwardsForce, front,
@@ -1181,7 +1167,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void UpdateShipFloatation(ShipFloatation shipFloatation)
   {
-    UpdateVehicleStats(false, TargetHeight > 5f);
+    UpdateVehicleStats(false, IsSubmerged());
     UpdateWaterForce(shipFloatation);
     ApplyEdgeForce(Time.fixedDeltaTime);
     if (HasOceanSwayDisabled)
@@ -1235,17 +1221,23 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var shipRight = ShipDirection.position +
                     ShipDirection.right *
                     GetFloatSizeFromDirection(Vector3.right);
+    // min does not matter but max does as the ship when attempting to reach flight mode will start bouncing badly.
+    var clampedTargetHeight = Mathf.Clamp(TargetHeight, cachedMaxDepthOffset,
+      GetSurfaceOffsetWaterVehicleOnly());
+
     var waterLevelCenter =
-      Floating.GetWaterLevel(worldCenterOfMass, ref m_previousCenter) -
-      TargetHeight;
-    var waterLevelLeft = Floating.GetWaterLevel(shipLeft, ref m_previousLeft) -
-                         TargetHeight;
+      Floating.GetWaterLevel(worldCenterOfMass, ref m_previousCenter) +
+      clampedTargetHeight;
+    var waterLevelLeft = Floating.GetWaterLevel(shipLeft, ref m_previousLeft) +
+                         clampedTargetHeight;
     var waterLevelRight =
-      Floating.GetWaterLevel(shipRight, ref m_previousRight) - TargetHeight;
+      Floating.GetWaterLevel(shipRight, ref m_previousRight) +
+      clampedTargetHeight;
     var waterLevelForward =
-      Floating.GetWaterLevel(shipForward, ref m_previousForward) - TargetHeight;
-    var waterLevelBack = Floating.GetWaterLevel(shipBack, ref m_previousBack) -
-                         TargetHeight;
+      Floating.GetWaterLevel(shipForward, ref m_previousForward) +
+      clampedTargetHeight;
+    var waterLevelBack = Floating.GetWaterLevel(shipBack, ref m_previousBack) +
+                         clampedTargetHeight;
     var averageWaterHeight =
       (waterLevelCenter + waterLevelLeft + waterLevelRight + waterLevelForward +
        waterLevelBack) /
@@ -1264,15 +1256,15 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     var currentDepth =
       worldCenterOfMass.y - averageWaterHeight;
+
     var isInvalid = false;
     if (averageWaterHeight <= -10000 ||
-        (averageWaterHeight + TargetHeight) < m_disableLevel)
+        averageWaterHeight < (m_disableLevel))
     {
-      currentDepth = 30;
+      currentDepth = 30 + clampedTargetHeight;
       isInvalid = true;
     }
 
-    // todo may need to offset this too.
     var isAboveBuoyantLevel = currentDepth > m_disableLevel || isInvalid;
 
     return new ShipFloatation()
@@ -1280,6 +1272,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       AverageWaterHeight = averageWaterHeight,
       CurrentDepth = currentDepth,
       IsAboveBuoyantLevel = isAboveBuoyantLevel,
+      IsInvalid = isInvalid,
       ShipLeft = shipLeft,
       ShipForward = shipForward,
       ShipBack = shipBack,
@@ -1377,8 +1370,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     UpdateColliderPositions();
 
+    var isFlying = IsFlying();
 
-    if (!ShipFloatationObj.IsAboveBuoyantLevel || IsNotFlying)
+    if (!ShipFloatationObj.IsAboveBuoyantLevel || !isFlying)
     {
       if (m_body.constraints != RigidbodyConstraints.None)
       {
@@ -1386,11 +1380,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       }
     }
 
-    if (!ShipFloatationObj.IsAboveBuoyantLevel && IsNotFlying)
+    if (!ShipFloatationObj.IsAboveBuoyantLevel && !isFlying)
     {
       UpdateShipFloatation(ShipFloatationObj);
     }
-    else if (IsFlying())
+    else if (isFlying)
     {
       UpdateFlyingVehicle();
     }
@@ -1690,17 +1684,25 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     lastFlyingDt = Time.fixedDeltaTime;
 
-    var pieceOffset =
-      TargetHeight + PiecesController?.FloatColliderDefaultPosition.y;
-    cachedFlyingValue = pieceOffset <
-                        -ZoneSystem.instance.m_waterLevel;
+    // The vehicle is out of the water.
+    // var pieceOffset =
+    //   TargetHeight + OnboardCollider.bounds.min.y;
+    cachedFlyingValue = TargetHeight > GetSurfaceOffsetWaterVehicleOnly();
 
     return cachedFlyingValue;
   }
 
+  /// <summary>
+  /// Checks that the vehicle is fully below water and ballast is enabled.
+  /// Todo may need to add more settings, but this getter should be for switching to submerged physics
+  /// - Assert that the top of the vehicle is underwater.
+  /// - Assert that not flying
+  /// </summary>
+  /// <returns></returns>
   public bool IsSubmerged()
   {
-    return WaterConfig.WaterBallastEnabled.Value && TargetHeight > 0f;
+    return IsNotFlying && WaterConfig.WaterBallastEnabled.Value &&
+           OnboardCollider.bounds.max.y < ZoneSystem.instance.m_waterLevel;
   }
 
   private Vector3 GetSailForce(float sailSize, float dt, bool isFlying)
@@ -2293,9 +2295,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       SendSetAnchor(state: false);
     }
 
-    // lerped
-    _previousTargetHeight = TargetHeight;
-
     if (!ValheimRaftPlugin.Instance.AllowFlight.Value &&
         !WaterConfig.WaterBallastEnabled.Value)
     {
@@ -2308,8 +2307,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
         return;
       }
 
-      UpdateTargetHeight(TargetHeight + _maxVerticalOffset);
+      UpdateTargetHeight(TargetHeight - _maxVerticalOffset);
 
+      // todo see if this is still valid
       if (FloatCollider.transform.position.y - _maxVerticalOffset <=
           ZoneSystem.instance.m_waterLevel &&
           !WaterConfig.WaterBallastEnabled.Value)
@@ -2327,9 +2327,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       SendSetAnchor(false);
     }
 
-    _previousTargetHeight = TargetHeight;
-    var currentTargetHeight = TargetHeight;
-
     if (IsBallastAndFlightDisabled)
     {
       UpdateTargetHeight(0f);
@@ -2341,7 +2338,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
         return;
       }
 
-      UpdateTargetHeight(currentTargetHeight - _maxVerticalOffset);
+      UpdateTargetHeight(TargetHeight + _maxVerticalOffset);
     }
   }
 
@@ -2388,7 +2385,26 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return GetMaxAboveSurfaceFromOnboardExtents() * multiplier;
   }
 
-  private const float MaxFlightOffset = -10000f;
+  private const float MaxFlightOffset = 10000f;
+
+  public float GetSurfaceOffsetWaterVehicleOnly()
+  {
+    if (IsBallastAndFlightDisabled) return 0f;
+
+    if (WaterConfig.EXPERIMENTAL_AboveSurfaceBallastUsesShipMass.Value)
+    {
+      var aboveSurfaceVal = GetMaxAboveSurfaceFromShipWeight();
+      return aboveSurfaceVal;
+    }
+
+    if (WaterConfig.WaterBallastEnabled.Value)
+    {
+      var aboveSurfaceVal = GetMaxAboveSurfaceFromOnboardExtents();
+      return aboveSurfaceVal;
+    }
+
+    return 0f;
+  }
 
   /// <summary>
   /// A negative offset pushing collider lower, forcing ship higher
@@ -2397,30 +2413,16 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// <returns></returns>
   public float GetSurfaceOffset()
   {
-    if (IsBallastAndFlightDisabled) return 0f;
-    // this may need to be positive as a 2000f is pretty large render distance when calculating land collision. Likely can just inverse some flight mechanic logic.
     if (ValheimRaftPlugin.Instance.AllowFlight.Value)
     {
       // fly up to 2000f in the sky.
       return MaxFlightOffset;
     }
 
-#if DEBUG
-    if (WaterConfig.EXPERIMENTAL_AboveSurfaceBallastUsesShipMass.Value)
-    {
-      var aboveSurfaceVal = GetMaxAboveSurfaceFromShipWeight() * -1f;
-      return aboveSurfaceVal;
-    }
-#endif
-
-    if (WaterConfig.WaterBallastEnabled.Value)
-    {
-      var aboveSurfaceVal = GetMaxAboveSurfaceFromOnboardExtents() * -1f;
-      return aboveSurfaceVal;
-    }
-
-    return 0f;
+    return GetSurfaceOffsetWaterVehicleOnly();
   }
+
+  public float cachedMaxDepthOffset = 0f;
 
   /// <summary>
   /// Max depth the vehicle can go underwater or on ground.
@@ -2429,7 +2431,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public float GetMaxDepthOffset()
   {
     var highestGroundPoint = GetHighestGroundPoint(ShipFloatationObj);
-    return ZoneSystem.instance.m_waterLevel - highestGroundPoint;
+    cachedMaxDepthOffset =
+      highestGroundPoint - ZoneSystem.instance.m_waterLevel;
+    return cachedMaxDepthOffset;
   }
 
   private float lastForceUpdateTimer = 0f;
@@ -2447,12 +2451,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     var clampedValue = Mathf.Clamp(
       rawValue,
-      maxSurfaceLevelOffset, maxDepthOffset);
+      maxDepthOffset, maxSurfaceLevelOffset);
 
     var canForceUpdate = lastForceUpdateTimer == 0f && forceUpdate;
     var timeMult = canForceUpdate
       ? 0.5f
-      : Time.fixedDeltaTime * WaterConfig.BallastSpeed.Value;
+      : Time.fixedDeltaTime * PropulsionConfig.VerticalSmoothingSpeed.Value;
 
     TargetHeight = Mathf.Lerp(_previousTargetHeight, clampedValue, timeMult);
 
@@ -2568,6 +2572,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     if (_isAscending || _isDescending)
     {
+      ClearAutoClimbState();
       return true;
     }
 

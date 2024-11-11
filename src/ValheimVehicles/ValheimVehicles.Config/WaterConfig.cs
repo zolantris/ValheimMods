@@ -34,7 +34,7 @@ public static class WaterConfig
     DEBUG_WaterDisplacementMeshPrimitive { get; private set; } = null!;
 
   public static ConfigEntry<float>
-    BlockingColliderOffset { get; private set; } = null!;
+    UNSAFE_BlockingColliderOffset { get; private set; } = null!;
 
   public static ConfigEntry<WaterMeshFlipModeType>
     FlipWatermeshMode { get; private set; } = null!;
@@ -53,12 +53,6 @@ public static class WaterConfig
 
   public static ConfigEntry<bool>
     DEBUG_HasDepthOverrides { get; private set; } = null!;
-
-  public static ConfigEntry<float>
-    DEBUG_ManualBallastOffset { get; private set; } = null!;
-
-  public static ConfigEntry<bool>
-    DEBUG_ManualBallastOffsetEnabled { get; private set; } = null!;
 
   /// <summary>
   /// Modes
@@ -99,9 +93,6 @@ public static class WaterConfig
   public static ConfigEntry<bool> WaterBallastEnabled =
     null!;
 
-  public static ConfigEntry<float> BallastSpeed = null!;
-  // public ConfigEntry<KeyboardShortcut> ManualBallastModifierKey { get; set; }
-
   public static ConfigEntry<bool>
     EXPERIMENTAL_AboveSurfaceBallastUsesShipMass = null!;
 
@@ -132,33 +123,6 @@ public static class WaterConfig
     WaterZoneUtils.UpdateAllowList(AllowList);
   }
 
-  private static void OnAutoBallastToggle()
-  {
-    foreach (var keyValuePair in VehicleShip.AllVehicles)
-    {
-      var piecesController = keyValuePair.Value.PiecesController;
-      var movementController = keyValuePair.Value.MovementController;
-      if (piecesController != null && movementController != null)
-      {
-        if (piecesController != null &&
-            piecesController.FloatColliderDefaultPosition !=
-            movementController.FloatCollider.transform.localPosition)
-        {
-          movementController.FloatCollider.transform.position =
-            piecesController.FloatColliderDefaultPosition;
-        }
-
-        if (piecesController != null &&
-            piecesController.BlockingColliderDefaultPosition !=
-            movementController.BlockingCollider.transform.localPosition)
-        {
-          movementController.BlockingCollider.transform.position =
-            piecesController.BlockingColliderDefaultPosition;
-        }
-      }
-    }
-  }
-
   private static void OnCharacterWaterModeUpdate()
   {
     foreach (var sCharacter in Character.s_characters)
@@ -177,19 +141,6 @@ public static class WaterConfig
 
   public static void BindDebugConfig(ConfigFile config)
   {
-    DEBUG_ManualBallastOffsetEnabled = config.Bind(SectionKeyDebug,
-      "DEBUG_ManualBallastOffsetEnabled",
-      true,
-      ConfigHelpers.CreateConfigDescription(
-        "Enable manual ballast testing.",
-        true, true));
-    DEBUG_ManualBallastOffset = config.Bind(SectionKeyDebug,
-      "DEBUG_ManualBallastOffset",
-      0f,
-      ConfigHelpers.CreateConfigDescription(
-        "Lets you test how ballast works by setting a value.",
-        true, true, new AcceptableValueRange<float>(-100f, 100f)));
-
     DEBUG_WaterDisplacementMeshPrimitive = config.Bind(SectionKeyDebug,
       "DEBUG_WaterDisplacementMeshPrimitive",
       PrimitiveType.Cube,
@@ -197,7 +148,7 @@ public static class WaterConfig
         "Lets you choose from the water displacement mesh primitives. These will be stored as ZDOs. Not super user friendly yet...",
         true, true));
 
-    var depthRanges = new AcceptableValueRange<float>(-10000f, 50f);
+    var depthRanges = new AcceptableValueRange<float>(0f, 50f);
 
     DEBUG_HasDepthOverrides = config.Bind(SectionKeyDebug,
       "DEBUG_HasDepthOverrides",
@@ -262,9 +213,9 @@ public static class WaterConfig
     AboveSurfaceBallastMaxShipSizeAboveWater = Config.Bind(
       SectionKey,
       "AboveSurfaceBallastMaxShipSizeAboveWater",
-      0.75f,
+      0.5f,
       ConfigHelpers.CreateConfigDescription(
-        $"Ships a fixed value to set for all ships. Will not be applied if config <{aboveSurfaceConfigKey}> is enabled and the ship weight is more than this value.",
+        $"A fixed value to set for all vehicles. Will not be applied if config <{aboveSurfaceConfigKey}> is enabled and the ship weight is more than this value. Set it to 100% to always allow the full height of the ship above the surface.",
         true, true, new AcceptableValueRange<float>(0f, 1f)));
 
     EXPERIMENTAL_AboveSurfaceBallastUsesShipMass = Config.Bind(
@@ -272,25 +223,32 @@ public static class WaterConfig
       "EXPERIMENTAL_AboveSurfaceBallastUsesShipMass",
       false,
       ConfigHelpers.CreateConfigDescription(
-        "Ships with high mass to volume will not be able to ballast well above the surface. This adds a ship mass to onboard volume calculation. The calculation is experimental so it might be inaccurate.",
+        "Ships with high mass to volume will not be able to ballast well above the surface. This adds a ship mass to onboard volume calculation. The calculation is experimental so it might be inaccurate. For now mass to volume includes the length width heigth in a box around the ship. It's unrealistic as of 2.4.0 as this includes emptyspace above water. Eventually this will be calculated via displacement (empty volume with wall all around it) calculation.",
         true, true));
 
-    BlockingColliderOffset = Config.Bind(
+    UNSAFE_BlockingColliderOffset = Config.Bind(
       SectionKey,
-      "BlockingColliderOffset",
+      "UNSAFE_BlockingColliderOffset",
       0.2f,
       ConfigHelpers.CreateConfigDescription(
-        "Sets the relative offset from the float collider. Can be negative or positive. Recommended is near the float collider. Slightly above it.",
+        "Sets the relative offset from the float collider. Can be negative or positive. Recommended is near the float collider. Slightly above it. Leave this alone unless you know what you are doing.",
         true, true, new AcceptableValueRange<float>(-10f, 10f)));
 
-    BallastSpeed = Config.Bind(
+    AllowMonsterEntitesUnderwater = Config.Bind(
       SectionKey,
-      "BallastSpeed",
-      0.5f,
+      "AllowMonsterEntitesUnderwater",
+      true,
       ConfigHelpers.CreateConfigDescription(
-        "Adds more balast offset",
-        true, true, new AcceptableValueRange<float>(0.001f, 1)));
+        "Allows Monster entities onto the ship and underwater. This means they can go underwater similar to player.",
+        true, true));
 
+    AllowedEntiesList = Config.Bind(
+      SectionKey,
+      "AllowedEntiesList",
+      "",
+      ConfigHelpers.CreateConfigDescription(
+        "List separated by comma for entities that are allowed on the ship. For simplicity consider enabling monsters and tame creatures.",
+        true, true));
 
     AllowTamedEntiesUnderwater = Config.Bind(
       SectionKey,
@@ -316,32 +274,16 @@ public static class WaterConfig
         "Zoom value to allow for underwater zooming. Will allow camera to go underwater at values above 0. 0 will reset camera back to default.",
         false, false, new AcceptableValueRange<float>(0, 5000f)));
 
-    AllowMonsterEntitesUnderwater = Config.Bind(
-      SectionKey,
-      "AllowMonsterEntitesUnderwater",
-      true,
-      ConfigHelpers.CreateConfigDescription(
-        "Allows Monster entities onto the ship and underwater. This means they can go underwater similar to player.",
-        true, true));
-
-    AllowedEntiesList = Config.Bind(
-      SectionKey,
-      "AllowedEntiesList",
-      "",
-      ConfigHelpers.CreateConfigDescription(
-        "List separated by comma for entities that are allowed on the ship",
-        true, true));
-
     UnderwaterFogEnabled = Config.Bind(
       SectionKey,
-      "Use Underwater Fog",
+      "UnderwaterFogEnabled",
       true,
       ConfigHelpers.CreateConfigDescription(
         "Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.",
         true));
     UnderWaterFogColor = Config.Bind(
       SectionKey,
-      "Underwater fog color",
+      "UnderwaterFogColor",
       new Color(0.10f, 0.23f, 0.07f, 1.00f),
       ConfigHelpers.CreateConfigDescription(
         "Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.",
@@ -349,7 +291,7 @@ public static class WaterConfig
 
     UnderWaterFogIntensity = Config.Bind(
       SectionKey,
-      "Underwater Fog Intensity",
+      "UnderwaterFogIntensity",
       0.03f,
       ConfigHelpers.CreateConfigDescription(
         "Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.",

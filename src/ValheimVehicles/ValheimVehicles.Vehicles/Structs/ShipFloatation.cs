@@ -9,6 +9,7 @@ public struct ShipFloatation
   public Vector3 ShipLeft;
   public Vector3 ShipRight;
   public bool IsAboveBuoyantLevel;
+  public bool IsInvalid; // for floating values that are in extreme negatives.
   public float CurrentDepth;
   public float WaterLevelLeft;
   public float WaterLevelRight;

@@ -13,11 +13,10 @@ public static class PropulsionConfig
   public static ConfigEntry<float> FlightClimbingOffset { get; private set; } =
     null!;
 
-  public static ConfigEntry<float>
-    FlightClimbDampingTime { get; private set; } =
+  public static ConfigEntry<float> BallastClimbingOffset { get; private set; } =
     null!;
 
-  public static ConfigEntry<float> UnderwaterClimbingOffset
+  public static ConfigEntry<float> VerticalSmoothingSpeed
   {
     get;
     private set;
@@ -100,6 +99,8 @@ public static class PropulsionConfig
       ConfigHelpers.CreateConfigDescription(
         "Lifts the anchor when using a speed change key, this is a QOL to prevent anchor from being required to be pressed when attempting to change the ship speed"));
 
+    // vertical flight/ballast config
+
     FlightClimbingOffset = Config.Bind(SectionName,
       "FlightClimbingOffset",
       5f,
@@ -107,19 +108,21 @@ public static class PropulsionConfig
         "Ascent and Descent speed for the vehicle in the air. This value is interpolated to prevent jitters.",
         true, true, new AcceptableValueRange<float>(1, 10)));
 
-    FlightClimbDampingTime = Config.Bind(SectionName,
-      "FlightClimbDampingTime",
-      5f,
-      ConfigHelpers.CreateConfigDescription(
-        "How much time it takes to go from 1 target value to another target value. Higher is more smooth. Lower can cause huge jitters.",
-        true, true, new AcceptableValueRange<float>(0.1f, 50f)));
-
-    UnderwaterClimbingOffset = Config.Bind(SectionName,
-      "UnderwaterClimbingOffset",
+    BallastClimbingOffset = Config.Bind(SectionName,
+      "BallastClimbingOffset",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Ascent and Descent speed for the vehicle in the water. This value is interpolated to prevent jitters.",
         true, true, new AcceptableValueRange<float>(0.01f, 10)));
+
+    VerticalSmoothingSpeed = Config.Bind(SectionName,
+      "VerticalSmoothingSpeed",
+      0.2f,
+      ConfigHelpers.CreateConfigDescription(
+        "This applies to both Ballast and Flight modes. The vehicle will use this value to interpolate the climbing offset. Meaning low value will be slower climbing/ballast and high values will be instant and match the offset. High values will result in jitters and potentially could throw people off the vehicle. Expect values of 0.01 and 1. IE 1% and 100%",
+        true, true, new AcceptableValueRange<float>(0.01f, 1f)));
+
+    // end vertical config.
 
     DefaultPhysicsMode.SettingChanged +=
       (sender, args) =>

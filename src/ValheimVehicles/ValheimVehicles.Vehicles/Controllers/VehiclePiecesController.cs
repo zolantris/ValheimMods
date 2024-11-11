@@ -2665,7 +2665,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
      * - may need more logic for water masks (hiding water on boat) and other boat magic that has not been added yet.
      */
     var blockingColliderCenterY = floatColliderCenterOffset.y +
-                                  WaterConfig.BlockingColliderOffset.Value;
+                                  WaterConfig.UNSAFE_BlockingColliderOffset
+                                    .Value;
     var blockingColliderCenterOffset = new Vector3(_vehicleBounds.center.x,
       blockingColliderCenterY, _vehicleBounds.center.z);
     var blockingColliderSize = new Vector3(
