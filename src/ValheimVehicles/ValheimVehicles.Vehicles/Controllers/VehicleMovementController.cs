@@ -773,7 +773,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var expectedLowestBlockingColliderPoint =
       BlockingCollider.transform.position.y - BlockingCollider.bounds.extents.y;
 
-    if (IsFlying())
+    if (IsFlying() || !WaterConfig.WaterBallastEnabled.Value)
     {
       var flyingFloatPositionY =
         PiecesController.FloatColliderDefaultPosition.y;
@@ -2466,8 +2466,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (Mathf.Approximately(TargetHeight, 200f) ||
         Mathf.Approximately(TargetHeight, ZoneSystem.instance.m_waterLevel))
     {
-      _isAscending = false;
-      _isDescending = false;
+      ClearAutoClimbState();
       return;
     }
 
@@ -2480,8 +2479,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     if (IsNotFlying)
     {
-      _isAscending = false;
-      _isDescending = false;
+      ClearAutoClimbState();
       return;
     }
 
@@ -2489,8 +2487,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (!_isHoldingDescend && _isDescending)
     {
-      _isAscending = false;
-      _isDescending = false;
+      ClearAutoClimbState();
       return;
     }
 
@@ -2500,7 +2497,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public static bool ShouldHandleControls()
   {
-    var character = (Character)Player.m_localPlayer;
+    Character character = Player.m_localPlayer;
     if (!character) return false;
 
     var isAttachedToShip = character.IsAttachedToShip();
@@ -2526,39 +2523,52 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     !ValheimRaftPlugin.Instance.AllowFlight.Value &&
     !WaterConfig.WaterBallastEnabled.Value;
 
+  public bool GetAscendKeyPress =>
+    ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump");
+
+  public bool GetDescendKeyPress =>
+    ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch");
+
+  public bool CanDescend =>
+    (WaterConfig.WaterBallastEnabled.Value && IsNotFlying) || IsFlying();
+
+  public void ClearAutoClimbState()
+  {
+    _isAscending = false;
+    _isDescending = false;
+  }
+
+  public bool OnAutoFlyingControlsStatusCleared()
+  {
+    if (_isAscending || _isDescending)
+    {
+      return true;
+    }
+
+    return false;
+  }
+
   public void OnFlightControls()
   {
     if (IsBallastAndFlightDisabled || isAnchored) return;
-    if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
+
+    // early exit if the flight controls are in auto mode. Next press should set the next mode
+    if (OnAutoFlyingControlsStatusCleared())
     {
-      if (_isAscending || _isDescending)
-      {
-        _isAscending = false;
-        _isDescending = false;
-      }
-      else
-      {
-        Ascend();
-        ToggleAutoAscend();
-      }
+      return;
     }
-    else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
+
+    if (GetAscendKeyPress)
     {
-      if (_isDescending || _isAscending)
-      {
-        _isDescending = false;
-        _isAscending = false;
-      }
-      else
-      {
-        Descend();
-        ToggleAutoDescend();
-      }
+      Ascend();
+      ToggleAutoAscend();
+      return;
     }
-    else
+
+    if (CanDescend && GetDescendKeyPress)
     {
-      _isHoldingAscend = false;
-      _isHoldingDescend = false;
+      Descend();
+      ToggleAutoDescend();
     }
   }
 
@@ -2692,8 +2702,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     if (IsNotFlying)
     {
-      _isAscending = false;
-      _isDescending = false;
+      ClearAutoClimbState();
       return;
     }
 
@@ -2701,8 +2710,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (!_isHoldingAscend && _isAscending)
     {
-      _isAscending = false;
-      _isDescending = false;
+      ClearAutoClimbState();
       return;
     }
 
@@ -2730,8 +2738,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     if (isEnabled)
     {
-      _isAscending = false;
-      _isDescending = false;
+      ClearAutoClimbState();
       // only stops speed if the anchor is dropped.
       vehicleSpeed = Ship.Speed.Stop;
     }
