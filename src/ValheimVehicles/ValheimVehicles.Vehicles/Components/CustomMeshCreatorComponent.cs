@@ -205,30 +205,37 @@ public class CustomMeshCreatorComponent : MonoBehaviour
       return;
     // must be from the first coordinate otherwise bounds would start from zero and be off
     transform.rotation = Quaternion.identity;
-    var bounds = new Bounds(activeMeshList[0].transform.localPosition,
+    var localBounds = new Bounds(activeMeshList[0].transform.localPosition,
       Vector3.zero);
     foreach (var customMeshCreatorComponent in activeMeshList.Skip(0).ToArray())
     {
-      bounds.Encapsulate(customMeshCreatorComponent.transform.localPosition);
+      localBounds.Encapsulate(
+        customMeshCreatorComponent.transform.localPosition);
     }
 
     var prefabToCreate = GetMeshPrefab();
     if (prefabToCreate == null) return;
 
 
-    // Needs testing...
+    // If on the vehicle it will need to have the parent's rotation, defaults to zero rotation.
     var rotation = transform.parent
       ? transform.parent.rotation * RotationOffset
       : Quaternion.identity;
 
+    var deltaLocalPositionToCenter =
+      localBounds.center - transform.localPosition;
+
+    var meshPosition = transform.position + deltaLocalPositionToCenter;
+
     Logger.LogDebug(
-      $"Creating water mask at {bounds.center} size: {bounds.size}");
-    var meshComponent = Instantiate(prefabToCreate, bounds.center,
+      $"Creating water mask at {localBounds.center} size: {localBounds.size}");
+    var meshComponent = Instantiate(prefabToCreate, meshPosition,
       rotation);
 
     if (transform.parent != null)
     {
       meshComponent.transform.SetParent(transform.parent);
+      meshComponent.transform.localPosition = localBounds.center;
     }
 
 
@@ -239,8 +246,10 @@ public class CustomMeshCreatorComponent : MonoBehaviour
     {
       var netView = meshComponent.GetComponent<ZNetView>();
       var zdo = netView.GetZDO();
+      zdo.SetPosition(transform.position);
+      zdo.SetRotation(transform.rotation);
       zdo.Set(VehicleZdoVars.CustomMeshId, (int)selectedCreatorType);
-      zdo.Set(VehicleZdoVars.CustomMeshScale, bounds.size);
+      zdo.Set(VehicleZdoVars.CustomMeshScale, localBounds.size);
       zdo.Set(VehicleZdoVars.CustomMeshPrimitiveType,
         (int)WaterConfig.DEBUG_WaterDisplacementMeshPrimitive.Value);
 
