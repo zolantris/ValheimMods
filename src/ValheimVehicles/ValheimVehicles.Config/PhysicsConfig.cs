@@ -42,45 +42,26 @@ public class PhysicsConfig
 
   private static ConfigFile Config { get; set; } = null!;
 
+  private static AcceptableValueRange<float> SafeDampingRangeWaterVehicle =
+    new AcceptableValueRange<float>(0.5f, 1f);
 
-  // too bad array iteration of config is refused
-  // List<(ConfigEntry<float>, float)> configs =
-  // [
-  //   // flight
-  //   (flightAngularDamping, 5f),
-  //   (flightAngularDamping, 5f),
-  //   (flightSidewaysDamping, 5f),
-  //   (flightDamping, 5f),
-  //   (flightSteerForce, 1f),
-  //   (flightSailForceFactor, 0.1f),
-  //   (flightDrag, 0.5f),
-  //   (flightAngularDrag, 0.5f),
-  //   // water
-  //   (waterAngularDamping, 1f),
-  //   (waterSidewaysDamping, 1f),
-  //   (waterSteerForce, 1f),
-  //   (waterDamping, 5f),
-  //   (waterSailForceFactor, 0.05f),
-  //   (waterDrag, 0.8f),
-  //   (waterAngularDrag, 0.8f),
-  //   // underwater
-  //   (submersibleAngularDamping, 1f),
-  //   (submersibleSidewaysDamping, 1f),
-  //   (submersibleSteerForce, 1f),
-  //   (submersibleDamping, 5f),
-  //   (submersibleSailForceFactor, 0.05f),
-  //   (submersibleDrag, 0.8f),
-  //   (submersibleAngularDrag, 0.8f),
-  // ];
+  private const string SailDampingExplaination =
+    "Controls how much the wind pushes the boat in the direction of the wind. Lower values will allow the wind to push signficantly harder in the direction it faces. Recommended value is 0.5f for watervehicles. Air vehicles should be lower numbers but it makes them hard to use with sails so setting to 1f is recommended. Noting that 1f is unrealistic but makes sailing much more relaxed without requiring tacking.";
 
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
 
-    flightAngularDamping = Config.Bind(SectionKey, "flightAngularDamping", 1f);
+    var dampingDescription = ConfigHelpers.CreateConfigDescription(
+      SailDampingExplaination,
+      true, false, SafeDampingRangeWaterVehicle);
+
+    flightAngularDamping = Config.Bind(SectionKey, "flightAngularDamping", 1f,
+      dampingDescription);
     flightSidewaysDamping =
-      Config.Bind(SectionKey, "flightSidewaysDamping", 1f);
-    flightDamping = Config.Bind(SectionKey, "flightDamping", 1f);
+      Config.Bind(SectionKey, "flightSidewaysDamping", 1f, dampingDescription);
+    flightDamping =
+      Config.Bind(SectionKey, "flightDamping", 1f, dampingDescription);
 
     flightSteerForce = Config.Bind(SectionKey, "flightSteerForce", 1f);
     flightSailForceFactor =
@@ -92,9 +73,12 @@ public class PhysicsConfig
     waterSteerForce = Config.Bind(SectionKey, "waterSteerForce", 1f);
 
     waterSidewaysDamping =
-      Config.Bind(SectionKey, "waterSidewaysDamping", 0.05f);
-    waterAngularDamping = Config.Bind(SectionKey, "waterAngularDamping", 0.05f);
-    waterDamping = Config.Bind(SectionKey, "waterDamping", 0.05f);
+      Config.Bind(SectionKey, "waterSidewaysDamping", 0.5f,
+        dampingDescription);
+    waterAngularDamping = Config.Bind(SectionKey, "waterAngularDamping", 0.5f,
+      dampingDescription);
+    waterDamping = Config.Bind(SectionKey, "waterDamping", 0.5f,
+      dampingDescription);
 
     waterSailForceFactor =
       Config.Bind(SectionKey, "waterSailForceFactor", 0.05f);
@@ -103,10 +87,13 @@ public class PhysicsConfig
 
     // underwater
     submersibleAngularDamping =
-      Config.Bind(SectionKey, "submersibleAngularDamping", 0.5f);
+      Config.Bind(SectionKey, "submersibleAngularDamping", 1f,
+        dampingDescription);
     submersibleSidewaysDamping =
-      Config.Bind(SectionKey, "submersibleSidewaysDamping", 0.5f);
-    submersibleDamping = Config.Bind(SectionKey, "submersibleDamping", 0.5f);
+      Config.Bind(SectionKey, "submersibleSidewaysDamping", 1f,
+        dampingDescription);
+    submersibleDamping = Config.Bind(SectionKey, "submersibleDamping", 1f,
+      dampingDescription);
 
     submersibleSteerForce =
       Config.Bind(SectionKey, "submersibleSteerForce", 0.5f);
