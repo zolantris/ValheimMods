@@ -219,7 +219,7 @@ public class CustomMeshCreatorComponent : MonoBehaviour
 
     // If on the vehicle it will need to have the parent's rotation, defaults to zero rotation.
     var rotation = transform.parent
-      ? transform.parent.rotation * RotationOffset
+      ? transform.parent.rotation
       : Quaternion.identity;
 
     var deltaLocalPositionToCenter =

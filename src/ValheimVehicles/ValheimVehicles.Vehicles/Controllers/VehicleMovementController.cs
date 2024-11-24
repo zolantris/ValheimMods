@@ -1015,7 +1015,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void UpdateWaterStats()
   {
-    m_angularDamping = PhysicsConfig.flightAngularDamping.Value;
+    m_angularDamping = PhysicsConfig.waterAngularDamping.Value;
     m_damping = PhysicsConfig.waterDamping.Value;
     m_dampingSideway = PhysicsConfig.waterSidewaysDamping.Value;
     m_sailForceFactor = PhysicsConfig.waterSailForceFactor.Value;
@@ -1038,14 +1038,19 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// Todo debounce this when values do not change
   /// <param name="flight"></param>
   /// <param name="submerged"></param>
-  private void UpdateVehicleStats(bool flight, bool submerged)
+  /// <param name="forceUpdate">Used to force update physics when values for physics properties change</param>
+  public void UpdateVehicleStats(bool flight, bool submerged,
+    bool forceUpdate = false)
   {
-    if (vehicleStatSyncTimer is > 0f and < 30f &&
-        previousSyncFlight == flight &&
-        previousSyncSubmerged == submerged)
+    if (!forceUpdate)
     {
-      vehicleStatSyncTimer += Time.fixedDeltaTime;
-      return;
+      if (vehicleStatSyncTimer is > 0f and < 30f &&
+          previousSyncFlight == flight &&
+          previousSyncSubmerged == submerged)
+      {
+        vehicleStatSyncTimer += Time.fixedDeltaTime;
+        return;
+      }
     }
 
     vehicleStatSyncTimer = Time.fixedDeltaTime;
@@ -1137,6 +1142,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
                             Mathf.Sign(deltaForward) *
                             m_dampingForward *
                             currentDepthForceMultiplier;
+
+    // the water pushes the boat in the direction of the wind (sort of). Higher multipliers of m_dampingSideway will actually decrease this affect.
     var deltaRightClamp = deltaRight * deltaRight * Mathf.Sign(deltaRight) *
                           m_dampingSideway *
                           currentDepthForceMultiplier;

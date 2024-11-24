@@ -608,7 +608,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     // SentryLoads after
     ApplyMetricIfAvailable();
     AddGuiLayerComponents();
-    new BepInExConfigAutoDoc().Generate(this, Config);
+    new BepInExConfigAutoDoc().Generate(this, Config, "ValheimRAFT");
   }
 
   /**

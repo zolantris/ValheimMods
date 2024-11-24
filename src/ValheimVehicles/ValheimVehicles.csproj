@@ -19,28 +19,20 @@
     <Import Project="$(SolutionDir)/valheim.targets"/>
 
     <ItemGroup>
-        <Compile Include="Plugins\ConvexHullCalculator.cs"/>
-        <Compile Include="ValheimVehicles.Attributes\GameCacheValueAttribute.cs"/>
-        <Compile Include="ValheimVehicles.ModSupport\DynamicLocationsLoginIntegration.cs"/>
-        <Compile Include="ValheimVehicles.Patches\GameCamera_VehiclePiecesPatch.cs"/>
-        <Compile Include="ValheimVehicles.Patches\Zone_Patch.cs"/>
-        <Compile Include="ValheimVehicles.Config\ConfigHelpers.cs"/>
-        <Compile Include="ValheimVehicles.Config\RamConfig.cs"/>
-        <Compile Include="ValheimVehicles.ConsoleCommands\LocateVehicle.cs"/>
-        <Compile Include="ValheimVehicles.ConsoleCommands\VehicleCommands.cs"/>
-        <Compile Include="ValheimVehicles.Prefabs\PrefabNames.cs"/>
-        <Compile Include="ValheimVehicles.Propulsion\Rudder\SteeringWheelComponent.cs"/>
-        <Compile Include="ValheimVehicles.Propulsion\Sail\SailAreaForce.cs"/>
         <Compile Include="ValheimVehiclesPlugin.cs"/>
-        <Compile Include=".\ValheimVehicles.Utils\*.cs"/>
-        <Compile Include=".\ValheimVehicles.Vehicles\*.cs"/>
-        <Compile Include=".\ValheimVehicles.Patches\*.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
     </ItemGroup>
     <ItemGroup>
         <Folder Include="ValheimVehicles.DynamicLocations\"/>
-        <Folder Include="ValheimVehicles.Propulsion\Sailing\"/>
+        <Folder Include="ValheimVehicles.Propulsion\"/>
         <Folder Include="ValheimVehicles.Vehicles\"/>
+        <Folder Include="ValheimVehicles.Config\"/>
+        <Folder Include="ValheimVehicles.Prefabs\"/>
+        <Folder Include="ValheimVehicles.Constants\"/>
+        <Folder Include="ValheimVehicles.Patches\"/>
+        <Folder Include="ValheimVehicles.Helpers\"/>
+        <Folder Include="ValheimVehicles.ModSupport\"/>
+        <Folder Include="Plugins\"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\SentryUnityWrapper\SentryUnityWrapper.csproj"/>
