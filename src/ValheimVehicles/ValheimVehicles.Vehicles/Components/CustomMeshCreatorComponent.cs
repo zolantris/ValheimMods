@@ -219,17 +219,16 @@ public class CustomMeshCreatorComponent : MonoBehaviour
     // Needs testing...
     var rotation = transform.parent
       ? transform.parent.rotation * RotationOffset
-      : GetRotationFromBounds(bounds);
+      : Quaternion.identity;
 
     Logger.LogDebug(
       $"Creating water mask at {bounds.center} size: {bounds.size}");
-    var meshComponent = Instantiate(prefabToCreate, transform.position,
-      Quaternion.identity);
+    var meshComponent = Instantiate(prefabToCreate, bounds.center,
+      rotation);
 
     if (transform.parent != null)
     {
       meshComponent.transform.SetParent(transform.parent);
-      meshComponent.transform.localPosition = bounds.center;
     }
 
 
