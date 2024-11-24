@@ -22,6 +22,7 @@ using ValheimRAFT.Util;
 using ValheimVehicles;
 using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
+using ValheimVehicles.Constants;
 using ValheimVehicles.ModSupport;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
@@ -52,7 +53,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "2.4.1";
+  public const string Version = "2.4.2";
   public const string ModName = "ValheimRAFT";
   public const string ModGuid = $"{Author}.{ModName}";
   public static string HarmonyGuid => ModGuid;
@@ -608,7 +609,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     // SentryLoads after
     ApplyMetricIfAvailable();
     AddGuiLayerComponents();
-    new BepInExConfigAutoDoc().Generate(this, Config, "ValheimRAFT");
+
+    if (ModEnvironment.IsDebug)
+    {
+      new BepInExConfigAutoDoc().Generate(this, Config, "ValheimRAFT");
+    }
   }
 
   /**

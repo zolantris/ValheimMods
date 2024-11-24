@@ -25,7 +25,7 @@
 
 ### RemoveStartMenuBackground 
 - Description: Removes the start scene background, only use this if you want to speedup start time
-- Default Value: false
+- Default Value: true
 
 ## Server config
 
@@ -63,7 +63,7 @@
 
 ### AllowFlight 
 - Description: Allow the raft to fly (jump\crouch to go up and down)
-- Default Value: true
+- Default Value: false
 
 ### AllowCustomRudderSpeeds 
 - Description: Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed. See advanced section for the actual speed settings.
@@ -99,7 +99,7 @@
 
 ### EnableExactVehicleBounds 
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible
-- Default Value: true
+- Default Value: false
 
 ## Debug
 
@@ -111,35 +111,35 @@
 
 ### MaxPropulsionSpeed 
 - Description: Sets the absolute max speed a ship can ever hit. This is capped on the vehicle, so no forces applied will be able to exceed this value. 20-30f is safe, higher numbers could let the ship fail off the map
-- Default Value: 200
+- Default Value: 45
 
 ### MaxSailSpeed 
 - Description: Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.
-- Default Value: 163.4272
+- Default Value: 30
 
 ### MassPercentage 
 - Description: Sets the mass percentage of the ship that will slow down the sails
-- Default Value: 10
+- Default Value: 55
 
 ### SpeedCapMultiplier 
 - Description: Sets the speed at which it becomes significantly harder to gain speed per sail area
-- Default Value: 3
+- Default Value: 1
 
 ### Rudder Back Speed 
 - Description: Set the Back speed of rudder, this will apply with sails
-- Default Value: 5
+- Default Value: 10
 
 ### Rudder Slow Speed 
 - Description: Set the Slow speed of rudder, this will apply with sails
-- Default Value: 5
+- Default Value: 2
 
 ### Rudder Half Speed 
 - Description: Set the Half speed of rudder, this will apply with sails
-- Default Value: 50
+- Default Value: 4
 
 ### Rudder Full Speed 
 - Description: Set the Full speed of rudder, this will apply with sails
-- Default Value: 20
+- Default Value: 50
 
 ### HasShipWeightCalculations 
 - Description: enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less
@@ -167,19 +167,19 @@
 
 ### SailTier1Area 
 - Description: Manual sets the sail wind area of the tier 1 sail.
-- Default Value: 10
+- Default Value: 5
 
 ### SailTier2Area 
 - Description: Manual sets the sail wind area of the tier 2 sail.
-- Default Value: 20
+- Default Value: 10
 
 ### SailTier3Area 
 - Description: Manual sets the sail wind area of the tier 3 sail.
-- Default Value: 30
+- Default Value: 20
 
 ### SailTier4Area 
 - Description: Manual sets the sail wind area of the tier 4 sail.
-- Default Value: 50
+- Default Value: 40
 
 ### FlightVerticalToggle 
 - Description: Flight Vertical Continues UntilToggled: Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button
@@ -259,15 +259,15 @@
 
 ### chopDamage 
 - Description: chopDamage for Ram Blades excludes Ram Stakes. the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass.. Will damage trees dependending on tool tier settings
-- Default Value: 50
+- Default Value: 5
 
 ### pickaxeDamage 
 - Description: pickDamage the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass. Will damage rocks as well as other entities
-- Default Value: 20
+- Default Value: 220
 
 ### pierceDamage 
 - Description: Pierce damage for Ram Stakes. the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass. Will damage rocks as well as other entities
-- Default Value: 20
+- Default Value: 55
 
 ### percentageDamageToSelf 
 - Description: Percentage Damage applied to the Ram piece per hit. Number between 0-1.
@@ -303,7 +303,7 @@
 
 ### HitRadius 
 - Description: The base ram hit radius area. Stakes are always half the size, this will hit all pieces within this radius, capped between 0.1 and 10 for balance and framerate stability
-- Default Value: 5
+- Default Value: 40
 
 ### RamHitInterval 
 - Description: Every X seconds, the ram will apply this damage
@@ -326,6 +326,10 @@
 - Default Value: 0.25
 
 ## PrefabConfig
+
+### RopeLadderEjectionPoint 
+- Description: The place the player is placed after they leave the ladder. Defaults to Y +0.25 and Z +0.5 meaning you are placed forwards of the ladder.
+- Default Value: {"x":0.0,"y":0.0,"z":0.0}
 
 ### startingPiece 
 - Description: Allows you to customize what piece the raft initializes with. Admins only as this can be overpowered.
@@ -351,7 +355,7 @@
 
 ### HasAutoAnchorDelay 
 - Description: For realism, the ship continues even when nobody is onboard. This is meant for debugging logout points but also could be useful for realism
-- Default Value: true
+- Default Value: false
 
 ### AutoAnchorDelayTimeInSeconds 
 - Description: For realism, the ship continues for X amount of time until it either unrenders or a player stops it.
@@ -367,17 +371,17 @@
 
 ### UNSTABLE_PositionAutoFix 
 - Description: UNSTABLE due to vehicle center point shifting and not being in center of actual vehicle pieces - Automatically moves the vehicle if buried/stuck underground. The close to 0 the closer it will be to teleporting the vehicle above the ground. The higher the number the more lenient it is. Recommended to keep this number above 10. Lower can make the vehicle trigger an infinite loop of teleporting upwards and then falling and re-telporting while gaining velocity
-- Default Value: false
+- Default Value: true
 
 ### positionAutoFixThreshold 
 - Description: Threshold for autofixing stuck vehicles. Large values are less accurate but smaller values may trigger the autofix too frequently
-- Default Value: 10
+- Default Value: 5
 
 ## Debug
 
 ### SyncShipPhysicsOnAllClients 
 - Description: Makes all clients sync physics
-- Default Value: true
+- Default Value: false
 
 ## Propulsion
 
@@ -393,15 +397,15 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### turningPowerWithRudder 
 - Description: Set the turning power with a rudder
-- Default Value: 6
+- Default Value: 2
 
 ### slowAndReverseWithoutControls 
 - Description: Vehicles do not require controls while in slow and reverse with a person on them
-- Default Value: true
+- Default Value: false
 
 ### enableLandVehicles 
 - Description: Vehicles can now float on land. What is realism. Experimental only until wheels are invented. Must use rudder speeds to move forwards.
-- Default Value: false
+- Default Value: true
 
 ### enableBaseGameSailRotation 
 - Description: Lets the baseGame sails Tiers1-4 to rotate based on wind direction
@@ -409,15 +413,19 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### shouldLiftAnchorOnSpeedChange 
 - Description: Lifts the anchor when using a speed change key, this is a QOL to prevent anchor from being required to be pressed when attempting to change the ship speed
-- Default Value: true
+- Default Value: false
 
 ### FlightClimbingOffset 
 - Description: Ascent and Descent speed for the vehicle in the air. This value is interpolated to prevent jitters.
 - Default Value: 5
 
-### UnderwaterClimbingOffset 
+### BallastClimbingOffset 
 - Description: Ascent and Descent speed for the vehicle in the water. This value is interpolated to prevent jitters.
-- Default Value: 5
+- Default Value: 2
+
+### VerticalSmoothingSpeed 
+- Description: This applies to both Ballast and Flight modes. The vehicle will use this value to interpolate the climbing offset. Meaning low value will be slower climbing/ballast and high values will be instant and match the offset. High values will result in jitters and potentially could throw people off the vehicle. Expect values of 0.01 and 1. IE 1% and 100%
+- Default Value: 0.5
 
 ## ModSupport:DynamicLocations
 
@@ -436,14 +444,6 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Default Value: false
 
 ## Underwater: Debug
-
-### DEBUG_ManualBallastOffsetEnabled 
-- Description: Enable manual ballast testing.
-- Default Value: true
-
-### DEBUG_ManualBallastOffset 
-- Description: Lets you test how ballast works by setting a value.
-- Default Value: 0
 
 ### DEBUG_WaterDisplacementMeshPrimitive 
 - Description: Lets you choose from the water displacement mesh primitives. These will be stored as ZDOs. Not super user friendly yet...
@@ -469,108 +469,112 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: Force Overrides the Swim depth for character on boats. Values above the swim depth force the player into a swim animation.
 - Default Value: 15
 
-### DEBUG_AutoBallastOffsetMultiplier 
-- Description: Adds more balast offset
-- Default Value: 1
-
 ## Underwater
 
-### ManualBallast 
+### DEBUG_WaveSizeMultiplier 
+- Description: Make the big waves applies to DEBUG builds only. This is a direct multiplier to height might not work as expected. Debug value for fun
+- Default Value: 1
+
+### WaterBallastEnabled 
 - Description: Similar to flight mechanics but at sea. Defaults with Space/Jump to increase height and Sneak/Shift to decrease height uses the same flight comamnds.
 - Default Value: true
 
-### AutoBallast 
-- Description: Force moves the ship's float collider to the lowest section of the boat if that section is going to smash the ground
+### AboveSurfaceBallastMaxShipSizeAboveWater 
+- Description: A fixed value to set for all vehicles. Will not be applied if config <EXPERIMENTAL_AboveSurfaceBallastUsesShipMass> is enabled and the ship weight is more than this value. Set it to 100% to always allow the full height of the ship above the surface.
+- Default Value: 0
+
+### EXPERIMENTAL_AboveSurfaceBallastUsesShipMass 
+- Description: Ships with high mass to volume will not be able to ballast well above the surface. This adds a ship mass to onboard volume calculation. The calculation is experimental so it might be inaccurate. For now mass to volume includes the length width heigth in a box around the ship. It's unrealistic as of 2.4.0 as this includes emptyspace above water. Eventually this will be calculated via displacement (empty volume with wall all around it) calculation.
+- Default Value: false
+
+### UNSAFE_BlockingColliderOffset 
+- Description: Sets the relative offset from the float collider. Can be negative or positive. Recommended is near the float collider. Slightly above it. Leave this alone unless you know what you are doing.
+- Default Value: 0.2
+
+### AllowMonsterEntitesUnderwater 
+- Description: Allows Monster entities onto the ship and underwater. This means they can go underwater similar to player.
 - Default Value: true
 
-### AutoBallastSpeed 
-- Description: Adds more balast offset
-- Default Value: 0.1
+### AllowedEntiesList 
+- Description: List separated by comma for entities that are allowed on the ship. For simplicity consider enabling monsters and tame creatures.
+- Default Value: 
 
 ### AllowTamedEntiesUnderwater 
 - Description: Lets tamed animals underwater too. Could break or kill them depending on config.
 - Default Value: false
 
 ### FlipWatermeshMode 
-- Description: Flips the water mesh underwater. This can cause some jitters. Turn it on at your own risk. It's improve immersion. Recommended to keep off for now while onboard to prevent underwater jitters due to camera colliding rapidly when water flips
-- Default Value: Disabled
-
-### WaveSizeMultiplier 
-- Description: Make the big waves. This is a direct multiplier to height
-- Default Value: 1
+- Description: Flips the water mesh underwater. This can cause some jitters. Turn it on at your own risk. It's improve immersion. Recommended to keep off if you dislike seeing a bit of tearing in the water meshes. Flipping camera above to below surface should fix things.
+- Default Value: Everywhere
 
 ### UnderwaterShipCameraZoom 
 - Description: Zoom value to allow for underwater zooming. Will allow camera to go underwater at values above 0. 0 will reset camera back to default.
 - Default Value: 5000
 
-### AllowedEntiesList 
-- Description: List separated by comma for entities that are allowed on the ship
-- Default Value: 
-
-### Use Underwater Fog 
+### UnderwaterFogEnabled 
 - Description: Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.
 - Default Value: true
 
-### Underwater fog color 
+### UnderwaterFogColor 
 - Description: Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.
-- Default Value: 009199FF
+- Default Value: 1A3B12FF
 
-### Underwater Fog Intensity 
+### UnderwaterFogIntensity 
 - Description: Adds fog to make underwater appear more realistic. This should be disabled if using Vikings do swim as this mod section is not compatible yet.
-- Default Value: 0.2
+- Default Value: 0.03
 
 ### UnderwaterAccessMode 
 - Description: Allows for walking underwater, anywhere, or onship, or eventually within the water displaced area only. Disabled with remove all water logic. DEBUG_WaterZoneOnly is not supported yet
-- Default Value: Disabled
+- Default Value: OnboardOnly
 
 ## Vehicle Physics
 
-### flightAngularDamping 
-- Description: 
-- Default Value: 5
+### flightDamping_2.4.2 
+- Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
+- Default Value: 1
 
-### flightSidewaysDamping 
-- Description: 
-- Default Value: 5
+### flightSidewaysDamping_2.4.2 
+- Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
+- Default Value: 2
 
-### flightDamping 
-- Description: 
-- Default Value: 5
+### flightAngularDamping_2.4.2 
+- Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
+- Default Value: 1
 
 ### flightSteerForce 
-- Description: 
+- Description: DEBUG, tweak sailing math. Not supported or tested. Do not mess with defaults. Do not use this unless you know what your doing.
 - Default Value: 1
 
 ### flightSailForceFactor 
-- Description: 
+- Description: DEBUG, tweak sailing math. Not supported or tested. Do not mess with defaults. Do not use this unless you know what your doing.
 - Default Value: 0.1
 
 ### flightDrag 
 - Description: 
-- Default Value: 1
+- Default Value: 1.2
 
 ### flightAngularDrag 
 - Description: 
-- Default Value: 1
-
-### waterAngularDamping 
-- Description: 
-- Default Value: 1
-
-### waterSidewaysDamping 
-- Description: 
-- Default Value: 1
+- Default Value: 1.2
 
 ### waterSteerForce 
 - Description: 
 - Default Value: 1
 
-### waterDamping 
-- Description: 
-- Default Value: 5
+### waterDamping_2.4.2 
+- Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
+- Default Value: 1
+
+### waterSidewaysDamping_2.4.2 
+- Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
+- Default Value: 2
+
+### waterAngularDamping_2.4.2 
+- Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
+- Default Value: 1
 
 ### waterSailForceFactor 
-- Description: 
+- Description: DEBUG, tweak sailing math. Not supported or tested. Do not mess with defaults. Do not use this unless you know what your doing.
 - Default Value: 0.05
 
 ### waterDrag 
@@ -581,48 +585,74 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: 
 - Default Value: 0.8
 
-### submersibleAngularDamping 
-- Description: 
+### submersibleDamping_2.4.2 
+- Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping 
-- Description: 
+### submersibleSidewaysDamping_2.4.2 
+- Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
+- Default Value: 2
+
+### submersibleAngularDamping_2.4.2 
+- Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
 ### submersibleSteerForce 
 - Description: 
-- Default Value: 1
-
-### submersibleDamping 
-- Description: 
-- Default Value: 5
+- Default Value: 0.5
 
 ### submersibleSailForceFactor 
-- Description: 
+- Description: DEBUG, tweak sailing math. Not supported or tested. Do not mess with defaults. Do not use this unless you know what your doing.
 - Default Value: 0
 
 ### submersibleDrag 
 - Description: 
-- Default Value: 1.5
+- Default Value: 1
 
 ### submersibleAngularDrag 
 - Description: 
-- Default Value: 1.5
+- Default Value: 2
+
+## MinimapConfig
+
+### BedPinSyncInterval 
+- Description: The interval in seconds at which DynamicSpawn Player pins are synced to the client.
+- Default Value: 1.131455
+
+### VehiclePinSyncInterval 
+- Description: The interval in seconds at which vehicle pins are synced to the client.
+- Default Value: 3
+
+### VehicleNameTag 
+- Description: Set the name of the vehicle icon.
+- Default Value: Vehicle
+
+### ShowAllVehiclesOnMap 
+- Description: Shows all vehicles on global map. All vehicles will update their position.
+- Default Value: false
+
+### VisibleVehicleRadius 
+- Description: A radius in which all vehicles are revealed. This is more balanced than ShowAllVehicles.
+- Default Value: 360.0235
+
+### ShowBedsOnVehicles 
+- Description: Will show your bed on you vehicle. This requires DynamicLocations to be enabled. This config may be migrated to dynamic locations.
+- Default Value: true
 
 ## Quick Start (DEBUG-ONLY)
 
 ### QuickStartWorldName 
 - Description: Set the quick start World Name
-- Default Value: 
+- Default Value: ZolVehicles1
 
 ### QuickStartWorldPassword 
 - Description: Set the quick start world password
-- Default Value: 
+- Default Value: 123456
 
 ### QuickStartEnabled 
 - Description: Enable Quick start
-- Default Value: false
+- Default Value: true
 
 ### QuickStartWorldPlayerName 
 - Description: Quick start player name. Must be valid to start the quick start
-- Default Value: 
+- Default Value: Zol

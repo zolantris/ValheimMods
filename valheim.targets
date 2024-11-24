@@ -406,6 +406,9 @@
             <ThunderStoreName>Thunderstore</ThunderStoreName>
             <NexusName>Nexus</NexusName>
             <ModNameVersion>$(AssemblyName)-$(ApplicationVersion).zip</ModNameVersion>
+            <AutoDocName>$(AssemblyName)_AutoDoc.md</AutoDocName>
+            <AutoDocPath>$(PluginDeployPath)/$(AutoDocName)</AutoDocPath>
+            <LocalAutoDocPath>$(SolutionDir)src\$(AssemblyName)\docs\$(AutoDocName)</LocalAutoDocPath>
         </PropertyGroup>
         <Exec Command="if exist &quot;$(TmpDir)plugins\Assets&quot; rd /s /q &quot;$(TmpDir)plugins\Assets&quot;"/>
         <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>
@@ -419,6 +422,9 @@
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(TmpDir)plugins\$(AssemblyName).dll&quot;"/>
         <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(TmpDir)plugins\$(AssemblyName).pdb&quot;"/>
         <Exec Command="copy &quot;$(RepoDir)README.md&quot; &quot;$(TmpDir)README.md&quot;"/>
+
+        <!-- Overrites the auto-doc -->
+        <Copy Condition="Exists('$(AutoDocPath)') and Exists('$(LocalAutoDocPath)')" SourceFiles="$(AutoDocPath)" DestinationFolder="$(SolutionDir)src\$(AssemblyName)\docs\"/>
 
         <!-- Copy Assets -->
         <Exec Command="if exist &quot;$(AssetsDir)&quot; xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>
