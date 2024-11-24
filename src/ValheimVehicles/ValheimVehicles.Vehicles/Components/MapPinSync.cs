@@ -33,6 +33,7 @@ public class MapPinSync : MonoBehaviour
   public void Awake()
   {
     Instance = this;
+    if (ZNet.instance == null) return;
     if (ZNet.instance.IsDedicated()) return;
     MinimapManager.OnVanillaMapDataLoaded += OnMapReady;
     ZdoWatchController.Instance.GetAllZdoGuids();
