@@ -191,7 +191,7 @@ public class PlayerSpawnController : MonoBehaviour
     // should sync the zdo just in case it doesn't match player
     if (player == null) return false;
 
-    if (!bed.IsMine() && bed.GetOwner() != 0L)
+    if (!bed.IsMine())
     {
       // exit b/c this is another player's bed, this should not set as a spawn
       return false;
