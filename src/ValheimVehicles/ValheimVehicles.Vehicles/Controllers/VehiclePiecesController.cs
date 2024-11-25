@@ -827,7 +827,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void CustomUpdate(float deltaTime, float time)
   {
     Client_UpdateAllPieces();
-    Sync();
+    // Sync();
   }
 
   private void UpdateBedPiece(Bed mBedPiece)
@@ -851,7 +851,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public void CustomLateUpdate(float deltaTime)
   {
-    Sync();
+    // Sync();
     if (!ZNet.instance.IsServer())
     {
       Client_UpdateAllPieces();
