@@ -154,7 +154,7 @@ public class PhysicsConfig
       dampingDescription);
     submersibleSidewaysDamping =
       Config.Bind(SectionKey, $"submersibleSidewaysDamping_{DampingResetKey}",
-        5f,
+        2f,
         dampingSidewaysDescription);
     submersibleAngularDamping =
       Config.Bind(SectionKey, $"submersibleAngularDamping_{DampingResetKey}",
