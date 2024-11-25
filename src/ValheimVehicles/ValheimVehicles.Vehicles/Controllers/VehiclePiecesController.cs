@@ -723,7 +723,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     if (MovementController == null) return Quaternion.identity;
 
-    if (!PropulsionConfig.LeanTowardsWindSailDirection.Value)
+    if (!PropulsionConfig.EXPERIMENTAL_LeanTowardsWindSailDirection.Value)
       return MovementController.m_body.rotation;
 
     // Normalize wind direction to [0, 360]
@@ -755,8 +755,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     // Clamp lean angle to configured maximum values
     sailLeanAngle = Mathf.Clamp(sailLeanAngle,
-      -PropulsionConfig.LeanTowardsWindSailDirectionMaxAngle.Value,
-      PropulsionConfig.LeanTowardsWindSailDirectionMaxAngle.Value);
+      -PropulsionConfig.EXPERIMENTAL_LeanTowardsWindSailDirectionMaxAngle.Value,
+      PropulsionConfig.EXPERIMENTAL_LeanTowardsWindSailDirectionMaxAngle.Value);
 
     // Apply the rotation based on the computed sail lean angle
     return MovementController.m_body.rotation *
