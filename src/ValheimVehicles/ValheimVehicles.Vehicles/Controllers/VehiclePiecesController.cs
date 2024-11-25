@@ -732,6 +732,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       m_fixedJoint.connectedBody = null;
     }
 
+    Physics.SyncTransforms();
+
     m_body.Move(
       VehicleInstance.MovementController.m_body.position,
       VehicleInstance.MovementController.m_body.rotation
@@ -851,7 +853,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public void CustomLateUpdate(float deltaTime)
   {
-    // Sync();
+    Sync();
     if (!ZNet.instance.IsServer())
     {
       Client_UpdateAllPieces();
