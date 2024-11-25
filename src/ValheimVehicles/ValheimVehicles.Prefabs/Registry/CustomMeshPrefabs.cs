@@ -50,7 +50,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
     var piece = PrefabRegistryHelpers.AddPieceForPrefab(
       PrefabNames.CustomWaterMaskCreator,
       prefab);
-    piece.m_canRotate = false;
+    piece.m_canRotate = true;
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig

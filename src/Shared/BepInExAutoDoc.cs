@@ -16,7 +16,8 @@ public class BepInExConfigAutoDoc
   public bool runOnRelease = false;
   public bool runOnDebug = true;
 
-  private static string? GetOutputFolderPath(PluginInfo plugin)
+  private static string? GetOutputFolderPath(PluginInfo plugin,
+    string autoDocName)
   {
     // string assemblyName = System.Reflection.Assembly.GetExecutingAssembly()
     //   .GetName().Name
@@ -38,7 +39,7 @@ public class BepInExConfigAutoDoc
 
     var bepinExPluginDir = Path.Combine(
       executingAssemblyLocation,
-      $"{plugin.Instance.name}_AutoDoc_V2.md");
+      $"{autoDocName}_AutoDoc.md");
 
 
     return bepinExPluginDir;
@@ -53,7 +54,7 @@ public class BepInExConfigAutoDoc
     ConfigMatchRegExp.Match(x).Groups[1].Value;
 
   private static void AutoWriteBepInExConfigDoc(PluginInfo plugin,
-    ConfigFile Config)
+    ConfigFile Config, string documentName)
   {
     StringBuilder sb = new();
     var lastSection = "";
@@ -74,7 +75,7 @@ public class BepInExConfigAutoDoc
         $"{Environment.NewLine}- Default Value: {Config[x].GetSerializedValue()}{Environment.NewLine}");
     }
 
-    var outputPath = GetOutputFolderPath(plugin);
+    var outputPath = GetOutputFolderPath(plugin, documentName);
     if (outputPath == null) return;
 
     File.WriteAllText(
@@ -83,16 +84,18 @@ public class BepInExConfigAutoDoc
   }
 
 
-  public void Generate(BaseUnityPlugin plugin, ConfigFile configFile)
+  public void Generate(BaseUnityPlugin plugin, ConfigFile configFile,
+    string documentName)
   {
     var pluginInfo = BepInExUtils.GetPluginInfoFromType(plugin.GetType());
-    Generate(pluginInfo, configFile);
+    Generate(pluginInfo, configFile, documentName);
   }
 
-  public void Generate(FileInfo pluginPath, ConfigFile configFile)
+  public void Generate(FileInfo pluginPath, ConfigFile configFile,
+    string documentName)
   {
     var pluginInfo = BepInExUtils.GetPluginInfoFromPath(pluginPath);
-    Generate(pluginInfo, configFile);
+    Generate(pluginInfo, configFile, documentName);
   }
 
   /// <summary>
@@ -100,9 +103,10 @@ public class BepInExConfigAutoDoc
   /// todo detect executing assembly and run based on environment flags being in debug mode
   /// </summary>
   /// <returns></returns>
-  public void Generate(PluginInfo pluginInfo, ConfigFile configFile)
+  public void Generate(PluginInfo pluginInfo, ConfigFile configFile,
+    string documentName)
   {
-    AutoWriteBepInExConfigDoc(pluginInfo, configFile);
+    AutoWriteBepInExConfigDoc(pluginInfo, configFile, documentName);
   }
 // #if DEBUG
 //     if (runOnDebug)

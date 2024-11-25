@@ -10,7 +10,7 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>2.4.1</ApplicationVersion>
+        <ApplicationVersion>2.4.2</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -36,21 +36,6 @@
         <!--            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>-->
         <!--        </ProjectReference>-->
         <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Helpers\VectorUtils.cs">
-            <Link>ValheimVehicles.Helpers\VectorUtils.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\LeverPrefabs.cs">
-            <Link>ValheimVehicles.Prefabs\Registry\LeverPrefabs.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\CustomToggleSwitch.cs">
-            <Link>ValheimVehicles.Vehicles\Components\CustomToggleSwitch.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\MapPinSync.cs">
-            <Link>ValheimVehicles.Vehicles\Components\MapPinSync.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Config\MinimapConfig.cs">
-            <Link>ValheimVehicles.Config\MiniMapConfig.cs</Link>
-        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup>
@@ -59,13 +44,6 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Remove="ValheimRAFT.Unity\**\*"/>
-        <!--        <Compile Include="ValheimRAFT.Config\IConfigSection.cs"/>-->
-        <!--        <Compile Include="ValheimRAFT.Config\PatchConfig.cs"/>-->
-        <!--        <Compile Include="ValheimRAFT.Unity\Assets\ValheimVehicles\Scene\CustomMeshGenerator.cs"/>-->
-        <!--        <Compile Include="ValheimRAFT\*.cs"/>-->
-        <!--        <Compile Include="ValheimRAFT.Patches\*.cs"/>-->
-        <!--        <Compile Include="ValheimRAFT.UI\*.cs"/>-->
-        <!--        <Compile Include="ValheimRAFT.Util\*.cs"/>-->
     </ItemGroup>
     <PropertyGroup>
         <SentryDSN>https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496</SentryDSN>
