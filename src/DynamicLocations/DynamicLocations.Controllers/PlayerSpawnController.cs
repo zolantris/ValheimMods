@@ -145,11 +145,15 @@ public class PlayerSpawnController : MonoBehaviour
 
     id = ZdoWatchController.Instance.GetOrCreatePersistentID(zdo);
 
-    if (id != 0)
+    if (id == 0)
     {
-      Logger.LogError(
-        "No persistent ID returned for bed, this should not be possible. Please report this error");
-      RemoveDynamicPoint(zdo, locationVariationType);
+      if (locationVariationType == LocationVariation.Spawn)
+      {
+        Logger.LogError(
+          "No persistent ID returned for bed, this should not be possible. Please report this error");
+        RemoveDynamicPoint(zdo, locationVariationType);
+      }
+
       return false;
     }
 
