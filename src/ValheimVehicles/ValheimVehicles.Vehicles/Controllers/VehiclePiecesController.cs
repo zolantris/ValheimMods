@@ -1551,6 +1551,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       return;
     }
 
+    if (VehicleInstance == null) return;
+
     // do not run if in a Pending or Created state or if no pending pieces
     if (BaseVehicleInitState != InitializationState.Complete &&
         GetCurrentPendingPieces()?.Count == 0) return;
@@ -1694,9 +1696,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       {
         // Activate each piece (e.g., instantiate or enable)
         ActivatePiece(piece);
-
-        // Yield after each piece or batch for smoother frame rates
-        yield return null;
       }
 
       // Clear processed items and add any newly queued items
