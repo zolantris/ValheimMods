@@ -1,6 +1,4 @@
-using System;
 using BepInEx.Configuration;
-using ComfyLib;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Enums;
 
@@ -83,13 +81,13 @@ public static class PropulsionConfig
         true));
 
     LeanTowardsWindSailDirection = Config.Bind(SectionName,
-      "CosmeticLeanTowardsWindDirection", false,
+      "LeanTowardsWindSailDirection", false,
       ConfigHelpers.CreateConfigDescription(
         "Toggles a lurch while sailing with wind power. Cosmetic only, but could make people sick.",
         false, true));
 
     LeanTowardsWindSailDirectionMaxAngle = Config.Bind(SectionName,
-      "CosmeticLeanTowardsWindDirectionMaxAngle", 20f,
+      "LeanTowardsWindSailDirectionMaxAngle", 20f,
       ConfigHelpers.CreateConfigDescription(
         "Set the max lean angle when wind is hitting sides directly", true,
         true, new AcceptableValueRange<float>(0f, 30f)));

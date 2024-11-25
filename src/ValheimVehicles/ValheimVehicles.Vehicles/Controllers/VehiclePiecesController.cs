@@ -733,9 +733,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     // Determine lean direction: port (-1) or starboard (1)
     float leanDirection;
     if (windDirection > 180f) // Port side (aft to left)
-      leanDirection = -1f;
-    else // Starboard side (aft to right)
       leanDirection = 1f;
+    else // Starboard side (aft to right)
+      leanDirection = -1f;
 
     // Check if wind direction falls within the specified ranges
     var isWithinRange =
