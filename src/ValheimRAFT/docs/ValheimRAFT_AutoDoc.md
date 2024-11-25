@@ -99,7 +99,7 @@
 
 ### EnableExactVehicleBounds 
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible
-- Default Value: false
+- Default Value: true
 
 ## Debug
 
@@ -127,19 +127,19 @@
 
 ### Rudder Back Speed 
 - Description: Set the Back speed of rudder, this will apply with sails
-- Default Value: 10
+- Default Value: 1
 
 ### Rudder Slow Speed 
 - Description: Set the Slow speed of rudder, this will apply with sails
-- Default Value: 2
+- Default Value: 1
 
 ### Rudder Half Speed 
 - Description: Set the Half speed of rudder, this will apply with sails
-- Default Value: 4
+- Default Value: 0
 
 ### Rudder Full Speed 
 - Description: Set the Full speed of rudder, this will apply with sails
-- Default Value: 50
+- Default Value: 0
 
 ### HasShipWeightCalculations 
 - Description: enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less
@@ -263,11 +263,11 @@
 
 ### pickaxeDamage 
 - Description: pickDamage the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass. Will damage rocks as well as other entities
-- Default Value: 220
+- Default Value: 20
 
 ### pierceDamage 
 - Description: Pierce damage for Ram Stakes. the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass. Will damage rocks as well as other entities
-- Default Value: 55
+- Default Value: 20
 
 ### percentageDamageToSelf 
 - Description: Percentage Damage applied to the Ram piece per hit. Number between 0-1.
@@ -303,7 +303,7 @@
 
 ### HitRadius 
 - Description: The base ram hit radius area. Stakes are always half the size, this will hit all pieces within this radius, capped between 0.1 and 10 for balance and framerate stability
-- Default Value: 40
+- Default Value: 5
 
 ### RamHitInterval 
 - Description: Every X seconds, the ram will apply this damage
@@ -367,11 +367,11 @@
 
 ### Vehicle Debug Menu 
 - Description: Enable the VehicleDebugMenu. This shows a GUI menu which has a few shortcuts to debugging/controlling vehicles.
-- Default Value: true
+- Default Value: false
 
 ### UNSTABLE_PositionAutoFix 
 - Description: UNSTABLE due to vehicle center point shifting and not being in center of actual vehicle pieces - Automatically moves the vehicle if buried/stuck underground. The close to 0 the closer it will be to teleporting the vehicle above the ground. The higher the number the more lenient it is. Recommended to keep this number above 10. Lower can make the vehicle trigger an infinite loop of teleporting upwards and then falling and re-telporting while gaining velocity
-- Default Value: true
+- Default Value: false
 
 ### positionAutoFixThreshold 
 - Description: Threshold for autofixing stuck vehicles. Large values are less accurate but smaller values may trigger the autofix too frequently
@@ -389,7 +389,7 @@
 - Description: SyncRigidbody - Accurately syncs physics across clients, it causes jitters during high speed.
 ForceSyncedRigidbody ignores all allowances that toggle SyncRigidbody related to flight. This will require a flight ascend value of 1 otherwise flight will be broken. Use this is there is problems with SyncRigidbody
 DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config that allows the player to smoothly move around the raft at high speeds even if they are not the host. Can cause the ship to glitch with anything that has to do with physics including ramps and other mods that add moving parts that could be added to the boat.
-- Default Value: ForceSyncedRigidbody
+- Default Value: SyncedRigidbody
 
 ### turningPowerNoRudder 
 - Description: Set the base turning power of the steering wheel
@@ -397,7 +397,7 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### turningPowerWithRudder 
 - Description: Set the turning power with a rudder
-- Default Value: 2
+- Default Value: 6
 
 ### slowAndReverseWithoutControls 
 - Description: Vehicles do not require controls while in slow and reverse with a person on them
@@ -405,7 +405,7 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### enableLandVehicles 
 - Description: Vehicles can now float on land. What is realism. Experimental only until wheels are invented. Must use rudder speeds to move forwards.
-- Default Value: true
+- Default Value: false
 
 ### enableBaseGameSailRotation 
 - Description: Lets the baseGame sails Tiers1-4 to rotate based on wind direction
@@ -481,7 +481,7 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### AboveSurfaceBallastMaxShipSizeAboveWater 
 - Description: A fixed value to set for all vehicles. Will not be applied if config <EXPERIMENTAL_AboveSurfaceBallastUsesShipMass> is enabled and the ship weight is more than this value. Set it to 100% to always allow the full height of the ship above the surface.
-- Default Value: 0
+- Default Value: 0.5
 
 ### EXPERIMENTAL_AboveSurfaceBallastUsesShipMass 
 - Description: Ships with high mass to volume will not be able to ballast well above the surface. This adds a ship mass to onboard volume calculation. The calculation is experimental so it might be inaccurate. For now mass to volume includes the length width heigth in a box around the ship. It's unrealistic as of 2.4.0 as this includes emptyspace above water. Eventually this will be calculated via displacement (empty volume with wall all around it) calculation.
@@ -563,7 +563,7 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### waterDamping_2.4.2 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
-- Default Value: 1
+- Default Value: 0.3532864
 
 ### waterSidewaysDamping_2.4.2 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
@@ -571,7 +571,7 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### waterAngularDamping_2.4.2 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
-- Default Value: 1
+- Default Value: 0.3532864
 
 ### waterSailForceFactor 
 - Description: DEBUG, tweak sailing math. Not supported or tested. Do not mess with defaults. Do not use this unless you know what your doing.
@@ -607,17 +607,17 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### submersibleDrag 
 - Description: 
-- Default Value: 1
+- Default Value: 1.5
 
 ### submersibleAngularDrag 
 - Description: 
-- Default Value: 2
+- Default Value: 1.5
 
 ## MinimapConfig
 
 ### BedPinSyncInterval 
 - Description: The interval in seconds at which DynamicSpawn Player pins are synced to the client.
-- Default Value: 1.131455
+- Default Value: 3
 
 ### VehiclePinSyncInterval 
 - Description: The interval in seconds at which vehicle pins are synced to the client.
@@ -633,7 +633,7 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### VisibleVehicleRadius 
 - Description: A radius in which all vehicles are revealed. This is more balanced than ShowAllVehicles.
-- Default Value: 360.0235
+- Default Value: 50
 
 ### ShowBedsOnVehicles 
 - Description: Will show your bed on you vehicle. This requires DynamicLocations to be enabled. This config may be migrated to dynamic locations.
