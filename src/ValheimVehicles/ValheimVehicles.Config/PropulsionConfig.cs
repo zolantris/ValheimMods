@@ -22,6 +22,19 @@ public static class PropulsionConfig
     private set;
   } = null!;
 
+  public static ConfigEntry<bool> LeanTowardsWindSailDirection
+  {
+    get;
+    private set;
+  } = null!;
+
+  public static ConfigEntry<float> LeanTowardsWindSailDirectionMaxAngle
+  {
+    get;
+    private set;
+  } =
+    null!;
+
   public static ConfigEntry<float> TurnPowerNoRudder { get; private set; } =
     null!;
 
@@ -68,6 +81,18 @@ public static class PropulsionConfig
         "ForceSyncedRigidbody ignores all allowances that toggle SyncRigidbody related to flight. This will require a flight ascend value of 1 otherwise flight will be broken. Use this is there is problems with SyncRigidbody\n" +
         "DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config that allows the player to smoothly move around the raft at high speeds even if they are not the host. Can cause the ship to glitch with anything that has to do with physics including ramps and other mods that add moving parts that could be added to the boat.",
         true));
+
+    LeanTowardsWindSailDirection = Config.Bind(SectionName,
+      "CosmeticLeanTowardsWindDirection", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Toggles a lurch while sailing with wind power. Cosmetic only, but could make people sick.",
+        false, true));
+
+    LeanTowardsWindSailDirectionMaxAngle = Config.Bind(SectionName,
+      "CosmeticLeanTowardsWindDirectionMaxAngle", 20f,
+      ConfigHelpers.CreateConfigDescription(
+        "Set the max lean angle when wind is hitting sides directly", true,
+        true, new AcceptableValueRange<float>(0f, 30f)));
 
     TurnPowerNoRudder = Config.Bind(SectionName, "turningPowerNoRudder", 1f,
       ConfigHelpers.CreateConfigDescription(

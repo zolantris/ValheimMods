@@ -712,9 +712,53 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     localVehiclePhysicsMode = physicsMode;
   }
 
+  public float sailLeanAngle = 0f;
+
+  /// <summary>
+  /// Adds a cool leaning effect. Cosmetic only to the ship. SailPower controls lean effect. Zero sails will not influence it.
+  /// </summary>
+  /// <returns></returns>
+  public Quaternion GetRotation()
+  {
+    if (MovementController == null) return Quaternion.identity;
+    if (!PropulsionConfig.LeanTowardsWindSailDirection.Value)
+      return MovementController.m_body.rotation;
+
+    var windDirection = MovementController.GetWindAngle();
+    var toValue = 0f;
+
+    var leanDirection = 1f;
+    if (windDirection is >= 180f and <= 360f)
+    {
+      leanDirection = -1f;
+    }
+
+    if (windDirection is >= -180f and <= 0f)
+    {
+      leanDirection = 1f;
+    }
+
+    if (windDirection is >= 10f and <= 120f or >= -350f and <= -225f)
+    {
+      toValue = MovementController.m_sailForce.magnitude;
+    }
+
+    sailLeanAngle = Mathf.Lerp(sailLeanAngle,
+      toValue * 50f * leanDirection,
+      Time.fixedDeltaTime * 0.01f);
+
+    sailLeanAngle =
+      Mathf.Clamp(sailLeanAngle,
+        -PropulsionConfig.LeanTowardsWindSailDirectionMaxAngle.Value,
+        PropulsionConfig.LeanTowardsWindSailDirectionMaxAngle.Value);
+
+    return MovementController.m_body.rotation *
+           Quaternion.Euler(0f, 0f, sailLeanAngle);
+  }
+
   public void KinematicSync()
   {
-    if (VehicleInstance?.MovementController == null) return;
+    if (MovementController == null) return;
     if (!m_body.isKinematic)
     {
       m_body.isKinematic = true;
@@ -733,10 +777,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
 
     Physics.SyncTransforms();
-
     m_body.Move(
-      VehicleInstance.MovementController.m_body.position,
-      VehicleInstance.MovementController.m_body.rotation
+      MovementController.m_body.position,
+      GetRotation()
     );
   }
 
