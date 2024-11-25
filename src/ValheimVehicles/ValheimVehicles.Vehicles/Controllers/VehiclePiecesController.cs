@@ -713,6 +713,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   }
 
   public float sailLeanAngle = 0f;
+  public float sailDirectionDamping = 0.1f;
 
   /// <summary>
   /// Adds a cool leaning effect. Cosmetic only to the ship. SailPower controls lean effect. Zero sails will not influence it.
@@ -721,40 +722,47 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public Quaternion GetRotation()
   {
     if (MovementController == null) return Quaternion.identity;
+
     if (!PropulsionConfig.LeanTowardsWindSailDirection.Value)
       return MovementController.m_body.rotation;
 
-    var windDirection = MovementController.GetWindAngle();
+    // Normalize wind direction to [0, 360]
+    var windDirection = Mathf.Repeat(MovementController.GetWindAngle(), 360f);
+
     var toValue = 0f;
-
-    var leanDirection = 1f;
-    if (windDirection is >= 180f and <= 360f)
-    {
+    // Determine lean direction: port (-1) or starboard (1)
+    float leanDirection;
+    if (windDirection > 180f) // Port side (aft to left)
       leanDirection = -1f;
-    }
-
-    if (windDirection is >= -180f and <= 0f)
-    {
+    else // Starboard side (aft to right)
       leanDirection = 1f;
-    }
 
-    if (windDirection is >= 10f and <= 120f or >= -350f and <= -225f)
+    // Check if wind direction falls within the specified ranges
+    var isWithinRange =
+      windDirection is >= 60f and <= 120f || // Starboard range
+      windDirection is >= 240f and <= 310f; // Port range
+
+    if (isWithinRange)
     {
+      // Wind affects sail force in this range
       toValue = MovementController.m_sailForce.magnitude;
     }
 
+    // Smoothly interpolate sail lean angle based on wind and direction
     sailLeanAngle = Mathf.Lerp(sailLeanAngle,
       toValue * 50f * leanDirection,
-      Time.fixedDeltaTime * 0.01f);
+      Time.fixedDeltaTime * sailDirectionDamping);
 
-    sailLeanAngle =
-      Mathf.Clamp(sailLeanAngle,
-        -PropulsionConfig.LeanTowardsWindSailDirectionMaxAngle.Value,
-        PropulsionConfig.LeanTowardsWindSailDirectionMaxAngle.Value);
+    // Clamp lean angle to configured maximum values
+    sailLeanAngle = Mathf.Clamp(sailLeanAngle,
+      -PropulsionConfig.LeanTowardsWindSailDirectionMaxAngle.Value,
+      PropulsionConfig.LeanTowardsWindSailDirectionMaxAngle.Value);
 
+    // Apply the rotation based on the computed sail lean angle
     return MovementController.m_body.rotation *
            Quaternion.Euler(0f, 0f, sailLeanAngle);
   }
+
 
   public void KinematicSync()
   {
