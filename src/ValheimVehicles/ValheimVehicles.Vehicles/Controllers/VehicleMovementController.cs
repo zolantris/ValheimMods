@@ -2243,8 +2243,18 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     CancelInvoke(nameof(SyncTargetHeight));
   }
 
+  /// <summary>
+  /// Force sets the owner after RPC fails to be sent.
+  /// </summary>
+  public void ForceSetOwner()
+  {
+    if (vehicleShip.NetView == null) return;
+    vehicleShip.NetView.m_zdo.SetOwner(Player.m_localPlayer.GetPlayerID());
+  }
+
   public void SendRequestControl(long playerId, Transform attachTransform)
   {
+    Invoke(nameof(ForceSetOwner), 2f);
     m_nview?.InvokeRPC(nameof(RPC_RequestControl),
       [playerId, attachTransform]);
   }
@@ -2929,6 +2939,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   private void RPC_RequestResponse(long sender, bool granted)
   {
+    // Cancels the invocation of this fallback method if the owner of the boat does not respond quick enough.
+    CancelInvoke(nameof(ForceSetOwner));
     if (!Player.m_localPlayer || !ShipInstance?.Instance)
     {
       return;
