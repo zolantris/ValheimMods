@@ -42,6 +42,7 @@ public class VehicleCommands : ConsoleCommand
     public const string toggleOceanSway = "toggleOceanSway";
     public const string upgradeToV2 = "upgradeShipToV2";
     public const string downgradeToV1 = "downgradeShipToV1";
+    public const string resetVehicleOwner = "resetLocalOwnership";
   }
 
   public override string Help => OnHelp();
@@ -120,10 +121,33 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.moveUp:
         VehicleMoveVertically(nextArgs);
         break;
+      case VehicleCommandArgs.resetVehicleOwner:
+        VehicleOwnerReset();
+        break;
       case VehicleCommandArgs.help:
         Logger.LogMessage(OnHelp());
         break;
     }
+  }
+
+  public void VehicleOwnerReset()
+  {
+    var currentVehicle =
+      GetNearestVehicleShip(Player.m_localPlayer.transform.position);
+    if (currentVehicle?.MovementController == null)
+    {
+      Logger.LogMessage("No vehicle nearby");
+      return;
+    }
+
+    if (!VehicleOnboardController.IsCharacterOnboard(Player.m_localPlayer))
+    {
+      Logger.LogMessage(
+        "You player is not onboard any vehicle. You must be onboard the vehicle to safely take control of it.");
+      return;
+    }
+
+    currentVehicle.MovementController.ForceSetOwner();
   }
 
   public static void FloatArgErrorMessage(string arg)
@@ -752,6 +776,7 @@ public class VehicleCommands : ConsoleCommand
     VehicleCommandArgs.colliderEditMode,
     VehicleCommandArgs.move,
     VehicleCommandArgs.moveUp,
+    VehicleCommandArgs.resetVehicleOwner,
   ];
 
   public override string Name => "vehicle";
