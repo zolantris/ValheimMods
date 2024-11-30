@@ -17,6 +17,7 @@ public static class EffectsArea_VehiclePatches
   [HarmonyPatch(typeof(EffectArea),
     nameof(EffectArea.IsPointPlus025InsideBurningArea))]
   [HarmonyPrefix]
+  [HarmonyPriority(Priority.VeryHigh)]
   private static bool EffectArea_GetBurningAreaPointPlus025(Vector3 p,
     ref bool __result)
   {
@@ -29,6 +30,7 @@ public static class EffectsArea_VehiclePatches
   [HarmonyPatch(typeof(EffectArea),
     nameof(EffectArea.GetBurningAreaPointPlus025))]
   [HarmonyPrefix]
+  [HarmonyPriority(Priority.VeryHigh)]
   private static bool EffectArea_GetBurningAreaPointPlus025(Vector3 p,
     ref EffectArea __result)
   {
