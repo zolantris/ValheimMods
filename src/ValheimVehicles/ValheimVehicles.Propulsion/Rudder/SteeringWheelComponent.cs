@@ -336,7 +336,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
       return;
     }
 
-    ShipInstance.Instance?.MovementController?.FireReleaseControl(player);
+    ShipInstance.Instance?.MovementController?.SendReleaseControl(player);
   }
 
   public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run,

@@ -2344,7 +2344,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   /// <summary>
   /// We have to sync the new user id across all clients but only the owner of the zdo can set the new user id.
-  /// - This will fallback to a force owner takeover from the invoker if the owner is somehow un-responsive.
+  /// - This will fall back to a force owner takeover from the invoker if the owner is somehow un-responsive.
   /// </summary>
   /// <param name="sender"></param>
   /// <param name="targetPlayerId"></param>
@@ -2383,9 +2383,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       return;
     }
 
-    var isValidUser = HaveValidUser();
+    // the previous user could be invalid so always makes the current user valid if so.
     m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_RequestResponse),
-      isValidUser, targetPlayerId, previousUserId);
+      true, targetPlayerId, previousUserId);
   }
 
   private void RPC_ReleaseControl(long sender, long playerId)
@@ -3051,12 +3051,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     var isLocalPlayer = targetPlayer == Player.m_localPlayer;
 
-    var previousUserId = GetUser();
+    var previousUserId = previousPlayer?.GetPlayerID() ?? 0L;
     // the person controlling the ship should control physics
     var playerOwner = targetPlayer.GetOwner();
 
     m_nview.GetZDO().SetOwner(playerOwner);
-    if (previousUserId != targetPlayer.GetPlayerID())
+    if (previousUserId != targetPlayer.GetPlayerID() || previousUserId == 0L)
     {
       m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayer.GetPlayerID());
     }
@@ -3092,7 +3092,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   private void EjectPreviousPlayerFromControls(Player? player)
   {
-    player?.AttachStop();
+    if (player == null) return;
+    player.m_doodadController = null;
+    player.AttachStop();
   }
 
   private void RPC_RequestResponse(long sender, bool granted,
@@ -3110,7 +3112,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       OnControlsHandOff(Player.GetPlayer(targetPlayerId),
         Player.GetPlayer(previousPlayerId));
       // lets the player know they are disconnected.
-      if (Player.m_localPlayer == Player.GetPlayer(previousPlayerId))
+      if (Player.m_localPlayer ==
+          Player.GetPlayer(previousPlayerId) &&
+          targetPlayerId != previousPlayerId)
       {
         Player.m_localPlayer.Message(MessageHud.MessageType.Center,
           "$valheim_vehicles_wheel_ejected");
@@ -3254,7 +3258,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
-  public void FireReleaseControl(Player player)
+  public void SendReleaseControl(Player player)
   {
     CancelDebounceTakeoverControls();
     if (m_nview == null) return;

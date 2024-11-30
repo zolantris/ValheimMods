@@ -123,7 +123,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> RaftCreativeHeight { get; set; }
   public ConfigEntry<KeyboardShortcut> AnchorKeyboardShortcut { get; set; }
   public ConfigEntry<bool> EnableMetrics { get; set; }
-  public ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
 
   public ConfigEntry<bool> ProtectVehiclePiecesOnErrorFromWearNTearDamage
   {
@@ -139,23 +138,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> EnableShipInWaterSounds { get; set; }
   public ConfigEntry<bool> EnableShipSailSounds { get; set; }
 
-  public enum HullFloatation
-  {
-    Average,
-    AverageOfHullPieces,
-    Center,
-    Bottom,
-    Top,
-    Custom,
-  }
-
-  public ConfigEntry<HullFloatation> HullFloatationColliderLocation
-  {
-    get;
-    set;
-  }
-
-  public ConfigEntry<float> HullFloatationCustomColliderOffset { get; set; }
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -179,38 +161,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         IsAdvanced = isAdvanced,
       }
     );
-  }
-
-  /**
-   * @todo will port to valheim vehicles plugin soon.
-   */
-  private void CreateVehicleConfig()
-  {
-    var hullFloatationRange = new AcceptableValueRange<float>(-20f, 20f);
-#if DEBUG
-    hullFloatationRange = new AcceptableValueRange<float>(-50f, 50f);
-#endif
-    HullFloatationColliderLocation = Config.Bind("Vehicles",
-      "HullFloatationColliderLocation",
-      HullFloatation.Custom,
-      new ConfigDescription(
-        "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20",
-        null, new object[]
-        {
-        }));
-    HullFloatationCustomColliderOffset = Config.Bind("Vehicles",
-      "HullFloatation Custom Offset",
-      0f,
-      CreateConfigDescription(
-        "Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.",
-        true, true, hullFloatationRange
-      ));
-
-    EnableExactVehicleBounds = Config.Bind("Vehicles",
-      "EnableExactVehicleBounds", false,
-      CreateConfigDescription(
-        "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible",
-        true, true));
   }
 
   private void CreateColliderConfig()
@@ -489,7 +439,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CreateKeyboardSetup();
 
     // vehicles
-    CreateVehicleConfig();
     CreatePropulsionConfig();
     CreateFlightPropulsionConfig();
 

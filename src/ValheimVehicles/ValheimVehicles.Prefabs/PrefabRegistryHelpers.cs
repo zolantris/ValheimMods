@@ -64,7 +64,7 @@ public abstract class PrefabRegistryHelpers
     }
 
     zSyncTransform.m_syncPosition = true;
-    zSyncTransform.m_syncBodyVelocity = false;
+    zSyncTransform.m_syncBodyVelocity = true;
     zSyncTransform.m_syncRotation = true;
     return zSyncTransform;
   }

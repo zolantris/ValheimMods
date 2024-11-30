@@ -911,12 +911,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void CustomFixedUpdate(float deltaTime)
   {
     UpdateBedPieces();
-    Sync();
+    // Sync();
   }
 
   public void CustomLateUpdate(float deltaTime)
   {
-    Sync();
+    // Sync();
     if (!ZNet.instance.IsServer())
     {
       Client_UpdateAllPieces();
@@ -2582,14 +2582,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     if (m_hullPieces.Count <= 0 ||
         !ValheimRaftPlugin.Instance.HullCollisionOnly.Value)
     {
-      return ValheimRaftPlugin.Instance.HullFloatationCustomColliderOffset
+      return PhysicsConfig.HullFloatationCustomColliderOffset
         .Value + HullFloatationColliderAlignmentOffset;
     }
 
     var totalHeight = 0f;
 
-    if (ValheimRaftPlugin.Instance.HullFloatationColliderLocation.Value ==
-        ValheimRaftPlugin.HullFloatation.AverageOfHullPieces)
+    if (PhysicsConfig.HullFloatationColliderLocation.Value ==
+        PhysicsConfig.HullFloatation.AverageOfHullPieces)
     {
       foreach (var hullPiece in m_hullPieces)
       {
@@ -2615,12 +2615,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
 
 
-    switch (ValheimRaftPlugin.Instance.HullFloatationColliderLocation.Value)
+    switch (PhysicsConfig.HullFloatationColliderLocation.Value)
     {
-      case ValheimRaftPlugin.HullFloatation.AverageOfHullPieces:
-      case ValheimRaftPlugin.HullFloatation.Average:
+      case PhysicsConfig.HullFloatation.AverageOfHullPieces:
+      case PhysicsConfig.HullFloatation.Average:
         var hullPieceCount =
-          ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value
+          PhysicsConfig.EnableExactVehicleBounds.Value
             ? m_hullPieces.Count
             : m_pieces.Count;
 
@@ -2632,14 +2632,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
         return totalHeight / hullPieceCount;
 
-      case ValheimRaftPlugin.HullFloatation.Bottom:
+      case PhysicsConfig.HullFloatation.Bottom:
         return _hullBounds.min.y;
-      case ValheimRaftPlugin.HullFloatation.Top:
+      case PhysicsConfig.HullFloatation.Top:
         return _hullBounds.max.y;
-      case ValheimRaftPlugin.HullFloatation.Custom:
-        return ValheimRaftPlugin.Instance.HullFloatationCustomColliderOffset
+      case PhysicsConfig.HullFloatation.Custom:
+        return PhysicsConfig.HullFloatationCustomColliderOffset
           .Value;
-      case ValheimRaftPlugin.HullFloatation.Center:
+      case PhysicsConfig.HullFloatation.Center:
       default:
         return _hullBounds.center.y;
     }
@@ -2985,7 +2985,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     if (!door && !ladder && !isRope && !SailPrefabs.IsSail(go.name)
         && !RamPrefabs.IsRam(go.name))
     {
-      if (ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value ||
+      if (PhysicsConfig.EnableExactVehicleBounds.Value ||
           PrefabNames.IsHull(go))
       {
         var newBounds =
