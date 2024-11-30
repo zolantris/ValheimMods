@@ -101,7 +101,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   // The rudder force multiplier applied to the ship speed
   private float _rudderForce = 1f;
 
-  private GameObject _piecesContainer;
+  // todo remove if unused or make this a getter. Might not be safe from null references though.
+  // private GameObject _piecesContainer;
   private GameObject _ghostContainer;
   private ImpactEffect _impactEffect;
 
@@ -1418,7 +1419,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if ((!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner) ||
         isBeached) return;
 
-
     _currentShipFloatation = GetShipFloatationObj();
 
     UpdateColliderPositions();
@@ -1997,6 +1997,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void AddPlayerIfMissing(Player player)
   {
+    if (player == null) return;
     if (m_players.Contains(player))
     {
       return;
@@ -2947,8 +2948,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     SyncAnchor();
     SyncOceanSway();
 
-    Physics.SyncTransforms();
-    zsyncTransform.SyncNow();
     PiecesController.Sync();
   }
 
@@ -3023,10 +3022,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// <param name="player"></param>
   public void FixPlayerParent(Player player)
   {
-    if (player.transform.root == null ||
-        player.transform.root != PiecesController.transform)
+    if (PiecesController == null || player.transform.root == null) return;
+    if (player.transform.root != PiecesController.transform)
     {
-      player.transform.SetParent(_piecesContainer.transform);
+      player.transform.SetParent(PiecesController.transform);
     }
   }
 
@@ -3274,6 +3273,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return user != 0L && IsPlayerInBoat(user);
   }
 
+  /// <summary>
+  /// Todo may need to cache this as this can be called a lot of times.
+  /// </summary>
+  /// <returns></returns>
   private long GetUser()
   {
     if (!m_nview) return 0L;
