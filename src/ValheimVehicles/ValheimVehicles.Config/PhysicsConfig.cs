@@ -6,7 +6,7 @@ using ValheimVehicles.Constants;
 
 namespace ValheimVehicles.Config;
 
-public class PhysicsConfig
+public static class PhysicsConfig
 {
   public static ConfigEntry<bool> EnableCustomWaterMeshCreators =
     null!;
@@ -64,6 +64,32 @@ public class PhysicsConfig
           ? 5000f
           : 5f);
 
+  public enum HullFloatation
+  {
+    Average,
+    AverageOfHullPieces,
+    Center,
+    Bottom,
+    Top,
+    Custom,
+  }
+
+  public static ConfigEntry<HullFloatation> HullFloatationColliderLocation
+  {
+    get;
+    set;
+  }
+
+  public static ConfigEntry<float> HullFloatationCustomColliderOffset
+  {
+    get;
+    set;
+  }
+
+
+  public static ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
+
+
   private const string SailDampingExplaination =
     "Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.";
 
@@ -88,6 +114,9 @@ public class PhysicsConfig
     }
   }
 
+  private static readonly AcceptableValueRange<float> StableSailForceRange =
+    new(0.01f, 0.1f);
+
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
@@ -107,7 +136,7 @@ public class PhysicsConfig
     var debugSailForceAndFactorDescription =
       ConfigHelpers.CreateConfigDescription(
         "DEBUG, tweak sailing math. Not supported or tested. Do not mess with defaults. Do not use this unless you know what your doing.",
-        true, true);
+        true, true, StableSailForceRange);
 
     // flight
     flightDamping =
@@ -123,7 +152,7 @@ public class PhysicsConfig
     flightSteerForce = Config.Bind(SectionKey, "flightSteerForce", 1f,
       debugSailForceAndFactorDescription);
     flightSailForceFactor =
-      Config.Bind(SectionKey, "flightSailForceFactor", 0.1f,
+      Config.Bind(SectionKey, "UNSTABLE_flightSailForceFactor", 0.075f,
         debugSailForceAndFactorDescription);
     flightDrag = Config.Bind(SectionKey, "flightDrag", 1.2f);
     flightAngularDrag = Config.Bind(SectionKey, "flightAngularDrag", 1.2f);
@@ -142,7 +171,7 @@ public class PhysicsConfig
       dampingAngularDescription);
 
     waterSailForceFactor =
-      Config.Bind(SectionKey, "waterSailForceFactor", 0.05f,
+      Config.Bind(SectionKey, "UNSTABLE_waterSailForceFactor", 0.05f,
         debugSailForceAndFactorDescription
       );
     waterDrag = Config.Bind(SectionKey, "waterDrag", 0.8f);
@@ -162,13 +191,39 @@ public class PhysicsConfig
         dampingAngularDescription);
 
     submersibleSteerForce =
-      Config.Bind(SectionKey, "submersibleSteerForce", 0.5f);
+      Config.Bind(SectionKey, "submersibleSteerForce", 1f);
     submersibleSailForceFactor =
-      Config.Bind(SectionKey, "submersibleSailForceFactor", 0f,
+      Config.Bind(SectionKey, "UNSTABLE_submersibleSailForceFactor", 0.05f,
         debugSailForceAndFactorDescription);
     submersibleDrag = Config.Bind(SectionKey, "submersibleDrag", 1.5f);
     submersibleAngularDrag =
       Config.Bind(SectionKey, "submersibleAngularDrag", 1.5f);
+
+    var hullFloatationRange = new AcceptableValueRange<float>(-20f, 20f);
+#if DEBUG
+    hullFloatationRange = new AcceptableValueRange<float>(-50f, 50f);
+#endif
+
+    HullFloatationColliderLocation = Config.Bind("Vehicles",
+      "HullFloatationColliderLocation",
+      HullFloatation.Custom,
+      ConfigHelpers.CreateConfigDescription(
+        "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20",
+        true, false));
+
+    HullFloatationCustomColliderOffset = Config.Bind("Vehicles",
+      "HullFloatation Custom Offset",
+      0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.",
+        true, true, hullFloatationRange
+      ));
+
+    EnableExactVehicleBounds = Config.Bind("Vehicles",
+      "EnableExactVehicleBounds", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible",
+        true, true));
 
     flightDamping.SettingChanged +=
       OnPhysicsChangeForceUpdateAllVehiclePhysics;

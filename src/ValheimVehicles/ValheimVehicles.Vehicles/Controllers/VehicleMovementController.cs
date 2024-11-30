@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
@@ -9,6 +10,7 @@ using ValheimRAFT.Config;
 using ValheimRAFT.Patches;
 using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
+using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.LayerUtils;
 using ValheimVehicles.Prefabs;
@@ -100,7 +102,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   // The rudder force multiplier applied to the ship speed
   private float _rudderForce = 1f;
 
-  private GameObject _piecesContainer;
+  // todo remove if unused or make this a getter. Might not be safe from null references though.
+  // private GameObject _piecesContainer;
   private GameObject _ghostContainer;
   private ImpactEffect _impactEffect;
 
@@ -246,10 +249,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// </summary>
   public void UpdateVehicleSpeedThrottle()
   {
+    var isOwner = m_nview?.IsOwner() ?? false;
     m_body.maxAngularVelocity =
-      ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value;
+      isOwner ? ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value : 500L;
     m_body.maxLinearVelocity =
-      ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value;
+      isOwner ? ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value : 500L;
   }
 
   public void InitColliders()
@@ -534,7 +538,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     base.Awake();
   }
 
-  public void Start()
+  public void Setup()
   {
     // this delay is added to prevent added items from causing collisions in the brief moment they are not ignoring collisions.
     Invoke(nameof(UpdateRemovePieceCollisionExclusions), 5f);
@@ -559,6 +563,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     InitializeRPC();
     SyncShip();
+  }
+
+  public void Start()
+  {
+    Setup();
   }
 
   [FormerlySerializedAs("TargetHeightObj")]
@@ -680,6 +689,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// <param name="time"></param>
   public void CustomUpdate(float deltaTime, float time)
   {
+    if (PiecesController == null) return;
+    PiecesController.Sync();
   }
 
   public void CustomLateUpdate(float deltaTime)
@@ -906,6 +917,22 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       ForceMode.VelocityChange);
     AddForceAtPosition(Vector3.up * centerUpwardsForce, centerpos2,
       ForceMode.VelocityChange);
+  }
+
+  /// <summary>
+  /// Forward velocity relative to the ShipDirection instead of the rigidbody
+  /// </summary>
+  /// <returns></returns>
+  public float GetForwardVelocity()
+  {
+    var velocity = m_body.velocity;
+
+    // Convert the velocity from world space to the local space of ShipDirection
+    var localVelocity = ShipDirection.InverseTransformDirection(velocity);
+
+    // Get the forward velocity relative to ShipDirection
+    var forwardVelocity = Vector3.Dot(localVelocity, Vector3.forward);
+    return forwardVelocity;
   }
 
   public void UpdateAndFreezeRotation()
@@ -1384,7 +1411,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var owner = m_nview.IsOwner();
     if ((!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner) ||
         isBeached) return;
-
 
     _currentShipFloatation = GetShipFloatationObj();
 
@@ -1964,6 +1990,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void AddPlayerIfMissing(Player player)
   {
+    if (player == null) return;
     if (m_players.Contains(player))
     {
       return;
@@ -2184,8 +2211,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // steering
     m_nview.Register<long>(nameof(RPC_RequestControl), RPC_RequestControl);
-    m_nview.Register<bool>(nameof(RPC_RequestResponse), RPC_RequestResponse);
-    m_nview.Register<long>(nameof(RPC_ReleaseControl), RPC_ReleaseControl);
+    m_nview.Register<bool, long, long>(nameof(RPC_RequestResponse),
+      RPC_RequestResponse);
+    m_nview.Register<long>(nameof(RPC_ReleaseControl),
+      RPC_ReleaseControl);
 
     _hasRegister = true;
   }
@@ -2268,61 +2297,101 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     CancelInvoke(nameof(SyncTargetHeight));
   }
 
+  internal void ForceTakeoverControls(long playerId)
+  {
+    Logger.LogDebug("Calling ForceSetOwner");
+    var prevOwnerId = GetUser();
+    var prevPlayerOwner = Player.GetPlayer(prevOwnerId);
+    OnControlsHandOff(Player.GetPlayer(playerId), prevPlayerOwner);
+  }
+
+  private Coroutine? _debouncedForceTakeoverControlsInstance = null;
+
   /// <summary>
   /// Force sets the owner after RPC fails to be sent.
   /// </summary>
-  public void ForceSetOwner()
+  public IEnumerator DebouncedForceTakeoverControls(long playerId)
   {
-    if (vehicleShip.NetView == null) return;
-    vehicleShip.NetView.m_zdo.SetOwner(Player.m_localPlayer.GetPlayerID());
+    if (vehicleShip.NetView == null) yield break;
+    yield return new WaitForSeconds(2f);
+    ForceTakeoverControls(playerId);
   }
 
-  public void SendRequestControl(long playerId, Transform attachTransform)
+  /// <summary>
+  /// Cancels the invocation which forces the owner to be the new player.
+  /// </summary>
+  public void CancelDebounceTakeoverControls()
   {
-    Invoke(nameof(ForceSetOwner), 2f);
-    m_nview?.InvokeRPC(nameof(RPC_RequestControl),
-      [playerId, attachTransform]);
+    if (_debouncedForceTakeoverControlsInstance != null)
+    {
+      StopCoroutine(_debouncedForceTakeoverControlsInstance);
+    }
   }
 
-  private void RPC_RequestControl(long sender, long playerID)
+  public void SendRequestControl(long playerId)
   {
-    var isOwner = m_nview?.IsOwner() ?? false;
-    var isInBoat = IsPlayerInBoat(playerID);
+    if (m_nview == null) return;
+    CancelDebounceTakeoverControls();
+    m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_RequestControl),
+      playerId);
+  }
 
-#if DEBUG
+  /// <summary>
+  /// We have to sync the new user id across all clients but only the owner of the zdo can set the new user id.
+  /// - This will fall back to a force owner takeover from the invoker if the owner is somehow un-responsive.
+  /// </summary>
+  /// <param name="sender"></param>
+  /// <param name="targetPlayerId"></param>
+  private void RPC_RequestControl(long sender, long targetPlayerId)
+  {
+    if (m_nview == null || ZNet.instance == null) return;
+    CancelDebounceTakeoverControls();
+
+    _debouncedForceTakeoverControlsInstance =
+      StartCoroutine(DebouncedForceTakeoverControls(targetPlayerId));
+
+    var previousUserId = GetUser();
+    var isInBoat = IsPlayerInBoat(targetPlayerId);
+
+    if (!m_nview.IsOwner())
+    {
+      if (ModEnvironment.IsDebug)
+      {
+        Logger.LogDebug("Not zdo owner, skipping...");
+      }
+
+      return;
+    }
+
+    if (ModEnvironment.IsDebug)
+    {
+      if (!isInBoat)
+      {
+        Logger.LogDebug(
+          "RPC_RequestControl requested the owner to give control but they are not within the boat.");
+      }
+    }
+
     if (!isInBoat)
-    {
-      Logger.LogDebug(
-        "RPC_RequestControl requested the owner to give control but they are not within the boat. Skipping");
-    }
-
-    if (!isOwner)
-    {
-      Logger.LogDebug(
-        "Error, the requestControl RPC made it to the wrong user even though they were the netView ZDO owner");
-    }
-#endif
-
-    if (!isOwner || !isInBoat)
     {
       return;
     }
 
-    var isValidUser = false;
-    if (GetUser() == playerID || !HaveValidUser())
-    {
-      m_nview?.GetZDO().Set(ZDOVars.s_user, playerID);
-      isValidUser = true;
-    }
-
-    m_nview?.InvokeRPC(sender, nameof(RPC_RequestResponse), isValidUser);
+    // the previous user could be invalid so always makes the current user valid if so.
+    m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_RequestResponse),
+      true, targetPlayerId, previousUserId);
   }
 
-  private void RPC_ReleaseControl(long sender, long playerID)
+  private void RPC_ReleaseControl(long sender, long playerId)
   {
+    CancelDebounceTakeoverControls();
     if (m_nview == null) return;
 
-    if (m_nview.IsOwner() && GetUser() == playerID)
+    var previousUser = GetUser();
+    var previousPlayer = Player.GetPlayer(previousUser);
+    EjectPreviousPlayerFromControls(previousPlayer);
+
+    if (m_nview.IsOwner())
     {
       m_nview.GetZDO().Set(ZDOVars.s_user, 0L);
     }
@@ -2791,7 +2860,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void SyncRudder(float rudder)
   {
-    m_nview.InvokeRPC(nameof(RPC_Rudder), rudder);
+    m_nview.InvokeRPC(0L, nameof(RPC_Rudder), rudder);
   }
 
 
@@ -2867,9 +2936,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// </summary>
   private void SyncShip()
   {
-    if (ZNetView.m_forceDisableInit) return;
+    if (ZNetView.m_forceDisableInit || zsyncTransform == null ||
+        PiecesController == null) return;
     SyncAnchor();
     SyncOceanSway();
+
+    PiecesController.Sync();
   }
 
   private void SyncOceanSway()
@@ -2937,35 +3009,91 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     SetAnchor(state);
   }
 
-  private void OnControlsHandOff()
+  /// <summary>
+  /// Generate syncing fixes to fix "accidents" were the player is not detected in other clients and not put within the ship.
+  /// </summary>
+  /// <param name="player"></param>
+  public void FixPlayerParent(Player player)
   {
-    if (!Player.m_localPlayer || !ShipInstance?.Instance)
+    if (PiecesController == null || player.transform.root == null) return;
+    if (player.transform.root != PiecesController.transform)
+    {
+      player.transform.SetParent(PiecesController.transform);
+    }
+  }
+
+  public void UpdatePlayerOnShip(Player player)
+  {
+    AddPlayerIfMissing(player);
+    FixPlayerParent(player);
+  }
+
+  public void OnControlsHandOff(Player? targetPlayer, Player? previousPlayer)
+
+  {
+    if (targetPlayer == null || !ShipInstance?.Instance ||
+        PiecesController == null ||
+        m_nview == null || m_nview.m_zdo == null)
     {
       return;
     }
 
+    EjectPreviousPlayerFromControls(previousPlayer);
+    UpdatePlayerOnShip(targetPlayer);
+
+    var isLocalPlayer = targetPlayer == Player.m_localPlayer;
+
+    var previousUserId = previousPlayer?.GetPlayerID() ?? 0L;
     // the person controlling the ship should control physics
-    var playerOwner = Player.m_localPlayer.GetOwner();
+    var playerOwner = targetPlayer.GetOwner();
+
     m_nview.GetZDO().SetOwner(playerOwner);
+    if (previousUserId != targetPlayer.GetPlayerID() || previousUserId == 0L)
+    {
+      m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayer.GetPlayerID());
+    }
+
     Logger.LogDebug("Changing ship owner to " + playerOwner +
-                    $", name: {Player.m_localPlayer.GetPlayerName()}");
+                    $", name: {targetPlayer.GetPlayerName()}");
+
     SyncVehicleBounds();
     var attachTransform = lastUsedWheelComponent.AttachPoint;
-    Player.m_localPlayer.StartDoodadControl(lastUsedWheelComponent);
-    if (attachTransform != null)
+
+    // local player only.
+    if (isLocalPlayer)
     {
-      Player.m_localPlayer.AttachStart(attachTransform, null,
-        hideWeapons: false, isBed: false,
-        onShip: true, m_attachAnimation, detachOffset);
+      targetPlayer.StartDoodadControl(lastUsedWheelComponent);
+    }
+
+    if (attachTransform == null) return;
+
+    // non-local player too as this will show them controlling the object.
+    targetPlayer.AttachStart(attachTransform, null,
+      hideWeapons: false, isBed: false,
+      onShip: true, m_attachAnimation, detachOffset);
+
+    if (ShipInstance.Instance != null &&
+        lastUsedWheelComponent.wheelTransform != null)
+    {
       ShipInstance.Instance.m_controlGuiPos =
         lastUsedWheelComponent.wheelTransform;
     }
   }
 
-  private void RPC_RequestResponse(long sender, bool granted)
+  private const string InUseMessage = "$msg_inuse";
+
+  private void EjectPreviousPlayerFromControls(Player? player)
   {
-    // Cancels the invocation of this fallback method if the owner of the boat does not respond quick enough.
-    CancelInvoke(nameof(ForceSetOwner));
+    if (player == null) return;
+    player.m_doodadController = null;
+    player.AttachStop();
+  }
+
+  private void RPC_RequestResponse(long sender, bool granted,
+    long targetPlayerId, long previousPlayerId)
+  {
+    CancelDebounceTakeoverControls();
+
     if (!Player.m_localPlayer || !ShipInstance?.Instance)
     {
       return;
@@ -2973,11 +3101,22 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (granted)
     {
-      OnControlsHandOff();
+      OnControlsHandOff(Player.GetPlayer(targetPlayerId),
+        Player.GetPlayer(previousPlayerId));
+      // lets the player know they are disconnected.
+      if (Player.m_localPlayer ==
+          Player.GetPlayer(previousPlayerId) &&
+          targetPlayerId != previousPlayerId)
+      {
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center,
+          "$valheim_vehicles_wheel_ejected");
+      }
     }
-    else
+
+    if (!granted &&
+        Player.m_localPlayer == Player.GetPlayer(targetPlayerId))
     {
-      Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$msg_inuse");
+      Player.m_localPlayer.Message(MessageHud.MessageType.Center, InUseMessage);
     }
   }
 
@@ -3008,7 +3147,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     m_rudderValue += m_rudder * m_rudderSpeed * fixedDeltaTime;
     m_rudderValue = Mathf.Clamp(m_rudderValue, -1f, 1f);
     // deadzone logic to allow rudder to be centered.
-    if (Time.fixedDeltaTime - m_sendRudderTime > 0.2f)
+    if (Time.time - m_sendRudderTime > 0.2f)
     {
       // allows updating rudder but zeros it out quickly in a deadzone.
       if (m_rudderValue is >= -0.1f and < 0.1f)
@@ -3026,6 +3165,23 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void SendSpeedChange(DirectionChange directionChange)
   {
+    if (isAnchored)
+    {
+      var anchorMessage = SteeringWheelComponent.GetTutorialAnchorMessage(
+        isAnchored);
+      if (TutorialConfig.HasVehicleAnchoredWarning.Value)
+      {
+        Player.m_localPlayer.Message(
+          MessageHud.MessageType.Center,
+          anchorMessage
+        );
+      }
+
+      Logger.LogDebug($"You are anchored. {anchorMessage}");
+
+      return;
+    }
+
     switch (directionChange)
     {
       case DirectionChange.Forward:
@@ -3111,15 +3267,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
-  public void FireReleaseControl(Player player)
+  public void SendReleaseControl(Player player)
   {
+    CancelDebounceTakeoverControls();
     if (m_nview == null) return;
     if (!m_nview.IsValid()) return;
-    m_nview.InvokeRPC(nameof(RPC_ReleaseControl), player.GetPlayerID());
-    if (AttachPoint != null)
-    {
-      player.AttachStop();
-    }
+    m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_ReleaseControl),
+      player.GetPlayerID());
   }
 
   public bool HaveValidUser()
@@ -3129,6 +3283,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return user != 0L && IsPlayerInBoat(user);
   }
 
+  /// <summary>
+  /// Todo may need to cache this as this can be called a lot of times.
+  /// </summary>
+  /// <returns></returns>
   private long GetUser()
   {
     if (!m_nview) return 0L;

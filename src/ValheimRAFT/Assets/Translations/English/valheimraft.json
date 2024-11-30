@@ -63,6 +63,7 @@
   "valheim_vehicles_water_vehicle_desc": "A raft (>=v2.0.0)...that you can build on!",
   "valheim_vehicles_wheel": "Vehicle Wheel",
   "valheim_vehicles_wheel_desc": "Use the Vehicle Wheel to control the Vehicle it attaches to.",
+  "valheim_vehicles_wheel_ejected": "Ejected from vehicle controls",
   "valheim_vehicles_wheel_use": "Steer",
   "valheim_vehicles_wheel_use_error": "Wheel not on vehicle",
   "valheim_vehicles_wheel_use_anchor_disable_detail": "To raise Anchor",

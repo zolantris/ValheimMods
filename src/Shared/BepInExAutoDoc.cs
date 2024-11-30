@@ -72,7 +72,7 @@ public class BepInExConfigAutoDoc
           .Replace("[]",
             "") +
         $"{Environment.NewLine}- Description: {Config[x].Description.Description.Replace("[Synced with Server]", "").Replace("[Not Synced with Server]", "")}" +
-        $"{Environment.NewLine}- Default Value: {Config[x].GetSerializedValue()}{Environment.NewLine}");
+        $"{Environment.NewLine}- Default Value: {Config[x].DefaultValue}{Environment.NewLine}");
     }
 
     var outputPath = GetOutputFolderPath(plugin, documentName);

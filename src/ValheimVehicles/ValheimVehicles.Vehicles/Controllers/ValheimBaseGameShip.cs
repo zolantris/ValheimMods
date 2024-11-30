@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using Logger = Jotunn.Logger;
 
@@ -356,20 +357,22 @@ public class ValheimBaseGameShip : MonoBehaviour
   public bool IsPlayerInBoat(Player player)
   {
     var currentPlayerOnBoat = m_players.Contains(player);
-    return currentPlayerOnBoat;
-  }
+    if (currentPlayerOnBoat) return true;
 
-  public bool IsPlayerInBoat(long playerID)
-  {
-    foreach (var player in m_players)
+    if (player.transform.root != null &&
+        player.transform.root.name.Contains(PrefabNames
+          .VehiclePiecesContainer))
     {
-      if (player.GetPlayerID() == playerID)
-      {
-        return true;
-      }
+      return true;
     }
 
-    return false;
+    return WaterZoneUtils.IsOnboard(player);
+  }
+
+  public bool IsPlayerInBoat(long playerId)
+  {
+    var playerFromId = Player.GetPlayer(playerId);
+    return playerFromId != null && IsPlayerInBoat(playerFromId);
   }
 
   public bool HasPlayerOnboard()

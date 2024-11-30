@@ -451,7 +451,7 @@ public abstract class PrefabRegistryHelpers
   public static void IgnoreCameraCollisions(GameObject go)
   {
     var cameraMask = GameCamera.instance.m_blockCameraMask;
-    if (cameraMask == null) return;
+    if (cameraMask == 0L) return;
     var colliders = go.GetComponentsInChildren<Collider>();
 
     foreach (var collider in colliders)

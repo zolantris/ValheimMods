@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
@@ -54,13 +55,42 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   private const float maxUseRange = 10f;
   public Transform AttachPoint { get; set; }
 
-
+  /// <summary>
+  /// Todo might be worth caching this.
+  /// </summary>
+  /// <returns></returns>
   public static string GetAnchorHotkeyString()
   {
     return ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() !=
            "Not set"
       ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString()
       : ZInput.instance.GetBoundKeyString("Run");
+  }
+
+  public const string AnchorUseMessage =
+    "[<color=red><b>$valheim_vehicles_wheel_use_anchored</b></color>]";
+
+  public static string GetAnchorMessage(bool isAnchored, string anchorKeyString)
+  {
+    var anchoredStatus =
+      isAnchored
+        ? AnchorUseMessage
+        : "";
+    var anchorText =
+      isAnchored
+        ? "$valheim_vehicles_wheel_use_anchor_disable_detail"
+        : "$valheim_vehicles_wheel_use_anchor_enable_detail";
+
+    return
+      $"{anchoredStatus}\n[<color=yellow><b>{anchorKeyString}</b></color>] <color=white>{anchorText}</color>";
+  }
+
+  public static string GetTutorialAnchorMessage(bool isAnchored)
+  {
+    var anchorMessage = GetAnchorMessage(isAnchored,
+      GetAnchorHotkeyString());
+    anchorMessage = Regex.Replace(anchorMessage, @"[\[\]]", "");
+    return $"Vehicle is {anchorMessage}";
   }
 
   /// <summary>
@@ -99,17 +129,10 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
       shipStatsText = $"<color=white>{shipStatsText}</color>";
     }
 
-    var anchoredStatus =
-      isAnchored
-        ? "[<color=red><b>$valheim_vehicles_wheel_use_anchored</b></color>]"
-        : "";
-    var anchorText =
-      isAnchored
-        ? "$valheim_vehicles_wheel_use_anchor_disable_detail"
-        : "$valheim_vehicles_wheel_use_anchor_enable_detail";
+    var anchorMessage = GetAnchorMessage(isAnchored, anchorKeyString);
 
     return Localization.instance.Localize(
-      $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$valheim_vehicles_wheel_use</b></color> {anchoredStatus}\n[<color=yellow><b>{anchorKeyString}</b></color>] <color=white>{anchorText}</color> {shipStatsText}");
+      $"[<color=yellow><b>$KEY_Use</b></color>]<color=white><b>$valheim_vehicles_wheel_use</b></color>\n{anchorMessage}\n{shipStatsText}");
   }
 
 
@@ -267,7 +290,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
 
     if (player != null)
     {
-      ShipInstance?.MovementController?.AddPlayerIfMissing(player);
+      ShipInstance?.MovementController?.UpdatePlayerOnShip(player);
     }
 
     if (playerOnShipViaShipInstance?.Length == 0 ||
@@ -287,8 +310,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
           $"Interact PlayerId {playerInstance.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
         if (playerInstance.GetPlayerID() != player.GetPlayerID()) continue;
         ShipInstance?.Instance?.MovementController?.SendRequestControl(
-          playerInstance.GetPlayerID(),
-          AttachPoint);
+          playerInstance.GetPlayerID());
         return true;
       }
     else if ((bool)deprecatedShipControls)
@@ -320,7 +342,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     if (!ShipInstance?.Instance?.MovementController) return false;
 
     ShipInstance.Instance.MovementController?.SendRequestControl(
-      player.GetPlayerID(), AttachPoint);
+      player.GetPlayerID());
     return true;
   }
 
@@ -337,7 +359,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
       return;
     }
 
-    ShipInstance.Instance.MovementController.FireReleaseControl(player);
+    ShipInstance.Instance?.MovementController?.SendReleaseControl(player);
   }
 
   public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run,

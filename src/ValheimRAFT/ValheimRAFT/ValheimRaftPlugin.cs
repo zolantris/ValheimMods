@@ -123,7 +123,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> RaftCreativeHeight { get; set; }
   public ConfigEntry<KeyboardShortcut> AnchorKeyboardShortcut { get; set; }
   public ConfigEntry<bool> EnableMetrics { get; set; }
-  public ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
 
   public ConfigEntry<bool> ProtectVehiclePiecesOnErrorFromWearNTearDamage
   {
@@ -132,29 +131,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   }
 
   public ConfigEntry<bool> DebugRemoveStartMenuBackground { get; set; }
-  public ConfigEntry<bool> HullCollisionOnly { get; set; }
 
   // sounds for VehicleShip Effects
   public ConfigEntry<bool> EnableShipWakeSounds { get; set; }
   public ConfigEntry<bool> EnableShipInWaterSounds { get; set; }
   public ConfigEntry<bool> EnableShipSailSounds { get; set; }
 
-  public enum HullFloatation
-  {
-    Average,
-    Center,
-    Bottom,
-    Top,
-    Custom,
-  }
-
-  public ConfigEntry<HullFloatation> HullFloatationColliderLocation
-  {
-    get;
-    set;
-  }
-
-  public ConfigEntry<float> HullFloatationCustomColliderOffset { get; set; }
 
   /**
    * These folder names are matched for the CustomTexturesGroup
@@ -178,47 +160,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         IsAdvanced = isAdvanced,
       }
     );
-  }
-
-  /**
-   * @todo will port to valheim vehicles plugin soon.
-   */
-  private void CreateVehicleConfig()
-  {
-    var hullFloatationRange = new AcceptableValueRange<float>(-20f, 20f);
-#if DEBUG
-    hullFloatationRange = new AcceptableValueRange<float>(-50f, 50f);
-#endif
-    HullFloatationColliderLocation = Config.Bind("Vehicles",
-      "HullFloatationColliderLocation",
-      HullFloatation.Custom,
-      new ConfigDescription(
-        "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20",
-        null, new object[]
-        {
-        }));
-    HullFloatationCustomColliderOffset = Config.Bind("Vehicles",
-      "HullFloatation Custom Offset",
-      0f,
-      CreateConfigDescription(
-        "Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.",
-        true, true, hullFloatationRange
-      ));
-
-    EnableExactVehicleBounds = Config.Bind("Vehicles",
-      "EnableExactVehicleBounds", false,
-      CreateConfigDescription(
-        "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible",
-        true, true));
-  }
-
-  private void CreateColliderConfig()
-  {
-    HullCollisionOnly = Config.Bind("Floatation",
-      "Only Use Hulls For Floatation Collisions", true,
-      CreateConfigDescription(
-        "Makes the Ship Hull prefabs be the sole source of collisions, meaning ships with wider tops will not collide at bottom terrain due to their width above water. Requires a Hull, without a hull it will previous box around all items in ship",
-        true));
   }
 
   private void CreateCommandConfig()
@@ -484,11 +425,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CreateDebugConfig();
     CreateServerConfig();
     CreateCommandConfig();
-    CreateColliderConfig();
     CreateKeyboardSetup();
 
     // vehicles
-    CreateVehicleConfig();
     CreatePropulsionConfig();
     CreateFlightPropulsionConfig();
 
@@ -508,6 +447,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     WaterConfig.BindConfig(Config);
     PhysicsConfig.BindConfig(Config);
     MinimapConfig.BindConfig(Config);
+    TutorialConfig.BindConfig(Config);
 
 #if DEBUG
     // Meant for only being run in debug builds for testing quickly
