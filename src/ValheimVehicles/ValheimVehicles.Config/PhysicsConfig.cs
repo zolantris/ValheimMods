@@ -114,6 +114,9 @@ public static class PhysicsConfig
     }
   }
 
+  private static readonly AcceptableValueRange<float> StableSailForceRange =
+    new(0.01f, 0.1f);
+
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
@@ -133,7 +136,7 @@ public static class PhysicsConfig
     var debugSailForceAndFactorDescription =
       ConfigHelpers.CreateConfigDescription(
         "DEBUG, tweak sailing math. Not supported or tested. Do not mess with defaults. Do not use this unless you know what your doing.",
-        true, true);
+        true, true, StableSailForceRange);
 
     // flight
     flightDamping =
@@ -149,7 +152,7 @@ public static class PhysicsConfig
     flightSteerForce = Config.Bind(SectionKey, "flightSteerForce", 1f,
       debugSailForceAndFactorDescription);
     flightSailForceFactor =
-      Config.Bind(SectionKey, "flightSailForceFactor", 0.1f,
+      Config.Bind(SectionKey, "UNSTABLE_flightSailForceFactor", 0.075f,
         debugSailForceAndFactorDescription);
     flightDrag = Config.Bind(SectionKey, "flightDrag", 1.2f);
     flightAngularDrag = Config.Bind(SectionKey, "flightAngularDrag", 1.2f);
@@ -168,7 +171,7 @@ public static class PhysicsConfig
       dampingAngularDescription);
 
     waterSailForceFactor =
-      Config.Bind(SectionKey, "waterSailForceFactor", 0.05f,
+      Config.Bind(SectionKey, "UNSTABLE_waterSailForceFactor", 0.05f,
         debugSailForceAndFactorDescription
       );
     waterDrag = Config.Bind(SectionKey, "waterDrag", 0.8f);
@@ -188,9 +191,9 @@ public static class PhysicsConfig
         dampingAngularDescription);
 
     submersibleSteerForce =
-      Config.Bind(SectionKey, "submersibleSteerForce", 0.5f);
+      Config.Bind(SectionKey, "submersibleSteerForce", 1f);
     submersibleSailForceFactor =
-      Config.Bind(SectionKey, "submersibleSailForceFactor", 0.5f,
+      Config.Bind(SectionKey, "UNSTABLE_submersibleSailForceFactor", 0.05f,
         debugSailForceAndFactorDescription);
     submersibleDrag = Config.Bind(SectionKey, "submersibleDrag", 1.5f);
     submersibleAngularDrag =
@@ -200,6 +203,7 @@ public static class PhysicsConfig
 #if DEBUG
     hullFloatationRange = new AcceptableValueRange<float>(-50f, 50f);
 #endif
+
     HullFloatationColliderLocation = Config.Bind("Vehicles",
       "HullFloatationColliderLocation",
       HullFloatation.Custom,

@@ -131,7 +131,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   }
 
   public ConfigEntry<bool> DebugRemoveStartMenuBackground { get; set; }
-  public ConfigEntry<bool> HullCollisionOnly { get; set; }
 
   // sounds for VehicleShip Effects
   public ConfigEntry<bool> EnableShipWakeSounds { get; set; }
@@ -161,15 +160,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         IsAdvanced = isAdvanced,
       }
     );
-  }
-
-  private void CreateColliderConfig()
-  {
-    HullCollisionOnly = Config.Bind("Floatation",
-      "Only Use Hulls For Floatation Collisions", true,
-      CreateConfigDescription(
-        "Makes the Ship Hull prefabs be the sole source of collisions, meaning ships with wider tops will not collide at bottom terrain due to their width above water. Requires a Hull, without a hull it will previous box around all items in ship",
-        true));
   }
 
   private void CreateCommandConfig()
@@ -435,7 +425,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CreateDebugConfig();
     CreateServerConfig();
     CreateCommandConfig();
-    CreateColliderConfig();
     CreateKeyboardSetup();
 
     // vehicles

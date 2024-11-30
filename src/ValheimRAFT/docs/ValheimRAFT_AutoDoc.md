@@ -75,31 +75,9 @@
 - Description: Sets the raftcreative command height, raftcreative is relative to the current height of the ship, negative numbers will sink your ship temporarily
 - Default Value: 5
 
-## Floatation
-
-### Only Use Hulls For Floatation Collisions 
-- Description: Makes the Ship Hull prefabs be the sole source of collisions, meaning ships with wider tops will not collide at bottom terrain due to their width above water. Requires a Hull, without a hull it will previous box around all items in ship
-- Default Value: True
-
-## Config
-
 ### AnchorKeyboardShortcut 
 - Description: Anchor keyboard hotkey. Only applies to keyboard
 - Default Value: LeftShift
-
-## Vehicles
-
-### HullFloatationColliderLocation 
-- Description: Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20
-- Default Value: Custom
-
-### HullFloatation Custom Offset 
-- Description: Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
-- Default Value: 0
-
-### EnableExactVehicleBounds 
-- Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible
-- Default Value: False
 
 ## Debug
 
@@ -392,12 +370,12 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Default Value: SyncedRigidbody
 
 ### EXPERIMENTAL_LeanTowardsWindSailDirection 
-- Description: Toggles a lean while sailing with wind power. Cosmetic only and does not work in multiplayer yet. Warning for those with motion sickness..
+- Description: Toggles a lean while sailing with wind power. Cosmetic only and does not work in multiplayer yet. Warning for those with motion sickness, this will increase your symptoms. Prepare your dramamine!
 - Default Value: False
 
 ### EXPERIMENTAL_LeanTowardsWindSailDirectionMaxAngle 
 - Description: Set the max lean angle when wind is hitting sides directly
-- Default Value: 15
+- Default Value: 10
 
 ### turningPowerNoRudder 
 - Description: Set the base turning power of the steering wheel
@@ -553,9 +531,9 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: DEBUG, tweak sailing math. Not supported or tested. Do not mess with defaults. Do not use this unless you know what your doing.
 - Default Value: 1
 
-### flightSailForceFactor 
+### UNSTABLE_flightSailForceFactor 
 - Description: DEBUG, tweak sailing math. Not supported or tested. Do not mess with defaults. Do not use this unless you know what your doing.
-- Default Value: 0.1
+- Default Value: 0.075
 
 ### flightDrag 
 - Description: 
@@ -581,7 +559,7 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
-### waterSailForceFactor 
+### UNSTABLE_waterSailForceFactor 
 - Description: DEBUG, tweak sailing math. Not supported or tested. Do not mess with defaults. Do not use this unless you know what your doing.
 - Default Value: 0.05
 
@@ -607,11 +585,11 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### submersibleSteerForce 
 - Description: 
-- Default Value: 0.5
+- Default Value: 1
 
-### submersibleSailForceFactor 
+### UNSTABLE_submersibleSailForceFactor 
 - Description: DEBUG, tweak sailing math. Not supported or tested. Do not mess with defaults. Do not use this unless you know what your doing.
-- Default Value: 0
+- Default Value: 0.05
 
 ### submersibleDrag 
 - Description: 
@@ -620,6 +598,20 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 ### submersibleAngularDrag 
 - Description: 
 - Default Value: 1.5
+
+## Vehicles
+
+### HullFloatationColliderLocation 
+- Description: Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20
+- Default Value: Custom
+
+### HullFloatation Custom Offset 
+- Description: Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
+- Default Value: 0
+
+### EnableExactVehicleBounds 
+- Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible
+- Default Value: False
 
 ## MinimapConfig
 
@@ -645,6 +637,12 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### ShowBedsOnVehicles 
 - Description: Will show your bed on you vehicle. This requires DynamicLocations to be enabled. This config may be migrated to dynamic locations.
+- Default Value: True
+
+## Tutorial
+
+### HasVehicleAnchoredWarning 
+- Description: Shows the anchored status if the player attempts to move the vehicle when anchored. A clearer way to tell players to remove the anchor so they can move.
 - Default Value: True
 
 ## Quick Start (DEBUG-ONLY)

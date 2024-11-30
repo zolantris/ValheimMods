@@ -2577,13 +2577,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     _hullBounds = new Bounds();
 
-    if (m_hullPieces.Count <= 0 ||
-        !ValheimRaftPlugin.Instance.HullCollisionOnly.Value)
-    {
-      return PhysicsConfig.HullFloatationCustomColliderOffset
-        .Value + HullFloatationColliderAlignmentOffset;
-    }
-
     var totalHeight = 0f;
 
     if (PhysicsConfig.HullFloatationColliderLocation.Value ==
@@ -2636,7 +2629,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         return _hullBounds.max.y;
       case PhysicsConfig.HullFloatation.Custom:
         return PhysicsConfig.HullFloatationCustomColliderOffset
-          .Value;
+          .Value + HullFloatationColliderAlignmentOffset;
       case PhysicsConfig.HullFloatation.Center:
       default:
         return _hullBounds.center.y;
@@ -2770,20 +2763,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       Mathf.Max(minColliderSize, _vehicleBounds.size.x),
       floatColliderSize.y,
       Mathf.Max(minColliderSize, _vehicleBounds.size.z));
-
-    if (ValheimRaftPlugin.Instance.HullCollisionOnly.Value &&
-        _hullBounds.size != Vector3.zero)
-    {
-      blockingColliderCenterOffset.x = _hullBounds.center.x;
-      blockingColliderCenterOffset.z = _hullBounds.center.z;
-      blockingColliderSize.x = _hullBounds.size.x;
-      blockingColliderSize.z = _hullBounds.size.z;
-
-      floatColliderCenterOffset.x = _hullBounds.center.x;
-      floatColliderCenterOffset.z = _hullBounds.center.z;
-      floatColliderSize.x = _hullBounds.size.x;
-      floatColliderSize.z = _hullBounds.size.z;
-    }
 
     // asign defaults immediately
     FloatColliderDefaultPosition = floatColliderCenterOffset;
