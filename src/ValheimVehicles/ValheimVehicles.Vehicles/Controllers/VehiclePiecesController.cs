@@ -795,13 +795,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       m_fixedJoint.connectedBody = null;
     }
 
-    Physics.SyncTransforms();
-    m_body.angularDrag = MovementController.m_body.angularDrag;
-    m_body.drag = MovementController.m_body.drag;
-
-    m_body.angularVelocity = MovementController.m_body.angularVelocity;
-    m_body.velocity = MovementController.m_body.velocity;
-
     m_body.Move(
       MovementController.m_body.position,
       GetRotation()

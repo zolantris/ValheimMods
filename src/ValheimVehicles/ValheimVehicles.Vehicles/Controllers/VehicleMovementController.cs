@@ -632,16 +632,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
-  // public void LateUpdate()
-  // {
-  //   if (m_body == null || m_floatcollider == null ||
-  //       PiecesController == null) return;
-  //
-  //   Physics.SyncTransforms();
-  //   zsyncTransform.SyncNow();
-  //   PiecesController?.Sync();
-  // }
-
   public void CustomFixedUpdate(float deltaTime)
   {
     if (!(bool)m_body || !(bool)m_floatcollider)
@@ -698,6 +688,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// <param name="time"></param>
   public void CustomUpdate(float deltaTime, float time)
   {
+    if (PiecesController == null) return;
+    PiecesController.Sync();
   }
 
   public void CustomLateUpdate(float deltaTime)
@@ -3172,6 +3164,23 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void SendSpeedChange(DirectionChange directionChange)
   {
+    if (isAnchored)
+    {
+      var anchorMessage = SteeringWheelComponent.GetAnchorMessage(isAnchored,
+        SteeringWheelComponent.GetAnchorHotkeyString());
+      if (TutorialConfig.HasVehicleAnchoredWarning.Value)
+      {
+        Player.m_localPlayer.Message(
+          MessageHud.MessageType.Center,
+          anchorMessage
+        );
+      }
+
+      Logger.LogDebug($"You are anchored. {anchorMessage}");
+
+      return;
+    }
+
     switch (directionChange)
     {
       case DirectionChange.Forward:

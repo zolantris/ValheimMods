@@ -54,13 +54,34 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   private const float maxUseRange = 10f;
   public Transform AttachPoint { get; set; }
 
-
+  /// <summary>
+  /// Todo might be worth caching this.
+  /// </summary>
+  /// <returns></returns>
   public static string GetAnchorHotkeyString()
   {
     return ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() !=
            "Not set"
       ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString()
       : ZInput.instance.GetBoundKeyString("Run");
+  }
+
+  public const string AnchorUseMessage =
+    "[<color=red><b>$valheim_vehicles_wheel_use_anchored</b></color>]";
+
+  public static string GetAnchorMessage(bool isAnchored, string anchorKeyString)
+  {
+    var anchoredStatus =
+      isAnchored
+        ? AnchorUseMessage
+        : "";
+    var anchorText =
+      isAnchored
+        ? "$valheim_vehicles_wheel_use_anchor_disable_detail"
+        : "$valheim_vehicles_wheel_use_anchor_enable_detail";
+
+    return
+      $"{anchoredStatus}\n[<color=yellow><b>{anchorKeyString}</b></color>] <color=white>{anchorText}</color>";
   }
 
   /// <summary>
@@ -99,17 +120,10 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
       shipStatsText = $"<color=white>{shipStatsText}</color>";
     }
 
-    var anchoredStatus =
-      isAnchored
-        ? "[<color=red><b>$valheim_vehicles_wheel_use_anchored</b></color>]"
-        : "";
-    var anchorText =
-      isAnchored
-        ? "$valheim_vehicles_wheel_use_anchor_disable_detail"
-        : "$valheim_vehicles_wheel_use_anchor_enable_detail";
+    var anchorMessage = GetAnchorMessage(isAnchored, anchorKeyString);
 
     return Localization.instance.Localize(
-      $"[<color=yellow><b>$KEY_Use</b></color>] <color=white><b>$valheim_vehicles_wheel_use</b></color> {anchoredStatus}\n[<color=yellow><b>{anchorKeyString}</b></color>] <color=white>{anchorText}</color> {shipStatsText}");
+      $"[<color=yellow><b>$KEY_Use</b></color>]<color=white><b>$valheim_vehicles_wheel_use</b></color>\n{anchorMessage}\n{shipStatsText}");
   }
 
 

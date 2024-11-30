@@ -6,7 +6,7 @@ using ValheimVehicles.Constants;
 
 namespace ValheimVehicles.Config;
 
-public class PhysicsConfig
+public static class PhysicsConfig
 {
   public static ConfigEntry<bool> EnableCustomWaterMeshCreators =
     null!;

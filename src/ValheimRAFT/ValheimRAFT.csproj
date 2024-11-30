@@ -36,6 +36,9 @@
         <!--            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>-->
         <!--        </ProjectReference>-->
         <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Config\TutorialConfig.cs">
+            <Link>ValheimVehicles.Config\TutorialConfig.cs</Link>
+        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup>
