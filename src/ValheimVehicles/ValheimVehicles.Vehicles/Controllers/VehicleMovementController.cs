@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
@@ -3166,8 +3167,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     if (isAnchored)
     {
-      var anchorMessage = SteeringWheelComponent.GetAnchorMessage(isAnchored,
-        SteeringWheelComponent.GetAnchorHotkeyString());
+      var anchorMessage = SteeringWheelComponent.GetTutorialAnchorMessage(
+        isAnchored);
       if (TutorialConfig.HasVehicleAnchoredWarning.Value)
       {
         Player.m_localPlayer.Message(

@@ -190,7 +190,7 @@ public static class PhysicsConfig
     submersibleSteerForce =
       Config.Bind(SectionKey, "submersibleSteerForce", 0.5f);
     submersibleSailForceFactor =
-      Config.Bind(SectionKey, "submersibleSailForceFactor", 0f,
+      Config.Bind(SectionKey, "submersibleSailForceFactor", 0.5f,
         debugSailForceAndFactorDescription);
     submersibleDrag = Config.Bind(SectionKey, "submersibleDrag", 1.5f);
     submersibleAngularDrag =

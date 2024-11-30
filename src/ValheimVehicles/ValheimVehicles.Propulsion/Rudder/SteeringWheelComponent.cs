@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
@@ -82,6 +83,14 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
 
     return
       $"{anchoredStatus}\n[<color=yellow><b>{anchorKeyString}</b></color>] <color=white>{anchorText}</color>";
+  }
+
+  public static string GetTutorialAnchorMessage(bool isAnchored)
+  {
+    var anchorMessage = GetAnchorMessage(isAnchored,
+      GetAnchorHotkeyString());
+    anchorMessage = Regex.Replace(anchorMessage, @"[\[\]]", "");
+    return $"Vehicle is {anchorMessage}";
   }
 
   /// <summary>
