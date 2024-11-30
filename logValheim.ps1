@@ -14,6 +14,47 @@ if (-Not (Test-Path $LogPath))
     return
 }
 
+function Get-LogColor
+{
+    Param(
+        [Parameter(Position = 0)]
+        [String]$LogEntry
+    )
+
+    process {
+        if ($LogEntry.Contains("ValheimRAFT") -or $LogEntry.Contains("ValheimVehicles") -or $LogEntry.Contains("DynamicLocations") -or $LogEntry.Contains("ZdoWatcher"))
+        {
+            if ( $LogEntry.Contains("Debug"))
+            {
+                Return "Green"
+            }
+            elseif ($LogEntry.Contains("Warn"))
+            {
+                Return "Yellow"
+            }
+            elseif ($LogEntry.Contains("Error") -or $LogEntry.Contains("NullReferenceException"))
+            {
+                Return "Red"
+            }
+            else
+            {
+                Return "White"
+            }
+        }
+        # we should still see red for errors.        
+        if ($LogEntry.Contains("NullReferenceException") -or $LogEntry.Contains("Error"))
+        {
+            Return "Red"
+        }
+        else
+        {
+            # makes other messages less visible            
+            Return "Gray"
+        }
+    }
+}
+
+
 # Define patterns to exclude
 $excludePatterns = @(".*Activating default element Continue")
 
@@ -24,5 +65,5 @@ gc -wait -tail 10 $LogPath |
             $_ -notmatch $excludePatterns
         } |
         ForEach-Object {
-            Write-Host $_
+            Write-Host -ForegroundColor (Get-LogColor $_) $_
         }
