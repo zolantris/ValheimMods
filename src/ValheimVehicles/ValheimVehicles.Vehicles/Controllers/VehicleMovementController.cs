@@ -2383,11 +2383,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       return;
     }
 
-    if (previousUserId != targetPlayerId)
-    {
-      m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayerId);
-    }
-
     var isValidUser = HaveValidUser();
     m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_RequestResponse),
       isValidUser, targetPlayerId, previousUserId);
@@ -2395,14 +2390,17 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   private void RPC_ReleaseControl(long sender, long playerId)
   {
+    CancelDebounceTakeoverControls();
     if (m_nview == null) return;
 
-    if (m_nview.IsOwner() && GetUser() == playerId)
+    var previousUser = GetUser();
+    var previousPlayer = Player.GetPlayer(previousUser);
+    EjectPreviousPlayerFromControls(previousPlayer);
+
+    if (m_nview.IsOwner())
     {
       m_nview.GetZDO().Set(ZDOVars.s_user, 0L);
     }
-
-    EjectPreviousPlayerFromControls(Player.GetPlayer(playerId));
   }
 
   private float _previousTargetHeight = 0f;
@@ -3053,11 +3051,19 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     var isLocalPlayer = targetPlayer == Player.m_localPlayer;
 
+    var previousUserId = GetUser();
     // the person controlling the ship should control physics
     var playerOwner = targetPlayer.GetOwner();
+
     m_nview.GetZDO().SetOwner(playerOwner);
+    if (previousUserId != targetPlayer.GetPlayerID())
+    {
+      m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayer.GetPlayerID());
+    }
+
     Logger.LogDebug("Changing ship owner to " + playerOwner +
                     $", name: {targetPlayer.GetPlayerName()}");
+
     SyncVehicleBounds();
     var attachTransform = lastUsedWheelComponent.AttachPoint;
 
@@ -3253,8 +3259,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     CancelDebounceTakeoverControls();
     if (m_nview == null) return;
     if (!m_nview.IsValid()) return;
-    m_nview.InvokeRPC(0L, nameof(RPC_ReleaseControl), player.GetPlayerID());
-    EjectPreviousPlayerFromControls(player);
+    m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_ReleaseControl),
+      player.GetPlayerID());
   }
 
   public bool HaveValidUser()
