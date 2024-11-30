@@ -80,11 +80,11 @@ public static class PropulsionConfig
     EXPERIMENTAL_LeanTowardsWindSailDirection = Config.Bind(SectionName,
       "EXPERIMENTAL_LeanTowardsWindSailDirection", false,
       ConfigHelpers.CreateConfigDescription(
-        "Toggles a lean while sailing with wind power. Cosmetic only and does not work in multiplayer yet. Warning for those with motion sickness..",
+        "Toggles a lean while sailing with wind power. Cosmetic only and does not work in multiplayer yet. Warning for those with motion sickness, this will increase your symptoms. Prepare your dramamine!",
         true, true));
 
     EXPERIMENTAL_LeanTowardsWindSailDirectionMaxAngle = Config.Bind(SectionName,
-      "EXPERIMENTAL_LeanTowardsWindSailDirection", 20f,
+      "EXPERIMENTAL_LeanTowardsWindSailDirectionMaxAngle", 10f,
       ConfigHelpers.CreateConfigDescription(
         "Set the max lean angle when wind is hitting sides directly", true,
         true, new AcceptableValueRange<float>(0f, 30f)));

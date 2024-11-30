@@ -713,10 +713,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   }
 
   public float sailLeanAngle = 0f;
-  public float sailDirectionDamping = 0.1f;
+  public float sailDirectionDamping = 0.05f;
+
+  // for adding additional multiplier within lower ranges so angle gets to expected value quicker.
+  public static float rotationLeanMultiplier = 1.5f;
 
   /// <summary>
-  /// Adds a cool leaning effect. Cosmetic only to the ship. SailPower controls lean effect. Zero sails will not influence it.
+  /// Adds a leaning effect similar to sailing when wind is starboard/port pushing upwards/downwards. Cosmetic only to the ship. SailPower controls lean effect. Zero sails will not influence it.
   /// </summary>
   /// <returns></returns>
   public Quaternion GetRotation()
@@ -733,9 +736,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     // Determine lean direction: port (-1) or starboard (1)
     float leanDirection;
     if (windDirection > 180f) // Port side (aft to left)
-      leanDirection = 1f;
-    else // Starboard side (aft to right)
       leanDirection = -1f;
+    else // Starboard side (aft to right)
+      leanDirection = 1f;
 
     // Check if wind direction falls within the specified ranges
     var isWithinRange =
@@ -744,13 +747,22 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     if (isWithinRange)
     {
-      // Wind affects sail force in this range
-      toValue = MovementController.m_sailForce.magnitude;
+      var forwardVelocity = MovementController.GetForwardVelocity();
+      if (forwardVelocity < 0.5f)
+      {
+        toValue = 0f;
+      }
+      else
+      {
+        // Wind affects sail force in this range
+        toValue = forwardVelocity *
+                  rotationLeanMultiplier;
+      }
     }
 
     // Smoothly interpolate sail lean angle based on wind and direction
     sailLeanAngle = Mathf.Lerp(sailLeanAngle,
-      toValue * 50f * leanDirection,
+      toValue * leanDirection,
       Time.fixedDeltaTime * sailDirectionDamping);
 
     // Clamp lean angle to configured maximum values
@@ -2560,6 +2572,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         firstRudder.transform.localPosition.z);
   }
 
+  // pushes the collider down a bit to have the boat spawn above water.
+  private const float HullFloatationColliderAlignmentOffset = -1.5f;
+
   private float GetAverageFloatHeightFromHulls()
   {
     _hullBounds = new Bounds();
@@ -2568,23 +2583,55 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         !ValheimRaftPlugin.Instance.HullCollisionOnly.Value)
     {
       return ValheimRaftPlugin.Instance.HullFloatationCustomColliderOffset
-        .Value;
+        .Value + HullFloatationColliderAlignmentOffset;
     }
 
     var totalHeight = 0f;
-    foreach (var hullPiece in m_hullPieces)
+
+    if (ValheimRaftPlugin.Instance.HullFloatationColliderLocation.Value ==
+        ValheimRaftPlugin.HullFloatation.AverageOfHullPieces)
     {
-      var newBounds = EncapsulateColliders(_hullBounds.center, _hullBounds.size,
-        hullPiece.gameObject);
-      totalHeight += hullPiece.transform.localPosition.y;
-      if (newBounds == null) continue;
-      _hullBounds = newBounds.Value;
+      foreach (var hullPiece in m_hullPieces)
+      {
+        var newBounds = EncapsulateColliders(_hullBounds.center,
+          _hullBounds.size,
+          hullPiece.gameObject);
+        totalHeight += hullPiece.transform.localPosition.y;
+        if (newBounds == null) continue;
+        _hullBounds = newBounds.Value;
+      }
     }
+    else
+    {
+      foreach (var piece in m_pieces)
+      {
+        var newBounds = EncapsulateColliders(_hullBounds.center,
+          _hullBounds.size,
+          piece.gameObject);
+        totalHeight += piece.transform.localPosition.y;
+        if (newBounds == null) continue;
+        _hullBounds = newBounds.Value;
+      }
+    }
+
 
     switch (ValheimRaftPlugin.Instance.HullFloatationColliderLocation.Value)
     {
+      case ValheimRaftPlugin.HullFloatation.AverageOfHullPieces:
       case ValheimRaftPlugin.HullFloatation.Average:
-        return totalHeight / m_hullPieces.Count;
+        var hullPieceCount =
+          ValheimRaftPlugin.Instance.EnableExactVehicleBounds.Value
+            ? m_hullPieces.Count
+            : m_pieces.Count;
+
+        if (Mathf.Approximately(totalHeight, 0f) ||
+            Mathf.Approximately(hullPieceCount, 0f))
+        {
+          return _hullBounds.center.y;
+        }
+
+        return totalHeight / hullPieceCount;
+
       case ValheimRaftPlugin.HullFloatation.Bottom:
         return _hullBounds.min.y;
       case ValheimRaftPlugin.HullFloatation.Top:

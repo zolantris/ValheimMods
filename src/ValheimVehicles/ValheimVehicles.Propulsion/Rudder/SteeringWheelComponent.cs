@@ -267,7 +267,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
 
     if (player != null)
     {
-      ShipInstance?.MovementController?.AddPlayerIfMissing(player);
+      ShipInstance?.MovementController?.UpdatePlayerOnShip(player);
     }
 
     if (playerOnShipViaShipInstance?.Length == 0 ||
@@ -337,7 +337,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
       return;
     }
 
-    ShipInstance.Instance.MovementController.FireReleaseControl(player);
+    ShipInstance.Instance?.MovementController?.FireReleaseControl(player);
   }
 
   public void ApplyControlls(Vector3 moveDir, Vector3 lookDir, bool run,

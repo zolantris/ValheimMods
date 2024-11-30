@@ -142,6 +142,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public enum HullFloatation
   {
     Average,
+    AverageOfHullPieces,
     Center,
     Bottom,
     Top,
