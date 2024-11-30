@@ -79,6 +79,7 @@ public static class WaterZoneUtils
   /// <returns></returns>
   private static bool IsInVehicleShipBounds(Character character)
   {
+    if (character.transform.root == null) return false;
     var piecesController =
       character.transform.root.GetComponent<VehiclePiecesController>();
     return piecesController != null;

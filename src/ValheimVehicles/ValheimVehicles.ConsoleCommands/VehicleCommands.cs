@@ -147,7 +147,8 @@ public class VehicleCommands : ConsoleCommand
       return;
     }
 
-    currentVehicle.MovementController.OnControlsHandOff(Player.m_localPlayer);
+    currentVehicle.MovementController.ForceTakeoverControls(Player.m_localPlayer
+      .GetPlayerID());
   }
 
   public static void FloatArgErrorMessage(string arg)

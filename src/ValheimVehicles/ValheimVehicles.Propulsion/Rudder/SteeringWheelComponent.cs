@@ -287,8 +287,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
           $"Interact PlayerId {playerInstance.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
         if (playerInstance.GetPlayerID() != player.GetPlayerID()) continue;
         ShipInstance?.Instance?.MovementController?.SendRequestControl(
-          playerInstance.GetPlayerID(),
-          AttachPoint);
+          playerInstance.GetPlayerID());
         return true;
       }
     else if ((bool)deprecatedShipControls)
@@ -320,7 +319,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     if (!ShipInstance?.Instance?.MovementController) return false;
 
     ShipInstance.Instance.MovementController?.SendRequestControl(
-      player.GetPlayerID(), AttachPoint);
+      player.GetPlayerID());
     return true;
   }
 
