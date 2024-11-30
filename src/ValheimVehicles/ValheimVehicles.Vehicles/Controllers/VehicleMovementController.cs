@@ -1513,13 +1513,38 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     m_sailWasInPosition = flag;
   }
 
+  /// <summary>
+  /// CrossWind dir
+  /// </summary>
+  /// <param name="movementController"></param>
+  /// <returns></returns>
+  public static Vector3 GetCrossWindDirForShip(
+    VehicleMovementController movementController)
+  {
+    var isWindPowerActive = movementController.IsWindControllActive();
+
+    var windDir = isWindPowerActive
+      ? movementController.ShipDirection.forward
+      : EnvMan.instance.GetWindDir();
+    windDir = Vector3.Cross(
+      Vector3.Cross(windDir, movementController.ShipDirection.up),
+      movementController.ShipDirection.up);
+    return windDir;
+  }
+
+  public static float GetWindSailTurnTime(Vector3 windDir,
+    VehicleMovementController movementController)
+  {
+    return 0.5f +
+           Vector3.Dot(movementController.ShipDirection.forward, windDir) *
+           0.5f;
+  }
+
   public void UpdateSail(float deltaTime)
   {
     UpdateSailSize(deltaTime);
-    var windDir = EnvMan.instance.GetWindDir();
-    windDir = Vector3.Cross(Vector3.Cross(windDir, ShipDirection.up),
-      ShipDirection.up);
-    var t = 0.5f + Vector3.Dot(ShipDirection.forward, windDir) * 0.5f;
+    var windDir = GetCrossWindDirForShip(this);
+    var t = GetWindSailTurnTime(windDir, this);
 
     switch (VehicleSpeed)
     {

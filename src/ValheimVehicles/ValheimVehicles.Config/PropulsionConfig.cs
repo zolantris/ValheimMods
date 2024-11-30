@@ -1,6 +1,4 @@
-using System;
 using BepInEx.Configuration;
-using ComfyLib;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Enums;
 
@@ -21,6 +19,16 @@ public static class PropulsionConfig
     get;
     private set;
   } = null!;
+
+  public static ConfigEntry<bool> EXPERIMENTAL_LeanTowardsWindSailDirection
+  {
+    get;
+    private set;
+  } = null!;
+
+  public static ConfigEntry<float>
+    EXPERIMENTAL_LeanTowardsWindSailDirectionMaxAngle { get; private set; } =
+    null!;
 
   public static ConfigEntry<float> TurnPowerNoRudder { get; private set; } =
     null!;
@@ -68,6 +76,18 @@ public static class PropulsionConfig
         "ForceSyncedRigidbody ignores all allowances that toggle SyncRigidbody related to flight. This will require a flight ascend value of 1 otherwise flight will be broken. Use this is there is problems with SyncRigidbody\n" +
         "DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config that allows the player to smoothly move around the raft at high speeds even if they are not the host. Can cause the ship to glitch with anything that has to do with physics including ramps and other mods that add moving parts that could be added to the boat.",
         true));
+
+    EXPERIMENTAL_LeanTowardsWindSailDirection = Config.Bind(SectionName,
+      "EXPERIMENTAL_LeanTowardsWindSailDirection", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Toggles a lean while sailing with wind power. Cosmetic only and does not work in multiplayer yet. Warning for those with motion sickness..",
+        true, true));
+
+    EXPERIMENTAL_LeanTowardsWindSailDirectionMaxAngle = Config.Bind(SectionName,
+      "EXPERIMENTAL_LeanTowardsWindSailDirection", 20f,
+      ConfigHelpers.CreateConfigDescription(
+        "Set the max lean angle when wind is hitting sides directly", true,
+        true, new AcceptableValueRange<float>(0f, 30f)));
 
     TurnPowerNoRudder = Config.Bind(SectionName, "turningPowerNoRudder", 1f,
       ConfigHelpers.CreateConfigDescription(

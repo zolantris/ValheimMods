@@ -387,22 +387,33 @@ public class ValheimBaseGameShip : MonoBehaviour
     s_currentShips.Remove(this);
   }
 
+  private bool m_cachedWindControlStatus = false;
+  private float lastUpdateWindControlStatus = 0f;
+
   /// <summary>
   /// If moder power is enabled
   /// </summary>
   /// <returns></returns>
   public bool IsWindControllActive()
   {
+    if (lastUpdateWindControlStatus < 2f)
+    {
+      lastUpdateWindControlStatus += Time.fixedDeltaTime;
+      return m_cachedWindControlStatus;
+    }
+
     foreach (Player player in m_players)
     {
       if (player.GetSEMan()
           .HaveStatusAttribute(StatusEffect.StatusAttribute.SailingPower))
       {
-        return true;
+        m_cachedWindControlStatus = true;
+        return m_cachedWindControlStatus;
       }
     }
 
-    return false;
+    m_cachedWindControlStatus = false;
+    return m_cachedWindControlStatus;
   }
 
   public static ValheimBaseGameShip GetLocalShip()
