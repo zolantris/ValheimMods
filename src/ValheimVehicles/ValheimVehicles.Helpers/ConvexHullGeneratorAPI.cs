@@ -1,13 +1,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimVehicles.LayerUtils;
 using ValheimVehicles.Plugins;
+using ValheimVehicles.Prefabs;
+using ValheimVehicles.Vehicles;
 
 namespace ValheimVehicles.Helpers;
 
 public class ConvexHullMeshGeneratorAPI : MonoBehaviour
 {
-  public static Vector3 transformPreviewOffset = new(1, 0, 0);
+  public static Vector3 transformPreviewOffset = new(2f, -2f, 0);
   public static float DistanceThreshold = 0.1f;
 
   /// <summary>
@@ -187,6 +190,11 @@ public class ConvexHullMeshGeneratorAPI : MonoBehaviour
       .ToList();
   }
 
+  /// <summary>
+  /// Adds localPosition offset to the local point so that a point is relative to a localPosition and does not rely on worldposition points.
+  /// </summary>
+  /// <param name="colliders"></param>
+  /// <returns></returns>
   public static List<Vector3> GetColliderPointsRelative(
     List<Collider> colliders)
   {
@@ -211,7 +219,20 @@ public class ConvexHullMeshGeneratorAPI : MonoBehaviour
     foreach (var obj in gameObjects)
     {
       if (obj == null) continue;
-      allColliders.AddRange(obj.GetComponentsInChildren<Collider>());
+      var colliders = obj.GetComponentsInChildren<Collider>().ToList();
+
+      // todo filters might need to be tweaked. This ignores any layer for colliders that are not physical
+      // if (colliders is { Count: > 0 })
+      // {
+      //   colliders = colliders.Where(x =>
+      //     LayerHelpers.IsContainedWithinMask(x.gameObject.layer,
+      //       LayerHelpers.PhysicalLayers)).ToList();
+      // }
+
+      if (colliders is { Count: > 0 })
+      {
+        allColliders.AddRange(colliders);
+      }
     }
 
     // Cluster colliders by proximity
@@ -219,7 +240,7 @@ public class ConvexHullMeshGeneratorAPI : MonoBehaviour
 
     foreach (var collider in allColliders)
     {
-      bool addedToCluster = false;
+      var addedToCluster = false;
 
       // Check against existing clusters
       foreach (var cluster in clusters)
@@ -348,16 +369,39 @@ public class ConvexHullMeshGeneratorAPI : MonoBehaviour
     return result;
   }
 
+  /// <summary>
+  /// For GameObjects
+  /// </summary>
+  /// <param name="parentGameObject"></param>
+  /// <param name="convexHullGameObjects"></param>
+  /// <param name="distanceThreshold"></param>
   public static void GenerateMeshesFromChildColliders(
-    GameObject targetGameObject, List<GameObject> generateObjectList,
-    float distanceThreshold)
+    GameObject parentGameObject, List<GameObject> convexHullGameObjects,
+    float distanceThreshold = 0.1f)
   {
-    if (generateObjectList.Count > 0)
+    var childGameObjects = GetAllChildGameObjects(parentGameObject);
+    GenerateMeshesFromChildColliders(parentGameObject, convexHullGameObjects,
+      distanceThreshold, childGameObjects);
+  }
+
+  /// <summary>
+  /// Main generator for convex hull meshes.
+  /// </summary>
+  /// <param name="parentGameObject"></param>
+  /// <param name="childGameObjects"></param>
+  /// <param name="convexHullGameObjects"></param>
+  /// <param name="distanceThreshold"></param>
+  public static void GenerateMeshesFromChildColliders(
+    GameObject parentGameObject,
+    List<GameObject> convexHullGameObjects,
+    float distanceThreshold, List<GameObject> childGameObjects)
+  {
+    // TODO we may need to delete these after. Deleting immediately could cause a physics jump / issue
+    if (convexHullGameObjects.Count > 0)
     {
-      DeleteMeshesFromChildColliders(generateObjectList);
+      DeleteMeshesFromChildColliders(convexHullGameObjects);
     }
 
-    var childGameObjects = GetAllChildGameObjects(targetGameObject);
     var hullClusters =
       GroupCollidersByProximity(childGameObjects.ToList(), distanceThreshold);
 
@@ -366,8 +410,8 @@ public class ConvexHullMeshGeneratorAPI : MonoBehaviour
     foreach (var hullCluster in hullClusters)
     {
       var colliderPoints = GetColliderPointsRelative(hullCluster);
-      GenerateConvexHullMesh(colliderPoints, generateObjectList,
-        targetGameObject.transform);
+      GenerateConvexHullMesh(colliderPoints, convexHullGameObjects,
+        parentGameObject.transform);
     }
   }
 
@@ -378,9 +422,9 @@ public class ConvexHullMeshGeneratorAPI : MonoBehaviour
   private static void AdaptiveDestroy(GameObject gameObject)
   {
 #if UNITY_EDITOR
-    UnityEngine.Object.DestroyImmediate(gameObject);
+    DestroyImmediate(gameObject);
 #else
-    UnityEngine.Object.Destroy(gameObject);
+    Destroy(gameObject);
 #endif
   }
 
@@ -396,16 +440,16 @@ public class ConvexHullMeshGeneratorAPI : MonoBehaviour
 
     Debug.Log("Generating convex hull...");
 
-    // Step 1: Prepare output containers
+    // Prepare output containers
     var verts = new List<Vector3>();
     var tris = new List<int>();
     var normals = new List<Vector3>();
 
-    // Step 2: Generate convex hull and export the mesh
+    // Generate convex hull and export the mesh
     convexHullCalculator.GenerateHull(points, true, ref verts, ref tris,
       ref normals);
 
-    // Step 3: Create a Unity Mesh
+    // Create a Unity Mesh
     var mesh = new Mesh
     {
       vertices = verts.ToArray(),
@@ -413,25 +457,30 @@ public class ConvexHullMeshGeneratorAPI : MonoBehaviour
       normals = normals.ToArray()
     };
 
-    // Step 5: Create a new GameObject to display the mesh
-    var go =
-      new GameObject($"ConvexHullPreview{generateObjectList.Count}");
+    // Create a new GameObject to display the mesh
+    var go = new GameObject(PrefabNames.ConvexHull);
     generateObjectList.Add(go);
     var meshFilter = go.AddComponent<MeshFilter>();
     var meshRenderer = go.AddComponent<MeshRenderer>();
 
     meshFilter.mesh = mesh;
 
-    // Step 6: Create and assign the material
-    var material = new Material(Shader.Find("Standard"))
-    {
-      color = Color.green
-    };
+    var standardShader = Shader.Find("Standard");
+    // Create and assign the material
+    var material =
+      new Material(standardShader
+        ? standardShader
+        : LoadValheimAssets.CustomPieceShader)
+      {
+        color = Color.green
+      };
+    material = VehiclePiecesController.FixMaterial(material);
     meshRenderer.material = material;
 
     // Optional: Adjust transform
     go.transform.position =
       parentObjTransform.position + transformPreviewOffset;
     go.transform.rotation = parentObjTransform.rotation;
+    go.transform.SetParent(parentObjTransform);
   }
 }

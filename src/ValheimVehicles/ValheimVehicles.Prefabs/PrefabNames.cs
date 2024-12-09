@@ -280,6 +280,8 @@ public static class PrefabNames
   public const string RamBladePrefix = $"{ValheimVehiclesPrefix}_ram_blade";
   public const string RamStakePrefix = $"{ValheimVehiclesPrefix}_ram_stake";
 
+  public const string ConvexHull = $"{ValheimVehiclesPrefix}_ConvexHull";
+
   public static string GetRamBladeName(string val)
   {
     return $"{RamBladePrefix}_{val.ToLower()}_{PrefabTiers.Tier3}";

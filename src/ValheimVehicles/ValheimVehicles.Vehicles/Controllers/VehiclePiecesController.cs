@@ -2684,119 +2684,15 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   }
 
   public bool useWorldColliderPosition = false;
+  public List<GameObject> convexHullMeshes = [];
 
-  public void RebuildBoundsWithConvexHull()
+  public void RebuildConvexHull()
   {
-    if (!(bool)m_floatcollider || !(bool)m_onboardcollider ||
-        !(bool)m_blockingcollider)
-    {
-      return;
-    }
-
-    RotateVehicleForwardPosition();
     Physics.SyncTransforms();
-
-    // this will not update the vehicle bounds until after things have been run.
-    _pendingHullBounds = new Bounds();
-    _pendingVehicleBounds = new Bounds();
-
-    List<Vector3> vehicleColliderPoints = [];
-
-    foreach (var netView in m_pieces.ToList())
-    {
-      if (!netView)
-      {
-        m_pieces.Remove(netView);
-        continue;
-      }
-
-      var colliders = netView.GetComponentsInChildren<Collider>();
-      if (colliders == null) continue;
-
-      var colliderInPhysicalLayer = colliders.Where(x =>
-        LayerHelpers.IsContainedWithinMask(x.gameObject.layer,
-          LayerHelpers.PhysicalLayers)).ToList();
-      if (colliderInPhysicalLayer.Count == 0) continue;
-
-      vehicleColliderPoints.AddRange(ColliderPointsExtractor
-        .GetColliderPointsRelative(colliderInPhysicalLayer));
-    }
-
-    OnBoundsChangeUpdateShipColliders();
-
-    // for testing logic directly
-    if (ModEnvironment.IsDebug)
-    {
-      Vector3Logger.LogPointsForInspector(vehicleColliderPoints);
-    }
-
-    GenerateConvexHullMesh(vehicleColliderPoints);
-  }
-
-  private GameObject previewObject;
-
-  private readonly ConvexHullCalculator
-    _convexHullCalculator = new();
-
-  public void GenerateConvexHullMesh(List<Vector3> points)
-  {
-    // Step 4: Remove previous preview instance
-    if (previewObject != null)
-    {
-      Destroy(previewObject);
-    }
-
-    if (points.Count < 3)
-    {
-      Logger.LogError("Not enough points to generate a convex hull.");
-      return;
-    }
-
-    // Step 1: Prepare output containers
-    var verts = new List<Vector3>();
-    var tris = new List<int>();
-    var normals = new List<Vector3>();
-
-    // Step 2: Generate convex hull and export the mesh
-    _convexHullCalculator.GenerateHull(points, true, ref verts, ref tris,
-      ref normals);
-
-    // Step 3: Create a Unity Mesh
-    var mesh = new Mesh
-    {
-      vertices = verts.ToArray(),
-      triangles = tris.ToArray(),
-      normals = normals.ToArray()
-    };
-
-    // Step 5: Create a new GameObject to display the mesh
-    previewObject = new GameObject("ConvexHullPreview");
-    var meshFilter = previewObject.AddComponent<MeshFilter>();
-    var meshRenderer = previewObject.AddComponent<MeshRenderer>();
-
-    meshFilter.mesh = mesh;
-
-    // Step 6: Create and assign the material
-    var material = new Material(LoadValheimAssets.CustomPieceShader)
-    {
-      color = Color.green
-    };
-    material = FixMaterial(material);
-    meshRenderer.material = material;
-
-    if (VehicleInstance?.Instance != null)
-    {
-      // Optional: Adjust transform
-      var vehicleTransform = VehicleInstance.Instance.transform;
-      previewObject.transform.position =
-        vehicleTransform.position;
-      previewObject.transform.rotation =
-        vehicleTransform.rotation;
-      // previewObject.transform.SetParent(vehicleTransform);
-      // for now only set to piece parent to prevent problems.
-      previewObject.transform.SetParent(transform);
-      previewObject.transform.localPosition = Vector3.zero;
-    }
+    var nvChildGameObjects = m_pieces.Select(x => x.gameObject).ToList();
+    ConvexHullMeshGeneratorAPI
+      .GenerateMeshesFromChildColliders(gameObject, convexHullMeshes,
+        ConvexHullMeshGeneratorAPI.DistanceThreshold, nvChildGameObjects);
   }
 
   /**
@@ -2805,7 +2701,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
    */
   public void RebuildBounds()
   {
-    RebuildBoundsWithConvexHull();
+    RebuildConvexHull();
 
     if (!(bool)m_floatcollider || !(bool)m_onboardcollider ||
         !(bool)m_blockingcollider)
