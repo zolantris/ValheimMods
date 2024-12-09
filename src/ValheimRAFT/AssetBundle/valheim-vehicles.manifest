@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3579827985
+CRC: 2548102374
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 88ca8fda4b2f32a9396ab6322b60cc7a
+    Hash: a36a506a4b701d5de7e9df595623870f
   TypeTreeHash:
     serializedVersion: 2
     Hash: c06587813f50b4ac49249ee2d68a3382
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 88ca8fda4b2f32a9396ab6322b60cc7a
+    Hash: a36a506a4b701d5de7e9df595623870f
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -78,16 +78,18 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_slab_iron_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_double_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_4x4.prefab
-- Assets/ValheimVehicles/Prefabs/hull_rib_prow_iron_4x4.prefab
+- Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_iron.prefab
+- Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_iron_2x2.prefab
-- Assets/ValheimVehicles/Prefabs/ram_stake_tier3_1x2.prefab
-- Assets/ValheimVehicles/Prefabs/shared_nautilus.prefab
+- Assets/ValheimVehicles/Prefabs/hull_rib_prow_iron_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_bottom.prefab
+- Assets/ValheimVehicles/Prefabs/shared_nautilus.prefab
 - Assets/ValheimVehicles/Shaders/InvertWaterMask.shader
 - Assets/ValheimVehicles/Prefabs/hull_slab_iron_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_2x4.prefab
 - Assets/ValheimVehicles/Material/WaterMaskMaterial.mat
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_1x2.prefab
+- Assets/ValheimVehicles/Prefabs/ram_stake_tier3_1x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_center_iron.prefab
 - Assets/Horem/Mocks/Shaders/Custom_WaterMask.shader
 - Assets/ValheimVehicles/Prefabs/hull_window_wood_2x2.prefab
@@ -101,6 +103,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_slab_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_left.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus.prefab
+- Assets/ValheimVehicles/Prefabs/hull_corner_floor_right_wood.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_iron.prefab
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier3_2x4.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_double_iron.prefab
@@ -120,6 +123,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/custom_sail.prefab
 - Assets/ValheimVehicles/Prefabs/shared_rudder_advanced_double.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_wood.prefab
+- Assets/ValheimVehicles/Prefabs/hull_corner_floor_right_iron.prefab
 - Assets/ValheimVehicles/Prefabs/shared_rudder_advanced_single.prefab
 Dependencies:
 - C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/AssetBundle/valheim-raft

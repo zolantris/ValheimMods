@@ -141,6 +141,9 @@ public static class PrefabNames
   public const string HullRibCorner =
     $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Corner";
 
+  public const string HullRibCornerFloor =
+    $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Corner_Floor";
+
   public const string HullRib = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib";
 
   // to only be used for matching with generic prefab names
@@ -148,6 +151,9 @@ public static class PrefabNames
 
   public const string HullWall =
     $"{ValheimVehiclesPrefix}_Hull_Wall";
+
+  public const string HullCornerFloor =
+    $"{ValheimVehiclesPrefix}_Hull_Corner_Floor";
 
   private static string GetMaterialVariantName(string materialVariant)
   {
@@ -184,6 +190,15 @@ public static class PrefabNames
     var materialName = GetMaterialVariantName(materialVariant);
 
     return $"{HullRibCorner}_{directionName}_{materialName}";
+  }
+
+  public static string GetHullRibCornerFloorName(string materialVariant,
+    DirectionVariant directionVariant)
+  {
+    var directionName = GetDirectionName(directionVariant);
+    var materialName = GetMaterialVariantName(materialVariant);
+
+    return $"{HullRibCornerFloor}_{directionName}_{materialName}";
   }
 
   public static string GetHullSlabName(string materialVariant,
