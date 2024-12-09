@@ -184,27 +184,6 @@ public class ConvexHullMeshGenerator : MonoBehaviour
       .Distinct()
       .ToList();
   }
-
-  /// <summary>
-  /// Copy & paste the output of Vector3Logger
-  /// </summary>
-  // private IEnumerable<Vector3> testPoints = new Vector3[]
-  // {
-  //   new Vector3(1.969051f, 0.03499834f, 4.98811f),
-  //   new Vector3(5.969101f, 0.03500491f, -3.011944f),
-  //   new Vector3(-2.030958f, 0.03499899f, 12.98798f),
-  //   new Vector3(1.969054f, 0.01599588f, 12.98811f),
-  //   new Vector3(1.969146f, 0.05399674f, -3.012f),
-  //   new Vector3(5.969078f, 0.05400102f, 12.9881f),
-  //   new Vector3(5.969075f, 0.05400009f, 4.988083f),
-  //   new Vector3(0f, 0f, 0f),
-  //   new Vector3(-1.150025f, 0.1638423f, 3.718254f),
-  //   new Vector3(-2.030858f, 0.05399552f, -3.011994f),
-  //   new Vector3(0.3230967f, 0.9961958f, -2.063026f),
-  //   new Vector3(10.07709f, 0.5000018f, 5.488127f),
-  //   new Vector3(10.07709f, 0.5000022f, 7.488121f),
-  //   new Vector3(10.07696f, 0.5000033f, 9.487677f),
-  // };
   
   public Vector3 transformPreviewOffset = new Vector3(1, 0, 0);
 
@@ -230,68 +209,121 @@ public class ConvexHullMeshGenerator : MonoBehaviour
   
   
       /// <summary>
-    /// Groups colliders into clusters based on their proximity.
+    /// Groups colliders by proximity, handling nested or overlapping colliders correctly.
     /// </summary>
     /// <param name="gameObjects">List of GameObjects to process.</param>
-    /// <param name="distanceThreshold">The distance threshold to determine if colliders are near each other.</param>
-    /// <returns>A list of clusters, where each cluster is a list of colliders.</returns>
-    public static List<List<Collider>> GroupCollidersByProximity(List<GameObject> gameObjects, float distanceThreshold)
+    /// <param name="proximityThreshold">The distance threshold to determine proximity between colliders.</param>
+    /// <returns>A list of collider clusters, where each cluster is a list of colliders.</returns>
+    public static List<List<Collider>> GroupCollidersByProximity(List<GameObject> gameObjects, float proximityThreshold)
     {
+        // Collect all colliders from the provided GameObjects
         var allColliders = new List<Collider>();
-        foreach (var gameObject in gameObjects)
+        foreach (var obj in gameObjects)
         {
-            allColliders.AddRange(gameObject.GetComponentsInChildren<Collider>());
+            if (obj == null) continue;
+            allColliders.AddRange(obj.GetComponentsInChildren<Collider>());
         }
 
+        // Cluster colliders by proximity
         var clusters = new List<List<Collider>>();
-        var processedColliders = new HashSet<Collider>();
 
         foreach (var collider in allColliders)
         {
-            if (processedColliders.Contains(collider)) continue;
+            bool addedToCluster = false;
 
-            // Start a new cluster and find all connected colliders
-            var cluster = new List<Collider>();
-            FindConnectedColliders(collider, allColliders, cluster, processedColliders, distanceThreshold);
-            clusters.Add(cluster);
+            // Check against existing clusters
+            foreach (var cluster in clusters)
+            {
+                if (IsColliderNearCluster(collider, cluster, proximityThreshold))
+                {
+                    cluster.Add(collider);
+                    addedToCluster = true;
+                    break;
+                }
+            }
+
+            // If not added to an existing cluster, create a new cluster
+            if (!addedToCluster)
+            {
+                clusters.Add(new List<Collider> { collider });
+            }
         }
+
+        // Merge clusters that are near each other
+        MergeNearbyClusters(clusters, proximityThreshold);
 
         return clusters;
     }
 
     /// <summary>
-    /// Recursively finds all colliders connected to the given collider within the distance threshold.
+    /// Checks if a collider is near an existing cluster of colliders.
     /// </summary>
-    private static void FindConnectedColliders(
-        Collider current,
-        List<Collider> allColliders,
-        List<Collider> cluster,
-        HashSet<Collider> processedColliders,
-        float distanceThreshold)
+    private static bool IsColliderNearCluster(Collider collider, List<Collider> cluster, float proximityThreshold)
     {
-        cluster.Add(current);
-        processedColliders.Add(current);
-
-        foreach (var other in allColliders)
+        foreach (var clusterCollider in cluster)
         {
-            if (current == other || processedColliders.Contains(other)) continue;
+            // Use Bounds.Intersects to handle overlap or nesting
+            if (collider.bounds.Intersects(clusterCollider.bounds))
+                return true;
 
-            if (AreCollidersNear(current, other, distanceThreshold))
-            {
-                FindConnectedColliders(other, allColliders, cluster, processedColliders, distanceThreshold);
-            }
+            // Fallback to proximity calculation using ClosestPoint
+            var closestPoint = clusterCollider.ClosestPoint(collider.bounds.center);
+            var distance = Vector3.Distance(collider.bounds.center, closestPoint);
+            if (distance <= proximityThreshold)
+                return true;
         }
+        return false;
     }
 
     /// <summary>
-    /// Checks if two colliders are within a specified distance of each other.
+    /// Merges clusters that are near each other based on the proximity threshold.
     /// </summary>
-    private static bool AreCollidersNear(Collider a, Collider b, float distanceThreshold)
+    private static void MergeNearbyClusters(List<List<Collider>> clusters, float proximityThreshold)
     {
-        var closestPointA = a.ClosestPoint(b.bounds.center);
-        var closestPointB = b.ClosestPoint(a.bounds.center);
-        var distance = Vector3.Distance(closestPointA, closestPointB);
-        return distance <= distanceThreshold;
+        bool merged;
+        do
+        {
+            merged = false;
+
+            for (int i = 0; i < clusters.Count; i++)
+            {
+                for (int j = i + 1; j < clusters.Count; j++)
+                {
+                    if (AreClustersNearEachOther(clusters[i], clusters[j], proximityThreshold))
+                    {
+                        // Merge clusters
+                        clusters[i].AddRange(clusters[j]);
+                        clusters.RemoveAt(j);
+                        merged = true;
+                        break;
+                    }
+                }
+                if (merged) break;
+            }
+        } while (merged);
+    }
+
+    /// <summary>
+    /// Checks if two clusters are near each other based on the proximity threshold.
+    /// </summary>
+    private static bool AreClustersNearEachOther(List<Collider> cluster1, List<Collider> cluster2, float proximityThreshold)
+    {
+        foreach (var collider1 in cluster1)
+        {
+            foreach (var collider2 in cluster2)
+            {
+                // Check overlap
+                if (collider1.bounds.Intersects(collider2.bounds))
+                    return true;
+
+                // Proximity check
+                Vector3 closestPoint = collider1.ClosestPoint(collider2.bounds.center);
+                float distance = Vector3.Distance(collider2.bounds.center, closestPoint);
+                if (distance <= proximityThreshold)
+                    return true;
+            }
+        }
+        return false;
     }
 
   public List<Collider> GetColliderCluster(IEnumerable<GameObject> gameObjects)

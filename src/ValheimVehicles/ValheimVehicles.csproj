@@ -19,7 +19,6 @@
     <Import Project="$(SolutionDir)/valheim.targets"/>
 
     <ItemGroup>
-        <Compile Include="ValheimVehicles.Plugins\ConvexHullGenerator.cs"/>
         <Compile Include="ValheimVehicles.Plugins\Vector3Logger.cs"/>
         <Compile Include="ValheimVehiclesPlugin.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
