@@ -11,55 +11,94 @@ namespace ValheimVehicles.Scene
   [ExecuteInEditMode]
 public class ConvexHullMeshGenerator : MonoBehaviour
 {
+    private static readonly int Color1 = Shader.PropertyToID("Color");
 
-    public static void GetCapsuleColliderPoints(CapsuleCollider capsuleCollider, ref List<Vector3> points, Vector3 scale)
+    public static void GetCapsuleColliderPoints(CapsuleCollider capsuleCollider, ref List<Vector3> points, Vector3 scale, Transform parentTransform)
+{
+    // We use the local scale and manually apply the parent transform.
+    var localScale = capsuleCollider.transform.localScale;
+
+    // Adjust scale relative to the parent Transform's global scale if necessary.
+    var parentScale = parentTransform.lossyScale;
+    
+    // Now calculate the center and radius using local scale and global scale
+    var center = Vector3.Scale(capsuleCollider.center, scale);
+    var radius = capsuleCollider.radius * Mathf.Max(scale.x, scale.z);  // Apply scaling to X and Z for radius
+    var height = (capsuleCollider.height * 0.5f - capsuleCollider.radius) * scale.y; // Scale the height along Y
+
+    const int segmentCount = 10; // Number of segments for spherical caps and cylinder
+
+    var direction = capsuleCollider.direction; // 0 = X, 1 = Y, 2 = Z
+    var up = Vector3.up;
+    var forward = Vector3.forward;
+    var right = Vector3.right;
+
+    // Adjust up, forward, right vectors based on capsule direction
+    if (direction == 0)
     {
-        // CapsuleCollider: Generate points for the body and spherical caps
-        var center = Vector3.Scale(capsuleCollider.center, scale);
-        var height = (capsuleCollider.height * 0.5f - capsuleCollider.radius) * scale.y;
-        var radius = capsuleCollider.radius * Mathf.Max(scale.x, scale.z);
+        up = Vector3.right;
+        forward = Vector3.forward;
+        right = Vector3.up;
+    }
+    else if (direction == 1)
+    {
+        up = Vector3.up;
+        forward = Vector3.forward;
+        right = Vector3.right;
+    }
+    else if (direction == 2)
+    {
+        up = Vector3.forward;
+        forward = Vector3.up;
+        right = Vector3.right;
+    }
 
-        const int segmentCount = 10; // Number of segments for spherical caps and cylinder
+    // Generate cylinder body points
+    for (var i = 0; i <= segmentCount; i++)
+    {
+        var angle = 2 * Mathf.PI * i / segmentCount;
+        var x = radius * Mathf.Cos(angle);
+        var z = radius * Mathf.Sin(angle);
+        var bodyPoint = new Vector3(x, 0, z);
 
-        var direction = capsuleCollider.direction; // 0 = X, 1 = Y, 2 = Z
-        Vector3 up = Vector3.up, forward = Vector3.forward, right = Vector3.right;
+        // Apply transformations based on capsule's direction
+        points.Add(center + height * up + Vector3.Scale(bodyPoint, new Vector3(right.x, right.y, right.z)));
+        points.Add(center - height * up + Vector3.Scale(bodyPoint, new Vector3(right.x, right.y, right.z)));
+    }
 
-        if (direction == 0) { up = Vector3.right; forward = Vector3.up; right = Vector3.forward; }
-        else if (direction == 2) { up = Vector3.forward; forward = Vector3.up; right = Vector3.right; }
+    // Generate points for the spherical caps
+    for (var i = 0; i <= segmentCount; i++)
+    {
+        var theta = Mathf.PI * i / segmentCount; // Polar angle
+        var sinTheta = Mathf.Sin(theta);
+        var cosTheta = Mathf.Cos(theta);
 
-        // Generate cylinder body points
-        for (int i = 0; i <= segmentCount; i++)
+        for (var j = 0; j <= segmentCount; j++)
         {
-            var angle = 2 * Mathf.PI * i / segmentCount;
-            var x = radius * Mathf.Cos(angle);
-            var z = radius * Mathf.Sin(angle);
-            var bodyPoint = new Vector3(x, 0, z);
+            var phi = 2 * Mathf.PI * j / segmentCount; // Azimuthal angle
+            var x = radius * sinTheta * Mathf.Cos(phi);
+            var y = radius * cosTheta;
+            var z = radius * sinTheta * Mathf.Sin(phi);
 
-            points.Add(center + height * up + Vector3.Scale(bodyPoint, new Vector3(right.x, right.y, right.z)));
-            points.Add(center - height * up + Vector3.Scale(bodyPoint, new Vector3(right.x, right.y, right.z)));
-        }
+            var capPoint = new Vector3(x, y, z);
 
-        // Generate points for the spherical caps
-        for (int i = 0; i <= segmentCount; i++)
-        {
-            var theta = Mathf.PI * i / segmentCount; // Polar angle
-            var sinTheta = Mathf.Sin(theta);
-            var cosTheta = Mathf.Cos(theta);
-
-            for (int j = 0; j <= segmentCount; j++)
-            {
-                var phi = 2 * Mathf.PI * j / segmentCount; // Azimuthal angle
-                var x = radius * sinTheta * Mathf.Cos(phi);
-                var y = radius * cosTheta;
-                var z = radius * sinTheta * Mathf.Sin(phi);
-
-                var capPoint = new Vector3(x, y, z);
-
-                points.Add(center + height * up + capPoint); // Top cap
-                points.Add(center - height * up + capPoint); // Bottom cap
-            }
+            // Add cap points to the list (top and bottom caps)
+            points.Add(center + height * up + capPoint); // Top cap
+            points.Add(center - height * up + capPoint); // Bottom cap
         }
     }
+
+    // After calculating points in the collider's local space, manually apply the parent's world transformation
+    // This handles the scaling, rotation, and position correctly.
+    for (var i = 0; i < points.Count; i++)
+    {
+        // Applying the parent's world transform and scale manually
+        points[i] = parentTransform.TransformPoint(points[i]);
+        points[i] = Vector3.Scale(points[i], parentScale);  // Scale the point with parent's global scale
+    }
+}
+
+
    /// <summary>
   /// Gets all local-space points of a collider, adjusted for the object's scale.
   /// </summary>
@@ -125,7 +164,7 @@ public class ConvexHullMeshGenerator : MonoBehaviour
             }
         }
         else if (collider is CapsuleCollider capsuleCollider)
-            GetCapsuleColliderPoints(capsuleCollider, ref points, scale);
+            GetCapsuleColliderPoints(capsuleCollider, ref points, scale, collider.transform.parent);
         else
         {
             Debug.LogWarning($"Unsupported collider type: {collider.GetType()}");
@@ -142,17 +181,24 @@ private static List<Vector3> GetColliderPointsGlobal(Collider collider)
     // Handle BoxCollider
     if (collider is BoxCollider boxCollider)
     {
-        Vector3 boxCenter = transform.position + transform.rotation * boxCollider.center;
-        Vector3 boxSize = Vector3.Scale(boxCollider.size, transform.lossyScale);
+        // Calculate the center of the box in world space
+        var boxCenter = transform.TransformPoint(boxCollider.center);
 
-        for (int x = -1; x <= 1; x += 2)
+        // Apply lossyScale to the box size
+        var boxSize = Vector3.Scale(boxCollider.size, transform.lossyScale);
+
+        // Loop through each corner of the box
+        for (var x = -1; x <= 1; x += 2)
         {
-            for (int y = -1; y <= 1; y += 2)
+            for (var y = -1; y <= 1; y += 2)
             {
-                for (int z = -1; z <= 1; z += 2)
+                for (var z = -1; z <= 1; z += 2)
                 {
-                    Vector3 localCorner = new Vector3(x * boxSize.x, y * boxSize.y, z * boxSize.z) * 0.5f;
-                    Vector3 worldCorner = boxCenter + localCorner;
+                    // Define the local corner point
+                    var localCorner = new Vector3(x * boxSize.x, y * boxSize.y, z * boxSize.z) * 0.5f;
+
+                    // Transform the local corner to world space using rotation and position
+                    var worldCorner = boxCenter + transform.rotation * localCorner;
                     points.Add(worldCorner);
                 }
             }
@@ -185,8 +231,9 @@ private static List<Vector3> GetColliderPointsGlobal(Collider collider)
     // Handle CapsuleCollider
     else if (collider is CapsuleCollider capsuleCollider)
     {
-        var scale = transform.lossyScale;
-        GetCapsuleColliderPoints(capsuleCollider, ref points, scale);
+        Debug.Log("CapsuleCollider not supported due to issues with scaling");
+        // var scale = transform.lossyScale;
+        // GetCapsuleColliderPoints(capsuleCollider, ref points, scale, collider.transform.parent);
     }
     // Handle MeshCollider
     else if (collider is MeshCollider meshCollider)
@@ -205,6 +252,26 @@ private static List<Vector3> GetColliderPointsGlobal(Collider collider)
 
     return points;
 }
+
+public static void GetBoxColliderPoints(BoxCollider boxCollider, ref List<Vector3> points)
+{
+    Vector3 boxCenter = boxCollider.transform.TransformPoint(boxCollider.center);
+    Vector3 boxSize = Vector3.Scale(boxCollider.size, boxCollider.transform.lossyScale); // Account for scaling
+
+    // Calculate all 8 corners of the box in world space
+    for (int x = -1; x <= 1; x += 2)
+    {
+        for (int y = -1; y <= 1; y += 2)
+        {
+            for (int z = -1; z <= 1; z += 2)
+            {
+                Vector3 localCorner = boxCollider.center + new Vector3(x * boxSize.x, y * boxSize.y, z * boxSize.z) * 0.5f;
+                Vector3 worldCorner = boxCollider.transform.TransformPoint(localCorner);
+                points.Add(worldCorner);
+            }
+        }
+    }
+}
    
    private static List<Vector3> GetColliderPointsGlobal1(Collider collider)
     {
@@ -214,22 +281,7 @@ private static List<Vector3> GetColliderPointsGlobal(Collider collider)
         // Handle BoxCollider
         if (collider is BoxCollider boxCollider)
         {
-            Vector3 boxCenter = transform.TransformPoint(boxCollider.center);
-            Vector3 boxSize = Vector3.Scale(boxCollider.size, transform.lossyScale); // Account for scaling
-
-            // Calculate all 8 corners of the box in world space
-            for (int x = -1; x <= 1; x += 2)
-            {
-                for (int y = -1; y <= 1; y += 2)
-                {
-                    for (int z = -1; z <= 1; z += 2)
-                    {
-                        Vector3 localCorner = boxCollider.center + new Vector3(x * boxSize.x, y * boxSize.y, z * boxSize.z) * 0.5f;
-                        Vector3 worldCorner = transform.TransformPoint(localCorner);
-                        points.Add(worldCorner);
-                    }
-                }
-            }
+            GetBoxColliderPoints(boxCollider, ref points);
         }
         // Handle SphereCollider
         else if (collider is SphereCollider sphereCollider)
@@ -259,31 +311,9 @@ private static List<Vector3> GetColliderPointsGlobal(Collider collider)
         // Handle CapsuleCollider
         else if (collider is CapsuleCollider capsuleCollider)
         {
-            Vector3 center = transform.TransformPoint(capsuleCollider.center);
-            var lossyScale = transform.lossyScale;
-            float scaledRadius = capsuleCollider.radius * Mathf.Max(lossyScale.x, lossyScale.z); // Account for x/z scaling
-            float scaledHeight = Mathf.Max(0, capsuleCollider.height * lossyScale.y - 2 * scaledRadius); // Account for height scaling
-
-            // Top and bottom sphere centers in world space
-            Vector3 localUp = Vector3.up * scaledHeight * 0.5f;
-            Vector3 worldTop = transform.TransformPoint(capsuleCollider.center + localUp);
-            Vector3 worldBottom = transform.TransformPoint(capsuleCollider.center - localUp);
-
-            // Approximate the capsule (top, bottom, and middle)
-            int resolution = 12;
-            for (int i = 0; i < resolution; i++)
-            {
-                float theta = i * Mathf.PI * 2 / resolution;
-
-                // Circle points for top and bottom
-                Vector3 circlePoint = new Vector3(Mathf.Cos(theta), 0, Mathf.Sin(theta)) * scaledRadius;
-                points.Add(worldTop + transform.TransformVector(circlePoint));
-                points.Add(worldBottom + transform.TransformVector(circlePoint));
-
-                // Vertical segment (cylinder part)
-                Vector3 midPoint = Vector3.Lerp(worldBottom + transform.TransformVector(circlePoint), worldTop + transform.TransformVector(circlePoint), 0.5f);
-                points.Add(midPoint);
-            }
+            Debug.Log("CapsuleCollider not supported for convex hulls");
+            // GetBoxColliderPoints( capsuleCollider, ref points);
+            // GetCapsuleColliderPoints(capsuleCollider, ref points, collider.transform.lossyScale, collider.transform.parent);
         }
         // Handle MeshCollider
         else if (collider is MeshCollider meshCollider)
@@ -536,6 +566,7 @@ private static List<Vector3> GetColliderPointsGlobal(Collider collider)
       foreach (var hullCluster in hullClusters)
       {
           var colliderPoints = GetColliderPointsWorld(hullCluster);
+          // var colliderPoints = GetColliderPointsRelative(hullCluster);
           GenerateConvexHullMesh(colliderPoints);
       }
   }
@@ -553,6 +584,9 @@ private static List<Vector3> GetColliderPointsGlobal(Collider collider)
 #endif
   }
 
+
+  public Material HullPreviewMaterial;
+
   void GenerateConvexHullMesh(List<Vector3> points)
   {
     if (points.Count < 3)
@@ -569,7 +603,7 @@ private static List<Vector3> GetColliderPointsGlobal(Collider collider)
     var normals = new List<Vector3>();
 
     // Step 2: Generate convex hull and export the mesh
-    convexHullCalculator.GenerateHull(points, true, ref verts, ref tris,
+    convexHullCalculator.GenerateHull(points, false, ref verts, ref tris,
       ref normals);
 
     // Step 3: Create a Unity Mesh
@@ -589,11 +623,18 @@ private static List<Vector3> GetColliderPointsGlobal(Collider collider)
     meshFilter.mesh = mesh;
 
     // Step 6: Create and assign the material
-    var material = new Material(Shader.Find("Standard"))
+
+    if (!HullPreviewMaterial)
     {
-      color = Color.green
-    };
-    meshRenderer.material = material;
+        HullPreviewMaterial = new Material(Shader.Find("Standard"));
+    }
+        
+    var color = new Color(0f, 1f, 0f, 0.5f);
+    if (HullPreviewMaterial.color != color)
+    {
+        HullPreviewMaterial.SetColor(Color1, color);
+    }
+    meshRenderer.material = HullPreviewMaterial;
 
     // Optional: Adjust transform
     var transform1 = transform;
@@ -607,6 +648,144 @@ private static List<Vector3> GetColliderPointsGlobal(Collider collider)
   private void TestGenerateMesh()
   {
     GenerateMeshesFromChildColliders();
+  }
+  
+  // Test the method with a sample list of points
+  [ContextMenu("Generate Mesh From Points")]
+  private void TestGenerateMeshFromPoint()
+  {
+      var points = new Vector3[]
+      {
+          new Vector3(453.0362f, 29.7599f, 5362.737f),
+          new Vector3(453.0362f, 29.7599f, 5370.771f),
+          new Vector3(453.0362f, 30.39231f, 5362.737f),
+          new Vector3(453.0362f, 30.39231f, 5370.771f),
+          new Vector3(457.0362f, 29.7599f, 5362.737f),
+          new Vector3(457.0362f, 29.7599f, 5370.771f),
+          new Vector3(457.0362f, 30.39231f, 5362.737f),
+          new Vector3(457.0362f, 30.39231f, 5370.771f),
+          new Vector3(454.9006f, 29.9016f, 5365.494f),
+          new Vector3(454.9006f, 29.9016f, 5369.494f),
+          new Vector3(454.9006f, 30.4016f, 5365.494f),
+          new Vector3(454.9006f, 30.4016f, 5369.494f),
+          new Vector3(458.9006f, 29.9016f, 5365.494f),
+          new Vector3(458.9006f, 29.9016f, 5369.494f),
+          new Vector3(458.9006f, 30.4016f, 5365.494f),
+          new Vector3(458.9006f, 30.4016f, 5369.494f),
+          new Vector3(451.2051f, 29.883f, 5363.963f),
+          new Vector3(451.2051f, 29.883f, 5367.963f),
+          new Vector3(451.2051f, 30.383f, 5363.963f),
+          new Vector3(451.2051f, 30.383f, 5367.963f),
+          new Vector3(455.2051f, 29.883f, 5363.963f),
+          new Vector3(455.2051f, 29.883f, 5367.963f),
+          new Vector3(455.2051f, 30.383f, 5363.963f),
+          new Vector3(455.2051f, 30.383f, 5367.963f),
+          new Vector3(447.5082f, 30.1555f, 5362.463f),
+          new Vector3(447.5082f, 30.1555f, 5366.415f),
+          new Vector3(447.5082f, 30.38369f, 5362.463f),
+          new Vector3(447.5082f, 30.38369f, 5366.415f),
+          new Vector3(451.5243f, 30.1555f, 5362.463f),
+          new Vector3(451.5243f, 30.1555f, 5366.415f),
+          new Vector3(451.5243f, 30.38369f, 5362.463f),
+          new Vector3(451.5243f, 30.38369f, 5366.415f),
+          new Vector3(454.2187f, 30.39941f, 5368.808f),
+          new Vector3(454.2187f, 30.39941f, 5369.107f),
+          new Vector3(454.2187f, 32.39941f, 5368.808f),
+          new Vector3(454.2187f, 32.39941f, 5369.107f),
+          new Vector3(456.2187f, 30.39941f, 5368.808f),
+          new Vector3(456.2187f, 30.39941f, 5369.107f),
+          new Vector3(456.2187f, 32.39941f, 5368.808f),
+          new Vector3(456.2187f, 32.39941f, 5369.107f),
+          new Vector3(456.0665f, 30.40871f, 5369.573f),
+          new Vector3(456.0665f, 30.40871f, 5369.873f),
+          new Vector3(456.0665f, 32.40871f, 5369.573f),
+          new Vector3(456.0665f, 32.40871f, 5369.873f),
+          new Vector3(458.0665f, 30.40871f, 5369.573f),
+          new Vector3(458.0665f, 30.40871f, 5369.873f),
+          new Vector3(458.0665f, 32.40871f, 5369.573f),
+          new Vector3(458.0665f, 32.40871f, 5369.873f),
+          new Vector3(457.5971f, 30.40385f, 5365.877f),
+          new Vector3(457.5971f, 30.40385f, 5366.177f),
+          new Vector3(457.5971f, 32.40385f, 5365.877f),
+          new Vector3(457.5971f, 32.40385f, 5366.177f),
+          new Vector3(459.5971f, 30.40385f, 5365.877f),
+          new Vector3(459.5971f, 30.40385f, 5366.177f),
+          new Vector3(459.5971f, 32.40385f, 5365.877f),
+          new Vector3(459.5971f, 32.40385f, 5366.177f),
+          new Vector3(457.373f, 30.41214f, 5369.032f),
+          new Vector3(457.373f, 30.41214f, 5369.332f),
+          new Vector3(457.373f, 32.41214f, 5369.032f),
+          new Vector3(457.373f, 32.41214f, 5369.332f),
+          new Vector3(459.373f, 30.41214f, 5369.032f),
+          new Vector3(459.373f, 30.41214f, 5369.332f),
+          new Vector3(459.373f, 32.41214f, 5369.032f),
+          new Vector3(459.373f, 32.41214f, 5369.332f),
+          new Vector3(458.1383f, 30.40972f, 5367.184f),
+          new Vector3(458.1383f, 30.40972f, 5367.483f),
+          new Vector3(458.1383f, 32.40972f, 5367.184f),
+          new Vector3(458.1383f, 32.40972f, 5367.483f),
+          new Vector3(460.1383f, 30.40972f, 5367.184f),
+          new Vector3(460.1383f, 30.40972f, 5367.483f),
+          new Vector3(460.1383f, 32.40972f, 5367.184f),
+          new Vector3(460.1383f, 32.40972f, 5367.483f),
+          new Vector3(447.2122f, 30.36102f, 5363.974f),
+          new Vector3(447.2122f, 30.36102f, 5365.974f),
+          new Vector3(447.2122f, 31.36102f, 5363.974f),
+          new Vector3(447.2122f, 31.36102f, 5365.974f),
+          new Vector3(449.2122f, 30.36102f, 5363.974f),
+          new Vector3(449.2122f, 30.36102f, 5365.974f),
+          new Vector3(449.2122f, 31.36102f, 5363.974f),
+          new Vector3(449.2122f, 31.36102f, 5365.974f),
+          new Vector3(457.3654f, 32.41212f, 5369.026f),
+          new Vector3(457.3654f, 32.41212f, 5369.326f),
+          new Vector3(457.3654f, 34.41212f, 5369.026f),
+          new Vector3(457.3654f, 34.41212f, 5369.326f),
+          new Vector3(459.3654f, 32.41212f, 5369.026f),
+          new Vector3(459.3654f, 32.41212f, 5369.326f),
+          new Vector3(459.3654f, 34.41212f, 5369.026f),
+          new Vector3(459.3654f, 34.41212f, 5369.326f),
+          new Vector3(458.1307f, 32.40969f, 5367.178f),
+          new Vector3(458.1307f, 32.40969f, 5367.478f),
+          new Vector3(458.1307f, 34.40969f, 5367.178f),
+          new Vector3(458.1307f, 34.40969f, 5367.478f),
+          new Vector3(460.1307f, 32.40969f, 5367.178f),
+          new Vector3(460.1307f, 32.40969f, 5367.478f),
+          new Vector3(460.1307f, 34.40969f, 5367.178f),
+          new Vector3(460.1307f, 34.40969f, 5367.478f),
+          new Vector3(448.3583f, 30.35737f, 5362.051f),
+          new Vector3(448.3583f, 30.35737f, 5362.351f),
+          new Vector3(448.3583f, 32.35737f, 5362.051f),
+          new Vector3(448.3583f, 32.35737f, 5362.351f),
+          new Vector3(450.3583f, 30.35737f, 5362.051f),
+          new Vector3(450.3583f, 30.35737f, 5362.351f),
+          new Vector3(450.3583f, 32.35737f, 5362.051f),
+          new Vector3(450.3583f, 32.35737f, 5362.351f),
+          new Vector3(446.2864f, 30.35637f, 5364.44f),
+          new Vector3(446.2864f, 30.35637f, 5364.74f),
+          new Vector3(446.2864f, 32.35637f, 5364.44f),
+          new Vector3(446.2864f, 32.35637f, 5364.74f),
+          new Vector3(448.2864f, 30.35637f, 5364.44f),
+          new Vector3(448.2864f, 30.35637f, 5364.74f),
+          new Vector3(448.2864f, 32.35637f, 5364.44f),
+          new Vector3(448.2864f, 32.35637f, 5364.74f),
+          new Vector3(447.0518f, 30.35394f, 5362.592f),
+          new Vector3(447.0518f, 30.35394f, 5362.892f),
+          new Vector3(447.0518f, 32.35394f, 5362.592f),
+          new Vector3(447.0518f, 32.35394f, 5362.892f),
+          new Vector3(449.0518f, 30.35394f, 5362.592f),
+          new Vector3(449.0518f, 30.35394f, 5362.892f),
+          new Vector3(449.0518f, 32.35394f, 5362.592f),
+          new Vector3(449.0518f, 32.35394f, 5362.892f),
+          new Vector3(448.3506f, 32.35735f, 5362.045f),
+          new Vector3(448.3506f, 32.35735f, 5362.345f),
+          new Vector3(448.3506f, 34.35735f, 5362.045f),
+          new Vector3(448.3506f, 34.35735f, 5362.345f),
+          new Vector3(450.3506f, 32.35735f, 5362.045f),
+          new Vector3(450.3506f, 32.35735f, 5362.345f),
+          new Vector3(450.3506f, 34.35735f, 5362.045f),
+          new Vector3(450.3506f, 34.35735f, 5362.345f),
+      }.ToList();
+    GenerateConvexHullMesh(points);
   }
 }
 }

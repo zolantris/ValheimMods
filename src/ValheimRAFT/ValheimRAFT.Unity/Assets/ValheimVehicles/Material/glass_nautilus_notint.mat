@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: glass_nautilus_green_broken
+  m_Name: glass_nautilus_notint
   m_Shader: {fileID: 4800000, guid: 105522d5bc0394840bd92397ff18516e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -139,7 +139,7 @@ Material:
     - _Wet: 1
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 50, g: 50, b: 50, a: 0.5}
+    - _Color: {r: 0, g: 1, b: 0, a: 0.5}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _LogoColor: {r: 0.8160377, g: 1, b: 0.8220693, a: 0.42745098}
     - _MainColor: {r: 1, g: 1, b: 1, a: 0.21176471}

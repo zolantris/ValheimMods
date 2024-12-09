@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3294244539
+CRC: 3579827985
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 66c75fdb734e2df4a98da04a02b13143
+    Hash: 88ca8fda4b2f32a9396ab6322b60cc7a
   TypeTreeHash:
     serializedVersion: 2
     Hash: c06587813f50b4ac49249ee2d68a3382
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 66c75fdb734e2df4a98da04a02b13143
+    Hash: 88ca8fda4b2f32a9396ab6322b60cc7a
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -93,6 +93,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_window_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_wood_4x4.prefab
+- Assets/ValheimVehicles/Material/glass_nautilus_notint.mat
 - Assets/ValheimVehicles/Material/WaterHeightMaterial.mat
 - Assets/ValheimVehicles/Prefabs/hull_center_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib.prefab

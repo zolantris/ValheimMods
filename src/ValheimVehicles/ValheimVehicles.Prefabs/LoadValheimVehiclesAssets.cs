@@ -22,6 +22,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
   public static Material TransparentDepthMaskMaterial = null!;
   public static Material WaterHeightMaterial = null!;
+  public static Material GlassNautilusNoTint = null!;
+
 
   // hull
   public static GameObject ShipHullWoodAsset = null!;
@@ -140,6 +142,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
     _bundle = assetBundle;
     WaterHeightMaterial =
       assetBundle.LoadAsset<Material>("WaterHeightMaterial.mat");
+    GlassNautilusNoTint =
+      assetBundle.LoadAsset<Material>("glass_nautilus_notint.mat");
     // SelectiveMaskMat =
     //   assetBundle.LoadAsset<Material>("SelectiveMaskMat.mat");
     //
