@@ -326,27 +326,6 @@ public class ConvexHullMeshGenerator : MonoBehaviour
         return false;
     }
 
-  public List<Collider> GetColliderCluster(IEnumerable<GameObject> gameObjects)
-  {
-    var colliders = new List<Collider>();
-    
-    foreach (var go in gameObjects)
-    {
-      Debug.Log(go.transform.name);
-      var goColliders = go.GetComponentsInChildren<Collider>();
-      var goTopLevelCollider = go.GetComponent<Collider>();
-      if (goTopLevelCollider)
-      {
-        colliders.Add(goTopLevelCollider);
-      }
-      if (goColliders != null)
-      {
-        colliders.AddRange(goColliders);
-      }
-    }
-    return colliders;
-  }
-
   public float DistanceThreshold = 0.1f;
   
   public List<GameObject> GeneratedMeshGameObjects = new();

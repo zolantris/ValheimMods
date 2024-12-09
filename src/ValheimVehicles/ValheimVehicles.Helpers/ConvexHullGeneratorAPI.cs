@@ -5,9 +5,11 @@ using ValheimVehicles.Plugins;
 
 namespace ValheimVehicles.Helpers;
 
-[ExecuteInEditMode]
-public class ConvexHullMeshGenerator : MonoBehaviour
+public class ConvexHullMeshGeneratorAPI : MonoBehaviour
 {
+  public static Vector3 transformPreviewOffset = new(1, 0, 0);
+  public static float DistanceThreshold = 0.1f;
+
   /// <summary>
   /// Gets all local-space points of a collider, adjusted for the object's scale.
   /// </summary>
@@ -195,29 +197,6 @@ public class ConvexHullMeshGenerator : MonoBehaviour
       .ToList();
   }
 
-  public Vector3 transformPreviewOffset = new Vector3(1, 0, 0);
-
-  private void Start()
-  {
-    GenerateMeshesFromChildColliders();
-  }
-
-  public void OnEnable()
-  {
-    GenerateMeshesFromChildColliders();
-  }
-
-  public void OnDisable()
-  {
-    DeleteMeshesFromChildColliders();
-  }
-
-  public void FixedUpdate()
-  {
-    GenerateMeshesFromChildColliders();
-  }
-
-
   /// <summary>
   /// Groups colliders by proximity, handling nested or overlapping colliders correctly.
   /// </summary>
@@ -334,8 +313,8 @@ public class ConvexHullMeshGenerator : MonoBehaviour
           return true;
 
         // Proximity check
-        Vector3 closestPoint = collider1.ClosestPoint(collider2.bounds.center);
-        float distance =
+        var closestPoint = collider1.ClosestPoint(collider2.bounds.center);
+        var distance =
           Vector3.Distance(collider2.bounds.center, closestPoint);
         if (distance <= proximityThreshold)
           return true;
@@ -345,14 +324,11 @@ public class ConvexHullMeshGenerator : MonoBehaviour
     return false;
   }
 
-  public float DistanceThreshold = 0.1f;
-
-  public List<GameObject> GeneratedMeshGameObjects = new();
-
-  public void DeleteMeshesFromChildColliders()
+  public static void DeleteMeshesFromChildColliders(
+    List<GameObject> generateObjectList)
   {
-    var instances = GeneratedMeshGameObjects.ToList();
-    GeneratedMeshGameObjects.Clear();
+    var instances = generateObjectList.ToList();
+    generateObjectList.Clear();
 
     foreach (var instance in instances)
     {
@@ -372,27 +348,31 @@ public class ConvexHullMeshGenerator : MonoBehaviour
     return result;
   }
 
-  public void GenerateMeshesFromChildColliders()
+  public static void GenerateMeshesFromChildColliders(
+    GameObject targetGameObject, List<GameObject> generateObjectList,
+    float distanceThreshold)
   {
-    if (GeneratedMeshGameObjects.Count > 0)
+    if (generateObjectList.Count > 0)
     {
-      DeleteMeshesFromChildColliders();
+      DeleteMeshesFromChildColliders(generateObjectList);
     }
 
-    var childGameObjects = GetAllChildGameObjects(gameObject);
+    var childGameObjects = GetAllChildGameObjects(targetGameObject);
     var hullClusters =
-      GroupCollidersByProximity(childGameObjects.ToList(), DistanceThreshold);
+      GroupCollidersByProximity(childGameObjects.ToList(), distanceThreshold);
+
     Debug.Log($"HullCluster Count: {hullClusters.Count}");
 
     foreach (var hullCluster in hullClusters)
     {
       var colliderPoints = GetColliderPointsRelative(hullCluster);
-      GenerateConvexHullMesh(colliderPoints);
+      GenerateConvexHullMesh(colliderPoints, generateObjectList,
+        targetGameObject.transform);
     }
   }
 
   // Convex hull calculator instance
-  private ConvexHullCalculator
+  private static readonly ConvexHullCalculator
     convexHullCalculator = new();
 
   private static void AdaptiveDestroy(GameObject gameObject)
@@ -404,7 +384,9 @@ public class ConvexHullMeshGenerator : MonoBehaviour
 #endif
   }
 
-  void GenerateConvexHullMesh(List<Vector3> points)
+  public static void GenerateConvexHullMesh(
+    List<Vector3> points,
+    List<GameObject> generateObjectList, Transform parentObjTransform)
   {
     if (points.Count < 3)
     {
@@ -433,8 +415,8 @@ public class ConvexHullMeshGenerator : MonoBehaviour
 
     // Step 5: Create a new GameObject to display the mesh
     var go =
-      new GameObject($"ConvexHullPreview{GeneratedMeshGameObjects.Count}");
-    GeneratedMeshGameObjects.Add(go);
+      new GameObject($"ConvexHullPreview{generateObjectList.Count}");
+    generateObjectList.Add(go);
     var meshFilter = go.AddComponent<MeshFilter>();
     var meshRenderer = go.AddComponent<MeshRenderer>();
 
@@ -448,15 +430,8 @@ public class ConvexHullMeshGenerator : MonoBehaviour
     meshRenderer.material = material;
 
     // Optional: Adjust transform
-    var transform1 = transform;
-    go.transform.position = transform1.position + transformPreviewOffset;
-    go.transform.rotation = transform1.rotation;
-  }
-
-  // Test the method with a sample list of points
-  [ContextMenu("Generate Mesh")]
-  private void TestGenerateMesh()
-  {
-    GenerateMeshesFromChildColliders();
+    go.transform.position =
+      parentObjTransform.position + transformPreviewOffset;
+    go.transform.rotation = parentObjTransform.rotation;
   }
 }

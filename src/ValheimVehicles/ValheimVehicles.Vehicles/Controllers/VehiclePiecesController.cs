@@ -2792,7 +2792,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         vehicleTransform.position;
       previewObject.transform.rotation =
         vehicleTransform.rotation;
-      previewObject.transform.SetParent(vehicleTransform);
+      // previewObject.transform.SetParent(vehicleTransform);
+      // for now only set to piece parent to prevent problems.
+      previewObject.transform.SetParent(transform);
       previewObject.transform.localPosition = Vector3.zero;
     }
   }
