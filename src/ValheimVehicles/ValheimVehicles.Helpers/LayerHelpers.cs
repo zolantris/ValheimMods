@@ -14,6 +14,11 @@ public static class LayerHelpers
     "static_solid", "Default_small", "character_net", "vehicle",
     LayerMask.LayerToName(29));
 
+  public static LayerMask BlockingColliderExcludeLayers = LayerMask.GetMask(
+    "character", "character_net", "character_trigger", "viewbox",
+    "character_net", "character_nonenv",
+    LayerMask.LayerToName(29));
+
   public static List<string> ActiveLayersForBlockingMask = new List<string>();
 
   public static bool IsContainedWithinMask(int layer, LayerMask mask)
