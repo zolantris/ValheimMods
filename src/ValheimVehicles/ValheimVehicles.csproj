@@ -19,6 +19,8 @@
     <Import Project="$(SolutionDir)/valheim.targets"/>
 
     <ItemGroup>
+        <Compile Include="ValheimVehicles.Plugins\ConvexHullGenerator.cs"/>
+        <Compile Include="ValheimVehicles.Plugins\Vector3Logger.cs"/>
         <Compile Include="ValheimVehiclesPlugin.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
     </ItemGroup>
@@ -32,7 +34,6 @@
         <Folder Include="ValheimVehicles.Patches\"/>
         <Folder Include="ValheimVehicles.Helpers\"/>
         <Folder Include="ValheimVehicles.ModSupport\"/>
-        <Folder Include="Plugins\"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\SentryUnityWrapper\SentryUnityWrapper.csproj"/>

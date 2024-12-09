@@ -1982,7 +1982,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void SyncVehicleBounds()
   {
-    PiecesController?.DebouncedRebuildBounds();
+    if (PiecesController == null) return;
+    PiecesController.DebouncedRebuildBounds();
   }
 
   public void UpdateControlls(float dt) => UpdateControls(dt);

@@ -16,6 +16,11 @@ public static class LayerHelpers
 
   public static List<string> ActiveLayersForBlockingMask = new List<string>();
 
+  public static bool IsContainedWithinMask(int layer, LayerMask mask)
+  {
+    return (mask.value & (1 << layer)) != 0;
+  }
+
   // todo fix jitters with low headroom at water level
   // [HarmonyPostfix(typeof(GameCamera), nameof(GameCamera.UpdateNearClipping))]
   public static List<int> GetActiveLayers(LayerMask mask)

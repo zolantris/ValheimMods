@@ -272,7 +272,7 @@ namespace ValheimVehicles.Plugins
     /// <summary>
     ///   Generate a convex hull from points in points array, and store the
     ///   mesh in Unity-friendly format in verts and tris. If splitVerts is
-    ///   true, the the verts will be split, if false, the same vert will be
+    ///   true, the verts will be split, if false, the same vert will be
     ///   used for more than one triangle.
     /// </summary>
     public void GenerateHull(

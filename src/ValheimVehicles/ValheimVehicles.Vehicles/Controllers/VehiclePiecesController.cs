@@ -15,6 +15,8 @@ using ValheimRAFT.Util;
 using ValheimVehicles.Config;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.LayerUtils;
+using ValheimVehicles.Plugins;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Propulsion.Rudder;
@@ -244,6 +246,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   private Vector2i m_sector;
   private Vector2i m_serverSector;
   private Bounds _vehicleBounds;
+  private Bounds _pendingVehicleBounds;
+  private Bounds _pendingHullBounds;
   private Bounds _hullBounds;
 
   private BoxCollider m_blockingcollider =>
@@ -572,8 +576,15 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   private void StartClientServerUpdaters()
   {
+    if (!(bool)ZNet.instance)
+    {
+      return;
+    }
+
+    Logger.LogMessage($"IsDedicated : {ZNet.instance.IsDedicated()}");
     if (ZNet.instance.IsDedicated() && _serverUpdatePiecesCoroutine == null)
     {
+      Logger.LogMessage("Calling UpdatePiecesInEachSectorWorker");
       _serverUpdatePiecesCoroutine =
         StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
@@ -586,12 +597,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     HasRunCleanup = false;
     MonoUpdaterInstances.Add(this);
     InitializationTimer.Restart();
-
-    if (!(bool)ZNet.instance)
-    {
-      return;
-    }
-
     StartClientServerUpdaters();
   }
 
@@ -1077,6 +1082,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
  */
   public IEnumerator UpdatePiecesInEachSectorWorker()
   {
+    Logger.LogMessage("UpdatePiecesInEachSectorWorker started");
     while (isActiveAndEnabled)
     {
       if (!VehicleInstance?.NetView)
@@ -1099,6 +1105,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       yield return new WaitForFixedUpdate();
     }
 
+    Logger.LogMessage("UpdatePiecesInEachSectorWorker finished");
     // if we get here we need to restart this updater and this requires the coroutine to be null
     _serverUpdatePiecesCoroutine = null;
   }
@@ -2509,18 +2516,27 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     UpdateMass(netView);
 
     // Handle bounds rebuilding
-    switch (isNew)
+    if (shouldRebuildBounds)
     {
-      case true when shouldRebuildBounds:
-        RebuildBounds();
-        break;
-      case true:
-        EncapsulateBounds(netView.gameObject);
-        break;
-      case false:
-        DebouncedRebuildBounds();
-        break;
+      RebuildBounds();
     }
+    else
+    {
+      DebouncedRebuildBounds();
+    }
+
+    // switch (isNew)
+    // {
+    //   case true when shouldRebuildBounds:
+    //     RebuildBounds();
+    //     break;
+    //   case true:
+    //     EncapsulateBounds(netView.gameObject);
+    //     break;
+    //   case false:
+    //     DebouncedRebuildBounds();
+    //     break;
+    // }
 
     if (hasDebug)
     {
@@ -2561,18 +2577,20 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var firstRudder = m_rudderPieces.First();
     if (firstRudder == null)
     {
+      var bounds = m_floatcollider.bounds;
       VehicleInstance.Instance.ShipEffectsObj.transform.localPosition =
         new Vector3(m_floatcollider.transform.localPosition.x,
-          m_floatcollider.bounds.center.y,
-          m_floatcollider.bounds.min.z);
+          bounds.center.y,
+          bounds.min.z);
       return;
     }
 
+    var localPosition = firstRudder.transform.localPosition;
     VehicleInstance.Instance.ShipEffectsObj.transform.localPosition =
       new Vector3(
-        firstRudder.transform.localPosition.x,
+        localPosition.x,
         m_floatcollider.bounds.center.y,
-        firstRudder.transform.localPosition.z);
+        localPosition.z);
   }
 
   // pushes the collider down a bit to have the boat spawn above water.
@@ -2580,7 +2598,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   private float GetAverageFloatHeightFromHulls()
   {
-    _hullBounds = new Bounds();
+    _pendingHullBounds = new Bounds();
 
     var totalHeight = 0f;
 
@@ -2594,7 +2612,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
           hullPiece.gameObject);
         totalHeight += hullPiece.transform.localPosition.y;
         if (newBounds == null) continue;
-        _hullBounds = newBounds.Value;
+        _pendingHullBounds = newBounds.Value;
       }
     }
     else
@@ -2606,9 +2624,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
           piece.gameObject);
         totalHeight += piece.transform.localPosition.y;
         if (newBounds == null) continue;
-        _hullBounds = newBounds.Value;
+        _pendingHullBounds = newBounds.Value;
       }
     }
+
+    _hullBounds = _pendingHullBounds;
 
 
     switch (PhysicsConfig.HullFloatationColliderLocation.Value)
@@ -2646,7 +2666,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
    */
   private void RotateVehicleForwardPosition()
   {
-    if (VehicleInstance.MovementController == null)
+    if (VehicleInstance?.MovementController == null)
     {
       return;
     }
@@ -2658,9 +2678,123 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       return;
     }
 
-    VehicleInstance?.Instance?.MovementController?.UpdateShipDirection(
+    VehicleInstance.MovementController.UpdateShipDirection(
       firstPiece.transform
         .localRotation);
+  }
+
+  public bool useWorldColliderPosition = false;
+
+  public void RebuildBoundsWithConvexHull()
+  {
+    if (!(bool)m_floatcollider || !(bool)m_onboardcollider ||
+        !(bool)m_blockingcollider)
+    {
+      return;
+    }
+
+    RotateVehicleForwardPosition();
+    Physics.SyncTransforms();
+
+    // this will not update the vehicle bounds until after things have been run.
+    _pendingHullBounds = new Bounds();
+    _pendingVehicleBounds = new Bounds();
+
+    List<Vector3> vehicleColliderPoints = [];
+
+    foreach (var netView in m_pieces.ToList())
+    {
+      if (!netView)
+      {
+        m_pieces.Remove(netView);
+        continue;
+      }
+
+      var colliders = netView.GetComponentsInChildren<Collider>();
+      if (colliders == null) continue;
+
+      var colliderInPhysicalLayer = colliders.Where(x =>
+        LayerHelpers.IsContainedWithinMask(x.gameObject.layer,
+          LayerHelpers.PhysicalLayers)).ToList();
+      if (colliderInPhysicalLayer.Count == 0) continue;
+
+      vehicleColliderPoints.AddRange(ColliderPointsExtractor
+        .GetColliderPointsRelative(colliderInPhysicalLayer));
+    }
+
+    OnBoundsChangeUpdateShipColliders();
+
+    // for testing logic directly
+    if (ModEnvironment.IsDebug)
+    {
+      Vector3Logger.LogPointsForInspector(vehicleColliderPoints);
+    }
+
+    GenerateConvexHullMesh(vehicleColliderPoints);
+  }
+
+  private GameObject previewObject;
+
+  private readonly ConvexHullCalculator
+    _convexHullCalculator = new();
+
+  public void GenerateConvexHullMesh(List<Vector3> points)
+  {
+    // Step 4: Remove previous preview instance
+    if (previewObject != null)
+    {
+      Destroy(previewObject);
+    }
+
+    if (points.Count < 3)
+    {
+      Logger.LogError("Not enough points to generate a convex hull.");
+      return;
+    }
+
+    // Step 1: Prepare output containers
+    var verts = new List<Vector3>();
+    var tris = new List<int>();
+    var normals = new List<Vector3>();
+
+    // Step 2: Generate convex hull and export the mesh
+    _convexHullCalculator.GenerateHull(points, true, ref verts, ref tris,
+      ref normals);
+
+    // Step 3: Create a Unity Mesh
+    var mesh = new Mesh
+    {
+      vertices = verts.ToArray(),
+      triangles = tris.ToArray(),
+      normals = normals.ToArray()
+    };
+
+    // Step 5: Create a new GameObject to display the mesh
+    previewObject = new GameObject("ConvexHullPreview");
+    var meshFilter = previewObject.AddComponent<MeshFilter>();
+    var meshRenderer = previewObject.AddComponent<MeshRenderer>();
+
+    meshFilter.mesh = mesh;
+
+    // Step 6: Create and assign the material
+    var material = new Material(LoadValheimAssets.CustomPieceShader)
+    {
+      color = Color.green
+    };
+    material = FixMaterial(material);
+    meshRenderer.material = material;
+
+    if (VehicleInstance?.Instance != null)
+    {
+      // Optional: Adjust transform
+      var vehicleTransform = VehicleInstance.Instance.transform;
+      previewObject.transform.position =
+        vehicleTransform.position;
+      previewObject.transform.rotation =
+        vehicleTransform.rotation;
+      previewObject.transform.SetParent(vehicleTransform);
+      previewObject.transform.localPosition = Vector3.zero;
+    }
   }
 
   /**
@@ -2669,6 +2803,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
    */
   public void RebuildBounds()
   {
+    RebuildBoundsWithConvexHull();
+
     if (!(bool)m_floatcollider || !(bool)m_onboardcollider ||
         !(bool)m_blockingcollider)
     {
@@ -2696,11 +2832,19 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     OnBoundsChangeUpdateShipColliders();
   }
 
+  /// <summary>
+  /// TODO do something with vehicle convex hull instead.
+  /// </summary>
+  public void OnBoundsChangeUpdateShipCollidersForConvexHull()
+  {
+  }
 
 // todo move this logic to a file that can be tested
 // todo compute the float colliderY transform so it aligns with bounds if player builds underneath boat
   public void OnBoundsChangeUpdateShipColliders()
   {
+    OnBoundsChangeUpdateShipCollidersForConvexHull();
+
     var minColliderSize = 0.1f;
     if (!(bool)m_blockingcollider || !(bool)m_floatcollider ||
         !(bool)m_onboardcollider)
