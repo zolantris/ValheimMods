@@ -13,6 +13,7 @@ using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Util;
 using ValheimVehicles.Config;
+using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
@@ -544,16 +545,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       ActiveInstances.Add(VehicleInstance.PersistentZdoId, this);
     }
 
-    /*
-     * This should work on both client and server, but the garbage collecting should only apply if the ZDOs are not persistent
-     */
-    if (ZNet.instance.IsDedicated())
-    {
-      _serverUpdatePiecesCoroutine =
-        StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
-    }
-
-    StartActivatePendingPieces();
+    StartClientServerUpdaters();
   }
 
   private void OnDisable()
@@ -578,23 +570,29 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     CleanUp();
   }
 
+  private void StartClientServerUpdaters()
+  {
+    if (ZNet.instance.IsDedicated() && _serverUpdatePiecesCoroutine == null)
+    {
+      _serverUpdatePiecesCoroutine =
+        StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
+    }
+
+    StartActivatePendingPieces();
+  }
+
   private void OnEnable()
   {
     HasRunCleanup = false;
     MonoUpdaterInstances.Add(this);
     InitializationTimer.Restart();
 
-    StartActivatePendingPieces();
     if (!(bool)ZNet.instance)
     {
       return;
     }
 
-    if (ZNet.instance.IsDedicated() && _serverUpdatePiecesCoroutine == null)
-    {
-      _serverUpdatePiecesCoroutine =
-        StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
-    }
+    StartClientServerUpdaters();
   }
 
 
@@ -898,6 +896,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     mBedPiece.m_nview.m_zdo.SetPosition(mBedPiece.m_nview.transform.position);
   }
 
+  /// <summary>
+  /// BedPieces are not kept in the raft ball, so that a bed is always placed in the correct area if a player must spawn in it.
+  /// </summary>
   public void UpdateBedPieces()
   {
     foreach (var mBedPiece in m_bedPieces)
@@ -1087,7 +1088,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         m_allPieces.TryGetValue(VehicleInstance.PersistentZdoId, out var list);
       if (list == null || !output)
       {
-        yield return new WaitForSeconds(Math.Max(2f,
+        yield return new WaitForSeconds(Math.Max(
+          ModEnvironment.IsDebug ? 0.05f : 2f,
           ValheimRaftPlugin.Instance.ServerRaftUpdateZoneInterval
             .Value));
         continue;
@@ -1096,6 +1098,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       yield return UpdatePiecesWorker(list);
       yield return new WaitForFixedUpdate();
     }
+
+    // if we get here we need to restart this updater and this requires the coroutine to be null
+    _serverUpdatePiecesCoroutine = null;
   }
 
   // this needs to be connected to ropeladder too.
