@@ -152,7 +152,7 @@ public class ShipHullPrefab : IRegisterPrefab
     // todo might need to add a inverse description
     SetupHullPrefab(prefabInverse, prefabName,
       hullMaterial, 1, prefabInverse.transform.FindDeepChild("mesh"),
-      ["mesh"]);
+      ["mesh"], true);
   }
 
   public void RegisterHullRibCorner(
@@ -227,7 +227,8 @@ public class ShipHullPrefab : IRegisterPrefab
     string prefabName,
     string hullMaterial,
     int materialCount,
-    Transform? hoistParent = null, string[]? hoistFilters = null)
+    Transform? hoistParent = null, string[]? hoistFilters = null,
+    bool isInverse = false)
   {
     var wnt = PrefabRegistryHelpers.SetWearNTear(prefab);
     PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.Iron);
@@ -238,7 +239,7 @@ public class ShipHullPrefab : IRegisterPrefab
     PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-    PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab);
+    PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab, isInverse);
 
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
       hoistParent ?? prefab.transform,

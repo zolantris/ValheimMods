@@ -525,7 +525,8 @@ public abstract class PrefabRegistryHelpers
       .Name);
   }
 
-  public static Piece AddPieceForPrefab(string prefabName, GameObject prefab)
+  public static Piece AddPieceForPrefab(string prefabName, GameObject prefab,
+    bool isInverse = false)
   {
     var pieceInformation = PieceDataDictionary.GetValueSafe(prefabName);
 
@@ -534,6 +535,14 @@ public abstract class PrefabRegistryHelpers
     piece.m_name = pieceInformation.Name;
     piece.m_description = pieceInformation.Description;
     piece.m_icon = pieceInformation.Icon;
+
+    // todo yet another helper might be needed.
+    if (isInverse)
+    {
+      piece.m_name = $"$valheim_vehicles_inverse {piece.m_name}";
+      piece.m_description =
+        $"$valheim_vehicles_inverse_desc {piece.m_description}";
+    }
 
     return piece;
   }

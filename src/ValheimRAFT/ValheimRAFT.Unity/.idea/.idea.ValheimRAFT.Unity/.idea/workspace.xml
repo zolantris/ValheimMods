@@ -6,18 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="9eb05097-9d84-4b87-8e9a-0e73fcf3150e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/../../../libs" beforeDir="false" afterPath="$PROJECT_DIR$/../../../libs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/AssetBundle.manifest" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/../AssetBundle/valheim-vehicles.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Assets/Translations/English/valheimraft.json" beforeDir="false" afterPath="$PROJECT_DIR$/../Assets/Translations/English/valheimraft.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_2x4.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_2x4.mat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_iron.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_iron.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_wood.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_wood.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_corner_floor_right_iron.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_corner_floor_right_iron.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_corner_floor_right_wood.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_corner_floor_right_wood.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_rib_corner_right_iron.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/hull_rib_corner_right_iron.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/shared_nose_floor_left.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Prefabs/shared_nose_floor_left.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryHelpers.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryHelpers.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/ShipHullPrefab.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/ShipHullPrefab.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehiclePiecesController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehiclePiecesController.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -190,7 +183,7 @@
       <workItem from="1730955051216" duration="8034000" />
       <workItem from="1730964261074" duration="701000" />
       <workItem from="1731143420981" duration="838000" />
-      <workItem from="1733726631212" duration="22256000" />
+      <workItem from="1733726631212" duration="22572000" />
     </task>
     <servers />
   </component>

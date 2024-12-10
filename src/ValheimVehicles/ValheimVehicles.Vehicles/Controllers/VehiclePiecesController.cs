@@ -2817,9 +2817,18 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       blockingColliderCenterOffset;
 
     // Assign all the colliders And include offset to avoid Jumps in height if below ocean or flying
-    m_blockingcollider.size = blockingColliderSize;
-    m_blockingcollider.transform.localPosition =
-      blockingColliderCenterOffset;
+    if (convexHullMeshes.Count > 0)
+    {
+      m_blockingcollider.size = Vector3.zero;
+      m_blockingcollider.transform.localPosition =
+        blockingColliderCenterOffset;
+    }
+    else
+    {
+      m_blockingcollider.size = blockingColliderSize;
+      m_blockingcollider.transform.localPosition =
+        blockingColliderCenterOffset;
+    }
 
     m_floatcollider.size = floatColliderSize;
     m_floatcollider.transform.localPosition =
@@ -2859,6 +2868,17 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     foreach (var t in ramColliders)
     {
       if (t == null) continue;
+
+      // Important so the dynamic-hulls are not considered a collidable object
+      foreach (var convexHullMesh in convexHullMeshes)
+      {
+        var collider = convexHullMesh.GetComponent<Collider>();
+        if (collider != null)
+        {
+          Physics.IgnoreCollision(t, collider, true);
+        }
+      }
+
       if (m_floatcollider) Physics.IgnoreCollision(t, m_floatcollider, true);
       if (m_blockingcollider)
         Physics.IgnoreCollision(t, m_blockingcollider, true);
