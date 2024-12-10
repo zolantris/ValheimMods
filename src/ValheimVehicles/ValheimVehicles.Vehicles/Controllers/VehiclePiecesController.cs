@@ -249,6 +249,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   private Vector2i m_sector;
   private Vector2i m_serverSector;
   private Bounds _vehicleBounds;
+  private Bounds _vehicleHullBounds;
   private Bounds _pendingVehicleBounds;
   private Bounds _pendingHullBounds;
   private Bounds _hullBounds;
@@ -792,10 +793,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
 
     if (m_body.collisionDetectionMode !=
-        CollisionDetectionMode.Discrete)
+        PhysicsConfig.vehiclePiecesShipCollisionDetectionMode.Value)
     {
       m_body.collisionDetectionMode =
-        CollisionDetectionMode.Discrete;
+        PhysicsConfig.vehiclePiecesShipCollisionDetectionMode.Value;
     }
 
     if (m_fixedJoint.connectedBody)
@@ -2720,7 +2721,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     RotateVehicleForwardPosition();
     Physics.SyncTransforms();
 
-    _vehicleBounds = new Bounds();
+    Bounds? tempBounds = null;
 
     // todo this is not accurate, fix it.
     if (convexHullMeshes.Count > 0)
@@ -2728,14 +2729,27 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       foreach (var convexHullMesh in convexHullMeshes)
       {
         var meshRenderer = convexHullMesh.GetComponent<MeshRenderer>();
-        if (meshRenderer != null)
+        if (meshRenderer == null) continue;
+        var localCenter =
+          transform.InverseTransformPoint(meshRenderer.bounds.center);
+
+        if (tempBounds == null)
         {
-          var localCenter =
-            transform.InverseTransformPoint(meshRenderer.bounds.center);
-          _vehicleBounds.Encapsulate(new Bounds(
+          tempBounds = new Bounds(localCenter,
+            meshRenderer.bounds.size);
+        }
+        else
+        {
+          tempBounds.Value.Encapsulate(new Bounds(
             localCenter,
             meshRenderer.bounds.size));
         }
+      }
+
+      if (tempBounds != null)
+      {
+        _vehicleBounds = tempBounds.Value;
+        _vehicleHullBounds = tempBounds.Value;
       }
 
       OnBoundsChangeUpdateShipColliders();
@@ -2787,15 +2801,15 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
      */
     var averageFloatHeight = GetAverageFloatHeightFromHulls();
     var floatColliderCenterOffset =
-      new Vector3(_vehicleBounds.center.x, averageFloatHeight,
-        _vehicleBounds.center.z);
+      new Vector3(_vehicleHullBounds.center.x, averageFloatHeight,
+        _vehicleHullBounds.center.z);
     // var floatColliderSize = new Vector3(Mathf.Max(minColliderSize, _vehicleBounds.size.x),
     // m_floatcollider.size.y, Mathf.Max(minColliderSize, _vehicleBounds.size.z));
 
     var floatColliderSize = new Vector3(
-      Mathf.Max(minColliderSize, _vehicleBounds.size.x),
-      m_floatcollider.size.y,
-      Mathf.Max(minColliderSize, _vehicleBounds.size.z));
+      Mathf.Max(minColliderSize, _vehicleHullBounds.size.x),
+      _vehicleHullBounds.size.y,
+      Mathf.Max(minColliderSize, _vehicleHullBounds.size.z));
 
     /*
      * onboard colliders

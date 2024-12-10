@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BepInEx.Configuration;
+using UnityEngine;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Constants;
 
@@ -41,6 +42,9 @@ public static class PhysicsConfig
   public static ConfigEntry<float> submersibleSailForceFactor = null!;
   public static ConfigEntry<float> submersibleDrag = null!;
   public static ConfigEntry<float> submersibleAngularDrag = null!;
+
+  public static ConfigEntry<CollisionDetectionMode>
+    vehiclePiecesShipCollisionDetectionMode = null!;
 
 
   private static ConfigFile Config { get; set; } = null!;
@@ -223,6 +227,13 @@ public static class PhysicsConfig
       "EnableExactVehicleBounds", false,
       ConfigHelpers.CreateConfigDescription(
         "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible",
+        true, true));
+
+    vehiclePiecesShipCollisionDetectionMode = Config.Bind("Vehicles",
+      "vehiclePiecesShipCollisionDetectionMode",
+      CollisionDetectionMode.Continuous,
+      ConfigHelpers.CreateConfigDescription(
+        "Set the collision mode of the vehicle ship pieces container. This the container that people walk on and use the boat. Collision Continuous will prevent people from passing through the boat. Other modes might improve performance like Discrete but cost in more jitter or lag.",
         true, true));
 
     flightDamping.SettingChanged +=
