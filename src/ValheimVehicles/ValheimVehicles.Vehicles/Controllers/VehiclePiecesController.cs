@@ -2688,10 +2688,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public void RebuildConvexHull()
   {
+    if (VehicleInstance?.Instance == null) return;
+
     Physics.SyncTransforms();
     var nvChildGameObjects = m_pieces.Select(x => x.gameObject).ToList();
     ConvexHullMeshGeneratorAPI
-      .GenerateMeshesFromChildColliders(gameObject, convexHullMeshes,
+      .GenerateMeshesFromChildColliders(VehicleInstance.Instance.gameObject,
+        convexHullMeshes,
         ConvexHullMeshGeneratorAPI.DistanceThreshold, nvChildGameObjects);
   }
 
@@ -2819,7 +2822,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     // Assign all the colliders And include offset to avoid Jumps in height if below ocean or flying
     if (convexHullMeshes.Count > 0)
     {
-      m_blockingcollider.size = Vector3.zero;
+      m_blockingcollider.size = Vector3.one * 0.1f;
       m_blockingcollider.transform.localPosition =
         blockingColliderCenterOffset;
     }

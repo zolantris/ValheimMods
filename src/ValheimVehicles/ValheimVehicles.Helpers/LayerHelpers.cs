@@ -8,16 +8,18 @@ namespace ValheimVehicles.LayerUtils;
 
 public static class LayerHelpers
 {
+  public const int CustomRaftLayer = 29;
+
   public static LayerMask PhysicalLayers = LayerMask.GetMask("Default",
     "character", "piece",
     "terrain",
     "static_solid", "Default_small", "character_net", "vehicle",
-    LayerMask.LayerToName(29));
+    LayerMask.LayerToName(CustomRaftLayer));
 
   public static LayerMask BlockingColliderExcludeLayers = LayerMask.GetMask(
     "character", "character_net", "character_trigger", "viewbox",
     "character_net", "character_nonenv",
-    LayerMask.LayerToName(29));
+    LayerMask.LayerToName(CustomRaftLayer));
 
   public static List<string> ActiveLayersForBlockingMask = new List<string>();
 

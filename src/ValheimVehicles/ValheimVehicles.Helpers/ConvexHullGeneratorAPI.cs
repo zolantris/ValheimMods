@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimRAFT;
 using ValheimVehicles.Config;
 using ValheimVehicles.LayerUtils;
 using ValheimVehicles.Plugins;
@@ -413,6 +414,27 @@ public class ConvexHullMeshGeneratorAPI : MonoBehaviour
       .ToList();
   }
 
+
+  /// <summary>
+  /// Used to filter out any colliders not considered in a valid layer or a component that should not be included such as stairs
+  /// </summary>
+  /// <param name="colliders"></param>
+  public static List<Collider> FilterColliders(List<Collider> colliders,
+    GameObject parentGameObject)
+  {
+    var nameToLower = parentGameObject.name.ToLower();
+    if (nameToLower.Contains("stairs")) return [];
+
+    if (colliders is { Count: > 0 })
+    {
+      colliders = colliders.Where(x =>
+        LayerHelpers.IsContainedWithinMask(x.gameObject.layer,
+          LayerHelpers.PhysicalLayers)).ToList();
+    }
+
+    return colliders;
+  }
+
   /// <summary>
   /// Groups colliders by proximity, handling nested or overlapping colliders correctly.
   /// </summary>
@@ -427,17 +449,11 @@ public class ConvexHullMeshGeneratorAPI : MonoBehaviour
     foreach (var obj in gameObjects)
     {
       if (obj == null) continue;
-      var colliders = obj.GetComponentsInChildren<Collider>().ToList();
+      var colliders = obj.GetComponentsInChildren<Collider>();
 
-      // todo filters might need to be tweaked. This ignores any layer for colliders that are not physical
-      // if (colliders is { Count: > 0 })
-      // {
-      //   colliders = colliders.Where(x =>
-      //     LayerHelpers.IsContainedWithinMask(x.gameObject.layer,
-      //       LayerHelpers.PhysicalLayers)).ToList();
-      // }
-
-      if (colliders is { Count: > 0 })
+      if (colliders == null) continue;
+      var filterColliders = FilterColliders(colliders.ToList(), obj);
+      if (filterColliders is { Count: > 0 })
       {
         allColliders.AddRange(colliders);
       }
@@ -677,11 +693,16 @@ public class ConvexHullMeshGeneratorAPI : MonoBehaviour
 
     // Create a new GameObject to display the mesh
     var go = new GameObject(PrefabNames.ConvexHull);
+    go.layer = LayerHelpers.CustomRaftLayer;
+
     generateObjectList.Add(go);
     var meshFilter = go.AddComponent<MeshFilter>();
     var meshRenderer = go.AddComponent<MeshRenderer>();
-
+    var meshCollider = go.AddComponent<MeshCollider>();
     meshFilter.mesh = mesh;
+    meshCollider.sharedMesh = mesh;
+    meshCollider.convex = true;
+    meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
 
     // var standardShader = Shader.Find("Standard");
     // Create and assign the material

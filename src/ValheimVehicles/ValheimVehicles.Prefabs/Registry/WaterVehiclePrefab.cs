@@ -6,6 +6,7 @@ using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimRAFT;
+using ValheimVehicles.LayerUtils;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using Object = UnityEngine.Object;
@@ -65,7 +66,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
       floatColliderObj.FindDeepChild(PrefabNames
         .VehicleShipMovementOrientation);
     shipInstance.MovementController = shipControls;
-    shipInstance.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    shipInstance.gameObject.layer = LayerHelpers.CustomRaftLayer;
 
     // todo fix ship water effects so they do not cause ship materials to break
 

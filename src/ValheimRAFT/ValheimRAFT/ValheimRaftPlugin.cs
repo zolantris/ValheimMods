@@ -23,6 +23,7 @@ using ValheimVehicles;
 using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Constants;
+using ValheimVehicles.LayerUtils;
 using ValheimVehicles.ModSupport;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
@@ -66,7 +67,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   public MapPinSync MapPinSync;
 
-  public static readonly int CustomRaftLayer = 29;
   private bool m_customItemsAdded;
   public PrefabRegistryController prefabController;
 
@@ -559,9 +559,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   /**
    * Important for raft collisions to only include water and landmass colliders.
    *
-   * Other collisions on the piece level are not handled on the CustomRaftLayer
+   * Other collisions on the piece level are not handled on the LayerHelpers.CustomRaftLayer
    *
-   * todo remove CustomRaftLayer and use the VehicleLayer instead.
+   * todo remove LayerHelpers.CustomRaftLayer and use the VehicleLayer instead.
    * - Requires adding explicit collision ignores for the rigidbody attached to VehicleInstance (m_body)
    */
   private void AddPhysicsSettings()
@@ -569,43 +569,43 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     var layer = LayerMask.NameToLayer("vehicle");
 
     for (var index = 0; index < 32; ++index)
-      Physics.IgnoreLayerCollision(CustomRaftLayer, index,
+      Physics.IgnoreLayerCollision(LayerHelpers.CustomRaftLayer, index,
         Physics.GetIgnoreLayerCollision(layer, index));
 
-    Physics.IgnoreLayerCollision(CustomRaftLayer,
+    Physics.IgnoreLayerCollision(LayerHelpers.CustomRaftLayer,
       LayerMask.NameToLayer("vehicle"),
       true);
 
-    Physics.IgnoreLayerCollision(CustomRaftLayer,
+    Physics.IgnoreLayerCollision(LayerHelpers.CustomRaftLayer,
       LayerMask.NameToLayer("piece"),
       false);
 
-    Physics.IgnoreLayerCollision(CustomRaftLayer,
+    Physics.IgnoreLayerCollision(LayerHelpers.CustomRaftLayer,
       LayerMask.NameToLayer("character"),
       true);
-    Physics.IgnoreLayerCollision(CustomRaftLayer,
+    Physics.IgnoreLayerCollision(LayerHelpers.CustomRaftLayer,
       LayerMask.NameToLayer("smoke"),
       true);
-    Physics.IgnoreLayerCollision(CustomRaftLayer,
+    Physics.IgnoreLayerCollision(LayerHelpers.CustomRaftLayer,
       LayerMask.NameToLayer("character_ghost"), true);
-    Physics.IgnoreLayerCollision(CustomRaftLayer,
+    Physics.IgnoreLayerCollision(LayerHelpers.CustomRaftLayer,
       LayerMask.NameToLayer("weapon"),
       true);
-    Physics.IgnoreLayerCollision(CustomRaftLayer,
+    Physics.IgnoreLayerCollision(LayerHelpers.CustomRaftLayer,
       LayerMask.NameToLayer("blocker"),
       true);
-    Physics.IgnoreLayerCollision(CustomRaftLayer,
+    Physics.IgnoreLayerCollision(LayerHelpers.CustomRaftLayer,
       LayerMask.NameToLayer("pathblocker"), true);
-    Physics.IgnoreLayerCollision(CustomRaftLayer,
+    Physics.IgnoreLayerCollision(LayerHelpers.CustomRaftLayer,
       LayerMask.NameToLayer("viewblock"),
       true);
-    Physics.IgnoreLayerCollision(CustomRaftLayer,
+    Physics.IgnoreLayerCollision(LayerHelpers.CustomRaftLayer,
       LayerMask.NameToLayer("character_net"), true);
-    Physics.IgnoreLayerCollision(CustomRaftLayer,
+    Physics.IgnoreLayerCollision(LayerHelpers.CustomRaftLayer,
       LayerMask.NameToLayer("character_noenv"), true);
-    Physics.IgnoreLayerCollision(CustomRaftLayer,
+    Physics.IgnoreLayerCollision(LayerHelpers.CustomRaftLayer,
       LayerMask.NameToLayer("Default_small"), false);
-    Physics.IgnoreLayerCollision(CustomRaftLayer,
+    Physics.IgnoreLayerCollision(LayerHelpers.CustomRaftLayer,
       LayerMask.NameToLayer("Default"),
       false);
   }
