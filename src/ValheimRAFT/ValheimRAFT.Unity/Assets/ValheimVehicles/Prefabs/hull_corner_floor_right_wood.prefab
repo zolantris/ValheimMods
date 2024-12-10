@@ -80,6 +80,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2435960679565265128, guid: dd0b3e7491dd8cd49a44f61e366b0a78, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.25
+      objectReference: {fileID: 0}
     - target: {fileID: 7610956805273626704, guid: dd0b3e7491dd8cd49a44f61e366b0a78, type: 3}
       propertyPath: m_Name
       value: shared_nose_floor_right
