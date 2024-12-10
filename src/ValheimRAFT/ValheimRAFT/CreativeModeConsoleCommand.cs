@@ -11,7 +11,8 @@ public class CreativeModeConsoleCommand : ConsoleCommand
 {
   public override string Name => "RaftCreative";
 
-  public override string Help => "Sets the current raft you are standing on into creative mode.";
+  public override string Help =>
+    "Sets the current raft you are standing on into creative mode.";
 
   public override void Run(string[] args)
   {
@@ -38,25 +39,45 @@ public class CreativeModeConsoleCommand : ConsoleCommand
     var player = Player.m_localPlayer;
     if (!player)
     {
-      Logger.LogWarning($"Player does not exist, this command {comandName} cannot be run");
+      Logger.LogWarning(
+        $"Player does not exist, this command {comandName} cannot be run");
       return;
     }
 
+    var pieceOrVehicleLayer = LayerMask.GetMask("piece") +
+                              LayerMask.NameToLayer("CustomVehicleLayer");
+
     if (!Physics.Raycast(
-          GameCamera.instance.transform.position, GameCamera.instance.transform.forward,
-          out var hitinfo, 50f,
-          LayerMask.GetMask("piece") + LayerMask.GetMask("CustomVehicleLayer")))
+          GameCamera.instance.transform.position,
+          GameCamera.instance.transform.forward,
+          out var hitinfo, 50f, pieceOrVehicleLayer))
     {
       Logger.LogWarning(
         $"boat not detected within 50f, get nearer to the boat and look directly at the boat");
       return;
     }
 
-    var vehiclePiecesController = hitinfo.collider.GetComponentInParent<VehiclePiecesController>();
+    var vehiclePiecesController =
+      hitinfo.collider.GetComponentInParent<VehiclePiecesController>();
 
-    if ((bool)vehiclePiecesController?.VehicleInstance?.Instance)
+    if (vehiclePiecesController == null)
     {
-      var vehicleShipController = vehiclePiecesController?.VehicleInstance?.Instance;
+      var vehicleShip = hitinfo.collider.GetComponentInParent<VehicleShip>();
+
+      if (vehicleShip != null)
+      {
+        ToggleMode(player, vehicleShip);
+        return;
+      }
+    }
+
+    if ((vehiclePiecesController != null
+          ? vehiclePiecesController.VehicleInstance?.Instance
+          : null) != null)
+    {
+      var vehicleShipController =
+        vehiclePiecesController.VehicleInstance?.Instance;
+
       ToggleMode(player, vehicleShipController);
       return;
     }
@@ -77,16 +98,17 @@ public class CreativeModeConsoleCommand : ConsoleCommand
   /// <param name="ship"></param>
   /// <returns></returns>
   private static bool ToggleMode(Character character,
-    VehicleShip ship)
+    VehicleShip? ship)
   {
-    if (!(bool)ship || ship.MovementController == null)
+    if (ship == null || ship.MovementController == null)
     {
       return false;
     }
 
     var toggledKinematicValue = !ship.MovementController.m_body.isKinematic;
     ship.MovementController.m_body.isKinematic = toggledKinematicValue;
-    ship.MovementController.zsyncTransform.m_isKinematicBody = toggledKinematicValue;
+    ship.MovementController.zsyncTransform.m_isKinematicBody =
+      toggledKinematicValue;
 
     if (toggledKinematicValue)
     {
@@ -142,7 +164,8 @@ public class CreativeModeConsoleCommand : ConsoleCommand
 
         mb.m_rigidbody.position =
           new Vector3(mb.transform.position.x,
-            mb.m_rigidbody.position.y + ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
+            mb.m_rigidbody.position.y +
+            ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
             mb.transform.position.z);
         mb.m_rigidbody.transform.rotation =
           Quaternion.Euler(0, mb.m_rigidbody.rotation.eulerAngles.y, 0);
