@@ -323,6 +323,7 @@ public static class PrefabNames
            goName.StartsWith(HullRib) ||
            goName.StartsWith(HullRibCorner)
            || goName.StartsWith(HullWall) || goName.StartsWith(HullSlab) ||
-           goName.StartsWith(HullProw);
+           goName.StartsWith(HullProw) ||
+           goName.StartsWith(HullRibCornerFloor);
   }
 }

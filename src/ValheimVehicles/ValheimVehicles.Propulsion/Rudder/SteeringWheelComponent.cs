@@ -119,7 +119,12 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
       shipStatsText += $"\ntotalMass: {totalMass}";
       shipStatsText +=
         $"\nshipMass(no-containers): {shipMass}";
-      shipStatsText += $"\nshipContainerMass: {shipContainerMass}";
+
+      if (ValheimRaftPlugin.Instance.HasShipContainerWeightCalculations.Value)
+      {
+        shipStatsText += $"\nshipContainerMass: {shipContainerMass}";
+      }
+
       shipStatsText +=
         $"\ntotalMassToPush: {shipMassToPush}% * {totalMass} = {totalMass * shipMassToPush / 100f}";
       shipStatsText +=

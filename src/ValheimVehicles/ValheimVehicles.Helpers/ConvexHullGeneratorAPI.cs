@@ -414,17 +414,29 @@ public class ConvexHullMeshGeneratorAPI : MonoBehaviour
       .ToList();
   }
 
+  /// <summary>
+  /// Allows only specific gameobjects to match
+  /// </summary>
+  /// TODO add ability to add additional matchers so players can add other mod items if they do not match the matchers.
+  /// <param name="go"></param>
+  /// <returns></returns>
+  public static bool IsAllowedAsHull(GameObject go)
+  {
+    if (PrefabNames.IsHull(go)) return true;
+    var name = go.name.ToLower();
+
+    if (name.Contains("floor") || name.Contains("wall")) return true;
+
+    return false;
+  }
+
 
   /// <summary>
   /// Used to filter out any colliders not considered in a valid layer or a component that should not be included such as stairs
   /// </summary>
   /// <param name="colliders"></param>
-  public static List<Collider> FilterColliders(List<Collider> colliders,
-    GameObject parentGameObject)
+  public static List<Collider> FilterColliders(List<Collider> colliders)
   {
-    var nameToLower = parentGameObject.name.ToLower();
-    if (nameToLower.Contains("stairs")) return [];
-
     if (colliders is { Count: > 0 })
     {
       colliders = colliders.Where(x =>
@@ -449,10 +461,11 @@ public class ConvexHullMeshGeneratorAPI : MonoBehaviour
     foreach (var obj in gameObjects)
     {
       if (obj == null) continue;
+      // excludes gameobjects that do not fit as a collider but still need to be a piece on the ship.
+      if (!IsAllowedAsHull(obj)) continue;
       var colliders = obj.GetComponentsInChildren<Collider>();
-
       if (colliders == null) continue;
-      var filterColliders = FilterColliders(colliders.ToList(), obj);
+      var filterColliders = FilterColliders(colliders.ToList());
       if (filterColliders is { Count: > 0 })
       {
         allColliders.AddRange(colliders);

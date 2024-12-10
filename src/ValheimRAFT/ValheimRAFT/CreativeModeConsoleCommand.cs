@@ -1,6 +1,7 @@
 using System.Collections;
 using Jotunn.Entities;
 using UnityEngine;
+using ValheimVehicles.LayerUtils;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
@@ -44,8 +45,8 @@ public class CreativeModeConsoleCommand : ConsoleCommand
       return;
     }
 
-    var pieceOrVehicleLayer = LayerMask.GetMask("piece") +
-                              LayerMask.NameToLayer("CustomVehicleLayer");
+    var pieceOrVehicleLayer = LayerMask.GetMask("piece", LayerMask.LayerToName(
+      LayerHelpers.CustomRaftLayer));
 
     if (!Physics.Raycast(
           GameCamera.instance.transform.position,

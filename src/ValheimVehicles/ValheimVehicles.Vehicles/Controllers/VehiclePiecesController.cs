@@ -223,7 +223,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public float ShipMass = 0f;
   public static bool hasDebug => ValheimRaftPlugin.Instance.HasDebugBase.Value;
 
-  public float TotalMass => ShipContainerMass + ShipMass;
+  public float TotalMass =>
+    ValheimRaftPlugin.Instance.HasShipContainerWeightCalculations.Value
+      ? ShipMass
+      : ShipContainerMass + ShipMass;
 
   /*
    * sail calcs
@@ -681,12 +684,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
 
     m_body.angularDrag = angularDrag;
-    m_body.drag = drag;
-    m_body.mass = mass;
-
     MovementController.m_body.angularDrag = angularDrag;
+
+    m_body.drag = drag;
     MovementController.m_body.drag = drag;
-    MovementController.m_body.mass = mass;
+
+    // temp disable mass sync.
+    // m_body.mass = mass;
+    // MovementController.m_body.mass = mass;
   }
 
   public VehiclePhysicsMode localVehiclePhysicsMode =
@@ -915,7 +920,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void CustomFixedUpdate(float deltaTime)
   {
     UpdateBedPieces();
-    // Sync();
+    Sync();
   }
 
   public void CustomLateUpdate(float deltaTime)
@@ -2716,6 +2721,26 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     Physics.SyncTransforms();
 
     _vehicleBounds = new Bounds();
+
+    // todo this is not accurate, fix it.
+    if (convexHullMeshes.Count > 0)
+    {
+      foreach (var convexHullMesh in convexHullMeshes)
+      {
+        var meshRenderer = convexHullMesh.GetComponent<MeshRenderer>();
+        if (meshRenderer != null)
+        {
+          var localCenter =
+            transform.InverseTransformPoint(meshRenderer.bounds.center);
+          _vehicleBounds.Encapsulate(new Bounds(
+            localCenter,
+            meshRenderer.bounds.size));
+        }
+      }
+
+      OnBoundsChangeUpdateShipColliders();
+      return;
+    }
 
     foreach (var netView in m_pieces.ToList())
     {

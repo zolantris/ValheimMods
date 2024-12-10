@@ -690,7 +690,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public void CustomUpdate(float deltaTime, float time)
   {
     if (PiecesController == null) return;
-    PiecesController.Sync();
+    // PiecesController.Sync();
   }
 
   public void CustomLateUpdate(float deltaTime)
@@ -2942,7 +2942,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     SyncAnchor();
     SyncOceanSway();
 
-    PiecesController.Sync();
+    // PiecesController.Sync();
   }
 
   private void SyncOceanSway()
