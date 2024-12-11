@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using UnityEngine;
-using ValheimRAFT.Util;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
@@ -69,10 +69,12 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRoot.shipController = this;
     m_baseRoot.m_nview = m_nview;
     m_baseRoot.m_ship = ship;
-    m_baseRoot.m_id = ZdoWatchController.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
+    m_baseRoot.m_id =
+      ZdoWatchController.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
     m_rigidbody = GetComponent<Rigidbody>();
     m_baseRoot.m_syncRigidbody = m_rigidbody;
-    m_rigidbody.maxAngularVelocity = ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value;
+    m_rigidbody.maxAngularVelocity =
+      ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value;
     m_rigidbody.mass = m_baseRoot.TotalMass;
     m_baseRootObject.transform.SetParent(null);
     Logger.LogDebug("Set baseRoot params from BaseShipComponent");
@@ -80,14 +82,20 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_baseRootObject.transform.position = base.transform.position;
     m_baseRootObject.transform.rotation = base.transform.rotation;
     ship.transform.Find("ship/visual/mast")?.gameObject.SetActive(value: false);
-    ship.transform.Find("ship/colliders/log")?.gameObject.SetActive(value: false);
-    ship.transform.Find("ship/colliders/log (1)")?.gameObject.SetActive(value: false);
-    ship.transform.Find("ship/colliders/log (2)")?.gameObject.SetActive(value: false);
-    ship.transform.Find("ship/colliders/log (3)")?.gameObject.SetActive(value: false);
+    ship.transform.Find("ship/colliders/log")?.gameObject
+      .SetActive(value: false);
+    ship.transform.Find("ship/colliders/log (1)")?.gameObject
+      .SetActive(value: false);
+    ship.transform.Find("ship/colliders/log (2)")?.gameObject
+      .SetActive(value: false);
+    ship.transform.Find("ship/colliders/log (3)")?.gameObject
+      .SetActive(value: false);
     UpdateVisual();
-    BoxCollider[] colliders = base.transform.GetComponentsInChildren<BoxCollider>();
+    BoxCollider[] colliders =
+      base.transform.GetComponentsInChildren<BoxCollider>();
     m_baseRoot.m_onboardcollider =
-      colliders.FirstOrDefault((BoxCollider k) => k.gameObject.name == "OnboardTrigger");
+      colliders.FirstOrDefault((BoxCollider k) =>
+        k.gameObject.name == "OnboardTrigger");
 
     if (!m_baseRoot.m_onboardcollider)
     {
@@ -97,17 +105,20 @@ public class MoveableBaseShipComponent : MonoBehaviour
     else
     {
       if (m_baseRoot.m_onboardcollider != null)
-        m_baseRoot.m_onboardcollider.transform.localScale = new Vector3(1f, 1f, 1f);
+        m_baseRoot.m_onboardcollider.transform.localScale =
+          new Vector3(1f, 1f, 1f);
     }
 
     m_baseRoot.m_floatcollider = ship.m_floatCollider;
     m_baseRoot.m_floatcollider.transform.localScale = new Vector3(1f, 1f, 1f);
     m_baseRoot.m_blockingcollider = ship.transform.Find("ship/colliders/Cube")
       .GetComponentInChildren<BoxCollider>();
-    m_baseRoot.m_blockingcollider.transform.localScale = new Vector3(1f, 1f, 1f);
-    m_baseRoot.m_blockingcollider.gameObject.layer = ValheimRaftPlugin.CustomRaftLayer;
+    m_baseRoot.m_blockingcollider.transform.localScale =
+      new Vector3(1f, 1f, 1f);
+    m_baseRoot.m_blockingcollider.gameObject.layer =
+      LayerHelpers.CustomRaftLayer;
     m_baseRoot.m_blockingcollider.transform.parent.gameObject.layer =
-      ValheimRaftPlugin.CustomRaftLayer;
+      LayerHelpers.CustomRaftLayer;
     m_baseRoot.ActivatePendingPiecesCoroutine();
     FirstTimeCreation();
   }
@@ -116,14 +127,20 @@ public class MoveableBaseShipComponent : MonoBehaviour
   {
     if (m_nview.m_zdo != null)
     {
-      m_flags = (MBFlags)m_nview.m_zdo.GetInt(VehicleZdoVars.VehicleFlags, (int)m_flags);
-      var newTransform = m_flags.HasFlag(MBFlags.HideMesh) ? Vector3.zero : Vector3.one;
+      m_flags =
+        (MBFlags)m_nview.m_zdo.GetInt(VehicleZdoVars.VehicleFlags,
+          (int)m_flags);
+      var newTransform = m_flags.HasFlag(MBFlags.HideMesh)
+        ? Vector3.zero
+        : Vector3.one;
       /*
        * hide with vector transform instead of active change to prevent NRE spam.
        * Previously these called gameobject SetActive(!m_flags.HasFlag(MBFlags.HideMesh));
        */
-      transform.Find("ship/visual").gameObject.transform.localScale = newTransform;
-      transform.Find("interactive").gameObject.transform.localScale = newTransform;
+      transform.Find("ship/visual").gameObject.transform.localScale =
+        newTransform;
+      transform.Find("interactive").gameObject.transform.localScale =
+        newTransform;
     }
   }
 
@@ -186,7 +203,8 @@ public class MoveableBaseShipComponent : MonoBehaviour
         return;
       }
 
-      m_targetHeight = Mathf.Clamp(m_baseRoot.m_floatcollider.transform.position.y + 1f,
+      m_targetHeight = Mathf.Clamp(
+        m_baseRoot.m_floatcollider.transform.position.y + 1f,
         ZoneSystem.instance.m_waterLevel, 200f);
     }
 
@@ -212,9 +230,11 @@ public class MoveableBaseShipComponent : MonoBehaviour
         return;
       }
 
-      m_targetHeight = Mathf.Clamp(m_baseRoot.m_floatcollider.transform.position.y - 1f,
+      m_targetHeight = Mathf.Clamp(
+        m_baseRoot.m_floatcollider.transform.position.y - 1f,
         ZoneSystem.instance.m_waterLevel, 200f);
-      if (m_baseRoot.m_floatcollider.transform.position.y - 1f <= ZoneSystem.instance.m_waterLevel)
+      if (m_baseRoot.m_floatcollider.transform.position.y - 1f <=
+          ZoneSystem.instance.m_waterLevel)
       {
         m_targetHeight = 0f;
       }
@@ -264,7 +284,9 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   public void RPC_SetAnchor(long sender, bool state)
   {
-    m_flags = (state ? (m_flags | MBFlags.IsAnchored) : (m_flags & ~MBFlags.IsAnchored));
+    m_flags = (state
+      ? (m_flags | MBFlags.IsAnchored)
+      : (m_flags & ~MBFlags.IsAnchored));
     m_nview.m_zdo.Set(VehicleZdoVars.VehicleFlags, (int)m_flags);
   }
 
@@ -275,7 +297,9 @@ public class MoveableBaseShipComponent : MonoBehaviour
 
   public void RPC_SetVisual(long sender, bool state)
   {
-    m_flags = (state ? (m_flags | MBFlags.HideMesh) : (m_flags & ~MBFlags.HideMesh));
+    m_flags = (state
+      ? (m_flags | MBFlags.HideMesh)
+      : (m_flags & ~MBFlags.HideMesh));
     m_nview.m_zdo.Set(VehicleZdoVars.VehicleFlags, (int)m_flags);
     UpdateVisual();
   }

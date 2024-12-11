@@ -1,6 +1,7 @@
 using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Entities;
+using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Vehicles.Components;
@@ -44,6 +45,7 @@ public class ShipHullPrefab : IRegisterPrefab
         RegisterHullRibCorner(
           hullMaterialType,
           ribDirection);
+        RegisterHullRibCornerFloor(hullMaterialType, ribDirection);
       }
 
       foreach (var sizeVariant in sizeVariants)
@@ -121,9 +123,41 @@ public class ShipHullPrefab : IRegisterPrefab
     wnt.m_burnable = hullMaterial != ShipHulls.HullMaterial.Iron;
   }
 
+  /// <summary>
+  /// Experimental, will likely not be used in production without a feature flag flip
+  /// </summary>
+  /// <param name="hullMaterial"></param>
+  /// <param name="directionVariant"></param>
+  public void RegisterInverseHullRibCorner(string hullMaterial,
+    DirectionVariant directionVariant)
+  {
+    var prefabName = GetHullRibCornerName(hullMaterial,
+      directionVariant);
+    var prefabInverseName = $"{prefabName}_inverse";
+    var inverseDirection = GetInverseDirection(directionVariant);
+
+    // must get the opposite IE if left get right for the flipped mesh to align
+    var prefabAsset =
+      LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial,
+        inverseDirection);
+    var prefabInverse =
+      PrefabManager.Instance.CreateClonedPrefab(
+        prefabInverseName, prefabAsset);
+
+    // must flip this mesh upside down and then rotate 180 on X.
+    prefabInverse.transform.FindDeepChild("mesh").rotation =
+      Quaternion.Euler(180f, 180f, 0);
+
+    // does not need prefabInverseName
+    // todo might need to add a inverse description
+    SetupHullPrefab(prefabInverse, prefabName,
+      hullMaterial, 1, prefabInverse.transform.FindDeepChild("mesh"),
+      ["mesh"], true);
+  }
+
   public void RegisterHullRibCorner(
     string hullMaterial,
-    DirectionVariant directionVariant)
+    DirectionVariant directionVariant, bool hasInverse = true)
   {
     var prefabName = GetHullRibCornerName(hullMaterial,
       directionVariant);
@@ -135,7 +169,39 @@ public class ShipHullPrefab : IRegisterPrefab
         prefabName, prefabAsset);
 
     SetupHullPrefab(prefab, prefabName,
-      hullMaterial, 8);
+      hullMaterial, 4, prefab.transform.FindDeepChild("mesh"));
+
+    if (hasInverse)
+    {
+      RegisterInverseHullRibCorner(hullMaterial,
+        directionVariant);
+    }
+  }
+
+  public DirectionVariant GetInverseDirection(DirectionVariant variant) =>
+    variant == DirectionVariant.Left
+      ? DirectionVariant.Right
+      : DirectionVariant.Left;
+
+
+  /// <summary>
+  /// Registers all Hull-corner-floors (seals a hull rib)
+  /// </summary>
+  public void RegisterHullRibCornerFloor(
+    string hullMaterial,
+    DirectionVariant directionVariant)
+  {
+    var prefabName = GetHullRibCornerFloorName(hullMaterial,
+      directionVariant);
+    var prefabAsset =
+      LoadValheimVehicleAssets.GetShipHullCornerFloor(hullMaterial,
+        directionVariant);
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        prefabName, prefabAsset);
+
+    SetupHullPrefab(prefab, prefabName,
+      hullMaterial, 1, prefab.transform.FindDeepChild("mesh"));
   }
 
   public void RegisterHullRibProw(
@@ -161,7 +227,8 @@ public class ShipHullPrefab : IRegisterPrefab
     string prefabName,
     string hullMaterial,
     int materialCount,
-    Transform? hoistParent = null, string[]? hoistFilters = null)
+    Transform? hoistParent = null, string[]? hoistFilters = null,
+    bool isInverse = false)
   {
     var wnt = PrefabRegistryHelpers.SetWearNTear(prefab);
     PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.Iron);
@@ -172,9 +239,7 @@ public class ShipHullPrefab : IRegisterPrefab
     PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-    // prefab.layer = 0;
-    // prefab.gameObject.layer = 0;
-    PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab);
+    PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab, isInverse);
 
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
       hoistParent ?? prefab.transform,
@@ -190,9 +255,12 @@ public class ShipHullPrefab : IRegisterPrefab
       }));
   }
 
+
   /// <summary>
-  /// Experimental not ready
+  /// Registers all hull ribs
   /// </summary>
+  /// <param name="prefabName"></param>
+  /// <param name="hullMaterial"></param>
   private static void RegisterHullRib(
     string prefabName,
     string hullMaterial)
@@ -206,6 +274,7 @@ public class ShipHullPrefab : IRegisterPrefab
       8,
       prefab.transform.Find("new") ?? prefab.transform);
   }
+
 
   /// <summary>
   /// TODO refactor for LoadAssetBundle dynamic string approach

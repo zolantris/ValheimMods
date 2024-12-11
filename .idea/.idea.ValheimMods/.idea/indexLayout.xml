@@ -4,6 +4,7 @@
     <attachedFolders>
       <Path>docs</Path>
       <Path>libs</Path>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedModScripts</Path>
       <Path>../valheim-connect-mods</Path>
       <Path>../valheim_extracted</Path>
       <Path>../valheim_extracted_versions/0.219.1</Path>

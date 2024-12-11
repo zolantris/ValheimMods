@@ -8,7 +8,7 @@ using ValheimVehicles.Attributes;
 using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
-using ValheimVehicles.LayerUtils;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Controllers;
 using Logger = Jotunn.Logger;

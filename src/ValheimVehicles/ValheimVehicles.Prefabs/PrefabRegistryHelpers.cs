@@ -232,6 +232,41 @@ public abstract class PrefabRegistryHelpers
     }
   }
 
+  public static void RegisterHullRibCornerFloors()
+  {
+    var spriteAtlas = LoadValheimVehicleAssets.VehicleSprites;
+    const string pieceBaseName = "valheim_vehicles_hull_rib_corner_floor";
+    const string pieceName = $"${pieceBaseName}";
+    const string pieceDescription = $"${pieceBaseName}_desc";
+    const string iconBaseName = "hull_corner_floor";
+
+    List<PrefabNames.DirectionVariant> directionVariants =
+      [PrefabNames.DirectionVariant.Left, PrefabNames.DirectionVariant.Right];
+    List<string> materialVariants =
+      [ShipHulls.HullMaterial.Wood, ShipHulls.HullMaterial.Iron];
+
+    foreach (var directionVariant in directionVariants)
+    {
+      var directionName = PrefabNames.GetDirectionName(directionVariant);
+      foreach (var materialVariant in materialVariants)
+      {
+        var materialName = materialVariant.ToLower();
+        var prefabName = PrefabNames.GetHullRibCornerFloorName(materialVariant,
+          directionVariant);
+        var pieceData = new PieceData()
+        {
+          Name =
+            $"{pieceName} $valheim_vehicles_material_{materialName} $valheim_vehicles_direction_{directionName}",
+          Description = pieceDescription,
+          Icon = spriteAtlas.GetSprite(
+            $"{iconBaseName}_{directionName}_{materialName}")
+        };
+
+        PieceDataDictionary.Add(prefabName, pieceData);
+      }
+    }
+  }
+
   public static void RegisterHullRibCornerWalls()
   {
     var spriteAtlas = LoadValheimVehicleAssets.VehicleSprites;
@@ -325,6 +360,7 @@ public abstract class PrefabRegistryHelpers
     RegisterHullWalls();
     RegisterHullProws();
     RegisterHullRibCornerWalls();
+    RegisterHullRibCornerFloors();
 
     PieceDataDictionary.Add(PrefabNames.WaterVehicleShip, new PieceData()
     {
@@ -489,7 +525,8 @@ public abstract class PrefabRegistryHelpers
       .Name);
   }
 
-  public static Piece AddPieceForPrefab(string prefabName, GameObject prefab)
+  public static Piece AddPieceForPrefab(string prefabName, GameObject prefab,
+    bool isInverse = false)
   {
     var pieceInformation = PieceDataDictionary.GetValueSafe(prefabName);
 
@@ -498,6 +535,14 @@ public abstract class PrefabRegistryHelpers
     piece.m_name = pieceInformation.Name;
     piece.m_description = pieceInformation.Description;
     piece.m_icon = pieceInformation.Icon;
+
+    // todo yet another helper might be needed.
+    if (isInverse)
+    {
+      piece.m_name = $"$valheim_vehicles_inverse {piece.m_name}";
+      piece.m_description =
+        $"$valheim_vehicles_inverse_desc {piece.m_description}";
+    }
 
     return piece;
   }
