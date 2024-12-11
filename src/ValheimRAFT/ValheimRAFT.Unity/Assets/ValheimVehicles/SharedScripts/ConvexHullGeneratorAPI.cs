@@ -127,8 +127,7 @@ namespace ValheimVehicles.SharedScripts
       // Transform points to world space, adapting for the object's scale
       for (var i = 0; i < points.Count; i++)
         // Adapt for the scaling of the parent object (capsuleCollider.transform.localScale)
-        points[i] = capsuleCollider.transform.TransformPoint(points[i])
-                    * capsuleCollider.transform.localScale.magnitude;
+        points[i] = capsuleCollider.transform.TransformPoint(points[i]);
 
       return points;
     }
@@ -273,33 +272,47 @@ namespace ValheimVehicles.SharedScripts
       // Calculate the center of the box in world space
       var boxCenter = transform.TransformPoint(boxCollider.center);
 
-      // Apply the lossy scale to the box size (this accounts for non-uniform scaling of the parent object)
-      var boxSize =
-        Vector3.Scale(boxCollider.size,
-          transform.lossyScale); // Use lossyScale for world space
+      // Calculate the box size based on the boxCollider's size
+      var boxSize = boxCollider.size;
+
+      // Initialize a vector to store the final scale, starting with local scale of the collider
+      Vector3 finalScale = Vector3.one;
+
+      Debug.Log("Hello world");
+      // Traverse the hierarchy and accumulate the scale from each parent
+      var currentTransform = transform;
+      while (currentTransform != null)
+      {
+        finalScale.Scale(currentTransform.localScale);  // Apply the parent's scale
+        currentTransform = currentTransform.parent;
+      }
+
+      // Apply the accumulated scale to the box size
+      var scaledBoxSize = Vector3.Scale(boxSize, finalScale);
 
       // Loop through each corner of the box
       for (var x = -1; x <= 1; x += 2)
       for (var y = -1; y <= 1; y += 2)
       for (var z = -1; z <= 1; z += 2)
       {
-        // Define the local corner point
-        var localCorner =
-          new Vector3(x * boxSize.x, y * boxSize.y, z * boxSize.z) * 0.5f;
+        // Define the local corner point (relative to the center)
+        var localCorner = new Vector3(x * scaledBoxSize.x, y * scaledBoxSize.y, z * scaledBoxSize.z) * 0.5f;
 
-        // Transform the local corner to world space using both the rotation and position of the box
+        // Transform the local corner to world space using the position, rotation, and scaling
         var worldCorner = boxCenter + transform.rotation * localCorner;
+
+        // Add the world corner to the list of points
         points.Add(worldCorner);
       }
 
       return points;
     }
 
+
+
     private static List<Vector3> GetColliderPointsGlobal(Collider collider)
     {
       var points = new List<Vector3>();
-      var transform = collider.transform;
-
       switch (collider)
       {
         // Handle BoxCollider
@@ -667,7 +680,7 @@ namespace ValheimVehicles.SharedScripts
       }
 
       var localPoints = points
-        .Select(parentObjTransform.InverseTransformPoint).ToList();
+        .Select(x => x - parentObjTransform.transform.position).ToList();
 
       Vector3Logger.LogPointsForInspector(localPoints);
 
@@ -733,7 +746,7 @@ namespace ValheimVehicles.SharedScripts
       go.transform.position =
         parentObjTransform.position + transformPreviewOffset;
       go.transform.rotation = parentObjTransform.rotation;
-      go.transform.SetParent(parentObjTransform);
+      // go.transform.SetParent(parentObjTransform);
     }
   }
 }
