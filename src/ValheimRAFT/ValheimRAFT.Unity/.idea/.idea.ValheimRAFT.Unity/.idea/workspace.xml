@@ -6,7 +6,23 @@
   <component name="ChangeListManager">
     <list default="true" id="9eb05097-9d84-4b87-8e9a-0e73fcf3150e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/../../../libs" beforeDir="false" afterPath="$PROJECT_DIR$/../../../libs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimRAFT.Unity/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_2x2.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_2x2.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/ConvexHullGenerator.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/ConvexHullGenerator.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/SharedScripts/ConvexHullGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/SharedScripts/ConvexHullGenerator.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/SharedScripts/ConvexHullGeneratorAPI.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/SharedScripts/ConvexHullGeneratorAPI.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ProjectSettings/EditorSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/EditorSettings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/CreativeModeConsoleCommand.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/CreativeModeConsoleCommand.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/MoveableBaseShipComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/MoveableBaseShipComponent.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ValheimRAFT/ValheimRaftPlugin.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ValheimRAFT/ValheimRaftPlugin.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Patches/Character_WaterPatches.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Patches/Character_WaterPatches.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabNames.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabNames.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/CustomMeshPrefabs.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/CustomMeshPrefabs.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/WaterVehiclePrefab.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Prefabs/Registry/WaterVehiclePrefab.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/ScalableDoubleSidedCube.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Components/ScalableDoubleSidedCube.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/WaterZoneController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../ValheimVehicles/ValheimVehicles.Vehicles/Controllers/WaterZoneController.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,6 +41,7 @@
     <setting file="file://$PROJECT_DIR$/../../../../../../../../Program Files/Unity/Hub/Editor/2022.3.17f1/Editor/Data/CGIncludes/UnityCG.cginc" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../../../Program Files/Unity/Hub/Editor/2022.3.17f1/Editor/Data/CGIncludes/UnityCustomRenderTexture.cginc" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../../../Program Files/Unity/Hub/Editor/2022.3.17f1/Editor/Data/CGIncludes/UnityShaderUtilities.cginc" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/17d9ce77f27a4bd2afb5ba32c9bea97646ac00/6f/728fff76/Func`1.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/7fc3391e1be744f5be29237354d19046a630/4d/da657dff/Quaternion.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/29/fdd9a050/Vector3.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/73/e1df8cf7/GameObject.cs" root0="FORCE_HIGHLIGHTING" />
@@ -44,7 +61,13 @@
     <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Assets/ValheimVehicles/Scene/WaterMaskController.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.assetbundlebrowser@ad2a81ec30/Editor/AssetBundleDataSource/AssetDatabaseABDataSource.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.assetbundlebrowser@ad2a81ec30/Editor/InspectTab/AssetBundleInspectTab.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.burst@1.8.11/Editor/LongTextArea.cs" root0="SKIP_HIGHLIGHTING" />
@@ -70,6 +93,8 @@
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.xr.openxr@1.9.1/Runtime/OpenXRProjectValidation.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../unity_repos/valheim_export_unity_versions/0.218.15/Assets/Scripts/Valheim.UI/GroupElement.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../unity_repos/valheim_exported_assets/ValheimAssets/Assets/Shader/Custom_Vegetation.shader" root0="FORCE_HIGHLIGHTING" />
+    <setting file="mock://ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -86,7 +111,7 @@
     "Attach to Unity Editor.Attach to Unity Editor.executor": "Debug",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "XThreadsFramesViewSplitterKey": "0.95238096",
+    "XThreadsFramesViewSplitterKey": "1.5458168",
     "git-widget-placeholder": "feat/quick-convex-hull-calcs",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -194,7 +219,7 @@
       <workItem from="1730964261074" duration="701000" />
       <workItem from="1731143420981" duration="838000" />
       <workItem from="1733726631212" duration="22572000" />
-      <workItem from="1733886498958" duration="9715000" />
+      <workItem from="1733886498958" duration="16075000" />
     </task>
     <servers />
   </component>

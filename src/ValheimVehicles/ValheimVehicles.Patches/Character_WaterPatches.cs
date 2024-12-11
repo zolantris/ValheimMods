@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Config;
-using ValheimVehicles.LayerUtils;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Controllers;

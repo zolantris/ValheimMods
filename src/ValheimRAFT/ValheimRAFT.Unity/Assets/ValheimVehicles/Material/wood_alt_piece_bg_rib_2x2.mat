@@ -10,7 +10,7 @@ Material:
   m_Name: wood_alt_piece_bg_rib_2x2
   m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
   m_Parent: {fileID: 2100000, guid: 7f8295de6be79274b824c30304d2b3f8, type: 2}
-  m_ModifiedSerializedProperties: 0
+  m_ModifiedSerializedProperties: 16
   m_ValidKeywords:
   - _DETAIL_MULX2
   - _METALLICGLOSSMAP
@@ -42,8 +42,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _DstBlend: 0
     - _GlossMapScale: 0
+    - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.0376
+    - _SrcBlend: 1
+    - _ZWrite: 1
     m_Colors: []
   m_BuildTextureStacks: []

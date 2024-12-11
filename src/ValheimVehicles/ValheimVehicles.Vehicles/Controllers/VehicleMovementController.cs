@@ -12,9 +12,9 @@ using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
-using ValheimVehicles.LayerUtils;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Controllers;
 using ValheimVehicles.Vehicles.Enums;
@@ -507,11 +507,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (m_body)
     {
-      var physicalLayers = LayerMask.GetMask("Default", "character", "piece",
-        "terrain",
-        "static_solid", "Default_small", "character_net", "vehicle",
-        LayerMask.LayerToName(29));
-      m_body.includeLayers = physicalLayers;
+      m_body.includeLayers = LayerHelpers.PhysicalLayers;
       m_body.excludeLayers = excludedLayers;
     }
   }

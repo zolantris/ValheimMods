@@ -6,7 +6,7 @@ using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimRAFT;
-using ValheimVehicles.LayerUtils;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using Object = UnityEngine.Object;

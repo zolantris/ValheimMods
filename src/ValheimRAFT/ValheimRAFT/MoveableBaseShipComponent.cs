@@ -1,8 +1,7 @@
 using System;
 using System.Linq;
 using UnityEngine;
-using ValheimRAFT.Util;
-using ValheimVehicles.LayerUtils;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;

@@ -15,11 +15,10 @@ using ValheimRAFT.Util;
 using ValheimVehicles.Config;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
-using ValheimVehicles.LayerUtils;
-using ValheimVehicles.Plugins;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Propulsion.Rudder;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Controllers;
 using ValheimVehicles.Vehicles.Enums;
@@ -1794,70 +1793,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     OnActivatePendingPiecesComplete(PendingPieceStateEnum.Complete);
   }
 
-  // private IEnumerator DEPRECATED_activatePendingPiecesCoroutine()
-  // {
-  //   // It will wait for the vehicle to be initialized before attempting to run.
-  //
-  //
-  //   // yield return new WaitUntil(() =>
-  //   //   (bool)VehicleInstance?.NetView ||
-  //   //   BaseVehicleInitState != InitializationState.Complete ||
-  //   //   PendingPiecesTimer.ElapsedMilliseconds > 50000);
-  //   //
-  //   // if (VehicleInstance?.NetView?.GetZDO() == null)
-  //   // {
-  //   //   yield return new WaitUntil(() =>
-  //   //     VehicleInstance?.NetView?.GetZDO() != null);
-  //   // }
-  //
-  //   var persistentZdoId = VehicleInstance?.PersistentZdoId;
-  //   if (!persistentZdoId.HasValue)
-  //   {
-  //     OnActivatePendingPiecesComplete(PendingPieceStateEnum.Failure,
-  //       "No persistentID found on Vehicle instance");
-  //     yield break;
-  //   }
-  //
-  //   var currentPieces = GetShipActiveInstances(persistentZdoId);
-  //
-  //   if (currentPieces is { Count: > 0 })
-  //   {
-  //     var stopwatch = Stopwatch.StartNew();
-  //     foreach (var obj in currentPieces.ToList())
-  //     {
-  //       if ((bool)obj)
-  //       {
-  //         if (hasDebug)
-  //         {
-  //           Logger.LogDebug($"ActivatePendingPieces obj: {obj} {obj.name}");
-  //         }
-  //
-  //         ActivatePiece(obj);
-  //         if (ZNetScene.instance.InLoadingScreen() ||
-  //             stopwatch.ElapsedMilliseconds < 10)
-  //           continue;
-  //         yield return new WaitForEndOfFrame();
-  //         stopwatch.Restart();
-  //       }
-  //       else
-  //       {
-  //         currentPieces.FastRemove(obj);
-  //         if (hasDebug)
-  //         {
-  //           Logger.LogDebug($"ActivatePendingPieces obj is not valid {obj}");
-  //         }
-  //       }
-  //     }
-  //
-  //     // this is commented out b/c it may be triggering the destroy method guard at the bottom.
-  //     currentPieces.Clear();
-  //     m_pendingPieces.Remove(persistentZdoId.Value);
-  //   }
-  //
-  //   OnActivatePendingPiecesComplete(PendingPieceStateEnum.Complete);
-  // }
-
-
   /// <summary>
   /// A bit heavy for iteration, likely better than raycast logic, allows for accurately detecting if in vehicle area. But it could be inaccurate since the point is not technically a part of the pieces list.
   /// </summary>
@@ -2690,7 +2625,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     ConvexHullMeshGeneratorAPI
       .GenerateMeshesFromChildColliders(VehicleInstance.Instance.gameObject,
         convexHullMeshes,
-        ConvexHullMeshGeneratorAPI.DistanceThreshold, nvChildGameObjects);
+        ConvexHullMeshGeneratorAPI.DefaultDistanceThreshold,
+        nvChildGameObjects);
   }
 
   /**

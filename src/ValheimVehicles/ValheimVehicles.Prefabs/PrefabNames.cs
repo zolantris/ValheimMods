@@ -315,15 +315,14 @@ public static class PrefabNames
            objName.StartsWith(WaterVehicleOnboardCollider);
   }
 
-  public static bool IsHull(GameObject go)
-  {
-    var goName = go.name;
-    return goName.StartsWith(ShipHullCenterWoodPrefabName) ||
-           goName.StartsWith(ShipHullCenterIronPrefabName) ||
-           goName.StartsWith(HullRib) ||
-           goName.StartsWith(HullRibCorner)
-           || goName.StartsWith(HullWall) || goName.StartsWith(HullSlab) ||
-           goName.StartsWith(HullProw) ||
-           goName.StartsWith(HullRibCornerFloor);
-  }
+  public static bool IsHull(string goName) =>
+    goName.StartsWith(ShipHullCenterWoodPrefabName) ||
+    goName.StartsWith(ShipHullCenterIronPrefabName) ||
+    goName.StartsWith(HullRib) ||
+    goName.StartsWith(HullRibCorner)
+    || goName.StartsWith(HullWall) || goName.StartsWith(HullSlab) ||
+    goName.StartsWith(HullProw) ||
+    goName.StartsWith(HullRibCornerFloor);
+
+  public static bool IsHull(GameObject go) => IsHull(go.name);
 }

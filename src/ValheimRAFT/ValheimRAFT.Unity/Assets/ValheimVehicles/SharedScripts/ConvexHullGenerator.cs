@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
-using ValheimVehicles.SharedModScripts;
+using Debug = UnityEngine.Debug;
 
-namespace ValheimVehicles.Unity.Shared
+namespace ValheimVehicles.SharedScripts
 {
   /// <summary>
   ///   both unity and valheim so this can be tested easily. This file is meant to be
@@ -13,22 +14,9 @@ namespace ValheimVehicles.Unity.Shared
   [ExecuteInEditMode]
   public class ConvexHullMeshGenerator : MonoBehaviour
   {
-    public const string
-      ConvexHullPrefix =
-        "ConvexHullPreview"; // Specify the name of the objects to delete
-
-    private static readonly int Color1 = Shader.PropertyToID("Color");
-
     public float distanceThreshold = 0.2f;
-
     public Vector3 transformPreviewOffset = new(1, 0, 0);
-
-    public float DistanceThreshold = 0.1f;
-
     public List<GameObject> GeneratedMeshGameObjects = new();
-
-
-    public Material HullPreviewMaterial;
 
     // Convex hull calculator instance
     private readonly ConvexHullCalculator
@@ -38,14 +26,13 @@ namespace ValheimVehicles.Unity.Shared
 
     private void Awake()
     {
+      SyncDebugConfig();
       Cleanup();
     }
 
     private void Start()
     {
       Cleanup();
-      ConvexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(gameObject,
-        GeneratedMeshGameObjects, 0.2f);
     }
 
     /// <summary>
@@ -64,20 +51,32 @@ namespace ValheimVehicles.Unity.Shared
         return;
       }
 
-      ConvexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(gameObject,
+      ConvexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(
+        transform.root.gameObject,
         GeneratedMeshGameObjects, distanceThreshold);
     }
 
-
     public void OnEnable()
     {
-      ConvexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(gameObject,
+      ConvexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(
+        transform.root.gameObject,
         GeneratedMeshGameObjects, distanceThreshold);
     }
 
     public void OnDisable()
     {
       Cleanup();
+    }
+
+    [Conditional("UNITY_EDITOR")]
+    private void SyncDebugConfig()
+    {
+      // overrides this method allowing all strings.
+      ConvexHullMeshGeneratorAPI.IsAllowedAsHullOverride = s => true;
+
+      ConvexHullMeshGeneratorAPI.transformPreviewOffset =
+        transformPreviewOffset;
+      ConvexHullMeshGeneratorAPI.DebugMode = true;
     }
 
     public void Cleanup()
@@ -95,7 +94,8 @@ namespace ValheimVehicles.Unity.Shared
 
       foreach (var obj in allObjects)
         // If the GameObject's name matches the target name, delete it
-        if (obj.name.StartsWith(ConvexHullPrefix))
+        if (obj.name.StartsWith(ConvexHullMeshGeneratorAPI
+              .GeneratedMeshNamePrefix))
         {
           Destroy(obj);
           Debug.Log($"Deleted GameObject: {obj.name}");
@@ -105,22 +105,23 @@ namespace ValheimVehicles.Unity.Shared
     [UsedImplicitly]
     public void TriggerBuildConvexHullFromColliders()
     {
-      ConvexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(gameObject,
+      ConvexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(
+        transform.root.gameObject,
         GeneratedMeshGameObjects, distanceThreshold);
     }
 
     [UsedImplicitly]
     public void TriggerDeleteConvexHullObjects()
     {
-      if (GeneratedMeshGameObjects.Count > 0)
-        );
+      if (GeneratedMeshGameObjects.Count > 0) Cleanup();
     }
 
     // Test the method with a sample list of points
     [ContextMenu("Generate Mesh")]
     private void TestGenerateMesh()
     {
-      ConvexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(gameObject,
+      ConvexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(
+        transform.root.gameObject,
         GeneratedMeshGameObjects, distanceThreshold);
     }
 

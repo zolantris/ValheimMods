@@ -321,7 +321,7 @@ GameObject:
   - component: {fileID: 828959054}
   - component: {fileID: 828959053}
   - component: {fileID: 828959052}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Capsule
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -337,7 +337,7 @@ Transform:
   m_GameObject: {fileID: 828959050}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.91}
+  m_LocalPosition: {x: 2.18, y: -0.02, z: 0.74}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -350,7 +350,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 828959050}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 1322001954}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -358,7 +358,7 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -426,7 +426,7 @@ GameObject:
   m_Component:
   - component: {fileID: 882757978}
   - component: {fileID: 882757979}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: hull_obj
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -466,10 +466,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3707d8703e8442a4f97345fd449e8f13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  distanceThreshold: 2
   transformPreviewOffset: {x: 0, y: -2, z: 0}
-  DistanceThreshold: 0.1
   GeneratedMeshGameObjects: []
-  HullPreviewMaterial: {fileID: 1390672973}
 --- !u!1 &1197262634
 GameObject:
   m_ObjectHideFlags: 0
@@ -482,13 +481,13 @@ GameObject:
   - component: {fileID: 1197262638}
   - component: {fileID: 1197262637}
   - component: {fileID: 1197262636}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Capsule_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1197262635
 Transform:
   m_ObjectHideFlags: 0
@@ -498,7 +497,7 @@ Transform:
   m_GameObject: {fileID: 1197262634}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 1.92}
+  m_LocalPosition: {x: 3.38, y: 2.28, z: 1.92}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -577,87 +576,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1197262634}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
---- !u!21 &1390672973
-Material:
-  serializedVersion: 8
+--- !u!134 &1322001954
+PhysicMaterial:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Standard
-  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _BumpMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailAlbedoMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailMask:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailNormalMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _EmissionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _OcclusionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _ParallaxMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _BumpScale: 1
-    - _Cutoff: 0.5
-    - _DetailNormalMapScale: 1
-    - _DstBlend: 0
-    - _GlossMapScale: 1
-    - _Glossiness: 0.5
-    - _GlossyReflections: 1
-    - _Metallic: 0
-    - _Mode: 0
-    - _OcclusionStrength: 1
-    - _Parallax: 0.02
-    - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
-    - _SrcBlend: 1
-    - _UVSec: 0
-    - _ZWrite: 1
-    m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-  m_BuildTextureStacks: []
+  m_Name: 
+  dynamicFriction: 0.6
+  staticFriction: 0.6
+  bounciness: 0
+  frictionCombine: 0
+  bounceCombine: 0
 --- !u!1001 &1664906662
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -666,17 +596,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 882757978}
     m_Modifications:
+    - target: {fileID: 1716309427620158726, guid: 77074a9096a518645afa14c30c21d470, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 2010091281}
     - target: {fileID: 2419627718422263377, guid: 77074a9096a518645afa14c30c21d470, type: 3}
       propertyPath: m_LocalPosition.x
       value: 37.53088
       objectReference: {fileID: 0}
     - target: {fileID: 2419627718422263377, guid: 77074a9096a518645afa14c30c21d470, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.22268921
+      value: -0.22268873
       objectReference: {fileID: 0}
     - target: {fileID: 2419627718422263377, guid: 77074a9096a518645afa14c30c21d470, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.7804657
+      value: -4.6
       objectReference: {fileID: 0}
     - target: {fileID: 2419627718422263377, guid: 77074a9096a518645afa14c30c21d470, type: 3}
       propertyPath: m_LocalRotation.w
@@ -706,9 +640,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4149090542654101047, guid: 77074a9096a518645afa14c30c21d470, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7610956805273626704, guid: 77074a9096a518645afa14c30c21d470, type: 3}
       propertyPath: m_Name
       value: hull_corner_floor_left_iron
+      objectReference: {fileID: 0}
+    - target: {fileID: 7610956805273626704, guid: 77074a9096a518645afa14c30c21d470, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -727,13 +669,13 @@ GameObject:
   - component: {fileID: 1694695099}
   - component: {fileID: 1694695098}
   - component: {fileID: 1694695097}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Cube_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1694695096
 Transform:
   m_ObjectHideFlags: 0
@@ -837,13 +779,13 @@ GameObject:
   - component: {fileID: 1867191978}
   - component: {fileID: 1867191977}
   - component: {fileID: 1867191976}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1867191975
 Transform:
   m_ObjectHideFlags: 0
@@ -853,7 +795,7 @@ Transform:
   m_GameObject: {fileID: 1867191974}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.024, y: -0.01, z: 0}
+  m_LocalPosition: {x: 0.024, y: -0.01, z: -0.03}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1036,6 +978,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!134 &2010091281
+PhysicMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  dynamicFriction: 0.6
+  staticFriction: 0.6
+  bounciness: 0
+  frictionCombine: 0
+  bounceCombine: 0
 --- !u!1 &2024188280
 GameObject:
   m_ObjectHideFlags: 0
@@ -1048,13 +1002,13 @@ GameObject:
   - component: {fileID: 2024188284}
   - component: {fileID: 2024188283}
   - component: {fileID: 2024188282}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Cube_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2024188281
 Transform:
   m_ObjectHideFlags: 0
@@ -1064,7 +1018,7 @@ Transform:
   m_GameObject: {fileID: 2024188280}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.024, y: 0, z: -1.09}
+  m_LocalPosition: {x: 0.024, y: -0.2, z: -1.09}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

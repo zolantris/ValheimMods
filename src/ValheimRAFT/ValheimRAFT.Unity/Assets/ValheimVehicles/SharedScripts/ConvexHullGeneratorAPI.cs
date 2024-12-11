@@ -1,97 +1,127 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using UnityEngine;
-using ValheimVehicles.SharedModScripts;
+using Object = UnityEngine.Object;
 
-namespace ValheimVehicles.Unity.Shared
+namespace ValheimVehicles.SharedScripts
 {
-  public class ConvexHullMeshGeneratorAPI : MonoBehaviour
+  public static class ConvexHullMeshGeneratorAPI
   {
     public static Vector3 transformPreviewOffset = new(0, -3f, 0);
 
-    public static float DistanceThreshold = 0.1f;
+    public static float DefaultDistanceThreshold = 0.1f;
 
     // Convex hull calculator instance
     private static readonly ConvexHullCalculator
       convexHullCalculator = new();
 
+    public static bool DebugMode = false;
+    public static string GeneratedMeshNamePrefix = "ValheimVehicles_HullMesh";
+
+    [CanBeNull] public static Material DebugMaterial;
+    public static Color DebugMaterialColor = new(0, 1, 0, 0.5f);
     private static readonly int Color1 = Shader.PropertyToID("_Color");
 
-    public static void GetCapsuleColliderPoints(CapsuleCollider capsuleCollider,
-      ref List<Vector3> points, Vector3 scale)
+    public static Func<string, bool> IsAllowedAsHullOverride =
+      IsAllowedAsHullDefault;
+
+    public static List<Vector3> GetCapsuleColliderVertices(
+      CapsuleCollider capsuleCollider)
     {
-      // Get the capsule's local center and radius, then scale them based on the provided scale
-      var center = Vector3.Scale(capsuleCollider.center, scale);
-      var radius =
-        capsuleCollider.radius *
-        Mathf.Max(scale.x, scale.z); // Ensure scaling on X and Z axes
-      var height = (capsuleCollider.height * 0.5f - capsuleCollider.radius) *
-                   scale.y; // Scale the height along the Y axis
+      var points = new List<Vector3>();
 
-      const int
-        segmentCount = 10; // Number of segments for spherical caps and cylinder
+      // Get key capsule parameters
+      var localCenter = capsuleCollider.center;
+      var radius = capsuleCollider.radius;
+      var height = capsuleCollider.height;
+      var direction = capsuleCollider.direction;
 
-      var direction = capsuleCollider.direction; // 0 = X, 1 = Y, 2 = Z
-      var up = Vector3.up;
-      var forward = Vector3.forward;
-      var right = Vector3.right;
-
-      // Adjust up, forward, right vectors based on capsule direction
-      if (direction == 0)
+      // Determine axis vectors based on direction
+      Vector3 primaryAxis, secondaryAxis, tertiaryAxis;
+      switch (direction)
       {
-        up = Vector3.right;
-        forward = Vector3.forward;
-        right = Vector3.up;
+        case 0: // X-axis
+          primaryAxis = Vector3.right;
+          secondaryAxis = Vector3.up;
+          tertiaryAxis = Vector3.forward;
+          break;
+        case 1: // Y-axis
+          primaryAxis = Vector3.up;
+          secondaryAxis = Vector3.forward;
+          tertiaryAxis = Vector3.right;
+          break;
+        case 2: // Z-axis
+          primaryAxis = Vector3.forward;
+          secondaryAxis = Vector3.up;
+          tertiaryAxis = Vector3.right;
+          break;
+        default:
+          throw new ArgumentException("Invalid capsule direction");
       }
-      else if (direction == 1)
+
+      // Precise height calculation
+      var halfHeight = height * 0.5f - radius;
+
+      // Generate points for a full sphere with additional cylinder section
+      var horizontalSegments = 12;
+      var verticalSegments = 6;
+
+      // Generate sphere points for top and bottom caps
+      for (var lat = 0; lat <= verticalSegments; lat++)
       {
-        up = Vector3.up;
-        forward = Vector3.forward;
-        right = Vector3.right;
-      }
-      else if (direction == 2)
-      {
-        up = Vector3.forward;
-        forward = Vector3.up;
-        right = Vector3.right;
+        var polar = Mathf.PI * lat / verticalSegments;
+        var sinPolar = Mathf.Sin(polar);
+        var cosPolar = Mathf.Cos(polar);
+
+        for (var lon = 0; lon <= horizontalSegments; lon++)
+        {
+          var azimuth = 2 * Mathf.PI * lon / horizontalSegments;
+          var sinAzimuth = Mathf.Sin(azimuth);
+          var cosAzimuth = Mathf.Cos(azimuth);
+
+          // Calculate point on unit sphere
+          var spherePoint = new Vector3(
+            sinPolar * cosAzimuth,
+            cosPolar,
+            sinPolar * sinAzimuth
+          );
+
+          // Top and bottom cap points
+          var topCapPoint = localCenter +
+                            primaryAxis * (halfHeight + radius) +
+                            spherePoint * radius;
+          var bottomCapPoint = localCenter -
+                               primaryAxis * (halfHeight + radius) +
+                               spherePoint * radius;
+
+          points.Add(topCapPoint);
+          points.Add(bottomCapPoint);
+        }
       }
 
       // Generate cylinder body points
-      for (var i = 0; i <= segmentCount; i++)
+      for (var i = 0; i <= horizontalSegments; i++)
       {
-        var angle = 2 * Mathf.PI * i / segmentCount;
-        var x = radius * Mathf.Cos(angle);
-        var z = radius * Mathf.Sin(angle);
-        var bodyPoint = new Vector3(x, 0, z);
+        var angle = 2 * Mathf.PI * i / horizontalSegments;
+        var sinAngle = Mathf.Sin(angle);
+        var cosAngle = Mathf.Cos(angle);
 
-        // Apply transformations based on capsule's direction
-        points.Add(center + height * up + Vector3.Scale(bodyPoint,
-          new Vector3(right.x, right.y, right.z)));
-        points.Add(center - height * up + Vector3.Scale(bodyPoint,
-          new Vector3(right.x, right.y, right.z)));
+        // Points along the cylinder body
+        var cylinderPoint = localCenter +
+                            (secondaryAxis * sinAngle +
+                             tertiaryAxis * cosAngle) * radius;
+
+        points.Add(cylinderPoint + primaryAxis * halfHeight);
+        points.Add(cylinderPoint - primaryAxis * halfHeight);
       }
 
-      // Generate points for the spherical caps
-      for (var i = 0; i <= segmentCount; i++)
-      {
-        var theta = Mathf.PI * i / segmentCount; // Polar angle
-        var sinTheta = Mathf.Sin(theta);
-        var cosTheta = Mathf.Cos(theta);
+      // Transform points to world space
+      for (var i = 0; i < points.Count; i++)
+        points[i] = capsuleCollider.transform.TransformPoint(points[i]);
 
-        for (var j = 0; j <= segmentCount; j++)
-        {
-          var phi = 2 * Mathf.PI * j / segmentCount; // Azimuthal angle
-          var x = radius * sinTheta * Mathf.Cos(phi);
-          var y = radius * cosTheta;
-          var z = radius * sinTheta * Mathf.Sin(phi);
-
-          var capPoint = new Vector3(x, y, z);
-
-          // Add cap points to the list (top and bottom caps)
-          points.Add(center + height * up + capPoint); // Top cap
-          points.Add(center - height * up + capPoint); // Bottom cap
-        }
-      }
+      return points;
     }
 
 
@@ -161,7 +191,7 @@ namespace ValheimVehicles.Unity.Shared
       }
       else if (collider is CapsuleCollider capsuleCollider)
       {
-        GetCapsuleColliderPoints(capsuleCollider, ref points, scale);
+        points.AddRange(GetCapsuleColliderVertices(capsuleCollider));
       }
       else
       {
@@ -229,8 +259,7 @@ namespace ValheimVehicles.Unity.Shared
       // Handle CapsuleCollider
       else if (collider is CapsuleCollider capsuleCollider)
       {
-        // var scale = transform.lossyScale;
-        // GetCapsuleColliderPoints(capsuleCollider, ref points, scale);
+        points.AddRange(GetCapsuleColliderVertices(capsuleCollider));
       }
       // Handle MeshCollider
       else if (collider is MeshCollider meshCollider)
@@ -249,112 +278,7 @@ namespace ValheimVehicles.Unity.Shared
           }
 
         // immediately garbage collect the copy mesh to prevent memory problems.
-        if (!isReadable) Destroy(mesh);
-      }
-
-      return points;
-    }
-
-    private static List<Vector3> GetColliderPointsGlobal1(Collider collider)
-    {
-      var points = new List<Vector3>();
-      var transform = collider.transform;
-
-      // Handle BoxCollider
-      if (collider is BoxCollider boxCollider)
-      {
-        var boxCenter = transform.TransformPoint(boxCollider.center);
-        var boxSize =
-          Vector3.Scale(boxCollider.size,
-            transform.lossyScale); // Account for scaling
-
-        // Calculate all 8 corners of the box in world space
-        for (var x = -1; x <= 1; x += 2)
-        for (var y = -1; y <= 1; y += 2)
-        for (var z = -1; z <= 1; z += 2)
-        {
-          var localCorner = boxCollider.center +
-                            new Vector3(x * boxSize.x, y * boxSize.y,
-                              z * boxSize.z) * 0.5f;
-          var worldCorner = transform.TransformPoint(localCorner);
-          points.Add(worldCorner);
-        }
-      }
-      // Handle SphereCollider
-      else if (collider is SphereCollider sphereCollider)
-      {
-        var center = transform.TransformPoint(sphereCollider.center);
-        var scaledRadius =
-          sphereCollider.radius *
-          transform.lossyScale.x; // Assume uniform scaling for spheres
-
-        // Approximate the sphere using a spherical point distribution
-        var resolution = 12; // Number of points for approximation
-        for (var i = 0; i < resolution; i++)
-        {
-          var theta = i * Mathf.PI * 2 / resolution;
-          for (var j = 0; j <= resolution / 2; j++)
-          {
-            var phi = j * Mathf.PI / (resolution / 2);
-            var localPoint = new Vector3(
-              Mathf.Sin(phi) * Mathf.Cos(theta),
-              Mathf.Sin(phi) * Mathf.Sin(theta),
-              Mathf.Cos(phi)
-            ) * scaledRadius;
-
-            var worldPoint = center + transform.TransformVector(localPoint);
-            points.Add(worldPoint);
-          }
-        }
-      }
-      // Handle CapsuleCollider
-      else if (collider is CapsuleCollider capsuleCollider)
-      {
-        var center = transform.TransformPoint(capsuleCollider.center);
-        var lossyScale = transform.lossyScale;
-        var scaledRadius = capsuleCollider.radius *
-                           Mathf.Max(lossyScale.x,
-                             lossyScale.z); // Account for x/z scaling
-        var scaledHeight = Mathf.Max(0,
-          capsuleCollider.height * lossyScale.y -
-          2 * scaledRadius); // Account for height scaling
-
-        // Top and bottom sphere centers in world space
-        var localUp = Vector3.up * scaledHeight * 0.5f;
-        var worldTop =
-          transform.TransformPoint(capsuleCollider.center + localUp);
-        var worldBottom =
-          transform.TransformPoint(capsuleCollider.center - localUp);
-
-        // Approximate the capsule (top, bottom, and middle)
-        var resolution = 12;
-        for (var i = 0; i < resolution; i++)
-        {
-          var theta = i * Mathf.PI * 2 / resolution;
-
-          // Circle points for top and bottom
-          var circlePoint =
-            new Vector3(Mathf.Cos(theta), 0, Mathf.Sin(theta)) * scaledRadius;
-          points.Add(worldTop + transform.TransformVector(circlePoint));
-          points.Add(worldBottom + transform.TransformVector(circlePoint));
-
-          // Vertical segment (cylinder part)
-          var midPoint =
-            Vector3.Lerp(worldBottom + transform.TransformVector(circlePoint),
-              worldTop + transform.TransformVector(circlePoint), 0.5f);
-          points.Add(midPoint);
-        }
-      }
-      // Handle MeshCollider
-      else if (collider is MeshCollider meshCollider)
-      {
-        var mesh = meshCollider.sharedMesh;
-        if (mesh != null)
-          foreach (var vertex in mesh.vertices)
-          {
-            var worldVertex = transform.TransformPoint(vertex);
-            points.Add(worldVertex);
-          }
+        if (!isReadable) AdaptiveDestroy(mesh);
       }
 
       return points;
@@ -407,6 +331,14 @@ namespace ValheimVehicles.Unity.Shared
         .ToList();
     }
 
+    private static bool IsAllowedAsHullDefault(string input)
+    {
+      if (input.Contains("floor") || input.Contains("wall"))
+        return true;
+
+      return false;
+    }
+
     /// <summary>
     ///   Allows only specific gameobjects to match
     /// </summary>
@@ -415,12 +347,8 @@ namespace ValheimVehicles.Unity.Shared
     /// <returns></returns>
     public static bool IsAllowedAsHull(GameObject go)
     {
-      if (PrefabNames.IsHull(go)) return true;
-      var name = go.name.ToLower();
-
-      if (name.Contains("floor") || name.Contains("wall")) return true;
-
-      return false;
+      var input = go.name.ToLower();
+      return IsAllowedAsHullOverride(input);
     }
 
 
@@ -433,8 +361,9 @@ namespace ValheimVehicles.Unity.Shared
     {
       if (colliders is { Count: > 0 })
         colliders = colliders.Where(x =>
-          LayerHelpers.IsContainedWithinMask(x.gameObject.layer,
-            LayerHelpers.PhysicalLayers)).ToList();
+            LayerHelpers.IsContainedWithinMask(x.gameObject.layer,
+              LayerHelpers.PhysicalLayers) && x.gameObject.activeInHierarchy)
+          .ToList();
 
       return colliders;
     }
@@ -462,7 +391,7 @@ namespace ValheimVehicles.Unity.Shared
         if (obj == null) continue;
         // excludes gameobjects that do not fit as a collider but still need to be a piece on the ship.
         if (!IsAllowedAsHull(obj)) continue;
-        var colliders = obj.GetComponentsInChildren<Collider>();
+        var colliders = obj.GetComponentsInChildren<Collider>(false);
         if (colliders == null) continue;
         var filterColliders = FilterColliders(colliders.ToList());
         if (filterColliders is { Count: > 0 }) allColliders.AddRange(colliders);
@@ -572,19 +501,22 @@ namespace ValheimVehicles.Unity.Shared
     public static void DeleteMeshesFromChildColliders(
       List<GameObject> generateObjectList)
     {
-      var instances = generateObjectList.ToList();
+      var objects = generateObjectList.ToList();
       generateObjectList.Clear();
 
-      foreach (var instance in instances) AdaptiveDestroy(instance);
+      foreach (var obj in objects) AdaptiveDestroy(obj);
     }
 
-    public static List<GameObject> GetAllChildGameObjects(GameObject parentGo)
+    public static List<GameObject> GetAllChildGameObjects(GameObject parentGo,
+      int depth = 0, int maxDepth = 0)
     {
       var result = new List<GameObject>();
       foreach (Transform child in parentGo.transform)
       {
         result.Add(child.gameObject);
-        result.AddRange(GetAllChildGameObjects(child.gameObject));
+        if (depth < maxDepth)
+          result.AddRange(GetAllChildGameObjects(child.gameObject, depth + 1,
+            maxDepth));
       }
 
       return result;
@@ -598,7 +530,7 @@ namespace ValheimVehicles.Unity.Shared
     /// <param name="distanceThreshold"></param>
     public static void GenerateMeshesFromChildColliders(
       GameObject parentGameObject, List<GameObject> convexHullGameObjects,
-      float distanceThreshold = 0.1f)
+      float distanceThreshold = 0.5f)
     {
       var childGameObjects = GetAllChildGameObjects(parentGameObject);
       GenerateMeshesFromChildColliders(parentGameObject, convexHullGameObjects,
@@ -634,12 +566,12 @@ namespace ValheimVehicles.Unity.Shared
       }
     }
 
-    private static void AdaptiveDestroy(GameObject gameObject)
+    private static void AdaptiveDestroy(Object gameObject)
     {
 #if UNITY_EDITOR
-      DestroyImmediate(gameObject);
+      Object.DestroyImmediate(gameObject);
 #else
-    Destroy(gameObject);
+      Object.Destroy(gameObject);
 #endif
     }
 
@@ -664,6 +596,16 @@ namespace ValheimVehicles.Unity.Shared
       return readableMesh;
     }
 
+    public static Material GetMaterial()
+    {
+      return DebugMaterial
+        ? DebugMaterial
+        : new Material(Shader.Find("Standard"))
+        {
+          color = DebugMaterialColor
+        };
+    }
+
     public static void GenerateConvexHullMesh(
       List<Vector3> points,
       List<GameObject> generateObjectList, Transform parentObjTransform)
@@ -677,10 +619,6 @@ namespace ValheimVehicles.Unity.Shared
       var localPoints = points
         .Select(parentObjTransform.InverseTransformPoint).ToList();
 
-      Debug.Log("Generating convex hull...");
-      Debug.Log("GlobalPoints:");
-      Vector3Logger.LogPointsForInspector(points);
-      Debug.Log("LocalPoints:");
       Vector3Logger.LogPointsForInspector(localPoints);
 
 
@@ -690,7 +628,7 @@ namespace ValheimVehicles.Unity.Shared
       var normals = new List<Vector3>();
 
       // Generate convex hull and export the mesh
-      convexHullCalculator.GenerateHull(localPoints, true, ref verts, ref tris,
+      convexHullCalculator.GenerateHull(localPoints, false, ref verts, ref tris,
         ref normals);
 
       // Create a Unity Mesh
@@ -698,36 +636,42 @@ namespace ValheimVehicles.Unity.Shared
       {
         vertices = verts.ToArray(),
         triangles = tris.ToArray(),
-        normals = normals.ToArray()
+        normals = normals.ToArray(),
+        name = $"{GeneratedMeshNamePrefix}_{generateObjectList.Count}_mesh"
       };
 
       // possibly necessary for performance (but a bit of overhead)
       mesh.Optimize();
-      // likely all unnecessary.
-      mesh.RecalculateNormals();
-      mesh.RecalculateBounds();
+
+      // possibly unnecessary.
+      // mesh.RecalculateNormals();
+      // mesh.RecalculateBounds();
 
       // Create a new GameObject to display the mesh
-      var go = new GameObject(PrefabNames.ConvexHull);
-      go.layer = LayerHelpers.CustomRaftLayer;
+      // var go = new GameObject(PrefabNames.ConvexHull);
+      var go =
+        new GameObject($"{GeneratedMeshNamePrefix}_{generateObjectList.Count}")
+        {
+          layer = LayerHelpers.CustomRaftLayer
+        };
 
       generateObjectList.Add(go);
-      var meshFilter = go.AddComponent<MeshFilter>();
+
+      // debug only to show the mesh filter + load a material
+      // if (DebugMode)
+      // {
+      // }
       var meshRenderer = go.AddComponent<MeshRenderer>();
+      meshRenderer.sharedMaterial = GetMaterial();
+
+      var meshFilter = go.AddComponent<MeshFilter>();
       var meshCollider = go.AddComponent<MeshCollider>();
       meshFilter.mesh = mesh;
+
       meshCollider.sharedMesh = mesh;
       meshCollider.convex = true;
       meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
 
-      // var standardShader = Shader.Find("Standard");
-      // Create and assign the material
-      // var material =
-      //   new Material(standardShader
-      //     ? standardShader
-      //     : LoadValheimAssets.CustomPieceShader)
-      meshRenderer.material =
-        LoadValheimVehicleAssets.DoubleSidedTransparentMat;
 
       // Optional: Adjust transform
       go.transform.position =

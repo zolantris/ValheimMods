@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace ValheimVehicles.SharedModScripts
+namespace ValheimVehicles.SharedScripts
 {
   public class ConvexHullCalculator
   {
