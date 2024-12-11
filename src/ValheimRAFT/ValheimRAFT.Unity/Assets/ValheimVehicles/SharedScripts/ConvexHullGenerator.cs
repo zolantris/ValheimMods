@@ -15,8 +15,12 @@ namespace ValheimVehicles.SharedScripts
   public class ConvexHullMeshGenerator : MonoBehaviour
   {
     public float distanceThreshold = 0.2f;
-    public Vector3 transformPreviewOffset = new(1, 0, 0);
+    public Vector3 transformPreviewOffset = new(0, -2f, 0);
     public List<GameObject> GeneratedMeshGameObjects = new();
+
+    public bool hasFixedUpdate = true;
+
+    public bool useWorld;
 
     // Convex hull calculator instance
     private readonly ConvexHullCalculator
@@ -33,6 +37,9 @@ namespace ValheimVehicles.SharedScripts
     private void Start()
     {
       Cleanup();
+      ConvexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(
+        transform.root.gameObject,
+        GeneratedMeshGameObjects, distanceThreshold);
     }
 
     /// <summary>
@@ -41,6 +48,10 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     public void FixedUpdate()
     {
+      if (useWorld != ConvexHullMeshGeneratorAPI.UseWorld)
+        ConvexHullMeshGeneratorAPI.UseWorld = useWorld;
+
+      if (!hasFixedUpdate) return;
       if (lastUpdate > 0.2f)
       {
         lastUpdate = 0f;

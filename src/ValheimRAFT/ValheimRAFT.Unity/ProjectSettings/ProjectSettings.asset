@@ -298,7 +298,11 @@ PlayerSettings:
   - m_BuildTarget: WebGL
     m_StaticBatching: 0
     m_DynamicBatching: 0
-  m_BuildTargetShaderSettings: []
+  m_BuildTargetShaderSettings:
+  - m_BuildTarget: Standalone
+    m_ChunkSizeInMB: 16
+    m_MaxChunks: 0
+    m_OverrideDefaultSettings: 0
   m_BuildTargetGraphicsJobs:
   - m_BuildTarget: MacStandaloneSupport
     m_GraphicsJobs: 0
@@ -661,8 +665,10 @@ PlayerSettings:
     - /langversion:preview
   platformArchitecture: {}
   scriptingBackend:
+    Server: 1
     Standalone: 1
-  il2cppCompilerConfiguration: {}
+  il2cppCompilerConfiguration:
+    Server: 0
   il2cppCodeGeneration: {}
   managedStrippingLevel:
     EmbeddedLinux: 1

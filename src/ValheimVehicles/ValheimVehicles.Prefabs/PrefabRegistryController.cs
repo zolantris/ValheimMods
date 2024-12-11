@@ -65,6 +65,7 @@ public class PrefabRegistryController : MonoBehaviour
       PrefabNames.IsHull;
     ConvexHullMeshGeneratorAPI.DebugMaterial =
       LoadValheimVehicleAssets.DoubleSidedTransparentMat;
+    ConvexHullMeshGeneratorAPI.GeneratedMeshNamePrefix = PrefabNames.ConvexHull;
   }
 
   // todo this should come from config

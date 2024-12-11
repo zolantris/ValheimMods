@@ -11,7 +11,7 @@ namespace ValheimVehicles.SharedScripts
   {
     public static Vector3 transformPreviewOffset = new(0, -3f, 0);
 
-    public static float DefaultDistanceThreshold = 0.1f;
+    public static float DefaultDistanceThreshold = 0.2f;
 
     // Convex hull calculator instance
     private static readonly ConvexHullCalculator
@@ -26,6 +26,8 @@ namespace ValheimVehicles.SharedScripts
 
     public static Func<string, bool> IsAllowedAsHullOverride =
       IsAllowedAsHullDefault;
+
+    public static bool UseWorld = true;
 
     public static List<Vector3> GetCapsuleColliderVertices(
       CapsuleCollider capsuleCollider)
@@ -62,7 +64,7 @@ namespace ValheimVehicles.SharedScripts
       }
 
       // Precise height calculation
-      var halfHeight = height * 0.5f - radius;
+      var halfHeight = (height - 2 * radius) * 0.5f;
 
       // Generate points for a full sphere with additional cylinder section
       var horizontalSegments = 12;
@@ -88,7 +90,7 @@ namespace ValheimVehicles.SharedScripts
             sinPolar * sinAzimuth
           );
 
-          // Top and bottom cap points
+          // Top and bottom cap points (considering radius and height)
           var topCapPoint = localCenter +
                             primaryAxis * (halfHeight + radius) +
                             spherePoint * radius;
@@ -113,17 +115,46 @@ namespace ValheimVehicles.SharedScripts
                             (secondaryAxis * sinAngle +
                              tertiaryAxis * cosAngle) * radius;
 
-        points.Add(cylinderPoint + primaryAxis * halfHeight);
-        points.Add(cylinderPoint - primaryAxis * halfHeight);
+        // Adjust cylinder points with parent scaling
+        var topCylinderPoint = cylinderPoint + primaryAxis * halfHeight;
+        var bottomCylinderPoint = cylinderPoint - primaryAxis * halfHeight;
+
+        // Add the points
+        points.Add(topCylinderPoint);
+        points.Add(bottomCylinderPoint);
       }
 
-      // Transform points to world space
+      // Transform points to world space, adapting for the object's scale
       for (var i = 0; i < points.Count; i++)
-        points[i] = capsuleCollider.transform.TransformPoint(points[i]);
+        // Adapt for the scaling of the parent object (capsuleCollider.transform.localScale)
+        points[i] = capsuleCollider.transform.TransformPoint(points[i])
+                    * capsuleCollider.transform.localScale.magnitude;
 
       return points;
     }
 
+    public static List<Vector3> GetMeshColliderVertices(
+      MeshCollider meshCollider)
+    {
+      var transform = meshCollider.transform;
+      var points = new List<Vector3>();
+      var isReadable = meshCollider.sharedMesh.isReadable;
+      var mesh = isReadable
+        ? meshCollider.sharedMesh
+        : CreateReadableMesh(meshCollider.sharedMesh);
+
+      if (mesh != null)
+        foreach (var vertex in mesh.vertices)
+        {
+          // Convert mesh vertex to world space
+          var worldVertex = transform.TransformPoint(vertex);
+          points.Add(worldVertex);
+        }
+
+      // immediately garbage collect the copy mesh to prevent memory problems.
+      // if (!isReadable) AdaptiveDestroy(mesh);
+      return points;
+    }
 
     /// <summary>
     ///   Gets all local-space points of a collider, adjusted for the object's scale.
@@ -201,84 +232,92 @@ namespace ValheimVehicles.SharedScripts
       return points; // Local space, scaled
     }
 
+    private static List<Vector3> GetSphereColliderPoints(
+      SphereCollider sphereCollider)
+    {
+      var points = new List<Vector3>();
+      var transform = sphereCollider.transform;
+      var center = transform.position +
+                   transform.rotation * sphereCollider.center;
+      var lossyScale = transform.lossyScale;
+      var scaledRadius = sphereCollider.radius * Mathf.Max(
+        lossyScale.x, lossyScale.y,
+        lossyScale.z);
+
+      var resolution = 12;
+      for (var i = 0; i < resolution; i++)
+      {
+        var theta = i * Mathf.PI * 2 / resolution;
+        for (var j = 0; j <= resolution / 2; j++)
+        {
+          var phi = j * Mathf.PI / (resolution / 2);
+          var localPoint = new Vector3(
+            Mathf.Sin(phi) * Mathf.Cos(theta),
+            Mathf.Sin(phi) * Mathf.Sin(theta),
+            Mathf.Cos(phi)
+          ) * scaledRadius;
+
+          var worldPoint = center + localPoint;
+          points.Add(worldPoint);
+        }
+      }
+
+      return points;
+    }
+
+    private static List<Vector3> GetBoxColliderVertices(BoxCollider boxCollider)
+    {
+      var transform = boxCollider.transform;
+      var points = new List<Vector3>();
+
+      // Calculate the center of the box in world space
+      var boxCenter = transform.TransformPoint(boxCollider.center);
+
+      // Apply the lossy scale to the box size (this accounts for non-uniform scaling of the parent object)
+      var boxSize =
+        Vector3.Scale(boxCollider.size,
+          transform.lossyScale); // Use lossyScale for world space
+
+      // Loop through each corner of the box
+      for (var x = -1; x <= 1; x += 2)
+      for (var y = -1; y <= 1; y += 2)
+      for (var z = -1; z <= 1; z += 2)
+      {
+        // Define the local corner point
+        var localCorner =
+          new Vector3(x * boxSize.x, y * boxSize.y, z * boxSize.z) * 0.5f;
+
+        // Transform the local corner to world space using both the rotation and position of the box
+        var worldCorner = boxCenter + transform.rotation * localCorner;
+        points.Add(worldCorner);
+      }
+
+      return points;
+    }
+
     private static List<Vector3> GetColliderPointsGlobal(Collider collider)
     {
       var points = new List<Vector3>();
       var transform = collider.transform;
 
-      // Handle BoxCollider
-      if (collider is BoxCollider boxCollider)
+      switch (collider)
       {
-        // Calculate the center of the box in world space
-        var boxCenter = transform.TransformPoint(boxCollider.center);
-
-        // Apply lossyScale to the box size
-        var boxSize = Vector3.Scale(boxCollider.size, transform.lossyScale);
-
-        // Loop through each corner of the box
-        for (var x = -1; x <= 1; x += 2)
-        for (var y = -1; y <= 1; y += 2)
-        for (var z = -1; z <= 1; z += 2)
-        {
-          // Define the local corner point
-          var localCorner =
-            new Vector3(x * boxSize.x, y * boxSize.y, z * boxSize.z) * 0.5f;
-
-          // Transform the local corner to world space using rotation and position
-          var worldCorner = boxCenter + transform.rotation * localCorner;
-          points.Add(worldCorner);
-        }
-      }
-      // Handle SphereCollider
-      else if (collider is SphereCollider sphereCollider)
-      {
-        var center = transform.position +
-                     transform.rotation * sphereCollider.center;
-        var scaledRadius = sphereCollider.radius * Mathf.Max(
-          transform.lossyScale.x, transform.lossyScale.y,
-          transform.lossyScale.z);
-
-        var resolution = 12;
-        for (var i = 0; i < resolution; i++)
-        {
-          var theta = i * Mathf.PI * 2 / resolution;
-          for (var j = 0; j <= resolution / 2; j++)
-          {
-            var phi = j * Mathf.PI / (resolution / 2);
-            var localPoint = new Vector3(
-              Mathf.Sin(phi) * Mathf.Cos(theta),
-              Mathf.Sin(phi) * Mathf.Sin(theta),
-              Mathf.Cos(phi)
-            ) * scaledRadius;
-
-            var worldPoint = center + localPoint;
-            points.Add(worldPoint);
-          }
-        }
-      }
-      // Handle CapsuleCollider
-      else if (collider is CapsuleCollider capsuleCollider)
-      {
-        points.AddRange(GetCapsuleColliderVertices(capsuleCollider));
-      }
-      // Handle MeshCollider
-      else if (collider is MeshCollider meshCollider)
-      {
-        var isReadable = meshCollider.sharedMesh.isReadable;
-        var mesh = isReadable
-          ? meshCollider.sharedMesh
-          : CreateReadableMesh(meshCollider.sharedMesh);
-
-        if (mesh != null)
-          foreach (var vertex in mesh.vertices)
-          {
-            // Convert mesh vertex to world space
-            var worldVertex = transform.TransformPoint(vertex);
-            points.Add(worldVertex);
-          }
-
-        // immediately garbage collect the copy mesh to prevent memory problems.
-        if (!isReadable) AdaptiveDestroy(mesh);
+        // Handle BoxCollider
+        case BoxCollider boxCollider:
+          points.AddRange(GetBoxColliderVertices(boxCollider));
+          break;
+        // Handle SphereCollider
+        case SphereCollider sphereCollider:
+          points.AddRange(GetSphereColliderPoints(sphereCollider));
+          break;
+        // Handle CapsuleCollider
+        case CapsuleCollider capsuleCollider:
+          points.AddRange(GetCapsuleColliderVertices(capsuleCollider));
+          break;
+        // Handle MeshCollider
+        case MeshCollider meshCollider:
+          points.AddRange(GetMeshColliderVertices(meshCollider));
+          break;
       }
 
       return points;
@@ -304,7 +343,8 @@ namespace ValheimVehicles.SharedScripts
       return worldPoints;
     }
 
-    public static List<Vector3> GetColliderPointsLocal(List<Collider> colliders)
+    public static List<Vector3> GetColliderPointsLocal(
+      List<Collider> colliders)
     {
       return colliders
         .SelectMany(GetColliderPointsLocal)
@@ -313,7 +353,8 @@ namespace ValheimVehicles.SharedScripts
     }
 
     // Optional: Overload for world space conversion of multiple colliders
-    public static List<Vector3> GetColliderPointsWorld(List<Collider> colliders)
+    public static List<Vector3> GetAllColliderPointsAsWorldPoints(
+      List<Collider> colliders)
     {
       return colliders
         .SelectMany(GetColliderPointsGlobal)
@@ -394,7 +435,8 @@ namespace ValheimVehicles.SharedScripts
         var colliders = obj.GetComponentsInChildren<Collider>(false);
         if (colliders == null) continue;
         var filterColliders = FilterColliders(colliders.ToList());
-        if (filterColliders is { Count: > 0 }) allColliders.AddRange(colliders);
+        if (filterColliders is { Count: > 0 })
+          allColliders.AddRange(colliders);
       }
 
       // Cluster colliders by proximity
@@ -436,7 +478,8 @@ namespace ValheimVehicles.SharedScripts
           return true;
 
         // Fallback to proximity calculation using ClosestPoint
-        var closestPoint = clusterCollider.ClosestPoint(collider.bounds.center);
+        var closestPoint =
+          clusterCollider.ClosestPoint(collider.bounds.center);
         var distance = Vector3.Distance(collider.bounds.center, closestPoint);
         if (distance <= proximityThreshold)
           return true;
@@ -533,7 +576,8 @@ namespace ValheimVehicles.SharedScripts
       float distanceThreshold = 0.5f)
     {
       var childGameObjects = GetAllChildGameObjects(parentGameObject);
-      GenerateMeshesFromChildColliders(parentGameObject, convexHullGameObjects,
+      GenerateMeshesFromChildColliders(parentGameObject,
+        convexHullGameObjects,
         distanceThreshold, childGameObjects);
     }
 
@@ -554,13 +598,16 @@ namespace ValheimVehicles.SharedScripts
         DeleteMeshesFromChildColliders(convexHullGameObjects);
 
       var hullClusters =
-        GroupCollidersByProximity(childGameObjects.ToList(), distanceThreshold);
+        GroupCollidersByProximity(childGameObjects.ToList(),
+          distanceThreshold);
 
       Debug.Log($"HullCluster Count: {hullClusters.Count}");
 
       foreach (var hullCluster in hullClusters)
       {
-        var colliderPoints = GetColliderPointsWorld(hullCluster);
+        var colliderPoints = UseWorld
+          ? GetAllColliderPointsAsWorldPoints(hullCluster)
+          : GetColliderPointsLocal(hullCluster);
         GenerateConvexHullMesh(colliderPoints, convexHullGameObjects,
           parentGameObject.transform);
       }
@@ -598,12 +645,15 @@ namespace ValheimVehicles.SharedScripts
 
     public static Material GetMaterial()
     {
-      return DebugMaterial
-        ? DebugMaterial
-        : new Material(Shader.Find("Standard"))
-        {
-          color = DebugMaterialColor
-        };
+      if (DebugMaterial) return DebugMaterial;
+
+      var shader = Shader.Find("Standard");
+      if (!shader) return null;
+
+      return new Material(shader)
+      {
+        color = DebugMaterialColor
+      };
     }
 
     public static void GenerateConvexHullMesh(
@@ -628,7 +678,8 @@ namespace ValheimVehicles.SharedScripts
       var normals = new List<Vector3>();
 
       // Generate convex hull and export the mesh
-      convexHullCalculator.GenerateHull(localPoints, false, ref verts, ref tris,
+      convexHullCalculator.GenerateHull(localPoints, false, ref verts,
+        ref tris,
         ref normals);
 
       // Create a Unity Mesh
@@ -641,30 +692,35 @@ namespace ValheimVehicles.SharedScripts
       };
 
       // possibly necessary for performance (but a bit of overhead)
-      mesh.Optimize();
+      // mesh.Optimize();
 
       // possibly unnecessary.
       // mesh.RecalculateNormals();
       // mesh.RecalculateBounds();
 
       // Create a new GameObject to display the mesh
-      // var go = new GameObject(PrefabNames.ConvexHull);
       var go =
-        new GameObject($"{GeneratedMeshNamePrefix}_{generateObjectList.Count}")
+        new GameObject(
+          $"{GeneratedMeshNamePrefix}_{generateObjectList.Count}")
         {
           layer = LayerHelpers.CustomRaftLayer
         };
 
       generateObjectList.Add(go);
 
-      // debug only to show the mesh filter + load a material
-      // if (DebugMode)
-      // {
-      // }
-      var meshRenderer = go.AddComponent<MeshRenderer>();
-      meshRenderer.sharedMaterial = GetMaterial();
-
       var meshFilter = go.AddComponent<MeshFilter>();
+
+      // debug only to show the mesh filter + load a material
+      if (DebugMode)
+      {
+        var material = GetMaterial();
+        if (material != null)
+        {
+          var meshRenderer = go.AddComponent<MeshRenderer>();
+          meshRenderer.material = material;
+        }
+      }
+
       var meshCollider = go.AddComponent<MeshCollider>();
       meshFilter.mesh = mesh;
 
