@@ -2615,6 +2615,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public bool useWorldColliderPosition = false;
   public List<GameObject> convexHullMeshes = [];
+  public ConvexHullGeneratorIntegration convexHullGenerator = new();
 
   public void RebuildConvexHull()
   {
@@ -2622,10 +2623,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     Physics.SyncTransforms();
     var nvChildGameObjects = m_pieces.Select(x => x.gameObject).ToList();
-    ConvexHullMeshGeneratorAPI
+    convexHullGenerator
       .GenerateMeshesFromChildColliders(VehicleInstance.Instance.gameObject,
         convexHullMeshes,
-        ConvexHullMeshGeneratorAPI.DefaultDistanceThreshold,
+        0.3f,
         nvChildGameObjects);
   }
 
@@ -2751,10 +2752,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         _vehiclePieceBounds.center.z);
     // var floatColliderSize = new Vector3(Mathf.Max(minColliderSize, _vehicleBounds.size.x),
     // m_floatcollider.size.y, Mathf.Max(minColliderSize, _vehicleBounds.size.z));
+    const float originalFloatColliderSize = 0.5f;
+    // throttled float collider size for larger ships?
+    // // Mathf.Clamp(_vehiclePieceBounds.size.y * 0.33f, originalFloatColliderSize,
+    //   5f),
 
     var floatColliderSize = new Vector3(
       Mathf.Max(minColliderSize, _vehiclePieceBounds.size.x),
-      averageFloatHeight,
+      originalFloatColliderSize,
       Mathf.Max(minColliderSize, _vehiclePieceBounds.size.z));
 
     /*

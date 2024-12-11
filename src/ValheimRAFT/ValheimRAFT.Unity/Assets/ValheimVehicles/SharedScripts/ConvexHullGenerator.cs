@@ -82,9 +82,6 @@ namespace ValheimVehicles.SharedScripts
     [Conditional("UNITY_EDITOR")]
     private void SyncDebugConfig()
     {
-      // overrides this method allowing all strings.
-      ConvexHullMeshGeneratorAPI.IsAllowedAsHullOverride = s => true;
-
       ConvexHullMeshGeneratorAPI.transformPreviewOffset =
         transformPreviewOffset;
       ConvexHullMeshGeneratorAPI.DebugMode = true;
@@ -105,7 +102,7 @@ namespace ValheimVehicles.SharedScripts
 
       foreach (var obj in allObjects)
         // If the GameObject's name matches the target name, delete it
-        if (obj.name.StartsWith(ConvexHullMeshGeneratorAPI
+        if (obj.name.StartsWith(ConvexHullMeshGeneratorAPI.instance
               .GeneratedMeshNamePrefix))
         {
           Destroy(obj);

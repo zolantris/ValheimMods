@@ -4,12 +4,11 @@ using UnityEngine;
 
 namespace ValheimVehicles.SharedScripts
 {
-  public static class Vector3Logger
+  public abstract class Vector3Logger
   {
     /// <summary>
     ///   To be overridden by any loging api.
     /// </summary>
-    // ReSharper disable once FieldCanBeMadeReadOnly.Global
     public static Action<string> LoggerAPI = Debug.Log;
 
     /// <summary>

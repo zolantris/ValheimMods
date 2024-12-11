@@ -146,14 +146,15 @@ public class LoadValheimVehicleAssets : ILoadAssets
   /// <param name="assetBundle"></param>
   public void Init(AssetBundle assetBundle, AssetBundle sharedAssetBundle)
   {
+    _bundle = assetBundle;
+
     DoubleSidedTransparentShader =
-      sharedAssetBundle.LoadAsset<Shader>(
+      assetBundle.LoadAsset<Shader>(
         "DoubleSidedTransparentShader.shader");
     DoubleSidedTransparentMat =
-      sharedAssetBundle.LoadAsset<Material>(
+      assetBundle.LoadAsset<Material>(
         "double_sided_transparent.mat");
 
-    _bundle = assetBundle;
     WaterHeightMaterial =
       assetBundle.LoadAsset<Material>("WaterHeightMaterial.mat");
     GlassNautilusNoTint =

@@ -7,27 +7,31 @@ using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.SharedScripts
 {
-  public static class ConvexHullMeshGeneratorAPI
+  public class ConvexHullMeshGeneratorAPI
   {
-    public static Vector3 transformPreviewOffset = new(0, -3f, 0);
-
-    public static float DefaultDistanceThreshold = 0.2f;
+    public static Vector3 transformPreviewOffset = Vector3.zero;
 
     // Convex hull calculator instance
     private static readonly ConvexHullCalculator
       convexHullCalculator = new();
 
-    public static bool DebugMode = false;
-    public static string GeneratedMeshNamePrefix = "ValheimVehicles_HullMesh";
+    public static bool DebugMode = true;
 
     [CanBeNull] public static Material DebugMaterial;
     public static Color DebugMaterialColor = new(0, 1, 0, 0.5f);
-    private static readonly int Color1 = Shader.PropertyToID("_Color");
 
-    public static Func<string, bool> IsAllowedAsHullOverride =
-      IsAllowedAsHullDefault;
+    public static ConvexHullMeshGeneratorAPI instance = new();
 
     public static bool UseWorld = true;
+
+    // todo move prefixes to unity so it can be shared. Possibly auto-generated too.
+    public string GeneratedMeshNamePrefix = "ValheimVehicles_ConvexHull";
+
+    public virtual bool IsAllowedAsHullOverride(string val)
+    {
+      // This is dumb (likely user mistake) for some reason it cannot be overridden. Likely need to refactor this whole thing into non-static methods and initialize it inside VehiclePieces container as a static method (For all vehicles).
+      return true;
+    }
 
     public static List<Vector3> GetCapsuleColliderVertices(
       CapsuleCollider capsuleCollider)
@@ -276,14 +280,14 @@ namespace ValheimVehicles.SharedScripts
       var boxSize = boxCollider.size;
 
       // Initialize a vector to store the final scale, starting with local scale of the collider
-      Vector3 finalScale = Vector3.one;
+      var finalScale = Vector3.one;
 
-      Debug.Log("Hello world");
       // Traverse the hierarchy and accumulate the scale from each parent
       var currentTransform = transform;
       while (currentTransform != null)
       {
-        finalScale.Scale(currentTransform.localScale);  // Apply the parent's scale
+        finalScale.Scale(currentTransform
+          .localScale); // Apply the parent's scale
         currentTransform = currentTransform.parent;
       }
 
@@ -296,7 +300,8 @@ namespace ValheimVehicles.SharedScripts
       for (var z = -1; z <= 1; z += 2)
       {
         // Define the local corner point (relative to the center)
-        var localCorner = new Vector3(x * scaledBoxSize.x, y * scaledBoxSize.y, z * scaledBoxSize.z) * 0.5f;
+        var localCorner = new Vector3(x * scaledBoxSize.x, y * scaledBoxSize.y,
+          z * scaledBoxSize.z) * 0.5f;
 
         // Transform the local corner to world space using the position, rotation, and scaling
         var worldCorner = boxCenter + transform.rotation * localCorner;
@@ -307,7 +312,6 @@ namespace ValheimVehicles.SharedScripts
 
       return points;
     }
-
 
 
     private static List<Vector3> GetColliderPointsGlobal(Collider collider)
@@ -387,7 +391,8 @@ namespace ValheimVehicles.SharedScripts
 
     private static bool IsAllowedAsHullDefault(string input)
     {
-      if (input.Contains("floor") || input.Contains("wall"))
+      if (input.Contains("floor") || input.Contains("wall") ||
+          input.Contains("hull"))
         return true;
 
       return false;
@@ -402,7 +407,8 @@ namespace ValheimVehicles.SharedScripts
     public static bool IsAllowedAsHull(GameObject go)
     {
       var input = go.name.ToLower();
-      return IsAllowedAsHullOverride(input);
+      return instance.IsAllowedAsHullOverride(input) ||
+             IsAllowedAsHullDefault(input);
     }
 
 
@@ -589,7 +595,7 @@ namespace ValheimVehicles.SharedScripts
       float distanceThreshold = 0.5f)
     {
       var childGameObjects = GetAllChildGameObjects(parentGameObject);
-      GenerateMeshesFromChildColliders(parentGameObject,
+      instance.GenerateMeshesFromChildColliders(parentGameObject,
         convexHullGameObjects,
         distanceThreshold, childGameObjects);
     }
@@ -601,7 +607,7 @@ namespace ValheimVehicles.SharedScripts
     /// <param name="childGameObjects"></param>
     /// <param name="convexHullGameObjects"></param>
     /// <param name="distanceThreshold"></param>
-    public static void GenerateMeshesFromChildColliders(
+    public void GenerateMeshesFromChildColliders(
       GameObject parentGameObject,
       List<GameObject> convexHullGameObjects,
       float distanceThreshold, List<GameObject> childGameObjects)
@@ -701,20 +707,21 @@ namespace ValheimVehicles.SharedScripts
         vertices = verts.ToArray(),
         triangles = tris.ToArray(),
         normals = normals.ToArray(),
-        name = $"{GeneratedMeshNamePrefix}_{generateObjectList.Count}_mesh"
+        name =
+          $"{instance.GeneratedMeshNamePrefix}_{generateObjectList.Count}_mesh"
       };
 
       // possibly necessary for performance (but a bit of overhead)
       // mesh.Optimize();
-
-      // possibly unnecessary.
+      //
+      // // possibly unnecessary.
       // mesh.RecalculateNormals();
       // mesh.RecalculateBounds();
 
       // Create a new GameObject to display the mesh
       var go =
         new GameObject(
-          $"{GeneratedMeshNamePrefix}_{generateObjectList.Count}")
+          $"{instance.GeneratedMeshNamePrefix}_{generateObjectList.Count}")
         {
           layer = LayerHelpers.CustomRaftLayer
         };
@@ -746,7 +753,7 @@ namespace ValheimVehicles.SharedScripts
       go.transform.position =
         parentObjTransform.position + transformPreviewOffset;
       go.transform.rotation = parentObjTransform.rotation;
-      // go.transform.SetParent(parentObjTransform);
+      go.transform.SetParent(parentObjTransform);
     }
   }
 }
