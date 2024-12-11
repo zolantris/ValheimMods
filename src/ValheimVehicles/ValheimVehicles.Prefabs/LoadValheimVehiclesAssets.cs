@@ -14,7 +14,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
   // public static Shader InvertedWaterMask = null!;
 
   // public static Shader SelectiveMask = null!;
-  public static Shader StandardTwoSidedShader = null!;
+  public static Shader DoubleSidedTransparentShader = null!;
+  public static Material DoubleSidedTransparentMat = null!;
   // public static Shader WaterMaskShader = null!;
 
   // public static Material WaterMaskMaterial = null!;
@@ -145,24 +146,18 @@ public class LoadValheimVehicleAssets : ILoadAssets
   /// <param name="assetBundle"></param>
   public void Init(AssetBundle assetBundle, AssetBundle sharedAssetBundle)
   {
-    StandardTwoSidedShader =
-      sharedAssetBundle.LoadAsset<Shader>("StandardTwoSided.shader");
+    DoubleSidedTransparentShader =
+      sharedAssetBundle.LoadAsset<Shader>(
+        "DoubleSidedTransparentShader.shader");
+    DoubleSidedTransparentMat =
+      sharedAssetBundle.LoadAsset<Material>(
+        "double_sided_transparent.mat");
 
     _bundle = assetBundle;
     WaterHeightMaterial =
       assetBundle.LoadAsset<Material>("WaterHeightMaterial.mat");
     GlassNautilusNoTint =
       assetBundle.LoadAsset<Material>("glass_nautilus_notint.mat");
-    // SelectiveMaskMat =
-    //   assetBundle.LoadAsset<Material>("SelectiveMaskMat.mat");
-    //
-    // WaterMaskShader = assetBundle.LoadAsset<Shader>("WaterMask.shader");
-    // WaterMaskMaterial =
-    //   assetBundle.LoadAsset<Material>("WaterMaskMaterial.mat");
-    // InvertedWaterMask =
-    //   assetBundle.LoadAsset<Shader>("InvertWaterMask.shader");
-    // SelectiveMask =
-    //   assetBundle.LoadAsset<Shader>("SelectiveMask.shader");
     TransparentDepthMaskMaterial =
       assetBundle.LoadAsset<Material>("TransparentDepthMask.mat");
 

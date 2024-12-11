@@ -42,14 +42,20 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Helpers\ConvexHullGeneratorAPI.cs">
             <Link>ValheimVehicles.Helpers\ConvexHullGeneratorAPI.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleBoundsController.cs">
+            <Link>ValheimVehicles.Vehicles\Controllers\VehicleBoundsController.cs</Link>
+        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
-    <ItemGroup>
-        <!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->
+    <ItemGroup><!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->
         <!--        <Compile Include="Properties\CustomAssemblyAttributes.cs"/>-->
+
     </ItemGroup>
     <ItemGroup>
         <Compile Remove="ValheimRAFT.Unity\**\*"/>
+        <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
+        <Compile Include="ValheimRAFT.Unity\Assets\ValheimVehicles\SharedModScripts\*"/>
+        <Folder Include="ValheimRAFT.Unity\Assets\ValheimVehicles\SharedModScripts\"/>
     </ItemGroup>
     <PropertyGroup>
         <SentryDSN>https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496</SentryDSN>

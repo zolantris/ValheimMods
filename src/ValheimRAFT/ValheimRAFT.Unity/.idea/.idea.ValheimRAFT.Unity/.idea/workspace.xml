@@ -6,6 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="9eb05097-9d84-4b87-8e9a-0e73fcf3150e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/../../../libs" beforeDir="false" afterPath="$PROJECT_DIR$/../../../libs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,8 +29,21 @@
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/29/fdd9a050/Vector3.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/73/e1df8cf7/GameObject.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/79/3a7f369f/Transform.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/f7237cf7abef49bfbb552d7eb076e422174200/fe/137d5a57/Mesh.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/SourcesCache/3ea01e77be99618395f448b16bd7cc2bd4248bd9e5d8474964b2d97f39c5d74/System.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Assets/ValheimVehicles/Scene/BendingController.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Assets/ValheimVehicles/Scene/WaterMaskController.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.assetbundlebrowser@ad2a81ec30/Editor/AssetBundleDataSource/AssetDatabaseABDataSource.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.assetbundlebrowser@ad2a81ec30/Editor/InspectTab/AssetBundleInspectTab.cs" root0="SKIP_HIGHLIGHTING" />
@@ -66,23 +80,24 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
-    &quot;Attach to Unity Editor.Attach to Unity Editor.executor&quot;: &quot;Debug&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;XThreadsFramesViewSplitterKey&quot;: &quot;0.3313253&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feat/quick-convex-hull-calcs&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_ADD_EXTERNAL_FILES": "true",
+    "Attach to Unity Editor.Attach to Unity Editor.executor": "Debug",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "XThreadsFramesViewSplitterKey": "0.95238096",
+    "git-widget-placeholder": "feat/quick-convex-hull-calcs",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "rider.code.cleanup.on.save": "true",
+    "settings.editor.selected.configurable": "preferences.sourceCode.C#",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
     <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
       <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\2022.3.17f1\Editor\Unity.exe" />
@@ -179,6 +194,7 @@
       <workItem from="1730964261074" duration="701000" />
       <workItem from="1731143420981" duration="838000" />
       <workItem from="1733726631212" duration="22572000" />
+      <workItem from="1733886498958" duration="9715000" />
     </task>
     <servers />
   </component>
@@ -210,7 +226,7 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/Assets/ValheimVehicles/scripts/CircleLine.cs</url>
+          <url>file://$PROJECT_DIR$/Assets/ValheimVehicles/Scripts/CircleLine.cs</url>
           <line>137</line>
           <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT\ValheimRAFT.Unity\Assets\ValheimVehicles\scripts\CircleLine.cs" containingFunctionPresentation="Method 'Draw'">
             <startOffsets>
@@ -229,5 +245,9 @@
         <PinnedItemInfo parentTag="Frame#PrefabThumbnailGenerator.GetFilesFromSearchPath" memberName="this" />
       </pinned-members>
     </pin-to-top-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>

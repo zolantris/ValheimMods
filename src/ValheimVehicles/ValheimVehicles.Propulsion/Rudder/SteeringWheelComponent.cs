@@ -260,7 +260,8 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
         transform.position;
     }
 
-    if (user == Player.m_localPlayer)
+    if (user == Player.m_localPlayer && ValheimRaftPlugin.Instance
+          .HasShipContainerWeightCalculations.Value)
     {
       var baseVehicle = GetComponentInParent<VehiclePiecesController>();
       if (baseVehicle != null)

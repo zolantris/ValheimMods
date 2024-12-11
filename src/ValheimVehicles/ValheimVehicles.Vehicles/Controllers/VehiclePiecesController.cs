@@ -248,11 +248,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 /* end sail calcs  */
   private Vector2i m_sector;
   private Vector2i m_serverSector;
-  private Bounds _vehicleBounds;
+
+  private Bounds _vehiclePieceBounds;
   private Bounds _vehicleHullBounds;
+
+  // private Bounds _vehicleHullBounds;
   private Bounds _pendingVehicleBounds;
   private Bounds _pendingHullBounds;
-  private Bounds _hullBounds;
 
   private BoxCollider m_blockingcollider =>
     MovementController?.BlockingCollider ?? new();
@@ -289,7 +291,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public Bounds GetVehicleBounds()
   {
-    return _vehicleBounds;
+    return _vehiclePieceBounds;
   }
 
   public List<ZNetView>? GetCurrentPendingPieces()
@@ -1686,7 +1688,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     if (hasDebug)
       Logger.LogDebug(
-        $"Ship Size calc is: m_bounds {_vehicleBounds} bounds size {_vehicleBounds.size}");
+        $"Ship Size calc is: m_bounds {_vehiclePieceBounds} bounds size {_vehiclePieceBounds.size}");
 
     m_dynamicObjects.TryGetValue(VehicleInstance?.PersistentZdoId ?? 0,
       out var objectList);
@@ -2531,23 +2533,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       DebouncedRebuildBounds();
     }
 
-    // switch (isNew)
-    // {
-    //   case true when shouldRebuildBounds:
-    //     RebuildBounds();
-    //     break;
-    //   case true:
-    //     EncapsulateBounds(netView.gameObject);
-    //     break;
-    //   case false:
-    //     DebouncedRebuildBounds();
-    //     break;
-    // }
-
     if (hasDebug)
     {
       Logger.LogDebug(
-        $"After Adding Piece: {netView.name}, Ship Size calc is: m_bounds {_vehicleBounds} bounds size {_vehicleBounds.size}");
+        $"After Adding Piece: {netView.name}, Ship Size calc is: m_bounds {_vehiclePieceBounds} bounds size {_vehiclePieceBounds.size}");
     }
   }
 
@@ -2613,8 +2602,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     {
       foreach (var hullPiece in m_hullPieces)
       {
-        var newBounds = EncapsulateColliders(_hullBounds.center,
-          _hullBounds.size,
+        var newBounds = EncapsulateColliders(_vehicleHullBounds.center,
+          _vehicleHullBounds.size,
           hullPiece.gameObject);
         totalHeight += hullPiece.transform.localPosition.y;
         if (newBounds == null) continue;
@@ -2625,8 +2614,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     {
       foreach (var piece in m_pieces)
       {
-        var newBounds = EncapsulateColliders(_hullBounds.center,
-          _hullBounds.size,
+        var newBounds = EncapsulateColliders(_vehicleHullBounds.center,
+          _vehicleHullBounds.size,
           piece.gameObject);
         totalHeight += piece.transform.localPosition.y;
         if (newBounds == null) continue;
@@ -2634,7 +2623,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       }
     }
 
-    _hullBounds = _pendingHullBounds;
+    _vehicleHullBounds = _pendingHullBounds;
 
 
     switch (PhysicsConfig.HullFloatationColliderLocation.Value)
@@ -2649,21 +2638,21 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         if (Mathf.Approximately(totalHeight, 0f) ||
             Mathf.Approximately(hullPieceCount, 0f))
         {
-          return _hullBounds.center.y;
+          return _vehicleHullBounds.center.y;
         }
 
         return totalHeight / hullPieceCount;
 
       case PhysicsConfig.HullFloatation.Bottom:
-        return _hullBounds.min.y;
+        return _vehicleHullBounds.min.y;
       case PhysicsConfig.HullFloatation.Top:
-        return _hullBounds.max.y;
+        return _vehicleHullBounds.max.y;
       case PhysicsConfig.HullFloatation.Custom:
         return PhysicsConfig.HullFloatationCustomColliderOffset
           .Value + HullFloatationColliderAlignmentOffset;
       case PhysicsConfig.HullFloatation.Center:
       default:
-        return _hullBounds.center.y;
+        return _vehicleHullBounds.center.y;
     }
   }
 
@@ -2678,14 +2667,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
 
     if (_steeringWheelPieces.Count <= 0) return;
-    var firstPiece = _steeringWheelPieces.First();
-    if (!firstPiece.enabled)
+    var firstWheel = _steeringWheelPieces.First();
+    if (firstWheel == null || !firstWheel.enabled)
     {
       return;
     }
 
     VehicleInstance.MovementController.UpdateShipDirection(
-      firstPiece.transform
+      firstWheel.transform
         .localRotation);
   }
 
@@ -2719,55 +2708,73 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
 
     RotateVehicleForwardPosition();
+
+    // messing with collider bounds requires syncing outside a physics update
     Physics.SyncTransforms();
+    _pendingHullBounds = new Bounds();
+    _pendingVehicleBounds = new Bounds();
 
-    Bounds? tempBounds = null;
+    // if (convexHullMeshes.Count > 0)
+    // {
+    //   for (var index = 0; index < convexHullMeshes.Count; index++)
+    //   {
+    //     var convexHullMesh = convexHullMeshes[index];
+    //     var meshRenderer = convexHullMesh.GetComponent<MeshRenderer>();
+    //     if (meshRenderer == null) continue;
+    //
+    //     // Get world space bounds
+    //     var worldBounds = meshRenderer.bounds;
+    //
+    //     // Convert bounds to local space
+    //     var transformLossy = transform.lossyScale;
+    //     var localCenter = transform.InverseTransformPoint(worldBounds.center);
+    //     var localSize = new Vector3(
+    //       worldBounds.size.x / transformLossy.x,
+    //       worldBounds.size.y / transformLossy.y,
+    //       worldBounds.size.z / transformLossy.z
+    //     );
+    //     // Initialize or encapsulate bounds
+    //     if (index == 0)
+    //     {
+    //       _pendingHullBounds = new Bounds(localCenter, localSize);
+    //     }
+    //     else
+    //     {
+    //       _pendingHullBounds.Encapsulate(new Bounds(localCenter, localSize));
+    //     }
+    //   }
+    //
+    //   // Assign the final hull bounds
+    //   _vehicleHullBounds =
+    //     new Bounds(_pendingHullBounds.center, _pendingHullBounds.size);
+    // }
 
-    // todo this is not accurate, fix it.
-    if (convexHullMeshes.Count > 0)
+    for (var index = 0; index < m_pieces.ToList().Count; index++)
     {
-      foreach (var convexHullMesh in convexHullMeshes)
-      {
-        var meshRenderer = convexHullMesh.GetComponent<MeshRenderer>();
-        if (meshRenderer == null) continue;
-        var localCenter =
-          transform.InverseTransformPoint(meshRenderer.bounds.center);
-
-        if (tempBounds == null)
-        {
-          tempBounds = new Bounds(localCenter,
-            meshRenderer.bounds.size);
-        }
-        else
-        {
-          tempBounds.Value.Encapsulate(new Bounds(
-            localCenter,
-            meshRenderer.bounds.size));
-        }
-      }
-
-      if (tempBounds != null)
-      {
-        _vehicleBounds = tempBounds.Value;
-        _vehicleHullBounds = tempBounds.Value;
-      }
-
-      OnBoundsChangeUpdateShipColliders();
-      return;
-    }
-
-    foreach (var netView in m_pieces.ToList())
-    {
+      var netView = m_pieces.ToList()[index];
       if (!netView)
       {
         m_pieces.Remove(netView);
         continue;
       }
 
-      // This may need to be called within the encapsulation section to validate the bounds.min.y + transform.position is the true lowest section.
-      // UpdateLowestAveragePoint(netView);
-      EncapsulateBounds(netView.gameObject);
+
+      // will only update vehicle bounds here.
+      var newBounds =
+        EncapsulateBounds(netView.gameObject, _pendingVehicleBounds);
+      if (index == 0)
+      {
+        _pendingVehicleBounds = new Bounds(newBounds.center, newBounds.size);
+      }
+      else
+      {
+        _pendingVehicleBounds.Encapsulate(newBounds);
+      }
     }
+
+    _vehiclePieceBounds = new Bounds(_pendingVehicleBounds.center,
+      _pendingVehicleBounds.size);
+
 
     OnBoundsChangeUpdateShipColliders();
   }
@@ -2794,6 +2801,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       return;
     }
 
+    // blocking collider should not be enabled for the new dynamic hull.
+    m_blockingcollider.enabled = convexHullMeshes.Count <= 0;
+
     /*
      * @description float collider logic
      * - should match all ship colliders at surface level
@@ -2801,15 +2811,15 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
      */
     var averageFloatHeight = GetAverageFloatHeightFromHulls();
     var floatColliderCenterOffset =
-      new Vector3(_vehicleHullBounds.center.x, averageFloatHeight,
-        _vehicleHullBounds.center.z);
+      new Vector3(_vehiclePieceBounds.center.x, averageFloatHeight,
+        _vehiclePieceBounds.center.z);
     // var floatColliderSize = new Vector3(Mathf.Max(minColliderSize, _vehicleBounds.size.x),
     // m_floatcollider.size.y, Mathf.Max(minColliderSize, _vehicleBounds.size.z));
 
     var floatColliderSize = new Vector3(
-      Mathf.Max(minColliderSize, _vehicleHullBounds.size.x),
-      _vehicleHullBounds.size.y,
-      Mathf.Max(minColliderSize, _vehicleHullBounds.size.z));
+      Mathf.Max(minColliderSize, _vehiclePieceBounds.size.x),
+      averageFloatHeight,
+      Mathf.Max(minColliderSize, _vehiclePieceBounds.size.z));
 
     /*
      * onboard colliders
@@ -2828,13 +2838,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     //     _vehicleBounds.size.y + characterTriggerMaxAddedHeight) -
     //   m_floatcollider.size.y;
     var onboardColliderCenter =
-      new Vector3(_vehicleBounds.center.x,
-        _vehicleBounds.center.y,
-        _vehicleBounds.center.z);
+      new Vector3(_vehiclePieceBounds.center.x,
+        _vehiclePieceBounds.center.y,
+        _vehiclePieceBounds.center.z);
     var onboardColliderSize = new Vector3(
-      Mathf.Max(minColliderSize, _vehicleBounds.size.x),
-      Mathf.Max(minColliderSize, _vehicleBounds.size.y),
-      Mathf.Max(minColliderSize, _vehicleBounds.size.z));
+      Mathf.Max(minColliderSize, _vehiclePieceBounds.size.x),
+      Mathf.Max(minColliderSize, _vehiclePieceBounds.size.y),
+      Mathf.Max(minColliderSize, _vehiclePieceBounds.size.z));
 
     /*
      * blocking collider is the collider that prevents the ship from going through objects.
@@ -2846,12 +2856,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var blockingColliderCenterY = floatColliderCenterOffset.y +
                                   WaterConfig.UNSAFE_BlockingColliderOffset
                                     .Value;
-    var blockingColliderCenterOffset = new Vector3(_vehicleBounds.center.x,
-      blockingColliderCenterY, _vehicleBounds.center.z);
+    var blockingColliderCenterOffset = new Vector3(_vehiclePieceBounds.center.x,
+      blockingColliderCenterY, _vehiclePieceBounds.center.z);
     var blockingColliderSize = new Vector3(
-      Mathf.Max(minColliderSize, _vehicleBounds.size.x),
+      Mathf.Max(minColliderSize, _vehiclePieceBounds.size.x),
       floatColliderSize.y,
-      Mathf.Max(minColliderSize, _vehicleBounds.size.z));
+      Mathf.Max(minColliderSize, _vehiclePieceBounds.size.z));
 
     // asign defaults immediately
     FloatColliderDefaultPosition = floatColliderCenterOffset;
@@ -2971,46 +2981,105 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
   }
 
-  ///
-  /// <summary>Parses Collider.bounds and confirm if it's local/ or out of ship bounds</summary>
-  /// - Collider.bounds should be global, but it may not be returning the correct value when instantiated
-  /// - world position bounds will desync when the vehicle moves
-  /// - Using global position bounds with a local bounds will cause the center to extend to the global position and break the raft
-  ///
-  /// Looks like the solution is Physics.SyncTransforms() because on first render before Physics it does not update transforms.
-  ///
-  public static Bounds? TransformColliderGlobalBoundsToLocal(Collider collider)
+  public static Bounds TransformColliderGlobalBoundsToLocal(Collider collider)
   {
-    var colliderCenterMagnitude = collider.bounds.center.magnitude;
-    var worldPositionMagnitude = collider.transform.position.magnitude;
+    if (collider == null)
+      throw new ArgumentNullException(nameof(collider));
 
-    Vector3 center;
+    // Transform global center into local space of the root transform
+    var rootTransform = collider.transform.root;
+    var localCenter =
+      rootTransform.InverseTransformPoint(collider.bounds.center);
 
-    /*
-     * <summary>
-     * confirms that the magnitude is near zero when subtracting a guaranteed world-position coordinate with a bounds.center coordinate that could be local or global.
-     * </summary>
-     *
-     * - if magnitude is above 5f (or probably even 1f) it is very likely a local position subtracted against a global position.
-     *
-     * - Limitations: Near world center 0,0,0 this calc likely will not be accurate, but won't really matter
-     */
-    var isOutOfBounds =
-      Mathf.Abs(colliderCenterMagnitude - worldPositionMagnitude) > 5f;
-    if (isOutOfBounds)
+    // Adjust the size for scaling (bounds.size is always in world space)
+    var localSize = Vector3.Scale(collider.bounds.size,
+      Reciprocal(rootTransform.lossyScale));
+
+    // Return the calculated local bounds
+    return new Bounds(localCenter, localSize);
+  }
+
+  // Helper extension method to get reciprocal scale
+  public static Vector3 Reciprocal(Vector3 v)
+  {
+    return new Vector3(
+      v.x != 0 ? 1f / v.x : 0f,
+      v.y != 0 ? 1f / v.y : 0f,
+      v.z != 0 ? 1f / v.z : 0f
+    );
+  }
+
+  // ///
+  // /// <summary>Parses Collider.bounds and confirm if it's local/ or out of ship bounds</summary>
+  // /// - Collider.bounds should be global, but it may not be returning the correct value when instantiated
+  // /// - world position bounds will desync when the vehicle moves
+  // /// - Using global position bounds with a local bounds will cause the center to extend to the global position and break the raft
+  // ///
+  // /// Looks like the solution is Physics.SyncTransforms() because on first render before Physics it does not update transforms.
+  // ///
+  // public static Bounds? TransformColliderGlobalBoundsToLocal(Collider collider)
+  // {
+  //   var colliderCenterMagnitude = collider.bounds.center.magnitude;
+  //   var worldPositionMagnitude = collider.transform.position.magnitude;
+  //
+  //   Vector3 center;
+  //
+  //   /*
+  //    * <summary>
+  //    * confirms that the magnitude is near zero when subtracting a guaranteed world-position coordinate with a bounds.center coordinate that could be local or global.
+  //    * </summary>
+  //    *
+  //    * - if magnitude is above 5f (or probably even 1f) it is very likely a local position subtracted against a global position.
+  //    *
+  //    * - Limitations: Near world center 0,0,0 this calc likely will not be accurate, but won't really matter
+  //    */
+  //   var isOutOfBounds =
+  //     Mathf.Abs(colliderCenterMagnitude - worldPositionMagnitude) > 5f;
+  //   if (isOutOfBounds)
+  //   {
+  //     return new Bounds(
+  //       collider.transform.root.transform.InverseTransformPoint(collider
+  //         .transform.position),
+  //       collider.bounds.size);
+  //   }
+  //
+  //   center =
+  //     collider.transform.root.transform.InverseTransformPoint(collider.bounds
+  //       .center);
+  //   var size = collider.bounds.size;
+  //   var outputBounds = new Bounds(center, size);
+  //   return outputBounds;
+  // }
+
+  public Bounds GeneratePerfectBoundingBox(GameObject parentObject)
+  {
+    // Step 1: Initialize the global bounds
+    var colliders = parentObject.GetComponentsInChildren<Collider>();
+    if (colliders.Length == 0) return new Bounds();
+
+    var globalBounds = new Bounds(colliders[0].bounds.center, Vector3.zero);
+
+    // Step 2: Encapsulate all colliders in world space
+    foreach (var collider in colliders)
     {
-      return new Bounds(
-        collider.transform.root.transform.InverseTransformPoint(collider
-          .transform.position),
-        collider.bounds.size);
+      globalBounds.Encapsulate(collider.bounds);
     }
 
-    center =
-      collider.transform.root.transform.InverseTransformPoint(collider.bounds
-        .center);
-    var size = collider.bounds.size;
-    var outputBounds = new Bounds(center, size);
-    return outputBounds;
+    // Step 3: Convert global bounds to local bounds relative to the parent
+    // var localCenter = parentObject.transform.InverseTransformPoint(globalBounds.center);
+    // var localSize = globalBounds.size;
+
+    // // Debug: Visualize the bounds using a cube
+    // DebugDrawBounds(globalBounds, Color.green);
+    //
+    // // Step 4: Attach or update a BoxCollider
+    // var boxCollider = parentObject.GetComponent<BoxCollider>();
+    // if (!boxCollider) boxCollider = parentObject.AddComponent<BoxCollider>();
+    //
+    // boxCollider.center = localCenter;
+    // boxCollider.size = localSize;
+
+    return globalBounds;
   }
 
   private Bounds? EncapsulateColliders(Vector3 boundsCenter,
@@ -3018,19 +3087,22 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     GameObject netView)
   {
     if (!(bool)m_floatcollider) return null;
+    if (netView.gameObject.name.StartsWith(PrefabNames.KeelColliderPrefix))
+    {
+      return null;
+    }
+
     var outputBounds = new Bounds(boundsCenter, boundsSize);
     var colliders = netView.GetComponentsInChildren<Collider>();
-    foreach (var collider in colliders)
-    {
-      if (collider.gameObject.layer != PrefabRegistryHelpers.PieceLayer ||
-          collider.gameObject.name.StartsWith(PrefabNames.KeelColliderPrefix))
-      {
-        continue;
-      }
 
+    // filters only physical layers
+    var filteredColliders =
+      ConvexHullMeshGeneratorAPI.FilterColliders(colliders.ToList());
+
+    foreach (var collider in filteredColliders)
+    {
       var rendererGlobalBounds = TransformColliderGlobalBoundsToLocal(collider);
-      if (rendererGlobalBounds == null) continue;
-      outputBounds.Encapsulate(rendererGlobalBounds.Value);
+      outputBounds.Encapsulate(rendererGlobalBounds);
     }
 
     return outputBounds;
@@ -3047,13 +3119,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     // var piece = netView.GetComponent<Piece>();
     // return piece
     //   ? piece.GetAllColliders()
-    return [..netView.GetComponentsInChildren<Collider>(true)];
+    return [..netView.GetComponentsInChildren<Collider>(false)];
   }
 
 /*
  * Functional that updates targetBounds, useful for updating with new items or running off large lists and updating the newBounds value without mutating rigidbody values
+ * As a safety measure it will never update the vehicle bounds directly.
  */
-  public void EncapsulateBounds(GameObject go)
+  public Bounds EncapsulateBounds(GameObject go, Bounds tempBounds)
   {
     var colliders = GetCollidersInPiece(go);
 
@@ -3075,20 +3148,26 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
           PrefabNames.IsHull(go))
       {
         var newBounds =
-          EncapsulateColliders(_vehicleBounds.center, _vehicleBounds.size, go);
-        if (newBounds == null) return;
-        _vehicleBounds = newBounds.Value;
-        OnShipBoundsChange();
-        return;
+          EncapsulateColliders(tempBounds.center, tempBounds.size,
+            go);
+        if (newBounds != null)
+          return new Bounds(newBounds.Value.center, newBounds.Value.size);
       }
-
-      _vehicleBounds.Encapsulate(go.transform.localPosition);
+      else
+      {
+        tempBounds.Encapsulate(go.transform.localPosition);
+      }
     }
+
+    OnShipBoundsChange();
+    return new Bounds(tempBounds.center, tempBounds.size);
   }
 
   internal int GetPieceCount()
   {
-    if (!VehicleInstance.NetView || VehicleInstance.NetView.m_zdo == null)
+    if (VehicleInstance == null) return m_pieces.Count;
+    if (VehicleInstance.NetView == null ||
+        VehicleInstance.NetView.m_zdo == null)
     {
       return m_pieces.Count;
     }

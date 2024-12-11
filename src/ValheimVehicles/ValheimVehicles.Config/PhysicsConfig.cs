@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using BepInEx.Configuration;
 using UnityEngine;
+using ValheimRAFT;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Constants;
 
@@ -224,9 +225,9 @@ public static class PhysicsConfig
       ));
 
     EnableExactVehicleBounds = Config.Bind("Vehicles",
-      "EnableExactVehicleBounds", false,
+      $"EnableExactVehicleBounds_{ValheimRaftPlugin.Version}", true,
       ConfigHelpers.CreateConfigDescription(
-        "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible",
+        "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version",
         true, true));
 
     vehiclePiecesShipCollisionDetectionMode = Config.Bind("Vehicles",

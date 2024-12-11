@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 74102105
+CRC: 4052550108
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 042fb986056a1acc50a0987d1d94b21f
+    Hash: fdb3f1ea94e33430855b82af024c4f02
   TypeTreeHash:
     serializedVersion: 2
     Hash: c06587813f50b4ac49249ee2d68a3382
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 042fb986056a1acc50a0987d1d94b21f
+    Hash: fdb3f1ea94e33430855b82af024c4f02
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -115,6 +115,7 @@ Assets:
 - Assets/ValheimVehicles/Shaders/WaterMask.shader
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_4x4.prefab
 - Assets/ValheimVehicles/vehicle_icons.spriteatlasv2
+- Assets/ValheimVehicles/Material/double_sided_transparent.mat
 - Assets/ValheimVehicles/Prefabs/mechanical_switch.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_right_iron.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/hud_anchor.prefab

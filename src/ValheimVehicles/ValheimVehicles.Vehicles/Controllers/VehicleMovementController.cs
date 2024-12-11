@@ -701,14 +701,34 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public void UpdateShipDirection(Quaternion steeringWheelRotation)
   {
     var rotation = Quaternion.Euler(0, steeringWheelRotation.eulerAngles.y, 0);
-    if (!(bool)ShipDirection)
+    // var halfRotation =
+    //   Quaternion.Euler(0, steeringWheelRotation.eulerAngles.y / 2f, 0);
+
+    if (ShipDirection == null)
     {
       ShipDirection = transform;
       return;
     }
 
     if (ShipDirection.localRotation.Equals(rotation)) return;
+
+    // for some reason we have to rotate these parent colliders by half and the child again by half.
     ShipDirection.localRotation = rotation;
+
+    // Sync the rotation of the first hull piece. Any piece within these convex meshes should be considered the rotation of the Colliders.
+    if (PiecesController != null && PiecesController.convexHullMeshes.Count > 0)
+    {
+      var firstHullMesh = PiecesController.convexHullMeshes.First();
+      var localRotation = firstHullMesh.transform.localRotation;
+
+      // FloatCollider.transform.localRotation =
+      //   halfRotation;
+      // BlockingCollider.transform.localRotation =
+      //   halfRotation;
+
+      // onboard collider does not rotate as it is not generating from convexHullMeshes which are placed on the vehicle
+      OnboardCollider.transform.localRotation = localRotation;
+    }
   }
 
   private static Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity)
@@ -1253,20 +1273,112 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return true;
   }
 
+  /// <summary>
+  /// TODO this is for getting the points from the ship hull mesh
+  /// </summary>
+  /// <param name="mesh"></param>
+  /// <param name="shipForward"></param>
+  /// <param name="meshTransform"></param>
+  /// <returns></returns>
+  public static Dictionary<string, Vector3> GetExtremePointsRelativeToDirection(
+    Mesh mesh, Vector3 shipForward, Transform meshTransform)
+  {
+    // Dictionary to store the results
+    var extremePoints = new Dictionary<string, Vector3>
+    {
+      { "ForwardLeft", Vector3.zero },
+      { "ForwardRight", Vector3.zero },
+      { "BackwardLeft", Vector3.zero },
+      { "BackwardRight", Vector3.zero }
+    };
+
+    // Extreme distances for each point
+    var extremeDistances = new Dictionary<string, float>
+    {
+      { "ForwardLeft", float.MinValue },
+      { "ForwardRight", float.MinValue },
+      { "BackwardLeft", float.MinValue },
+      { "BackwardRight", float.MinValue }
+    };
+
+    // Normalize the forward direction
+    shipForward = shipForward.normalized;
+
+    // Create a rotation that aligns the shipForward with Vector3.forward
+    var rotationToShipSpace =
+      Quaternion.FromToRotation(shipForward, Vector3.forward);
+
+    // Get the vertices in world space
+    var vertices = mesh.vertices.Select(v => meshTransform.TransformPoint(v));
+
+    // Transform vertices into ship space
+    foreach (var vertex in vertices)
+    {
+      // Rotate the vertex into the ship's local space
+      var localPoint = rotationToShipSpace * vertex;
+
+      // Classify the vertex into a quadrant
+      if (localPoint.z >= 0 && localPoint.x <= 0) // Forward-Left
+      {
+        var distance = localPoint.magnitude;
+        if (distance > extremeDistances["ForwardLeft"])
+        {
+          extremeDistances["ForwardLeft"] = distance;
+          extremePoints["ForwardLeft"] = vertex;
+        }
+      }
+      else if (localPoint.z >= 0 && localPoint.x > 0) // Forward-Right
+      {
+        var distance = localPoint.magnitude;
+        if (distance > extremeDistances["ForwardRight"])
+        {
+          extremeDistances["ForwardRight"] = distance;
+          extremePoints["ForwardRight"] = vertex;
+        }
+      }
+      else if (localPoint.z < 0 && localPoint.x <= 0) // Backward-Left
+      {
+        var distance = localPoint.magnitude;
+        if (distance > extremeDistances["BackwardLeft"])
+        {
+          extremeDistances["BackwardLeft"] = distance;
+          extremePoints["BackwardLeft"] = vertex;
+        }
+      }
+      else if (localPoint.z < 0 && localPoint.x > 0) // Backward-Right
+      {
+        var distance = localPoint.magnitude;
+        if (distance > extremeDistances["BackwardRight"])
+        {
+          extremeDistances["BackwardRight"] = distance;
+          extremePoints["BackwardRight"] = vertex;
+        }
+      }
+    }
+
+    return extremePoints;
+  }
+
   public ShipFloatation GetShipFloatationObj()
   {
+    if (ShipDirection == null) return new ShipFloatation();
+
     var worldCenterOfMass = m_body.worldCenterOfMass;
-    var shipForward = ShipDirection!.position +
-                      ShipDirection.forward *
+    var forward = ShipDirection.forward;
+    var position = ShipDirection.position;
+    var right = ShipDirection.right;
+
+    var shipForward = position +
+                      forward *
                       GetFloatSizeFromDirection(Vector3.forward);
-    var shipBack = ShipDirection.position -
-                   ShipDirection.forward *
+    var shipBack = position -
+                   forward *
                    GetFloatSizeFromDirection(Vector3.forward);
-    var shipLeft = ShipDirection.position -
-                   ShipDirection.right *
+    var shipLeft = position -
+                   right *
                    GetFloatSizeFromDirection(Vector3.right);
-    var shipRight = ShipDirection.position +
-                    ShipDirection.right *
+    var shipRight = position +
+                    right *
                     GetFloatSizeFromDirection(Vector3.right);
     // min does not matter but max does as the ship when attempting to reach flight mode will start bouncing badly.
     var clampedTargetHeight = Mathf.Clamp(TargetHeight, cachedMaxDepthOffset,
