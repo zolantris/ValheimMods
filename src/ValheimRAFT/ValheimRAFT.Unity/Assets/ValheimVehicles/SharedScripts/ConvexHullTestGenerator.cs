@@ -51,6 +51,7 @@ namespace ValheimVehicles.SharedScripts
       ConvexHullAPI.DebugOriginalMesh = debugOriginalMesh;
 
       if (_convexHullAPI == null) return;
+      
       // local setters
       _convexHullAPI.transformPreviewOffset =
         transformPreviewOffset;
