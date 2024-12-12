@@ -27,12 +27,6 @@ public static class PropulsionConfig
     private set;
   } = null!;
 
-  public static ConfigEntry<Color> ConvexHullPreviewGlassColor
-  {
-    get;
-    private set;
-  } = null!;
-
   public static ConfigEntry<bool> EXPERIMENTAL_LeanTowardsWindSailDirection
   {
     get;
@@ -162,13 +156,6 @@ public static class PropulsionConfig
       Vector3.up * 10f,
       ConfigHelpers.CreateConfigDescription(
         "For debugging the vehicle's convex hull. Seeing it overlay over the ship is easier to debug. Most players will not need this unless they need to debug their ship",
-        true, true));
-
-    ConvexHullPreviewGlassColor = Config.Bind(SectionName,
-      "ConvexHullPreviewGlassColor",
-      new Color(0, 0.75f, 0, 0.8f),
-      ConfigHelpers.CreateConfigDescription(
-        "Color of the ConvexHullPreview debug glass. This is transparent",
         true, true));
 
     DefaultPhysicsMode.SettingChanged +=

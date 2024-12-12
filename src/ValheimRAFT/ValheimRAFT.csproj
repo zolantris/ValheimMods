@@ -45,6 +45,9 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleBoundsController.cs">
             <Link>ValheimVehicles.Vehicles\Controllers\VehicleBoundsController.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\ConvexHullComponent.cs">
+            <Link>ValheimVehicles.Vehicles\Components\ConvexHullComponent.cs</Link>
+        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup><!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->

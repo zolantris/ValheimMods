@@ -19,6 +19,11 @@ public static class PhysicsConfig
 
   private const string SectionKey = "Vehicle Physics";
 
+  private static string
+    FloatationPhysicsSectionKey = $"{SectionKey}: Floatation";
+
+  private static string VelocityModeSectionKey = $"{SectionKey}: Velocity Mode";
+
   // flight
   public static ConfigEntry<float> flightAngularDamping = null!;
   public static ConfigEntry<float> flightSidewaysDamping = null!;
@@ -45,9 +50,23 @@ public static class PhysicsConfig
   public static ConfigEntry<float> submersibleDrag = null!;
   public static ConfigEntry<float> submersibleAngularDrag = null!;
 
+  // convex hull
   public static ConfigEntry<float> convexHullJoinDistanceThreshold = null!;
   public static ConfigEntry<Color> convexHullDebuggerColor = null!;
   public static ConfigEntry<bool> convexHullDebuggerForceEnabled = null!;
+  public static ConfigEntry<Vector3> convexHullPreviewOffset = null!;
+
+  // physics related to floatation and propulsion
+  public static ConfigEntry<ForceMode> floatationVelocityMode = null!;
+  public static ConfigEntry<ForceMode> turningVelocityMode = null!;
+  public static ConfigEntry<ForceMode> sailingVelocityMode = null!;
+  public static ConfigEntry<ForceMode> rudderVelocityMode = null!;
+  public static ConfigEntry<ForceMode> flyingVelocityMode = null!;
+
+
+  public static ConfigEntry<float> forceDistance = null!;
+  public static ConfigEntry<float> force = null!;
+  public static ConfigEntry<float> backwardForce = null!;
 
 
   public static ConfigEntry<CollisionDetectionMode>
@@ -160,6 +179,18 @@ public static class PhysicsConfig
       $"flightAngularDamping_{DampingResetKey}", 1f,
       dampingAngularDescription);
 
+
+    forceDistance = Config.Bind(SectionKey,
+      $"forceDistance_{DampingResetKey}", 5f,
+      "EXPERIMENTAL_FORCE_DISTANCE");
+    force = Config.Bind(SectionKey,
+      $"force_{DampingResetKey}", 3f,
+      "EXPERIMENTAL_FORCE");
+
+    backwardForce = Config.Bind(SectionKey,
+      $"backwardForce_{DampingResetKey}", 1f,
+      "EXPERIMENTAL_BackwardFORCE");
+
     flightSteerForce = Config.Bind(SectionKey, "flightSteerForce", 1f,
       debugSailForceAndFactorDescription);
     flightSailForceFactor =
@@ -215,14 +246,15 @@ public static class PhysicsConfig
     hullFloatationRange = new AcceptableValueRange<float>(-50f, 50f);
 #endif
 
-    HullFloatationColliderLocation = Config.Bind("Vehicles",
+    HullFloatationColliderLocation = Config.Bind(FloatationPhysicsSectionKey,
       "HullFloatationColliderLocation",
       HullFloatation.Custom,
       ConfigHelpers.CreateConfigDescription(
         "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20",
         true, false));
 
-    HullFloatationCustomColliderOffset = Config.Bind("Vehicles",
+    HullFloatationCustomColliderOffset = Config.Bind(
+      FloatationPhysicsSectionKey,
       "HullFloatation Custom Offset",
       0f,
       ConfigHelpers.CreateConfigDescription(
@@ -230,48 +262,91 @@ public static class PhysicsConfig
         true, true, hullFloatationRange
       ));
 
-    EnableExactVehicleBounds = Config.Bind("Vehicles",
+    EnableExactVehicleBounds = Config.Bind(FloatationPhysicsSectionKey,
       $"EnableExactVehicleBounds_{ValheimRaftPlugin.Version}", true,
       ConfigHelpers.CreateConfigDescription(
         "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version",
         true, true));
 
-    vehiclePiecesShipCollisionDetectionMode = Config.Bind("Vehicles",
+    vehiclePiecesShipCollisionDetectionMode = Config.Bind(
+      FloatationPhysicsSectionKey,
       "vehiclePiecesShipCollisionDetectionMode",
       CollisionDetectionMode.Continuous,
       ConfigHelpers.CreateConfigDescription(
         "Set the collision mode of the vehicle ship pieces container. This the container that people walk on and use the boat. Collision Continuous will prevent people from passing through the boat. Other modes might improve performance like Discrete but cost in more jitter or lag.",
         true, true));
 
-    convexHullJoinDistanceThreshold = Config.Bind("Vehicles",
+    convexHullJoinDistanceThreshold = Config.Bind(FloatationPhysicsSectionKey,
       "convexHullJoinDistanceThreshold",
       3f,
       ConfigHelpers.CreateConfigDescription(
         "The threshold at which a vehicle's colliders are joined with another pieces colliders to make a singular hull. Higher numbers will join multiple pieces together into a singular hull. Lower numbers allow for splitting hulls out at the cost of performance.",
         true, true, new AcceptableValueRange<float>(0.1f, 10f)));
 
-    convexHullDebuggerColor = Config.Bind("Vehicles",
+    convexHullDebuggerColor = Config.Bind(FloatationPhysicsSectionKey,
       "convexHullDebuggerColor",
-      new Color(0, 1f, 0, 0.2f),
+      new Color(0, 0.60f, 0.60f, 0.20f),
       ConfigHelpers.CreateConfigDescription(
         "Allows the user to set the debugger hull color.",
         true, true));
 
-    convexHullDebuggerForceEnabled = Config.Bind("Vehicles",
+    convexHullDebuggerForceEnabled = Config.Bind(FloatationPhysicsSectionKey,
       "convexHullDebuggerForceEnabled",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Force enables the convex hull. This will be turned off if other commands are run or re-enabled if toggled.",
         true, true));
 
+    convexHullPreviewOffset = Config.Bind(FloatationPhysicsSectionKey,
+      "convexHullPreviewOffset",
+      new Vector3(0, 0, 0),
+      ConfigHelpers.CreateConfigDescription(
+        $"Sets the hull preview offset, this will allow previewing the hull side by side with your vehicle. This can only be seen if the {convexHullDebuggerForceEnabled.Definition} is true.",
+        true, true));
+
+    floatationVelocityMode = Config.Bind(VelocityModeSectionKey,
+      "floatationVelocityMode", ForceMode.Force,
+      ConfigHelpers.CreateConfigDescription(
+        "EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for",
+        true, true));
+    flyingVelocityMode = Config.Bind(VelocityModeSectionKey,
+      "flyingVelocityMode", ForceMode.Force,
+      ConfigHelpers.CreateConfigDescription(
+        "EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for",
+        true, true));
+    turningVelocityMode = Config.Bind(VelocityModeSectionKey,
+      "turningVelocityMode", ForceMode.Force,
+      ConfigHelpers.CreateConfigDescription(
+        "EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for",
+        true, true));
+    sailingVelocityMode = Config.Bind(VelocityModeSectionKey,
+      "sailingVelocityMode", ForceMode.Force,
+      ConfigHelpers.CreateConfigDescription(
+        "EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for",
+        true, true));
+    rudderVelocityMode = Config.Bind(VelocityModeSectionKey,
+      "rudderVelocityMode", ForceMode.Force,
+      ConfigHelpers.CreateConfigDescription(
+        "EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for",
+        true, true));
+
+
     convexHullDebuggerForceEnabled.SettingChanged += (_, __) =>
       ConvexHullAPI.UpdatePropertiesForConvexHulls(
+        convexHullPreviewOffset.Value,
         convexHullDebuggerForceEnabled.Value, convexHullDebuggerColor
           .Value);
     convexHullDebuggerColor.SettingChanged += (_, __) =>
       ConvexHullAPI.UpdatePropertiesForConvexHulls(
+        convexHullPreviewOffset.Value,
         convexHullDebuggerForceEnabled.Value, convexHullDebuggerColor
           .Value);
+    convexHullPreviewOffset.SettingChanged += (_, __) =>
+      ConvexHullAPI.UpdatePropertiesForConvexHulls(
+        convexHullPreviewOffset.Value,
+        convexHullDebuggerForceEnabled.Value, convexHullDebuggerColor
+          .Value);
+
 
     flightDamping.SettingChanged +=
       OnPhysicsChangeForceUpdateAllVehiclePhysics;

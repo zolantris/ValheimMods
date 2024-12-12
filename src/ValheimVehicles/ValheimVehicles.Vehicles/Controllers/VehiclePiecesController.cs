@@ -122,10 +122,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public bool useWorldColliderPosition = false;
 
-  public ConvexHullAPI _convexHullGenerator;
+  [FormerlySerializedAs("_convexHullGenerator")]
+  public ConvexHullComponent _convexHullComponent = null!;
 
   public List<GameObject> convexHullMeshes =>
-    _convexHullGenerator.convexHullMeshes;
+    _convexHullComponent.convexHullMeshes;
 
 
   public static bool DEBUGAllowActivatePendingPieces
@@ -465,18 +466,31 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   private void InitConvexHullGenerator()
   {
-    _convexHullGenerator =
-      gameObject.AddComponent<ConvexHullAPI>();
+    if (_convexHullComponent == null)
+    {
+      _convexHullComponent = GetComponent<ConvexHullComponent>();
+    }
+
+    if (_convexHullComponent == null)
+    {
+      _convexHullComponent =
+        gameObject.AddComponent<ConvexHullComponent>();
+    }
 
     // safety check, this will run after game-world loads especially if settings have changed.
     if (!ConvexHullAPI.HasInitialized)
     {
-      _convexHullGenerator.PreviewParent = transform;
+      // static
       ConvexHullAPI.InitializeConvexMeshGeneratorApi(
         PhysicsConfig.convexHullDebuggerForceEnabled.Value,
         LoadValheimVehicleAssets.DoubleSidedTransparentMat,
         PhysicsConfig.convexHullDebuggerColor.Value, PrefabNames.ConvexHull,
         Logger.LogMessage);
+
+      // instance
+      _convexHullComponent.PreviewParent = transform;
+      _convexHullComponent.transformPreviewOffset =
+        PhysicsConfig.convexHullPreviewOffset.Value;
     }
   }
 
@@ -2626,7 +2640,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     Physics.SyncTransforms();
     var nvChildGameObjects = m_pieces.Select(x => x.gameObject).ToList();
-    _convexHullGenerator
+    _convexHullComponent
       .GenerateMeshesFromChildColliders(VehicleInstance.Instance.gameObject,
         PhysicsConfig.convexHullJoinDistanceThreshold.Value,
         nvChildGameObjects);

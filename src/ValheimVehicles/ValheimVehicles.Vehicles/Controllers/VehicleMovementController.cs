@@ -13,6 +13,7 @@ using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles.Components;
@@ -906,15 +907,15 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // Apply the smoothed forces at the corresponding positions
     AddForceAtPosition(Vector3.up * frontUpwardsForce, front,
-      ForceMode.VelocityChange);
+      PhysicsConfig.flyingVelocityMode.Value);
     AddForceAtPosition(Vector3.up * backUpwardsForce, back,
-      ForceMode.VelocityChange);
+      PhysicsConfig.flyingVelocityMode.Value);
     AddForceAtPosition(Vector3.up * leftUpwardsForce, left,
-      ForceMode.VelocityChange);
+      PhysicsConfig.flyingVelocityMode.Value);
     AddForceAtPosition(Vector3.up * rightUpwardsForce, right,
-      ForceMode.VelocityChange);
+      PhysicsConfig.flyingVelocityMode.Value);
     AddForceAtPosition(Vector3.up * centerUpwardsForce, centerpos2,
-      ForceMode.VelocityChange);
+      PhysicsConfig.flyingVelocityMode.Value);
   }
 
   /// <summary>
@@ -996,11 +997,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     if (!(bool)m_body) return 50f;
 
-    const float damagePerPointOfMass = 0.01f;
-    const float baseDamage = 25f;
-    const float maxDamage = 500f;
+    var damagePerPointOfMass = RamConfig.VehicleHullMassMultiplierDamage.Value;
+    var baseDamage = RamConfig.BaseVehicleHullImpactDamage.Value;
+    var maxDamage = RamConfig.MaxVehicleHullImpactDamage.Value;
 
-    var rigidBodyMass = m_body?.mass ?? 1000f;
+    var rigidBodyMass = m_body != null ? m_body.mass : 1000f;
     var massDamage = rigidBodyMass * damagePerPointOfMass;
     var damage = Math.Min(maxDamage, baseDamage + massDamage);
 
@@ -1096,15 +1097,33 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       UpdateWaterStats();
     }
 
-    m_force = 3f;
-    m_forceDistance = 5f;
+    // todo determine if we change this what happens.
+    m_force = PhysicsConfig.force.Value;
+    // todo determine if we change this what happens.
+    m_forceDistance = PhysicsConfig.forceDistance.Value;
+
     m_stearVelForceFactor = 1.3f;
     m_waterImpactDamage = 0f;
-    m_backwardForce = 1f;
+    m_backwardForce = PhysicsConfig.backwardForce.Value;
 
-    if ((bool)_impactEffect)
+    UpdateImpactEffectValues();
+  }
+
+  public void UpdateImpactEffectValues()
+  {
+    if (_impactEffect != null)
     {
-      _impactEffect.m_damages.m_blunt = GetDamageFromImpact();
+      var damage = GetDamageFromImpact();
+      if (RamConfig.VehicleHullUsesPickaxeDamage.Value)
+      {
+        _impactEffect.m_damages.m_pickaxe = damage;
+      }
+      else
+      {
+        _impactEffect.m_damages.m_blunt = damage;
+      }
+
+      _impactEffect.m_toolTier = RamConfig.HullToolTier.Value;
     }
     else
     {
@@ -1153,7 +1172,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     AddForceAtPosition(upwardForceVector * deltaForceMultiplier,
       worldCenterOfMass,
-      ForceMode.VelocityChange);
+      PhysicsConfig.floatationVelocityMode.Value);
 
     // todo rename variables for this section to something meaningful
     // todo abstract this to a method
@@ -1201,13 +1220,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     f4 = Mathf.Sign(f4) * Mathf.Abs(Mathf.Pow(f4, 2f));
 
     AddForceAtPosition(Vector3.up * f * deltaForceMultiplier, shipForward,
-      ForceMode.VelocityChange);
+      PhysicsConfig.floatationVelocityMode.Value);
     AddForceAtPosition(Vector3.up * f2 * deltaForceMultiplier, shipBack,
-      ForceMode.VelocityChange);
+      PhysicsConfig.floatationVelocityMode.Value);
     AddForceAtPosition(Vector3.up * f3 * deltaForceMultiplier, shipLeft,
-      ForceMode.VelocityChange);
+      PhysicsConfig.floatationVelocityMode.Value);
     AddForceAtPosition(Vector3.up * f4 * deltaForceMultiplier, shipRight,
-      ForceMode.VelocityChange);
+      PhysicsConfig.floatationVelocityMode.Value);
   }
 
   public void UpdateShipFloatation(ShipFloatation shipFloatation)
@@ -1960,7 +1979,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     AddForceAtPosition(
       steerOffsetForce,
-      steerOffset, ForceMode.VelocityChange);
+      steerOffset, PhysicsConfig.rudderVelocityMode.Value);
 
     var steerForce = ShipDirection.forward *
                      (m_backwardForce * rudderForce *
@@ -1989,7 +2008,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
 
     AddForceAtPosition(steerForce * Time.fixedDeltaTime, steerOffset,
-      ForceMode.VelocityChange);
+      PhysicsConfig.turningVelocityMode.Value);
   }
 
   private static void ApplySailForce(VehicleMovementController instance,
@@ -2041,7 +2060,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     instance.AddForceAtPosition(
       sailForce,
       position,
-      ForceMode.VelocityChange);
+      PhysicsConfig.sailingVelocityMode.Value);
   }
 
   public void Forward()

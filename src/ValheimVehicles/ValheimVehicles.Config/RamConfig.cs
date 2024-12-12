@@ -38,10 +38,28 @@ public static class RamConfig
 
   public static ConfigEntry<float> MaxVelocityMultiplier { get; set; } = null!;
 
+  public static ConfigEntry<float> MaxVehicleHullImpactDamage { get; set; } =
+    null!;
+
+  public static ConfigEntry<float> BaseVehicleHullImpactDamage { get; set; } =
+    null!;
+
+  public static ConfigEntry<float>
+    VehicleHullMassMultiplierDamage { get; set; } =
+    null!;
+
+  public static ConfigEntry<bool>
+    VehicleHullUsesPickaxeDamage { get; set; } =
+    null!;
+
+
+  public static ConfigEntry<int> HullToolTier { get; set; } =
+    null!;
+
   /// <summary>
   /// TODO possibly enable this after initial release of rams
   /// </summary>
-  // public static ConfigEntry<float> ShipMassMaxMultiplier { get; set; }  = null!;
+// public static ConfigEntry<float> ShipMassMaxMultiplier { get; set; }  = null!;
   public static ConfigEntry<int> RamDamageToolTier { get; set; } = null!;
 
   private const string SectionName = "Rams";
@@ -154,10 +172,42 @@ public static class RamConfig
       ConfigHelpers.CreateConfigDescription(
         "Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.",
         true, true));
-    // ShipMassMaxMultiplier = config.Bind(SectionName, "ShipMassMaxMultiplier", 0.01f,
-    //   ConfigHelpers.CreateConfigDescription(
-    //     "Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.",
-    //     true, true));
+
+    const string VehicleHullImpactDescription =
+      "damage a vehicle can do to a rock or other object it hits.";
+    MaxVehicleHullImpactDamage = config.Bind(SectionName,
+      "MaxVehicleHullImpactDamage",
+      9000f,
+      ConfigHelpers.CreateConfigDescription(
+        $"The maximum {VehicleHullImpactDescription}",
+        true, true));
+    BaseVehicleHullImpactDamage = config.Bind(SectionName,
+      "MinVehicleHullImpactDamage",
+      50f,
+      ConfigHelpers.CreateConfigDescription(
+        $"The minimum {VehicleHullImpactDescription}",
+        true, true));
+
+    VehicleHullMassMultiplierDamage = config.Bind(SectionName,
+      "VehicleHullMassMultiplierDamage",
+      0.1f,
+      ConfigHelpers.CreateConfigDescription(
+        $"Multiplier per each single point of mass the vehicle has how much additional damage is done, multiplied by the velocity.",
+        true, true));
+
+    VehicleHullUsesPickaxeDamage = config.Bind(SectionName,
+      "VehicleHullUsesPickaxeDamage",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        $"Makes the vehicle hit with a pickaxe damage effect. It will damage rocks and other objects much easier. Also some rocks normally not destroyable will be IE Spires.",
+        true, true));
+
+    HullToolTier = config.Bind(SectionName,
+      "VehicleHullTier",
+      100,
+      ConfigHelpers.CreateConfigDescription(
+        "The tier damage a vehicle can do to a rock or other object it hits. To be balanced this should be a lower value IE (1) bronze. But ashlands will require a higher tier to smash spires FYI.",
+        true, true));
 
     const int tierDiff = 2;
     const float defaultDamagePerTier = .25f;
