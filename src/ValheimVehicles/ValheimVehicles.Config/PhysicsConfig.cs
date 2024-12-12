@@ -5,6 +5,7 @@ using UnityEngine;
 using ValheimRAFT;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Constants;
+using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.Config;
 
@@ -43,6 +44,11 @@ public static class PhysicsConfig
   public static ConfigEntry<float> submersibleSailForceFactor = null!;
   public static ConfigEntry<float> submersibleDrag = null!;
   public static ConfigEntry<float> submersibleAngularDrag = null!;
+
+  public static ConfigEntry<float> convexHullJoinDistanceThreshold = null!;
+  public static ConfigEntry<Color> convexHullDebuggerColor = null!;
+  public static ConfigEntry<bool> convexHullDebuggerForceEnabled = null!;
+
 
   public static ConfigEntry<CollisionDetectionMode>
     vehiclePiecesShipCollisionDetectionMode = null!;
@@ -236,6 +242,36 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "Set the collision mode of the vehicle ship pieces container. This the container that people walk on and use the boat. Collision Continuous will prevent people from passing through the boat. Other modes might improve performance like Discrete but cost in more jitter or lag.",
         true, true));
+
+    convexHullJoinDistanceThreshold = Config.Bind("Vehicles",
+      "convexHullJoinDistanceThreshold",
+      3f,
+      ConfigHelpers.CreateConfigDescription(
+        "The threshold at which a vehicle's colliders are joined with another pieces colliders to make a singular hull. Higher numbers will join multiple pieces together into a singular hull. Lower numbers allow for splitting hulls out at the cost of performance.",
+        true, true, new AcceptableValueRange<float>(0.1f, 10f)));
+
+    convexHullDebuggerColor = Config.Bind("Vehicles",
+      "convexHullDebuggerColor",
+      new Color(0, 1f, 0, 0.2f),
+      ConfigHelpers.CreateConfigDescription(
+        "Allows the user to set the debugger hull color.",
+        true, true));
+
+    convexHullDebuggerForceEnabled = Config.Bind("Vehicles",
+      "convexHullDebuggerForceEnabled",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Force enables the convex hull. This will be turned off if other commands are run or re-enabled if toggled.",
+        true, true));
+
+    convexHullDebuggerForceEnabled.SettingChanged += (_, __) =>
+      ConvexHullMeshGeneratorAPI.UpdatePropertiesForConvexHulls(
+        convexHullDebuggerForceEnabled.Value, convexHullDebuggerColor
+          .Value);
+    convexHullDebuggerColor.SettingChanged += (_, __) =>
+      ConvexHullMeshGeneratorAPI.UpdatePropertiesForConvexHulls(
+        convexHullDebuggerForceEnabled.Value, convexHullDebuggerColor
+          .Value);
 
     flightDamping.SettingChanged +=
       OnPhysicsChangeForceUpdateAllVehiclePhysics;

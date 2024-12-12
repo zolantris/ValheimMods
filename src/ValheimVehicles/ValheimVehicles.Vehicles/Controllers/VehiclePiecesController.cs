@@ -2614,8 +2614,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   }
 
   public bool useWorldColliderPosition = false;
-  public List<GameObject> convexHullMeshes = [];
+
+
   public ConvexHullGeneratorIntegration convexHullGenerator = new();
+
+  public List<GameObject> convexHullMeshes =>
+    convexHullGenerator.convexHullMeshes;
 
   public void RebuildConvexHull()
   {
@@ -2625,8 +2629,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var nvChildGameObjects = m_pieces.Select(x => x.gameObject).ToList();
     convexHullGenerator
       .GenerateMeshesFromChildColliders(VehicleInstance.Instance.gameObject,
-        convexHullMeshes,
-        0.3f,
+        PhysicsConfig.convexHullJoinDistanceThreshold.Value,
         nvChildGameObjects);
   }
 

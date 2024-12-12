@@ -477,7 +477,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     //       parent = gameObject
     //     });
     // }
-
     VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
     {
       collider = MovementController.FloatCollider,

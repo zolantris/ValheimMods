@@ -13,7 +13,7 @@ Shader "Custom/DoubleSidedTransparent"
         {
             Name "Forward"
             Blend SrcAlpha OneMinusSrcAlpha
-            Cull Front            // Render both front and back faces
+            Cull Off            // Render both front and back faces
             ZWrite Off          // Do not write to the depth buffer
             Lighting Off        // Disable lighting to avoid lighting differences
 

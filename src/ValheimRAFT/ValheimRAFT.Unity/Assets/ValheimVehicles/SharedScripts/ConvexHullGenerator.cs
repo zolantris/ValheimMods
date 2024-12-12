@@ -22,9 +22,14 @@ namespace ValheimVehicles.SharedScripts
 
     public bool useWorld;
 
+    public GameObject parentGameObject;
+
     // Convex hull calculator instance
     private readonly ConvexHullCalculator
       convexHullCalculator = new();
+
+    private readonly ConvexHullMeshGeneratorAPI convexHullMeshGeneratorAPI =
+      new();
 
     private float lastUpdate;
 
@@ -37,9 +42,20 @@ namespace ValheimVehicles.SharedScripts
     private void Start()
     {
       Cleanup();
-      ConvexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(
-        transform.root.gameObject,
-        GeneratedMeshGameObjects, distanceThreshold);
+      Generate();
+    }
+
+    /// <summary>
+    ///   For GameObjects
+    /// </summary>
+    private void Generate()
+    {
+      var childGameObjects =
+        ConvexHullMeshGeneratorAPI.GetAllChildGameObjects(gameObject);
+
+      convexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(
+        parentGameObject,
+        distanceThreshold, childGameObjects);
     }
 
     /// <summary>
@@ -62,16 +78,12 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
-      ConvexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(
-        transform.root.gameObject,
-        GeneratedMeshGameObjects, distanceThreshold);
+      Generate();
     }
 
     public void OnEnable()
     {
-      ConvexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(
-        transform.root.gameObject,
-        GeneratedMeshGameObjects, distanceThreshold);
+      Generate();
     }
 
     public void OnDisable()
@@ -113,9 +125,7 @@ namespace ValheimVehicles.SharedScripts
     [UsedImplicitly]
     public void TriggerBuildConvexHullFromColliders()
     {
-      ConvexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(
-        transform.root.gameObject,
-        GeneratedMeshGameObjects, distanceThreshold);
+      Generate();
     }
 
     [UsedImplicitly]
@@ -128,9 +138,7 @@ namespace ValheimVehicles.SharedScripts
     [ContextMenu("Generate Mesh")]
     private void TestGenerateMesh()
     {
-      ConvexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(
-        transform.root.gameObject,
-        GeneratedMeshGameObjects, distanceThreshold);
+      Generate();
     }
 
     // Test the method with a sample list of points
@@ -269,8 +277,7 @@ namespace ValheimVehicles.SharedScripts
         new(450.3506f, 34.35735f, 5362.345f)
       }.ToList();
 
-      ConvexHullMeshGeneratorAPI.GenerateConvexHullMesh(points,
-        GeneratedMeshGameObjects, transform);
+      convexHullMeshGeneratorAPI.GenerateConvexHullMesh(points, transform);
     }
   }
 }

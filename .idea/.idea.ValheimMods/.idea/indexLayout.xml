@@ -41,6 +41,10 @@
       <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene</Path>
       <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Shaders</Path>
       <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Texture</Path>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Library</Path>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Logs</Path>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Packages</Path>
+      <Path>src/ValheimRAFT/ValheimRAFT.Unity/obj</Path>
     </explicitExcludes>
   </component>
 </project>

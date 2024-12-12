@@ -697,9 +697,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public void UpdateShipDirection(Quaternion steeringWheelRotation)
   {
     var rotation = Quaternion.Euler(0, steeringWheelRotation.eulerAngles.y, 0);
-    // var halfRotation =
-    //   Quaternion.Euler(0, steeringWheelRotation.eulerAngles.y / 2f, 0);
-
     if (ShipDirection == null)
     {
       ShipDirection = transform;
@@ -710,21 +707,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // for some reason we have to rotate these parent colliders by half and the child again by half.
     ShipDirection.localRotation = rotation;
-
-    // Sync the rotation of the first hull piece. Any piece within these convex meshes should be considered the rotation of the Colliders.
-    if (PiecesController != null && PiecesController.convexHullMeshes.Count > 0)
-    {
-      var firstHullMesh = PiecesController.convexHullMeshes.First();
-      var localRotation = firstHullMesh.transform.localRotation;
-
-      // FloatCollider.transform.localRotation =
-      //   halfRotation;
-      // BlockingCollider.transform.localRotation =
-      //   halfRotation;
-
-      // onboard collider does not rotate as it is not generating from convexHullMeshes which are placed on the vehicle
-      OnboardCollider.transform.localRotation = localRotation;
-    }
   }
 
   private static Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity)

@@ -27,10 +27,43 @@ namespace ValheimVehicles.SharedScripts
     // todo move prefixes to unity so it can be shared. Possibly auto-generated too.
     public string GeneratedMeshNamePrefix = "ValheimVehicles_ConvexHull";
 
+    /// <summary>
+    /// A list of Convex Hull GameObjects. These gameobjects can be updated by the debug flags. 
+    /// </summary>
+    public List<GameObject> convexHullMeshes = new();
+
+    public static List<ConvexHullMeshGeneratorAPI> Instances = new();
+
     public virtual bool IsAllowedAsHullOverride(string val)
     {
       // This is dumb (likely user mistake) for some reason it cannot be overridden. Likely need to refactor this whole thing into non-static methods and initialize it inside VehiclePieces container as a static method (For all vehicles).
       return true;
+    }
+
+    public static void UpdatePropertiesForConvexHulls(bool IsDebug, Color color)
+    {
+      DebugMode = IsDebug;
+      DebugMaterialColor = color;
+
+      foreach (var convexHullMeshGeneratorAPI in Instances)
+      {
+        foreach (var convexHullObject in convexHullMeshGeneratorAPI
+                   .convexHullMeshes)
+        {
+          var meshRenderer = convexHullObject.GetComponent<MeshRenderer>();
+
+          // add meshrenderer if in debug mode. Update the colors
+          if (DebugMode && !meshRenderer)
+          {
+            AddDebugMeshRenderer(convexHullObject);
+          }
+          // delete mesh renderer if not debugmode.
+          else if (!DebugMode && meshRenderer)
+          {
+            Object.Destroy(meshRenderer);
+          }
+        }
+      }
     }
 
     public static List<Vector3> GetCapsuleColliderVertices(
@@ -585,50 +618,30 @@ namespace ValheimVehicles.SharedScripts
     }
 
     /// <summary>
-    ///   For GameObjects
-    /// </summary>
-    /// <param name="parentGameObject"></param>
-    /// <param name="convexHullGameObjects"></param>
-    /// <param name="distanceThreshold"></param>
-    public static void GenerateMeshesFromChildColliders(
-      GameObject parentGameObject, List<GameObject> convexHullGameObjects,
-      float distanceThreshold = 0.5f)
-    {
-      var childGameObjects = GetAllChildGameObjects(parentGameObject);
-      instance.GenerateMeshesFromChildColliders(parentGameObject,
-        convexHullGameObjects,
-        distanceThreshold, childGameObjects);
-    }
-
-    /// <summary>
     ///   Main generator for convex hull meshes.
     /// </summary>
-    /// <param name="parentGameObject"></param>
     /// <param name="childGameObjects"></param>
-    /// <param name="convexHullGameObjects"></param>
+    /// <param name="targetParentGameObject">ConvexHullParent where all convexHull GameObjects are places</param>
     /// <param name="distanceThreshold"></param>
     public void GenerateMeshesFromChildColliders(
-      GameObject parentGameObject,
-      List<GameObject> convexHullGameObjects,
+      GameObject targetParentGameObject,
       float distanceThreshold, List<GameObject> childGameObjects)
     {
       // TODO we may need to delete these after. Deleting immediately could cause a physics jump / issue
-      if (convexHullGameObjects.Count > 0)
-        DeleteMeshesFromChildColliders(convexHullGameObjects);
+      if (convexHullMeshes.Count > 0)
+        DeleteMeshesFromChildColliders(convexHullMeshes);
 
       var hullClusters =
         GroupCollidersByProximity(childGameObjects.ToList(),
           distanceThreshold);
-
-      Debug.Log($"HullCluster Count: {hullClusters.Count}");
 
       foreach (var hullCluster in hullClusters)
       {
         var colliderPoints = UseWorld
           ? GetAllColliderPointsAsWorldPoints(hullCluster)
           : GetColliderPointsLocal(hullCluster);
-        GenerateConvexHullMesh(colliderPoints, convexHullGameObjects,
-          parentGameObject.transform);
+        GenerateConvexHullMesh(colliderPoints,
+          targetParentGameObject.transform);
       }
     }
 
@@ -662,11 +675,11 @@ namespace ValheimVehicles.SharedScripts
       return readableMesh;
     }
 
-    public static Material GetMaterial()
+    public static Material? GetMaterial()
     {
       if (DebugMaterial) return DebugMaterial;
 
-      var shader = Shader.Find("Standard");
+      var shader = Shader.Find("Custom/DoubleSidedTransparent");
       if (!shader) return null;
 
       return new Material(shader)
@@ -675,9 +688,28 @@ namespace ValheimVehicles.SharedScripts
       };
     }
 
-    public static void GenerateConvexHullMesh(
-      List<Vector3> points,
-      List<GameObject> generateObjectList, Transform parentObjTransform)
+    /// <summary>
+    /// Renders a mesh for visualizing the hull. Not meant for casual players but worth using in creative mode.
+    /// </summary>
+    /// <param name="go"></param>
+    public static void AddDebugMeshRenderer(GameObject go)
+    {
+      if (!DebugMode) return;
+      var material = GetMaterial();
+      if (material != null)
+      {
+        var meshRenderer = go.GetComponent<MeshRenderer>();
+        if (!meshRenderer)
+        {
+          meshRenderer = go.AddComponent<MeshRenderer>();
+        }
+
+        meshRenderer.material = material;
+      }
+    }
+
+    public void GenerateConvexHullMesh(
+      List<Vector3> points, Transform parentObjTransform)
     {
       if (points.Count < 3)
       {
@@ -708,7 +740,7 @@ namespace ValheimVehicles.SharedScripts
         triangles = tris.ToArray(),
         normals = normals.ToArray(),
         name =
-          $"{instance.GeneratedMeshNamePrefix}_{generateObjectList.Count}_mesh"
+          $"{instance.GeneratedMeshNamePrefix}_{convexHullMeshes.Count}_mesh"
       };
 
       // possibly necessary for performance (but a bit of overhead)
@@ -721,25 +753,16 @@ namespace ValheimVehicles.SharedScripts
       // Create a new GameObject to display the mesh
       var go =
         new GameObject(
-          $"{instance.GeneratedMeshNamePrefix}_{generateObjectList.Count}")
+          $"{instance.GeneratedMeshNamePrefix}_{convexHullMeshes.Count}")
         {
           layer = LayerHelpers.CustomRaftLayer
         };
 
-      generateObjectList.Add(go);
+      convexHullMeshes.Add(go);
 
       var meshFilter = go.AddComponent<MeshFilter>();
 
-      // debug only to show the mesh filter + load a material
-      if (DebugMode)
-      {
-        var material = GetMaterial();
-        if (material != null)
-        {
-          var meshRenderer = go.AddComponent<MeshRenderer>();
-          meshRenderer.material = material;
-        }
-      }
+      AddDebugMeshRenderer(go);
 
       var meshCollider = go.AddComponent<MeshCollider>();
       meshFilter.mesh = mesh;
@@ -750,10 +773,11 @@ namespace ValheimVehicles.SharedScripts
 
 
       // Optional: Adjust transform
-      go.transform.position =
-        parentObjTransform.position + transformPreviewOffset;
-      go.transform.rotation = parentObjTransform.rotation;
+      go.transform.position = parentObjTransform.transform.position;
+      //   parentObjTransform.position + ;
+      // go.transform.rotation = parentObjTransform.rotation;
       go.transform.SetParent(parentObjTransform);
+      // go.transform.localPosition += transformPreviewOffset;
     }
   }
 }
