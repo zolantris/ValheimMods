@@ -68,6 +68,10 @@ public static class PhysicsConfig
   public static ConfigEntry<float> force = null!;
   public static ConfigEntry<float> backwardForce = null!;
 
+  // Camera (does not belong here)
+  public static ConfigEntry<bool>
+    removeCameraCollisionWithObjectsOnBoat = null!;
+
 
   public static ConfigEntry<CollisionDetectionMode>
     vehiclePiecesShipCollisionDetectionMode = null!;
@@ -329,6 +333,12 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for",
         true, true));
+
+    removeCameraCollisionWithObjectsOnBoat = Config.Bind(SectionKey,
+      "removeCameraCollisionWithObjectsOnBoat", true,
+      ConfigHelpers.CreateConfigDescription(
+        "EXPERIMENTAL removes all collision of camera for objects on boat. Should significantly lower jitter when camera smashes into objects on boat it will force camera through it instead of pushing rapidly forward with vehicle force too.",
+        false, true));
 
 
     convexHullDebuggerForceEnabled.SettingChanged += (_, __) =>
