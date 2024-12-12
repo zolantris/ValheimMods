@@ -4,7 +4,7 @@ using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.Helpers;
 
-public class ConvexHullGeneratorIntegration : ConvexHullMeshGeneratorAPI
+public class ConvexHullGeneratorIntegration : ConvexHullAPI
 {
   public new Material DebugMaterial =>
     LoadValheimVehicleAssets.DoubleSidedTransparentMat;

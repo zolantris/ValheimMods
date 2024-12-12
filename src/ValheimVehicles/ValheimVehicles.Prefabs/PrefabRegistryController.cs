@@ -63,7 +63,7 @@ public class PrefabRegistryController : MonoBehaviour
     Vector3Logger.LoggerAPI = Logger.LogDebug;
     // ConvexHullMeshGeneratorAPI.IsAllowedAsHullOverride =
     //   PrefabNames.IsHull;
-    ConvexHullMeshGeneratorAPI.DebugMaterial =
+    ConvexHullAPI.DebugMaterial =
       LoadValheimVehicleAssets.DoubleSidedTransparentMat;
     // ConvexHullMeshGeneratorAPI.GeneratedMeshNamePrefix = PrefabNames.ConvexHull;
   }

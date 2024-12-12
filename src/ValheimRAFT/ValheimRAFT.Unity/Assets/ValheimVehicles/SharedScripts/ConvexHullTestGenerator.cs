@@ -12,7 +12,7 @@ namespace ValheimVehicles.SharedScripts
   ///   run inside unity.
   /// </summary>
   [ExecuteInEditMode]
-  public class ConvexHullMeshGenerator : MonoBehaviour
+  public class ConvexHullTestGenerator : MonoBehaviour
   {
     public float distanceThreshold = 0.2f;
     public Vector3 transformPreviewOffset = new(0, -2f, 0);
@@ -24,23 +24,48 @@ namespace ValheimVehicles.SharedScripts
 
     public GameObject parentGameObject;
 
-    // Convex hull calculator instance
-    private readonly ConvexHullCalculator
-      convexHullCalculator = new();
-
-    private readonly ConvexHullMeshGeneratorAPI convexHullMeshGeneratorAPI =
-      new();
+    private ConvexHullAPI _convexHullAPI;
 
     private float lastUpdate;
+    public bool debugOriginalMesh = false;
+
+    private void GetOrAddMeshGeneratorApi()
+    {
+      _convexHullAPI =
+        gameObject.GetComponent<ConvexHullAPI>();
+
+      if (_convexHullAPI == null)
+      {
+        _convexHullAPI =
+          gameObject.AddComponent<ConvexHullAPI>();
+      }
+
+      SyncAPIProperties();
+    }
+
+    private void SyncAPIProperties()
+    {
+      // static setters
+      ConvexHullAPI.UseWorld = useWorld;
+      ConvexHullAPI.DebugMode = true;
+      ConvexHullAPI.DebugOriginalMesh = debugOriginalMesh;
+
+      if (_convexHullAPI == null) return;
+      // local setters
+      _convexHullAPI.transformPreviewOffset =
+        transformPreviewOffset;
+      _convexHullAPI.PreviewParent = transform;
+    }
 
     private void Awake()
     {
-      SyncDebugConfig();
+      GetOrAddMeshGeneratorApi();
       Cleanup();
     }
 
     private void Start()
     {
+      SyncAPIProperties();
       Cleanup();
       Generate();
     }
@@ -51,9 +76,9 @@ namespace ValheimVehicles.SharedScripts
     private void Generate()
     {
       var childGameObjects =
-        ConvexHullMeshGeneratorAPI.GetAllChildGameObjects(gameObject);
+        ConvexHullAPI.GetAllChildGameObjects(gameObject);
 
-      convexHullMeshGeneratorAPI.GenerateMeshesFromChildColliders(
+      _convexHullAPI.GenerateMeshesFromChildColliders(
         parentGameObject,
         distanceThreshold, childGameObjects);
     }
@@ -64,9 +89,6 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     public void FixedUpdate()
     {
-      if (useWorld != ConvexHullMeshGeneratorAPI.UseWorld)
-        ConvexHullMeshGeneratorAPI.UseWorld = useWorld;
-
       if (!hasFixedUpdate) return;
       if (lastUpdate > 0.2f)
       {
@@ -78,6 +100,7 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
+      SyncAPIProperties();
       Generate();
     }
 
@@ -91,17 +114,9 @@ namespace ValheimVehicles.SharedScripts
       Cleanup();
     }
 
-    [Conditional("UNITY_EDITOR")]
-    private void SyncDebugConfig()
-    {
-      ConvexHullMeshGeneratorAPI.transformPreviewOffset =
-        transformPreviewOffset;
-      ConvexHullMeshGeneratorAPI.DebugMode = true;
-    }
-
     public void Cleanup()
     {
-      ConvexHullMeshGeneratorAPI.DeleteMeshesFromChildColliders(
+      ConvexHullAPI.DeleteMeshesFromChildColliders(
         GeneratedMeshGameObjects);
       DeleteObjects();
     }
@@ -114,11 +129,10 @@ namespace ValheimVehicles.SharedScripts
 
       foreach (var obj in allObjects)
         // If the GameObject's name matches the target name, delete it
-        if (obj.name.StartsWith(ConvexHullMeshGeneratorAPI.instance
-              .GeneratedMeshNamePrefix))
+        if (obj.name.StartsWith(ConvexHullAPI.MeshNamePrefix))
         {
-          Destroy(obj);
           Debug.Log($"Deleted GameObject: {obj.name}");
+          ConvexHullAPI.AdaptiveDestroy(obj);
         }
     }
 
@@ -277,7 +291,7 @@ namespace ValheimVehicles.SharedScripts
         new(450.3506f, 34.35735f, 5362.345f)
       }.ToList();
 
-      convexHullMeshGeneratorAPI.GenerateConvexHullMesh(points, transform);
+      _convexHullAPI.GenerateConvexHullMesh(points, transform);
     }
   }
 }

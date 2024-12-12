@@ -119,25 +119,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     $"^({string.Join("|", IgnoredPrefabNames.Select(Regex.Escape))})",
     RegexOptions.Compiled);
 
-  // /// <summary>
-  // /// For water access. This will accurately set the lowest relative netview on the ship. This netview position will then be computed in LowestPointOnVehicle.
-  // /// </summary>
-  // public void UpdateLowestAveragePoint(ZNetView pieceNetView)
-  // {
-  //   if (IgnoredAveragePointRegexp.IsMatch(pieceNetView.name)) return;
-  //
-  //   if (LowestPiece == null)
-  //   {
-  //     LowestPiece = pieceNetView;
-  //     return;
-  //   }
-  //
-  //   if (LowestPiece.transform.localPosition.y >
-  //       pieceNetView.transform.localPosition.y)
-  //   {
-  //     LowestPiece = pieceNetView;
-  //   }
-  // }
+
+  public bool useWorldColliderPosition = false;
+
+  public ConvexHullAPI _convexHullGenerator;
+
+  public List<GameObject> convexHullMeshes =>
+    _convexHullGenerator.convexHullMeshes;
 
 
   public static bool DEBUGAllowActivatePendingPieces
@@ -466,11 +454,30 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       return;
     }
 
+    InitConvexHullGenerator();
     _piecesContainer = GetPiecesContainer();
     _movingPiecesContainer = CreateMovingPiecesContainer();
     m_body = _piecesContainer.GetComponent<Rigidbody>();
     m_fixedJoint = _piecesContainer.GetComponent<FixedJoint>();
     InitializationTimer.Start();
+  }
+
+
+  private void InitConvexHullGenerator()
+  {
+    _convexHullGenerator =
+      gameObject.AddComponent<ConvexHullAPI>();
+
+    // safety check, this will run after game-world loads especially if settings have changed.
+    if (!ConvexHullAPI.HasInitialized)
+    {
+      _convexHullGenerator.PreviewParent = transform;
+      ConvexHullAPI.InitializeConvexMeshGeneratorApi(
+        PhysicsConfig.convexHullDebuggerForceEnabled.Value,
+        LoadValheimVehicleAssets.DoubleSidedTransparentMat,
+        PhysicsConfig.convexHullDebuggerColor.Value, PrefabNames.ConvexHull,
+        Logger.LogMessage);
+    }
   }
 
   private void LinkFixedJoint()
@@ -2613,21 +2620,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         .localRotation);
   }
 
-  public bool useWorldColliderPosition = false;
-
-
-  public ConvexHullGeneratorIntegration convexHullGenerator = new();
-
-  public List<GameObject> convexHullMeshes =>
-    convexHullGenerator.convexHullMeshes;
-
   public void RebuildConvexHull()
   {
     if (VehicleInstance?.Instance == null) return;
 
     Physics.SyncTransforms();
     var nvChildGameObjects = m_pieces.Select(x => x.gameObject).ToList();
-    convexHullGenerator
+    _convexHullGenerator
       .GenerateMeshesFromChildColliders(VehicleInstance.Instance.gameObject,
         PhysicsConfig.convexHullJoinDistanceThreshold.Value,
         nvChildGameObjects);
@@ -3041,7 +3040,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     // filters only physical layers
     var filteredColliders =
-      ConvexHullMeshGeneratorAPI.FilterColliders(colliders.ToList());
+      ConvexHullAPI.FilterColliders(colliders.ToList());
 
     foreach (var collider in filteredColliders)
     {

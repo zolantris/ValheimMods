@@ -265,11 +265,11 @@ public static class PhysicsConfig
         true, true));
 
     convexHullDebuggerForceEnabled.SettingChanged += (_, __) =>
-      ConvexHullMeshGeneratorAPI.UpdatePropertiesForConvexHulls(
+      ConvexHullAPI.UpdatePropertiesForConvexHulls(
         convexHullDebuggerForceEnabled.Value, convexHullDebuggerColor
           .Value);
     convexHullDebuggerColor.SettingChanged += (_, __) =>
-      ConvexHullMeshGeneratorAPI.UpdatePropertiesForConvexHulls(
+      ConvexHullAPI.UpdatePropertiesForConvexHulls(
         convexHullDebuggerForceEnabled.Value, convexHullDebuggerColor
           .Value);
 

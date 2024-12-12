@@ -3,36 +3,84 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.SharedScripts
 {
-  public class ConvexHullMeshGeneratorAPI
+  public class ConvexHullAPI : MonoBehaviour
   {
-    public static Vector3 transformPreviewOffset = Vector3.zero;
+    public Vector3 transformPreviewOffset = Vector3.zero;
 
     // Convex hull calculator instance
     private static readonly ConvexHullCalculator
       convexHullCalculator = new();
 
     public static bool DebugMode = true;
+    public static bool DebugOriginalMesh = false;
 
+    public static bool HasInitialized = false;
     [CanBeNull] public static Material DebugMaterial;
     public static Color DebugMaterialColor = new(0, 1, 0, 0.5f);
 
-    public static ConvexHullMeshGeneratorAPI instance = new();
-
+    public static ConvexHullAPI instance = new();
+    public static Action<string> LoggerAPI = Debug.Log;
     public static bool UseWorld = true;
 
     // todo move prefixes to unity so it can be shared. Possibly auto-generated too.
-    public string GeneratedMeshNamePrefix = "ValheimVehicles_ConvexHull";
+    public static string MeshNamePrefix = "ConvexHull";
+    public static string MeshNamePreviewPrefix => $"{MeshNamePrefix}_Preview";
+    public static bool ShouldOptimizeGeneratedMeshes = false;
+
+    public Transform PreviewParent;
 
     /// <summary>
     /// A list of Convex Hull GameObjects. These gameobjects can be updated by the debug flags. 
     /// </summary>
     public List<GameObject> convexHullMeshes = new();
 
-    public static List<ConvexHullMeshGeneratorAPI> Instances = new();
+    /// <summary>
+    /// List of Convex Hull Preview Meshes. These meshes must placed within a container that should not have a Rigidbody parent.
+    /// </summary>
+    public List<GameObject> convexHullPreviewMeshes = new();
+
+    public static List<ConvexHullAPI> Instances = new();
+
+    public static void InitializeConvexMeshGeneratorApi(bool debugMode,
+      Material debugMaterial, Color debugMaterialColor, string meshNamePrefix,
+      Action<string> loggerApi)
+    {
+      MeshNamePrefix = meshNamePrefix;
+      LoggerAPI = loggerApi;
+      DebugMode = debugMode;
+      DebugMaterial = debugMaterial;
+      DebugMaterialColor = debugMaterialColor;
+    }
+
+    private void Awake()
+    {
+      PreviewParent = transform;
+    }
+
+    private void OnDisable()
+    {
+      if (!Instances.Contains(this))
+      {
+        return;
+      }
+
+      Instances.Remove(this);
+    }
+
+    private void OnEnable()
+    {
+      if (Instances.Contains(this))
+      {
+        return;
+      }
+
+      Instances.Add(this);
+    }
 
     public virtual bool IsAllowedAsHullOverride(string val)
     {
@@ -596,6 +644,7 @@ namespace ValheimVehicles.SharedScripts
     public static void DeleteMeshesFromChildColliders(
       List<GameObject> generateObjectList)
     {
+      if (generateObjectList.Count == 0) return;
       var objects = generateObjectList.ToList();
       generateObjectList.Clear();
 
@@ -643,9 +692,11 @@ namespace ValheimVehicles.SharedScripts
         GenerateConvexHullMesh(colliderPoints,
           targetParentGameObject.transform);
       }
+
+      CreatePreviewConvexHullMeshes();
     }
 
-    private static void AdaptiveDestroy(Object gameObject)
+    public static void AdaptiveDestroy(Object gameObject)
     {
 #if UNITY_EDITOR
       Object.DestroyImmediate(gameObject);
@@ -708,6 +759,76 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+    /// <summary>
+    /// Preview meshes are to be only used for visual purposes.
+    /// </summary>
+    public void CreatePreviewConvexHullMeshes()
+    {
+      DeleteMeshesFromChildColliders(convexHullPreviewMeshes);
+
+      if (!DebugMode) return;
+
+      // Rigidbody must not be in preview parent otherwise it would have it's colliders applied as physics.
+      var rigidbody =
+        PreviewParent.GetComponent<Rigidbody>();
+
+      if (rigidbody == null)
+      {
+        PreviewParent
+          .GetComponentInParent<Rigidbody>();
+      }
+
+      if (rigidbody != null && rigidbody.isKinematic == false)
+      {
+        LoggerAPI(
+          "Error this component is invalid due to preview parent containing a non-kinematic Rigidbody. using a non-kinematic rigidbody will cause this preview to desync.");
+        return;
+      }
+
+      if (PreviewParent == null)
+      {
+        LoggerAPI("Error: PreviewParent is null.");
+        return;
+      }
+
+      if (convexHullMeshes.Count > 0)
+      {
+        for (var index = 0; index < convexHullMeshes.Count; index++)
+        {
+          var convexHullMesh = convexHullMeshes[index];
+          var previewInstance =
+            Instantiate(convexHullMesh, PreviewParent);
+          convexHullPreviewMeshes.Add(previewInstance);
+
+          // Gets the difference between the original position and the parent. Then adds that as local position to align things.
+          var positionOffsetFromDestinationOffset =
+            convexHullMesh.transform.position -
+            previewInstance.transform.position;
+
+          previewInstance.transform.localPosition +=
+            positionOffsetFromDestinationOffset;
+
+
+          AddDebugMeshRenderer(previewInstance.gameObject);
+
+          var previewName = $"{MeshNamePreviewPrefix}_{index}";
+          previewInstance.gameObject.name = previewName;
+
+          var previewMeshCollider =
+            previewInstance.GetComponent<MeshCollider>();
+          // Do not need a mesh collider for a preview instance. This can cause problems too.
+          if (previewMeshCollider != null)
+          {
+            AdaptiveDestroy(previewMeshCollider);
+          }
+
+          LoggerAPI(
+            $"Adjusting preview offset by {transformPreviewOffset}");
+          previewInstance.transform.localPosition += transformPreviewOffset;
+        }
+      }
+    }
+
     public void GenerateConvexHullMesh(
       List<Vector3> points, Transform parentObjTransform)
     {
@@ -740,20 +861,23 @@ namespace ValheimVehicles.SharedScripts
         triangles = tris.ToArray(),
         normals = normals.ToArray(),
         name =
-          $"{instance.GeneratedMeshNamePrefix}_{convexHullMeshes.Count}_mesh"
+          $"{MeshNamePrefix}_{convexHullMeshes.Count}_mesh"
       };
 
-      // possibly necessary for performance (but a bit of overhead)
-      // mesh.Optimize();
-      //
-      // // possibly unnecessary.
-      // mesh.RecalculateNormals();
-      // mesh.RecalculateBounds();
+      if (ShouldOptimizeGeneratedMeshes)
+      {
+        // possibly necessary for performance (but a bit of overhead)
+        mesh.Optimize();
+        //
+        // // possibly unnecessary.
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+      }
 
       // Create a new GameObject to display the mesh
       var go =
         new GameObject(
-          $"{instance.GeneratedMeshNamePrefix}_{convexHullMeshes.Count}")
+          $"{MeshNamePrefix}_{convexHullMeshes.Count}")
         {
           layer = LayerHelpers.CustomRaftLayer
         };
@@ -762,7 +886,12 @@ namespace ValheimVehicles.SharedScripts
 
       var meshFilter = go.AddComponent<MeshFilter>();
 
-      AddDebugMeshRenderer(go);
+#if UNITY_EDITOR
+      if (DebugOriginalMesh)
+      {
+        AddDebugMeshRenderer(go);
+      }
+#endif
 
       var meshCollider = go.AddComponent<MeshCollider>();
       meshFilter.mesh = mesh;
@@ -771,13 +900,8 @@ namespace ValheimVehicles.SharedScripts
       meshCollider.convex = true;
       meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
 
-
-      // Optional: Adjust transform
       go.transform.position = parentObjTransform.transform.position;
-      //   parentObjTransform.position + ;
-      // go.transform.rotation = parentObjTransform.rotation;
       go.transform.SetParent(parentObjTransform);
-      // go.transform.localPosition += transformPreviewOffset;
     }
   }
 }
