@@ -1116,7 +1116,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       var damage = GetDamageFromImpact();
       if (RamConfig.VehicleHullUsesPickaxeDamage.Value)
       {
-        _impactEffect.m_damages.m_pickaxe = damage;
+        _impactEffect.m_damages.m_pickaxe = damage / 2;
+        _impactEffect.m_damages.m_chop = damage / 2;
       }
       else
       {
