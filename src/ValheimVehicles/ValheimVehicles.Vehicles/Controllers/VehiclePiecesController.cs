@@ -122,11 +122,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public bool useWorldColliderPosition = false;
 
-  [FormerlySerializedAs("_convexHullGenerator")]
-  public ConvexHullComponent _convexHullComponent = null!;
+  public ConvexHullComponent convexHullComponent = null!;
 
   public List<GameObject> convexHullMeshes =>
-    _convexHullComponent.convexHullMeshes;
+    convexHullComponent.convexHullMeshes;
 
 
   public static bool DEBUGAllowActivatePendingPieces
@@ -466,14 +465,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   private void InitConvexHullGenerator()
   {
-    if (_convexHullComponent == null)
+    if (convexHullComponent == null)
     {
-      _convexHullComponent = GetComponent<ConvexHullComponent>();
+      convexHullComponent = GetComponent<ConvexHullComponent>();
     }
 
-    if (_convexHullComponent == null)
+    if (convexHullComponent == null)
     {
-      _convexHullComponent =
+      convexHullComponent =
         gameObject.AddComponent<ConvexHullComponent>();
     }
 
@@ -488,8 +487,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         Logger.LogMessage);
 
       // instance
-      _convexHullComponent.PreviewParent = transform;
-      _convexHullComponent.transformPreviewOffset =
+      convexHullComponent.PreviewParent = transform;
+      convexHullComponent.transformPreviewOffset =
         PhysicsConfig.convexHullPreviewOffset.Value;
     }
   }
@@ -2640,7 +2639,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     Physics.SyncTransforms();
     var nvChildGameObjects = m_pieces.Select(x => x.gameObject).ToList();
-    _convexHullComponent
+    convexHullComponent
       .GenerateMeshesFromChildColliders(VehicleInstance.Instance.gameObject,
         PhysicsConfig.convexHullJoinDistanceThreshold.Value,
         nvChildGameObjects);

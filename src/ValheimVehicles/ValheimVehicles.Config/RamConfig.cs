@@ -49,7 +49,7 @@ public static class RamConfig
     null!;
 
   public static ConfigEntry<bool>
-    VehicleHullUsesPickaxeDamage { get; set; } =
+    VehicleHullUsesPickaxeAndChopDamage { get; set; } =
     null!;
 
 
@@ -195,11 +195,11 @@ public static class RamConfig
         $"Multiplier per each single point of mass the vehicle has how much additional damage is done, multiplied by the velocity.",
         true, true));
 
-    VehicleHullUsesPickaxeDamage = config.Bind(SectionName,
-      "VehicleHullUsesPickaxeDamage",
+    VehicleHullUsesPickaxeAndChopDamage = config.Bind(SectionName,
+      "VehicleHullUsesPickaxeAndChopDamage",
       true,
       ConfigHelpers.CreateConfigDescription(
-        $"Makes the vehicle hit with a pickaxe damage effect. It will damage rocks and other objects much easier. Also some rocks normally not destroyable will be IE Spires.",
+        $"Makes the vehicle hit with a pickaxe and chop damage effect. This will make the vehicle effective against trees and rocks. Also some rocks normally not destroyable will be IE Spires. Damage is split 66% to pickaxe and 33% to chop damage.",
         true, true));
 
     HullToolTier = config.Bind(SectionName,

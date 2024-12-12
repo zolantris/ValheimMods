@@ -1114,10 +1114,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (_impactEffect != null)
     {
       var damage = GetDamageFromImpact();
-      if (RamConfig.VehicleHullUsesPickaxeDamage.Value)
+      if (RamConfig.VehicleHullUsesPickaxeAndChopDamage.Value)
       {
-        _impactEffect.m_damages.m_pickaxe = damage / 2;
-        _impactEffect.m_damages.m_chop = damage / 2;
+        _impactEffect.m_damages.m_pickaxe = damage * 0.66f;
+        _impactEffect.m_damages.m_chop = damage * 0.33f;
       }
       else
       {
@@ -1133,7 +1133,129 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
+  public Vector3 currentUpwardsForce = Vector3.zero;
+  public Vector3 currentUpwardsForceVelocity = Vector3.zero;
+
   public void UpdateWaterForce(ShipFloatation shipFloatation)
+  {
+    var shipLeft = shipFloatation.ShipLeft;
+    var shipForward = shipFloatation.ShipForward;
+    var shipBack = shipFloatation.ShipBack;
+    var shipRight = shipFloatation.ShipRight;
+    var waterLevelLeft = shipFloatation.WaterLevelLeft;
+    var waterLevelRight = shipFloatation.WaterLevelRight;
+    var waterLevelForward = shipFloatation.WaterLevelForward;
+    var waterLevelBack = shipFloatation.WaterLevelBack;
+    var currentDepth = shipFloatation.CurrentDepth;
+    var worldCenterOfMass = m_body.worldCenterOfMass;
+
+    if (shipFloatation.IsAboveBuoyantLevel)
+    {
+      return;
+    }
+
+    m_body.WakeUp();
+
+    if (m_waterImpactDamage > 0f)
+    {
+      UpdateWaterForce(currentDepth, Time.fixedDeltaTime);
+    }
+
+    // Calculate the forces for left, right, forward, and backward directions
+    var leftForce = new Vector3(shipLeft.x, waterLevelLeft, shipLeft.z);
+    var rightForce = new Vector3(shipRight.x, waterLevelRight, shipRight.z);
+    var forwardForce =
+      new Vector3(shipForward.x, waterLevelForward, shipForward.z);
+    var backwardForce = new Vector3(shipBack.x, waterLevelBack, shipBack.z);
+
+    // Get fixedDeltaTime and the delta force multiplier
+    var fixedDeltaTime = Time.fixedDeltaTime;
+    var deltaForceMultiplier =
+      fixedDeltaTime * PhysicsConfig.waterDeltaForceMultiplier.Value;
+
+    // Calculate the current depth force multiplier
+    var currentDepthForceMultiplier =
+      Mathf.Clamp01(Mathf.Abs(currentDepth) / m_forceDistance);
+
+    // Calculate the target upwards force based on the current depth
+    var targetUpwardsForce = Vector3.up * m_force *
+                             currentDepthForceMultiplier;
+
+    // Apply SmoothDamp to prevent jitter
+    // Use a reference variable for the current upwards force, which will be smoothed
+    if (currentUpwardsForce == null)
+    {
+      currentUpwardsForce = targetUpwardsForce; // Initialize if not set
+    }
+
+    // Smoothly interpolate towards the target upwards force over time
+    currentUpwardsForce = Vector3.SmoothDamp(currentUpwardsForce,
+      targetUpwardsForce, ref currentUpwardsForceVelocity,
+      deltaForceMultiplier);
+
+    // Apply the smoothed upwards force
+    AddForceAtPosition(currentUpwardsForce, worldCenterOfMass,
+      PhysicsConfig.floatationVelocityMode.Value);
+
+    // sideways force
+
+    // todo rename variables for this section to something meaningful
+    // todo abstract this to a method
+    var deltaForward = Vector3.Dot(m_body.velocity, ShipDirection.forward);
+    var deltaRight = Vector3.Dot(m_body.velocity, ShipDirection.right);
+    var velocity = m_body.velocity;
+    var deltaUp = velocity.y * velocity.y * Mathf.Sign(velocity.y) * m_damping *
+                  currentDepthForceMultiplier;
+
+    var deltaForwardClamp = deltaForward * deltaForward *
+                            Mathf.Sign(deltaForward) *
+                            m_dampingForward *
+                            currentDepthForceMultiplier;
+
+    // the water pushes the boat in the direction of the wind (sort of). Higher multipliers of m_dampingSideway will actually decrease this effect.
+    var deltaRightClamp = deltaRight * deltaRight * Mathf.Sign(deltaRight) *
+                          m_dampingSideway *
+                          currentDepthForceMultiplier;
+
+    velocity.y -= Mathf.Clamp(deltaUp, -1f, 1f);
+    velocity -= ShipDirection.forward * Mathf.Clamp(deltaForwardClamp, -1f, 1f);
+    velocity -= ShipDirection.right * Mathf.Clamp(deltaRightClamp, -1f, 1f);
+
+    if (velocity.magnitude > m_body.velocity.magnitude)
+      velocity = velocity.normalized * m_body.velocity.magnitude;
+
+    m_body.velocity = velocity;
+    m_body.angularVelocity -=
+      m_body.angularVelocity * m_angularDamping * currentDepthForceMultiplier;
+
+    // clamps the force to a specific number
+    // todo rename variables for this section to something meaningful
+    // todo abstract to a method
+    var num7 = 0.15f;
+    var num8 = 0.5f;
+    var f = Mathf.Clamp((forwardForce.y - shipForward.y) * num7, 0f - num8,
+      num8);
+    var f2 = Mathf.Clamp((backwardForce.y - shipBack.y) * num7, 0f - num8,
+      num8);
+    var f3 = Mathf.Clamp((leftForce.y - shipLeft.y) * num7, 0f - num8, num8);
+    var f4 = Mathf.Clamp((rightForce.y - shipRight.y) * num7, 0f - num8, num8);
+    f = Mathf.Sign(f) * Mathf.Abs(Mathf.Pow(f, 2f));
+    f2 = Mathf.Sign(f2) * Mathf.Abs(Mathf.Pow(f2, 2f));
+    f3 = Mathf.Sign(f3) * Mathf.Abs(Mathf.Pow(f3, 2f));
+    f4 = Mathf.Sign(f4) * Mathf.Abs(Mathf.Pow(f4, 2f));
+
+    AddForceAtPosition(Vector3.up * f * deltaForceMultiplier, shipForward,
+      PhysicsConfig.floatationVelocityMode.Value);
+    AddForceAtPosition(Vector3.up * f2 * deltaForceMultiplier, shipBack,
+      PhysicsConfig.floatationVelocityMode.Value);
+    AddForceAtPosition(Vector3.up * f3 * deltaForceMultiplier, shipLeft,
+      PhysicsConfig.floatationVelocityMode.Value);
+    AddForceAtPosition(Vector3.up * f4 * deltaForceMultiplier, shipRight,
+      PhysicsConfig.floatationVelocityMode.Value);
+  }
+
+
+  public void UpdateWaterForceDeprecated(ShipFloatation shipFloatation)
   {
     var shipLeft = shipFloatation.ShipLeft;
     var shipForward = shipFloatation.ShipForward;
@@ -3261,7 +3383,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (Time.time - m_sendRudderTime > 0.2f)
     {
       // allows updating rudder but zeros it out quickly in a deadzone.
-      if (m_rudderValue is >= -0.1f and < 0.1f)
+      if (m_rudderValue is >= -0.01f and < 0.01f)
       {
         m_rudderValue = 0.0f;
       }

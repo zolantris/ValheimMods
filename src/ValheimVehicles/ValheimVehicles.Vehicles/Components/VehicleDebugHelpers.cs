@@ -42,6 +42,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   private Coroutine? _drawColliderCoroutine = null;
 
   private InvokeBinder repeatInvoke;
+  private GameObject worldCenterOfMassCube;
 
   private void FixedUpdate()
   {
@@ -50,6 +51,7 @@ public class VehicleDebugHelpers : MonoBehaviour
         VehicleDebugConfig.AutoShowVehicleColliders.Value)
     {
       DrawAllColliders();
+      RenderWorldCenterOfMassAsCube();
     }
   }
 
@@ -63,6 +65,8 @@ public class VehicleDebugHelpers : MonoBehaviour
   public void StartRenderAllCollidersLoop()
   {
     autoUpdateColliders = !autoUpdateColliders;
+    RenderWorldCenterOfMassAsCube();
+
     if (autoUpdateColliders) return;
     foreach (var keyValuePair in lines)
     {
@@ -75,6 +79,28 @@ public class VehicleDebugHelpers : MonoBehaviour
         data.Remove(lineRenderer);
       }
     }
+  }
+
+  public void RenderWorldCenterOfMassAsCube()
+  {
+    if (VehicleShipInstance.MovementController == null) return;
+    if (worldCenterOfMassCube == null)
+    {
+      worldCenterOfMassCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+      var meshRenderer = worldCenterOfMassCube.GetComponent<MeshRenderer>();
+      meshRenderer.material =
+        new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
+        {
+          color = Color.yellow
+        };
+    }
+
+    worldCenterOfMassCube.transform.position = VehicleShipInstance
+      .MovementController.m_body
+      .worldCenterOfMass;
+    worldCenterOfMassCube.transform.SetParent(
+      VehicleShipInstance.PiecesController.transform,
+      false);
   }
 
   private static RaycastHit? RaycastToPiecesUnderPlayerCamera()
@@ -260,10 +286,13 @@ public class VehicleDebugHelpers : MonoBehaviour
     var color = lineColor ?? LineColorDefault;
 
     if (boxCollider == null) return;
-    var material = new Material(LoadValheimAssets.CustomPieceShader)
-    {
-      color = color
-    };
+    if (!boxCollider.gameObject.activeInHierarchy) return;
+
+    var material =
+      new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
+      {
+        color = color
+      };
     const float width = 0.05f;
     var rightDir = boxCollider.transform.right.normalized;
     var forwardDir = boxCollider.transform.forward.normalized;
