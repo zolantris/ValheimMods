@@ -1,0 +1,163 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: wood_alt_piece_bg_masked
+  m_Shader: {fileID: 4800000, guid: f0638e74771d3934aba326b253d7cfa6, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _DETAIL_MULX2
+  - _METALLICGLOSSMAP
+  - _NORMALMAP
+  - _PARALLAXMAP
+  m_InvalidKeywords:
+  - _ADDRAIN_ON
+  - _ADDSNOW_ON
+  - _CAMCULL_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BumpMap:
+        m_Texture: {fileID: 2800000, guid: 3f0613b571340644ab144b82e684fe7f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 0.5, y: 0.5}
+        m_Offset: {x: 0, y: 0}
+    - _DetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
+        m_Texture: {fileID: 2800000, guid: 0c767479ec77263469decd10b307a178, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 4, y: 4}
+        m_Offset: {x: 0, y: 0}
+    - _EmissiveTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _LogoNormal:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _LogoTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainColorNormal:
+        m_Texture: {fileID: 2800000, guid: 70f02c7a67b345a4abbba1ecb9d2e480, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: aa21ff06b4d3b514598861350cc10ae2, type: 3}
+        m_Scale: {x: 4, y: 4}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 2800000, guid: 70f02c7a67b345a4abbba1ecb9d2e480, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicTex:
+        m_Texture: {fileID: 2800000, guid: 70f02c7a67b345a4abbba1ecb9d2e480, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MossTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NoiseTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 2800000, guid: e17cb35f957a1cd468752c3c486ae9c1, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ParallaxMap:
+        m_Texture: {fileID: 2800000, guid: d1894603b66b05147b359bd1214f53bb, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _PatternNormal:
+        m_Texture: {fileID: 2800000, guid: f729a6476e677a04daad76be6790b628, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _PatternTex:
+        m_Texture: {fileID: 2800000, guid: f729a6476e677a04daad76be6790b628, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddRain: 1
+    - _AddSnow: 1
+    - _BumpScale: 1
+    - _CamCull: 1
+    - _Cull: 2
+    - _Cutoff: 0.579
+    - _DetailNormalMapScale: 0.4
+    - _DstBlend: 0
+    - _GlossMapScale: 0
+    - _Glossiness: 0
+    - _GlossyReflections: 1
+    - _Height: 15
+    - _LogoRotation: 0
+    - _Metallic: 0
+    - _MetallicAlphaGloss: 0
+    - _MistAlpha: 0.5
+    - _Mode: 0
+    - _MossAlpha: 0
+    - _MossBlend: 0
+    - _MossNormal: 0.5
+    - _MossTransition: 0.1
+    - _OcclusionStrength: 1
+    - _Parallax: 0.0329
+    - _PatternRotation: 0
+    - _PushClothMode: 0
+    - _PushDistance: 0
+    - _RippleDeadzoneMax: 2
+    - _RippleDeadzoneMin: 0.3
+    - _RippleDistance: 0
+    - _RippleFreq: 1
+    - _RippleSpeed: 100
+    - _SmoothnessTextureChannel: 0
+    - _SpecularHighlights: 1
+    - _SphereNormals: 0
+    - _SphereOffset: 0
+    - _SrcBlend: 1
+    - _StencilComp: 2
+    - _StencilRef: 1
+    - _SwayDistance: 0.5
+    - _SwaySpeed: 15
+    - _TriplanarLocalPos: 0
+    - _TriplanarMap: 0
+    - _TriplanarScale: 1
+    - _TwoSidedNormals: 0
+    - _UVSec: 0
+    - _ValueNoise: 0.5
+    - _ValueNoiseVertex: 0
+    - _Wet: 0
+    - _ZWrite: 1
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _LogoColor: {r: 1, g: 1, b: 1, a: 1}
+    - _MainColor: {r: 1, g: 1, b: 1, a: 1}
+    - _MetalColor: {r: 1, g: 1, b: 1, a: 1}
+    - _PatternColor: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []

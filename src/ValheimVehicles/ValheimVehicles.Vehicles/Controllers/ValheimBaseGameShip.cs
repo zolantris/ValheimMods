@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles;
@@ -239,7 +241,12 @@ public class ValheimBaseGameShip : MonoBehaviour
     return num2 * num3;
   }
 
-  public void UpdateWaterForce(float depth, float dt)
+  /// <summary>
+  /// TODO may need to rename to UpdateWaterForce again if there is a method problem or use the combat class
+  /// </summary>
+  /// <param name="depth"></param>
+  /// <param name="dt"></param>
+  public void UpdateWaterImpactForce(float depth, float dt)
   {
     if (m_lastDepth == -9999f)
     {
@@ -289,7 +296,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     var num2 = Utils.LerpStep(num, 10500f, magnitude) * 8f;
     var vector2 = vector * num2;
 
-    m_body.AddForce(vector2 * dt, ForceMode.VelocityChange);
+    m_body.AddForce(vector2 * dt, PhysicsConfig.floatationVelocityMode.Value);
   }
 
   internal void FixTilt()

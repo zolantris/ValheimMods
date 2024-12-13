@@ -1136,6 +1136,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public Vector3 currentUpwardsForce = Vector3.zero;
   public Vector3 currentUpwardsForceVelocity = Vector3.zero;
 
+  public static bool CanRunSidewaysWaterForceUpdate = true;
+
   public void UpdateWaterForce(ShipFloatation shipFloatation)
   {
     var shipLeft = shipFloatation.ShipLeft;
@@ -1158,7 +1160,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (m_waterImpactDamage > 0f)
     {
-      UpdateWaterForce(currentDepth, Time.fixedDeltaTime);
+      UpdateWaterImpactForce(currentDepth, Time.fixedDeltaTime);
     }
 
     // Calculate the forces for left, right, forward, and backward directions
@@ -1169,9 +1171,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var backwardForce = new Vector3(shipBack.x, waterLevelBack, shipBack.z);
 
     // Get fixedDeltaTime and the delta force multiplier
-    var fixedDeltaTime = Time.fixedDeltaTime;
     var deltaForceMultiplier =
-      fixedDeltaTime * PhysicsConfig.waterDeltaForceMultiplier.Value;
+      Time.fixedDeltaTime * PhysicsConfig.waterDeltaForceMultiplier.Value;
 
     // Calculate the current depth force multiplier
     var currentDepthForceMultiplier =
@@ -1198,6 +1199,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       PhysicsConfig.floatationVelocityMode.Value);
 
     // sideways force
+
+    if (!CanRunSidewaysWaterForceUpdate) return;
 
     // todo rename variables for this section to something meaningful
     // todo abstract this to a method
@@ -1277,7 +1280,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (m_waterImpactDamage > 0f)
     {
-      UpdateWaterForce(currentDepth, Time.fixedDeltaTime);
+      UpdateWaterImpactForce(currentDepth, Time.fixedDeltaTime);
     }
 
     var leftForce = new Vector3(shipLeft.x, waterLevelLeft, shipLeft.z);
@@ -1352,11 +1355,19 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       PhysicsConfig.floatationVelocityMode.Value);
   }
 
+  public bool CanApplyWaterEdgeForce = true;
+
   public void UpdateShipFloatation(ShipFloatation shipFloatation)
   {
     UpdateVehicleStats(false, IsSubmerged());
+
     UpdateWaterForce(shipFloatation);
-    ApplyEdgeForce(Time.fixedDeltaTime);
+
+    if (CanApplyWaterEdgeForce)
+    {
+      ApplyEdgeForce(Time.fixedDeltaTime);
+    }
+
     if (HasOceanSwayDisabled)
     {
       UpdateAndFreezeRotation();

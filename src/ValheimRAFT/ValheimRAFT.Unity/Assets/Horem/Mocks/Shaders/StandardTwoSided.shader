@@ -1,4 +1,4 @@
-Shader "StandardDoubleSide"
+Shader "StandardDoubleSided"
 {
     Properties
     {
@@ -50,6 +50,7 @@ Shader "StandardDoubleSide"
             "RenderType"="Opaque" "PerformanceChecks"="False"
         }
         LOD 300
+        Lighting Off
 
 
         // ------------------------------------------------------------------
