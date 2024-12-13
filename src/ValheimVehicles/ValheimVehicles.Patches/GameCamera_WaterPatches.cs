@@ -89,6 +89,14 @@ internal class GameCamera_WaterPatches
     previousSurfaceState = isAboveWater;
   }
 
+  public static LayerMask BlockingWaterMask = new();
+
+  [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.Awake))]
+  [HarmonyPostfix]
+  public static void GameCameraGetWaterMaskOnAwake(GameCamera __instance)
+  {
+    BlockingWaterMask = __instance.m_blockCameraMask;
+  }
 
   [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.UpdateCamera))]
   [HarmonyPostfix]

@@ -10,7 +10,7 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>2.4.3</ApplicationVersion>
+        <ApplicationVersion>2.5.0</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -39,14 +39,26 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Config\TutorialConfig.cs">
             <Link>ValheimVehicles.Config\TutorialConfig.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Helpers\ConvexHullGeneratorAPI.cs">
+            <Link>ValheimVehicles.Helpers\ConvexHullGeneratorAPI.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleBoundsController.cs">
+            <Link>ValheimVehicles.Vehicles\Controllers\VehicleBoundsController.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\ConvexHullComponent.cs">
+            <Link>ValheimVehicles.Vehicles\Components\ConvexHullComponent.cs</Link>
+        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
-    <ItemGroup>
-        <!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->
+    <ItemGroup><!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->
         <!--        <Compile Include="Properties\CustomAssemblyAttributes.cs"/>-->
+
     </ItemGroup>
     <ItemGroup>
         <Compile Remove="ValheimRAFT.Unity\**\*"/>
+        <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
+        <Compile Include="ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\*.cs"/>
+        <Folder Include="ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\"/>
     </ItemGroup>
     <PropertyGroup>
         <SentryDSN>https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496</SentryDSN>

@@ -319,6 +319,36 @@ public class VehicleOnboardController : MonoBehaviour
     return playerComponent;
   }
 
+  /// <summary>
+  /// Restores the blocking behavior if this mod is controlling / unblocking camera
+  /// </summary>
+  /// <param name="player"></param>
+  private static void RestorePlayerBlockingCamera(Player player)
+  {
+    if (!PhysicsConfig.removeCameraCollisionWithObjectsOnBoat.Value) return;
+    if (Player.m_localPlayer == player &&
+        GameCamera.instance.m_blockCameraMask == 0)
+    {
+      GameCamera.instance.m_blockCameraMask =
+        GameCamera_WaterPatches.BlockingWaterMask;
+    }
+  }
+
+  /// <summary>
+  /// Prevents jitters. Likely most people will want this feature enabled especially for complicated boats.
+  /// </summary>
+  /// Does not remove changes if the feature is disabled. Players will need to reload. This prevents breaking other mods that might mess with camera.
+  /// <param name="player"></param>
+  private static void RemovePlayerBlockingCameraWhileOnboard(Player player)
+  {
+    if (!PhysicsConfig.removeCameraCollisionWithObjectsOnBoat.Value) return;
+    if (Player.m_localPlayer == player &&
+        GameCamera.instance.m_blockCameraMask != 0)
+    {
+      GameCamera.instance.m_blockCameraMask = 0;
+    }
+  }
+
   private void RemovePlayerOnShip(Player player)
   {
     var isPlayerInList = MovementController.m_players.Contains(player);
@@ -333,6 +363,8 @@ public class VehicleOnboardController : MonoBehaviour
       Logger.LogWarning(
         $"Player {player.GetPlayerName()} detected leaving ship, but not within the ship's player list");
     }
+
+    RestorePlayerBlockingCamera(player);
 
     player.transform.SetParent(null);
   }
@@ -351,7 +383,7 @@ public class VehicleOnboardController : MonoBehaviour
     }
 
     var isPlayerInList = MovementController.m_players.Contains(player);
-
+    RemovePlayerBlockingCameraWhileOnboard(player);
     player.transform.SetParent(piecesTransform);
 
     if (!isPlayerInList)

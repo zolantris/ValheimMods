@@ -13,6 +13,9 @@ public static class PrefabConfig
     private set;
   }
 
+  public static ConfigEntry<Color> GlassDefaultColor { get; private set; } =
+    null!;
+
   public static ConfigEntry<int> RopeLadderRunMultiplier { get; private set; } =
     null!;
 
@@ -39,7 +42,7 @@ public static class PrefabConfig
       "RopeLadderEjectionPoint", Vector3.zero,
       "The place the player is placed after they leave the ladder. Defaults to Y +0.25 and Z +0.5 meaning you are placed forwards of the ladder.");
 
-    StartingPiece = config.Bind(SectionKey, "startingPiece",
+    StartingPiece = config.Bind(SectionKey, SectionKey,
       VehicleShipInitPiece.Hull4X8,
       ConfigHelpers.CreateConfigDescription(
         "Allows you to customize what piece the raft initializes with. Admins only as this can be overpowered.",
@@ -52,5 +55,12 @@ public static class PrefabConfig
     RopeLadderHints = config.Bind(SectionKey, "ropeLadderHints", true,
       ConfigHelpers.CreateConfigDescription(
         "Shows the controls required to auto ascend/descend and run to speedup ladder"));
+
+    GlassDefaultColor = Config.Bind(SectionKey,
+      "GlassDefaultColor",
+      new Color(0.60f, 0.60f, 0.60f, 0.05f),
+      ConfigHelpers.CreateConfigDescription(
+        "Set the experimental glass color for your vehicle. This will be used for most glass meshes. This is the default color. Eventually players can customize the color of the glass.",
+        true, true));
   }
 }

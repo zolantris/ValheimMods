@@ -125,6 +125,25 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
     GUILayout.BeginArea(new Rect(500, Screen.height - 510, 200, 500),
       myButtonStyle);
+    if (GUILayout.Button("ConvexHull debugger"))
+    {
+      Logger.LogMessage(
+        "Toggling convex hull debugger on the ship. This will show/hide the current convex hulls.");
+      var currentInstance = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
+
+      if (!currentInstance)
+      {
+        currentInstance = VehicleDebugHelpers.GetOnboardMBRaftDebugHelper();
+      }
+
+      if (!currentInstance)
+      {
+        return;
+      }
+
+      currentInstance?.StartRenderAllCollidersLoop();
+    }
+
     if (GUILayout.Button("collider debugger"))
     {
       Logger.LogMessage(

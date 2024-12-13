@@ -141,6 +141,9 @@ public static class PrefabNames
   public const string HullRibCorner =
     $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Corner";
 
+  public const string HullRibCornerFloor =
+    $"{ValheimVehiclesPrefix}_Ship_Hull_Rib_Corner_Floor";
+
   public const string HullRib = $"{ValheimVehiclesPrefix}_Ship_Hull_Rib";
 
   // to only be used for matching with generic prefab names
@@ -148,6 +151,9 @@ public static class PrefabNames
 
   public const string HullWall =
     $"{ValheimVehiclesPrefix}_Hull_Wall";
+
+  public const string HullCornerFloor =
+    $"{ValheimVehiclesPrefix}_Hull_Corner_Floor";
 
   private static string GetMaterialVariantName(string materialVariant)
   {
@@ -184,6 +190,15 @@ public static class PrefabNames
     var materialName = GetMaterialVariantName(materialVariant);
 
     return $"{HullRibCorner}_{directionName}_{materialName}";
+  }
+
+  public static string GetHullRibCornerFloorName(string materialVariant,
+    DirectionVariant directionVariant)
+  {
+    var directionName = GetDirectionName(directionVariant);
+    var materialName = GetMaterialVariantName(materialVariant);
+
+    return $"{HullRibCornerFloor}_{directionName}_{materialName}";
   }
 
   public static string GetHullSlabName(string materialVariant,
@@ -280,6 +295,8 @@ public static class PrefabNames
   public const string RamBladePrefix = $"{ValheimVehiclesPrefix}_ram_blade";
   public const string RamStakePrefix = $"{ValheimVehiclesPrefix}_ram_stake";
 
+  public const string ConvexHull = $"{ValheimVehiclesPrefix}_ConvexHull";
+
   public static string GetRamBladeName(string val)
   {
     return $"{RamBladePrefix}_{val.ToLower()}_{PrefabTiers.Tier3}";
@@ -298,14 +315,14 @@ public static class PrefabNames
            objName.StartsWith(WaterVehicleOnboardCollider);
   }
 
-  public static bool IsHull(GameObject go)
-  {
-    var goName = go.name;
-    return goName.StartsWith(ShipHullCenterWoodPrefabName) ||
-           goName.StartsWith(ShipHullCenterIronPrefabName) ||
-           goName.StartsWith(HullRib) ||
-           goName.StartsWith(HullRibCorner)
-           || goName.StartsWith(HullWall) || goName.StartsWith(HullSlab) ||
-           goName.StartsWith(HullProw);
-  }
+  public static bool IsHull(string goName) =>
+    goName.StartsWith(ShipHullCenterWoodPrefabName) ||
+    goName.StartsWith(ShipHullCenterIronPrefabName) ||
+    goName.StartsWith(HullRib) ||
+    goName.StartsWith(HullRibCorner)
+    || goName.StartsWith(HullWall) || goName.StartsWith(HullSlab) ||
+    goName.StartsWith(HullProw) ||
+    goName.StartsWith(HullRibCornerFloor);
+
+  public static bool IsHull(GameObject go) => IsHull(go.name);
 }

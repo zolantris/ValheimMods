@@ -4,7 +4,7 @@ using Jotunn.Managers;
 using UnityEditor;
 using UnityEngine;
 using ValheimVehicles.Config;
-using ValheimVehicles.LayerUtils;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 

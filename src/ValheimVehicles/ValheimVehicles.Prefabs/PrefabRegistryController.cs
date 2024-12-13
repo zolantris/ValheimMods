@@ -11,6 +11,7 @@ using UnityEngine.U2D;
 using ValheimRAFT;
 using ValheimRAFT.Patches;
 using ValheimVehicles.Prefabs.Registry;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
 
@@ -29,8 +30,6 @@ public class PrefabRegistryController : MonoBehaviour
   public static AssetBundle vehicleAssetBundle;
 
   private static bool _initialized = false;
-
-  public static Component waterMask;
 
   /// <summary>
   /// For debugging and nuking rafts, not to be included in releases
@@ -54,6 +53,19 @@ public class PrefabRegistryController : MonoBehaviour
         }
       }
     }
+  }
+
+  /// <summary>
+  /// Requires assetbundle values to be set already
+  /// </summary>
+  private static void SetupComponents()
+  {
+    Vector3Logger.LoggerAPI = Logger.LogDebug;
+    // ConvexHullMeshGeneratorAPI.IsAllowedAsHullOverride =
+    //   PrefabNames.IsHull;
+    ConvexHullAPI.DebugMaterial =
+      LoadValheimVehicleAssets.DoubleSidedTransparentMat;
+    // ConvexHullMeshGeneratorAPI.GeneratedMeshNamePrefix = PrefabNames.ConvexHull;
   }
 
   // todo this should come from config
@@ -153,6 +165,9 @@ public class PrefabRegistryController : MonoBehaviour
     PrefabRegistryHelpers.Init();
 
     RegisterAllPrefabs();
+
+    // must be called after RegisterAllPrefabs and AssetBundle assignment to be safe.
+    SetupComponents();
   }
 
   public static void AddToRaftPrefabPieces(Piece raftPiece)
