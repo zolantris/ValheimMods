@@ -11,23 +11,30 @@ Shader "Custom/WallWithHole"
     {
         Tags
         {
-            "RenderType"="Opaque"
+            "RenderType"="Transparent"
         }
         LOD 200
-                     
-            Stencil
-            {
-                Ref 44
-                Comp NotEqual
-                Pass Replace
-            }
+        
+        Stencil
+        {
+            Ref 44
+            Comp NotEqual
+            Pass Keep
+        }
+        
+        Stencil
+        {
+            Ref 1
+            Comp Always
+            Pass Zero
+        }
             
-            CGPROGRAM
+        CGPROGRAM
         // Physically based Standard lighting model, and enable shadows on all light types
-        #pragma surface surf Standard alpha:fade
+        #pragma surface surf Standard
 
         // Use shader model 3.0 target, to get nicer looking lighting
-        #pragma target 3.0
+        #pragma target 5.0
 
         sampler2D _MainTex;
 

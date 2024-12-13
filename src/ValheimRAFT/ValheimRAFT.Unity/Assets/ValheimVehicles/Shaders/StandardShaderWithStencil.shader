@@ -1,8 +1,8 @@
-Shader "Custom/ObjectThroughHole"
+Shader "Custom/StandardWithStencil"
 {
     Properties
     {
-         _Color("Color", Color) = (1,1,1,1)
+        _Color("Color", Color) = (1,1,1,1)
         _MainTex("Albedo", 2D) = "white" {}
 
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
@@ -48,17 +48,14 @@ Shader "Custom/ObjectThroughHole"
         }
         LOD 200
 
-        Cull Off
-        ZWrite On
-        ZTest LEqual
-        
         Stencil
         {
-            Ref 44               // Reference value for stencil testing
-            Comp Always          // Only render where the stencil value is equal to 1 (the hole area)
-            Pass Replace           // Keep the current stencil value
+            Ref 44
+            Comp NotEqual
+            Pass Keep
         }
         
+        ZTest LEqual
 
         CGPROGRAM
         // Physically based Standard lighting model, and enable shadows on all light types
@@ -97,6 +94,6 @@ Shader "Custom/ObjectThroughHole"
         }
         ENDCG
     }
-    
+
     FallBack "Diffuse"
 }
