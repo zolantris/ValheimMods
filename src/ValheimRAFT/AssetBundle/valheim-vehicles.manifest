@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 4282604633
+CRC: 2473735135
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 73495f03c3eb795fa4f611569bfe24b4
+    Hash: ae500c19e23d29df1263dffb2192c24f
   TypeTreeHash:
     serializedVersion: 2
     Hash: c06587813f50b4ac49249ee2d68a3382
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 73495f03c3eb795fa4f611569bfe24b4
+    Hash: ae500c19e23d29df1263dffb2192c24f
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -103,6 +103,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_slab_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_left.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus.prefab
+- Assets/ValheimVehicles/Prefabs/hull_wall_window_iron_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_right_wood.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_iron.prefab
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier3_2x4.prefab

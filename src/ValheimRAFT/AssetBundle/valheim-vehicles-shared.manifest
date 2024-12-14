@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3939568386
+CRC: 1735254371
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 9f5ba9d77998acd3de434fdf59a128d5
+    Hash: 291bc3d0b83edc9ebacbfa5bd0757bac
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0e971d6ec910fda0a941f7ca640159c0
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 9f5ba9d77998acd3de434fdf59a128d5
+    Hash: 291bc3d0b83edc9ebacbfa5bd0757bac
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -42,7 +42,7 @@ Assets:
 - Assets/ValheimVehicles/Texture/wood_59_diffuse_256_normal.png
 - Assets/ValheimVehicles/Texture/Planks5c_low_n.png
 - Assets/ValheimVehicles/Texture/iron.png
-- Assets/Horem/Mocks/Shaders/StandardTwoSided.shader
+- Assets/ValheimVehicles/Shaders/StandardDoubleSided.shader
 - Assets/ValheimVehicles/Texture/blackmetal_d.png
 - Assets/ValheimVehicles/Texture/rope_d.png
 - Assets/ValheimVehicles/Texture/iron_n.png
@@ -54,11 +54,12 @@ Assets:
 - Assets/ValheimVehicles/Texture/rope_n.png
 - Assets/Horem/Mocks/Shaders/Custom_Piece.shader
 - Assets/ValheimVehicles/Texture/Planks5c_low.png
-- Assets/ValheimVehicles/Icons/pirate_skull_uncompressed.png
+- Assets/ValheimVehicles/Shaders/VehicleSailShaderWithMask.shader
 - Assets/ValheimVehicles/Texture/Planks5_Normal.png
 - Assets/ValheimVehicles/Shaders/DirtfloorShader.shader
 - Assets/ValheimVehicles/Prefabs/bottom_stand.prefab
 - Assets/ValheimVehicles/Material/wood.mat
+- Assets/ValheimVehicles/Icons/pirate_skull_uncompressed.png
 - Assets/ValheimVehicles/Material/wood_piece_valheim.mat
 - Assets/ValheimVehicles/Icons/stag.png
 - Assets/ValheimVehicles/BlenderImports/shturval_edit2.FBX
