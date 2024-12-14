@@ -879,6 +879,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2015659072213094124, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3784598169234739585, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
       propertyPath: m_LocalPosition.x
       value: -12.438219
@@ -889,7 +893,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3784598169234739585, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -136.97452
+      value: -134.799
       objectReference: {fileID: 0}
     - target: {fileID: 3784598169234739585, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
       propertyPath: m_LocalRotation.w
@@ -919,9 +923,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4127591472299775996, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5107264316775730461, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
       propertyPath: m_Name
       value: hull_wall_window_iron_2x2 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5243588250503394698, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7384995554817454265, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7671281732749405338, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2891,7 +2911,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3784598169234739585, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -136.97452
+      value: -133.541
       objectReference: {fileID: 0}
     - target: {fileID: 3784598169234739585, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
       propertyPath: m_LocalRotation.w
@@ -4222,6 +4242,10 @@ PrefabInstance:
     - target: {fileID: 385631728708239502, guid: acf2155fa309abb40850cfd6e874ed21, type: 3}
       propertyPath: m_Name
       value: shared_hull_wall_iron_new
+      objectReference: {fileID: 0}
+    - target: {fileID: 385631728708239502, guid: acf2155fa309abb40850cfd6e874ed21, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7822402868691204280, guid: acf2155fa309abb40850cfd6e874ed21, type: 3}
       propertyPath: m_LocalPosition.x

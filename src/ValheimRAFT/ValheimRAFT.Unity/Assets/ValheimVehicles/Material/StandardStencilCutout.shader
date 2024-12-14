@@ -55,20 +55,8 @@ Shader "Custom/StandardStencilCutout"
         {
             Ref 1 // Reference value to write
             Comp Always // Always pass stencil test
-            Pass IncrSat // Increment the stencil value (saturating to 255)
+            Pass IncrWrap // Increment the stencil value (saturating to 255)
         }
-
-        Pass
-        {
-            Stencil
-            {
-                Ref 2 // Requires adding 2 masks together to get a window effect. Anything higher is ignored.
-                Comp Equal // Always pass stencil test
-                Pass Keep // Increment the stencil value (saturating to 255)
-            }
-            ColorMask 0
-        }
-
 
         CGPROGRAM
         // Physically based Standard lighting model, and enable shadows on all light types

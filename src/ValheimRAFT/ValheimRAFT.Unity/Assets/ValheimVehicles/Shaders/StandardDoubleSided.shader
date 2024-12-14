@@ -51,7 +51,6 @@ Shader "StandardDoubleSided"
             "RenderType"="Opaque" "PerformanceChecks"="False"
         }
         LOD 300
-        Lighting Off
 
         ZClip On
         ZWrite On
@@ -63,20 +62,20 @@ Shader "StandardDoubleSided"
             Pass IncrSat
         }
         
-        // Anything above [_StencilMask] must be decremented to prevent it continuing to increase
+        // anything above 2 must be decremented
         Pass
         {
             ZWrite On
             Stencil
             {
-                Ref [_StencilMask]
-                Comp Greater
+                Ref 2
+                Comp GEqual
                 Pass DecrSat
             }
             ColorMask 0
         }
-        
 
+        
         // ------------------------------------------------------------------
         //  Base forward pass (directional light, emission, lightmaps, ...)
         Pass
