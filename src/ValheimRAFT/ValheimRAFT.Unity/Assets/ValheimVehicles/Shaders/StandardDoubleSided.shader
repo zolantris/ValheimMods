@@ -53,31 +53,29 @@ Shader "StandardDoubleSided"
         LOD 300
         Lighting Off
 
-        ZClip Off
-        ZWrite [_ZWrite]
-
-        // To support StandardStencil which adds 1 or 2 values that can be rendered but above that it should be hidden
+        ZClip On
+        ZWrite On
+        
+        Stencil
+        {
+            Ref [_StencilMask]
+            Comp Always
+            Pass IncrSat
+        }
+        
+        // Anything above [_StencilMask] must be decremented to prevent it continuing to increase
         Pass
         {
+            ZWrite On
             Stencil
             {
-                Ref 4
-                Comp Equal
-                Pass Replace
+                Ref [_StencilMask]
+                Comp Greater
+                Pass DecrSat
             }
             ColorMask 0
         }
-
-        Pass
-        {
-            Stencil
-            {
-                Ref 3
-                Comp Equal
-                Pass Replace
-            }
-            ColorMask 0
-        }
+        
 
         // ------------------------------------------------------------------
         //  Base forward pass (directional light, emission, lightmaps, ...)

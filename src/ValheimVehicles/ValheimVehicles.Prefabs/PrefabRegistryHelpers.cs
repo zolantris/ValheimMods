@@ -483,19 +483,20 @@ public abstract class PrefabRegistryHelpers
         .VehicleSwitch)
     });
     
-    PieceDataDictionary.Add(PrefabNames.ToggleSwitch, new PieceData()
+    PieceDataDictionary.Add(PrefabNames.WindowPortholeWallPrefab, new PieceData()
     {
       Name = "$valheim_vehicles_window_porthole",
-      Description = "valheim_vehicles_window_porthole_desc",
+      Description = "$valheim_vehicles_window_porthole_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .VehicleSwitch)
+        .WindowPortholeWall)
     });
-    PieceDataDictionary.Add(PrefabNames.ToggleSwitch, new PieceData()
+    
+    PieceDataDictionary.Add(PrefabNames.WindowPortholeStandalonePrefab, new PieceData()
     {
       Name = "$valheim_vehicles_window_porthole_standalone",
-      Description = "valheim_vehicles_window_porthole_standalone_desc",
+      Description = "$valheim_vehicles_window_porthole_standalone_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .VehicleSwitch)
+        .WindowPortholeStandalone)
     });
   }
 

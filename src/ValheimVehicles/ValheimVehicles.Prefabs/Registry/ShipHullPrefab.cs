@@ -1,3 +1,4 @@
+using System;
 using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Entities;
@@ -6,6 +7,7 @@ using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Vehicles.Components;
 using static ValheimVehicles.Prefabs.PrefabNames;
+using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;
 
@@ -83,17 +85,17 @@ public class ShipHullPrefab : IRegisterPrefab
         WindowPortholeStandalonePrefab, LoadValheimVehicleAssets.ShipWindowPortholeStandalone);
     
     SetupHullPrefab(prefab, WindowPortholeStandalonePrefab,
-      ShipHulls.HullMaterial.Iron, 1);    
+      ShipHulls.HullMaterial.Iron, 1, prefab.transform.FindDeepChild("trim"));    
   }
 
   public static void RegisterIronPortholeWindowWall()
   {
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
-        WindowPortholeStandalonePrefab, LoadValheimVehicleAssets.ShipWindowPortholeWall);
+        WindowPortholeWallPrefab, LoadValheimVehicleAssets.ShipWindowPortholeWall);
     
     SetupHullPrefab(prefab, WindowPortholeWallPrefab,
-      ShipHulls.HullMaterial.Iron, 2);    
+      ShipHulls.HullMaterial.Iron, 3);    
   }
 
   public static RequirementConfig[] GetRequirements(string material,
@@ -252,29 +254,37 @@ public class ShipHullPrefab : IRegisterPrefab
     Transform? hoistParent = null, string[]? hoistFilters = null,
     bool isInverse = false)
   {
-    var wnt = PrefabRegistryHelpers.SetWearNTear(prefab);
-    PrefabRegistryHelpers.SetWearNTearSupport(wnt, WearNTear.MaterialType.Iron);
+    try
+    {
+      var wnt = PrefabRegistryHelpers.SetWearNTear(prefab);
+      PrefabRegistryHelpers.SetWearNTearSupport(wnt,
+        WearNTear.MaterialType.Iron);
 
-    SetHullWnt(wnt, hullMaterial);
+      SetHullWnt(wnt, hullMaterial);
 
-    ShipHulls.SetMaterialHealthValues(hullMaterial, wnt, materialCount);
-    PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
+      ShipHulls.SetMaterialHealthValues(hullMaterial, wnt, materialCount);
+      PrefabRegistryHelpers.AddNewOldPiecesToWearNTear(prefab, wnt);
 
-    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
-    PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab, isInverse);
+      PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+      PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab, isInverse);
 
-    PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
-      hoistParent ?? prefab.transform,
-      hoistFilters);
+      PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
+        hoistParent ?? prefab.transform,
+        hoistFilters);
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
-      new PieceConfig
-      {
-        PieceTable = "Hammer",
-        Category = ValheimRaftMenuName,
-        Enabled = true,
-        Requirements = GetRequirements(hullMaterial, materialCount)
-      }));
+      PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
+        new PieceConfig
+        {
+          PieceTable = "Hammer",
+          Category = ValheimRaftMenuName,
+          Enabled = true,
+          Requirements = GetRequirements(hullMaterial, materialCount)
+        }));
+    }
+    catch (Exception e)
+    {
+      Logger.LogError(e);
+    }
   }
 
 
