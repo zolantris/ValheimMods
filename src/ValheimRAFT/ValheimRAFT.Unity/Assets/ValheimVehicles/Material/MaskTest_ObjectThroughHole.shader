@@ -2,7 +2,7 @@ Shader "Custom/ObjectThroughHole"
 {
     Properties
     {
-         _Color("Color", Color) = (1,1,1,1)
+        _Color("Color", Color) = (1,1,1,1)
         _MainTex("Albedo", 2D) = "white" {}
 
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
@@ -37,7 +37,7 @@ Shader "Custom/ObjectThroughHole"
         [HideInInspector] _SrcBlend ("__src", Float) = 1.0
         [HideInInspector] _DstBlend ("__dst", Float) = 0.0
         [Enum(ZWrite)] _ZWrite ("ZWrite", Int) = 1
-        [Enum(CullMode)] _CullMode ("Cull", Integer) = 2 
+        [Enum(CullMode)] _CullMode ("Cull", Integer) = 2
         _StencilMask("StencilMask", Range(0,255)) = 44
     }
     SubShader
@@ -47,18 +47,30 @@ Shader "Custom/ObjectThroughHole"
             "RenderType"="Transparent"
         }
         LOD 200
+        ZClip Off
 
         Cull Off
         ZWrite On
         ZTest LEqual
-        
+
         Stencil
         {
-            Ref 44               // Reference value for stencil testing
-            Comp Always          // Only render where the stencil value is equal to 1 (the hole area)
-            Pass Replace           // Keep the current stencil value
+            Ref 1 // Reference value to write
+            Comp Always // Always pass stencil test
+            Pass IncrSat // Increment the stencil value (saturating to 255)
         }
-        
+
+        Pass
+        {
+            Stencil
+            {
+                Ref 2 // Reference value to write
+                Comp Equal // Always pass stencil test
+                Pass Keep // Increment the stencil value (saturating to 255)
+            }
+            ColorMask 0
+        }
+
 
         CGPROGRAM
         // Physically based Standard lighting model, and enable shadows on all light types
@@ -97,6 +109,6 @@ Shader "Custom/ObjectThroughHole"
         }
         ENDCG
     }
-    
+
     FallBack "Diffuse"
 }

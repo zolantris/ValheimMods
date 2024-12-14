@@ -52,11 +52,72 @@ Shader "StandardDoubleSided"
         LOD 300
         Lighting Off
 
+        ZClip Off
+        ZWrite On
+
+        //        Stencil
+        //        {
+        //            Ref 0
+        //            Comp Equal
+        //        }
+        //
+        //        Pass
+        //        {
+        //            Stencil
+        //            {
+        //                Ref 1
+        //                Comp Equal
+        //                Pass DecrSat
+        //            }
+        //            ZTest GEqual
+        //            ColorMask 0
+        //        }
+        //
+        //        Pass
+        //        {
+        //            Stencil
+        //            {
+        //                Ref 1
+        //                Comp Equal
+        //                Pass Keep
+        //            }
+        //            ZTest Greater
+        //
+        //            ColorMask 0
+        //        }
+        Pass
+        {
+            Stencil
+            {
+                Ref 4
+                Comp Equal
+                Pass Replace
+            }
+            ColorMask 0
+        }
+
+        Pass
+        {
+            Stencil
+            {
+                Ref 3
+                Comp Equal
+                Pass Replace
+            }
+            ColorMask 0
+        }
 
         // ------------------------------------------------------------------
         //  Base forward pass (directional light, emission, lightmaps, ...)
         Pass
         {
+            Stencil
+            {
+                Ref 0
+                Comp Equal
+                Pass Keep
+            }
+
             Name "FORWARD"
             Tags
             {
