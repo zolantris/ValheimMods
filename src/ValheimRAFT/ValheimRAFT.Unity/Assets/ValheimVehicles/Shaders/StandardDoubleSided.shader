@@ -36,7 +36,7 @@ Shader "StandardDoubleSided"
         [HideInInspector] _Mode ("__mode", Float) = 0.0
         [HideInInspector] _SrcBlend ("__src", Float) = 1.0
         [HideInInspector] _DstBlend ("__dst", Float) = 0.0
-        _ZWrite ("ZWrite", Float) = 1.0
+        [Enum(ZWrite)] _ZWrite ("ZWrite", Int) = 0
         _StencilMask("StencilMask", Int) = 0
     }
 
@@ -54,11 +54,11 @@ Shader "StandardDoubleSided"
         Lighting Off
 
         ZClip Off
-        ZWrite On
+        ZWrite [_ZWrite]
 
+        // To support StandardStencil which adds 1 or 2 values that can be rendered but above that it should be hidden
         Pass
         {
-            ZWrite On
             Stencil
             {
                 Ref 4
@@ -70,7 +70,6 @@ Shader "StandardDoubleSided"
 
         Pass
         {
-            ZWrite On
             Stencil
             {
                 Ref 3

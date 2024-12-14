@@ -1,4 +1,4 @@
-Shader "Custom/ObjectThroughHole"
+Shader "Custom/StandardStencilCutout"
 {
     Properties
     {
