@@ -482,6 +482,21 @@ public abstract class PrefabRegistryHelpers
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .VehicleSwitch)
     });
+    
+    PieceDataDictionary.Add(PrefabNames.ToggleSwitch, new PieceData()
+    {
+      Name = "$valheim_vehicles_window_porthole",
+      Description = "valheim_vehicles_window_porthole_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .VehicleSwitch)
+    });
+    PieceDataDictionary.Add(PrefabNames.ToggleSwitch, new PieceData()
+    {
+      Name = "$valheim_vehicles_window_porthole_standalone",
+      Description = "valheim_vehicles_window_porthole_standalone_desc",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .VehicleSwitch)
+    });
   }
 
   public static void IgnoreCameraCollisions(GameObject go)

@@ -129,7 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1131295095656482566}
   m_Layer: 0
-  m_Name: window_porthole
+  m_Name: window_porthole_standalone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

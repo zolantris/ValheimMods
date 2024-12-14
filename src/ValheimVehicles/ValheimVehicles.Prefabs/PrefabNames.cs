@@ -222,6 +222,8 @@ public static class PrefabNames
   public const string KeelColliderPrefix = "keel_collider";
 
   public const string ShipHullPrefabName = "Ship_Hull";
+  public const string WindowPortholeWallPrefab = $"{ValheimVehiclesPrefix}_ShipWindow_Porthole_Wall_2x2";
+  public const string WindowPortholeStandalonePrefab = $"{ValheimVehiclesPrefix}_ShipWindow_Porthole_standalone";
 
   // hull
   public const string ShipHullCenterWoodPrefabName =
@@ -322,7 +324,9 @@ public static class PrefabNames
     goName.StartsWith(HullRibCorner)
     || goName.StartsWith(HullWall) || goName.StartsWith(HullSlab) ||
     goName.StartsWith(HullProw) ||
-    goName.StartsWith(HullRibCornerFloor);
+    goName.StartsWith(HullRibCornerFloor) ||
+    goName.StartsWith(WindowPortholeStandalonePrefab) ||
+    goName.StartsWith(WindowPortholeWallPrefab);
 
   public static bool IsHull(GameObject go) => IsHull(go.name);
 }
