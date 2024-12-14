@@ -76,6 +76,9 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject VehicleShipAsset = null!;
   public static GameObject VehiclePiecesAsset = null!;
   public static GameObject MechanicalSwitch = null!;
+  
+  public static GameObject ShipWindowPortholeWall = null!;
+  public static GameObject ShipWindowPortholeStandalone = null!;
 
   // hud
   public static GameObject HudAnchor = null!;
@@ -230,6 +233,12 @@ public class LoadValheimVehicleAssets : ILoadAssets
       assetBundle.LoadAsset<GameObject>($"ram_stake_{PrefabTiers.Tier3}_1x2");
     RamStakeIron2X4 =
       assetBundle.LoadAsset<GameObject>($"ram_stake_{PrefabTiers.Tier3}_2x4");
+    
+    
+    ShipWindowPortholeWall =
+      assetBundle.LoadAsset<GameObject>($"hull_wall_window_iron_2x2.prefab");
+    ShipWindowPortholeStandalone =
+      assetBundle.LoadAsset<GameObject>($"window_porthole_standalone.prefab");
 
 
     RamBladeTop = assetBundle.LoadAsset<GameObject>(

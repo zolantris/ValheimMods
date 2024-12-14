@@ -31,6 +31,9 @@ public class ShipHullPrefab : IRegisterPrefab
       DirectionVariant.Right
     ];
 
+    RegisterIronPortholeWindowWall();
+    RegisterIronPortholeWindowStandalone();
+
     foreach (var hullMaterialType in hullMaterialTypes)
     {
       RegisterHull(GetShipHullCenterName(hullMaterialType), hullMaterialType,
@@ -72,7 +75,26 @@ public class ShipHullPrefab : IRegisterPrefab
   public static void Test()
   {
   }
+  
+  public static void RegisterIronPortholeWindowStandalone()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        WindowPortholeStandalonePrefab, LoadValheimVehicleAssets.ShipWindowPortholeStandalone);
+    
+    SetupHullPrefab(prefab, WindowPortholeStandalonePrefab,
+      ShipHulls.HullMaterial.Iron, 1);    
+  }
 
+  public static void RegisterIronPortholeWindowWall()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        WindowPortholeStandalonePrefab, LoadValheimVehicleAssets.ShipWindowPortholeWall);
+    
+    SetupHullPrefab(prefab, WindowPortholeWallPrefab,
+      ShipHulls.HullMaterial.Iron, 2);    
+  }
 
   public static RequirementConfig[] GetRequirements(string material,
     int materialCount)

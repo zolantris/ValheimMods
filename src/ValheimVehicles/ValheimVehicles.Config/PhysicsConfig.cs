@@ -41,6 +41,7 @@ public static class PhysicsConfig
   public static ConfigEntry<float> waterSailForceFactor = null!;
   public static ConfigEntry<float> waterDrag = null!;
   public static ConfigEntry<float> waterAngularDrag = null!;
+  public static ConfigEntry<float> waterDeltaForceMultiplier = null!;
 
   public static ConfigEntry<float> submersibleAngularDamping = null!;
   public static ConfigEntry<float> submersibleSidewaysDamping = null!;
@@ -339,6 +340,10 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL removes all collision of camera for objects on boat. Should significantly lower jitter when camera smashes into objects on boat it will force camera through it instead of pushing rapidly forward with vehicle force too.",
         false, true));
+    waterDeltaForceMultiplier = Config.Bind(SectionKey,
+      "waterDeltaForceMultiplier", 50f,
+      ConfigHelpers.CreateConfigDescription("Water delta force multiplier",
+        true, true, new AcceptableValueRange<float>(0.1f, 5000f)));
 
 
     convexHullDebuggerForceEnabled.SettingChanged += (_, __) =>

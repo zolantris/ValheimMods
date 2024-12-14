@@ -7,6 +7,7 @@ using ValheimRAFT.Patches;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Enums;
 using Logger = Jotunn.Logger;
@@ -141,7 +142,9 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
         return;
       }
 
-      currentInstance?.StartRenderAllCollidersLoop();
+      ConvexHullAPI.DebugMode = !ConvexHullAPI.DebugMode;
+      currentInstance.VehicleShipInstance.PiecesController.convexHullComponent
+        .CreatePreviewConvexHullMeshes();
     }
 
     if (GUILayout.Button("collider debugger"))
