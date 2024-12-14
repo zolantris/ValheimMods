@@ -21,12 +21,6 @@ public static class PropulsionConfig
     private set;
   } = null!;
 
-  public static ConfigEntry<Vector3> ConvexHullPreviewOffset
-  {
-    get;
-    private set;
-  } = null!;
-
   public static ConfigEntry<bool> EXPERIMENTAL_LeanTowardsWindSailDirection
   {
     get;
@@ -150,13 +144,6 @@ public static class PropulsionConfig
         true, true, new AcceptableValueRange<float>(0.01f, 1f)));
 
     // end vertical config.
-
-    ConvexHullPreviewOffset = Config.Bind(SectionName,
-      "ConvexHullPreviewOffset",
-      Vector3.up * 10f,
-      ConfigHelpers.CreateConfigDescription(
-        "For debugging the vehicle's convex hull. Seeing it overlay over the ship is easier to debug. Most players will not need this unless they need to debug their ship",
-        true, true));
 
     DefaultPhysicsMode.SettingChanged +=
       (sender, args) =>

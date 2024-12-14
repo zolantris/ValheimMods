@@ -52,7 +52,7 @@ Shader "StandardDoubleSided"
         }
         LOD 300
 
-        ZClip On
+        ZClip Off
         ZWrite On
         
         Stencil
