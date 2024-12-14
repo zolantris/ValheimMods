@@ -98,7 +98,7 @@ Material:
     - _Glossiness: 0.677
     - _GlossyReflections: 1
     - _MetalGloss: 0
-    - _Metallic: 0.395
+    - _Metallic: 1
     - _MetallicAlphaGloss: 0
     - _Mode: 0
     - _MossAlpha: 1

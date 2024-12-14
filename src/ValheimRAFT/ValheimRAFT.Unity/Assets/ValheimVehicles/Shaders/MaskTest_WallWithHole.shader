@@ -3,66 +3,69 @@ Shader "Custom/WallWithHole"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Base (RGB)", 2D) = "white" {}
-        _StencilRef ("Stencil Reference Value", Range(0,255)) = 1  // New property for stencil reference
+        _MainTex ("Albedo (RGB)", 2D) = "white" {}
+        _Glossiness ("Smoothness", Range(0,1)) = 0.5
+        _Metallic ("Metallic", Range(0,1)) = 0.0
     }
-
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
-
-        // Pass 1: Write to Stencil Buffer
-        Pass
+        Tags
         {
-            Name "STENCIL_WRITE"
-            Tags { "LightMode"="Always" }
-
-            Stencil
-            {
-                Ref 44       // Use the unique stencil reference value for each wall
-                Comp Always             // Always pass the stencil test
-                Pass Replace            // Replace the stencil value with the reference value
-            }
-
-            ColorMask 0               // Do not write color (only stencil buffer is modified)
-            ZWrite On                 // Enable depth writing
-            ZTest LEqual              // Standard depth test
+            "RenderType"="Transparent"
         }
-
-        // Pass 2: Render the wall normally (without the cut-out region)
-        Pass
+        LOD 200
+        
+        Stencil
         {
-            Name "STENCIL_RENDER"
-            Tags { "LightMode"="ForwardBase" }
-
-            Stencil
-            {
-                Ref 44       // Reference value to compare with stencil buffer
-                Comp NotEqual            // Only render where stencil value is NOT equal to the reference value (1)
-                Pass Keep               // Keep the current stencil value
-            }
+            Ref 44
+            Comp NotEqual
+            Pass Keep
         }
         
-                    // Standard shader logic to render the wall
-            CGPROGRAM
-            #pragma surface surf Standard alpha
-            #include "UnityCG.cginc"
+        Stencil
+        {
+            Ref 1
+            Comp Always
+            Pass Zero
+        }
+            
+        CGPROGRAM
+        // Physically based Standard lighting model, and enable shadows on all light types
+        #pragma surface surf Standard
 
-            sampler2D _MainTex;
-            float4 _Color;
+        // Use shader model 3.0 target, to get nicer looking lighting
+        #pragma target 5.0
 
-            struct Input
-            {
-                float2 uv_MainTex : TEXCOORD0;
-            };
+        sampler2D _MainTex;
 
-            void surf(Input IN, inout SurfaceOutputStandard o)
-            {
-                o.Albedo = tex2D(_MainTex, IN.uv_MainTex).rgb * _Color.rgb;
-                o.Alpha = tex2D(_MainTex, IN.uv_MainTex).a;
-            }
-            ENDCG
+        struct Input
+        {
+            float2 uv_MainTex;
+        };
+
+        half _Glossiness;
+        half _Metallic;
+        fixed4 _Color;
+
+        // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
+        // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
+        // #pragma instancing_options assumeuniformscaling
+        UNITY_INSTANCING_BUFFER_START(Props)
+            // put more per-instance properties here
+        UNITY_INSTANCING_BUFFER_END(Props)
+
+        void surf(Input IN, inout SurfaceOutputStandard o)
+        {
+            // Albedo comes from a texture tinted by color
+            fixed4 c = tex2D(_MainTex, IN.uv_MainTex) * _Color;
+            o.Albedo = c.rgb;
+            // Metallic and smoothness come from slider variables
+            o.Metallic = _Metallic;
+            o.Smoothness = _Glossiness;
+            o.Alpha = c.a;
+        }
+        ENDCG
     }
-
-    Fallback "Standard"
+    
+    FallBack "Diffuse"
 }
