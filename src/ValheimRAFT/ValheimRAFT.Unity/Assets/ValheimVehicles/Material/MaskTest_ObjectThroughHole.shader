@@ -36,9 +36,7 @@ Shader "Custom/ObjectThroughHole"
         [HideInInspector] _Mode ("__mode", Float) = 0.0
         [HideInInspector] _SrcBlend ("__src", Float) = 1.0
         [HideInInspector] _DstBlend ("__dst", Float) = 0.0
-        [Enum(ZWrite)] _ZWrite ("ZWrite", Int) = 1
         [Enum(CullMode)] _CullMode ("Cull", Integer) = 2
-        _StencilMask("StencilMask", Range(0,255)) = 44
     }
     SubShader
     {
@@ -64,7 +62,7 @@ Shader "Custom/ObjectThroughHole"
         {
             Stencil
             {
-                Ref 2 // Reference value to write
+                Ref 2 // Requires adding 2 masks together to get a window effect. Anything higher is ignored.
                 Comp Equal // Always pass stencil test
                 Pass Keep // Increment the stencil value (saturating to 255)
             }

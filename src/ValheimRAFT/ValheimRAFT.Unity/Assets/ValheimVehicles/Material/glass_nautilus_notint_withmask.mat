@@ -133,7 +133,7 @@ Material:
     - _SphereOffset: 0
     - _SrcBlend: 1
     - _StencilComp: 4
-    - _StencilMask: 44
+    - _StencilMask: 1
     - _StencilRef: 1
     - _SwayDistance: 0.5
     - _SwaySpeed: 15

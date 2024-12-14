@@ -37,6 +37,7 @@ Shader "StandardDoubleSided"
         [HideInInspector] _SrcBlend ("__src", Float) = 1.0
         [HideInInspector] _DstBlend ("__dst", Float) = 0.0
         _ZWrite ("ZWrite", Float) = 1.0
+        _StencilMask("StencilMask", Int) = 0
     }
 
     CGINCLUDE
@@ -55,38 +56,9 @@ Shader "StandardDoubleSided"
         ZClip Off
         ZWrite On
 
-        //        Stencil
-        //        {
-        //            Ref 0
-        //            Comp Equal
-        //        }
-        //
-        //        Pass
-        //        {
-        //            Stencil
-        //            {
-        //                Ref 1
-        //                Comp Equal
-        //                Pass DecrSat
-        //            }
-        //            ZTest GEqual
-        //            ColorMask 0
-        //        }
-        //
-        //        Pass
-        //        {
-        //            Stencil
-        //            {
-        //                Ref 1
-        //                Comp Equal
-        //                Pass Keep
-        //            }
-        //            ZTest Greater
-        //
-        //            ColorMask 0
-        //        }
         Pass
         {
+            ZWrite On
             Stencil
             {
                 Ref 4
@@ -98,6 +70,7 @@ Shader "StandardDoubleSided"
 
         Pass
         {
+            ZWrite On
             Stencil
             {
                 Ref 3
@@ -126,7 +99,6 @@ Shader "StandardDoubleSided"
 
             Blend [_SrcBlend] [_DstBlend]
             Cull Off
-            ZWrite On
             CGPROGRAM
             #pragma target 3.0
             // TEMPORARY: GLES2.0 temporarily disabled to prevent errors spam on devices without textureCubeLodEXT
@@ -411,7 +383,5 @@ Shader "StandardDoubleSided"
         }
     }
 
-
-    FallBack "VertexLit"
-    CustomEditor "StandardShaderGUI"
+    FallBack "Standard"
 }
