@@ -33,8 +33,11 @@ public class ShipHullPrefab : IRegisterPrefab
       DirectionVariant.Right
     ];
 
-    RegisterIronPortholeWindowWall();
-    RegisterIronPortholeWindowStandalone();
+    RegisterWindowPortholeIronStandalone();
+    RegisterWindowWallPorthole2x2Iron();
+    RegisterWindowWallPorthole4x4Iron();
+    RegisterWindowWallSquareWood();
+    RegisterWindowWallSquareIron();
 
     foreach (var hullMaterialType in hullMaterialTypes)
     {
@@ -78,7 +81,7 @@ public class ShipHullPrefab : IRegisterPrefab
   {
   }
   
-  public static void RegisterIronPortholeWindowStandalone()
+  public static void RegisterWindowPortholeIronStandalone()
   {
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
@@ -88,13 +91,43 @@ public class ShipHullPrefab : IRegisterPrefab
       ShipHulls.HullMaterial.Iron, 1, prefab.transform.FindDeepChild("trim"));    
   }
 
-  public static void RegisterIronPortholeWindowWall()
+  public static void RegisterWindowWallPorthole2x2Iron()
   {
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
-        WindowPortholeWallPrefab, LoadValheimVehicleAssets.ShipWindowPortholeWall);
+        WindowWallPorthole2x2Prefab, LoadValheimVehicleAssets.ShipWindowPortholeWall2x2);
     
-    SetupHullPrefab(prefab, WindowPortholeWallPrefab,
+    SetupHullPrefab(prefab, WindowWallPorthole2x2Prefab,
+      ShipHulls.HullMaterial.Iron, 3);    
+  }
+  
+  public static void RegisterWindowWallPorthole4x4Iron()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        WindowWallPorthole4x4Prefab, LoadValheimVehicleAssets.ShipWindowPortholeWall2x2);
+    
+    SetupHullPrefab(prefab, WindowWallPorthole2x2Prefab,
+      ShipHulls.HullMaterial.Iron, 6);    
+  }
+  
+  public static void RegisterWindowWallSquareWood()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        WindowWallSquareWoodPrefabName, LoadValheimVehicleAssets.ShipWindowSquareWallWood);
+    
+    SetupHullPrefab(prefab, WindowWallSquareWoodPrefabName,
+      ShipHulls.HullMaterial.Wood, 3);    
+  }
+  
+  public static void RegisterWindowWallSquareIron()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        WindowWallSquareIronPrefabName, LoadValheimVehicleAssets.ShipWindowSquareWallIron);
+    
+    SetupHullPrefab(prefab, WindowWallSquareIronPrefabName,
       ShipHulls.HullMaterial.Iron, 3);    
   }
 

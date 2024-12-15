@@ -122,8 +122,10 @@
   "valheim_vehicles_gui_vehicle_is_beached": "The Vehicle is beached. Dig until your vehicle can reach water.",
   "valheim_vehicles_water_mask": "Water Mask creator",
   "valheim_vehicles_water_mask_desc": "Use this to hide water on the ship. Requires 8 pieces placed to make a cube around the area. This will not bend the water, but it will make the ship clear of water where it's put.",
-  "$valheim_vehicles_window_porthole": "Porthole window",
-  "$valheim_vehicles_window_porthole_desc": "Reinforced porthole window.",
-  "$valheim_vehicles_window_porthole_standalone": "Porthole window: Standalone",
-  "$valheim_vehicles_window_porthole_standalone_desc": "Porthole window that can be placed on any vehicle piece to see through it. Requires 2 windows to create a proper seal."
+  "valheim_vehicles_window_wall_porthole": "Porthole window",
+  "valheim_vehicles_window_wall_porthole_desc": "Reinforced porthole window wall.",
+  "valheim_vehicles_window_wall_square": "Square window",
+  "valheim_vehicles_window_wall_square_desc": "Reinforced square window wall.",
+  "valheim_vehicles_window_porthole_standalone": "Porthole window: Standalone",
+  "valheim_vehicles_window_porthole_standalone_desc": "Porthole window that can be placed on any vehicle piece to see through it. Requires 2 windows to create a proper seal."
 }

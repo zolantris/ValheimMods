@@ -4,8 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8e9c2722-7e95-4dcd-9c74-7fd6f514667b" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimMods/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimMods/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="49fd9c5b-a57d-463a-91d9-eee1949fd2bc" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/docs/UnityProBuilderMeshGeneration.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimMods/.idea/indexLayout.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimMods/.idea/projectSettingsUpdater.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimMods/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimMods/.idea/workspace.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/libs" beforeDir="false" afterPath="$PROJECT_DIR$/libs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle.manifest" afterDir="false" />
@@ -13,87 +17,87 @@
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles-shared" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles-shared" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles-shared.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles-shared.manifest" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/Assets/Translations/English/valheimraft.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/Assets/Translations/English/valheimraft.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/glass_round_double_sided.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/glass_round_double_sided.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_center_wood.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_center_wood.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_slab_wood_2x2.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_slab_wood_2x2.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_slab_wood_4x4.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_slab_wood_4x4.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_wall_iron_2x2.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_wall_iron_2x2.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_wall_window_iron_2x2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_wall_wood_2x2.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_wall_wood_2x2.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_wall_wood_4x4.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_wall_wood_4x4.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_window_wood_2x2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_window_wood_4x4.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/vehicle_ship.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/vehicle_ship.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/window_porthole_standalone.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/window_porthole_standalone.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/StandardStencilCutout.shader" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/StandardStencilCutout.shader" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/glass_nautilus_green.mat" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/glass_nautilus_green.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/glass_nautilus_notint.mat" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/glass_nautilus_notint.mat" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/glass_nautilus_notint_withmask.mat" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/glass_nautilus_notint_withmask.mat" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/iron_metal_double_side.mat" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/iron_metal_double_side.mat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/wood_alt_piece_bg_valheim_wood.mat" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/wood_alt_piece_bg_valheim_wood.mat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/wood_piece_valheim.mat" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/wood_piece_valheim.mat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/hull_wall_window_iron_2x2.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/hull_wall_window_iron_2x2.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/iron_pole_vert.mat" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/iron_pole_vert.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/hull_slab_wood_2x2.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/hull_slab_wood_2x2.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/hull_wall_iron_2x2.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/hull_wall_iron_2x2.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/hull_wall_iron_4x4.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/hull_wall_iron_4x4.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/hull_wall_window_iron_2x2.prefab" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/hull_wall_wood_4x4.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/hull_wall_wood_4x4.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/hull_window_wood_2x2.prefab" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/hull_window_wood_4x4.prefab" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/shared_hull_slab_2x2_new.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/shared_hull_slab_2x2_new.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/shared_hull_slab_2x2_worn.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/shared_hull_slab_2x2_worn.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/shared_hull_slab_iron_4x4_new.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/shared_hull_slab_iron_4x4_new.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/shared_hull_wall_iron_new.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/shared_hull_wall_iron_new.prefab" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/window_porthole_standalone.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/window_porthole_standalone.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/BendingController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/BendingMaterial.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/BendingMaterial2.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullCalculator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/CustomMeshGenerator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/Planar Material.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/PlanarShader.shader" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ScalableDoubleSidedCube.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/StandardWaterMaterial.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/StandardWithStencilMask.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/StencilMaskMaterial.mat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.unity" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/ConvexHullGenerator.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/HullTesting.unity" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/HullTesting.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/SceneTestItems/StandardWaterMaterial.mat" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/SceneTestItems/StandardWaterMaterial.mat" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/Stencil_Mask_Scene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/Stencil_Mask_Scene.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/TargetMaterial.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/TestDefaultMaterial.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/TestMask.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/TransparencyMask.shader" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/TransparentMat.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/TransparentShader.shader" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/VertexBending.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/WaterColorCameraShader.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/WaterColorShader.shader" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/WaterMaskController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/WaterShaderMaterial Variant.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/WaterShaderMaterial.mat" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Shaders/StandardDoubleSided.shader" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Shaders/StandardDoubleSided.shader" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/cutout_wood_alt_piece_bg_valheim_wood.mat" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/Assets/cutout_wood_alt_piece_bg_valheim_wood.mat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Config/PropulsionConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Config/PropulsionConfig.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/ProjectSettings/GraphicsSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/ProjectSettings/GraphicsSettings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/ProjectSettings/ProjectSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Unity/ProjectSettings/ProjectSettings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/LoadValheimVehiclesAssets.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/LoadValheimVehiclesAssets.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/PrefabNames.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/PrefabNames.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryHelpers.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryHelpers.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/Registry/ShipHullPrefab.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/Registry/ShipHullPrefab.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/SpriteNames.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/SpriteNames.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="DpaMonitoringSettings">
-    <option name="firstShow" value="false" />
-  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/bdf59acb21534ad59114d82c98d8912e6e200/6f/582af22a/PrefabManager.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/4a26704d10e145e2890fa38a6cc0df67531820/23/9585e22b/String.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo"><![CDATA[{
   "customColor": "",
   "associatedIndex": 2
 }]]></component>
-  <component name="ProjectId" id="2qDBb2tPoR0fFAprKPKJPa1ho5e" />
+  <component name="ProjectId" id="2qFgwI01qqS4HJuzUeDrZtDrxKx" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "Mono Remote.Valheim.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "XThreadsFramesViewSplitterKey": "0.6013889",
     "git-widget-placeholder": "feat/windows-and-window-cutouts",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "configurable.group.appearance",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RecentsManager">
-    <key name="CidrLocalAttachDebugger.recentlyUsed">
-      <recent name="com.jetbrains.rider.cpp.debugger.RiderCppLLDBDriverConfiguration" />
-    </key>
-  </component>
-  <component name="RunManager">
-    <configuration name="Valheim" type="ConnectRemote" factoryName="Mono Remote" show_console_on_std_err="false" show_console_on_std_out="false" port="10000" address="127.0.0.1">
+  <component name="RunManager" selected="Mono Remote.valheim">
+    <configuration name="valheim" type="ConnectRemote" factoryName="Mono Remote" show_console_on_std_err="false" show_console_on_std_out="false" port="10000" address="127.0.0.1">
       <option name="allowRunningInParallel" value="false" />
       <option name="listenPortForConnections" value="false" />
       <option name="projectPathOnTarget" />
@@ -102,16 +106,30 @@
       </option>
       <method v="2" />
     </configuration>
+    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost">
+      <option name="allowRunningInParallel" value="false" />
+      <option name="listenPortForConnections" value="false" />
+      <option name="pid" />
+      <option name="projectPathOnTarget" />
+      <option name="selectedOptions">
+        <list />
+      </option>
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Attach to Unity Editor.Attach to Unity Editor" />
+      <item itemvalue="Mono Remote.valheim" />
+    </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="8e9c2722-7e95-4dcd-9c74-7fd6f514667b" name="Changes" comment="" />
-      <created>1734187334900</created>
+      <changelist id="49fd9c5b-a57d-463a-91d9-eee1949fd2bc" name="Changes" comment="" />
+      <created>1734263974434</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1734187334900</updated>
-      <workItem from="1734187336360" duration="5125000" />
+      <updated>1734263974434</updated>
+      <workItem from="1734263976060" duration="12365000" />
     </task>
     <servers />
   </component>
@@ -124,5 +142,24 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs</url>
+          <line>1166</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs" containingFunctionPresentation="Method 'UpdateWaterForce'">
+            <startOffsets>
+              <option value="34908" />
+            </startOffsets>
+            <endOffsets>
+              <option value="34976" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

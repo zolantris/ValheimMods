@@ -3407,22 +3407,33 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     m_backwardPressed = isBackward;
   }
 
+  public bool IsPlayerOnboardLocalShip(Player player)
+  {
+    return m_players.Contains(player);
+  }
+
+  public bool IsPlayerOnboardAndControllingVehicle(Player? player)
+  {
+    if (player == null) return false;
+    return IsPlayerOnboardLocalShip(player) &&
+           Player.m_localPlayer.GetDoodadController() != null;
+  }
+
   public void SendSpeedChange(DirectionChange directionChange)
   {
     if (isAnchored)
     {
       var anchorMessage = SteeringWheelComponent.GetTutorialAnchorMessage(
         isAnchored);
-      if (TutorialConfig.HasVehicleAnchoredWarning.Value)
+      if (TutorialConfig.HasVehicleAnchoredWarning.Value && IsPlayerOnboardAndControllingVehicle(Player.m_localPlayer))
       {
         Player.m_localPlayer.Message(
           MessageHud.MessageType.Center,
           anchorMessage
         );
+        Logger.LogDebug($"You are anchored. {anchorMessage}");
       }
-
-      Logger.LogDebug($"You are anchored. {anchorMessage}");
-
+      
       return;
     }
 

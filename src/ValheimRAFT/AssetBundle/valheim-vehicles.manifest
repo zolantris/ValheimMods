@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 330500567
+CRC: 424415860
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 3c79305241b4e50c33c866d99f087517
+    Hash: cd0c39f8ebbdf0dd95dbd6e4f088e18c
   TypeTreeHash:
     serializedVersion: 2
-    Hash: c06587813f50b4ac49249ee2d68a3382
+    Hash: a2aa82b65f9c2462c15990b70dc4415f
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 3c79305241b4e50c33c866d99f087517
+    Hash: cd0c39f8ebbdf0dd95dbd6e4f088e18c
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -38,6 +38,10 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 8233d90336aea43098adf6dbabd606a2, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 1ca002da428252441b92f28d83c8a65f, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 136
@@ -59,6 +63,16 @@ ClassTypes:
 - Class: 687078895
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
+- AssemblyName: Unity.ProBuilder
+  ClassName: UnityEngine.ProBuilder.AutoUnwrapSettings
+- AssemblyName: Unity.ProBuilder
+  ClassName: UnityEngine.ProBuilder.Face
+- AssemblyName: Unity.ProBuilder
+  ClassName: UnityEngine.ProBuilder.Shapes.Torus
+- AssemblyName: Unity.ProBuilder
+  ClassName: UnityEngine.ProBuilder.SharedVertex
+- AssemblyName: Unity.ProBuilder
+  ClassName: UnityEngine.ProBuilder.UnwrapParameters
 - AssemblyName: UnityEngine.CoreModule
   ClassName: UnityEngine.Events.PersistentCallGroup
 - AssemblyName: UnityEngine.UI
@@ -86,13 +100,14 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/shared_nautilus.prefab
 - Assets/ValheimVehicles/Shaders/InvertWaterMask.shader
 - Assets/ValheimVehicles/Prefabs/hull_slab_iron_4x4.prefab
+- Assets/ValheimVehicles/Prefabs/hull_wall_window_porthole_iron_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_2x4.prefab
 - Assets/ValheimVehicles/Material/WaterMaskMaterial.mat
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_1x2.prefab
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier3_1x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_center_iron.prefab
 - Assets/Horem/Mocks/Shaders/Custom_WaterMask.shader
-- Assets/ValheimVehicles/Prefabs/hull_window_wood_2x2.prefab
+- Assets/ValheimVehicles/Prefabs/hull_wall_window_square_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_wood_4x4.prefab
 - Assets/ValheimVehicles/Material/glass_nautilus_notint.mat
@@ -103,7 +118,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_slab_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_left.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus.prefab
-- Assets/ValheimVehicles/Prefabs/hull_wall_window_iron_2x2.prefab
+- Assets/ValheimVehicles/Prefabs/hull_wall_window_porthole_iron_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_right_wood.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_iron.prefab
 - Assets/ValheimVehicles/Prefabs/window_porthole_standalone.prefab
@@ -112,6 +127,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/ram_blade_top.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_iron.prefab
 - Assets/ValheimVehicles/Prefabs/steering_wheel.prefab
+- Assets/ValheimVehicles/Prefabs/hull_wall_window_square_iron_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_2x2.prefab
 - Assets/ValheimVehicles/Shaders/WaterMask.shader
@@ -122,7 +138,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_right_iron.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/hud_anchor.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_2x2_worn.prefab
-- Assets/ValheimVehicles/Prefabs/hull_window_wood_4x4.prefab
+- Assets/ValheimVehicles/Prefabs/hull_wall_window_square_wood_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/custom_sail.prefab
 - Assets/ValheimVehicles/Prefabs/shared_rudder_advanced_double.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_wood.prefab

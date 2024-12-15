@@ -6,6 +6,9 @@ using UnityEngine.U2D;
 
 namespace ValheimVehicles.Prefabs;
 
+/// <summary>
+/// Loads all ValheimVehicles assets. All assets are strings with their type. `.material` or `.shader` or `.prefab` are optional
+/// </summary>
 public class LoadValheimVehicleAssets : ILoadAssets
 {
   // CustomSail
@@ -77,7 +80,10 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject VehiclePiecesAsset = null!;
   public static GameObject MechanicalSwitch = null!;
   
-  public static GameObject ShipWindowPortholeWall = null!;
+  public static GameObject ShipWindowPortholeWall2x2 = null!;
+  public static GameObject ShipWindowPortholeWall4x4 = null!;
+  public static GameObject ShipWindowSquareWallIron = null!;
+  public static GameObject ShipWindowSquareWallWood = null!;
   public static GameObject ShipWindowPortholeStandalone = null!;
 
   // hud
@@ -235,8 +241,13 @@ public class LoadValheimVehicleAssets : ILoadAssets
       assetBundle.LoadAsset<GameObject>($"ram_stake_{PrefabTiers.Tier3}_2x4");
     
     
-    ShipWindowPortholeWall =
-      assetBundle.LoadAsset<GameObject>($"hull_wall_window_iron_2x2.prefab");
+    ShipWindowPortholeWall2x2 =
+      assetBundle.LoadAsset<GameObject>($"hull_wall_window_porthole_iron_2x2.prefab");
+    ShipWindowPortholeWall4x4 = assetBundle.LoadAsset<GameObject>($"hull_wall_window_porthole_iron_4x4.prefab");
+    ShipWindowSquareWallIron =
+      assetBundle.LoadAsset<GameObject>($"hull_wall_window_square_iron_2x2.prefab");
+    ShipWindowSquareWallWood =
+      assetBundle.LoadAsset<GameObject>($"hull_wall_window_square_wood_2x2.prefab");
     ShipWindowPortholeStandalone =
       assetBundle.LoadAsset<GameObject>($"window_porthole_standalone.prefab");
 

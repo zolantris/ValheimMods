@@ -96,7 +96,7 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _StencilMask: 0
+    - _StencilMask: 1
     - _TriplanarLocalPos: 0
     - _TriplanarMap: 0
     - _TriplanarScale: 1
@@ -104,6 +104,7 @@ Material:
     - _UVSec: 0
     - _ValueNoise: 0.5
     - _ValueNoiseVertex: 0
+    - _ZClip: 0
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

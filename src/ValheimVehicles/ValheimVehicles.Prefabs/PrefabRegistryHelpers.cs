@@ -483,12 +483,20 @@ public abstract class PrefabRegistryHelpers
         .VehicleSwitch)
     });
     
-    PieceDataDictionary.Add(PrefabNames.WindowPortholeWallPrefab, new PieceData()
+    PieceDataDictionary.Add(PrefabNames.WindowWallPorthole2x2Prefab, new PieceData()
     {
-      Name = "$valheim_vehicles_window_porthole",
-      Description = "$valheim_vehicles_window_porthole_desc",
+      Name = "$valheim_vehicles_window_wall_porthole 2x2",
+      Description = "$valheim_vehicles_window_wall_porthole_desc 2x2",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .WindowPortholeWall)
+        .WindowWallPorthole)
+    });
+    
+    PieceDataDictionary.Add(PrefabNames.WindowWallPorthole4x4Prefab, new PieceData()
+    {
+      Name = "$valheim_vehicles_window_wall_porthole 4x4",
+      Description = "$valheim_vehicles_window_wall_porthole_desc 4x4",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .WindowWallPorthole)
     });
     
     PieceDataDictionary.Add(PrefabNames.WindowPortholeStandalonePrefab, new PieceData()
@@ -497,6 +505,23 @@ public abstract class PrefabRegistryHelpers
       Description = "$valheim_vehicles_window_porthole_standalone_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .WindowPortholeStandalone)
+    });
+    
+    PieceDataDictionary.Add(PrefabNames.WindowWallSquareWoodPrefabName, new PieceData()
+    {
+      Name = "$valheim_vehicles_window_wall_square $valheim_vehicles_material_wood",
+      Description = "$valheim_vehicles_window_wall_square $valheim_vehicles_material_wood",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .WindowWallSquareWood)
+    });
+    
+    
+    PieceDataDictionary.Add(PrefabNames.WindowWallSquareIronPrefabName, new PieceData()
+    {
+      Name = "$valheim_vehicles_window_wall_square $valheim_vehicles_material_iron",
+      Description = "$valheim_vehicles_window_wall_square $valheim_vehicles_material_iron",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .WindowWallSquareIron)
     });
   }
 
