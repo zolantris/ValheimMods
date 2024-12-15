@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5353929646540429744}
   m_Layer: 10
-  m_Name: $hud_snappoint_outter $hud_snappoint_top $hud_snappoint_corner 4
+  m_Name: $hud_snappoint_outer $hud_snappoint_top $hud_snappoint_corner 4
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 1365162162084184529}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0.7071068, w: 0}
-  m_LocalPosition: {x: 3, y: 1, z: -0.25}
+  m_LocalPosition: {x: 3, y: 1, z: -0.125}
   m_LocalScale: {x: 2, y: 6, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -41,7 +41,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5373735424265413406}
   m_Layer: 10
-  m_Name: $hud_snappoint_outter $hud_snappoint_bottom $hud_snappoint_corner 2
+  m_Name: $hud_snappoint_outer $hud_snappoint_bottom $hud_snappoint_corner 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -56,7 +56,7 @@ Transform:
   m_GameObject: {fileID: 3186094118726471782}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0.7071068, w: 0}
-  m_LocalPosition: {x: 3, y: -3, z: -0.25}
+  m_LocalPosition: {x: 3, y: -3, z: -0.125}
   m_LocalScale: {x: 2, y: 6, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -72,7 +72,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6714254798650488151}
   m_Layer: 10
-  m_Name: $hud_snappoint_outter $hud_snappoint_top $hud_snappoint_center
+  m_Name: $hud_snappoint_outer $hud_snappoint_top $hud_snappoint_center
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -87,7 +87,7 @@ Transform:
   m_GameObject: {fileID: 3262249520990786870}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0.7071068, w: 0}
-  m_LocalPosition: {x: 1, y: 1, z: -0.25}
+  m_LocalPosition: {x: 1, y: 1, z: -0.125}
   m_LocalScale: {x: 2, y: 6, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -103,7 +103,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3593352548364611372}
   m_Layer: 10
-  m_Name: $hud_snappoint_outter $hud_snappoint_bottom $hud_snappoint_corner 1
+  m_Name: $hud_snappoint_outer $hud_snappoint_bottom $hud_snappoint_corner 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -118,7 +118,7 @@ Transform:
   m_GameObject: {fileID: 4528786317959657652}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0.7071068, w: 0}
-  m_LocalPosition: {x: -1, y: -3, z: -0.25}
+  m_LocalPosition: {x: -1, y: -3, z: -0.125}
   m_LocalScale: {x: 2, y: 6, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -134,7 +134,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8197371786802398766}
   m_Layer: 10
-  m_Name: $hud_snappoint_outter $hud_snappoint_bottom $hud_snappoint_center
+  m_Name: $hud_snappoint_outer $hud_snappoint_bottom $hud_snappoint_center
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -149,7 +149,7 @@ Transform:
   m_GameObject: {fileID: 4895776691187940836}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0.7071068, w: 0}
-  m_LocalPosition: {x: 1, y: -3, z: -0.25}
+  m_LocalPosition: {x: 1, y: -3, z: -0.125}
   m_LocalScale: {x: 2, y: 6, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -204,7 +204,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2772047990977232864}
   m_Layer: 10
-  m_Name: $hud_snappoint_outter $hud_snappoint_center
+  m_Name: $hud_snappoint_outer $hud_snappoint_center
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -219,7 +219,7 @@ Transform:
   m_GameObject: {fileID: 7959310516449406947}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0.7071068, w: 0}
-  m_LocalPosition: {x: 1, y: -1, z: -0.25}
+  m_LocalPosition: {x: 1, y: -1, z: -0.125}
   m_LocalScale: {x: 2, y: 6, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -235,7 +235,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9028203608437068663}
   m_Layer: 10
-  m_Name: $hud_snappoint_outter $hud_snappoint_top $hud_snappoint_corner 3
+  m_Name: $hud_snappoint_outer $hud_snappoint_top $hud_snappoint_corner 3
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -250,7 +250,7 @@ Transform:
   m_GameObject: {fileID: 9213159939822992029}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0.7071068, w: 0}
-  m_LocalPosition: {x: -1, y: 1, z: -0.25}
+  m_LocalPosition: {x: -1, y: 1, z: -0.125}
   m_LocalScale: {x: 2, y: 6, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []

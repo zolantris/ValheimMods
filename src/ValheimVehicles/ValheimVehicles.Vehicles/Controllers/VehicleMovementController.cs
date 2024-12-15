@@ -1176,26 +1176,26 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // Calculate the current depth force multiplier
     var currentDepthForceMultiplier =
-      Mathf.Clamp01(Mathf.Abs(currentDepth) / m_forceDistance);
+      Mathf.Clamp01(Mathf.Abs(currentDepth) / PhysicsConfig.forceDistance.Value);
 
     // Calculate the target upwards force based on the current depth
-    var targetUpwardsForce = Vector3.up * m_force *
-                             currentDepthForceMultiplier;
+    var upwardForceVector = Vector3.up * PhysicsConfig.force.Value *
+                            currentDepthForceMultiplier;
 
     // Apply SmoothDamp to prevent jitter
     // Use a reference variable for the current upwards force, which will be smoothed
-    if (currentUpwardsForce == null)
-    {
-      currentUpwardsForce = targetUpwardsForce; // Initialize if not set
-    }
+    // if (currentUpwardsForce == null)
+    // {
+      // currentUpwardsForce = targetUpwardsForce; // Initialize if not set
+    // }
 
     // Smoothly interpolate towards the target upwards force over time
-    currentUpwardsForce = Vector3.SmoothDamp(currentUpwardsForce,
-      targetUpwardsForce, ref currentUpwardsForceVelocity,
-      deltaForceMultiplier);
-
+    // currentUpwardsForce = Vector3.SmoothDamp(currentUpwardsForce,
+    //   targetUpwardsForce, ref currentUpwardsForceVelocity,
+    //   deltaForceMultiplier);
+    
     // Apply the smoothed upwards force
-    AddForceAtPosition(currentUpwardsForce, worldCenterOfMass,
+    AddForceAtPosition(upwardForceVector, worldCenterOfMass,
       PhysicsConfig.floatationVelocityMode.Value);
 
     // sideways force
@@ -2082,6 +2082,16 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return shipAdditiveSteerForce;
   }
 
+
+  public Vector3 GetRudderPosition()
+  {
+    // var forwardPos = ShipDirection.forward;
+    if (PiecesController == null) return  ShipDirection.position;
+    var hasRudderPrefab = PiecesController.m_rudderPieces.Count > 0;
+    if (!hasRudderPrefab) return  ShipDirection.position;
+    return PiecesController.m_rudderPieces[0].transform.position;
+  }
+
   /// <summary>
   /// Sets the speed of the ship with rudder speed added to it.
   /// </summary>
@@ -2091,6 +2101,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     if (VehicleSpeed == Ship.Speed.Stop ||
         isAnchored) return;
+    
+    // Should not apply rudder torque (which requires water)
+    if (!IsFlying() &&
+        _currentShipFloatation is { IsAboveBuoyantLevel: true })
+    {
+      return;
+    }
 
     var direction = Vector3.Dot(m_body.velocity, ShipDirection.forward);
     var rudderForce = GetRudderForcePerSpeed();
@@ -2098,12 +2115,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // todo GetFloatSizeFromDirection may not be needed anymore.
     // This needs to use blocking collider otherwise the float collider pushes the vehicle upwards but the blocking collider cannot push downwards.
     // todo set this to the rudder point
+    // rear steering is size z. Center steering is size.z/2
     var steerOffset = VectorUtils.MergeVectors(
       new Vector3(0, FloatCollider.center.y, 0),
       ShipDirection.position -
-      ShipDirection.forward *
-      GetFloatSizeFromDirection(
-        Vector3.forward));
+      ShipDirection.forward * FloatCollider.bounds.size.z);
 
     var steeringVelocityDirectionFactor = direction * m_stearVelForceFactor;
     var steerOffsetForce = ShipDirection.right *
@@ -2140,7 +2156,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       transform.rotation =
         Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
     }
-
+    
     AddForceAtPosition(steerForce * Time.fixedDeltaTime, steerOffset,
       PhysicsConfig.turningVelocityMode.Value);
   }
@@ -3366,6 +3382,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void ApplyControlls(Vector3 dir) => ApplyControls(dir);
 
+  
+  public bool IsWithinWheelDeadZone()
+  {
+    return m_rudderValue >= -PropulsionConfig.WheelDeadZone.Value && m_rudderValue <=
+           PropulsionConfig.WheelDeadZone.Value;
+  }
+
   /// <summary>
   /// Updates based on the controls provided
   /// </summary>
@@ -3390,11 +3413,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     m_rudder = dir.x * num;
     m_rudderValue += m_rudder * m_rudderSpeed * fixedDeltaTime;
     m_rudderValue = Mathf.Clamp(m_rudderValue, -1f, 1f);
-    // deadzone logic to allow rudder to be centered.
+  
     if (Time.time - m_sendRudderTime > 0.2f)
     {
+    
+      // deadzone logic to allow rudder to be centered.
       // allows updating rudder but zeros it out quickly in a deadzone.
-      if (m_rudderValue is >= -0.01f and < 0.01f)
+      if (IsWithinWheelDeadZone())
       {
         m_rudderValue = 0.0f;
       }

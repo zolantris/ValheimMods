@@ -488,7 +488,7 @@ public abstract class PrefabRegistryHelpers
       Name = "$valheim_vehicles_window_wall_porthole 2x2",
       Description = "$valheim_vehicles_window_wall_porthole_desc 2x2",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .WindowWallPorthole)
+        .WindowWallPorthole2x2)
     });
     
     PieceDataDictionary.Add(PrefabNames.WindowWallPorthole4x4Prefab, new PieceData()
@@ -496,7 +496,15 @@ public abstract class PrefabRegistryHelpers
       Name = "$valheim_vehicles_window_wall_porthole 4x4",
       Description = "$valheim_vehicles_window_wall_porthole_desc 4x4",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .WindowWallPorthole)
+        .WindowWallPorthole4x4)
+    });
+    
+    PieceDataDictionary.Add(PrefabNames.WindowFloorPorthole4x4Prefab, new PieceData()
+    {
+      Name = "$valheim_vehicles_window_floor_porthole 4x4",
+      Description = "$valheim_vehicles_window_floor_porthole_desc 4x4",
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .WindowFloorPorthole4x4Prefab)
     });
     
     PieceDataDictionary.Add(PrefabNames.WindowPortholeStandalonePrefab, new PieceData()

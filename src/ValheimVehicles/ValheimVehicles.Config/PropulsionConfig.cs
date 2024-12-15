@@ -51,6 +51,12 @@ public static class PropulsionConfig
     get;
     private set;
   } = null!;
+  
+  public static ConfigEntry<float> WheelDeadZone
+  {
+    get;
+    private set;
+  } = null!;
 
   public static ConfigEntry<bool> AllowBaseGameSailRotation
   {
@@ -90,13 +96,13 @@ public static class PropulsionConfig
         "Set the max lean angle when wind is hitting sides directly", true,
         true, new AcceptableValueRange<float>(0f, 30f)));
 
-    TurnPowerNoRudder = Config.Bind(SectionName, "turningPowerNoRudder", 1f,
+    TurnPowerNoRudder = Config.Bind(SectionName, "turningPowerNoRudder", 0.7f,
       ConfigHelpers.CreateConfigDescription(
-        "Set the base turning power of the steering wheel", true));
+        "Set the base turning power of the steering wheel without a rudder", true));
 
-    TurnPowerWithRudder = Config.Bind(SectionName, "turningPowerWithRudder", 6f,
+    TurnPowerWithRudder = Config.Bind(SectionName, "turningPowerWithRudder", 1f,
       ConfigHelpers.CreateConfigDescription(
-        "Set the turning power with a rudder", true));
+        "Set the turning power with a rudder prefab attached to the boat. This value overrides the turningPowerNoRudder config.", true));
 
     SlowAndReverseWithoutControls = Config.Bind(SectionName,
       "slowAndReverseWithoutControls", false,
@@ -119,15 +125,8 @@ public static class PropulsionConfig
       "shouldLiftAnchorOnSpeedChange", false,
       ConfigHelpers.CreateConfigDescription(
         "Lifts the anchor when using a speed change key, this is a QOL to prevent anchor from being required to be pressed when attempting to change the ship speed"));
-
+    
     // vertical flight/ballast config
-
-    FlightClimbingOffset = Config.Bind(SectionName,
-      "FlightClimbingOffset",
-      5f,
-      ConfigHelpers.CreateConfigDescription(
-        "Ascent and Descent speed for the vehicle in the air. This value is interpolated to prevent jitters.",
-        true, true, new AcceptableValueRange<float>(1, 15)));
 
     BallastClimbingOffset = Config.Bind(SectionName,
       "BallastClimbingOffset",
@@ -144,6 +143,13 @@ public static class PropulsionConfig
         true, true, new AcceptableValueRange<float>(0.01f, 1f)));
 
     // end vertical config.
+    
+    WheelDeadZone = Config.Bind(SectionName,
+      "WheelDeadZone",
+      0.02f,
+      ConfigHelpers.CreateConfigDescription(
+        "Plus or minus deadzone of the wheel when turning. Setting this to 0 will disable this feature. This will zero out the rudder if the user attempts to navigate with a value lower than this threshold range",
+        true, true, new AcceptableValueRange<float>(0f, 0.1f)));
 
     DefaultPhysicsMode.SettingChanged +=
       (sender, args) =>

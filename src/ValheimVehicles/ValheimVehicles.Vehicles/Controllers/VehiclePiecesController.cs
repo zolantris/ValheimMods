@@ -2738,6 +2738,27 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
   }
 
+  public static Bounds GetCombinedBoundingBoxOfChildren(Transform root)
+  {
+    if (root == null)
+    {
+      throw new ArgumentException("The supplied transform was null");
+    }
+
+    var colliders = root.GetComponentsInChildren<Collider>();
+    if (colliders.Length == 0)
+    {
+      throw new ArgumentException("The supplied transform " + root?.name + " does not have any children with colliders");
+    }
+
+    Bounds totalBBox = colliders[0].bounds;
+    foreach (var collider in colliders)
+    {
+      totalBBox.Encapsulate(collider.bounds);
+    }
+    return totalBBox;
+  }
+
 // todo move this logic to a file that can be tested
 // todo compute the float colliderY transform so it aligns with bounds if player builds underneath boat
   public void OnBoundsChangeUpdateShipColliders()
@@ -2755,6 +2776,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     // blocking collider should not be enabled for the new dynamic hull.
     m_blockingcollider.enabled = convexHullMeshes.Count <= 0;
+    m_floatcollider.enabled = convexHullMeshes.Count <= 0;
 
     /*
      * @description float collider logic

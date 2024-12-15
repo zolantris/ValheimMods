@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 424415860
+CRC: 926746783
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: cd0c39f8ebbdf0dd95dbd6e4f088e18c
+    Hash: 29bc1b942956eee4472a9d41586f1e2f
   TypeTreeHash:
     serializedVersion: 2
-    Hash: a2aa82b65f9c2462c15990b70dc4415f
+    Hash: c06587813f50b4ac49249ee2d68a3382
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: cd0c39f8ebbdf0dd95dbd6e4f088e18c
+    Hash: 29bc1b942956eee4472a9d41586f1e2f
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -38,10 +38,6 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 8233d90336aea43098adf6dbabd606a2, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 1ca002da428252441b92f28d83c8a65f, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 136
@@ -63,16 +59,6 @@ ClassTypes:
 - Class: 687078895
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
-- AssemblyName: Unity.ProBuilder
-  ClassName: UnityEngine.ProBuilder.AutoUnwrapSettings
-- AssemblyName: Unity.ProBuilder
-  ClassName: UnityEngine.ProBuilder.Face
-- AssemblyName: Unity.ProBuilder
-  ClassName: UnityEngine.ProBuilder.Shapes.Torus
-- AssemblyName: Unity.ProBuilder
-  ClassName: UnityEngine.ProBuilder.SharedVertex
-- AssemblyName: Unity.ProBuilder
-  ClassName: UnityEngine.ProBuilder.UnwrapParameters
 - AssemblyName: UnityEngine.CoreModule
   ClassName: UnityEngine.Events.PersistentCallGroup
 - AssemblyName: UnityEngine.UI
@@ -84,6 +70,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/rudder_basic.prefab
 - Assets/ValheimVehicles/Prefabs/vehicle_ship.prefab
 - Assets/ValheimVehicles/Shaders/DepthMask.shader
+- Assets/ValheimVehicles/Prefabs/hull_floor_window_porthole_iron_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_iron_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_right_wood.prefab
 - Assets/ValheimVehicles/Material/TransparentDepthMask.mat

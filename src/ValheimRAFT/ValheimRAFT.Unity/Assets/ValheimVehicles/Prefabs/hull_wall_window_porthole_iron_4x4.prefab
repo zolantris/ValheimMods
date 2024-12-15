@@ -58,10 +58,20 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5107264316775730461, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
       propertyPath: m_Name
-      value: hul_wall_window_porthole_iron_4x4_var
+      value: hull_wall_window_porthole_iron_4x4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 106547016253077337, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+    - {fileID: 8861819687349239908, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+    - {fileID: 3787741160495892281, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+    - {fileID: 6413801092605214871, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+    - {fileID: 6793732887238701450, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+    - {fileID: 153809682252846911, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+    - {fileID: 4076283601089183001, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+    - {fileID: 3792054375363985589, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+    - {fileID: 484913839913552591, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+    - {fileID: 484856114716247404, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}

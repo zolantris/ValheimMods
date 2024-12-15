@@ -33,8 +33,9 @@ public abstract class SpriteNames
   public const string HullRibWood = "hull_rib_wood";
   public const string HullRibIron = "hull_rib_iron";
   public const string WindowPortholeStandalone = "window_porthole_standalone";
-  public const string WindowWallPorthole = "hull_wall_window_porthole_iron_2x2";
+  public const string WindowWallPorthole2x2 = "hull_wall_window_porthole_iron_2x2";
   public const string WindowWallPorthole4x4 = "hull_wall_window_porthole_iron_4x4";
+  public const string WindowFloorPorthole4x4Prefab = "hull_floor_window_porthole_iron_4x4";
   public const string WindowWallSquareIron = "hull_wall_window_square_iron_2x2";
   public const string WindowWallSquareWood = "hull_wall_window_square_wood_2x2";
 

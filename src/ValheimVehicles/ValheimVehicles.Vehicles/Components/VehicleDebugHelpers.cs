@@ -57,6 +57,10 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   private void OnDestroy()
   {
+    if (worldCenterOfMassCube != null)
+    {
+      Destroy(worldCenterOfMassCube);
+    }
     lines.Values.ToList()
       .ForEach(x => x.ForEach(Destroy));
     lines.Clear();
@@ -93,6 +97,7 @@ public class VehicleDebugHelpers : MonoBehaviour
         {
           color = Color.yellow
         };
+      worldCenterOfMassCube.gameObject.layer = LayerMask.NameToLayer("Ignore Raycast");
     }
 
     worldCenterOfMassCube.transform.position = VehicleShipInstance

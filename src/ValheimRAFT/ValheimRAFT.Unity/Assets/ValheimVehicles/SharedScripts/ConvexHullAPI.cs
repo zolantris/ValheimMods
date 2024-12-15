@@ -839,7 +839,7 @@ namespace ValheimVehicles.SharedScripts
       var localPoints = points
         .Select(x => x - parentObjTransform.transform.position).ToList();
 
-      Vector3Logger.LogPointsForInspector(localPoints);
+      // Vector3Logger.LogPointsForInspector(localPoints);
 
 
       // Prepare output containers

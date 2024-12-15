@@ -519,6 +519,13 @@ public class VehicleRamAoe : Aoe
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collider)) return;
     if (!UpdateDamageFromVelocityCollider(collider)) return;
+    
+    // this can be null somehow.
+    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+    if (base.OnTriggerStay == null)
+    {
+      return;
+    }
     base.OnTriggerStay(collider);
   }
 

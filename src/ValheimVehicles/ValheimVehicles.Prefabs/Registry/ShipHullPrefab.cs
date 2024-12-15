@@ -36,6 +36,7 @@ public class ShipHullPrefab : IRegisterPrefab
     RegisterWindowPortholeIronStandalone();
     RegisterWindowWallPorthole2x2Iron();
     RegisterWindowWallPorthole4x4Iron();
+    RegisterWindowFloorPorthole4x4Iron();
     RegisterWindowWallSquareWood();
     RegisterWindowWallSquareIron();
 
@@ -105,9 +106,18 @@ public class ShipHullPrefab : IRegisterPrefab
   {
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
-        WindowWallPorthole4x4Prefab, LoadValheimVehicleAssets.ShipWindowPortholeWall2x2);
+        WindowWallPorthole4x4Prefab, LoadValheimVehicleAssets.ShipWindowPortholeWall4x4);
     
-    SetupHullPrefab(prefab, WindowWallPorthole2x2Prefab,
+    SetupHullPrefab(prefab, WindowWallPorthole4x4Prefab,
+      ShipHulls.HullMaterial.Iron, 6);    
+  }
+    public static void RegisterWindowFloorPorthole4x4Iron()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        WindowFloorPorthole4x4Prefab, LoadValheimVehicleAssets.ShipWindowPortholeFloor4x4);
+    
+    SetupHullPrefab(prefab, WindowFloorPorthole4x4Prefab,
       ShipHulls.HullMaterial.Iron, 6);    
   }
   
