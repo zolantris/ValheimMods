@@ -28,13 +28,15 @@ public class SailPrefabs : IRegisterPrefab
     RegisterCustomSailCreator(prefabManager, pieceManager, 4);
   }
 
-  public static bool IsSail(string objName) =>
-    objName.StartsWith(PrefabNames.Tier1RaftMastName) &&
-    objName.StartsWith(PrefabNames
-      .Tier1CustomSailName) ||
-    objName.StartsWith(PrefabNames.Tier2RaftMastName) ||
-    objName.StartsWith(PrefabNames.Tier3RaftMastName) ||
-    objName.StartsWith(PrefabNames.Tier4RaftMastName);
+  public static bool IsSail(string objName)
+  {
+    return (objName.StartsWith(PrefabNames.Tier1RaftMastName) &&
+            objName.StartsWith(PrefabNames
+              .Tier1CustomSailName)) ||
+           objName.StartsWith(PrefabNames.Tier2RaftMastName) ||
+           objName.StartsWith(PrefabNames.Tier3RaftMastName) ||
+           objName.StartsWith(PrefabNames.Tier4RaftMastName);
+  }
 
   private void RegisterVikingMast(PrefabManager prefabManager,
     PieceManager pieceManager)
@@ -261,7 +263,7 @@ public class SailPrefabs : IRegisterPrefab
 
   public static string GetTieredSailAreaText(int tier)
   {
-    string description = tier switch
+    var description = tier switch
     {
       1 =>
         $"$mb_raft_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{ValheimRaftPlugin.Instance.SailTier1Area.Value}</b></color>]",

@@ -615,7 +615,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       return;
     }
 
-    Minimap.MapMode mode = Minimap.m_instance.m_mode;
+    var mode = Minimap.m_instance.m_mode;
     if (vehicleMapKey != "")
     {
       ZoneSystem.m_instance.RemoveGlobalKey(vehicleMapKey);
@@ -723,11 +723,19 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     m_body.AddForceAtPosition(force, position, forceMode);
   }
 
+  public float floatSizeOverride = 0f;
   /**
    * BasedOnInternalRotation
    */
   private float GetFloatSizeFromDirection(Vector3 direction)
   {
+    #if DEBUG
+    if (floatSizeOverride != 0f)
+    {
+      return floatSizeOverride;
+    }
+    #endif
+    
     if (direction == Vector3.right)
     {
       return m_floatcollider.size.x / 2;
@@ -1693,7 +1701,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       return;
     }
 
-    Quaternion b = Quaternion.Euler(0f,
+    var b = Quaternion.Euler(0f,
       m_rudderRotationMax * (0f - m_rudderValue), 0f);
     if (haveControllingPlayer)
     {
@@ -1727,7 +1735,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void UpdateSailSize(float dt)
   {
-    float num = 0f;
+    var num = 0f;
     var speed = VehicleSpeed;
 
     switch (speed)
@@ -1749,8 +1757,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
         break;
     }
 
-    Vector3 localScale = m_sailObject.transform.localScale;
-    bool flag = Mathf.Abs(localScale.y - num) < 0.01f;
+    var localScale = m_sailObject.transform.localScale;
+    var flag = Mathf.Abs(localScale.y - num) < 0.01f;
     if (!flag)
     {
       localScale.y = Mathf.MoveTowards(localScale.y, num, dt);
@@ -2109,7 +2117,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       return;
     }
 
-    var direction = Vector3.Dot(m_body.velocity, ShipDirection.forward);
+    var forward = ShipDirection.forward;
+    var direction = Vector3.Dot(m_body.velocity, forward);
     var rudderForce = GetRudderForcePerSpeed();
     // steer offset will need to be size x or size z depending on location of rotation.
     // todo GetFloatSizeFromDirection may not be needed anymore.
@@ -2119,7 +2128,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var steerOffset = VectorUtils.MergeVectors(
       new Vector3(0, FloatCollider.center.y, 0),
       ShipDirection.position -
-      ShipDirection.forward * FloatCollider.bounds.size.z);
+      forward * GetFloatSizeFromDirection(forward));
 
     var steeringVelocityDirectionFactor = direction * m_stearVelForceFactor;
     var steerOffsetForce = ShipDirection.right *
@@ -2131,7 +2140,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       steerOffsetForce,
       steerOffset, PhysicsConfig.rudderVelocityMode.Value);
 
-    var steerForce = ShipDirection.forward *
+    var steerForce = forward *
                      (m_backwardForce * rudderForce *
                       (1f - Mathf.Abs(m_rudderValue)));
 

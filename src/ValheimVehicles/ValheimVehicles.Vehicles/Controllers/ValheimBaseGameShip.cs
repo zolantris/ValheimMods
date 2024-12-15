@@ -68,7 +68,7 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public float m_upsideDownDmg = 20f;
 
-  public EffectList m_waterImpactEffect = new EffectList();
+  public EffectList m_waterImpactEffect = new();
 
   internal bool m_sailWasInPosition;
 
@@ -102,15 +102,9 @@ public class ValheimBaseGameShip : MonoBehaviour
   public Cloth? GetSailCloth()
   {
     if (!m_sailObject) return null;
-    if (!m_sailCloth)
-    {
-      m_sailCloth = m_sailObject.GetComponent<Cloth>();
-    }
+    if (!m_sailCloth) m_sailCloth = m_sailObject.GetComponent<Cloth>();
 
-    if (!m_sailCloth)
-    {
-      m_sailCloth = m_sailObject.AddComponent<Cloth>();
-    }
+    if (!m_sailCloth) m_sailCloth = m_sailObject.AddComponent<Cloth>();
 
     return m_sailCloth;
   }
@@ -129,33 +123,24 @@ public class ValheimBaseGameShip : MonoBehaviour
     m_nview = GetComponent<ZNetView>();
 
     if (!m_nview)
-    {
       Logger.LogError(
         "ValheimBaseShip initialized without NetView, or netview is not available yet (ghost mode?)");
-    }
 
     var wnt = GetComponent<WearNTear>();
     if ((bool)wnt)
-    {
       wnt.m_onDestroyed =
         (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(OnDestroyed));
-    }
 
     m_body = GetComponent<Rigidbody>();
     if (!m_body)
-    {
       Logger.LogError(
         "No rigidbody detected, ship must have a Rigidbody to work");
-    }
 
     m_body.mass = 2000f;
     m_body.useGravity = true;
     m_body.maxDepenetrationVelocity = 2f;
 
-    if (m_nview?.GetZDO() == null)
-    {
-      enabled = false;
-    }
+    if (m_nview?.GetZDO() == null) enabled = false;
 
 
     Heightmap.ForceGenerateAll();
@@ -179,9 +164,7 @@ public class ValheimBaseGameShip : MonoBehaviour
   internal void PrintStats()
   {
     if (m_players.Count != 0)
-    {
       Logger.LogDebug("Vel:" + m_body.velocity.magnitude.ToString("0.0"));
-    }
   }
 
   internal static float GetUpwardsForce(float targetY, float currentY,
@@ -196,21 +179,18 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public void UpdateUpsideDmg(float dt)
   {
-    if (base.transform.up.y >= 0f)
-    {
-      return;
-    }
+    if (transform.up.y >= 0f) return;
 
     m_upsideDownDmgTimer += dt;
     if (!(m_upsideDownDmgTimer <= m_upsideDownDmgInterval))
     {
       m_upsideDownDmgTimer = 0f;
-      IDestructible component = GetComponent<IDestructible>();
+      var component = GetComponent<IDestructible>();
       if (component != null)
       {
-        HitData hitData = new HitData();
+        var hitData = new HitData();
         hitData.m_damage.m_blunt = m_upsideDownDmg;
-        hitData.m_point = base.transform.position;
+        hitData.m_point = transform.position;
         hitData.m_dir = Vector3.up;
         component.Damage(hitData);
       }
@@ -219,14 +199,14 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public Vector3 GetSailForce(float sailSize, float dt)
   {
-    Vector3 windDir = EnvMan.instance.GetWindDir();
-    float windIntensity = EnvMan.instance.GetWindIntensity();
-    float num = Mathf.Lerp(0.25f, 1f, windIntensity);
-    float windAngleFactor = GetWindAngleFactor();
+    var windDir = EnvMan.instance.GetWindDir();
+    var windIntensity = EnvMan.instance.GetWindIntensity();
+    var num = Mathf.Lerp(0.25f, 1f, windIntensity);
+    var windAngleFactor = GetWindAngleFactor();
     windAngleFactor *= num;
-    Vector3 target = Vector3.Normalize(windDir + base.transform.forward) *
-                     windAngleFactor *
-                     m_sailForceFactor * sailSize;
+    var target = Vector3.Normalize(windDir + transform.forward) *
+                 windAngleFactor *
+                 m_sailForceFactor * sailSize;
     m_sailForce = Vector3.SmoothDamp(m_sailForce, target,
       ref m_windChangeVelocity, 1f, 99f);
     return m_sailForce;
@@ -234,10 +214,10 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public float GetWindAngleFactor()
   {
-    float num =
-      Vector3.Dot(EnvMan.instance.GetWindDir(), -base.transform.forward);
-    float num2 = Mathf.Lerp(0.7f, 1f, 1f - Mathf.Abs(num));
-    float num3 = 1f - Utils.LerpStep(0.75f, 0.8f, num);
+    var num =
+      Vector3.Dot(EnvMan.instance.GetWindDir(), -transform.forward);
+    var num2 = Mathf.Lerp(0.7f, 1f, 1f - Mathf.Abs(num));
+    var num3 = 1f - Utils.LerpStep(0.75f, 0.8f, num);
     return num2 * num3;
   }
 
@@ -254,26 +234,24 @@ public class ValheimBaseGameShip : MonoBehaviour
       return;
     }
 
-    float num = depth - m_lastDepth;
+    var num = depth - m_lastDepth;
     m_lastDepth = depth;
-    float num2 = num / dt;
+    var num2 = num / dt;
     if (num2 > 0f || !(Mathf.Abs(num2) > m_minWaterImpactForce) ||
         !(Time.time - m_lastWaterImpactTime > m_minWaterImpactInterval))
-    {
       return;
-    }
 
     m_lastWaterImpactTime = Time.time;
-    m_waterImpactEffect.Create(base.transform.position,
-      base.transform.rotation);
+    m_waterImpactEffect.Create(transform.position,
+      transform.rotation);
     if (m_players.Count > 0)
     {
-      IDestructible component = GetComponent<IDestructible>();
+      var component = GetComponent<IDestructible>();
       if (component != null)
       {
-        HitData hitData = new HitData();
+        var hitData = new HitData();
         hitData.m_damage.m_blunt = m_waterImpactDamage;
-        hitData.m_point = base.transform.position;
+        hitData.m_point = transform.position;
         hitData.m_dir = Vector3.up;
         component.Damage(hitData);
       }
@@ -287,12 +265,12 @@ public class ValheimBaseGameShip : MonoBehaviour
   /// <param name="dt"></param>
   public void ApplyEdgeForce(float dt)
   {
-    var magnitude = base.transform.position.magnitude;
+    var magnitude = transform.position.magnitude;
     var num = 10420f;
 
     if (!(magnitude > num)) return;
 
-    var vector = Vector3.Normalize(base.transform.position);
+    var vector = Vector3.Normalize(transform.position);
     var num2 = Utils.LerpStep(num, 10500f, magnitude) * 8f;
     var vector2 = vector * num2;
 
@@ -301,38 +279,30 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   internal void FixTilt()
   {
-    float num = Mathf.Asin(base.transform.right.y);
-    float num2 = Mathf.Asin(base.transform.forward.y);
+    var num = Mathf.Asin(transform.right.y);
+    var num2 = Mathf.Asin(transform.forward.y);
     if (Mathf.Abs(num) > (float)Math.PI / 6f)
     {
       if (num > 0f)
-      {
-        base.transform.RotateAround(base.transform.position,
-          base.transform.forward,
+        transform.RotateAround(transform.position,
+          transform.forward,
           (0f - Time.fixedDeltaTime) * 20f);
-      }
       else
-      {
-        base.transform.RotateAround(base.transform.position,
-          base.transform.forward,
+        transform.RotateAround(transform.position,
+          transform.forward,
           Time.fixedDeltaTime * 20f);
-      }
     }
 
     if (Mathf.Abs(num2) > (float)Math.PI / 6f)
     {
       if (num2 > 0f)
-      {
-        base.transform.RotateAround(base.transform.position,
-          base.transform.right,
+        transform.RotateAround(transform.position,
+          transform.right,
           (0f - Time.fixedDeltaTime) * 20f);
-      }
       else
-      {
-        base.transform.RotateAround(base.transform.position,
-          base.transform.right,
+        transform.RotateAround(transform.position,
+          transform.right,
           Time.fixedDeltaTime * 20f);
-      }
     }
   }
 
@@ -341,7 +311,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     if (m_nview.IsValid() && m_nview.IsOwner() && (bool)Player.m_localPlayer &&
         m_players.Count > 0 && !IsPlayerInBoat(Player.m_localPlayer))
     {
-      long owner = m_players[0].GetOwner();
+      var owner = m_players[0].GetOwner();
       m_nview.GetZDO().SetOwner(owner);
       Logger.LogDebug("Changing ship owner to " + owner +
                       $", name: {m_players[0].GetPlayerName()}");
@@ -350,13 +320,9 @@ public class ValheimBaseGameShip : MonoBehaviour
 
   public bool IsPlayerInBoat(ZDOID zdoid)
   {
-    foreach (Player player in m_players)
-    {
+    foreach (var player in m_players)
       if (player.GetZDOID() == zdoid)
-      {
         return true;
-      }
-    }
 
     return false;
   }
@@ -369,9 +335,7 @@ public class ValheimBaseGameShip : MonoBehaviour
     if (player.transform.root != null &&
         player.transform.root.name.Contains(PrefabNames
           .VehiclePiecesContainer))
-    {
       return true;
-    }
 
     return WaterZoneUtils.IsOnboard(player);
   }
@@ -390,9 +354,7 @@ public class ValheimBaseGameShip : MonoBehaviour
   public void OnDestroyed()
   {
     if (m_nview.IsValid() && m_nview.IsOwner())
-    {
-      Gogan.LogEvent("Game", "ShipDestroyed", base.gameObject.name, 0L);
-    }
+      Gogan.LogEvent("Game", "ShipDestroyed", gameObject.name, 0L);
 
     s_currentShips.Remove(this);
   }
@@ -412,15 +374,13 @@ public class ValheimBaseGameShip : MonoBehaviour
       return m_cachedWindControlStatus;
     }
 
-    foreach (Player player in m_players)
-    {
+    foreach (var player in m_players)
       if (player.GetSEMan()
           .HaveStatusAttribute(StatusEffect.StatusAttribute.SailingPower))
       {
         m_cachedWindControlStatus = true;
         return m_cachedWindControlStatus;
       }
-    }
 
     m_cachedWindControlStatus = false;
     return m_cachedWindControlStatus;
@@ -429,9 +389,7 @@ public class ValheimBaseGameShip : MonoBehaviour
   public static ValheimBaseGameShip GetLocalShip()
   {
     if (s_currentShips.Count != 0)
-    {
       return s_currentShips[s_currentShips.Count - 1];
-    }
 
     return null;
   }
@@ -439,30 +397,24 @@ public class ValheimBaseGameShip : MonoBehaviour
   public bool IsOwner()
   {
     if (!m_nview) return false;
-    if (m_nview.IsValid())
-    {
-      return m_nview.IsOwner();
-    }
+    if (m_nview.IsValid()) return m_nview.IsOwner();
 
     return false;
   }
 
   public float GetSpeed()
   {
-    return Vector3.Dot(m_body.velocity, base.transform.forward);
+    return Vector3.Dot(m_body.velocity, transform.forward);
   }
 
   public float GetShipYawAngle()
   {
-    Camera mainCamera = Utils.GetMainCamera();
-    if (mainCamera == null)
-    {
-      return 0f;
-    }
+    var mainCamera = Utils.GetMainCamera();
+    if (mainCamera == null) return 0f;
 
     return 0f -
            Utils.YawFromDirection(
-             mainCamera.transform.InverseTransformDirection(base.transform
+             mainCamera.transform.InverseTransformDirection(transform
                .forward));
   }
 }

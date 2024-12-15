@@ -149,7 +149,7 @@ public static class PropulsionConfig
       0.02f,
       ConfigHelpers.CreateConfigDescription(
         "Plus or minus deadzone of the wheel when turning. Setting this to 0 will disable this feature. This will zero out the rudder if the user attempts to navigate with a value lower than this threshold range",
-        true, true, new AcceptableValueRange<float>(0f, 0.1f)));
+        false, true, new AcceptableValueRange<float>(0f, 0.1f)));
 
     DefaultPhysicsMode.SettingChanged +=
       (sender, args) =>

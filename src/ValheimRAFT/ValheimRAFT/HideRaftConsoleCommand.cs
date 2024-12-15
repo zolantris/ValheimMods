@@ -14,7 +14,8 @@ internal class HideRaftConsoleCommand : ConsoleCommand
   {
     if (args.Length < 1)
     {
-      Jotunn.Logger.LogInfo("Missing arguments, arguments required: true\\false");
+      Jotunn.Logger.LogInfo(
+        "Missing arguments, arguments required: true\\false");
       return;
     }
 
@@ -24,29 +25,24 @@ internal class HideRaftConsoleCommand : ConsoleCommand
       return;
     }
 
-    Player player = Player.m_localPlayer;
-    if (!player)
-    {
-      return;
-    }
+    var player = Player.m_localPlayer;
+    if (!player) return;
 
-    Ship ship = player.GetStandingOnShip();
+    var ship = player.GetStandingOnShip();
     if ((!ship || !HideRaft(player, ship, hide)) && Physics.Raycast(
-          GameCamera.instance.transform.position, GameCamera.instance.transform.forward,
+          GameCamera.instance.transform.position,
+          GameCamera.instance.transform.forward,
           out var hitinfo, 50f, LayerMask.GetMask("piece")))
     {
-      MoveableBaseRootComponent mbr =
+      var mbr =
         hitinfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
-      if ((bool)mbr)
-      {
-        HideRaft(player, mbr.m_ship, hide);
-      }
+      if ((bool)mbr) HideRaft(player, mbr.m_ship, hide);
     }
   }
 
   private static bool HideRaft(Player player, Ship ship, bool hide)
   {
-    MoveableBaseShipComponent mb = ship.GetComponent<MoveableBaseShipComponent>();
+    var mb = ship.GetComponent<MoveableBaseShipComponent>();
     if ((bool)mb)
     {
       mb.SetVisual(hide);

@@ -45,7 +45,7 @@ public class Minimap_VehicleIcons
   public static bool UpdatePlayerMarker(Minimap __instance, Player player,
     Quaternion playerRot)
   {
-    Vector3 position = player.transform.position;
+    var position = player.transform.position;
     __instance.m_smallMarker.rotation =
       Quaternion.Euler(0.0f, 0.0f, -playerRot.eulerAngles.y);
     if (__instance.m_mode == Minimap.MapMode.Large &&
@@ -60,10 +60,12 @@ public class Minimap_VehicleIcons
         __instance.MapPointToLocalGuiPos(mx, my, __instance.m_mapImageLarge);
     }
     else
+    {
       __instance.m_largeMarker.gameObject.SetActive(false);
+    }
 
-    Ship controlledShip = player.GetControlledShip();
-    if ((bool)(UnityEngine.Object)controlledShip)
+    var controlledShip = player.GetControlledShip();
+    if ((bool)(Object)controlledShip)
     {
       __instance.m_smallShipMarker.gameObject.SetActive(true);
       __instance.m_smallShipMarker.rotation = Quaternion.Euler(0.0f, 0.0f,

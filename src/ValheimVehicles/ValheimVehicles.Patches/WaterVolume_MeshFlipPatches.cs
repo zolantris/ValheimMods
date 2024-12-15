@@ -15,7 +15,7 @@ internal class WaterVolume_WaterPatches
     AboveWater,
     BelowWater,
     ToBelow,
-    ToAbove,
+    ToAbove
   }
 
   public static float WaterLevelCamera = -10000f;
@@ -96,10 +96,7 @@ internal class WaterVolume_WaterPatches
   /// </summary>
   public static void FlipAllWaterVolumes()
   {
-    if (lastFlippedAllInvoke > 0.2f)
-    {
-      lastFlippedAllInvoke = 0f;
-    }
+    if (lastFlippedAllInvoke > 0.2f) lastFlippedAllInvoke = 0f;
 
     if (lastFlippedAllInvoke > 0f)
     {
@@ -107,16 +104,11 @@ internal class WaterVolume_WaterPatches
       return;
     }
 
-    if (lastFlippedAllState == CameraWaterState)
-    {
-      return;
-    }
+    if (lastFlippedAllState == CameraWaterState) return;
 
 
     foreach (var waterVolume in WaterVolume.Instances)
-    {
       UpdateMesh(waterVolume, waterVolume.m_normalizedDepth);
-    }
 
     lastFlippedAllInvoke += Time.fixedTime;
     lastFlippedAllState = CameraWaterState;
@@ -198,12 +190,12 @@ internal class WaterVolume_WaterPatches
       waterSurfaceTransform.rotation.eulerAngles.y.Equals(180f);
 
     // will flip the surface if camera is below it.
-    if (IsCameraAboveWater && isCurrentlyFlipped ||
-        IsCameraBelowWater && !isCurrentlyFlipped)
+    if ((IsCameraAboveWater && isCurrentlyFlipped) ||
+        (IsCameraBelowWater && !isCurrentlyFlipped))
     {
-      if (!isCurrentlyFlipped && (CanFlipEverywhere || CanFlipOnlyOffboard &&
+      if (!isCurrentlyFlipped && (CanFlipEverywhere || (CanFlipOnlyOffboard &&
             !VehicleOnboardController.IsCharacterOnboard(
-              Player.m_localPlayer)))
+              Player.m_localPlayer))))
       {
         FlipWaterSurface(__instance, normalizedDepth);
         SetWaterSurfacePosition(waterSurfaceTransform, WaterLevelCamera);
@@ -221,7 +213,7 @@ internal class WaterVolume_WaterPatches
   private static void SetWaterSurfacePosition(Transform transform,
     float height)
   {
-    Vector3 position = transform.position;
+    var position = transform.position;
     position.y = height;
     transform.position = position;
   }

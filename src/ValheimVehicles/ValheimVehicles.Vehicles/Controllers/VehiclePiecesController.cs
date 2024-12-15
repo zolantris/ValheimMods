@@ -1383,7 +1383,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
 
     var containers = GetComponentsInChildren<Container>();
-    float totalContainerMass = 0f;
+    var totalContainerMass = 0f;
     foreach (var container in containers)
     {
       totalContainerMass += ComputeContainerWeight(container);
@@ -2751,7 +2751,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       throw new ArgumentException("The supplied transform " + root?.name + " does not have any children with colliders");
     }
 
-    Bounds totalBBox = colliders[0].bounds;
+    var totalBBox = colliders[0].bounds;
     foreach (var collider in colliders)
     {
       totalBBox.Encapsulate(collider.bounds);

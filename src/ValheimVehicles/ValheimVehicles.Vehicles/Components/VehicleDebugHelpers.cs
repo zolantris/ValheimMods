@@ -40,8 +40,6 @@ public class VehicleDebugHelpers : MonoBehaviour
   public GameObject VehicleObj;
   public VehicleShip VehicleShipInstance;
   private Coroutine? _drawColliderCoroutine = null;
-
-  private InvokeBinder repeatInvoke;
   private GameObject worldCenterOfMassCube;
 
   private void FixedUpdate()
@@ -50,8 +48,8 @@ public class VehicleDebugHelpers : MonoBehaviour
     if (autoUpdateColliders ||
         VehicleDebugConfig.AutoShowVehicleColliders.Value)
     {
-      DrawAllColliders();
       RenderWorldCenterOfMassAsCube();
+      DrawAllColliders();
     }
   }
 
@@ -231,6 +229,11 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   public void AddColliderToRerender(DrawTargetColliders drawTargetColliders)
   {
+    if (!drawTargetColliders.parent.activeInHierarchy)
+    {
+      return;
+    }
+    
     targetColliders.Add(drawTargetColliders);
   }
 

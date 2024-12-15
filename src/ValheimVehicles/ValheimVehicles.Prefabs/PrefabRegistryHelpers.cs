@@ -59,9 +59,7 @@ public abstract class PrefabRegistryHelpers
   {
     var zSyncTransform = obj.GetComponent<ZSyncTransform>();
     if (zSyncTransform == null)
-    {
       zSyncTransform = obj.AddComponent<ZSyncTransform>();
-    }
 
     zSyncTransform.m_syncPosition = true;
     zSyncTransform.m_syncBodyVelocity = true;
@@ -74,17 +72,11 @@ public abstract class PrefabRegistryHelpers
   {
     var netView = obj.GetComponent<ZNetView>();
     if (netView == null)
-    {
       // var prevVal = ZNetView.m_useInitZDO;
       // ZNetView.m_useInitZDO = false;
       netView = obj.AddComponent<ZNetView>();
-      // ZNetView.m_useInitZDO = prevVal;
-    }
-
-    if (prioritized)
-    {
-      netView.m_type = ZDO.ObjectType.Prioritized;
-    }
+    // ZNetView.m_useInitZDO = prevVal;
+    if (prioritized) netView.m_type = ZDO.ObjectType.Prioritized;
 
     netView.m_persistent = false;
     netView.m_distant = true;
@@ -99,7 +91,7 @@ public abstract class PrefabRegistryHelpers
         Name = "$valheim_vehicles_water_mask",
         Description = "$valheim_vehicles_water_mask_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-          .WaterOpacityBucket),
+          .WaterOpacityBucket)
       });
   }
 
@@ -112,7 +104,6 @@ public abstract class PrefabRegistryHelpers
       var materialTranslation =
         PrefabTiers.GetTierMaterialTranslation(ramMaterial);
       foreach (var ramSize in ramSizes)
-      {
         PieceDataDictionary.Add(
           PrefabNames.GetRamStakeName(ramMaterial, ramSize), new PieceData()
           {
@@ -122,13 +113,11 @@ public abstract class PrefabRegistryHelpers
             Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(
               SpriteNames.GetRamStakeName(ramMaterial, ramSize))
           });
-      }
     }
 
     string[] bladeDirs = ["top", "bottom", "left", "right"];
 
     foreach (var bladeDir in bladeDirs)
-    {
       PieceDataDictionary.Add(
         PrefabNames.GetRamBladeName(bladeDir), new PieceData()
         {
@@ -138,7 +127,6 @@ public abstract class PrefabRegistryHelpers
           Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(
             SpriteNames.GetRamBladeName(bladeDir))
         });
-    }
   }
 
   private static void RegisterExternalShips()
@@ -482,55 +470,65 @@ public abstract class PrefabRegistryHelpers
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .VehicleSwitch)
     });
-    
-    PieceDataDictionary.Add(PrefabNames.WindowWallPorthole2x2Prefab, new PieceData()
-    {
-      Name = "$valheim_vehicles_window_wall_porthole 2x2",
-      Description = "$valheim_vehicles_window_wall_porthole_desc 2x2",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .WindowWallPorthole2x2)
-    });
-    
-    PieceDataDictionary.Add(PrefabNames.WindowWallPorthole4x4Prefab, new PieceData()
-    {
-      Name = "$valheim_vehicles_window_wall_porthole 4x4",
-      Description = "$valheim_vehicles_window_wall_porthole_desc 4x4",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .WindowWallPorthole4x4)
-    });
-    
-    PieceDataDictionary.Add(PrefabNames.WindowFloorPorthole4x4Prefab, new PieceData()
-    {
-      Name = "$valheim_vehicles_window_floor_porthole 4x4",
-      Description = "$valheim_vehicles_window_floor_porthole_desc 4x4",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .WindowFloorPorthole4x4Prefab)
-    });
-    
-    PieceDataDictionary.Add(PrefabNames.WindowPortholeStandalonePrefab, new PieceData()
-    {
-      Name = "$valheim_vehicles_window_porthole_standalone",
-      Description = "$valheim_vehicles_window_porthole_standalone_desc",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .WindowPortholeStandalone)
-    });
-    
-    PieceDataDictionary.Add(PrefabNames.WindowWallSquareWoodPrefabName, new PieceData()
-    {
-      Name = "$valheim_vehicles_window_wall_square $valheim_vehicles_material_wood",
-      Description = "$valheim_vehicles_window_wall_square $valheim_vehicles_material_wood",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .WindowWallSquareWood)
-    });
-    
-    
-    PieceDataDictionary.Add(PrefabNames.WindowWallSquareIronPrefabName, new PieceData()
-    {
-      Name = "$valheim_vehicles_window_wall_square $valheim_vehicles_material_iron",
-      Description = "$valheim_vehicles_window_wall_square $valheim_vehicles_material_iron",
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .WindowWallSquareIron)
-    });
+
+    PieceDataDictionary.Add(PrefabNames.WindowWallPorthole2x2Prefab,
+      new PieceData()
+      {
+        Name = "$valheim_vehicles_window_wall_porthole 2x2",
+        Description = "$valheim_vehicles_window_wall_porthole_desc 2x2",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .WindowWallPorthole2x2)
+      });
+
+    PieceDataDictionary.Add(PrefabNames.WindowWallPorthole4x4Prefab,
+      new PieceData()
+      {
+        Name = "$valheim_vehicles_window_wall_porthole 4x4",
+        Description = "$valheim_vehicles_window_wall_porthole_desc 4x4",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .WindowWallPorthole4x4)
+      });
+
+    PieceDataDictionary.Add(PrefabNames.WindowFloorPorthole4x4Prefab,
+      new PieceData()
+      {
+        Name = "$valheim_vehicles_window_floor_porthole 4x4",
+        Description = "$valheim_vehicles_window_floor_porthole_desc 4x4",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .WindowFloorPorthole4x4Prefab)
+      });
+
+    PieceDataDictionary.Add(PrefabNames.WindowPortholeStandalonePrefab,
+      new PieceData()
+      {
+        Name = "$valheim_vehicles_window_porthole_standalone",
+        Description = "$valheim_vehicles_window_porthole_standalone_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .WindowPortholeStandalone)
+      });
+
+    PieceDataDictionary.Add(PrefabNames.WindowWallSquareWoodPrefabName,
+      new PieceData()
+      {
+        Name =
+          "$valheim_vehicles_window_wall_square $valheim_vehicles_material_wood",
+        Description =
+          "$valheim_vehicles_window_wall_square $valheim_vehicles_material_wood",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .WindowWallSquareWood)
+      });
+
+
+    PieceDataDictionary.Add(PrefabNames.WindowWallSquareIronPrefabName,
+      new PieceData()
+      {
+        Name =
+          "$valheim_vehicles_window_wall_square $valheim_vehicles_material_iron",
+        Description =
+          "$valheim_vehicles_window_wall_square $valheim_vehicles_material_iron",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .WindowWallSquareIron)
+      });
   }
 
   public static void IgnoreCameraCollisions(GameObject go)
@@ -539,10 +537,7 @@ public abstract class PrefabRegistryHelpers
     if (cameraMask == 0L) return;
     var colliders = go.GetComponentsInChildren<Collider>();
 
-    foreach (var collider in colliders)
-    {
-      collider.excludeLayers = cameraMask;
-    }
+    foreach (var collider in colliders) collider.excludeLayers = cameraMask;
   }
 
   /// <summary>
@@ -600,10 +595,7 @@ public abstract class PrefabRegistryHelpers
     bool prioritized = false)
   {
     var netView = prefab.GetComponent<ZNetView>();
-    if (!(bool)netView)
-    {
-      netView = prefab.AddComponent<ZNetView>();
-    }
+    if (!(bool)netView) netView = prefab.AddComponent<ZNetView>();
 
     if (!netView)
     {
@@ -612,10 +604,7 @@ public abstract class PrefabRegistryHelpers
       return netView;
     }
 
-    if (prioritized)
-    {
-      netView.m_type = ZDO.ObjectType.Prioritized;
-    }
+    if (prioritized) netView.m_type = ZDO.ObjectType.Prioritized;
 
     netView.m_persistent = true;
 
@@ -717,24 +706,18 @@ public abstract class PrefabRegistryHelpers
     GameObject componentToEncapsulate)
   {
     var boxCol = parent.GetComponent<BoxCollider>();
-    if (boxCol == null)
-    {
-      boxCol = parent.AddComponent<BoxCollider>();
-    }
+    if (boxCol == null) boxCol = parent.AddComponent<BoxCollider>();
 
     boxCol.name = colliderName;
 
-    Bounds bounds = new Bounds(parent.transform.position, Vector3.zero);
+    var bounds = new Bounds(parent.transform.position, Vector3.zero);
 
     var allDescendants =
       componentToEncapsulate.GetComponentsInChildren<Transform>();
-    foreach (Transform desc in allDescendants)
+    foreach (var desc in allDescendants)
     {
-      Renderer childRenderer = desc.GetComponent<Renderer>();
-      if (childRenderer != null)
-      {
-        bounds.Encapsulate(childRenderer.bounds);
-      }
+      var childRenderer = desc.GetComponent<Renderer>();
+      if (childRenderer != null) bounds.Encapsulate(childRenderer.bounds);
 
       boxCol.center = new Vector3(0, bounds.max.y,
         0);

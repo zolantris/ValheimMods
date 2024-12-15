@@ -18,15 +18,12 @@ public class EditRampComponent
   public void ShowPanel(BoardingRampComponent boardingRamp)
   {
     m_ramp = boardingRamp;
-    if (!m_editPanel)
-    {
-      InitPanel();
-    }
+    if (!m_editPanel) InitPanel();
 
     m_segmentCount = boardingRamp.m_segments;
     m_segmentsInput.SetTextWithoutNotify(boardingRamp.m_segments.ToString());
-    GUIManager.BlockInput(state: true);
-    m_editPanel.SetActive(value: true);
+    GUIManager.BlockInput(true);
+    m_editPanel.SetActive(true);
   }
 
   /**
@@ -34,14 +31,18 @@ public class EditRampComponent
    */
   private void InitPanel()
   {
-    Transform parent = GUIManager.CustomGUIFront.transform;
+    var parent = GUIManager.CustomGUIFront.transform;
     m_editPanel = Object.Instantiate(
-      PrefabRegistryController.raftAssetBundle.LoadAsset<GameObject>("edit_ramp_panel"),
-      parent, worldPositionStays: false);
+      PrefabRegistryController.raftAssetBundle.LoadAsset<GameObject>(
+        "edit_ramp_panel"),
+      parent, false);
     PanelUtil.ApplyPanelStyle(m_editPanel);
-    m_segmentsInput = m_editPanel.transform.Find("SegmentsInput").GetComponent<InputField>();
-    Button saveButton = m_editPanel.transform.Find("SaveButton").GetComponent<Button>();
-    Button cancelButton = m_editPanel.transform.Find("CancelButton").GetComponent<Button>();
+    m_segmentsInput = m_editPanel.transform.Find("SegmentsInput")
+      .GetComponent<InputField>();
+    var saveButton = m_editPanel.transform.Find("SaveButton")
+      .GetComponent<Button>();
+    var cancelButton = m_editPanel.transform.Find("CancelButton")
+      .GetComponent<Button>();
     saveButton.onClick.AddListener(SaveEditPanel);
     cancelButton.onClick.AddListener(CancelEditPanel);
     m_segmentsInput.onValueChanged.AddListener(delegate(string val)
@@ -53,8 +54,8 @@ public class EditRampComponent
 
   private void ClosePanel()
   {
-    GUIManager.BlockInput(state: false);
-    m_editPanel.SetActive(value: false);
+    GUIManager.BlockInput(false);
+    m_editPanel.SetActive(false);
   }
 
   private void CancelEditPanel()
@@ -64,10 +65,7 @@ public class EditRampComponent
 
   private void SaveEditPanel()
   {
-    if (m_ramp != null)
-    {
-      m_ramp.SetSegmentCount(m_segmentCount);
-    }
+    if (m_ramp != null) m_ramp.SetSegmentCount(m_segmentCount);
 
     ClosePanel();
   }
