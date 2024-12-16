@@ -11,11 +11,17 @@ namespace ValheimRAFT.Patches;
 [HarmonyPatch]
 public class Ship_Patch
 {
+  /// <summary>
+  /// V1 raft only
+  /// </summary>
+  /// @Deprecated
+  /// <param name="__instance"></param>
   [HarmonyPatch(typeof(Ship), "Awake")]
   [HarmonyPostfix]
   private static void Ship_Awake(Ship __instance)
   {
-    Logger.LogDebug("Ship_Awake, called");
+    if (!ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value) return;
+
     if ((bool)__instance.m_nview && __instance.m_nview.m_zdo != null &&
         __instance.name.StartsWith("MBRaft"))
     {
@@ -32,18 +38,21 @@ public class Ship_Patch
           __instance.gameObject.AddComponent<VehicleDebugHelpers>();
         debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
         {
+          name = "Floating collider",
           collider = mbShip.m_baseRoot.m_floatcollider,
           lineColor = Color.green,
           parent = mbShip.m_baseRoot.gameObject
         });
         debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
         {
+          name = "Blocking collider",
           collider = mbShip.m_baseRoot.m_blockingcollider,
           lineColor = Color.magenta,
           parent = mbShip.m_baseRoot.gameObject
         });
         debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
         {
+          name = "Onboard collider",
           collider = mbShip.m_baseRoot.m_onboardcollider,
           lineColor = Color.yellow,
           parent = mbShip.m_baseRoot.gameObject
@@ -52,10 +61,18 @@ public class Ship_Patch
     }
   }
 
+  /// <summary>
+  /// V1 raft only
+  /// </summary>
+  /// @Deprecated
+  /// <param name="__instance"></param>
   [HarmonyPatch(typeof(Ship), "UpdateUpsideDmg")]
   [HarmonyPrefix]
   private static bool Ship_UpdateUpsideDmg(Ship __instance)
   {
+    // this is deprecated
+    if (!ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value) return true;
+
     var mb = __instance.GetComponent<MoveableBaseShipComponent>();
     if ((bool)mb && __instance.transform.up.y < 0f)
       __instance.m_body.rotation = Quaternion.Euler(new Vector3(
@@ -64,11 +81,19 @@ public class Ship_Patch
     return !mb;
   }
 
+  /// <summary>
+  /// V1 raft only
+  /// </summary>
+  /// @Deprecated
+  /// <param name="__instance"></param>
   [HarmonyPatch(typeof(Ship), "UpdateWaterForce")]
   [HarmonyPrefix]
   private static bool Ship_UpdateWaterForce(Ship __instance, float depth,
     float time)
   {
+    // this is deprecated
+    if (!ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value) return true;
+
     var num1 = (double)depth - (double)__instance.m_lastDepth;
     var num2 = time - __instance.m_lastUpdateWaterForceTime;
     __instance.m_lastDepth = depth;
@@ -97,10 +122,17 @@ public class Ship_Patch
     return false;
   }
 
+  /// <summary>
+  /// V1 raft only
+  /// </summary>
+  /// @Deprecated
+  /// <param name="__instance"></param>
   [HarmonyPatch(typeof(Ship), "UpdateSail")]
   [HarmonyPostfix]
   private static void Ship_UpdateSail(Ship __instance)
   {
+    if (!ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value) return;
+
     var mb = __instance.GetComponent<MoveableBaseShipComponent>();
     if (!mb || !mb.m_baseRoot) return;
     for (var i = 0; i < mb.m_baseRoot.m_mastPieces.Count; i++)
@@ -122,11 +154,15 @@ public class Ship_Patch
 
   /**
    * todo this may not work well with two postfixes, there are two for UpdateSail
+   * @DEPRECATED
    */
   [HarmonyPatch(typeof(Ship), "UpdateSail")]
   [HarmonyPostfix]
   private static void Ship_UpdateSailSize(Ship __instance)
   {
+    if (!ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value) return;
+
+
     var mb = __instance.GetComponent<MoveableBaseShipComponent>();
     if (!mb || !mb.m_baseRoot) return;
     for (var j = 0; j < mb.m_baseRoot.m_mastPieces.Count; j++)
@@ -182,6 +218,7 @@ public class Ship_Patch
 
   /**
    * only required for older ships.
+   * @DEPRECATED
    */
   [HarmonyPatch(typeof(Ship), "CustomFixedUpdate")]
   [HarmonyPrefix]
@@ -400,8 +437,15 @@ public class Ship_Patch
     return false;
   }
 
+  /// <summary>
+  /// @DEPRECATED method
+  /// </summary>
+  /// <param name="__instance"></param>
+  /// <param name="num5"></param>
   private static void ApplySailForce(Ship __instance, float num5)
   {
+    if (!ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value) return;
+
     var mb = __instance.GetComponent<MoveableBaseShipComponent>();
 
     var sailArea = 0f;

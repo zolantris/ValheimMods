@@ -40,6 +40,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2419627718422263377}
     m_Modifications:
+    - target: {fileID: 477138789101949530, guid: c3ef9a8e79e295e4e96f654f53704f13, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 8d2d9f5d32c4e274fa3c34d2229913c8, type: 2}
+    - target: {fileID: 558366938031771742, guid: c3ef9a8e79e295e4e96f654f53704f13, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 8d2d9f5d32c4e274fa3c34d2229913c8, type: 2}
     - target: {fileID: 2419627718422263377, guid: c3ef9a8e79e295e4e96f654f53704f13, type: 3}
       propertyPath: m_LocalScale.y
       value: 1
@@ -88,6 +96,10 @@ PrefabInstance:
       propertyPath: m_LocalScale.y
       value: 0.25
       objectReference: {fileID: 0}
+    - target: {fileID: 6779855251997915169, guid: c3ef9a8e79e295e4e96f654f53704f13, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 8d2d9f5d32c4e274fa3c34d2229913c8, type: 2}
     - target: {fileID: 7610956805273626704, guid: c3ef9a8e79e295e4e96f654f53704f13, type: 3}
       propertyPath: m_Name
       value: shared_nose_floor_left
