@@ -2,18 +2,7 @@
 <project version="4">
   <component name="UserContentModel">
     <attachedFolders />
-    <explicitIncludes>
-      <Path>.props</Path>
-      <Path>CheckFilesLocked.ps1</Path>
-      <Path>README.md</Path>
-      <Path>base.targets</Path>
-      <Path>gameLauncher.targets</Path>
-      <Path>logValheim.ps1</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts</Path>
-      <Path>valheim.targets</Path>
-    </explicitIncludes>
-    <explicitExcludes>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity</Path>
-    </explicitExcludes>
+    <explicitIncludes />
+    <explicitExcludes />
   </component>
 </project>
