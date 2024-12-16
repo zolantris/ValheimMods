@@ -78,67 +78,70 @@ public class ShipHullPrefab : IRegisterPrefab
     }
   }
 
-  public static void Test()
-  {
-  }
-  
   public static void RegisterWindowPortholeIronStandalone()
   {
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
-        WindowPortholeStandalonePrefab, LoadValheimVehicleAssets.ShipWindowPortholeStandalone);
-    
+        WindowPortholeStandalonePrefab,
+        LoadValheimVehicleAssets.ShipWindowPortholeStandalone);
+
     SetupHullPrefab(prefab, WindowPortholeStandalonePrefab,
-      ShipHulls.HullMaterial.Iron, 1, prefab.transform.FindDeepChild("trim"));    
+      ShipHulls.HullMaterial.Iron, 1, prefab.transform.FindDeepChild("trim"));
   }
 
   public static void RegisterWindowWallPorthole2x2Iron()
   {
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
-        WindowWallPorthole2x2Prefab, LoadValheimVehicleAssets.ShipWindowPortholeWall2x2);
-    
+        WindowWallPorthole2x2Prefab,
+        LoadValheimVehicleAssets.ShipWindowPortholeWall2x2);
+
     SetupHullPrefab(prefab, WindowWallPorthole2x2Prefab,
-      ShipHulls.HullMaterial.Iron, 3);    
+      ShipHulls.HullMaterial.Iron, 3);
   }
-  
+
   public static void RegisterWindowWallPorthole4x4Iron()
   {
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
-        WindowWallPorthole4x4Prefab, LoadValheimVehicleAssets.ShipWindowPortholeWall4x4);
-    
+        WindowWallPorthole4x4Prefab,
+        LoadValheimVehicleAssets.ShipWindowPortholeWall4x4);
+
     SetupHullPrefab(prefab, WindowWallPorthole4x4Prefab,
-      ShipHulls.HullMaterial.Iron, 6);    
+      ShipHulls.HullMaterial.Iron, 6);
   }
-    public static void RegisterWindowFloorPorthole4x4Iron()
+
+  public static void RegisterWindowFloorPorthole4x4Iron()
   {
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
-        WindowFloorPorthole4x4Prefab, LoadValheimVehicleAssets.ShipWindowPortholeFloor4x4);
-    
+        WindowFloorPorthole4x4Prefab,
+        LoadValheimVehicleAssets.ShipWindowPortholeFloor4x4);
+
     SetupHullPrefab(prefab, WindowFloorPorthole4x4Prefab,
-      ShipHulls.HullMaterial.Iron, 6);    
+      ShipHulls.HullMaterial.Iron, 6);
   }
-  
+
   public static void RegisterWindowWallSquareWood()
   {
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
-        WindowWallSquareWoodPrefabName, LoadValheimVehicleAssets.ShipWindowSquareWallWood);
-    
+        WindowWallSquareWoodPrefabName,
+        LoadValheimVehicleAssets.ShipWindowSquareWallWood);
+
     SetupHullPrefab(prefab, WindowWallSquareWoodPrefabName,
-      ShipHulls.HullMaterial.Wood, 3);    
+      ShipHulls.HullMaterial.Wood, 3);
   }
-  
+
   public static void RegisterWindowWallSquareIron()
   {
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
-        WindowWallSquareIronPrefabName, LoadValheimVehicleAssets.ShipWindowSquareWallIron);
-    
+        WindowWallSquareIronPrefabName,
+        LoadValheimVehicleAssets.ShipWindowSquareWallIron);
+
     SetupHullPrefab(prefab, WindowWallSquareIronPrefabName,
-      ShipHulls.HullMaterial.Iron, 3);    
+      ShipHulls.HullMaterial.Iron, 3);
   }
 
   public static RequirementConfig[] GetRequirements(string material,
@@ -239,16 +242,16 @@ public class ShipHullPrefab : IRegisterPrefab
       hullMaterial, 4, prefab.transform.FindDeepChild("mesh"));
 
     if (hasInverse)
-    {
       RegisterInverseHullRibCorner(hullMaterial,
         directionVariant);
-    }
   }
 
-  public DirectionVariant GetInverseDirection(DirectionVariant variant) =>
-    variant == DirectionVariant.Left
+  public DirectionVariant GetInverseDirection(DirectionVariant variant)
+  {
+    return variant == DirectionVariant.Left
       ? DirectionVariant.Right
       : DirectionVariant.Left;
+  }
 
 
   /// <summary>
@@ -268,7 +271,7 @@ public class ShipHullPrefab : IRegisterPrefab
         prefabName, prefabAsset);
 
     SetupHullPrefab(prefab, prefabName,
-      hullMaterial, 1, prefab.transform.FindDeepChild("mesh"));
+      hullMaterial, 1, prefab.transform.FindDeepChild("mesh"), ["mesh"]);
   }
 
   public void RegisterHullRibProw(
@@ -365,11 +368,9 @@ public class ShipHullPrefab : IRegisterPrefab
     if (prefabName.Contains(HullWall))
     {
       if (sizeVariant == PrefabSizeVariant.FourByFour)
-      {
         return hullMaterial.Equals(ShipHulls.HullMaterial.Iron)
           ? LoadValheimVehicleAssets.ShipHullWall4X4IronAsset
           : LoadValheimVehicleAssets.ShipHullWall4X4WoodAsset;
-      }
 
       return hullMaterial.Equals(ShipHulls.HullMaterial.Iron)
         ? LoadValheimVehicleAssets.ShipHullWall2X2IronAsset
@@ -379,11 +380,9 @@ public class ShipHullPrefab : IRegisterPrefab
     if (prefabName.Contains(HullSlab))
     {
       if (sizeVariant == PrefabSizeVariant.FourByFour)
-      {
         return hullMaterial.Equals(ShipHulls.HullMaterial.Iron)
           ? LoadValheimVehicleAssets.ShipHullSlab4X4IronAsset
           : LoadValheimVehicleAssets.ShipHullSlab4X4WoodAsset;
-      }
 
       return hullMaterial.Equals(ShipHulls.HullMaterial.Iron)
         ? LoadValheimVehicleAssets.ShipHullSlab2X2IronAsset
@@ -411,9 +410,7 @@ public class ShipHullPrefab : IRegisterPrefab
     var hoistParents = new[] { "new" };
 
     if (prefabName.Contains(ShipHullPrefabName))
-    {
       hoistParents.AddItem("hull_slab_new_shared");
-    }
 
     SetupHullPrefab(prefab, prefabName,
       hullMaterial,

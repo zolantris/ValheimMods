@@ -106,7 +106,7 @@ public static class PhysicsConfig
     Center,
     Bottom,
     Top,
-    Custom,
+    Custom
   }
 
   public static ConfigEntry<HullFloatation> HullFloatationColliderLocation
@@ -142,11 +142,9 @@ public static class PhysicsConfig
   {
     foreach (var vehicleMovementController in VehicleMovementController
                .Instances)
-    {
       vehicleMovementController.UpdateVehicleStats(
         vehicleMovementController.IsFlying(),
         vehicleMovementController.IsSubmerged(), true);
-    }
   }
 
   private static readonly AcceptableValueRange<float> StableSailForceRange =
@@ -189,7 +187,7 @@ public static class PhysicsConfig
       $"forceDistance_{DampingResetKey}", 5f,
       "EXPERIMENTAL_FORCE_DISTANCE");
     force = Config.Bind(SectionKey,
-      $"force_{DampingResetKey}", 3f,
+      $"force_{DampingResetKey}", 1f,
       "EXPERIMENTAL_FORCE");
 
     backwardForce = Config.Bind(SectionKey,

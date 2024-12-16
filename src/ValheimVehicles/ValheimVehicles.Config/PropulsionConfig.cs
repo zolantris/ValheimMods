@@ -51,12 +51,8 @@ public static class PropulsionConfig
     get;
     private set;
   } = null!;
-  
-  public static ConfigEntry<float> WheelDeadZone
-  {
-    get;
-    private set;
-  } = null!;
+
+  public static ConfigEntry<float> WheelDeadZone { get; private set; } = null!;
 
   public static ConfigEntry<bool> AllowBaseGameSailRotation
   {
@@ -98,11 +94,13 @@ public static class PropulsionConfig
 
     TurnPowerNoRudder = Config.Bind(SectionName, "turningPowerNoRudder", 0.7f,
       ConfigHelpers.CreateConfigDescription(
-        "Set the base turning power of the steering wheel without a rudder", true));
+        "Set the base turning power of the steering wheel without a rudder",
+        true));
 
     TurnPowerWithRudder = Config.Bind(SectionName, "turningPowerWithRudder", 1f,
       ConfigHelpers.CreateConfigDescription(
-        "Set the turning power with a rudder prefab attached to the boat. This value overrides the turningPowerNoRudder config.", true));
+        "Set the turning power with a rudder prefab attached to the boat. This value overrides the turningPowerNoRudder config.",
+        true));
 
     SlowAndReverseWithoutControls = Config.Bind(SectionName,
       "slowAndReverseWithoutControls", false,
@@ -125,8 +123,15 @@ public static class PropulsionConfig
       "shouldLiftAnchorOnSpeedChange", false,
       ConfigHelpers.CreateConfigDescription(
         "Lifts the anchor when using a speed change key, this is a QOL to prevent anchor from being required to be pressed when attempting to change the ship speed"));
-    
+
     // vertical flight/ballast config
+
+    FlightClimbingOffset = Config.Bind(SectionName,
+      "BallastClimbingOffset",
+      2f,
+      ConfigHelpers.CreateConfigDescription(
+        "Ascent and Descent speed for the vehicle in the air. This value is interpolated to prevent jitters.",
+        true, true, new AcceptableValueRange<float>(0.01f, 10)));
 
     BallastClimbingOffset = Config.Bind(SectionName,
       "BallastClimbingOffset",
@@ -143,7 +148,7 @@ public static class PropulsionConfig
         true, true, new AcceptableValueRange<float>(0.01f, 1f)));
 
     // end vertical config.
-    
+
     WheelDeadZone = Config.Bind(SectionName,
       "WheelDeadZone",
       0.02f,
