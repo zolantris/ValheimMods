@@ -1350,6 +1350,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
+  public float directionalForceMult = 0.15f;
+  public float maxForce = 0.5f;
+
   public void UpdateWaterForce(ShipFloatation shipFloatation)
   {
     var shipLeft = shipFloatation.ShipLeft;
@@ -1442,32 +1445,47 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // clamps the force to a specific number
     // todo rename variables for this section to something meaningful
     // todo abstract to a method
-    var num7 = 0.15f;
-    var num8 = 0.5f;
-    var f = Mathf.Clamp((forwardForce.y - shipForward.y) * num7, 0f - num8,
-      num8);
-    var f2 = Mathf.Clamp((backwardForce.y - shipBack.y) * num7, 0f - num8,
-      num8);
-    var f3 = Mathf.Clamp((leftForce.y - shipLeft.y) * num7, 0f - num8, num8);
-    var f4 = Mathf.Clamp((rightForce.y - shipRight.y) * num7, 0f - num8, num8);
-    f = Mathf.Sign(f) * Mathf.Abs(Mathf.Pow(f, 2f));
-    f2 = Mathf.Sign(f2) * Mathf.Abs(Mathf.Pow(f2, 2f));
-    f3 = Mathf.Sign(f3) * Mathf.Abs(Mathf.Pow(f3, 2f));
-    f4 = Mathf.Sign(f4) * Mathf.Abs(Mathf.Pow(f4, 2f));
+
+
+    var forwardUpwardForce = Mathf.Clamp(
+      (forwardForce.y - shipForward.y) * directionalForceMult, 0f - maxForce,
+      maxForce);
+    var backwardsUpwardForce = Mathf.Clamp(
+      (backwardForce.y - shipBack.y) * directionalForceMult, 0f - maxForce,
+      maxForce);
+    var leftUpwardForce =
+      Mathf.Clamp((leftForce.y - shipLeft.y) * directionalForceMult,
+        0f - maxForce, maxForce);
+    var rightUpwardForce = Mathf.Clamp(
+      (rightForce.y - shipRight.y) * directionalForceMult,
+      0f - maxForce, maxForce);
+
+    forwardUpwardForce = Mathf.Sign(forwardUpwardForce) *
+                         Mathf.Abs(Mathf.Pow(forwardUpwardForce, 2f));
+    backwardsUpwardForce = Mathf.Sign(backwardsUpwardForce) *
+                           Mathf.Abs(Mathf.Pow(backwardsUpwardForce, 2f));
+    leftUpwardForce = Mathf.Sign(leftUpwardForce) *
+                      Mathf.Abs(Mathf.Pow(leftUpwardForce, 2f));
+    rightUpwardForce = Mathf.Sign(rightUpwardForce) *
+                       Mathf.Abs(Mathf.Pow(rightUpwardForce, 2f));
 
     if (CanRunForwardWaterForce)
-      AddForceAtPosition(Vector3.up * f * deltaForceMultiplier, shipForward,
+      AddForceAtPosition(Vector3.up * forwardUpwardForce * deltaForceMultiplier,
+        shipForward,
         PhysicsConfig.rudderVelocityMode.Value);
 
     if (CanRunBackWaterForce)
-      AddForceAtPosition(Vector3.up * f2 * deltaForceMultiplier, shipBack,
+      AddForceAtPosition(
+        Vector3.up * backwardsUpwardForce * deltaForceMultiplier, shipBack,
         PhysicsConfig.rudderVelocityMode.Value);
 
     if (CanRunLeftWaterForce)
-      AddForceAtPosition(Vector3.up * f3 * deltaForceMultiplier, shipLeft,
+      AddForceAtPosition(Vector3.up * leftUpwardForce * deltaForceMultiplier,
+        shipLeft,
         PhysicsConfig.rudderVelocityMode.Value);
     if (CanRunRightWaterForce)
-      AddForceAtPosition(Vector3.up * f4 * deltaForceMultiplier, shipRight,
+      AddForceAtPosition(Vector3.up * rightUpwardForce * deltaForceMultiplier,
+        shipRight,
         PhysicsConfig.rudderVelocityMode.Value);
   }
 
