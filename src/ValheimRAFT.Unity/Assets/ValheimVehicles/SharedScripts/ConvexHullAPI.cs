@@ -387,6 +387,12 @@ namespace ValheimVehicles.SharedScripts
     private static List<Vector3> GetColliderPointsGlobal(Collider collider)
     {
       var points = new List<Vector3>();
+      
+      // filters out layer that should not be considered physical during generation
+      if (!LayerHelpers.IsContainedWithinMask(collider.gameObject.layer,
+            LayerHelpers.PhysicalLayers) ||
+          !collider.gameObject.activeInHierarchy) return [];
+      
       switch (collider)
       {
         // Handle BoxCollider

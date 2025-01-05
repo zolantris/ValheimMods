@@ -1042,9 +1042,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private void UpdateColliderPositions()
   {
     if (PiecesController == null) return;
+    var convexHullBounds = PiecesController.GetConvexHullBounds()!.Value;
 
-    var expectedLowestBlockingColliderPoint =
-      BlockingCollider.transform.position.y - BlockingCollider.bounds.extents.y;
+    // var expectedLowestBlockingColliderPoint =
+    //   BlockingCollider.transform.position.y - BlockingCollider.bounds.extents.y;
+    var expectedLowestBlockingColliderPoint = convexHullBounds.min.y;
 
     if (IsFlying() || !WaterConfig.WaterBallastEnabled.Value) return;
 
@@ -1053,30 +1055,32 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     {
       // will be a positive number.
       var heightDifference = _lastHighestGroundPoint -
-                             BlockingCollider.transform.position.y;
+                             expectedLowestBlockingColliderPoint;
       // we force update it.
       UpdateTargetHeight(TargetHeight + heightDifference);
     }
 
     // ForceUpdateIfBelowGround, this can happen if driving the vehicle forwards into the ground.
     // Prevents the ship from exceeding the lowest height above the water
-    if (_lastHighestGroundPoint > OnboardCollider.bounds.min.y)
-    {
-      // will be a positive number.
-      var heightDifference = _lastHighestGroundPoint -
-                             OnboardCollider.bounds.min.y;
-      // we force update it.
-      UpdateTargetHeight(TargetHeight + heightDifference);
-    }
+    // if (_lastHighestGroundPoint > OnboardCollider.bounds.min.y)
+    // {
+    //   // will be a positive number.
+    //   var heightDifference = _lastHighestGroundPoint -
+    //                          OnboardCollider.bounds.min.y;
+    //   // we force update it.
+    //   UpdateTargetHeight(TargetHeight + heightDifference);
+    // }
 
     // super stuck. do a direct update. But protect the players from being launched. Yikes.
-    if (_lastHighestGroundPoint > BlockingCollider.transform.position.y)
+    if (_lastHighestGroundPoint > convexHullBounds.center.y)
     {
       // force updates the vehicle to this position.
-      transform.position = new Vector3(transform.position.x,
-        transform.position.y + (_lastHighestGroundPoint -
-                                BlockingCollider.transform.position.y),
-        transform.position.z);
+      var position = transform.position;
+      position = new Vector3(position.x,
+        position.y + (_lastHighestGroundPoint -
+                      convexHullBounds.center.y),
+        position.z);
+      transform.position = position;
       UpdateTargetHeight(0);
     }
   }
@@ -1359,8 +1363,35 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
-  public float directionalForceMult = 0.15f;
+  public float directionalForceUnanchored = 0.15f;
+  public float directionalForceSubmerged = 0.05f;
+  public float directionalForceAnchored = 0.075f;
   public float maxForce = 0.5f;
+
+  /// <summary>
+  /// If the vehicle is anchored there is less sway
+  /// </summary>
+  /// TODO add config for this.
+  /// <returns></returns>
+  public float GetDirectionalForce()
+  {
+    if (isBeached)
+    {
+      return 0;
+    }
+   
+    if (IsSubmerged())
+    {
+      return directionalForceSubmerged;
+    }
+    
+    if (!isAnchored)
+    {
+      return directionalForceUnanchored;
+    }
+
+    return directionalForceAnchored;
+  }
 
   public void UpdateWaterForce(ShipFloatation shipFloatation)
   {
@@ -1401,18 +1432,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // Calculate the target upwards force based on the current depth
     var upwardForceVector = Vector3.up * PhysicsConfig.force.Value *
                             currentDepthForceMultiplier;
-
-    // Apply SmoothDamp to prevent jitter
-    // Use a reference variable for the current upwards force, which will be smoothed
-    // if (currentUpwardsForce == null)
-    // {
-    // currentUpwardsForce = targetUpwardsForce; // Initialize if not set
-    // }
-
-    // Smoothly interpolate towards the target upwards force over time
-    // currentUpwardsForce = Vector3.SmoothDamp(currentUpwardsForce,
-    //   targetUpwardsForce, ref currentUpwardsForceVelocity,
-    //   deltaForceMultiplier);
 
     // Apply the smoothed upwards force
     AddForceAtPosition(upwardForceVector, worldCenterOfMass,
@@ -1455,22 +1474,18 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       angularVelocity * m_angularDamping * currentDepthForceMultiplier;
     m_body.angularVelocity = angularVelocity;
 
-    // clamps the force to a specific number
-    // todo rename variables for this section to something meaningful
-    // todo abstract to a method
-
 
     var forwardUpwardForce = Mathf.Clamp(
-      (forwardForce.y - shipForward.y) * directionalForceMult, 0f - maxForce,
+      (forwardForce.y - shipForward.y) * GetDirectionalForce(), 0f - maxForce,
       maxForce);
     var backwardsUpwardForce = Mathf.Clamp(
-      (backwardForce.y - shipBack.y) * directionalForceMult, 0f - maxForce,
+      (backwardForce.y - shipBack.y) * GetDirectionalForce(), 0f - maxForce,
       maxForce);
     var leftUpwardForce =
-      Mathf.Clamp((leftForce.y - shipLeft.y) * directionalForceMult,
+      Mathf.Clamp((leftForce.y - shipLeft.y) * GetDirectionalForce(),
         0f - maxForce, maxForce);
     var rightUpwardForce = Mathf.Clamp(
-      (rightForce.y - shipRight.y) * directionalForceMult,
+      (rightForce.y - shipRight.y) * GetDirectionalForce(),
       0f - maxForce, maxForce);
 
     forwardUpwardForce = Mathf.Sign(forwardUpwardForce) *
