@@ -60,6 +60,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: hull_wall_window_porthole_iron_4x4
       objectReference: {fileID: 0}
+    - target: {fileID: 7681642250914584159, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.245
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 106547016253077337, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}

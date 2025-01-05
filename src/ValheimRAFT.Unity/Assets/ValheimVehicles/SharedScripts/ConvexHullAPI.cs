@@ -391,7 +391,7 @@ namespace ValheimVehicles.SharedScripts
       // filters out layer that should not be considered physical during generation
       if (!LayerHelpers.IsContainedWithinMask(collider.gameObject.layer,
             LayerHelpers.PhysicalLayers) ||
-          !collider.gameObject.activeInHierarchy) return [];
+          !collider.gameObject.activeInHierarchy) return new List<Vector3>();
       
       switch (collider)
       {
