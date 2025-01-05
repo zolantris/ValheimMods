@@ -7,6 +7,7 @@ using HarmonyLib;
 using Jotunn.Managers;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
@@ -46,7 +47,26 @@ public class VehicleDebugHelpers : MonoBehaviour
   public GameObject VehicleObj;
   public VehicleShip VehicleShipInstance;
   private Coroutine? _drawColliderCoroutine = null;
-  private GameObject worldCenterOfMassCube;
+  private GameObject? worldCenterOfMassCube;
+  private GameObject? forwardCube;
+  private GameObject? backwardCube;
+  private GameObject? rightCube;
+  private GameObject? leftCube;
+
+  private void RenderForcePointCubes()
+  {
+    if (VehicleShipInstance == null || VehicleShipInstance.MovementController == null) return;
+    
+    var shipFloatation = VehicleShipInstance
+      .MovementController.GetShipFloatation();
+
+    if (shipFloatation == null) return;
+    
+    RenderWaterForceCube(ref forwardCube, shipFloatation.Value.ShipForward);
+    RenderWaterForceCube(ref backwardCube, shipFloatation.Value.ShipBack);
+    RenderWaterForceCube(ref rightCube, shipFloatation.Value.ShipRight);
+    RenderWaterForceCube(ref leftCube,shipFloatation.Value.ShipLeft);
+  }
 
   private void FixedUpdate()
   {
@@ -54,6 +74,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     if (autoUpdateColliders ||
         VehicleDebugConfig.AutoShowVehicleColliders.Value)
     {
+      RenderForcePointCubes();
       RenderWorldCenterOfMassAsCube();
       DrawAllColliders();
       Update3DTextLookAt();
@@ -75,6 +96,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   {
     autoUpdateColliders = !autoUpdateColliders;
     RenderWorldCenterOfMassAsCube();
+    RenderForcePointCubes();
 
     if (autoUpdateColliders) return;
     foreach (var keyValuePair in lines)
@@ -110,6 +132,36 @@ public class VehicleDebugHelpers : MonoBehaviour
         textObject.transform.Rotate(0, 180f,
           0); // Correct the reversed orientation
       }
+  }
+
+  public void RenderWaterForceCube(ref GameObject? cube, Vector3 position)
+  {
+    if (!autoUpdateColliders)
+    {
+      if (cube != null)
+      {
+        Destroy(cube);
+      }
+      return;
+    }
+    if (VehicleShipInstance.MovementController == null) return;
+    if (cube == null)
+    {
+      cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+      var meshRenderer = cube.GetComponent<MeshRenderer>();
+      meshRenderer.material =
+        new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
+        {
+          color = Color.green
+        };
+      cube.gameObject.layer =
+        LayerMask.NameToLayer("Ignore Raycast");
+    }
+
+    cube.transform.position = position;
+    cube.transform.SetParent(
+      VehicleShipInstance.PiecesController.transform,
+      false);
   }
 
   public void RenderWorldCenterOfMassAsCube()

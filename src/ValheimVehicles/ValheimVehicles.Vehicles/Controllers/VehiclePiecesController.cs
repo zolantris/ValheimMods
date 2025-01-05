@@ -127,6 +127,37 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public List<GameObject> convexHullMeshes =>
     convexHullComponent.convexHullMeshes;
 
+  private Bounds? _cachedConvexHullBounds = null;
+
+  private void UpdateConvexHullBounds()
+  {
+    Bounds? convexHullBounds = null;
+    foreach (var convexHull in convexHullMeshes)
+    {
+      var collider = convexHull.GetComponent<Collider>();
+      if (convexHullBounds == null)
+      {
+        var bounds = collider.bounds;
+        convexHullBounds = new Bounds(bounds.center, bounds.size);
+      }
+      else
+      {
+        convexHullBounds.Value.Encapsulate(collider.bounds);
+      }
+    }
+
+    _cachedConvexHullBounds = convexHullBounds;
+  }
+  
+  public Bounds? GetConvexHullBounds()
+  {
+    if (_cachedConvexHullBounds == null)
+    {
+      UpdateConvexHullBounds();
+    }
+
+    return _cachedConvexHullBounds;
+  }
 
   public static bool DEBUGAllowActivatePendingPieces
   {
@@ -2389,6 +2420,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       .GenerateMeshesFromChildColliders(VehicleInstance.Instance.gameObject,
         PhysicsConfig.convexHullJoinDistanceThreshold.Value,
         nvChildGameObjects);
+    
+    UpdateConvexHullBounds();
   }
 
   /**
@@ -2512,7 +2545,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     // blocking collider should not be enabled for the new dynamic hull.
     m_blockingcollider.enabled = convexHullMeshes.Count <= 0;
-    m_floatcollider.enabled = convexHullMeshes.Count <= 0;
+    // m_floatcollider.enabled = convexHullMeshes.Count <= 0;
 
     /*
      * @description float collider logic

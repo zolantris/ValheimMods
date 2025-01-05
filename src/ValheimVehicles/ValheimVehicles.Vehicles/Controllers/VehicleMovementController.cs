@@ -102,6 +102,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private readonly bool _isHoldingDescend = false;
   private ShipFloatation? _currentShipFloatation;
 
+  public ShipFloatation? GetShipFloatation() => _currentShipFloatation;
+
   private Coroutine? _debouncedForceTakeoverControlsInstance;
 
   // todo remove if unused or make this a getter. Might not be safe from null references though.
@@ -980,10 +982,17 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 #if DEBUG
     if (floatSizeOverride != 0f) return floatSizeOverride;
 #endif
+    if (PiecesController == null) return 0f;
 
-    if (direction == Vector3.right) return m_floatcollider.size.x / 2;
+    var bounds = PiecesController.GetConvexHullBounds();
+    if (bounds == null)
+    {
+      return 0f;
+    }
 
-    return m_floatcollider.size.z / 2;
+    if (direction == Vector3.right) return bounds.Value.size.x / 2;
+
+    return bounds.Value.size.z / 2;
   }
 
   private float GetHighestGroundPoint(ShipFloatation shipFloatation)
@@ -1386,7 +1395,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // Calculate the current depth force multiplier
     var currentDepthForceMultiplier =
-      Mathf.Clamp01(Mathf.Abs(currentDepth) /
+      Mathf.Clamp01(currentDepth /
                     PhysicsConfig.forceDistance.Value);
 
     // Calculate the target upwards force based on the current depth
@@ -1415,8 +1424,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // todo rename variables for this section to something meaningful
     // todo abstract this to a method
-    var deltaForward = Vector3.Dot(m_body.velocity, ShipDirection.forward);
-    var deltaRight = Vector3.Dot(m_body.velocity, ShipDirection.right);
+    var forward = ShipDirection.forward;
+    var deltaForward = Vector3.Dot(m_body.velocity, forward);
+    var right = ShipDirection.right;
+    var deltaRight = Vector3.Dot(m_body.velocity, right);
     var velocity = m_body.velocity;
     var deltaUp = velocity.y * velocity.y * Mathf.Sign(velocity.y) * m_damping *
                   currentDepthForceMultiplier;
@@ -1432,15 +1443,17 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
                           currentDepthForceMultiplier;
 
     velocity.y -= Mathf.Clamp(deltaUp, -1f, 1f);
-    velocity -= ShipDirection.forward * Mathf.Clamp(deltaForwardClamp, -1f, 1f);
-    velocity -= ShipDirection.right * Mathf.Clamp(deltaRightClamp, -1f, 1f);
+    velocity -= forward * Mathf.Clamp(deltaForwardClamp, -1f, 1f);
+    velocity -= right * Mathf.Clamp(deltaRightClamp, -1f, 1f);
 
     if (velocity.magnitude > m_body.velocity.magnitude)
       velocity = velocity.normalized * m_body.velocity.magnitude;
 
     m_body.velocity = velocity;
-    m_body.angularVelocity -=
-      m_body.angularVelocity * m_angularDamping * currentDepthForceMultiplier;
+    var angularVelocity = m_body.angularVelocity;
+    angularVelocity -=
+      angularVelocity * m_angularDamping * currentDepthForceMultiplier;
+    m_body.angularVelocity = angularVelocity;
 
     // clamps the force to a specific number
     // todo rename variables for this section to something meaningful
@@ -1487,99 +1500,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       AddForceAtPosition(Vector3.up * rightUpwardForce * deltaForceMultiplier,
         shipRight,
         PhysicsConfig.rudderVelocityMode.Value);
-  }
-
-
-  public void UpdateWaterForceDeprecated(ShipFloatation shipFloatation)
-  {
-    var shipLeft = shipFloatation.ShipLeft;
-    var shipForward = shipFloatation.ShipForward;
-    var shipBack = shipFloatation.ShipBack;
-    var shipRight = shipFloatation.ShipRight;
-    var waterLevelLeft = shipFloatation.WaterLevelLeft;
-    var waterLevelRight = shipFloatation.WaterLevelRight;
-    var waterLevelForward = shipFloatation.WaterLevelForward;
-    var waterLevelBack = shipFloatation.WaterLevelBack;
-    var currentDepth = shipFloatation.CurrentDepth;
-    var worldCenterOfMass = m_body.worldCenterOfMass;
-
-    if (shipFloatation.IsAboveBuoyantLevel) return;
-
-    m_body.WakeUp();
-
-    if (m_waterImpactDamage > 0f)
-      UpdateWaterImpactForce(currentDepth, Time.fixedDeltaTime);
-
-    var leftForce = new Vector3(shipLeft.x, waterLevelLeft, shipLeft.z);
-    var rightForce = new Vector3(shipRight.x, waterLevelRight, shipRight.z);
-    var forwardForce =
-      new Vector3(shipForward.x, waterLevelForward, shipForward.z);
-    var backwardForce = new Vector3(shipBack.x, waterLevelBack, shipBack.z);
-
-    var fixedDeltaTime = Time.fixedDeltaTime;
-    var deltaForceMultiplier = fixedDeltaTime * 50f;
-
-    var currentDepthForceMultiplier =
-      Mathf.Clamp01(Mathf.Abs(currentDepth) / m_forceDistance);
-    var upwardForceVector = Vector3.up * m_force * currentDepthForceMultiplier;
-
-    AddForceAtPosition(upwardForceVector * deltaForceMultiplier,
-      worldCenterOfMass,
-      PhysicsConfig.floatationVelocityMode.Value);
-
-    // todo rename variables for this section to something meaningful
-    // todo abstract this to a method
-    var deltaForward = Vector3.Dot(m_body.velocity, ShipDirection.forward);
-    var deltaRight = Vector3.Dot(m_body.velocity, ShipDirection.right);
-    var velocity = m_body.velocity;
-    var deltaUp = velocity.y * velocity.y * Mathf.Sign(velocity.y) * m_damping *
-                  currentDepthForceMultiplier;
-
-    var deltaForwardClamp = deltaForward * deltaForward *
-                            Mathf.Sign(deltaForward) *
-                            m_dampingForward *
-                            currentDepthForceMultiplier;
-
-    // the water pushes the boat in the direction of the wind (sort of). Higher multipliers of m_dampingSideway will actually decrease this affect.
-    var deltaRightClamp = deltaRight * deltaRight * Mathf.Sign(deltaRight) *
-                          m_dampingSideway *
-                          currentDepthForceMultiplier;
-
-    velocity.y -= Mathf.Clamp(deltaUp, -1f, 1f);
-    velocity -= ShipDirection.forward * Mathf.Clamp(deltaForwardClamp, -1f, 1f);
-    velocity -= ShipDirection.right * Mathf.Clamp(deltaRightClamp, -1f, 1f);
-
-    if (velocity.magnitude > m_body.velocity.magnitude)
-      velocity = velocity.normalized * m_body.velocity.magnitude;
-
-    m_body.velocity = velocity;
-    m_body.angularVelocity -=
-      m_body.angularVelocity * m_angularDamping * currentDepthForceMultiplier;
-
-    // clamps the force to a specific number
-    // todo rename variables for this section to something meaningful
-    // todo abstract to a method
-    var num7 = 0.15f;
-    var num8 = 0.5f;
-    var f = Mathf.Clamp((forwardForce.y - shipForward.y) * num7, 0f - num8,
-      num8);
-    var f2 = Mathf.Clamp((backwardForce.y - shipBack.y) * num7, 0f - num8,
-      num8);
-    var f3 = Mathf.Clamp((leftForce.y - shipLeft.y) * num7, 0f - num8, num8);
-    var f4 = Mathf.Clamp((rightForce.y - shipRight.y) * num7, 0f - num8, num8);
-    f = Mathf.Sign(f) * Mathf.Abs(Mathf.Pow(f, 2f));
-    f2 = Mathf.Sign(f2) * Mathf.Abs(Mathf.Pow(f2, 2f));
-    f3 = Mathf.Sign(f3) * Mathf.Abs(Mathf.Pow(f3, 2f));
-    f4 = Mathf.Sign(f4) * Mathf.Abs(Mathf.Pow(f4, 2f));
-
-    AddForceAtPosition(Vector3.up * f * deltaForceMultiplier, shipForward,
-      PhysicsConfig.floatationVelocityMode.Value);
-    AddForceAtPosition(Vector3.up * f2 * deltaForceMultiplier, shipBack,
-      PhysicsConfig.floatationVelocityMode.Value);
-    AddForceAtPosition(Vector3.up * f3 * deltaForceMultiplier, shipLeft,
-      PhysicsConfig.floatationVelocityMode.Value);
-    AddForceAtPosition(Vector3.up * f4 * deltaForceMultiplier, shipRight,
-      PhysicsConfig.floatationVelocityMode.Value);
   }
 
   public void UpdateShipFloatation(ShipFloatation shipFloatation)
@@ -1764,8 +1684,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var groundLevelBack = ZoneSystem.instance.GetGroundHeight(shipBack);
 
 
+    // floatation point, does not need to be collider, could just be a value in MovementController 
+    // todo possibly add target height so it will not apply upward force if the target height is already considered in the normal zone
+    // a negative will have no upward force. A positive will have upward force.
+    // negatives will be when the averagewaterheight is below the vehicle. IE gravity should be doing it's job.
     var currentDepth =
-      worldCenterOfMass.y - averageWaterHeight;
+      averageWaterHeight - FloatCollider.transform.position.y;
 
     var isInvalid = false;
     if (averageWaterHeight <= -10000 ||
@@ -1775,7 +1699,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       isInvalid = true;
     }
 
-    var isAboveBuoyantLevel = currentDepth > m_disableLevel || isInvalid;
+    // var isAboveBuoyantLevel = currentDepth > m_disableLevel || isInvalid;
+    var isAboveBuoyantLevel = currentDepth < 0 || isInvalid;
 
     return new ShipFloatation
     {
@@ -2236,10 +2161,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // This needs to use blocking collider otherwise the float collider pushes the vehicle upwards but the blocking collider cannot push downwards.
     // todo set this to the rudder point
     // rear steering is size z. Center steering is size.z/2
-    var steerOffset = VectorUtils.MergeVectors(
-      new Vector3(0, FloatCollider.center.y, 0),
-      ShipDirection.position -
-      forward * GetFloatSizeFromDirection(Vector3.forward));
+    var steerOffset = m_body.worldCenterOfMass -
+      forward * GetFloatSizeFromDirection(Vector3.forward);
 
     var steeringVelocityDirectionFactor = direction * m_stearVelForceFactor;
     var steerOffsetForce = ShipDirection.right *
