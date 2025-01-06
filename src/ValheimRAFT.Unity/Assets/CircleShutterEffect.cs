@@ -125,7 +125,7 @@ public class CircularShutter : MonoBehaviour
 
                 // Grow the slice's width (overlap the adjacent slice)
                 float width = Mathf.Lerp(0, maxSliceWidth, time);
-                slice.localScale = new Vector3(width + (i > 0 ? overlapFactor : 0), 1, 1);  // Apply overlap
+                slice.localScale = new Vector3(width + (i > 0 ? overlapFactor : 0), width, width);  // Apply overlap
 
                 yield return null;
             }

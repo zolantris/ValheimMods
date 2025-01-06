@@ -28,6 +28,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static Material WaterHeightMaterial = null!;
   public static Material GlassNautilusNoTint = null!;
 
+  public static GameObject ShipAnchor = null!;
 
   // hull
   public static GameObject ShipHullWoodAsset = null!;
@@ -82,6 +83,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   
   public static GameObject ShipWindowPortholeWall2x2 = null!;
   public static GameObject ShipWindowPortholeWall4x4 = null!;
+  public static GameObject ShipWindowPortholeWall8x4 = null!;
   public static GameObject ShipWindowPortholeFloor4x4 = null!;
   public static GameObject ShipWindowSquareWallIron = null!;
   public static GameObject ShipWindowSquareWallWood = null!;
@@ -245,6 +247,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
     ShipWindowPortholeWall2x2 =
       assetBundle.LoadAsset<GameObject>($"hull_wall_window_porthole_iron_2x2.prefab");
     ShipWindowPortholeWall4x4 = assetBundle.LoadAsset<GameObject>($"hull_wall_window_porthole_iron_4x4.prefab");
+    ShipWindowPortholeWall8x4 = assetBundle.LoadAsset<GameObject>($"hull_wall_window_porthole_iron_8x4.prefab");
+
     ShipWindowSquareWallIron =
       assetBundle.LoadAsset<GameObject>($"hull_wall_window_square_iron_2x2.prefab");
     ShipWindowSquareWallWood =
@@ -254,6 +258,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
     ShipWindowPortholeStandalone =
       assetBundle.LoadAsset<GameObject>($"window_porthole_standalone.prefab");
 
+    ShipAnchor = assetBundle.LoadAsset<GameObject>($"ship_anchor.prefab");
 
     RamBladeTop = assetBundle.LoadAsset<GameObject>(
       "ram_blade_top.prefab");

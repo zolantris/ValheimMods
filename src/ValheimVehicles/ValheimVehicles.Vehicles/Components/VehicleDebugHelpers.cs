@@ -479,7 +479,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     {
       var existingText = colliderTextObjects[boxCollider.gameObject.name];
       // Update text content and position if necessary
-      var offset = new Vector3(0, boxCollider.size.y, 0);
+      var offset = new Vector3(0, boxCollider.size.y / 2f + 1f, 0);
       existingText.transform.position = boxCollider.transform.position + offset;
       existingText.transform.SetParent(parent.transform);
 

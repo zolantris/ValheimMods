@@ -1105,15 +1105,15 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void Flying_UpdateShipBalancingForce()
   {
-    var front = ShipDirection.position +
+    var centerPosition = ShipDirection.position;
+    var front = centerPosition +
                 ShipDirection.forward * FloatCollider.size.z / 2f;
-    var back = ShipDirection.position -
+    var back = centerPosition -
                ShipDirection.forward * FloatCollider.size.z / 2f;
-    var left = ShipDirection.position -
+    var left = centerPosition -
                ShipDirection.right * FloatCollider.size.x / 2f;
-    var right = ShipDirection.position +
+    var right = centerPosition +
                 ShipDirection.right * FloatCollider.size.x / 2f;
-    var centerpos2 = ShipDirection.position;
 
     var frontForce = m_body.GetPointVelocity(front);
     var backForce = m_body.GetPointVelocity(back);
@@ -1137,7 +1137,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       right.y + rightForce.y, m_balanceForce);
     var centerUpwardsForce = GetUpwardsForce(
       flyingTargetHeight,
-      centerpos2.y + m_body.velocity.y, m_liftForce);
+      centerPosition.y + m_body.velocity.y, m_liftForce);
 
     // Smooth time must always be greater than 3f
     var smoothValue = 3f + PropulsionConfig.VerticalSmoothingSpeed.Value * 10f;
@@ -1166,7 +1166,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       PhysicsConfig.flyingVelocityMode.Value);
     AddForceAtPosition(Vector3.up * rightUpwardsForce, right,
       PhysicsConfig.flyingVelocityMode.Value);
-    AddForceAtPosition(Vector3.up * centerUpwardsForce, centerpos2,
+    AddForceAtPosition(Vector3.up * centerUpwardsForce, centerPosition,
       PhysicsConfig.flyingVelocityMode.Value);
   }
 

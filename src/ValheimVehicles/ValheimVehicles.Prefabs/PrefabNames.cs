@@ -224,7 +224,10 @@ public static class PrefabNames
   public const string ShipHullPrefabName = "Ship_Hull";
   public const string WindowWallPorthole2x2Prefab = $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_2x2";
   public const string WindowWallPorthole4x4Prefab = $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_4x4";
+  public const string WindowWallPorthole8x4Prefab = $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_8x4";
   public const string WindowFloorPorthole4x4Prefab = $"{ValheimVehiclesPrefix}_ShipWindow_Floor_Porthole_4x4";
+  
+  public const string VehicleAnchor = $"{ValheimVehiclesPrefix}_Vehicle_Anchor_{ShipHulls.HullMaterial.Wood}";
   
   public const string WindowWallSquareIronPrefabName = $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Square_{ShipHulls.HullMaterial.Iron}_2x2";
   public const string WindowWallSquareWoodPrefabName = $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Square_{ShipHulls.HullMaterial.Wood}_2x2";
