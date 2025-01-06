@@ -258,7 +258,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
     ShipWindowPortholeStandalone =
       assetBundle.LoadAsset<GameObject>($"window_porthole_standalone.prefab");
 
-    ShipAnchor = assetBundle.LoadAsset<GameObject>($"ship_anchor.prefab");
+    ShipAnchor = assetBundle.LoadAsset<GameObject>($"ship_anchor_full.prefab");
 
     RamBladeTop = assetBundle.LoadAsset<GameObject>(
       "ram_blade_top.prefab");
