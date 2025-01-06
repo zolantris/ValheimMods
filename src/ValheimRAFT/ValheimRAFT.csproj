@@ -48,6 +48,12 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\ConvexHullComponent.cs">
             <Link>ValheimVehicles.Vehicles\Components\ConvexHullComponent.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\ShipAnchorController.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\ShipAnchorController.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\AnchorPrefabs.cs">
+          <Link>ValheimVehicles.Prefabs\Registry\AnchorPrefabs.cs</Link>
+        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup><!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3166205444
+CRC: 2363597730
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: d0351d305c10cab7d258715fa77af3d8
+    Hash: 1c880ba7f765acdf995e015da93dbb8e
   TypeTreeHash:
     serializedVersion: 2
-    Hash: c06587813f50b4ac49249ee2d68a3382
+    Hash: e3009fb610cfd1ea8286ec0812e156ac
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: d0351d305c10cab7d258715fa77af3d8
+    Hash: 1c880ba7f765acdf995e015da93dbb8e
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -30,6 +30,8 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 54
   Script: {instanceID: 0}
+- Class: 59
+  Script: {instanceID: 0}
 - Class: 64
   Script: {instanceID: 0}
 - Class: 65
@@ -38,7 +40,15 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 8233d90336aea43098adf6dbabd606a2, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 37593e1934874fe4db91a205982d109e, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
 - Class: 115
+  Script: {instanceID: 0}
+- Class: 120
   Script: {instanceID: 0}
 - Class: 136
   Script: {instanceID: 0}
@@ -59,6 +69,14 @@ ClassTypes:
 - Class: 687078895
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
+- AssemblyName: Unity.ProBuilder
+  ClassName: UnityEngine.ProBuilder.AutoUnwrapSettings
+- AssemblyName: Unity.ProBuilder
+  ClassName: UnityEngine.ProBuilder.Face
+- AssemblyName: Unity.ProBuilder
+  ClassName: UnityEngine.ProBuilder.SharedVertex
+- AssemblyName: Unity.ProBuilder
+  ClassName: UnityEngine.ProBuilder.UnwrapParameters
 - AssemblyName: UnityEngine.CoreModule
   ClassName: UnityEngine.Events.PersistentCallGroup
 - AssemblyName: UnityEngine.UI
@@ -82,20 +100,22 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_wood.prefab
-- Assets/ValheimVehicles/Prefabs/hull_rib_prow_iron_2x2.prefab
+- Assets/ValheimVehicles/Prefabs/anchor_full_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_iron_4x4.prefab
+- Assets/ValheimVehicles/Prefabs/hull_rib_prow_iron_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_bottom.prefab
-- Assets/ValheimVehicles/Prefabs/shared_nautilus.prefab
+- Assets/ValheimVehicles/Prefabs/anchor_full_chain.prefab
 - Assets/ValheimVehicles/Shaders/InvertWaterMask.shader
 - Assets/ValheimVehicles/Prefabs/hull_slab_iron_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_porthole_iron_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_2x4.prefab
 - Assets/ValheimVehicles/Material/WaterMaskMaterial.mat
+- Assets/ValheimVehicles/Prefabs/shared_nautilus.prefab
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_1x2.prefab
-- Assets/ValheimVehicles/Prefabs/ram_stake_tier3_1x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_center_iron.prefab
 - Assets/Horem/Mocks/Shaders/Custom_WaterMask.shader
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_square_wood_2x2.prefab
+- Assets/ValheimVehicles/Prefabs/ram_stake_tier3_1x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_wood_4x4.prefab
 - Assets/ValheimVehicles/Material/glass_nautilus_notint.mat
@@ -128,6 +148,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_2x2_worn.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_square_wood_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/custom_sail.prefab
+- Assets/ValheimVehicles/Prefabs/anchor_base.prefab
 - Assets/ValheimVehicles/Prefabs/shared_rudder_advanced_double.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_wood.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_right_iron.prefab

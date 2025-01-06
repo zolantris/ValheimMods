@@ -538,6 +538,17 @@ public abstract class PrefabRegistryHelpers
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WindowWallSquareIron)
       });
+    
+    PieceDataDictionary.Add(PrefabNames.ShipAnchorWood,
+      new PieceData()
+      {
+        Name =
+          "$valheim_vehicles_ship_anchor $valheim_vehicles_material_wood",
+        Description =
+          "$valheim_vehicles_ship_anchor_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .Anchor)
+      });
   }
 
   public static void IgnoreCameraCollisions(GameObject go)

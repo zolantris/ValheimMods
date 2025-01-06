@@ -28,7 +28,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static Material WaterHeightMaterial = null!;
   public static Material GlassNautilusNoTint = null!;
 
-  public static GameObject ShipAnchor = null!;
+  public static GameObject ShipAnchorWood = null!;
 
   // hull
   public static GameObject ShipHullWoodAsset = null!;
@@ -258,7 +258,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
     ShipWindowPortholeStandalone =
       assetBundle.LoadAsset<GameObject>($"window_porthole_standalone.prefab");
 
-    ShipAnchor = assetBundle.LoadAsset<GameObject>($"ship_anchor_full.prefab");
+    ShipAnchorWood = assetBundle.LoadAsset<GameObject>($"anchor_full_wood.prefab");
 
     RamBladeTop = assetBundle.LoadAsset<GameObject>(
       "ram_blade_top.prefab");

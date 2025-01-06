@@ -14,7 +14,7 @@ public class ChainLink : MonoBehaviour
     private GameObject[] chainLinks;
     private GameObject anchor;
     private Transform anchorAttachmentPoint; // The internal attachment point in the anchor prefab
-
+    
     void Start()
     {
         CreateChain();

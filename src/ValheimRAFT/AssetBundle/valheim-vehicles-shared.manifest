@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3000099171
+CRC: 2290082806
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 911493c2568798788eb239e1e5236e54
+    Hash: 544cdc06045f9cf3053dc6091437c561
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0e971d6ec910fda0a941f7ca640159c0
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 911493c2568798788eb239e1e5236e54
+    Hash: 544cdc06045f9cf3053dc6091437c561
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -65,6 +65,7 @@ Assets:
 - Assets/ValheimVehicles/BlenderImports/shturval_edit2.FBX
 - Assets/ValheimVehicles/Shaders/VehicleSailShader.shader
 - Assets/ValheimVehicles/Material/iron.mat
+- Assets/ValheimVehicles/BlenderImports/iron.png
 - Assets/Texture2D/Noise.png
 - Assets/ValheimVehicles/Material/iron_metal.mat
 - Assets/Material/woodwall.mat

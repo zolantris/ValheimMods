@@ -178,6 +178,8 @@ public class PrefabRegistryController : MonoBehaviour
   public static void RegisterValheimVehiclesPrefabs()
   {
     CustomMeshPrefabs.Instance.Register(prefabManager, pieceManager);
+    
+    AnchorPrefabs.Instance.Register(prefabManager, pieceManager);
 
     ShipRudderPrefabs.Instance.Register(prefabManager, pieceManager);
 

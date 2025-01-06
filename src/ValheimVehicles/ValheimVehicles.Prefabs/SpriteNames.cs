@@ -9,7 +9,7 @@ public abstract class SpriteNames
   public const string WaterOpacityBucket = "water_opacity_bucket";
   public const string ShipRudderAdvancedWood = "rudder_advanced_single_wood";
   public const string ShipRudderAdvancedIron = "rudder_advanced_single_iron";
-
+  public const string Anchor = "anchor";
   public const string ShipRudderAdvancedDoubleWood =
     "rudder_advanced_double_wood";
 

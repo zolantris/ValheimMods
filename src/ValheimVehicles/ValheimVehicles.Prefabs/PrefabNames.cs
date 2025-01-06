@@ -85,6 +85,7 @@ public static class PrefabNames
   public const string PlayerSpawnControllerObj =
     $"{ValheimVehiclesPrefix}_PlayerSpawnControllerObj";
 
+  public const string ShipAnchorWood = $"{ValheimVehiclesPrefix}_ShipAnchor_Wood";
 
   public const string MBRopeLadder = "MBRopeLadder";
   public const string MBRaft = "MBRaft";
