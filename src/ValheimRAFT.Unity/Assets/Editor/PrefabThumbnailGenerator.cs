@@ -278,7 +278,8 @@ public class PrefabThumbnailGenerator : EditorWindow
         light.shadows = LightShadows.None; // Optional, disable shadows for the preview
 
         // Generate the preview
-        RuntimePreviewGenerator.BackgroundColor = new Color(0,0,0,0);
+        RuntimePreviewGenerator.BackgroundColor = new Color(1, 1, 1, 0); // White background with transparency
+        // RuntimePreviewGenerator.BackgroundColor = new Color(0.5f, 0.5f, 0.5f, 0); // Light gray
 
         var pg = RuntimePreviewGenerator.GenerateModelPreview(obj.transform, width, height, false);
         var texturePath = $"{outputDirPath}{obj.name}.png";
@@ -301,5 +302,50 @@ public class PrefabThumbnailGenerator : EditorWindow
 
         AssetDatabase.WriteImportSettingsIfDirty(texturePath);
         DestroyImmediate(pg);
+    }
+    
+    private Camera previewCamera;
+
+    private void SetupPreviewCamera()
+    {
+        // Create a new camera for preview generation
+        GameObject cameraGO = new GameObject("PreviewCamera");
+        previewCamera = cameraGO.AddComponent<Camera>();
+        previewCamera.orthographic = true; // Optional: Use orthographic projection for a flat view
+        previewCamera.clearFlags = CameraClearFlags.SolidColor;
+        previewCamera.backgroundColor = Color.white; // Background color (optional, can be transparent)
+        previewCamera.transform.position = new Vector3(0, 1, -5); // Position the camera
+        previewCamera.transform.LookAt(Vector3.zero); // Ensure it looks at the object
+
+        // Set up the camera's exposure settings (if you're using post-processing)
+        // previewCamera.exposure = 0.5f; // Adjust as necessary (if you're using post-processing exposure settings)
+    }
+
+    private void CaptureWithCustomCamera(GameObject obj)
+    {
+        // Setup the preview camera
+        SetupPreviewCamera();
+
+        // Render the object with the custom camera settings
+        RenderTexture renderTexture = new RenderTexture(width, height, 24);
+        previewCamera.targetTexture = renderTexture;
+        previewCamera.Render();
+
+        // Capture the texture from the render texture
+        Texture2D texture = new Texture2D(width, height, TextureFormat.RGB24, false);
+        RenderTexture.active = renderTexture;
+        texture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+        texture.Apply();
+
+        // Save the texture as a PNG
+        var texturePath = $"{outputDirPath}{obj.name}.png";
+        byte[] bytes = texture.EncodeToPNG();
+        File.WriteAllBytes(texturePath, bytes);
+
+        // Clean up
+        RenderTexture.active = null;
+        DestroyImmediate(previewCamera.gameObject);
+        DestroyImmediate(renderTexture);
+        DestroyImmediate(texture);
     }
 }

@@ -10,7 +10,7 @@ Material:
   m_Name: wood_piece_valheim_4x4
   m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
   m_Parent: {fileID: 2100000, guid: 1c80cbe309cab584f8979db65874052d, type: 2}
-  m_ModifiedSerializedProperties: 0
+  m_ModifiedSerializedProperties: 8
   m_ValidKeywords:
   - _NORMALMAP
   m_InvalidKeywords:
@@ -46,10 +46,12 @@ Material:
     - _Cutoff: 0.579
     - _DetailNormalMapScale: 0.4
     - _Glossiness: 0
+    - _GlossyReflections: 1
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _RippleDistance: 0
     - _RippleFreq: 1
+    - _SpecularHighlights: 1
     - _ValueNoise: 0.5
     - _ValueNoiseVertex: 0
     m_Colors: []

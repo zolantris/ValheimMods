@@ -18,5 +18,7 @@ public class RigidbodyTestScripts : MonoBehaviour
     void FixedUpdate()
     {
         rbTarget.MovePosition(rbTarget.position + Vector3.forward * Time.fixedDeltaTime * 0.5f);
+        var rotation = rbTarget.rotation;
+        rbTarget.MoveRotation(Quaternion.Euler(rotation.eulerAngles.x,rotation.eulerAngles.y + 1f,rotation.eulerAngles.z));
     }
 }

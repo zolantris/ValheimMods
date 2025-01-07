@@ -27,7 +27,7 @@ namespace ValheimVehicles.SharedScripts
     
     public Transform anchorTransform;
     private Rigidbody anchorRb;
-    public AnchorState currentState = AnchorState.Idle;  // Current state of the anchor (Idle, Dropping, Reeling)
+    public AnchorState currentState = AnchorState.ReeledIn;  // Current state of the anchor (Idle, Dropping, Reeling)
 
     public LineRenderer ropeLine;  // LineRenderer to visualize rope
 
@@ -74,7 +74,7 @@ namespace ValheimVehicles.SharedScripts
             ropeLine = GetComponent<LineRenderer>();
         }
         UpdateRopeVisual();
-        UpdateAnchorState(AnchorState.Idle);
+        UpdateAnchorState(AnchorState.ReeledIn);
     }
 
     public Vector3 GetStartPosition()
@@ -88,7 +88,12 @@ namespace ValheimVehicles.SharedScripts
         HandleKeyInputs();
     }
 
-    void UpdateAnchorState(AnchorState newState)
+    public virtual void OnAnchorStateChange(AnchorState newState)
+    {
+        
+    }
+
+    internal void UpdateAnchorState(AnchorState newState)
     {
         currentState = newState;
         // Execute behavior based on the current state
@@ -122,9 +127,11 @@ namespace ValheimVehicles.SharedScripts
                 anchorCogRb.isKinematic = true;
                 anchorCogJoint.useMotor = false;
                 anchorRb.isKinematic = true;
-                anchorRb.MovePosition(GetStartPosition());
+                anchorRb.Move(GetStartPosition(), anchorRb.transform.parent.rotation);
                 break;
         }
+
+        OnAnchorStateChange(currentState);
     }
 
     void FixedUpdate()
@@ -140,7 +147,10 @@ namespace ValheimVehicles.SharedScripts
                 ReelAnchor();
                 break;
             case AnchorState.Dropped:
+                break;
             case AnchorState.ReeledIn:
+                anchorRb.Move(GetStartPosition(), anchorRb.transform.parent.rotation);
+                break;
             case AnchorState.Idle:
                 // anchorRb.MovePosition(GetStartPosition());
                 break;
@@ -255,11 +265,16 @@ namespace ValheimVehicles.SharedScripts
     {
         if (ropeLine == null) return;
 
+        ropeLine.startWidth = 0.2f;
+        ropeLine.endWidth = 0.2f;
         // Calculate the relative position of the external anchor rope attachment point
-        Vector3 startPosition = externalAnchorRopeAttachmentPoint.position - ropeLine.transform.position;
+        var ropelinePosition = ropeLine.transform.position;
+        Vector3 rotationConnectionPosition =
+            externalAnchorRopeAttachmentPoint.position;
+        Vector3 startPosition = anchorRopeAttachStartPoint.position;
 
         // Calculate the relative position of the anchor rope attachment point (where the rope ends)
-        Vector3 endPosition = anchorRopeAttachmentPoint.position - ropeLine.transform.position;
+        Vector3 endPosition = anchorRopeAttachmentPoint.position;
 
         // The length of the rope (in world space, not local space)
         float ropeLength = Vector3.Distance(startPosition, endPosition);
@@ -268,19 +283,21 @@ namespace ValheimVehicles.SharedScripts
         int numberOfPoints = Mathf.RoundToInt(ropeLength / 2f); // Adjust this divisor for finer or coarser rope segments
 
         // Ensure a minimum of 2 points (start and end) and a maximum of 40 points
-        ropeLine.positionCount = Mathf.Clamp(numberOfPoints + 1, 2, 40);
+        var lerpedPositionCount = Mathf.Clamp(numberOfPoints + 1, 3, 40);
 
         // List to store the positions of the rope segments
         List<Vector3> positions = new List<Vector3>();
 
         // Add the first point (relative position of the externalAnchorRopeAttachmentPoint)
+        positions.Add(rotationConnectionPosition); // This will be the first point of the rope in local space
         positions.Add(startPosition); // This will be the first point of the rope in local space
 
+
         // Loop to interpolate the rope segments
-        for (int i = 1; i < ropeLine.positionCount; i++)
+        for (int i = 1; i < lerpedPositionCount; i++)
         {
             // Calculate interpolation factor (t) between 0 and 1
-            float t = i / (float)(ropeLine.positionCount - 1);
+            float t = i / (float)(lerpedPositionCount - 1);
 
             // Lerp between startPosition (first point) and endPosition (last point)
             Vector3 lerpedPosition = Vector3.Lerp(startPosition, endPosition, t);
@@ -288,7 +305,8 @@ namespace ValheimVehicles.SharedScripts
             // Add this new point (as an offset from the LineRenderer)
             positions.Add(lerpedPosition);
         }
-
+        
+        ropeLine.positionCount = positions.Count;
         // Set the calculated positions to the LineRenderer
         ropeLine.SetPositions(positions.ToArray());
     }

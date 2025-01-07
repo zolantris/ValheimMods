@@ -3,6 +3,7 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.Vehicles.Controllers;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;
@@ -27,7 +28,7 @@ public class AnchorPrefabs : IRegisterPrefab
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(PrefabNames.ShipAnchorWood,LoadValheimVehicleAssets.ShipAnchorWood);
 
-    var anchorMechanismController = prefab.AddComponent<AnchorMechanismController>();
+    var anchorMechanismController = prefab.AddComponent<ShipAnchorController>();
 
     anchorMechanismController.externalAnchorRopeAttachmentPoint =
       anchorMechanismController.transform.Find("attachpoint_rotational");
