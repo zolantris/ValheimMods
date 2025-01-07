@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor.U2D;
+using UnityEngine.SceneManagement;
 using UnityEngine.U2D;
 using LinqUtility = Unity.VisualScripting.LinqUtility;
 using Object = UnityEngine.Object;
@@ -266,14 +267,27 @@ public class PrefabThumbnailGenerator : EditorWindow
     private void Capture(GameObject obj)
     {
         Debug.Log($"called capture for obj {obj.name}");
-        // Uses alpha to make transparent, black is good for edges of object that are not perfectly cut
+
+        // Create a new directional light in the scene
+        GameObject lightGO = new GameObject("PreviewLight");
+        Light light = lightGO.AddComponent<Light>();
+        light.type = LightType.Directional;
+        light.intensity = 1.0f; // You can tweak the intensity
+        light.color = Color.white; // White light
+        light.transform.rotation = Quaternion.Euler(50, -30, 0); // Set the light angle
+        light.shadows = LightShadows.None; // Optional, disable shadows for the preview
+
+        // Generate the preview
         RuntimePreviewGenerator.BackgroundColor = new Color(0,0,0,0);
+
         var pg = RuntimePreviewGenerator.GenerateModelPreview(obj.transform, width, height, false);
         var texturePath = $"{outputDirPath}{obj.name}.png";
         WriteTextureToFile(pg, texturePath);
-        
+
+        // Destroy the light after preview generation
+        DestroyImmediate(lightGO);
+
         AssetDatabase.ImportAsset(texturePath);
-        
         var importer = AssetImporter.GetAtPath(texturePath) as TextureImporter;
         if (importer != null)
         {
@@ -284,7 +298,7 @@ public class PrefabThumbnailGenerator : EditorWindow
         {
             Debug.LogWarning("No importer, this will result in the GeneratedIcons not being written as Sprites");
         }
-        
+
         AssetDatabase.WriteImportSettingsIfDirty(texturePath);
         DestroyImmediate(pg);
     }
