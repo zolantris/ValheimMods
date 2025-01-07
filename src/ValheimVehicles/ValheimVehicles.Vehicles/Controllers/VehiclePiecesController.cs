@@ -183,6 +183,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public List<ZNetView> m_pieces = [];
   internal List<ZNetView> m_ramPieces = [];
+  internal List<ZNetView> m_anchorPieces = [];
   internal List<ZNetView> m_hullPieces = [];
 
   internal List<MastComponent> m_mastPieces = [];
@@ -1192,6 +1193,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
           m_bedPieces.Remove(bed);
           break;
 
+        case ShipAnchorController anchorController:
+          m_anchorPieces.Remove(netView);
+          break;
+        
         case BoardingRampComponent ramp:
           m_boardingRamps.Remove(ramp);
           break;
@@ -2192,12 +2197,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     FixPieceMeshes(netView);
     IgnoreCollidersForAllRamPieces(netView);
+    IgnoreCollidersForAllAnchorPieces(netView);
 
     var shouldRebuildBounds = false;
     totalSailArea = 0;
     m_pieces.Add(netView);
     UpdatePieceCount();
-    // UpdateLowestAveragePoint(netView);
 
     // Cache components
     var components = netView.GetComponents<Component>();
@@ -2231,6 +2236,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         case BoardingRampComponent ramp:
           ramp.ForceRampUpdate();
           m_boardingRamps.Add(ramp);
+          break;
+        
+        case ShipAnchorController anchor:
+          m_anchorPieces.Add(netView);
           break;
 
         case RudderComponent rudder:
@@ -2268,7 +2277,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       var rbs = netView.GetComponentsInChildren<Rigidbody>();
       foreach (var rbsItem in rbs)
         if (!rbsItem.isKinematic)
+        {
+          Logger.LogWarning($"Destroying Rigidbody for root object {rbsItem.transform.root?.name ?? rbsItem.transform.name}");
           Destroy(rbsItem);
+        }
     }
 
     UpdateMass(netView);
@@ -2640,29 +2652,45 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     m_onboardcollider.transform.localPosition = onboardColliderCenter;
     Physics.SyncTransforms();
   }
-
-  public void IgnoreCollidersForAllRamPieces(ZNetView netView)
+  
+  public void IgnoreCollidersForList(ZNetView netView, List<ZNetView> list)
   {
-    if (m_ramPieces.Count <= 0) return;
+    if (list.Count <= 0) return;
     var colliders = netView.GetComponentsInChildren<Collider>();
-    foreach (var mRamPiece in m_ramPieces)
+    foreach (var piece in list.ToList())
     {
-      var ramColliders = mRamPiece.GetComponentsInChildren<Collider>();
+      if (piece == null)
+      {
+        list.Remove(piece);
+        continue;
+      }
+      
+      var pieceColliders = piece.GetComponentsInChildren<Collider>();
 
       foreach (var collider in colliders)
-      foreach (var ramCollider in ramColliders)
-        Physics.IgnoreCollision(collider, ramCollider, true);
+      foreach (var pieceCollider in pieceColliders)
+        Physics.IgnoreCollision(collider, pieceCollider, true);
     }
+  }
+  
+  public void IgnoreCollidersForAllAnchorPieces(ZNetView netView)
+  {
+    IgnoreCollidersForList(netView, m_anchorPieces);
+  }
+  
+  public void IgnoreCollidersForAllRamPieces(ZNetView netView)
+  {
+    IgnoreCollidersForList(netView, m_ramPieces);
   }
 
 
   /// <summary>
-  /// Ignore all colliders on the vehicleShip for a placed ram so it doesn't make the Vehicle Freak out
+  /// Ignore all colliders on the vehicleShip for objects like Rams or Anchors that can cause trouble
   /// </summary>
-  /// <param name="ramColliders">Colliders from a Ram</param>
-  public void IgnoreCollidersOnShipForRams(List<Collider> ramColliders)
+  /// <param name="colliders">Colliders from a Ram</param>
+  public void IgnoreCollidersOnShipForCollection(List<Collider> colliders)
   {
-    foreach (var t in ramColliders)
+    foreach (var t in colliders)
     {
       if (t == null) continue;
 
@@ -2866,7 +2894,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     var colliders = GetCollidersInPiece(go);
 
-    if (RamPrefabs.IsRam(go.name)) IgnoreCollidersOnShipForRams(colliders);
+    if (RamPrefabs.IsRam(go.name)) IgnoreCollidersOnShipForCollection(colliders);
+    if (go.name.Contains(PrefabNames.ShipAnchorWood)) IgnoreCollidersOnShipForCollection(colliders);
 
     IgnoreShipColliders(colliders);
 

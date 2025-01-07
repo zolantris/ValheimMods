@@ -1042,11 +1042,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private void UpdateColliderPositions()
   {
     if (PiecesController == null) return;
-    var convexHullBounds = PiecesController.GetConvexHullBounds()!.Value;
+    var convexHullBounds = PiecesController.GetConvexHullBounds();
+    if (convexHullBounds == null) return;
 
     // var expectedLowestBlockingColliderPoint =
     //   BlockingCollider.transform.position.y - BlockingCollider.bounds.extents.y;
-    var expectedLowestBlockingColliderPoint = convexHullBounds.min.y;
+    var expectedLowestBlockingColliderPoint = convexHullBounds.Value.min.y;
 
     if (IsFlying() || !WaterConfig.WaterBallastEnabled.Value) return;
 
@@ -1072,13 +1073,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // }
 
     // super stuck. do a direct update. But protect the players from being launched. Yikes.
-    if (_lastHighestGroundPoint > convexHullBounds.center.y)
+    if (_lastHighestGroundPoint > convexHullBounds.Value.center.y)
     {
       // force updates the vehicle to this position.
       var position = transform.position;
       position = new Vector3(position.x,
         position.y + (_lastHighestGroundPoint -
-                      convexHullBounds.center.y),
+                      convexHullBounds.Value.center.y),
         position.z);
       transform.position = position;
       UpdateTargetHeight(0);

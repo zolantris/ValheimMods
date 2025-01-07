@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ValheimVehicles.SharedScripts
 {
@@ -22,7 +23,7 @@ namespace ValheimVehicles.SharedScripts
     public Transform anchorRopeAttachStartPoint;
     private Vector3 anchorStartPositionCenterOffset;
     
-    public float maxDropDistance = 10f;  // Maximum depth the anchor can go
+    public float anchorDropDistance = 10f;  // Maximum depth the anchor can go
     public float reelSpeed = 5f;  // Speed at which the anchor reels in
     
     public Transform anchorTransform;
@@ -39,6 +40,8 @@ namespace ValheimVehicles.SharedScripts
     public Action OnAnchorRaise = delegate { };
     public Action OnAnchorDrop = delegate { };
     public Rigidbody prefabRigidbody;
+
+    public static bool CanUseHotkeys = true;
 
     /// <summary>
     /// This rigidbody should not start awakened to prevent collision problems on placement
@@ -77,15 +80,43 @@ namespace ValheimVehicles.SharedScripts
         UpdateAnchorState(AnchorState.ReeledIn);
     }
 
+    private void Update()
+    {
+        if (CanUseHotkeys)
+        {
+            HandleKeyInputs();
+        }
+    }
+    
+    private void FixedUpdate()
+    {
+        if (anchorRb == null) return;
+        // Execute behavior based on the current state
+        switch (currentState)
+        {
+            case AnchorState.Dropping:
+                DropAnchor();
+                break;
+            case AnchorState.Reeling:
+                ReelAnchor();
+                break;
+            case AnchorState.Dropped:
+                break;
+            case AnchorState.ReeledIn:
+                anchorRb.Move(GetStartPosition(), anchorRb.transform.parent.rotation);
+                break;
+            case AnchorState.Idle:
+                // anchorRb.MovePosition(GetStartPosition());
+                break;
+        }
+
+        UpdateRopeVisual();
+    }
+    
     public Vector3 GetStartPosition()
     {
         return anchorRopeAttachStartPoint.position -
                anchorStartPositionCenterOffset;
-    }
-
-    void Update()
-    {
-        HandleKeyInputs();
     }
 
     public virtual void OnAnchorStateChange(AnchorState newState)
@@ -134,31 +165,6 @@ namespace ValheimVehicles.SharedScripts
         OnAnchorStateChange(currentState);
     }
 
-    void FixedUpdate()
-    {
-        if (anchorRb == null) return;
-        // Execute behavior based on the current state
-        switch (currentState)
-        {
-            case AnchorState.Dropping:
-                DropAnchor();
-                break;
-            case AnchorState.Reeling:
-                ReelAnchor();
-                break;
-            case AnchorState.Dropped:
-                break;
-            case AnchorState.ReeledIn:
-                anchorRb.Move(GetStartPosition(), anchorRb.transform.parent.rotation);
-                break;
-            case AnchorState.Idle:
-                // anchorRb.MovePosition(GetStartPosition());
-                break;
-        }
-
-        UpdateRopeVisual();
-    }
-
     private void HandleKeyInputs()
     {
         if (anchorRb == null) return;
@@ -168,6 +174,10 @@ namespace ValheimVehicles.SharedScripts
             {
                 StartDropping();
             }
+            else
+            {
+                StopDropping();
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.R)) // Toggle reeling with 'R' key
@@ -175,6 +185,9 @@ namespace ValheimVehicles.SharedScripts
             if (currentState != AnchorState.Reeling)
             {
                 StartReeling();
+            }else
+            {
+                StopReeling();
             }
         }
     }
@@ -225,7 +238,7 @@ namespace ValheimVehicles.SharedScripts
 
     private void DropAnchor()
     {
-        if (anchorRopeAttachmentPoint.position.y > externalAnchorRopeAttachmentPoint.position.y - maxDropDistance)
+        if (anchorRopeAttachmentPoint.position.y > externalAnchorRopeAttachmentPoint.position.y - anchorDropDistance)
         {
             // Gravity is enabled, so anchor will fall naturally
         }

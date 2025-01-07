@@ -1,0 +1,74 @@
+ManifestFileVersion: 0
+CRC: 1421930781
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 544cdc06045f9cf3053dc6091437c561
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 0e971d6ec910fda0a941f7ca640159c0
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 544cdc06045f9cf3053dc6091437c561
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/ValheimVehicles/Texture/dirtfloor_d.png
+- Assets/ValheimVehicles/Material/wood_piece_bg_wood.mat
+- Assets/ValheimVehicles/Material/wood_piece_valheim_2x2.mat
+- Assets/ValheimVehicles/Texture/dirtfloor_n.png
+- Assets/ValheimVehicles/IconsDeprecated/rope_anchor.fbx
+- Assets/ValheimVehicles/Texture/wood_59_diffuse_256_normal.png
+- Assets/ValheimVehicles/Texture/Planks5c_low_n.png
+- Assets/ValheimVehicles/Texture/iron.png
+- Assets/ValheimVehicles/Shaders/StandardDoubleSided.shader
+- Assets/ValheimVehicles/Texture/blackmetal_d.png
+- Assets/ValheimVehicles/Texture/rope_d.png
+- Assets/ValheimVehicles/Texture/iron_n.png
+- Assets/ValheimVehicles/Material/RopeMat.mat
+- Assets/ValheimVehicles/Material/wood_piece_valheim_2x4.mat
+- Assets/ValheimVehicles/Texture/wood_59_diffuse_256.png
+- Assets/ValheimVehicles/Texture/blackmetal_n.png
+- Assets/ValheimVehicles/Shaders/Custom_Vegetation.shader
+- Assets/ValheimVehicles/Texture/rope_n.png
+- Assets/Horem/Mocks/Shaders/Custom_Piece.shader
+- Assets/ValheimVehicles/Texture/Planks5c_low.png
+- Assets/ValheimVehicles/Shaders/VehicleSailShaderWithMask.shader
+- Assets/ValheimVehicles/Texture/Planks5_Normal.png
+- Assets/ValheimVehicles/Shaders/DirtfloorShader.shader
+- Assets/ValheimVehicles/Prefabs/bottom_stand.prefab
+- Assets/ValheimVehicles/Material/wood.mat
+- Assets/ValheimVehicles/Icons/pirate_skull_uncompressed.png
+- Assets/ValheimVehicles/Material/wood_piece_valheim.mat
+- Assets/ValheimVehicles/Icons/stag.png
+- Assets/ValheimVehicles/BlenderImports/shturval_edit2.FBX
+- Assets/ValheimVehicles/Shaders/VehicleSailShader.shader
+- Assets/ValheimVehicles/Material/iron.mat
+- Assets/ValheimVehicles/BlenderImports/iron.png
+- Assets/Texture2D/Noise.png
+- Assets/ValheimVehicles/Material/iron_metal.mat
+- Assets/Material/woodwall.mat
+- Assets/ValheimVehicles/Material/iron_metal_no_tiling.mat
+Dependencies:
+- C:/Users/fre/dev/repos/ValheimMods/src/ValheimRAFT/AssetBundle/valheim-raft

@@ -1,10 +1,12 @@
 ﻿using System;
+using UnityEngine;
 using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.Vehicles.Controllers;
 
 public class ShipAnchorController : AnchorMechanismController
 {
+  public static float maxAnchorDistance = 40f;
 
   public override void OnAnchorStateChange(AnchorState newState)
   {
@@ -14,7 +16,9 @@ public class ShipAnchorController : AnchorMechanismController
         break;
       case AnchorState.Dropping:
         var position = anchorRopeAttachStartPoint.position;
-        maxDropDistance = position.y - ZoneSystem.instance.GetGroundHeight(position);
+        var distanceFromAnchorToGround =  position.y - ZoneSystem.instance.GetGroundHeight(position);
+        anchorDropDistance = Mathf.Clamp(distanceFromAnchorToGround, 1f,
+          maxAnchorDistance);
         break;
       case AnchorState.Dropped:
         break;
