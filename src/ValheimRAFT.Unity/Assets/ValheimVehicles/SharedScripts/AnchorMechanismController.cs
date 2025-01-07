@@ -2,19 +2,25 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AnchorMechanismController : MonoBehaviour
+namespace ValheimVehicles.SharedScripts
+{
+    public class AnchorMechanismController : MonoBehaviour
 {
     public enum AnchorState
     {
-        Idle,     // Anchor is not moving
-        Dropping, // Anchor is dropping down
-        Reeling   // Anchor is being reeled back up
+        Idle,         // No action is taking place.
+    
+        Dropping,     // The anchor is in the process of being dropped.
+        Dropped,      // The anchor is fully dropped, at the target position.
+    
+        Reeling,      // The anchor is being reeled back in.
+        ReeledIn      // The anchor is fully reeled back in to its starting position.
     }
 
     public Transform externalAnchorRopeAttachmentPoint;  // Point from which the rope is attached (usually the ship)
     public Transform anchorRopeAttachmentPoint;  // Point where the rope is attached (top of the anchor)
     public Transform anchorRopeAttachStartPoint;
-    private Vector3 rbStartPosition;
+    private Vector3 anchorStartPositionCenterOffset;
     
     public float maxDropDistance = 10f;  // Maximum depth the anchor can go
     public float reelSpeed = 5f;  // Speed at which the anchor reels in
@@ -24,17 +30,30 @@ public class AnchorMechanismController : MonoBehaviour
     public AnchorState currentState = AnchorState.Idle;  // Current state of the anchor (Idle, Dropping, Reeling)
 
     public LineRenderer ropeLine;  // LineRenderer to visualize rope
-    public Vector3 RopeStartPosition = new Vector3(0f, 0.7f, 0f);
 
     // for animations
     public HingeJoint anchorCogJoint;                 // Hinge joint for anchor movement
     public Rigidbody anchorCogRb;
-
-    public SpringJoint springJoint; // Spring Joint to attach the anchor to the ship
-
+    
     // callback methods meant for valheim-raft vehicles
     public Action OnAnchorRaise = delegate { };
     public Action OnAnchorDrop = delegate { };
+    public Rigidbody prefabRigidbody;
+
+    /// <summary>
+    /// This rigidbody should not start awakened to prevent collision problems on placement
+    /// </summary>
+    private void Awake()
+    {
+        if (prefabRigidbody == null)
+        {
+            prefabRigidbody = transform.GetComponent<Rigidbody>();
+            if (prefabRigidbody)
+            {
+                prefabRigidbody.Sleep();
+            }
+        }
+    }
 
     void Start()
     {
@@ -42,8 +61,9 @@ public class AnchorMechanismController : MonoBehaviour
         {
             anchorTransform = transform.Find("chain_generator/anchor");
         }
+        
         anchorRb = anchorTransform.GetComponent<Rigidbody>();
-        rbStartPosition = anchorRb.position - Vector3.up * 0.05f;
+        anchorStartPositionCenterOffset = anchorRopeAttachStartPoint.position - anchorTransform.position;
 
         // Initialize gravity state
         SetGravityState(false);
@@ -53,17 +73,14 @@ public class AnchorMechanismController : MonoBehaviour
         {
             ropeLine = GetComponent<LineRenderer>();
         }
-        
-        ropeLine.positionCount = 2;  // Only two points (attachment point and anchor)
-
         UpdateRopeVisual();
+        UpdateAnchorState(AnchorState.Idle);
+    }
 
-        // Add Spring Joint to simulate attachment to the ship
-        // springJoint = anchorTransform.gameObject.AddComponent<SpringJoint>();
-        // springJoint.connectedBody = externalAnchorRopeAttachmentPoint.GetComponent<Rigidbody>();
-        // springJoint.spring = 500f; // Adjust spring force to fit the needed attachment
-        // springJoint.damper = 50f; // Adjust damper to prevent oscillations
-        // springJoint.maxDistance = maxDropDistance;  // Control how far the anchor can move
+    public Vector3 GetStartPosition()
+    {
+        return anchorRopeAttachStartPoint.position -
+               anchorStartPositionCenterOffset;
     }
 
     void Update()
@@ -71,35 +88,61 @@ public class AnchorMechanismController : MonoBehaviour
         HandleKeyInputs();
     }
 
-    void FixedUpdate()
+    void UpdateAnchorState(AnchorState newState)
     {
-        if (anchorRb == null) return;
-        UpdateRopeVisual();
-
+        currentState = newState;
         // Execute behavior based on the current state
         switch (currentState)
         {
             case AnchorState.Dropping:
+                SetGravityState(true);  // Disable gravity when reeling in
                 anchorRb.isKinematic = false;
                 anchorCogRb.isKinematic = false;
                 anchorCogJoint.useMotor = true;
                 anchorCogJoint.axis = Vector3.up * -1;
-                DropAnchor();
                 break;
             case AnchorState.Reeling:
+                SetGravityState(false);  // Disable gravity when reeling in
                 anchorRb.isKinematic = false;
                 anchorCogRb.isKinematic = false;
                 anchorCogJoint.useMotor = true;
                 anchorCogJoint.axis = Vector3.up;
-                ReelAnchor();
                 break;
+            case AnchorState.Dropped:
+                SetGravityState(false);  // Disable gravity when reeling in
+                anchorCogRb.isKinematic = true;
+                anchorCogJoint.useMotor = false;
+                anchorRb.isKinematic = true;
+                break;
+            case AnchorState.ReeledIn:
             case AnchorState.Idle:
-                anchorRb.useGravity = false;
+                SetGravityState(false);  // Disable gravity when reeling in
                 // anchorRb.velocity = Vector3.zero;
                 // anchorRb.angularVelocity = Vector3.zero;
                 anchorCogRb.isKinematic = true;
                 anchorCogJoint.useMotor = false;
                 anchorRb.isKinematic = true;
+                anchorRb.MovePosition(GetStartPosition());
+                break;
+        }
+    }
+
+    void FixedUpdate()
+    {
+        if (anchorRb == null) return;
+        // Execute behavior based on the current state
+        switch (currentState)
+        {
+            case AnchorState.Dropping:
+                DropAnchor();
+                break;
+            case AnchorState.Reeling:
+                ReelAnchor();
+                break;
+            case AnchorState.Dropped:
+            case AnchorState.ReeledIn:
+            case AnchorState.Idle:
+                // anchorRb.MovePosition(GetStartPosition());
                 break;
         }
 
@@ -131,8 +174,7 @@ public class AnchorMechanismController : MonoBehaviour
         if (anchorRb == null) return;
         if (currentState != AnchorState.Dropping)
         {
-            currentState = AnchorState.Dropping;
-            SetGravityState(true);  // Enable gravity when the anchor is dropping
+            UpdateAnchorState(AnchorState.Dropping);
         }
     }
 
@@ -141,11 +183,8 @@ public class AnchorMechanismController : MonoBehaviour
         if (anchorRb == null) return;
         if (currentState == AnchorState.Dropping)
         {
+            UpdateAnchorState(AnchorState.Dropped);
             OnAnchorDrop.Invoke();
-            currentState = AnchorState.Idle;
-            // anchorRb.velocity = Vector3.zero;
-            // anchorRb.angularVelocity = Vector3.zero;
-            SetGravityState(false);
         }
     }
 
@@ -154,8 +193,7 @@ public class AnchorMechanismController : MonoBehaviour
         if (anchorRb == null) return;
         if (currentState != AnchorState.Reeling)
         {
-            currentState = AnchorState.Reeling;
-            SetGravityState(false);  // Disable gravity when reeling in
+            UpdateAnchorState(AnchorState.Reeling);
         }
     }
 
@@ -165,11 +203,7 @@ public class AnchorMechanismController : MonoBehaviour
         
         if (currentState == AnchorState.Reeling)
         {
-            // anchorRb.position = rbStartPosition;
-            // currentState = AnchorState.Idle;
-            anchorRb.velocity = new Vector3(anchorRb.velocity.x, 0f,anchorRb.velocity.z);
-            // anchorRb.angularVelocity = Vector3.zero;
-            SetGravityState(false);
+            UpdateAnchorState(AnchorState.ReeledIn);
             OnAnchorRaise.Invoke();
         }
     }
@@ -189,37 +223,6 @@ public class AnchorMechanismController : MonoBehaviour
         {
             StopDropping();
         }
-    }
-
-    public float maxSpeed = 20f;
-    void ApplyVelocityChangeToCenterAnchor()
-    {
-        // Calculate the difference in position (Vector3)
-        Vector3 directionToTarget = anchorRopeAttachStartPoint.position - anchorRb.position;
-
-        // Calculate the desired velocity change (velocity needed to move towards the target)
-        // We ignore the Y-axis for now since we're focusing on X and Z movement
-        directionToTarget.y = 0f;
-
-        // If the distance is very small, don't apply any velocity
-        if (directionToTarget.sqrMagnitude < 0.1f)
-        {
-            anchorRb.velocity = Vector3.zero;  // Stop the movement if close enough
-            return;
-        }
-
-        // Normalize the direction to get a unit vector (direction only)
-        directionToTarget.Normalize();
-
-        // Multiply by maxSpeed to get the velocity change
-        Vector3 velocityChange = directionToTarget * maxSpeed;
-
-        // Apply the calculated velocity change to the Rigidbody
-        // We use `velocity` to directly set the velocity, as we're using a "velocity change" approach
-        anchorRb.velocity = new Vector3(velocityChange.x, anchorRb.velocity.y, velocityChange.z);
-
-        // Optionally, apply a "softening" factor (e.g., reduce velocity when close to target)
-        // You could also apply a damping factor to gradually slow down as you approach the target
     }
 
     private void ReelAnchor()
@@ -289,6 +292,5 @@ public class AnchorMechanismController : MonoBehaviour
         // Set the calculated positions to the LineRenderer
         ropeLine.SetPositions(positions.ToArray());
     }
-
-
+}
 }

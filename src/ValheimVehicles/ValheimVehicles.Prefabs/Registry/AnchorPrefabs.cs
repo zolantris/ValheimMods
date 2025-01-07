@@ -30,22 +30,22 @@ public class AnchorPrefabs : IRegisterPrefab
     var anchorMechanismController = prefab.AddComponent<AnchorMechanismController>();
 
     anchorMechanismController.externalAnchorRopeAttachmentPoint =
-      anchorMechanismController.transform.Find("attachpoint_chain_generator");
+      anchorMechanismController.transform.Find("attachpoint_rotational");
     anchorMechanismController.anchorRopeAttachmentPoint =
       anchorMechanismController.transform.Find(
-        "chain_generator/anchor/attachpoint_anchor");
+        "anchor/attachpoint_anchor");
    
     anchorMechanismController.anchorRopeAttachStartPoint =
       anchorMechanismController.transform.Find("attachpoint_anchor_start");
     anchorMechanismController.anchorTransform =
-      anchorMechanismController.transform.Find("chain_generator/anchor");
+      anchorMechanismController.transform.Find("anchor");
     
     anchorMechanismController.ropeLine =
       anchorMechanismController.transform.Find("rope_line").GetComponent<LineRenderer>();
     
     var cogTransform =
       anchorMechanismController.transform.Find(
-        "anchor_chain_cogs/cogs/chain_cog");
+        "anchor_reel/rotational");
 
     anchorMechanismController.anchorCogJoint =
       cogTransform.GetComponent<HingeJoint>();
@@ -57,7 +57,7 @@ public class AnchorPrefabs : IRegisterPrefab
       PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.ShipAnchorWood,
         prefab);
 
-    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
       new PieceConfig
       {
         Name = piece.name,
