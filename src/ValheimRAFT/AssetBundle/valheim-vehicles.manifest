@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2363597730
+CRC: 1811711387
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 1c880ba7f765acdf995e015da93dbb8e
+    Hash: 6d830f517cb918bd4687b07eb46b4cf4
   TypeTreeHash:
     serializedVersion: 2
-    Hash: e3009fb610cfd1ea8286ec0812e156ac
+    Hash: d45ba39a9efe1eb32cbf9b913143c971
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 1c880ba7f765acdf995e015da93dbb8e
+    Hash: 6d830f517cb918bd4687b07eb46b4cf4
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -41,8 +41,6 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 8233d90336aea43098adf6dbabd606a2, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 37593e1934874fe4db91a205982d109e, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
@@ -69,14 +67,6 @@ ClassTypes:
 - Class: 687078895
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
-- AssemblyName: Unity.ProBuilder
-  ClassName: UnityEngine.ProBuilder.AutoUnwrapSettings
-- AssemblyName: Unity.ProBuilder
-  ClassName: UnityEngine.ProBuilder.Face
-- AssemblyName: Unity.ProBuilder
-  ClassName: UnityEngine.ProBuilder.SharedVertex
-- AssemblyName: Unity.ProBuilder
-  ClassName: UnityEngine.ProBuilder.UnwrapParameters
 - AssemblyName: UnityEngine.CoreModule
   ClassName: UnityEngine.Events.PersistentCallGroup
 - AssemblyName: UnityEngine.UI

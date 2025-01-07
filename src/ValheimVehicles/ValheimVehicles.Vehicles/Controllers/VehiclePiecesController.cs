@@ -2263,7 +2263,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
 
     // Remove non-kinematic rigidbodies if not a ram
-    if (!RamPrefabs.IsRam(netView.name))
+    if (!RamPrefabs.IsRam(netView.name) && !netView.name.Contains(PrefabNames.ShipAnchorWood))
     {
       var rbs = netView.GetComponentsInChildren<Rigidbody>();
       foreach (var rbsItem in rbs)

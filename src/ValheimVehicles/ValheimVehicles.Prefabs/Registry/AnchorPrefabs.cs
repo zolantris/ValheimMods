@@ -1,6 +1,8 @@
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
+using UnityEngine;
+using ValheimVehicles.SharedScripts;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;
@@ -17,10 +19,37 @@ public class AnchorPrefabs : IRegisterPrefab
     RegisterAnchorWoodPrefab();
   }
 
+  /// <summary>
+  /// @todo ship the binary reference back to Unity so these values do not have to be assigned at runtime again
+  /// </summary>
   public void RegisterAnchorWoodPrefab()
   {
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(PrefabNames.ShipAnchorWood,LoadValheimVehicleAssets.ShipAnchorWood);
+
+    var anchorMechanismController = prefab.AddComponent<AnchorMechanismController>();
+
+    anchorMechanismController.externalAnchorRopeAttachmentPoint =
+      anchorMechanismController.transform.Find("attachpoint_chain_generator");
+    anchorMechanismController.anchorRopeAttachmentPoint =
+      anchorMechanismController.transform.Find(
+        "chain_generator/anchor/attachpoint_anchor");
+   
+    anchorMechanismController.anchorRopeAttachStartPoint =
+      anchorMechanismController.transform.Find("attachpoint_anchor_start");
+    anchorMechanismController.anchorTransform =
+      anchorMechanismController.transform.Find("chain_generator/anchor");
+    
+    anchorMechanismController.ropeLine =
+      anchorMechanismController.transform.Find("rope_line").GetComponent<LineRenderer>();
+    
+    var cogTransform =
+      anchorMechanismController.transform.Find(
+        "anchor_chain_cogs/cogs/chain_cog");
+
+    anchorMechanismController.anchorCogJoint =
+      cogTransform.GetComponent<HingeJoint>();
+    anchorMechanismController.anchorCogRb =cogTransform.GetComponent<Rigidbody>();
     
     var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     
