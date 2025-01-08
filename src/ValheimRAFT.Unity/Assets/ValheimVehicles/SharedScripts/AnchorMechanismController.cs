@@ -87,6 +87,18 @@ namespace ValheimVehicles.SharedScripts
             HandleKeyInputs();
         }
     }
+
+    private void UpdateCogRotation()
+    {
+        if (Mathf.Abs(anchorRb.velocity.y) < 0.01f)
+        {
+            anchorCogRb.isKinematic = true;
+        }
+        else
+        {
+            anchorCogRb.isKinematic = false;
+        }
+    }
     
     private void FixedUpdate()
     {
@@ -96,9 +108,11 @@ namespace ValheimVehicles.SharedScripts
         {
             case AnchorState.Dropping:
                 DropAnchor();
+                UpdateCogRotation();
                 break;
             case AnchorState.Reeling:
                 ReelAnchor();
+                UpdateCogRotation();
                 break;
             case AnchorState.Dropped:
                 break;
@@ -145,21 +159,18 @@ namespace ValheimVehicles.SharedScripts
                 anchorCogJoint.axis = Vector3.up;
                 break;
             case AnchorState.Dropped:
-                SetGravityState(false);  // Disable gravity when reeling in
-                anchorCogRb.isKinematic = true;
-                anchorCogJoint.useMotor = false;
-                anchorRb.isKinematic = true;
-                break;
             case AnchorState.ReeledIn:
             case AnchorState.Idle:
-                SetGravityState(false);  // Disable gravity when reeling in
-                // anchorRb.velocity = Vector3.zero;
-                // anchorRb.angularVelocity = Vector3.zero;
+                SetGravityState(false); 
                 anchorCogRb.isKinematic = true;
-                anchorCogJoint.useMotor = false;
                 anchorRb.isKinematic = true;
-                anchorRb.Move(GetStartPosition(), anchorRb.transform.parent.rotation);
+                anchorCogJoint.useMotor = false;
                 break;
+        }
+
+        if (currentState is AnchorState.ReeledIn or AnchorState.Idle)
+        {
+            anchorRb.Move(GetStartPosition(), anchorRb.transform.parent.rotation);
         }
 
         OnAnchorStateChange(currentState);

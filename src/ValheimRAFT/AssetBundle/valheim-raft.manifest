@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2582834423
+CRC: 1500109362
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: c4f14cc0a7120119690becb766e016ca
+    Hash: 87c729a317c9cc395a634dc4ae9d9766
   TypeTreeHash:
     serializedVersion: 2
     Hash: fe5e120dcd104e5f53ee6ff03d3ba42b
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: c4f14cc0a7120119690becb766e016ca
+    Hash: 87c729a317c9cc395a634dc4ae9d9766
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -120,7 +120,6 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel.prefab
 - Assets/ValheimVehicles/Prefabs/boarding_ramp.prefab
 - Assets/ValheimVehicles/Prefabs/rope_anchor.prefab
-- Assets/ValheimVehicles/Prefabs/chain_link_mesh.prefab
 - Assets/ValheimVehicles/Prefabs/chain_link.prefab
 - Assets/ValheimVehicles/Prefabs/dirt_floor.prefab
 - Assets/ValheimVehicles/Texture/sail.png

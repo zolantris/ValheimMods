@@ -595,7 +595,7 @@ MonoBehaviour:
   externalAnchorRopeAttachmentPoint: {fileID: 8314048746296347427}
   anchorRopeAttachmentPoint: {fileID: 4709761718382251992}
   anchorRopeAttachStartPoint: {fileID: 1744322910015913269}
-  maxDropDistance: 10
+  anchorDropDistance: 10
   reelSpeed: 4
   anchorTransform: {fileID: 6537845648607202259}
   currentState: 0
@@ -2195,11 +2195,11 @@ Rigidbody:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 4294967295
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 1
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 126
   m_CollisionDetection: 0
