@@ -48,8 +48,6 @@ public class AnchorPrefabs : IRegisterPrefab
       anchorMechanismController.transform.Find(
         "anchor_reel/rotational");
     
-    anchorMechanismController.anchorCogRb =cogTransform.GetComponent<Rigidbody>();
-    
     var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     
     var piece =

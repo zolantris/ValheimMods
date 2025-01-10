@@ -11,7 +11,7 @@ namespace ValheimVehicles.Vehicles.Controllers;
 /// </summary>
 public class VehicleAnchorMechanismController : AnchorMechanismController
 {
-  public static float maxAnchorDistance = 40f;
+  public const float maxAnchorDistance = 40f;
 
   public void Awake()
   {

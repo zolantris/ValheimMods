@@ -1351,11 +1351,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 3372238094297302022}
   m_SourcePrefab: {fileID: 100100000, guid: 5413cc14b8af0b24099c0ff98f47316f, type: 3}
---- !u!54 &515505324451965937 stripped
-Rigidbody:
-  m_CorrespondingSourceObject: {fileID: 5512659033041169445, guid: 5413cc14b8af0b24099c0ff98f47316f, type: 3}
-  m_PrefabInstance: {fileID: 5451492392379893716}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &791499005105539084 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4709761718382251992, guid: 5413cc14b8af0b24099c0ff98f47316f, type: 3}
@@ -1386,13 +1381,15 @@ MonoBehaviour:
   rotationAnchorRopeAttachpoint: {fileID: 4091230241380027639}
   anchorRopeAttachmentPoint: {fileID: 791499005105539084}
   anchorRopeAttachStartPoint: {fileID: 6022019702646029025}
+  anchorReelTransform: {fileID: 0}
+  anchorReelCogsTransform: {fileID: 0}
   anchorDropDistance: 10
   reelSpeed: 4
   reelCogAngleMult: 15
   anchorTransform: {fileID: 1233001723591429127}
   currentState: 0
   ropeLine: {fileID: 3131161496094739256}
-  anchorCogRb: {fileID: 515505324451965937}
+  anchorCogRb: {fileID: 0}
   prefabRigidbody: {fileID: 0}
   CanUseHotkeys: 1
 --- !u!120 &3131161496094739256 stripped
@@ -1418,7 +1415,7 @@ MeshCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 4294967295
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
