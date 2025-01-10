@@ -5,8 +5,6 @@ using UnityEngine.Serialization;
 
 namespace ValheimVehicles.SharedScripts
 {
-    public class AnchorMechanismController : MonoBehaviour
-{
     public enum AnchorState
     {
         Idle,         // No action is taking place.
@@ -17,31 +15,37 @@ namespace ValheimVehicles.SharedScripts
         Reeling,      // The anchor is being reeled back in.
         ReeledIn      // The anchor is fully reeled back in to its starting position.
     }
+    
+    public class AnchorMechanismController : ParentCollisionListener
+{
 
-    public Transform externalAnchorRopeAttachmentPoint;  // Point from which the rope is attached (usually the ship)
+    public Transform rotationAnchorRopeAttachpoint;  // Point from which the rope is attached (usually the ship)
     public Transform anchorRopeAttachmentPoint;  // Point where the rope is attached (top of the anchor)
     public Transform anchorRopeAttachStartPoint;
     private Vector3 anchorStartPositionCenterOffset;
     
     public float anchorDropDistance = 10f;  // Maximum depth the anchor can go
     public float reelSpeed = 5f;  // Speed at which the anchor reels in
+    public float reelCogAngleMult = 15f;  // Speed at which the anchor reels in
     
     public Transform anchorTransform;
     private Rigidbody anchorRb;
     public AnchorState currentState = AnchorState.ReeledIn;  // Current state of the anchor (Idle, Dropping, Reeling)
 
     public LineRenderer ropeLine;  // LineRenderer to visualize rope
-
-    // for animations
-    public HingeJoint anchorCogJoint;                 // Hinge joint for anchor movement
-    public Rigidbody anchorCogRb;
     
-    // callback methods meant for valheim-raft vehicles
-    public Action OnAnchorRaise = delegate { };
-    public Action OnAnchorDrop = delegate { };
+    public Rigidbody anchorCogRb;
     public Rigidbody prefabRigidbody;
 
-    public static bool CanUseHotkeys = true;
+    public bool CanUseHotkeys = true;
+    
+    public override void OnChildCollisionEnter(Collision collision)
+    {
+        if (currentState == AnchorState.Dropping && collision.gameObject.layer == LayerMask.NameToLayer("terrain"))
+        {
+            UpdateAnchorState(AnchorState.Dropped);
+        }
+    }
 
     /// <summary>
     /// This rigidbody should not start awakened to prevent collision problems on placement
@@ -58,18 +62,16 @@ namespace ValheimVehicles.SharedScripts
         }
     }
 
-    void Start()
+    private void Start()
     {
         if (anchorTransform == null)
         {
             anchorTransform = transform.Find("chain_generator/anchor");
         }
-        
+
+        anchorTransform.Find("scalar/colliders").gameObject.AddComponent<ChildCollisionDetector>();
         anchorRb = anchorTransform.GetComponent<Rigidbody>();
         anchorStartPositionCenterOffset = anchorRopeAttachStartPoint.position - anchorTransform.position;
-
-        // Initialize gravity state
-        SetGravityState(false);
 
         // Initialize LineRenderer for rope visualization
         if (ropeLine == null)
@@ -87,20 +89,8 @@ namespace ValheimVehicles.SharedScripts
             HandleKeyInputs();
         }
     }
-
-    private void UpdateCogRotation()
-    {
-        if (Mathf.Abs(anchorRb.velocity.y) < 0.01f)
-        {
-            anchorCogRb.isKinematic = true;
-        }
-        else
-        {
-            anchorCogRb.isKinematic = false;
-        }
-    }
     
-    private void FixedUpdate()
+    public virtual void FixedUpdate()
     {
         if (anchorRb == null) return;
         // Execute behavior based on the current state
@@ -108,19 +98,18 @@ namespace ValheimVehicles.SharedScripts
         {
             case AnchorState.Dropping:
                 DropAnchor();
-                UpdateCogRotation();
                 break;
             case AnchorState.Reeling:
                 ReelAnchor();
-                UpdateCogRotation();
                 break;
             case AnchorState.Dropped:
                 break;
             case AnchorState.ReeledIn:
-                anchorRb.Move(GetStartPosition(), anchorRb.transform.parent.rotation);
+                // anchorRb.transform.position = GetStartPosition();
+                // anchorRb.transform.rotation =
+                //     anchorRb.transform.parent.rotation;
                 break;
             case AnchorState.Idle:
-                // anchorRb.MovePosition(GetStartPosition());
                 break;
         }
 
@@ -133,10 +122,7 @@ namespace ValheimVehicles.SharedScripts
                anchorStartPositionCenterOffset;
     }
 
-    public virtual void OnAnchorStateChange(AnchorState newState)
-    {
-        
-    }
+    public virtual void OnAnchorStateChange(AnchorState newState) {}
 
     internal void UpdateAnchorState(AnchorState newState)
     {
@@ -145,33 +131,19 @@ namespace ValheimVehicles.SharedScripts
         switch (currentState)
         {
             case AnchorState.Dropping:
-                SetGravityState(true);  // Disable gravity when reeling in
-                anchorRb.isKinematic = false;
-                anchorCogRb.isKinematic = false;
-                anchorCogJoint.useMotor = true;
-                anchorCogJoint.axis = Vector3.up * -1;
-                break;
             case AnchorState.Reeling:
-                SetGravityState(false);  // Disable gravity when reeling in
-                anchorRb.isKinematic = false;
-                anchorCogRb.isKinematic = false;
-                anchorCogJoint.useMotor = true;
-                anchorCogJoint.axis = Vector3.up;
-                break;
             case AnchorState.Dropped:
             case AnchorState.ReeledIn:
             case AnchorState.Idle:
-                SetGravityState(false); 
                 anchorCogRb.isKinematic = true;
                 anchorRb.isKinematic = true;
-                anchorCogJoint.useMotor = false;
                 break;
         }
 
-        if (currentState is AnchorState.ReeledIn or AnchorState.Idle)
-        {
-            anchorRb.Move(GetStartPosition(), anchorRb.transform.parent.rotation);
-        }
+        // if (currentState is AnchorState.ReeledIn or AnchorState.Idle)
+        // {
+        //     anchorRb.Move(GetStartPosition(), anchorRb.transform.parent.rotation);
+        // }
 
         OnAnchorStateChange(currentState);
     }
@@ -218,7 +190,6 @@ namespace ValheimVehicles.SharedScripts
         if (currentState == AnchorState.Dropping)
         {
             UpdateAnchorState(AnchorState.Dropped);
-            OnAnchorDrop.Invoke();
         }
     }
 
@@ -238,20 +209,19 @@ namespace ValheimVehicles.SharedScripts
         if (currentState == AnchorState.Reeling)
         {
             UpdateAnchorState(AnchorState.ReeledIn);
-            OnAnchorRaise.Invoke();
         }
     }
-
-    private void SetGravityState(bool isEnabled)
-    {
-        anchorRb.useGravity = isEnabled;
-    }
-
+    
     private void DropAnchor()
     {
-        if (anchorRopeAttachmentPoint.position.y > externalAnchorRopeAttachmentPoint.position.y - anchorDropDistance)
+        if (anchorRopeAttachmentPoint.position.y > rotationAnchorRopeAttachpoint.position.y - anchorDropDistance)
         {
-            // Gravity is enabled, so anchor will fall naturally
+            var deltaReelSpeed =  reelSpeed * 1.5f * Time.fixedDeltaTime;
+
+            // anchorRb.MovePosition(anchorRb.position + Vector3.down * deltaReelSpeed);
+            var cogEuler = anchorCogRb.rotation.eulerAngles;
+            
+            anchorCogRb.transform.rotation = Quaternion.Euler(cogEuler.x - reelCogAngleMult  * deltaReelSpeed, Mathf.Clamp01(cogEuler.y), Mathf.Clamp01(cogEuler.z));
         }
         else
         {
@@ -261,16 +231,14 @@ namespace ValheimVehicles.SharedScripts
 
     private void ReelAnchor()
     {
-        var deltaPosition = anchorRopeAttachmentPoint.position.y - anchorTransform.position.y;
-        
         // Only reel if the anchor is below the attachment point (on the Y-axis)
         if (anchorRopeAttachmentPoint.position.y < anchorRopeAttachStartPoint.position.y)
         {
-            // springJoint.maxDistance = Mathf.Clamp(springJoint.maxDistance - Time.fixedDeltaTime * reelSpeed, 0,
-                // maxDropDistance);
-            // ApplyVelocityChangeToCenterAnchor();
-            anchorRb.velocity = Vector3.up * reelSpeed * Mathf.Clamp01(deltaPosition);
-            // anchorRb.velocity = new Vector3(anchorRb.velocity.x, reelSpeed * Mathf.Clamp01(deltaPosition), anchorRb.velocity.z);
+            var deltaReelSpeed =  reelSpeed *  Time.fixedDeltaTime;
+            
+            // anchorRb.MovePosition(anchorRb.position + Vector3.up * deltaReelSpeed);
+            var cogEuler = anchorCogRb.rotation.eulerAngles;
+            anchorCogRb.transform.rotation = Quaternion.Euler(cogEuler.x + reelCogAngleMult * deltaReelSpeed, Mathf.Clamp01(cogEuler.y), Mathf.Clamp01(cogEuler.z));
 
             // Check if the anchor is close enough to the attachment point
             if (anchorRopeAttachmentPoint.position.y > anchorRopeAttachStartPoint.position.y)
@@ -285,54 +253,97 @@ namespace ValheimVehicles.SharedScripts
         }
     }
 
-    private void UpdateRopeVisual()
+  private void UpdateRopeVisual()
+{
+    if (ropeLine == null) return;
+
+    ropeLine.useWorldSpace = false;  // Ensure the rope uses local space.
+    ropeLine.startWidth = 0.2f;
+    ropeLine.endWidth = 0.2f;
+
+    // Get the transform of the LineRenderer and the relative positions of the points in local space.
+    var ropelineTransform = ropeLine.transform;
+    
+    // Calculate the relative local positions from the RopeLine to the anchor points (ignore world space)
+    var localStartPosition = ropelineTransform.InverseTransformPoint(anchorRopeAttachStartPoint.position);
+    var localEndPosition = ropelineTransform.InverseTransformPoint(anchorRopeAttachmentPoint.position);
+
+    // The length of the rope in world space (but it's easier to use the local difference here)
+    var ropeLength = Vector3.Distance(localStartPosition, localEndPosition);
+
+    // Number of segments based on rope length (adjust this divisor for finer or coarser rope segments)
+    int numberOfPoints = Mathf.RoundToInt(ropeLength / 2f); // Adjust this divisor for finer or coarser rope segments
+
+    // Ensure a minimum of 2 points (start and end) and a maximum of 40 points
+    var lerpedPositionCount = Mathf.Clamp(numberOfPoints + 1, 3, 40);
+
+    // List to store the positions of the rope segments in local space
+    var positions = new List<Vector3>();
+
+    // Add the first point (local position of the start point)
+    positions.Add(localStartPosition); // This will be the first point of the rope in local space
+
+    // Loop to interpolate the rope segments in local space
+    for (var i = 1; i < lerpedPositionCount; i++)
     {
-        if (ropeLine == null) return;
+        // Calculate interpolation factor (t) between 0 and 1
+        var t = i / (float)(lerpedPositionCount - 1);
 
-        ropeLine.startWidth = 0.2f;
-        ropeLine.endWidth = 0.2f;
-        // Calculate the relative position of the external anchor rope attachment point
-        var ropelinePosition = ropeLine.transform.position;
-        Vector3 rotationConnectionPosition =
-            externalAnchorRopeAttachmentPoint.position;
-        Vector3 startPosition = anchorRopeAttachStartPoint.position;
+        // Lerp between startPosition (first point) and endPosition (last point) in local space
+        Vector3 lerpedPosition = Vector3.Lerp(localStartPosition, localEndPosition, t);
 
-        // Calculate the relative position of the anchor rope attachment point (where the rope ends)
-        Vector3 endPosition = anchorRopeAttachmentPoint.position;
+        // Add this new point (as an offset from the LineRenderer in local space)
+        positions.Add(lerpedPosition);
+    }
+    
+    // Add the last point (local position of the end point)
+    positions.Add(localEndPosition);  // This will be the last point of the rope in local space
+    
+    ropeLine.positionCount = positions.Count;
+    // Set the calculated positions to the LineRenderer in local space
+    ropeLine.SetPositions(positions.ToArray());
+}
 
-        // The length of the rope (in world space, not local space)
-        float ropeLength = Vector3.Distance(startPosition, endPosition);
-
-        // Number of segments based on rope length (adjust segment density here)
-        int numberOfPoints = Mathf.RoundToInt(ropeLength / 2f); // Adjust this divisor for finer or coarser rope segments
-
-        // Ensure a minimum of 2 points (start and end) and a maximum of 40 points
-        var lerpedPositionCount = Mathf.Clamp(numberOfPoints + 1, 3, 40);
-
-        // List to store the positions of the rope segments
-        List<Vector3> positions = new List<Vector3>();
-
-        // Add the first point (relative position of the externalAnchorRopeAttachmentPoint)
-        positions.Add(rotationConnectionPosition); // This will be the first point of the rope in local space
-        positions.Add(startPosition); // This will be the first point of the rope in local space
-
-
-        // Loop to interpolate the rope segments
-        for (int i = 1; i < lerpedPositionCount; i++)
+    /// <summary>
+    /// For validating anchor state is in safe range. Likely not needed in favor of GetSafeAnchorState
+    /// </summary>
+    /// <param name="anchorState"></param>
+    /// <returns></returns>
+    public static bool IsAnchorStateValid(AnchorState anchorState)
+    {
+        switch (anchorState)
         {
-            // Calculate interpolation factor (t) between 0 and 1
-            float t = i / (float)(lerpedPositionCount - 1);
-
-            // Lerp between startPosition (first point) and endPosition (last point)
-            Vector3 lerpedPosition = Vector3.Lerp(startPosition, endPosition, t);
-
-            // Add this new point (as an offset from the LineRenderer)
-            positions.Add(lerpedPosition);
+            case AnchorState.Idle:
+            case AnchorState.Dropping:
+            case AnchorState.Dropped:
+            case AnchorState.Reeling:
+            case AnchorState.ReeledIn:
+                return true;
+            default:
+                // Logger.LogError("Invalid anchor state. Enum out of range");
+                return false;
         }
-        
-        ropeLine.positionCount = positions.Count;
-        // Set the calculated positions to the LineRenderer
-        ropeLine.SetPositions(positions.ToArray());
+    }
+    
+    /// <summary>
+    /// Returns a safe range for anchor state
+    /// </summary>
+    /// <param name="anchorStateInt"></param>
+    /// <returns></returns>
+    public static AnchorState GetSafeAnchorState(int anchorStateInt)
+    {
+        switch (anchorStateInt)
+        {
+            case (int)AnchorState.Idle:
+            case (int)AnchorState.Dropping:
+            case (int)AnchorState.Dropped:
+            case (int)AnchorState.Reeling:
+            case (int)AnchorState.ReeledIn:
+                return (AnchorState)anchorStateInt;
+            default:
+                // Logger.LogError("Invalid anchor state. Enum out of range");
+                return AnchorState.ReeledIn;
+        }
     }
 }
 }

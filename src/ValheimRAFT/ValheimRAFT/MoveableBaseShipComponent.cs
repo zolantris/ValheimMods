@@ -128,7 +128,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     if (m_nview.m_zdo != null)
     {
       m_flags =
-        (MBFlags)m_nview.m_zdo.GetInt(VehicleZdoVars.VehicleFlags,
+        (MBFlags)m_nview.m_zdo.GetInt(VehicleZdoVars.DEPRECATED_VehicleFlags,
           (int)m_flags);
       var newTransform = m_flags.HasFlag(MBFlags.HideMesh)
         ? Vector3.zero
@@ -265,7 +265,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_flags = state
       ? m_flags | MBFlags.IsAnchored
       : m_flags & ~MBFlags.IsAnchored;
-    m_nview.m_zdo.Set(VehicleZdoVars.VehicleFlags, (int)m_flags);
+    m_nview.m_zdo.Set(VehicleZdoVars.DEPRECATED_VehicleFlags, (int)m_flags);
   }
 
   internal void SetVisual(bool state)
@@ -278,7 +278,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     m_flags = state
       ? m_flags | MBFlags.HideMesh
       : m_flags & ~MBFlags.HideMesh;
-    m_nview.m_zdo.Set(VehicleZdoVars.VehicleFlags, (int)m_flags);
+    m_nview.m_zdo.Set(VehicleZdoVars.DEPRECATED_VehicleFlags, (int)m_flags);
     UpdateVisual();
   }
 }

@@ -184,6 +184,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public List<ZNetView> m_pieces = [];
   internal List<ZNetView> m_ramPieces = [];
   internal List<ZNetView> m_anchorPieces = [];
+  internal List<VehicleAnchorMechanismController> m_anchorMechanismComponents = [];
   internal List<ZNetView> m_hullPieces = [];
 
   internal List<MastComponent> m_mastPieces = [];
@@ -1193,7 +1194,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
           m_bedPieces.Remove(bed);
           break;
 
-        case ShipAnchorController anchorController:
+        case VehicleAnchorMechanismController anchorMechanismController:
+          m_anchorMechanismComponents.Remove(anchorMechanismController);
           m_anchorPieces.Remove(netView);
           break;
         
@@ -1759,6 +1761,26 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
            Vector3.zero;
   }
 
+  public void InitAnchorComponent(VehicleAnchorMechanismController anchorComponent)
+  {
+    if (anchorComponent.MovementController == null && MovementController != null)
+    {
+      anchorComponent.MovementController = MovementController;
+    }
+  }
+
+  /// <summary>
+  /// Binds the Movement to the anchor components and allows for the anchor hotkeys to toggle all anchors on the ship
+  /// </summary>
+  /// <param name="anchorState"></param>
+  public void UpdateAnchorState(AnchorState anchorState)
+  {
+    foreach (var anchorComponent in m_anchorMechanismComponents)
+    {
+      anchorComponent.UpdateAnchorState(anchorState);
+    }
+  }
+
   /**
    * A cached getter for sail size. Cache invalidates when a piece is added or removed
    *
@@ -2238,7 +2260,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
           m_boardingRamps.Add(ramp);
           break;
         
-        case ShipAnchorController anchor:
+        case VehicleAnchorMechanismController anchorMechanismController:
+          m_anchorMechanismComponents.Add(anchorMechanismController);
+          InitAnchorComponent(anchorMechanismController);
           m_anchorPieces.Add(netView);
           break;
 
@@ -2422,12 +2446,23 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         .localRotation);
   }
 
+  /// <summary>
+  /// For items that cannot be included within bounds without causing problems. E.G movable items that still need to be within the PiecesController
+  /// </summary>
+  /// <param name="name"></param>
+  /// <returns></returns>
+  public bool IsExcludedBoundsItem(string name)
+  {
+    if (name.StartsWith(PrefabNames.ShipAnchorWood)) return true;
+    return false;
+  }
+
   public void RebuildConvexHull()
   {
     if (VehicleInstance?.Instance == null) return;
 
     Physics.SyncTransforms();
-    var nvChildGameObjects = m_pieces.Select(x => x.gameObject).ToList();
+    var nvChildGameObjects = m_pieces.Select(x => x.gameObject).Where(x => !IsExcludedBoundsItem(x.gameObject.name)).ToList();
     convexHullComponent
       .GenerateMeshesFromChildColliders(VehicleInstance.Instance.gameObject,
         PhysicsConfig.convexHullJoinDistanceThreshold.Value,
@@ -2455,49 +2490,18 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     _pendingHullBounds = new Bounds();
     _pendingVehicleBounds = new Bounds();
 
-    // if (convexHullMeshes.Count > 0)
-    // {
-    //   for (var index = 0; index < convexHullMeshes.Count; index++)
-    //   {
-    //     var convexHullMesh = convexHullMeshes[index];
-    //     var meshRenderer = convexHullMesh.GetComponent<MeshRenderer>();
-    //     if (meshRenderer == null) continue;
-    //
-    //     // Get world space bounds
-    //     var worldBounds = meshRenderer.bounds;
-    //
-    //     // Convert bounds to local space
-    //     var transformLossy = transform.lossyScale;
-    //     var localCenter = transform.InverseTransformPoint(worldBounds.center);
-    //     var localSize = new Vector3(
-    //       worldBounds.size.x / transformLossy.x,
-    //       worldBounds.size.y / transformLossy.y,
-    //       worldBounds.size.z / transformLossy.z
-    //     );
-    //     // Initialize or encapsulate bounds
-    //     if (index == 0)
-    //     {
-    //       _pendingHullBounds = new Bounds(localCenter, localSize);
-    //     }
-    //     else
-    //     {
-    //       _pendingHullBounds.Encapsulate(new Bounds(localCenter, localSize));
-    //     }
-    //   }
-    //
-    //   // Assign the final hull bounds
-    //   _vehicleHullBounds =
-    //     new Bounds(_pendingHullBounds.center, _pendingHullBounds.size);
-    // }
+    var piecesList = m_pieces.ToList();
 
-    for (var index = 0; index < m_pieces.ToList().Count; index++)
+    for (var index = 0; index < piecesList.Count; index++)
     {
-      var netView = m_pieces.ToList()[index];
+      var netView = piecesList[index];
       if (!netView)
       {
         m_pieces.Remove(netView);
         continue;
       }
+
+      if (IsExcludedBoundsItem(netView.gameObject.name)) continue;
 
 
       // will only update vehicle bounds here.
@@ -2775,77 +2779,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       v.y != 0 ? 1f / v.y : 0f,
       v.z != 0 ? 1f / v.z : 0f
     );
-  }
-
-  // ///
-  // /// <summary>Parses Collider.bounds and confirm if it's local/ or out of ship bounds</summary>
-  // /// - Collider.bounds should be global, but it may not be returning the correct value when instantiated
-  // /// - world position bounds will desync when the vehicle moves
-  // /// - Using global position bounds with a local bounds will cause the center to extend to the global position and break the raft
-  // ///
-  // /// Looks like the solution is Physics.SyncTransforms() because on first render before Physics it does not update transforms.
-  // ///
-  // public static Bounds? TransformColliderGlobalBoundsToLocal(Collider collider)
-  // {
-  //   var colliderCenterMagnitude = collider.bounds.center.magnitude;
-  //   var worldPositionMagnitude = collider.transform.position.magnitude;
-  //
-  //   Vector3 center;
-  //
-  //   /*
-  //    * <summary>
-  //    * confirms that the magnitude is near zero when subtracting a guaranteed world-position coordinate with a bounds.center coordinate that could be local or global.
-  //    * </summary>
-  //    *
-  //    * - if magnitude is above 5f (or probably even 1f) it is very likely a local position subtracted against a global position.
-  //    *
-  //    * - Limitations: Near world center 0,0,0 this calc likely will not be accurate, but won't really matter
-  //    */
-  //   var isOutOfBounds =
-  //     Mathf.Abs(colliderCenterMagnitude - worldPositionMagnitude) > 5f;
-  //   if (isOutOfBounds)
-  //   {
-  //     return new Bounds(
-  //       collider.transform.root.transform.InverseTransformPoint(collider
-  //         .transform.position),
-  //       collider.bounds.size);
-  //   }
-  //
-  //   center =
-  //     collider.transform.root.transform.InverseTransformPoint(collider.bounds
-  //       .center);
-  //   var size = collider.bounds.size;
-  //   var outputBounds = new Bounds(center, size);
-  //   return outputBounds;
-  // }
-
-  public Bounds GeneratePerfectBoundingBox(GameObject parentObject)
-  {
-    // Step 1: Initialize the global bounds
-    var colliders = parentObject.GetComponentsInChildren<Collider>();
-    if (colliders.Length == 0) return new Bounds();
-
-    var globalBounds = new Bounds(colliders[0].bounds.center, Vector3.zero);
-
-    // Step 2: Encapsulate all colliders in world space
-    foreach (var collider in colliders)
-      globalBounds.Encapsulate(collider.bounds);
-
-    // Step 3: Convert global bounds to local bounds relative to the parent
-    // var localCenter = parentObject.transform.InverseTransformPoint(globalBounds.center);
-    // var localSize = globalBounds.size;
-
-    // // Debug: Visualize the bounds using a cube
-    // DebugDrawBounds(globalBounds, Color.green);
-    //
-    // // Step 4: Attach or update a BoxCollider
-    // var boxCollider = parentObject.GetComponent<BoxCollider>();
-    // if (!boxCollider) boxCollider = parentObject.AddComponent<BoxCollider>();
-    //
-    // boxCollider.center = localCenter;
-    // boxCollider.size = localSize;
-
-    return globalBounds;
   }
 
   private Bounds? EncapsulateColliders(Vector3 boundsCenter,

@@ -14376,3 +14376,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f44587a585f05c540ad46e160444cf0c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ropeSpoolPrefab: {fileID: 0}
+  ropeMaterial: {fileID: 0}
+  ropeStartPoint: {fileID: 0}
+  ropeEndPoint: {fileID: 0}
+  spoolRadius: 0.5
+  ropeLength: 20
+  ropeSegmentLength: 0.1

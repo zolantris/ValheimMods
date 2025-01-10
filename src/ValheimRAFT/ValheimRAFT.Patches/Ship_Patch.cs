@@ -240,7 +240,7 @@ public class Ship_Patch
       __instance.m_nview.m_zdo.GetFloat("MBTargetHeight", mb.m_targetHeight);
     mb.m_flags =
       (MoveableBaseShipComponent.MBFlags)__instance.m_nview.m_zdo.GetInt(
-        VehicleZdoVars.VehicleFlags,
+        VehicleZdoVars.DEPRECATED_VehicleFlags,
         (int)mb.m_flags);
 
     // This could be the spot that causes the raft to fly at spawn
@@ -259,7 +259,7 @@ public class Ship_Patch
       if (!mb.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags.IsAnchored))
       {
         mb.m_flags |= MoveableBaseShipComponent.MBFlags.IsAnchored;
-        __instance.m_nview.m_zdo.Set(VehicleZdoVars.VehicleFlags,
+        __instance.m_nview.m_zdo.Set(VehicleZdoVars.DEPRECATED_VehicleFlags,
           (int)mb.m_flags);
       }
     }

@@ -28,9 +28,9 @@ public class AnchorPrefabs : IRegisterPrefab
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(PrefabNames.ShipAnchorWood,LoadValheimVehicleAssets.ShipAnchorWood);
 
-    var anchorMechanismController = prefab.AddComponent<ShipAnchorController>();
+    var anchorMechanismController = prefab.AddComponent<VehicleAnchorMechanismController>();
 
-    anchorMechanismController.externalAnchorRopeAttachmentPoint =
+    anchorMechanismController.rotationAnchorRopeAttachpoint =
       anchorMechanismController.transform.Find("attachpoint_rotational");
     anchorMechanismController.anchorRopeAttachmentPoint =
       anchorMechanismController.transform.Find(
@@ -47,9 +47,7 @@ public class AnchorPrefabs : IRegisterPrefab
     var cogTransform =
       anchorMechanismController.transform.Find(
         "anchor_reel/rotational");
-
-    anchorMechanismController.anchorCogJoint =
-      cogTransform.GetComponent<HingeJoint>();
+    
     anchorMechanismController.anchorCogRb =cogTransform.GetComponent<Rigidbody>();
     
     var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
