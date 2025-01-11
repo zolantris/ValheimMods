@@ -1197,6 +1197,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         case VehicleAnchorMechanismController anchorMechanismController:
           m_anchorMechanismComponents.Remove(anchorMechanismController);
           m_anchorPieces.Remove(netView);
+          
+          if (MovementController != null)
+          {
+            MovementController.CanAnchor = m_anchorPieces.Count > 0;
+          }
           break;
         
         case BoardingRampComponent ramp:
@@ -2264,6 +2269,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
           m_anchorMechanismComponents.Add(anchorMechanismController);
           InitAnchorComponent(anchorMechanismController);
           m_anchorPieces.Add(netView);
+
+          if (MovementController != null)
+          {
+            MovementController.CanAnchor = m_anchorPieces.Count > 0;
+          }
           break;
 
         case RudderComponent rudder:

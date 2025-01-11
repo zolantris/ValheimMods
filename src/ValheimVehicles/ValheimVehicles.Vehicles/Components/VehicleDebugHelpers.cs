@@ -134,6 +134,7 @@ public class VehicleDebugHelpers : MonoBehaviour
       }
   }
 
+
   public void RenderWaterForceCube(ref GameObject? cube, Vector3 position)
   {
     if (!autoUpdateColliders)
@@ -145,24 +146,54 @@ public class VehicleDebugHelpers : MonoBehaviour
       return;
     }
     if (VehicleShipInstance.MovementController == null) return;
+
     if (cube == null)
     {
+      // Create the cube
       cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+      var collider = cube.GetComponent<BoxCollider>();
+      if (collider)
+      {
+        Destroy(collider);
+      }
+
       var meshRenderer = cube.GetComponent<MeshRenderer>();
       meshRenderer.material =
         new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
         {
           color = Color.green
         };
-      cube.gameObject.layer =
-        LayerMask.NameToLayer("Ignore Raycast");
+      cube.gameObject.layer = LayerMask.NameToLayer("Ignore Raycast");
+
+      // Add the text element as a child
+      GameObject textObj = new GameObject("CubeText");
+      textObj.transform.SetParent(cube.transform);
+      textObj.transform.localPosition = new Vector3(0, 1.2f, 0); // Adjust height as needed
+
+      var textMesh = textObj.AddComponent<TextMesh>();
+      textMesh.text = "Force Cube"; // Set desired text
+      textMesh.fontSize = 32;
+      textMesh.characterSize = 0.1f; // Adjust size as needed
+      textMesh.anchor = TextAnchor.MiddleCenter;
+      textMesh.alignment = TextAlignment.Center;
+      textMesh.color = Color.white;
     }
 
+    // Update the cube's position and set its parent
     cube.transform.position = position;
     cube.transform.SetParent(
       VehicleShipInstance.PiecesController.transform,
       false);
+
+    // Ensure the text always faces the camera
+    var textTransform = cube.transform.Find("CubeText");
+    if (textTransform != null)
+    {
+      textTransform.LookAt(Camera.main.transform);
+      textTransform.rotation = Quaternion.LookRotation(textTransform.forward * -1); // Flip to face correctly
+    }
   }
+
 
   public void RenderWorldCenterOfMassAsCube()
   {
@@ -178,6 +209,11 @@ public class VehicleDebugHelpers : MonoBehaviour
     if (worldCenterOfMassCube == null)
     {
       worldCenterOfMassCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+      var collider = worldCenterOfMassCube.GetComponent<BoxCollider>();
+      if (collider)
+      {
+        Destroy(collider);
+      }
       var meshRenderer = worldCenterOfMassCube.GetComponent<MeshRenderer>();
       meshRenderer.material =
         new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)

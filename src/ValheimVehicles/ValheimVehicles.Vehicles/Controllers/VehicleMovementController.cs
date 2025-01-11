@@ -108,6 +108,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public Vector3 currentUpwardsForceVelocity = Vector3.zero;
 
   public bool CanApplyWaterEdgeForce = true;
+  public bool CanAnchor = false;
 
   public float lastFlyingDt;
   public bool cachedFlyingValue;
@@ -2915,6 +2916,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   private void OnAnchorKeyPress()
   {
+    if (!CanAnchor) return;
     if (GetAnchorKeyUp())
     {
       _isHoldingAnchor = false;
@@ -3096,7 +3098,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     if (ZNetView.m_forceDisableInit) return;
     if (!isActiveAndEnabled) return;
-    if (m_nview == null)
+    // exit if we do not have anchor prefab or m_nview
+    if (!CanAnchor || m_nview == null)
     {
       vehicleAnchorState = AnchorState.Idle;
       return;
