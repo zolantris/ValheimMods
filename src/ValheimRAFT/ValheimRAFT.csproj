@@ -54,6 +54,9 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\AnchorPrefabs.cs">
           <Link>ValheimVehicles.Prefabs\Registry\AnchorPrefabs.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleZSyncTransform.cs">
+          <Link>ValheimVehicles.Vehicles\Controllers\VehiclePhysicsSync.cs</Link>
+        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup><!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->

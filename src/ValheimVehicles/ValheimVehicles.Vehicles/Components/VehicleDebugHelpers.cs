@@ -62,10 +62,10 @@ public class VehicleDebugHelpers : MonoBehaviour
 
     if (shipFloatation == null) return;
     
-    RenderWaterForceCube(ref forwardCube, shipFloatation.Value.ShipForward);
-    RenderWaterForceCube(ref backwardCube, shipFloatation.Value.ShipBack);
-    RenderWaterForceCube(ref rightCube, shipFloatation.Value.ShipRight);
-    RenderWaterForceCube(ref leftCube,shipFloatation.Value.ShipLeft);
+    RenderWaterForceCube(ref forwardCube, shipFloatation.Value.ShipForward, "forward");
+    RenderWaterForceCube(ref backwardCube, shipFloatation.Value.ShipBack, "backward");
+    RenderWaterForceCube(ref rightCube, shipFloatation.Value.ShipRight, "right");
+    RenderWaterForceCube(ref leftCube,shipFloatation.Value.ShipLeft, "left");
   }
 
   private void FixedUpdate()
@@ -135,7 +135,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   }
 
 
-  public void RenderWaterForceCube(ref GameObject? cube, Vector3 position)
+  public void RenderWaterForceCube(ref GameObject? cube, Vector3 position, string cubeTitle)
   {
     if (!autoUpdateColliders)
     {
@@ -151,6 +151,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     {
       // Create the cube
       cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+      cube.name = $"force_cube_{cubeTitle}";
       var collider = cube.GetComponent<BoxCollider>();
       if (collider)
       {
@@ -171,12 +172,12 @@ public class VehicleDebugHelpers : MonoBehaviour
       textObj.transform.localPosition = new Vector3(0, 1.2f, 0); // Adjust height as needed
 
       var textMesh = textObj.AddComponent<TextMesh>();
-      textMesh.text = "Force Cube"; // Set desired text
+      textMesh.text = $"Force Cube {cubeTitle}"; // Set desired text
       textMesh.fontSize = 32;
       textMesh.characterSize = 0.1f; // Adjust size as needed
       textMesh.anchor = TextAnchor.MiddleCenter;
       textMesh.alignment = TextAlignment.Center;
-      textMesh.color = Color.white;
+      textMesh.color = Color.yellow;
     }
 
     // Update the cube's position and set its parent

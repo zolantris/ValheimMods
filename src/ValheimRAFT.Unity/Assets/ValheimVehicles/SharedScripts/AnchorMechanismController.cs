@@ -121,6 +121,12 @@ namespace ValheimVehicles.SharedScripts
 
     internal void UpdateAnchorState(AnchorState newState)
     {
+        // Do nothing if state is equivalent
+        if (newState == currentState)
+        {
+            return;
+        }
+        
         currentState = newState;
         // Execute behavior based on the current state
         switch (currentState)
@@ -133,7 +139,7 @@ namespace ValheimVehicles.SharedScripts
                 anchorRb.isKinematic = true;
                 break;
         }
-
+        
         OnAnchorStateChange(currentState);
     }
 

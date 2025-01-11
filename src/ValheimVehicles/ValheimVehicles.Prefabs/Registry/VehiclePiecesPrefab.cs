@@ -21,8 +21,6 @@ public class VehiclePiecesPrefab : IRegisterPrefab
   {
     VehiclePiecesContainer = prefabManager.CreateClonedPrefab(PrefabNames.VehiclePiecesContainer,
       LoadValheimVehicleAssets.VehiclePiecesAsset);
-    // PrefabRegistryHelpers.AddTempNetView(VehiclePiecesContainer);
-    // PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(VehiclePiecesContainer);
   }
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)

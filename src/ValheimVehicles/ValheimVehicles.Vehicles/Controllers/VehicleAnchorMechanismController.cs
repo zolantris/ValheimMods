@@ -70,7 +70,7 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
         throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
     }
 
-    if (MovementController != null)
+    if (MovementController != null && MovementController.m_nview.IsOwner())
     {
       MovementController.SendSetAnchor(newState);
     }

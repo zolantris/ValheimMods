@@ -7,6 +7,7 @@ using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimRAFT;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs.Registry;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
@@ -55,11 +56,11 @@ public abstract class PrefabRegistryHelpers
   public static readonly Dictionary<string, PieceData> PieceDataDictionary =
     new();
 
-  public static ZSyncTransform GetOrAddMovementZSyncTransform(GameObject obj)
+  public static VehicleZSyncTransform GetOrAddMovementZSyncTransform(GameObject obj)
   {
-    var zSyncTransform = obj.GetComponent<ZSyncTransform>();
+    var zSyncTransform = obj.GetComponent<VehicleZSyncTransform>();
     if (zSyncTransform == null)
-      zSyncTransform = obj.AddComponent<ZSyncTransform>();
+      zSyncTransform = obj.AddComponent<VehicleZSyncTransform>();
 
     zSyncTransform.m_syncPosition = true;
     zSyncTransform.m_syncBodyVelocity = true;
@@ -72,10 +73,12 @@ public abstract class PrefabRegistryHelpers
   {
     var netView = obj.GetComponent<ZNetView>();
     if (netView == null)
+    {
       // var prevVal = ZNetView.m_useInitZDO;
       // ZNetView.m_useInitZDO = false;
       netView = obj.AddComponent<ZNetView>();
     // ZNetView.m_useInitZDO = prevVal;
+    }
     if (prioritized) netView.m_type = ZDO.ObjectType.Prioritized;
 
     netView.m_persistent = false;

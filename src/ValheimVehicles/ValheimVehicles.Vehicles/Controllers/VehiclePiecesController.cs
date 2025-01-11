@@ -14,6 +14,7 @@ using ValheimRAFT;
 using ValheimRAFT.Util;
 using ValheimVehicles.Config;
 using ValheimVehicles.Constants;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
@@ -176,7 +177,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   /// <summary>
   /// Future todo to enable zsync transform for objects within the synced raft which is done on clients only.
   /// </summary>
-  internal ZSyncTransform? zsyncTransform;
+  internal VehicleZSyncTransform? zsyncTransform;
 
   public Rigidbody m_body;
   internal FixedJoint m_fixedJoint;
@@ -467,6 +468,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     return mpc.transform;
   }
 
+  private ZNetView tempZNetView;
+
   public void Awake()
   {
     if (ZNetView.m_forceDisableInit) return;
@@ -477,6 +480,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     m_body = _piecesContainer.GetComponent<Rigidbody>();
     m_fixedJoint = _piecesContainer.GetComponent<FixedJoint>();
     InitializationTimer.Start();
+    
+    // tempZNetView = PrefabRegistryHelpers.AddTempNetView(gameObject);
+    // zsyncTransform = PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(gameObject);
   }
 
 
@@ -782,12 +788,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       m_body.collisionDetectionMode =
         PhysicsConfig.vehiclePiecesShipCollisionDetectionMode.Value;
 
-    if (m_fixedJoint.connectedBody) m_fixedJoint.connectedBody = null;
+    if (m_fixedJoint && m_fixedJoint.connectedBody) m_fixedJoint.connectedBody = null;
 
-    m_body.Move(
-      MovementController.m_body.position,
-      GetRotation()
-    );
+    // m_body.Move(
+    //   MovementController.m_body.position,
+    //   GetRotation()
+    // );
+    m_body.position = MovementController.m_body.position;
+    m_body.rotation = GetRotation();
   }
 
   public void JointSync()
@@ -845,8 +853,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       var vehiclePhysicsOwner = VehicleInstance.NetView.IsOwner();
       if (vehiclePhysicsOwner)
         KinematicSync();
-      else
+      else if (m_fixedJoint != null)
+      {
         JointSync();
+      }
 
       return;
     }
@@ -1782,7 +1792,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     foreach (var anchorComponent in m_anchorMechanismComponents)
     {
-      anchorComponent.UpdateAnchorState(anchorState);
+      if (anchorState != anchorComponent.currentState)
+      {
+        anchorComponent.UpdateAnchorState(anchorState);
+      }
     }
   }
 

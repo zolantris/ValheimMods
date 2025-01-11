@@ -9,6 +9,7 @@ using ValheimRAFT.Config;
 using ValheimRAFT.Patches;
 using ValheimVehicles.Config;
 using ValheimVehicles.Constants;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
@@ -86,7 +87,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public SteeringWheelComponent lastUsedWheelComponent;
   public Vector3 detachOffset = new(0f, 0.5f, 0f);
   public float m_rudderSpeed = 0.5f;
-  public ZSyncTransform zsyncTransform;
+  public VehicleZSyncTransform zsyncTransform;
 
   public VehicleOnboardController OnboardController;
 
@@ -752,7 +753,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     if (!zsyncTransform)
       zsyncTransform =
-        GetComponent<ZSyncTransform>();
+        GetComponent<VehicleZSyncTransform>();
 
     if (zsyncTransform) zsyncTransform.m_body = GetRigidbody();
   }
@@ -772,7 +773,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void SetupZsyncTransform()
   {
-    zsyncTransform = GetComponent<ZSyncTransform>();
+    zsyncTransform = GetComponent<VehicleZSyncTransform>();
     if (zsyncTransform == null) return;
     zsyncTransform.m_syncPosition = true;
     zsyncTransform.m_syncBodyVelocity = true;
@@ -1769,7 +1770,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (_prevGravity == isGravityEnabled && m_body.useGravity == _prevGravity &&
         zsyncTransform.m_useGravity == _prevGravity) return;
     _prevGravity = isGravityEnabled;
-    m_body.useGravity = isGravityEnabled;
+    
+    // The client cannot have this enabled as it adds additional velocity that is then faught against when zsynctransform is run.
+    m_body.useGravity = IsOwner() && isGravityEnabled;
     zsyncTransform.m_useGravity = isGravityEnabled;
   }
 
@@ -2288,7 +2291,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void SendSyncBounds()
   {
-    m_nview?.InvokeRPC(0, nameof(RPC_SyncBounds));
+    if (m_nview == null) return;
+    m_nview.InvokeRPC(0, nameof(RPC_SyncBounds));
   }
 
   /// <summary>
@@ -2981,12 +2985,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     {
       SendSetAnchor(!isAnchored ? AnchorState.Dropped : AnchorState.ReeledIn);
 
-      // flying will not update anchor state. Idle will behave like ReeledIn but there are no callback when idle
-      if (PiecesController != null)
-      {
-        PiecesController.UpdateAnchorState(AnchorState.Idle);
-      }
-
       return;
     }
 
@@ -2995,11 +2993,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       : AnchorState.Dropping;
 
     SendSetAnchor(newState);
-    
-    if (PiecesController != null)
-    {
-      PiecesController.UpdateAnchorState(vehicleAnchorState);
-    }
   }
 
 
@@ -3116,6 +3109,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       Logger.LogDebug(
         $"anchorState {vehicleAnchorState} zdoAnchorState {zdoAnchorState}");
       vehicleAnchorState = zdoAnchorState;
+    }
+    
+    if (PiecesController != null)
+    {
+      PiecesController.UpdateAnchorState(vehicleAnchorState);
     }
   }
 
