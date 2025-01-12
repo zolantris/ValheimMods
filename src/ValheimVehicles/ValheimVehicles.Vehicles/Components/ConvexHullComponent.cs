@@ -32,7 +32,7 @@ public class ConvexHullComponent : ConvexHullAPI
     {
       convexHullComponent.UpdatePropertiesForConvexHulls( PhysicsConfig.convexHullPreviewOffset.Value,
         GetConvexHullModeFromFlags(), PhysicsConfig.convexHullDebuggerColor
-          .Value);
+          .Value, WaterConfig.UnderwaterBubbleEffectColor.Value);
     }
   }
   

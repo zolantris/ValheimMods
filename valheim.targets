@@ -19,7 +19,7 @@
         <IsRunnable Condition="'$(IsRunnableRelease)' == 'true' or '$(IsRunnableDebug)' == 'true'">true</IsRunnable>
         <IsDebug Condition="'$(Configuration)' == 'Debug' or '$(IsRunnableDebug)' == 'true'">true</IsDebug>
         <IsRelease Condition="'$(Configuration)' == 'Release' or '$(IsRunnableRelease)' == 'true'">true</IsRelease>
-        <IsNotArchive Condition="'$(Configuration)' != 'Release Archive'">true</IsNotArchive>
+        <IsNotArchive Condition="'$(Configuration)' != 'Release Archive' and '$(Configuration)' != 'ReleaseBETA Archive'">true</IsNotArchive>
     </PropertyGroup>
     <PropertyGroup Condition="'$(IsDebug)' == 'true'">
         <PlatformTarget>AnyCPU</PlatformTarget>
@@ -32,7 +32,7 @@
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(IsRelease)' == 'true' or '$(Configuration)' == 'Release Archive'">
+    <PropertyGroup Condition="'$(IsRelease)' == 'true' or '$(Configuration)' == 'Release Archive' or '$(Configuration)' == 'ReleaseBETA Archive'">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugType>pdbonly</DebugType>
         <Optimize>true</Optimize>
@@ -435,6 +435,53 @@
 
         <Exec Command="xcopy /d &quot;$(ThunderStoreDir)&quot; &quot;$(TmpDir)&quot; /E/H"/>
         <!-- delete duplicate mod version-->
+        <Exec Command="if exist &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot;"/>
+        <Exec Command="if exist &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot;"/>
+        <Exec Command="if exist &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot; del /s /q &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot;"/>
+
+        <Exec Command="powershell Compress-Archive '$(TmpDir)\*' '$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)'"/>
+
+        <!--  For modNexus there needs to be a folder with the modname     -->
+        <Exec Command="xcopy /d &quot;$(TmpDir)plugins&quot; &quot;$(TmpDir)$(AssemblyName)&quot; /E/H"/>
+        <Exec Command="powershell Compress-Archive '$(TmpDir)$(AssemblyName)' '$(ModOutputDir)$(NexusName)-$(ModNameVersion)'"/>
+        <Exec Command="powershell Compress-Archive '$(SolutionDir)libs\*' '$(ModOutputDir)libs-$(ApplicationVersion).zip'"/>
+    </Target>
+    <Target Name="Generate_Mod_ArchiveBeta" AfterTargets="PostBuildEvent" Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' ">
+        <PropertyGroup>
+            <RepoDir>$(OutDir)..\..\</RepoDir>
+            <ModOutputDir>$(OutDir)..\ModVersions\</ModOutputDir>
+            <TmpDir>$(OutDir)..\tmp\</TmpDir>
+            <ThunderStoreDir>$(RepoDir)ThunderStoreBeta\</ThunderStoreDir>
+            <ThunderStoreName>Thunderstore</ThunderStoreName>
+            <NexusName>Nexus</NexusName>
+            <ModNameVersion>$(AssemblyName)-$(ApplicationVersion)-beta.zip</ModNameVersion>
+            <AutoDocName>$(AssemblyName)_AutoDoc.md</AutoDocName>
+            <AutoDocPath>$(PluginDeployPath)/$(AutoDocName)</AutoDocPath>
+            <LocalAutoDocPath>$(SolutionDir)src\$(AssemblyName)\docs\$(AutoDocName)</LocalAutoDocPath>
+        </PropertyGroup>
+        <Exec Command="if exist &quot;$(TmpDir)plugins\Assets&quot; rd /s /q &quot;$(TmpDir)plugins\Assets&quot;"/>
+        <Exec Command="if exist &quot;$(TmpDir)&quot; rd /s /q &quot;$(TmpDir)&quot;"/>
+
+        <Exec Command="if not exist &quot;$(ModOutputDir)&quot; mkdir &quot;$(ModOutputDir)&quot;"/>
+        <Exec Command="if not exist &quot;$(TmpDir)&quot; mkdir &quot;$(TmpDir)&quot;"/>
+        <Exec Command="if not exist &quot;$(TmpDir)plugins&quot; mkdir &quot;$(TmpDir)plugins&quot;"/>
+        <Exec Command="if not exist &quot;$(TmpDir)$(AssemblyName)&quot; mkdir &quot;$(TmpDir)$(AssemblyName)&quot;"/>
+
+
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).dll&quot; &quot;$(TmpDir)plugins\$(AssemblyName).dll&quot;"/>
+        <Exec Command="copy &quot;$(OutDir)$(AssemblyName).pdb&quot; &quot;$(TmpDir)plugins\$(AssemblyName).pdb&quot;"/>
+        <Exec Command="copy &quot;$(RepoDir)README.md&quot; &quot;$(TmpDir)README.md&quot;"/>
+
+        <!-- Overrites the auto-doc -->
+        <Copy Condition="Exists('$(AutoDocPath)') and Exists('$(LocalAutoDocPath)')" SourceFiles="$(AutoDocPath)" DestinationFolder="$(SolutionDir)src\$(AssemblyName)\docs\"/>
+
+        <!-- Copy Assets -->
+        <Exec Command="if exist &quot;$(AssetsDir)&quot; xcopy /d &quot;$(AssetsDir)&quot; &quot;$(TmpDir)plugins\Assets\&quot; /E/H"/>
+        <Exec Command="if exist $&quot;$(AssetsDir)&quot; del &quot;$(TmpDir)plugins\Assets\*.png.meta&quot;"/>
+
+        <!--   copy all files from outputdir, anything included is something that does not exist in the base game dependencies...this copies too many things, including dev only deps fyi. dont use it for production     -->
+        <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;$(TmpDir)plugins\&quot; /q /s /y /i"/>
+
         <Exec Command="if exist &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(ThunderStoreName)-$(ModNameVersion)&quot;"/>
         <Exec Command="if exist &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot; del /s /q &quot;$(ModOutputDir)$(NexusName)-$(ModNameVersion)&quot;"/>
         <Exec Command="if exist &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot; del /s /q &quot;$(ModOutputDir)libs-$(ApplicationVersion).zip&quot;"/>

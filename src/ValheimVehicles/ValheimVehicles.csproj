@@ -16,10 +16,15 @@
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
     </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' ">
+      <OutputPath>bin\ReleaseBETA Archive\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+      <OutputPath>bin\Release\</OutputPath>
+    </PropertyGroup>
     <Import Project="$(SolutionDir)/valheim.targets"/>
 
     <ItemGroup>
-        <Compile Include="ValheimVehicles.Plugins\Vector3Logger.cs"/>
         <Compile Include="ValheimVehiclesPlugin.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
     </ItemGroup>

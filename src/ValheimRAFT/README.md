@@ -8,6 +8,8 @@ and further extends its capabilities.
 
 ------
 
+This mod has both a beta and a non-beta on Thunderstore. Please make sure you are using non-beta if you want a stable experience. If you want to test previews, swap to the beta variant.
+
 :warning: Warning. If you are reading this readme on the
 [ValheimMods/ValheimRAFT](https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT)
 repo :warning:

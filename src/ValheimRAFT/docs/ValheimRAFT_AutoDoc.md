@@ -299,6 +299,26 @@
 - Description: Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.
 - Default Value: 1
 
+### MaxVehicleHullImpactDamage 
+- Description: The maximum damage a vehicle can do to a rock or other object it hits.
+- Default Value: 9000
+
+### MinVehicleHullImpactDamage 
+- Description: The minimum damage a vehicle can do to a rock or other object it hits.
+- Default Value: 50
+
+### VehicleHullMassMultiplierDamage 
+- Description: Multiplier per each single point of mass the vehicle has how much additional damage is done, multiplied by the velocity.
+- Default Value: 0.1
+
+### VehicleHullUsesPickaxeAndChopDamage 
+- Description: Makes the vehicle hit with a pickaxe and chop damage effect. This will make the vehicle effective against trees and rocks. Also some rocks normally not destroyable will be IE Spires. Damage is split 66% to pickaxe and 33% to chop damage.
+- Default Value: True
+
+### VehicleHullTier 
+- Description: The tier damage a vehicle can do to a rock or other object it hits. To be balanced this should be a lower value IE (1) bronze. But ashlands will require a higher tier to smash spires FYI.
+- Default Value: 100
+
 ### DamageIncreasePercentagePerTier 
 - Description: Damage Multiplier per tier. So far only HardWood (Tier1) Iron (Tier3) available. With base value 1 a Tier 3 mult at 25% additive additional damage would be 1.5. IE (1 * 0.25 * 2 + 1) = 1.5
 - Default Value: 0.25
@@ -309,7 +329,7 @@
 - Description: The place the player is placed after they leave the ladder. Defaults to Y +0.25 and Z +0.5 meaning you are placed forwards of the ladder.
 - Default Value: (0.00, 0.00, 0.00)
 
-### startingPiece 
+### PrefabConfig 
 - Description: Allows you to customize what piece the raft initializes with. Admins only as this can be overpowered.
 - Default Value: Hull4X8
 
@@ -320,6 +340,10 @@
 ### ropeLadderHints 
 - Description: Shows the controls required to auto ascend/descend and run to speedup ladder
 - Default Value: True
+
+### GlassDefaultColor 
+- Description: Set the experimental glass color for your vehicle. This will be used for most glass meshes. This is the default color. Eventually players can customize the color of the glass.
+- Default Value: RGBA(0.600, 0.600, 0.600, 0.050)
 
 ## Vehicle Debugging
 
@@ -378,12 +402,12 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Default Value: 10
 
 ### turningPowerNoRudder 
-- Description: Set the base turning power of the steering wheel
-- Default Value: 1
+- Description: Set the base turning power of the steering wheel without a rudder
+- Default Value: 0.7
 
 ### turningPowerWithRudder 
-- Description: Set the turning power with a rudder
-- Default Value: 6
+- Description: Set the turning power with a rudder prefab attached to the boat. This value overrides the turningPowerNoRudder config.
+- Default Value: 1
 
 ### slowAndReverseWithoutControls 
 - Description: Vehicles do not require controls while in slow and reverse with a person on them
@@ -401,17 +425,17 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: Lifts the anchor when using a speed change key, this is a QOL to prevent anchor from being required to be pressed when attempting to change the ship speed
 - Default Value: False
 
-### FlightClimbingOffset 
-- Description: Ascent and Descent speed for the vehicle in the air. This value is interpolated to prevent jitters.
-- Default Value: 5
-
 ### BallastClimbingOffset 
-- Description: Ascent and Descent speed for the vehicle in the water. This value is interpolated to prevent jitters.
+- Description: Ascent and Descent speed for the vehicle in the air. This value is interpolated to prevent jitters.
 - Default Value: 2
 
 ### VerticalSmoothingSpeed 
 - Description: This applies to both Ballast and Flight modes. The vehicle will use this value to interpolate the climbing offset. Meaning low value will be slower climbing/ballast and high values will be instant and match the offset. High values will result in jitters and potentially could throw people off the vehicle. Expect values of 0.01 and 1. IE 1% and 100%
 - Default Value: 0.5
+
+### WheelDeadZone 
+- Description: Plus or minus deadzone of the wheel when turning. Setting this to 0 will disable this feature. This will zero out the rudder if the user attempts to navigate with a value lower than this threshold range
+- Default Value: 0.02
 
 ## ModSupport:DynamicLocations
 
@@ -513,6 +537,14 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: Allows for walking underwater, anywhere, or onship, or eventually within the water displaced area only. Disabled with remove all water logic. DEBUG_WaterZoneOnly is not supported yet
 - Default Value: Disabled
 
+### HasUnderwaterHullBubbleEffect 
+- Description: Adds an underwater bubble conforming around the vehicle hull. Allowing for a underwater like distortion effect without needing to use fog.
+- Default Value: True
+
+### UnderwaterBubbleEffectColor 
+- Description: Set the underwater bubble color
+- Default Value: RGBA(0.000, 0.400, 0.400, 0.800)
+
 ## Vehicle Physics
 
 ### flightDamping_2.4.2 
@@ -525,6 +557,18 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### flightAngularDamping_2.4.2 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
+- Default Value: 1
+
+### forceDistance_2.4.2 
+- Description: EXPERIMENTAL_FORCE_DISTANCE
+- Default Value: 5
+
+### force_2.4.2 
+- Description: EXPERIMENTAL_FORCE
+- Default Value: 1
+
+### backwardForce_2.4.2 
+- Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
 ### flightSteerForce 
@@ -599,7 +643,7 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: 
 - Default Value: 1.5
 
-## Vehicles
+## Vehicle Physics: Floatation
 
 ### HullFloatationColliderLocation 
 - Description: Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20
@@ -609,9 +653,61 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
 - Default Value: 0
 
-### EnableExactVehicleBounds 
-- Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible
+### EnableExactVehicleBounds_2.5.0 
+- Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version
+- Default Value: True
+
+### vehiclePiecesShipCollisionDetectionMode 
+- Description: Set the collision mode of the vehicle ship pieces container. This the container that people walk on and use the boat. Collision Continuous will prevent people from passing through the boat. Other modes might improve performance like Discrete but cost in more jitter or lag.
+- Default Value: Continuous
+
+### convexHullJoinDistanceThreshold 
+- Description: The threshold at which a vehicle's colliders are joined with another pieces colliders to make a singular hull. Higher numbers will join multiple pieces together into a singular hull. Lower numbers allow for splitting hulls out at the cost of performance.
+- Default Value: 3
+
+### convexHullDebuggerColor 
+- Description: Allows the user to set the debugger hull color.
+- Default Value: RGBA(0.100, 0.230, 0.070, 0.500)
+
+### convexHullDebuggerForceEnabled 
+- Description: Force enables the convex hull. This will be turned off if other commands are run or re-enabled if toggled.
 - Default Value: False
+
+### convexHullPreviewOffset 
+- Description: Sets the hull preview offset, this will allow previewing the hull side by side with your vehicle. This can only be seen if the Vehicle Physics: Floatation.convexHullDebuggerForceEnabled is true.
+- Default Value: (0.00, 0.00, 0.00)
+
+## Vehicle Physics: Velocity Mode
+
+### floatationVelocityMode 
+- Description: EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for
+- Default Value: Force
+
+### flyingVelocityMode 
+- Description: EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for
+- Default Value: Force
+
+### turningVelocityMode 
+- Description: EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for
+- Default Value: Force
+
+### sailingVelocityMode 
+- Description: EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for
+- Default Value: Force
+
+### rudderVelocityMode 
+- Description: EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for
+- Default Value: Force
+
+## Vehicle Physics
+
+### removeCameraCollisionWithObjectsOnBoat 
+- Description: EXPERIMENTAL removes all collision of camera for objects on boat. Should significantly lower jitter when camera smashes into objects on boat it will force camera through it instead of pushing rapidly forward with vehicle force too.
+- Default Value: True
+
+### waterDeltaForceMultiplier 
+- Description: Water delta force multiplier
+- Default Value: 50
 
 ## MinimapConfig
 

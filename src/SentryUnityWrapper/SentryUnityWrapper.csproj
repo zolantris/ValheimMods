@@ -19,6 +19,9 @@
         <Nullable>enable</Nullable>
         <ApplicationVersion>1.8.0</ApplicationVersion>
     </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' ">
+      <OutputPath>bin\ReleaseBETA Archive\</OutputPath>
+    </PropertyGroup>
     <Import Project="..\..\valheim.targets"/>
     <!--  really just needs unity and bepinex  -->
     <ItemGroup>

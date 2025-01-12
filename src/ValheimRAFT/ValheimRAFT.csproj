@@ -15,27 +15,27 @@
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
-        <Configurations>Debug;Release;Release Archive;Debug Run ClientServer;Debug Run Client</Configurations>
+        <Configurations>Debug;Release;Release Archive;Debug Run ClientServer;Debug Run Client;ReleaseBETA Archive</Configurations>
     </PropertyGroup>
-    <Import Project="..\..\base.targets"/>
-    <Import Project="..\..\valheim.targets"/>
+    <Import Project="..\..\base.targets" />
+    <Import Project="..\..\valheim.targets" />
 
     <!-- Until ValheimVehicles is published, RAFT will directly pull in it's dependencies -->
     <!--    <ItemGroup Label="Embedded Resources">-->
     <!--    </ItemGroup>-->
     <ItemGroup>
-        <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj"/>
-        <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj"/>
+        <ProjectReference Include="..\DynamicLocations\DynamicLocations.csproj" />
+        <ProjectReference Include="..\ZdoWatcher\ZdoWatcher.csproj" />
     </ItemGroup>
     <!-- Compiled Shared items  -->
     <ItemGroup>
-        <ProjectReference Include="..\Shared\Shared.csproj"/>
+        <ProjectReference Include="..\Shared\Shared.csproj" />
     </ItemGroup>
     <ItemGroup Label="Embedded ValheimVehicles">
         <!--        <ProjectReference Include="..\ValheimVehicles\ValheimVehicles.csproj">-->
         <!--            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>-->
         <!--        </ProjectReference>-->
-        <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>
+        <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs" />
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Config\TutorialConfig.cs">
             <Link>ValheimVehicles.Config\TutorialConfig.cs</Link>
         </Compile>
@@ -58,15 +58,15 @@
           <Link>ValheimVehicles.Vehicles\Controllers\VehiclePhysicsSync.cs</Link>
         </Compile>
     </ItemGroup>
-    <Import Project="..\..\gameLauncher.targets"/>
+    <Import Project="..\..\gameLauncher.targets" />
     <ItemGroup><!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->
         <!--        <Compile Include="Properties\CustomAssemblyAttributes.cs"/>-->
 
     </ItemGroup>
     <ItemGroup>
         <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
-        <Compile Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\*.cs"/>
-        <Folder Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\"/>
+        <Compile Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\*.cs" />
+        <Folder Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\" />
     </ItemGroup>
     <PropertyGroup>
         <SentryDSN>https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496</SentryDSN>
@@ -77,35 +77,35 @@
         </AssemblyAttribute>
     </ItemGroup>
     <ItemGroup>
-        <None Remove="AssetBundle\AssetBundle"/>
-        <None Remove="AssetBundle\valheim-vehicles-shared"/>
-        <None Remove="AssetBundle\valheim-raft"/>
-        <None Remove="AssetBundle\valheim-vehicles"/>
-        <None Remove="AssetBundle\valheim-raft.manifest"/>
-        <None Remove="AssetBundle\valheim-vehicles.manifest"/>
-        <None Remove="AssetBundle\valheim-vehicles-shared.manifest"/>
-        <None Remove="AssetBundle\AssetBundle.manifest"/>
+        <None Remove="AssetBundle\AssetBundle" />
+        <None Remove="AssetBundle\valheim-vehicles-shared" />
+        <None Remove="AssetBundle\valheim-raft" />
+        <None Remove="AssetBundle\valheim-vehicles" />
+        <None Remove="AssetBundle\valheim-raft.manifest" />
+        <None Remove="AssetBundle\valheim-vehicles.manifest" />
+        <None Remove="AssetBundle\valheim-vehicles-shared.manifest" />
+        <None Remove="AssetBundle\AssetBundle.manifest" />
 
         <!--  TODO to embed assets, but this needs a refactor and inflates dll size, not worth adding now      -->
         <!--        <EmbeddedResource Include="Assets\**"/>-->
-        <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="AssetBundle"/>
-        <EmbeddedResource Include="AssetBundle\valheim-vehicles-shared" LogicalName="valheim-vehicles-shared"/>
-        <EmbeddedResource Include="AssetBundle\valheim-raft" LogicalName="valheim-raft"/>
-        <EmbeddedResource Include="AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles"/>
-        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest"/>
-        <EmbeddedResource Include="AssetBundle\valheim-vehicles-shared.manifest" LogicalName="valheim-vehicles-shared.manifest"/>
-        <EmbeddedResource Include="AssetBundle\valheim-raft.manifest" LogicalName="valheim-raft.manifest"/>
-        <EmbeddedResource Include="AssetBundle\valheim-vehicles.manifest" LogicalName="valheim-vehicles.manifest"/>
+        <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="AssetBundle" />
+        <EmbeddedResource Include="AssetBundle\valheim-vehicles-shared" LogicalName="valheim-vehicles-shared" />
+        <EmbeddedResource Include="AssetBundle\valheim-raft" LogicalName="valheim-raft" />
+        <EmbeddedResource Include="AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles" />
+        <EmbeddedResource Include="AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest" />
+        <EmbeddedResource Include="AssetBundle\valheim-vehicles-shared.manifest" LogicalName="valheim-vehicles-shared.manifest" />
+        <EmbeddedResource Include="AssetBundle\valheim-raft.manifest" LogicalName="valheim-raft.manifest" />
+        <EmbeddedResource Include="AssetBundle\valheim-vehicles.manifest" LogicalName="valheim-vehicles.manifest" />
     </ItemGroup>
     <ItemGroup>
-        <Content Include=".gitignore"/>
-        <Content Include="Assets\Translations\English\valheimraft.json"/>
-        <Content Include="docs\ValheimRAFT_AutoDoc.md"/>
-        <Content Include="docs\ConfigOutput.md"/>
-        <Content Include="src\ValheimRAFT\README.md"/>
-        <Content Include="Thunderstore\icon.png"/>
-        <Content Include="Thunderstore\manifest.json"/>
-        <Content Include="ValheimRAFT.Unity\.gitignore"/>
+        <Content Include=".gitignore" />
+        <Content Include="Assets\Translations\English\valheimraft.json" />
+        <Content Include="docs\ValheimRAFT_AutoDoc.md" />
+        <Content Include="docs\ConfigOutput.md" />
+        <Content Include="src\ValheimRAFT\README.md" />
+        <Content Include="Thunderstore\icon.png" />
+        <Content Include="Thunderstore\manifest.json" />
+        <Content Include="ValheimRAFT.Unity\.gitignore" />
     </ItemGroup>
 
     <!--  Other bepinex plugins  -->
@@ -141,6 +141,17 @@
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
         <OutputPath>bin\Release\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseBETA Archive' ">
+      <OutputPath>bin\Release Archive\</OutputPath>
+      <PlatformTarget>AnyCPU</PlatformTarget>
+      <DebugType>pdbonly</DebugType>
+      <Optimize>true</Optimize>
+      <OutputPath>bin\Release\</OutputPath>
+      <DefineConstants>TRACE</DefineConstants>
+      <ErrorReport>prompt</ErrorReport>
+      <WarningLevel>4</WarningLevel>
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

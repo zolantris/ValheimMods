@@ -1,9 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Nullable>enable</Nullable>
-        <Configurations>Debug;Release;Release Archive</Configurations>
+        <Configurations>Debug;Release;Release Archive;ReleaseBETA Archive</Configurations>
         <Platforms>AnyCPU</Platforms>
         <ApplicationVersion>1.0.0</ApplicationVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseBETA Archive' ">
+      <PlatformTarget>AnyCPU</PlatformTarget>
+      <DebugType>pdbonly</DebugType>
+      <Optimize>true</Optimize>
+      <OutputPath>bin\Release\</OutputPath>
+      <DefineConstants>TRACE</DefineConstants>
+      <ErrorReport>prompt</ErrorReport>
+      <WarningLevel>4</WarningLevel>
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     <Import Project="..\..\base.targets"/>
     <Import Project="..\..\valheim.targets"/>
