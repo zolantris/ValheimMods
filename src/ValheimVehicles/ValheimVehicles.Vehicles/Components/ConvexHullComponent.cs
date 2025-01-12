@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -12,6 +13,17 @@ public class ConvexHullComponent : ConvexHullAPI
   public void Awake()
   {
     BubbleMaterial = LoadValheimVehicleAssets.DoubleSidedTransparentMat;
+  }
+
+  public VehicleMovementController? MovementController;
+
+  public void FixedUpdate()
+  {
+    if (MovementController == null || convexHullPreviewMeshRendererItems.Count == 0) return;
+    foreach (var meshRenderer in convexHullPreviewMeshRendererItems)
+    {
+      meshRenderer.material.SetFloat(MaxHeightShaderId, MovementController.ShipFloatationObj.LowestWaterHeight);
+    }
   }
 
   public static void UpdatePropertiesForAllComponents()

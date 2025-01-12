@@ -12,13 +12,11 @@ Shader "Custom/HeightBasedShader"
         Tags
         {
             "RenderType"="Transparent"
-            "Queue"="Transparent"
+            "Queue"="Overlay" // Changed queue to Overlay to render after opaque geometry
         }
         LOD 100
         Cull Off
         ZWrite Off
-        ZClip Off
-        ZTest LEqual
         Blend SrcAlpha OneMinusSrcAlpha
 
         Pass

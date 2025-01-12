@@ -1711,6 +1711,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       (waterLevelCenter + waterLevelLeft + waterLevelRight + waterLevelForward +
        waterLevelBack) /
       5f;
+    var lowestWaterHeight = Mathf.Min([
+      waterLevelCenter, waterLevelLeft, waterLevelRight, waterLevelForward,
+      waterLevelBack
+    ]);
 
 
     var groundLevelCenter =
@@ -1744,6 +1748,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return new ShipFloatation
     {
       AverageWaterHeight = averageWaterHeight,
+      LowestWaterHeight = lowestWaterHeight,
       CurrentDepth = currentDepth,
       IsAboveBuoyantLevel = isAboveBuoyantLevel,
       IsInvalid = isInvalid,

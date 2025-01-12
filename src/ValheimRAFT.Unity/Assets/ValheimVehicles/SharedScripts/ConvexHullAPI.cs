@@ -29,7 +29,7 @@ namespace ValheimVehicles.SharedScripts
 
     public static Color DebugMaterialColor = new(0.10f, 0.23f, 0.07f, 0.5f);
 
-    public static Color BubbleMaterialColor = new(0.10f, 0.23f, 0.07f, 0.5f);
+    public static Color BubbleMaterialColor = new(0f, 0.4f, 0.4f, 0.8f);
 
     public static Action<string> LoggerAPI = Debug.Log;
     public static bool UseWorld = true;
@@ -40,7 +40,7 @@ namespace ValheimVehicles.SharedScripts
 
     public static List<ConvexHullAPI> Instances = new();
 
-    private static readonly int MaxHeightShaderId =
+    public static readonly int MaxHeightShaderId =
       Shader.PropertyToID("_MaxHeight");
 
     public Vector3 transformPreviewOffset = Vector3.zero;
@@ -62,6 +62,8 @@ namespace ValheimVehicles.SharedScripts
     ///   container that should not have a Rigidbody parent.
     /// </summary>
     public List<GameObject> convexHullPreviewMeshes = new();
+
+    public List<MeshRenderer> convexHullPreviewMeshRendererItems = new();
 
     private List<Vector3> _cachedPoints = new();
 
@@ -118,10 +120,11 @@ namespace ValheimVehicles.SharedScripts
     }
 
     public void UpdatePropertiesForConvexHulls(
-      Vector3 transformPreviewOffset, PreviewModes mode, Color color)
+      Vector3 transformPreviewOffset, PreviewModes mode, Color debugColor,  Color bubbleColor)
     {
       PreviewMode = mode;
-      DebugMaterialColor = color;
+      DebugMaterialColor = debugColor;
+      BubbleMaterialColor = bubbleColor;
 
       foreach (var convexHullAPI in Instances)
       {
@@ -670,7 +673,6 @@ namespace ValheimVehicles.SharedScripts
       if (generateObjectList.Count == 0) return;
       var objects = generateObjectList.ToList();
       generateObjectList.Clear();
-
       foreach (var obj in objects) DebugUnityHelpers.AdaptiveDestroy(obj);
     }
 
@@ -748,7 +750,7 @@ namespace ValheimVehicles.SharedScripts
       if (PreviewMode == PreviewModes.Bubble && BubbleMaterial)
       {
         BubbleMaterial.color = BubbleMaterialColor;
-        BubbleMaterial.SetFloat(MaxHeightShaderId, 30f);
+        BubbleMaterial.SetFloat(MaxHeightShaderId, 29f);
         return BubbleMaterial;
       }
 
@@ -773,7 +775,7 @@ namespace ValheimVehicles.SharedScripts
     ///   worth using in creative mode.
     /// </summary>
     /// <param name="go"></param>
-    public void AddDebugMeshRenderer(GameObject go)
+    public void AddConvexHullMeshRenderer(GameObject go)
     {
       if (PreviewMode == PreviewModes.None) return;
       var material = GetMaterial();
@@ -781,6 +783,7 @@ namespace ValheimVehicles.SharedScripts
       {
         var meshRenderer = go.GetComponent<MeshRenderer>();
         if (!meshRenderer) meshRenderer = go.AddComponent<MeshRenderer>();
+        convexHullPreviewMeshRendererItems.Add(meshRenderer);
 
         meshRenderer.material = material;
 
@@ -800,21 +803,21 @@ namespace ValheimVehicles.SharedScripts
     public void CreatePreviewConvexHullMeshes()
     {
       DeleteMeshesFromChildColliders(convexHullPreviewMeshes);
+      // must clear previews too
+      convexHullPreviewMeshRendererItems.Clear();
 
       if (PreviewMode == PreviewModes.None) return;
 
-      // Rigidbody must not be in preview parent otherwise it would have it's colliders applied as physics.
-      var rbComponent =
-        PreviewParent.GetComponent<Rigidbody>();
+      // Rigidbody must not be in preview parent otherwise it would have its colliders applied as physics.
+      var rbComponent = PreviewParent.GetComponent<Rigidbody>();
 
       if (rbComponent == null)
-        PreviewParent
-          .GetComponentInParent<Rigidbody>();
+        rbComponent = PreviewParent.GetComponentInParent<Rigidbody>();
 
-      if (rbComponent != null && rbComponent.isKinematic == false)
+      if (rbComponent != null && !rbComponent.isKinematic)
       {
         LoggerAPI(
-          "Error this component is invalid due to preview parent containing a non-kinematic Rigidbody. using a non-kinematic rigidbody will cause this preview to desync.");
+          "Error: This component is invalid due to preview parent containing a non-kinematic Rigidbody. Using a non-kinematic rigidbody will cause this preview to desync.");
         return;
       }
 
@@ -829,35 +832,45 @@ namespace ValheimVehicles.SharedScripts
         {
           var convexHullMesh = convexHullMeshes[index];
           var previewInstance =
-            Instantiate(convexHullMesh);
+            Instantiate(convexHullMesh, PreviewParent.transform);
           convexHullPreviewMeshes.Add(previewInstance);
           previewInstance.transform.localScale = previewScale;
+          // World-space position offset calculation
+          var parentOffset =
+            convexHullMesh.transform.TransformPoint(previewInstance
+              .transform
+              .position);
 
-          // Gets the difference between the original position and the parent. Then adds that as local position to align things.
-          var positionOffsetFromDestinationOffset =
-            convexHullMesh.transform.position -
-            previewInstance.transform.position;
+          // TODO this does not work well for scalars above Vector.one or lower
 
-          previewInstance.transform.localPosition +=
-            positionOffsetFromDestinationOffset;
+          // Apply the offset in world space, then convert it back to local position
+          // var positionWithoutScale =
+          //   PreviewParent.transform.TransformPoint(worldPositionOffset);
+          // previewInstance.transform.localScale = previewScale;
+          //
+          // var positionWithScale =
+          //   PreviewParent.transform.InverseTransformPoint(worldPositionOffset);
+          //
+          // previewInstance.transform.localPosition +=
+          //   Vector3.Scale(positionWithoutScale, previewScale);
 
+          previewInstance.transform.position =
+            parentOffset - PreviewParent.transform.position +
+            transformPreviewOffset;
 
-          AddDebugMeshRenderer(previewInstance.gameObject);
+          AddConvexHullMeshRenderer(previewInstance.gameObject);
 
           var previewName = $"{MeshNamePreviewPrefix}_{index}";
           previewInstance.gameObject.name = previewName;
 
+          // Handle the MeshCollider for the preview instance
           var previewMeshCollider =
             previewInstance.GetComponent<MeshCollider>();
-          // Do not need a mesh collider for a preview instance. This can cause problems too.
           if (previewMeshCollider != null)
             DebugUnityHelpers.AdaptiveDestroy(previewMeshCollider);
-
-          // LoggerAPI(
-          //   $"Adjusting preview offset by {transformPreviewOffset}");
-          previewInstance.transform.localPosition += transformPreviewOffset;
         }
     }
+
 
     public void GenerateConvexHullMesh(
       List<Vector3> points, Transform parentObjTransform)
@@ -924,7 +937,7 @@ namespace ValheimVehicles.SharedScripts
       var meshFilter = go.AddComponent<MeshFilter>();
 
 #if UNITY_EDITOR
-      if (DebugOriginalMesh) AddDebugMeshRenderer(go);
+      if (DebugOriginalMesh) AddConvexHullMeshRenderer(go);
 #endif
 
       var meshCollider = go.AddComponent<MeshCollider>();

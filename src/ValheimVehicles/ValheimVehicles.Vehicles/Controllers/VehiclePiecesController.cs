@@ -493,6 +493,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       convexHullComponent =
         gameObject.AddComponent<ConvexHullComponent>();
 
+    convexHullComponent.MovementController = MovementController;
     // safety check, this will run after game-world loads especially if settings have changed.
     if (!ConvexHullAPI.HasInitialized)
     {

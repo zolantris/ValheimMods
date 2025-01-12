@@ -5,6 +5,7 @@ using BepInEx.Configuration;
 using ComfyLib;
 using UnityEngine;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 
@@ -322,11 +323,14 @@ public static class WaterConfig
     UnderwaterBubbleEffectColor = Config.Bind(
       SectionKey,
       "UnderwaterBubbleEffectColor",
-      new Color(0.1f, 0.5f, 0.8f, 0.4f),
+      new Color(0f, 0.4f, 0.4f, 0.8f),
       ConfigHelpers.CreateConfigDescription(
         "Set the underwater bubble color",
         true));
 
+    UnderwaterBubbleEffectColor.SettingChanged +=  (sender, args) =>
+      ConvexHullComponent.UpdatePropertiesForAllComponents();
+    
     AllowedEntiesList.SettingChanged +=
       (sender, args) => OnAllowListUpdate();
     UnderwaterAccessMode.SettingChanged +=
