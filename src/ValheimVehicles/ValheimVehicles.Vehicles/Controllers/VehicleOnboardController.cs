@@ -371,10 +371,12 @@ public class VehicleOnboardController : MonoBehaviour
 
   private void SetPlayerOnShip(Player player)
   {
-    var piecesTransform = MovementController.ShipInstance?.Instance
-      ?.VehiclePiecesController?
-      .transform;
+    if (PiecesController == null)
+    {
+      return;
+    }
 
+    var piecesTransform = PiecesController.transform;
 
     if (!piecesTransform)
     {
@@ -436,8 +438,7 @@ public class VehicleOnboardController : MonoBehaviour
     // All clients should do this
     SetPlayerOnShip(playerInList);
 
-    var vehicleZdo = MovementController
-      .ShipInstance?.NetView?.GetZDO();
+    var vehicleZdo = MovementController.ShipInstance?.NetView != null ? MovementController.ShipInstance.NetView.GetZDO() : null;
 
     if (playerInList == Player.m_localPlayer && vehicleZdo != null)
     {
@@ -507,9 +508,12 @@ public class VehicleOnboardController : MonoBehaviour
     {
       yield return new WaitForSeconds(15);
 
-      var playersOnboard = MovementController?.ShipInstance
-        ?.VehiclePiecesController?
-        .GetComponentsInChildren<Player>();
+      if (PiecesController == null)
+      {
+        continue;
+      }
+
+      var playersOnboard = PiecesController.GetComponentsInChildren<Player>();
       List<Player> validPlayers = [];
 
       if (playersOnboard == null) continue;

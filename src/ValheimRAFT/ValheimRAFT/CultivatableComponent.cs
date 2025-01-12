@@ -11,7 +11,7 @@ public class CultivatableComponent : MonoBehaviour
 {
   private ZNetView m_nview;
 
-  private static Dictionary<int, List<int>> m_childObjects = new Dictionary<int, List<int>>();
+  private static Dictionary<int, List<int>> m_childObjects = new();
 
   private static readonly int MBCultivatableParentIdHash =
     "MBCultivatableParentId".GetStableHashCode();
@@ -27,11 +27,10 @@ public class CultivatableComponent : MonoBehaviour
   public void Awake()
   {
     m_nview = GetComponent<ZNetView>();
-    WearNTear wnt = GetComponent<WearNTear>();
+    var wnt = GetComponent<WearNTear>();
     if ((bool)wnt)
-    {
-      wnt.m_onDestroyed = (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(OnDestroyed));
-    }
+      wnt.m_onDestroyed =
+        (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(OnDestroyed));
   }
 
   public void Start()
@@ -41,20 +40,21 @@ public class CultivatableComponent : MonoBehaviour
 
   public void UpdateMaterial()
   {
-    Vector2 uvoffset = (base.transform.parent
-      ? new Vector2(0f - base.transform.localPosition.x, 0f - base.transform.localPosition.z)
-      : new Vector2(0f - base.transform.position.x, 0f - base.transform.position.z));
+    var uvoffset = transform.parent
+      ? new Vector2(0f - transform.localPosition.x,
+        0f - transform.localPosition.z)
+      : new Vector2(0f - transform.position.x, 0f - transform.position.z);
     uvoffset /= textureScale;
-    float uvrotation = (base.transform.parent
-      ? (0f - base.transform.localEulerAngles.y)
-      : (0f - base.transform.eulerAngles.y));
+    var uvrotation = transform.parent
+      ? 0f - transform.localEulerAngles.y
+      : 0f - transform.eulerAngles.y;
     uvrotation /= 360f;
-    Vector2 uvscale = new Vector2(base.transform.localScale.x, base.transform.localScale.z);
+    var uvscale = new Vector2(transform.localScale.x, transform.localScale.z);
     uvscale /= textureScale;
     MeshRenderer[] renderers = GetComponentsInChildren<MeshRenderer>();
-    for (int i = 0; i < renderers.Length; i++)
+    for (var i = 0; i < renderers.Length; i++)
     {
-      Material mat = renderers[i].material;
+      var mat = renderers[i].material;
       mat.SetTextureOffset("_MainTex", uvoffset);
       mat.SetTextureScale("_MainTex", uvscale);
       mat.SetTextureOffset("_MainNormal", uvoffset);
@@ -65,27 +65,22 @@ public class CultivatableComponent : MonoBehaviour
 
   private void OnDestroyed()
   {
-    var myid = ZdoWatchController.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
-    if (!m_childObjects.TryGetValue(myid, out var list))
-    {
-      return;
-    }
+    var myid =
+      ZdoWatchController.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
+    if (!m_childObjects.TryGetValue(myid, out var list)) return;
 
-    for (int i = 0; i < list.Count; i++)
+    for (var i = 0; i < list.Count; i++)
     {
       var zdo = ZdoWatchController.Instance.GetZdo(list[i]);
-      if (zdo == null)
-      {
-        continue;
-      }
+      if (zdo == null) continue;
 
-      ZNetView obj = ZNetScene.instance.FindInstance(zdo);
+      var obj = ZNetScene.instance.FindInstance(zdo);
       if ((bool)obj)
       {
-        if (base.gameObject == obj || base.transform.IsChildOf(obj.transform))
+        if (gameObject == obj || transform.IsChildOf(obj.transform))
         {
           Logger.LogWarning(
-            $" gameObject == obj || transform.IsChildOf(obj.transform) {base.gameObject} == {obj} || {base.transform.IsChildOf(obj.transform)}");
+            $" gameObject == obj || transform.IsChildOf(obj.transform) {gameObject} == {obj} || {transform.IsChildOf(obj.transform)}");
           continue;
         }
 
@@ -97,10 +92,7 @@ public class CultivatableComponent : MonoBehaviour
         }
 
         var netview = obj.GetComponent<ZNetView>();
-        if ((bool)netview)
-        {
-          netview.Destroy();
-        }
+        if ((bool)netview) netview.Destroy();
       }
       else
       {
@@ -133,30 +125,29 @@ public class CultivatableComponent : MonoBehaviour
 
   public void AddNewChild(ZNetView child)
   {
-    AddNewChild(ZdoWatchController.Instance.GetOrCreatePersistentID(m_nview.m_zdo), child);
+    AddNewChild(
+      ZdoWatchController.Instance.GetOrCreatePersistentID(m_nview.m_zdo),
+      child);
   }
 
   public static void InitPiece(ZNetView netview)
   {
-    int id = GetParentID(netview);
-    if (id != 0)
-    {
-      AddChild(id, netview);
-    }
+    var id = GetParentID(netview);
+    if (id != 0) AddChild(id, netview);
   }
 
   public static int GetParentID(ZNetView netview)
   {
-    int id = netview.m_zdo.GetInt(MBCultivatableParentIdHash);
+    var id = netview.m_zdo.GetInt(MBCultivatableParentIdHash);
     if (id == 0)
     {
-      ZDOID zdoid = netview.m_zdo.GetZDOID(MBCultivatableParentHash);
+      var zdoid = netview.m_zdo.GetZDOID(MBCultivatableParentHash);
       if (zdoid != ZDOID.None)
       {
-        ZDO zdoparent = ZDOMan.instance.GetZDO(zdoid);
-        id = ((zdoparent == null)
+        var zdoparent = ZDOMan.instance.GetZDO(zdoid);
+        id = zdoparent == null
           ? ZdoWatchController.ZdoIdToId(zdoid)
-          : ZdoWatchController.Instance.GetOrCreatePersistentID(zdoparent));
+          : ZdoWatchController.Instance.GetOrCreatePersistentID(zdoparent);
         netview.m_zdo.Set(MBCultivatableParentIdHash, id);
       }
     }
@@ -172,13 +163,11 @@ public class CultivatableComponent : MonoBehaviour
 
   public static void AddChild(int parent, ZNetView child)
   {
-    StaticPhysics sp = child.GetComponent<StaticPhysics>();
-    if ((bool)sp)
-    {
-      UnityEngine.Object.Destroy(sp);
-    }
+    var sp = child.GetComponent<StaticPhysics>();
+    if ((bool)sp) Destroy(sp);
 
-    AddChild(parent, ZdoWatchController.Instance.GetOrCreatePersistentID(child.m_zdo));
+    AddChild(parent,
+      ZdoWatchController.Instance.GetOrCreatePersistentID(child.m_zdo));
   }
 
   private static void AddChild(int parent, int child)

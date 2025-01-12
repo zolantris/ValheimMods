@@ -135,10 +135,7 @@ public class VehicleRamAoe : Aoe
 
   public new void Awake()
   {
-    if (!RamInstances.Contains(this))
-    {
-      RamInstances.Add(this);
-    }
+    if (!RamInstances.Contains(this)) RamInstances.Add(this);
 
     InitializeFromConfig();
     SetBaseDamageFromConfig();
@@ -148,18 +145,12 @@ public class VehicleRamAoe : Aoe
     rigidbody = GetComponent<Rigidbody>();
     // very important otherwise this rigidbody will interfere with physics of the Watervehicle controller due to nesting.
     // todo to move this rigidbody into a joint and make it a sibling of the WaterVehicle or PieceContainer (doing this would be a large refactor to structure, likely requiring a new prefab)
-    if (rigidbody)
-    {
-      rigidbody.includeLayers = m_rayMask;
-    }
+    if (rigidbody) rigidbody.includeLayers = m_rayMask;
   }
 
   private new void OnDisable()
   {
-    if (RamInstances.Contains(this))
-    {
-      RamInstances.Remove(this);
-    }
+    if (RamInstances.Contains(this)) RamInstances.Remove(this);
 
     base.OnDisable();
   }
@@ -171,10 +162,7 @@ public class VehicleRamAoe : Aoe
 
   public override void OnEnable()
   {
-    if (!RamInstances.Contains(this))
-    {
-      RamInstances.Add(this);
-    }
+    if (!RamInstances.Contains(this)) RamInstances.Add(this);
 
     Invoke(nameof(UpdateReadyForCollisions), 1f);
     base.OnEnable();
@@ -219,23 +207,22 @@ public class VehicleRamAoe : Aoe
       if ((double)m_chainDelay <= 0.0 &&
           (double)UnityEngine.Random.value < (double)m_chainStartChance)
       {
-        Vector3 position1 = transform.position;
+        var position1 = transform.position;
         FindHits();
         SortHits();
-        int num1 = UnityEngine.Random.Range(m_chainMinTargets,
+        var num1 = UnityEngine.Random.Range(m_chainMinTargets,
           m_chainMaxTargets + 1);
-        foreach (Collider hit in Aoe.s_hitList)
+        foreach (var hit in s_hitList)
         {
           if ((double)UnityEngine.Random.value < (double)m_chainChancePerTarget)
           {
-            Vector3 position2 = hit.gameObject.transform.position;
-            bool flag = false;
-            for (int index = 0; index < Aoe.s_chainObjs.Count; ++index)
-            {
-              if ((bool)(UnityEngine.Object)Aoe.s_chainObjs[index])
+            var position2 = hit.gameObject.transform.position;
+            var flag = false;
+            for (var index = 0; index < s_chainObjs.Count; ++index)
+              if ((bool)(UnityEngine.Object)s_chainObjs[index])
               {
                 if ((double)Vector3.Distance(
-                      Aoe.s_chainObjs[index].transform.position, position2) <
+                      s_chainObjs[index].transform.position, position2) <
                     0.10000000149011612)
                 {
                   flag = true;
@@ -243,17 +230,18 @@ public class VehicleRamAoe : Aoe
                 }
               }
               else
-                Aoe.s_chainObjs.RemoveAt(index);
-            }
+              {
+                s_chainObjs.RemoveAt(index);
+              }
 
             if (!flag)
             {
-              GameObject gameObject1 =
-                UnityEngine.Object.Instantiate<GameObject>(m_chainObj,
+              var gameObject1 =
+                Instantiate<GameObject>(m_chainObj,
                   position2,
                   hit.gameObject.transform.rotation);
-              Aoe.s_chainObjs.Add(gameObject1);
-              IProjectile componentInChildren =
+              s_chainObjs.Add(gameObject1);
+              var componentInChildren =
                 gameObject1.GetComponentInChildren<IProjectile>();
               if (componentInChildren != null)
               {
@@ -266,8 +254,8 @@ public class VehicleRamAoe : Aoe
               }
 
               --num1;
-              float num2 = Vector3.Distance(position2, transform.position);
-              foreach (GameObject gameObject2 in m_chainEffects.Create(
+              var num2 = Vector3.Distance(position2, transform.position);
+              foreach (var gameObject2 in m_chainEffects.Create(
                          position1 + Vector3.up,
                          Quaternion.LookRotation(
                            position1.DirTo(position2 + Vector3.up))))
@@ -341,17 +329,13 @@ public class VehicleRamAoe : Aoe
     // Velocity will significantly increase if the object is moving towards the other object IE collision
     float relativeVelocity;
     if (!vehicle?.MovementController.m_body)
-    {
       relativeVelocity = collider.attachedRigidbody.velocity.magnitude;
-    }
     else
-    {
       relativeVelocity =
         Vector3.Magnitude(collider?.attachedRigidbody?.velocity ??
                           Vector3.zero - vehicle?.MovementController.m_body
                             ?.velocity ??
                           Vector3.zero);
-    }
 
     return UpdateDamageFromVelocity(relativeVelocity);
   }
@@ -365,14 +349,9 @@ public class VehicleRamAoe : Aoe
       MaxVelocityMultiplier);
 
     if (materialTier == PrefabTiers.Tier3)
-    {
       multiplier *= Mathf.Clamp(1 + DamageIncreasePercentagePerTier * 2, 1, 4);
-    }
 
-    if (Mathf.Approximately(multiplier, 0))
-    {
-      multiplier = 0;
-    }
+    if (Mathf.Approximately(multiplier, 0)) multiplier = 0;
 
     var bluntDamage = baseDamage.m_blunt * multiplier;
     var pickaxeDamage = baseDamage.m_pickaxe * multiplier;
@@ -381,9 +360,7 @@ public class VehicleRamAoe : Aoe
     float pierceDamage = 0;
 
     if (RamType == RamPrefabs.RamType.Stake)
-    {
       pierceDamage = baseDamage.m_pierce * multiplier;
-    }
 
     if (RamType == RamPrefabs.RamType.Blade)
     {
@@ -402,24 +379,16 @@ public class VehicleRamAoe : Aoe
       {
         if (nextTotalDamage <= 0) return false;
         if (chopDamageRatio == 0)
-        {
           chopDamageRatio = chopDamage / nextTotalDamage;
-        }
 
         if (pickaxeDamageRatio == 0)
-        {
           pickaxeDamageRatio = pickaxeDamage / nextTotalDamage;
-        }
 
         if (slashDamageRatio == 0)
-        {
           slashDamageRatio = slashDamage / nextTotalDamage;
-        }
 
         if (bluntDamageRatio == 0)
-        {
           bluntDamageRatio = bluntDamage / nextTotalDamage;
-        }
 
         slashDamage = baseDamage.m_slash * slashDamageRatio;
         bluntDamage = baseDamage.m_blunt * bluntDamageRatio;
@@ -435,13 +404,10 @@ public class VehicleRamAoe : Aoe
       m_pierce = pierceDamage,
       m_slash = slashDamage,
       m_chop = chopDamage,
-      m_pickaxe = pickaxeDamage,
+      m_pickaxe = pickaxeDamage
     };
 
-    if (!CanDamageSelf)
-    {
-      return true;
-    }
+    if (!CanDamageSelf) return true;
 
     m_damageSelf =
       GetTotalDamage(slashDamage, bluntDamage, chopDamage, pickaxeDamage,
@@ -455,9 +421,7 @@ public class VehicleRamAoe : Aoe
   {
     var childColliders = GetComponentsInChildren<Collider>();
     foreach (var childCollider in childColliders)
-    {
       Physics.IgnoreCollision(childCollider, collider, true);
-    }
   }
 
   /// <summary>
@@ -476,13 +440,9 @@ public class VehicleRamAoe : Aoe
 
     if (collider.transform.root != transform.root) return false;
     if (vehicle != null)
-    {
       // allows for hitting other vehicles, excludes hitting current vehicle
       if (collider.transform.root != vehicle.transform.root)
-      {
         return false;
-      }
-    }
 
     IgnoreCollider(collider);
     return true;
@@ -519,6 +479,10 @@ public class VehicleRamAoe : Aoe
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collider)) return;
     if (!UpdateDamageFromVelocityCollider(collider)) return;
+
+    // this can be null somehow.
+    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+    if (base.OnTriggerStay == null) return;
     base.OnTriggerStay(collider);
   }
 
@@ -541,7 +505,7 @@ public class VehicleRamAoe : Aoe
       m_pierce = RamBasePierceDamage,
       m_blunt = RamBaseBluntDamage,
       m_chop = RamBaseChopDamage,
-      m_pickaxe = RamBasePickAxeDamage,
+      m_pickaxe = RamBasePickAxeDamage
     });
   }
 

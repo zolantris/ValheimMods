@@ -38,39 +38,33 @@ public class DockComponent : MonoBehaviour
     if ((bool)m_dockedRigidbody)
     {
       if (m_dockState == DockState.EnteringDock)
-      {
         PushToward(m_dockLocation);
-      }
-      else if (m_dockState == DockState.LeavingDock)
-      {
-        PushToward(m_dockExit);
-      }
+      else if (m_dockState == DockState.LeavingDock) PushToward(m_dockExit);
     }
   }
 
   private void PushToward(Transform target)
   {
-    Vector3 direction = target.transform.position - m_dockedRigidbody.transform.position;
-    m_dockedRigidbody.AddForce(direction.normalized * m_dockingStrength, ForceMode.VelocityChange);
+    var direction = target.transform.position -
+                    m_dockedRigidbody.transform.position;
+    m_dockedRigidbody.AddForce(direction.normalized * m_dockingStrength,
+      ForceMode.VelocityChange);
   }
 
   public void OnTriggerEnter(Collider other)
   {
-    if ((bool)m_dockedObject && CanDock(other))
-    {
-      Dock(other);
-    }
+    if ((bool)m_dockedObject && CanDock(other)) Dock(other);
   }
 
   private void Dock(Collider other)
   {
-    ZNetView nv = other.GetComponentInParent<ZNetView>();
+    var nv = other.GetComponentInParent<ZNetView>();
     if ((bool)nv && nv.IsOwner())
     {
-      Rigidbody rb = nv.GetComponent<Rigidbody>();
+      var rb = nv.GetComponent<Rigidbody>();
       if ((bool)rb)
       {
-        int id = ZdoWatchController.Instance.GetOrCreatePersistentID(nv.m_zdo);
+        var id = ZdoWatchController.Instance.GetOrCreatePersistentID(nv.m_zdo);
         m_dockedObject = nv.gameObject;
         m_dockedRigidbody = rb;
         m_nview.m_zdo.Set("MBDock_dockedObject", id);
@@ -81,15 +75,9 @@ public class DockComponent : MonoBehaviour
 
   private bool CanDock(Collider other)
   {
-    if (other.name.StartsWith("Karve"))
-    {
-      return true;
-    }
+    if (other.name.StartsWith("Karve")) return true;
 
-    if (other.name.StartsWith("VikingShip"))
-    {
-      return true;
-    }
+    if (other.name.StartsWith("VikingShip")) return true;
 
     return false;
   }

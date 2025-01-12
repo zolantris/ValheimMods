@@ -27,11 +27,11 @@ internal class GameCamera_WaterPatches
 
   public static void UpdateFogBasedOnEnvironment()
   {
-    EnvSetup currentEnvironment = EnvMan.instance.GetCurrentEnvironment();
+    var currentEnvironment = EnvMan.instance.GetCurrentEnvironment();
     var isNight = EnvMan.IsNight();
-    Color color = ((!EnvMan.IsNight())
+    var color = !EnvMan.IsNight()
       ? currentEnvironment.m_fogColorDay
-      : currentEnvironment.m_fogColorNight);
+      : currentEnvironment.m_fogColorNight;
   }
 
   public static Vector2i GetCurrentZone()
@@ -81,10 +81,7 @@ internal class GameCamera_WaterPatches
   public static void RequestUpdate(
     bool isAboveWater)
   {
-    if (isAboveWater != previousSurfaceState)
-    {
-      CanUpdateFog = true;
-    }
+    if (isAboveWater != previousSurfaceState) CanUpdateFog = true;
 
     previousSurfaceState = isAboveWater;
   }
@@ -106,9 +103,7 @@ internal class GameCamera_WaterPatches
     if (Player.m_localPlayer == null ||
         WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled)
-    {
       return;
-    }
 
     UpdateFogSettings();
     CameraPositionY = ___m_camera.gameObject.transform.position.y;
@@ -117,14 +112,10 @@ internal class GameCamera_WaterPatches
     // negative value due to it allowing zoom further out
     // fallthrough logic
     if (WaterConfig.UnderwaterShipCameraZoom.Value != 0)
-    {
       __instance.m_minWaterDistance =
         WaterConfig.UnderwaterShipCameraZoom.Value * -1;
-    }
     else
-    {
       // default
       __instance.m_minWaterDistance = 5f;
-    }
   }
 }

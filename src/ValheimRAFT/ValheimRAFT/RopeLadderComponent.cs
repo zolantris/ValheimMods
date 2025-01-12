@@ -74,8 +74,10 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
     return "";
   }
 
-  public static string WithYellowBold(string val) =>
-    $"[<color=yellow><b>{val}</b></color>]";
+  public static string WithYellowBold(string val)
+  {
+    return $"[<color=yellow><b>{val}</b></color>]";
+  }
 
   public string GetHoverText()
   {
@@ -84,10 +86,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
 
     List<string> modifiers =
       [isRunning ? "$valheim_vehicles_fast" : "$valheim_vehicles_slow"];
-    if (hasAutoClimb)
-    {
-      modifiers.Add("$valheim_vehicles_auto");
-    }
+    if (hasAutoClimb) modifiers.Add("$valheim_vehicles_auto");
 
     var modifiersString =
       WithYellowBold(string.Join(", ", modifiers.ToArray()));
@@ -151,8 +150,8 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
       ClampOffset(m_attachPoint.parent
         .InverseTransformPoint(player.transform.position).y),
       m_attachPoint.localPosition.z);
-    player.AttachStart(m_attachPoint, null, hideWeapons: true, isBed: false,
-      onShip: false,
+    player.AttachStart(m_attachPoint, null, true, false,
+      false,
       "Movement", Vector3.zero);
   }
 
@@ -165,9 +164,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
         0f &&
         !(vehiclePiecesController?.MovementController?.isAnchored ?? false) &&
         hitPoint.y < vehiclePiecesController?.GetColliderBottom())
-    {
       return true;
-    }
 
     if ((bool)m_mbroot && (bool)m_mbroot.shipController &&
         m_mbroot.shipController.m_targetHeight > 0f &&
@@ -175,42 +172,33 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
           .MBFlags
           .IsAnchored) &&
         hitPoint.y < m_mbroot.GetColliderBottom())
-    {
       return true;
-    }
 
     return false;
   }
 
   private void UpdateSteps()
   {
-    if (!m_stepObject)
-    {
-      return;
-    }
+    if (!m_stepObject) return;
 
     if (Mathf.Abs(transform.rotation.eulerAngles.x) > 40 ||
         Mathf.Abs(transform.rotation.eulerAngles.z) > 40)
-    {
       return;
-    }
 
     if (rayMask == 0)
-    {
       rayMask = LayerMask.GetMask("Default", "static_solid", "Default_small",
         "piece", "terrain");
-    }
 
     m_ladderHeight = 200f;
     var hitpoint = new Vector3(m_attachPoint.transform.position.x, 0f,
       m_attachPoint.transform.position.z);
     var raystart = new Vector3(m_attachPoint.transform.position.x,
-      base.transform.position.y,
+      transform.position.y,
       m_attachPoint.transform.position.z);
     var hits = Physics.RaycastAll(
       new Ray(raystart, -m_attachPoint.transform.up),
       m_ladderHeight, rayMask);
-    for (int i = 0; i < hits.Length; i++)
+    for (var i = 0; i < hits.Length; i++)
     {
       var hit = hits[i];
       if (!(hit.collider == m_collider) &&
@@ -225,13 +213,8 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
     if (IsFlyingAndNotAnchored(hitpoint))
     {
       if (vehiclePiecesController)
-      {
         hitpoint.y = vehiclePiecesController.GetColliderBottom();
-      }
-      else if (m_mbroot)
-      {
-        hitpoint.y = m_mbroot.GetColliderBottom();
-      }
+      else if (m_mbroot) hitpoint.y = m_mbroot.GetColliderBottom();
 
       m_ladderHeight = (hitpoint - raystart).magnitude;
       m_lastHitWaterDistance = 0f;
@@ -240,17 +223,12 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
     {
       if (WaterConfig.UnderwaterAccessMode.Value ==
           WaterConfig.UnderwaterAccessModeType.Disabled)
-      {
         hitpoint.y = ZoneSystem.instance.m_waterLevel;
-      }
 
       var waterdist = (hitpoint - raystart).magnitude + 2f;
       if (waterdist < m_ladderHeight)
       {
-        if (m_lastHitWaterDistance != 0f)
-        {
-          waterdist = m_lastHitWaterDistance;
-        }
+        if (m_lastHitWaterDistance != 0f) waterdist = m_lastHitWaterDistance;
 
         m_ladderHeight = waterdist;
         m_lastHitWaterDistance = waterdist;
@@ -317,15 +295,9 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
   {
     var center =
       Mathf.RoundToInt(m_attachPoint.localPosition.y / m_stepDistance);
-    if (m_currentRight == INVALID_STEP)
-    {
-      m_currentRight = center;
-    }
+    if (m_currentRight == INVALID_STEP) m_currentRight = center;
 
-    if (m_currentLeft == INVALID_STEP)
-    {
-      m_currentLeft = center;
-    }
+    if (m_currentLeft == INVALID_STEP) m_currentLeft = center;
 
     var currentMoveDir =
       hasAutoClimb ? _autoClimbDir : GetMovementDir(m_currentMoveDir);
@@ -340,7 +312,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
           !m_lastMovedLeft)
       {
         m_targetLeft = center +
-                       ((currentMoveDir == MoveDirection.Up)
+                       (currentMoveDir == MoveDirection.Up
                          ? m_stepOffsetUp
                          : m_stepOffsetDown);
         m_leftMoveTime = Time.time;
@@ -349,7 +321,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
       else
       {
         m_targetRight = center +
-                        ((currentMoveDir == MoveDirection.Up)
+                        (currentMoveDir == MoveDirection.Up
                           ? m_stepOffsetUp
                           : m_stepOffsetDown);
         m_rightMoveTime = Time.time;
@@ -358,27 +330,27 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
     }
 
     var leftHand =
-      base.transform.TransformPoint(new Vector3(-0.3f,
+      transform.TransformPoint(new Vector3(-0.3f,
         (float)(m_currentLeft + 2) * m_stepDistance,
         -0.1f));
     var leftFoot =
-      base.transform.TransformPoint(
+      transform.TransformPoint(
         new Vector3(-0.2f, (float)m_currentLeft * m_stepDistance, -0.3f));
     var rightHand =
-      base.transform.TransformPoint(new Vector3(0.3f,
+      transform.TransformPoint(new Vector3(0.3f,
         (float)(m_currentRight + 2) * m_stepDistance,
         -0.1f));
     var rightFoot =
-      base.transform.TransformPoint(
+      transform.TransformPoint(
         new Vector3(0.2f, (float)m_currentRight * m_stepDistance, -0.3f));
     if (m_targetLeft != INVALID_STEP)
     {
       var targetLeftHand =
-        base.transform.TransformPoint(new Vector3(-0.3f,
+        transform.TransformPoint(new Vector3(-0.3f,
           (float)(m_targetLeft + 3) * m_stepDistance,
           0f));
       var targetLeftFoot =
-        base.transform.TransformPoint(new Vector3(-0.2f,
+        transform.TransformPoint(new Vector3(-0.2f,
           (float)m_targetLeft * m_stepDistance, 0f));
       var leftAlpha =
         Mathf.Clamp01((Time.time - m_leftMoveTime) *
@@ -394,11 +366,11 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
     else if (m_targetRight != INVALID_STEP)
     {
       var targetRightHand =
-        base.transform.TransformPoint(new Vector3(0.3f,
+        transform.TransformPoint(new Vector3(0.3f,
           (float)(m_targetRight + 3) * m_stepDistance,
           0f));
       var targetRightFoot =
-        base.transform.TransformPoint(new Vector3(0.2f,
+        transform.TransformPoint(new Vector3(0.2f,
           (float)m_targetRight * m_stepDistance, 0f));
       var rightAlpha =
         Mathf.Clamp01((Time.time - m_rightMoveTime) *
@@ -469,10 +441,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
         : MoveDirection.None;
     }
 
-    if (isPressingRun)
-    {
-      isRunning = !isRunning;
-    }
+    if (isPressingRun) isRunning = !isRunning;
   }
 
   public void MoveOnLadder(Player player, float moveDir)
@@ -484,11 +453,9 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
     var dir = GetMovementDir(moveDir);
 
     if (hasAutoClimb && dir != MoveDirection.None && dir != _autoClimbDir)
-    {
       _autoClimbDir = _autoClimbDir == MoveDirection.None
         ? dir
         : MoveDirection.None;
-    }
 
     offset = UpdateMoveOffset(hasAutoClimb ? _autoClimbDir : dir, offset);
 
@@ -510,10 +477,7 @@ public class RopeLadderComponent : MonoBehaviour, Interactable, Hoverable
   public void OnNearTopExitForwards(Player player)
   {
     var deltaY = player.transform.position.y - m_exitPoint.position.y;
-    if (Mathf.Abs(deltaY) < 1f)
-    {
-      player.transform.position = GetExitOffset();
-    }
+    if (Mathf.Abs(deltaY) < 1f) player.transform.position = GetExitOffset();
   }
 
   /// <summary>

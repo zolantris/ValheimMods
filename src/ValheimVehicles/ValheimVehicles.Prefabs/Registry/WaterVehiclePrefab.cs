@@ -6,6 +6,7 @@ using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimRAFT;
+using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
@@ -110,13 +111,13 @@ public class WaterVehiclePrefab : IRegisterPrefab
     impactEffect.m_toolTier = 1000;
 
     impactEffect.m_damages.m_blunt = 50;
-    impactEffect.m_interval = 0.5f;
+    impactEffect.m_interval = 0.1f;
     impactEffect.m_damagePlayers = true;
     impactEffect.m_damageToSelf = false;
     impactEffect.m_damageFish = true;
     impactEffect.m_hitType = HitData.HitType.Boat;
-    impactEffect.m_minVelocity = 0.1f;
-    impactEffect.m_maxVelocity = 7;
+    impactEffect.m_minVelocity = 0.01f;
+    impactEffect.m_maxVelocity = 999f;
 
     return prefab;
   }

@@ -21,12 +21,6 @@ public static class PropulsionConfig
     private set;
   } = null!;
 
-  public static ConfigEntry<Vector3> ConvexHullPreviewOffset
-  {
-    get;
-    private set;
-  } = null!;
-
   public static ConfigEntry<bool> EXPERIMENTAL_LeanTowardsWindSailDirection
   {
     get;
@@ -57,6 +51,8 @@ public static class PropulsionConfig
     get;
     private set;
   } = null!;
+
+  public static ConfigEntry<float> WheelDeadZone { get; private set; } = null!;
 
   public static ConfigEntry<bool> AllowBaseGameSailRotation
   {
@@ -96,13 +92,15 @@ public static class PropulsionConfig
         "Set the max lean angle when wind is hitting sides directly", true,
         true, new AcceptableValueRange<float>(0f, 30f)));
 
-    TurnPowerNoRudder = Config.Bind(SectionName, "turningPowerNoRudder", 1f,
+    TurnPowerNoRudder = Config.Bind(SectionName, "turningPowerNoRudder", 0.7f,
       ConfigHelpers.CreateConfigDescription(
-        "Set the base turning power of the steering wheel", true));
+        "Set the base turning power of the steering wheel without a rudder",
+        true));
 
-    TurnPowerWithRudder = Config.Bind(SectionName, "turningPowerWithRudder", 6f,
+    TurnPowerWithRudder = Config.Bind(SectionName, "turningPowerWithRudder", 1f,
       ConfigHelpers.CreateConfigDescription(
-        "Set the turning power with a rudder", true));
+        "Set the turning power with a rudder prefab attached to the boat. This value overrides the turningPowerNoRudder config.",
+        true));
 
     SlowAndReverseWithoutControls = Config.Bind(SectionName,
       "slowAndReverseWithoutControls", false,
@@ -129,11 +127,11 @@ public static class PropulsionConfig
     // vertical flight/ballast config
 
     FlightClimbingOffset = Config.Bind(SectionName,
-      "FlightClimbingOffset",
-      5f,
+      "BallastClimbingOffset",
+      2f,
       ConfigHelpers.CreateConfigDescription(
         "Ascent and Descent speed for the vehicle in the air. This value is interpolated to prevent jitters.",
-        true, true, new AcceptableValueRange<float>(1, 15)));
+        true, true, new AcceptableValueRange<float>(0.01f, 10)));
 
     BallastClimbingOffset = Config.Bind(SectionName,
       "BallastClimbingOffset",
@@ -151,12 +149,12 @@ public static class PropulsionConfig
 
     // end vertical config.
 
-    ConvexHullPreviewOffset = Config.Bind(SectionName,
-      "ConvexHullPreviewOffset",
-      Vector3.up * 10f,
+    WheelDeadZone = Config.Bind(SectionName,
+      "WheelDeadZone",
+      0.02f,
       ConfigHelpers.CreateConfigDescription(
-        "For debugging the vehicle's convex hull. Seeing it overlay over the ship is easier to debug. Most players will not need this unless they need to debug their ship",
-        true, true));
+        "Plus or minus deadzone of the wheel when turning. Setting this to 0 will disable this feature. This will zero out the rudder if the user attempts to navigate with a value lower than this threshold range",
+        false, true, new AcceptableValueRange<float>(0f, 0.1f)));
 
     DefaultPhysicsMode.SettingChanged +=
       (sender, args) =>

@@ -85,6 +85,7 @@ public static class PrefabNames
   public const string PlayerSpawnControllerObj =
     $"{ValheimVehiclesPrefix}_PlayerSpawnControllerObj";
 
+  public const string ShipAnchorWood = $"{ValheimVehiclesPrefix}_ShipAnchor_{ShipHulls.HullMaterial.Wood}";
 
   public const string MBRopeLadder = "MBRopeLadder";
   public const string MBRaft = "MBRaft";
@@ -222,6 +223,14 @@ public static class PrefabNames
   public const string KeelColliderPrefix = "keel_collider";
 
   public const string ShipHullPrefabName = "Ship_Hull";
+  public const string WindowWallPorthole2x2Prefab = $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_2x2";
+  public const string WindowWallPorthole4x4Prefab = $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_4x4";
+  public const string WindowWallPorthole8x4Prefab = $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_8x4";
+  public const string WindowFloorPorthole4x4Prefab = $"{ValheimVehiclesPrefix}_ShipWindow_Floor_Porthole_4x4";
+  
+  public const string WindowWallSquareIronPrefabName = $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Square_{ShipHulls.HullMaterial.Iron}_2x2";
+  public const string WindowWallSquareWoodPrefabName = $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Square_{ShipHulls.HullMaterial.Wood}_2x2";
+  public const string WindowPortholeStandalonePrefab = $"{ValheimVehiclesPrefix}_ShipWindow_Porthole_standalone";
 
   // hull
   public const string ShipHullCenterWoodPrefabName =
@@ -322,7 +331,12 @@ public static class PrefabNames
     goName.StartsWith(HullRibCorner)
     || goName.StartsWith(HullWall) || goName.StartsWith(HullSlab) ||
     goName.StartsWith(HullProw) ||
-    goName.StartsWith(HullRibCornerFloor);
+    goName.StartsWith(HullRibCornerFloor) ||
+    goName.StartsWith(WindowPortholeStandalonePrefab) ||
+    goName.StartsWith(WindowWallPorthole2x2Prefab) ||
+    goName.StartsWith(WindowWallPorthole4x4Prefab) ||
+    goName.StartsWith(WindowWallSquareIronPrefabName) ||
+    goName.StartsWith(WindowWallSquareWoodPrefabName);
 
   public static bool IsHull(GameObject go) => IsHull(go.name);
 }

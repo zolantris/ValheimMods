@@ -64,6 +64,7 @@ Go [here](docs/CONTRIBUTING.md) for more information.
 6. In Rider connect the debugger via attach to process. Create a custom process
    call it `Valheim` add the IP which is the debug_address e.g. `127.0.0.1` and
    the port `10000`
+   - This can be found under `"mono-remote"`
 7. add a breakpoint in your mod to pause things.
 8. alternative wait for a game error to throw and it will pause and decompile
    that assembly!

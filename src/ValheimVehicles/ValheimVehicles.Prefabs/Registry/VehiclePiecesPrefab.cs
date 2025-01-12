@@ -21,8 +21,6 @@ public class VehiclePiecesPrefab : IRegisterPrefab
   {
     VehiclePiecesContainer = prefabManager.CreateClonedPrefab(PrefabNames.VehiclePiecesContainer,
       LoadValheimVehicleAssets.VehiclePiecesAsset);
-    // PrefabRegistryHelpers.AddTempNetView(VehiclePiecesContainer);
-    // PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(VehiclePiecesContainer);
   }
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
@@ -31,4 +29,4 @@ public class VehiclePiecesPrefab : IRegisterPrefab
     // todo to add a dynamic register for anything that needs to be a rigidbody added to this vehicle
     // RegisterStaticPiecesContainer(prefabManager);
   }
-}
+} 

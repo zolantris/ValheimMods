@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3288525478
+CRC: 1545836069
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 0ed6570ccaed5ae02d84be0ab6fef2bd
+    Hash: b33f5574fa0395f08bd0715ad10277f5
   TypeTreeHash:
     serializedVersion: 2
-    Hash: cf00480c8b9c76a7d0180d5f6a376b7d
+    Hash: fe5e120dcd104e5f53ee6ff03d3ba42b
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 0ed6570ccaed5ae02d84be0ab6fef2bd
+    Hash: b33f5574fa0395f08bd0715ad10277f5
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -29,6 +29,8 @@ ClassTypes:
 - Class: 48
   Script: {instanceID: 0}
 - Class: 54
+  Script: {instanceID: 0}
+- Class: 59
   Script: {instanceID: 0}
 - Class: 65
   Script: {instanceID: 0}
@@ -112,11 +114,13 @@ Assets:
 - Assets/ValheimVehicles/Material/SailMat.mat
 - Assets/ValheimVehicles/Texture/pattern_checker.png
 - Assets/ValheimVehicles/Prefabs/rope_ladder.prefab
+- Assets/ValheimVehicles/Prefabs/anchor_chain.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel 1.prefab
 - Assets/ValheimVehicles/Texture/sail_normal.png
 - Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel.prefab
 - Assets/ValheimVehicles/Prefabs/boarding_ramp.prefab
 - Assets/ValheimVehicles/Prefabs/rope_anchor.prefab
+- Assets/ValheimVehicles/Prefabs/chain_link.prefab
 - Assets/ValheimVehicles/Prefabs/dirt_floor.prefab
 - Assets/ValheimVehicles/Texture/sail.png
 Dependencies:

@@ -5,7 +5,9 @@ using System.Dynamic;
 using System.Linq;
 using HarmonyLib;
 using Jotunn.Managers;
+using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
@@ -23,25 +25,48 @@ public struct DrawTargetColliders
     lineColor = default;
     parent = null;
     width = 1f;
+    name = "";
   }
 
   public BoxCollider collider { get; set; }
   public Color lineColor { get; set; }
   public GameObject parent { get; set; }
   public float width { get; set; }
+
+  // used for inspecting
+  public string name { get; set; }
 }
 
 public class VehicleDebugHelpers : MonoBehaviour
 {
   private Dictionary<string, List<LineRenderer>> lines = new();
+  private Dictionary<string, GameObject> colliderTextObjects = new();
 
   public bool autoUpdateColliders = false;
   private List<DrawTargetColliders> targetColliders = [];
   public GameObject VehicleObj;
   public VehicleShip VehicleShipInstance;
   private Coroutine? _drawColliderCoroutine = null;
+  private GameObject? worldCenterOfMassCube;
+  private GameObject? forwardCube;
+  private GameObject? backwardCube;
+  private GameObject? rightCube;
+  private GameObject? leftCube;
 
-  private InvokeBinder repeatInvoke;
+  private void RenderForcePointCubes()
+  {
+    if (VehicleShipInstance == null || VehicleShipInstance.MovementController == null) return;
+    
+    var shipFloatation = VehicleShipInstance
+      .MovementController.GetShipFloatation();
+
+    if (shipFloatation == null) return;
+    
+    RenderWaterForceCube(ref forwardCube, shipFloatation.Value.ShipForward, "forward");
+    RenderWaterForceCube(ref backwardCube, shipFloatation.Value.ShipBack, "backward");
+    RenderWaterForceCube(ref rightCube, shipFloatation.Value.ShipRight, "right");
+    RenderWaterForceCube(ref leftCube,shipFloatation.Value.ShipLeft, "left");
+  }
 
   private void FixedUpdate()
   {
@@ -49,20 +74,30 @@ public class VehicleDebugHelpers : MonoBehaviour
     if (autoUpdateColliders ||
         VehicleDebugConfig.AutoShowVehicleColliders.Value)
     {
+      RenderForcePointCubes();
+      RenderWorldCenterOfMassAsCube();
       DrawAllColliders();
+      Update3DTextLookAt();
     }
   }
 
   private void OnDestroy()
   {
+    if (worldCenterOfMassCube != null) Destroy(worldCenterOfMassCube);
     lines.Values.ToList()
       .ForEach(x => x.ForEach(Destroy));
     lines.Clear();
+
+    foreach (var obj in targetColliders)
+      Remove3DTextForCollider(obj.collider.gameObject.name);
   }
 
   public void StartRenderAllCollidersLoop()
   {
     autoUpdateColliders = !autoUpdateColliders;
+    RenderWorldCenterOfMassAsCube();
+    RenderForcePointCubes();
+
     if (autoUpdateColliders) return;
     foreach (var keyValuePair in lines)
     {
@@ -77,13 +112,131 @@ public class VehicleDebugHelpers : MonoBehaviour
     }
   }
 
+  private void Remove3DTextForCollider(string colliderName)
+  {
+    if (colliderTextObjects.ContainsKey(colliderName))
+    {
+      var textObj = colliderTextObjects[colliderName];
+      Destroy(textObj); // Destroy the text object
+      colliderTextObjects.Remove(colliderName); // Remove from dictionary
+    }
+  }
+
+  private void Update3DTextLookAt()
+  {
+    // Loop through each collider text object and update the LookAt to always face the camera
+    foreach (var textObject in colliderTextObjects.Values)
+      if (textObject != null)
+      {
+        textObject.transform.LookAt(GameCamera.instance.transform);
+        textObject.transform.Rotate(0, 180f,
+          0); // Correct the reversed orientation
+      }
+  }
+
+
+  public void RenderWaterForceCube(ref GameObject? cube, Vector3 position, string cubeTitle)
+  {
+    if (!autoUpdateColliders)
+    {
+      if (cube != null)
+      {
+        Destroy(cube);
+      }
+      return;
+    }
+    if (VehicleShipInstance.MovementController == null) return;
+
+    if (cube == null)
+    {
+      // Create the cube
+      cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+      cube.name = $"force_cube_{cubeTitle}";
+      var collider = cube.GetComponent<BoxCollider>();
+      if (collider)
+      {
+        Destroy(collider);
+      }
+
+      var meshRenderer = cube.GetComponent<MeshRenderer>();
+      meshRenderer.material =
+        new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
+        {
+          color = Color.green
+        };
+      cube.gameObject.layer = LayerMask.NameToLayer("Ignore Raycast");
+
+      // Add the text element as a child
+      GameObject textObj = new GameObject("CubeText");
+      textObj.transform.SetParent(cube.transform);
+      textObj.transform.localPosition = new Vector3(0, 1.2f, 0); // Adjust height as needed
+
+      var textMesh = textObj.AddComponent<TextMesh>();
+      textMesh.text = $"Force Cube {cubeTitle}"; // Set desired text
+      textMesh.fontSize = 32;
+      textMesh.characterSize = 0.1f; // Adjust size as needed
+      textMesh.anchor = TextAnchor.MiddleCenter;
+      textMesh.alignment = TextAlignment.Center;
+      textMesh.color = Color.yellow;
+    }
+
+    // Update the cube's position and set its parent
+    cube.transform.position = position;
+    cube.transform.SetParent(
+      VehicleShipInstance.PiecesController.transform,
+      false);
+
+    // Ensure the text always faces the camera
+    var textTransform = cube.transform.Find("CubeText");
+    if (textTransform != null)
+    {
+      textTransform.LookAt(Camera.main.transform);
+      textTransform.rotation = Quaternion.LookRotation(textTransform.forward * -1); // Flip to face correctly
+    }
+  }
+
+
+  public void RenderWorldCenterOfMassAsCube()
+  {
+    if (!autoUpdateColliders)
+    {
+      if (worldCenterOfMassCube != null)
+      {
+        Destroy(worldCenterOfMassCube);
+      }
+      return;
+    }
+    if (VehicleShipInstance.MovementController == null) return;
+    if (worldCenterOfMassCube == null)
+    {
+      worldCenterOfMassCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+      var collider = worldCenterOfMassCube.GetComponent<BoxCollider>();
+      if (collider)
+      {
+        Destroy(collider);
+      }
+      var meshRenderer = worldCenterOfMassCube.GetComponent<MeshRenderer>();
+      meshRenderer.material =
+        new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
+        {
+          color = Color.yellow
+        };
+      worldCenterOfMassCube.gameObject.layer =
+        LayerMask.NameToLayer("Ignore Raycast");
+    }
+
+    worldCenterOfMassCube.transform.position = VehicleShipInstance
+      .MovementController.m_body
+      .worldCenterOfMass;
+    worldCenterOfMassCube.transform.SetParent(
+      VehicleShipInstance.PiecesController.transform,
+      false);
+  }
+
   private static RaycastHit? RaycastToPiecesUnderPlayerCamera()
   {
     var player = Player.m_localPlayer;
-    if (player == null)
-    {
-      return null;
-    }
+    if (player == null) return null;
 
     if (!Physics.Raycast(
           GameCamera.instance.transform.position,
@@ -126,9 +279,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     // flips the x and z axis which act as the boat depth and sides
     // y-axis is boat height. Flipping that would just rotate boat which is why it is omitted
     if (!VehicleShipInstance.isCreative)
-    {
       VehicleShipInstance.MovementController.m_body.isKinematic = true;
-    }
 
     // transform.rotation = Quaternion.Euler(0, VehicleObj.transform.eulerAngles.y,
     //   0);
@@ -137,9 +288,7 @@ public class VehicleDebugHelpers : MonoBehaviour
       0);
 
     if (!VehicleShipInstance.isCreative)
-    {
       VehicleShipInstance.MovementController.m_body.isKinematic = false;
-    }
   }
 
   public void MoveShip(Vector3 vector)
@@ -186,13 +335,9 @@ public class VehicleDebugHelpers : MonoBehaviour
     line.SetPosition(1, end);
 
     if (index < lineItems.Count)
-    {
       lineItems[index] = line;
-    }
     else
-    {
       lineItems.Add(line);
-    }
   }
 
 
@@ -200,6 +345,8 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   public void AddColliderToRerender(DrawTargetColliders drawTargetColliders)
   {
+    if (!drawTargetColliders.collider.enabled) return;
+
     targetColliders.Add(drawTargetColliders);
   }
 
@@ -219,11 +366,9 @@ public class VehicleDebugHelpers : MonoBehaviour
   private bool DrawAllColliders()
   {
     foreach (var drawTargetColliders in targetColliders)
-    {
       DrawColliders(drawTargetColliders.collider,
         drawTargetColliders.collider.gameObject,
-        drawTargetColliders.lineColor);
-    }
+        drawTargetColliders.lineColor, drawTargetColliders.name);
 
     return true;
   }
@@ -255,24 +400,32 @@ public class VehicleDebugHelpers : MonoBehaviour
    * Debug any boxCollider, graphically visualizes the bounds
    */
   public void DrawColliders(BoxCollider boxCollider, GameObject parent,
-    Color? lineColor)
+    Color? lineColor, string name)
   {
     var color = lineColor ?? LineColorDefault;
 
     if (boxCollider == null) return;
-    var material = new Material(LoadValheimAssets.CustomPieceShader)
-    {
-      color = color
-    };
+    if (!boxCollider.gameObject.activeInHierarchy) return;
+
+    var material =
+      new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
+      {
+        color = color
+      };
     const float width = 0.05f;
-    var rightDir = boxCollider.transform.right.normalized;
-    var forwardDir = boxCollider.transform.forward.normalized;
-    var upDir = boxCollider.transform.up.normalized;
-    var center = boxCollider.transform.position + boxCollider.center;
+    var boxColliderTransform = boxCollider.transform;
+
+    var rightDir = boxColliderTransform.right.normalized;
+    var forwardDir = boxColliderTransform.forward.normalized;
+    var upDir = boxColliderTransform.up.normalized;
+    var center = boxColliderTransform.position + boxCollider.center;
     var size = boxCollider.size;
-    size.x *= boxCollider.transform.lossyScale.x;
-    size.y *= boxCollider.transform.lossyScale.y;
-    size.z *= boxCollider.transform.lossyScale.z;
+
+    var lossyScale = boxColliderTransform.lossyScale;
+
+    size.x *= lossyScale.x;
+    size.y *= lossyScale.y;
+    size.z *= lossyScale.z;
     var extents = size / 2f;
 
     var topMostDir = upDir * extents.y;
@@ -350,5 +503,50 @@ public class VehicleDebugHelpers : MonoBehaviour
       forwardBottomRight, index, lineRendererData);
 
     lines[boxCollider.name] = colliderItems;
+
+    Update3DTextForCollider(boxCollider, parent, name, color);
+  }
+
+  private void Update3DTextForCollider(BoxCollider boxCollider,
+    GameObject parent, string textTitle, Color color)
+
+  {
+    // If text already exists for this collider, update it
+    if (colliderTextObjects.ContainsKey(boxCollider.gameObject.name))
+    {
+      var existingText = colliderTextObjects[boxCollider.gameObject.name];
+      // Update text content and position if necessary
+      var offset = new Vector3(0, boxCollider.size.y / 2f + 1f, 0);
+      existingText.transform.position = boxCollider.transform.position + offset;
+      existingText.transform.SetParent(parent.transform);
+
+      // Ensure the text always faces the camera
+      existingText.transform.LookAt(GameCamera.instance.transform);
+      existingText.transform.Rotate(0, 180f,
+        0); // Correct the reversed orientation
+    }
+    else
+    {
+      // Create new 3D Text for this collider
+      var textObj = new GameObject($"{boxCollider.gameObject.name}_label");
+      var textMeshPro = textObj.AddComponent<TextMeshPro>();
+
+      // Set text properties
+      textMeshPro.text = textTitle;
+      textMeshPro.fontSize = 10;
+      textMeshPro.color = color;
+
+      // Position the text next to the collider
+      var offset = new Vector3(0, boxCollider.size.y / 2f + 1f, 0);
+      textObj.transform.position = boxCollider.transform.position + offset;
+      textObj.transform.SetParent(parent.transform);
+
+      // Make text face the camera
+      textObj.transform.LookAt(GameCamera.instance.transform);
+      textObj.transform.Rotate(0, 180f, 0); // Correct the reversed orientation
+
+      // Add text to dictionary for future updates
+      colliderTextObjects.Add(boxCollider.gameObject.name, textObj);
+    }
   }
 }

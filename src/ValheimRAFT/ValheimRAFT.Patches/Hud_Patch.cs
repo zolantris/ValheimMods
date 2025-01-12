@@ -46,16 +46,16 @@ public class Hud_Patch
   //   windIndicatorCircle.AddComponent<CircleWindIndicator>();
   // }
 
-  public static void AddAnchorGameObject(Transform shipPowerHud, Transform rudderIndicator)
+  public static void AddAnchorGameObject(Transform shipPowerHud,
+    Transform rudderIndicator)
   {
-    AnchorHud = Object.Instantiate(LoadValheimVehicleAssets.HudAnchor, shipPowerHud);
+    AnchorHud =
+      Object.Instantiate(LoadValheimVehicleAssets.HudAnchor, shipPowerHud);
     AnchorHud.name = PrefabNames.VehicleHudAnchorIndicator;
     AnchorHud.SetActive(false);
 
     if (rudderIndicator)
-    {
       AnchorHud.transform.localPosition = rudderIndicator.localPosition;
-    }
   }
 
   private static void ToggleAnchorHud(Ship ship)
@@ -89,10 +89,7 @@ public class Hud_Patch
 
     var rudder = shipHud.Find("Rudder");
 
-    if (shipPowerIcon)
-    {
-      AddAnchorGameObject(shipPowerIcon, rudder);
-    }
+    if (shipPowerIcon) AddAnchorGameObject(shipPowerIcon, rudder);
   }
 
 
@@ -106,24 +103,24 @@ public class Hud_Patch
   public static void UpdateShipHudV2(Hud __instance, Player player, float dt,
     VehicleShipCompat vehicleInterface)
   {
-    Ship.Speed speedSetting = vehicleInterface.GetSpeedSetting();
-    float rudder = vehicleInterface.GetRudder();
-    float rudderValue = vehicleInterface.GetRudderValue();
-    __instance.m_shipHudRoot.SetActive(value: true);
+    var speedSetting = vehicleInterface.GetSpeedSetting();
+    var rudder = vehicleInterface.GetRudder();
+    var rudderValue = vehicleInterface.GetRudderValue();
+    __instance.m_shipHudRoot.SetActive(true);
     __instance.m_rudderSlow.SetActive(speedSetting == Ship.Speed.Slow);
     __instance.m_rudderForward.SetActive(speedSetting == Ship.Speed.Half);
     __instance.m_rudderFastForward.SetActive(speedSetting == Ship.Speed.Full);
     __instance.m_rudderBackward.SetActive(speedSetting == Ship.Speed.Back);
-    __instance.m_rudderLeft.SetActive(value: false);
-    __instance.m_rudderRight.SetActive(value: false);
+    __instance.m_rudderLeft.SetActive(false);
+    __instance.m_rudderRight.SetActive(false);
     __instance.m_fullSail.SetActive(speedSetting == Ship.Speed.Full);
     __instance.m_halfSail.SetActive(speedSetting == Ship.Speed.Half);
-    GameObject rudder2 = __instance.m_rudder;
+    var rudder2 = __instance.m_rudder;
     int active;
     switch (speedSetting)
     {
       case Ship.Speed.Stop:
-        active = ((Mathf.Abs(rudderValue) > 0.2f) ? 1 : 0);
+        active = Mathf.Abs(rudderValue) > 0.2f ? 1 : 0;
         break;
       default:
         active = 0;
@@ -136,17 +133,16 @@ public class Hud_Patch
 
     rudder2.SetActive((byte)active != 0);
     if ((rudder > 0f && rudderValue < 1f) || (rudder < 0f && rudderValue > -1f))
-    {
-      __instance.m_shipRudderIcon.transform.Rotate(new Vector3(0f, 0f, 200f * (0f - rudder) * dt));
-    }
+      __instance.m_shipRudderIcon.transform.Rotate(new Vector3(0f, 0f,
+        200f * (0f - rudder) * dt));
 
     if (Mathf.Abs(rudderValue) < 0.02f)
     {
-      __instance.m_shipRudderIndicator.gameObject.SetActive(value: false);
+      __instance.m_shipRudderIndicator.gameObject.SetActive(false);
     }
     else
     {
-      __instance.m_shipRudderIndicator.gameObject.SetActive(value: true);
+      __instance.m_shipRudderIndicator.gameObject.SetActive(true);
       if (rudderValue > 0f)
       {
         __instance.m_shipRudderIndicator.fillClockwise = true;
@@ -155,60 +151,48 @@ public class Hud_Patch
       else
       {
         __instance.m_shipRudderIndicator.fillClockwise = false;
-        __instance.m_shipRudderIndicator.fillAmount = (0f - rudderValue) * 0.25f;
+        __instance.m_shipRudderIndicator.fillAmount =
+          (0f - rudderValue) * 0.25f;
       }
     }
 
-    float shipYawAngle = vehicleInterface.GetShipYawAngle();
-    __instance.m_shipWindIndicatorRoot.localRotation = Quaternion.Euler(0f, 0f, shipYawAngle);
-    float windAngle = vehicleInterface.GetWindAngle();
-    __instance.m_shipWindIconRoot.localRotation = Quaternion.Euler(0f, 0f, windAngle);
-    float windAngleFactor = vehicleInterface.GetWindAngleFactor();
+    var shipYawAngle = vehicleInterface.GetShipYawAngle();
+    __instance.m_shipWindIndicatorRoot.localRotation =
+      Quaternion.Euler(0f, 0f, shipYawAngle);
+    var windAngle = vehicleInterface.GetWindAngle();
+    __instance.m_shipWindIconRoot.localRotation =
+      Quaternion.Euler(0f, 0f, windAngle);
+    var windAngleFactor = vehicleInterface.GetWindAngleFactor();
     __instance.m_shipWindIcon.color =
       Color.Lerp(new Color(0.2f, 0.2f, 0.2f, 1f), Color.white, windAngleFactor);
-    Camera mainCamera = Utils.GetMainCamera();
+    var mainCamera = Utils.GetMainCamera();
     if (!(mainCamera == null))
-    {
       __instance.m_shipControlsRoot.transform.position =
-        mainCamera.WorldToScreenPointScaled(vehicleInterface.m_controlGuiPos.position);
-    }
+        mainCamera.WorldToScreenPointScaled(vehicleInterface.m_controlGuiPos
+          .position);
   }
 
   [HarmonyPatch(typeof(Hud), nameof(Hud.UpdateShipHud))]
   [HarmonyPrefix]
   public static bool UpdateShipHud(Hud __instance, Player player, float dt)
   {
-    object? controlledShipObj = Player_Patch.HandleGetControlledShip(player);
-    if (controlledShipObj == null)
-    {
-      return true;
-    }
+    var controlledShipObj = Player_Patch.HandleGetControlledShip(player);
+    if (controlledShipObj == null) return true;
 
     var vehicleInterface = VehicleShipCompat.InitFromUnknown(controlledShipObj);
 
-    if (vehicleInterface == null)
-    {
-      return true;
-    }
+    if (vehicleInterface == null) return true;
 
 
     if (vehicleInterface.IsVehicleShip)
-    {
       ToggleAnchorHud(vehicleInterface.VehicleShipInstance);
-    }
     else if (vehicleInterface.IsMbRaft)
-    {
       ToggleAnchorHud(vehicleInterface.ShipInstance);
-    }
     else
-    {
       return true;
-    }
 
-    if (vehicleInterface is { IsVehicleShip: false, IsMbRaft: false })
-    {
-      return true;
-    }
+    if (vehicleInterface is
+        { IsVehicleShip: false, IsMbRaft: false }) return true;
 
     UpdateShipHudV2(__instance, player, dt, vehicleInterface);
     return false;

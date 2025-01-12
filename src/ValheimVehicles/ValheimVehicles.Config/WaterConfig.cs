@@ -5,6 +5,7 @@ using BepInEx.Configuration;
 using ComfyLib;
 using UnityEngine;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 
@@ -38,6 +39,12 @@ public static class WaterConfig
 
   public static ConfigEntry<WaterMeshFlipModeType>
     FlipWatermeshMode { get; private set; } = null!;
+  
+  public static ConfigEntry<bool>
+    HasUnderwaterHullBubbleEffect { get; private set; } = null!;
+  
+  public static ConfigEntry<Color>
+    UnderwaterBubbleEffectColor { get; private set; } = null!;
 
   public static ConfigEntry<float>
     DEBUG_LiquidDepthOverride { get; private set; } = null!;
@@ -304,7 +311,26 @@ public static class WaterConfig
       ConfigHelpers.CreateConfigDescription(
         "Allows for walking underwater, anywhere, or onship, or eventually within the water displaced area only. Disabled with remove all water logic. DEBUG_WaterZoneOnly is not supported yet",
         true, true));
+    
+    HasUnderwaterHullBubbleEffect = Config.Bind(
+      SectionKey,
+      "HasUnderwaterHullBubbleEffect",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "Adds an underwater bubble conforming around the vehicle hull. Allowing for a underwater like distortion effect without needing to use fog.",
+        true, true));
+    
+    UnderwaterBubbleEffectColor = Config.Bind(
+      SectionKey,
+      "UnderwaterBubbleEffectColor",
+      new Color(0f, 0.4f, 0.4f, 0.8f),
+      ConfigHelpers.CreateConfigDescription(
+        "Set the underwater bubble color",
+        true));
 
+    UnderwaterBubbleEffectColor.SettingChanged +=  (sender, args) =>
+      ConvexHullComponent.UpdatePropertiesForAllComponents();
+    
     AllowedEntiesList.SettingChanged +=
       (sender, args) => OnAllowListUpdate();
     UnderwaterAccessMode.SettingChanged +=

@@ -31,11 +31,10 @@ public class VehicleShipEffects : MonoBehaviour
 
   private float m_sailBaseVol = 1f;
 
-  private readonly List<KeyValuePair<AudioSource, float>> m_wakeSounds =
-    new List<KeyValuePair<AudioSource, float>>();
+  private readonly List<KeyValuePair<AudioSource, float>> m_wakeSounds = new();
 
   private readonly List<KeyValuePair<AudioSource, float>> m_inWaterSounds =
-    new List<KeyValuePair<AudioSource, float>>();
+    new();
 
   private WaterVolume m_previousWaterVolume;
 
@@ -64,24 +63,26 @@ public class VehicleShipEffects : MonoBehaviour
     var componentInParent = GetComponentInParent<ZNetView>();
     if ((bool)componentInParent && componentInParent.GetZDO() == null)
     {
-      base.enabled = false;
+      enabled = false;
       return;
     }
 
     m_body = GetComponentInParent<Rigidbody>();
     m_ship = GetComponentInParent<VehicleShip>();
     if ((bool)m_speedWakeRoot)
-    {
-      m_wakeParticles = m_speedWakeRoot.GetComponentsInChildren<ParticleSystem>();
-    }
+      m_wakeParticles =
+        m_speedWakeRoot.GetComponentsInChildren<ParticleSystem>();
 
     if ((bool)m_wakeSoundRoot)
     {
-      var componentsInChildren = m_wakeSoundRoot.GetComponentsInChildren<AudioSource>();
+      var componentsInChildren =
+        m_wakeSoundRoot.GetComponentsInChildren<AudioSource>();
       foreach (var audioSource in componentsInChildren)
       {
         audioSource.pitch = Random.Range(0.9f, 1.1f);
-        m_wakeSounds.Add(new KeyValuePair<AudioSource, float>(audioSource, audioSource.volume));
+        m_wakeSounds.Add(
+          new KeyValuePair<AudioSource, float>(audioSource,
+            audioSource.volume));
       }
     }
 
@@ -93,7 +94,8 @@ public class VehicleShipEffects : MonoBehaviour
       {
         audioSource2.pitch = Random.Range(0.9f, 1.1f);
         m_inWaterSounds.Add(
-          new KeyValuePair<AudioSource, float>(audioSource2, audioSource2.volume));
+          new KeyValuePair<AudioSource, float>(audioSource2,
+            audioSource2.volume));
       }
     }
 
@@ -118,74 +120,62 @@ public class VehicleShipEffects : MonoBehaviour
   {
     if (!Floating.IsUnderWater(transform.position, ref m_previousWaterVolume))
     {
-      m_shadow.gameObject.SetActive(value: false);
-      SetWake(enabled: false, deltaTime);
-      FadeSounds(m_inWaterSounds, enabled: false, deltaTime);
+      m_shadow.gameObject.SetActive(false);
+      SetWake(false, deltaTime);
+      FadeSounds(m_inWaterSounds, false, deltaTime);
       return;
     }
 
-    m_shadow.gameObject.SetActive(value: true);
-    bool flag = m_body.velocity.magnitude > m_minimumWakeVel;
-    FadeSounds(m_inWaterSounds, enabled: true, deltaTime);
+    m_shadow.gameObject.SetActive(true);
+    var flag = m_body.velocity.magnitude > m_minimumWakeVel;
+    FadeSounds(m_inWaterSounds, true, deltaTime);
     SetWake(flag, deltaTime);
     if ((bool)m_sailSound)
     {
-      float target = (m_ship.MovementController.IsSailUp() ? m_sailBaseVol : 0f);
+      var target = m_ship.MovementController.IsSailUp() ? m_sailBaseVol : 0f;
       FadeSound(m_sailSound, target, m_sailFadeDuration, deltaTime);
     }
 
     if (m_splashEffects != null)
-    {
       m_splashEffects.SetActive(m_ship.MovementController.HasPlayerOnboard());
-    }
   }
 
   private void SetWake(bool enabled, float dt)
   {
     ParticleSystem[] wakeParticles = m_wakeParticles;
-    for (int i = 0; i < wakeParticles.Length; i++)
+    for (var i = 0; i < wakeParticles.Length; i++)
     {
-      ParticleSystem.EmissionModule emission = wakeParticles[i].emission;
+      var emission = wakeParticles[i].emission;
       emission.enabled = enabled;
     }
 
     FadeSounds(m_wakeSounds, enabled, dt);
   }
 
-  private void FadeSounds(List<KeyValuePair<AudioSource, float>> sources, bool enabled, float dt)
+  private void FadeSounds(List<KeyValuePair<AudioSource, float>> sources,
+    bool enabled, float dt)
   {
     foreach (KeyValuePair<AudioSource, float> source in sources)
-    {
       if (enabled)
-      {
         FadeSound(source.Key, source.Value, m_audioFadeDuration, dt);
-      }
       else
-      {
         FadeSound(source.Key, 0f, m_audioFadeDuration, dt);
-      }
-    }
   }
 
-  private static void FadeSound(AudioSource source, float target, float fadeDuration, float dt)
+  private static void FadeSound(AudioSource source, float target,
+    float fadeDuration, float dt)
   {
-    float maxDelta = dt / fadeDuration;
+    var maxDelta = dt / fadeDuration;
     if (target > 0f)
     {
-      if (!source.isPlaying)
-      {
-        source.Play();
-      }
+      if (!source.isPlaying) source.Play();
 
       source.volume = Mathf.MoveTowards(source.volume, target, maxDelta);
     }
     else if (source.isPlaying)
     {
       source.volume = Mathf.MoveTowards(source.volume, 0f, maxDelta);
-      if (source.volume <= 0f)
-      {
-        source.Stop();
-      }
+      if (source.volume <= 0f) source.Stop();
     }
   }
 }

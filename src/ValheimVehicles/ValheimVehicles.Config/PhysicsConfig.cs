@@ -6,6 +6,7 @@ using ValheimRAFT;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Constants;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.Config;
 
@@ -41,6 +42,7 @@ public static class PhysicsConfig
   public static ConfigEntry<float> waterSailForceFactor = null!;
   public static ConfigEntry<float> waterDrag = null!;
   public static ConfigEntry<float> waterAngularDrag = null!;
+  public static ConfigEntry<float> waterDeltaForceMultiplier = null!;
 
   public static ConfigEntry<float> submersibleAngularDamping = null!;
   public static ConfigEntry<float> submersibleSidewaysDamping = null!;
@@ -105,7 +107,7 @@ public static class PhysicsConfig
     Center,
     Bottom,
     Top,
-    Custom,
+    Custom
   }
 
   public static ConfigEntry<HullFloatation> HullFloatationColliderLocation
@@ -141,11 +143,9 @@ public static class PhysicsConfig
   {
     foreach (var vehicleMovementController in VehicleMovementController
                .Instances)
-    {
       vehicleMovementController.UpdateVehicleStats(
         vehicleMovementController.IsFlying(),
         vehicleMovementController.IsSubmerged(), true);
-    }
   }
 
   private static readonly AcceptableValueRange<float> StableSailForceRange =
@@ -188,7 +188,7 @@ public static class PhysicsConfig
       $"forceDistance_{DampingResetKey}", 5f,
       "EXPERIMENTAL_FORCE_DISTANCE");
     force = Config.Bind(SectionKey,
-      $"force_{DampingResetKey}", 3f,
+      $"force_{DampingResetKey}", 1f,
       "EXPERIMENTAL_FORCE");
 
     backwardForce = Config.Bind(SectionKey,
@@ -289,7 +289,7 @@ public static class PhysicsConfig
 
     convexHullDebuggerColor = Config.Bind(FloatationPhysicsSectionKey,
       "convexHullDebuggerColor",
-      new Color(0, 0.60f, 0.60f, 0.20f),
+      new Color(0.10f, 0.23f, 0.07f, 0.5f),
       ConfigHelpers.CreateConfigDescription(
         "Allows the user to set the debugger hull color.",
         true, true));
@@ -339,23 +339,18 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL removes all collision of camera for objects on boat. Should significantly lower jitter when camera smashes into objects on boat it will force camera through it instead of pushing rapidly forward with vehicle force too.",
         false, true));
+    waterDeltaForceMultiplier = Config.Bind(SectionKey,
+      "waterDeltaForceMultiplier", 50f,
+      ConfigHelpers.CreateConfigDescription("Water delta force multiplier",
+        true, true, new AcceptableValueRange<float>(0.1f, 5000f)));
 
 
     convexHullDebuggerForceEnabled.SettingChanged += (_, __) =>
-      ConvexHullAPI.UpdatePropertiesForConvexHulls(
-        convexHullPreviewOffset.Value,
-        convexHullDebuggerForceEnabled.Value, convexHullDebuggerColor
-          .Value);
+      ConvexHullComponent.UpdatePropertiesForAllComponents();
     convexHullDebuggerColor.SettingChanged += (_, __) =>
-      ConvexHullAPI.UpdatePropertiesForConvexHulls(
-        convexHullPreviewOffset.Value,
-        convexHullDebuggerForceEnabled.Value, convexHullDebuggerColor
-          .Value);
+      ConvexHullComponent.UpdatePropertiesForAllComponents();
     convexHullPreviewOffset.SettingChanged += (_, __) =>
-      ConvexHullAPI.UpdatePropertiesForConvexHulls(
-        convexHullPreviewOffset.Value,
-        convexHullDebuggerForceEnabled.Value, convexHullDebuggerColor
-          .Value);
+      ConvexHullComponent.UpdatePropertiesForAllComponents();
 
 
     flightDamping.SettingChanged +=

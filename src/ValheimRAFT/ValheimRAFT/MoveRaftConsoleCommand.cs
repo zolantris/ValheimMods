@@ -40,54 +40,50 @@ internal class MoveRaftConsoleCommand : ConsoleCommand
       return;
     }
 
-    Vector3 offset = new Vector3(x, y, z);
-    Player player = Player.m_localPlayer;
-    if (!player)
-    {
-      return;
-    }
+    var offset = new Vector3(x, y, z);
+    var player = Player.m_localPlayer;
+    if (!player) return;
 
-    Ship ship = player.GetStandingOnShip();
+    var ship = player.GetStandingOnShip();
     if ((!ship || !MoveRaft(player, ship, offset)) && Physics.Raycast(
-          GameCamera.instance.transform.position, GameCamera.instance.transform.forward,
+          GameCamera.instance.transform.position,
+          GameCamera.instance.transform.forward,
           out var hitinfo, 50f, LayerMask.GetMask("piece")))
     {
-      MoveableBaseRootComponent mbr =
+      var mbr =
         hitinfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
-      if ((bool)mbr)
-      {
-        MoveRaft(player, mbr.m_ship, offset);
-      }
+      if ((bool)mbr) MoveRaft(player, mbr.m_ship, offset);
     }
   }
 
   public static bool MoveRaft(Player player, Ship ship, Vector3 offset)
   {
-    MoveableBaseShipComponent mb = ship.GetComponent<MoveableBaseShipComponent>();
+    var mb = ship.GetComponent<MoveableBaseShipComponent>();
 
     if ((bool)mb && (bool)mb.m_baseRoot)
     {
-      Stopwatch stopWatch = new Stopwatch();
+      var stopWatch = new Stopwatch();
       stopWatch.Start();
-      int id = ZdoWatchController.Instance.GetOrCreatePersistentID(mb.m_baseRoot.m_nview.m_zdo);
-      foreach (ZDO zdo in ZDOMan.instance.m_objectsByID.Values)
+      var id =
+        ZdoWatchController.Instance.GetOrCreatePersistentID(mb.m_baseRoot
+          .m_nview.m_zdo);
+      foreach (var zdo in ZDOMan.instance.m_objectsByID.Values)
       {
-        int zdoid = zdo.GetInt(MoveableBaseRootComponent.MBParentIdHash);
+        var zdoid = zdo.GetInt(MoveableBaseRootComponent.MBParentIdHash);
         if (zdoid == id)
         {
-          Vector3 pos = zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash, Vector3.zero);
-          Vector3 newpos = pos + offset;
+          var pos = zdo.GetVec3(MoveableBaseRootComponent.MBPositionHash,
+            Vector3.zero);
+          var newpos = pos + offset;
           zdo.Set(MoveableBaseRootComponent.MBPositionHash, newpos);
           zdo.SetPosition(ship.transform.position);
-          ZNetView obj = ZNetScene.instance.FindInstance(zdo);
-          if ((bool)obj)
-          {
-            obj.transform.localPosition = newpos;
-          }
+          var obj = ZNetScene.instance.FindInstance(zdo);
+          if ((bool)obj) obj.transform.localPosition = newpos;
         }
       }
 
-      Jotunn.Logger.LogInfo($"Completed MoveRaft in {stopWatch.ElapsedMilliseconds}ms");
+      Jotunn.Logger.LogInfo(
+        $"Completed MoveRaft in {stopWatch.ElapsedMilliseconds}ms");
       return true;
     }
 

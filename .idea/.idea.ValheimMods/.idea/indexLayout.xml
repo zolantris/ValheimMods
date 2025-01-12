@@ -23,28 +23,28 @@
       <Path>logValheim.ps1</Path>
       <Path>src/ValheimRAFT/Assets/Translations/English/valheimraft.json</Path>
       <Path>src/ValheimRAFT/README.md</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles</Path>
+      <Path>src/ValheimRAFT.Unity/Assets/ValheimVehicles</Path>
       <Path>src/ValheimVehicles/ValheimVehicles.Helpers</Path>
       <Path>src/YggdrassilTerrain</Path>
       <Path>valheim.targets</Path>
     </explicitIncludes>
     <explicitExcludes>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Alternative_Prefabs</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/BlenderImports</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/ExternalAssets</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/IconsDeprecated</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Material</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Shaders</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Assets/ValheimVehicles/Texture</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Library</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Logs</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/Packages</Path>
-      <Path>src/ValheimRAFT/ValheimRAFT.Unity/obj</Path>
+      <Path>src/ValheimRAFT.Unity</Path>
+      <Path>src/ValheimRAFT.Unity/Assets/ValheimVehicles/Alternative_Prefabs</Path>
+      <Path>src/ValheimRAFT.Unity/Assets/ValheimVehicles/BlenderImports</Path>
+      <Path>src/ValheimRAFT.Unity/Assets/ValheimVehicles/ExternalAssets</Path>
+      <Path>src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons</Path>
+      <Path>src/ValheimRAFT.Unity/Assets/ValheimVehicles/Icons</Path>
+      <Path>src/ValheimRAFT.Unity/Assets/ValheimVehicles/IconsDeprecated</Path>
+      <Path>src/ValheimRAFT.Unity/Assets/ValheimVehicles/Material</Path>
+      <Path>src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs</Path>
+      <Path>src/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene</Path>
+      <Path>src/ValheimRAFT.Unity/Assets/ValheimVehicles/Shaders</Path>
+      <Path>src/ValheimRAFT.Unity/Assets/ValheimVehicles/Texture</Path>
+      <Path>src/ValheimRAFT.Unity/Library</Path>
+      <Path>src/ValheimRAFT.Unity/Logs</Path>
+      <Path>src/ValheimRAFT.Unity/Packages</Path>
+      <Path>src/ValheimRAFT.Unity/obj</Path>
     </explicitExcludes>
   </component>
 </project>

@@ -374,11 +374,12 @@ Logs/
 
 #libs/
 
-src/ValheimRAFT/ValheimRAFT.Unity/Library
-src/ValheimRAFT/ValheimRAFT.Unity/UserSettings
-src/ValheimRAFT/ValheimRAFT.Unity/obj
-src/ValheimRAFT/ValheimRAFT.Unity/.vs
-src/ValheimRAFT/ValheimRAFT.Unity/Logs
-src/ValheimRAFT/ValheimRAFT.Unity/Temp
-src/ValheimRAFT/ValheimRAFT.Unity/Packages
-src/ValheimRAFT/ValheimRAFT.Unity/.idea
+# src/ValheimRAFT/ValheimRAFT.Unity/Library
+# src/ValheimRAFT/ValheimRAFT.Unity/UserSettings
+# src/ValheimRAFT/ValheimRAFT.Unity/obj
+# src/ValheimRAFT/ValheimRAFT.Unity/.vs
+# src/ValheimRAFT/ValheimRAFT.Unity/Logs
+# src/ValheimRAFT/ValheimRAFT.Unity/Temp
+# src/ValheimRAFT/ValheimRAFT.Unity/Packages
+# src/ValheimRAFT/ValheimRAFT.Unity/.idea
+src/ValheimRAFT.Unity/Assets/SUIMONO - WATER SYSTEM 2

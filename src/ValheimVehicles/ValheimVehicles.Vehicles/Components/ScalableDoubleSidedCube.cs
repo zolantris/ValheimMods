@@ -31,8 +31,8 @@ public class ScalableDoubleSidedCube : MonoBehaviour
   private static readonly int ColorId = Shader.PropertyToID("_Color");
   private static readonly int MaxHeight = Shader.PropertyToID("_MaxHeight");
 
-  private List<GameObject> cubeObjs = new List<GameObject>();
-  private List<Renderer> cubeRenders = new List<Renderer>();
+  private List<GameObject> cubeObjs = new();
+  private List<Renderer> cubeRenders = new();
 
   /// <summary>
   /// Controller flags
@@ -42,7 +42,7 @@ public class ScalableDoubleSidedCube : MonoBehaviour
   public int CubeLayer = LayerHelpers.IgnoreRaycastLayer;
   public bool ShouldUpdateHeight = false;
   public float ForcedMaxHeight = 30f;
-  public Color color = new Color(0.5f, 0.5f, 1f, 0.8f);
+  public Color color = new(0.5f, 0.5f, 1f, 0.8f);
   public static bool EnabledFixedUpdateSync = false;
 
   public bool HasForcedHeight = true;
@@ -58,10 +58,8 @@ public class ScalableDoubleSidedCube : MonoBehaviour
   public static Material GetCubeMaskMaterial()
   {
     if (_CubeMaskMaterial == null)
-    {
       _CubeMaskMaterial =
         new Material(LoadValheimVehicleAssets.TransparentDepthMaskMaterial);
-    }
 
     return _CubeMaskMaterial;
   }
@@ -69,10 +67,8 @@ public class ScalableDoubleSidedCube : MonoBehaviour
   public static Material GetVisibleSurfaceMaterial()
   {
     if (_VisibleSurfaceMaterial == null)
-    {
       _CubeMaskMaterial =
         new Material(LoadValheimVehicleAssets.WaterHeightMaterial);
-    }
 
     return _VisibleSurfaceMaterial;
   }
@@ -84,10 +80,7 @@ public class ScalableDoubleSidedCube : MonoBehaviour
 
   public void InitCubes()
   {
-    if (CubeMaskMaterial == null || CubeVisibleSurfaceMaterial == null)
-    {
-      return;
-    }
+    if (CubeMaskMaterial == null || CubeVisibleSurfaceMaterial == null) return;
 
     CreateCube();
   }
@@ -106,10 +99,7 @@ public class ScalableDoubleSidedCube : MonoBehaviour
 
     var scale =
       nv.GetZDO().GetVec3(VehicleZdoVars.CustomMeshScale, Vector3.one);
-    if (scale != Vector3.one)
-    {
-      rectangleSize = scale;
-    }
+    if (scale != Vector3.one) rectangleSize = scale;
 
     transform.localScale = rectangleSize;
 
@@ -120,9 +110,7 @@ public class ScalableDoubleSidedCube : MonoBehaviour
   public BoxCollider? GetCubeCollider()
   {
     if (!_cubeCollider)
-    {
       _cubeCollider = _cubeMaskObj?.GetComponent<BoxCollider>();
-    }
 
     return _cubeCollider;
   }
@@ -131,20 +119,14 @@ public class ScalableDoubleSidedCube : MonoBehaviour
 
   private void AlignTopOfCubeWithWater(float waterHeight)
   {
-    if (!ShouldUpdateHeight)
-    {
-      return;
-    }
+    if (!ShouldUpdateHeight) return;
 
     var cubeSizeOffset = transform.localScale.y / 2;
     var bottomOfCube = transform.position.y - cubeSizeOffset;
     var topOfCube = transform.position.y + cubeSizeOffset;
     if (_cubeMaskObj == null) return;
     // Moving the gameobject out of bounds should never happen.
-    if (waterHeight < bottomOfCube || waterHeight > topOfCube)
-    {
-      return;
-    }
+    if (waterHeight < bottomOfCube || waterHeight > topOfCube) return;
 
     _cubeMaskObj.transform.position = new Vector3(transform.position.x,
       waterHeight, transform.position.z);
@@ -170,19 +152,13 @@ public class ScalableDoubleSidedCube : MonoBehaviour
     AlignTopOfCubeWithWater(waterLevel);
 
     if (transform.gameObject.layer != CubeLayer)
-    {
       transform.gameObject.layer = CubeLayer;
-    }
 
     if (transform.localScale != rectangleSize)
-    {
       transform.localScale = rectangleSize;
-    }
 
     if (_cubeMaskObj != null && _cubeMaskObj.gameObject.layer != CubeLayer)
-    {
       _cubeMaskObj.gameObject.layer = CubeLayer;
-    }
 
     foreach (var cubeRender in cubeRenders)
     {
@@ -196,27 +172,19 @@ public class ScalableDoubleSidedCube : MonoBehaviour
       }
 
       if (cubeRender.material.color != color)
-      {
         cubeRender.material.SetColor(ColorId, color);
-      }
 
       if (cubeRender.gameObject.layer != CubeLayer)
-      {
         cubeRender.gameObject.layer = CubeLayer;
-      }
     }
   }
 
   private void SafeDestroy(GameObject obj)
   {
     if (!Application.isPlaying)
-    {
       DestroyImmediate(obj);
-    }
     else
-    {
       Destroy(obj);
-    }
   }
 
   public void Cleanup()
@@ -265,7 +233,7 @@ public class ScalableDoubleSidedCube : MonoBehaviour
   /// </summary>
   private void CreateCubeFaces()
   {
-    float halfSize = baseFaceSize / 2f;
+    var halfSize = baseFaceSize / 2f;
 
     var topDirection = Vector3.up;
     var topPosition = new Vector3(0, halfSize, 0);
@@ -299,10 +267,8 @@ public class ScalableDoubleSidedCube : MonoBehaviour
     };
 
     if (!CanRenderTopOfCube && !_cubeMaskObj)
-    {
       CreateFaceMesh(topPosition, Quaternion.Euler(topRotation),
         topDirection, CubeFaceType.MaskFace);
-    }
 
     // Create each face with two meshes for double-sided rendering
     for (var i = 0; i < positions.Length; i++)
@@ -318,11 +284,9 @@ public class ScalableDoubleSidedCube : MonoBehaviour
 
       // Back side of the face (flip normal)
       if (RenderDoubleSided || RenderMaskOnSecondFace)
-      {
         CreateFaceMesh(positions[i],
           Quaternion.Euler(rotations[i] + new Vector3(0, 180, 0)),
           -directions[i], CubeFaceType.MaskFace);
-      }
     }
   }
 
@@ -371,9 +335,7 @@ public class ScalableDoubleSidedCube : MonoBehaviour
     Vector3 normal, CubeFaceType faceType)
   {
     if (transform.localScale != rectangleSize)
-    {
       transform.localScale = rectangleSize;
-    }
 
     var primitiveType = faceType == CubeFaceType.HeightFace
       ? PrimitiveType.Quad
@@ -386,14 +348,10 @@ public class ScalableDoubleSidedCube : MonoBehaviour
     cubeFace.transform.localRotation = rotation;
 
     if (faceType == CubeFaceType.MaskFace)
-    {
       cubeFace.transform.localScale =
         new Vector3(1, 1, 0.1f);
-    }
     else
-    {
       cubeFace.transform.localScale = Vector3.one;
-    }
 
     var componentRenderer = cubeFace.GetComponent<MeshRenderer>();
     if (faceType == CubeFaceType.HeightFace)
