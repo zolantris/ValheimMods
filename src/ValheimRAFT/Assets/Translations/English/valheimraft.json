@@ -129,7 +129,7 @@
   "valheim_vehicles_window_wall_square": "Square window",
   "valheim_vehicles_window_wall_square_desc": "Reinforced square window wall.",
   "valheim_vehicles_window_porthole_standalone": "Porthole window: Standalone",
-  "valheim_vehicles_window_porthole_standalone_desc": "Porthole window that can be placed on any vehicle piece to see through it. Requires 2 windows to create a proper seal."
+  "valheim_vehicles_window_porthole_standalone_desc": "Porthole window that can be placed on any vehicle piece to see through it. Requires 2 windows to create a proper seal.",
   "valheim_vehicles_ship_anchor": "Ship Anchor",
   "valheim_vehicles_ship_anchor_desc": "A placeable ship anchor. Meant for stopping the ship and lowering water sway while anchored."
 }

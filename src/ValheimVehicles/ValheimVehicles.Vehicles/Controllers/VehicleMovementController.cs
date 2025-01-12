@@ -1810,7 +1810,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // Sets values based on m_speed
     UpdateShipWheelTurningSpeed();
-    UpdateShipSpeed(hasControllingPlayer, m_players.Count);
+    UpdateShipSpeed(hasControllingPlayer);
 
     //base ship direction controls
     UpdateControls(Time.fixedDeltaTime);
@@ -2396,24 +2396,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   }
 
 
-  public void UpdateShipSpeed(bool hasControllingPlayer, int playerCount)
+  public void UpdateShipSpeed(bool hasControllingPlayer)
   {
     if (isAnchored && vehicleSpeed != Ship.Speed.Stop)
     {
       vehicleSpeed = Ship.Speed.Stop;
       // force resets rudder to 0 degree position
       m_rudderValue = 0f;
-    }
-
-    var isNotAnchoredWithNobodyOnboard = playerCount == 0 && !isAnchored;
-
-    if (isNotAnchoredWithNobodyOnboard)
-    {
-      // exits
-      if (VehicleDebugConfig.HasAutoAnchorDelay.Value) return;
-      SendSetAnchor(AnchorState.Dropped);
-      SendSpeedChange(DirectionChange.Stop);
-      return;
     }
 
     var isUncontrolledRowing = !hasControllingPlayer &&
@@ -2526,7 +2515,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void AssignShipControls(Player player)
   {
-    if (PiecesController?._steeringWheelPieces.Count > 0)
+    if (PiecesController != null && PiecesController._steeringWheelPieces.Count > 0)
       player.m_doodadController = PiecesController._steeringWheelPieces[0];
   }
 
@@ -3099,6 +3088,15 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
 
     if (m_nview.isActiveAndEnabled != true) return;
+    
+    var isNotAnchoredWithNobodyOnboard = m_players.Count == 0 && !isAnchored;
+
+    if (isNotAnchoredWithNobodyOnboard)
+    {
+      if (VehicleDebugConfig.HasAutoAnchorDelay.Value) return;
+      SendSetAnchor(AnchorState.Dropped);
+      return;
+    }
 
     var zdoAnchorState =
       (AnchorState)AnchorMechanismController.GetSafeAnchorState(m_nview.GetZDO()

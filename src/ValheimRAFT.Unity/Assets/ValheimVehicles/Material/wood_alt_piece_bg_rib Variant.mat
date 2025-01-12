@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: wood_alt_piece_bg_rib Variant
-  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
+  m_Shader: {fileID: 4800000, guid: 906ebf25ce541ed4ab17c721e09594b9, type: 3}
   m_Parent: {fileID: 2100000, guid: 9f50f724d23916f488cd6f8f04b115b5, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
@@ -41,5 +41,6 @@ Material:
     - _GlossMapScale: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.0376
-    m_Colors: []
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

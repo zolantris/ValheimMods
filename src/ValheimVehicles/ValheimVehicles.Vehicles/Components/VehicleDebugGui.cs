@@ -142,7 +142,9 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
         return;
       }
 
-      ConvexHullAPI.DebugMode = !ConvexHullAPI.DebugMode;
+      // Just a 3 mode loop
+      ConvexHullAPI.PreviewMode = ConvexHullAPI.PreviewMode == ConvexHullAPI.PreviewModes.None ? ConvexHullAPI.PreviewModes.Bubble : ConvexHullAPI.PreviewMode == ConvexHullAPI.PreviewModes.Bubble ? ConvexHullAPI.PreviewModes.Debug : ConvexHullAPI.PreviewModes.Bubble;
+      
       currentInstance.VehicleShipInstance.PiecesController.convexHullComponent
         .CreatePreviewConvexHullMeshes();
     }

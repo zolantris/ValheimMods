@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Unity.XR.CoreUtils;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.SharedScripts
@@ -15,12 +18,26 @@ namespace ValheimVehicles.SharedScripts
     private static readonly ConvexHullCalculator
       convexHullCalculator = new();
 
-    public static bool DebugMode = true;
+    public enum PreviewModes
+    {
+      None,
+      Debug,
+      Bubble
+    }
+
+    public static PreviewModes PreviewMode = PreviewModes.None;  
+    public static bool CanRenderBubble = true;
     public static bool DebugOriginalMesh = false;
 
     public static bool HasInitialized = false;
     [CanBeNull] public static Material DebugMaterial;
-    public static Color DebugMaterialColor = new(0, 1, 0, 0.5f);
+    [CanBeNull] public static Material BubbleMaterial;
+    [CanBeNull] public Material ConvexHullMaterialOverride;
+
+    public static Color DebugMaterialColor =
+      new Color(0.10f, 0.23f, 0.07f, 0.5f);
+    public static Color BubbleMaterialColor = 
+      new Color(0.10f, 0.23f, 0.07f, 0.5f);
 
     public static Action<string> LoggerAPI = Debug.Log;
     public static bool UseWorld = true;
@@ -29,6 +46,7 @@ namespace ValheimVehicles.SharedScripts
     public static string MeshNamePrefix = "ConvexHull";
     public static string MeshNamePreviewPrefix => $"{MeshNamePrefix}_Preview";
     public static bool ShouldOptimizeGeneratedMeshes = false;
+    public Vector3 previewScale = Vector3.one;
 
     public Transform PreviewParent;
 
@@ -43,20 +61,28 @@ namespace ValheimVehicles.SharedScripts
     public List<GameObject> convexHullPreviewMeshes = new();
 
     public static List<ConvexHullAPI> Instances = new();
+    private static readonly int MaxHeightShaderId = Shader.PropertyToID("_MaxHeight");
 
-    public static void InitializeConvexMeshGeneratorApi(bool debugMode,
-      Material debugMaterial, Color debugMaterialColor, string meshNamePrefix,
+    public void InitializeConvexMeshGeneratorApi(PreviewModes mode,
+      Material debugMaterial, Material bubbleMaterial, Color debugMaterialColor, Color bubbleMaterialColor, string meshNamePrefix,
       Action<string> loggerApi)
     {
       MeshNamePrefix = meshNamePrefix;
       LoggerAPI = loggerApi;
-      DebugMode = debugMode;
+      PreviewMode = mode;
       DebugMaterial = debugMaterial;
       DebugMaterialColor = debugMaterialColor;
+      BubbleMaterial = bubbleMaterial;
+      BubbleMaterialColor = bubbleMaterialColor;
     }
 
     private void Awake()
     {
+      if (ConvexHullMaterialOverride)
+      {
+        DebugMaterial = ConvexHullMaterialOverride;
+        BubbleMaterial = ConvexHullMaterialOverride;
+      }
       PreviewParent = transform;
     }
 
@@ -90,10 +116,10 @@ namespace ValheimVehicles.SharedScripts
       return false;
     }
 
-    public static void UpdatePropertiesForConvexHulls(
-      Vector3 transformPreviewOffset, bool IsDebug, Color color)
+    public void UpdatePropertiesForConvexHulls(
+      Vector3 transformPreviewOffset, PreviewModes mode, Color color)
     {
-      DebugMode = IsDebug;
+      PreviewMode = mode;
       DebugMaterialColor = color;
 
       foreach (var convexHullAPI in Instances)
@@ -721,13 +747,21 @@ namespace ValheimVehicles.SharedScripts
       return readableMesh;
     }
 
-    public static Material? GetMaterial()
-    {
-      if (DebugMaterial)
+    public Material? GetMaterial()
+    {      
+      if (PreviewMode == PreviewModes.Bubble && BubbleMaterial)
+      {
+        BubbleMaterial.color = BubbleMaterialColor;
+        BubbleMaterial.SetFloat(MaxHeightShaderId, 30f);
+        return BubbleMaterial;
+      }
+      
+      if (PreviewMode == PreviewModes.Debug && DebugMaterial)
       {
         DebugMaterial.color = DebugMaterialColor;
         return DebugMaterial;
       }
+
 
       var shader = Shader.Find("Custom/DoubleSidedTransparent");
       if (!shader) return null;
@@ -737,14 +771,74 @@ namespace ValheimVehicles.SharedScripts
         color = DebugMaterialColor
       };
     }
+    
+      /// <summary>
+    /// Calculates 4 corner points of the Y-plane bounds by raycasting to the mesh.
+    /// </summary>
+    public static List<Vector3> CalculateYPlaneBoundsUsingRaycast(MeshCollider meshCollider)
+    {
+        if (meshCollider.sharedMesh == null)
+        {
+            Debug.LogError("Mesh is null!");
+            return null;
+        }
+
+        // Define the 4 initial directions for corners
+        Vector3[] directions =
+        {
+            new(-1, 0, -1), // Bottom Left
+            new(1, 0, -1),  // Bottom Right
+            new(-1, 0, 1),  // Top Left
+            new(1, 0, 1)    // Top Right
+        };
+        
+        List<Vector3> corners = new List<Vector3>();
+        foreach (var dir in directions)
+        {
+            // Raycast origin and direction
+            Vector3 origin = meshCollider.bounds.center + Vector3.Scale(dir, meshCollider.bounds.extents + Vector3.one);
+            // Vector3 direction = dir.normalized;
+            Vector3 direction = Vector3.Scale(dir.normalized, Vector3.one * -1);
+
+            // Perform raycast
+            if (Physics.Raycast(origin, direction, out RaycastHit hit, 30, LayerHelpers.CustomRaftLayerMask))
+            {
+                if (hit.collider.name != meshCollider.name) continue;
+                MeshCollider hitMeshCollider = hit.collider as MeshCollider;
+                if (hitMeshCollider != null && hitMeshCollider.sharedMesh == meshCollider.sharedMesh)
+                {
+                    corners.Add(hit.point);
+                }
+            }
+        }
+
+        return corners;
+    }
+
+    /// <summary>
+    /// Draws the bounds of the Y-plane as a rectangle using raycast results.
+    /// </summary>
+    public static void DrawYPlaneBounds(List<Vector3> corners)
+    {
+        if (corners == null || corners.Count != 4)
+        {
+            Debug.LogError("Invalid corner points for drawing bounds!");
+            return;
+        }
+
+        Debug.DrawLine(corners[0], corners[1], Color.green); // Bottom Edge
+        Debug.DrawLine(corners[1], corners[3], Color.green); // Right Edge
+        Debug.DrawLine(corners[3], corners[2], Color.green); // Top Edge
+        Debug.DrawLine(corners[2], corners[0], Color.green); // Left Edge
+    }
 
     /// <summary>
     /// Renders a mesh for visualizing the hull. Not meant for casual players but worth using in creative mode.
     /// </summary>
     /// <param name="go"></param>
-    public static void AddDebugMeshRenderer(GameObject go)
+    public void AddDebugMeshRenderer(GameObject go)
     {
-      if (!DebugMode) return;
+      if (PreviewMode == PreviewModes.None) return;
       var material = GetMaterial();
       if (material != null)
       {
@@ -756,9 +850,35 @@ namespace ValheimVehicles.SharedScripts
 
         meshRenderer.material = material;
 
-        if (meshRenderer.material.color != DebugMaterialColor)
+        if (PreviewMode == PreviewModes.Debug)
         {
-          meshRenderer.material.color = DebugMaterialColor;
+          if (meshRenderer.material.color != DebugMaterialColor)
+          {
+            meshRenderer.material.color = DebugMaterialColor;
+          }
+        }
+        if (PreviewMode == PreviewModes.Bubble)
+        {
+          if (meshRenderer.material.color != BubbleMaterialColor)
+          {
+            meshRenderer.material.color = BubbleMaterialColor;
+          }
+        }
+      }
+    }
+    
+    private void OnDrawGizmos()
+    {
+      foreach (var convexHullMesh in convexHullMeshes)
+      {
+        var meshCollider = convexHullMesh.GetComponent<MeshCollider>();
+        if (meshCollider != null && meshCollider.sharedMesh != null)
+        {
+          // Calculate bounds
+          var corners = CalculateYPlaneBoundsUsingRaycast(meshCollider);
+
+          // Draw bounds
+          DrawYPlaneBounds(corners);
         }
       }
     }
@@ -770,7 +890,7 @@ namespace ValheimVehicles.SharedScripts
     {
       DeleteMeshesFromChildColliders(convexHullPreviewMeshes);
 
-      if (!DebugMode) return;
+      if (PreviewMode == PreviewModes.None) return;
 
       // Rigidbody must not be in preview parent otherwise it would have it's colliders applied as physics.
       var rbComponent =
@@ -801,8 +921,9 @@ namespace ValheimVehicles.SharedScripts
         {
           var convexHullMesh = convexHullMeshes[index];
           var previewInstance =
-            Instantiate(convexHullMesh, PreviewParent);
+            Instantiate(convexHullMesh);
           convexHullPreviewMeshes.Add(previewInstance);
+          previewInstance.transform.localScale = previewScale;
 
           // Gets the difference between the original position and the parent. Then adds that as local position to align things.
           var positionOffsetFromDestinationOffset =
@@ -825,7 +946,7 @@ namespace ValheimVehicles.SharedScripts
           {
             AdaptiveDestroy(previewMeshCollider);
           }
-
+          
           LoggerAPI(
             $"Adjusting preview offset by {transformPreviewOffset}");
           previewInstance.transform.localPosition += transformPreviewOffset;

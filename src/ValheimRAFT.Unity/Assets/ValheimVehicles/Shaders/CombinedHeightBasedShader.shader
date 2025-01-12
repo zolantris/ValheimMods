@@ -4,7 +4,7 @@ Shader "Custom/CombinedHeightBasedShader"
     {
         _MainTex ("Texture", 2D) = "white" {}
         _Color ("Color", Color) = (1, 1, 1, 0)
-        _MaxHeight ("Max Height", Float) = 1.0
+        _MaxHeight ("Max Height", Float) = 30.0
     }
 
     SubShader
@@ -15,10 +15,9 @@ Shader "Custom/CombinedHeightBasedShader"
         }
         LOD 100
         Cull Off
-        ZClip Off
         ZWrite Off
         ZTest LEqual
-        Blend SrcColor OneMinusSrcAlpha
+        Blend SrcAlpha OneMinusSrcAlpha
 
         Stencil
         {
@@ -40,14 +39,7 @@ Shader "Custom/CombinedHeightBasedShader"
 //                ZFail IncrSat
             }
              ZTest LEqual
-//            ZTest Equal
-//            ZTest GEqual
-//            ZClip On
-//            ZWrite On
-//            ZTest GEqual
-
-//            Blend DstAlpha OneMinusDstAlpha
-//            ZWrite Off // No depth writing
+             
             Cull Off // Render both sides
 
             CGPROGRAM

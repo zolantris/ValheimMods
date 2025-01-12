@@ -38,6 +38,12 @@ public static class WaterConfig
 
   public static ConfigEntry<WaterMeshFlipModeType>
     FlipWatermeshMode { get; private set; } = null!;
+  
+  public static ConfigEntry<bool>
+    HasUnderwaterHullBubbleEffect { get; private set; } = null!;
+  
+  public static ConfigEntry<Color>
+    UnderwaterBubbleEffectColor { get; private set; } = null!;
 
   public static ConfigEntry<float>
     DEBUG_LiquidDepthOverride { get; private set; } = null!;
@@ -304,6 +310,22 @@ public static class WaterConfig
       ConfigHelpers.CreateConfigDescription(
         "Allows for walking underwater, anywhere, or onship, or eventually within the water displaced area only. Disabled with remove all water logic. DEBUG_WaterZoneOnly is not supported yet",
         true, true));
+    
+    HasUnderwaterHullBubbleEffect = Config.Bind(
+      SectionKey,
+      "HasUnderwaterHullBubbleEffect",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "Adds an underwater bubble conforming around the vehicle hull. Allowing for a underwater like distortion effect without needing to use fog.",
+        true, true));
+    
+    UnderwaterBubbleEffectColor = Config.Bind(
+      SectionKey,
+      "UnderwaterBubbleEffectColor",
+      new Color(0.1f, 0.5f, 0.8f, 0.4f),
+      ConfigHelpers.CreateConfigDescription(
+        "Set the underwater bubble color",
+        true));
 
     AllowedEntiesList.SettingChanged +=
       (sender, args) => OnAllowListUpdate();

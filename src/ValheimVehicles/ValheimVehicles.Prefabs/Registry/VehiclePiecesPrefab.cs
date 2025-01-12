@@ -29,4 +29,4 @@ public class VehiclePiecesPrefab : IRegisterPrefab
     // todo to add a dynamic register for anything that needs to be a rigidbody added to this vehicle
     // RegisterStaticPiecesContainer(prefabManager);
   }
-}
+} 

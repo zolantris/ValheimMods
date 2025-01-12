@@ -106,7 +106,7 @@ Material:
     - _ValueNoiseVertex: 0
     - _ZWrite: 0
     m_Colors:
-    - _Color: {r: 0.7412399, g: 0.026972268, b: 0.026972268, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _MetalColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

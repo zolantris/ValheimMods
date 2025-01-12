@@ -177,7 +177,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   /// <summary>
   /// Future todo to enable zsync transform for objects within the synced raft which is done on clients only.
   /// </summary>
-  internal VehicleZSyncTransform? zsyncTransform;
+  // internal VehicleZSyncTransform? zsyncTransform;
 
   public Rigidbody m_body;
   internal FixedJoint m_fixedJoint;
@@ -212,6 +212,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   private Transform? _piecesContainer;
   private Transform? _movingPiecesContainer;
+
+  public static bool UseManualSync = true;
 
   public enum InitializationState
   {
@@ -468,7 +470,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     return mpc.transform;
   }
 
-  private ZNetView tempZNetView;
+  // private ZNetView tempZNetView;
 
   public void Awake()
   {
@@ -480,11 +482,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     m_body = _piecesContainer.GetComponent<Rigidbody>();
     m_fixedJoint = _piecesContainer.GetComponent<FixedJoint>();
     InitializationTimer.Start();
-    
-    // tempZNetView = PrefabRegistryHelpers.AddTempNetView(gameObject);
-    // zsyncTransform = PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(gameObject);
   }
-
 
   private void InitConvexHullGenerator()
   {
@@ -499,10 +497,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     if (!ConvexHullAPI.HasInitialized)
     {
       // static
-      ConvexHullAPI.InitializeConvexMeshGeneratorApi(
-        PhysicsConfig.convexHullDebuggerForceEnabled.Value,
+      convexHullComponent.InitializeConvexMeshGeneratorApi(ConvexHullComponent.GetConvexHullModeFromFlags(),
         LoadValheimVehicleAssets.DoubleSidedTransparentMat,
-        PhysicsConfig.convexHullDebuggerColor.Value, PrefabNames.ConvexHull,
+        LoadValheimVehicleAssets.WaterHeightMaterial,
+        PhysicsConfig.convexHullDebuggerColor.Value,  WaterConfig.UnderwaterBubbleEffectColor.Value,  PrefabNames.ConvexHull,
         Logger.LogMessage);
 
       // instance
@@ -517,9 +515,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     if (!MovementController) return;
     if (!m_fixedJoint) m_fixedJoint = GetComponent<FixedJoint>();
 
-    if (!m_fixedJoint)
+    if (m_fixedJoint == null)
+    {
       Logger.LogError(
         "No FixedJoint found. This means the vehicle is not syncing positions");
+      return;
+    }
 
     m_fixedJoint.connectedBody = MovementController!.GetRigidbody();
   }
@@ -581,6 +582,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       ActiveInstances.Add(VehicleInstance.PersistentZdoId, this);
 
     StartClientServerUpdaters();
+    
+    // tempZNetView = PrefabRegistryHelpers.AddTempNetView(gameObject);
+    // zsyncTransform = PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(gameObject);
   }
 
   private void OnDisable()
@@ -778,10 +782,19 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
            Quaternion.Euler(0f, 0f, sailLeanAngle);
   }
 
+  public void SyncOwner()
+  {
+    // if (VehicleInstance?.NetView != null && tempZNetView != null && tempZNetView.GetZDO().Owner != VehicleInstance.NetView.GetZDO().Owner)
+    // {
+    //   tempZNetView.GetZDO().SetOwner(VehicleInstance.NetView.GetZDO().GetOwner());
+    // }
+  }
+
   public void KinematicSync()
   {
     if (MovementController == null) return;
     if (!m_body.isKinematic) m_body.isKinematic = true;
+ 
 
     if (m_body.collisionDetectionMode !=
         PhysicsConfig.vehiclePiecesShipCollisionDetectionMode.Value)
@@ -790,12 +803,29 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     if (m_fixedJoint && m_fixedJoint.connectedBody) m_fixedJoint.connectedBody = null;
 
-    // m_body.Move(
-    //   MovementController.m_body.position,
-    //   GetRotation()
-    // );
-    m_body.position = MovementController.m_body.position;
-    m_body.rotation = GetRotation();
+    if (VehicleInstance?.NetView != null)
+    {
+      if (VehicleInstance.NetView.IsOwner())
+      {
+        // var vehicleTransform = VehicleInstance.Instance.transform;
+        // transform.position = vehicleTransform.position;
+        // transform.rotation = vehicleTransform.rotation;
+        m_body.Move(
+          MovementController.m_body.position,
+          GetRotation()
+        );
+        
+      }
+      else
+      {
+        m_body.Move(
+          MovementController.m_body.position,
+          GetRotation()
+        );
+        // transform.position = MovementController.m_body.position;
+        // transform.rotation = GetRotation();
+      }
+    }
   }
 
   public void JointSync()
@@ -894,6 +924,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void CustomFixedUpdate(float deltaTime)
   {
     UpdateBedPieces();
+    SyncOwner();
     Sync();
   }
 
@@ -2486,6 +2517,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     Physics.SyncTransforms();
     var nvChildGameObjects = m_pieces.Select(x => x.gameObject).Where(x => !IsExcludedBoundsItem(x.gameObject.name)).ToList();
+    if (WaterConfig.HasUnderwaterHullBubbleEffect.Value)
+    {
+      // Makes it slightly larger extended out from the ship
+      convexHullComponent.previewScale = new Vector3(1.05f, 1.05f, 1.05f);
+    }
+    
     convexHullComponent
       .GenerateMeshesFromChildColliders(VehicleInstance.Instance.gameObject,
         PhysicsConfig.convexHullJoinDistanceThreshold.Value,
@@ -2500,6 +2537,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
    */
   public void RebuildBounds()
   {
+    if (!isActiveAndEnabled) return;
     RebuildConvexHull();
 
     if (!(bool)m_floatcollider || !(bool)m_onboardcollider ||

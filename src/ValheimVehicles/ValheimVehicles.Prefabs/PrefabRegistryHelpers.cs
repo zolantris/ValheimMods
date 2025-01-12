@@ -82,7 +82,7 @@ public abstract class PrefabRegistryHelpers
     if (prioritized) netView.m_type = ZDO.ObjectType.Prioritized;
 
     netView.m_persistent = false;
-    netView.m_distant = true;
+    // netView.m_distant = true;
     return netView;
   }
 

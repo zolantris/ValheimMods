@@ -505,7 +505,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   /// <note>
   /// this must be added instead of on the prefab otherwise PlacedPiece cannot get the data in time
   /// </note>
-  private void InitializeVehiclePiecesController()
+  public void InitializeVehiclePiecesController()
   {
     if (ZNetView.m_forceDisableInit) return;
     if (!(bool)NetView || NetView.GetZDO() == null || NetView.m_ghost ||

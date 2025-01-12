@@ -6,6 +6,7 @@ using ValheimRAFT;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Constants;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.Config;
 
@@ -288,7 +289,7 @@ public static class PhysicsConfig
 
     convexHullDebuggerColor = Config.Bind(FloatationPhysicsSectionKey,
       "convexHullDebuggerColor",
-      new Color(0, 0.60f, 0.60f, 0.20f),
+      new Color(0.10f, 0.23f, 0.07f, 0.5f),
       ConfigHelpers.CreateConfigDescription(
         "Allows the user to set the debugger hull color.",
         true, true));
@@ -345,20 +346,11 @@ public static class PhysicsConfig
 
 
     convexHullDebuggerForceEnabled.SettingChanged += (_, __) =>
-      ConvexHullAPI.UpdatePropertiesForConvexHulls(
-        convexHullPreviewOffset.Value,
-        convexHullDebuggerForceEnabled.Value, convexHullDebuggerColor
-          .Value);
+      ConvexHullComponent.UpdatePropertiesForAllComponents();
     convexHullDebuggerColor.SettingChanged += (_, __) =>
-      ConvexHullAPI.UpdatePropertiesForConvexHulls(
-        convexHullPreviewOffset.Value,
-        convexHullDebuggerForceEnabled.Value, convexHullDebuggerColor
-          .Value);
+      ConvexHullComponent.UpdatePropertiesForAllComponents();
     convexHullPreviewOffset.SettingChanged += (_, __) =>
-      ConvexHullAPI.UpdatePropertiesForConvexHulls(
-        convexHullPreviewOffset.Value,
-        convexHullDebuggerForceEnabled.Value, convexHullDebuggerColor
-          .Value);
+      ConvexHullComponent.UpdatePropertiesForAllComponents();
 
 
     flightDamping.SettingChanged +=

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace ValheimVehicles.Controllers;
 
@@ -43,151 +41,151 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
 
   public void Awake()
   {
-    this.m_nview = this.GetComponent<ZNetView>();
-    this.m_body = this.GetComponent<Rigidbody>();
-    this.m_projectile = this.GetComponent<Projectile>();
-    this.m_character = this.GetComponent<Character>();
-    if (this.m_nview.GetZDO() == null)
+    m_nview = GetComponent<ZNetView>();
+    m_body = GetComponent<Rigidbody>();
+    m_projectile = GetComponent<Projectile>();
+    m_character = GetComponent<Character>();
+    if (m_nview.GetZDO() == null)
     {
-      this.enabled = false;
+      enabled = false;
     }
     else
     {
-      if ((bool) (Object) this.m_body)
+      if ((bool) (Object) m_body)
       {
-        this.m_isKinematicBody = this.m_body.isKinematic;
-        this.m_useGravity = this.m_body.useGravity;
+        m_isKinematicBody = m_body.isKinematic;
+        m_useGravity = m_body.useGravity;
       }
-      this.m_wasOwner = this.m_nview.GetZDO().IsOwner();
+      m_wasOwner = m_nview.GetZDO().IsOwner();
     }
   }
 
-  public void OnEnable() => ZSyncTransform.Instances.Add((IMonoUpdater) this);
+  public void OnEnable() => ZSyncTransform.Instances.Add(this);
 
-  public void OnDisable() => ZSyncTransform.Instances.Remove((IMonoUpdater) this);
+  public void OnDisable() => ZSyncTransform.Instances.Remove(this);
 
   public Vector3 GetVelocity()
   {
-    if ((Object) this.m_body != (Object) null)
-      return this.m_body.velocity;
-    return (Object) this.m_projectile != (Object) null ? this.m_projectile.GetVelocity() : Vector3.zero;
+    if (m_body != null)
+      return m_body.velocity;
+    return m_projectile != null ? m_projectile.GetVelocity() : Vector3.zero;
   }
 
   public Vector3 GetPosition()
   {
-    return !(bool) (Object) this.m_body ? this.transform.position : this.m_body.position;
+    return !(bool) (Object) m_body ? transform.position : m_body.position;
   }
 
   public void OwnerSync()
   {
-    ZDO zdo = this.m_nview.GetZDO();
+    ZDO zdo = m_nview.GetZDO();
     bool flag1 = zdo.IsOwner();
-    bool flag2 = !this.m_wasOwner & flag1;
-    this.m_wasOwner = flag1;
+    bool flag2 = !m_wasOwner & flag1;
+    m_wasOwner = flag1;
     if (!flag1)
       return;
     if (flag2)
     {
       bool flag3 = false;
-      if (this.m_syncPosition)
+      if (m_syncPosition)
       {
-        this.transform.position = zdo.GetPosition();
+        transform.position = zdo.GetPosition();
         flag3 = true;
       }
-      if (this.m_syncRotation)
+      if (m_syncRotation)
       {
-        this.transform.rotation = zdo.GetRotation();
+        transform.rotation = zdo.GetRotation();
         flag3 = true;
       }
-      if (this.m_syncBodyVelocity && (bool) (Object) this.m_body)
+      if (m_syncBodyVelocity && (bool) (Object) m_body)
       {
-        this.m_body.velocity = zdo.GetVec3(ZDOVars.s_bodyVelHash, Vector3.zero);
-        this.m_body.angularVelocity = zdo.GetVec3(ZDOVars.s_bodyAVelHash, Vector3.zero);
+        m_body.velocity = zdo.GetVec3(ZDOVars.s_bodyVelHash, Vector3.zero);
+        m_body.angularVelocity = zdo.GetVec3(ZDOVars.s_bodyAVelHash, Vector3.zero);
       }
-      if (flag3 && (bool) (Object) this.m_body)
+      if (flag3 && (bool) (Object) m_body)
         Physics.SyncTransforms();
     }
-    if ((double) this.transform.position.y < -5000.0)
+    if (transform.position.y < -5000.0)
     {
-      if ((bool) (Object) this.m_body)
-        this.m_body.velocity = Vector3.zero;
-      ZLog.Log((object) ("Object fell out of world:" + this.gameObject.name));
-      float groundHeight = ZoneSystem.instance.GetGroundHeight(this.transform.position);
-      this.transform.position = this.transform.position with
+      if ((bool) (Object) m_body)
+        m_body.velocity = Vector3.zero;
+      ZLog.Log("Object fell out of world:" + gameObject.name);
+      float groundHeight = ZoneSystem.instance.GetGroundHeight(transform.position);
+      transform.position = transform.position with
       {
         y = groundHeight + 1f
       };
-      if (!(bool) (Object) this.m_body)
+      if (!(bool) (Object) m_body)
         return;
       Physics.SyncTransforms();
     }
     else
     {
-      if (this.m_syncPosition)
+      if (m_syncPosition)
       {
-        Vector3 position = this.GetPosition();
-        if (!this.m_positionCached.Equals(position))
+        Vector3 position = GetPosition();
+        if (!m_positionCached.Equals(position))
           zdo.SetPosition(position);
-        Vector3 velocity = this.GetVelocity();
-        if (!this.m_velocityCached.Equals(velocity))
+        Vector3 velocity = GetVelocity();
+        if (!m_velocityCached.Equals(velocity))
           zdo.Set(ZDOVars.s_velHash, velocity);
-        this.m_positionCached = position;
-        this.m_velocityCached = velocity;
-        if (this.m_characterParentSync)
+        m_positionCached = position;
+        m_velocityCached = velocity;
+        if (m_characterParentSync)
         {
-          if (this.GetRelativePosition(zdo, out this.m_tempParent, out this.m_tempAttachJoint, out this.m_tempRelativePos, out this.m_tempRelativeRot, out this.m_tempRelativeVel))
+          if (GetRelativePosition(zdo, out m_tempParent, out m_tempAttachJoint, out m_tempRelativePos, out m_tempRelativeRot, out m_tempRelativeVel))
           {
-            if (this.m_tempParent != this.m_tempParentCached)
+            if (m_tempParent != m_tempParentCached)
             {
-              zdo.SetConnection(ZDOExtraData.ConnectionType.SyncTransform, this.m_tempParent);
-              zdo.Set(ZDOVars.s_attachJointHash, this.m_tempAttachJoint);
+              zdo.SetConnection(ZDOExtraData.ConnectionType.SyncTransform, m_tempParent);
+              zdo.Set(ZDOVars.s_attachJointHash, m_tempAttachJoint);
             }
-            if (!this.m_tempRelativePos.Equals(this.m_tempRelativePosCached))
-              zdo.Set(ZDOVars.s_relPosHash, this.m_tempRelativePos);
-            if (!this.m_tempRelativeRot.Equals(this.m_tempRelativeRotCached))
-              zdo.Set(ZDOVars.s_relRotHash, this.m_tempRelativeRot);
-            if (!this.m_tempRelativeVel.Equals(this.m_tempRelativeVelCached))
-              zdo.Set(ZDOVars.s_velHash, this.m_tempRelativeVel);
-            this.m_tempRelativePosCached = this.m_tempRelativePos;
-            this.m_tempRelativeRotCached = this.m_tempRelativeRot;
-            this.m_tempRelativeVelCached = this.m_tempRelativeVel;
+            if (!m_tempRelativePos.Equals(m_tempRelativePosCached))
+              zdo.Set(ZDOVars.s_relPosHash, m_tempRelativePos);
+            if (!m_tempRelativeRot.Equals(m_tempRelativeRotCached))
+              zdo.Set(ZDOVars.s_relRotHash, m_tempRelativeRot);
+            if (!m_tempRelativeVel.Equals(m_tempRelativeVelCached))
+              zdo.Set(ZDOVars.s_velHash, m_tempRelativeVel);
+            m_tempRelativePosCached = m_tempRelativePos;
+            m_tempRelativeRotCached = m_tempRelativeRot;
+            m_tempRelativeVelCached = m_tempRelativeVel;
           }
-          else if (this.m_tempParent != this.m_tempParentCached)
+          else if (m_tempParent != m_tempParentCached)
           {
             zdo.UpdateConnection(ZDOExtraData.ConnectionType.SyncTransform, ZDOID.None);
             zdo.Set(ZDOVars.s_attachJointHash, "");
           }
-          this.m_tempParentCached = this.m_tempParent;
+          m_tempParentCached = m_tempParent;
         }
       }
-      if (this.m_syncRotation && this.transform.hasChanged)
+      if (m_syncRotation && transform.hasChanged)
       {
-        Quaternion rot = (bool) (Object) this.m_body ? this.m_body.rotation : this.transform.rotation;
+        Quaternion rot = (bool) (Object) m_body ? m_body.rotation : transform.rotation;
         zdo.SetRotation(rot);
       }
-      if (this.m_syncScale && this.transform.hasChanged)
+      if (m_syncScale && transform.hasChanged)
       {
-        if (Mathf.Approximately(this.transform.localScale.x, this.transform.localScale.y) && Mathf.Approximately(this.transform.localScale.x, this.transform.localScale.z))
+        if (Mathf.Approximately(transform.localScale.x, transform.localScale.y) && Mathf.Approximately(transform.localScale.x, transform.localScale.z))
         {
           zdo.RemoveVec3(ZDOVars.s_scaleHash);
-          zdo.Set(ZDOVars.s_scaleScalarHash, this.transform.localScale.x);
+          zdo.Set(ZDOVars.s_scaleScalarHash, transform.localScale.x);
         }
         else
         {
           zdo.RemoveFloat(ZDOVars.s_scaleScalarHash);
-          zdo.Set(ZDOVars.s_scaleHash, this.transform.localScale);
+          zdo.Set(ZDOVars.s_scaleHash, transform.localScale);
         }
       }
-      if ((bool) (Object) this.m_body)
+      if ((bool) (Object) m_body)
       {
-        if (this.m_syncBodyVelocity)
+        if (m_syncBodyVelocity)
         {
-          this.m_nview.GetZDO().Set(ZDOVars.s_bodyVelHash, this.m_body.velocity);
-          this.m_nview.GetZDO().Set(ZDOVars.s_bodyAVelHash, this.m_body.angularVelocity);
+          m_nview.GetZDO().Set(ZDOVars.s_bodyVelHash, m_body.velocity);
+          m_nview.GetZDO().Set(ZDOVars.s_bodyAVelHash, m_body.angularVelocity);
         }
-        this.m_body.useGravity = this.m_useGravity;
+        m_body.useGravity = m_useGravity;
       }
-      this.transform.hasChanged = false;
+      transform.hasChanged = false;
     }
   }
 
@@ -199,17 +197,17 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
     out Quaternion relativeRot,
     out Vector3 relativeVel)
   {
-    if ((bool) (Object) this.m_character)
-      return this.m_character.GetRelativePosition(out parent, out attachJoint, out relativePos, out relativeRot, out relativeVel);
-    if ((bool) (Object) this.transform.parent)
+    if ((bool) (Object) m_character)
+      return m_character.GetRelativePosition(out parent, out attachJoint, out relativePos, out relativeRot, out relativeVel);
+    if ((bool) (Object) transform.parent)
     {
-      ZNetView component = (bool) (Object) this.transform.parent ? this.transform.parent.GetComponent<ZNetView>() : (ZNetView) null;
+      ZNetView component = (bool) (Object) transform.parent ? transform.parent.GetComponent<ZNetView>() : null;
       if ((bool) (Object) component && component.IsValid())
       {
         parent = component.GetZDO().m_uid;
         attachJoint = "";
-        relativePos = this.transform.localPosition;
-        relativeRot = this.transform.localRotation;
+        relativePos = transform.localPosition;
+        relativeRot = transform.localRotation;
         relativeVel = Vector3.zero;
         return true;
       }
@@ -225,7 +223,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
   public void SyncPosition(ZDO zdo, float dt, out bool usedLocalRotation)
   {
     usedLocalRotation = false;
-    if (this.m_characterParentSync && zdo.HasOwner())
+    if (m_characterParentSync && zdo.HasOwner())
     {
       ZDOID connectionZdoid = zdo.GetConnectionZDOID(ZDOExtraData.ConnectionType.SyncTransform);
       if (!connectionZdoid.IsNone())
@@ -241,169 +239,181 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
           Quaternion quaternion1 = zdo.GetQuaternion(ZDOVars.s_relRotHash, Quaternion.identity);
           Vector3 vec3_2 = zdo.GetVec3(ZDOVars.s_velHash, Vector3.zero);
           bool flag = false;
-          if ((int) zdo.DataRevision != (int) this.m_posRevision)
+          if ((int) zdo.DataRevision != (int) m_posRevision)
           {
-            this.m_posRevision = zdo.DataRevision;
-            this.m_targetPosTimer = 0.0f;
+            m_posRevision = zdo.DataRevision;
+            m_targetPosTimer = 0.0f;
           }
           if (aName.Length > 0)
           {
             Transform child = Utils.FindChild(instance.transform, aName);
             if ((bool) (Object) child)
             {
-              this.transform.position = child.position;
+              transform.position = child.position;
               flag = true;
             }
           }
           else
           {
-            this.m_targetPosTimer += dt;
-            this.m_targetPosTimer = Mathf.Min(this.m_targetPosTimer, 2f);
-            Vector3 vector3 = vec3_1 + vec3_2 * this.m_targetPosTimer;
-            if (!this.m_haveTempRelPos)
+            m_targetPosTimer += dt;
+            m_targetPosTimer = Mathf.Min(m_targetPosTimer, 2f);
+            Vector3 vector3 = vec3_1 + vec3_2 * m_targetPosTimer;
+            if (!m_haveTempRelPos)
             {
-              this.m_haveTempRelPos = true;
-              this.m_tempRelPos = vector3;
+              m_haveTempRelPos = true;
+              m_tempRelPos = vector3;
             }
-            if ((double) Vector3.Distance(this.m_tempRelPos, vector3) > 1.0 / 1000.0)
+            if (Vector3.Distance(m_tempRelPos, vector3) > 1.0 / 1000.0)
             {
-              this.m_tempRelPos = Vector3.Lerp(this.m_tempRelPos, vector3, 0.2f);
-              vector3 = this.m_tempRelPos;
+              m_tempRelPos = Vector3.Lerp(m_tempRelPos, vector3, 0.2f);
+              vector3 = m_tempRelPos;
             }
             Vector3 b = instance.transform.TransformPoint(vector3);
-            if ((double) Vector3.Distance(this.transform.position, b) > 1.0 / 1000.0)
+            if (Vector3.Distance(transform.position, b) > 1.0 / 1000.0)
             {
-              this.transform.position = b;
+              transform.position = b;
               flag = true;
             }
           }
-          Quaternion a = Quaternion.Inverse(instance.transform.rotation) * this.transform.rotation;
-          if ((double) Quaternion.Angle(a, quaternion1) > 1.0 / 1000.0)
+          Quaternion a = Quaternion.Inverse(instance.transform.rotation) * transform.rotation;
+          if (Quaternion.Angle(a, quaternion1) > 1.0 / 1000.0)
           {
             Quaternion quaternion2 = Quaternion.Slerp(a, quaternion1, 0.5f);
-            this.transform.rotation = instance.transform.rotation * quaternion2;
+            transform.rotation = instance.transform.rotation * quaternion2;
             flag = true;
           }
           usedLocalRotation = true;
-          if (!flag || !(bool) (Object) this.m_body)
+          if (!flag || !(bool) (Object) m_body)
             return;
           Physics.SyncTransforms();
           return;
         }
       }
     }
-    this.m_haveTempRelPos = false;
+    m_haveTempRelPos = false;
     Vector3 position = zdo.GetPosition();
-    if ((int) zdo.DataRevision != (int) this.m_posRevision)
+    if ((int) zdo.DataRevision != (int) m_posRevision)
     {
-      this.m_posRevision = zdo.DataRevision;
-      this.m_targetPosTimer = 0.0f;
+      m_posRevision = zdo.DataRevision;
+      m_targetPosTimer = 0.0f;
     }
     if (zdo.HasOwner())
     {
-      this.m_targetPosTimer += dt;
-      this.m_targetPosTimer = Mathf.Min(this.m_targetPosTimer, 2f);
+      m_targetPosTimer += dt;
+      m_targetPosTimer = Mathf.Min(m_targetPosTimer, 2f);
       Vector3 vec3 = zdo.GetVec3(ZDOVars.s_velHash, Vector3.zero);
-      position += vec3 * this.m_targetPosTimer;
+      position += vec3 * m_targetPosTimer;
     }
-    float num = Vector3.Distance(this.transform.position, position);
-    if ((double) num <= 1.0 / 1000.0)
+    float num = Vector3.Distance(transform.position, position);
+    if (num <= 1.0 / 1000.0)
       return;
-    this.transform.position = (double) num < 5.0 ? Vector3.Lerp(this.transform.position, position, 0.2f) : position;
-    if (!(bool) (Object) this.m_body)
+    transform.position = num < 5.0 ? Vector3.Lerp(transform.position, position, Mathf.Max(dt, m_targetPosTimer)) : position;
+    if (!(bool) (Object) m_body)
       return;
     Physics.SyncTransforms();
   }
+  
+  public static float smoothTime = 0.5f;
 
-  public void ClientSync(float dt)
+  public void KinematicClientSync(ZDO zdo, float dt)
   {
-    ZDO zdo = this.m_nview.GetZDO();
-    if (zdo.IsOwner())
-      return;
-    int frameCount = Time.frameCount;
-    if (this.m_lastUpdateFrame == frameCount)
-      return;
-    this.m_lastUpdateFrame = frameCount;
-    if (this.m_isKinematicBody)
+    if (m_syncPosition)
     {
-      if (this.m_syncPosition)
+      Vector3 vector3 = zdo.GetPosition();
+      if (Vector3.Distance(m_body.position, vector3) > 5.0)
       {
-        Vector3 vector3 = zdo.GetPosition();
-        if ((double) Vector3.Distance(this.m_body.position, vector3) > 5.0)
-        {
-          this.m_body.position = vector3;
-        }
-        else
-        {
-          if ((double) Vector3.Distance(this.m_body.position, vector3) > 0.009999999776482582)
-            vector3 = Vector3.Lerp(this.m_body.position, vector3, 0.2f);
-          this.m_body.MovePosition(vector3);
-        }
+        m_body.position = vector3;
       }
-      if (this.m_syncRotation)
+      else
       {
-        Quaternion rotation = zdo.GetRotation();
-        if ((double) Quaternion.Angle(this.m_body.rotation, rotation) > 45.0)
-          this.m_body.rotation = rotation;
-        else
-          this.m_body.MoveRotation(rotation);
+        if (Vector3.Distance(m_body.position, vector3) > 0.009999999776482582)
+          vector3 = Vector3.Lerp(m_body.position, vector3, dt);
+        m_body.MovePosition(vector3);
       }
     }
-    else
+    if (m_syncRotation)
     {
-      bool usedLocalRotation = false;
-      if (this.m_syncPosition)
-        this.SyncPosition(zdo, dt, out usedLocalRotation);
-      if (this.m_syncRotation && !usedLocalRotation)
+      Quaternion rotation = zdo.GetRotation();
+      if (Quaternion.Angle(m_body.rotation, rotation) > 45.0)
+        m_body.rotation = rotation;
+      else
+        m_body.MoveRotation(rotation);
+    }
+  }
+
+  public void NonKinematicSync(ZDO zdo, float dt)
+  {
+    bool usedLocalRotation = false;
+    if (m_syncPosition)
+      SyncPosition(zdo, dt, out usedLocalRotation);
+    if (m_syncRotation && !usedLocalRotation)
+    {
+      Quaternion rotation = zdo.GetRotation();
+      if (Quaternion.Angle(transform.rotation, rotation) > 1.0 / 1000.0)
+        transform.rotation = Quaternion.Slerp(transform.rotation, rotation, dt * smoothTime);
+    }
+    if ((bool) (Object) m_body)
+    {
+      m_body.useGravity = false;
+      if (m_syncBodyVelocity && m_nview.HasOwner())
       {
-        Quaternion rotation = zdo.GetRotation();
-        if ((double) Quaternion.Angle(this.transform.rotation, rotation) > 1.0 / 1000.0)
-          this.transform.rotation = Quaternion.Slerp(this.transform.rotation, rotation, 0.5f);
+        Vector3 vec3_1 = zdo.GetVec3(ZDOVars.s_bodyVelHash, Vector3.zero);
+        Vector3 vec3_2 = zdo.GetVec3(ZDOVars.s_bodyAVelHash, Vector3.zero);
+        if (vec3_1.magnitude > 0.009999999776482582 || vec3_2.magnitude > 0.009999999776482582)
+        {
+          m_body.velocity = vec3_1;
+          m_body.angularVelocity = vec3_2;
+        }
+        else
+          m_body.Sleep();
       }
-      if ((bool) (Object) this.m_body)
+      else if (!m_body.IsSleeping())
       {
-        this.m_body.useGravity = false;
-        if (this.m_syncBodyVelocity && this.m_nview.HasOwner())
-        {
-          Vector3 vec3_1 = zdo.GetVec3(ZDOVars.s_bodyVelHash, Vector3.zero);
-          Vector3 vec3_2 = zdo.GetVec3(ZDOVars.s_bodyAVelHash, Vector3.zero);
-          if ((double) vec3_1.magnitude > 0.009999999776482582 || (double) vec3_2.magnitude > 0.009999999776482582)
-          {
-            this.m_body.velocity = vec3_1;
-            this.m_body.angularVelocity = vec3_2;
-          }
-          else
-            this.m_body.Sleep();
-        }
-        else if (!this.m_body.IsSleeping())
-        {
-          this.m_body.velocity = Vector3.zero;
-          this.m_body.angularVelocity = Vector3.zero;
-          this.m_body.Sleep();
-        }
+        m_body.velocity = Vector3.zero;
+        m_body.angularVelocity = Vector3.zero;
+        m_body.Sleep();
       }
     }
-    if (!this.m_syncScale)
+    if (!m_syncScale)
       return;
     Vector3 vec3 = zdo.GetVec3(ZDOVars.s_scaleHash, Vector3.zero);
     if (vec3 != Vector3.zero)
     {
-      this.transform.localScale = vec3;
+      transform.localScale = vec3;
     }
     else
     {
-      float num = zdo.GetFloat(ZDOVars.s_scaleScalarHash, this.transform.localScale.x);
-      if (this.transform.localScale.x.Equals(num))
+      float num = zdo.GetFloat(ZDOVars.s_scaleScalarHash, transform.localScale.x);
+      if (transform.localScale.x.Equals(num))
         return;
-      this.transform.localScale = new Vector3(num, num, num);
+      transform.localScale = new Vector3(num, num, num);
     }
+  }
+
+  public void ClientSync(float dt)
+  {
+    ZDO zdo = m_nview.GetZDO();
+    if (zdo.IsOwner())
+      return;
+    int frameCount = Time.frameCount;
+    if (m_lastUpdateFrame == frameCount)
+      return;
+    m_lastUpdateFrame = frameCount;
+
+    if (m_isKinematicBody)
+    {
+      KinematicClientSync(zdo, dt);
+      return;
+    }
+
+    NonKinematicSync(zdo, dt);
   }
 
   public void CustomFixedUpdate(float fixedDeltaTime)
   {
-    if (!this.m_nview.IsValid())
+    if (!m_nview.IsValid())
       return;
-    this.ClientSync(fixedDeltaTime);
+    ClientSync(fixedDeltaTime);
   }
 
   public void CustomUpdate(float deltaTime, float time)
@@ -413,15 +423,15 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
 
   public void CustomLateUpdate(float deltaTime)
   {
-    if (!this.m_nview.IsValid())
+    if (!m_nview.IsValid())
       return;
-    this.OwnerSync();
+    OwnerSync();
   }
 
   public void SyncNow()
   {
-    if (!this.m_nview.IsValid())
+    if (!m_nview.IsValid())
       return;
-    this.OwnerSync();
+    OwnerSync();
   }
 }

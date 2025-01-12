@@ -9,6 +9,8 @@ namespace ValheimVehicles.SharedScripts
   {
     public const int CustomRaftLayer = 29;
 
+    public static LayerMask CustomRaftLayerMask = LayerMask.GetMask(LayerMask.LayerToName(CustomRaftLayer));
+
     public static LayerMask PhysicalLayers = LayerMask.GetMask("Default",
       "character", "piece",
       "terrain",

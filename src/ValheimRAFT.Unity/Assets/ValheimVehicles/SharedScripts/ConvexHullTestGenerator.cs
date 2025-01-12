@@ -47,7 +47,7 @@ namespace ValheimVehicles.SharedScripts
     {
       // static setters
       ConvexHullAPI.UseWorld = useWorld;
-      ConvexHullAPI.DebugMode = true;
+      ConvexHullAPI.PreviewMode = ConvexHullAPI.PreviewModes.Debug;
       ConvexHullAPI.DebugOriginalMesh = debugOriginalMesh;
 
       if (_convexHullAPI == null) return;

@@ -37,7 +37,7 @@ TagManager:
   - character_noenv
   - vehicle
   - CustomVehicleLayer
-  - 
+  - Suimono_Water
   - smoke
   m_SortingLayers:
   - name: Default
