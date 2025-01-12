@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -22,23 +21,83 @@ namespace ValheimVehicles.SharedScripts
 
     public bool useWorld;
 
-    public GameObject parentGameObject;
+    public GameObject convexHullParentGameObject;
+    public GameObject PiecesParentObj;
+    public bool debugOriginalMesh;
+
+    public Transform forwardTransform;
 
     private ConvexHullAPI _convexHullAPI;
+    private MeshBoundsVisualizer _meshBoundsVisualizer;
 
     private float lastUpdate;
-    public bool debugOriginalMesh = false;
+
+    private void Awake()
+    {
+      GetOrAddMeshGeneratorApi();
+      Cleanup();
+    }
+
+    private void Start()
+    {
+      SyncAPIProperties();
+      Cleanup();
+      Generate();
+    }
+
+    /// <summary>
+    ///   For seeing the colliders update live. This should not be used in game for
+    ///   performance reasons.
+    /// </summary>
+    public void FixedUpdate()
+    {
+      if (!hasFixedUpdate) return;
+      if (lastUpdate > 5f)
+      {
+        lastUpdate = 0f;
+      }
+      else
+      {
+        lastUpdate += Time.deltaTime;
+        return;
+      }
+
+      SyncAPIProperties();
+
+      Generate();
+    }
+
+    public void OnEnable()
+    {
+      Generate();
+    }
+
+    public void OnDisable()
+    {
+      Cleanup();
+    }
+
+    private void OnDrawGizmos()
+    {
+      foreach (var convexHullMesh in _convexHullAPI.convexHullMeshes)
+      {
+        var meshCollider = convexHullMesh.GetComponent<MeshCollider>();
+        if (meshCollider != null && meshCollider.sharedMesh != null)
+          // Calculate bounds
+          _meshBoundsVisualizer.CalculateAndVisualizeBounds(meshCollider,
+            forwardTransform);
+      }
+    }
 
     private void GetOrAddMeshGeneratorApi()
     {
+      _meshBoundsVisualizer = GetComponent<MeshBoundsVisualizer>();
       _convexHullAPI =
         gameObject.GetComponent<ConvexHullAPI>();
 
       if (_convexHullAPI == null)
-      {
         _convexHullAPI =
           gameObject.AddComponent<ConvexHullAPI>();
-      }
 
       SyncAPIProperties();
     }
@@ -55,20 +114,9 @@ namespace ValheimVehicles.SharedScripts
       // local setters
       _convexHullAPI.transformPreviewOffset =
         transformPreviewOffset;
-      _convexHullAPI.PreviewParent = transform;
-    }
 
-    private void Awake()
-    {
-      GetOrAddMeshGeneratorApi();
-      Cleanup();
-    }
-
-    private void Start()
-    {
-      SyncAPIProperties();
-      Cleanup();
-      Generate();
+      // for physics this should be pieceParent, but then we need to ignore it when iterating
+      _convexHullAPI.PreviewParent = PiecesParentObj.transform;
     }
 
     /// <summary>
@@ -77,42 +125,12 @@ namespace ValheimVehicles.SharedScripts
     private void Generate()
     {
       var childGameObjects =
-        ConvexHullAPI.GetAllChildGameObjects(gameObject);
+        ConvexHullAPI.GetAllChildGameObjects(PiecesParentObj).Where(go =>
+          !go.name.Contains(ConvexHullAPI.MeshNamePrefix));
 
       _convexHullAPI.GenerateMeshesFromChildColliders(
-        parentGameObject,
-        distanceThreshold, childGameObjects);
-    }
-
-    /// <summary>
-    ///   For seeing the colliders update live. This should not be used in game for
-    ///   performance reasons.
-    /// </summary>
-    public void FixedUpdate()
-    {
-      if (!hasFixedUpdate) return;
-      if (lastUpdate > 0.2f)
-      {
-        lastUpdate = 0f;
-      }
-      else
-      {
-        lastUpdate += Time.deltaTime;
-        return;
-      }
-
-      SyncAPIProperties();
-      Generate();
-    }
-
-    public void OnEnable()
-    {
-      Generate();
-    }
-
-    public void OnDisable()
-    {
-      Cleanup();
+        convexHullParentGameObject,
+        distanceThreshold, childGameObjects.ToList());
     }
 
     public void Cleanup()
@@ -133,7 +151,7 @@ namespace ValheimVehicles.SharedScripts
         if (obj.name.StartsWith(ConvexHullAPI.MeshNamePrefix))
         {
           Debug.Log($"Deleted GameObject: {obj.name}");
-          ConvexHullAPI.AdaptiveDestroy(obj);
+          DebugUnityHelpers.AdaptiveDestroy(obj);
         }
     }
 

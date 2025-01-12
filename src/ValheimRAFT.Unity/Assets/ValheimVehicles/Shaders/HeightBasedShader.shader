@@ -9,16 +9,19 @@ Shader "Custom/HeightBasedShader"
 
     SubShader
     {
-        Tags {
+        Tags
+        {
             "RenderType"="Transparent"
             "Queue"="Transparent"
         }
         LOD 100
         Cull Off
-        Blend SrcAlpha OneMinusSrcAlpha
         ZWrite Off
+        ZClip Off
+        ZTest LEqual
+        Blend SrcAlpha OneMinusSrcAlpha
 
-       Pass
+        Pass
         {
             CGPROGRAM
             #pragma vertex vert
@@ -28,5 +31,5 @@ Shader "Custom/HeightBasedShader"
         }
     }
 
-    Fallback "Diffuse"
+    Fallback "StandardDoubleSided"
 }

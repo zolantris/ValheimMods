@@ -1,8 +1,6 @@
 #pragma once
-#include "UnityCG.cginc"
+#include "UnityStandardCore.cginc"
 
-sampler2D _MainTex;
-fixed4 _Color;
 float _MaxHeight;
 
 struct appdata_t
@@ -11,33 +9,46 @@ struct appdata_t
     float2 uv : TEXCOORD0;
 };
 
-struct v2f
+
+struct VertexOutputForwardBaseWithWorldPos : VertexOutputForwardBase
 {
-    float2 uv : TEXCOORD0;
-    float4 vertex : SV_POSITION;
-    float worldY : TEXCOORD1; 
+    float worldY : TEXCOORD1;
 };
 
-v2f vert(appdata_t v)
+VertexOutputForwardBaseWithWorldPos vert(VertexInput v)
 {
-    v2f o;
-    o.vertex = UnityObjectToClipPos(v.vertex);
-    o.uv = v.uv;
+    VertexOutputForwardBaseWithWorldPos o;
+    VertexOutputForwardBase fb = vertForwardBase(v);
 
+    o.pos = fb.pos;
+    o.tex = fb.tex;
+    o.eyeVec = fb.eyeVec;
+    o.ambientOrLightmapUV = fb.ambientOrLightmapUV;
+    o._ShadowCoord = fb._ShadowCoord;
+
+    // extension.
     float4 worldPosition = mul(unity_ObjectToWorld, v.vertex);
     o.worldY = worldPosition.y;
 
-    return o ;
+    return o;
 }
 
-fixed4 frag(v2f i) : SV_Target
+fixed4 frag(VertexOutputForwardBaseWithWorldPos i) : SV_Target
 {
     // Check if the world Y position is above the maximum height
     if (i.worldY > _MaxHeight)
     {
-        return fixed4(0, 0, 0, 0); // Fully transparent
+        // Fully transparent for the case where world Y is above max height
+        return fixed4(0, 0, 0, 0);
     }
 
-    fixed4 c = tex2D (_MainTex, i.uv) * _Color;
-    return c * _Color.a;
+    VertexOutputForwardBase o;
+    o.pos = i.pos;
+    o.tex = i.tex;
+    o.eyeVec = i.eyeVec;
+    o.ambientOrLightmapUV = i.ambientOrLightmapUV;
+    o._ShadowCoord = i._ShadowCoord;
+
+
+    return fragForwardBase(o);
 }
