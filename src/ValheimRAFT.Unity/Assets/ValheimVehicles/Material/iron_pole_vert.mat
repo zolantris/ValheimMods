@@ -35,7 +35,8 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Glossiness: 0.39
+    - _Cutoff: 0.288
+    - _Glossiness: 0.416
     - _GlossyReflections: 1
     - _Metallic: 1
     - _SpecularHighlights: 0
