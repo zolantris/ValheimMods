@@ -20,7 +20,7 @@ Material:
   - _ADDRAIN_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
-  m_DoubleSidedGI: 0
+  m_DoubleSidedGI: 1
   m_CustomRenderQueue: 2000
   stringTagMap: {}
   disabledShaderPasses: []
@@ -99,7 +99,7 @@ Material:
     - _TriplanarMap: 0
     - _TriplanarScale: 1
     - _TwoSidedNormals: 0
-    - _UVSec: 0
+    - _UVSec: 1
     - _ValueNoise: 0.5
     - _ValueNoiseVertex: 0
     - _ZWrite: 1

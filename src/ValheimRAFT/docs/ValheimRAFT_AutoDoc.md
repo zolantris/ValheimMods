@@ -537,14 +537,6 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: Allows for walking underwater, anywhere, or onship, or eventually within the water displaced area only. Disabled with remove all water logic. DEBUG_WaterZoneOnly is not supported yet
 - Default Value: Disabled
 
-### HasUnderwaterHullBubbleEffect 
-- Description: Adds an underwater bubble conforming around the vehicle hull. Allowing for a underwater like distortion effect without needing to use fog.
-- Default Value: True
-
-### UnderwaterBubbleEffectColor 
-- Description: Set the underwater bubble color
-- Default Value: RGBA(0.000, 0.400, 0.400, 0.800)
-
 ## Vehicle Physics
 
 ### flightDamping_2.4.2 
@@ -667,7 +659,7 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### convexHullDebuggerColor 
 - Description: Allows the user to set the debugger hull color.
-- Default Value: RGBA(0.100, 0.230, 0.070, 0.500)
+- Default Value: RGBA(0.000, 0.600, 0.600, 0.200)
 
 ### convexHullDebuggerForceEnabled 
 - Description: Force enables the convex hull. This will be turned off if other commands are run or re-enabled if toggled.

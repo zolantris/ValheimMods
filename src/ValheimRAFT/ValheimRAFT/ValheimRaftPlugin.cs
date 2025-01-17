@@ -56,6 +56,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public const string Author = "zolantris";
   public const string Version = "2.5.0";
   public const string ModName = "ValheimRAFT";
+  public const string ModNameBeta = "ValheimRAFTBETA";
   public const string ModGuid = $"{Author}.{ModName}";
   public static string HarmonyGuid => ModGuid;
 
@@ -144,7 +145,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public string[] possibleModFolderNames =
   [
     $"{Author}-{ModName}", $"zolantris-{ModName}", $"Zolantris-{ModName}",
-    ModName
+    ModName, $"{Author}-{ModNameBeta}", $"zolantris-{ModNameBeta}", $"Zolantris-{ModNameBeta}",
+    ModNameBeta
   ];
 
   private ConfigDescription CreateConfigDescription(string description,
