@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1027925305
+CRC: 1413370088
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: c0b1938a74447f2d732cf2f35a4334c5
+    Hash: f31e936e88ad21e5f3f01d401038745a
   TypeTreeHash:
     serializedVersion: 2
     Hash: 244aa4fda2a165e0284f57ff9078be95
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: c0b1938a74447f2d732cf2f35a4334c5
+    Hash: f31e936e88ad21e5f3f01d401038745a
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -148,7 +148,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/keel.prefab
 - Assets/ValheimVehicles/Prefabs/side_ram.prefab
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_2x4.mat
-- Assets/ValheimVehicles/Icons/anchor.png
+- Assets/ValheimVehicles/Icons/anchor_old.png
 - Assets/ValheimVehicles/Shaders/DoubleSidedTransparent.shader
 - Assets/ValheimVehicles/Material/iron_metal_rustic_2x2.mat
 - Assets/ValheimVehicles/Prefabs/GUI/Slider.prefab

@@ -310,7 +310,8 @@ public static class PhysicsConfig
         $"Sets the hull preview offset, this will allow previewing the hull side by side with your vehicle. This can only be seen if the {convexHullDebuggerForceEnabled.Definition} is true.",
         true, true));
 
-    var forceModes = ModEnvironment.IsDebug ? null : new AcceptableValueList<int>((int)ForceMode.VelocityChange);
+    // var forceModes = ModEnvironment.IsDebug ? null : new AcceptableValueList<string>("VelocityChange");
+    var forceModes = new AcceptableValueList<string>("VelocityChange");
 
     floatationVelocityMode = Config.Bind(VelocityModeSectionKey,
       "floatationVelocityMode", ForceMode.VelocityChange,
