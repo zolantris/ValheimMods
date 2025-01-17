@@ -8,9 +8,9 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: wood_piece_rib
-  m_Shader: {fileID: 4800000, guid: 377825f654969ee4ca04134ef7f10cef, type: 3}
+  m_Shader: {fileID: 4800000, guid: 5a017bb1d1e8f7142bcb05f77a8be48e, type: 3}
   m_Parent: {fileID: 2100000, guid: 95e8034110fa5b5408c376188aad1e89, type: 2}
-  m_ModifiedSerializedProperties: 0
+  m_ModifiedSerializedProperties: 8
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _ADDRAIN_ON
@@ -18,7 +18,7 @@ Material:
   - _NORMALMAP
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
+  m_DoubleSidedGI: 1
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []

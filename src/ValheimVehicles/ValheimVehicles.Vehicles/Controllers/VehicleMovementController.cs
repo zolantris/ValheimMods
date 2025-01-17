@@ -554,6 +554,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       return;
     }
 
+    if (m_nview.GetZDO().GetInt(VehicleZdoVars.VehicleAnchorState) ==
+        (int)state)
+    {
+      return;
+    }
+
     if (HasPendingAnchor)
     {
       // Might need to rethink this if it's heavy performance hit. Maybe a coroutine if calling cancel invoke is constant.
@@ -3143,7 +3149,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void RPC_SetAnchor(long sender, int state)
   {
-    SetAnchor(AnchorMechanismController.GetSafeAnchorState(state));
+    var safeAnchorState = AnchorMechanismController.GetSafeAnchorState(state);
+    if (PiecesController != null)
+    {
+      PiecesController.UpdateAnchorState(safeAnchorState);
+    }
+    SetAnchor(safeAnchorState);
   }
 
   /// <summary>

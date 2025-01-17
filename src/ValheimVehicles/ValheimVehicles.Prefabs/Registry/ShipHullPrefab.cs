@@ -33,13 +33,13 @@ public class ShipHullPrefab : IRegisterPrefab
       DirectionVariant.Right
     ];
 
-    RegisterWindowPortholeIronStandalone();
+    // RegisterWindowPortholeIronStandalone();
     RegisterWindowWallPorthole2x2Iron();
     RegisterWindowWallPorthole4x4Iron();
     RegisterWindowWallPorthole8x4Iron();
     RegisterWindowFloorPorthole4x4Iron();
-    RegisterWindowWallSquareWood();
-    RegisterWindowWallSquareIron();
+    // RegisterWindowWallSquareWood();
+    // RegisterWindowWallSquareIron();
 
     foreach (var hullMaterialType in hullMaterialTypes)
     {
@@ -132,6 +132,10 @@ public class ShipHullPrefab : IRegisterPrefab
 
     SetupHullPrefab(prefab, WindowFloorPorthole4x4Prefab,
       ShipHulls.HullMaterial.Iron, 6);
+    var wnt = prefab.GetComponent<WearNTear>();
+    
+    // windows are half health
+    wnt.m_health /= 2f;
   }
 
   public static void RegisterWindowWallSquareWood()
@@ -253,9 +257,9 @@ public class ShipHullPrefab : IRegisterPrefab
     SetupHullPrefab(prefab, prefabName,
       hullMaterial, 4, prefab.transform.FindDeepChild("mesh"));
 
-    if (hasInverse)
-      RegisterInverseHullRibCorner(hullMaterial,
-        directionVariant);
+    // if (hasInverse)
+    //   RegisterInverseHullRibCorner(hullMaterial,
+    //     directionVariant);
   }
 
   public DirectionVariant GetInverseDirection(DirectionVariant variant)
