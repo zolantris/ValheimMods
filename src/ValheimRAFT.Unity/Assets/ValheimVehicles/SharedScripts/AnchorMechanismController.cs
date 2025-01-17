@@ -55,13 +55,12 @@ namespace ValheimVehicles.SharedScripts
 
     public bool CanUseHotkeys = true;
 
-    public TextMeshProUGUI anchorStateTextMesh;
+    public TextMeshPro anchorStateTextMesh;
 
-    private readonly Color messageColor = new(0f, 224f, 0f, 255f);
+    private readonly Color messageColor = new(249f, 224f, 0f, 255f);
 
     private Rigidbody anchorRb;
     private Vector3 anchorStartLocalPosition;
-    private Transform anchorTextCanvasTransform;
     private Transform anchorTextMeshProTransform;
     private float messageFadeValue = 255f;
 
@@ -71,7 +70,7 @@ namespace ValheimVehicles.SharedScripts
     ///   This rigidbody should not start awakened to prevent collision problems on
     ///   placement
     /// </summary>
-    private void Awake()
+    internal void Awake()
     {
       if (prefabRigidbody == null)
       {
@@ -92,10 +91,15 @@ namespace ValheimVehicles.SharedScripts
       if (anchorRopeAttachStartPoint == null)
         anchorRopeAttachStartPoint = transform.Find("attachpoint_anchor_start");
 
-      anchorTextCanvasTransform = transform.Find("hover_anchor_state_message");
-      anchorTextMeshProTransform = anchorTextCanvasTransform.Find("text");
-      anchorStateTextMesh =
-        anchorTextMeshProTransform.GetComponent<TextMeshProUGUI>();
+      anchorTextMeshProTransform = transform.Find("hover_anchor_state_message");
+      anchorStateTextMesh = anchorTextMeshProTransform.gameObject
+        .AddComponent<TextMeshPro>();
+
+      anchorStateTextMesh.color = messageColor;
+      anchorStateTextMesh.fontStyle = FontStyles.Bold | FontStyles.SmallCaps;
+      anchorStateTextMesh.alignment = TextAlignmentOptions.Center;
+      anchorStateTextMesh.outlineWidth = 0.136f;
+      anchorStateTextMesh.fontSize = 4;
 
       anchorTransform.Find("scalar/colliders").gameObject
         .AddComponent<ChildCollisionDetector>();
@@ -172,14 +176,14 @@ namespace ValheimVehicles.SharedScripts
 
     private void hideAnchorText()
     {
-      if (anchorTextCanvasTransform.gameObject.activeInHierarchy)
-        anchorTextCanvasTransform.gameObject.SetActive(false);
+      if (anchorTextMeshProTransform.gameObject.activeInHierarchy)
+        anchorTextMeshProTransform.gameObject.SetActive(false);
     }
 
     private void showAnchorText()
     {
-      if (!anchorTextCanvasTransform.gameObject.activeSelf)
-        anchorTextCanvasTransform.gameObject.SetActive(true);
+      if (!anchorTextMeshProTransform.gameObject.activeSelf)
+        anchorTextMeshProTransform.gameObject.SetActive(true);
     }
 
     public bool ShouldHideAfterLastStateUpdate()
