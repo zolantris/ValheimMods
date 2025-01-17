@@ -43,8 +43,9 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
       HasAnchorTextHud = HudConfig.HasVehicleAnchorStateTextAboveAnchors.Value;
   }
 
-  public void Awake()
+  public new void Awake()
   {
+    base.Awake();
     setLocalizedStates();
     CanUseHotkeys = false;
   }

@@ -5,9 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca26c040-1a50-419b-8729-0605793a97f8" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/DisplayScaledValues.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimMods/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimMods/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ValheimMods.sln" beforeDir="false" afterPath="$PROJECT_DIR$/ValheimMods.sln" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs" beforeDir="false" afterPath="$PROJECT_DIR$/libs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/PlatformTools.Core.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/PlatformTools.Core.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/PlatformTools.Platform.Steam.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/PlatformTools.Platform.Steam.dll" afterDir="false" />
@@ -16,23 +13,8 @@
       <change beforePath="$PROJECT_DIR$/libs/assembly_utils.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/assembly_utils.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/assembly_valheim.dll" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/gui_framework.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/gui_framework.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/anchor_full_wood.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/anchor_full_wood.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/RigidBodyTests.unity" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/RigidBodyTests.unity" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/AnchorMechanismController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/AnchorMechanismController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullAPI.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullAPI.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle.manifest" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles.manifest" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/Assets/Translations/English/valheimraft.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/Assets/Translations/English/valheimraft.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT/ValheimRaftPlugin.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT/ValheimRaftPlugin.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Config/PhysicsConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Config/PhysicsConfig.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Config/TutorialConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Config/HudConfig.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugHelpers.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugHelpers.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleAnchorMechanismController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleAnchorMechanismController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/valheim.targets" beforeDir="false" afterPath="$PROJECT_DIR$/valheim.targets" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -131,7 +113,7 @@
     "Mono Remote.valheim.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "XThreadsFramesViewSplitterKey": "0.5366337",
+    "XThreadsFramesViewSplitterKey": "0.8926829",
     "git-widget-placeholder": "feat/anchor-hud-and-minor-fixes",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -359,17 +341,69 @@
           <option name="timeStamp" value="202" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/AnchorMechanismController.cs</url>
-          <line>185</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\AnchorMechanismController.cs" containingFunctionPresentation="Method 'ShouldHideAfterLastStateUpdate'">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleAnchorMechanismController.cs</url>
+          <line>56</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleAnchorMechanismController.cs" containingFunctionPresentation="Method 'FixedUpdate'">
             <startOffsets>
-              <option value="5615" />
+              <option value="1631" />
             </startOffsets>
             <endOffsets>
-              <option value="5661" />
+              <option value="1650" />
             </endOffsets>
           </properties>
-          <option name="timeStamp" value="203" />
+          <option name="timeStamp" value="204" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleAnchorMechanismController.cs</url>
+          <line>118</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleAnchorMechanismController.cs" containingFunctionPresentation="Method 'OnAnchorStateChange'">
+            <startOffsets>
+              <option value="3186" />
+            </startOffsets>
+            <endOffsets>
+              <option value="3257" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="205" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleAnchorMechanismController.cs</url>
+          <line>102</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleAnchorMechanismController.cs" containingFunctionPresentation="Method 'OnAnchorStateChange'">
+            <startOffsets>
+              <option value="2819" />
+            </startOffsets>
+            <endOffsets>
+              <option value="2836" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="206" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleAnchorMechanismController.cs</url>
+          <line>90</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleAnchorMechanismController.cs" containingFunctionPresentation="Method 'OnAnchorStateChange'">
+            <startOffsets>
+              <option value="2577" />
+            </startOffsets>
+            <endOffsets>
+              <option value="2641" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="207" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/AnchorMechanismController.cs</url>
+          <line>71</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\AnchorMechanismController.cs" containingFunctionPresentation="Method 'Awake'">
+            <startOffsets>
+              <option value="2174" />
+            </startOffsets>
+            <endOffsets>
+              <option value="2202" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="208" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

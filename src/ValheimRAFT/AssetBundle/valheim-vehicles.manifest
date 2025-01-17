@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3844874434
+CRC: 101358348
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 5e5d4192f62b84dfb9002887d0a1c572
+    Hash: 87378ce3f603706d3083d73bb7184dbd
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 29b2eff037d6847f774162a3cd00ec6d
+    Hash: 4ef4f90917409759e68efe1e04e67e13
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 5e5d4192f62b84dfb9002887d0a1c572
+    Hash: 87378ce3f603706d3083d73bb7184dbd
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -36,8 +36,6 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 65
   Script: {instanceID: 0}
-- Class: 102
-  Script: {instanceID: 0}
 - Class: 108
   Script: {instanceID: 0}
 - Class: 114
@@ -49,6 +47,8 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
@@ -57,13 +57,19 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 747419968f339df40a827088f25c215d, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: f44587a585f05c540ad46e160444cf0c, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 8233d90336aea43098adf6dbabd606a2, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 71c1514a6bd24e1e882cebbe1904ce04, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 37593e1934874fe4db91a205982d109e, type: 3}
 - Class: 114
@@ -90,6 +96,8 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 222
   Script: {instanceID: 0}
+- Class: 223
+  Script: {instanceID: 0}
 - Class: 224
   Script: {instanceID: 0}
 - Class: 687078895
@@ -103,8 +111,36 @@ SerializeReferenceClassIdentifiers:
   ClassName: UnityEngine.ProBuilder.SharedVertex
 - AssemblyName: Unity.ProBuilder
   ClassName: UnityEngine.ProBuilder.UnwrapParameters
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.FaceInfo_Legacy
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.FontAssetCreationSettings
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.KerningTable
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.TMP_Character
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.TMP_FontFeatureTable
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.TMP_FontWeightPair
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.TMP_GlyphAdjustmentRecord
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.TMP_GlyphPairAdjustmentRecord
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.TMP_GlyphValueRecord
+- AssemblyName: Unity.TextMeshPro
+  ClassName: TMPro.VertexGradient
 - AssemblyName: UnityEngine.CoreModule
   ClassName: UnityEngine.Events.PersistentCallGroup
+- AssemblyName: UnityEngine.TextCoreFontEngineModule
+  ClassName: UnityEngine.TextCore.FaceInfo
+- AssemblyName: UnityEngine.TextCoreFontEngineModule
+  ClassName: UnityEngine.TextCore.Glyph
+- AssemblyName: UnityEngine.TextCoreFontEngineModule
+  ClassName: UnityEngine.TextCore.GlyphMetrics
+- AssemblyName: UnityEngine.TextCoreFontEngineModule
+  ClassName: UnityEngine.TextCore.GlyphRect
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.AnimationTriggers
 - AssemblyName: UnityEngine.UI

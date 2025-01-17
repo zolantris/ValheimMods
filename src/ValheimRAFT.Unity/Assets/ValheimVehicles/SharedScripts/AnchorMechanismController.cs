@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 namespace ValheimVehicles.SharedScripts
@@ -54,11 +55,15 @@ namespace ValheimVehicles.SharedScripts
 
     public bool CanUseHotkeys = true;
 
+    public TextMeshProUGUI anchorStateTextMesh;
+
+    private readonly Color messageColor = new(0f, 224f, 0f, 255f);
+
     private Rigidbody anchorRb;
     private Vector3 anchorStartLocalPosition;
-
-    private TextMesh anchorStateTextMesh;
-    private Transform anchorTextMeshTransform;
+    private Transform anchorTextCanvasTransform;
+    private Transform anchorTextMeshProTransform;
+    private float messageFadeValue = 255f;
 
     private float timePassedSinceStateUpdate;
 
@@ -73,10 +78,7 @@ namespace ValheimVehicles.SharedScripts
         prefabRigidbody = transform.GetComponent<Rigidbody>();
         if (prefabRigidbody) prefabRigidbody.Sleep();
       }
-    }
 
-    private void Start()
-    {
       if (anchorTransform == null)
         anchorTransform = transform.Find("anchor");
 
@@ -90,21 +92,26 @@ namespace ValheimVehicles.SharedScripts
       if (anchorRopeAttachStartPoint == null)
         anchorRopeAttachStartPoint = transform.Find("attachpoint_anchor_start");
 
-      anchorTextMeshTransform = transform.Find("hover_message");
+      anchorTextCanvasTransform = transform.Find("hover_anchor_state_message");
+      anchorTextMeshProTransform = anchorTextCanvasTransform.Find("text");
       anchorStateTextMesh =
-        anchorTextMeshTransform.GetComponent<TextMesh>();
+        anchorTextMeshProTransform.GetComponent<TextMeshProUGUI>();
+
       anchorTransform.Find("scalar/colliders").gameObject
         .AddComponent<ChildCollisionDetector>();
       anchorReelTransform = transform.Find("anchor_reel");
       anchorReelCogsTransform = transform.Find("anchor_reel/cogs");
       anchorRb = anchorTransform.GetComponent<Rigidbody>();
       anchorStartLocalPosition = anchorRb.transform.localPosition;
+    }
 
+    private void Start()
+    {
       // Initialize LineRenderer for rope visualization
       if (ropeLine == null) ropeLine = GetComponent<LineRenderer>();
       UpdateRopeVisual();
       UpdateAnchorState(AnchorState.Recovered);
-      SetScaledTextSize();
+      // SetScaledTextSize();
     }
 
     private void Update()
@@ -144,7 +151,6 @@ namespace ValheimVehicles.SharedScripts
           Mathf.Clamp(DisplayScaledValues.GetScaledSize(), baseTextSize,
             baseTextSize * 4));
 
-      anchorStateTextMesh.characterSize = anchorTextCharacterSize;
       anchorStateTextMesh.fontSize = anchorTextSize;
     }
 
@@ -166,19 +172,19 @@ namespace ValheimVehicles.SharedScripts
 
     private void hideAnchorText()
     {
-      if (anchorTextMeshTransform.gameObject.activeInHierarchy)
-        anchorTextMeshTransform.gameObject.SetActive(false);
+      if (anchorTextCanvasTransform.gameObject.activeInHierarchy)
+        anchorTextCanvasTransform.gameObject.SetActive(false);
     }
 
     private void showAnchorText()
     {
-      if (!anchorTextMeshTransform.gameObject.activeSelf)
-        anchorTextMeshTransform.gameObject.SetActive(true);
+      if (!anchorTextCanvasTransform.gameObject.activeSelf)
+        anchorTextCanvasTransform.gameObject.SetActive(true);
     }
 
     public bool ShouldHideAfterLastStateUpdate()
     {
-      if (HideAnchorTimer == 0f) return false;
+      if (Mathf.Approximately(HideAnchorTimer, 0f)) return false;
       return timePassedSinceStateUpdate > HideAnchorTimer;
     }
 
@@ -195,14 +201,38 @@ namespace ValheimVehicles.SharedScripts
       if (HideAnchorTimer != 0f)
         timePassedSinceStateUpdate += Time.fixedDeltaTime;
 
-      if (anchorTextMeshTransform != null && Camera.main != null)
+      if (anchorTextMeshProTransform != null && Camera.main != null)
       {
-        anchorTextMeshTransform.LookAt(Camera.main.transform);
+        // Calculate the point at which the fade should start (last 25% of the timer)
+        var fadeStartTime = HideAnchorTimer * 0.1f;
+
+        // Only start fading when we're in the last 25% of the timer
+        if (timePassedSinceStateUpdate > fadeStartTime)
+        {
+          // Calculate the normalized time for the fading effect (approaches 0 as time passes)
+          var fadeProgress = Mathf.InverseLerp(fadeStartTime, HideAnchorTimer,
+            timePassedSinceStateUpdate);
+
+          // Use this progress value to lerp the alpha value
+          messageFadeValue =
+            Mathf.Lerp(1f, 0f,
+              fadeProgress); // Fade from 1 to 0 over the last 25%
+
+          // Apply the new alpha value to the color
+          anchorStateTextMesh.color = new Color(messageColor.r, messageColor.g,
+            messageColor.b, messageFadeValue);
+        }
+        else
+        {
+          anchorStateTextMesh.color = messageColor;
+        }
+
+        anchorTextMeshProTransform.LookAt(Camera.main.transform);
         anchorStateTextMesh.text = GetCurrentStateText();
-        anchorStateTextMesh.fontSize = anchorTextSize;
-        anchorTextMeshTransform.rotation =
-          Quaternion.LookRotation(anchorTextMeshTransform.forward *
+        anchorTextMeshProTransform.rotation =
+          Quaternion.LookRotation(anchorTextMeshProTransform.forward *
                                   -1); // Flip to face correctly
+        // anchorStateTextMesh.fontSize = anchorTextSize;
       }
     }
 

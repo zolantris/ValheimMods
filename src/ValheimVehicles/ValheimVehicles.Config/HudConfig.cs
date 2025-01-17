@@ -8,7 +8,7 @@ public static class HudConfig
 {
   private static ConfigFile Config = null!;
   public static ConfigEntry<bool> HasVehicleAnchorStateTextAboveAnchors = null!;
-  public static ConfigEntry<float> HideAnchorMessageTimer = null!;
+  public static ConfigEntry<int> HideAnchorMessageTimer = null!;
 
   private const string SectionKey = "Hud";
 
@@ -22,10 +22,9 @@ public static class HudConfig
         false, false));
     
     HideAnchorMessageTimer = Config.Bind(SectionKey,
-      "HideAnchorStateMessageTimer", 0f,
-      ConfigHelpers.CreateConfigDescription(
+      "HideAnchorStateMessageTimer", 0, ConfigHelpers.CreateConfigDescription(
         $"Hides the {HasVehicleAnchorStateTextAboveAnchors.Description} after X seconds a specific amount of time has passed. Setting this to 0 will mean it never hides",
-        false, false, new AcceptableValueRange<float>(0f, 20f)));
+        false, false, new AcceptableValueRange<int>(0, 20)));
     
     HasVehicleAnchorStateTextAboveAnchors.SettingChanged += (sender, args) => VehicleAnchorMechanismController.SyncHudHideAnchorMessageTimer();
     HideAnchorMessageTimer.SettingChanged += (sender, args) => VehicleAnchorMechanismController.SyncHudHideAnchorMessageTimer();
