@@ -10,7 +10,7 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>2.5.0</ApplicationVersion>
+        <ApplicationVersion>2.5.1</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -92,7 +92,8 @@
         <EmbeddedResource Include="AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest" />
         <EmbeddedResource Include="AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles" />
         <EmbeddedResource Include="AssetBundle\valheim-vehicles.manifest" LogicalName="valheim-vehicles.manifest" />
-        <EmbeddedResources Include="Assets\**.png" /> 
+        <!--        TODO import assets this way-->
+        <!--        <EmbeddedResources Include="Assets\**.png" /> -->
     </ItemGroup>
     <ItemGroup>
         <Content Include=".gitignore" />

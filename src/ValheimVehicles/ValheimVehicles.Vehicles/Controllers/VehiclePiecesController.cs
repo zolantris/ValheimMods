@@ -147,10 +147,23 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       }
     }
 
-    _cachedConvexHullBounds = convexHullBounds;
+    // converts to relative bounds
+    if (convexHullBounds != null)
+    {
+      convexHullBounds =
+        new Bounds(
+          transform.InverseTransformPoint(convexHullBounds.Value.center),
+          convexHullBounds.Value.size);
+
+      _cachedConvexHullBounds = convexHullBounds;
+    }
+    else
+    {
+      _cachedConvexHullBounds = new Bounds(Vector3.zero, Vector3.one * 3);
+    }
   }
   
-  public Bounds? GetConvexHullBounds()
+  public Bounds? GetConvexHullRelativeBounds()
   {
     if (_cachedConvexHullBounds == null)
     {

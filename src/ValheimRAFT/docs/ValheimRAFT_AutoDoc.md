@@ -537,29 +537,37 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: Allows for walking underwater, anywhere, or onship, or eventually within the water displaced area only. Disabled with remove all water logic. DEBUG_WaterZoneOnly is not supported yet
 - Default Value: Disabled
 
+### HasUnderwaterHullBubbleEffect 
+- Description: Adds an underwater bubble conforming around the vehicle hull. Allowing for a underwater like distortion effect without needing to use fog.
+- Default Value: True
+
+### UnderwaterBubbleEffectColor 
+- Description: Set the underwater bubble color
+- Default Value: RGBA(0.000, 0.400, 0.400, 0.800)
+
 ## Vehicle Physics
 
-### flightDamping_2.4.2 
+### flightDamping_2.5.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_2.4.2 
+### flightSidewaysDamping_2.5.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_2.4.2 
+### flightAngularDamping_2.5.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
-### forceDistance_2.4.2 
+### forceDistance_2.5.0 
 - Description: EXPERIMENTAL_FORCE_DISTANCE
-- Default Value: 5
+- Default Value: 1
 
-### force_2.4.2 
+### force_2.5.0 
 - Description: EXPERIMENTAL_FORCE
 - Default Value: 1
 
-### backwardForce_2.4.2 
+### backwardForce_2.5.0 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -583,15 +591,15 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: 
 - Default Value: 1
 
-### waterDamping_2.4.2 
+### waterDamping_2.5.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_2.4.2 
+### waterSidewaysDamping_2.5.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_2.4.2 
+### waterAngularDamping_2.5.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -607,15 +615,15 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: 
 - Default Value: 0.8
 
-### submersibleDamping_2.4.2 
+### submersibleDamping_2.5.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_2.4.2 
+### submersibleSidewaysDamping_2.5.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_2.4.2 
+### submersibleAngularDamping_2.5.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -659,7 +667,7 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ### convexHullDebuggerColor 
 - Description: Allows the user to set the debugger hull color.
-- Default Value: RGBA(0.000, 0.600, 0.600, 0.200)
+- Default Value: RGBA(0.100, 0.230, 0.070, 0.500)
 
 ### convexHullDebuggerForceEnabled 
 - Description: Force enables the convex hull. This will be turned off if other commands are run or re-enabled if toggled.
@@ -672,24 +680,24 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 ## Vehicle Physics: Velocity Mode
 
 ### floatationVelocityMode 
-- Description: EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for
-- Default Value: Force
+- Description: EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for
+- Default Value: VelocityChange
 
 ### flyingVelocityMode 
-- Description: EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for
-- Default Value: Force
+- Description: EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for
+- Default Value: VelocityChange
 
 ### turningVelocityMode 
-- Description: EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for
-- Default Value: Force
+- Description: EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for
+- Default Value: VelocityChange
 
 ### sailingVelocityMode 
-- Description: EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for
-- Default Value: Force
+- Description: EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for
+- Default Value: VelocityChange
 
 ### rudderVelocityMode 
-- Description: EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for
-- Default Value: Force
+- Description: EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for
+- Default Value: VelocityChange
 
 ## Vehicle Physics
 

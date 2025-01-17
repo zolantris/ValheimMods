@@ -1013,7 +1013,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 #endif
     if (PiecesController == null) return 0f;
 
-    var bounds = PiecesController.GetConvexHullBounds();
+    var bounds = PiecesController.GetConvexHullRelativeBounds();
     if (bounds == null)
     {
       return 0f;
@@ -1071,12 +1071,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private void UpdateColliderPositions()
   {
     if (PiecesController == null) return;
-    var convexHullBounds = PiecesController.GetConvexHullBounds();
-    if (convexHullBounds == null) return;
+    var convexHullRelativeBounds = PiecesController.GetConvexHullRelativeBounds();
+    if (convexHullRelativeBounds == null) return;
 
     // var expectedLowestBlockingColliderPoint =
     //   BlockingCollider.transform.position.y - BlockingCollider.bounds.extents.y;
-    var expectedLowestBlockingColliderPoint = convexHullBounds.Value.min.y;
+    var expectedLowestBlockingColliderPoint = PiecesController.transform.position.y + convexHullRelativeBounds.Value.min.y;
 
     if (IsFlying() || !WaterConfig.WaterBallastEnabled.Value) return;
 
@@ -1102,13 +1102,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // }
 
     // super stuck. do a direct update. But protect the players from being launched. Yikes.
-    if (_lastHighestGroundPoint > convexHullBounds.Value.center.y)
+    if (_lastHighestGroundPoint > PiecesController.transform.position.y + convexHullRelativeBounds.Value.center.y)
     {
       // force updates the vehicle to this position.
       var position = transform.position;
       position = new Vector3(position.x,
         position.y + (_lastHighestGroundPoint -
-                      convexHullBounds.Value.center.y),
+                      convexHullRelativeBounds.Value.center.y),
         position.z);
       transform.position = position;
       UpdateTargetHeight(0);
@@ -2663,7 +2663,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // prevents divison of zero
     if (TotalMass <= 0f) TotalMass = 1000f;
 
-    var convexHullBounds = PiecesController.GetConvexHullBounds() ?? OnboardCollider.bounds;
+    var convexHullBounds = PiecesController.GetConvexHullRelativeBounds() ?? OnboardCollider.bounds;
     // prevent zero value
     var volumeOfShip = Mathf.Max(convexHullBounds.size.x *
                                  convexHullBounds.size.y *
