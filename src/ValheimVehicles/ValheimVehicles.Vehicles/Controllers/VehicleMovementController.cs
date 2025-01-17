@@ -67,22 +67,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public static float maxFlyingHeight = 5000f;
 
-  private AnchorState _vehicleAnchorState = AnchorState.Idle;
-  public AnchorState vehicleAnchorState
-  {
-    get => _vehicleAnchorState;
-    set {
-      _vehicleAnchorState = value;
-      isAnchored = IsAnchorDropped(_vehicleAnchorState);
-    }
-  }
-
-  public static bool IsAnchorDropped(AnchorState val)
-  {
-    return val == AnchorState.Anchored;
-  }
-
-  public bool isAnchored = false;
+  public bool isAnchored;
 
   public SteeringWheelComponent lastUsedWheelComponent;
   public Vector3 detachOffset = new(0f, 0.5f, 0f);
@@ -109,17 +94,22 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public Vector3 currentUpwardsForceVelocity = Vector3.zero;
 
   public bool CanApplyWaterEdgeForce = true;
-  public bool CanAnchor = false;
+  public bool CanAnchor;
 
   public float lastFlyingDt;
   public bool cachedFlyingValue;
 
   public float cachedMaxDepthOffset;
+
+  public float directionalForceUnanchored = 0.15f;
+  public float directionalForceSubmerged = 0.05f;
+  public float directionalForceAnchored = 0.075f;
+  public float maxForce = 0.5f;
   private readonly bool _isHoldingAscend = false;
   private readonly bool _isHoldingDescend = false;
-  private ShipFloatation? _currentShipFloatation;
 
-  public ShipFloatation? GetShipFloatation() => _currentShipFloatation;
+  private float lastSyncTargetHeight = 0f;
+  private ShipFloatation? _currentShipFloatation;
 
   private Coroutine? _debouncedForceTakeoverControlsInstance;
 
@@ -143,6 +133,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   // The rudder force multiplier applied to the ship speed
   private float _rudderForce = 1f;
+
+  private AnchorState _vehicleAnchorState = AnchorState.Idle;
 
   private GameObject _vehiclePiecesContainerInstance;
 
@@ -173,6 +165,16 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private Ship.Speed vehicleSpeed;
 
   private float vehicleStatSyncTimer;
+
+  public AnchorState vehicleAnchorState
+  {
+    get => _vehicleAnchorState;
+    set
+    {
+      _vehicleAnchorState = value;
+      isAnchored = IsAnchorDropped(_vehicleAnchorState);
+    }
+  }
 
   public IVehicleShip? ShipInstance => vehicleShip;
 
@@ -517,20 +519,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       UpdateTargetHeight(TargetHeight - maxVerticalOffset);
     }
   }
-  
-  /// <summary>
-  /// Reels the anchor on vertical commands.
-  /// </summary>
-
-  public void UpdateAnchorOnVertical()
-  {
-    if (isAnchored && vehicleAnchorState != AnchorState.Reeling) SendSetAnchor(AnchorState.Reeling);
-  }
 
   public void Ascend()
   {
     UpdateAnchorOnVertical();
-    
+
     if (IsBallastAndFlightDisabled)
     {
       UpdateTargetHeight(0f);
@@ -556,9 +549,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (m_nview.GetZDO().GetInt(VehicleZdoVars.VehicleAnchorState) ==
         (int)state)
-    {
       return;
-    }
 
     if (HasPendingAnchor)
     {
@@ -571,6 +562,25 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (state == AnchorState.Anchored) SendSpeedChange(DirectionChange.Stop);
 
     m_nview.InvokeRPC(nameof(RPC_SetAnchor), (int)state);
+  }
+
+  public static bool IsAnchorDropped(AnchorState val)
+  {
+    return val == AnchorState.Anchored;
+  }
+
+  public ShipFloatation? GetShipFloatation()
+  {
+    return _currentShipFloatation;
+  }
+
+  /// <summary>
+  ///   Reels the anchor on vertical commands.
+  /// </summary>
+  public void UpdateAnchorOnVertical()
+  {
+    if (isAnchored && vehicleAnchorState != AnchorState.Reeling)
+      SendSetAnchor(AnchorState.Reeling);
   }
 
   // unfortunately, the current approach does not allow increasing this beyond 1f otherwise it causes massive jitters when changing altitude.
@@ -1014,10 +1024,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (PiecesController == null) return 0f;
 
     var bounds = PiecesController.GetConvexHullRelativeBounds();
-    if (bounds == null)
-    {
-      return 0f;
-    }
+    if (bounds == null) return 0f;
 
     if (direction == Vector3.right) return bounds.Value.size.x / 2;
 
@@ -1071,12 +1078,15 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private void UpdateColliderPositions()
   {
     if (PiecesController == null) return;
-    var convexHullRelativeBounds = PiecesController.GetConvexHullRelativeBounds();
+    var convexHullRelativeBounds =
+      PiecesController.GetConvexHullRelativeBounds();
     if (convexHullRelativeBounds == null) return;
 
     // var expectedLowestBlockingColliderPoint =
     //   BlockingCollider.transform.position.y - BlockingCollider.bounds.extents.y;
-    var expectedLowestBlockingColliderPoint = PiecesController.transform.position.y + convexHullRelativeBounds.Value.min.y;
+    var expectedLowestBlockingColliderPoint =
+      PiecesController.transform.position.y +
+      convexHullRelativeBounds.Value.min.y;
 
     if (IsFlying() || !WaterConfig.WaterBallastEnabled.Value) return;
 
@@ -1102,7 +1112,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // }
 
     // super stuck. do a direct update. But protect the players from being launched. Yikes.
-    if (_lastHighestGroundPoint > PiecesController.transform.position.y + convexHullRelativeBounds.Value.center.y)
+    if (_lastHighestGroundPoint > PiecesController.transform.position.y +
+        convexHullRelativeBounds.Value.center.y)
     {
       // force updates the vehicle to this position.
       var position = transform.position;
@@ -1393,32 +1404,18 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
-  public float directionalForceUnanchored = 0.15f;
-  public float directionalForceSubmerged = 0.05f;
-  public float directionalForceAnchored = 0.075f;
-  public float maxForce = 0.5f;
-
   /// <summary>
-  /// If the vehicle is anchored there is less sway
+  ///   If the vehicle is anchored there is less sway
   /// </summary>
   /// TODO add config for this.
   /// <returns></returns>
   public float GetDirectionalForce()
   {
-    if (isBeached)
-    {
-      return 0;
-    }
-   
-    if (IsSubmerged())
-    {
-      return directionalForceSubmerged;
-    }
-    
-    if (!isAnchored)
-    {
-      return directionalForceUnanchored;
-    }
+    if (isBeached) return 0;
+
+    if (IsSubmerged()) return directionalForceSubmerged;
+
+    if (!isAnchored) return directionalForceUnanchored;
 
     return directionalForceAnchored;
   }
@@ -1781,7 +1778,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (_prevGravity == isGravityEnabled && m_body.useGravity == _prevGravity &&
         zsyncTransform.m_useGravity == _prevGravity) return;
     _prevGravity = isGravityEnabled;
-    
+
     // The client cannot have this enabled as it adds additional velocity that is then faught against when zsynctransform is run.
     m_body.useGravity = IsOwner() && isGravityEnabled;
     zsyncTransform.m_useGravity = isGravityEnabled;
@@ -2214,7 +2211,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // todo set this to the rudder point
     // rear steering is size z. Center steering is size.z/2
     var steerOffset = m_body.worldCenterOfMass -
-      forward * GetFloatSizeFromDirection(Vector3.forward);
+                      forward * GetFloatSizeFromDirection(Vector3.forward);
 
     var steeringVelocityDirectionFactor = direction * m_stearVelForceFactor;
     var steerOffsetForce = ShipDirection.right *
@@ -2379,7 +2376,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// <summary>
   ///   Meant for realism and testing but will allow the ship to continue for a bit
   ///   even when the player is logged out on server.
-  ///
   ///   Will not anchor if the vehicle suddenly has a player aboard
   /// </summary>
   public void DelayedAnchor()
@@ -2448,6 +2444,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     TargetHeight = zdoTargetHeight;
   }
 
+  internal void RPC_TargetHeight(long sender, float value)
+  {
+    TargetHeight = value;
+  }
+
   private void InitializeRPC()
   {
     if (m_nview && !_hasRegister)
@@ -2461,6 +2462,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     // ship piece bounds syncing
     m_nview.Unregister(nameof(RPC_SyncBounds));
+
+    // boat target height
+    m_nview.Unregister(nameof(RPC_TargetHeight));
 
     // ship speed
     m_nview.Unregister(nameof(RPC_SpeedChange));
@@ -2486,6 +2490,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     // ship piece bounds syncing
     m_nview.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
+
+    // ship target height
+    m_nview.Register<float>(nameof(RPC_TargetHeight), RPC_TargetHeight);
 
     // ship speed
     m_nview.Register<int>(nameof(RPC_SpeedChange), RPC_SpeedChange);
@@ -2526,7 +2533,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void AssignShipControls(Player player)
   {
-    if (PiecesController != null && PiecesController._steeringWheelPieces.Count > 0)
+    if (PiecesController != null &&
+        PiecesController._steeringWheelPieces.Count > 0)
       player.m_doodadController = PiecesController._steeringWheelPieces[0];
   }
 
@@ -2657,13 +2665,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public float GetMaxAboveSurfaceFromShipWeight()
   {
     if (PiecesController == null) return 1000f;
-    
+
     var TotalMass = PiecesController.TotalMass;
 
     // prevents divison of zero
     if (TotalMass <= 0f) TotalMass = 1000f;
 
-    var convexHullBounds = PiecesController.GetConvexHullRelativeBounds() ?? OnboardCollider.bounds;
+    var convexHullBounds = PiecesController.GetConvexHullRelativeBounds() ??
+                           OnboardCollider.bounds;
     // prevent zero value
     var volumeOfShip = Mathf.Max(convexHullBounds.size.x *
                                  convexHullBounds.size.y *
@@ -2738,6 +2747,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// <param name="forceUpdate"></param>
   public void UpdateTargetHeight(float rawValue, bool forceUpdate = false)
   {
+    if (ShipInstance?.Instance == null || m_nview == null) return;
+
     _previousTargetHeight = TargetHeight;
     var maxSurfaceLevelOffset = GetSurfaceOffset();
     var maxDepthOffset = GetMaxDepthOffset();
@@ -2755,8 +2766,20 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (Mathf.Approximately(_previousTargetHeight, TargetHeight)) return;
 
-    m_nview?.GetZDO().Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
-    ShipInstance?.Instance?.UpdateShipEffects();
+
+    m_nview.GetZDO().Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
+
+    ShipInstance.Instance.UpdateShipEffects();
+
+    if (lastSyncTargetHeight > 2f)
+    {
+      m_nview.InvokeRPC(nameof(RPC_TargetHeight), TargetHeight);
+      lastSyncTargetHeight = 0f;
+    }
+    else
+    {
+      lastSyncTargetHeight += Time.fixedDeltaTime;
+    }
 
     if (forceUpdate && lastForceUpdateTimer is >= 0f and < 0.2f)
       lastForceUpdateTimer += Time.fixedDeltaTime;
@@ -3099,7 +3122,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
 
     if (m_nview.isActiveAndEnabled != true) return;
-    
+
     var isNotAnchoredWithNobodyOnboard = m_players.Count == 0 && !isAnchored;
 
     if (isNotAnchoredWithNobodyOnboard)
@@ -3110,7 +3133,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
 
     var zdoAnchorState =
-      (AnchorState)AnchorMechanismController.GetSafeAnchorState(m_nview.GetZDO()
+      AnchorMechanismController.GetSafeAnchorState(m_nview.GetZDO()
         .GetInt(VehicleZdoVars.VehicleAnchorState, (int)vehicleAnchorState));
 
     if (vehicleAnchorState != zdoAnchorState)
@@ -3119,11 +3142,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
         $"anchorState {vehicleAnchorState} zdoAnchorState {zdoAnchorState}");
       vehicleAnchorState = zdoAnchorState;
     }
-    
+
     if (PiecesController != null)
-    {
       PiecesController.UpdateAnchorState(vehicleAnchorState);
-    }
   }
 
   /// <summary>
@@ -3151,9 +3172,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     var safeAnchorState = AnchorMechanismController.GetSafeAnchorState(state);
     if (PiecesController != null)
-    {
       PiecesController.UpdateAnchorState(safeAnchorState);
-    }
     SetAnchor(safeAnchorState);
   }
 
@@ -3272,10 +3291,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void SendSpeedChange(DirectionChange directionChange)
   {
-    if (isAnchored)
-    {
-      return;
-    }
+    if (isAnchored) return;
 
     switch (directionChange)
     {
