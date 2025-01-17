@@ -25,8 +25,6 @@ public class PrefabRegistryController : MonoBehaviour
   private static List<Piece> raftPrefabPieces = new();
   private static bool prefabsEnabled = true;
 
-  public static AssetBundle raftAssetBundle;
-  public static AssetBundle vehicleSharedAssetBundle;
   public static AssetBundle vehicleAssetBundle;
 
   private static bool _initialized = false;
@@ -133,21 +131,9 @@ public class PrefabRegistryController : MonoBehaviour
    */
   public static void Init()
   {
-    vehicleSharedAssetBundle =
-      AssetUtils.LoadAssetBundleFromResources("valheim-vehicles-shared",
-        Assembly.GetExecutingAssembly());
-    Logger.LogDebug($"valheim-vehicles-shared {vehicleSharedAssetBundle}");
-
-    raftAssetBundle =
-      AssetUtils.LoadAssetBundleFromResources("valheim-raft",
-        Assembly.GetExecutingAssembly());
-    Logger.LogDebug($"valheim-raft {raftAssetBundle}");
-
-
     vehicleAssetBundle =
       AssetUtils.LoadAssetBundleFromResources("valheim-vehicles",
         Assembly.GetExecutingAssembly());
-    Logger.LogDebug($"valheim-vehicles {vehicleAssetBundle}");
 
     prefabManager = PrefabManager.Instance;
     pieceManager = PieceManager.Instance;
@@ -155,11 +141,9 @@ public class PrefabRegistryController : MonoBehaviour
     LoadValheimAssets.Instance.Init(prefabManager);
 
     // dependent on ValheimVehiclesShared
-    LoadValheimRaftAssets.Instance.Init(raftAssetBundle,
-      vehicleSharedAssetBundle);
+    LoadValheimRaftAssets.Instance.Init(vehicleAssetBundle);
     // dependent on ValheimVehiclesShared and RaftAssetBundle
-    LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle,
-      vehicleSharedAssetBundle);
+    LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle);
 
     // must be called after assets are loaded
     PrefabRegistryHelpers.Init();

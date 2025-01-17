@@ -10,7 +10,7 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>2.5.0</ApplicationVersion>
+        <ApplicationVersion>2.5.1</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -89,13 +89,11 @@
         <!--  TODO to embed assets, but this needs a refactor and inflates dll size, not worth adding now      -->
         <!--        <EmbeddedResource Include="Assets\**"/>-->
         <EmbeddedResource Include="AssetBundle\AssetBundle" LogicalName="AssetBundle" />
-        <EmbeddedResource Include="AssetBundle\valheim-vehicles-shared" LogicalName="valheim-vehicles-shared" />
-        <EmbeddedResource Include="AssetBundle\valheim-raft" LogicalName="valheim-raft" />
-        <EmbeddedResource Include="AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles" />
         <EmbeddedResource Include="AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest" />
-        <EmbeddedResource Include="AssetBundle\valheim-vehicles-shared.manifest" LogicalName="valheim-vehicles-shared.manifest" />
-        <EmbeddedResource Include="AssetBundle\valheim-raft.manifest" LogicalName="valheim-raft.manifest" />
+        <EmbeddedResource Include="AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles" />
         <EmbeddedResource Include="AssetBundle\valheim-vehicles.manifest" LogicalName="valheim-vehicles.manifest" />
+        <!--        TODO import assets this way-->
+        <!--        <EmbeddedResources Include="Assets\**.png" /> -->
     </ItemGroup>
     <ItemGroup>
         <Content Include=".gitignore" />

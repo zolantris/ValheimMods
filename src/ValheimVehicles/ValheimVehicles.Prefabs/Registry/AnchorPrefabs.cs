@@ -44,11 +44,7 @@ public class AnchorPrefabs : IRegisterPrefab
     anchorMechanismController.ropeLine =
       anchorMechanismController.transform.Find("rope_line").GetComponent<LineRenderer>();
     
-    var cogTransform =
-      anchorMechanismController.transform.Find(
-        "anchor_reel/rotational");
-    
-    var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
     
     var piece =
       PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.ShipAnchorWood,
@@ -61,6 +57,20 @@ public class AnchorPrefabs : IRegisterPrefab
         PieceTable = "Hammer",
         Icon = piece.m_icon,
         Category = PrefabNames.ValheimRaftMenuName,
+        Requirements = [
+          new RequirementConfig
+          {
+            Amount = 20,
+            Item = "RoundLog",
+            Recover = true,
+          },
+          new RequirementConfig
+          {
+            Amount = 3,
+            Item = "Chain",
+            Recover = true,
+          }
+        ],
         Enabled = true,
       }));
   }

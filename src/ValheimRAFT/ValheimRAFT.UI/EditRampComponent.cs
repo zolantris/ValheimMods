@@ -33,7 +33,7 @@ public class EditRampComponent
   {
     var parent = GUIManager.CustomGUIFront.transform;
     m_editPanel = Object.Instantiate(
-      PrefabRegistryController.raftAssetBundle.LoadAsset<GameObject>(
+      PrefabRegistryController.vehicleAssetBundle.LoadAsset<GameObject>(
         "edit_ramp_panel"),
       parent, false);
     PanelUtil.ApplyPanelStyle(m_editPanel);

@@ -156,7 +156,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   /// todo investigate if it's cleaner to do this load within the registration process.
   /// todo this approach retains the asset in memory adding a unnecessary (small) burden to valheim. Possibly swap this out for a dynamic name generator so things do not need to be hardcoded
   /// <param name="assetBundle"></param>
-  public void Init(AssetBundle assetBundle, AssetBundle sharedAssetBundle)
+  public void Init(AssetBundle assetBundle)
   {
     _bundle = assetBundle;
 

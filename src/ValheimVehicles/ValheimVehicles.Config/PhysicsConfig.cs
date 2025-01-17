@@ -5,8 +5,10 @@ using UnityEngine;
 using ValheimRAFT;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Constants;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Vehicles.Controllers;
 
 namespace ValheimVehicles.Config;
 
@@ -136,7 +138,7 @@ public static class PhysicsConfig
     "Controls how much the water pushes the boat sideways based on wind direction and velocity.";
 
   // may make this per version update as this can be very important to force reset people to defaults.
-  private const string DampingResetKey = "2.4.2";
+  private const string DampingResetKey = ValheimRaftPlugin.Version;
 
   private static void OnPhysicsChangeForceUpdateAllVehiclePhysics(object sender,
     EventArgs eventArgs)
@@ -185,7 +187,7 @@ public static class PhysicsConfig
 
 
     forceDistance = Config.Bind(SectionKey,
-      $"forceDistance_{DampingResetKey}", 5f,
+      $"forceDistance_{DampingResetKey}", 1f,
       "EXPERIMENTAL_FORCE_DISTANCE");
     force = Config.Bind(SectionKey,
       $"force_{DampingResetKey}", 1f,
@@ -308,31 +310,33 @@ public static class PhysicsConfig
         $"Sets the hull preview offset, this will allow previewing the hull side by side with your vehicle. This can only be seen if the {convexHullDebuggerForceEnabled.Definition} is true.",
         true, true));
 
+    var forceModes = ModEnvironment.IsDebug ? null : new AcceptableValueList<int>((int)ForceMode.VelocityChange);
+
     floatationVelocityMode = Config.Bind(VelocityModeSectionKey,
-      "floatationVelocityMode", ForceMode.Force,
+      "floatationVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
-        "EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for",
-        true, true));
+        "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
+        true, true, forceModes));
     flyingVelocityMode = Config.Bind(VelocityModeSectionKey,
-      "flyingVelocityMode", ForceMode.Force,
+      "flyingVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
-        "EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for",
-        true, true));
+        "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
+        true, true, forceModes));
     turningVelocityMode = Config.Bind(VelocityModeSectionKey,
-      "turningVelocityMode", ForceMode.Force,
+      "turningVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
-        "EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for",
-        true, true));
+        "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
+        true, true, forceModes));
     sailingVelocityMode = Config.Bind(VelocityModeSectionKey,
-      "sailingVelocityMode", ForceMode.Force,
+      "sailingVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
-        "EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for",
-        true, true));
+        "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
+        true, true, forceModes));
     rudderVelocityMode = Config.Bind(VelocityModeSectionKey,
-      "rudderVelocityMode", ForceMode.Force,
+      "rudderVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
-        "EXPERIMENTAL VelocityMode override so mass and vehicle size are accounted for",
-        true, true));
+        "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
+        true, true, forceModes));
 
     removeCameraCollisionWithObjectsOnBoat = Config.Bind(SectionKey,
       "removeCameraCollisionWithObjectsOnBoat", true,
@@ -345,6 +349,11 @@ public static class PhysicsConfig
         true, true, new AcceptableValueRange<float>(0.1f, 5000f)));
 
 
+    removeCameraCollisionWithObjectsOnBoat.SettingChanged += (sender, args) =>
+    {
+      VehicleOnboardController.AddOrRemovePlayerBlockingCamera(Player.m_localPlayer);
+    };
+      
     convexHullDebuggerForceEnabled.SettingChanged += (_, __) =>
       ConvexHullComponent.UpdatePropertiesForAllComponents();
     convexHullDebuggerColor.SettingChanged += (_, __) =>

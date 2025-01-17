@@ -19,7 +19,7 @@ namespace ValheimVehicles.SharedScripts
     private static readonly ConvexHullCalculator
       convexHullCalculator = new();
 
-    public static PreviewModes PreviewMode = PreviewModes.None;
+    public static PreviewModes PreviewMode = PreviewModes.Bubble;
     public static bool CanRenderBubble = true;
     public static bool DebugOriginalMesh = false;
 
@@ -775,7 +775,7 @@ namespace ValheimVehicles.SharedScripts
     ///   worth using in creative mode.
     /// </summary>
     /// <param name="go"></param>
-    public void AddConvexHullMeshRenderer(GameObject go)
+    public void AddConvexHullMeshRenderer(GameObject go, bool isPreview = false)
     {
       if (PreviewMode == PreviewModes.None) return;
       var material = GetMaterial();

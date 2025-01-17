@@ -50,55 +50,55 @@ Shader "StandardDoubleSided"
         {
             "RenderType"="Opaque" "PerformanceChecks"="False"
         }
-        LOD 300
+        LOD 100
 
         ZWrite [_ZWrite]
         ZClip Off
-        
-//        Stencil
-//        {
-//            Ref [_StencilMask]
-//            Comp Always
-//            Pass IncrSat
-//        }
-//        
-//        Pass
-//        {
-//            ZWrite On
-//            ZTest LEqual
-//            Stencil
-//            {
-//                Ref 1
-//                Comp Equal
-//                Pass Replace
-//            }
-//            ColorMask 0
-//        }
-        
-        // anything above 2 must be decremented
-//        Pass
-//        {
-//            ZWrite On
-//            Stencil
-//            {
-//                Ref 2
-//                Comp GEqual
-//                Pass DecrSat
-//            }
-//            ColorMask 0
-//        }
 
-        
+        //        Stencil
+        //        {
+        //            Ref [_StencilMask]
+        //            Comp Always
+        //            Pass IncrSat
+        //        }
+        //        
+        //        Pass
+        //        {
+        //            ZWrite On
+        //            ZTest LEqual
+        //            Stencil
+        //            {
+        //                Ref 1
+        //                Comp Equal
+        //                Pass Replace
+        //            }
+        //            ColorMask 0
+        //        }
+
+        // anything above 2 must be decremented
+        //        Pass
+        //        {
+        //            ZWrite On
+        //            Stencil
+        //            {
+        //                Ref 2
+        //                Comp GEqual
+        //                Pass DecrSat
+        //            }
+        //            ColorMask 0
+        //        }
+
+
         // ------------------------------------------------------------------
         //  Base forward pass (directional light, emission, lightmaps, ...)
         Pass
         {
-//            Stencil
-//            {
-//                Ref 0
-//                Comp Equal
-//                Pass Keep
-//            }
+            //            Stencil
+            //            {
+            //                Ref 0
+            //                Comp Equal
+            //                Pass Keep
+            //            }
 
             Name "FORWARD"
             Tags

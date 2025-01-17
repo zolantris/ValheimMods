@@ -44,6 +44,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: $hud_snappoint_top
       objectReference: {fileID: 0}
+    - target: {fileID: 2270176176690278139, guid: fae4949ba7554af468d8123cc1a5c24e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.36
+      objectReference: {fileID: 0}
     - target: {fileID: 3464160435630349420, guid: fae4949ba7554af468d8123cc1a5c24e, type: 3}
       propertyPath: m_Name
       value: $hud_snappoint_center
@@ -87,6 +91,14 @@ PrefabInstance:
     - target: {fileID: 5077854269718908073, guid: fae4949ba7554af468d8123cc1a5c24e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5226394821237344097, guid: fae4949ba7554af468d8123cc1a5c24e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.18
+      objectReference: {fileID: 0}
+    - target: {fileID: 5226394821237344097, guid: fae4949ba7554af468d8123cc1a5c24e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 5706030049292349690, guid: fae4949ba7554af468d8123cc1a5c24e, type: 3}
       propertyPath: m_Name

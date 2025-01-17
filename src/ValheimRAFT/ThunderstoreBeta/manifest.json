@@ -1,9 +1,9 @@
 ﻿{
-  "name": "ValheimRAFT-BETA",
-  "version_number": "2.5.0",
+  "name": "ValheimRAFTBETA",
+  "version_number": "2.5.1",
   "website_url": "https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT",
   "description": "ValheimRAFT (BETA) - a water vehicles mod for valheim. BETA release channel. Please use the non-beta for stable versions.",
   "dependencies": [
-    "ValheimModding-Jotunn-2.22.0"
+    "ValheimModding-Jotunn-2.23.0"
   ]
 }

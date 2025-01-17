@@ -323,7 +323,7 @@ public class VehicleOnboardController : MonoBehaviour
   /// Restores the blocking behavior if this mod is controlling / unblocking camera
   /// </summary>
   /// <param name="player"></param>
-  private static void RestorePlayerBlockingCamera(Player player)
+  public static void RestorePlayerBlockingCamera(Player player)
   {
     if (!PhysicsConfig.removeCameraCollisionWithObjectsOnBoat.Value) return;
     if (Player.m_localPlayer == player &&
@@ -334,12 +334,24 @@ public class VehicleOnboardController : MonoBehaviour
     }
   }
 
+  public static void AddOrRemovePlayerBlockingCamera(Player player)
+  {
+    if (WaterZoneUtils.IsOnboard(player))
+    {
+      RemovePlayerBlockingCameraWhileOnboard(player);
+    }
+    else
+    {
+      RestorePlayerBlockingCamera(player);
+    }
+  }
+
   /// <summary>
   /// Prevents jitters. Likely most people will want this feature enabled especially for complicated boats.
   /// </summary>
   /// Does not remove changes if the feature is disabled. Players will need to reload. This prevents breaking other mods that might mess with camera.
   /// <param name="player"></param>
-  private static void RemovePlayerBlockingCameraWhileOnboard(Player player)
+  public static void RemovePlayerBlockingCameraWhileOnboard(Player player)
   {
     if (!PhysicsConfig.removeCameraCollisionWithObjectsOnBoat.Value) return;
     if (Player.m_localPlayer == player &&
