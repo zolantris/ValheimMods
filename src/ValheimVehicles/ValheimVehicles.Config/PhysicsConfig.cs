@@ -5,8 +5,10 @@ using UnityEngine;
 using ValheimRAFT;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Constants;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Vehicles.Controllers;
 
 namespace ValheimVehicles.Config;
 
@@ -347,6 +349,11 @@ public static class PhysicsConfig
         true, true, new AcceptableValueRange<float>(0.1f, 5000f)));
 
 
+    removeCameraCollisionWithObjectsOnBoat.SettingChanged += (sender, args) =>
+    {
+      VehicleOnboardController.AddOrRemovePlayerBlockingCamera(Player.m_localPlayer);
+    };
+      
     convexHullDebuggerForceEnabled.SettingChanged += (_, __) =>
       ConvexHullComponent.UpdatePropertiesForAllComponents();
     convexHullDebuggerColor.SettingChanged += (_, __) =>

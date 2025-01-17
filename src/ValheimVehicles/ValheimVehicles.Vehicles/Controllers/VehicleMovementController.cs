@@ -3185,6 +3185,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     EjectPreviousPlayerFromControls(previousPlayer);
     UpdatePlayerOnShip(targetPlayer);
+    VehicleOnboardController.AddOrRemovePlayerBlockingCamera(targetPlayer);
 
     var isLocalPlayer = targetPlayer == Player.m_localPlayer;
 
