@@ -327,7 +327,7 @@
         <SandBoxieFileToValidate>$(SandboxiePluginDeployPath)\$(AssemblyName).dll</SandBoxieFileToValidate>
         <SandBoxieFileExitCode>1</SandBoxieFileExitCode>
 
-        <PowerShellScript>$(SolutionDir)\CheckFilesLocked.ps1</PowerShellScript>
+        <PowerShellScript>$(SolutionDir)CheckFilesLocked.ps1</PowerShellScript>
     </PropertyGroup>
 
     <Target Name="file_lock_check" BeforeTargets="PostBuildEvent">

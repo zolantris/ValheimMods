@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using BepInEx.Configuration;
 using UnityEngine;
 using ValheimRAFT;
@@ -152,6 +153,35 @@ public static class PhysicsConfig
 
   private static readonly AcceptableValueRange<float> StableSailForceRange =
     new(0.01f, 0.1f);
+
+  /// <summary>
+  /// Force overrides the value if any of the Physics values change after loading in a release.
+  ///
+  /// Also since this can trigger itself it will exit if the values are equal
+  /// </summary>
+  private static void ForceSetVehiclePhysics(ConfigEntry<ForceMode> entry)
+  {
+    if (ModEnvironment.IsRelease) return;
+    if (entry.Value != ForceMode.VelocityChange)
+    {
+      entry.Value = ForceMode.VelocityChange;
+    }
+  }
+
+  private static void ForceSetAllVehiclePhysics()
+  {
+    if (ModEnvironment.IsRelease) return;
+    foreach (var velocityConfig in VelocityConfigs)
+    {
+      ForceSetVehiclePhysics(velocityConfig);
+    }
+  }
+
+  private static List<ConfigEntry<ForceMode>> VelocityConfigs =>
+  [
+    floatationVelocityMode, sailingVelocityMode, turningVelocityMode,
+    flyingVelocityMode, rudderVelocityMode
+  ];
 
   public static void BindConfig(ConfigFile config)
   {
@@ -309,35 +339,32 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         $"Sets the hull preview offset, this will allow previewing the hull side by side with your vehicle. This can only be seen if the {convexHullDebuggerForceEnabled.Definition} is true.",
         true, true));
-
-    // var forceModes = ModEnvironment.IsDebug ? null : new AcceptableValueList<string>("VelocityChange");
-    var forceModes = new AcceptableValueList<string>("VelocityChange");
-
+    
     floatationVelocityMode = Config.Bind(VelocityModeSectionKey,
       "floatationVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
-        true, true, forceModes));
+        true, true));
     flyingVelocityMode = Config.Bind(VelocityModeSectionKey,
       "flyingVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
-        true, true, forceModes));
+        true, true));
     turningVelocityMode = Config.Bind(VelocityModeSectionKey,
       "turningVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
-        true, true, forceModes));
+        true, true));
     sailingVelocityMode = Config.Bind(VelocityModeSectionKey,
       "sailingVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
-        true, true, forceModes));
+        true, true));
     rudderVelocityMode = Config.Bind(VelocityModeSectionKey,
       "rudderVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
-        true, true, forceModes));
+        true, true));
 
     removeCameraCollisionWithObjectsOnBoat = Config.Bind(SectionKey,
       "removeCameraCollisionWithObjectsOnBoat", true,
@@ -349,6 +376,14 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription("Water delta force multiplier",
         true, true, new AcceptableValueRange<float>(0.1f, 5000f)));
 
+    
+    floatationVelocityMode.SettingChanged += (sender, args) => ForceSetVehiclePhysics(floatationVelocityMode);
+    flyingVelocityMode.SettingChanged += (sender, args) => ForceSetVehiclePhysics(flyingVelocityMode);
+    turningVelocityMode.SettingChanged += (sender, args) => ForceSetVehiclePhysics(turningVelocityMode);
+    sailingVelocityMode.SettingChanged += (sender, args) => ForceSetVehiclePhysics(sailingVelocityMode);
+    rudderVelocityMode.SettingChanged += (sender, args) => ForceSetVehiclePhysics(rudderVelocityMode);
+
+    ForceSetAllVehiclePhysics();
 
     removeCameraCollisionWithObjectsOnBoat.SettingChanged += (sender, args) =>
     {

@@ -449,7 +449,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     WaterConfig.BindConfig(Config);
     PhysicsConfig.BindConfig(Config);
     MinimapConfig.BindConfig(Config);
-    TutorialConfig.BindConfig(Config);
+    HudConfig.BindConfig(Config);
 
 #if DEBUG
     // Meant for only being run in debug builds for testing quickly

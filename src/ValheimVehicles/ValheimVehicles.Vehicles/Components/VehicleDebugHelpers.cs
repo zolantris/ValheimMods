@@ -188,7 +188,7 @@ public class VehicleDebugHelpers : MonoBehaviour
 
     // Ensure the text always faces the camera
     var textTransform = cube.transform.Find("CubeText");
-    if (textTransform != null)
+    if (textTransform != null && Camera.main != null)
     {
       textTransform.LookAt(Camera.main.transform);
       textTransform.rotation = Quaternion.LookRotation(textTransform.forward * -1); // Flip to face correctly

@@ -79,7 +79,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public static bool IsAnchorDropped(AnchorState val)
   {
-    return val == AnchorState.Dropped;
+    return val == AnchorState.Anchored;
   }
 
   public bool isAnchored = false;
@@ -568,7 +568,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
 
     SetAnchor(state);
-    if (state == AnchorState.Dropped) SendSpeedChange(DirectionChange.Stop);
+    if (state == AnchorState.Anchored) SendSpeedChange(DirectionChange.Stop);
 
     m_nview.InvokeRPC(nameof(RPC_SetAnchor), (int)state);
   }
@@ -2386,7 +2386,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     if (m_players.Count > 0) return;
     HasPendingAnchor = false;
-    SendSetAnchor(AnchorState.Dropped);
+    SendSetAnchor(AnchorState.Anchored);
   }
 
   /// <summary>
@@ -2403,7 +2403,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       return;
     }
 
-    SendSetAnchor(AnchorState.Dropped);
+    SendSetAnchor(AnchorState.Anchored);
   }
 
 
@@ -2983,14 +2983,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // Flying does not animate anchor.
     if (IsFlying())
     {
-      SendSetAnchor(!isAnchored ? AnchorState.Dropped : AnchorState.ReeledIn);
+      SendSetAnchor(!isAnchored ? AnchorState.Anchored : AnchorState.Recovered);
 
       return;
     }
 
     var newState = isAnchored
       ? AnchorState.Reeling
-      : AnchorState.Dropping;
+      : AnchorState.Lowering;
 
     SendSetAnchor(newState);
   }
@@ -3105,7 +3105,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (isNotAnchoredWithNobodyOnboard)
     {
       if (VehicleDebugConfig.HasAutoAnchorDelay.Value) return;
-      SendSetAnchor(AnchorState.Dropped);
+      SendSetAnchor(AnchorState.Anchored);
       return;
     }
 
@@ -3274,18 +3274,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     if (isAnchored)
     {
-      var anchorMessage = SteeringWheelComponent.GetTutorialAnchorMessage(
-        isAnchored);
-      if (TutorialConfig.HasVehicleAnchoredWarning.Value &&
-          IsPlayerOnboardAndControllingVehicle(Player.m_localPlayer))
-      {
-        Player.m_localPlayer.Message(
-          MessageHud.MessageType.Center,
-          anchorMessage
-        );
-        Logger.LogDebug($"You are anchored. {anchorMessage}");
-      }
-
       return;
     }
 

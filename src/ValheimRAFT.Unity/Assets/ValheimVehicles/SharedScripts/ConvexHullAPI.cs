@@ -841,19 +841,6 @@ namespace ValheimVehicles.SharedScripts
               .transform
               .position);
 
-          // TODO this does not work well for scalars above Vector.one or lower
-
-          // Apply the offset in world space, then convert it back to local position
-          // var positionWithoutScale =
-          //   PreviewParent.transform.TransformPoint(worldPositionOffset);
-          // previewInstance.transform.localScale = previewScale;
-          //
-          // var positionWithScale =
-          //   PreviewParent.transform.InverseTransformPoint(worldPositionOffset);
-          //
-          // previewInstance.transform.localPosition +=
-          //   Vector3.Scale(positionWithoutScale, previewScale);
-
           previewInstance.transform.position =
             parentOffset - PreviewParent.transform.position +
             transformPreviewOffset;
@@ -946,6 +933,7 @@ namespace ValheimVehicles.SharedScripts
       meshCollider.sharedMesh = mesh;
       meshCollider.convex = true;
       meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
+      meshCollider.includeLayers = LayerHelpers.PhysicalLayers;
 
       go.transform.position = parentObjTransform.transform.position;
       go.transform.SetParent(parentObjTransform);

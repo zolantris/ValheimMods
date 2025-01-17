@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
+using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts;
 using Logger = Jotunn.Logger;
 
@@ -12,9 +13,39 @@ namespace ValheimVehicles.Vehicles.Controllers;
 public class VehicleAnchorMechanismController : AnchorMechanismController
 {
   public const float maxAnchorDistance = 40f;
+  private static bool hasLocalizedAnchorState = false;
+  private static string recoveredAnchorText;
+  private static string reelingText;
+  private static string anchoredText;
+  private static string loweringText;
+
+  public static void setLocalizedStates()
+  {
+    if (hasLocalizedAnchorState) return;
+    
+    reelingText =
+      Localization.instance.Localize("$valheim_vehicles_anchor_state_reeling");
+    
+    recoveredAnchorText =
+      Localization.instance.Localize("$valheim_vehicles_anchor_state_recovered");
+
+    anchoredText =
+      Localization.instance.Localize("$valheim_vehicles_anchor_state_anchored");    
+    
+    loweringText =
+      Localization.instance.Localize("$valheim_vehicles_anchor_state_lowering");
+    hasLocalizedAnchorState = true;
+  }
+
+  public static void SyncHudHideAnchorMessageTimer()
+  {
+      HideAnchorTimer = HudConfig.HideAnchorMessageTimer.Value; 
+      HasAnchorTextHud = HudConfig.HasVehicleAnchorStateTextAboveAnchors.Value;
+  }
 
   public void Awake()
   {
+    setLocalizedStates();
     CanUseHotkeys = false;
   }
 
@@ -24,7 +55,7 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
   {
     base.FixedUpdate();
     
-    if (currentState == AnchorState.Dropping)
+    if (currentState == AnchorState.Lowering)
     {
       UpdateDistanceToGround();
     }
@@ -38,13 +69,27 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
       maxAnchorDistance);
   }
 
+
+  public override string GetCurrentStateText()
+  {
+    return currentState switch
+    {
+      AnchorState.Idle => "Idle",
+      AnchorState.Lowering => loweringText,
+      AnchorState.Anchored => anchoredText,
+      AnchorState.Reeling => reelingText,
+      AnchorState.Recovered => recoveredAnchorText,
+      _ => throw new ArgumentOutOfRangeException()
+    };
+  }
+
   public override void OnAnchorStateChange(AnchorState newState)
   {
     
     // No callbacks for anchor when flying. You can only Reel-in, or reel upwards.
     if (MovementController != null && MovementController.IsFlying())
     {
-      if (currentState != AnchorState.ReeledIn)
+      if (currentState != AnchorState.Recovered)
       {
         UpdateAnchorState(AnchorState.Reeling);
       }
@@ -58,13 +103,13 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
     {
       case AnchorState.Idle:
         break;
-      case AnchorState.Dropping:
+      case AnchorState.Lowering:
         break;
-      case AnchorState.Dropped:
+      case AnchorState.Anchored:
         break;
       case AnchorState.Reeling:
         break;
-      case AnchorState.ReeledIn:
+      case AnchorState.Recovered:
         break;
       default:
         throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
