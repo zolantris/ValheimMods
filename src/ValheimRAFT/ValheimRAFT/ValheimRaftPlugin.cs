@@ -54,7 +54,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "2.5.1";
+  public const string Version = "2.5.2";
   public const string ModName = "ValheimRAFT";
   public const string ModNameBeta = "ValheimRAFTBETA";
   public const string ModGuid = $"{Author}.{ModName}";
@@ -145,7 +145,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public string[] possibleModFolderNames =
   [
     $"{Author}-{ModName}", $"zolantris-{ModName}", $"Zolantris-{ModName}",
-    ModName, $"{Author}-{ModNameBeta}", $"zolantris-{ModNameBeta}", $"Zolantris-{ModNameBeta}",
+    ModName, $"{Author}-{ModNameBeta}", $"zolantris-{ModNameBeta}",
+    $"Zolantris-{ModNameBeta}",
     ModNameBeta
   ];
 
@@ -159,7 +160,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       new ConfigurationManagerAttributes()
       {
         IsAdminOnly = isAdmin,
-        IsAdvanced = isAdvanced,
+        IsAdvanced = isAdvanced
       }
     );
   }
@@ -553,9 +554,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     AddGuiLayerComponents();
 
     if (ModEnvironment.IsDebug)
-    {
       new BepInExConfigAutoDoc().Generate(this, Config, "ValheimRAFT");
-    }
   }
 
   /**
@@ -651,15 +650,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   {
     _debugGui = GetComponent<VehicleDebugGui>();
 
-    if ((bool)_debugGui && !hasDebug)
-    {
-      Destroy(_debugGui);
-    }
+    if ((bool)_debugGui && !hasDebug) Destroy(_debugGui);
 
     if (!(bool)_debugGui && hasDebug)
-    {
       _debugGui = gameObject.AddComponent<VehicleDebugGui>();
-    }
   }
 
   private void AddCustomPieces()

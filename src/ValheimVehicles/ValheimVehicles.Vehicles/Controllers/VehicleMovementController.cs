@@ -2202,6 +2202,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (_currentShipFloatation == null) return;
 
+    // Stop steering when above the water. Applying force is bad...
+    if (!IsFlying() &&
+        _currentShipFloatation.Value.IsAboveBuoyantLevel)
+      return;
+
     var forward = ShipDirection.forward;
     var direction = Vector3.Dot(m_body.velocity, forward);
     var rudderForce = GetRudderForcePerSpeed();
@@ -2773,7 +2778,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (lastSyncTargetHeight > 2f)
     {
-      m_nview.InvokeRPC(nameof(RPC_TargetHeight), TargetHeight);
+      m_nview.InvokeRPC(0, nameof(RPC_TargetHeight), TargetHeight);
       lastSyncTargetHeight = 0f;
     }
     else

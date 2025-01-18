@@ -547,27 +547,27 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 
 ## Vehicle Physics
 
-### flightDamping_2.5.0 
+### flightDamping_2.5.1 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_2.5.0 
+### flightSidewaysDamping_2.5.1 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_2.5.0 
+### flightAngularDamping_2.5.1 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
-### forceDistance_2.5.0 
+### forceDistance_2.5.1 
 - Description: EXPERIMENTAL_FORCE_DISTANCE
 - Default Value: 1
 
-### force_2.5.0 
+### force_2.5.1 
 - Description: EXPERIMENTAL_FORCE
 - Default Value: 1
 
-### backwardForce_2.5.0 
+### backwardForce_2.5.1 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -591,15 +591,15 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: 
 - Default Value: 1
 
-### waterDamping_2.5.0 
+### waterDamping_2.5.1 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_2.5.0 
+### waterSidewaysDamping_2.5.1 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_2.5.0 
+### waterAngularDamping_2.5.1 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -615,15 +615,15 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: 
 - Default Value: 0.8
 
-### submersibleDamping_2.5.0 
+### submersibleDamping_2.5.1 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_2.5.0 
+### submersibleSidewaysDamping_2.5.1 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_2.5.0 
+### submersibleAngularDamping_2.5.1 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -653,7 +653,7 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
 - Default Value: 0
 
-### EnableExactVehicleBounds_2.5.0 
+### EnableExactVehicleBounds_2.5.1 
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version
 - Default Value: True
 
@@ -735,11 +735,15 @@ DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config tha
 - Description: Will show your bed on you vehicle. This requires DynamicLocations to be enabled. This config may be migrated to dynamic locations.
 - Default Value: True
 
-## Tutorial
+## Hud
 
-### HasVehicleAnchoredWarning 
-- Description: Shows the anchored status if the player attempts to move the vehicle when anchored. A clearer way to tell players to remove the anchor so they can move.
+### HaseAnchorPrefabStateTextAboveAnchors 
+- Description: Shows the anchored status above vehicle anchors prefab. This text will update based on state change
 - Default Value: True
+
+### HideAnchorStateMessageTimer 
+- Description: Hides the BepInEx.Configuration.ConfigDescription after X seconds a specific amount of time has passed. Setting this to 0 will mean it never hides
+- Default Value: 0
 
 ## Quick Start (DEBUG-ONLY)
 
