@@ -278,6 +278,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public VehicleMovementController? MovementController =>
     VehicleInstance?.MovementController;
 
+  public VehicleOnboardController? OnboardController =>
+    VehicleInstance?.OnboardController;
+
 /* end sail calcs  */
   private Vector2i m_sector;
   private Vector2i m_serverSector;

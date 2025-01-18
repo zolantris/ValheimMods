@@ -128,6 +128,7 @@ public static class PhysicsConfig
   public static ConfigEntry<float> MaxAngularVelocity { get; set; }
 
   public static ConfigEntry<float> MaxLinearVelocity { get; set; }
+  public static ConfigEntry<float> MaxLinearYVelocity { get; set; }
 
 
   public static ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
@@ -182,6 +183,17 @@ public static class PhysicsConfig
     floatationVelocityMode, sailingVelocityMode, turningVelocityMode,
     flyingVelocityMode, rudderVelocityMode
   ];
+
+  private static readonly AcceptableValueRange<float>
+    maxLinearVelocityAcceptableValues =
+      ModEnvironment.IsDebug
+        ? new AcceptableValueRange<float>(1, 2000f)
+        : new AcceptableValueRange<float>(1, 100f);
+
+  private static readonly AcceptableValueRange<float>
+    maxLinearYVelocityAcceptableValues = ModEnvironment.IsDebug
+      ? new AcceptableValueRange<float>(1, 2000f)
+      : new AcceptableValueRange<float>(1, 20f);
 
   public static void BindConfig(ConfigFile config)
   {
@@ -284,11 +296,18 @@ public static class PhysicsConfig
 
     MaxLinearVelocity = Config.Bind(SectionKey, "MaxVehicleLinearVelocity", 10f,
       ConfigHelpers.CreateConfigDescription(
-        "Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away",
-        true, true, new AcceptableValueRange<float>(1f, 50f)));
+        "Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 20. Higher values will increase potential of vehicle flying off to space",
+        true, true, maxLinearVelocityAcceptableValues));
+
+
+    MaxLinearYVelocity = Config.Bind(SectionKey, "MaxVehicleLinearYVelocity",
+      3f,
+      ConfigHelpers.CreateConfigDescription(
+        "Sets the absolute max speed a vehicle can ever move in vertical direction. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not use gravity well",
+        true, true, maxLinearYVelocityAcceptableValues));
 
     MaxAngularVelocity = Config.Bind(SectionKey, "MaxVehicleAngularVelocity",
-      1f,
+      5f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the absolute max speed a vehicle can ROTATE in. Having a high value means the vehicle can spin out of control.",
         true, true, new AcceptableValueRange<float>(0.1f, 10f)));

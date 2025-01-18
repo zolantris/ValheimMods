@@ -79,8 +79,7 @@ public class ValheimBaseGameShip : MonoBehaviour
   /// <summary>
   /// todo This field must be migrated to VehicleOnboardController. Does not make sense to decouple the logic from OnboardController and have to sync two interfaces, especially if the character api is better for most things and has been extended.
   /// </summary>
-  public List<Player> m_players = [];
-
+  // public List<Player> m_players = [];
   internal WaterVolume m_previousCenter;
 
   internal WaterVolume m_previousLeft;
@@ -148,25 +147,6 @@ public class ValheimBaseGameShip : MonoBehaviour
     // m_sailCloth = m_sailObject.GetComponent<Cloth>();
   }
 
-  /**
-   * TODO this could be set to false for the ship as an override to allow the ship to never un-render
-   */
-  public bool CanBeRemoved()
-  {
-    return m_players.Count == 0;
-  }
-
-  // internal void Start()
-  // {
-  //   InvokeRepeating(nameof(UpdateOwner), 2f, 2f);
-  // }
-
-  internal void PrintStats()
-  {
-    if (m_players.Count != 0)
-      Logger.LogDebug("Vel:" + m_body.velocity.magnitude.ToString("0.0"));
-  }
-
   internal static float GetUpwardsForce(float targetY, float currentY,
     float maxForce)
   {
@@ -226,37 +206,37 @@ public class ValheimBaseGameShip : MonoBehaviour
   /// </summary>
   /// <param name="depth"></param>
   /// <param name="dt"></param>
-  public void UpdateWaterImpactForce(float depth, float dt)
-  {
-    if (m_lastDepth == -9999f)
-    {
-      m_lastDepth = depth;
-      return;
-    }
-
-    var num = depth - m_lastDepth;
-    m_lastDepth = depth;
-    var num2 = num / dt;
-    if (num2 > 0f || !(Mathf.Abs(num2) > m_minWaterImpactForce) ||
-        !(Time.time - m_lastWaterImpactTime > m_minWaterImpactInterval))
-      return;
-
-    m_lastWaterImpactTime = Time.time;
-    m_waterImpactEffect.Create(transform.position,
-      transform.rotation);
-    if (m_players.Count > 0)
-    {
-      var component = GetComponent<IDestructible>();
-      if (component != null)
-      {
-        var hitData = new HitData();
-        hitData.m_damage.m_blunt = m_waterImpactDamage;
-        hitData.m_point = transform.position;
-        hitData.m_dir = Vector3.up;
-        component.Damage(hitData);
-      }
-    }
-  }
+  // public void UpdateWaterImpactForce(float depth, float dt)
+  // {
+  //   if (m_lastDepth == -9999f)
+  //   {
+  //     m_lastDepth = depth;
+  //     return;
+  //   }
+  //
+  //   var num = depth - m_lastDepth;
+  //   m_lastDepth = depth;
+  //   var num2 = num / dt;
+  //   if (num2 > 0f || !(Mathf.Abs(num2) > m_minWaterImpactForce) ||
+  //       !(Time.time - m_lastWaterImpactTime > m_minWaterImpactInterval))
+  //     return;
+  //
+  //   m_lastWaterImpactTime = Time.time;
+  //   m_waterImpactEffect.Create(transform.position,
+  //     transform.rotation);
+  //   if (m_players.Count > 0)
+  //   {
+  //     var component = GetComponent<IDestructible>();
+  //     if (component != null)
+  //     {
+  //       var hitData = new HitData();
+  //       hitData.m_damage.m_blunt = m_waterImpactDamage;
+  //       hitData.m_point = transform.position;
+  //       hitData.m_dir = Vector3.up;
+  //       component.Damage(hitData);
+  //     }
+  //   }
+  // }
 
   /// <summary>
   /// This is the base game ship EdgeForce. Needs more information about what it does
@@ -306,50 +286,50 @@ public class ValheimBaseGameShip : MonoBehaviour
     }
   }
 
-  internal void UpdateOwner()
-  {
-    if (m_nview.IsValid() && m_nview.IsOwner() && (bool)Player.m_localPlayer &&
-        m_players.Count > 0 && !IsPlayerInBoat(Player.m_localPlayer))
-    {
-      var owner = m_players[0].GetOwner();
-      m_nview.GetZDO().SetOwner(owner);
-      Logger.LogDebug("Changing ship owner to " + owner +
-                      $", name: {m_players[0].GetPlayerName()}");
-    }
-  }
+  // internal void UpdateOwner()
+  // {
+  //   if (m_nview.IsValid() && m_nview.IsOwner() && (bool)Player.m_localPlayer &&
+  //       m_players.Count > 0 && !IsPlayerInBoat(Player.m_localPlayer))
+  //   {
+  //     var owner = m_players[0].GetOwner();
+  //     m_nview.GetZDO().SetOwner(owner);
+  //     Logger.LogDebug("Changing ship owner to " + owner +
+  //                     $", name: {m_players[0].GetPlayerName()}");
+  //   }
+  // }
 
-  public bool IsPlayerInBoat(ZDOID zdoid)
-  {
-    foreach (var player in m_players)
-      if (player.GetZDOID() == zdoid)
-        return true;
+  // public bool IsPlayerInBoat(ZDOID zdoid)
+  // {
+  //   foreach (var player in m_players)
+  //     if (player.GetZDOID() == zdoid)
+  //       return true;
+  //
+  //   return false;
+  // }
 
-    return false;
-  }
+  // public bool IsPlayerInBoat(Player player)
+  // {
+  //   var currentPlayerOnBoat = m_players.Contains(player);
+  //   if (currentPlayerOnBoat) return true;
+  //
+  //   if (player.transform.root != null &&
+  //       player.transform.root.name.Contains(PrefabNames
+  //         .VehiclePiecesContainer))
+  //     return true;
+  //
+  //   return WaterZoneUtils.IsOnboard(player);
+  // }
 
-  public bool IsPlayerInBoat(Player player)
-  {
-    var currentPlayerOnBoat = m_players.Contains(player);
-    if (currentPlayerOnBoat) return true;
+  // public bool IsPlayerInBoat(long playerId)
+  // {
+  //   var playerFromId = Player.GetPlayer(playerId);
+  //   return playerFromId != null && IsPlayerInBoat(playerFromId);
+  // }
 
-    if (player.transform.root != null &&
-        player.transform.root.name.Contains(PrefabNames
-          .VehiclePiecesContainer))
-      return true;
-
-    return WaterZoneUtils.IsOnboard(player);
-  }
-
-  public bool IsPlayerInBoat(long playerId)
-  {
-    var playerFromId = Player.GetPlayer(playerId);
-    return playerFromId != null && IsPlayerInBoat(playerFromId);
-  }
-
-  public bool HasPlayerOnboard()
-  {
-    return m_players.Count > 0;
-  }
+  // public bool HasPlayerOnboard()
+  // {
+  //   return m_players.Count > 0;
+  // }
 
   public void OnDestroyed()
   {
@@ -357,33 +337,6 @@ public class ValheimBaseGameShip : MonoBehaviour
       Gogan.LogEvent("Game", "ShipDestroyed", gameObject.name, 0L);
 
     s_currentShips.Remove(this);
-  }
-
-  private bool m_cachedWindControlStatus = false;
-  private float lastUpdateWindControlStatus = 0f;
-
-  /// <summary>
-  /// If moder power is enabled
-  /// </summary>
-  /// <returns></returns>
-  public bool IsWindControllActive()
-  {
-    if (lastUpdateWindControlStatus < 2f)
-    {
-      lastUpdateWindControlStatus += Time.fixedDeltaTime;
-      return m_cachedWindControlStatus;
-    }
-
-    foreach (var player in m_players)
-      if (player.GetSEMan()
-          .HaveStatusAttribute(StatusEffect.StatusAttribute.SailingPower))
-      {
-        m_cachedWindControlStatus = true;
-        return m_cachedWindControlStatus;
-      }
-
-    m_cachedWindControlStatus = false;
-    return m_cachedWindControlStatus;
   }
 
   public static ValheimBaseGameShip GetLocalShip()

@@ -22,25 +22,29 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
   public static void setLocalizedStates()
   {
     if (hasLocalizedAnchorState) return;
-    
+
     reelingText =
       Localization.instance.Localize("$valheim_vehicles_anchor_state_reeling");
-    
+
     recoveredAnchorText =
-      Localization.instance.Localize("$valheim_vehicles_anchor_state_recovered");
+      Localization.instance.Localize(
+        "$valheim_vehicles_anchor_state_recovered");
 
     anchoredText =
-      Localization.instance.Localize("$valheim_vehicles_anchor_state_anchored");    
-    
+      Localization.instance.Localize("$valheim_vehicles_anchor_state_anchored");
+
     loweringText =
       Localization.instance.Localize("$valheim_vehicles_anchor_state_lowering");
     hasLocalizedAnchorState = true;
   }
 
-  public static void SyncHudHideAnchorMessageTimer()
+  public static void SyncHudAnchorValues()
   {
-      HideAnchorTimer = HudConfig.HideAnchorMessageTimer.Value; 
-      HasAnchorTextHud = HudConfig.HasVehicleAnchorStateTextAboveAnchors.Value;
+    HideAnchorTimer = HudConfig.HudAnchorMessageTimer.Value;
+    HasAnchorTextHud = HudConfig.HudAnchorTextAboveAnchors.Value;
+    foreach (var anchorMechanismController in Instances)
+      anchorMechanismController.anchorTextSize =
+        HudConfig.HudAnchorTextSize.Value;
   }
 
   public new void Awake()
@@ -55,17 +59,15 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
   public override void FixedUpdate()
   {
     base.FixedUpdate();
-    
-    if (currentState == AnchorState.Lowering)
-    {
-      UpdateDistanceToGround();
-    }
+
+    if (currentState == AnchorState.Lowering) UpdateDistanceToGround();
   }
 
   public void UpdateDistanceToGround()
   {
     var position = anchorRopeAttachStartPoint.position;
-    var distanceFromAnchorToGround =  position.y - ZoneSystem.instance.GetGroundHeight(position);
+    var distanceFromAnchorToGround =
+      position.y - ZoneSystem.instance.GetGroundHeight(position);
     anchorDropDistance = Mathf.Clamp(distanceFromAnchorToGround, 1f,
       maxAnchorDistance);
   }
@@ -86,20 +88,15 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
 
   public override void OnAnchorStateChange(AnchorState newState)
   {
-    
     // No callbacks for anchor when flying. You can only Reel-in, or reel upwards.
     if (MovementController != null && MovementController.IsFlying())
     {
       if (currentState != AnchorState.Recovered)
-      {
         UpdateAnchorState(AnchorState.Reeling);
-      }
       else
-      {
         return;
-      }
     }
-    
+
     switch (newState)
     {
       case AnchorState.Idle:
@@ -117,8 +114,6 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
     }
 
     if (MovementController != null && MovementController.m_nview.IsOwner())
-    {
       MovementController.SendSetAnchor(newState);
-    }
   }
 }

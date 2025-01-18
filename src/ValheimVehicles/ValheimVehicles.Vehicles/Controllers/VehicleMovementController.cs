@@ -384,6 +384,35 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
                .forward));
   }
 
+  public bool IsPlayerInBoat(Player player)
+  {
+    var currentPlayerOnBoat =
+      OnboardController.m_localPlayers.Contains(player);
+    if (currentPlayerOnBoat) return true;
+
+    if (player.transform.root != null &&
+        player.transform.root.name.Contains(PrefabNames
+          .VehiclePiecesContainer))
+      return true;
+
+    return WaterZoneUtils.IsOnboard(player);
+  }
+
+  public bool IsPlayerInBoat(long playerId)
+  {
+    var playerFromId = Player.GetPlayer(playerId);
+    return playerFromId != null && IsPlayerInBoat(playerFromId);
+  }
+
+  public bool IsPlayerInBoat(ZDOID zdoid)
+  {
+    foreach (var player in OnboardController.m_localPlayers)
+      if (player.GetZDOID() == zdoid)
+        return true;
+
+    return false;
+  }
+
   public float GetWindAngle()
   {
     // moder power support
@@ -608,11 +637,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// </summary>
   private void RemovePlayersBeforeDestroyingBoat()
   {
-    foreach (var mPlayer in m_players)
+    foreach (var mPlayer in OnboardController.m_localPlayers.ToList())
     {
-      if (!mPlayer) continue;
-      mPlayer?.transform?.SetParent(null);
+      if (mPlayer == null) continue;
+      mPlayer.transform.SetParent(null);
     }
+
+    OnboardController.m_localPlayers.Clear();
   }
 
   /// <summary>
@@ -664,23 +695,16 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return _rudderForce;
   }
 
-
   /**
    * adds guard for when ship controls do not exist on the ship.
    * - previous ship would assume m_shipControlls was connected because it was part of the base prefab
    */
   public bool HaveControllingPlayer()
   {
-    if (m_players.Count != 0) return HaveValidUser();
+    if (OnboardController.m_localPlayers.Count != 0)
+      return HaveValidUser();
 
     return false;
-  }
-
-  public bool IsReady()
-  {
-    var netView = GetComponent<ZNetView>();
-    if (netView == null) return false;
-    return netView?.isActiveAndEnabled ?? false;
   }
 
   private float maxYLinearVelocity = 10f;
@@ -690,7 +714,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// </summary>
   public void UpdateVehicleSpeedThrottle()
   {
-    maxYLinearVelocity = PhysicsConfig.MaxLinearVelocity.Value * 0.25f;
+    maxYLinearVelocity = PhysicsConfig.MaxLinearYVelocity.Value;
     m_body.maxLinearVelocity = PhysicsConfig.MaxLinearVelocity.Value;
     m_body.maxAngularVelocity = PhysicsConfig.MaxAngularVelocity.Value;
   }
@@ -1396,8 +1420,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     m_body.WakeUp();
 
-    if (m_waterImpactDamage > 0f)
-      UpdateWaterImpactForce(currentDepth, Time.fixedDeltaTime);
+    // TODO swap with damage from environment such as ashlands
+    // if (m_waterImpactDamage > 0f)
+    //   UpdateWaterImpactForce(currentDepth, Time.fixedDeltaTime);
 
     // Calculate the forces for left, right, forward, and backward directions
     var leftForce = new Vector3(shipLeft.x, waterLevelLeft, shipLeft.z);
@@ -1533,7 +1558,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// <returns></returns>
   private bool UpdateAnchorVelocity(Vector3 velocity)
   {
-    if (m_players.Count != 0 &&
+    if (OnboardController.m_localPlayers.Count != 0 &&
         !isAnchored) return false;
 
     var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
@@ -2285,15 +2310,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     PiecesController.DebouncedRebuildBounds();
   }
 
-
-  public void AddPlayerIfMissing(Player player)
-  {
-    if (player == null) return;
-    if (m_players.Contains(player)) return;
-
-    m_players.Add(player);
-  }
-
   public void OnFlightChangePolling()
   {
     CancelInvoke(nameof(SyncTargetHeight));
@@ -2345,7 +2361,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// </summary>
   public void DelayedAnchor()
   {
-    if (m_players.Count > 0) return;
+    if (OnboardController.m_localPlayers.Count > 0) return;
     HasPendingAnchor = false;
     SendSetAnchor(AnchorState.Anchored);
   }
@@ -2511,7 +2527,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     VehicleMovementController? vehicleMovementController)
   {
     if (vehicleMovementController == null) return;
-    foreach (var mPlayer in vehicleMovementController.m_players)
+    foreach (var mPlayer in vehicleMovementController.OnboardController
+               .m_localPlayers)
       mPlayer.m_doodadController = null;
   }
 
@@ -2576,7 +2593,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       StartCoroutine(DebouncedForceTakeoverControls(targetPlayerId));
 
     var previousUserId = GetUser();
-    var isInBoat = IsPlayerInBoat(targetPlayerId);
+    var isInBoat = WaterZoneUtils.IsOnboard(Player.GetPlayer(targetPlayerId));
 
     if (!m_nview.IsOwner())
     {
@@ -3088,7 +3105,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (m_nview.isActiveAndEnabled != true) return;
 
-    var isNotAnchoredWithNobodyOnboard = m_players.Count == 0 && !isAnchored;
+    var isNotAnchoredWithNobodyOnboard =
+      OnboardController.m_localPlayers.Count == 0 && !isAnchored;
 
     if (isNotAnchoredWithNobodyOnboard)
     {
@@ -3155,7 +3173,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void UpdatePlayerOnShip(Player player)
   {
-    AddPlayerIfMissing(player);
+    OnboardController.TryAddPlayerIfMissing(player);
     FixPlayerParent(player);
   }
 
@@ -3245,14 +3263,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public bool IsPlayerOnboardLocalShip(Player player)
   {
-    return m_players.Contains(player);
-  }
-
-  public bool IsPlayerOnboardAndControllingVehicle(Player? player)
-  {
-    if (player == null) return false;
-    return IsPlayerOnboardLocalShip(player) &&
-           Player.m_localPlayer.GetDoodadController() != null;
+    return OnboardController.m_localPlayers.Contains(player);
   }
 
   public void SendSpeedChange(DirectionChange directionChange)
@@ -3354,8 +3365,35 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public bool HaveValidUser()
   {
     var user = GetUser();
-    if (!ShipInstance?.Instance) return false;
+    if (ShipInstance?.Instance == null) return false;
     return user != 0L && IsPlayerInBoat(user);
+  }
+
+  private bool m_cachedWindControlStatus = false;
+  private float lastUpdateWindControlStatus = 0f;
+
+  /// <summary>
+  /// If moder power is enabled
+  /// </summary>
+  /// <returns></returns>
+  public bool IsWindControllActive()
+  {
+    if (lastUpdateWindControlStatus < 2f)
+    {
+      lastUpdateWindControlStatus += Time.fixedDeltaTime;
+      return m_cachedWindControlStatus;
+    }
+
+    foreach (var player in OnboardController.m_localPlayers)
+      if (player.GetSEMan()
+          .HaveStatusAttribute(StatusEffect.StatusAttribute.SailingPower))
+      {
+        m_cachedWindControlStatus = true;
+        return m_cachedWindControlStatus;
+      }
+
+    m_cachedWindControlStatus = false;
+    return m_cachedWindControlStatus;
   }
 
   /// <summary>
