@@ -163,11 +163,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
   }
 
-  public Bounds? GetConvexHullRelativeBounds()
+  public Bounds GetConvexHullRelativeBounds()
   {
     if (_cachedConvexHullBounds == null) UpdateConvexHullBounds();
 
-    return _cachedConvexHullBounds;
+    return _cachedConvexHullBounds ??
+           new Bounds(transform.position, Vector3.one);
   }
 
   public static bool DEBUGAllowActivatePendingPieces
@@ -685,7 +686,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
   }
 
-  public virtual void SyncRigidbodyStats(float drag, float angularDrag,
+  public void SyncRigidbodyStats(float drag, float angularDrag,
     bool flight)
   {
     if (!isActiveAndEnabled) return;
@@ -715,7 +716,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     m_body.drag = drag;
     MovementController.m_body.drag = drag;
 
-    // temp disable mass sync.
     // m_body.mass = mass;
     // MovementController.m_body.mass = mass;
   }
@@ -2542,17 +2542,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
    */
   public void RebuildBounds()
   {
-    if (!isActiveAndEnabled) return;
+    if (!isActiveAndEnabled || MovementController == null) return;
+    Physics.SyncTransforms();
+
     RebuildConvexHull();
-
-    if (!(bool)m_floatcollider || !(bool)m_onboardcollider ||
-        !(bool)m_blockingcollider)
-      return;
-
     RotateVehicleForwardPosition();
+    MovementController.CalculateFloatPoints();
 
     // messing with collider bounds requires syncing outside a physics update
-    Physics.SyncTransforms();
     _pendingHullBounds = new Bounds();
     _pendingVehicleBounds = new Bounds();
 

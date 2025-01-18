@@ -39,10 +39,7 @@ public static class WaterZoneUtils
 
   public static void UpdateAllowList(List<string> allowList)
   {
-    if (allowList.Count == 0)
-    {
-      _underwaterAllowList = _waterZoneRegexDefault;
-    }
+    if (allowList.Count == 0) _underwaterAllowList = _waterZoneRegexDefault;
 
     var pattern =
       string.Join("|",
@@ -53,21 +50,14 @@ public static class WaterZoneUtils
   public static bool IsAllowedUnderwater(Character character)
   {
     if (character == null || character.gameObject == null) return false;
-    if (character.IsPlayer())
-    {
-      return true;
-    }
+    if (character.IsPlayer()) return true;
 
     if (WaterConfig.AllowMonsterEntitesUnderwater.Value &&
         character.IsMonsterFaction(Time.time))
-    {
       return true;
-    }
 
     if (WaterConfig.AllowTamedEntiesUnderwater.Value && character.IsTamed())
-    {
       return true;
-    }
 
     return _underwaterAllowList.IsMatch(character.gameObject.name);
   }
@@ -99,19 +89,16 @@ public static class WaterZoneUtils
   {
     waterZoneData = null;
     var isAllowedUnderwater = IsAllowedUnderwater(character);
-    if (!isAllowedUnderwater)
-    {
-      return IsInVehicleShipBounds(character);
-    }
+    if (!isAllowedUnderwater) return IsInVehicleShipBounds(character);
 
     waterZoneData =
       VehicleOnboardController.GetOnboardCharacterData(character);
     var isCharacterOnboard = waterZoneData != null;
 
-    // if (waterZoneData == null)
-    // {
-    //   return IsInVehicleShipBounds(character);
-    // }
+    if (isCharacterOnboard &&
+        waterZoneData?.OnboardController != null &&
+        waterZoneData.OnboardController.m_localPlayers.Contains(character))
+      return true;
 
     var isCharacterStandingOnVehicle =
       HasShipUnderneath(character);
@@ -124,7 +111,7 @@ public static class WaterZoneUtils
   /// </summary>
   /// <param name="character"></param>
   /// <returns></returns>
-  [GameCacheValue(name: "IsOnboard", intervalInSeconds: 1f)]
+  [GameCacheValue("IsOnboard", 1f)]
   public static bool IsOnboard(Character character)
   {
     return IsOnboard(character, out _);
@@ -135,7 +122,7 @@ public static class WaterZoneUtils
   /// </summary>
   /// <param name="character"></param>
   /// <returns></returns>
-  [GameCacheValue(intervalInSeconds: 2f)]
+  [GameCacheValue(2f)]
   public static bool IsWithinHull(Character character)
   {
     var hasPieceBelowHull =
@@ -147,21 +134,21 @@ public static class WaterZoneUtils
     return hasPieceBelowHull && hasPieceToLeft && hasPieceToRight;
   }
 
-  [GameCacheValue(intervalInSeconds: 0.5f)]
+  [GameCacheValue(0.5f)]
   public static bool HasShipToRight(Character character)
   {
     return HasShipInDirection(character.transform.position,
       character.transform.TransformDirection(Vector3.right));
   }
 
-  [GameCacheValue(intervalInSeconds: 0.5f)]
+  [GameCacheValue(0.5f)]
   public static bool HasShipToLeft(Character character)
   {
     return HasShipInDirection(character.transform.position,
       character.transform.TransformDirection(Vector3.left));
   }
 
-  [GameCacheValue(intervalInSeconds: 0.5f)]
+  [GameCacheValue(0.5f)]
   public static bool HasShipUnderneath(Character character)
   {
     return HasShipInDirection(character.transform.position,
@@ -192,7 +179,6 @@ public static class WaterZoneUtils
     var isValid = false;
     // Perform the raycast
     if (size > 0)
-    {
       for (var i = 0; i < size; i++)
       {
         var resultItem = results[i];
@@ -204,7 +190,6 @@ public static class WaterZoneUtils
           break;
         }
       }
-    }
 
     return isValid;
   }
@@ -270,9 +255,7 @@ public static class WaterZoneUtils
     }
 
     if (IsCharacterTheLocalPlayer(character))
-    {
       WaterVolume_WaterPatches.UpdateCameraState();
-    }
 
     return false;
   }
@@ -314,19 +297,13 @@ public static class WaterZoneUtils
     {
       case LiquidType.Water:
         if (isOnboard)
-        {
           character.m_waterLevel = 0f;
-        }
         else
-        {
           character.m_waterLevel = liquidLevel;
-        }
 
         if (character.m_tarLevel > character.m_waterLevel &&
             WaterZoneController.IsCharacterInWaterFreeZone(character))
-        {
           character.m_tarLevel = -10000f;
-        }
 
         character.m_liquidLevel =
           Mathf.Max(character.m_waterLevel, character.m_tarLevel);
@@ -374,9 +351,7 @@ public static class WaterZoneUtils
 
     // Check the difference between current depth and onboard collider.
     if (isValid && onboardController.OnboardCollider != null)
-    {
       return onboardController.OnboardCollider.bounds.min.y;
-    }
 
     return currentDepth;
   }
@@ -486,10 +461,7 @@ public static class WaterZoneUtils
 
 
       // TODO determine if need to update the water or if should leave alone in this block
-      if (Mathf.Approximately(liquidDepth, 0f))
-      {
-        return true;
-      }
+      if (Mathf.Approximately(liquidDepth, 0f)) return true;
 
       UpdateDepthValues(character, 0f, LiquidType.Water);
       return true;
@@ -504,9 +476,7 @@ public static class WaterZoneUtils
   {
     if (!CharacterWaterVolumeRefs.TryGetValue(character.GetZDOID(),
           out var waterVolume))
-    {
       waterVolume = null;
-    }
 
     var height = Floating.GetWaterLevel(character.transform.position,
       ref waterVolume);
@@ -523,15 +493,10 @@ public static class WaterZoneUtils
     VehicleOnboardController? controller, Character character)
   {
     if (WaterConfig.DEBUG_HasDepthOverrides.Value)
-    {
       return WaterConfig.DEBUG_LiquidDepthOverride.Value;
-    }
 
     var waterHeight = GetWaterHeightFromWaterVolume(character);
-    if (controller?.OnboardCollider == null)
-    {
-      return waterHeight;
-    }
+    if (controller?.OnboardCollider == null) return waterHeight;
 
     return GetLowestDepthFromVehicle(character, waterHeight,
       controller);

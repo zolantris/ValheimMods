@@ -203,6 +203,9 @@ public class MeshBoundsVisualizer : MonoBehaviour
       if (showDebugCubes)
       {
         var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        var collider = cube.GetComponent<BoxCollider>();
+        if (collider != null) Destroy(collider);
+        cube.layer = LayerHelpers.IgnoreRaycastLayer;
         cube.transform.position = centerPoints[i];
         cube.transform.SetParent(cubeAndLabelObject.transform);
         cube.transform.localScale = Vector3.one * cubeSize;
