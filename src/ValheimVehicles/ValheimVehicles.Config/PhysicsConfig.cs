@@ -125,6 +125,10 @@ public static class PhysicsConfig
     set;
   }
 
+  public static ConfigEntry<float> MaxAngularVelocity { get; set; }
+
+  public static ConfigEntry<float> MaxLinearVelocity { get; set; }
+
 
   public static ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
 
@@ -163,18 +167,14 @@ public static class PhysicsConfig
   {
     if (ModEnvironment.IsRelease) return;
     if (entry.Value != ForceMode.VelocityChange)
-    {
       entry.Value = ForceMode.VelocityChange;
-    }
   }
 
   private static void ForceSetAllVehiclePhysics()
   {
     if (ModEnvironment.IsRelease) return;
     foreach (var velocityConfig in VelocityConfigs)
-    {
       ForceSetVehiclePhysics(velocityConfig);
-    }
   }
 
   private static List<ConfigEntry<ForceMode>> VelocityConfigs =>
@@ -282,6 +282,17 @@ public static class PhysicsConfig
     hullFloatationRange = new AcceptableValueRange<float>(-50f, 50f);
 #endif
 
+    MaxLinearVelocity = Config.Bind(SectionKey, "MaxVehicleLinearVelocity", 10f,
+      ConfigHelpers.CreateConfigDescription(
+        "Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away",
+        true, true, new AcceptableValueRange<float>(1f, 50f)));
+
+    MaxAngularVelocity = Config.Bind(SectionKey, "MaxVehicleAngularVelocity",
+      1f,
+      ConfigHelpers.CreateConfigDescription(
+        "Sets the absolute max speed a vehicle can ROTATE in. Having a high value means the vehicle can spin out of control.",
+        true, true, new AcceptableValueRange<float>(0.1f, 10f)));
+
     HullFloatationColliderLocation = Config.Bind(FloatationPhysicsSectionKey,
       "HullFloatationColliderLocation",
       HullFloatation.Custom,
@@ -339,7 +350,7 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         $"Sets the hull preview offset, this will allow previewing the hull side by side with your vehicle. This can only be seen if the {convexHullDebuggerForceEnabled.Definition} is true.",
         true, true));
-    
+
     floatationVelocityMode = Config.Bind(VelocityModeSectionKey,
       "floatationVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
@@ -371,25 +382,41 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL removes all collision of camera for objects on boat. Should significantly lower jitter when camera smashes into objects on boat it will force camera through it instead of pushing rapidly forward with vehicle force too.",
         false, true));
+
+    var waterForceDeltaMultiplierRange = ModEnvironment.IsDebug
+      ? new AcceptableValueRange<float>(0.1f, 5000f)
+      : new AcceptableValueRange<float>(10f, 50f);
     waterDeltaForceMultiplier = Config.Bind(SectionKey,
       "waterDeltaForceMultiplier", 50f,
       ConfigHelpers.CreateConfigDescription("Water delta force multiplier",
-        true, true, new AcceptableValueRange<float>(0.1f, 5000f)));
+        true, true, waterForceDeltaMultiplierRange));
 
-    
-    floatationVelocityMode.SettingChanged += (sender, args) => ForceSetVehiclePhysics(floatationVelocityMode);
-    flyingVelocityMode.SettingChanged += (sender, args) => ForceSetVehiclePhysics(flyingVelocityMode);
-    turningVelocityMode.SettingChanged += (sender, args) => ForceSetVehiclePhysics(turningVelocityMode);
-    sailingVelocityMode.SettingChanged += (sender, args) => ForceSetVehiclePhysics(sailingVelocityMode);
-    rudderVelocityMode.SettingChanged += (sender, args) => ForceSetVehiclePhysics(rudderVelocityMode);
+    MaxAngularVelocity.SettingChanged += (sender, args) =>
+      VehicleMovementController.Instances.ForEach(x =>
+        x.UpdateVehicleSpeedThrottle());
+    MaxLinearVelocity.SettingChanged += (sender, args) =>
+      VehicleMovementController.Instances.ForEach(x =>
+        x.UpdateVehicleSpeedThrottle());
+
+    floatationVelocityMode.SettingChanged += (sender, args) =>
+      ForceSetVehiclePhysics(floatationVelocityMode);
+    flyingVelocityMode.SettingChanged += (sender, args) =>
+      ForceSetVehiclePhysics(flyingVelocityMode);
+    turningVelocityMode.SettingChanged += (sender, args) =>
+      ForceSetVehiclePhysics(turningVelocityMode);
+    sailingVelocityMode.SettingChanged += (sender, args) =>
+      ForceSetVehiclePhysics(sailingVelocityMode);
+    rudderVelocityMode.SettingChanged += (sender, args) =>
+      ForceSetVehiclePhysics(rudderVelocityMode);
 
     ForceSetAllVehiclePhysics();
 
     removeCameraCollisionWithObjectsOnBoat.SettingChanged += (sender, args) =>
     {
-      VehicleOnboardController.AddOrRemovePlayerBlockingCamera(Player.m_localPlayer);
+      VehicleOnboardController.AddOrRemovePlayerBlockingCamera(
+        Player.m_localPlayer);
     };
-      
+
     convexHullDebuggerForceEnabled.SettingChanged += (_, __) =>
       ConvexHullComponent.UpdatePropertiesForAllComponents();
     convexHullDebuggerColor.SettingChanged += (_, __) =>

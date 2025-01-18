@@ -637,22 +637,22 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
         _rudderForce =
           Mathf.Clamp(ValheimRaftPlugin.Instance.VehicleRudderSpeedBack.Value,
             0,
-            ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value);
+            PhysicsConfig.MaxLinearVelocity.Value);
         break;
       case Ship.Speed.Slow:
         _rudderForce = Mathf.Clamp(
           ValheimRaftPlugin.Instance.VehicleRudderSpeedSlow.Value, 0,
-          ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value);
+          PhysicsConfig.MaxLinearVelocity.Value);
         break;
       case Ship.Speed.Half:
         _rudderForce = Mathf.Clamp(
           ValheimRaftPlugin.Instance.VehicleRudderSpeedHalf.Value, 0,
-          ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value);
+          PhysicsConfig.MaxLinearVelocity.Value);
         break;
       case Ship.Speed.Full:
         _rudderForce = Mathf.Clamp(
           ValheimRaftPlugin.Instance.VehicleRudderSpeedFull.Value, 0,
-          ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value);
+          PhysicsConfig.MaxLinearVelocity.Value);
         break;
       default:
         Logger.LogError(
@@ -683,18 +683,34 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return netView?.isActiveAndEnabled ?? false;
   }
 
+  private float maxYLinearVelocity = 10f;
+
   /// <summary>
   ///   caps the vehicle speeds to these values
   /// </summary>
   public void UpdateVehicleSpeedThrottle()
   {
-    var isOwner = m_nview?.IsOwner() ?? false;
-    m_body.maxAngularVelocity =
-      isOwner ? ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value : 500L;
-    m_body.maxLinearVelocity =
-      isOwner ? ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value : 500L;
+    maxYLinearVelocity = PhysicsConfig.MaxLinearVelocity.Value * 0.25f;
+    m_body.maxLinearVelocity = PhysicsConfig.MaxLinearVelocity.Value;
+    m_body.maxAngularVelocity = PhysicsConfig.MaxAngularVelocity.Value;
   }
 
+  /// <summary>
+  /// Meant to be called for the owner's physics so the velocity never exceeds a specific value.
+  /// </summary>
+  public void ThrottleVehicleAcceleration()
+  {
+    var currentVelocity = m_body.velocity;
+
+    if (!(Mathf.Abs(currentVelocity.y) > maxYLinearVelocity)) return;
+    // Clamp Y velocity while keeping X and Z unaffected
+    currentVelocity.y = Mathf.Sign(currentVelocity.y) * maxYLinearVelocity;
+    m_body.velocity = currentVelocity;
+  }
+
+  /// <summary>
+  /// TODO move all colliders into pieces controller. And only keep onboard collider. Other colliders are not needed now with generated meshes 
+  /// </summary>
   public void InitColliders()
   {
     var vehicleCollidersParentObj =
@@ -710,7 +726,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       vehicleCollidersParentObj.transform.Find(PrefabNames
         .WaterVehicleOnboardCollider);
 
-    if (onboardColliderObj?.gameObject)
+    if (onboardColliderObj != null && onboardColliderObj.gameObject != null)
     {
       OnboardController = onboardColliderObj.gameObject
         .AddComponent<VehicleOnboardController>();
@@ -821,63 +837,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       };
   }
 
-  /// <summary>
-  ///   This will autofix vehicles stuck underground on spawn
-  /// </summary>
-  /// bounds are based on the vehicle position which is the same as the MovementController transform.position
-  //   public void FixShipPosition()
-//   {
-// #if !DEBUG
-//     // early exit for release variants so this code does not cause issues
-//     return;
-// #endif
-//
-//     if (PiecesController == null) return;
-//
-//     if (!VehicleDebugConfig.PositionAutoFix.Value) return;
-//
-//     var vehicleBounds = PiecesController.GetVehicleBounds();
-//     var currentLowestHeight = transform.position.y - vehicleBounds.extents.y;
-//     var groundHeight = ZoneSystem.instance.GetGroundHeight(transform.position);
-//     var floatColliderLowestPoint = FloatCollider.transform.position.y -
-//                                    FloatCollider.size.y / 2;
-//
-//     // approximateGroundHeight used so add a buffer, so this only applies if the vehicle is stuck within the ground
-//     var approximateGroundHeight = groundHeight - Math.Max(2,
-//       VehicleDebugConfig.PositionAutoFixThreshold.Value);
-//     var isFloatingBelowGround =
-//       floatColliderLowestPoint < approximateGroundHeight;
-//     var isVehicleBelowGround = currentLowestHeight < approximateGroundHeight;
-//     var waterLevel =
-//       Floating.GetWaterLevel(transform.position, ref m_previousCenter);
-//     var isWaterNearGroundHeight =
-//       waterLevel - 3f < groundHeight && waterLevel + 3f > groundHeight;
-//
-//     // Vehicle is not below the ground near float collider nor is the lowest part of the vehicle embedded in the ground
-//     // and not above the ground significantly where isVehicleBelowGround becomes inaccurate for landvehicles
-//     if (!isFloatingBelowGround &&
-//         (isWaterNearGroundHeight || !isVehicleBelowGround)) return;
-//     if (!isFloatingBelowGround &&
-//         approximateGroundHeight - 10f > waterLevel) return;
-//
-//     if (waterLevel < groundHeight)
-//     {
-//       // prevents movement when above water when a ship is stuck on land.
-//       isBeached = !(PropulsionConfig.EnableLandVehicles.Value ||
-//                     ValheimRaftPlugin.Instance.AllowFlight.Value);
-//
-//       // makes your vehicle literally float on the land and also prevents the vehicle from being embedded in the ground
-//       transform.position = new Vector3(transform.position.x,
-//         transform.position.y + vehicleBounds.extents.y, transform.position.z);
-//       return;
-//     }
-//
-//     if (waterLevel > m_disableLevel && waterLevel > groundHeight)
-//     {
-//       transform.position = new Vector3(transform.position.x,
-//         waterLevel + vehicleBounds.extents.y, transform.position.z);
-//     }
-//   }
   public IEnumerator FixShipRotation()
   {
     var eulerAngles = transform.rotation.eulerAngles;
@@ -1860,6 +1819,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // both flying and floatation use this
     ApplyRudderForce();
+    ThrottleVehicleAcceleration();
   }
 
   public bool IsSailUp()
@@ -3209,6 +3169,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     EjectPreviousPlayerFromControls(previousPlayer);
     UpdatePlayerOnShip(targetPlayer);
+    UpdateVehicleSpeedThrottle();
     VehicleOnboardController.AddOrRemovePlayerBlockingCamera(targetPlayer);
 
     var isLocalPlayer = targetPlayer == Player.m_localPlayer;

@@ -73,8 +73,6 @@ public class MoveableBaseShipComponent : MonoBehaviour
       ZdoWatchController.Instance.GetOrCreatePersistentID(m_nview.m_zdo);
     m_rigidbody = GetComponent<Rigidbody>();
     m_baseRoot.m_syncRigidbody = m_rigidbody;
-    m_rigidbody.maxAngularVelocity =
-      ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value;
     m_rigidbody.mass = m_baseRoot.TotalMass;
     m_baseRootObject.transform.SetParent(null);
     Logger.LogDebug("Set baseRoot params from BaseShipComponent");
@@ -91,7 +89,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     ship.transform.Find("ship/colliders/log (3)")?.gameObject
       .SetActive(false);
     UpdateVisual();
-    BoxCollider[] colliders =
+    var colliders =
       transform.GetComponentsInChildren<BoxCollider>();
     m_baseRoot.m_onboardcollider =
       colliders.FirstOrDefault((BoxCollider k) =>

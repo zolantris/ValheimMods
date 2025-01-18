@@ -94,7 +94,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   // Propulsion Configs
   public ConfigEntry<bool> EnableCustomPropulsionConfig { get; set; }
 
-  public ConfigEntry<float> MaxPropulsionSpeed { get; set; }
   public ConfigEntry<float> MaxSailSpeed { get; set; }
   public ConfigEntry<float> SpeedCapMultiplier { get; set; }
   public ConfigEntry<float> VehicleRudderSpeedBack { get; set; }
@@ -177,10 +176,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private void CreatePropulsionConfig()
   {
     ShowShipStats = Config.Bind("Debug", "ShowShipState", true);
-    MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxPropulsionSpeed", 45f,
-      CreateConfigDescription(
-        "Sets the absolute max speed a ship can ever hit. This is capped on the vehicle, so no forces applied will be able to exceed this value. 20-30f is safe, higher numbers could let the ship fail off the map",
-        true, false, new AcceptableValueRange<float>(10, 200)));
     MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 30f,
       CreateConfigDescription(
         "Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.",
