@@ -721,8 +721,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   /// <summary>
   /// Meant to be called for the owner's physics so the velocity never exceeds a specific value.
+  ///
+  /// This will only update the Y velocity if it exceeds the values 
   /// </summary>
-  public void ThrottleVehicleAcceleration()
+  public void ClampVehicleAcceleration()
   {
     var currentVelocity = m_body.velocity;
 
@@ -1472,7 +1474,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
                           m_dampingSideway *
                           currentDepthForceMultiplier;
 
+    // todo might want to remove this clamp as it could throttle things too much.
     velocity.y -= Mathf.Clamp(deltaUp, -1f, 1f);
+
     velocity -= forward * Mathf.Clamp(deltaForwardClamp, -1f, 1f);
     velocity -= right * Mathf.Clamp(deltaRightClamp, -1f, 1f);
 
@@ -1844,7 +1848,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // both flying and floatation use this
     ApplyRudderForce();
-    ThrottleVehicleAcceleration();
+    ClampVehicleAcceleration();
   }
 
   public bool IsSailUp()
@@ -2188,7 +2192,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (_currentShipFloatation == null) return;
 
     // Stop steering when above the water. Applying force is bad...
-    if (!IsFlying() &&
+    if (!IsFlying() && !IsSubmerged() &&
         _currentShipFloatation.Value.IsAboveBuoyantLevel)
       return;
 
