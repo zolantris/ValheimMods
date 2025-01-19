@@ -171,7 +171,7 @@ public class VehicleRamAoe : Aoe
     base.OnEnable();
   }
 
-  public void FixedUpdate(float fixedDeltaTime)
+  public void FixedUpdate()
   {
     if ((UnityEngine.Object)m_nview != (UnityEngine.Object)null &&
         !m_nview.IsOwner())
@@ -196,7 +196,7 @@ public class VehicleRamAoe : Aoe
       return;
     if ((double)m_hitInterval > 0.0 && !m_useTriggers)
     {
-      m_hitTimer -= fixedDeltaTime;
+      m_hitTimer -= Time.fixedDeltaTime;
       if ((double)m_hitTimer <= 0.0)
       {
         m_hitTimer = m_hitInterval;
@@ -206,7 +206,7 @@ public class VehicleRamAoe : Aoe
 
     if ((double)m_chainStartChance > 0.0 && (double)m_chainDelay >= 0.0)
     {
-      m_chainDelay -= fixedDeltaTime;
+      m_chainDelay -= Time.fixedDeltaTime;
       if ((double)m_chainDelay <= 0.0 &&
           (double)UnityEngine.Random.value < (double)m_chainStartChance)
       {
@@ -274,7 +274,7 @@ public class VehicleRamAoe : Aoe
 
     if ((double)m_ttl <= 0.0)
       return;
-    m_ttl -= fixedDeltaTime;
+    m_ttl -= Time.fixedDeltaTime;
     if ((double)m_ttl > 0.0)
       return;
     if (m_hitAfterTtl)
@@ -323,7 +323,8 @@ public class VehicleRamAoe : Aoe
     if (!collider) return false;
     // reset damage to base damage if one of these is not available, will still recalculate later
     // exit to apply damage that has no velocity
-    if (!vehicle?.MovementController.m_body || !collider.attachedRigidbody)
+    if (vehicle?.MovementController?.m_body == null ||
+        !collider.attachedRigidbody)
     {
       m_damage = baseDamage;
       return true;
@@ -441,25 +442,26 @@ public class VehicleRamAoe : Aoe
       return true;
     }
 
-    if (collider.transform.root != transform.root) return false;
     if (vehicle != null)
     {
       if (vehicle.PiecesController != null &&
           vehicle.PiecesController.transform == collider.transform.root)
       {
         IgnoreCollider(collider);
-        return false;
+        return true;
       }
 
       // allows for hitting other vehicles, excludes hitting current vehicle
       if (collider.transform.root == vehicle.transform.root)
       {
         IgnoreCollider(collider);
-        return false;
+        return true;
       }
 
       return false;
     }
+
+    if (collider.transform.root != transform.root) return false;
 
     IgnoreCollider(collider);
     return true;

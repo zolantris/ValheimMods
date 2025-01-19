@@ -93,7 +93,10 @@ public class VehicleDebugHelpers : MonoBehaviour
     lines.Clear();
 
     foreach (var obj in targetColliders)
+    {
+      if (obj.collider == null) continue;
       Remove3DTextForCollider(obj.collider.gameObject.name);
+    }
   }
 
   public void StartRenderAllCollidersLoop()

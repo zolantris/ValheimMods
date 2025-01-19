@@ -2147,6 +2147,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (aoeRam.m_nview == null) aoeRam.m_nview = m_nview;
 
     aoeRam.RamType = RamPrefabs.RamType.Blade;
+    aoeRam.vehicle = vehicleShip;
     aoeRam.SetVehicleRamModifier(RamConfig.VehicleHullsAreRams.Value);
   }
 

@@ -128,6 +128,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public List<GameObject> convexHullMeshes =>
     convexHullComponent.convexHullMeshes;
 
+  public List<MeshCollider> convexHullMeshColliders;
+
   public List<GameObject> convexHullTriggerMeshes =>
     convexHullComponent.convexHullTriggerMeshes;
 
@@ -2585,6 +2587,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         vehicleMovementCollidersTransform.gameObject,
         PhysicsConfig.convexHullJoinDistanceThreshold.Value,
         nvChildGameObjects, MovementController.DamageColliders);
+    convexHullMeshColliders =
+      vehicleMovementCollidersTransform.GetComponents<MeshCollider>().ToList();
 
     if (RamConfig.VehicleHullsAreRams.Value)
       MovementController.AddRamAoeToConvexHull();

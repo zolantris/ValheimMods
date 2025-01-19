@@ -130,7 +130,7 @@ namespace ValheimVehicles.SharedScripts
 
       _convexHullAPI.GenerateMeshesFromChildColliders(
         convexHullParentGameObject,
-        distanceThreshold, childGameObjects.ToList());
+        distanceThreshold, childGameObjects.ToList(), null);
     }
 
     public void Cleanup()

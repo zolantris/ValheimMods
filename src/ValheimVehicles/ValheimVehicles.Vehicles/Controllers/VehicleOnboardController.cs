@@ -273,10 +273,21 @@ public class VehicleOnboardController : MonoBehaviour
     HandleCharacterHitVehicleBounds(collider, true);
   }
 
+  public void RestoreCollisionDetection(Collider collider)
+  {
+    if (PiecesController != null)
+      foreach (var piecesControllerConvexHullMesh in
+               PiecesController.convexHullMeshColliders)
+        Physics.IgnoreCollision(piecesControllerConvexHullMesh, collider,
+          false);
+  }
+
   public void HandleCharacterHitVehicleBounds(Collider collider, bool isExiting)
   {
     var character = collider.GetComponent<Character>();
-    if (!(bool)character) return;
+    if (character == null) return;
+
+    RestoreCollisionDetection(collider);
 
     if (isExiting)
     {
