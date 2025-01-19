@@ -41,21 +41,21 @@ public class Ship_Patch
           name = "Floating collider",
           collider = mbShip.m_baseRoot.m_floatcollider,
           lineColor = Color.green,
-          parent = mbShip.m_baseRoot.gameObject
+          parent = mbShip.m_baseRoot.transform
         });
         debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
         {
           name = "Blocking collider",
           collider = mbShip.m_baseRoot.m_blockingcollider,
           lineColor = Color.magenta,
-          parent = mbShip.m_baseRoot.gameObject
+          parent = mbShip.m_baseRoot.transform
         });
         debugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
         {
           name = "Onboard collider",
           collider = mbShip.m_baseRoot.m_onboardcollider,
           lineColor = Color.yellow,
-          parent = mbShip.m_baseRoot.gameObject
+          parent = mbShip.m_baseRoot.transform
         });
       }
     }

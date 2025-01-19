@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
+using UnityEngine.UIElements;
 using ValheimRAFT;
 using ValheimRAFT.Config;
 using ValheimRAFT.Patches;
@@ -196,8 +197,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public static List<IMonoUpdater> MonoUpdaterInstances { get; } = [];
 
-  public BoxCollider BlockingCollider { get; set; }
-  public BoxCollider OnboardCollider { get; set; }
+  public BoxCollider OnboardCollider;
 
   public BoxCollider FloatCollider
   {
@@ -701,6 +701,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
    */
   public bool HaveControllingPlayer()
   {
+    if (OnboardController == null) return false;
     if (OnboardController.m_localPlayers.Count != 0)
       return HaveValidUser();
 
@@ -739,40 +740,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// </summary>
   public void InitColliders()
   {
-    var vehicleCollidersParentObj =
-      VehicleShip.GetVehicleMovementCollidersObj(transform);
-
-    var floatColliderObj =
-      vehicleCollidersParentObj.transform.Find(
-        PrefabNames.WaterVehicleFloatCollider);
-    var blockingColliderObj =
-      vehicleCollidersParentObj.transform.Find(PrefabNames
-        .WaterVehicleBlockingCollider);
-    var onboardColliderObj =
-      vehicleCollidersParentObj.transform.Find(PrefabNames
-        .WaterVehicleOnboardCollider);
-
-    if (onboardColliderObj != null && onboardColliderObj.gameObject != null)
-    {
-      OnboardController = onboardColliderObj.gameObject
-        .AddComponent<VehicleOnboardController>();
-      if (!OnboardController.GetMovementController())
-      {
-        Logger.LogError(
-          "OnboardController controller initialized but null controller, manually initializing from VehicleMovementController parent");
-        OnboardController.SetMovementController(this);
-      }
-    }
-
-    onboardColliderObj.name = PrefabNames.WaterVehicleOnboardCollider;
-    floatColliderObj.name = PrefabNames.WaterVehicleFloatCollider;
-    blockingColliderObj.name = PrefabNames.WaterVehicleBlockingCollider;
-
+    if (PiecesController == null) return;
+    var vehicleMovementObj = VehicleShip.GetVehicleMovementTransform(transform);
     ShipDirection =
-      floatColliderObj.Find(PrefabNames.VehicleShipMovementOrientation);
-    BlockingCollider = blockingColliderObj.GetComponent<BoxCollider>();
-    FloatCollider = floatColliderObj.GetComponent<BoxCollider>();
-    OnboardCollider = onboardColliderObj.GetComponent<BoxCollider>();
+      vehicleMovementObj.transform.Find(PrefabNames
+        .VehicleShipMovementOrientation);
+    FloatCollider = PiecesController.FloatCollider;
+    OnboardCollider = PiecesController.OnboardCollider;
   }
 
   public void SetupImpactEffect()
@@ -842,10 +816,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public void AwakeSetupShipComponents()
   {
     vehicleShip = GetComponent<VehicleShip>();
+    ShipDirection = transform.Find(
+      $"vehicle_movement/{PrefabNames.VehicleShipMovementOrientation}");
+
     GetRigidbody();
     SetupZsyncTransform();
     SetupPhysicsSync();
-    SetupImpactEffect();
+    // SetupImpactEffect();
     InitColliders();
     UpdateVehicleSpeedThrottle();
 
@@ -941,7 +918,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     DebugTargetHeightObj.transform.rotation = FloatCollider.transform.rotation;
     DebugTargetHeightObj.transform.localScale =
-      FloatCollider?.size ?? Vector3.one;
+      FloatCollider.size;
   }
 
   public string GetVehicleMapKey()
@@ -1039,21 +1016,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var localPosition = targetTransform.localPosition;
     targetTransform.localPosition =
       new Vector3(localPosition.x, newYPosition, localPosition.z);
-  }
-
-  /// <summary>
-  ///   Cannot use this without requiring a water force update to logic reliant on
-  ///   this automatic center of mass.
-  /// </summary>
-  public void UpdateCenterOfMass()
-  {
-    m_body.automaticCenterOfMass = false;
-    if (OnboardCollider.bounds.min.y > BlockingCollider.bounds.min.y)
-      m_body.centerOfMass = new Vector3(OnboardCollider.center.x,
-        OnboardCollider.bounds.center.y, OnboardCollider.center.z);
-    else
-      m_body.centerOfMass = new Vector3(BlockingCollider.center.x,
-        BlockingCollider.bounds.center.y, BlockingCollider.center.z);
   }
 
   /// <summary>
@@ -1285,7 +1247,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var drag = PhysicsConfig.flightDrag.Value;
     var angularDrag = PhysicsConfig.flightAngularDrag.Value;
 
-    ShipInstance?.VehiclePiecesController?.SyncRigidbodyStats(drag, angularDrag,
+    ShipInstance?.PiecesController?.SyncRigidbodyStats(drag, angularDrag,
       true);
   }
 
@@ -1301,7 +1263,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var drag = PhysicsConfig.submersibleDrag.Value;
     var angularDrag = PhysicsConfig.submersibleAngularDrag.Value;
 
-    ShipInstance?.VehiclePiecesController?.SyncRigidbodyStats(drag, angularDrag,
+    ShipInstance?.PiecesController?.SyncRigidbodyStats(drag, angularDrag,
       false);
   }
 
@@ -1316,7 +1278,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var drag = PhysicsConfig.waterDrag.Value;
     var angularDrag = PhysicsConfig.waterAngularDrag.Value;
 
-    ShipInstance?.VehiclePiecesController?.SyncRigidbodyStats(drag, angularDrag,
+    ShipInstance?.PiecesController?.SyncRigidbodyStats(drag, angularDrag,
       false);
   }
 
@@ -1368,26 +1330,26 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void UpdateImpactEffectValues()
   {
-    if (_impactEffect != null)
-    {
-      var damage = GetDamageFromImpact();
-      if (RamConfig.VehicleHullUsesPickaxeAndChopDamage.Value)
-      {
-        _impactEffect.m_damages.m_pickaxe = damage * 0.66f;
-        _impactEffect.m_damages.m_chop = damage * 0.33f;
-      }
-      else
-      {
-        _impactEffect.m_damages.m_blunt = damage;
-      }
-
-      _impactEffect.m_toolTier = RamConfig.HullToolTier.Value;
-    }
-    else
-    {
-      Logger.LogDebug(
-        "No Ship ImpactEffect detected, this needs to be added to the custom ship");
-    }
+    // if (_impactEffect != null)
+    // {
+    //   var damage = GetDamageFromImpact();
+    //   if (RamConfig.VehicleHullUsesPickaxeAndChopDamage.Value)
+    //   {
+    //     _impactEffect.m_damages.m_pickaxe = damage * 0.66f;
+    //     _impactEffect.m_damages.m_chop = damage * 0.33f;
+    //   }
+    //   else
+    //   {
+    //     _impactEffect.m_damages.m_blunt = damage;
+    //   }
+    //
+    //   _impactEffect.m_toolTier = RamConfig.HullToolTier.Value;
+    // }
+    // else
+    // {
+    //   Logger.LogDebug(
+    //     "No Ship ImpactEffect detected, this needs to be added to the custom ship");
+    // }
   }
 
   /// <summary>
@@ -1797,7 +1759,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// </summary>
   public void VehiclePhysicsFixedUpdateAllClients()
   {
-    if (!(bool)ShipInstance?.VehiclePiecesController || !(bool)m_nview ||
+    if (!(bool)ShipInstance?.PiecesController || !(bool)m_nview ||
         m_nview.m_zdo == null ||
         !(bool)ShipDirection) return;
 
@@ -1985,13 +1947,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     if (!isActiveAndEnabled) return;
 
-    if (ShipInstance?.VehiclePiecesController == null) return;
-    foreach (var mast in ShipInstance.VehiclePiecesController.m_mastPieces
+    if (ShipInstance?.PiecesController == null) return;
+    foreach (var mast in ShipInstance.PiecesController.m_mastPieces
                .ToList())
     {
       if (!(bool)mast)
       {
-        ShipInstance.VehiclePiecesController.m_mastPieces.Remove(mast);
+        ShipInstance.PiecesController.m_mastPieces.Remove(mast);
         continue;
       }
 
@@ -2018,12 +1980,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       }
     }
 
-    foreach (var rudder in ShipInstance.VehiclePiecesController.m_rudderPieces
+    foreach (var rudder in ShipInstance.PiecesController.m_rudderPieces
                .ToList())
     {
       if (!(bool)rudder)
       {
-        ShipInstance.VehiclePiecesController.m_rudderPieces.Remove(rudder);
+        ShipInstance.PiecesController.m_rudderPieces.Remove(rudder);
         continue;
       }
 
@@ -2040,11 +2002,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       rudder.PivotPoint.localRotation = newRotation;
     }
 
-    foreach (var wheel in ShipInstance.VehiclePiecesController
+    foreach (var wheel in ShipInstance.PiecesController
                ._steeringWheelPieces
                .ToList())
       if (!(bool)wheel)
-        ShipInstance.VehiclePiecesController._steeringWheelPieces.Remove(wheel);
+        ShipInstance.PiecesController._steeringWheelPieces.Remove(wheel);
       else if (wheel.wheelTransform != null)
         wheel.wheelTransform.localRotation = Quaternion.Slerp(
           wheel.wheelTransform.localRotation,
@@ -2252,9 +2214,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     var sailArea = 0f;
 
-    if (instance?.ShipInstance?.VehiclePiecesController != null)
+    if (instance?.ShipInstance?.PiecesController != null)
       sailArea =
-        instance.ShipInstance.VehiclePiecesController.GetSailingForce();
+        instance.ShipInstance.PiecesController.GetSailingForce();
 
     // intellij seems to think 1370 does not have enough guards if this check is at the top of the function.
     if (instance == null) return;

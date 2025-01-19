@@ -39,7 +39,8 @@ public class WearNTear_Patch
   [HarmonyPrefix]
   private static bool WearNTear_Repair(WearNTear __instance, ref bool __result)
   {
-    if (RamConfig.CanRepairRams.Value || !RamPrefabs.IsRam(__instance.gameObject.name)) return true;
+    if (RamConfig.CanRepairRams.Value ||
+        !RamPrefabs.IsRam(__instance.gameObject.name)) return true;
 
     __result = false;
     return false;
@@ -49,9 +50,11 @@ public class WearNTear_Patch
    * IF the mod breaks, this is a SAFETY FEATURE
    * - prevents destruction of ship attached pieces if the ship fails to initialize properly
    */
-  private static bool PreventDestructionOfItemWithoutInitializedRaft(WearNTear __instance)
+  private static bool PreventDestructionOfItemWithoutInitializedRaft(
+    WearNTear __instance)
   {
-    if (!ValheimRaftPlugin.Instance.ProtectVehiclePiecesOnErrorFromWearNTearDamage.Value)
+    if (!ValheimRaftPlugin.Instance
+          .ProtectVehiclePiecesOnErrorFromWearNTearDamage.Value)
       return false;
 
     var parentVehicleHash =
@@ -73,10 +76,10 @@ public class WearNTear_Patch
   private static bool WearNTear_Destroy(WearNTear __instance)
   {
     if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleShip))
-    {
       try
       {
-        var canDestroyVehicle = VehiclePiecesController.CanDestroyVehicle(__instance.m_nview);
+        var canDestroyVehicle =
+          VehiclePiecesController.CanDestroyVehicle(__instance.m_nview);
         return canDestroyVehicle;
       }
       catch
@@ -84,12 +87,11 @@ public class WearNTear_Patch
         // if the mod is crashed it will not delete the raft controlling object to prevent the raft from being deleted if the user had a bad install or the game updated
         return false;
       }
-    }
 
     if (RamPrefabs.IsRam(__instance.name))
     {
       var vehicle = __instance.GetComponentInParent<VehicleShip>();
-      vehicle?.VehiclePiecesController?.DestroyPiece(__instance);
+      vehicle?.PiecesController?.DestroyPiece(__instance);
     }
 
     var bv = __instance.GetComponentInParent<VehiclePiecesController>();
@@ -106,71 +108,54 @@ public class WearNTear_Patch
 
   [HarmonyPatch(typeof(WearNTear), "SetHealthVisual")]
   [HarmonyPrefix]
-  private static bool WearNTear_SetHealthVisual(WearNTear __instance, float health,
+  private static bool WearNTear_SetHealthVisual(WearNTear __instance,
+    float health,
     bool triggerEffects)
   {
     var isHull = PrefabNames.IsHull(__instance.gameObject);
     if (!isHull) return true;
 
 
-    if (__instance.m_worn == null && __instance.m_broken == null && __instance.m_new == null)
-    {
-      return false;
-    }
+    if (__instance.m_worn == null && __instance.m_broken == null &&
+        __instance.m_new == null) return false;
 
     if (health > 0.75f)
     {
       if (__instance.m_worn != __instance.m_new)
-      {
-        __instance.m_worn.SetActive(value: false);
-      }
+        __instance.m_worn.SetActive(false);
 
       if (__instance.m_broken != __instance.m_new)
-      {
-        __instance.m_broken.SetActive(value: false);
-      }
+        __instance.m_broken.SetActive(false);
 
-      __instance.m_new.SetActive(value: true);
+      __instance.m_new.SetActive(true);
     }
     else if (health > 0.25f)
     {
       if (triggerEffects && !__instance.m_worn.activeSelf)
-      {
         __instance.m_switchEffect.Create(__instance.transform.position,
           __instance.transform.rotation, __instance.transform);
-      }
 
       if (__instance.m_new != __instance.m_worn)
-      {
-        __instance.m_new.SetActive(value: false);
-      }
+        __instance.m_new.SetActive(false);
 
       if (__instance.m_broken != __instance.m_worn)
-      {
-        __instance.m_broken.SetActive(value: false);
-      }
+        __instance.m_broken.SetActive(false);
 
-      __instance.m_worn.SetActive(value: true);
+      __instance.m_worn.SetActive(true);
     }
     else
     {
       if (triggerEffects && !__instance.m_broken.activeSelf)
-      {
         __instance.m_switchEffect.Create(__instance.transform.position,
           __instance.transform.rotation, __instance.transform);
-      }
 
       if (__instance.m_new != __instance.m_broken)
-      {
-        __instance.m_new.SetActive(value: false);
-      }
+        __instance.m_new.SetActive(false);
 
       if (__instance.m_worn != __instance.m_broken)
-      {
-        __instance.m_worn.SetActive(value: false);
-      }
+        __instance.m_worn.SetActive(false);
 
-      __instance.m_broken.SetActive(value: true);
+      __instance.m_broken.SetActive(true);
     }
 
     return false;
@@ -182,23 +167,15 @@ public class WearNTear_Patch
   {
     // watervehicleship should receive no wearntear damage
     if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleShip))
-    {
       return false;
-    }
 
     var bv = __instance.GetComponentInParent<VehiclePiecesController>();
-    if ((bool)bv)
-    {
-      return true;
-    }
+    if ((bool)bv) return true;
 
     if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
     {
       var mbr = __instance.GetComponentInParent<MoveableBaseShipComponent>();
-      if ((bool)mbr)
-      {
-        return true;
-      }
+      if ((bool)mbr) return true;
     }
 
     // scans all the items to see if there is a vehicle reference.
@@ -214,7 +191,9 @@ public class WearNTear_Patch
   {
     var list = instructions.ToList();
     for (var i = 0; i < list.Count; i++)
-      if (list[i].Calls(AccessTools.PropertyGetter(typeof(Collider), "attachedRigidbody")))
+      if (list[i]
+          .Calls(AccessTools.PropertyGetter(typeof(Collider),
+            "attachedRigidbody")))
       {
         list[i] = new CodeInstruction(OpCodes.Call,
           AccessTools.Method(typeof(WearNTear_Patch),
@@ -231,7 +210,8 @@ public class WearNTear_Patch
   {
     if (!__instance.isActiveAndEnabled) return false;
     var mbr = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-    var baseVehicle = __instance.GetComponentInParent<VehiclePiecesController>();
+    var baseVehicle =
+      __instance.GetComponentInParent<VehiclePiecesController>();
     if (!(bool)mbr && !(bool)baseVehicle) return true;
     // if (__instance.transform.localPosition.y > 1f) return true;
 

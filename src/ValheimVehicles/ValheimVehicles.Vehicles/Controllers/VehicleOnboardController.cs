@@ -1,16 +1,12 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using DynamicLocations;
 using DynamicLocations.Controllers;
 using JetBrains.Annotations;
 using UnityEngine;
-using UnityEngine.Serialization;
 using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Patches;
 using ValheimVehicles.Vehicles.Components;
-using ValheimVehicles.Vehicles.Enums;
 using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
 
@@ -23,8 +19,8 @@ namespace ValheimVehicles.Vehicles.Controllers;
 /// </summary>
 public class VehicleOnboardController : MonoBehaviour
 {
-  public VehicleMovementController MovementController = null!;
-  public IVehicleShip? VehicleInstance => MovementController?.ShipInstance;
+  public VehicleMovementController? MovementController;
+  public IVehicleShip? VehicleInstance => PiecesController.VehicleInstance;
 
   [UsedImplicitly]
   public static readonly Dictionary<ZDOID, WaterZoneCharacterData>
@@ -40,14 +36,17 @@ public class VehicleOnboardController : MonoBehaviour
   public bool HasPlayersOnboard => m_localPlayers.Count > 0;
   private static bool _hasExitSubscriptionDelay = false;
 
-  public Collider? OnboardCollider => MovementController?.OnboardCollider;
+  public Collider? OnboardCollider;
 
-  public VehiclePiecesController? PiecesController =>
-    MovementController?.ShipInstance?.VehiclePiecesController;
+  public VehiclePiecesController? PiecesController;
 
   private void Awake()
   {
-    MovementController = GetComponentInParent<VehicleMovementController>();
+    if (PiecesController == null)
+      PiecesController = transform.root.GetComponent<VehiclePiecesController>();
+    OnboardCollider = GetComponent<Collider>();
+    if (MovementController == null)
+      MovementController = PiecesController.MovementController;
     InvokeRepeating(nameof(ValidateCharactersAreOnShip), 1f, 30f);
   }
 

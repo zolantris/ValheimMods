@@ -38,35 +38,11 @@ public class WaterVehiclePrefab : IRegisterPrefab
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab, true);
     PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(prefab);
 
-    // colliders already have a rigidbody on them from unity prefab
-    var vehicleMovementColliders =
-      VehicleShip.GetVehicleMovementCollidersObj(prefab.transform);
-
-    var floatColliderObj =
-      vehicleMovementColliders.transform.Find(
-        PrefabNames.WaterVehicleFloatCollider);
-    var blockingColliderObj =
-      vehicleMovementColliders.transform.Find(PrefabNames
-        .WaterVehicleBlockingCollider);
-    var onboardColliderObj =
-      vehicleMovementColliders.transform.Find(PrefabNames
-        .WaterVehicleOnboardCollider);
-
-    onboardColliderObj.name = PrefabNames.WaterVehicleOnboardCollider;
-    floatColliderObj.name = PrefabNames.WaterVehicleFloatCollider;
-    blockingColliderObj.name = PrefabNames.WaterVehicleBlockingCollider;
-
     /*
      * ShipControls were a gameObject with a script attached to them. This approach directly attaches the script instead of having the rudder show.
      */
 
     var shipInstance = prefab.AddComponent<VehicleShip>();
-    var shipControls = prefab.AddComponent<VehicleMovementController>();
-    shipInstance.ColliderParentObj = vehicleMovementColliders.gameObject;
-    shipControls.ShipDirection =
-      floatColliderObj.FindDeepChild(PrefabNames
-        .VehicleShipMovementOrientation);
-    shipInstance.MovementController = shipControls;
     shipInstance.gameObject.layer = LayerHelpers.CustomRaftLayer;
 
     // todo fix ship water effects so they do not cause ship materials to break
@@ -103,21 +79,21 @@ public class WaterVehiclePrefab : IRegisterPrefab
 
     // todo ImpactEffect likely never should have been added like this
     // todo remove if unnecessary
-    var impactEffect = prefab.AddComponent<ImpactEffect>();
-    impactEffect.m_triggerMask = LayerMask.GetMask("Default", "character",
-      "piece", "terrain",
-      "static_solid", "Default_small", "character_net", "vehicle",
-      LayerMask.LayerToName(29));
-    impactEffect.m_toolTier = 1000;
-
-    impactEffect.m_damages.m_blunt = 50;
-    impactEffect.m_interval = 0.1f;
-    impactEffect.m_damagePlayers = true;
-    impactEffect.m_damageToSelf = false;
-    impactEffect.m_damageFish = true;
-    impactEffect.m_hitType = HitData.HitType.Boat;
-    impactEffect.m_minVelocity = 0.01f;
-    impactEffect.m_maxVelocity = 999f;
+    // var impactEffect = prefab.AddComponent<ImpactEffect>();
+    // impactEffect.m_triggerMask = LayerMask.GetMask("Default", "character",
+    //   "piece", "terrain",
+    //   "static_solid", "Default_small", "character_net", "vehicle",
+    //   LayerMask.LayerToName(29));
+    // impactEffect.m_toolTier = 1000;
+    //
+    // impactEffect.m_damages.m_blunt = 50;
+    // impactEffect.m_interval = 0.1f;
+    // impactEffect.m_damagePlayers = true;
+    // impactEffect.m_damageToSelf = false;
+    // impactEffect.m_damageFish = true;
+    // impactEffect.m_hitType = HitData.HitType.Boat;
+    // impactEffect.m_minVelocity = 0.01f;
+    // impactEffect.m_maxVelocity = 999f;
 
     return prefab;
   }
@@ -149,7 +125,7 @@ public class WaterVehiclePrefab : IRegisterPrefab
           {
             Amount = 16,
             Item = "Wood",
-            Recover = false,
+            Recover = false
           }
         ]
       }));
@@ -209,18 +185,12 @@ public class WaterVehiclePrefab : IRegisterPrefab
 
     var nautilus = PrefabManager.Instance?.GetPrefab(PrefabNames.Nautilus);
 
-    if (shouldEnable && !nautilus)
-    {
-      RegisterNautilusVehicleShipPrefab();
-    }
+    if (shouldEnable && !nautilus) RegisterNautilusVehicleShipPrefab();
 
     if (!shouldEnable && nautilus)
     {
       var piece = PieceManager.Instance?.GetPiece(PrefabNames.Nautilus);
-      if (piece != null)
-      {
-        piece.Piece.enabled = false;
-      }
+      if (piece != null) piece.Piece.enabled = false;
     }
   }
 

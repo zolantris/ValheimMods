@@ -150,7 +150,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   /// <returns>String</returns>
   private string GetOwnerHoverText()
   {
-    var controller = ShipInstance?.VehiclePiecesController?.VehicleInstance;
+    var controller = ShipInstance?.PiecesController?.VehicleInstance;
     if (controller?.NetView?.GetZDO() == null) return "";
 
     var ownerId = controller.NetView.GetZDO().GetOwner();
@@ -182,7 +182,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     if ((bool)deprecatedShipControls)
       return deprecatedShipControls.GetHoverText();
 
-    var controller = ShipInstance?.VehiclePiecesController;
+    var controller = ShipInstance?.PiecesController;
     if (controller == null)
       return Localization.instance.Localize(
         "<color=white><b>$valheim_vehicles_wheel_use_error</b></color>");
@@ -266,7 +266,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     var player = user as Player;
 
     var playerOnShipViaShipInstance =
-      ShipInstance?.VehiclePiecesController
+      ShipInstance?.PiecesController
         ?.GetComponentsInChildren<Player>() ?? null;
 
     if (player != null)

@@ -85,10 +85,7 @@ public class CreativeModeConsoleCommand : ConsoleCommand
 
     var mbr =
       hitinfo.collider.GetComponentInParent<MoveableBaseRootComponent>();
-    if ((bool)mbr)
-    {
-      ToggleMode(player, mbr.m_ship);
-    }
+    if ((bool)mbr) ToggleMode(player, mbr.m_ship);
   }
 
   /// <summary>
@@ -101,10 +98,7 @@ public class CreativeModeConsoleCommand : ConsoleCommand
   private static bool ToggleMode(Character character,
     VehicleShip? ship)
   {
-    if (ship == null || ship.MovementController == null)
-    {
-      return false;
-    }
+    if (ship == null || ship.MovementController == null) return false;
 
     var toggledKinematicValue = !ship.MovementController.m_body.isKinematic;
     ship.MovementController.m_body.isKinematic = toggledKinematicValue;
@@ -117,7 +111,7 @@ public class CreativeModeConsoleCommand : ConsoleCommand
         ship.MovementController.m_body.position.y +
         ValheimRaftPlugin.Instance.RaftCreativeHeight.Value;
       var playerInBoat =
-        character.transform.parent == ship.VehiclePiecesController?.transform;
+        character.transform.parent == ship.PiecesController?.transform;
       if (playerInBoat)
       {
         character.m_body.isKinematic = true;
@@ -155,13 +149,11 @@ public class CreativeModeConsoleCommand : ConsoleCommand
       if (mb.m_rigidbody.isKinematic)
       {
         if (character.transform.parent == mb.m_baseRoot.transform)
-        {
           character.m_body.position = new Vector3(
             character.m_body.transform.position.x,
             character.m_body.transform.position.y +
             ValheimRaftPlugin.Instance.RaftCreativeHeight.Value,
             character.m_body.transform.position.z);
-        }
 
         mb.m_rigidbody.position =
           new Vector3(mb.transform.position.x,

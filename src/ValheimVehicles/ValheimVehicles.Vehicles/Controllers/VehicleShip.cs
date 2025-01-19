@@ -27,16 +27,10 @@ public static class VehicleShipHelpers
     GameObject searchObj,
     string objectName)
   {
-    if ((bool)returnObj)
-    {
-      return returnObj;
-    }
+    if ((bool)returnObj) return returnObj;
 
     var gameObjTransform = searchObj.transform.FindDeepChild(objectName);
-    if (!gameObjTransform)
-    {
-      return returnObj;
-    }
+    if (!gameObjTransform) return returnObj;
 
     returnObj = gameObjTransform.gameObject;
     return returnObj;
@@ -59,14 +53,18 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   private float _rudderForce = 1f;
 
 
-  public GameObject GhostContainer() =>
-    VehicleShipHelpers.GetOrFindObj(_ghostContainer, gameObject,
+  public GameObject GhostContainer()
+  {
+    return VehicleShipHelpers.GetOrFindObj(_ghostContainer, gameObject,
       PrefabNames.GhostContainer);
+  }
 
-  public GameObject PiecesContainer() =>
-    VehicleShipHelpers.GetOrFindObj(_piecesContainer,
+  public GameObject PiecesContainer()
+  {
+    return VehicleShipHelpers.GetOrFindObj(_piecesContainer,
       transform.parent.gameObject,
       PrefabNames.PiecesContainer);
+  }
 
   public static readonly Dictionary<int, VehicleShip> AllVehicles = new();
 
@@ -83,45 +81,27 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   public void SetCreativeMode(bool val)
   {
     isCreative = val;
-    MovementController?.UpdateShipCreativeModeRotation();
+    if (MovementController != null)
+      MovementController.UpdateShipCreativeModeRotation();
     UpdateShipEffects();
   }
 
-  public static bool CustomShipPhysicsEnabled = false;
-
-  // The determines the directional movement of the ship 
-  public GameObject ColliderParentObj;
 
   public GameObject? ShipEffectsObj;
   public VehicleShipEffects? ShipEffects;
 
-  public VehiclePiecesController PiecesController;
-  public ZSyncTransform piecesZsyncTransform;
+  public VehiclePiecesController? PiecesController { get; set; }
 
   public ZNetView NetView { get; set; }
 
+  public Transform vehicleMovementTransform;
+  public Transform vehicleMovementCollidersTransform;
+
   public VehicleDebugHelpers? VehicleDebugHelpersInstance { get; private set; }
 
-  public VehiclePiecesController? VehiclePiecesController => PiecesController;
+  public VehicleMovementController? MovementController { get; set; }
 
-  private VehicleMovementController? _movementController;
-
-  public VehicleMovementController? MovementController
-  {
-    get
-    {
-      if (!_movementController)
-      {
-        AwakeSetupVehicleShip();
-      }
-
-      return _movementController;
-    }
-    set => _movementController = value;
-  }
-
-  public VehicleOnboardController? OnboardController =>
-    MovementController?.OnboardController;
+  public VehicleOnboardController? OnboardController { get; set; }
 
   public VehicleShip Instance => this;
 
@@ -150,25 +130,22 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     return obj.gameObject;
   }
 
-  public static GameObject GetVehicleMovementCollidersObj(Transform prefabRoot)
+  public static Transform GetVehicleMovementCollidersTransform(
+    Transform prefabRoot)
   {
-    var obj = prefabRoot.Find("vehicle_movement/colliders");
-    return obj.gameObject;
+    return prefabRoot.Find("vehicle_movement/colliders");
   }
 
 
-  public static GameObject GetVehicleMovementObj(Transform prefabRoot)
+  public static Transform GetVehicleMovementTransform(Transform prefabRoot)
   {
-    var obj = prefabRoot.Find("vehicle_movement");
-    return obj.gameObject;
+    return prefabRoot.Find("vehicle_movement");
   }
 
   public static void OnAllowFlight(object sender, EventArgs eventArgs)
   {
     foreach (var vehicle in AllVehicles)
-    {
       vehicle.Value?.MovementController?.OnFlightChangePolling();
-    }
   }
 
 
@@ -189,9 +166,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   private static void UpdateAllShipSounds()
   {
     foreach (var vehicleShip in AllVehicles)
-    {
       UpdateShipSounds(vehicleShip.Value);
-    }
   }
 
   public static void UpdateAllShipSounds(object sender, EventArgs eventArgs)
@@ -217,34 +192,17 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     UnloadAndDestroyPieceContainer();
 
     if (PersistentZdoId != 0 && AllVehicles.ContainsKey(PersistentZdoId))
-    {
       AllVehicles.Remove(PersistentZdoId);
-    }
 
     if (MovementController && MovementController != null)
-    {
       Destroy(MovementController.gameObject);
-    }
-  }
-
-  public void AwakeSetupVehicleShip()
-  {
-    if (_movementController == null)
-    {
-      MovementController = GetComponent<VehicleMovementController>();
-    }
-
-    if (ShipEffectsObj == null && _movementController != null)
-    {
-      ShipEffects = MovementController?.GetComponent<VehicleShipEffects>();
-      ShipEffectsObj = ShipEffects?.gameObject;
-    }
   }
 
   // updates the vehicle water effects if flying/not flying
   public void UpdateShipEffects()
   {
-    ShipEffectsObj?.SetActive(!(TargetHeight > 0f || isCreative));
+    if (ShipEffectsObj == null) return;
+    ShipEffectsObj.SetActive(!(TargetHeight > 0f || isCreative));
   }
 
   private int GetPersistentID()
@@ -254,31 +212,20 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     {
       Logger.LogWarning(
         "No ZdoWatchManager instance, this means something went wrong");
-    }
-
-    if (_persistentZdoId != 0)
-    {
+      _persistentZdoId = 0;
       return _persistentZdoId;
     }
 
-    if (!NetView)
-    {
-      NetView = GetComponent<ZNetView>();
-    }
+    if (_persistentZdoId != 0) return _persistentZdoId;
 
-    if (NetView == null)
-    {
-      return _persistentZdoId;
-    }
+    if (!NetView) NetView = GetComponent<ZNetView>();
 
-    if (NetView.GetZDO() == null)
-    {
-      return _persistentZdoId;
-    }
+    if (NetView == null) return _persistentZdoId;
+
+    if (NetView.GetZDO() == null) return _persistentZdoId;
 
     _persistentZdoId =
-      ZdoWatchController.Instance?.GetOrCreatePersistentID(NetView.GetZDO()) ??
-      0;
+      ZdoWatchController.Instance.GetOrCreatePersistentID(NetView.GetZDO());
     return _persistentZdoId;
   }
 
@@ -288,21 +235,18 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     NetView = GetComponent<ZNetView>();
     GetPersistentID();
 
+    vehicleMovementCollidersTransform =
+      GetVehicleMovementCollidersTransform(transform);
+    vehicleMovementTransform = GetVehicleMovementTransform(transform);
+
+
     if (PersistentZdoId == 0)
-    {
       Logger.LogWarning("PersistewnZdoId, did not get a zdo from the NetView");
-    }
 
     if (AllVehicles.ContainsKey(PersistentZdoId))
-    {
       Logger.LogDebug("VehicleShip somehow already registered this component");
-    }
     else
-    {
       AllVehicles.Add(PersistentZdoId, this);
-    }
-
-    AwakeSetupVehicleShip();
 
     if (!NetView)
     {
@@ -310,15 +254,63 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       NetView = GetComponent<ZNetView>();
     }
 
+    vehicleMovementTransform = GetVehicleMovementTransform(transform);
+
     InitializeVehiclePiecesController();
+    InitializeMovementController();
+    InitializeOnboardController();
+
+    // For starting the vehicle pieces.
+    PiecesController.InitFromShip(Instance);
+    InitStarterPiece();
+  }
+
+  public void InitializeMovementController()
+  {
+    if (MovementController == null)
+    {
+      var movementController = GetComponent<VehicleMovementController>();
+      if (movementController == null)
+        movementController =
+          gameObject.AddComponent<VehicleMovementController>();
+      MovementController = movementController;
+    }
+
+    if (PiecesController != null)
+      PiecesController.MovementController = MovementController;
+
+    if (OnboardController != null)
+      OnboardController.MovementController = MovementController;
+
+    if (ShipEffectsObj == null)
+    {
+      ShipEffects = MovementController.GetComponent<VehicleShipEffects>();
+      ShipEffectsObj = ShipEffects.gameObject;
+    }
+  }
+
+  /// <summary>
+  /// @Requires MovementController
+  /// </summary>
+  public void InitializeOnboardController()
+  {
+    if (MovementController == null || PiecesController == null)
+    {
+      Logger.LogError(
+        $"MovementController: {MovementController}, PiecesController {PiecesController} not initialized this likely means the mod is unstable");
+      return;
+    }
+
+    PiecesController.OnboardController = PiecesController.OnboardCollider
+      .gameObject
+      .AddComponent<VehicleOnboardController>();
+    OnboardController = PiecesController.OnboardController;
+    MovementController.OnboardController = PiecesController.OnboardController;
   }
 
   public void Start()
   {
-    if (HasVehicleDebugger && PiecesController)
-    {
-      InitializeVehicleDebugger();
-    }
+    if (HasVehicleDebugger && PiecesController) InitializeVehicleDebugger();
 
     UpdateShipSounds(this);
     UpdateShipEffects();
@@ -326,23 +318,15 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   public void OnEnable()
   {
-    if (!NetView)
-    {
-      NetView = GetComponent<ZNetView>();
-    }
+    if (!NetView) NetView = GetComponent<ZNetView>();
 
     GetPersistentID();
 
     if (PersistentZdoId != 0 && !AllVehicles.ContainsKey(PersistentZdoId))
-    {
       AllVehicles.Add(PersistentZdoId, this);
-    }
 
     InitializeVehiclePiecesController();
-    if (HasVehicleDebugger && PiecesController)
-    {
-      InitializeVehicleDebugger();
-    }
+    if (HasVehicleDebugger && PiecesController) InitializeVehicleDebugger();
   }
 
   public void UpdateShipZdoPosition()
@@ -350,9 +334,12 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     if (!(bool)NetView || NetView.GetZDO() == null || NetView.m_ghost ||
         (bool)PiecesController ||
         !isActiveAndEnabled) return;
-    var sector = ZoneSystem.GetZone(transform.position);
+    var position = transform.position;
+
+    var sector = ZoneSystem.GetZone(position);
     var zdo = NetView.GetZDO();
-    zdo.SetPosition(transform.position);
+
+    zdo.SetPosition(position);
     zdo.SetSector(sector);
   }
 
@@ -419,19 +406,14 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     }
 
     var pieceCount = PiecesController.GetPieceCount();
-    if (pieceCount != 0)
-    {
-      return;
-    }
+    if (pieceCount != 0) return;
 
     // Having this value sooner is better
     GetPersistentID();
 
     if (PiecesController.BaseVehicleInitState !=
-        Vehicles.VehiclePiecesController.InitializationState.Created)
-    {
+        VehiclePiecesController.InitializationState.Created)
       return;
-    }
 
     var prefab = GetStarterPiece();
     if (!prefab) return;
@@ -449,7 +431,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   {
     if (VehicleDebugHelpersInstance != null) return;
     if (MovementController == null || !MovementController.FloatCollider ||
-        !MovementController.BlockingCollider ||
         !MovementController.OnboardCollider)
     {
       CancelInvoke(nameof(InitializeVehicleDebugger));
@@ -460,40 +441,29 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     VehicleDebugHelpersInstance =
       gameObject.AddComponent<VehicleDebugHelpers>();
 
-    // if (_movementController != null &&
-    //     _movementController.DebugTargetHeightObj == null)
-    // {
-    //   MovementController.DEBUG_VisualizeFloatPoint();
-    // }
-
-    // if (MovementController.DebugTargetHeightObj)
-    // {
-    //   VehicleDebugHelpersInstance.AddColliderToRerender(
-    //     new DrawTargetColliders()
-    //     {
-    //       collider = MovementController.DebugTargetHeightObj
-    //         .GetComponent<BoxCollider>(),
-    //       lineColor = Color.orange,
-    //       parent = gameObject
-    //     });
-    // }
     VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
     {
       collider = MovementController.FloatCollider,
       lineColor = Color.green,
-      parent = gameObject
+      parent = transform
     });
-    VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
-    {
-      collider = MovementController.BlockingCollider,
-      lineColor = Color.blue,
-      parent = gameObject
-    });
+
+    // foreach (var piecesControllerConvexHullMesh in PiecesController
+    //            .convexHullMeshes)
+    //   VehicleDebugHelpersInstance.AddColliderToRerender(
+    //     new DrawTargetColliders()
+    //     {
+    //       collider =
+    //         piecesControllerConvexHullMesh.GetComponent<MeshCollider>(),
+    //       lineColor = Color.blue,
+    //       parent = gameObject
+    //     });
+
     VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
     {
       collider = MovementController.OnboardCollider,
       lineColor = Color.yellow,
-      parent = gameObject
+      parent = transform
     });
     VehicleDebugHelpersInstance.VehicleObj = gameObject;
     VehicleDebugHelpersInstance.VehicleShipInstance = this;
@@ -527,8 +497,5 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
     PiecesController = _vehiclePiecesContainerInstance
       .AddComponent<VehiclePiecesController>();
-    PiecesController.InitFromShip(Instance);
-
-    InitStarterPiece();
   }
 }

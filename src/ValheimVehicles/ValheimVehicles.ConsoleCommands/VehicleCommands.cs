@@ -668,7 +668,7 @@ public class VehicleCommands : ConsoleCommand
       Logger.LogMessage(
         "No ship found, please run this command near the ship that needs to be reported.");
 
-    var pieceController = shipInstance!.VehiclePiecesController;
+    var pieceController = shipInstance!.PiecesController;
     if (pieceController == null) return;
 
     var vehiclePendingPieces =

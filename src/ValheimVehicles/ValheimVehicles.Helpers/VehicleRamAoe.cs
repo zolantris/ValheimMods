@@ -512,9 +512,9 @@ public class VehicleRamAoe : Aoe
     });
   }
 
-  public void UpdateVehicleRamModifier()
+  public void SetVehicleRamModifier(bool isRamEnabled)
   {
-    IsVehicleRam = RamConfig.VehicleHullsAreRams.Value;
+    IsVehicleRam = isRamEnabled;
     RamDamageOverallMultiplier = IsVehicleRam ? 0.5f : 1f;
   }
 
