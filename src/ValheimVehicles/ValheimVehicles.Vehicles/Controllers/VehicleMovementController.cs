@@ -822,9 +822,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// <param name="val"></param>
   public static void SetPhysicsSyncTarget(VehiclePhysicsMode val)
   {
-    PhysicsSyncTarget = val == VehiclePhysicsMode.DesyncedJointRigidbodyBody
-      ? PhysicsTarget.VehiclePieces
-      : PhysicsTarget.VehicleShip;
+    // PhysicsSyncTarget = val == VehiclePhysicsMode.DesyncedJointRigidbodyBody
+    //   ? PhysicsTarget.VehiclePieces
+    // : PhysicsTarget.VehicleShip;
+    PhysicsSyncTarget = PhysicsTarget.VehicleShip;
     foreach (var vehicleMovementController in Instances)
       vehicleMovementController.SetupPhysicsSync();
   }

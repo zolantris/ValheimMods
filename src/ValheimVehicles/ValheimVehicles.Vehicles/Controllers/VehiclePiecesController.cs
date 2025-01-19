@@ -697,15 +697,15 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         localVehiclePhysicsMode)
       SetVehiclePhysicsType(VehiclePhysicsMode.ForceSyncedRigidbody);
 
-    if (flight && localVehiclePhysicsMode ==
-        VehiclePhysicsMode.SyncedRigidbody)
-      SetVehiclePhysicsType(VehiclePhysicsMode
-        .DesyncedJointRigidbodyBody);
+    // if (flight && localVehiclePhysicsMode ==
+    //     VehiclePhysicsMode.SyncedRigidbody)
+    //   SetVehiclePhysicsType(VehiclePhysicsMode
+    //     .DesyncedJointRigidbodyBody);
 
-    if (!flight &&
-        localVehiclePhysicsMode ==
-        VehiclePhysicsMode.DesyncedJointRigidbodyBody)
-      SetVehiclePhysicsType(VehiclePhysicsMode.SyncedRigidbody);
+    // if (!flight &&
+    //     localVehiclePhysicsMode ==
+    //     VehiclePhysicsMode.DesyncedJointRigidbodyBody)
+    //   SetVehiclePhysicsType(VehiclePhysicsMode.SyncedRigidbody);
 
     var mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
 
@@ -835,8 +835,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         );
       else
         m_body.Move(
-          MovementController.m_body.position,
-          GetRotation()
+          VehicleInstance.NetView.GetZDO().GetPosition(),
+          VehicleInstance.NetView.GetZDO().GetRotation()
         );
       // transform.position = MovementController.m_body.position;
       // transform.rotation = GetRotation();
@@ -886,32 +886,33 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         VehicleInstance.NetView == null ||
         VehicleInstance.Instance == null)
       return;
-
-    if (IsPhysicsForceSynced)
-    {
-      KinematicSync();
-      return;
-    }
-
-    if (VehicleMovementController.HasPieceSyncTarget && IsNotFlying)
-    {
-      var vehiclePhysicsOwner = VehicleInstance.NetView.IsOwner();
-      if (vehiclePhysicsOwner)
-        KinematicSync();
-      else if (m_fixedJoint != null) JointSync();
-
-      return;
-    }
-
-    if (localVehiclePhysicsMode ==
-        VehiclePhysicsMode.DesyncedJointRigidbodyBody ||
-        !IsNotFlying)
-    {
-      JointSync();
-      return;
-    }
-
     KinematicSync();
+
+    // if (IsPhysicsForceSynced)
+    // {
+    //   KinematicSync();
+    //   return;
+    // }
+
+    // if (VehicleMovementController.HasPieceSyncTarget && IsNotFlying)
+    // {
+    //   var vehiclePhysicsOwner = VehicleInstance.NetView.IsOwner();
+    //   if (vehiclePhysicsOwner)
+    //     KinematicSync();
+    //   else if (m_fixedJoint != null) JointSync();
+    //
+    //   return;
+    // }
+    //
+    // if (localVehiclePhysicsMode ==
+    //     VehiclePhysicsMode.DesyncedJointRigidbodyBody ||
+    //     !IsNotFlying)
+    // {
+    //   JointSync();
+    //   return;
+    // }
+    //
+    // KinematicSync();
   }
 
   public void CustomUpdate(float deltaTime, float time)
@@ -2273,6 +2274,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
 
     FixPieceMeshes(netView);
+    IgnoreShipColliders(
+      netView.GetComponentsInChildren<Collider>(true).ToList());
     IgnoreCollidersForAllRamPieces(netView);
     IgnoreCollidersForAllAnchorPieces(netView);
 
@@ -2727,18 +2730,18 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     if (list.Count <= 0) return;
     var colliders = netView.GetComponentsInChildren<Collider>();
-    foreach (var piece in list.ToList())
+    foreach (var listItem in list.ToList())
     {
-      if (piece == null)
+      if (listItem == null)
       {
-        list.Remove(piece);
+        list.Remove(listItem);
         continue;
       }
 
-      var pieceColliders = piece.GetComponentsInChildren<Collider>();
+      var listItemColliders = listItem.GetComponentsInChildren<Collider>();
 
       foreach (var collider in colliders)
-      foreach (var pieceCollider in pieceColliders)
+      foreach (var pieceCollider in listItemColliders)
         Physics.IgnoreCollision(collider, pieceCollider, true);
     }
   }
@@ -2763,19 +2766,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     foreach (var t in colliders)
     {
       if (t == null) continue;
+      IgnoreShipColliderForCollider(t);
 
-      // Important so the dynamic-hulls are not considered a collidable object
-      foreach (var convexHullMesh in convexHullMeshes)
-      {
-        var collider = convexHullMesh.GetComponent<Collider>();
-        if (collider != null) Physics.IgnoreCollision(t, collider, true);
-      }
-
-      if (m_floatcollider) Physics.IgnoreCollision(t, m_floatcollider, true);
-      if (m_blockingcollider)
-        Physics.IgnoreCollision(t, m_blockingcollider, true);
-      if (m_onboardcollider)
-        Physics.IgnoreCollision(t, m_onboardcollider, true);
       foreach (var nv in m_pieces.ToList())
       {
         if (!nv)
@@ -2791,31 +2783,34 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
   }
 
-  public void IgnoreShipColliders(List<Collider> colliders)
+  public void IgnoreShipColliderForCollider(Collider collider)
   {
-    foreach (var t in colliders.ToList())
-    {
-      if (t == null) continue;
-      if (m_floatcollider) Physics.IgnoreCollision(t, m_floatcollider, true);
-      if (m_blockingcollider)
-        Physics.IgnoreCollision(t, m_blockingcollider, true);
-      if (m_onboardcollider)
-        Physics.IgnoreCollision(t, m_onboardcollider, true);
-    }
+    if (collider == null) return;
+    foreach (var convexHullMesh in convexHullMeshes)
+      Physics.IgnoreCollision(collider,
+        convexHullMesh.GetComponent<MeshCollider>(),
+        true);
+    if (m_floatcollider)
+      Physics.IgnoreCollision(collider, m_floatcollider, true);
+    if (m_blockingcollider)
+      Physics.IgnoreCollision(collider, m_blockingcollider, true);
+    if (m_onboardcollider)
+      Physics.IgnoreCollision(collider, m_onboardcollider, true);
   }
 
-  /// <summary>
-  /// Should ignore camera jitter, however it does not work yet
-  /// </summary>
-  /// TODO fix this or add a patch to ignore camera collision in roofed boats or when paning and colliding with wheel
-  /// <param name="colliders"></param>
+  public void IgnoreShipColliders(List<Collider> colliders)
+  {
+    foreach (var t in colliders) IgnoreShipColliderForCollider(t);
+  }
+
   public void IgnoreCameraCollision(List<Collider> colliders)
   {
-    var cameraMask = GameCamera.instance.m_blockCameraMask;
-    foreach (var t in colliders.ToList())
+    if (Camera.main == null) return;
+    var cameraCollider = Camera.main.GetComponent<Collider>();
+    foreach (var t in colliders)
     {
       if (t == null) continue;
-      t.excludeLayers |= cameraMask;
+      Physics.IgnoreCollision(t, cameraCollider, true);
     }
   }
 
