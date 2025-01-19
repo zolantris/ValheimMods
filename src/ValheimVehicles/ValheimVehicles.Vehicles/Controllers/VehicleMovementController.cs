@@ -227,12 +227,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
-  public Vector3 floatPointRight;
-  public Vector3 floatPointLeft;
-  public Vector3 floatPointForward;
-  public Vector3 floatPointBackward;
-  public MeshBoundsVisualizer meshBoundsVisualizer;
-
   public static bool IsBallastAndFlightDisabled =>
     !ValheimRaftPlugin.Instance.AllowFlight.Value &&
     !WaterConfig.WaterBallastEnabled.Value;
@@ -845,7 +839,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public void AwakeSetupShipComponents()
   {
     vehicleShip = GetComponent<VehicleShip>();
-    meshBoundsVisualizer = gameObject.AddComponent<MeshBoundsVisualizer>();
     GetRigidbody();
     SetupZsyncTransform();
     SetupPhysicsSync();
@@ -931,68 +924,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     SyncShip();
   }
 
-  /// <summary>
-  /// WIP NOT READY
-  /// </summary>
-  /// <exception cref="ArgumentOutOfRangeException"></exception>
-  public void CalculateFloatPoints()
-  {
-    if (ModEnvironment.IsRelease) return;
-    if (PiecesController == null || !meshBoundsVisualizer) return;
-    // reset everything to defaults.
-    var combinedCenter =
-      PiecesController.transform.position + PiecesController
-        .GetConvexHullRelativeBounds().center;
-    var forward = ShipDirection.forward;
-    var right = ShipDirection.right;
-
-    floatPointForward = combinedCenter + forward;
-    floatPointRight = combinedCenter + right;
-    floatPointBackward = combinedCenter - forward;
-    floatPointLeft = combinedCenter - right;
-
-    // This can be multiple objects, so it's important we end up with the points with the greatest differences in distance IE left to right compared and forward to backward compared
-    foreach (var piecesControllerConvexHullMesh in PiecesController
-               .convexHullMeshes)
-    {
-      var pointWithDirections =
-        meshBoundsVisualizer.CalculateAndVisualizeBounds(
-          piecesControllerConvexHullMesh.GetComponent<MeshCollider>(),
-          ShipDirection);
-
-      foreach (var pointWithDirection in pointWithDirections)
-        switch (pointWithDirection.direction)
-        {
-          case MeshBoundsVisualizer.Direction.Forward:
-            if (Vector3.Distance(floatPointBackward,
-                  pointWithDirection.point) >
-                Vector3.Distance(floatPointBackward, floatPointForward))
-              floatPointForward = pointWithDirection.point;
-            break;
-          case MeshBoundsVisualizer.Direction.Left:
-            if (Vector3.Distance(floatPointRight,
-                  pointWithDirection.point) >
-                Vector3.Distance(floatPointRight, floatPointLeft))
-              floatPointLeft = pointWithDirection.point;
-            break;
-          case MeshBoundsVisualizer.Direction.Right:
-            if (Vector3.Distance(floatPointLeft,
-                  pointWithDirection.point) >
-                Vector3.Distance(floatPointLeft, floatPointRight))
-              floatPointRight = pointWithDirection.point;
-            break;
-          case MeshBoundsVisualizer.Direction.Backward:
-            if (Vector3.Distance(floatPointForward,
-                  pointWithDirection.point) >
-                Vector3.Distance(floatPointForward, floatPointBackward))
-              floatPointBackward = pointWithDirection.point;
-            break;
-          default:
-            throw new ArgumentOutOfRangeException();
-        }
-    }
-  }
-
   public void DEBUG_VisualizeFloatPoint()
   {
     DebugTargetHeightObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -1076,9 +1007,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (PiecesController == null) return 0f;
 
     var bounds = PiecesController.GetConvexHullRelativeBounds();
-    if (direction == Vector3.right) return bounds.size.x / 2;
+    if (bounds == null) return 0f;
 
-    return bounds.size.z / 2;
+    if (direction == Vector3.right) return bounds.Value.size.x / 2;
+
+    return bounds.Value.size.z / 2;
   }
 
   private float GetHighestGroundPoint(ShipFloatation shipFloatation)
@@ -1130,12 +1063,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (PiecesController == null) return;
     var convexHullRelativeBounds =
       PiecesController.GetConvexHullRelativeBounds();
+    if (convexHullRelativeBounds == null) return;
 
     // var expectedLowestBlockingColliderPoint =
     //   BlockingCollider.transform.position.y - BlockingCollider.bounds.extents.y;
     var expectedLowestBlockingColliderPoint =
       PiecesController.transform.position.y +
-      convexHullRelativeBounds.min.y;
+      convexHullRelativeBounds.Value.min.y;
 
     if (IsFlying() || !WaterConfig.WaterBallastEnabled.Value) return;
 
@@ -1162,13 +1096,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // super stuck. do a direct update. But protect the players from being launched. Yikes.
     if (_lastHighestGroundPoint > PiecesController.transform.position.y +
-        convexHullRelativeBounds.center.y)
+        convexHullRelativeBounds.Value.center.y)
     {
       // force updates the vehicle to this position.
       var position = transform.position;
       position = new Vector3(position.x,
         position.y + (_lastHighestGroundPoint -
-                      convexHullRelativeBounds.center.y),
+                      convexHullRelativeBounds.Value.center.y),
         position.z);
       transform.position = position;
       UpdateTargetHeight(0);
@@ -1520,12 +1454,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // todo rename variables for this section to something meaningful
     // todo abstract this to a method
-    var deltaForward = Vector3.Dot(m_body.velocity,
-      shipForward);
-    var deltaRight =
-      Vector3.Dot(m_body.velocity, shipRight);
+    var forward = ShipDirection.forward;
+    var deltaForward = Vector3.Dot(m_body.velocity, forward);
+    var right = ShipDirection.right;
+    var deltaRight = Vector3.Dot(m_body.velocity, right);
     var velocity = m_body.velocity;
-
     var deltaUp = velocity.y * velocity.y * Mathf.Sign(velocity.y) * m_damping *
                   currentDepthForceMultiplier;
 
@@ -1539,11 +1472,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
                           m_dampingSideway *
                           currentDepthForceMultiplier;
 
-    // TODO might want to remove this we have this already at final part of owner sync.
-    // velocity.y -= Mathf.Clamp(deltaUp, -1f, 1f);
-
-    velocity -= ShipDirection.forward * Mathf.Clamp(deltaForwardClamp, -1f, 1f);
-    velocity -= ShipDirection.right * Mathf.Clamp(deltaRightClamp, -1f, 1f);
+    velocity.y -= Mathf.Clamp(deltaUp, -1f, 1f);
+    velocity -= forward * Mathf.Clamp(deltaForwardClamp, -1f, 1f);
+    velocity -= right * Mathf.Clamp(deltaRightClamp, -1f, 1f);
 
     if (velocity.magnitude > m_body.velocity.magnitude)
       velocity = velocity.normalized * m_body.velocity.magnitude;
@@ -1753,18 +1684,16 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var waterLevelCenter =
       Floating.GetWaterLevel(worldCenterOfMass, ref m_previousCenter) +
       clampedTargetHeight;
-    var waterLevelLeft =
-      Floating.GetWaterLevel(shipLeft, ref m_previousLeft) +
-      clampedTargetHeight;
+    var waterLevelLeft = Floating.GetWaterLevel(shipLeft, ref m_previousLeft) +
+                         clampedTargetHeight;
     var waterLevelRight =
       Floating.GetWaterLevel(shipRight, ref m_previousRight) +
       clampedTargetHeight;
     var waterLevelForward =
       Floating.GetWaterLevel(shipForward, ref m_previousForward) +
       clampedTargetHeight;
-    var waterLevelBack =
-      Floating.GetWaterLevel(shipBack, ref m_previousBack) +
-      clampedTargetHeight;
+    var waterLevelBack = Floating.GetWaterLevel(shipBack, ref m_previousBack) +
+                         clampedTargetHeight;
     var averageWaterHeight =
       (waterLevelCenter + waterLevelLeft + waterLevelRight + waterLevelForward +
        waterLevelBack) /
@@ -1777,13 +1706,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     var groundLevelCenter =
       ZoneSystem.instance.GetGroundHeight(worldCenterOfMass);
-    var groundLevelLeft = ZoneSystem.instance.GetGroundHeight(floatPointLeft);
+    var groundLevelLeft = ZoneSystem.instance.GetGroundHeight(shipLeft);
     var groundLevelRight =
-      ZoneSystem.instance.GetGroundHeight(floatPointRight);
+      ZoneSystem.instance.GetGroundHeight(shipRight);
     var groundLevelForward =
-      ZoneSystem.instance.GetGroundHeight(floatPointForward);
-    var groundLevelBack =
-      ZoneSystem.instance.GetGroundHeight(floatPointBackward);
+      ZoneSystem.instance.GetGroundHeight(shipForward);
+    var groundLevelBack = ZoneSystem.instance.GetGroundHeight(shipBack);
 
 
     // floatation point, does not need to be collider, could just be a value in MovementController 
@@ -2260,7 +2188,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (_currentShipFloatation == null) return;
 
     // Stop steering when above the water. Applying force is bad...
-    if (!IsFlying() && !IsSubmerged() &&
+    if (!IsFlying() &&
         _currentShipFloatation.Value.IsAboveBuoyantLevel)
       return;
 
@@ -2725,7 +2653,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // prevents divison of zero
     if (TotalMass <= 0f) TotalMass = 1000f;
 
-    var convexHullBounds = PiecesController.GetConvexHullRelativeBounds();
+    var convexHullBounds = PiecesController.GetConvexHullRelativeBounds() ??
+                           OnboardCollider.bounds;
     // prevent zero value
     var volumeOfShip = Mathf.Max(convexHullBounds.size.x *
                                  convexHullBounds.size.y *

@@ -257,7 +257,7 @@ public static class PhysicsConfig
       Config.Bind(SectionKey, $"waterSidewaysDamping_{DampingResetKey}", 2f,
         dampingSidewaysDescription);
     waterAngularDamping = Config.Bind(SectionKey,
-      $"waterAngularDamping_{DampingResetKey}", 0.2f,
+      $"waterAngularDamping_{DampingResetKey}", 1f,
       dampingAngularDescription);
 
     waterSailForceFactor =

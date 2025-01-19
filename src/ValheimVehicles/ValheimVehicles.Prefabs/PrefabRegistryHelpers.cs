@@ -56,8 +56,7 @@ public abstract class PrefabRegistryHelpers
   public static readonly Dictionary<string, PieceData> PieceDataDictionary =
     new();
 
-  public static VehicleZSyncTransform GetOrAddMovementZSyncTransform(
-    GameObject obj)
+  public static VehicleZSyncTransform GetOrAddMovementZSyncTransform(GameObject obj)
   {
     var zSyncTransform = obj.GetComponent<VehicleZSyncTransform>();
     if (zSyncTransform == null)
@@ -74,10 +73,12 @@ public abstract class PrefabRegistryHelpers
   {
     var netView = obj.GetComponent<ZNetView>();
     if (netView == null)
+    {
       // var prevVal = ZNetView.m_useInitZDO;
       // ZNetView.m_useInitZDO = false;
       netView = obj.AddComponent<ZNetView>();
     // ZNetView.m_useInitZDO = prevVal;
+    }
     if (prioritized) netView.m_type = ZDO.ObjectType.Prioritized;
 
     netView.m_persistent = false;
@@ -389,7 +390,7 @@ public abstract class PrefabRegistryHelpers
     PieceDataDictionary.Add(PrefabNames.ShipHullCenterWoodPrefabName,
       new PieceData()
       {
-        Name = "$valheim_vehicles_hull_center $valheim_vehicles_material_wood",
+        Name = "$valheim_vehicles_hull_center",
         Description = $"$valheim_vehicles_hull_center_desc {woodMatDesc}",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .HullCenterWood)
@@ -398,7 +399,7 @@ public abstract class PrefabRegistryHelpers
     PieceDataDictionary.Add(PrefabNames.ShipHullCenterIronPrefabName,
       new PieceData()
       {
-        Name = "$valheim_vehicles_hull_center $valheim_vehicles_material_iron",
+        Name = "$valheim_vehicles_hull_center",
         Description = $"valheim_vehicles_hull_center_desc {ironMatDesc}",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .HullCenterIron)
@@ -490,7 +491,7 @@ public abstract class PrefabRegistryHelpers
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WindowWallPorthole4x4)
       });
-
+    
     PieceDataDictionary.Add(PrefabNames.WindowWallPorthole8x4Prefab,
       new PieceData()
       {
@@ -540,7 +541,7 @@ public abstract class PrefabRegistryHelpers
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WindowWallSquareIron)
       });
-
+    
     PieceDataDictionary.Add(PrefabNames.ShipAnchorWood,
       new PieceData()
       {
