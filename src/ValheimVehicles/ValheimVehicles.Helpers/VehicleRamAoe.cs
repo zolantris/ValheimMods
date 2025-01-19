@@ -171,7 +171,7 @@ public class VehicleRamAoe : Aoe
     base.OnEnable();
   }
 
-  public new void CustomFixedUpdate(float fixedDeltaTime)
+  public void FixedUpdate(float fixedDeltaTime)
   {
     if ((UnityEngine.Object)m_nview != (UnityEngine.Object)null &&
         !m_nview.IsOwner())
@@ -443,9 +443,23 @@ public class VehicleRamAoe : Aoe
 
     if (collider.transform.root != transform.root) return false;
     if (vehicle != null)
-      // allows for hitting other vehicles, excludes hitting current vehicle
-      if (collider.transform.root != vehicle.transform.root)
+    {
+      if (vehicle.PiecesController != null &&
+          vehicle.PiecesController.transform == collider.transform.root)
+      {
+        IgnoreCollider(collider);
         return false;
+      }
+
+      // allows for hitting other vehicles, excludes hitting current vehicle
+      if (collider.transform.root == vehicle.transform.root)
+      {
+        IgnoreCollider(collider);
+        return false;
+      }
+
+      return false;
+    }
 
     IgnoreCollider(collider);
     return true;

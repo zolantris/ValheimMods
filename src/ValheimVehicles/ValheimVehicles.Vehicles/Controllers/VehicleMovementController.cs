@@ -13,6 +13,7 @@ using ValheimVehicles.Constants;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles.Components;
@@ -192,6 +193,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private Ship.Speed VehicleSpeed => GetSpeedSetting();
 
   public Transform ShipDirection { get; set; } = null!;
+  public Transform DamageColliders = null!;
 
   public static List<VehicleMovementController> Instances { get; } = [];
 
@@ -240,10 +242,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public bool CanDescend =>
     (WaterConfig.WaterBallastEnabled.Value && IsNotFlying) || IsFlying();
 
-  private new void Awake()
+  internal override void Awake()
   {
     AwakeSetupShipComponents();
-
+    DamageColliders = VehicleShip.GetVehicleMovementDamageColliders(transform);
     m_nview = GetComponent<ZNetView>();
 
     var excludedLayers = LayerMask.GetMask("piece", "piece_nonsolid");
@@ -2126,6 +2128,27 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return shipAdditiveSteerForce;
   }
 
+  /// <summary>
+  /// For adding a single AOE component in the top level collider component for meshcolliders.
+  /// TODO determine if this is best place for this function.
+  ///
+  /// This does not need to be tracked as a Ram piece as every gameobject added to this PiecesController ignores the meshColliders provided
+  /// </summary>
+  public void AddRamAoeToConvexHull()
+  {
+    var aoeRam = GetComponent<VehicleRamAoe>();
+
+    if (aoeRam == null)
+      aoeRam = DamageColliders.gameObject
+        .AddComponent<VehicleRamAoe>();
+
+    // negative check, should never hit this...
+    if (aoeRam == null) return;
+    if (aoeRam.m_nview == null) aoeRam.m_nview = m_nview;
+
+    aoeRam.RamType = RamPrefabs.RamType.Blade;
+    aoeRam.SetVehicleRamModifier(RamConfig.VehicleHullsAreRams.Value);
+  }
 
   public Vector3 GetRudderPosition()
   {

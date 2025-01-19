@@ -128,6 +128,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public List<GameObject> convexHullMeshes =>
     convexHullComponent.convexHullMeshes;
 
+  public List<GameObject> convexHullTriggerMeshes =>
+    convexHullComponent.convexHullTriggerMeshes;
+
+  public List<Collider> convexHullTriggerColliders = [];
+
   private Bounds? _cachedConvexHullBounds;
 
   private void UpdateConvexHullBounds()
@@ -2294,7 +2299,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     var nvName = netView.name;
     var nvColliders = netView.GetComponentsInChildren<Collider>(true).ToList();
+    convexHullTriggerColliders = MovementController.DamageColliders
+      .GetComponents<Collider>().ToList();
+
     if (nvColliders.Count == 0) return;
+
 
     // main ship colliders like the generated meshes and onboard collider
     IgnoreShipColliders(nvColliders);
@@ -2560,38 +2569,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     return false;
   }
 
-
-  private List<VehicleRamAoe> convexHullRamComponents = [];
-
-  /// <summary>
-  /// For adding a single AOE component in the top level collider component for meshcolliders.
-  /// TODO determine if this is best place for this function.
-  ///
-  /// This does not need to be tracked as a Ram piece as every gameobject added to this PiecesController ignores the meshColliders provided
-  /// </summary>
-  public void AddRamAoeToConvexHull()
-  {
-    if (VehicleInstance?.Instance == null) return;
-    var vehicleMovementCollidersTransform =
-      VehicleInstance.Instance.vehicleMovementCollidersTransform;
-
-    var aoeRam =
-      vehicleMovementCollidersTransform.GetComponent<VehicleRamAoe>();
-
-    if (aoeRam == null)
-      aoeRam = vehicleMovementCollidersTransform.gameObject
-        .AddComponent<VehicleRamAoe>();
-
-    // negative check, should never hit this...
-    if (aoeRam == null) return;
-
-    aoeRam.RamType = RamPrefabs.RamType.Blade;
-    aoeRam.SetVehicleRamModifier(RamConfig.VehicleHullsAreRams.Value);
-  }
-
   public void RebuildConvexHull()
   {
-    if (VehicleInstance?.Instance == null) return;
+    if (VehicleInstance?.Instance == null || MovementController == null) return;
     var vehicleMovementCollidersTransform =
       VehicleInstance.Instance.vehicleMovementCollidersTransform;
     var nvChildGameObjects = m_pieces.Select(x => x.gameObject)
@@ -2604,12 +2584,16 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       .GenerateMeshesFromChildColliders(
         vehicleMovementCollidersTransform.gameObject,
         PhysicsConfig.convexHullJoinDistanceThreshold.Value,
-        nvChildGameObjects);
+        nvChildGameObjects, MovementController.DamageColliders);
 
-    if (RamConfig.VehicleHullsAreRams.Value) AddRamAoeToConvexHull();
+    if (RamConfig.VehicleHullsAreRams.Value)
+      MovementController.AddRamAoeToConvexHull();
 
     UpdateConvexHullBounds();
 
+    convexHullTriggerColliders = MovementController.DamageColliders
+      .GetComponents<Collider>().ToList();
+    IgnoreShipColliders(convexHullTriggerColliders);
     IgnoreVehicleCollidersForAllPieces();
   }
 
@@ -2835,6 +2819,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void IgnoreShipColliderForCollider(Collider collider)
   {
     if (collider == null) return;
+    foreach (var triggerCollider in convexHullTriggerColliders)
+      Physics.IgnoreCollision(collider, triggerCollider, true);
     foreach (var convexHullMesh in convexHullMeshes)
       Physics.IgnoreCollision(collider,
         convexHullMesh.GetComponent<MeshCollider>(),

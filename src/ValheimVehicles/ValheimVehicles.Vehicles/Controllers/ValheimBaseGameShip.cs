@@ -117,7 +117,7 @@ public class ValheimBaseGameShip : MonoBehaviour
   internal float m_rudderPaddleTimer;
 
 
-  internal void Awake()
+  internal virtual void Awake()
   {
     m_nview = GetComponent<ZNetView>();
 

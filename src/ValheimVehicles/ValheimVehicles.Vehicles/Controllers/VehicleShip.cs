@@ -142,6 +142,12 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     return prefabRoot.Find("vehicle_movement");
   }
 
+  public static Transform GetVehicleMovementDamageColliders(
+    Transform prefabRoot)
+  {
+    return prefabRoot.Find("vehicle_movement/damage_colliders");
+  }
+
   public static void OnAllowFlight(object sender, EventArgs eventArgs)
   {
     foreach (var vehicle in AllVehicles)
