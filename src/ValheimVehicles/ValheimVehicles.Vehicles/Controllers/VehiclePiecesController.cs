@@ -2265,18 +2265,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
   }
 
-  public void AddPiece(ZNetView netView, bool isNew = false)
+  /// <summary>
+  /// The main event for adding collider ignores when pieces are added.
+  /// </summary>
+  public void OnAddPieceIgnoreColliders(ZNetView netView)
   {
-    if (!(bool)netView)
-    {
-      Logger.LogError("netView does not exist but somehow called AddPiece()");
-      return;
-    }
-
     var nvName = netView.name;
     var nvColliders = netView.GetComponentsInChildren<Collider>(true).ToList();
-
-    FixPieceMeshes(netView);
+    if (nvColliders.Count == 0) return;
 
     // main ship colliders like the generated meshes and onboard collider
     IgnoreShipColliders(nvColliders);
@@ -2288,6 +2284,18 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     // rams must always have new pieces added to their list ignored. So that the new piece does not hit the ram.
     IgnoreCollidersForAllRamPieces(netView);
     IgnoreCollidersForAllAnchorPieces(netView);
+  }
+
+  public void AddPiece(ZNetView netView, bool isNew = false)
+  {
+    if (!(bool)netView)
+    {
+      Logger.LogError("netView does not exist but somehow called AddPiece()");
+      return;
+    }
+
+    FixPieceMeshes(netView);
+    OnAddPieceIgnoreColliders(netView);
 
     var shouldRebuildBounds = false;
     totalSailArea = 0;
@@ -2536,6 +2544,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   /// <summary>
   /// For adding a single AOE component in the top level collider component for meshcolliders.
   /// TODO determine if this is best place for this function.
+  ///
+  /// This does not need to be tracked as a Ram piece as every gameobject added to this PiecesController ignores the meshColliders provided
   /// </summary>
   public void AddRamAoeToConvexHull()
   {
@@ -2555,8 +2565,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void RebuildConvexHull()
   {
     if (VehicleInstance?.Instance == null) return;
-
-    Physics.SyncTransforms();
+    var vehicleCollidersParentObj =
+      VehicleShip.GetVehicleMovementCollidersObj(transform);
     var nvChildGameObjects = m_pieces.Select(x => x.gameObject)
       .Where(x => !IsExcludedBoundsItem(x.gameObject.name)).ToList();
     if (WaterConfig.HasUnderwaterHullBubbleEffect.Value)
@@ -2564,7 +2574,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       convexHullComponent.previewScale = new Vector3(1.05f, 1.05f, 1.05f);
 
     convexHullComponent
-      .GenerateMeshesFromChildColliders(VehicleInstance.Instance.gameObject,
+      .GenerateMeshesFromChildColliders(vehicleCollidersParentObj,
         PhysicsConfig.convexHullJoinDistanceThreshold.Value,
         nvChildGameObjects);
 
@@ -2580,6 +2590,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void RebuildBounds()
   {
     if (!isActiveAndEnabled) return;
+    Physics.SyncTransforms();
+
     RebuildConvexHull();
 
     if (!(bool)m_floatcollider || !(bool)m_onboardcollider ||
@@ -2589,7 +2601,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     RotateVehicleForwardPosition();
 
     // messing with collider bounds requires syncing outside a physics update
-    Physics.SyncTransforms();
     _pendingHullBounds = new Bounds();
     _pendingVehicleBounds = new Bounds();
 
@@ -2621,6 +2632,15 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
 
     OnBoundsChangeUpdateShipColliders();
+  }
+
+  public void IgnoreVehicleCollidersForAllPieces()
+  {
+    foreach (var zNetView in m_pieces)
+    {
+      var colliders = zNetView.GetComponentsInChildren<Collider>();
+      IgnoreShipColliders(colliders.ToList());
+    }
   }
 
   /// <summary>
@@ -2760,6 +2780,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     Physics.SyncTransforms();
   }
 
+  public void IgnoreNetViewCollidersForList(ZNetView netView,
+    List<ZNetView> list)
+  {
+    IgnoreCollidersForList(
+      netView.GetComponentsInChildren<Collider>(true).ToList(), list);
+  }
+
   public void IgnoreCollidersForList(List<Collider> colliders,
     List<ZNetView> list)
   {
@@ -2782,39 +2809,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public void IgnoreCollidersForAllAnchorPieces(ZNetView netView)
   {
-    IgnoreCollidersForList(netView, m_anchorPieces);
+    IgnoreNetViewCollidersForList(netView, m_anchorPieces);
   }
 
   public void IgnoreCollidersForAllRamPieces(ZNetView netView)
   {
-    IgnoreCollidersForList(netView, m_ramPieces);
-  }
-
-
-  /// <summary>
-  /// Ignore all colliders on the vehicleShip for objects like Rams or Anchors that can cause trouble
-  /// </summary>
-  /// <param name="colliders">Colliders from a Ram</param>
-  public void IgnoreCollidersOnShipForCollection(List<Collider> colliders)
-  {
-    foreach (var t in colliders)
-    {
-      if (t == null) continue;
-      IgnoreShipColliderForCollider(t);
-
-      foreach (var nv in m_pieces.ToList())
-      {
-        if (!nv)
-        {
-          m_pieces.Remove(nv);
-          continue;
-        }
-
-        var nvColliders = nv.GetComponentsInChildren<Collider>();
-        foreach (var nvCollider in nvColliders)
-          Physics.IgnoreCollision(t, nvCollider, true);
-      }
-    }
+    IgnoreNetViewCollidersForList(netView, m_ramPieces);
   }
 
   public void IgnoreShipColliderForCollider(Collider collider)
@@ -2885,7 +2885,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       return null;
 
     var outputBounds = new Bounds(boundsCenter, boundsSize);
-    var colliders = netView.GetComponentsInChildren<Collider>();
+    var colliders = netView.GetComponentsInChildren<Collider>(false);
 
     // filters only physical layers
     var filteredColliders =
@@ -2906,12 +2906,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   /// If only including active colliders, this would cause a problem if a WearNTear Piece updated its object and the collider began interacting with the vehicle 
   /// <param name="netView"></param>
   /// <returns></returns>
-  public static List<Collider> GetCollidersInPiece(GameObject netView)
+  public static List<Collider> GetCollidersInPiece(GameObject netView,
+    bool includeInactive = true)
   {
-    // var piece = netView.GetComponent<Piece>();
-    // return piece
-    //   ? piece.GetAllColliders()
-    return [..netView.GetComponentsInChildren<Collider>(false)];
+    return [..netView.GetComponentsInChildren<Collider>(includeInactive)];
   }
 
 /*
@@ -2920,15 +2918,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
  */
   public Bounds EncapsulateBounds(GameObject go, Bounds tempBounds)
   {
-    var colliders = GetCollidersInPiece(go);
-
-    if (RamPrefabs.IsRam(go.name))
-      IgnoreCollidersOnShipForCollection(colliders);
-    if (go.name.Contains(PrefabNames.ShipAnchorWood))
-      IgnoreCollidersOnShipForCollection(colliders);
-
-    IgnoreShipColliders(colliders);
-
     var door = go.GetComponentInChildren<Door>();
     var ladder = go.GetComponent<RopeLadderComponent>();
     var isRope = go.name.Equals(PrefabNames.MBRopeLadder);
