@@ -748,16 +748,25 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   // for adding additional multiplier within lower ranges so angle gets to expected value quicker.
   public static float rotationLeanMultiplier = 1.5f;
 
+  private bool cachedIsNetviewOwner = false;
+
   /// <summary>
   /// Adds a leaning effect similar to sailing when wind is starboard/port pushing upwards/downwards. Cosmetic only to the ship. SailPower controls lean effect. Zero sails will not influence it.
   /// </summary>
   /// <returns></returns>
-  public Quaternion GetRotation()
+  public Quaternion GetRotationWithLean()
   {
-    if (MovementController == null) return Quaternion.identity;
+    if (MovementController == null || VehicleInstance?.NetView == null)
+      return Quaternion.identity;
 
+    var baseRotation = cachedIsNetviewOwner
+      ? MovementController.m_body.rotation
+      : VehicleInstance.NetView.GetZDO().GetRotation();
     if (!PropulsionConfig.EXPERIMENTAL_LeanTowardsWindSailDirection.Value)
-      return MovementController.m_body.rotation;
+      return baseRotation;
+
+    // no leaning when no sails.
+    if (m_sailPieces.Count == 0) return baseRotation;
 
     // Normalize wind direction to [0, 360]
     var windDirection = Mathf.Repeat(MovementController.GetWindAngle(), 360f);
@@ -797,16 +806,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       PropulsionConfig.EXPERIMENTAL_LeanTowardsWindSailDirectionMaxAngle.Value);
 
     // Apply the rotation based on the computed sail lean angle
-    return MovementController.m_body.rotation *
+    return baseRotation *
            Quaternion.Euler(0f, 0f, sailLeanAngle);
-  }
-
-  public void SyncOwner()
-  {
-    // if (VehicleInstance?.NetView != null && tempZNetView != null && tempZNetView.GetZDO().Owner != VehicleInstance.NetView.GetZDO().Owner)
-    // {
-    //   tempZNetView.GetZDO().SetOwner(VehicleInstance.NetView.GetZDO().GetOwner());
-    // }
   }
 
   public void KinematicSync()
@@ -825,21 +826,16 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     if (VehicleInstance?.NetView != null)
     {
-      if (VehicleInstance.NetView.IsOwner())
-        // var vehicleTransform = VehicleInstance.Instance.transform;
-        // transform.position = vehicleTransform.position;
-        // transform.rotation = vehicleTransform.rotation;
-        m_body.Move(
-          MovementController.m_body.position,
-          GetRotation()
-        );
-      else
-        m_body.Move(
-          VehicleInstance.NetView.GetZDO().GetPosition(),
-          VehicleInstance.NetView.GetZDO().GetRotation()
-        );
-      // transform.position = MovementController.m_body.position;
-      // transform.rotation = GetRotation();
+      var rotation = GetRotationWithLean();
+      var position = cachedIsNetviewOwner
+        ? MovementController.m_body.position
+        // We use the vehicle zdo position and GetRotation is shared.
+        : VehicleInstance.NetView.GetZDO().GetPosition();
+
+      m_body.Move(
+        position,
+        rotation
+      );
     }
   }
 
@@ -886,8 +882,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         VehicleInstance.NetView == null ||
         VehicleInstance.Instance == null)
       return;
-    KinematicSync();
 
+    KinematicSync();
     // if (IsPhysicsForceSynced)
     // {
     //   KinematicSync();
@@ -936,15 +932,19 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public void CustomFixedUpdate(float deltaTime)
   {
-    UpdateBedPieces();
-    SyncOwner();
+    if (VehicleInstance?.NetView == null) return;
+    cachedIsNetviewOwner = VehicleInstance.NetView.IsOwner();
     Sync();
   }
 
   public void CustomLateUpdate(float deltaTime)
   {
     // Sync();
-    if (!ZNet.instance.IsServer()) Client_UpdateAllPieces();
+    if (!ZNet.instance.IsServer())
+    {
+      Client_UpdateAllPieces();
+      UpdateBedPieces();
+    }
   }
 
   /// <summary>
@@ -2273,9 +2273,19 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       return;
     }
 
+    var nvName = netView.name;
+    var nvColliders = netView.GetComponentsInChildren<Collider>(true).ToList();
+
     FixPieceMeshes(netView);
-    IgnoreShipColliders(
-      netView.GetComponentsInChildren<Collider>(true).ToList());
+
+    // main ship colliders like the generated meshes and onboard collider
+    IgnoreShipColliders(nvColliders);
+
+    // all pieces
+    if (RamPrefabs.IsRam(nvName) || nvName.Contains(PrefabNames.ShipAnchorWood))
+      IgnoreCollidersForList(nvColliders, m_pieces);
+
+    // rams must always have new pieces added to their list ignored. So that the new piece does not hit the ram.
     IgnoreCollidersForAllRamPieces(netView);
     IgnoreCollidersForAllAnchorPieces(netView);
 
@@ -2520,6 +2530,28 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     return false;
   }
 
+
+  private List<VehicleRamAoe> convexHullRamComponents = [];
+
+  /// <summary>
+  /// For adding a single AOE component in the top level collider component for meshcolliders.
+  /// TODO determine if this is best place for this function.
+  /// </summary>
+  public void AddRamAoeToConvexHull()
+  {
+    var vehicleCollidersParentObj =
+      VehicleShip.GetVehicleMovementCollidersObj(transform);
+    var aoeRam = vehicleCollidersParentObj.GetComponent<VehicleRamAoe>();
+    if (aoeRam == null)
+      aoeRam = vehicleCollidersParentObj.AddComponent<VehicleRamAoe>();
+
+    // negative check, should never hit this...
+    if (aoeRam == null) return;
+
+    aoeRam.RamType = RamPrefabs.RamType.Blade;
+    aoeRam.UpdateVehicleRamModifier();
+  }
+
   public void RebuildConvexHull()
   {
     if (VehicleInstance?.Instance == null) return;
@@ -2535,6 +2567,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       .GenerateMeshesFromChildColliders(VehicleInstance.Instance.gameObject,
         PhysicsConfig.convexHullJoinDistanceThreshold.Value,
         nvChildGameObjects);
+
+    if (RamConfig.VehicleHullsAreRams.Value) AddRamAoeToConvexHull();
 
     UpdateConvexHullBounds();
   }
@@ -2726,11 +2760,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     Physics.SyncTransforms();
   }
 
-  public void IgnoreCollidersForList(ZNetView netView, List<ZNetView> list)
+  public void IgnoreCollidersForList(List<Collider> colliders,
+    List<ZNetView> list)
   {
     if (list.Count <= 0) return;
-    var colliders = netView.GetComponentsInChildren<Collider>();
-    foreach (var listItem in list.ToList())
+    foreach (var listItem in list)
     {
       if (listItem == null)
       {

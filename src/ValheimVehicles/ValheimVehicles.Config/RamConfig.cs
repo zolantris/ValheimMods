@@ -12,6 +12,7 @@ public static class RamConfig
   public static ConfigEntry<float>
     DamageIncreasePercentagePerTier { get; set; } = null!;
 
+  public static ConfigEntry<bool> VehicleHullsAreRams { get; set; } = null!;
   public static ConfigEntry<float> HitRadius { get; set; } = null!;
   public static ConfigEntry<float> RamBaseSlashDamage { get; set; } = null!;
   public static ConfigEntry<float> RamBaseBluntDamage { get; set; } = null!;
@@ -207,6 +208,13 @@ public static class RamConfig
       100,
       ConfigHelpers.CreateConfigDescription(
         "The tier damage a vehicle can do to a rock or other object it hits. To be balanced this should be a lower value IE (1) bronze. But ashlands will require a higher tier to smash spires FYI.",
+        true, true));
+
+    VehicleHullsAreRams = config.Bind(SectionName,
+      "VehicleHullsAreRams",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "Each vehicle has a Ram added it's mesh. Vehicle hull ram damage is calculated with different values.",
         true, true));
 
     const int tierDiff = 2;

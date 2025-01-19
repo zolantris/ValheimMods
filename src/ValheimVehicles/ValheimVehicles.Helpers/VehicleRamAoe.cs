@@ -29,6 +29,9 @@ public class VehicleRamAoe : Aoe
   public VehicleShip? vehicle;
   public RamPrefabs.RamType RamType;
 
+  public bool IsVehicleRam = false;
+  private float RamDamageOverallMultiplier = 1f;
+
   // damages
   public static int RamDamageToolTier = RamConfig.RamDamageToolTier.Value;
   public static float RamHitArea = RamConfig.HitRadius.Value;
@@ -346,7 +349,7 @@ public class VehicleRamAoe : Aoe
     if (relativeVelocityMagnitude < minimumVelocityToTriggerHit) return false;
 
     var multiplier = Mathf.Min(relativeVelocityMagnitude * 0.5f,
-      MaxVelocityMultiplier);
+      MaxVelocityMultiplier) * RamDamageOverallMultiplier;
 
     if (materialTier == PrefabTiers.Tier3)
       multiplier *= Mathf.Clamp(1 + DamageIncreasePercentagePerTier * 2, 1, 4);
@@ -507,6 +510,12 @@ public class VehicleRamAoe : Aoe
       m_chop = RamBaseChopDamage,
       m_pickaxe = RamBasePickAxeDamage
     });
+  }
+
+  public void UpdateVehicleRamModifier()
+  {
+    IsVehicleRam = RamConfig.VehicleHullsAreRams.Value;
+    RamDamageOverallMultiplier = IsVehicleRam ? 0.5f : 1f;
   }
 
   public static void OnBaseSettingsChange(object sender, EventArgs eventArgs)
