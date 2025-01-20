@@ -459,6 +459,7 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
     m_hitData = hitData;
   }
 
+
   public void OnCollisionEnter(Collision collision)
   {
     CauseTriggerDamage(collision.collider, true);

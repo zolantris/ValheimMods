@@ -35,7 +35,6 @@ public class VehicleRamAoe : ValheimAoe
 
   // damages
   public static int RamDamageToolTier = RamConfig.RamDamageToolTier.Value;
-  public static float RamHitArea = RamConfig.HitRadius.Value;
 
   public static float PercentageDamageToSelf =
     RamConfig.PercentageDamageToSelf.Value;
@@ -155,11 +154,6 @@ public class VehicleRamAoe : ValheimAoe
 
     Invoke(nameof(UpdateReadyForCollisions), 1f);
     base.OnEnable();
-  }
-
-  public void FixedUpdate()
-  {
-    CustomFixedUpdate(Time.fixedDeltaTime);
   }
 
   public void UpdateReadyForCollisions()
@@ -414,6 +408,9 @@ public class VehicleRamAoe : ValheimAoe
     m_isVehicleRam = isRamEnabled;
     RamDamageOverallMultiplier = m_isVehicleRam ? 0.5f : 1f;
     m_triggerEnterOnly = false;
+
+    // vehicles need much more radius to effectively hit
+    m_radius = Mathf.Clamp(m_radius, 10f, 50f);
     InitAoe();
   }
 
@@ -450,7 +447,6 @@ public class VehicleRamAoe : ValheimAoe
         continue;
       }
 
-      RamHitArea = RamConfig.HitRadius.Value;
       instance.SetBaseDamageFromConfig();
       instance.InitAoe();
     }

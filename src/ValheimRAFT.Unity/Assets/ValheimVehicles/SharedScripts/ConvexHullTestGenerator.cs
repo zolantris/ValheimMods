@@ -4,6 +4,9 @@ using JetBrains.Annotations;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
+// ReSharper disable ArrangeNamespaceBody
+
+// ReSharper disable NamespaceStyle
 namespace ValheimVehicles.SharedScripts
 {
   /// <summary>
@@ -82,6 +85,12 @@ namespace ValheimVehicles.SharedScripts
       foreach (var convexHullMesh in _convexHullAPI.convexHullMeshes)
       {
         var meshCollider = convexHullMesh.GetComponent<MeshCollider>();
+        // EncapsulateMeshCollider(meshCollider, sphereEncapsulationBuffer,
+        //   out var center,
+        //   out var radius);
+        // Gizmos.color = Color.green;
+        // Gizmos.DrawWireSphere(center, radius);
+
         if (meshCollider != null && meshCollider.sharedMesh != null)
           // Calculate bounds
           _meshBoundsVisualizer.CalculateAndVisualizeBounds(meshCollider,
@@ -106,10 +115,9 @@ namespace ValheimVehicles.SharedScripts
     {
       // static setters
       ConvexHullAPI.UseWorld = useWorld;
-      ConvexHullAPI.PreviewMode = ConvexHullAPI.PreviewModes.Debug;
-      ConvexHullAPI.DebugOriginalMesh = debugOriginalMesh;
 
       if (_convexHullAPI == null) return;
+      // _convexHullAPI.PreviewMode = ConvexHullAPI.PreviewModes.Debug;
 
       // local setters
       _convexHullAPI.transformPreviewOffset =
@@ -130,7 +138,14 @@ namespace ValheimVehicles.SharedScripts
 
       _convexHullAPI.GenerateMeshesFromChildColliders(
         convexHullParentGameObject,
-        distanceThreshold, childGameObjects.ToList(), null);
+        distanceThreshold, childGameObjects.ToList());
+    }
+
+    private void DrawSphere(Vector3 center, float radius)
+    {
+      // Visualize the sphere in the Scene view
+      Gizmos.color = Color.green;
+      Gizmos.DrawWireSphere(center, radius);
     }
 
     public void Cleanup()

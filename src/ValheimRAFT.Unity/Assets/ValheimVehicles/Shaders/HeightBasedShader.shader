@@ -5,6 +5,7 @@ Shader "Custom/HeightBasedShader"
         _MainTex ("Texture", 2D) = "white" {}
         _Color ("Color", Color) = (1, 1, 1, 0)
         _MaxHeight ("Max Height", Float) = 30.0
+        //        [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull", Int) = 0
     }
 
     SubShader
@@ -16,7 +17,7 @@ Shader "Custom/HeightBasedShader"
             "Queue"="Overlay" // Changed queue to Overlay to render after opaque geometry
         }
         LOD 100
-        Cull Off
+        Cull Front
         ZWrite Off
         Fog
         {
@@ -33,5 +34,5 @@ Shader "Custom/HeightBasedShader"
         }
     }
 
-    Fallback "Unlit/Transparent"
+    Fallback "Diffuse"
 }

@@ -16,7 +16,7 @@ namespace ValheimVehicles.Vehicles.Components;
 
 public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 {
-  GUIStyle? myButtonStyle;
+  private GUIStyle? myButtonStyle;
   private string ShipMovementOffsetText;
   private Vector3 _shipMovementOffset;
 
@@ -47,13 +47,9 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       VehiclePiecesController.DEBUGAllowActivatePendingPieces =
         !VehiclePiecesController.DEBUGAllowActivatePendingPieces;
       if (VehiclePiecesController.DEBUGAllowActivatePendingPieces)
-      {
         foreach (var vehiclePiecesController in VehiclePiecesController
                    .ActiveInstances.Values)
-        {
           vehiclePiecesController.StartActivatePendingPieces();
-        }
-      }
     }
 
     // if (GUILayout.Button(
@@ -79,10 +75,8 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     {
       var currentShip = VehicleDebugHelpers.GetVehiclePiecesController();
       if (currentShip != null)
-      {
         ZNetScene.instance.Destroy(currentShip?.VehicleInstance?.NetView?
           .gameObject);
-      }
     }
 
     if (GUILayout.Button("Set logoutpoint"))
@@ -91,34 +85,23 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
         .GetComponentInParent<VehiclePiecesController>()?.VehicleInstance
         ?.NetView?
         .GetZDO();
-      if (zdo != null)
-      {
-        PlayerSpawnController.Instance?.SyncLogoutPoint(zdo);
-      }
+      if (zdo != null) PlayerSpawnController.Instance?.SyncLogoutPoint(zdo);
     }
 
     if (GUILayout.Button("Move to current spawn"))
-    {
       PlayerSpawnController.Instance?.DEBUG_MoveTo(LocationVariation
         .Spawn);
-    }
 
     if (GUILayout.Button("Move to current logout"))
-    {
       PlayerSpawnController.Instance?.DEBUG_MoveTo(LocationVariation
         .Logout);
-    }
 
     if (GUILayout.Button("DebugFind PlayerSpawnController"))
     {
       var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
       foreach (var obj in allObjects)
-      {
         if (obj.name.Contains($"{PrefabNames.PlayerSpawnControllerObj}(Clone)"))
-        {
           Logger.LogDebug("found playerSpawn controller");
-        }
-      }
     }
 
     GUILayout.EndArea();
@@ -133,18 +116,21 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       var currentInstance = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
 
       if (!currentInstance)
-      {
         currentInstance = VehicleDebugHelpers.GetOnboardMBRaftDebugHelper();
-      }
 
-      if (!currentInstance)
-      {
-        return;
-      }
+      if (!currentInstance) return;
 
+      var convexHullComponent = currentInstance.VehicleShipInstance
+        .PiecesController.convexHullComponent;
       // Just a 3 mode loop
-      ConvexHullAPI.PreviewMode = ConvexHullAPI.PreviewMode == ConvexHullAPI.PreviewModes.None ? ConvexHullAPI.PreviewModes.Bubble : ConvexHullAPI.PreviewMode == ConvexHullAPI.PreviewModes.Bubble ? ConvexHullAPI.PreviewModes.Debug : ConvexHullAPI.PreviewModes.Bubble;
-      
+      convexHullComponent.PreviewMode =
+        convexHullComponent.PreviewMode switch
+        {
+          ConvexHullAPI.PreviewModes.None => ConvexHullAPI.PreviewModes.Bubble,
+          ConvexHullAPI.PreviewModes.Bubble => ConvexHullAPI.PreviewModes.Debug,
+          _ => ConvexHullAPI.PreviewModes.Bubble
+        };
+
       currentInstance.VehicleShipInstance.PiecesController.convexHullComponent
         .CreatePreviewConvexHullMeshes();
     }
@@ -156,38 +142,25 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       var currentInstance = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
 
       if (!currentInstance)
-      {
         currentInstance = VehicleDebugHelpers.GetOnboardMBRaftDebugHelper();
-      }
 
-      if (!currentInstance)
-      {
-        return;
-      }
+      if (!currentInstance) return;
 
       currentInstance?.StartRenderAllCollidersLoop();
     }
 
     if (GUILayout.Button("raftcreative"))
-    {
       CreativeModeConsoleCommand.RunCreativeModeCommand("raftcreative");
-    }
 
     if (GUILayout.Button("activatePendingPieces"))
-    {
       VehicleDebugHelpers.GetVehiclePiecesController()
         ?.StartActivatePendingPieces();
-    }
 
     if (GUILayout.Button("Zero Ship RotationXZ"))
-    {
       VehicleDebugHelpers.GetOnboardVehicleDebugHelper()?.FlipShip();
-    }
 
     if (GUILayout.Button("Toggle Ocean Sway"))
-    {
       VehicleCommands.VehicleToggleOceanSway();
-    }
 
     GUILayout.EndArea();
   }

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 122573187
+CRC: 2204838294
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 719aaf65f2849b634ea54544443898e0
+    Hash: 6ff939702c7c86511a8f496da7f6149d
   TypeTreeHash:
     serializedVersion: 2
     Hash: 307a0571a905aa8390435e9040d27ed4
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 719aaf65f2849b634ea54544443898e0
+    Hash: 6ff939702c7c86511a8f496da7f6149d
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -156,7 +156,6 @@ Assets:
 - Assets/ValheimVehicles/Material/wood_piece_worn.mat
 - Assets/ValheimVehicles/Prefabs/hull_slab_iron_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_double_wood.prefab
-- Assets/ValheimVehicles/Prefabs/hull_rib_prow_iron_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_wood.prefab
 - Assets/ValheimVehicles/Prefabs/anchor_full_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_nautilus.prefab
@@ -185,7 +184,6 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/anchor_rope_spool.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/ship_compass.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib_prow_2x2.prefab
-- Assets/ValheimVehicles/Prefabs/shared_hull_rib_prow_4x4.prefab
 - Assets/ValheimVehicles/Material/stake.mat
 - Assets/ValheimVehicles/Prefabs/anchor_chain_wheel.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_top.prefab
@@ -234,7 +232,6 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/glass_round_double_sided.prefab
 - Assets/ValheimVehicles/Material/RopeMat.mat
 - Assets/ValheimVehicles/Material/wood_piece_valheim_2x4.mat
-- Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_iron.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_iron_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/anchor_chain.prefab

@@ -250,7 +250,7 @@ public static class RamConfig
     RamDamageToolTier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
 
 
-    HitRadius.SettingChanged += VehicleRamAoe.OnSettingsChanged;
+    HitRadius.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     // Must update damage values only
     RamBaseSlashDamage.SettingChanged += VehicleRamAoe.OnSettingsChanged;
     RamBasePierceDamage.SettingChanged += VehicleRamAoe.OnSettingsChanged;
