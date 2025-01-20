@@ -341,6 +341,18 @@ public class VehicleOnboardController : MonoBehaviour
       RestorePlayerBlockingCamera(player);
   }
 
+  public static void AddOrRemovePlayerBlockingCamera(Player player)
+  {
+    if (WaterZoneUtils.IsOnboard(player))
+    {
+      RemovePlayerBlockingCameraWhileOnboard(player);
+    }
+    else
+    {
+      RestorePlayerBlockingCamera(player);
+    }
+  }
+
   /// <summary>
   /// Prevents jitters. Likely most people will want this feature enabled especially for complicated boats.
   /// </summary>
