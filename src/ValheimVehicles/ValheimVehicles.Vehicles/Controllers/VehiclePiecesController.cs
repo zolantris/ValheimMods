@@ -787,9 +787,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     if (MovementController == null || VehicleInstance?.NetView == null)
       return Quaternion.identity;
 
-    var baseRotation = cachedIsNetviewOwner
-      ? MovementController.m_body.rotation
-      : VehicleInstance.NetView.GetZDO().GetRotation();
+    // var baseRotation = cachedIsNetviewOwner
+    //   ? MovementController.m_body.rotation
+    //   : VehicleInstance.NetView.GetZDO().GetRotation();
+    var baseRotation = MovementController.m_body.rotation;
     if (!PropulsionConfig.EXPERIMENTAL_LeanTowardsWindSailDirection.Value)
       return baseRotation;
 
@@ -855,10 +856,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     if (VehicleInstance?.NetView != null)
     {
       var rotation = GetRotationWithLean();
-      var position = cachedIsNetviewOwner
-        ? MovementController.m_body.position
-        // We use the vehicle zdo position and GetRotation is shared.
-        : VehicleInstance.NetView.GetZDO().GetPosition();
+      var position = MovementController.m_body.position;
+      // var position = cachedIsNetviewOwner
+      //   ? MovementController.m_body.position
+      //   // We use the vehicle zdo position and GetRotation is shared.
+      //   : VehicleInstance.NetView.GetZDO().GetPosition();
 
       m_body.Move(
         position,
