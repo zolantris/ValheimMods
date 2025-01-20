@@ -53,19 +53,12 @@ public class VehicleRamAoe : ValheimAoe
   public static float RamBaseMaximumDamage =>
     RamConfig.RamBaseMaximumDamage.Value;
 
-  public static float RamHitInterval = RamConfig.RamHitInterval.Value;
-
   public static bool AllowContinuousDamage =
     RamConfig.AllowContinuousDamage.Value;
 
   // hit booleans
   public static bool RamsCanHitEnvironmentOrTerrain =
     RamConfig.CanHitEnvironmentOrTerrain.Value;
-
-  public static bool RamsCanHitEnemies = RamConfig.CanHitEnemies.Value;
-  public static bool CanDamageSelf = RamConfig.CanDamageSelf.Value;
-  public static bool RamsCanHitCharacters = RamConfig.CanHitCharacters.Value;
-  public static bool RamsCanHitFriendly = RamConfig.CanHitFriendly.Value;
 
   public float chopDamageRatio;
   public float pickaxeDamageRatio;
@@ -90,35 +83,25 @@ public class VehicleRamAoe : ValheimAoe
   {
     m_blockable = false;
     m_dodgeable = false;
-    m_hitTerrain = RamsCanHitEnvironmentOrTerrain;
-    m_hitProps = RamsCanHitEnvironmentOrTerrain;
-    m_hitCharacters = RamsCanHitCharacters;
-    m_hitFriendly = RamsCanHitFriendly;
-    m_hitEnemy = RamsCanHitEnemies;
-    m_hitParent = CanDamageSelf;
-
-    // todo may need this to do damage to wearntear prefab of the ram
-    // m_hitTerrain = true;
-    // m_hitProps = true;
-    // m_hitCharacters = true;
-    // m_hitFriendly = true;
-    // m_hitEnemy = true;
-    // m_hitParent = true;
-
-    m_hitInterval = Mathf.Clamp(RamHitInterval, 0.5f, 5f);
+    m_hitTerrain = RamConfig.CanHitEnvironmentOrTerrain.Value;
+    m_hitProps = RamConfig.CanHitEnvironmentOrTerrain.Value;
+    m_hitCharacters = RamConfig.CanHitCharacters.Value;
+    m_hitFriendly = RamConfig.CanHitFriendly.Value;
+    m_hitEnemy = RamConfig.CanHitEnemies.Value;
+    m_hitParent = RamConfig.CanDamageSelf.Value;
+    m_hitInterval = Mathf.Clamp(RamConfig.RamHitInterval.Value, 0.5f, 20f);
 
     // todo need to tweak this
-    m_damageSelf = !CanDamageSelf ? 0 : 1;
+    m_damageSelf = !RamConfig.CanDamageSelf.Value ? 0 : 1;
     m_toolTier = RamDamageToolTier;
     m_attackForce = 5;
     m_attackForce = 50;
 
-    m_radius = Mathf.Clamp(RamHitArea, 0.1f, 150f);
+    m_radius = Mathf.Clamp(RamConfig.HitRadius.Value, 0.1f, 150f);
     m_radius *= m_RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f;
 
     m_useTriggers = true;
-    m_triggerEnterOnly = AllowContinuousDamage;
-    m_triggerEnterOnly = true;
+    m_triggerEnterOnly = RamConfig.AllowContinuousDamage.Value;
     m_useCollider = null;
     m_useAttackSettings = true;
     m_ttl = 0;
@@ -176,116 +159,7 @@ public class VehicleRamAoe : ValheimAoe
 
   public void FixedUpdate()
   {
-    if ((UnityEngine.Object)m_nview != (UnityEngine.Object)null &&
-        !m_nview.IsOwner())
-      return;
-    if (m_initRun && !m_useTriggers && !m_hitAfterTtl &&
-        (double)m_activationTimer <= 0.0)
-    {
-      m_initRun = false;
-      if ((double)m_hitInterval <= 0.0)
-        Initiate();
-    }
-
-    if ((UnityEngine.Object)m_owner != (UnityEngine.Object)null &&
-        m_attachToCaster)
-    {
-      transform.position =
-        m_owner.transform.TransformPoint(m_offset);
-      transform.rotation = m_owner.transform.rotation * m_localRot;
-    }
-
-    if ((double)m_activationTimer > 0.0)
-      return;
-    if ((double)m_hitInterval > 0.0 && !m_useTriggers)
-    {
-      m_hitTimer -= Time.fixedDeltaTime;
-      if ((double)m_hitTimer <= 0.0)
-      {
-        m_hitTimer = m_hitInterval;
-        Initiate();
-      }
-    }
-
-    if ((double)m_chainStartChance > 0.0 && (double)m_chainDelay >= 0.0)
-    {
-      m_chainDelay -= Time.fixedDeltaTime;
-      if ((double)m_chainDelay <= 0.0 &&
-          (double)UnityEngine.Random.value < (double)m_chainStartChance)
-      {
-        var position1 = transform.position;
-        FindHits();
-        SortHits();
-        var num1 = UnityEngine.Random.Range(m_chainMinTargets,
-          m_chainMaxTargets + 1);
-        foreach (var hit in s_hitList)
-        {
-          if ((double)UnityEngine.Random.value < (double)m_chainChancePerTarget)
-          {
-            var position2 = hit.gameObject.transform.position;
-            var flag = false;
-            for (var index = 0; index < s_chainObjs.Count; ++index)
-              if ((bool)(UnityEngine.Object)s_chainObjs[index])
-              {
-                if ((double)Vector3.Distance(
-                      s_chainObjs[index].transform.position, position2) <
-                    0.10000000149011612)
-                {
-                  flag = true;
-                  break;
-                }
-              }
-              else
-              {
-                s_chainObjs.RemoveAt(index);
-              }
-
-            if (!flag)
-            {
-              var gameObject1 =
-                Instantiate<GameObject>(m_chainObj,
-                  position2,
-                  hit.gameObject.transform.rotation);
-              s_chainObjs.Add(gameObject1);
-              var componentInChildren =
-                gameObject1.GetComponentInChildren<IProjectile>();
-              if (componentInChildren != null)
-              {
-                componentInChildren.Setup(m_owner, position1.DirTo(position2),
-                  -1f,
-                  m_hitData, m_itemData, m_ammo);
-                if (componentInChildren is Aoe aoe)
-                  aoe.m_chainChance =
-                    m_chainChance * m_chainStartChanceFalloff;
-              }
-
-              --num1;
-              var num2 = Vector3.Distance(position2, transform.position);
-              foreach (var gameObject2 in m_chainEffects.Create(
-                         position1 + Vector3.up,
-                         Quaternion.LookRotation(
-                           position1.DirTo(position2 + Vector3.up))))
-                gameObject2.transform.localScale = Vector3.one * num2;
-            }
-          }
-
-          if (num1 <= 0)
-            break;
-        }
-      }
-    }
-
-    if ((double)m_ttl <= 0.0)
-      return;
-    m_ttl -= Time.fixedDeltaTime;
-    if ((double)m_ttl > 0.0)
-      return;
-    if (m_hitAfterTtl)
-      Initiate();
-    if (!(bool)(UnityEngine.Object)ZNetScene.instance)
-      return;
-    ZNetScene.instance.Destroy(gameObject);
-    return;
+    CustomFixedUpdate(Time.fixedDeltaTime);
   }
 
   public void UpdateReadyForCollisions()
@@ -414,7 +288,11 @@ public class VehicleRamAoe : ValheimAoe
       m_pickaxe = pickaxeDamage
     };
 
-    if (!CanDamageSelf) return true;
+    if (!RamConfig.CanDamageSelf.Value)
+    {
+      m_damageSelf = 0;
+      return true;
+    }
 
     m_damageSelf =
       GetTotalDamage(slashDamage, bluntDamage, chopDamage, pickaxeDamage,
@@ -535,8 +413,6 @@ public class VehicleRamAoe : ValheimAoe
   {
     m_isVehicleRam = isRamEnabled;
     RamDamageOverallMultiplier = m_isVehicleRam ? 0.5f : 1f;
-    // m_hitTerrain = false;
-    // m_chainStartChance = 1.0f;
     m_triggerEnterOnly = false;
     InitAoe();
   }
@@ -574,6 +450,7 @@ public class VehicleRamAoe : ValheimAoe
         continue;
       }
 
+      RamHitArea = RamConfig.HitRadius.Value;
       instance.SetBaseDamageFromConfig();
       instance.InitAoe();
     }

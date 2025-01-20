@@ -118,6 +118,8 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
   public ItemDrop.ItemData m_itemData;
   public ItemDrop.ItemData m_ammo;
   public Rigidbody m_body;
+  public static List<IMonoUpdater> Instances = new();
+
 
   public List<MeshCollider> m_meshColliders = new();
 
@@ -149,15 +151,16 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
     m_chainChance = m_chainStartChance;
   }
 
+
   public virtual void OnEnable()
   {
     m_initRun = true;
-    Aoe.Instances.Add((IMonoUpdater)this);
+    Instances.Add(this);
   }
 
   public virtual void OnDisable()
   {
-    Aoe.Instances.Remove((IMonoUpdater)this);
+    Instances.Remove(this);
   }
 
   public HitData.DamageTypes GetDamage()
@@ -246,17 +249,17 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
         SortHits();
         var num1 =
           UnityEngine.Random.Range(m_chainMinTargets, m_chainMaxTargets + 1);
-        foreach (var hit in Aoe.s_hitList)
+        foreach (var hit in s_hitList)
         {
           if ((double)UnityEngine.Random.value < (double)m_chainChancePerTarget)
           {
             var position2 = hit.gameObject.transform.position;
             var flag = false;
-            for (var index = 0; index < Aoe.s_chainObjs.Count; ++index)
+            for (var index = 0; index < s_chainObjs.Count; ++index)
               if ((bool)(UnityEngine.Object)Aoe.s_chainObjs[index])
               {
                 if ((double)Vector3.Distance(
-                      Aoe.s_chainObjs[index].transform.position, position2) <
+                      s_chainObjs[index].transform.position, position2) <
                     0.10000000149011612)
                 {
                   flag = true;
@@ -265,14 +268,14 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
               }
               else
               {
-                Aoe.s_chainObjs.RemoveAt(index);
+                s_chainObjs.RemoveAt(index);
               }
 
             if (!flag)
             {
               var gameObject1 = Instantiate<GameObject>(m_chainObj, position2,
                 hit.gameObject.transform.rotation);
-              Aoe.s_chainObjs.Add(gameObject1);
+              s_chainObjs.Add(gameObject1);
               var componentInChildren =
                 gameObject1.GetComponentInChildren<IProjectile>();
               if (componentInChildren != null)
@@ -332,7 +335,7 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
     {
       SortHits();
       var targetsFromCenter = m_maxTargetsFromCenter;
-      foreach (var hit in Aoe.s_hitList)
+      foreach (var hit in s_hitList)
       {
         if (OnHit(hit, hit.transform.position))
           --targetsFromCenter;
@@ -342,8 +345,8 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
     }
     else
     {
-      for (var index = 0; index < Aoe.s_hitList.Count; ++index)
-        OnHit(Aoe.s_hitList[index], Aoe.s_hitList[index].transform.position);
+      for (var index = 0; index < s_hitList.Count; ++index)
+        OnHit(Aoe.s_hitList[index], s_hitList[index].transform.position);
     }
   }
 
@@ -352,21 +355,21 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
     m_hitList.Clear();
     // var num = (UnityEngine.Object)m_useCollider != (UnityEngine.Object)null
     //   ? Physics.OverlapBoxNonAlloc(transform.position + m_useCollider.center,
-    //     m_useCollider.size / 2f, Aoe.s_hits, transform.rotation, m_rayMask)
-    //   : Physics.OverlapSphereNonAlloc(transform.position, m_radius, Aoe.s_hits,
+    //     m_useCollider.size / 2f,ValheimAoe.s_hits, transform.rotation, m_rayMask)
+    //   : Physics.OverlapSphereNonAlloc(transform.position, m_radius,ValheimAoe.s_hits,
     //     m_rayMask);
 
     // This must come from the point of impact, not the transform position of the rigidbody.
     var num = Physics.OverlapSphereNonAlloc(transform.position, m_radius,
-      Aoe.s_hits,
+      s_hits,
       m_rayMask);
 
-    Aoe.s_hitList.Clear();
+    s_hitList.Clear();
     for (var index = 0; index < num; ++index)
     {
-      var hit = Aoe.s_hits[index];
+      var hit = s_hits[index];
       if (ShouldHit(hit))
-        Aoe.s_hitList.Add(hit);
+        s_hitList.Add(hit);
     }
   }
 
@@ -405,7 +408,7 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
 
   public void SortHits()
   {
-    Aoe.s_hitList.Sort((Comparison<Collider>)((a, b) =>
+    s_hitList.Sort((Comparison<Collider>)((a, b) =>
       Vector3.Distance(a.transform.position, transform.position)
         .CompareTo(Vector3.Distance(b.transform.position,
           transform.position))));
@@ -481,7 +484,10 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
     if (collision.contactCount <= 0)
     {
       var centerPoint = collision.collider.bounds.center;
-      return m_body.ClosestPointOnBounds(centerPoint);
+      var closestPointToAoe = m_body.ClosestPointOnBounds(centerPoint);
+      var colliderClosestPoint =
+        collision.collider.ClosestPointOnBounds(closestPointToAoe);
+      return m_body.ClosestPointOnBounds(colliderClosestPoint);
     }
 
     var averagePoint = Vector3.zero;
@@ -516,7 +522,10 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
       if (!ShouldHit(collider))
         return;
       var centerPoint = collider.bounds.center;
-      OnHit(collider, m_body.ClosestPointOnBounds(centerPoint));
+      var closestPointToAoe = m_body.ClosestPointOnBounds(centerPoint);
+      var colliderClosestPoint =
+        collider.ClosestPointOnBounds(closestPointToAoe);
+      OnHit(collider, colliderClosestPoint);
     }
   }
 

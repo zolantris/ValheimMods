@@ -151,8 +151,8 @@ public static class RamConfig
 
     HitRadius = config.Bind(SectionName, "HitRadius", 5f,
       ConfigHelpers.CreateConfigDescription(
-        "The base ram hit radius area. Stakes are always half the size, this will hit all pieces within this radius, capped between 0.1 and 10 for balance and framerate stability",
-        true, true));
+        "The base ram hit radius area. Stakes are always half the size, this will hit all pieces within this radius, capped between 5 and 10, but 50 is max. Stakes are half this value. Blades are equivalent to this value.",
+        true, true, new AcceptableValueRange<float>(5f, 50f)));
     RamHitInterval = config.Bind(SectionName, "RamHitInterval", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Every X seconds, the ram will apply this damage",
@@ -249,6 +249,8 @@ public static class RamConfig
     // ShipMassMaxMultiplier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     RamDamageToolTier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
 
+
+    HitRadius.SettingChanged += VehicleRamAoe.OnSettingsChanged;
     // Must update damage values only
     RamBaseSlashDamage.SettingChanged += VehicleRamAoe.OnSettingsChanged;
     RamBasePierceDamage.SettingChanged += VehicleRamAoe.OnSettingsChanged;
