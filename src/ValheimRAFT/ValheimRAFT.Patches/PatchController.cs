@@ -32,7 +32,7 @@ internal static class PatchController
     Harmony.PatchAll(typeof(ZNetScene_Patch));
     Harmony.PatchAll(typeof(ZNetView_Patch));
     Harmony.PatchAll(typeof(Hud_Patch));
-    Harmony.PatchAll(typeof(VehicleMovementPatches));
+    Harmony.PatchAll(typeof(MonoUpdaterPatches));
     Harmony.PatchAll(typeof(EffectsArea_VehiclePatches));
 
     // water effects
@@ -43,9 +43,7 @@ internal static class PatchController
     Harmony.PatchAll(typeof(Minimap_VehicleIcons));
 
     if (Chainloader.PluginInfos.ContainsKey("zolantris.DynamicLocations"))
-    {
       Harmony.PatchAll(typeof(DynamicLocations_Game_LogoutPatch));
-    }
 
 #if DEBUG
     Harmony.PatchAll(typeof(QuickStartWorld_Patch));
@@ -56,14 +54,10 @@ internal static class PatchController
 // #endif
 
     if (PatchConfig.ShipPausePatch.Value)
-    {
       Harmony.PatchAll(typeof(GamePause_Patch));
-    }
 
     if (ValheimRaftPlugin.Instance.DebugRemoveStartMenuBackground.Value)
-    {
       Harmony.PatchAll(typeof(StartScene_Patch));
-    }
 
     HasGizmoMod = Chainloader.PluginInfos.ContainsKey(ComfyGizmoGuid);
     if (HasGizmoMod && PatchConfig.ComfyGizmoPatches.Value)

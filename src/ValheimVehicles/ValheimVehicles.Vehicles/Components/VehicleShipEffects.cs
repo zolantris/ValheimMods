@@ -6,7 +6,7 @@ namespace ValheimVehicles.Vehicles.Components;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class VehicleShipEffects : MonoBehaviour
+public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
 {
   public Transform m_shadow;
 
@@ -44,6 +44,7 @@ public class VehicleShipEffects : MonoBehaviour
   private VehicleShip m_ship;
 
   public static List<VehicleShipEffects> Instances { get; } = [];
+  public static List<IMonoUpdater> MonoUpdaters = [];
 
   public static void CloneShipEffectsToInstance(VehicleShipEffects instance,
     ShipEffects shipEffects)
@@ -109,12 +110,24 @@ public class VehicleShipEffects : MonoBehaviour
 
   private void OnEnable()
   {
+    MonoUpdaters.Add(this);
     Instances.Add(this);
   }
 
   private void OnDisable()
   {
+    MonoUpdaters.Remove(this);
     Instances.Remove(this);
+  }
+
+  public void CustomFixedUpdate(float deltaTime)
+  {
+    // throw new System.NotImplementedException();
+  }
+
+  public void CustomUpdate(float deltaTime, float time)
+  {
+    // throw new System.NotImplementedException();
   }
 
   public void CustomLateUpdate(float deltaTime)

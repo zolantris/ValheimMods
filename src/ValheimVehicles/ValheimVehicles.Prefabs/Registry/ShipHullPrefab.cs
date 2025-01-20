@@ -17,6 +17,11 @@ public class ShipHullPrefab : IRegisterPrefab
 
   public static Shader MaskShader = null!;
 
+  /// <summary>
+  /// Main method for all hull registry. This method is not efficient for iteration however, it keeps all hull variants together instead of spacing them everywhere.
+  /// </summary>
+  /// <param name="prefabManager"></param>
+  /// <param name="pieceManager"></param>
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
     var sizeVariants = new[]
@@ -42,14 +47,15 @@ public class ShipHullPrefab : IRegisterPrefab
     // RegisterWindowWallSquareIron();
 
     foreach (var hullMaterialType in hullMaterialTypes)
-    {
       RegisterHull(GetShipHullCenterName(hullMaterialType), hullMaterialType,
         16 + 16 + 4,
         PrefabSizeVariant.FourByEight);
 
+    // does not have a size variant
+    foreach (var hullMaterialType in hullMaterialTypes)
+    {
+      RegisterHullRibProw(hullMaterialType, PrefabSizeVariant.TwoByTwo);
       RegisterHullRib(GetHullRibName(hullMaterialType), hullMaterialType);
-
-      // does not have a size variant
       foreach (var ribDirection in ribDirections)
       {
         RegisterHullRibCorner(
@@ -57,25 +63,28 @@ public class ShipHullPrefab : IRegisterPrefab
           ribDirection);
         RegisterHullRibCornerFloor(hullMaterialType, ribDirection);
       }
+    }
 
-      foreach (var sizeVariant in sizeVariants)
-      {
-        var materialCount = GetPrefabSizeArea(sizeVariant);
-        RegisterHull(
-          GetHullSlabName(hullMaterialType, sizeVariant),
-          hullMaterialType,
-          materialCount,
-          sizeVariant);
+    foreach (var hullMaterialType in hullMaterialTypes)
+    foreach (var sizeVariant in sizeVariants)
+    {
+      var materialCount = GetPrefabSizeArea(sizeVariant);
+      RegisterHull(
+        GetHullSlabName(hullMaterialType, sizeVariant),
+        hullMaterialType,
+        materialCount,
+        sizeVariant);
+    }
 
-        RegisterHull(
-          GetHullWallName(hullMaterialType, sizeVariant),
-          hullMaterialType,
-          materialCount,
-          sizeVariant);
-
-        // hull-prow
-        RegisterHullRibProw(hullMaterialType, sizeVariant);
-      }
+    foreach (var hullMaterialType in hullMaterialTypes)
+    foreach (var sizeVariant in sizeVariants)
+    {
+      var materialCount = GetPrefabSizeArea(sizeVariant);
+      RegisterHull(
+        GetHullWallName(hullMaterialType, sizeVariant),
+        hullMaterialType,
+        materialCount,
+        sizeVariant);
     }
   }
 
@@ -100,7 +109,7 @@ public class ShipHullPrefab : IRegisterPrefab
     SetupHullPrefab(prefab, WindowWallPorthole2x2Prefab,
       ShipHulls.HullMaterial.Iron, 3);
   }
-  
+
   public static void RegisterWindowWallPorthole4x4Iron()
   {
     var prefab =
@@ -133,7 +142,7 @@ public class ShipHullPrefab : IRegisterPrefab
     SetupHullPrefab(prefab, WindowFloorPorthole4x4Prefab,
       ShipHulls.HullMaterial.Iron, 6);
     var wnt = prefab.GetComponent<WearNTear>();
-    
+
     // windows are half health
     wnt.m_health /= 2f;
   }

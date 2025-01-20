@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
@@ -19,33 +16,33 @@ public class ConvexHullComponent : ConvexHullAPI
 
   public void FixedUpdate()
   {
-    if (MovementController == null || convexHullPreviewMeshRendererItems.Count == 0) return;
+    if (MovementController == null ||
+        convexHullPreviewMeshRendererItems.Count == 0) return;
     foreach (var meshRenderer in convexHullPreviewMeshRendererItems)
-    {
-      meshRenderer.material.SetFloat(MaxHeightShaderId, MovementController.ShipFloatationObj.LowestWaterHeight);
-    }
+      meshRenderer.material.SetFloat(MaxHeightShaderId,
+        MovementController.ShipFloatationObj.LowestWaterHeight - 1f);
   }
 
   public static void UpdatePropertiesForAllComponents()
   {
     foreach (var convexHullComponent in Instances.ToList())
-    {
-      convexHullComponent.UpdatePropertiesForConvexHulls( PhysicsConfig.convexHullPreviewOffset.Value,
+      convexHullComponent.UpdatePropertiesForConvexHulls(
+        PhysicsConfig.convexHullPreviewOffset.Value,
         GetConvexHullModeFromFlags(), PhysicsConfig.convexHullDebuggerColor
           .Value, WaterConfig.UnderwaterBubbleEffectColor.Value);
-    }
   }
-  
-  public static ConvexHullAPI.PreviewModes GetConvexHullModeFromFlags()
+
+  public static PreviewModes GetConvexHullModeFromFlags()
   {
     return PhysicsConfig.convexHullDebuggerForceEnabled.Value
-      ?
-      ConvexHullAPI.PreviewModes.Debug
+      ? PreviewModes.Debug
       : WaterConfig.HasUnderwaterHullBubbleEffect.Value
-        ? ConvexHullAPI.PreviewModes.Bubble
-        : ConvexHullAPI.PreviewModes.None;
+        ? PreviewModes.Bubble
+        : PreviewModes.None;
   }
-  
-  public override bool IsAllowedAsHullOverride(string val) =>
-    PrefabNames.IsHull(val);
+
+  public override bool IsAllowedAsHullOverride(string val)
+  {
+    return PrefabNames.IsHull(val);
+  }
 }

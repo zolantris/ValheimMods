@@ -4,7 +4,11 @@ using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 
+// ReSharper disable ArrangeNamespaceBody
+
+// ReSharper disable NamespaceStyle
 namespace ValheimVehicles.SharedScripts
 {
   public class ConvexHullAPI : MonoBehaviour
@@ -20,9 +24,7 @@ namespace ValheimVehicles.SharedScripts
     private static readonly ConvexHullCalculator
       convexHullCalculator = new();
 
-    public static PreviewModes PreviewMode = PreviewModes.Bubble;
     public static bool CanRenderBubble = true;
-    public static bool DebugOriginalMesh = false;
 
     public static bool HasInitialized = false;
     [CanBeNull] public static Material DebugMaterial;
@@ -49,39 +51,49 @@ namespace ValheimVehicles.SharedScripts
 
     public static string MeshNameTriggerPrefix = $"{MeshNamePrefix}_Preview";
 
+    public PreviewModes PreviewMode = PreviewModes.Bubble;
+
+    [FormerlySerializedAs("sphereEncapsulationBuffer")]
+    public float wrapperBuffer = 0.5f;
+
     public Vector3 transformPreviewOffset = Vector3.zero;
-    [CanBeNull] public Material ConvexHullMaterialOverride;
+
+    [FormerlySerializedAs("ConvexHullMaterialOverride")] [CanBeNull]
+    public Material m_fallbackMaterial;
 
     public bool CanLog;
     public Vector3 previewScale = Vector3.one;
 
     public Transform PreviewParent;
 
+    private List<Vector3> _cachedPoints = new();
+
+    [NonSerialized] public List<MeshCollider> convexHullMeshColliders = new();
+
     /// <summary>
     ///   A list of Convex Hull GameObjects. These gameobjects can be updated by the
     ///   debug flags.
     /// </summary>
-    public List<GameObject> convexHullMeshes = new();
+    [NonSerialized] public List<GameObject> convexHullMeshes = new();
 
     /// <summary>
     ///   List of Convex Hull Preview Meshes. These meshes must placed within a
     ///   container that should not have a Rigidbody parent.
     /// </summary>
-    public List<GameObject> convexHullPreviewMeshes = new();
+    [NonSerialized] public List<GameObject> convexHullPreviewMeshes = new();
 
-    public List<GameObject> convexHullTriggerMeshes = new();
-
+    [NonSerialized]
     public List<MeshRenderer> convexHullPreviewMeshRendererItems = new();
 
-    private List<Vector3> _cachedPoints = new();
+    [NonSerialized] public List<GameObject> convexHullTriggerMeshes = new();
 
     private void Awake()
     {
-      if (ConvexHullMaterialOverride)
-      {
-        DebugMaterial = ConvexHullMaterialOverride;
-        BubbleMaterial = ConvexHullMaterialOverride;
-      }
+      if (m_fallbackMaterial != null && BubbleMaterial == null)
+        BubbleMaterial = m_fallbackMaterial;
+
+      if (m_fallbackMaterial != null && DebugMaterial == null)
+        DebugMaterial = m_fallbackMaterial;
 
       PreviewParent = transform;
     }
@@ -98,6 +110,11 @@ namespace ValheimVehicles.SharedScripts
       if (!Instances.Contains(this)) return;
 
       Instances.Remove(this);
+
+      DeleteMeshesFromChildColliders(convexHullMeshes);
+      DeleteMeshesFromChildColliders(convexHullPreviewMeshes);
+      convexHullPreviewMeshRendererItems.Clear();
+      convexHullMeshes.Clear();
     }
 
     public void InitializeConvexMeshGeneratorApi(PreviewModes mode,
@@ -524,6 +541,95 @@ namespace ValheimVehicles.SharedScripts
              IsAllowedAsHullDefault(input);
     }
 
+    public void GenerateUnderwaterBoxWrapper()
+    {
+      foreach (var meshCollider in convexHullMeshColliders.ToList())
+      {
+        if (meshCollider == null)
+        {
+          convexHullMeshColliders.Remove(meshCollider);
+          continue;
+        }
+
+        EncapsulateMeshCollider(meshCollider, wrapperBuffer,
+          out var boxCenter, out var boxSize);
+
+        // Create the box GameObject
+        CreateEncapsulationBox(boxCenter, boxSize);
+      }
+    }
+
+    private void EncapsulateMeshCollider(MeshCollider collider, float buffer,
+      out Vector3 boxCenter, out Vector3 boxSize)
+    {
+      // Access the mesh
+      var mesh = collider.sharedMesh;
+      if (mesh == null)
+      {
+        Debug.LogError("MeshCollider does not have a valid mesh.");
+        boxCenter = Vector3.zero;
+        boxSize = Vector3.zero;
+        return;
+      }
+
+      // Get the vertices of the mesh in world space
+      var vertices = mesh.vertices;
+      var colliderTransform = collider.transform;
+
+      var min = Vector3.positiveInfinity;
+      var max = Vector3.negativeInfinity;
+
+      // Compute world-space bounds of all vertices
+      foreach (var localVertex in vertices)
+      {
+        var worldVertex = colliderTransform.TransformPoint(localVertex);
+        min = Vector3.Min(min, worldVertex);
+        max = Vector3.Max(max, worldVertex);
+      }
+
+      // Calculate the center and size of the box
+      boxCenter = (min + max) / 2;
+      boxSize = max - min;
+
+      // Add buffer to the size
+      boxSize +=
+        new Vector3(buffer, buffer,
+          buffer); // Add a small buffer to ensure it encapsulates the mesh
+    }
+
+    private void CreateEncapsulationBox(Vector3 center, Vector3 size)
+    {
+      // Create a new GameObject for the box
+      var box = GameObject.CreatePrimitive(PrimitiveType.Cube);
+      box.name = "VehicleShip_HullUnderwaterBox";
+      box.gameObject.layer = LayerHelpers.IgnoreRaycastLayer;
+
+      // Set the box's position to the calculated center
+      box.transform.position = center;
+
+      // Scale the box to match the calculated size
+      box.transform.localScale = size;
+
+      // Optionally, assign it as a child of the MeshCollider's GameObject for better organization
+      box.transform.SetParent(PreviewParent);
+
+      // Set a transparent material for visualization (optional)
+      var boxRenderer = box.GetComponent<Renderer>();
+      if (boxRenderer != null)
+      {
+        boxRenderer.material = GetMaterial();
+        boxRenderer.shadowCastingMode = ShadowCastingMode.Off;
+        boxRenderer.receiveShadows = false;
+        boxRenderer.lightProbeUsage = LightProbeUsage.Off;
+        boxRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+      }
+
+      // Prevent the box from interfering with physics by removing its collider
+      Destroy(box.GetComponent<Collider>());
+
+      convexHullPreviewMeshes.Add(box);
+    }
+
 
     /// <summary>
     ///   Used to filter out any colliders not considered in a valid layer or a
@@ -715,7 +821,10 @@ namespace ValheimVehicles.SharedScripts
     {
       // TODO we may need to delete these after. Deleting immediately could cause a physics jump / issue
       if (convexHullMeshes.Count > 0)
+      {
         DeleteMeshesFromChildColliders(convexHullMeshes);
+        convexHullMeshColliders.Clear();
+      }
 
       var hullClusters =
         GroupCollidersByProximity(childGameObjects.ToList(),
@@ -758,27 +867,20 @@ namespace ValheimVehicles.SharedScripts
 
     public Material? GetMaterial()
     {
-      if (PreviewMode == PreviewModes.Bubble && BubbleMaterial)
+      if (PreviewMode == PreviewModes.Bubble && BubbleMaterial != null)
       {
         BubbleMaterial.color = BubbleMaterialColor;
         BubbleMaterial.SetFloat(MaxHeightShaderId, 29f);
         return BubbleMaterial;
       }
 
-      if (PreviewMode == PreviewModes.Debug && DebugMaterial)
+      if (PreviewMode == PreviewModes.Debug && DebugMaterial != null)
       {
         DebugMaterial.color = DebugMaterialColor;
         return DebugMaterial;
       }
 
-
-      var shader = Shader.Find("Custom/DoubleSidedTransparent");
-      if (!shader) return null;
-
-      return new Material(shader)
-      {
-        color = DebugMaterialColor
-      };
+      return null;
     }
 
     /// <summary>
@@ -799,19 +901,21 @@ namespace ValheimVehicles.SharedScripts
         meshRenderer.shadowCastingMode =
           ShadowCastingMode.Off;
         meshRenderer.receiveShadows = false;
-        
-        meshRenderer.lightProbeUsage = LightProbeUsage.Off; // Disable Light Probes
-        meshRenderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off; // Disable Reflection Probes
 
-        meshRenderer.material = material;
+        meshRenderer.lightProbeUsage =
+          LightProbeUsage.Off; // Disable Light Probes
+        meshRenderer.reflectionProbeUsage =
+          ReflectionProbeUsage.Off; // Disable Reflection Probes
+
+        meshRenderer.sharedMaterial = material;
 
         if (PreviewMode == PreviewModes.Debug)
-          if (meshRenderer.material.color != DebugMaterialColor)
-            meshRenderer.material.color = DebugMaterialColor;
+          if (meshRenderer.sharedMaterial.color != DebugMaterialColor)
+            meshRenderer.sharedMaterial.color = DebugMaterialColor;
 
         if (PreviewMode == PreviewModes.Bubble)
-          if (meshRenderer.material.color != BubbleMaterialColor)
-            meshRenderer.material.color = BubbleMaterialColor;
+          if (meshRenderer.sharedMaterial.color != BubbleMaterialColor)
+            meshRenderer.sharedMaterial.color = BubbleMaterialColor;
       }
     }
 
@@ -819,8 +923,6 @@ namespace ValheimVehicles.SharedScripts
     {
       DeleteMeshesFromChildColliders(convexHullTriggerMeshes);
       convexHullTriggerMeshes.Clear();
-
-      if (PreviewMode == PreviewModes.None) return;
 
       // Rigidbody must not be in preview parent otherwise it would have its colliders applied as physics.
       var rbComponent = PreviewParent.GetComponent<Rigidbody>();
@@ -865,10 +967,11 @@ namespace ValheimVehicles.SharedScripts
           triggerInstance.transform.position =
             parentOffset - triggerParent.transform.position;
 
-          AddConvexHullMeshRenderer(triggerInstance.gameObject);
-
           var triggerObjName = $"{MeshNameTriggerPrefix}_{index}";
           triggerInstance.gameObject.name = triggerObjName;
+
+          var meshRenderer = triggerInstance.GetComponent<MeshRenderer>();
+          if (meshRenderer != null) Destroy(meshRenderer);
 
           // Handle the MeshCollider for the preview instance
           var triggerMeshCollider =
@@ -881,6 +984,23 @@ namespace ValheimVehicles.SharedScripts
     }
 
     /// <summary>
+    ///   Todo this might need to be refactored to determine the origin point it needs
+    ///   to move to. Scale seems inaccurate when resizing a complex mesh.
+    /// </summary>
+    /// <param name="meshCollider"></param>
+    /// <returns></returns>
+    public Vector3 GetPreviewScale(MeshCollider meshCollider)
+    {
+      if (meshCollider.bounds.size.x > 30 || meshCollider.bounds.size.z > 30)
+        return new Vector3(1.03f, 1.1f, 1.03f);
+
+      if (meshCollider.bounds.size.x > 10 || meshCollider.bounds.size.z > 10)
+        return Vector3.one * 1.05f;
+
+      return Vector3.one * 1.1f;
+    }
+
+    /// <summary>
     ///   Preview meshes are to be only used for visual purposes.
     /// </summary>
     public void CreatePreviewConvexHullMeshes()
@@ -890,6 +1010,11 @@ namespace ValheimVehicles.SharedScripts
       convexHullPreviewMeshRendererItems.Clear();
 
       if (PreviewMode == PreviewModes.None) return;
+      if (PreviewMode == PreviewModes.Bubble)
+      {
+        GenerateUnderwaterBoxWrapper();
+        return;
+      }
 
       // Rigidbody must not be in preview parent otherwise it would have its colliders applied as physics.
       var rbComponent = PreviewParent.GetComponent<Rigidbody>();
@@ -917,7 +1042,14 @@ namespace ValheimVehicles.SharedScripts
           var previewInstance =
             Instantiate(convexHullMesh, PreviewParent.transform);
           convexHullPreviewMeshes.Add(previewInstance);
-          previewInstance.transform.localScale = previewScale;
+
+          var previewMeshCollider =
+            previewInstance.GetComponent<MeshCollider>();
+
+          previewInstance.transform.localScale =
+            PreviewMode == PreviewModes.Debug
+              ? previewScale
+              : Vector3.one;
           // World-space position offset calculation
           var parentOffset =
             convexHullMesh.transform.TransformPoint(previewInstance
@@ -928,14 +1060,15 @@ namespace ValheimVehicles.SharedScripts
             parentOffset - PreviewParent.transform.position +
             transformPreviewOffset;
 
+
+          var meshFilter = previewInstance.AddComponent<MeshFilter>();
+          meshFilter.mesh = previewMeshCollider.sharedMesh;
           AddConvexHullMeshRenderer(previewInstance.gameObject);
 
           var previewName = $"{MeshNamePreviewPrefix}_{index}";
           previewInstance.gameObject.name = previewName;
 
           // Handle the MeshCollider for the preview instance
-          var previewMeshCollider =
-            previewInstance.GetComponent<MeshCollider>();
           if (previewMeshCollider != null)
             DebugUnityHelpers.AdaptiveDestroy(previewMeshCollider);
         }
@@ -1004,14 +1137,8 @@ namespace ValheimVehicles.SharedScripts
 
       convexHullMeshes.Add(go);
 
-      var meshFilter = go.AddComponent<MeshFilter>();
-
-#if UNITY_EDITOR
-      if (DebugOriginalMesh) AddConvexHullMeshRenderer(go);
-#endif
-
       var meshCollider = go.AddComponent<MeshCollider>();
-      meshFilter.mesh = mesh;
+      convexHullMeshColliders.Add(meshCollider);
 
       meshCollider.sharedMesh = mesh;
       meshCollider.convex = true;
