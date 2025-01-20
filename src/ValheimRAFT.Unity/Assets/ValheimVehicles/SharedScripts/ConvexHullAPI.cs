@@ -52,7 +52,9 @@ namespace ValheimVehicles.SharedScripts
     public static string MeshNameTriggerPrefix = $"{MeshNamePrefix}_Preview";
 
     public PreviewModes PreviewMode = PreviewModes.Bubble;
-    public float sphereEncapsulationBuffer = 0.5f;
+
+    [FormerlySerializedAs("sphereEncapsulationBuffer")]
+    public float wrapperBuffer = 0.5f;
 
     public Vector3 transformPreviewOffset = Vector3.zero;
 
@@ -539,7 +541,7 @@ namespace ValheimVehicles.SharedScripts
              IsAllowedAsHullDefault(input);
     }
 
-    public void GenerateUnderwaterSphereWrapper()
+    public void GenerateUnderwaterBoxWrapper()
     {
       foreach (var meshCollider in convexHullMeshColliders.ToList())
       {
@@ -549,25 +551,24 @@ namespace ValheimVehicles.SharedScripts
           continue;
         }
 
-        EncapsulateMeshCollider(meshCollider, sphereEncapsulationBuffer,
-          out var center,
-          out var radius);
+        EncapsulateMeshCollider(meshCollider, wrapperBuffer,
+          out var boxCenter, out var boxSize);
 
-        // Create the sphere GameObject
-        CreateEncapsulationSphere(center, radius);
+        // Create the box GameObject
+        CreateEncapsulationBox(boxCenter, boxSize);
       }
     }
 
     private void EncapsulateMeshCollider(MeshCollider collider, float buffer,
-      out Vector3 sphereCenter, out float sphereRadius)
+      out Vector3 boxCenter, out Vector3 boxSize)
     {
       // Access the mesh
       var mesh = collider.sharedMesh;
       if (mesh == null)
       {
         Debug.LogError("MeshCollider does not have a valid mesh.");
-        sphereCenter = Vector3.zero;
-        sphereRadius = 0f;
+        boxCenter = Vector3.zero;
+        boxSize = Vector3.zero;
         return;
       }
 
@@ -575,66 +576,60 @@ namespace ValheimVehicles.SharedScripts
       var vertices = mesh.vertices;
       var colliderTransform = collider.transform;
 
-      var worldCenter = Vector3.zero;
-      var maxRadius = 0f;
+      var min = Vector3.positiveInfinity;
+      var max = Vector3.negativeInfinity;
 
       // Compute world-space bounds of all vertices
       foreach (var localVertex in vertices)
       {
         var worldVertex = colliderTransform.TransformPoint(localVertex);
-        worldCenter += worldVertex;
+        min = Vector3.Min(min, worldVertex);
+        max = Vector3.Max(max, worldVertex);
       }
 
-      // Average the vertex positions to find the center
-      worldCenter /= vertices.Length;
+      // Calculate the center and size of the box
+      boxCenter = (min + max) / 2;
+      boxSize = max - min;
 
-      // Calculate the maximum distance from the center (radius)
-      foreach (var localVertex in vertices)
-      {
-        var worldVertex = colliderTransform.TransformPoint(localVertex);
-        var distance = Vector3.Distance(worldCenter, worldVertex);
-        if (distance > maxRadius) maxRadius = distance;
-      }
-
-      // Add buffer to the radius
-      sphereRadius = maxRadius + buffer;
-      sphereCenter = worldCenter;
+      // Add buffer to the size
+      boxSize +=
+        new Vector3(buffer, buffer,
+          buffer); // Add a small buffer to ensure it encapsulates the mesh
     }
 
-    private void CreateEncapsulationSphere(
-      Vector3 center, float radius)
+    private void CreateEncapsulationBox(Vector3 center, Vector3 size)
     {
-      // Create a sphere primitive
-      var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-      sphere.name = "VehicleShip_HullUnderwaterBubble";
-      sphere.gameObject.layer = LayerHelpers.IgnoreRaycastLayer;
+      // Create a new GameObject for the box
+      var box = GameObject.CreatePrimitive(PrimitiveType.Cube);
+      box.name = "VehicleShip_HullUnderwaterBox";
+      box.gameObject.layer = LayerHelpers.IgnoreRaycastLayer;
 
-      // Set the sphere's position to the calculated center
-      sphere.transform.position = center;
+      // Set the box's position to the calculated center
+      box.transform.position = center;
 
-      // Scale the sphere to match the radius (Unity spheres have a default diameter of 1)
-      var diameter = radius * 2;
-      sphere.transform.localScale = new Vector3(diameter, diameter, diameter);
+      // Scale the box to match the calculated size
+      box.transform.localScale = size;
 
       // Optionally, assign it as a child of the MeshCollider's GameObject for better organization
-      sphere.transform.SetParent(PreviewParent);
+      box.transform.SetParent(PreviewParent);
 
       // Set a transparent material for visualization (optional)
-      var sphereRenderer = sphere.GetComponent<Renderer>();
-      if (sphereRenderer != null)
+      var boxRenderer = box.GetComponent<Renderer>();
+      if (boxRenderer != null)
       {
-        sphereRenderer.material = GetMaterial();
-        sphereRenderer.shadowCastingMode = ShadowCastingMode.Off;
-        sphereRenderer.receiveShadows = false;
-        sphereRenderer.lightProbeUsage = LightProbeUsage.Off;
-        sphereRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+        boxRenderer.material = GetMaterial();
+        boxRenderer.shadowCastingMode = ShadowCastingMode.Off;
+        boxRenderer.receiveShadows = false;
+        boxRenderer.lightProbeUsage = LightProbeUsage.Off;
+        boxRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
       }
 
-      // Prevent the sphere from interfering with physics by removing its collider
-      Destroy(sphere.GetComponent<Collider>());
+      // Prevent the box from interfering with physics by removing its collider
+      Destroy(box.GetComponent<Collider>());
 
-      convexHullPreviewMeshes.Add(sphere);
+      convexHullPreviewMeshes.Add(box);
     }
+
 
     /// <summary>
     ///   Used to filter out any colliders not considered in a valid layer or a
@@ -989,7 +984,8 @@ namespace ValheimVehicles.SharedScripts
     }
 
     /// <summary>
-    /// Todo this might need to be refactored to determine the origin point it needs to move to. Scale seems inaccurate when resizing a complex mesh.
+    ///   Todo this might need to be refactored to determine the origin point it needs
+    ///   to move to. Scale seems inaccurate when resizing a complex mesh.
     /// </summary>
     /// <param name="meshCollider"></param>
     /// <returns></returns>
@@ -1016,7 +1012,7 @@ namespace ValheimVehicles.SharedScripts
       if (PreviewMode == PreviewModes.None) return;
       if (PreviewMode == PreviewModes.Bubble)
       {
-        GenerateUnderwaterSphereWrapper();
+        GenerateUnderwaterBoxWrapper();
         return;
       }
 
