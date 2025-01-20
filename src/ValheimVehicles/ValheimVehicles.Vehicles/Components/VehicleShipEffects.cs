@@ -1,3 +1,4 @@
+using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 
 namespace ValheimVehicles.Vehicles.Components;
@@ -129,20 +130,41 @@ public class VehicleShipEffects : MonoBehaviour
     m_shadow.gameObject.SetActive(true);
     var flag = m_body.velocity.magnitude > m_minimumWakeVel;
     FadeSounds(m_inWaterSounds, true, deltaTime);
-    SetWake(flag, deltaTime);
-    if ((bool)m_sailSound)
+
+    // flying and submerged states should never have a wake.
+    if (m_ship.MovementController != null &&
+        (m_ship.MovementController.IsSubmerged() ||
+         m_ship.MovementController.IsFlying()))
     {
-      var target = m_ship.MovementController.IsSailUp() ? m_sailBaseVol : 0f;
+      m_speedWakeRoot.SetActive(false);
+    }
+    else
+    {
+      if (m_ship.MovementController != null)
+      {
+        var speedWakePos = m_speedWakeRoot.transform.position;
+        speedWakePos.y = m_ship.MovementController.ShipFloatationObj
+          .AverageWaterHeight;
+        m_speedWakeRoot.transform.position = speedWakePos;
+      }
+
+      m_speedWakeRoot.SetActive(true);
+      SetWake(flag, deltaTime);
+    }
+
+    if (m_sailSound != null && m_ship.MovementController != null)
+    {
+      var target = m_ship!.MovementController!.IsSailUp() ? m_sailBaseVol : 0f;
       FadeSound(m_sailSound, target, m_sailFadeDuration, deltaTime);
     }
 
-    if (m_splashEffects != null)
-      m_splashEffects.SetActive(m_ship.MovementController.HasPlayerOnboard());
+    if (m_splashEffects != null && m_ship.MovementController != null)
+      m_splashEffects.SetActive(m_ship!.OnboardController!.HasPlayersOnboard);
   }
 
   private void SetWake(bool enabled, float dt)
   {
-    ParticleSystem[] wakeParticles = m_wakeParticles;
+    var wakeParticles = m_wakeParticles;
     for (var i = 0; i < wakeParticles.Length; i++)
     {
       var emission = wakeParticles[i].emission;
@@ -155,7 +177,7 @@ public class VehicleShipEffects : MonoBehaviour
   private void FadeSounds(List<KeyValuePair<AudioSource, float>> sources,
     bool enabled, float dt)
   {
-    foreach (KeyValuePair<AudioSource, float> source in sources)
+    foreach (var source in sources)
       if (enabled)
         FadeSound(source.Key, source.Value, m_audioFadeDuration, dt);
       else

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace ValheimVehicles.SharedScripts
 {
@@ -27,7 +28,7 @@ namespace ValheimVehicles.SharedScripts
     [CanBeNull] public static Material DebugMaterial;
     [CanBeNull] public static Material BubbleMaterial;
 
-    public static Color DebugMaterialColor = new(0.10f, 0.23f, 0.07f, 0.5f);
+    public static Color DebugMaterialColor = new(0.10f, 0.23f, 0.5f, 0.2f);
 
     public static Color BubbleMaterialColor = new(0f, 0.4f, 0.4f, 0.8f);
 
@@ -42,6 +43,11 @@ namespace ValheimVehicles.SharedScripts
 
     public static readonly int MaxHeightShaderId =
       Shader.PropertyToID("_MaxHeight");
+
+    public static readonly string MeshNamePreviewPrefix =
+      $"{MeshNamePrefix}_Preview";
+
+    public static string MeshNameTriggerPrefix = $"{MeshNamePrefix}_Preview";
 
     public Vector3 transformPreviewOffset = Vector3.zero;
     [CanBeNull] public Material ConvexHullMaterialOverride;
@@ -63,11 +69,11 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     public List<GameObject> convexHullPreviewMeshes = new();
 
+    public List<GameObject> convexHullTriggerMeshes = new();
+
     public List<MeshRenderer> convexHullPreviewMeshRendererItems = new();
 
     private List<Vector3> _cachedPoints = new();
-
-    public static string MeshNamePreviewPrefix => $"{MeshNamePrefix}_Preview";
 
     private void Awake()
     {
@@ -120,7 +126,8 @@ namespace ValheimVehicles.SharedScripts
     }
 
     public void UpdatePropertiesForConvexHulls(
-      Vector3 transformPreviewOffset, PreviewModes mode, Color debugColor,  Color bubbleColor)
+      Vector3 transformPreviewOffset, PreviewModes mode, Color debugColor,
+      Color bubbleColor)
     {
       PreviewMode = mode;
       DebugMaterialColor = debugColor;
@@ -700,9 +707,11 @@ namespace ValheimVehicles.SharedScripts
     ///   GameObjects are places
     /// </param>
     /// <param name="distanceThreshold"></param>
+    /// <param name="triggerParent"></param>
     public void GenerateMeshesFromChildColliders(
       GameObject targetParentGameObject,
-      float distanceThreshold, List<GameObject> childGameObjects)
+      float distanceThreshold, List<GameObject> childGameObjects,
+      Transform? triggerParent = null)
     {
       // TODO we may need to delete these after. Deleting immediately could cause a physics jump / issue
       if (convexHullMeshes.Count > 0)
@@ -722,6 +731,8 @@ namespace ValheimVehicles.SharedScripts
       }
 
       CreatePreviewConvexHullMeshes();
+
+      if (triggerParent != null) CreateTriggerConvexHullMeshes(triggerParent);
     }
 
     // Create a copy of the mesh that is readable
@@ -785,6 +796,13 @@ namespace ValheimVehicles.SharedScripts
         if (!meshRenderer) meshRenderer = go.AddComponent<MeshRenderer>();
         convexHullPreviewMeshRendererItems.Add(meshRenderer);
 
+        meshRenderer.shadowCastingMode =
+          ShadowCastingMode.Off;
+        meshRenderer.receiveShadows = false;
+        
+        meshRenderer.lightProbeUsage = LightProbeUsage.Off; // Disable Light Probes
+        meshRenderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off; // Disable Reflection Probes
+
         meshRenderer.material = material;
 
         if (PreviewMode == PreviewModes.Debug)
@@ -795,6 +813,71 @@ namespace ValheimVehicles.SharedScripts
           if (meshRenderer.material.color != BubbleMaterialColor)
             meshRenderer.material.color = BubbleMaterialColor;
       }
+    }
+
+    public void CreateTriggerConvexHullMeshes(Transform triggerParent)
+    {
+      DeleteMeshesFromChildColliders(convexHullTriggerMeshes);
+      convexHullTriggerMeshes.Clear();
+
+      if (PreviewMode == PreviewModes.None) return;
+
+      // Rigidbody must not be in preview parent otherwise it would have its colliders applied as physics.
+      var rbComponent = PreviewParent.GetComponent<Rigidbody>();
+
+      if (rbComponent == null)
+        rbComponent = PreviewParent.GetComponentInParent<Rigidbody>();
+
+      if (rbComponent != null && !rbComponent.isKinematic)
+      {
+        LoggerAPI(
+          "Error: This component is invalid due to preview parent containing a non-kinematic Rigidbody. Using a non-kinematic rigidbody will cause this preview to desync.");
+        return;
+      }
+
+      if (rbComponent != null)
+      {
+        rbComponent.includeLayers = LayerHelpers.PhysicalLayers;
+        rbComponent.excludeLayers =
+          LayerHelpers.RamColliderExcludeLayers;
+      }
+
+      if (triggerParent == null)
+      {
+        LoggerAPI("Error: triggerParent is null.");
+        return;
+      }
+
+      if (convexHullMeshes.Count > 0)
+        for (var index = 0; index < convexHullMeshes.Count; index++)
+        {
+          var convexHullMesh = convexHullMeshes[index];
+          var triggerInstance =
+            Instantiate(convexHullMesh, triggerParent);
+          convexHullTriggerMeshes.Add(triggerInstance);
+          triggerInstance.transform.localScale = Vector3.one;
+          // World-space position offset calculation
+          var parentOffset =
+            convexHullMesh.transform.TransformPoint(triggerInstance
+              .transform
+              .position);
+
+          triggerInstance.transform.position =
+            parentOffset - triggerParent.transform.position;
+
+          AddConvexHullMeshRenderer(triggerInstance.gameObject);
+
+          var triggerObjName = $"{MeshNameTriggerPrefix}_{index}";
+          triggerInstance.gameObject.name = triggerObjName;
+
+          // Handle the MeshCollider for the preview instance
+          var triggerMeshCollider =
+            triggerInstance.GetComponent<MeshCollider>();
+          triggerMeshCollider.isTrigger = true;
+          triggerMeshCollider.includeLayers = LayerHelpers.PhysicalLayers;
+          triggerMeshCollider.excludeLayers =
+            LayerHelpers.RamColliderExcludeLayers;
+        }
     }
 
     /// <summary>
@@ -840,19 +923,6 @@ namespace ValheimVehicles.SharedScripts
             convexHullMesh.transform.TransformPoint(previewInstance
               .transform
               .position);
-
-          // TODO this does not work well for scalars above Vector.one or lower
-
-          // Apply the offset in world space, then convert it back to local position
-          // var positionWithoutScale =
-          //   PreviewParent.transform.TransformPoint(worldPositionOffset);
-          // previewInstance.transform.localScale = previewScale;
-          //
-          // var positionWithScale =
-          //   PreviewParent.transform.InverseTransformPoint(worldPositionOffset);
-          //
-          // previewInstance.transform.localPosition +=
-          //   Vector3.Scale(positionWithoutScale, previewScale);
 
           previewInstance.transform.position =
             parentOffset - PreviewParent.transform.position +
@@ -946,6 +1016,7 @@ namespace ValheimVehicles.SharedScripts
       meshCollider.sharedMesh = mesh;
       meshCollider.convex = true;
       meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
+      meshCollider.includeLayers = LayerHelpers.PhysicalLayers;
 
       go.transform.position = parentObjTransform.transform.position;
       go.transform.SetParent(parentObjTransform);

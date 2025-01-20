@@ -128,7 +128,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public List<GameObject> convexHullMeshes =>
     convexHullComponent.convexHullMeshes;
 
-  private Bounds? _cachedConvexHullBounds = null;
+  public List<MeshCollider> convexHullMeshColliders = [];
+
+  public List<GameObject> convexHullTriggerMeshes =>
+    convexHullComponent.convexHullTriggerMeshes;
+
+  public List<Collider> convexHullTriggerColliders = [];
+
+  private Bounds? _cachedConvexHullBounds;
 
   private void UpdateConvexHullBounds()
   {
@@ -162,13 +169,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       _cachedConvexHullBounds = new Bounds(Vector3.zero, Vector3.one * 3);
     }
   }
-  
+
   public Bounds? GetConvexHullRelativeBounds()
   {
-    if (_cachedConvexHullBounds == null)
-    {
-      UpdateConvexHullBounds();
-    }
+    if (_cachedConvexHullBounds == null) UpdateConvexHullBounds();
 
     return _cachedConvexHullBounds;
   }
@@ -191,14 +195,17 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   /// Future todo to enable zsync transform for objects within the synced raft which is done on clients only.
   /// </summary>
   // internal VehicleZSyncTransform? zsyncTransform;
-
   public Rigidbody m_body;
+
   internal FixedJoint m_fixedJoint;
 
   public List<ZNetView> m_pieces = [];
   internal List<ZNetView> m_ramPieces = [];
   internal List<ZNetView> m_anchorPieces = [];
-  internal List<VehicleAnchorMechanismController> m_anchorMechanismComponents = [];
+
+  internal List<VehicleAnchorMechanismController> m_anchorMechanismComponents =
+    [];
+
   internal List<ZNetView> m_hullPieces = [];
 
   internal List<MastComponent> m_mastPieces = [];
@@ -261,6 +268,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       ? ShipMass
       : ShipContainerMass + ShipMass;
 
+  private Transform piecesCollidersTransform;
+
+  private Transform onboardColliderTransform;
+  private Transform floatColliderTransform;
+
   /*
    * sail calcs
    */
@@ -275,8 +287,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public virtual IVehicleShip? VehicleInstance { set; get; }
   public int PersistentZdoId => VehicleInstance?.PersistentZdoId ?? 0;
 
-  public VehicleMovementController? MovementController =>
-    VehicleInstance?.MovementController;
+  public VehicleMovementController? MovementController;
 
 /* end sail calcs  */
   private Vector2i m_sector;
@@ -289,14 +300,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   private Bounds _pendingVehicleBounds;
   private Bounds _pendingHullBounds;
 
-  private BoxCollider m_blockingcollider =>
-    MovementController?.BlockingCollider ?? new BoxCollider();
+  public BoxCollider FloatCollider { get; set; }
 
-  private BoxCollider m_floatcollider =>
-    MovementController?.FloatCollider ?? new BoxCollider();
-
-  private BoxCollider m_onboardcollider =>
-    MovementController?.OnboardCollider ?? new BoxCollider();
+  public BoxCollider OnboardCollider { get; set; }
+  public VehicleOnboardController OnboardController { get; set; }
 
   internal Stopwatch InitializationTimer = new();
   internal Stopwatch PendingPiecesTimer = new();
@@ -389,10 +396,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void ValidateInitialization()
   {
     // colliders that must be valid
-    FireErrorOnNull(m_floatcollider, PrefabNames.WaterVehicleFloatCollider);
-    FireErrorOnNull(m_blockingcollider,
-      PrefabNames.WaterVehicleBlockingCollider);
-    FireErrorOnNull(m_onboardcollider, PrefabNames.WaterVehicleOnboardCollider);
+    FireErrorOnNull(FloatCollider, PrefabNames.WaterVehicleFloatCollider);
+    FireErrorOnNull(OnboardCollider, PrefabNames.WaterVehicleOnboardCollider);
   }
 
   private void HideGhostContainer()
@@ -488,6 +493,24 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void Awake()
   {
     if (ZNetView.m_forceDisableInit) return;
+    if (piecesCollidersTransform == null)
+      piecesCollidersTransform = transform.Find("colliders");
+
+    // todo might not need float collider soon too.
+    if (floatColliderTransform == null)
+      floatColliderTransform =
+        piecesCollidersTransform.Find(PrefabNames.WaterVehicleFloatCollider);
+
+    if (onboardColliderTransform == null)
+      onboardColliderTransform =
+        piecesCollidersTransform.Find(PrefabNames.WaterVehicleOnboardCollider);
+
+
+    if (FloatCollider == null)
+      FloatCollider = floatColliderTransform.GetComponent<BoxCollider>();
+
+    if (OnboardCollider == null)
+      OnboardCollider = onboardColliderTransform.GetComponent<BoxCollider>();
 
     InitConvexHullGenerator();
     _piecesContainer = GetPiecesContainer();
@@ -511,10 +534,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     if (!ConvexHullAPI.HasInitialized)
     {
       // static
-      convexHullComponent.InitializeConvexMeshGeneratorApi(ConvexHullComponent.GetConvexHullModeFromFlags(),
+      convexHullComponent.InitializeConvexMeshGeneratorApi(
+        ConvexHullComponent.GetConvexHullModeFromFlags(),
         LoadValheimVehicleAssets.DoubleSidedTransparentMat,
         LoadValheimVehicleAssets.WaterHeightMaterial,
-        PhysicsConfig.convexHullDebuggerColor.Value,  WaterConfig.UnderwaterBubbleEffectColor.Value,  PrefabNames.ConvexHull,
+        PhysicsConfig.convexHullDebuggerColor.Value,
+        WaterConfig.UnderwaterBubbleEffectColor.Value, PrefabNames.ConvexHull,
         Logger.LogMessage);
 
       // instance
@@ -585,6 +610,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     if (!(bool)ZNet.instance) return;
 
+    if (OnboardCollider != null)
+      MovementController.OnboardCollider = OnboardCollider;
+
+    if (FloatCollider != null) MovementController.FloatCollider = FloatCollider;
+
+    if (OnboardController != null)
+      MovementController.OnboardController = OnboardController;
+
     if (hasDebug)
     {
       Logger.LogInfo($"pieces {m_pieces.Count}");
@@ -596,7 +629,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       ActiveInstances.Add(VehicleInstance.PersistentZdoId, this);
 
     StartClientServerUpdaters();
-    
+
     // tempZNetView = PrefabRegistryHelpers.AddTempNetView(gameObject);
     // zsyncTransform = PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(gameObject);
   }
@@ -692,15 +725,15 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         localVehiclePhysicsMode)
       SetVehiclePhysicsType(VehiclePhysicsMode.ForceSyncedRigidbody);
 
-    if (flight && localVehiclePhysicsMode ==
-        VehiclePhysicsMode.SyncedRigidbody)
-      SetVehiclePhysicsType(VehiclePhysicsMode
-        .DesyncedJointRigidbodyBody);
+    // if (flight && localVehiclePhysicsMode ==
+    //     VehiclePhysicsMode.SyncedRigidbody)
+    //   SetVehiclePhysicsType(VehiclePhysicsMode
+    //     .DesyncedJointRigidbodyBody);
 
-    if (!flight &&
-        localVehiclePhysicsMode ==
-        VehiclePhysicsMode.DesyncedJointRigidbodyBody)
-      SetVehiclePhysicsType(VehiclePhysicsMode.SyncedRigidbody);
+    // if (!flight &&
+    //     localVehiclePhysicsMode ==
+    //     VehiclePhysicsMode.DesyncedJointRigidbodyBody)
+    //   SetVehiclePhysicsType(VehiclePhysicsMode.SyncedRigidbody);
 
     var mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
 
@@ -743,16 +776,26 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   // for adding additional multiplier within lower ranges so angle gets to expected value quicker.
   public static float rotationLeanMultiplier = 1.5f;
 
+  private bool cachedIsNetviewOwner = false;
+
   /// <summary>
   /// Adds a leaning effect similar to sailing when wind is starboard/port pushing upwards/downwards. Cosmetic only to the ship. SailPower controls lean effect. Zero sails will not influence it.
   /// </summary>
   /// <returns></returns>
-  public Quaternion GetRotation()
+  public Quaternion GetRotationWithLean()
   {
-    if (MovementController == null) return Quaternion.identity;
+    if (MovementController == null || VehicleInstance?.NetView == null)
+      return Quaternion.identity;
 
+    // var baseRotation = cachedIsNetviewOwner
+    //   ? MovementController.m_body.rotation
+    //   : VehicleInstance.NetView.GetZDO().GetRotation();
+    var baseRotation = MovementController.m_body.rotation;
     if (!PropulsionConfig.EXPERIMENTAL_LeanTowardsWindSailDirection.Value)
-      return MovementController.m_body.rotation;
+      return baseRotation;
+
+    // no leaning when no sails.
+    if (m_sailPieces.Count == 0) return baseRotation;
 
     // Normalize wind direction to [0, 360]
     var windDirection = Mathf.Repeat(MovementController.GetWindAngle(), 360f);
@@ -792,53 +835,37 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       PropulsionConfig.EXPERIMENTAL_LeanTowardsWindSailDirectionMaxAngle.Value);
 
     // Apply the rotation based on the computed sail lean angle
-    return MovementController.m_body.rotation *
+    return baseRotation *
            Quaternion.Euler(0f, 0f, sailLeanAngle);
-  }
-
-  public void SyncOwner()
-  {
-    // if (VehicleInstance?.NetView != null && tempZNetView != null && tempZNetView.GetZDO().Owner != VehicleInstance.NetView.GetZDO().Owner)
-    // {
-    //   tempZNetView.GetZDO().SetOwner(VehicleInstance.NetView.GetZDO().GetOwner());
-    // }
   }
 
   public void KinematicSync()
   {
     if (MovementController == null) return;
     if (!m_body.isKinematic) m_body.isKinematic = true;
- 
+
 
     if (m_body.collisionDetectionMode !=
         PhysicsConfig.vehiclePiecesShipCollisionDetectionMode.Value)
       m_body.collisionDetectionMode =
         PhysicsConfig.vehiclePiecesShipCollisionDetectionMode.Value;
 
-    if (m_fixedJoint && m_fixedJoint.connectedBody) m_fixedJoint.connectedBody = null;
+    if (m_fixedJoint && m_fixedJoint.connectedBody)
+      m_fixedJoint.connectedBody = null;
 
     if (VehicleInstance?.NetView != null)
     {
-      if (VehicleInstance.NetView.IsOwner())
-      {
-        // var vehicleTransform = VehicleInstance.Instance.transform;
-        // transform.position = vehicleTransform.position;
-        // transform.rotation = vehicleTransform.rotation;
-        m_body.Move(
-          MovementController.m_body.position,
-          GetRotation()
-        );
-        
-      }
-      else
-      {
-        m_body.Move(
-          MovementController.m_body.position,
-          GetRotation()
-        );
-        // transform.position = MovementController.m_body.position;
-        // transform.rotation = GetRotation();
-      }
+      var rotation = GetRotationWithLean();
+      var position = MovementController.m_body.position;
+      // var position = cachedIsNetviewOwner
+      //   ? MovementController.m_body.position
+      //   // We use the vehicle zdo position and GetRotation is shared.
+      //   : VehicleInstance.NetView.GetZDO().GetPosition();
+
+      m_body.Move(
+        position,
+        rotation
+      );
     }
   }
 
@@ -886,34 +913,32 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         VehicleInstance.Instance == null)
       return;
 
-    if (IsPhysicsForceSynced)
-    {
-      KinematicSync();
-      return;
-    }
-
-    if (VehicleMovementController.HasPieceSyncTarget && IsNotFlying)
-    {
-      var vehiclePhysicsOwner = VehicleInstance.NetView.IsOwner();
-      if (vehiclePhysicsOwner)
-        KinematicSync();
-      else if (m_fixedJoint != null)
-      {
-        JointSync();
-      }
-
-      return;
-    }
-
-    if (localVehiclePhysicsMode ==
-        VehiclePhysicsMode.DesyncedJointRigidbodyBody ||
-        !IsNotFlying)
-    {
-      JointSync();
-      return;
-    }
-
     KinematicSync();
+    // if (IsPhysicsForceSynced)
+    // {
+    //   KinematicSync();
+    //   return;
+    // }
+
+    // if (VehicleMovementController.HasPieceSyncTarget && IsNotFlying)
+    // {
+    //   var vehiclePhysicsOwner = VehicleInstance.NetView.IsOwner();
+    //   if (vehiclePhysicsOwner)
+    //     KinematicSync();
+    //   else if (m_fixedJoint != null) JointSync();
+    //
+    //   return;
+    // }
+    //
+    // if (localVehiclePhysicsMode ==
+    //     VehiclePhysicsMode.DesyncedJointRigidbodyBody ||
+    //     !IsNotFlying)
+    // {
+    //   JointSync();
+    //   return;
+    // }
+    //
+    // KinematicSync();
   }
 
   public void CustomUpdate(float deltaTime, float time)
@@ -937,15 +962,19 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public void CustomFixedUpdate(float deltaTime)
   {
-    UpdateBedPieces();
-    SyncOwner();
+    if (VehicleInstance?.NetView == null) return;
+    cachedIsNetviewOwner = VehicleInstance.NetView.IsOwner();
     Sync();
   }
 
   public void CustomLateUpdate(float deltaTime)
   {
     // Sync();
-    if (!ZNet.instance.IsServer()) Client_UpdateAllPieces();
+    if (!ZNet.instance.IsServer())
+    {
+      Client_UpdateAllPieces();
+      UpdateBedPieces();
+    }
   }
 
   /// <summary>
@@ -1124,12 +1153,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     _serverUpdatePiecesCoroutine = null;
   }
 
-  // this needs to be connected to ropeladder too.
+  /// <summary>
+  /// Should be called during physics update
+  /// </summary>
+  /// <returns></returns>
   internal float GetColliderBottom()
   {
-    return m_blockingcollider.transform.position.y +
-           m_blockingcollider.center.y -
-           m_blockingcollider.size.y / 2f;
+    return OnboardCollider.bounds.min.y;
   }
 
   public static void AddInactivePiece(int id, ZNetView netView,
@@ -1252,13 +1282,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         case VehicleAnchorMechanismController anchorMechanismController:
           m_anchorMechanismComponents.Remove(anchorMechanismController);
           m_anchorPieces.Remove(netView);
-          
+
           if (MovementController != null)
-          {
             MovementController.CanAnchor = m_anchorPieces.Count > 0;
-          }
           break;
-        
+
         case BoardingRampComponent ramp:
           m_boardingRamps.Remove(ramp);
           break;
@@ -1734,7 +1762,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     controller = null;
     foreach (var instance in ActiveInstances.Values)
-      if (instance.m_onboardcollider.bounds.Contains(p))
+      if (instance.OnboardCollider.bounds.Contains(p))
       {
         controller = instance;
         return true;
@@ -1821,12 +1849,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
            Vector3.zero;
   }
 
-  public void InitAnchorComponent(VehicleAnchorMechanismController anchorComponent)
+  public void InitAnchorComponent(
+    VehicleAnchorMechanismController anchorComponent)
   {
-    if (anchorComponent.MovementController == null && MovementController != null)
-    {
+    if (anchorComponent.MovementController == null &&
+        MovementController != null)
       anchorComponent.MovementController = MovementController;
-    }
   }
 
   /// <summary>
@@ -1836,12 +1864,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void UpdateAnchorState(AnchorState anchorState)
   {
     foreach (var anchorComponent in m_anchorMechanismComponents)
-    {
       if (anchorState != anchorComponent.currentState)
-      {
         anchorComponent.UpdateAnchorState(anchorState);
-      }
-    }
   }
 
   /**
@@ -1954,7 +1978,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var maxSailForce = Math.Min(ValheimRaftPlugin.Instance.MaxSailSpeed.Value,
       sailForce);
     var maxPropulsion =
-      Math.Min(ValheimRaftPlugin.Instance.MaxPropulsionSpeed.Value,
+      Math.Min(PhysicsConfig.MaxLinearVelocity.Value,
         maxSailForce);
     return maxPropulsion;
   }
@@ -2272,6 +2296,31 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
   }
 
+  /// <summary>
+  /// The main event for adding collider ignores when pieces are added.
+  /// </summary>
+  public void OnAddPieceIgnoreColliders(ZNetView netView)
+  {
+    var nvName = netView.name;
+    var nvColliders = netView.GetComponentsInChildren<Collider>(true).ToList();
+    convexHullTriggerColliders = MovementController.DamageColliders
+      .GetComponents<Collider>().ToList();
+
+    if (nvColliders.Count == 0) return;
+
+
+    // main ship colliders like the generated meshes and onboard collider
+    IgnoreShipColliders(nvColliders);
+
+    // all pieces
+    if (RamPrefabs.IsRam(nvName) || nvName.Contains(PrefabNames.ShipAnchorWood))
+      IgnoreCollidersForList(nvColliders, m_pieces);
+
+    // rams must always have new pieces added to their list ignored. So that the new piece does not hit the ram.
+    IgnoreCollidersForAllRamPieces(netView);
+    IgnoreCollidersForAllAnchorPieces(netView);
+  }
+
   public void AddPiece(ZNetView netView, bool isNew = false)
   {
     if (!(bool)netView)
@@ -2281,8 +2330,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
 
     FixPieceMeshes(netView);
-    IgnoreCollidersForAllRamPieces(netView);
-    IgnoreCollidersForAllAnchorPieces(netView);
+    OnAddPieceIgnoreColliders(netView);
 
     var shouldRebuildBounds = false;
     totalSailArea = 0;
@@ -2322,16 +2370,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
           ramp.ForceRampUpdate();
           m_boardingRamps.Add(ramp);
           break;
-        
+
         case VehicleAnchorMechanismController anchorMechanismController:
           m_anchorMechanismComponents.Add(anchorMechanismController);
           InitAnchorComponent(anchorMechanismController);
           m_anchorPieces.Add(netView);
 
           if (MovementController != null)
-          {
             MovementController.CanAnchor = m_anchorPieces.Count > 0;
-          }
           break;
 
         case RudderComponent rudder:
@@ -2360,17 +2406,20 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     {
       m_ramPieces.Add(netView);
       var vehicleRamAoe = netView.GetComponentInChildren<VehicleRamAoe>();
-      if ((bool)vehicleRamAoe) vehicleRamAoe.vehicle = VehicleInstance.Instance;
+      if ((bool)vehicleRamAoe)
+        vehicleRamAoe.m_vehicle = VehicleInstance.Instance;
     }
 
     // Remove non-kinematic rigidbodies if not a ram
-    if (!RamPrefabs.IsRam(netView.name) && !netView.name.Contains(PrefabNames.ShipAnchorWood))
+    if (!RamPrefabs.IsRam(netView.name) &&
+        !netView.name.Contains(PrefabNames.ShipAnchorWood))
     {
       var rbs = netView.GetComponentsInChildren<Rigidbody>();
       foreach (var rbsItem in rbs)
         if (!rbsItem.isKinematic)
         {
-          Logger.LogWarning($"Destroying Rigidbody for root object {rbsItem.transform.root?.name ?? rbsItem.transform.name}");
+          Logger.LogWarning(
+            $"Destroying Rigidbody for root object {rbsItem.transform.root?.name ?? rbsItem.transform.name}");
           Destroy(rbsItem);
         }
     }
@@ -2420,9 +2469,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var firstRudder = m_rudderPieces.First();
     if (firstRudder == null)
     {
-      var bounds = m_floatcollider.bounds;
+      var bounds = FloatCollider.bounds;
       VehicleInstance.Instance.ShipEffectsObj.transform.localPosition =
-        new Vector3(m_floatcollider.transform.localPosition.x,
+        new Vector3(FloatCollider.transform.localPosition.x,
           bounds.center.y,
           bounds.min.z);
       return;
@@ -2432,7 +2481,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     VehicleInstance.Instance.ShipEffectsObj.transform.localPosition =
       new Vector3(
         localPosition.x,
-        m_floatcollider.bounds.center.y,
+        FloatCollider.bounds.center.y,
         localPosition.z);
   }
 
@@ -2527,22 +2576,32 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public void RebuildConvexHull()
   {
-    if (VehicleInstance?.Instance == null) return;
-
-    Physics.SyncTransforms();
-    var nvChildGameObjects = m_pieces.Select(x => x.gameObject).Where(x => !IsExcludedBoundsItem(x.gameObject.name)).ToList();
+    if (VehicleInstance?.Instance == null || MovementController == null) return;
+    var vehicleMovementCollidersTransform =
+      VehicleInstance.Instance.vehicleMovementCollidersTransform;
+    var nvChildGameObjects = m_pieces.Select(x => x.gameObject)
+      .Where(x => !IsExcludedBoundsItem(x.gameObject.name)).ToList();
     if (WaterConfig.HasUnderwaterHullBubbleEffect.Value)
-    {
       // Makes it slightly larger extended out from the ship
       convexHullComponent.previewScale = new Vector3(1.05f, 1.05f, 1.05f);
-    }
-    
+
     convexHullComponent
-      .GenerateMeshesFromChildColliders(VehicleInstance.Instance.gameObject,
+      .GenerateMeshesFromChildColliders(
+        vehicleMovementCollidersTransform.gameObject,
         PhysicsConfig.convexHullJoinDistanceThreshold.Value,
-        nvChildGameObjects);
-    
+        nvChildGameObjects, MovementController.DamageColliders);
+    convexHullMeshColliders =
+      vehicleMovementCollidersTransform.GetComponents<MeshCollider>().ToList();
+
+    if (RamConfig.VehicleHullsAreRams.Value)
+      MovementController.AddRamAoeToConvexHull(convexHullMeshColliders);
+
     UpdateConvexHullBounds();
+
+    convexHullTriggerColliders = MovementController.DamageColliders
+      .GetComponents<Collider>().ToList();
+    IgnoreShipColliders(convexHullTriggerColliders);
+    IgnoreVehicleCollidersForAllPieces();
   }
 
   /**
@@ -2552,16 +2611,16 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void RebuildBounds()
   {
     if (!isActiveAndEnabled) return;
+    Physics.SyncTransforms();
+
     RebuildConvexHull();
 
-    if (!(bool)m_floatcollider || !(bool)m_onboardcollider ||
-        !(bool)m_blockingcollider)
+    if (FloatCollider == null || OnboardCollider == null)
       return;
 
     RotateVehicleForwardPosition();
 
     // messing with collider bounds requires syncing outside a physics update
-    Physics.SyncTransforms();
     _pendingHullBounds = new Bounds();
     _pendingVehicleBounds = new Bounds();
 
@@ -2595,11 +2654,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     OnBoundsChangeUpdateShipColliders();
   }
 
-  /// <summary>
-  /// TODO do something with vehicle convex hull instead.
-  /// </summary>
-  public void OnBoundsChangeUpdateShipCollidersForConvexHull()
+  public void IgnoreVehicleCollidersForAllPieces()
   {
+    foreach (var zNetView in m_pieces)
+    {
+      var colliders = zNetView.GetComponentsInChildren<Collider>();
+      IgnoreShipColliders(colliders.ToList());
+    }
   }
 
   public static Bounds GetCombinedBoundingBoxOfChildren(Transform root)
@@ -2623,20 +2684,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 // todo compute the float colliderY transform so it aligns with bounds if player builds underneath boat
   public void OnBoundsChangeUpdateShipColliders()
   {
-    OnBoundsChangeUpdateShipCollidersForConvexHull();
-
     var minColliderSize = 0.1f;
-    if (!(bool)m_blockingcollider || !(bool)m_floatcollider ||
-        !(bool)m_onboardcollider)
+    if (FloatCollider == null || OnboardCollider == null)
     {
       Logger.LogWarning(
         "Ship colliders updated but the ship was unable to access colliders on ship object. Likely cause is ZoneSystem destroying the ship");
       return;
     }
-
-    // blocking collider should not be enabled for the new dynamic hull.
-    m_blockingcollider.enabled = convexHullMeshes.Count <= 0;
-    // m_floatcollider.enabled = convexHullMeshes.Count <= 0;
 
     /*
      * @description float collider logic
@@ -2648,7 +2702,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       new Vector3(_vehiclePieceBounds.center.x, averageFloatHeight,
         _vehiclePieceBounds.center.z);
     // var floatColliderSize = new Vector3(Mathf.Max(minColliderSize, _vehicleBounds.size.x),
-    // m_floatcollider.size.y, Mathf.Max(minColliderSize, _vehicleBounds.size.z));
+    // FloatCollider.size.y, Mathf.Max(minColliderSize, _vehicleBounds.size.z));
     const float originalFloatColliderSize = 0.5f;
     // throttled float collider size for larger ships?
     // // Mathf.Clamp(_vehiclePieceBounds.size.y * 0.33f, originalFloatColliderSize,
@@ -2676,7 +2730,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     //     Math.Max(_vehicleBounds.size.y * characterHeightScalar,
     //       _vehicleBounds.size.y + characterTriggerMinHeight),
     //     _vehicleBounds.size.y + characterTriggerMaxAddedHeight) -
-    //   m_floatcollider.size.y;
+    //   FloatCollider.size.y;
     var onboardColliderCenter =
       new Vector3(_vehiclePieceBounds.center.x,
         _vehiclePieceBounds.center.y,
@@ -2693,138 +2747,110 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
      * - may need an additional size
      * - may need more logic for water masks (hiding water on boat) and other boat magic that has not been added yet.
      */
-    var blockingColliderCenterY = floatColliderCenterOffset.y +
-                                  WaterConfig.UNSAFE_BlockingColliderOffset
-                                    .Value;
-    var blockingColliderCenterOffset = new Vector3(_vehiclePieceBounds.center.x,
-      blockingColliderCenterY, _vehiclePieceBounds.center.z);
-    var blockingColliderSize = new Vector3(
-      Mathf.Max(minColliderSize, _vehiclePieceBounds.size.x),
-      floatColliderSize.y,
-      Mathf.Max(minColliderSize, _vehiclePieceBounds.size.z));
+    // var blockingColliderCenterY = floatColliderCenterOffset.y +
+    //                               WaterConfig.UNSAFE_BlockingColliderOffset
+    //                                 .Value;
+    // var blockingColliderCenterOffset = new Vector3(_vehiclePieceBounds.center.x,
+    //   blockingColliderCenterY, _vehiclePieceBounds.center.z);
+    // var blockingColliderSize = new Vector3(
+    //   Mathf.Max(minColliderSize, _vehiclePieceBounds.size.x),
+    //   floatColliderSize.y,
+    //   Mathf.Max(minColliderSize, _vehiclePieceBounds.size.z));
 
     // asign defaults immediately
     FloatColliderDefaultPosition = floatColliderCenterOffset;
-    BlockingColliderDefaultPosition =
-      blockingColliderCenterOffset;
+    // BlockingColliderDefaultPosition =
+    //   blockingColliderCenterOffset;
 
     // Assign all the colliders And include offset to avoid Jumps in height if below ocean or flying
-    if (convexHullMeshes.Count > 0)
-    {
-      m_blockingcollider.size = Vector3.one * 0.1f;
-      m_blockingcollider.transform.localPosition =
-        blockingColliderCenterOffset;
-    }
-    else
-    {
-      m_blockingcollider.size = blockingColliderSize;
-      m_blockingcollider.transform.localPosition =
-        blockingColliderCenterOffset;
-    }
+    // if (convexHullMeshes.Count > 0)
+    // {
+    //   m_blockingcollider.size = Vector3.one * 0.1f;
+    //   m_blockingcollider.transform.localPosition =
+    //     blockingColliderCenterOffset;
+    // }
+    // else
+    // {
+    //   m_blockingcollider.size = blockingColliderSize;
+    //   m_blockingcollider.transform.localPosition =
+    //     blockingColliderCenterOffset;
+    // }
 
-    m_floatcollider.size = floatColliderSize;
-    m_floatcollider.transform.localPosition =
+    FloatCollider.size = floatColliderSize;
+    FloatCollider.transform.localPosition =
       floatColliderCenterOffset;
 
-    m_onboardcollider.size =
+    OnboardCollider.size =
       onboardColliderSize;
-    m_onboardcollider.transform.localPosition = onboardColliderCenter;
+    OnboardCollider.transform.localPosition = onboardColliderCenter;
     Physics.SyncTransforms();
   }
-  
-  public void IgnoreCollidersForList(ZNetView netView, List<ZNetView> list)
+
+  public void IgnoreNetViewCollidersForList(ZNetView netView,
+    List<ZNetView> list)
+  {
+    IgnoreCollidersForList(
+      netView.GetComponentsInChildren<Collider>(true).ToList(), list);
+  }
+
+  public void IgnoreCollidersForList(List<Collider> colliders,
+    List<ZNetView> list)
   {
     if (list.Count <= 0) return;
-    var colliders = netView.GetComponentsInChildren<Collider>();
-    foreach (var piece in list.ToList())
+    foreach (var listItem in list.ToList())
     {
-      if (piece == null)
+      if (listItem == null)
       {
-        list.Remove(piece);
+        list.Remove(listItem);
         continue;
       }
-      
-      var pieceColliders = piece.GetComponentsInChildren<Collider>();
+
+      var listItemColliders = listItem.GetComponentsInChildren<Collider>();
 
       foreach (var collider in colliders)
-      foreach (var pieceCollider in pieceColliders)
+      foreach (var pieceCollider in listItemColliders)
         Physics.IgnoreCollision(collider, pieceCollider, true);
     }
   }
-  
+
   public void IgnoreCollidersForAllAnchorPieces(ZNetView netView)
   {
-    IgnoreCollidersForList(netView, m_anchorPieces);
+    IgnoreNetViewCollidersForList(netView, m_anchorPieces);
   }
-  
+
   public void IgnoreCollidersForAllRamPieces(ZNetView netView)
   {
-    IgnoreCollidersForList(netView, m_ramPieces);
+    IgnoreNetViewCollidersForList(netView, m_ramPieces);
   }
 
-
-  /// <summary>
-  /// Ignore all colliders on the vehicleShip for objects like Rams or Anchors that can cause trouble
-  /// </summary>
-  /// <param name="colliders">Colliders from a Ram</param>
-  public void IgnoreCollidersOnShipForCollection(List<Collider> colliders)
+  public void IgnoreShipColliderForCollider(Collider collider)
   {
-    foreach (var t in colliders)
-    {
-      if (t == null) continue;
-
-      // Important so the dynamic-hulls are not considered a collidable object
-      foreach (var convexHullMesh in convexHullMeshes)
-      {
-        var collider = convexHullMesh.GetComponent<Collider>();
-        if (collider != null) Physics.IgnoreCollision(t, collider, true);
-      }
-
-      if (m_floatcollider) Physics.IgnoreCollision(t, m_floatcollider, true);
-      if (m_blockingcollider)
-        Physics.IgnoreCollision(t, m_blockingcollider, true);
-      if (m_onboardcollider)
-        Physics.IgnoreCollision(t, m_onboardcollider, true);
-      foreach (var nv in m_pieces.ToList())
-      {
-        if (!nv)
-        {
-          m_pieces.Remove(nv);
-          continue;
-        }
-
-        var nvColliders = nv.GetComponentsInChildren<Collider>();
-        foreach (var nvCollider in nvColliders)
-          Physics.IgnoreCollision(t, nvCollider, true);
-      }
-    }
+    if (collider == null) return;
+    foreach (var triggerCollider in convexHullTriggerColliders)
+      Physics.IgnoreCollision(collider, triggerCollider, true);
+    foreach (var convexHullMesh in convexHullMeshes)
+      Physics.IgnoreCollision(collider,
+        convexHullMesh.GetComponent<MeshCollider>(),
+        true);
+    if (FloatCollider)
+      Physics.IgnoreCollision(collider, FloatCollider, true);
+    if (OnboardCollider)
+      Physics.IgnoreCollision(collider, OnboardCollider, true);
   }
 
   public void IgnoreShipColliders(List<Collider> colliders)
   {
-    foreach (var t in colliders.ToList())
-    {
-      if (t == null) continue;
-      if (m_floatcollider) Physics.IgnoreCollision(t, m_floatcollider, true);
-      if (m_blockingcollider)
-        Physics.IgnoreCollision(t, m_blockingcollider, true);
-      if (m_onboardcollider)
-        Physics.IgnoreCollision(t, m_onboardcollider, true);
-    }
+    foreach (var t in colliders) IgnoreShipColliderForCollider(t);
   }
 
-  /// <summary>
-  /// Should ignore camera jitter, however it does not work yet
-  /// </summary>
-  /// TODO fix this or add a patch to ignore camera collision in roofed boats or when paning and colliding with wheel
-  /// <param name="colliders"></param>
   public void IgnoreCameraCollision(List<Collider> colliders)
   {
-    var cameraMask = GameCamera.instance.m_blockCameraMask;
-    foreach (var t in colliders.ToList())
+    if (Camera.main == null) return;
+    var cameraCollider = Camera.main.GetComponent<Collider>();
+    foreach (var t in colliders)
     {
       if (t == null) continue;
-      t.excludeLayers |= cameraMask;
+      Physics.IgnoreCollision(t, cameraCollider, true);
     }
   }
 
@@ -2860,12 +2886,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     Vector3 boundsSize,
     GameObject netView)
   {
-    if (!(bool)m_floatcollider) return null;
     if (netView.gameObject.name.StartsWith(PrefabNames.KeelColliderPrefix))
       return null;
 
     var outputBounds = new Bounds(boundsCenter, boundsSize);
-    var colliders = netView.GetComponentsInChildren<Collider>();
+    var colliders = netView.GetComponentsInChildren<Collider>(false);
 
     // filters only physical layers
     var filteredColliders =
@@ -2886,12 +2911,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   /// If only including active colliders, this would cause a problem if a WearNTear Piece updated its object and the collider began interacting with the vehicle 
   /// <param name="netView"></param>
   /// <returns></returns>
-  public static List<Collider> GetCollidersInPiece(GameObject netView)
+  public static List<Collider> GetCollidersInPiece(GameObject netView,
+    bool includeInactive = true)
   {
-    // var piece = netView.GetComponent<Piece>();
-    // return piece
-    //   ? piece.GetAllColliders()
-    return [..netView.GetComponentsInChildren<Collider>(false)];
+    return [..netView.GetComponentsInChildren<Collider>(includeInactive)];
   }
 
 /*
@@ -2900,13 +2923,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
  */
   public Bounds EncapsulateBounds(GameObject go, Bounds tempBounds)
   {
-    var colliders = GetCollidersInPiece(go);
-
-    if (RamPrefabs.IsRam(go.name)) IgnoreCollidersOnShipForCollection(colliders);
-    if (go.name.Contains(PrefabNames.ShipAnchorWood)) IgnoreCollidersOnShipForCollection(colliders);
-
-    IgnoreShipColliders(colliders);
-
     var door = go.GetComponentInChildren<Door>();
     var ladder = go.GetComponent<RopeLadderComponent>();
     var isRope = go.name.Equals(PrefabNames.MBRopeLadder);

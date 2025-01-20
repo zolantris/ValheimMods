@@ -30,7 +30,7 @@ public struct DrawTargetColliders
 
   public BoxCollider collider { get; set; }
   public Color lineColor { get; set; }
-  public GameObject parent { get; set; }
+  public Transform parent { get; set; }
   public float width { get; set; }
 
   // used for inspecting
@@ -55,17 +55,21 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   private void RenderForcePointCubes()
   {
-    if (VehicleShipInstance == null || VehicleShipInstance.MovementController == null) return;
-    
+    if (VehicleShipInstance == null ||
+        VehicleShipInstance.MovementController == null) return;
+
     var shipFloatation = VehicleShipInstance
       .MovementController.GetShipFloatation();
 
     if (shipFloatation == null) return;
-    
-    RenderWaterForceCube(ref forwardCube, shipFloatation.Value.ShipForward, "forward");
-    RenderWaterForceCube(ref backwardCube, shipFloatation.Value.ShipBack, "backward");
-    RenderWaterForceCube(ref rightCube, shipFloatation.Value.ShipRight, "right");
-    RenderWaterForceCube(ref leftCube,shipFloatation.Value.ShipLeft, "left");
+
+    RenderWaterForceCube(ref forwardCube, shipFloatation.Value.ShipForward,
+      "forward");
+    RenderWaterForceCube(ref backwardCube, shipFloatation.Value.ShipBack,
+      "backward");
+    RenderWaterForceCube(ref rightCube, shipFloatation.Value.ShipRight,
+      "right");
+    RenderWaterForceCube(ref leftCube, shipFloatation.Value.ShipLeft, "left");
   }
 
   private void FixedUpdate()
@@ -89,7 +93,10 @@ public class VehicleDebugHelpers : MonoBehaviour
     lines.Clear();
 
     foreach (var obj in targetColliders)
+    {
+      if (obj.collider == null) continue;
       Remove3DTextForCollider(obj.collider.gameObject.name);
+    }
   }
 
   public void StartRenderAllCollidersLoop()
@@ -135,16 +142,15 @@ public class VehicleDebugHelpers : MonoBehaviour
   }
 
 
-  public void RenderWaterForceCube(ref GameObject? cube, Vector3 position, string cubeTitle)
+  public void RenderWaterForceCube(ref GameObject? cube, Vector3 position,
+    string cubeTitle)
   {
     if (!autoUpdateColliders)
     {
-      if (cube != null)
-      {
-        Destroy(cube);
-      }
+      if (cube != null) Destroy(cube);
       return;
     }
+
     if (VehicleShipInstance.MovementController == null) return;
 
     if (cube == null)
@@ -153,10 +159,7 @@ public class VehicleDebugHelpers : MonoBehaviour
       cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
       cube.name = $"force_cube_{cubeTitle}";
       var collider = cube.GetComponent<BoxCollider>();
-      if (collider)
-      {
-        Destroy(collider);
-      }
+      if (collider) Destroy(collider);
 
       var meshRenderer = cube.GetComponent<MeshRenderer>();
       meshRenderer.material =
@@ -167,9 +170,10 @@ public class VehicleDebugHelpers : MonoBehaviour
       cube.gameObject.layer = LayerMask.NameToLayer("Ignore Raycast");
 
       // Add the text element as a child
-      GameObject textObj = new GameObject("CubeText");
+      var textObj = new GameObject("CubeText");
       textObj.transform.SetParent(cube.transform);
-      textObj.transform.localPosition = new Vector3(0, 1.2f, 0); // Adjust height as needed
+      textObj.transform.localPosition =
+        new Vector3(0, 1.2f, 0); // Adjust height as needed
 
       var textMesh = textObj.AddComponent<TextMesh>();
       textMesh.text = $"Force Cube {cubeTitle}"; // Set desired text
@@ -188,10 +192,12 @@ public class VehicleDebugHelpers : MonoBehaviour
 
     // Ensure the text always faces the camera
     var textTransform = cube.transform.Find("CubeText");
-    if (textTransform != null)
+    if (textTransform != null && Camera.main != null)
     {
       textTransform.LookAt(Camera.main.transform);
-      textTransform.rotation = Quaternion.LookRotation(textTransform.forward * -1); // Flip to face correctly
+      textTransform.rotation =
+        Quaternion.LookRotation(textTransform.forward *
+                                -1); // Flip to face correctly
     }
   }
 
@@ -200,21 +206,16 @@ public class VehicleDebugHelpers : MonoBehaviour
   {
     if (!autoUpdateColliders)
     {
-      if (worldCenterOfMassCube != null)
-      {
-        Destroy(worldCenterOfMassCube);
-      }
+      if (worldCenterOfMassCube != null) Destroy(worldCenterOfMassCube);
       return;
     }
+
     if (VehicleShipInstance.MovementController == null) return;
     if (worldCenterOfMassCube == null)
     {
       worldCenterOfMassCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
       var collider = worldCenterOfMassCube.GetComponent<BoxCollider>();
-      if (collider)
-      {
-        Destroy(collider);
-      }
+      if (collider) Destroy(collider);
       var meshRenderer = worldCenterOfMassCube.GetComponent<MeshRenderer>();
       meshRenderer.material =
         new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
@@ -321,7 +322,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     {
       line = new GameObject($"{collider.name}_Line_{index}")
         .AddComponent<LineRenderer>();
-      line.transform.SetParent(parent.transform);
+      line.transform.SetParent(parent);
     }
 
     line.material = material;
@@ -367,7 +368,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   {
     foreach (var drawTargetColliders in targetColliders)
       DrawColliders(drawTargetColliders.collider,
-        drawTargetColliders.collider.gameObject,
+        drawTargetColliders.collider.transform,
         drawTargetColliders.lineColor, drawTargetColliders.name);
 
     return true;
@@ -377,13 +378,13 @@ public class VehicleDebugHelpers : MonoBehaviour
   {
     public Color color;
     public Material material;
-    public GameObject parent;
+    public Transform parent;
     public BoxCollider boxCollider;
     public List<LineRenderer>? lineItems;
     public float width;
 
     public void Deconstruct(out Color o_color, out Material o_material,
-      out GameObject o_parent,
+      out Transform o_parent,
       out BoxCollider o_boxCollider, out List<LineRenderer>? o_lineItems,
       out float o_width)
     {
@@ -399,7 +400,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   /*
    * Debug any boxCollider, graphically visualizes the bounds
    */
-  public void DrawColliders(BoxCollider boxCollider, GameObject parent,
+  public void DrawColliders(BoxCollider boxCollider, Transform parent,
     Color? lineColor, string name)
   {
     var color = lineColor ?? LineColorDefault;
@@ -508,7 +509,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   }
 
   private void Update3DTextForCollider(BoxCollider boxCollider,
-    GameObject parent, string textTitle, Color color)
+    Transform parent, string textTitle, Color color)
 
   {
     // If text already exists for this collider, update it
@@ -518,7 +519,7 @@ public class VehicleDebugHelpers : MonoBehaviour
       // Update text content and position if necessary
       var offset = new Vector3(0, boxCollider.size.y / 2f + 1f, 0);
       existingText.transform.position = boxCollider.transform.position + offset;
-      existingText.transform.SetParent(parent.transform);
+      existingText.transform.SetParent(parent);
 
       // Ensure the text always faces the camera
       existingText.transform.LookAt(GameCamera.instance.transform);
@@ -539,7 +540,7 @@ public class VehicleDebugHelpers : MonoBehaviour
       // Position the text next to the collider
       var offset = new Vector3(0, boxCollider.size.y / 2f + 1f, 0);
       textObj.transform.position = boxCollider.transform.position + offset;
-      textObj.transform.SetParent(parent.transform);
+      textObj.transform.SetParent(parent);
 
       // Make text face the camera
       textObj.transform.LookAt(GameCamera.instance.transform);

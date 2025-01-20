@@ -33,7 +33,7 @@ public class WaterZoneController : CreativeModeColliderComponent
   public enum WaterZoneControllerType
   {
     Vehicle,
-    Static,
+    Static
   }
 
   public WaterZoneControllerType zoneType = WaterZoneControllerType.Static;
@@ -48,29 +48,18 @@ public class WaterZoneController : CreativeModeColliderComponent
 
   public void Start()
   {
-    if (ZNetView.m_forceDisableInit)
-    {
-      return;
-    }
+    if (ZNetView.m_forceDisableInit) return;
 
-    if (netView == null)
-    {
-      netView = GetComponent<ZNetView>();
-    }
+    if (netView == null) netView = GetComponent<ZNetView>();
 
     if (netView != null)
     {
       instanceZdoid = netView.GetZDO().m_uid;
       if (!Instances.ContainsKey(instanceZdoid))
-      {
         Instances.Add(instanceZdoid, this);
-      }
     }
 
-    if (_onboardController)
-    {
-      zoneType = WaterZoneControllerType.Vehicle;
-    }
+    if (_onboardController) zoneType = WaterZoneControllerType.Vehicle;
 
     InitMaskFromNetview();
   }
@@ -176,10 +165,7 @@ public class WaterZoneController : CreativeModeColliderComponent
     var characterZdoid = character.GetZDOID();
 
     // we do not need to keep transitioning the player between areas. This avoids an exit/entry call continuously fighting for ownership
-    if (WaterZoneCharacterData.ContainsKey(characterZdoid))
-    {
-      return;
-    }
+    if (WaterZoneCharacterData.ContainsKey(characterZdoid)) return;
 
     WaterZoneCharacterData.Add(characterZdoid,
       new WaterZoneCharacterData(character, this));
@@ -191,9 +177,7 @@ public class WaterZoneController : CreativeModeColliderComponent
     if (character == null) return;
 
     if (!WaterZoneCharacterData.TryGetValue(instanceZdoid, out var data))
-    {
       return;
-    }
 
     // only removes the instance associated with it.
     if (data.controllerZdoId != instanceZdoid &&
@@ -204,36 +188,25 @@ public class WaterZoneController : CreativeModeColliderComponent
   public static void OnToggleEditMode(bool isDebug)
   {
     foreach (var waterMaskComponent in Instances.Values.ToList())
-    {
       if (isDebug)
-      {
         waterMaskComponent?.UseDebugComponents();
-      }
       else
-      {
         waterMaskComponent?.UseHiddenComponents();
-      }
-    }
   }
 
   private void CreateDebugHelperComponent()
   {
     if (_debugComponent == null)
-    {
       _debugComponent = gameObject.AddComponent<VehicleDebugHelpers>();
-    }
 
-    if (!collider)
-    {
-      collider = GetComponent<BoxCollider>();
-    }
+    if (!collider) collider = GetComponent<BoxCollider>();
 
     if (collider == null) return;
 
     _debugComponent.AddColliderToRerender(new DrawTargetColliders
     {
       collider = collider,
-      parent = gameObject,
+      parent = transform,
       lineColor = new Color(0, 0.5f, 1f, 0.8f),
       width = 1f
     });
@@ -255,10 +228,7 @@ public class WaterZoneController : CreativeModeColliderComponent
   /// </summary>
   public void UseHiddenComponents()
   {
-    if (_debugComponent != null)
-    {
-      Destroy(_debugComponent);
-    }
+    if (_debugComponent != null) Destroy(_debugComponent);
 
     gameObject.layer = LayerHelpers.IgnoreRaycastLayer;
   }
@@ -316,12 +286,8 @@ public class WaterZoneController : CreativeModeColliderComponent
     InitPrimitive();
 
     if (IsEditMode)
-    {
       UseDebugComponents();
-    }
     else
-    {
       UseHiddenComponents();
-    }
   }
 }

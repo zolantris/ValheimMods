@@ -54,7 +54,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "2.5.1";
+  public const string Version = "2.5.3";
   public const string ModName = "ValheimRAFT";
   public const string ModNameBeta = "ValheimRAFTBETA";
   public const string ModGuid = $"{Author}.{ModName}";
@@ -94,7 +94,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   // Propulsion Configs
   public ConfigEntry<bool> EnableCustomPropulsionConfig { get; set; }
 
-  public ConfigEntry<float> MaxPropulsionSpeed { get; set; }
   public ConfigEntry<float> MaxSailSpeed { get; set; }
   public ConfigEntry<float> SpeedCapMultiplier { get; set; }
   public ConfigEntry<float> VehicleRudderSpeedBack { get; set; }
@@ -145,7 +144,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public string[] possibleModFolderNames =
   [
     $"{Author}-{ModName}", $"zolantris-{ModName}", $"Zolantris-{ModName}",
-    ModName, $"{Author}-{ModNameBeta}", $"zolantris-{ModNameBeta}", $"Zolantris-{ModNameBeta}",
+    ModName, $"{Author}-{ModNameBeta}", $"zolantris-{ModNameBeta}",
+    $"Zolantris-{ModNameBeta}",
     ModNameBeta
   ];
 
@@ -159,7 +159,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       new ConfigurationManagerAttributes()
       {
         IsAdminOnly = isAdmin,
-        IsAdvanced = isAdvanced,
+        IsAdvanced = isAdvanced
       }
     );
   }
@@ -176,10 +176,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private void CreatePropulsionConfig()
   {
     ShowShipStats = Config.Bind("Debug", "ShowShipState", true);
-    MaxPropulsionSpeed = Config.Bind("Propulsion", "MaxPropulsionSpeed", 45f,
-      CreateConfigDescription(
-        "Sets the absolute max speed a ship can ever hit. This is capped on the vehicle, so no forces applied will be able to exceed this value. 20-30f is safe, higher numbers could let the ship fail off the map",
-        true, false, new AcceptableValueRange<float>(10, 200)));
     MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 30f,
       CreateConfigDescription(
         "Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.",
@@ -449,7 +445,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     WaterConfig.BindConfig(Config);
     PhysicsConfig.BindConfig(Config);
     MinimapConfig.BindConfig(Config);
-    TutorialConfig.BindConfig(Config);
+    HudConfig.BindConfig(Config);
 
 #if DEBUG
     // Meant for only being run in debug builds for testing quickly
@@ -553,9 +549,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     AddGuiLayerComponents();
 
     if (ModEnvironment.IsDebug)
-    {
       new BepInExConfigAutoDoc().Generate(this, Config, "ValheimRAFT");
-    }
   }
 
   /**
@@ -651,15 +645,10 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   {
     _debugGui = GetComponent<VehicleDebugGui>();
 
-    if ((bool)_debugGui && !hasDebug)
-    {
-      Destroy(_debugGui);
-    }
+    if ((bool)_debugGui && !hasDebug) Destroy(_debugGui);
 
     if (!(bool)_debugGui && hasDebug)
-    {
       _debugGui = gameObject.AddComponent<VehicleDebugGui>();
-    }
   }
 
   private void AddCustomPieces()

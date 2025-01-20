@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using BepInEx.Configuration;
 using UnityEngine;
 using ValheimRAFT;
@@ -124,6 +125,11 @@ public static class PhysicsConfig
     set;
   }
 
+  public static ConfigEntry<float> MaxAngularVelocity { get; set; }
+
+  public static ConfigEntry<float> MaxLinearVelocity { get; set; }
+  public static ConfigEntry<float> MaxLinearYVelocity { get; set; }
+
 
   public static ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
 
@@ -152,6 +158,42 @@ public static class PhysicsConfig
 
   private static readonly AcceptableValueRange<float> StableSailForceRange =
     new(0.01f, 0.1f);
+
+  /// <summary>
+  /// Force overrides the value if any of the Physics values change after loading in a release.
+  ///
+  /// Also since this can trigger itself it will exit if the values are equal
+  /// </summary>
+  private static void ForceSetVehiclePhysics(ConfigEntry<ForceMode> entry)
+  {
+    if (ModEnvironment.IsRelease) return;
+    if (entry.Value != ForceMode.VelocityChange)
+      entry.Value = ForceMode.VelocityChange;
+  }
+
+  private static void ForceSetAllVehiclePhysics()
+  {
+    if (ModEnvironment.IsRelease) return;
+    foreach (var velocityConfig in VelocityConfigs)
+      ForceSetVehiclePhysics(velocityConfig);
+  }
+
+  private static List<ConfigEntry<ForceMode>> VelocityConfigs =>
+  [
+    floatationVelocityMode, sailingVelocityMode, turningVelocityMode,
+    flyingVelocityMode, rudderVelocityMode
+  ];
+
+  private static readonly AcceptableValueRange<float>
+    maxLinearVelocityAcceptableValues =
+      ModEnvironment.IsDebug
+        ? new AcceptableValueRange<float>(1, 2000f)
+        : new AcceptableValueRange<float>(1, 100f);
+
+  private static readonly AcceptableValueRange<float>
+    maxLinearYVelocityAcceptableValues = ModEnvironment.IsDebug
+      ? new AcceptableValueRange<float>(1, 2000f)
+      : new AcceptableValueRange<float>(1, 20f);
 
   public static void BindConfig(ConfigFile config)
   {
@@ -252,6 +294,24 @@ public static class PhysicsConfig
     hullFloatationRange = new AcceptableValueRange<float>(-50f, 50f);
 #endif
 
+    MaxLinearVelocity = Config.Bind(SectionKey, "MaxVehicleLinearVelocity", 10f,
+      ConfigHelpers.CreateConfigDescription(
+        "Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 20. Higher values will increase potential of vehicle flying off to space",
+        true, true, maxLinearVelocityAcceptableValues));
+
+
+    MaxLinearYVelocity = Config.Bind(SectionKey, "MaxVehicleLinearYVelocity",
+      3f,
+      ConfigHelpers.CreateConfigDescription(
+        "Sets the absolute max speed a vehicle can ever move in vertical direction. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not use gravity well",
+        true, true, maxLinearYVelocityAcceptableValues));
+
+    MaxAngularVelocity = Config.Bind(SectionKey, "MaxVehicleAngularVelocity",
+      5f,
+      ConfigHelpers.CreateConfigDescription(
+        "Sets the absolute max speed a vehicle can ROTATE in. Having a high value means the vehicle can spin out of control.",
+        true, true, new AcceptableValueRange<float>(0.1f, 10f)));
+
     HullFloatationColliderLocation = Config.Bind(FloatationPhysicsSectionKey,
       "HullFloatationColliderLocation",
       HullFloatation.Custom,
@@ -310,50 +370,72 @@ public static class PhysicsConfig
         $"Sets the hull preview offset, this will allow previewing the hull side by side with your vehicle. This can only be seen if the {convexHullDebuggerForceEnabled.Definition} is true.",
         true, true));
 
-    var forceModes = ModEnvironment.IsDebug ? null : new AcceptableValueList<int>((int)ForceMode.VelocityChange);
-
     floatationVelocityMode = Config.Bind(VelocityModeSectionKey,
       "floatationVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
-        true, true, forceModes));
+        true, true));
     flyingVelocityMode = Config.Bind(VelocityModeSectionKey,
       "flyingVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
-        true, true, forceModes));
+        true, true));
     turningVelocityMode = Config.Bind(VelocityModeSectionKey,
       "turningVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
-        true, true, forceModes));
+        true, true));
     sailingVelocityMode = Config.Bind(VelocityModeSectionKey,
       "sailingVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
-        true, true, forceModes));
+        true, true));
     rudderVelocityMode = Config.Bind(VelocityModeSectionKey,
       "rudderVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
-        true, true, forceModes));
+        true, true));
 
     removeCameraCollisionWithObjectsOnBoat = Config.Bind(SectionKey,
       "removeCameraCollisionWithObjectsOnBoat", true,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL removes all collision of camera for objects on boat. Should significantly lower jitter when camera smashes into objects on boat it will force camera through it instead of pushing rapidly forward with vehicle force too.",
         false, true));
+
+    var waterForceDeltaMultiplierRange = ModEnvironment.IsDebug
+      ? new AcceptableValueRange<float>(0.1f, 5000f)
+      : new AcceptableValueRange<float>(10f, 50f);
     waterDeltaForceMultiplier = Config.Bind(SectionKey,
       "waterDeltaForceMultiplier", 50f,
       ConfigHelpers.CreateConfigDescription("Water delta force multiplier",
-        true, true, new AcceptableValueRange<float>(0.1f, 5000f)));
+        true, true, waterForceDeltaMultiplierRange));
 
+    MaxAngularVelocity.SettingChanged += (sender, args) =>
+      VehicleMovementController.Instances.ForEach(x =>
+        x.UpdateVehicleSpeedThrottle());
+    MaxLinearVelocity.SettingChanged += (sender, args) =>
+      VehicleMovementController.Instances.ForEach(x =>
+        x.UpdateVehicleSpeedThrottle());
+
+    floatationVelocityMode.SettingChanged += (sender, args) =>
+      ForceSetVehiclePhysics(floatationVelocityMode);
+    flyingVelocityMode.SettingChanged += (sender, args) =>
+      ForceSetVehiclePhysics(flyingVelocityMode);
+    turningVelocityMode.SettingChanged += (sender, args) =>
+      ForceSetVehiclePhysics(turningVelocityMode);
+    sailingVelocityMode.SettingChanged += (sender, args) =>
+      ForceSetVehiclePhysics(sailingVelocityMode);
+    rudderVelocityMode.SettingChanged += (sender, args) =>
+      ForceSetVehiclePhysics(rudderVelocityMode);
+
+    ForceSetAllVehiclePhysics();
 
     removeCameraCollisionWithObjectsOnBoat.SettingChanged += (sender, args) =>
     {
-      VehicleOnboardController.AddOrRemovePlayerBlockingCamera(Player.m_localPlayer);
+      VehicleOnboardController.AddOrRemovePlayerBlockingCamera(
+        Player.m_localPlayer);
     };
-      
+
     convexHullDebuggerForceEnabled.SettingChanged += (_, __) =>
       ConvexHullComponent.UpdatePropertiesForAllComponents();
     convexHullDebuggerColor.SettingChanged += (_, __) =>

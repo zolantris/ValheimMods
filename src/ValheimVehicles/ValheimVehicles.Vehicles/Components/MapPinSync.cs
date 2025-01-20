@@ -21,7 +21,7 @@ public class MapPinSync : MonoBehaviour
     public ZDO zdo;
   }
 
-  Dictionary<Vector3, CustomPinZdoData> _vehiclePins = new();
+  private Dictionary<Vector3, CustomPinZdoData> _vehiclePins = new();
   public static MapPinSync Instance;
 
   public string GetOwnerNameFromZdo(ZDO zdo)
@@ -81,10 +81,7 @@ public class MapPinSync : MonoBehaviour
 
   private void ClearSpawnPin(Minimap.PinData? pinData)
   {
-    if (pinData != null)
-    {
-      Minimap.instance.RemovePin(pinData);
-    }
+    if (pinData != null) Minimap.instance.RemovePin(pinData);
 
     cachedLastBedPinData = null;
     cachedLastBedVector = null;
@@ -94,12 +91,9 @@ public class MapPinSync : MonoBehaviour
   {
     if (PlayerSpawnController.Instance == null) yield break;
     if (cachedPlayerSpawnZdo == null)
-    {
       yield return PlayerSpawnController.Instance.FindDynamicZdo(
         LocationVariation.Spawn,
-        onComplete: (
-          data => { cachedPlayerSpawnZdo = data; }));
-    }
+        onComplete: data => { cachedPlayerSpawnZdo = data; });
 
     if (cachedPlayerSpawnZdo == null)
     {
@@ -111,15 +105,10 @@ public class MapPinSync : MonoBehaviour
 
     // if the previous key exists, it needs to be removed.
     if (cachedLastBedVector != nextPosition)
-    {
       ClearSpawnPin(cachedLastBedPinData);
-    }
 
     // make sure the key does not already exist/not point to update it if so.
-    if (Minimap.instance.m_pins.Contains(cachedLastBedPinData))
-    {
-      yield break;
-    }
+    if (Minimap.instance.m_pins.Contains(cachedLastBedPinData)) yield break;
 
     cachedLastBedPinData = Minimap.instance.AddPin(nextPosition,
       Minimap.PinType.Bed,
@@ -140,8 +129,11 @@ public class MapPinSync : MonoBehaviour
   {
     var guids = ZdoWatchController.Instance.GetAllZdoGuids();
     var vehicleZdos = guids.Select(x => x.Value).Where(x =>
-      ZNetScene.instance.GetPrefab(x.GetPrefab()).name
-        .Contains(PrefabNames.WaterVehicleShip)).ToHashSet();
+    {
+      var prefab = ZNetScene.instance.GetPrefab(x.GetPrefab());
+      if (prefab == null) return false;
+      return prefab.name.Contains(PrefabNames.WaterVehicleShip);
+    }).ToHashSet();
 
     var allPins = Minimap.instance.m_pins;
     var pinZdosToSkip = new HashSet<ZDO>();
@@ -158,10 +150,7 @@ public class MapPinSync : MonoBehaviour
         // Update the key in _vehiclePins without removing and re-adding
         if (!vehiclePin.Key.Equals(zdoPosition))
         {
-          if (isVisible)
-          {
-            _vehiclePins[zdoPosition] = vehiclePin.Value;
-          }
+          if (isVisible) _vehiclePins[zdoPosition] = vehiclePin.Value;
 
           _vehiclePins.Remove(vehiclePin.Key);
         }
@@ -206,9 +195,7 @@ public class MapPinSync : MonoBehaviour
     // Remove each pin in _vehiclePins from m_locationPins
     foreach (var vehiclePin in _vehiclePins.Where(vehiclePin =>
                Minimap.instance.m_pins.Contains(vehiclePin.Value.pinData)))
-    {
       Minimap.instance.RemovePin(vehiclePin.Value.pinData);
-    }
 
     // Clear the local _vehiclePins dictionary
     _vehiclePins.Clear();

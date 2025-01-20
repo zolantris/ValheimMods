@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1027925305
+CRC: 122573187
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: c0b1938a74447f2d732cf2f35a4334c5
+    Hash: 719aaf65f2849b634ea54544443898e0
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 244aa4fda2a165e0284f57ff9078be95
+    Hash: 307a0571a905aa8390435e9040d27ed4
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: c0b1938a74447f2d732cf2f35a4334c5
+    Hash: 719aaf65f2849b634ea54544443898e0
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -148,11 +148,11 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/keel.prefab
 - Assets/ValheimVehicles/Prefabs/side_ram.prefab
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_2x4.mat
-- Assets/ValheimVehicles/Icons/anchor.png
 - Assets/ValheimVehicles/Shaders/DoubleSidedTransparent.shader
+- Assets/ValheimVehicles/Prefabs/hull_wall_iron_4x4.prefab
 - Assets/ValheimVehicles/Material/iron_metal_rustic_2x2.mat
 - Assets/ValheimVehicles/Prefabs/GUI/Slider.prefab
-- Assets/ValheimVehicles/Prefabs/hull_wall_iron_4x4.prefab
+- Assets/ValheimVehicles/Prefabs/hull_wall_window_square_wood_4x4.prefab
 - Assets/ValheimVehicles/Material/wood_piece_worn.mat
 - Assets/ValheimVehicles/Prefabs/hull_slab_iron_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_double_wood.prefab
@@ -171,7 +171,6 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_iron_2x2_worn.prefab
 - Assets/ValheimVehicles/Prefabs/shared_ram_stake.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_square_wood_2x2.prefab
-- Assets/ValheimVehicles/Prefabs/hull_wall_window_square_wood_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_2x2.prefab
 - Assets/ValheimVehicles/Material/WaterHeightMaterial.mat
 - Assets/ValheimVehicles/Material/bronze_nautilus_metal_rib 1.mat

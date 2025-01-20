@@ -207,16 +207,12 @@ public class VehicleCommands : ConsoleCommand
     VehicleOnboardController? vehicleOnboardController,
     bool shouldSkipPlayer = true)
   {
-    if (vehicleOnboardController == null)
-    {
-      return null;
-    }
+    if (vehicleOnboardController == null) return null;
 
     var playersOnShip = vehicleOnboardController.GetPlayersOnShip();
     var playerData = new List<SafeMovePlayerData>();
 
     if (!shouldSkipPlayer)
-    {
       playerData.Add(new SafeMovePlayerData()
       {
         player = Player.m_localPlayer,
@@ -225,18 +221,13 @@ public class VehicleCommands : ConsoleCommand
           ? Player.m_localPlayer.transform.localPosition
           : Vector3.zero
       });
-    }
 
     // excludes current player to avoid double toggling.
     if (playersOnShip.Count > 0)
-    {
       foreach (var player in playersOnShip)
       {
         var isDebugFlying = player.IsDebugFlying();
-        if (!isDebugFlying)
-        {
-          player.m_body.isKinematic = true;
-        }
+        if (!isDebugFlying) player.m_body.isKinematic = true;
 
         player.transform.SetParent(null);
         playerData.Add(new SafeMovePlayerData()
@@ -247,19 +238,15 @@ public class VehicleCommands : ConsoleCommand
             : Vector3.zero
         });
       }
-    }
 
     var wasDebugFlying = Player.m_localPlayer.IsDebugFlying();
-    if (!wasDebugFlying)
-    {
-      Player.m_localPlayer.m_body.isKinematic = true;
-    }
+    if (!wasDebugFlying) Player.m_localPlayer.m_body.isKinematic = true;
 
     return new SafeMoveData()
     {
       playersOnShip = playerData,
       IsLocalPlayerDebugFlying = wasDebugFlying,
-      OnboardController = vehicleOnboardController,
+      OnboardController = vehicleOnboardController
     };
   }
 
@@ -281,10 +268,7 @@ public class VehicleCommands : ConsoleCommand
       SafeMovePlayerBefore(onboardController, shouldMoveLocalPlayerOffship);
     yield return new WaitForFixedUpdate();
 
-    if (coroutineFunc != null)
-    {
-      yield return coroutineFunc;
-    }
+    if (coroutineFunc != null) yield return coroutineFunc;
 
     var nextPosition = completeCallback();
     yield return SafeMovePlayerAfter(safeMoveData, nextPosition);
@@ -293,10 +277,7 @@ public class VehicleCommands : ConsoleCommand
 
   public static void ResetPlayerVelocities(Player player)
   {
-    if (player.m_body.isKinematic)
-    {
-      player.m_body.isKinematic = false;
-    }
+    if (player.m_body.isKinematic) player.m_body.isKinematic = false;
 
     player.m_body.angularVelocity = Vector3.zero;
     player.m_body.velocity = Vector3.zero;
@@ -341,12 +322,10 @@ public class VehicleCommands : ConsoleCommand
         // If moving player to the vehicle exceeds the range, they need to be force teleported.
         if (Mathf.Abs(deltaX) > 50f || Mathf.Abs(deltaY) > 50f ||
             Mathf.Abs(deltaZ) > 50f)
-        {
           targetLocation = data.Value.OnboardController.VehicleInstance.NetView
                              .m_zdo
                              .GetPosition() +
                            safeMovePlayerData.lastLocalOffset;
-        }
 
         TeleportImmediately(safeMovePlayerData.player,
           targetLocation);
@@ -396,12 +375,8 @@ public class VehicleCommands : ConsoleCommand
     }
 
     if (!complete)
-    {
       foreach (var playerData in data.Value.playersOnShip)
-      {
         ResetPlayerVelocities(playerData.player);
-      }
-    }
 
     timer.Restart();
     // keep running this for the first 5 seconds to prevent falldamage while the ship recovers it's physics and the player lands on the ship.
@@ -428,13 +403,9 @@ public class VehicleCommands : ConsoleCommand
     // attempts to for the ship to move here.
     var zoneToMoveTo = ZoneSystem.GetZone(newLocation);
     if (!ZoneSystem.instance.PokeLocalZone(zoneToMoveTo))
-    {
       if (!ZoneSystem.instance.SpawnZone(zoneToMoveTo,
             ZoneSystem.SpawnMode.Full, out _))
-      {
         ZoneSystem.instance.CreateLocalZones(newLocation);
-      }
-    }
 
     var timer = Stopwatch.StartNew();
     yield return new WaitUntil(() =>
@@ -473,10 +444,7 @@ public class VehicleCommands : ConsoleCommand
       MoveVehicleIntoFarZone(vehicleInstance, offset,
         (pos) => { finalPosition = pos; }));
 
-    if (vehicleInstance != null)
-    {
-      vehicleInstance.SetCreativeMode(false);
-    }
+    if (vehicleInstance != null) vehicleInstance.SetCreativeMode(false);
   }
 
   public Vector3 ClampFromPermissions(Vector3 position)
@@ -552,10 +520,8 @@ public class VehicleCommands : ConsoleCommand
     }
 
     if (args.Length == 1)
-    {
       Game.instance.StartCoroutine(vehicleController?.VehicleInstance
         ?.MovementController?.FixShipRotation());
-    }
 
     if (args.Length == 4)
     {
@@ -601,10 +567,8 @@ public class VehicleCommands : ConsoleCommand
     var piecesInVehicleController = vehicleController.GetCurrentPendingPieces();
 
     foreach (var zNetView in piecesInVehicleController)
-    {
       zNetView.m_zdo.Set(MoveableBaseRootComponent.MBParentIdHash,
         mbShip.GetMbRoot().GetPersistentId());
-    }
 
     if (vehicleShip.Instance != null)
       ZNetScene.instance.Destroy(vehicleShip.Instance.gameObject);
@@ -631,10 +595,8 @@ public class VehicleCommands : ConsoleCommand
 
     var piecesInMbRaft = mbRaft.m_pieces;
     foreach (var zNetView in piecesInMbRaft)
-    {
       zNetView.m_zdo.Set(VehicleZdoVars.MBParentIdHash,
         vehicleShip.PersistentZdoId);
-    }
 
     ZNetScene.instance.Destroy(mbRaft.m_ship.gameObject);
   }
@@ -644,9 +606,7 @@ public class VehicleCommands : ConsoleCommand
     var debugGui = ValheimRaftPlugin.Instance.GetComponent<VehicleDebugGui>();
     ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui(!(bool)debugGui);
     foreach (var vehicleShip in VehicleShip.AllVehicles)
-    {
       vehicleShip.Value?.InitializeVehicleDebugger();
-    }
   }
 
   public static VehicleShip? GetNearestVehicleShip(Vector3 position)
@@ -705,12 +665,10 @@ public class VehicleCommands : ConsoleCommand
     var shipInstance =
       GetNearestVehicleShip(Player.m_localPlayer.transform.position);
     if (shipInstance == null)
-    {
       Logger.LogMessage(
         "No ship found, please run this command near the ship that needs to be reported.");
-    }
 
-    var pieceController = shipInstance!.VehiclePiecesController;
+    var pieceController = shipInstance!.PiecesController;
     if (pieceController == null) return;
 
     var vehiclePendingPieces =
@@ -719,18 +677,16 @@ public class VehicleCommands : ConsoleCommand
     var currentPendingState = pieceController!.PendingPiecesState;
     var pendingPiecesString =
       string.Join(",", vehiclePendingPieces?.Select(x => x.name) ?? []);
-    if (pendingPiecesString == string.Empty)
-    {
-      pendingPiecesString = "None";
-    }
+    if (pendingPiecesString == string.Empty) pendingPiecesString = "None";
 
     var piecesString = string.Join(",",
       pieceController.m_pieces?.Select(x => x.name) ?? []);
 
     // todo swap all m_players to OnboardController.characterData check instead.
     var playersOnVehicle =
-      string.Join(",", shipInstance?.MovementController?.m_players.Select((x) =>
-        x?.GetPlayerName() ?? "Null Player") ?? []);
+      string.Join(",", shipInstance?.OnboardController?.m_localPlayers.Select(
+        (x) =>
+          x?.GetPlayerName() ?? "Null Player") ?? []);
 
     var separatorDecorator = "================";
     var logSeparatorStart =
@@ -761,24 +717,27 @@ public class VehicleCommands : ConsoleCommand
       .IsEditMode);
   }
 
-  public override List<string> CommandOptionList() =>
-  [
-    // VehicleCommandArgs.locate, 
-    // VehicleCommandArgs.destroy,
-    VehicleCommandArgs.rotate,
-    VehicleCommandArgs.toggleOceanSway,
-    VehicleCommandArgs.creative,
-    VehicleCommandArgs.debug,
-    VehicleCommandArgs.help,
-    VehicleCommandArgs.upgradeToV2,
-    VehicleCommandArgs.downgradeToV1,
-    VehicleCommandArgs.recover,
-    VehicleCommandArgs.reportInfo,
-    VehicleCommandArgs.colliderEditMode,
-    VehicleCommandArgs.move,
-    VehicleCommandArgs.moveUp,
-    VehicleCommandArgs.resetVehicleOwner,
-  ];
+  public override List<string> CommandOptionList()
+  {
+    return
+    [
+      // VehicleCommandArgs.locate, 
+      // VehicleCommandArgs.destroy,
+      VehicleCommandArgs.rotate,
+      VehicleCommandArgs.toggleOceanSway,
+      VehicleCommandArgs.creative,
+      VehicleCommandArgs.debug,
+      VehicleCommandArgs.help,
+      VehicleCommandArgs.upgradeToV2,
+      VehicleCommandArgs.downgradeToV1,
+      VehicleCommandArgs.recover,
+      VehicleCommandArgs.reportInfo,
+      VehicleCommandArgs.colliderEditMode,
+      VehicleCommandArgs.move,
+      VehicleCommandArgs.moveUp,
+      VehicleCommandArgs.resetVehicleOwner
+    ];
+  }
 
   public override string Name => "vehicle";
 }

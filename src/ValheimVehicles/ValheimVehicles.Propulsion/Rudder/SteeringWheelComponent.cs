@@ -121,9 +121,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
         $"\nshipMass(no-containers): {shipMass}";
 
       if (ValheimRaftPlugin.Instance.HasShipContainerWeightCalculations.Value)
-      {
         shipStatsText += $"\nshipContainerMass: {shipContainerMass}";
-      }
 
       shipStatsText +=
         $"\ntotalMassToPush: {shipMassToPush}% * {totalMass} = {totalMass * shipMassToPush / 100f}";
@@ -152,14 +150,14 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   /// <returns>String</returns>
   private string GetOwnerHoverText()
   {
-    var controller = ShipInstance?.VehiclePiecesController?.VehicleInstance;
+    var controller = ShipInstance?.PiecesController?.VehicleInstance;
     if (controller?.NetView?.GetZDO() == null) return "";
 
     var ownerId = controller.NetView.GetZDO().GetOwner();
     if (ownerId != _currentOwner || _currentPlayerName == null)
     {
       var matchingOwnerInPlayers =
-        controller?.MovementController?.m_players.FirstOrDefault((player) =>
+        controller?.OnboardController.m_localPlayers.FirstOrDefault((player) =>
         {
           var playerOwnerId = player.GetOwner();
           return ownerId == playerOwnerId;
@@ -182,16 +180,12 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   {
     // deprecated MBRaft support
     if ((bool)deprecatedShipControls)
-    {
       return deprecatedShipControls.GetHoverText();
-    }
 
-    var controller = ShipInstance?.VehiclePiecesController;
+    var controller = ShipInstance?.PiecesController;
     if (controller == null)
-    {
       return Localization.instance.Localize(
         "<color=white><b>$valheim_vehicles_wheel_use_error</b></color>");
-    }
 
     var isAnchored =
       controller?.VehicleInstance?.MovementController?.isAnchored ?? false;
@@ -202,15 +196,11 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
       controller?.ShipContainerMass ?? 0, controller?.GetSailingForce() ?? 0,
       isAnchored,
       anchorKeyString);
-    if ((bool)controller?.MovementController?.m_players?.Any())
-    {
+    if ((bool)controller?.OnboardController?.m_localPlayers?.Any())
       hoverText += GetOwnerHoverText();
-    }
 
     if ((bool)controller?.MovementController?.isBeached)
-    {
       hoverText += GetBeachedHoverText();
-    }
 
     return Localization.instance.Localize(hoverText);
   }
@@ -226,9 +216,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   public string GetHoverName()
   {
     if ((bool)deprecatedShipControls)
-    {
       return deprecatedShipControls.GetHoverName();
-    }
 
     return Localization.instance.Localize("$valheim_vehicles_wheel");
   }
@@ -236,21 +224,14 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   public void SetLastUsedWheel()
   {
     if (ShipInstance != null)
-    {
       ShipInstance.Instance.MovementController.lastUsedWheelComponent = this;
-    }
     else if ((bool)deprecatedShipControls)
-    {
       PatchSharedData.PlayerLastUsedControls = deprecatedShipControls;
-    }
   }
 
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
-    if (!isActiveAndEnabled)
-    {
-      return false;
-    }
+    if (!isActiveAndEnabled) return false;
 
     // for mbraft
     if ((bool)deprecatedShipControls)
@@ -271,45 +252,37 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
       else
       {
         var baseRoot = GetComponentInParent<MoveableBaseRootComponent>();
-        if (baseRoot != null)
-        {
-          baseRoot.ComputeAllShipContainerItemWeight();
-        }
+        if (baseRoot != null) baseRoot.ComputeAllShipContainerItemWeight();
       }
     }
 
     var canUse = InUseDistance(user);
 
     var noControls = !((bool)deprecatedShipControls || ShipInstance?.Instance);
-    if (hold || noControls || !canUse)
-    {
-      return false;
-    }
+    if (hold || noControls || !canUse) return false;
 
     SetLastUsedWheel();
 
     var player = user as Player;
 
     var playerOnShipViaShipInstance =
-      ShipInstance?.VehiclePiecesController
+      ShipInstance?.PiecesController
         ?.GetComponentsInChildren<Player>() ?? null;
 
     if (player != null)
-    {
       ShipInstance?.MovementController?.UpdatePlayerOnShip(player);
-    }
 
     if (playerOnShipViaShipInstance?.Length == 0 ||
         playerOnShipViaShipInstance == null)
-    {
       playerOnShipViaShipInstance =
-        ShipInstance?.Instance?.MovementController?.m_players.ToArray() ?? null;
-    }
+        ShipInstance?.Instance?.OnboardController?.m_localPlayers.ToArray() ??
+        null;
 
     /*
      * <note /> This logic allows for the player to just look at the Raft and see if the player is a child within it.
      */
     if (playerOnShipViaShipInstance != null)
+    {
       foreach (var playerInstance in playerOnShipViaShipInstance)
       {
         Logger.LogDebug(
@@ -319,22 +292,18 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
           playerInstance.GetPlayerID());
         return true;
       }
+    }
     else if ((bool)deprecatedShipControls)
     {
       if (player)
-      {
         player.m_lastGroundBody = deprecatedShipControls.m_ship.m_body;
-      }
 
       deprecatedShipControls.m_nview.InvokeRPC("RequestControl",
         (object)player.GetPlayerID());
       return false;
     }
 
-    if (player == null || player.IsEncumbered())
-    {
-      return false;
-    }
+    if (player == null || player.IsEncumbered()) return false;
 
     var playerOnShip =
       VehicleShipCompat.InitFromUnknown(player.GetStandingOnShip());
@@ -385,9 +354,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   {
     if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value &&
         (bool)deprecatedShipControls)
-    {
       return transform.parent.GetComponent<MoveableBaseRootComponent>().m_ship;
-    }
 
     return ShipInstance.Instance;
   }
@@ -408,10 +375,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   public void FixedUpdate()
   {
     if (!deprecatedShipControls) return;
-    if (!VehicleMovementController.ShouldHandleControls())
-    {
-      return;
-    }
+    if (!VehicleMovementController.ShouldHandleControls()) return;
 
     if (!deprecatedMBShip) return;
 
@@ -461,10 +425,8 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     ShipInstance = vehicleShip;
 
     if (!(bool)_controls)
-    {
       _controls =
         vehicleShip.Instance.MovementController;
-    }
 
     if (_controls != null)
     {
@@ -485,17 +447,14 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
 
   private Vector3 GetWheelHandOffset(float height)
   {
-    var offset = new Vector3(0f, (height > wheelLocalOffset.y) ? -0.25f : 0.25f,
+    var offset = new Vector3(0f, height > wheelLocalOffset.y ? -0.25f : 0.25f,
       0f);
     return offset;
   }
 
   public void UpdateIK(Animator animator)
   {
-    if (!wheelTransform)
-    {
-      return;
-    }
+    if (!wheelTransform) return;
 
     if (!m_currentLeftHand)
     {
@@ -556,16 +515,16 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     }
 
 
-    var leftHandPos = ((bool)m_targetLeftHand
+    var leftHandPos = (bool)m_targetLeftHand
       ? Vector3.Lerp(m_currentLeftHand.transform.position,
         m_targetLeftHand.transform.position,
         leftHandAlpha)
-      : m_currentLeftHand.transform.position);
-    var rightHandPos = ((bool)m_targetRightHand
+      : m_currentLeftHand.transform.position;
+    var rightHandPos = (bool)m_targetRightHand
       ? Vector3.Lerp(m_currentRightHand.transform.position,
         m_targetRightHand.transform.position,
         rightHandAlpha)
-      : m_currentRightHand.transform.position);
+      : m_currentRightHand.transform.position;
 
     animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, leftHandIKWeight);
     animator.SetIKPosition(AvatarIKGoal.LeftHand, leftHandPos);

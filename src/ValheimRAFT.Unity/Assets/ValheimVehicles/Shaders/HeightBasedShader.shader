@@ -12,13 +12,17 @@ Shader "Custom/HeightBasedShader"
         Tags
         {
             "RenderType"="Transparent"
+            "LightMode"="Always"
             "Queue"="Overlay" // Changed queue to Overlay to render after opaque geometry
         }
         LOD 100
         Cull Off
         ZWrite Off
+        Fog
+        {
+            Mode Off
+        }
         Blend SrcAlpha OneMinusSrcAlpha
-
         Pass
         {
             CGPROGRAM
@@ -29,5 +33,5 @@ Shader "Custom/HeightBasedShader"
         }
     }
 
-    Fallback "StandardDoubleSided"
+    Fallback "Unlit/Transparent"
 }

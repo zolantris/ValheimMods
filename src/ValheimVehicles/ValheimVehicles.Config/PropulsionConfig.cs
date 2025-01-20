@@ -73,11 +73,12 @@ public static class PropulsionConfig
     Config = config;
 
     DefaultPhysicsMode = Config.Bind(SectionName,
-      "VehiclePhysicsMode", VehiclePhysicsMode.SyncedRigidbody,
+      "VehiclePhysicsMode", VehiclePhysicsMode.ForceSyncedRigidbody,
       ConfigHelpers.CreateConfigDescription(
-        "SyncRigidbody - Accurately syncs physics across clients, it causes jitters during high speed.\n" +
+        // "SyncRigidbody - Accurately syncs physics across clients, it causes jitters during high speed.\n" +
         "ForceSyncedRigidbody ignores all allowances that toggle SyncRigidbody related to flight. This will require a flight ascend value of 1 otherwise flight will be broken. Use this is there is problems with SyncRigidbody\n" +
-        "DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config that allows the player to smoothly move around the raft at high speeds even if they are not the host. Can cause the ship to glitch with anything that has to do with physics including ramps and other mods that add moving parts that could be added to the boat.",
+        "Other methods removed after 2.5.0",
+        // "DesyncedJointRigidbodyBody - is a new UNSTABLE (you have been warned) config that allows the player to smoothly move around the raft at high speeds even if they are not the host. Can cause the ship to glitch with anything that has to do with physics including ramps and other mods that add moving parts that could be added to the boat.",
         true));
 
     EXPERIMENTAL_LeanTowardsWindSailDirection = Config.Bind(SectionName,

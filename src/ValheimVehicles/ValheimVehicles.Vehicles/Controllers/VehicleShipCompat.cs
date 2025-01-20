@@ -23,15 +23,9 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
 
   public ZNetView? GetNetView()
   {
-    if (IsVehicleShip)
-    {
-      return VehicleShipInstance.NetView;
-    }
+    if (IsVehicleShip) return VehicleShipInstance.NetView;
 
-    if (IsValheimShip)
-    {
-      return ShipInstance.m_nview;
-    }
+    if (IsValheimShip) return ShipInstance.m_nview;
 
     return null;
   }
@@ -46,41 +40,30 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   public static VehicleShipCompat? InitFromUnknown(object? vehicleOrShip)
   {
     if (vehicleOrShip?.GetType() == typeof(VehicleShipCompat))
-    {
       return vehicleOrShip as VehicleShipCompat;
-    }
 
     var vehicleShip = vehicleOrShip as VehicleShip;
-    if (vehicleShip != null)
-    {
-      return InitWithVehicleShip(vehicleShip);
-    }
+    if (vehicleShip != null) return InitWithVehicleShip(vehicleShip);
 
     var ship = vehicleOrShip as Ship;
-    if (ship != null)
-    {
-      return InitWithShip(ship);
-    }
+    if (ship != null) return InitWithShip(ship);
 
     return null;
   }
 
   public bool IsOwner()
   {
-    if (IsVehicleShip)
-    {
-      return VehicleShipInstance.MovementController.IsOwner();
-    }
+    if (IsVehicleShip) return VehicleShipInstance.MovementController.IsOwner();
 
-    if (IsValheimShip)
-    {
-      return ShipInstance.IsOwner();
-    }
+    if (IsValheimShip) return ShipInstance.IsOwner();
 
     return false;
   }
 
-  public void ApplyControls(Vector3 dir) => ApplyControlls(dir);
+  public void ApplyControls(Vector3 dir)
+  {
+    ApplyControlls(dir);
+  }
 
   public void ApplyControlls(Vector3 dir)
   {
@@ -90,10 +73,7 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
       return;
     }
 
-    if (IsValheimShip)
-    {
-      ShipInstance?.ApplyControlls(dir);
-    }
+    if (IsValheimShip) ShipInstance?.ApplyControlls(dir);
   }
 
   public void Forward()
@@ -106,10 +86,7 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
       return;
     }
 
-    if (IsValheimShip)
-    {
-      ShipInstance?.Forward();
-    }
+    if (IsValheimShip) ShipInstance?.Forward();
   }
 
   public void Backward()
@@ -122,10 +99,7 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
       return;
     }
 
-    if (IsValheimShip)
-    {
-      ShipInstance?.Backward();
-    }
+    if (IsValheimShip) ShipInstance?.Backward();
   }
 
   public void Stop()
@@ -138,13 +112,13 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
       return;
     }
 
-    if (IsValheimShip)
-    {
-      ShipInstance?.Stop();
-    }
+    if (IsValheimShip) ShipInstance?.Stop();
   }
 
-  public void UpdateControls(float dt) => UpdateControlls(dt);
+  public void UpdateControls(float dt)
+  {
+    UpdateControlls(dt);
+  }
 
   public void UpdateControlls(float dt)
   {
@@ -154,10 +128,7 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
       return;
     }
 
-    if (IsValheimShip)
-    {
-      ShipInstance?.UpdateControlls(dt);
-    }
+    if (IsValheimShip) ShipInstance?.UpdateControlls(dt);
   }
 
   private static VehicleShipCompat InitWithVehicleShip(VehicleShip vehicleShip)
@@ -167,7 +138,7 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
       VehicleShipInstance = vehicleShip,
       _isVehicleShip = true,
       _isValheimShip = false,
-      m_controlGuiPos = vehicleShip.m_controlGuiPos,
+      m_controlGuiPos = vehicleShip.m_controlGuiPos
     };
   }
 
@@ -178,21 +149,16 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
       ShipInstance = ship,
       _isVehicleShip = false,
       _isValheimShip = true,
-      m_controlGuiPos = ship.m_controlGuiPos,
+      m_controlGuiPos = ship.m_controlGuiPos
     };
   }
 
   public bool IsPlayerInBoat(ZDOID zdoId)
   {
     if (IsVehicleShip)
-    {
       return VehicleShipInstance.MovementController.IsPlayerInBoat(zdoId);
-    }
 
-    if (IsValheimShip)
-    {
-      return ShipInstance.IsPlayerInBoat(zdoId);
-    }
+    if (IsValheimShip) return ShipInstance.IsPlayerInBoat(zdoId);
 
     return false;
   }
@@ -200,14 +166,9 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   public bool IsPlayerInBoat(Player zdoId)
   {
     if (IsVehicleShip)
-    {
       return VehicleShipInstance.MovementController.IsPlayerInBoat(zdoId);
-    }
 
-    if (IsValheimShip)
-    {
-      return ShipInstance.IsPlayerInBoat(zdoId);
-    }
+    if (IsValheimShip) return ShipInstance.IsPlayerInBoat(zdoId);
 
     return false;
   }
@@ -215,14 +176,9 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   public bool IsPlayerInBoat(long playerID)
   {
     if (IsVehicleShip)
-    {
       return VehicleShipInstance.MovementController.IsPlayerInBoat(playerID);
-    }
 
-    if (IsValheimShip)
-    {
-      return ShipInstance.IsPlayerInBoat(playerID);
-    }
+    if (IsValheimShip) return ShipInstance.IsPlayerInBoat(playerID);
 
     return false;
   }
@@ -236,14 +192,9 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   public float GetWindAngle()
   {
     if (IsVehicleShip)
-    {
       return VehicleShipInstance.MovementController.GetWindAngle();
-    }
 
-    if (IsValheimShip)
-    {
-      return ShipInstance.GetWindAngle();
-    }
+    if (IsValheimShip) return ShipInstance.GetWindAngle();
 
     return 0f;
   }
@@ -251,14 +202,9 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   public float GetWindAngleFactor()
   {
     if (IsVehicleShip)
-    {
       return VehicleShipInstance.MovementController.GetWindAngleFactor();
-    }
 
-    if (IsValheimShip)
-    {
-      return ShipInstance.GetWindAngleFactor();
-    }
+    if (IsValheimShip) return ShipInstance.GetWindAngleFactor();
 
     return 0f;
   }
@@ -266,14 +212,9 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   public Ship.Speed GetSpeedSetting()
   {
     if (IsVehicleShip)
-    {
       return VehicleShipInstance.MovementController.GetSpeedSetting();
-    }
 
-    if (IsValheimShip)
-    {
-      return ShipInstance.GetSpeedSetting();
-    }
+    if (IsValheimShip) return ShipInstance.GetSpeedSetting();
 
     return Ship.Speed.Stop;
   }
@@ -281,14 +222,9 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   public float GetRudder()
   {
     if (IsVehicleShip)
-    {
       return VehicleShipInstance.MovementController.GetRudder();
-    }
 
-    if (IsValheimShip)
-    {
-      return ShipInstance.GetRudder();
-    }
+    if (IsValheimShip) return ShipInstance.GetRudder();
 
     return 0f;
   }
@@ -296,14 +232,9 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   public float GetRudderValue()
   {
     if (IsVehicleShip)
-    {
       return VehicleShipInstance.MovementController.GetRudderValue();
-    }
 
-    if (IsValheimShip)
-    {
-      return ShipInstance.GetRudderValue();
-    }
+    if (IsValheimShip) return ShipInstance.GetRudderValue();
 
     return 0f;
   }
@@ -311,20 +242,15 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   public float GetShipYawAngle()
   {
     if (IsVehicleShip)
-    {
       return VehicleShipInstance.MovementController.GetShipYawAngle();
-    }
 
-    if (IsValheimShip)
-    {
-      return ShipInstance.GetShipYawAngle();
-    }
+    if (IsValheimShip) return ShipInstance.GetShipYawAngle();
 
     return 0f;
   }
 
   public GameObject RudderObject { get; set; }
-  public VehiclePiecesController? VehiclePiecesController { get; }
+  public VehiclePiecesController? PiecesController { get; }
   public VehicleMovementController MovementController { get; }
   public VehicleOnboardController? OnboardController { get; }
   public Rigidbody? MovementControllerRigidbody { get; }
@@ -333,31 +259,19 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   public Transform ControlGuiPosition { get; set; }
   public Transform m_controlGuiPos { get; set; }
 
-  public VehicleShip? Instance
-  {
-    get => VehicleShipInstance;
-  }
+  public VehicleShip? Instance => VehicleShipInstance;
 
   public ZNetView? NetView
   {
     get
     {
-      if (IsVehicleShip)
-      {
-        return VehicleShipInstance.NetView;
-      }
+      if (IsVehicleShip) return VehicleShipInstance.NetView;
 
-      if (IsValheimShip)
-      {
-        return ShipInstance.m_nview;
-      }
+      if (IsValheimShip) return ShipInstance.m_nview;
 
       return null;
     }
   }
 
-  public int PersistentZdoId
-  {
-    get => 0;
-  }
+  public int PersistentZdoId => 0;
 }

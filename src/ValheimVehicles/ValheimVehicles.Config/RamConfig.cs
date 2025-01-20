@@ -12,6 +12,7 @@ public static class RamConfig
   public static ConfigEntry<float>
     DamageIncreasePercentagePerTier { get; set; } = null!;
 
+  public static ConfigEntry<bool> VehicleHullsAreRams { get; set; } = null!;
   public static ConfigEntry<float> HitRadius { get; set; } = null!;
   public static ConfigEntry<float> RamBaseSlashDamage { get; set; } = null!;
   public static ConfigEntry<float> RamBaseBluntDamage { get; set; } = null!;
@@ -150,8 +151,8 @@ public static class RamConfig
 
     HitRadius = config.Bind(SectionName, "HitRadius", 5f,
       ConfigHelpers.CreateConfigDescription(
-        "The base ram hit radius area. Stakes are always half the size, this will hit all pieces within this radius, capped between 0.1 and 10 for balance and framerate stability",
-        true, true));
+        "The base ram hit radius area. Stakes are always half the size, this will hit all pieces within this radius, capped between 5 and 10, but 50 is max. Stakes are half this value. Blades are equivalent to this value.",
+        true, true, new AcceptableValueRange<float>(5f, 50f)));
     RamHitInterval = config.Bind(SectionName, "RamHitInterval", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Every X seconds, the ram will apply this damage",
@@ -209,6 +210,13 @@ public static class RamConfig
         "The tier damage a vehicle can do to a rock or other object it hits. To be balanced this should be a lower value IE (1) bronze. But ashlands will require a higher tier to smash spires FYI.",
         true, true));
 
+    VehicleHullsAreRams = config.Bind(SectionName,
+      "VehicleHullsAreRams",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "Each vehicle has a Ram added it's mesh. Vehicle hull ram damage is calculated with different values.",
+        true, true));
+
     const int tierDiff = 2;
     const float defaultDamagePerTier = .25f;
     const int baseDamage = 1;
@@ -241,6 +249,8 @@ public static class RamConfig
     // ShipMassMaxMultiplier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
     RamDamageToolTier.SettingChanged += VehicleRamAoe.OnBaseSettingsChange;
 
+
+    HitRadius.SettingChanged += VehicleRamAoe.OnSettingsChanged;
     // Must update damage values only
     RamBaseSlashDamage.SettingChanged += VehicleRamAoe.OnSettingsChanged;
     RamBasePierceDamage.SettingChanged += VehicleRamAoe.OnSettingsChanged;
