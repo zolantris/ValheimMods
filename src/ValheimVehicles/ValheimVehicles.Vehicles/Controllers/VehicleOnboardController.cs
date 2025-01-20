@@ -275,7 +275,8 @@ public class VehicleOnboardController : MonoBehaviour
 
   public void RestoreCollisionDetection(Collider collider)
   {
-    if (PiecesController != null)
+    if (PiecesController != null &&
+        PiecesController.convexHullMeshColliders.Count > 0)
       foreach (var piecesControllerConvexHullMesh in
                PiecesController.convexHullMeshColliders)
         Physics.IgnoreCollision(piecesControllerConvexHullMesh, collider,

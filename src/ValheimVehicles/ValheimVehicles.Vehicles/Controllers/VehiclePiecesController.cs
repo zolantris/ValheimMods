@@ -128,7 +128,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public List<GameObject> convexHullMeshes =>
     convexHullComponent.convexHullMeshes;
 
-  public List<MeshCollider> convexHullMeshColliders;
+  public List<MeshCollider> convexHullMeshColliders = [];
 
   public List<GameObject> convexHullTriggerMeshes =>
     convexHullComponent.convexHullTriggerMeshes;
@@ -2404,7 +2404,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     {
       m_ramPieces.Add(netView);
       var vehicleRamAoe = netView.GetComponentInChildren<VehicleRamAoe>();
-      if ((bool)vehicleRamAoe) vehicleRamAoe.vehicle = VehicleInstance.Instance;
+      if ((bool)vehicleRamAoe)
+        vehicleRamAoe.m_vehicle = VehicleInstance.Instance;
     }
 
     // Remove non-kinematic rigidbodies if not a ram
@@ -2591,7 +2592,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       vehicleMovementCollidersTransform.GetComponents<MeshCollider>().ToList();
 
     if (RamConfig.VehicleHullsAreRams.Value)
-      MovementController.AddRamAoeToConvexHull();
+      MovementController.AddRamAoeToConvexHull(convexHullMeshColliders);
 
     UpdateConvexHullBounds();
 

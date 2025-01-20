@@ -20,7 +20,7 @@ public class RamPrefabs : IRegisterPrefab
   public enum RamType
   {
     Stake,
-    Blade,
+    Blade
   }
 
   public struct RamVariant
@@ -31,8 +31,11 @@ public class RamPrefabs : IRegisterPrefab
     public int size;
   }
 
-  public static bool IsRam(string objName) => objName.StartsWith(PrefabNames.RamBladePrefix) ||
-                                              objName.StartsWith(PrefabNames.RamStakePrefix);
+  public static bool IsRam(string objName)
+  {
+    return objName.StartsWith(PrefabNames.RamBladePrefix) ||
+           objName.StartsWith(PrefabNames.RamStakePrefix);
+  }
 
 
   private static VehicleRamAoe SetupAoeComponent(GameObject colliderObj)
@@ -45,9 +48,11 @@ public class RamPrefabs : IRegisterPrefab
   {
     var childColliders = go.GetComponentsInChildren<Collider>();
     var colliderFrontPhysicalOnly =
-      childColliders.FirstOrDefault((collider) => collider.name == "collider_front_physical");
+      childColliders.FirstOrDefault((collider) =>
+        collider.name == "collider_front_physical");
     var damageCollider =
-      childColliders.FirstOrDefault((collider) => collider.name == "collider_front");
+      childColliders.FirstOrDefault((collider) =>
+        collider.name == "collider_front");
     if (!colliderFrontPhysicalOnly || !damageCollider) return;
     Physics.IgnoreCollision(damageCollider, colliderFrontPhysicalOnly, true);
   }
@@ -83,7 +88,7 @@ public class RamPrefabs : IRegisterPrefab
         prefabName = "2x4",
         material = PrefabTiers.Tier3,
         size = 2
-      },
+      }
     ];
 
 
@@ -91,7 +96,9 @@ public class RamPrefabs : IRegisterPrefab
     {
       var size = variant.size;
       var prefabFullName = PrefabNames.GetRamStakeName(variant.material, size);
-      var prefab = PrefabManager.Instance.CreateClonedPrefab(prefabFullName, variant.asset);
+      var prefab =
+        PrefabManager.Instance.CreateClonedPrefab(prefabFullName,
+          variant.asset);
       PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
       PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
       var wnt = PrefabRegistryHelpers.SetWearNTear(prefab,
@@ -99,14 +106,15 @@ public class RamPrefabs : IRegisterPrefab
       IgnoreNestedCollider(prefab.gameObject);
 
       PrefabRegistryHelpers.AddPieceForPrefab(prefabFullName, prefab);
-      var bladeColliderObj = prefab.transform.FindDeepChild("damage_colliders")?.gameObject;
+      var bladeColliderObj = prefab.transform.FindDeepChild("damage_colliders")
+        ?.gameObject;
 
       // just a safety check should always work unless and update breaks things
       if (bladeColliderObj != null)
       {
         var ramAoe = SetupAoeComponent(bladeColliderObj);
         ramAoe.materialTier = variant.material;
-        ramAoe.RamType = RamType.Stake;
+        ramAoe.m_RamType = RamType.Stake;
       }
       else
       {
@@ -114,27 +122,28 @@ public class RamPrefabs : IRegisterPrefab
           "Could not found damage_colliders within ram prefab, this likely means that rams are broken");
       }
 
-      PieceManager.Instance.AddPiece(new CustomPiece(prefab, false, new PieceConfig
-      {
-        PieceTable = "Hammer",
-        Category = PrefabNames.ValheimRaftMenuName,
-        Enabled = true,
-        Requirements =
-        [
-          new RequirementConfig
-          {
-            Amount = 3 * size,
-            Item = "Iron",
-            Recover = true,
-          },
-          new RequirementConfig
-          {
-            Amount = 2 * size,
-            Item = "RoundLog",
-            Recover = true,
-          },
-        ]
-      }));
+      PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
+        new PieceConfig
+        {
+          PieceTable = "Hammer",
+          Category = PrefabNames.ValheimRaftMenuName,
+          Enabled = true,
+          Requirements =
+          [
+            new RequirementConfig
+            {
+              Amount = 3 * size,
+              Item = "Iron",
+              Recover = true
+            },
+            new RequirementConfig
+            {
+              Amount = 2 * size,
+              Item = "RoundLog",
+              Recover = true
+            }
+          ]
+        }));
     }
   }
 
@@ -145,40 +154,43 @@ public class RamPrefabs : IRegisterPrefab
       new RamVariant()
       {
         asset = LoadValheimVehicleAssets.RamBladeTop,
-        prefabName = "top",
+        prefabName = "top"
       },
       new RamVariant()
       {
         asset = LoadValheimVehicleAssets.RamBladeBottom,
-        prefabName = "bottom",
+        prefabName = "bottom"
       },
       new RamVariant()
       {
         asset = LoadValheimVehicleAssets.RamBladeLeft,
-        prefabName = "left",
+        prefabName = "left"
       },
       new RamVariant()
       {
         asset = LoadValheimVehicleAssets.RamBladeRight,
-        prefabName = "right",
-      },
+        prefabName = "right"
+      }
     ];
 
     foreach (var variant in loadedAssets)
     {
       var prefabFullName = PrefabNames.GetRamBladeName(variant.prefabName);
-      var prefab = PrefabManager.Instance.CreateClonedPrefab(prefabFullName, variant.asset);
+      var prefab =
+        PrefabManager.Instance.CreateClonedPrefab(prefabFullName,
+          variant.asset);
       PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
       PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
       var wnt = PrefabRegistryHelpers.SetWearNTear(prefab, 3);
       PrefabRegistryHelpers.AddPieceForPrefab(prefabFullName, prefab);
-      var bladeColliderObj = prefab.transform.FindDeepChild("damage_colliders")?.gameObject;
+      var bladeColliderObj = prefab.transform.FindDeepChild("damage_colliders")
+        ?.gameObject;
 
       // just a safety check should always work unless and update breaks things
       if (bladeColliderObj != null)
       {
         var ramAoe = SetupAoeComponent(bladeColliderObj);
-        ramAoe.RamType = RamType.Blade;
+        ramAoe.m_RamType = RamType.Blade;
         ramAoe.materialTier = variant.material;
       }
       else
@@ -187,33 +199,34 @@ public class RamPrefabs : IRegisterPrefab
           "Could not found damage_colliders within ram prefab, this likely means that rams are broken");
       }
 
-      PieceManager.Instance.AddPiece(new CustomPiece(prefab, false, new PieceConfig
-      {
-        PieceTable = "Hammer",
-        Category = PrefabNames.ValheimRaftMenuName,
-        Enabled = true,
-        Requirements =
-        [
-          new RequirementConfig
-          {
-            Amount = 10,
-            Item = "Bronze",
-            Recover = true,
-          },
-          new RequirementConfig
-          {
-            Amount = 70,
-            Item = "BronzeNails",
-            Recover = true,
-          },
-          new RequirementConfig
-          {
-            Amount = 2,
-            Item = "Iron",
-            Recover = true,
-          },
-        ]
-      }));
+      PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
+        new PieceConfig
+        {
+          PieceTable = "Hammer",
+          Category = PrefabNames.ValheimRaftMenuName,
+          Enabled = true,
+          Requirements =
+          [
+            new RequirementConfig
+            {
+              Amount = 10,
+              Item = "Bronze",
+              Recover = true
+            },
+            new RequirementConfig
+            {
+              Amount = 70,
+              Item = "BronzeNails",
+              Recover = true
+            },
+            new RequirementConfig
+            {
+              Amount = 2,
+              Item = "Iron",
+              Recover = true
+            }
+          ]
+        }));
     }
   }
 

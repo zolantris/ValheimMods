@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Policy;
 using Microsoft.Win32;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
@@ -14,7 +15,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Helpers;
 
-public class VehicleRamAoe : Aoe
+public class VehicleRamAoe : ValheimAoe
 {
   // Typeof PrefabTiers
   public string materialTier;
@@ -24,12 +25,12 @@ public class VehicleRamAoe : Aoe
 
   public float minimumVelocityToTriggerHit =>
     RamConfig.minimumVelocityToTriggerHit.Value *
-    (RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f);
+    (m_RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f);
 
-  public VehicleShip? vehicle;
-  public RamPrefabs.RamType RamType;
+  public VehicleShip? m_vehicle;
+  public RamPrefabs.RamType m_RamType;
 
-  public bool IsVehicleRam = false;
+  public bool m_isVehicleRam = false;
   private float RamDamageOverallMultiplier = 1f;
 
   // damages
@@ -112,8 +113,8 @@ public class VehicleRamAoe : Aoe
     m_attackForce = 5;
     m_attackForce = 50;
 
-    m_radius = Mathf.Clamp(RamHitArea, 0.1f, 10f);
-    m_radius *= RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f;
+    m_radius = Mathf.Clamp(RamHitArea, 0.1f, 150f);
+    m_radius *= m_RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f;
 
     m_useTriggers = true;
     m_triggerEnterOnly = AllowContinuousDamage;
@@ -121,6 +122,8 @@ public class VehicleRamAoe : Aoe
     m_useCollider = null;
     m_useAttackSettings = true;
     m_ttl = 0;
+
+    if (m_isVehicleRam) SetVehicleRamModifier(m_isVehicleRam);
   }
 
   public float GetTotalDamage(float slashDamage, float bluntDamage,
@@ -323,7 +326,7 @@ public class VehicleRamAoe : Aoe
     if (!collider) return false;
     // reset damage to base damage if one of these is not available, will still recalculate later
     // exit to apply damage that has no velocity
-    if (vehicle?.MovementController?.m_body == null ||
+    if (m_vehicle?.MovementController?.m_body == null ||
         !collider.attachedRigidbody)
     {
       m_damage = baseDamage;
@@ -332,12 +335,12 @@ public class VehicleRamAoe : Aoe
 
     // Velocity will significantly increase if the object is moving towards the other object IE collision
     float relativeVelocity;
-    if (!vehicle?.MovementController.m_body)
+    if (!m_vehicle?.MovementController.m_body)
       relativeVelocity = collider.attachedRigidbody.velocity.magnitude;
     else
       relativeVelocity =
         Vector3.Magnitude(collider?.attachedRigidbody?.velocity ??
-                          Vector3.zero - vehicle?.MovementController.m_body
+                          Vector3.zero - m_vehicle?.MovementController.m_body
                             ?.velocity ??
                           Vector3.zero);
 
@@ -363,10 +366,10 @@ public class VehicleRamAoe : Aoe
     float chopDamage = 0;
     float pierceDamage = 0;
 
-    if (RamType == RamPrefabs.RamType.Stake)
+    if (m_RamType == RamPrefabs.RamType.Stake)
       pierceDamage = baseDamage.m_pierce * multiplier;
 
-    if (RamType == RamPrefabs.RamType.Blade)
+    if (m_RamType == RamPrefabs.RamType.Blade)
     {
       slashDamage = baseDamage.m_slash * multiplier;
       chopDamage = baseDamage.m_chop * multiplier;
@@ -442,17 +445,17 @@ public class VehicleRamAoe : Aoe
       return true;
     }
 
-    if (vehicle != null)
+    if (m_vehicle != null)
     {
-      if (vehicle.PiecesController != null &&
-          vehicle.PiecesController.transform == collider.transform.root)
+      if (m_vehicle.PiecesController != null &&
+          m_vehicle.PiecesController.transform == collider.transform.root)
       {
         IgnoreCollider(collider);
         return true;
       }
 
       // allows for hitting other vehicles, excludes hitting current vehicle
-      if (collider.transform.root == vehicle.transform.root)
+      if (collider.transform.root == m_vehicle.transform.root)
       {
         IgnoreCollider(collider);
         return true;
@@ -530,8 +533,12 @@ public class VehicleRamAoe : Aoe
 
   public void SetVehicleRamModifier(bool isRamEnabled)
   {
-    IsVehicleRam = isRamEnabled;
-    RamDamageOverallMultiplier = IsVehicleRam ? 0.5f : 1f;
+    m_isVehicleRam = isRamEnabled;
+    RamDamageOverallMultiplier = m_isVehicleRam ? 0.5f : 1f;
+    // m_hitTerrain = false;
+    // m_chainStartChance = 1.0f;
+    m_triggerEnterOnly = false;
+    InitAoe();
   }
 
   public static void OnBaseSettingsChange(object sender, EventArgs eventArgs)

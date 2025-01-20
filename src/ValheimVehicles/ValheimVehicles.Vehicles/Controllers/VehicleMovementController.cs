@@ -731,9 +731,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     var currentVelocity = m_body.velocity;
 
-    if (!(Mathf.Abs(currentVelocity.y) > maxYLinearVelocity)) return;
+    // if anchored the vehicle will not raise/lower as much.
+    var dynamicYLinearVelocity =
+      isAnchored ? maxYLinearVelocity * 0.1f : maxYLinearVelocity;
+
+    if (!(Mathf.Abs(currentVelocity.y) > dynamicYLinearVelocity)) return;
     // Clamp Y velocity while keeping X and Z unaffected
-    currentVelocity.y = Mathf.Sign(currentVelocity.y) * maxYLinearVelocity;
+    currentVelocity.y = Mathf.Sign(currentVelocity.y) * dynamicYLinearVelocity;
+
     m_body.velocity = currentVelocity;
   }
 
@@ -2134,21 +2139,23 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   ///
   /// This does not need to be tracked as a Ram piece as every gameobject added to this PiecesController ignores the meshColliders provided
   /// </summary>
-  public void AddRamAoeToConvexHull()
+  public VehicleRamAoe? AddRamAoeToConvexHull(List<MeshCollider> meshColliders)
   {
-    var aoeRam = GetComponent<VehicleRamAoe>();
+    var aoeRam = DamageColliders.gameObject.GetComponent<VehicleRamAoe>();
 
     if (aoeRam == null)
       aoeRam = DamageColliders.gameObject
         .AddComponent<VehicleRamAoe>();
 
     // negative check, should never hit this...
-    if (aoeRam == null) return;
+    if (aoeRam == null) return null;
     if (aoeRam.m_nview == null) aoeRam.m_nview = m_nview;
 
-    aoeRam.RamType = RamPrefabs.RamType.Blade;
-    aoeRam.vehicle = vehicleShip;
+    aoeRam.m_RamType = RamPrefabs.RamType.Blade;
+    aoeRam.m_vehicle = vehicleShip;
+    aoeRam.m_meshColliders = meshColliders;
     aoeRam.SetVehicleRamModifier(RamConfig.VehicleHullsAreRams.Value);
+    return aoeRam;
   }
 
   public Vector3 GetRudderPosition()

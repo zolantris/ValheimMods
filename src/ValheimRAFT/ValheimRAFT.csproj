@@ -57,6 +57,12 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleZSyncTransform.cs">
             <Link>ValheimVehicles.Vehicles\Controllers\VehiclePhysicsSync.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs">
+            <Link>ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\ValheimAoe.cs">
+            <Link>ValheimVehicles.Vehicles\Components\ValheimAoe.cs</Link>
+        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup><!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->
