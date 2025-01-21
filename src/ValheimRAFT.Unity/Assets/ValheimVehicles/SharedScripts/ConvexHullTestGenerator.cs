@@ -13,7 +13,7 @@ namespace ValheimVehicles.SharedScripts
   ///   both unity and valheim so this can be tested easily. This file is meant to be
   ///   run inside unity.
   /// </summary>
-  [ExecuteInEditMode]
+  // [ExecuteInEditMode]
   public class ConvexHullTestGenerator : MonoBehaviour
   {
     public float distanceThreshold = 0.2f;
@@ -108,6 +108,8 @@ namespace ValheimVehicles.SharedScripts
         _convexHullAPI =
           gameObject.AddComponent<ConvexHullAPI>();
 
+      ConvexHullAPI.BubbleMaterialColor = new Color(0, 1f, 1f, 0.8f);
+      ConvexHullAPI.DebugMaterialColor = new Color(1f, 1f, 0f, 0.8f);
       SyncAPIProperties();
     }
 
@@ -134,7 +136,8 @@ namespace ValheimVehicles.SharedScripts
     {
       var childGameObjects =
         ConvexHullAPI.GetAllChildGameObjects(PiecesParentObj).Where(go =>
-          !go.name.Contains(ConvexHullAPI.MeshNamePrefix));
+          !go.name.Contains(ConvexHullAPI.MeshNamePrefix) &&
+          !go.name.StartsWith("VehicleShip") && go.activeInHierarchy);
 
       _convexHullAPI.GenerateMeshesFromChildColliders(
         convexHullParentGameObject,
