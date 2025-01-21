@@ -5,8 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca26c040-1a50-419b-8729-0605793a97f8" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.editorconfig" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimMods/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimMods/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs" beforeDir="false" afterPath="$PROJECT_DIR$/libs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/PlatformTools.Core.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/PlatformTools.Core.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/PlatformTools.Platform.Steam.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/PlatformTools.Platform.Steam.dll" afterDir="false" />
@@ -15,20 +13,6 @@
       <change beforePath="$PROJECT_DIR$/libs/assembly_utils.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/assembly_utils.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/assembly_valheim.dll" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/gui_framework.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/gui_framework.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullAPI.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullAPI.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullCalculator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullCalculator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullTestGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullTestGenerator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/MeshBoundsVisualizer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/MeshBoundsVisualizer.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle.manifest" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles.manifest" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Patches/PatchController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Patches/PatchController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Patches/VehicleMovementPatches.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Patches/MonoUpdaterPatches.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugGui.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugGui.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleShipEffects.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleShipEffects.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -80,12 +64,19 @@
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/ff/ec7295c9/Mathf.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullAPI.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/LayerHelpers.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/MeshBoundsVisualizer.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Config/RamConfig.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryHelpers.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/Registry/RamPrefabs.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/Registry/ShipHullPrefab.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ConvexHullComponent.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleShipEffects.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleOnboardController.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehiclePiecesController.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Structs/ShipFloatation.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Aoe.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/AssetMemoryUsagePolicy.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Attack.cs" root0="SKIP_HIGHLIGHTING" />
@@ -106,6 +97,7 @@
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/FejdStartup.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/FloatingTerrain.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/FollowPlayer.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/GameCamera.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Gibber.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/HeightmapBuilder.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/HotkeyBar.cs" root0="SKIP_HIGHLIGHTING" />
@@ -114,6 +106,7 @@
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Incinerator.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/InventoryGrid.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Leviathan.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/LineAttach.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/LiquidVolume.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/LodFadeInOut.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/MaterialVariationWorld.cs" root0="SKIP_HIGHLIGHTING" />
@@ -178,8 +171,8 @@
     "Mono Remote.valheim.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "XThreadsFramesViewSplitterKey": "2.465306",
-    "git-widget-placeholder": "feat/anchor-hud-and-minor-fixes",
+    "XThreadsFramesViewSplitterKey": "1.2621951",
+    "git-widget-placeholder": "feat/stability-tweaks",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.stylelint": "true",
     "node.js.detected.package.tslint": "true",
@@ -494,13 +487,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs</url>
-          <line>85</line>
+          <line>84</line>
           <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs" containingFunctionPresentation="Method 'InitializeFromConfig'">
             <startOffsets>
-              <option value="2530" />
+              <option value="2468" />
             </startOffsets>
             <endOffsets>
-              <option value="2588" />
+              <option value="2526" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="381" />
@@ -569,19 +562,6 @@
             </endOffsets>
           </properties>
           <option name="timeStamp" value="386" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullAPI.cs</url>
-          <line>625</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\ConvexHullAPI.cs" containingFunctionPresentation="Method 'CreateEncapsulationSphere'">
-            <startOffsets>
-              <option value="20592" />
-            </startOffsets>
-            <endOffsets>
-              <option value="20633" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="387" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
