@@ -112,8 +112,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 9072412453102170723}
   - {fileID: 1236080717359844368}
+  - {fileID: 9072412453102170723}
   - {fileID: 2668842051993398019}
   - {fileID: 2370383924732358459}
   m_Father: {fileID: 0}
@@ -439,7 +439,7 @@ GameObject:
   - component: {fileID: 7921013959125192910}
   - component: {fileID: 909015093029241858}
   m_Layer: 0
-  m_Name: connector
+  m_Name: wheel_connector
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -454,8 +454,8 @@ Transform:
   m_GameObject: {fileID: 8613661468750202377}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.053, y: -0.882, z: -1.55}
-  m_LocalScale: {x: 0.25, y: 1.25, z: 0.25}
+  m_LocalPosition: {x: 1.053, y: -0.88199997, z: -1.55}
+  m_LocalScale: {x: 0.25, y: 1.2500002, z: 0.25}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7142624703866748063}

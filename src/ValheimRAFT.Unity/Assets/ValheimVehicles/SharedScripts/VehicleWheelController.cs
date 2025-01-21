@@ -67,8 +67,10 @@ namespace ValheimVehicles.SharedScripts
     [Header("Wheel Settings")]
     public Transform boundsTransform; // Reference for bounds
 
+    public Transform forwardDirection; // Dynamic rotation reference
+
     public GameObject wheelSetPrefab; // Prefab for a single wheel set
-    public int minimumWheelSets = 4; // Minimum number of wheel sets
+    public int minimumWheelSets = 3; // Minimum number of wheel sets
     public float axelPadding = 0.5f; // Extra length on both sides of axel
 
     public float
@@ -91,12 +93,13 @@ namespace ValheimVehicles.SharedScripts
 
     private void Awake()
     {
+      wheelParent = transform.Find("wheels");
+      rigid = GetComponent<Rigidbody>();
     }
 
     private void Start()
     {
       GenerateWheelSets();
-
       // Override center of mass when a reference is passed in.
       if (centerOfMass != null)
       {
@@ -135,8 +138,6 @@ namespace ValheimVehicles.SharedScripts
 
     private void SetupWheels()
     {
-      wheelParent = transform.Find("Wheels");
-      rigid = GetComponent<Rigidbody>();
       wheelColliders = wheelParent.GetComponentsInChildren<WheelCollider>()
         .ToList();
 
@@ -166,31 +167,52 @@ namespace ValheimVehicles.SharedScripts
       poweredWheels = wheelColliders;
     }
 
+    public bool IsXBoundsAlignment()
+    {
+      // Determine the forward direction (X or Z axis) based on ForwardDirection rotation
+      var forwardAngle =
+        Mathf.Round(forwardDirection.eulerAngles.y / 90f) * 90f;
+      var isXBounds = Mathf.Approximately(Mathf.Abs(forwardAngle) % 180, 90);
+      return isXBounds;
+    }
+
     private void GenerateWheelSets()
     {
-      if (!boundsTransform || !wheelSetPrefab)
+      if (!boundsTransform || !wheelSetPrefab || !forwardDirection)
       {
         Debug.LogError(
-          "Bounds Transform and Wheel Set Prefab must be assigned.");
+          "Bounds Transform, Forward Direction, and Wheel Set Prefab must be assigned.");
         return;
       }
 
+      Physics.SyncTransforms();
       var bounds = GetBounds(boundsTransform);
-      var totalWheelSets = CalculateTotalWheelSets(bounds);
+      var isXBounds = IsXBoundsAlignment();
+      var totalWheelSets = CalculateTotalWheelSets(bounds, isXBounds);
 
       // Clear any existing wheel sets
       foreach (var set in wheelSets) Destroy(set);
       wheelSets.Clear();
 
+      var spacing = (isXBounds ? bounds.size.x : bounds.size.z) /
+                    (totalWheelSets - 1);
+
       // Generate wheel sets dynamically
       for (var i = 0; i < totalWheelSets; i++)
       {
-        var position = CalculateWheelSetPosition(i, totalWheelSets, bounds);
+        var position =
+          CalculateWheelSetPosition(i, totalWheelSets, bounds, spacing,
+            isXBounds);
         var wheelSet = Instantiate(wheelSetPrefab, position,
-          Quaternion.identity, transform);
-        AdjustWheelSet(wheelSet, bounds);
+          forwardDirection.rotation,
+          wheelParent);
+        AdjustWheelSet(wheelSet, bounds, isXBounds);
         wheelSets.Add(wheelSet);
       }
+
+      if (isXBounds) wheelParent.position += new Vector3(spacing, 0, 0);
+      // if (isXBounds && totalWheelSets > 5) wheelParent.position += new Vector3(-2.5f, 0, 0);
+      // wheelParent.transform.position += deltaWheelParentToBounds;
     }
 
     private Bounds GetBounds(Transform boundsTransform)
@@ -206,10 +228,12 @@ namespace ValheimVehicles.SharedScripts
       return new Bounds(Vector3.zero, Vector3.zero);
     }
 
-    private int CalculateTotalWheelSets(Bounds bounds)
+    private int CalculateTotalWheelSets(Bounds bounds, bool isXBounds)
     {
       var vehicleSize =
-        bounds.size.z; // Assuming size along the Z-axis determines length
+        isXBounds
+          ? bounds.size.x
+          : bounds.size.z; // Assuming size along the Z-axis determines length
 
       if (vehicleSize >= vehicleSizeThresholdFor6thSet) return 6;
 
@@ -219,19 +243,26 @@ namespace ValheimVehicles.SharedScripts
     }
 
     private Vector3 CalculateWheelSetPosition(int index, int totalWheelSets,
-      Bounds bounds)
+      Bounds bounds, float spacing, bool isXBounds)
     {
-      var spacing = bounds.size.z / (totalWheelSets - 1);
-      var zPosition = bounds.min.z + spacing * index;
+      var xPosition =
+        isXBounds ? bounds.min.x + spacing * index : bounds.center.x;
 
-      return new Vector3(bounds.center.x, bounds.min.y, zPosition);
+      // if (isXBounds) xPosition += bounds.extents.x / totalWheelSets;
+
+      var zPosition =
+        isXBounds ? bounds.center.z : bounds.min.z + spacing * index;
+
+      return new Vector3(xPosition, bounds.min.y, zPosition);
     }
 
-    private void AdjustWheelSet(GameObject wheelSet, Bounds bounds)
+    private void AdjustWheelSet(GameObject wheelSet, Bounds bounds,
+      bool isXBoundsAligned)
     {
       var wheelAxel = wheelSet.transform.Find("wheel_axel");
       var wheelLeft = wheelSet.transform.Find("wheel_left");
       var wheelRight = wheelSet.transform.Find("wheel_right");
+      var wheelConnector = wheelSet.transform.Find("wheel_connector");
 
       if (!wheelAxel || !wheelLeft || !wheelRight)
       {
@@ -240,26 +271,58 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
-      // Adjust axel scale
-      var axelLength = bounds.extents.x + 2 * axelPadding;
+      // Adjust axel scale and alignment
+      var axelLength =
+        (!isXBoundsAligned ? bounds.extents.x : bounds.extents.z) * 2 +
+        2 * axelPadding;
       var axelScale = wheelAxel.localScale;
-      axelScale.y = axelLength;
+      axelScale.y = axelLength / 2;
       wheelAxel.localScale = axelScale;
 
-      // Adjust wheel positions
-      var leftPosition =
-        wheelAxel.localPosition - new Vector3(axelLength, 0, 0);
-      var rightPosition =
-        wheelAxel.localPosition + new Vector3(axelLength, 0, 0);
-      wheelLeft.localPosition = leftPosition;
-      wheelRight.localPosition = rightPosition;
 
-      // Adjust wheel scales if needed (optional logic can be added here)
-      // var wheelScaleFactor = Mathf.Min(bounds.size.z, bounds.size.x) / 2;
-      // wheelLeft.localScale = new Vector3(wheelScaleFactor, wheelScaleFactor,
-      //   wheelLeft.localScale.z);
-      // wheelRight.localScale = new Vector3(wheelScaleFactor, wheelScaleFactor,
-      //   wheelRight.localScale.z);
+      // Adjust wheel positions based on axel length
+      // var offset = !isYAxis
+      //   ? new Vector3(axelLength / 2, 0, 0)
+      //   : new Vector3(0, 0, axelLength / 2);
+      var wheelAxelLocalPosition = wheelAxel.localPosition;
+
+      if (isXBoundsAligned)
+        wheelAxelLocalPosition.x -= axelPadding * 2;
+      else
+        wheelAxelLocalPosition.x -= axelPadding * 2;
+      wheelAxelLocalPosition.z = 0;
+
+      var wheelConnectorLocalPosition = wheelConnector.localPosition;
+      wheelConnectorLocalPosition.x = 0;
+
+      wheelAxel.localPosition = wheelAxelLocalPosition;
+      wheelConnector.localPosition = wheelConnectorLocalPosition;
+
+      wheelLeft.localPosition = new Vector3(-axelLength / 2,
+        wheelAxel.localPosition.y, wheelAxel.localPosition.z);
+      wheelRight.localPosition = new Vector3(axelLength / 2,
+        wheelAxel.localPosition.y, wheelAxel.localPosition.z);
+      // if (!isYAxis)
+      // {
+      //   wheelLeft.localPosition = new Vector3(-axelLength / 2,
+      //     wheelAxel.localPosition.y, wheelAxel.localPosition.z);
+      //   wheelRight.localPosition = new Vector3(axelLength / 2,
+      //     wheelAxel.localPosition.y, wheelAxel.localPosition.z);
+      // }
+      // else
+      // {
+      //   wheelLeft.localPosition = new Vector3(wheelAxel.localPosition.x,
+      //     wheelAxel.localPosition.y, -axelLength / 2);
+      //   wheelRight.localPosition = new Vector3(wheelAxel.localPosition.x,
+      //     wheelAxel.localPosition.y, axelLength / 2);
+      // }
+
+      // Adjust wheel scale to fit bounds without colliding
+      // var wheelScaleFactor = Mathf.Min(bounds.size.x, bounds.size.z) / 2;
+      // wheelLeft.localScale = new Vector3(wheelScaleFactor,
+      //   wheelLeft.localScale.y, wheelScaleFactor);
+      // wheelRight.localScale = new Vector3(wheelScaleFactor,
+      //   wheelRight.localScale.y, wheelScaleFactor);
     }
 
     private void UpdateWheelsFromBounds()
