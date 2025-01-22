@@ -760,6 +760,20 @@ Other methods removed after 2.5.0
 - Description: Sets the anchor text size. Potentially Useful for those with different monitor sizes
 - Default Value: 4
 
+## Camera Optimizations
+
+### CameraOcclusionInterval 
+- Description: Interval in seconds at which the camera will hide meshes in attempt to consolidate FPS / GPU memory.
+- Default Value: 0.1
+
+### CameraOcclusionEnabled 
+- Description: Enables hiding active raft pieces at specific intervals. This will hide only the rendered texture.
+- Default Value: True
+
+### DistanceToKeepObjects 
+- Description: Threshold at which to retain a object even if it's through a wall.
+- Default Value: 5
+
 ## Quick Start (DEBUG-ONLY)
 
 ### QuickStartWorldName 
