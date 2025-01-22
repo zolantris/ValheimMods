@@ -40,6 +40,9 @@ public class CustomMeshPrefabs : IRegisterPrefab
     {
       color = new Color(0.3f, 0.4f, 1, 0.8f)
     };
+    var collider = prefab.GetComponent<BoxCollider>();
+    prefab.layer = LayerMask.NameToLayer("piece_nonsolid");
+    collider.excludeLayers = LayerHelpers.CustomRaftLayerMask;
     mesh.material = material;
     prefab.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
