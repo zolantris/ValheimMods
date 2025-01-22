@@ -3,6 +3,8 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
 using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles.Components;
@@ -68,6 +70,15 @@ public class CustomMeshPrefabs : IRegisterPrefab
   {
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.CustomWaterMask);
+
+    var meshRenderer = prefab.GetComponent<MeshRenderer>();
+
+    // No special effects etc. Should be completely empty area invisible.
+    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
+    meshRenderer.receiveShadows = false;
+    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+    meshRenderer.rayTracingMode = RayTracingMode.Off;
+    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
 
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
