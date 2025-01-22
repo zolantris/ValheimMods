@@ -20,7 +20,9 @@ namespace ValheimVehicles.Vehicles.Controllers;
 /// </summary>
 public class VehicleOnboardController : MonoBehaviour
 {
-  public VehicleMovementController? MovementController;
+  public VehicleMovementController? MovementController => vehicleShip != null
+    ? vehicleShip.MovementController
+    : null;
 
   public VehicleShip? vehicleShip;
 
@@ -40,7 +42,8 @@ public class VehicleOnboardController : MonoBehaviour
 
   public BoxCollider OnboardCollider = null!;
 
-  public VehiclePiecesController? PiecesController;
+  public VehiclePiecesController? PiecesController =>
+    vehicleShip != null ? vehicleShip.PiecesController : null;
 
   private void Awake()
   {
@@ -245,16 +248,6 @@ public class VehicleOnboardController : MonoBehaviour
 
     if (_removePlayersCoroutineInstance != null)
       StopCoroutine(_removePlayersCoroutineInstance);
-  }
-
-  public VehicleMovementController GetMovementController()
-  {
-    return MovementController;
-  }
-
-  public void SetMovementController(VehicleMovementController val)
-  {
-    MovementController = val;
   }
 
   public void OnTriggerEnter(Collider collider)

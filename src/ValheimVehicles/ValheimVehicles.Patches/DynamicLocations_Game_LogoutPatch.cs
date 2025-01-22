@@ -29,6 +29,6 @@ public class DynamicLocations_Game_LogoutPatch
     if (onboardData.OnboardController == null) return;
 
     PlayerSpawnController.Instance?.SyncLogoutPoint(
-      onboardData?.OnboardController?.VehicleShipInstance?.NetView?.GetZDO());
+      onboardData?.OnboardController?.vehicleShip?.NetView?.GetZDO());
   }
 }

@@ -76,7 +76,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public float m_rudderSpeed = 0.5f;
   public VehicleZSyncTransform zsyncTransform;
 
-  public VehicleOnboardController? OnboardController;
+  public VehicleOnboardController? OnboardController =>
+    _vehicle.OnboardController;
 
   public bool isBeached;
 
@@ -163,7 +164,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private float prevLeftUpwardsForce;
   private float prevRightUpwardsForce;
 
-  private VehicleShip _vehicle;
+  private VehicleShip? _vehicle;
   private Ship.Speed vehicleSpeed;
 
   private float vehicleStatSyncTimer;
@@ -187,7 +188,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     VehicleInstance?.WheelController;
 
   public BoxCollider? OnboardCollider =>
-    OnboardController != null ? OnboardController.OnboardCollider : null;
+    _vehicle != null ? _vehicle.OnboardCollider : null;
 
   public Rigidbody rigidbody => m_body;
   public Transform AttachPoint { get; set; }
@@ -207,7 +208,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
 
   public BoxCollider? FloatCollider =>
-    PiecesController != null ? VehicleInstance.FloatCollider : null;
+    _vehicle != null ? _vehicle.FloatCollider : null;
 
   public Transform ControlGuiPosition
   {
@@ -756,8 +757,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     ShipDirection =
       vehicleMovementObj.transform.Find(PrefabNames
         .VehicleShipMovementOrientation);
-    FloatCollider = PiecesController.FloatCollider;
-    OnboardCollider = PiecesController.OnboardCollider;
   }
 
   public void SetupImpactEffect()

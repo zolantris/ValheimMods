@@ -302,9 +302,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     // For starting the vehicle pieces.
     if (PiecesController != null)
     {
-      FloatCollider = PiecesController.FloatCollider;
-      OnboardCollider = PiecesController.OnboardCollider;
-
       PiecesController.InitFromShip(Instance);
       InitStarterPiece();
     }
@@ -320,27 +317,15 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   /// </summary>
   public void RebindAllComponents()
   {
-    // if (PiecesController != null)
-    // {
-    //   PiecesController.OnboardController = OnboardController;
-    //   PiecesController.MovementController = MovementController;
-    //   // available only for Vehicles with land capability
-    //   PiecesController.WheelController = WheelController;
-    // }
-    //
-    // if (OnboardController != null)
-    // {
-    //   OnboardController.MovementController = MovementController;
-    //   OnboardController.PiecesController = PiecesController;
-    // }
-    //
-    // if (MovementController != null)
-    // {
-    //   MovementController.PiecesController = PiecesController;
-    //   MovementController.OnboardController = OnboardController;
-    //   // available only for Vehicles with land capability
-    //   MovementController.WheelController = WheelController;
-    // }
+    // Init colliders
+    if (PiecesController != null)
+    {
+      FloatCollider = PiecesController.FloatCollider;
+      OnboardCollider = PiecesController.OnboardCollider;
+    }
+
+    if (MovementController != null && FloatCollider != null)
+      MovementController.m_floatcollider = FloatCollider;
   }
 
   public void InitializeMovementController()
