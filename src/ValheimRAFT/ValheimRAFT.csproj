@@ -122,6 +122,9 @@
             <HintPath>$(SolutionDir)\libs\PlanBuild.dll</HintPath>
             <Private>False</Private>
         </Reference>
+        <Reference Include="UnityEngine.VehiclesModule">
+            <HintPath>..\..\..\..\..\..\..\Program Files\Unity\Hub\Editor\2022.3.17f1\Editor\Data\Managed\UnityEngine\UnityEngine.VehiclesModule.dll</HintPath>
+        </Reference>
     </ItemGroup>
     <!--    <ItemGroup>-->
     <!--        <Folder Include="..\ValheimVehicles\ValheimVehicles.Utils\">-->

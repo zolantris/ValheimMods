@@ -36,12 +36,16 @@ function Copy-FileIfDifferent {
         [string]$destinationFile
     )
     Write-Host "Comparing files: $sourceFile and $destinationFile"
-    if (-not (Test-Path $destinationFile) -or (Get-FileHash $sourceFile).Hash -ne (Get-FileHash $destinationFile).Hash) {
-        Write-Host "Copying $sourceFile to $destinationFile"
-        Copy-Item $sourceFile -Destination $destinationFile -Force
-    } else {
-        Write-Host "$destinationFile is already up to date."
+
+    # If the destination file exists, remove it before copying
+    if (Test-Path $destinationFile) {
+        Write-Host "File $destinationFile exists. Removing it before copying."
+        Remove-Item $destinationFile -Force
     }
+
+    # Now copy the file
+    Write-Host "Copying $sourceFile to $destinationFile"
+    Copy-Item $sourceFile -Destination $destinationFile -Force
 }
 
 # Ensure the paths are valid
