@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Config;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles.Components;
 
@@ -143,6 +144,14 @@ public class VehicleCameraCullingComponent : MonoBehaviour
 
   private bool IsObjectOccluded(GameObject obj)
   {
+    if (Player.m_localPlayer == null) return false;
+    if (obj.name.StartsWith(PrefabNames.ShipAnchorWood) ||
+        obj.name.StartsWith(PrefabNames.ShipSteeringWheel)) return false;
+    if (Vector3.Distance(obj.transform.position,
+          Player.m_localPlayer.transform.position) <
+        CameraConfig.DistanceToKeepObjects.Value)
+      return false;
+
     if (gameCamera == null) return false;
     // First check if the object is inside the camera's frustum
     if (!IsObjectVisibleToCamera(obj))
@@ -165,7 +174,7 @@ public class VehicleCameraCullingComponent : MonoBehaviour
     {
       var hit = results[index];
       if (hit.collider == null) continue;
-      // If the ray hits something other than the target object, parent, or netview at top, it's occluded
+      // If the ray hits something other than the obj object, parent, or netview at top, it false's occluded
       if (hit.collider.gameObject == obj) isOccluded = false;
 
       if (hit.collider.transform.parent == obj.transform) isOccluded = false;
