@@ -2610,13 +2610,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     if (!isActiveAndEnabled) return;
     Physics.SyncTransforms();
+    RotateVehicleForwardPosition();
 
     RebuildConvexHull();
 
     if (FloatCollider == null || OnboardCollider == null)
       return;
 
-    RotateVehicleForwardPosition();
 
     // messing with collider bounds requires syncing outside a physics update
     _pendingHullBounds = new Bounds();
@@ -2677,16 +2677,23 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   }
 
   public static float floatColliderSizeMultiplier = 1.5f;
+  public static float minColliderSize = 1f;
 
 // todo move this logic to a file that can be tested
 // todo compute the float colliderY transform so it aligns with bounds if player builds underneath boat
   public void OnBoundsChangeUpdateShipColliders()
   {
-    var minColliderSize = 0.1f;
     if (FloatCollider == null || OnboardCollider == null)
     {
       Logger.LogWarning(
         "Ship colliders updated but the ship was unable to access colliders on ship object. Likely cause is ZoneSystem destroying the ship");
+      return;
+    }
+
+    if (_cachedConvexHullBounds == null)
+    {
+      Logger.LogWarning(
+        "Cached convexHullBounds is null this is like a problem with collider setup. Make sure to use custom colliders if other settings are not working");
       return;
     }
 
@@ -2708,10 +2715,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     var floatColliderSize = new Vector3(
       Mathf.Max(minColliderSize,
-        _vehiclePieceBounds.size.x * floatColliderSizeMultiplier),
+        _cachedConvexHullBounds.Value.size.x),
       originalFloatColliderSize,
       Mathf.Max(minColliderSize,
-        _vehiclePieceBounds.size.z * floatColliderSizeMultiplier));
+        _cachedConvexHullBounds.Value.size.z));
 
     /*
      * onboard colliders

@@ -987,6 +987,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
+  /// <summary>
+  /// Must call Physics Sync Transforms
+  /// </summary>
+  /// <param name="steeringWheelRotation"></param>
   public void UpdateShipDirection(Quaternion steeringWheelRotation)
   {
     var rotation = Quaternion.Euler(0, steeringWheelRotation.eulerAngles.y, 0);
@@ -1000,6 +1004,15 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // for some reason we have to rotate these parent colliders by half and the child again by half.
     ShipDirection.localRotation = rotation;
+
+    // Ensures the Z is always forwards.
+    if (FloatCollider != null) FloatCollider.transform.localRotation = rotation;
+
+    if (OnboardCollider != null)
+      OnboardCollider.transform.localRotation = rotation;
+
+    Physics.SyncTransforms();
+
   }
 
   private static Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity)
