@@ -63,6 +63,12 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\ValheimAoe.cs">
             <Link>ValheimVehicles.Vehicles\Components\ValheimAoe.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Config\CameraConfig.cs">
+            <Link>ValheimVehicles.Config\CameraConfig.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleCameraCullingComponent.cs">
+            <Link>ValheimVehicles.Vehicles\Components\VehicleCameraCullingComponent.cs</Link>
+        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup><!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->
