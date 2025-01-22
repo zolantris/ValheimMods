@@ -2887,6 +2887,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     );
   }
 
+  /// <summary>
+  /// todo this would need to rotate a point if the collider is rotated. Or rotate based on ship direction if the collider is not rotated.
+  /// </summary>
+  /// <param name="boundsCenter"></param>
+  /// <param name="boundsSize"></param>
+  /// <param name="netView"></param>
+  /// <returns></returns>
   private Bounds? EncapsulateColliders(Vector3 boundsCenter,
     Vector3 boundsSize,
     GameObject netView)

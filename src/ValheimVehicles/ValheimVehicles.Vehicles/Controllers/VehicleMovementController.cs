@@ -1005,11 +1005,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // for some reason we have to rotate these parent colliders by half and the child again by half.
     ShipDirection.localRotation = rotation;
 
+    // TODO this could be a solution, but it would require rotating the points before they could be placed within the colliders
     // Ensures the Z is always forwards.
-    if (FloatCollider != null) FloatCollider.transform.localRotation = rotation;
-
-    if (OnboardCollider != null)
-      OnboardCollider.transform.localRotation = rotation;
+    // if (FloatCollider != null) FloatCollider.transform.localRotation = rotation;
+    //
+    // if (OnboardCollider != null)
+    //   OnboardCollider.transform.localRotation = rotation;
 
     Physics.SyncTransforms();
 
