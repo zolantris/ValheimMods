@@ -287,7 +287,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public virtual IVehicleShip? VehicleInstance { set; get; }
   public int PersistentZdoId => VehicleInstance?.PersistentZdoId ?? 0;
 
-  public VehicleMovementController? MovementController;
+  public VehicleMovementController? MovementController =>
+    VehicleInstance?.MovementController;
+
+  public VehicleWheelController? WheelController =>
+    VehicleInstance?.WheelController;
+
+  public VehicleOnboardController? OnboardController =>
+    VehicleInstance?.OnboardController;
 
 /* end sail calcs  */
   private Vector2i m_sector;
@@ -300,10 +307,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   private Bounds _pendingVehicleBounds;
   private Bounds _pendingHullBounds;
 
-  public BoxCollider FloatCollider { get; set; }
+  public BoxCollider? FloatCollider { get; set; }
 
-  public BoxCollider OnboardCollider { get; set; }
-  public VehicleOnboardController OnboardController { get; set; }
+  public BoxCollider? OnboardCollider { get; set; }
 
   internal Stopwatch InitializationTimer = new();
   internal Stopwatch PendingPiecesTimer = new();
@@ -609,15 +615,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     ValidateInitialization();
 
     if (!(bool)ZNet.instance) return;
-
-    if (OnboardCollider != null)
-      MovementController.OnboardCollider = OnboardCollider;
-
-    if (FloatCollider != null) MovementController.FloatCollider = FloatCollider;
-
-    if (OnboardController != null)
-      MovementController.OnboardController = OnboardController;
-
     if (hasDebug)
     {
       Logger.LogInfo($"pieces {m_pieces.Count}");
@@ -625,7 +622,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       Logger.LogInfo($"allPieces {m_allPieces.Count}");
     }
 
-    if (VehicleInstance != null)
+    if (VehicleInstance != null &&
+        !ActiveInstances.ContainsKey(VehicleInstance.PersistentZdoId))
       ActiveInstances.Add(VehicleInstance.PersistentZdoId, this);
 
     StartClientServerUpdaters();

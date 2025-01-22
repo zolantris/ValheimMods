@@ -3,6 +3,7 @@ using System.Linq;
 using DynamicLocations.Controllers;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Patches;
@@ -20,7 +21,8 @@ namespace ValheimVehicles.Vehicles.Controllers;
 public class VehicleOnboardController : MonoBehaviour
 {
   public VehicleMovementController? MovementController;
-  public IVehicleShip? VehicleInstance => PiecesController.VehicleInstance;
+
+  public VehicleShip? vehicleShip;
 
   [UsedImplicitly]
   public static readonly Dictionary<ZDOID, WaterZoneCharacterData>
@@ -36,17 +38,13 @@ public class VehicleOnboardController : MonoBehaviour
   public bool HasPlayersOnboard => m_localPlayers.Count > 0;
   private static bool _hasExitSubscriptionDelay = false;
 
-  public Collider? OnboardCollider;
+  public BoxCollider OnboardCollider = null!;
 
   public VehiclePiecesController? PiecesController;
 
   private void Awake()
   {
-    if (PiecesController == null)
-      PiecesController = transform.root.GetComponent<VehiclePiecesController>();
-    OnboardCollider = GetComponent<Collider>();
-    if (MovementController == null)
-      MovementController = PiecesController.MovementController;
+    OnboardCollider = GetComponent<BoxCollider>();
     InvokeRepeating(nameof(ValidateCharactersAreOnShip), 1f, 30f);
   }
 
@@ -309,7 +307,7 @@ public class VehicleOnboardController : MonoBehaviour
   /// <returns></returns>
   private Player? GetPlayerComponent(Collider collider)
   {
-    if (MovementController.ShipInstance?.Instance == null) return null;
+    if (MovementController.VehicleInstance?.Instance == null) return null;
     var playerComponent = collider.GetComponent<Player>();
     if (!playerComponent) return null;
 
@@ -434,8 +432,8 @@ public class VehicleOnboardController : MonoBehaviour
     Logger.LogDebug(
       $"Player: {playerInList.GetPlayerName()} on-board, total onboard {m_localPlayers.Count}");
 
-    var vehicleZdo = MovementController.ShipInstance?.NetView != null
-      ? MovementController.ShipInstance.NetView.GetZDO()
+    var vehicleZdo = MovementController.VehicleInstance?.NetView != null
+      ? MovementController.VehicleInstance.NetView.GetZDO()
       : null;
 
     if (playerInList == Player.m_localPlayer && vehicleZdo != null)
@@ -447,9 +445,9 @@ public class VehicleOnboardController : MonoBehaviour
     KeyValuePair<ZDOID, Player> delayedExitSubscription)
   {
     if (MovementController == null ||
-        MovementController.ShipInstance?.NetView == null) return;
+        MovementController.VehicleInstance?.NetView == null) return;
     var vehicleZdo = MovementController
-      .ShipInstance.NetView.GetZDO();
+      .VehicleInstance.NetView.GetZDO();
     if (delayedExitSubscription.Value == Player.m_localPlayer &&
         vehicleZdo != null && PlayerSpawnController.Instance != null)
       PlayerSpawnController.Instance.SyncLogoutPoint(vehicleZdo, true);

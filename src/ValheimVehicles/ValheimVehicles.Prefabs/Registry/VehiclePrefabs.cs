@@ -17,9 +17,9 @@ namespace ValheimVehicles.Prefabs.Registry;
 /**
  * example registry of a prefab
  */
-public class VehiclePrefab : IRegisterPrefab
+public class VehiclePrefabs : IRegisterPrefab
 {
-  public static readonly VehiclePrefab Instance = new();
+  public static readonly VehiclePrefabs Instance = new();
 
   public static GameObject CreateClonedPrefab(string prefabName)
   {
@@ -77,24 +77,6 @@ public class VehiclePrefab : IRegisterPrefab
     wnt.m_noRoofWear = true;
     wnt.enabled = false;
 
-    // todo ImpactEffect likely never should have been added like this
-    // todo remove if unnecessary
-    // var impactEffect = prefab.AddComponent<ImpactEffect>();
-    // impactEffect.m_triggerMask = LayerMask.GetMask("Default", "character",
-    //   "piece", "terrain",
-    //   "static_solid", "Default_small", "character_net", "vehicle",
-    //   LayerMask.LayerToName(29));
-    // impactEffect.m_toolTier = 1000;
-    //
-    // impactEffect.m_damages.m_blunt = 50;
-    // impactEffect.m_interval = 0.1f;
-    // impactEffect.m_damagePlayers = true;
-    // impactEffect.m_damageToSelf = false;
-    // impactEffect.m_damageFish = true;
-    // impactEffect.m_hitType = HitData.HitType.Boat;
-    // impactEffect.m_minVelocity = 0.01f;
-    // impactEffect.m_maxVelocity = 999f;
-
     return prefab;
   }
 
@@ -102,6 +84,31 @@ public class VehiclePrefab : IRegisterPrefab
   {
     var prefab = CreateClonedPrefab(PrefabNames.WaterVehicleShip);
     var waterVehiclePrefab = CreateWaterVehiclePrefab(prefab);
+    // top level netview must be passed along to other components from VehicleShip
+    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab, true);
+    PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(prefab);
+
+    var woodWnt = LoadValheimAssets.woodFloorPiece.GetComponent<WearNTear>();
+    var wnt = PrefabRegistryHelpers.SetWearNTear(prefab, 1, true);
+    PrefabRegistryHelpers.SetWearNTearSupport(wnt,
+      WearNTear.MaterialType.HardWood);
+
+    wnt.m_onDestroyed += woodWnt.m_onDestroyed;
+    // triggerPrivateArea will damage enemies/pieces when within it
+    wnt.m_triggerPrivateArea = true;
+
+    wnt.m_supports = true;
+    wnt.m_support = 2000f;
+    wnt.m_noSupportWear = true;
+    wnt.m_noRoofWear = true;
+    wnt.enabled = false;
+
+    /*
+     * ShipControls were a gameObject with a script attached to them. This approach directly attaches the script instead of having the rudder show.
+     */
+
+    var shipInstance = prefab.AddComponent<VehicleShip>();
+    shipInstance.gameObject.layer = LayerHelpers.CustomRaftLayer;
 
     var piece =
       PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.WaterVehicleShip,
@@ -124,6 +131,44 @@ public class VehiclePrefab : IRegisterPrefab
           new RequirementConfig
           {
             Amount = 16,
+            Item = "Wood",
+            Recover = false
+          }
+        ]
+      }));
+  }
+
+  public static void RegisterLandVehiclePrefab()
+  {
+    var landVehiclePrefab = CreateClonedPrefab(PrefabNames.LandVehicle);
+
+    CreateWaterVehiclePrefab(landVehiclePrefab);
+    var vehicleShip = landVehiclePrefab.GetComponent<VehicleShip>();
+    vehicleShip.IsLandVehicleFromPrefab = true;
+    vehicleShip.IsLandVehicle = true;
+    landVehiclePrefab.AddComponent<VehicleWheelController>();
+
+    var piece =
+      PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.LandVehicle,
+        landVehiclePrefab);
+    piece.m_primaryTarget = true;
+    piece.m_randomTarget = true;
+    piece.m_targetNonPlayerBuilt = true;
+    piece.m_waterPiece = false;
+    piece.m_noClipping = true;
+    piece.m_canRotate = true;
+
+    PieceManager.Instance.AddPiece(new CustomPiece(landVehiclePrefab, true,
+      new PieceConfig
+      {
+        PieceTable = "Hammer",
+        Category = PrefabNames.ValheimRaftMenuName,
+        Enabled = true,
+        Requirements =
+        [
+          new RequirementConfig
+          {
+            Amount = 48,
             Item = "Wood",
             Recover = false
           }
@@ -197,6 +242,7 @@ public class VehiclePrefab : IRegisterPrefab
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
     RegisterWaterVehicleShipPrefab();
+    RegisterLandVehiclePrefab();
     RegisterNautilus();
   }
 }

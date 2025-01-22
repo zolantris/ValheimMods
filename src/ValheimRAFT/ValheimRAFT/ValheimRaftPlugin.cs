@@ -487,7 +487,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     EnableShipInWaterSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
     AllowFlight.SettingChanged += VehicleShip.OnAllowFlight;
     AllowExperimentalPrefabs.SettingChanged +=
-      WaterVehiclePrefab.Instance.OnExperimentalPrefabSettingsChange;
+      VehiclePrefabs.Instance.OnExperimentalPrefabSettingsChange;
 
     /*
      * @todo add a way to skip LoadCustomTextures when on server. This check when used here crashes the Plugin.
