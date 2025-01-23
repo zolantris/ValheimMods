@@ -1278,7 +1278,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (WheelController == null) return;
     m_body.WakeUp();
 
-    if (WheelController.wheelColliders.Count == 0 && PiecesController != null)
+    if (WheelController.wheelHingeJoints.Count == 0 && PiecesController != null)
     {
       var bounds = PiecesController.GetConvexHullRelativeBounds() ??
                    new Bounds(transform.position, Vector3.one);
