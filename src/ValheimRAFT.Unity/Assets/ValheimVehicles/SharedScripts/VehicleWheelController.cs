@@ -83,6 +83,10 @@ namespace ValheimVehicles.SharedScripts
 
     public float forwardInput;
 
+
+    public bool isBreaking = false;
+    public bool UseManualControls = false;
+
     // Used to associate a wheel with a one of the model prefabs.
     private readonly Dictionary<WheelCollider, MeshRenderer>
       WheelcollidersToWheelRenderMap =
@@ -308,6 +312,25 @@ namespace ValheimVehicles.SharedScripts
         zPosition);
     }
 
+    public bool IsMiddleIndex(int index, int size)
+    {
+      // Check if size is even or odd
+      if (size % 2 == 0)
+      {
+        // For even size, two middle indices
+        var middle1 = size / 2 - 1;
+        var middle2 = size / 2;
+
+        return index == middle1 || index == middle2;
+      }
+      else
+      {
+        // For odd size, one middle index
+        var middle = size / 2;
+        return index == middle;
+      }
+    }
+
     private void AdjustWheelInstance(GameObject wheelObj, Bounds bounds,
       bool isXBoundsAligned, int wheelSetIndex, bool isLeft, int totalWheelSets)
     {
@@ -316,8 +339,9 @@ namespace ValheimVehicles.SharedScripts
       var wheelCollider =
         wheelObj.transform.Find("collider").GetComponent<WheelCollider>();
 
+      var isMiddle = IsMiddleIndex(wheelSetIndex, totalWheelSets);
       // Setting higher forward stiffness for front and rear wheels allows for speeds to be picked up.
-      if (wheelSetIndex == 0 || wheelSetIndex == totalWheelSets - 1)
+      if (!isMiddle)
       {
         var forwardRightFriction = wheelCollider.forwardFriction;
         forwardRightFriction.stiffness = 1f;
@@ -337,102 +361,9 @@ namespace ValheimVehicles.SharedScripts
         wheelCollider.sidewaysFriction = sideFriction;
       }
 
-      WheelcollidersToWheelRenderMap.TryAdd(wheelCollider, wheelRenderer);
+      if (WheelcollidersToWheelRenderMap.ContainsKey(wheelCollider))
+        WheelcollidersToWheelRenderMap.Add(wheelCollider, wheelRenderer);
     }
-
-    // private void AdjustWheelInstance(GameObject wheelSet, Bounds bounds,
-    //   bool isXBoundsAligned, int index, bool isLeft, int totalWheelsets)
-    // {
-    //   var wheelAxel = wheelSet.transform.Find("wheel_axel");
-    //   var wheelConnector = wheelSet.transform.Find("wheel_connector");
-    //   var wheelLeft =
-    //     wheelSet.transform.Find("wheel_left");
-    //   var wheelRight =
-    //     wheelSet.transform.Find("wheel_right");
-    //
-    //   var wheelColliderLeft = wheelLeft.transform.Find("collider")
-    //     .GetComponent<WheelCollider>();
-    //   var wheelColliderRight = wheelRight.transform.Find("collider")
-    //     .GetComponent<WheelCollider>();
-    //
-    //   if (index == 0 || index == totalWheelsets - 1)
-    //   {
-    //     var forwardRightFriction = wheelColliderRight.forwardFriction;
-    //     forwardRightFriction.stiffness = 0.1f;
-    //     wheelColliderRight.forwardFriction = forwardRightFriction;
-    //
-    //     var forwardLeftFriction = wheelColliderLeft.forwardFriction;
-    //     forwardLeftFriction.stiffness = 0.1f;
-    //     wheelColliderLeft.forwardFriction = forwardLeftFriction;
-    //   }
-    //
-    //   if (!WheelcollidersToWheelRenderMap.ContainsKey(wheelColliderRight))
-    //     WheelcollidersToWheelRenderMap.Add(wheelColliderRight, wheelRenderer);
-    //
-    //   if (!WheelcollidersToWheelRenderMap.ContainsKey(wheelColliderLeft))
-    //     WheelcollidersToWheelRenderMap.Add(wheelColliderLeft, wheelRenderer);
-    //
-    //   if (!wheelAxel || !wheelLeft || !wheelRight)
-    //   {
-    //     Debug.LogError(
-    //       "Wheel Set Prefab must contain wheel_axel, wheel_left, and wheel_right transforms.");
-    //     return;
-    //   }
-    //
-    //   // Adjust axel scale and alignment
-    //   var axelLength =
-    //     (!isXBoundsAligned ? bounds.extents.x : bounds.extents.z) * 2 +
-    //     2 * axelPadding;
-    //   var axelScale = wheelAxel.localScale;
-    //   axelScale.y = axelLength / 2;
-    //   wheelAxel.localScale = axelScale;
-    //
-    //
-    //   // Adjust wheel positions based on axel length
-    //   // var offset = !isYAxis
-    //   //   ? new Vector3(axelLength / 2, 0, 0)
-    //   //   : new Vector3(0, 0, axelLength / 2);
-    //   var wheelAxelLocalPosition = wheelAxel.localPosition;
-    //
-    //   if (isXBoundsAligned)
-    //     wheelAxelLocalPosition.x -= axelPadding * 2;
-    //   else
-    //     wheelAxelLocalPosition.x -= axelPadding * 2;
-    //   wheelAxelLocalPosition.z = 0;
-    //
-    //   var wheelConnectorLocalPosition = wheelConnector.localPosition;
-    //   wheelConnectorLocalPosition.x = 0;
-    //
-    //   wheelAxel.localPosition = wheelAxelLocalPosition;
-    //   wheelConnector.localPosition = wheelConnectorLocalPosition;
-    //
-    //
-    //   wheelColliderLeft.transform.localPosition = new Vector3(-axelLength / 2,
-    //     wheelAxel.localPosition.y, wheelAxel.localPosition.z);
-    //   wheelColliderRight.transform.localPosition = new Vector3(axelLength / 2,
-    //     wheelAxel.localPosition.y, wheelAxel.localPosition.z);
-    //   // if (!isYAxis)
-    //   // {
-    //   //   wheelLeft.localPosition = new Vector3(-axelLength / 2,
-    //   //     wheelAxel.localPosition.y, wheelAxel.localPosition.z);
-    //   //   wheelRight.localPosition = new Vector3(axelLength / 2,
-    //   //     wheelAxel.localPosition.y, wheelAxel.localPosition.z);
-    //   // }
-    //   // else
-    //   // {
-    //   //   wheelLeft.localPosition = new Vector3(wheelAxel.localPosition.x,
-    //   //     wheelAxel.localPosition.y, -axelLength / 2);
-    //   //   wheelRight.localPosition = new Vector3(wheelAxel.localPosition.x,
-    //   //     wheelAxel.localPosition.y, axelLength / 2);
-    //   // }
-    //
-    //   // Adjust wheel scale to fit bounds without colliding
-    //   // var wheelScaleFactor = Mathf.Min(bounds.size.x, bounds.size.z) / 2;
-    //   // wheelLeft.localScale = new Vector3(wheelScaleFactor,
-    //   //   wheelLeft.localScale.y, wheelScaleFactor);
-    //   // wheelRight.localScale = new Vector3(wheelScaleFactor,
-    //   //   wheelRight.localScale.y, wheelScaleFactor);
-    // }
 
     public void RunSteering()
     {
@@ -452,6 +383,8 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+    public static float defaultBreakForce = 250f;
+    public float additionalBreakForce = defaultBreakForce;
     private float deltaRunPoweredWheels = 0f;
 
     /// <summary>
@@ -474,7 +407,7 @@ namespace ValheimVehicles.SharedScripts
       {
         if (isBreaking)
         {
-          wheel.brakeTorque = forwardInput * motorTorque + 1000f;
+          wheel.brakeTorque = forwardInput * motorTorque + additionalBreakForce;
         }
         else
         {
@@ -549,6 +482,11 @@ namespace ValheimVehicles.SharedScripts
     ///   rotating when this is done. Lowering side friction for wheels that
     ///   don't need it (i.e., wheels away from the center) can mitigate this.
     /// </summary>
+    /// <limitations>
+    /// 
+    ///  - must be negative motor torque
+    ///  - Does not work well for many wheels or long vehicles (need magic to fix this). Usually need odd set of wheels for better performance
+    /// </limitations>
     private void RunDifferentialSteeringWheels()
     {
       foreach (var wheel in left)
@@ -579,8 +517,7 @@ namespace ValheimVehicles.SharedScripts
         }
 
         if (isTorqueAndTurnNearZero) continue;
-
-        wheel.motorTorque -= motorTorque * turnInput;
+        wheel.motorTorque += motorTorque * -turnInput;
       }
     }
 
@@ -619,7 +556,39 @@ namespace ValheimVehicles.SharedScripts
       rigid.MoveRotation(magicRotation);
     }
 
-    public bool isBreaking = false;
+    public bool IsControlling = false;
+
+    public void SetAcceleration(float val)
+    {
+      forwardInput = val;
+    }
+
+
+    public void SetTurnInput(float val)
+    {
+      turnInput = val;
+    }
+
+    public void SetIsBreaking(bool val)
+    {
+      isBreaking = val;
+    }
+
+    /// <summary>
+    /// This will need logic to check if the player is the owner and if the player is controlling the vehicle actively.
+    ///
+    /// - To be called within VehicleMovementController.
+    /// </summary>
+    public void UpdateControls()
+    {
+      if (!IsControlling) return;
+      if (UseManualControls) return;
+
+      isBreaking = Input.GetKey(KeyCode.Space);
+      forwardInput = Input.GetAxis("Vertical");
+      turnInput = Input.GetAxis("Horizontal");
+    }
+
     // We run this only in Unity Editor
 #if UNITY_EDITOR
     private void Start()
@@ -634,22 +603,12 @@ namespace ValheimVehicles.SharedScripts
     private void Update()
     {
       if (!Application.isPlaying) return;
-      isBreaking = Input.GetKey(KeyCode.Space);
-      if (m_steeringType == SteeringType.Magic)
-      {
-        // forwardInput = Input.GetAxis("Vertical");
-
-        turnInput = Input.GetAxis("Horizontal");
-      }
-      else
-      {
-        turnInput = turnInputOverride;
-      }
-      // Capture input in the Update, not the FixedUpdate!
+      UpdateControls();
     }
 
     private void FixedUpdate()
     {
+      if (!Application.isPlaying) return;
       VehicleMovementFixedUpdate();
     }
 #endif

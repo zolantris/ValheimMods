@@ -1148,14 +1148,17 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public void Flying_UpdateShipBalancingForce()
   {
     var centerPosition = ShipDirection.position;
+    var shipForward = ShipDirection.forward;
+    var shipRight = ShipDirection.right;
+    
     var front = centerPosition +
-                ShipDirection.forward * FloatCollider.size.z / 2f;
+                shipForward * GetFloatSizeFromDirection(shipForward);
     var back = centerPosition -
-               ShipDirection.forward * FloatCollider.size.z / 2f;
+               shipForward * GetFloatSizeFromDirection(shipForward);
     var left = centerPosition -
-               ShipDirection.right * FloatCollider.size.x / 2f;
+               shipRight * GetFloatSizeFromDirection(shipRight);
     var right = centerPosition +
-                ShipDirection.right * FloatCollider.size.x / 2f;
+                shipRight * GetFloatSizeFromDirection(shipRight);
 
     var frontForce = m_body.GetPointVelocity(front);
     var backForce = m_body.GetPointVelocity(back);
@@ -1278,7 +1281,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (WheelController == null) return;
     m_body.WakeUp();
 
-    if (WheelController.wheelHingeJoints.Count == 0 && PiecesController != null)
+    if (WheelController.wheelColliders.Count == 0 && PiecesController != null)
     {
       var bounds = PiecesController.GetConvexHullRelativeBounds() ??
                    new Bounds(transform.position, Vector3.one);

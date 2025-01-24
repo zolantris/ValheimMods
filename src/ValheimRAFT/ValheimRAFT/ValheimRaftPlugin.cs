@@ -34,7 +34,6 @@ using ZdoWatcher;
 using Zolantris.Shared;
 using Zolantris.Shared.BepInExAutoDoc;
 using Logger = Jotunn.Logger;
-
 namespace ValheimRAFT;
 
 internal abstract class PluginDependencies
@@ -59,10 +58,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public const string ModNameBeta = "ValheimRAFTBETA";
   public const string ModGuid = $"{Author}.{ModName}";
   public static string HarmonyGuid => ModGuid;
-
   public const string ModDescription =
     "Valheim Mod for building on the sea, requires Jotunn to be installed.";
-
   public const string CopyRight = "Copyright © 2023-2024, GNU-v3 licensed";
   // ReSharper restore MemberCanBePrivate.Global
 

@@ -1206,8 +1206,11 @@ MonoBehaviour:
   vehicleSizeThresholdFor5thSet: 18
   vehicleSizeThresholdFor6thSet: 30
   forwardInput: 0
-  WheelBottomOffset: 3
   isBreaking: 0
+  UseManualControls: 0
+  WheelBottomOffset: 3
+  additionalBreakForce: 1000
+  IsControlling: 0
   turnInputOverride: -100
 --- !u!54 &372606731
 Rigidbody:
@@ -10443,7 +10446,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   topSpeed: 44
   steeringAngle: 30
-  motorTorque: 40
+  motorTorque: 100
   magicTurnRate: 45
   centerOfMass: {fileID: 946403019}
   front: []
@@ -10451,7 +10454,7 @@ MonoBehaviour:
   poweredWheels: []
   left: []
   right: []
-  m_steeringType: 1
+  m_steeringType: 0
   boundsTransform: {fileID: 1935939067}
   forwardDirection: {fileID: 473882986}
   wheelPrefab: {fileID: 2037590979320573674, guid: a86b73da2c20f75489ef96ab31349133, type: 3}
@@ -10460,8 +10463,11 @@ MonoBehaviour:
   vehicleSizeThresholdFor5thSet: 18
   vehicleSizeThresholdFor6thSet: 30
   forwardInput: 4
-  WheelBottomOffset: 3
   isBreaking: 0
+  UseManualControls: 0
+  WheelBottomOffset: 3
+  additionalBreakForce: 500
+  IsControlling: 1
   turnInputOverride: 0
 --- !u!54 &893013806
 Rigidbody:
@@ -10473,7 +10479,7 @@ Rigidbody:
   serializedVersion: 4
   m_Mass: 100
   m_Drag: 0.1
-  m_AngularDrag: 10
+  m_AngularDrag: 1
   m_CenterOfMass: {x: 0, y: -1, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -11178,8 +11184,11 @@ MonoBehaviour:
   vehicleSizeThresholdFor5thSet: 18
   vehicleSizeThresholdFor6thSet: 30
   forwardInput: 0
-  WheelBottomOffset: 3
   isBreaking: 0
+  UseManualControls: 0
+  WheelBottomOffset: 3
+  additionalBreakForce: 1000
+  IsControlling: 0
   turnInputOverride: 0
 --- !u!4 &1060612978 stripped
 Transform:
@@ -19424,8 +19433,11 @@ MonoBehaviour:
   vehicleSizeThresholdFor5thSet: 18
   vehicleSizeThresholdFor6thSet: 30
   forwardInput: 0
-  WheelBottomOffset: 3
   isBreaking: 0
+  UseManualControls: 0
+  WheelBottomOffset: 3
+  additionalBreakForce: 1000
+  IsControlling: 0
   turnInputOverride: 100
 --- !u!54 &1351345418
 Rigidbody:
@@ -20671,8 +20683,11 @@ MonoBehaviour:
   vehicleSizeThresholdFor5thSet: 18
   vehicleSizeThresholdFor6thSet: 30
   forwardInput: 0
-  WheelBottomOffset: 3
   isBreaking: 0
+  UseManualControls: 0
+  WheelBottomOffset: 3
+  additionalBreakForce: 1000
+  IsControlling: 0
   turnInputOverride: 0
 --- !u!54 &1734882904
 Rigidbody:
