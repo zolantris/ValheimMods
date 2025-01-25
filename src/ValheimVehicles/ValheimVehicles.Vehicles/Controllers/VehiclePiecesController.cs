@@ -2576,10 +2576,16 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     return false;
   }
 
-  public var shipLeft = Vector3.left;
-  public var shipRight = Vector3.right;
-  public var shipForward = Vector3.forward;
-  public var shipBackward = Vector3.back;
+  internal Vector3 m_localShipLeft = Vector3.left;
+  internal Vector3 m_localShipRight = Vector3.right;
+  internal Vector3 m_localShipForward = Vector3.forward;
+  internal Vector3 m_localShipBack = Vector3.back;
+
+  // meant for calculating vehicle's positiona and water height.
+  public Vector3 shipLeft => transform.position + m_localShipLeft;
+  public Vector3 shipRight => transform.position + m_localShipRight;
+  public Vector3 shipForward => transform.position + m_localShipForward;
+  public Vector3 shipBack => transform.position + m_localShipBack;
 
   public void CalculateFurthestPointsOnMeshes()
   {
@@ -2603,21 +2609,26 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         // Compare to find the furthest points
         if (worldVertex.z > furthestFront.z)
           furthestFront =
-            meshCollider.transform.InverseTransformPoint(worldVertex);
+            transform.InverseTransformPoint(worldVertex);
 
         if (worldVertex.z < furthestBack.z)
           furthestBack =
-            meshCollider.transform.InverseTransformPoint(worldVertex);
+            transform.InverseTransformPoint(worldVertex);
 
         if (worldVertex.x < furthestLeft.x)
           furthestLeft =
-            meshCollider.transform.InverseTransformPoint(worldVertex);
+            transform.InverseTransformPoint(worldVertex);
 
         if (worldVertex.x > furthestRight.x)
           furthestRight =
-            meshCollider.transform.InverseTransformPoint(worldVertex);
+            transform.InverseTransformPoint(worldVertex);
       }
     }
+
+    m_localShipLeft = furthestLeft;
+    m_localShipRight = furthestRight;
+    m_localShipForward = furthestFront;
+    m_localShipBack = furthestBack;
   }
 
   public void RebuildConvexHull()

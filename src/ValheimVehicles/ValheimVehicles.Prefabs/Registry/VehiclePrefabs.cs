@@ -242,7 +242,11 @@ public class VehiclePrefabs : IRegisterPrefab
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
     RegisterWaterVehicleShipPrefab();
-    // RegisterLandVehiclePrefab();
+
+    // registers only for v3 releases.
+    // if (ValheimRaftPlugin.Version.StartsWith("3")) 
+    RegisterLandVehiclePrefab();
+
     RegisterNautilus();
   }
 }
