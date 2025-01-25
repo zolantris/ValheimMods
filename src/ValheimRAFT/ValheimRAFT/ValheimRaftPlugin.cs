@@ -34,7 +34,6 @@ using ZdoWatcher;
 using Zolantris.Shared;
 using Zolantris.Shared.BepInExAutoDoc;
 using Logger = Jotunn.Logger;
-
 namespace ValheimRAFT;
 
 internal abstract class PluginDependencies
@@ -59,10 +58,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public const string ModNameBeta = "ValheimRAFTBETA";
   public const string ModGuid = $"{Author}.{ModName}";
   public static string HarmonyGuid => ModGuid;
-
   public const string ModDescription =
     "Valheim Mod for building on the sea, requires Jotunn to be installed.";
-
   public const string CopyRight = "Copyright © 2023-2024, GNU-v3 licensed";
   // ReSharper restore MemberCanBePrivate.Global
 
@@ -446,6 +443,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     PhysicsConfig.BindConfig(Config);
     MinimapConfig.BindConfig(Config);
     HudConfig.BindConfig(Config);
+    CameraConfig.BindConfig(Config);
 
 #if DEBUG
     // Meant for only being run in debug builds for testing quickly
@@ -487,7 +485,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     EnableShipInWaterSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
     AllowFlight.SettingChanged += VehicleShip.OnAllowFlight;
     AllowExperimentalPrefabs.SettingChanged +=
-      WaterVehiclePrefab.Instance.OnExperimentalPrefabSettingsChange;
+      VehiclePrefabs.Instance.OnExperimentalPrefabSettingsChange;
 
     /*
      * @todo add a way to skip LoadCustomTextures when on server. This check when used here crashes the Plugin.

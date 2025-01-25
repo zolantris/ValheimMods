@@ -38,6 +38,7 @@ internal static class PatchController
     // water effects
     Harmony.PatchAll(typeof(WaterVolume_WaterPatches));
     Harmony.PatchAll(typeof(GameCamera_WaterPatches));
+    Harmony.PatchAll(typeof(GameCamera_CullingPatches));
     Harmony.PatchAll(typeof(Character_WaterPatches));
     Harmony.PatchAll(typeof(Fireplace_WaterPatches));
     Harmony.PatchAll(typeof(Minimap_VehicleIcons));

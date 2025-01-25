@@ -293,6 +293,7 @@ namespace ValheimVehicles.SharedScripts
       var points = new List<Vector3>();
       var scale = collider.transform.localScale; // Object's local scale
 
+      if (!collider.enabled) return points;
       if (collider is MeshCollider meshCollider &&
           meshCollider.sharedMesh != null)
       {
@@ -442,14 +443,16 @@ namespace ValheimVehicles.SharedScripts
     {
       var points = new List<Vector3>();
 
+      if (!collider.enabled) return points;
       // filters out layer that should not be considered physical during generation
       if (!LayerHelpers.IsContainedWithinMask(collider.gameObject.layer,
             LayerHelpers.PhysicalLayers) ||
-          !collider.gameObject.activeInHierarchy) return new List<Vector3>();
+          !collider.gameObject.activeInHierarchy) return points;
+
 
       switch (collider)
       {
-        // Handle BoxCollider
+        // Handle BoxColliedr
         case BoxCollider boxCollider:
           points.AddRange(GetBoxColliderVertices(boxCollider));
           break;

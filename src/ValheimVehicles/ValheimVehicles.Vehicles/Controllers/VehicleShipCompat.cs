@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Controllers;
@@ -253,6 +254,7 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   public VehiclePiecesController? PiecesController { get; }
   public VehicleMovementController MovementController { get; }
   public VehicleOnboardController? OnboardController { get; }
+  public VehicleWheelController? WheelController { get; } = null;
   public Rigidbody? MovementControllerRigidbody { get; }
   public BoxCollider FloatCollider { get; set; }
   public Transform? ShipDirection { get; }

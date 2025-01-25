@@ -92,7 +92,7 @@ internal class GameCamera_WaterPatches
   [HarmonyPostfix]
   public static void GameCameraGetWaterMaskOnAwake(GameCamera __instance)
   {
-    BlockingWaterMask = __instance.m_blockCameraMask;
+    if (GameCamera.m_instance.m_camera == Camera.main) BlockingWaterMask = __instance.m_blockCameraMask;
   }
 
   [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.UpdateCamera))]
@@ -100,6 +100,7 @@ internal class GameCamera_WaterPatches
   public static void GameCameraUpdateCameraPatch(GameCamera __instance,
     Camera ___m_camera)
   {
+    if (GameCamera.m_instance.m_camera != Camera.main) return;
     if (Player.m_localPlayer == null ||
         WaterConfig.UnderwaterAccessMode.Value ==
         WaterConfig.UnderwaterAccessModeType.Disabled)

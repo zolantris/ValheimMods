@@ -67,6 +67,26 @@ Add the following data.
     </PropertyGroup>
 ```
 
+For enabling automatic converting valheim into a debug variant. Example is of
+Unity 2022.3.50.f1
+
+```xml
+
+<PropertyGroup Label="LocalPaths">
+    <BepInExPath>$(R2ModManPath)\$(R2ModManProfile)\BepInEx\core</BepInExPath>
+    <ManagedDataPath>$(GamePath)\valheim_Data\Managed</ManagedDataPath>
+    <UnityHubBasePath>C:\Program Files\Unity\Hub</UnityHubBasePath>
+    <UnityVersion>2022.3.50f1</UnityVersion>
+</PropertyGroup>
+```
+
+See
+the ["unity-debug-build-converter.targets"](../unity-debug-build-converter.targets)
+for the scripts run. The script executed
+is [UnityConvertGameToDebugBuild.ps1](../UnityConvertGameToDebugBuild.ps1). It
+executes all the steps automatically
+from [ValheimDebugging.md](./ValheimDebugging.md)
+
 With SandboxieVm for running two games at same time with two steam users.
 
 ```xml

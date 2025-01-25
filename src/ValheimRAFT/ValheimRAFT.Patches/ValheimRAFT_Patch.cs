@@ -1,4 +1,5 @@
 using UnityEngine;
+using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;
 
@@ -16,6 +17,8 @@ public class ValheimRAFT_Patch
   /// <param name="gameObject"></param>
   public static void PlacedPiece(Player player, GameObject gameObject)
   {
+    Logger.LogWarning(
+      "Deprecated ValheimRAFT method PlacedPiece called, please use ValheimRAFT.Patches.Player_Patch.PlacedPiece");
     Player_Patch.PlacedPiece(gameObject);
   }
 }

@@ -47,6 +47,9 @@ public class LoadValheimVehicleAssets : ILoadAssets
   // ships (like nautilus)
   public static GameObject ShipNautilus = null!;
 
+  public static GameObject VehicleLand = null!;
+  public static GameObject WheelSet = null!;
+
   // hull ribs
   public static GameObject ShipHullRibWoodAsset = null!;
   public static GameObject ShipHullRibIronAsset = null!;
@@ -276,15 +279,22 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
     RamBladeTop = assetBundle.LoadAsset<GameObject>(
       "ram_blade_top.prefab");
-    ;
+
     RamBladeBottom = assetBundle.LoadAsset<GameObject>(
       "ram_blade_bottom.prefab");
-    ;
+
     RamBladeRight = assetBundle.LoadAsset<GameObject>(
       "ram_blade_right.prefab");
-    ;
+
     RamBladeLeft = assetBundle.LoadAsset<GameObject>(
       "ram_blade_left.prefab");
-    ;
+
+    WheelSet =
+      assetBundle.LoadAsset<GameObject>(
+        $"wheel_set.prefab");
+
+    VehicleLand =
+      assetBundle.LoadAsset<GameObject>(
+        $"vehicle_land.prefab");
   }
 }

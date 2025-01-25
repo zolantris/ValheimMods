@@ -15,8 +15,12 @@ public static class VehicleZdoVars
   public static string CustomMeshPrimitiveType =
     "ValheimVehicles_CustomMeshPrimitiveType";
 
+  public static string IsLandVehicle = "ValheimVehicles_IsLandVehicle";
+
   // todo remove this flag set as it is deprecated
-  public static readonly int DEPRECATED_VehicleFlags = "VehicleFlags".GetStableHashCode();
+  public static readonly int DEPRECATED_VehicleFlags =
+    "VehicleFlags".GetStableHashCode();
+
   public static readonly string VehicleAnchorState = "VehicleAnchorState";
 
   public static readonly int VehicleTargetHeight =

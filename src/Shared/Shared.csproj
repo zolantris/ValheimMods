@@ -17,4 +17,7 @@
     <Import Project="..\..\base.targets"/>
     <Import Project="..\..\valheim.targets"/>
     <Import Project="..\..\gameLauncher.targets"/>
+
+    <!--  Converts valheim to a unity debug build  -->
+    <Import Project="..\..\unity-debug-build-converter.targets"/>
 </Project>

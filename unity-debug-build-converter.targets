@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+
+        <!-- Import UnityPaths.props file if needed -->
+
+        <!-- Define MSBuild properties -->
+        <UnityVersion>$(UnityVersion)</UnityVersion>
+        <UnityHubBasePath>$(UnityHubBasePath)</UnityHubBasePath>
+
+        <!-- relative to supplied .props variables -->
+        <Win64DevelopmentPlayerPath>$(UnityHubBasePath)\$(UnityVersion)\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\win64_player_development_mono</Win64DevelopmentPlayerPath>
+        <ValheimGameFolder>$(GamePath)</ValheimGameFolder>  <!-- Replace with actual game path variable -->
+        <ManagedFolder>$(Win64DevelopmentPlayerPath)\Data\Managed</ManagedFolder>
+        <ResourceFolder>$(Win64DevelopmentPlayerPath)\Data\Resources</ResourceFolder>
+        <WindowsPlayerExe>$(Win64DevelopmentPlayerPath)\WindowsPlayer.exe</WindowsPlayerExe>
+        <UnityPlayerDll>$(Win64DevelopmentPlayerPath)\UnityPlayer.dll</UnityPlayerDll>
+        <WinPixEventRuntimeDll>$(Win64DevelopmentPlayerPath)\WinPixEventRuntime.dll</WinPixEventRuntimeDll>
+    </PropertyGroup>
+    <!-- Define a target that runs the PowerShell script -->
+    <Target Condition="'$(ShouldConvertGameToDebugUnityBuild)' == 'true'" Name="CopyUnityFiles" AfterTargets="Build">
+        <Exec Command="powershell.exe -ExecutionPolicy Bypass -File &quot;$(SolutionDir)UnityConvertGameToDebugBuild.ps1&quot; -UnityHubPath &quot;$(UnityHubPath)&quot; -ValheimGameFolder &quot;$(ValheimGameFolder)&quot; -WindowsPlayerExe &quot;$(WindowsPlayerExe)&quot; -UnityPlayerDll &quot;$(UnityPlayerDll)&quot; -WinPixEventRuntimeDll &quot;$(WinPixEventRuntimeDll)&quot; -ManagedFolder &quot;$(ManagedFolder)&quot; -ResourceFolder &quot;$(ResourceFolder)&quot;"/>
+    </Target>
+</Project>

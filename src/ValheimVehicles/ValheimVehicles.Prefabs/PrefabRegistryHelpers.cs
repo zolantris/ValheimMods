@@ -551,6 +551,17 @@ public abstract class PrefabRegistryHelpers
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .Anchor)
       });
+
+    PieceDataDictionary.Add(PrefabNames.LandVehicle,
+      new PieceData()
+      {
+        Name =
+          "$valheim_vehicles_land_vehicle",
+        Description =
+          "$valheim_vehicles_land_vehicle_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .LandVehicle)
+      });
   }
 
   public static void IgnoreCameraCollisions(GameObject go)
