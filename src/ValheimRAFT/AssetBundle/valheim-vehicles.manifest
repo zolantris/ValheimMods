@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1490429379
+CRC: 2380869971
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 2533abe96ae6065f385c8166f0cd7433
+    Hash: 7e4865beddd72b1deac0b409c906ebac
   TypeTreeHash:
     serializedVersion: 2
     Hash: 3f7dd0e2f18f78d881135ba7c5d35cd0
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 2533abe96ae6065f385c8166f0cd7433
+    Hash: 7e4865beddd72b1deac0b409c906ebac
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -174,6 +174,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/shared_ram_stake.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_square_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_2x2.prefab
+- Assets/ValheimVehicles/Prefabs/wheel_set_hinge.prefab
 - Assets/ValheimVehicles/Material/WaterHeightMaterial.mat
 - Assets/ValheimVehicles/Prefabs/wheel_set.prefab
 - Assets/ValheimVehicles/Material/bronze_nautilus_metal_rib 1.mat
@@ -280,6 +281,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/shared_hull_wall_iron_worn.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/edit_texture_panel.prefab
+- Assets/ValheimVehicles/Prefabs/wheel_single.prefab
 - Assets/ValheimVehicles/vehicle_icons.spriteatlasv2
 - Assets/ValheimVehicles/Prefabs/bottom_stand.prefab
 - Assets/ValheimVehicles/Prefabs/boarding_ramp.prefab

@@ -472,6 +472,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return m_rudder;
   }
 
+  public float VehicleSpeedMult = 0.5f;
   /// <summary>
   ///   Handles updating direction controls, update Controls is called within the
   ///   FixedUpdate of VehicleShip
@@ -491,6 +492,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       if (HasPendingAnchor) return;
       vehicleSpeed = (Ship.Speed)m_nview.GetZDO().GetInt(ZDOVars.s_forward);
       m_rudderValue = m_nview.GetZDO().GetFloat(ZDOVars.s_rudder);
+    }
+
+    if (WheelController != null)
+    {
+      WheelController.SetTurnInput(m_rudderValue);
+      var landVehicleSpeed = GetLandVehicleSpeed() *
+                             PhysicsConfig.VehicleLandSpeedMult.Value;
+      WheelController.SetAcceleration(landVehicleSpeed);
     }
   }
 
@@ -1265,10 +1274,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return vehicleSpeed switch
     {
       Ship.Speed.Stop => 0,
-      Ship.Speed.Back => -10,
-      Ship.Speed.Slow => 10,
-      Ship.Speed.Half => 30,
-      Ship.Speed.Full => 60,
+      Ship.Speed.Back => -PhysicsConfig.VehicleLandSpeedBack.Value,
+      Ship.Speed.Slow => PhysicsConfig.VehicleLandSpeedSlow.Value,
+      Ship.Speed.Half => PhysicsConfig.VehicleLandSpeedHalf.Value,
+      Ship.Speed.Full => PhysicsConfig.VehicleLandSpeedFull.Value,
       _ => throw new ArgumentOutOfRangeException()
     };
   }
@@ -1786,7 +1795,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
         ref m_previousForward) +
       clampedTargetHeight;
     var waterLevelBack =
-      Floating.GetWaterLevel(PiecesController.shipBackward,
+      Floating.GetWaterLevel(PiecesController.shipBack,
         ref m_previousBack) +
                          clampedTargetHeight;
     var averageWaterHeight =
@@ -1808,7 +1817,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var groundLevelForward =
       ZoneSystem.instance.GetGroundHeight(PiecesController.shipForward);
     var groundLevelBack =
-      ZoneSystem.instance.GetGroundHeight(PiecesController.shipBackward);
+      ZoneSystem.instance.GetGroundHeight(PiecesController.shipBack);
 
 
     // floatation point, does not need to be collider, could just be a value in MovementController 
@@ -1838,7 +1847,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       IsInvalid = isInvalid,
       ShipLeft = PiecesController.shipLeft,
       ShipForward = PiecesController.shipForward,
-      ShipBack = PiecesController.shipBackward,
+      ShipBack = PiecesController.shipBack,
       ShipRight = PiecesController.shipRight,
       WaterLevelLeft = waterLevelLeft,
       WaterLevelRight = waterLevelRight,

@@ -143,10 +143,11 @@ namespace ValheimVehicles.SharedScripts
     ///   Must pass a bounds in
     /// </summary>
     /// <param name="bounds"></param>
-    public void ReInitializeWheels(Bounds bounds)
+    public void ReInitializeWheels(Bounds? bounds)
     {
+      if (bounds == null) return;
       hasInitialized = false;
-      GenerateWheelSets(bounds);
+      GenerateWheelSets(bounds.Value);
       SetupWheels();
       // Override center of mass when a reference is passed in.
       if (centerOfMass != null)
@@ -265,6 +266,7 @@ namespace ValheimVehicles.SharedScripts
 
     private Bounds GetBounds(Transform boundsTransform)
     {
+      if (boundsTransform == null) return new Bounds(Vector3.zero, Vector3.one);
       var renderer = boundsTransform.GetComponent<Renderer>();
       if (renderer) return renderer.bounds;
 

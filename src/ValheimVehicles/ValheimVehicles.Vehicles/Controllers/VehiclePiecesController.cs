@@ -2670,6 +2670,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       .GetComponents<Collider>().ToList();
     IgnoreShipColliders(convexHullTriggerColliders);
     IgnoreVehicleCollidersForAllPieces();
+    var convexHullBounds = GetConvexHullRelativeBounds();
+    if (WheelController != null)
+      WheelController.ReInitializeWheels(convexHullBounds);
   }
 
   /**

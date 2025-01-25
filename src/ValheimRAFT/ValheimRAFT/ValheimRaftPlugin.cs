@@ -93,11 +93,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   public ConfigEntry<float> MaxSailSpeed { get; set; }
   public ConfigEntry<float> SpeedCapMultiplier { get; set; }
-  public ConfigEntry<float> VehicleRudderSpeedBack { get; set; }
-  public ConfigEntry<float> VehicleRudderSpeedSlow { get; set; }
-  public ConfigEntry<float> VehicleRudderSpeedHalf { get; set; }
 
-  public ConfigEntry<float> VehicleRudderSpeedFull { get; set; }
 
   public ConfigEntry<bool> FlightVerticalToggle { get; set; }
   public ConfigEntry<bool> FlightHasRudderOnly { get; set; }
@@ -187,18 +183,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         true));
 
     // rudder
-    VehicleRudderSpeedBack = Config.Bind("Propulsion", "Rudder Back Speed", 1f,
-      CreateConfigDescription(
-        "Set the Back speed of rudder, this will apply with sails", true));
-    VehicleRudderSpeedSlow = Config.Bind("Propulsion", "Rudder Slow Speed", 1f,
-      CreateConfigDescription(
-        "Set the Slow speed of rudder, this will apply with sails", true));
-    VehicleRudderSpeedHalf = Config.Bind("Propulsion", "Rudder Half Speed", 0f,
-      CreateConfigDescription(
-        "Set the Half speed of rudder, this will apply with sails", true));
-    VehicleRudderSpeedFull = Config.Bind("Propulsion", "Rudder Full Speed", 0f,
-      CreateConfigDescription(
-        "Set the Full speed of rudder, this will apply with sails", true));
+
 
     // ship weight
     HasShipWeightCalculations = Config.Bind("Propulsion",

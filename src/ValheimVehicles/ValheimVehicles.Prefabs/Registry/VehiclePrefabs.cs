@@ -146,7 +146,14 @@ public class VehiclePrefabs : IRegisterPrefab
     var vehicleShip = landVehiclePrefab.GetComponent<VehicleShip>();
     vehicleShip.IsLandVehicleFromPrefab = true;
     vehicleShip.IsLandVehicle = true;
-    landVehiclePrefab.AddComponent<VehicleWheelController>();
+    var wheelController =
+      landVehiclePrefab.AddComponent<VehicleWheelController>();
+    wheelController.wheelPrefab = LoadValheimVehicleAssets.Wheel;
+    wheelController.UseManualControls = true;
+    wheelController.magicTurnRate = 20;
+    wheelController.forwardInput = 0;
+    wheelController.turnInput = 0;
+    wheelController.m_steeringType = VehicleWheelController.SteeringType.Magic;
 
     var piece =
       PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.LandVehicle,

@@ -28,6 +28,18 @@ public static class PhysicsConfig
 
   private static string VelocityModeSectionKey = $"{SectionKey}: Velocity Mode";
 
+  // rudder speed
+  public static ConfigEntry<float> VehicleRudderSpeedBack { get; set; } = null!;
+  public static ConfigEntry<float> VehicleRudderSpeedSlow { get; set; } = null!;
+  public static ConfigEntry<float> VehicleRudderSpeedHalf { get; set; } = null!;
+  public static ConfigEntry<float> VehicleRudderSpeedFull { get; set; } = null!;
+
+  public static ConfigEntry<float> VehicleLandSpeedBack { get; set; } = null!;
+  public static ConfigEntry<float> VehicleLandSpeedSlow { get; set; } = null!;
+  public static ConfigEntry<float> VehicleLandSpeedHalf { get; set; } = null!;
+  public static ConfigEntry<float> VehicleLandSpeedFull { get; set; } = null!;
+  public static ConfigEntry<float> VehicleLandSpeedMult { get; set; } = null!;
+
   // flight
   public static ConfigEntry<float> flightAngularDamping = null!;
   public static ConfigEntry<float> flightSidewaysDamping = null!;
@@ -195,10 +207,55 @@ public static class PhysicsConfig
       ? new AcceptableValueRange<float>(1, 2000f)
       : new AcceptableValueRange<float>(1, 20f);
 
+  public const string PropulsionSection = "Physics: Propulsion";
+
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
 
+    VehicleRudderSpeedBack = Config.Bind(PropulsionSection, "Rudder Back Speed",
+      1f,
+      ConfigHelpers.CreateConfigDescription(
+        "Set the Back speed of rudder, this will apply with sails", true));
+    VehicleRudderSpeedSlow = Config.Bind(PropulsionSection, "Rudder Slow Speed",
+      1f,
+      ConfigHelpers.CreateConfigDescription(
+        "Set the Slow speed of rudder, this will apply with sails", true));
+    VehicleRudderSpeedHalf = Config.Bind(PropulsionSection, "Rudder Half Speed",
+      0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Set the Half speed of rudder, this will apply with sails", true));
+    VehicleRudderSpeedFull = Config.Bind(PropulsionSection, "Rudder Full Speed",
+      0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Set the Full speed of rudder, this will apply with sails", true));
+
+    VehicleLandSpeedBack = Config.Bind(PropulsionSection, "Land Back Speed",
+      1f,
+      ConfigHelpers.CreateConfigDescription(
+        "Set the Back speed of land vehicle.",
+        true));
+    VehicleLandSpeedSlow = Config.Bind(PropulsionSection, "Land Slow Speed",
+      1f,
+      ConfigHelpers.CreateConfigDescription(
+        "Set the Slow speed of land vehicle.",
+        true));
+    VehicleLandSpeedHalf = Config.Bind(PropulsionSection, "Land Half Speed",
+      0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Set the Half speed of land vehicle.",
+        true));
+    VehicleLandSpeedFull = Config.Bind(PropulsionSection, "Land Full Speed",
+      0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Set the Full speed of land vehicle.",
+        true));
+    VehicleLandSpeedMult = Config.Bind(PropulsionSection,
+      "Land Speed Multiplier",
+      0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Set the speed multiplier of the land vehicle", true));
+    
     var dampingSidewaysDescription = ConfigHelpers.CreateConfigDescription(
       SailSidewaysDampingExplaination,
       true, true, SafeSidewaysDampingRangeWaterVehicle);

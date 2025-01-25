@@ -48,7 +48,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject ShipNautilus = null!;
 
   public static GameObject VehicleLand = null!;
-  public static GameObject WheelSet = null!;
+  public static GameObject Wheel = null!;
 
   // hull ribs
   public static GameObject ShipHullRibWoodAsset = null!;
@@ -289,9 +289,9 @@ public class LoadValheimVehicleAssets : ILoadAssets
     RamBladeLeft = assetBundle.LoadAsset<GameObject>(
       "ram_blade_left.prefab");
 
-    WheelSet =
+    Wheel =
       assetBundle.LoadAsset<GameObject>(
-        $"wheel_set.prefab");
+        $"wheel.prefab");
 
     VehicleLand =
       assetBundle.LoadAsset<GameObject>(
