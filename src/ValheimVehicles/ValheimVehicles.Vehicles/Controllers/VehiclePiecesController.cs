@@ -1224,7 +1224,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   private IEnumerator DebounceRebuildBoundRoutine()
   {
-    yield return new WaitForSeconds(1f);
+    yield return new WaitForSeconds(VehicleDebugConfig
+      .VehiclePieceBoundsRecalculationDelay.Value);
     RebuildBounds();
     _rebuildBoundsTimer = null;
   }
@@ -2373,9 +2374,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
           m_anchorMechanismComponents.Add(anchorMechanismController);
           InitAnchorComponent(anchorMechanismController);
           m_anchorPieces.Add(netView);
-
           if (MovementController != null)
+          {
             MovementController.CanAnchor = m_anchorPieces.Count > 0;
+            UpdateAnchorState(MovementController.vehicleAnchorState);
+          }
+
           break;
 
         case RudderComponent rudder:
@@ -2572,6 +2576,50 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     return false;
   }
 
+  public var shipLeft = Vector3.left;
+  public var shipRight = Vector3.right;
+  public var shipForward = Vector3.forward;
+  public var shipBackward = Vector3.back;
+
+  public void CalculateFurthestPointsOnMeshes()
+  {
+    if (convexHullMeshColliders.Count == 0) return;
+
+    var furthestLeft = Vector3.left;
+    var furthestRight = Vector3.right;
+    var furthestFront = Vector3.forward;
+    var furthestBack = Vector3.back;
+
+    foreach (var meshCollider in convexHullMeshColliders)
+    {
+      var mesh = meshCollider.sharedMesh;
+
+      // Loop through all vertices of the mesh
+      foreach (var vertex in mesh.vertices)
+      {
+        // Convert the vertex from local space to world space
+        var worldVertex = meshCollider.transform.TransformPoint(vertex);
+
+        // Compare to find the furthest points
+        if (worldVertex.z > furthestFront.z)
+          furthestFront =
+            meshCollider.transform.InverseTransformPoint(worldVertex);
+
+        if (worldVertex.z < furthestBack.z)
+          furthestBack =
+            meshCollider.transform.InverseTransformPoint(worldVertex);
+
+        if (worldVertex.x < furthestLeft.x)
+          furthestLeft =
+            meshCollider.transform.InverseTransformPoint(worldVertex);
+
+        if (worldVertex.x > furthestRight.x)
+          furthestRight =
+            meshCollider.transform.InverseTransformPoint(worldVertex);
+      }
+    }
+  }
+
   public void RebuildConvexHull()
   {
     if (VehicleInstance?.Instance == null || MovementController == null) return;
@@ -2588,9 +2636,20 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         vehicleMovementCollidersTransform.gameObject,
         PhysicsConfig.convexHullJoinDistanceThreshold.Value,
         nvChildGameObjects, MovementController.DamageColliders);
-    convexHullMeshColliders =
-      vehicleMovementCollidersTransform.GetComponents<MeshCollider>().ToList();
 
+    var tempColliders = new List<MeshCollider>();
+
+    convexHullMeshes.ForEach((x) =>
+    {
+      var comp = x.GetComponent<MeshCollider>();
+      if (comp != null) tempColliders.Add(comp);
+    });
+    if (tempColliders.Count > 0)
+    {
+      convexHullMeshColliders = tempColliders;
+      CalculateFurthestPointsOnMeshes();
+    }
+    
     if (RamConfig.VehicleHullsAreRams.Value)
       MovementController.AddRamAoeToConvexHull(convexHullMeshColliders);
 
@@ -2678,6 +2737,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public static float floatColliderSizeMultiplier = 1.5f;
   public static float minColliderSize = 1f;
+  private const float originalFloatColliderSize = 0.5f;
 
 // todo move this logic to a file that can be tested
 // todo compute the float colliderY transform so it aligns with bounds if player builds underneath boat
@@ -2706,12 +2766,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var floatColliderCenterOffset =
       new Vector3(_vehiclePieceBounds.center.x, averageFloatHeight,
         _vehiclePieceBounds.center.z);
-    // var floatColliderSize = new Vector3(Mathf.Max(minColliderSize, _vehicleBounds.size.x),
-    // FloatCollider.size.y, Mathf.Max(minColliderSize, _vehicleBounds.size.z));
-    const float originalFloatColliderSize = 0.5f;
-    // throttled float collider size for larger ships?
-    // // Mathf.Clamp(_vehiclePieceBounds.size.y * 0.33f, originalFloatColliderSize,
-    //   5f),
 
     var floatColliderSize = new Vector3(
       Mathf.Max(minColliderSize,
@@ -2720,22 +2774,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       Mathf.Max(minColliderSize,
         _cachedConvexHullBounds.Value.size.z));
 
-    /*
-     * onboard colliders
-     * need to be higher than the items placed on the ship.
-     *
-     * todo make this logic exact.
-     * - Have a minimum "deck" position and determine height based on the deck. For now this do not need to be done
-     */
-    const float characterTriggerMaxAddedHeight = 10;
-    const float characterTriggerMinHeight = 4;
-    const float characterHeightScalar = 1.15f;
-    // var computedOnboardTriggerHeight =
-    //   Math.Min(
-    //     Math.Max(_vehicleBounds.size.y * characterHeightScalar,
-    //       _vehicleBounds.size.y + characterTriggerMinHeight),
-    //     _vehicleBounds.size.y + characterTriggerMaxAddedHeight) -
-    //   FloatCollider.size.y;
     var onboardColliderCenter =
       new Vector3(_vehiclePieceBounds.center.x,
         _vehiclePieceBounds.center.y,
@@ -2744,42 +2782,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       Mathf.Max(minColliderSize, _vehiclePieceBounds.size.x),
       Mathf.Max(minColliderSize, _vehiclePieceBounds.size.y),
       Mathf.Max(minColliderSize, _vehiclePieceBounds.size.z));
-
-    /*
-     * blocking collider is the collider that prevents the ship from going through objects.
-     * - must start at the float collider and encapsulate only up to the ship deck otherwise the ship becomes unstable due to the collider being used for gravity
-     * This collider could likely share most of floatcollider settings and sync them
-     * - may need an additional size
-     * - may need more logic for water masks (hiding water on boat) and other boat magic that has not been added yet.
-     */
-    // var blockingColliderCenterY = floatColliderCenterOffset.y +
-    //                               WaterConfig.UNSAFE_BlockingColliderOffset
-    //                                 .Value;
-    // var blockingColliderCenterOffset = new Vector3(_vehiclePieceBounds.center.x,
-    //   blockingColliderCenterY, _vehiclePieceBounds.center.z);
-    // var blockingColliderSize = new Vector3(
-    //   Mathf.Max(minColliderSize, _vehiclePieceBounds.size.x),
-    //   floatColliderSize.y,
-    //   Mathf.Max(minColliderSize, _vehiclePieceBounds.size.z));
-
-    // asign defaults immediately
-    FloatColliderDefaultPosition = floatColliderCenterOffset;
-    // BlockingColliderDefaultPosition =
-    //   blockingColliderCenterOffset;
-
-    // Assign all the colliders And include offset to avoid Jumps in height if below ocean or flying
-    // if (convexHullMeshes.Count > 0)
-    // {
-    //   m_blockingcollider.size = Vector3.one * 0.1f;
-    //   m_blockingcollider.transform.localPosition =
-    //     blockingColliderCenterOffset;
-    // }
-    // else
-    // {
-    //   m_blockingcollider.size = blockingColliderSize;
-    //   m_blockingcollider.transform.localPosition =
-    //     blockingColliderCenterOffset;
-    // }
 
     FloatCollider.size = floatColliderSize;
     FloatCollider.transform.localPosition =

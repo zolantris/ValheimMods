@@ -1705,25 +1705,69 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public ShipFloatation GetShipFloatationObj()
   {
-    if (ShipDirection == null) return new ShipFloatation();
+    if (ShipDirection == null || PiecesController == null)
+      return new ShipFloatation();
+    // var convexHullRelativeBounds =
+    //   PiecesController.GetConvexHullRelativeBounds() ?? FloatCollider.bounds;
 
+    // var vehiclePosition = transform.position;
     var worldCenterOfMass = m_body.worldCenterOfMass;
-    var forward = ShipDirection.forward;
-    var position = ShipDirection.position;
-    var right = ShipDirection.right;
+    // var forward = ShipDirection.forward;
+    // var position = ShipDirection.position;
+    // var right = ShipDirection.right;
 
-    var shipForward = position +
-                      forward *
-                      GetFloatSizeFromDirection(Vector3.forward);
-    var shipBack = position -
-                   forward *
-                   GetFloatSizeFromDirection(Vector3.forward);
-    var shipLeft = position -
-                   right *
-                   GetFloatSizeFromDirection(Vector3.right);
-    var shipRight = position +
-                    right *
-                    GetFloatSizeFromDirection(Vector3.right);
+    // var shipForward = position +
+    //                   forward *
+    //                   GetFloatSizeFromDirection(Vector3.forward);
+    // var shipBack = position -
+    //                forward *
+    //                GetFloatSizeFromDirection(Vector3.forward);
+    // var shipLeft = position -
+    //                right *
+    //                GetFloatSizeFromDirection(Vector3.right);
+    // var shipRight = position +
+    //                 right *
+    //                 GetFloatSizeFromDirection(Vector3.right);
+    //
+    //
+    // if (PiecesController.convexHullMeshColliders.Count > 0)
+    // {
+    //   var firstMeshCollider =
+    //     PiecesController.convexHullMeshColliders[0];
+    //   var nearestForward =
+    //     firstMeshCollider.ClosestPoint(shipForward);
+    //   var nearestBack =
+    //     firstMeshCollider.ClosestPoint(shipBack);
+    //   var nearestLeft =
+    //     firstMeshCollider.ClosestPoint(shipLeft);
+    //   var nearestRight =
+    //     firstMeshCollider.ClosestPoint(shipRight);
+    //   shipForward = nearestForward;
+    //   shipBack = nearestBack;
+    //   shipRight = nearestRight;
+    //   shipLeft = nearestLeft;
+    // }
+    // else
+    // {
+    //   var nearestRight = vehiclePosition +
+    //                      convexHullRelativeBounds.ClosestPoint(shipRight -
+    //                        vehiclePosition);
+    //   var nearestLeft = vehiclePosition +
+    //                     convexHullRelativeBounds.ClosestPoint(shipLeft -
+    //                       vehiclePosition);
+    //   var nearestForward = vehiclePosition +
+    //                        convexHullRelativeBounds.ClosestPoint(shipForward -
+    //                          vehiclePosition);
+    //   var nearestBack = vehiclePosition +
+    //                     convexHullRelativeBounds.ClosestPoint(shipBack -
+    //                       vehiclePosition);
+    //   shipForward = nearestForward;
+    //   shipBack = nearestBack;
+    //   shipRight = nearestRight;
+    //   shipLeft = nearestLeft;
+    // }
+
+    
     // min does not matter but max does as the ship when attempting to reach flight mode will start bouncing badly.
     var clampedTargetHeight = Mathf.Clamp(TargetHeight, cachedMaxDepthOffset,
       GetSurfaceOffsetWaterVehicleOnly());
@@ -1731,15 +1775,19 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var waterLevelCenter =
       Floating.GetWaterLevel(worldCenterOfMass, ref m_previousCenter) +
       clampedTargetHeight;
-    var waterLevelLeft = Floating.GetWaterLevel(shipLeft, ref m_previousLeft) +
+    var waterLevelLeft =
+      Floating.GetWaterLevel(PiecesController.shipLeft, ref m_previousLeft) +
                          clampedTargetHeight;
     var waterLevelRight =
-      Floating.GetWaterLevel(shipRight, ref m_previousRight) +
+      Floating.GetWaterLevel(PiecesController.shipRight, ref m_previousRight) +
       clampedTargetHeight;
     var waterLevelForward =
-      Floating.GetWaterLevel(shipForward, ref m_previousForward) +
+      Floating.GetWaterLevel(PiecesController.shipForward,
+        ref m_previousForward) +
       clampedTargetHeight;
-    var waterLevelBack = Floating.GetWaterLevel(shipBack, ref m_previousBack) +
+    var waterLevelBack =
+      Floating.GetWaterLevel(PiecesController.shipBackward,
+        ref m_previousBack) +
                          clampedTargetHeight;
     var averageWaterHeight =
       (waterLevelCenter + waterLevelLeft + waterLevelRight + waterLevelForward +
@@ -1753,12 +1801,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     var groundLevelCenter =
       ZoneSystem.instance.GetGroundHeight(worldCenterOfMass);
-    var groundLevelLeft = ZoneSystem.instance.GetGroundHeight(shipLeft);
+    var groundLevelLeft =
+      ZoneSystem.instance.GetGroundHeight(PiecesController.shipLeft);
     var groundLevelRight =
-      ZoneSystem.instance.GetGroundHeight(shipRight);
+      ZoneSystem.instance.GetGroundHeight(PiecesController.shipRight);
     var groundLevelForward =
-      ZoneSystem.instance.GetGroundHeight(shipForward);
-    var groundLevelBack = ZoneSystem.instance.GetGroundHeight(shipBack);
+      ZoneSystem.instance.GetGroundHeight(PiecesController.shipForward);
+    var groundLevelBack =
+      ZoneSystem.instance.GetGroundHeight(PiecesController.shipBackward);
 
 
     // floatation point, does not need to be collider, could just be a value in MovementController 
@@ -1786,10 +1836,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       CurrentDepth = currentDepth,
       IsAboveBuoyantLevel = isAboveBuoyantLevel,
       IsInvalid = isInvalid,
-      ShipLeft = shipLeft,
-      ShipForward = shipForward,
-      ShipBack = shipBack,
-      ShipRight = shipRight,
+      ShipLeft = PiecesController.shipLeft,
+      ShipForward = PiecesController.shipForward,
+      ShipBack = PiecesController.shipBackward,
+      ShipRight = PiecesController.shipRight,
       WaterLevelLeft = waterLevelLeft,
       WaterLevelRight = waterLevelRight,
       WaterLevelForward = waterLevelForward,
@@ -2739,7 +2789,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
                                  convexHullBounds.size.z, 1f);
 
     // we assume the ship actually only occupies a smaller volume
-    volumeOfShip *= 0.8f;
+    volumeOfShip *= 0.5f;
 
     // as the total mass to Volume number approaches zero it will allow almost 100% of the ship above the surface
     // if the ship is extremely heavy it will sink up to it's full height.
