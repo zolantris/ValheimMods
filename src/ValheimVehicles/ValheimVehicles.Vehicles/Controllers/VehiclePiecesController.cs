@@ -2664,8 +2664,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     
     if (WheelController != null)
     {
-      var convexHullBounds = convexHullComponent.GetConvexHullRelativeBounds();
-      WheelController.ReInitializeWheels(new Bounds(convexHullBounds.center + transform.position, convexHullBounds.size));
+      var convexHullBounds = convexHullComponent.GetConvexHullBounds(false, transform.position);
+      WheelController.InitializeWheels(convexHullBounds);
       IgnoreAllWheelColliders();
     }
   }
@@ -2766,13 +2766,15 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         "Ship colliders updated but the ship was unable to access colliders on ship object. Likely cause is ZoneSystem destroying the ship");
       return;
     }
+    var convexHullBounds = convexHullComponent.GetConvexHullBounds(false, transform.position);
 
-    if (_cachedConvexHullBounds == null)
+    if (convexHullBounds == null)
     {
       Logger.LogWarning(
         "Cached convexHullBounds is null this is like a problem with collider setup. Make sure to use custom colliders if other settings are not working");
       return;
     }
+
 
     /*
      * @description float collider logic
@@ -2786,10 +2788,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     var floatColliderSize = new Vector3(
       Mathf.Max(minColliderSize,
-        _cachedConvexHullBounds.Value.size.x),
+        convexHullBounds.size.x),
       originalFloatColliderSize,
       Mathf.Max(minColliderSize,
-        _cachedConvexHullBounds.Value.size.z));
+        convexHullBounds.size.z));
 
     var onboardColliderCenter =
       new Vector3(_vehiclePieceBounds.center.x,

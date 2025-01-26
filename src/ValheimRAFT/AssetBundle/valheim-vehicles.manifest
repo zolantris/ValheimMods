@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3268560181
+CRC: 305569052
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 97d13cf40dd44632562ce86c2e0af7e2
+    Hash: b22991a714333c29782e1571fc3f0f08
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 3f7dd0e2f18f78d881135ba7c5d35cd0
+    Hash: b9588c41b767b224ab45a59ac1b63900
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 97d13cf40dd44632562ce86c2e0af7e2
+    Hash: b22991a714333c29782e1571fc3f0f08
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -39,35 +39,35 @@ ClassTypes:
 - Class: 108
   Script: {instanceID: 0}
 - Class: 114
-  Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 0d0b652f32a2cc243917e4028fa0f046, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: d199490a83bb2b844b9695cbf13b01ef, type: 3}
+  Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: f44587a585f05c540ad46e160444cf0c, type: 3}
+  Script: {fileID: 11500000, guid: d199490a83bb2b844b9695cbf13b01ef, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 8233d90336aea43098adf6dbabd606a2, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
+  Script: {fileID: 11500000, guid: 747419968f339df40a827088f25c215d, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: f44587a585f05c540ad46e160444cf0c, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 37593e1934874fe4db91a205982d109e, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 0d0b652f32a2cc243917e4028fa0f046, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 747419968f339df40a827088f25c215d, type: 3}
+  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 120
@@ -168,9 +168,8 @@ Assets:
 - Assets/ValheimVehicles/Material/StandardStencilCutout.shader
 - Assets/ValheimVehicles/Material/wood.mat
 - Assets/ValheimVehicles/Material/Dirtfloor 1.mat
-- Assets/ValheimVehicles/Prefabs/vehicle_land.prefab
-- Assets/ValheimVehicles/Prefabs/shared_hull_slab_iron_2x2_worn.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_4x4_worn.prefab
+- Assets/ValheimVehicles/Prefabs/shared_hull_slab_iron_2x2_worn.prefab
 - Assets/ValheimVehicles/Prefabs/shared_ram_stake.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_square_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_2x2.prefab
@@ -277,6 +276,7 @@ Assets:
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_masked.mat
 - Assets/ValheimVehicles/Material/iron Variant.mat
 - Assets/ValheimVehicles/Prefabs/rope_ladder.prefab
+- Assets/ValheimVehicles/Prefabs/vehicle_land.prefab
 - Assets/ValheimVehicles/Prefabs/shared_ram_blade.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_wall_iron_worn.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_2x2.prefab

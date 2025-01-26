@@ -241,20 +241,20 @@ public static class PhysicsConfig
         "Set the Slow speed of land vehicle.",
         true));
     VehicleLandSpeedHalf = Config.Bind(PropulsionSection, "Land Half Speed",
-      0f,
+      2f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Half speed of land vehicle.",
         true));
     VehicleLandSpeedFull = Config.Bind(PropulsionSection, "Land Full Speed",
-      0f,
+      4f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of land vehicle.",
         true));
     VehicleLandSpeedMult = Config.Bind(PropulsionSection,
       "Land Speed Multiplier",
-      0f,
+      1f,
       ConfigHelpers.CreateConfigDescription(
-        "Set the speed multiplier of the land vehicle", true));
+        "Set the speed multiplier of the land vehicle", true, false, new AcceptableValueRange<float>(1, 5)));
     
     var dampingSidewaysDescription = ConfigHelpers.CreateConfigDescription(
       SailSidewaysDampingExplaination,

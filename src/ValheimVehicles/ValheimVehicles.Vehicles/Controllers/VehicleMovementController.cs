@@ -1070,9 +1070,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     m_body.AddForceAtPosition(force, position, forceMode);
   }
 
-  /**
-   * BasedOnInternalRotation
-   */
+  /// <summary>
+  /// Very inaccurate. Needs to be updated to use a multiplication for forward position.
+  /// </summary>
+  /// <param name="direction"></param>
+  /// <returns></returns>
   public float GetFloatSizeFromDirection(Vector3 direction)
   {
 #if DEBUG
@@ -1080,12 +1082,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 #endif
     if (PiecesController == null) return 0f;
 
-    var bounds = PiecesController.GetConvexHullRelativeBounds();
-    if (bounds == null) return 0f;
+    var bounds = PiecesController.convexHullComponent.GetConvexHullBounds(true);
 
-    if (direction == Vector3.right) return bounds.Value.size.x / 2;
+    if (direction == Vector3.right) return bounds.size.x / 2;
 
-    return bounds.Value.size.z / 2;
+    return bounds.size.z / 2;
   }
 
   private float GetHighestGroundPoint(ShipFloatation shipFloatation)
@@ -1121,14 +1122,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     if (PiecesController == null) return;
     var convexHullRelativeBounds =
-      PiecesController.GetConvexHullRelativeBounds();
-    if (convexHullRelativeBounds == null) return;
+      PiecesController.convexHullComponent.GetConvexHullBounds(false, transform.position);
 
     // var expectedLowestBlockingColliderPoint =
     //   BlockingCollider.transform.position.y - BlockingCollider.bounds.extents.y;
     var expectedLowestBlockingColliderPoint =
       PiecesController.transform.position.y +
-      convexHullRelativeBounds.Value.min.y;
+      convexHullRelativeBounds.min.y;
 
     if (IsFlying() || !WaterConfig.WaterBallastEnabled.Value) return;
 
@@ -1155,13 +1155,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // super stuck. do a direct update. But protect the players from being launched. Yikes.
     if (_lastHighestGroundPoint > PiecesController.transform.position.y +
-        convexHullRelativeBounds.Value.center.y)
+        convexHullRelativeBounds.center.y)
     {
       // force updates the vehicle to this position.
       var position = transform.position;
       position = new Vector3(position.x,
         position.y + (_lastHighestGroundPoint -
-                      convexHullRelativeBounds.Value.center.y),
+                      convexHullRelativeBounds.center.y),
         position.z);
       transform.position = position;
       UpdateTargetHeight(0);
@@ -1323,12 +1323,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     {
       m_body.Sleep();
       m_body.isKinematic = true;
-      var bounds = PiecesController.GetConvexHullRelativeBounds() ??
-                   new Bounds(Vector3.zero, Vector3.one);
+      var bounds = PiecesController.convexHullComponent.GetConvexHullBounds(false, transform.position);
 
-      WheelController.ReInitializeWheels(new Bounds(
-        PiecesController.transform.position + bounds.center,
-        bounds.size));
+      WheelController.InitializeWheels(bounds);
       PiecesController.IgnoreAllWheelColliders();
       return;
     }
@@ -1348,8 +1345,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       m_body.WakeUp();
       var landSpeed = GetLandVehicleSpeed();
 
-      WheelController.forwardInput = landSpeed;
-      WheelController.turnInput = m_rudderValue;
+      WheelController.inputForwardForce = landSpeed;
+      WheelController.inputTurnForce = Mathf.Clamp(m_rudderValue, -1, 1);
       WheelController.VehicleMovementFixedUpdate();
     }
 
@@ -2839,8 +2836,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // prevents divison of zero
     if (TotalMass <= 0f) TotalMass = 1000f;
 
-    var convexHullBounds = PiecesController.GetConvexHullRelativeBounds() ??
-                           OnboardCollider.bounds;
+    var convexHullBounds = PiecesController.convexHullComponent.GetConvexHullBounds(true);
     // prevent zero value
     var volumeOfShip = Mathf.Max(convexHullBounds.size.x *
                                  convexHullBounds.size.y *
