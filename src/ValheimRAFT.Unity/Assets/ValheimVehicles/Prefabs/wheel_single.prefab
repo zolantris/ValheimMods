@@ -80,7 +80,7 @@ WheelCollider:
     spring: 2000
     damper: 50
     targetPosition: 1
-  m_SuspensionDistance: 0.25
+  m_SuspensionDistance: 0.75
   m_ForceAppPointDistance: 0
   m_Mass: 40
   m_WheelDampingRate: 0.25

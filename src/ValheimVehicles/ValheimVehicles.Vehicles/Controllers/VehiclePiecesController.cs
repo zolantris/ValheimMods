@@ -135,48 +135,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public List<Collider> convexHullTriggerColliders = [];
 
-  private Bounds? _cachedConvexHullBounds;
-
-  private void UpdateConvexHullBounds()
-  {
-    Bounds? convexHullBounds = null;
-    foreach (var convexHull in convexHullMeshes)
-    {
-      var collider = convexHull.GetComponent<Collider>();
-      if (convexHullBounds == null)
-      {
-        var bounds = collider.bounds;
-        convexHullBounds = new Bounds(bounds.center, bounds.size);
-      }
-      else
-      {
-        convexHullBounds.Value.Encapsulate(collider.bounds);
-      }
-    }
-
-    // converts to relative bounds
-    if (convexHullBounds != null)
-    {
-      convexHullBounds =
-        new Bounds(
-          transform.InverseTransformPoint(convexHullBounds.Value.center),
-          convexHullBounds.Value.size);
-
-      _cachedConvexHullBounds = convexHullBounds;
-    }
-    else
-    {
-      _cachedConvexHullBounds = new Bounds(Vector3.zero, Vector3.one * 3);
-    }
-  }
-
-  public Bounds? GetConvexHullRelativeBounds()
-  {
-    if (_cachedConvexHullBounds == null) UpdateConvexHullBounds();
-
-    return _cachedConvexHullBounds;
-  }
-
   public static bool DEBUGAllowActivatePendingPieces
   {
     get => _allowPendingPiecesToActivate;
@@ -2377,7 +2335,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
           if (MovementController != null)
           {
             MovementController.CanAnchor = m_anchorPieces.Count > 0;
-            UpdateAnchorState(MovementController.vehicleAnchorState);
+            anchorMechanismController.UpdateAnchorState(MovementController
+              .vehicleAnchorState);
           }
 
           break;
@@ -2589,40 +2548,71 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public void CalculateFurthestPointsOnMeshes()
   {
-    if (convexHullMeshColliders.Count == 0) return;
+    if (convexHullMeshColliders.Count == 0 ||
+        MovementController == null || FloatCollider == null) return;
 
     var furthestLeft = Vector3.left;
     var furthestRight = Vector3.right;
     var furthestFront = Vector3.forward;
     var furthestBack = Vector3.back;
 
+    var position = MovementController.transform.position;
+    var forward = MovementController.ShipDirection.forward;
+    var right = MovementController.ShipDirection.right;
+
+
+    var shipForward = position +
+                      forward *
+                      MovementController.GetFloatSizeFromDirection(
+                        Vector3.forward);
+    var shipBack = position -
+                   forward *
+                   MovementController.GetFloatSizeFromDirection(
+                     Vector3.forward);
+    var shipLeft = position -
+                   right *
+                   MovementController
+                     .GetFloatSizeFromDirection(Vector3.right);
+    var shipRight = position +
+                    right *
+                    MovementController.GetFloatSizeFromDirection(
+                      Vector3.right);
+    
     foreach (var meshCollider in convexHullMeshColliders)
     {
-      var mesh = meshCollider.sharedMesh;
-
       // Loop through all vertices of the mesh
-      foreach (var vertex in mesh.vertices)
-      {
-        // Convert the vertex from local space to world space
-        var worldVertex = meshCollider.transform.TransformPoint(vertex);
+      // foreach (var vertex in mesh.vertices)
+      // {
+      //   // Convert the vertex from local space to world space
+      //   var worldVertex = meshCollider.transform.TransformPoint(vertex);
+      //
+      //   // todo might  have to get offset of meshCollider.position and transform.position and use meshCollider.Inverse instead
+      //   var relativeVertex = transform.InverseTransformPoint(worldVertex);
 
-        // Compare to find the furthest points
-        if (worldVertex.z > furthestFront.z)
-          furthestFront =
-            transform.InverseTransformPoint(worldVertex);
+      var nearestForward =
+        meshCollider.ClosestPoint(shipForward) - position;
+      var nearestBack =
+        meshCollider.ClosestPoint(shipBack) - position;
+      var nearestLeft =
+        meshCollider.ClosestPoint(shipLeft) - position;
+      var nearestRight =
+        meshCollider.ClosestPoint(shipRight) - position;
 
-        if (worldVertex.z < furthestBack.z)
-          furthestBack =
-            transform.InverseTransformPoint(worldVertex);
+      if (nearestForward.z > furthestFront.z)
+        furthestFront = new Vector3(nearestForward.x, FloatCollider.center.y,
+          nearestForward.z);
 
-        if (worldVertex.x < furthestLeft.x)
-          furthestLeft =
-            transform.InverseTransformPoint(worldVertex);
+      if (nearestBack.z < furthestBack.z)
+        furthestBack = new Vector3(nearestBack.x, FloatCollider.center.y,
+          nearestBack.z);
 
-        if (worldVertex.x > furthestRight.x)
-          furthestRight =
-            transform.InverseTransformPoint(worldVertex);
-      }
+      if (nearestLeft.x < furthestLeft.x)
+        furthestLeft = new Vector3(nearestLeft.x, FloatCollider.center.y,
+          nearestLeft.z);
+
+      if (nearestRight.x > furthestRight.x)
+        furthestRight = new Vector3(nearestRight.x, FloatCollider.center.y,
+          nearestRight.z);
     }
 
     m_localShipLeft = furthestLeft;
@@ -2655,6 +2645,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       var comp = x.GetComponent<MeshCollider>();
       if (comp != null) tempColliders.Add(comp);
     });
+    convexHullComponent.UpdateConvexHullBounds();
+
     if (tempColliders.Count > 0)
     {
       convexHullMeshColliders = tempColliders;
@@ -2663,16 +2655,27 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     
     if (RamConfig.VehicleHullsAreRams.Value)
       MovementController.AddRamAoeToConvexHull(convexHullMeshColliders);
-
-    UpdateConvexHullBounds();
-
+    
     convexHullTriggerColliders = MovementController.DamageColliders
       .GetComponents<Collider>().ToList();
     IgnoreShipColliders(convexHullTriggerColliders);
     IgnoreVehicleCollidersForAllPieces();
-    var convexHullBounds = GetConvexHullRelativeBounds();
+    
+    
     if (WheelController != null)
-      WheelController.ReInitializeWheels(convexHullBounds);
+    {
+      var convexHullBounds = convexHullComponent.GetConvexHullRelativeBounds();
+      WheelController.ReInitializeWheels(new Bounds(convexHullBounds.center + transform.position, convexHullBounds.size));
+      IgnoreAllWheelColliders();
+    }
+  }
+
+  public void IgnoreAllWheelColliders()
+  {
+    if (WheelController == null) return;
+    var colliders = WheelController.wheelColliders.Select((x) => x.GetComponent<Collider>()).ToList();
+    colliders.ForEach(x => IgnoreShipColliderForCollider(x, true));
+    IgnoreCollidersForList(colliders, m_pieces);
   }
 
   /**
@@ -2844,7 +2847,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     IgnoreNetViewCollidersForList(netView, m_ramPieces);
   }
 
-  public void IgnoreShipColliderForCollider(Collider collider)
+  public void IgnoreShipColliderForCollider(Collider collider, bool skipWheelIgnore = false)
   {
     if (collider == null) return;
     foreach (var triggerCollider in convexHullTriggerColliders)
@@ -2853,6 +2856,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       Physics.IgnoreCollision(collider,
         convexHullMesh.GetComponent<MeshCollider>(),
         true);
+
+    if (!skipWheelIgnore)
+    {
+
+      IgnoreAllWheelColliders();
+    }
     if (FloatCollider)
       Physics.IgnoreCollision(collider, FloatCollider, true);
     if (OnboardCollider)

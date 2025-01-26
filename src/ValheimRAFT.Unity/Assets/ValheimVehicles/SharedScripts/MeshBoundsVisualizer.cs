@@ -72,6 +72,7 @@ namespace ValheimVehicles.SharedScripts
       Transform forwardTransform)
     {
       List<PointWithDirection> pointsWithDirections = new();
+      if (!isActiveAndEnabled) return pointsWithDirections;
       if (meshCollider.sharedMesh == null)
       {
         Debug.LogError("Mesh is null!");

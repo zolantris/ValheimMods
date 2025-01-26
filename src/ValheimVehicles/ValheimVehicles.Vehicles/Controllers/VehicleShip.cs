@@ -372,9 +372,16 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   /// </summary>
   public void InitializeWheelController()
   {
-    if (!IsLandVehicle) return;
+    if (!IsLandVehicle || MovementController == null) return;
 
     WheelController = gameObject.AddComponent<VehicleWheelController>();
+    WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
+    WheelController.UseManualControls = true;
+    WheelController.magicTurnRate = 20;
+    WheelController.forwardInput = 0;
+    WheelController.forwardDirection = MovementController.ShipDirection;
+    WheelController.turnInput = 0;
+    WheelController.m_steeringType = VehicleWheelController.SteeringType.Magic;
 
     if (WheelController == null)
       Logger.LogError("Error initializing WheelController");
@@ -513,16 +520,29 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
     var prefab = GetStarterPiece();
     if (!prefab) return;
-
+    var localTransform = transform;
     if (IsLandVehicle)
     {
       // we use the same alignments of the slabs in the ghost preview
-      var slabTransform = transform.Find("ghostContainer/preview_slabs");
-      var slabObjects = slabTransform.GetComponentsInChildren<Transform>();
-      foreach (var slabObject in slabObjects)
+      var slabTransform = transform.Find("ghostContainer_demo/preview_slabs");
+      if (slabTransform != null)
       {
+        for (var i = 0; i < slabTransform.childCount; i++)
+        {
+          var slabTopLevelChild = slabTransform.GetChild(i);
+          if (slabTopLevelChild == null) continue;
         var hull =
-          Instantiate(prefab, slabObject.position, slabObject.rotation);
+          Instantiate(prefab, slabTopLevelChild.position,
+            slabTopLevelChild.rotation, null);
+        if (hull == null) return;
+        var hullNetView = hull.GetComponent<ZNetView>();
+        PiecesController.AddNewPiece(hullNetView);
+        }
+      }
+      else
+      {
+        var hull = Instantiate(prefab, localTransform.position,
+          localTransform.rotation, null);
         if (hull == null) return;
         var hullNetView = hull.GetComponent<ZNetView>();
         PiecesController.AddNewPiece(hullNetView);
@@ -530,9 +550,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     }
     else
     {
-      var localTransform = transform;
       var hull = Instantiate(prefab, localTransform.position,
-        localTransform.rotation);
+        localTransform.rotation, null);
       if (hull == null) return;
       var hullNetView = hull.GetComponent<ZNetView>();
       PiecesController.AddNewPiece(hullNetView);

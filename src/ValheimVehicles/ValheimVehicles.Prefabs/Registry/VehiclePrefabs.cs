@@ -21,12 +21,6 @@ public class VehiclePrefabs : IRegisterPrefab
 {
   public static readonly VehiclePrefabs Instance = new();
 
-  public static GameObject CreateClonedPrefab(string prefabName)
-  {
-    return PrefabManager.Instance.CreateClonedPrefab(prefabName,
-      LoadValheimVehicleAssets.VehicleShipAsset);
-  }
-
   /**
    * todo it's possible this all needs to be done in the Awake method to safely load valheim.
    * Should test this in development build of valheim
@@ -82,7 +76,9 @@ public class VehiclePrefabs : IRegisterPrefab
 
   private static void RegisterWaterVehicleShipPrefab()
   {
-    var prefab = CreateClonedPrefab(PrefabNames.WaterVehicleShip);
+    var prefab = PrefabManager.Instance.CreateClonedPrefab(
+      PrefabNames.WaterVehicleShip,
+      LoadValheimVehicleAssets.VehicleShipAsset);
     var waterVehiclePrefab = CreateWaterVehiclePrefab(prefab);
     // top level netview must be passed along to other components from VehicleShip
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab, true);
@@ -140,20 +136,14 @@ public class VehiclePrefabs : IRegisterPrefab
 
   public static void RegisterLandVehiclePrefab()
   {
-    var landVehiclePrefab = CreateClonedPrefab(PrefabNames.LandVehicle);
+    var landVehiclePrefab = PrefabManager.Instance.CreateClonedPrefab(
+      PrefabNames.LandVehicle,
+      LoadValheimVehicleAssets.VehicleLand);
 
     CreateWaterVehiclePrefab(landVehiclePrefab);
     var vehicleShip = landVehiclePrefab.GetComponent<VehicleShip>();
     vehicleShip.IsLandVehicleFromPrefab = true;
     vehicleShip.IsLandVehicle = true;
-    var wheelController =
-      landVehiclePrefab.AddComponent<VehicleWheelController>();
-    wheelController.wheelPrefab = LoadValheimVehicleAssets.Wheel;
-    wheelController.UseManualControls = true;
-    wheelController.magicTurnRate = 20;
-    wheelController.forwardInput = 0;
-    wheelController.turnInput = 0;
-    wheelController.m_steeringType = VehicleWheelController.SteeringType.Magic;
 
     var piece =
       PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.LandVehicle,

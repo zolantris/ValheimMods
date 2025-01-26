@@ -30,15 +30,30 @@ namespace ValheimVehicles.SharedScripts
 
     public Transform forwardTransform;
 
-    private ConvexHullAPI _convexHullAPI;
+    public ConvexHullAPI _convexHullAPI;
     private MeshBoundsVisualizer _meshBoundsVisualizer;
-
+    public VehicleWheelController vehicleWheelController;
     private float lastUpdate;
+    private Bounds _cachedDebugBounds = new Bounds(Vector3.zero, Vector3.zero);
 
     private void Awake()
     {
       GetOrAddMeshGeneratorApi();
       Cleanup();
+
+      if (vehicleWheelController != null)
+      {
+        if (vehicleWheelController.wheelParent == null)
+        {
+          vehicleWheelController.wheelParent = transform.Find("vehicle_land/wheels");
+        }
+      }
+
+      EnableCollisionBetweenLayers(10, 28);
+      EnableCollisionBetweenLayers(28, 10);
+
+      EnableCollisionBetweenLayers(10, 29);
+      EnableCollisionBetweenLayers(29, 10);
     }
 
     private void Start()
@@ -48,6 +63,7 @@ namespace ValheimVehicles.SharedScripts
       Generate();
     }
 
+    public float DebouncedUpdateInterval = 2f;
     /// <summary>
     ///   For seeing the colliders update live. This should not be used in game for
     ///   performance reasons.
@@ -55,7 +71,7 @@ namespace ValheimVehicles.SharedScripts
     public void FixedUpdate()
     {
       if (!hasFixedUpdate) return;
-      if (lastUpdate > 5f)
+      if (lastUpdate > DebouncedUpdateInterval)
       {
         lastUpdate = 0f;
       }
@@ -80,10 +96,15 @@ namespace ValheimVehicles.SharedScripts
       Cleanup();
     }
 
+
     private void OnDrawGizmos()
     {
+      Gizmos.color = Color.green;
+      if (_convexHullAPI == null || _convexHullAPI.convexHullMeshes == null) return;
       foreach (var convexHullMesh in _convexHullAPI.convexHullMeshes)
       {
+        if (convexHullMesh == null) continue;
+
         var meshCollider = convexHullMesh.GetComponent<MeshCollider>();
         // EncapsulateMeshCollider(meshCollider, sphereEncapsulationBuffer,
         //   out var center,
@@ -101,13 +122,6 @@ namespace ValheimVehicles.SharedScripts
     private void GetOrAddMeshGeneratorApi()
     {
       _meshBoundsVisualizer = GetComponent<MeshBoundsVisualizer>();
-      _convexHullAPI =
-        gameObject.GetComponent<ConvexHullAPI>();
-
-      if (_convexHullAPI == null)
-        _convexHullAPI =
-          gameObject.AddComponent<ConvexHullAPI>();
-
       ConvexHullAPI.BubbleMaterialColor = new Color(0, 1f, 1f, 0.8f);
       ConvexHullAPI.DebugMaterialColor = new Color(1f, 1f, 0f, 0.8f);
       SyncAPIProperties();
@@ -129,6 +143,11 @@ namespace ValheimVehicles.SharedScripts
       _convexHullAPI.PreviewParent = PiecesParentObj.transform;
     }
 
+    public void EnableCollisionBetweenLayers(int layerA, int layerB)
+    {
+      Physics.IgnoreLayerCollision(layerA, layerB, false);
+    }
+
     /// <summary>
     ///   For GameObjects
     /// </summary>
@@ -142,6 +161,15 @@ namespace ValheimVehicles.SharedScripts
       _convexHullAPI.GenerateMeshesFromChildColliders(
         convexHullParentGameObject,
         distanceThreshold, childGameObjects.ToList());
+
+      _convexHullAPI.UpdateConvexHullBounds();
+
+      if (vehicleWheelController && convexHullParentGameObject != null)
+      {
+        var bounds = _convexHullAPI.GetConvexHullBounds(true);
+        _cachedDebugBounds = bounds;
+        vehicleWheelController.InitializeWheels(bounds);
+      }
     }
 
     private void DrawSphere(Vector3 center, float radius)
@@ -197,7 +225,7 @@ namespace ValheimVehicles.SharedScripts
     private void TestGenerateMeshFromPoint()
     {
       // copy & paste points here to see the result.
-      var points = new Vector3[] { }.ToList();
+      var points = new Vector3[] {}.ToList();
 
       _convexHullAPI.GenerateConvexHullMesh(points, transform);
     }

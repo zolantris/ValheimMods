@@ -266,9 +266,36 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     Setup();
   }
 
+  private void UpdateBreakingControls()
+  {
+    if (WheelController == null) return;
+
+    WheelController.SetIsBreaking(Input.GetKey(KeyCode.Space));
+  }
+
   private void Update()
   {
+    if (VehicleInstance?.Instance == null) return;
+    if (VehicleInstance.Instance.IsLandVehicleFromPrefab)
+    {
+      var hasControllingPlayer = HaveControllingPlayer();
+
+      // Edge case but the player could be detached. This guard allows the next anchor click if returning to the controls.
+      if (!hasControllingPlayer)
+      {
+        if (_isHoldingAnchor) _isHoldingAnchor = false;
+        return;
+      }
+
+      OnAnchorKeyPress();
+      UpdateBreakingControls();
+      return;
+    }
+    
     OnControllingWithHotKeyPress();
+
+    // only should be run on Ships for now.
+    // todo split updates between land and ships.
     AutoVerticalFlightUpdate();
   }
 
@@ -308,8 +335,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
           Vector3.up * TargetHeight);
       DebugTargetHeightObj.transform.localScale = FloatCollider.size;
     }
+    if (WheelController != null && !WheelController.hasInitialized)
+    {
+      InitLandVehicleWheels();
+      m_body.isKinematic = true;
+      return;
+    }
 
-    if (_vehicle
+    if (_vehicle != null && _vehicle
           .PiecesController != null && !_vehicle
           .PiecesController.isInitialActivationComplete)
     {
@@ -327,7 +360,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
      * creative mode should not allow movement, and applying force on an object will cause errors, when the object is kinematic
      */
     if (isCreative) return;
-
     if (m_body.isKinematic) m_body.isKinematic = false;
 
     VehiclePhysicsFixedUpdateAllClients();
@@ -682,23 +714,23 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
         break;
       case Ship.Speed.Back:
         _rudderForce =
-          Mathf.Clamp(ValheimRaftPlugin.Instance.VehicleRudderSpeedBack.Value,
+          Mathf.Clamp(PhysicsConfig.VehicleRudderSpeedBack.Value,
             0,
             PhysicsConfig.MaxLinearVelocity.Value);
         break;
       case Ship.Speed.Slow:
         _rudderForce = Mathf.Clamp(
-          ValheimRaftPlugin.Instance.VehicleRudderSpeedSlow.Value, 0,
+          PhysicsConfig.VehicleRudderSpeedSlow.Value, 0,
           PhysicsConfig.MaxLinearVelocity.Value);
         break;
       case Ship.Speed.Half:
         _rudderForce = Mathf.Clamp(
-          ValheimRaftPlugin.Instance.VehicleRudderSpeedHalf.Value, 0,
+          PhysicsConfig.VehicleRudderSpeedHalf.Value, 0,
           PhysicsConfig.MaxLinearVelocity.Value);
         break;
       case Ship.Speed.Full:
         _rudderForce = Mathf.Clamp(
-          ValheimRaftPlugin.Instance.VehicleRudderSpeedFull.Value, 0,
+          PhysicsConfig.VehicleRudderSpeedFull.Value, 0,
           PhysicsConfig.MaxLinearVelocity.Value);
         break;
       default:
@@ -1041,7 +1073,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /**
    * BasedOnInternalRotation
    */
-  private float GetFloatSizeFromDirection(Vector3 direction)
+  public float GetFloatSizeFromDirection(Vector3 direction)
   {
 #if DEBUG
     if (floatSizeOverride != 0f) return floatSizeOverride;
@@ -1282,28 +1314,45 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     };
   }
 
-  public void UpdateVehicleLandSpeed()
-  {
-    UpdateVehicleStats(false, false);
-    // early exit if anchored.
-    if (UpdateAnchorVelocity(m_body.velocity)) return;
-    if (WheelController == null) return;
-    m_body.WakeUp();
+  public bool shouldUpdateLandInputs = false;
 
-    if (WheelController.wheelColliders.Count == 0 && PiecesController != null)
+  public void InitLandVehicleWheels()
+  {
+    if (WheelController == null || PiecesController == null) return;
+    if (WheelController.wheelColliders.Count == 0)
     {
+      m_body.Sleep();
+      m_body.isKinematic = true;
       var bounds = PiecesController.GetConvexHullRelativeBounds() ??
-                   new Bounds(transform.position, Vector3.one);
+                   new Bounds(Vector3.zero, Vector3.one);
+
       WheelController.ReInitializeWheels(new Bounds(
         PiecesController.transform.position + bounds.center,
         bounds.size));
+      PiecesController.IgnoreAllWheelColliders();
+      return;
+    }
+  }
+
+  public void UpdateVehicleLandSpeed()
+  {
+    // UpdateVehicleStats(false, false);
+    // early exit if anchored.
+    if (UpdateAnchorVelocity(m_body.velocity)) return;
+    if (WheelController == null) return;
+
+    WheelController.forwardDirection = ShipDirection;
+
+    if (shouldUpdateLandInputs)
+    {
+      m_body.WakeUp();
+      var landSpeed = GetLandVehicleSpeed();
+
+      WheelController.forwardInput = landSpeed;
+      WheelController.turnInput = m_rudderValue;
+      WheelController.VehicleMovementFixedUpdate();
     }
 
-    var landSpeed = GetLandVehicleSpeed();
-
-    WheelController.forwardInput = landSpeed;
-    WheelController.turnInput = m_rudderValue;
-    WheelController.VehicleMovementFixedUpdate();
   }
 
   /// <summary>

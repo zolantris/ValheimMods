@@ -16,6 +16,7 @@ using DynamicLocations.API;
 using DynamicLocations.Controllers;
 using DynamicLocations.Structs;
 using UnityEngine;
+using UnityEngine.Rendering;
 using ValheimRAFT.Config;
 using ValheimRAFT.Patches;
 using ValheimRAFT.Util;
@@ -484,6 +485,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     // PlayerSpawnController.PlayerMoveToVehicleCallback =
     // VehiclePiecesController.OnPlayerSpawnInVehicle;
     AddModSupport();
+
+    var renderPipeline = GraphicsSettings.defaultRenderPipeline;
+    if (renderPipeline != null)
+      Logger.LogDebug(
+        $"Valheim GameEngine is using: <{renderPipeline}> graphics pipeline ");
   }
 
   private void OnDestroy()
