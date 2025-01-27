@@ -20900,8 +20900,8 @@ MonoBehaviour:
   axelPadding: 0
   vehicleSizeThresholdFor5thSet: 30
   vehicleSizeThresholdFor6thSet: 60
-  inputForwardForce: 0
-  inputTurnForce: -0.1
+  inputForwardForce: 4
+  inputTurnForce: 0
   turnInputOverride: 0
   isBreaking: 0
   UseManualControls: 1
@@ -20932,7 +20932,7 @@ Rigidbody:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_ImplicitCom: 0
+  m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0

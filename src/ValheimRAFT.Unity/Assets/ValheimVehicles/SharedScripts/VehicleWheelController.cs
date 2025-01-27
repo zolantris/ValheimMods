@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -164,15 +165,25 @@ namespace ValheimVehicles.SharedScripts
       RunSteering();
     }
 
+    private Coroutine? initializeWheelsCoroutine;
     /// <summary>
-    ///   Must pass a bounds in
+    ///   Must pass a local bounds into this wheel controller. The local bounds must be relative to the VehicleWheelController transform.
     /// </summary>
-    ///
+    /// 
     /// TODO make this a coroutine so it does not impact performance.
     /// <param name="bounds"></param>
     public void InitializeWheels(Bounds? bounds)
     {
-      if (bounds == null) return;
+      if (initializeWheelsCoroutine != null)
+      {
+        StopCoroutine(initializeWheelsCoroutine);
+      }
+      initializeWheelsCoroutine = StartCoroutine(InitializeWheelsCoroutine(bounds));
+    }
+
+    public IEnumerator InitializeWheelsCoroutine(Bounds? bounds)
+    {
+      if (bounds == null) yield break;
       hasInitialized = false;
 
       CleanupWheels();
@@ -180,7 +191,7 @@ namespace ValheimVehicles.SharedScripts
       if (wheelColliders.Count > 0 || front.Count > 0 || rear.Count > 0 || left.Count > 0 || right.Count > 0 || poweredWheels.Count > 0)
       {
         Debug.LogWarning("VehicleWheelController is not probably cleaned up. Must call CleanupWheels before. Exiting InitializeWheels");
-        return;
+        yield break;
       }
 
       GenerateWheelSets(bounds.Value);
@@ -194,6 +205,11 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     private void SetupWheels()
     {
+      if (wheelColliders.Count > 0)
+      {
+        wheelColliders.Clear();
+      }
+      
       wheelColliders = wheelParent.GetComponentsInChildren<WheelCollider>()
         .ToList();
 
@@ -340,7 +356,7 @@ namespace ValheimVehicles.SharedScripts
       var zPos = bounds.min.z + spacing * index;
       // var ratio = index / Math.Max(totalWheelSets, 1);
       // var zPos = bounds.size.z * ratio * bounds.min.z;
-      var localPosition = new Vector3(xPos, -bounds.extents.y, zPos);
+      var localPosition = new Vector3(xPos, -bounds.extents.y + WheelBottomOffset, zPos);
 
       // Return the local position without any world space conversions
       return localPosition;
@@ -439,12 +455,12 @@ namespace ValheimVehicles.SharedScripts
         var wheelPosition = wheel.transform.position;
 
         // Perform raycasts above and below the wheel position
-        if (Physics.Raycast(wheelPosition, Vector3.down, out var hitBelow, Mathf.Infinity, terrainMask))
+        if (Physics.Raycast(wheelPosition, Vector3.down, out var hitBelow, 80, terrainMask))
         {
           highestGroundPoint = Mathf.Max(highestGroundPoint, hitBelow.point.y);
         }
 
-        if (Physics.Raycast(wheelPosition, Vector3.up, Mathf.Infinity, terrainMask))
+        if (Physics.Raycast(wheelPosition, Vector3.up, 80, terrainMask))
         {
           isAboveTerrain = true;
         }
@@ -482,7 +498,7 @@ namespace ValheimVehicles.SharedScripts
     }
 
     /// <summary>
-    ///   POWERED WHEELS
+    ///   POWERED WHEELSoffs
     ///   Sets the motor torque of the wheel based on forward input. This moves
     ///   the tank forwards and backwards.
     /// </summary>
@@ -644,6 +660,7 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     private void RunMagicRotation()
     {
+      if (Mathf.Approximately(inputTurnForce, 0f)) return;
       var magicRotation = transform.rotation *
                           Quaternion.AngleAxis(
                             magicTurnRate * inputTurnForce * Time.deltaTime,

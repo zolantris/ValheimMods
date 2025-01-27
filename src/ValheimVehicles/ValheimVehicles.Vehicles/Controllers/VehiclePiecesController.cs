@@ -2664,7 +2664,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     
     if (WheelController != null)
     {
-      var convexHullBounds = convexHullComponent.GetConvexHullBounds(false, transform.position);
+      var convexHullBounds = convexHullComponent.GetConvexHullBounds(true);
       WheelController.InitializeWheels(convexHullBounds);
       IgnoreAllWheelColliders();
     }
@@ -2673,8 +2673,22 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void IgnoreAllWheelColliders()
   {
     if (WheelController == null) return;
-    var colliders = WheelController.wheelColliders.Select((x) => x.GetComponent<Collider>()).ToList();
-    colliders.ForEach(x => IgnoreShipColliderForCollider(x, true));
+
+    var colliders = new List<Collider>();
+    foreach (var wheelCollider in WheelController.wheelColliders.ToList())
+    {
+      if (wheelCollider == null)
+      {
+        continue;
+      }
+
+      var collider = wheelCollider.GetComponent<Collider>();
+      if (collider == null) continue;
+
+      IgnoreShipColliderForCollider(collider, true);
+      colliders.Add(collider);
+    }
+    
     IgnoreCollidersForList(colliders, m_pieces);
   }
 

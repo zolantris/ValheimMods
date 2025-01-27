@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3862590103273061354}
-  m_Layer: 28
+  m_Layer: 0
   m_Name: wheel_single
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -43,7 +43,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9168006654644231112}
   - component: {fileID: 3519201564313527777}
-  m_Layer: 28
+  m_Layer: 29
   m_Name: collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -80,7 +80,7 @@ WheelCollider:
     spring: 2000
     damper: 50
     targetPosition: 1
-  m_SuspensionDistance: 0.75
+  m_SuspensionDistance: 0
   m_ForceAppPointDistance: 0
   m_Mass: 40
   m_WheelDampingRate: 0.25
@@ -114,7 +114,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 69686054218827271}
-  m_Layer: 28
+  m_Layer: 2
   m_Name: rotation_point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -147,7 +147,7 @@ GameObject:
   - component: {fileID: 1304424690632794146}
   - component: {fileID: 7552653989016854223}
   - component: {fileID: 5578359812963799694}
-  m_Layer: 28
+  m_Layer: 29
   m_Name: mesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}

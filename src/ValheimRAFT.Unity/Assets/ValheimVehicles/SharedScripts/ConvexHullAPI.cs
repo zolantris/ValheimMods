@@ -118,10 +118,7 @@ namespace ValheimVehicles.SharedScripts
 
       Instances.Remove(this);
 
-      DeleteMeshesFromChildColliders(convexHullMeshes);
-      DeleteMeshesFromChildColliders(convexHullPreviewMeshes);
-      convexHullPreviewMeshRendererItems.Clear();
-      convexHullMeshes.Clear();
+      DestroyAllConvexMeshes();
     }
 
     public void InitializeConvexMeshGeneratorApi(PreviewModes mode,
@@ -812,6 +809,15 @@ namespace ValheimVehicles.SharedScripts
       return result;
     }
 
+    public void DestroyAllConvexMeshes()
+    {
+      DeleteMeshesFromChildColliders(convexHullMeshes);
+      convexHullMeshColliders.Clear();
+
+      DeleteMeshesFromChildColliders(convexHullPreviewMeshes);
+      DeleteMeshesFromChildColliders(convexHullTriggerMeshes);
+    }
+
     /// <summary>
     ///   Main generator for convex hull meshes.
     /// </summary>
@@ -827,12 +833,7 @@ namespace ValheimVehicles.SharedScripts
       float distanceThreshold, List<GameObject> childGameObjects,
       Transform? triggerParent = null)
     {
-      // TODO we may need to delete these after. Deleting immediately could cause a physics jump / issue
-      if (convexHullMeshes.Count > 0)
-      {
-        DeleteMeshesFromChildColliders(convexHullMeshes);
-        convexHullMeshColliders.Clear();
-      }
+      DestroyAllConvexMeshes();
 
       var hullClusters =
         GroupCollidersByProximity(childGameObjects.ToList(),

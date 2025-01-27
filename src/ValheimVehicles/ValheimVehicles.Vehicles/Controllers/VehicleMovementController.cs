@@ -935,8 +935,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       }
       transform.rotation =
         Quaternion.Euler(transformedX, eulerY, transformedZ);
+      m_body.velocity = Vector3.zero;
+      m_body.angularVelocity = Vector3.zero;
+
 
       Physics.SyncTransforms();
+      m_body.velocity = Vector3.zero;
+      m_body.angularVelocity = Vector3.zero;
+      
       foreach (var modifiedKinematicPlayer in modifiedKinematicPlayers)
         if (modifiedKinematicPlayer.m_body.isKinematic)
         {
@@ -1323,7 +1329,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     {
       m_body.Sleep();
       m_body.isKinematic = true;
-      var bounds = PiecesController.convexHullComponent.GetConvexHullBounds(false, transform.position);
+      var bounds = PiecesController.convexHullComponent.GetConvexHullBounds(true);
 
       WheelController.InitializeWheels(bounds);
       PiecesController.IgnoreAllWheelColliders();
@@ -1333,6 +1339,15 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void UpdateVehicleLandSpeed()
   {
+    m_body.angularDrag = 2;
+    m_body.drag = 2;
+    m_body.automaticCenterOfMass = true;
+    m_body.centerOfMass = Vector3.zero;
+
+    var centerOfMass = m_body.centerOfMass;
+    centerOfMass.y = -10f;
+
+    m_body.centerOfMass = centerOfMass;
     // UpdateVehicleStats(false, false);
     // early exit if anchored.
     if (UpdateAnchorVelocity(m_body.velocity)) return;
