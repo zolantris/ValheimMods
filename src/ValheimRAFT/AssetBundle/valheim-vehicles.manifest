@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3197917892
+CRC: 1722567907
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 97b33a604dd550daa5813572667baa3b
+    Hash: c304741bf8593ad60b969d8617b1ccd6
   TypeTreeHash:
     serializedVersion: 2
     Hash: d8f024905b27cc255f2675d880be5359
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 97b33a604dd550daa5813572667baa3b
+    Hash: c304741bf8593ad60b969d8617b1ccd6
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -175,7 +175,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/wheel_set_hinge.prefab
 - Assets/ValheimVehicles/Material/WaterHeightMaterial.mat
-- Assets/ValheimVehicles/Prefabs/wheel_set.prefab
+- Assets/ValheimVehicles/Prefabs/wheel_set_preview.prefab
 - Assets/ValheimVehicles/Material/bronze_nautilus_metal_rib 1.mat
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus_hatch.prefab

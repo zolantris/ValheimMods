@@ -28,18 +28,36 @@ namespace ValheimVehicles.SharedScripts
     }
 
     [Tooltip("Top speed of the tank in m/s.")]
-    public float topSpeed = 10.0f;
+    public float topSpeed = 50.0f;
 
     [Tooltip(
       "For tanks with front/rear wheels defined, this is how far those wheels turn.")]
     public float steeringAngle = 30.0f;
 
     [Tooltip("Power of any wheel listed under powered wheels.")]
-    public float motorTorque = 10.0f;
+    public float motorTorque = 100.0f;
 
     [Tooltip(
       "Turn rate that is \"magically\" applied regardless of what the physics state of the tank is.")]
     public float magicTurnRate = 45.0f;
+
+    public float wheelMass = 20f;
+    public WheelFrictionCurve wheelForwardFriction = new WheelFrictionCurve()
+    {
+      extremumSlip = 0f,
+      extremumValue = 1f,
+      asymptoteSlip = 1f,
+      asymptoteValue = 1f,
+      stiffness = 1,
+    };
+    public WheelFrictionCurve wheelSidewaysFriction = new WheelFrictionCurve()
+    {
+      extremumSlip = 0f,
+      extremumValue = 1f,
+      asymptoteSlip = 1f,
+      asymptoteValue = 1f,
+      stiffness = 1f,
+    };
 
     [Tooltip(
       "Assign this to override the center of mass. This can be useful to make the tank more stable and prevent it from flipping over. \n\nNOTE: THIS TRANSFORM MUST BE A CHILD OF THE ROOT TANK OBJECT.")]
@@ -102,6 +120,23 @@ namespace ValheimVehicles.SharedScripts
     internal List<WheelCollider> wheelColliders = new();
 
     public Transform wheelParent;
+
+    [ToolTip("Wheel properties")]
+    public float wheelBottomOffset = 0;
+    public float wheelRadius = 1.5f;
+    public float wheelSuspensionDistance = 1.5f;
+
+    // speed overrides
+    public static float Override_WheelBottomOffset = 0;
+    public static float Override_WheelRadius = 0;
+    public static float Override_WheelSuspensionDistance = 0;
+    public static float Override_TopSpeed = 0;
+    public static float maxWheelRotationVisualRate = 500f;
+    public static float wheelDamping = 2f;
+    public const float wheelBaseRadiusScale = 1.5f;
+
+    // wheel regeneration
+    public static bool shouldCleanupPerInitialize = true;
 
     private void Awake()
     {
@@ -181,18 +216,22 @@ namespace ValheimVehicles.SharedScripts
       initializeWheelsCoroutine = StartCoroutine(InitializeWheelsCoroutine(bounds));
     }
 
+
     public IEnumerator InitializeWheelsCoroutine(Bounds? bounds)
     {
       if (bounds == null) yield break;
       hasInitialized = false;
 
-      CleanupWheels();
-
-      if (wheelColliders.Count > 0 || front.Count > 0 || rear.Count > 0 || left.Count > 0 || right.Count > 0 || poweredWheels.Count > 0)
+      if (shouldCleanupPerInitialize)
       {
-        Debug.LogWarning("VehicleWheelController is not probably cleaned up. Must call CleanupWheels before. Exiting InitializeWheels");
-        yield break;
+        CleanupWheels();
       }
+      // if (wheelColliders.Count > 0 || front.Count > 0 || rear.Count > 0 || left.Count > 0 || right.Count > 0 || poweredWheels.Count > 0)
+      // {
+      //   Debug.LogWarning("VehicleWheelController is not probably cleaned up. Must call CleanupWheels before. Exiting InitializeWheels");
+      //   hasInitialized = true;
+      //   yield break;
+      // }
 
       GenerateWheelSets(bounds.Value);
       // AdjustVehicleToGround(bounds.Value);
@@ -205,29 +244,30 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     private void SetupWheels()
     {
-      if (wheelColliders.Count > 0)
+      if (wheelColliders.Count != wheelInstances.Count)
       {
-        wheelColliders.Clear();
+        wheelColliders = wheelParent.GetComponentsInChildren<WheelCollider>()
+          .ToList();
       }
-      
-      wheelColliders = wheelParent.GetComponentsInChildren<WheelCollider>()
-        .ToList();
 
       foreach (var wheelCollider in wheelColliders)
       {
-        if (wheelCollider.name.StartsWith("Front"))
+        if (wheelCollider.name.StartsWith("Front") && !front.Contains(wheelCollider))
           front.Add(wheelCollider);
 
-        if (wheelCollider.name.StartsWith("Rear"))
+        if (wheelCollider.name.StartsWith("Rear") && !rear.Contains(wheelCollider))
           rear.Add(wheelCollider);
 
-        if (wheelCollider.transform.parent.name.Contains("right"))
+        if (wheelCollider.transform.parent.name.Contains("right") && !right.Contains(wheelCollider))
           right.Add(wheelCollider);
 
-        if (wheelCollider.transform.parent.name.Contains("left"))
+        if (wheelCollider.transform.parent.name.Contains("left") && !left.Contains(wheelCollider))
           left.Add(wheelCollider);
 
-        poweredWheels.Add(wheelCollider);
+        if (!poweredWheels.Contains(wheelCollider))
+        {
+          poweredWheels.Add(wheelCollider);
+        }
       }
     }
 
@@ -257,6 +297,30 @@ namespace ValheimVehicles.SharedScripts
     }
 
     /// <summary>
+    /// For overriding wheels with values. Mainly for debugging
+    /// </summary>
+    private void SetOverrides()
+    {
+
+      if (Override_WheelSuspensionDistance != 0)
+      {
+        wheelSuspensionDistance = Override_WheelSuspensionDistance;
+      }
+      if (Override_TopSpeed != 0)
+      {
+        topSpeed = Override_TopSpeed;
+      }
+      if (Override_WheelBottomOffset != 0)
+      {
+        wheelBottomOffset = Override_WheelBottomOffset;
+      }
+      if (Override_WheelRadius != 0)
+      {
+        wheelRadius = Override_WheelRadius;
+      }
+    }
+
+    /// <summary>
     ///   Generates wheel sets from a local bounds. This bounds must be local.
     /// </summary>
     /// TODO fix the rotated wheel issue where wheels get out of alignment for 90 degrees and -90 variants.
@@ -270,18 +334,23 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
+      SetOverrides();
+
       Physics.SyncTransforms();
       var isXBounds = IsXBoundsAlignment();
       var totalWheelSets = CalculateTotalWheelSets(bounds, isXBounds);
 
-      // Clear any existing wheel sets
-      foreach (var set in wheelInstances) Destroy(set);
-      wheelInstances.Clear();
+      // we fully can regenerate wheels.
+      // todo just remove the ones we no longer use
+      if (totalWheelSets != wheelInstances.Count)
+      {
+        CleanupWheels();
+      }
 
-      // var spacing = (isXBounds ? bounds.size.x : bounds.size.z) /
-      //               (totalWheelSets - 1);
+      var wheelIndex = 0;
       var spacing = bounds.size.z / Math.Max(totalWheelSets - 1, 1);
 
+      var centerOfMassBounds = new Bounds(rigid.centerOfMass, bounds.size);
       // Generate wheel sets dynamically
       for (var i = 0; i < totalWheelSets; i++)
       {
@@ -289,17 +358,31 @@ namespace ValheimVehicles.SharedScripts
         {
           var isLeft = directionIndex == 0;
           var localPosition =
-            GetWheelLocalPosition(i, isLeft, totalWheelSets, bounds,
+            GetWheelLocalPosition(i, isLeft, totalWheelSets, centerOfMassBounds,
               spacing,
               isXBounds);
-          var wheelInstance = Instantiate(wheelPrefab, wheelParent);
+          GameObject wheelInstance;
+          if (wheelInstances.Count < wheelIndex)
+          {
+            wheelInstance = wheelInstances[wheelIndex];
+          }
+          else
+          {
+            wheelInstance = Instantiate(wheelPrefab, wheelParent);
+          }
+
           wheelInstance.transform.localPosition = localPosition;
           var dirName = isLeft ? "left" : "right";
           var positionName = GetWheelPositionName(i, totalWheelSets);
           wheelInstance.name = $"ValheimVehicles_VehicleLand_wheel_{positionName}_{dirName}_{i}";
-          SetWheelPhysics(wheelInstance, bounds, isXBounds, i, isLeft,
+          SetWheelPhysics(wheelInstance, centerOfMassBounds, isXBounds, i, isLeft,
             totalWheelSets);
-          wheelInstances.Add(wheelInstance);
+
+          if (wheelInstances.Count >= wheelIndex)
+          {
+            wheelInstances.Add(wheelInstance);
+          }
+          wheelIndex += 1;
         }
       }
     }
@@ -332,9 +415,6 @@ namespace ValheimVehicles.SharedScripts
       return minimumWheelSets;
     }
 
-    public float WheelBottomOffset = 0;
-    public float WheelRadius = 1.5f;
-
     // private Vector3 GetWheelLocalPosition(int index, bool isLeft, int totalWheelSets,
     //   Bounds bounds, float spacing, bool isXBounds)
     // {
@@ -356,7 +436,7 @@ namespace ValheimVehicles.SharedScripts
       var zPos = bounds.min.z + spacing * index;
       // var ratio = index / Math.Max(totalWheelSets, 1);
       // var zPos = bounds.size.z * ratio * bounds.min.z;
-      var localPosition = new Vector3(xPos, -bounds.extents.y + WheelBottomOffset, zPos);
+      var localPosition = new Vector3(xPos, -bounds.extents.y + wheelBottomOffset, zPos);
 
       // Return the local position without any world space conversions
       return localPosition;
@@ -381,40 +461,49 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+    private static Vector3 wheelMeshLocalScale = new(3f, 0.3f, 3f);
+
     private void SetWheelPhysics(GameObject wheelObj, Bounds bounds,
       bool isXBoundsAligned, int wheelSetIndex, bool isLeft, int totalWheelSets)
     {
       var wheelRenderer =
-        wheelObj.transform.Find("mesh").GetComponent<MeshRenderer>();
+        wheelObj.transform.Find("wheel_mesh").GetComponent<MeshRenderer>();
       var wheelCollider =
-        wheelObj.transform.Find("collider").GetComponent<WheelCollider>();
+        wheelObj.transform.Find("wheel_collider").GetComponent<WheelCollider>();
 
       var isMiddle = IsMiddleIndex(wheelSetIndex, totalWheelSets);
-
-      wheelCollider.radius = WheelRadius;
+      wheelCollider.mass = wheelMass;
+      wheelCollider.wheelDampingRate = wheelDamping;
+      wheelCollider.radius = wheelRadius;
+      wheelCollider.suspensionDistance = wheelSuspensionDistance;
+      var wheelScalar = wheelCollider.radius / wheelBaseRadiusScale;
+      if (!Mathf.Approximately(wheelScalar, 1f))
+      {
+        wheelRenderer.transform.localScale = new Vector3(wheelScalar * wheelMeshLocalScale.x, wheelMeshLocalScale.y, wheelScalar * wheelMeshLocalScale.z);
+      }
 
       // Setting higher forward stiffness for front and rear wheels allows for speeds to be picked up.
       if (!isMiddle)
       {
-        var forwardRightFriction = wheelCollider.forwardFriction;
+        var forwardRightFriction = wheelForwardFriction;
         forwardRightFriction.stiffness = 1f;
         wheelCollider.forwardFriction = forwardRightFriction;
 
-        var sideFriction = wheelCollider.sidewaysFriction;
-        sideFriction.stiffness = 0.1f;
+        var sideFriction = wheelSidewaysFriction;
+        sideFriction.stiffness = 1f;
         wheelCollider.sidewaysFriction = sideFriction;
       }
       else
       {
-        var forwardRightFriction = wheelCollider.forwardFriction;
-        forwardRightFriction.stiffness = 0.5f;
+        var forwardRightFriction = wheelForwardFriction;
+        forwardRightFriction.stiffness = 1f;
         wheelCollider.forwardFriction = forwardRightFriction;
-        var sideFriction = wheelCollider.sidewaysFriction;
-        sideFriction.stiffness = 10f;
+        var sideFriction = wheelSidewaysFriction;
+        sideFriction.stiffness = 1f;
         wheelCollider.sidewaysFriction = sideFriction;
       }
 
-      if (WheelcollidersToWheelRenderMap.ContainsKey(wheelCollider))
+      if (!WheelcollidersToWheelRenderMap.ContainsKey(wheelCollider))
         WheelcollidersToWheelRenderMap.Add(wheelCollider, wheelRenderer);
     }
 
@@ -440,7 +529,6 @@ namespace ValheimVehicles.SharedScripts
     public float additionalBreakForce = defaultBreakForce;
     private float deltaRunPoweredWheels = 0f;
 
-    public float wheelOffset = 0.25f;
     private void AdjustVehicleToGround(Bounds bounds)
     {
       if (!rigid) return;
@@ -475,7 +563,7 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
-      var offsetY = maxWheelRadius + highestGroundPoint - bounds.min.y + wheelOffset; // Align the bottom of the vehicle to the highest ground point
+      var offsetY = maxWheelRadius + highestGroundPoint - bounds.min.y + wheelBottomOffset; // Align the bottom of the vehicle to the highest ground point
       // Calculate the required vertical adjustment
       var vehiclePosition = rigid.transform.position;
 
@@ -497,14 +585,15 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+    internal float powerWheelDeltaInterval = 0.3f;
     /// <summary>
-    ///   POWERED WHEELSoffs
+    ///   POWERED WHEELs
     ///   Sets the motor torque of the wheel based on forward input. This moves
     ///   the tank forwards and backwards.
     /// </summary>
     private void RunPoweredWheels()
     {
-      if (deltaRunPoweredWheels > 4)
+      if (deltaRunPoweredWheels > powerWheelDeltaInterval)
       {
         deltaRunPoweredWheels = 0f;
       }
@@ -519,6 +608,12 @@ namespace ValheimVehicles.SharedScripts
         if (isBreaking)
         {
           wheel.brakeTorque = inputForwardForce * motorTorque + additionalBreakForce;
+          wheel.motorTorque = 0f;
+        }
+        else if (inputForwardForce == 0)
+        {
+          wheel.motorTorque = 0;
+          wheel.brakeTorque = 20f;
         }
         else
         {
@@ -526,9 +621,9 @@ namespace ValheimVehicles.SharedScripts
           // To create a top speed for the tank, the motor torque just
           // cuts out when the tank starts moving fast enough.
           if (rigid.velocity.magnitude <= topSpeed)
-            wheel.motorTorque = inputForwardForce * motorTorque;
-          else
-            wheel.motorTorque = 0.0f;
+            wheel.motorTorque += inputForwardForce * motorTorque * Time.fixedDeltaTime;
+          // else
+          //   wheel.motorTorque = 0.0f;
         }
 
         if (wheelInstances != null &&
@@ -559,7 +654,7 @@ namespace ValheimVehicles.SharedScripts
     {
       // var wheelRb = wheelTransform.GetComponent<Rigidbody>();
 
-      float deltaRotation = wheelCollider.motorTorque * Time.deltaTime;
+      var deltaRotation = Mathf.Clamp(wheelCollider.motorTorque, -100f, 100f) * Time.deltaTime;
 
       // wheels need to move their X coordinate but for some reason it's the Y axis rotated...baffling.
       wheelTransform.Rotate(deltaRotation > 0 ? Vector3.down : Vector3.up,
@@ -681,11 +776,17 @@ namespace ValheimVehicles.SharedScripts
       inputTurnForce = val;
     }
 
+    public void ToggleIsBreaking()
+    {
+      isBreaking = !isBreaking;
+    }
+
     public void SetIsBreaking(bool val)
     {
       isBreaking = val;
     }
 
+    private bool isBreakDown = true;
     /// <summary>
     /// This will need logic to check if the player is the owner and if the player is controlling the vehicle actively.
     ///
@@ -696,7 +797,17 @@ namespace ValheimVehicles.SharedScripts
       if (!IsControlling) return;
       if (UseManualControls) return;
 
-      isBreaking = Input.GetKey(KeyCode.Space);
+      var isBreakingPressed = Input.GetKeyDown(KeyCode.Space);
+      if (!isBreakingPressed && isBreakDown)
+      {
+        isBreakDown = false;
+      }
+      if (isBreakingPressed && !isBreakDown)
+      {
+        ToggleIsBreaking();
+        isBreakDown = true;
+      }
+
       inputForwardForce = Input.GetAxis("Vertical");
       inputTurnForce = Input.GetAxis("Horizontal");
     }
@@ -723,5 +834,13 @@ namespace ValheimVehicles.SharedScripts
       VehicleMovementFixedUpdate();
     }
 #endif
+  }
+
+  public class ToolTipAttribute : Attribute
+  {
+    public ToolTipAttribute(string wheelProperties)
+    {
+      throw new NotImplementedException();
+    }
   }
 }

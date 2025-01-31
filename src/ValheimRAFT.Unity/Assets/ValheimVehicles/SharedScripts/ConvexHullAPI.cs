@@ -89,6 +89,9 @@ namespace ValheimVehicles.SharedScripts
 
     [NonSerialized] public List<GameObject> convexHullTriggerMeshes = new();
 
+    public Transform m_colliderParentTransform;
+    public Rigidbody m_rigidbody;
+    
     private void Awake()
     {
       if (m_fallbackMaterial != null && BubbleMaterial == null)
@@ -98,6 +101,9 @@ namespace ValheimVehicles.SharedScripts
         DebugMaterial = m_fallbackMaterial;
 
       PreviewParent = transform;
+
+      m_colliderParentTransform = transform.Find("vehicle_movement/colliders");
+      m_rigidbody = GetComponent<Rigidbody>();
 
       if (convexMeshLayer == 29)
       {
@@ -1185,6 +1191,7 @@ namespace ValheimVehicles.SharedScripts
       {
         // var centerWorld = meshCollider.transform.TransformPoint(meshCollider.bounds.center);
         var centerLocal = transform.InverseTransformPoint(meshCollider.bounds.center);
+        // var centerLocal = transform.InverseTransformPoint(colliderParent.position);
         var localBounds = new Bounds(centerLocal, meshCollider.bounds.size);
         convexHullBounds.Encapsulate(localBounds);
       }
@@ -1205,15 +1212,28 @@ namespace ValheimVehicles.SharedScripts
       //   _cachedConvexHullBounds = new Bounds(Vector3.zero, Vector3.one * 3);
       // }
     }
-
+    
     public void OnDrawGizmos()
     {
       if (_cachedConvexHullBounds != null)
       {
         Gizmos.color = Color.green;
-        Gizmos.DrawWireCube(_cachedConvexHullBounds.center + transform.position, _cachedConvexHullBounds.size);
-        Gizmos.DrawWireCube(_cachedConvexHullBounds.center + transform.position, Vector3.one);
+        // Gizmos.DrawWireCube(_cachedConvexHullBounds.center + transform.position, _cachedConvexHullBounds.size);
+        Gizmos.DrawWireCube(_cachedConvexHullBounds.center + m_colliderParentTransform.position, Vector3.one);
       }
+
+      if (!m_rigidbody)
+      {
+        m_rigidbody = GetComponent<Rigidbody>();
+
+      }
+
+      if (m_rigidbody)
+      {
+        Gizmos.color = Color.white;
+        Gizmos.DrawWireCube(m_rigidbody.worldCenterOfMass, Vector3.one);
+      }
+      
     }
   }
 }

@@ -15,17 +15,16 @@
       <change beforePath="$PROJECT_DIR$/libs/assembly_utils.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/assembly_utils.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/assembly_valheim.dll" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/gui_framework.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/gui_framework.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/WaterHeightMaterial.mat" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/WaterHeightMaterial.mat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/wheel_single.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/wheel_single.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/GroundVehicles.unity" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/GroundVehicles.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/vehicle_land.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/vehicle_land.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/wheel_set.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/wheel_set_preview.prefab" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullAPI.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullAPI.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/VehicleWheelController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/VehicleWheelController.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/AssetBundle.manifest" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/AssetBundle/valheim-vehicles.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugGui.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugGui.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehiclePiecesController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehiclePiecesController.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,6 +52,7 @@
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/3d6c0041788c43b8a666c81e9de881f7216c0/ee/be9a2482/ForceMode.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/474744d65d8e460fa08cd5fd82b5d65f32000/51/2b290f0c/GeneralExtensions.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/4a26704d10e145e2890fa38a6cc0df67531820/5c/d7bdb089/Single.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/5b741df2313e4e06a82651797ac446a72d800/db/e4518712/FileHelpers.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/5e471ddbeb974684bff43bc61f1b58cb1f200/16/e4a84080/AcceptableValueRange`1.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/5e471ddbeb974684bff43bc61f1b58cb1f200/1f/45664d2d/ConfigEntry`1.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/5e471ddbeb974684bff43bc61f1b58cb1f200/f9/00e6a6f5/ConfigEntry`1.cs" root0="SKIP_HIGHLIGHTING" />
@@ -67,6 +67,7 @@
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/2c/cb54fd98/MonoUpdatersExtra.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/35/0615f380/ZDOVars.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/47/c606032e/ImpactEffect.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/52/e216430e/ZNetView.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/5a/1f92f78a/GameCamera.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/60/0b0f1330/Ship.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/70/36696be0/StaticTarget.cs" root0="SKIP_HIGHLIGHTING" />
@@ -86,6 +87,7 @@
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/47/2f02cda0/GameObject.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/49/2966b71b/LayerMask.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/86/751124c9/GraphicsSettings.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/8c/75ec9536/Bounds.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/8f/2b1463ab/Vector3.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/a1/95fb23ec/Vector3.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/a6/c0fb1c1d/Camera.cs" root0="SKIP_HIGHLIGHTING" />
@@ -211,27 +213,27 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Mono Remote.valheim.executor&quot;: &quot;Debug&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;XThreadsFramesViewSplitterKey&quot;: &quot;0.4903357&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feat/tank-logic&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.stylelint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.stylelint&quot;: &quot;&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;rider.code.cleanup.on.save&quot;: &quot;true&quot;,
-    &quot;rider.code.cleanup.on.save.only.changed.lines&quot;: &quot;true&quot;,
-    &quot;rider.code.cleanup.on.save.profile&quot;: &quot;Built-in: Reformat &amp; Apply Syntax Style&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.sourceCode.C#&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Mono Remote.valheim.executor": "Debug",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "XThreadsFramesViewSplitterKey": "1.6188811",
+    "git-widget-placeholder": "feat/tank-logic",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.stylelint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.stylelint": "",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "rider.code.cleanup.on.save": "true",
+    "rider.code.cleanup.on.save.only.changed.lines": "true",
+    "rider.code.cleanup.on.save.profile": "Built-in: Reformat & Apply Syntax Style",
+    "settings.editor.selected.configurable": "preferences.sourceCode.C#",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="Mono Remote.valheim">
     <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost">
       <option name="allowRunningInParallel" value="false" />
@@ -272,7 +274,8 @@
       <workItem from="1737839999185" duration="7817000" />
       <workItem from="1737847893492" duration="4730000" />
       <workItem from="1737934559936" duration="3581000" />
-      <workItem from="1737956635672" duration="848000" />
+      <workItem from="1737956635672" duration="8019000" />
+      <workItem from="1738302638375" duration="5414000" />
     </task>
     <servers />
   </component>
@@ -301,318 +304,6 @@
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT/MoveableBaseRootComponent.cs</url>
-          <line>925</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT\ValheimRAFT\MoveableBaseRootComponent.cs" containingFunctionPresentation="Method 'AddPiece'">
-            <startOffsets>
-              <option value="26355" />
-            </startOffsets>
-            <endOffsets>
-              <option value="26371" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="57" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs</url>
-          <line>462</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\ValheimAoe.cs" containingFunctionPresentation="Method 'OnCollisionEnter'">
-            <startOffsets>
-              <option value="14419" />
-            </startOffsets>
-            <endOffsets>
-              <option value="14464" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="338" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs</url>
-          <line>467</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\ValheimAoe.cs" containingFunctionPresentation="Method 'OnCollisionStay'">
-            <startOffsets>
-              <option value="14529" />
-            </startOffsets>
-            <endOffsets>
-              <option value="14575" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="339" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs</url>
-          <line>505</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\ValheimAoe.cs" containingFunctionPresentation="Method 'CauseCollisionTriggerDamage'">
-            <startOffsets>
-              <option value="15587" />
-            </startOffsets>
-            <endOffsets>
-              <option value="15635" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="343" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/1e/566f7e57/MineRock5.cs</url>
-          <line>207</line>
-          <properties documentPath="C:\Users\fre\AppData\Local\JetBrains\Shared\vAny\DecompilerCache\decompiler\889b2bc1e1224b249a4784da9ef107e21eba00\1e\566f7e57\MineRock5.cs" containingFunctionPresentation="Method 'Damage'">
-            <startOffsets>
-              <option value="8715" />
-            </startOffsets>
-            <endOffsets>
-              <option value="8818" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="346" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/1e/566f7e57/MineRock5.cs</url>
-          <line>205</line>
-          <properties documentPath="C:\Users\fre\AppData\Local\JetBrains\Shared\vAny\DecompilerCache\decompiler\889b2bc1e1224b249a4784da9ef107e21eba00\1e\566f7e57\MineRock5.cs" containingFunctionPresentation="Method 'Damage'">
-            <startOffsets>
-              <option value="8575" />
-            </startOffsets>
-            <endOffsets>
-              <option value="8696" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="347" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/1e/566f7e57/MineRock5.cs</url>
-          <line>237</line>
-          <properties documentPath="C:\Users\fre\AppData\Local\JetBrains\Shared\vAny\DecompilerCache\decompiler\889b2bc1e1224b249a4784da9ef107e21eba00\1e\566f7e57\MineRock5.cs" containingFunctionPresentation="Method 'Damage'">
-            <startOffsets>
-              <option value="10036" />
-            </startOffsets>
-            <endOffsets>
-              <option value="10089" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="348" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/1e/566f7e57/MineRock5.cs</url>
-          <line>219</line>
-          <properties documentPath="C:\Users\fre\AppData\Local\JetBrains\Shared\vAny\DecompilerCache\decompiler\889b2bc1e1224b249a4784da9ef107e21eba00\1e\566f7e57\MineRock5.cs" containingFunctionPresentation="Method 'Damage'">
-            <startOffsets>
-              <option value="9499" />
-            </startOffsets>
-            <endOffsets>
-              <option value="9561" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="349" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/1e/566f7e57/MineRock5.cs</url>
-          <line>217</line>
-          <properties documentPath="C:\Users\fre\AppData\Local\JetBrains\Shared\vAny\DecompilerCache\decompiler\889b2bc1e1224b249a4784da9ef107e21eba00\1e\566f7e57\MineRock5.cs" containingFunctionPresentation="Method 'Damage'">
-            <startOffsets>
-              <option value="9440" />
-            </startOffsets>
-            <endOffsets>
-              <option value="9482" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="350" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/1e/566f7e57/MineRock5.cs</url>
-          <line>212</line>
-          <properties documentPath="C:\Users\fre\AppData\Local\JetBrains\Shared\vAny\DecompilerCache\decompiler\889b2bc1e1224b249a4784da9ef107e21eba00\1e\566f7e57\MineRock5.cs" containingFunctionPresentation="Method 'Damage'">
-            <startOffsets>
-              <option value="9055" />
-            </startOffsets>
-            <endOffsets>
-              <option value="9097" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="351" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs</url>
-          <line>275</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\ValheimAoe.cs" containingFunctionPresentation="Method 'CustomFixedUpdate'">
-            <startOffsets>
-              <option value="8886" />
-            </startOffsets>
-            <endOffsets>
-              <option value="9002" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="356" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs</url>
-          <line>270</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\ValheimAoe.cs" containingFunctionPresentation="Method 'CustomFixedUpdate'">
-            <startOffsets>
-              <option value="8789" />
-            </startOffsets>
-            <endOffsets>
-              <option value="8817" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="357" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs</url>
-          <line>248</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\ValheimAoe.cs" containingFunctionPresentation="Method 'CustomFixedUpdate'">
-            <startOffsets>
-              <option value="7973" />
-            </startOffsets>
-            <endOffsets>
-              <option value="7984" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="360" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs</url>
-          <line>243</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\ValheimAoe.cs" containingFunctionPresentation="Method 'CustomFixedUpdate'">
-            <startOffsets>
-              <option value="7785" />
-            </startOffsets>
-            <endOffsets>
-              <option value="7892" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="361" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs</url>
-          <line>362</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\ValheimAoe.cs" containingFunctionPresentation="Method 'FindHits'">
-            <startOffsets>
-              <option value="11534" />
-            </startOffsets>
-            <endOffsets>
-              <option value="11635" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="380" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs</url>
-          <line>1267</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs" containingFunctionPresentation="Method 'GetForwardVelocity'">
-            <startOffsets>
-              <option value="36467" />
-            </startOffsets>
-            <endOffsets>
-              <option value="36537" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="436" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/WaterZoneController.cs</url>
-          <line>205</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\WaterZoneController.cs" containingFunctionPresentation="Method 'CreateDebugHelperComponent'">
-            <startOffsets>
-              <option value="6312" />
-            </startOffsets>
-            <endOffsets>
-              <option value="6505" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="449" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs</url>
-          <line>1192</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs" containingFunctionPresentation="Method 'Flying_UpdateShipBalancingForce'">
-            <startOffsets>
-              <option value="33352" />
-            </startOffsets>
-            <endOffsets>
-              <option value="33450" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="465" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleCameraCullingComponent.cs</url>
-          <line>157</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleCameraCullingComponent.cs" containingFunctionPresentation="Method 'IsObjectOccluded'">
-            <startOffsets>
-              <option value="5035" />
-            </startOffsets>
-            <endOffsets>
-              <option value="5047" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="484" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleCameraCullingComponent.cs</url>
-          <line>187</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleCameraCullingComponent.cs" containingFunctionPresentation="Method 'IsObjectOccluded'">
-            <startOffsets>
-              <option value="6112" />
-            </startOffsets>
-            <endOffsets>
-              <option value="6130" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="485" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleCameraCullingComponent.cs</url>
-          <line>73</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleCameraCullingComponent.cs" containingFunctionPresentation="Method 'DisableRenderersForVehicleInstances'">
-            <startOffsets>
-              <option value="2386" />
-            </startOffsets>
-            <endOffsets>
-              <option value="2412" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="486" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/VehicleWheelController.cs</url>
-          <line>311</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\VehicleWheelController.cs" containingFunctionPresentation="Method 'GenerateWheelSets'">
-            <startOffsets>
-              <option value="9002" />
-            </startOffsets>
-            <endOffsets>
-              <option value="9060" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="533" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/VehicleWheelController.cs</url>
-          <line>312</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\VehicleWheelController.cs" containingFunctionPresentation="Method 'GenerateWheelSets'">
-            <startOffsets>
-              <option value="9071" />
-            </startOffsets>
-            <endOffsets>
-              <option value="9125" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="534" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/VehicleWheelController.cs</url>
-          <line>500</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\VehicleWheelController.cs" containingFunctionPresentation="Method 'AdjustVehicleToGround'">
-            <startOffsets>
-              <option value="15624" />
-            </startOffsets>
-            <endOffsets>
-              <option value="15721" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="535" />
-        </line-breakpoint>
         <breakpoint enabled="true" type="DotNet Exception Breakpoints">
           <properties exception="System.OperationCanceledException" breakIfHandledByOtherCode="false" displayValue="System.OperationCanceledException" />
           <option name="timeStamp" value="492" />
@@ -631,6 +322,71 @@
           </properties>
           <option name="timeStamp" value="532" />
         </breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs</url>
+          <line>346</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs" containingFunctionPresentation="Method 'OnCollisionEnter'">
+            <startOffsets>
+              <option value="10322" />
+            </startOffsets>
+            <endOffsets>
+              <option value="10348" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="546" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs</url>
+          <line>364</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs" containingFunctionPresentation="Method 'OnTriggerEnter'">
+            <startOffsets>
+              <option value="10902" />
+            </startOffsets>
+            <endOffsets>
+              <option value="10928" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="548" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs</url>
+          <line>372</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs" containingFunctionPresentation="Method 'OnTriggerStay'">
+            <startOffsets>
+              <option value="11137" />
+            </startOffsets>
+            <endOffsets>
+              <option value="11163" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="549" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs</url>
+          <line>340</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs" containingFunctionPresentation="Method 'ShouldIgnore'">
+            <startOffsets>
+              <option value="10210" />
+            </startOffsets>
+            <endOffsets>
+              <option value="10235" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="550" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs</url>
+          <line>312</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs" containingFunctionPresentation="Method 'ShouldIgnore'">
+            <startOffsets>
+              <option value="9526" />
+            </startOffsets>
+            <endOffsets>
+              <option value="9540" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="551" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
     <pin-to-top-manager>

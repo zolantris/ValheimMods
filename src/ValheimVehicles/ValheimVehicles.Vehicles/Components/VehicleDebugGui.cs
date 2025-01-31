@@ -52,25 +52,6 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
           vehiclePiecesController.StartActivatePendingPieces();
     }
 
-    // if (GUILayout.Button(
-    //       $"SyncPiecesPhysics {vehicleDebugPhysicsSync}"))
-    // {
-    //   vehicleDebugPhysicsSync = !vehicleDebugPhysicsSync;
-    //   VehicleMovementController.SetPhysicsSyncTarget(
-    //     vehicleDebugPhysicsSync);
-    // }
-    //
-    // if (GUILayout.Button(
-    //       $"Toggle Sync Physics"))
-    // {
-    //   foreach (var vehiclePiecesController in VehiclePiecesController
-    //              .ActiveInstances)
-    //   {
-    //     vehiclePiecesController.Value?.SetVehiclePhysicsType(VehiclePhysicsMode
-    //       .ForceSyncedRigidbody);
-    //   }
-    // }
-
     if (GUILayout.Button("Delete ShipZDO"))
     {
       var currentShip = VehicleDebugHelpers.GetVehiclePiecesController();
@@ -102,6 +83,36 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       foreach (var obj in allObjects)
         if (obj.name.Contains($"{PrefabNames.PlayerSpawnControllerObj}(Clone)"))
           Logger.LogDebug("found playerSpawn controller");
+    }
+
+    if (GUILayout.Button("Force Move Vehicle"))
+    {
+      var currentShip = VehicleDebugHelpers.GetVehiclePiecesController();
+      if (currentShip != null)
+      {
+        var shipBody = currentShip.VehicleInstance?.Instance?.MovementController?.m_body;
+        if (shipBody == null) return;
+        shipBody.MovePosition(shipBody.position + Vector3.forward);
+      }
+    }
+
+    if (GUILayout.Button("Delete All Vehicles"))
+    {
+      var allObjects = Resources.FindObjectsOfTypeAll<ZNetView>();
+      foreach (var obj in allObjects)
+        if (obj.name.Contains($"{PrefabNames.WaterVehicleShip}(Clone)") || obj.name.Contains($"{PrefabNames.LandVehicle}(Clone)"))
+        {
+          Logger.LogInfo($"Destroying {obj.name}");
+          var wnt = obj.GetComponent<WearNTear>();
+          if (wnt != null)
+          {
+            wnt.Destroy();
+          }
+          else
+          {
+            obj.Destroy();
+          }
+        }
     }
 
     GUILayout.EndArea();

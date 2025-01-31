@@ -44,7 +44,7 @@ GameObject:
   - component: {fileID: 9168006654644231112}
   - component: {fileID: 3519201564313527777}
   m_Layer: 29
-  m_Name: collider
+  m_Name: wheel_collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79,11 +79,11 @@ WheelCollider:
   m_SuspensionSpring:
     spring: 2000
     damper: 50
-    targetPosition: 1
-  m_SuspensionDistance: 0
-  m_ForceAppPointDistance: 0
+    targetPosition: 0
+  m_SuspensionDistance: 3
+  m_ForceAppPointDistance: 3
   m_Mass: 40
-  m_WheelDampingRate: 0.25
+  m_WheelDampingRate: 1
   m_ForwardFriction:
     m_ExtremumSlip: 0.4
     m_ExtremumValue: 1
@@ -148,7 +148,7 @@ GameObject:
   - component: {fileID: 7552653989016854223}
   - component: {fileID: 5578359812963799694}
   m_Layer: 29
-  m_Name: mesh
+  m_Name: wheel_mesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
