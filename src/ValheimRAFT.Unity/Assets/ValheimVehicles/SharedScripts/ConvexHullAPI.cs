@@ -982,7 +982,7 @@ namespace ValheimVehicles.SharedScripts
           triggerInstance.transform.position =
             parentOffset - triggerParent.transform.position;
 
-          var triggerObjName = $"{MeshNameTriggerPrefix}_{index}";
+          var triggerObjName = $"{MeshNameTriggerPrefix}_damage_trigger_{index}";
           triggerInstance.gameObject.name = triggerObjName;
 
           var meshRenderer = triggerInstance.GetComponent<MeshRenderer>();
@@ -993,8 +993,8 @@ namespace ValheimVehicles.SharedScripts
             triggerInstance.GetComponent<MeshCollider>();
           triggerMeshCollider.isTrigger = true;
           triggerMeshCollider.includeLayers = LayerHelpers.PhysicalLayers;
-          triggerMeshCollider.excludeLayers =
-            LayerHelpers.RamColliderExcludeLayers;
+          // triggerMeshCollider.excludeLayers =
+          //   LayerHelpers.RamColliderExcludeLayers;
         }
     }
 

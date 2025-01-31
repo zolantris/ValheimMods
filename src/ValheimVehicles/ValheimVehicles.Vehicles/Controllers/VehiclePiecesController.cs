@@ -133,6 +133,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public List<GameObject> convexHullTriggerMeshes =>
     convexHullComponent.convexHullTriggerMeshes;
 
+  public List<MeshCollider> convexHullTriggerMeshColliders = [];
   public List<Collider> convexHullTriggerColliders = [];
 
   public static bool DEBUGAllowActivatePendingPieces
@@ -2656,13 +2657,13 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     convexHullTriggerColliders = MovementController.DamageColliders
       .GetComponentsInChildren<Collider>().ToList();
 
-    var convexHullMeshTriggerColliders = convexHullTriggerColliders = MovementController.DamageColliders
+    convexHullTriggerMeshColliders = MovementController.DamageColliders
       .GetComponentsInChildren<MeshCollider>().ToList();
 
     if (RamConfig.VehicleHullsAreRams.Value)
-      MovementController.AddRamAoeToConvexHull(convexHullMeshTriggerColliders);
-    
-    IgnoreShipColliders(convexHullTriggerColliders);
+      MovementController.AddRamAoeToConvexHull(convexHullTriggerMeshColliders);
+
+    IgnoreShipColliders(convexHullMeshColliders.Select(x => x.GetComponent<Collider>()).ToList());
     IgnoreVehicleCollidersForAllPieces();
     
     

@@ -369,6 +369,40 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     VehicleMovementUpdatesOwnerOnly();
   }
 
+  private IEnumerator EnableCollisionAfterTeleport(List<MeshCollider> IgnoredColliders, Collider collisionCollider, Character? character)
+
+  {
+    foreach (var collider in IgnoredColliders)
+    {
+      Physics.IgnoreCollision(collider, collisionCollider, true);
+    }
+    var isTeleporting = true;
+    while (isTeleporting)
+    {
+      isTeleporting = character.IsTeleporting();
+      if (!isTeleporting) break;
+      yield return new WaitForFixedUpdate();
+    }
+    var isCharacterOnboard = !WaterZoneUtils.IsOnboard(character);
+    if (isCharacterOnboard)
+    {
+      foreach (var collider in IgnoredColliders)
+      {
+        Physics.IgnoreCollision(collider, collisionCollider, false);
+      }
+    }
+  }
+
+  private void OnCollisionEnter(Collision collision)
+  {
+    if (PiecesController == null) return;
+    var character = collision.transform.GetComponentInParent<Character>();
+    if (character != null && character.IsTeleporting())
+    {
+      StartCoroutine(EnableCollisionAfterTeleport(PiecesController.convexHullMeshColliders, collision.collider, character));
+    }
+  }
+
   /// <summary>
   ///   Unused, but required for IMonoUpdaters which Valheim uses to sync client and
   ///   server lifecycle updates
@@ -1348,8 +1382,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     m_body.angularDrag = landVehicleAngularDrag;
     m_body.drag = landVehicleDrag;
-    m_body.automaticCenterOfMass = true;
     m_body.centerOfMass = Vector3.zero;
+    m_body.automaticCenterOfMass = true;
 
     if (!Mathf.Approximately(centerOfMassOffset, 0f))
     {
@@ -1784,7 +1818,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public ShipFloatation GetShipFloatationObj()
   {
-    if (ShipDirection == null || PiecesController == null)
+    if (ShipDirection == null || PiecesController == null || OnboardCollider == null)
       return new ShipFloatation();
     var convexHullRelativeBounds =
       PiecesController.convexHullComponent.GetConvexHullBounds(false);
@@ -1796,8 +1830,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var right = ShipDirection.right;
 
     var shipForward = position +
-                      forward *
-                      GetFloatSizeFromDirection(Vector3.forward);
+                      forward * OnboardCollider.extents.z;
+    // GetFloatSizeFromDirection(Vector3.forward);
     var shipBack = position -
                    forward *
                    GetFloatSizeFromDirection(Vector3.forward);
@@ -2367,7 +2401,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (aoeRam == null)
       aoeRam = DamageColliders.gameObject
         .AddComponent<VehicleRamAoe>();
-
+    meshColliders.ForEach((x) => x.gameObject.layer = LayerMask.NameToLayer("piece"));
     // negative check, should never hit this...
     if (aoeRam == null) return null;
     if (aoeRam.m_nview == null) aoeRam.m_nview = m_nview;

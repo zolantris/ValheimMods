@@ -121,7 +121,7 @@ public class VehicleRamAoe : ValheimAoe
     base.Awake();
   }
 
-  public new void Awake()
+  public override void Awake()
   {
     if (!RamInstances.Contains(this)) RamInstances.Add(this);
 
@@ -133,10 +133,10 @@ public class VehicleRamAoe : ValheimAoe
     rigidbody = GetComponent<Rigidbody>();
     // very important otherwise this rigidbody will interfere with physics of the Watervehicle controller due to nesting.
     // todo to move this rigidbody into a joint and make it a sibling of the WaterVehicle or PieceContainer (doing this would be a large refactor to structure, likely requiring a new prefab)
-    if (rigidbody) rigidbody.includeLayers = m_rayMask;
+    // if (rigidbody) rigidbody.includeLayers = m_rayMask;
   }
 
-  private new void OnDisable()
+  public override void OnDisable()
   {
     if (RamInstances.Contains(this)) RamInstances.Remove(this);
 
@@ -176,6 +176,7 @@ public class VehicleRamAoe : ValheimAoe
     // Must be within the BaseVehiclePieces after initialization otherwise this AOE could attempt to damage items within the raft ball
     var isChildOfBaseVehicle =
       transform.root.name.StartsWith(PrefabNames.WaterVehicleShip) ||
+      transform.root.name.StartsWith(PrefabNames.LandVehicle) ||
       transform.root.name.StartsWith(PrefabNames.VehiclePiecesContainer) ||
       transform.root.name.StartsWith(
         PrefabNames

@@ -103,15 +103,7 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
         if (obj.name.Contains($"{PrefabNames.WaterVehicleShip}(Clone)") || obj.name.Contains($"{PrefabNames.LandVehicle}(Clone)"))
         {
           Logger.LogInfo($"Destroying {obj.name}");
-          var wnt = obj.GetComponent<WearNTear>();
-          if (wnt != null)
-          {
-            wnt.Destroy();
-          }
-          else
-          {
-            obj.Destroy();
-          }
+          ZNetScene.instance.Destroy(obj.gameObject);
         }
     }
 

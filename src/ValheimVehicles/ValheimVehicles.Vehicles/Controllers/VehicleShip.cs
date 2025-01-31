@@ -123,7 +123,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   public VehicleShip Instance => this;
 
-  private GameObject _vehiclePiecesContainerInstance;
+  private GameObject? _vehiclePiecesContainerInstance;
   private GUIStyle myButtonStyle;
 
   public Transform m_controlGuiPos { get; set; }
@@ -207,8 +207,17 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   public void UnloadAndDestroyPieceContainer()
   {
     if (!(bool)_vehiclePiecesContainerInstance) return;
-    PiecesController.CleanUp();
-    Destroy(PiecesController.gameObject);
+    if (PiecesController != null)
+    {
+      PiecesController.CleanUp();
+      PiecesController = null;
+
+      if (_vehiclePiecesContainerInstance != null)
+      {
+        Destroy(_vehiclePiecesContainerInstance);
+        _vehiclePiecesContainerInstance = null;
+      }
+    }
   }
 
   public void OnDestroy()
@@ -524,7 +533,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     if (IsLandVehicle)
     {
       // we use the same alignments of the slabs in the ghost preview
-      var slabTransform = transform.Find("ghostContainer_demo/preview_slabs");
+      var slabTransform = transform.Find("ghostContainer/preview_slabs");
       if (slabTransform != null)
       {
         for (var i = 0; i < slabTransform.childCount; i++)
