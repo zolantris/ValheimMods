@@ -107,7 +107,7 @@ namespace ValheimVehicles.SharedScripts
 
       if (convexMeshLayer == 29)
       {
-        convexMeshLayer = LayerMask.NameToLayer("CustomVehicleLayer");
+        convexMeshLayer = LayerHelpers.CustomRaftLayer;
       }
     }
 

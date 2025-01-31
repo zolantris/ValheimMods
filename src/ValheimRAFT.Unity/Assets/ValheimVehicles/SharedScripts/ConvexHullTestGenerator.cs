@@ -49,11 +49,11 @@ namespace ValheimVehicles.SharedScripts
         }
       }
 
-      EnableCollisionBetweenLayers(10, 28);
-      EnableCollisionBetweenLayers(28, 10);
-
-      EnableCollisionBetweenLayers(10, 29);
-      EnableCollisionBetweenLayers(29, 10);
+      // EnableCollisionBetweenLayers(10, 28);
+      // EnableCollisionBetweenLayers(28, 10);
+      //
+      // EnableCollisionBetweenLayers(10, 29);
+      // EnableCollisionBetweenLayers(29, 10);
     }
 
     private void Start()

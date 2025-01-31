@@ -2541,10 +2541,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   internal Vector3 m_localShipBack = Vector3.back;
 
   // meant for calculating vehicle's positiona and water height.
-  public Vector3 shipLeft => transform.position + m_localShipLeft;
-  public Vector3 shipRight => transform.position + m_localShipRight;
-  public Vector3 shipForward => transform.position + m_localShipForward;
-  public Vector3 shipBack => transform.position + m_localShipBack;
+  // public Vector3 shipLeft => transform.position + m_localShipLeft;
+  // public Vector3 shipRight => transform.position + m_localShipRight;
+  // public Vector3 shipForward => transform.position + m_localShipForward;
+  // public Vector3 shipBack => transform.position + m_localShipBack;
 
   public void CalculateFurthestPointsOnMeshes()
   {
@@ -2653,11 +2653,15 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       CalculateFurthestPointsOnMeshes();
     }
     
-    if (RamConfig.VehicleHullsAreRams.Value)
-      MovementController.AddRamAoeToConvexHull(convexHullMeshColliders);
-    
     convexHullTriggerColliders = MovementController.DamageColliders
-      .GetComponents<Collider>().ToList();
+      .GetComponentsInChildren<Collider>().ToList();
+
+    var convexHullMeshTriggerColliders = convexHullTriggerColliders = MovementController.DamageColliders
+      .GetComponentsInChildren<MeshCollider>().ToList();
+
+    if (RamConfig.VehicleHullsAreRams.Value)
+      MovementController.AddRamAoeToConvexHull(convexHullMeshTriggerColliders);
+    
     IgnoreShipColliders(convexHullTriggerColliders);
     IgnoreVehicleCollidersForAllPieces();
     
