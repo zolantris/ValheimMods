@@ -120,9 +120,6 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
   public Rigidbody m_body;
   public static List<IMonoUpdater> Instances = new();
 
-
-  public List<MeshCollider> m_meshColliders = new();
-
   public virtual void Awake()
   {
     m_nview = GetComponentInParent<ZNetView>();

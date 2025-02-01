@@ -128,6 +128,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public List<GameObject> convexHullMeshes =>
     convexHullComponent.convexHullMeshes;
 
+  public List<Collider> convexHullColliders = [];
   public List<MeshCollider> convexHullMeshColliders = [];
 
   public List<GameObject> convexHullTriggerMeshes =>
@@ -2639,39 +2640,37 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         PhysicsConfig.convexHullJoinDistanceThreshold.Value,
         nvChildGameObjects, MovementController.DamageColliders);
 
-    var tempColliders = new List<MeshCollider>();
+    convexHullColliders.Clear();
+    convexHullMeshColliders.Clear();
 
     convexHullMeshes.ForEach((x) =>
     {
-      var comp = x.GetComponent<MeshCollider>();
-      if (comp != null) tempColliders.Add(comp);
-    });
-    convexHullComponent.UpdateConvexHullBounds();
+      var meshCollider = x.GetComponent<MeshCollider>();
+      var collider = x.GetComponent<Collider>();
 
-    if (tempColliders.Count > 0)
-    {
-      convexHullMeshColliders = tempColliders;
-      CalculateFurthestPointsOnMeshes();
-    }
+      if (meshCollider != null) convexHullMeshColliders.Add(meshCollider);
+      if (collider != null) convexHullColliders.Add(collider);
+    });
+
+    CalculateFurthestPointsOnMeshes();
+    convexHullComponent.UpdateConvexHullBounds();
     
     convexHullTriggerColliders = MovementController.DamageColliders
       .GetComponentsInChildren<Collider>().ToList();
-
     convexHullTriggerMeshColliders = MovementController.DamageColliders
       .GetComponentsInChildren<MeshCollider>().ToList();
 
     if (RamConfig.VehicleHullsAreRams.Value)
-      MovementController.AddRamAoeToConvexHull(convexHullTriggerMeshColliders);
+      MovementController.AddRamAoeToConvexHull();
 
-    IgnoreShipColliders(convexHullMeshColliders.Select(x => x.GetComponent<Collider>()).ToList());
+    IgnoreShipColliders(convexHullColliders);
     IgnoreVehicleCollidersForAllPieces();
-    
     
     if (WheelController != null)
     {
       var convexHullBounds = convexHullComponent.GetConvexHullBounds(true);
       WheelController.InitializeWheels(convexHullBounds);
-      IgnoreAllWheelColliders();
+      // IgnoreAllWheelColliders();
     }
   }
 
@@ -2873,6 +2872,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     if (collider == null) return;
     foreach (var triggerCollider in convexHullTriggerColliders)
       Physics.IgnoreCollision(collider, triggerCollider, true);
+    foreach (var triggerMeshCollider in convexHullMeshColliders)
+    {
+      Physics.IgnoreCollision(collider, triggerMeshCollider, true);
+    }
     foreach (var convexHullMesh in convexHullMeshes)
       Physics.IgnoreCollision(collider,
         convexHullMesh.GetComponent<MeshCollider>(),
@@ -2880,7 +2883,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     if (!skipWheelIgnore)
     {
-
       IgnoreAllWheelColliders();
     }
     if (FloatCollider)

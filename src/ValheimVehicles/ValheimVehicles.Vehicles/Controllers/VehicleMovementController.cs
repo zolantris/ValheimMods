@@ -2394,21 +2394,19 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   ///
   /// This does not need to be tracked as a Ram piece as every gameobject added to this PiecesController ignores the meshColliders provided
   /// </summary>
-  public VehicleRamAoe? AddRamAoeToConvexHull(List<MeshCollider> meshColliders)
+  public VehicleRamAoe? AddRamAoeToConvexHull()
   {
     var aoeRam = DamageColliders.gameObject.GetComponent<VehicleRamAoe>();
 
     if (aoeRam == null)
       aoeRam = DamageColliders.gameObject
         .AddComponent<VehicleRamAoe>();
-    meshColliders.ForEach((x) => x.gameObject.layer = LayerMask.NameToLayer("piece"));
     // negative check, should never hit this...
     if (aoeRam == null) return null;
     if (aoeRam.m_nview == null) aoeRam.m_nview = m_nview;
 
     aoeRam.m_RamType = RamPrefabs.RamType.Blade;
     aoeRam.m_vehicle = _vehicle;
-    aoeRam.m_meshColliders = meshColliders;
     aoeRam.SetVehicleRamModifier(RamConfig.VehicleHullsAreRams.Value);
     return aoeRam;
   }
