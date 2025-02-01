@@ -141,8 +141,11 @@ namespace ValheimVehicles.SharedScripts
           break;
         case AnchorState.Recovered:
         case AnchorState.Idle:
-          anchorRb.transform.localPosition = anchorStartLocalPosition;
-          anchorRb.transform.localRotation = Quaternion.identity;
+          if (anchorRb != null)
+          {
+            anchorRb.transform.localPosition = anchorStartLocalPosition;
+            anchorRb.transform.localRotation = Quaternion.identity;
+          }
           break;
       }
 
@@ -271,7 +274,10 @@ namespace ValheimVehicles.SharedScripts
         case AnchorState.Anchored:
         case AnchorState.Recovered:
         case AnchorState.Idle:
-          anchorRb.isKinematic = true;
+          if (anchorRb != null)
+          {
+            anchorRb.isKinematic = true;
+          }
           break;
       }
 
