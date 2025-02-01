@@ -104,7 +104,7 @@ public class VehiclePrefabs : IRegisterPrefab
      */
 
     var shipInstance = prefab.AddComponent<VehicleShip>();
-    shipInstance.gameObject.layer = LayerHelpers.CustomRaftLayer;
+    // shipInstance.gameObject.layer = LayerHelpers.CustomRaftLayer;
 
     var piece =
       PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.WaterVehicleShip,
@@ -155,12 +155,13 @@ public class VehiclePrefabs : IRegisterPrefab
     piece.m_noClipping = true;
     piece.m_canRotate = true;
 
+
     PieceManager.Instance.AddPiece(new CustomPiece(landVehiclePrefab, true,
       new PieceConfig
       {
         PieceTable = "Hammer",
         Category = PrefabNames.ValheimRaftMenuName,
-        Enabled = true,
+        Enabled = PrefabConfig.EnableLandVehicles.Value,
         Requirements =
         [
           new RequirementConfig
@@ -242,6 +243,7 @@ public class VehiclePrefabs : IRegisterPrefab
 
     // registers only for v3 releases.
     // if (ValheimRaftPlugin.Version.StartsWith("3")) 
+
     RegisterLandVehiclePrefab();
 
     RegisterNautilus();

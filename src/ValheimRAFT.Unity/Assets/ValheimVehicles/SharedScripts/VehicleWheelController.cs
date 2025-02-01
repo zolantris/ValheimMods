@@ -42,21 +42,21 @@ namespace ValheimVehicles.SharedScripts
     public float magicTurnRate = 45.0f;
 
     public float wheelMass = 20f;
-    public WheelFrictionCurve wheelForwardFriction = new WheelFrictionCurve()
+    public WheelFrictionCurve wheelForwardFriction = new()
     {
       extremumSlip = 0f,
       extremumValue = 1f,
       asymptoteSlip = 1f,
       asymptoteValue = 1f,
-      stiffness = 1,
+      stiffness = 1
     };
-    public WheelFrictionCurve wheelSidewaysFriction = new WheelFrictionCurve()
+    public WheelFrictionCurve wheelSidewaysFriction = new()
     {
       extremumSlip = 0f,
       extremumValue = 1f,
       asymptoteSlip = 1f,
       asymptoteValue = 1f,
-      stiffness = 1f,
+      stiffness = 1f
     };
 
     [Tooltip(
@@ -100,6 +100,7 @@ namespace ValheimVehicles.SharedScripts
     [Tooltip(
       "User input forces")]
     public float inputForwardForce;
+    public float MaximumInputForwardForce = 100f;
     public float inputTurnForce;
     public float turnInputOverride = 0;
 
@@ -121,7 +122,7 @@ namespace ValheimVehicles.SharedScripts
 
     public Transform wheelParent;
 
-    [ToolTip("Wheel properties")]
+    [Tooltip("Wheel properties")]
     public float wheelBottomOffset = 0;
     public float wheelRadius = 1.5f;
     public float wheelSuspensionDistance = 1.5f;
@@ -607,13 +608,13 @@ namespace ValheimVehicles.SharedScripts
         if (wheel == null) continue;
         if (isBreaking)
         {
-          wheel.brakeTorque = inputForwardForce * motorTorque + additionalBreakForce;
+          wheel.brakeTorque = inputForwardForce * motorTorque * 2 + additionalBreakForce;
           wheel.motorTorque = 0f;
         }
         else if (inputForwardForce == 0)
         {
           wheel.motorTorque = 0;
-          wheel.brakeTorque = 20f;
+          wheel.brakeTorque = inputForwardForce * motorTorque / 2f;
         }
         else
         {
@@ -621,7 +622,11 @@ namespace ValheimVehicles.SharedScripts
           // To create a top speed for the tank, the motor torque just
           // cuts out when the tank starts moving fast enough.
           if (rigid.velocity.magnitude <= topSpeed)
+          {
             wheel.motorTorque += inputForwardForce * motorTorque * Time.fixedDeltaTime;
+          }
+
+          wheel.motorTorque = Mathf.Clamp(motorTorque, -MaximumInputForwardForce, MaximumInputForwardForce);
           // else
           //   wheel.motorTorque = 0.0f;
         }
@@ -654,7 +659,7 @@ namespace ValheimVehicles.SharedScripts
     {
       // var wheelRb = wheelTransform.GetComponent<Rigidbody>();
 
-      var deltaRotation = Mathf.Clamp(wheelCollider.motorTorque, -100f, 100f) * Time.deltaTime;
+      var deltaRotation = Mathf.Clamp(wheelCollider.motorTorque, -300f, 300f) * Time.deltaTime;
 
       // wheels need to move their X coordinate but for some reason it's the Y axis rotated...baffling.
       wheelTransform.Rotate(deltaRotation > 0 ? Vector3.down : Vector3.up,
@@ -768,6 +773,10 @@ namespace ValheimVehicles.SharedScripts
     public void SetAcceleration(float val)
     {
       inputForwardForce = val;
+
+      // maximum is always cubic.
+      var maxTotalTorque = Mathf.Pow(val * inputForwardForce, 3);
+      MaximumInputForwardForce = maxTotalTorque;
     }
 
 
@@ -834,13 +843,5 @@ namespace ValheimVehicles.SharedScripts
       VehicleMovementFixedUpdate();
     }
 #endif
-  }
-
-  public class ToolTipAttribute : Attribute
-  {
-    public ToolTipAttribute(string wheelProperties)
-    {
-      throw new NotImplementedException();
-    }
   }
 }

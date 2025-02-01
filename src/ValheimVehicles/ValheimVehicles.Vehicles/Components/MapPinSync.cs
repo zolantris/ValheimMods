@@ -154,7 +154,7 @@ public class MapPinSync : MonoBehaviour
     {
       var prefab = ZNetScene.instance.GetPrefab(x.GetPrefab());
       if (prefab == null) return false;
-      return prefab.name.Contains(PrefabNames.WaterVehicleShip);
+      return PrefabNames.IsVehicle(prefab.name);
     }).ToHashSet();
 
     var allPins = Minimap.instance.m_pins;

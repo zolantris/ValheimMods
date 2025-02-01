@@ -37,9 +37,6 @@ public static class PropulsionConfig
   public static ConfigEntry<float> TurnPowerWithRudder { get; private set; } =
     null!;
 
-  public static ConfigEntry<bool> EnableLandVehicles { get; private set; } =
-    null!;
-
   public static ConfigEntry<bool> SlowAndReverseWithoutControls
   {
     get;
@@ -107,11 +104,6 @@ public static class PropulsionConfig
       "slowAndReverseWithoutControls", false,
       ConfigHelpers.CreateConfigDescription(
         "Vehicles do not require controls while in slow and reverse with a person on them",
-        true));
-
-    EnableLandVehicles = Config.Bind(SectionName, "enableLandVehicles", false,
-      ConfigHelpers.CreateConfigDescription(
-        "Vehicles can now float on land. What is realism. Experimental only until wheels are invented. Must use rudder speeds to move forwards.",
         true));
 
     AllowBaseGameSailRotation = Config.Bind(SectionName,

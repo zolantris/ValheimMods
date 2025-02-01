@@ -39,7 +39,7 @@ namespace ValheimVehicles.SharedScripts
 
     // todo move prefixes to unity so it can be shared. Possibly auto-generated too.
     public static string MeshNamePrefix = "ConvexHull";
-    public static bool ShouldOptimizeGeneratedMeshes = false;
+    public static bool ShouldOptimizeGeneratedMeshes = true;
 
     public static List<ConvexHullAPI> Instances = new();
 
@@ -91,7 +91,7 @@ namespace ValheimVehicles.SharedScripts
 
     public Transform m_colliderParentTransform;
     public Rigidbody m_rigidbody;
-    
+
     private void Awake()
     {
       if (m_fallbackMaterial != null && BubbleMaterial == null)
@@ -973,14 +973,9 @@ namespace ValheimVehicles.SharedScripts
             Instantiate(convexHullMesh, triggerParent);
           convexHullTriggerMeshes.Add(triggerInstance);
           triggerInstance.transform.localScale = Vector3.one;
-          // World-space position offset calculation
-          var parentOffset =
-            convexHullMesh.transform.TransformPoint(triggerInstance
-              .transform
-              .position);
 
-          triggerInstance.transform.position =
-            parentOffset - triggerParent.transform.position;
+          // It must remain at the parent position (world position but it will be 0,0,0 local position)
+          // triggerInstance.transform.position = transform.position;
 
           var triggerObjName = $"{MeshNameTriggerPrefix}_damage_trigger_{index}";
           triggerInstance.gameObject.name = triggerObjName;
@@ -993,8 +988,8 @@ namespace ValheimVehicles.SharedScripts
             triggerInstance.GetComponent<MeshCollider>();
           triggerMeshCollider.isTrigger = true;
           triggerMeshCollider.includeLayers = LayerHelpers.PhysicalLayers;
-          // triggerMeshCollider.excludeLayers =
-          //   LayerHelpers.RamColliderExcludeLayers;
+          triggerMeshCollider.excludeLayers =
+            LayerHelpers.RamColliderExcludeLayers;
         }
     }
 
@@ -1066,14 +1061,15 @@ namespace ValheimVehicles.SharedScripts
               ? previewScale
               : Vector3.one;
           // World-space position offset calculation
-          var parentOffset =
-            convexHullMesh.transform.TransformPoint(previewInstance
-              .transform
-              .position);
-
-          previewInstance.transform.position =
-            parentOffset - PreviewParent.transform.position +
-            transformPreviewOffset;
+          // var parentOffset =
+          //   convexHullMesh.transform.TransformPoint(previewInstance
+          //     .transform
+          //     .position);
+          //
+          // previewInstance.transform.position =
+          //   parentOffset - PreviewParent.transform.position +
+          //   transformPreviewOffset;
+          previewInstance.transform.localPosition += transformPreviewOffset;
 
 
           var meshFilter = previewInstance.AddComponent<MeshFilter>();
@@ -1147,7 +1143,7 @@ namespace ValheimVehicles.SharedScripts
         new GameObject(
           $"{MeshNamePrefix}_{convexHullMeshes.Count}")
         {
-          layer = convexMeshLayer,
+          layer = LayerHelpers.CustomRaftLayer,
           transform = { parent = parentObjTransform, position = parentObjTransform.transform.position }
         };
 
@@ -1166,7 +1162,7 @@ namespace ValheimVehicles.SharedScripts
       // go.transform.position = parentObjTransform.transform.position;
     }
 
-    private Bounds _cachedConvexHullBounds = new Bounds(Vector3.zero, Vector3.one);
+    private Bounds _cachedConvexHullBounds = new(Vector3.zero, Vector3.one);
 
     /// <summary>
     /// Returns the sum of all convexHulls as a bounds, this can be non-relative but requires a transform.
@@ -1212,7 +1208,7 @@ namespace ValheimVehicles.SharedScripts
       //   _cachedConvexHullBounds = new Bounds(Vector3.zero, Vector3.one * 3);
       // }
     }
-    
+
     public void OnDrawGizmos()
     {
       if (_cachedConvexHullBounds != null)
@@ -1233,7 +1229,7 @@ namespace ValheimVehicles.SharedScripts
         Gizmos.color = Color.white;
         Gizmos.DrawWireCube(m_rigidbody.worldCenterOfMass, Vector3.one);
       }
-      
+
     }
   }
 }

@@ -29,16 +29,18 @@ public static class PhysicsConfig
   private static string VelocityModeSectionKey = $"{SectionKey}: Velocity Mode";
 
   // rudder speed
-  public static ConfigEntry<float> VehicleRudderSpeedBack { get; set; } = null!;
-  public static ConfigEntry<float> VehicleRudderSpeedSlow { get; set; } = null!;
-  public static ConfigEntry<float> VehicleRudderSpeedHalf { get; set; } = null!;
-  public static ConfigEntry<float> VehicleRudderSpeedFull { get; set; } = null!;
+  public static ConfigEntry<float> VehicleRudderSpeedBack = null!;
+  public static ConfigEntry<float> VehicleRudderSpeedSlow = null!;
+  public static ConfigEntry<float> VehicleRudderSpeedHalf = null!;
+  public static ConfigEntry<float> VehicleRudderSpeedFull = null!;
 
-  public static ConfigEntry<float> VehicleLandSpeedBack { get; set; } = null!;
-  public static ConfigEntry<float> VehicleLandSpeedSlow { get; set; } = null!;
-  public static ConfigEntry<float> VehicleLandSpeedHalf { get; set; } = null!;
-  public static ConfigEntry<float> VehicleLandSpeedFull { get; set; } = null!;
-  public static ConfigEntry<float> VehicleLandSpeedMult { get; set; } = null!;
+  public static ConfigEntry<float> VehicleLandSpeedBack = null!;
+  public static ConfigEntry<float> VehicleLandSpeedSlow = null!;
+  public static ConfigEntry<float> VehicleLandSpeedHalf = null!;
+  public static ConfigEntry<float> VehicleLandSpeedFull = null!;
+  public static ConfigEntry<float> VehicleLandSpeedMult = null!;
+
+  public static ConfigEntry<float> VehicleLandTurnSpeed = null!;
 
   // flight
   public static ConfigEntry<float> flightAngularDamping = null!;
@@ -94,7 +96,7 @@ public static class PhysicsConfig
     vehiclePiecesShipCollisionDetectionMode = null!;
 
 
-  private static ConfigFile Config { get; set; } = null!;
+  private static ConfigFile Config = null!;
 
   private static AcceptableValueRange<float>
     SafeDampingRangeWaterVehicle =
@@ -137,13 +139,13 @@ public static class PhysicsConfig
     set;
   }
 
-  public static ConfigEntry<float> MaxAngularVelocity { get; set; }
+  public static ConfigEntry<float> MaxAngularVelocity = null!;
 
-  public static ConfigEntry<float> MaxLinearVelocity { get; set; }
-  public static ConfigEntry<float> MaxLinearYVelocity { get; set; }
+  public static ConfigEntry<float> MaxLinearVelocity = null!;
+  public static ConfigEntry<float> MaxLinearYVelocity = null!;
 
 
-  public static ConfigEntry<bool> EnableExactVehicleBounds { get; set; }
+  public static ConfigEntry<bool> EnableExactVehicleBounds = null!;
 
 
   private const string SailDampingExplaination =
@@ -230,32 +232,37 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of rudder, this will apply with sails", true));
 
-    VehicleLandSpeedBack = Config.Bind(PropulsionSection, "Land Back Speed",
+    VehicleLandSpeedBack = Config.Bind(PropulsionSection, "LandVehicle Back Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Back speed of land vehicle.",
         true));
-    VehicleLandSpeedSlow = Config.Bind(PropulsionSection, "Land Slow Speed",
+    VehicleLandSpeedSlow = Config.Bind(PropulsionSection, "LandVehicle Slow Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Slow speed of land vehicle.",
         true));
-    VehicleLandSpeedHalf = Config.Bind(PropulsionSection, "Land Half Speed",
+    VehicleLandSpeedHalf = Config.Bind(PropulsionSection, "LandVehicle Half Speed",
       2f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Half speed of land vehicle.",
         true));
-    VehicleLandSpeedFull = Config.Bind(PropulsionSection, "Land Full Speed",
+    VehicleLandSpeedFull = Config.Bind(PropulsionSection, "LandVehicle Full Speed",
       4f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of land vehicle.",
         true));
     VehicleLandSpeedMult = Config.Bind(PropulsionSection,
-      "Land Speed Multiplier",
+      "LandVehicle Speed Multiplier",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the speed multiplier of the land vehicle", true, false, new AcceptableValueRange<float>(1, 5)));
-    
+    VehicleLandTurnSpeed = Config.Bind(PropulsionSection,
+      "LandVehicle Turn Speed",
+      35f,
+      ConfigHelpers.CreateConfigDescription(
+        "Turn angle multiplier for land vehicles. Higher values will turn faster, but will be more disorienting and unrealistic.", true, false, new AcceptableValueRange<float>(20f, 90f)));
+
     var dampingSidewaysDescription = ConfigHelpers.CreateConfigDescription(
       SailSidewaysDampingExplaination,
       true, true, SafeSidewaysDampingRangeWaterVehicle);
@@ -473,6 +480,9 @@ public static class PhysicsConfig
     MaxLinearVelocity.SettingChanged += (sender, args) =>
       VehicleMovementController.Instances.ForEach(x =>
         x.UpdateVehicleSpeedThrottle());
+
+    VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+
 
     floatationVelocityMode.SettingChanged += (sender, args) =>
       ForceSetVehiclePhysics(floatationVelocityMode);

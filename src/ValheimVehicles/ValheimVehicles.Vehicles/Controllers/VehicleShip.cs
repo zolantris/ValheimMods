@@ -67,7 +67,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       PrefabNames.PiecesContainer);
   }
 
-  public static readonly Dictionary<int, VehicleShip> AllVehicles = new();
+  public static readonly Dictionary<int, VehicleShip> VehicleInstances = new();
 
   private GameObject _piecesContainer;
   private GameObject _ghostContainer;
@@ -168,7 +168,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   public static void OnAllowFlight(object sender, EventArgs eventArgs)
   {
-    foreach (var vehicle in AllVehicles)
+    foreach (var vehicle in VehicleInstances)
       vehicle.Value?.MovementController?.OnFlightChangePolling();
   }
 
@@ -189,8 +189,16 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   private static void UpdateAllShipSounds()
   {
-    foreach (var vehicleShip in AllVehicles)
+    foreach (var vehicleShip in VehicleInstances)
       UpdateShipSounds(vehicleShip.Value);
+  }
+
+  public static void UpdateAllWheelControllers()
+  {
+    foreach (var instance in VehicleInstances.Values)
+    {
+      instance.UpdateWheelControllerProperties();
+    }
   }
 
   public static void UpdateAllShipSounds(object sender, EventArgs eventArgs)
@@ -224,8 +232,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   {
     UnloadAndDestroyPieceContainer();
 
-    if (PersistentZdoId != 0 && AllVehicles.ContainsKey(PersistentZdoId))
-      AllVehicles.Remove(PersistentZdoId);
+    if (PersistentZdoId != 0 && VehicleInstances.ContainsKey(PersistentZdoId))
+      VehicleInstances.Remove(PersistentZdoId);
 
     if (MovementController && MovementController != null)
       Destroy(MovementController.gameObject);
@@ -276,10 +284,10 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     if (PersistentZdoId == 0)
       Logger.LogWarning("PersistewnZdoId, did not get a zdo from the NetView");
 
-    if (AllVehicles.ContainsKey(PersistentZdoId))
+    if (VehicleInstances.ContainsKey(PersistentZdoId))
       Logger.LogDebug("VehicleShip somehow already registered this component");
     else
-      AllVehicles.Add(PersistentZdoId, this);
+      VehicleInstances.Add(PersistentZdoId, this);
 
     if (!NetView)
     {
@@ -307,7 +315,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     // Re-attaches all the components to the initialized components (if they are valid).
     RebindAllComponents();
 
-    
+
     // For starting the vehicle pieces.
     if (PiecesController != null)
     {
@@ -376,22 +384,26 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     OnboardController.vehicleShip = this;
   }
 
+  public void UpdateWheelControllerProperties()
+  {
+    if (!IsLandVehicle || MovementController == null || WheelController == null) return;
+    WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
+    WheelController.UseManualControls = true;
+    WheelController.magicTurnRate = PhysicsConfig.VehicleLandTurnSpeed.Value;
+    WheelController.forwardDirection = MovementController.ShipDirection;
+    WheelController.m_steeringType = VehicleWheelController.SteeringType.Magic;
+  }
+
   /// <summary>
   /// For land vehicles
   /// </summary>
   public void InitializeWheelController()
   {
-    if (!IsLandVehicle || MovementController == null) return;
 
     WheelController = gameObject.AddComponent<VehicleWheelController>();
-    WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
-    WheelController.UseManualControls = true;
-    WheelController.magicTurnRate = 20;
-    WheelController.inputForwardForce = 0;
-    WheelController.forwardDirection = MovementController.ShipDirection;
     WheelController.inputTurnForce = 0;
-    WheelController.m_steeringType = VehicleWheelController.SteeringType.Magic;
-
+    WheelController.inputForwardForce = 0;
+    UpdateWheelControllerProperties();
     if (WheelController == null)
       Logger.LogError("Error initializing WheelController");
   }
@@ -426,8 +438,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
     GetPersistentID();
 
-    if (PersistentZdoId != 0 && !AllVehicles.ContainsKey(PersistentZdoId))
-      AllVehicles.Add(PersistentZdoId, this);
+    if (PersistentZdoId != 0 && !VehicleInstances.ContainsKey(PersistentZdoId))
+      VehicleInstances.Add(PersistentZdoId, this);
 
     if (isValidZdo) InitializeAllComponents();
 
@@ -540,12 +552,12 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
         {
           var slabTopLevelChild = slabTransform.GetChild(i);
           if (slabTopLevelChild == null) continue;
-        var hull =
-          Instantiate(prefab, slabTopLevelChild.position,
-            slabTopLevelChild.rotation, null);
-        if (hull == null) return;
-        var hullNetView = hull.GetComponent<ZNetView>();
-        PiecesController.AddNewPiece(hullNetView);
+          var hull =
+            Instantiate(prefab, slabTopLevelChild.position,
+              slabTopLevelChild.rotation, null);
+          if (hull == null) return;
+          var hullNetView = hull.GetComponent<ZNetView>();
+          PiecesController.AddNewPiece(hullNetView);
         }
       }
       else

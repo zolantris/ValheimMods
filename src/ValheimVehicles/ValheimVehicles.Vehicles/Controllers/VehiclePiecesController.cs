@@ -839,8 +839,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   }
 
   private bool IsNotFlying =>
-    !VehicleInstance?.MovementController?.IsFlying() ?? (false ||
-      ValheimRaftPlugin.Instance.AllowFlight.Value == false);
+    !VehicleInstance?.MovementController?.IsFlying() ?? false ||
+    ValheimRaftPlugin.Instance.AllowFlight.Value == false;
 
   private bool IsPhysicsForceSynced =
     PropulsionConfig.DefaultPhysicsMode.Value ==
@@ -1192,7 +1192,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public void RemovePiece(ZNetView netView)
   {
-    if (netView.name.Contains(PrefabNames.WaterVehicleShip)) return;
+    if (PrefabNames.IsVehicle(netView.name)) return;
     if (!m_pieces.Remove(netView)) return;
 
     UpdateMass(netView, true);
@@ -1445,7 +1445,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     if ((bool)wnt)
     {
-      if (wnt.name.Contains(PrefabNames.WaterVehicleShip))
+      if (PrefabNames.IsVehicle(wnt.name))
         // prevents a loop of DestroyPiece being called from WearNTear_Patch
         return;
 
@@ -1835,7 +1835,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public float GetTotalSailArea()
   {
     if (totalSailArea != 0f || !ValheimRaftPlugin.Instance ||
-        (m_mastPieces.Count == 0 && m_sailPieces.Count == 0))
+        m_mastPieces.Count == 0 && m_sailPieces.Count == 0)
       return totalSailArea;
 
     totalSailArea = 0;
@@ -1978,7 +1978,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public static void RemoveZDO(ZDO zdo)
   {
     if (zdo.m_prefab ==
-        PrefabNames.WaterVehicleShip.GetStableHashCode()) return;
+        PrefabNames.WaterVehicleShip.GetStableHashCode() || zdo.m_prefab == PrefabNames.LandVehicle.GetStableHashCode()) return;
 
     var id = GetParentID(zdo);
     if (id == 0 || !m_allPieces.TryGetValue(id, out var list)) return;
@@ -2012,7 +2012,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public static bool IsExcludedPrefab(GameObject netView)
   {
-    if (netView.name.StartsWith(PrefabNames.WaterVehicleShip) ||
+    if (PrefabNames.IsVehicle(netView.name) ||
         netView.name.StartsWith(PrefabNames.VehiclePiecesContainer))
       return true;
 
@@ -2270,14 +2270,15 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     // main ship colliders like the generated meshes and onboard collider
     IgnoreShipColliders(nvColliders);
+    IgnoreWheelColliders(nvColliders);
 
     // all pieces
     if (RamPrefabs.IsRam(nvName) || nvName.Contains(PrefabNames.ShipAnchorWood))
       IgnoreCollidersForList(nvColliders, m_pieces);
 
     // rams must always have new pieces added to their list ignored. So that the new piece does not hit the ram.
-    IgnoreCollidersForAllRamPieces(netView);
-    IgnoreCollidersForAllAnchorPieces(netView);
+    IgnoreCollidersForRamPieces(netView);
+    IgnoreCollidersForAnchorPieces(netView);
   }
 
   public void AddPiece(ZNetView netView, bool isNew = false)
@@ -2579,7 +2580,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
                     right *
                     MovementController.GetFloatSizeFromDirection(
                       Vector3.right);
-    
+
     foreach (var meshCollider in convexHullMeshColliders)
     {
       // Loop through all vertices of the mesh
@@ -2654,24 +2655,44 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     CalculateFurthestPointsOnMeshes();
     convexHullComponent.UpdateConvexHullBounds();
-    
+
     convexHullTriggerColliders = MovementController.DamageColliders
-      .GetComponentsInChildren<Collider>().ToList();
+      .GetComponentsInChildren<Collider>(true).ToList();
     convexHullTriggerMeshColliders = MovementController.DamageColliders
-      .GetComponentsInChildren<MeshCollider>().ToList();
+      .GetComponentsInChildren<MeshCollider>(true).ToList();
 
     if (RamConfig.VehicleHullsAreRams.Value)
       MovementController.AddRamAoeToConvexHull();
 
     IgnoreShipColliders(convexHullColliders);
     IgnoreVehicleCollidersForAllPieces();
-    
+
     if (WheelController != null)
     {
       var convexHullBounds = convexHullComponent.GetConvexHullBounds(true);
       WheelController.InitializeWheels(convexHullBounds);
-      // IgnoreAllWheelColliders();
+      IgnoreAllWheelColliders();
     }
+  }
+
+  public void IgnoreColliderForWheelColliders(Collider collider)
+  {
+    if (collider == null || WheelController == null) return;
+    foreach (var wheelCollider in WheelController.wheelColliders)
+    {
+      if (wheelCollider == null)
+      {
+        continue;
+      }
+
+      Physics.IgnoreCollision(collider, wheelCollider, true);
+    }
+  }
+
+  public void IgnoreWheelColliders(List<Collider> colliders)
+  {
+    if (WheelController == null) return;
+    colliders.ForEach(IgnoreColliderForWheelColliders);
   }
 
   public void IgnoreAllWheelColliders()
@@ -2692,7 +2713,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       IgnoreShipColliderForCollider(collider, true);
       colliders.Add(collider);
     }
-    
+
     IgnoreCollidersForList(colliders, m_pieces);
   }
 
@@ -2750,7 +2771,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     foreach (var zNetView in m_pieces)
     {
-      var colliders = zNetView.GetComponentsInChildren<Collider>();
+      var colliders = zNetView.GetComponentsInChildren<Collider>(true);
       IgnoreShipColliders(colliders.ToList());
     }
   }
@@ -2857,12 +2878,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     }
   }
 
-  public void IgnoreCollidersForAllAnchorPieces(ZNetView netView)
+  public void IgnoreCollidersForAnchorPieces(ZNetView netView)
   {
     IgnoreNetViewCollidersForList(netView, m_anchorPieces);
   }
 
-  public void IgnoreCollidersForAllRamPieces(ZNetView netView)
+  public void IgnoreCollidersForRamPieces(ZNetView netView)
   {
     IgnoreNetViewCollidersForList(netView, m_ramPieces);
   }
@@ -2872,19 +2893,20 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     if (collider == null) return;
     foreach (var triggerCollider in convexHullTriggerColliders)
       Physics.IgnoreCollision(collider, triggerCollider, true);
-    // foreach (var triggerMeshCollider in convexHullMeshColliders)
-    // {
-    //   Physics.IgnoreCollision(collider, triggerMeshCollider, true);
-    // }
+    foreach (var triggerMeshCollider in convexHullMeshColliders)
+    {
+      Physics.IgnoreCollision(collider, triggerMeshCollider, true);
+    }
     foreach (var convexHullMesh in convexHullMeshes)
       Physics.IgnoreCollision(collider,
         convexHullMesh.GetComponent<MeshCollider>(),
         true);
 
-    // if (!skipWheelIgnore)
-    // {
-    //   IgnoreAllWheelColliders();
-    // }
+    if (!skipWheelIgnore)
+    {
+      IgnoreColliderForWheelColliders(collider);
+    }
+
     if (FloatCollider)
       Physics.IgnoreCollision(collider, FloatCollider, true);
     if (OnboardCollider)

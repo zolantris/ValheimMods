@@ -243,7 +243,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch");
 
   public bool CanDescend =>
-    (WaterConfig.WaterBallastEnabled.Value && IsNotFlying) || IsFlying();
+    WaterConfig.WaterBallastEnabled.Value && IsNotFlying || IsFlying();
 
   internal override void Awake()
   {
@@ -294,7 +294,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       UpdateBreakingControls();
       return;
     }
-    
+
     OnControllingWithHotKeyPress();
 
     // only should be run on Ships for now.
@@ -979,7 +979,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       Physics.SyncTransforms();
       m_body.velocity = Vector3.zero;
       m_body.angularVelocity = Vector3.zero;
-      
+
       foreach (var modifiedKinematicPlayer in modifiedKinematicPlayers)
         if (modifiedKinematicPlayer.m_body.isKinematic)
         {
@@ -1234,7 +1234,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var centerPosition = ShipDirection.position;
     var shipForward = ShipDirection.forward;
     var shipRight = ShipDirection.right;
-    
+
     var front = centerPosition +
                 shipForward * GetFloatSizeFromDirection(shipForward);
     var back = centerPosition -
@@ -1369,7 +1369,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       var bounds = PiecesController.convexHullComponent.GetConvexHullBounds(true);
 
       WheelController.InitializeWheels(bounds);
-      PiecesController.IgnoreAllWheelColliders();
       return;
     }
   }
@@ -1402,7 +1401,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     {
       m_body.WakeUp();
       var landSpeed = GetLandVehicleSpeed();
-     
+
       WheelController.inputForwardForce = landSpeed;
       WheelController.inputTurnForce = Mathf.Clamp(m_rudderValue, -1, 1);
       WheelController.VehicleMovementFixedUpdate();
@@ -1884,7 +1883,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       shipLeft = nearestLeft;
     }
 
-    
+
     // min does not matter but max does as the ship when attempting to reach flight mode will start bouncing badly.
     var clampedTargetHeight = Mathf.Clamp(TargetHeight, cachedMaxDepthOffset,
       GetSurfaceOffsetWaterVehicleOnly());
@@ -1894,7 +1893,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       clampedTargetHeight;
     var waterLevelLeft =
       Floating.GetWaterLevel(shipLeft, ref m_previousLeft) +
-                         clampedTargetHeight;
+      clampedTargetHeight;
     var waterLevelRight =
       Floating.GetWaterLevel(shipRight, ref m_previousRight) +
       clampedTargetHeight;
@@ -1905,7 +1904,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var waterLevelBack =
       Floating.GetWaterLevel(shipBack,
         ref m_previousBack) +
-                         clampedTargetHeight;
+      clampedTargetHeight;
     var averageWaterHeight =
       (waterLevelCenter + waterLevelLeft + waterLevelRight + waterLevelForward +
        waterLevelBack) /
@@ -2068,7 +2067,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       UpdateShipFloatation(ShipFloatationObj);
     else if (isFlying)
       UpdateFlyingVehicle();
-    else if (PropulsionConfig.EnableLandVehicles.Value)
+    else if (PrefabConfig.EnableLandVehicles.Value)
       UpdateVehicleLandSpeed();
 
     // both flying and floatation use this

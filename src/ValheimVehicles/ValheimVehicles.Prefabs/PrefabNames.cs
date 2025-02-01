@@ -358,4 +358,10 @@ public static class PrefabNames
   {
     return IsHull(go.name);
   }
+
+  public static bool IsVehicle(string goName)
+  {
+    return goName.StartsWith(LandVehicle) || goName.StartsWith(WaterVehicleShip);
+  }
+
 }

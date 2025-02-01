@@ -1,5 +1,7 @@
 using BepInEx.Configuration;
+using Jotunn.Managers;
 using UnityEngine;
+using ValheimVehicles.Prefabs;
 
 namespace ValheimVehicles.Config;
 
@@ -24,6 +26,9 @@ public static class PrefabConfig
   public static ConfigEntry<Vector3>
     RopeLadderEjectionOffset { get; private set; } = null!;
 
+  public static ConfigEntry<bool> EnableLandVehicles { get; private set; } =
+    null!;
+
   public enum VehicleShipInitPiece
   {
     Hull4X8,
@@ -34,6 +39,14 @@ public static class PrefabConfig
   }
 
   private const string SectionKey = "PrefabConfig";
+
+  public static void UpdatePrefabEnabled(string prefabName, bool enabled)
+  {
+    if (PieceManager.Instance == null) return;
+    var prefab = PieceManager.Instance.GetPiece(prefabName);
+    if (prefab == null) return;
+    prefab.Piece.m_enabled = enabled;
+  }
 
   public static void BindConfig(ConfigFile config)
   {
@@ -62,5 +75,12 @@ public static class PrefabConfig
       ConfigHelpers.CreateConfigDescription(
         "Set the experimental glass color for your vehicle. This will be used for most glass meshes. This is the default color. Eventually players can customize the color of the glass.",
         true, true));
+
+    EnableLandVehicles = Config.Bind(SectionKey, "enableLandVehicles", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Vehicles land vehicle prefab will be enabled. LandVehicles will be available for all version above V3.0.0",
+        true));
+
+    EnableLandVehicles.SettingChanged += (_, __) => UpdatePrefabEnabled(PrefabNames.LandVehicle, EnableLandVehicles.Value);
   }
 }

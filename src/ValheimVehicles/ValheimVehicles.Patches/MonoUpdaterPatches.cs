@@ -14,6 +14,9 @@ public class MonoUpdaterPatches
   private const string VehiclePiecesControllerUpdate =
     "MonoUpdaters.Update.VehiclePiecesController";
 
+  private const string ValheimAoeUpdate =
+    "MonoUpdaters.Update.ValheimAoe";
+
   private const string VehiclePiecesControllerFixedUpdate =
     "MonoUpdaters.FixedUpdate.VehiclePiecesController";
 
@@ -47,6 +50,12 @@ public class MonoUpdaterPatches
   {
     var deltaTime = Time.deltaTime;
     var time = Time.time;
+
+
+    __instance.m_update.CustomUpdate(
+      ValheimAoe.Instances,
+      ValheimAoeUpdate,
+      deltaTime, time);
 
     __instance.m_update.CustomUpdate(
       VehiclePiecesController.MonoUpdaterInstances,

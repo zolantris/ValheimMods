@@ -190,19 +190,6 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
     return stringBuilder.ToString();
   }
 
-  public void Update()
-  {
-    if ((double)m_activationTimer > 0.0)
-      m_activationTimer -= Time.deltaTime;
-    if ((double)m_hitInterval <= 0.0 || !m_useTriggers)
-      return;
-    m_hitTimer -= Time.deltaTime;
-    if ((double)m_hitTimer > 0.0)
-      return;
-    m_hitTimer = m_hitInterval;
-    m_hitList.Clear();
-  }
-
   public void CustomFixedUpdate(float fixedDeltaTime)
   {
     if ((UnityEngine.Object)m_nview != (UnityEngine.Object)null &&
@@ -313,6 +300,15 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
 
   public void CustomUpdate(float deltaTime, float time)
   {
+    if ((double)m_activationTimer > 0.0)
+      m_activationTimer -= deltaTime;
+    if ((double)m_hitInterval <= 0.0 || !m_useTriggers)
+      return;
+    m_hitTimer -= deltaTime;
+    if ((double)m_hitTimer > 0.0)
+      return;
+    m_hitTimer = m_hitInterval;
+    m_hitList.Clear();
   }
 
   public void CustomLateUpdate(float deltaTime)
@@ -457,22 +453,44 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
   }
 
 
-  public void OnCollisionEnter(Collision collision)
+  private void OnCollisionEnter(Collision collision)
   {
-    CauseTriggerDamage(collision.collider, true);
+    OnCollisionEnterHandler(collision);
   }
 
-  public void OnCollisionStay(Collision collision)
+  private void OnCollisionStay(Collision collision)
+  {
+    OnCollisionStayHandler(collision);
+  }
+
+  private void OnTriggerEnter(Collider collider)
+  {
+    OnTriggerEnterHandler(collider);
+  }
+
+  private void OnTriggerStay(Collider collider)
+  {
+    OnTriggerEnterHandler(collider);
+  }
+
+  // handlers for override methods.
+
+  public virtual void OnCollisionStayHandler(Collision collision)
   {
     CauseTriggerDamage(collision.collider, false);
   }
 
-  public void OnTriggerEnter(Collider collider)
+  public virtual void OnCollisionEnterHandler(Collision collision)
+  {
+    CauseTriggerDamage(collision.collider, true);
+  }
+
+  public virtual void OnTriggerEnterHandler(Collider collider)
   {
     CauseTriggerDamage(collider, true);
   }
 
-  public void OnTriggerStay(Collider collider)
+  public virtual void OnTriggerStayHandler(Collider collider)
   {
     CauseTriggerDamage(collider, false);
   }

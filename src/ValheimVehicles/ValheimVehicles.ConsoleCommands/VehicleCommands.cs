@@ -606,7 +606,7 @@ public class VehicleCommands : ConsoleCommand
   {
     var debugGui = ValheimRaftPlugin.Instance.GetComponent<VehicleDebugGui>();
     ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui(!(bool)debugGui);
-    foreach (var vehicleShip in VehicleShip.AllVehicles)
+    foreach (var vehicleShip in VehicleShip.VehicleInstances)
       vehicleShip.Value?.InitializeVehicleDebugger();
   }
 

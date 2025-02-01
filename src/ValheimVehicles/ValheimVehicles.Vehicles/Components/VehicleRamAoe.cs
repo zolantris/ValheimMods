@@ -175,8 +175,7 @@ public class VehicleRamAoe : ValheimAoe
 
     // Must be within the BaseVehiclePieces after initialization otherwise this AOE could attempt to damage items within the raft ball
     var isChildOfBaseVehicle =
-      transform.root.name.StartsWith(PrefabNames.WaterVehicleShip) ||
-      transform.root.name.StartsWith(PrefabNames.LandVehicle) ||
+      PrefabNames.IsVehicle(transform.root.name) ||
       transform.root.name.StartsWith(PrefabNames.VehiclePiecesContainer) ||
       transform.root.name.StartsWith(
         PrefabNames
@@ -343,42 +342,39 @@ public class VehicleRamAoe : ValheimAoe
     return true;
   }
 
-  public new void OnCollisionEnter(Collision collision)
+  public override void OnCollisionEnterHandler(Collision collision)
   {
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collision.collider)) return;
     if (!UpdateDamageFromVelocity(
           Vector3.Magnitude(collision.relativeVelocity))) return;
-    base.OnCollisionEnter(collision);
+    base.OnCollisionEnterHandler(collision);
   }
 
-  public new void OnCollisionStay(Collision collision)
+  public override void OnCollisionStayHandler(Collision collision)
   {
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collision.collider)) return;
     if (!UpdateDamageFromVelocity(
           Vector3.Magnitude(collision.relativeVelocity))) return;
-    base.OnCollisionStay(collision);
+
+    base.OnCollisionStayHandler(collision);
   }
 
-  public new void OnTriggerEnter(Collider collider)
+  public override void OnTriggerEnterHandler(Collider collider)
   {
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collider)) return;
     if (!UpdateDamageFromVelocityCollider(collider)) return;
-    base.OnTriggerEnter(collider);
+    base.OnTriggerEnterHandler(collider);
   }
 
-  public new void OnTriggerStay(Collider collider)
+  public override void OnTriggerStayHandler(Collider collider)
   {
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collider)) return;
     if (!UpdateDamageFromVelocityCollider(collider)) return;
-
-    // this can be null somehow.
-    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-    if (base.OnTriggerStay == null) return;
-    base.OnTriggerStay(collider);
+    base.OnTriggerStayHandler(collider);
   }
 
   public void SetBaseDamage(HitData.DamageTypes data)
