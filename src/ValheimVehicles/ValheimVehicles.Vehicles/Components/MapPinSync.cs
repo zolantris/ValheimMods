@@ -30,6 +30,8 @@ public class MapPinSync : MonoBehaviour
       UGCType.CharacterName, Player.m_localPlayer.GetOwner().ToString());
   }
 
+  public bool hasInitialized = false;
+
   public void Awake()
   {
     Instance = this;
@@ -41,27 +43,46 @@ public class MapPinSync : MonoBehaviour
 
   private void OnDestroy()
   {
-    CancelInvoke(nameof(RefreshVehiclePins));
-    StopCoroutine(nameof(RefreshDynamicSpawnPin));
+    if (hasInitialized)
+    {
+      CancelInvoke(nameof(RefreshVehiclePins));
+    }
+
+    if (refreshDynamicSpawnPinRoutine != null)
+    {
+      StopCoroutine(refreshDynamicSpawnPinRoutine);
+      refreshDynamicSpawnPinRoutine = null;
+    }
+
+    hasInitialized = false;
   }
 
   private void OnMapReady()
   {
     StartVehiclePinSync();
     StartSpawnPinSync();
+    hasInitialized = true;
   }
 
   public void StartVehiclePinSync()
   {
-    CancelInvoke(nameof(RefreshVehiclePins));
+    if (hasInitialized)
+    {
+      return;
+    }
+
     InvokeRepeating(nameof(RefreshVehiclePins), 0f,
       MinimapConfig.VehiclePinSyncInterval.Value);
   }
 
   public void StartSpawnPinSync()
   {
-    StopCoroutine(nameof(RefreshDynamicSpawnPin));
-    StartCoroutine(RefreshDynamicSpawnPin());
+    if (refreshDynamicSpawnPinRoutine != null)
+    {
+      StopCoroutine(refreshDynamicSpawnPinRoutine);
+      refreshDynamicSpawnPinRoutine = null;
+    }
+    refreshDynamicSpawnPinRoutine = StartCoroutine(RefreshDynamicSpawnPin());
   }
 
   private bool IsWithinVisibleRadius(Vector3 point)
@@ -78,6 +99,7 @@ public class MapPinSync : MonoBehaviour
   private ZDO? cachedPlayerSpawnZdo = null;
   private Vector3? cachedLastBedVector = null;
   private Minimap.PinData? cachedLastBedPinData = null;
+  private Coroutine? refreshDynamicSpawnPinRoutine;
 
   private void ClearSpawnPin(Minimap.PinData? pinData)
   {
@@ -93,7 +115,7 @@ public class MapPinSync : MonoBehaviour
     if (cachedPlayerSpawnZdo == null)
       yield return PlayerSpawnController.Instance.FindDynamicZdo(
         LocationVariation.Spawn,
-        onComplete: data => { cachedPlayerSpawnZdo = data; });
+        data => { cachedPlayerSpawnZdo = data; });
 
     if (cachedPlayerSpawnZdo == null)
     {
@@ -181,6 +203,7 @@ public class MapPinSync : MonoBehaviour
 
   public void RefreshVehiclePins()
   {
+    if (ZNet.instance == null) return;
     if (ZNet.instance.IsDedicated()) return;
     if (Player.m_localPlayer == null) return;
     // Clear existing pins from both dictionaries
