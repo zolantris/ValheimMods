@@ -2872,19 +2872,19 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     if (collider == null) return;
     foreach (var triggerCollider in convexHullTriggerColliders)
       Physics.IgnoreCollision(collider, triggerCollider, true);
-    foreach (var triggerMeshCollider in convexHullMeshColliders)
-    {
-      Physics.IgnoreCollision(collider, triggerMeshCollider, true);
-    }
+    // foreach (var triggerMeshCollider in convexHullMeshColliders)
+    // {
+    //   Physics.IgnoreCollision(collider, triggerMeshCollider, true);
+    // }
     foreach (var convexHullMesh in convexHullMeshes)
       Physics.IgnoreCollision(collider,
         convexHullMesh.GetComponent<MeshCollider>(),
         true);
 
-    if (!skipWheelIgnore)
-    {
-      IgnoreAllWheelColliders();
-    }
+    // if (!skipWheelIgnore)
+    // {
+    //   IgnoreAllWheelColliders();
+    // }
     if (FloatCollider)
       Physics.IgnoreCollision(collider, FloatCollider, true);
     if (OnboardCollider)
