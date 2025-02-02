@@ -1162,7 +1162,7 @@ namespace ValheimVehicles.SharedScripts
       // go.transform.position = parentObjTransform.transform.position;
     }
 
-    private Bounds _cachedConvexHullBounds = new(Vector3.zero, Vector3.one);
+    private Bounds _cachedConvexHullBounds = new(Vector3.zero, Vector3.one * 4);
 
     /// <summary>
     /// Returns the sum of all convexHulls as a bounds, this can be non-relative but requires a transform.

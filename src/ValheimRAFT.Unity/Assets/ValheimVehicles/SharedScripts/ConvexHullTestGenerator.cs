@@ -33,6 +33,7 @@ namespace ValheimVehicles.SharedScripts
     public ConvexHullAPI _convexHullAPI;
     private MeshBoundsVisualizer _meshBoundsVisualizer;
     public VehicleWheelController vehicleWheelController;
+    public MovementPiecesController movementPiecesController;
     private float lastUpdate;
     private Bounds _cachedDebugBounds = new Bounds(Vector3.zero, Vector3.zero);
 
@@ -48,7 +49,6 @@ namespace ValheimVehicles.SharedScripts
           vehicleWheelController.wheelParent = transform.Find("vehicle_land/wheels");
         }
       }
-
       // EnableCollisionBetweenLayers(10, 28);
       // EnableCollisionBetweenLayers(28, 10);
       //
@@ -143,11 +143,6 @@ namespace ValheimVehicles.SharedScripts
       _convexHullAPI.PreviewParent = PiecesParentObj.transform;
     }
 
-    public void EnableCollisionBetweenLayers(int layerA, int layerB)
-    {
-      Physics.IgnoreLayerCollision(layerA, layerB, false);
-    }
-
     /// <summary>
     ///   For GameObjects
     /// </summary>
@@ -169,7 +164,14 @@ namespace ValheimVehicles.SharedScripts
         var bounds = _convexHullAPI.GetConvexHullBounds(true);
         _cachedDebugBounds = bounds;
         vehicleWheelController.InitializeWheels(bounds);
+        IgnoreAllCollidersBetweenWheelsAndPieces();
       }
+    }
+
+    public void IgnoreAllCollidersBetweenWheelsAndPieces()
+    {
+      var childColliders = PhysicsHelpers.GetAllChildColliders(transform);
+      PhysicsHelpers.IgnoreCollidersForLists(vehicleWheelController.colliders, childColliders);
     }
 
     private void DrawSphere(Vector3 center, float radius)

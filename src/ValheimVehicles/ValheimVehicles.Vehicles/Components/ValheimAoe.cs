@@ -366,7 +366,7 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
     }
   }
 
-  public bool ShouldHit(Collider collider)
+  public virtual bool ShouldHit(Collider collider)
   {
     var hitObject = Projectile.FindHitObject(collider);
     if ((bool)(UnityEngine.Object)hitObject)
@@ -379,19 +379,19 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
           return false;
         if ((UnityEngine.Object)m_owner != (UnityEngine.Object)null)
         {
-          if ((!m_hitOwner && (UnityEngine.Object)component ==
-                (UnityEngine.Object)m_owner) ||
-              (!m_hitSame && component.m_name == m_owner.m_name))
+          if (!m_hitOwner && (UnityEngine.Object)component ==
+              (UnityEngine.Object)m_owner ||
+              !m_hitSame && component.m_name == m_owner.m_name)
             return false;
           var flag = BaseAI.IsEnemy(m_owner, component) ||
-                     ((bool)(UnityEngine.Object)component.GetBaseAI() &&
-                      component.GetBaseAI().IsAggravatable() &&
-                      m_owner.IsPlayer());
-          if ((!m_hitFriendly && !flag) || !m_hitEnemy & flag)
+                     (bool)(UnityEngine.Object)component.GetBaseAI() &&
+                     component.GetBaseAI().IsAggravatable() &&
+                     m_owner.IsPlayer();
+          if (!m_hitFriendly && !flag || !m_hitEnemy & flag)
             return false;
         }
 
-        if (!m_hitCharacters || (m_dodgeable && component.IsDodgeInvincible()))
+        if (!m_hitCharacters || m_dodgeable && component.IsDodgeInvincible())
           return false;
       }
     }
@@ -604,9 +604,9 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
       }
 
       var flag3 =
-        (component1 is Destructible destructible &&
-         (UnityEngine.Object)destructible.m_spawnWhenDestroyed !=
-         (UnityEngine.Object)null) ||
+        component1 is Destructible destructible &&
+        (UnityEngine.Object)destructible.m_spawnWhenDestroyed !=
+        (UnityEngine.Object)null ||
         hitObject.GetComponent<MineRock5>() != null;
       var vector3 = m_attackForceForward
         ? transform.forward
@@ -738,8 +738,11 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
 
     if (hitObject.GetComponent<MineRock5>() == null)
       m_hitEffects.Create(hitPoint, Quaternion.identity);
-    if (((m_gaveSkill || !(bool)(UnityEngine.Object)m_owner ? 0 :
-          m_skill != 0 ? 1 : 0) & (flag2 ? 1 : 0)) != 0 && m_canRaiseSkill)
+    if (((m_gaveSkill || !(bool)(UnityEngine.Object)m_owner
+          ? 0
+          : m_skill != 0
+            ? 1
+            : 0) & (flag2 ? 1 : 0)) != 0 && m_canRaiseSkill)
     {
       m_owner.RaiseSkill(m_skill);
       m_gaveSkill = true;

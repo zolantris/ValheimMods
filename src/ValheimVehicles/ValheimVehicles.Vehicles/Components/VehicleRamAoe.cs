@@ -189,28 +189,31 @@ public class VehicleRamAoe : ValheimAoe
     isReadyForCollisions = true;
   }
 
+  public float GetRelativeVelocity(Collider collider)
+  {
+    var colliderVelocity = collider.attachedRigidbody != null ? collider.attachedRigidbody.velocity : Vector3.zero;
+    if (m_vehicle == null || m_vehicle.MovementController == null)
+      return colliderVelocity.magnitude;
+
+    var vehicleVelocity = m_vehicle.MovementController.m_body
+      .velocity;
+    var relativeVelocity = Vector3.Magnitude(colliderVelocity - vehicleVelocity);
+
+    return relativeVelocity;
+  }
+
   public bool UpdateDamageFromVelocityCollider(Collider collider)
   {
     if (!collider) return false;
+    var relativeVelocity = GetRelativeVelocity(collider);
     // reset damage to base damage if one of these is not available, will still recalculate later
     // exit to apply damage that has no velocity
-    if (m_vehicle?.MovementController?.m_body == null ||
-        !collider.attachedRigidbody)
+    if (m_vehicle == null &&
+        collider.attachedRigidbody == null)
     {
       m_damage = baseDamage;
-      return true;
+      return false;
     }
-
-    // Velocity will significantly increase if the object is moving towards the other object IE collision
-    float relativeVelocity;
-    if (!m_vehicle?.MovementController.m_body)
-      relativeVelocity = collider.attachedRigidbody.velocity.magnitude;
-    else
-      relativeVelocity =
-        Vector3.Magnitude(collider?.attachedRigidbody?.velocity ??
-                          Vector3.zero - m_vehicle?.MovementController.m_body
-                            ?.velocity ??
-                          Vector3.zero);
 
     return UpdateDamageFromVelocity(relativeVelocity);
   }
@@ -225,6 +228,12 @@ public class VehicleRamAoe : ValheimAoe
 
     if (materialTier == PrefabTiers.Tier3)
       multiplier *= Mathf.Clamp(1 + DamageIncreasePercentagePerTier * 2, 1, 4);
+
+    // todo add a minimum damage for a vehicle crushing an object.
+    // if (RamConfig.VehicleHullMassMultiplierDamage.Value != 0 && m_vehicle != null && m_vehicle.MovementControllerRigidbody != null)
+    // {
+    //   multiplier += Mathf.Clamp(m_vehicle.MovementControllerRigidbody.mass * RamConfig.VehicleHullMassMultiplierDamage.Value * relativeVelocityMagnitude, 0, 3);
+    // }
 
     if (Mathf.Approximately(multiplier, 0)) multiplier = 0;
 
@@ -301,6 +310,14 @@ public class VehicleRamAoe : ValheimAoe
     var childColliders = GetComponentsInChildren<Collider>();
     foreach (var childCollider in childColliders)
       Physics.IgnoreCollision(childCollider, collider, true);
+  }
+
+  public override bool ShouldHit(Collider collider)
+  {
+    var relativeVelocity = GetRelativeVelocity(collider);
+    if (relativeVelocity < minimumVelocityToTriggerHit) return false;
+
+    return base.ShouldHit(collider);
   }
 
   /// <summary>

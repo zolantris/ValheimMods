@@ -1346,6 +1346,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public float GetLandVehicleSpeed()
   {
+    if (isAnchored)
+    {
+      return 0;
+    }
+
     return vehicleSpeed switch
     {
       Ship.Speed.Stop => 0,
@@ -1379,10 +1384,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void UpdateVehicleLandSpeed()
   {
+    // sync values
     m_body.angularDrag = landVehicleAngularDrag;
     m_body.drag = landVehicleDrag;
-    m_body.centerOfMass = Vector3.zero;
+    m_body.ResetCenterOfMass();
     m_body.automaticCenterOfMass = true;
+    m_body.freezeRotation = true;
 
     if (!Mathf.Approximately(centerOfMassOffset, 0f))
     {
@@ -1394,6 +1401,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // UpdateVehicleStats(false, false);
     // early exit if anchored.
+
+    // need to be called per fixed update
     if (UpdateAnchorVelocity(m_body.velocity)) return;
     if (WheelController == null) return;
     WheelController.forwardDirection = ShipDirection;
@@ -1403,7 +1412,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       var landSpeed = GetLandVehicleSpeed();
 
       WheelController.inputForwardForce = landSpeed;
-      WheelController.inputTurnForce = Mathf.Clamp(m_rudderValue, -1, 1);
       WheelController.VehicleMovementFixedUpdate();
     }
 
@@ -3279,6 +3287,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   internal void RPC_Rudder(long sender, float value)
   {
     m_rudderValue = value;
+    if (WheelController != null)
+    {
+      WheelController.inputTurnForce = Mathf.Clamp(m_rudderValue, -1, 1);
+    }
   }
 
   /// <summary>
@@ -3542,6 +3554,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       vehicleAnchorState = HandleSetAnchor(AnchorState.Reeling);
 
     vehicleSpeed = (Ship.Speed)speed;
+    if (WheelController != null)
+    {
+      var landVehicleSpeed = GetLandVehicleSpeed();
+      WheelController.SetAcceleration(landVehicleSpeed);
+    }
   }
 
 

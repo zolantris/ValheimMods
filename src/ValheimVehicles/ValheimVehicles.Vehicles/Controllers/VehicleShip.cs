@@ -392,6 +392,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     WheelController.magicTurnRate = PhysicsConfig.VehicleLandTurnSpeed.Value;
     WheelController.forwardDirection = MovementController.ShipDirection;
     WheelController.m_steeringType = VehicleWheelController.SteeringType.Magic;
+    WheelController.wheelSuspensionDistance = PhysicsConfig.VehicleLandSuspensionDistance.Value;
+    WheelController.wheelRadius = PhysicsConfig.VehicleLandWheelRadius.Value;
   }
 
   /// <summary>

@@ -48,28 +48,35 @@ public class VehicleDebugHelpers : MonoBehaviour
   public VehicleShip VehicleShipInstance;
   private Coroutine? _drawColliderCoroutine = null;
   private GameObject? worldCenterOfMassCube;
+  private GameObject? vehiclePiecesCenterCube;
+  private GameObject? vehicleMovementCenterCube;
   private GameObject? forwardCube;
   private GameObject? backwardCube;
   private GameObject? rightCube;
   private GameObject? leftCube;
 
-  private void RenderForcePointCubes()
+  private void RenderDebugCubes()
   {
     if (VehicleShipInstance == null ||
-        VehicleShipInstance.MovementController == null) return;
+        VehicleShipInstance.MovementController == null || VehicleShipInstance.PiecesController == null) return;
 
     var shipFloatation = VehicleShipInstance
       .MovementController.GetShipFloatation();
 
-    if (shipFloatation == null) return;
+    if (shipFloatation != null)
+    {
+      RenderDebugCube(ref forwardCube, shipFloatation.Value.ShipForward,
+        "water_forward");
+      RenderDebugCube(ref backwardCube, shipFloatation.Value.ShipBack,
+        "water_backward");
+      RenderDebugCube(ref rightCube, shipFloatation.Value.ShipRight,
+        "water_right");
+      RenderDebugCube(ref leftCube, shipFloatation.Value.ShipLeft, "water_left");
+    }
 
-    RenderWaterForceCube(ref forwardCube, shipFloatation.Value.ShipForward,
-      "forward");
-    RenderWaterForceCube(ref backwardCube, shipFloatation.Value.ShipBack,
-      "backward");
-    RenderWaterForceCube(ref rightCube, shipFloatation.Value.ShipRight,
-      "right");
-    RenderWaterForceCube(ref leftCube, shipFloatation.Value.ShipLeft, "left");
+    RenderDebugCube(ref worldCenterOfMassCube, VehicleShipInstance.MovementController.m_body.position + VehicleShipInstance.MovementController.m_body.centerOfMass, "center_of_mass");
+    RenderDebugCube(ref vehiclePiecesCenterCube, VehicleShipInstance.PiecesController.transform.position, "vehicle_piece_center");
+    RenderDebugCube(ref vehicleMovementCenterCube, VehicleShipInstance.MovementController.transform.position, "vehicle_movement_center");
   }
 
   private void FixedUpdate()
@@ -78,8 +85,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     if (autoUpdateColliders ||
         VehicleDebugConfig.AutoShowVehicleColliders.Value)
     {
-      RenderForcePointCubes();
-      RenderWorldCenterOfMassAsCube();
+      RenderDebugCubes();
       DrawAllColliders();
       Update3DTextLookAt();
     }
@@ -102,8 +108,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   public void StartRenderAllCollidersLoop()
   {
     autoUpdateColliders = !autoUpdateColliders;
-    RenderWorldCenterOfMassAsCube();
-    RenderForcePointCubes();
+    RenderDebugCubes();
 
     if (autoUpdateColliders) return;
     foreach (var keyValuePair in lines)
@@ -142,7 +147,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   }
 
 
-  public void RenderWaterForceCube(ref GameObject? cube, Vector3 position,
+  public void RenderDebugCube(ref GameObject? cube, Vector3 position,
     string cubeTitle)
   {
     if (!autoUpdateColliders)
@@ -157,7 +162,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     {
       // Create the cube
       cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-      cube.name = $"force_cube_{cubeTitle}";
+      cube.name = $"debug_cube_{cubeTitle}";
       var collider = cube.GetComponent<BoxCollider>();
       if (collider) Destroy(collider);
 
@@ -176,7 +181,7 @@ public class VehicleDebugHelpers : MonoBehaviour
         new Vector3(0, 1.2f, 0); // Adjust height as needed
 
       var textMesh = textObj.AddComponent<TextMesh>();
-      textMesh.text = $"Force Cube {cubeTitle}"; // Set desired text
+      textMesh.text = $"{cubeTitle.Replace("_", " ")}"; // Set desired text
       textMesh.fontSize = 32;
       textMesh.characterSize = 0.1f; // Adjust size as needed
       textMesh.anchor = TextAnchor.MiddleCenter;
@@ -199,39 +204,6 @@ public class VehicleDebugHelpers : MonoBehaviour
         Quaternion.LookRotation(textTransform.forward *
                                 -1); // Flip to face correctly
     }
-  }
-
-
-  public void RenderWorldCenterOfMassAsCube()
-  {
-    if (!autoUpdateColliders)
-    {
-      if (worldCenterOfMassCube != null) Destroy(worldCenterOfMassCube);
-      return;
-    }
-
-    if (VehicleShipInstance.MovementController == null) return;
-    if (worldCenterOfMassCube == null)
-    {
-      worldCenterOfMassCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-      var collider = worldCenterOfMassCube.GetComponent<BoxCollider>();
-      if (collider) Destroy(collider);
-      var meshRenderer = worldCenterOfMassCube.GetComponent<MeshRenderer>();
-      meshRenderer.material =
-        new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
-        {
-          color = Color.yellow
-        };
-      worldCenterOfMassCube.gameObject.layer =
-        LayerMask.NameToLayer("Ignore Raycast");
-    }
-
-    worldCenterOfMassCube.transform.position = VehicleShipInstance
-      .MovementController.m_body
-      .worldCenterOfMass;
-    worldCenterOfMassCube.transform.SetParent(
-      VehicleShipInstance.PiecesController.transform,
-      false);
   }
 
   private static RaycastHit? RaycastToPiecesUnderPlayerCamera()

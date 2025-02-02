@@ -41,6 +41,8 @@ public static class PhysicsConfig
   public static ConfigEntry<float> VehicleLandSpeedMult = null!;
 
   public static ConfigEntry<float> VehicleLandTurnSpeed = null!;
+  public static ConfigEntry<float> VehicleLandSuspensionDistance = null!;
+  public static ConfigEntry<float> VehicleLandWheelRadius = null!;
 
   // flight
   public static ConfigEntry<float> flightAngularDamping = null!;
@@ -263,6 +265,19 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "Turn angle multiplier for land vehicles. Higher values will turn faster, but will be more disorienting and unrealistic.", true, false, new AcceptableValueRange<float>(20f, 90f)));
 
+    VehicleLandSuspensionDistance = Config.Bind(PropulsionSection,
+      "LandVehicle Suspension Distance",
+      1.5f,
+      ConfigHelpers.CreateConfigDescription(
+        "Distance suspension distance between vehicle position and wheel position. Higher values push the vehicle up and make it more bouncy. Also allowing it to recover from getting stuck", true, false, new AcceptableValueRange<float>(0.25f, 10f)));
+
+    VehicleLandWheelRadius = Config.Bind(PropulsionSection,
+      "VehicleLand Wheel Radius",
+      1.5f,
+      ConfigHelpers.CreateConfigDescription(
+        "Wheel radius. Larger wheels have more traction. But may be less realistic.", true, false, new AcceptableValueRange<float>(1.0f, 5f)));
+
+
     var dampingSidewaysDescription = ConfigHelpers.CreateConfigDescription(
       SailSidewaysDampingExplaination,
       true, true, SafeSidewaysDampingRangeWaterVehicle);
@@ -482,6 +497,8 @@ public static class PhysicsConfig
         x.UpdateVehicleSpeedThrottle());
 
     VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandSuspensionDistance.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandWheelRadius.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
 
 
     floatationVelocityMode.SettingChanged += (sender, args) =>
