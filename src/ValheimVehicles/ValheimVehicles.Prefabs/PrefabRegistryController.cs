@@ -36,21 +36,15 @@ public class PrefabRegistryController : MonoBehaviour
   {
     var allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
     foreach (var obj in allObjects)
-    {
       if (obj.name.Contains($"{PrefabNames.WaterVehicleShip}(Clone)") ||
-          PrefabNames.IsHull(obj) && obj.name.Contains("(Clone)"))
+          (PrefabNames.IsHull(obj) && obj.name.Contains("(Clone)")))
       {
         var wnt = obj.GetComponent<WearNTear>();
         if ((bool)wnt)
-        {
           wnt.Destroy();
-        }
         else
-        {
           Destroy(obj);
-        }
       }
-    }
   }
 
   /// <summary>
@@ -93,9 +87,7 @@ public class PrefabRegistryController : MonoBehaviour
   {
     if (!ValheimRaftPlugin.Instance.AdminsCanOnlyBuildRaft.Value &&
         prefabsEnabled)
-    {
       return;
-    }
 
     Logger.LogDebug(
       $"ValheimRAFT: UpdatePrefabStatusCalled with AdminsCanOnlyBuildRaft set as {ValheimRaftPlugin.Instance.AdminsCanOnlyBuildRaft.Value}, updating prefabs and player access");
@@ -162,7 +154,7 @@ public class PrefabRegistryController : MonoBehaviour
   public static void RegisterValheimVehiclesPrefabs()
   {
     CustomMeshPrefabs.Instance.Register(prefabManager, pieceManager);
-    
+
     AnchorPrefabs.Instance.Register(prefabManager, pieceManager);
 
     ShipRudderPrefabs.Instance.Register(prefabManager, pieceManager);
@@ -181,7 +173,7 @@ public class PrefabRegistryController : MonoBehaviour
   public static void RegisterAllPrefabs()
   {
     // Critical Items
-    WaterVehiclePrefab.Instance.Register(prefabManager, pieceManager);
+    VehiclePrefabs.Instance.Register(prefabManager, pieceManager);
     RaftPrefab.Instance.Register(prefabManager, pieceManager);
     ShipSteeringWheelPrefab.Instance.Register(prefabManager, pieceManager);
 
@@ -267,7 +259,7 @@ public class PrefabRegistryController : MonoBehaviour
           {
             Amount = 10,
             Item = "Wood",
-            Recover = true,
+            Recover = true
           }
         ]
       }));

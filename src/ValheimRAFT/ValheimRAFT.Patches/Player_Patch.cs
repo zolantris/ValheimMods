@@ -28,7 +28,7 @@ public class Player_Patch
     IEnumerable<CodeInstruction> instructions)
   {
     var operand = HarmonyPatchMethods.GetGenericMethod(
-      typeof(UnityEngine.Object), "Instantiate", 1,
+      typeof(Object), "Instantiate", 1,
       new System.Type[3]
       {
         typeof(System.Type),
@@ -39,7 +39,7 @@ public class Player_Patch
     {
       new(OpCodes.Call, operand)
     };
-    return new CodeMatcher(instructions).MatchForward(useEnd: true, matches)
+    return new CodeMatcher(instructions).MatchForward(true, matches)
       .Advance(1)
       .InsertAndAdvance(
         Transpilers.EmitDelegate<System.Func<GameObject, GameObject>>(
@@ -49,8 +49,9 @@ public class Player_Patch
 
   public static void HidePreviewComponent(ZNetView netView)
   {
-    if (!netView.name.Contains(PrefabNames.WaterVehicleShip)) return;
+    if (!PrefabNames.IsVehicle(netView.name)) return;
     var vehicleShip = netView.GetComponent<VehicleShip>();
+    if (vehicleShip == null) return;
     var ghostContainer = vehicleShip.GhostContainer();
     if (ghostContainer != null)
     {
@@ -63,7 +64,7 @@ public class Player_Patch
     var piece = gameObject.GetComponent<Piece>();
 
     if (!piece) return gameObject;
-    if (piece.name.StartsWith(PrefabNames.WaterVehicleShip)) return gameObject;
+    if (PrefabNames.IsVehicle(gameObject.name)) return gameObject;
 
     var rb = piece.GetComponentInChildren<Rigidbody>();
     var netView = piece.GetComponent<ZNetView>();
@@ -73,7 +74,7 @@ public class Player_Patch
       HidePreviewComponent(netView);
     }
 
-    if (((bool)rb && !rb.isKinematic) || !PatchSharedData.PlayerLastRayPiece)
+    if ((bool)rb && !rb.isKinematic || !PatchSharedData.PlayerLastRayPiece)
     {
       return gameObject;
     }
@@ -213,11 +214,11 @@ public class Player_Patch
     if ((bool)((Character)__instance).m_lastGroundCollider &&
         ((Character)__instance).m_lastGroundTouch < 0.3f)
     {
-      if (!VehiclePiecesController.AddDynamicParent((__instance).m_nview,
-            (__instance).m_lastGroundCollider.gameObject))
+      if (!VehiclePiecesController.AddDynamicParent(__instance.m_nview,
+            __instance.m_lastGroundCollider.gameObject))
       {
-        MoveableBaseRootComponent.AddDynamicParent((__instance).m_nview,
-          (__instance).m_lastGroundCollider.gameObject);
+        MoveableBaseRootComponent.AddDynamicParent(__instance.m_nview,
+          __instance.m_lastGroundCollider.gameObject);
       }
     }
   }

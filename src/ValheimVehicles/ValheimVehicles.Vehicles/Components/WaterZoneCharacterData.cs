@@ -28,7 +28,7 @@ public class WaterZoneCharacterData : ICharacterOnboardData
   public VehicleOnboardController? OnboardController;
 
   public VehicleShip? VehicleShip =>
-    OnboardController?.VehicleInstance?.Instance;
+    OnboardController?.vehicleShip?.Instance;
 
   public WaterZoneController? WaterZoneController;
   private WaterVolume? _prevWaterVolume;

@@ -75,7 +75,7 @@ public class WearNTear_Patch
   [HarmonyPrefix]
   private static bool WearNTear_Destroy(WearNTear __instance)
   {
-    if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleShip))
+    if (PrefabNames.IsVehicle(__instance.gameObject.name))
       try
       {
         var canDestroyVehicle =
@@ -166,7 +166,7 @@ public class WearNTear_Patch
   private static bool WearNTear_ApplyDamage(WearNTear __instance, float damage)
   {
     // watervehicleship should receive no wearntear damage
-    if (__instance.gameObject.name.Contains(PrefabNames.WaterVehicleShip))
+    if (PrefabNames.IsVehicle(__instance.gameObject.name))
       return false;
 
     var bv = __instance.GetComponentInParent<VehiclePiecesController>();

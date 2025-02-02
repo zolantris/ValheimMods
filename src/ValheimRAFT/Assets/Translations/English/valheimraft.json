@@ -135,5 +135,7 @@
   "valheim_vehicles_window_porthole_standalone": "Porthole window: Standalone",
   "valheim_vehicles_window_porthole_standalone_desc": "Porthole window that can be placed on any vehicle piece to see through it. Requires 2 windows to create a proper seal.",
   "valheim_vehicles_ship_anchor": "Ship Anchor",
-  "valheim_vehicles_ship_anchor_desc": "A placeable ship anchor. Meant for stopping the ship and lowering water sway while anchored."
+  "valheim_vehicles_ship_anchor_desc": "A placeable ship anchor. Meant for stopping the ship and lowering water sway while anchored.",
+  "valheim_vehicles_land_vehicle": "Land Vehicle",
+  "valheim_vehicles_land_vehicle_desc": "A placeable land vehicle. Explore the lands of valheim with a vehicle!"
 }

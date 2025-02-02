@@ -16,6 +16,7 @@ using DynamicLocations.API;
 using DynamicLocations.Controllers;
 using DynamicLocations.Structs;
 using UnityEngine;
+using UnityEngine.Rendering;
 using ValheimRAFT.Config;
 using ValheimRAFT.Patches;
 using ValheimRAFT.Util;
@@ -34,7 +35,6 @@ using ZdoWatcher;
 using Zolantris.Shared;
 using Zolantris.Shared.BepInExAutoDoc;
 using Logger = Jotunn.Logger;
-
 namespace ValheimRAFT;
 
 internal abstract class PluginDependencies
@@ -59,10 +59,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public const string ModNameBeta = "ValheimRAFTBETA";
   public const string ModGuid = $"{Author}.{ModName}";
   public static string HarmonyGuid => ModGuid;
-
   public const string ModDescription =
     "Valheim Mod for building on the sea, requires Jotunn to be installed.";
-
   public const string CopyRight = "Copyright © 2023-2024, GNU-v3 licensed";
   // ReSharper restore MemberCanBePrivate.Global
 
@@ -96,11 +94,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   public ConfigEntry<float> MaxSailSpeed { get; set; }
   public ConfigEntry<float> SpeedCapMultiplier { get; set; }
-  public ConfigEntry<float> VehicleRudderSpeedBack { get; set; }
-  public ConfigEntry<float> VehicleRudderSpeedSlow { get; set; }
-  public ConfigEntry<float> VehicleRudderSpeedHalf { get; set; }
 
-  public ConfigEntry<float> VehicleRudderSpeedFull { get; set; }
 
   public ConfigEntry<bool> FlightVerticalToggle { get; set; }
   public ConfigEntry<bool> FlightHasRudderOnly { get; set; }
@@ -190,18 +184,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         true));
 
     // rudder
-    VehicleRudderSpeedBack = Config.Bind("Propulsion", "Rudder Back Speed", 1f,
-      CreateConfigDescription(
-        "Set the Back speed of rudder, this will apply with sails", true));
-    VehicleRudderSpeedSlow = Config.Bind("Propulsion", "Rudder Slow Speed", 1f,
-      CreateConfigDescription(
-        "Set the Slow speed of rudder, this will apply with sails", true));
-    VehicleRudderSpeedHalf = Config.Bind("Propulsion", "Rudder Half Speed", 0f,
-      CreateConfigDescription(
-        "Set the Half speed of rudder, this will apply with sails", true));
-    VehicleRudderSpeedFull = Config.Bind("Propulsion", "Rudder Full Speed", 0f,
-      CreateConfigDescription(
-        "Set the Full speed of rudder, this will apply with sails", true));
+
 
     // ship weight
     HasShipWeightCalculations = Config.Bind("Propulsion",
@@ -446,6 +429,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     PhysicsConfig.BindConfig(Config);
     MinimapConfig.BindConfig(Config);
     HudConfig.BindConfig(Config);
+    CameraConfig.BindConfig(Config);
 
 #if DEBUG
     // Meant for only being run in debug builds for testing quickly
@@ -487,7 +471,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     EnableShipInWaterSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
     AllowFlight.SettingChanged += VehicleShip.OnAllowFlight;
     AllowExperimentalPrefabs.SettingChanged +=
-      WaterVehiclePrefab.Instance.OnExperimentalPrefabSettingsChange;
+      VehiclePrefabs.Instance.OnExperimentalPrefabSettingsChange;
 
     /*
      * @todo add a way to skip LoadCustomTextures when on server. This check when used here crashes the Plugin.
@@ -501,6 +485,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     // PlayerSpawnController.PlayerMoveToVehicleCallback =
     // VehiclePiecesController.OnPlayerSpawnInVehicle;
     AddModSupport();
+
+    var renderPipeline = GraphicsSettings.defaultRenderPipeline;
+    if (renderPipeline != null)
+      Logger.LogDebug(
+        $"Valheim GameEngine is using: <{renderPipeline}> graphics pipeline ");
   }
 
   private void OnDestroy()

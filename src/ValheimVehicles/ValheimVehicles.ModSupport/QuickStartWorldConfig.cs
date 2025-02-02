@@ -12,7 +12,7 @@ public static class QuickStartWorldConfig
 {
   public static ConfigFile? Config { get; private set; }
 
-  private const string QuickStartSection = "Quick Start (DEBUG-ONLY)";
+  private const string QuickStartSection = "QuickStartWorld";
 #if DEBUG
   public static ConfigEntry<string> QuickStartWorldName { get; private set; } =
     null!;
@@ -24,8 +24,40 @@ public static class QuickStartWorldConfig
     QuickStartWorldPassword { get; private set; } =
     null!;
 
+
   public static ConfigEntry<string>
     QuickStartWorldPlayerName { get; private set; } = null!;
+
+  public static ConfigEntry<string>
+    JoinServerUrl { get; private set; } =
+    null!;
+
+  public static ConfigEntry<OnlineBackendType>
+    ServerOnlineBackendType { get; private set; } =
+    null!;
+
+
+  public static ConfigEntry<int>
+    JoinServerPort { get; private set; } =
+    null!;
+
+  public static ConfigEntry<bool>
+    IsPublicServer { get; private set; } =
+    null!;
+
+  public static ConfigEntry<bool>
+    IsServer { get; private set; } =
+    null!;
+
+  public static ConfigEntry<bool>
+    IsJoinServer { get; private set; } =
+    null!;
+
+
+  public static ConfigEntry<bool>
+    IsOpenServer { get; private set; } =
+    null!;
+
 #endif
 
 #if DEBUG
@@ -46,7 +78,9 @@ public static class QuickStartWorldConfig
   public static void BindConfig(ConfigFile config)
   {
 #if DEBUG
-       Config = config;
+    Config = config;
+
+    ServerOnlineBackendType = config.Bind(QuickStartSection, "ServerOnlineBackendType", OnlineBackendType.Steamworks);
 
     QuickStartWorldName = config.Bind(QuickStartSection, "QuickStartWorldName",
       "",
@@ -62,6 +96,48 @@ public static class QuickStartWorldConfig
         "Set the quick start world password",
         false, false));
 
+    IsOpenServer = config.Bind(QuickStartSection,
+      "IsOpenServer",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Set if hosted server is opened allowing other players to connect to the server.",
+        false, false));
+
+    IsPublicServer = config.Bind(QuickStartSection,
+      "IsPublicServer",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Set the hosted server is public and listed.",
+        false, false));
+
+    IsServer = config.Bind(QuickStartSection,
+      "IsServer",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Set if server is public",
+        false, false));
+
+    IsJoinServer = config.Bind(QuickStartSection,
+      "IsJoinServer",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Join a server instead of hosting a server automatically.",
+        false, false));
+
+    JoinServerUrl = config.Bind(QuickStartSection,
+      "JoinServerUrl",
+      "",
+      ConfigHelpers.CreateConfigDescription(
+        "Set the join server URL. This can be an IP address or a web url if hosted server can resolve from a url.",
+        false, false));
+
+    JoinServerPort = config.Bind(QuickStartSection,
+      "JoinServerPort",
+      2456,
+      ConfigHelpers.CreateConfigDescription(
+        "Set the join server URL. This can be an IP address or a web url if hosted server can resolve from a url.",
+        false, false));
+
     QuickStartEnabled = config.Bind(QuickStartSection,
       "QuickStartEnabled",
       false,
@@ -75,6 +151,7 @@ public static class QuickStartWorldConfig
       ConfigHelpers.CreateConfigDescription(
         "Quick start player name. Must be valid to start the quick start",
         false, false));
+
     QuickStartEnabled.SettingChanged += (sender, args) => OnQuickStartEnabled();
 #endif
   }

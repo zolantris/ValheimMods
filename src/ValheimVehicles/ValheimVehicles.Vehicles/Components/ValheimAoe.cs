@@ -120,10 +120,7 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
   public Rigidbody m_body;
   public static List<IMonoUpdater> Instances = new();
 
-
-  public List<MeshCollider> m_meshColliders = new();
-
-  public void Awake()
+  public virtual void Awake()
   {
     m_nview = GetComponentInParent<ZNetView>();
     m_body = GetComponent<Rigidbody>();
@@ -191,19 +188,6 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
     stringBuilder.AppendFormat("\n$item_backstab: <color=orange>{0}x</color>",
       (object)m_backstabBonus);
     return stringBuilder.ToString();
-  }
-
-  public void Update()
-  {
-    if ((double)m_activationTimer > 0.0)
-      m_activationTimer -= Time.deltaTime;
-    if ((double)m_hitInterval <= 0.0 || !m_useTriggers)
-      return;
-    m_hitTimer -= Time.deltaTime;
-    if ((double)m_hitTimer > 0.0)
-      return;
-    m_hitTimer = m_hitInterval;
-    m_hitList.Clear();
   }
 
   public void CustomFixedUpdate(float fixedDeltaTime)
@@ -316,6 +300,15 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
 
   public void CustomUpdate(float deltaTime, float time)
   {
+    if ((double)m_activationTimer > 0.0)
+      m_activationTimer -= deltaTime;
+    if ((double)m_hitInterval <= 0.0 || !m_useTriggers)
+      return;
+    m_hitTimer -= deltaTime;
+    if ((double)m_hitTimer > 0.0)
+      return;
+    m_hitTimer = m_hitInterval;
+    m_hitList.Clear();
   }
 
   public void CustomLateUpdate(float deltaTime)
@@ -373,7 +366,7 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
     }
   }
 
-  public bool ShouldHit(Collider collider)
+  public virtual bool ShouldHit(Collider collider)
   {
     var hitObject = Projectile.FindHitObject(collider);
     if ((bool)(UnityEngine.Object)hitObject)
@@ -386,19 +379,19 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
           return false;
         if ((UnityEngine.Object)m_owner != (UnityEngine.Object)null)
         {
-          if ((!m_hitOwner && (UnityEngine.Object)component ==
-                (UnityEngine.Object)m_owner) ||
-              (!m_hitSame && component.m_name == m_owner.m_name))
+          if (!m_hitOwner && (UnityEngine.Object)component ==
+              (UnityEngine.Object)m_owner ||
+              !m_hitSame && component.m_name == m_owner.m_name)
             return false;
           var flag = BaseAI.IsEnemy(m_owner, component) ||
-                     ((bool)(UnityEngine.Object)component.GetBaseAI() &&
-                      component.GetBaseAI().IsAggravatable() &&
-                      m_owner.IsPlayer());
-          if ((!m_hitFriendly && !flag) || !m_hitEnemy & flag)
+                     (bool)(UnityEngine.Object)component.GetBaseAI() &&
+                     component.GetBaseAI().IsAggravatable() &&
+                     m_owner.IsPlayer();
+          if (!m_hitFriendly && !flag || !m_hitEnemy & flag)
             return false;
         }
 
-        if (!m_hitCharacters || (m_dodgeable && component.IsDodgeInvincible()))
+        if (!m_hitCharacters || m_dodgeable && component.IsDodgeInvincible())
           return false;
       }
     }
@@ -460,22 +453,44 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
   }
 
 
-  public void OnCollisionEnter(Collision collision)
+  private void OnCollisionEnter(Collision collision)
   {
-    CauseTriggerDamage(collision.collider, true);
+    OnCollisionEnterHandler(collision);
   }
 
-  public void OnCollisionStay(Collision collision)
+  private void OnCollisionStay(Collision collision)
+  {
+    OnCollisionStayHandler(collision);
+  }
+
+  private void OnTriggerEnter(Collider collider)
+  {
+    OnTriggerEnterHandler(collider);
+  }
+
+  private void OnTriggerStay(Collider collider)
+  {
+    OnTriggerEnterHandler(collider);
+  }
+
+  // handlers for override methods.
+
+  public virtual void OnCollisionStayHandler(Collision collision)
   {
     CauseTriggerDamage(collision.collider, false);
   }
 
-  public void OnTriggerEnter(Collider collider)
+  public virtual void OnCollisionEnterHandler(Collision collision)
+  {
+    CauseTriggerDamage(collision.collider, true);
+  }
+
+  public virtual void OnTriggerEnterHandler(Collider collider)
   {
     CauseTriggerDamage(collider, true);
   }
 
-  public void OnTriggerStay(Collider collider)
+  public virtual void OnTriggerStayHandler(Collider collider)
   {
     CauseTriggerDamage(collider, false);
   }
@@ -589,9 +604,9 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
       }
 
       var flag3 =
-        (component1 is Destructible destructible &&
-         (UnityEngine.Object)destructible.m_spawnWhenDestroyed !=
-         (UnityEngine.Object)null) ||
+        component1 is Destructible destructible &&
+        (UnityEngine.Object)destructible.m_spawnWhenDestroyed !=
+        (UnityEngine.Object)null ||
         hitObject.GetComponent<MineRock5>() != null;
       var vector3 = m_attackForceForward
         ? transform.forward
@@ -723,8 +738,11 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
 
     if (hitObject.GetComponent<MineRock5>() == null)
       m_hitEffects.Create(hitPoint, Quaternion.identity);
-    if (((m_gaveSkill || !(bool)(UnityEngine.Object)m_owner ? 0 :
-          m_skill != 0 ? 1 : 0) & (flag2 ? 1 : 0)) != 0 && m_canRaiseSkill)
+    if (((m_gaveSkill || !(bool)(UnityEngine.Object)m_owner
+          ? 0
+          : m_skill != 0
+            ? 1
+            : 0) & (flag2 ? 1 : 0)) != 0 && m_canRaiseSkill)
     {
       m_owner.RaiseSkill(m_skill);
       m_gaveSkill = true;

@@ -306,7 +306,7 @@ public class VehicleCommands : ConsoleCommand
     if (data.Value.playersOnShip.Count <= 0) yield break;
     var piecesController =
       data.Value.OnboardController?.PiecesController?.transform;
-    var zdo = data.Value.OnboardController?.VehicleInstance?.NetView?.m_zdo;
+    var zdo = data.Value.OnboardController?.vehicleShip?.NetView?.m_zdo;
 
     foreach (var safeMovePlayerData in data.Value.playersOnShip)
     {
@@ -322,7 +322,8 @@ public class VehicleCommands : ConsoleCommand
         // If moving player to the vehicle exceeds the range, they need to be force teleported.
         if (Mathf.Abs(deltaX) > 50f || Mathf.Abs(deltaY) > 50f ||
             Mathf.Abs(deltaZ) > 50f)
-          targetLocation = data.Value.OnboardController.VehicleInstance.NetView
+          targetLocation = data.Value.OnboardController.vehicleShip
+                             .NetView
                              .m_zdo
                              .GetPosition() +
                            safeMovePlayerData.lastLocalOffset;
@@ -605,7 +606,7 @@ public class VehicleCommands : ConsoleCommand
   {
     var debugGui = ValheimRaftPlugin.Instance.GetComponent<VehicleDebugGui>();
     ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui(!(bool)debugGui);
-    foreach (var vehicleShip in VehicleShip.AllVehicles)
+    foreach (var vehicleShip in VehicleShip.VehicleInstances)
       vehicleShip.Value?.InitializeVehicleDebugger();
   }
 

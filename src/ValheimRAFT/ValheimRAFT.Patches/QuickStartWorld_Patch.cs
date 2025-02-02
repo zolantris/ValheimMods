@@ -7,6 +7,7 @@ namespace ValheimRAFT.Patches;
 public class QuickStartWorld_Patch
 {
 #if DEBUG
+
   /// <summary>
   /// Extends CookieMilkX's mod in debug only but adds support for selection via configuration menu 
   /// </summary>
@@ -20,7 +21,12 @@ public class QuickStartWorld_Patch
     if (!QuickStartWorldConfig.QuickStartEnabled.Value ||
         QuickStartWorldConfig.QuickStartWorldName.Value == "" ||
         QuickStartWorldConfig.QuickStartWorldPlayerName.Value == "") return;
+    ConnectOrHostServer();
+  }
 
+  public static void ConnectOrHostServer()
+  {
+    if (FejdStartup.instance == null) return;
     var worldList = SaveSystem.GetWorldList();
     var playerProfiles = SaveSystem.GetAllPlayerProfiles();
     var world = worldList.FirstOrDefault((x) =>
@@ -32,12 +38,22 @@ public class QuickStartWorld_Patch
 
     ZSteamMatchmaking.instance.StopServerListing();
     // ZNet.m_onlineBackend = OnlineBackendType.Steamworks;
-    ZNet.m_onlineBackend = OnlineBackendType.Steamworks;
-    Game.SetProfile(player.m_filename, FileHelpers.FileSource.Auto);
-    ZNet.SetServer(server: true, openServer: false, publicServer: false,
-      world.m_name, QuickStartWorldConfig.QuickStartWorldPassword.Value,
-      world);
-    __instance.LoadMainScene();
+    ZNet.m_onlineBackend = QuickStartWorldConfig.ServerOnlineBackendType.Value;
+    Game.SetProfile(player.m_filename, FileHelpers.FileSource.Local);
+
+    // joins an already hosted server.
+    if (QuickStartWorldConfig.IsJoinServer.Value)
+    {
+      ZNet.SetServerHost(QuickStartWorldConfig.JoinServerUrl.Value, QuickStartWorldConfig.JoinServerPort.Value, QuickStartWorldConfig.ServerOnlineBackendType.Value);
+      FejdStartup.instance.LoadMainScene();
+    }
+    else
+    {
+      ZNet.SetServer(true, QuickStartWorldConfig.IsOpenServer.Value, QuickStartWorldConfig.IsPublicServer.Value,
+        world.m_name, QuickStartWorldConfig.QuickStartWorldPassword.Value,
+        world);
+      FejdStartup.instance.LoadMainScene();
+    }
   }
 #endif
 }

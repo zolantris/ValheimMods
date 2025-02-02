@@ -121,7 +121,7 @@ public class VehicleRamAoe : ValheimAoe
     base.Awake();
   }
 
-  public new void Awake()
+  public override void Awake()
   {
     if (!RamInstances.Contains(this)) RamInstances.Add(this);
 
@@ -133,10 +133,10 @@ public class VehicleRamAoe : ValheimAoe
     rigidbody = GetComponent<Rigidbody>();
     // very important otherwise this rigidbody will interfere with physics of the Watervehicle controller due to nesting.
     // todo to move this rigidbody into a joint and make it a sibling of the WaterVehicle or PieceContainer (doing this would be a large refactor to structure, likely requiring a new prefab)
-    if (rigidbody) rigidbody.includeLayers = m_rayMask;
+    // if (rigidbody) rigidbody.includeLayers = m_rayMask;
   }
 
-  private new void OnDisable()
+  public override void OnDisable()
   {
     if (RamInstances.Contains(this)) RamInstances.Remove(this);
 
@@ -175,7 +175,7 @@ public class VehicleRamAoe : ValheimAoe
 
     // Must be within the BaseVehiclePieces after initialization otherwise this AOE could attempt to damage items within the raft ball
     var isChildOfBaseVehicle =
-      transform.root.name.StartsWith(PrefabNames.WaterVehicleShip) ||
+      PrefabNames.IsVehicle(transform.root.name) ||
       transform.root.name.StartsWith(PrefabNames.VehiclePiecesContainer) ||
       transform.root.name.StartsWith(
         PrefabNames
@@ -189,28 +189,31 @@ public class VehicleRamAoe : ValheimAoe
     isReadyForCollisions = true;
   }
 
+  public float GetRelativeVelocity(Collider collider)
+  {
+    var colliderVelocity = collider.attachedRigidbody != null ? collider.attachedRigidbody.velocity : Vector3.zero;
+    if (m_vehicle == null || m_vehicle.MovementController == null)
+      return colliderVelocity.magnitude;
+
+    var vehicleVelocity = m_vehicle.MovementController.m_body
+      .velocity;
+    var relativeVelocity = Vector3.Magnitude(colliderVelocity - vehicleVelocity);
+
+    return relativeVelocity;
+  }
+
   public bool UpdateDamageFromVelocityCollider(Collider collider)
   {
     if (!collider) return false;
+    var relativeVelocity = GetRelativeVelocity(collider);
     // reset damage to base damage if one of these is not available, will still recalculate later
     // exit to apply damage that has no velocity
-    if (m_vehicle?.MovementController?.m_body == null ||
-        !collider.attachedRigidbody)
+    if (m_vehicle == null &&
+        collider.attachedRigidbody == null)
     {
       m_damage = baseDamage;
-      return true;
+      return false;
     }
-
-    // Velocity will significantly increase if the object is moving towards the other object IE collision
-    float relativeVelocity;
-    if (!m_vehicle?.MovementController.m_body)
-      relativeVelocity = collider.attachedRigidbody.velocity.magnitude;
-    else
-      relativeVelocity =
-        Vector3.Magnitude(collider?.attachedRigidbody?.velocity ??
-                          Vector3.zero - m_vehicle?.MovementController.m_body
-                            ?.velocity ??
-                          Vector3.zero);
 
     return UpdateDamageFromVelocity(relativeVelocity);
   }
@@ -225,6 +228,12 @@ public class VehicleRamAoe : ValheimAoe
 
     if (materialTier == PrefabTiers.Tier3)
       multiplier *= Mathf.Clamp(1 + DamageIncreasePercentagePerTier * 2, 1, 4);
+
+    // todo add a minimum damage for a vehicle crushing an object.
+    // if (RamConfig.VehicleHullMassMultiplierDamage.Value != 0 && m_vehicle != null && m_vehicle.MovementControllerRigidbody != null)
+    // {
+    //   multiplier += Mathf.Clamp(m_vehicle.MovementControllerRigidbody.mass * RamConfig.VehicleHullMassMultiplierDamage.Value * relativeVelocityMagnitude, 0, 3);
+    // }
 
     if (Mathf.Approximately(multiplier, 0)) multiplier = 0;
 
@@ -303,6 +312,14 @@ public class VehicleRamAoe : ValheimAoe
       Physics.IgnoreCollision(childCollider, collider, true);
   }
 
+  public override bool ShouldHit(Collider collider)
+  {
+    var relativeVelocity = GetRelativeVelocity(collider);
+    if (relativeVelocity < minimumVelocityToTriggerHit) return false;
+
+    return base.ShouldHit(collider);
+  }
+
   /// <summary>
   /// Ignores anything within the current vehicle and other vehicle movement/float/onboard colliders 
   /// </summary>
@@ -342,42 +359,39 @@ public class VehicleRamAoe : ValheimAoe
     return true;
   }
 
-  public new void OnCollisionEnter(Collision collision)
+  public override void OnCollisionEnterHandler(Collision collision)
   {
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collision.collider)) return;
     if (!UpdateDamageFromVelocity(
           Vector3.Magnitude(collision.relativeVelocity))) return;
-    base.OnCollisionEnter(collision);
+    base.OnCollisionEnterHandler(collision);
   }
 
-  public new void OnCollisionStay(Collision collision)
+  public override void OnCollisionStayHandler(Collision collision)
   {
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collision.collider)) return;
     if (!UpdateDamageFromVelocity(
           Vector3.Magnitude(collision.relativeVelocity))) return;
-    base.OnCollisionStay(collision);
+
+    base.OnCollisionStayHandler(collision);
   }
 
-  public new void OnTriggerEnter(Collider collider)
+  public override void OnTriggerEnterHandler(Collider collider)
   {
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collider)) return;
     if (!UpdateDamageFromVelocityCollider(collider)) return;
-    base.OnTriggerEnter(collider);
+    base.OnTriggerEnterHandler(collider);
   }
 
-  public new void OnTriggerStay(Collider collider)
+  public override void OnTriggerStayHandler(Collider collider)
   {
     if (!isReadyForCollisions) return;
     if (ShouldIgnore(collider)) return;
     if (!UpdateDamageFromVelocityCollider(collider)) return;
-
-    // this can be null somehow.
-    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-    if (base.OnTriggerStay == null) return;
-    base.OnTriggerStay(collider);
+    base.OnTriggerStayHandler(collider);
   }
 
   public void SetBaseDamage(HitData.DamageTypes data)

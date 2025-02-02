@@ -23,12 +23,19 @@ public class MapPinSync : MonoBehaviour
 
   private Dictionary<Vector3, CustomPinZdoData> _vehiclePins = new();
   public static MapPinSync Instance;
+  private ZDO? cachedPlayerSpawnZdo = null;
+  private Vector3? cachedLastBedVector = null;
+  private Minimap.PinData? cachedLastBedPinData = null;
+  private Coroutine? refreshDynamicSpawnPinRoutine;
+  private Coroutine? refreshVehiclePinsRoutine;
 
   public string GetOwnerNameFromZdo(ZDO zdo)
   {
     return CensorShittyWords.FilterUGC(zdo.GetString(ZDOVars.s_ownerName),
       UGCType.CharacterName, Player.m_localPlayer.GetOwner().ToString());
   }
+
+  public bool hasInitialized = false;
 
   public void Awake()
   {
@@ -41,27 +48,47 @@ public class MapPinSync : MonoBehaviour
 
   private void OnDestroy()
   {
-    CancelInvoke(nameof(RefreshVehiclePins));
-    StopCoroutine(nameof(RefreshDynamicSpawnPin));
+    if (refreshDynamicSpawnPinRoutine != null)
+    {
+      StopCoroutine(refreshVehiclePinsRoutine);
+      refreshVehiclePinsRoutine = null;
+    }
+
+    if (refreshDynamicSpawnPinRoutine != null)
+    {
+      StopCoroutine(refreshDynamicSpawnPinRoutine);
+      refreshDynamicSpawnPinRoutine = null;
+    }
+
+    hasInitialized = false;
   }
 
   private void OnMapReady()
   {
     StartVehiclePinSync();
     StartSpawnPinSync();
+    hasInitialized = true;
   }
 
   public void StartVehiclePinSync()
   {
-    CancelInvoke(nameof(RefreshVehiclePins));
-    InvokeRepeating(nameof(RefreshVehiclePins), 0f,
-      MinimapConfig.VehiclePinSyncInterval.Value);
+    if (refreshVehiclePinsRoutine != null)
+    {
+      StopCoroutine(refreshVehiclePinsRoutine);
+      refreshVehiclePinsRoutine = null;
+    }
+
+    refreshVehiclePinsRoutine = StartCoroutine(nameof(RefreshVehiclePins));
   }
 
   public void StartSpawnPinSync()
   {
-    StopCoroutine(nameof(RefreshDynamicSpawnPin));
-    StartCoroutine(RefreshDynamicSpawnPin());
+    if (refreshDynamicSpawnPinRoutine != null)
+    {
+      StopCoroutine(refreshDynamicSpawnPinRoutine);
+      refreshDynamicSpawnPinRoutine = null;
+    }
+    refreshDynamicSpawnPinRoutine = StartCoroutine(RefreshDynamicSpawnPin());
   }
 
   private bool IsWithinVisibleRadius(Vector3 point)
@@ -74,10 +101,6 @@ public class MapPinSync : MonoBehaviour
                                 MinimapConfig.VisibleVehicleRadius.Value;
     return isWithinVisibleRadius;
   }
-
-  private ZDO? cachedPlayerSpawnZdo = null;
-  private Vector3? cachedLastBedVector = null;
-  private Minimap.PinData? cachedLastBedPinData = null;
 
   private void ClearSpawnPin(Minimap.PinData? pinData)
   {
@@ -93,7 +116,7 @@ public class MapPinSync : MonoBehaviour
     if (cachedPlayerSpawnZdo == null)
       yield return PlayerSpawnController.Instance.FindDynamicZdo(
         LocationVariation.Spawn,
-        onComplete: data => { cachedPlayerSpawnZdo = data; });
+        data => { cachedPlayerSpawnZdo = data; });
 
     if (cachedPlayerSpawnZdo == null)
     {
@@ -132,7 +155,7 @@ public class MapPinSync : MonoBehaviour
     {
       var prefab = ZNetScene.instance.GetPrefab(x.GetPrefab());
       if (prefab == null) return false;
-      return prefab.name.Contains(PrefabNames.WaterVehicleShip);
+      return PrefabNames.IsVehicle(prefab.name);
     }).ToHashSet();
 
     var allPins = Minimap.instance.m_pins;
@@ -179,15 +202,20 @@ public class MapPinSync : MonoBehaviour
     }
   }
 
-  public void RefreshVehiclePins()
+  public IEnumerator RefreshVehiclePins()
   {
-    if (ZNet.instance.IsDedicated()) return;
-    if (Player.m_localPlayer == null) return;
-    // Clear existing pins from both dictionaries
-    ClearAllVehiclePins();
+    while (isActiveAndEnabled)
+    {
+      yield return new WaitForSeconds(MinimapConfig.VehiclePinSyncInterval.Value);
+      if (ZNet.instance == null) yield return null;
+      if (ZNet.instance != null && ZNet.instance.IsDedicated()) yield break;
+      if (Player.m_localPlayer == null) yield return null;
+      // Clear existing pins from both dictionaries
+      ClearAllVehiclePins();
 
-    // Regenerate all pins
-    UpdateVehiclePins();
+      // Regenerate all pins
+      UpdateVehiclePins();
+    }
   }
 
   private void ClearAllVehiclePins()
