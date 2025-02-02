@@ -99,22 +99,6 @@
 - Description: Sets the speed at which it becomes significantly harder to gain speed per sail area
 - Default Value: 1
 
-### Rudder Back Speed 
-- Description: Set the Back speed of rudder, this will apply with sails
-- Default Value: 1
-
-### Rudder Slow Speed 
-- Description: Set the Slow speed of rudder, this will apply with sails
-- Default Value: 1
-
-### Rudder Half Speed 
-- Description: Set the Half speed of rudder, this will apply with sails
-- Default Value: 0
-
-### Rudder Full Speed 
-- Description: Set the Full speed of rudder, this will apply with sails
-- Default Value: 0
-
 ### HasShipWeightCalculations 
 - Description: enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less
 - Default Value: True
@@ -345,6 +329,10 @@
 - Description: Set the experimental glass color for your vehicle. This will be used for most glass meshes. This is the default color. Eventually players can customize the color of the glass.
 - Default Value: RGBA(0.600, 0.600, 0.600, 0.050)
 
+### enableLandVehicles 
+- Description: Vehicles land vehicle prefab will be enabled. LandVehicles will be available for all version above V3.0.0
+- Default Value: False
+
 ## Vehicle Debugging
 
 ### DebugMetricsEnabled 
@@ -385,6 +373,10 @@
 - Description: Makes all clients sync physics
 - Default Value: False
 
+### VehiclePieceBoundsRecalculationDelay 
+- Description: The delay time at which the vehicle will recalculate bounds after placing a piece. This recalculation can be a bit heavy so it's debounced a minimum of 1 seconds but could be increased up to 30 seconds for folks that want to build a pause for a bit.
+- Default Value: 1
+
 ## Propulsion
 
 ### VehiclePhysicsMode 
@@ -410,10 +402,6 @@ Other methods removed after 2.5.0
 
 ### slowAndReverseWithoutControls 
 - Description: Vehicles do not require controls while in slow and reverse with a person on them
-- Default Value: False
-
-### enableLandVehicles 
-- Description: Vehicles can now float on land. What is realism. Experimental only until wheels are invented. Must use rudder speeds to move forwards.
 - Default Value: False
 
 ### enableBaseGameSailRotation 
@@ -543,6 +531,56 @@ Other methods removed after 2.5.0
 ### UnderwaterBubbleEffectColor 
 - Description: Set the underwater bubble color
 - Default Value: RGBA(0.000, 0.400, 0.400, 0.800)
+
+## Physics: Propulsion
+
+### Rudder Back Speed 
+- Description: Set the Back speed of rudder, this will apply with sails
+- Default Value: 1
+
+### Rudder Slow Speed 
+- Description: Set the Slow speed of rudder, this will apply with sails
+- Default Value: 1
+
+### Rudder Half Speed 
+- Description: Set the Half speed of rudder, this will apply with sails
+- Default Value: 0
+
+### Rudder Full Speed 
+- Description: Set the Full speed of rudder, this will apply with sails
+- Default Value: 0
+
+### LandVehicle Back Speed 
+- Description: Set the Back speed of land vehicle.
+- Default Value: 1
+
+### LandVehicle Slow Speed 
+- Description: Set the Slow speed of land vehicle.
+- Default Value: 1
+
+### LandVehicle Half Speed 
+- Description: Set the Half speed of land vehicle.
+- Default Value: 2
+
+### LandVehicle Full Speed 
+- Description: Set the Full speed of land vehicle.
+- Default Value: 4
+
+### LandVehicle Speed Multiplier 
+- Description: Set the speed multiplier of the land vehicle
+- Default Value: 1
+
+### LandVehicle Turn Speed 
+- Description: Turn angle multiplier for land vehicles. Higher values will turn faster, but will be more disorienting and unrealistic.
+- Default Value: 35
+
+### LandVehicle Suspension Distance 
+- Description: Distance suspension distance between vehicle position and wheel position. Higher values push the vehicle up and make it more bouncy. Also allowing it to recover from getting stuck
+- Default Value: 1.5
+
+### VehicleLand Wheel Radius 
+- Description: Wheel radius. Larger wheels have more traction. But may be less realistic.
+- Default Value: 1.5
 
 ## Vehicle Physics
 
@@ -774,7 +812,11 @@ Other methods removed after 2.5.0
 - Description: Threshold at which to retain a object even if it's through a wall.
 - Default Value: 5
 
-## Quick Start (DEBUG-ONLY)
+## QuickStartWorld
+
+### ServerOnlineBackendType 
+- Description: 
+- Default Value: Steamworks
 
 ### QuickStartWorldName 
 - Description: Set the quick start World Name
@@ -783,6 +825,30 @@ Other methods removed after 2.5.0
 ### QuickStartWorldPassword 
 - Description: Set the quick start world password
 - Default Value: 
+
+### IsOpenServer 
+- Description: Set if hosted server is opened allowing other players to connect to the server.
+- Default Value: False
+
+### IsPublicServer 
+- Description: Set the hosted server is public and listed.
+- Default Value: False
+
+### IsServer 
+- Description: Set if server is public
+- Default Value: False
+
+### IsJoinServer 
+- Description: Join a server instead of hosting a server automatically.
+- Default Value: False
+
+### JoinServerUrl 
+- Description: Set the join server URL. This can be an IP address or a web url if hosted server can resolve from a url.
+- Default Value: 
+
+### JoinServerPort 
+- Description: Set the join server URL. This can be an IP address or a web url if hosted server can resolve from a url.
+- Default Value: 2456
 
 ### QuickStartEnabled 
 - Description: Enable Quick start
