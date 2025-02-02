@@ -806,7 +806,7 @@ Other methods removed after 2.5.0
 
 ### CameraOcclusionEnabled 
 - Description: Enables hiding active raft pieces at specific intervals. This will hide only the rendered texture.
-- Default Value: True
+- Default Value: False
 
 ### DistanceToKeepObjects 
 - Description: Threshold at which to retain a object even if it's through a wall.
