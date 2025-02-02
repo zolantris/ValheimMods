@@ -2391,7 +2391,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     UpdateMass(netView);
 
     // Handle bounds rebuilding
-    if (shouldRebuildBounds)
+    if (shouldRebuildBounds || convexHullColliders.Count == 0)
       RebuildBounds();
     else
       DebouncedRebuildBounds();

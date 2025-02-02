@@ -10,6 +10,18 @@ public static class VehicleDebugConfig
 {
   public static ConfigFile? Config { get; private set; }
 
+  public static ConfigEntry<float> windowPosX;
+
+  public static ConfigEntry<float> windowPosY;
+
+  public static ConfigEntry<int> buttonFontSize;
+
+  public static ConfigEntry<int> TitleFontSize;
+
+  public static ConfigEntry<int> windowWidth;
+
+  public static ConfigEntry<int> windowHeight;
+
   public static ConfigEntry<bool>
     AutoShowVehicleColliders { get; private set; } = null!;
 
@@ -24,7 +36,7 @@ public static class VehicleDebugConfig
 
   public static ConfigEntry<int>
     VehiclePieceBoundsRecalculationDelay { get; private set; } = null!;
-  
+
   public static ConfigEntry<float> AutoAnchorDelayTime { get; private set; } =
     null!;
 
@@ -127,6 +139,13 @@ public static class VehicleDebugConfig
       ConfigHelpers.CreateConfigDescription(
         "The delay time at which the vehicle will recalculate bounds after placing a piece. This recalculation can be a bit heavy so it's debounced a minimum of 1 seconds but could be increased up to 30 seconds for folks that want to build a pause for a bit.",
         false, true, new AcceptableValueRange<int>(1, 30)));
+
+    windowPosX = Config.Bind<float>(SectionName, "WindowPosX", 20f, (ConfigDescription)null);
+    windowPosY = Config.Bind<float>(SectionName, "WindowPosY", 20f, (ConfigDescription)null);
+    buttonFontSize = Config.Bind<int>(SectionName, "ButtonFontSize", 16, (ConfigDescription)null);
+    TitleFontSize = Config.Bind<int>(SectionName, "LabelFontSize", 22, (ConfigDescription)null);
+    windowWidth = Config.Bind<int>(SectionName, "WindowWidth", 250, (ConfigDescription)null);
+    windowHeight = Config.Bind<int>(SectionName, "WindowHeight", 50, (ConfigDescription)null);
 
     // onChanged
     AutoShowVehicleColliders.SettingChanged +=

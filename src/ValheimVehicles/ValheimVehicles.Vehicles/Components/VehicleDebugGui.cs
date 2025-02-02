@@ -1,9 +1,17 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using DynamicLocations;
 using DynamicLocations.Constants;
 using DynamicLocations.Controllers;
+using Jotunn.GUI;
+using Jotunn.Managers;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using ValheimRAFT;
 using ValheimRAFT.Patches;
+using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
@@ -32,12 +40,279 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
   public static bool vehicleDebugPhysicsSync = true;
 
-  private void OnGUI()
+  private Rect windowRect;
+
+  private Rect errorWinRect;
+
+  private int buttonFontSize = 16;
+
+  private int titleFontSize = 18;
+
+  private GUIStyle buttonStyle;
+
+  private GUIStyle labelStyle;
+
+  private GameObject devCommandsWindow;
+  private GameObject modderCommandsWindow;
+  private bool hasInitialized = false;
+
+  private void Start()
   {
-    myButtonStyle ??= new GUIStyle(GUI.skin.button)
+    windowRect.x = VehicleDebugConfig.windowPosX.Value;
+    windowRect.y = VehicleDebugConfig.windowPosY.Value;
+    buttonFontSize = VehicleDebugConfig.buttonFontSize.Value;
+    titleFontSize = VehicleDebugConfig.TitleFontSize.Value;
+    windowRect.width = VehicleDebugConfig.windowWidth.Value;
+    windowRect.height = VehicleDebugConfig.windowHeight.Value;
+    InitPanel();
+  }
+
+  private void TogglePanelState()
+  {
+    var state = !hasInitialized || !modderCommandsWindow.activeSelf;
+
+    if (devCommandsWindow)
     {
-      fontSize = 50
-    };
+      devCommandsWindow.SetActive(state);
+    }
+
+    if (modderCommandsWindow)
+    {
+      modderCommandsWindow.SetActive(state);
+    }
+
+    // Toggle input for the player and camera while displaying the GUI
+    // GUIManager.BlockInput(state);
+  }
+
+  private void InitPanel()
+  {
+    if (GUIManager.Instance == null)
+    {
+      Logger.LogError("GUIManager instance is null");
+      return;
+    }
+
+    if (!GUIManager.CustomGUIFront)
+    {
+      Logger.LogError("GUIManager CustomGUI is null");
+      return;
+    }
+
+    CreateShortcutPanel();
+    TogglePanelState();
+    hasInitialized = true;
+  }
+
+  public struct ButtonAction
+  {
+    public string title;
+    public Action action;
+  }
+
+  public static float buttonHeight = 60f;
+  public static float buttonWidth = 150f;
+  public void AddButtonWithAction(ButtonAction buttonAction, int index, float StartHeight, Transform windowTransform)
+  {
+
+    var buttonObj = GUIManager.Instance.CreateButton(
+      buttonAction.title,
+      windowTransform,
+      new Vector2(0.5f, 0.5f),
+      new Vector2(0.5f, 0.5f),
+      new Vector2(-20, StartHeight - index * buttonHeight),
+      buttonWidth, buttonHeight
+    );
+    buttonObj.SetActive(true);
+    // Add a listener to the button to close the panel again
+    var button = buttonObj.GetComponent<Button>();
+    var text = buttonObj.GetComponent<Text>();
+    if (text != null)
+    {
+      text.fontSize = buttonFontSize;
+    }
+
+    button.onClick.AddListener(() => buttonAction.action());
+  }
+
+  private void CreateShortcutPanel()
+  {
+    if (modderCommandsWindow != null) return;
+
+    modderCommandsWindow = GUIManager.Instance.CreateWoodpanel(
+      GUIManager.CustomGUIFront.transform,
+      new Vector2(0.5f, 0.5f),
+      new Vector2(0.5f, 0.5f),
+      new Vector2(0, 0),
+      200,
+      500,
+      true);
+    modderCommandsWindow.SetActive(false);
+    modderCommandsWindow.name = "modderCommandsWindow";
+
+    modderCommandsWindow.gameObject.AddComponent<DragWindowCntrl>();
+
+    // Create the text object
+    GUIManager.Instance.CreateText(
+      "Vehicle Shortcuts",
+      modderCommandsWindow.transform,
+      new Vector2(0.5f, 1f),
+      new Vector2(0.5f, 1f),
+      new Vector2(0f, -20f),
+      GUIManager.Instance.AveriaSerifBold,
+      titleFontSize,
+      GUIManager.Instance.ValheimOrange,
+      true,
+      Color.black,
+      200f,
+      40f,
+      true);
+
+    // Create the button object
+    var buttonObject = GUIManager.Instance.CreateButton(
+      "Hide",
+      modderCommandsWindow.transform,
+      new Vector2(1f, 1f),
+      new Vector2(1f, 1f),
+      new Vector2(60, 0),
+      60f,
+      60f);
+    buttonObject.SetActive(true);
+
+    // Add a listener to the button to close the panel again
+    var button = buttonObject.GetComponent<Button>();
+    button.onClick.AddListener(InitPanel);
+
+    List<ButtonAction> buttonActions =
+    [
+      new()
+      {
+        title = "ConvexHull debugger",
+        action = () =>
+        {
+          ToggleConvexHullDebugger();
+        }
+      },
+      new()
+      {
+        title = "ConvexHull debugger",
+        action = () =>
+        {
+          ToggleColliderDebugger();
+        }
+      },
+      new()
+      {
+        title = "Raft Creative",
+        action = () => CreativeModeConsoleCommand.RunCreativeModeCommand("raftcreative")
+      },
+      new()
+      {
+        title = "Zero Ship Rotation X/Z",
+        action = () =>
+        {
+          var onboardHelpers = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
+          if (onboardHelpers != null) onboardHelpers.FlipShip();
+        }
+      },
+      new()
+      {
+        title = "Toggle Ocean Sway",
+        action = VehicleCommands.VehicleToggleOceanSway
+      }
+    ];
+
+    var startHeight = 100f;
+    for (var index = 0; index < buttonActions.Count; index++)
+    {
+      var buttonAction = buttonActions[index];
+      AddButtonWithAction(buttonAction, index, startHeight, modderCommandsWindow.transform);
+    }
+
+    modderCommandsWindow.SetActive(true);
+  }
+
+  private void ToggleConvexHullDebugger()
+  {
+    Logger.LogMessage(
+      "Toggling convex hull debugger on the ship. This will show/hide the current convex hulls.");
+    var currentInstance = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
+
+    if (!currentInstance)
+      currentInstance = VehicleDebugHelpers.GetOnboardMBRaftDebugHelper();
+
+    if (!currentInstance) return;
+
+    var convexHullComponent = currentInstance.VehicleShipInstance
+      .PiecesController.convexHullComponent;
+    // Just a 3 mode loop
+    convexHullComponent.PreviewMode =
+      convexHullComponent.PreviewMode switch
+      {
+        ConvexHullAPI.PreviewModes.None => ConvexHullAPI.PreviewModes.Bubble,
+        ConvexHullAPI.PreviewModes.Bubble => ConvexHullAPI.PreviewModes.Debug,
+        _ => ConvexHullAPI.PreviewModes.Bubble
+      };
+
+    currentInstance.VehicleShipInstance.PiecesController.convexHullComponent
+      .CreatePreviewConvexHullMeshes();
+  }
+
+
+  private void ToggleColliderDebugger()
+  {
+    Logger.LogMessage(
+      "Collider debugger called, \nblue = BlockingCollider for collisions and keeping boat on surface, \ngreen is float collider for pushing the boat upwards, typically it needs to be below or at same level as BlockingCollider to prevent issues, \nYellow is onboardtrigger for calculating if player is onboard");
+    var currentInstance = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
+
+    if (!currentInstance)
+      currentInstance = VehicleDebugHelpers.GetOnboardMBRaftDebugHelper();
+
+    if (!currentInstance) return;
+
+    currentInstance?.StartRenderAllCollidersLoop();
+  }
+
+  /// <summary>
+  /// For Developers, Modders, and normal users that need to frequently use ValheimRAFT commands.
+  /// </summary>
+  private void DrawVehicleDebugCommandsMenu()
+  {
+    GUILayout.BeginArea(new Rect(500, Screen.height - 510, 200, 500),
+      myButtonStyle);
+
+    if (GUILayout.Button("ConvexHull debugger"))
+    {
+      ToggleConvexHullDebugger();
+    }
+
+    if (GUILayout.Button("collider debugger"))
+    {
+      ToggleColliderDebugger();
+    }
+
+    if (GUILayout.Button("raftcreative"))
+      CreativeModeConsoleCommand.RunCreativeModeCommand("raftcreative");
+
+    if (GUILayout.Button("activatePendingPieces"))
+      VehicleDebugHelpers.GetVehiclePiecesController()
+        ?.StartActivatePendingPieces();
+
+    if (GUILayout.Button("Zero Ship RotationXZ"))
+      VehicleDebugHelpers.GetOnboardVehicleDebugHelper()?.FlipShip();
+
+    if (GUILayout.Button("Toggle Ocean Sway"))
+      VehicleCommands.VehicleToggleOceanSway();
+
+    GUILayout.EndArea();
+  }
+
+  /// <summary>
+  /// Meant for developers. Should never be enabled for players. These commands can be very destructive to the entire game world.
+  /// </summary>
+  [Conditional("DEBUG")]
+  private void DrawDeveloperDebugCommandsWindow()
+  {
 #if DEBUG
     GUILayout.BeginArea(new Rect(250, Screen.height - 510, 200, 200),
       myButtonStyle);
@@ -109,62 +384,16 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
     GUILayout.EndArea();
 #endif
+  }
 
-    GUILayout.BeginArea(new Rect(500, Screen.height - 510, 200, 500),
-      myButtonStyle);
-    if (GUILayout.Button("ConvexHull debugger"))
+  private void OnGUI()
+  {
+    myButtonStyle ??= new GUIStyle(GUI.skin.button)
     {
-      Logger.LogMessage(
-        "Toggling convex hull debugger on the ship. This will show/hide the current convex hulls.");
-      var currentInstance = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
+      fontSize = 50
+    };
 
-      if (!currentInstance)
-        currentInstance = VehicleDebugHelpers.GetOnboardMBRaftDebugHelper();
-
-      if (!currentInstance) return;
-
-      var convexHullComponent = currentInstance.VehicleShipInstance
-        .PiecesController.convexHullComponent;
-      // Just a 3 mode loop
-      convexHullComponent.PreviewMode =
-        convexHullComponent.PreviewMode switch
-        {
-          ConvexHullAPI.PreviewModes.None => ConvexHullAPI.PreviewModes.Bubble,
-          ConvexHullAPI.PreviewModes.Bubble => ConvexHullAPI.PreviewModes.Debug,
-          _ => ConvexHullAPI.PreviewModes.Bubble
-        };
-
-      currentInstance.VehicleShipInstance.PiecesController.convexHullComponent
-        .CreatePreviewConvexHullMeshes();
-    }
-
-    if (GUILayout.Button("collider debugger"))
-    {
-      Logger.LogMessage(
-        "Collider debugger called, \nblue = BlockingCollider for collisions and keeping boat on surface, \ngreen is float collider for pushing the boat upwards, typically it needs to be below or at same level as BlockingCollider to prevent issues, \nYellow is onboardtrigger for calculating if player is onboard");
-      var currentInstance = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
-
-      if (!currentInstance)
-        currentInstance = VehicleDebugHelpers.GetOnboardMBRaftDebugHelper();
-
-      if (!currentInstance) return;
-
-      currentInstance?.StartRenderAllCollidersLoop();
-    }
-
-    if (GUILayout.Button("raftcreative"))
-      CreativeModeConsoleCommand.RunCreativeModeCommand("raftcreative");
-
-    if (GUILayout.Button("activatePendingPieces"))
-      VehicleDebugHelpers.GetVehiclePiecesController()
-        ?.StartActivatePendingPieces();
-
-    if (GUILayout.Button("Zero Ship RotationXZ"))
-      VehicleDebugHelpers.GetOnboardVehicleDebugHelper()?.FlipShip();
-
-    if (GUILayout.Button("Toggle Ocean Sway"))
-      VehicleCommands.VehicleToggleOceanSway();
-
-    GUILayout.EndArea();
+    // DrawDeveloperDebugCommandsWindow();
+    // DrawVehicleDebugCommandsMenu();
   }
 }
