@@ -266,13 +266,23 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     Setup();
   }
 
+  public bool isHoldingBreak = false;
+
   private void UpdateBreakingControls()
   {
     if (WheelController == null) return;
     var isBreakingPressed = Input.GetKeyDown(KeyCode.Space);
-    if (isBreakingPressed)
+    if (isBreakingPressed && !isHoldingBreak)
     {
       WheelController.ToggleIsBreaking();
+      SendSetAnchor(WheelController.isBreaking ? AnchorState.Anchored : AnchorState.Recovered);
+      isHoldingBreak = true;
+    }
+
+    // we do not handle setting anchor state if it's still anchored and not breaking. This should only be handled if the break toggle is pressed.
+    if (!isBreakingPressed)
+    {
+      isHoldingBreak = false;
     }
   }
 
