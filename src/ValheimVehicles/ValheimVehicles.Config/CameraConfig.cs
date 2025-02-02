@@ -22,7 +22,7 @@ public static class CameraConfig
         false, false, new AcceptableValueRange<float>(0, 30f)));
 
     CameraOcclusionEnabled = Config.Bind(SectionKey,
-      "CameraOcclusionEnabled", true, ConfigHelpers.CreateConfigDescription(
+      "CameraOcclusionEnabled", false, ConfigHelpers.CreateConfigDescription(
         $"Enables hiding active raft pieces at specific intervals. This will hide only the rendered texture.",
         false, false));
 
