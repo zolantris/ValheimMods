@@ -35,7 +35,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   private float RamDamageOverallMultiplier = 1f;
 
   // damages
-  public static int RamDamageToolTier = RamConfig.RamDamageToolTier.Value;
+  public static int RamDamageToolTier;
 
   public static float PercentageDamageToSelf =
     RamConfig.PercentageDamageToSelf.Value;
@@ -101,7 +101,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
     // todo need to tweak this
     m_damageSelf = !RamConfig.CanDamageSelf.Value ? 0 : 1;
-    m_toolTier = RamDamageToolTier;
+    m_toolTier = RamConfig.RamDamageToolTier.Value;
     m_attackForce = 5;
     m_attackForce = 50;
 
@@ -529,8 +529,11 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   public void SetVehicleRamModifier(bool isRamEnabled)
   {
     m_isVehicleRam = isRamEnabled;
-    RamDamageOverallMultiplier = m_isVehicleRam ? 0.5f : 1f;
+    RamDamageOverallMultiplier = 0.5f;
     m_triggerEnterOnly = false;
+
+    // overrides for vehicles.
+    m_toolTier = RamConfig.HullToolTier.Value;
 
     // vehicles need much more radius to effectively hit
     m_radius = Mathf.Clamp(m_radius, 10f, 50f);

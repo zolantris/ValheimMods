@@ -42,7 +42,7 @@ public static class PhysicsConfig
 
   public static ConfigEntry<float> VehicleLandTurnSpeed = null!;
   public static ConfigEntry<float> VehicleCenterOfMassOffset = null!;
-  public static ConfigEntry<bool> VehicleLandAllowXYRotation = null!;
+  public static ConfigEntry<bool> VehicleLandAllowXZRotation = null!;
   public static ConfigEntry<float> VehicleLandSuspensionDistance = null!;
   public static ConfigEntry<float> VehicleLandWheelSuspensionSpring = null!;
   public static ConfigEntry<float> VehicleLandWheelRadius = null!;
@@ -271,11 +271,11 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "Turn angle multiplier for land vehicles. Higher values will turn faster, but will be more disorienting and unrealistic.", true, false, new AcceptableValueRange<float>(20f, 90f)));
 
-    VehicleLandAllowXYRotation = Config.Bind(PropulsionSection,
-      "VehicleLand AllowXYRotation",
+    VehicleLandAllowXZRotation = Config.Bind(PropulsionSection,
+      "VehicleLand AllowXZRotation",
       true,
       ConfigHelpers.CreateConfigDescription(
-        "Allow XY rotation. Can make a vehicle flip.", true, false));
+        "Allow XZ rotation. Can make a vehicle flip/tilt. But is much more realistic. Look at centerofmassoffset for ways to make the vehicle more stable", true, false));
 
     VehicleCenterOfMassOffset = Config.Bind(PropulsionSection,
       "Vehicle CenterOfMassOffset",
