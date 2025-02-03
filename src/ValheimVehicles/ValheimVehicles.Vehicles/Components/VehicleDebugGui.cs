@@ -141,9 +141,9 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
     modderCommandsWindow = GUIManager.Instance.CreateWoodpanel(
       GUIManager.CustomGUIFront.transform,
+      new Vector2(1f, 0.5f),
       new Vector2(0.5f, 0.5f),
-      new Vector2(0.5f, 0.5f),
-      new Vector2(0, 0),
+      new Vector2(500, Screen.height - 510),
       200,
       500,
       true);

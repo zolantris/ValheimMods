@@ -41,6 +41,8 @@ public static class PhysicsConfig
   public static ConfigEntry<float> VehicleLandSpeedMult = null!;
 
   public static ConfigEntry<float> VehicleLandTurnSpeed = null!;
+  public static ConfigEntry<float> VehicleCenterOfMassOffset = null!;
+  public static ConfigEntry<bool> VehicleLandAllowXYRotation = null!;
   public static ConfigEntry<float> VehicleLandSuspensionDistance = null!;
   public static ConfigEntry<float> VehicleLandWheelRadius = null!;
 
@@ -52,6 +54,9 @@ public static class PhysicsConfig
   public static ConfigEntry<float> flightSailForceFactor = null!;
   public static ConfigEntry<float> flightDrag = null!;
   public static ConfigEntry<float> flightAngularDrag = null!;
+
+  public static ConfigEntry<float> landDrag = null!;
+  public static ConfigEntry<float> landAngularDrag = null!;
 
   // water
   public static ConfigEntry<float> waterAngularDamping = null!;
@@ -167,9 +172,9 @@ public static class PhysicsConfig
   {
     foreach (var vehicleMovementController in VehicleMovementController
                .Instances)
-      vehicleMovementController.UpdateVehicleStats(
-        vehicleMovementController.IsFlying(),
-        vehicleMovementController.IsSubmerged(), true);
+    {
+      vehicleMovementController.UpdateVehicleStats(vehicleMovementController.GetCachedVehiclePhysicsState(), true);
+    }
   }
 
   private static readonly AcceptableValueRange<float> StableSailForceRange =
@@ -265,6 +270,18 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "Turn angle multiplier for land vehicles. Higher values will turn faster, but will be more disorienting and unrealistic.", true, false, new AcceptableValueRange<float>(20f, 90f)));
 
+    VehicleLandAllowXYRotation = Config.Bind(PropulsionSection,
+      "VehicleLandAllowXYRotation",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "Allow XY rotation. Can make a vehicle flip.", true, false));
+
+    VehicleCenterOfMassOffset = Config.Bind(PropulsionSection,
+      "VehicleCenterOfMassOffset",
+      0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Offset the center of mass by a percentage of vehicle total height. Should always be a positive number. Higher values will make the vehicle more sturdy as it will pivot lower. Too high a value will make the ship behave weirdly possibly flipping. 0 will be the center of all colliders within the physics of the vehicle. 100% will be 50% lower than the vehicle's collider. 50% will be the very bottom of the vehicle's collider.", true, true, new AcceptableValueRange<float>(0f, 1f)));
+
     VehicleLandSuspensionDistance = Config.Bind(PropulsionSection,
       "LandVehicle Suspension Distance",
       1.5f,
@@ -305,7 +322,13 @@ public static class PhysicsConfig
     flightAngularDamping = Config.Bind(SectionKey,
       $"flightAngularDamping_{DampingResetKey}", 1f,
       dampingAngularDescription);
-
+    flightSteerForce = Config.Bind(SectionKey, "flightSteerForce", 1f,
+      debugSailForceAndFactorDescription);
+    flightSailForceFactor =
+      Config.Bind(SectionKey, "UNSTABLE_flightSailForceFactor", 0.075f,
+        debugSailForceAndFactorDescription);
+    flightDrag = Config.Bind(SectionKey, "flightDrag", 1.2f);
+    flightAngularDrag = Config.Bind(SectionKey, "flightAngularDrag", 1.2f);
 
     forceDistance = Config.Bind(SectionKey,
       $"forceDistance_{DampingResetKey}", 1f,
@@ -317,14 +340,6 @@ public static class PhysicsConfig
     backwardForce = Config.Bind(SectionKey,
       $"backwardForce_{DampingResetKey}", 1f,
       "EXPERIMENTAL_BackwardFORCE");
-
-    flightSteerForce = Config.Bind(SectionKey, "flightSteerForce", 1f,
-      debugSailForceAndFactorDescription);
-    flightSailForceFactor =
-      Config.Bind(SectionKey, "UNSTABLE_flightSailForceFactor", 0.075f,
-        debugSailForceAndFactorDescription);
-    flightDrag = Config.Bind(SectionKey, "flightDrag", 1.2f);
-    flightAngularDrag = Config.Bind(SectionKey, "flightAngularDrag", 1.2f);
 
     // water
     waterSteerForce = Config.Bind(SectionKey, "waterSteerForce", 1f);
@@ -373,6 +388,11 @@ public static class PhysicsConfig
     hullFloatationRange = new AcceptableValueRange<float>(-50f, 50f);
 #endif
 
+    // landVehicles much more simple. No sails allowed etc.
+    landDrag = Config.Bind(SectionKey, "landDrag", 1.2f);
+    landAngularDrag = Config.Bind(SectionKey, "landAngularDrag", 1.2f);
+
+    // guards for max values
     MaxLinearVelocity = Config.Bind(SectionKey, "MaxVehicleLinearVelocity", 10f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 20. Higher values will increase potential of vehicle flying off to space",

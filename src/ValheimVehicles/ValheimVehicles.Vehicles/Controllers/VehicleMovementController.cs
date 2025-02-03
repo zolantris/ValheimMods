@@ -159,8 +159,16 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private float prevCenterUpwardsForce;
 
   private float prevFrontUpwardForce;
-  private bool previousSyncFlight;
-  private bool previousSyncSubmerged;
+
+  public enum VehiclePhysicsState
+  {
+    Land,
+    Air,
+    Sea,
+    Submerged
+  }
+
+  private VehiclePhysicsState _previousVehiclePhysicsState;
   private float prevLeftUpwardsForce;
   private float prevRightUpwardsForce;
 
@@ -177,6 +185,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       _vehicleAnchorState = value;
       isAnchored = IsAnchorDropped(_vehicleAnchorState);
     }
+  }
+
+  public VehiclePhysicsState GetCachedVehiclePhysicsState()
+  {
+    return _previousVehiclePhysicsState;
   }
 
   public IVehicleShip? VehicleInstance => _vehicle;
@@ -1342,7 +1355,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void UpdateFlyingVehicle()
   {
-    UpdateVehicleStats(true, false);
+    UpdateVehicleStats(VehiclePhysicsState.Air);
     UpdateAndFreezeRotation();
     // early exit if anchored.
     if (UpdateAnchorVelocity(m_body.velocity)) return;
@@ -1388,43 +1401,53 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
-  public float landVehicleDrag = 0.5f;
-  public float landVehicleAngularDrag = 1f;
-  public float centerOfMassOffset = -10f;
+  public void OffsetCenterOfMass()
+  {
+    if (PiecesController == null) return;
+    // resets the mass to center. But then we will offset it if there is an offset provided.
+    m_body.ResetCenterOfMass();
+    m_body.automaticCenterOfMass = true;
+
+
+    if (Mathf.Approximately(PhysicsConfig.VehicleCenterOfMassOffset.Value, 0f)) return;
+
+    var centerOfMass = m_body.centerOfMass;
+    var convexHullBounds = PiecesController.convexHullComponent.GetConvexHullBounds(true);
+    var offset = PhysicsConfig.VehicleCenterOfMassOffset.Value * convexHullBounds.size.y;
+
+    if (!(offset > 0.1f)) return;
+    centerOfMass.y += offset;
+    m_body.centerOfMass = centerOfMass;
+    m_body.automaticCenterOfMass = false;
+  }
+
+  public void UpdateLandVehicleStats()
+  {
+    m_body.angularDrag = PhysicsConfig.landAngularDrag.Value;
+    m_body.drag = PhysicsConfig.landDrag.Value;
+
+    if (m_body.freezeRotation != PhysicsConfig.VehicleLandAllowXYRotation.Value)
+    {
+      m_body.freezeRotation = PhysicsConfig.VehicleLandAllowXYRotation.Value;
+    }
+  }
 
   public void UpdateVehicleLandSpeed()
   {
-    // sync values
-    m_body.angularDrag = landVehicleAngularDrag;
-    m_body.drag = landVehicleDrag;
-    m_body.ResetCenterOfMass();
-    m_body.automaticCenterOfMass = true;
-    m_body.freezeRotation = true;
-
-    if (!Mathf.Approximately(centerOfMassOffset, 0f))
-    {
-      var centerOfMass = m_body.centerOfMass;
-      centerOfMass.y += centerOfMassOffset;
-      m_body.centerOfMass = centerOfMass;
-      m_body.automaticCenterOfMass = false;
-    }
-
-    // UpdateVehicleStats(false, false);
-    // early exit if anchored.
-
-    // need to be called per fixed update
+    UpdateVehicleStats(VehiclePhysicsState.Land);
     if (UpdateAnchorVelocity(m_body.velocity)) return;
     if (WheelController == null) return;
     WheelController.forwardDirection = ShipDirection;
+
+    var isOwner = m_nview.IsOwner();
+    if (!isOwner) return;
     if (shouldUpdateLandInputs)
     {
       m_body.WakeUp();
       var landSpeed = GetLandVehicleSpeed();
-
       WheelController.inputForwardForce = landSpeed;
       WheelController.VehicleMovementFixedUpdate();
     }
-
   }
 
   /// <summary>
@@ -1502,29 +1525,43 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   ///   Used to force update physics when values for physics
   ///   properties change
   /// </param>
-  public void UpdateVehicleStats(bool flight, bool submerged,
+  public void UpdateVehicleStats(VehiclePhysicsState currentPhysicsState,
     bool forceUpdate = false)
   {
     if (!forceUpdate)
+    {
+
       if (vehicleStatSyncTimer is > 0f and < 30f &&
-          previousSyncFlight == flight &&
-          previousSyncSubmerged == submerged)
+          _previousVehiclePhysicsState == currentPhysicsState)
       {
         vehicleStatSyncTimer += Time.fixedDeltaTime;
         return;
       }
 
-    vehicleStatSyncTimer = Time.fixedDeltaTime;
+      // only reset timer if forceupdate not provided
+      vehicleStatSyncTimer = Time.fixedDeltaTime;
+    }
 
-    previousSyncFlight = flight;
-    previousSyncSubmerged = submerged;
+    _previousVehiclePhysicsState = currentPhysicsState;
 
-    if (flight)
-      UpdateFlightStats();
-    else if (submerged)
-      UpdateSubmergedStats();
-    else
-      UpdateWaterStats();
+    switch (currentPhysicsState)
+    {
+
+      case VehiclePhysicsState.Land:
+        UpdateLandVehicleStats();
+        break;
+      case VehiclePhysicsState.Air:
+        UpdateFlightStats();
+        break;
+      case VehiclePhysicsState.Sea:
+        UpdateWaterStats();
+        break;
+      case VehiclePhysicsState.Submerged:
+        UpdateSubmergedStats();
+        break;
+      default:
+        throw new ArgumentOutOfRangeException(nameof(currentPhysicsState), currentPhysicsState, null);
+    }
 
     // todo determine if we change this what happens.
     m_force = PhysicsConfig.force.Value;
@@ -1707,7 +1744,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public void UpdateShipFloatation(ShipFloatation shipFloatation)
   {
-    UpdateVehicleStats(false, IsSubmerged());
+    var vehicleState = IsSubmerged() ? VehiclePhysicsState.Sea : VehiclePhysicsState.Submerged;
+    UpdateVehicleStats(vehicleState);
 
     UpdateWaterForce(shipFloatation);
 
@@ -2052,20 +2090,21 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// Physics syncs on 1 client are better otherwise the ships will desync across clients and both will stutter
   public void VehicleMovementUpdatesOwnerOnly()
   {
-    if (!m_nview) return;
+    if (!m_nview || !_vehicle) return;
+    var hasOwner = m_nview.HasOwner();
+    var owner = m_nview.IsOwner();
+    if (!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner && hasOwner ||
+        isBeached) return;
+
+
+    _currentShipFloatation = GetShipFloatationObj();
+
 
     if (_vehicle.IsLandVehicle)
     {
       UpdateVehicleLandSpeed();
       return;
     }
-
-    var hasOwner = m_nview.HasOwner();
-    var owner = m_nview.IsOwner();
-    if (!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner && hasOwner ||
-        isBeached) return;
-
-    _currentShipFloatation = GetShipFloatationObj();
 
     UpdateColliderPositions();
 

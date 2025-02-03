@@ -5,7 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca26c040-1a50-419b-8729-0605793a97f8" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimMods/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimMods/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs" beforeDir="false" afterPath="$PROJECT_DIR$/libs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/PlanBuild.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/PlanBuild.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/PlatformTools.Core.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/PlatformTools.Core.dll" afterDir="false" />
@@ -15,9 +14,9 @@
       <change beforePath="$PROJECT_DIR$/libs/assembly_utils.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/assembly_utils.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/assembly_valheim.dll" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/gui_framework.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/gui_framework.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Config/VehicleDebugConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Config/VehicleDebugConfig.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Config/PhysicsConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Config/PhysicsConfig.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugGui.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugGui.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehiclePiecesController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehiclePiecesController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -85,6 +84,7 @@
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/fa/2cfa95fd/ZSyncTransform.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/fb/5073cc62/Player.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/bdf59acb21534ad59114d82c98d8912e6e200/42/a355fd6b/DragWindowCntrl.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/bdf59acb21534ad59114d82c98d8912e6e200/62/dcf5758c/GUIManager.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/bdf59acb21534ad59114d82c98d8912e6e200/be/38644a6e/PieceConfig.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac0151000/7a/0a5556d0/Object.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/04/5a8639a1/Bounds.cs" root0="SKIP_HIGHLIGHTING" />
@@ -92,6 +92,8 @@
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/47/0d7762e9/MonoBehaviour.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/47/2f02cda0/GameObject.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/49/2966b71b/LayerMask.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/4f/26e7fe84/UnityEvent.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/5d/2b88e57f/Vector2.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/68/1c3763c0/Quaternion.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/86/751124c9/GraphicsSettings.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/8c/75ec9536/Bounds.cs" root0="FORCE_HIGHLIGHTING" />
@@ -265,7 +267,7 @@
     "Mono Remote.valheim.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "XThreadsFramesViewSplitterKey": "1.1353383",
+    "XThreadsFramesViewSplitterKey": "0.5391499",
     "git-widget-placeholder": "feat/tank-track-logic",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.stylelint": "true",
@@ -276,7 +278,7 @@
     "nodejs_package_manager_path": "npm",
     "rider.code.cleanup.on.save": "true",
     "rider.code.cleanup.on.save.profile": "Built-in: Reformat & Apply Syntax Style",
-    "settings.editor.selected.configurable": "actions.on.save",
+    "settings.editor.selected.configurable": "preferences.sourceCode.C#",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -463,16 +465,29 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugGui.cs</url>
-          <line>193</line>
+          <line>140</line>
           <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleDebugGui.cs" containingFunctionPresentation="Method 'CreateShortcutPanel'">
             <startOffsets>
-              <option value="5666" />
+              <option value="3649" />
             </startOffsets>
             <endOffsets>
-              <option value="5699" />
+              <option value="3682" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="703" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs</url>
+          <line>2086</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs" containingFunctionPresentation="Method 'VehicleMovementUpdatesOwnerOnly'">
+            <startOffsets>
+              <option value="64447" />
+            </startOffsets>
+            <endOffsets>
+              <option value="64454" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="704" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
