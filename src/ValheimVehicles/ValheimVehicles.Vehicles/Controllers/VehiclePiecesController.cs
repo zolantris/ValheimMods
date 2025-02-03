@@ -2713,18 +2713,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     convexHullTriggerMeshColliders = MovementController.DamageColliders
       .GetComponentsInChildren<MeshCollider>(true).ToList();
 
-    if (RamConfig.VehicleHullsAreRams.Value)
-      MovementController.AddRamAoeToConvexHull();
-
     IgnoreShipColliders(convexHullColliders);
     IgnoreVehicleCollidersForAllPieces();
-
-    if (WheelController != null)
-    {
-      var convexHullBounds = convexHullComponent.GetConvexHullBounds(true);
-      WheelController.InitializeWheels(convexHullBounds);
-      IgnoreAllWheelColliders();
-    }
   }
 
   public void IgnoreColliderForWheelColliders(Collider collider)
@@ -2776,6 +2766,10 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void RebuildBounds()
   {
     if (!isActiveAndEnabled) return;
+    if (RamConfig.VehicleHullsAreRams.Value && MovementController != null)
+      MovementController.AddRamAoeToConvexHull();
+    TempDisableRamsDuringRebuild();
+
     Physics.SyncTransforms();
     RotateVehicleForwardPosition();
 
@@ -2823,7 +2817,15 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     {
       OnboardController.OnBoundsRebuild();
     }
-    TempDisableRamsDuringRebuild();
+
+
+    if (WheelController != null)
+    {
+      // var convexHullBounds = convexHullComponent.GetConvexHullBounds(true);
+      var onboardColliderRelativeBounds = new Bounds(OnboardCollider.transform.localPosition, OnboardCollider.bounds.size);
+      WheelController.InitializeWheels(onboardColliderRelativeBounds);
+      IgnoreAllWheelColliders();
+    }
   }
 
   /// <summary>

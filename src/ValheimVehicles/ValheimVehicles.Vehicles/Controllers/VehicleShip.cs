@@ -395,6 +395,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     WheelController.wheelSuspensionDistance = PhysicsConfig.VehicleLandSuspensionDistance.Value;
     WheelController.wheelRadius = PhysicsConfig.VehicleLandWheelRadius.Value;
     WheelController.wheelSuspensionSpring = PhysicsConfig.VehicleLandWheelSuspensionSpring.Value;
+    WheelController.wheelBottomOffset = PhysicsConfig.VehicleLandWheelOffset.Value;
   }
 
   /// <summary>

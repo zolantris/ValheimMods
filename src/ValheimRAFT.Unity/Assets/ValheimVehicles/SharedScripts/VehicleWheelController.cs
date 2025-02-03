@@ -443,7 +443,13 @@ namespace ValheimVehicles.SharedScripts
     {
       // Calculate the local position directly within the bounds
       var xPos = isLeft ? bounds.min.x : bounds.max.x;
+      // var xPos = isLeft ? bounds.min.x : bounds.max.x;
+
       var zPos = bounds.min.z + spacing * index;
+
+      // unknown why these must be divided by 2 as they should be matching the bounds properly.
+      xPos /= 2;
+      zPos /= 2;
       // var ratio = index / Math.Max(totalWheelSets, 1);
       // var zPos = bounds.size.z * ratio * bounds.min.z;
       var localPosition = new Vector3(xPos, bounds.min.y + wheelBottomOffset, zPos);

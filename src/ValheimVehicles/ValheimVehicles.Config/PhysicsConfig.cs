@@ -46,6 +46,7 @@ public static class PhysicsConfig
   public static ConfigEntry<float> VehicleLandSuspensionDistance = null!;
   public static ConfigEntry<float> VehicleLandWheelSuspensionSpring = null!;
   public static ConfigEntry<float> VehicleLandWheelRadius = null!;
+  public static ConfigEntry<float> VehicleLandWheelOffset = null!;
 
   // flight
   public static ConfigEntry<float> flightAngularDamping = null!;
@@ -293,7 +294,13 @@ public static class PhysicsConfig
       "LandVehicle WheelRadius",
       1.5f,
       ConfigHelpers.CreateConfigDescription(
-        "Wheel radius. Larger wheels have more traction. But may be less realistic.", true, false, new AcceptableValueRange<float>(1.0f, 5f)));
+        "Wheel radius. Larger wheels have more traction. But may be less realistic.", true, false, new AcceptableValueRange<float>(0.25f, 5f)));
+
+    VehicleLandWheelOffset = Config.Bind(PropulsionSection,
+      "LandVehicle WheelOffset",
+      1.5f,
+      ConfigHelpers.CreateConfigDescription(
+        "Wheel offset. Allowing for raising the wheels higher. May require increasing suspension distance so the wheels spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the wheels", true, false, new AcceptableValueRange<float>(-10f, 10f)));
 
     VehicleLandWheelSuspensionSpring = Config.Bind(PropulsionSection,
       "LandVehicle SuspensionSpring",
@@ -524,6 +531,7 @@ public static class PhysicsConfig
         x.UpdateVehicleSpeedThrottle());
 
     VehicleLandWheelSuspensionSpring.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandWheelOffset.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandSuspensionDistance.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandWheelRadius.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();

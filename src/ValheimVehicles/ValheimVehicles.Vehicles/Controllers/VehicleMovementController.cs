@@ -1428,9 +1428,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     m_body.angularDrag = PhysicsConfig.landAngularDrag.Value;
     m_body.drag = PhysicsConfig.landDrag.Value;
 
-    if (m_body.freezeRotation != !PhysicsConfig.VehicleLandAllowXYRotation.Value)
+    if (m_body.freezeRotation != !PhysicsConfig.VehicleLandAllowXZRotation.Value)
     {
-      m_body.freezeRotation = !PhysicsConfig.VehicleLandAllowXYRotation.Value;
+      m_body.freezeRotation = !PhysicsConfig.VehicleLandAllowXZRotation.Value;
     }
   }
 
