@@ -835,7 +835,7 @@ namespace ValheimVehicles.SharedScripts
     /// <param name="distanceThreshold"></param>
     /// <param name="triggerParent"></param>
     public void GenerateMeshesFromChildColliders(
-      GameObject targetParentGameObject,
+      GameObject targetParentGameObject, Vector3 centerOfMassOffset,
       float distanceThreshold, List<GameObject> childGameObjects,
       Transform? triggerParent = null)
     {
@@ -851,7 +851,7 @@ namespace ValheimVehicles.SharedScripts
           ? GetAllColliderPointsAsWorldPoints(hullCluster)
           : GetColliderPointsLocal(hullCluster);
         GenerateConvexHullMesh(colliderPoints,
-          targetParentGameObject.transform);
+          targetParentGameObject.transform, centerOfMassOffset);
       }
 
       CreatePreviewConvexHullMeshes();
@@ -1087,7 +1087,7 @@ namespace ValheimVehicles.SharedScripts
 
 
     public void GenerateConvexHullMesh(
-      List<Vector3> points, Transform parentObjTransform)
+      List<Vector3> points, Transform parentObjTransform, Vector3 centerOfMassOffset)
     {
       if (points.Count < 3)
       {
@@ -1096,7 +1096,7 @@ namespace ValheimVehicles.SharedScripts
       }
 
       var localPoints = points
-        .Select(x => parentObjTransform.InverseTransformPoint(x)).ToList();
+        .Select(x => parentObjTransform.InverseTransformPoint(x) + centerOfMassOffset).ToList();
 
       // if (convexHullMeshes.Count > 0 &&
       //     DebugUnityHelpers.Vector3ArrayEqualWithTolerance(

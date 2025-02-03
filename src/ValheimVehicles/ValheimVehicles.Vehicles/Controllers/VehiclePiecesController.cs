@@ -2689,7 +2689,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     convexHullComponent
       .GenerateMeshesFromChildColliders(
-        vehicleMovementCollidersTransform.gameObject,
+        vehicleMovementCollidersTransform.gameObject, vehicleMovementCollidersTransform.position - m_body.worldCenterOfMass,
         PhysicsConfig.convexHullJoinDistanceThreshold.Value,
         nvChildGameObjects, MovementController.DamageColliders);
 

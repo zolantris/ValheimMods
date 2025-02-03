@@ -92,10 +92,10 @@ namespace ValheimVehicles.SharedScripts
     public float axelPadding = 0.5f; // Extra length on both sides of axel
 
     public float
-      vehicleSizeThresholdFor5thSet = 30f; // Threshold for adding 5th set
+      vehicleSizeThresholdFor5thSet = 24f; // Threshold for adding 5th set
 
     public float
-      vehicleSizeThresholdFor6thSet = 60f; // Threshold for adding 6th set
+      vehicleSizeThresholdFor6thSet = 48f; // Threshold for adding 6th set
 
     [Tooltip(
       "User input")]
@@ -188,6 +188,7 @@ namespace ValheimVehicles.SharedScripts
       WheelcollidersToWheelRenderMap.Clear();
       poweredWheels.Clear();
       wheelColliders.Clear();
+      colliders.Clear();
       right.Clear();
       left.Clear();
       rear.Clear();
@@ -346,9 +347,8 @@ namespace ValheimVehicles.SharedScripts
 
       SetOverrides();
 
-      Physics.SyncTransforms();
-      var isXBounds = IsXBoundsAlignment();
-      var totalWheelSets = CalculateTotalWheelSets(bounds, isXBounds);
+      // var isXBounds = IsXBoundsAlignment();
+      var totalWheelSets = CalculateTotalWheelSets(bounds);
 
       // we fully can regenerate wheels.
       // todo just remove the ones we no longer use
@@ -369,8 +369,7 @@ namespace ValheimVehicles.SharedScripts
           var isLeft = directionIndex == 0;
           var localPosition =
             GetWheelLocalPosition(i, isLeft, totalWheelSets, bounds,
-              spacing,
-              isXBounds);
+              spacing);
           GameObject wheelInstance;
           if (wheelInstances.Count < wheelIndex)
           {
@@ -385,7 +384,7 @@ namespace ValheimVehicles.SharedScripts
           var dirName = isLeft ? "left" : "right";
           var positionName = GetWheelPositionName(i, totalWheelSets);
           wheelInstance.name = $"ValheimVehicles_VehicleLand_wheel_{positionName}_{dirName}_{i}";
-          SetWheelProperties(wheelInstance, bounds, isXBounds, i, isLeft,
+          SetWheelProperties(wheelInstance, bounds, i, isLeft,
             totalWheelSets);
 
           if (wheelInstances.Count >= wheelIndex)
@@ -411,12 +410,9 @@ namespace ValheimVehicles.SharedScripts
       return new Bounds(Vector3.zero, Vector3.zero);
     }
 
-    private int CalculateTotalWheelSets(Bounds bounds, bool isXBounds)
+    private int CalculateTotalWheelSets(Bounds bounds)
     {
-      var vehicleSize =
-        isXBounds
-          ? bounds.size.x
-          : bounds.size.z; // Assuming size along the Z-axis determines length
+      var vehicleSize = bounds.size.z; // Assuming size along the Z-axis determines length
 
       if (vehicleSize >= vehicleSizeThresholdFor6thSet) return 6;
 
@@ -439,7 +435,7 @@ namespace ValheimVehicles.SharedScripts
     //   return wheelParent.InverseTransformPoint(rotatedPosition);
     // }
     private Vector3 GetWheelLocalPosition(int index, bool isLeft, int totalWheelSets,
-      Bounds bounds, float spacing, bool isXBounds)
+      Bounds bounds, float spacing)
     {
       // Calculate the local position directly within the bounds
       var xPos = isLeft ? bounds.min.x : bounds.max.x;
@@ -479,8 +475,7 @@ namespace ValheimVehicles.SharedScripts
 
     private static Vector3 wheelMeshLocalScale = new(3f, 0.3f, 3f);
 
-    private void SetWheelProperties(GameObject wheelObj, Bounds bounds,
-      bool isXBoundsAligned, int wheelSetIndex, bool isLeft, int totalWheelSets)
+    private void SetWheelProperties(GameObject wheelObj, Bounds bounds, int wheelSetIndex, bool isLeft, int totalWheelSets)
     {
       var wheelRenderer =
         wheelObj.transform.Find("wheel_mesh").GetComponent<MeshRenderer>();
@@ -549,61 +544,61 @@ namespace ValheimVehicles.SharedScripts
     public float additionalBreakForce = defaultBreakForce;
     private float deltaRunPoweredWheels = 0f;
 
-    private void AdjustVehicleToGround(Bounds bounds)
-    {
-      if (!rigid) return;
-
-      var terrainMask = LayerMask.GetMask("terrain"); // Ensure "Terrain" is a valid layer name in your project.
-      var highestGroundPoint = float.MinValue;
-      var isAboveTerrain = false;
-      var maxWheelRadius = 0.5f;
-
-      foreach (var wheel in wheelColliders)
-      {
-        var wheelPosition = wheel.transform.position;
-
-        // Perform raycasts above and below the wheel position
-        if (Physics.Raycast(wheelPosition, Vector3.down, out var hitBelow, 80, terrainMask))
-        {
-          highestGroundPoint = Mathf.Max(highestGroundPoint, hitBelow.point.y);
-        }
-
-        if (Physics.Raycast(wheelPosition, Vector3.up, 80, terrainMask))
-        {
-          isAboveTerrain = true;
-        }
-
-        maxWheelRadius = Mathf.Max(maxWheelRadius, wheel.radius);
-      }
-
-      // If terrain is detected both above and below, skip adjustment
-      if (isAboveTerrain)
-      {
-        Debug.Log("Vehicle is trapped between terrain above and below. Skipping adjustment.");
-        return;
-      }
-
-      var offsetY = maxWheelRadius + highestGroundPoint - bounds.min.y + wheelBottomOffset; // Align the bottom of the vehicle to the highest ground point
-      // Calculate the required vertical adjustment
-      var vehiclePosition = rigid.transform.position;
-
-      var newPosition = new Vector3(vehiclePosition.x, vehiclePosition.y + offsetY, vehiclePosition.z);
-
-
-      // todo move all objects on rigidbody upwards without causing kinematic problems.
-
-      // Move the rigidbody kinematically
-      var originalKinematicState = rigid.isKinematic;
-      rigid.isKinematic = true;
-      rigid.transform.position = newPosition;
-      rigid.isKinematic = originalKinematicState;
-
-      if (rigid.isKinematic == false)
-      {
-        rigid.velocity = Vector3.zero;
-        rigid.angularVelocity = Vector3.zero;
-      }
-    }
+    // private void AdjustVehicleToGround(Bounds bounds)
+    // {
+    //   if (!rigid) return;
+    //
+    //   var terrainMask = LayerMask.GetMask("terrain"); // Ensure "Terrain" is a valid layer name in your project.
+    //   var highestGroundPoint = float.MinValue;
+    //   var isAboveTerrain = false;
+    //   var maxWheelRadius = 0.5f;
+    //
+    //   foreach (var wheel in wheelColliders)
+    //   {
+    //     var wheelPosition = wheel.transform.position;
+    //
+    //     // Perform raycasts above and below the wheel position
+    //     if (Physics.Raycast(wheelPosition, Vector3.down, out var hitBelow, 80, terrainMask))
+    //     {
+    //       highestGroundPoint = Mathf.Max(highestGroundPoint, hitBelow.point.y);
+    //     }
+    //
+    //     if (Physics.Raycast(wheelPosition, Vector3.up, 80, terrainMask))
+    //     {
+    //       isAboveTerrain = true;
+    //     }
+    //
+    //     maxWheelRadius = Mathf.Max(maxWheelRadius, wheel.radius);
+    //   }
+    //
+    //   // If terrain is detected both above and below, skip adjustment
+    //   if (isAboveTerrain)
+    //   {
+    //     Debug.Log("Vehicle is trapped between terrain above and below. Skipping adjustment.");
+    //     return;
+    //   }
+    //
+    //   var offsetY = maxWheelRadius + highestGroundPoint - bounds.min.y + wheelBottomOffset; // Align the bottom of the vehicle to the highest ground point
+    //   // Calculate the required vertical adjustment
+    //   var vehiclePosition = rigid.transform.position;
+    //
+    //   var newPosition = new Vector3(vehiclePosition.x, vehiclePosition.y + offsetY, vehiclePosition.z);
+    //
+    //
+    //   // todo move all objects on rigidbody upwards without causing kinematic problems.
+    //
+    //   // Move the rigidbody kinematically
+    //   var originalKinematicState = rigid.isKinematic;
+    //   rigid.isKinematic = true;
+    //   rigid.transform.position = newPosition;
+    //   rigid.isKinematic = originalKinematicState;
+    //
+    //   if (rigid.isKinematic == false)
+    //   {
+    //     rigid.velocity = Vector3.zero;
+    //     rigid.angularVelocity = Vector3.zero;
+    //   }
+    // }
 
     internal float powerWheelDeltaInterval = 0.3f;
 

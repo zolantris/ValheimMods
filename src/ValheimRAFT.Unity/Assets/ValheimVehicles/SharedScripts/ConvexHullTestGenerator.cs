@@ -35,7 +35,7 @@ namespace ValheimVehicles.SharedScripts
     public VehicleWheelController vehicleWheelController;
     public MovementPiecesController movementPiecesController;
     private float lastUpdate;
-    private Bounds _cachedDebugBounds = new Bounds(Vector3.zero, Vector3.zero);
+    private Bounds _cachedDebugBounds = new(Vector3.zero, Vector3.zero);
 
     private void Awake()
     {
@@ -154,7 +154,7 @@ namespace ValheimVehicles.SharedScripts
           !go.name.StartsWith("VehicleShip") && go.activeInHierarchy);
 
       _convexHullAPI.GenerateMeshesFromChildColliders(
-        convexHullParentGameObject,
+        convexHullParentGameObject, convexHullParentGameObject.transform.position - PiecesParentObj.GetComponent<Rigidbody>().worldCenterOfMass,
         distanceThreshold, childGameObjects.ToList());
 
       _convexHullAPI.UpdateConvexHullBounds();
@@ -223,13 +223,13 @@ namespace ValheimVehicles.SharedScripts
     }
 
     // Test the method with a sample list of points
-    [ContextMenu("Generate Mesh From Points")]
-    private void TestGenerateMeshFromPoint()
-    {
-      // copy & paste points here to see the result.
-      var points = new Vector3[] {}.ToList();
-
-      _convexHullAPI.GenerateConvexHullMesh(points, transform);
-    }
+    // [ContextMenu("Generate Mesh From Points")]
+    // private void TestGenerateMeshFromPoint()
+    // {
+    //   // copy & paste points here to see the result.
+    //   var points = new Vector3[] {}.ToList();
+    //
+    //   _convexHullAPI.GenerateConvexHullMesh(points, transform);
+    // }
   }
 }
