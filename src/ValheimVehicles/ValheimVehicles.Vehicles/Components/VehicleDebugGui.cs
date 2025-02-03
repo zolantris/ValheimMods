@@ -40,10 +40,6 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
   public static bool vehicleDebugPhysicsSync = true;
 
-  private Rect windowRect;
-
-  private Rect errorWinRect;
-
   private int buttonFontSize = 16;
 
   private int titleFontSize = 18;
@@ -72,12 +68,8 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
   private void Start()
   {
-    windowRect.x = VehicleDebugConfig.windowPosX.Value;
-    windowRect.y = VehicleDebugConfig.windowPosY.Value;
-    buttonFontSize = VehicleDebugConfig.buttonFontSize.Value;
+    buttonFontSize = VehicleDebugConfig.ButtonFontSize.Value;
     titleFontSize = VehicleDebugConfig.TitleFontSize.Value;
-    windowRect.width = VehicleDebugConfig.windowWidth.Value;
-    windowRect.height = VehicleDebugConfig.windowHeight.Value;
     hasInitialized = false;
 
     GUIManager.OnCustomGUIAvailable += InitPanel;
@@ -227,17 +219,23 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       GUIManager.Instance.ValheimControlResources
     );
     panel.name = "ValheimVehicles_modderCommandsWindow_commands";
-    panel.AddComponent<DragWindowCntrlExtension>();
+    var dragWindowExtension = panel.AddComponent<DragWindowCntrlExtension>();
     panel.transform.SetParent(GUIManager.CustomGUIBack.transform, false);
     panel.GetComponent<Image>().pixelsPerUnitMultiplier = 1f;
     var panelTransform = (RectTransform)panel.transform;
-    panelTransform.anchoredPosition = panelPosition;
+    panelTransform.anchoredPosition = new Vector2(VehicleDebugConfig.WindowPosX.Value, VehicleDebugConfig.WindowPosY.Value);
     panelTransform.anchorMin = anchorMin;
     panelTransform.anchorMax = anchorMax;
 
     panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, panelWidth);
     panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, buttonHeight);
 
+    dragWindowExtension.OnDragCalled += () =>
+    {
+      var anchoredPosition = panelTransform.anchoredPosition;
+      VehicleDebugConfig.WindowPosX.Value = anchoredPosition.x;
+      VehicleDebugConfig.WindowPosY.Value = anchoredPosition.y;
+    };
     // Create the text object
     // GUIManager.Instance.CreateText(
     //   "Vehicle Shortcuts",

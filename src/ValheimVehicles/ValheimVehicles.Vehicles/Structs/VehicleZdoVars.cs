@@ -17,6 +17,12 @@ public static class VehicleZdoVars
 
   public static string IsLandVehicle = "ValheimVehicles_IsLandVehicle";
 
+  public static readonly int VehicleMovingPiece =
+    "VehicleMovingPiece".GetStableHashCode();
+
+  public static readonly int VehicleMovingPieceOffsetHash =
+    "VehicleMovingPieceOffsetHash".GetStableHashCode();
+
   // todo remove this flag set as it is deprecated
   public static readonly int DEPRECATED_VehicleFlags =
     "VehicleFlags".GetStableHashCode();
@@ -31,12 +37,6 @@ public static class VehicleZdoVars
 
   public static readonly KeyValuePair<int, int> MBParentHash =
     ZDO.GetHashZDOID("MBParent");
-
-  public static readonly int MBCharacterParentHash =
-    "MBCharacterParent".GetStableHashCode();
-
-  public static readonly int MBCharacterOffsetHash =
-    "MBCharacterOffset".GetStableHashCode();
 
   public static readonly int MBParentIdHash = "MBParentId".GetStableHashCode();
 

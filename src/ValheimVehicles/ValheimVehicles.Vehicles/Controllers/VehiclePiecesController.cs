@@ -160,6 +160,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   internal FixedJoint m_fixedJoint;
 
   public List<ZNetView> m_pieces = [];
+  public List<ZNetView> m_tempPieces = [];
   internal List<ZNetView> m_ramPieces = [];
   internal List<ZNetView> m_anchorPieces = [];
 
@@ -669,6 +670,17 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       piece.transform.SetParent(null);
       AddInactivePiece(VehicleInstance!.PersistentZdoId, piece, null, true);
     }
+
+    // todo might need to do some freezing of positions if these pieces are rigidbodies/physics related such as animals and npcs.
+    foreach (var tempPiece in m_tempPieces.ToList())
+    {
+      if (!tempPiece)
+      {
+        m_tempPieces.Remove(tempPiece);
+        continue;
+      }
+      tempPiece.transform.SetParent(null);
+    }
   }
 
   public virtual void SyncRigidbodyStats(float drag, float angularDrag,
@@ -965,6 +977,24 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         continue;
       }
 
+      nv.m_zdo?.SetPosition(position);
+    }
+
+    // Removes the temp collider from the parent if not within the parent.
+    foreach (var nv in controller.m_tempPieces.ToList())
+    {
+      if (nv == null)
+      {
+        controller.m_tempPieces.Remove(nv);
+        continue;
+      }
+      var convexHullBounds = controller.convexHullComponent.GetConvexHullBounds(false);
+      if (!convexHullBounds.Contains(nv.transform.position))
+      {
+        nv.transform.SetParent(null);
+        controller.m_tempPieces.Remove(nv);
+        continue;
+      }
       nv.m_zdo?.SetPosition(position);
     }
   }
@@ -1632,7 +1662,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
         if (ZDOExtraData.s_vec3.TryGetValue(nv.m_zdo.m_uid, out var dic))
         {
-          if (dic.TryGetValue(VehicleZdoVars.MBCharacterOffsetHash,
+          if (dic.TryGetValue(VehicleZdoVars.VehicleMovingPieceOffsetHash,
                 out var offset))
             nv.transform.position = offset + transform.position;
 
@@ -1640,9 +1670,9 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         }
 
         ZDOExtraData.RemoveInt(nv.m_zdo.m_uid,
-          VehicleZdoVars.MBCharacterParentHash);
+          VehicleZdoVars.VehicleMovingPiece);
         ZDOExtraData.RemoveVec3(nv.m_zdo.m_uid,
-          VehicleZdoVars.MBCharacterOffsetHash);
+          VehicleZdoVars.VehicleMovingPieceOffsetHash);
         dic = null;
       }
 
@@ -1758,29 +1788,29 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       return;
     }
 
-    source.m_zdo.RemoveInt(VehicleZdoVars.MBCharacterParentHash);
-    source.m_zdo.RemoveVec3(VehicleZdoVars.MBCharacterOffsetHash);
+    source.m_zdo.RemoveInt(VehicleZdoVars.VehicleMovingPiece);
+    source.m_zdo.RemoveVec3(VehicleZdoVars.VehicleMovingPieceOffsetHash);
   }
 
   /// <summary>
   /// Makes the player associated with the vehicle ship, if they spawn they are teleported here.
   /// </summary>
-  /// <param name="source"></param>
+  /// <param name="netView"></param>
   /// <param name="bvc"></param>
   /// <returns></returns>
-  public static bool AddDynamicParentForVehicle(ZNetView source,
+  public static bool AddDynamicParentForVehicle(ZNetView netView,
     VehiclePiecesController bvc)
   {
-    if (source == null) return false;
-    if (!source.isActiveAndEnabled)
+    if (netView == null) return false;
+    if (!netView.isActiveAndEnabled)
     {
       Logger.LogDebug("Player source Not active");
       return false;
     }
 
-    // source.m_zdo.Set(VehicleZdoVars.MBCharacterParentHash, bvc.PersistentZdoId);
-    // source.m_zdo.Set(VehicleZdoVars.MBCharacterOffsetHash,
-    //   source.transform.position - bvc.transform.position);
+    netView.m_zdo.Set(VehicleZdoVars.VehicleMovingPiece, bvc.PersistentZdoId);
+    netView.m_zdo.Set(VehicleZdoVars.VehicleMovingPieceOffsetHash,
+      netView.transform.position - bvc.transform.position);
     return true;
   }
 
@@ -1795,7 +1825,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     if (!netView) return 0;
 
-    return netView.GetZDO()?.GetInt(VehicleZdoVars.MBCharacterParentHash, 0) ??
+    return netView.GetZDO()?.GetInt(VehicleZdoVars.VehicleMovingPiece, 0) ??
            0;
   }
 
@@ -1803,7 +1833,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   {
     if (!netView) return Vector3.zero;
 
-    return netView.m_zdo?.GetVec3(VehicleZdoVars.MBCharacterOffsetHash,
+    return netView.m_zdo?.GetVec3(VehicleZdoVars.VehicleMovingPieceOffsetHash,
              Vector3.zero) ??
            Vector3.zero;
   }
@@ -1962,7 +1992,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       list.Add(zdo);
     }
 
-    var cid = zdo.GetInt(VehicleZdoVars.MBCharacterParentHash);
+    var cid = zdo.GetInt(VehicleZdoVars.VehicleMovingPiece);
     if (cid != 0)
     {
       if (!m_dynamicObjects.TryGetValue(cid, out var objectList))
@@ -2063,6 +2093,28 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     if ((bool)wnt) wnt.enabled = true;
 
     AddPiece(netView);
+  }
+
+  /// <summary>
+  /// For Carts and other rigidbody moveable objects.
+  /// </summary>
+  /// <param name="netView"></param>
+  public void AddTemporaryPiece(ZNetView netView)
+  {
+    var zdo = netView.GetZDO();
+    if (zdo == null) return;
+    AddDynamicParentForVehicle(netView, this);
+    SetPieceToParent(netView.transform);
+    FixPieceMeshes(netView);
+    OnAddPieceIgnoreColliders(netView);
+    m_tempPieces.Add(netView);
+  }
+
+  public void RemoveTempPiece(ZNetView netView)
+  {
+    RemoveDynamicParentForVehicle(netView);
+    netView.transform.SetParent(null);
+    m_tempPieces.Remove(netView);
   }
 
   /// <summary>
@@ -2791,6 +2843,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void IgnoreVehicleCollidersForAllPieces()
   {
     foreach (var zNetView in m_pieces)
+    {
+      var colliders = zNetView.GetComponentsInChildren<Collider>(true);
+      IgnoreShipColliders(colliders.ToList());
+    }
+
+    foreach (var zNetView in m_tempPieces)
     {
       var colliders = zNetView.GetComponentsInChildren<Collider>(true);
       IgnoreShipColliders(colliders.ToList());

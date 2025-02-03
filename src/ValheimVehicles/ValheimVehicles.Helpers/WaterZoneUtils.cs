@@ -79,6 +79,7 @@ public static class WaterZoneUtils
   /// <returns></returns>
   private static bool IsInVehicleShipBounds(Character character)
   {
+    if (character == null) return false;
     if (character.transform.root == null) return false;
     var piecesController =
       character.transform.root.GetComponent<VehiclePiecesController>();
@@ -98,6 +99,7 @@ public static class WaterZoneUtils
     out WaterZoneCharacterData? waterZoneData)
   {
     waterZoneData = null;
+    if (character == null) return false;
     var isAllowedUnderwater = IsAllowedUnderwater(character);
     if (!isAllowedUnderwater)
     {
@@ -124,7 +126,7 @@ public static class WaterZoneUtils
   /// </summary>
   /// <param name="character"></param>
   /// <returns></returns>
-  [GameCacheValue(name: "IsOnboard", intervalInSeconds: 1f)]
+  [GameCacheValue("IsOnboard", 1f)]
   public static bool IsOnboard(Character character)
   {
     return IsOnboard(character, out _);

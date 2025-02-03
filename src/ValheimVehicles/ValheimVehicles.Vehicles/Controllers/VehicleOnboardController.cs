@@ -46,8 +46,8 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
   private const float _maxStayTimer = 2f;
   public float _disableTime = 0f;
 
-  public bool _isReadyForCollisions { get; set; }
-  public bool _isRebuildingCollisions
+  public bool isReadyForCollisions { get; set; }
+  public bool isRebuildingCollisions
   {
     get;
     set;
@@ -64,7 +64,7 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
 
   private void Start()
   {
-    _isReadyForCollisions = MovementController != null;
+    isReadyForCollisions = MovementController != null;
     Invoke(nameof(UpdateReadyForCollisions), 0.1f);
   }
 
@@ -73,12 +73,12 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     CancelInvoke(nameof(UpdateReadyForCollisions));
     if (!MovementController || !vehicleShip || !PiecesController)
     {
-      _isReadyForCollisions = false;
+      isReadyForCollisions = false;
       Invoke(nameof(UpdateReadyForCollisions), 0.1f);
       return;
     }
 
-    _isReadyForCollisions = true;
+    isReadyForCollisions = true;
   }
 
   public List<Player> GetPlayersOnShip()
@@ -301,14 +301,14 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
   /// todo to see if we need to add a cast to ensure the player is onboard.
   public void OnBoundsRebuild()
   {
-    _isRebuildingCollisions = false;
+    isRebuildingCollisions = false;
     _disableTime = Time.fixedTime + _maxStayTimer;
   }
 
   public void UpdateReloadingTime()
   {
-    _isRebuildingCollisions = Time.fixedTime < _disableTime;
-    if (!_isRebuildingCollisions)
+    isRebuildingCollisions = Time.fixedTime < _disableTime;
+    if (!isRebuildingCollisions)
     {
       _disableTime = 0f;
     }
@@ -321,10 +321,13 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
   /// <returns></returns>
   public bool IsReady()
   {
-    if (!_isReadyForCollisions) return false;
-    if (_isRebuildingCollisions) return false;
-    UpdateReloadingTime();
-    return !_isRebuildingCollisions;
+    if (!isReadyForCollisions) return false;
+    if (isRebuildingCollisions)
+    {
+      UpdateReloadingTime();
+    }
+
+    return !isRebuildingCollisions;
   }
 
   public void RestoreCollisionDetection(Collider collider)
