@@ -54,7 +54,21 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
   private GameObject devCommandsWindow;
   private GameObject modderCommandsWindow;
+  private GameObject modderCommandToggleWindow;
+  private List<GameObject> modderCommandsPanelToggleObjects = [];
+  private List<GameObject> devCommandsPanelToggleObjects = [];
   private bool hasInitialized = false;
+
+  private const int panelHeight = 500;
+  private const float buttonHeight = 60f;
+  private const float buttonWidth = 150f;
+  private static float panelWidth = buttonWidth * 1.1f;
+
+  private static readonly Vector2 anchorMin = new(0f, 0.5f);
+  private static readonly Vector2 anchorMax = new(0.5f, 0.5f);
+  private static readonly Vector2 panelPosition = Vector2.zero;
+  private static readonly Vector3 buttonHeightVector3 = Vector3.up * buttonHeight;
+  private static readonly Vector3 panelHeightVector3 = Vector3.up * panelHeight / 2f;
 
   private void Start()
   {
@@ -64,25 +78,49 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     titleFontSize = VehicleDebugConfig.TitleFontSize.Value;
     windowRect.width = VehicleDebugConfig.windowWidth.Value;
     windowRect.height = VehicleDebugConfig.windowHeight.Value;
+    hasInitialized = false;
+
+    GUIManager.OnCustomGUIAvailable += InitPanel;
+  }
+
+  private void OnEnable()
+  {
+    hasInitialized = false;
     InitPanel();
+  }
+
+  private void OnDisable()
+  {
+    devCommandsPanelToggleObjects.Clear();
+    modderCommandsPanelToggleObjects.Clear();
+    if (devCommandsWindow != null) Destroy(devCommandsWindow);
+    if (modderCommandsWindow != null) Destroy(modderCommandsWindow);
+  }
+
+  public bool lastPanelState = false;
+
+  public static void HideOrShowPanel(bool isVisible)
+  {
+    if (Instance == null) return;
+    if (Instance.devCommandsWindow)
+    {
+      Instance.devCommandsWindow.SetActive(isVisible);
+      Instance.devCommandsPanelToggleObjects.ForEach((x) =>
+      {
+        x.SetActive(isVisible);
+      });
+    }
+
+    if (Instance.modderCommandsWindow)
+    {
+      Instance.modderCommandsWindow.SetActive(isVisible);
+    }
   }
 
   private void TogglePanelState()
   {
     var state = !hasInitialized || !modderCommandsWindow.activeSelf;
-
-    if (devCommandsWindow)
-    {
-      devCommandsWindow.SetActive(state);
-    }
-
-    if (modderCommandsWindow)
-    {
-      modderCommandsWindow.SetActive(state);
-    }
-
-    // Toggle input for the player and camera while displaying the GUI
-    // GUIManager.BlockInput(state);
+    HideOrShowPanel(state);
   }
 
   private void InitPanel()
@@ -100,7 +138,15 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     }
 
     CreateShortcutPanel();
-    TogglePanelState();
+
+    if (VehicleDebugConfig.VehicleDebugMenuEnabled.Value)
+    {
+      HideOrShowPanel(true);
+    }
+    else
+    {
+      TogglePanelState();
+    }
     hasInitialized = true;
   }
 
@@ -110,9 +156,48 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     public Action action;
   }
 
-  public static float buttonHeight = 60f;
-  public static float buttonWidth = 150f;
-  public void AddButtonWithAction(ButtonAction buttonAction, int index, float StartHeight, Transform windowTransform)
+
+  private static List<ButtonAction> buttonActions =
+  [
+    new()
+    {
+      title = "Hull debugger",
+      action = () =>
+      {
+        ToggleConvexHullDebugger();
+      }
+    },
+    new()
+    {
+      title = "Physics Debugger",
+      action = () =>
+      {
+        ToggleColliderDebugger();
+      }
+    },
+    new()
+    {
+      title = "Raft Creative",
+      action = () => CreativeModeConsoleCommand.RunCreativeModeCommand("raftcreative")
+    },
+    new()
+    {
+      title = "Zero Ship Rotation X/Z",
+      action = () =>
+      {
+        var onboardHelpers = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
+        if (onboardHelpers != null) onboardHelpers.FlipShip();
+      }
+    },
+    new()
+    {
+      title = "Toggle Ocean Sway",
+      action = VehicleCommands.VehicleToggleOceanSway
+    }
+  ];
+
+
+  public GameObject AddButtonWithAction(ButtonAction buttonAction, int index, float StartHeight, Transform windowTransform)
   {
 
     var buttonObj = GUIManager.Instance.CreateButton(
@@ -120,7 +205,7 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
       windowTransform,
       new Vector2(0.5f, 0.5f),
       new Vector2(0.5f, 0.5f),
-      new Vector2(-20, StartHeight - index * buttonHeight),
+      new Vector2(0, StartHeight - index * buttonHeight),
       buttonWidth, buttonHeight
     );
     buttonObj.SetActive(true);
@@ -133,106 +218,105 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     }
 
     button.onClick.AddListener(() => buttonAction.action());
+    return buttonObj;
   }
+
+  private GameObject CreateModderCommandsTogglePanel()
+  {
+    var panel = DefaultControls.CreatePanel(
+      GUIManager.Instance.ValheimControlResources
+    );
+    panel.name = "ValheimVehicles_modderCommandsWindow_commands";
+    panel.AddComponent<DragWindowCntrlExtension>();
+    panel.transform.SetParent(GUIManager.CustomGUIBack.transform, false);
+    panel.GetComponent<Image>().pixelsPerUnitMultiplier = 1f;
+    var panelTransform = (RectTransform)panel.transform;
+    panelTransform.anchoredPosition = panelPosition;
+    panelTransform.anchorMin = anchorMin;
+    panelTransform.anchorMax = anchorMax;
+
+    panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, panelWidth);
+    panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, buttonHeight);
+
+    // Create the text object
+    // GUIManager.Instance.CreateText(
+    //   "Vehicle Shortcuts",
+    //   panel.transform,
+    //   new Vector2(0.5f, 0.5f),
+    //   new Vector2(0.5f, 0.5f),
+    //   new Vector2(0f, 0f),
+    //   GUIManager.Instance.AveriaSerifBold,
+    //   titleFontSize,
+    //   GUIManager.Instance.ValheimOrange,
+    //   true,
+    //   Color.black,
+    //   200f,
+    //   buttonHeight,
+    //   true);
+
+    const string vehicleCommandsHide = "VehicleCommands (Hide)";
+    const string vehicleCommandsShow = "VehicleCommands (Show)";
+    // Create the button object above the gui manager. So it can hide itself.
+    var buttonObject = GUIManager.Instance.CreateButton(
+      vehicleCommandsHide,
+      panel.transform,
+      new Vector2(0.5f, 0.5f),
+      new Vector2(0.5f, 0.5f),
+      new Vector2(0, 0),
+      buttonWidth,
+      buttonHeight);
+    buttonObject.SetActive(true);
+    var buttonText = buttonObject.GetComponentInChildren<Text>();
+
+    // Add a listener to the button to close the panel again
+    var button = buttonObject.GetComponent<Button>();
+    button.onClick.AddListener(() =>
+    {
+      var nextState = !modderCommandsWindow.activeSelf;
+      buttonText.text = nextState ? vehicleCommandsHide : vehicleCommandsShow;
+      HideOrShowPanel(nextState);
+    });
+
+    return panel;
+  }
+
 
   private void CreateShortcutPanel()
   {
     if (modderCommandsWindow != null) return;
 
+    modderCommandToggleWindow = CreateModderCommandsTogglePanel();
+
+    var panelDrag = modderCommandToggleWindow.GetComponent<DragWindowCntrlExtension>();
+    var dynamicPanelHeight = buttonActions.Count * buttonHeight + buttonActions.Count * 5;
     modderCommandsWindow = GUIManager.Instance.CreateWoodpanel(
-      GUIManager.CustomGUIFront.transform,
-      new Vector2(1f, 0.5f),
-      new Vector2(0.5f, 0.5f),
-      new Vector2(500, Screen.height - 510),
-      200,
-      500,
-      true);
+      modderCommandToggleWindow.transform,
+      new Vector2(0.5f, 0f),
+      new Vector2(0.5f, 0f),
+      new Vector2(0, -(dynamicPanelHeight / 2 + 15f)),
+      panelWidth,
+      dynamicPanelHeight,
+      false);
     modderCommandsWindow.SetActive(false);
-    modderCommandsWindow.name = "modderCommandsWindow";
+    var modderCommandsPanelOffset = -(Vector3.up * (dynamicPanelHeight / 2f));
 
-    modderCommandsWindow.gameObject.AddComponent<DragWindowCntrl>();
+    // panelDrag.OnDragCalled = () =>
+    // {
+    //   modderCommandsWindow.transform.position = modderCommandToggleWindow.transform.position + modderCommandsPanelOffset;
+    // };
 
-    // Create the text object
-    GUIManager.Instance.CreateText(
-      "Vehicle Shortcuts",
-      modderCommandsWindow.transform,
-      new Vector2(0.5f, 1f),
-      new Vector2(0.5f, 1f),
-      new Vector2(0f, -20f),
-      GUIManager.Instance.AveriaSerifBold,
-      titleFontSize,
-      GUIManager.Instance.ValheimOrange,
-      true,
-      Color.black,
-      200f,
-      40f,
-      true);
+    // modderCommandsWindow.transform.position = modderCommandToggleWindow.transform.position + modderCommandsPanelOffset;
 
-    // Create the button object
-    var buttonObject = GUIManager.Instance.CreateButton(
-      "Hide",
-      modderCommandsWindow.transform,
-      new Vector2(1f, 1f),
-      new Vector2(1f, 1f),
-      new Vector2(60, 0),
-      60f,
-      60f);
-    buttonObject.SetActive(true);
-
-    // Add a listener to the button to close the panel again
-    var button = buttonObject.GetComponent<Button>();
-    button.onClick.AddListener(InitPanel);
-
-    List<ButtonAction> buttonActions =
-    [
-      new()
-      {
-        title = "ConvexHull debugger",
-        action = () =>
-        {
-          ToggleConvexHullDebugger();
-        }
-      },
-      new()
-      {
-        title = "ConvexHull debugger",
-        action = () =>
-        {
-          ToggleColliderDebugger();
-        }
-      },
-      new()
-      {
-        title = "Raft Creative",
-        action = () => CreativeModeConsoleCommand.RunCreativeModeCommand("raftcreative")
-      },
-      new()
-      {
-        title = "Zero Ship Rotation X/Z",
-        action = () =>
-        {
-          var onboardHelpers = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
-          if (onboardHelpers != null) onboardHelpers.FlipShip();
-        }
-      },
-      new()
-      {
-        title = "Toggle Ocean Sway",
-        action = VehicleCommands.VehicleToggleOceanSway
-      }
-    ];
-
-    var startHeight = 100f;
+    var startHeight = dynamicPanelHeight / 2f - buttonHeight / 2;
     for (var index = 0; index < buttonActions.Count; index++)
     {
       var buttonAction = buttonActions[index];
-      AddButtonWithAction(buttonAction, index, startHeight, modderCommandsWindow.transform);
+      var obj = AddButtonWithAction(buttonAction, index, startHeight, modderCommandsWindow.transform);
+      modderCommandsPanelToggleObjects.Add(obj);
     }
-
-    modderCommandsWindow.SetActive(true);
   }
 
-  private void ToggleConvexHullDebugger()
+  private static void ToggleConvexHullDebugger()
   {
     Logger.LogMessage(
       "Toggling convex hull debugger on the ship. This will show/hide the current convex hulls.");
@@ -259,7 +343,7 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
   }
 
 
-  private void ToggleColliderDebugger()
+  private static void ToggleColliderDebugger()
   {
     Logger.LogMessage(
       "Collider debugger called, \nblue = BlockingCollider for collisions and keeping boat on surface, \ngreen is float collider for pushing the boat upwards, typically it needs to be below or at same level as BlockingCollider to prevent issues, \nYellow is onboardtrigger for calculating if player is onboard");
