@@ -286,7 +286,7 @@ public static class PhysicsConfig
 
     VehicleLandSuspensionDistance = Config.Bind(PropulsionSection,
       "LandVehicle Suspension Distance",
-      1.5f,
+      0.25f,
       ConfigHelpers.CreateConfigDescription(
         "Distance suspension distance between vehicle position and wheel position. Higher values push the vehicle up and make it more bouncy. Also allowing it to recover from getting stuck", true, false, new AcceptableValueRange<float>(0.25f, 10f)));
 
@@ -298,7 +298,7 @@ public static class PhysicsConfig
 
     VehicleLandWheelOffset = Config.Bind(PropulsionSection,
       "LandVehicle WheelOffset",
-      1.5f,
+      0f,
       ConfigHelpers.CreateConfigDescription(
         "Wheel offset. Allowing for raising the wheels higher. May require increasing suspension distance so the wheels spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the wheels", true, false, new AcceptableValueRange<float>(-10f, 10f)));
 
