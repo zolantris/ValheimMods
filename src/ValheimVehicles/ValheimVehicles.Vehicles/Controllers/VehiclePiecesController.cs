@@ -2765,6 +2765,27 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
 
     OnBoundsChangeUpdateShipColliders();
+
+    // to accurately place player onboard after rebuild of bounds.
+    if (OnboardController != null)
+    {
+      OnboardController.OnBoundsRebuild();
+    }
+    TempDisableRamsDuringRebuild();
+  }
+
+  /// <summary>
+  /// Prevents accidents like the ram hitting when the vehicle is rebuilding bounds
+  /// </summary>
+  public void TempDisableRamsDuringRebuild()
+  {
+    if (MovementController == null) return;
+    var vehicleRamAoeComponents = MovementController.GetComponentsInChildren<VehicleRamAoe>();
+
+    foreach (var vehicleRamAoeComponent in vehicleRamAoeComponents)
+    {
+      vehicleRamAoeComponent.OnBoundsRebuild();
+    }
   }
 
   public void IgnoreVehicleCollidersForAllPieces()

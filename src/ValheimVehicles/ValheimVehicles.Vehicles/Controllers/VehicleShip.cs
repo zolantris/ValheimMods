@@ -394,6 +394,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     WheelController.m_steeringType = VehicleWheelController.SteeringType.Magic;
     WheelController.wheelSuspensionDistance = PhysicsConfig.VehicleLandSuspensionDistance.Value;
     WheelController.wheelRadius = PhysicsConfig.VehicleLandWheelRadius.Value;
+    WheelController.wheelSuspensionSpring = PhysicsConfig.VehicleLandWheelSuspensionSpring.Value;
   }
 
   /// <summary>
@@ -603,17 +604,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       lineColor = Color.green,
       parent = transform
     });
-
-    // foreach (var piecesControllerConvexHullMesh in PiecesController
-    //            .convexHullMeshes)
-    //   VehicleDebugHelpersInstance.AddColliderToRerender(
-    //     new DrawTargetColliders()
-    //     {
-    //       collider =
-    //         piecesControllerConvexHullMesh.GetComponent<MeshCollider>(),
-    //       lineColor = Color.blue,
-    //       parent = gameObject
-    //     });
 
     VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
     {

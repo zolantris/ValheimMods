@@ -160,6 +160,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   private float prevFrontUpwardForce;
 
+  public Vector3 vehicleAutomaticCenterOfMassPoint = Vector3.zero;
+
   public enum VehiclePhysicsState
   {
     Land,
@@ -1401,13 +1403,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
-  public void OffsetCenterOfMass()
+  public void UpdateCenterOfMass()
   {
     if (PiecesController == null) return;
     // resets the mass to center. But then we will offset it if there is an offset provided.
-    m_body.ResetCenterOfMass();
     m_body.automaticCenterOfMass = true;
-
+    m_body.ResetCenterOfMass();
+    vehicleAutomaticCenterOfMassPoint = m_body.centerOfMass;
 
     if (Mathf.Approximately(PhysicsConfig.VehicleCenterOfMassOffset.Value, 0f)) return;
 
@@ -1416,7 +1418,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var offset = PhysicsConfig.VehicleCenterOfMassOffset.Value * convexHullBounds.size.y;
 
     if (!(offset > 0.1f)) return;
-    centerOfMass.y += offset;
+    centerOfMass.y -= offset;
     m_body.centerOfMass = centerOfMass;
     m_body.automaticCenterOfMass = false;
   }
@@ -1426,9 +1428,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     m_body.angularDrag = PhysicsConfig.landAngularDrag.Value;
     m_body.drag = PhysicsConfig.landDrag.Value;
 
-    if (m_body.freezeRotation != PhysicsConfig.VehicleLandAllowXYRotation.Value)
+    if (m_body.freezeRotation != !PhysicsConfig.VehicleLandAllowXYRotation.Value)
     {
-      m_body.freezeRotation = PhysicsConfig.VehicleLandAllowXYRotation.Value;
+      m_body.freezeRotation = !PhysicsConfig.VehicleLandAllowXYRotation.Value;
     }
   }
 
@@ -1541,6 +1543,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       // only reset timer if forceupdate not provided
       vehicleStatSyncTimer = Time.fixedDeltaTime;
     }
+
+    UpdateCenterOfMass();
 
     _previousVehiclePhysicsState = currentPhysicsState;
 

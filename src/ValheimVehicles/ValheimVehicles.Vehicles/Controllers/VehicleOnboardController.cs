@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using DynamicLocations.Controllers;
@@ -18,7 +19,7 @@ namespace ValheimVehicles.Vehicles.Controllers;
 ///
 /// TODO in multiplayer make sure that not only the host, but all clients add all Characters that are players to the VehiclePieces controller. This way there is no jitters
 /// </summary>
-public class VehicleOnboardController : MonoBehaviour
+public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
 {
   public VehicleMovementController? MovementController => vehicleShip != null
     ? vehicleShip.MovementController
@@ -42,6 +43,16 @@ public class VehicleOnboardController : MonoBehaviour
 
   public BoxCollider OnboardCollider = null!;
 
+  private const float _maxStayTimer = 2f;
+  public float _disableTime = 0f;
+
+  public bool _isReadyForCollisions { get; set; }
+  public bool _isRebuildingCollisions
+  {
+    get;
+    set;
+  }
+
   public VehiclePiecesController? PiecesController =>
     vehicleShip != null ? vehicleShip.PiecesController : null;
 
@@ -49,6 +60,25 @@ public class VehicleOnboardController : MonoBehaviour
   {
     OnboardCollider = GetComponent<BoxCollider>();
     InvokeRepeating(nameof(ValidateCharactersAreOnShip), 1f, 30f);
+  }
+
+  private void Start()
+  {
+    _isReadyForCollisions = MovementController != null;
+    Invoke(nameof(UpdateReadyForCollisions), 0.1f);
+  }
+
+  public void UpdateReadyForCollisions()
+  {
+    CancelInvoke(nameof(UpdateReadyForCollisions));
+    if (!MovementController || !vehicleShip || !PiecesController)
+    {
+      _isReadyForCollisions = false;
+      Invoke(nameof(UpdateReadyForCollisions), 0.1f);
+      return;
+    }
+
+    _isReadyForCollisions = true;
   }
 
   public List<Player> GetPlayersOnShip()
@@ -149,8 +179,8 @@ public class VehicleOnboardController : MonoBehaviour
     else if (characterInstance != null)
     {
       if (characterInstance.OnboardController != this ||
-          (characterInstance.OnboardController != null &&
-           characterInstance.OnboardController.transform.parent == null))
+          characterInstance.OnboardController != null &&
+          characterInstance.OnboardController.transform.parent == null)
         characterInstance.OnboardController = this;
     }
   }
@@ -236,6 +266,7 @@ public class VehicleOnboardController : MonoBehaviour
 
   private void OnEnable()
   {
+    Invoke(nameof(UpdateReadyForCollisions), 0.1f);
     StartRemovePlayerCoroutine();
   }
 
@@ -252,16 +283,48 @@ public class VehicleOnboardController : MonoBehaviour
 
   public void OnTriggerEnter(Collider collider)
   {
-    if (MovementController == null) return;
+    if (!IsReady()) return;
     OnPlayerEnterVehicleBounds(collider);
     HandleCharacterHitVehicleBounds(collider, false);
   }
 
   public void OnTriggerExit(Collider collider)
   {
-    if (MovementController == null) return;
+    if (!IsReady()) return;
     HandlePlayerExitVehicleBounds(collider);
     HandleCharacterHitVehicleBounds(collider, true);
+  }
+
+  /// <summary>
+  /// For bounds updates this must be called
+  /// </summary>
+  /// todo to see if we need to add a cast to ensure the player is onboard.
+  public void OnBoundsRebuild()
+  {
+    _isRebuildingCollisions = false;
+    _disableTime = Time.fixedTime + _maxStayTimer;
+  }
+
+  public void UpdateReloadingTime()
+  {
+    _isRebuildingCollisions = Time.fixedTime < _disableTime;
+    if (!_isRebuildingCollisions)
+    {
+      _disableTime = 0f;
+    }
+  }
+
+  /// <summary>
+  /// Same logic as (VehicleRamAOE,VehicleOnboardController)
+  /// </summary>
+  /// todo share logic
+  /// <returns></returns>
+  public bool IsReady()
+  {
+    if (!_isReadyForCollisions) return false;
+    if (_isRebuildingCollisions) return false;
+    UpdateReloadingTime();
+    return !_isRebuildingCollisions;
   }
 
   public void RestoreCollisionDetection(Collider collider)
@@ -300,6 +363,7 @@ public class VehicleOnboardController : MonoBehaviour
   /// <returns></returns>
   private Player? GetPlayerComponent(Collider collider)
   {
+    if (MovementController == null) return null;
     if (MovementController.VehicleInstance?.Instance == null) return null;
     var playerComponent = collider.GetComponent<Player>();
     if (!playerComponent) return null;

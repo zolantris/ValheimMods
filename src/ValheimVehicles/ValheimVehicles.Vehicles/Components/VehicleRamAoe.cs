@@ -15,7 +15,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Helpers;
 
-public class VehicleRamAoe : ValheimAoe
+public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 {
   // Typeof PrefabTiers
   public string materialTier;
@@ -74,7 +74,12 @@ public class VehicleRamAoe : ValheimAoe
   public static bool HasMaxDamageCap =>
     RamConfig.HasMaximumDamageCap.Value;
 
-  public bool isReadyForCollisions = false;
+  public bool _isReadyForCollisions { get; set; }
+  public bool _isRebuildingCollisions
+  {
+    get;
+    set;
+  }
 
   private Rigidbody rigidbody;
 
@@ -136,6 +141,15 @@ public class VehicleRamAoe : ValheimAoe
     // if (rigidbody) rigidbody.includeLayers = m_rayMask;
   }
 
+  private float _disableTime = 0f;
+  private const float _disableTimeMax = 0.5f;
+
+  public void OnBoundsRebuild()
+  {
+    _isRebuildingCollisions = true;
+    _disableTime = Time.fixedTime + _disableTimeMax;
+  }
+
   public override void OnDisable()
   {
     if (RamInstances.Contains(this)) RamInstances.Remove(this);
@@ -161,7 +175,7 @@ public class VehicleRamAoe : ValheimAoe
     CancelInvoke(nameof(UpdateReadyForCollisions));
     if (!m_nview)
     {
-      isReadyForCollisions = false;
+      _isReadyForCollisions = false;
       Invoke(nameof(UpdateReadyForCollisions), 1);
       return;
     }
@@ -169,7 +183,7 @@ public class VehicleRamAoe : ValheimAoe
     var isVehicleChild = m_nview.GetZDO().GetInt(VehicleZdoVars.MBParentIdHash);
     if (isVehicleChild == 0)
     {
-      isReadyForCollisions = true;
+      _isReadyForCollisions = true;
       return;
     }
 
@@ -182,11 +196,12 @@ public class VehicleRamAoe : ValheimAoe
           .VehicleMovingPiecesContainer);
     if (!isChildOfBaseVehicle)
     {
-      isReadyForCollisions = false;
+      _isReadyForCollisions = false;
+      Invoke(nameof(UpdateReadyForCollisions), 1);
       return;
     }
 
-    isReadyForCollisions = true;
+    _isReadyForCollisions = true;
   }
 
   public float GetRelativeVelocity(Collider collider)
@@ -312,8 +327,19 @@ public class VehicleRamAoe : ValheimAoe
       Physics.IgnoreCollision(childCollider, collider, true);
   }
 
+  public void UpdateReloadingTime()
+  {
+    _isRebuildingCollisions = Time.fixedTime < _disableTime;
+    if (!_isRebuildingCollisions)
+    {
+      _disableTime = 0f;
+    }
+  }
+
   public override bool ShouldHit(Collider collider)
   {
+    if (!IsReady()) return false;
+
     var relativeVelocity = GetRelativeVelocity(collider);
     if (relativeVelocity < minimumVelocityToTriggerHit) return false;
 
@@ -359,9 +385,22 @@ public class VehicleRamAoe : ValheimAoe
     return true;
   }
 
+  /// <summary>
+  /// Same logic as (VehicleRamAOE,VehicleOnboardController)
+  /// </summary>
+  /// todo share logic
+  /// <returns></returns>
+  public bool IsReady()
+  {
+    if (!_isReadyForCollisions) return false;
+    if (_isRebuildingCollisions) return false;
+    UpdateReloadingTime();
+    return !_isRebuildingCollisions;
+  }
+
   public override void OnCollisionEnterHandler(Collision collision)
   {
-    if (!isReadyForCollisions) return;
+    if (!IsReady()) return;
     if (ShouldIgnore(collision.collider)) return;
     if (!UpdateDamageFromVelocity(
           Vector3.Magnitude(collision.relativeVelocity))) return;
@@ -370,7 +409,7 @@ public class VehicleRamAoe : ValheimAoe
 
   public override void OnCollisionStayHandler(Collision collision)
   {
-    if (!isReadyForCollisions) return;
+    if (!IsReady()) return;
     if (ShouldIgnore(collision.collider)) return;
     if (!UpdateDamageFromVelocity(
           Vector3.Magnitude(collision.relativeVelocity))) return;
@@ -380,7 +419,7 @@ public class VehicleRamAoe : ValheimAoe
 
   public override void OnTriggerEnterHandler(Collider collider)
   {
-    if (!isReadyForCollisions) return;
+    if (!IsReady()) return;
     if (ShouldIgnore(collider)) return;
     if (!UpdateDamageFromVelocityCollider(collider)) return;
     base.OnTriggerEnterHandler(collider);
@@ -388,7 +427,7 @@ public class VehicleRamAoe : ValheimAoe
 
   public override void OnTriggerStayHandler(Collider collider)
   {
-    if (!isReadyForCollisions) return;
+    if (!IsReady()) return;
     if (ShouldIgnore(collider)) return;
     if (!UpdateDamageFromVelocityCollider(collider)) return;
     base.OnTriggerStayHandler(collider);

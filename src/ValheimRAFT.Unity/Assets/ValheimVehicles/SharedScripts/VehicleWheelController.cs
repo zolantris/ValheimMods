@@ -128,6 +128,7 @@ namespace ValheimVehicles.SharedScripts
     public float wheelBottomOffset = 0;
     public float wheelRadius = 1.5f;
     public float wheelSuspensionDistance = 1.5f;
+    [FormerlySerializedAs("wheelBounce")] public float wheelSuspensionSpring = 2000f;
 
     // speed overrides
     public static float Override_WheelBottomOffset = 0;
@@ -384,7 +385,7 @@ namespace ValheimVehicles.SharedScripts
           var dirName = isLeft ? "left" : "right";
           var positionName = GetWheelPositionName(i, totalWheelSets);
           wheelInstance.name = $"ValheimVehicles_VehicleLand_wheel_{positionName}_{dirName}_{i}";
-          SetWheelPhysics(wheelInstance, bounds, isXBounds, i, isLeft,
+          SetWheelProperties(wheelInstance, bounds, isXBounds, i, isLeft,
             totalWheelSets);
 
           if (wheelInstances.Count >= wheelIndex)
@@ -472,7 +473,7 @@ namespace ValheimVehicles.SharedScripts
 
     private static Vector3 wheelMeshLocalScale = new(3f, 0.3f, 3f);
 
-    private void SetWheelPhysics(GameObject wheelObj, Bounds bounds,
+    private void SetWheelProperties(GameObject wheelObj, Bounds bounds,
       bool isXBoundsAligned, int wheelSetIndex, bool isLeft, int totalWheelSets)
     {
       var wheelRenderer =
@@ -485,6 +486,10 @@ namespace ValheimVehicles.SharedScripts
       wheelCollider.wheelDampingRate = wheelDamping;
       wheelCollider.radius = wheelRadius;
       wheelCollider.suspensionDistance = wheelSuspensionDistance;
+
+      var suspensionSpring = wheelCollider.suspensionSpring;
+      suspensionSpring.spring = wheelSuspensionSpring;
+      wheelCollider.suspensionSpring = suspensionSpring;
       var wheelScalar = wheelCollider.radius / wheelBaseRadiusScale;
       if (!Mathf.Approximately(wheelScalar, 1f))
       {
