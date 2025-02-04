@@ -106,7 +106,7 @@ namespace ValheimVehicles.SharedScripts
     public float turnInputOverride = 0;
 
 
-    public bool isBreaking = false;
+    public bool isBreaking = true;
     public bool UseManualControls = false;
 
     // Used to associate a wheel with a one of the model prefabs.
@@ -128,7 +128,7 @@ namespace ValheimVehicles.SharedScripts
     public float wheelBottomOffset = 0;
     public float wheelRadius = 1.5f;
     public float wheelSuspensionDistance = 1.5f;
-    [FormerlySerializedAs("wheelBounce")] public float wheelSuspensionSpring = 2000f;
+    public float wheelSuspensionSpring = 200f;
 
     // speed overrides
     public static float Override_WheelBottomOffset = 0;
@@ -613,8 +613,9 @@ namespace ValheimVehicles.SharedScripts
 
     private float GetAccelerationMultiplier(WheelCollider wheel)
     {
+      return 1f;
       var normalizedRPM = Mathf.Clamp01(Mathf.Abs(wheel.rpm) / MaxWheelRPM);
-      var accelerationMultiplier = Mathf.Lerp(8f, 1f, normalizedRPM);
+      var accelerationMultiplier = Mathf.Lerp(10, 1f, normalizedRPM);
       return accelerationMultiplier;
     }
     /// <summary>
@@ -649,9 +650,18 @@ namespace ValheimVehicles.SharedScripts
             wheel.motorTorque = 0;
             wheel.brakeTorque = inputForwardForce * baseMotorTorque / 2f + additionalBreakForce * Time.fixedDeltaTime;
           }
-          else if (Mathf.Abs(wheel.rpm) > MaxWheelRPM || rigid.velocity.magnitude >= topSpeed)
+          // else if (Mathf.Abs(wheel.rpm) > MaxWheelRPM || rigid.velocity.magnitude >= topSpeed)
+          // {
+          //   wheel.motorTorque = inputForceDir * MaxWheelRPM;
+          // }
+          else if (Mathf.Abs(wheel.rpm) > MaxWheelRPM || !wheel.isGrounded)
           {
-            wheel.motorTorque = inputForceDir * MaxWheelRPM;
+            var attachedRigidbody = wheel.attachedRigidbody;
+            // slam the vehicle down if the wheels are not hitting ground.
+            // wheel.attachedRigidbody.AddForceAtPosition(Vector3.down * Physics.gravity.y * 1.5f * attachedRigidbody.mass, attachedRigidbody.worldCenterOfMass);
+            wheel.attachedRigidbody.AddForceAtPosition(Physics.gravity * 2, attachedRigidbody.worldCenterOfMass, ForceMode.Acceleration);
+
+            wheel.motorTorque = 0f;
           }
           else if (!Mathf.Approximately(MaxWheelRPM, 0f))
           {
@@ -711,7 +721,7 @@ namespace ValheimVehicles.SharedScripts
     {
       // var wheelRb = wheelTransform.GetComponent<Rigidbody>();
 
-      var deltaRotation = Mathf.Clamp(wheelCollider.motorTorque, -300f, 300f) * Time.deltaTime;
+      var deltaRotation = Mathf.Clamp(wheelCollider.rpm, -359f, 359f) * Time.deltaTime;
 
       // wheels need to move their X coordinate but for some reason it's the Y axis rotated...baffling.
       // deltaRotation > 0 ? Vector3.down : Vector3.up

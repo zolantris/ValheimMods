@@ -1123,11 +1123,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   }
 
-  private static Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity, float smoothTime = 5f)
+  private Vector3 anchorSmoothVelocity = Vector3.zero;
+  private Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity, float smoothTime = 2f)
   {
-    var zeroVelocity = Vector3.zero;
     return Vector3.SmoothDamp(currentVelocity, Vector3.zero,
-      ref zeroVelocity, smoothTime);
+      ref anchorSmoothVelocity, smoothTime);
   }
 
   public void AddForceAtPosition(Vector3 force, Vector3 position,
@@ -1436,6 +1436,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     UpdateVehicleStats(VehiclePhysicsState.Land);
     if (WheelController == null) return;
+    if (UpdateAnchorVelocity())
+    {
+      WheelController.isBreaking = true;
+      return;
+    }
+
     var isOwner = m_nview.IsOwner();
     if (!isOwner) return;
 
@@ -1449,7 +1455,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       WheelController.VehicleMovementFixedUpdate();
     }
 
-    UpdateAnchorVelocity();
   }
 
   /// <summary>
