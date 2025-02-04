@@ -289,6 +289,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   private Coroutine? _serverUpdatePiecesCoroutine;
   private Coroutine? _bedUpdateCoroutine;
 
+  public GameObject vehicleCenter;
+
   private int rebuildBoundsPromise;
 
   public List<Bed> GetBedPieces()
@@ -457,9 +459,27 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   // private ZNetView tempZNetView;
 
+  /// <summary>
+  /// Todo add to prefab. Even test this in the VehiclePieceMovement controller would be worth it.
+  /// </summary>
+  public void CreatePieceCenter()
+  {
+    var controllerTransform = transform;
+    vehicleCenter = new GameObject
+    {
+      name = "VehiclePiece_Center",
+      transform = { position = controllerTransform.position, rotation = controllerTransform.rotation, parent = controllerTransform }
+    };
+  }
+
   public void Awake()
   {
     if (ZNetView.m_forceDisableInit) return;
+    if (vehicleCenter == null)
+    {
+      CreatePieceCenter();
+    }
+
     if (piecesCollidersTransform == null)
       piecesCollidersTransform = transform.Find("colliders");
 
@@ -628,6 +648,12 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     HasRunCleanup = false;
     MonoUpdaterInstances.Add(this);
     InitializationTimer.Restart();
+
+    if (vehicleCenter == null)
+    {
+      CreatePieceCenter();
+    }
+
     StartClientServerUpdaters();
   }
 
@@ -642,6 +668,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     if (HasRunCleanup) return;
     HasRunCleanup = true;
     RemovePlayersFromBoat();
+
+    if (vehicleCenter)
+    {
+      Destroy(vehicleCenter);
+    }
 
     if (_pendingPiecesCoroutine != null)
     {
@@ -2603,77 +2634,77 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
   public void CalculateFurthestPointsOnMeshes()
   {
-    if (convexHullMeshColliders.Count == 0 ||
-        MovementController == null || FloatCollider == null) return;
-
-    var furthestLeft = Vector3.left;
-    var furthestRight = Vector3.right;
-    var furthestFront = Vector3.forward;
-    var furthestBack = Vector3.back;
-
-    var position = MovementController.transform.position;
-    var forward = MovementController.ShipDirection.forward;
-    var right = MovementController.ShipDirection.right;
-
-
-    var shipForward = position +
-                      forward *
-                      MovementController.GetFloatSizeFromDirection(
-                        Vector3.forward);
-    var shipBack = position -
-                   forward *
-                   MovementController.GetFloatSizeFromDirection(
-                     Vector3.forward);
-    var shipLeft = position -
-                   right *
-                   MovementController
-                     .GetFloatSizeFromDirection(Vector3.right);
-    var shipRight = position +
-                    right *
-                    MovementController.GetFloatSizeFromDirection(
-                      Vector3.right);
-
-    foreach (var meshCollider in convexHullMeshColliders)
-    {
-      // Loop through all vertices of the mesh
-      // foreach (var vertex in mesh.vertices)
-      // {
-      //   // Convert the vertex from local space to world space
-      //   var worldVertex = meshCollider.transform.TransformPoint(vertex);
-      //
-      //   // todo might  have to get offset of meshCollider.position and transform.position and use meshCollider.Inverse instead
-      //   var relativeVertex = transform.InverseTransformPoint(worldVertex);
-
-      var nearestForward =
-        meshCollider.ClosestPoint(shipForward) - position;
-      var nearestBack =
-        meshCollider.ClosestPoint(shipBack) - position;
-      var nearestLeft =
-        meshCollider.ClosestPoint(shipLeft) - position;
-      var nearestRight =
-        meshCollider.ClosestPoint(shipRight) - position;
-
-      if (nearestForward.z > furthestFront.z)
-        furthestFront = new Vector3(nearestForward.x, FloatCollider.center.y,
-          nearestForward.z);
-
-      if (nearestBack.z < furthestBack.z)
-        furthestBack = new Vector3(nearestBack.x, FloatCollider.center.y,
-          nearestBack.z);
-
-      if (nearestLeft.x < furthestLeft.x)
-        furthestLeft = new Vector3(nearestLeft.x, FloatCollider.center.y,
-          nearestLeft.z);
-
-      if (nearestRight.x > furthestRight.x)
-        furthestRight = new Vector3(nearestRight.x, FloatCollider.center.y,
-          nearestRight.z);
-    }
-
-    m_localShipLeft = furthestLeft;
-    m_localShipRight = furthestRight;
-    m_localShipForward = furthestFront;
-    m_localShipBack = furthestBack;
+    // if (convexHullMeshColliders.Count == 0 ||
+    //     MovementController == null || FloatCollider == null) return;
+    //
+    // var furthestLeft = Vector3.left;
+    // var furthestRight = Vector3.right;
+    // var furthestFront = Vector3.forward;
+    // var furthestBack = Vector3.back;
+    //
+    // var position = MovementController.transform.position;
+    // var forward = MovementController.ShipDirection.forward;
+    // var right = MovementController.ShipDirection.right;
+    //
+    //
+    // var shipForward = position +
+    //                   forward *
+    //                   MovementController.GetFloatSizeFromDirection(
+    //                     Vector3.forward);
+    // var shipBack = position -
+    //                forward *
+    //                MovementController.GetFloatSizeFromDirection(
+    //                  Vector3.forward);
+    // var shipLeft = position -
+    //                right *
+    //                MovementController
+    //                  .GetFloatSizeFromDirection(Vector3.right);
+    // var shipRight = position +
+    //                 right *
+    //                 MovementController.GetFloatSizeFromDirection(
+    //                   Vector3.right);
+    //
+    // foreach (var meshCollider in convexHullMeshColliders)
+    // {
+    //   // Loop through all vertices of the mesh
+    //   // foreach (var vertex in mesh.vertices)
+    //   // {
+    //   //   // Convert the vertex from local space to world space
+    //   //   var worldVertex = meshCollider.transform.TransformPoint(vertex);
+    //   //
+    //   //   // todo might  have to get offset of meshCollider.position and transform.position and use meshCollider.Inverse instead
+    //   //   var relativeVertex = transform.InverseTransformPoint(worldVertex);
+    //
+    //   var nearestForward =
+    //     meshCollider.ClosestPoint(shipForward) - position;
+    //   var nearestBack =
+    //     meshCollider.ClosestPoint(shipBack) - position;
+    //   var nearestLeft =
+    //     meshCollider.ClosestPoint(shipLeft) - position;
+    //   var nearestRight =
+    //     meshCollider.ClosestPoint(shipRight) - position;
+    //
+    //   if (nearestForward.z > furthestFront.z)
+    //     furthestFront = new Vector3(nearestForward.x, FloatCollider.center.y,
+    //       nearestForward.z);
+    //
+    //   if (nearestBack.z < furthestBack.z)
+    //     furthestBack = new Vector3(nearestBack.x, FloatCollider.center.y,
+    //       nearestBack.z);
+    //
+    //   if (nearestLeft.x < furthestLeft.x)
+    //     furthestLeft = new Vector3(nearestLeft.x, FloatCollider.center.y,
+    //       nearestLeft.z);
+    //
+    //   if (nearestRight.x > furthestRight.x)
+    //     furthestRight = new Vector3(nearestRight.x, FloatCollider.center.y,
+    //       nearestRight.z);
+    // }
+    //
+    // m_localShipLeft = furthestLeft;
+    // m_localShipRight = furthestRight;
+    // m_localShipForward = furthestFront;
+    // m_localShipBack = furthestBack;
   }
 
   public void RebuildConvexHull()
@@ -2689,9 +2720,11 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     convexHullComponent
       .GenerateMeshesFromChildColliders(
-        vehicleMovementCollidersTransform.gameObject, vehicleMovementCollidersTransform.position - m_body.worldCenterOfMass,
+        vehicleMovementCollidersTransform.gameObject, Vector3.zero,
         PhysicsConfig.convexHullJoinDistanceThreshold.Value,
         nvChildGameObjects, MovementController.DamageColliders);
+
+    vehicleCenter.transform.localPosition = convexHullComponent.GetConvexHullBounds(true).center;
 
     convexHullColliders.Clear();
     convexHullMeshColliders.Clear();
@@ -2706,7 +2739,6 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     });
 
     CalculateFurthestPointsOnMeshes();
-    convexHullComponent.UpdateConvexHullBounds();
 
     convexHullTriggerColliders = MovementController.DamageColliders
       .GetComponentsInChildren<Collider>(true).ToList();
@@ -2778,36 +2810,36 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     if (FloatCollider == null || OnboardCollider == null)
       return;
 
-
-    // messing with collider bounds requires syncing outside a physics update
-    _pendingHullBounds = new Bounds();
-    _pendingVehicleBounds = new Bounds();
-
-    var piecesList = m_pieces.ToList();
-
-    for (var index = 0; index < piecesList.Count; index++)
-    {
-      var netView = piecesList[index];
-      if (!netView)
-      {
-        m_pieces.Remove(netView);
-        continue;
-      }
-
-      if (IsExcludedBoundsItem(netView.gameObject.name)) continue;
-
-
-      // will only update vehicle bounds here.
-      var newBounds =
-        EncapsulateBounds(netView.gameObject, _pendingVehicleBounds);
-      if (index == 0)
-        _pendingVehicleBounds = new Bounds(newBounds.center, newBounds.size);
-      else
-        _pendingVehicleBounds.Encapsulate(newBounds);
-    }
-
-    _vehiclePieceBounds = new Bounds(_pendingVehicleBounds.center,
-      _pendingVehicleBounds.size);
+    _vehiclePieceBounds = convexHullComponent.GetConvexHullBounds(true);
+    // // messing with collider bounds requires syncing outside a physics update
+    // _pendingHullBounds = new Bounds();
+    // _pendingVehicleBounds = new Bounds();
+    //
+    // var piecesList = m_pieces.ToList();
+    //
+    // for (var index = 0; index < piecesList.Count; index++)
+    // {
+    //   var netView = piecesList[index];
+    //   if (!netView)
+    //   {
+    //     m_pieces.Remove(netView);
+    //     continue;
+    //   }
+    //
+    //   if (IsExcludedBoundsItem(netView.gameObject.name)) continue;
+    //
+    //
+    //   // will only update vehicle bounds here.
+    //   var newBounds =
+    //     EncapsulateBounds(netView.gameObject, _pendingVehicleBounds);
+    //   if (index == 0)
+    //     _pendingVehicleBounds = new Bounds(newBounds.center, newBounds.size);
+    //   else
+    //     _pendingVehicleBounds.Encapsulate(newBounds);
+    // }
+    //
+    // _vehiclePieceBounds = new Bounds(_pendingVehicleBounds.center,
+    //   _pendingVehicleBounds.size);
 
 
     OnBoundsChangeUpdateShipColliders();
@@ -3104,7 +3136,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       }
       else
       {
-        tempBounds.Encapsulate(go.transform.localPosition);
+        var relativePosition = transform.InverseTransformPoint(go.transform.position);
+        tempBounds.Encapsulate(relativePosition);
       }
     }
 

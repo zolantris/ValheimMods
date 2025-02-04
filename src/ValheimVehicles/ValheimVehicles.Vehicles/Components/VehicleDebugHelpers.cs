@@ -50,7 +50,9 @@ public class VehicleDebugHelpers : MonoBehaviour
   private Coroutine? _drawColliderCoroutine = null;
   private GameObject? worldCenterOfMassCube;
   private GameObject? vehicleMovementAutomaticCenterOfMassCube;
+  private GameObject? vehiclePiecesCenterOfMassCube;
   private GameObject? vehiclePiecesCenterCube;
+  private GameObject? vehiclePieceCenterPoint;
   private GameObject? vehicleMovementCenterCube;
   private GameObject? forwardCube;
   private GameObject? backwardCube;
@@ -83,12 +85,15 @@ public class VehicleDebugHelpers : MonoBehaviour
     }
 
     // center of mass debugging should be yellow
-    RenderDebugCube(ref worldCenterOfMassCube, VehicleShipInstance.MovementController.m_body.position + VehicleShipInstance.MovementController.m_body.centerOfMass, "center_of_mass", Color.yellow, Vector3.up * 1);
-    RenderDebugCube(ref vehicleMovementAutomaticCenterOfMassCube, VehicleShipInstance.MovementController.vehicleAutomaticCenterOfMassPoint, "vehicle_automatic_center_of_mass", Color.yellow, Vector3.up * 2);
+    RenderDebugCube(ref worldCenterOfMassCube, VehicleShipInstance.MovementController.m_body.worldCenterOfMass, "center_of_mass", Color.yellow, Vector3.up * 1);
+    RenderDebugCube(ref vehiclePiecesCenterOfMassCube, VehicleShipInstance.PiecesController.m_body.worldCenterOfMass, "vehicle_pieces_automatic_center_of_mass", Color.yellow, Vector3.up * 0.5f);
+    RenderDebugCube(ref vehicleMovementAutomaticCenterOfMassCube, VehicleShipInstance.MovementController.m_body.position + VehicleShipInstance.MovementController.vehicleAutomaticCenterOfMassPoint, "vehicle_automatic_center_of_mass", Color.yellow, Vector3.up * 2);
 
     // vehicle center debugging should be green
     RenderDebugCube(ref vehiclePiecesCenterCube, VehicleShipInstance.PiecesController.transform.position, "vehicle_piece_center", Color.green, Vector3.up * 3);
     RenderDebugCube(ref vehicleMovementCenterCube, VehicleShipInstance.MovementController.transform.position, "vehicle_movement_center", Color.green, Vector3.up * 4);
+
+    RenderDebugCube(ref vehiclePieceCenterPoint, VehicleShipInstance.PiecesController.vehicleCenter.transform.position, "piece_vehicle_center_point", Color.red, Vector3.up * 5);
   }
 
   private void FixedUpdate()
@@ -105,7 +110,6 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   private void OnDestroy()
   {
-    if (worldCenterOfMassCube != null) Destroy(worldCenterOfMassCube);
     lines.Values.ToList()
       .ForEach(x => x.ForEach(Destroy));
     lines.Clear();
@@ -217,7 +221,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     cube.transform.position = position;
     cube.transform.SetParent(
       VehicleShipInstance.PiecesController.transform,
-      false);
+      true);
 
     // Ensure the text always faces the camera
     var textTransform = cube.transform.Find("CubeText");

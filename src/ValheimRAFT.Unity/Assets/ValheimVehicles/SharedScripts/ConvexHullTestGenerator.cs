@@ -157,8 +157,6 @@ namespace ValheimVehicles.SharedScripts
         convexHullParentGameObject, convexHullParentGameObject.transform.position - PiecesParentObj.GetComponent<Rigidbody>().worldCenterOfMass,
         distanceThreshold, childGameObjects.ToList());
 
-      _convexHullAPI.UpdateConvexHullBounds();
-
       if (vehicleWheelController && convexHullParentGameObject != null)
       {
         var bounds = _convexHullAPI.GetConvexHullBounds(true);
