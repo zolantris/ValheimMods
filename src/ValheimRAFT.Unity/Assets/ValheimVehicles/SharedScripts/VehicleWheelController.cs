@@ -381,6 +381,7 @@ namespace ValheimVehicles.SharedScripts
           }
 
           wheelInstance.transform.localPosition = localPosition;
+
           var dirName = isLeft ? "left" : "right";
           var positionName = GetWheelPositionName(i, totalWheelSets);
           wheelInstance.name = $"ValheimVehicles_VehicleLand_wheel_{positionName}_{dirName}_{i}";
@@ -434,6 +435,16 @@ namespace ValheimVehicles.SharedScripts
     //   //   isLeft ? bounds.min.x : bounds.max.x);
     //   return wheelParent.InverseTransformPoint(rotatedPosition);
     // }
+
+    /// <summary>
+    /// TODO This has problems with rotation alignment, rotating the wheel.root transform will cause the size to somehow inflate. 
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="isLeft"></param>
+    /// <param name="totalWheelSets"></param>
+    /// <param name="bounds"></param>
+    /// <param name="spacing"></param>
+    /// <returns></returns>
     private Vector3 GetWheelLocalPosition(int index, bool isLeft, int totalWheelSets,
       Bounds bounds, float spacing)
     {
@@ -443,9 +454,6 @@ namespace ValheimVehicles.SharedScripts
 
       var zPos = bounds.min.z + spacing * index;
 
-      // unknown why these must be divided by 2 as they should be matching the bounds properly.
-      xPos /= 2;
-      // zPos /= 2;
       // var ratio = index / Math.Max(totalWheelSets, 1);
       // var zPos = bounds.size.z * ratio * bounds.min.z;
       var localPosition = new Vector3(xPos, bounds.min.y + wheelBottomOffset, zPos);

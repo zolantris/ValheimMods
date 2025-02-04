@@ -2853,9 +2853,8 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     if (WheelController != null)
     {
-      // var convexHullBounds = convexHullComponent.GetConvexHullBounds(true);
-      var onboardColliderRelativeBounds = new Bounds(OnboardCollider.transform.localPosition, OnboardCollider.bounds.size);
-      WheelController.InitializeWheels(onboardColliderRelativeBounds);
+      var convexHullBounds = convexHullComponent.GetConvexHullBounds(true);
+      WheelController.InitializeWheels(convexHullBounds);
       IgnoreAllWheelColliders();
     }
   }
