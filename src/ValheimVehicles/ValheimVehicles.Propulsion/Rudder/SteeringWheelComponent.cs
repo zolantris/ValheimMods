@@ -11,6 +11,7 @@ using ValheimRAFT.Patches;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Controllers;
 using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
 
@@ -211,6 +212,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
 
   private void Awake()
   {
+    VehicleAnchorMechanismController.setLocalizedStates();
     AttachPoint = transform.Find("attachpoint");
     wheelTransform = transform.Find("controls/wheel");
     wheelLocalOffset = wheelTransform.position - transform.position;
@@ -451,12 +453,15 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     }
   }
 
+  private AnchorState lastAnchorState = AnchorState.Idle;
   /// <summary>
   /// To be invoked from VehiclePiecesController when anchor updates or breaks update.
   /// </summary>
   /// <param name="message"></param>
-  public void UpdateSteeringHoverMessage(string message)
+  public void UpdateSteeringHoverMessage(AnchorState anchorState, string message)
   {
+    if (anchorState == lastAnchorState) return;
+    lastAnchorState = anchorState;
     steeringWheelHoverText.ResetHoverTimer();
     steeringWheelHoverText.currentText = message;
   }

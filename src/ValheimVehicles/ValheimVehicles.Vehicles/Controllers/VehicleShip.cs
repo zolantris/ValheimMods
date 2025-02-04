@@ -355,6 +355,11 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
           gameObject.AddComponent<VehicleMovementController>();
       MovementController = movementController;
     }
+
+    if (MovementController != null)
+    {
+      MovementController.CanAnchor = IsLandVehicle;
+    }
   }
 
   public void InitializeShipEffects()

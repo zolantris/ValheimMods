@@ -240,26 +240,25 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of rudder, this will apply with sails", true));
 
-    VehicleLandSpeedBack = Config.Bind(PropulsionSection, "LandVehicle Back Speed",
-      1f,
+    VehicleLandSpeedBack = Config.Bind(PropulsionSection, "LandVehicle Back Speed", 5f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Back speed of land vehicle.",
-        true));
+        true, false, new AcceptableValueRange<float>(1, 100f)));
     VehicleLandSpeedSlow = Config.Bind(PropulsionSection, "LandVehicle Slow Speed",
       5f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Slow speed of land vehicle.",
-        true));
+        true, false, new AcceptableValueRange<float>(1, 100f)));
     VehicleLandSpeedHalf = Config.Bind(PropulsionSection, "LandVehicle Half Speed",
-      20f,
+      10f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Half speed of land vehicle.",
-        true));
+        true, false, new AcceptableValueRange<float>(5f, 100f)));
     VehicleLandSpeedFull = Config.Bind(PropulsionSection, "LandVehicle Full Speed",
-      40f,
+      20f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of land vehicle.",
-        true));
+        true, false, new AcceptableValueRange<float>(20, 100f)));
     VehicleLandTurnSpeed = Config.Bind(PropulsionSection,
       "LandVehicle Turn Speed",
       35f,

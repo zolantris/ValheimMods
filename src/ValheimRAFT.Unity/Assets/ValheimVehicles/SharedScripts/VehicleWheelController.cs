@@ -610,6 +610,12 @@ namespace ValheimVehicles.SharedScripts
 
     internal float powerWheelDeltaInterval = 0.3f;
 
+    private float GetAccelerationMultiplier(WheelCollider wheel)
+    {
+      var normalizedRPM = Mathf.Clamp01(Mathf.Abs(wheel.rpm) / MaxWheelRPM);
+      var accelerationMultiplier = Mathf.Lerp(8f, 1f, normalizedRPM);
+      return accelerationMultiplier;
+    }
     /// <summary>
     ///   POWERED WHEELs
     ///   Sets the motor torque of the wheel based on forward input. This moves
@@ -625,8 +631,9 @@ namespace ValheimVehicles.SharedScripts
       // {
       //   deltaRunPoweredWheels += Time.fixedDeltaTime;
       // }
+      var inputForceDir = Mathf.Sign(inputForwardForce);
 
-      foreach (var wheel in poweredWheels.ToList())
+      foreach (var wheel in poweredWheels)
       {
         if (wheel == null) continue;
         if (isBreaking)
@@ -643,9 +650,9 @@ namespace ValheimVehicles.SharedScripts
           }
           else if (Mathf.Abs(wheel.rpm) > MaxWheelRPM || rigid.velocity.magnitude >= topSpeed)
           {
-            wheel.motorTorque = 0f;
+            wheel.motorTorque = inputForceDir * MaxWheelRPM;
           }
-          else
+          else if (!Mathf.Approximately(MaxWheelRPM, 0f))
           {
             // To create a top speed for the tank, the motor torque just
             // cuts out when the tank starts moving fast enough.
@@ -653,9 +660,17 @@ namespace ValheimVehicles.SharedScripts
             {
               wheel.brakeTorque = 0f;
             }
-
             var nextMotorTorque = wheel.motorTorque;
-            var additiveTorque = inputForwardForce * baseMotorTorque * Time.fixedDeltaTime;
+
+            var accelerationMultiplier = GetAccelerationMultiplier(wheel);
+            // using power will turn the number positive. We use sign to get -1 if below 1 or 1 if above 0
+            var additiveTorque = inputForwardForce * baseMotorTorque * accelerationMultiplier * Time.fixedDeltaTime;
+
+            // alternative to acceleration mulitplier
+            // if (wheel.rpm < MaxWheelRPM * 0.1f)
+            // {
+            //   nextMotorTorque += inputForceDir * MaxWheelRPM * 0.1f;
+            // }
 
             // When flipping directions we immediately must zero out the motor torque.
             if (wheel.motorTorque > 0f && additiveTorque < 0f || wheel.motorTorque < 0f && additiveTorque > 0f)
@@ -831,8 +846,13 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     public void UpdateMaxRPM()
     {
-      var maxTotalTorque = baseMotorTorque * inputForwardForce * 4;
-      MaxWheelRPM = Mathf.Abs(maxTotalTorque);
+      var maxTotalTorque = baseMotorTorque * Mathf.Pow(inputForwardForce, 2) * 2;
+      MaxWheelRPM = Mathf.Clamp(Mathf.Abs(maxTotalTorque), -2500f, 2500f);
+
+      if (MaxWheelRPM == 0f)
+      {
+        MaxWheelRPM = 0.01f;
+      }
     }
 
     public void SetAcceleration(float val)

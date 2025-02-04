@@ -492,7 +492,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       Logger.LogDebug(
         $"Valheim GameEngine is using: <{renderPipeline}> graphics pipeline ");
 
-    VehicleAnchorMechanismController.setLocalizedStates();
+    Localization.OnLanguageChange = VehicleAnchorMechanismController.setLocalizedStates;
   }
 
   private void OnDestroy()

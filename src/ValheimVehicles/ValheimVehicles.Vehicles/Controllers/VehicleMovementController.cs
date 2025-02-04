@@ -283,23 +283,22 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public bool isHoldingBreak = false;
 
-  private void UpdateBreakingControls()
-  {
-    if (WheelController == null) return;
-    var isBreakingPressed = Input.GetKeyDown(KeyCode.Space);
-    if (isBreakingPressed && !isHoldingBreak)
-    {
-      WheelController.ToggleIsBreaking();
-      SendSetAnchor(WheelController.isBreaking ? AnchorState.Anchored : AnchorState.Recovered);
-      isHoldingBreak = true;
-    }
-
-    // we do not handle setting anchor state if it's still anchored and not breaking. This should only be handled if the break toggle is pressed.
-    if (!isBreakingPressed)
-    {
-      isHoldingBreak = false;
-    }
-  }
+  // private void UpdateBreakingControls()
+  // {
+  //   if (WheelController == null) return;
+  //   var isBreakingPressed = Input.GetKeyDown(KeyCode.Space);
+  //   if (isBreakingPressed && !isHoldingBreak)
+  //   {
+  //     SendSetAnchor(WheelController.isBreaking ? AnchorState.Anchored : AnchorState.Recovered);
+  //     isHoldingBreak = true;
+  //   }
+  //
+  //   // we do not handle setting anchor state if it's still anchored and not breaking. This should only be handled if the break toggle is pressed.
+  //   if (!isBreakingPressed)
+  //   {
+  //     isHoldingBreak = false;
+  //   }
+  // }
 
   private void Update()
   {
@@ -316,7 +315,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       }
 
       OnAnchorKeyPress();
-      UpdateBreakingControls();
+      // UpdateBreakingControls();
       return;
     }
 
@@ -1123,11 +1122,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   }
 
-  private static Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity)
+  private static Vector3 CalculateAnchorStopVelocity(Vector3 currentVelocity, float smoothTime = 5f)
   {
     var zeroVelocity = Vector3.zero;
-    return Vector3.SmoothDamp(currentVelocity * 0.5f, Vector3.zero,
-      ref zeroVelocity, 5f);
+    return Vector3.SmoothDamp(currentVelocity, Vector3.zero,
+      ref zeroVelocity, smoothTime);
   }
 
   public void AddForceAtPosition(Vector3 force, Vector3 position,
@@ -1358,7 +1357,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     UpdateVehicleStats(VehiclePhysicsState.Air);
     UpdateAndFreezeRotation();
     // early exit if anchored.
-    if (UpdateAnchorVelocity(m_body.velocity)) return;
+    if (UpdateAnchorVelocity()) return;
 
     m_body.WakeUp();
     Flying_UpdateShipBalancingForce();
@@ -1435,12 +1434,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public void UpdateVehicleLandSpeed()
   {
     UpdateVehicleStats(VehiclePhysicsState.Land);
-    if (UpdateAnchorVelocity(m_body.velocity)) return;
     if (WheelController == null) return;
-    WheelController.forwardDirection = ShipDirection;
-
     var isOwner = m_nview.IsOwner();
     if (!isOwner) return;
+
+    WheelController.forwardDirection = ShipDirection;
+
     if (shouldUpdateLandInputs)
     {
       m_body.WakeUp();
@@ -1448,6 +1447,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       WheelController.inputForwardForce = landSpeed;
       WheelController.VehicleMovementFixedUpdate();
     }
+
+    UpdateAnchorVelocity();
   }
 
   /// <summary>
@@ -1763,7 +1764,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
         m_body.constraints = RigidbodyConstraints.None;
     }
 
-    if (UpdateAnchorVelocity(m_body.velocity)) return;
+    if (UpdateAnchorVelocity()) return;
 
     ApplySailForce(this);
   }
@@ -1771,14 +1772,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// <summary>
   ///   Used to stop the ship and prevent further velocity calcs if anchored.
   /// </summary>
-  /// <param name="velocity"></param>
   /// <returns></returns>
-  private bool UpdateAnchorVelocity(Vector3 velocity)
+  private bool UpdateAnchorVelocity()
   {
     if (OnboardController.m_localPlayers.Count != 0 &&
         !isAnchored) return false;
 
-    var anchoredVelocity = CalculateAnchorStopVelocity(velocity);
+    var anchoredVelocity = CalculateAnchorStopVelocity(m_body.velocity);
     var anchoredAngularVelocity =
       CalculateAnchorStopVelocity(m_body.angularVelocity);
 
@@ -2098,11 +2098,10 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner && hasOwner ||
         isBeached) return;
 
-
     _currentShipFloatation = GetShipFloatationObj();
 
 
-    if (_vehicle.IsLandVehicle)
+    if (_vehicle!.IsLandVehicle)
     {
       UpdateVehicleLandSpeed();
       return;
@@ -3294,10 +3293,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public void ToggleAnchor()
   {
     // Flying does not animate anchor.
-    if (IsFlying())
+    if (IsFlying() || VehicleInstance!.IsLandVehicle)
     {
       SendSetAnchor(!isAnchored ? AnchorState.Anchored : AnchorState.Recovered);
-
+      if (WheelController != null)
+      {
+        WheelController.isBreaking = isAnchored;
+      }
       return;
     }
 

@@ -1305,7 +1305,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
           m_anchorPieces.Remove(netView);
 
           if (MovementController != null)
-            MovementController.CanAnchor = m_anchorPieces.Count > 0;
+            MovementController.CanAnchor = m_anchorPieces.Count > 0 || VehicleInstance!.IsLandVehicle;
           break;
 
         case BoardingRampComponent ramp:
@@ -1878,16 +1878,25 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       anchorComponent.MovementController = MovementController;
   }
 
+
+  private AnchorState lastAnchorState = AnchorState.Idle;
   /// <summary>
   /// Binds the Movement to the anchor components and allows for the anchor hotkeys to toggle all anchors on the ship
   /// </summary>
   /// <param name="anchorState"></param>
   public void UpdateAnchorState(AnchorState anchorState)
   {
+    if (lastAnchorState == anchorState)
+    {
+      return;
+    }
+
     var isLandVehicle = MovementController != null && MovementController.VehicleInstance is
     {
       IsLandVehicle: true
     };
+
+    lastAnchorState = anchorState;
 
     var currentWheelStateText = VehicleAnchorMechanismController.GetCurrentStateTextStatic(anchorState, isLandVehicle);
     foreach (var anchorComponent in m_anchorMechanismComponents)
@@ -1895,7 +1904,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
         anchorComponent.UpdateAnchorState(anchorState, currentWheelStateText);
     foreach (var steeringWheel in _steeringWheelPieces)
     {
-      steeringWheel.UpdateSteeringHoverMessage(currentWheelStateText);
+      steeringWheel.UpdateSteeringHoverMessage(anchorState, currentWheelStateText);
     }
   }
 
@@ -2431,7 +2440,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
           m_anchorPieces.Add(netView);
           if (MovementController != null)
           {
-            MovementController.CanAnchor = m_anchorPieces.Count > 0;
+            MovementController.CanAnchor = m_anchorPieces.Count > 0 || VehicleInstance!.IsLandVehicle;
             anchorMechanismController.UpdateAnchorState(MovementController
               .vehicleAnchorState, VehicleAnchorMechanismController.GetCurrentStateTextStatic(MovementController.vehicleAnchorState, VehicleInstance != null && VehicleInstance.IsLandVehicle));
           }
