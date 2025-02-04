@@ -9,6 +9,7 @@ using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Patches;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
@@ -57,8 +58,6 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   public Transform AttachPoint { get; set; }
   public Transform steeringWheelHoverTransform;
   public HoverFadeText steeringWheelHoverText;
-
-  private static readonly Color messageColor = new(249f, 224f, 0f, 255f);
 
   /// <summary>
   /// Todo might be worth caching this.
@@ -216,13 +215,10 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     wheelTransform = transform.Find("controls/wheel");
     wheelLocalOffset = wheelTransform.position - transform.position;
     PrefabRegistryHelpers.IgnoreCameraCollisions(gameObject);
-  }
-
-  public void AddAnchorStatus()
-  {
     steeringWheelHoverTransform = transform.Find("wheel_state_hover_message");
     steeringWheelHoverText = steeringWheelHoverTransform.gameObject.AddComponent<HoverFadeText>();
   }
+
 
   public string GetHoverName()
   {
