@@ -631,7 +631,7 @@ namespace ValheimVehicles.SharedScripts
         if (wheel == null) continue;
         if (isBreaking)
         {
-          wheel.brakeTorque = inputForwardForce * baseMotorTorque * 2 + additionalBreakForce;
+          wheel.brakeTorque = wheel.rpm * 2 + additionalBreakForce;
           wheel.motorTorque = 0f;
         }
         if (!isBreaking)

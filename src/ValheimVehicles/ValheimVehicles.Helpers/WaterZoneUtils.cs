@@ -110,14 +110,21 @@ public static class WaterZoneUtils
       VehicleOnboardController.GetOnboardCharacterData(character);
     var isCharacterOnboard = waterZoneData != null;
 
-    // if (waterZoneData == null)
-    // {
-    //   return IsInVehicleShipBounds(character);
-    // }
-
     var isCharacterStandingOnVehicle =
-      HasShipUnderneath(character);
-    return isCharacterOnboard && isCharacterStandingOnVehicle;
+      HasShipUnderneath(character, out var shipUnderneath);
+
+    // Force adds the player if they are onboard but somehow not on the ship.
+    if (isCharacterStandingOnVehicle && shipUnderneath != null && shipUnderneath.OnboardController != null && !isCharacterOnboard)
+    {
+      var player = character.GetComponent<Player>();
+      if (player != null)
+      {
+        shipUnderneath.OnboardController.AddPlayerToLocalShip(player);
+      }
+      shipUnderneath.OnboardController.AddCharacter(character);
+    }
+
+    return isCharacterOnboard || isCharacterStandingOnVehicle;
   }
 
 
@@ -153,21 +160,28 @@ public static class WaterZoneUtils
   public static bool HasShipToRight(Character character)
   {
     return HasShipInDirection(character.transform.position,
-      character.transform.TransformDirection(Vector3.right));
+      character.transform.TransformDirection(Vector3.right), out _);
   }
 
   [GameCacheValue(intervalInSeconds: 0.5f)]
   public static bool HasShipToLeft(Character character)
   {
     return HasShipInDirection(character.transform.position,
-      character.transform.TransformDirection(Vector3.left));
+      character.transform.TransformDirection(Vector3.left), out _);
   }
 
   [GameCacheValue(intervalInSeconds: 0.5f)]
   public static bool HasShipUnderneath(Character character)
   {
     return HasShipInDirection(character.transform.position,
-      character.transform.TransformDirection(Vector3.down));
+      character.transform.TransformDirection(Vector3.down), out _);
+  }
+  public static bool HasShipUnderneath(Character character, out VehiclePiecesController? controller)
+  {
+    var hasShipInDirection = HasShipInDirection(character.transform.position,
+      character.transform.TransformDirection(Vector3.down), out var piecesController);
+    controller = piecesController;
+    return hasShipInDirection;
   }
 
   public static bool IsCharacterTheLocalPlayer(Character character)
@@ -183,13 +197,12 @@ public static class WaterZoneUtils
   /// <param name="direction"></param>
   /// <returns></returns>
   [MeasureTime]
-  public static bool HasShipInDirection(Vector3 position, Vector3 direction)
+  public static bool HasShipInDirection(Vector3 position, Vector3 direction, out VehiclePiecesController? piecesController)
   {
-    var maxDistance =
-      Mathf.Clamp(position.y, 10, 100); // Adjust as needed
+    piecesController = null;
     var results = new RaycastHit[5];
     var size = Physics.RaycastNonAlloc(position,
-      direction, results, maxDistance, LayerMask.GetMask("piece"));
+      direction, results, 5f, LayerMask.GetMask("piece"));
 
     var isValid = false;
     // Perform the raycast
@@ -198,7 +211,7 @@ public static class WaterZoneUtils
       for (var i = 0; i < size; i++)
       {
         var resultItem = results[i];
-        var piecesController = resultItem.transform.root
+        piecesController = resultItem.transform.root
           .GetComponent<VehiclePiecesController>();
         if (piecesController)
         {

@@ -988,6 +988,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
     var currentPieceControllerSector =
       ZoneSystem.GetZone(position);
 
+    // todo might have to set this to the current position not the sent in position
     controller.VehicleInstance?.NetView?.m_zdo?.SetPosition(position);
 
 
@@ -1037,7 +1038,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   public void ForceUpdateAllPiecePositions()
   {
     ForceUpdateAllPiecePositions(this,
-      VehicleInstance?.Instance?.transform.position ?? transform.position);
+      m_body.worldCenterOfMass);
   }
 
   /**
@@ -1841,7 +1842,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
 
     netView.m_zdo.Set(VehicleZdoVars.VehicleMovingPiece, bvc.PersistentZdoId);
     netView.m_zdo.Set(VehicleZdoVars.VehicleMovingPieceOffsetHash,
-      netView.transform.position - bvc.transform.position);
+      netView.transform.position - bvc.m_body.worldCenterOfMass);
     return true;
   }
 
@@ -1883,9 +1884,19 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
   /// <param name="anchorState"></param>
   public void UpdateAnchorState(AnchorState anchorState)
   {
+    var isLandVehicle = MovementController != null && MovementController.VehicleInstance is
+    {
+      IsLandVehicle: true
+    };
+
+    var currentWheelStateText = VehicleAnchorMechanismController.GetCurrentStateTextStatic(anchorState, isLandVehicle);
     foreach (var anchorComponent in m_anchorMechanismComponents)
       if (anchorState != anchorComponent.currentState)
-        anchorComponent.UpdateAnchorState(anchorState);
+        anchorComponent.UpdateAnchorState(anchorState, currentWheelStateText);
+    foreach (var steeringWheel in _steeringWheelPieces)
+    {
+      steeringWheel.UpdateSteeringHoverMessage(currentWheelStateText);
+    }
   }
 
   /**
@@ -2422,7 +2433,7 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
           {
             MovementController.CanAnchor = m_anchorPieces.Count > 0;
             anchorMechanismController.UpdateAnchorState(MovementController
-              .vehicleAnchorState);
+              .vehicleAnchorState, VehicleAnchorMechanismController.GetCurrentStateTextStatic(MovementController.vehicleAnchorState, VehicleInstance != null && VehicleInstance.IsLandVehicle));
           }
 
           break;

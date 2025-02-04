@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
@@ -54,6 +55,10 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
 
   private const float maxUseRange = 10f;
   public Transform AttachPoint { get; set; }
+  public Transform steeringWheelHoverTransform;
+  public HoverFadeText steeringWheelHoverText;
+
+  private static readonly Color messageColor = new(249f, 224f, 0f, 255f);
 
   /// <summary>
   /// Todo might be worth caching this.
@@ -213,6 +218,12 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     PrefabRegistryHelpers.IgnoreCameraCollisions(gameObject);
   }
 
+  public void AddAnchorStatus()
+  {
+    steeringWheelHoverTransform = transform.Find("wheel_state_hover_message");
+    steeringWheelHoverText = steeringWheelHoverTransform.gameObject.AddComponent<HoverFadeText>();
+  }
+
   public string GetHoverName()
   {
     if ((bool)deprecatedShipControls)
@@ -369,11 +380,9 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     return this;
   }
 
-
-  // Run anchor controls here only if the deprecatedMbShip is used
-  // Otherwise updates for anchor are handled in MovementController
-  public void FixedUpdate()
+  public void FixedUpdateDeprecatedShip()
   {
+
     if (!deprecatedShipControls) return;
     if (!VehicleMovementController.ShouldHandleControls()) return;
 
@@ -387,6 +396,16 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     deprecatedMBShip.SetAnchor(
       !deprecatedMBShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags
         .IsAnchored));
+  }
+
+  // Run anchor controls here only if the deprecatedMbShip is used
+  // Otherwise updates for anchor are handled in MovementController
+  public void FixedUpdate()
+  {
+    steeringWheelHoverText.UpdateText();
+
+    // only for v1
+    FixedUpdateDeprecatedShip();
   }
 
   /**
@@ -434,6 +453,16 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
       ShipInstance = vehicleShip;
       _controls.enabled = true;
     }
+  }
+
+  /// <summary>
+  /// To be invoked from VehiclePiecesController when anchor updates or breaks update.
+  /// </summary>
+  /// <param name="message"></param>
+  public void UpdateSteeringHoverMessage(string message)
+  {
+    steeringWheelHoverText.ResetHoverTimer();
+    steeringWheelHoverText.currentText = message;
   }
 
   public void UpdateSpokes()

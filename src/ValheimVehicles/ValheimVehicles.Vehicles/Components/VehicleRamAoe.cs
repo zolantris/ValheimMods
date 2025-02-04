@@ -360,6 +360,13 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   {
     if (!IsReady()) return false;
 
+    var character = collider.GetComponentInParent<Character>();
+    if (WaterZoneUtils.IsOnboard(character))
+    {
+      IgnoreCollider(collider);
+      return false;
+    }
+
     var relativeVelocity = GetRelativeVelocity(collider);
     if (relativeVelocity < minimumVelocityToTriggerHit) return false;
 
@@ -406,7 +413,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     }
 
     var character = collider.GetComponentInParent<Character>();
-    if (WaterZoneUtils.IsOnboard(character))
+    if (character != null && WaterZoneUtils.IsOnboard(character))
     {
       IgnoreCollider(collider);
       return true;

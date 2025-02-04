@@ -288,6 +288,17 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     HandleCharacterHitVehicleBounds(collider, false);
   }
 
+  /// <summary>
+  /// Meant to be run only when rebuilding. This is heavier computation. But it will prevent problems like the player getting hit by damage if they are not onboard.
+  /// </summary>
+  /// <param name="collider"></param>
+  public void OnTriggerStay(Collider collider)
+  {
+    if (!isRebuildingCollisions) return;
+    HandlePlayerExitVehicleBounds(collider);
+    HandleCharacterHitVehicleBounds(collider, false);
+  }
+
   public void OnTriggerExit(Collider collider)
   {
     if (!IsReady()) return;

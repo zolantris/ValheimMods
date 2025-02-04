@@ -74,7 +74,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   private ImpactEffect _impactEffect;
   public float TargetHeight => MovementController?.TargetHeight ?? 0f;
   public bool IsLandVehicleFromPrefab = false;
-  public bool IsLandVehicle = false;
+  public bool IsLandVehicle { get; set; }
   public bool isCreative;
 
   private BoxCollider m_floatCollider;
@@ -454,14 +454,14 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   public void UpdateShipZdoPosition()
   {
     if (!(bool)NetView || NetView.GetZDO() == null || NetView.m_ghost ||
-        (bool)PiecesController ||
+        PiecesController == null ||
         !isActiveAndEnabled) return;
     var position = transform.position;
 
     var sector = ZoneSystem.GetZone(position);
     var zdo = NetView.GetZDO();
 
-    zdo.SetPosition(position);
+    zdo.SetPosition(PiecesController.m_body.worldCenterOfMass);
     zdo.SetSector(sector);
   }
 

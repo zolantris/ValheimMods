@@ -220,7 +220,7 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     );
     panel.name = "ValheimVehicles_modderCommandsWindow_commands";
     var dragWindowExtension = panel.AddComponent<DragWindowCntrlExtension>();
-    panel.transform.SetParent(GUIManager.CustomGUIBack.transform, false);
+    panel.transform.SetParent(GUIManager.CustomGUIFront.transform, false);
     panel.GetComponent<Image>().pixelsPerUnitMultiplier = 1f;
     var panelTransform = (RectTransform)panel.transform;
     panelTransform.anchoredPosition = new Vector2(VehicleDebugConfig.WindowPosX.Value, VehicleDebugConfig.WindowPosY.Value);

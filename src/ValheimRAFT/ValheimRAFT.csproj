@@ -75,6 +75,9 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\DragWindowCntrlExtension.cs">
             <Link>ValheimVehicles.Vehicles\Components\DragWindowCntrlExtension.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\HoverFadeText.cs">
+            <Link>ValheimVehicles.Vehicles\Components\HoverFadeText.cs</Link>
+        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup><!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->

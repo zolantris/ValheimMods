@@ -566,7 +566,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return m_rudder;
   }
 
-  public float VehicleSpeedMult = 0.5f;
   /// <summary>
   ///   Handles updating direction controls, update Controls is called within the
   ///   FixedUpdate of VehicleShip
@@ -591,8 +590,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (WheelController != null)
     {
       WheelController.SetTurnInput(m_rudderValue);
-      var landVehicleSpeed = GetLandVehicleSpeed() *
-                             PhysicsConfig.VehicleLandSpeedMult.Value;
+      var landVehicleSpeed = GetLandVehicleSpeed();
       WheelController.SetAcceleration(landVehicleSpeed);
     }
   }
