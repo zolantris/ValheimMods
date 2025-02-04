@@ -216,6 +216,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
   public Transform ShipDirection { get; set; } = null!;
   public Transform DamageColliders = null!;
+  public VehicleRamAoe? vehicleRam = null;
 
   public static List<VehicleMovementController> Instances { get; } = [];
 
@@ -2445,6 +2446,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return shipAdditiveSteerForce;
   }
 
+  private void OnTriggerEnter(Collider collider)
+  {
+    if (vehicleRam == null) return;
+    var colliderName = collider.name;
+    vehicleRam.OnTriggerEnterHandler(collider);
+  }
+
   /// <summary>
   /// For adding a single AOE component in the top level collider component for meshcolliders.
   /// TODO determine if this is best place for this function.
@@ -2453,19 +2461,19 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// </summary>
   public VehicleRamAoe? AddRamAoeToConvexHull()
   {
-    var aoeRam = DamageColliders.gameObject.GetComponent<VehicleRamAoe>();
+    vehicleRam = DamageColliders.gameObject.GetComponent<VehicleRamAoe>();
 
-    if (aoeRam == null)
-      aoeRam = DamageColliders.gameObject
+    if (vehicleRam == null)
+      vehicleRam = DamageColliders.gameObject
         .AddComponent<VehicleRamAoe>();
     // negative check, should never hit this...
-    if (aoeRam == null) return null;
-    if (aoeRam.m_nview == null) aoeRam.m_nview = m_nview;
+    if (vehicleRam == null) return null;
+    if (vehicleRam.m_nview == null) vehicleRam.m_nview = m_nview;
 
-    aoeRam.m_RamType = RamPrefabs.RamType.Blade;
-    aoeRam.m_vehicle = _vehicle;
-    aoeRam.SetVehicleRamModifier(RamConfig.VehicleHullsAreRams.Value);
-    return aoeRam;
+    vehicleRam.m_RamType = RamPrefabs.RamType.Blade;
+    vehicleRam.m_vehicle = _vehicle;
+    vehicleRam.SetVehicleRamModifier(RamConfig.VehicleHullsAreRams.Value);
+    return vehicleRam;
   }
 
   public Vector3 GetRudderPosition()

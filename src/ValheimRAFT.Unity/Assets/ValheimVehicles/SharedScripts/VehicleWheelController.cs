@@ -148,6 +148,7 @@ namespace ValheimVehicles.SharedScripts
       if (ghostContainer) ghostContainer.gameObject.SetActive(false);
 #endif
       wheelParent = transform.Find("wheels");
+
       rigid = GetComponent<Rigidbody>();
       var centerOfMass = transform.Find("center_of_mass");
       if (centerOfMass != null) centerOfMassTransform = centerOfMass;

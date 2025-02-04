@@ -2968,10 +2968,14 @@ public class VehiclePiecesController : MonoBehaviour, IMonoUpdater
       new Vector3(_vehiclePieceBounds.center.x,
         _vehiclePieceBounds.center.y,
         _vehiclePieceBounds.center.z);
+    const float additionalHeight = 3f;
+    onboardColliderCenter.y += additionalHeight / 2f;
+
     var onboardColliderSize = new Vector3(
       Mathf.Max(minColliderSize, _vehiclePieceBounds.size.x),
       Mathf.Max(minColliderSize, _vehiclePieceBounds.size.y),
       Mathf.Max(minColliderSize, _vehiclePieceBounds.size.z));
+    onboardColliderSize.y += additionalHeight;
 
     FloatCollider.size = floatColliderSize;
     FloatCollider.transform.localPosition =
