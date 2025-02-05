@@ -1578,34 +1578,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     m_forceDistance = PhysicsConfig.forceDistance.Value;
 
     m_stearVelForceFactor = 1.3f;
-    m_waterImpactDamage = 0f;
     m_backwardForce = PhysicsConfig.backwardForce.Value;
-
-    UpdateImpactEffectValues();
-  }
-
-  public void UpdateImpactEffectValues()
-  {
-    // if (_impactEffect != null)
-    // {
-    //   var damage = GetDamageFromImpact();
-    //   if (RamConfig.VehicleHullUsesPickaxeAndChopDamage.Value)
-    //   {
-    //     _impactEffect.m_damages.m_pickaxe = damage * 0.66f;
-    //     _impactEffect.m_damages.m_chop = damage * 0.33f;
-    //   }
-    //   else
-    //   {
-    //     _impactEffect.m_damages.m_blunt = damage;
-    //   }
-    //
-    //   _impactEffect.m_toolTier = RamConfig.HullToolTier.Value;
-    // }
-    // else
-    // {
-    //   Logger.LogDebug(
-    //     "No Ship ImpactEffect detected, this needs to be added to the custom ship");
-    // }
   }
 
   /// <summary>

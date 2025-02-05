@@ -202,43 +202,6 @@ public class ValheimBaseGameShip : MonoBehaviour
   }
 
   /// <summary>
-  /// TODO may need to rename to UpdateWaterForce again if there is a method problem or use the combat class
-  /// </summary>
-  /// <param name="depth"></param>
-  /// <param name="dt"></param>
-  // public void UpdateWaterImpactForce(float depth, float dt)
-  // {
-  //   if (m_lastDepth == -9999f)
-  //   {
-  //     m_lastDepth = depth;
-  //     return;
-  //   }
-  //
-  //   var num = depth - m_lastDepth;
-  //   m_lastDepth = depth;
-  //   var num2 = num / dt;
-  //   if (num2 > 0f || !(Mathf.Abs(num2) > m_minWaterImpactForce) ||
-  //       !(Time.time - m_lastWaterImpactTime > m_minWaterImpactInterval))
-  //     return;
-  //
-  //   m_lastWaterImpactTime = Time.time;
-  //   m_waterImpactEffect.Create(transform.position,
-  //     transform.rotation);
-  //   if (m_players.Count > 0)
-  //   {
-  //     var component = GetComponent<IDestructible>();
-  //     if (component != null)
-  //     {
-  //       var hitData = new HitData();
-  //       hitData.m_damage.m_blunt = m_waterImpactDamage;
-  //       hitData.m_point = transform.position;
-  //       hitData.m_dir = Vector3.up;
-  //       component.Damage(hitData);
-  //     }
-  //   }
-  // }
-
-  /// <summary>
   /// This is the base game ship EdgeForce. Needs more information about what it does
   /// </summary>
   /// Todo figure out what this does
