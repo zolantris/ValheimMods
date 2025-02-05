@@ -2,8 +2,8 @@
   "name": "ValheimRAFT",
   "version_number": "3.0.0",
   "website_url": "https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT",
-  "description": "ValheimRAFT - a water vehicles mod for valheim. V2 has new hulls,walls,slabs.",
+  "description": "ValheimRAFT - a vehicles mod for valheim. Build a ship, build a land vehicle. Explore valheim! This is release channel. Features should be released slower and should be more stable. Use the beta channel if you want to see new features sooner.",
   "dependencies": [
-    "ValheimModding-Jotunn-2.20.0"
+    "ValheimModding-Jotunn-2.23.0"
   ]
 }
