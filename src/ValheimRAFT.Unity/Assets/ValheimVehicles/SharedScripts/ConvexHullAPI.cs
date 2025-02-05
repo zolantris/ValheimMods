@@ -815,6 +815,9 @@ namespace ValheimVehicles.SharedScripts
       return result;
     }
 
+    /// <summary>
+    /// TODO refactor this so it does not destroy, only mutates the already existing mesh object. This way the colliders do not have to be rebound to physics ignores.
+    /// </summary>
     public void DestroyAllConvexMeshes()
     {
       DeleteMeshesFromChildColliders(convexHullMeshes);
@@ -835,7 +838,7 @@ namespace ValheimVehicles.SharedScripts
     /// <param name="distanceThreshold"></param>
     /// <param name="triggerParent"></param>
     public void GenerateMeshesFromChildColliders(
-      GameObject targetParentGameObject,
+      GameObject targetParentGameObject, Vector3 offset,
       float distanceThreshold, List<GameObject> childGameObjects,
       Transform? triggerParent = null)
     {
@@ -851,12 +854,13 @@ namespace ValheimVehicles.SharedScripts
           ? GetAllColliderPointsAsWorldPoints(hullCluster)
           : GetColliderPointsLocal(hullCluster);
         GenerateConvexHullMesh(colliderPoints,
-          targetParentGameObject.transform);
+          targetParentGameObject.transform, offset);
       }
 
       CreatePreviewConvexHullMeshes();
 
       if (triggerParent != null) CreateTriggerConvexHullMeshes(triggerParent);
+
     }
 
     // Create a copy of the mesh that is readable
@@ -1087,7 +1091,7 @@ namespace ValheimVehicles.SharedScripts
 
 
     public void GenerateConvexHullMesh(
-      List<Vector3> points, Transform parentObjTransform)
+      List<Vector3> points, Transform parentObjTransform, Vector3 offset)
     {
       if (points.Count < 3)
       {
@@ -1096,8 +1100,9 @@ namespace ValheimVehicles.SharedScripts
       }
 
       var localPoints = points
-        .Select(x => parentObjTransform.InverseTransformPoint(x)).ToList();
+        .Select(x => parentObjTransform.InverseTransformPoint(x) + offset).ToList();
 
+      UpdateConvexHullBounds(localPoints);
       // if (convexHullMeshes.Count > 0 &&
       //     DebugUnityHelpers.Vector3ArrayEqualWithTolerance(
       //       localPoints.ToArray(), _cachedPoints.ToArray()))
@@ -1180,34 +1185,16 @@ namespace ValheimVehicles.SharedScripts
       return new Bounds(centerWithWorldY, _cachedConvexHullBounds.size);
     }
 
-    public void UpdateConvexHullBounds()
+    /// <summary>
+    /// This needs to be manually called after GenerateMeshesFromChildColliders is invoked in order to regenerate the accurate colliders.
+    /// </summary>
+    public void UpdateConvexHullBounds(List<Vector3> localPoints)
     {
-      var convexHullBounds = new Bounds(Vector3.zero, Vector3.zero);
-      foreach (var meshCollider in convexHullMeshColliders)
-      {
-        // var centerWorld = meshCollider.transform.TransformPoint(meshCollider.bounds.center);
-        var centerLocal = transform.InverseTransformPoint(meshCollider.bounds.center);
-        // var centerLocal = transform.InverseTransformPoint(colliderParent.position);
-        var localBounds = new Bounds(centerLocal, meshCollider.bounds.size);
-        convexHullBounds.Encapsulate(localBounds);
-      }
-
+      if (localPoints.Count < 0) return;
+      var convexHullBounds = new Bounds(localPoints[0], Vector3.zero);
+      localPoints.ForEach(x => convexHullBounds.Encapsulate(x));
       _cachedConvexHullBounds = convexHullBounds;
-      // // converts to relative bounds
-      // if (convexHullBounds != null)
-      // {
-      //   convexHullBounds =
-      //     new Bounds(
-      //       transform.InverseTransformPoint(convexHullBounds.Value.center),
-      //       convexHullBounds.Value.size);
-      //
-      //   _cachedConvexHullBounds = convexHullBounds.Value;
-      // }
-      // else
-      // {
-      //   _cachedConvexHullBounds = new Bounds(Vector3.zero, Vector3.one * 3);
-      // }
-    }
+     }
 
     public void OnDrawGizmos()
     {

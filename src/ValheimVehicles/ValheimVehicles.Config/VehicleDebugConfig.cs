@@ -10,6 +10,14 @@ public static class VehicleDebugConfig
 {
   public static ConfigFile? Config { get; private set; }
 
+  public static ConfigEntry<float> WindowPosX;
+
+  public static ConfigEntry<float> WindowPosY;
+
+  public static ConfigEntry<int> ButtonFontSize;
+
+  public static ConfigEntry<int> TitleFontSize;
+
   public static ConfigEntry<bool>
     AutoShowVehicleColliders { get; private set; } = null!;
 
@@ -24,7 +32,7 @@ public static class VehicleDebugConfig
 
   public static ConfigEntry<int>
     VehiclePieceBoundsRecalculationDelay { get; private set; } = null!;
-  
+
   public static ConfigEntry<float> AutoAnchorDelayTime { get; private set; } =
     null!;
 
@@ -127,6 +135,11 @@ public static class VehicleDebugConfig
       ConfigHelpers.CreateConfigDescription(
         "The delay time at which the vehicle will recalculate bounds after placing a piece. This recalculation can be a bit heavy so it's debounced a minimum of 1 seconds but could be increased up to 30 seconds for folks that want to build a pause for a bit.",
         false, true, new AcceptableValueRange<int>(1, 30)));
+
+    WindowPosX = Config.Bind(SectionName, "WindowPosX", 0f);
+    WindowPosY = Config.Bind(SectionName, "WindowPosY", 0f);
+    ButtonFontSize = Config.Bind(SectionName, "ButtonFontSize", 16);
+    TitleFontSize = Config.Bind(SectionName, "LabelFontSize", 22);
 
     // onChanged
     AutoShowVehicleColliders.SettingChanged +=

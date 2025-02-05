@@ -74,7 +74,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   private ImpactEffect _impactEffect;
   public float TargetHeight => MovementController?.TargetHeight ?? 0f;
   public bool IsLandVehicleFromPrefab = false;
-  public bool IsLandVehicle = false;
+  public bool IsLandVehicle { get; set; }
   public bool isCreative;
 
   private BoxCollider m_floatCollider;
@@ -355,6 +355,11 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
           gameObject.AddComponent<VehicleMovementController>();
       MovementController = movementController;
     }
+
+    if (MovementController != null)
+    {
+      MovementController.CanAnchor = IsLandVehicle;
+    }
   }
 
   public void InitializeShipEffects()
@@ -394,6 +399,9 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     WheelController.m_steeringType = VehicleWheelController.SteeringType.Magic;
     WheelController.wheelSuspensionDistance = PhysicsConfig.VehicleLandSuspensionDistance.Value;
     WheelController.wheelRadius = PhysicsConfig.VehicleLandWheelRadius.Value;
+    WheelController.wheelSuspensionSpring = PhysicsConfig.VehicleLandWheelSuspensionSpring.Value;
+    WheelController.wheelBottomOffset = PhysicsConfig.VehicleLandWheelOffset.Value;
+    WheelController.wheelMass = PhysicsConfig.VehicleLandWheelMass.Value;
   }
 
   /// <summary>
@@ -452,14 +460,14 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   public void UpdateShipZdoPosition()
   {
     if (!(bool)NetView || NetView.GetZDO() == null || NetView.m_ghost ||
-        (bool)PiecesController ||
+        PiecesController == null ||
         !isActiveAndEnabled) return;
     var position = transform.position;
 
     var sector = ZoneSystem.GetZone(position);
     var zdo = NetView.GetZDO();
 
-    zdo.SetPosition(position);
+    zdo.SetPosition(PiecesController.m_body.worldCenterOfMass);
     zdo.SetSector(sector);
   }
 
@@ -603,17 +611,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       lineColor = Color.green,
       parent = transform
     });
-
-    // foreach (var piecesControllerConvexHullMesh in PiecesController
-    //            .convexHullMeshes)
-    //   VehicleDebugHelpersInstance.AddColliderToRerender(
-    //     new DrawTargetColliders()
-    //     {
-    //       collider =
-    //         piecesControllerConvexHullMesh.GetComponent<MeshCollider>(),
-    //       lineColor = Color.blue,
-    //       parent = gameObject
-    //     });
 
     VehicleDebugHelpersInstance.AddColliderToRerender(new DrawTargetColliders()
     {

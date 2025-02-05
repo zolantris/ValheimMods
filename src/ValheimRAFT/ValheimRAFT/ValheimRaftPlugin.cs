@@ -31,6 +31,7 @@ using ValheimVehicles.Propulsion.Sail;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Vehicles.Controllers;
 using ZdoWatcher;
 using Zolantris.Shared;
 using Zolantris.Shared.BepInExAutoDoc;
@@ -54,7 +55,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "2.5.3";
+  public const string Version = "3.0.0";
   public const string ModName = "ValheimRAFT";
   public const string ModNameBeta = "ValheimRAFTBETA";
   public const string ModGuid = $"{Author}.{ModName}";
@@ -490,6 +491,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     if (renderPipeline != null)
       Logger.LogDebug(
         $"Valheim GameEngine is using: <{renderPipeline}> graphics pipeline ");
+
+    Localization.OnLanguageChange = VehicleAnchorMechanismController.setLocalizedStates;
   }
 
   private void OnDestroy()

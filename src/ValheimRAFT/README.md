@@ -6,6 +6,53 @@ This mod aims to continue support for Water based features of the original
 ValheimRAFT mod and incorporate more vehicle items and mechanics within the mod
 and further extends its capabilities.
 
+## Welcome To 3.0.0 (beta for now)
+
+Land Vehicles can now be built. _This is a beta_ these vehicles are UNBALANCED.
+They will be absolutely fun to use. But not balanced and may have bugs or other
+errors.
+
+- vehicles have a bit of trouble going up mountains. But you can turn and slowly
+  move up the mountain.
+- Losing momentum can cause the vehicle to go the opposite way. Use the break /
+  anchor wisely.
+- Land Vehicles can wreck forests and mine rocks. Their damage is configurable
+  through `RAM config` sections.
+
+### Other fixes
+
+- Carts can be added on vehicles
+- **Stability of vehicles drastically improved**. See "CenterOfMass" percentage
+  allowing you to move the center up to 50% lower than the vehicle's lowest
+  point. Or at 50% exactly at it's lowest Y point.
+- Bounds and rendering are exact. No issues with bound ever again (unless a mod
+  adds a massive collider).
+- Improved ram collisions. There is now a filter for repeated hits to ensure
+  that velocity is over a threshold other to not do a hit.
+- Improved logic to protect player when teleporting. There is a collision check
+  when the ram attempt to hit a player so it does not hit the player if they are
+  currently teleporting.
+- MapSync should have 0 Null reference errors. But this logic will continue to
+  be improved/optimize.
+
+### 3.0.0 Upcoming Features / TODOS
+
+- [ ] Swap out the wheels for treads.
+- [ ] Swap out the wheels colliders for rotators.
+- [ ] Add power system so vehicles are balanced
+- [ ] Make Land-vehicle engine require tar.
+- [ ] Make Land-vehicle coal engine variant
+- [ ] Make land vehicles break and require maintenance to repair coal / tar
+  generator
+- [ ] Add refinery to harvest tar more efficiently.
+- [ ] Make Land-vehicles very slow coal engine
+- [ ] Fill the location under the vehicle with treads and a platform of some
+  sort. Maybe just expand the treads.
+- [ ] Align the vehicle wheels a bit better for no square vehicles.
+- [ ] Allow rotating of the vehicle based on the wheel position...This is a
+  problem with normal rafts too where the points become inaccurate due to bad
+  logic (it's complicated).
+
 ------
 
 This mod has both a beta and a non-beta on Thunderstore. Please make sure you

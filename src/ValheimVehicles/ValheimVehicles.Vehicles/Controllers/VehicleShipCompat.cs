@@ -256,6 +256,10 @@ public class VehicleShipCompat : IVehicleShip, IValheimShip
   public VehicleOnboardController? OnboardController { get; }
   public VehicleWheelController? WheelController { get; } = null;
   public Rigidbody? MovementControllerRigidbody { get; }
+  public bool IsLandVehicle
+  {
+    get;
+  }
   public BoxCollider FloatCollider { get; set; }
   public Transform? ShipDirection { get; }
   public Transform ControlGuiPosition { get; set; }

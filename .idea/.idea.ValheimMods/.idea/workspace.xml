@@ -15,26 +15,16 @@
       <change beforePath="$PROJECT_DIR$/libs/assembly_utils.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/assembly_utils.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/assembly_valheim.dll" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/gui_framework.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/gui_framework.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/FastScriptReload/Examples/Point/Point.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/FastScriptReload/Examples/Point/Point.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/FastScriptReload/Examples/Scenes/ExampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/FastScriptReload/Examples/Scenes/ExampleScene.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/FastScriptReload/Scripts/Editor/FastScriptReload.Editor.asmdef" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/FastScriptReload/Scripts/Editor/FastScriptReload.Editor.asmdef" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/FastScriptReload/Scripts/Runtime/FastScriptReload.Runtime.asmdef" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/FastScriptReload/Scripts/Runtime/FastScriptReload.Runtime.asmdef" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/PhysicsTankExample/Terrain/TankDrivingTerrain.asset" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/PhysicsTankExample/Terrain/TankDrivingTerrain.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/vehicle_land.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/vehicle_land.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/vehicle_land_old.prefab" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/wheel_set_hinge.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/wheel_set_hinge.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/wheel_set_preview.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/wheel_set_preview.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/bronze_nautilus_metal.mat" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/bronze_nautilus_metal.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/iron_metal_double_side.mat" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/iron_metal_double_side.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/iron_metal_no_tiling.mat" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Material/iron_metal_no_tiling.mat" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/wheel_single.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/wheel_single.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/GroundVehicles.unity" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/GroundVehicles.unity" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullAPI.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullAPI.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/VehicleWheelController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/VehicleWheelController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Patches/Player_Patch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Patches/Player_Patch.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Patches/QuickStartWorld_Patch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Patches/QuickStartWorld_Patch.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Patches/WearNTear_Patch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT/ValheimRAFT.Patches/WearNTear_Patch.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.ModSupport/QuickStartWorldConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.ModSupport/QuickStartWorldConfig.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugHelpers.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugHelpers.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Config/PhysicsConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Config/PhysicsConfig.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleShip.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleShip.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,12 +47,16 @@
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/ILViewer/6f57eb1610c448aeaeb54157a983824c10a9200/74/0bbf9a90/02000040pdb141High.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/02877122efc04a3daec2c884ec70309e64800/70/a6f7383f/TMP_Text.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/02877122efc04a3daec2c884ec70309e64800/f4/983580a9/MaterialReference.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/1468d7b66ba840a5b1cc628b013690163e00/4f/080d909f/WheelCollider.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/1e9eda733cd44fc894689c0ee003727617a848/fe/2b2f002a/Enumerable.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/31687ccd371e4dc6b0c23a1317cf947446ac00/11/02763c7c/RuntimeMethodInfo.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/31687ccd371e4dc6b0c23a1317cf947446ac00/17/36b5554c/ThrowHelper.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/31687ccd371e4dc6b0c23a1317cf947446ac00/9d/e40fe0a5/NullReferenceException.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/3d6c0041788c43b8a666c81e9de881f7216c0/46/73419834/Collider.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/3d6c0041788c43b8a666c81e9de881f7216c0/53/2f9e1d14/Rigidbody.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/3d6c0041788c43b8a666c81e9de881f7216c0/9d/e658a390/Collider.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/3d6c0041788c43b8a666c81e9de881f7216c0/a2/bba55689/Rigidbody.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/3d6c0041788c43b8a666c81e9de881f7216c0/a8/4c9b30c9/Physics.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/3d6c0041788c43b8a666c81e9de881f7216c0/ee/be9a2482/ForceMode.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/474744d65d8e460fa08cd5fd82b5d65f32000/51/2b290f0c/GeneralExtensions.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/4a26704d10e145e2890fa38a6cc0df67531820/5c/d7bdb089/Single.cs" root0="SKIP_HIGHLIGHTING" />
@@ -73,6 +67,8 @@
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/5e471ddbeb974684bff43bc61f1b58cb1f200/a0/221eba4b/ConfigEntry`1.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/5e471ddbeb974684bff43bc61f1b58cb1f200/f9/00e6a6f5/ConfigEntry`1.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/620f6e7eba834c42a2f2db6b22950df6531838/cb/6720f09b/MethodImplAttribute.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/727fd5405ffb4795abf6c3e1107e736940a00/d0/6d6ecb80/IBeginDragHandler.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/727fd5405ffb4795abf6c3e1107e736940a00/e9/068a0875/DefaultControls.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/787fcd34337844b082ec8eed172311d864c00/55/9424bd9f/PlacementComponent.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/787fcd34337844b082ec8eed172311d864c00/a4/80d3caf3/Blueprint.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/787fcd34337844b082ec8eed172311d864c00/b6/89590106/Selection.cs" root0="SKIP_HIGHLIGHTING" />
@@ -88,25 +84,36 @@
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/47/c606032e/ImpactEffect.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/52/e216430e/ZNetView.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/5a/1f92f78a/GameCamera.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/5b/bb1642c2/IDestructible.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/60/0b0f1330/Ship.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/70/36696be0/StaticTarget.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/7c/9344212b/WearNTear.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/94/811c61a5/PlayerProfile.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/97/4af5190d/ZNetView.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/a6/2e0728f6/Aoe.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/ac/6f692819/IDestructible.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/c4/93589d59/Character.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/c9/a961d115/ZDOExtraData.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/ca/bf363add/Piece.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/cb/d2507d47/IMonoUpdater.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/f6/862ef344/WearNTear.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/fa/2cfa95fd/ZSyncTransform.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21eba00/fb/5073cc62/Player.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/889b2bc1e1224b249a4784da9ef107e21ed000/7d/716f72f5/MineRock5.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/bdf59acb21534ad59114d82c98d8912e6e200/42/a355fd6b/DragWindowCntrl.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/bdf59acb21534ad59114d82c98d8912e6e200/62/dcf5758c/GUIManager.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/bdf59acb21534ad59114d82c98d8912e6e200/be/38644a6e/PieceConfig.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/bdf59acb21534ad59114d82c98d8912e6e200/f7/379cbd3e/Logger.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac0151000/7a/0a5556d0/Object.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/04/5a8639a1/Bounds.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/0f/e22f8de9/Object.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/32/50e7ba53/Transform.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/47/0d7762e9/MonoBehaviour.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/47/2f02cda0/GameObject.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/49/2966b71b/LayerMask.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/4f/26e7fe84/UnityEvent.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/5d/2b88e57f/Vector2.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/67/6eeaf478/GameObject.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/68/1c3763c0/Quaternion.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/86/751124c9/GraphicsSettings.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/8c/75ec9536/Bounds.cs" root0="FORCE_HIGHLIGHTING" />
@@ -119,8 +126,15 @@
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/e1/59064b11/Transform.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/f0/a508fdef/Transform.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/f7/f9cb27b1/Component.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/fb/2b87aea0/RectTransform.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/ff/2c02712f/Material.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/be2cce08ca774b9684099a81093ecac01530c0/ff/ec7295c9/Mathf.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/f173829cfb574c4d8cd8d0e395edc8676a00/19/a8e84be0/Localization.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/f9542d0d68b140b482b85a2e305357cc2e0c0/55/4a1b484c/GUILayout.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/Dummy/Localization.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Scripts/BoardingRampComponent.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Scripts/CircleLine.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Scripts/TextureTilingTest.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/ConvexHullAPI.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/LayerHelpers.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/MeshBoundsVisualizer.cs" root0="FORCE_HIGHLIGHTING" />
@@ -140,8 +154,11 @@
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Aoe.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/AssetMemoryUsagePolicy.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Attack.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/AudioMan.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/AutoJumpLedge.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/BaseAI.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/CameraEffects.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Catapult.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/CensorShittyWords.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Character.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/CharacterAnimEvent.cs" root0="SKIP_HIGHLIGHTING" />
@@ -154,9 +171,11 @@
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/DamageText.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/DepthCamera.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Destructible.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/DreamTexts.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/DungeonGenerator.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/EffectArea.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/EmitterRotation.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/EntryPointSceneLoader.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/EnvMan.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/FejdStartup.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Fireplace.cs" root0="SKIP_HIGHLIGHTING" />
@@ -165,20 +184,27 @@
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/FollowPlayer.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/GameCamera.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Gibber.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Heightmap.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/HeightmapBuilder.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/HotkeyBar.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/HoverText.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Hud.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/IMonoUpdater.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Incinerator.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Inventory.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/InventoryGrid.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Ladder.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Leviathan.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/LineAttach.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/LiquidVolume.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Location.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/LocationList.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/LodFadeInOut.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/LuredWisp.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/MaterialVariationWorld.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/MeleeWeaponTrail.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Menu.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/MenuScene.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/MineRock.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/MineRock5.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Minimap.cs" root0="SKIP_HIGHLIGHTING" />
@@ -186,7 +212,10 @@
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/MonoUpdatersExtra.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/MovementDamage.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/MovementTest.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/MusicMan.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Odin.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/OnLoginDoneCallback.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/OnlineBackendTypeExtentions.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/OnlineStatus.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Pathfinding.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Petable.cs" root0="SKIP_HIGHLIGHTING" />
@@ -205,7 +234,13 @@
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/RoutedMethod.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/RuneStone.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/SE_Demister.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/SE_Stats.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Sadle.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/SaveSystem.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/SceneLoader.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/ServerList.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/SetActiveOnAwake.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Settings.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Ship.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/ShipEffects.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Sign.cs" root0="SKIP_HIGHLIGHTING" />
@@ -213,27 +248,42 @@
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/SkillsDialog.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/SpawnSystemList.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/StaticTarget.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/StealthSystem.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/SteamManager.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/SteamManager2.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Tail.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Teleport.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Terminal.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/TerrainComp.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/TerrainModifier.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/TerrainOp.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/TestSceneCharacter.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/TextViewer.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/ToggleImage.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Trader.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/UGCType.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/UnitySourceGeneratedAssemblyMonoScriptTypes_v1.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Vagon.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Valheim.SettingsGui/GraphicsSettings.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Valheim.UI/HoverSelectSpeedSetting.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Valheim.UI/RadialArray.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Valheim.UI/RadialDataInitializer.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Valheim.UI/Selector.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Valkyrie.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Vegvisir.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/VirtualFrameBuffer.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/VirtualFrameBufferScaler.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/WaterTrigger.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/WaterVolume.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/WearNTear.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Windmill.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/ZBroastcast.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/ZDO.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/ZDOComparer.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/ZDOMan.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/ZNet.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/ZNetScene.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/ZNetView.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/ZPlayFabSocket.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/ZRoutedRpc.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/ZRpc.cs" root0="SKIP_HIGHLIGHTING" />
@@ -258,26 +308,26 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Mono Remote.valheim.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "XThreadsFramesViewSplitterKey": "1.1583333",
-    "git-widget-placeholder": "feat/tank-logic",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.stylelint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.stylelint": "",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "rider.code.cleanup.on.save": "true",
-    "rider.code.cleanup.on.save.profile": "Built-in: Reformat & Apply Syntax Style",
-    "settings.editor.selected.configurable": "actions.on.save",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Mono Remote.valheim.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;XThreadsFramesViewSplitterKey&quot;: &quot;1.167939&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feat/tank-track-logic&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.stylelint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.stylelint&quot;: &quot;&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;rider.code.cleanup.on.save&quot;: &quot;true&quot;,
+    &quot;rider.code.cleanup.on.save.profile&quot;: &quot;Built-in: Reformat &amp; Apply Syntax Style&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.sourceCode.C#&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Mono Remote.valheim">
     <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost">
       <option name="allowRunningInParallel" value="false" />
@@ -322,6 +372,8 @@
       <workItem from="1738302638375" duration="5414000" />
       <workItem from="1738314561901" duration="235000" />
       <workItem from="1738355648981" duration="7269000" />
+      <workItem from="1738546380885" duration="60921000" />
+      <workItem from="1738714397383" duration="2850000" />
     </task>
     <servers />
   </component>
@@ -363,37 +415,11 @@
           <option name="timeStamp" value="494" />
         </breakpoint>
         <breakpoint enabled="true" type="DotNet Exception Breakpoints">
-          <properties exception="System.NullReferenceException" breakIfHandledByUserCode="true" isInternal="false" displayValue="NullReferenceException" namespaceName="System">
+          <properties exception="System.NullReferenceException" breakIfHandledByUserCode="true" breakIfUnhandled="false" isInternal="false" displayValue="NullReferenceException" namespaceName="System">
             <option name="internal" value="false" />
           </properties>
           <option name="timeStamp" value="532" />
         </breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs</url>
-          <line>359</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs" containingFunctionPresentation="Method 'OnCollisionEnter'">
-            <startOffsets>
-              <option value="10572" />
-            </startOffsets>
-            <endOffsets>
-              <option value="10598" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="546" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs</url>
-          <line>368</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs" containingFunctionPresentation="Method 'OnCollisionStay'">
-            <startOffsets>
-              <option value="10883" />
-            </startOffsets>
-            <endOffsets>
-              <option value="10909" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="553" />
-        </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs</url>
           <line>462</line>
@@ -408,43 +434,17 @@
           <option name="timeStamp" value="557" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs</url>
-          <line>1123</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs" containingFunctionPresentation="Method 'GetFloatSizeFromDirection'">
-            <startOffsets>
-              <option value="30791" />
-            </startOffsets>
-            <endOffsets>
-              <option value="30816" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="593" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs</url>
-          <line>144</line>
+          <line>178</line>
           <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs" containingFunctionPresentation="Method 'OnDisable'">
             <startOffsets>
-              <option value="4416" />
+              <option value="5388" />
             </startOffsets>
             <endOffsets>
-              <option value="4433" />
+              <option value="5389" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="616" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs</url>
-          <line>384</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs" containingFunctionPresentation="Method 'OnTriggerStayHandler'">
-            <startOffsets>
-              <option value="11429" />
-            </startOffsets>
-            <endOffsets>
-              <option value="11455" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="647" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs</url>
@@ -460,62 +460,167 @@
           <option name="timeStamp" value="654" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs</url>
-          <line>217</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs" containingFunctionPresentation="Method 'UpdateDamageFromVelocityCollider'">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/ValheimAoe.cs</url>
+          <line>494</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\ValheimAoe.cs" containingFunctionPresentation="Method 'OnTriggerStayHandler'">
             <startOffsets>
-              <option value="6534" />
+              <option value="15131" />
             </startOffsets>
             <endOffsets>
-              <option value="6584" />
+              <option value="15167" />
             </endOffsets>
           </properties>
-          <option name="timeStamp" value="683" />
+          <option name="timeStamp" value="694" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugGui.cs</url>
+          <line>98</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleDebugGui.cs" containingFunctionPresentation="Method 'HideOrShowPanel'">
+            <startOffsets>
+              <option value="2972" />
+            </startOffsets>
+            <endOffsets>
+              <option value="3020" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="708" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugGui.cs</url>
+          <line>99</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleDebugGui.cs" containingFunctionPresentation="Method 'HideOrShowPanel'">
+            <startOffsets>
+              <option value="3027" />
+            </startOffsets>
+            <endOffsets>
+              <option value="3130" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="709" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugGui.cs</url>
+          <line>303</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleDebugGui.cs" containingFunctionPresentation="Lambda expression inside Method 'CreateShortcutPanel'">
+            <startOffsets>
+              <option value="8772" />
+            </startOffsets>
+            <endOffsets>
+              <option value="8887" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="711" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugGui.cs</url>
+          <line>306</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleDebugGui.cs" containingFunctionPresentation="Method 'CreateShortcutPanel'">
+            <startOffsets>
+              <option value="8906" />
+            </startOffsets>
+            <endOffsets>
+              <option value="9021" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="713" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleDebugGui.cs</url>
+          <line>284</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleDebugGui.cs" containingFunctionPresentation="Method 'CreateShortcutPanel'">
+            <startOffsets>
+              <option value="8025" />
+            </startOffsets>
+            <endOffsets>
+              <option value="8058" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="714" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Components/VehicleRamAoe.cs</url>
-          <line>223</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs" containingFunctionPresentation="Method 'UpdateDamageFromVelocity'">
+          <line>471</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs" containingFunctionPresentation="Method 'IsReady'">
             <startOffsets>
-              <option value="6736" />
+              <option value="13962" />
             </startOffsets>
             <endOffsets>
-              <option value="6796" />
+              <option value="13975" />
             </endOffsets>
           </properties>
-          <option name="timeStamp" value="685" />
+          <option name="timeStamp" value="730" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/VehicleWheelController.cs</url>
-          <line>631</line>
+          <line>645</line>
           <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\VehicleWheelController.cs" containingFunctionPresentation="Method 'RunPoweredWheels'">
             <startOffsets>
-              <option value="20322" />
+              <option value="20884" />
             </startOffsets>
             <endOffsets>
-              <option value="20401" />
+              <option value="20975" />
             </endOffsets>
           </properties>
-          <option name="timeStamp" value="688" />
+          <option name="timeStamp" value="832" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/SharedScripts/VehicleWheelController.cs</url>
-          <line>634</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\VehicleWheelController.cs" containingFunctionPresentation="Method 'RunPoweredWheels'">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs</url>
+          <line>3313</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs" containingFunctionPresentation="Method 'ToggleAnchor'">
             <startOffsets>
-              <option value="20425" />
+              <option value="100572" />
             </startOffsets>
             <endOffsets>
-              <option value="20530" />
+              <option value="100614" />
             </endOffsets>
           </properties>
-          <option name="timeStamp" value="689" />
+          <option name="timeStamp" value="835" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs</url>
+          <line>3259</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs" containingFunctionPresentation="Method 'OnAnchorKeyPress'">
+            <startOffsets>
+              <option value="99194" />
+            </startOffsets>
+            <endOffsets>
+              <option value="99201" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="837" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs</url>
+          <line>3269</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs" containingFunctionPresentation="Method 'OnAnchorKeyPress'">
+            <startOffsets>
+              <option value="99366" />
+            </startOffsets>
+            <endOffsets>
+              <option value="99411" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="838" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs</url>
+          <line>3248</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs" containingFunctionPresentation="Method 'OnAnchorKeyPress'">
+            <startOffsets>
+              <option value="98974" />
+            </startOffsets>
+            <endOffsets>
+              <option value="98995" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="839" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
     <pin-to-top-manager>
       <pinned-members>
         <PinnedItemInfo parentTag="Type#UnityEngine.LayerMask" memberName="m_Mask" />
+        <PinnedItemInfo parentTag="Type#UnityEngine.Collider" memberName="sharedMaterial" />
       </pinned-members>
     </pin-to-top-manager>
   </component>

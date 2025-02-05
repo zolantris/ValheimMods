@@ -25,6 +25,7 @@
       <Path>src/ValheimRAFT/Assets/Translations/English/valheimraft.json</Path>
       <Path>src/ValheimRAFT/README.md</Path>
       <Path>src/ValheimVehicles/ValheimVehicles.Helpers</Path>
+      <Path>src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers</Path>
       <Path>src/YggdrassilTerrain</Path>
       <Path>unity-debug-build-converter.targets</Path>
       <Path>valheim.targets</Path>

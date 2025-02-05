@@ -25,7 +25,7 @@ public static class WaterConfig
   {
     Disabled,
     Everywhere,
-    ExcludeOnboard,
+    ExcludeOnboard
   }
 
   /// <summary>
@@ -34,15 +34,12 @@ public static class WaterConfig
   public static ConfigEntry<PrimitiveType>
     DEBUG_WaterDisplacementMeshPrimitive { get; private set; } = null!;
 
-  public static ConfigEntry<float>
-    UNSAFE_BlockingColliderOffset { get; private set; } = null!;
-
   public static ConfigEntry<WaterMeshFlipModeType>
     FlipWatermeshMode { get; private set; } = null!;
-  
+
   public static ConfigEntry<bool>
     HasUnderwaterHullBubbleEffect { get; private set; } = null!;
-  
+
   public static ConfigEntry<Color>
     UnderwaterBubbleEffectColor { get; private set; } = null!;
 
@@ -233,13 +230,6 @@ public static class WaterConfig
         "Ships with high mass to volume will not be able to ballast well above the surface. This adds a ship mass to onboard volume calculation. The calculation is experimental so it might be inaccurate. For now mass to volume includes the length width heigth in a box around the ship. It's unrealistic as of 2.4.0 as this includes emptyspace above water. Eventually this will be calculated via displacement (empty volume with wall all around it) calculation.",
         true, true));
 
-    UNSAFE_BlockingColliderOffset = Config.Bind(
-      SectionKey,
-      "UNSAFE_BlockingColliderOffset",
-      0.2f,
-      ConfigHelpers.CreateConfigDescription(
-        "Sets the relative offset from the float collider. Can be negative or positive. Recommended is near the float collider. Slightly above it. Leave this alone unless you know what you are doing.",
-        true, true, new AcceptableValueRange<float>(-10f, 10f)));
 
     AllowMonsterEntitesUnderwater = Config.Bind(
       SectionKey,
@@ -311,7 +301,7 @@ public static class WaterConfig
       ConfigHelpers.CreateConfigDescription(
         "Allows for walking underwater, anywhere, or onship, or eventually within the water displaced area only. Disabled with remove all water logic. DEBUG_WaterZoneOnly is not supported yet",
         true, true));
-    
+
     HasUnderwaterHullBubbleEffect = Config.Bind(
       SectionKey,
       "HasUnderwaterHullBubbleEffect",
@@ -319,7 +309,7 @@ public static class WaterConfig
       ConfigHelpers.CreateConfigDescription(
         "Adds an underwater bubble conforming around the vehicle hull. Allowing for a underwater like distortion effect without needing to use fog.",
         true, true));
-    
+
     UnderwaterBubbleEffectColor = Config.Bind(
       SectionKey,
       "UnderwaterBubbleEffectColor",
@@ -328,9 +318,9 @@ public static class WaterConfig
         "Set the underwater bubble color",
         true));
 
-    UnderwaterBubbleEffectColor.SettingChanged +=  (sender, args) =>
+    UnderwaterBubbleEffectColor.SettingChanged += (sender, args) =>
       ConvexHullComponent.UpdatePropertiesForAllComponents();
-    
+
     AllowedEntiesList.SettingChanged +=
       (sender, args) => OnAllowListUpdate();
     UnderwaterAccessMode.SettingChanged +=

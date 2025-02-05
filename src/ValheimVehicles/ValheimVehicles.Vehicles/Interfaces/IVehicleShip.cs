@@ -8,7 +8,8 @@ namespace ValheimVehicles.Vehicles.Interfaces;
 public interface IVehicleShip
 
 {
-  public BoxCollider? FloatCollider { get; } 
+  public bool IsLandVehicle { get; }
+  public BoxCollider? FloatCollider { get; }
   public VehiclePiecesController? PiecesController { get; }
   public VehicleMovementController? MovementController { get; }
   public VehicleOnboardController? OnboardController { get; }

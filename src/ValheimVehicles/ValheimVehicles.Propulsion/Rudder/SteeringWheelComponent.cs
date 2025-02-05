@@ -3,12 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Patches;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Controllers;
 using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
 
@@ -54,6 +57,8 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
 
   private const float maxUseRange = 10f;
   public Transform AttachPoint { get; set; }
+  public Transform steeringWheelHoverTransform;
+  public HoverFadeText steeringWheelHoverText;
 
   /// <summary>
   /// Todo might be worth caching this.
@@ -207,11 +212,15 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
 
   private void Awake()
   {
+    VehicleAnchorMechanismController.setLocalizedStates();
     AttachPoint = transform.Find("attachpoint");
     wheelTransform = transform.Find("controls/wheel");
     wheelLocalOffset = wheelTransform.position - transform.position;
     PrefabRegistryHelpers.IgnoreCameraCollisions(gameObject);
+    steeringWheelHoverTransform = transform.Find("wheel_state_hover_message");
+    steeringWheelHoverText = steeringWheelHoverTransform.gameObject.AddComponent<HoverFadeText>();
   }
+
 
   public string GetHoverName()
   {
@@ -369,11 +378,9 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     return this;
   }
 
-
-  // Run anchor controls here only if the deprecatedMbShip is used
-  // Otherwise updates for anchor are handled in MovementController
-  public void FixedUpdate()
+  public void FixedUpdateDeprecatedShip()
   {
+
     if (!deprecatedShipControls) return;
     if (!VehicleMovementController.ShouldHandleControls()) return;
 
@@ -387,6 +394,16 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     deprecatedMBShip.SetAnchor(
       !deprecatedMBShip.m_flags.HasFlag(MoveableBaseShipComponent.MBFlags
         .IsAnchored));
+  }
+
+  // Run anchor controls here only if the deprecatedMbShip is used
+  // Otherwise updates for anchor are handled in MovementController
+  public void FixedUpdate()
+  {
+    steeringWheelHoverText.UpdateText();
+
+    // only for v1
+    FixedUpdateDeprecatedShip();
   }
 
   /**
@@ -434,6 +451,19 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
       ShipInstance = vehicleShip;
       _controls.enabled = true;
     }
+  }
+
+  private AnchorState lastAnchorState = AnchorState.Idle;
+  /// <summary>
+  /// To be invoked from VehiclePiecesController when anchor updates or breaks update.
+  /// </summary>
+  /// <param name="message"></param>
+  public void UpdateSteeringHoverMessage(AnchorState anchorState, string message)
+  {
+    if (anchorState == lastAnchorState) return;
+    lastAnchorState = anchorState;
+    steeringWheelHoverText.ResetHoverTimer();
+    steeringWheelHoverText.currentText = message;
   }
 
   public void UpdateSpokes()

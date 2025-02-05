@@ -14,14 +14,20 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
 {
   public const float maxAnchorDistance = 40f;
   private static bool hasLocalizedAnchorState = false;
-  private static string recoveredAnchorText;
-  private static string reelingText;
-  private static string anchoredText;
-  private static string loweringText;
+  public static string recoveredAnchorText = "";
+  public static string reelingText = "";
+  public static string anchoredText = "";
+  public static string loweringText = "";
+  public static string breakingText = "";
+  public static string idleText = "";
 
   public static void setLocalizedStates()
   {
     if (hasLocalizedAnchorState) return;
+
+    breakingText = Localization.instance.Localize("$valheim_vehicles_land_state_breaking");
+
+    idleText = Localization.instance.Localize("$valheim_vehicles_land_state_idle");
 
     reelingText =
       Localization.instance.Localize("$valheim_vehicles_anchor_state_reeling");
@@ -72,10 +78,14 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
       maxAnchorDistance);
   }
 
-
-  public override string GetCurrentStateText()
+  public static string GetCurrentStateTextStatic(AnchorState anchorState, bool isLandVehicle)
   {
-    return currentState switch
+    if (isLandVehicle)
+    {
+      return anchorState == AnchorState.Anchored ? breakingText : idleText;
+    }
+
+    return anchorState switch
     {
       AnchorState.Idle => "Idle",
       AnchorState.Lowering => loweringText,
@@ -86,13 +96,22 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
     };
   }
 
+  public override string GetCurrentStateText()
+  {
+    var isLandVehicle = MovementController != null && MovementController.VehicleInstance is
+    {
+      IsLandVehicle: true
+    };
+    return GetCurrentStateTextStatic(currentState, isLandVehicle);
+  }
+
   public override void OnAnchorStateChange(AnchorState newState)
   {
     // No callbacks for anchor when flying. You can only Reel-in, or reel upwards.
     if (MovementController != null && MovementController.IsFlying())
     {
       if (currentState != AnchorState.Recovered)
-        UpdateAnchorState(AnchorState.Reeling);
+        UpdateAnchorState(AnchorState.Reeling, GetCurrentStateText());
       else
         return;
     }

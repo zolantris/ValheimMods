@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Policy;
+using System.Text.RegularExpressions;
 using Microsoft.Win32;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -15,7 +16,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Helpers;
 
-public class VehicleRamAoe : ValheimAoe
+public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 {
   // Typeof PrefabTiers
   public string materialTier;
@@ -34,7 +35,7 @@ public class VehicleRamAoe : ValheimAoe
   private float RamDamageOverallMultiplier = 1f;
 
   // damages
-  public static int RamDamageToolTier = RamConfig.RamDamageToolTier.Value;
+  public static int RamDamageToolTier;
 
   public static float PercentageDamageToSelf =
     RamConfig.PercentageDamageToSelf.Value;
@@ -74,9 +75,17 @@ public class VehicleRamAoe : ValheimAoe
   public static bool HasMaxDamageCap =>
     RamConfig.HasMaximumDamageCap.Value;
 
-  public bool isReadyForCollisions = false;
+  public bool isReadyForCollisions { get; set; }
+  public bool isRebuildingCollisions
+  {
+    get;
+    set;
+  }
 
   private Rigidbody rigidbody;
+
+  public static List<string> PiecesToMoveOnToVehicle = ["Cart"];
+  public static Regex ExclusionPattern;
 
   public void InitializeFromConfig()
   {
@@ -92,7 +101,7 @@ public class VehicleRamAoe : ValheimAoe
 
     // todo need to tweak this
     m_damageSelf = !RamConfig.CanDamageSelf.Value ? 0 : 1;
-    m_toolTier = RamDamageToolTier;
+    m_toolTier = RamConfig.RamDamageToolTier.Value;
     m_attackForce = 5;
     m_attackForce = 50;
 
@@ -121,9 +130,25 @@ public class VehicleRamAoe : ValheimAoe
     base.Awake();
   }
 
+  public static Regex GenerateRegexFromList(List<string> prefixes)
+  {
+    // Escape special characters in the strings and join them with a pipe (|) for OR condition
+    var escapedPrefixes = new List<string>();
+    foreach (var prefix in prefixes)
+    {
+      escapedPrefixes.Add(Regex.Escape(prefix));
+    }
+
+    // Create a regex pattern that matches the start of the string (^)
+    // It will match any of the provided prefixes at the start of the string
+    var pattern = "^(" + string.Join("|", escapedPrefixes) + ")";
+    return new Regex(pattern);
+  }
+
   public override void Awake()
   {
     if (!RamInstances.Contains(this)) RamInstances.Add(this);
+    ExclusionPattern = GenerateRegexFromList(PiecesToMoveOnToVehicle);
 
     InitializeFromConfig();
     SetBaseDamageFromConfig();
@@ -134,6 +159,15 @@ public class VehicleRamAoe : ValheimAoe
     // very important otherwise this rigidbody will interfere with physics of the Watervehicle controller due to nesting.
     // todo to move this rigidbody into a joint and make it a sibling of the WaterVehicle or PieceContainer (doing this would be a large refactor to structure, likely requiring a new prefab)
     // if (rigidbody) rigidbody.includeLayers = m_rayMask;
+  }
+
+  private float _disableTime = 0f;
+  private const float _disableTimeMax = 0.5f;
+
+  public void OnBoundsRebuild()
+  {
+    isRebuildingCollisions = true;
+    _disableTime = Time.fixedTime + _disableTimeMax;
   }
 
   public override void OnDisable()
@@ -183,6 +217,7 @@ public class VehicleRamAoe : ValheimAoe
     if (!isChildOfBaseVehicle)
     {
       isReadyForCollisions = false;
+      Invoke(nameof(UpdateReadyForCollisions), 1);
       return;
     }
 
@@ -312,12 +347,49 @@ public class VehicleRamAoe : ValheimAoe
       Physics.IgnoreCollision(childCollider, collider, true);
   }
 
+  public void UpdateReloadingTime()
+  {
+    isRebuildingCollisions = Time.fixedTime < _disableTime;
+    if (!isRebuildingCollisions)
+    {
+      _disableTime = 0f;
+    }
+  }
+
   public override bool ShouldHit(Collider collider)
   {
+    if (!IsReady()) return false;
+
+    var character = collider.GetComponentInParent<Character>();
+    if (WaterZoneUtils.IsOnboard(character))
+    {
+      IgnoreCollider(collider);
+      return false;
+    }
+
     var relativeVelocity = GetRelativeVelocity(collider);
     if (relativeVelocity < minimumVelocityToTriggerHit) return false;
 
     return base.ShouldHit(collider);
+  }
+
+  private bool ShouldMoveToPieceController(Collider collider)
+  {
+    if (m_vehicle == null) return false;
+    if (m_vehicle.PiecesController == null) return false;
+
+    var root = collider.transform.root;
+    if (PrefabNames.IsVehicle(root.name)) return false;
+
+    if (ExclusionPattern.IsMatch(root.name))
+    {
+      var netView = root.GetComponent<ZNetView>();
+      if (!netView) return false;
+      m_vehicle.PiecesController.AddTemporaryPiece(netView);
+      return true;
+    }
+
+    return false;
   }
 
   /// <summary>
@@ -329,6 +401,19 @@ public class VehicleRamAoe : ValheimAoe
   {
     if (!collider) return false;
     if (PrefabNames.IsVehicleCollider(collider.name))
+    {
+      IgnoreCollider(collider);
+      return true;
+    }
+
+    if (ShouldMoveToPieceController(collider))
+    {
+      IgnoreCollider(collider);
+      return true;
+    }
+
+    var character = collider.GetComponentInParent<Character>();
+    if (character != null && WaterZoneUtils.IsOnboard(character))
     {
       IgnoreCollider(collider);
       return true;
@@ -359,9 +444,40 @@ public class VehicleRamAoe : ValheimAoe
     return true;
   }
 
+  /// <summary>
+  /// Prevent rams from working until colliders are working on the OnboardVehicle.
+  /// If no vehicle, Do nothing for rams outside the vehicle.
+  /// </summary>
+  /// <returns></returns>
+  public bool IsWaitingForOnboardCollider()
+  {
+    if (m_vehicle == null) return false;
+    return m_vehicle.OnboardController != null && (!m_vehicle.OnboardController.isReadyForCollisions || m_vehicle.OnboardController.isRebuildingCollisions);
+  }
+  /// <summary>
+  /// Same logic as (VehicleRamAOE,VehicleOnboardController)
+  /// </summary>
+  /// todo share logic
+  /// <returns></returns>
+  public bool IsReady()
+  {
+    if (!isReadyForCollisions) return false;
+    if (isRebuildingCollisions)
+    {
+      UpdateReloadingTime();
+    }
+
+    if (IsWaitingForOnboardCollider())
+    {
+      return false;
+    }
+
+    return !isRebuildingCollisions;
+  }
+
   public override void OnCollisionEnterHandler(Collision collision)
   {
-    if (!isReadyForCollisions) return;
+    if (!IsReady()) return;
     if (ShouldIgnore(collision.collider)) return;
     if (!UpdateDamageFromVelocity(
           Vector3.Magnitude(collision.relativeVelocity))) return;
@@ -370,7 +486,7 @@ public class VehicleRamAoe : ValheimAoe
 
   public override void OnCollisionStayHandler(Collision collision)
   {
-    if (!isReadyForCollisions) return;
+    if (!IsReady()) return;
     if (ShouldIgnore(collision.collider)) return;
     if (!UpdateDamageFromVelocity(
           Vector3.Magnitude(collision.relativeVelocity))) return;
@@ -380,7 +496,7 @@ public class VehicleRamAoe : ValheimAoe
 
   public override void OnTriggerEnterHandler(Collider collider)
   {
-    if (!isReadyForCollisions) return;
+    if (!IsReady()) return;
     if (ShouldIgnore(collider)) return;
     if (!UpdateDamageFromVelocityCollider(collider)) return;
     base.OnTriggerEnterHandler(collider);
@@ -388,7 +504,7 @@ public class VehicleRamAoe : ValheimAoe
 
   public override void OnTriggerStayHandler(Collider collider)
   {
-    if (!isReadyForCollisions) return;
+    if (!IsReady()) return;
     if (ShouldIgnore(collider)) return;
     if (!UpdateDamageFromVelocityCollider(collider)) return;
     base.OnTriggerStayHandler(collider);
@@ -420,8 +536,11 @@ public class VehicleRamAoe : ValheimAoe
   public void SetVehicleRamModifier(bool isRamEnabled)
   {
     m_isVehicleRam = isRamEnabled;
-    RamDamageOverallMultiplier = m_isVehicleRam ? 0.5f : 1f;
+    RamDamageOverallMultiplier = 0.5f;
     m_triggerEnterOnly = false;
+
+    // overrides for vehicles.
+    m_toolTier = RamConfig.HullToolTier.Value;
 
     // vehicles need much more radius to effectively hit
     m_radius = Mathf.Clamp(m_radius, 10f, 50f);

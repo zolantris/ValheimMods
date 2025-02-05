@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using HarmonyLib;
 using Jotunn.Managers;
 using TMPro;
@@ -48,12 +49,20 @@ public class VehicleDebugHelpers : MonoBehaviour
   public VehicleShip VehicleShipInstance;
   private Coroutine? _drawColliderCoroutine = null;
   private GameObject? worldCenterOfMassCube;
+  private GameObject? vehicleMovementAutomaticCenterOfMassCube;
+  private GameObject? vehiclePiecesCenterOfMassCube;
   private GameObject? vehiclePiecesCenterCube;
+  private GameObject? vehiclePieceCenterPoint;
   private GameObject? vehicleMovementCenterCube;
   private GameObject? forwardCube;
   private GameObject? backwardCube;
   private GameObject? rightCube;
   private GameObject? leftCube;
+
+  public static Color OrangeColor = new(1f, 0.647f, 0);
+
+  // todo check if there is a conflicting textmesh and push the current one upwards. Recurse until finding a unique point of a specific increment in height.
+  private Dictionary<GameObject, Vector3> localPositions = new();
 
   private void RenderDebugCubes()
   {
@@ -63,20 +72,28 @@ public class VehicleDebugHelpers : MonoBehaviour
     var shipFloatation = VehicleShipInstance
       .MovementController.GetShipFloatation();
 
+    // physics should be orange
     if (shipFloatation != null)
     {
       RenderDebugCube(ref forwardCube, shipFloatation.Value.ShipForward,
-        "water_forward");
+        "water_forward", OrangeColor, Vector3.zero);
       RenderDebugCube(ref backwardCube, shipFloatation.Value.ShipBack,
-        "water_backward");
+        "water_backward", OrangeColor, Vector3.zero);
       RenderDebugCube(ref rightCube, shipFloatation.Value.ShipRight,
-        "water_right");
-      RenderDebugCube(ref leftCube, shipFloatation.Value.ShipLeft, "water_left");
+        "water_right", OrangeColor, Vector3.zero);
+      RenderDebugCube(ref leftCube, shipFloatation.Value.ShipLeft, "water_left", OrangeColor, Vector3.zero);
     }
 
-    RenderDebugCube(ref worldCenterOfMassCube, VehicleShipInstance.MovementController.m_body.position + VehicleShipInstance.MovementController.m_body.centerOfMass, "center_of_mass");
-    RenderDebugCube(ref vehiclePiecesCenterCube, VehicleShipInstance.PiecesController.transform.position, "vehicle_piece_center");
-    RenderDebugCube(ref vehicleMovementCenterCube, VehicleShipInstance.MovementController.transform.position, "vehicle_movement_center");
+    // center of mass debugging should be yellow
+    RenderDebugCube(ref worldCenterOfMassCube, VehicleShipInstance.MovementController.m_body.worldCenterOfMass, "center_of_mass", Color.yellow, Vector3.up * 1);
+    RenderDebugCube(ref vehiclePiecesCenterOfMassCube, VehicleShipInstance.PiecesController.m_body.worldCenterOfMass, "vehicle_pieces_automatic_center_of_mass", Color.yellow, Vector3.up * 0.5f);
+    RenderDebugCube(ref vehicleMovementAutomaticCenterOfMassCube, VehicleShipInstance.MovementController.m_body.position + VehicleShipInstance.MovementController.vehicleAutomaticCenterOfMassPoint, "vehicle_automatic_center_of_mass", Color.yellow, Vector3.up * 2);
+
+    // vehicle center debugging should be green
+    RenderDebugCube(ref vehiclePiecesCenterCube, VehicleShipInstance.PiecesController.transform.position, "vehicle_piece_center", Color.green, Vector3.up * 3);
+    RenderDebugCube(ref vehicleMovementCenterCube, VehicleShipInstance.MovementController.transform.position, "vehicle_movement_center", Color.green, Vector3.up * 4);
+
+    RenderDebugCube(ref vehiclePieceCenterPoint, VehicleShipInstance.PiecesController.vehicleCenter.transform.position, "piece_vehicle_center_point", Color.red, Vector3.up * 5);
   }
 
   private void FixedUpdate()
@@ -93,7 +110,6 @@ public class VehicleDebugHelpers : MonoBehaviour
 
   private void OnDestroy()
   {
-    if (worldCenterOfMassCube != null) Destroy(worldCenterOfMassCube);
     lines.Values.ToList()
       .ForEach(x => x.ForEach(Destroy));
     lines.Clear();
@@ -146,9 +162,20 @@ public class VehicleDebugHelpers : MonoBehaviour
       }
   }
 
+  public static string SplitCamelCase(string input)
+  {
+    // Regex to find uppercase letters that are preceded by lowercase letters
+    var pattern = @"([a-z])([A-Z])";
+
+    // Replace with the first letter, followed by a space, then the second letter
+    var result = Regex.Replace(input, pattern, "$1 $2");
+
+    // Trim to remove any leading or trailing spaces
+    return result.Trim();
+  }
 
   public void RenderDebugCube(ref GameObject? cube, Vector3 position,
-    string cubeTitle)
+    string cubeTitle, Color color, Vector3 textOffset)
   {
     if (!autoUpdateColliders)
     {
@@ -163,6 +190,7 @@ public class VehicleDebugHelpers : MonoBehaviour
       // Create the cube
       cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
       cube.name = $"debug_cube_{cubeTitle}";
+      cube.transform.localScale = Vector3.one * 0.3f;
       var collider = cube.GetComponent<BoxCollider>();
       if (collider) Destroy(collider);
 
@@ -170,7 +198,7 @@ public class VehicleDebugHelpers : MonoBehaviour
       meshRenderer.material =
         new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat)
         {
-          color = Color.green
+          color = color
         };
       cube.gameObject.layer = LayerMask.NameToLayer("Ignore Raycast");
 
@@ -178,10 +206,10 @@ public class VehicleDebugHelpers : MonoBehaviour
       var textObj = new GameObject("CubeText");
       textObj.transform.SetParent(cube.transform);
       textObj.transform.localPosition =
-        new Vector3(0, 1.2f, 0); // Adjust height as needed
-
+        new Vector3(0, 1.2f, 0) + textOffset; // Adjust height as needed
       var textMesh = textObj.AddComponent<TextMesh>();
-      textMesh.text = $"{cubeTitle.Replace("_", " ")}"; // Set desired text
+      var text = SplitCamelCase(cubeTitle.Replace("_", " "));
+      textMesh.text = text; // Set desired text
       textMesh.fontSize = 32;
       textMesh.characterSize = 0.1f; // Adjust size as needed
       textMesh.anchor = TextAnchor.MiddleCenter;
@@ -193,7 +221,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     cube.transform.position = position;
     cube.transform.SetParent(
       VehicleShipInstance.PiecesController.transform,
-      false);
+      true);
 
     // Ensure the text always faces the camera
     var textTransform = cube.transform.Find("CubeText");
@@ -262,19 +290,6 @@ public class VehicleDebugHelpers : MonoBehaviour
 
     if (!VehicleShipInstance.isCreative)
       VehicleShipInstance.MovementController.m_body.isKinematic = false;
-  }
-
-  public void MoveShip(Vector3 vector)
-  {
-    if (!(bool)VehicleShipInstance.MovementController.m_body) return;
-    // flips the x and z axis which act as the boat depth and sides
-    // y axis is boat height. Flipping that would just rotate boat which is why it is omitted
-    VehicleShipInstance.MovementController.m_body.isKinematic = true;
-    transform.rotation = Quaternion.Euler(0f,
-      VehicleObj.transform.eulerAngles.y,
-      0f);
-    transform.position += vector;
-    VehicleShipInstance.MovementController.m_body.isKinematic = false;
   }
 
   private static void DrawLine(Vector3 start, Vector3 end, int index,
@@ -489,8 +504,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     {
       var existingText = colliderTextObjects[boxCollider.gameObject.name];
       // Update text content and position if necessary
-      var offset = new Vector3(0, boxCollider.size.y / 2f + 1f, 0);
-      existingText.transform.position = boxCollider.transform.position + offset;
+      existingText.transform.position = boxCollider.transform.position;
       existingText.transform.SetParent(parent);
 
       // Ensure the text always faces the camera
@@ -510,8 +524,7 @@ public class VehicleDebugHelpers : MonoBehaviour
       textMeshPro.color = color;
 
       // Position the text next to the collider
-      var offset = new Vector3(0, boxCollider.size.y / 2f + 1f, 0);
-      textObj.transform.position = boxCollider.transform.position + offset;
+      textObj.transform.position = boxCollider.transform.position;
       textObj.transform.SetParent(parent);
 
       // Make text face the camera

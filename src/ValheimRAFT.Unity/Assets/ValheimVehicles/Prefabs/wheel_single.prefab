@@ -49,7 +49,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &9168006654644231112
 Transform:
   m_ObjectHideFlags: 0
@@ -77,7 +77,7 @@ WheelCollider:
   m_Center: {x: 0, y: 0, z: 0}
   m_Radius: 1.5
   m_SuspensionSpring:
-    spring: 2000
+    spring: 200
     damper: 500
     targetPosition: 0
   m_SuspensionDistance: 3
@@ -147,6 +147,7 @@ GameObject:
   - component: {fileID: 1304424690632794146}
   - component: {fileID: 7552653989016854223}
   - component: {fileID: 5578359812963799694}
+  - component: {fileID: 5119713219414571018}
   m_Layer: 29
   m_Name: wheel_mesh
   m_TagString: Untagged
@@ -219,3 +220,25 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &5119713219414571018
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4818688348208568026}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 1007715841
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 3287251318
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}

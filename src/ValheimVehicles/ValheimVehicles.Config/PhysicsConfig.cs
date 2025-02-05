@@ -38,11 +38,15 @@ public static class PhysicsConfig
   public static ConfigEntry<float> VehicleLandSpeedSlow = null!;
   public static ConfigEntry<float> VehicleLandSpeedHalf = null!;
   public static ConfigEntry<float> VehicleLandSpeedFull = null!;
-  public static ConfigEntry<float> VehicleLandSpeedMult = null!;
 
   public static ConfigEntry<float> VehicleLandTurnSpeed = null!;
+  public static ConfigEntry<float> VehicleCenterOfMassOffset = null!;
+  public static ConfigEntry<bool> VehicleLandAllowXZRotation = null!;
   public static ConfigEntry<float> VehicleLandSuspensionDistance = null!;
+  public static ConfigEntry<float> VehicleLandWheelSuspensionSpring = null!;
   public static ConfigEntry<float> VehicleLandWheelRadius = null!;
+  public static ConfigEntry<float> VehicleLandWheelMass = null!;
+  public static ConfigEntry<float> VehicleLandWheelOffset = null!;
 
   // flight
   public static ConfigEntry<float> flightAngularDamping = null!;
@@ -52,6 +56,9 @@ public static class PhysicsConfig
   public static ConfigEntry<float> flightSailForceFactor = null!;
   public static ConfigEntry<float> flightDrag = null!;
   public static ConfigEntry<float> flightAngularDrag = null!;
+
+  public static ConfigEntry<float> landDrag = null!;
+  public static ConfigEntry<float> landAngularDrag = null!;
 
   // water
   public static ConfigEntry<float> waterAngularDamping = null!;
@@ -167,9 +174,9 @@ public static class PhysicsConfig
   {
     foreach (var vehicleMovementController in VehicleMovementController
                .Instances)
-      vehicleMovementController.UpdateVehicleStats(
-        vehicleMovementController.IsFlying(),
-        vehicleMovementController.IsSubmerged(), true);
+    {
+      vehicleMovementController.UpdateVehicleStats(vehicleMovementController.GetCachedVehiclePhysicsState(), true);
+    }
   }
 
   private static readonly AcceptableValueRange<float> StableSailForceRange =
@@ -234,48 +241,71 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of rudder, this will apply with sails", true));
 
-    VehicleLandSpeedBack = Config.Bind(PropulsionSection, "LandVehicle Back Speed",
-      1f,
+    VehicleLandSpeedBack = Config.Bind(PropulsionSection, "LandVehicle Back Speed", 5f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Back speed of land vehicle.",
-        true));
+        true, false, new AcceptableValueRange<float>(1, 100f)));
     VehicleLandSpeedSlow = Config.Bind(PropulsionSection, "LandVehicle Slow Speed",
-      1f,
+      5f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Slow speed of land vehicle.",
-        true));
+        true, false, new AcceptableValueRange<float>(1, 100f)));
     VehicleLandSpeedHalf = Config.Bind(PropulsionSection, "LandVehicle Half Speed",
-      2f,
+      10f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Half speed of land vehicle.",
-        true));
+        true, false, new AcceptableValueRange<float>(5f, 100f)));
     VehicleLandSpeedFull = Config.Bind(PropulsionSection, "LandVehicle Full Speed",
-      4f,
+      30f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of land vehicle.",
-        true));
-    VehicleLandSpeedMult = Config.Bind(PropulsionSection,
-      "LandVehicle Speed Multiplier",
-      1f,
-      ConfigHelpers.CreateConfigDescription(
-        "Set the speed multiplier of the land vehicle", true, false, new AcceptableValueRange<float>(1, 5)));
+        true, false, new AcceptableValueRange<float>(20, 100f)));
     VehicleLandTurnSpeed = Config.Bind(PropulsionSection,
       "LandVehicle Turn Speed",
       35f,
       ConfigHelpers.CreateConfigDescription(
         "Turn angle multiplier for land vehicles. Higher values will turn faster, but will be more disorienting and unrealistic.", true, false, new AcceptableValueRange<float>(20f, 90f)));
 
+    VehicleLandAllowXZRotation = Config.Bind(PropulsionSection,
+      "VehicleLand AllowXZRotation",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "Allow XZ rotation. Can make a vehicle flip/tilt. But is much more realistic. Look at centerofmassoffset for ways to make the vehicle more stable", true, false));
+    VehicleLandWheelMass = Config.Bind(PropulsionSection,
+      "VehicleLand WheelMass",
+      200f,
+      ConfigHelpers.CreateConfigDescription(
+        "The weight per wheel of the vehicle. This will allow more traction, but could slow down the vehicle at higher values. Experimental only", true, false, new AcceptableValueRange<float>(1f, 2000f)));
+
+    VehicleCenterOfMassOffset = Config.Bind(PropulsionSection,
+      "Vehicle CenterOfMassOffset",
+      0.65f,
+      ConfigHelpers.CreateConfigDescription(
+        "Offset the center of mass by a percentage of vehicle total height. Should always be a positive number. Higher values will make the vehicle more sturdy as it will pivot lower. Too high a value will make the ship behave weirdly possibly flipping. 0 will be the center of all colliders within the physics of the vehicle. 100% will be 50% lower than the vehicle's collider. 50% will be the very bottom of the vehicle's collider.", true, true, new AcceptableValueRange<float>(0f, 1f)));
+
     VehicleLandSuspensionDistance = Config.Bind(PropulsionSection,
       "LandVehicle Suspension Distance",
-      1.5f,
+      2.25f,
       ConfigHelpers.CreateConfigDescription(
-        "Distance suspension distance between vehicle position and wheel position. Higher values push the vehicle up and make it more bouncy. Also allowing it to recover from getting stuck", true, false, new AcceptableValueRange<float>(0.25f, 10f)));
+        "Distance suspension distance between vehicle position and wheel position. Higher values push the vehicle up and make it more bouncy.", true, false, new AcceptableValueRange<float>(0.25f, 10f)));
 
     VehicleLandWheelRadius = Config.Bind(PropulsionSection,
-      "VehicleLand Wheel Radius",
-      1.5f,
+      "LandVehicle WheelRadius",
+      0.70f,
       ConfigHelpers.CreateConfigDescription(
-        "Wheel radius. Larger wheels have more traction. But may be less realistic.", true, false, new AcceptableValueRange<float>(1.0f, 5f)));
+        "Wheel radius. Larger wheels have more traction. But may be less realistic.", true, false, new AcceptableValueRange<float>(0.25f, 5f)));
+
+    VehicleLandWheelOffset = Config.Bind(PropulsionSection,
+      "LandVehicle WheelOffset",
+      0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Wheel offset. Allowing for raising the wheels higher. May require increasing suspension distance so the wheels spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the wheels", true, false, new AcceptableValueRange<float>(-10f, 10f)));
+
+    VehicleLandWheelSuspensionSpring = Config.Bind(PropulsionSection,
+      "LandVehicle SuspensionSpring",
+      200f,
+      ConfigHelpers.CreateConfigDescription(
+        "Suspension spring value. This will control how much the vehicle bounces when it drops. No suspension will be a bit jarring but high suspension can jitter the user a bit too.", true, false, new AcceptableValueRange<float>(0f, 2000f)));
 
 
     var dampingSidewaysDescription = ConfigHelpers.CreateConfigDescription(
@@ -305,7 +335,13 @@ public static class PhysicsConfig
     flightAngularDamping = Config.Bind(SectionKey,
       $"flightAngularDamping_{DampingResetKey}", 1f,
       dampingAngularDescription);
-
+    flightSteerForce = Config.Bind(SectionKey, "flightSteerForce", 1f,
+      debugSailForceAndFactorDescription);
+    flightSailForceFactor =
+      Config.Bind(SectionKey, "UNSTABLE_flightSailForceFactor", 0.075f,
+        debugSailForceAndFactorDescription);
+    flightDrag = Config.Bind(SectionKey, "flightDrag", 1.2f);
+    flightAngularDrag = Config.Bind(SectionKey, "flightAngularDrag", 1.2f);
 
     forceDistance = Config.Bind(SectionKey,
       $"forceDistance_{DampingResetKey}", 1f,
@@ -317,14 +353,6 @@ public static class PhysicsConfig
     backwardForce = Config.Bind(SectionKey,
       $"backwardForce_{DampingResetKey}", 1f,
       "EXPERIMENTAL_BackwardFORCE");
-
-    flightSteerForce = Config.Bind(SectionKey, "flightSteerForce", 1f,
-      debugSailForceAndFactorDescription);
-    flightSailForceFactor =
-      Config.Bind(SectionKey, "UNSTABLE_flightSailForceFactor", 0.075f,
-        debugSailForceAndFactorDescription);
-    flightDrag = Config.Bind(SectionKey, "flightDrag", 1.2f);
-    flightAngularDrag = Config.Bind(SectionKey, "flightAngularDrag", 1.2f);
 
     // water
     waterSteerForce = Config.Bind(SectionKey, "waterSteerForce", 1f);
@@ -373,6 +401,11 @@ public static class PhysicsConfig
     hullFloatationRange = new AcceptableValueRange<float>(-50f, 50f);
 #endif
 
+    // landVehicles much more simple. No sails allowed etc.
+    landDrag = Config.Bind(SectionKey, "landDrag", 0.05f);
+    landAngularDrag = Config.Bind(SectionKey, "landAngularDrag", 1.2f);
+
+    // guards for max values
     MaxLinearVelocity = Config.Bind(SectionKey, "MaxVehicleLinearVelocity", 10f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 20. Higher values will increase potential of vehicle flying off to space",
@@ -496,10 +529,12 @@ public static class PhysicsConfig
       VehicleMovementController.Instances.ForEach(x =>
         x.UpdateVehicleSpeedThrottle());
 
+    VehicleLandWheelSuspensionSpring.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandWheelOffset.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandSuspensionDistance.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandWheelMass.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandWheelRadius.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
-
 
     floatationVelocityMode.SettingChanged += (sender, args) =>
       ForceSetVehiclePhysics(floatationVelocityMode);
@@ -527,6 +562,12 @@ public static class PhysicsConfig
     convexHullPreviewOffset.SettingChanged += (_, __) =>
       ConvexHullComponent.UpdatePropertiesForAllComponents();
 
+    VehicleCenterOfMassOffset.SettingChanged +=
+      OnPhysicsChangeForceUpdateAllVehiclePhysics;
+    landAngularDrag.SettingChanged +=
+      OnPhysicsChangeForceUpdateAllVehiclePhysics;
+    landDrag.SettingChanged +=
+      OnPhysicsChangeForceUpdateAllVehiclePhysics;
 
     flightDamping.SettingChanged +=
       OnPhysicsChangeForceUpdateAllVehiclePhysics;

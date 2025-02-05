@@ -377,6 +377,24 @@
 - Description: The delay time at which the vehicle will recalculate bounds after placing a piece. This recalculation can be a bit heavy so it's debounced a minimum of 1 seconds but could be increased up to 30 seconds for folks that want to build a pause for a bit.
 - Default Value: 1
 
+## Vehicle Debugging
+
+### WindowPosX 
+- Description: 
+- Default Value: 0
+
+### WindowPosY 
+- Description: 
+- Default Value: 0
+
+### ButtonFontSize 
+- Description: 
+- Default Value: 16
+
+### LabelFontSize 
+- Description: 
+- Default Value: 22
+
 ## Propulsion
 
 ### VehiclePhysicsMode 
@@ -484,10 +502,6 @@ Other methods removed after 2.5.0
 - Description: Ships with high mass to volume will not be able to ballast well above the surface. This adds a ship mass to onboard volume calculation. The calculation is experimental so it might be inaccurate. For now mass to volume includes the length width heigth in a box around the ship. It's unrealistic as of 2.4.0 as this includes emptyspace above water. Eventually this will be calculated via displacement (empty volume with wall all around it) calculation.
 - Default Value: False
 
-### UNSAFE_BlockingColliderOffset 
-- Description: Sets the relative offset from the float collider. Can be negative or positive. Recommended is near the float collider. Slightly above it. Leave this alone unless you know what you are doing.
-- Default Value: 0.2
-
 ### AllowMonsterEntitesUnderwater 
 - Description: Allows Monster entities onto the ship and underwater. This means they can go underwater similar to player.
 - Default Value: True
@@ -552,60 +566,64 @@ Other methods removed after 2.5.0
 
 ### LandVehicle Back Speed 
 - Description: Set the Back speed of land vehicle.
-- Default Value: 1
+- Default Value: 5
 
 ### LandVehicle Slow Speed 
 - Description: Set the Slow speed of land vehicle.
-- Default Value: 1
+- Default Value: 5
 
 ### LandVehicle Half Speed 
 - Description: Set the Half speed of land vehicle.
-- Default Value: 2
+- Default Value: 10
 
 ### LandVehicle Full Speed 
 - Description: Set the Full speed of land vehicle.
-- Default Value: 4
-
-### LandVehicle Speed Multiplier 
-- Description: Set the speed multiplier of the land vehicle
-- Default Value: 1
+- Default Value: 30
 
 ### LandVehicle Turn Speed 
 - Description: Turn angle multiplier for land vehicles. Higher values will turn faster, but will be more disorienting and unrealistic.
 - Default Value: 35
 
-### LandVehicle Suspension Distance 
-- Description: Distance suspension distance between vehicle position and wheel position. Higher values push the vehicle up and make it more bouncy. Also allowing it to recover from getting stuck
-- Default Value: 1.5
+### VehicleLand AllowXZRotation 
+- Description: Allow XZ rotation. Can make a vehicle flip/tilt. But is much more realistic. Look at centerofmassoffset for ways to make the vehicle more stable
+- Default Value: True
 
-### VehicleLand Wheel Radius 
+### VehicleLand WheelMass 
+- Description: The weight per wheel of the vehicle. This will allow more traction, but could slow down the vehicle at higher values. Experimental only
+- Default Value: 200
+
+### Vehicle CenterOfMassOffset 
+- Description: Offset the center of mass by a percentage of vehicle total height. Should always be a positive number. Higher values will make the vehicle more sturdy as it will pivot lower. Too high a value will make the ship behave weirdly possibly flipping. 0 will be the center of all colliders within the physics of the vehicle. 100% will be 50% lower than the vehicle's collider. 50% will be the very bottom of the vehicle's collider.
+- Default Value: 0.65
+
+### LandVehicle Suspension Distance 
+- Description: Distance suspension distance between vehicle position and wheel position. Higher values push the vehicle up and make it more bouncy.
+- Default Value: 2.25
+
+### LandVehicle WheelRadius 
 - Description: Wheel radius. Larger wheels have more traction. But may be less realistic.
-- Default Value: 1.5
+- Default Value: 0.7
+
+### LandVehicle WheelOffset 
+- Description: Wheel offset. Allowing for raising the wheels higher. May require increasing suspension distance so the wheels spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the wheels
+- Default Value: 0
+
+### LandVehicle SuspensionSpring 
+- Description: Suspension spring value. This will control how much the vehicle bounces when it drops. No suspension will be a bit jarring but high suspension can jitter the user a bit too.
+- Default Value: 200
 
 ## Vehicle Physics
 
-### flightDamping_2.5.3 
+### flightDamping_3.0.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_2.5.3 
+### flightSidewaysDamping_3.0.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_2.5.3 
+### flightAngularDamping_3.0.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
-- Default Value: 1
-
-### forceDistance_2.5.3 
-- Description: EXPERIMENTAL_FORCE_DISTANCE
-- Default Value: 1
-
-### force_2.5.3 
-- Description: EXPERIMENTAL_FORCE
-- Default Value: 1
-
-### backwardForce_2.5.3 
-- Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
 ### flightSteerForce 
@@ -624,19 +642,31 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1.2
 
+### forceDistance_3.0.0 
+- Description: EXPERIMENTAL_FORCE_DISTANCE
+- Default Value: 1
+
+### force_3.0.0 
+- Description: EXPERIMENTAL_FORCE
+- Default Value: 1
+
+### backwardForce_3.0.0 
+- Description: EXPERIMENTAL_BackwardFORCE
+- Default Value: 1
+
 ### waterSteerForce 
 - Description: 
 - Default Value: 1
 
-### waterDamping_2.5.3 
+### waterDamping_3.0.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_2.5.3 
+### waterSidewaysDamping_3.0.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_2.5.3 
+### waterAngularDamping_3.0.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -652,15 +682,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 0.8
 
-### submersibleDamping_2.5.3 
+### submersibleDamping_3.0.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_2.5.3 
+### submersibleSidewaysDamping_3.0.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_2.5.3 
+### submersibleAngularDamping_3.0.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -679,6 +709,14 @@ Other methods removed after 2.5.0
 ### submersibleAngularDrag 
 - Description: 
 - Default Value: 1.5
+
+### landDrag 
+- Description: 
+- Default Value: 0.05
+
+### landAngularDrag 
+- Description: 
+- Default Value: 1.2
 
 ### MaxVehicleLinearVelocity 
 - Description: Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 20. Higher values will increase potential of vehicle flying off to space
@@ -702,7 +740,7 @@ Other methods removed after 2.5.0
 - Description: Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
 - Default Value: 0
 
-### EnableExactVehicleBounds_2.5.3 
+### EnableExactVehicleBounds_3.0.0 
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version
 - Default Value: True
 
@@ -806,7 +844,7 @@ Other methods removed after 2.5.0
 
 ### CameraOcclusionEnabled 
 - Description: Enables hiding active raft pieces at specific intervals. This will hide only the rendered texture.
-- Default Value: True
+- Default Value: False
 
 ### DistanceToKeepObjects 
 - Description: Threshold at which to retain a object even if it's through a wall.
