@@ -1,8 +1,8 @@
 ﻿{
   "name": "ValheimRAFTBETA",
-  "version_number": "3.0.0-beta.1",
+  "version_number": "3.0.0",
   "website_url": "https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT",
-  "description": "ValheimRAFT (BETA) - a water vehicles mod for valheim. BETA release channel. Please use the non-beta for stable versions.",
+  "description": "ValheimRAFT (BETA) - a vehicles mod for valheim. Build a ship, build a land vehicle. Explore valheim! This is a BETA release channel. Please use the non-beta for stable versions.",
   "dependencies": [
     "ValheimModding-Jotunn-2.23.0"
   ]
