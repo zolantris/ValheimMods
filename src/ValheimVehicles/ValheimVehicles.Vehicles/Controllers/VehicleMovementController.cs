@@ -3311,7 +3311,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       SendSetAnchor(!isAnchored ? AnchorState.Anchored : AnchorState.Recovered);
       if (WheelController != null)
       {
-        WheelController.isBreaking = isAnchored;
+        WheelController.SetIsBreaking(isAnchored);
       }
       return;
     }

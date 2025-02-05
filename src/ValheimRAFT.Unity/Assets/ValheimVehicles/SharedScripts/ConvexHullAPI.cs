@@ -1194,48 +1194,7 @@ namespace ValheimVehicles.SharedScripts
       var convexHullBounds = new Bounds(localPoints[0], Vector3.zero);
       localPoints.ForEach(x => convexHullBounds.Encapsulate(x));
       _cachedConvexHullBounds = convexHullBounds;
-      // foreach (var meshCollider in convexHullMeshColliders)
-      // {
-      //   // var centerWorld = meshCollider.transform.TransformPoint(meshCollider.bounds.center);
-      //
-      //   // todo we may need to use a different transform point or add an offset
-      //   var centerLocal = transform.InverseTransformPoint(meshCollider.bounds.center);
-      //   var closestCenter = meshCollider.ClosestPoint(meshCollider.bounds.center);
-      //   var closestMin = meshCollider.ClosestPointOnBounds(meshCollider.bounds.min);
-      //   var closestMaxZ = meshCollider.ClosestPointOnBounds(new Vector3(closestCenter.x, closestCenter.y, meshCollider.bounds.max.z + 10f));
-      //   var closestMinZ = meshCollider.ClosestPointOnBounds(new Vector3(closestCenter.x, closestCenter.y, meshCollider.bounds.min.z - 10f));
-      //   var closestMax = meshCollider.ClosestPointOnBounds(meshCollider.bounds.max);
-      //   var closestSize = new Vector3(Mathf.Abs(closestMin.x - closestMax.x), Mathf.Abs(closestMin.y - closestMax.y), Mathf.Abs(closestMin.z - closestMax.z));
-      //   // var centerLocal = transform.InverseTransformPoint(colliderParent.position);
-      //   var localBounds = new Bounds(centerLocal, meshCollider.bounds.size);
-      //
-      //   if (!convexHullBounds.HasValue)
-      //   {
-      //     convexHullBounds = localBounds;
-      //   }
-      //   else
-      //   {
-      //
-      //     convexHullBounds.Value.Encapsulate(localBounds);
-      //   }
-      // }
-      //
-      // _cachedConvexHullBounds = convexHullBounds ?? convexHullMeshColliders[0].bounds;
-      // // converts to relative bounds
-      // if (convexHullBounds != null)
-      // {
-      //   convexHullBounds =
-      //     new Bounds(
-      //       transform.InverseTransformPoint(convexHullBounds.Value.center),
-      //       convexHullBounds.Value.size);
-      //
-      //   _cachedConvexHullBounds = convexHullBounds.Value;
-      // }
-      // else
-      // {
-      //   _cachedConvexHullBounds = new Bounds(Vector3.zero, Vector3.one * 3);
-      // }
-    }
+     }
 
     public void OnDrawGizmos()
     {

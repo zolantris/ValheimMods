@@ -92,10 +92,10 @@ namespace ValheimVehicles.SharedScripts
     public float axelPadding = 0.5f; // Extra length on both sides of axel
 
     public float
-      vehicleSizeThresholdFor5thSet = 24f; // Threshold for adding 5th set
+      vehicleSizeThresholdFor5thSet = 18f; // Threshold for adding 5th set
 
     public float
-      vehicleSizeThresholdFor6thSet = 48f; // Threshold for adding 6th set
+      vehicleSizeThresholdFor6thSet = 32f; // Threshold for adding 6th set
 
     [Tooltip(
       "User input")]
@@ -549,7 +549,7 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public static float defaultBreakForce = 250f;
+    public static float defaultBreakForce = 500f;
     public float additionalBreakForce = defaultBreakForce;
     private float deltaRunPoweredWheels = 0f;
 
@@ -632,7 +632,9 @@ namespace ValheimVehicles.SharedScripts
       // else
       // {
       //   deltaRunPoweredWheels += Time.fixedDeltaTime;
+      //   return;
       // }
+
       var inputForceDir = Mathf.Sign(inputForwardForce);
 
       foreach (var wheel in poweredWheels)
@@ -640,8 +642,8 @@ namespace ValheimVehicles.SharedScripts
         if (wheel == null) continue;
         if (isBreaking)
         {
-          wheel.brakeTorque = wheel.rpm * 2 + additionalBreakForce;
           wheel.motorTorque = 0f;
+          wheel.brakeTorque = wheel.rpm + inputForwardForce * baseMotorTorque + additionalBreakForce;
         }
         if (!isBreaking)
         {
@@ -650,17 +652,12 @@ namespace ValheimVehicles.SharedScripts
             wheel.motorTorque = 0;
             wheel.brakeTorque = inputForwardForce * baseMotorTorque / 2f + additionalBreakForce * Time.fixedDeltaTime;
           }
-          // else if (Mathf.Abs(wheel.rpm) > MaxWheelRPM || rigid.velocity.magnitude >= topSpeed)
-          // {
-          //   wheel.motorTorque = inputForceDir * MaxWheelRPM;
-          // }
+          else if (Mathf.Abs(wheel.rpm) > MaxWheelRPM || rigid.velocity.x + rigid.velocity.z >= topSpeed)
+          {
+            return;
+          }
           else if (Mathf.Abs(wheel.rpm) > MaxWheelRPM || !wheel.isGrounded)
           {
-            var attachedRigidbody = wheel.attachedRigidbody;
-            // slam the vehicle down if the wheels are not hitting ground.
-            // wheel.attachedRigidbody.AddForceAtPosition(Vector3.down * Physics.gravity.y * 1.5f * attachedRigidbody.mass, attachedRigidbody.worldCenterOfMass);
-            wheel.attachedRigidbody.AddForceAtPosition(Physics.gravity * 2, attachedRigidbody.worldCenterOfMass, ForceMode.Acceleration);
-
             wheel.motorTorque = 0f;
           }
           else if (!Mathf.Approximately(MaxWheelRPM, 0f))

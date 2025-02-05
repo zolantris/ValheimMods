@@ -45,6 +45,7 @@ public static class PhysicsConfig
   public static ConfigEntry<float> VehicleLandSuspensionDistance = null!;
   public static ConfigEntry<float> VehicleLandWheelSuspensionSpring = null!;
   public static ConfigEntry<float> VehicleLandWheelRadius = null!;
+  public static ConfigEntry<float> VehicleLandWheelMass = null!;
   public static ConfigEntry<float> VehicleLandWheelOffset = null!;
 
   // flight
@@ -255,7 +256,7 @@ public static class PhysicsConfig
         "Set the Half speed of land vehicle.",
         true, false, new AcceptableValueRange<float>(5f, 100f)));
     VehicleLandSpeedFull = Config.Bind(PropulsionSection, "LandVehicle Full Speed",
-      20f,
+      30f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of land vehicle.",
         true, false, new AcceptableValueRange<float>(20, 100f)));
@@ -270,6 +271,11 @@ public static class PhysicsConfig
       true,
       ConfigHelpers.CreateConfigDescription(
         "Allow XZ rotation. Can make a vehicle flip/tilt. But is much more realistic. Look at centerofmassoffset for ways to make the vehicle more stable", true, false));
+    VehicleLandWheelMass = Config.Bind(PropulsionSection,
+      "VehicleLand WheelMass",
+      200f,
+      ConfigHelpers.CreateConfigDescription(
+        "The weight per wheel of the vehicle. This will allow more traction, but could slow down the vehicle at higher values. Experimental only", true, false, new AcceptableValueRange<float>(1f, 2000f)));
 
     VehicleCenterOfMassOffset = Config.Bind(PropulsionSection,
       "Vehicle CenterOfMassOffset",
@@ -527,6 +533,7 @@ public static class PhysicsConfig
     VehicleLandWheelOffset.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandSuspensionDistance.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandWheelMass.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandWheelRadius.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
 
     floatationVelocityMode.SettingChanged += (sender, args) =>
