@@ -1,7 +1,6 @@
-using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
+using Unity.VisualScripting; // Required for Visual Scripting components
 
 public class MovingTreadComponent : MonoBehaviour
 {
@@ -26,6 +25,12 @@ public class MovingTreadComponent : MonoBehaviour
   public List<Vector3> originalTreadPositions = new();
   public Bounds localBounds = new();
   public GameObject CenterObj;
+
+  // New flag to control direction of movement
+  public bool isForward = true;
+
+  // Speed multiplier that controls the overall speed of treads
+  public float speedMultiplier = 1f;
 
   public void Awake()
   {
@@ -104,9 +109,6 @@ public class MovingTreadComponent : MonoBehaviour
     return rb;
   }
 
-  public float rotationTimeMultiplier = 1f;
-  public float movementTimeMultiplier = 1f;
-
   public void UpdateAllTreads()
   {
     if (treadTargetPoints.Count != _movingTreads.Count) return;
@@ -115,6 +117,7 @@ public class MovingTreadComponent : MonoBehaviour
     var parentPosition = treadParent.position;
     var parentRotation = treadParent.rotation;
 
+    // Update tread rotation and position
     for (var i = 0; i < _movingTreads.Count; i++)
     {
       var currentTreadRb = _movingTreads[i];
@@ -122,14 +125,20 @@ public class MovingTreadComponent : MonoBehaviour
 
       int currentTreadTarget = _treadTargetPointMap[currentTreadRb];
 
-      // Wrap target points to avoid out-of-bounds access
-      if (currentTreadTarget == _movingTreads.Count - 1 && _movingTreads.Count > 1)
+      // If moving backward, reverse the order of treads
+      if (!isForward)
+      {
+        currentTreadTarget = _movingTreads.Count - 1 - currentTreadTarget; // Reversed indexing
+      }
+
+      // Ensure the targets loop correctly (wrap around)
+      if (currentTreadTarget >= _movingTreads.Count)
       {
         currentTreadTarget = 0;
       }
-      else
+      else if (currentTreadTarget < 0)
       {
-        currentTreadTarget++;
+        currentTreadTarget = _movingTreads.Count - 1;
       }
 
       var localTransform = treadTargetPoints[currentTreadTarget];
@@ -138,26 +147,32 @@ public class MovingTreadComponent : MonoBehaviour
       var worldTargetPosition = parentRotation * localTransform.position + parentPosition;
       var worldTargetRotation = parentRotation * localTransform.rotation;
 
-      // Calculate distance and handle position update
+      // Calculate the angular distance to rotate towards the target
+      var deltaRotation = Quaternion.RotateTowards(currentTreadRb.transform.localRotation, localTransform.rotation, Time.fixedDeltaTime * 180f * speedMultiplier); // 180 degrees per second for now
+
+      // Linear movement: Move towards the target position in world space
       var distanceToNextTread = Vector3.Distance(currentTreadRb.transform.position, worldTargetPosition);
       if (Mathf.Approximately(distanceToNextTread, 0.0f))
       {
-        // Update the DB and set new target point
-        _treadTargetPointMap[currentTreadRb] = currentTreadTarget;
-        localTransform = treadTargetPoints[currentTreadTarget];
-      }
+        // Update the target index based on direction
+        if (isForward)
+        {
+          _treadTargetPointMap[currentTreadRb] = currentTreadTarget + 1 < _movingTreads.Count ? currentTreadTarget + 1 : 0;
+        }
+        else
+        {
+          _treadTargetPointMap[currentTreadRb] = currentTreadTarget - 1 >= 0 ? currentTreadTarget - 1 : _movingTreads.Count - 1;
+        }
 
-      // Update the rigidbody transform based on the world space position and rotation
-      var rbTransform = currentTreadRb.transform;
+        localTransform = treadTargetPoints[_treadTargetPointMap[currentTreadRb]];
+      }
 
       // Convert world space target position back to local space
       var localTargetPosition = treadParent.InverseTransformPoint(worldTargetPosition);
-      var localTargetRotation = Quaternion.Inverse(treadParent.rotation) * worldTargetRotation;
 
-      // Update the tread's position and rotation, considering parent changes
-      rbTransform.localPosition = Vector3.MoveTowards(rbTransform.localPosition, localTargetPosition, Time.fixedDeltaTime * movementTimeMultiplier); // 5f speed for smooth transition
-      rbTransform.localRotation = Quaternion.Lerp(rbTransform.localRotation, localTargetRotation, Time.fixedDeltaTime * rotationTimeMultiplier);
-      // rbTransform.localRotation = Quaternion.RotateTowards(rbTransform.localRotation, localTargetRotation, Time.fixedDeltaTime * rotationTimeMultiplier); // 180 degrees per second
+      // Update the rigidbody transform based on local position and rotation
+      currentTreadRb.transform.localPosition = Vector3.MoveTowards(currentTreadRb.transform.localPosition, localTargetPosition, Time.fixedDeltaTime * 5f * speedMultiplier); // 5f speed for smooth transition
+      currentTreadRb.transform.rotation = deltaRotation;
     }
   }
 
