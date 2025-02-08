@@ -1216,7 +1216,6 @@ namespace ValheimVehicles.SharedScripts
         Gizmos.color = Color.white;
         Gizmos.DrawWireCube(m_rigidbody.worldCenterOfMass, Vector3.one);
       }
-
     }
   }
 }

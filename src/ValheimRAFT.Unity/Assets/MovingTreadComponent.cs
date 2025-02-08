@@ -4,10 +4,83 @@ using Unity.VisualScripting; // Required for Visual Scripting components
 
 public class MovingTreadComponent : MonoBehaviour
 {
-  private List<Rigidbody> _movingTreads = new();
-  private List<LocalTransform> treadTargetPoints = new();
-  private Dictionary<Rigidbody, int> _treadTargetPointMap = new();
-  private Rigidbody treadRb;
+  internal List<Rigidbody> _movingTreads = new();
+  internal List<LocalTransform> treadTargetPoints = new();
+  internal Dictionary<Rigidbody, int> _treadTargetPointMap = new();
+  internal Rigidbody treadRb;
+
+  public float treadPointDistanceZ = 0.624670029f;
+
+  public const float treadPointYOffset = 1.578f;
+  public float treadTopLocalPosition = treadPointYOffset;
+  public float treadBottomLocalPosition = 0f;
+
+  internal static List<LocalTransform> _treadFrontLocalPoints = new()
+  {
+    // flat top
+    new LocalTransform()
+    {
+      position = new Vector3(-0.142456055f, 1.57800007f, 4.37768173f),
+      rotation = Quaternion.identity
+    },
+    // angles 45
+    new LocalTransform()
+    {
+      position = new Vector3(-0.142456055f, 1.57800007f, 4.37768173f),
+      rotation = Quaternion.Euler(45f, 0f, 0f)
+    },
+    // angles 90
+    new LocalTransform()
+    {
+      position = new Vector3(-0.169189453f, 0.782000542f, 5.19924545f),
+      rotation = Quaternion.Euler(90f, 0f, 0f)
+    },
+    // forward tread angles 135
+    new LocalTransform()
+    {
+      position = new Vector3(-0.160583496f, 0.245388985f, 4.93422127f),
+      rotation = Quaternion.Euler(135f, 0f, 0f)
+    },
+    // bottom tread IE (angles 180) 
+    new LocalTransform()
+    {
+      position = new Vector3(-0.142456055f, 0, 4.37768173f),
+      rotation = Quaternion.Euler(180f, 0f, 0f)
+    },
+  };
+  internal static List<LocalTransform> _treadBackLocalPoints = new()
+  {
+    // flat top tread
+    new LocalTransform()
+    {
+      position = Vector3.zero,
+      rotation = Quaternion.Euler(180f, 0f, 0f)
+    },
+    // back-near bottom tread
+    new LocalTransform()
+    {
+      position = new Vector3(0.0177001953f, 0.245388985f, -0.542955399f),
+      rotation = Quaternion.Euler(-135f, 0f, 0f)
+    },
+    // back middle tread
+    new LocalTransform()
+    {
+      position = new Vector3(0.0246276855f, 0.782000542f, -0.756231308f),
+      rotation = Quaternion.Euler(270, 0, 0)
+    },
+    // back-near-top tread angles 315
+    new LocalTransform()
+    {
+      position = new Vector3(0.0173339844f, 1.34000015f, -0.531721115f),
+      rotation = Quaternion.Euler(315, 0, 0)
+    },
+    // top tread
+    new LocalTransform()
+    {
+      position = new Vector3(0, 1.57800007f, 0),
+      rotation = Quaternion.identity
+    },
+  };
 
   public struct LocalTransform
   {
@@ -32,7 +105,7 @@ public class MovingTreadComponent : MonoBehaviour
   // Speed multiplier that controls the overall speed of treads
   public float speedMultiplier = 1f;
 
-  private Dictionary<Rigidbody, float> treadProgress = new(); // Stores the progress of each tread (0 to 1)
+  internal Dictionary<Rigidbody, float> treadProgress = new(); // Stores the progress of each tread (0 to 1)
 
   public void Awake()
   {
