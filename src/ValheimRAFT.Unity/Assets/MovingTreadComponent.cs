@@ -32,6 +32,8 @@ public class MovingTreadComponent : MonoBehaviour
   // Speed multiplier that controls the overall speed of treads
   public float speedMultiplier = 1f;
 
+  private Dictionary<Rigidbody, float> treadProgress = new(); // Stores the progress of each tread (0 to 1)
+
   public void Awake()
   {
     treadRb = GetComponent<Rigidbody>();
@@ -89,6 +91,9 @@ public class MovingTreadComponent : MonoBehaviour
       var rb = AddRigidbodyToChild(child);
       _movingTreads.Add(rb);
       _treadTargetPointMap.Add(rb, i);
+
+      // Initialize progress for each tread (0 to 1)
+      treadProgress[rb] = 0f;
     }
 
     CenterObj.transform.position = treadParent.position + localBounds.center;
@@ -147,32 +152,44 @@ public class MovingTreadComponent : MonoBehaviour
       var worldTargetPosition = parentRotation * localTransform.position + parentPosition;
       var worldTargetRotation = parentRotation * localTransform.rotation;
 
-      // Calculate the angular distance to rotate towards the target
-      var deltaRotation = Quaternion.RotateTowards(currentTreadRb.transform.localRotation, localTransform.rotation, Time.fixedDeltaTime * 180f * speedMultiplier); // 180 degrees per second for now
+      // Get the previous target position and rotation
+      int prevTreadTarget = isForward ? currentTreadTarget - 1 : currentTreadTarget + 1;
+      if (prevTreadTarget >= _movingTreads.Count) prevTreadTarget = 0;
+      if (prevTreadTarget < 0) prevTreadTarget = _movingTreads.Count - 1;
 
-      // Linear movement: Move towards the target position in world space
-      var distanceToNextTread = Vector3.Distance(currentTreadRb.transform.position, worldTargetPosition);
-      if (Mathf.Approximately(distanceToNextTread, 0.0f))
+      var prevLocalTransform = treadTargetPoints[prevTreadTarget];
+      var worldPrevPosition = parentRotation * prevLocalTransform.position + parentPosition;
+      var worldPrevRotation = parentRotation * prevLocalTransform.rotation;
+
+      // Interpolation factor for smooth movement
+      float progress = treadProgress[currentTreadRb];
+
+      // Increment progress based on fixedDeltaTime and speedMultiplier
+      progress += Time.fixedDeltaTime * speedMultiplier;
+
+      // Loop progress between 0 and 1
+      if (progress > 1f)
       {
-        // Update the target index based on direction
-        if (isForward)
-        {
-          _treadTargetPointMap[currentTreadRb] = currentTreadTarget + 1 < _movingTreads.Count ? currentTreadTarget + 1 : 0;
-        }
-        else
-        {
-          _treadTargetPointMap[currentTreadRb] = currentTreadTarget - 1 >= 0 ? currentTreadTarget - 1 : _movingTreads.Count - 1;
-        }
+        progress = 0f; // Reset progress when we reach the target point
+        currentTreadTarget = isForward ? currentTreadTarget + 1 : currentTreadTarget - 1; // Update target point index
 
-        localTransform = treadTargetPoints[_treadTargetPointMap[currentTreadRb]];
+        // Ensure we stay within bounds
+        if (currentTreadTarget >= _movingTreads.Count) currentTreadTarget = 0;
+        if (currentTreadTarget < 0) currentTreadTarget = _movingTreads.Count - 1;
+
+        treadProgress[currentTreadRb] = progress; // Reset progress for the next point
       }
 
-      // Convert world space target position back to local space
-      var localTargetPosition = treadParent.InverseTransformPoint(worldTargetPosition);
+      // Update the progress value
+      treadProgress[currentTreadRb] = progress;
 
-      // Update the rigidbody transform based on local position and rotation
-      currentTreadRb.transform.localPosition = Vector3.MoveTowards(currentTreadRb.transform.localPosition, localTargetPosition, Time.fixedDeltaTime * 5f * speedMultiplier); // 5f speed for smooth transition
-      currentTreadRb.transform.rotation = deltaRotation;
+      // Lerp position and rotation based on the progress
+      var newPosition = Vector3.Lerp(worldPrevPosition, worldTargetPosition, progress);
+      var newRotation = Quaternion.Lerp(worldPrevRotation, worldTargetRotation, progress);
+
+      // Apply the calculated position and rotation to the tread's rigidbody
+      currentTreadRb.MovePosition(newPosition);
+      currentTreadRb.MoveRotation(newRotation);
     }
   }
 
