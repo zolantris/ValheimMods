@@ -2,11 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 // ReSharper disable ArrangeNamespaceBody
-
 // ReSharper disable NamespaceStyle
 namespace ValheimVehicles.SharedScripts
 {
@@ -115,6 +115,7 @@ namespace ValheimVehicles.SharedScripts
         new();
 
     private readonly List<GameObject> wheelInstances = new();
+    private readonly List<MovingTreadComponent> treadsInstances = new();
 
     public bool hasInitialized;
 
@@ -137,9 +138,13 @@ namespace ValheimVehicles.SharedScripts
     public static float Override_TopSpeed = 0;
     public static float wheelDamping = 2f;
     public const float wheelBaseRadiusScale = 1.5f;
+    public GameObject treadsPrefab;
 
     // wheel regeneration
-    public static bool shouldCleanupPerInitialize = true;
+    public static bool shouldCleanupPerInitialize = false;
+
+    internal MovingTreadComponent movingTreadRight;
+    internal MovingTreadComponent movingTreadLeft;
 
     private void Awake()
     {
@@ -154,6 +159,42 @@ namespace ValheimVehicles.SharedScripts
       if (centerOfMass != null) centerOfMassTransform = centerOfMass;
       if (centerOfMassTransform == null) centerOfMassTransform = transform;
       UpdateMaxRPM();
+      InitTreads();
+    }
+
+    public Transform treadsRight;
+    public Transform treadsLeft;
+    private void InitTreads()
+    {
+      if (!treadsRight)
+      {
+        treadsRight = transform.Find("treads_right");
+      }
+      if (!treadsLeft)
+      {
+        treadsLeft = transform.Find("treads_left");
+      }
+      if (!treadsRight || !treadsLeft) return;
+
+      movingTreadLeft = treadsLeft.AddComponent<MovingTreadComponent>();
+      movingTreadRight = treadsRight.AddComponent<MovingTreadComponent>();
+
+      movingTreadLeft.treadPrefab = treadsPrefab;
+      movingTreadLeft.treadParent = treadsLeft;
+
+      movingTreadRight.treadPrefab = treadsPrefab;
+      movingTreadRight.treadParent = treadsRight;
+    }
+
+    private void UpdateTreads(Bounds bounds)
+    {
+      if (!treadsRight || !treadsLeft) return;
+
+      treadsRight.localPosition = new Vector3(bounds.max.x, bounds.min.y, 0);
+      treadsLeft.localPosition = new Vector3(bounds.min.x, bounds.min.y, 0);
+
+      if (movingTreadLeft) movingTreadLeft.InitTreads(bounds);
+      if (movingTreadRight) movingTreadRight.InitTreads(bounds);
     }
 
     private void UpdateCenterOfMass(float yOffset)
@@ -393,9 +434,15 @@ namespace ValheimVehicles.SharedScripts
           {
             wheelInstances.Add(wheelInstance);
           }
+          else
+          {
+            wheelInstances[wheelIndex] = wheelInstance;
+          }
           wheelIndex += 1;
         }
       }
+
+      UpdateTreads(bounds);
     }
 
     private Bounds GetBounds(Transform boundsTransform)
