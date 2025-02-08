@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -176,8 +175,8 @@ namespace ValheimVehicles.SharedScripts
       }
       if (!treadsRight || !treadsLeft) return;
 
-      movingTreadLeft = treadsLeft.AddComponent<MovingTreadComponent>();
-      movingTreadRight = treadsRight.AddComponent<MovingTreadComponent>();
+      movingTreadLeft = treadsLeft.transform.gameObject.AddComponent<MovingTreadComponent>();
+      movingTreadRight = treadsRight.transform.gameObject.AddComponent<MovingTreadComponent>();
 
       movingTreadLeft.treadPrefab = treadsPrefab;
       movingTreadLeft.treadParent = treadsLeft;

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2844207301
+CRC: 3733894054
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: dd69caaad3ede805e447a97f1165ff6a
+    Hash: afa4cc36b803358cb6c15d250ac07724
   TypeTreeHash:
     serializedVersion: 2
-    Hash: d8f024905b27cc255f2675d880be5359
+    Hash: 74dd0bbf0d3b96a195382cbd7e753071
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: dd69caaad3ede805e447a97f1165ff6a
+    Hash: afa4cc36b803358cb6c15d250ac07724
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -39,6 +39,8 @@ ClassTypes:
 - Class: 108
   Script: {instanceID: 0}
 - Class: 114
+  Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 0d0b652f32a2cc243917e4028fa0f046, type: 3}
@@ -66,8 +68,6 @@ ClassTypes:
   Script: {fileID: 11500000, guid: 37593e1934874fe4db91a205982d109e, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 120
@@ -175,6 +175,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_square_wood_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_prow_wood_2x2.prefab
 - Assets/ValheimVehicles/Material/WaterHeightMaterial.mat
+- Assets/ValheimVehicles/Prefabs/shared_tank_tread.prefab
 - Assets/ValheimVehicles/Material/bronze_nautilus_metal_rib 1.mat
 - Assets/ValheimVehicles/Prefabs/vehicle_ship_pieces.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus_hatch.prefab

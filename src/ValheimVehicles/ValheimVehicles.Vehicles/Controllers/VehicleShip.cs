@@ -392,6 +392,11 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   public void UpdateWheelControllerProperties()
   {
     if (!IsLandVehicle || MovementController == null || WheelController == null) return;
+    if (WheelController.treadsPrefab == null)
+    {
+      WheelController.treadsPrefab = LoadValheimVehicleAssets.TankTreadsSingle;
+    }
+
     WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
     WheelController.UseManualControls = true;
     WheelController.magicTurnRate = PhysicsConfig.VehicleLandTurnSpeed.Value;

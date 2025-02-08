@@ -1454,26 +1454,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       WheelController.inputForwardForce = landSpeed;
       WheelController.VehicleMovementFixedUpdate();
     }
-
-  }
-
-  /// <summary>
-  ///   Calculates damage from impact using vehicle weight
-  /// </summary>
-  /// <returns></returns>
-  private float GetDamageFromImpact()
-  {
-    if (!(bool)m_body) return 50f;
-
-    var damagePerPointOfMass = RamConfig.VehicleHullMassMultiplierDamage.Value;
-    var baseDamage = RamConfig.BaseVehicleHullImpactDamage.Value;
-    var maxDamage = RamConfig.MaxVehicleHullImpactDamage.Value;
-
-    var rigidBodyMass = m_body != null ? m_body.mass : 1000f;
-    var massDamage = rigidBodyMass * damagePerPointOfMass;
-    var damage = Math.Min(maxDamage, baseDamage + massDamage);
-
-    return damage;
   }
 
   private void UpdateFlightStats()

@@ -17,21 +17,21 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseBETA Archive|AnyCPU' ">
-      <OutputPath>bin\ReleaseBETA Archive\</OutputPath>
+        <OutputPath>bin\ReleaseBETA Archive\</OutputPath>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-      <OutputPath>bin\Release\</OutputPath>
+        <OutputPath>bin\Release\</OutputPath>
     </PropertyGroup>
     <Import Project="$(SolutionDir)/valheim.targets"/>
 
     <ItemGroup>
+        <Compile Include="ValheimVehicles.Vehicles\Controllers\VehiclePiecesJobs.cs"/>
         <Compile Include="ValheimVehiclesPlugin.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
     </ItemGroup>
     <ItemGroup>
         <Folder Include="ValheimVehicles.DynamicLocations\"/>
         <Folder Include="ValheimVehicles.Propulsion\"/>
-        <Folder Include="ValheimVehicles.Vehicles\"/>
         <Folder Include="ValheimVehicles.Config\"/>
         <Folder Include="ValheimVehicles.Prefabs\"/>
         <Folder Include="ValheimVehicles.Constants\"/>

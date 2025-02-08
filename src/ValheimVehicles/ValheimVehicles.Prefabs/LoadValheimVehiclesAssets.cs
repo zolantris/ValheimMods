@@ -49,6 +49,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
   public static GameObject VehicleLand = null!;
   public static GameObject WheelSingle = null!;
+  public static GameObject TankTreadsSingle = null!;
 
   // hull ribs
   public static GameObject ShipHullRibWoodAsset = null!;
@@ -292,7 +293,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
     WheelSingle =
       assetBundle.LoadAsset<GameObject>(
         $"wheel_single.prefab");
-
+    TankTreadsSingle = assetBundle.LoadAsset<GameObject>(
+      $"shared_tank_tread.prefab");
     VehicleLand =
       assetBundle.LoadAsset<GameObject>(
         $"vehicle_land.prefab");

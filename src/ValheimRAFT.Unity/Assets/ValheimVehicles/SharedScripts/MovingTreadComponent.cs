@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Unity.VisualScripting; // Required for Visual Scripting components
 
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
@@ -38,7 +37,7 @@ namespace ValheimVehicles.SharedScripts
 
     internal Dictionary<Rigidbody, float> treadProgress = new(); // Stores the progress of each tread (0 to 1)
 
-    internal static Vector3 tread_meshScalar = new Vector3(2f, 0.0500000007f, 0.599999964f);
+    internal static Vector3 tread_meshScalar = new(2f, 0.0500000007f, 0.599999964f);
     internal static List<LocalTransform> _treadFrontLocalPoints = new()
     {
       new LocalTransform()
@@ -73,7 +72,7 @@ namespace ValheimVehicles.SharedScripts
       {
         position = new Vector3(0f, 0f, 0f),
         rotation = Quaternion.Euler(180f, 0f, 0f)
-      },
+      }
     };
     internal static List<LocalTransform> _treadBackLocalPoints = new()
     {
@@ -100,7 +99,7 @@ namespace ValheimVehicles.SharedScripts
       {
         position = new Vector3(0.0f, 1.34000015f, -0.542955399f),
         rotation = Quaternion.Euler(315, 0, 0)
-      },
+      }
       // // top tread
       // new LocalTransform()
       // {
@@ -180,7 +179,7 @@ namespace ValheimVehicles.SharedScripts
         // HingeJoint hinge = GetComponent<HingeJoint>();
 
 // Get the center of mass of the object
-        Vector3 centerOfMass = hinge.transform.parent.position; // Or use a different method to calculate the center
+        var centerOfMass = hinge.transform.parent.position; // Or use a different method to calculate the center
 
 // Set the hinge joint's anchor to the center of mass
         hinge.anchor = hinge.transform.InverseTransformPoint(centerOfMass);
@@ -401,7 +400,7 @@ namespace ValheimVehicles.SharedScripts
       var rb = child.GetComponent<Rigidbody>();
       if (!rb)
       {
-        rb = child.AddComponent<Rigidbody>();
+        rb = child.gameObject.AddComponent<Rigidbody>();
       }
       rb.mass = 1f;
       rb.drag = 1f;
@@ -450,7 +449,7 @@ namespace ValheimVehicles.SharedScripts
         var worldTargetRotation = parentRotation * localTransform.rotation;
 
         // Get the previous target position and rotation
-        int prevTreadTarget = isForward ? currentTreadTarget - 1 : currentTreadTarget + 1;
+        var prevTreadTarget = isForward ? currentTreadTarget - 1 : currentTreadTarget + 1;
         if (prevTreadTarget >= _movingTreads.Count) prevTreadTarget = 0;
         if (prevTreadTarget < 0) prevTreadTarget = _movingTreads.Count - 1;
 
@@ -459,7 +458,7 @@ namespace ValheimVehicles.SharedScripts
         var worldPrevRotation = parentRotation * prevLocalTransform.rotation;
 
         // Interpolation factor for smooth movement
-        float progress = treadProgress[currentTreadRb];
+        var progress = treadProgress[currentTreadRb];
 
         // Increment progress based on fixedDeltaTime and speedMultiplier
         progress += Time.fixedDeltaTime * speedMultiplier;
