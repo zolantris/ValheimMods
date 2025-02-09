@@ -414,8 +414,14 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   /// </summary>
   public void InitializeWheelController()
   {
-
-    WheelController = gameObject.AddComponent<VehicleWheelController>();
+    if (WheelController == null)
+    {
+      WheelController = gameObject.GetComponent<VehicleWheelController>();
+      if (WheelController == null)
+      {
+        WheelController = gameObject.AddComponent<VehicleWheelController>();
+      }
+    }
     WheelController.inputTurnForce = 0;
     WheelController.inputForwardForce = 0;
     UpdateWheelControllerProperties();

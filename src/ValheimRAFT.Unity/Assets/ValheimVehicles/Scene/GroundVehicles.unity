@@ -1242,7 +1242,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &298421930
 Transform:
   m_ObjectHideFlags: 0
@@ -2737,13 +2737,7 @@ PrefabInstance:
     - {fileID: 7054957573198245590, guid: 3d36d4983b82e1a40925c3ef608cd7d1, type: 3}
     - {fileID: 3146322858652883453, guid: 3d36d4983b82e1a40925c3ef608cd7d1, type: 3}
     - {fileID: 5882386707620461319, guid: 3d36d4983b82e1a40925c3ef608cd7d1, type: 3}
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 3130001061267890357, guid: b9a83f51c91f7ed4aa53cdfaba483afe, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1254273957}
-    - targetCorrespondingSourceObject: {fileID: 3130001061267890357, guid: b9a83f51c91f7ed4aa53cdfaba483afe, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1378403312}
+    m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 8225528950071859225, guid: b9a83f51c91f7ed4aa53cdfaba483afe, type: 3}
       insertIndex: -1
@@ -4773,37 +4767,11 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!1 &1254273956
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1254273957}
-  m_Layer: 10
-  m_Name: treads_left
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1254273957
+--- !u!4 &1254273957 stripped
 Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 8540712990952796350, guid: b9a83f51c91f7ed4aa53cdfaba483afe, type: 3}
+  m_PrefabInstance: {fileID: 817209009}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1254273956}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1365930687}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1258938123
 GameObject:
   m_ObjectHideFlags: 0
@@ -5716,8 +5684,8 @@ MonoBehaviour:
   wheelSuspensionDistance: 1
   wheelSuspensionSpring: 200
   treadsPrefab: {fileID: 5595029556979915977, guid: c5dd1538f0ffd3242b551c837c16135b, type: 3}
-  treadsRight: {fileID: 0}
-  treadsLeft: {fileID: 0}
+  treadsRight: {fileID: 1378403312}
+  treadsLeft: {fileID: 1254273957}
   additionalBreakForce: 250
   IsControlling: 0
 --- !u!54 &1365930684
@@ -5769,11 +5737,6 @@ MonoBehaviour:
   convexMeshLayer: 29
   m_colliderParentTransform: {fileID: 2055734410}
   m_rigidbody: {fileID: 1365930684}
---- !u!4 &1365930687 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 3130001061267890357, guid: b9a83f51c91f7ed4aa53cdfaba483afe, type: 3}
-  m_PrefabInstance: {fileID: 817209009}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1374780049
 GameObject:
   m_ObjectHideFlags: 0
@@ -5868,37 +5831,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
---- !u!1 &1378403311
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1378403312}
-  m_Layer: 10
-  m_Name: treads_right
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1378403312
+--- !u!4 &1378403312 stripped
 Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 7748001732500551816, guid: b9a83f51c91f7ed4aa53cdfaba483afe, type: 3}
+  m_PrefabInstance: {fileID: 817209009}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1378403311}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1365930687}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1390999940
 GameObject:
   m_ObjectHideFlags: 0
@@ -6509,7 +6446,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1543952656}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5d00054e3a775ab41980f1dcdcbdafd5, type: 3}
   m_Name: 
@@ -6518,7 +6455,7 @@ MonoBehaviour:
   treadPrefab: {fileID: 0}
   treadTopLocalPosition: 1.578
   treadBottomLocalPosition: 0
-  wheelRotators: []
+  _wheelRotators: []
   treadParent: {fileID: 1739700096}
   originalTreadPositions: []
   localBounds:
@@ -65877,7 +65814,7 @@ MonoBehaviour:
   m_PreserveMeshAssetOnDestroy: 0
   assetGuid: 
   m_Mesh: {fileID: 1699126306}
-  m_VersionIndex: 76
+  m_VersionIndex: 79
   m_IsSelectable: 1
   m_SelectedFaces: 
   m_SelectedEdges: []

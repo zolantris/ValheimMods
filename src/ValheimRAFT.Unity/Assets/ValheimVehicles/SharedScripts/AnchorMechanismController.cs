@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 
 // ReSharper disable ArrangeNamespaceBody
@@ -176,6 +175,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void UpdateHoverText(string text = "")
     {
+      if (anchorStateFadeText == null) return;
       anchorStateFadeText.currentText = text == "" ? GetCurrentStateText() : text;
       anchorStateFadeText.ResetHoverTimer();
     }

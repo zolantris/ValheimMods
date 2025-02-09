@@ -3,6 +3,7 @@ using Jotunn;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.U2D;
+using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.Prefabs;
 
@@ -298,5 +299,8 @@ public class LoadValheimVehicleAssets : ILoadAssets
     VehicleLand =
       assetBundle.LoadAsset<GameObject>(
         $"vehicle_land.prefab");
+
+
+    MovingTreadComponent.fallbackPrefab = TankTreadsSingle;
   }
 }

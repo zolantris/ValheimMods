@@ -139,11 +139,14 @@ namespace ValheimVehicles.SharedScripts
     public const float wheelBaseRadiusScale = 1.5f;
     public GameObject treadsPrefab;
 
-    // wheel regeneration
-    public static bool shouldCleanupPerInitialize = false;
+    // wheel regeneration unstable so leave this one for now
+    public static bool shouldCleanupPerInitialize = true;
 
     internal MovingTreadComponent movingTreadRight;
     internal MovingTreadComponent movingTreadLeft;
+    public Transform treadsRight;
+    public Transform treadsLeft;
+
 
     private void Awake()
     {
@@ -157,14 +160,7 @@ namespace ValheimVehicles.SharedScripts
       var centerOfMass = transform.Find("center_of_mass");
       if (centerOfMass != null) centerOfMassTransform = centerOfMass;
       if (centerOfMassTransform == null) centerOfMassTransform = transform;
-      UpdateMaxRPM();
-      InitTreads();
-    }
 
-    public Transform treadsRight;
-    public Transform treadsLeft;
-    private void InitTreads()
-    {
       if (!treadsRight)
       {
         treadsRight = transform.Find("treads_right");
@@ -173,27 +169,84 @@ namespace ValheimVehicles.SharedScripts
       {
         treadsLeft = transform.Find("treads_left");
       }
+
+      InitTreadComponent();
+    }
+
+    // We run this only in Unity Editor
+#if UNITY_EDITOR
+    private float centerOfMassOffset = -10f;
+    private void Update()
+    {
+      if (!Application.isPlaying) return;
+      UpdateControls();
+    }
+
+    private void FixedUpdate()
+    {
+      if (!Application.isPlaying) return;
+      VehicleMovementFixedUpdate();
+      UpdateCenterOfMass(centerOfMassOffset);
+      UpdateMaxRPM();
+    }
+#endif
+
+    private void OnEnable()
+    {
+      UpdateMaxRPM();
+      InitTreadComponent();
+    }
+
+    private void OnDisable()
+    {
+      CleanupTreads();
+      CleanupWheels();
+    }
+
+    private void InitTreadComponent()
+    {
       if (!treadsRight || !treadsLeft) return;
+      if (!movingTreadLeft)
+      {
+        movingTreadLeft = treadsLeft.GetComponent<MovingTreadComponent>();
+      }
+      if (!movingTreadLeft)
+      {
+        movingTreadLeft = treadsLeft.transform.gameObject.AddComponent<MovingTreadComponent>();
+      }
 
-      movingTreadLeft = treadsLeft.transform.gameObject.AddComponent<MovingTreadComponent>();
-      movingTreadRight = treadsRight.transform.gameObject.AddComponent<MovingTreadComponent>();
+      if (!movingTreadRight)
+      {
+        movingTreadRight = treadsRight.GetComponent<MovingTreadComponent>();
+      }
+      if (!movingTreadRight)
+      {
+        movingTreadRight = treadsRight.transform.gameObject.AddComponent<MovingTreadComponent>();
+      }
 
-      movingTreadLeft.treadPrefab = treadsPrefab;
       movingTreadLeft.treadParent = treadsLeft;
-
-      movingTreadRight.treadPrefab = treadsPrefab;
       movingTreadRight.treadParent = treadsRight;
+
+      if (treadsPrefab)
+      {
+        movingTreadLeft.treadPrefab = treadsPrefab;
+        movingTreadRight.treadPrefab = treadsPrefab;
+      }
     }
 
     private void UpdateTreads(Bounds bounds)
     {
-      if (!treadsRight || !treadsLeft) return;
+      if (!movingTreadLeft || !movingTreadRight)
+      {
+        InitTreadComponent();
+      }
 
-      treadsRight.localPosition = new Vector3(bounds.max.x, bounds.min.y, 0);
-      treadsLeft.localPosition = new Vector3(bounds.min.x, bounds.min.y, 0);
+      // treads generate from their origin point forwards so Z axis should always be lowest value
+      treadsRight.localPosition = new Vector3(bounds.max.x, bounds.min.y, bounds.min.z);
+      treadsLeft.localPosition = new Vector3(bounds.min.x, bounds.min.y, bounds.min.z);
 
-      if (movingTreadLeft) movingTreadLeft.InitTreads(bounds);
-      if (movingTreadRight) movingTreadRight.InitTreads(bounds);
+      if (movingTreadLeft) movingTreadLeft.GenerateTreads(bounds);
+      if (movingTreadRight) movingTreadRight.GenerateTreads(bounds);
     }
 
     private void UpdateCenterOfMass(float yOffset)
@@ -206,9 +259,10 @@ namespace ValheimVehicles.SharedScripts
       rigid.centerOfMass = centerOfMass;
     }
 
-    private void OnDisable()
+    private void CleanupTreads()
     {
-      CleanupWheels();
+      if (movingTreadLeft) Destroy(movingTreadLeft);
+      if (movingTreadRight) Destroy(movingTreadRight);
     }
 
     private void CleanupWheels()
@@ -244,6 +298,15 @@ namespace ValheimVehicles.SharedScripts
       if (!hasInitialized || wheelColliders.Count == 0) return;
       RunPoweredWheels();
       RunSteering();
+
+      var isForward = Mathf.Sign(inputForwardForce) > 0;
+      var currentSpeed = rigid.velocity.magnitude;
+
+      if (movingTreadLeft && movingTreadRight)
+      {
+        movingTreadLeft.SetSpeedAndDirection(currentSpeed, isForward);
+        movingTreadRight.SetSpeedAndDirection(currentSpeed, isForward);
+      }
     }
 
     private Coroutine? initializeWheelsCoroutine;
@@ -295,12 +358,17 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     private void SetupWheels()
     {
-      if (wheelColliders.Count != wheelInstances.Count)
+      wheelColliders = new List<WheelCollider>();
+      colliders = new List<Collider>();
+
+      wheelInstances.ForEach(x =>
       {
-        wheelColliders = wheelParent.GetComponentsInChildren<WheelCollider>()
-          .ToList();
-        colliders = wheelParent.GetComponentsInChildren<Collider>().ToList();
-      }
+        var wheelCollider = x.GetComponentInChildren<WheelCollider>();
+        if (!wheelCollider) return;
+        wheelColliders.Add(wheelCollider);
+        var colliderComp = wheelCollider.GetComponent<Collider>();
+        if (colliderComp) colliders.Add(colliderComp);
+      });
 
       foreach (var wheelCollider in wheelColliders)
       {
@@ -393,7 +461,7 @@ namespace ValheimVehicles.SharedScripts
 
       // we fully can regenerate wheels.
       // todo just remove the ones we no longer use
-      if (totalWheelSets != wheelInstances.Count)
+      if (totalWheelSets != wheelInstances.Count || wheelColliders.Count != totalWheelSets)
       {
         CleanupWheels();
       }
@@ -664,6 +732,76 @@ namespace ValheimVehicles.SharedScripts
       var accelerationMultiplier = Mathf.Lerp(10, 1f, normalizedRPM);
       return accelerationMultiplier;
     }
+
+    public float currentMotorTorque = 0f;
+    public float currentBreakTorque = 0f;
+
+    /// <summary>
+    /// Updates the shared torque values for both debugging and computation efficiency
+    /// </summary>
+    /// <param name="wheel"></param>
+    public void UpdateSynchronizedWheelProperties(WheelCollider wheel)
+    {
+      if (!wheel) return;
+      // var inputForceDir = Mathf.Sign(inputForwardForce);
+
+      if (isBreaking)
+      {
+        currentMotorTorque = 0f;
+        currentBreakTorque = Mathf.Abs(wheel.rpm + inputForwardForce * baseMotorTorque + additionalBreakForce);
+        return;
+      }
+
+      if (inputForwardForce == 0)
+      {
+        currentMotorTorque = 0;
+        currentBreakTorque = inputForwardForce * baseMotorTorque / 2f + additionalBreakForce * Time.fixedDeltaTime;
+        return;
+      }
+
+      if (Mathf.Abs(wheel.rpm) > MaxWheelRPM || rigid.velocity.x + rigid.velocity.z >= topSpeed)
+      {
+        currentBreakTorque = wheel.rpm;
+        return;
+      }
+
+      if (Mathf.Abs(wheel.rpm) > MaxWheelRPM || !wheel.isGrounded)
+      {
+        currentMotorTorque = 0f;
+        currentBreakTorque = 0f;
+        return;
+      }
+
+      if (!Mathf.Approximately(MaxWheelRPM, 0f))
+      {
+        // To create a top speed for the tank, the motor torque just
+        // cuts out when the tank starts moving fast enough.
+        if (wheel.brakeTorque > 0f)
+        {
+          currentBreakTorque = 0f;
+        }
+        var nextMotorTorque = wheel.motorTorque;
+
+        var accelerationMultiplier = GetAccelerationMultiplier(wheel);
+        // using power will turn the number positive. We use sign to get -1 if below 1 or 1 if above 0
+        var additiveTorque = inputForwardForce * baseMotorTorque * accelerationMultiplier * Time.fixedDeltaTime;
+
+        // alternative to acceleration mulitplier
+        // if (wheel.rpm < MaxWheelRPM * 0.1f)
+        // {
+        //   nextMotorTorque += inputForceDir * MaxWheelRPM * 0.1f;
+        // }
+
+        // When flipping directions we immediately must zero out the motor torque.
+        if (wheel.motorTorque > 0f && additiveTorque < 0f || wheel.motorTorque < 0f && additiveTorque > 0f)
+        {
+          nextMotorTorque = 0f;
+        }
+
+        currentMotorTorque = Mathf.Clamp(nextMotorTorque + additiveTorque, -MaxWheelRPM, MaxWheelRPM);
+      }
+    }
+
     /// <summary>
     ///   POWERED WHEELs
     ///   Sets the motor torque of the wheel based on forward input. This moves
@@ -681,69 +819,24 @@ namespace ValheimVehicles.SharedScripts
       //   return;
       // }
 
-      var inputForceDir = Mathf.Sign(inputForwardForce);
+      if (poweredWheels.Count == 0) return;
+
+      var firstWheel = wheelColliders[0];
+      UpdateSynchronizedWheelProperties(firstWheel);
 
       foreach (var wheel in poweredWheels)
       {
         if (wheel == null) continue;
-        if (isBreaking)
-        {
-          wheel.motorTorque = 0f;
-          wheel.brakeTorque = wheel.rpm + inputForwardForce * baseMotorTorque + additionalBreakForce;
-        }
-        if (!isBreaking)
-        {
-          if (inputForwardForce == 0)
-          {
-            wheel.motorTorque = 0;
-            wheel.brakeTorque = inputForwardForce * baseMotorTorque / 2f + additionalBreakForce * Time.fixedDeltaTime;
-          }
-          else if (Mathf.Abs(wheel.rpm) > MaxWheelRPM || rigid.velocity.x + rigid.velocity.z >= topSpeed)
-          {
-            return;
-          }
-          else if (Mathf.Abs(wheel.rpm) > MaxWheelRPM || !wheel.isGrounded)
-          {
-            wheel.motorTorque = 0f;
-          }
-          else if (!Mathf.Approximately(MaxWheelRPM, 0f))
-          {
-            // To create a top speed for the tank, the motor torque just
-            // cuts out when the tank starts moving fast enough.
-            if (wheel.brakeTorque > 0f)
-            {
-              wheel.brakeTorque = 0f;
-            }
-            var nextMotorTorque = wheel.motorTorque;
-
-            var accelerationMultiplier = GetAccelerationMultiplier(wheel);
-            // using power will turn the number positive. We use sign to get -1 if below 1 or 1 if above 0
-            var additiveTorque = inputForwardForce * baseMotorTorque * accelerationMultiplier * Time.fixedDeltaTime;
-
-            // alternative to acceleration mulitplier
-            // if (wheel.rpm < MaxWheelRPM * 0.1f)
-            // {
-            //   nextMotorTorque += inputForceDir * MaxWheelRPM * 0.1f;
-            // }
-
-            // When flipping directions we immediately must zero out the motor torque.
-            if (wheel.motorTorque > 0f && additiveTorque < 0f || wheel.motorTorque < 0f && additiveTorque > 0f)
-            {
-              nextMotorTorque = 0f;
-            }
-
-            wheel.motorTorque = Mathf.Clamp(nextMotorTorque + additiveTorque, -MaxWheelRPM, MaxWheelRPM);
-          }
-        }
-
-        if (wheelInstances != null &&
-            WheelcollidersToWheelRenderMap.TryGetValue(wheel,
+        wheel.brakeTorque = currentBreakTorque;
+        wheel.motorTorque = currentMotorTorque;
+        if (WheelcollidersToWheelRenderMap.TryGetValue(wheel,
               out var wheelRenderer))
         {
           SyncWheelVisualWithCollider(wheelRenderer, wheel);
         }
       }
     }
+
 
     /// <summary>
     /// Update wheel mesh positions to match the physics wheels.
@@ -932,6 +1025,7 @@ namespace ValheimVehicles.SharedScripts
     }
 
     private bool isBreakDown = true;
+
     /// <summary>
     /// This will need logic to check if the player is the owner and if the player is controlling the vehicle actively.
     ///
@@ -956,31 +1050,5 @@ namespace ValheimVehicles.SharedScripts
       inputForwardForce = Input.GetAxis("Vertical");
       inputTurnForce = Input.GetAxis("Horizontal");
     }
-
-    // We run this only in Unity Editor
-#if UNITY_EDITOR
-    private float centerOfMassOffset = -10f;
-    private void Start()
-    {
-      if (!Application.isPlaying) return;
-      // inputForwardForce = 500f;
-      // if (boundsTransform != null)
-      // InitializeWheels();
-    }
-
-    private void Update()
-    {
-      if (!Application.isPlaying) return;
-      UpdateControls();
-    }
-
-    private void FixedUpdate()
-    {
-      if (!Application.isPlaying) return;
-      VehicleMovementFixedUpdate();
-      UpdateCenterOfMass(centerOfMassOffset);
-      UpdateMaxRPM();
-    }
-#endif
   }
 }
