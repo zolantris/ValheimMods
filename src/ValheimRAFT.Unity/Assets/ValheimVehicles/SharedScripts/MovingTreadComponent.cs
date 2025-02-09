@@ -161,7 +161,7 @@ namespace ValheimVehicles.SharedScripts
     public bool AllowTreadsObject(string val)
 
     {
-      if (val.Contains("treads"))
+      if (val.Contains("tread"))
         return true;
       return false;
     }
@@ -397,12 +397,23 @@ namespace ValheimVehicles.SharedScripts
       var treadGameObjects = _movingTreads.Select(x => x.gameObject).ToList();
       convexHullComponent.HasPreviewGeneration = false;
       convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects, null);
+      convexHullComponent.convexHullMeshColliders.ForEach(x =>
+      {
+        if (!x) return;
+        x.gameObject.name = "convex_tread_collider";
+        x.includeLayers = LayerMask.GetMask("terrain");
+        x.excludeLayers = -1;
+      });
     }
 
-    public void SetSpeedAndDirection(float speed, bool isMovingForward)
+    public void SetSpeed(float speed)
     {
       speedMultiplier = speedMultiplierOverride != 0 ? speedMultiplierOverride : speed;
-      isForward = isMovingForward;
+    }
+
+    public void SetDirection(bool isDirectionForward)
+    {
+      isForward = isDirectionForward;
     }
 
     public static Rigidbody AddRigidbodyToChild(Transform child)
@@ -416,7 +427,7 @@ namespace ValheimVehicles.SharedScripts
       rb.drag = 0.05f;
       rb.angularDrag = 10f;
       rb.useGravity = false;
-      rb.isKinematic = false;
+      rb.isKinematic = true;
       return rb;
     }
 
@@ -498,18 +509,18 @@ namespace ValheimVehicles.SharedScripts
         var newPosition = Vector3.Lerp(worldPrevPosition, worldTargetPosition, progress);
         var newRotation = Quaternion.Lerp(worldPrevRotation, worldTargetRotation, progress);
 
-        if (!currentTreadRb.name.Contains("top"))
-        {
-          var rbTransform = currentTreadRb.transform;
-          var position = rbTransform.position;
-          // var deltaPosition = newPosition - position;
-          // the forward direction should push backwards
-          var forwardMultiplier = isForward ? -1f : 1f;
-          var inverseDirectionalForce = rbTransform.forward * 450f * forwardMultiplier;
-          var upwardForce = rbTransform.up * 50f;
-          var force = upwardForce + inverseDirectionalForce;
-          rootRb.AddForceAtPosition(force, position, ForceMode.Force);
-        }
+        // if (!currentTreadRb.name.Contains("top"))
+        // {
+        //   var rbTransform = currentTreadRb.transform;
+        //   var position = rbTransform.position;
+        //   // var deltaPosition = newPosition - position;
+        //   // the forward direction should push backwards
+        //   var forwardMultiplier = isForward ? -1f : 1f;
+        //   var inverseDirectionalForce = rbTransform.forward * 450f * forwardMultiplier;
+        //   var upwardForce = rbTransform.up * 50f;
+        //   var force = upwardForce + inverseDirectionalForce;
+        //   rootRb.AddForceAtPosition(force, position, ForceMode.Force);
+        // }
 
         // Apply the calculated position and rotation to the tread's rigidbody
         currentTreadRb.MovePosition(newPosition);
