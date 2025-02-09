@@ -1720,7 +1720,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 417425496}
   serializedVersion: 4
-  m_Mass: 100
+  m_Mass: 1000
   m_Drag: 0.05
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -5727,17 +5727,17 @@ MonoBehaviour:
   axelPadding: 0.5
   vehicleSizeThresholdFor5thSet: 30
   vehicleSizeThresholdFor6thSet: 60
-  inputForwardForce: 2
-  inputTurnForce: 0.5
+  inputForwardForce: 4
+  inputTurnForce: 0
   MaxWheelRPM: 3000
   turnInputOverride: 0
   isBreaking: 0
   UseManualControls: 0
   hasInitialized: 0
   wheelBottomOffset: 0
-  wheelRadius: 1.578
-  wheelSuspensionDistance: 1
-  wheelSuspensionSpring: 200
+  wheelRadius: 1
+  wheelSuspensionDistance: 0
+  wheelSuspensionSpring: 0
   treadsPrefab: {fileID: 5595029556979915977, guid: c5dd1538f0ffd3242b551c837c16135b, type: 3}
   wheelParent: {fileID: 942143422}
   treadsParent: {fileID: 605681478}
@@ -5757,8 +5757,8 @@ Rigidbody:
   m_GameObject: {fileID: 1365930681}
   serializedVersion: 4
   m_Mass: 1000
-  m_Drag: 0
-  m_AngularDrag: 1
+  m_Drag: 0.5
+  m_AngularDrag: 0.5
   m_CenterOfMass: {x: 0, y: -10, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -5773,7 +5773,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 1
-  m_Constraints: 14
+  m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!114 &1365930686
 MonoBehaviour:
@@ -66627,7 +66627,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1684181124}
   serializedVersion: 4
-  m_Mass: 100
+  m_Mass: 1000
   m_Drag: 0.05
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}

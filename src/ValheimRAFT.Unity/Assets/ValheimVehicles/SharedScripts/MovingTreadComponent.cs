@@ -394,16 +394,15 @@ namespace ValheimVehicles.SharedScripts
 
       CenterObj.transform.position = treadParent.position + localBounds.center;
 
-      var treadGameObjects = _movingTreads.Select(x => x.gameObject).ToList();
-      convexHullComponent.HasPreviewGeneration = false;
-      convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects, null);
-      convexHullComponent.convexHullMeshColliders.ForEach(x =>
-      {
-        if (!x) return;
-        x.gameObject.name = "convex_tread_collider";
-        x.includeLayers = LayerMask.GetMask("terrain");
-        x.excludeLayers = -1;
-      });
+      // var treadGameObjects = 0eneration = false;
+      // convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects, null);
+      // convexHullComponent.convexHullMeshColliders.ForEach(x =>
+      // {
+      //   if (!x) return;
+      //   x.gameObject.name = "convex_tread_collider";
+      //   x.includeLayers = LayerMask.GetMask("terrain");
+      //   x.excludeLayers = -1;
+      // });
     }
 
     public void SetSpeed(float speed)
