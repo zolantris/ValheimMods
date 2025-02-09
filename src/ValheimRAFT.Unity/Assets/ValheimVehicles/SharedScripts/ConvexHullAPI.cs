@@ -84,6 +84,9 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     [NonSerialized] public List<GameObject> convexHullPreviewMeshes = new();
 
+    [FormerlySerializedAs("HasPreviewGenerationEnabled")] [FormerlySerializedAs("hasPreviewGenerationEnabled")]
+    public bool HasPreviewGeneration = true;
+
     [NonSerialized]
     public List<MeshRenderer> convexHullPreviewMeshRendererItems = new();
 
@@ -147,10 +150,7 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     /// <param name="val"></param>
     /// <returns></returns>
-    public virtual bool IsAllowedAsHullOverride(string val)
-    {
-      return false;
-    }
+    public Func<string, bool> IsAllowedAsHullOverride = s => false;
 
     public void UpdatePropertiesForConvexHulls(
       Vector3 transformPreviewOffset, PreviewModes mode, Color debugColor,
@@ -1019,6 +1019,7 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     public void CreatePreviewConvexHullMeshes()
     {
+      if (!HasPreviewGeneration) return;
       DeleteMeshesFromChildColliders(convexHullPreviewMeshes);
       // must clear previews too
       convexHullPreviewMeshRendererItems.Clear();
@@ -1194,7 +1195,7 @@ namespace ValheimVehicles.SharedScripts
       var convexHullBounds = new Bounds(localPoints[0], Vector3.zero);
       localPoints.ForEach(x => convexHullBounds.Encapsulate(x));
       _cachedConvexHullBounds = convexHullBounds;
-     }
+    }
 
     public void OnDrawGizmos()
     {

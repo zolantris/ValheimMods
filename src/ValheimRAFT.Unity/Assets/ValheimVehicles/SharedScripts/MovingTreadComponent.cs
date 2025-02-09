@@ -17,6 +17,7 @@ namespace ValheimVehicles.SharedScripts
     public List<HingeJoint> _wheelRotators = new();
 
     internal Rigidbody treadRb;
+    internal Rigidbody rootRb;
     public Transform rotatorParent;
 
     public static GameObject fallbackPrefab = null!;
@@ -117,10 +118,13 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+    public ConvexHullAPI convexHullComponent;
+
     public void Awake()
     {
       rotatorParent = transform.Find("rotators");
       treadRb = GetComponent<Rigidbody>();
+      rootRb = GetComponentInParent<Rigidbody>();
       if (!treadPrefab && fallbackPrefab)
       {
         treadPrefab = fallbackPrefab;
@@ -139,7 +143,29 @@ namespace ValheimVehicles.SharedScripts
       {
         _wheelRotators = rotatorParent.GetComponentsInChildren<HingeJoint>().ToList();
       }
+      if (!convexHullComponent)
+      {
+        convexHullComponent = gameObject.AddComponent<ConvexHullAPI>();
+      }
+
+      convexHullComponent.m_colliderParentTransform = treadParent;
+      convexHullComponent.HasPreviewGeneration = false;
+      convexHullComponent.IsAllowedAsHullOverride = AllowTreadsObject;
     }
+
+    /// <summary>
+    /// A lower case string matcher to allow any object starting with treads to be allowed as a convexhull so we can create collisions.
+    /// </summary>
+    /// <param name="val"></param>
+    /// <returns></returns>
+    public bool AllowTreadsObject(string val)
+
+    {
+      if (val.Contains("treads"))
+        return true;
+      return false;
+    }
+
     public void OnEnable()
     {
       CleanUp();
@@ -194,8 +220,8 @@ namespace ValheimVehicles.SharedScripts
 
 
         var motor = hinge.motor;
-        motor.force = speedMultiplier * currentSpeed * 50f;
-        motor.targetVelocity = speedMultiplier * currentSpeed * 50f;
+        motor.force = speedMultiplier * speedMultiplierOverride * 50f;
+        motor.targetVelocity = speedMultiplier * speedMultiplierOverride * 50f;
         hinge.motor = motor;
       });
     }
@@ -367,27 +393,30 @@ namespace ValheimVehicles.SharedScripts
       }
 
       CenterObj.transform.position = treadParent.position + localBounds.center;
+
+      var treadGameObjects = _movingTreads.Select(x => x.gameObject).ToList();
+      convexHullComponent.HasPreviewGeneration = false;
+      convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects, null);
     }
 
     public void SetSpeedAndDirection(float speed, bool isMovingForward)
     {
-      // currentSpeed = speed;
-      speedMultiplier = speed;
+      speedMultiplier = speedMultiplierOverride != 0 ? speedMultiplierOverride : speed;
       isForward = isMovingForward;
     }
 
-    public Rigidbody AddRigidbodyToChild(Transform child)
+    public static Rigidbody AddRigidbodyToChild(Transform child)
     {
       var rb = child.GetComponent<Rigidbody>();
       if (!rb)
       {
         rb = child.gameObject.AddComponent<Rigidbody>();
       }
-      rb.mass = 1f;
-      rb.drag = 1f;
+      rb.mass = 20f;
+      rb.drag = 0.05f;
       rb.angularDrag = 10f;
       rb.useGravity = false;
-      rb.isKinematic = true;
+      rb.isKinematic = false;
       return rb;
     }
 
@@ -469,6 +498,19 @@ namespace ValheimVehicles.SharedScripts
         var newPosition = Vector3.Lerp(worldPrevPosition, worldTargetPosition, progress);
         var newRotation = Quaternion.Lerp(worldPrevRotation, worldTargetRotation, progress);
 
+        if (!currentTreadRb.name.Contains("top"))
+        {
+          var rbTransform = currentTreadRb.transform;
+          var position = rbTransform.position;
+          // var deltaPosition = newPosition - position;
+          // the forward direction should push backwards
+          var forwardMultiplier = isForward ? -1f : 1f;
+          var inverseDirectionalForce = rbTransform.forward * 450f * forwardMultiplier;
+          var upwardForce = rbTransform.up * 50f;
+          var force = upwardForce + inverseDirectionalForce;
+          rootRb.AddForceAtPosition(force, position, ForceMode.Force);
+        }
+
         // Apply the calculated position and rotation to the tread's rigidbody
         currentTreadRb.MovePosition(newPosition);
         currentTreadRb.MoveRotation(newRotation);
@@ -476,7 +518,7 @@ namespace ValheimVehicles.SharedScripts
     }
 
     private float lastSpeed = 0f;
-    public float currentSpeed = 1f;
+    public float speedMultiplierOverride = 0;
     // Update is called once per frame
     public void FixedUpdate()
     {
@@ -484,9 +526,9 @@ namespace ValheimVehicles.SharedScripts
 
       if (_wheelRotators.Count > 0)
       {
-        if (!Mathf.Approximately(lastSpeed, currentSpeed))
+        if (!Mathf.Approximately(lastSpeed, speedMultiplierOverride))
         {
-          lastSpeed = currentSpeed;
+          lastSpeed = speedMultiplierOverride;
           UpdateRotators();
         }
       }
