@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Debug = UnityEngine.Debug;
 using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
 
@@ -101,10 +102,10 @@ namespace ValheimVehicles.SharedScripts
     public GameObject wheelPrefab; // Prefab for a single wheel set
     public GameObject rotationEnginePrefab; // Prefab for a single wheel set
 
-    public int minimumWheelSets = 2; // Minimum number of wheel sets
-    public int maxWheelSets = 5; // Minimum number of wheel sets
+    public int minimumWheelSets = 3; // Minimum number of wheel sets
+    public int maxWheelSets = 5; // Max number of wheel sets (FYI 20 is limit of all wheels so 10 total sets)
     public float
-      wheelSetIncrement = 10f;
+      wheelSetIncrement = 5f;
     public float axelPadding = 0.5f; // Extra length on both sides of axel
 
     [FormerlySerializedAs("accelerationForce")]
@@ -120,6 +121,7 @@ namespace ValheimVehicles.SharedScripts
     public float inputMovement;
 
 
+    public float inputTurnMultiplier = 1f;
     public float MaxWheelRPM = 3000f;
     public float turnInputOverride;
 
@@ -951,7 +953,13 @@ namespace ValheimVehicles.SharedScripts
     private int CalculateTotalWheelSets(Bounds bounds)
     {
       var vehicleSize = bounds.size.z; // Assuming size along the Z-axis determines length
-      var nearestIncrement = Mathf.Clamp(Mathf.RoundToInt(vehicleSize / wheelSetIncrement), minimumWheelSets, maxWheelSets);
+      var setInt = Mathf.RoundToInt(vehicleSize / wheelSetIncrement);
+      if (setInt % 2 == 0)
+      {
+        setInt += 1;
+      }
+
+      var nearestIncrement = Mathf.Clamp(setInt, minimumWheelSets, maxWheelSets);
       return nearestIncrement;
     }
 
@@ -1038,7 +1046,8 @@ namespace ValheimVehicles.SharedScripts
       var suspensionSpring = wheelCollider.suspensionSpring;
       suspensionSpring.spring = wheelSuspensionSpring;
       wheelCollider.suspensionSpring = suspensionSpring;
-      var wheelScalar = wheelCollider.radius / wheelBaseRadiusScale;
+      var wheelScalar = Mathf.RoundToInt(wheelCollider.radius / wheelBaseRadiusScale);
+
       if (!Mathf.Approximately(wheelScalar, 1f))
       {
         wheelVisual.transform.localScale = new Vector3(wheelScalar * wheelMeshLocalScale.x, wheelMeshLocalScale.y, wheelScalar * wheelMeshLocalScale.z);
@@ -1069,154 +1078,6 @@ namespace ValheimVehicles.SharedScripts
         WheelcollidersToWheelVisualMap.Add(wheelCollider, wheelVisual);
     }
 
-    public void RunSteering()
-    {
-      switch (m_steeringType)
-      {
-        case SteeringType.Differential:
-          RunDifferentialSteeringWheels();
-          break;
-        case SteeringType.Magic:
-          RunMagicRotation();
-          break;
-        case SteeringType.FourWheel:
-          RunFourWheelSteeringWheels();
-          break;
-        default:
-          throw new ArgumentOutOfRangeException();
-      }
-    }
-
-    private float GetAccelerationMultiplier(WheelCollider wheel)
-    {
-      return 1f;
-      var normalizedRPM = Mathf.Clamp01(Mathf.Abs(wheel.rpm) / MaxWheelRPM);
-      var accelerationMultiplier = Mathf.Lerp(10, 1f, normalizedRPM);
-      return accelerationMultiplier;
-    }
-
-    /// <summary>
-    /// Updates the shared torque values for both debugging and computation efficiency
-    /// </summary>
-    /// <param name="wheel"></param>
-    public void UpdateSynchronizedWheelProperties(WheelCollider wheel, bool isLeft, ref float motorTorque, ref float brakeTorque)
-    {
-      if (!wheel) return;
-      // var inputForceDir = Mathf.Sign(inputForwardForce);
-      if (!isLeft && inputTurnForce > 0.20f || isLeft && inputTurnForce < -0.20f || Mathf.Abs(inputTurnForce) > 10f)
-      {
-        // breakTorque = Mathf.Clamp(wheel.brakeTorque, MaxWheelRPM, MaxWheelRPM);
-        // motorTorque = Mathf.Clamp(wheel.motorTorque, MaxWheelRPM, MaxWheelRPM);
-        return;
-      }
-
-      if (isBraking)
-      {
-        motorTorque = 0f;
-        brakeTorque = Mathf.Abs(wheel.rpm + baseTorque * baseMotorTorque + additionalBrakeForce);
-        return;
-      }
-
-      if (baseTorque == 0)
-      {
-        motorTorque = 0;
-        brakeTorque = baseTorque * baseMotorTorque / 2f + additionalBrakeForce * Time.fixedDeltaTime;
-        return;
-      }
-
-      if (Mathf.Abs(wheel.rpm) > MaxWheelRPM || vehicleRootBody.velocity.x + vehicleRootBody.velocity.z >= topSpeed)
-      {
-        brakeTorque = Mathf.Abs(wheel.rpm);
-        return;
-      }
-
-      if (!wheel.isGrounded)
-      {
-        motorTorque = 0f;
-        brakeTorque = 500f;
-        return;
-      }
-
-
-      if (!Mathf.Approximately(MaxWheelRPM, 0f))
-      {
-        // To create a top speed for the tank, the motor torque just
-        // cuts out when the tank starts moving fast enough.
-        if (wheel.brakeTorque > 0f)
-        {
-          brakeTorque = 0f;
-        }
-        var nextMotorTorque = wheel.motorTorque;
-
-        var accelerationMultiplier = GetAccelerationMultiplier(wheel);
-        // using power will turn the number positive. We use sign to get -1 if below 1 or 1 if above 0
-        var additiveTorque = baseTorque * baseMotorTorque * accelerationMultiplier * Time.fixedDeltaTime;
-
-        // alternative to acceleration mulitplier
-        // if (wheel.rpm < MaxWheelRPM * 0.1f)
-        // {
-        //   nextMotorTorque += inputForceDir * MaxWheelRPM * 0.1f;
-        // }
-
-        // When flipping directions we immediately must zero out the motor torque.
-        if (wheel.motorTorque > 0f && additiveTorque < 0f || wheel.motorTorque < 0f && additiveTorque > 0f)
-        {
-          nextMotorTorque = 0f;
-        }
-
-        motorTorque = Mathf.Clamp(nextMotorTorque + additiveTorque, -MaxWheelRPM, MaxWheelRPM);
-      }
-    }
-
-    /// <summary>
-    ///   POWERED WHEELs
-    ///   Sets the motor torque of the wheel based on forward input. This moves
-    ///   the tank forwards and backwards.
-    /// </summary>
-    private void RunPoweredWheels()
-    {
-      // if (deltaRunPoweredWheels > powerWheelDeltaInterval)
-      // {
-      //   deltaRunPoweredWheels = 0f;
-      // }
-      // else
-      // {
-      //   deltaRunPoweredWheels += Time.fixedDeltaTime;
-      //   return;
-      // }
-
-      if (poweredWheels.Count == 0) return;
-
-      var firstWheelLeft = wheelColliders[0];
-      var firstWheelRight = wheelColliders[1];
-      // UpdateSynchronizedWheelProperties(firstWheelLeft, true, ref currentMotorTorqueLeft, ref currentBreakTorqueLeft);
-      // UpdateSynchronizedWheelProperties(firstWheelRight, false, ref currentMotorTorqueRight, ref currentBreakTorqueRight);
-
-      foreach (var wheel in poweredWheels)
-      {
-        if (wheel == null) continue;
-        var torque = 0f;
-        var brakeTorque = 0f;
-        if (wheel.transform.parent.name.Contains("left"))
-        {
-          UpdateSynchronizedWheelProperties(firstWheelLeft, true, ref torque, ref brakeTorque);
-          wheel.brakeTorque = torque;
-          wheel.motorTorque = brakeTorque;
-        }
-        else
-        {
-          UpdateSynchronizedWheelProperties(firstWheelLeft, false, ref torque, ref brakeTorque);
-          wheel.brakeTorque = torque;
-          wheel.motorTorque = brakeTorque;
-        }
-        if (WheelcollidersToWheelVisualMap.TryGetValue(wheel,
-              out var wheelVisual))
-        {
-          SyncWheelVisualWithCollider(wheelVisual, wheel);
-        }
-      }
-    }
-
     public void SyncWheelVisual(WheelCollider wheel)
     {
       if (!_hasSyncedWheelsOnCurrentFrame && WheelcollidersToWheelVisualMap.TryGetValue(wheel,
@@ -1225,7 +1086,6 @@ namespace ValheimVehicles.SharedScripts
         SyncWheelVisualWithCollider(wheelVisual, wheel);
       }
     }
-
     /// <summary>
     /// Update wheel mesh positions to match the physics wheels.
     /// </summary>
@@ -1418,22 +1278,6 @@ namespace ValheimVehicles.SharedScripts
       movingTreadRight.isForward = isRightForward;
     }
 
-    /// <summary>
-    ///   FOUR WHEEL STEERING
-    ///   Wheels assigned as front and rear wheels rotate to turn the tank.
-    ///   This works great in motion, but will not turn the tank when standing
-    ///   still.
-    ///   Note: If only one set of wheels is filled out, only that set will
-    ///   rotate.
-    /// </summary>
-    private void RunFourWheelSteeringWheels()
-    {
-      // foreach (var wheel in front)
-      //   wheel.steerAngle = inputTurnForce * steeringAngle;
-      // foreach (var wheel in rear)
-      //   wheel.steerAngle = -inputTurnForce * steeringAngle;
-    }
-
     private void RotateAroundCenterOfMass(Rigidbody rb, float turnRate, float inputTurnForce)
     {
       rb.ResetCenterOfMass();
@@ -1449,55 +1293,6 @@ namespace ValheimVehicles.SharedScripts
       // rb.position = newPosition; // This ensures no teleportation occurs
 
       UpdateCenterOfMass(centerOfMassOffset);
-    }
-
-    /// <summary>
-    ///   MAGIC ROTATION
-    ///   Simply rotates the Rigidbody itself using a predefined rotation rate
-    ///   and turning input. This has no connection to physics in any way, but
-    ///   is very controllable and predictable.
-    ///   Note: Since there is no connection to the physics, the tank could
-    ///   turn even if it wasn't on the ground. A simple way to counter this
-    ///   would be to check how many wheels are on the ground and then reduce
-    ///   the turning speed depending on how many are touching the ground.
-    /// </summary>
-    // private void RunMagicRotation()
-    // {
-    //   if (isBreaking) return;
-    //   if (Mathf.Approximately(currentMotorTorque, 0f)) return;
-    //   if (Mathf.Approximately(inputTurnForce, 0f)) return;
-    //
-    //   var turningSpeed = Mathf.Lerp(Mathf.Min(1 / vehicleRootBody.velocity.magnitude, 1), 1, Time.fixedDeltaTime * magicTurnRate);
-    //   // var newRotation = Quaternion.AngleAxis(currentMotorTorque, Vector3.up);
-    //   
-    // }
-    private void RunMagicRotation()
-    {
-      var clampedRotation = transform.rotation;
-      // if (Mathf.Abs(clampedRotation.eulerAngles.x) > 20f || Mathf.Abs(clampedRotation.eulerAngles.z) > 20f)
-      // {
-      //   var zeroedXZQuaternion = new Quaternion(1, clampedRotation.y, 1, clampedRotation.w);
-      //   clampedRotation = Quaternion.Slerp(clampedRotation, zeroedXZQuaternion, Time.fixedDeltaTime);
-      // }
-      if (Mathf.Approximately(inputTurnForce, 0f))
-      {
-        if (transform.rotation != clampedRotation)
-        {
-          vehicleRootBody.MoveRotation(clampedRotation);
-        }
-
-        return;
-      }
-      // var magicRotation = transform.rotation *
-      //                     Quaternion.AngleAxis(
-      //                       magicTurnRate * inputTurnForce * Time.deltaTime,
-      //                       transform.up);
-
-      var magicRotation = clampedRotation *
-                          Quaternion.AngleAxis(
-                            magicTurnRate * inputTurnForce * Time.deltaTime,
-                            transform.up);
-      vehicleRootBody.MoveRotation(magicRotation);
     }
 
     /// <summary>
@@ -1602,6 +1397,17 @@ namespace ValheimVehicles.SharedScripts
       });
     }
 
+    private float GetTurnMultiplier()
+    {
+      return accelerationType switch
+      {
+        AccelerationType.Low => 1.1f,
+        AccelerationType.Medium => 1.2f,
+        AccelerationType.High => 0.65f,
+        _ => 1f
+      };
+    }
+
     private void ApplyTorque(float move, float turn)
     {
       if (Mathf.Approximately(move, 0f) && Mathf.Approximately(turn, 0f))
@@ -1622,14 +1428,17 @@ namespace ValheimVehicles.SharedScripts
 
       if (Mathf.Abs(turn) >= 0.5f)
       {
-        leftSideTorque = turn > 0 ? -baseTorque : baseTorque;
-        rightSideTorque = turn > 0 ? baseTorque : -baseTorque;
+        leftSideTorque = turn > 0 ? baseTorque : -baseTorque;
+        rightSideTorque = turn > 0 ? -baseTorque : baseTorque;
+
+        leftSideTorque *= inputTurnMultiplier;
+        rightSideTorque *= inputTurnMultiplier;
       }
       else if (turn != 0)
       {
         var turnEffect = Mathf.Lerp(1f, 0f, lerpedTurnFactor);
         leftSideTorque *= turn > 0 ? 1 : turnEffect;
-        rightSideTorque *= turn > 0 ? turnEffect : 1f;
+        rightSideTorque *= turn > 0 ? turnEffect : 1;
       }
 
       // Apply torques to wheels
@@ -1668,6 +1477,7 @@ namespace ValheimVehicles.SharedScripts
     public void SetAcceleration(AccelerationType acceleration, int direction)
     {
       (lowTorque, mediumTorque, highTorque) = CalculateTorque(vehicleRootBody.mass, wheelInstances.Count, wheelRadius, wheelMass);
+
       accelerationType = acceleration;
       baseTorque = acceleration switch
       {
@@ -1676,7 +1486,7 @@ namespace ValheimVehicles.SharedScripts
         AccelerationType.Low => mediumTorque,
         _ => lowTorque
       };
-
+      inputTurnMultiplier = GetTurnMultiplier();
       isForward = direction > 0;
     }
 
@@ -1738,6 +1548,7 @@ namespace ValheimVehicles.SharedScripts
       UpdateCenterOfMass(centerOfMassOffset);
       UpdateMaxRPM();
       VehicleMovementFixedUpdate();
+      SetAcceleration(accelerationType, Math.Sign(inputMovement));
     }
 #endif
   }

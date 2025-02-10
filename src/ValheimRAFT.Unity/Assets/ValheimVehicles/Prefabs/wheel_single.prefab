@@ -27,8 +27,8 @@ Transform:
   m_GameObject: {fileID: 138735900666736611}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0.625, y: 0, z: 0.00000046193594}
-  m_LocalScale: {x: 40, y: 40, z: 10}
+  m_LocalPosition: {x: 0.055555403, y: -0.0000006357829, z: 0.0000006655851}
+  m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1107043180837464942}
@@ -216,7 +216,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0.7071068, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 3.3333328, y: 0.33333325, z: 0.33333334}
+  m_LocalScale: {x: 30, y: 3, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7773421660519638361}
@@ -292,8 +292,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1304424690632794146}
-  - component: {fileID: 7552653989016854223}
-  - component: {fileID: 5119713219414571018}
   m_Layer: 29
   m_Name: wheel_mesh
   m_TagString: Untagged
@@ -317,36 +315,6 @@ Transform:
   - {fileID: 1107043180837464942}
   m_Father: {fileID: 3862590103273061354}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
---- !u!33 &7552653989016854223
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4818688348208568026}
-  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
---- !u!64 &5119713219414571018
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4818688348208568026}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 2048
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 4294965111
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &5012367247476099342
 GameObject:
   m_ObjectHideFlags: 0
@@ -358,6 +326,7 @@ GameObject:
   - component: {fileID: 6685005917496829487}
   - component: {fileID: 2339004568630323386}
   - component: {fileID: 5387493393828402907}
+  - component: {fileID: 6009243967257031394}
   m_Layer: 29
   m_Name: wheel_rotator_mesh
   m_TagString: Untagged
@@ -375,7 +344,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 40, y: 40, z: 20}
+  m_LocalScale: {x: 4, y: 4, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1107043180837464942}
@@ -430,6 +399,28 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &6009243967257031394
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5012367247476099342}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 805357057
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 3825154934
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4300000, guid: 033278bd8a20d1e4783672e38e0bab5b, type: 2}
 --- !u!1 &7449807269327564531
 GameObject:
   m_ObjectHideFlags: 0
@@ -457,8 +448,8 @@ Transform:
   m_GameObject: {fileID: 7449807269327564531}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -0.625, y: 0, z: -0.000000074505806}
-  m_LocalScale: {x: 40, y: 40, z: 10}
+  m_LocalPosition: {x: -0.06944424, y: 0.0000006357829, z: 0.0000001241763}
+  m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1107043180837464942}
