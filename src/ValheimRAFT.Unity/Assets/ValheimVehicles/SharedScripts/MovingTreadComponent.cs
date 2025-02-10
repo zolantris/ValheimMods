@@ -1,8 +1,11 @@
-using System;
+#region
+
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
+
+#endregion
 
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
@@ -10,69 +13,46 @@ namespace ValheimVehicles.SharedScripts
 {
   public class MovingTreadComponent : MonoBehaviour
   {
-    internal List<Rigidbody> _movingTreads = new();
-    internal List<LocalTransform> _treadTargetPoints = new();
-    internal Dictionary<Rigidbody, int> _treadTargetPointMap = new();
-    internal readonly Dictionary<Rigidbody, float> _treadProgress = new(); // Stores the progress of each tread (0 to 1)
-    public List<HingeJoint> _wheelRotators = new();
-
-    internal Rigidbody treadRb;
-    internal Rigidbody rootRb;
-    public Transform rotatorParent;
-
-    public static GameObject fallbackPrefab = null!;
-    public GameObject treadPrefab;
 
     public const float treadPointDistanceZ = 0.624670029f;
 
     public const float treadPointYOffset = 1.578f;
-    public float treadTopLocalPosition = treadPointYOffset;
-    public float treadBottomLocalPosition = 0f;
+    public const float treadRadiusScale1 = 0.789f;
 
-    [FormerlySerializedAs("wheelRotators")]
-    public Transform treadParent;
-    public List<Vector3> originalTreadPositions = new();
-    public Bounds localBounds = new();
-    public GameObject CenterObj;
-
-    // New flag to control direction of movement
-    public bool isForward = true;
-
-    // Speed multiplier that controls the overall speed of treads
-    public float speedMultiplier = 1f;
+    public static GameObject fallbackPrefab = null!;
 
     internal static Vector3 tread_meshScalar = new(2f, 0.0500000007f, 0.599999964f);
     internal static readonly List<LocalTransform> _treadFrontLocalPoints = new()
     {
-      new LocalTransform()
+      new LocalTransform
       {
         position = new Vector3(0f, 1.57800007f, -treadPointDistanceZ),
         rotation = Quaternion.identity
       },
-      new LocalTransform()
+      new LocalTransform
       {
         position = new Vector3(0.0f, 1.57800007f, 0f),
         rotation = Quaternion.identity
       },
       // top-near
-      new LocalTransform()
+      new LocalTransform
       {
         position = new Vector3(0.0f, 1.4f, 0.542955399f),
         rotation = Quaternion.Euler(45f, 0f, 0f)
       },
       // top middle
-      new LocalTransform()
+      new LocalTransform
       {
         position = new Vector3(0.0f, 0.782000542f, 0.756231308f),
         rotation = Quaternion.Euler(90f, 0f, 0f)
       },
       // top near bottom
-      new LocalTransform()
+      new LocalTransform
       {
         position = new Vector3(0.0f, 0.245388985f, 0.542955399f),
         rotation = Quaternion.Euler(135f, 0f, 0f)
       },
-      new LocalTransform()
+      new LocalTransform
       {
         position = new Vector3(0f, 0f, 0f),
         rotation = Quaternion.Euler(180f, 0f, 0f)
@@ -81,44 +61,64 @@ namespace ValheimVehicles.SharedScripts
     internal static readonly List<LocalTransform> _treadBackLocalPoints = new()
     {
       // // flat top tread
-      new LocalTransform()
+      new LocalTransform
       {
-        position = Vector3.zero,
+        position = new Vector3(0.0f, 0.0f, 0.0f),
         rotation = Quaternion.Euler(180f, 0f, 0f)
       },
       // back-near bottom tread
-      new LocalTransform()
+      new LocalTransform
       {
         position = new Vector3(0.0f, 0.245388985f, -0.542955399f),
-        rotation = Quaternion.Euler(-135f, 0f, 0f)
+        rotation = Quaternion.Euler(225, 0f, 0f)
       },
       // back middle tread
-      new LocalTransform()
+      new LocalTransform
       {
         position = new Vector3(0.0f, 0.782000542f, -0.756231308f),
         rotation = Quaternion.Euler(270, 0, 0)
       },
       // back-near-top tread angles 315
-      new LocalTransform()
+      new LocalTransform
       {
         position = new Vector3(0.0f, 1.34000015f, -0.542955399f),
         rotation = Quaternion.Euler(315, 0, 0)
       }
     };
+    private static readonly Quaternion flippedXRotation = Quaternion.Euler(180, 0, 0);
+    public List<HingeJoint> _wheelRotators = new();
+    public Transform rotatorParent;
+    public GameObject treadPrefab;
+    public float treadTopLocalPosition = treadPointYOffset;
+    public float treadBottomLocalPosition;
 
-    public struct LocalTransform
-    {
-      public Vector3 position;
-      public Quaternion rotation;
+    [FormerlySerializedAs("wheelRotators")]
+    public Transform treadParent;
+    public List<Vector3> originalTreadPositions = new();
+    public Bounds localBounds;
+    public Bounds vehicleLocalBounds;
+    public GameObject CenterObj;
 
-      public LocalTransform(Transform objTransform)
-      {
-        position = objTransform.localPosition;
-        rotation = objTransform.localRotation;
-      }
-    }
+    // New flag to control direction of movement
+    public bool isForward = true;
+
+    // Speed multiplier that controls the overall speed of treads
+    public float speedMultiplier = 1f;
 
     public ConvexHullAPI convexHullComponent;
+    public float speedMultiplierOverride;
+    internal readonly Dictionary<Rigidbody, float> _treadProgress = new(); // Stores the progress of each tread (0 to 1)
+
+    private bool _hasInitLocalBounds;
+    internal List<Rigidbody> _movingTreads = new();
+    internal Dictionary<Rigidbody, int> _treadTargetPointMap = new();
+    internal List<LocalTransform> _treadTargetPoints = new();
+
+    private float lastSpeed;
+    internal Rigidbody rootRb;
+
+    internal Rigidbody treadRb;
+    internal WheelCollider[] wheelColliders = {};
 
     public void Awake()
     {
@@ -152,18 +152,19 @@ namespace ValheimVehicles.SharedScripts
       convexHullComponent.HasPreviewGeneration = false;
       convexHullComponent.IsAllowedAsHullOverride = AllowTreadsObject;
     }
-
-    /// <summary>
-    /// A lower case string matcher to allow any object starting with treads to be allowed as a convexhull so we can create collisions.
-    /// </summary>
-    /// <param name="val"></param>
-    /// <returns></returns>
-    public bool AllowTreadsObject(string val)
-
+    // Update is called once per frame
+    public void FixedUpdate()
     {
-      if (val.Contains("tread"))
-        return true;
-      return false;
+      UpdateAllTreads();
+
+      if (_wheelRotators.Count > 0)
+      {
+        if (!Mathf.Approximately(lastSpeed, speedMultiplierOverride))
+        {
+          lastSpeed = speedMultiplierOverride;
+          UpdateRotators();
+        }
+      }
     }
 
     public void OnEnable()
@@ -178,10 +179,31 @@ namespace ValheimVehicles.SharedScripts
       CleanUp();
     }
 
+    public void OnDestroy()
+    {
+      if (CenterObj)
+      {
+        Destroy(CenterObj);
+      }
+    }
+
+    /// <summary>
+    /// A lower case string matcher to allow any object starting with treads to be allowed as a convexhull so we can create collisions.
+    /// </summary>
+    /// <param name="val"></param>
+    /// <returns></returns>
+    public bool AllowTreadsObject(string val)
+
+    {
+      if (val.Contains("tread"))
+        return true;
+      return false;
+    }
+
     public void UpdateRotators()
     {
       Physics.SyncTransforms();
-      _wheelRotators.ForEach((hinge) =>
+      _wheelRotators.ForEach(hinge =>
       {
         // Calculate the mesh bounds (you could also use other methods for finding the center)
 //       Renderer meshRenderer = hinge.GetComponentInChildren<Renderer>(); // Make sure the object has a Renderer
@@ -226,14 +248,6 @@ namespace ValheimVehicles.SharedScripts
       });
     }
 
-    public void OnDestroy()
-    {
-      if (CenterObj)
-      {
-        Destroy(CenterObj);
-      }
-    }
-
     public void InitTreadsFromChildren()
     {
       CreateCenteringObject();
@@ -272,7 +286,7 @@ namespace ValheimVehicles.SharedScripts
     {
       if (!CenterObj)
       {
-        CenterObj = new GameObject()
+        CenterObj = new GameObject
         {
           name = "Treads_CenterObj",
           layer = LayerMask.NameToLayer("Ignore Raycast"),
@@ -311,6 +325,9 @@ namespace ValheimVehicles.SharedScripts
         localBounds.Encapsulate(treadGameObject.transform.localPosition);
       }
 
+      // scale the tread to the correct height.
+      treadGameObject.transform.localScale = Vector3.one * GetWheelTreadRadiusScalar();
+
       var localPoint = new LocalTransform(treadGameObject.transform);
       _treadTargetPoints.Add(localPoint);
 
@@ -322,8 +339,11 @@ namespace ValheimVehicles.SharedScripts
       _treadProgress[rb] = 0f;
     }
 
-    private bool _hasInitLocalBounds;
-    private static readonly Quaternion flippedXRotation = Quaternion.Euler(180, 0, 0);
+    public float GetWheelTreadRadiusScalar()
+    {
+      if (wheelColliders.Length <= 0) return 1;
+      return wheelColliders[0].radius / treadRadiusScale1;
+    }
     /// <summary>
     /// Generates dynamically all treads based on a bounds size. Must be invoked
     /// </summary>
@@ -331,13 +351,17 @@ namespace ValheimVehicles.SharedScripts
     public void GenerateTreads(Bounds bounds)
     {
       if (!treadPrefab) return;
+      vehicleLocalBounds = bounds;
       CleanUp();
 
       CreateCenteringObject();
+      var scalar = GetWheelTreadRadiusScalar();
+      var horizontalTreads = Mathf.RoundToInt(bounds.size.z / treadPointDistanceZ / scalar);
 
-      // var horizontalTreads = Mathf.RoundToInt(3);
-      var horizontalTreads = Mathf.RoundToInt(bounds.size.z / treadPointDistanceZ);
+      // scaled from radius of the first wheel.
       var fullTreadLength = horizontalTreads * treadPointDistanceZ;
+
+      var centeringOffset = Vector3.down * treadPointYOffset / 2f + Vector3.forward * -vehicleLocalBounds.extents.z / scalar - Vector3.forward * 0.25f;
       // top treads
       for (var i = 0; i < horizontalTreads; i++)
       {
@@ -345,7 +369,7 @@ namespace ValheimVehicles.SharedScripts
         treadGameObject.name = "Treads_" + i + "top";
 
         var zPos = treadPointDistanceZ * i;
-        var offset = new Vector3(0, treadPointYOffset, zPos);
+        var offset = new Vector3(0, treadPointYOffset, zPos) + centeringOffset;
         treadGameObject.transform.localPosition = offset;
         // Update bounds for the first time
         InitSingleTread(treadGameObject);
@@ -360,7 +384,7 @@ namespace ValheimVehicles.SharedScripts
 
         // we offset the Z position so that it aligns with the last 
         var zPos = x.position.z + fullTreadLength + treadPointDistanceZ;
-        treadGameObject.transform.localPosition = new Vector3(x.position.x, x.position.y, zPos);
+        treadGameObject.transform.localPosition = new Vector3(x.position.x, x.position.y, zPos) + centeringOffset;
         treadGameObject.transform.localRotation = x.rotation;
 
         InitSingleTread(treadGameObject);
@@ -373,7 +397,7 @@ namespace ValheimVehicles.SharedScripts
         var offset = new Vector3(0, 0, treadPointDistanceZ * (horizontalTreads - i));
         var rotation = flippedXRotation;
 
-        treadGameObject.transform.localPosition = offset;
+        treadGameObject.transform.localPosition = offset + centeringOffset;
         treadGameObject.transform.localRotation = rotation;
 
         InitSingleTread(treadGameObject);
@@ -386,13 +410,14 @@ namespace ValheimVehicles.SharedScripts
         treadGameObject.name = $"Treads_{i}_back";
 
         // since this is zero based it is actually fine to not use relative calcs for z pos.
-        treadGameObject.transform.localPosition = x.position;
+        treadGameObject.transform.localPosition = x.position + centeringOffset;
         treadGameObject.transform.localRotation = x.rotation;
 
         InitSingleTread(treadGameObject);
       }
 
       CenterObj.transform.position = treadParent.position + localBounds.center;
+      // treadParent.position = CenterObj.transform.position;
 
       // var treadGameObjects = 0eneration = false;
       // convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects, null);
@@ -527,20 +552,15 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private float lastSpeed = 0f;
-    public float speedMultiplierOverride = 0;
-    // Update is called once per frame
-    public void FixedUpdate()
+    public struct LocalTransform
     {
-      UpdateAllTreads();
+      public Vector3 position;
+      public Quaternion rotation;
 
-      if (_wheelRotators.Count > 0)
+      public LocalTransform(Transform objTransform)
       {
-        if (!Mathf.Approximately(lastSpeed, speedMultiplierOverride))
-        {
-          lastSpeed = speedMultiplierOverride;
-          UpdateRotators();
-        }
+        position = Vector3.Scale(objTransform.localPosition, objTransform.localScale);
+        rotation = objTransform.localRotation;
       }
     }
   }
