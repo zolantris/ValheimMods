@@ -117,11 +117,13 @@ namespace ValheimVehicles.SharedScripts
     public float baseTorque;
 
     public float inputTurnForce;
+    public float inputMovement;
+
+
     public float MaxWheelRPM = 3000f;
     public float turnInputOverride;
 
-
-    [FormerlySerializedAs("isBreaking")] public bool isBraking = true;
+    public bool isBraking = true;
     public bool UseManualControls;
 
     public bool hasInitialized;
@@ -150,12 +152,17 @@ namespace ValheimVehicles.SharedScripts
 
     [Header("Wheel Physics settings")]
     [Tooltip("Wheel configuration")]
-    public float wheelPowerStiffness = 1f;
-    public float wheelPowerExtremumSlip = 0.7f;
-    public float wheelPowerAsymptoteSlip = 0.7f;
-    public float wheelPowerSidewaysStiffness = 1f;
-    public float wheelPowerSidewaysExtremumSlip = 0.7f;
-    public float wheelPowerSidewaysAsymptoteSlip = 0.7f;
+    public float wheelPowerStiffness = 2f;
+    public float wheelPowerExtremumSlip = 0.4f;
+    public float wheelPowerExtremumValue = 1.5f;
+    public float wheelPowerAsymptoteSlip = 2.0f;
+    public float wheelPowerAsymptoteValue = 0.5f;
+
+    public float wheelPowerSidewaysStiffness = 1.2f;
+    public float wheelPowerSidewaysExtremumSlip = 0.5f;
+    public float wheelPowerSidewaysExtremumValue = 0.7f;
+    public float wheelPowerSidewaysAsymptoteSlip = 1.5f;
+    public float wheelPowerSidewaysAsymptoteValue = 0.3f;
 
     public float wheelCenterStiffness = 0.1f;
     public float wheelCenterExtremumSlip = 0.2f;
@@ -164,6 +171,7 @@ namespace ValheimVehicles.SharedScripts
     public float wheelCenterSidewaysExtremumSlip = 0.2f;
     public float wheelCenterSidewaysAsymptoteSlip = 0.2f;
 
+    [Header("Wheel Acceleration internal Values")]
     public float lowTorque;
     public float mediumTorque;
     public float highTorque;
@@ -568,7 +576,11 @@ namespace ValheimVehicles.SharedScripts
       currentMotorTorqueRight = 0f;
 
       AdjustForHills();
-      ApplyTorque(baseTorque, inputTurnForce);
+
+      if (isBraking)
+        ApplyBrakes();
+      else
+        ApplyTorque(inputMovement, inputTurnForce);
       // if (m_steeringType != SteeringType.Differential || m_steeringType == SteeringType.Differential && Mathf.Abs(inputTurnForce) < 0.5f)
       // {
       //   RunPoweredWheels();
@@ -627,6 +639,9 @@ namespace ValheimVehicles.SharedScripts
       // GenerateRotatorEngines(bounds.Value);
       GenerateWheelSets(bounds.Value);
       SetupWheels();
+      ApplyFrictionValuesToWheels();
+      SetAcceleration(accelerationType, Math.Sign(inputMovement));
+
 
       // must be called after SetupWheels
       UpdateTreads(bounds.Value);
@@ -1084,7 +1099,7 @@ namespace ValheimVehicles.SharedScripts
     /// Updates the shared torque values for both debugging and computation efficiency
     /// </summary>
     /// <param name="wheel"></param>
-    public void UpdateSynchronizedWheelProperties(WheelCollider wheel, bool isLeft, ref float motorTorque, ref float breakTorque)
+    public void UpdateSynchronizedWheelProperties(WheelCollider wheel, bool isLeft, ref float motorTorque, ref float brakeTorque)
     {
       if (!wheel) return;
       // var inputForceDir = Mathf.Sign(inputForwardForce);
@@ -1098,27 +1113,27 @@ namespace ValheimVehicles.SharedScripts
       if (isBraking)
       {
         motorTorque = 0f;
-        breakTorque = Mathf.Abs(wheel.rpm + baseTorque * baseMotorTorque + additionalBrakeForce);
+        brakeTorque = Mathf.Abs(wheel.rpm + baseTorque * baseMotorTorque + additionalBrakeForce);
         return;
       }
 
       if (baseTorque == 0)
       {
         motorTorque = 0;
-        breakTorque = baseTorque * baseMotorTorque / 2f + additionalBrakeForce * Time.fixedDeltaTime;
+        brakeTorque = baseTorque * baseMotorTorque / 2f + additionalBrakeForce * Time.fixedDeltaTime;
         return;
       }
 
       if (Mathf.Abs(wheel.rpm) > MaxWheelRPM || vehicleRootBody.velocity.x + vehicleRootBody.velocity.z >= topSpeed)
       {
-        breakTorque = Mathf.Abs(wheel.rpm);
+        brakeTorque = Mathf.Abs(wheel.rpm);
         return;
       }
 
       if (!wheel.isGrounded)
       {
         motorTorque = 0f;
-        breakTorque = 500f;
+        brakeTorque = 500f;
         return;
       }
 
@@ -1129,7 +1144,7 @@ namespace ValheimVehicles.SharedScripts
         // cuts out when the tank starts moving fast enough.
         if (wheel.brakeTorque > 0f)
         {
-          breakTorque = 0f;
+          brakeTorque = 0f;
         }
         var nextMotorTorque = wheel.motorTorque;
 
@@ -1268,6 +1283,11 @@ namespace ValheimVehicles.SharedScripts
     }
 
 
+    /// <summary>
+    /// @deprecated
+    /// </summary>
+    /// <param name="wheel"></param>
+    /// <param name="directionMultiplier"></param>
     private void RunDifferentialSteeringForWheel(WheelCollider wheel, float directionMultiplier)
     {
       var isTorqueAndTurnNearZero = Mathf.Approximately(baseTorque, 0) &&
@@ -1521,9 +1541,70 @@ namespace ValheimVehicles.SharedScripts
       hillFactor = Mathf.Clamp(1f + (1f - slopeFactor), 0.5f, 2f);
     }
 
+    private float GetTankSpeed()
+    {
+      return Vector3.Dot(GetComponent<Rigidbody>().velocity, transform.forward);
+    }
+
+
+    private void ApplyBrakes()
+    {
+      var currentSpeed = GetTankSpeed();
+      var brakeForce = vehicleRootBody.mass * Mathf.Abs(currentSpeed) / 2f; // Stops in ~2s
+
+      foreach (var wheel in wheelColliders)
+      {
+        // Apply braking force based on current torque & momentum
+        wheel.brakeTorque = Mathf.Max(brakeForce, Mathf.Abs(wheel.motorTorque) * 1.5f);
+        wheel.motorTorque = 0; // Cut off power when braking
+      }
+    }
+
+
+    private void ApplyFrictionValuesToWheels()
+    {
+      var frictionMultiplier = Mathf.Clamp(10f / wheelColliders.Count, 0.7f, 1.5f);
+      wheelColliders.ForEach(wheel =>
+      {
+        var forwardFriction = wheel.forwardFriction;
+        forwardFriction.extremumSlip = 0.4f * frictionMultiplier;
+        forwardFriction.extremumValue = 1.5f * frictionMultiplier;
+        forwardFriction.asymptoteSlip = 2.0f * frictionMultiplier;
+        forwardFriction.asymptoteValue = 0.5f * frictionMultiplier;
+        forwardFriction.stiffness = 2.0f;
+        wheel.forwardFriction = forwardFriction;
+
+        var sidewaysFriction = wheel.sidewaysFriction;
+        sidewaysFriction.extremumSlip = 0.5f * frictionMultiplier;
+        sidewaysFriction.extremumValue = 0.7f * frictionMultiplier;
+        sidewaysFriction.asymptoteSlip = 1.5f * frictionMultiplier;
+        sidewaysFriction.asymptoteValue = 0.3f * frictionMultiplier;
+        sidewaysFriction.stiffness = 1.2f;
+        wheel.sidewaysFriction = sidewaysFriction;
+
+        // var forwardFriction = wheel.forwardFriction;
+        // forwardFriction.extremumSlip = wheelPowerExtremumSlip;
+        // forwardFriction.asymptoteSlip = wheelPowerAsymptoteSlip;
+        // forwardFriction.extremumValue = 0.1f;
+        // forwardFriction.asymptoteValue = 0.5f;
+        //
+        // forwardFriction.stiffness = wheelPowerStiffness;
+        //
+        // var sidewaysFriction = wheel.sidewaysFriction;
+        // sidewaysFriction.extremumSlip = wheelPowerSidewaysExtremumSlip;
+        // sidewaysFriction.asymptoteSlip = wheelPowerSidewaysAsymptoteSlip;
+        // sidewaysFriction.stiffness = wheelPowerSidewaysStiffness;
+        // sidewaysFriction.extremumValue = 0.1f;
+        // sidewaysFriction.asymptoteValue = 0.5f;
+        //
+        // wheel.forwardFriction = forwardFriction;
+        // wheel.sidewaysFriction = forwardFriction;
+      });
+    }
+
     private void ApplyTorque(float move, float turn)
     {
-      if (move == 0 && turn == 0)
+      if (Mathf.Approximately(move, 0f) && Mathf.Approximately(turn, 0f))
       {
         StopWheels();
         return;
@@ -1547,36 +1628,35 @@ namespace ValheimVehicles.SharedScripts
       else if (turn != 0)
       {
         var turnEffect = Mathf.Lerp(1f, 0f, lerpedTurnFactor);
-        leftSideTorque *= turn > 0 ? turnEffect : 1f;
-        rightSideTorque *= turn > 0 ? 1f : turnEffect;
+        leftSideTorque *= turn > 0 ? 1 : turnEffect;
+        rightSideTorque *= turn > 0 ? turnEffect : 1f;
       }
 
       // Apply torques to wheels
       foreach (var leftWheel in left)
       {
         leftWheel.motorTorque = leftSideTorque;
+        leftWheel.brakeTorque = 0f;
         SyncWheelVisual(leftWheel);
       }
       foreach (var rightWheel in right)
       {
         rightWheel.motorTorque = rightSideTorque;
+        rightWheel.brakeTorque = 0f;
         SyncWheelVisual(rightWheel);
       }
     }
 
     public void StopWheels()
     {
-      foreach (var leftWheel in left)
-      {
+      var currentSpeed = GetTankSpeed();
+      var engineBrakeForce = vehicleRootBody.mass * Mathf.Abs(currentSpeed) / 5f; // Lighter braking effect
 
-        leftWheel.motorTorque = 0f;
-        SyncWheelVisual(leftWheel);
-      }
-
-      foreach (var rightWheel in right)
+      foreach (var wheel in wheelColliders)
       {
-        rightWheel.motorTorque = 0f;
-        SyncWheelVisual(rightWheel);
+        wheel.motorTorque = 0f; // No acceleration
+        wheel.brakeTorque = engineBrakeForce; // Light braking
+        SyncWheelVisual(wheel);
       }
     }
 
@@ -1585,11 +1665,10 @@ namespace ValheimVehicles.SharedScripts
       rotatorEngineHingeInstances.ForEach(UpdateRotatorEngine);
     }
 
-    public void SetAcceleration(AccelerationType acceleration)
+    public void SetAcceleration(AccelerationType acceleration, int direction)
     {
-      (lowTorque, mediumTorque, highTorque) = CalculateTorque(vehicleRootBody.mass, wheelInstances, wheelRadius, wheelMass);
-
-      accelerationValue = acceleration;
+      (lowTorque, mediumTorque, highTorque) = CalculateTorque(vehicleRootBody.mass, wheelInstances.Count, wheelRadius, wheelMass);
+      accelerationType = acceleration;
       baseTorque = acceleration switch
       {
         AccelerationType.High => highTorque,
@@ -1598,7 +1677,7 @@ namespace ValheimVehicles.SharedScripts
         _ => lowTorque
       };
 
-      isForward = baseTorque >= 0;
+      isForward = direction > 0;
     }
 
 
@@ -1607,13 +1686,13 @@ namespace ValheimVehicles.SharedScripts
       inputTurnForce = val;
     }
 
-    public void ToggleIsBreaking()
+    public void ToggleBrake()
     {
       isBraking = !isBraking;
       UpdateRotatorEngines();
     }
 
-    public void SetIsBreaking(bool val)
+    public void SetBrake(bool val)
     {
       isBraking = val;
     }
@@ -1635,10 +1714,12 @@ namespace ValheimVehicles.SharedScripts
       }
       if (isBrakingPressed && !isBrakePressedDown)
       {
-        ToggleIsBreaking();
+        ToggleBrake();
         isBrakePressedDown = true;
       }
       inputTurnForce = Input.GetAxis("Horizontal");
+      inputMovement = Input.GetAxis("Vertical");
+      SetAcceleration(accelerationType, Math.Sign(inputMovement));
     }
 
     // We run this only in Unity Editor

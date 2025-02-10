@@ -1720,7 +1720,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 417425496}
   serializedVersion: 4
-  m_Mass: 10
+  m_Mass: 1000
   m_Drag: 0.05
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -5838,11 +5838,13 @@ MonoBehaviour:
   maxWheelSets: 5
   wheelSetIncrement: 10
   axelPadding: 0.5
-  inputForwardForce: 1.46
-  inputTurnForce: -55
+  accelerationType: 0
+  baseTorque: 0
+  inputTurnForce: 0.2
+  inputMovement: 1
   MaxWheelRPM: 3000
   turnInputOverride: 0
-  isBraking: 0
+  isBraking: 1
   UseManualControls: 0
   hasInitialized: 1
   wheelBottomOffset: 0
@@ -5860,19 +5862,26 @@ MonoBehaviour:
   currentMotorTorqueLeft: 0
   currentBreakTorqueLeft: 0
   currentBreakTorqueRight: 0
-  IsControlling: 0
+  IsControlling: 1
   wheelPowerStiffness: 1
   wheelPowerExtremumSlip: 0.7
+  wheelPowerExtremumValue: 1.5
   wheelPowerAsymptoteSlip: 0.7
+  wheelPowerAsymptoteValue: 0.5
   wheelPowerSidewaysStiffness: 1
   wheelPowerSidewaysExtremumSlip: 0.7
+  wheelPowerSidewaysExtremumValue: 0.7
   wheelPowerSidewaysAsymptoteSlip: 0.7
+  wheelPowerSidewaysAsymptoteValue: 0.3
   wheelCenterStiffness: 0.1
   wheelCenterExtremumSlip: 0.2
   wheelCenterAsymptoteSlip: 0.2
   wheelCenterSidewaysStiffness: 0.1
   wheelCenterSidewaysExtremumSlip: 0.2
   wheelCenterSidewaysAsymptoteSlip: 0.2
+  lowTorque: 0
+  mediumTorque: 0
+  highTorque: 0
 --- !u!54 &1365930684
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -66758,7 +66767,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1684181124}
   serializedVersion: 4
-  m_Mass: 10
+  m_Mass: 1000
   m_Drag: 0.05
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
