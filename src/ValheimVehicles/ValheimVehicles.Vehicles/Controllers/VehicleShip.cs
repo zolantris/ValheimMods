@@ -423,7 +423,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       }
     }
     WheelController.inputTurnForce = 0;
-    WheelController.inputForwardForce = 0;
+    WheelController.inputMovement = 0;
     UpdateWheelControllerProperties();
     if (WheelController == null)
       Logger.LogError("Error initializing WheelController");

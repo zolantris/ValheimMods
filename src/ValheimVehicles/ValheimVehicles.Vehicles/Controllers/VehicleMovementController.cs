@@ -591,7 +591,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     {
       WheelController.SetTurnInput(m_rudderValue);
       var landVehicleSpeed = GetLandVehicleSpeed();
-      WheelController.SetAcceleration(landVehicleSpeed);
+      var direction = VehicleSpeed == Ship.Speed.Back ? 1 : -1;
+      WheelController.SetAcceleration(landVehicleSpeed, direction);
     }
   }
 
@@ -1367,20 +1368,25 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       ApplySailForce(this, true);
   }
 
-  public float GetLandVehicleSpeed()
+  public VehicleWheelController.AccelerationType GetLandVehicleSpeed()
   {
     if (isAnchored)
     {
       return 0;
     }
 
+    if (isAnchored)
+    {
+      return VehicleWheelController.AccelerationType.Stop;
+    }
+
     return vehicleSpeed switch
     {
-      Ship.Speed.Stop => 0,
-      Ship.Speed.Back => -PhysicsConfig.VehicleLandSpeedBack.Value,
-      Ship.Speed.Slow => PhysicsConfig.VehicleLandSpeedSlow.Value,
-      Ship.Speed.Half => PhysicsConfig.VehicleLandSpeedHalf.Value,
-      Ship.Speed.Full => PhysicsConfig.VehicleLandSpeedFull.Value,
+      Ship.Speed.Stop => VehicleWheelController.AccelerationType.Stop,
+      Ship.Speed.Back => VehicleWheelController.AccelerationType.Low,
+      Ship.Speed.Slow => VehicleWheelController.AccelerationType.Low,
+      Ship.Speed.Half => VehicleWheelController.AccelerationType.Medium,
+      Ship.Speed.Full => VehicleWheelController.AccelerationType.High,
       _ => throw new ArgumentOutOfRangeException()
     };
   }
@@ -1438,7 +1444,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (WheelController == null) return;
     if (UpdateAnchorVelocity())
     {
-      WheelController.isBreaking = true;
+      WheelController.SetBrake(true);
       return;
     }
 
@@ -1450,8 +1456,9 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (shouldUpdateLandInputs)
     {
       m_body.WakeUp();
-      var landSpeed = GetLandVehicleSpeed();
-      WheelController.inputForwardForce = landSpeed;
+      // var landSpeed = GetLandVehicleSpeed();
+      // var direction = VehicleSpeed == Ship.Speed.Back ? 1 : -1;
+      // WheelController.SetAcceleration(landSpeed, direction);
       WheelController.VehicleMovementFixedUpdate();
     }
   }
@@ -3264,7 +3271,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       SendSetAnchor(!isAnchored ? AnchorState.Anchored : AnchorState.Recovered);
       if (WheelController != null)
       {
-        WheelController.SetIsBreaking(isAnchored);
+        WheelController.SetBrake(isAnchored);
       }
       return;
     }
@@ -3576,7 +3583,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (WheelController != null)
     {
       var landVehicleSpeed = GetLandVehicleSpeed();
-      WheelController.SetAcceleration(landVehicleSpeed);
+      var direction = VehicleSpeed == Ship.Speed.Back ? 1 : -1;
+      WheelController.SetAcceleration(landVehicleSpeed, direction);
     }
   }
 

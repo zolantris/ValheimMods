@@ -361,7 +361,7 @@ namespace ValheimVehicles.SharedScripts
       // scaled from radius of the first wheel.
       var fullTreadLength = horizontalTreads * treadPointDistanceZ;
 
-      var centeringOffset = Vector3.down * treadPointYOffset / 2f + Vector3.forward * -vehicleLocalBounds.extents.z / scalar - Vector3.forward * 0.25f;
+      var centeringOffset = Vector3.down * treadPointYOffset / 2f / scalar + Vector3.forward * -vehicleLocalBounds.extents.z / scalar - Vector3.forward * 0.25f;
       // top treads
       for (var i = 0; i < horizontalTreads; i++)
       {
@@ -417,17 +417,17 @@ namespace ValheimVehicles.SharedScripts
       }
 
       CenterObj.transform.position = treadParent.position + localBounds.center;
-      // treadParent.position = CenterObj.transform.position;
+      treadParent.position = CenterObj.transform.position;
 
-      // var treadGameObjects = 0eneration = false;
-      // convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects, null);
-      // convexHullComponent.convexHullMeshColliders.ForEach(x =>
-      // {
-      //   if (!x) return;
-      //   x.gameObject.name = "convex_tread_collider";
-      //   x.includeLayers = LayerMask.GetMask("terrain");
-      //   x.excludeLayers = -1;
-      // });
+      var treadGameObjects = _movingTreads.Select(x => x.gameObject).ToList();
+      convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects);
+      convexHullComponent.convexHullMeshColliders.ForEach(x =>
+      {
+        if (!x) return;
+        x.gameObject.name = "convex_tread_collider";
+        x.includeLayers = LayerMask.GetMask("terrain");
+        x.excludeLayers = -1;
+      });
     }
 
     public void SetSpeed(float speed)

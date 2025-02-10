@@ -1,13 +1,11 @@
 ﻿#region
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Debug = UnityEngine.Debug;
-using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
 
 #endregion
@@ -29,6 +27,7 @@ namespace ValheimVehicles.SharedScripts
 
     public enum AccelerationType
     {
+      Stop,
       Low,
       Medium,
       High
@@ -264,6 +263,8 @@ namespace ValheimVehicles.SharedScripts
     internal List<GameObject> rotationEngineInstances = new();
     internal List<HingeJoint> rotatorEngineHingeInstances = new();
 
+    private float smoothRotationTime;
+
     private Rigidbody vehicleRootBody;
 
     [Tooltip("Kinematic Objects and Colliders")]
@@ -303,12 +304,13 @@ namespace ValheimVehicles.SharedScripts
 
       if (!treadsRight)
       {
-        treadsRight = treadsParent.Find("treads_right");
+        treadsRight = transform.Find("treads/treads_right");
       }
       if (!treadsLeft)
       {
-        treadsLeft = treadsParent.Find("treads_left");
+        treadsLeft = transform.Find("treads/treads_left");
       }
+
       InitTreadComponent();
     }
 
@@ -382,42 +384,22 @@ namespace ValheimVehicles.SharedScripts
         InitTreadComponent();
       }
 
-      // var wheelLocalPositionToRoot = transform.InverseTransformPoint(wheelInstances[0].transform.position);
-      // var deltaWheelY = bounds.center.y - wheelLocalPositionToRoot.y - wheelRadius * 2;
-      // var newCenterPosition = new Vector3(bounds.center.x, deltaWheelY, bounds.center.z);
-      // var newCenterBounds = new Bounds(newCenterPosition, bounds.size);
-
-      // var treadRightFixedJoint = treadsRight.GetComponent<FixedJoint>();
-      // var treadLeftFixedJoint = treadsLeft.GetComponent<FixedJoint>();
-      // treads generate from their origin point forwards so Z axis should always be lowest value
       if (treadsLeft && treadsRight)
       {
         var leftJoint = treadsLeft.GetComponent<ConfigurableJoint>();
         var rightJoint = treadsRight.GetComponent<ConfigurableJoint>();
 
-        var treadsAnchorLeftLocalPosition = new Vector3(bounds.min.x - 0.5f, treadsLeft.localPosition.y, bounds.center.z);
-        var treadsAnchorRightLocalPosition = new Vector3(bounds.max.x + 0.5f, treadsRight.localPosition.y, bounds.center.z);
+        var treadsAnchorLeftLocalPosition = new Vector3(bounds.min.x - 0.5f, bounds.min.y + wheelBottomOffset + wheelRadius * 2, bounds.center.z);
+        var treadsAnchorRightLocalPosition = new Vector3(bounds.max.x + 0.5f, bounds.min.y + wheelBottomOffset + wheelRadius * 2, bounds.center.z);
 
-        var localPosY = Vector3.up * (-bounds.extents.y + wheelBottomOffset + wheelRadius);
+        // var localPosY = Vector3.up * (-bounds.extents.y + wheelRadius);
 
-        treadsLeft.localPosition = treadsAnchorLeftLocalPosition - localPosY;
-        treadsRight.localPosition = treadsAnchorRightLocalPosition - localPosY;
+        treadsLeft.localPosition = treadsAnchorLeftLocalPosition;
+        treadsRight.localPosition = treadsAnchorRightLocalPosition;
 
-        ConfigureJoint(leftJoint, vehicleRootBody, -treadsLeft.localPosition);
-        ConfigureJoint(rightJoint, vehicleRootBody, -treadsRight.localPosition);
-        // var leftRb = treadsAnchorLeft.GetComponent<Rigidbody>();
-        // var rightRb = treadsAnchorRight.GetComponent<Rigidbody>();
-        // leftRb.isKinematic = true;
-        // rightRb.isKinematic = true;
-
-        // leftRb.isKinematic = false;
-        // rightRb.isKinematic = false;
+        ConfigureJoint(leftJoint, vehicleRootBody, Vector3.zero);
+        ConfigureJoint(rightJoint, vehicleRootBody, Vector3.zero);
       }
-      // else
-      // {
-      //   treadsLeft.localPosition = new Vector3(bounds.min.x, bounds.min.y, bounds.min.z);
-      //   treadsRight.localPosition = new Vector3(bounds.max.x, bounds.min.y, bounds.min.z);
-      // }
       if (movingTreadLeft && movingTreadRight)
       {
         movingTreadLeft.wheelColliders = left;
@@ -456,66 +438,6 @@ namespace ValheimVehicles.SharedScripts
       // Apply scale
       obj.localScale = scaleFactor;
     }
-
-    // void RecenterPivotToCenterOfMass(Rigidbody vehicleRB)
-    // {
-    //   // Create a new root GameObject
-    //   GameObject root = new GameObject(vehicleRB.name + "_Root");
-    //   root.transform.position = vehicleRB.worldCenterOfMass; // Set root at COM
-    //
-    //   // Parent vehicle under root and reset local position
-    //   Transform vehicleTransform = vehicleRB.transform;
-    //   Vector3 localOffset = vehicleTransform.position - root.transform.position;
-    //   vehicleTransform.SetParent(root.transform);
-    //   vehicleTransform.localPosition = localOffset; // Maintain world position
-    //
-    //   // Add a new Rigidbody to the root and copy all settings
-    //   Rigidbody rootRB = root.AddComponent<Rigidbody>();
-    //   CopyRigidbodyProperties(vehicleRB, rootRB);
-    //
-    //   // Destroy old Rigidbody from the vehicle to prevent duplicate physics
-    //   Destroy(vehicleRB);
-    //
-    //   Debug.Log("Pivot recentered to center of mass! New root: " + root.name);
-    // }
-    //
-    // /// <summary>
-    // /// Copies all Rigidbody properties from the original to the new Rigidbody.
-    // /// </summary>
-    // public static void CopyRigidbodyProperties(Rigidbody fromRB, Rigidbody toRB)
-    // {
-    //   toRB.mass = fromRB.mass;
-    //   toRB.drag = fromRB.drag;
-    //   toRB.angularDrag = fromRB.angularDrag;
-    //   toRB.interpolation = fromRB.interpolation;
-    //   toRB.collisionDetectionMode = fromRB.collisionDetectionMode;
-    //   toRB.constraints = fromRB.constraints;
-    //   toRB.isKinematic = fromRB.isKinematic;
-    //   toRB.useGravity = fromRB.useGravity;
-    //   toRB.maxDepenetrationVelocity = fromRB.maxDepenetrationVelocity;
-    //   toRB.maxAngularVelocity = fromRB.maxAngularVelocity;
-    //   toRB.sleepThreshold = fromRB.sleepThreshold;
-    //   toRB.solverIterations = fromRB.solverIterations;
-    //   toRB.solverVelocityIterations = fromRB.solverVelocityIterations;
-    // }
-
-    // void RecenterRigidbodyToCenterOfMass(Rigidbody rb)
-    // {
-    //   // Calculate offset to the center of mass
-    //   Vector3 com = rb.worldCenterOfMass;
-    //   Vector3 offset = rb.transform.position - com;
-    //
-    //   // Move all children to compensate for the shift
-    //   foreach (Transform child in rb.transform)
-    //   {
-    //     child.position += offset;
-    //   }
-    //
-    //   // Finally, move the Rigidbody object itself to the new center
-    //   rb.transform.position = com;
-    //
-    //   Debug.Log("Rigidbody pivot recentered to Center of Mass!");
-    // }
 
     private void UpdateCenterOfMass(float yOffset)
     {
@@ -577,21 +499,19 @@ namespace ValheimVehicles.SharedScripts
       currentMotorTorqueLeft = 0f;
       currentMotorTorqueRight = 0f;
 
+      if (smoothRotationTime > 5f)
+      {
+        smoothRotationTime = 0f;
+      }
+      smoothRotationTime += Time.deltaTime;
+
       AdjustForHills();
 
       if (isBraking)
         ApplyBrakes();
       else
         ApplyTorque(inputMovement, inputTurnForce);
-      // if (m_steeringType != SteeringType.Differential || m_steeringType == SteeringType.Differential && Mathf.Abs(inputTurnForce) < 0.5f)
-      // {
-      //   RunPoweredWheels();
-      // }
-      // todo only update if a property is changed.
-      // UpdateRotatorEngines();
-      // RunSteering();
-
-      var currentSpeed = vehicleRootBody.velocity.magnitude;
+      currentSpeed = vehicleRootBody.velocity.magnitude;
 
       if (movingTreadLeft && movingTreadRight)
       {
@@ -617,9 +537,9 @@ namespace ValheimVehicles.SharedScripts
       if (bounds == null) return;
       hasInitialized = false;
 
-      if (bounds.Value.size == Vector3.zero)
+      if (bounds.Value.size.x < 4f || bounds.Value.size.y < 2f || bounds.Value.size.z < 4f)
       {
-        bounds = new Bounds(Vector3.zero, new Vector3(4f, 2f, 4f));
+        bounds = new Bounds(Vector3.zero, new Vector3(1, 1f, 1f));
       }
 
       if (shouldCleanupPerInitialize)
@@ -648,34 +568,6 @@ namespace ValheimVehicles.SharedScripts
       // must be called after SetupWheels
       UpdateTreads(bounds.Value);
       // AdjustVehicleToGround(bounds.Value);
-      hasInitialized = true;
-    }
-
-
-    public IEnumerator InitializeWheelsCoroutine(Bounds? bounds)
-    {
-      if (bounds == null) yield break;
-      hasInitialized = false;
-
-      if (bounds.Value.size == Vector3.zero)
-      {
-        bounds = new Bounds(Vector3.zero, new Vector3(4f, 2f, 4f));
-      }
-
-      if (shouldCleanupPerInitialize)
-      {
-        Cleanup();
-      }
-      // if (wheelColliders.Count > 0 || front.Count > 0 || rear.Count > 0 || left.Count > 0 || right.Count > 0 || poweredWheels.Count > 0)
-      // {
-      //   Debug.LogWarning("VehicleWheelController is not probably cleaned up. Must call CleanupWheels before. Exiting InitializeWheels");
-      //   hasInitialized = true;
-      //   yield break;
-      // }
-
-      GenerateWheelSets(bounds.Value);
-      // AdjustVehicleToGround(bounds.Value);
-      SetupWheels();
       hasInitialized = true;
     }
 
@@ -847,7 +739,7 @@ namespace ValheimVehicles.SharedScripts
       var targetScale = new Vector3(bounds.size.x,
         MovingTreadComponent.treadPointYOffset,
         MovingTreadComponent.treadPointYOffset);
-      ScaleMeshToFitBounds(rotatorMeshTransform.transform, targetScale);
+      // ScaleMeshToFitBounds(rotatorMeshTransform.transform, targetScale);
 
       // joint setup has to be done last in order to align the item first before it's force locked.
       var joint = rotationEngineInstance.GetComponent<HingeJoint>();
@@ -1005,9 +897,9 @@ namespace ValheimVehicles.SharedScripts
 
       var zPos = bounds.min.z + spacing * index;
 
-      // var ratio = index / Math.Max(totalWheelSets, 1);
+      // var ratio = index / Math.Max(totalWheelSets, 1) KF UdYCOU
       // var zPos = bounds.size.z * ratio * bounds.min.z;
-      var localPosition = new Vector3(xPos, -(wheelBottomOffset + wheelRadius), zPos);
+      var localPosition = new Vector3(xPos, bounds.min.y - (wheelBottomOffset + wheelRadius), zPos);
 
       // Return the local position without any world space conversions
       return localPosition;
@@ -1046,11 +938,11 @@ namespace ValheimVehicles.SharedScripts
       var suspensionSpring = wheelCollider.suspensionSpring;
       suspensionSpring.spring = wheelSuspensionSpring;
       wheelCollider.suspensionSpring = suspensionSpring;
-      var wheelScalar = Mathf.RoundToInt(wheelCollider.radius / wheelBaseRadiusScale);
+      var wheelScalar = wheelCollider.radius / wheelBaseRadiusScale;
 
       if (!Mathf.Approximately(wheelScalar, 1f))
       {
-        wheelVisual.transform.localScale = new Vector3(wheelScalar * wheelMeshLocalScale.x, wheelMeshLocalScale.y, wheelScalar * wheelMeshLocalScale.z);
+        wheelVisual.transform.localScale = new Vector3(wheelScalar * wheelMeshLocalScale.x, wheelMeshLocalScale.y * wheelBaseRadiusScale, wheelScalar * wheelMeshLocalScale.z);
       }
 
       // Setting higher forward stiffness for front and rear wheels allows for speeds to be picked up.
@@ -1103,7 +995,7 @@ namespace ValheimVehicles.SharedScripts
     private void RotateOnXAxis(WheelCollider wheelCollider,
       Transform wheelTransform)
     {
-      var deltaRotation = Mathf.Clamp(wheelCollider.rpm, -359f, 359f) * Time.deltaTime;
+      var deltaRotation = Mathf.Clamp(wheelCollider.rpm, -360f, 360f) * smoothRotationTime;
       wheelTransform.Rotate(Vector3.down,
         deltaRotation, Space.Self);
     }
@@ -1115,7 +1007,6 @@ namespace ValheimVehicles.SharedScripts
     {
       if (wheelCount <= 0 || wheelRadius <= 0)
       {
-        Debug.LogError("Wheel count and wheel radius must be greater than zero.");
         return (0f, 0f, 0f);
       }
 
@@ -1278,22 +1169,22 @@ namespace ValheimVehicles.SharedScripts
       movingTreadRight.isForward = isRightForward;
     }
 
-    private void RotateAroundCenterOfMass(Rigidbody rb, float turnRate, float inputTurnForce)
-    {
-      rb.ResetCenterOfMass();
-      var com = rb.worldCenterOfMass; // Get world-space center of mass
-      var rotationDelta = Quaternion.AngleAxis(turnRate * inputTurnForce * Time.deltaTime, rb.transform.up);
-
-      // Compute the new position to maintain correct pivoting
-      var offset = rb.position - com;
-      var newPosition = com + rotationDelta * offset;
-
-      // Apply the rotation and maintain the correct position
-      rb.Move(newPosition, rotationDelta * rb.rotation);
-      // rb.position = newPosition; // This ensures no teleportation occurs
-
-      UpdateCenterOfMass(centerOfMassOffset);
-    }
+    // private void RotateAroundCenterOfMass(Rigidbody rb, float turnRate, float inputTurnForce)
+    // {
+    //   rb.ResetCenterOfMass();
+    //   var com = rb.worldCenterOfMass; // Get world-space center of mass
+    //   var rotationDelta = Quaternion.AngleAxis(turnRate * inputTurnForce * Time.deltaTime, rb.transform.up);
+    //
+    //   // Compute the new position to maintain correct pivoting
+    //   var offset = rb.position - com;
+    //   var newPosition = com + rotationDelta * offset;
+    //
+    //   // Apply the rotation and maintain the correct position
+    //   rb.Move(newPosition, rotationDelta * rb.rotation);
+    //   // rb.position = newPosition; // This ensures no teleportation occurs
+    //
+    //   UpdateCenterOfMass(cent);
+    // }
 
     /// <summary>
     /// This is the absolute max value torque has before it is clamped both positive and negative.
@@ -1344,7 +1235,7 @@ namespace ValheimVehicles.SharedScripts
 
     private void ApplyBrakes()
     {
-      var currentSpeed = GetTankSpeed();
+      currentSpeed = GetTankSpeed();
       var brakeForce = vehicleRootBody.mass * Mathf.Abs(currentSpeed) / 2f; // Stops in ~2s
 
       foreach (var wheel in wheelColliders)
@@ -1401,9 +1292,10 @@ namespace ValheimVehicles.SharedScripts
     {
       return accelerationType switch
       {
-        AccelerationType.Low => 1.1f,
-        AccelerationType.Medium => 1.2f,
+        AccelerationType.Low => 1f,
+        AccelerationType.Medium => 1f,
         AccelerationType.High => 0.65f,
+        AccelerationType.Stop => 0f,
         _ => 1f
       };
     }
@@ -1430,9 +1322,9 @@ namespace ValheimVehicles.SharedScripts
       {
         leftSideTorque = turn > 0 ? baseTorque : -baseTorque;
         rightSideTorque = turn > 0 ? -baseTorque : baseTorque;
-
-        leftSideTorque *= inputTurnMultiplier;
-        rightSideTorque *= inputTurnMultiplier;
+        //
+        // leftSideTorque *= inputTurnMultiplier;
+        // rightSideTorque *= inputTurnMultiplier;
       }
       else if (turn != 0)
       {
@@ -1458,7 +1350,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void StopWheels()
     {
-      var currentSpeed = GetTankSpeed();
+      currentSpeed = GetTankSpeed();
       var engineBrakeForce = vehicleRootBody.mass * Mathf.Abs(currentSpeed) / 5f; // Lighter braking effect
 
       foreach (var wheel in wheelColliders)
@@ -1484,6 +1376,7 @@ namespace ValheimVehicles.SharedScripts
         AccelerationType.High => highTorque,
         AccelerationType.Medium => mediumTorque,
         AccelerationType.Low => mediumTorque,
+        AccelerationType.Stop => 0f,
         _ => lowTorque
       };
       inputTurnMultiplier = GetTurnMultiplier();

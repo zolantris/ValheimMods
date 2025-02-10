@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
@@ -9,6 +10,7 @@ public class ConvexHullComponent : ConvexHullAPI
 {
   public void Awake()
   {
+    IsAllowedAsHullOverride = IsAllowedForConvexHullFn;
     BubbleMaterial = LoadValheimVehicleAssets.DoubleSidedTransparentMat;
   }
 
@@ -41,7 +43,7 @@ public class ConvexHullComponent : ConvexHullAPI
         : PreviewModes.None;
   }
 
-  public override bool IsAllowedAsHullOverride(string val)
+  public bool IsAllowedForConvexHullFn(string val)
   {
     return PrefabNames.IsHull(val);
   }
