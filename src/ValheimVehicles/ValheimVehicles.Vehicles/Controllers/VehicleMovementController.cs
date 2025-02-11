@@ -590,9 +590,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (WheelController != null)
     {
       WheelController.SetTurnInput(m_rudderValue);
-      var landVehicleSpeed = GetLandVehicleSpeed();
-      var direction = VehicleSpeed == Ship.Speed.Back ? 1 : -1;
-      WheelController.SetAcceleration(landVehicleSpeed, direction);
+      UpdateLandVehicleStatsIfNecessary();
     }
   }
 
@@ -1368,6 +1366,24 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       ApplySailForce(this, true);
   }
 
+  public float GetLandVehicleSpeedInput()
+  {
+    if (isAnchored)
+    {
+      return 0;
+    }
+
+    return vehicleSpeed switch
+    {
+      Ship.Speed.Stop => 0,
+      Ship.Speed.Back => -PhysicsConfig.VehicleLandSpeedBack.Value,
+      Ship.Speed.Slow => PhysicsConfig.VehicleLandSpeedSlow.Value,
+      Ship.Speed.Half => PhysicsConfig.VehicleLandSpeedHalf.Value,
+      Ship.Speed.Full => PhysicsConfig.VehicleLandSpeedFull.Value,
+      _ => throw new ArgumentOutOfRangeException()
+    };
+  }
+
   public VehicleWheelController.AccelerationType GetLandVehicleSpeed()
   {
     if (isAnchored)
@@ -1451,15 +1467,25 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var isOwner = m_nview.IsOwner();
     if (!isOwner) return;
 
-    WheelController.forwardDirection = ShipDirection;
-
     if (shouldUpdateLandInputs)
     {
       m_body.WakeUp();
-      // var landSpeed = GetLandVehicleSpeed();
-      // var direction = VehicleSpeed == Ship.Speed.Back ? 1 : -1;
-      // WheelController.SetAcceleration(landSpeed, direction);
+      UpdateLandVehicleStatsIfNecessary();
       WheelController.VehicleMovementFixedUpdate();
+    }
+  }
+
+  public void UpdateLandVehicleStatsIfNecessary()
+  {
+    if (WheelController == null) return;
+    var landSpeed = GetLandVehicleSpeed();
+    var isForward = VehicleSpeed != Ship.Speed.Back;
+    var landInputMovementMultiplier = GetLandVehicleSpeedInput();
+    WheelController!.inputMovement = (isForward ? 1f : -1f) * landInputMovementMultiplier;
+    if (landSpeed != WheelController!.accelerationType || WheelController.isForward != isForward)
+    {
+      WheelController.forwardDirection = ShipDirection;
+      WheelController.UpdateAccelerationValues(landSpeed, isForward);
     }
   }
 
@@ -3580,12 +3606,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       vehicleAnchorState = HandleSetAnchor(AnchorState.Reeling);
 
     vehicleSpeed = (Ship.Speed)speed;
-    if (WheelController != null)
-    {
-      var landVehicleSpeed = GetLandVehicleSpeed();
-      var direction = VehicleSpeed == Ship.Speed.Back ? 1 : -1;
-      WheelController.SetAcceleration(landVehicleSpeed, direction);
-    }
+
+    UpdateLandVehicleStatsIfNecessary();
   }
 
 

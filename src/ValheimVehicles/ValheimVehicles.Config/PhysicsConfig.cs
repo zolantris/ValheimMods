@@ -244,27 +244,27 @@ public static class PhysicsConfig
     VehicleLandSpeedBack = Config.Bind(PropulsionSection, "LandVehicle Back Speed", 5f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Back speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(1, 100f)));
+        true, false, new AcceptableValueRange<float>(0.1f, 100f)));
     VehicleLandSpeedSlow = Config.Bind(PropulsionSection, "LandVehicle Slow Speed",
-      5f,
+      1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Slow speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(1, 100f)));
+        true, false, new AcceptableValueRange<float>(0.1f, 100f)));
     VehicleLandSpeedHalf = Config.Bind(PropulsionSection, "LandVehicle Half Speed",
-      10f,
+      1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Half speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(5f, 100f)));
+        true, false, new AcceptableValueRange<float>(0.1f, 100f)));
     VehicleLandSpeedFull = Config.Bind(PropulsionSection, "LandVehicle Full Speed",
-      30f,
+      1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(20, 100f)));
+        true, false, new AcceptableValueRange<float>(0.1f, 100f)));
     VehicleLandTurnSpeed = Config.Bind(PropulsionSection,
       "LandVehicle Turn Speed",
       35f,
       ConfigHelpers.CreateConfigDescription(
-        "Turn angle multiplier for land vehicles. Higher values will turn faster, but will be more disorienting and unrealistic.", true, false, new AcceptableValueRange<float>(20f, 90f)));
+        "Turn angle multiplier for land vehicles. Higher values will turn faster, but will be more disorienting and unrealistic.", true, false, new AcceptableValueRange<float>(0.1f, 90f)));
 
     VehicleLandAllowXZRotation = Config.Bind(PropulsionSection,
       "VehicleLand AllowXZRotation",

@@ -1,8 +1,11 @@
+#region
+
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
+
+#endregion
 
 // ReSharper disable ArrangeNamespaceBody
 
@@ -31,11 +34,13 @@ namespace ValheimVehicles.SharedScripts
     public Transform forwardTransform;
 
     public ConvexHullAPI _convexHullAPI;
-    private MeshBoundsVisualizer _meshBoundsVisualizer;
     public VehicleWheelController vehicleWheelController;
     public MovementPiecesController movementPiecesController;
-    private float lastUpdate;
+
+    public float DebouncedUpdateInterval = 2f;
     private Bounds _cachedDebugBounds = new(Vector3.zero, Vector3.zero);
+    private MeshBoundsVisualizer _meshBoundsVisualizer;
+    private float lastUpdate;
 
     private void Awake()
     {
@@ -62,8 +67,6 @@ namespace ValheimVehicles.SharedScripts
       Cleanup();
       Generate();
     }
-
-    public float DebouncedUpdateInterval = 2f;
     /// <summary>
     ///   For seeing the colliders update live. This should not be used in game for
     ///   performance reasons.
@@ -143,6 +146,13 @@ namespace ValheimVehicles.SharedScripts
       _convexHullAPI.PreviewParent = PiecesParentObj.transform;
     }
 
+
+    private void OnScriptHotReload()
+    {
+      //do whatever you want to do with access to instance via 'this'
+      Generate();
+    }
+
     /// <summary>
     ///   For GameObjects
     /// </summary>
@@ -196,7 +206,9 @@ namespace ValheimVehicles.SharedScripts
         // If the GameObject's name matches the target name, delete it
         if (obj.name.StartsWith(ConvexHullAPI.MeshNamePrefix))
         {
-          Debug.Log($"Deleted GameObject: {obj.name}");
+#if DEBUG
+          // Debug.Log($"Deleted GameObject: {obj.name}");
+#endif
           DebugUnityHelpers.AdaptiveDestroy(obj);
         }
     }
