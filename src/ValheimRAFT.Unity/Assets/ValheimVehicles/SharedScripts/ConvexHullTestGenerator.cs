@@ -38,10 +38,10 @@ namespace ValheimVehicles.SharedScripts
     public MovementPiecesController movementPiecesController;
 
     public float DebouncedUpdateInterval = 2f;
+    public Transform cameraTransform;
     private Bounds _cachedDebugBounds = new(Vector3.zero, Vector3.zero);
     private MeshBoundsVisualizer _meshBoundsVisualizer;
     private float lastUpdate;
-
     private void Awake()
     {
       GetOrAddMeshGeneratorApi();
@@ -53,6 +53,11 @@ namespace ValheimVehicles.SharedScripts
         {
           vehicleWheelController.wheelParent = transform.Find("vehicle_land/wheels");
         }
+      }
+
+      if (!cameraTransform)
+      {
+        cameraTransform = transform.Find("camera");
       }
       // EnableCollisionBetweenLayers(10, 28);
       // EnableCollisionBetweenLayers(28, 10);
@@ -73,6 +78,10 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     public void FixedUpdate()
     {
+      if (cameraTransform)
+      {
+        cameraTransform.position = vehicleWheelController.transform.position + Vector3.up * 5f;
+      }
       if (!hasFixedUpdate) return;
       if (lastUpdate > DebouncedUpdateInterval)
       {
@@ -83,6 +92,8 @@ namespace ValheimVehicles.SharedScripts
         lastUpdate += Time.deltaTime;
         return;
       }
+
+
 
       SyncAPIProperties();
 

@@ -244,9 +244,8 @@ namespace ValheimVehicles.SharedScripts
       var ghostContainer = transform.Find("ghostContainer");
       if (ghostContainer) ghostContainer.gameObject.SetActive(false);
 #endif
-      wheelParent = transform.Find("wheels");
-      treadsParent = transform.Find("treads");
-      rotationEnginesParent = transform.Find("treads/rotation_engines");
+      wheelParent = transform.Find("vehicle_movement/wheels");
+      treadsParent = transform.Find("vehicle_movement/treads");
 
       vehicleRootBody = GetComponent<Rigidbody>();
       var centerOfMass = transform.Find("center_of_mass");
@@ -255,11 +254,11 @@ namespace ValheimVehicles.SharedScripts
 
       if (!treadsRight)
       {
-        treadsRight = transform.Find("treads/treads_right");
+        treadsRight = transform.Find("vehicle_movement/treads/treads_right");
       }
       if (!treadsLeft)
       {
-        treadsLeft = transform.Find("treads/treads_left");
+        treadsLeft = transform.Find("vehicle_movement/treads/treads_left");
       }
 
       InitTreadComponent();
@@ -631,97 +630,6 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     /// TODO fix the rotated wheel issue where wheels get out of alignment for 90 degrees and -90 variants.
     /// <param name="bounds"></param>
-    private void GenerateRotatorEngines(Bounds bounds)
-    {
-      if (!rotationEnginePrefab || !forwardDirection)
-      {
-        Debug.LogError(
-          "Bounds Transform, Forward Direction, and Wheel Set Prefab must be assigned.");
-        return;
-      }
-
-      SetOverrides();
-
-      // var isXBounds = IsXBoundsAlignment();
-      var totalRotators = CalculateTotalWheelSets(bounds);
-
-      // we fully can regenerate wheels.
-      // todo just remove the ones we no longer use
-      if (totalRotators != wheelInstances.Count || wheelColliders.Count != totalRotators)
-      {
-        Cleanup();
-      }
-
-      var rotatorIndex = 0;
-      var spacing = bounds.size.z / Math.Max(totalRotators - 1, 1);
-
-      // var centerOfMassBounds = new Bounds(rigid.centerOfMass, bounds.size);
-      // Generate wheel sets dynamically
-      for (var i = 0; i < totalRotators; i++)
-      {
-        GameObject rotationEngineInstance;
-        if (rotationEngineInstances.Count < rotatorIndex)
-        {
-          rotationEngineInstance = rotationEngineInstances[rotatorIndex];
-        }
-        else
-        {
-          rotationEngineInstance = Instantiate(rotationEnginePrefab, rotationEnginesParent);
-        }
-
-        SetRotationEngineProperties(rotationEngineInstance, bounds, i, totalRotators, spacing);
-
-        if (rotationEngineInstances.Count >= rotatorIndex)
-        {
-          rotationEngineInstances.Add(rotationEngineInstance);
-        }
-        else
-        {
-          rotationEngineInstances[rotatorIndex] = rotationEngineInstance;
-        }
-        rotatorIndex += 1;
-      }
-    }
-
-    private void SetRotationEngineProperties(GameObject rotationEngineInstance, Bounds bounds, int index, int totalEngines, float spacing)
-    {
-      var localPosition =
-        GetRotationEnginePosition(index, bounds,
-          spacing);
-      var positionName = GetPositionName(index, totalEngines);
-
-      rotationEngineInstance.name = $"ValheimVehicles_rotationEngine_{positionName}_{index}";
-      rotationEngineInstance.transform.localPosition = localPosition;
-
-      // scale the rotator to fit across the X bounds.
-      var rotatorMeshTransform = rotationEngineInstance.transform.Find("scalar");
-      var targetScale = new Vector3(bounds.size.x,
-        MovingTreadComponent.treadPointYOffset,
-        MovingTreadComponent.treadPointYOffset);
-      // ScaleMeshToFitBounds(rotatorMeshTransform.transform, targetScale);
-
-      // joint setup has to be done last in order to align the item first before it's force locked.
-      var joint = rotationEngineInstance.GetComponent<HingeJoint>();
-      if (joint)
-      {
-        if (rotatorEngineHingeInstances.Count < index)
-        {
-          rotatorEngineHingeInstances[index] = joint;
-        }
-        else
-        {
-          rotatorEngineHingeInstances.Add(joint);
-        }
-
-        joint.connectedBody = vehicleRootBody;
-      }
-    }
-
-    /// <summary>
-    ///   Generates wheel sets from a local bounds. This bounds must be local.
-    /// </summary>
-    /// TODO fix the rotated wheel issue where wheels get out of alignment for 90 degrees and -90 variants.
-    /// <param name="bounds"></param>
     private void GenerateWheelSets(Bounds bounds)
     {
       if (!wheelPrefab || !forwardDirection)
@@ -787,20 +695,6 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    private Bounds GetBounds(Transform boundsTransform)
-    {
-      if (boundsTransform == null) return new Bounds(Vector3.zero, Vector3.one);
-      var renderer = boundsTransform.GetComponent<Renderer>();
-      if (renderer) return renderer.bounds;
-
-      var collider = boundsTransform.GetComponent<Collider>();
-      if (collider) return collider.bounds;
-
-      Debug.LogError(
-        "Bounds Transform must have a Renderer or Collider component.");
-      return new Bounds(Vector3.zero, Vector3.zero);
-    }
-
     private int CalculateTotalWheelSets(Bounds bounds)
     {
       var vehicleSize = bounds.size.z; // Assuming size along the Z-axis determines length
@@ -812,56 +706,6 @@ namespace ValheimVehicles.SharedScripts
 
       var nearestIncrement = Mathf.Clamp(setInt, minimumWheelSets, maxWheelSets);
       return nearestIncrement;
-    }
-
-    // private Vector3 GetWheelLocalPosition(int index, bool isLeft, int totalWheelSets,
-    //   Bounds bounds, float spacing, bool isXBounds)
-    // {
-    //   var xPos = isLeft ? bounds.min.x : bounds.max.x;
-    //   var zPos = bounds.min.z + spacing * index;
-    //   var newPosition = new Vector3(xPos, -bounds.extents.y, zPos);
-    //
-    //   var rotatedPosition = wheelParent.TransformPoint(newPosition);
-    //
-    //   // var newPosition = new Vector3(bounds.min.z + spacing * index, -bounds.extents.y,
-    //   //   isLeft ? bounds.min.x : bounds.max.x);
-    //   return wheelParent.InverseTransformPoint(rotatedPosition);
-    // }
-
-    private Vector3 GetRotationEnginePosition(int index,
-      Bounds bounds, float spacing)
-    {
-      // Calculate the local position directly within the bounds
-      var xPos = bounds.center.x;
-      var zPos = bounds.min.z + spacing * index;
-      var localPosition = new Vector3(xPos, 0, zPos);
-      return localPosition;
-    }
-
-    /// <summary>
-    /// TODO This has problems with rotation alignment, rotating the wheel.root transform will cause the size to somehow inflate. 
-    /// </summary>
-    /// <param name="index"></param>
-    /// <param name="isLeft"></param>
-    /// <param name="totalWheelSets"></param>
-    /// <param name="bounds"></param>
-    /// <param name="spacing"></param>
-    /// <returns></returns>
-    private Vector3 GetWheelLocalPosition(int index, bool isLeft, int totalWheelSets,
-      Bounds bounds, float spacing)
-    {
-      // Calculate the local position directly within the bounds
-      var xPos = isLeft ? bounds.min.x : bounds.max.x;
-      // var xPos = isLeft ? bounds.min.x : bounds.max.x;
-
-      var zPos = bounds.min.z + spacing * index;
-
-      // var ratio = index / Math.Max(totalWheelSets, 1) KF UdYCOU
-      // var zPos = bounds.size.z * ratio * bounds.min.z;
-      var localPosition = new Vector3(xPos, bounds.min.y - (wheelBottomOffset + wheelRadius), zPos);
-
-      // Return the local position without any world space conversions
-      return localPosition;
     }
 
     public bool IsMiddleIndex(int index, int size)
