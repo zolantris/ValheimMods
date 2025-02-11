@@ -145,7 +145,6 @@ namespace ValheimVehicles.SharedScripts
     public Transform rotationEnginesParent;
     public Transform treadsRight;
     public Transform treadsLeft;
-    [FormerlySerializedAs("additionalBreakForce")]
     public float additionalBrakeForce = defaultBreakForce;
     public float currentMotorTorqueRight;
     public float currentMotorTorqueLeft;
@@ -182,6 +181,9 @@ namespace ValheimVehicles.SharedScripts
     public bool isForward = true;
 
     public bool lastTurningState;
+
+    public bool ShouldSyncWheelsToCollider;
+    // Set to false until it's stable/syncs with the treads.
     [Tooltip("Wheels that provide power and move the tank forwards/reverse.")]
     public readonly List<WheelCollider> poweredWheels = new();
 
@@ -339,13 +341,15 @@ namespace ValheimVehicles.SharedScripts
         var leftJoint = treadsLeft.GetComponent<ConfigurableJoint>();
         var rightJoint = treadsRight.GetComponent<ConfigurableJoint>();
 
-        var treadsAnchorLeftLocalPosition = new Vector3(bounds.min.x - 0.5f, bounds.min.y + wheelBottomOffset + wheelRadius * 2, bounds.center.z);
-        var treadsAnchorRightLocalPosition = new Vector3(bounds.max.x + 0.5f, bounds.min.y + wheelBottomOffset + wheelRadius * 2, bounds.center.z);
+        var treadsAnchorLeftLocalPosition = new Vector3(bounds.min.x - 0.5f, bounds.min.y + wheelBottomOffset, bounds.center.z);
+        var treadsAnchorRightLocalPosition = new Vector3(bounds.max.x + 0.5f, bounds.min.y + wheelBottomOffset, bounds.center.z);
 
         // var localPosY = Vector3.up * (-bounds.extents.y + wheelRadius);
+        var positionLeft = transform.position + treadsAnchorLeftLocalPosition;
+        var positionRight = transform.position + treadsAnchorRightLocalPosition;
 
-        treadsLeft.localPosition = treadsAnchorLeftLocalPosition;
-        treadsRight.localPosition = treadsAnchorRightLocalPosition;
+        treadsLeft.position = positionLeft;
+        treadsRight.position = positionRight;
 
         ConfigureJoint(leftJoint, vehicleRootBody, Vector3.zero);
         ConfigureJoint(rightJoint, vehicleRootBody, Vector3.zero);
@@ -358,6 +362,20 @@ namespace ValheimVehicles.SharedScripts
         movingTreadRight.GenerateTreads(bounds);
       }
 
+      // Sync position correctly because it's pretty complicated getting these wheels to align well with treads center. Requires treads to be generated
+      foreach (var wheelInstance in wheelInstances)
+      {
+        var newPos = wheelInstance.transform.position;
+        if (wheelInstance.name.Contains("left"))
+        {
+          newPos.y = treadsLeft.position.y;
+        }
+        if (wheelInstance.name.Contains("right"))
+        {
+          newPos.y = treadsRight.position.y;
+        }
+        wheelInstance.transform.position = newPos;
+      }
     }
 
     public void ScaleAxle(Transform axle, float targetLength)
@@ -708,6 +726,33 @@ namespace ValheimVehicles.SharedScripts
       return nearestIncrement;
     }
 
+
+    /// <summary>
+    /// TODO This has problems with rotation alignment, rotating the wheel.root transform will cause the size to somehow inflate. 
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="isLeft"></param>
+    /// <param name="totalWheelSets"></param>
+    /// <param name="bounds"></param>
+    /// <param name="spacing"></param>
+    /// <returns></returns>
+    private Vector3 GetWheelLocalPosition(int index, bool isLeft, int totalWheelSets,
+      Bounds bounds, float spacing)
+    {
+      // Calculate the local position directly within the bounds
+      var xPos = isLeft ? bounds.min.x : bounds.max.x;
+      // var xPos = isLeft ? bounds.min.x : bounds.max.x;
+
+      var zPos = bounds.min.z + spacing * index;
+
+      // var ratio = index / Math.Max(totalWheelSets, 1) KF UdYCOU
+      // var zPos = bounds.size.z * ratio * bounds.min.z;
+      var localPosition = new Vector3(xPos, bounds.min.y - (wheelBottomOffset + wheelRadius), zPos);
+
+      // Return the local position without any world space conversions
+      return localPosition;
+    }
+
     public bool IsMiddleIndex(int index, int size)
     {
       // Check if size is even or odd
@@ -743,7 +788,7 @@ namespace ValheimVehicles.SharedScripts
 
       if (!Mathf.Approximately(wheelScalar, 1f))
       {
-        wheelVisual.transform.localScale = new Vector3(wheelScalar * wheelMeshLocalScale.x, wheelMeshLocalScale.y * wheelBaseRadiusScale, wheelScalar * wheelMeshLocalScale.z);
+        wheelVisual.transform.localScale = new Vector3(wheelScalar * wheelMeshLocalScale.x, wheelScalar * wheelMeshLocalScale.y, wheelScalar * wheelMeshLocalScale.z);
       }
 
       if (wheelCollider)
@@ -773,14 +818,17 @@ namespace ValheimVehicles.SharedScripts
       if (wheelVisual == null) return;
       var wheelTransform = wheelVisual.transform;
       wheelCollider.GetWorldPose(out var position, out _);
-      wheelTransform.position = position;
+      if (ShouldSyncWheelsToCollider)
+      {
+        wheelTransform.position = position;
+      }
       RotateOnXAxis(wheelCollider, wheelVisual.transform);
     }
 
     private void RotateOnXAxis(WheelCollider wheelCollider,
       Transform wheelTransform)
     {
-      var deltaRotation = Mathf.Clamp(wheelCollider.rpm * Time.fixedDeltaTime, -359f, 359f);
+      var deltaRotation = Mathf.Clamp(wheelCollider.rpm / 60f * Time.fixedDeltaTime, -359f, 359f);
       wheelTransform.Rotate(Vector3.down,
         deltaRotation, Space.Self);
     }

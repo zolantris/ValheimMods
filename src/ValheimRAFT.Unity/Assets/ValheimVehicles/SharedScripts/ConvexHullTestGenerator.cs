@@ -81,6 +81,7 @@ namespace ValheimVehicles.SharedScripts
       if (cameraTransform)
       {
         cameraTransform.position = vehicleWheelController.transform.position + Vector3.up * 5f;
+        cameraTransform.localRotation = vehicleWheelController.transform.localRotation;
       }
       if (!hasFixedUpdate) return;
       if (lastUpdate > DebouncedUpdateInterval)

@@ -3,7 +3,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 #endregion
 
@@ -92,7 +91,6 @@ namespace ValheimVehicles.SharedScripts
     public float treadTopLocalPosition = treadPointYOffset;
     public float treadBottomLocalPosition;
 
-    [FormerlySerializedAs("wheelRotators")]
     public Transform treadParent;
     public List<Vector3> originalTreadPositions = new();
     public Bounds localBounds;
@@ -419,15 +417,15 @@ namespace ValheimVehicles.SharedScripts
       CenterObj.transform.position = treadParent.position + localBounds.center;
       treadParent.position = CenterObj.transform.position;
 
-      var treadGameObjects = _movingTreads.Select(x => x.gameObject).ToList();
-      convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects);
-      convexHullComponent.convexHullMeshColliders.ForEach(x =>
-      {
-        if (!x) return;
-        x.gameObject.name = "convex_tread_collider";
-        x.includeLayers = LayerMask.GetMask("terrain");
-        x.excludeLayers = -1;
-      });
+      // var treadGameObjects = _movingTreads.Select(x => x.gameObject).ToList();
+      // convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects);
+      // convexHullComponent.convexHullMeshColliders.ForEach(x =>
+      // {
+      //   if (!x) return;
+      //   x.gameObject.name = "convex_tread_collider";
+      //   x.includeLayers = LayerMask.GetMask("terrain");
+      //   x.excludeLayers = -1;
+      // });
     }
 
     public void SetSpeed(float speed)
