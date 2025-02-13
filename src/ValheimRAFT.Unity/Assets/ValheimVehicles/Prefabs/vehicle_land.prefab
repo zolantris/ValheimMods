@@ -309,7 +309,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1759348672122597279}
-  - component: {fileID: 5841030135074940508}
   m_Layer: 10
   m_Name: treads_right
   m_TagString: Untagged
@@ -365,29 +364,6 @@ Transform:
   - {fileID: 3760165178047111081}
   m_Father: {fileID: 5060495523002218080}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5841030135074940508
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 516342953880360386}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8aa93d7854518e94aaf1cc6faf180375, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  PreviewMode: 2
-  wrapperBuffer: 0.5
-  transformPreviewOffset: {x: 0, y: 0, z: 0}
-  m_fallbackMaterial: {fileID: 0}
-  CanLog: 0
-  previewScale: {x: 1, y: 1, z: 1}
-  PreviewParent: {fileID: 1759348672122597279}
-  convexMeshLayer: 29
-  HasPreviewGeneration: 0
-  m_colliderParentTransform: {fileID: 1759348672122597279}
-  m_rigidbody: {fileID: 0}
 --- !u!1 &591855939869341643
 GameObject:
   m_ObjectHideFlags: 0
@@ -2668,7 +2644,7 @@ ConfigurableJoint:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3104779969178346762}
-  m_ConnectedBody: {fileID: 4313409607007339069}
+  m_ConnectedBody: {fileID: 0}
   m_ConnectedArticulationBody: {fileID: 0}
   m_Anchor: {x: 0, y: 0, z: 0}
   m_Axis: {x: 1, y: 0, z: 0}
@@ -9860,7 +9836,7 @@ ConfigurableJoint:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8525095631510787110}
-  m_ConnectedBody: {fileID: 4313409607007339069}
+  m_ConnectedBody: {fileID: 0}
   m_ConnectedArticulationBody: {fileID: 0}
   m_Anchor: {x: 0, y: 0, z: 0}
   m_Axis: {x: 1, y: 0, z: 0}
@@ -10875,8 +10851,7 @@ PrefabInstance:
       propertyPath: m_Name
       value: vehicle_land
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 491688074500453359, guid: 3ad0b9b59e9b1e94798aa29c1f2cc40c, type: 3}
+    m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 7097101089698676056, guid: 3ad0b9b59e9b1e94798aa29c1f2cc40c, type: 3}
     m_AddedGameObjects:
@@ -10892,43 +10867,8 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6535037035360283912, guid: 3ad0b9b59e9b1e94798aa29c1f2cc40c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7784464627780231160}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 6660037161417452804, guid: 3ad0b9b59e9b1e94798aa29c1f2cc40c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 4313409607007339069}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3ad0b9b59e9b1e94798aa29c1f2cc40c, type: 3}
---- !u!1 &8225528950071859225 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6660037161417452804, guid: 3ad0b9b59e9b1e94798aa29c1f2cc40c, type: 3}
-  m_PrefabInstance: {fileID: 3335978188559463709}
-  m_PrefabAsset: {fileID: 0}
---- !u!54 &4313409607007339069
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8225528950071859225}
-  serializedVersion: 4
-  m_Mass: 1000
-  m_Drag: 0.05
-  m_AngularDrag: 0.5
-  m_CenterOfMass: {x: 0, y: -10, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 1
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!4 &8340188236436778126 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6770470994868771219, guid: 3ad0b9b59e9b1e94798aa29c1f2cc40c, type: 3}
@@ -10969,7 +10909,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3862590103273061354, guid: a476ad740d1a255449edb42e69d22446, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.16830236
+      value: 0.043302357
       objectReference: {fileID: 0}
     - target: {fileID: 3862590103273061354, guid: a476ad740d1a255449edb42e69d22446, type: 3}
       propertyPath: m_LocalPosition.z

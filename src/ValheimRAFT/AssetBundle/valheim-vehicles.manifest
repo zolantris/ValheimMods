@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2335630316
+CRC: 2913858167
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: cd7cfe65c0ec3d8310fd6aa60b687ef5
+    Hash: 46a6619318ca72c4c076821b6e92866f
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 692ab41bce6016fbe7c98257a5dd98d5
+    Hash: 6ab5d685d4ab2d420a0bd924277ccb12
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: cd7cfe65c0ec3d8310fd6aa60b687ef5
+    Hash: 46a6619318ca72c4c076821b6e92866f
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -40,6 +40,8 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 114
   Script: {fileID: 11500000, guid: 8aa93d7854518e94aaf1cc6faf180375, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 19bf60ab5c953fe4ba1db2f29c51ad1b, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 7d873279a1e81b9419d0f6fb8b3c1fa9, type: 3}
 - Class: 114
@@ -75,8 +77,6 @@ ClassTypes:
 - Class: 120
   Script: {instanceID: 0}
 - Class: 128
-  Script: {instanceID: 0}
-- Class: 135
   Script: {instanceID: 0}
 - Class: 136
   Script: {instanceID: 0}
@@ -167,8 +167,9 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_wood.prefab
 - Assets/ValheimVehicles/Prefabs/anchor_full_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_nautilus.prefab
-- Assets/ValheimVehicles/Prefabs/ram_stake_tier3_1x2.prefab
+- Assets/vehicle_land_scene_tester.prefab
 - Assets/ValheimVehicles/Prefabs/anchor_full_chain.prefab
+- Assets/ValheimVehicles/Prefabs/ram_stake_tier3_1x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_porthole_iron_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier1_2x4.prefab
 - Assets/ValheimVehicles/Material/StandardStencilCutout.shader
