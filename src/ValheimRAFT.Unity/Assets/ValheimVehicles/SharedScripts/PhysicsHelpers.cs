@@ -1,6 +1,11 @@
-﻿using System.Collections.Generic;
+﻿#region
+
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+
+#endregion
+
 namespace ValheimVehicles.SharedScripts
 {
   public static class PhysicsHelpers
@@ -8,6 +13,15 @@ namespace ValheimVehicles.SharedScripts
     public static void EnableCollisionBetweenLayers(int layerA, int layerB)
     {
       Physics.IgnoreLayerCollision(layerA, layerB, false);
+    }
+
+    public static void UpdateRelativeCenterOfMass(Rigidbody rb, float yOffset)
+    {
+      rb.ResetCenterOfMass();
+      var centerOfMass = rb.centerOfMass;
+      centerOfMass = new Vector3(centerOfMass.x, yOffset, centerOfMass.z);
+
+      rb.centerOfMass = centerOfMass;
     }
 
     public static void IgnoreCollidersForLists(List<Collider> targetColliders, List<Collider> collidersToIgnore)
