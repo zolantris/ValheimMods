@@ -80,6 +80,8 @@ namespace ValheimVehicles.SharedScripts
 
     [Tooltip("Multiplier used to convert input into a force applied at the treads an alternative to wheel motor torque.")]
     public float baseMotorForce = 5.0f; // Adjust this value as needed
+    [Tooltip("Multiplier used to convert input turns of -1 and 1 to a bigger number")]
+    public float baseTurnForce = 5.0f; // Adjust this value as needed
 
     [Tooltip(
       "Turn rate that is \"magically\" applied regardless of what the physics state of the tank is.")]
@@ -132,8 +134,6 @@ namespace ValheimVehicles.SharedScripts
     public float inputTurnForce;
     public float inputMovement;
 
-
-    public float inputTurnMultiplier = 1f;
     public float MaxWheelRPM = 3000f;
     public float turnInputOverride;
 
@@ -273,7 +273,8 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public bool IsUsingEngine => !Mathf.Approximately(inputMovement, 0f);
+    // both inputTurnForce and inputMovement have to be zero to not use the engine.
+    public bool IsUsingEngine => !Mathf.Approximately(inputTurnForce, 0f) || !Mathf.Approximately(inputMovement, 0f);
 
     private void Awake()
     {
@@ -418,7 +419,7 @@ namespace ValheimVehicles.SharedScripts
       var rightTreadPos = treadsRight.position;
       if (IsBraking)
       {
-        ApplyBreaks();
+        ApplyBrakes();
       }
       else
       {
@@ -426,8 +427,8 @@ namespace ValheimVehicles.SharedScripts
         // - A positive inputMovement moves the tank forward.
         // - A positive inputTurnForce will add force to the left tread and subtract from the right,
         //   causing an in-place right turn (and vice versa).
-        var leftForceMagnitude = (inputMovement + inputTurnForce) * baseMotorForce * hillFactor;
-        var rightForceMagnitude = (inputMovement - inputTurnForce) * baseMotorForce * hillFactor;
+        var leftForceMagnitude = (inputMovement + inputTurnForce * baseTurnForce) * baseMotorForce * hillFactor;
+        var rightForceMagnitude = (inputMovement - inputTurnForce * baseTurnForce) * baseMotorForce * hillFactor;
 
         treadsLeftRb.AddForceAtPosition(forward * leftForceMagnitude, leftTreadPos, ForceMode.Acceleration);
         treadsRightRb.AddForceAtPosition(forward * rightForceMagnitude, rightTreadPos, ForceMode.Acceleration);
@@ -597,7 +598,7 @@ namespace ValheimVehicles.SharedScripts
         // ApplyDownforce();
 
         if (IsBraking)
-          ApplyBreaks();
+          ApplyBrakes();
         else
           ApplyTorque(inputMovement, inputTurnForce);
       }
@@ -1073,7 +1074,7 @@ namespace ValheimVehicles.SharedScripts
     }
 
 
-    private void ApplyBreaks()
+    private void ApplyBrakes()
     {
       currentSpeed = GetTankSpeed();
       var brakeForce = vehicleRootBody.mass * Mathf.Abs(currentSpeed) / 2f; // Stops in ~2s
@@ -1105,7 +1106,14 @@ namespace ValheimVehicles.SharedScripts
         stiffness = adjustedStiffness // Adjust dynamically instead of hardcoding 10f
       };
 
-      currentSidewaysFriction = new WheelFrictionCurve { extremumSlip = (isTurningInPlace ? 0.5f : 0.4f) * frictionMultiplier, extremumValue = (isTurningInPlace ? 0.7f : 0.8f) * frictionMultiplier, asymptoteSlip = (isTurningInPlace ? 1.8f : 2.0f) * frictionMultiplier, asymptoteValue = (isTurningInPlace ? 0.5f : 0.6f) * frictionMultiplier, stiffness = isTurningInPlace ? 1.8f : Mathf.Lerp(2.0f, 2.5f, speed / topSpeed) };
+      currentSidewaysFriction = new WheelFrictionCurve
+      {
+        extremumSlip = (isTurningInPlace ? 0.5f : 0.4f) * frictionMultiplier,
+        extremumValue = (isTurningInPlace ? 0.7f : 0.8f) * frictionMultiplier,
+        asymptoteSlip = (isTurningInPlace ? 1.8f : 2.0f) * frictionMultiplier,
+        asymptoteValue = (isTurningInPlace ? 0.5f : 0.6f) * frictionMultiplier,
+        stiffness = isTurningInPlace ? 1.8f : Mathf.Lerp(2.0f, 2.5f, speed / topSpeed)
+      };
 
       // currentSidewaysFriction = new WheelFrictionCurve
       // {
@@ -1128,13 +1136,13 @@ namespace ValheimVehicles.SharedScripts
       wheelColliders.ForEach(x => ApplyFrictionToWheelCollider(x, speed));
     }
 
-    private float GetTurnMultiplier()
+    private float GetTurnForce()
     {
       return accelerationType switch
       {
-        AccelerationType.Low => 1f,
+        AccelerationType.Low => inputMovement + 10f,
         AccelerationType.Medium => 1f,
-        AccelerationType.High => 0.65f,
+        AccelerationType.High => 1f,
         AccelerationType.Stop => 0f,
         _ => 1f
       };
@@ -1258,16 +1266,31 @@ namespace ValheimVehicles.SharedScripts
 
       baseMotorForce = acceleration switch
       {
-        AccelerationType.High => 6,
-        AccelerationType.Medium => 4,
-        AccelerationType.Low => 2,
+        AccelerationType.High => 20f,
+        AccelerationType.Medium => 15f,
+        AccelerationType.Low => 10f,
         AccelerationType.Stop => 0f,
         _ => lowTorque
       };
 
 
-      inputTurnMultiplier = GetTurnMultiplier();
+      baseTurnForce = GetTurnForce();
       isForward = isMovingForward;
+
+      if (!IsUsingEngine)
+      {
+        wheelColliders.ForEach(x =>
+        {
+          x.brakeTorque = 50f;
+        });
+      }
+      else
+      {
+        wheelColliders.ForEach(x =>
+        {
+          x.brakeTorque = 0f;
+        });
+      }
     }
 
 

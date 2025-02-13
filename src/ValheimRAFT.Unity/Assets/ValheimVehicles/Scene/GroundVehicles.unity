@@ -4555,7 +4555,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3104779968902216635}
   serializedVersion: 4
-  m_Mass: 1000
+  m_Mass: 100
   m_Drag: 0.05
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -4902,12 +4902,12 @@ MonoBehaviour:
   axelPadding: 0.5
   accelerationType: 1
   baseTorque: 0
-  inputTurnForce: 0
+  inputTurnForce: 1
   inputMovement: 0
   inputTurnMultiplier: 1
   MaxWheelRPM: 3000
   turnInputOverride: 0
-  UseInputControls: 1
+  UseInputControls: 0
   hasInitialized: 1
   wheelBottomOffset: 0
   wheelRadius: 0.65
@@ -5029,7 +5029,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8525095631786265239}
   serializedVersion: 4
-  m_Mass: 1000
+  m_Mass: 100
   m_Drag: 0.05
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
