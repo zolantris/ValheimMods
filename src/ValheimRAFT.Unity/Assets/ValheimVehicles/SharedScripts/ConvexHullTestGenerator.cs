@@ -39,6 +39,8 @@ namespace ValheimVehicles.SharedScripts
 
     public float DebouncedUpdateInterval = 2f;
     public Transform cameraTransform;
+
+    public bool hasCalledFirstGenerate;
     private Bounds _cachedDebugBounds = new(Vector3.zero, Vector3.zero);
     private MeshBoundsVisualizer _meshBoundsVisualizer;
     private float lastUpdate;
@@ -70,7 +72,6 @@ namespace ValheimVehicles.SharedScripts
     {
       SyncAPIProperties();
       Cleanup();
-      Generate();
     }
     /// <summary>
     ///   For seeing the colliders update live. This should not be used in game for
@@ -82,6 +83,11 @@ namespace ValheimVehicles.SharedScripts
       {
         cameraTransform.position = vehicleWheelController.transform.position + Vector3.up * 5f;
         cameraTransform.localRotation = vehicleWheelController.transform.localRotation;
+      }
+      if (!hasCalledFirstGenerate)
+      {
+        Generate();
+        hasCalledFirstGenerate = true;
       }
       if (!hasFixedUpdate) return;
       if (lastUpdate > DebouncedUpdateInterval)
@@ -103,7 +109,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void OnEnable()
     {
-      Generate();
+      // Generate();
     }
 
     public void OnDisable()
@@ -175,6 +181,13 @@ namespace ValheimVehicles.SharedScripts
           !go.name.Contains(ConvexHullAPI.MeshNamePrefix) &&
           !go.name.StartsWith("VehicleShip") && go.activeInHierarchy);
 
+      // VIP confirm that rotation of roots are aligned otherwise bail due to problems with rigidbodies not matching and requiring lots of complicated transforms around pivots to align points
+      if (PiecesParentObj.transform.root.rotation != vehicleWheelController.transform.root.rotation)
+      {
+        Debug.LogWarning("PiecesParentObj.transform.root.rotation != vehicleWheelController.transform.root.rotation force aligning them in worldspace before this causes big issues with transforms all needing to be re-aligned. ");
+        PiecesParentObj.transform.root.rotation = vehicleWheelController.transform.root.rotation;
+      }
+
       _convexHullAPI.GenerateMeshesFromChildColliders(
         convexHullParentGameObject, convexHullParentGameObject.transform.position - PiecesParentObj.GetComponent<Rigidbody>().worldCenterOfMass,
         distanceThreshold, childGameObjects.ToList());
@@ -189,6 +202,12 @@ namespace ValheimVehicles.SharedScripts
     }
 
     public void IgnoreAllCollidersBetweenWheelsAndPieces()
+    {
+      var childColliders = PhysicsHelpers.GetAllChildColliders(transform);
+      PhysicsHelpers.IgnoreCollidersForLists(vehicleWheelController.colliders, childColliders);
+    }
+
+    public void IgnoreAllCollidersBetweenTreadsAndPieces()
     {
       var childColliders = PhysicsHelpers.GetAllChildColliders(transform);
       PhysicsHelpers.IgnoreCollidersForLists(vehicleWheelController.colliders, childColliders);

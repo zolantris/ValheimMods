@@ -1,5 +1,9 @@
+#region
+
 using System.Collections.Generic;
 using UnityEngine;
+
+#endregion
 
 // todo figure out where utils is coming from that causes a conflict.
 // Looks like a static class from valheim
@@ -11,6 +15,8 @@ namespace ValheimVehicles.SharedScripts
   public static class LayerHelpers
   {
     public const int CustomRaftLayer = 29;
+
+    public static int TerrainLayer = LayerMask.NameToLayer("terrain");
 
     public static LayerMask CustomRaftLayerMask =
       LayerMask.GetMask(LayerMask.LayerToName(CustomRaftLayer));
@@ -44,7 +50,7 @@ namespace ValheimVehicles.SharedScripts
 
     public static bool IsContainedWithinMask(int layer, LayerMask mask)
     {
-      return (mask.value & (1 << layer)) != 0;
+      return (mask.value & 1 << layer) != 0;
     }
 
     // todo fix jitters with low headroom at water level
@@ -57,7 +63,7 @@ namespace ValheimVehicles.SharedScripts
       // Iterate through all 32 possible layers
       for (var i = 0; i < 32; i++)
         // Check if the i-th bit in the mask is set
-        if ((mask.value & (1 << i)) != 0)
+        if ((mask.value & 1 << i) != 0)
         {
           var name = LayerMask.LayerToName(i);
           ActiveLayersForBlockingMask.Add(name);
@@ -80,7 +86,7 @@ namespace ValheimVehicles.SharedScripts
     public static LayerMask CombineLayerMask(LayerMask originalMask,
       int layerToAdd)
     {
-      return originalMask | (1 << layerToAdd);
+      return originalMask | 1 << layerToAdd;
     }
   }
 }

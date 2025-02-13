@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -5,6 +7,8 @@ using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
+
+#endregion
 
 // ReSharper disable ArrangeNamespaceBody
 
@@ -66,9 +70,17 @@ namespace ValheimVehicles.SharedScripts
 
     public Transform PreviewParent;
 
-    private List<Vector3> _cachedPoints = new();
-
     public int convexMeshLayer = 29;
+
+    [FormerlySerializedAs("HasPreviewGenerationEnabled")] [FormerlySerializedAs("hasPreviewGenerationEnabled")]
+    public bool HasPreviewGeneration = true;
+
+    public Transform m_colliderParentTransform;
+    public Rigidbody m_rigidbody;
+
+    private Bounds _cachedConvexHullBounds = new(Vector3.zero, Vector3.one * 4);
+
+    private List<Vector3> _cachedPoints = new();
 
     [NonSerialized] public List<MeshCollider> convexHullMeshColliders = new();
 
@@ -84,16 +96,18 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     [NonSerialized] public List<GameObject> convexHullPreviewMeshes = new();
 
-    [FormerlySerializedAs("HasPreviewGenerationEnabled")] [FormerlySerializedAs("hasPreviewGenerationEnabled")]
-    public bool HasPreviewGeneration = true;
-
     [NonSerialized]
     public List<MeshRenderer> convexHullPreviewMeshRendererItems = new();
 
     [NonSerialized] public List<GameObject> convexHullTriggerMeshes = new();
 
-    public Transform m_colliderParentTransform;
-    public Rigidbody m_rigidbody;
+    /// <summary>
+    ///   Allows for additional overrides. This should be a function provided in any
+    ///   class extending ConvexHullAPI
+    /// </summary>
+    /// <param name="val"></param>
+    /// <returns></returns>
+    public Func<string, bool> IsAllowedAsHullOverride = s => false;
 
     private void Awake()
     {
@@ -130,6 +144,28 @@ namespace ValheimVehicles.SharedScripts
       DestroyAllConvexMeshes();
     }
 
+    public void OnDrawGizmos()
+    {
+      if (_cachedConvexHullBounds != null)
+      {
+        Gizmos.color = Color.green;
+        // Gizmos.DrawWireCube(_cachedConvexHullBounds.center + transform.position, _cachedConvexHullBounds.size);
+        Gizmos.DrawWireCube(_cachedConvexHullBounds.center + m_colliderParentTransform.position, Vector3.one);
+      }
+
+      if (!m_rigidbody)
+      {
+        m_rigidbody = GetComponent<Rigidbody>();
+
+      }
+
+      if (m_rigidbody)
+      {
+        Gizmos.color = Color.white;
+        Gizmos.DrawWireCube(m_rigidbody.worldCenterOfMass, Vector3.one);
+      }
+    }
+
     public void InitializeConvexMeshGeneratorApi(PreviewModes mode,
       Material debugMaterial, Material bubbleMaterial, Color debugMaterialColor,
       Color bubbleMaterialColor, string meshNamePrefix,
@@ -143,14 +179,6 @@ namespace ValheimVehicles.SharedScripts
       BubbleMaterial = bubbleMaterial;
       BubbleMaterialColor = bubbleMaterialColor;
     }
-
-    /// <summary>
-    ///   Allows for additional overrides. This should be a function provided in any
-    ///   class extending ConvexHullAPI
-    /// </summary>
-    /// <param name="val"></param>
-    /// <returns></returns>
-    public Func<string, bool> IsAllowedAsHullOverride = s => false;
 
     public void UpdatePropertiesForConvexHulls(
       Vector3 transformPreviewOffset, PreviewModes mode, Color debugColor,
@@ -861,6 +889,7 @@ namespace ValheimVehicles.SharedScripts
 
       if (triggerParent != null) CreateTriggerConvexHullMeshes(triggerParent);
 
+      UpdateConvexHullBounds();
     }
 
     // Create a copy of the mesh that is readable
@@ -1103,7 +1132,6 @@ namespace ValheimVehicles.SharedScripts
       var localPoints = points
         .Select(x => parentObjTransform.InverseTransformPoint(x) + offset).ToList();
 
-      UpdateConvexHullBounds(localPoints);
       // if (convexHullMeshes.Count > 0 &&
       //     DebugUnityHelpers.Vector3ArrayEqualWithTolerance(
       //       localPoints.ToArray(), _cachedPoints.ToArray()))
@@ -1163,12 +1191,7 @@ namespace ValheimVehicles.SharedScripts
       meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
       meshCollider.includeLayers = LayerHelpers.PhysicalLayers;
       meshCollider.transform.localRotation = Quaternion.identity;
-      //
-      // go.transform.SetParent(parentObjTransform);
-      // go.transform.position = parentObjTransform.transform.position;
     }
-
-    private Bounds _cachedConvexHullBounds = new(Vector3.zero, Vector3.one * 4);
 
     /// <summary>
     /// Returns the sum of all convexHulls as a bounds, this can be non-relative but requires a transform.
@@ -1188,34 +1211,49 @@ namespace ValheimVehicles.SharedScripts
 
     /// <summary>
     /// This needs to be manually called after GenerateMeshesFromChildColliders is invoked in order to regenerate the accurate colliders.
+    ///
+    /// This is heavier than using local points, but it should prevent issues with transform mutating the local meshcollider actual point position.
     /// </summary>
-    public void UpdateConvexHullBounds(List<Vector3> localPoints)
+    public void UpdateConvexHullBounds()
     {
-      if (localPoints.Count < 0) return;
-      var convexHullBounds = new Bounds(localPoints[0], Vector3.zero);
-      localPoints.ForEach(x => convexHullBounds.Encapsulate(x));
-      _cachedConvexHullBounds = convexHullBounds;
-    }
+      // var localBounds = new Bounds();
+      var localPoints = convexHullMeshColliders.SelectMany(x => x.sharedMesh.vertices).Select(x => transform.TransformPoint(x)).Select(x => transform.InverseTransformPoint(x)).ToList();
 
-    public void OnDrawGizmos()
-    {
-      if (_cachedConvexHullBounds != null)
+      // foreach (var meshCollider in convexHullMeshColliders)
+      // {
+
+      // var meshTransform = meshCollider.transform;
+      //
+      // // Get mesh vertices in world space
+      // var worldVertices = meshCollider.sharedMesh.vertices
+      //   .Select(v => meshTransform.TransformPoint(v)) // Convert local to world
+      //   .ToArray();
+      //
+      // // Compute world-space bounds
+      // var worldBounds = new Bounds(worldVertices[0], Vector3.zero);
+      // foreach (var vertex in worldVertices)
+      // {
+      //   worldBounds.Encapsulate(vertex);
+      // }
+      //
+      // // Transform world bounds back into local space of the parent
+      // var parentTransform = meshTransform.parent;
+      // if (parentTransform)
+      // {
+      //   // Convert world-space bounds back to parent's local space
+      //   var localMin = parentTransform.InverseTransformPoint(worldBounds.min);
+      //   var localMax = parentTransform.InverseTransformPoint(worldBounds.max);
+      //
+      //   // Compute final local-space bounds
+      //   localBounds.SetMinMax(localMin, localMax);
+      // }
+      // }
+      //
+      if (localPoints.Count > 0)
       {
-        Gizmos.color = Color.green;
-        // Gizmos.DrawWireCube(_cachedConvexHullBounds.center + transform.position, _cachedConvexHullBounds.size);
-        Gizmos.DrawWireCube(_cachedConvexHullBounds.center + m_colliderParentTransform.position, Vector3.one);
-      }
-
-      if (!m_rigidbody)
-      {
-        m_rigidbody = GetComponent<Rigidbody>();
-
-      }
-
-      if (m_rigidbody)
-      {
-        Gizmos.color = Color.white;
-        Gizmos.DrawWireCube(m_rigidbody.worldCenterOfMass, Vector3.one);
+        var convexHullBounds = new Bounds(localPoints[0], Vector3.zero);
+        localPoints.ForEach(x => convexHullBounds.Encapsulate(x));
+        _cachedConvexHullBounds = convexHullBounds;
       }
     }
   }

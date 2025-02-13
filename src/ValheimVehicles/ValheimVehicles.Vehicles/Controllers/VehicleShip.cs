@@ -398,7 +398,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     }
 
     WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
-    WheelController.UseManualControls = true;
     WheelController.magicTurnRate = PhysicsConfig.VehicleLandTurnSpeed.Value;
     WheelController.forwardDirection = MovementController.ShipDirection;
     WheelController.m_steeringType = VehicleWheelController.SteeringType.Magic;

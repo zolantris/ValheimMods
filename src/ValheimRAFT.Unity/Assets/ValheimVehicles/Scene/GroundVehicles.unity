@@ -2020,6 +2020,7 @@ MonoBehaviour:
   movementPiecesController: {fileID: 1246876114}
   DebouncedUpdateInterval: 2
   cameraTransform: {fileID: 2010887271}
+  hasCalledFirstGenerate: 0
 --- !u!4 &1341137349
 Transform:
   m_ObjectHideFlags: 0
@@ -3622,6 +3623,7 @@ MonoBehaviour:
   movementPiecesController: {fileID: 0}
   DebouncedUpdateInterval: 2
   cameraTransform: {fileID: 0}
+  hasCalledFirstGenerate: 0
 --- !u!4 &1870395135
 Transform:
   m_ObjectHideFlags: 0
@@ -4555,9 +4557,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3104779968902216635}
   serializedVersion: 4
-  m_Mass: 100
-  m_Drag: 0.05
-  m_AngularDrag: 0.05
+  m_Mass: 1000
+  m_Drag: 0
+  m_AngularDrag: 0
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -4674,7 +4676,7 @@ ConfigurableJoint:
   m_BreakTorque: Infinity
   m_EnableCollision: 0
   m_EnablePreprocessing: 1
-  m_MassScale: 1
+  m_MassScale: 2
   m_ConnectedMassScale: 1
 --- !u!4 &3130001060467473924
 Transform:
@@ -4730,9 +4732,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8225528950328919720}
   serializedVersion: 4
-  m_Mass: 1000
-  m_Drag: 1
-  m_AngularDrag: 1
+  m_Mass: 10000
+  m_Drag: 0.01
+  m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: -10, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -4875,10 +4877,11 @@ MonoBehaviour:
   Override_wheelDampingRate: 2
   Override_WheelSpringDamper: 5000
   Override_IsBreaking: 0
-  topSpeed: 50
+  topSpeed: 10
   steeringAngle: 30
   baseMotorTorque: 10
   baseMotorForce: 3
+  baseTurnForce: 5
   magicTurnRate: 45
   wheelMass: 100
   centerOfMassTransform: {fileID: 0}
@@ -4903,8 +4906,7 @@ MonoBehaviour:
   accelerationType: 1
   baseTorque: 0
   inputTurnForce: 1
-  inputMovement: 0
-  inputTurnMultiplier: 1
+  inputMovement: 1
   MaxWheelRPM: 3000
   turnInputOverride: 0
   UseInputControls: 0
@@ -4949,6 +4951,9 @@ MonoBehaviour:
   lastTurningState: 0
   ShouldSyncWheelsToCollider: 0
   useDirectTreadPhysics: 1
+  parentBounds:
+    m_Center: {x: 0, y: 0, z: 0}
+    m_Extent: {x: 2.5, y: 2.5, z: 2.5}
 --- !u!1 &8225528950328919720
 GameObject:
   m_ObjectHideFlags: 0
@@ -5029,9 +5034,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8525095631786265239}
   serializedVersion: 4
-  m_Mass: 100
-  m_Drag: 0.05
-  m_AngularDrag: 0.05
+  m_Mass: 1000
+  m_Drag: 0
+  m_AngularDrag: 0
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -5060,7 +5065,7 @@ ConfigurableJoint:
   m_Anchor: {x: 0, y: 0, z: 0}
   m_Axis: {x: 1, y: 0, z: 0}
   m_AutoConfigureConnectedAnchor: 1
-  m_ConnectedAnchor: {x: 0, y: 0, z: 0}
+  m_ConnectedAnchor: {x: 236.805, y: 10.121398, z: -38.125}
   serializedVersion: 3
   m_SecondaryAxis: {x: 0, y: 1, z: 0}
   m_XMotion: 2
@@ -5148,7 +5153,7 @@ ConfigurableJoint:
   m_BreakTorque: Infinity
   m_EnableCollision: 0
   m_EnablePreprocessing: 1
-  m_MassScale: 1
+  m_MassScale: 2
   m_ConnectedMassScale: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

@@ -18,6 +18,8 @@ namespace ValheimVehicles.SharedScripts
     public const float treadPointYOffset = 1.578f;
     public const float treadRadiusScale1 = 0.789f;
 
+    private const float _lastTerrainTouchTimeExpiration = 10f;
+
     public static GameObject fallbackPrefab = null!;
 
     internal static Vector3 tread_meshScalar = new(2f, 0.0500000007f, 0.599999964f);
@@ -108,6 +110,7 @@ namespace ValheimVehicles.SharedScripts
     internal readonly Dictionary<Rigidbody, float> _treadProgress = new(); // Stores the progress of each tread (0 to 1)
 
     private bool _hasInitLocalBounds;
+    private float _lastTerrainTouchDeltaTime = 10f;
     internal List<Rigidbody> _movingTreads = new();
     internal Dictionary<Rigidbody, int> _treadTargetPointMap = new();
     internal List<LocalTransform> _treadTargetPoints = new();
@@ -183,6 +186,19 @@ namespace ValheimVehicles.SharedScripts
       {
         Destroy(CenterObj);
       }
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+      if (collision.gameObject.layer == LayerHelpers.TerrainLayer)
+      {
+        _lastTerrainTouchDeltaTime = Time.fixedDeltaTime;
+      }
+    }
+
+    public bool IsOnGround()
+    {
+      return _lastTerrainTouchDeltaTime + _lastTerrainTouchTimeExpiration < Time.fixedDeltaTime;
     }
 
     /// <summary>
@@ -417,15 +433,16 @@ namespace ValheimVehicles.SharedScripts
       CenterObj.transform.position = treadParent.position + localBounds.center;
       treadParent.position = CenterObj.transform.position;
 
-      // var treadGameObjects = _movingTreads.Select(x => x.gameObject).ToList();
-      // convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects);
-      // convexHullComponent.convexHullMeshColliders.ForEach(x =>
-      // {
-      //   if (!x) return;
-      //   x.gameObject.name = "convex_tread_collider";
-      //   x.includeLayers = LayerMask.GetMask("terrain");
-      //   x.excludeLayers = -1;
-      // });
+      var treadGameObjects = _movingTreads.Select(x => x.gameObject).ToList();
+      convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects);
+      convexHullComponent.convexHullMeshColliders.ForEach(x =>
+      {
+        if (!x) return;
+        x.gameObject.name = "convex_tread_collider";
+        x.includeLayers = LayerMask.GetMask("terrain");
+        x.excludeLayers = -1;
+        x.isTrigger = true;
+      });
     }
 
     public void SetSpeed(float speed)

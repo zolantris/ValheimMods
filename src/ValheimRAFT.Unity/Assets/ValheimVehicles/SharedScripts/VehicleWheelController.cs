@@ -66,7 +66,8 @@ namespace ValheimVehicles.SharedScripts
     public float Override_wheelDampingRate = 2f;
     public float Override_WheelSpringDamper = 5000f;
     // can be -1 0 1 we will compute with Sign for local debugging.
-    public int Override_IsBreaking;
+    [FormerlySerializedAs("Override_IsBreaking")]
+    public int Override_IsBraking;
 
     [Tooltip("Top speed of the tank in m/s.")]
     public float topSpeed = 50.0f;
@@ -81,7 +82,7 @@ namespace ValheimVehicles.SharedScripts
     [Tooltip("Multiplier used to convert input into a force applied at the treads an alternative to wheel motor torque.")]
     public float baseMotorForce = 5.0f; // Adjust this value as needed
     [Tooltip("Multiplier used to convert input turns of -1 and 1 to a bigger number")]
-    public float baseTurnForce = 5.0f; // Adjust this value as needed
+    public float baseTurnForce = 1f; // Adjust this value as needed
 
     [Tooltip(
       "Turn rate that is \"magically\" applied regardless of what the physics state of the tank is.")]
@@ -198,6 +199,8 @@ namespace ValheimVehicles.SharedScripts
 
     [Tooltip("Toggle between wheel-collider torque and direct tread physics.")]
     public bool useDirectTreadPhysics = true;
+
+    public Bounds parentBounds = new(Vector3.zero, Vector3.one * 5);
     // Set to false until it's stable/syncs with the treads.
     [Tooltip("Wheels that provide power and move the tank forwards/reverse.")]
     public readonly List<WheelCollider> poweredWheels = new();
@@ -228,6 +231,8 @@ namespace ValheimVehicles.SharedScripts
     private bool isRightForward = true;
     private bool isTurningInPlace;
     private float lerpedTurnFactor;
+
+    private Vector3 m_smoothSpeed = Vector3.zero;
     private float maxRotationSpeed = 5f; // Default top speed
     private float maxSpeed = 25f; // Default top speed
     internal MovingTreadComponent movingTreadLeft;
@@ -240,6 +245,7 @@ namespace ValheimVehicles.SharedScripts
     [Tooltip("Kinematic Objects and Colliders")]
     internal Rigidbody vehicleRootBody;
     internal List<WheelCollider> wheelColliders = new();
+    public const float centerOfMassOffset = 4f;
 
     public WheelFrictionCurve WheelForwardFriction = new()
     {
@@ -324,7 +330,7 @@ namespace ValheimVehicles.SharedScripts
       {
         InitTreadComponent();
       }
-      if (!vehicleRootBody || !treadsLeftRb || !treadsRightRb) return;
+      if (!vehicleRootBody) return;
 
       if (treadsLeft && treadsRight)
       {
@@ -341,6 +347,8 @@ namespace ValheimVehicles.SharedScripts
           leftJoint.connectedAnchor = Vector3.zero;
           rightJoint.connectedAnchor = Vector3.zero;
         }
+
+        // var localPoint = vehicleRootBody.transform.InverseTransformPoint();
 
         treadsLeft.position = vehicleRootBody.transform.TransformPoint(treadsAnchorLeftLocalPosition);
         treadsRight.position = vehicleRootBody.transform.TransformPoint(treadsAnchorRightLocalPosition);
@@ -361,8 +369,18 @@ namespace ValheimVehicles.SharedScripts
         movingTreadRight.GenerateTreads(bounds);
       }
 
-      PhysicsHelpers.UpdateRelativeCenterOfMass(treadsLeftRb, centerOfMassOffset);
-      PhysicsHelpers.UpdateRelativeCenterOfMass(treadsRightRb, centerOfMassOffset);
+      var collidersRight = movingTreadRight.GetComponentsInChildren<Collider>();
+      var collidersLeft = movingTreadLeft.GetComponentsInChildren<Collider>();
+      colliders.AddRange(collidersLeft);
+      colliders.AddRange(collidersRight);
+
+      // todo ensure colliders are then ignored upstream. We want the treads to be able to hit the player or at least a convex collider variant to do this.
+
+      if (treadsRightRb && treadsLeftRb)
+      {
+        PhysicsHelpers.UpdateRelativeCenterOfMass(treadsLeftRb, centerOfMassOffset);
+        PhysicsHelpers.UpdateRelativeCenterOfMass(treadsRightRb, centerOfMassOffset);
+      }
 
 
       var leftIndex = 0;
@@ -396,14 +414,23 @@ namespace ValheimVehicles.SharedScripts
 
     public bool IsVehicleInAir()
     {
+      if (movingTreadRight.IsOnGround() || movingTreadRight.IsOnGround()) return false;
       return !wheelColliders.Any(w => w.isGrounded);
     }
-
     // New method: apply forces directly at the treads to simulate continuous treads
     private void ApplyTreadForces()
     {
-      if (!IsUsingEngine)
+      if (!IsUsingEngine || IsBraking)
       {
+        if (IsBraking)
+        {
+          ApplyBrakes();
+        }
+
+        if (Mathf.Abs(currentSpeed) > 0)
+        {
+          vehicleRootBody.velocity = Vector3.SmoothDamp(vehicleRootBody.velocity, Vector3.zero, ref m_smoothSpeed, 20f);
+        }
         return;
       }
       isInAir = IsVehicleInAir();
@@ -417,12 +444,11 @@ namespace ValheimVehicles.SharedScripts
       var forward = transform.forward;
       var leftTreadPos = treadsLeft.position;
       var rightTreadPos = treadsRight.position;
-      if (IsBraking)
+
+      if (vehicleRootBody.velocity.magnitude > maxSpeed)
       {
-        ApplyBrakes();
+        return;
       }
-      else
-      {
         // Differential steering:
         // - A positive inputMovement moves the tank forward.
         // - A positive inputTurnForce will add force to the left tread and subtract from the right,
@@ -432,7 +458,7 @@ namespace ValheimVehicles.SharedScripts
 
         treadsLeftRb.AddForceAtPosition(forward * leftForceMagnitude, leftTreadPos, ForceMode.Acceleration);
         treadsRightRb.AddForceAtPosition(forward * rightForceMagnitude, rightTreadPos, ForceMode.Acceleration);
-      }
+      
     }
 
     private void InitTreadComponent()
@@ -573,7 +599,7 @@ namespace ValheimVehicles.SharedScripts
       currentMotorTorqueLeft = 0f;
       currentMotorTorqueRight = 0f;
       isTurningInPlace = Mathf.Approximately(inputMovement, 0f) && Mathf.Abs(inputTurnForce) > 0f;
-      currentSpeed = vehicleRootBody.velocity.magnitude;
+      currentSpeed = GetTankSpeed();
 
       if (isTurningInPlace != lastTurningState)
       {
@@ -605,9 +631,10 @@ namespace ValheimVehicles.SharedScripts
 
       if (movingTreadLeft && movingTreadRight)
       {
-        movingTreadLeft.SetSpeed(currentSpeed);
-        movingTreadRight.SetSpeed(currentSpeed);
-        UpdateSteeringTreadVisuals();
+        var clampedSpeed = Mathf.Clamp(currentSpeed, -12f, 12f);
+        movingTreadLeft.SetSpeed(clampedSpeed);
+        movingTreadRight.SetSpeed(clampedSpeed);
+        UpdateSteeringTreadDirectionVisuals();
       }
 
       wheelColliders.ForEach(SyncWheelVisual);
@@ -627,6 +654,8 @@ namespace ValheimVehicles.SharedScripts
       // initializeWheelsCoroutine = StartCoroutine(InitializeWheelsCoroutine(bounds));
 
       if (bounds == null) return;
+
+      parentBounds = bounds.Value;
       hasInitialized = false;
 
       if (bounds.Value.size.x < 4f || bounds.Value.size.y < 2f || bounds.Value.size.z < 4f)
@@ -758,7 +787,7 @@ namespace ValheimVehicles.SharedScripts
         wheelRadius = Override_WheelRadius;
       }
 
-      var breakValue = Math.Sign(Override_IsBreaking);
+      var breakValue = Math.Sign(Override_IsBraking);
       if (breakValue != 0)
       {
         IsBraking = breakValue == -1;
@@ -995,7 +1024,7 @@ namespace ValheimVehicles.SharedScripts
       return (torqueLow, torqueMedium, torqueHigh);
     }
 
-    private void UpdateSteeringTreadVisuals()
+    private void UpdateSteeringTreadDirectionVisuals()
     {
       switch (inputTurnForce)
       {
@@ -1070,7 +1099,7 @@ namespace ValheimVehicles.SharedScripts
 
     private float GetTankSpeed()
     {
-      return Vector3.Dot(GetComponent<Rigidbody>().velocity, transform.forward);
+      return Vector3.Dot(vehicleRootBody.velocity, transform.forward);
     }
 
 
@@ -1082,7 +1111,7 @@ namespace ValheimVehicles.SharedScripts
       foreach (var wheel in wheelColliders)
       {
         // Apply braking force based on current torque & momentum
-        wheel.brakeTorque = Mathf.Max(brakeForce, Mathf.Abs(wheel.motorTorque) * 1.5f);
+        wheel.brakeTorque = Mathf.Max(brakeForce, (useDirectTreadPhysics ? Mathf.Abs(defaultBreakForce * baseMotorForce) : Mathf.Abs(wheel.motorTorque)) * 1.5f);
         wheel.motorTorque = 0; // Cut off power when braking
       }
     }
@@ -1132,8 +1161,8 @@ namespace ValheimVehicles.SharedScripts
     private void ApplyFrictionValuesToAllWheels()
     {
       if (!vehicleRootBody) return;
-      var speed = vehicleRootBody.velocity.magnitude;
-      wheelColliders.ForEach(x => ApplyFrictionToWheelCollider(x, speed));
+      currentSpeed = GetTankSpeed();
+      wheelColliders.ForEach(x => ApplyFrictionToWheelCollider(x, currentSpeed));
     }
 
     private float GetTurnForce()
@@ -1141,7 +1170,7 @@ namespace ValheimVehicles.SharedScripts
       return accelerationType switch
       {
         AccelerationType.Low => inputMovement + 10f,
-        AccelerationType.Medium => 1f,
+        AccelerationType.Medium => 5f,
         AccelerationType.High => 1f,
         AccelerationType.Stop => 0f,
         _ => 1f
@@ -1266,8 +1295,8 @@ namespace ValheimVehicles.SharedScripts
 
       baseMotorForce = acceleration switch
       {
-        AccelerationType.High => 20f,
-        AccelerationType.Medium => 15f,
+        AccelerationType.High => 50f,
+        AccelerationType.Medium => 25f,
         AccelerationType.Low => 10f,
         AccelerationType.Stop => 0f,
         _ => lowTorque
@@ -1352,8 +1381,6 @@ namespace ValheimVehicles.SharedScripts
 
     // We run this only in Unity Editor
 #if UNITY_EDITOR
-    private float centerOfMassOffset = -10f;
-
     private void Update()
     {
       if (!Application.isPlaying) return;
