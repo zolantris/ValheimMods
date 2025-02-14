@@ -183,6 +183,67 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+--- !u!1001 &60319215
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1246876111}
+    m_Modifications:
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -4.125
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4090740829085154989, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_Name
+      value: hull_slab_iron_4x4_22
+      objectReference: {fileID: 0}
+    - target: {fileID: 4090740829085154989, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
 --- !u!1001 &138619444
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -945,6 +1006,11 @@ Transform:
   - {fileID: 1242472708}
   m_Father: {fileID: 608385591}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &445410224 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+  m_PrefabInstance: {fileID: 60319215}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &491166205
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1954,6 +2020,11 @@ MonoBehaviour:
   m_syncRigidbody: {fileID: 4313409606746086540}
   m_localRigidbody: {fileID: 1246876113}
   m_vehicleWheelController: {fileID: 7210998224556755449}
+--- !u!4 &1298997937 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+  m_PrefabInstance: {fileID: 2007737385}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1341137345
 GameObject:
   m_ObjectHideFlags: 0
@@ -2009,7 +2080,7 @@ MonoBehaviour:
   distanceThreshold: 33
   transformPreviewOffset: {x: 0, y: 0, z: 0}
   GeneratedMeshGameObjects: []
-  hasFixedUpdate: 0
+  hasFixedUpdate: 1
   useWorld: 1
   convexHullParentGameObject: {fileID: 2990044044509212180}
   PiecesParentObj: {fileID: 1246876110}
@@ -2748,6 +2819,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       insertIndex: -1
       addedObject: {fileID: 999462132}
+    - targetCorrespondingSourceObject: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 445410224}
+    - targetCorrespondingSourceObject: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1298997937}
     - targetCorrespondingSourceObject: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1689425261}
@@ -3975,6 +4052,67 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1961789658}
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1001 &2007737385
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1246876111}
+    m_Modifications:
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -8.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4090740829085154989, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_Name
+      value: hull_slab_iron_4x4_23
+      objectReference: {fileID: 0}
+    - target: {fileID: 4090740829085154989, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
 --- !u!1 &2010887270
 GameObject:
   m_ObjectHideFlags: 0
@@ -4558,8 +4696,8 @@ Rigidbody:
   m_GameObject: {fileID: 3104779968902216635}
   serializedVersion: 4
   m_Mass: 1000
-  m_Drag: 0
-  m_AngularDrag: 0
+  m_Drag: 0.1
+  m_AngularDrag: 0.1
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -4876,7 +5014,7 @@ MonoBehaviour:
   Override_TopSpeed: 0
   Override_wheelDampingRate: 2
   Override_WheelSpringDamper: 5000
-  Override_IsBreaking: 0
+  Override_IsBraking: 0
   topSpeed: 10
   steeringAngle: 30
   baseMotorTorque: 10
@@ -4900,19 +5038,20 @@ MonoBehaviour:
   wheelPrefab: {fileID: 2037590979320573674, guid: a476ad740d1a255449edb42e69d22446, type: 3}
   rotationEnginePrefab: {fileID: 0}
   minimumWheelSets: 3
-  maxWheelSets: 3
+  maxWheelSets: 5
   wheelSetIncrement: 10
   axelPadding: 0.5
   accelerationType: 1
   baseTorque: 0
   inputTurnForce: 1
-  inputMovement: 1
+  inputTurnForceMult: 1
+  inputMovement: 0
   MaxWheelRPM: 3000
   turnInputOverride: 0
   UseInputControls: 0
   hasInitialized: 1
   wheelBottomOffset: 0
-  wheelRadius: 0.65
+  wheelRadius: 1
   wheelSuspensionDistance: 1.5
   wheelSuspensionSpring: 50
   treadsPrefab: {fileID: 5595029556979915977, guid: c5dd1538f0ffd3242b551c837c16135b, type: 3}
@@ -4950,10 +5089,14 @@ MonoBehaviour:
   isForward: 1
   lastTurningState: 0
   ShouldSyncWheelsToCollider: 0
+  ShouldCleanupPerInitialize: 1
   useDirectTreadPhysics: 1
   parentBounds:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 2.5, y: 2.5, z: 2.5}
+  maxTreadLength: 20
+  maxTreadWidth: 8
+  totalWheels: 0
 --- !u!1 &8225528950328919720
 GameObject:
   m_ObjectHideFlags: 0
@@ -5035,8 +5178,8 @@ Rigidbody:
   m_GameObject: {fileID: 8525095631786265239}
   serializedVersion: 4
   m_Mass: 1000
-  m_Drag: 0
-  m_AngularDrag: 0
+  m_Drag: 0.1
+  m_AngularDrag: 0.1
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}

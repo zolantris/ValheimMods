@@ -397,6 +397,9 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       WheelController.treadsPrefab = LoadValheimVehicleAssets.TankTreadsSingle;
     }
 
+    WheelController.inputTurnForceMult = PhysicsConfig.VehicleLandTurnSpeed.Value;
+    WheelController.maxTreadLength = PhysicsConfig.VehicleLandMaxTreadLength.Value;
+    WheelController.maxTreadWidth = PhysicsConfig.VehicleLandMaxTreadWidth.Value;
     WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
     WheelController.magicTurnRate = PhysicsConfig.VehicleLandTurnSpeed.Value;
     WheelController.forwardDirection = MovementController.ShipDirection;

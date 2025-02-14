@@ -49,9 +49,7 @@ namespace ValheimVehicles.SharedScripts
     private const float downhillResistance = 500f; // Torque to counteract rolling backward
     private const float stabilityCorrectionFactor = 200f;
     private const float downforceAmount = 50f;
-
-    // wheel regeneration unstable so leave this one for now
-    public static bool shouldCleanupPerInitialize = true;
+    public const float centerOfMassOffset = -4f;
 
     private static Vector3 wheelMeshLocalScale = new(3f, 0.3f, 3f);
 
@@ -132,7 +130,8 @@ namespace ValheimVehicles.SharedScripts
     [Tooltip("This torque value is scaled for wheelmass radius and vehicle mass")]
     public float baseTorque;
 
-    public float inputTurnForce;
+    public float inputTurnForce = 1f;
+    public float inputTurnForceMult = 1f;
     public float inputMovement;
 
     public float MaxWheelRPM = 3000f;
@@ -195,12 +194,21 @@ namespace ValheimVehicles.SharedScripts
 
     public bool lastTurningState;
 
+    [Header("SYNC LOGIC")]
     public bool ShouldSyncWheelsToCollider;
+    // wheel regeneration unstable so leave this one for now 
+    [Tooltip("Prevent deletion of wheels if they already exist when regenerating. This is optimal to prevent wheel from being embedded in terrain")]
+    public bool ShouldCleanupPerInitialize = true;
 
     [Tooltip("Toggle between wheel-collider torque and direct tread physics.")]
     public bool useDirectTreadPhysics = true;
 
     public Bounds parentBounds = new(Vector3.zero, Vector3.one * 5);
+    public int maxTreadLength = 20;
+    public int maxTreadWidth = 8;
+
+
+    public int totalWheels;
     // Set to false until it's stable/syncs with the treads.
     [Tooltip("Wheels that provide power and move the tank forwards/reverse.")]
     public readonly List<WheelCollider> poweredWheels = new();
@@ -245,7 +253,6 @@ namespace ValheimVehicles.SharedScripts
     [Tooltip("Kinematic Objects and Colliders")]
     internal Rigidbody vehicleRootBody;
     internal List<WheelCollider> wheelColliders = new();
-    public const float centerOfMassOffset = 4f;
 
     public WheelFrictionCurve WheelForwardFriction = new()
     {
@@ -255,8 +262,6 @@ namespace ValheimVehicles.SharedScripts
       asymptoteValue = 0.6f,
       stiffness = 2.0f // Stronger forward traction
     };
-
-
     internal List<GameObject> wheelInstances = new();
     public WheelFrictionCurve WheelSidewayFriction = new()
     {
@@ -266,6 +271,7 @@ namespace ValheimVehicles.SharedScripts
       asymptoteValue = 1.0f,
       stiffness = 2.2f // Higher stiffness to prevent sliding
     };
+    public float wheelColliderRadius => Mathf.Clamp(wheelRadius, 0f, 5f);
 
     [UsedImplicitly]
     public bool IsBraking
@@ -305,13 +311,13 @@ namespace ValheimVehicles.SharedScripts
         treadsLeft = transform.Find("vehicle_movement/treads/treads_left");
       }
 
-      InitTreadComponent();
+      InitTreads();
     }
 
     private void OnEnable()
     {
       UpdateMaxRPM();
-      InitTreadComponent();
+      InitTreads();
     }
 
     private void OnDisable()
@@ -328,9 +334,17 @@ namespace ValheimVehicles.SharedScripts
     {
       if (!movingTreadLeft || !movingTreadRight)
       {
-        InitTreadComponent();
+        InitTreads();
       }
       if (!vehicleRootBody) return;
+      var isBoundsXOversized = bounds.size.x > maxTreadWidth;
+      var isBoundsZOversized = bounds.size.z > maxTreadLength;
+
+      // constrains the bounds to a workable level
+      if (isBoundsXOversized || isBoundsZOversized)
+      {
+        bounds = new Bounds(bounds.center, new Vector3(isBoundsXOversized ? maxTreadWidth : bounds.size.x, bounds.size.y, isBoundsZOversized ? maxTreadLength : bounds.size.z));
+      }
 
       if (treadsLeft && treadsRight)
       {
@@ -449,57 +463,100 @@ namespace ValheimVehicles.SharedScripts
       {
         return;
       }
-        // Differential steering:
-        // - A positive inputMovement moves the tank forward.
-        // - A positive inputTurnForce will add force to the left tread and subtract from the right,
-        //   causing an in-place right turn (and vice versa).
-        var leftForceMagnitude = (inputMovement + inputTurnForce * baseTurnForce) * baseMotorForce * hillFactor;
-        var rightForceMagnitude = (inputMovement - inputTurnForce * baseTurnForce) * baseMotorForce * hillFactor;
+      // Differential steering:
+      // - A positive inputMovement moves the tank forward.
+      // - A positive inputTurnForce will add force to the left tread and subtract from the right,
+      //   causing an in-place right turn (and vice versa).
 
-        treadsLeftRb.AddForceAtPosition(forward * leftForceMagnitude, leftTreadPos, ForceMode.Acceleration);
-        treadsRightRb.AddForceAtPosition(forward * rightForceMagnitude, rightTreadPos, ForceMode.Acceleration);
-      
+      // Get current angular speed (rotation speed around the Y-axis)
+      var angularSpeed = Mathf.Abs(vehicleRootBody.angularVelocity.y);
+
+      // Lerp turn force: Starts high at low speeds (20), drops to 0.01 at max angular speed.
+      var turnForceLerp = Mathf.Lerp(50f * inputTurnForce * inputTurnForceMult, 0f, Mathf.Clamp01(angularSpeed / 5f));
+      var baseTorqueTurnLerp = Mathf.Lerp(1.3f, 0.5f, Mathf.Clamp01(baseTorque / highTorque));
+      var combinedTurnLerp = turnForceLerp * baseTorqueTurnLerp;
+
+      var leftForce = 0f;
+      var rightForce = 0f;
+
+      if (m_steeringType == SteeringType.Magic)
+      {
+        leftForce = combinedTurnLerp;
+      }
+      if (m_steeringType == SteeringType.Differential)
+      {
+        leftForce = (inputMovement + combinedTurnLerp) * baseTorque * hillFactor;
+        rightForce = (inputMovement - combinedTurnLerp) * baseTorque * hillFactor;
+      }
+
+      // Differential steering: Modify turn force multiplier based on movement
+      // var leftForceMagnitude = (inputMovement + combinedTurnLerp) * baseTorque * hillFactor;
+      // var rightForceMagnitude = (inputMovement - combinedTurnLerp) * baseTorque * hillFactor;
+
+      // only apply force 1 time so things are stable.
+      treadsLeftRb.AddForceAtPosition(forward * leftForce, leftTreadPos, ForceMode.Force);
+      treadsRightRb.AddForceAtPosition(forward * rightForce, rightTreadPos, ForceMode.Force);
     }
 
-    private void InitTreadComponent()
+
+    // var inputMovementToSteeringRatio = Mathf.Lerp(1,0f,Mathf.Clamp01(Mathf.Abs(inputTurnForce) - 0.5f));
+
+    // Differential steering: Modify turn force multiplier based on movement
+    // var leftForceMagnitude = inputMovement * inputMovementToSteeringRatio * baseTorque * hillFactor;
+    // var rightForceMagnitude = inputMovement * inputMovementToSteeringRatio * baseTorque * hillFactor;
+
+    // var leftForceMagnitude = leftForceMagnitude * hillFactor;
+    //
+    // treadsLeftRb.AddForceAtPosition(forward * leftForceMagnitude, leftTreadPos, ForceMode.Force);
+    // treadsRightRb.AddForceAtPosition(forward * rightForceMagnitude, rightTreadPos, ForceMode.Force);
+
+    private float GetSteeringForceLerp()
+    {
+      var angularSpeed = Mathf.Abs(vehicleRootBody.angularVelocity.y);
+
+      // Lerp turn force: Starts high at low speeds (20), drops to 0.01 at max angular speed.
+      var turnForceLerp = Mathf.Lerp(50f * inputTurnForce * inputTurnForceMult, 0f, Mathf.Clamp01(angularSpeed / 5f));
+      var baseTorqueTurnLerp = Mathf.Lerp(1.3f, 0.5f, Mathf.Clamp01(baseTorque / highTorque));
+      var combinedTurnLerp = turnForceLerp * baseTorqueTurnLerp;
+
+      return combinedTurnLerp;
+    }
+
+    /// <summary>
+    /// Sets up all treads. Makes it easier to not mess up on left/right duplication of properties per tread
+    /// </summary>
+    /// <param name="treadObj"></param>
+    /// <param name="movingTreadComponent"></param>
+    /// <param name="treadRb"></param>
+    private void SetupSingleTread(GameObject treadObj, ref MovingTreadComponent movingTreadComponent, ref Rigidbody treadRb)
+    {
+      if (!movingTreadComponent)
+      {
+        movingTreadComponent = treadObj.GetComponent<MovingTreadComponent>();
+      }
+      if (!movingTreadComponent)
+      {
+        movingTreadComponent = treadObj.AddComponent<MovingTreadComponent>();
+      }
+
+      movingTreadComponent.treadParent = treadObj.transform;
+      movingTreadComponent.treadPrefab = treadsPrefab;
+      movingTreadComponent.vehicleWheelController = this;
+
+      if (!treadRb)
+      {
+        treadRb = treadObj.GetComponent<Rigidbody>();
+      }
+    }
+
+    /// <summary>
+    /// Init for both treads
+    /// </summary>
+    private void InitTreads()
     {
       if (!treadsRight || !treadsLeft) return;
-      if (!movingTreadLeft)
-      {
-        movingTreadLeft = treadsLeft.GetComponent<MovingTreadComponent>();
-      }
-      if (!movingTreadLeft)
-      {
-        movingTreadLeft = treadsLeft.transform.gameObject.AddComponent<MovingTreadComponent>();
-      }
-
-      if (!movingTreadRight)
-      {
-        movingTreadRight = treadsRight.GetComponent<MovingTreadComponent>();
-      }
-      if (!movingTreadRight)
-      {
-        movingTreadRight = treadsRight.transform.gameObject.AddComponent<MovingTreadComponent>();
-      }
-
-      movingTreadLeft.treadParent = treadsLeft;
-      movingTreadRight.treadParent = treadsRight;
-
-      if (treadsPrefab)
-      {
-        movingTreadLeft.treadPrefab = treadsPrefab;
-        movingTreadRight.treadPrefab = treadsPrefab;
-      }
-
-      if (!treadsLeftRb)
-      {
-        treadsLeftRb = treadsLeft.GetComponent<Rigidbody>();
-      }
-
-      if (!treadsRightRb)
-      {
-        treadsRightRb = treadsRight.GetComponent<Rigidbody>();
-      }
+      SetupSingleTread(treadsRight.gameObject, ref movingTreadRight, ref treadsRightRb);
+      SetupSingleTread(treadsLeft.gameObject, ref movingTreadLeft, ref treadsLeftRb);
     }
 
     public void ConfigureJoint(ConfigurableJoint joint, Rigidbody vehicleBody, Vector3 localPosition)
@@ -576,6 +633,7 @@ namespace ValheimVehicles.SharedScripts
       DeleteAllItems(wheelInstances);
       DeleteAllItems(rotationEngineInstances);
 
+      totalWheels = 0;
       rotationEngineInstances.Clear();
       rotatorEngineHingeInstances.Clear();
       WheelcollidersToWheelVisualMap.Clear();
@@ -631,7 +689,7 @@ namespace ValheimVehicles.SharedScripts
 
       if (movingTreadLeft && movingTreadRight)
       {
-        var clampedSpeed = Mathf.Clamp(currentSpeed, -12f, 12f);
+        var clampedSpeed = Mathf.Clamp(currentSpeed, -8f, 8f);
         movingTreadLeft.SetSpeed(clampedSpeed);
         movingTreadRight.SetSpeed(clampedSpeed);
         UpdateSteeringTreadDirectionVisuals();
@@ -663,23 +721,11 @@ namespace ValheimVehicles.SharedScripts
         bounds = new Bounds(Vector3.zero, new Vector3(1, 1f, 1f));
       }
 
-      if (shouldCleanupPerInitialize)
+      if (ShouldCleanupPerInitialize)
       {
         Cleanup();
       }
-      // if (wheelColliders.Count > 0 || front.Count > 0 || rear.Count > 0 || left.Count > 0 || right.Count > 0 || poweredWheels.Count > 0)
-      // {
-      //   Debug.LogWarning("VehicleWheelController is not probably cleaned up. Must call CleanupWheels before. Exiting InitializeWheels");
-      //   hasInitialized = true;
-      //   yield break;
-      // }
-      // var lowestYBounds = new Vector3(0, -bounds.Value.extents.y, 0);
-      // treadsParent.localPosition = lowestYBounds;
 
-      // it's within the treads parent. So we just need to align it with the treads which are generated above the localposition.
-      // rotationEnginesParent.localPosition = new Vector3(0, MovingTreadComponent.treadPointYOffset / 2, 0);
-
-      // GenerateRotatorEngines(bounds.Value);
       GenerateWheelSets(bounds.Value);
       SetupWheels();
       UpdateAccelerationValues(accelerationType, isForward);
@@ -822,7 +868,10 @@ namespace ValheimVehicles.SharedScripts
       var wheelIndex = 0;
       var spacing = bounds.size.z / Math.Max(totalWheelSets - 1, 1);
 
-      // var centerOfMassBounds = new Bounds(rigid.centerOfMass, bounds.size);
+      // this is important to set before calling setter logic that may need to know how many wheels are to be added.
+      // alternative is using an allocating array. Might be cleaner.
+      totalWheels = totalWheelSets * 2;
+
       // Generate wheel sets dynamically
       for (var i = 0; i < totalWheelSets; i++)
       {
@@ -918,6 +967,12 @@ namespace ValheimVehicles.SharedScripts
       return index == middle;
     }
 
+    public float GetWheelRadiusScalar()
+    {
+      if (!hasInitialized || totalWheels == 0) return 1f;
+      return wheelRadius / wheelBaseRadiusScale;
+    }
+
     private void SetWheelProperties(GameObject wheelObj, Bounds bounds, int wheelSetIndex, bool isLeft, int totalWheelSets)
     {
       if (!vehicleRootBody) return;
@@ -927,19 +982,18 @@ namespace ValheimVehicles.SharedScripts
         wheelObj.transform.Find("wheel_collider").GetComponent<WheelCollider>();
 
       wheelCollider.mass = wheelMass;
+      // Larger radius is required for traversing valheim terrain. Small wheels will disappear.
+      wheelCollider.radius = wheelColliderRadius;
 
       // Dynamically adjust targetPosition based on weight & radius
       var massFactor = Mathf.Clamp01(vehicleRootBody.mass / 2000f); // Normalize weight influence
-      var radiusFactor = Mathf.Clamp01(wheelCollider.radius / 1f); // Normalize wheel size influence
+      var radiusFactor = Mathf.Clamp01(wheelColliderRadius / 1f); // Normalize wheel size influence
 
-      wheelCollider.suspensionDistance = wheelCollider.radius * 2f;
-      wheelCollider.forceAppPointDistance = wheelCollider.radius * 1.2f;
+
+      wheelCollider.suspensionDistance = Mathf.Max(wheelColliderRadius * 2f, 1f);
+      wheelCollider.forceAppPointDistance = wheelColliderRadius * 1.2f;
 
       // wheelCollider.wheelDampingRate = Override_wheelDampingRate;
-      // wheelCollider.radius = wheelRadius;
-      // wheelCollider.suspensionDistance = wheelRadius * 2;
-      // wheelCollider.forceAppPointDistance = wheelRadius;
-      //
       var suspensionSpring = wheelCollider.suspensionSpring;
       suspensionSpring.damper = Override_WheelSpringDamper;
       suspensionSpring.spring = wheelSuspensionSpring;
@@ -947,7 +1001,7 @@ namespace ValheimVehicles.SharedScripts
 
       wheelCollider.suspensionSpring = suspensionSpring;
 
-      var wheelScalar = wheelCollider.radius / wheelBaseRadiusScale;
+      var wheelScalar = GetWheelRadiusScalar();
 
       if (!Mathf.Approximately(wheelScalar, 1f))
       {
@@ -1169,9 +1223,9 @@ namespace ValheimVehicles.SharedScripts
     {
       return accelerationType switch
       {
-        AccelerationType.Low => inputMovement + 10f,
-        AccelerationType.Medium => 5f,
-        AccelerationType.High => 1f,
+        AccelerationType.Low => 10f,
+        AccelerationType.Medium => 10f,
+        AccelerationType.High => 10f,
         AccelerationType.Stop => 0f,
         _ => 1f
       };
@@ -1288,7 +1342,7 @@ namespace ValheimVehicles.SharedScripts
       {
         AccelerationType.High => highTorque,
         AccelerationType.Medium => mediumTorque,
-        AccelerationType.Low => mediumTorque,
+        AccelerationType.Low => lowTorque,
         AccelerationType.Stop => 0f,
         _ => lowTorque
       };

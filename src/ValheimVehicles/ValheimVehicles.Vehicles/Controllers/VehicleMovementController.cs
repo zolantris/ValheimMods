@@ -1447,6 +1447,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   {
     m_body.angularDrag = PhysicsConfig.landAngularDrag.Value;
     m_body.drag = PhysicsConfig.landDrag.Value;
+    m_body.maxAngularVelocity = PhysicsConfig.MaxAngularVelocity.Value;
+    m_body.maxLinearVelocity = PhysicsConfig.MaxLinearVelocity.Value;
 
     if (m_body.freezeRotation != !PhysicsConfig.VehicleLandAllowXZRotation.Value)
     {
@@ -1454,14 +1456,30 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
+  public void UpdateLandVehicleHeightIfBelowGround()
+  {
+    if (OnboardCollider.bounds.min.y < ShipFloatationObj.AverageGroundLevel)
+    {
+      var position = transform.position;
+      var deltaAverageGroundLevel = position.y - ShipFloatationObj.AverageGroundLevel;
+      m_body.MovePosition(new Vector3(position.x, ShipFloatationObj.AverageGroundLevel + deltaAverageGroundLevel, position.z));
+      m_body.velocity = Vector3.zero;
+      m_body.angularVelocity = Vector3.zero;
+    }
+  }
+
   public void UpdateVehicleLandSpeed()
   {
+    UpdateLandVehicleHeightIfBelowGround();
+    
     UpdateVehicleStats(VehiclePhysicsState.Land);
     if (WheelController == null) return;
     if (UpdateAnchorVelocity())
     {
-      WheelController.SetBrake(true);
-      return;
+      if (!WheelController.IsBraking)
+      {
+        WheelController.SetBrake(true);
+      }
     }
 
     var isOwner = m_nview.IsOwner();
@@ -1469,7 +1487,6 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     if (shouldUpdateLandInputs)
     {
-      m_body.WakeUp();
       UpdateLandVehicleStatsIfNecessary();
       WheelController.VehicleMovementFixedUpdate();
     }
@@ -1481,7 +1498,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var landSpeed = GetLandVehicleSpeed();
     var isForward = VehicleSpeed != Ship.Speed.Back;
     var landInputMovementMultiplier = GetLandVehicleSpeedInput();
-    WheelController!.inputMovement = (isForward ? 1f : -1f) * landInputMovementMultiplier;
+    WheelController!.inputMovement = landInputMovementMultiplier;
     if (landSpeed != WheelController!.accelerationType || WheelController.isForward != isForward)
     {
       WheelController.forwardDirection = ShipDirection;
@@ -1976,6 +1993,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var groundLevelBack =
       ZoneSystem.instance.GetGroundHeight(shipBack);
 
+    var averageGroundLevel = (groundLevelCenter + groundLevelLeft + groundLevelRight + groundLevelForward + groundLevelBack) / 5f;
+
 
     // floatation point, does not need to be collider, could just be a value in MovementController 
     // todo possibly add target height so it will not apply upward force if the target height is already considered in the normal zone
@@ -1998,6 +2017,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return new ShipFloatation
     {
       AverageWaterHeight = averageWaterHeight,
+      AverageGroundLevel = averageGroundLevel,
       LowestWaterHeight = lowestWaterHeight,
       CurrentDepth = currentDepth,
       IsAboveBuoyantLevel = isAboveBuoyantLevel,
@@ -3341,7 +3361,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     m_rudderValue = value;
     if (WheelController != null)
     {
-      WheelController.inputTurnForce = Mathf.Clamp(m_rudderValue, -1, 1);
+      WheelController.SetTurnInput(Mathf.Clamp(m_rudderValue, -1, 1));
     }
   }
 

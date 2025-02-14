@@ -15,6 +15,7 @@ namespace ValheimVehicles.SharedScripts
 
     public const float treadPointDistanceZ = 0.624670029f;
 
+    public VehicleWheelController vehicleWheelController;
     public const float treadPointYOffset = 1.578f;
     public const float treadRadiusScale1 = 0.789f;
 
@@ -103,7 +104,7 @@ namespace ValheimVehicles.SharedScripts
     public bool isForward = true;
 
     // Speed multiplier that controls the overall speed of treads
-    public float speedMultiplier = 1f;
+    private float speedMultiplier = 1f;
 
     public ConvexHullAPI convexHullComponent;
     public float speedMultiplierOverride;
@@ -192,13 +193,13 @@ namespace ValheimVehicles.SharedScripts
     {
       if (collision.gameObject.layer == LayerHelpers.TerrainLayer)
       {
-        _lastTerrainTouchDeltaTime = Time.fixedDeltaTime;
+        _lastTerrainTouchDeltaTime = Time.fixedTime;
       }
     }
 
     public bool IsOnGround()
     {
-      return _lastTerrainTouchDeltaTime + _lastTerrainTouchTimeExpiration < Time.fixedDeltaTime;
+      return _lastTerrainTouchDeltaTime + _lastTerrainTouchTimeExpiration < Time.fixedTime;
     }
 
     /// <summary>
@@ -209,7 +210,7 @@ namespace ValheimVehicles.SharedScripts
     public bool AllowTreadsObject(string val)
 
     {
-      if (val.Contains("tread"))
+      if (val.ToLower().Contains("tread"))
         return true;
       return false;
     }
@@ -340,7 +341,7 @@ namespace ValheimVehicles.SharedScripts
       }
 
       // scale the tread to the correct height.
-      treadGameObject.transform.localScale = Vector3.one * GetWheelTreadRadiusScalar();
+      treadGameObject.transform.localScale = Vector3.one * vehicleWheelController.GetWheelRadiusScalar();
 
       var localPoint = new LocalTransform(treadGameObject.transform);
       _treadTargetPoints.Add(localPoint);
@@ -352,12 +353,7 @@ namespace ValheimVehicles.SharedScripts
       // Initialize progress for each tread (0 to 1)
       _treadProgress[rb] = 0f;
     }
-
-    public float GetWheelTreadRadiusScalar()
-    {
-      if (wheelColliders.Length <= 0) return 1;
-      return wheelColliders[0].radius / treadRadiusScale1;
-    }
+    
     /// <summary>
     /// Generates dynamically all treads based on a bounds size. Must be invoked
     /// </summary>
@@ -369,7 +365,7 @@ namespace ValheimVehicles.SharedScripts
       CleanUp();
 
       CreateCenteringObject();
-      var scalar = GetWheelTreadRadiusScalar();
+      var scalar = vehicleWheelController.GetWheelRadiusScalar();
       var horizontalTreads = Mathf.RoundToInt(bounds.size.z / treadPointDistanceZ / scalar);
 
       // scaled from radius of the first wheel.
@@ -380,7 +376,7 @@ namespace ValheimVehicles.SharedScripts
       for (var i = 0; i < horizontalTreads; i++)
       {
         var treadGameObject = Instantiate(treadPrefab, treadParent);
-        treadGameObject.name = "Treads_" + i + "top";
+        treadGameObject.name = $"tread_{i}_top";
 
         var zPos = treadPointDistanceZ * i;
         var offset = new Vector3(0, treadPointYOffset, zPos) + centeringOffset;
@@ -394,7 +390,7 @@ namespace ValheimVehicles.SharedScripts
       {
         var x = _treadFrontLocalPoints[i];
         var treadGameObject = Instantiate(treadPrefab, treadParent);
-        treadGameObject.name = $"Treads_{i}_front";
+        treadGameObject.name = $"tread_{i}_front";
 
         // we offset the Z position so that it aligns with the last 
         var zPos = x.position.z + fullTreadLength + treadPointDistanceZ;
@@ -407,7 +403,7 @@ namespace ValheimVehicles.SharedScripts
       for (var i = 0; i < horizontalTreads; i++)
       {
         var treadGameObject = Instantiate(treadPrefab, treadParent);
-        treadGameObject.name = $"Treads_{i}_bottom";
+        treadGameObject.name = $"tread_{i}_bottom";
         var offset = new Vector3(0, 0, treadPointDistanceZ * (horizontalTreads - i));
         var rotation = flippedXRotation;
 
@@ -421,7 +417,7 @@ namespace ValheimVehicles.SharedScripts
       {
         var x = _treadBackLocalPoints[i];
         var treadGameObject = Instantiate(treadPrefab, transform.position, Quaternion.identity, treadParent);
-        treadGameObject.name = $"Treads_{i}_back";
+        treadGameObject.name = $"tread_{i}_back";
 
         // since this is zero based it is actually fine to not use relative calcs for z pos.
         treadGameObject.transform.localPosition = x.position + centeringOffset;
@@ -441,13 +437,41 @@ namespace ValheimVehicles.SharedScripts
         x.gameObject.name = "convex_tread_collider";
         x.includeLayers = LayerMask.GetMask("terrain");
         x.excludeLayers = -1;
-        x.isTrigger = true;
+        x.isTrigger = false;
       });
     }
 
+    /// <summary>
+    /// Controls visual clamping of tread speed to avoid jittery animations.
+    /// </summary>
+    ///
+    /// This may not need a negative protection as we use direction to control this value
+    /// <param name="speed"></param>
     public void SetSpeed(float speed)
     {
-      speedMultiplier = speedMultiplierOverride != 0 ? speedMultiplierOverride : speed;
+#if DEBUG
+      if (speedMultiplierOverride != 0)
+      {
+        speedMultiplier = speedMultiplierOverride;
+      }
+#endif
+
+      var clampedSpeed = Mathf.Clamp(speed, -8f, 8f);
+
+      switch (clampedSpeed)
+      {
+        case < 0.01f:
+          clampedSpeed = 0f;
+          break;
+        case < 0.1f:
+        {
+          var dir = Mathf.Sign(clampedSpeed);
+          clampedSpeed = dir * 0.01f;
+          break;
+        }
+      }
+
+      speedMultiplier = clampedSpeed;
     }
 
     public void SetDirection(bool isDirectionForward)

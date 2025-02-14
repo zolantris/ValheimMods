@@ -38,6 +38,8 @@ public static class PhysicsConfig
   public static ConfigEntry<float> VehicleLandSpeedSlow = null!;
   public static ConfigEntry<float> VehicleLandSpeedHalf = null!;
   public static ConfigEntry<float> VehicleLandSpeedFull = null!;
+  public static ConfigEntry<int> VehicleLandMaxTreadWidth = null!;
+  public static ConfigEntry<int> VehicleLandMaxTreadLength = null!;
 
   public static ConfigEntry<float> VehicleLandTurnSpeed = null!;
   public static ConfigEntry<float> VehicleCenterOfMassOffset = null!;
@@ -262,9 +264,21 @@ public static class PhysicsConfig
         true, false, new AcceptableValueRange<float>(0.1f, 100f)));
     VehicleLandTurnSpeed = Config.Bind(PropulsionSection,
       "LandVehicle Turn Speed",
-      35f,
+      1f,
       ConfigHelpers.CreateConfigDescription(
-        "Turn angle multiplier for land vehicles. Higher values will turn faster, but will be more disorienting and unrealistic.", true, false, new AcceptableValueRange<float>(0.1f, 90f)));
+        "Turn angle multiplier for land vehicles. Higher values will turn faster, but will be more disorienting and unrealistic.", true, false, new AcceptableValueRange<float>(0.1f, 10f)));
+
+    VehicleLandMaxTreadWidth = Config.Bind(PropulsionSection,
+      "LandVehicle Max Tread Width",
+      8,
+      ConfigHelpers.CreateConfigDescription(
+        "Max width the treads can expand to.", true, false, new AcceptableValueRange<int>(2, 40)));
+
+    VehicleLandMaxTreadLength = Config.Bind(PropulsionSection,
+      "LandVehicle Max Tread Length",
+      20,
+      ConfigHelpers.CreateConfigDescription(
+        "Max length the treads can expand to.", true, false, new AcceptableValueRange<int>(4, 100)));
 
     VehicleLandAllowXZRotation = Config.Bind(PropulsionSection,
       "VehicleLand AllowXZRotation",
@@ -532,6 +546,8 @@ public static class PhysicsConfig
     VehicleLandWheelSuspensionSpring.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandWheelOffset.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandMaxTreadWidth.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandMaxTreadLength.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandSuspensionDistance.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandWheelMass.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandWheelRadius.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
