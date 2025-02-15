@@ -199,6 +199,9 @@ namespace ValheimVehicles.SharedScripts
         vehicleWheelController.InitializeWheels(bounds);
         IgnoreAllCollidersBetweenWheelsAndPieces();
       }
+
+      // RigidbodyUtils.RecenterRigidbodyPivot(PiecesParentObj.gameObject);
+      // RigidbodyUtils.RecenterRigidbodyPivot(vehicleWheelController.gameObject);
     }
 
     public void IgnoreAllCollidersBetweenWheelsAndPieces()

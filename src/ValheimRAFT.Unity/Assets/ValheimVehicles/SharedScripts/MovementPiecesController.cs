@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿#region
+
 using UnityEngine;
-using UnityEngine.PlayerLoop;
+
+#endregion
+
 namespace ValheimVehicles.SharedScripts
 {
   /// <summary>
@@ -13,6 +15,7 @@ namespace ValheimVehicles.SharedScripts
     public Rigidbody m_localRigidbody;
     public VehicleWheelController m_vehicleWheelController;
 
+    public bool m_shouldSync = true;
     public virtual void Awake()
     {
       m_localRigidbody = GetComponent<Rigidbody>();
@@ -20,7 +23,10 @@ namespace ValheimVehicles.SharedScripts
 
     public void FixedUpdate()
     {
-      m_localRigidbody.Move(m_syncRigidbody.position, m_syncRigidbody.rotation);
+      if (m_shouldSync)
+      {
+        m_localRigidbody.Move(m_syncRigidbody.position, m_syncRigidbody.rotation);
+      }
     }
   }
 }

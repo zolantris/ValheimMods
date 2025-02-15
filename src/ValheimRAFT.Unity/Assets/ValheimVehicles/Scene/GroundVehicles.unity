@@ -2020,6 +2020,7 @@ MonoBehaviour:
   m_syncRigidbody: {fileID: 4313409606746086540}
   m_localRigidbody: {fileID: 1246876113}
   m_vehicleWheelController: {fileID: 7210998224556755449}
+  m_shouldSync: 1
 --- !u!4 &1298997937 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3715165887456535575, guid: 6a06cc02c2197e94592c78b2b966f593, type: 3}
@@ -2724,7 +2725,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalRotation.x
@@ -2732,7 +2733,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalRotation.z
@@ -2744,7 +2745,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: 90
       objectReference: {fileID: 0}
     - target: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -4824,14 +4825,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8225528950328919720}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 0.38268343, z: 0, w: 0.92387956}
   m_LocalPosition: {x: 236.805, y: 12.25, z: -38.125}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8340188237230322239}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 45, z: 0}
 --- !u!4 &3462057762617736770
 Transform:
   m_ObjectHideFlags: 0
@@ -4988,7 +4989,7 @@ Transform:
   m_GameObject: {fileID: 6407385884862251252}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -2.128602, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -5043,7 +5044,7 @@ MonoBehaviour:
   axelPadding: 0.5
   accelerationType: 1
   baseTorque: 0
-  inputTurnForce: 1
+  inputTurnForce: 0
   inputTurnForceMult: 1
   inputMovement: 0
   MaxWheelRPM: 3000
@@ -5058,8 +5059,8 @@ MonoBehaviour:
   wheelParent: {fileID: 2895838982252528142}
   treadsParent: {fileID: 6870272609440107524}
   rotationEnginesParent: {fileID: 0}
-  treadsRight: {fileID: 0}
-  treadsLeft: {fileID: 0}
+  treadsRightTransform: {fileID: 0}
+  treadsLeftTransform: {fileID: 0}
   treadsLeftRb: {fileID: 0}
   treadsRightRb: {fileID: 0}
   additionalBrakeForce: 500
@@ -5089,14 +5090,18 @@ MonoBehaviour:
   isForward: 1
   lastTurningState: 0
   ShouldSyncWheelsToCollider: 0
-  ShouldCleanupPerInitialize: 1
+  ShouldCleanupPerInitialize: 0
   useDirectTreadPhysics: 1
-  parentBounds:
+  currentVehicleFrameBounds:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 2.5, y: 2.5, z: 2.5}
   maxTreadLength: 20
   maxTreadWidth: 8
   totalWheels: 0
+  wheelPrefabCenterPointOffset: {x: 0, y: 0, z: 0}
+  wheelPrefabMeshSize:
+    m_Center: {x: 0, y: 0, z: 0}
+    m_Extent: {x: 0, y: 0, z: 0}
 --- !u!1 &8225528950328919720
 GameObject:
   m_ObjectHideFlags: 0

@@ -27,8 +27,8 @@ Transform:
   m_GameObject: {fileID: 138735900666736611}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0.004555531, y: -0.00000007947286, z: 0.000000024835263}
-  m_LocalScale: {x: 4, y: 4, z: 4}
+  m_LocalPosition: {x: 0.040999997, y: 0, z: 0}
+  m_LocalScale: {x: 20, y: 20, z: 20}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1107043180837464942}
@@ -98,7 +98,7 @@ GameObject:
   - component: {fileID: 3977607419448260642}
   - component: {fileID: 4486288440746004945}
   m_Layer: 29
-  m_Name: wheel_rotator_mesh_1
+  m_Name: wheel_rotator
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -113,8 +113,8 @@ Transform:
   m_GameObject: {fileID: 1155389498607626353}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -0.056, y: 0, z: 0}
-  m_LocalScale: {x: 4, y: 4, z: 3.25838}
+  m_LocalPosition: {x: -0.5040005, y: 0, z: 0}
+  m_LocalScale: {x: 20, y: 20, z: 20}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1107043180837464942}
@@ -184,7 +184,7 @@ MeshCollider:
     serializedVersion: 2
     m_Bits: 3825154934
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
@@ -220,8 +220,9 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 69686054218827271}
   - {fileID: 9168006654644231112}
-  - {fileID: 1304424690632794146}
+  - {fileID: 1107043180837464942}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3124236213991880322
@@ -249,12 +250,11 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3124236213991880322}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: -0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: 0.7071068, w: 0.7071068}
+  m_LocalPosition: {x: -0.5, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 69686054218827271}
+  m_Children: []
   m_Father: {fileID: 3862590103273061354}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
 --- !u!146 &3519201564313527777
@@ -306,7 +306,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1107043180837464942}
   m_Layer: 29
-  m_Name: scalar
+  m_Name: wheel_mesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -320,15 +320,15 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4322421580097765431}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0.7071068, w: 0.7071068}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 30, y: 3, z: 3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1101582114614829354}
   - {fileID: 7773421660519638361}
   - {fileID: 624016420568912586}
-  - {fileID: 1101582114614829354}
-  m_Father: {fileID: 1304424690632794146}
+  m_Father: {fileID: 3862590103273061354}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4655380341522319259
 GameObject:
@@ -340,7 +340,7 @@ GameObject:
   m_Component:
   - component: {fileID: 69686054218827271}
   m_Layer: 2
-  m_Name: rotation_point
+  m_Name: center_point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -354,45 +354,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4655380341522319259}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: 0.7071068, w: 0.7071068}
+  m_LocalPosition: {x: -0.5, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 9168006654644231112}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &4818688348208568026
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1304424690632794146}
-  m_Layer: 29
-  m_Name: wheel_mesh
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1304424690632794146
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4818688348208568026}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 3, y: 0.29999998, z: 3}
-  m_ConstrainProportionsScale: 1
-  m_Children:
-  - {fileID: 1107043180837464942}
   m_Father: {fileID: 3862590103273061354}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7449807269327564531
 GameObject:
   m_ObjectHideFlags: 0
@@ -420,8 +388,8 @@ Transform:
   m_GameObject: {fileID: 7449807269327564531}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -0.11755554, y: 0.00000007947286, z: 0.000000024835263}
-  m_LocalScale: {x: 4, y: 4, z: 4}
+  m_LocalPosition: {x: -1.0580014, y: 0, z: 0}
+  m_LocalScale: {x: 20, y: 20, z: 20}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1107043180837464942}

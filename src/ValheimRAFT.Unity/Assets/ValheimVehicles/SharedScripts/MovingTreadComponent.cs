@@ -14,8 +14,6 @@ namespace ValheimVehicles.SharedScripts
   {
 
     public const float treadPointDistanceZ = 0.624670029f;
-
-    public VehicleWheelController vehicleWheelController;
     public const float treadPointYOffset = 1.578f;
     public const float treadRadiusScale1 = 0.789f;
 
@@ -88,6 +86,8 @@ namespace ValheimVehicles.SharedScripts
       }
     };
     private static readonly Quaternion flippedXRotation = Quaternion.Euler(180, 0, 0);
+
+    public VehicleWheelController vehicleWheelController;
     public List<HingeJoint> _wheelRotators = new();
     public Transform rotatorParent;
     public GameObject treadPrefab;
@@ -103,9 +103,6 @@ namespace ValheimVehicles.SharedScripts
     // New flag to control direction of movement
     public bool isForward = true;
 
-    // Speed multiplier that controls the overall speed of treads
-    private float speedMultiplier = 1f;
-
     public ConvexHullAPI convexHullComponent;
     public float speedMultiplierOverride;
     internal readonly Dictionary<Rigidbody, float> _treadProgress = new(); // Stores the progress of each tread (0 to 1)
@@ -118,6 +115,9 @@ namespace ValheimVehicles.SharedScripts
 
     private float lastSpeed;
     internal Rigidbody rootRb;
+
+    // Speed multiplier that controls the overall speed of treads
+    private float speedMultiplier = 1f;
 
     internal Rigidbody treadRb;
     internal WheelCollider[] wheelColliders = {};
@@ -202,6 +202,11 @@ namespace ValheimVehicles.SharedScripts
       return _lastTerrainTouchDeltaTime + _lastTerrainTouchTimeExpiration < Time.fixedTime;
     }
 
+    public Bounds GetGlobalBounds()
+    {
+      return new Bounds(CenterObj.transform.position, localBounds.size);
+    }
+
     /// <summary>
     /// A lower case string matcher to allow any object starting with treads to be allowed as a convexhull so we can create collisions.
     /// </summary>
@@ -279,10 +284,9 @@ namespace ValheimVehicles.SharedScripts
           hasInitLocalBounds = false;
           localBounds = new Bounds(child.localPosition, Vector3.zero);
         }
-        else
-        {
-          localBounds.Encapsulate(child.localPosition);
-        }
+
+        localBounds.Encapsulate(child.GetComponentInChildren<MeshCollider>().bounds);
+
 
         var localPoint = new LocalTransform(child.transform);
         _treadTargetPoints.Add(localPoint);
@@ -353,7 +357,7 @@ namespace ValheimVehicles.SharedScripts
       // Initialize progress for each tread (0 to 1)
       _treadProgress[rb] = 0f;
     }
-    
+
     /// <summary>
     /// Generates dynamically all treads based on a bounds size. Must be invoked
     /// </summary>
