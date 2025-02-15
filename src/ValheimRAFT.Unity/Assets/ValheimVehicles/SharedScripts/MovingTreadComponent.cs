@@ -365,6 +365,7 @@ namespace ValheimVehicles.SharedScripts
     public void GenerateTreads(Bounds bounds)
     {
       if (!treadPrefab) return;
+      if (!vehicleWheelController) return;
       vehicleLocalBounds = bounds;
       CleanUp();
 

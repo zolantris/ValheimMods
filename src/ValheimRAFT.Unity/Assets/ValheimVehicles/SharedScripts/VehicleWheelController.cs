@@ -278,7 +278,7 @@ namespace ValheimVehicles.SharedScripts
       asymptoteValue = 1.0f,
       stiffness = 2.2f // Higher stiffness to prevent sliding
     };
-    public float wheelColliderRadius => Mathf.Clamp(wheelRadius * 1.2f, 0f, 5f);
+    public float wheelColliderRadius => Mathf.Clamp(wheelRadius, 0f, 5f);
 
     [UsedImplicitly]
     public bool IsBraking
@@ -373,7 +373,7 @@ namespace ValheimVehicles.SharedScripts
     /// <param name="bounds"></param>
     private void UpdateTreads(Bounds bounds)
     {
-      if (!treadsLeftMovingComponent || !treadsRightMovingComponent)
+      if (!treadsLeftMovingComponent || !treadsRightMovingComponent || !IsTreadsSetup)
       {
         InitTreads();
       }
@@ -409,6 +409,11 @@ namespace ValheimVehicles.SharedScripts
       }
       if (treadsLeftMovingComponent && treadsRightMovingComponent)
       {
+        if (!treadsLeftMovingComponent.vehicleWheelController || !treadsRightMovingComponent.vehicleWheelController)
+        {
+          InitTreads();
+        }
+        
         treadsLeftMovingComponent.wheelColliders = left;
         treadsRightMovingComponent.wheelColliders = right;
         treadsLeftMovingComponent.GenerateTreads(bounds);
@@ -543,7 +548,11 @@ namespace ValheimVehicles.SharedScripts
       }
 
       movingTreadComponent.treadParent = treadObj.transform;
-      movingTreadComponent.treadPrefab = treadsPrefab;
+
+      if (treadsPrefab)
+      {
+        movingTreadComponent.treadPrefab = treadsPrefab;
+      }
       movingTreadComponent.vehicleWheelController = this;
 
       if (!treadRb)
@@ -552,14 +561,21 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+    public bool IsTreadsSetup = false;
     /// <summary>
     /// Init for both treads
     /// </summary>
     private void InitTreads()
     {
-      if (!treadsRightTransform || !treadsLeftTransform) return;
+      if (!treadsRightTransform || !treadsLeftTransform)
+      {
+        IsTreadsSetup = false;
+        return;
+      }
       SetupSingleTread(treadsRightTransform.gameObject, ref treadsRightMovingComponent, ref treadsRightRb);
       SetupSingleTread(treadsLeftTransform.gameObject, ref treadsLeftMovingComponent, ref treadsLeftRb);
+
+      IsTreadsSetup = true;
     }
 
     public void ConfigureJoint(ConfigurableJoint joint, Rigidbody vehicleBody, Vector3 localPosition)
@@ -928,6 +944,7 @@ namespace ValheimVehicles.SharedScripts
           else
           {
             wheelInstance = Instantiate(wheelPrefab, wheelParent);
+            // wheelInstance = Instantiate(wheelPrefab, isLeft ?treadsLeftTransform: treadsRightTransform);
             wheelInstances.Add(wheelInstance); // **Only add new wheels**
           }
           var dirName = isLeft ? "left" : "right";
@@ -1028,7 +1045,7 @@ namespace ValheimVehicles.SharedScripts
       var radiusFactor = Mathf.Clamp01(wheelColliderRadius / 1f); // Normalize wheel size influence
 
 
-      wheelCollider.suspensionDistance = Mathf.Max(wheelColliderRadius * 2f, 1f);
+      wheelCollider.suspensionDistance = -wheelColliderRadius;
       wheelCollider.forceAppPointDistance = wheelColliderRadius * 1.2f;
 
       // wheelCollider.wheelDampingRate = Override_wheelDampingRate;

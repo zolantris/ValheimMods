@@ -23,10 +23,14 @@ namespace ValheimVehicles.SharedScripts
     public Vector3 transformPreviewOffset = new(0, -2f, 0);
     public List<GameObject> GeneratedMeshGameObjects = new();
 
-    public bool hasFixedUpdate = true;
+    [Header("FixedUpdate Logic")]
+    public bool HasResyncFixedUpdate = true;
+    public bool HasTestPieceGeneration;
+    public float DebouncedUpdateInterval = 2f;
+    public float PieceGeneratorInterval = 0.05f;
 
+    [Header("Mesh Generation Logic")]
     public bool useWorld;
-
     public GameObject convexHullParentGameObject;
     public GameObject PiecesParentObj;
     public bool debugOriginalMesh;
@@ -37,12 +41,22 @@ namespace ValheimVehicles.SharedScripts
     public VehicleWheelController vehicleWheelController;
     public MovementPiecesController movementPiecesController;
 
-    public float DebouncedUpdateInterval = 2f;
     public Transform cameraTransform;
 
     public bool hasCalledFirstGenerate;
+
+    public int maxPiecesToAdd = 50;
+    public GameObject prefabFloorPiece;
+    public GameObject prefabWallPiece;
+
+    public Vector3 lastPieceOffset = Vector3.zero;
+
     private Bounds _cachedDebugBounds = new(Vector3.zero, Vector3.zero);
     private MeshBoundsVisualizer _meshBoundsVisualizer;
+
+    private bool CanUpdate;
+
+    private float lastPieceGeneratorUpdate;
     private float lastUpdate;
     private void Awake()
     {
@@ -73,38 +87,38 @@ namespace ValheimVehicles.SharedScripts
       SyncAPIProperties();
       Cleanup();
     }
+
     /// <summary>
     ///   For seeing the colliders update live. This should not be used in game for
     ///   performance reasons.
     /// </summary>
     public void FixedUpdate()
     {
+      CanUpdate = RunFixedUpdateDebounce();
+      var CanUpdatePieceGenerator = RunFixedUpdateDebounceGenerator();
+      SyncAPIProperties();
+
       if (cameraTransform)
       {
         cameraTransform.position = vehicleWheelController.transform.position + Vector3.up * 5f;
         cameraTransform.localRotation = vehicleWheelController.transform.localRotation;
       }
+
       if (!hasCalledFirstGenerate)
       {
         Generate();
         hasCalledFirstGenerate = true;
       }
-      if (!hasFixedUpdate) return;
-      if (lastUpdate > DebouncedUpdateInterval)
+
+      if (HasTestPieceGeneration && CanUpdatePieceGenerator)
       {
-        lastUpdate = 0f;
-      }
-      else
-      {
-        lastUpdate += Time.deltaTime;
-        return;
+        TestAddPieceToVehicleChild();
       }
 
-
-
-      SyncAPIProperties();
-
-      Generate();
+      if (HasResyncFixedUpdate && CanUpdate)
+      {
+        Generate();
+      }
     }
 
     public void OnEnable()
@@ -138,6 +152,27 @@ namespace ValheimVehicles.SharedScripts
           _meshBoundsVisualizer.CalculateAndVisualizeBounds(meshCollider,
             forwardTransform);
       }
+    }
+
+    public bool RunFixedUpdateDebounce()
+    {
+      if (lastUpdate > DebouncedUpdateInterval)
+      {
+        lastUpdate = 0f;
+        return true;
+      }
+      lastUpdate += Time.deltaTime;
+      return false;
+    }
+    public bool RunFixedUpdateDebounceGenerator()
+    {
+      if (lastPieceGeneratorUpdate > PieceGeneratorInterval)
+      {
+        lastPieceGeneratorUpdate = 0f;
+        return true;
+      }
+      lastPieceGeneratorUpdate += Time.deltaTime;
+      return false;
     }
 
     private void GetOrAddMeshGeneratorApi()
@@ -197,7 +232,6 @@ namespace ValheimVehicles.SharedScripts
         var bounds = _convexHullAPI.GetConvexHullBounds(true);
         _cachedDebugBounds = bounds;
         vehicleWheelController.InitializeWheels(bounds);
-        IgnoreAllCollidersBetweenWheelsAndPieces();
       }
 
       // RigidbodyUtils.RecenterRigidbodyPivot(PiecesParentObj.gameObject);
@@ -221,6 +255,40 @@ namespace ValheimVehicles.SharedScripts
       // Visualize the sphere in the Scene view
       Gizmos.color = Color.green;
       Gizmos.DrawWireSphere(center, radius);
+    }
+
+    /// <summary>
+    /// Todo to detect meshRenderBounds and get the offset from there.
+    /// </summary>
+    /// <returns></returns>
+    public Vector3 GetPieceOffset()
+    {
+      var pieceCount = movementPiecesController.m_pieces.Count;
+      var secondThird = maxPiecesToAdd * 2 / 3;
+      var firstThird = maxPiecesToAdd / 3;
+      if (pieceCount > secondThird)
+      {
+        return new Vector3(4 * (pieceCount - secondThird), 0, 8);
+      }
+
+      if (pieceCount > firstThird)
+      {
+        return new Vector3(4 * (pieceCount - firstThird), 0, 4);
+      }
+
+      var currentVector = new Vector3(4 * pieceCount, 0, 0);
+      return currentVector;
+    }
+
+    public void TestAddPieceToVehicleChild()
+    {
+      if (!prefabFloorPiece) return;
+      if (movementPiecesController.m_pieces.Count > maxPiecesToAdd) return;
+
+      var localPosition = GetPieceOffset();
+      var piece = Instantiate(prefabFloorPiece, transform);
+      piece.transform.localPosition = localPosition;
+      movementPiecesController.OnPieceAdded(piece);
     }
 
     public void Cleanup()

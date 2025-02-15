@@ -2020,6 +2020,7 @@ MonoBehaviour:
   m_syncRigidbody: {fileID: 4313409606746086540}
   m_localRigidbody: {fileID: 1246876113}
   m_vehicleWheelController: {fileID: 7210998224556755449}
+  m_vehicleCollisionManager: {fileID: 0}
   m_shouldSync: 1
 --- !u!4 &1298997937 stripped
 Transform:
@@ -2081,7 +2082,8 @@ MonoBehaviour:
   distanceThreshold: 33
   transformPreviewOffset: {x: 0, y: 0, z: 0}
   GeneratedMeshGameObjects: []
-  hasFixedUpdate: 1
+  HasResyncFixedUpdate: 1
+  HasTestPieceGeneration: 1
   useWorld: 1
   convexHullParentGameObject: {fileID: 2990044044509212180}
   PiecesParentObj: {fileID: 1246876110}
@@ -2090,9 +2092,13 @@ MonoBehaviour:
   _convexHullAPI: {fileID: 1576914376612159117}
   vehicleWheelController: {fileID: 7210998224556755449}
   movementPiecesController: {fileID: 1246876114}
-  DebouncedUpdateInterval: 2
+  DebouncedUpdateInterval: 0.5
   cameraTransform: {fileID: 2010887271}
   hasCalledFirstGenerate: 0
+  maxPiecesToAdd: 50
+  prefabFloorPiece: {fileID: 7703310815849067777, guid: 3c942f23fd2b53c42b0e3c4adaacbdbd, type: 3}
+  prefabWallPiece: {fileID: 0}
+  lastPieceOffset: {x: 0, y: 0, z: 0}
 --- !u!4 &1341137349
 Transform:
   m_ObjectHideFlags: 0
@@ -3690,7 +3696,8 @@ MonoBehaviour:
   distanceThreshold: 33
   transformPreviewOffset: {x: 0, y: 0, z: 0}
   GeneratedMeshGameObjects: []
-  hasFixedUpdate: 1
+  HasResyncFixedUpdate: 1
+  HasTestPieceGeneration: 0
   useWorld: 1
   convexHullParentGameObject: {fileID: 1850669128}
   PiecesParentObj: {fileID: 152844458}
@@ -3702,6 +3709,10 @@ MonoBehaviour:
   DebouncedUpdateInterval: 2
   cameraTransform: {fileID: 0}
   hasCalledFirstGenerate: 0
+  maxPiecesToAdd: 50
+  prefabFloorPiece: {fileID: 0}
+  prefabWallPiece: {fileID: 0}
+  lastPieceOffset: {x: 0, y: 0, z: 0}
 --- !u!4 &1870395135
 Transform:
   m_ObjectHideFlags: 0
@@ -4696,9 +4707,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3104779968902216635}
   serializedVersion: 4
-  m_Mass: 1000
-  m_Drag: 0.1
-  m_AngularDrag: 0.1
+  m_Mass: 10
+  m_Drag: 0
+  m_AngularDrag: 0
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -4727,7 +4738,7 @@ ConfigurableJoint:
   m_Anchor: {x: 0, y: 0, z: 0}
   m_Axis: {x: 1, y: 0, z: 0}
   m_AutoConfigureConnectedAnchor: 1
-  m_ConnectedAnchor: {x: 0, y: 0, z: 0}
+  m_ConnectedAnchor: {x: 236.805, y: 12.25, z: -38.125}
   serializedVersion: 3
   m_SecondaryAxis: {x: 0, y: 1, z: 0}
   m_XMotion: 2
@@ -4825,14 +4836,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8225528950328919720}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.38268343, z: 0, w: 0.92387956}
+  m_LocalRotation: {x: 0, y: -0.17364825, z: 0, w: 0.9848078}
   m_LocalPosition: {x: 236.805, y: 12.25, z: -38.125}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8340188237230322239}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 45, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -20, z: 0}
 --- !u!4 &3462057762617736770
 Transform:
   m_ObjectHideFlags: 0
@@ -4871,7 +4882,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8225528950328919720}
   serializedVersion: 4
-  m_Mass: 10000
+  m_Mass: 1000
   m_Drag: 0.01
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: -10, z: 0}
@@ -5102,6 +5113,7 @@ MonoBehaviour:
   wheelPrefabMeshSize:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 0, y: 0, z: 0}
+  IsTreadsSetup: 0
 --- !u!1 &8225528950328919720
 GameObject:
   m_ObjectHideFlags: 0
@@ -5182,9 +5194,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8525095631786265239}
   serializedVersion: 4
-  m_Mass: 1000
-  m_Drag: 0.1
-  m_AngularDrag: 0.1
+  m_Mass: 10
+  m_Drag: 0
+  m_AngularDrag: 0
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -5213,7 +5225,7 @@ ConfigurableJoint:
   m_Anchor: {x: 0, y: 0, z: 0}
   m_Axis: {x: 1, y: 0, z: 0}
   m_AutoConfigureConnectedAnchor: 1
-  m_ConnectedAnchor: {x: 236.805, y: 10.121398, z: -38.125}
+  m_ConnectedAnchor: {x: 236.805, y: 12.25, z: -38.125}
   serializedVersion: 3
   m_SecondaryAxis: {x: 0, y: 1, z: 0}
   m_XMotion: 2
