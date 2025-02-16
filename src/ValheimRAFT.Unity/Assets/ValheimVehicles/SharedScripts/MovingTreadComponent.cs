@@ -492,10 +492,10 @@ namespace ValheimVehicles.SharedScripts
         rb = child.gameObject.AddComponent<Rigidbody>();
       }
       rb.mass = 20f;
-      rb.drag = 0.05f;
+      rb.drag = 0.01f;
       rb.angularDrag = 10f;
       rb.useGravity = false;
-      rb.isKinematic = true;
+      rb.isKinematic = false;
       return rb;
     }
 

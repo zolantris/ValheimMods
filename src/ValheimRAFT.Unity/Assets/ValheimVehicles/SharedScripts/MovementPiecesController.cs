@@ -23,10 +23,16 @@ namespace ValheimVehicles.SharedScripts
     {
       m_localRigidbody = GetComponent<Rigidbody>();
       m_vehicleCollisionManager = gameObject.AddComponent<VehicleCollisionManager>();
-      AddAllChildrenToIgnores();
+      AddAllChildrenToIgnores(transform);
     }
 
+#if UNITY_EDITOR
     public void FixedUpdate()
+    {
+      CustomFixedUpdate();
+    }
+#endif
+    public virtual void CustomFixedUpdate()
     {
       if (m_shouldSync)
       {
@@ -34,9 +40,9 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public void AddAllChildrenToIgnores()
+    public void AddAllChildrenToIgnores(Transform targetTransform)
     {
-      foreach (Transform child in transform)
+      foreach (Transform child in targetTransform)
       {
         m_vehicleCollisionManager.AddObjectToVehicle(child.gameObject);
       }
@@ -46,7 +52,7 @@ namespace ValheimVehicles.SharedScripts
     {
       piece.transform.SetParent(transform, false);
       m_pieces.Add(piece);
-      OnPieceAddedIgnoreAllColliders(piece);
+      // OnPieceAddedIgnoreAllColliders(piece);
     }
 
     internal void OnPieceAddedIgnoreAllColliders(GameObject piece)

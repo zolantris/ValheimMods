@@ -43,7 +43,7 @@ GameObject:
   - component: {fileID: 6165906457819262112}
   - component: {fileID: 1351627717961849816}
   - component: {fileID: 6152966664091722548}
-  - component: {fileID: 5000316593182017145}
+  - component: {fileID: 9180005412974307903}
   m_Layer: 29
   m_Name: tread_mesh
   m_TagString: Untagged
@@ -116,20 +116,20 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &5000316593182017145
+--- !u!65 &9180005412974307903
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7365503988617434554}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 2ac727169718bb54f9f79ff1bb27e8ad, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 202411520
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 4294965111
+    m_Bits: 4092555639
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0

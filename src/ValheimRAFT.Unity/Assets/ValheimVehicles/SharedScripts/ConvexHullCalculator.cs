@@ -1,9 +1,13 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Assertions;
+
+#endregion
 
 // ReSharper disable ArrangeNamespaceBody
 
@@ -285,14 +289,12 @@ namespace ValheimVehicles.SharedScripts
       litFaces.Add(fi);
 
       Assert(PointFaceDistance(point, points[face.Vertex0], face) > 0.0f);
-
+      if (!litFaces.Contains(face.Opposite0) && faces.TryGetValue(face.Opposite0, out var oppositeFace0))
       {
-        var oppositeFace = faces[face.Opposite0];
-
         var dist = PointFaceDistance(
           point,
-          points[oppositeFace.Vertex0],
-          oppositeFace);
+          points[oppositeFace0.Vertex0],
+          oppositeFace0);
 
         if (dist <= 0.0f)
           horizon.Add(new HorizonEdge
@@ -302,17 +304,15 @@ namespace ValheimVehicles.SharedScripts
             Edge1 = face.Vertex2
           });
         else
-          SearchHorizon(points, point, fi, face.Opposite0, oppositeFace);
+          SearchHorizon(points, point, fi, face.Opposite0, oppositeFace0);
       }
 
-      if (!litFaces.Contains(face.Opposite1))
+      if (!litFaces.Contains(face.Opposite1) && faces.TryGetValue(face.Opposite1, out var oppositeFace1))
       {
-        var oppositeFace = faces[face.Opposite1];
-
         var dist = PointFaceDistance(
           point,
-          points[oppositeFace.Vertex0],
-          oppositeFace);
+          points[oppositeFace1.Vertex0],
+          oppositeFace1);
 
         if (dist <= 0.0f)
           horizon.Add(new HorizonEdge
@@ -322,17 +322,16 @@ namespace ValheimVehicles.SharedScripts
             Edge1 = face.Vertex0
           });
         else
-          SearchHorizon(points, point, fi, face.Opposite1, oppositeFace);
+          SearchHorizon(points, point, fi, face.Opposite1, oppositeFace1);
       }
 
-      if (!litFaces.Contains(face.Opposite2))
+      if (!litFaces.Contains(face.Opposite2) && faces.TryGetValue(face.Opposite2, out var oppositeFace2))
       {
-        var oppositeFace = faces[face.Opposite2];
 
         var dist = PointFaceDistance(
           point,
-          points[oppositeFace.Vertex0],
-          oppositeFace);
+          points[oppositeFace2.Vertex0],
+          oppositeFace2);
 
         if (dist <= 0.0f)
           horizon.Add(new HorizonEdge
@@ -342,7 +341,7 @@ namespace ValheimVehicles.SharedScripts
             Edge1 = face.Vertex1
           });
         else
-          SearchHorizon(points, point, fi, face.Opposite2, oppositeFace);
+          SearchHorizon(points, point, fi, face.Opposite2, oppositeFace2);
       }
     }
 
@@ -396,14 +395,12 @@ namespace ValheimVehicles.SharedScripts
         edge2 = face.Vertex0;
       }
 
-      if (!litFaces.Contains(nextFaceIndex0))
+      if (!litFaces.Contains(nextFaceIndex0) && faces.TryGetValue(nextFaceIndex0, out var oppositeFace0))
       {
-        var oppositeFace = faces[nextFaceIndex0];
-
         var dist = PointFaceDistance(
           point,
-          points[oppositeFace.Vertex0],
-          oppositeFace);
+          points[oppositeFace0.Vertex0],
+          oppositeFace0);
 
         if (dist <= 0.0f)
           horizon.Add(new HorizonEdge
@@ -413,17 +410,15 @@ namespace ValheimVehicles.SharedScripts
             Edge1 = edge1
           });
         else
-          SearchHorizon(points, point, faceCount, nextFaceIndex0, oppositeFace);
+          SearchHorizon(points, point, faceCount, nextFaceIndex0, oppositeFace0);
       }
 
-      if (!litFaces.Contains(nextFaceIndex1))
+      if (!litFaces.Contains(nextFaceIndex1) && faces.TryGetValue(nextFaceIndex1, out var oppositeFace1))
       {
-        var oppositeFace = faces[nextFaceIndex1];
-
         var dist = PointFaceDistance(
           point,
-          points[oppositeFace.Vertex0],
-          oppositeFace);
+          points[oppositeFace1.Vertex0],
+          oppositeFace1);
 
         if (dist <= 0.0f)
           horizon.Add(new HorizonEdge
@@ -433,7 +428,7 @@ namespace ValheimVehicles.SharedScripts
             Edge1 = edge2
           });
         else
-          SearchHorizon(points, point, faceCount, nextFaceIndex1, oppositeFace);
+          SearchHorizon(points, point, faceCount, nextFaceIndex1, oppositeFace1);
       }
     }
 
@@ -767,9 +762,9 @@ namespace ValheimVehicles.SharedScripts
 
     private bool HasEdge(Face f, int e0, int e1)
     {
-      return (f.Vertex0 == e0 && f.Vertex1 == e1)
-             || (f.Vertex1 == e0 && f.Vertex2 == e1)
-             || (f.Vertex2 == e0 && f.Vertex0 == e1);
+      return f.Vertex0 == e0 && f.Vertex1 == e1
+             || f.Vertex1 == e0 && f.Vertex2 == e1
+             || f.Vertex2 == e0 && f.Vertex0 == e1;
     }
 
     [Conditional("DEBUG_QUICKHULL")]

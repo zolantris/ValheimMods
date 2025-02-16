@@ -24,6 +24,7 @@ using ValheimVehicles;
 using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Constants;
+using ValheimVehicles.Injections;
 using ValheimVehicles.ModSupport;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
@@ -456,6 +457,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   public void Awake()
   {
+    // BurstInjector.LoadBurst();
+    
     Instance = this;
     gameObject.AddComponent<BatchedLogger>();
 

@@ -1,5 +1,6 @@
 #region
 
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
@@ -28,6 +29,11 @@ namespace ValheimVehicles.SharedScripts
     public bool HasTestPieceGeneration;
     public float DebouncedUpdateInterval = 2f;
     public float PieceGeneratorInterval = 0.05f;
+    public int maxPiecesToAdd = 50;
+    public int BatchAddSize = 100;
+    public int MaxXGeneration = 8;
+    public int MaxZGeneration = 20;
+    public int MaxYGeneration = 20;
 
     [Header("Mesh Generation Logic")]
     public bool useWorld;
@@ -45,19 +51,25 @@ namespace ValheimVehicles.SharedScripts
 
     public bool hasCalledFirstGenerate;
 
-    public int maxPiecesToAdd = 50;
     public GameObject prefabFloorPiece;
     public GameObject prefabWallPiece;
 
     public Vector3 lastPieceOffset = Vector3.zero;
 
+
     private Bounds _cachedDebugBounds = new(Vector3.zero, Vector3.zero);
     private MeshBoundsVisualizer _meshBoundsVisualizer;
 
-    private bool CanUpdate;
+    private Coroutine AddPieceRoutine;
+
+    private bool CanRunGenerate;
 
     private float lastPieceGeneratorUpdate;
     private float lastUpdate;
+    private int xOffset;
+    private int yOffset;
+
+    private int zOffset;
     private void Awake()
     {
       GetOrAddMeshGeneratorApi();
@@ -87,37 +99,37 @@ namespace ValheimVehicles.SharedScripts
       SyncAPIProperties();
       Cleanup();
     }
-
     /// <summary>
     ///   For seeing the colliders update live. This should not be used in game for
     ///   performance reasons.
     /// </summary>
     public void FixedUpdate()
     {
-      CanUpdate = RunFixedUpdateDebounce();
+      CanRunGenerate = RunFixedUpdateDebounce();
       var CanUpdatePieceGenerator = RunFixedUpdateDebounceGenerator();
       SyncAPIProperties();
 
       if (cameraTransform)
       {
-        cameraTransform.position = vehicleWheelController.transform.position + Vector3.up * 5f;
-        cameraTransform.localRotation = vehicleWheelController.transform.localRotation;
-      }
-
-      if (!hasCalledFirstGenerate)
-      {
-        Generate();
-        hasCalledFirstGenerate = true;
+        var wheelControllerTransform = vehicleWheelController.transform;
+        cameraTransform.position = wheelControllerTransform.position + Vector3.up * 5f;
+        cameraTransform.localRotation = wheelControllerTransform.localRotation;
       }
 
       if (HasTestPieceGeneration && CanUpdatePieceGenerator)
       {
-        TestAddPieceToVehicleChild();
+        if (AddPieceRoutine != null)
+        {
+          StopCoroutine(AddPieceRoutine);
+        }
+
+        AddPieceRoutine = StartCoroutine(TestAddPieceToVehicleChild());
       }
 
-      if (HasResyncFixedUpdate && CanUpdate)
+      if (!hasCalledFirstGenerate || HasResyncFixedUpdate && CanRunGenerate)
       {
         Generate();
+        hasCalledFirstGenerate = true;
       }
     }
 
@@ -237,18 +249,18 @@ namespace ValheimVehicles.SharedScripts
       // RigidbodyUtils.RecenterRigidbodyPivot(PiecesParentObj.gameObject);
       // RigidbodyUtils.RecenterRigidbodyPivot(vehicleWheelController.gameObject);
     }
-
-    public void IgnoreAllCollidersBetweenWheelsAndPieces()
-    {
-      var childColliders = PhysicsHelpers.GetAllChildColliders(transform);
-      PhysicsHelpers.IgnoreCollidersForLists(vehicleWheelController.colliders, childColliders);
-    }
-
-    public void IgnoreAllCollidersBetweenTreadsAndPieces()
-    {
-      var childColliders = PhysicsHelpers.GetAllChildColliders(transform);
-      PhysicsHelpers.IgnoreCollidersForLists(vehicleWheelController.colliders, childColliders);
-    }
+    //
+    // public void IgnoreAllCollidersBetweenWheelsAndPieces()
+    // {
+    //   var childColliders = PhysicsHelpers.GetAllChildColliders(transform);
+    //   PhysicsHelpers.IgnoreCollidersForLists(vehicleWheelController.colliders, childColliders);
+    // }
+    //
+    // public void IgnoreAllCollidersBetweenTreadsAndPieces()
+    // {
+    //   var childColliders = PhysicsHelpers.GetAllChildColliders(transform);
+    //   PhysicsHelpers.IgnoreCollidersForLists(vehicleWheelController.colliders, childColliders);
+    // }
 
     private void DrawSphere(Vector3 center, float radius)
     {
@@ -256,39 +268,69 @@ namespace ValheimVehicles.SharedScripts
       Gizmos.color = Color.green;
       Gizmos.DrawWireSphere(center, radius);
     }
-
     /// <summary>
     /// Todo to detect meshRenderBounds and get the offset from there.
     /// </summary>
     /// <returns></returns>
-    public Vector3 GetPieceOffset()
+    public Vector3? GetPieceOffset()
     {
       var pieceCount = movementPiecesController.m_pieces.Count;
-      var secondThird = maxPiecesToAdd * 2 / 3;
-      var firstThird = maxPiecesToAdd / 3;
-      if (pieceCount > secondThird)
+      var currentVector = new Vector3(4 * xOffset, 4 * yOffset, 4 * zOffset);
+
+      if (yOffset > MaxYGeneration)
       {
-        return new Vector3(4 * (pieceCount - secondThird), 0, 8);
+        return null;
       }
 
-      if (pieceCount > firstThird)
+      if (zOffset > MaxZGeneration)
       {
-        return new Vector3(4 * (pieceCount - firstThird), 0, 4);
+        zOffset = 0;
+        xOffset = 0;
+        yOffset += 1;
       }
 
-      var currentVector = new Vector3(4 * pieceCount, 0, 0);
+      if (xOffset > MaxXGeneration)
+      {
+        xOffset = 0;
+        zOffset += 1;
+      }
+      else
+      {
+        xOffset += 1;
+      }
       return currentVector;
     }
 
-    public void TestAddPieceToVehicleChild()
+    private void InstantiatePrefab(GameObject prefab)
     {
-      if (!prefabFloorPiece) return;
-      if (movementPiecesController.m_pieces.Count > maxPiecesToAdd) return;
-
       var localPosition = GetPieceOffset();
-      var piece = Instantiate(prefabFloorPiece, transform);
-      piece.transform.localPosition = localPosition;
+      if (localPosition == null) return;
+
+      var piece = Instantiate(prefab, transform);
+      piece.transform.localPosition = localPosition.Value;
       movementPiecesController.OnPieceAdded(piece);
+    }
+
+    private IEnumerator TestAddPieceToVehicleChild()
+    {
+      if (!prefabFloorPiece) yield break;
+      if (movementPiecesController.m_pieces.Count > maxPiecesToAdd) yield break;
+      var currentPieces = movementPiecesController.m_pieces.Count;
+
+      var current = 0;
+      while (BatchAddSize > current && movementPiecesController.m_pieces.Count < maxPiecesToAdd)
+      {
+        InstantiatePrefab(prefabFloorPiece);
+        InstantiatePrefab(prefabWallPiece);
+        current++;
+      }
+
+      yield return null;
+
+      if (currentPieces != movementPiecesController.m_pieces.Count)
+      {
+        Generate();
+      }
     }
 
     public void Cleanup()

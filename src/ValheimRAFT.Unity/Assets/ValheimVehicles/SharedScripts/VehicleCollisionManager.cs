@@ -15,18 +15,20 @@ namespace ValheimVehicles.SharedScripts
   public class VehicleCollisionManager : MonoBehaviour
   {
     private List<Collider> _colliders = new();
+    private JobHandle _currentJob;
     private List<GCHandle> _gcHandles = new(); // Track GCHandles for cleanup
+    private bool _isProcessing;
     private bool _isVehicleDestroyed;
 
     private void OnDestroy()
     {
-      _isVehicleDestroyed = true; // Mark vehicle for cleanup
-      Cleanup(); // Release resources
+      _isVehicleDestroyed = true;
+      Cleanup();
     }
 
     public void AddObjectToVehicle(GameObject obj)
     {
-      if (_isVehicleDestroyed || obj == null) return; // Avoid processing on destroyed vehicles
+      if (_isVehicleDestroyed || obj == null) return;
 
       var newColliders = obj.GetComponentsInChildren<Collider>();
       foreach (var collider in newColliders)
@@ -42,19 +44,22 @@ namespace ValheimVehicles.SharedScripts
 
     public void RemoveObjectFromVehicle(GameObject obj)
     {
-      if (_isVehicleDestroyed || obj == null) return; // Skip removal on destroyed objects
+      if (_isVehicleDestroyed || obj == null) return;
 
       var removeColliders = obj.GetComponentsInChildren<Collider>();
-
       foreach (var collider in removeColliders)
       {
         _colliders.Remove(collider);
       }
+
+      Cleanup();
     }
 
     private void ProcessIgnoreCollisions()
     {
-      if (_isVehicleDestroyed || _colliders.Count < 2) return; // Prevent processing if the vehicle is gone
+      if (_isVehicleDestroyed || _colliders.Count < 2 || _isProcessing) return;
+
+      _isProcessing = true;
 
       var colliderCount = _colliders.Count;
       var pairCount = colliderCount * (colliderCount - 1) / 2;
@@ -64,14 +69,16 @@ namespace ValheimVehicles.SharedScripts
 
       try
       {
-        // Clear GCHandle tracking before creating new ones
         Cleanup();
         _gcHandles.Clear();
 
-        // Convert Colliders to IntPtr & store handles for cleanup
         for (var i = 0; i < colliderCount; i++)
         {
-          if (_colliders[i] == null) continue; // Skip null colliders
+          if (_colliders[i] == null)
+          {
+            _colliders.RemoveAt(i--);
+            continue;
+          }
 
           var handle = GCHandle.Alloc(_colliders[i], GCHandleType.Weak);
           _gcHandles.Add(handle);
@@ -84,22 +91,21 @@ namespace ValheimVehicles.SharedScripts
           CollisionPairs = collisionPairs
         };
 
-        var handleJob = job.Schedule(colliderCount, 1);
-        handleJob.Complete();
+        _currentJob = job.Schedule();
+        _currentJob.Complete(); // Ensure job is done before processing results
 
-        // Apply ignore collisions on the main thread
         for (var i = 0; i < pairCount; i++)
         {
           var pair = collisionPairs[i];
 
           if (_isVehicleDestroyed || pair.ColliderA == IntPtr.Zero || pair.ColliderB == IntPtr.Zero)
-            continue; // Skip invalid pairs
+            continue;
 
           var handleA = GCHandle.FromIntPtr(pair.ColliderA);
           var handleB = GCHandle.FromIntPtr(pair.ColliderB);
 
           if (!handleA.IsAllocated || !handleB.IsAllocated)
-            continue; // Skip if handle was lost
+            continue;
 
           var colliderA = handleA.Target as Collider;
           var colliderB = handleB.Target as Collider;
@@ -110,12 +116,16 @@ namespace ValheimVehicles.SharedScripts
           }
         }
       }
+      catch (Exception e)
+      {
+        Debug.LogError($"VehicleCollisionManager encountered an error: {e.Message}");
+      }
       finally
       {
-        // Ensure cleanup
         Cleanup();
         colliderPtrs.Dispose();
         collisionPairs.Dispose();
+        _isProcessing = false;
       }
     }
 
@@ -129,7 +139,8 @@ namespace ValheimVehicles.SharedScripts
         }
       }
       _gcHandles.Clear();
-      _colliders.RemoveAll(c => c == null); // Remove null colliders
+      _colliders.RemoveAll(c => c == null);
     }
   }
+
 }

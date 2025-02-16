@@ -179,12 +179,12 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 805357057
+    m_Bits: 50689
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 3825154934
+    m_Bits: 3288284022
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
@@ -274,7 +274,7 @@ WheelCollider:
   m_SuspensionDistance: 3
   m_ForceAppPointDistance: 1
   m_Mass: 40
-  m_WheelDampingRate: 1
+  m_WheelDampingRate: 0.01
   m_ForwardFriction:
     m_ExtremumSlip: 0.4
     m_ExtremumValue: 1

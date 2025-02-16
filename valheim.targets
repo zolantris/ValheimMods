@@ -135,6 +135,7 @@
         <Reference Include="System"/>
         <Reference Include="System.Core"/>
     </ItemGroup>
+
     <!-- Add Unity references -->
     <ItemGroup Label="Unity">
         <Reference Include="UnityEngine">
@@ -277,7 +278,7 @@
     <ItemGroup Label="required-mods">
         <Reference Include="Jotunn">
             <SpecificVersion>False</SpecificVersion>
-            <HintPath>..\..\libs\Jotunn.dll</HintPath>
+            <HintPath>$(SolutionDir)\libs\Jotunn.dll</HintPath>
             <Private>False</Private>
         </Reference>
     </ItemGroup>

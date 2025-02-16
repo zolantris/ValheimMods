@@ -403,7 +403,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
     WheelController.magicTurnRate = PhysicsConfig.VehicleLandTurnSpeed.Value;
     WheelController.forwardDirection = MovementController.ShipDirection;
-    WheelController.m_steeringType = VehicleWheelController.SteeringType.Magic;
+    // WheelController.m_steeringType = VehicleWheelController.SteeringType.Differential;
     WheelController.wheelSuspensionDistance = PhysicsConfig.VehicleLandSuspensionDistance.Value;
     WheelController.wheelRadius = PhysicsConfig.VehicleLandWheelRadius.Value;
     WheelController.wheelSuspensionSpring = PhysicsConfig.VehicleLandWheelSuspensionSpring.Value;
@@ -480,7 +480,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     var sector = ZoneSystem.GetZone(position);
     var zdo = NetView.GetZDO();
 
-    zdo.SetPosition(PiecesController.m_body.worldCenterOfMass);
+    zdo.SetPosition(PiecesController.m_localRigidbody.worldCenterOfMass);
     zdo.SetSector(sector);
   }
 

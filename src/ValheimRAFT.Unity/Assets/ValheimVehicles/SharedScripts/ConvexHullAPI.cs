@@ -24,10 +24,6 @@ namespace ValheimVehicles.SharedScripts
       Bubble
     }
 
-    // Convex hull calculator instance
-    private static readonly ConvexHullCalculator
-      convexHullCalculator = new();
-
     public static bool CanRenderBubble = true;
 
     public static bool HasInitialized = false;
@@ -82,6 +78,15 @@ namespace ValheimVehicles.SharedScripts
 
     private List<Vector3> _cachedPoints = new();
 
+    // Convex hull calculator instance
+    /// <summary>
+    /// With the current implementation we need multiple ConvexHullApi components otherwise the hullcalculator can collide with itself.
+    ///
+    /// todo Would be worth profiling to see if calling new ConvexHullCalculator would benefit per invocation.
+    /// </summary>
+    private ConvexHullCalculator
+      convexHullCalculator = new();
+
     [NonSerialized] public List<MeshCollider> convexHullMeshColliders = new();
 
     /// <summary>
@@ -108,6 +113,8 @@ namespace ValheimVehicles.SharedScripts
     /// <param name="val"></param>
     /// <returns></returns>
     public Func<string, bool> IsAllowedAsHullOverride = s => false;
+
+    private Transform lastParentTransform;
 
     private void Awake()
     {
@@ -1119,15 +1126,21 @@ namespace ValheimVehicles.SharedScripts
         }
     }
 
-
     public void GenerateConvexHullMesh(
       List<Vector3> points, Transform parentObjTransform, Vector3 offset)
     {
       if (points.Count < 3)
       {
-        Debug.LogError("Not enough points to generate a convex hull.");
+        Debug.LogError($"Not enough points to generate a convex hull. This is for parentObjTransform: {parentObjTransform.name}");
         return;
       }
+
+      if (lastParentTransform != parentObjTransform)
+      {
+        lastParentTransform = parentObjTransform;
+        convexHullCalculator = new ConvexHullCalculator();
+      }
+
 
       var localPoints = points
         .Select(x => parentObjTransform.InverseTransformPoint(x) + offset).ToList();
@@ -1148,6 +1161,7 @@ namespace ValheimVehicles.SharedScripts
       var normals = new List<Vector3>();
 
       // Generate convex hull and export the mesh
+      // let this calculator garbage collect if the parentTransform is different.
       convexHullCalculator.GenerateHull(localPoints, false, ref verts,
         ref tris,
         ref normals);

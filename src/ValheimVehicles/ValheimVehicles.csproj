@@ -25,6 +25,7 @@
     <Import Project="$(SolutionDir)/valheim.targets"/>
 
     <ItemGroup>
+        <Compile Include="ValheimVehicles.Injections\UnityBurstInjection.cs"/>
         <Compile Include="ValheimVehicles.Vehicles\Controllers\VehiclePiecesJobs.cs"/>
         <Compile Include="ValheimVehiclesPlugin.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>

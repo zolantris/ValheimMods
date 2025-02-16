@@ -9,6 +9,6 @@ PhysicMaterial:
   m_Name: TreadPhysicsMaterial
   dynamicFriction: 0.01
   staticFriction: 0.01
-  bounciness: 1
+  bounciness: 0
   frictionCombine: 0
-  bounceCombine: 0
+  bounceCombine: 1
