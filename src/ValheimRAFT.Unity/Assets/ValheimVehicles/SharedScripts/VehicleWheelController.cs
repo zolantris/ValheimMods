@@ -50,12 +50,17 @@ namespace ValheimVehicles.SharedScripts
     private const float stabilityCorrectionFactor = 200f;
     private const float downforceAmount = 50f;
     public const float centerOfMassOffset = -4f;
+    private const float baseAccelerationMultiplier = 30f;
+    private const float baseTurnAccelerationMultiplier = 30f;
 
     private static Vector3 wheelMeshLocalScale = new(3f, 0.3f, 3f);
 
     public static float defaultBreakForce = 500f;
 
     public static readonly Bounds VehicleFrameBoundsDefault = new(Vector3.up * 2, new Vector3(4f, 4f, 4f));
+    private static float highAcceleration = 3 * baseAccelerationMultiplier;
+    private static float mediumAcceleration = 2 * baseAccelerationMultiplier;
+    private static float lowAcceleration = 1 * baseAccelerationMultiplier;
 
     [Header("USER Inputs (FOR FORCE EFFECTS")]
     [Tooltip(
@@ -212,7 +217,6 @@ namespace ValheimVehicles.SharedScripts
     private float hillFactor = 1f; // Hill compensation multiplier
 
     private Coroutine? initializeWheelsCoroutine;
-    private float inputTurnForceMult = 1f;
 
     private bool isBrakePressedDown = true;
 
@@ -221,8 +225,10 @@ namespace ValheimVehicles.SharedScripts
     private bool isRightForward = true;
     private bool isTurningInPlace;
     private float lerpedTurnFactor;
+    private Vector3 m_angularVelocitySmoothSpeed = Vector3.zero;
 
-    private Vector3 m_smoothSpeed = Vector3.zero;
+    private Vector3 m_velocitySmoothSpeed = Vector3.zero;
+
     private float maxRotationSpeed = 5f; // Default top speed
     private float maxSpeed = 25f; // Default top speed
 
@@ -359,8 +365,8 @@ namespace ValheimVehicles.SharedScripts
         var leftJoint = treadsLeftTransform.GetComponent<ConfigurableJoint>();
         var rightJoint = treadsRightTransform.GetComponent<ConfigurableJoint>();
 
-        var treadsAnchorLeftLocalPosition = new Vector3(bounds.min.x - 0.5f, bounds.min.y + wheelBottomOffset, bounds.center.z);
-        var treadsAnchorRightLocalPosition = new Vector3(bounds.max.x + 0.5f, bounds.min.y + wheelBottomOffset, bounds.center.z);
+        var treadsAnchorLeftLocalPosition = new Vector3(bounds.min.x - 1f, bounds.min.y + wheelBottomOffset, bounds.center.z);
+        var treadsAnchorRightLocalPosition = new Vector3(bounds.max.x + 1f, bounds.min.y + wheelBottomOffset, bounds.center.z);
 
         if (leftJoint && rightJoint)
         {
@@ -430,10 +436,15 @@ namespace ValheimVehicles.SharedScripts
 
         if (Mathf.Abs(currentSpeed) > 0)
         {
-          vehicleRootBody.velocity = Vector3.SmoothDamp(vehicleRootBody.velocity, Vector3.zero, ref m_smoothSpeed, 20f);
+          vehicleRootBody.velocity = Vector3.SmoothDamp(vehicleRootBody.velocity, Vector3.zero, ref m_velocitySmoothSpeed, 20f);
+        }
+        else
+        {
+          m_velocitySmoothSpeed = Vector3.Lerp(m_velocitySmoothSpeed, Vector3.zero, Time.deltaTime * 10f);
         }
         return;
       }
+
       isInAir = IsVehicleInAir();
       if (isInAir)
       {
@@ -459,8 +470,8 @@ namespace ValheimVehicles.SharedScripts
       var angularSpeed = Mathf.Abs(vehicleRootBody.angularVelocity.y);
 
       // Lerp turn force: Starts high at low speeds (20), drops to 0.01 at max angular speed.
-      var turnForceLerp = Mathf.Lerp(50f * inputTurnForce * inputTurnForceMult, 0f, Mathf.Clamp01(angularSpeed / 5f));
-      var baseTorqueTurnLerp = Mathf.Lerp(1.3f, 0.5f, Mathf.Clamp01(baseTorque / highTorque));
+      var turnForceLerp = Mathf.Lerp(inputTurnForce * baseTurnAccelerationMultiplier, 0f, Mathf.Clamp01(angularSpeed / 5f));
+      var baseTorqueTurnLerp = Mathf.Lerp(1f, 0.25f, Mathf.Clamp01(baseAcceleration / highAcceleration));
       var combinedTurnLerp = turnForceLerp * baseTorqueTurnLerp;
 
       var leftForce = 0f;
@@ -473,7 +484,7 @@ namespace ValheimVehicles.SharedScripts
 
       if (m_steeringType == SteeringType.Differential)
       {
-        var dt = Time.fixedDeltaTime * 0.5f;
+        var dt = Time.fixedDeltaTime;
         // leftForce = (inputMovement + combinedTurnLerp) * baseTorque * hillFactor;
         // rightForce = (inputMovement - combinedTurnLerp) * baseTorque * hillFactor;
         leftForce = (inputMovement + combinedTurnLerp) * baseAcceleration * hillFactor * dt;
@@ -500,6 +511,14 @@ namespace ValheimVehicles.SharedScripts
       vehicleRootBody.AddForceAtPosition(forward * leftForce + upwardsForce, treadsLeftRb.position, ForceMode.Acceleration);
       vehicleRootBody.AddForceAtPosition(forward * rightForce + upwardsForce, treadsRightRb.position, ForceMode.Acceleration);
 
+      if (Mathf.Abs(angularSpeed) > maxRotationSpeed)
+      {
+        vehicleRootBody.angularVelocity = Vector3.SmoothDamp(vehicleRootBody.angularVelocity, Vector3.zero, ref m_angularVelocitySmoothSpeed, 20f);
+      }
+      else
+      {
+        m_angularVelocitySmoothSpeed = Vector3.Lerp(m_angularVelocitySmoothSpeed, Vector3.zero, Time.deltaTime * 10f);
+      }
       // only apply force 1 time so things are stable.
       // vehicleRootBody.AddForceAtPosition(forward * leftForce + transform.up * 50, treadsLeftRb.position, ForceMode.Force);
       // vehicleRootBody.AddForceAtPosition(forward * rightForce + transform.up * 50, treadsRightRb.position, ForceMode.Force);
@@ -525,7 +544,7 @@ namespace ValheimVehicles.SharedScripts
       var angularSpeed = Mathf.Abs(vehicleRootBody.angularVelocity.y);
 
       // Lerp turn force: Starts high at low speeds (20), drops to 0.01 at max angular speed.
-      var turnForceLerp = Mathf.Lerp(50f * inputTurnForce * inputTurnForceMult, 0f, Mathf.Clamp01(angularSpeed / 5f));
+      var turnForceLerp = Mathf.Lerp(50f * inputTurnForce * baseTurnAccelerationMultiplier, 0f, Mathf.Clamp01(angularSpeed / 5f));
       var baseTorqueTurnLerp = Mathf.Lerp(1.3f, 0.5f, Mathf.Clamp01(baseTorque / highTorque));
       var combinedTurnLerp = turnForceLerp * baseTorqueTurnLerp;
 
@@ -1422,9 +1441,9 @@ namespace ValheimVehicles.SharedScripts
 
       baseAcceleration = acceleration switch
       {
-        AccelerationType.High => 3,
-        AccelerationType.Medium => 2,
-        AccelerationType.Low => 1,
+        AccelerationType.High => highAcceleration,
+        AccelerationType.Medium => mediumAcceleration,
+        AccelerationType.Low => lowAcceleration,
         AccelerationType.Stop => 0,
         _ => 0
       };

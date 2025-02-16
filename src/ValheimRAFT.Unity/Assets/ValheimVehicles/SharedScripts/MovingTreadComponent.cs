@@ -376,7 +376,9 @@ namespace ValheimVehicles.SharedScripts
       // scaled from radius of the first wheel.
       var fullTreadLength = horizontalTreads * treadPointDistanceZ;
 
+      // makes the treads within the vehicle
       var centeringOffset = Vector3.down * treadPointYOffset / 2f / scalar + Vector3.forward * -vehicleLocalBounds.extents.z / scalar - Vector3.forward * 0.25f;
+
       // top treads
       for (var i = 0; i < horizontalTreads; i++)
       {

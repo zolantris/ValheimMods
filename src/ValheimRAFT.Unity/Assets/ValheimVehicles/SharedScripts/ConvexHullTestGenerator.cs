@@ -325,8 +325,6 @@ namespace ValheimVehicles.SharedScripts
         current++;
       }
 
-      yield return null;
-
       if (currentPieces != movementPiecesController.m_pieces.Count)
       {
         Generate();
