@@ -29,6 +29,11 @@ Shader "StandardDoubleSided"
         _DetailNormalMapScale("Scale", Float) = 1.0
         _DetailNormalMap("Normal Map", 2D) = "bump" {}
 
+        _SmoothnessTextureChannel("SmoothnessTextureChannel", Float) = 1.0
+        _SpecularHighlights("SpecularHighlights", Float) = 1.0
+        _GlossMapScale("GlossMapScale", Float) = 1.0
+        _GlossyReflections("GlossyReflections", Float) = 1.0
+
         [Enum(UV0,0,UV1,1)] _UVSec ("UV Set for secondary textures", Float) = 0
 
 
