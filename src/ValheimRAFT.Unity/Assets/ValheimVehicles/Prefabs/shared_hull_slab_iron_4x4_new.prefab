@@ -40,7 +40,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7822402868691204280}
-  - component: {fileID: 2896396551934700444}
   m_Layer: 10
   m_Name: shared_hull_slab_iron_4x4_new
   m_TagString: Untagged
@@ -70,27 +69,6 @@ Transform:
   - {fileID: 6684217430516609103}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &2896396551934700444
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 385631728708239502}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 4.016114, y: 0.22819422, z: 3.9523056}
-  m_Center: {x: 1.0061879, y: 0.12113763, z: 1.002657}
 --- !u!1 &1006205524636411712
 GameObject:
   m_ObjectHideFlags: 0

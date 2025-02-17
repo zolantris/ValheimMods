@@ -363,7 +363,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
           Vector3.up * TargetHeight);
       DebugTargetHeightObj.transform.localScale = FloatCollider.size;
     }
-    if (WheelController != null && !WheelController.hasInitialized)
+    if (WheelController != null && !WheelController.IsVehicleReady)
     {
       InitLandVehicleWheels();
       m_body.isKinematic = true;
@@ -2137,7 +2137,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       UpdateShipFloatation(ShipFloatationObj);
     else if (isFlying)
       UpdateFlyingVehicle();
-    else if (PrefabConfig.EnableLandVehicles.Value)
+    else if (PrefabConfig.EnableLandVehicles.Value && VehicleInstance.IsLandVehicle)
       UpdateVehicleLandSpeed();
 
     // both flying and floatation use this

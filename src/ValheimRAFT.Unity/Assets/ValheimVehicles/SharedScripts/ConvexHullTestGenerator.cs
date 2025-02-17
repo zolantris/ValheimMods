@@ -274,7 +274,7 @@ namespace ValheimVehicles.SharedScripts
     /// <returns></returns>
     public Vector3? GetPieceOffset()
     {
-      var pieceCount = movementPiecesController.m_pieces.Count;
+      var pieceCount = movementPiecesController.vehiclePieces.Count;
       var currentVector = new Vector3(4 * xOffset, 4 * yOffset, 4 * zOffset);
 
       if (yOffset > MaxYGeneration)
@@ -314,18 +314,18 @@ namespace ValheimVehicles.SharedScripts
     private IEnumerator TestAddPieceToVehicleChild()
     {
       if (!prefabFloorPiece) yield break;
-      if (movementPiecesController.m_pieces.Count > maxPiecesToAdd) yield break;
-      var currentPieces = movementPiecesController.m_pieces.Count;
+      if (movementPiecesController.vehiclePieces.Count > maxPiecesToAdd) yield break;
+      var currentPieces = movementPiecesController.vehiclePieces.Count;
 
       var current = 0;
-      while (BatchAddSize > current && movementPiecesController.m_pieces.Count < maxPiecesToAdd)
+      while (BatchAddSize > current && movementPiecesController.vehiclePieces.Count < maxPiecesToAdd)
       {
         InstantiatePrefab(prefabFloorPiece);
         InstantiatePrefab(prefabWallPiece);
         current++;
       }
 
-      if (currentPieces != movementPiecesController.m_pieces.Count)
+      if (currentPieces != movementPiecesController.vehiclePieces.Count)
       {
         Generate();
       }

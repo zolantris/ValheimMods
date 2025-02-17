@@ -791,6 +791,19 @@ public abstract class PrefabRegistryHelpers
     Transform parent,
     string[]? hoistParentNameFilters = null)
   {
+    var snappointParent = prefab.transform.Find("snappoints");
+
+    if (snappointParent != null)
+    {
+      for (var i = 0; i < snappointParent.childCount; i++)
+      {
+        var transformObj = snappointParent.GetChild(i);
+        transformObj.SetParent(prefab.transform);
+        transformObj.gameObject.SetActive(false);
+      }
+      return;
+    }
+    
     var transformObjs = parent.GetComponentsInChildren<Transform>(true);
     foreach (var transformObj in transformObjs)
     {

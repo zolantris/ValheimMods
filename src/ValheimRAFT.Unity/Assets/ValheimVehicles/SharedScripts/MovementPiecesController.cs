@@ -18,7 +18,7 @@ namespace ValheimVehicles.SharedScripts
     public VehicleCollisionManager m_vehicleCollisionManager;
 
     public bool m_shouldSync = true;
-    public readonly List<GameObject> m_pieces = new();
+    public readonly List<GameObject> vehiclePieces = new();
     public virtual void Awake()
     {
       m_localRigidbody = GetComponent<Rigidbody>();
@@ -51,7 +51,7 @@ namespace ValheimVehicles.SharedScripts
     public void OnPieceAdded(GameObject piece)
     {
       piece.transform.SetParent(transform, false);
-      m_pieces.Add(piece);
+      vehiclePieces.Add(piece);
       // OnPieceAddedIgnoreAllColliders(piece);
     }
 

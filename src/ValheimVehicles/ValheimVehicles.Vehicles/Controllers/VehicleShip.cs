@@ -397,13 +397,13 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       WheelController.treadsPrefab = LoadValheimVehicleAssets.TankTreadsSingle;
     }
 
-    WheelController.inputTurnForceMult = PhysicsConfig.VehicleLandTurnSpeed.Value;
+    VehicleWheelController.baseTurnAccelerationMultiplier = PhysicsConfig.VehicleLandTurnSpeed.Value;
     WheelController.maxTreadLength = PhysicsConfig.VehicleLandMaxTreadLength.Value;
     WheelController.maxTreadWidth = PhysicsConfig.VehicleLandMaxTreadWidth.Value;
     WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
     WheelController.magicTurnRate = PhysicsConfig.VehicleLandTurnSpeed.Value;
     WheelController.forwardDirection = MovementController.ShipDirection;
-    // WheelController.m_steeringType = VehicleWheelController.SteeringType.Differential;
+    WheelController.m_steeringType = VehicleWheelController.SteeringType.Differential;
     WheelController.wheelSuspensionDistance = PhysicsConfig.VehicleLandSuspensionDistance.Value;
     WheelController.wheelRadius = PhysicsConfig.VehicleLandWheelRadius.Value;
     WheelController.wheelSuspensionSpring = PhysicsConfig.VehicleLandWheelSuspensionSpring.Value;
@@ -416,6 +416,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   /// </summary>
   public void InitializeWheelController()
   {
+    if (!IsLandVehicle) return;
     if (WheelController == null)
     {
       WheelController = gameObject.GetComponent<VehicleWheelController>();

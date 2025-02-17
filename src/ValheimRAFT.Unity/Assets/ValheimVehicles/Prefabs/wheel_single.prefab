@@ -271,7 +271,7 @@ WheelCollider:
     spring: 200
     damper: 500
     targetPosition: 0
-  m_SuspensionDistance: 3
+  m_SuspensionDistance: 2
   m_ForceAppPointDistance: 1
   m_Mass: 40
   m_WheelDampingRate: 0.01
@@ -292,7 +292,7 @@ WheelCollider:
     m_Bits: 2048
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 536870912
+    m_Bits: 4294965111
   m_LayerOverridePriority: 0
   m_Enabled: 1
   m_ProvidesContacts: 0

@@ -2365,26 +2365,26 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   /// </summary>
   public void OnAddPieceIgnoreColliders(ZNetView netView)
   {
-    OnPieceAddedIgnoreAllColliders(netView.gameObject);
-    // var nvName = netView.name;
-    // var nvColliders = netView.GetComponentsInChildren<Collider>(true).ToList();
-    // convexHullTriggerColliders = MovementController.DamageColliders
-    //   .GetComponents<Collider>().ToList();
-    //
-    // if (nvColliders.Count == 0) return;
-    //
-    //
-    // // main ship colliders like the generated meshes and onboard collider
-    // IgnoreShipColliders(nvColliders);
-    // IgnoreWheelColliders(nvColliders);
-    //
-    // // all pieces
-    // if (RamPrefabs.IsRam(nvName) || nvName.Contains(PrefabNames.ShipAnchorWood))
-    //   IgnoreCollidersForList(nvColliders, m_nviewPieces);
-    //
-    // // rams must always have new pieces added to their list ignored. So that the new piece does not hit the ram.
-    // IgnoreCollidersForRamPieces(netView);
-    // IgnoreCollidersForAnchorPieces(netView);
+    // OnPieceAddedIgnoreAllColliders(netView.gameObject);
+    var nvName = netView.name;
+    var nvColliders = netView.GetComponentsInChildren<Collider>(true).ToList();
+    convexHullTriggerColliders = MovementController.DamageColliders
+      .GetComponents<Collider>().ToList();
+
+    if (nvColliders.Count == 0) return;
+
+
+    // main ship colliders like the generated meshes and onboard collider
+    IgnoreShipColliders(nvColliders);
+    IgnoreWheelColliders(nvColliders);
+
+    // all pieces
+    if (RamPrefabs.IsRam(nvName) || nvName.Contains(PrefabNames.ShipAnchorWood))
+      IgnoreCollidersForList(nvColliders, m_nviewPieces);
+
+    // rams must always have new pieces added to their list ignored. So that the new piece does not hit the ram.
+    IgnoreCollidersForRamPieces(netView);
+    IgnoreCollidersForAnchorPieces(netView);
   }
 
   public void AddPiece(ZNetView netView, bool isNew = false)
@@ -2393,6 +2393,11 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     {
       Logger.LogError("netView does not exist but somehow called AddPiece()");
       return;
+    }
+
+    if (!isInitialActivationComplete)
+    {
+      isInitialActivationComplete = true;
     }
     
     FixPieceMeshes(netView);

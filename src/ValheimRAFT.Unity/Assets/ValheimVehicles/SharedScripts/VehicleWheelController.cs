@@ -51,7 +51,8 @@ namespace ValheimVehicles.SharedScripts
     private const float downforceAmount = 50f;
     public const float centerOfMassOffset = -4f;
     private const float baseAccelerationMultiplier = 30f;
-    private const float baseTurnAccelerationMultiplier = 30f;
+    private const float defaultTurnAccelerationMultiplier = 30f;
+    public static float baseTurnAccelerationMultiplier = defaultTurnAccelerationMultiplier;
 
     private static Vector3 wheelMeshLocalScale = new(3f, 0.3f, 3f);
 
@@ -259,7 +260,7 @@ namespace ValheimVehicles.SharedScripts
       asymptoteValue = 1.0f,
       stiffness = 2.2f // Higher stiffness to prevent sliding
     };
-    private bool _isVehicleReady => _isWheelsInitialized && _isTreadsInitialized && wheelInstances.Count > 0 && vehicleRootBody; // important catchall for preventing fixedupdate physics from being applied until the vehicle is ready.
+    public bool IsVehicleReady => _isWheelsInitialized && _isTreadsInitialized && wheelInstances.Count > 0 && vehicleRootBody; // important catchall for preventing fixedupdate physics from being applied until the vehicle is ready.
     public float wheelColliderRadius => Mathf.Clamp(wheelRadius, 0f, 5f);
 
     [UsedImplicitly]
@@ -426,7 +427,7 @@ namespace ValheimVehicles.SharedScripts
     // New method: apply forces directly at the treads to simulate continuous treads
     private void ApplyTreadForces()
     {
-      if (!_isVehicleReady) return;
+      if (!IsVehicleReady) return;
       if (!IsUsingEngine || IsBraking)
       {
         if (IsBraking)
@@ -508,8 +509,8 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
-      vehicleRootBody.AddForceAtPosition(forward * leftForce + upwardsForce, treadsLeftRb.position, ForceMode.Acceleration);
-      vehicleRootBody.AddForceAtPosition(forward * rightForce + upwardsForce, treadsRightRb.position, ForceMode.Acceleration);
+      vehicleRootBody.AddForceAtPosition(forward * leftForce + upwardsForce, treadsLeftTransform.position, ForceMode.Acceleration);
+      vehicleRootBody.AddForceAtPosition(forward * rightForce + upwardsForce, treadsRightTransform.position, ForceMode.Acceleration);
 
       if (Mathf.Abs(angularSpeed) > maxRotationSpeed)
       {
@@ -713,7 +714,7 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     public void VehicleMovementFixedUpdate()
     {
-      if (!_isVehicleReady) return;
+      if (!IsVehicleReady) return;
       _shouldSyncVisualOnCurrentFrame = false;
 
       isTurningInPlace = Mathf.Approximately(inputMovement, 0f) && Mathf.Abs(inputTurnForce) > 0f;

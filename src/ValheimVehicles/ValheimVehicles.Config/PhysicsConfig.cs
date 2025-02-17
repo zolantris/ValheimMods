@@ -243,30 +243,30 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of rudder, this will apply with sails", true));
 
-    VehicleLandSpeedBack = Config.Bind(PropulsionSection, "LandVehicle Back Speed", 5f,
+    VehicleLandSpeedBack = Config.Bind(PropulsionSection, "LandVehicle Back Speed", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Back speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(0.1f, 100f)));
+        true, false, new AcceptableValueRange<float>(0.0001f, 100f)));
     VehicleLandSpeedSlow = Config.Bind(PropulsionSection, "LandVehicle Slow Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Slow speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(0.1f, 100f)));
+        true, false, new AcceptableValueRange<float>(0.0001f, 100f)));
     VehicleLandSpeedHalf = Config.Bind(PropulsionSection, "LandVehicle Half Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Half speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(0.1f, 100f)));
+        true, false, new AcceptableValueRange<float>(0.0001f, 100f)));
     VehicleLandSpeedFull = Config.Bind(PropulsionSection, "LandVehicle Full Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(0.1f, 100f)));
+        true, false, new AcceptableValueRange<float>(0.0001f, 100f)));
     VehicleLandTurnSpeed = Config.Bind(PropulsionSection,
       "LandVehicle Turn Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
-        "Turn angle multiplier for land vehicles. Higher values will turn faster, but will be more disorienting and unrealistic.", true, false, new AcceptableValueRange<float>(0.1f, 10f)));
+        "Turn angle multiplier for land vehicles. Higher values will turn faster, but will be more disorienting and unrealistic.", true, false, new AcceptableValueRange<float>(0.0001f, 10f)));
 
     VehicleLandMaxTreadWidth = Config.Bind(PropulsionSection,
       "LandVehicle Max Tread Width",
