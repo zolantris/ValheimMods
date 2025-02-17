@@ -2365,7 +2365,9 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   /// </summary>
   public void OnAddPieceIgnoreColliders(ZNetView netView)
   {
-    // OnPieceAddedIgnoreAllColliders(netView.gameObject);
+    OnPieceAddedIgnoreAllColliders(netView.gameObject);
+    
+    
     var nvName = netView.name;
     var nvColliders = netView.GetComponentsInChildren<Collider>(true).ToList();
     convexHullTriggerColliders = MovementController.DamageColliders
