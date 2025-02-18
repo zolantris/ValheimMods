@@ -792,6 +792,10 @@ public abstract class PrefabRegistryHelpers
     string[]? hoistParentNameFilters = null)
   {
     var snappointParent = prefab.transform.Find("snappoints");
+    if (snappointParent == null)
+    {
+      snappointParent = parent.transform.Find("snappoints");
+    }
 
     if (snappointParent != null)
     {

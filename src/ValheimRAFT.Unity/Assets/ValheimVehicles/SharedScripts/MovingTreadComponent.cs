@@ -114,19 +114,15 @@ namespace ValheimVehicles.SharedScripts
     internal List<LocalTransform> _treadTargetPoints = new();
 
     private float lastSpeed;
-    internal Rigidbody rootRb;
 
     // Speed multiplier that controls the overall speed of treads
     private float speedMultiplier = 1f;
 
-    internal Rigidbody treadRb;
     internal WheelCollider[] wheelColliders = {};
 
     public void Awake()
     {
       rotatorParent = transform.Find("rotators");
-      treadRb = GetComponent<Rigidbody>();
-      rootRb = GetComponentInParent<Rigidbody>();
       if (!treadPrefab && fallbackPrefab)
       {
         treadPrefab = fallbackPrefab;
@@ -145,28 +141,12 @@ namespace ValheimVehicles.SharedScripts
       {
         _wheelRotators = rotatorParent.GetComponentsInChildren<HingeJoint>().ToList();
       }
-      if (!convexHullComponent)
-      {
-        convexHullComponent = gameObject.AddComponent<ConvexHullAPI>();
-      }
-
-      convexHullComponent.m_colliderParentTransform = treadParent;
-      convexHullComponent.HasPreviewGeneration = false;
-      convexHullComponent.IsAllowedAsHullOverride = AllowTreadsObject;
     }
     // Update is called once per frame
     public void FixedUpdate()
     {
+      if (!isActiveAndEnabled) return;
       UpdateAllTreads();
-
-      if (_wheelRotators.Count > 0)
-      {
-        if (!Mathf.Approximately(lastSpeed, speedMultiplierOverride))
-        {
-          lastSpeed = speedMultiplierOverride;
-          UpdateRotators();
-        }
-      }
     }
 
     public void OnEnable()
@@ -195,6 +175,18 @@ namespace ValheimVehicles.SharedScripts
       {
         _lastTerrainTouchDeltaTime = Time.fixedTime;
       }
+    }
+
+    public void InitConvexHullComponent()
+    {
+      if (!convexHullComponent)
+      {
+        convexHullComponent = gameObject.AddComponent<ConvexHullAPI>();
+      }
+
+      convexHullComponent.m_colliderParentTransform = treadParent;
+      convexHullComponent.HasPreviewGeneration = false;
+      convexHullComponent.IsAllowedAsHullOverride = AllowTreadsObject;
     }
 
     public bool IsOnGround()
@@ -339,10 +331,11 @@ namespace ValheimVehicles.SharedScripts
         _hasInitLocalBounds = false;
         localBounds = new Bounds(treadGameObject.transform.localPosition, Vector3.zero);
       }
-      else
-      {
-        localBounds.Encapsulate(treadGameObject.transform.localPosition);
-      }
+
+      localBounds.Encapsulate(treadGameObject.transform.localPosition + Vector3.right * 0.5f);
+      localBounds.Encapsulate(treadGameObject.transform.localPosition);
+      localBounds.Encapsulate(treadGameObject.transform.localPosition + Vector3.left * 0.5f);
+
 
       // scale the tread to the correct height.
       treadGameObject.transform.localScale = Vector3.one * vehicleWheelController.GetWheelRadiusScalar();
@@ -437,15 +430,15 @@ namespace ValheimVehicles.SharedScripts
       treadParent.position = CenterObj.transform.position;
 
       var treadGameObjects = _movingTreads.Select(x => x.gameObject).ToList();
-      convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects);
-      convexHullComponent.convexHullMeshColliders.ForEach(x =>
-      {
-        if (!x) return;
-        x.gameObject.name = "convex_tread_collider";
-        x.includeLayers = LayerMask.GetMask("terrain");
-        x.excludeLayers = -1;
-        x.isTrigger = false;
-      });
+      // convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects);
+      // convexHullComponent.convexHullMeshColliders.ForEach(x =>
+      // {
+      //   if (!x) return;
+      //   x.gameObject.name = "convex_tread_collider";
+      //   x.includeLayers = LayerMask.GetMask("terrain");
+      //   x.excludeLayers = -1;
+      //   x.isTrigger = false;
+      // });
     }
 
     /// <summary>
@@ -497,7 +490,7 @@ namespace ValheimVehicles.SharedScripts
       rb.drag = 0.01f;
       rb.angularDrag = 10f;
       rb.useGravity = false;
-      rb.isKinematic = false;
+      rb.isKinematic = true;
       return rb;
     }
 
@@ -593,8 +586,7 @@ namespace ValheimVehicles.SharedScripts
         // }
 
         // Apply the calculated position and rotation to the tread's rigidbody
-        currentTreadRb.MovePosition(newPosition);
-        currentTreadRb.MoveRotation(newRotation);
+        currentTreadRb.Move(newPosition, newRotation);
       }
     }
 

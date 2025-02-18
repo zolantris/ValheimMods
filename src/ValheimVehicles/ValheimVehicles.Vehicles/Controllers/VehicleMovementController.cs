@@ -421,10 +421,32 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private void OnCollisionEnter(Collision collision)
   {
     if (PiecesController == null) return;
+    if (collision.collider.name == "tread_mesh")
+    {
+      // Physics.IgnoreCollision(collision.collider, collision.collider, true);
+    }
+    
     var character = collision.transform.GetComponentInParent<Character>();
+
+    if (!character && collision.transform.root == transform || collision.transform.root == PiecesController.transform)
+    {
+      // PiecesController.m_vehicleCollisionManager.AddColliderToVehicle(collision.collider, true);
+      return;
+    }
+    
     if (character != null && character.IsTeleporting())
     {
       StartCoroutine(EnableCollisionAfterTeleport(PiecesController.convexHullMeshColliders, collision.collider, character));
+    }
+  }
+
+  private void OnCollisionStay(Collision collision)
+  {
+    if (PiecesController == null) return;
+    if (collision.transform.root == transform || collision.transform.root == PiecesController.transform)
+    {
+      // PiecesController.m_vehicleCollisionManager.AddColliderToVehicle(collision.collider, true);
+      return;
     }
   }
 

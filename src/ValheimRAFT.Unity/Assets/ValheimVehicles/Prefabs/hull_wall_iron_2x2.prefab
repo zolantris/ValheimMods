@@ -25,12 +25,12 @@ Transform:
   m_GameObject: {fileID: 827263265000188937}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 1, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 7577132816419463301}
   - {fileID: 7439779651053144902}
+  - {fileID: 7577132816419463301}
   - {fileID: 1594229109798753939}
   - {fileID: 5616028002799744085}
   m_Father: {fileID: 3784598169234739585}
@@ -45,7 +45,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5616028002799744085}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner_4
+  m_Name: $hud_snappoint_corner 4
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -59,8 +59,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4766718807835160899}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.5, y: 0.5, z: 0.5, w: 0.5}
-  m_LocalPosition: {x: 1, y: 2, z: -1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1, y: 2, z: -0.75}
   m_LocalScale: {x: 1, y: 3, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -76,7 +76,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7439779651053144902}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner_2
+  m_Name: $hud_snappoint_corner 1
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -90,8 +90,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4966904283130432243}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.5, y: 0.5, z: 0.5, w: 0.5}
-  m_LocalPosition: {x: -1, y: 0, z: -1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1, y: 0, z: -0.75}
   m_LocalScale: {x: 1, y: 3, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -141,7 +141,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7577132816419463301}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner_1
+  m_Name: $hud_snappoint_corner 2
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -155,8 +155,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6189189999737733239}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.5, y: 0.5, z: 0.5, w: 0.5}
-  m_LocalPosition: {x: 1, y: 0, z: -1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1, y: 0, z: -0.75}
   m_LocalScale: {x: 1, y: 3, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -188,7 +188,7 @@ Transform:
   m_GameObject: {fileID: 6471674369719337689}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -1}
+  m_LocalPosition: {x: 1, y: 1, z: -0.875}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -213,8 +213,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.2, y: 2, z: 2}
-  m_Center: {x: -0.1, y: 0, z: 0}
+  m_Size: {x: 2, y: 2, z: 0.2}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &7429852054245187990
 GameObject:
   m_ObjectHideFlags: 0
@@ -225,7 +225,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1594229109798753939}
   m_Layer: 10
-  m_Name: $hud_snappoint_corner_3
+  m_Name: $hud_snappoint_corner 3
   m_TagString: snappoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -239,8 +239,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7429852054245187990}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.5, y: 0.5, z: 0.5, w: 0.5}
-  m_LocalPosition: {x: -1, y: 2, z: -1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1, y: 2, z: -0.75}
   m_LocalScale: {x: 1, y: 3, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -303,8 +303,12 @@ PrefabInstance:
       value: -0.034000427
       objectReference: {fileID: 0}
     - target: {fileID: 3751276296273340410, guid: a702c9f99a3324e4c91312a6ec4d6c98, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3751276296273340410, guid: a702c9f99a3324e4c91312a6ec4d6c98, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3751276296273340410, guid: a702c9f99a3324e4c91312a6ec4d6c98, type: 3}
       propertyPath: m_LocalPosition.z
@@ -471,6 +475,7 @@ PrefabInstance:
     - {fileID: 6235052542116471469, guid: a702c9f99a3324e4c91312a6ec4d6c98, type: 3}
     - {fileID: 348108154528326309, guid: a702c9f99a3324e4c91312a6ec4d6c98, type: 3}
     - {fileID: 4765658949385550466, guid: a702c9f99a3324e4c91312a6ec4d6c98, type: 3}
+    - {fileID: 2351243813171417180, guid: a702c9f99a3324e4c91312a6ec4d6c98, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a702c9f99a3324e4c91312a6ec4d6c98, type: 3}

@@ -346,6 +346,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     VehicleInstance?.NetView?.GetZDO()
       .Set(VehicleZdoVars.ZdoKeyBaseVehicleInitState, true);
     _baseVehicleInitializationState = InitializationState.Complete;
+    IgnoreAllVehicleColliders();
   }
 
 
@@ -490,6 +491,8 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
 
     AddAllChildrenToIgnores(piecesCollidersTransform);
+
+    IgnoreAllVehicleColliders();
 
 
     if (FloatCollider == null)
@@ -1645,7 +1648,11 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     _pendingPiecesState = pieceStateEnum;
     PendingPiecesTimer.Reset();
 
-    if (!isInitialActivationComplete) isInitialActivationComplete = true;
+    if (!isInitialActivationComplete)
+    {
+      isInitialActivationComplete = true;
+      IgnoreAllVehicleColliders();
+    }
 
     if (pieceStateEnum == PendingPieceStateEnum.ForceReset)
       InitializationTimer.Reset();
@@ -2365,9 +2372,15 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   /// </summary>
   public void OnAddPieceIgnoreColliders(ZNetView netView)
   {
+    IgnoreAllVehicleCollidersForGameObjectChildren(netView.gameObject);
+
+    // todo this causes a crash, possibly due to being called too much.
     OnPieceAddedIgnoreAllColliders(netView.gameObject);
-    
-    
+
+
+
+    // todo the code below is inefficient. Need to abstract this all to another component that is meant for hashing gameobjects with colliders and iterating through their slices in batches.
+
     var nvName = netView.name;
     var nvColliders = netView.GetComponentsInChildren<Collider>(true).ToList();
     convexHullTriggerColliders = MovementController.DamageColliders
@@ -2397,10 +2410,10 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       return;
     }
 
-    if (!isInitialActivationComplete)
-    {
-      isInitialActivationComplete = true;
-    }
+    // if (!isInitialActivationComplete)
+    // {
+    //   isInitialActivationComplete = true;
+    // }
     
     FixPieceMeshes(netView);
     OnAddPieceIgnoreColliders(netView);
@@ -2757,17 +2770,17 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     vehicleCenter.transform.localPosition = convexHullComponent.GetConvexHullBounds(true).center;
 
     AddAllChildrenToIgnores(vehicleMovementCollidersTransform);
-    // convexHullColliders.Clear();
-    // convexHullMeshColliders.Clear();
-    //
-    // convexHullMeshes.ForEach((x) =>
-    // {
-    //   var meshCollider = x.GetComponent<MeshCollider>();
-    //   var collider = x.GetComponent<Collider>();
-    //
-    //   if (meshCollider != null) convexHullMeshColliders.Add(meshCollider);
-    //   if (collider != null) convexHullColliders.Add(collider);
-    // });
+    convexHullColliders.Clear();
+    convexHullMeshColliders.Clear();
+
+    convexHullMeshes.ForEach((x) =>
+    {
+      var meshCollider = x.GetComponent<MeshCollider>();
+      var collider = x.GetComponent<Collider>();
+
+      if (meshCollider != null) convexHullMeshColliders.Add(meshCollider);
+      if (collider != null) convexHullColliders.Add(collider);
+    });
 
     CalculateFurthestPointsOnMeshes();
 
@@ -2776,8 +2789,53 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     convexHullTriggerMeshColliders = MovementController.DamageColliders
       .GetComponentsInChildren<MeshCollider>(true).ToList();
 
-    IgnoreShipColliders(convexHullColliders);
+    // convexHullColliders.ForEach((x) => OnPieceAddedIgnoreAllColliders(x.gameObject));
+    // IgnoreShipColliders(convexHullColliders); 
     // IgnoreVehicleCollidersForAllPieces();
+
+    IgnoreAllVehicleColliders();
+  }
+
+  /// <summary>
+  /// Ignores absolutely all vehicle colliders. This is not optimize and allocates, however it is non-complex and should work every time.
+  /// </summary>
+  public void IgnoreAllVehicleColliders()
+  {
+    if (VehicleInstance?.Instance == null || MovementController == null) return;
+
+    var allVehicleColliders = VehicleInstance.Instance.GetComponentsInChildren<Collider>(true);
+    var allPieceColliders = GetComponentsInChildren<Collider>(true);
+
+    // heavy but simple ignore all colliders.
+    foreach (var vehicleCollider in allVehicleColliders)
+    {
+      foreach (var vehicleCollider2 in allVehicleColliders)
+      {
+        if (vehicleCollider == vehicleCollider2) continue;
+        Physics.IgnoreCollision(vehicleCollider, vehicleCollider2, true);
+      }
+
+      foreach (var allPieceCollider in allPieceColliders)
+      {
+        Physics.IgnoreCollision(vehicleCollider, allPieceCollider, true);
+      }
+    }
+  }
+
+  // For when pieces are added
+  // extremely unoptimized and allocates. But should work without complex logic managing removals.
+  public void IgnoreAllVehicleCollidersForGameObjectChildren(GameObject gameObject)
+  {
+    var colliders = gameObject.GetComponentsInChildren<Collider>(true);
+    if (!colliders.Any()) return;
+    var allVehicleColliders = VehicleInstance.Instance.GetComponentsInChildren<Collider>(true);
+    foreach (var collider in colliders)
+    {
+      foreach (var allVehicleCollider in allVehicleColliders)
+      {
+        Physics.IgnoreCollision(collider, allVehicleCollider, true);
+      }
+    }
   }
 
   public void IgnoreColliderForWheelColliders(Collider collider)
@@ -2804,22 +2862,26 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   {
     if (WheelController == null) return;
 
-    var colliders = new List<Collider>();
-    foreach (var wheelCollider in WheelController.wheelColliders.ToList())
-    {
-      if (wheelCollider == null)
-      {
-        continue;
-      }
+    m_vehicleCollisionManager.AddListOfColliders(WheelController.wheelColliders);
 
-      var collider = wheelCollider.GetComponent<Collider>();
-      if (collider == null) continue;
-
-      IgnoreShipColliderForCollider(collider, true);
-      colliders.Add(collider);
-    }
-
-    IgnoreCollidersForList(colliders, m_nviewPieces);
+    //
+    // var colliders = new List<Collider>();
+    // foreach (var wheelCollider in WheelController.wheelColliders.ToList())
+    // {
+    //   if (wheelCollider == null)
+    //   {
+    //     continue;
+    //   }
+    // OnPieceAddedIgnoreAllColliders(wheelCollider);
+    //
+    //   var collider = wheelCollider.GetComponent<Collider>();
+    //   if (collider == null) continue;
+    //
+    //   IgnoreShipColliderForCollider(collider, true);
+    //   colliders.Add(collider);
+    // }
+    //
+    // IgnoreCollidersForList(colliders, m_nviewPieces);
   }
 
   /**

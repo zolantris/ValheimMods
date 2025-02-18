@@ -432,15 +432,17 @@ public class ShipHullPrefab : IRegisterPrefab
       PrefabManager.Instance.CreateClonedPrefab(
         prefabName, prefabClone);
 
-    var hoistParents = new[] { "new" };
+    var hoistParents = new[] { "new", "snappoints" };
 
     if (prefabName.Contains(ShipHullPrefabName))
       hoistParents.AddItem("hull_slab_new_shared");
 
+    var wntNewParent = prefab.transform.Find("new");
+
     SetupHullPrefab(prefab, prefabName,
       hullMaterial,
       materialCount,
-      prefab.transform.Find("new") ?? prefab.transform,
+      wntNewParent,
       hoistParents
     );
   }

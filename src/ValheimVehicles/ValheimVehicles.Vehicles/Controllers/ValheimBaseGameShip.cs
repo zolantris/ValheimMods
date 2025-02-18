@@ -135,7 +135,7 @@ public class ValheimBaseGameShip : MonoBehaviour
       Logger.LogError(
         "No rigidbody detected, ship must have a Rigidbody to work");
 
-    m_body.mass = 2000f;
+    m_body.mass = 1000f;
     m_body.useGravity = true;
     m_body.maxDepenetrationVelocity = 2f;
 

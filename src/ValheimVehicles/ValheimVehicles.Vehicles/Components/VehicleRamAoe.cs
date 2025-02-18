@@ -258,6 +258,11 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     // exits if the velocity is not within expected damage ranges
     if (relativeVelocityMagnitude < minimumVelocityToTriggerHit) return false;
 
+    if (relativeVelocityMagnitude == 0)
+    {
+      relativeVelocityMagnitude = 0.1f;
+    }
+
     var multiplier = Mathf.Min(relativeVelocityMagnitude * 0.5f,
       MaxVelocityMultiplier) * RamDamageOverallMultiplier;
 

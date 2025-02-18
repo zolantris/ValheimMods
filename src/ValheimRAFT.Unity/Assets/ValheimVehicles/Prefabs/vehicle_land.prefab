@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 516342953880360386}
   serializedVersion: 2
   m_LocalRotation: {x: 6.5146918e-15, y: -1.089384e-14, z: 2.6471841e-12, w: 1}
-  m_LocalPosition: {x: 7.7642517, y: -0.8859024, z: 3.002655}
+  m_LocalPosition: {x: 7.6392517, y: -0.8859024, z: 3.002655}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -88,7 +88,7 @@ Transform:
   m_GameObject: {fileID: 698084730879670213}
   serializedVersion: 2
   m_LocalRotation: {x: -5.763501e-15, y: 2.311498e-15, z: 1.7174426e-14, w: 1}
-  m_LocalPosition: {x: 2.3731384, y: -0.8859024, z: 3.002655}
+  m_LocalPosition: {x: 2.6231384, y: -0.8859024, z: 3.002655}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -197,7 +197,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3124944817430274445}
-  - component: {fileID: 2416184788468778381}
   m_Layer: 10
   m_Name: treads_right
   m_TagString: Untagged
@@ -214,39 +213,12 @@ Transform:
   m_GameObject: {fileID: 3104779969178346762}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 1.875, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6870272608629396149}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &2416184788468778381
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3104779969178346762}
-  serializedVersion: 4
-  m_Mass: 1000
-  m_Drag: 0
-  m_AngularDrag: 0
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 4294965111
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 1
-  m_Interpolate: 1
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!1 &4287206981448609210
 GameObject:
   m_ObjectHideFlags: 0
@@ -272,7 +244,7 @@ Transform:
   m_GameObject: {fileID: 4287206981448609210}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.64199996, y: 0, z: 2.89}
+  m_LocalPosition: {x: -1.892, y: 0, z: 2.64}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -418,7 +390,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3888210364284546389}
-  - component: {fileID: 5235137418063659752}
   m_Layer: 10
   m_Name: treads_left
   m_TagString: Untagged
@@ -435,39 +406,12 @@ Transform:
   m_GameObject: {fileID: 8525095631510787110}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 1.875, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6870272608629396149}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &5235137418063659752
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8525095631510787110}
-  serializedVersion: 4
-  m_Mass: 1000
-  m_Drag: 0
-  m_AngularDrag: 0
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 4294965111
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 1
-  m_Interpolate: 1
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!1001 &122836843343193155
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -557,7 +501,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3715165887456535575, guid: 8e756d977fe26c74a99de2e65081acc7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.023000002
+      value: 0.227
       objectReference: {fileID: 0}
     - target: {fileID: 3715165887456535575, guid: 8e756d977fe26c74a99de2e65081acc7, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1477,7 +1421,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3715165887456535575, guid: 8e756d977fe26c74a99de2e65081acc7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.023000002
+      value: 0.227
       objectReference: {fileID: 0}
     - target: {fileID: 3715165887456535575, guid: 8e756d977fe26c74a99de2e65081acc7, type: 3}
       propertyPath: m_LocalPosition.y

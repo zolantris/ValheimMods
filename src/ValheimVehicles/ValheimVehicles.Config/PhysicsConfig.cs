@@ -46,6 +46,7 @@ public static class PhysicsConfig
   public static ConfigEntry<bool> VehicleLandAllowXZRotation = null!;
   public static ConfigEntry<float> VehicleLandSuspensionDistance = null!;
   public static ConfigEntry<float> VehicleLandWheelSuspensionSpring = null!;
+  public static ConfigEntry<float> VehicleLandWheelSuspensionSpringDamper = null!;
   public static ConfigEntry<float> VehicleLandWheelRadius = null!;
   public static ConfigEntry<float> VehicleLandWheelMass = null!;
   public static ConfigEntry<float> VehicleLandWheelOffset = null!;
@@ -264,9 +265,9 @@ public static class PhysicsConfig
         true, false, new AcceptableValueRange<float>(0.0001f, 100f)));
     VehicleLandTurnSpeed = Config.Bind(PropulsionSection,
       "LandVehicle Turn Speed",
-      1f,
+      0f,
       ConfigHelpers.CreateConfigDescription(
-        "Turn angle multiplier for land vehicles. Higher values will turn faster, but will be more disorienting and unrealistic.", true, false, new AcceptableValueRange<float>(0.0001f, 10f)));
+        "Turn angle multiplier for land vehicles. Base of zero will use the default turn speed of 30 at 0% and 100% will be double IE 60.", true, false, new AcceptableValueRange<float>(0, 1f)));
 
     VehicleLandMaxTreadWidth = Config.Bind(PropulsionSection,
       "LandVehicle Max Tread Width",
@@ -301,11 +302,11 @@ public static class PhysicsConfig
       "LandVehicle Suspension Distance",
       2.25f,
       ConfigHelpers.CreateConfigDescription(
-        "Distance suspension distance between vehicle position and wheel position. Higher values push the vehicle up and make it more bouncy.", true, false, new AcceptableValueRange<float>(0.25f, 10f)));
+        "Distance suspension distance between vehicle position and wheel position. Higher values push the vehicle up and make it more bouncy.", true, false, new AcceptableValueRange<float>(0.25f, 20f)));
 
     VehicleLandWheelRadius = Config.Bind(PropulsionSection,
       "LandVehicle WheelRadius",
-      0.70f,
+      1f,
       ConfigHelpers.CreateConfigDescription(
         "Wheel radius. Larger wheels have more traction. But may be less realistic.", true, false, new AcceptableValueRange<float>(0.25f, 5f)));
 
@@ -319,7 +320,13 @@ public static class PhysicsConfig
       "LandVehicle SuspensionSpring",
       200f,
       ConfigHelpers.CreateConfigDescription(
-        "Suspension spring value. This will control how much the vehicle bounces when it drops. No suspension will be a bit jarring but high suspension can jitter the user a bit too.", true, false, new AcceptableValueRange<float>(0f, 2000f)));
+        "Suspension spring value. This will control how much the vehicle bounces when it drops. No suspension will be a bit jarring but high suspension can cause lots of screen jump. Ensure a higher SuspensionSpringDamper to fix the bounce continuing.", true, false, new AcceptableValueRange<float>(0f, 50000f)));
+
+    VehicleLandWheelSuspensionSpringDamper = Config.Bind(PropulsionSection,
+      "LandVehicle SuspensionSpringDamper",
+      10000f,
+      ConfigHelpers.CreateConfigDescription(
+        "Suspension spring damper value. This will control how much the vehicle stops bouncing. Higher values must be supplied for higher suspension spring values.", true, false, new AcceptableValueRange<float>(0f, 50000f)));
 
 
     var dampingSidewaysDescription = ConfigHelpers.CreateConfigDescription(
@@ -544,6 +551,7 @@ public static class PhysicsConfig
         x.UpdateVehicleSpeedThrottle());
 
     VehicleLandWheelSuspensionSpring.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandWheelSuspensionSpringDamper.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandWheelOffset.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandMaxTreadWidth.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();

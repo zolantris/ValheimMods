@@ -14,133 +14,201 @@ namespace ValheimVehicles.SharedScripts
 
   public class VehicleCollisionManager : MonoBehaviour
   {
-    private List<Collider> _colliders = new();
-    private JobHandle _currentJob;
-    private List<GCHandle> _gcHandles = new(); // Track GCHandles for cleanup
-    private bool _isProcessing;
-    private bool _isVehicleDestroyed;
+      private const int BatchSize = 5000; // Optimal for 100K+ colliders
 
-    private void OnDestroy()
-    {
-      _isVehicleDestroyed = true;
-      Cleanup();
-    }
+      private List<Collider> _colliders = new();
+      private List<GCHandle> _gcHandles = new();
+      private bool _isProcessing;
+      private bool _isVehicleDestroyed;
+      private NativeArray<IntPtr> _colliderPtrs;
+      private NativeArray<IntPtrPair> _collisionPairs;
+      private JobHandle _currentJob;
 
-    public void AddObjectToVehicle(GameObject obj)
-    {
-      if (_isVehicleDestroyed || obj == null) return;
-
-      var newColliders = obj.GetComponentsInChildren<Collider>();
-      foreach (var collider in newColliders)
+      private void OnDestroy()
       {
-        if (collider != null && !_colliders.Contains(collider))
-        {
-          _colliders.Add(collider);
-        }
+          _isVehicleDestroyed = true;
+          Cleanup();
       }
 
-      ProcessIgnoreCollisions();
-    }
-
-    public void RemoveObjectFromVehicle(GameObject obj)
-    {
-      if (_isVehicleDestroyed || obj == null) return;
-
-      var removeColliders = obj.GetComponentsInChildren<Collider>();
-      foreach (var collider in removeColliders)
+      public void AddColliderToVehicle(Collider collider)
       {
-        _colliders.Remove(collider);
+          AddColliderToVehicle(collider, false);
       }
 
-      Cleanup();
-    }
-
-    private void ProcessIgnoreCollisions()
-    {
-      if (_isVehicleDestroyed || _colliders.Count < 2 || _isProcessing) return;
-
-      _isProcessing = true;
-
-      var colliderCount = _colliders.Count;
-      var pairCount = colliderCount * (colliderCount - 1) / 2;
-
-      var colliderPtrs = new NativeArray<IntPtr>(colliderCount, Allocator.TempJob);
-      var collisionPairs = new NativeArray<IntPtrPair>(pairCount, Allocator.TempJob);
-
-      try
+      public void AddColliderToVehicle(Collider collider, bool shouldUpdate)
       {
-        Cleanup();
-        _gcHandles.Clear();
-
-        for (var i = 0; i < colliderCount; i++)
-        {
-          if (_colliders[i] == null)
+          if (collider != null && !_colliders.Contains(collider))
           {
-            _colliders.RemoveAt(i--);
-            continue;
+              _colliders.Add(collider);
+          }
+          if (shouldUpdate)
+          {
+              ProcessIgnoreCollisions();
+          }
+      }
+
+      public void AddListOfColliders(List<Collider> colliders)
+      {
+          colliders.ForEach(AddColliderToVehicle);
+          ProcessIgnoreCollisions();
+      }
+
+      public void AddListOfColliders(List<WheelCollider> colliders)
+      {
+          colliders.ForEach(AddColliderToVehicle);
+          ProcessIgnoreCollisions();
+      }
+
+      public void AddObjectToVehicle(GameObject obj)
+      {
+          if (_isVehicleDestroyed || obj == null) return;
+
+          var newColliders = obj.GetComponentsInChildren<Collider>();
+          foreach (var collider in newColliders)
+          {
+              AddColliderToVehicle(collider);
           }
 
-          var handle = GCHandle.Alloc(_colliders[i], GCHandleType.Weak);
-          _gcHandles.Add(handle);
-          colliderPtrs[i] = GCHandle.ToIntPtr(handle);
-        }
+          ProcessIgnoreCollisions();
+      }
 
-        var job = new CollisionIgnoreJob
-        {
-          ColliderPointers = colliderPtrs,
-          CollisionPairs = collisionPairs
-        };
+      public void RemoveObjectFromVehicle(GameObject obj)
+      {
+          if (_isVehicleDestroyed || obj == null) return;
 
-        _currentJob = job.Schedule();
-        _currentJob.Complete(); // Ensure job is done before processing results
-
-        for (var i = 0; i < pairCount; i++)
-        {
-          var pair = collisionPairs[i];
-
-          if (_isVehicleDestroyed || pair.ColliderA == IntPtr.Zero || pair.ColliderB == IntPtr.Zero)
-            continue;
-
-          var handleA = GCHandle.FromIntPtr(pair.ColliderA);
-          var handleB = GCHandle.FromIntPtr(pair.ColliderB);
-
-          if (!handleA.IsAllocated || !handleB.IsAllocated)
-            continue;
-
-          var colliderA = handleA.Target as Collider;
-          var colliderB = handleB.Target as Collider;
-
-          if (colliderA != null && colliderB != null)
+          var removeColliders = obj.GetComponentsInChildren<Collider>();
+          foreach (var collider in removeColliders)
           {
-            Physics.IgnoreCollision(colliderA, colliderB, true);
+              _colliders.Remove(collider);
           }
-        }
-      }
-      catch (Exception e)
-      {
-        Debug.LogError($"VehicleCollisionManager encountered an error: {e.Message}");
-      }
-      finally
-      {
-        Cleanup();
-        colliderPtrs.Dispose();
-        collisionPairs.Dispose();
-        _isProcessing = false;
-      }
-    }
 
-    private void Cleanup()
-    {
-      foreach (var handle in _gcHandles)
-      {
-        if (handle.IsAllocated)
-        {
-          handle.Free();
-        }
+          Cleanup();
       }
-      _gcHandles.Clear();
-      _colliders.RemoveAll(c => c == null);
-    }
+
+      private void ProcessIgnoreCollisions()
+      {
+          if (_isVehicleDestroyed || _colliders.Count < 2 || _isProcessing) return;
+          _isProcessing = true;
+
+          Cleanup();
+
+          var colliderCount = _colliders.Count;
+          var pairCount = colliderCount * (colliderCount - 1) / 2;
+
+          if (colliderCount < 2 || pairCount <= 0)
+          {
+              Debug.LogWarning("⚠ Skipping collision processing: Not enough colliders.");
+              _isProcessing = false;
+              return;
+          }
+
+          Debug.Log($"🚀 Processing Ignore Collisions: colliderCount={colliderCount}, pairCount={pairCount}");
+
+          _colliderPtrs = new NativeArray<IntPtr>(colliderCount, Allocator.Persistent);
+          _collisionPairs = new NativeArray<IntPtrPair>(pairCount, Allocator.Persistent);
+
+          _gcHandles.Clear();
+          var validIndex = 0;
+
+          // Ensure valid collider storage
+          for (var i = 0; i < _colliders.Count; i++)
+          {
+              if (_colliders[i] == null)
+                  continue;
+
+              var handle = GCHandle.Alloc(_colliders[i], GCHandleType.Weak);
+              _gcHandles.Add(handle);
+              _colliderPtrs[validIndex++] = GCHandle.ToIntPtr(handle);
+          }
+
+          // 🔹 Schedule batched processing
+          var batchCount = Mathf.CeilToInt((float)colliderCount / BatchSize);
+          JobHandle previousJob = default;
+
+          for (var batchIndex = 0; batchIndex < batchCount; batchIndex++)
+          {
+              var start = batchIndex * BatchSize;
+              var end = Mathf.Min(start + BatchSize, colliderCount);
+              var length = end - start;
+
+              if (start >= colliderCount || length <= 0)
+              {
+                  Debug.LogWarning($"⚠ Skipping batch {batchIndex}: start={start}, length={length}, colliderCount={colliderCount}");
+                  continue; // 🚨 Prevents invalid subarray calls
+              }
+
+              var pairsInBatch = length * (length - 1) / 2;
+              if (pairsInBatch <= 0) continue; // 🚨 Prevents empty subarray
+
+              Debug.Log($"🔍 Scheduling job {batchIndex}: start={start}, length={length}, pairsInBatch={pairsInBatch}");
+
+              var job = new CollisionIgnoreJob
+              {
+                  ColliderPointers = _colliderPtrs.GetSubArray(start, length),
+                  CollisionPairs = _collisionPairs.GetSubArray(start, pairsInBatch)
+              };
+
+              previousJob = batchIndex == 0 ? job.Schedule() : job.Schedule(previousJob);
+          }
+
+          _currentJob = previousJob;
+          JobHandle.ScheduleBatchedJobs();
+      }
+
+      private void LateUpdate()
+      {
+          if (_isProcessing && _currentJob.IsCompleted)
+          {
+              _currentJob.Complete();
+              ApplyCollisionIgnores();
+          }
+      }
+
+      private void ApplyCollisionIgnores()
+      {
+          var pairCount = _collisionPairs.Length;
+
+          for (var i = 0; i < pairCount; i++)
+          {
+              var pair = _collisionPairs[i];
+
+              if (_isVehicleDestroyed || pair.ColliderA == IntPtr.Zero || pair.ColliderB == IntPtr.Zero)
+                  continue;
+
+              var handleA = GCHandle.FromIntPtr(pair.ColliderA);
+              var handleB = GCHandle.FromIntPtr(pair.ColliderB);
+
+              if (!handleA.IsAllocated || !handleB.IsAllocated)
+                  continue;
+
+              var colliderA = handleA.Target as Collider;
+              var colliderB = handleB.Target as Collider;
+
+              if (colliderA != null && colliderB != null)
+              {
+                  Physics.IgnoreCollision(colliderA, colliderB, true);
+              }
+          }
+
+          Cleanup();
+          _isProcessing = false;
+      }
+
+      private void Cleanup()
+      {
+          foreach (var handle in _gcHandles)
+          {
+              if (handle.IsAllocated)
+              {
+                  handle.Free();
+              }
+          }
+
+          _gcHandles.Clear();
+          _colliders.RemoveAll(c => c == null);
+
+          if (_colliderPtrs.IsCreated) _colliderPtrs.Dispose();
+          if (_collisionPairs.IsCreated) _collisionPairs.Dispose();
+      }
   }
-
 }

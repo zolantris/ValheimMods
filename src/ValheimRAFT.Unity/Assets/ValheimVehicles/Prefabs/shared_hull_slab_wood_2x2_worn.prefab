@@ -463,7 +463,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3715165887456535575}
-  - component: {fileID: 5243727027568368779}
   m_Layer: 10
   m_Name: shared_hull_slab_wood_2x2_worn
   m_TagString: Untagged
@@ -488,27 +487,6 @@ Transform:
   - {fileID: 6265771396197033104}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &5243727027568368779
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4090740829085154989}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 2, y: 0.24048717, z: 2}
-  m_Center: {x: 0, y: 0.12743104, z: 0}
 --- !u!1 &4305571310162545456
 GameObject:
   m_ObjectHideFlags: 0

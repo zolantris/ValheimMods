@@ -66,6 +66,8 @@ namespace ValheimVehicles.SharedScripts
 
     private float lastPieceGeneratorUpdate;
     private float lastUpdate;
+
+    private Vector3 startPosition;
     private int xOffset;
     private int yOffset;
 
@@ -87,6 +89,8 @@ namespace ValheimVehicles.SharedScripts
       {
         cameraTransform = transform.Find("camera");
       }
+
+      startPosition = vehicleWheelController.transform.root.position;
       // EnableCollisionBetweenLayers(10, 28);
       // EnableCollisionBetweenLayers(28, 10);
       //
@@ -108,6 +112,13 @@ namespace ValheimVehicles.SharedScripts
       CanRunGenerate = RunFixedUpdateDebounce();
       var CanUpdatePieceGenerator = RunFixedUpdateDebounceGenerator();
       SyncAPIProperties();
+
+      if (vehicleWheelController.transform.position.y < 0f)
+      {
+        vehicleWheelController.vehicleRootBody.MovePosition(startPosition);
+        vehicleWheelController.vehicleRootBody.velocity = Vector3.zero;
+        vehicleWheelController.vehicleRootBody.angularVelocity = Vector3.zero;
+      }
 
       if (cameraTransform)
       {
