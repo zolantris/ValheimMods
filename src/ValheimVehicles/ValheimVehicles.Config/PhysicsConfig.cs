@@ -47,6 +47,11 @@ public static class PhysicsConfig
   public static ConfigEntry<float> VehicleLandSuspensionDistance = null!;
   public static ConfigEntry<float> VehicleLandWheelSuspensionSpring = null!;
   public static ConfigEntry<float> VehicleLandWheelSuspensionSpringDamper = null!;
+  public static ConfigEntry<float> VehicleLandWheelSuspensionSpringTarget = null!;
+  public static ConfigEntry<bool> DEBUG_VehicleLandShouldHideWheels = null!;
+  public static ConfigEntry<bool> DEBUG_VehicleLandShouldSyncWheelPositions = null!;
+  public static ConfigEntry<float> ForwardFrictionMultiplier = null!;
+  public static ConfigEntry<float> SidewaysFrictionMultiplier = null!;
   public static ConfigEntry<float> VehicleLandWheelRadius = null!;
   public static ConfigEntry<float> VehicleLandWheelMass = null!;
   public static ConfigEntry<float> VehicleLandWheelOffset = null!;
@@ -316,17 +321,36 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "Wheel offset. Allowing for raising the wheels higher. May require increasing suspension distance so the wheels spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the wheels", true, false, new AcceptableValueRange<float>(-10f, 10f)));
 
+    DEBUG_VehicleLandShouldHideWheels = Config.Bind(PropulsionSection,
+      "LandVehicle ShouldHideWheels",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Hides the wheel visual as wheels are not perfectly synced.", true, false));
+    DEBUG_VehicleLandShouldSyncWheelPositions = Config.Bind(PropulsionSection,
+      "LandVehicle ShouldSyncWheelPositions",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Toggles syncing of wheels to their actual collider position. Can cause desync with tracks.", true, false));
+
+
+
     VehicleLandWheelSuspensionSpring = Config.Bind(PropulsionSection,
       "LandVehicle SuspensionSpring",
-      200f,
+      35000f,
       ConfigHelpers.CreateConfigDescription(
         "Suspension spring value. This will control how much the vehicle bounces when it drops. No suspension will be a bit jarring but high suspension can cause lots of screen jump. Ensure a higher SuspensionSpringDamper to fix the bounce continuing.", true, false, new AcceptableValueRange<float>(0f, 50000f)));
 
     VehicleLandWheelSuspensionSpringDamper = Config.Bind(PropulsionSection,
       "LandVehicle SuspensionSpringDamper",
-      10000f,
+      1500f,
       ConfigHelpers.CreateConfigDescription(
         "Suspension spring damper value. This will control how much the vehicle stops bouncing. Higher values must be supplied for higher suspension spring values.", true, false, new AcceptableValueRange<float>(0f, 50000f)));
+
+    VehicleLandWheelSuspensionSpringTarget = Config.Bind(PropulsionSection,
+      "LandVehicle wheelSuspensionSpringTarget",
+      0.4f,
+      ConfigHelpers.CreateConfigDescription(
+        "Suspension target. Between 0 and 1 it will determine the target spring position. This can allow for high suspension but also high targets", true, false, new AcceptableValueRange<float>(0f, 1f)));
 
 
     var dampingSidewaysDescription = ConfigHelpers.CreateConfigDescription(
@@ -552,6 +576,7 @@ public static class PhysicsConfig
 
     VehicleLandWheelSuspensionSpring.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandWheelSuspensionSpringDamper.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandWheelSuspensionSpringTarget.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandWheelOffset.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandMaxTreadWidth.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();

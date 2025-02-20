@@ -290,7 +290,7 @@ namespace ValheimVehicles.SharedScripts
         // Initialize progress for each tread (0 to 1)
         _treadProgress[rb] = 0f;
       }
-      CenterObj.transform.position = treadParent.position + localBounds.center;
+      CenterObj.transform.position = transform.position + localBounds.center;
     }
 
     public void CreateCenteringObject()

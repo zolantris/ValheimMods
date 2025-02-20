@@ -425,6 +425,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     {
       // Physics.IgnoreCollision(collision.collider, collision.collider, true);
     }
+
+    if (vehicleRam != null && collision.collider.gameObject.layer == LayerMask.NameToLayer("static_solid"))
+    {
+      vehicleRam.OnCollisionEnterHandler(collision);
+      return;
+    }
     
     var character = collision.transform.GetComponentInParent<Character>();
 
@@ -446,6 +452,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (collision.transform.root == transform || collision.transform.root == PiecesController.transform)
     {
       // PiecesController.m_vehicleCollisionManager.AddColliderToVehicle(collision.collider, true);
+      return;
+    }
+
+    if (vehicleRam != null && collision.collider.gameObject.layer == LayerMask.NameToLayer("static_solid"))
+    {
+      vehicleRam.OnCollisionEnterHandler(collision);
       return;
     }
   }

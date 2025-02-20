@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 510066553
+CRC: 2711111572
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 811bf134b4c98a5f2df122a940567546
+    Hash: 77e392f421cd0b91c08754535822948f
   TypeTreeHash:
     serializedVersion: 2
     Hash: bb86a0ad3e30e1d5b5b576eb52c7ff2f
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 811bf134b4c98a5f2df122a940567546
+    Hash: 77e392f421cd0b91c08754535822948f
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -190,10 +190,11 @@ Assets:
 - Assets/ValheimVehicles/Material/wood_piece_valheim_2x2.mat
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_porthole_iron_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_iron.prefab
-- Assets/ValheimVehicles/Prefabs/nautilus.prefab
 - Assets/ValheimVehicles/Prefabs/anchor_rope_spool.prefab
-- Assets/ValheimVehicles/Prefabs/GUI/ship_compass.prefab
+- Assets/hull_slab_wood_4x4.prefab
+- Assets/ValheimVehicles/Prefabs/nautilus.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib_prow_2x2.prefab
+- Assets/ValheimVehicles/Prefabs/GUI/ship_compass.prefab
 - Assets/ValheimVehicles/Material/stake.mat
 - Assets/ValheimVehicles/Prefabs/anchor_chain_wheel.prefab
 - Assets/ValheimVehicles/Prefabs/ram_blade_top.prefab
@@ -256,7 +257,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_center_iron.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_slab_4x4_new.prefab
 - Assets/ValheimVehicles/Material/bronze_metal.mat
-- Assets/ValheimVehicles/Prefabs/hull_slab_wood_4x4.prefab
+- Assets/ValheimVehicles/Prefabs/hull_light_wood_4x4.prefab
 - Assets/ValheimVehicles/Material/bronze_nautilus_metal Variant 1.mat
 - Assets/ValheimVehicles/Material/boat_wood_worn.mat
 - Assets/ValheimVehicles/Prefabs/anchor_reel.prefab
@@ -264,9 +265,9 @@ Assets:
 - Assets/ValheimVehicles/Material/Dirtfloor.mat
 - Assets/ValheimVehicles/Prefabs/hull_center_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib.prefab
+- Assets/ValheimVehicles/Prefabs/hull_light_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/hull_slab_wood_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/anchor_full_wood_test_variant.prefab
-- Assets/ValheimVehicles/Prefabs/hull_corner_floor_right_wood.prefab
 - Assets/ValheimVehicles/Material/iron_metal_custom_single.mat
 - Assets/ValheimVehicles/Prefabs/window_porthole_standalone.prefab
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_2x2.mat
@@ -281,6 +282,7 @@ Assets:
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_masked.mat
 - Assets/ValheimVehicles/Material/iron Variant.mat
 - Assets/ValheimVehicles/Prefabs/rope_ladder.prefab
+- Assets/ValheimVehicles/Prefabs/hull_corner_floor_right_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_ram_blade.prefab
 - Assets/ValheimVehicles/Material/Dirtfloor 2.mat
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_2x2.prefab

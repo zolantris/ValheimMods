@@ -402,6 +402,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
     }
 
+    WheelController.wheelSuspensionTarget = PhysicsConfig.VehicleLandWheelSuspensionSpringTarget.Value;
+
     // very important to add these. We always need a base of 30.
     var additionalTurnRate = Mathf.Lerp(0, 5, Mathf.Clamp01(PhysicsConfig.VehicleLandTurnSpeed.Value));
     VehicleWheelController.baseTurnAccelerationMultiplier = VehicleWheelController.defaultTurnAccelerationMultiplier + VehicleWheelController.defaultTurnAccelerationMultiplier * additionalTurnRate;
@@ -411,6 +413,10 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
     // deprecated. Likely will remove this setter at least.
     WheelController.magicTurnRate = PhysicsConfig.VehicleLandTurnSpeed.Value;
+
+
+    WheelController.ShouldSyncWheelsToCollider = PhysicsConfig.DEBUG_VehicleLandShouldSyncWheelPositions.Value;
+    WheelController.ShouldHideWheelRender = PhysicsConfig.DEBUG_VehicleLandShouldHideWheels.Value;
     
     WheelController.forwardDirection = MovementController.ShipDirection;
     WheelController.m_steeringType = VehicleWheelController.SteeringType.Differential;

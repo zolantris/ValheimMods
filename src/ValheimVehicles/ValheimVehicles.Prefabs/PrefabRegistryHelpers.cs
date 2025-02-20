@@ -802,8 +802,10 @@ public abstract class PrefabRegistryHelpers
       for (var i = 0; i < snappointParent.childCount; i++)
       {
         var transformObj = snappointParent.GetChild(i);
+        // changing parent makes the current childCount immediately drop.
         transformObj.SetParent(prefab.transform);
         transformObj.gameObject.SetActive(false);
+        i--;
       }
       return;
     }

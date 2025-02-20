@@ -47,6 +47,8 @@ namespace ValheimVehicles.SharedScripts
     public VehicleWheelController vehicleWheelController;
     public MovementPiecesController movementPiecesController;
 
+    public float centerOfMassOffset = -4f;
+
     public Transform cameraTransform;
 
     public bool hasCalledFirstGenerate;
@@ -112,6 +114,13 @@ namespace ValheimVehicles.SharedScripts
       CanRunGenerate = RunFixedUpdateDebounce();
       var CanUpdatePieceGenerator = RunFixedUpdateDebounceGenerator();
       SyncAPIProperties();
+
+      // clamping offset of center of mass to prevent issues
+      var hullBounds = _convexHullAPI.GetConvexHullBounds(true);
+      var offset = Mathf.Lerp(hullBounds.extents.y, -hullBounds.extents.y, centerOfMassOffset);
+      var localCenterOfMassOffset = Mathf.Min(offset, -5f);
+
+      PhysicsHelpers.UpdateRelativeCenterOfMass(vehicleWheelController.vehicleRootBody, localCenterOfMassOffset);
 
       if (vehicleWheelController.transform.position.y < 0f)
       {

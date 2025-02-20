@@ -327,6 +327,10 @@ public class ShipHullPrefab : IRegisterPrefab
   {
     try
     {
+      PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
+        hoistParent ?? prefab.transform,
+        hoistFilters);
+
       var wnt = PrefabRegistryHelpers.SetWearNTear(prefab);
       PrefabRegistryHelpers.SetWearNTearSupport(wnt,
         WearNTear.MaterialType.Iron);
@@ -338,11 +342,7 @@ public class ShipHullPrefab : IRegisterPrefab
 
       PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
       PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab, isInverse);
-
-      PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
-        hoistParent ?? prefab.transform,
-        hoistFilters);
-
+      
       PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
         new PieceConfig
         {
