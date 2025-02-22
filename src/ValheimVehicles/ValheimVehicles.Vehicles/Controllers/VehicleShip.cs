@@ -405,8 +405,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     WheelController.wheelSuspensionTarget = PhysicsConfig.VehicleLandWheelSuspensionSpringTarget.Value;
 
     // very important to add these. We always need a base of 30.
-    var additionalTurnRate = Mathf.Lerp(0, 5, Mathf.Clamp01(PhysicsConfig.VehicleLandTurnSpeed.Value));
-    VehicleWheelController.baseTurnAccelerationMultiplier = VehicleWheelController.defaultTurnAccelerationMultiplier + VehicleWheelController.defaultTurnAccelerationMultiplier * additionalTurnRate;
+    var additionalTurnRate = Mathf.Lerp(VehicleWheelController.defaultTurnAccelerationMultiplier / 2, VehicleWheelController.defaultTurnAccelerationMultiplier * 2, Mathf.Clamp01(PhysicsConfig.VehicleLandTurnSpeed.Value));
+    VehicleWheelController.baseTurnAccelerationMultiplier = additionalTurnRate;
    
     WheelController.maxTreadLength = PhysicsConfig.VehicleLandMaxTreadLength.Value;
     WheelController.maxTreadWidth = PhysicsConfig.VehicleLandMaxTreadWidth.Value;

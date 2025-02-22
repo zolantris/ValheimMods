@@ -105,6 +105,8 @@ namespace ValheimVehicles.SharedScripts
 
     public ConvexHullAPI convexHullComponent;
     public float speedMultiplierOverride;
+
+
     internal readonly Dictionary<Rigidbody, float> _treadProgress = new(); // Stores the progress of each tread (0 to 1)
 
     private bool _hasInitLocalBounds;
@@ -141,6 +143,14 @@ namespace ValheimVehicles.SharedScripts
       {
         _wheelRotators = rotatorParent.GetComponentsInChildren<HingeJoint>().ToList();
       }
+    }
+
+    /// <summary>
+    /// Must be called after as VehicleWheelController sets some properties / binds things.
+    /// </summary>
+    public void Start()
+    {
+      InitConvexHullComponent();
     }
     // Update is called once per frame
     public void FixedUpdate()
@@ -187,6 +197,7 @@ namespace ValheimVehicles.SharedScripts
       convexHullComponent.m_colliderParentTransform = treadParent;
       convexHullComponent.HasPreviewGeneration = false;
       convexHullComponent.IsAllowedAsHullOverride = AllowTreadsObject;
+      convexHullComponent.AddLocalPhysicMaterial(vehicleWheelController.treadPhysicMaterial);
     }
 
     public bool IsOnGround()
@@ -430,15 +441,15 @@ namespace ValheimVehicles.SharedScripts
       treadParent.position = CenterObj.transform.position;
 
       var treadGameObjects = _movingTreads.Select(x => x.gameObject).ToList();
-      // convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects);
-      // convexHullComponent.convexHullMeshColliders.ForEach(x =>
-      // {
-      //   if (!x) return;
-      //   x.gameObject.name = "convex_tread_collider";
-      //   x.includeLayers = LayerMask.GetMask("terrain");
-      //   x.excludeLayers = -1;
-      //   x.isTrigger = false;
-      // });
+      convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects);
+      convexHullComponent.convexHullMeshColliders.ForEach(x =>
+      {
+        if (!x) return;
+        x.gameObject.name = "convex_tread_collider";
+        x.includeLayers = LayerMask.GetMask("terrain");
+        x.excludeLayers = LayerHelpers.RamColliderExcludeLayers;
+        x.isTrigger = false;
+      });
     }
 
     /// <summary>
@@ -487,8 +498,9 @@ namespace ValheimVehicles.SharedScripts
         rb = child.gameObject.AddComponent<Rigidbody>();
       }
       rb.mass = 20f;
-      rb.drag = 0.01f;
-      rb.angularDrag = 10f;
+      // rb.constraints = RigidbodyConstraints.FreezePositionX;
+      rb.drag = 0f;
+      rb.angularDrag = 0f;
       rb.useGravity = false;
       rb.isKinematic = true;
       return rb;

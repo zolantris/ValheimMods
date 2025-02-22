@@ -51,6 +51,9 @@ namespace ValheimVehicles.SharedScripts
 
     public static string MeshNameTriggerPrefix = $"{MeshNamePrefix}_Preview";
 
+    // shared across all instances, but not created immediately
+    public static PhysicMaterial localPhysicMaterial;
+
     public PreviewModes PreviewMode = PreviewModes.Bubble;
 
     [FormerlySerializedAs("sphereEncapsulationBuffer")]
@@ -68,13 +71,17 @@ namespace ValheimVehicles.SharedScripts
 
     public int convexMeshLayer = 29;
 
-    [FormerlySerializedAs("HasPreviewGenerationEnabled")] [FormerlySerializedAs("hasPreviewGenerationEnabled")]
     public bool HasPreviewGeneration = true;
 
     public Transform m_colliderParentTransform;
     public Rigidbody m_rigidbody;
 
     public bool ShouldDestroyOnGenerate;
+    [FormerlySerializedAs("HasFrictionlessMaterial")]
+    public bool HasPhysicMaterial;
+
+    public float PhysicMaterialStaticFriction = 0.01f;
+    public float PhysicMaterialDynamicFriction = 0.02f;
 
     private Bounds _cachedConvexHullBounds = new(Vector3.zero, Vector3.one * 4);
 
@@ -107,7 +114,6 @@ namespace ValheimVehicles.SharedScripts
     public List<MeshRenderer> convexHullPreviewMeshRendererItems = new();
 
     [NonSerialized] public List<GameObject> convexHullTriggerMeshes = new();
-
     /// <summary>
     ///   Allows for additional overrides. This should be a function provided in any
     ///   class extending ConvexHullAPI
@@ -579,6 +585,37 @@ namespace ValheimVehicles.SharedScripts
       return false;
     }
 
+    public void AddLocalPhysicMaterial(PhysicMaterial material)
+    {
+      localPhysicMaterial = material;
+      HasPhysicMaterial = true;
+    }
+    /// <summary>
+    /// Applies a PhysicMaterial on to any new convexHullApi generated collider.
+    ///
+    /// Useful for making things frictionless
+    /// </summary>
+    public void AddLocalPhysicMaterial(float dynamicFriction, float staticFriction)
+    {
+      PhysicMaterialDynamicFriction = dynamicFriction;
+      PhysicMaterialStaticFriction = staticFriction;
+
+      AddLocalPhysicMaterial(CreatePhysicMaterial());
+    }
+
+    private PhysicMaterial CreatePhysicMaterial()
+    {
+      if (localPhysicMaterial != null) return localPhysicMaterial;
+      var physicsMaterial = new PhysicMaterial("ConvexHullAPI_local_PhysicMaterial")
+      {
+        dynamicFriction = PhysicMaterialDynamicFriction, // Low friction so it slides over objects
+        staticFriction = PhysicMaterialStaticFriction, // Prevents excessive sticking
+        bounciness = 0.0f, // No bounce effect
+        frictionCombine = PhysicMaterialCombine.Minimum // Ensures lowest friction is used
+      };
+      return physicsMaterial;
+    }
+
     /// <summary>
     ///   Allows only specific gameobjects to match
     /// </summary>
@@ -1026,7 +1063,7 @@ namespace ValheimVehicles.SharedScripts
     {
       DeleteMeshesFromChildColliders(convexHullTriggerMeshes);
       convexHullTriggerMeshes.Clear();
-      
+
       // Rigidbody must not be in preview parent otherwise it would have its colliders applied as physics.
       var rbComponent = PreviewParent.GetComponent<Rigidbody>();
 
@@ -1271,6 +1308,11 @@ namespace ValheimVehicles.SharedScripts
         meshCollider = meshObject.AddComponent<MeshCollider>();
       }
 
+      if (HasPhysicMaterial)
+      {
+        meshCollider.material = localPhysicMaterial;
+      }
+
       if (!convexHullMeshColliders.Contains(meshCollider))
       {
         convexHullMeshColliders.Add(meshCollider);
@@ -1278,6 +1320,7 @@ namespace ValheimVehicles.SharedScripts
       }
 
       meshCollider.sharedMesh = mesh;
+
       meshCollider.convex = true;
       meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
       meshCollider.includeLayers = LayerHelpers.PhysicalLayers;

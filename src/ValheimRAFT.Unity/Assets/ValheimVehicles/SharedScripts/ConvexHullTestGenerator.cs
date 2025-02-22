@@ -93,6 +93,10 @@ namespace ValheimVehicles.SharedScripts
       }
 
       startPosition = vehicleWheelController.transform.root.position;
+
+      _convexHullAPI.AddLocalPhysicMaterial(0.01f, 0.01f);
+
+      vehicleWheelController.SetBrake(false);
       // EnableCollisionBetweenLayers(10, 28);
       // EnableCollisionBetweenLayers(28, 10);
       //
@@ -116,11 +120,7 @@ namespace ValheimVehicles.SharedScripts
       SyncAPIProperties();
 
       // clamping offset of center of mass to prevent issues
-      var hullBounds = _convexHullAPI.GetConvexHullBounds(true);
-      var offset = Mathf.Lerp(hullBounds.extents.y, -hullBounds.extents.y, centerOfMassOffset);
-      var localCenterOfMassOffset = Mathf.Min(offset, -5f);
-
-      PhysicsHelpers.UpdateRelativeCenterOfMass(vehicleWheelController.vehicleRootBody, localCenterOfMassOffset);
+      UpdateCenterOfMass();
 
       if (vehicleWheelController.transform.position.y < 0f)
       {
@@ -184,6 +184,15 @@ namespace ValheimVehicles.SharedScripts
           _meshBoundsVisualizer.CalculateAndVisualizeBounds(meshCollider,
             forwardTransform);
       }
+    }
+
+    public void UpdateCenterOfMass()
+    {
+      var hullBounds = _convexHullAPI.GetConvexHullBounds(true);
+      var offset = Mathf.Lerp(hullBounds.extents.y, -hullBounds.extents.y, centerOfMassOffset);
+      var localCenterOfMassOffset = Mathf.Min(offset, -5f);
+
+      PhysicsHelpers.UpdateRelativeCenterOfMass(vehicleWheelController.vehicleRootBody, localCenterOfMassOffset);
     }
 
     public bool RunFixedUpdateDebounce()

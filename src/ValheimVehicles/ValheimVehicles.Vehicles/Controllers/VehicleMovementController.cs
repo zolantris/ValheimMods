@@ -455,7 +455,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       return;
     }
 
-    if (vehicleRam != null && collision.collider.gameObject.layer == LayerMask.NameToLayer("static_solid"))
+    if (vehicleRam != null && LayerHelpers.IsContainedWithinMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayers))
     {
       vehicleRam.OnCollisionEnterHandler(collision);
       return;
@@ -991,6 +991,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// <returns></returns>
   public IEnumerator FixShipRotation()
   {
+    if (_vehicle == null) yield break;
     var eulerAngles = transform.rotation.eulerAngles;
     var eulerX = eulerAngles.x;
     var eulerY = eulerAngles.y;
@@ -1000,16 +1001,33 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var transformedZ = eulerZ;
     var shouldUpdate = false;
 
-    if (Mathf.Abs(eulerX) is > 60 and < 300)
+    if (_vehicle.IsLandVehicle)
     {
-      transformedX = 0;
-      shouldUpdate = true;
-    }
+      if (Mathf.Abs(eulerX) is > 90 and < 270)
+      {
+        transformedX = 0;
+        shouldUpdate = true;
+      }
 
-    if (Mathf.Abs(eulerZ) is > 60 and < 300)
+      if (Mathf.Abs(eulerZ) is > 90 and < 270)
+      {
+        transformedZ = 0;
+        shouldUpdate = true;
+      }
+    }
+    else
     {
-      transformedZ = 0;
-      shouldUpdate = true;
+      if (Mathf.Abs(eulerX) is > 65 and < 295)
+      {
+        transformedX = 0;
+        shouldUpdate = true;
+      }
+
+      if (Mathf.Abs(eulerZ) is > 65 and < 295)
+      {
+        transformedZ = 0;
+        shouldUpdate = true;
+      }
     }
 
     if (shouldUpdate)
@@ -1490,21 +1508,28 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
+  /// <summary>
+  /// TODO this logic is meant to protect vehicles from going underground. But it was triggering a bit too much.
+  ///
+  /// TODO might need to move this to treads as these treads should be above the land.
+  /// </summary>
   public void UpdateLandVehicleHeightIfBelowGround()
   {
-    if (OnboardCollider.bounds.min.y < ShipFloatationObj.AverageGroundLevel)
-    {
-      var position = transform.position;
-      var deltaAverageGroundLevel = position.y - ShipFloatationObj.AverageGroundLevel;
-      m_body.MovePosition(new Vector3(position.x, ShipFloatationObj.AverageGroundLevel + deltaAverageGroundLevel, position.z));
-      m_body.velocity = Vector3.zero;
-      m_body.angularVelocity = Vector3.zero;
-    }
+
+    // if (OnboardCollider.bounds.min.y + 2f < ShipFloatationObj.AverageGroundLevel)
+    // {
+    //   var position = transform.position;
+    //   var deltaAverageGroundLevel = ShipFloatationObj.AverageGroundLevel + 1f;
+    //   var lerpedMovement = Mathf.Lerp(OnboardCollider.bounds.min.y, ShipFloatationObj.AverageGroundLevel, Time.fixedDeltaTime);
+    //   m_body.MovePosition(new Vector3(position.x, lerpedMovement, position.z));
+    //   // m_body.velocity = Vector3.zero;
+    //   // m_body.angularVelocity = Vector3.zero;
+    // }
   }
 
   public void UpdateVehicleLandSpeed()
   {
-    UpdateLandVehicleHeightIfBelowGround();
+    // UpdateLandVehicleHeightIfBelowGround();
     
     UpdateVehicleStats(VehiclePhysicsState.Land);
     if (WheelController == null) return;

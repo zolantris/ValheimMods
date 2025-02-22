@@ -272,7 +272,7 @@ public static class PhysicsConfig
       "LandVehicle Turn Speed",
       0f,
       ConfigHelpers.CreateConfigDescription(
-        "Turn angle multiplier for land vehicles. Base of zero will use the default turn speed of 30 at 0% and 100% will be double IE 60.", true, false, new AcceptableValueRange<float>(0, 1f)));
+        "Turn speed for landvehicles. Zero is half the normal speed, 50% is normal speed, and 100% is double normal speed.", true, false, new AcceptableValueRange<float>(0, 1f)));
 
     VehicleLandMaxTreadWidth = Config.Bind(PropulsionSection,
       "LandVehicle Max Tread Width",

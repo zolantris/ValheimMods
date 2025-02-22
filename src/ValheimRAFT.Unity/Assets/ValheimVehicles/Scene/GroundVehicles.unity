@@ -2671,6 +2671,7 @@ MonoBehaviour:
   _convexHullAPI: {fileID: 1576914376612159117}
   vehicleWheelController: {fileID: 7210998224556755449}
   movementPiecesController: {fileID: 1246876114}
+  centerOfMassOffset: -4
   cameraTransform: {fileID: 2010887271}
   hasCalledFirstGenerate: 0
   prefabFloorPiece: {fileID: 7703310815849067777, guid: 3c942f23fd2b53c42b0e3c4adaacbdbd, type: 3}
@@ -3296,15 +3297,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 236.875
+      value: 197.555
       objectReference: {fileID: 0}
     - target: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 9.75
+      value: 58.875
       objectReference: {fileID: 0}
     - target: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -38
+      value: 114.625
       objectReference: {fileID: 0}
     - target: {fileID: 370483867695338920, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalRotation.w
@@ -3371,8 +3372,16 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6223762886225816425, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
+      propertyPath: m_Constraints
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6223762886225816425, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_ImplicitCom
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6223762886225816425, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
+      propertyPath: m_Interpolate
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6223762886225816425, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_IsKinematic
@@ -3380,11 +3389,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6223762886225816425, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_CollisionDetection
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6223762886225816425, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_IncludeLayers.m_Bits
-      value: 3072
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6333687209388776363, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4307,6 +4316,9 @@ MonoBehaviour:
   m_colliderParentTransform: {fileID: 0}
   m_rigidbody: {fileID: 0}
   ShouldDestroyOnGenerate: 0
+  HasPhysicMaterial: 0
+  PhysicMaterialStaticFriction: 0.01
+  PhysicMaterialDynamicFriction: 0.02
 --- !u!114 &1870395134
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4339,6 +4351,7 @@ MonoBehaviour:
   _convexHullAPI: {fileID: 0}
   vehicleWheelController: {fileID: 0}
   movementPiecesController: {fileID: 0}
+  centerOfMassOffset: -4
   cameraTransform: {fileID: 0}
   hasCalledFirstGenerate: 0
   prefabFloorPiece: {fileID: 0}
@@ -5476,6 +5489,9 @@ MonoBehaviour:
   m_colliderParentTransform: {fileID: 5808629398772157823}
   m_rigidbody: {fileID: 4313409606746086540}
   ShouldDestroyOnGenerate: 0
+  HasPhysicMaterial: 0
+  PhysicMaterialStaticFriction: 0.01
+  PhysicMaterialDynamicFriction: 0.02
 --- !u!4 &2895838982252528142
 Transform:
   m_ObjectHideFlags: 0
@@ -5547,7 +5563,7 @@ Transform:
   m_GameObject: {fileID: 8225528950328919720}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 236.805, y: 12.25, z: -38.125}
+  m_LocalPosition: {x: 197.555, y: 58.875, z: 114.625}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -5610,7 +5626,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 1
+  m_CollisionDetection: 0
 --- !u!1 &4499314200508571651
 GameObject:
   m_ObjectHideFlags: 0
@@ -5651,7 +5667,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 1
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!4 &5808629398772157823
@@ -5731,11 +5747,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   accelerationType: 1
-  inputTurnForce: 1
-  inputMovement: 0
+  inputTurnForce: 0
+  inputMovement: 1
   MaxWheelRPM: 3000
   turnInputOverride: 0
-  UseInputControls: 0
+  UseInputControls: 1
   maxTreadLength: 40
   maxTreadWidth: 40
   Override_WheelBottomOffset: 0
@@ -5753,6 +5769,8 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  leftRenderers: []
+  rightRenderers: []
   right:
   - {fileID: 0}
   - {fileID: 0}
@@ -5766,10 +5784,11 @@ MonoBehaviour:
   wheelSetIncrement: 10
   axelPadding: 0.5
   wheelBottomOffset: 0
-  wheelRadius: 2.5
+  wheelRadius: 2
   wheelSuspensionDistance: 2
   wheelSuspensionSpring: 35000
   wheelSuspensionSpringDamper: 1500
+  wheelSuspensionTarget: 0.5
   treadsPrefab: {fileID: 5595029556979915977, guid: c5dd1538f0ffd3242b551c837c16135b, type: 3}
   baseTorque: 0
   topSpeed: 10
@@ -5778,7 +5797,7 @@ MonoBehaviour:
   baseAcceleration: 3
   baseTurnForce: 5
   magicTurnRate: 45
-  wheelMass: 100
+  wheelMass: 1
   wheelParent: {fileID: 2895838982252528142}
   treadsParent: {fileID: 6870272609440107524}
   rotationEnginesParent: {fileID: 0}
@@ -5792,6 +5811,7 @@ MonoBehaviour:
   ShouldSyncWheelsToCollider: 1
   ShouldCleanupPerInitialize: 0
   useDirectTreadPhysics: 1
+  useWheelTorquePhysics: 0
   currentVehicleFrameBounds:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 2.5, y: 2.5, z: 2.5}
@@ -5803,6 +5823,12 @@ MonoBehaviour:
   SuspensionDistanceMultiplier: 1
   UseUnbalancedForce: 0
   ShouldHideWheelRender: 0
+  dynamicFriction: 0.01
+  staticFriction: 0.02
+  treadPhysicMaterial: {fileID: 0}
+  IsOnGround: 0
+  dampingDuration: 1
+  angularDampingDuration: 1
 --- !u!1 &8225528950328919720
 GameObject:
   m_ObjectHideFlags: 0
