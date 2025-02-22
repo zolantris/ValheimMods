@@ -794,7 +794,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8338912282861446822}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: wheel_state_hover_message
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -948,7 +948,7 @@ LODGroup:
   m_AnimateCrossFading: 0
   m_LastLODIsBillboard: 0
   m_LODs:
-  - screenRelativeHeight: 0.05392331
+  - screenRelativeHeight: 0.14517464
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 4147999281433239980}

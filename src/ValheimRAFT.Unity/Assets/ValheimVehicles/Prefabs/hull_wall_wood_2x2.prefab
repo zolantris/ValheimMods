@@ -1,5 +1,58 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &217676636818397241
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5491833793510051440}
+  - component: {fileID: 5959957842353335275}
+  m_Layer: 10
+  m_Name: collider
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5491833793510051440
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 217676636818397241}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1, y: 1, z: 0.12500006}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3784598169234739585}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &5959957842353335275
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 217676636818397241}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2, y: 2, z: 0.25}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &3240684223114423738
 GameObject:
   m_ObjectHideFlags: 0
@@ -60,6 +113,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 5491833793510051440}
   - {fileID: 1338953026097401721}
   - {fileID: 5483353297095307198}
   m_Father: {fileID: 0}
@@ -258,7 +312,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4090740829085154989, guid: 2d58d9fb1b8ba3244a5cceab9670127e, type: 3}
       propertyPath: m_Name
-      value: hull_slab_2x2_wood
+      value: shared
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
@@ -267,6 +321,8 @@ PrefabInstance:
     - {fileID: 1021075383065837556, guid: 2d58d9fb1b8ba3244a5cceab9670127e, type: 3}
     - {fileID: 698323995500224198, guid: 2d58d9fb1b8ba3244a5cceab9670127e, type: 3}
     - {fileID: 180656209468655943, guid: 2d58d9fb1b8ba3244a5cceab9670127e, type: 3}
+    - {fileID: 8689353965458056406, guid: 2d58d9fb1b8ba3244a5cceab9670127e, type: 3}
+    - {fileID: 8131620389892031500, guid: 2d58d9fb1b8ba3244a5cceab9670127e, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2d58d9fb1b8ba3244a5cceab9670127e, type: 3}

@@ -1,14 +1,16 @@
+#region
+
 using System;
-using UnityEngine;
-using UnityEditor;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using JetBrains.Annotations;
+using UnityEditor;
 using UnityEditor.U2D;
-using UnityEngine.SceneManagement;
+using UnityEngine;
 using UnityEngine.U2D;
-using LinqUtility = Unity.VisualScripting.LinqUtility;
 using Object = UnityEngine.Object;
+
+#endregion
 
 /// <summary>
 /// Add this Class to the Assets/Editor folder in Unity project
@@ -16,32 +18,29 @@ using Object = UnityEngine.Object;
 /// </summary>
 public class PrefabThumbnailGenerator : EditorWindow
 {
+  private static string outputDirPath = "Assets/ValheimVehicles/GeneratedIcons/"; // output dir
+
+  private static readonly List<string> excludedNames = new()
+    { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail" };
+  private static GameObject sceneLight;
   public Object searchDirectory;
   public Object targetSpriteAtlas;
   public string searchDirectoryPath = "Assets/ValheimVehicles/Prefabs/";
   public string targetSpriteAtlasPath = "Assets/ValheimVehicles/vehicle_icons.spriteatlasv2";
-  private List<GameObject> objList = new();
-  private Object outputDirObj;
-  static string outputDirPath = "Assets/ValheimVehicles/GeneratedIcons/"; // output dir
-  int width = 100; // image width
-  int height = 100; // image height
+  private int height = 100; // image height
 
   private bool isRunning;
 
-  private static readonly List<string> excludedNames = new()
-    { "shared_", "steering_wheel", "rope_ladder", "dirt_floor", "dirtfloor_icon", "rope_anchor", "keel", "rudder_basic", "custom_sail" };
+  private Vector3 lastPosition = Vector3.zero;
+  private List<GameObject> objList = new();
+  private Object outputDirObj;
+
+  private Camera previewCamera;
 
   private List<string> spritePaths = new();
-  private static GameObject sceneLight;
+  private int width = 100; // image width
 
-  [MenuItem("Window/PrefabThumbnailGenerator")]
-  static void ShowWindow()
-  {
-    GetWindow(typeof(PrefabThumbnailGenerator));
-  }
-
-  private GUIContent CaptureRunButtonText =>
-    new GUIContent(isRunning ? "Generating...please wait" : "Generated Sprite Icons");
+  private GUIContent CaptureRunButtonText => new(isRunning ? "Generating...please wait" : "Generated Sprite Icons");
   private void OnGUI()
   {
     GUILayout.BeginHorizontal();
@@ -52,7 +51,7 @@ public class PrefabThumbnailGenerator : EditorWindow
 
     GUILayout.BeginHorizontal();
     GUILayout.Label("Search Directory : ", GUILayout.Width(110));
-    searchDirectory = EditorGUILayout.ObjectField(searchDirectory, typeof(UnityEngine.Object), true);
+    searchDirectory = EditorGUILayout.ObjectField(searchDirectory, typeof(Object), true);
     GUILayout.EndHorizontal();
     EditorGUILayout.Space();
 
@@ -89,6 +88,12 @@ public class PrefabThumbnailGenerator : EditorWindow
 
       isRunning = false;
     }
+  }
+
+  [MenuItem("Window/PrefabThumbnailGenerator")]
+  private static void ShowWindow()
+  {
+    GetWindow(typeof(PrefabThumbnailGenerator));
   }
 
   private List<GameObject> GetFilesFromSearchPath()
@@ -134,6 +139,8 @@ public class PrefabThumbnailGenerator : EditorWindow
     //     Debug.Log($"TEMP OBJ ITEM, {tmpObj}");
     //     // Capture(tmpObj);
     // }
+
+    lastPosition = Vector3.zero;
 
     foreach (var obj in tempObjList.ToArray())
     {
@@ -184,7 +191,7 @@ public class PrefabThumbnailGenerator : EditorWindow
 
   private string GetSpriteAtlasPath()
   {
-    return targetSpriteAtlas ? AssetDatabase.GetAssetPath(targetSpriteAtlas) : this.targetSpriteAtlasPath;
+    return targetSpriteAtlas ? AssetDatabase.GetAssetPath(targetSpriteAtlas) : targetSpriteAtlasPath;
   }
 
   // must use the AssetDatabase get the current sprites and nuke them
@@ -285,6 +292,8 @@ public class PrefabThumbnailGenerator : EditorWindow
     if (light == null)
       light = sceneLight.AddComponent<Light>();
 
+    lastPosition += Vector3.right * 10;
+
     light.type = LightType.Directional;
     light.intensity = 1.0f; // You can tweak the intensity
     light.color = Color.white; // White light
@@ -295,7 +304,8 @@ public class PrefabThumbnailGenerator : EditorWindow
     RuntimePreviewGenerator.BackgroundColor = new Color(1, 1, 1, 0); // White background with transparency
     // RuntimePreviewGenerator.BackgroundColor = new Color(0.5f, 0.5f, 0.5f, 0); // Light gray
 
-    var pg = RuntimePreviewGenerator.GenerateModelPreview(obj.transform, width, height, false);
+    var objClone = Instantiate(obj, lastPosition, Quaternion.identity);
+    var pg = RuntimePreviewGenerator.GenerateModelPreview(objClone.transform, width, height);
     var texturePath = $"{outputDirPath}{obj.name}.png";
     WriteTextureToFile(pg, texturePath);
 
@@ -313,14 +323,13 @@ public class PrefabThumbnailGenerator : EditorWindow
 
     AssetDatabase.WriteImportSettingsIfDirty(texturePath);
     DestroyImmediate(pg);
+    DestroyImmediate(objClone);
   }
-
-  private Camera previewCamera;
 
   private void SetupPreviewCamera()
   {
     // Create a new camera for preview generation
-    GameObject cameraGO = new GameObject("PreviewCamera");
+    var cameraGO = new GameObject("PreviewCamera");
     previewCamera = cameraGO.AddComponent<Camera>();
     previewCamera.orthographic = true; // Optional: Use orthographic projection for a flat view
     previewCamera.clearFlags = CameraClearFlags.SolidColor;
@@ -332,25 +341,26 @@ public class PrefabThumbnailGenerator : EditorWindow
     // previewCamera.exposure = 0.5f; // Adjust as necessary (if you're using post-processing exposure settings)
   }
 
+  [UsedImplicitly]
   private void CaptureWithCustomCamera(GameObject obj)
   {
     // Setup the preview camera
     SetupPreviewCamera();
 
     // Render the object with the custom camera settings
-    RenderTexture renderTexture = new RenderTexture(width, height, 24);
+    var renderTexture = new RenderTexture(width, height, 24);
     previewCamera.targetTexture = renderTexture;
     previewCamera.Render();
 
     // Capture the texture from the render texture
-    Texture2D texture = new Texture2D(width, height, TextureFormat.RGB24, false);
+    var texture = new Texture2D(width, height, TextureFormat.RGB24, false);
     RenderTexture.active = renderTexture;
     texture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
     texture.Apply();
 
     // Save the texture as a PNG
     var texturePath = $"{outputDirPath}{obj.name}.png";
-    byte[] bytes = texture.EncodeToPNG();
+    var bytes = texture.EncodeToPNG();
     File.WriteAllBytes(texturePath, bytes);
 
     // Clean up

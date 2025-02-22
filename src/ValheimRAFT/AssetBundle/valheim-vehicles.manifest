@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1883888318
+CRC: 2084172206
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 23e91d3693ff9740aaeeac8e73543b2e
+    Hash: 7016293126d19532e703284838a94b6d
   TypeTreeHash:
     serializedVersion: 2
     Hash: f89f6a5a95307c7ee2181398335663cf
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 23e91d3693ff9740aaeeac8e73543b2e
+    Hash: 7016293126d19532e703284838a94b6d
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -193,7 +193,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_wall_window_porthole_iron_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_single_iron.prefab
 - Assets/ValheimVehicles/Prefabs/anchor_rope_spool.prefab
-- Assets/hull_slab_wood_4x4.prefab
+- Assets/ValheimVehicles/Prefabs/hull_slab_wood_4x4.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus.prefab
 - Assets/ValheimVehicles/Prefabs/shared_hull_rib_prow_2x2.prefab
 - Assets/ValheimVehicles/Prefabs/GUI/ship_compass.prefab
