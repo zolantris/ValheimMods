@@ -57,7 +57,7 @@ public class ShipHullPrefab : IRegisterPrefab
       RegisterHullRibProw(hullMaterialType, PrefabSizeVariant.TwoByTwo);
       RegisterHullRib(GetHullRibName(hullMaterialType), hullMaterialType);
       RegisterHullRibCorner(
-        hullMaterialType, DirectionVariant.Universal);
+        hullMaterialType);
       
       foreach (var ribDirection in ribDirections)
       {
@@ -226,15 +226,11 @@ public class ShipHullPrefab : IRegisterPrefab
   public void RegisterInverseHullRibCorner(string hullMaterial,
     DirectionVariant directionVariant)
   {
-    var prefabName = GetHullRibCornerName(hullMaterial,
-      directionVariant);
+    var prefabName = GetHullRibCornerName(hullMaterial);
     var prefabInverseName = $"{prefabName}_inverse";
-    var inverseDirection = GetInverseDirection(directionVariant);
-
     // must get the opposite IE if left get right for the flipped mesh to align
     var prefabAsset =
-      LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial,
-        inverseDirection);
+      LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial);
     var prefabInverse =
       PrefabManager.Instance.CreateClonedPrefab(
         prefabInverseName, prefabAsset);
@@ -251,14 +247,11 @@ public class ShipHullPrefab : IRegisterPrefab
   }
 
   public void RegisterHullRibCorner(
-    string hullMaterial,
-    DirectionVariant directionVariant, bool hasInverse = true)
+    string hullMaterial, bool hasInverse = true)
   {
-    var prefabName = GetHullRibCornerName(hullMaterial,
-      directionVariant);
+    var prefabName = GetHullRibCornerName(hullMaterial);
     var prefabAsset =
-      LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial,
-        directionVariant);
+      LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial);
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
         prefabName, prefabAsset);

@@ -1474,6 +1474,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     }
   }
 
+  public float localCenterOfMassOffset = 0f;
   public void UpdateCenterOfMass()
   {
     if (PiecesController == null) return;
@@ -1495,6 +1496,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       offset = 4f;
     }
 
+    localCenterOfMassOffset = offset;
+    
     if (!(offset > 0.1f)) return;
     centerOfMass.y -= offset;
     m_body.centerOfMass = centerOfMass;
@@ -1803,23 +1806,25 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     rightUpwardForce = Mathf.Sign(rightUpwardForce) *
                        Mathf.Abs(Mathf.Pow(rightUpwardForce, 2f));
 
+    var centerOffMassDifference = Vector3.up * localCenterOfMassOffset;
+
     if (CanRunForwardWaterForce)
       AddForceAtPosition(Vector3.up * forwardUpwardForce * deltaForceMultiplier,
-        shipForward,
+        shipForward - centerOffMassDifference,
         PhysicsConfig.rudderVelocityMode.Value);
 
     if (CanRunBackWaterForce)
       AddForceAtPosition(
-        Vector3.up * backwardsUpwardForce * deltaForceMultiplier, shipBack,
+        Vector3.up * backwardsUpwardForce * deltaForceMultiplier, shipBack - centerOffMassDifference,
         PhysicsConfig.rudderVelocityMode.Value);
 
     if (CanRunLeftWaterForce)
       AddForceAtPosition(Vector3.up * leftUpwardForce * deltaForceMultiplier,
-        shipLeft,
+        shipLeft - centerOffMassDifference,
         PhysicsConfig.rudderVelocityMode.Value);
     if (CanRunRightWaterForce)
       AddForceAtPosition(Vector3.up * rightUpwardForce * deltaForceMultiplier,
-        shipRight,
+        shipRight - centerOffMassDifference,
         PhysicsConfig.rudderVelocityMode.Value);
   }
 

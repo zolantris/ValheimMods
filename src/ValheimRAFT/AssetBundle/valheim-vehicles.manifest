@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1361755099
+CRC: 3695500449
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: acce8eaa1a56eec62f4f4e16711e2c5a
+    Hash: 977837b15592e821e9870033327f16e3
   TypeTreeHash:
     serializedVersion: 2
     Hash: f89f6a5a95307c7ee2181398335663cf
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: acce8eaa1a56eec62f4f4e16711e2c5a
+    Hash: 977837b15592e821e9870033327f16e3
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -148,7 +148,7 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.Toggle/ToggleEvent
 Assets:
-- Assets/ValheimVehicles/Prefabs/hull_rib_corner_universal_iron.prefab
+- Assets/ValheimVehicles/Prefabs/hull_rib_corner_iron.prefab
 - Assets/ValheimVehicles/Prefabs/nautilus_glass.prefab
 - Assets/ValheimVehicles/Material/iron_metal_rustic_4x4.mat
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_right_wood.prefab
@@ -234,7 +234,7 @@ Assets:
 - Assets/ValheimVehicles/Material/TransparentDepthMask.mat
 - Assets/ValheimVehicles/Material/TransparentDepthMaskLayer3000.mat
 - Assets/ValheimVehicles/Prefabs/shared_hull_wall_4x4_new.prefab
-- Assets/ValheimVehicles/Prefabs/hull_rib_corner_universal_wood.prefab
+- Assets/ValheimVehicles/Prefabs/hull_rib_corner_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_example_raft.prefab
 - Assets/ValheimVehicles/Material/glass_nautilus_green.mat
 - Assets/ValheimVehicles/Material/SailMat.mat
