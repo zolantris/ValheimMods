@@ -279,21 +279,9 @@
 - Description: Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.
 - Default Value: 1
 
-### MaxVehicleHullImpactDamage 
-- Description: The maximum damage a vehicle can do to a rock or other object it hits.
-- Default Value: 9000
-
-### MinVehicleHullImpactDamage 
-- Description: The minimum damage a vehicle can do to a rock or other object it hits.
-- Default Value: 50
-
 ### VehicleHullMassMultiplierDamage 
 - Description: Multiplier per each single point of mass the vehicle has how much additional damage is done, multiplied by the velocity.
 - Default Value: 0.1
-
-### VehicleHullUsesPickaxeAndChopDamage 
-- Description: Makes the vehicle hit with a pickaxe and chop damage effect. This will make the vehicle effective against trees and rocks. Also some rocks normally not destroyable will be IE Spires. Damage is split 66% to pickaxe and 33% to chop damage.
-- Default Value: True
 
 ### VehicleHullTier 
 - Description: The tier damage a vehicle can do to a rock or other object it hits. To be balanced this should be a lower value IE (1) bronze. But ashlands will require a higher tier to smash spires FYI.
@@ -375,7 +363,7 @@
 
 ### VehiclePieceBoundsRecalculationDelay 
 - Description: The delay time at which the vehicle will recalculate bounds after placing a piece. This recalculation can be a bit heavy so it's debounced a minimum of 1 seconds but could be increased up to 30 seconds for folks that want to build a pause for a bit.
-- Default Value: 1
+- Default Value: 10
 
 ## Vehicle Debugging
 
@@ -566,27 +554,35 @@ Other methods removed after 2.5.0
 
 ### LandVehicle Back Speed 
 - Description: Set the Back speed of land vehicle.
-- Default Value: 5
+- Default Value: 1
 
 ### LandVehicle Slow Speed 
 - Description: Set the Slow speed of land vehicle.
-- Default Value: 5
+- Default Value: 1
 
 ### LandVehicle Half Speed 
 - Description: Set the Half speed of land vehicle.
-- Default Value: 10
+- Default Value: 1
 
 ### LandVehicle Full Speed 
 - Description: Set the Full speed of land vehicle.
-- Default Value: 30
+- Default Value: 1
 
 ### LandVehicle Turn Speed 
-- Description: Turn angle multiplier for land vehicles. Higher values will turn faster, but will be more disorienting and unrealistic.
-- Default Value: 35
+- Description: Turn speed for landvehicles. Zero is half the normal speed, 50% is normal speed, and 100% is double normal speed.
+- Default Value: 0
 
-### VehicleLand AllowXZRotation 
-- Description: Allow XZ rotation. Can make a vehicle flip/tilt. But is much more realistic. Look at centerofmassoffset for ways to make the vehicle more stable
-- Default Value: True
+### LandVehicle Max Tread Width 
+- Description: Max width the treads can expand to.
+- Default Value: 8
+
+### LandVehicle Max Tread Length 
+- Description: Max length the treads can expand to.
+- Default Value: 20
+
+### VehicleLand LockXZRotation 
+- Description: Prevents XZ rotation on landvehicles. Vehicles will always remain perfectly flat to horizon
+- Default Value: False
 
 ### VehicleLand WheelMass 
 - Description: The weight per wheel of the vehicle. This will allow more traction, but could slow down the vehicle at higher values. Experimental only
@@ -602,15 +598,31 @@ Other methods removed after 2.5.0
 
 ### LandVehicle WheelRadius 
 - Description: Wheel radius. Larger wheels have more traction. But may be less realistic.
-- Default Value: 0.7
+- Default Value: 1
 
 ### LandVehicle WheelOffset 
 - Description: Wheel offset. Allowing for raising the wheels higher. May require increasing suspension distance so the wheels spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the wheels
 - Default Value: 0
 
+### LandVehicle ShouldHideWheels 
+- Description: Hides the wheel visual as wheels are not perfectly synced.
+- Default Value: False
+
+### LandVehicle ShouldSyncWheelPositions 
+- Description: Toggles syncing of wheels to their actual collider position. Can cause desync with tracks.
+- Default Value: False
+
 ### LandVehicle SuspensionSpring 
-- Description: Suspension spring value. This will control how much the vehicle bounces when it drops. No suspension will be a bit jarring but high suspension can jitter the user a bit too.
-- Default Value: 200
+- Description: Suspension spring value. This will control how much the vehicle bounces when it drops. No suspension will be a bit jarring but high suspension can cause lots of screen jump. Ensure a higher SuspensionSpringDamper to fix the bounce continuing.
+- Default Value: 35000
+
+### LandVehicle SuspensionSpringDamper 
+- Description: Suspension spring damper value. This will control how much the vehicle stops bouncing. Higher values must be supplied for higher suspension spring values.
+- Default Value: 1500
+
+### LandVehicle wheelSuspensionSpringTarget 
+- Description: Suspension target. Between 0 and 1 it will determine the target spring position. This can allow for high suspension but also high targets
+- Default Value: 0.4
 
 ## Vehicle Physics
 
