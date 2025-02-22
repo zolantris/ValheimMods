@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5721838593751922162}
   m_Layer: 10
-  m_Name: hull_rib_corner_left_wood
+  m_Name: hull_rib_corner_wood
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -50,7 +50,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4179269162098430418, guid: 094c6dbf9499a1041b70d366a7687d6c, type: 3}
       propertyPath: m_Name
-      value: shared_hull_rib_side_left
+      value: new
       objectReference: {fileID: 0}
     - target: {fileID: 4179269162098430418, guid: 094c6dbf9499a1041b70d366a7687d6c, type: 3}
       propertyPath: m_Layer

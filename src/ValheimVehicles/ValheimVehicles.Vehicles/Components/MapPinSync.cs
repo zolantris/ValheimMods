@@ -78,7 +78,7 @@ public class MapPinSync : MonoBehaviour
       refreshVehiclePinsRoutine = null;
     }
 
-    refreshVehiclePinsRoutine = StartCoroutine(nameof(RefreshVehiclePins));
+    refreshVehiclePinsRoutine = StartCoroutine(RefreshVehiclePins());
   }
 
   public void StartSpawnPinSync()

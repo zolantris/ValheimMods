@@ -1,8 +1,12 @@
+#region
+
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
+
+#endregion
 
 // ReSharper disable ArrangeNamespaceBody
 
@@ -20,10 +24,19 @@ namespace ValheimVehicles.SharedScripts
     public Vector3 transformPreviewOffset = new(0, -2f, 0);
     public List<GameObject> GeneratedMeshGameObjects = new();
 
-    public bool hasFixedUpdate = true;
+    [Header("FixedUpdate Logic")]
+    public bool HasResyncFixedUpdate = true;
+    public bool HasTestPieceGeneration;
+    public float DebouncedUpdateInterval = 2f;
+    public float PieceGeneratorInterval = 0.05f;
+    public int maxPiecesToAdd = 50;
+    public int BatchAddSize = 100;
+    public int MaxXGeneration = 8;
+    public int MaxZGeneration = 20;
+    public int MaxYGeneration = 20;
 
+    [Header("Mesh Generation Logic")]
     public bool useWorld;
-
     public GameObject convexHullParentGameObject;
     public GameObject PiecesParentObj;
     public bool debugOriginalMesh;
@@ -31,12 +44,36 @@ namespace ValheimVehicles.SharedScripts
     public Transform forwardTransform;
 
     public ConvexHullAPI _convexHullAPI;
-    private MeshBoundsVisualizer _meshBoundsVisualizer;
     public VehicleWheelController vehicleWheelController;
     public MovementPiecesController movementPiecesController;
-    private float lastUpdate;
-    private Bounds _cachedDebugBounds = new(Vector3.zero, Vector3.zero);
 
+    public float centerOfMassOffset = -4f;
+
+    public Transform cameraTransform;
+
+    public bool hasCalledFirstGenerate;
+
+    public GameObject prefabFloorPiece;
+    public GameObject prefabWallPiece;
+
+    public Vector3 lastPieceOffset = Vector3.zero;
+
+
+    private Bounds _cachedDebugBounds = new(Vector3.zero, Vector3.zero);
+    private MeshBoundsVisualizer _meshBoundsVisualizer;
+
+    private Coroutine AddPieceRoutine;
+
+    private bool CanRunGenerate;
+
+    private float lastPieceGeneratorUpdate;
+    private float lastUpdate;
+
+    private Vector3 startPosition;
+    private int xOffset;
+    private int yOffset;
+
+    private int zOffset;
     private void Awake()
     {
       GetOrAddMeshGeneratorApi();
@@ -49,6 +86,17 @@ namespace ValheimVehicles.SharedScripts
           vehicleWheelController.wheelParent = transform.Find("vehicle_land/wheels");
         }
       }
+
+      if (!cameraTransform)
+      {
+        cameraTransform = transform.Find("camera");
+      }
+
+      startPosition = vehicleWheelController.transform.root.position;
+
+      _convexHullAPI.AddLocalPhysicMaterial(0.01f, 0.01f);
+
+      vehicleWheelController.SetBrake(false);
       // EnableCollisionBetweenLayers(10, 28);
       // EnableCollisionBetweenLayers(28, 10);
       //
@@ -60,35 +108,54 @@ namespace ValheimVehicles.SharedScripts
     {
       SyncAPIProperties();
       Cleanup();
-      Generate();
     }
-
-    public float DebouncedUpdateInterval = 2f;
     /// <summary>
     ///   For seeing the colliders update live. This should not be used in game for
     ///   performance reasons.
     /// </summary>
     public void FixedUpdate()
     {
-      if (!hasFixedUpdate) return;
-      if (lastUpdate > DebouncedUpdateInterval)
-      {
-        lastUpdate = 0f;
-      }
-      else
-      {
-        lastUpdate += Time.deltaTime;
-        return;
-      }
-
+      CanRunGenerate = RunFixedUpdateDebounce();
+      var CanUpdatePieceGenerator = RunFixedUpdateDebounceGenerator();
       SyncAPIProperties();
 
-      Generate();
+      // clamping offset of center of mass to prevent issues
+      UpdateCenterOfMass();
+
+      if (vehicleWheelController.transform.position.y < 0f)
+      {
+        vehicleWheelController.vehicleRootBody.MovePosition(startPosition);
+        vehicleWheelController.vehicleRootBody.velocity = Vector3.zero;
+        vehicleWheelController.vehicleRootBody.angularVelocity = Vector3.zero;
+      }
+
+      if (cameraTransform)
+      {
+        var wheelControllerTransform = vehicleWheelController.transform;
+        cameraTransform.position = wheelControllerTransform.position + Vector3.up * 5f;
+        cameraTransform.localRotation = wheelControllerTransform.localRotation;
+      }
+
+      if (HasTestPieceGeneration && CanUpdatePieceGenerator)
+      {
+        if (AddPieceRoutine != null)
+        {
+          StopCoroutine(AddPieceRoutine);
+        }
+
+        AddPieceRoutine = StartCoroutine(TestAddPieceToVehicleChild());
+      }
+
+      if (!hasCalledFirstGenerate || HasResyncFixedUpdate && CanRunGenerate)
+      {
+        Generate();
+        hasCalledFirstGenerate = true;
+      }
     }
 
     public void OnEnable()
     {
-      Generate();
+      // Generate();
     }
 
     public void OnDisable()
@@ -119,6 +186,36 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+    public void UpdateCenterOfMass()
+    {
+      var hullBounds = _convexHullAPI.GetConvexHullBounds(true);
+      var offset = Mathf.Lerp(hullBounds.extents.y, -hullBounds.extents.y, centerOfMassOffset);
+      var localCenterOfMassOffset = Mathf.Min(offset, -5f);
+
+      PhysicsHelpers.UpdateRelativeCenterOfMass(vehicleWheelController.vehicleRootBody, localCenterOfMassOffset);
+    }
+
+    public bool RunFixedUpdateDebounce()
+    {
+      if (lastUpdate > DebouncedUpdateInterval)
+      {
+        lastUpdate = 0f;
+        return true;
+      }
+      lastUpdate += Time.deltaTime;
+      return false;
+    }
+    public bool RunFixedUpdateDebounceGenerator()
+    {
+      if (lastPieceGeneratorUpdate > PieceGeneratorInterval)
+      {
+        lastPieceGeneratorUpdate = 0f;
+        return true;
+      }
+      lastPieceGeneratorUpdate += Time.deltaTime;
+      return false;
+    }
+
     private void GetOrAddMeshGeneratorApi()
     {
       _meshBoundsVisualizer = GetComponent<MeshBoundsVisualizer>();
@@ -143,6 +240,13 @@ namespace ValheimVehicles.SharedScripts
       _convexHullAPI.PreviewParent = PiecesParentObj.transform;
     }
 
+
+    private void OnScriptHotReload()
+    {
+      //do whatever you want to do with access to instance via 'this'
+      Generate();
+    }
+
     /// <summary>
     ///   For GameObjects
     /// </summary>
@@ -153,6 +257,13 @@ namespace ValheimVehicles.SharedScripts
           !go.name.Contains(ConvexHullAPI.MeshNamePrefix) &&
           !go.name.StartsWith("VehicleShip") && go.activeInHierarchy);
 
+      // VIP confirm that rotation of roots are aligned otherwise bail due to problems with rigidbodies not matching and requiring lots of complicated transforms around pivots to align points
+      if (PiecesParentObj.transform.root.rotation != vehicleWheelController.transform.root.rotation)
+      {
+        Debug.LogWarning("PiecesParentObj.transform.root.rotation != vehicleWheelController.transform.root.rotation force aligning them in worldspace before this causes big issues with transforms all needing to be re-aligned. ");
+        PiecesParentObj.transform.root.rotation = vehicleWheelController.transform.root.rotation;
+      }
+
       _convexHullAPI.GenerateMeshesFromChildColliders(
         convexHullParentGameObject, convexHullParentGameObject.transform.position - PiecesParentObj.GetComponent<Rigidbody>().worldCenterOfMass,
         distanceThreshold, childGameObjects.ToList());
@@ -162,21 +273,91 @@ namespace ValheimVehicles.SharedScripts
         var bounds = _convexHullAPI.GetConvexHullBounds(true);
         _cachedDebugBounds = bounds;
         vehicleWheelController.InitializeWheels(bounds);
-        IgnoreAllCollidersBetweenWheelsAndPieces();
       }
-    }
 
-    public void IgnoreAllCollidersBetweenWheelsAndPieces()
-    {
-      var childColliders = PhysicsHelpers.GetAllChildColliders(transform);
-      PhysicsHelpers.IgnoreCollidersForLists(vehicleWheelController.colliders, childColliders);
+      // RigidbodyUtils.RecenterRigidbodyPivot(PiecesParentObj.gameObject);
+      // RigidbodyUtils.RecenterRigidbodyPivot(vehicleWheelController.gameObject);
     }
+    //
+    // public void IgnoreAllCollidersBetweenWheelsAndPieces()
+    // {
+    //   var childColliders = PhysicsHelpers.GetAllChildColliders(transform);
+    //   PhysicsHelpers.IgnoreCollidersForLists(vehicleWheelController.colliders, childColliders);
+    // }
+    //
+    // public void IgnoreAllCollidersBetweenTreadsAndPieces()
+    // {
+    //   var childColliders = PhysicsHelpers.GetAllChildColliders(transform);
+    //   PhysicsHelpers.IgnoreCollidersForLists(vehicleWheelController.colliders, childColliders);
+    // }
 
     private void DrawSphere(Vector3 center, float radius)
     {
       // Visualize the sphere in the Scene view
       Gizmos.color = Color.green;
       Gizmos.DrawWireSphere(center, radius);
+    }
+    /// <summary>
+    /// Todo to detect meshRenderBounds and get the offset from there.
+    /// </summary>
+    /// <returns></returns>
+    public Vector3? GetPieceOffset()
+    {
+      var pieceCount = movementPiecesController.vehiclePieces.Count;
+      var currentVector = new Vector3(4 * xOffset, 4 * yOffset, 4 * zOffset);
+
+      if (yOffset > MaxYGeneration)
+      {
+        return null;
+      }
+
+      if (zOffset > MaxZGeneration)
+      {
+        zOffset = 0;
+        xOffset = 0;
+        yOffset += 1;
+      }
+
+      if (xOffset > MaxXGeneration)
+      {
+        xOffset = 0;
+        zOffset += 1;
+      }
+      else
+      {
+        xOffset += 1;
+      }
+      return currentVector;
+    }
+
+    private void InstantiatePrefab(GameObject prefab)
+    {
+      var localPosition = GetPieceOffset();
+      if (localPosition == null) return;
+
+      var piece = Instantiate(prefab, transform);
+      piece.transform.localPosition = localPosition.Value;
+      movementPiecesController.OnPieceAdded(piece);
+    }
+
+    private IEnumerator TestAddPieceToVehicleChild()
+    {
+      if (!prefabFloorPiece) yield break;
+      if (movementPiecesController.vehiclePieces.Count > maxPiecesToAdd) yield break;
+      var currentPieces = movementPiecesController.vehiclePieces.Count;
+
+      var current = 0;
+      while (BatchAddSize > current && movementPiecesController.vehiclePieces.Count < maxPiecesToAdd)
+      {
+        InstantiatePrefab(prefabFloorPiece);
+        InstantiatePrefab(prefabWallPiece);
+        current++;
+      }
+
+      if (currentPieces != movementPiecesController.vehiclePieces.Count)
+      {
+        Generate();
+      }
     }
 
     public void Cleanup()
@@ -196,7 +377,9 @@ namespace ValheimVehicles.SharedScripts
         // If the GameObject's name matches the target name, delete it
         if (obj.name.StartsWith(ConvexHullAPI.MeshNamePrefix))
         {
-          Debug.Log($"Deleted GameObject: {obj.name}");
+#if DEBUG
+          // Debug.Log($"Deleted GameObject: {obj.name}");
+#endif
           DebugUnityHelpers.AdaptiveDestroy(obj);
         }
     }

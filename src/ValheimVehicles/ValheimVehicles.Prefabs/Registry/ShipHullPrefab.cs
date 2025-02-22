@@ -56,11 +56,11 @@ public class ShipHullPrefab : IRegisterPrefab
     {
       RegisterHullRibProw(hullMaterialType, PrefabSizeVariant.TwoByTwo);
       RegisterHullRib(GetHullRibName(hullMaterialType), hullMaterialType);
+      RegisterHullRibCorner(
+        hullMaterialType);
+      
       foreach (var ribDirection in ribDirections)
       {
-        RegisterHullRibCorner(
-          hullMaterialType,
-          ribDirection);
         RegisterHullRibCornerFloor(hullMaterialType, ribDirection);
       }
     }
@@ -226,15 +226,11 @@ public class ShipHullPrefab : IRegisterPrefab
   public void RegisterInverseHullRibCorner(string hullMaterial,
     DirectionVariant directionVariant)
   {
-    var prefabName = GetHullRibCornerName(hullMaterial,
-      directionVariant);
+    var prefabName = GetHullRibCornerName(hullMaterial);
     var prefabInverseName = $"{prefabName}_inverse";
-    var inverseDirection = GetInverseDirection(directionVariant);
-
     // must get the opposite IE if left get right for the flipped mesh to align
     var prefabAsset =
-      LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial,
-        inverseDirection);
+      LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial);
     var prefabInverse =
       PrefabManager.Instance.CreateClonedPrefab(
         prefabInverseName, prefabAsset);
@@ -251,14 +247,11 @@ public class ShipHullPrefab : IRegisterPrefab
   }
 
   public void RegisterHullRibCorner(
-    string hullMaterial,
-    DirectionVariant directionVariant, bool hasInverse = true)
+    string hullMaterial, bool hasInverse = true)
   {
-    var prefabName = GetHullRibCornerName(hullMaterial,
-      directionVariant);
+    var prefabName = GetHullRibCornerName(hullMaterial);
     var prefabAsset =
-      LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial,
-        directionVariant);
+      LoadValheimVehicleAssets.GetShipHullRibCorner(hullMaterial);
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
         prefabName, prefabAsset);
@@ -327,6 +320,10 @@ public class ShipHullPrefab : IRegisterPrefab
   {
     try
     {
+      PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
+        hoistParent ?? prefab.transform,
+        hoistFilters);
+
       var wnt = PrefabRegistryHelpers.SetWearNTear(prefab);
       PrefabRegistryHelpers.SetWearNTearSupport(wnt,
         WearNTear.MaterialType.Iron);
@@ -338,11 +335,7 @@ public class ShipHullPrefab : IRegisterPrefab
 
       PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
       PrefabRegistryHelpers.AddPieceForPrefab(prefabName, prefab, isInverse);
-
-      PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab,
-        hoistParent ?? prefab.transform,
-        hoistFilters);
-
+      
       PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
         new PieceConfig
         {
@@ -432,15 +425,17 @@ public class ShipHullPrefab : IRegisterPrefab
       PrefabManager.Instance.CreateClonedPrefab(
         prefabName, prefabClone);
 
-    var hoistParents = new[] { "new" };
+    var hoistParents = new[] { "new", "snappoints" };
 
     if (prefabName.Contains(ShipHullPrefabName))
       hoistParents.AddItem("hull_slab_new_shared");
 
+    var wntNewParent = prefab.transform.Find("new");
+
     SetupHullPrefab(prefab, prefabName,
       hullMaterial,
       materialCount,
-      prefab.transform.Find("new") ?? prefab.transform,
+      wntNewParent,
       hoistParents
     );
   }

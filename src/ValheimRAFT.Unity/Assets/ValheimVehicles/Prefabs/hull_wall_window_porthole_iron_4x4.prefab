@@ -8,6 +8,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2381714456397058290, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2381714456397058290, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.315
+      objectReference: {fileID: 0}
+    - target: {fileID: 3380828655270001296, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3380828655270001296, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.315
+      objectReference: {fileID: 0}
     - target: {fileID: 3784598169234739585, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
       propertyPath: m_LocalScale.x
       value: 2
@@ -60,9 +76,61 @@ PrefabInstance:
       propertyPath: m_Name
       value: hull_wall_window_porthole_iron_4x4
       objectReference: {fileID: 0}
+    - target: {fileID: 6365340422788530382, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6365340422788530382, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.315
+      objectReference: {fileID: 0}
+    - target: {fileID: 7311637740984309210, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7311637740984309210, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7311637740984309210, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.439
+      objectReference: {fileID: 0}
     - target: {fileID: 7681642250914584159, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
       propertyPath: m_LocalPosition.z
       value: -0.245
+      objectReference: {fileID: 0}
+    - target: {fileID: 7999121331611532881, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7999121331611532881, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.315
+      objectReference: {fileID: 0}
+    - target: {fileID: 8826272270723438003, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_Size.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8826272270723438003, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_Size.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8826272270723438003, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_Size.z
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8826272270723438003, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_Center.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8826272270723438003, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_Center.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8826272270723438003, guid: 1b74e1526d208d74bb43cd9507284dbc, type: 3}
+      propertyPath: m_Center.z
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:

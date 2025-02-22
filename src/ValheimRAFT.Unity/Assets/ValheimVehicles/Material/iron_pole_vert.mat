@@ -36,7 +36,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _Cutoff: 0.288
-    - _Glossiness: 0.416
+    - _Glossiness: 0.244
     - _GlossyReflections: 1
     - _Metallic: 1
     - _SpecularHighlights: 0

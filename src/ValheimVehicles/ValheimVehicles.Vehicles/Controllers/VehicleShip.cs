@@ -392,16 +392,35 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   public void UpdateWheelControllerProperties()
   {
     if (!IsLandVehicle || MovementController == null || WheelController == null) return;
-    WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
-    WheelController.UseManualControls = true;
-    WheelController.magicTurnRate = PhysicsConfig.VehicleLandTurnSpeed.Value;
-    WheelController.forwardDirection = MovementController.ShipDirection;
-    WheelController.m_steeringType = VehicleWheelController.SteeringType.Magic;
-    WheelController.wheelSuspensionDistance = PhysicsConfig.VehicleLandSuspensionDistance.Value;
+    if (WheelController.treadsPrefab == null)
+    {
+      WheelController.treadsPrefab = LoadValheimVehicleAssets.TankTreadsSingle;
+    }
+
+    if (WheelController.wheelPrefab == null)
+    {
+      WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
+    }
+
+#if DEBUG
+    WheelController.wheelSuspensionTarget = PhysicsConfig.VehicleLandWheelSuspensionSpringTarget.Value;
     WheelController.wheelRadius = PhysicsConfig.VehicleLandWheelRadius.Value;
+    WheelController.wheelSuspensionDistance = PhysicsConfig.VehicleLandSuspensionDistance.Value;
     WheelController.wheelSuspensionSpring = PhysicsConfig.VehicleLandWheelSuspensionSpring.Value;
-    WheelController.wheelBottomOffset = PhysicsConfig.VehicleLandWheelOffset.Value;
-    WheelController.wheelMass = PhysicsConfig.VehicleLandWheelMass.Value;
+    WheelController.wheelSuspensionSpringDamper = PhysicsConfig.VehicleLandWheelSuspensionSpringDamper.Value;
+    WheelController.ShouldSyncWheelsToCollider = PhysicsConfig.DEBUG_VehicleLandShouldSyncWheelPositions.Value;
+    WheelController.ShouldHideWheelRender = PhysicsConfig.DEBUG_VehicleLandShouldHideWheels.Value;
+        WheelController.wheelMass = PhysicsConfig.VehicleLandWheelMass.Value;
+#endif
+
+    // very important to add these. We always need a base of 30.
+    var additionalTurnRate = Mathf.Lerp(VehicleWheelController.defaultTurnAccelerationMultiplier / 2, VehicleWheelController.defaultTurnAccelerationMultiplier * 2, Mathf.Clamp01(PhysicsConfig.VehicleLandTurnSpeed.Value));
+    
+    VehicleWheelController.baseTurnAccelerationMultiplier = additionalTurnRate;
+    WheelController.maxTreadLength = PhysicsConfig.VehicleLandMaxTreadLength.Value;
+    WheelController.maxTreadWidth = PhysicsConfig.VehicleLandMaxTreadWidth.Value;
+    WheelController.forwardDirection = MovementController.ShipDirection;
+    WheelController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadOffset.Value;
   }
 
   /// <summary>
@@ -409,10 +428,17 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   /// </summary>
   public void InitializeWheelController()
   {
-
-    WheelController = gameObject.AddComponent<VehicleWheelController>();
+    if (!IsLandVehicle) return;
+    if (WheelController == null)
+    {
+      WheelController = gameObject.GetComponent<VehicleWheelController>();
+      if (WheelController == null)
+      {
+        WheelController = gameObject.AddComponent<VehicleWheelController>();
+      }
+    }
     WheelController.inputTurnForce = 0;
-    WheelController.inputForwardForce = 0;
+    WheelController.inputMovement = 0;
     UpdateWheelControllerProperties();
     if (WheelController == null)
       Logger.LogError("Error initializing WheelController");
@@ -467,7 +493,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     var sector = ZoneSystem.GetZone(position);
     var zdo = NetView.GetZDO();
 
-    zdo.SetPosition(PiecesController.m_body.worldCenterOfMass);
+    zdo.SetPosition(PiecesController.m_localRigidbody.worldCenterOfMass);
     zdo.SetSector(sector);
   }
 

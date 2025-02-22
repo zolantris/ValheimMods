@@ -23,6 +23,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   private VehicleMovementController _controls;
   public VehicleMovementController? Controls => _controls;
   public ShipControlls deprecatedShipControls;
+  public bool HasDeprecatedControls = false;
   public MoveableBaseShipComponent deprecatedMBShip;
 
   public IVehicleShip ShipInstance;
@@ -59,6 +60,8 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   public Transform AttachPoint { get; set; }
   public Transform steeringWheelHoverTransform;
   public HoverFadeText steeringWheelHoverText;
+
+  public string _cachedLocalizedWheelHoverText = "";
 
   /// <summary>
   /// Todo might be worth caching this.
@@ -224,17 +227,18 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
 
   public string GetHoverName()
   {
-    if ((bool)deprecatedShipControls)
-      return deprecatedShipControls.GetHoverName();
+    if (_cachedLocalizedWheelHoverText != string.Empty) return _cachedLocalizedWheelHoverText;
 
-    return Localization.instance.Localize("$valheim_vehicles_wheel");
+    _cachedLocalizedWheelHoverText = !HasDeprecatedControls ? Localization.instance.Localize("$valheim_vehicles_wheel") : deprecatedShipControls.GetHoverName();
+
+    return _cachedLocalizedWheelHoverText;
   }
 
   public void SetLastUsedWheel()
   {
-    if (ShipInstance != null)
-      ShipInstance.Instance.MovementController.lastUsedWheelComponent = this;
-    else if ((bool)deprecatedShipControls)
+    if (ShipInstance.MovementController != null)
+      ShipInstance.MovementController.lastUsedWheelComponent = this;
+    else if (HasDeprecatedControls)
       PatchSharedData.PlayerLastUsedControls = deprecatedShipControls;
   }
 
@@ -425,6 +429,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
       deprecatedShipControls.m_attachAnimation = "Standing Torch Idle right";
       deprecatedShipControls.m_detachOffset = new Vector3(0f, 0f, 0f);
       deprecatedShipControls.m_ship = mbRoot.m_ship;
+      HasDeprecatedControls = true;
     }
 
     if (!wheelTransform)

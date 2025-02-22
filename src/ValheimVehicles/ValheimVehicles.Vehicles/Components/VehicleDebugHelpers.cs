@@ -86,7 +86,7 @@ public class VehicleDebugHelpers : MonoBehaviour
 
     // center of mass debugging should be yellow
     RenderDebugCube(ref worldCenterOfMassCube, VehicleShipInstance.MovementController.m_body.worldCenterOfMass, "center_of_mass", Color.yellow, Vector3.up * 1);
-    RenderDebugCube(ref vehiclePiecesCenterOfMassCube, VehicleShipInstance.PiecesController.m_body.worldCenterOfMass, "vehicle_pieces_automatic_center_of_mass", Color.yellow, Vector3.up * 0.5f);
+    RenderDebugCube(ref vehiclePiecesCenterOfMassCube, VehicleShipInstance.PiecesController.m_localRigidbody.worldCenterOfMass, "vehicle_pieces_automatic_center_of_mass", Color.yellow, Vector3.up * 0.5f);
     RenderDebugCube(ref vehicleMovementAutomaticCenterOfMassCube, VehicleShipInstance.MovementController.m_body.position + VehicleShipInstance.MovementController.vehicleAutomaticCenterOfMassPoint, "vehicle_automatic_center_of_mass", Color.yellow, Vector3.up * 2);
 
     // vehicle center debugging should be green

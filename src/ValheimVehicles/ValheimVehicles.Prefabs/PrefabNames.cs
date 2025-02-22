@@ -189,13 +189,10 @@ public static class PrefabNames
   }
 
   // material names are always second to last after size names. Direction names are important so they are first
-  public static string GetHullRibCornerName(string materialVariant,
-    DirectionVariant directionVariant)
+  public static string GetHullRibCornerName(string materialVariant)
   {
-    var directionName = GetDirectionName(directionVariant);
     var materialName = GetMaterialVariantName(materialVariant);
-
-    return $"{HullRibCorner}_{directionName}_{materialName}";
+    return $"{HullRibCorner}_{materialName}";
   }
 
   public static string GetHullRibCornerFloorName(string materialVariant,

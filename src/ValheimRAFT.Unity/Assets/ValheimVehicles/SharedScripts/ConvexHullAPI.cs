@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -5,6 +7,8 @@ using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
+
+#endregion
 
 // ReSharper disable ArrangeNamespaceBody
 
@@ -19,10 +23,6 @@ namespace ValheimVehicles.SharedScripts
       Debug,
       Bubble
     }
-
-    // Convex hull calculator instance
-    private static readonly ConvexHullCalculator
-      convexHullCalculator = new();
 
     public static bool CanRenderBubble = true;
 
@@ -51,6 +51,9 @@ namespace ValheimVehicles.SharedScripts
 
     public static string MeshNameTriggerPrefix = $"{MeshNamePrefix}_Preview";
 
+    // shared across all instances, but not created immediately
+    public PhysicMaterial localPhysicMaterial;
+
     public PreviewModes PreviewMode = PreviewModes.Bubble;
 
     [FormerlySerializedAs("sphereEncapsulationBuffer")]
@@ -66,9 +69,32 @@ namespace ValheimVehicles.SharedScripts
 
     public Transform PreviewParent;
 
+    public int convexMeshLayer = 29;
+
+    public bool HasPreviewGeneration = true;
+
+    public Transform m_colliderParentTransform;
+    public Rigidbody m_rigidbody;
+
+    public bool ShouldDestroyOnGenerate;
+    [FormerlySerializedAs("HasFrictionlessMaterial")]
+    public bool HasPhysicMaterial;
+
+    public float PhysicMaterialStaticFriction = 0.01f;
+    public float PhysicMaterialDynamicFriction = 0.02f;
+
+    private Bounds _cachedConvexHullBounds = new(Vector3.zero, Vector3.one * 4);
+
     private List<Vector3> _cachedPoints = new();
 
-    public int convexMeshLayer = 29;
+    // Convex hull calculator instance
+    /// <summary>
+    /// With the current implementation we need multiple ConvexHullApi components otherwise the hullcalculator can collide with itself.
+    ///
+    /// todo Would be worth profiling to see if calling new ConvexHullCalculator would benefit per invocation.
+    /// </summary>
+    private ConvexHullCalculator
+      convexHullCalculator = new();
 
     [NonSerialized] public List<MeshCollider> convexHullMeshColliders = new();
 
@@ -88,9 +114,16 @@ namespace ValheimVehicles.SharedScripts
     public List<MeshRenderer> convexHullPreviewMeshRendererItems = new();
 
     [NonSerialized] public List<GameObject> convexHullTriggerMeshes = new();
+    /// <summary>
+    ///   Allows for additional overrides. This should be a function provided in any
+    ///   class extending ConvexHullAPI
+    /// </summary>
+    /// <param name="val"></param>
+    /// <returns></returns>
+    public Func<string, bool> IsAllowedAsHullOverride = s => false;
 
-    public Transform m_colliderParentTransform;
-    public Rigidbody m_rigidbody;
+    private Transform lastParentTransform;
+    [NonSerialized] public List<MeshCollider> newMeshColliders = new();
 
     private void Awake()
     {
@@ -127,6 +160,28 @@ namespace ValheimVehicles.SharedScripts
       DestroyAllConvexMeshes();
     }
 
+    public void OnDrawGizmos()
+    {
+      if (_cachedConvexHullBounds != null)
+      {
+        Gizmos.color = Color.green;
+        // Gizmos.DrawWireCube(_cachedConvexHullBounds.center + transform.position, _cachedConvexHullBounds.size);
+        Gizmos.DrawWireCube(_cachedConvexHullBounds.center + m_colliderParentTransform.position, Vector3.one);
+      }
+
+      if (!m_rigidbody)
+      {
+        m_rigidbody = GetComponent<Rigidbody>();
+
+      }
+
+      if (m_rigidbody)
+      {
+        Gizmos.color = Color.white;
+        Gizmos.DrawWireCube(m_rigidbody.worldCenterOfMass, Vector3.one);
+      }
+    }
+
     public void InitializeConvexMeshGeneratorApi(PreviewModes mode,
       Material debugMaterial, Material bubbleMaterial, Color debugMaterialColor,
       Color bubbleMaterialColor, string meshNamePrefix,
@@ -139,17 +194,6 @@ namespace ValheimVehicles.SharedScripts
       DebugMaterialColor = debugMaterialColor;
       BubbleMaterial = bubbleMaterial;
       BubbleMaterialColor = bubbleMaterialColor;
-    }
-
-    /// <summary>
-    ///   Allows for additional overrides. This should be a function provided in any
-    ///   class extending ConvexHullAPI
-    /// </summary>
-    /// <param name="val"></param>
-    /// <returns></returns>
-    public virtual bool IsAllowedAsHullOverride(string val)
-    {
-      return false;
     }
 
     public void UpdatePropertiesForConvexHulls(
@@ -541,6 +585,37 @@ namespace ValheimVehicles.SharedScripts
       return false;
     }
 
+    public void AddLocalPhysicMaterial(PhysicMaterial material)
+    {
+      localPhysicMaterial = material;
+      HasPhysicMaterial = true;
+    }
+    /// <summary>
+    /// Applies a PhysicMaterial on to any new convexHullApi generated collider.
+    ///
+    /// Useful for making things frictionless
+    /// </summary>
+    public void AddLocalPhysicMaterial(float dynamicFriction, float staticFriction)
+    {
+      PhysicMaterialDynamicFriction = dynamicFriction;
+      PhysicMaterialStaticFriction = staticFriction;
+
+      AddLocalPhysicMaterial(CreatePhysicMaterial());
+    }
+
+    private PhysicMaterial CreatePhysicMaterial()
+    {
+      if (localPhysicMaterial != null) return localPhysicMaterial;
+      var physicsMaterial = new PhysicMaterial("ConvexHullAPI_local_PhysicMaterial")
+      {
+        dynamicFriction = PhysicMaterialDynamicFriction, // Low friction so it slides over objects
+        staticFriction = PhysicMaterialStaticFriction, // Prevents excessive sticking
+        bounciness = 0.0f, // No bounce effect
+        frictionCombine = PhysicMaterialCombine.Minimum // Ensures lowest friction is used
+      };
+      return physicsMaterial;
+    }
+
     /// <summary>
     ///   Allows only specific gameobjects to match
     /// </summary>
@@ -827,6 +902,35 @@ namespace ValheimVehicles.SharedScripts
       DeleteMeshesFromChildColliders(convexHullTriggerMeshes);
     }
 
+    public void DestroyRemainingColliders(int clusterCount)
+    {
+      // deletes the mesh and associated meshCollider if the next hull clusters is smaller than the current one.
+      var meshesToAddDifference = clusterCount - convexHullMeshes.Count;
+      if (meshesToAddDifference > 0 && convexHullMeshes.Count > 0)
+      {
+        var startIndex = convexHullMeshes.Count + meshesToAddDifference;
+        for (var i = startIndex; i < convexHullMeshes.Count; i++)
+        {
+          var go = convexHullMeshes[i];
+          if (go == null)
+          {
+            continue;
+          }
+
+          var meshCollider = go.GetComponent<MeshCollider>();
+          if (convexHullMeshColliders.Contains(meshCollider))
+          {
+            convexHullMeshColliders.Remove(meshCollider);
+          }
+
+          Destroy(go);
+          convexHullMeshes.RemoveAt(i);
+          // subtract 1 as the array will increment without this.
+          i--;
+        }
+      }
+    }
+
     /// <summary>
     ///   Main generator for convex hull meshes.
     /// </summary>
@@ -842,25 +946,38 @@ namespace ValheimVehicles.SharedScripts
       float distanceThreshold, List<GameObject> childGameObjects,
       Transform? triggerParent = null)
     {
-      DestroyAllConvexMeshes();
+      if (ShouldDestroyOnGenerate)
+      {
+        DestroyAllConvexMeshes();
+      }
+      else
+      {
+        newMeshColliders.Clear();
+      }
+
 
       var hullClusters =
         GroupCollidersByProximity(childGameObjects.ToList(),
           distanceThreshold);
 
-      foreach (var hullCluster in hullClusters)
+      DestroyRemainingColliders(hullClusters.Count);
+
+      for (var index = 0; index < hullClusters.Count; index++)
       {
+        var hullCluster = hullClusters[index];
         var colliderPoints = UseWorld
           ? GetAllColliderPointsAsWorldPoints(hullCluster)
           : GetColliderPointsLocal(hullCluster);
+
         GenerateConvexHullMesh(colliderPoints,
-          targetParentGameObject.transform, offset);
+          targetParentGameObject.transform, offset, index);
       }
 
       CreatePreviewConvexHullMeshes();
 
       if (triggerParent != null) CreateTriggerConvexHullMeshes(triggerParent);
 
+      UpdateConvexHullBounds();
     }
 
     // Create a copy of the mesh that is readable
@@ -915,7 +1032,11 @@ namespace ValheimVehicles.SharedScripts
       {
         var meshRenderer = go.GetComponent<MeshRenderer>();
         if (!meshRenderer) meshRenderer = go.AddComponent<MeshRenderer>();
-        convexHullPreviewMeshRendererItems.Add(meshRenderer);
+
+        if (!convexHullPreviewMeshRendererItems.Contains(meshRenderer))
+        {
+          convexHullPreviewMeshRendererItems.Add(meshRenderer);
+        }
 
         meshRenderer.shadowCastingMode =
           ShadowCastingMode.Off;
@@ -973,9 +1094,9 @@ namespace ValheimVehicles.SharedScripts
         for (var index = 0; index < convexHullMeshes.Count; index++)
         {
           var convexHullMesh = convexHullMeshes[index];
-          var triggerInstance =
-            Instantiate(convexHullMesh, triggerParent);
-          convexHullTriggerMeshes.Add(triggerInstance);
+
+          var triggerInstance = GetOrInstantiateMesh(convexHullMesh, index, triggerParent, convexHullTriggerMeshes);
+
           triggerInstance.transform.localScale = Vector3.one;
 
           // It must remain at the parent position (world position but it will be 0,0,0 local position)
@@ -1014,14 +1135,39 @@ namespace ValheimVehicles.SharedScripts
       return Vector3.one * 1.1f;
     }
 
+    public GameObject GetOrInstantiateMesh(GameObject convexHullMesh, int index, Transform parent, List<GameObject> meshList)
+    {
+      var instance = meshList.Count > index ? meshList[index] : null;
+
+      if (instance == null)
+      {
+        instance =
+          Instantiate(convexHullMesh, parent);
+        if (meshList.Count > index)
+        {
+          meshList[index] = instance;
+        }
+        else
+        {
+          meshList.Add(instance);
+        }
+      }
+
+      return instance;
+    }
+
     /// <summary>
     ///   Preview meshes are to be only used for visual purposes.
     /// </summary>
     public void CreatePreviewConvexHullMeshes()
     {
+      if (!HasPreviewGeneration) return;
+      // if (ShouldDestroyOnGenerate)
+      // {
       DeleteMeshesFromChildColliders(convexHullPreviewMeshes);
       // must clear previews too
       convexHullPreviewMeshRendererItems.Clear();
+      // }
 
       if (PreviewMode == PreviewModes.None) return;
       if (PreviewMode == PreviewModes.Bubble)
@@ -1053,9 +1199,7 @@ namespace ValheimVehicles.SharedScripts
         for (var index = 0; index < convexHullMeshes.Count; index++)
         {
           var convexHullMesh = convexHullMeshes[index];
-          var previewInstance =
-            Instantiate(convexHullMesh, PreviewParent.transform);
-          convexHullPreviewMeshes.Add(previewInstance);
+          var previewInstance = GetOrInstantiateMesh(convexHullMesh, index, PreviewParent, convexHullPreviewMeshes);
 
           var previewMeshCollider =
             previewInstance.GetComponent<MeshCollider>();
@@ -1089,29 +1233,26 @@ namespace ValheimVehicles.SharedScripts
         }
     }
 
-
     public void GenerateConvexHullMesh(
-      List<Vector3> points, Transform parentObjTransform, Vector3 offset)
+      List<Vector3> points, Transform parentObjTransform, Vector3 offset, int meshIndex)
     {
       if (points.Count < 3)
       {
-        Debug.LogError("Not enough points to generate a convex hull.");
+        Debug.LogError($"Not enough points to generate a convex hull. This is for parentObjTransform: {parentObjTransform.name}");
         return;
       }
+
+      if (lastParentTransform != parentObjTransform)
+      {
+        lastParentTransform = parentObjTransform;
+        convexHullCalculator = new ConvexHullCalculator();
+      }
+
 
       var localPoints = points
         .Select(x => parentObjTransform.InverseTransformPoint(x) + offset).ToList();
 
-      UpdateConvexHullBounds(localPoints);
-      // if (convexHullMeshes.Count > 0 &&
-      //     DebugUnityHelpers.Vector3ArrayEqualWithTolerance(
-      //       localPoints.ToArray(), _cachedPoints.ToArray()))
-      //   return;
-
       _cachedPoints = localPoints;
-
-      // Vector3Logger.LogPointsForInspector(localPoints);
-
 
       // Prepare output containers
       var verts = new List<Vector3>();
@@ -1119,6 +1260,7 @@ namespace ValheimVehicles.SharedScripts
       var normals = new List<Vector3>();
 
       // Generate convex hull and export the mesh
+      // let this calculator garbage collect if the parentTransform is different.
       convexHullCalculator.GenerateHull(localPoints, false, ref verts,
         ref tris,
         ref normals);
@@ -1143,31 +1285,47 @@ namespace ValheimVehicles.SharedScripts
         mesh.RecalculateBounds();
       }
 
-      // Create a new GameObject to display the mesh
-      var go =
-        new GameObject(
-          $"{MeshNamePrefix}_{convexHullMeshes.Count}")
-        {
-          layer = LayerHelpers.CustomRaftLayer,
-          transform = { parent = parentObjTransform, position = parentObjTransform.transform.position }
-        };
+      var meshObject = convexHullMeshes.Count > meshIndex ? convexHullMeshes[meshIndex] : null;
 
-      convexHullMeshes.Add(go);
+      // Do not create another mesh instance if it already exists. Doing this require every collider to be ignored.
+      if (meshObject == null)
+      {
+        // Create a new GameObject to display the mesh
+        meshObject =
+          new GameObject(
+            $"{MeshNamePrefix}_{convexHullMeshes.Count}")
+          {
+            layer = LayerHelpers.CustomRaftLayer,
+            transform = { parent = parentObjTransform, position = parentObjTransform.transform.position }
+          };
+        convexHullMeshes.Add(meshObject);
+      }
 
-      var meshCollider = go.AddComponent<MeshCollider>();
-      convexHullMeshColliders.Add(meshCollider);
+      var meshCollider = meshObject.GetComponent<MeshCollider>();
+
+      if (!meshCollider)
+      {
+        meshCollider = meshObject.AddComponent<MeshCollider>();
+      }
+
+      if (HasPhysicMaterial)
+      {
+        meshCollider.material = localPhysicMaterial;
+      }
+
+      if (!convexHullMeshColliders.Contains(meshCollider))
+      {
+        convexHullMeshColliders.Add(meshCollider);
+        newMeshColliders.Add(meshCollider);
+      }
 
       meshCollider.sharedMesh = mesh;
+
       meshCollider.convex = true;
       meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
       meshCollider.includeLayers = LayerHelpers.PhysicalLayers;
       meshCollider.transform.localRotation = Quaternion.identity;
-      //
-      // go.transform.SetParent(parentObjTransform);
-      // go.transform.position = parentObjTransform.transform.position;
     }
-
-    private Bounds _cachedConvexHullBounds = new(Vector3.zero, Vector3.one * 4);
 
     /// <summary>
     /// Returns the sum of all convexHulls as a bounds, this can be non-relative but requires a transform.
@@ -1187,36 +1345,50 @@ namespace ValheimVehicles.SharedScripts
 
     /// <summary>
     /// This needs to be manually called after GenerateMeshesFromChildColliders is invoked in order to regenerate the accurate colliders.
+    ///
+    /// This is heavier than using local points, but it should prevent issues with transform mutating the local meshcollider actual point position.
     /// </summary>
-    public void UpdateConvexHullBounds(List<Vector3> localPoints)
+    public void UpdateConvexHullBounds()
     {
-      if (localPoints.Count < 0) return;
-      var convexHullBounds = new Bounds(localPoints[0], Vector3.zero);
-      localPoints.ForEach(x => convexHullBounds.Encapsulate(x));
-      _cachedConvexHullBounds = convexHullBounds;
-     }
+      // var localBounds = new Bounds();
+      var localPoints = convexHullMeshColliders.SelectMany(x => x.sharedMesh.vertices).Select(x => transform.TransformPoint(x)).Select(x => transform.InverseTransformPoint(x)).ToList();
 
-    public void OnDrawGizmos()
-    {
-      if (_cachedConvexHullBounds != null)
+      // foreach (var meshCollider in convexHullMeshColliders)
+      // {
+
+      // var meshTransform = meshCollider.transform;
+      //
+      // // Get mesh vertices in world space
+      // var worldVertices = meshCollider.sharedMesh.vertices
+      //   .Select(v => meshTransform.TransformPoint(v)) // Convert local to world
+      //   .ToArray();
+      //
+      // // Compute world-space bounds
+      // var worldBounds = new Bounds(worldVertices[0], Vector3.zero);
+      // foreach (var vertex in worldVertices)
+      // {
+      //   worldBounds.Encapsulate(vertex);
+      // }
+      //
+      // // Transform world bounds back into local space of the parent
+      // var parentTransform = meshTransform.parent;
+      // if (parentTransform)
+      // {
+      //   // Convert world-space bounds back to parent's local space
+      //   var localMin = parentTransform.InverseTransformPoint(worldBounds.min);
+      //   var localMax = parentTransform.InverseTransformPoint(worldBounds.max);
+      //
+      //   // Compute final local-space bounds
+      //   localBounds.SetMinMax(localMin, localMax);
+      // }
+      // }
+      //
+      if (localPoints.Count > 0)
       {
-        Gizmos.color = Color.green;
-        // Gizmos.DrawWireCube(_cachedConvexHullBounds.center + transform.position, _cachedConvexHullBounds.size);
-        Gizmos.DrawWireCube(_cachedConvexHullBounds.center + m_colliderParentTransform.position, Vector3.one);
+        var convexHullBounds = new Bounds(localPoints[0], Vector3.zero);
+        localPoints.ForEach(x => convexHullBounds.Encapsulate(x));
+        _cachedConvexHullBounds = convexHullBounds;
       }
-
-      if (!m_rigidbody)
-      {
-        m_rigidbody = GetComponent<Rigidbody>();
-
-      }
-
-      if (m_rigidbody)
-      {
-        Gizmos.color = Color.white;
-        Gizmos.DrawWireCube(m_rigidbody.worldCenterOfMass, Vector3.one);
-      }
-
     }
   }
 }

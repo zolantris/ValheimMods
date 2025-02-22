@@ -681,7 +681,7 @@ public class VehicleCommands : ConsoleCommand
     if (pendingPiecesString == string.Empty) pendingPiecesString = "None";
 
     var piecesString = string.Join(",",
-      pieceController.m_pieces?.Select(x => x.name) ?? []);
+      pieceController.m_nviewPieces?.Select(x => x.name) ?? []);
 
     // todo swap all m_players to OnboardController.characterData check instead.
     var playersOnVehicle =

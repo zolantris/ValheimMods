@@ -616,7 +616,10 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
       hit.m_damage = GetDamage();
       hit.m_pushForce = m_attackForce * multiplier1 * multiplier2;
       hit.m_backstabBonus = m_backstabBonus;
-      hit.m_point = flag3 ? transform.position : hitPoint;
+
+      // must always be the hitpoint origin otherwise it will not damage thedestructible object
+      hit.m_point = hitPoint;
+      
       hit.m_dir = vector3;
       hit.m_statusEffectHash = GetStatusEffect(character);
       var hitData = hit;
@@ -629,7 +632,7 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
         : (byte)Game.m_worldLevel;
       hit.m_dodgeable = m_dodgeable;
       hit.m_blockable = m_blockable;
-      hit.m_ranged = true;
+      hit.m_ranged = false;
       hit.m_ignorePVP =
         (UnityEngine.Object)m_owner == (UnityEngine.Object)character ||
         m_ignorePVP;

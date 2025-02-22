@@ -3,6 +3,9 @@ using ValheimVehicles.Helpers;
 
 namespace ValheimVehicles.Config;
 
+/// <summary>
+/// Aggregation of all Ram and vehicle impact damages. These are all AOE impacts.
+/// </summary>
 public static class RamConfig
 {
   public static ConfigFile Config { get; private set; }
@@ -39,18 +42,8 @@ public static class RamConfig
 
   public static ConfigEntry<float> MaxVelocityMultiplier { get; set; } = null!;
 
-  public static ConfigEntry<float> MaxVehicleHullImpactDamage { get; set; } =
-    null!;
-
-  public static ConfigEntry<float> BaseVehicleHullImpactDamage { get; set; } =
-    null!;
-
   public static ConfigEntry<float>
     VehicleHullMassMultiplierDamage { get; set; } =
-    null!;
-
-  public static ConfigEntry<bool>
-    VehicleHullUsesPickaxeAndChopDamage { get; set; } =
     null!;
 
 
@@ -174,33 +167,11 @@ public static class RamConfig
         "Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.",
         true, true));
 
-    const string VehicleHullImpactDescription =
-      "damage a vehicle can do to a rock or other object it hits.";
-    MaxVehicleHullImpactDamage = config.Bind(SectionName,
-      "MaxVehicleHullImpactDamage",
-      9000f,
-      ConfigHelpers.CreateConfigDescription(
-        $"The maximum {VehicleHullImpactDescription}",
-        true, true));
-    BaseVehicleHullImpactDamage = config.Bind(SectionName,
-      "MinVehicleHullImpactDamage",
-      50f,
-      ConfigHelpers.CreateConfigDescription(
-        $"The minimum {VehicleHullImpactDescription}",
-        true, true));
-
     VehicleHullMassMultiplierDamage = config.Bind(SectionName,
       "VehicleHullMassMultiplierDamage",
       0.1f,
       ConfigHelpers.CreateConfigDescription(
         $"Multiplier per each single point of mass the vehicle has how much additional damage is done, multiplied by the velocity.",
-        true, true));
-
-    VehicleHullUsesPickaxeAndChopDamage = config.Bind(SectionName,
-      "VehicleHullUsesPickaxeAndChopDamage",
-      true,
-      ConfigHelpers.CreateConfigDescription(
-        $"Makes the vehicle hit with a pickaxe and chop damage effect. This will make the vehicle effective against trees and rocks. Also some rocks normally not destroyable will be IE Spires. Damage is split 66% to pickaxe and 33% to chop damage.",
         true, true));
 
     HullToolTier = config.Bind(SectionName,
@@ -218,7 +189,7 @@ public static class RamConfig
         true, true));
 
     const int tierDiff = 2;
-    const float defaultDamagePerTier = .25f;
+    const float defaultDamagePerTier = 0.25f;
     const int baseDamage = 1;
     DamageIncreasePercentagePerTier = config.Bind(SectionName,
       "DamageIncreasePercentagePerTier",

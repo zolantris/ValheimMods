@@ -264,31 +264,24 @@ public abstract class PrefabRegistryHelpers
     const string pieceName = $"${pieceBaseName}";
     const string pieceDescription = $"${pieceBaseName}_desc";
     const string iconBaseName = "hull_rib_corner";
-
-    List<PrefabNames.DirectionVariant> directionVariants =
-      [PrefabNames.DirectionVariant.Left, PrefabNames.DirectionVariant.Right];
+    
     List<string> materialVariants =
       [ShipHulls.HullMaterial.Wood, ShipHulls.HullMaterial.Iron];
 
-    foreach (var directionVariant in directionVariants)
+    foreach (var materialVariant in materialVariants)
     {
-      var directionName = PrefabNames.GetDirectionName(directionVariant);
-      foreach (var materialVariant in materialVariants)
+      var materialName = materialVariant.ToLower();
+      var prefabName = PrefabNames.GetHullRibCornerName(materialVariant);
+      var pieceData = new PieceData()
       {
-        var materialName = materialVariant.ToLower();
-        var prefabName = PrefabNames.GetHullRibCornerName(materialVariant,
-          directionVariant);
-        var pieceData = new PieceData()
-        {
-          Name =
-            $"{pieceName} $valheim_vehicles_material_{materialName} $valheim_vehicles_direction_{directionName}",
-          Description = pieceDescription,
-          Icon = spriteAtlas.GetSprite(
-            $"{iconBaseName}_{directionName}_{materialName}")
-        };
+        Name =
+          $"{pieceName} $valheim_vehicles_material_{materialName}",
+        Description = pieceDescription,
+        Icon = spriteAtlas.GetSprite(
+          $"{iconBaseName}_{materialName}")
+      };
 
-        PieceDataDictionary.Add(prefabName, pieceData);
-      }
+      PieceDataDictionary.Add(prefabName, pieceData);
     }
   }
 
@@ -791,6 +784,25 @@ public abstract class PrefabRegistryHelpers
     Transform parent,
     string[]? hoistParentNameFilters = null)
   {
+    var snappointParent = prefab.transform.Find("snappoints");
+    if (snappointParent == null)
+    {
+      snappointParent = parent.transform.Find("snappoints");
+    }
+
+    if (snappointParent != null)
+    {
+      for (var i = 0; i < snappointParent.childCount; i++)
+      {
+        var transformObj = snappointParent.GetChild(i);
+        // changing parent makes the current childCount immediately drop.
+        transformObj.SetParent(prefab.transform);
+        transformObj.gameObject.SetActive(false);
+        i--;
+      }
+      return;
+    }
+    
     var transformObjs = parent.GetComponentsInChildren<Transform>(true);
     foreach (var transformObj in transformObjs)
     {

@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿#region
+
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
+
+#endregion
+
 namespace ValheimVehicles.SharedScripts
 {
   /// <summary>
@@ -12,15 +15,49 @@ namespace ValheimVehicles.SharedScripts
     public Rigidbody m_syncRigidbody;
     public Rigidbody m_localRigidbody;
     public VehicleWheelController m_vehicleWheelController;
+    public VehicleCollisionManager m_vehicleCollisionManager;
 
+    public bool m_shouldSync = true;
+    public readonly List<GameObject> vehiclePieces = new();
     public virtual void Awake()
     {
       m_localRigidbody = GetComponent<Rigidbody>();
+      m_vehicleCollisionManager = gameObject.AddComponent<VehicleCollisionManager>();
+      AddAllChildrenToIgnores(transform);
     }
 
+#if UNITY_EDITOR
     public void FixedUpdate()
     {
-      m_localRigidbody.Move(m_syncRigidbody.position, m_syncRigidbody.rotation);
+      CustomFixedUpdate();
+    }
+#endif
+    public virtual void CustomFixedUpdate()
+    {
+      if (m_shouldSync)
+      {
+        m_localRigidbody.Move(m_syncRigidbody.position, m_syncRigidbody.rotation);
+      }
+    }
+
+    public void AddAllChildrenToIgnores(Transform targetTransform)
+    {
+      foreach (Transform child in targetTransform)
+      {
+        m_vehicleCollisionManager.AddObjectToVehicle(child.gameObject);
+      }
+    }
+
+    public void OnPieceAdded(GameObject piece)
+    {
+      piece.transform.SetParent(transform, false);
+      vehiclePieces.Add(piece);
+      // OnPieceAddedIgnoreAllColliders(piece);
+    }
+
+    internal void OnPieceAddedIgnoreAllColliders(GameObject piece)
+    {
+      m_vehicleCollisionManager.AddObjectToVehicle(piece);
     }
   }
 }
