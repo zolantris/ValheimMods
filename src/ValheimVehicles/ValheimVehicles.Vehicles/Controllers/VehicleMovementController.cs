@@ -1494,7 +1494,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     m_body.centerOfMass = centerOfMass;
     m_body.automaticCenterOfMass = false;
   }
-
+  public RigidbodyConstraints FreezeXZRotation = RigidbodyConstraints.FreezeRotationZ | RigidbodyConstraints.FreezeRotationX;
   public void UpdateLandVehicleStats()
   {
     m_body.angularDrag = PhysicsConfig.landAngularDrag.Value;
@@ -1502,9 +1502,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     m_body.maxAngularVelocity = PhysicsConfig.MaxAngularVelocity.Value;
     m_body.maxLinearVelocity = PhysicsConfig.MaxLinearVelocity.Value;
 
-    if (m_body.freezeRotation != !PhysicsConfig.VehicleLandAllowXZRotation.Value)
+    if (PhysicsConfig.VehicleLandLockXZRotation.Value)
     {
-      m_body.freezeRotation = !PhysicsConfig.VehicleLandAllowXZRotation.Value;
+      UpdateAndFreezeRotation();
+    }
+    else
+    {
+      if (m_body.constraints == FreezeBothXZ)
+        m_body.constraints = RigidbodyConstraints.None;
     }
   }
 

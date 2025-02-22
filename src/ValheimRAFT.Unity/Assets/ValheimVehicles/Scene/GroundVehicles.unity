@@ -5748,10 +5748,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   accelerationType: 1
   inputTurnForce: 0
-  inputMovement: 1
+  inputMovement: 0.2
   MaxWheelRPM: 3000
   turnInputOverride: 0
-  UseInputControls: 1
+  UseInputControls: 0
   maxTreadLength: 40
   maxTreadWidth: 40
   Override_WheelBottomOffset: 0
@@ -5829,6 +5829,8 @@ MonoBehaviour:
   IsOnGround: 0
   dampingDuration: 1
   angularDampingDuration: 1
+  maxHillFactorMultiplier: 10
+  ShouldApplyDownwardsForceOnSlop: 1
 --- !u!1 &8225528950328919720
 GameObject:
   m_ObjectHideFlags: 0

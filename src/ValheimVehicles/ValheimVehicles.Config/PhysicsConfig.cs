@@ -43,7 +43,7 @@ public static class PhysicsConfig
 
   public static ConfigEntry<float> VehicleLandTurnSpeed = null!;
   public static ConfigEntry<float> VehicleCenterOfMassOffset = null!;
-  public static ConfigEntry<bool> VehicleLandAllowXZRotation = null!;
+  public static ConfigEntry<bool> VehicleLandLockXZRotation = null!;
   public static ConfigEntry<float> VehicleLandSuspensionDistance = null!;
   public static ConfigEntry<float> VehicleLandWheelSuspensionSpring = null!;
   public static ConfigEntry<float> VehicleLandWheelSuspensionSpringDamper = null!;
@@ -286,11 +286,11 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "Max length the treads can expand to.", true, false, new AcceptableValueRange<int>(4, 100)));
 
-    VehicleLandAllowXZRotation = Config.Bind(PropulsionSection,
-      "VehicleLand AllowXZRotation",
-      true,
+    VehicleLandLockXZRotation = Config.Bind(PropulsionSection,
+      "VehicleLand LockXZRotation",
+      false,
       ConfigHelpers.CreateConfigDescription(
-        "Allow XZ rotation. Can make a vehicle flip/tilt. But is much more realistic. Look at centerofmassoffset for ways to make the vehicle more stable", true, false));
+        "Prevents XZ rotation on landvehicles. Vehicles will always remain perfectly flat to horizon", true, false));
     VehicleLandWheelMass = Config.Bind(PropulsionSection,
       "VehicleLand WheelMass",
       200f,

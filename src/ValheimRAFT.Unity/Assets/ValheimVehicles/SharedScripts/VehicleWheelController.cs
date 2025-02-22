@@ -184,7 +184,7 @@ namespace ValheimVehicles.SharedScripts
 
     [Tooltip("Toggle between wheel-collider torque and direct tread physics.")]
     public bool useDirectTreadPhysics = true;
-    public bool useWheelTorquePhysics = false;
+    public bool useWheelTorquePhysics;
 
     public Bounds currentVehicleFrameBounds = new(Vector3.zero, Vector3.one * 5);
 
@@ -208,6 +208,9 @@ namespace ValheimVehicles.SharedScripts
     public bool IsOnGround;
     public float dampingDuration = 0.5f; // Time to fully eliminate sideways velocity
     public float angularDampingDuration = 0.25f; // Time to eliminate angular Y velocity
+
+    public float maxHillFactorMultiplier = 3f;
+    public bool ShouldApplyDownwardsForceOnSlop = true;
     // Set to false until it's stable/syncs with the treads.
     [Tooltip("Wheels that provide power and move the tank forwards/reverse.")]
     public readonly List<WheelCollider> poweredWheels = new();
@@ -911,14 +914,14 @@ namespace ValheimVehicles.SharedScripts
 
       if (treadsLeftMovingComponent && treadsRightMovingComponent)
       {
-        var lerpedSpeed = Mathf.Lerp(0f, 8f, (inputMovement * baseAcceleration + lerpedTurnFactor * baseTurnAccelerationMultiplier) / highAcceleration);
-        var clampedSpeed = Mathf.Clamp(lerpedSpeed, 0f, 8f);
-        if (inputMovement > 0 && Mathf.Approximately(clampedSpeed, 0))
+        var lerpTime = Mathf.Clamp01(Mathf.Abs(inputMovement) * baseAcceleration + lerpedTurnFactor * baseTurnAccelerationMultiplier / highAcceleration);
+        var lerpSpeed = Mathf.Lerp(0f, 8f, lerpTime);
+        if (inputMovement > 0 && Mathf.Approximately(lerpSpeed, 0))
         {
-          clampedSpeed = 0.5f;
+          lerpSpeed = 0.5f;
         }
-        treadsLeftMovingComponent.SetSpeed(clampedSpeed);
-        treadsRightMovingComponent.SetSpeed(clampedSpeed);
+        treadsLeftMovingComponent.SetSpeed(lerpSpeed);
+        treadsRightMovingComponent.SetSpeed(lerpSpeed);
         UpdateSteeringTreadDirectionVisuals();
       }
 
@@ -962,7 +965,7 @@ namespace ValheimVehicles.SharedScripts
     {
       if (bounds.size.x < 4f || bounds.size.y < 4f || bounds.size.z < 4f)
       {
-        var size = new Vector3(Mathf.Max(bounds.size.x, 4f), Mathf.Max(bounds.size.y, 0.2f), Mathf.Max(bounds.size.z, 4f));
+        var size = new Vector3(Mathf.Max(bounds.size.x, 2f), Mathf.Max(bounds.size.y, 2f), Mathf.Max(bounds.size.z, 2f));
         var center = bounds.center;
         // if (bounds.size.y < 4f)
         // {
@@ -1418,24 +1421,17 @@ namespace ValheimVehicles.SharedScripts
       switch (inputTurnForce)
       {
         case > 0.2f:
-          isLeftForward = true;
-          isRightForward = false;
+          isLeftForward = isForward;
+          isRightForward = !isForward;
           break;
         case < -0.2f:
-          isLeftForward = false;
-          isRightForward = true;
+          isLeftForward = !isForward;
+          isRightForward = isForward;
           break;
         default:
           isLeftForward = isForward;
           isRightForward = isForward;
           break;
-      }
-
-      // inverse the directions
-      if (!isForward)
-      {
-        isLeftForward = !isLeftForward;
-        isRightForward = !isRightForward;
       }
 
       treadsLeftMovingComponent.isForward = isLeftForward;
@@ -1450,9 +1446,6 @@ namespace ValheimVehicles.SharedScripts
       var maxTotalTorque = baseMotorTorque * baseTorque * 4;
       MaxWheelRPM = Mathf.Clamp(Mathf.Abs(maxTotalTorque), 1000f, 5000f);
     }
-
-    public float maxHillFactorMultiplier = 3f;
-    public bool ShouldApplyDownwardsForceOnSlop = true;
     // Adjusts hillFactor based on the tank's forward Y component.
     // Flat (forward.y == 0) results in hillFactor = 1.
     // Uphill (forward.y positive) scales hillFactor up to 3.
