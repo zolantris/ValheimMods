@@ -536,6 +536,42 @@ Other methods removed after 2.5.0
 
 ## Physics: Propulsion
 
+### VehicleLand LockXZRotation 
+- Description: Prevents XZ rotation on landvehicles DEBUG ONLY. Vehicles will always remain perfectly flat to horizon but this will limit upwards/downwards angular traversal
+- Default Value: False
+
+### VehicleLand WheelMass 
+- Description: The weight per wheel of the vehicle. This will allow more traction, but could slow down the vehicle at higher values. Experimental only
+- Default Value: 200
+
+### LandVehicle WheelRadius 
+- Description: Wheel radius. Larger wheels have more traction. But may be less realistic.
+- Default Value: 1
+
+### LandVehicle ShouldHideWheels 
+- Description: Hides the wheel visual as wheels are not perfectly synced.
+- Default Value: False
+
+### LandVehicle ShouldSyncWheelPositions 
+- Description: Toggles syncing of wheels to their actual collider position. Can cause desync with tracks.
+- Default Value: False
+
+### LandVehicle Suspension Distance 
+- Description: Distance suspension distance between vehicle position and wheel position. Higher values push the vehicle up and make it more bouncy.
+- Default Value: 2.25
+
+### LandVehicle SuspensionSpring 
+- Description: Suspension spring value. This will control how much the vehicle bounces when it drops. No suspension will be a bit jarring but high suspension can cause lots of screen jump. Ensure a higher SuspensionSpringDamper to fix the bounce continuing.
+- Default Value: 35000
+
+### LandVehicle SuspensionSpringDamper 
+- Description: Suspension spring damper value. This will control how much the vehicle stops bouncing. Higher values must be supplied for higher suspension spring values.
+- Default Value: 1500
+
+### LandVehicle wheelSuspensionSpringTarget 
+- Description: Suspension target. Between 0 and 1 it will determine the target spring position. This can allow for high suspension but also high targets
+- Default Value: 0.4
+
 ### Rudder Back Speed 
 - Description: Set the Back speed of rudder, this will apply with sails
 - Default Value: 1
@@ -570,7 +606,7 @@ Other methods removed after 2.5.0
 
 ### LandVehicle Turn Speed 
 - Description: Turn speed for landvehicles. Zero is half the normal speed, 50% is normal speed, and 100% is double normal speed.
-- Default Value: 0
+- Default Value: 0.5
 
 ### LandVehicle Max Tread Width 
 - Description: Max width the treads can expand to.
@@ -580,61 +616,21 @@ Other methods removed after 2.5.0
 - Description: Max length the treads can expand to.
 - Default Value: 20
 
-### VehicleLand LockXZRotation 
-- Description: Prevents XZ rotation on landvehicles. Vehicles will always remain perfectly flat to horizon
-- Default Value: False
-
-### VehicleLand WheelMass 
-- Description: The weight per wheel of the vehicle. This will allow more traction, but could slow down the vehicle at higher values. Experimental only
-- Default Value: 200
-
 ### Vehicle CenterOfMassOffset 
 - Description: Offset the center of mass by a percentage of vehicle total height. Should always be a positive number. Higher values will make the vehicle more sturdy as it will pivot lower. Too high a value will make the ship behave weirdly possibly flipping. 0 will be the center of all colliders within the physics of the vehicle. 100% will be 50% lower than the vehicle's collider. 50% will be the very bottom of the vehicle's collider.
 - Default Value: 0.65
 
-### LandVehicle Suspension Distance 
-- Description: Distance suspension distance between vehicle position and wheel position. Higher values push the vehicle up and make it more bouncy.
-- Default Value: 2.25
-
-### LandVehicle WheelRadius 
-- Description: Wheel radius. Larger wheels have more traction. But may be less realistic.
-- Default Value: 1
-
-### LandVehicle WheelOffset 
-- Description: Wheel offset. Allowing for raising the wheels higher. May require increasing suspension distance so the wheels spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the wheels
-- Default Value: 0
-
-### LandVehicle ShouldHideWheels 
-- Description: Hides the wheel visual as wheels are not perfectly synced.
-- Default Value: False
-
-### LandVehicle ShouldSyncWheelPositions 
-- Description: Toggles syncing of wheels to their actual collider position. Can cause desync with tracks.
-- Default Value: False
-
-### LandVehicle SuspensionSpring 
-- Description: Suspension spring value. This will control how much the vehicle bounces when it drops. No suspension will be a bit jarring but high suspension can cause lots of screen jump. Ensure a higher SuspensionSpringDamper to fix the bounce continuing.
-- Default Value: 35000
-
-### LandVehicle SuspensionSpringDamper 
-- Description: Suspension spring damper value. This will control how much the vehicle stops bouncing. Higher values must be supplied for higher suspension spring values.
-- Default Value: 1500
-
-### LandVehicle wheelSuspensionSpringTarget 
-- Description: Suspension target. Between 0 and 1 it will determine the target spring position. This can allow for high suspension but also high targets
-- Default Value: 0.4
-
 ## Vehicle Physics
 
-### flightDamping_3.0.0 
+### flightDamping_3.0.1 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.0.0 
+### flightSidewaysDamping_3.0.1 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.0.0 
+### flightAngularDamping_3.0.1 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -654,15 +650,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1.2
 
-### forceDistance_3.0.0 
+### forceDistance_3.0.1 
 - Description: EXPERIMENTAL_FORCE_DISTANCE
 - Default Value: 1
 
-### force_3.0.0 
+### force_3.0.1 
 - Description: EXPERIMENTAL_FORCE
 - Default Value: 1
 
-### backwardForce_3.0.0 
+### backwardForce_3.0.1 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -670,15 +666,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1
 
-### waterDamping_3.0.0 
+### waterDamping_3.0.1 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.0.0 
+### waterSidewaysDamping_3.0.1 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.0.0 
+### waterAngularDamping_3.0.1 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -694,15 +690,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 0.8
 
-### submersibleDamping_3.0.0 
+### submersibleDamping_3.0.1 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.0.0 
+### submersibleSidewaysDamping_3.0.1 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.0.0 
+### submersibleAngularDamping_3.0.1 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -730,6 +726,14 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1.2
 
+## Physics: Propulsion
+
+### LandVehicle TreadOffset 
+- Description: Wheel offset. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads
+- Default Value: 0
+
+## Vehicle Physics
+
 ### MaxVehicleLinearVelocity 
 - Description: Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 20. Higher values will increase potential of vehicle flying off to space
 - Default Value: 10
@@ -749,10 +753,10 @@ Other methods removed after 2.5.0
 - Default Value: Custom
 
 ### HullFloatation Custom Offset 
-- Description: Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
+- Description: DEPRECATED!!! Will be removed soon, values of -2 and 2 are allowed. Anything above means you are likely not using this correctly. Please use CenterOfMass instead if your vehicle needs to pivot lower. Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
 - Default Value: 0
 
-### EnableExactVehicleBounds_3.0.0 
+### EnableExactVehicleBounds_3.0.1 
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version
 - Default Value: True
 
@@ -800,9 +804,9 @@ Other methods removed after 2.5.0
 
 ## Vehicle Physics
 
-### removeCameraCollisionWithObjectsOnBoat 
-- Description: EXPERIMENTAL removes all collision of camera for objects on boat. Should significantly lower jitter when camera smashes into objects on boat it will force camera through it instead of pushing rapidly forward with vehicle force too.
-- Default Value: True
+### EXPERIMENTAL removeCameraCollisionWithObjectsOnBoat 
+- Description: EXPERIMENTAL removes all collision of camera for objects on boat. Should significantly lower jitter when camera smashes into objects on boat it will force camera through it instead of pushing rapidly forward with vehicle force too. This will cause objects to pop in and out of view.
+- Default Value: False
 
 ### waterDeltaForceMultiplier 
 - Description: Water delta force multiplier

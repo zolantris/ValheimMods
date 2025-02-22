@@ -5,6 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca26c040-1a50-419b-8729-0605793a97f8" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.ValheimMods/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ValheimMods/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs" beforeDir="false" afterPath="$PROJECT_DIR$/libs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/PlanBuild.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/PlanBuild.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/PlatformTools.Core.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/PlatformTools.Core.dll" afterDir="false" />
@@ -14,17 +15,7 @@
       <change beforePath="$PROJECT_DIR$/libs/assembly_utils.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/assembly_utils.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/assembly_valheim.dll" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/libs/gui_framework.dll" beforeDir="false" afterPath="$PROJECT_DIR$/libs/gui_framework.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_left_iron.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_left_wood.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_right_iron.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_corner_right_iron.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_iron.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_iron.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_iron_2x2.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/hull_rib_prow_iron_2x2.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/nautilus.png" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/GeneratedIcons/nautilus.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/hull_rib_corner_universal_iron.prefab" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Prefabs/hull_rib_corner_universal_wood.prefab" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/GroundVehicles.unity" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimRAFT.Unity/Assets/ValheimVehicles/Scene/GroundVehicles.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/PrefabNames.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/PrefabNames.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryHelpers.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Prefabs/PrefabRegistryHelpers.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,6 +54,7 @@
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/3d6c0041788c43b8a666c81e9de881f7216c0/46/59907566/Collision.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/3d6c0041788c43b8a666c81e9de881f7216c0/46/73419834/Collider.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/3d6c0041788c43b8a666c81e9de881f7216c0/53/2f9e1d14/Rigidbody.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/3d6c0041788c43b8a666c81e9de881f7216c0/8b/5edf9ce8/Collision.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/3d6c0041788c43b8a666c81e9de881f7216c0/9d/e658a390/Collider.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/3d6c0041788c43b8a666c81e9de881f7216c0/a2/bba55689/Rigidbody.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/3d6c0041788c43b8a666c81e9de881f7216c0/a8/4c9b30c9/Physics.cs" root0="FORCE_HIGHLIGHTING" />
@@ -184,6 +176,7 @@
     <setting file="file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehiclePiecesController.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Structs/ShipFloatation.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/AnimSetTrigger.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/AnimalAI.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Aoe.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/AssetMemoryUsagePolicy.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../valheim_extracted_versions/0.219.1/Attack.cs" root0="FORCE_HIGHLIGHTING" />
@@ -461,7 +454,7 @@
       <workItem from="1739775924805" duration="24977000" />
       <workItem from="1740018743858" duration="7094000" />
       <workItem from="1740183596667" duration="8243000" />
-      <workItem from="1740198588003" duration="13724000" />
+      <workItem from="1740198588003" duration="16601000" />
     </task>
     <servers />
   </component>
@@ -544,13 +537,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs</url>
-          <line>1387</line>
+          <line>1398</line>
           <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs" containingFunctionPresentation="Method 'GetForwardVelocity'">
             <startOffsets>
-              <option value="40228" />
+              <option value="40820" />
             </startOffsets>
             <endOffsets>
-              <option value="40251" />
+              <option value="40843" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="760" />
@@ -567,19 +560,6 @@
             </endOffsets>
           </properties>
           <option name="timeStamp" value="827" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs</url>
-          <line>879</line>
-          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs" containingFunctionPresentation="Method 'ClampVehicleAcceleration'">
-            <startOffsets>
-              <option value="23901" />
-            </startOffsets>
-            <endOffsets>
-              <option value="23935" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="838" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehiclePiecesController.cs</url>
@@ -658,6 +638,19 @@
             </endOffsets>
           </properties>
           <option name="timeStamp" value="887" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/src/ValheimVehicles/ValheimVehicles.Vehicles/Controllers/VehicleMovementController.cs</url>
+          <line>457</line>
+          <properties documentPath="C:\Users\fre\dev\repos\ValheimMods\src\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleMovementController.cs" containingFunctionPresentation="Method 'OnCollisionStay'">
+            <startOffsets>
+              <option value="12831" />
+            </startOffsets>
+            <endOffsets>
+              <option value="12975" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="916" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

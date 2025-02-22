@@ -454,6 +454,23 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       return;
     }
 
+#if DEBUG
+    // allows landvehicles within the vehicle, requires a PiecesController reparent likely.
+    if (collision.relativeVelocity.magnitude < 2 && collision.transform.root.name.StartsWith(PrefabNames.LandVehicle) && collision.contactCount > 0)
+    {
+      // should only ignore for convexHull collider (not the damage trigger variant)
+      var thisCollider = collision.contacts[0].thisCollider;
+      if (thisCollider.name.StartsWith("ValheimVehicles_ConvexHull") || thisCollider.name.StartsWith("convex_tread_collider"))
+      {
+        Physics.IgnoreCollision(collision.collider, thisCollider, true);
+      }
+      if (transform.root.name.StartsWith(PrefabNames.LandVehicle))
+      {
+        PiecesController.AddTemporaryPiece(transform.root.GetComponent<ZNetView>());
+      }
+    }
+#endif
+
     if (vehicleRam != null && LayerHelpers.IsContainedWithinMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayers))
     {
       vehicleRam.OnCollisionEnterHandler(collision);
