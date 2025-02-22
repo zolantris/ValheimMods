@@ -10,7 +10,7 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>3.0.1</ApplicationVersion>
+        <ApplicationVersion>3.0.2</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>
@@ -136,9 +136,6 @@
         <Reference Include="PlanBuild">
             <HintPath>$(SolutionDir)\libs\PlanBuild.dll</HintPath>
             <Private>False</Private>
-        </Reference>
-        <Reference Include="UnityEngine.VehiclesModule">
-            <HintPath>..\..\..\..\..\..\..\Program Files\Unity\Hub\Editor\2022.3.17f1\Editor\Data\Managed\UnityEngine\UnityEngine.VehiclesModule.dll</HintPath>
         </Reference>
     </ItemGroup>
 

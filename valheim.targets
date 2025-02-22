@@ -198,6 +198,11 @@
             <HintPath>$(ManagedDataPath)\Unity.TextMeshPro.dll</HintPath>
             <Private>False</Private>
         </Reference>
+        <Reference Include="Unity.VehiclesModule">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>$(ManagedDataPath)\UnityEngine.VehiclesModule.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
         <Reference Include="UnityEngine.UI">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>$(ManagedDataPath)\UnityEngine.UI.dll</HintPath>
