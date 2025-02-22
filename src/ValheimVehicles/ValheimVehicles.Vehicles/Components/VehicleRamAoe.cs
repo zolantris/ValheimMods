@@ -127,6 +127,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
   public void InitAoe()
   {
+    m_attackForce = 0f;
     base.Awake();
   }
 
@@ -418,10 +419,19 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     }
 
     var character = collider.GetComponentInParent<Character>();
-    if (character != null && WaterZoneUtils.IsOnboard(character))
+    if (character != null)
     {
-      IgnoreCollider(collider);
-      return true;
+      if (character.IsTeleporting())
+      {
+        m_vehicle.MovementController.StartPlayerCollisionAfterTeleport(collider, character);
+        return true;
+      }
+
+      if (WaterZoneUtils.IsOnboard(character))
+      {
+        IgnoreCollider(collider);
+        return true;
+      }
     }
 
     if (m_vehicle != null)

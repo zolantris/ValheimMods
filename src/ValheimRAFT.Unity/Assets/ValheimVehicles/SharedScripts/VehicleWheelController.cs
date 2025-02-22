@@ -17,11 +17,7 @@ using Vector3 = UnityEngine.Vector3;
 namespace ValheimVehicles.SharedScripts
 {
   /// <summary>
-  ///   Meant to replace ValheimVehicle.Component.MovementController for integration
-  ///   within unity.
-  ///   - This will only interface with built-in unity project values.
-  ///   MovementController from ValheimVehicles will then override properties and/or
-  ///   set defaults. 
+  /// Controls all LandVehicle Wheel and Force Settings.
   /// </summary>
   [RequireComponent(typeof(Rigidbody))]
   public class VehicleWheelController : MonoBehaviour
@@ -48,20 +44,16 @@ namespace ValheimVehicles.SharedScripts
     private const float uphillTorqueMultiplier = 1.5f; // Adjust for hill climbing power
     private const float downhillResistance = 500f; // Torque to counteract rolling backward
     private const float stabilityCorrectionFactor = 200f;
-    private const float downforceAmount = 50f;
     private const float baseAccelerationMultiplier = 30f;
     public const float defaultTurnAccelerationMultiplier = 10f;
     private const float _lastTerrainTouchTimeExpiration = 1f;
     public static float baseTurnAccelerationMultiplier = defaultTurnAccelerationMultiplier;
-
-    private static Vector3 wheelMeshLocalScale = new(3f, 0.3f, 3f);
-
+    
     public static float defaultBreakForce = 500f;
 
-    public static readonly Bounds VehicleFrameBoundsDefault = new(Vector3.up * 2, new Vector3(4f, 4f, 4f));
-    private static float highAcceleration = 3 * baseAccelerationMultiplier;
-    private static float mediumAcceleration = 2 * baseAccelerationMultiplier;
-    private static float lowAcceleration = 1 * baseAccelerationMultiplier;
+    private static readonly float highAcceleration = 6 * baseAccelerationMultiplier;
+    private static readonly float mediumAcceleration = 3 * baseAccelerationMultiplier;
+    private static readonly float lowAcceleration = 1 * baseAccelerationMultiplier;
 
     [Header("USER Inputs (FOR FORCE EFFECTS")]
     [Tooltip(
@@ -150,12 +142,6 @@ namespace ValheimVehicles.SharedScripts
     [FormerlySerializedAs("baseVelocityChange")] [Tooltip("Multiplier used to convert input into a force applied at the treads an alternative to wheel motor torque.")]
     public float baseAcceleration = 5.0f; // Adjust this value as needed
     [Tooltip("Multiplier used to convert input turns of -1 and 1 to a bigger number")]
-    public float baseTurnForce = 1f; // Adjust this value as needed
-
-    [Tooltip(
-      "Turn rate that is \"magically\" applied regardless of what the physics state of the tank is.")]
-    public float magicTurnRate = 45.0f;
-
     public float wheelMass = 500f;
 
     [Tooltip("Transforms")]
@@ -340,6 +326,13 @@ namespace ValheimVehicles.SharedScripts
       {
         _lastTerrainTouchDeltaTime = 0f;
       }
+
+#if VALHEIM_RAFT
+      if (collision.collider.GetComponentInParent<Character>() != null)
+      {
+        Debug.Log("Hit a character!");
+      }
+#endif
 
       // Get first contact point and its collider
       var contact = collision.GetContact(0);
@@ -1547,19 +1540,6 @@ namespace ValheimVehicles.SharedScripts
       wheelColliders.ForEach(x => ApplyFrictionToWheelCollider(x, currentSpeed));
     }
 
-    private float GetTurnForce()
-    {
-      return accelerationType switch
-      {
-        AccelerationType.Low => 10f,
-        AccelerationType.Medium => 10f,
-        AccelerationType.High => 10f,
-        AccelerationType.Stop => 0f,
-        _ => 1f
-      };
-    }
-
-
     private void AdjustSuspensionForTank()
     {
       var isApplyingForce = Mathf.Abs(inputMovement) > 0.1f || Mathf.Abs(inputTurnForce) > 0.1f;
@@ -1732,9 +1712,7 @@ namespace ValheimVehicles.SharedScripts
         AccelerationType.Stop => 0,
         _ => 0
       };
-
-
-      baseTurnForce = GetTurnForce();
+      
       isForward = isMovingForward;
 
       if (!IsUsingEngine)

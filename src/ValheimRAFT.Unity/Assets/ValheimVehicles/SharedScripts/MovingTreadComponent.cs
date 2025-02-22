@@ -466,23 +466,21 @@ namespace ValheimVehicles.SharedScripts
         speedMultiplier = speedMultiplierOverride;
       }
 #endif
-
-      var clampedSpeed = Mathf.Clamp(speed, -8f, 8f);
-
-      switch (clampedSpeed)
+      
+      switch (speed)
       {
         case < 0.01f:
-          clampedSpeed = 0f;
+          speed = 0f;
           break;
         case < 0.1f:
         {
-          var dir = Mathf.Sign(clampedSpeed);
-          clampedSpeed = dir * 0.01f;
+          var dir = Mathf.Sign(speed);
+          speed = dir * 0.01f;
           break;
         }
       }
 
-      speedMultiplier = clampedSpeed;
+      speedMultiplier = speed;
     }
 
     public void SetDirection(bool isDirectionForward)

@@ -34,15 +34,26 @@ public static class PhysicsConfig
   public static ConfigEntry<float> VehicleRudderSpeedHalf = null!;
   public static ConfigEntry<float> VehicleRudderSpeedFull = null!;
 
+  // landvehicle speed
   public static ConfigEntry<float> VehicleLandSpeedBack = null!;
   public static ConfigEntry<float> VehicleLandSpeedSlow = null!;
   public static ConfigEntry<float> VehicleLandSpeedHalf = null!;
   public static ConfigEntry<float> VehicleLandSpeedFull = null!;
+
+  // landvehicle turning
+  public static ConfigEntry<float> VehicleLandTurnSpeed = null!;
+  
   public static ConfigEntry<int> VehicleLandMaxTreadWidth = null!;
   public static ConfigEntry<int> VehicleLandMaxTreadLength = null!;
 
-  public static ConfigEntry<float> VehicleLandTurnSpeed = null!;
+  // all vehicles
   public static ConfigEntry<float> VehicleCenterOfMassOffset = null!;
+  public static ConfigEntry<float> VehicleLandTreadOffset = null!;
+
+#if DEBUG
+  // for debug only most of this content does not exist in prod.
+  public static ConfigEntry<float> VehicleLandWheelRadius = null!;
+  public static ConfigEntry<float> VehicleLandWheelMass = null!;
   public static ConfigEntry<bool> VehicleLandLockXZRotation = null!;
   public static ConfigEntry<float> VehicleLandSuspensionDistance = null!;
   public static ConfigEntry<float> VehicleLandWheelSuspensionSpring = null!;
@@ -50,11 +61,7 @@ public static class PhysicsConfig
   public static ConfigEntry<float> VehicleLandWheelSuspensionSpringTarget = null!;
   public static ConfigEntry<bool> DEBUG_VehicleLandShouldHideWheels = null!;
   public static ConfigEntry<bool> DEBUG_VehicleLandShouldSyncWheelPositions = null!;
-  public static ConfigEntry<float> ForwardFrictionMultiplier = null!;
-  public static ConfigEntry<float> SidewaysFrictionMultiplier = null!;
-  public static ConfigEntry<float> VehicleLandWheelRadius = null!;
-  public static ConfigEntry<float> VehicleLandWheelMass = null!;
-  public static ConfigEntry<float> VehicleLandWheelOffset = null!;
+#endif
 
   // flight
   public static ConfigEntry<float> flightAngularDamping = null!;
@@ -209,6 +216,73 @@ public static class PhysicsConfig
       ForceSetVehiclePhysics(velocityConfig);
   }
 
+  private static void DebugOnlyConfig()
+  {
+
+#if DEBUG
+    VehicleLandLockXZRotation = Config.Bind(PropulsionSection,
+      "VehicleLand LockXZRotation",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Prevents XZ rotation on landvehicles DEBUG ONLY. Vehicles will always remain perfectly flat to horizon but this will limit upwards/downwards angular traversal", true, false));
+
+    VehicleLandWheelMass = Config.Bind(PropulsionSection,
+      "VehicleLand WheelMass",
+      200f,
+      ConfigHelpers.CreateConfigDescription(
+        "The weight per wheel of the vehicle. This will allow more traction, but could slow down the vehicle at higher values. Experimental only", true, false, new AcceptableValueRange<float>(1f, 2000f)));
+    VehicleLandWheelRadius = Config.Bind(PropulsionSection,
+      "LandVehicle WheelRadius",
+      1f,
+      ConfigHelpers.CreateConfigDescription(
+        "Wheel radius. Larger wheels have more traction. But may be less realistic.", true, false, new AcceptableValueRange<float>(0.25f, 5f)));
+
+   
+    DEBUG_VehicleLandShouldHideWheels = Config.Bind(PropulsionSection,
+      "LandVehicle ShouldHideWheels",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Hides the wheel visual as wheels are not perfectly synced.", true, false));
+    DEBUG_VehicleLandShouldSyncWheelPositions = Config.Bind(PropulsionSection,
+      "LandVehicle ShouldSyncWheelPositions",
+      false,
+      ConfigHelpers.CreateConfigDescription(
+        "Toggles syncing of wheels to their actual collider position. Can cause desync with tracks.", true, false));
+
+    VehicleLandSuspensionDistance = Config.Bind(PropulsionSection,
+      "LandVehicle Suspension Distance",
+      2.25f,
+      ConfigHelpers.CreateConfigDescription(
+        "Distance suspension distance between vehicle position and wheel position. Higher values push the vehicle up and make it more bouncy.", true, false, new AcceptableValueRange<float>(0.25f, 20f)));
+
+
+    VehicleLandWheelSuspensionSpring = Config.Bind(PropulsionSection,
+      "LandVehicle SuspensionSpring",
+      35000f,
+      ConfigHelpers.CreateConfigDescription(
+        "Suspension spring value. This will control how much the vehicle bounces when it drops. No suspension will be a bit jarring but high suspension can cause lots of screen jump. Ensure a higher SuspensionSpringDamper to fix the bounce continuing.", true, false, new AcceptableValueRange<float>(0f, 50000f)));
+
+    VehicleLandWheelSuspensionSpringDamper = Config.Bind(PropulsionSection,
+      "LandVehicle SuspensionSpringDamper",
+      1500f,
+      ConfigHelpers.CreateConfigDescription(
+        "Suspension spring damper value. This will control how much the vehicle stops bouncing. Higher values must be supplied for higher suspension spring values.", true, false, new AcceptableValueRange<float>(0f, 50000f)));
+
+    VehicleLandWheelSuspensionSpringTarget = Config.Bind(PropulsionSection,
+      "LandVehicle wheelSuspensionSpringTarget",
+      0.4f,
+      ConfigHelpers.CreateConfigDescription(
+        "Suspension target. Between 0 and 1 it will determine the target spring position. This can allow for high suspension but also high targets", true, false, new AcceptableValueRange<float>(0f, 1f)));
+
+    VehicleLandWheelSuspensionSpring.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandWheelSuspensionSpringDamper.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandWheelSuspensionSpringTarget.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandSuspensionDistance.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandWheelMass.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    VehicleLandWheelRadius.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+#endif
+  }
+
   private static List<ConfigEntry<ForceMode>> VelocityConfigs =>
   [
     floatationVelocityMode, sailingVelocityMode, turningVelocityMode,
@@ -231,6 +305,10 @@ public static class PhysicsConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
+
+#if DEBUG
+    DebugOnlyConfig();
+#endif
 
     VehicleRudderSpeedBack = Config.Bind(PropulsionSection, "Rudder Back Speed",
       1f,
@@ -270,7 +348,7 @@ public static class PhysicsConfig
         true, false, new AcceptableValueRange<float>(0.0001f, 100f)));
     VehicleLandTurnSpeed = Config.Bind(PropulsionSection,
       "LandVehicle Turn Speed",
-      0f,
+      0.5f,
       ConfigHelpers.CreateConfigDescription(
         "Turn speed for landvehicles. Zero is half the normal speed, 50% is normal speed, and 100% is double normal speed.", true, false, new AcceptableValueRange<float>(0, 1f)));
 
@@ -286,71 +364,12 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "Max length the treads can expand to.", true, false, new AcceptableValueRange<int>(4, 100)));
 
-    VehicleLandLockXZRotation = Config.Bind(PropulsionSection,
-      "VehicleLand LockXZRotation",
-      false,
-      ConfigHelpers.CreateConfigDescription(
-        "Prevents XZ rotation on landvehicles. Vehicles will always remain perfectly flat to horizon", true, false));
-    VehicleLandWheelMass = Config.Bind(PropulsionSection,
-      "VehicleLand WheelMass",
-      200f,
-      ConfigHelpers.CreateConfigDescription(
-        "The weight per wheel of the vehicle. This will allow more traction, but could slow down the vehicle at higher values. Experimental only", true, false, new AcceptableValueRange<float>(1f, 2000f)));
-
     VehicleCenterOfMassOffset = Config.Bind(PropulsionSection,
       "Vehicle CenterOfMassOffset",
       0.65f,
       ConfigHelpers.CreateConfigDescription(
         "Offset the center of mass by a percentage of vehicle total height. Should always be a positive number. Higher values will make the vehicle more sturdy as it will pivot lower. Too high a value will make the ship behave weirdly possibly flipping. 0 will be the center of all colliders within the physics of the vehicle. 100% will be 50% lower than the vehicle's collider. 50% will be the very bottom of the vehicle's collider.", true, true, new AcceptableValueRange<float>(0f, 1f)));
 
-    VehicleLandSuspensionDistance = Config.Bind(PropulsionSection,
-      "LandVehicle Suspension Distance",
-      2.25f,
-      ConfigHelpers.CreateConfigDescription(
-        "Distance suspension distance between vehicle position and wheel position. Higher values push the vehicle up and make it more bouncy.", true, false, new AcceptableValueRange<float>(0.25f, 20f)));
-
-    VehicleLandWheelRadius = Config.Bind(PropulsionSection,
-      "LandVehicle WheelRadius",
-      1f,
-      ConfigHelpers.CreateConfigDescription(
-        "Wheel radius. Larger wheels have more traction. But may be less realistic.", true, false, new AcceptableValueRange<float>(0.25f, 5f)));
-
-    VehicleLandWheelOffset = Config.Bind(PropulsionSection,
-      "LandVehicle WheelOffset",
-      0f,
-      ConfigHelpers.CreateConfigDescription(
-        "Wheel offset. Allowing for raising the wheels higher. May require increasing suspension distance so the wheels spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the wheels", true, false, new AcceptableValueRange<float>(-10f, 10f)));
-
-    DEBUG_VehicleLandShouldHideWheels = Config.Bind(PropulsionSection,
-      "LandVehicle ShouldHideWheels",
-      false,
-      ConfigHelpers.CreateConfigDescription(
-        "Hides the wheel visual as wheels are not perfectly synced.", true, false));
-    DEBUG_VehicleLandShouldSyncWheelPositions = Config.Bind(PropulsionSection,
-      "LandVehicle ShouldSyncWheelPositions",
-      false,
-      ConfigHelpers.CreateConfigDescription(
-        "Toggles syncing of wheels to their actual collider position. Can cause desync with tracks.", true, false));
-
-
-
-    VehicleLandWheelSuspensionSpring = Config.Bind(PropulsionSection,
-      "LandVehicle SuspensionSpring",
-      35000f,
-      ConfigHelpers.CreateConfigDescription(
-        "Suspension spring value. This will control how much the vehicle bounces when it drops. No suspension will be a bit jarring but high suspension can cause lots of screen jump. Ensure a higher SuspensionSpringDamper to fix the bounce continuing.", true, false, new AcceptableValueRange<float>(0f, 50000f)));
-
-    VehicleLandWheelSuspensionSpringDamper = Config.Bind(PropulsionSection,
-      "LandVehicle SuspensionSpringDamper",
-      1500f,
-      ConfigHelpers.CreateConfigDescription(
-        "Suspension spring damper value. This will control how much the vehicle stops bouncing. Higher values must be supplied for higher suspension spring values.", true, false, new AcceptableValueRange<float>(0f, 50000f)));
-
-    VehicleLandWheelSuspensionSpringTarget = Config.Bind(PropulsionSection,
-      "LandVehicle wheelSuspensionSpringTarget",
-      0.4f,
-      ConfigHelpers.CreateConfigDescription(
-        "Suspension target. Between 0 and 1 it will determine the target spring position. This can allow for high suspension but also high targets", true, false, new AcceptableValueRange<float>(0f, 1f)));
 
 
     var dampingSidewaysDescription = ConfigHelpers.CreateConfigDescription(
@@ -441,7 +460,7 @@ public static class PhysicsConfig
     submersibleAngularDrag =
       Config.Bind(SectionKey, "submersibleAngularDrag", 1.5f);
 
-    var hullFloatationRange = new AcceptableValueRange<float>(-20f, 20f);
+    var hullFloatationRange = new AcceptableValueRange<float>(-2f, 2f);
 #if DEBUG
     hullFloatationRange = new AcceptableValueRange<float>(-50f, 50f);
 #endif
@@ -449,6 +468,13 @@ public static class PhysicsConfig
     // landVehicles much more simple. No sails allowed etc.
     landDrag = Config.Bind(SectionKey, "landDrag", 0.05f);
     landAngularDrag = Config.Bind(SectionKey, "landAngularDrag", 1.2f);
+
+    VehicleLandTreadOffset = Config.Bind(PropulsionSection,
+      "LandVehicle TreadOffset",
+      0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Wheel offset. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads", true, false, new AcceptableValueRange<float>(-10f, 10f)));
+    VehicleLandTreadOffset.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
 
     // guards for max values
     MaxLinearVelocity = Config.Bind(SectionKey, "MaxVehicleLinearVelocity", 10f,
@@ -481,7 +507,7 @@ public static class PhysicsConfig
       "HullFloatation Custom Offset",
       0f,
       ConfigHelpers.CreateConfigDescription(
-        "Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.",
+        "DEPRECATED!!! Will be removed soon, values of -2 and 2 are allowed. Anything above means you are likely not using this correctly. Please use CenterOfMass instead if your vehicle needs to pivot lower. Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.",
         true, true, hullFloatationRange
       ));
 
@@ -554,9 +580,9 @@ public static class PhysicsConfig
         true, true));
 
     removeCameraCollisionWithObjectsOnBoat = Config.Bind(SectionKey,
-      "removeCameraCollisionWithObjectsOnBoat", true,
+      "EXPERIMENTAL removeCameraCollisionWithObjectsOnBoat", false,
       ConfigHelpers.CreateConfigDescription(
-        "EXPERIMENTAL removes all collision of camera for objects on boat. Should significantly lower jitter when camera smashes into objects on boat it will force camera through it instead of pushing rapidly forward with vehicle force too.",
+        "EXPERIMENTAL removes all collision of camera for objects on boat. Should significantly lower jitter when camera smashes into objects on boat it will force camera through it instead of pushing rapidly forward with vehicle force too. This will cause objects to pop in and out of view.",
         false, true));
 
     var waterForceDeltaMultiplierRange = ModEnvironment.IsDebug
@@ -573,17 +599,10 @@ public static class PhysicsConfig
     MaxLinearVelocity.SettingChanged += (sender, args) =>
       VehicleMovementController.Instances.ForEach(x =>
         x.UpdateVehicleSpeedThrottle());
-
-    VehicleLandWheelSuspensionSpring.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
-    VehicleLandWheelSuspensionSpringDamper.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
-    VehicleLandWheelSuspensionSpringTarget.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
-    VehicleLandWheelOffset.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+    
     VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandMaxTreadWidth.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandMaxTreadLength.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
-    VehicleLandSuspensionDistance.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
-    VehicleLandWheelMass.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
-    VehicleLandWheelRadius.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
 
     floatationVelocityMode.SettingChanged += (sender, args) =>
       ForceSetVehiclePhysics(floatationVelocityMode);

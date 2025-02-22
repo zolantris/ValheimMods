@@ -402,33 +402,25 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
     }
 
+#if DEBUG
     WheelController.wheelSuspensionTarget = PhysicsConfig.VehicleLandWheelSuspensionSpringTarget.Value;
-
-    // very important to add these. We always need a base of 30.
-    var additionalTurnRate = Mathf.Lerp(VehicleWheelController.defaultTurnAccelerationMultiplier / 2, VehicleWheelController.defaultTurnAccelerationMultiplier * 2, Mathf.Clamp01(PhysicsConfig.VehicleLandTurnSpeed.Value));
-    VehicleWheelController.baseTurnAccelerationMultiplier = additionalTurnRate;
-   
-    WheelController.maxTreadLength = PhysicsConfig.VehicleLandMaxTreadLength.Value;
-    WheelController.maxTreadWidth = PhysicsConfig.VehicleLandMaxTreadWidth.Value;
-
-    // deprecated. Likely will remove this setter at least.
-    WheelController.magicTurnRate = PhysicsConfig.VehicleLandTurnSpeed.Value;
-
-
-    WheelController.ShouldSyncWheelsToCollider = PhysicsConfig.DEBUG_VehicleLandShouldSyncWheelPositions.Value;
-    WheelController.ShouldHideWheelRender = PhysicsConfig.DEBUG_VehicleLandShouldHideWheels.Value;
-    
-    WheelController.forwardDirection = MovementController.ShipDirection;
-    WheelController.m_steeringType = VehicleWheelController.SteeringType.Differential;
-
     WheelController.wheelRadius = PhysicsConfig.VehicleLandWheelRadius.Value;
-    
     WheelController.wheelSuspensionDistance = PhysicsConfig.VehicleLandSuspensionDistance.Value;
     WheelController.wheelSuspensionSpring = PhysicsConfig.VehicleLandWheelSuspensionSpring.Value;
     WheelController.wheelSuspensionSpringDamper = PhysicsConfig.VehicleLandWheelSuspensionSpringDamper.Value;
+    WheelController.ShouldSyncWheelsToCollider = PhysicsConfig.DEBUG_VehicleLandShouldSyncWheelPositions.Value;
+    WheelController.ShouldHideWheelRender = PhysicsConfig.DEBUG_VehicleLandShouldHideWheels.Value;
+        WheelController.wheelMass = PhysicsConfig.VehicleLandWheelMass.Value;
+#endif
+
+    // very important to add these. We always need a base of 30.
+    var additionalTurnRate = Mathf.Lerp(VehicleWheelController.defaultTurnAccelerationMultiplier / 2, VehicleWheelController.defaultTurnAccelerationMultiplier * 2, Mathf.Clamp01(PhysicsConfig.VehicleLandTurnSpeed.Value));
     
-    WheelController.wheelBottomOffset = PhysicsConfig.VehicleLandWheelOffset.Value;
-    WheelController.wheelMass = PhysicsConfig.VehicleLandWheelMass.Value;
+    VehicleWheelController.baseTurnAccelerationMultiplier = additionalTurnRate;
+    WheelController.maxTreadLength = PhysicsConfig.VehicleLandMaxTreadLength.Value;
+    WheelController.maxTreadWidth = PhysicsConfig.VehicleLandMaxTreadWidth.Value;
+    WheelController.forwardDirection = MovementController.ShipDirection;
+    WheelController.wheelBottomOffset = PhysicsConfig.VehicleLandTreadOffset.Value;
   }
 
   /// <summary>

@@ -632,7 +632,7 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
         : (byte)Game.m_worldLevel;
       hit.m_dodgeable = m_dodgeable;
       hit.m_blockable = m_blockable;
-      hit.m_ranged = true;
+      hit.m_ranged = false;
       hit.m_ignorePVP =
         (UnityEngine.Object)m_owner == (UnityEngine.Object)character ||
         m_ignorePVP;

@@ -131,7 +131,7 @@ public static class VehicleDebugConfig
           true, true));
 
     VehiclePieceBoundsRecalculationDelay = Config.Bind("Debug",
-      "VehiclePieceBoundsRecalculationDelay", 1,
+      "VehiclePieceBoundsRecalculationDelay", 10,
       ConfigHelpers.CreateConfigDescription(
         "The delay time at which the vehicle will recalculate bounds after placing a piece. This recalculation can be a bit heavy so it's debounced a minimum of 1 seconds but could be increased up to 30 seconds for folks that want to build a pause for a bit.",
         false, true, new AcceptableValueRange<int>(1, 30)));

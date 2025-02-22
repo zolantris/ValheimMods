@@ -52,7 +52,7 @@ namespace ValheimVehicles.SharedScripts
     public static string MeshNameTriggerPrefix = $"{MeshNamePrefix}_Preview";
 
     // shared across all instances, but not created immediately
-    public static PhysicMaterial localPhysicMaterial;
+    public PhysicMaterial localPhysicMaterial;
 
     public PreviewModes PreviewMode = PreviewModes.Bubble;
 

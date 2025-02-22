@@ -280,6 +280,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   public void Start()
   {
     Setup();
+    UpdateLandVehicleHeightIfBelowGround();
   }
 
   public bool isHoldingBreak = false;
@@ -394,7 +395,12 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     VehicleMovementUpdatesOwnerOnly();
   }
 
-  private IEnumerator EnableCollisionAfterTeleport(List<MeshCollider> IgnoredColliders, Collider collisionCollider, Character? character)
+  public void StartPlayerCollisionAfterTeleport(Collider collider, Character character)
+  {
+    StartCoroutine(EnableCollisionAfterTeleport(PiecesController.convexHullMeshColliders, collider, character));
+  }
+
+  public IEnumerator EnableCollisionAfterTeleport(List<MeshCollider> IgnoredColliders, Collider collisionCollider, Character? character)
 
   {
     foreach (var collider in IgnoredColliders)
@@ -421,28 +427,21 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private void OnCollisionEnter(Collision collision)
   {
     if (PiecesController == null) return;
+    if (collision.collider.gameObject.layer == LayerHelpers.TerrainLayer) return;
     if (collision.collider.name == "tread_mesh")
     {
       // Physics.IgnoreCollision(collision.collider, collision.collider, true);
     }
-
-    if (vehicleRam != null && collision.collider.gameObject.layer == LayerMask.NameToLayer("static_solid"))
+    if (vehicleRam == null) return;
+    var isCharacterLayer = collision.gameObject.layer == LayerHelpers.CharacterLayer;
+    if (isCharacterLayer)
+    {
+      Logger.LogDebug("Hit character");
+      vehicleRam.OnCollisionEnterHandler(collision);
+    }
+    else if (LayerHelpers.IsContainedWithinMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayers))
     {
       vehicleRam.OnCollisionEnterHandler(collision);
-      return;
-    }
-    
-    var character = collision.transform.GetComponentInParent<Character>();
-
-    if (!character && collision.transform.root == transform || collision.transform.root == PiecesController.transform)
-    {
-      // PiecesController.m_vehicleCollisionManager.AddColliderToVehicle(collision.collider, true);
-      return;
-    }
-    
-    if (character != null && character.IsTeleporting())
-    {
-      StartCoroutine(EnableCollisionAfterTeleport(PiecesController.convexHullMeshColliders, collision.collider, character));
     }
   }
 
@@ -1487,7 +1486,14 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     var centerOfMass = m_body.centerOfMass;
     var convexHullBounds = PiecesController.convexHullComponent.GetConvexHullBounds(true);
+    
     var offset = PhysicsConfig.VehicleCenterOfMassOffset.Value * convexHullBounds.size.y;
+
+    // adds a fake offset until bounds are larger to stabilize a new vehicle
+    if (convexHullBounds.size.y < 4f)
+    {
+      offset = 4f;
+    }
 
     if (!(offset > 0.1f)) return;
     centerOfMass.y -= offset;
@@ -1502,7 +1508,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     m_body.maxAngularVelocity = PhysicsConfig.MaxAngularVelocity.Value;
     m_body.maxLinearVelocity = PhysicsConfig.MaxLinearVelocity.Value;
 
-    if (PhysicsConfig.VehicleLandLockXZRotation.Value)
+#if DEBUG
+        if (PhysicsConfig.VehicleLandLockXZRotation.Value)
     {
       UpdateAndFreezeRotation();
     }
@@ -1511,6 +1518,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       if (m_body.constraints == FreezeBothXZ)
         m_body.constraints = RigidbodyConstraints.None;
     }
+#endif
   }
 
   /// <summary>
@@ -1520,22 +1528,19 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// </summary>
   public void UpdateLandVehicleHeightIfBelowGround()
   {
+    if (OnboardCollider.bounds.min.y + 2f < ShipFloatationObj.AverageGroundLevel)
+    {
+      var position = transform.position;
 
-    // if (OnboardCollider.bounds.min.y + 2f < ShipFloatationObj.AverageGroundLevel)
-    // {
-    //   var position = transform.position;
-    //   var deltaAverageGroundLevel = ShipFloatationObj.AverageGroundLevel + 1f;
-    //   var lerpedMovement = Mathf.Lerp(OnboardCollider.bounds.min.y, ShipFloatationObj.AverageGroundLevel, Time.fixedDeltaTime);
-    //   m_body.MovePosition(new Vector3(position.x, lerpedMovement, position.z));
-    //   // m_body.velocity = Vector3.zero;
-    //   // m_body.angularVelocity = Vector3.zero;
-    // }
+      // var lerpedMovement = Mathf.Lerp(OnboardCollider.bounds.min.y, ShipFloatationObj.AverageGroundLevel, Time.fixedDeltaTime);
+      m_body.MovePosition(new Vector3(position.x, ShipFloatationObj.AverageGroundLevel + 3f, position.z));
+      m_body.velocity = Vector3.zero;
+      m_body.angularVelocity = Vector3.zero;
+    }
   }
 
   public void UpdateVehicleLandSpeed()
   {
-    // UpdateLandVehicleHeightIfBelowGround();
-    
     UpdateVehicleStats(VehiclePhysicsState.Land);
     if (WheelController == null) return;
     if (UpdateAnchorVelocity())
@@ -2524,6 +2529,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private void OnTriggerEnter(Collider collider)
   {
     if (vehicleRam == null) return;
+    if (collider.gameObject.layer == LayerHelpers.TerrainLayer) return;
     var colliderName = collider.name;
     vehicleRam.OnTriggerEnterHandler(collider);
   }

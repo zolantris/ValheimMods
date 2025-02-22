@@ -2410,10 +2410,10 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       return;
     }
 
-    // if (!isInitialActivationComplete)
-    // {
-    //   isInitialActivationComplete = true;
-    // }
+    if (!isInitialActivationComplete)
+    {
+      isInitialActivationComplete = true;
+    }
     
     FixPieceMeshes(netView);
     OnAddPieceIgnoreColliders(netView);
