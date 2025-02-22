@@ -24,7 +24,8 @@ public static class PrefabNames
   public enum DirectionVariant
   {
     Left,
-    Right
+    Right,
+    Universal
   }
 
   /// <summary>
@@ -50,6 +51,7 @@ public static class PrefabNames
     {
       DirectionVariant.Left => "left",
       DirectionVariant.Right => "right",
+      DirectionVariant.Universal => "universal",
       _ => throw new ArgumentOutOfRangeException(nameof(directionVariant),
         directionVariant, null)
     };

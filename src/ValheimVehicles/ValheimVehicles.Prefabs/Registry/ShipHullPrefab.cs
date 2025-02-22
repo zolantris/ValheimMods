@@ -56,11 +56,11 @@ public class ShipHullPrefab : IRegisterPrefab
     {
       RegisterHullRibProw(hullMaterialType, PrefabSizeVariant.TwoByTwo);
       RegisterHullRib(GetHullRibName(hullMaterialType), hullMaterialType);
+      RegisterHullRibCorner(
+        hullMaterialType, DirectionVariant.Universal);
+      
       foreach (var ribDirection in ribDirections)
       {
-        RegisterHullRibCorner(
-          hullMaterialType,
-          ribDirection);
         RegisterHullRibCornerFloor(hullMaterialType, ribDirection);
       }
     }

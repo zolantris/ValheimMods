@@ -266,7 +266,7 @@ public abstract class PrefabRegistryHelpers
     const string iconBaseName = "hull_rib_corner";
 
     List<PrefabNames.DirectionVariant> directionVariants =
-      [PrefabNames.DirectionVariant.Left, PrefabNames.DirectionVariant.Right];
+      [PrefabNames.DirectionVariant.Universal];
     List<string> materialVariants =
       [ShipHulls.HullMaterial.Wood, ShipHulls.HullMaterial.Iron];
 
@@ -278,10 +278,11 @@ public abstract class PrefabRegistryHelpers
         var materialName = materialVariant.ToLower();
         var prefabName = PrefabNames.GetHullRibCornerName(materialVariant,
           directionVariant);
+        var directionTranslationName = directionVariant == PrefabNames.DirectionVariant.Universal ? "" : $" $valheim_vehicles_direction_{directionName}";
         var pieceData = new PieceData()
         {
           Name =
-            $"{pieceName} $valheim_vehicles_material_{materialName} $valheim_vehicles_direction_{directionName}",
+            $"{pieceName} $valheim_vehicles_material_{materialName}${directionTranslationName}",
           Description = pieceDescription,
           Icon = spriteAtlas.GetSprite(
             $"{iconBaseName}_{directionName}_{materialName}")

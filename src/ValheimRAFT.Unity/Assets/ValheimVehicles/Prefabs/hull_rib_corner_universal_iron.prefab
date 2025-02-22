@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5721838593751922162}
   m_Layer: 10
-  m_Name: hull_rib_corner_left_wood
+  m_Name: hull_rib_corner_universal_iron
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -44,6 +44,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 10
       objectReference: {fileID: 0}
+    - target: {fileID: 879561372290728073, guid: 094c6dbf9499a1041b70d366a7687d6c, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 9f50f724d23916f488cd6f8f04b115b5, type: 2}
     - target: {fileID: 883326360751803557, guid: 094c6dbf9499a1041b70d366a7687d6c, type: 3}
       propertyPath: m_Layer
       value: 10
@@ -60,6 +64,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 10
       objectReference: {fileID: 0}
+    - target: {fileID: 5340342860526972254, guid: 094c6dbf9499a1041b70d366a7687d6c, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: b01d7d67c9e759d4297aeab15df81c18, type: 2}
     - target: {fileID: 5721838593751922162, guid: 094c6dbf9499a1041b70d366a7687d6c, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
