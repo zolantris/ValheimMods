@@ -347,14 +347,6 @@
 - Description: Enable the VehicleDebugMenu. This shows a GUI menu which has a few shortcuts to debugging/controlling vehicles.
 - Default Value: False
 
-### UNSTABLE_PositionAutoFix 
-- Description: UNSTABLE due to vehicle center point shifting and not being in center of actual vehicle pieces - Automatically moves the vehicle if buried/stuck underground. The close to 0 the closer it will be to teleporting the vehicle above the ground. The higher the number the more lenient it is. Recommended to keep this number above 10. Lower can make the vehicle trigger an infinite loop of teleporting upwards and then falling and re-telporting while gaining velocity
-- Default Value: False
-
-### positionAutoFixThreshold 
-- Description: Threshold for autofixing stuck vehicles. Large values are less accurate but smaller values may trigger the autofix too frequently
-- Default Value: 5
-
 ## Debug
 
 ### SyncShipPhysicsOnAllClients 

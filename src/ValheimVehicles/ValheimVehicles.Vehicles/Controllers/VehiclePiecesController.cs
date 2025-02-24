@@ -2373,10 +2373,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   public void OnAddPieceIgnoreColliders(ZNetView netView)
   {
     IgnoreAllVehicleCollidersForGameObjectChildren(netView.gameObject);
-
-    // todo this causes a crash, possibly due to being called too much.
     OnPieceAddedIgnoreAllColliders(netView.gameObject);
-
 
 
     // todo the code below is inefficient. Need to abstract this all to another component that is meant for hashing gameobjects with colliders and iterating through their slices in batches.
@@ -2781,19 +2778,11 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       if (meshCollider != null) convexHullMeshColliders.Add(meshCollider);
       if (collider != null) convexHullColliders.Add(collider);
     });
-
-    CalculateFurthestPointsOnMeshes();
-
+    
     convexHullTriggerColliders = MovementController.DamageColliders
       .GetComponentsInChildren<Collider>(true).ToList();
     convexHullTriggerMeshColliders = MovementController.DamageColliders
       .GetComponentsInChildren<MeshCollider>(true).ToList();
-
-    // convexHullColliders.ForEach((x) => OnPieceAddedIgnoreAllColliders(x.gameObject));
-    // IgnoreShipColliders(convexHullColliders); 
-    // IgnoreVehicleCollidersForAllPieces();
-
-    IgnoreAllVehicleColliders();
   }
 
   /// <summary>
@@ -2904,51 +2893,22 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       return;
 
     _vehiclePieceBounds = convexHullComponent.GetConvexHullBounds(true);
-    // // messing with collider bounds requires syncing outside a physics update
-    // _pendingHullBounds = new Bounds();
-    // _pendingVehicleBounds = new Bounds();
-    //
-    // var piecesList = m_pieces.ToList();
-    //
-    // for (var index = 0; index < piecesList.Count; index++)
-    // {
-    //   var netView = piecesList[index];
-    //   if (!netView)
-    //   {
-    //     m_pieces.Remove(netView);
-    //     continue;
-    //   }
-    //
-    //   if (IsExcludedBoundsItem(netView.gameObject.name)) continue;
-    //
-    //
-    //   // will only update vehicle bounds here.
-    //   var newBounds =
-    //     EncapsulateBounds(netView.gameObject, _pendingVehicleBounds);
-    //   if (index == 0)
-    //     _pendingVehicleBounds = new Bounds(newBounds.center, newBounds.size);
-    //   else
-    //     _pendingVehicleBounds.Encapsulate(newBounds);
-    // }
-    //
-    // _vehiclePieceBounds = new Bounds(_pendingVehicleBounds.center,
-    //   _pendingVehicleBounds.size);
-
-
+    
     OnBoundsChangeUpdateShipColliders();
+
+    if (WheelController != null)
+    {
+      var convexHullBounds = convexHullComponent.GetConvexHullBounds(true);
+      WheelController.Initialize(convexHullBounds);
+    }
+
+    // Critical for vehicle stability otherwise it will blast off in a random direction to due colliders internally colliding.
+    IgnoreAllVehicleColliders();
 
     // to accurately place player onboard after rebuild of bounds.
     if (OnboardController != null)
     {
       OnboardController.OnBoundsRebuild();
-    }
-
-
-    if (WheelController != null)
-    {
-      var convexHullBounds = convexHullComponent.GetConvexHullBounds(true);
-      WheelController.InitializeWheels(convexHullBounds);
-      IgnoreAllWheelColliders();
     }
   }
 

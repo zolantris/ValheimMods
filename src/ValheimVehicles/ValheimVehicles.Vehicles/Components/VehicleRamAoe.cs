@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Policy;
@@ -165,11 +166,25 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   private float _disableTime = 0f;
   private const float _disableTimeMax = 0.5f;
 
+  // private Coroutine? rebuildBoundRoutine = null;
+
   public void OnBoundsRebuild()
   {
     isRebuildingCollisions = true;
     _disableTime = Time.fixedTime + _disableTimeMax;
+
+    // if (rebuildBoundRoutine != null)
+    // {
+    //   StopCoroutine(rebuildBoundRoutine);
+    // }
+    // StartCoroutine(RebuildBoundsDisableTime());
   }
+
+  // public IEnumerator RebuildBoundsDisableTime()
+  // {
+  //   // var disabledColliders = game
+  //   // yield return new WaitUntil(() => Time.fixedTime > _disableTime);
+  // }
 
   public override void OnDisable()
   {
@@ -323,6 +338,20 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       }
     }
 
+    var damageSum = slashDamage + chopDamage + pierceDamage + chopDamage + pickaxeDamage;
+    if (damageSum < 1)
+    {
+      m_damage = new HitData.DamageTypes()
+      {
+        m_blunt = 0,
+        m_pierce = 0,
+        m_slash = 0,
+        m_chop = 0,
+        m_pickaxe = 0
+      };
+      return false;
+    }
+    
     m_damage = new HitData.DamageTypes()
     {
       m_blunt = bluntDamage,

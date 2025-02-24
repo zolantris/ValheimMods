@@ -18,6 +18,7 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Controllers;
+using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
@@ -32,6 +33,7 @@ public class VehicleCommands : ConsoleCommand
     // public const string destroy = "destroy";
     public const string reportInfo = "report-info";
     public const string debug = "debug";
+    public const string config = "config";
     public const string creative = "creative";
     public const string colliderEditMode = "colliderEditMode";
     public const string help = "help";
@@ -51,6 +53,7 @@ public class VehicleCommands : ConsoleCommand
   {
     return
       "Runs vehicle commands, each command will require parameters to run use help to see the input values." +
+      $"\n<{VehicleCommandArgs.config}>: will show a menu related to the current vehicle you are on. This GUI menu will let you customize values specifically for your current vehicle." +
       $"\n<{VehicleCommandArgs.debug}>: will show a menu with options like rotating or debugging vehicle colliders" +
       $"\n<{VehicleCommandArgs.recover}>: will recover any vehicles within range of 1000 and turn them into V2 Vehicles" +
       $"\n<{VehicleCommandArgs.rotate}>: defaults to zeroing x and z tilt. Can also provide 3 args: x y z" +
@@ -104,7 +107,10 @@ public class VehicleCommands : ConsoleCommand
           $"{Name} {VehicleCommandArgs.creative}");
         break;
       case VehicleCommandArgs.debug:
-        ToggleVehicleDebugComponent();
+        ToggleVehicleDebugCommandsComponent();
+        break;
+      case VehicleCommandArgs.config:
+        ToggleVehicleGuiConfig();
         break;
       case VehicleCommandArgs.upgradeToV2:
         RunUpgradeToV2();
@@ -602,12 +608,26 @@ public class VehicleCommands : ConsoleCommand
     ZNetScene.instance.Destroy(mbRaft.m_ship.gameObject);
   }
 
-  private static void ToggleVehicleDebugComponent()
+  private static void ToggleVehicleGuiConfig()
   {
-    var debugGui = ValheimRaftPlugin.Instance.GetComponent<VehicleDebugGui>();
-    ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui(!(bool)debugGui);
+    if (!VehicleGui.Instance)
+    {
+      ValheimRaftPlugin.Instance.AddRemoveVehicleGui();
+    }
+
+    VehicleGui.ToggleConfigPanelState(true);
+  }
+
+  private static void ToggleVehicleDebugCommandsComponent()
+  {
+    VehicleGui.ToggleCommandsPanelState();
     foreach (var vehicleShip in VehicleShip.VehicleInstances)
-      vehicleShip.Value?.InitializeVehicleDebugger();
+    {
+      if (vehicleShip.Value != null)
+      {
+        vehicleShip.Value.InitializeVehicleDebugger();
+      }
+    }
   }
 
   public static VehicleShip? GetNearestVehicleShip(Vector3 position)
@@ -724,10 +744,11 @@ public class VehicleCommands : ConsoleCommand
     [
       // VehicleCommandArgs.locate, 
       // VehicleCommandArgs.destroy,
+      VehicleCommandArgs.config,
+      VehicleCommandArgs.debug,
       VehicleCommandArgs.rotate,
       VehicleCommandArgs.toggleOceanSway,
       VehicleCommandArgs.creative,
-      VehicleCommandArgs.debug,
       VehicleCommandArgs.help,
       VehicleCommandArgs.upgradeToV2,
       VehicleCommandArgs.downgradeToV1,

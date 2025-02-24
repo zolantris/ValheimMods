@@ -166,8 +166,14 @@ public class VehiclePrefabs : IRegisterPrefab
         [
           new RequirementConfig
           {
-            Amount = 48,
-            Item = "Wood",
+            Amount = 12,
+            Item = "BlackMetal",
+            Recover = false
+          },
+          new RequirementConfig
+          {
+            Amount = 12,
+            Item = "Tar",
             Recover = false
           }
         ]

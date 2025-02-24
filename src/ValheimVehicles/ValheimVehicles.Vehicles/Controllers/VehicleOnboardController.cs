@@ -443,6 +443,14 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     RestorePlayerBlockingCamera(player);
     UpdateCameraZoom(player, true);
 
+    if (player == Player.m_localPlayer)
+    {
+      if (VehicleGui.hasConfigPanelOpened)
+      {
+        VehicleGui.SetConfigPanelState(false);
+      }
+    }
+
     player.transform.SetParent(null);
   }
 

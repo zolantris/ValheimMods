@@ -8,9 +8,13 @@ public static class VehicleDebugConfig
 {
   public static ConfigFile? Config { get; private set; }
 
-  public static ConfigEntry<float> WindowPosX;
+  public static ConfigEntry<float> CommandsWindowPosX;
 
-  public static ConfigEntry<float> WindowPosY;
+  public static ConfigEntry<float> CommandsWindowPosY;
+
+  public static ConfigEntry<float> VehicleConfigWindowPosX;
+
+  public static ConfigEntry<float> VehicleConfigWindowPosY;
 
   public static ConfigEntry<int> ButtonFontSize;
 
@@ -37,15 +41,6 @@ public static class VehicleDebugConfig
   public static ConfigEntry<float> AutoAnchorDelayTime { get; private set; } =
     null!;
 
-  // public static ConfigEntry<bool>
-  //   ForceTakeoverShipControls { get; private set; } = null!;
-
-  public static ConfigEntry<bool>
-    PositionAutoFix { get; private set; } = null!;
-
-  public static ConfigEntry<float>
-    PositionAutoFixThreshold { get; private set; } = null!;
-
   public static ConfigEntry<bool>
     VehicleDebugMenuEnabled { get; private set; } = null!;
 
@@ -61,8 +56,7 @@ public static class VehicleDebugConfig
 
   private static void OnShowVehicleDebugMenuChange()
   {
-    ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui(VehicleDebugMenuEnabled
-      .Value);
+    ValheimRaftPlugin.Instance.AddRemoveVehicleGui();
   }
 
   private static void OnMetricsUpdate()
@@ -116,33 +110,22 @@ public static class VehicleDebugConfig
         "Enable the VehicleDebugMenu. This shows a GUI menu which has a few shortcuts to debugging/controlling vehicles.",
         true, true));
 
-    PositionAutoFix = config.Bind(SectionName,
-      "UNSTABLE_PositionAutoFix",
-      false,
-      ConfigHelpers.CreateConfigDescription(
-        "UNSTABLE due to vehicle center point shifting and not being in center of actual vehicle pieces - Automatically moves the vehicle if buried/stuck underground. The close to 0 the closer it will be to teleporting the vehicle above the ground. The higher the number the more lenient it is. Recommended to keep this number above 10. Lower can make the vehicle trigger an infinite loop of teleporting upwards and then falling and re-telporting while gaining velocity",
-        true, true));
-    PositionAutoFixThreshold = config.Bind(SectionName,
-      "positionAutoFixThreshold",
-      5f,
-      ConfigHelpers.CreateConfigDescription(
-        "Threshold for autofixing stuck vehicles. Large values are less accurate but smaller values may trigger the autofix too frequently",
-        true, true, new AcceptableValueRange<float>(0, 10f)));
-
     SyncShipPhysicsOnAllClients =
-      Config.Bind("Debug", "SyncShipPhysicsOnAllClients", false,
+      Config.Bind(SectionName, "SyncShipPhysicsOnAllClients", false,
         ConfigHelpers.CreateConfigDescription(
-          "Makes all clients sync physics",
+          "Makes all clients sync physics. This will likely cause a desync in physics but could fix some problems with physics not updating in time for some clients as all clients would control physics.",
           true, true));
 
-    VehiclePieceBoundsRecalculationDelay = Config.Bind("Debug",
+    VehiclePieceBoundsRecalculationDelay = Config.Bind(SectionName,
       "VehiclePieceBoundsRecalculationDelay", 10,
       ConfigHelpers.CreateConfigDescription(
         "The delay time at which the vehicle will recalculate bounds after placing a piece. This recalculation can be a bit heavy so it's debounced a minimum of 1 seconds but could be increased up to 30 seconds for folks that want to build a pause for a bit.",
         false, true, new AcceptableValueRange<int>(1, 30)));
 
-    WindowPosX = Config.Bind(SectionName, "WindowPosX", 0f);
-    WindowPosY = Config.Bind(SectionName, "WindowPosY", 0f);
+    CommandsWindowPosX = Config.Bind(SectionName, "CommandsWindowPosX", 0f);
+    CommandsWindowPosY = Config.Bind(SectionName, "CommandsWindowPosY", 0f);
+    VehicleConfigWindowPosX = Config.Bind(SectionName, "ConfigWindowPosX", 0f);
+    VehicleConfigWindowPosY = Config.Bind(SectionName, "ConfigWindowPosY", 0f);
     ButtonFontSize = Config.Bind(SectionName, "ButtonFontSize", 16);
     TitleFontSize = Config.Bind(SectionName, "LabelFontSize", 22);
 
@@ -152,7 +135,5 @@ public static class VehicleDebugConfig
     DebugMetricsEnabled.SettingChanged += (_, _) => OnMetricsUpdate();
     DebugMetricsTimer.SettingChanged +=
       (_, _) => OnMetricsUpdate();
-
- 
   }
 }

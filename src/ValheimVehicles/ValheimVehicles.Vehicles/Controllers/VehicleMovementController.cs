@@ -391,8 +391,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (isCreative) return;
     if (m_body.isKinematic) m_body.isKinematic = false;
 
-    VehiclePhysicsFixedUpdateAllClients();
     VehicleMovementUpdatesOwnerOnly();
+    VehiclePhysicsFixedUpdateAllClients();
   }
 
   public void StartPlayerCollisionAfterTeleport(Collider collider, Character character)
@@ -427,6 +427,16 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   private void OnCollisionEnter(Collision collision)
   {
     if (PiecesController == null) return;
+    if (collision.relativeVelocity.magnitude < 3f && collision.collider.transform.root.name.StartsWith(PrefabNames.LandVehicle) && collision.collider.transform.root != transform)
+    {
+      var rootNv = collision.collider.transform.root.GetComponent<ZNetView>();
+      if (rootNv)
+      {
+        PiecesController.AddTemporaryPiece(rootNv);
+      }
+      return;
+    }
+    
     if (collision.collider.gameObject.layer == LayerHelpers.TerrainLayer) return;
     if (collision.collider.name == "tread_mesh")
     {
@@ -1217,9 +1227,22 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     var bounds = PiecesController.convexHullComponent.GetConvexHullBounds(true);
 
-    if (direction == Vector3.right) return bounds.size.x / 2;
+    // var isRotated90Degrees = Mathf.Approximately(Mathf.Abs(ShipDirection.localRotation.eulerAngles.y), 90f) || Mathf.Approximately(Mathf.Abs(ShipDirection.localRotation.eulerAngles.y), 270f);
 
-    return bounds.size.z / 2;
+    if (direction == Vector3.right)
+    {
+      // if (isRotated90Degrees)
+      // {
+      //   return bounds.extents.z;
+      // }
+      return bounds.extents.x;
+    }
+
+    // if (isRotated90Degrees)
+    // {
+    //   return bounds.extents.x;
+    // }
+    return bounds.extents.z;
   }
 
   private float GetHighestGroundPoint(ShipFloatation shipFloatation)
@@ -1486,7 +1509,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
       m_body.isKinematic = true;
       var bounds = PiecesController.convexHullComponent.GetConvexHullBounds(true);
 
-      WheelController.InitializeWheels(bounds);
+      WheelController.Initialize(bounds);
       return;
     }
   }
@@ -1577,7 +1600,7 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (shouldUpdateLandInputs)
     {
       UpdateLandVehicleStatsIfNecessary();
-      WheelController.VehicleMovementFixedUpdate();
+      WheelController.VehicleMovementFixedUpdateOwnerClient();
     }
   }
 
@@ -1980,66 +2003,82 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     var convexHullRelativeBounds =
       PiecesController.convexHullComponent.GetConvexHullBounds(false);
 
-    var vehiclePosition = transform.position;
     var worldCenterOfMass = m_body.worldCenterOfMass;
     var forward = ShipDirection.forward;
-    var position = ShipDirection.position;
+    var position = transform.position;
     var right = ShipDirection.right;
 
-    var shipForward = position +
-                      forward * OnboardCollider.extents.z;
-    // GetFloatSizeFromDirection(Vector3.forward);
-    var shipBack = position -
-                   forward *
-                   GetFloatSizeFromDirection(Vector3.forward);
-    var shipLeft = position -
-                   right *
-                   GetFloatSizeFromDirection(Vector3.right);
-    var shipRight = position +
-                    right *
-                    GetFloatSizeFromDirection(Vector3.right);
+    var shipForward = new Vector3(convexHullRelativeBounds.center.x, convexHullRelativeBounds.center.y, convexHullRelativeBounds.max.z);
+    var shipBack = new Vector3(convexHullRelativeBounds.center.x, convexHullRelativeBounds.center.y, convexHullRelativeBounds.min.z);
+    var shipRight = new Vector3(convexHullRelativeBounds.max.x, convexHullRelativeBounds.center.y, convexHullRelativeBounds.center.z);
+    var shipLeft = new Vector3(convexHullRelativeBounds.min.x, convexHullRelativeBounds.center.y, convexHullRelativeBounds.center.z);
+    // var shipForward = position +
+    //                   forward * OnboardCollider.extents.z;
+    // // GetFloatSizeFromDirection(Vector3.forward);
+    // var shipBack = position -
+    //                forward *
+    //                GetFloatSizeFromDirection(Vector3.forward);
+    // var shipLeft = position -
+    //                right *
+    //                GetFloatSizeFromDirection(Vector3.right);
+    // var shipRight = position +
+    //                 right *
+    //                 GetFloatSizeFromDirection(Vector3.right);
+
+    // var shipForward = convexHullRelativeBounds.center +
+    //                   forward * GetFloatSizeFromDirection(Vector3.forward);
+    // // GetFloatSizeFromDirection(Vector3.forward);
+    // var shipBack = convexHullRelativeBounds.center -
+    //                forward *
+    //                GetFloatSizeFromDirection(Vector3.forward);
+    // var shipLeft = convexHullRelativeBounds.center -
+    //                right *
+    //                GetFloatSizeFromDirection(Vector3.right);
+    // var shipRight = convexHullRelativeBounds.center +
+    //                 right *
+    //                 GetFloatSizeFromDirection(Vector3.right);
 
 
-    if (PiecesController.convexHullMeshColliders.Count > 0)
-    {
-      var firstMeshCollider =
-        PiecesController.convexHullMeshColliders[0];
-      if (firstMeshCollider != null)
-      {
-        var nearestForward =
-          firstMeshCollider.ClosestPoint(shipForward);
-        var nearestBack =
-          firstMeshCollider.ClosestPoint(shipBack);
-        var nearestLeft =
-          firstMeshCollider.ClosestPoint(shipLeft);
-        var nearestRight =
-          firstMeshCollider.ClosestPoint(shipRight);
-        shipForward = nearestForward;
-        shipBack = nearestBack;
-        shipRight = nearestRight;
-        shipLeft = nearestLeft;
-      }
-
-    }
-    else
-    {
-      var nearestRight = vehiclePosition +
-                         convexHullRelativeBounds.ClosestPoint(shipRight -
-                                                               vehiclePosition);
-      var nearestLeft = vehiclePosition +
-                        convexHullRelativeBounds.ClosestPoint(shipLeft -
-                                                              vehiclePosition);
-      var nearestForward = vehiclePosition +
-                           convexHullRelativeBounds.ClosestPoint(shipForward -
-                                                                 vehiclePosition);
-      var nearestBack = vehiclePosition +
-                        convexHullRelativeBounds.ClosestPoint(shipBack -
-                                                              vehiclePosition);
-      shipForward = nearestForward;
-      shipBack = nearestBack;
-      shipRight = nearestRight;
-      shipLeft = nearestLeft;
-    }
+    // if (PiecesController.convexHullMeshColliders.Count > 0)
+    // {
+    //   var firstMeshCollider =
+    //     PiecesController.convexHullMeshColliders[0];
+    //   if (firstMeshCollider != null)
+    //   {
+    //     var nearestForward =
+    //       firstMeshCollider.ClosestPoint(shipForward);
+    //     var nearestBack =
+    //       firstMeshCollider.ClosestPoint(shipBack);
+    //     var nearestLeft =
+    //       firstMeshCollider.ClosestPoint(shipLeft);
+    //     var nearestRight =
+    //       firstMeshCollider.ClosestPoint(shipRight);
+    //     shipForward = nearestForward;
+    //     shipBack = nearestBack;
+    //     shipRight = nearestRight;
+    //     shipLeft = nearestLeft;
+    //   }
+    //
+    // }
+    // else
+    // {
+    //   var nearestRight = vehiclePosition +
+    //                      convexHullRelativeBounds.ClosestPoint(shipRight -
+    //                                                            vehiclePosition);
+    //   var nearestLeft = vehiclePosition +
+    //                     convexHullRelativeBounds.ClosestPoint(shipLeft -
+    //                                                           vehiclePosition);
+    //   var nearestForward = vehiclePosition +
+    //                        convexHullRelativeBounds.ClosestPoint(shipForward -
+    //                                                              vehiclePosition);
+    //   var nearestBack = vehiclePosition +
+    //                     convexHullRelativeBounds.ClosestPoint(shipBack -
+    //                                                           vehiclePosition);
+    //   shipForward = nearestForward;
+    //   shipBack = nearestBack;
+    //   shipRight = nearestRight;
+    //   shipLeft = nearestLeft;
+    // }
 
 
     // min does not matter but max does as the ship when attempting to reach flight mode will start bouncing badly.
@@ -2187,6 +2226,11 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
 
     // raft pieces transforms
     SyncVehicleRotationDependentItems();
+
+    if (VehicleInstance!.IsLandVehicle && VehicleInstance.WheelController != null)
+    {
+      VehicleInstance.WheelController.VehicleMovementFixedUpdateAllClients();
+    }
   }
 
   /// <summary>

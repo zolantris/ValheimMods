@@ -71,7 +71,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private bool m_customItemsAdded;
   public PrefabRegistryController prefabController;
 
-  public static VehicleDebugGui _debugGui;
+  public static VehicleGui Gui;
+  public static GameObject GuiObj;
 
   public static ValheimRaftPlugin Instance { get; private set; }
 
@@ -541,7 +542,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   {
     // SentryLoads after
     ApplyMetricIfAvailable();
-    AddGuiLayerComponents();
+    AddRemoveVehicleGui();
 
     if (ModEnvironment.IsDebug)
       new BepInExConfigAutoDoc().Generate(this, Config, "ValheimRAFT");
@@ -628,22 +629,26 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     }
   }
 
-  private void AddGuiLayerComponents()
-  {
-    AddRemoveVehicleDebugGui(VehicleDebugConfig.VehicleDebugMenuEnabled.Value);
-  }
-
   /**
    * todo: move to Vehicles plugin when it is ready
    */
-  public void AddRemoveVehicleDebugGui(bool hasDebug)
+  public void AddRemoveVehicleGui()
   {
-    _debugGui = GetComponent<VehicleDebugGui>();
-
-    if ((bool)_debugGui && !hasDebug) Destroy(_debugGui);
-
-    if (!(bool)_debugGui && hasDebug)
-      _debugGui = gameObject.AddComponent<VehicleDebugGui>();
+    if (!GuiObj)
+    {
+      GuiObj = new GameObject("ValheimVehicles_VehicleGui")
+      {
+        transform = { parent = transform },
+        layer = LayerHelpers.UILayer
+      };
+    }
+    Gui = GuiObj.GetComponent<VehicleGui>();
+    if (!VehicleGui.hasConfigPanelOpened && Gui)
+    {
+      Destroy(GuiObj);
+    }
+    else if (!Gui)
+      Gui = GuiObj.AddComponent<VehicleGui>();
   }
 
   private void AddCustomPieces()

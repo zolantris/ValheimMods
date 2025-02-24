@@ -330,7 +330,7 @@ namespace ValheimVehicles.SharedScripts
 #if VALHEIM_RAFT
       if (collision.collider.GetComponentInParent<Character>() != null)
       {
-        Debug.Log("Hit a character!");
+        Debug.Log("ValheimVehicles.WheelController Hit a character!");
       }
 #endif
 
@@ -437,8 +437,8 @@ namespace ValheimVehicles.SharedScripts
         var leftJoint = treadsLeftTransform.GetComponent<ConfigurableJoint>();
         var rightJoint = treadsRightTransform.GetComponent<ConfigurableJoint>();
 
-        var treadsAnchorLeftLocalPosition = new Vector3(bounds.min.x - 1f, bounds.min.y + wheelBottomOffset, bounds.center.z);
-        var treadsAnchorRightLocalPosition = new Vector3(bounds.max.x + 1f, bounds.min.y + wheelBottomOffset, bounds.center.z);
+        var treadsAnchorLeftLocalPosition = new Vector3(bounds.min.x, bounds.min.y + wheelBottomOffset, bounds.center.z);
+        var treadsAnchorRightLocalPosition = new Vector3(bounds.max.x, bounds.min.y + wheelBottomOffset, bounds.center.z);
 
         if (leftJoint && rightJoint)
         {
@@ -552,6 +552,8 @@ namespace ValheimVehicles.SharedScripts
       }
       SmoothAngularVelocity();
     }
+
+    public static float minTreadDistances = 0.1f;
     // New method: apply forces directly at the treads to simulate continuous treads
     private void ApplyTreadForces()
     {
@@ -630,7 +632,7 @@ namespace ValheimVehicles.SharedScripts
 
       var deltaTreads = Vector3.Distance(rightTreadPos, leftTreadPos);
 
-      if (deltaTreads <= 2)
+      if (deltaTreads < minTreadDistances)
       {
         // vehicle is not ready. The treads are too close.
         return;
@@ -834,7 +836,7 @@ namespace ValheimVehicles.SharedScripts
     /// <summary>
     ///   To be called from VehicleMovementController
     /// </summary>
-    public void VehicleMovementFixedUpdate()
+    public void VehicleMovementFixedUpdateOwnerClient()
     {
       if (!IsVehicleReady) return;
       _shouldSyncVisualOnCurrentFrame = true;
@@ -856,7 +858,6 @@ namespace ValheimVehicles.SharedScripts
         // return;
       }
 
-      // AdjustSuspensionForTank();
       HandleObstacleClimb();
 
       if (useDirectTreadPhysics)
@@ -868,7 +869,10 @@ namespace ValheimVehicles.SharedScripts
       {
         ApplyTorque(inputMovement, inputTurnForce);
       }
+    }
 
+    public void VehicleMovementFixedUpdateAllClients()
+    {
       SyncWheelAndTreadVisuals();
     }
 
@@ -981,7 +985,7 @@ namespace ValheimVehicles.SharedScripts
     /// 
     /// TODO make this a coroutine so it does not impact performance.
     /// <param name="bounds"></param>
-    public void InitializeWheels(Bounds? bounds)
+    public void Initialize(Bounds? bounds)
     {
       _isWheelsInitialized = false;
       var vehicleFrameBounds = GetVehicleFrameBounds(bounds.GetValueOrDefault());
@@ -1809,7 +1813,8 @@ namespace ValheimVehicles.SharedScripts
       UpdateAccelerationValues(accelerationType, inputMovement >= 0);
 
       // critical call, meant for all components
-      VehicleMovementFixedUpdate();
+      VehicleMovementFixedUpdateOwnerClient();
+      VehicleMovementFixedUpdateAllClients();
     }
 #endif
   }

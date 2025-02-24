@@ -30,6 +30,78 @@ public class CustomMeshPrefabs : IRegisterPrefab
     }
   }
 
+  // public void RegisterVehicleTreadsDistanceCreator()
+  // {
+  //   var prefab =
+  //     PrefabManager.Instance.CreateEmptyPrefab(
+  //       PrefabNames.CustomWaterMaskCreator,
+  //       false);
+  //
+  //   var mesh = prefab.GetComponent<MeshRenderer>();
+  //   var material = new Material(LoadValheimAssets.CustomPieceShader)
+  //   {
+  //     color = Color.green
+  //   };
+  //   var collider = prefab.GetComponent<BoxCollider>();
+  //   prefab.layer = LayerMask.NameToLayer("piece_nonsolid");
+  //   collider.excludeLayers = LayerHelpers.CustomRaftLayerMask;
+  //   mesh.material = material;
+  //   prefab.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+  //
+  //   var creatorComponent = prefab.AddComponent<CustomMeshCreatorComponent>();
+  //   creatorComponent.SetCreatorType(CustomMeshCreatorComponent
+  //     .MeshCreatorTypeEnum.WaterMask);
+  //
+  //   var piece = PrefabRegistryHelpers.AddPieceForPrefab(
+  //     PrefabNames.CustomTreadDistanceCreator,
+  //     prefab);
+  //   piece.m_canRotate = true;
+  //
+  //   PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
+  //     new PieceConfig
+  //     {
+  //       PieceTable = "Hammer",
+  //       Category = PrefabNames.ValheimRaftMenuName,
+  //       Enabled = true
+  //     }));
+  // }
+
+  // public void RegisterVehicleHeight()
+  // {
+  //   var prefab =
+  //     PrefabManager.Instance.CreateEmptyPrefab(
+  //       PrefabNames.CustomWaterMaskCreator,
+  //       false);
+  //
+  //   var mesh = prefab.GetComponent<MeshRenderer>();
+  //   var material = new Material(LoadValheimAssets.CustomPieceShader)
+  //   {
+  //     color = Color.green
+  //   };
+  //   var collider = prefab.GetComponent<BoxCollider>();
+  //   prefab.layer = LayerMask.NameToLayer("piece_nonsolid");
+  //   collider.excludeLayers = LayerHelpers.CustomRaftLayerMask;
+  //   mesh.material = material;
+  //   prefab.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+  //
+  //   var creatorComponent = prefab.AddComponent<CustomMeshCreatorComponent>();
+  //   creatorComponent.SetCreatorType(CustomMeshCreatorComponent
+  //     .MeshCreatorTypeEnum.WaterMask);
+  //
+  //   var piece = PrefabRegistryHelpers.AddPieceForPrefab(
+  //     PrefabNames.CustomTreadDistanceCreator,
+  //     prefab);
+  //   piece.m_canRotate = true;
+  //
+  //   PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
+  //     new PieceConfig
+  //     {
+  //       PieceTable = "Hammer",
+  //       Category = PrefabNames.ValheimRaftMenuName,
+  //       Enabled = true
+  //     }));
+  // }
+
   private void RegisterWaterMaskCreator()
   {
     var prefab =

@@ -272,7 +272,7 @@ namespace ValheimVehicles.SharedScripts
       {
         var bounds = _convexHullAPI.GetConvexHullBounds(true);
         _cachedDebugBounds = bounds;
-        vehicleWheelController.InitializeWheels(bounds);
+        vehicleWheelController.Initialize(bounds);
       }
 
       // RigidbodyUtils.RecenterRigidbodyPivot(PiecesParentObj.gameObject);

@@ -335,17 +335,17 @@ public static class PhysicsConfig
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Slow speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(0.0001f, 100f)));
+        true, false, new AcceptableValueRange<float>(0.05f, 4f)));
     VehicleLandSpeedHalf = Config.Bind(PropulsionSection, "LandVehicle Half Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Half speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(0.0001f, 100f)));
+        true, false, new AcceptableValueRange<float>(0.05f, 4f)));
     VehicleLandSpeedFull = Config.Bind(PropulsionSection, "LandVehicle Full Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(0.0001f, 100f)));
+        true, false, new AcceptableValueRange<float>(0.05f, 4f)));
     VehicleLandTurnSpeed = Config.Bind(PropulsionSection,
       "LandVehicle Turn Speed",
       0.5f,
@@ -356,7 +356,7 @@ public static class PhysicsConfig
       "LandVehicle Max Tread Width",
       8,
       ConfigHelpers.CreateConfigDescription(
-        "Max width the treads can expand to.", true, false, new AcceptableValueRange<int>(1, 20)));
+        "Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles though.", true, false, new AcceptableValueRange<int>(1, 20)));
 
     VehicleLandMaxTreadLength = Config.Bind(PropulsionSection,
       "LandVehicle Max Tread Length",
