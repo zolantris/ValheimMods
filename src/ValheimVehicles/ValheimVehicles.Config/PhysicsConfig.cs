@@ -356,7 +356,7 @@ public static class PhysicsConfig
       "LandVehicle Max Tread Width",
       8,
       ConfigHelpers.CreateConfigDescription(
-        "Max width the treads can expand to.", true, false, new AcceptableValueRange<int>(2, 40)));
+        "Max width the treads can expand to.", true, false, new AcceptableValueRange<int>(1, 20)));
 
     VehicleLandMaxTreadLength = Config.Bind(PropulsionSection,
       "LandVehicle Max Tread Length",

@@ -14,7 +14,29 @@ public class StartScene_Patch
   [HarmonyPrefix]
   public static bool MenuScene_Awake(MenuScene __instance)
   {
-    Object.Destroy(__instance.gameObject);
+    // destroy is pretty heavy and will break ui layering.
+    // Object.Destroy(__instance.gameObject);
+
+    // top level root objects
+    var staticObj = GameObject.Find("Static");
+    var backgroundSceneObj = GameObject.Find("Backgroundscene");
+
+    // most of the valheim terrain is here
+    if (staticObj != null)
+    {
+      staticObj.SetActive(false);
+    }
+
+    // grass is inside the BackgroundSceneObject
+    if (backgroundSceneObj != null)
+    {
+      var grassRoot = backgroundSceneObj.transform.Find("grassroot");
+      if (grassRoot != null)
+      {
+        grassRoot.gameObject.SetActive(false);
+      }
+    }
+    
     return false;
   }
 
@@ -25,7 +47,6 @@ public class StartScene_Patch
   {
     return false;
   }
-
 
   // AudioMan returns a NRE if the StartScene is nuked
   [HarmonyPatch(typeof(AudioMan), "Update")]

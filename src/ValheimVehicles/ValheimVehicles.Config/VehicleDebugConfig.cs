@@ -1,7 +1,5 @@
-using System;
 using BepInEx.Configuration;
 using ValheimRAFT;
-using ValheimVehicles.Vehicles.Components;
 using Zolantris.Shared;
 
 namespace ValheimVehicles.Config;
@@ -20,6 +18,9 @@ public static class VehicleDebugConfig
 
   public static ConfigEntry<bool>
     AutoShowVehicleColliders { get; private set; } = null!;
+
+
+  public static float OriginalCameraZoomOutDistance = 8f;
 
   public static ConfigEntry<bool>
     HasAutoAnchorDelay { get; private set; } = null!;
@@ -48,6 +49,7 @@ public static class VehicleDebugConfig
   public static ConfigEntry<bool>
     VehicleDebugMenuEnabled { get; private set; } = null!;
 
+
   public static ConfigEntry<bool> SyncShipPhysicsOnAllClients
   {
     get;
@@ -71,6 +73,9 @@ public static class VehicleDebugConfig
       BatchedLogger.BatchIntervalFrequencyInSeconds = DebugMetricsTimer.Value;
     }
   }
+
+
+
 
   public static void BindConfig(ConfigFile config)
   {
@@ -147,5 +152,7 @@ public static class VehicleDebugConfig
     DebugMetricsEnabled.SettingChanged += (_, _) => OnMetricsUpdate();
     DebugMetricsTimer.SettingChanged +=
       (_, _) => OnMetricsUpdate();
+
+ 
   }
 }

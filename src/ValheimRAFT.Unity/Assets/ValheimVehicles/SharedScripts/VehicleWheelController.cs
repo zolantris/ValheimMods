@@ -960,10 +960,6 @@ namespace ValheimVehicles.SharedScripts
       {
         var size = new Vector3(Mathf.Max(bounds.size.x, 2f), Mathf.Max(bounds.size.y, 2f), Mathf.Max(bounds.size.z, 2f));
         var center = bounds.center;
-        // if (bounds.size.y < 4f)
-        // {
-        //   center.y = 2f;
-        // }
         bounds = new Bounds(center, size);
       }
 

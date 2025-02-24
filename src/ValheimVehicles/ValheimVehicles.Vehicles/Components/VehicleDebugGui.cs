@@ -117,15 +117,8 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
   private void InitPanel()
   {
-    if (GUIManager.Instance == null)
+    if (GUIManager.Instance == null || GUIManager.CustomGUIFront == null)
     {
-      Logger.LogError("GUIManager instance is null");
-      return;
-    }
-
-    if (!GUIManager.CustomGUIFront)
-    {
-      Logger.LogError("GUIManager CustomGUI is null");
       return;
     }
 

@@ -441,8 +441,26 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     }
 
     RestorePlayerBlockingCamera(player);
+    UpdateCameraZoom(player, true);
 
     player.transform.SetParent(null);
+  }
+
+  public void UpdateCameraZoom(Player player, bool isLeaving)
+  {
+    if (!CameraConfig.CameraZoomOverridesEnabled.Value || CameraConfig.CameraZoomMaxDistance.Value == 0 || Player.m_localPlayer != player || GameCamera.instance == null)
+    {
+      return;
+    }
+
+    if (isLeaving)
+    {
+      GameCamera.instance.m_maxDistance = Mathf.Max(GameCamera_CullingPatches.originalMaxDistance, GameCamera_CullingPatches.minimumMaxDistance);
+      return;
+    }
+
+    var distance = Mathf.Lerp(CameraConfig.cameraZoomMultiplier, Mathf.Pow(CameraConfig.cameraZoomMultiplier, 2), CameraConfig.CameraZoomMaxDistance.Value);
+    GameCamera.instance.m_maxDistance = distance;
   }
 
   public void AddPlayerToLocalShip(Player player)
@@ -459,6 +477,7 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
 
     var isPlayerInList = m_localPlayers.Contains(player);
     RemovePlayerBlockingCameraWhileOnboard(player);
+    UpdateCameraZoom(player, false);
     player.transform.SetParent(piecesTransform);
 
     if (!isPlayerInList)
