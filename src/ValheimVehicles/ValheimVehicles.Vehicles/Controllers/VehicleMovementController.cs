@@ -1996,89 +1996,67 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     return extremePoints;
   }
 
+  /// <summary>
+  /// Overly Complicated way to transform a rotated ShipDirection and get points from a box collider that does not rotate in world space.
+  /// </summary>
+  /// todo it would be simpler to get the position of the box collider corners. But not sure what needs to be done. This code works.
+  /// <returns></returns>
+  public (Vector3, Vector3, Vector3, Vector3) GetShipForcePoints()
+  {
+    if (FloatCollider == null || ShipDirection == null)
+      return (Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
+
+    // Get the root object (the Rigidbody holder) dynamically
+    var rootRigidbody = FloatCollider.GetComponentInParent<Rigidbody>();
+    var rootTransform = rootRigidbody ? rootRigidbody.transform : FloatCollider.transform.root;
+
+    // Get local position relative to the root (not directly ShipDirection)
+    var localPosition = rootTransform.InverseTransformPoint(FloatCollider.transform.position);
+
+    // Get the half-size of the collider
+    var halfSize = FloatCollider.size * 0.5f;
+
+    var isXZSwapped = Mathf.Abs(Vector3.Dot(ShipDirection.forward, Vector3.right)) > Mathf.Abs(Vector3.Dot(ShipDirection.forward, Vector3.forward));
+
+    // Use ShipDirection's rotation directly (since it's responsible for movement)
+    var shipRotation = ShipDirection.rotation;
+
+    // Define local offset points (these will be rotated)
+    var localOffsets = isXZSwapped
+      ? new Vector3[]
+      {
+        new(0, 0, halfSize.x), // Forward
+        new(0, 0, -halfSize.x), // Back
+        new(halfSize.z, 0, 0), // Right
+        new(-halfSize.z, 0, 0) // Left
+      }
+      : new Vector3[]
+      {
+        new(0, 0, halfSize.z), // Forward
+        new(0, 0, -halfSize.z), // Back
+        new(halfSize.x, 0, 0), // Right
+        new(-halfSize.x, 0, 0) // Left
+      };
+
+    // Convert all points using world-space rotation from ShipDirection
+    var worldCenter = rootTransform.TransformPoint(localPosition);
+    var worldPoints = new Vector3[localOffsets.Length];
+
+    for (var i = 0; i < localOffsets.Length; i++)
+    {
+      worldPoints[i] = worldCenter + shipRotation * localOffsets[i];
+    }
+
+    return (worldPoints[0], worldPoints[1], worldPoints[2], worldPoints[3]);
+  }
+
+
   public ShipFloatation GetShipFloatationObj()
   {
     if (ShipDirection == null || PiecesController == null || OnboardCollider == null)
       return new ShipFloatation();
-    var convexHullRelativeBounds =
-      PiecesController.convexHullComponent.GetConvexHullBounds(false);
-
     var worldCenterOfMass = m_body.worldCenterOfMass;
-    var forward = ShipDirection.forward;
-    var position = transform.position;
-    var right = ShipDirection.right;
-
-    var shipForward = new Vector3(convexHullRelativeBounds.center.x, convexHullRelativeBounds.center.y, convexHullRelativeBounds.max.z);
-    var shipBack = new Vector3(convexHullRelativeBounds.center.x, convexHullRelativeBounds.center.y, convexHullRelativeBounds.min.z);
-    var shipRight = new Vector3(convexHullRelativeBounds.max.x, convexHullRelativeBounds.center.y, convexHullRelativeBounds.center.z);
-    var shipLeft = new Vector3(convexHullRelativeBounds.min.x, convexHullRelativeBounds.center.y, convexHullRelativeBounds.center.z);
-    // var shipForward = position +
-    //                   forward * OnboardCollider.extents.z;
-    // // GetFloatSizeFromDirection(Vector3.forward);
-    // var shipBack = position -
-    //                forward *
-    //                GetFloatSizeFromDirection(Vector3.forward);
-    // var shipLeft = position -
-    //                right *
-    //                GetFloatSizeFromDirection(Vector3.right);
-    // var shipRight = position +
-    //                 right *
-    //                 GetFloatSizeFromDirection(Vector3.right);
-
-    // var shipForward = convexHullRelativeBounds.center +
-    //                   forward * GetFloatSizeFromDirection(Vector3.forward);
-    // // GetFloatSizeFromDirection(Vector3.forward);
-    // var shipBack = convexHullRelativeBounds.center -
-    //                forward *
-    //                GetFloatSizeFromDirection(Vector3.forward);
-    // var shipLeft = convexHullRelativeBounds.center -
-    //                right *
-    //                GetFloatSizeFromDirection(Vector3.right);
-    // var shipRight = convexHullRelativeBounds.center +
-    //                 right *
-    //                 GetFloatSizeFromDirection(Vector3.right);
-
-
-    // if (PiecesController.convexHullMeshColliders.Count > 0)
-    // {
-    //   var firstMeshCollider =
-    //     PiecesController.convexHullMeshColliders[0];
-    //   if (firstMeshCollider != null)
-    //   {
-    //     var nearestForward =
-    //       firstMeshCollider.ClosestPoint(shipForward);
-    //     var nearestBack =
-    //       firstMeshCollider.ClosestPoint(shipBack);
-    //     var nearestLeft =
-    //       firstMeshCollider.ClosestPoint(shipLeft);
-    //     var nearestRight =
-    //       firstMeshCollider.ClosestPoint(shipRight);
-    //     shipForward = nearestForward;
-    //     shipBack = nearestBack;
-    //     shipRight = nearestRight;
-    //     shipLeft = nearestLeft;
-    //   }
-    //
-    // }
-    // else
-    // {
-    //   var nearestRight = vehiclePosition +
-    //                      convexHullRelativeBounds.ClosestPoint(shipRight -
-    //                                                            vehiclePosition);
-    //   var nearestLeft = vehiclePosition +
-    //                     convexHullRelativeBounds.ClosestPoint(shipLeft -
-    //                                                           vehiclePosition);
-    //   var nearestForward = vehiclePosition +
-    //                        convexHullRelativeBounds.ClosestPoint(shipForward -
-    //                                                              vehiclePosition);
-    //   var nearestBack = vehiclePosition +
-    //                     convexHullRelativeBounds.ClosestPoint(shipBack -
-    //                                                           vehiclePosition);
-    //   shipForward = nearestForward;
-    //   shipBack = nearestBack;
-    //   shipRight = nearestRight;
-    //   shipLeft = nearestLeft;
-    // }
+    var (shipForward, shipBack, shipRight, shipLeft) = GetShipForcePoints();
 
 
     // min does not matter but max does as the ship when attempting to reach flight mode will start bouncing badly.
