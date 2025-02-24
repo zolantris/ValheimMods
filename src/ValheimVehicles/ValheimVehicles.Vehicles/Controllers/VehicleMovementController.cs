@@ -1999,6 +1999,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
   /// <summary>
   /// Overly Complicated way to transform a rotated ShipDirection and get points from a box collider that does not rotate in world space.
   /// </summary>
+  /// Do not change this logic without testing rotating VehicleWheel in all 90 degree increments.
+  /// - Noting that 90 degree increments can get off even with this logic during reloads of the game. There is likely more to this rotation logic.
   /// todo it would be simpler to get the position of the box collider corners. But not sure what needs to be done. This code works.
   /// <returns></returns>
   public (Vector3, Vector3, Vector3, Vector3) GetShipForcePoints()
@@ -2006,6 +2008,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     if (FloatCollider == null || ShipDirection == null)
       return (Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
 
+    Physics.SyncTransforms();
+    
     // Get the root object (the Rigidbody holder) dynamically
     var rootRigidbody = FloatCollider.GetComponentInParent<Rigidbody>();
     var rootTransform = rootRigidbody ? rootRigidbody.transform : FloatCollider.transform.root;
@@ -2016,7 +2020,8 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     // Get the half-size of the collider
     var halfSize = FloatCollider.size * 0.5f;
 
-    var isXZSwapped = Mathf.Abs(Vector3.Dot(ShipDirection.forward, Vector3.right)) > Mathf.Abs(Vector3.Dot(ShipDirection.forward, Vector3.forward));
+    var forward = ShipDirection.forward;
+    var isXZSwapped = Mathf.Abs(Vector3.Dot(forward, Vector3.right)) > Mathf.Abs(Vector3.Dot(forward, Vector3.forward));
 
     // Use ShipDirection's rotation directly (since it's responsible for movement)
     var shipRotation = ShipDirection.rotation;
@@ -2037,6 +2042,13 @@ public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
         new(halfSize.x, 0, 0), // Right
         new(-halfSize.x, 0, 0) // Left
       };
+    // var localOffsets = new Vector3[]
+    // {
+    //   new(0, 0, halfSize.z), // Forward
+    //   new(0, 0, -halfSize.z), // Back
+    //   new(halfSize.x, 0, 0), // Right
+    //   new(-halfSize.x, 0, 0) // Left
+    // };
 
     // Convert all points using world-space rotation from ShipDirection
     var worldCenter = rootTransform.TransformPoint(localPosition);
