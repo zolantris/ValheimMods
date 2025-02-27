@@ -29,10 +29,10 @@ namespace ValheimVehicles.SharedScripts
 #if UNITY_EDITOR
     public void FixedUpdate()
     {
-      CustomFixedUpdate();
+      CustomFixedUpdate(Time.fixedDeltaTime);
     }
 #endif
-    public virtual void CustomFixedUpdate()
+    public virtual void CustomFixedUpdate(float deltaTime)
     {
       if (m_shouldSync)
       {

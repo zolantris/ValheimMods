@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using ValheimRAFT.Util;
+using ValheimVehicles.Vehicles;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
@@ -75,7 +76,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
   internal Rigidbody m_rigidbody;
 
-  public static RopeAnchorComponent m_draggingRopeFrom;
+  public static RopeAnchorComponent? m_draggingRopeFrom;
 
   private List<Rope> m_ropes = new();
 
@@ -84,8 +85,15 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   private uint m_zdoDataRevision;
 
   private float m_lastRopeCheckTime;
-
+  
   internal static GameObject m_draggingRopeTo;
+
+  public bool isHauling = false;
+  private static string AttachToText = "";
+  private static string StartAttachText = "";
+  private static string HaulingStartText = "";
+  private static string HaulingStopText = ""; 
+  
 
   private static readonly Dictionary<string, string[]> m_attachmentPoints =
     GetAttachmentPoints();
@@ -106,6 +114,46 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     wnt.m_onDestroyed =
       (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(DestroyAllRopes));
     LoadFromZDO();
+
+    SetupLocalization();
+    Localization.OnLanguageChange += SetupLocalization;
+  }
+
+  public void OnDestroy()
+  {
+    Localization.OnLanguageChange -= SetupLocalization;
+  }
+
+  private static void SetupLocalization()
+  {
+    if (Localization.instance == null) return;
+
+    // alt key for hauling vehicles
+    if (HaulingStartText == string.Empty)
+    {
+      HaulingStartText = Localization.instance.Localize(
+        "[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] $valhiem_vehicles_haul_vehicle_start");
+    }
+
+    // stop does not need a alt key
+    if (HaulingStopText == string.Empty)
+    {
+      HaulingStopText = Localization.instance.Localize(
+        "[<color=yellow><b>$KEY_Use</b></color>] $valhiem_vehicles_haul_vehicle_stop");
+    }
+
+    if (AttachToText == string.Empty)
+    {
+      AttachToText = Localization.instance.Localize(
+        "[<color=yellow><b>$KEY_Use</b></color>] $mb_rope_anchor_attach_to");
+    }
+
+
+    if (StartAttachText == string.Empty)
+    {
+      StartAttachText = Localization.instance.Localize(
+        "[<color=yellow><b>$KEY_Use</b></color>] $mb_rope_anchor_attach");
+    }
   }
 
   private void DestroyAllRopes()
@@ -117,20 +165,59 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   {
     return "";
   }
+  
 
   public string GetHoverText()
   {
+    if (isHauling)
+    {
+      return HaulingStopText;
+    }
+    
     if (m_draggingRopeTo != this)
-      return Localization.instance.Localize(
-        "[<color=yellow><b>$KEY_Use</b></color>] $mb_rope_anchor_attach_to");
+      return $"{StartAttachText}\n{HaulingStartText}";
 
-    return Localization.instance.Localize(
-      "[<color=yellow><b>$KEY_Use</b></color>] $mb_rope_anchor_attach");
+    return AttachToText;
+  }
+
+  public void StopHauling()
+  {
+    m_rope.enabled = false;
+    m_draggingRopeFrom = null;
+    isHauling = false;
+  }
+
+  public void ToggleHaulingVehicle(Humanoid user)
+  {
+    isHauling = !isHauling;
+    if (!isHauling)
+    {
+      StopHauling();
+    }
+    m_draggingRopeFrom = isHauling ? this : null;
+    m_rope.enabled = isHauling;
+
+    var player = user.GetComponent<Player>();
+    if (player == null) return;
+    var piecesController = GetComponentInParent<VehiclePiecesController>();
+    if (piecesController == null || piecesController.MovementController == null) return;
+    piecesController.MovementController.SetHaulingVehicle(player, this, isHauling);
   }
 
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
-    if (!m_draggingRopeFrom)
+    if (alt || isHauling)
+    {
+      ToggleHaulingVehicle(user);
+      return true;
+    }
+
+    if (hold && m_draggingRopeFrom == this)
+    {
+      m_draggingRopeFrom = null;
+      m_rope.enabled = false;
+    }
+    else if (!m_draggingRopeFrom)
     {
       m_draggingRopeFrom = this;
       m_rope.enabled = true;
@@ -346,7 +433,7 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     if (m_rope.enabled && (bool)Player.m_localPlayer)
     {
       m_rope.SetPosition(0, transform.position);
-      if ((bool)m_draggingRopeTo)
+      if (!isHauling && (bool)m_draggingRopeTo)
       {
         var index = GetIndexAtLocation(m_draggingRopeTo);
         var t = GetAttachmentTransform(m_draggingRopeTo,

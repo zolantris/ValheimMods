@@ -47,19 +47,25 @@ namespace ValheimVehicles.SharedScripts
           }
       }
 
-      public void AddListOfColliders(List<Collider> colliders)
+      public void AddListOfColliders(List<Collider> colliders, bool shouldUpdate = false)
       {
           colliders.ForEach(AddColliderToVehicle);
-          ProcessIgnoreCollisions();
+          if (shouldUpdate)
+          {
+              ProcessIgnoreCollisions();
+          }
       }
 
-      public void AddListOfColliders(List<WheelCollider> colliders)
+      public void AddListOfColliders(List<WheelCollider> colliders, bool shouldUpdate = false)
       {
           colliders.ForEach(AddColliderToVehicle);
-          ProcessIgnoreCollisions();
+          if (shouldUpdate)
+          {
+              ProcessIgnoreCollisions();
+          }
       }
 
-      public void AddObjectToVehicle(GameObject obj)
+      public void AddObjectToVehicle(GameObject obj, bool shouldUpdate = false)
       {
           if (_isVehicleDestroyed || obj == null) return;
 
@@ -68,8 +74,10 @@ namespace ValheimVehicles.SharedScripts
           {
               AddColliderToVehicle(collider);
           }
-
-          ProcessIgnoreCollisions();
+          if (shouldUpdate)
+          {
+              ProcessIgnoreCollisions();
+          }  
       }
 
       public void RemoveObjectFromVehicle(GameObject obj)
