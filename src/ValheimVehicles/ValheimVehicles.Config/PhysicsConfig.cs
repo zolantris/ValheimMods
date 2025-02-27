@@ -411,7 +411,7 @@ public static class PhysicsConfig
       $"forceDistance_{DampingResetKey}", 1f,
       "EXPERIMENTAL_FORCE_DISTANCE");
     force = Config.Bind(SectionKey,
-      $"force_{DampingResetKey}", 1f,
+      $"force_{DampingResetKey}", 2f,
       "EXPERIMENTAL_FORCE");
 
     backwardForce = Config.Bind(SectionKey,

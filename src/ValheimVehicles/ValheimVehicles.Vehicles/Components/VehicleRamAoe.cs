@@ -511,6 +511,9 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       UpdateReloadingTime();
     }
 
+    // we do not want to allow collisions for kinematic objects (such as raft creative or hauling modes)
+    if (m_body.isKinematic) return false;
+
     if (IsWaitingForOnboardCollider())
     {
       return false;

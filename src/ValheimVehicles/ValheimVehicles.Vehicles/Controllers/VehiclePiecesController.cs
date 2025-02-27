@@ -501,8 +501,8 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     if (OnboardCollider == null)
       OnboardCollider = onboardColliderTransform.GetComponent<BoxCollider>();
 
-    m_vehicleCollisionManager.AddObjectToVehicle(FloatCollider.gameObject);
-    m_vehicleCollisionManager.AddObjectToVehicle(OnboardCollider.gameObject);
+    // m_vehicleCollisionManager.AddObjectToVehicle(FloatCollider.gameObject);
+    // m_vehicleCollisionManager.AddObjectToVehicle(OnboardCollider.gameObject);
 
     InitConvexHullGenerator();
     _piecesContainer = GetPiecesContainer();
@@ -966,7 +966,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     foreach (var mBedPiece in m_bedPieces) UpdateBedPiece(mBedPiece);
   }
 
-  public void CustomFixedUpdate(float deltaTime)
+  public override void CustomFixedUpdate(float deltaTime)
   {
     if (VehicleInstance?.NetView == null) return;
     cachedIsNetviewOwner = VehicleInstance.NetView.IsOwner();
@@ -2373,7 +2373,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   public void OnAddPieceIgnoreColliders(ZNetView netView)
   {
     IgnoreAllVehicleCollidersForGameObjectChildren(netView.gameObject);
-    OnPieceAddedIgnoreAllColliders(netView.gameObject);
+    // OnPieceAddedIgnoreAllColliders(netView.gameObject);
 
 
     // todo the code below is inefficient. Need to abstract this all to another component that is meant for hashing gameobjects with colliders and iterating through their slices in batches.
@@ -2798,12 +2798,14 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     // heavy but simple ignore all colliders.
     foreach (var vehicleCollider in allVehicleColliders)
     {
+      // must ignore all vehicle colliders
       foreach (var vehicleCollider2 in allVehicleColliders)
       {
         if (vehicleCollider == vehicleCollider2) continue;
         Physics.IgnoreCollision(vehicleCollider, vehicleCollider2, true);
       }
 
+      // vehicle colliders must ignore pieces. But pieces should likely not ignore eachother and it won't matter with how piece controller ignores physics engine.
       foreach (var allPieceCollider in allPieceColliders)
       {
         Physics.IgnoreCollision(vehicleCollider, allPieceCollider, true);

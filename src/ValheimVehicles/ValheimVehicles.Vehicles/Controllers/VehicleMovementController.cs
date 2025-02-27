@@ -81,6 +81,8 @@
 
     public static float maxFlyingHeight = 5000f;
 
+    private static float buoyancyThreshold = -1f;
+
     public bool isAnchored;
 
     public SteeringWheelComponent lastUsedWheelComponent;
@@ -128,8 +130,16 @@
 
     public float localCenterOfMassOffset;
     public RigidbodyConstraints FreezeXZRotation = RigidbodyConstraints.FreezeRotationZ | RigidbodyConstraints.FreezeRotationX;
-    private readonly bool _isHoldingAscend = false;
-    private readonly bool _isHoldingDescend = false;
+
+    public bool isPlayerHaulingVehicle;
+    public Player? HaulingPlayer;
+    public RopeAnchorComponent? HaulingRopeComponent;
+
+    public float centerOfMassForceOffsetDifferenceMultiplier = 1f;
+
+    public static float haulMoveSpeed = 1.5f;
+    public static float haulRotationSpeed = 1f;
+
     private ShipFloatation? _currentShipFloatation;
 
     private Coroutine? _debouncedForceTakeoverControlsInstance;
@@ -143,6 +153,8 @@
     // flying mechanics
     private bool _isAscending;
     private bool _isDescending;
+    private bool _isHoldingAscend = false;
+    private bool _isHoldingDescend = false;
 
     // prevents updating repeatedly firing while the key is down
     private bool _isHoldingAnchor;
@@ -178,7 +190,6 @@
 
     internal bool m_forwardPressed;
 
-
     internal float m_rudder;
     internal float m_rudderValue;
 
@@ -195,6 +206,13 @@
     private Ship.Speed vehicleSpeed;
 
     private float vehicleStatSyncTimer;
+
+    // hauling config values
+    public static float minHaulFollowDistance = 2f;
+    public static float maxHaulFollowDistance = 20f;
+    public static float HaulingOffsetLowestPointBuffer = 1f;
+    public float haulingStaminaCost = 5f;
+    public float distanceMovedSinceHaulTick = 0f;
 
     public VehicleOnboardController? OnboardController =>
       _vehicle.OnboardController;
@@ -266,10 +284,10 @@
       !WaterConfig.WaterBallastEnabled.Value;
 
     public bool GetAscendKeyPress =>
-      ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump");
+      ZInput.GetButtonDown("Jump") || ZInput.GetButtonDown("JoyJump");
 
     public bool GetDescendKeyPress =>
-      ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch");
+      ZInput.GetButtonDown("Crouch") || ZInput.GetButtonDown("JoyCrouch");
 
     public bool CanDescend =>
       WaterConfig.WaterBallastEnabled.Value && IsNotFlying || IsFlying();
@@ -294,6 +312,15 @@
     {
       Setup();
       UpdateLandVehicleHeightIfBelowGround();
+    }
+
+    public void SetHaulingVehicle(Player? player, RopeAnchorComponent? ropeComponent, bool isHauling)
+    {
+      distanceMovedSinceHaulTick = 0f;
+
+      isPlayerHaulingVehicle = isHauling;
+      HaulingPlayer = isHauling ? player : null;
+      HaulingRopeComponent = isHauling ? ropeComponent : null;
     }
 
     // private void UpdateBreakingControls()
@@ -471,7 +498,14 @@
        * creative mode should not allow movement, and applying force on an object will cause errors, when the object is kinematic
        */
       if (isCreative) return;
-      if (m_body.isKinematic) m_body.isKinematic = false;
+      if (!isPlayerHaulingVehicle && m_body.isKinematic)
+      {
+        m_body.isKinematic = false;
+      }
+      else if (isPlayerHaulingVehicle && HaulingPlayer != null && HaulingPlayer.transform.root == PiecesController.transform.root)
+      {
+        m_body.isKinematic = false;
+      }
 
       VehicleMovementUpdatesOwnerOnly();
       VehiclePhysicsFixedUpdateAllClients();
@@ -1856,7 +1890,7 @@
       rightUpwardForce = Mathf.Sign(rightUpwardForce) *
                          Mathf.Abs(Mathf.Pow(rightUpwardForce, 2f));
 
-      var centerOffMassDifference = Vector3.up * localCenterOfMassOffset;
+      var centerOffMassDifference = Vector3.up * localCenterOfMassOffset * centerOfMassForceOffsetDifferenceMultiplier;
 
       if (CanRunForwardWaterForce)
         AddForceAtPosition(Vector3.up * forwardUpwardForce * deltaForceMultiplier,
@@ -2147,10 +2181,9 @@
       return (shipForward, shipBackward, shipRight, shipLeft);
     }
 
-
     public ShipFloatation GetShipFloatationObj()
     {
-      if (ShipDirection == null || PiecesController == null || OnboardCollider == null)
+      if (ShipDirection == null || PiecesController == null || FloatCollider == null || OnboardCollider == null)
         return new ShipFloatation();
       var worldCenterOfMass = m_body.worldCenterOfMass;
       var (shipForward, shipBackward, shipRight, shipLeft) = GetShipForcePoints();
@@ -2181,7 +2214,7 @@
          waterLevelBack) /
         5f;
       var lowestWaterHeight = Mathf.Min(waterLevelCenter, waterLevelLeft, waterLevelRight, waterLevelForward, waterLevelBack);
-
+      var maxWaterHeight = Mathf.Max(waterLevelCenter, waterLevelLeft, waterLevelRight, waterLevelForward, waterLevelBack, 30f);
 
       var groundLevelCenter =
         ZoneSystem.instance.GetGroundHeight(worldCenterOfMass);
@@ -2195,14 +2228,16 @@
         ZoneSystem.instance.GetGroundHeight(shipBackward);
 
       var averageGroundLevel = (groundLevelCenter + groundLevelLeft + groundLevelRight + groundLevelForward + groundLevelBack) / 5f;
-
-
+      var maxGroundLevel = Mathf.Max(groundLevelCenter, groundLevelLeft, groundLevelRight, groundLevelForward, groundLevelBack);
       // floatation point, does not need to be collider, could just be a value in MovementController 
       // todo possibly add target height so it will not apply upward force if the target height is already considered in the normal zone
       // a negative will have no upward force. A positive will have upward force.
       // negatives will be when the averagewaterheight is below the vehicle. IE gravity should be doing it's job.
       var currentDepth =
-        averageWaterHeight - FloatCollider.transform.position.y;
+        averageWaterHeight - FloatCollider.bounds.min.y;
+
+      // for adding a speed cost when nearing 0 rapidly decreases speed, but allows movement up to double the No-float height allow for energy to still push the vehicle to overcome being stuck.
+      var buoyancySpeedMultiplier = Mathf.Lerp(0f, 1f, Mathf.Clamp01(currentDepth - buoyancyThreshold * 2));
 
       var isInvalid = false;
       if (averageWaterHeight <= -10000 ||
@@ -2213,15 +2248,23 @@
       }
 
       // var isAboveBuoyantLevel = currentDepth > m_disableLevel || isInvalid;
-      var isAboveBuoyantLevel = currentDepth < 0 || isInvalid;
+      var isAboveBuoyantLevel = currentDepth < buoyancyThreshold || isInvalid;
+
+      if (isInvalid)
+      {
+        buoyancySpeedMultiplier = 0f;
+      }
 
       return new ShipFloatation
       {
         AverageWaterHeight = averageWaterHeight,
         AverageGroundLevel = averageGroundLevel,
+        MaxGroundLevel = maxGroundLevel,
+        MaxWaterHeight = maxWaterHeight,
         LowestWaterHeight = lowestWaterHeight,
         CurrentDepth = currentDepth,
         IsAboveBuoyantLevel = isAboveBuoyantLevel,
+        BuoyancySpeedMultiplier = buoyancySpeedMultiplier,
         IsInvalid = isInvalid,
         ShipLeft = shipLeft,
         ShipForward = shipForward,
@@ -2304,6 +2347,108 @@
       }
     }
 
+    public void ForceStopHauling(bool shouldCallComponent = false)
+    {
+      if (shouldCallComponent && HaulingRopeComponent != null)
+      {
+        HaulingRopeComponent.StopHauling();
+      }
+
+      HaulingRopeComponent = null;
+      HaulingPlayer = null;
+      isPlayerHaulingVehicle = false;
+      distanceMovedSinceHaulTick = 0f;
+
+      if (m_body.isKinematic)
+      {
+        m_body.isKinematic = false;
+      }
+    }
+
+    public void UpdateVehicleFromHaulPosition()
+    {
+      if (!isPlayerHaulingVehicle) return;
+      if (OnboardCollider == null || HaulingPlayer == null || HaulingRopeComponent == null)
+      {
+        ForceStopHauling(true);
+        return;
+      }
+
+      if (distanceMovedSinceHaulTick > 1)
+      {
+        HaulingPlayer.UseStamina(haulingStaminaCost);
+        distanceMovedSinceHaulTick = 0f;
+      }
+
+      if (HaulingPlayer.m_stamina < haulingStaminaCost)
+      {
+        ForceStopHauling(true);
+        return;
+      }
+
+
+      m_body.isKinematic = true;
+
+      // Calculate direction based on pivot’s forward
+      var position = m_body.position;
+      var rotation = m_body.rotation;
+      var haulingPlayerPosition = HaulingPlayer.transform.position;
+
+      var playerClosestPointToVehicle = OnboardCollider.ClosestPointOnBounds(haulingPlayerPosition);
+      var distanceToPlayerVehicleCollider = Vector3.Distance(playerClosestPointToVehicle, haulingPlayerPosition);
+      if (distanceToPlayerVehicleCollider < minHaulFollowDistance) return;
+
+      var direction = (new Vector3(haulingPlayerPosition.x, m_body.position.y, haulingPlayerPosition.z) - position).normalized;
+
+      // Move the rigidbody in that direction
+      var newPosition = position + direction * haulMoveSpeed * Time.fixedDeltaTime;
+
+      var bodyOffsetBetweenLowestPoint = OnboardCollider.bounds.min.y - position.y;
+
+      // we need to know if we are near the ground. If not we add an offset positive or negative so the vehicle hits near the ground while dragged
+      float deltaLowestPoint;
+
+      if (ShipFloatationObj.MaxWaterHeight > ShipFloatationObj.MaxGroundLevel)
+      {
+        deltaLowestPoint = ShipFloatationObj.MaxWaterHeight - FloatCollider!.bounds.min.y;
+      }
+      else
+      {
+        deltaLowestPoint = ShipFloatationObj.MaxGroundLevel - OnboardCollider.bounds.min.y;
+      }
+      // directly updates this to prevent accidents.
+      newPosition.y += bodyOffsetBetweenLowestPoint + deltaLowestPoint + HaulingOffsetLowestPointBuffer;
+
+      var haulingRopePosition = HaulingRopeComponent.transform.position;
+      var deltaDistanceFromAnchorPoint = Vector3.Distance(haulingPlayerPosition, haulingRopePosition);
+
+      if (deltaDistanceFromAnchorPoint < minHaulFollowDistance)
+      {
+        // do nothing. We do not allow hauling vehicle within this distance.
+        return;
+      }
+
+      if (deltaDistanceFromAnchorPoint > maxHaulFollowDistance)
+      {
+        ForceStopHauling(true);
+        return;
+      }
+
+      m_body.MovePosition(newPosition);
+
+      // increment distance so we can make it cost stamina per 1 meter used.
+      distanceMovedSinceHaulTick += Vector3.Distance(position, newPosition);
+
+      // Calculate desired rotation
+      var targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+
+      // Adjust rotation to align with the pivot’s forward
+      var adjustedRotation = Quaternion.Euler(0, targetRotation.eulerAngles.y - ShipDirection.rotation.eulerAngles.y, 0);
+
+      // Apply rotation smoothly
+      m_body.MoveRotation(Quaternion.Slerp(rotation, adjustedRotation, haulRotationSpeed * Time.fixedDeltaTime));
+    }
+
     /// <summary>
     ///   The owner of the vehicle netview will only be able to fire these updates
     /// </summary>
@@ -2318,8 +2463,14 @@
 
       _currentShipFloatation = GetShipFloatationObj();
 
+      if (isPlayerHaulingVehicle && HaulingPlayer != null && HaulingPlayer.transform.root != PiecesController.transform.root)
+      {
+        UpdateVehicleFromHaulPosition();
+        return;
+      }
 
-      if (_vehicle!.IsLandVehicle)
+      // for land-vehicle prefab only.
+      if (_vehicle!.IsLandVehicleFromPrefab)
       {
         UpdateVehicleLandSpeed();
         return;
@@ -2333,17 +2484,11 @@
         if (m_body.constraints != RigidbodyConstraints.None)
           m_body.constraints = RigidbodyConstraints.None;
 
-      if (_vehicle.IsLandVehicle)
-      {
-        UpdateVehicleLandSpeed();
-        return;
-      }
-
       if (!ShipFloatationObj.IsAboveBuoyantLevel && !isFlying)
         UpdateShipFloatation(ShipFloatationObj);
       else if (isFlying)
         UpdateFlyingVehicle();
-      else if (PrefabConfig.EnableLandVehicles.Value && VehicleInstance.IsLandVehicle)
+      else if (PrefabConfig.EnableLandVehicles.Value && _vehicle.IsLandVehicle)
         UpdateVehicleLandSpeed();
 
       // both flying and floatation use this
@@ -2629,6 +2774,10 @@
       m_sailForce = Vector3.SmoothDamp(m_sailForce, target,
         ref m_windChangeVelocity, 1f, 99f);
 
+      // add a buoyancy force multiplier for when near stuck to slow down velocity.
+      m_sailForce *= ShipFloatationObj.BuoyancySpeedMultiplier;
+
+
       return Vector3.ClampMagnitude(m_sailForce, 20f);
     }
 
@@ -2711,11 +2860,10 @@
       if (VehicleSpeed == Ship.Speed.Stop ||
           isAnchored) return;
 
-      if (_currentShipFloatation == null) return;
-
+      var flying = IsFlying();
       // Stop steering when above the water. Applying force is bad...
-      if (!IsFlying() && !IsSubmerged() &&
-          _currentShipFloatation.Value.IsAboveBuoyantLevel)
+      if (!flying && !IsSubmerged() &&
+          ShipFloatationObj.IsAboveBuoyantLevel)
         return;
 
       var forward = ShipDirection.forward;
@@ -2734,6 +2882,12 @@
                              (steeringVelocityDirectionFactor *
                               (0f - m_rudderValue) *
                               Time.fixedDeltaTime);
+
+      // add a buoyancy force multiplier for when near stuck to slow down velocity.
+      if (!flying)
+      {
+        steerOffsetForce *= ShipFloatationObj.BuoyancySpeedMultiplier;
+      }
 
       AddForceAtPosition(
         steerOffsetForce,
@@ -2756,10 +2910,17 @@
       else if (VehicleSpeed is Ship.Speed.Back or Ship.Speed.Slow)
         steerForce += GetAdditiveSteerForce(directionMultiplier);
 
-
-      if (IsFlying())
-        transform.rotation =
-          Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
+      switch (flying)
+      {
+        case true:
+          transform.rotation =
+            Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
+          break;
+        case false:
+          // add a buoyancy force multiplier for when near stuck to slow down velocity.
+          steerForce *= _currentShipFloatation.Value.BuoyancySpeedMultiplier;
+          break;
+      }
 
       AddForceAtPosition(steerForce * Time.fixedDeltaTime, steerOffset,
         PhysicsConfig.turningVelocityMode.Value);
@@ -2768,14 +2929,13 @@
     private static void ApplySailForce(VehicleMovementController instance,
       bool isFlying = false)
     {
-      if (!instance?.m_body || !instance?.ShipDirection ||
-          instance.isAnchored) return;
+      if (instance == null || instance.isAnchored || instance.m_body == null || instance.ShipDirection == null) return;
 
       var sailArea = 0f;
 
-      if (instance?.VehicleInstance?.PiecesController != null)
+      if (instance.PiecesController != null)
         sailArea =
-          instance.VehicleInstance.PiecesController.GetSailingForce();
+          instance.PiecesController.GetSailingForce();
 
       // intellij seems to think 1370 does not have enough guards if this check is at the top of the function.
       if (instance == null) return;
@@ -2797,14 +2957,10 @@
           break;
       }
 
-      // backup guard, inTheory not possible to get here
-      if (instance.isAnchored) sailArea = 0f;
-
       var sailForce =
         instance.GetSailForce(sailArea, Time.fixedDeltaTime, isFlying);
 
       var position = instance.m_body.worldCenterOfMass;
-
 
       instance.AddForceAtPosition(
         sailForce,
@@ -3392,6 +3548,7 @@
     {
       if (IsBallastAndFlightDisabled || isAnchored) return;
 
+      _isHoldingAscend = GetAscendKeyPress;
       if (GetAscendKeyPress)
       {
         Ascend();
@@ -3399,14 +3556,14 @@
         return;
       }
 
-      var isDescendKeyPressed = GetDescendKeyPress;
-      if (!CanDescend && isDescendKeyPressed && TargetHeight != 0f)
+      _isHoldingDescend = GetDescendKeyPress;
+      if (!CanDescend && _isHoldingAscend && TargetHeight != 0f)
       {
         UpdateTargetHeight(0f);
         return;
       }
 
-      if (CanDescend && isDescendKeyPressed)
+      if (CanDescend && _isHoldingDescend)
       {
         Descend();
         ToggleAutoDescend();

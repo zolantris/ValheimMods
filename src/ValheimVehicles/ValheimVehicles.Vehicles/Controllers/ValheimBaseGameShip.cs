@@ -30,7 +30,7 @@ public class ValheimBaseGameShip : MonoBehaviour
   // base game sets default of 1.5f
   public float m_waterLevelOffset = 1.5f;
 
-  public float m_forceDistance = 1f;
+  public float m_forceDistance = 5f;
 
   public float m_force = 0.5f;
 
