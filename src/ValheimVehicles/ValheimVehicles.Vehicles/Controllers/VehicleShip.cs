@@ -13,6 +13,7 @@ using ValheimRAFT.Patches;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.ValheimVehicles.Vehicles.Structs;
 using ValheimVehicles.Vehicles.Controllers;
 using ValheimVehicles.Vehicles.Interfaces;
 using ValheimVehicles.Vehicles.Structs;
@@ -53,6 +54,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   // The rudder force multiplier applied to the ship speed
   private float _rudderForce = 1f;
 
+  public VehicleConfig VehicleConfig { get; set; }
 
   public GameObject GhostContainer()
   {

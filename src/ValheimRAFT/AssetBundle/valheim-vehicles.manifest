@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3184705574
+CRC: 2573776959
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 4f95e940206291c70db1f7b41ae1b421
+    Hash: c289c56154d6203ee32aa40dde695e72
   TypeTreeHash:
     serializedVersion: 2
-    Hash: f89f6a5a95307c7ee2181398335663cf
+    Hash: 21453b47eff9f57ef3cc4ae38bf7f2ab
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 4f95e940206291c70db1f7b41ae1b421
+    Hash: c289c56154d6203ee32aa40dde695e72
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -39,13 +39,13 @@ ClassTypes:
 - Class: 108
   Script: {instanceID: 0}
 - Class: 114
+  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 0d0b652f32a2cc243917e4028fa0f046, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
 - Class: 114
@@ -210,6 +210,7 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/hull_wall_wood_4x4.prefab
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_rib_8x4.mat
 - Assets/ValheimVehicles/Material/bronze_nautilus_metal Variant.mat
+- Assets/ValheimVehicles/Prefabs/GUI/edit_ramp_panel 1.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_right_iron.prefab
 - Assets/ValheimVehicles/Prefabs/custom_sail.prefab
 - Assets/ValheimVehicles/Material/iron_hull.mat
@@ -279,11 +280,13 @@ Assets:
 - Assets/ValheimVehicles/Prefabs/ram_stake_tier3_2x4.prefab
 - Assets/ValheimVehicles/Material/MaskTest_Wall.mat
 - Assets/ValheimVehicles/Prefabs/rudder_advanced_double_iron.prefab
+- Assets/edit_ramp_panel.prefab
 - Assets/ValheimVehicles/Material/MaskTest_ObjectThroughWall.mat
 - Assets/ValheimVehicles/Material/iron_metal_custom.mat
 - Assets/ValheimVehicles/Material/wood_alt_piece_bg_masked.mat
-- Assets/ValheimVehicles/Material/iron Variant.mat
+- Assets/edit_config_panel.prefab
 - Assets/ValheimVehicles/Prefabs/rope_ladder.prefab
+- Assets/ValheimVehicles/Material/iron Variant.mat
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_right_wood.prefab
 - Assets/ValheimVehicles/Prefabs/shared_ram_blade.prefab
 - Assets/ValheimVehicles/Material/Dirtfloor 2.mat

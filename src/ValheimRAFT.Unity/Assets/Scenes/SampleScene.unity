@@ -38,7 +38,6 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44078845, g: 0.48186743, b: 0.5285446, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -260,6 +259,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 295b9138aeaaea143a3bc62a144d57f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  textureScale: 4
 --- !u!65 &23905023
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1000,6 +1000,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77e04b48c3a582147b5a80b0ddb33ada, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_state: 0
+  m_stateProgress: 0
+  m_stateChangeDuration: 0.5
+  m_segments: 15
+  m_segmentLength: 2
+  m_segmentOverlap: 0.1
+  m_segmentHeight: 0.05
+  m_maxRampRotation: 0
 --- !u!4 &120340352 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4096486320254286859, guid: 1cf22b43868075f4daca98e4fe6e8042, type: 3}
@@ -1453,7 +1461,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6274189656113324437, guid: 93b6e25136665a046874484332d71264, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7531135626072259732, guid: 93b6e25136665a046874484332d71264, type: 3}
       propertyPath: m_Pivot.x
@@ -3182,6 +3190,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 295b9138aeaaea143a3bc62a144d57f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  textureScale: 4
 --- !u!65 &789149174
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3812,6 +3821,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d3f0daaf346d2346bc19e467602f043, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_znetview: {fileID: 0}
+  m_mesh: {fileID: 0}
+  m_sailCloth: {fileID: 0}
+  m_sailCorners: []
+  m_sailSubdivision: 0.5
+  m_lockedSailSides: 0
+  m_lockedSailCorners: 0
 --- !u!4 &1014534122
 Transform:
   m_ObjectHideFlags: 0
@@ -4729,7 +4745,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1248092011
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4886,7 +4902,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 61778030574829210, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 61778031737475329, guid: dda5bcc5ea6fd8b4eaced7ba43867fd2, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -8480,7 +8496,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5110827421138086618, guid: dd4f1c296d78e00449a449559da4fa7f, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -8502,11 +8518,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 7501866424829164560, guid: 80f1684ab97cbe64dad6298757077af1, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7501866424936544459, guid: 80f1684ab97cbe64dad6298757077af1, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7501866425458463090, guid: 80f1684ab97cbe64dad6298757077af1, type: 3}
       propertyPath: m_Name
