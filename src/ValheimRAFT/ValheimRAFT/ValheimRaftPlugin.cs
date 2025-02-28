@@ -650,6 +650,13 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     }
     else if (!Gui)
       Gui = GuiObj.AddComponent<VehicleGui>();
+
+
+    if (VehicleGui.Instance != null)
+    {
+      VehicleGui.Instance.InitPanel();
+      VehicleGui.SetCommandsPanelState(VehicleDebugConfig.VehicleDebugMenuEnabled.Value);
+    }
   }
 
   private void AddCustomPieces()

@@ -162,7 +162,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     HideOrShowDebugCommandPanel(hasCommandsWindowOpened, true);
   }
 
-  private void InitPanel()
+  public void InitPanel()
   {
     if (GUIManager.Instance == null || GUIManager.CustomGUIFront == null)
     {
@@ -387,6 +387,8 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
       HideOrShowVehicleConfigPanel(nextState);
     });
 
+    panel.SetActive(false);
+
     return panel;
   }
 
@@ -413,21 +415,6 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
       VehicleDebugConfig.CommandsWindowPosX.Value = anchoredPosition.x;
       VehicleDebugConfig.CommandsWindowPosY.Value = anchoredPosition.y;
     };
-    // Create the text object
-    // GUIManager.Instance.CreateText(
-    //   "Vehicle Shortcuts",
-    //   panel.transform,
-    //   new Vector2(0.5f, 0.5f),
-    //   new Vector2(0.5f, 0.5f),
-    //   new Vector2(0f, 0f),
-    //   GUIManager.Instance.AveriaSerifBold,
-    //   titleFontSize,
-    //   GUIManager.Instance.ValheimOrange,
-    //   true,
-    //   Color.black,
-    //   200f,
-    //   buttonHeight,
-    //   true);
     // Create the button object above the gui manager. So it can hide itself.
     var buttonObject = GUIManager.Instance.CreateButton(
       vehicleCommandsHide,
@@ -448,6 +435,8 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
       buttonText.text = nextState ? vehicleCommandsHide : vehicleCommandsShow;
       HideOrShowDebugCommandPanel(nextState);
     });
+
+    panel.SetActive(false);
 
     return panel;
   }

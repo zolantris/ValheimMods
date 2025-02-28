@@ -1,5 +1,6 @@
 using BepInEx.Configuration;
 using ValheimRAFT;
+using ValheimVehicles.Vehicles.Components;
 using Zolantris.Shared;
 
 namespace ValheimVehicles.Config;
@@ -68,8 +69,19 @@ public static class VehicleDebugConfig
     }
   }
 
-
-
+  private static void OnToggleVehicleDebugMenu()
+  {
+    if (VehicleGui.Instance == null)
+    {
+      ValheimRaftPlugin.Instance.AddRemoveVehicleGui();
+    }
+    else
+    {
+      
+      VehicleGui.Instance.InitPanel();
+    VehicleGui.SetCommandsPanelState(VehicleDebugMenuEnabled.Value);
+    }
+  }
 
   public static void BindConfig(ConfigFile config)
   {
@@ -135,5 +147,6 @@ public static class VehicleDebugConfig
     DebugMetricsEnabled.SettingChanged += (_, _) => OnMetricsUpdate();
     DebugMetricsTimer.SettingChanged +=
       (_, _) => OnMetricsUpdate();
+    VehicleDebugMenuEnabled.SettingChanged += (_, _) => OnToggleVehicleDebugMenu();
   }
 }
