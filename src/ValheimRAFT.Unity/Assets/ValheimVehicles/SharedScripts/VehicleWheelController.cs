@@ -238,7 +238,7 @@ namespace ValheimVehicles.SharedScripts
     private bool isRightForward = true;
     private bool isTurningInPlace;
     private Vector3 lateralVelocitySmoothDamp = Vector3.zero; // For SmoothDamp velocity tracking
-    private float lerpedTurnFactor;
+    // private float lerpedTurnFactor;
     private Vector3 m_angularVelocitySmoothSpeed = Vector3.zero;
 
     private Vector3 m_velocitySmoothSpeed = Vector3.zero;
@@ -553,6 +553,9 @@ namespace ValheimVehicles.SharedScripts
       SmoothAngularVelocity();
     }
 
+    public float currentLeftForce = 0f;
+    public float currentRightForce = 0f; 
+
     public static float minTreadDistances = 0.1f;
     // New method: apply forces directly at the treads to simulate continuous treads
     private void ApplyTreadForces()
@@ -564,7 +567,8 @@ namespace ValheimVehicles.SharedScripts
         {
           ApplyBrakes();
         }
-
+        currentLeftForce = 0;
+        currentRightForce = 0;
         ApplyDecreasingForce();
 
         return;
@@ -634,6 +638,8 @@ namespace ValheimVehicles.SharedScripts
 
       if (deltaTreads < minTreadDistances)
       {
+        currentLeftForce = 0;
+        currentRightForce = 0;
         // vehicle is not ready. The treads are too close.
         return;
       }
@@ -641,6 +647,8 @@ namespace ValheimVehicles.SharedScripts
       vehicleRootBody.AddForceAtPosition(forward * leftForce + upwardsForce, treadsLeftTransform.position, ForceMode.Acceleration);
       vehicleRootBody.AddForceAtPosition(forward * rightForce + upwardsForce, treadsRightTransform.position, ForceMode.Acceleration);
 
+      currentLeftForce = leftForce;
+      currentRightForce = rightForce;
       // this removes sideways velocities quickly to prevent issues with vehicle at higher speeds turning.
       DampenSidewaysVelocity();
       DampenAngularYVelocity();
@@ -846,16 +854,9 @@ namespace ValheimVehicles.SharedScripts
       isTurningInPlace = Mathf.Approximately(inputMovement, 0f) && Mathf.Abs(inputTurnForce) > 0f;
       currentSpeed = GetTankSpeed();
 
-      if (isTurningInPlace != lastTurningState)
-      {
-        lastTurningState = isTurningInPlace;
-        ApplyFrictionValuesToAllWheels();
-      }
-
       if (!IsOnGround)
       {
         ApplyDownforce();
-        // return;
       }
 
       HandleObstacleClimb();
@@ -863,11 +864,6 @@ namespace ValheimVehicles.SharedScripts
       if (useDirectTreadPhysics)
       {
         ApplyTreadForces();
-      }
-
-      if (useWheelTorquePhysics)
-      {
-        ApplyTorque(inputMovement, inputTurnForce);
       }
     }
 
@@ -887,7 +883,7 @@ namespace ValheimVehicles.SharedScripts
 
       wheelCollider.GetWorldPose(out var colliderPosition, out _);
 
-      // todo not sure why wheelX require 1/4 divsor as it is already centered and should not be changing the wheel alignment.
+      // todo not sure why wheelX require 1/4 divisor as it is already centered and should not be changing the wheel alignment.
       var wheelX = colliderPosition.x + wheelSync.wheelMeshScale.x / 4;
       var wheelY = colliderPosition.y - wheelRadius + wheelSync.wheelMeshScale.y / 2;
       var bottomContactPoint = new Vector3(wheelX, wheelY, colliderPosition.z);
@@ -911,14 +907,15 @@ namespace ValheimVehicles.SharedScripts
 
       if (treadsLeftMovingComponent && treadsRightMovingComponent)
       {
-        var lerpTime = Mathf.Clamp01(Mathf.Abs(inputMovement) * baseAcceleration + lerpedTurnFactor * baseTurnAccelerationMultiplier / highAcceleration);
-        var lerpSpeed = Mathf.Lerp(0f, 8f, lerpTime);
-        if (inputMovement > 0 && Mathf.Approximately(lerpSpeed, 0))
+        // var lerpTime = Mathf.Clamp01(Mathf.Abs(inputMovement) * baseAcceleration + combinedTurnLerp * baseTurnAccelerationMultiplier / highAcceleration);
+        var clampedSpeed = Mathf.Clamp(Mathf.Abs(currentLeftForce), 0, 8f);
+        // var lerpSpeed = Mathf.Lerp(0f, 8f, lerpTime);
+        if ((inputMovement > 0 || inputTurnForce > 0) && Mathf.Approximately(clampedSpeed, 0))
         {
-          lerpSpeed = 0.5f;
+          clampedSpeed = 0.5f;
         }
-        treadsLeftMovingComponent.SetSpeed(lerpSpeed);
-        treadsRightMovingComponent.SetSpeed(lerpSpeed);
+        treadsLeftMovingComponent.SetSpeed(clampedSpeed);
+        treadsRightMovingComponent.SetSpeed(clampedSpeed);
         UpdateSteeringTreadDirectionVisuals();
       }
 
@@ -962,7 +959,7 @@ namespace ValheimVehicles.SharedScripts
     {
       if (bounds.size.x < 4f || bounds.size.y < 4f || bounds.size.z < 4f)
       {
-        var size = new Vector3(Mathf.Max(bounds.size.x, 2f), Mathf.Max(bounds.size.y, 2f), Mathf.Max(bounds.size.z, 2f));
+        var size = new Vector3(Mathf.Max(bounds.size.x, 2f), Mathf.Max(bounds.size.y, 0.05f), Mathf.Max(bounds.size.z, 2f));
         var center = bounds.center;
         bounds = new Bounds(center, size);
       }
@@ -1588,79 +1585,79 @@ namespace ValheimVehicles.SharedScripts
       // }
     }
 
-    private void ApplyTorque(float move, float turn)
-    {
-      if (Mathf.Approximately(move, 0f) && Mathf.Approximately(turn, 0f))
-      {
-        StopWheels();
-        return;
-      }
-
-      lerpedTurnFactor = Mathf.Lerp(lerpedTurnFactor, Mathf.Abs(turn), Time.fixedDeltaTime * 5f);
-      var speed = vehicleRootBody.velocity.magnitude;
-      var angularSpeed = Mathf.Abs(vehicleRootBody.angularVelocity.y); // Get current rotation speed
-
-      var targetSpeed = move * maxSpeed;
-      var torqueBoost = hillFactor * uphillTorqueMultiplier;
-
-      // if (move > 0 && Vector3.Dot(vehicleRootBody.velocity, transform.forward) < 0)
-      // {
-      //   torqueBoost += downhillResistance;
-      // }
-
-      if (Mathf.Abs(speed - targetSpeed) < 1f)
-      {
-        torqueBoost *= 0.85f;
-      }
-
-      var minTorque = baseTorque * 0.2f;
-      var forwardTorque = Mathf.Max((baseTorque + torqueBoost) * move, minTorque);
-
-      var leftSideTorque = forwardTorque;
-      var rightSideTorque = forwardTorque;
-
-      // **New: Apply Turn Boost if Rotating in Place**
-      if (Mathf.Approximately(move, 0f) && Mathf.Abs(turn) > 0f)
-      {
-        // var maxTurnSpeed = 1.5f; // Max angular velocity before limiting turn boost
-        var turnBoost = Mathf.Clamp(maxRotationSpeed - angularSpeed, 1f, maxRotationSpeed); // Increase torque at low speeds
-
-        leftSideTorque = turn > 0 ? -baseTorque * turnBoost : baseTorque * turnBoost;
-        rightSideTorque = turn > 0 ? baseTorque * turnBoost : -baseTorque * turnBoost;
-      }
-      else if (Mathf.Abs(turn) >= 0.5f)
-      {
-        leftSideTorque = turn > 0 ? baseTorque : -baseTorque;
-        rightSideTorque = turn > 0 ? -baseTorque : baseTorque;
-      }
-      else if (turn != 0)
-      {
-        var turnStrength = Mathf.Lerp(1f, 0.6f, lerpedTurnFactor);
-
-        if (turn > 0)
-        {
-          leftSideTorque *= 1f;
-          rightSideTorque *= turnStrength;
-        }
-        else
-        {
-          leftSideTorque *= turnStrength;
-          rightSideTorque *= 1f;
-        }
-      }
-
-      // Apply torques to wheels
-      foreach (var leftWheel in left)
-      {
-        leftWheel.brakeTorque = 0f;
-        leftWheel.motorTorque = leftSideTorque;
-      }
-      foreach (var rightWheel in right)
-      {
-        rightWheel.brakeTorque = 0f;
-        rightWheel.motorTorque = rightSideTorque;
-      }
-    }
+    // private void ApplyTorque(float move, float turn)
+    // {
+    //   if (Mathf.Approximately(move, 0f) && Mathf.Approximately(turn, 0f))
+    //   {
+    //     StopWheels();
+    //     return;
+    //   }
+    //
+    //   var lerpedTurnFactor = Mathf.Lerp(lerpedTurnFactor, Mathf.Abs(turn), Time.fixedDeltaTime * 5f);
+    //   var speed = vehicleRootBody.velocity.magnitude;
+    //   var angularSpeed = Mathf.Abs(vehicleRootBody.angularVelocity.y); // Get current rotation speed
+    //
+    //   var targetSpeed = move * maxSpeed;
+    //   var torqueBoost = hillFactor * uphillTorqueMultiplier;
+    //
+    //   // if (move > 0 && Vector3.Dot(vehicleRootBody.velocity, transform.forward) < 0)
+    //   // {
+    //   //   torqueBoost += downhillResistance;
+    //   // }
+    //
+    //   if (Mathf.Abs(speed - targetSpeed) < 1f)
+    //   {
+    //     torqueBoost *= 0.85f;
+    //   }
+    //
+    //   var minTorque = baseTorque * 0.2f;
+    //   var forwardTorque = Mathf.Max((baseTorque + torqueBoost) * move, minTorque);
+    //
+    //   var leftSideTorque = forwardTorque;
+    //   var rightSideTorque = forwardTorque;
+    //
+    //   // **New: Apply Turn Boost if Rotating in Place**
+    //   if (Mathf.Approximately(move, 0f) && Mathf.Abs(turn) > 0f)
+    //   {
+    //     // var maxTurnSpeed = 1.5f; // Max angular velocity before limiting turn boost
+    //     var turnBoost = Mathf.Clamp(maxRotationSpeed - angularSpeed, 1f, maxRotationSpeed); // Increase torque at low speeds
+    //
+    //     leftSideTorque = turn > 0 ? -baseTorque * turnBoost : baseTorque * turnBoost;
+    //     rightSideTorque = turn > 0 ? baseTorque * turnBoost : -baseTorque * turnBoost;
+    //   }
+    //   else if (Mathf.Abs(turn) >= 0.5f)
+    //   {
+    //     leftSideTorque = turn > 0 ? baseTorque : -baseTorque;
+    //     rightSideTorque = turn > 0 ? -baseTorque : baseTorque;
+    //   }
+    //   else if (turn != 0)
+    //   {
+    //     var turnStrength = Mathf.Lerp(1f, 0.6f, lerpe);
+    //
+    //     if (turn > 0)
+    //     {
+    //       leftSideTorque *= 1f;
+    //       rightSideTorque *= turnStrength;
+    //     }
+    //     else
+    //     {
+    //       leftSideTorque *= turnStrength;
+    //       rightSideTorque *= 1f;
+    //     }
+    //   }
+    //
+    //   // Apply torques to wheels
+    //   foreach (var leftWheel in left)
+    //   {
+    //     leftWheel.brakeTorque = 0f;
+    //     leftWheel.motorTorque = leftSideTorque;
+    //   }
+    //   foreach (var rightWheel in right)
+    //   {
+    //     rightWheel.brakeTorque = 0f;
+    //     rightWheel.motorTorque = rightSideTorque;
+    //   }
+    // }
 
     public void StopWheels()
     {

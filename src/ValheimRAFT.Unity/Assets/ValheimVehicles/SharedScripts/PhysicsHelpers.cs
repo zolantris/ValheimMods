@@ -40,6 +40,24 @@ namespace ValheimVehicles.SharedScripts
       return childColliders;
     }
 
+    public static void IgnoreAllCollisionsBetweenChildren(Transform transform)
+    {
+      var colliders = transform.GetComponentsInChildren<Collider>(true).ToList();
+      var topLevelCollider = transform.GetComponent<Collider>();
+
+      if (topLevelCollider != null)
+      {
+        colliders.Add(topLevelCollider);
+      }
+      if (!colliders.Any()) return;
+
+      foreach (var currentCollider in colliders)
+      foreach (var targetCollider in colliders)
+      {
+        Physics.IgnoreCollision(currentCollider, targetCollider, true);
+      }
+    }
+
 
     public static void IgnoreCollisionsWithinRoot(Transform transform, Transform _root, List<Collider> _colliders)
     {

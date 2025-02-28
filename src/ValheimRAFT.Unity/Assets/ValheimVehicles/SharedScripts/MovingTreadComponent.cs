@@ -96,8 +96,8 @@ namespace ValheimVehicles.SharedScripts
 
     public Transform treadParent;
     public List<Vector3> originalTreadPositions = new();
-    public Bounds localBounds;
-    public Bounds vehicleLocalBounds;
+    public Bounds localBounds = new(Vector3.zero, Vector3.one);
+    public Bounds vehicleLocalBounds = new(Vector3.zero, Vector3.one);
     public GameObject CenterObj;
 
     // New flag to control direction of movement
@@ -143,15 +143,10 @@ namespace ValheimVehicles.SharedScripts
       {
         _wheelRotators = rotatorParent.GetComponentsInChildren<HingeJoint>().ToList();
       }
-    }
 
-    /// <summary>
-    /// Must be called after as VehicleWheelController sets some properties / binds things.
-    /// </summary>
-    public void Start()
-    {
       InitConvexHullComponent();
     }
+    
     // Update is called once per frame
     public void FixedUpdate()
     {
@@ -337,15 +332,16 @@ namespace ValheimVehicles.SharedScripts
 
     public void InitSingleTread(GameObject treadGameObject)
     {
+      var localPosition = treadGameObject.transform.localPosition;
       if (_hasInitLocalBounds)
       {
         _hasInitLocalBounds = false;
-        localBounds = new Bounds(treadGameObject.transform.localPosition, Vector3.zero);
+        localBounds = new Bounds(localPosition, Vector3.one);
       }
 
-      localBounds.Encapsulate(treadGameObject.transform.localPosition + Vector3.right * 0.5f);
-      localBounds.Encapsulate(treadGameObject.transform.localPosition);
-      localBounds.Encapsulate(treadGameObject.transform.localPosition + Vector3.left * 0.5f);
+      localBounds.Encapsulate(localPosition + Vector3.right * 0.5f);
+      localBounds.Encapsulate(localPosition);
+      localBounds.Encapsulate(localPosition + Vector3.left * 0.5f);
 
 
       // scale the tread to the correct height.
@@ -440,16 +436,32 @@ namespace ValheimVehicles.SharedScripts
       CenterObj.transform.position = treadParent.position + localBounds.center;
       treadParent.position = CenterObj.transform.position;
 
-      var treadGameObjects = _movingTreads.Select(x => x.gameObject).ToList();
-      convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects);
-      convexHullComponent.convexHullMeshColliders.ForEach(x =>
+      // var treadGameObjects = _movingTreads.Select(x => x.gameObject).ToList();
+      var treadGameObjects = new List<GameObject>();
+      _movingTreads.ForEach(x =>
       {
-        if (!x) return;
-        x.gameObject.name = "convex_tread_collider";
-        x.includeLayers = LayerMask.GetMask("terrain");
-        x.excludeLayers = LayerHelpers.RamColliderExcludeLayers;
-        x.isTrigger = false;
+        if (x == null) return;
+        if (x.gameObject == null) return;
+        treadGameObjects.Add(x.gameObject);
       });
+
+      if (convexHullComponent == null)
+      {
+        InitConvexHullComponent();
+      }
+
+      if (convexHullComponent != null)
+      {
+        convexHullComponent.GenerateMeshesFromChildColliders(treadParent.gameObject, Vector3.zero, 50, treadGameObjects);
+        convexHullComponent.convexHullMeshColliders.ForEach(x =>
+        {
+          if (!x) return;
+          x.gameObject.name = "convex_tread_collider";
+          x.includeLayers = LayerMask.GetMask("terrain");
+          x.excludeLayers = LayerHelpers.RamColliderExcludeLayers;
+          x.isTrigger = false;
+        });
+      }
     }
 
     /// <summary>
