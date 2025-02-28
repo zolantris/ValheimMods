@@ -2374,18 +2374,25 @@
         return;
       }
 
+      var shouldSkipSnappingLeash = HaulingPlayer.InGhostMode() || HaulingPlayer.InGodMode() || HaulingPlayer.IsDebugFlying();
+
+#if DEBUG
+      shouldSkipSnappingLeash = false;
+#endif
+
+      // costs stamina of you move the vehicle beyond 1meter distance every FixedUpdate tick.
       if (distanceMovedSinceHaulTick > 1)
       {
         HaulingPlayer.UseStamina(haulingStaminaCost);
         distanceMovedSinceHaulTick = 0f;
       }
 
-      if (HaulingPlayer.m_stamina < haulingStaminaCost)
+      if (!shouldSkipSnappingLeash && HaulingPlayer.IsEncumbered())
       {
+        Logger.LogDebug("Hauling player is encumbered, you cannot pull a vehicle while encumbered");
         ForceStopHauling(true);
         return;
       }
-
 
       m_body.isKinematic = true;
 
@@ -2399,6 +2406,37 @@
       if (distanceToPlayerVehicleCollider < minHaulFollowDistance) return;
 
       var direction = (new Vector3(haulingPlayerPosition.x, m_body.position.y, haulingPlayerPosition.z) - position).normalized;
+
+      // Force drops the vehicle if you run out of stamina.
+      if (!shouldSkipSnappingLeash && HaulingPlayer.m_stamina < haulingStaminaCost)
+      {
+        // get wrecked if you have it break.
+        var hit = new HitData()
+        {
+          m_hitType = HitData.HitType.PlayerHit,
+          m_backstabBonus = 1,
+          m_point = haulingPlayerPosition,
+          m_attacker = HaulingPlayer.GetZDOID(),
+          m_ignorePVP = true,
+          m_damage =
+          {
+            m_slash = 10f,
+            m_blunt = 10f
+          },
+          m_ranged = true,
+          m_hitCollider = HaulingPlayer.m_collider,
+          m_toolTier = 100,
+          m_dodgeable = false,
+          m_blockable = false,
+          m_pushForce = 300f,
+          m_dir = direction
+        };
+        hit.SetAttacker(HaulingPlayer);
+
+        HaulingPlayer.Damage(hit);
+        ForceStopHauling(true);
+        return;
+      }
 
       // Move the rigidbody in that direction
       var newPosition = position + direction * haulMoveSpeed * Time.fixedDeltaTime;
