@@ -741,7 +741,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     //     VehiclePhysicsMode.DesyncedJointRigidbodyBody)
     //   SetVehiclePhysicsType(VehiclePhysicsMode.SyncedRigidbody);
 
-    var mass = Math.Max(VehicleShip.MinimumRigibodyMass, TotalMass);
 
     m_localRigidbody.angularDrag = angularDrag;
     MovementController.m_body.angularDrag = angularDrag;
