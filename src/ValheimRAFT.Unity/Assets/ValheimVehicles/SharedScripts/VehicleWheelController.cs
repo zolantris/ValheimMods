@@ -119,7 +119,7 @@ namespace ValheimVehicles.SharedScripts
     public float axelPadding = 0.5f; // Extra length on both sides of axel
 
     [Tooltip("Wheel properties")]
-    public float wheelBottomOffset;
+    public float wheelBottomOffset = -1f;
     public float wheelRadius = 1.5f;
     public float wheelSuspensionDistance = 1.5f;
     public float wheelSuspensionSpring = 35000f;

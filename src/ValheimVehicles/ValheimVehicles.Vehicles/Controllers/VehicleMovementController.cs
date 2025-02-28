@@ -1134,7 +1134,7 @@
           //     }
           // }
           var targetRotation = Quaternion.Euler(transformedX, eulerY, transformedZ);
-          var smoothRotation = Quaternion.SlerpUnclamped(transform.rotation, targetRotation, Time.fixedDeltaTime);
+          var smoothRotation = Quaternion.SlerpUnclamped(transform.rotation, targetRotation, Time.fixedDeltaTime * 50f);
           m_body.MoveRotation(smoothRotation);
           yield return new WaitForFixedUpdate();
           // m_body.velocity = Vector3.zero;

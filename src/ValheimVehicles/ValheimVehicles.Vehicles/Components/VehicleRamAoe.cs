@@ -511,8 +511,8 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       UpdateReloadingTime();
     }
 
-    // we do not want to allow collisions for kinematic objects (such as raft creative or hauling modes)
-    if (m_body.isKinematic) return false;
+    // todo possibly disable ram damage if the vehicle is kinematic but this would prevent damage while hauling
+    if (m_vehicle != null && m_vehicle.isCreative) return false;
 
     if (IsWaitingForOnboardCollider())
     {

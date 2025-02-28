@@ -471,7 +471,7 @@ public static class PhysicsConfig
 
     VehicleLandTreadOffset = Config.Bind(PropulsionSection,
       "LandVehicle TreadOffset",
-      0f,
+      -1f,
       ConfigHelpers.CreateConfigDescription(
         "Wheel offset. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads", true, false, new AcceptableValueRange<float>(-10f, 10f)));
     VehicleLandTreadOffset.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
