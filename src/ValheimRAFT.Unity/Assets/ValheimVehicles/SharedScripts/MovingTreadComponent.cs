@@ -1,6 +1,7 @@
 #region
 
-using System.Collections.Generic;
+  using System;
+  using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -143,10 +144,14 @@ namespace ValheimVehicles.SharedScripts
       {
         _wheelRotators = rotatorParent.GetComponentsInChildren<HingeJoint>().ToList();
       }
+    }
 
+    public void Start()
+    {
+      // VehicleWheelController must initialize some critical values. Methods here are reliant on it.
       InitConvexHullComponent();
     }
-    
+
     // Update is called once per frame
     public void FixedUpdate()
     {
@@ -182,8 +187,12 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+    /// <summary>
+    /// Must be called on Start as the vehicleWheelController context will not exist yet.
+    /// </summary>
     public void InitConvexHullComponent()
     {
+      if (!vehicleWheelController) return;
       if (!convexHullComponent)
       {
         convexHullComponent = gameObject.AddComponent<ConvexHullAPI>();
@@ -518,6 +527,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void UpdateAllTreads()
     {
+      if (!vehicleWheelController) return;
       if (_treadTargetPoints.Count != _movingTreads.Count)
       {
         Debug.LogError($"Tread TargetPoints {_treadTargetPoints.Count} larger than moving treads {_movingTreads.Count}. Exiting treads to prevent error");

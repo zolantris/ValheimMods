@@ -192,7 +192,7 @@ namespace ValheimVehicles.SharedScripts
       var offset = Mathf.Lerp(hullBounds.extents.y, -hullBounds.extents.y, centerOfMassOffset);
       var localCenterOfMassOffset = Mathf.Min(offset, -5f);
 
-      PhysicsHelpers.UpdateRelativeCenterOfMass(vehicleWheelController.vehicleRootBody, localCenterOfMassOffset);
+      PhysicUtils.UpdateRelativeCenterOfMass(vehicleWheelController.vehicleRootBody, localCenterOfMassOffset);
     }
 
     public bool RunFixedUpdateDebounce()

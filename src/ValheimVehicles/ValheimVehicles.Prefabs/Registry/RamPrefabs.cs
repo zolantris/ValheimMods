@@ -20,7 +20,9 @@ public class RamPrefabs : IRegisterPrefab
   public enum RamType
   {
     Stake,
-    Blade
+    Blade,
+    WaterVehicle,
+    LandVehicle
   }
 
   public struct RamVariant

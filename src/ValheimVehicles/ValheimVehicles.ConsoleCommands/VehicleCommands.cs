@@ -8,11 +8,13 @@ using BepInEx.Logging;
 using ComfyGizmo;
 using Components;
 using HarmonyLib;
+using Jotunn;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
 using ValheimRAFT;
+using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
@@ -170,6 +172,7 @@ public class VehicleCommands : ConsoleCommand
   /// <param name="args">Command arguments.</param>
   public static void VehicleMoveVertically(string[]? args)
   {
+    if (!CanRunCheatCommand()) return;
     if (args == null || args.Length < 1)
     {
       FloatArgErrorMessage("No args provided");
@@ -468,12 +471,30 @@ public class VehicleCommands : ConsoleCommand
     return VectorUtils.ClampVector(position, -5000f, 5000f);
   }
 
+  public static bool CanRunCheatCommand()
+  {
+    if (!VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Value)
+    {
+      if (Player.m_localPlayer == null || ZNet.instance == false) return false;
+      var playerId = Player.m_localPlayer.GetPlayerID();
+      if (!ZNetExtension.IsAdmin(ZNet.instance, playerId))
+      {
+        Logger.LogMessage("Player is not an admin. They cannot run this command without setting AllowDebugCommandsForNonAdmins to true in the raft config or being an Admin.");
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   /// <summary>
   /// Moves the vehicle based on the provided x, y, z parameters.
   /// </summary>
   /// <param name="args">Command arguments.</param>
   public void VehicleMove(string[] args)
   {
+    if (!CanRunCheatCommand()) return;
+    
     var shipInstance =
       GetNearestVehicleShip(Player.m_localPlayer.transform.position);
     if (shipInstance == null)
@@ -620,6 +641,7 @@ public class VehicleCommands : ConsoleCommand
 
   private static void ToggleVehicleDebugCommandsComponent()
   {
+    if (!CanRunCheatCommand()) return;
     VehicleGui.ToggleCommandsPanelState();
     foreach (var vehicleShip in VehicleShip.VehicleInstances)
     {

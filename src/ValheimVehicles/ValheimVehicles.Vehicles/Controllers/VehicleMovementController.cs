@@ -2856,21 +2856,27 @@
     ///
     /// This does not need to be tracked as a Ram piece as every gameobject added to this PiecesController ignores the meshColliders provided
     /// </summary>
-    public VehicleRamAoe? AddRamAoeToConvexHull()
+    public void TryAddRamAoeToVehicle()
     {
+      if (_vehicle == null) return;
+
+      var isLandVehicleFromPrefab = _vehicle.IsLandVehicleFromPrefab;
+      if (isLandVehicleFromPrefab && !RamConfig.LandVehiclesAreRams.Value || !isLandVehicleFromPrefab && !RamConfig.WaterVehiclesAreRams.Value)
+      {
+        return;
+      }
+      
       vehicleRam = DamageColliders.gameObject.GetComponent<VehicleRamAoe>();
 
       if (vehicleRam == null)
         vehicleRam = DamageColliders.gameObject
           .AddComponent<VehicleRamAoe>();
       // negative check, should never hit this...
-      if (vehicleRam == null) return null;
+      if (vehicleRam == null) return;
       if (vehicleRam.m_nview == null) vehicleRam.m_nview = m_nview;
 
-      vehicleRam.m_RamType = RamPrefabs.RamType.Blade;
+      vehicleRam.m_RamType = isLandVehicleFromPrefab ? RamPrefabs.RamType.LandVehicle : RamPrefabs.RamType.WaterVehicle;
       vehicleRam.m_vehicle = _vehicle;
-      vehicleRam.SetVehicleRamModifier(RamConfig.VehicleHullsAreRams.Value);
-      return vehicleRam;
     }
 
     public Vector3 GetRudderPosition()
@@ -3190,6 +3196,14 @@
       _hasRegister = false;
     }
 
+    public void SyncVehicleConfig()
+    {
+      var currentVehicleConfig = new VehicleConfig()
+      {
+        treadDistance = 5f
+      };
+      m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SyncVehicleConfig), new VehicleConfig());
+    }
     /// <summary>
     /// This is meant to sync all individual vehicle config values. When a value changes we must emit this to all clients.
     ///
@@ -3480,7 +3494,7 @@
       var canForceUpdate = lastForceUpdateTimer == 0f && forceUpdate;
       var timeMult = canForceUpdate
         ? 0.5f
-        : Time.fixedDeltaTime * PropulsionConfig.VerticalSmoothingSpeed.Value;
+        : Time.fixedDeltaTime * PropulsionConfig.VerticalSmoothingSpeed.Value * 10;
 
       TargetHeight = Mathf.Lerp(_previousTargetHeight, clampedValue, timeMult);
 

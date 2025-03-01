@@ -48,12 +48,14 @@ namespace ValheimVehicles.SharedScripts
     public const float defaultTurnAccelerationMultiplier = 10f;
     private const float _lastTerrainTouchTimeExpiration = 1f;
     public static float baseTurnAccelerationMultiplier = defaultTurnAccelerationMultiplier;
-    
+
     public static float defaultBreakForce = 500f;
 
     private static readonly float highAcceleration = 6 * baseAccelerationMultiplier;
     private static readonly float mediumAcceleration = 3 * baseAccelerationMultiplier;
     private static readonly float lowAcceleration = 1 * baseAccelerationMultiplier;
+
+    public static float minTreadDistances = 0.1f;
 
     [Header("USER Inputs (FOR FORCE EFFECTS")]
     [Tooltip(
@@ -197,6 +199,9 @@ namespace ValheimVehicles.SharedScripts
 
     public float maxHillFactorMultiplier = 3f;
     public bool ShouldApplyDownwardsForceOnSlop = true;
+
+    public float currentLeftForce;
+    public float currentRightForce;
     // Set to false until it's stable/syncs with the treads.
     [Tooltip("Wheels that provide power and move the tank forwards/reverse.")]
     public readonly List<WheelCollider> poweredWheels = new();
@@ -344,10 +349,13 @@ namespace ValheimVehicles.SharedScripts
       // Compute the front position using the tank's bounds
       var frontPosition = transform.position + transform.forward * (currentVehicleFrameBounds.extents.z + 0.5f);
 
-      // Only apply climbing force if the collision happens at the front of the tank
-      if (Vector3.Dot(transform.forward, (contact.point - transform.position).normalized) > 0.5f)
+      if (!vehicleRootBody.isKinematic)
       {
-        ApplyClimbForce(frontPosition);
+        // Only apply climbing force if the collision happens at the front of the tank
+        if (Vector3.Dot(transform.forward, (contact.point - transform.position).normalized) > 0.5f)
+        {
+          ApplyClimbForce(frontPosition);
+        }
       }
     }
     private void OnCollisionStay(Collision collision)
@@ -552,11 +560,6 @@ namespace ValheimVehicles.SharedScripts
       }
       SmoothAngularVelocity();
     }
-
-    public float currentLeftForce = 0f;
-    public float currentRightForce = 0f; 
-
-    public static float minTreadDistances = 0.1f;
     // New method: apply forces directly at the treads to simulate continuous treads
     private void ApplyTreadForces()
     {
@@ -608,8 +611,6 @@ namespace ValheimVehicles.SharedScripts
       {
         var dt = Time.fixedDeltaTime;
         var baseTurnRate = Mathf.Lerp(baseAccelerationMultiplier, 0f, Mathf.Clamp01(baseAcceleration / baseTurnAccelerationMultiplier));
-        // leftForce = (inputMovement + combinedTurnLerp) * baseTorque * hillFactor;
-        // rightForce = (inputMovement - combinedTurnLerp) * baseTorque * hillFactor;
         leftForce = (inputMovement + combinedTurnLerp) * (baseAcceleration + baseTurnRate) * hillFactor * dt;
         rightForce = (inputMovement - combinedTurnLerp) * (baseAcceleration + baseTurnRate) * hillFactor * dt;
       }
@@ -698,20 +699,23 @@ namespace ValheimVehicles.SharedScripts
     {
       _isTreadsInitialized = false;
 
+      if (!treadPhysicMaterial)
+      {
+        // shared dynamic physicMaterial. This can be different per vehicle used.
+        treadPhysicMaterial = new PhysicMaterial("TreadPhysicMaterial")
+        {
+          dynamicFriction = IsBraking ? 0.5f : dynamicFriction,
+          staticFriction = IsBraking ? 0.5f : staticFriction,
+          bounciness = 0f,
+          bounceCombine = PhysicMaterialCombine.Minimum,
+          frictionCombine = PhysicMaterialCombine.Minimum
+        };
+      }
+
       if (!treadsRightTransform || !treadsLeftTransform)
       {
         return;
       }
-
-      // shared dynamic physicMaterial. This can be different per vehicle used.
-      treadPhysicMaterial = new PhysicMaterial("TreadPhysicMaterial")
-      {
-        dynamicFriction = IsBraking ? 0.5f : dynamicFriction,
-        staticFriction = IsBraking ? 0.5f : staticFriction,
-        bounciness = 0f,
-        bounceCombine = PhysicMaterialCombine.Minimum,
-        frictionCombine = PhysicMaterialCombine.Minimum
-      };
 
       SetupSingleTread(treadsRightTransform.gameObject, ref treadsRightMovingComponent);
       SetupSingleTread(treadsLeftTransform.gameObject, ref treadsLeftMovingComponent);
@@ -819,34 +823,13 @@ namespace ValheimVehicles.SharedScripts
       leftRenderers.Clear();
     }
 
-#if UNITY_EDITOR
-    /// <summary>
-    /// Todo may remove this logic, and it should not ever be included outside the editor until then.
-    /// </summary>
-    public void DEPRECATED_WheelTorqueFixedUpdate()
-    {
-      if (isTurningInPlace != lastTurningState)
-      {
-        lastTurningState = isTurningInPlace;
-        ApplyFrictionValuesToAllWheels();
-      }
-
-      AdjustForHills();
-      ApplyDownforce();
-
-      if (IsBraking)
-        ApplyBrakes();
-      else
-        ApplyTorque(inputMovement, inputTurnForce);
-    }
-#endif
-
     /// <summary>
     ///   To be called from VehicleMovementController
     /// </summary>
     public void VehicleMovementFixedUpdateOwnerClient()
     {
       if (!IsVehicleReady) return;
+      if (vehicleRootBody.isKinematic) return;
       _shouldSyncVisualOnCurrentFrame = true;
 
       UpdateIsOnGround();
@@ -1709,7 +1692,7 @@ namespace ValheimVehicles.SharedScripts
         AccelerationType.Stop => 0,
         _ => 0
       };
-      
+
       isForward = isMovingForward;
 
       if (!IsUsingEngine)

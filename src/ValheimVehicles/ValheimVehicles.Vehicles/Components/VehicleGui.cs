@@ -38,9 +38,12 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     return new Vector3(x, y, z);
   }
 
+
+  // todo translate this
   public const string vehicleCommandsHide = "Vehicle Commands (Hide)";
   public const string vehicleCommandsShow = "Vehicle Commands (Show)";
 
+  // todo translate this
   public const string vehicleConfigHide = "Vehicle Config (Hide)";
   public const string vehicleConfigShow = "Vehicle Config (Show)";
 
@@ -133,6 +136,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
       panelWindow.SetActive(isVisible);
       toggleObjects.ForEach((x) =>
       {
+        if (x == null) return;
         x.SetActive(isVisible);
       });
     }
@@ -269,6 +273,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
       title = "Toggle Ocean Sway",
       action = VehicleCommands.VehicleToggleOceanSway
     },
+#if DEBUG
     new()
     {
       title = "Config",
@@ -277,6 +282,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
         ToggleConfigPanelState(true);
       }
     }
+#endif
   ];
 
   public GameObject AddInputWithAction(InputAction inputAction, int index, float StartHeight, Transform windowTransform)

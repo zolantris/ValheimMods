@@ -479,6 +479,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     if (PersistentZdoId != 0 && !VehicleInstances.ContainsKey(PersistentZdoId))
       VehicleInstances.Add(PersistentZdoId, this);
 
+    PhysicUtils.IgnoreAllCollisionsBetweenChildren(transform);
+
     if (isValidZdo) InitializeAllComponents();
 
     if (HasVehicleDebugger && PiecesController != null)

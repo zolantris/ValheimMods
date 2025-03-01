@@ -9,6 +9,8 @@ public static class VehicleDebugConfig
 {
   public static ConfigFile? Config { get; private set; }
 
+  public static ConfigEntry<bool> AllowDebugCommandsForNonAdmins;
+
   public static ConfigEntry<float> CommandsWindowPosX;
 
   public static ConfigEntry<float> CommandsWindowPosY;
@@ -86,6 +88,12 @@ public static class VehicleDebugConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
+
+    AllowDebugCommandsForNonAdmins = config.Bind(SectionName, "AllowDebugCommandsForNonAdmins",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "Will will allow all debug commands for non-admins. Turning this to false will only allow debug (cheat) commands if the user is an admin.",
+        true, true));
 
     DebugMetricsEnabled = config.Bind(SectionName, "DebugMetricsEnabled",
       false,

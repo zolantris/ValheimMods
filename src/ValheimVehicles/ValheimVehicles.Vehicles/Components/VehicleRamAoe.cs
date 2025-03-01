@@ -11,6 +11,7 @@ using ValheimRAFT;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
@@ -25,57 +26,44 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
   public static HitData.DamageTypes baseDamage;
 
-  public float minimumVelocityToTriggerHit =>
-    RamConfig.minimumVelocityToTriggerHit.Value *
-    (m_RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f);
+  [FormerlySerializedAs("minimumVelocityToTriggerHit")]
+  public float MinimumVelocityToTriggerHit = 0.5f;
 
   public VehicleShip? m_vehicle;
   public RamPrefabs.RamType m_RamType;
 
-  public bool m_isVehicleRam = false;
+  [FormerlySerializedAs("m_isVehicleRam")]
+  public bool IsVehicleRamType = false;
   private float RamDamageOverallMultiplier = 1f;
 
   // damages
-  public static int RamDamageToolTier;
+  public int RamDamageToolTier;
+  public float PercentageDamageToSelf = 0f;
+  public float RamBasePickAxeDamage = 0f;
+  public float RamBaseSlashDamage = 0f;
+  public float RamBasePierceDamage = 0f;
+  public float RamBaseChopDamage = 0f;
+  public float RamBaseBluntDamage = 0f;
+  public float RamBaseMaximumDamage = 0f;
 
-  public static float PercentageDamageToSelf =
-    RamConfig.PercentageDamageToSelf.Value;
-
-  public static float RamBaseSlashDamage => RamConfig.RamBaseSlashDamage.Value;
-  public static float RamBaseBluntDamage => RamConfig.RamBaseBluntDamage.Value;
-  public static float RamBaseChopDamage => RamConfig.RamBaseChopDamage.Value;
-
-  public static float RamBasePickAxeDamage =>
-    RamConfig.RamBasePickAxeDamage.Value;
-
-  public static float RamBasePierceDamage =>
-    RamConfig.RamBasePierceDamage.Value;
-
-  public static float RamBaseMaximumDamage =>
-    RamConfig.RamBaseMaximumDamage.Value;
-
-  public static bool AllowContinuousDamage =
-    RamConfig.AllowContinuousDamage.Value;
-
-  // hit booleans
-  public static bool RamsCanHitEnvironmentOrTerrain =
-    RamConfig.CanHitEnvironmentOrTerrain.Value;
-
+  // damage ratios
   public float chopDamageRatio;
   public float pickaxeDamageRatio;
   public float slashDamageRatio;
   public float pierceDamageRatio;
   public float bluntDamageRatio;
 
-  public static float DamageIncreasePercentagePerTier =>
-    RamConfig.DamageIncreasePercentagePerTier.Value;
+  public bool CanDamageSelf = true;
+  public bool CanHitWhileHauling = true;
+  public float DamageIncreasePercentagePerTier = 1;
+  public float MaxVelocityMultiplier = 1f;
+  public bool HasMaxDamageCap = RamConfig.HasMaximumDamageCap.Value;
+  public HitData.DamageTypes selfDamage;
+  public Collider[] selfHitColliders = new Collider[50];
 
-  public static float MaxVelocityMultiplier =>
-    RamConfig.MaxVelocityMultiplier.Value;
-
-  public static bool HasMaxDamageCap =>
-    RamConfig.HasMaximumDamageCap.Value;
-
+  private float _disableTime = 0f;
+  private const float _disableTimeMax = 0.5f;
+  
   public bool isReadyForCollisions { get; set; }
   public bool isRebuildingCollisions
   {
@@ -85,37 +73,99 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
   private Rigidbody rigidbody;
 
-  public static List<string> PiecesToMoveOnToVehicle = ["Cart"];
+  public static List<string> PiecesToMoveOnToVehicle = ["Cart", "Catapult", PrefabNames.LandVehicle];
   public static Regex ExclusionPattern;
+
+  public float GetMinimumVelocityToTriggerRam()
+  {
+    var val = IsVehicleRamType ? RamConfig.VehicleMinimumVelocityToTriggerHit.Value : RamConfig.MinimumVelocityToTriggerHit.Value;
+    var variantMultiplier = m_RamType == RamPrefabs.RamType.Stake ? 0.5f : 1f;
+    return val * variantMultiplier;
+  }
+
+  public float GetPercentageDamageToVehicle()
+  {
+    if (m_RamType is RamPrefabs.RamType.LandVehicle or RamPrefabs.RamType.WaterVehicle)
+    {
+      return RamConfig.VehiclePercentageDamageToCollisionArea.Value;
+    }
+    return RamConfig.PercentageDamageToSelf.Value;
+  }
+
+  public int GetToolTier()
+  {
+    if (m_RamType == RamPrefabs.RamType.LandVehicle)
+    {
+      return RamConfig.LandVehicleRamToolTier.Value;
+    }
+    if (m_RamType == RamPrefabs.RamType.WaterVehicle)
+    {
+      return RamConfig.WaterVehicleRamToolTier.Value;
+    }
+    return RamConfig.RamDamageToolTier.Value;
+  }
 
   public void InitializeFromConfig()
   {
+    // must set this first.
+    IsVehicleRamType = m_RamType is RamPrefabs.RamType.LandVehicle or RamPrefabs.RamType.WaterVehicle;
+    // local config values
+    MinimumVelocityToTriggerHit = GetMinimumVelocityToTriggerRam();
+    DamageIncreasePercentagePerTier = RamConfig.DamageIncreasePercentagePerTier.Value;
+    PercentageDamageToSelf = GetPercentageDamageToVehicle();
+    CanHitWhileHauling = RamConfig.CanHitWhileHauling.Value;
+    RamDamageToolTier = GetToolTier();
+    CanDamageSelf = IsVehicleRamType ? RamConfig.VehicleRamCanDamageSelf.Value : RamConfig.CanDamageSelf.Value;
+
+    if (IsVehicleRamType)
+    {
+      MaxVelocityMultiplier = RamConfig.VehicleMaxVelocityMultiplier.Value;
+      RamBaseSlashDamage = RamConfig.VehicleRamBaseSlashDamage.Value;
+      RamBasePierceDamage = RamConfig.VehicleRamBasePierceDamage.Value;
+      RamBaseBluntDamage = RamConfig.VehicleRamBaseBluntDamage.Value;
+      RamBasePickAxeDamage = RamConfig.VehicleRamBasePickAxeDamage.Value;
+      RamBaseChopDamage = RamConfig.VehicleRamBaseChopDamage.Value;
+      m_hitTerrain = RamConfig.VehicleRamCanHitEnvironmentOrTerrain.Value;
+      m_hitProps = RamConfig.VehicleRamCanHitEnvironmentOrTerrain.Value;
+      m_hitCharacters = RamConfig.VehicleRamCanHitCharacters.Value;
+      m_hitFriendly = RamConfig.VehicleRamCanHitFriendly.Value;
+      m_hitEnemy = RamConfig.VehicleRamCanHitEnemies.Value;
+      m_hitParent = RamConfig.VehicleRamCanDamageSelf.Value;
+    }
+    else
+    {
+      MaxVelocityMultiplier = RamConfig.MaxVelocityMultiplier.Value;
+      RamBaseSlashDamage = RamConfig.RamBaseSlashDamage.Value;
+      RamBasePierceDamage = RamConfig.RamBasePierceDamage.Value;
+      RamBaseBluntDamage = RamConfig.RamBaseBluntDamage.Value;
+      RamBasePickAxeDamage = RamConfig.RamBasePickAxeDamage.Value;
+      RamBaseChopDamage = RamConfig.RamBaseChopDamage.Value;
+
+      m_hitTerrain = RamConfig.CanHitEnvironmentOrTerrain.Value;
+      m_hitProps = RamConfig.CanHitEnvironmentOrTerrain.Value;
+      m_hitCharacters = RamConfig.CanHitCharacters.Value;
+      m_hitFriendly = RamConfig.CanHitFriendly.Value;
+      m_hitEnemy = RamConfig.CanHitEnemies.Value;
+      m_hitParent = RamConfig.CanDamageSelf.Value;
+    }
+
     m_blockable = false;
     m_dodgeable = false;
-    m_hitTerrain = RamConfig.CanHitEnvironmentOrTerrain.Value;
-    m_hitProps = RamConfig.CanHitEnvironmentOrTerrain.Value;
-    m_hitCharacters = RamConfig.CanHitCharacters.Value;
-    m_hitFriendly = RamConfig.CanHitFriendly.Value;
-    m_hitEnemy = RamConfig.CanHitEnemies.Value;
-    m_hitParent = RamConfig.CanDamageSelf.Value;
     m_hitInterval = Mathf.Clamp(RamConfig.RamHitInterval.Value, 0.5f, 20f);
 
     // todo need to tweak this
     m_damageSelf = !RamConfig.CanDamageSelf.Value ? 0 : 1;
-    m_toolTier = RamConfig.RamDamageToolTier.Value;
+    m_toolTier = RamDamageToolTier;
     m_attackForce = 5;
-    m_attackForce = 50;
 
-    m_radius = Mathf.Clamp(RamConfig.HitRadius.Value, 0.1f, 150f);
-    m_radius *= m_RamType == RamPrefabs.RamType.Blade ? 1 : 0.5f;
-
+    m_radius = Mathf.Clamp(IsVehicleRamType ? RamConfig.VehicleRamHitRadius.Value : RamConfig.HitRadius.Value, 0.1f, 50f);
+    m_radius *= m_RamType == RamPrefabs.RamType.Stake ? 0.5f : 1f;
+   
     m_useTriggers = true;
-    m_triggerEnterOnly = RamConfig.AllowContinuousDamage.Value;
+    m_triggerEnterOnly = !IsVehicleRamType && RamConfig.AllowContinuousDamage.Value;
     m_useCollider = null;
     m_useAttackSettings = true;
     m_ttl = 0;
-
-    if (m_isVehicleRam) SetVehicleRamModifier(m_isVehicleRam);
   }
 
   public float GetTotalDamage(float slashDamage, float bluntDamage,
@@ -151,40 +201,14 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   {
     if (!RamInstances.Contains(this)) RamInstances.Add(this);
     ExclusionPattern = GenerateRegexFromList(PiecesToMoveOnToVehicle);
-
-    InitializeFromConfig();
-    SetBaseDamageFromConfig();
-
-    InitAoe();
-
     rigidbody = GetComponent<Rigidbody>();
-    // very important otherwise this rigidbody will interfere with physics of the Watervehicle controller due to nesting.
-    // todo to move this rigidbody into a joint and make it a sibling of the WaterVehicle or PieceContainer (doing this would be a large refactor to structure, likely requiring a new prefab)
-    // if (rigidbody) rigidbody.includeLayers = m_rayMask;
   }
-
-  private float _disableTime = 0f;
-  private const float _disableTimeMax = 0.5f;
-
-  // private Coroutine? rebuildBoundRoutine = null;
-
+  
   public void OnBoundsRebuild()
   {
     isRebuildingCollisions = true;
     _disableTime = Time.fixedTime + _disableTimeMax;
-
-    // if (rebuildBoundRoutine != null)
-    // {
-    //   StopCoroutine(rebuildBoundRoutine);
-    // }
-    // StartCoroutine(RebuildBoundsDisableTime());
   }
-
-  // public IEnumerator RebuildBoundsDisableTime()
-  // {
-  //   // var disabledColliders = game
-  //   // yield return new WaitUntil(() => Time.fixedTime > _disableTime);
-  // }
 
   public override void OnDisable()
   {
@@ -195,6 +219,11 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
   public void Start()
   {
+    // must initialize after Awake so we can set these values after AddComponent is called.
+    InitializeFromConfig();
+    SetBaseDamageFromConfig();
+    InitAoe();
+    
     Invoke(nameof(UpdateReadyForCollisions), 1f);
   }
 
@@ -266,13 +295,13 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       return false;
     }
 
-    return UpdateDamageFromVelocity(relativeVelocity);
+    return UpdateDamageFromVelocity(relativeVelocity, collider);
   }
 
-  public bool UpdateDamageFromVelocity(float relativeVelocityMagnitude)
+  public bool UpdateDamageFromVelocity(float relativeVelocityMagnitude, Collider collider)
   {
     // exits if the velocity is not within expected damage ranges
-    if (relativeVelocityMagnitude < minimumVelocityToTriggerHit) return false;
+    if (relativeVelocityMagnitude < MinimumVelocityToTriggerHit) return false;
 
     if (relativeVelocityMagnitude == 0)
     {
@@ -308,10 +337,18 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       chopDamage = baseDamage.m_chop * multiplier;
     }
 
+    if (IsVehicleRamType)
+    {
+      slashDamage = baseDamage.m_slash * multiplier;
+      chopDamage = baseDamage.m_slash * multiplier;
+      pierceDamage = baseDamage.m_slash * multiplier;
+    }
+
+    var nextTotalDamage = 0f;
 
     if (HasMaxDamageCap)
     {
-      var nextTotalDamage =
+      nextTotalDamage =
         GetTotalDamage(slashDamage, bluntDamage, chopDamage, pickaxeDamage,
           pierceDamage);
 
@@ -361,18 +398,92 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       m_pickaxe = pickaxeDamage
     };
 
-    if (!RamConfig.CanDamageSelf.Value)
+    selfDamage = new HitData.DamageTypes()
+    {
+      m_blunt = bluntDamage * PercentageDamageToSelf,
+      m_pierce = pierceDamage * PercentageDamageToSelf,
+      m_slash = slashDamage * PercentageDamageToSelf,
+      m_chop = chopDamage * PercentageDamageToSelf,
+      m_pickaxe = pickaxeDamage * PercentageDamageToSelf
+    };
+
+    // do not damage self for land vehicles, instead we apply damage directly to the area.
+    if (!CanDamageSelf || m_RamType == RamPrefabs.RamType.LandVehicle || m_RamType == RamPrefabs.RamType.WaterVehicle)
     {
       m_damageSelf = 0;
-      return true;
+    }
+    else
+    {
+      m_damageSelf =
+        nextTotalDamage *
+      PercentageDamageToSelf;
     }
 
-    m_damageSelf =
-      GetTotalDamage(slashDamage, bluntDamage, chopDamage, pickaxeDamage,
-        pierceDamage) *
-      PercentageDamageToSelf;
-
     return true;
+  }
+
+  public HitData? cachedSelfDamageHitData = new();
+  // todo might need to set this to Boat (but I saw no damage)
+  public HitData.HitType damageSelfHitType = HitData.HitType.EnemyHit;
+
+  public HitData GetHitData(Collider collider, Vector3 collisionPoint)
+  {
+    if (cachedSelfDamageHitData != null) return cachedSelfDamageHitData;
+    var collisionDir = collider.bounds.center.DirTo(collisionPoint);
+    var hitData = new HitData()
+    {
+      m_point = collisionPoint,
+      m_hitCollider = collider,
+      m_damage = selfDamage,
+      m_dir = collisionDir,
+      m_blockable = false,
+      m_dodgeable = false,
+      m_pushForce = 0,
+      m_backstabBonus = 1,
+      m_ranged = false,
+      m_ignorePVP = true,
+      m_toolTier = (short)RamDamageToolTier,
+      m_hitType = damageSelfHitType,
+      m_radius = m_radius // todo might not be necessary
+    };
+
+    cachedSelfDamageHitData = hitData;
+    return hitData;
+  }
+
+  /// <summary>
+  /// For vehicle ram variants
+  /// </summary>
+  /// <param name="collider"></param>
+  public void OnHitSelfVehiclePieces(Collider collider)
+  {
+    if (m_vehicle == null || m_vehicle.PiecesController == null) return;
+    var approximateTotalDamage = selfDamage.m_blunt + selfDamage.m_pierce + selfDamage.m_slash + selfDamage.m_chop + selfDamage.m_pickaxe + selfDamage.m_pierce;
+    if (approximateTotalDamage < 5f)
+    {
+      return;
+    }
+
+    // todo possibly check collider type and use closestPoint
+    var collisionPoint = collider.ClosestPointOnBounds(transform.position);
+
+    // only hit piece layer to avoid hitting player and other layers that might not be a piece but could be on the vehicle.
+    var hitCount = Physics.OverlapSphereNonAlloc(collisionPoint, m_radius, selfHitColliders, LayerHelpers.PieceLayer);
+    cachedSelfDamageHitData = null;
+
+    if (hitCount < 1) return;
+
+    for (var i = 0; i < hitCount && i < selfHitColliders.Length; i++)
+    {
+      var hitCollider = selfHitColliders[i];
+      if (hitCollider == null) continue;
+      var isPieceController = hitCollider.transform.root == m_vehicle.PiecesController.transform;
+      if (!isPieceController) continue;
+      var wnt = hitCollider.GetComponentInParent<WearNTear>();
+      if (!wnt) continue;
+      var hitData = GetHitData(collider, collisionPoint);
+      wnt.Damage(hitData);
+    }
   }
 
   private void IgnoreCollider(Collider collider)
@@ -403,7 +514,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     }
 
     var relativeVelocity = GetRelativeVelocity(collider);
-    if (relativeVelocity < minimumVelocityToTriggerHit) return false;
+    if (relativeVelocity < MinimumVelocityToTriggerHit) return false;
 
     return base.ShouldHit(collider);
   }
@@ -510,9 +621,13 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     {
       UpdateReloadingTime();
     }
+    if (m_vehicle == null) return false;
 
-    // todo possibly disable ram damage if the vehicle is kinematic but this would prevent damage while hauling
-    if (m_vehicle != null && m_vehicle.isCreative) return false;
+    if (m_vehicle.isCreative) return false;
+    if (!CanHitWhileHauling && m_vehicle.MovementController != null && m_vehicle.MovementController.isPlayerHaulingVehicle)
+    {
+      return false;
+    }
 
     if (IsWaitingForOnboardCollider())
     {
@@ -527,7 +642,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     if (!IsReady()) return;
     if (ShouldIgnore(collision.collider)) return;
     if (!UpdateDamageFromVelocity(
-          Vector3.Magnitude(collision.relativeVelocity))) return;
+          Vector3.Magnitude(collision.relativeVelocity), collision.collider)) return;
     base.OnCollisionEnterHandler(collision);
   }
 
@@ -536,8 +651,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     if (!IsReady()) return;
     if (ShouldIgnore(collision.collider)) return;
     if (!UpdateDamageFromVelocity(
-          Vector3.Magnitude(collision.relativeVelocity))) return;
-
+          Vector3.Magnitude(collision.relativeVelocity), collision.collider)) return;
     base.OnCollisionStayHandler(collision);
   }
 
@@ -555,6 +669,20 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     if (ShouldIgnore(collider)) return;
     if (!UpdateDamageFromVelocityCollider(collider)) return;
     base.OnTriggerStayHandler(collider);
+  }
+
+  public override bool OnHit(Collider collider, Vector3 hitPoint)
+  {
+    var hasHit = base.OnHit(collider, hitPoint);
+    if (!hasHit) return false;
+    if (!IsVehicleRamType) return true;
+    // additional call.
+    // do not run for excluded self hit collisions.
+    if (!m_hitSelfExcludeList.Contains(collider))
+    {
+      OnHitSelfVehiclePieces(collider);
+    }
+    return true;
   }
 
   public void SetBaseDamage(HitData.DamageTypes data)
@@ -580,20 +708,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     });
   }
 
-  public void SetVehicleRamModifier(bool isRamEnabled)
-  {
-    m_isVehicleRam = isRamEnabled;
-    RamDamageOverallMultiplier = 0.5f;
-    m_triggerEnterOnly = false;
-
-    // overrides for vehicles.
-    m_toolTier = RamConfig.HullToolTier.Value;
-
-    // vehicles need much more radius to effectively hit
-    m_radius = Mathf.Clamp(m_radius, 10f, 50f);
-    InitAoe();
-  }
-
   public static void OnBaseSettingsChange(object sender, EventArgs eventArgs)
   {
     foreach (var instance in RamInstances.ToList())
@@ -614,21 +728,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       {
         instance.gameObject.SetActive(false);
       }
-    }
-  }
-
-  public static void OnSettingsChanged(object sender, EventArgs eventArgs)
-  {
-    foreach (var instance in RamInstances.ToArray())
-    {
-      if (!instance)
-      {
-        RamInstances.Remove(instance);
-        continue;
-      }
-
-      instance.SetBaseDamageFromConfig();
-      instance.InitAoe();
     }
   }
 }

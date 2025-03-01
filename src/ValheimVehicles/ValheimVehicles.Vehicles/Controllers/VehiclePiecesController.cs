@@ -1245,10 +1245,10 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     if (ZNetView.m_forceDisableInit) return;
     if (_rebuildBoundsTimer != null) return;
 
-    _rebuildBoundsTimer = StartCoroutine(DebounceRebuildBoundRoutine());
+    _rebuildBoundsTimer = StartCoroutine(DebounceRebuildBoundsRoutine());
   }
 
-  private IEnumerator DebounceRebuildBoundRoutine()
+  private IEnumerator DebounceRebuildBoundsRoutine()
   {
     yield return new WaitForSeconds(VehicleDebugConfig
       .VehiclePieceBoundsRecalculationDelay.Value);
@@ -2398,6 +2398,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     IgnoreCollidersForAnchorPieces(netView);
   }
 
+  public static int immediateRebuildPieceThreshold = 5;
   public void AddPiece(ZNetView netView, bool isNew = false)
   {
     if (!(bool)netView)
@@ -2413,11 +2414,14 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     
     FixPieceMeshes(netView);
     OnAddPieceIgnoreColliders(netView);
-
+    
     var shouldRebuildBounds = false;
     totalSailArea = 0;
     m_nviewPieces.Add(netView);
     UpdatePieceCount();
+
+    // to be safe(r)?, calling ignore colliders after would allow ignoring all colliders including the current piece, but this means the internal piece colliders now ignore eachother which can regress things.
+    OnAddPieceIgnoreColliders(netView);
 
     // Cache components
     var components = netView.GetComponents<Component>();
@@ -2513,7 +2517,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     UpdateMass(netView);
 
     // Handle bounds rebuilding
-    if (shouldRebuildBounds || convexHullColliders.Count == 0)
+    if (shouldRebuildBounds || convexHullColliders.Count < immediateRebuildPieceThreshold)
       RebuildBounds();
     else
       DebouncedRebuildBounds();
@@ -2817,14 +2821,22 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   public void IgnoreAllVehicleCollidersForGameObjectChildren(GameObject gameObject)
   {
     var colliders = gameObject.GetComponentsInChildren<Collider>(true);
+    var topLevelCollider = gameObject.GetComponent<Collider>();
+    if (topLevelCollider != null)
+    {
+      if (colliders == null) colliders = [topLevelCollider];
+      else
+      {
+        colliders.AddItem(topLevelCollider);
+      }
+    }
     if (!colliders.Any()) return;
+    if (VehicleInstance == null || VehicleInstance.Instance == null) return;
     var allVehicleColliders = VehicleInstance.Instance.GetComponentsInChildren<Collider>(true);
     foreach (var collider in colliders)
+    foreach (var allVehicleCollider in allVehicleColliders)
     {
-      foreach (var allVehicleCollider in allVehicleColliders)
-      {
-        Physics.IgnoreCollision(collider, allVehicleCollider, true);
-      }
+      Physics.IgnoreCollision(collider, allVehicleCollider, true);
     }
   }
 
@@ -2850,10 +2862,8 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
   public void IgnoreAllWheelColliders()
   {
-    if (WheelController == null) return;
-
+    if (WheelController == null || WheelController.wheelColliders.Count == 0) return;
     m_vehicleCollisionManager.AddListOfColliders(WheelController.wheelColliders);
-
     //
     // var colliders = new List<Collider>();
     // foreach (var wheelCollider in WheelController.wheelColliders.ToList())
@@ -2874,6 +2884,12 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     // IgnoreCollidersForList(colliders, m_nviewPieces);
   }
 
+  public void TryAddRamToVehicle()
+  {
+    if (VehicleInstance?.MovementController == null) return;
+    VehicleInstance.MovementController.TryAddRamAoeToVehicle();
+  }
+
   /**
    * Must be wrapped in an Invoke delay to prevent spamming on unmounting
    * bounds cannot be de-encapsulated by default so regenerating it seems prudent on piece removal
@@ -2881,8 +2897,10 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   public void RebuildBounds()
   {
     if (!isActiveAndEnabled) return;
-    if (RamConfig.VehicleHullsAreRams.Value && MovementController != null)
-      MovementController.AddRamAoeToConvexHull();
+    if (FloatCollider == null || OnboardCollider == null)
+      return;
+
+    TryAddRamToVehicle();
     TempDisableRamsDuringRebuild();
 
     Physics.SyncTransforms();
@@ -2890,17 +2908,20 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
     RebuildConvexHull();
 
-    if (FloatCollider == null || OnboardCollider == null)
-      return;
-
     _vehiclePieceBounds = convexHullComponent.GetConvexHullBounds(true);
-    
-    OnBoundsChangeUpdateShipColliders();
 
-    if (WheelController != null)
+    try
     {
-      var convexHullBounds = convexHullComponent.GetConvexHullBounds(true);
-      WheelController.Initialize(convexHullBounds);
+
+      if (WheelController != null)
+      {
+        var convexHullBounds = convexHullComponent.GetConvexHullBounds(true);
+        WheelController.Initialize(convexHullBounds);
+      }
+    }
+    catch (Exception e)
+    {
+      Logger.LogError(e);
     }
 
     // Critical for vehicle stability otherwise it will blast off in a random direction to due colliders internally colliding.
@@ -2911,6 +2932,8 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     {
       OnboardController.OnBoundsRebuild();
     }
+
+    OnBoundsChangeUpdateShipColliders();
   }
 
   /// <summary>
