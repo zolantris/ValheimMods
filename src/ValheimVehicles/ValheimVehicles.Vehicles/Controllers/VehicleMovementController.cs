@@ -252,7 +252,9 @@
 
     public static List<IMonoUpdater> MonoUpdaterInstances { get; } = [];
 
-
+    public static float staminaHaulCost = 5;
+    public static bool ShouldHaulingLineSnapOnZeroStamina = false;
+    
     public BoxCollider? FloatCollider =>
       _vehicle != null ? _vehicle.FloatCollider : null;
 
@@ -2355,6 +2357,8 @@
       }
     }
 
+    private static float HaulingBreakPushForce = 30f; 
+    
     public void UpdateVehicleFromHaulPosition()
     {
       if (!isPlayerHaulingVehicle) return;
@@ -2369,7 +2373,6 @@
 #if DEBUG
       shouldSkipSnappingLeash = false;
 #endif
-      var staminaHaulCost = PhysicsConfig.VehicleStaminaHaulingCost.Value;
 
       // costs stamina of you move the vehicle beyond 1meter distance every FixedUpdate tick.
       if (distanceMovedSinceHaulTick > 1 && HaulingPlayer.m_stamina > staminaHaulCost)
@@ -2397,42 +2400,51 @@
       if (distanceToPlayerVehicleCollider < minHaulFollowDistance) return;
 
       var direction = (new Vector3(haulingPlayerPosition.x, m_body.position.y, haulingPlayerPosition.z) - position).normalized;
+      var directionFromPlayerToAnchor = (HaulingRopeComponent.transform.position - haulingPlayerPosition).normalized;
 
       // Force drops the vehicle if you run out of stamina.
       if (!shouldSkipSnappingLeash && HaulingPlayer.m_stamina < staminaHaulCost)
       {
         var nextDamage = staminaHaulCost * distanceMovedSinceHaulTick;
-        if (nextDamage > HaulingPlayer.m_health)
+        if (nextDamage + 5f > HaulingPlayer.GetHealth())
         {
-          ForceStopHauling();
+          ForceStopHauling(true);
           return;
         }
 
-        // makes the player lose health as they continue to haul.
-        var hit = new HitData()
+        if (nextDamage > 1)
         {
-          m_hitType = HitData.HitType.PlayerHit,
-          m_backstabBonus = 1,
-          m_point = haulingPlayerPosition,
-          m_attacker = HaulingPlayer.GetZDOID(),
-          m_ignorePVP = true,
-          m_damage =
+          // makes the player lose health as they continue to haul.
+          var hit = new HitData()
           {
-            m_damage = nextDamage
-          },
-          m_ranged = true,
-          m_hitCollider = HaulingPlayer.m_collider,
-          m_toolTier = 100,
-          m_dodgeable = false,
-          m_blockable = false,
-          m_pushForce = 300f,
-          m_dir = direction
-        };
-        hit.SetAttacker(HaulingPlayer);
+            m_hitType = HitData.HitType.PlayerHit,
+            m_backstabBonus = 1,
+            m_point = haulingPlayerPosition,
+            m_attacker = HaulingPlayer.GetZDOID(),
+            m_ignorePVP = true,
+            m_damage =
+            {
+              m_slash = nextDamage * 0.5f,
+              m_pierce = nextDamage * 0.5f
+            },
+            m_ranged = false,
+            m_hitCollider = HaulingPlayer.m_collider,
+            m_toolTier = 100,
+            m_dodgeable = false,
+            m_blockable = false,
+            m_pushForce = HaulingBreakPushForce,
+            m_dir = directionFromPlayerToAnchor
+          };
+          hit.SetAttacker(HaulingPlayer);
 
-        HaulingPlayer.Damage(hit);
-        distanceMovedSinceHaulTick = 0f;
-        return;
+          HaulingPlayer.Damage(hit);
+          distanceMovedSinceHaulTick = 0f;
+        }
+
+        if (ShouldHaulingLineSnapOnZeroStamina && HaulingPlayer.m_stamina < 1)
+        {
+          ForceStopHauling(true);
+        }
       }
 
       // Move the rigidbody in that direction

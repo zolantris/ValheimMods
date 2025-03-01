@@ -42,7 +42,6 @@ public static class PhysicsConfig
 
   // landvehicle turning
   public static ConfigEntry<float> VehicleLandTurnSpeed = null!;
-  public static ConfigEntry<float> VehicleStaminaHaulingCost = null!;
   
   public static ConfigEntry<int> VehicleLandMaxTreadWidth = null!;
   public static ConfigEntry<int> VehicleLandMaxTreadLength = null!;
@@ -389,12 +388,6 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "DEBUG, tweak sailing math. Not supported or tested. Do not mess with defaults. Do not use this unless you know what your doing.",
         true, true, StableSailForceRange);
-
-    VehicleStaminaHaulingCost = Config.Bind(PropulsionSection,
-      "VehicleStaminaHaulingCost",
-      5f,
-      ConfigHelpers.CreateConfigDescription(
-        "The cost per 1 meter of hauling a vehicle. This cost is on incurred if the vehicle is being pulled towards the player. When stamina runs out, the player is damaged by this amount until they release the vehicle.", true, false, new AcceptableValueRange<float>(0, 10f)));
 
     // flight
     flightDamping =
