@@ -95,12 +95,14 @@ public class VehicleCommands : ConsoleCommand
     switch (firstArg)
     {
       case VehicleCommandArgs.move:
+        if (!CanRunCheatCommand()) return;
         VehicleMove(nextArgs);
         break;
       case VehicleCommandArgs.toggleOceanSway:
         VehicleToggleOceanSway();
         break;
       case VehicleCommandArgs.rotate:
+        if (!CanRunCheatCommand()) return;
         VehicleRotate(args);
         break;
       case VehicleCommandArgs.recover:
@@ -108,10 +110,12 @@ public class VehicleCommands : ConsoleCommand
           $"{Name} {VehicleCommandArgs.recover}");
         break;
       case VehicleCommandArgs.creative:
+        if (!CanRunEditCommand()) return;
         CreativeModeConsoleCommand.RunCreativeModeCommand(
           $"{Name} {VehicleCommandArgs.creative}");
         break;
       case VehicleCommandArgs.debug:
+        if (!CanRunCheatCommand()) return;
         ToggleVehicleDebugCommandsComponent();
         break;
 #if DEBUG
@@ -133,6 +137,7 @@ public class VehicleCommands : ConsoleCommand
         ToggleColliderEditMode();
         break;
       case VehicleCommandArgs.moveUp:
+        if (!CanRunCheatCommand()) return;
         VehicleMoveVertically(nextArgs);
         break;
       case VehicleCommandArgs.resetVehicleOwner:
@@ -483,9 +488,25 @@ public class VehicleCommands : ConsoleCommand
     {
       if (Player.m_localPlayer == null || ZNet.instance == false) return false;
       var playerId = Player.m_localPlayer.GetPlayerID();
-      if (!ZNetExtension.IsAdmin(ZNet.instance, playerId))
+      if (!ZNet.instance.IsAdmin(playerId))
       {
-        Logger.LogMessage("Player is not an admin. They cannot run this command without setting AllowDebugCommandsForNonAdmins to true in the raft config or being an Admin.");
+        Logger.LogMessage($"Player is not an admin. They cannot run this cheat command without setting configKeySection <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public static bool CanRunEditCommand()
+  {
+    if (!VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Value)
+    {
+      if (Player.m_localPlayer == null || ZNet.instance == false) return false;
+      var playerId = Player.m_localPlayer.GetPlayerID();
+      if (!ZNet.instance.IsAdmin(playerId))
+      {
+        Logger.LogMessage($"Player is not an admin. They cannot run this edit command without setting configKeySection <{VehicleDebugConfig.AllowEditCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleDebugConfig.AllowEditCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
         return false;
       }
     }
@@ -499,8 +520,6 @@ public class VehicleCommands : ConsoleCommand
   /// <param name="args">Command arguments.</param>
   public void VehicleMove(string[] args)
   {
-    if (!CanRunCheatCommand()) return;
-    
     var shipInstance =
       GetNearestVehicleShip(Player.m_localPlayer.transform.position);
     if (shipInstance == null)
@@ -647,7 +666,6 @@ public class VehicleCommands : ConsoleCommand
 
   private static void ToggleVehicleDebugCommandsComponent()
   {
-    if (!CanRunCheatCommand()) return;
     VehicleGui.ToggleCommandsPanelState();
     foreach (var vehicleShip in VehicleShip.VehicleInstances)
     {
