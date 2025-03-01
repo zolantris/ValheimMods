@@ -11,6 +11,9 @@
 *.sln.docstates
 *.sln.DotSettings
 
+# intellij cannot be committed as it breaks whenever switching branchs or ide versions of rider. 
+.idea/
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
