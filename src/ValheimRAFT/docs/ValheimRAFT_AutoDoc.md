@@ -61,10 +61,6 @@
 - Description: Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.
 - Default Value: True
 
-### AllowFlight 
-- Description: Allow the raft to fly (jump\crouch to go up and down)
-- Default Value: False
-
 ### AllowCustomRudderSpeeds 
 - Description: Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed. See advanced section for the actual speed settings.
 - Default Value: True
@@ -78,74 +74,6 @@
 ### AnchorKeyboardShortcut 
 - Description: Anchor keyboard hotkey. Only applies to keyboard
 - Default Value: LeftShift
-
-## Debug
-
-### ShowShipState 
-- Description: 
-- Default Value: True
-
-## Propulsion
-
-### MaxSailSpeed 
-- Description: Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.
-- Default Value: 30
-
-### MassPercentage 
-- Description: Sets the mass percentage of the ship that will slow down the sails
-- Default Value: 55
-
-### SpeedCapMultiplier 
-- Description: Sets the speed at which it becomes significantly harder to gain speed per sail area
-- Default Value: 1
-
-### HasShipWeightCalculations 
-- Description: enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less
-- Default Value: True
-
-### HasShipContainerWeightCalculations 
-- Description: enables ship weight calculations for containers which affects sail-force (sailing speed) and future propulsion calculations. Makes ships with lots of containers require more sails
-- Default Value: False
-
-## Debug
-
-### HasDebugSails 
-- Description: Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only.
-- Default Value: False
-
-## Propulsion
-
-### EnableCustomPropulsionConfig 
-- Description: Enables all custom propulsion values
-- Default Value: False
-
-### SailCustomAreaTier1Multiplier 
-- Description: Manual sets the sail wind area multiplier the custom tier1 sail. Currently there is only 1 tier
-- Default Value: 0.5
-
-### SailTier1Area 
-- Description: Manual sets the sail wind area of the tier 1 sail.
-- Default Value: 5
-
-### SailTier2Area 
-- Description: Manual sets the sail wind area of the tier 2 sail.
-- Default Value: 10
-
-### SailTier3Area 
-- Description: Manual sets the sail wind area of the tier 3 sail.
-- Default Value: 20
-
-### SailTier4Area 
-- Description: Manual sets the sail wind area of the tier 4 sail.
-- Default Value: 40
-
-### FlightVerticalToggle 
-- Description: Flight Vertical Continues UntilToggled: Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button
-- Default Value: True
-
-### FlightHasRudderOnly 
-- Description: Flight allows for different rudder speeds. Use rudder speed only. Do not use sail speed.
-- Default Value: False
 
 ## Graphics
 
@@ -421,6 +349,14 @@
 - Description: Vehicles land vehicle prefab will be enabled. LandVehicles will be available for all version above V3.0.0
 - Default Value: False
 
+### VehicleStaminaHaulingCost 
+- Description: The cost per 1 meter of hauling a vehicle. This cost is on incurred if the vehicle is being pulled towards the player. When stamina runs out, the player is damaged by this amount until they release the vehicle.
+- Default Value: 5
+
+### VehicleHaulingSnapsOnStaminaZero 
+- Description: Instead of allowing the viking to use health. The vehicle hauling line will snap when you have zero stamina doing a single one-time damage.
+- Default Value: False
+
 ## Vehicle Debugging
 
 ### AllowDebugCommandsForNonAdmins 
@@ -455,9 +391,23 @@
 - Description: Makes all clients sync physics. This will likely cause a desync in physics but could fix some problems with physics not updating in time for some clients as all clients would control physics.
 - Default Value: False
 
-### VehiclePieceBoundsRecalculationDelay 
-- Description: The delay time at which the vehicle will recalculate bounds after placing a piece. This recalculation can be a bit heavy so it's debounced a minimum of 1 seconds but could be increased up to 30 seconds for folks that want to build a pause for a bit.
-- Default Value: 10
+## Vehicle Pieces
+
+### VehicleBoundsRebuildDelayPerPiece 
+- Description: The delay time that is added per piece the vehicle has on it for recalculating vehicle bounds. Example 2000 * 0.02 = 40seconds delay.  Values are clamped at 4 and max value: 60 so even smaller vehicles rebuild at the min value and large >2k piece vehicles build at the max value.
+- Default Value: 0.02
+
+### DisableVehicleCube 
+- Description: The raft will no longer be a cube. It will place pieces in world position. This will allow for teleporting and other rapid location / login fixes to work better. It might cause large vehicles to clip/break if they are rendered out of a zone.
+- Default Value: False
+
+## Debug
+
+### HasDebugSails 
+- Description: Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only.
+- Default Value: False
+
+## Vehicle Debugging
 
 ### CommandsWindowPosX 
 - Description: 
@@ -484,6 +434,14 @@
 - Default Value: 22
 
 ## Propulsion
+
+### AllowFlight 
+- Description: Allow the raft to fly (jump\crouch to go up and down)
+- Default Value: False
+
+### MassPercentage 
+- Description: Sets the mass percentage of the ship that will slow down the sails
+- Default Value: 0.5
 
 ### VehiclePhysicsMode 
 - Description: ForceSyncedRigidbody ignores all allowances that toggle SyncRigidbody related to flight. This will require a flight ascend value of 1 otherwise flight will be broken. Use this is there is problems with SyncRigidbody
@@ -529,6 +487,54 @@ Other methods removed after 2.5.0
 ### VerticalSmoothingSpeed 
 - Description: This applies to both Ballast and Flight modes. The vehicle will use this value to interpolate the climbing offset. Meaning low value will be slower climbing/ballast and high values will be instant and match the offset. High values will result in jitters and potentially could throw people off the vehicle. Expect values of 0.01 and 1. IE 1% and 100%
 - Default Value: 0.5
+
+## Debug
+
+### ShowShipState 
+- Description: 
+- Default Value: True
+
+## Propulsion
+
+### MaxSailSpeed 
+- Description: Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.
+- Default Value: 30
+
+### SpeedCapMultiplier 
+- Description: Sets the speed at which it becomes significantly harder to gain speed per sail area
+- Default Value: 1
+
+### EnableCustomPropulsionConfig 
+- Description: Enables all custom propulsion values
+- Default Value: False
+
+### SailCustomAreaTier1Multiplier 
+- Description: Manual sets the sail wind area multiplier the custom tier1 sail. Currently there is only 1 tier
+- Default Value: 0.5
+
+### SailTier1Area 
+- Description: Manual sets the sail wind area of the tier 1 sail.
+- Default Value: 5
+
+### SailTier2Area 
+- Description: Manual sets the sail wind area of the tier 2 sail.
+- Default Value: 10
+
+### SailTier3Area 
+- Description: Manual sets the sail wind area of the tier 3 sail.
+- Default Value: 20
+
+### SailTier4Area 
+- Description: Manual sets the sail wind area of the tier 4 sail.
+- Default Value: 40
+
+### FlightVerticalToggle 
+- Description: Flight Vertical Continues UntilToggled: Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button
+- Default Value: True
+
+### FlightHasRudderOnly 
+- Description: Flight allows for different rudder speeds. Use rudder speed only. Do not use sail speed.
+- Default Value: False
 
 ### WheelDeadZone 
 - Description: Plus or minus deadzone of the wheel when turning. Setting this to 0 will disable this feature. This will zero out the rudder if the user attempts to navigate with a value lower than this threshold range
@@ -724,21 +730,17 @@ Other methods removed after 2.5.0
 - Description: Offset the center of mass by a percentage of vehicle total height. Should always be a positive number. Higher values will make the vehicle more sturdy as it will pivot lower. Too high a value will make the ship behave weirdly possibly flipping. 0 will be the center of all colliders within the physics of the vehicle. 100% will be 50% lower than the vehicle's collider. 50% will be the very bottom of the vehicle's collider.
 - Default Value: 0.65
 
-### VehicleStaminaHaulingCost 
-- Description: The cost per 1 meter of hauling a vehicle. This cost is on incurred if the vehicle is being pulled towards the player. When stamina runs out, the player is damaged by this amount until they release the vehicle.
-- Default Value: 5
-
 ## Vehicle Physics
 
-### flightDamping_3.0.2 
+### flightDamping_3.0.3 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.0.2 
+### flightSidewaysDamping_3.0.3 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.0.2 
+### flightAngularDamping_3.0.3 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -758,15 +760,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1.2
 
-### forceDistance_3.0.2 
+### forceDistance_3.0.3 
 - Description: EXPERIMENTAL_FORCE_DISTANCE
 - Default Value: 1
 
-### force_3.0.2 
+### force_3.0.3 
 - Description: EXPERIMENTAL_FORCE
 - Default Value: 2
 
-### backwardForce_3.0.2 
+### backwardForce_3.0.3 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -774,15 +776,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1
 
-### waterDamping_3.0.2 
+### waterDamping_3.0.3 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.0.2 
+### waterSidewaysDamping_3.0.3 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.0.2 
+### waterAngularDamping_3.0.3 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -798,15 +800,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 0.8
 
-### submersibleDamping_3.0.2 
+### submersibleDamping_3.0.3 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.0.2 
+### submersibleSidewaysDamping_3.0.3 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.0.2 
+### submersibleAngularDamping_3.0.3 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -864,7 +866,7 @@ Other methods removed after 2.5.0
 - Description: DEPRECATED!!! Will be removed soon, values of -2 and 2 are allowed. Anything above means you are likely not using this correctly. Please use CenterOfMass instead if your vehicle needs to pivot lower. Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
 - Default Value: 0
 
-### EnableExactVehicleBounds_3.0.2 
+### EnableExactVehicleBounds_3.0.3 
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version
 - Default Value: True
 

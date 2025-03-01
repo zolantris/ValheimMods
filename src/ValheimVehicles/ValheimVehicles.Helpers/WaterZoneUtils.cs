@@ -56,6 +56,7 @@ public static class WaterZoneUtils
     {
       contactPoints.ForEach(x =>
       {
+        if (x.otherCollider == null || x.otherCollider == null) return;
         Physics.IgnoreCollision(x.thisCollider, x.otherCollider, false);
       });
     }
@@ -152,7 +153,7 @@ public static class WaterZoneUtils
 
     var isCharacterStandingOnVehicle =
       HasShipUnderneath(character, out var shipUnderneath);
-
+    
     // Force adds the player if they are onboard but somehow not on the ship.
     if (isCharacterStandingOnVehicle && shipUnderneath != null && shipUnderneath.OnboardController != null && !isCharacterOnboard)
     {
@@ -164,7 +165,7 @@ public static class WaterZoneUtils
       shipUnderneath.OnboardController.AddCharacter(character);
     }
 
-    return isCharacterOnboard || isCharacterStandingOnVehicle;
+    return isCharacterStandingOnVehicle;
   }
 
 

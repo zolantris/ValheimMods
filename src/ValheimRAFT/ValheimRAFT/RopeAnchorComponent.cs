@@ -206,11 +206,14 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
-    if (alt || isHauling)
+    if (alt)
     {
       ToggleHaulingVehicle(user);
       return true;
     }
+
+    // do not allow E interact to interfere without alt method. This way players can use other items/interact with steering.
+    if (isHauling) return true;
 
     if (hold && m_draggingRopeFrom == this)
     {

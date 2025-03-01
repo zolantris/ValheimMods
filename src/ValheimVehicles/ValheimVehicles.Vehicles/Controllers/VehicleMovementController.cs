@@ -4146,6 +4146,7 @@
     /// <returns></returns>
     public bool IsWindControllActive()
     {
+      if (OnboardController == null) return false;
       if (lastUpdateWindControlStatus < 2f)
       {
         lastUpdateWindControlStatus += Time.fixedDeltaTime;

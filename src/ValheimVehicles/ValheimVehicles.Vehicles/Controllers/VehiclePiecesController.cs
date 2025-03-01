@@ -1881,11 +1881,14 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
    *
    * This method calls so frequently outside of the scope of ValheimRaftPlugin.Instance so the Config values cannot be fetched for some reason.
    */
-  public float GetTotalSailArea()
+  public float GetTotalSailArea(bool forceUpdate = false)
   {
-    if (cachedTotalSailArea < 0 ||
-        m_mastPieces.Count == 0 && m_sailPieces.Count == 0)
+    if (!forceUpdate)
+    {
+      if (cachedTotalSailArea > -1 ||
+          m_mastPieces.Count == 0 && m_sailPieces.Count == 0)
       return cachedTotalSailArea;
+    }
 
     cachedTotalSailArea = 0;
     customSailsArea = 0;
@@ -1968,14 +1971,14 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     {
       return cachedSailForce;
     }
-    
-    var area = GetTotalSailArea();
+
+    var area = Mathf.Max(GetTotalSailArea(), 0f);
     var mpFactor = Mathf.Clamp01(PropulsionConfig.SailingMassPercentageFactor.Value);
     var speedCapMultiplier =
       PropulsionConfig.SpeedCapMultiplier.Value;
     var surfaceArea = speedCapMultiplier * area;
     var maxSpeed = Mathf.Min(PhysicsConfig.MaxLinearVelocity.Value, PropulsionConfig.MaxSailSpeed.Value);
-    var massToPush = Mathf.Max(1, TotalMass * mpFactor);
+    var massToPush = Mathf.Max(1f, TotalMass * mpFactor);
     var lerpedSailForce = Mathf.Lerp(0f, maxSpeed, Mathf.Clamp01(surfaceArea / massToPush));
     return lerpedSailForce;
   }
