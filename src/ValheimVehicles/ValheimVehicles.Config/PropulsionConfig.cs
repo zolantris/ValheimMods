@@ -120,7 +120,7 @@ public static class PropulsionConfig
     // vertical flight/ballast config
 
     FlightClimbingOffset = Config.Bind(SectionName,
-      "BallastClimbingOffset",
+      "FlightClimbingOffset",
       2f,
       ConfigHelpers.CreateConfigDescription(
         "Ascent and Descent speed for the vehicle in the air. This value is interpolated to prevent jitters.",
