@@ -1072,88 +1072,80 @@
     public IEnumerator FixShipRotation()
     {
       if (_vehicle == null) yield break;
-      var shouldUpdate = true;
+      var eulerAngles = transform.rotation.eulerAngles;
+      var eulerX = eulerAngles.x;
+      var eulerY = eulerAngles.y;
+      var eulerZ = eulerAngles.z;
 
-      while (shouldUpdate)
+      var transformedX = eulerX;
+      var transformedZ = eulerZ;
+      var shouldUpdate = false;
+
+      if (_vehicle.IsLandVehicle)
       {
-        var eulerAngles = transform.rotation.eulerAngles;
-        var eulerX = eulerAngles.x;
-        var eulerY = eulerAngles.y;
-        var eulerZ = eulerAngles.z;
-
-        var transformedX = eulerX;
-        var transformedZ = eulerZ;
-
-        if (_vehicle.IsLandVehicle)
+        if (Mathf.Abs(eulerX) is > 90 and < 270)
         {
-          if (Mathf.Abs(eulerX) is > 90 and < 270)
-          {
-            transformedX = 0;
-            shouldUpdate = true;
-          }
-
-          if (Mathf.Abs(eulerZ) is > 90 and < 270)
-          {
-            transformedZ = 0;
-            shouldUpdate = true;
-          }
-        }
-        else
-        {
-          if (Mathf.Abs(eulerX) is > 65 and < 295)
-          {
-            transformedX = 0;
-            shouldUpdate = true;
-          }
-
-          if (Mathf.Abs(eulerZ) is > 65 and < 295)
-          {
-            transformedZ = 0;
-            shouldUpdate = true;
-          }
+          transformedX = 0;
+          shouldUpdate = true;
         }
 
-        if (!shouldUpdate)
+        if (Mathf.Abs(eulerZ) is > 90 and < 270)
         {
-          yield break;
-        }
-
-        if (shouldUpdate)
-        {
-          List<Player> onboardPlayers = [];
-          List<Player> modifiedKinematicPlayers = [];
-          if (OnboardController != null)
-          {
-            onboardPlayers = OnboardController.m_localPlayers.ToList();
-            foreach (var onboardPlayer in onboardPlayers)
-              if (!onboardPlayer.IsAttached())
-              {
-                onboardPlayer.m_body.isKinematic = true;
-                modifiedKinematicPlayers.Add(onboardPlayer);
-              }
-          }
-          // var targetRotation = Quaternion.Euler(transformedX, eulerY, transformedZ);
-          // var smoothRotation = Quaternion.SlerpUnclamped(transform.rotation, targetRotation, Time.fixedDeltaTime * 50f);
-          // m_body.MoveRotation(smoothRotation);;
-          m_body.velocity = Vector3.zero;
-          m_body.angularVelocity = Vector3.zero;
-
-
-          Physics.SyncTransforms();
-          m_body.velocity = Vector3.zero;
-          m_body.angularVelocity = Vector3.zero;
-
-          foreach (var modifiedKinematicPlayer in modifiedKinematicPlayers)
-            if (modifiedKinematicPlayer.m_body.isKinematic)
-            {
-              modifiedKinematicPlayer.m_body.isKinematic = false;
-              modifiedKinematicPlayer.m_body.velocity = Vector3.zero;
-            }
-
-          onboardPlayers.Clear();
-          modifiedKinematicPlayers.Clear();
+          transformedZ = 0;
+          shouldUpdate = true;
         }
       }
+      else
+      {
+        if (Mathf.Abs(eulerX) is > 65 and < 295)
+        {
+          transformedX = 0;
+          shouldUpdate = true;
+        }
+
+        if (Mathf.Abs(eulerZ) is > 65 and < 295)
+        {
+          transformedZ = 0;
+          shouldUpdate = true;
+        }
+      }
+
+      if (shouldUpdate)
+      {
+        List<Player> onboardPlayers = [];
+        List<Player> modifiedKinematicPlayers = [];
+        if (OnboardController != null)
+        {
+          onboardPlayers = OnboardController.m_localPlayers.ToList();
+          foreach (var onboardPlayer in onboardPlayers)
+            if (!onboardPlayer.IsAttached())
+            {
+              onboardPlayer.m_body.isKinematic = true;
+              modifiedKinematicPlayers.Add(onboardPlayer);
+            }
+        }
+        transform.rotation =
+          Quaternion.Euler(transformedX, eulerY, transformedZ);
+        m_body.velocity = Vector3.zero;
+        m_body.angularVelocity = Vector3.zero;
+
+
+        Physics.SyncTransforms();
+        m_body.velocity = Vector3.zero;
+        m_body.angularVelocity = Vector3.zero;
+
+        foreach (var modifiedKinematicPlayer in modifiedKinematicPlayers)
+          if (modifiedKinematicPlayer.m_body.isKinematic)
+          {
+            modifiedKinematicPlayer.m_body.isKinematic = false;
+            modifiedKinematicPlayer.m_body.velocity = Vector3.zero;
+          }
+
+        onboardPlayers.Clear();
+        modifiedKinematicPlayers.Clear();
+      }
+
+      yield return null;
     }
 
     private void UpdateRemovePieceCollisionExclusions()
@@ -3038,7 +3030,7 @@
     public void SyncVehicleBounds()
     {
       if (PiecesController == null) return;
-      PiecesController.DebouncedRebuildBounds();
+      PiecesController.RebuildBoundsThrottled();
     }
 
     public void OnFlightChangePolling()

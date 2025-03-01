@@ -55,7 +55,10 @@ public class VehicleCommands : ConsoleCommand
   {
     return
       "Runs vehicle commands, each command will require parameters to run use help to see the input values." +
+#if DEBUG
+      // config is only debug for now.
       $"\n<{VehicleCommandArgs.config}>: will show a menu related to the current vehicle you are on. This GUI menu will let you customize values specifically for your current vehicle." +
+#endif
       $"\n<{VehicleCommandArgs.debug}>: will show a menu with options like rotating or debugging vehicle colliders" +
       $"\n<{VehicleCommandArgs.recover}>: will recover any vehicles within range of 1000 and turn them into V2 Vehicles" +
       $"\n<{VehicleCommandArgs.rotate}>: defaults to zeroing x and z tilt. Can also provide 3 args: x y z" +
@@ -111,9 +114,12 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.debug:
         ToggleVehicleDebugCommandsComponent();
         break;
+#if DEBUG
+      // config is not ready - only debug for now.
       case VehicleCommandArgs.config:
         ToggleVehicleGuiConfig();
         break;
+#endif
       case VehicleCommandArgs.upgradeToV2:
         RunUpgradeToV2();
         break;
@@ -766,7 +772,10 @@ public class VehicleCommands : ConsoleCommand
     [
       // VehicleCommandArgs.locate, 
       // VehicleCommandArgs.destroy,
+#if DEBUG
+      // config is only debug for now.
       VehicleCommandArgs.config,
+#endif
       VehicleCommandArgs.debug,
       VehicleCommandArgs.rotate,
       VehicleCommandArgs.toggleOceanSway,

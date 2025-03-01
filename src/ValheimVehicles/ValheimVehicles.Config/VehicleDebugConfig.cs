@@ -1,5 +1,6 @@
 using BepInEx.Configuration;
 using ValheimRAFT;
+using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using Zolantris.Shared;
 
@@ -38,8 +39,11 @@ public static class VehicleDebugConfig
   public static ConfigEntry<float>
     DebugMetricsTimer { get; private set; } = null!;
 
-  public static ConfigEntry<int>
-    VehiclePieceBoundsRecalculationDelay { get; private set; } = null!;
+  public static ConfigEntry<float>
+    VehicleBoundsRebuildDelayPerPiece { get; private set; } = null!;
+
+  public static ConfigEntry<bool>
+    DisableVehicleCube { get; private set; } = null!;
 
   public static ConfigEntry<float> AutoAnchorDelayTime { get; private set; } =
     null!;
@@ -56,6 +60,7 @@ public static class VehicleDebugConfig
 
 
   private const string SectionName = "Vehicle Debugging";
+  private const string VehiclePiecesSectionName = "Vehicle Pieces";
 
   private static void OnShowVehicleDebugMenuChange()
   {
@@ -136,12 +141,19 @@ public static class VehicleDebugConfig
           "Makes all clients sync physics. This will likely cause a desync in physics but could fix some problems with physics not updating in time for some clients as all clients would control physics.",
           true, true));
 
-    VehiclePieceBoundsRecalculationDelay = Config.Bind(SectionName,
-      "VehiclePieceBoundsRecalculationDelay", 10,
+    // todo possibly move this config-value to a vehicleConfig or vehiclePieceConfig file
+    VehicleBoundsRebuildDelayPerPiece = Config.Bind(VehiclePiecesSectionName,
+      "VehicleBoundsRebuildDelayPerPiece", 0.02f,
       ConfigHelpers.CreateConfigDescription(
-        "The delay time at which the vehicle will recalculate bounds after placing a piece. This recalculation can be a bit heavy so it's debounced a minimum of 1 seconds but could be increased up to 30 seconds for folks that want to build a pause for a bit.",
-        false, true, new AcceptableValueRange<int>(1, 30)));
+        $"The delay time that is added per piece the vehicle has on it for recalculating vehicle bounds. Example 2000 * 0.02 = 40seconds delay.  Values are clamped at {VehiclePiecesController.RebuildPieceMinDelay} and max value: {VehiclePiecesController.RebuildPieceMaxDelay} so even smaller vehicles rebuild at the min value and large >2k piece vehicles build at the max value.",
+        false, true, new AcceptableValueRange<float>(0.01f, 0.1f)));
 
+    DisableVehicleCube = Config.Bind(VehiclePiecesSectionName,
+      "DisableVehicleCube", false,
+      ConfigHelpers.CreateConfigDescription(
+        $"The raft will no longer be a cube. It will place pieces in world position. This will allow for teleporting and other rapid location / login fixes to work better. It might cause large vehicles to clip/break if they are rendered out of a zone.",
+        true, true));
+    
     CommandsWindowPosX = Config.Bind(SectionName, "CommandsWindowPosX", 0f);
     CommandsWindowPosY = Config.Bind(SectionName, "CommandsWindowPosY", 0f);
     VehicleConfigWindowPosX = Config.Bind(SectionName, "ConfigWindowPosX", 0f);
@@ -149,6 +161,14 @@ public static class VehicleDebugConfig
     ButtonFontSize = Config.Bind(SectionName, "ButtonFontSize", 16);
     TitleFontSize = Config.Bind(SectionName, "LabelFontSize", 22);
 
+    DisableVehicleCube.SettingChanged += (sender, args) =>
+    {
+      VehiclePiecesController.CanUseActualPiecePosition = DisableVehicleCube.Value;
+    };
+    VehicleBoundsRebuildDelayPerPiece.SettingChanged += (sender, args) =>
+    {
+      VehiclePiecesController.BoundsDelayPerPiece = VehicleBoundsRebuildDelayPerPiece.Value;
+    };
     // onChanged
     AutoShowVehicleColliders.SettingChanged +=
       (_, _) => OnShowVehicleDebugMenuChange();

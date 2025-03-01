@@ -126,7 +126,7 @@ public static class PrefabNames
 
   // Containers that are nested within a VehiclePrefab top level
   // utilize the Get<Name> methods within the LoadValheimVehiclesAssets class to get these GameObjects
-  public const string PiecesContainer =
+  private const string PiecesContainer =
     "piecesContainer";
 
   public const string MovingPiecesContainer =

@@ -66,7 +66,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   {
     return VehicleShipHelpers.GetOrFindObj(_piecesContainer,
       transform.parent.gameObject,
-      PrefabNames.PiecesContainer);
+      PrefabNames.VehiclePiecesContainer);
   }
 
   public static readonly Dictionary<int, VehicleShip> VehicleInstances = new();
@@ -623,6 +623,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   public void InitializeVehicleDebugger()
   {
+    if (!isActiveAndEnabled) return;
     if (VehicleDebugHelpersInstance != null) return;
     if (MovementController == null || !MovementController.FloatCollider ||
         !MovementController.OnboardCollider)

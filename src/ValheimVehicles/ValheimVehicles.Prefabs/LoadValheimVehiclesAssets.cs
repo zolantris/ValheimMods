@@ -109,7 +109,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
   public static GameObject GetPiecesContainer(GameObject obj)
   {
-    return obj.FindDeepChild(PrefabNames.PiecesContainer).gameObject;
+    return obj.FindDeepChild(PrefabNames.VehiclePiecesContainer).gameObject;
   }
 
   public static GameObject GetVehicleContainer(GameObject obj)

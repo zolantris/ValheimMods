@@ -6,6 +6,7 @@ using UnityEngine;
 using ValheimVehicles.Attributes;
 using ValheimVehicles.Config;
 using ValheimVehicles.Patches;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Controllers;
@@ -22,6 +23,45 @@ public static class WaterZoneUtils
     new(@"^Player\(Clone\)$");
 
   private static Regex _underwaterAllowList = _waterZoneRegexDefault;
+  public static Dictionary<Character, List<ContactPoint>> CharacterExcludedContactPoints = new();
+
+  public static void IgnoreColliderIfAttachedAndOnVehicle(Character character, Collision collision)
+  {
+    if (collision.contactCount < 1) return;
+    if (!character.IsAttached() || !character.transform.root.name.StartsWith(PrefabNames.VehiclePiecesContainer))
+    {
+      return;
+    }
+    var firstContactPoint = collision.contacts[0];
+
+    var exists = CharacterExcludedContactPoints.TryGetValue(character, out var contactPoints);
+    if (!exists)
+    {
+      CharacterExcludedContactPoints[character] = [firstContactPoint];
+    }
+    else
+    {
+      CharacterExcludedContactPoints[character].Add(firstContactPoint);
+    }
+
+    Physics.IgnoreCollision(firstContactPoint.thisCollider, firstContactPoint.otherCollider, true);
+  }
+
+  public static void RestoreColliderCollisionsAfterDetach(Character character)
+  {
+    var exists = CharacterExcludedContactPoints.TryGetValue(character, out var contactPoints);
+    if (!exists) return;
+
+    if (contactPoints != null)
+    {
+      contactPoints.ForEach(x =>
+      {
+        Physics.IgnoreCollision(x.thisCollider, x.otherCollider, false);
+      });
+    }
+    CharacterExcludedContactPoints.Remove(character);
+  }
+
 
   // helpers
   public static void IsInLiquidSwimDepth(Character character, ref bool result)

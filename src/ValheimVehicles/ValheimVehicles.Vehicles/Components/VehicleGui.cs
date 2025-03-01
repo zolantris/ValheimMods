@@ -273,6 +273,17 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
       title = "Toggle Ocean Sway",
       action = VehicleCommands.VehicleToggleOceanSway
     },
+    new()
+    {
+      title = "Rebuild Bounds",
+      action = () =>
+      {
+        var vpc = VehicleDebugHelpers.GetVehiclePiecesController();
+        if (vpc == null)
+          return;
+        vpc.ForceRebuildBounds();
+      }
+    },
 #if DEBUG
     new()
     {
