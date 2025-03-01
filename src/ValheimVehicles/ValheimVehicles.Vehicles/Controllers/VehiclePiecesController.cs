@@ -234,7 +234,8 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   public int numberOfTier4Sails = 0;
   public float customSailsArea = 0f;
 
-  public float totalSailArea = 0f;
+  public float cachedTotalSailArea = 0f;
+  public float cachedSailForce = 0f;
 
   public virtual IVehicleShip? VehicleInstance { set; get; }
   public int PersistentZdoId => VehicleInstance?.PersistentZdoId ?? 0;
@@ -1132,7 +1133,16 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         continue;
       }
 
-      zdo.SetPosition(pos);
+      // this is experimental might cause problems here, but it aligns with other piece setting values.
+      if (CanUseActualPiecePosition)
+      {
+        var pieceOffset = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+        zdo.SetPosition(pos + pieceOffset);
+      }
+      else
+      {
+        zdo.SetPosition(pos);
+      }
     }
   }
 
@@ -1462,7 +1472,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       var netview = wnt.GetComponent<ZNetView>();
       RemovePiece(netview);
       UpdatePieceCount();
-      totalSailArea = 0f;
+      cachedTotalSailArea = 0f;
     }
 
 
@@ -1873,11 +1883,11 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
    */
   public float GetTotalSailArea()
   {
-    if (totalSailArea != 0f || !ValheimRaftPlugin.Instance ||
+    if (cachedTotalSailArea < 0 ||
         m_mastPieces.Count == 0 && m_sailPieces.Count == 0)
-      return totalSailArea;
+      return cachedTotalSailArea;
 
-    totalSailArea = 0;
+    cachedTotalSailArea = 0;
     customSailsArea = 0;
     numberOfTier1Sails = 0;
     numberOfTier2Sails = 0;
@@ -1902,7 +1912,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         var multiplier = hasConfigOverride
           ? PropulsionConfig.SailTier1Area.Value
           : Tier1;
-        totalSailArea += numberOfTier1Sails * multiplier;
+        cachedTotalSailArea += numberOfTier1Sails * multiplier;
       }
       else if (mMastPiece.name.StartsWith(PrefabNames.Tier2RaftMastName))
       {
@@ -1910,7 +1920,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         var multiplier = hasConfigOverride
           ? PropulsionConfig.SailTier2Area.Value
           : Tier2;
-        totalSailArea += numberOfTier2Sails * multiplier;
+        cachedTotalSailArea += numberOfTier2Sails * multiplier;
       }
       else if (mMastPiece.name.StartsWith(PrefabNames.Tier3RaftMastName))
       {
@@ -1918,7 +1928,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         var multiplier = hasConfigOverride
           ? PropulsionConfig.SailTier3Area.Value
           : Tier3;
-        totalSailArea += numberOfTier3Sails * multiplier;
+        cachedTotalSailArea += numberOfTier3Sails * multiplier;
         ;
       }
       else if (mMastPiece.name.StartsWith(PrefabNames.Tier4RaftMastName))
@@ -1927,7 +1937,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         var multiplier = hasConfigOverride
           ? PropulsionConfig.SailTier4Area.Value
           : Tier4;
-        totalSailArea += numberOfTier4Sails * multiplier;
+        cachedTotalSailArea += numberOfTier4Sails * multiplier;
         ;
       }
     }
@@ -1944,32 +1954,30 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         ? PropulsionConfig.SailCustomAreaTier1Multiplier.Value
         : CustomTier1AreaForceMultiplier;
 
-      totalSailArea +=
-        customSailsArea * Math.Max(0.1f,
+      cachedTotalSailArea +=
+        customSailsArea * Mathf.Max(0.1f,
           multiplier);
     }
 
-    /*
-     * Clamps everything by the maxSailSpeed
-     */
-    totalSailArea = Math.Min(PropulsionConfig.MaxSailSpeed.Value,
-        totalSailArea);
-
-    return totalSailArea;
+    return cachedTotalSailArea;
   }
 
   public float GetSailingForce()
   {
+    if (cachedSailForce >= 0f)
+    {
+      return cachedSailForce;
+    }
+    
     var area = GetTotalSailArea();
     var mpFactor = Mathf.Clamp01(PropulsionConfig.SailingMassPercentageFactor.Value);
     var speedCapMultiplier =
       PropulsionConfig.SpeedCapMultiplier.Value;
-
-    var sailForce = speedCapMultiplier * area - TotalMass * mpFactor;
+    var surfaceArea = speedCapMultiplier * area;
     var maxSpeed = Mathf.Min(PhysicsConfig.MaxLinearVelocity.Value, PropulsionConfig.MaxSailSpeed.Value);
-    var clampedSailForce = Mathf.Clamp(sailForce, 0, maxSpeed);
-
-    return clampedSailForce;
+    var massToPush = Mathf.Max(1, TotalMass * mpFactor);
+    var lerpedSailForce = Mathf.Lerp(0f, maxSpeed, Mathf.Clamp01(surfaceArea / massToPush));
+    return lerpedSailForce;
   }
 
   public static void InitZdo(ZDO zdo)
@@ -2352,7 +2360,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     OnAddPieceIgnoreColliders(netView);
     
     var shouldRebuildBounds = false;
-    totalSailArea = 0;
+    ResetSailCachedValues();
     m_nviewPieces.Add(netView);
     UpdatePieceCount();
 
@@ -2824,6 +2832,12 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     RebuildBounds();
   }
 
+  public void ResetSailCachedValues()
+  {
+    cachedSailForce = -1;
+    cachedTotalSailArea = -1;
+  }
+
   /**
    * Must be wrapped in an Invoke delay to prevent spamming on unmounting
    * bounds cannot be de-encapsulated by default so regenerating it seems prudent on piece removal
@@ -2835,6 +2849,8 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       return;
 
     lastRebuildItemCount = m_nviewPieces.Count;
+
+    ResetSailCachedValues();
 
     TryAddRamToVehicle();
     TempDisableRamsDuringRebuild();

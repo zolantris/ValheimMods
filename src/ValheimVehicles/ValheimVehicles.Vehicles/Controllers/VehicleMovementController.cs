@@ -209,7 +209,7 @@
 
     // hauling config values
     public static float minHaulFollowDistance = 2f;
-    public static float maxHaulFollowDistance = 20f;
+    public static float maxHaulFollowDistance = 50f;
     public static float HaulingOffsetLowestPointBuffer = 1f;
     public float distanceMovedSinceHaulTick = 0f;
 

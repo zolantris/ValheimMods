@@ -195,7 +195,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     var isAnchored =
       controller?.VehicleInstance?.MovementController?.isAnchored ?? false;
     var anchorKeyString = GetAnchorHotkeyString();
-    var hoverText = GetHoverTextFromShip(controller?.totalSailArea ?? 0,
+    var hoverText = GetHoverTextFromShip(controller?.cachedTotalSailArea ?? 0,
       controller?.TotalMass ?? 0,
       controller?.ShipMass ?? 0, controller?.GetSailingForce() ?? 0,
       isAnchored,

@@ -97,7 +97,7 @@ public static class PropulsionConfig
     SailingMassPercentageFactor = Config.Bind(SectionName, "MassPercentage", 0.5f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the mass percentage of the ship that will slow down the sails",
-        true, false, new AcceptableValueRange<float>(0f, 1f)));
+        true, false, new AcceptableValueRange<float>(0.1f, 1f)));
     
     DefaultPhysicsMode = Config.Bind(SectionName,
       "VehiclePhysicsMode", VehiclePhysicsMode.ForceSyncedRigidbody,
