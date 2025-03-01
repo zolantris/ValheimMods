@@ -10,7 +10,7 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <Platforms>AnyCPU</Platforms>
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <ApplicationVersion>3.0.2</ApplicationVersion>
+        <ApplicationVersion>3.0.3</ApplicationVersion>
         <FileAlignment>512</FileAlignment>
         <RootNamespace>ValheimRAFT</RootNamespace>
         <LangVersion>latest</LangVersion>

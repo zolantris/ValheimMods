@@ -2016,12 +2016,12 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     if (!ValheimRaftPlugin.Instance.HasShipWeightCalculations.Value)
       return area;
 
-    var mpFactor = ValheimRaftPlugin.Instance.MassPercentageFactor.Value;
+    var mpFactor = Mathf.Clamp01(ValheimRaftPlugin.Instance.MassPercentageFactor.Value);
     var speedCapMultiplier =
       ValheimRaftPlugin.Instance.SpeedCapMultiplier.Value;
 
     var sailForce = speedCapMultiplier * area /
-                    (TotalMass / mpFactor);
+                    Mathf.Clamp(TotalMass * mpFactor, 300, 1000);
 
     var maxSailForce = Math.Min(ValheimRaftPlugin.Instance.MaxSailSpeed.Value,
       sailForce);

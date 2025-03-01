@@ -193,15 +193,35 @@
 - Description: Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT. PlanBuild mod can be found here. https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/
 - Default Value: False
 
-## Rams
+### Ram MineRock patches 
+- Description: Enable MineRock5 patches to so vehicle and rams prefabs do not trigger errors when hitting areas over the default radius size
+- Default Value: True
+
+## Ram: Prefabs
 
 ### ramDamageEnabled 
 - Description: Will keep the prefab available for aethetics only, will not do any damage nor will it initialize anything related to damage. Alternatives are using the damage tweaks.
 - Default Value: True
 
+## Ram: Vehicles
+
+### CanHitWhileHauling 
+- Description: Allows the vehicle to continue hitting objects while it's being hauled/moved.
+- Default Value: True
+
+## Ram: Prefabs
+
 ### maximumDamage 
 - Description: Maximum damage for all damages combined. This will throttle any calcs based on each damage value. The throttling is balanced and will fit the ratio of every damage value set. This allows for velocity to increase ram damage but still prevent total damage over specific values
 - Default Value: 200
+
+## Ram: Vehicles
+
+### maximumDamage 
+- Description: Maximum damage for all damages combined. This will throttle any calcs based on each damage value. The throttling is balanced and will fit the ratio of every damage value set. This allows for velocity to increase ram damage but still prevent total damage over specific values
+- Default Value: 200
+
+## Ram: Prefabs
 
 ### maxDamageCap 
 - Description: enable damage caps
@@ -227,9 +247,41 @@
 - Description: Pierce damage for Ram Stakes. the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass. Will damage rocks as well as other entities
 - Default Value: 20
 
+## Ram: Vehicles
+
+### slashDamage 
+- Description: slashDamage for Ram Blades. the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass.
+- Default Value: 0
+
+### bluntDamage 
+- Description: bluntDamage the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass.
+- Default Value: 0
+
+### chopDamage 
+- Description: chopDamage for Ram Blades excludes Ram Stakes. the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass.. Will damage trees depending on tool tier settings
+- Default Value: 100
+
+### pickaxeDamage 
+- Description: pickDamage the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass. Will damage rocks as well as other entities
+- Default Value: 100
+
+### pierceDamage 
+- Description: Pierce damage for Ram Stakes. the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass. Will damage rocks as well as other entities
+- Default Value: 0
+
+## Ram: Prefabs
+
 ### percentageDamageToSelf 
-- Description: Percentage Damage applied to the Ram piece per hit. Number between 0-1.
+- Description: Percentage Damage applied to the Ram piece per hit. Number between 0-1. This will damage the vehicle in the area hit.
 - Default Value: 0.01
+
+## Ram: Vehicles
+
+### percentageDamageToSelf 
+- Description: Percentage Damage applied to the Vehicle pieces per hit. Number between 0-1. This will damage the vehicle in the area hit.
+- Default Value: 0.01
+
+## Ram: Prefabs
 
 ### AllowContinuousDamage 
 - Description: Rams will continue to apply damage based on their velocity even after the initial impact
@@ -263,6 +315,34 @@
 - Description: The base ram hit radius area. Stakes are always half the size, this will hit all pieces within this radius, capped between 5 and 10, but 50 is max. Stakes are half this value. Blades are equivalent to this value.
 - Default Value: 5
 
+## Ram: Vehicles
+
+### CanHitCharacters 
+- Description: allows vehicle rams to hit characters/entities
+- Default Value: True
+
+### CanHitEnemies 
+- Description: allows vehicle rams to hit enemies
+- Default Value: True
+
+### CanHitFriendly 
+- Description: allows vehicle rams to hit friendlies
+- Default Value: True
+
+### CanDamageSelf 
+- Description: allows vehicle rams to be damaged. The values set for the damage will be calculated
+- Default Value: True
+
+### CanHitEnvironmentOrTerrain 
+- Description: allows vehicle rams to hit friendlies
+- Default Value: True
+
+### HitRadius 
+- Description: The base hit radius of vehicle bodies. This will also effect self-damage to vehicle based on the radius.
+- Default Value: 5
+
+## Ram: Prefabs
+
 ### RamHitInterval 
 - Description: Every X seconds, the ram will apply this damage
 - Default Value: 1
@@ -275,21 +355,41 @@
 - Description: Minimum velocity required to activate the ram's damage
 - Default Value: 1
 
-### RamMaxVelocityMultiplier 
+### MaxVelocityMultiplier 
 - Description: Damage of the ram is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.
 - Default Value: 1
 
+## Ram: Vehicles
+
+### VehicleMinimumVelocityToTriggerHit 
+- Description: Minimum velocity required to activate the vehicle hull's damage
+- Default Value: 1
+
+### MaxVelocityMultiplier 
+- Description: Damage of the vehicle hull is increased by an additional % based on the additional weight of the ship. 1500 mass at 1% would be 5 extra damage. IE 1500-1000 = 500 * 0.01 = 5.
+- Default Value: 1
+
 ### VehicleHullMassMultiplierDamage 
-- Description: Multiplier per each single point of mass the vehicle has how much additional damage is done, multiplied by the velocity.
+- Description: Multiplier per each single point of mass the vehicle which adds additional damage. This value is multiplied by the velocity.
 - Default Value: 0.1
 
-### VehicleHullTier 
-- Description: The tier damage a vehicle can do to a rock or other object it hits. To be balanced this should be a lower value IE (1) bronze. But ashlands will require a higher tier to smash spires FYI.
+### WaterVehicleRamToolTier 
+- Description: The tier damage a water vehicle can do to a rock or other object it hits. To be balanced this should be a lower value IE (1) bronze. But ashlands will require a higher tier to smash spires FYI.
 - Default Value: 100
 
-### VehicleHullsAreRams 
-- Description: Each vehicle has a Ram added it's mesh. Vehicle hull ram damage is calculated with different values.
+### LandVehicleRamToolTier 
+- Description: The tier damage a Land vehicle can do to a rock or other object it hits. This should be set to maximum as land vehicles are black metal tier.
+- Default Value: 100
+
+### WaterVehiclesAreRams 
+- Description: Adds ram damage to a water vehicle's combined hull mesh. This affects all water vehicles vehicles. This will turn off all rams for water vehicles if set to false.
 - Default Value: True
+
+### LandVehiclesAreRams 
+- Description: Adds ram damage to a land vehicle's combined hull mesh. This affects all land vehicles vehicles. This will turn off all rams for land vehicles if set to false.
+- Default Value: True
+
+## Ram: Prefabs
 
 ### DamageIncreasePercentagePerTier 
 - Description: Damage Multiplier per tier. So far only HardWood (Tier1) Iron (Tier3) available. With base value 1 a Tier 3 mult at 25% additive additional damage would be 1.5. IE (1 * 0.25 * 2 + 1) = 1.5
@@ -323,6 +423,10 @@
 
 ## Vehicle Debugging
 
+### AllowDebugCommandsForNonAdmins 
+- Description: Will will allow all debug commands for non-admins. Turning this to false will only allow debug (cheat) commands if the user is an admin.
+- Default Value: True
+
 ### DebugMetricsEnabled 
 - Description: Will locally log metrics for ValheimVehicles mods. Meant for debugging functional delays
 - Default Value: False
@@ -347,23 +451,27 @@
 - Description: Enable the VehicleDebugMenu. This shows a GUI menu which has a few shortcuts to debugging/controlling vehicles.
 - Default Value: False
 
-## Debug
-
 ### SyncShipPhysicsOnAllClients 
-- Description: Makes all clients sync physics
+- Description: Makes all clients sync physics. This will likely cause a desync in physics but could fix some problems with physics not updating in time for some clients as all clients would control physics.
 - Default Value: False
 
 ### VehiclePieceBoundsRecalculationDelay 
 - Description: The delay time at which the vehicle will recalculate bounds after placing a piece. This recalculation can be a bit heavy so it's debounced a minimum of 1 seconds but could be increased up to 30 seconds for folks that want to build a pause for a bit.
 - Default Value: 10
 
-## Vehicle Debugging
-
-### WindowPosX 
+### CommandsWindowPosX 
 - Description: 
 - Default Value: 0
 
-### WindowPosY 
+### CommandsWindowPosY 
+- Description: 
+- Default Value: 0
+
+### ConfigWindowPosX 
+- Description: 
+- Default Value: 0
+
+### ConfigWindowPosY 
 - Description: 
 - Default Value: 0
 
@@ -410,8 +518,12 @@ Other methods removed after 2.5.0
 - Description: Lifts the anchor when using a speed change key, this is a QOL to prevent anchor from being required to be pressed when attempting to change the ship speed
 - Default Value: False
 
-### BallastClimbingOffset 
+### FlightClimbingOffset 
 - Description: Ascent and Descent speed for the vehicle in the air. This value is interpolated to prevent jitters.
+- Default Value: 2
+
+### BallastClimbingOffset 
+- Description: Ascent and Descent speed for the vehicle in the water. This value is interpolated to prevent jitters.
 - Default Value: 2
 
 ### VerticalSmoothingSpeed 
@@ -601,7 +713,7 @@ Other methods removed after 2.5.0
 - Default Value: 0.5
 
 ### LandVehicle Max Tread Width 
-- Description: Max width the treads can expand to.
+- Description: Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles though.
 - Default Value: 8
 
 ### LandVehicle Max Tread Length 
@@ -612,17 +724,21 @@ Other methods removed after 2.5.0
 - Description: Offset the center of mass by a percentage of vehicle total height. Should always be a positive number. Higher values will make the vehicle more sturdy as it will pivot lower. Too high a value will make the ship behave weirdly possibly flipping. 0 will be the center of all colliders within the physics of the vehicle. 100% will be 50% lower than the vehicle's collider. 50% will be the very bottom of the vehicle's collider.
 - Default Value: 0.65
 
+### VehicleStaminaHaulingCost 
+- Description: The cost per 1 meter of hauling a vehicle. This cost is on incurred if the vehicle is being pulled towards the player. When stamina runs out, the player is damaged by this amount until they release the vehicle.
+- Default Value: 5
+
 ## Vehicle Physics
 
-### flightDamping_3.0.1 
+### flightDamping_3.0.2 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.0.1 
+### flightSidewaysDamping_3.0.2 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.0.1 
+### flightAngularDamping_3.0.2 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -642,15 +758,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1.2
 
-### forceDistance_3.0.1 
+### forceDistance_3.0.2 
 - Description: EXPERIMENTAL_FORCE_DISTANCE
 - Default Value: 1
 
-### force_3.0.1 
+### force_3.0.2 
 - Description: EXPERIMENTAL_FORCE
-- Default Value: 1
+- Default Value: 2
 
-### backwardForce_3.0.1 
+### backwardForce_3.0.2 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -658,15 +774,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1
 
-### waterDamping_3.0.1 
+### waterDamping_3.0.2 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.0.1 
+### waterSidewaysDamping_3.0.2 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.0.1 
+### waterAngularDamping_3.0.2 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -682,15 +798,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 0.8
 
-### submersibleDamping_3.0.1 
+### submersibleDamping_3.0.2 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.0.1 
+### submersibleSidewaysDamping_3.0.2 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.0.1 
+### submersibleAngularDamping_3.0.2 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -722,7 +838,7 @@ Other methods removed after 2.5.0
 
 ### LandVehicle TreadOffset 
 - Description: Wheel offset. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads
-- Default Value: 0
+- Default Value: -1
 
 ## Vehicle Physics
 
@@ -748,7 +864,7 @@ Other methods removed after 2.5.0
 - Description: DEPRECATED!!! Will be removed soon, values of -2 and 2 are allowed. Anything above means you are likely not using this correctly. Please use CenterOfMass instead if your vehicle needs to pivot lower. Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
 - Default Value: 0
 
-### EnableExactVehicleBounds_3.0.1 
+### EnableExactVehicleBounds_3.0.2 
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version
 - Default Value: True
 
@@ -850,13 +966,23 @@ Other methods removed after 2.5.0
 - Description: Interval in seconds at which the camera will hide meshes in attempt to consolidate FPS / GPU memory.
 - Default Value: 0.1
 
-### CameraOcclusionEnabled 
-- Description: Enables hiding active raft pieces at specific intervals. This will hide only the rendered texture.
+### UNSTABLE_CameraOcclusionEnabled 
+- Description: Unstable config, this will possible get you more performance but parts of the vehicle will be hidden when rapidly panning. This Enables hiding active raft pieces at specific intervals. This will hide only the rendered texture.
 - Default Value: False
 
 ### DistanceToKeepObjects 
 - Description: Threshold at which to retain a object even if it's through a wall.
 - Default Value: 5
+
+## Camera Zoom
+
+### CameraZoom Enabled 
+- Description: Overrides the camera zoom while on the vehicle. Values are configured through other keys.
+- Default Value: False
+
+### CameraZoomMaxDistance 
+- Description: Allows the camera to zoom out between 8 and 64 meters. Percentage based zoom.
+- Default Value: 0
 
 ## QuickStartWorld
 
