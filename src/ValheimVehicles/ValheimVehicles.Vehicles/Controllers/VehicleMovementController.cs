@@ -211,7 +211,6 @@
     public static float minHaulFollowDistance = 2f;
     public static float maxHaulFollowDistance = 20f;
     public static float HaulingOffsetLowestPointBuffer = 1f;
-    public float haulingStaminaCost = 5f;
     public float distanceMovedSinceHaulTick = 0f;
 
     public VehicleOnboardController? OnboardController =>
@@ -1121,39 +1120,38 @@
 
         if (shouldUpdate)
         {
-          // List<Player> onboardPlayers = [];
-          // List<Player> modifiedKinematicPlayers = [];
-          // if (OnboardController != null)
-          // {
-          //   onboardPlayers = OnboardController.m_localPlayers.ToList();
-          //   foreach (var onboardPlayer in onboardPlayers)
-          //     if (!onboardPlayer.IsAttached())
-          //     {
-          //       onboardPlayer.m_body.isKinematic = true;
-          //       modifiedKinematicPlayers.Add(onboardPlayer);
-          //     }
-          // }
-          var targetRotation = Quaternion.Euler(transformedX, eulerY, transformedZ);
-          var smoothRotation = Quaternion.SlerpUnclamped(transform.rotation, targetRotation, Time.fixedDeltaTime * 50f);
-          m_body.MoveRotation(smoothRotation);
-          yield return new WaitForFixedUpdate();
-          // m_body.velocity = Vector3.zero;
-          // m_body.angularVelocity = Vector3.zero;
+          List<Player> onboardPlayers = [];
+          List<Player> modifiedKinematicPlayers = [];
+          if (OnboardController != null)
+          {
+            onboardPlayers = OnboardController.m_localPlayers.ToList();
+            foreach (var onboardPlayer in onboardPlayers)
+              if (!onboardPlayer.IsAttached())
+              {
+                onboardPlayer.m_body.isKinematic = true;
+                modifiedKinematicPlayers.Add(onboardPlayer);
+              }
+          }
+          // var targetRotation = Quaternion.Euler(transformedX, eulerY, transformedZ);
+          // var smoothRotation = Quaternion.SlerpUnclamped(transform.rotation, targetRotation, Time.fixedDeltaTime * 50f);
+          // m_body.MoveRotation(smoothRotation);;
+          m_body.velocity = Vector3.zero;
+          m_body.angularVelocity = Vector3.zero;
 
 
-          // Physics.SyncTransforms();
-          // m_body.velocity = Vector3.zero;
-          // m_body.angularVelocity = Vector3.zero;
+          Physics.SyncTransforms();
+          m_body.velocity = Vector3.zero;
+          m_body.angularVelocity = Vector3.zero;
 
-          // foreach (var modifiedKinematicPlayer in modifiedKinematicPlayers)
-          //   if (modifiedKinematicPlayer.m_body.isKinematic)
-          //   {
-          //     modifiedKinematicPlayer.m_body.isKinematic = false;
-          //     modifiedKinematicPlayer.m_body.velocity = Vector3.zero;
-          //   }
-          //
-          // onboardPlayers.Clear();
-          // modifiedKinematicPlayers.Clear();
+          foreach (var modifiedKinematicPlayer in modifiedKinematicPlayers)
+            if (modifiedKinematicPlayer.m_body.isKinematic)
+            {
+              modifiedKinematicPlayer.m_body.isKinematic = false;
+              modifiedKinematicPlayer.m_body.velocity = Vector3.zero;
+            }
+
+          onboardPlayers.Clear();
+          modifiedKinematicPlayers.Clear();
         }
       }
     }
@@ -2379,11 +2377,12 @@
 #if DEBUG
       shouldSkipSnappingLeash = false;
 #endif
+      var staminaHaulCost = PhysicsConfig.VehicleStaminaHaulingCost.Value;
 
       // costs stamina of you move the vehicle beyond 1meter distance every FixedUpdate tick.
-      if (distanceMovedSinceHaulTick > 1)
+      if (distanceMovedSinceHaulTick > 1 && HaulingPlayer.m_stamina > staminaHaulCost)
       {
-        HaulingPlayer.UseStamina(haulingStaminaCost);
+        HaulingPlayer.UseStamina(staminaHaulCost);
         distanceMovedSinceHaulTick = 0f;
       }
 
@@ -2408,9 +2407,16 @@
       var direction = (new Vector3(haulingPlayerPosition.x, m_body.position.y, haulingPlayerPosition.z) - position).normalized;
 
       // Force drops the vehicle if you run out of stamina.
-      if (!shouldSkipSnappingLeash && HaulingPlayer.m_stamina < haulingStaminaCost)
+      if (!shouldSkipSnappingLeash && HaulingPlayer.m_stamina < staminaHaulCost)
       {
-        // get wrecked if you have it break.
+        var nextDamage = staminaHaulCost * distanceMovedSinceHaulTick;
+        if (nextDamage > HaulingPlayer.m_health)
+        {
+          ForceStopHauling();
+          return;
+        }
+
+        // makes the player lose health as they continue to haul.
         var hit = new HitData()
         {
           m_hitType = HitData.HitType.PlayerHit,
@@ -2420,8 +2426,7 @@
           m_ignorePVP = true,
           m_damage =
           {
-            m_slash = 10f,
-            m_blunt = 10f
+            m_damage = nextDamage
           },
           m_ranged = true,
           m_hitCollider = HaulingPlayer.m_collider,
@@ -2434,7 +2439,7 @@
         hit.SetAttacker(HaulingPlayer);
 
         HaulingPlayer.Damage(hit);
-        ForceStopHauling(true);
+        distanceMovedSinceHaulTick = 0f;
         return;
       }
 

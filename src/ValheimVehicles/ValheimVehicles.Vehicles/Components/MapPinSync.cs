@@ -150,6 +150,9 @@ public class MapPinSync : MonoBehaviour
 
   private void UpdateVehiclePins()
   {
+    if (Minimap.instance == null) return;
+    if (Minimap.instance.m_pins == null) return;
+    if (ZdoWatchController.Instance == null) return;
     var guids = ZdoWatchController.Instance.GetAllZdoGuids();
     var vehicleZdos = guids.Select(x => x.Value).Where(x =>
     {
@@ -220,6 +223,8 @@ public class MapPinSync : MonoBehaviour
 
   private void ClearAllVehiclePins()
   {
+    if (Minimap.instance == null) return;
+    if (Minimap.instance.m_pins == null) return;
     // Remove each pin in _vehiclePins from m_locationPins
     foreach (var vehiclePin in _vehiclePins.Where(vehiclePin =>
                Minimap.instance.m_pins.Contains(vehiclePin.Value.pinData)))
