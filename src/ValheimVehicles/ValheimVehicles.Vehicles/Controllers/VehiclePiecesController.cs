@@ -1271,8 +1271,16 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   public void RebuildBoundsThrottled()
   {
     if (ZNetView.m_forceDisableInit) return;
+    if (_lastRebuildTime + 40 < Time.fixedTime || Mathf.Abs(m_nviewPieces.Count - lastRebuildItemCount) > 20f)
+    {
+      if (_rebuildBoundsTimer != null)
+      {
+        StopCoroutine(_rebuildBoundsTimer);
+      }
+      RebuildBounds();
+      return;
+    } 
     if (_rebuildBoundsTimer != null) return;
-
     _rebuildBoundsTimer = StartCoroutine(RebuildBoundsThrottleRoutine());
   }
 
@@ -2361,8 +2369,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     
     FixPieceMeshes(netView);
     OnAddPieceIgnoreColliders(netView);
-    
-    var shouldRebuildBounds = false;
     ResetSailCachedValues();
     m_nviewPieces.Add(netView);
     UpdatePieceCount();
@@ -2426,7 +2432,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
           OnAddSteeringWheelDestroyPrevious(netView, wheel);
           _steeringWheelPieces.Add(wheel);
           wheel.InitializeControls(netView, VehicleInstance);
-          shouldRebuildBounds = true;
           break;
 
         case TeleportWorld portal:
@@ -2464,10 +2469,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     UpdateMass(netView);
 
     // Handle bounds rebuilding
-    if (shouldRebuildBounds)
-      RebuildBounds();
-    else
-      RebuildBoundsThrottled();
+    RebuildBoundsThrottled();
 
     if (hasDebug)
       Logger.LogDebug(
@@ -2517,27 +2519,19 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
     var totalHeight = 0f;
 
-    if (PhysicsConfig.HullFloatationColliderLocation.Value ==
-        PhysicsConfig.HullFloatation.AverageOfHullPieces)
-      foreach (var hullPiece in m_hullPieces)
-      {
-        var newBounds = EncapsulateColliders(_vehicleHullBounds.center,
-          _vehicleHullBounds.size,
-          hullPiece.gameObject);
-        totalHeight += hullPiece.transform.localPosition.y;
-        if (newBounds == null) continue;
-        _pendingHullBounds = newBounds.Value;
-      }
-    else
-      foreach (var piece in m_nviewPieces)
-      {
-        var newBounds = EncapsulateColliders(_vehicleHullBounds.center,
-          _vehicleHullBounds.size,
-          piece.gameObject);
-        totalHeight += piece.transform.localPosition.y;
-        if (newBounds == null) continue;
-        _pendingHullBounds = newBounds.Value;
-      }
+    var isAverageCollider = PhysicsConfig.HullFloatationColliderLocation.Value ==
+                            PhysicsConfig.HullFloatation.AverageOfHullPieces;
+    var items = isAverageCollider ? m_hullPieces : m_nviewPieces;
+
+    foreach (var piece in items)
+    {
+      var newBounds = EncapsulateColliders(_vehicleHullBounds.center,
+        _vehicleHullBounds.size,
+        piece.gameObject);
+      totalHeight += piece.transform.localPosition.y;
+      if (newBounds == null) continue;
+      _pendingHullBounds = newBounds.Value;
+    }
 
     _vehicleHullBounds = _pendingHullBounds;
 
@@ -2841,6 +2835,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     cachedTotalSailArea = -1;
   }
 
+  private float _lastRebuildTime = 0f;
   /**
    * Must be wrapped in an Invoke delay to prevent spamming on unmounting
    * bounds cannot be de-encapsulated by default so regenerating it seems prudent on piece removal
@@ -2851,6 +2846,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     if (FloatCollider == null || OnboardCollider == null)
       return;
 
+    _lastRebuildTime = Time.fixedTime; 
     lastRebuildItemCount = m_nviewPieces.Count;
 
     ResetSailCachedValues();

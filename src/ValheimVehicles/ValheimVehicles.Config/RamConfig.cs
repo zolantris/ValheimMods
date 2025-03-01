@@ -1,4 +1,5 @@
 using BepInEx.Configuration;
+using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
 
 namespace ValheimVehicles.Config;
@@ -227,10 +228,10 @@ public static class RamConfig
       ConfigHelpers.CreateConfigDescription(
         "allows vehicle rams to hit friendlies",
         true, true));
-    VehicleRamCanDamageSelf = config.Bind(VehicleRamSectionName, "CanDamageSelf", true,
+    VehicleRamCanDamageSelf = config.Bind(VehicleRamSectionName, "CanDamageSelf", false,
       ConfigHelpers.CreateConfigDescription(
-        "allows vehicle rams to be damaged. The values set for the damage will be calculated",
-        true, true));
+        "allows vehicle rams to be damaged. The values set for the damage will be calculated at same time hits are calculated. This config does not work yet so it's set to false currently on all releases",
+        true, true, new AcceptableValueList<bool>(ModEnvironment.IsDebug)));
     VehicleRamCanHitEnvironmentOrTerrain = config.Bind(VehicleRamSectionName,
       "CanHitEnvironmentOrTerrain", true,
       ConfigHelpers.CreateConfigDescription(

@@ -408,10 +408,10 @@ public static class PhysicsConfig
     flightAngularDrag = Config.Bind(SectionKey, "flightAngularDrag", 1.2f);
 
     forceDistance = Config.Bind(SectionKey,
-      $"forceDistance_{DampingResetKey}", 1f,
+      $"forceDistance_{DampingResetKey}", 3f,
       "EXPERIMENTAL_FORCE_DISTANCE");
     force = Config.Bind(SectionKey,
-      $"force_{DampingResetKey}", 2f,
+      $"force_{DampingResetKey}", 5f,
       "EXPERIMENTAL_FORCE");
 
     backwardForce = Config.Bind(SectionKey,
