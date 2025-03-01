@@ -215,14 +215,10 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   public PendingPieceStateEnum PendingPiecesState => _pendingPiecesState;
 
   private Coroutine? _rebuildBoundsTimer = null;
-  public float ShipContainerMass = 0f;
   public float ShipMass = 0f;
   public static bool hasDebug => ValheimRaftPlugin.Instance.HasDebugBase.Value;
 
-  public float TotalMass =>
-    ValheimRaftPlugin.Instance.HasShipContainerWeightCalculations.Value
-      ? ShipMass
-      : ShipContainerMass + ShipMass;
+  public float TotalMass => ShipMass;
 
   private Transform piecesCollidersTransform;
 
@@ -900,7 +896,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
   private bool IsNotFlying =>
     !VehicleInstance?.MovementController?.IsFlying() ?? false ||
-    ValheimRaftPlugin.Instance.AllowFlight.Value == false;
+    PropulsionConfig.AllowFlight.Value == false;
 
   private bool IsPhysicsForceSynced =
     PropulsionConfig.DefaultPhysicsMode.Value ==
@@ -1239,15 +1235,14 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
  */
   public void UpdateMass(ZNetView netView, bool isRemoving = false)
   {
-    if (!(bool)netView)
+    if (!netView)
     {
       if (hasDebug) Logger.LogDebug("NetView is invalid skipping mass update");
-
       return;
     }
 
     var piece = netView.GetComponent<Piece>();
-    if (!(bool)piece)
+    if (!piece)
     {
       if (hasDebug)
         Logger.LogDebug(
@@ -1384,106 +1379,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         default:
           break;
       }
-
-    //
-    // var effectsArea = netView.GetComponent<EffectArea>();
-    // if (effectsArea != null)
-    // {
-    //   cachedVehicleEffectAreas.Add(effectsArea);
-    // }
-    //
-    // var sail = netView.GetComponent<SailComponent>();
-    // if ((bool)sail)
-    // {
-    //   m_sailPieces.Remove(sail);
-    // }
-    //
-    // var mast = netView.GetComponent<MastComponent>();
-    // if ((bool)mast)
-    // {
-    //   m_mastPieces.Remove(mast);
-    // }
-    //
-    // var rudder = netView.GetComponent<RudderComponent>();
-    // if ((bool)rudder)
-    // {
-    //   m_rudderPieces.Remove(rudder);
-    //
-    //   if (VehicleInstance?.Instance && m_rudderPieces.Count > 0)
-    //   {
-    //     SetShipWakeBounds();
-    //   }
-    // }
-    //
-    // var wheel = netView.GetComponent<SteeringWheelComponent>();
-    // if ((bool)wheel)
-    // {
-    //   _steeringWheelPieces.Remove(wheel);
-    // }
-    //
-    // var isRam = RamPrefabs.IsRam(netView.name);
-    // if (isRam)
-    // {
-    //   m_ramPieces.Remove(netView);
-    // }
-    //
-    //
-    // var bed = netView.GetComponent<Bed>();
-    // if ((bool)bed) m_bedPieces.Remove(bed);
-    //
-    // var ramp = netView.GetComponent<BoardingRampComponent>();
-    // if ((bool)ramp) m_boardingRamps.Remove(ramp);
-    //
-    // var portal = netView.GetComponent<TeleportWorld>();
-    // if ((bool)portal) m_portals.Remove(netView);
-    //
-    // var ladder = netView.GetComponent<RopeLadderComponent>();
-    // if ((bool)ladder)
-    // {
-    //   m_ladders.Remove(ladder);
-    //   ladder.m_mbroot = null;
-    //   ladder.vehiclePiecesController = null;
-    // }
-  }
-
-  private void UpdateStats()
-  {
-  }
-
-  /**
-   * this will recalculate only when the ship speed changes.
-   */
-  public void ComputeAllShipContainerItemWeight()
-  {
-    if (!ValheimRaftPlugin.Instance.HasShipContainerWeightCalculations.Value &&
-        ShipContainerMass != 0f)
-    {
-      ShipContainerMass = 0f;
-      return;
-    }
-
-    var containers = GetComponentsInChildren<Container>();
-    var totalContainerMass = 0f;
-    foreach (var container in containers)
-      totalContainerMass += ComputeContainerWeight(container);
-
-    ShipContainerMass = totalContainerMass;
-  }
-
-
-  private float ComputeContainerWeight(Container container,
-    bool isRemoving = false)
-  {
-    var inventory = container.GetInventory();
-    if (inventory == null) return 0f;
-
-    var containerWeight = inventory.GetTotalWeight();
-    if (hasDebug)
-      Logger.LogDebug(
-        $"containerWeight {containerWeight} name: {container.name}");
-    if (isRemoving) return -containerWeight;
-
-    return containerWeight;
   }
 
 /*
@@ -1494,14 +1389,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     if (!(bool)piece) return 0f;
 
     var pieceName = piece.name;
-
-    if (ValheimRaftPlugin.Instance.HasShipContainerWeightCalculations.Value)
-    {
-      var container = piece.GetComponent<Container>();
-      if ((bool)container)
-        ShipContainerMass += ComputeContainerWeight(container, isRemoving);
-    }
-
+    
     var baseMultiplier = 1f;
     /*
      * locally scaled pieces should have a mass multiplier.
@@ -1997,7 +1885,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     numberOfTier4Sails = 0;
 
     var hasConfigOverride =
-      ValheimRaftPlugin.Instance.EnableCustomPropulsionConfig.Value;
+      PropulsionConfig.EnableCustomPropulsionConfig.Value;
 
     foreach (var mMastPiece in m_mastPieces.ToList())
     {
@@ -2012,7 +1900,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       {
         ++numberOfTier1Sails;
         var multiplier = hasConfigOverride
-          ? ValheimRaftPlugin.Instance.SailTier1Area.Value
+          ? PropulsionConfig.SailTier1Area.Value
           : Tier1;
         totalSailArea += numberOfTier1Sails * multiplier;
       }
@@ -2020,7 +1908,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       {
         ++numberOfTier2Sails;
         var multiplier = hasConfigOverride
-          ? ValheimRaftPlugin.Instance.SailTier2Area.Value
+          ? PropulsionConfig.SailTier2Area.Value
           : Tier2;
         totalSailArea += numberOfTier2Sails * multiplier;
       }
@@ -2028,7 +1916,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       {
         ++numberOfTier3Sails;
         var multiplier = hasConfigOverride
-          ? ValheimRaftPlugin.Instance.SailTier3Area.Value
+          ? PropulsionConfig.SailTier3Area.Value
           : Tier3;
         totalSailArea += numberOfTier3Sails * multiplier;
         ;
@@ -2037,7 +1925,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       {
         ++numberOfTier4Sails;
         var multiplier = hasConfigOverride
-          ? ValheimRaftPlugin.Instance.SailTier4Area.Value
+          ? PropulsionConfig.SailTier4Area.Value
           : Tier4;
         totalSailArea += numberOfTier4Sails * multiplier;
         ;
@@ -2053,7 +1941,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
       if (hasDebug) Logger.LogDebug($"CustomSailsArea {customSailsArea}");
       var multiplier = hasConfigOverride
-        ? ValheimRaftPlugin.Instance.SailCustomAreaTier1Multiplier.Value
+        ? PropulsionConfig.SailCustomAreaTier1Multiplier.Value
         : CustomTier1AreaForceMultiplier;
 
       totalSailArea +=
@@ -2064,9 +1952,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     /*
      * Clamps everything by the maxSailSpeed
      */
-    if (totalSailArea != 0 &&
-        !ValheimRaftPlugin.Instance.HasShipWeightCalculations.Value)
-      totalSailArea = Math.Min(ValheimRaftPlugin.Instance.MaxSailSpeed.Value,
+    totalSailArea = Math.Min(PropulsionConfig.MaxSailSpeed.Value,
         totalSailArea);
 
     return totalSailArea;
@@ -2075,22 +1961,15 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   public float GetSailingForce()
   {
     var area = GetTotalSailArea();
-    if (!ValheimRaftPlugin.Instance.HasShipWeightCalculations.Value)
-      return area;
-
-    var mpFactor = Mathf.Clamp01(ValheimRaftPlugin.Instance.MassPercentageFactor.Value);
+    var mpFactor = Mathf.Clamp01(PropulsionConfig.SailingMassPercentageFactor.Value);
     var speedCapMultiplier =
-      ValheimRaftPlugin.Instance.SpeedCapMultiplier.Value;
+      PropulsionConfig.SpeedCapMultiplier.Value;
 
-    var sailForce = speedCapMultiplier * area /
-                    Mathf.Clamp(TotalMass * mpFactor, 300, 1000);
+    var sailForce = speedCapMultiplier * area - TotalMass * mpFactor;
+    var maxSpeed = Mathf.Min(PhysicsConfig.MaxLinearVelocity.Value, PropulsionConfig.MaxSailSpeed.Value);
+    var clampedSailForce = Mathf.Clamp(sailForce, 0, maxSpeed);
 
-    var maxSailForce = Math.Min(ValheimRaftPlugin.Instance.MaxSailSpeed.Value,
-      sailForce);
-    var maxPropulsion =
-      Math.Min(PhysicsConfig.MaxLinearVelocity.Value,
-        maxSailForce);
-    return maxPropulsion;
+    return clampedSailForce;
   }
 
   public static void InitZdo(ZDO zdo)

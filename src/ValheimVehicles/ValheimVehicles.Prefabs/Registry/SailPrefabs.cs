@@ -6,6 +6,7 @@ using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Rendering;
 using ValheimRAFT;
+using ValheimVehicles.Config;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;
@@ -266,13 +267,13 @@ public class SailPrefabs : IRegisterPrefab
     var description = tier switch
     {
       1 =>
-        $"$mb_raft_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{ValheimRaftPlugin.Instance.SailTier1Area.Value}</b></color>]",
+        $"$mb_raft_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{PropulsionConfig.SailTier1Area.Value}</b></color>]",
       2 =>
-        $"$mb_karve_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{ValheimRaftPlugin.Instance.SailTier2Area.Value}</b></color>]",
+        $"$mb_karve_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{PropulsionConfig.SailTier2Area.Value}</b></color>]",
       3 =>
-        $"$mb_vikingship_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{ValheimRaftPlugin.Instance.SailTier3Area.Value}</b></color>]",
+        $"$mb_vikingship_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{PropulsionConfig.SailTier3Area.Value}</b></color>]",
       4 =>
-        $"$valheim_vehicles_drakkalship_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{ValheimRaftPlugin.Instance.SailTier4Area.Value}</b></color>]",
+        $"$valheim_vehicles_drakkalship_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{PropulsionConfig.SailTier4Area.Value}</b></color>]",
       _ => ""
     };
 

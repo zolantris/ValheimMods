@@ -279,7 +279,7 @@
     }
 
     public static bool IsBallastAndFlightDisabled =>
-      !ValheimRaftPlugin.Instance.AllowFlight.Value &&
+      !PropulsionConfig.AllowFlight.Value &&
       !WaterConfig.WaterBallastEnabled.Value;
 
     public bool GetAscendKeyPress =>
@@ -302,7 +302,7 @@
 
       if (!m_nview) m_nview = GetComponent<ZNetView>();
 
-      if (ValheimRaftPlugin.Instance.AllowFlight.Value) OnFlightChangePolling();
+      if (PropulsionConfig.AllowFlight.Value) OnFlightChangePolling();
 
       base.Awake();
     }
@@ -487,7 +487,7 @@
         return;
       }
 
-      if (ValheimRaftPlugin.Instance.AllowFlight.Value ||
+      if (PropulsionConfig.AllowFlight.Value ||
           WaterConfig.WaterBallastEnabled.Value)
         SyncTargetHeight();
 
@@ -723,7 +723,7 @@
     {
       UpdateAnchorOnVertical();
 
-      if (!ValheimRaftPlugin.Instance.AllowFlight.Value &&
+      if (!PropulsionConfig.AllowFlight.Value &&
           !WaterConfig.WaterBallastEnabled.Value)
       {
         UpdateTargetHeight(0f);
@@ -837,7 +837,7 @@
     // unfortunately, the current approach does not allow increasing this beyond 1f otherwise it causes massive jitters when changing altitude.
     private float GetMaxVerticalOffset()
     {
-      if (ValheimRaftPlugin.Instance.AllowFlight.Value)
+      if (PropulsionConfig.AllowFlight.Value)
         if (IsFlying() ||
             OnboardCollider.bounds.max.y > ZoneSystem.instance.m_waterLevel ||
             TargetHeight - 2f > GetSurfaceOffsetWaterVehicleOnly())
@@ -1493,7 +1493,7 @@
       m_body.WakeUp();
       Flying_UpdateShipBalancingForce();
 
-      if (!ValheimRaftPlugin.Instance.FlightHasRudderOnly.Value)
+      if (!PropulsionConfig.FlightHasRudderOnly.Value)
         ApplySailForce(this, true);
     }
 
@@ -2757,7 +2757,7 @@
     /// <returns></returns>
     public bool IsFlying()
     {
-      if (!ValheimRaftPlugin.Instance.AllowFlight.Value) return false;
+      if (!PropulsionConfig.AllowFlight.Value) return false;
 
       // this allows for the check to run the first time.
       if (lastFlyingDt is > 0f and < 2f)
@@ -3126,7 +3126,7 @@
 
     private void SetTargetHeight(float val)
     {
-      switch (ValheimRaftPlugin.Instance.AllowFlight.Value)
+      switch (PropulsionConfig.AllowFlight.Value)
       {
         case false:
           m_nview?.m_zdo.Set(VehicleZdoVars.VehicleTargetHeight, 0f);
@@ -3447,7 +3447,7 @@
     /// <returns></returns>
     public float GetSurfaceOffset()
     {
-      if (ValheimRaftPlugin.Instance.AllowFlight.Value)
+      if (PropulsionConfig.AllowFlight.Value)
         // fly up to 2000f in the sky.
         return MaxFlightOffset;
 
@@ -3531,8 +3531,8 @@
 
     public void AutoVerticalFlightUpdate()
     {
-      if (!ValheimRaftPlugin.Instance.AllowFlight.Value ||
-          !ValheimRaftPlugin.Instance.FlightVerticalToggle.Value ||
+      if (!PropulsionConfig.AllowFlight.Value ||
+          !PropulsionConfig.FlightVerticalToggle.Value ||
           isAnchored) return;
 
       if (Mathf.Approximately(TargetHeight, 200f) ||
@@ -3555,7 +3555,7 @@
         return;
       }
 
-      if (!ValheimRaftPlugin.Instance.FlightVerticalToggle.Value) return;
+      if (!PropulsionConfig.FlightVerticalToggle.Value) return;
 
       if (!_isHoldingDescend && _isDescending)
       {
@@ -3762,7 +3762,7 @@
         return;
       }
 
-      if (!ValheimRaftPlugin.Instance.FlightVerticalToggle.Value) return;
+      if (!PropulsionConfig.FlightVerticalToggle.Value) return;
 
       if (!_isHoldingAscend && _isAscending)
       {

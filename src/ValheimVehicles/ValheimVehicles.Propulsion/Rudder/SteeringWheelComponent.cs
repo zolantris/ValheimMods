@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimRAFT.Patches;
+using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
@@ -114,22 +115,18 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   /// <param name="anchorKeyString"></param>
   /// <returns></returns>
   public static string GetHoverTextFromShip(float sailArea, float totalMass,
-    float shipMass,
-    float shipContainerMass, float shipPropulsion, bool isAnchored,
+    float shipMass, float shipPropulsion, bool isAnchored,
     string anchorKeyString)
   {
     var shipStatsText = "";
-    if (ValheimRaftPlugin.Instance.ShowShipStats.Value)
+    if (PropulsionConfig.ShowShipStats.Value)
     {
       var shipMassToPush =
-        ValheimRaftPlugin.Instance.MassPercentageFactor.Value;
+        PropulsionConfig.SailingMassPercentageFactor.Value;
       shipStatsText += $"\nsailArea: {sailArea}";
       shipStatsText += $"\ntotalMass: {totalMass}";
       shipStatsText +=
         $"\nshipMass(no-containers): {shipMass}";
-
-      if (ValheimRaftPlugin.Instance.HasShipContainerWeightCalculations.Value)
-        shipStatsText += $"\nshipContainerMass: {shipContainerMass}";
 
       shipStatsText +=
         $"\ntotalMassToPush: {shipMassToPush}% * {totalMass} = {totalMass * shipMassToPush / 100f}";
@@ -200,8 +197,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
     var anchorKeyString = GetAnchorHotkeyString();
     var hoverText = GetHoverTextFromShip(controller?.totalSailArea ?? 0,
       controller?.TotalMass ?? 0,
-      controller?.ShipMass ?? 0,
-      controller?.ShipContainerMass ?? 0, controller?.GetSailingForce() ?? 0,
+      controller?.ShipMass ?? 0, controller?.GetSailingForce() ?? 0,
       isAnchored,
       anchorKeyString);
     if ((bool)controller?.OnboardController?.m_localPlayers?.Any())
@@ -252,21 +248,6 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
       deprecatedShipControls.Interact(user, hold, alt);
       deprecatedShipControls.m_ship.m_controlGuiPos.position =
         transform.position;
-    }
-
-    if (user == Player.m_localPlayer && ValheimRaftPlugin.Instance
-          .HasShipContainerWeightCalculations.Value)
-    {
-      var baseVehicle = GetComponentInParent<VehiclePiecesController>();
-      if (baseVehicle != null)
-      {
-        baseVehicle.ComputeAllShipContainerItemWeight();
-      }
-      else
-      {
-        var baseRoot = GetComponentInParent<MoveableBaseRootComponent>();
-        if (baseRoot != null) baseRoot.ComputeAllShipContainerItemWeight();
-      }
     }
 
     var canUse = InUseDistance(user);

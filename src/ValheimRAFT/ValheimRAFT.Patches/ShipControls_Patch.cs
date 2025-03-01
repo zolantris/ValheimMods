@@ -56,12 +56,6 @@ public class ShipControls_Patch
   {
     if (character == Player.m_localPlayer && __instance.isActiveAndEnabled)
     {
-      var baseRoot = __instance.GetComponentInParent<MoveableBaseRootComponent>();
-      if (baseRoot != null)
-      {
-        baseRoot.ComputeAllShipContainerItemWeight();
-      }
-
       PatchSharedData.PlayerLastUsedControls = __instance;
     }
   }
@@ -81,7 +75,7 @@ public class ShipControls_Patch
         .IsAnchored);
 
     var hoverText = SteeringWheelComponent.GetHoverTextFromShip(mbShip.m_baseRoot.totalSailArea,
-      mbShip.m_baseRoot.TotalMass, mbShip.m_baseRoot.ShipMass, mbShip.m_baseRoot.ShipContainerMass,
+      mbShip.m_baseRoot.TotalMass, mbShip.m_baseRoot.ShipMass,
       mbShip.m_baseRoot.GetSailingForce(),
       isAnchored, SteeringWheelComponent.GetAnchorHotkeyString());
 

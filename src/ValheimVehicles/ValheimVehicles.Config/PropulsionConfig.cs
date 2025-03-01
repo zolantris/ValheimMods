@@ -1,6 +1,8 @@
 using BepInEx.Configuration;
 using UnityEngine;
+using ValheimVehicles.Propulsion.Sail;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Enums;
 
 namespace ValheimVehicles.Config;
@@ -14,7 +16,28 @@ public static class PropulsionConfig
 
   public static ConfigEntry<float> BallastClimbingOffset { get; private set; } =
     null!;
+  public static ConfigEntry<float> SailingMassPercentageFactor { get; set; }
+  public static ConfigEntry<bool> AllowFlight { get; set; }
 
+  // Propulsion Configs
+  public static ConfigEntry<bool> EnableCustomPropulsionConfig { get; set; }
+
+  public static ConfigEntry<float> MaxSailSpeed { get; set; }
+  public static ConfigEntry<float> SpeedCapMultiplier { get; set; }
+
+
+  public static ConfigEntry<bool> FlightVerticalToggle { get; set; }
+  public static ConfigEntry<bool> FlightHasRudderOnly { get; set; }
+
+
+  public static ConfigEntry<float> SailTier1Area { get; set; }
+  public static ConfigEntry<float> SailTier2Area { get; set; }
+  public static ConfigEntry<float> SailTier3Area { get; set; }
+  public static ConfigEntry<float> SailTier4Area { get; set; }
+  public static ConfigEntry<float> SailCustomAreaTier1Multiplier { get; set; }
+
+  public static ConfigEntry<bool> ShowShipStats { get; set; }
+  
   public static ConfigEntry<float> VerticalSmoothingSpeed
   {
     get;
@@ -68,7 +91,14 @@ public static class PropulsionConfig
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
-
+    AllowFlight = Config.Bind<bool>(SectionName, "AllowFlight", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Allow the raft to fly (jump\\crouch to go up and down)", true));
+    SailingMassPercentageFactor = Config.Bind(SectionName, "MassPercentage", 0.5f,
+      ConfigHelpers.CreateConfigDescription(
+        "Sets the mass percentage of the ship that will slow down the sails",
+        true, false, new AcceptableValueRange<float>(0f, 1f)));
+    
     DefaultPhysicsMode = Config.Bind(SectionName,
       "VehiclePhysicsMode", VehiclePhysicsMode.ForceSyncedRigidbody,
       ConfigHelpers.CreateConfigDescription(
@@ -142,6 +172,62 @@ public static class PropulsionConfig
 
     // end vertical config.
 
+    ShowShipStats = Config.Bind("Debug", "ShowShipState", true);
+    MaxSailSpeed = Config.Bind(SectionName, "MaxSailSpeed", 30f,
+      ConfigHelpers.CreateConfigDescription(
+        "Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.",
+        true, false, new AcceptableValueRange<float>(10, 200)));
+    SpeedCapMultiplier = Config.Bind(SectionName, "SpeedCapMultiplier", 1f,
+      ConfigHelpers.CreateConfigDescription(
+        "Sets the speed at which it becomes significantly harder to gain speed per sail area",
+        true));
+
+    // rudder
+
+    EnableCustomPropulsionConfig = Config.Bind(SectionName,
+      "EnableCustomPropulsionConfig", SailAreaForce.HasPropulsionConfigOverride,
+      ConfigHelpers.CreateConfigDescription("Enables all custom propulsion values", true,
+        true));
+
+    SailCustomAreaTier1Multiplier = Config.Bind(SectionName,
+      "SailCustomAreaTier1Multiplier",
+      SailAreaForce.CustomTier1AreaForceMultiplier,
+      ConfigHelpers.CreateConfigDescription(
+        "Manual sets the sail wind area multiplier the custom tier1 sail. Currently there is only 1 tier",
+        true, true)
+    );
+
+    SailTier1Area = Config.Bind(SectionName,
+      "SailTier1Area", SailAreaForce.Tier1,
+      ConfigHelpers.CreateConfigDescription(
+        "Manual sets the sail wind area of the tier 1 sail.", true, true)
+    );
+
+    SailTier2Area = Config.Bind(SectionName,
+      "SailTier2Area", SailAreaForce.Tier2,
+      ConfigHelpers.CreateConfigDescription(
+        "Manual sets the sail wind area of the tier 2 sail.", true, true));
+
+    SailTier3Area = Config.Bind(SectionName,
+      "SailTier3Area", SailAreaForce.Tier3,
+      ConfigHelpers.CreateConfigDescription(
+        "Manual sets the sail wind area of the tier 3 sail.", true, true));
+
+    SailTier4Area = Config.Bind(SectionName,
+      "SailTier4Area", SailAreaForce.Tier4,
+      ConfigHelpers.CreateConfigDescription(
+        "Manual sets the sail wind area of the tier 4 sail.", true, true));
+
+    FlightVerticalToggle = Config.Bind<bool>(SectionName,
+      "FlightVerticalToggle",
+      true,
+      "Flight Vertical Continues UntilToggled: Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button");
+    FlightHasRudderOnly = Config.Bind<bool>(SectionName,
+      "FlightHasRudderOnly",
+      false,
+      "Flight allows for different rudder speeds. Use rudder speed only. Do not use sail speed.");
+    
+
     WheelDeadZone = Config.Bind(SectionName,
       "WheelDeadZone",
       0.02f,
@@ -154,7 +240,7 @@ public static class PropulsionConfig
         VehicleMovementController.SetPhysicsSyncTarget(
           DefaultPhysicsMode
             .Value);
-
+    AllowFlight.SettingChanged += VehicleShip.OnAllowFlight;
     // setters that must be called on init
     VehicleMovementController.SetPhysicsSyncTarget(
       DefaultPhysicsMode.Value);

@@ -180,10 +180,6 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     {
       HideOrShowDebugCommandPanel(true);
     }
-    else
-    {
-      ToggleCommandsPanelState();
-    }
 
     HideOrShowVehicleConfigPanel(hasConfigPanelOpened);
     

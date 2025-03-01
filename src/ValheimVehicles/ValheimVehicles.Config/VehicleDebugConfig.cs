@@ -25,6 +25,9 @@ public static class VehicleDebugConfig
 
   public static ConfigEntry<int> TitleFontSize;
 
+  public static ConfigEntry<bool> HasDebugSails { get; set; }
+
+
   public static ConfigEntry<bool>
     AutoShowVehicleColliders { get; private set; } = null!;
 
@@ -159,6 +162,11 @@ public static class VehicleDebugConfig
       ConfigHelpers.CreateConfigDescription(
         $"The raft will no longer be a cube. It will place pieces in world position. This will allow for teleporting and other rapid location / login fixes to work better. It might cause large vehicles to clip/break if they are rendered out of a zone.",
         true, true));
+
+    HasDebugSails = Config.Bind("Debug", "HasDebugSails", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only.",
+        false, true));
     
     CommandsWindowPosX = Config.Bind(SectionName, "CommandsWindowPosX", 0f);
     CommandsWindowPosY = Config.Bind(SectionName, "CommandsWindowPosY", 0f);
