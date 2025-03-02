@@ -10,8 +10,9 @@ and further extends its capabilities.
 ## V3.0.0 Changes
 
 ### Land Vehicles can now be built.
-They will be absolutely fun to use. But not balanced and may have bugs or other
-errors.
+
+They will be absolutely fun to use. But are unbalanced in energy and power and
+really should require rams to be enabled (but you can toggle them off).
 
 - vehicles have a bit of trouble going up mountains. But you can turn and slowly
   move up the mountain.
