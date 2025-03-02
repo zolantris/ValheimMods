@@ -286,7 +286,10 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   public static float RebuildPieceMinDelay = 4f;
   public static float RebuildPieceMaxDelay = 60f;
 
-  private int lastRebuildItemCount = 0;
+  // for bounds and piece building revisions.
+  private int _lastRebuildItemCount = 0;
+  private int _lastRebuildPieceRevision = 0;
+  private int _lastPieceRevision = 0;
 
   public List<Bed> GetBedPieces()
   {
@@ -544,8 +547,12 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
   private void LinkFixedJoint()
   {
-    if (!MovementController) return;
+    if (MovementController == null) return;
     if (!m_fixedJoint) m_fixedJoint = GetComponent<FixedJoint>();
+    if (!m_fixedJoint)
+    {
+      m_fixedJoint = gameObject.AddComponent<FixedJoint>();
+    }
 
     if (m_fixedJoint == null)
     {
@@ -554,7 +561,21 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       return;
     }
 
+    if (m_fixedJoint.connectedBody == null)
+    {
+      var movementPosition = MovementController.transform.position;
+      var movementRotation = MovementController.transform.rotation;
+      if (movementPosition != transform.position)
+      {
+        transform.position = movementPosition;
+      }
+      if (movementRotation != transform.rotation)
+      {
+        transform.rotation = movementRotation;
+      }
+
     m_fixedJoint.connectedBody = MovementController!.GetRigidbody();
+    }
   }
 
 
@@ -620,6 +641,8 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
   private void OnDisable()
   {
+    _isInvalid = false;
+    
     if (MonoUpdaterInstances.Contains(this)) MonoUpdaterInstances.Remove(this);
 
     if (VehicleInstance != null &&
@@ -855,32 +878,18 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
   public void KinematicSync()
   {
-    if (MovementController == null) return;
-    if (!m_localRigidbody.isKinematic) m_localRigidbody.isKinematic = true;
-
-
-    if (m_localRigidbody.collisionDetectionMode !=
-        PhysicsConfig.vehiclePiecesShipCollisionDetectionMode.Value)
-      m_localRigidbody.collisionDetectionMode =
-        PhysicsConfig.vehiclePiecesShipCollisionDetectionMode.Value;
-
+    if (IsInvalid()) return;
+    
     if (m_fixedJoint && m_fixedJoint.connectedBody)
       m_fixedJoint.connectedBody = null;
 
-    if (VehicleInstance?.NetView != null)
-    {
-      var rotation = GetRotationWithLean();
-      var position = MovementController.m_body.position;
-      // var position = cachedIsNetviewOwner
-      //   ? MovementController.m_body.position
-      //   // We use the vehicle zdo position and GetRotation is shared.
-      //   : VehicleInstance.NetView.GetZDO().GetPosition();
-
-      m_localRigidbody.Move(
-        position,
-        rotation
-      );
-    }
+    var rotation = GetRotationWithLean();
+    var position = MovementController!.m_body.position;
+    m_localRigidbody.Move(
+      position,
+      rotation
+    );
+  
   }
 
   public void JointSync()
@@ -889,8 +898,8 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
     if (MovementController != null &&
         MovementController.m_body.rotation != m_localRigidbody.rotation)
-      m_localRigidbody.MoveRotation(MovementController.m_body.rotation);
-
+      m_localRigidbody.rotation = MovementController.m_body.rotation;
+    
     if (m_fixedJoint.connectedBody == null) LinkFixedJoint();
   }
 
@@ -921,38 +930,86 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   /// </summary>
   public void Sync()
   {
-    if (!(bool)m_localRigidbody || !(bool)VehicleInstance?.MovementControllerRigidbody ||
-        VehicleInstance?.MovementController == null ||
-        VehicleInstance.NetView == null ||
-        VehicleInstance.Instance == null)
-      return;
-
+#if DEBUG
     KinematicSync();
-    // if (IsPhysicsForceSynced)
-    // {
-    //   KinematicSync();
-    //   return;
-    // }
+    // JointSync();
+#endif
 
-    // if (VehicleMovementController.HasPieceSyncTarget && IsNotFlying)
+#if !DEBUG
+    KinematicSync();
+#endif
+  }
+
+  public void ForceEnableGPUInstancing(GameObject prefab)
+  {
+    var renderer = prefab.GetComponent<MeshRenderer>();
+    if (renderer)
+    {
+      renderer.sharedMaterial.enableInstancing = true;
+    }
+
+    var meshRenderers = prefab.GetComponentsInChildren<MeshRenderer>(true);
+    if (meshRenderers == null) return;
+    foreach (var meshRenderer in meshRenderers)
+    {
+      meshRenderer.sharedMaterial.enableInstancing = true;
+    }
+  }
+
+  /// <summary>
+  /// Todo may need to ignore doors and other rigidbodies.
+  /// </summary>
+  /// <param name="collider"></param>
+  public void ConvertColliderToTrigger(Collider collider)
+  {
+    collider.isTrigger = true;
+    //
+    // var colliders = prefab.GetComponentsInChildren<Collider>(true);
+    // if (colliders == null) return;
+    // foreach (var collider in colliders)
     // {
-    //   var vehiclePhysicsOwner = VehicleInstance.NetView.IsOwner();
-    //   if (vehiclePhysicsOwner)
-    //     KinematicSync();
-    //   else if (m_fixedJoint != null) JointSync();
-    //
-    //   return;
+    //   collider.isTrigger = true;
     // }
-    //
-    // if (localVehiclePhysicsMode ==
-    //     VehiclePhysicsMode.DesyncedJointRigidbodyBody ||
-    //     !IsNotFlying)
-    // {
-    //   JointSync();
-    //   return;
-    // }
-    //
-    // KinematicSync();
+  }
+
+  // public void drawMeshesOnly()
+  // {
+  //   
+  //     foreach (var mNviewPiece in m_nviewPieces)
+  //     {
+  //       if (mNviewPiece.isActiveAndEnabled)
+  //       {
+  //         Mesh mesh = mNviewPiece.GetComponent<MeshFilter>().sharedMesh;
+  //         Material material = mNviewPiece.GetComponent<MeshRenderer>().sharedMaterial;
+  //         List<Matrix4x4> matrices = new List<Matrix4x4>();
+  //
+  //         for (int i = 0; i < instanceCount; i++)
+  //         {
+  //           // Vector3 position = new Vector3(Mathf.Range(-10, 10), 0, Random.Range(-10, 10));
+  //           matrices.Add(Matrix4x4.TRS(position, Quaternion.identity, Vector3.one));
+  //         }
+  //
+  //         Graphics.DrawMeshInstanced(mesh, 0, material, matrices.ToArray());
+  //       }
+  //       mNviewPiece.gameObject.SetActive(false);
+  //     }
+  // }
+
+  public bool _isInvalid = true;
+  public bool IsInvalid()
+  {
+    if (isActiveAndEnabled && !_isInvalid)
+    {
+      return false;
+    }
+
+    var isInvalid = m_localRigidbody == null || VehicleInstance?.MovementControllerRigidbody == null ||
+                    VehicleInstance?.MovementController == null ||
+                    VehicleInstance.NetView == null ||
+                    VehicleInstance.Instance == null;
+    _isInvalid = isInvalid;
+
+    return _isInvalid;
   }
 
   public void CustomUpdate(float deltaTime, float time)
@@ -1280,7 +1337,13 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       StopCoroutine(_rebuildBoundsTimer);
       _rebuildBoundsTimer = null;
     }
-    var hasMinimumWait = _lastRebuildTime + 40 < Time.fixedTime && Mathf.Abs(m_nviewPieces.Count - lastRebuildItemCount) > 20f;
+    // No need to run the revision
+    if (_lastPieceRevision == _lastRebuildPieceRevision)
+    {
+      return;
+    }
+
+    var hasMinimumWait = _lastRebuildTime + 40 < Time.fixedTime && Mathf.Abs(m_nviewPieces.Count - _lastRebuildItemCount) > 20f;
     _rebuildBoundsTimer = StartCoroutine(RebuildBoundsThrottleRoutine(hasMinimumWait));
   }
 
@@ -1303,7 +1366,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     var allItems = Math.Max(list.Count, m_nviewPieces.Count);
 
     // these calcs ensure we rebuild if there is a significant difference between currentItems
-    var allVsCurrentRebuildItems = allItems - lastRebuildItemCount;
+    var allVsCurrentRebuildItems = allItems - _lastRebuildItemCount;
     var newItemsDiff = Mathf.Abs(allVsCurrentRebuildItems);
     var itemDiffRatio = newItemsDiff / Mathf.Min(allItems, 1);
 
@@ -1337,6 +1400,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     if (PrefabNames.IsVehicle(netView.name)) return;
     if (!m_nviewPieces.Remove(netView)) return;
 
+    IncrementPieceRevision();
     UpdateMass(netView, true);
     RebuildBoundsThrottled();
 
@@ -2365,6 +2429,11 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     // IgnoreCollidersForAnchorPieces(netView);
   }
 
+  public void IncrementPieceRevision()
+  {
+    _lastPieceRevision += 1;
+  }
+
   public void AddPiece(ZNetView netView, bool isNew = false)
   {
     if (!(bool)netView)
@@ -2372,8 +2441,12 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       Logger.LogError("netView does not exist but somehow called AddPiece()");
       return;
     }
-    
+
+    // incrementRevision
+    IncrementPieceRevision();    
+
     FixPieceMeshes(netView);
+
     OnAddPieceIgnoreColliders(netView);
     ResetSailCachedValues();
     
@@ -2753,32 +2826,83 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   public void IgnoreAllVehicleCollidersForGameObjectChildren(GameObject gameObject)
   {
     var colliders = gameObject.GetComponentsInChildren<Collider>(true);
-    var topLevelCollider = gameObject.GetComponent<Collider>();
-
     // characters should not skip hitting treads. If this happens we would have to track them so they do not fall on the treads and go through them when exiting vehicle after first time on vehicle.
     var character = gameObject.GetComponentInParent<Character>();
     var isCharacter = character != null;
-    if (topLevelCollider != null)
-    {
-      if (colliders == null) colliders = [topLevelCollider];
-      else
-      {
-        colliders.AddItem(topLevelCollider);
-      }
-    }
     if (!colliders.Any()) return;
     if (VehicleInstance == null || VehicleInstance.Instance == null) return;
     var allVehicleColliders = VehicleInstance.Instance.GetComponentsInChildren<Collider>(true);
     foreach (var collider in colliders)
-    foreach (var allVehicleCollider in allVehicleColliders)
     {
-      if (collider.name.StartsWith("tread") && isCharacter)
+      if (!isCharacter)
       {
-        // skip character collider ignore.
-        continue;
+        ConvertColliderToTrigger(collider);
       }
-      Physics.IgnoreCollision(collider, allVehicleCollider, true);
+      foreach (var allVehicleCollider in allVehicleColliders)
+      {
+        if (collider.name.StartsWith("tread") && isCharacter)
+        {
+          // skip character collider ignore.
+          continue;
+        }
+        Physics.IgnoreCollision(collider, allVehicleCollider, true);
+      }
     }
+  }
+
+  public GameObject _lastCombinedGameObj;
+
+  public bool shouldHideAllMeshComponents = true;
+  private void GenerateCollisionMeshes()
+  {
+    if (_lastCombinedGameObj)
+    {
+      Destroy(_lastCombinedGameObj);
+    }
+    // var meshFilters = deck.GetComponentsInChildren<MeshFilter>();
+    var vehicleCombinedMesh = new GameObject()
+    {
+      name = "ValheimVehicles_VehicleCombinedMesh",
+      transform = { parent = transform }
+    };
+    List<MeshFilter> allMeshFilters = [];
+
+    foreach (var x in m_nviewPieces)
+    {
+      if (!x) continue;
+      var doorComponent = x.GetComponentInChildren<Door>();
+      if (doorComponent) continue;
+      var meshFilters = x.GetComponentsInChildren<MeshFilter>();
+      allMeshFilters.AddRange(meshFilters);
+    }
+
+    var combine = new CombineInstance[allMeshFilters.Count];
+
+    for (var i = 0; i < allMeshFilters.Count; i++)
+    {
+      var meshFilter = allMeshFilters[i];
+      if (!meshFilter) continue;
+      // Skip open spaces (e.g., doors, windows) by filtering meshes
+      if (meshFilter.name.Contains("door"))
+        continue;
+
+      combine[i].mesh = meshFilter.sharedMesh;
+      combine[i].transform = meshFilter.transform.localToWorldMatrix;
+
+      if (shouldHideAllMeshComponents)
+      {
+        meshFilter.gameObject.SetActive(false);
+      }
+    }
+
+    var collisionMesh = new Mesh { name = "ValheimVehicles_CombinedMesh" };
+    collisionMesh.CombineMeshes(combine);
+
+    // Assign to MeshCollider
+    var meshCollider = vehicleCombinedMesh.AddComponent<MeshCollider>();
+    meshCollider.sharedMesh = collisionMesh;
+    meshCollider.convex = false; // Keep it non-convex for walkable surfaces
+
   }
 
   public void IgnoreColliderForWheelColliders(Collider collider)
@@ -2858,8 +2982,9 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     if (FloatCollider == null || OnboardCollider == null)
       return;
 
-    _lastRebuildTime = Time.fixedTime; 
-    lastRebuildItemCount = m_nviewPieces.Count;
+    _lastRebuildTime = Time.fixedTime;
+    _lastRebuildItemCount = m_nviewPieces.Count;
+    _lastRebuildPieceRevision = _lastPieceRevision;
 
     ResetSailCachedValues();
 
@@ -2880,6 +3005,16 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       {
         WheelController.Initialize(_vehiclePieceBounds);
       }
+    }
+    catch (Exception e)
+    {
+      Logger.LogError(e);
+    }
+
+    try
+    {
+      // could be a huge performance boost.
+      GenerateCollisionMeshes();
     }
     catch (Exception e)
     {
