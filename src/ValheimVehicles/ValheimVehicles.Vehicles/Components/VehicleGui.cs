@@ -126,6 +126,11 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
   public void HideOrShowPanel(bool isVisible, bool shouldDeactivateToggleButton, ref GameObject toggleWindow, ref GameObject panelWindow, ref List<GameObject> toggleObjects)
   {
     if (Instance == null) return;
+    if (toggleWindow == null || panelWindow == null)
+    {
+      InitPanel();
+    }
+    
     if (toggleWindow != null && shouldDeactivateToggleButton)
     {
       toggleWindow.SetActive(isVisible);
@@ -175,12 +180,8 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
 
     CreateCommandsShortcutPanel();
     CreateVehicleConfigShortcutPanel();
-    
-    if (VehicleDebugConfig.VehicleDebugMenuEnabled.Value)
-    {
-      HideOrShowDebugCommandPanel(true);
-    }
 
+    HideOrShowDebugCommandPanel(hasCommandsWindowOpened);
     HideOrShowVehicleConfigPanel(hasConfigPanelOpened);
     
     hasInitialized = true;

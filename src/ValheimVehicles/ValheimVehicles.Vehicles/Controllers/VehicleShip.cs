@@ -404,6 +404,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
     }
 
+
 #if DEBUG
     WheelController.wheelSuspensionTarget = PhysicsConfig.VehicleLandWheelSuspensionSpringTarget.Value;
     WheelController.wheelRadius = PhysicsConfig.VehicleLandWheelRadius.Value;
@@ -414,6 +415,9 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     WheelController.ShouldHideWheelRender = PhysicsConfig.DEBUG_VehicleLandShouldHideWheels.Value;
         WheelController.wheelMass = PhysicsConfig.VehicleLandWheelMass.Value;
 #endif
+
+    WheelController.treadWidthXScale = ExperimentalTreadScaleX.Value;
+
 
     // very important to add these. We always need a base of 30.
     var additionalTurnRate = Mathf.Lerp(VehicleWheelController.defaultTurnAccelerationMultiplier / 2, VehicleWheelController.defaultTurnAccelerationMultiplier * 2, Mathf.Clamp01(PhysicsConfig.VehicleLandTurnSpeed.Value));

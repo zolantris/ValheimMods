@@ -88,9 +88,8 @@ public static class VehicleDebugConfig
     }
     else
     {
-      
       VehicleGui.Instance.InitPanel();
-    VehicleGui.SetCommandsPanelState(VehicleDebugMenuEnabled.Value);
+      VehicleGui.SetCommandsPanelState(VehicleDebugMenuEnabled.Value);
     }
   }
 
@@ -155,7 +154,7 @@ public static class VehicleDebugConfig
       "VehicleBoundsRebuildDelayPerPiece", 0.02f,
       ConfigHelpers.CreateConfigDescription(
         $"The delay time that is added per piece the vehicle has on it for recalculating vehicle bounds. Example 2000 * 0.02 = 40seconds delay.  Values are clamped at {VehiclePiecesController.RebuildPieceMinDelay} and max value: {VehiclePiecesController.RebuildPieceMaxDelay} so even smaller vehicles rebuild at the min value and large >2k piece vehicles build at the max value.",
-        false, true, new AcceptableValueRange<float>(0.01f, 0.1f)));
+        false, true, new AcceptableValueRange<float>(0.001f, 0.1f)));
 
     DisableVehicleCube = Config.Bind(VehiclePiecesSectionName,
       "DisableVehicleCube", false,

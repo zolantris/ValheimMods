@@ -341,6 +341,13 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     return !isRebuildingCollisions;
   }
 
+
+  /// <summary>
+  /// For restoring any ignore colliders. May want just track ignored colliders per character collider at this rate.
+  /// </summary>
+  /// 
+  /// Todo more collision logic here might be needed
+  /// <param name="collider"></param>
   public void RestoreCollisionDetection(Collider collider)
   {
     if (PiecesController != null &&
@@ -349,6 +356,20 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
                PiecesController.convexHullMeshColliders)
         Physics.IgnoreCollision(piecesControllerConvexHullMesh, collider,
           false);
+
+    if (MovementController != null && MovementController.WheelController != null)
+    {
+      MovementController.WheelController.treadsLeftMovingComponent.convexHullComponent.convexHullMeshColliders.ForEach((x) =>
+      {
+        if (x == null) return;
+        Physics.IgnoreCollision(collider, x, false);
+      });
+      MovementController.WheelController.treadsRightMovingComponent.convexHullComponent.convexHullMeshColliders.ForEach((x) =>
+      {
+        if (x == null) return;
+        Physics.IgnoreCollision(collider, x, false);
+      });
+    }
   }
 
   public void HandleCharacterHitVehicleBounds(Collider collider, bool isExiting)

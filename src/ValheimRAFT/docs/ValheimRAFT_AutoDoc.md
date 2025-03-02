@@ -258,8 +258,8 @@
 - Default Value: True
 
 ### CanDamageSelf 
-- Description: allows vehicle rams to be damaged. The values set for the damage will be calculated
-- Default Value: True
+- Description: allows vehicle rams to be damaged. The values set for the damage will be calculated at same time hits are calculated. This config does not work yet so it's set to false currently on all releases
+- Default Value: False
 
 ### CanHitEnvironmentOrTerrain 
 - Description: allows vehicle rams to hit friendlies
@@ -356,6 +356,10 @@
 ### VehicleHaulingSnapsOnStaminaZero 
 - Description: Instead of allowing the viking to use health. The vehicle hauling line will snap when you have zero stamina doing a single one-time damage.
 - Default Value: False
+
+### Experimental_TreadWidth 
+- Description: Set the tank tread width. This will make the treads larger or smaller allowing more/less grip.
+- Default Value: 1
 
 ## Vehicle Debugging
 
@@ -732,15 +736,15 @@ Other methods removed after 2.5.0
 
 ## Vehicle Physics
 
-### flightDamping_3.0.3 
+### flightDamping_3.0.4 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.0.3 
+### flightSidewaysDamping_3.0.4 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.0.3 
+### flightAngularDamping_3.0.4 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -760,15 +764,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1.2
 
-### forceDistance_3.0.3 
+### forceDistance_3.0.4 
 - Description: EXPERIMENTAL_FORCE_DISTANCE
-- Default Value: 1
+- Default Value: 3
 
-### force_3.0.3 
+### force_3.0.4 
 - Description: EXPERIMENTAL_FORCE
-- Default Value: 2
+- Default Value: 5
 
-### backwardForce_3.0.3 
+### backwardForce_3.0.4 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -776,15 +780,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1
 
-### waterDamping_3.0.3 
+### waterDamping_3.0.4 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.0.3 
+### waterSidewaysDamping_3.0.4 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.0.3 
+### waterAngularDamping_3.0.4 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -800,15 +804,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 0.8
 
-### submersibleDamping_3.0.3 
+### submersibleDamping_3.0.4 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.0.3 
+### submersibleSidewaysDamping_3.0.4 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.0.3 
+### submersibleAngularDamping_3.0.4 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -866,7 +870,7 @@ Other methods removed after 2.5.0
 - Description: DEPRECATED!!! Will be removed soon, values of -2 and 2 are allowed. Anything above means you are likely not using this correctly. Please use CenterOfMass instead if your vehicle needs to pivot lower. Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
 - Default Value: 0
 
-### EnableExactVehicleBounds_3.0.3 
+### EnableExactVehicleBounds_3.0.4 
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version
 - Default Value: True
 

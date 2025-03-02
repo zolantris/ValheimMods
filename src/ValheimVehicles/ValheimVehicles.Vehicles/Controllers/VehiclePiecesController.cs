@@ -1028,6 +1028,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
       nv.m_zdo?.SetPosition(CanUseActualPiecePosition ? nv.transform.position : position);
     }
+    var convexHullBounds = controller.convexHullComponent.GetConvexHullBounds(false);
 
     // Removes the temp collider from the parent if not within the parent.
     for (var index = 0; index < controller.m_tempPieces.Count; index++)
@@ -1040,7 +1041,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         continue;
       }
       
-      var convexHullBounds = controller.convexHullComponent.GetConvexHullBounds(false);
       var combinedBounds = GetCombinedColliderBoundsInPiece(nv.gameObject);
       if (!convexHullBounds.Intersects(combinedBounds))
       {
@@ -1270,21 +1270,17 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
   public void RebuildBoundsThrottled()
   {
-    if (ZNetView.m_forceDisableInit) return;
-    if (_lastRebuildTime + 40 < Time.fixedTime || Mathf.Abs(m_nviewPieces.Count - lastRebuildItemCount) > 20f)
+    if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !isInitialActivationComplete) return;
+    if (_rebuildBoundsTimer != null)
     {
-      if (_rebuildBoundsTimer != null)
-      {
-        StopCoroutine(_rebuildBoundsTimer);
-      }
-      RebuildBounds();
-      return;
-    } 
-    if (_rebuildBoundsTimer != null) return;
-    _rebuildBoundsTimer = StartCoroutine(RebuildBoundsThrottleRoutine());
+      StopCoroutine(_rebuildBoundsTimer);
+      _rebuildBoundsTimer = null;
+    }
+    var hasMinimumWait = _lastRebuildTime + 40 < Time.fixedTime && Mathf.Abs(m_nviewPieces.Count - lastRebuildItemCount) > 20f;
+    _rebuildBoundsTimer = StartCoroutine(RebuildBoundsThrottleRoutine(hasMinimumWait));
   }
 
-  private IEnumerator RebuildBoundsThrottleRoutine()
+  private IEnumerator RebuildBoundsThrottleRoutine(bool hasMinimumWait = false)
   {
     var output =
       m_allPieces.TryGetValue(PersistentZdoId, out var list);
@@ -1292,6 +1288,13 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     {
       yield break;
     }
+    if (hasMinimumWait)
+    {
+      yield return new WaitForSeconds(RebuildPieceMinDelay);
+      RebuildBounds();
+      yield break;
+    }
+    
     // in case the local m_nviewPieces are somehow larger we check.
     var allItems = Math.Max(list.Count, m_nviewPieces.Count);
 
@@ -2337,28 +2340,27 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
     // todo the code below is inefficient. Need to abstract this all to another component that is meant for hashing gameobjects with colliders and iterating through their slices in batches.
 
-    var nvName = netView.name;
-    var nvColliders = netView.GetComponentsInChildren<Collider>(true).ToList();
-    convexHullTriggerColliders = MovementController.DamageColliders
-      .GetComponents<Collider>().ToList();
-
-    if (nvColliders.Count == 0) return;
+    // var nvName = netView.name;
+    // var nvColliders = netView.GetComponentsInChildren<Collider>(true).ToList();
+    // convexHullTriggerColliders = MovementController.DamageColliders
+    //   .GetComponents<Collider>().ToList();
+    //
+    // if (nvColliders.Count == 0) return;
 
 
     // main ship colliders like the generated meshes and onboard collider
-    IgnoreShipColliders(nvColliders);
-    IgnoreWheelColliders(nvColliders);
+    // IgnoreShipColliders(nvColliders);
+    // IgnoreWheelColliders(nvColliders);
 
     // all pieces
-    if (RamPrefabs.IsRam(nvName) || nvName.Contains(PrefabNames.ShipAnchorWood))
-      IgnoreCollidersForList(nvColliders, m_nviewPieces);
+    // if (RamPrefabs.IsRam(nvName) || nvName.Contains(PrefabNames.ShipAnchorWood))
+    //   IgnoreCollidersForList(nvColliders, m_nviewPieces);
 
     // rams must always have new pieces added to their list ignored. So that the new piece does not hit the ram.
-    IgnoreCollidersForRamPieces(netView);
-    IgnoreCollidersForAnchorPieces(netView);
+    // IgnoreCollidersForRamPieces(netView);
+    // IgnoreCollidersForAnchorPieces(netView);
   }
 
-  public static int immediateRebuildPieceThreshold = 5;
   public void AddPiece(ZNetView netView, bool isNew = false)
   {
     if (!(bool)netView)
@@ -2370,11 +2372,9 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     FixPieceMeshes(netView);
     OnAddPieceIgnoreColliders(netView);
     ResetSailCachedValues();
+    
     m_nviewPieces.Add(netView);
     UpdatePieceCount();
-
-    // to be safe(r)?, calling ignore colliders after would allow ignoring all colliders including the current piece, but this means the internal piece colliders now ignore eachother which can regress things.
-    OnAddPieceIgnoreColliders(netView);
 
     // Cache components
     var components = netView.GetComponents<Component>();
@@ -2696,23 +2696,22 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
     vehicleCenter.transform.localPosition = convexHullComponent.GetConvexHullBounds(true).center;
 
-    AddAllChildrenToIgnores(vehicleMovementCollidersTransform);
-    convexHullColliders.Clear();
-    convexHullMeshColliders.Clear();
+    // convexHullColliders.Clear();
+    // convexHullMeshColliders.Clear();
+    //
+    // convexHullMeshes.ForEach((x) =>
+    // {
+    //   var meshCollider = x.GetComponent<MeshCollider>();
+    //   var collider = x.GetComponent<Collider>();
+    //
+    //   if (meshCollider != null) convexHullMeshColliders.Add(meshCollider);
+    //   if (collider != null) convexHullColliders.Add(collider);
+    // });
 
-    convexHullMeshes.ForEach((x) =>
-    {
-      var meshCollider = x.GetComponent<MeshCollider>();
-      var collider = x.GetComponent<Collider>();
-
-      if (meshCollider != null) convexHullMeshColliders.Add(meshCollider);
-      if (collider != null) convexHullColliders.Add(collider);
-    });
-    
-    convexHullTriggerColliders = MovementController.DamageColliders
-      .GetComponentsInChildren<Collider>(true).ToList();
-    convexHullTriggerMeshColliders = MovementController.DamageColliders
-      .GetComponentsInChildren<MeshCollider>(true).ToList();
+    // convexHullTriggerColliders = MovementController.DamageColliders
+    //   .GetComponentsInChildren<Collider>(true).ToList();
+    // convexHullTriggerMeshColliders = MovementController.DamageColliders
+    //   .GetComponentsInChildren<MeshCollider>(true).ToList();
   }
 
   /// <summary>
@@ -2751,6 +2750,10 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   {
     var colliders = gameObject.GetComponentsInChildren<Collider>(true);
     var topLevelCollider = gameObject.GetComponent<Collider>();
+
+    // characters should not skip hitting treads. If this happens we would have to track them so they do not fall on the treads and go through them when exiting vehicle after first time on vehicle.
+    var character = gameObject.GetComponentInParent<Character>();
+    var isCharacter = character != null;
     if (topLevelCollider != null)
     {
       if (colliders == null) colliders = [topLevelCollider];
@@ -2765,6 +2768,11 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     foreach (var collider in colliders)
     foreach (var allVehicleCollider in allVehicleColliders)
     {
+      if (collider.name.StartsWith("tread") && isCharacter)
+      {
+        // skip character collider ignore.
+        continue;
+      }
       Physics.IgnoreCollision(collider, allVehicleCollider, true);
     }
   }
@@ -2866,8 +2874,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
       if (WheelController != null)
       {
-        var convexHullBounds = convexHullComponent.GetConvexHullBounds(true);
-        WheelController.Initialize(convexHullBounds);
+        WheelController.Initialize(_vehiclePieceBounds);
       }
     }
     catch (Exception e)
@@ -2897,7 +2904,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
     foreach (var vehicleRamAoeComponent in vehicleRamAoeComponents)
     {
-      vehicleRamAoeComponent.OnBoundsRebuild();
+      vehicleRamAoeComponent.OnBoundsRebuildStart();
     }
   }
 
@@ -3032,35 +3039,35 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     IgnoreNetViewCollidersForList(netView, m_ramPieces);
   }
 
-  public void IgnoreShipColliderForCollider(Collider collider, bool skipWheelIgnore = false)
-  {
-    if (collider == null) return;
-    foreach (var triggerCollider in convexHullTriggerColliders)
-      Physics.IgnoreCollision(collider, triggerCollider, true);
-    foreach (var triggerMeshCollider in convexHullMeshColliders)
-    {
-      Physics.IgnoreCollision(collider, triggerMeshCollider, true);
-    }
-    foreach (var convexHullMesh in convexHullMeshes)
-      Physics.IgnoreCollision(collider,
-        convexHullMesh.GetComponent<MeshCollider>(),
-        true);
+  // public void IgnoreShipColliderForCollider(Collider collider, bool skipWheelIgnore = false)
+  // {
+  //   if (collider == null) return;
+  //   foreach (var triggerCollider in convexHullTriggerColliders)
+  //     Physics.IgnoreCollision(collider, triggerCollider, true);
+  //   foreach (var triggerMeshCollider in convexHullMeshColliders)
+  //   {
+  //     Physics.IgnoreCollision(collider, triggerMeshCollider, true);
+  //   }
+  //   foreach (var convexHullMesh in convexHullMeshes)
+  //     Physics.IgnoreCollision(collider,
+  //       convexHullMesh.GetComponent<MeshCollider>(),
+  //       true);
+  //
+  //   if (!skipWheelIgnore)
+  //   {
+  //     IgnoreColliderForWheelColliders(collider);
+  //   }
+  //
+  //   if (FloatCollider)
+  //     Physics.IgnoreCollision(collider, FloatCollider, true);
+  //   if (OnboardCollider)
+  //     Physics.IgnoreCollision(collider, OnboardCollider, true);
+  // }
 
-    if (!skipWheelIgnore)
-    {
-      IgnoreColliderForWheelColliders(collider);
-    }
-
-    if (FloatCollider)
-      Physics.IgnoreCollision(collider, FloatCollider, true);
-    if (OnboardCollider)
-      Physics.IgnoreCollision(collider, OnboardCollider, true);
-  }
-
-  public void IgnoreShipColliders(List<Collider> colliders)
-  {
-    foreach (var t in colliders) IgnoreShipColliderForCollider(t);
-  }
+  // public void IgnoreShipColliders(List<Collider> colliders)
+  // {
+  //   foreach (var t in colliders) IgnoreShipColliderForCollider(t);
+  // }
 
   public void IgnoreCameraCollision(List<Collider> colliders)
   {

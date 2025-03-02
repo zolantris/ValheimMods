@@ -2,7 +2,9 @@ using BepInEx.Configuration;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
+using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.Config;
 
@@ -41,6 +43,8 @@ public static class PrefabConfig
     WoodFloor2X2,
     Nautilus
   }
+
+  public static ConfigEntry<float> ExperimentalTreadScaleX = null!;
 
   private const string SectionKey = "PrefabConfig";
 
@@ -95,6 +99,12 @@ public static class PrefabConfig
       ConfigHelpers.CreateConfigDescription(
         "Instead of allowing the viking to use health. The vehicle hauling line will snap when you have zero stamina doing a single one-time damage.", true, false));
 
+    ExperimentalTreadScaleX = Config.Bind(SectionKey,
+      "Experimental_TreadScaleX", 1f,
+      ConfigHelpers.CreateConfigDescription(
+        "Set the tank per tread piece X scale (width). This will make the treads larger or smaller allowing more/less grip.", true, false, new AcceptableValueRange<float>(0.5f, 5f)));
+
+    ExperimentalTreadScaleX.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleStaminaHaulingCost.SettingChanged += (_, __) =>
     {
       VehicleMovementController.staminaHaulCost = VehicleStaminaHaulingCost.Value;

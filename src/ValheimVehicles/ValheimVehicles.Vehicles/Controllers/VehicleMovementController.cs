@@ -412,7 +412,9 @@
       var isCharacterLayer = collision.gameObject.layer == LayerHelpers.CharacterLayer;
       if (isCharacterLayer)
       {
+#if DEBUG
         Logger.LogDebug("Hit character");
+#endif
         vehicleRam.OnCollisionEnterHandler(collision);
       }
       else if (LayerHelpers.IsContainedWithinMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayers))
@@ -938,9 +940,19 @@
     /// </summary>
     public void UpdateVehicleSpeedThrottle()
     {
+      if (!_vehicle) return;
       maxYLinearVelocity = PhysicsConfig.MaxLinearYVelocity.Value;
       m_body.maxLinearVelocity = PhysicsConfig.MaxLinearVelocity.Value;
-      m_body.maxAngularVelocity = PhysicsConfig.MaxAngularVelocity.Value;
+
+      if (_vehicle!.IsLandVehicle)
+      {
+        // heavily throttle turning to prevent infinite spin issues especially uphill.
+        m_body.maxAngularVelocity = Mathf.Min(PhysicsConfig.MaxAngularVelocity.Value, 0.3f);
+      }
+      else
+      {
+        m_body.maxAngularVelocity = PhysicsConfig.MaxAngularVelocity.Value;
+      }
     }
 
     /// <summary>
@@ -1584,7 +1596,9 @@
     {
       m_body.angularDrag = PhysicsConfig.landAngularDrag.Value;
       m_body.drag = PhysicsConfig.landDrag.Value;
-      m_body.maxAngularVelocity = PhysicsConfig.MaxAngularVelocity.Value;
+
+      // heavily throttle turning to prevent infinite spin issues especially uphill.
+      m_body.maxAngularVelocity = Mathf.Min(PhysicsConfig.MaxAngularVelocity.Value, 0.3f);
       m_body.maxLinearVelocity = PhysicsConfig.MaxLinearVelocity.Value;
 
 #if DEBUG

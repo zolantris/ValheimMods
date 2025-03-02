@@ -56,6 +56,7 @@ namespace ValheimVehicles.SharedScripts
     private static readonly float lowAcceleration = 1 * baseAccelerationMultiplier;
 
     public static float minTreadDistances = 0.1f;
+    public float treadWidthXScale = 1f;
 
     [Header("USER Inputs (FOR FORCE EFFECTS")]
     [Tooltip(
@@ -269,6 +270,9 @@ namespace ValheimVehicles.SharedScripts
     public bool IsVehicleReady => _isWheelsInitialized && _isTreadsInitialized && vehicleRootBody; // important catchall for preventing fixedupdate physics from being applied until the vehicle is ready.
     public float wheelColliderRadius => Mathf.Clamp(wheelRadius, 0f, 5f);
 
+    public float treadLateralDamping = 0.01f;
+    public float treadBackwardDamping = 50f;
+    
     [UsedImplicitly]
     public bool IsBraking
     {
@@ -463,6 +467,10 @@ namespace ValheimVehicles.SharedScripts
         treadsLeftTransform.position = vehicleRootBody.transform.TransformPoint(treadsAnchorLeftLocalPosition);
         treadsRightTransform.position = vehicleRootBody.transform.TransformPoint(treadsAnchorRightLocalPosition);
 
+        var scale = new Vector3(1 * treadWidthXScale, 1, 1);
+        treadsLeftTransform.localScale = scale;
+        treadsRightTransform.localScale = scale;
+
         // wheelParent.transform.localPosition = new Vector3(0, bounds.min.y + wheelBottomOffset, 0);
         // treadsLeft.rotation = vehicleRootBody.transform.rotation;
         // treadsRight.rotation = vehicleRootBody.transform.rotation;
@@ -503,8 +511,6 @@ namespace ValheimVehicles.SharedScripts
     }
     public void SmoothAngularVelocity()
     {
-      vehicleRootBody.maxAngularVelocity = maxRotationSpeed;
-
       if (Mathf.Abs(vehicleRootBody.angularVelocity.y) > maxRotationSpeed * 0.75f || !IsUsingEngine)
       {
         vehicleRootBody.angularVelocity = Vector3.SmoothDamp(vehicleRootBody.angularVelocity, new Vector3(vehicleRootBody.angularVelocity.x, vehicleRootBody.angularVelocity.y * 0.75f, vehicleRootBody.angularVelocity.z), ref m_angularVelocitySmoothSpeed, 2f);
@@ -560,6 +566,33 @@ namespace ValheimVehicles.SharedScripts
       }
       SmoothAngularVelocity();
     }
+
+    private void DampUnwantedVelocity(Rigidbody rb, float lateralDamping, float backwardDamping)
+    {
+      if (!rb) return;
+
+      var velocity = rb.velocity;
+      var forwardDir = rb.transform.forward * Mathf.Clamp(inputMovement, -1, 1);
+
+      // Project velocity onto forward direction
+      var forwardSpeed = Vector3.Dot(velocity, forwardDir);
+      var forwardVelocity = forwardDir * forwardSpeed;
+
+      // Compute unwanted velocity (lateral + backward)
+      var unwantedVelocity = velocity - forwardVelocity;
+
+      // Apply counter force to dampen the unwanted velocity
+      var dampingForce = -unwantedVelocity * lateralDamping;
+
+      // Apply additional damping for unwanted backward motion
+      if (forwardSpeed < 0)
+      {
+        dampingForce += forwardDir * (-forwardSpeed * backwardDamping);
+      }
+
+      rb.AddForce(dampingForce, ForceMode.Acceleration);
+    }
+    
     // New method: apply forces directly at the treads to simulate continuous treads
     private void ApplyTreadForces()
     {
@@ -650,6 +683,10 @@ namespace ValheimVehicles.SharedScripts
 
       currentLeftForce = leftForce;
       currentRightForce = rightForce;
+
+      // todo may only use this to replace sideways velocity damping
+      DampUnwantedVelocity(vehicleRootBody, treadLateralDamping, treadBackwardDamping);
+      
       // this removes sideways velocities quickly to prevent issues with vehicle at higher speeds turning.
       DampenSidewaysVelocity();
       DampenAngularYVelocity();
@@ -1482,9 +1519,8 @@ namespace ValheimVehicles.SharedScripts
     private void ApplyDownforce()
     {
       vehicleRootBody.AddForce(-Vector3.up * Gravity, ForceMode.Acceleration);
-      // treadsRightRb.AddForce(-Vector3.up * downforceAmount, ForceMode.Acceleration);
-      // treadsLeftRb.AddForce(-Vector3.up * downforceAmount, ForceMode.Acceleration);
     }
+    
     private void ApplyFrictionToWheelCollider(WheelCollider wheel, float speed)
     {
       var frictionMultiplier = Mathf.Clamp(10f / wheelColliders.Count, 0.7f, 1.5f);

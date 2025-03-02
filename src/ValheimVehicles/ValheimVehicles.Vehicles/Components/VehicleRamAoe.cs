@@ -203,8 +203,8 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     ExclusionPattern = GenerateRegexFromList(PiecesToMoveOnToVehicle);
     rigidbody = GetComponent<Rigidbody>();
   }
-  
-  public void OnBoundsRebuild()
+
+  public void OnBoundsRebuildStart()
   {
     isRebuildingCollisions = true;
     _disableTime = Time.fixedTime + _disableTimeMax;
