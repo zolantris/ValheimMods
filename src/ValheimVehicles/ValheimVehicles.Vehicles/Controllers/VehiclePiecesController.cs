@@ -562,11 +562,10 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   {
     foreach (var mBedPiece in m_bedPieces)
     {
-      if (!(bool)mBedPiece.m_nview) continue;
-
+      if (mBedPiece.m_nview == null) continue;
+      if (mBedPiece.m_nview.m_zdo == null) continue;
       var zdoPosition = mBedPiece.m_nview.m_zdo.GetPosition();
       if (zdoPosition == mBedPiece.m_spawnPoint.position) continue;
-
       mBedPiece.m_spawnPoint.position = zdoPosition;
     }
   }
@@ -964,7 +963,10 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
   private void UpdateBedPiece(Bed mBedPiece)
   {
-    mBedPiece.m_nview.m_zdo.SetPosition(mBedPiece.m_nview.transform.position);
+    var bedNetView = mBedPiece.m_nview;
+    if (bedNetView == null) return;
+    if (bedNetView.m_zdo == null) return;
+    bedNetView.m_zdo.SetPosition(mBedPiece.m_nview.transform.position);
   }
 
   /// <summary>
@@ -1008,13 +1010,15 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     controller.VehicleInstance?.NetView?.m_zdo?.SetPosition(position);
 
 
-    foreach (var nv in controller.m_nviewPieces.ToList())
+    for (var index = 0; index < controller.m_nviewPieces.Count; index++)
     {
+      var nv = controller.m_nviewPieces[index];
       if (!nv)
       {
         Logger.LogError(
           $"Error found with m_pieces: netview {nv}, save removing the piece");
         controller.m_nviewPieces.Remove(nv);
+        index--;
         continue;
       }
 
