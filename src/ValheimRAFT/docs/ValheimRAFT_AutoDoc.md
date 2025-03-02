@@ -357,8 +357,8 @@
 - Description: Instead of allowing the viking to use health. The vehicle hauling line will snap when you have zero stamina doing a single one-time damage.
 - Default Value: False
 
-### Experimental_TreadWidth 
-- Description: Set the tank tread width. This will make the treads larger or smaller allowing more/less grip.
+### Experimental_TreadScaleX 
+- Description: Set the tank per tread piece X scale (width). This will make the treads larger or smaller allowing more/less grip.
 - Default Value: 1
 
 ## Vehicle Debugging

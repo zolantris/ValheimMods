@@ -46,8 +46,10 @@ public static class VehicleDebugConfig
   public static ConfigEntry<float>
     VehicleBoundsRebuildDelayPerPiece { get; private set; } = null!;
 
+#if DEBUG
   public static ConfigEntry<bool>
     DisableVehicleCube { get; private set; } = null!;
+#endif
 
   public static ConfigEntry<float> AutoAnchorDelayTime { get; private set; } =
     null!;
@@ -156,12 +158,17 @@ public static class VehicleDebugConfig
         $"The delay time that is added per piece the vehicle has on it for recalculating vehicle bounds. Example 2000 * 0.02 = 40seconds delay.  Values are clamped at {VehiclePiecesController.RebuildPieceMinDelay} and max value: {VehiclePiecesController.RebuildPieceMaxDelay} so even smaller vehicles rebuild at the min value and large >2k piece vehicles build at the max value.",
         false, true, new AcceptableValueRange<float>(0.001f, 0.1f)));
 
+#if DEBUG
     DisableVehicleCube = Config.Bind(VehiclePiecesSectionName,
       "DisableVehicleCube", false,
       ConfigHelpers.CreateConfigDescription(
         $"The raft will no longer be a cube. It will place pieces in world position. This will allow for teleporting and other rapid location / login fixes to work better. It might cause large vehicles to clip/break if they are rendered out of a zone.",
         true, true));
-
+    DisableVehicleCube.SettingChanged += (sender, args) =>
+    {
+      VehiclePiecesController.CanUseActualPiecePosition = DisableVehicleCube.Value;
+    };
+#endif
     HasDebugSails = Config.Bind("Debug", "HasDebugSails", false,
       ConfigHelpers.CreateConfigDescription(
         "Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only.",
@@ -173,11 +180,7 @@ public static class VehicleDebugConfig
     VehicleConfigWindowPosY = Config.Bind(SectionName, "ConfigWindowPosY", 0f);
     ButtonFontSize = Config.Bind(SectionName, "ButtonFontSize", 16);
     TitleFontSize = Config.Bind(SectionName, "LabelFontSize", 22);
-
-    DisableVehicleCube.SettingChanged += (sender, args) =>
-    {
-      VehiclePiecesController.CanUseActualPiecePosition = DisableVehicleCube.Value;
-    };
+    
     VehicleBoundsRebuildDelayPerPiece.SettingChanged += (sender, args) =>
     {
       VehiclePiecesController.BoundsDelayPerPiece = VehicleBoundsRebuildDelayPerPiece.Value;
