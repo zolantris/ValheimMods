@@ -13,6 +13,8 @@ public static class PatchConfig
 
   public static ConfigEntry<bool> PlanBuildPatches { get; set; }
 
+  public static ConfigEntry<bool> MineRockPatch { get; set; }
+
 
   public static ConfigEntry<bool> ComfyGizmoPatchCreativeHasNoRotation
   {
@@ -56,14 +58,15 @@ public static class PatchConfig
     PlanBuildPatches = Config.Bind<bool>("Patches",
       "Enable PlanBuild Patches (required to be on if you installed PlanBuild)",
       false,
-      new ConfigDescription(
-        "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT. PlanBuild mod can be found here. https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/",
-        (AcceptableValueBase)null, new object[1]
-        {
-          (object)new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = false
-          }
-        }));
+      ConfigHelpers.CreateConfigDescription(
+        "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT. PlanBuild mod can be found here. https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/", true));
+
+    MineRockPatch = Config.Bind<bool>("Patches",
+      "Ram MineRock patches",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "Enable MineRock5 patches to so vehicle and rams prefabs do not trigger errors when hitting areas over the default radius size"
+        , true));
+
   }
 }

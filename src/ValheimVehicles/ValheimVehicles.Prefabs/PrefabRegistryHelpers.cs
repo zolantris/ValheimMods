@@ -97,6 +97,30 @@ public abstract class PrefabRegistryHelpers
       });
   }
 
+  /// <summary>
+  /// Another cube like controller for bounds setting for a vehicle
+  /// </summary>
+  private static void RegisterVehicleBoundsControllerPieces()
+  {
+    PieceDataDictionary.Add(PrefabNames.CustomTreadDistanceCreator,
+      new PieceData
+      {
+        Name = "$valheim_vehicles_custom_tread_distance",
+        Description = "$valheim_vehicles_tread_distance_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .TankTreadIcon)
+      });
+
+    PieceDataDictionary.Add(PrefabNames.CustomVehicleMaxCollisionHeightCreator,
+      new PieceData
+      {
+        Name = "$valheim_vehicles_tread_distance",
+        Description = "$valheim_vehicles_tread_distance_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .TankTreadIcon)
+      });
+  }
+
   private static void RegisterRamPieces()
   {
     int[] ramSizes = [1, 2];
@@ -336,6 +360,8 @@ public abstract class PrefabRegistryHelpers
     PieceLayer = LayerMask.NameToLayer("piece");
 
     RegisterCustomMeshPieces();
+    RegisterVehicleBoundsControllerPieces();
+    
     RegisterRamPieces();
     RegisterExternalShips();
 

@@ -22,7 +22,7 @@ using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles.Components;
 
-public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
+public class VehicleGui : SingletonBehaviour<VehicleGui>
 {
   private GUIStyle? myButtonStyle;
   private string ShipMovementOffsetText;
@@ -38,6 +38,15 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     return new Vector3(x, y, z);
   }
 
+
+  // todo translate this
+  public const string vehicleCommandsHide = "Vehicle Commands (Hide)";
+  public const string vehicleCommandsShow = "Vehicle Commands (Show)";
+
+  // todo translate this
+  public const string vehicleConfigHide = "Vehicle Config (Hide)";
+  public const string vehicleConfigShow = "Vehicle Config (Show)";
+
   public static bool vehicleDebugPhysicsSync = true;
 
   private int buttonFontSize = 16;
@@ -48,11 +57,21 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
   private GUIStyle labelStyle;
 
-  private GameObject devCommandsWindow;
-  private GameObject modderCommandsWindow;
-  private GameObject modderCommandToggleWindow;
-  private List<GameObject> modderCommandsPanelToggleObjects = [];
-  private List<GameObject> devCommandsPanelToggleObjects = [];
+  // private GameObject devCommandsWindow;
+  public static bool hasCommandsWindowOpened = false;
+  public static bool hasConfigPanelOpened = false;
+
+
+  private GameObject configWindow;
+  private GameObject commandsWindow;
+
+  private GameObject commandsToggleWindow;
+  private GameObject configToggleWindow;
+
+  private List<GameObject> commandsPanelToggleObjects = [];
+  // private List<GameObject> devCommandsPanelToggleObjects = [];
+  private List<GameObject> configPanelToggleObjects = [];
+  
   private bool hasInitialized = false;
 
   private const int panelHeight = 500;
@@ -83,62 +102,88 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
   private void OnDisable()
   {
-    devCommandsPanelToggleObjects.Clear();
-    modderCommandsPanelToggleObjects.Clear();
-    if (devCommandsWindow != null) Destroy(devCommandsWindow);
-    if (modderCommandsWindow != null) Destroy(modderCommandsWindow);
+    // devCommandsPanelToggleObjects.Clear();
+    commandsPanelToggleObjects.Clear();
+    configPanelToggleObjects.Clear();
+    if (commandsWindow != null) Destroy(commandsWindow);
+    if (configWindow != null) Destroy(configWindow);
   }
 
   public bool lastPanelState = false;
 
-  public static void HideOrShowPanel(bool isVisible)
+  public static void ToggleConfigPanelState(bool shouldHideShowButton = false)
+  {
+    hasConfigPanelOpened = !hasConfigPanelOpened;
+    HideOrShowVehicleConfigPanel(hasConfigPanelOpened, shouldHideShowButton);
+  }
+
+  public static void SetConfigPanelState(bool val)
+  {
+    hasConfigPanelOpened = val;
+    HideOrShowVehicleConfigPanel(val, true);
+  }
+
+  public void HideOrShowPanel(bool isVisible, bool shouldDeactivateToggleButton, ref GameObject toggleWindow, ref GameObject panelWindow, ref List<GameObject> toggleObjects)
   {
     if (Instance == null) return;
-    if (Instance.devCommandsWindow)
+    if (toggleWindow == null || panelWindow == null)
     {
-      Instance.devCommandsWindow.SetActive(isVisible);
-      Instance.devCommandsPanelToggleObjects.ForEach((x) =>
+      InitPanel();
+    }
+    
+    if (toggleWindow != null && shouldDeactivateToggleButton)
+    {
+      toggleWindow.SetActive(isVisible);
+    }
+
+    if (panelWindow != null)
+    {
+      panelWindow.SetActive(isVisible);
+      toggleObjects.ForEach((x) =>
       {
+        if (x == null) return;
         x.SetActive(isVisible);
       });
     }
-
-    if (Instance.modderCommandsWindow)
-    {
-      Instance.modderCommandsWindow.SetActive(isVisible);
-    }
   }
 
-  private void TogglePanelState()
+  public static void HideOrShowDebugCommandPanel(bool isVisible, bool shouldDeactivateToggleButton = false)
   {
-    var state = !hasInitialized || !modderCommandsWindow.activeSelf;
-    HideOrShowPanel(state);
+    if (Instance == null) return;
+    Instance.HideOrShowPanel(isVisible, shouldDeactivateToggleButton, ref Instance.commandsToggleWindow, ref Instance.commandsWindow, ref Instance.commandsPanelToggleObjects);
   }
 
-  private void InitPanel()
+  public static void HideOrShowVehicleConfigPanel(bool isVisible, bool shouldDeactivateToggleButton = false)
   {
-    if (GUIManager.Instance == null)
+    if (Instance == null) return;
+    Instance.HideOrShowPanel(isVisible, shouldDeactivateToggleButton, ref Instance.configToggleWindow, ref Instance.configWindow, ref Instance.configPanelToggleObjects);
+  }
+
+  public static void SetCommandsPanelState(bool val)
+  {
+    hasCommandsWindowOpened = val;
+    HideOrShowVehicleConfigPanel(val, true);
+  }
+
+  public static void ToggleCommandsPanelState()
+  {
+    hasCommandsWindowOpened = !hasCommandsWindowOpened;
+    HideOrShowDebugCommandPanel(hasCommandsWindowOpened, true);
+  }
+
+  public void InitPanel()
+  {
+    if (GUIManager.Instance == null || GUIManager.CustomGUIFront == null)
     {
-      Logger.LogError("GUIManager instance is null");
       return;
     }
 
-    if (!GUIManager.CustomGUIFront)
-    {
-      Logger.LogError("GUIManager CustomGUI is null");
-      return;
-    }
+    CreateCommandsShortcutPanel();
+    CreateVehicleConfigShortcutPanel();
 
-    CreateShortcutPanel();
-
-    if (VehicleDebugConfig.VehicleDebugMenuEnabled.Value)
-    {
-      HideOrShowPanel(true);
-    }
-    else
-    {
-      TogglePanelState();
-    }
+    HideOrShowDebugCommandPanel(hasCommandsWindowOpened);
+    HideOrShowVehicleConfigPanel(hasConfigPanelOpened);
+    
     hasInitialized = true;
   }
 
@@ -148,8 +193,47 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     public Action action;
   }
 
+  public struct InputAction
+  {
+    public string title;
+    public string description;
+    public Action saveAction;
+    public Action resetAction;
+  }
 
-  private static List<ButtonAction> buttonActions =
+  public VehicleShip? targetInstance;
+
+  private ButtonAction GetCurrentVehicleButtonAction = new()
+  {
+    title = "Update current vehicle",
+    action = () =>
+    {
+      if (Instance == null) return;
+      var piecesController = VehicleDebugHelpers.GetVehiclePiecesController();
+      if (piecesController == null)
+      {
+        Instance.targetInstance = null;
+        return;
+      }
+      Instance.targetInstance = piecesController.VehicleInstance?.Instance;
+    }
+  };
+
+  private static List<InputAction> configSections =
+  [
+    new()
+    {
+      title = "Treads Max Width",
+      description = "Set the max width of treads",
+      saveAction = () =>
+      {
+      },
+      resetAction = () => {}
+    }
+  ];
+
+
+  private static List<ButtonAction> commandButtonActions =
   [
     new()
     {
@@ -185,8 +269,67 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     {
       title = "Toggle Ocean Sway",
       action = VehicleCommands.VehicleToggleOceanSway
+    },
+    new()
+    {
+      title = "Rebuild Bounds",
+      action = () =>
+      {
+        var vpc = VehicleDebugHelpers.GetVehiclePiecesController();
+        if (vpc == null)
+          return;
+        vpc.ForceRebuildBounds();
+      }
+    },
+#if DEBUG
+    new()
+    {
+      title = "Config",
+      action = () =>
+      {
+        ToggleConfigPanelState(true);
+      }
     }
+#endif
   ];
+
+  public GameObject AddInputWithAction(InputAction inputAction, int index, float StartHeight, Transform windowTransform)
+  {
+
+    var buttonObj = GUIManager.Instance.CreateInputField(
+      windowTransform,
+      new Vector2(0.5f, 0.5f),
+      new Vector2(0.5f, 0.5f),
+      new Vector2(0, StartHeight - index * buttonHeight),
+      InputField.ContentType.IntegerNumber, "8"
+    );
+    buttonObj.SetActive(true);
+    // Add a listener to the button to close the panel again
+    var inputField = buttonObj.GetComponent<InputField>();
+    // var text = buttonObj.GetComponent<Text>();?
+    // if (inputField != null && inputField.placeholder)
+    // {
+    //   inputField.placeholder.textfontSize = buttonFontSize;
+    // }
+    inputField.onSubmit.AddListener((x) =>
+    {
+      var intString = float.TryParse(x, out var value);
+      if (intString)
+      {
+        Logger.LogDebug($"Converted string to float {value}");
+      }
+      else
+      {
+        Logger.LogDebug($"Not a string {x}");
+      }
+    });
+
+    // button.OnSubmit(() =>
+    // {
+    //   return inputAction.saveAction;
+    // });
+    return buttonObj;
+  }
 
 
   public GameObject AddButtonWithAction(ButtonAction buttonAction, int index, float StartHeight, Transform windowTransform)
@@ -213,17 +356,17 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     return buttonObj;
   }
 
-  private GameObject CreateModderCommandsTogglePanel()
+  private GameObject CreateConfigTogglePanel()
   {
     var panel = DefaultControls.CreatePanel(
       GUIManager.Instance.ValheimControlResources
     );
-    panel.name = "ValheimVehicles_modderCommandsWindow_commands";
+    panel.name = "ValheimVehicles_configWindow";
     var dragWindowExtension = panel.AddComponent<DragWindowCntrlExtension>();
     panel.transform.SetParent(GUIManager.CustomGUIFront.transform, false);
     panel.GetComponent<Image>().pixelsPerUnitMultiplier = 1f;
     var panelTransform = (RectTransform)panel.transform;
-    panelTransform.anchoredPosition = new Vector2(VehicleDebugConfig.WindowPosX.Value, VehicleDebugConfig.WindowPosY.Value);
+    panelTransform.anchoredPosition = new Vector2(VehicleDebugConfig.VehicleConfigWindowPosX.Value, VehicleDebugConfig.VehicleConfigWindowPosY.Value);
     panelTransform.anchorMin = anchorMin;
     panelTransform.anchorMax = anchorMax;
 
@@ -233,27 +376,59 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     dragWindowExtension.OnDragCalled += () =>
     {
       var anchoredPosition = panelTransform.anchoredPosition;
-      VehicleDebugConfig.WindowPosX.Value = anchoredPosition.x;
-      VehicleDebugConfig.WindowPosY.Value = anchoredPosition.y;
+      VehicleDebugConfig.VehicleConfigWindowPosX.Value = anchoredPosition.x;
+      VehicleDebugConfig.VehicleConfigWindowPosY.Value = anchoredPosition.y;
     };
-    // Create the text object
-    // GUIManager.Instance.CreateText(
-    //   "Vehicle Shortcuts",
-    //   panel.transform,
-    //   new Vector2(0.5f, 0.5f),
-    //   new Vector2(0.5f, 0.5f),
-    //   new Vector2(0f, 0f),
-    //   GUIManager.Instance.AveriaSerifBold,
-    //   titleFontSize,
-    //   GUIManager.Instance.ValheimOrange,
-    //   true,
-    //   Color.black,
-    //   200f,
-    //   buttonHeight,
-    //   true);
 
-    const string vehicleCommandsHide = "VehicleCommands (Hide)";
-    const string vehicleCommandsShow = "VehicleCommands (Show)";
+    // Create the button object above the gui manager. So it can hide itself.
+    var buttonObject = GUIManager.Instance.CreateButton(
+      vehicleConfigHide,
+      panel.transform,
+      new Vector2(0.5f, 0.5f),
+      new Vector2(0.5f, 0.5f),
+      new Vector2(0, 0),
+      buttonWidth,
+      buttonHeight);
+    buttonObject.SetActive(true);
+    var buttonText = buttonObject.GetComponentInChildren<Text>();
+
+    // Add a listener to the button to close the panel again
+    var button = buttonObject.GetComponent<Button>();
+    button.onClick.AddListener(() =>
+    {
+      var nextState = !configWindow.activeSelf;
+      buttonText.text = nextState ? vehicleConfigHide : vehicleConfigShow;
+      HideOrShowVehicleConfigPanel(nextState);
+    });
+
+    panel.SetActive(false);
+
+    return panel;
+  }
+
+  private GameObject CreateCommandsTogglePanel()
+  {
+    var panel = DefaultControls.CreatePanel(
+      GUIManager.Instance.ValheimControlResources
+    );
+    panel.name = "ValheimVehicles_commandsWindow";
+    var dragWindowExtension = panel.AddComponent<DragWindowCntrlExtension>();
+    panel.transform.SetParent(GUIManager.CustomGUIFront.transform, false);
+    panel.GetComponent<Image>().pixelsPerUnitMultiplier = 1f;
+    var panelTransform = (RectTransform)panel.transform;
+    panelTransform.anchoredPosition = new Vector2(VehicleDebugConfig.CommandsWindowPosX.Value, VehicleDebugConfig.CommandsWindowPosY.Value);
+    panelTransform.anchorMin = anchorMin;
+    panelTransform.anchorMax = anchorMax;
+
+    panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, panelWidth);
+    panelTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, buttonHeight);
+
+    dragWindowExtension.OnDragCalled += () =>
+    {
+      var anchoredPosition = panelTransform.anchoredPosition;
+      VehicleDebugConfig.CommandsWindowPosX.Value = anchoredPosition.x;
+      VehicleDebugConfig.CommandsWindowPosY.Value = anchoredPosition.y;
+    };
     // Create the button object above the gui manager. So it can hide itself.
     var buttonObject = GUIManager.Instance.CreateButton(
       vehicleCommandsHide,
@@ -270,47 +445,65 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
     var button = buttonObject.GetComponent<Button>();
     button.onClick.AddListener(() =>
     {
-      var nextState = !modderCommandsWindow.activeSelf;
+      var nextState = !commandsWindow.activeSelf;
       buttonText.text = nextState ? vehicleCommandsHide : vehicleCommandsShow;
-      HideOrShowPanel(nextState);
+      HideOrShowDebugCommandPanel(nextState);
     });
+
+    panel.SetActive(false);
 
     return panel;
   }
 
-
-  private void CreateShortcutPanel()
+  private void CreateVehicleConfigShortcutPanel()
   {
-    if (modderCommandsWindow != null) return;
+    if (configToggleWindow != null && configWindow != null) return;
 
-    modderCommandToggleWindow = CreateModderCommandsTogglePanel();
+    configToggleWindow = CreateConfigTogglePanel();
 
-    var panelDrag = modderCommandToggleWindow.GetComponent<DragWindowCntrlExtension>();
-    var dynamicPanelHeight = buttonActions.Count * buttonHeight + buttonActions.Count * 5;
-    modderCommandsWindow = GUIManager.Instance.CreateWoodpanel(
-      modderCommandToggleWindow.transform,
+    var dynamicPanelHeight = configSections.Count * buttonHeight + configSections.Count * 5;
+    configWindow = GUIManager.Instance.CreateWoodpanel(
+      configToggleWindow.transform,
+      new Vector2(0.5f, 0f),
+      new Vector2(0.5f, 0f),
+      new Vector2(0, -(dynamicPanelHeight / 2 + 15f)),
+      500f,
+      Math.Min(1000f, Screen.height * 0.8f),
+      true);
+    configWindow.SetActive(false);
+
+    var startHeight = dynamicPanelHeight / 2f - buttonHeight / 2;
+    for (var index = 0; index < configSections.Count; index++)
+    {
+      var inputAction = configSections[index];
+      var obj = AddInputWithAction(inputAction, index, startHeight, configWindow.transform);
+      configPanelToggleObjects.Add(obj);
+    }
+  }
+
+  private void CreateCommandsShortcutPanel()
+  {
+    if (commandsToggleWindow != null) return;
+
+    commandsToggleWindow = CreateCommandsTogglePanel();
+
+    var dynamicPanelHeight = commandButtonActions.Count * buttonHeight + commandButtonActions.Count * 5;
+    commandsWindow = GUIManager.Instance.CreateWoodpanel(
+      commandsToggleWindow.transform,
       new Vector2(0.5f, 0f),
       new Vector2(0.5f, 0f),
       new Vector2(0, -(dynamicPanelHeight / 2 + 15f)),
       panelWidth,
       dynamicPanelHeight,
       false);
-    modderCommandsWindow.SetActive(false);
-    var modderCommandsPanelOffset = -(Vector3.up * (dynamicPanelHeight / 2f));
-
-    // panelDrag.OnDragCalled = () =>
-    // {
-    //   modderCommandsWindow.transform.position = modderCommandToggleWindow.transform.position + modderCommandsPanelOffset;
-    // };
-
-    // modderCommandsWindow.transform.position = modderCommandToggleWindow.transform.position + modderCommandsPanelOffset;
+    commandsWindow.SetActive(false);
 
     var startHeight = dynamicPanelHeight / 2f - buttonHeight / 2;
-    for (var index = 0; index < buttonActions.Count; index++)
+    for (var index = 0; index < commandButtonActions.Count; index++)
     {
-      var buttonAction = buttonActions[index];
-      var obj = AddButtonWithAction(buttonAction, index, startHeight, modderCommandsWindow.transform);
-      modderCommandsPanelToggleObjects.Add(obj);
+      var buttonAction = commandButtonActions[index];
+      var obj = AddButtonWithAction(buttonAction, index, startHeight, commandsWindow.transform);
+      commandsPanelToggleObjects.Add(obj);
     }
   }
 
@@ -466,16 +659,5 @@ public class VehicleDebugGui : SingletonBehaviour<VehicleDebugGui>
 
     GUILayout.EndArea();
 #endif
-  }
-
-  private void OnGUI()
-  {
-    myButtonStyle ??= new GUIStyle(GUI.skin.button)
-    {
-      fontSize = 50
-    };
-
-    // DrawDeveloperDebugCommandsWindow();
-    // DrawVehicleDebugCommandsMenu();
   }
 }

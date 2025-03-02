@@ -35,6 +35,9 @@ public static class VehicleZdoVars
   public static readonly int VehicleOceanSway =
     "VehicleOceanSway".GetStableHashCode();
 
+  public static readonly int VehicleTreadWidth =
+    "VehicleTreadWidth".GetStableHashCode();
+
   public static readonly KeyValuePair<int, int> MBParentHash =
     ZDO.GetHashZDOID("MBParent");
 

@@ -1,6 +1,6 @@
-using System;
 using BepInEx.Configuration;
 using ValheimRAFT;
+using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using Zolantris.Shared;
 
@@ -10,16 +10,29 @@ public static class VehicleDebugConfig
 {
   public static ConfigFile? Config { get; private set; }
 
-  public static ConfigEntry<float> WindowPosX;
+  public static ConfigEntry<bool> AllowDebugCommandsForNonAdmins;
+  public static ConfigEntry<bool> AllowEditCommandsForNonAdmins;
 
-  public static ConfigEntry<float> WindowPosY;
+  public static ConfigEntry<float> CommandsWindowPosX;
+
+  public static ConfigEntry<float> CommandsWindowPosY;
+
+  public static ConfigEntry<float> VehicleConfigWindowPosX;
+
+  public static ConfigEntry<float> VehicleConfigWindowPosY;
 
   public static ConfigEntry<int> ButtonFontSize;
 
   public static ConfigEntry<int> TitleFontSize;
 
+  public static ConfigEntry<bool> HasDebugSails { get; set; }
+
+
   public static ConfigEntry<bool>
     AutoShowVehicleColliders { get; private set; } = null!;
+
+
+  public static float OriginalCameraZoomOutDistance = 8f;
 
   public static ConfigEntry<bool>
     HasAutoAnchorDelay { get; private set; } = null!;
@@ -30,23 +43,20 @@ public static class VehicleDebugConfig
   public static ConfigEntry<float>
     DebugMetricsTimer { get; private set; } = null!;
 
-  public static ConfigEntry<int>
-    VehiclePieceBoundsRecalculationDelay { get; private set; } = null!;
+  public static ConfigEntry<float>
+    VehicleBoundsRebuildDelayPerPiece { get; private set; } = null!;
+
+#if DEBUG
+  public static ConfigEntry<bool>
+    DisableVehicleCube { get; private set; } = null!;
+#endif
 
   public static ConfigEntry<float> AutoAnchorDelayTime { get; private set; } =
     null!;
 
-  // public static ConfigEntry<bool>
-  //   ForceTakeoverShipControls { get; private set; } = null!;
-
-  public static ConfigEntry<bool>
-    PositionAutoFix { get; private set; } = null!;
-
-  public static ConfigEntry<float>
-    PositionAutoFixThreshold { get; private set; } = null!;
-
   public static ConfigEntry<bool>
     VehicleDebugMenuEnabled { get; private set; } = null!;
+
 
   public static ConfigEntry<bool> SyncShipPhysicsOnAllClients
   {
@@ -56,11 +66,11 @@ public static class VehicleDebugConfig
 
 
   private const string SectionName = "Vehicle Debugging";
+  private const string VehiclePiecesSectionName = "Vehicle Pieces";
 
   private static void OnShowVehicleDebugMenuChange()
   {
-    ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui(VehicleDebugMenuEnabled
-      .Value);
+    ValheimRaftPlugin.Instance.AddRemoveVehicleGui();
   }
 
   private static void OnMetricsUpdate()
@@ -72,9 +82,33 @@ public static class VehicleDebugConfig
     }
   }
 
+  private static void OnToggleVehicleDebugMenu()
+  {
+    if (VehicleGui.Instance == null)
+    {
+      ValheimRaftPlugin.Instance.AddRemoveVehicleGui();
+    }
+    else
+    {
+      VehicleGui.Instance.InitPanel();
+      VehicleGui.SetCommandsPanelState(VehicleDebugMenuEnabled.Value);
+    }
+  }
+
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
+
+    AllowDebugCommandsForNonAdmins = config.Bind(SectionName, "AllowDebugCommandsForNonAdmins",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "Will will allow all debug commands for non-admins. Turning this to false will only allow debug (cheat) commands if the user is an admin.",
+        true, true));
+    AllowEditCommandsForNonAdmins = config.Bind(SectionName, "AllowDebugCommandsForNonAdmins",
+      true,
+      ConfigHelpers.CreateConfigDescription(
+        "This will allow non-admins the ability to use vehicle creative to edit their vehicle. Non-admins can still use vehicle sway and config commands to edit their ship. This config is provided to improve realism at the cost of convenience.",
+        true, true));
 
     DebugMetricsEnabled = config.Bind(SectionName, "DebugMetricsEnabled",
       false,
@@ -111,41 +145,52 @@ public static class VehicleDebugConfig
         "Enable the VehicleDebugMenu. This shows a GUI menu which has a few shortcuts to debugging/controlling vehicles.",
         true, true));
 
-    PositionAutoFix = config.Bind(SectionName,
-      "UNSTABLE_PositionAutoFix",
-      false,
-      ConfigHelpers.CreateConfigDescription(
-        "UNSTABLE due to vehicle center point shifting and not being in center of actual vehicle pieces - Automatically moves the vehicle if buried/stuck underground. The close to 0 the closer it will be to teleporting the vehicle above the ground. The higher the number the more lenient it is. Recommended to keep this number above 10. Lower can make the vehicle trigger an infinite loop of teleporting upwards and then falling and re-telporting while gaining velocity",
-        true, true));
-    PositionAutoFixThreshold = config.Bind(SectionName,
-      "positionAutoFixThreshold",
-      5f,
-      ConfigHelpers.CreateConfigDescription(
-        "Threshold for autofixing stuck vehicles. Large values are less accurate but smaller values may trigger the autofix too frequently",
-        true, true, new AcceptableValueRange<float>(0, 10f)));
-
     SyncShipPhysicsOnAllClients =
-      Config.Bind("Debug", "SyncShipPhysicsOnAllClients", false,
+      Config.Bind(SectionName, "SyncShipPhysicsOnAllClients", false,
         ConfigHelpers.CreateConfigDescription(
-          "Makes all clients sync physics",
+          "Makes all clients sync physics. This will likely cause a desync in physics but could fix some problems with physics not updating in time for some clients as all clients would control physics.",
           true, true));
 
-    VehiclePieceBoundsRecalculationDelay = Config.Bind("Debug",
-      "VehiclePieceBoundsRecalculationDelay", 10,
+    // todo possibly move this config-value to a vehicleConfig or vehiclePieceConfig file
+    VehicleBoundsRebuildDelayPerPiece = Config.Bind(VehiclePiecesSectionName,
+      "VehicleBoundsRebuildDelayPerPiece", 0.02f,
       ConfigHelpers.CreateConfigDescription(
-        "The delay time at which the vehicle will recalculate bounds after placing a piece. This recalculation can be a bit heavy so it's debounced a minimum of 1 seconds but could be increased up to 30 seconds for folks that want to build a pause for a bit.",
-        false, true, new AcceptableValueRange<int>(1, 30)));
+        $"The delay time that is added per piece the vehicle has on it for recalculating vehicle bounds. Example 2000 * 0.02 = 40seconds delay.  Values are clamped at {VehiclePiecesController.RebuildPieceMinDelay} and max value: {VehiclePiecesController.RebuildPieceMaxDelay} so even smaller vehicles rebuild at the min value and large >2k piece vehicles build at the max value.",
+        false, true, new AcceptableValueRange<float>(0.001f, 0.1f)));
 
-    WindowPosX = Config.Bind(SectionName, "WindowPosX", 0f);
-    WindowPosY = Config.Bind(SectionName, "WindowPosY", 0f);
+#if DEBUG
+    DisableVehicleCube = Config.Bind(VehiclePiecesSectionName,
+      "DisableVehicleCube", false,
+      ConfigHelpers.CreateConfigDescription(
+        $"The raft will no longer be a cube. It will place pieces in world position. This will allow for teleporting and other rapid location / login fixes to work better. It might cause large vehicles to clip/break if they are rendered out of a zone.",
+        true, true));
+    DisableVehicleCube.SettingChanged += (sender, args) =>
+    {
+      VehiclePiecesController.CanUseActualPiecePosition = DisableVehicleCube.Value;
+    };
+#endif
+    HasDebugSails = Config.Bind("Debug", "HasDebugSails", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only.",
+        false, true));
+    
+    CommandsWindowPosX = Config.Bind(SectionName, "CommandsWindowPosX", 0f);
+    CommandsWindowPosY = Config.Bind(SectionName, "CommandsWindowPosY", 0f);
+    VehicleConfigWindowPosX = Config.Bind(SectionName, "ConfigWindowPosX", 0f);
+    VehicleConfigWindowPosY = Config.Bind(SectionName, "ConfigWindowPosY", 0f);
     ButtonFontSize = Config.Bind(SectionName, "ButtonFontSize", 16);
     TitleFontSize = Config.Bind(SectionName, "LabelFontSize", 22);
-
+    
+    VehicleBoundsRebuildDelayPerPiece.SettingChanged += (sender, args) =>
+    {
+      VehiclePiecesController.BoundsDelayPerPiece = VehicleBoundsRebuildDelayPerPiece.Value;
+    };
     // onChanged
     AutoShowVehicleColliders.SettingChanged +=
       (_, _) => OnShowVehicleDebugMenuChange();
     DebugMetricsEnabled.SettingChanged += (_, _) => OnMetricsUpdate();
     DebugMetricsTimer.SettingChanged +=
       (_, _) => OnMetricsUpdate();
+    VehicleDebugMenuEnabled.SettingChanged += (_, _) => OnToggleVehicleDebugMenu();
   }
 }

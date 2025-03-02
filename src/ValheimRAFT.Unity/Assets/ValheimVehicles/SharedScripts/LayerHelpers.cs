@@ -17,6 +17,8 @@ namespace ValheimVehicles.SharedScripts
     public const int CustomRaftLayer = 29;
 
     public static int TerrainLayer = LayerMask.NameToLayer("terrain");
+    public static int UILayer = LayerMask.NameToLayer("UI");
+    public static int PieceLayer = LayerMask.NameToLayer("piece");
 
     public static LayerMask CustomRaftLayerMask =
       LayerMask.GetMask(LayerMask.LayerToName(CustomRaftLayer));

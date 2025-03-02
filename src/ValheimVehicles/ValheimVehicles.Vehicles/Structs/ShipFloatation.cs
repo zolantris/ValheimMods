@@ -9,6 +9,7 @@ public struct ShipFloatation
   public Vector3 ShipLeft;
   public Vector3 ShipRight;
   public bool IsAboveBuoyantLevel;
+  public float BuoyancySpeedMultiplier;
   public bool IsInvalid; // for floating values that are in extreme negatives.
   public float CurrentDepth; // a positive number for below water. A negative number above the water
   public float WaterLevelLeft;
@@ -24,4 +25,7 @@ public struct ShipFloatation
   // averages
   public float AverageWaterHeight;
   public float AverageGroundLevel;
+  // max values
+  public float MaxWaterHeight;
+  public float MaxGroundLevel;
 }

@@ -6,6 +6,7 @@ using UnityEngine;
 using ValheimVehicles.Attributes;
 using ValheimVehicles.Config;
 using ValheimVehicles.Patches;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Controllers;
@@ -22,6 +23,46 @@ public static class WaterZoneUtils
     new(@"^Player\(Clone\)$");
 
   private static Regex _underwaterAllowList = _waterZoneRegexDefault;
+  public static Dictionary<Character, List<ContactPoint>> CharacterExcludedContactPoints = new();
+
+  public static void IgnoreColliderIfAttachedAndOnVehicle(Character character, Collision collision)
+  {
+    if (collision.contactCount < 1) return;
+    if (!character.IsAttached() || !character.transform.root.name.StartsWith(PrefabNames.VehiclePiecesContainer))
+    {
+      return;
+    }
+    var firstContactPoint = collision.contacts[0];
+
+    var exists = CharacterExcludedContactPoints.TryGetValue(character, out var contactPoints);
+    if (!exists)
+    {
+      CharacterExcludedContactPoints[character] = [firstContactPoint];
+    }
+    else
+    {
+      CharacterExcludedContactPoints[character].Add(firstContactPoint);
+    }
+
+    Physics.IgnoreCollision(firstContactPoint.thisCollider, firstContactPoint.otherCollider, true);
+  }
+
+  public static void RestoreColliderCollisionsAfterDetach(Character character)
+  {
+    var exists = CharacterExcludedContactPoints.TryGetValue(character, out var contactPoints);
+    if (!exists) return;
+
+    if (contactPoints != null)
+    {
+      contactPoints.ForEach(x =>
+      {
+        if (x.otherCollider == null || x.otherCollider == null) return;
+        Physics.IgnoreCollision(x.thisCollider, x.otherCollider, false);
+      });
+    }
+    CharacterExcludedContactPoints.Remove(character);
+  }
+
 
   // helpers
   public static void IsInLiquidSwimDepth(Character character, ref bool result)
@@ -112,7 +153,7 @@ public static class WaterZoneUtils
 
     var isCharacterStandingOnVehicle =
       HasShipUnderneath(character, out var shipUnderneath);
-
+    
     // Force adds the player if they are onboard but somehow not on the ship.
     if (isCharacterStandingOnVehicle && shipUnderneath != null && shipUnderneath.OnboardController != null && !isCharacterOnboard)
     {
@@ -124,7 +165,7 @@ public static class WaterZoneUtils
       shipUnderneath.OnboardController.AddCharacter(character);
     }
 
-    return isCharacterOnboard || isCharacterStandingOnVehicle;
+    return isCharacterStandingOnVehicle;
   }
 
 

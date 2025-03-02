@@ -20,7 +20,9 @@ public class RamPrefabs : IRegisterPrefab
   public enum RamType
   {
     Stake,
-    Blade
+    Blade,
+    WaterVehicle,
+    LandVehicle
   }
 
   public struct RamVariant
@@ -99,6 +101,7 @@ public class RamPrefabs : IRegisterPrefab
       var prefab =
         PrefabManager.Instance.CreateClonedPrefab(prefabFullName,
           variant.asset);
+      prefab.name = prefabFullName;
       PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
       PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
       var wnt = PrefabRegistryHelpers.SetWearNTear(prefab,

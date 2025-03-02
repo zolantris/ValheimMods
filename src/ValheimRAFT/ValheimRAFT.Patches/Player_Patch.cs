@@ -309,6 +309,9 @@ public class Player_Patch
         AvatarIKGoal.RightHand, 0);
     }
 
+    // always call this as the player might detach and not be in the vehicle briefly.
+    WaterZoneUtils.RestoreColliderCollisionsAfterDetach(__instance);
+
     return true;
   }
 

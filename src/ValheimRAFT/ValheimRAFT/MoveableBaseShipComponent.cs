@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using UnityEngine;
+using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using ZdoWatcher;
@@ -182,7 +183,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
   {
     if (IsAnchored) SetAnchor(false);
 
-    if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
+    if (!PropulsionConfig.AllowFlight.Value)
     {
       m_targetHeight = 0f;
     }
@@ -203,7 +204,7 @@ public class MoveableBaseShipComponent : MonoBehaviour
     if (IsAnchored) SetAnchor(false);
 
     var oldTargetHeight = m_targetHeight;
-    if (!ValheimRaftPlugin.Instance.AllowFlight.Value)
+    if (!PropulsionConfig.AllowFlight.Value)
     {
       m_targetHeight = 0f;
     }

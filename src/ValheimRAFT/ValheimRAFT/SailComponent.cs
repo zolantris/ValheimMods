@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 using ValheimRAFT.UI;
 using ValheimRAFT.Util;
+using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using Logger = Jotunn.Logger;
 
@@ -328,7 +329,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     m_logoColor = sailMaterial.GetColor(LogoColor);
     m_logoRotation = sailMaterial.GetFloat(LogoRotation);
 
-    if (ValheimRaftPlugin.Instance.HasDebugSails.Value)
+    if (VehicleDebugConfig.HasDebugSails.Value)
     {
       Logger.LogDebug("AFTER LOAD FROM MATERIAL");
       Logger.LogDebug($"m_lockedSailSides {m_lockedSailSides}");
@@ -503,7 +504,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
       Logger.LogDebug(
         $"ZDO color: {zdo_mainColor} updated on LoadZDO of mesh color {m_mainColor} from sailMaterialColor: {GetSailMaterial().GetColor(MainColor)}");
 
-    if (ValheimRaftPlugin.Instance.HasDebugSails.Value)
+    if (VehicleDebugConfig.HasDebugSails.Value)
     {
       Logger.LogDebug($"zdo_lockedSailSides {zdo_lockedSailSides}");
       Logger.LogDebug($"zdo_lockedSailCorners {zdo_lockedSailCorners}");
@@ -594,7 +595,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   public void SaveZdo()
   {
     if (!(bool)m_nview || m_nview.m_zdo == null) return;
-    if (ValheimRaftPlugin.Instance.HasDebugSails.Value)
+    if (VehicleDebugConfig.HasDebugSails.Value)
     {
       Logger.LogDebug($"m_lockedSailSides {m_lockedSailSides}");
       Logger.LogDebug($"m_lockedSailCorners {m_lockedSailCorners}");

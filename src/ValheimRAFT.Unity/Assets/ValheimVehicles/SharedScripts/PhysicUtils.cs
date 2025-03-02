@@ -6,9 +6,13 @@ using UnityEngine;
 
 #endregion
 
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
 namespace ValheimVehicles.SharedScripts
 {
-  public static class PhysicsHelpers
+
+
+  public static class PhysicUtils
   {
     public static void EnableCollisionBetweenLayers(int layerA, int layerB)
     {
@@ -40,6 +44,24 @@ namespace ValheimVehicles.SharedScripts
       return childColliders;
     }
 
+    public static void IgnoreAllCollisionsBetweenChildren(Transform transform)
+    {
+      var colliders = transform.GetComponentsInChildren<Collider>(true).ToList();
+      var topLevelCollider = transform.GetComponent<Collider>();
+
+      if (topLevelCollider != null)
+      {
+        colliders.Add(topLevelCollider);
+      }
+      if (!colliders.Any()) return;
+
+      foreach (var currentCollider in colliders)
+      foreach (var targetCollider in colliders)
+      {
+        Physics.IgnoreCollision(currentCollider, targetCollider, true);
+      }
+    }
+
 
     public static void IgnoreCollisionsWithinRoot(Transform transform, Transform _root, List<Collider> _colliders)
     {
@@ -51,7 +73,7 @@ namespace ValheimVehicles.SharedScripts
       }
 
       // Perform a sphere cast to find nearby objects
-      Collider[] hitColliders = Physics.OverlapSphere(bounds.center, bounds.extents.magnitude);
+      var hitColliders = Physics.OverlapSphere(bounds.center, bounds.extents.magnitude);
 
       foreach (var hitCollider in hitColliders)
       {

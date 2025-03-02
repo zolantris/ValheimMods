@@ -4,6 +4,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Controllers;
 
@@ -12,6 +13,7 @@ namespace ValheimRAFT.Patches;
 [HarmonyPatch]
 public class Character_Patch
 {
+  
   [HarmonyPatch(typeof(Character), "ApplyGroundForce")]
   [HarmonyTranspiler]
   public static IEnumerable<CodeInstruction> Character_Patch_ApplyGroundForce(
@@ -122,7 +124,7 @@ public class Character_Patch
     if (!mbr && !bvc && __instance.transform.parent != null)
       __instance.transform.SetParent(null);
   }
-
+  
   /// <summary>
   /// Fixes issue where player is running on a moving boat and then enters flying mode or hover mode if moving near edge and ship is moving forward but player is moving backwards
   /// </summary>
@@ -133,6 +135,7 @@ public class Character_Patch
   [HarmonyPrefix]
   private static bool OnCollisionStay(Character __instance, Collision collision)
   {
+    WaterZoneUtils.IgnoreColliderIfAttachedAndOnVehicle(__instance, collision);
     if (!__instance.m_nview.IsValid() || !__instance.m_nview.IsOwner() ||
         __instance.m_jumpTimer < 0.1f) return false;
     var contacts = collision.contacts;

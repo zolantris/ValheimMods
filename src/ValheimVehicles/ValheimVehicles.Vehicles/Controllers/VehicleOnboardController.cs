@@ -341,6 +341,13 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     return !isRebuildingCollisions;
   }
 
+
+  /// <summary>
+  /// For restoring any ignore colliders. May want just track ignored colliders per character collider at this rate.
+  /// </summary>
+  /// 
+  /// Todo more collision logic here might be needed
+  /// <param name="collider"></param>
   public void RestoreCollisionDetection(Collider collider)
   {
     if (PiecesController != null &&
@@ -349,6 +356,20 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
                PiecesController.convexHullMeshColliders)
         Physics.IgnoreCollision(piecesControllerConvexHullMesh, collider,
           false);
+
+    if (MovementController != null && MovementController.WheelController != null)
+    {
+      MovementController.WheelController.treadsLeftMovingComponent.convexHullComponent.convexHullMeshColliders.ForEach((x) =>
+      {
+        if (x == null) return;
+        Physics.IgnoreCollision(collider, x, false);
+      });
+      MovementController.WheelController.treadsRightMovingComponent.convexHullComponent.convexHullMeshColliders.ForEach((x) =>
+      {
+        if (x == null) return;
+        Physics.IgnoreCollision(collider, x, false);
+      });
+    }
   }
 
   public void HandleCharacterHitVehicleBounds(Collider collider, bool isExiting)
@@ -441,8 +462,34 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     }
 
     RestorePlayerBlockingCamera(player);
+    UpdateCameraZoom(player, true);
+
+    if (player == Player.m_localPlayer)
+    {
+      if (VehicleGui.hasConfigPanelOpened)
+      {
+        VehicleGui.SetConfigPanelState(false);
+      }
+    }
 
     player.transform.SetParent(null);
+  }
+
+  public void UpdateCameraZoom(Player player, bool isLeaving)
+  {
+    if (!CameraConfig.CameraZoomOverridesEnabled.Value || CameraConfig.CameraZoomMaxDistance.Value == 0 || Player.m_localPlayer != player || GameCamera.instance == null)
+    {
+      return;
+    }
+
+    if (isLeaving)
+    {
+      GameCamera.instance.m_maxDistance = Mathf.Max(GameCamera_CullingPatches.originalMaxDistance, GameCamera_CullingPatches.minimumMaxDistance);
+      return;
+    }
+
+    var distance = Mathf.Lerp(CameraConfig.cameraZoomMultiplier, Mathf.Pow(CameraConfig.cameraZoomMultiplier, 2), CameraConfig.CameraZoomMaxDistance.Value);
+    GameCamera.instance.m_maxDistance = distance;
   }
 
   public void AddPlayerToLocalShip(Player player)
@@ -459,6 +506,7 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
 
     var isPlayerInList = m_localPlayers.Contains(player);
     RemovePlayerBlockingCameraWhileOnboard(player);
+    UpdateCameraZoom(player, false);
     player.transform.SetParent(piecesTransform);
 
     if (!isPlayerInList)

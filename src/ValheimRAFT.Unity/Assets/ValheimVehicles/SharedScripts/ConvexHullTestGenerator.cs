@@ -192,7 +192,7 @@ namespace ValheimVehicles.SharedScripts
       var offset = Mathf.Lerp(hullBounds.extents.y, -hullBounds.extents.y, centerOfMassOffset);
       var localCenterOfMassOffset = Mathf.Min(offset, -5f);
 
-      PhysicsHelpers.UpdateRelativeCenterOfMass(vehicleWheelController.vehicleRootBody, localCenterOfMassOffset);
+      PhysicUtils.UpdateRelativeCenterOfMass(vehicleWheelController.vehicleRootBody, localCenterOfMassOffset);
     }
 
     public bool RunFixedUpdateDebounce()
@@ -272,7 +272,7 @@ namespace ValheimVehicles.SharedScripts
       {
         var bounds = _convexHullAPI.GetConvexHullBounds(true);
         _cachedDebugBounds = bounds;
-        vehicleWheelController.InitializeWheels(bounds);
+        vehicleWheelController.Initialize(bounds);
       }
 
       // RigidbodyUtils.RecenterRigidbodyPivot(PiecesParentObj.gameObject);

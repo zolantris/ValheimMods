@@ -43,6 +43,12 @@ internal static class PatchController
     Harmony.PatchAll(typeof(Fireplace_WaterPatches));
     Harmony.PatchAll(typeof(Minimap_VehicleIcons));
 
+    // RamAOE
+    if (PatchConfig.MineRockPatch.Value)
+    {
+      Harmony.PatchAll(typeof(MineRock_Patches));
+    }
+
     if (Chainloader.PluginInfos.ContainsKey("zolantris.DynamicLocations"))
       Harmony.PatchAll(typeof(DynamicLocations_Game_LogoutPatch));
 

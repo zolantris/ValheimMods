@@ -7,6 +7,7 @@ public abstract class SpriteNames
   public const string DirtFloor = "dirtfloor_icon";
   public const string BoardingRamp = "boarding_ramp";
   public const string WaterOpacityBucket = "water_opacity_bucket";
+  public const string TankTreadIcon = "tank_tread_icon";
   public const string ShipRudderAdvancedWood = "rudder_advanced_single_wood";
   public const string ShipRudderAdvancedIron = "rudder_advanced_single_iron";
   public const string Anchor = "anchor";

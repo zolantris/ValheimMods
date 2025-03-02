@@ -335,17 +335,17 @@ public static class PhysicsConfig
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Slow speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(0.0001f, 100f)));
+        true, false, new AcceptableValueRange<float>(0.05f, 4f)));
     VehicleLandSpeedHalf = Config.Bind(PropulsionSection, "LandVehicle Half Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Half speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(0.0001f, 100f)));
+        true, false, new AcceptableValueRange<float>(0.05f, 4f)));
     VehicleLandSpeedFull = Config.Bind(PropulsionSection, "LandVehicle Full Speed",
       1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the Full speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(0.0001f, 100f)));
+        true, false, new AcceptableValueRange<float>(0.05f, 4f)));
     VehicleLandTurnSpeed = Config.Bind(PropulsionSection,
       "LandVehicle Turn Speed",
       0.5f,
@@ -356,7 +356,7 @@ public static class PhysicsConfig
       "LandVehicle Max Tread Width",
       8,
       ConfigHelpers.CreateConfigDescription(
-        "Max width the treads can expand to.", true, false, new AcceptableValueRange<int>(2, 40)));
+        "Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles though.", true, false, new AcceptableValueRange<int>(1, 20)));
 
     VehicleLandMaxTreadLength = Config.Bind(PropulsionSection,
       "LandVehicle Max Tread Length",
@@ -408,10 +408,10 @@ public static class PhysicsConfig
     flightAngularDrag = Config.Bind(SectionKey, "flightAngularDrag", 1.2f);
 
     forceDistance = Config.Bind(SectionKey,
-      $"forceDistance_{DampingResetKey}", 1f,
+      $"forceDistance_{DampingResetKey}", 3f,
       "EXPERIMENTAL_FORCE_DISTANCE");
     force = Config.Bind(SectionKey,
-      $"force_{DampingResetKey}", 1f,
+      $"force_{DampingResetKey}", 5f,
       "EXPERIMENTAL_FORCE");
 
     backwardForce = Config.Bind(SectionKey,
@@ -471,7 +471,7 @@ public static class PhysicsConfig
 
     VehicleLandTreadOffset = Config.Bind(PropulsionSection,
       "LandVehicle TreadOffset",
-      0f,
+      -1f,
       ConfigHelpers.CreateConfigDescription(
         "Wheel offset. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads", true, false, new AcceptableValueRange<float>(-10f, 10f)));
     VehicleLandTreadOffset.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();

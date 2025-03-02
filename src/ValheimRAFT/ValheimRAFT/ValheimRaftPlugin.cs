@@ -56,7 +56,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "3.0.1";
+  public const string Version = "3.0.4";
   public const string ModName = "ValheimRAFT";
   public const string ModNameBeta = "ValheimRAFTBETA";
   public const string ModGuid = $"{Author}.{ModName}";
@@ -71,13 +71,13 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private bool m_customItemsAdded;
   public PrefabRegistryController prefabController;
 
-  public static VehicleDebugGui _debugGui;
+  public static VehicleGui Gui;
+  public static GameObject GuiObj;
 
   public static ValheimRaftPlugin Instance { get; private set; }
 
   public ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
 
-  public ConfigEntry<bool> AllowFlight { get; set; }
   public ConfigEntry<bool> Graphics_AllowSailsFadeInFog { get; set; }
   public ConfigEntry<bool> AllowCustomRudderSpeeds { get; set; }
 
@@ -90,32 +90,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<bool> AllowOldV1RaftRecipe { get; set; }
   public ConfigEntry<bool> AllowExperimentalPrefabs { get; set; }
   public ConfigEntry<bool> ForceShipOwnerUpdatePerFrame { get; set; }
-
-  // Propulsion Configs
-  public ConfigEntry<bool> EnableCustomPropulsionConfig { get; set; }
-
-  public ConfigEntry<float> MaxSailSpeed { get; set; }
-  public ConfigEntry<float> SpeedCapMultiplier { get; set; }
-
-
-  public ConfigEntry<bool> FlightVerticalToggle { get; set; }
-  public ConfigEntry<bool> FlightHasRudderOnly { get; set; }
-
-
-  public ConfigEntry<float> SailTier1Area { get; set; }
-  public ConfigEntry<float> SailTier2Area { get; set; }
-  public ConfigEntry<float> SailTier3Area { get; set; }
-  public ConfigEntry<float> SailTier4Area { get; set; }
-  public ConfigEntry<float> SailCustomAreaTier1Multiplier { get; set; }
+  
   public ConfigEntry<float> BoatDragCoefficient { get; set; }
   public ConfigEntry<float> MastShearForceThreshold { get; set; }
-  public ConfigEntry<bool> HasDebugSails { get; set; }
   public ConfigEntry<bool> HasDebugBase { get; set; }
-
-  public ConfigEntry<bool> HasShipWeightCalculations { get; set; }
-  public ConfigEntry<float> MassPercentageFactor { get; set; }
-  public ConfigEntry<bool> ShowShipStats { get; set; }
-  public ConfigEntry<bool> HasShipContainerWeightCalculations { get; set; }
+  
   public ConfigEntry<float> RaftCreativeHeight { get; set; }
   public ConfigEntry<KeyboardShortcut> AnchorKeyboardShortcut { get; set; }
   public ConfigEntry<bool> EnableMetrics { get; set; }
@@ -169,79 +148,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         false));
   }
 
-  private void CreatePropulsionConfig()
-  {
-    ShowShipStats = Config.Bind("Debug", "ShowShipState", true);
-    MaxSailSpeed = Config.Bind("Propulsion", "MaxSailSpeed", 30f,
-      CreateConfigDescription(
-        "Sets the absolute max speed a ship can ever hit with sails. Prevents or enables space launches, cannot exceed MaxPropulsionSpeed.",
-        true, false, new AcceptableValueRange<float>(10, 200)));
-    MassPercentageFactor = Config.Bind("Propulsion", "MassPercentage", 55f,
-      CreateConfigDescription(
-        "Sets the mass percentage of the ship that will slow down the sails",
-        true));
-    SpeedCapMultiplier = Config.Bind("Propulsion", "SpeedCapMultiplier", 1f,
-      CreateConfigDescription(
-        "Sets the speed at which it becomes significantly harder to gain speed per sail area",
-        true));
-
-    // rudder
-
-
-    // ship weight
-    HasShipWeightCalculations = Config.Bind("Propulsion",
-      "HasShipWeightCalculations", true,
-      CreateConfigDescription(
-        "enables ship weight calculations for sail-force (sailing speed) and future propulsion, makes larger ships require more sails and smaller ships require less",
-        true));
-
-    HasShipContainerWeightCalculations = Config.Bind("Propulsion",
-      "HasShipContainerWeightCalculations",
-      false,
-      CreateConfigDescription(
-        "enables ship weight calculations for containers which affects sail-force (sailing speed) and future propulsion calculations. Makes ships with lots of containers require more sails",
-        true));
-
-    HasDebugSails = Config.Bind("Debug", "HasDebugSails", false,
-      CreateConfigDescription(
-        "Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only.",
-        false, true));
-
-    EnableCustomPropulsionConfig = Config.Bind("Propulsion",
-      "EnableCustomPropulsionConfig", SailAreaForce.HasPropulsionConfigOverride,
-      CreateConfigDescription("Enables all custom propulsion values", true,
-        true));
-
-    SailCustomAreaTier1Multiplier = Config.Bind("Propulsion",
-      "SailCustomAreaTier1Multiplier",
-      SailAreaForce.CustomTier1AreaForceMultiplier,
-      CreateConfigDescription(
-        "Manual sets the sail wind area multiplier the custom tier1 sail. Currently there is only 1 tier",
-        true, true)
-    );
-
-    SailTier1Area = Config.Bind("Propulsion",
-      "SailTier1Area", SailAreaForce.Tier1,
-      CreateConfigDescription(
-        "Manual sets the sail wind area of the tier 1 sail.", true, true)
-    );
-
-    SailTier2Area = Config.Bind("Propulsion",
-      "SailTier2Area", SailAreaForce.Tier2,
-      CreateConfigDescription(
-        "Manual sets the sail wind area of the tier 2 sail.", true, true));
-
-    SailTier3Area = Config.Bind("Propulsion",
-      "SailTier3Area", SailAreaForce.Tier3,
-      CreateConfigDescription(
-        "Manual sets the sail wind area of the tier 3 sail.", true, true));
-
-    SailTier4Area = Config.Bind("Propulsion",
-      "SailTier4Area", SailAreaForce.Tier4,
-      CreateConfigDescription(
-        "Manual sets the sail wind area of the tier 4 sail.", true, true));
-  }
-
   private void CreateServerConfig()
   {
     ProtectVehiclePiecesOnErrorFromWearNTearDamage = Config.Bind(
@@ -284,26 +190,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         "Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.",
         true
       ));
-    AllowFlight = Config.Bind<bool>("Server config", "AllowFlight", false,
-      CreateConfigDescription(
-        "Allow the raft to fly (jump\\crouch to go up and down)", true));
     AllowCustomRudderSpeeds = Config.Bind("Server config",
       "AllowCustomRudderSpeeds", true,
       CreateConfigDescription(
         "Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed. See advanced section for the actual speed settings.",
         true));
-  }
-
-  private void CreateFlightPropulsionConfig()
-  {
-    FlightVerticalToggle = Config.Bind<bool>("Propulsion",
-      "FlightVerticalToggle",
-      true,
-      "Flight Vertical Continues UntilToggled: Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button");
-    FlightHasRudderOnly = Config.Bind<bool>("Propulsion",
-      "FlightHasRudderOnly",
-      false,
-      "Flight allows for different rudder speeds. Use rudder speed only. Do not use sail speed.");
   }
 
   private void CreateDebugConfig()
@@ -409,11 +300,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CreateServerConfig();
     CreateCommandConfig();
     CreateKeyboardSetup();
-
-    // vehicles
-    CreatePropulsionConfig();
-    CreateFlightPropulsionConfig();
-
     // for graphics QOL but maybe less FPS friendly
     CreateGraphicsConfig();
     CreateSoundConfig();
@@ -473,7 +359,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     EnableShipSailSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
     EnableShipWakeSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
     EnableShipInWaterSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
-    AllowFlight.SettingChanged += VehicleShip.OnAllowFlight;
     AllowExperimentalPrefabs.SettingChanged +=
       VehiclePrefabs.Instance.OnExperimentalPrefabSettingsChange;
 
@@ -495,11 +380,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       Logger.LogDebug(
         $"Valheim GameEngine is using: <{renderPipeline}> graphics pipeline ");
 
-    Localization.OnLanguageChange = VehicleAnchorMechanismController.setLocalizedStates;
+    Localization.OnLanguageChange += VehicleAnchorMechanismController.setLocalizedStates;
   }
 
   private void OnDestroy()
   {
+    Localization.OnLanguageChange -= VehicleAnchorMechanismController.setLocalizedStates;
     PatchController.UnpatchSelf();
   }
 
@@ -541,7 +427,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   {
     // SentryLoads after
     ApplyMetricIfAvailable();
-    AddGuiLayerComponents();
+    AddRemoveVehicleGui();
 
     if (ModEnvironment.IsDebug)
       new BepInExConfigAutoDoc().Generate(this, Config, "ValheimRAFT");
@@ -628,22 +514,33 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     }
   }
 
-  private void AddGuiLayerComponents()
-  {
-    AddRemoveVehicleDebugGui(VehicleDebugConfig.VehicleDebugMenuEnabled.Value);
-  }
-
   /**
    * todo: move to Vehicles plugin when it is ready
    */
-  public void AddRemoveVehicleDebugGui(bool hasDebug)
+  public void AddRemoveVehicleGui()
   {
-    _debugGui = GetComponent<VehicleDebugGui>();
+    if (!GuiObj)
+    {
+      GuiObj = new GameObject("ValheimVehicles_VehicleGui")
+      {
+        transform = { parent = transform },
+        layer = LayerHelpers.UILayer
+      };
+    }
+    Gui = GuiObj.GetComponent<VehicleGui>();
+    if (!VehicleGui.hasConfigPanelOpened && Gui)
+    {
+      Destroy(GuiObj);
+    }
+    else if (!Gui)
+      Gui = GuiObj.AddComponent<VehicleGui>();
 
-    if ((bool)_debugGui && !hasDebug) Destroy(_debugGui);
 
-    if (!(bool)_debugGui && hasDebug)
-      _debugGui = gameObject.AddComponent<VehicleDebugGui>();
+    if (VehicleGui.Instance != null)
+    {
+      VehicleGui.Instance.InitPanel();
+      VehicleGui.SetCommandsPanelState(VehicleDebugConfig.VehicleDebugMenuEnabled.Value);
+    }
   }
 
   private void AddCustomPieces()

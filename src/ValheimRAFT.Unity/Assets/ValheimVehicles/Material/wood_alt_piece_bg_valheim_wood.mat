@@ -83,7 +83,7 @@ Material:
     - _DstBlend: 0
     - _GlossMapScale: 0
     - _Glossiness: 0
-    - _GlossyReflections: 1
+    - _GlossyReflections: 0
     - _Metallic: 0
     - _MetallicAlphaGloss: 0
     - _Mode: 0

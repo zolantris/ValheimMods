@@ -13,6 +13,7 @@ using ValheimRAFT.Patches;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.ValheimVehicles.Vehicles.Structs;
 using ValheimVehicles.Vehicles.Controllers;
 using ValheimVehicles.Vehicles.Interfaces;
 using ValheimVehicles.Vehicles.Structs;
@@ -53,6 +54,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   // The rudder force multiplier applied to the ship speed
   private float _rudderForce = 1f;
 
+  public VehicleConfig VehicleConfig { get; set; }
 
   public GameObject GhostContainer()
   {
@@ -64,7 +66,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   {
     return VehicleShipHelpers.GetOrFindObj(_piecesContainer,
       transform.parent.gameObject,
-      PrefabNames.PiecesContainer);
+      PrefabNames.VehiclePiecesContainer);
   }
 
   public static readonly Dictionary<int, VehicleShip> VehicleInstances = new();
@@ -402,6 +404,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
     }
 
+
 #if DEBUG
     WheelController.wheelSuspensionTarget = PhysicsConfig.VehicleLandWheelSuspensionSpringTarget.Value;
     WheelController.wheelRadius = PhysicsConfig.VehicleLandWheelRadius.Value;
@@ -412,6 +415,9 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     WheelController.ShouldHideWheelRender = PhysicsConfig.DEBUG_VehicleLandShouldHideWheels.Value;
         WheelController.wheelMass = PhysicsConfig.VehicleLandWheelMass.Value;
 #endif
+
+    WheelController.treadWidthXScale = ExperimentalTreadScaleX.Value;
+
 
     // very important to add these. We always need a base of 30.
     var additionalTurnRate = Mathf.Lerp(VehicleWheelController.defaultTurnAccelerationMultiplier / 2, VehicleWheelController.defaultTurnAccelerationMultiplier * 2, Mathf.Clamp01(PhysicsConfig.VehicleLandTurnSpeed.Value));
@@ -476,6 +482,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
     if (PersistentZdoId != 0 && !VehicleInstances.ContainsKey(PersistentZdoId))
       VehicleInstances.Add(PersistentZdoId, this);
+
+    PhysicUtils.IgnoreAllCollisionsBetweenChildren(transform);
 
     if (isValidZdo) InitializeAllComponents();
 
@@ -619,6 +627,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   public void InitializeVehicleDebugger()
   {
+    if (!isActiveAndEnabled) return;
     if (VehicleDebugHelpersInstance != null) return;
     if (MovementController == null || !MovementController.FloatCollider ||
         !MovementController.OnboardCollider)

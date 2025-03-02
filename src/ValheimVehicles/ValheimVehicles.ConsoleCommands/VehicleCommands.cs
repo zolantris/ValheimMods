@@ -8,16 +8,19 @@ using BepInEx.Logging;
 using ComfyGizmo;
 using Components;
 using HarmonyLib;
+using Jotunn;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
 using ValheimRAFT;
+using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Controllers;
+using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
@@ -32,6 +35,7 @@ public class VehicleCommands : ConsoleCommand
     // public const string destroy = "destroy";
     public const string reportInfo = "report-info";
     public const string debug = "debug";
+    public const string config = "config";
     public const string creative = "creative";
     public const string colliderEditMode = "colliderEditMode";
     public const string help = "help";
@@ -51,6 +55,10 @@ public class VehicleCommands : ConsoleCommand
   {
     return
       "Runs vehicle commands, each command will require parameters to run use help to see the input values." +
+#if DEBUG
+      // config is only debug for now.
+      $"\n<{VehicleCommandArgs.config}>: will show a menu related to the current vehicle you are on. This GUI menu will let you customize values specifically for your current vehicle." +
+#endif
       $"\n<{VehicleCommandArgs.debug}>: will show a menu with options like rotating or debugging vehicle colliders" +
       $"\n<{VehicleCommandArgs.recover}>: will recover any vehicles within range of 1000 and turn them into V2 Vehicles" +
       $"\n<{VehicleCommandArgs.rotate}>: defaults to zeroing x and z tilt. Can also provide 3 args: x y z" +
@@ -87,12 +95,14 @@ public class VehicleCommands : ConsoleCommand
     switch (firstArg)
     {
       case VehicleCommandArgs.move:
+        if (!CanRunCheatCommand()) return;
         VehicleMove(nextArgs);
         break;
       case VehicleCommandArgs.toggleOceanSway:
         VehicleToggleOceanSway();
         break;
       case VehicleCommandArgs.rotate:
+        if (!CanRunCheatCommand()) return;
         VehicleRotate(args);
         break;
       case VehicleCommandArgs.recover:
@@ -100,12 +110,20 @@ public class VehicleCommands : ConsoleCommand
           $"{Name} {VehicleCommandArgs.recover}");
         break;
       case VehicleCommandArgs.creative:
+        if (!CanRunEditCommand()) return;
         CreativeModeConsoleCommand.RunCreativeModeCommand(
           $"{Name} {VehicleCommandArgs.creative}");
         break;
       case VehicleCommandArgs.debug:
-        ToggleVehicleDebugComponent();
+        if (!CanRunCheatCommand()) return;
+        ToggleVehicleDebugCommandsComponent();
         break;
+#if DEBUG
+      // config is not ready - only debug for now.
+      case VehicleCommandArgs.config:
+        ToggleVehicleGuiConfig();
+        break;
+#endif
       case VehicleCommandArgs.upgradeToV2:
         RunUpgradeToV2();
         break;
@@ -119,6 +137,7 @@ public class VehicleCommands : ConsoleCommand
         ToggleColliderEditMode();
         break;
       case VehicleCommandArgs.moveUp:
+        if (!CanRunCheatCommand()) return;
         VehicleMoveVertically(nextArgs);
         break;
       case VehicleCommandArgs.resetVehicleOwner:
@@ -164,6 +183,7 @@ public class VehicleCommands : ConsoleCommand
   /// <param name="args">Command arguments.</param>
   public static void VehicleMoveVertically(string[]? args)
   {
+    if (!CanRunCheatCommand()) return;
     if (args == null || args.Length < 1)
     {
       FloatArgErrorMessage("No args provided");
@@ -462,6 +482,38 @@ public class VehicleCommands : ConsoleCommand
     return VectorUtils.ClampVector(position, -5000f, 5000f);
   }
 
+  public static bool CanRunCheatCommand()
+  {
+    if (!VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Value)
+    {
+      if (Player.m_localPlayer == null || ZNet.instance == false) return false;
+      var playerId = Player.m_localPlayer.GetPlayerID();
+      if (!ZNet.instance.IsAdmin(playerId))
+      {
+        Logger.LogMessage($"Player is not an admin. They cannot run this cheat command without setting configKeySection <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public static bool CanRunEditCommand()
+  {
+    if (!VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Value)
+    {
+      if (Player.m_localPlayer == null || ZNet.instance == false) return false;
+      var playerId = Player.m_localPlayer.GetPlayerID();
+      if (!ZNet.instance.IsAdmin(playerId))
+      {
+        Logger.LogMessage($"Player is not an admin. They cannot run this edit command without setting configKeySection <{VehicleDebugConfig.AllowEditCommandsForNonAdmins.Definition.Section}> ConfigKey: <{VehicleDebugConfig.AllowEditCommandsForNonAdmins.Definition.Key}> to true in the raft config or being an Admin.");
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   /// <summary>
   /// Moves the vehicle based on the provided x, y, z parameters.
   /// </summary>
@@ -602,12 +654,26 @@ public class VehicleCommands : ConsoleCommand
     ZNetScene.instance.Destroy(mbRaft.m_ship.gameObject);
   }
 
-  private static void ToggleVehicleDebugComponent()
+  private static void ToggleVehicleGuiConfig()
   {
-    var debugGui = ValheimRaftPlugin.Instance.GetComponent<VehicleDebugGui>();
-    ValheimRaftPlugin.Instance.AddRemoveVehicleDebugGui(!(bool)debugGui);
+    if (!VehicleGui.Instance)
+    {
+      ValheimRaftPlugin.Instance.AddRemoveVehicleGui();
+    }
+
+    VehicleGui.ToggleConfigPanelState(true);
+  }
+
+  private static void ToggleVehicleDebugCommandsComponent()
+  {
+    VehicleGui.ToggleCommandsPanelState();
     foreach (var vehicleShip in VehicleShip.VehicleInstances)
-      vehicleShip.Value?.InitializeVehicleDebugger();
+    {
+      if (vehicleShip.Value != null)
+      {
+        vehicleShip.Value.InitializeVehicleDebugger();
+      }
+    }
   }
 
   public static VehicleShip? GetNearestVehicleShip(Vector3 position)
@@ -724,10 +790,14 @@ public class VehicleCommands : ConsoleCommand
     [
       // VehicleCommandArgs.locate, 
       // VehicleCommandArgs.destroy,
+#if DEBUG
+      // config is only debug for now.
+      VehicleCommandArgs.config,
+#endif
+      VehicleCommandArgs.debug,
       VehicleCommandArgs.rotate,
       VehicleCommandArgs.toggleOceanSway,
       VehicleCommandArgs.creative,
-      VehicleCommandArgs.debug,
       VehicleCommandArgs.help,
       VehicleCommandArgs.upgradeToV2,
       VehicleCommandArgs.downgradeToV1,

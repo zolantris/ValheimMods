@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.Serialization;
+using ValheimVehicles.Prefabs;
 
 namespace ValheimVehicles.Vehicles;
 
@@ -104,6 +108,7 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
   public ZNetView m_nview;
   public Character m_owner;
   public readonly List<GameObject> m_hitList = new();
+  public readonly HashSet<Collider> m_hitSelfExcludeList = new();
   public float m_hitTimer;
   public float m_activationTimer;
   public Vector3 m_offset = Vector3.zero;
@@ -119,9 +124,14 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
   public ItemDrop.ItemData m_ammo;
   public Rigidbody m_body;
   public static List<IMonoUpdater> Instances = new();
+  public List<string> ExcludeHitObjectNames = new();
+  public Regex ExclusionHitObjectNamesRegex = new("");
 
   public virtual void Awake()
   {
+    ExcludeHitObjectNames.Clear();
+    ExcludeHitObjectNames.Add("convex_tread_collider");
+    ExclusionHitObjectNamesRegex = GenerateRegexFromList(ExcludeHitObjectNames);
     m_nview = GetComponentInParent<ZNetView>();
     m_body = GetComponent<Rigidbody>();
     m_rayMask = 0;
@@ -346,6 +356,7 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
   public void FindHits()
   {
     m_hitList.Clear();
+    m_hitSelfExcludeList.Clear();
     // var num = (UnityEngine.Object)m_useCollider != (UnityEngine.Object)null
     //   ? Physics.OverlapBoxNonAlloc(transform.position + m_useCollider.center,
     //     m_useCollider.size / 2f,ValheimAoe.s_hits, transform.rotation, m_rayMask)
@@ -473,15 +484,47 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
     OnTriggerEnterHandler(collider);
   }
 
+  public static Regex GenerateRegexFromList(List<string> prefixes)
+  {
+    // Escape special characters in the strings and join them with a pipe (|) for OR condition
+    var escapedPrefixes = new List<string>();
+    foreach (var prefix in prefixes)
+    {
+      escapedPrefixes.Add(Regex.Escape(prefix));
+    }
+
+    // Create a regex pattern that matches the start of the string (^)
+    // It will match any of the provided prefixes at the start of the string
+    var pattern = "^(" + string.Join("|", escapedPrefixes) + ")";
+    return new Regex(pattern);
+  }
+
+  /// <summary>
+  /// Only works for collisions. We will ignore collisions for treads and other colliders so that there is no SelfHit
+  /// </summary>
+  /// <param name="collision"></param>
+  public void TryAddCollisionColliderToExcludeHitList(Collision collision)
+  {
+    foreach (var collisionContact in collision.contacts)
+    {
+      if (ExclusionHitObjectNamesRegex.IsMatch(collisionContact.thisCollider.name))
+      {
+        m_hitSelfExcludeList.Add(collision.collider);
+        break;
+      }
+    }
+  }
   // handlers for override methods.
 
   public virtual void OnCollisionStayHandler(Collision collision)
   {
+    TryAddCollisionColliderToExcludeHitList(collision);
     CauseTriggerDamage(collision.collider, false);
   }
 
   public virtual void OnCollisionEnterHandler(Collision collision)
   {
+    TryAddCollisionColliderToExcludeHitList(collision);
     CauseTriggerDamage(collision.collider, true);
   }
 
@@ -515,13 +558,13 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
     return averagePoint;
   }
 
-  public void CauseCollisionTriggerDamage(Collision collision)
-  {
-    var collider = collision.collider;
-    if (!ShouldHit(collider))
-      return;
-    OnHit(collider, AverageContactPoint(collision));
-  }
+  // public void CauseCollisionTriggerDamage(Collision collision)
+  // {
+  //   var collider = collision.collider;
+  //   if (!ShouldHit(collider))
+  //     return;
+  //   OnHit(collider, AverageContactPoint(collision));
+  // }
 
   public void CauseTriggerDamage(Collider collider, bool onTriggerEnter)
   {
@@ -545,7 +588,7 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
     }
   }
 
-  public bool OnHit(Collider collider, Vector3 hitPoint)
+  public virtual bool OnHit(Collider collider, Vector3 hitPoint)
   {
     var hitObject = Projectile.FindHitObject(collider);
     if (m_hitList.Contains(hitObject))

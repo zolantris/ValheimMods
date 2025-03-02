@@ -85,6 +85,11 @@ public static class PrefabNames
   public const string CustomWaterMaskCreator =
     $"{ValheimVehiclesPrefix}_CustomWaterMaskCreator";
 
+  public const string CustomTreadDistanceCreator =
+    $"{ValheimVehiclesPrefix}_CustomTreadDistanceCreator";
+
+  public const string CustomVehicleMaxCollisionHeightCreator =
+    $"{ValheimVehiclesPrefix}_CustomVehicleMaxCollisionHeightCreator";
 
   public const string PlayerSpawnControllerObj =
     $"{ValheimVehiclesPrefix}_PlayerSpawnControllerObj";
@@ -121,7 +126,7 @@ public static class PrefabNames
 
   // Containers that are nested within a VehiclePrefab top level
   // utilize the Get<Name> methods within the LoadValheimVehiclesAssets class to get these GameObjects
-  public const string PiecesContainer =
+  private const string PiecesContainer =
     "piecesContainer";
 
   public const string MovingPiecesContainer =
