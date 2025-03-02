@@ -407,12 +407,12 @@ public static class PhysicsConfig
     flightDrag = Config.Bind(SectionKey, "flightDrag", 1.2f);
     flightAngularDrag = Config.Bind(SectionKey, "flightAngularDrag", 1.2f);
 
-    forceDistance = Config.Bind(SectionKey,
-      $"forceDistance_{DampingResetKey}", 3f,
-      "EXPERIMENTAL_FORCE_DISTANCE");
     force = Config.Bind(SectionKey,
-      $"force_{DampingResetKey}", 5f,
+      $"force_{DampingResetKey}", 3f,
       "EXPERIMENTAL_FORCE");
+    forceDistance = Config.Bind(SectionKey,
+      $"forceDistance_{DampingResetKey}", 5f,
+      "EXPERIMENTAL_FORCE_DISTANCE");
 
     backwardForce = Config.Bind(SectionKey,
       $"backwardForce_{DampingResetKey}", 1f,
@@ -524,7 +524,17 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "Set the collision mode of the vehicle ship pieces container. This the container that people walk on and use the boat. Collision Continuous will prevent people from passing through the boat. Other modes might improve performance like Discrete but cost in more jitter or lag.",
         true, true));
-
+    vehiclePiecesShipCollisionDetectionMode.SettingChanged += (_, _) =>
+    {
+      foreach (var keyValuePair in VehicleShip.VehicleInstances)
+      {
+        if (keyValuePair.Value != null)
+        {
+          var pieceController = keyValuePair.Value.PiecesController;
+          if (pieceController != null) pieceController.m_localRigidbody.collisionDetectionMode = vehiclePiecesShipCollisionDetectionMode.Value;
+        }
+      }
+    };
     convexHullJoinDistanceThreshold = Config.Bind(FloatationPhysicsSectionKey,
       "convexHullJoinDistanceThreshold",
       3f,

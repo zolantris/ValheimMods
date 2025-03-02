@@ -1070,12 +1070,12 @@ namespace ValheimVehicles.SharedScripts
       if (rbComponent == null)
         rbComponent = PreviewParent.GetComponentInParent<Rigidbody>();
 
-      if (rbComponent != null && !rbComponent.isKinematic)
-      {
-        LoggerAPI(
-          "Error: This component is invalid due to preview parent containing a non-kinematic Rigidbody. Using a non-kinematic rigidbody will cause this preview to desync.");
-        return;
-      }
+      // if (rbComponent != null && !rbComponent.isKinematic)
+      // {
+      //   LoggerAPI(
+      //     "Error: This component is invalid due to preview parent containing a non-kinematic Rigidbody. Using a non-kinematic rigidbody will cause this preview to desync.");
+      //   return;
+      // }
 
       if (rbComponent != null)
       {
@@ -1182,12 +1182,12 @@ namespace ValheimVehicles.SharedScripts
       if (rbComponent == null)
         rbComponent = PreviewParent.GetComponentInParent<Rigidbody>();
 
-      if (rbComponent != null && !rbComponent.isKinematic)
-      {
-        LoggerAPI(
-          "Error: This component is invalid due to preview parent containing a non-kinematic Rigidbody. Using a non-kinematic rigidbody will cause this preview to desync.");
-        return;
-      }
+      // if (rbComponent != null && !rbComponent.isKinematic)
+      // {
+      //   LoggerAPI(
+      //     "Error: This component is invalid due to preview parent containing a non-kinematic Rigidbody. Using a non-kinematic rigidbody will cause this preview to desync.");
+      //   return;
+      // }
 
       if (PreviewParent == null)
       {
