@@ -995,7 +995,7 @@ namespace ValheimVehicles.SharedScripts
         vertices = sourceMesh.vertices,
         triangles = sourceMesh.triangles,
         normals = sourceMesh.normals,
-        uv = sourceMesh.uv
+        uv = sourceMesh.uv,
       };
       readableMesh.RecalculateBounds();
       return readableMesh;
@@ -1272,7 +1272,7 @@ namespace ValheimVehicles.SharedScripts
         triangles = tris.ToArray(),
         normals = normals.ToArray(),
         name =
-          $"{MeshNamePrefix}_{convexHullMeshes.Count}_mesh"
+          $"{MeshNamePrefix}_{convexHullMeshes.Count}_mesh",
       };
 
       if (ShouldOptimizeGeneratedMeshes)

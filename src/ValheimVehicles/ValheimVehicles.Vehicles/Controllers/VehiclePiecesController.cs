@@ -2936,6 +2936,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   }
 
   private Dictionary<Material, GameObject> _previousCombinedMeshObjects = new(); // Store previous combined meshes
+  private Dictionary<Material, HashSet<GameObject>> _relatedMaterialToGameObjectsMap = new(); // Store previous combined meshes
 
   public static Regex CombinedMeshExclusionPattern;
   public static Regex CombinedMeshIncludePattern;
@@ -2955,19 +2956,25 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   public void OnWearNTearPieceDestroy(GameObject go)
   {
     if (!RenderingConfig.EnableVehicleClusterMeshRendering.Value) return;
+    CleanupRelatedCombinedMeshes();
     if (RelatedMaterialsMap.TryGetValue(go, out var items))
     {
       var relatedPrefabs = new List<GameObject>();
       foreach (var material in items)
       {
+        if (_relatedMaterialToGameObjectsMap.TryGetValue(material, out var relatedGameObjects))
+        {
+          relatedPrefabs.AddRange(relatedGameObjects);
+        }
         if (_previousCombinedMeshObjects.TryGetValue(material, out var previousCombinedMeshObject))
-          relatedPrefabs.Add(previousCombinedMeshObject);
+        {
+          Destroy(previousCombinedMeshObject);
+          _previousCombinedMeshObjects.Remove(material);
+        }
       }
-      if (relatedPrefabs.Count > 0)
-      {
-        GenerateCombinedMeshes(relatedPrefabs, PrefabExcludeNames, MeshFilterIncludesNames);
+      if (relatedPrefabs.Count < 1) return;
+      GenerateCombinedMeshes(relatedPrefabs, PrefabExcludeNames, MeshFilterIncludesNames, true);
         IgnoreAllVehicleColliders();
-      }
     }
   }
 
@@ -3056,13 +3063,37 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
            wnt.m_new && child.IsChildOf(wnt.m_new.transform);
   }
 
-  private void GenerateCombinedMeshes(List<ZNetView> list, List<string> prefabNameExclusionList, List<string> meshFilterExclusionList)
+  private void GenerateCombinedMeshes(List<ZNetView> list, List<string> prefabNameExclusionList, List<string> meshFilterExclusionList, bool hasRunCleanup = false)
   {
     var objects = list.Where(x => x != null).Select(x => x.gameObject).ToList();
     GenerateCombinedMeshes(objects, prefabNameExclusionList, meshFilterExclusionList);
   }
 
-  private void GenerateCombinedMeshes(List<GameObject> list, List<string> prefabNameExclusionList, List<string> meshFilterExclusionList)
+  private void CleanupRelatedCombinedMeshes()
+  {
+    // cleanup hashsets so there is no null objects
+    var keysToRemove = new List<Material>();
+
+    foreach (var kvp in _relatedMaterialToGameObjectsMap)
+    {
+      if (kvp.Value == null)
+      {
+        keysToRemove.Add(kvp.Key); // Mark key for deletion
+      }
+      else
+      {
+        kvp.Value.RemoveWhere(x => x == null); // ✅ Remove null GameObjects directly
+      }
+    }
+
+    // ✅ Remove dictionary keys AFTER iteration (efficient & safe)
+    foreach (var key in keysToRemove)
+    {
+      _relatedMaterialToGameObjectsMap.Remove(key);
+    }
+  }
+
+  private void GenerateCombinedMeshes(List<GameObject> prefabList, List<string> prefabNameExclusionList, List<string> meshFilterExclusionList, bool hasRunCleanup = false)
   {
     if (!combinedMeshParent)
     {
@@ -3074,17 +3105,22 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       };
     }
 
+    if (!hasRunCleanup)
+    {
+      CleanupRelatedCombinedMeshes();
+    }
+
     Dictionary<Material, List<CombineInstance>> materialToMeshes = new();
     var prefabExclusionRegex = GenerateRegexFromList(prefabNameExclusionList); // Compile Regex once
     var meshFilterExclusionRegex = GenerateRegexFromList(meshFilterExclusionList); // Compile Regex once
     var meshFilterIncludeRegex = GenerateRegexFromList(MeshFilterIncludesNames); // Compile Regex once
 
-    foreach (var x in list)
+    foreach (var prefabItem in prefabList)
     {
-      if (!x) continue; // Skip inactive
-      if (prefabExclusionRegex.IsMatch(x.gameObject.name)) continue; // 🔹 Skip excluded objects
+      if (!prefabItem) continue; // Skip inactive
+      if (prefabExclusionRegex.IsMatch(prefabItem.gameObject.name)) continue; // 🔹 Skip excluded objects
 
-      var wnt = x.GetComponent<WearNTear>();
+      var wnt = prefabItem.GetComponent<WearNTear>();
       List<MeshRenderer> selectedRenderers = new();
 
       if (wnt != null)
@@ -3093,7 +3129,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         if (!wntSubscribers.Contains(wnt))
         {
           wntSubscribers.Add(wnt);
-          wnt.m_onDestroyed += () => OnWearNTearPieceDestroy(x.gameObject);
+          wnt.m_onDestroyed += () => OnWearNTearPieceDestroy(prefabItem.gameObject);
         }
         // 🔹 WNT Exists: Get the active component & its MeshRenderer
         var activeWNTObject = GetWNTActiveComponent(wnt);
@@ -3115,7 +3151,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         }
       }
 
-      var nonWntRenderers = GetValidNonNestedMeshRenderers(selectedRenderers, x.transform, wnt);
+      var nonWntRenderers = GetValidNonNestedMeshRenderers(selectedRenderers, prefabItem.transform, wnt);
       var tempNonWntCombinedRenderers = new List<MeshRenderer>();
 
       // 🔹 Include non-WNT MeshRenderers that are not nested inside other WNT objects
@@ -3131,7 +3167,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       selectedRenderers.AddRange(tempNonWntCombinedRenderers.Count > 0 ? tempNonWntCombinedRenderers : nonWntRenderers);
 
 
-      if (!hiddenMeshRenderersObjMap.TryGetValue(x.gameObject, out var currentDeactivatedMeshes))
+      if (!hiddenMeshRenderersObjMap.TryGetValue(prefabItem.gameObject, out var currentDeactivatedMeshes))
       {
         currentDeactivatedMeshes = new List<MeshRenderer>();
       }
@@ -3163,6 +3199,15 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
           _previousCombinedMeshObjects.Remove(fixedMaterial);
         }
 
+        if (_relatedMaterialToGameObjectsMap.TryGetValue(fixedMaterial, out var relatedGameObjectsToMaterial))
+        {
+          relatedGameObjectsToMaterial.Add(prefabItem);
+        }
+        else
+        {
+          _relatedMaterialToGameObjectsMap[fixedMaterial] = [prefabItem];
+        }
+
         var meshTransform = renderer.transform;
 
         // 🔹 Prevent floating-point errors in transform updates
@@ -3185,7 +3230,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
           currentDeactivatedMeshes.Add(renderer);
         }
 
-        if (RelatedMaterialsMap.TryGetValue(x, out var relatedMaterials))
+        if (RelatedMaterialsMap.TryGetValue(prefabItem, out var relatedMaterials))
         {
           if (!relatedMaterials.Contains(fixedMaterial))
           {
@@ -3194,7 +3239,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         }
         else
         {
-          RelatedMaterialsMap.Add(x, [fixedMaterial]);
+          RelatedMaterialsMap.Add(prefabItem, [fixedMaterial]);
         }
       }
     }
@@ -3207,7 +3252,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       var combinedMesh = new Mesh
       {
         name = "ValheimVehicles_CombinedMesh_" + material.name,
-        indexFormat = UnityEngine.Rendering.IndexFormat.UInt32
+        indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 // we need this (we easily surpass the default value)
       };
 
       combinedMesh.CombineMeshes(combineInstances.ToArray(), true);
@@ -3221,16 +3266,13 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
       var meshRenderer = meshObject.AddComponent<MeshRenderer>();
 
-      material.renderQueue -= 1;
+#if DEBUG
+      // this causes problems with the low LOD items, we could hide those instead but for now not doing this..
+      // material.renderQueue = material.renderQueue == 2000 ? 1999 : material.renderQueue;
+#endif
       
       // 🔹 Apply fixed material instance
       meshRenderer.sharedMaterial = material;
-
-      // render queue on a higher layer so that layers lower than it will clip this.
-      
-      // 🔹 Ensure shadows update properly
-      // meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
-      // meshRenderer.receiveShadows = true;
 
       var meshCollider = meshObject.AddComponent<MeshCollider>();
       meshCollider.sharedMesh = combinedMesh;

@@ -182,7 +182,7 @@ public static class PhysicsConfig
     "Controls how much the water pushes the boat sideways based on wind direction and velocity.";
 
   // may make this per version update as this can be very important to force reset people to defaults.
-  private const string DampingResetKey = ValheimRaftPlugin.Version;
+  private const string versionResetKey = ValheimRaftPlugin.Version;
 
   private static void OnPhysicsChangeForceUpdateAllVehiclePhysics(object sender,
     EventArgs eventArgs)
@@ -391,13 +391,13 @@ public static class PhysicsConfig
 
     // flight
     flightDamping =
-      Config.Bind(SectionKey, $"flightDamping_{DampingResetKey}", 1f,
+      Config.Bind(SectionKey, $"flightDamping_{versionResetKey}", 1f,
         dampingDescription);
     flightSidewaysDamping =
-      Config.Bind(SectionKey, $"flightSidewaysDamping_{DampingResetKey}", 2f,
+      Config.Bind(SectionKey, $"flightSidewaysDamping_{versionResetKey}", 2f,
         dampingSidewaysDescription);
     flightAngularDamping = Config.Bind(SectionKey,
-      $"flightAngularDamping_{DampingResetKey}", 1f,
+      $"flightAngularDamping_{versionResetKey}", 1f,
       dampingAngularDescription);
     flightSteerForce = Config.Bind(SectionKey, "flightSteerForce", 1f,
       debugSailForceAndFactorDescription);
@@ -408,27 +408,27 @@ public static class PhysicsConfig
     flightAngularDrag = Config.Bind(SectionKey, "flightAngularDrag", 1.2f);
 
     force = Config.Bind(SectionKey,
-      $"force_{DampingResetKey}", 3f,
+      $"force_{versionResetKey}", 1f,
       "EXPERIMENTAL_FORCE");
     forceDistance = Config.Bind(SectionKey,
-      $"forceDistance_{DampingResetKey}", 5f,
+      $"forceDistance_{versionResetKey}", 1f,
       "EXPERIMENTAL_FORCE_DISTANCE");
 
     backwardForce = Config.Bind(SectionKey,
-      $"backwardForce_{DampingResetKey}", 1f,
+      $"backwardForce_{versionResetKey}", 1f,
       "EXPERIMENTAL_BackwardFORCE");
 
     // water
     waterSteerForce = Config.Bind(SectionKey, "waterSteerForce", 1f);
 
-    waterDamping = Config.Bind(SectionKey, $"waterDamping_{DampingResetKey}",
+    waterDamping = Config.Bind(SectionKey, $"waterDamping_{versionResetKey}",
       1f,
       dampingDescription);
     waterSidewaysDamping =
-      Config.Bind(SectionKey, $"waterSidewaysDamping_{DampingResetKey}", 2f,
+      Config.Bind(SectionKey, $"waterSidewaysDamping_{versionResetKey}", 2f,
         dampingSidewaysDescription);
     waterAngularDamping = Config.Bind(SectionKey,
-      $"waterAngularDamping_{DampingResetKey}", 1f,
+      $"waterAngularDamping_{versionResetKey}", 1f,
       dampingAngularDescription);
 
     waterSailForceFactor =
@@ -440,14 +440,14 @@ public static class PhysicsConfig
 
     // underwater
     submersibleDamping = Config.Bind(SectionKey,
-      $"submersibleDamping_{DampingResetKey}", 1f,
+      $"submersibleDamping_{versionResetKey}", 1f,
       dampingDescription);
     submersibleSidewaysDamping =
-      Config.Bind(SectionKey, $"submersibleSidewaysDamping_{DampingResetKey}",
+      Config.Bind(SectionKey, $"submersibleSidewaysDamping_{versionResetKey}",
         2f,
         dampingSidewaysDescription);
     submersibleAngularDamping =
-      Config.Bind(SectionKey, $"submersibleAngularDamping_{DampingResetKey}",
+      Config.Bind(SectionKey, $"submersibleAngularDamping_{versionResetKey}",
         1f,
         dampingAngularDescription);
 
