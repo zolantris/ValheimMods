@@ -2955,7 +2955,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   /// <param name="go"></param>
   public void OnWearNTearPieceDestroy(GameObject go)
   {
-    if (!RenderingConfig.EnableVehicleClusterMeshRendering.Value) return;
+    if (!RenderingConfig.EnableVehicleClusterMeshRendering.Value || m_nviewPieces.Count < RenderingConfig.ClusterRenderingPieceThreshold.Value) return;
     CleanupRelatedCombinedMeshes();
     if (RelatedMaterialsMap.TryGetValue(go, out var items))
     {
@@ -3476,7 +3476,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       Logger.LogError(e);
     }
 
-    if (RenderingConfig.EnableVehicleClusterMeshRendering.Value)
+    if (RenderingConfig.EnableVehicleClusterMeshRendering.Value && m_nviewPieces.Count >= RenderingConfig.ClusterRenderingPieceThreshold.Value)
     {
       try
       {
