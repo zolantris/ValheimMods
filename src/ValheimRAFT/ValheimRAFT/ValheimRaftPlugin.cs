@@ -56,7 +56,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "3.0.4";
+  public const string Version = "3.0.5";
   public const string ModName = "ValheimRAFT";
   public const string ModNameBeta = "ValheimRAFTBETA";
   public const string ModGuid = $"{Author}.{ModName}";
@@ -318,6 +318,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     MinimapConfig.BindConfig(Config);
     HudConfig.BindConfig(Config);
     CameraConfig.BindConfig(Config);
+    RenderingConfig.BindConfig(Config);
 
 #if DEBUG
     // Meant for only being run in debug builds for testing quickly

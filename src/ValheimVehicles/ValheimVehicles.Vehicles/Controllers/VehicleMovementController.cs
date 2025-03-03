@@ -153,8 +153,8 @@
     // flying mechanics
     private bool _isAscending;
     private bool _isDescending;
-    private bool _isHoldingAscend = false;
-    private bool _isHoldingDescend = false;
+    private bool _isAscendToggled = false;
+    private bool _isDescendToggled = false;
 
     // prevents updating repeatedly firing while the key is down
     private bool _isHoldingAnchor;
@@ -284,11 +284,14 @@
       !PropulsionConfig.AllowFlight.Value &&
       !WaterConfig.WaterBallastEnabled.Value;
 
-    public bool GetAscendKeyPress =>
-      ZInput.GetButtonDown("Jump") || ZInput.GetButtonDown("JoyJump");
 
+    // todo getButtonDef and listen for press state directly
+    public bool GetAscendKeyPress =>
+      ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump");
+
+    // todo getButtonDef and listen for press state directly
     public bool GetDescendKeyPress =>
-      ZInput.GetButtonDown("Crouch") || ZInput.GetButtonDown("JoyCrouch");
+      ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch");
 
     public bool CanDescend =>
       WaterConfig.WaterBallastEnabled.Value && IsNotFlying || IsFlying();
@@ -2192,6 +2195,7 @@
       if (ShipDirection == null || PiecesController == null || FloatCollider == null || OnboardCollider == null)
         return new ShipFloatation();
       var worldCenterOfMass = m_body.worldCenterOfMass;
+      worldCenterOfMass.y = FloatCollider.bounds.center.y;
       var (shipForward, shipBackward, shipRight, shipLeft) = GetShipForcePoints();
 
       // min does not matter but max does as the ship when attempting to reach flight mode will start bouncing badly.
@@ -3545,13 +3549,13 @@
 
     public void AutoAscendUpdate()
     {
-      if (!_isAscending || _isHoldingAscend || _isHoldingDescend) return;
+      if (!_isAscending || _isAscendToggled || _isDescendToggled) return;
       Ascend();
     }
 
     public void AutoDescendUpdate()
     {
-      if (!_isDescending || _isHoldingDescend || _isHoldingAscend) return;
+      if (!_isDescending || _isDescendToggled || _isAscendToggled) return;
       Descend();
     }
 
@@ -3583,7 +3587,7 @@
 
       if (!PropulsionConfig.FlightVerticalToggle.Value) return;
 
-      if (!_isHoldingDescend && _isDescending)
+      if (!_isDescendToggled && _isDescending)
       {
         ClearAutoClimbState();
         return;
@@ -3621,24 +3625,48 @@
 
     public void OnFlightControls()
     {
-      if (IsBallastAndFlightDisabled || isAnchored) return;
+      if (isCreative || isPlayerHaulingVehicle || IsBallastAndFlightDisabled || isAnchored) return;
 
-      _isHoldingAscend = GetAscendKeyPress;
-      if (GetAscendKeyPress)
+      var isAscendKeyPressed = GetAscendKeyPress;
+      var isDescendKeyPressed = GetDescendKeyPress;
+
+      if (isAscendKeyPressed && isDescendKeyPressed)
+      {
+        _isAscendToggled = false;
+        _isDescendToggled = false;
+        _isDescending = false;
+        _isAscending = false;
+        return;
+      }
+
+      if (PropulsionConfig.FlightVerticalToggle.Value)
+      {
+        if (isAscendKeyPressed)
+        {
+          _isAscendToggled = !isDescendKeyPressed && isAscendKeyPressed;
+          _isDescendToggled = false;
+        }
+        if (isDescendKeyPressed)
+        {
+          _isDescendToggled = !isAscendKeyPressed && isDescendKeyPressed;
+          _isAscendToggled = false;
+        }
+      }
+
+      if (isAscendKeyPressed)
       {
         Ascend();
         ToggleAutoAscend();
         return;
       }
 
-      _isHoldingDescend = GetDescendKeyPress;
-      if (!CanDescend && _isHoldingAscend && TargetHeight != 0f)
+      if (!CanDescend && isDescendKeyPressed && TargetHeight != 0f)
       {
         UpdateTargetHeight(0f);
         return;
       }
 
-      if (CanDescend && _isHoldingDescend)
+      if (CanDescend && isDescendKeyPressed)
       {
         Descend();
         ToggleAutoDescend();
@@ -3790,7 +3818,7 @@
 
       if (!PropulsionConfig.FlightVerticalToggle.Value) return;
 
-      if (!_isHoldingAscend && _isAscending)
+      if (!_isAscendToggled && _isAscending)
       {
         ClearAutoClimbState();
         return;

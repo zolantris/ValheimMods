@@ -61,12 +61,16 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
   public static bool hasCommandsWindowOpened = false;
   public static bool hasConfigPanelOpened = false;
 
+  // overlay buttons that control toggling the panel
+  public static bool isCommandsToggleButtonVisible = false;
+  public static bool isConfigPanelToggleButtonVisible = false;
+
 
   private GameObject configWindow;
   private GameObject commandsWindow;
 
-  private GameObject commandsToggleWindow;
-  private GameObject configToggleWindow;
+  private GameObject commandsToggleButtonWindow;
+  private GameObject configToggleButtonWindow;
 
   private List<GameObject> commandsPanelToggleObjects = [];
   // private List<GameObject> devCommandsPanelToggleObjects = [];
@@ -147,28 +151,29 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     }
   }
 
-  public static void HideOrShowDebugCommandPanel(bool isVisible, bool shouldDeactivateToggleButton = false)
+  public static void HideOrShowDebugCommandPanel(bool isVisible, bool canUpdateTogglePanel)
   {
     if (Instance == null) return;
-    Instance.HideOrShowPanel(isVisible, shouldDeactivateToggleButton, ref Instance.commandsToggleWindow, ref Instance.commandsWindow, ref Instance.commandsPanelToggleObjects);
+    Instance.HideOrShowPanel(isVisible, canUpdateTogglePanel, ref Instance.commandsToggleButtonWindow, ref Instance.commandsWindow, ref Instance.commandsPanelToggleObjects);
   }
 
-  public static void HideOrShowVehicleConfigPanel(bool isVisible, bool shouldDeactivateToggleButton = false)
+  public static void HideOrShowVehicleConfigPanel(bool isVisible, bool canUpdateTogglePanel)
   {
     if (Instance == null) return;
-    Instance.HideOrShowPanel(isVisible, shouldDeactivateToggleButton, ref Instance.configToggleWindow, ref Instance.configWindow, ref Instance.configPanelToggleObjects);
+    Instance.HideOrShowPanel(isVisible, canUpdateTogglePanel, ref Instance.configToggleButtonWindow, ref Instance.configWindow, ref Instance.configPanelToggleObjects);
   }
 
   public static void SetCommandsPanelState(bool val)
   {
     hasCommandsWindowOpened = val;
-    HideOrShowVehicleConfigPanel(val, true);
+    HideOrShowVehicleConfigPanel(val, false);
   }
 
-  public static void ToggleCommandsPanelState()
+  public static void ToggleCommandsPanelState(bool canUpdateTogglePanel)
   {
     hasCommandsWindowOpened = !hasCommandsWindowOpened;
-    HideOrShowDebugCommandPanel(hasCommandsWindowOpened, true);
+    // this should not hide the actual commands panel button.
+    HideOrShowDebugCommandPanel(hasCommandsWindowOpened, canUpdateTogglePanel);
   }
 
   public void InitPanel()
@@ -181,8 +186,8 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     CreateCommandsShortcutPanel();
     CreateVehicleConfigShortcutPanel();
 
-    HideOrShowDebugCommandPanel(hasCommandsWindowOpened);
-    HideOrShowVehicleConfigPanel(hasConfigPanelOpened);
+    HideOrShowDebugCommandPanel(hasCommandsWindowOpened, true);
+    HideOrShowVehicleConfigPanel(hasConfigPanelOpened, true);
     
     hasInitialized = true;
   }
@@ -389,7 +394,6 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
       new Vector2(0, 0),
       buttonWidth,
       buttonHeight);
-    buttonObject.SetActive(true);
     var buttonText = buttonObject.GetComponentInChildren<Text>();
 
     // Add a listener to the button to close the panel again
@@ -398,10 +402,10 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     {
       var nextState = !configWindow.activeSelf;
       buttonText.text = nextState ? vehicleConfigHide : vehicleConfigShow;
-      HideOrShowVehicleConfigPanel(nextState);
+      HideOrShowVehicleConfigPanel(nextState, true);
     });
 
-    panel.SetActive(false);
+    panel.SetActive(hasConfigPanelOpened);
 
     return panel;
   }
@@ -438,7 +442,6 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
       new Vector2(0, 0),
       buttonWidth,
       buttonHeight);
-    buttonObject.SetActive(true);
     var buttonText = buttonObject.GetComponentInChildren<Text>();
 
     // Add a listener to the button to close the panel again
@@ -447,30 +450,30 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     {
       var nextState = !commandsWindow.activeSelf;
       buttonText.text = nextState ? vehicleCommandsHide : vehicleCommandsShow;
-      HideOrShowDebugCommandPanel(nextState);
+      HideOrShowDebugCommandPanel(nextState, false);
     });
 
-    panel.SetActive(false);
+    panel.SetActive(hasCommandsWindowOpened);
 
     return panel;
   }
 
   private void CreateVehicleConfigShortcutPanel()
   {
-    if (configToggleWindow != null && configWindow != null) return;
+    if (configToggleButtonWindow != null && configWindow != null) return;
 
-    configToggleWindow = CreateConfigTogglePanel();
+    configToggleButtonWindow = CreateConfigTogglePanel();
 
     var dynamicPanelHeight = configSections.Count * buttonHeight + configSections.Count * 5;
     configWindow = GUIManager.Instance.CreateWoodpanel(
-      configToggleWindow.transform,
+      configToggleButtonWindow.transform,
       new Vector2(0.5f, 0f),
       new Vector2(0.5f, 0f),
       new Vector2(0, -(dynamicPanelHeight / 2 + 15f)),
       500f,
       Math.Min(1000f, Screen.height * 0.8f),
       true);
-    configWindow.SetActive(false);
+    configWindow.SetActive(hasConfigPanelOpened);
 
     var startHeight = dynamicPanelHeight / 2f - buttonHeight / 2;
     for (var index = 0; index < configSections.Count; index++)
@@ -483,20 +486,20 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
 
   private void CreateCommandsShortcutPanel()
   {
-    if (commandsToggleWindow != null) return;
+    if (commandsToggleButtonWindow != null) return;
 
-    commandsToggleWindow = CreateCommandsTogglePanel();
+    commandsToggleButtonWindow = CreateCommandsTogglePanel();
 
     var dynamicPanelHeight = commandButtonActions.Count * buttonHeight + commandButtonActions.Count * 5;
     commandsWindow = GUIManager.Instance.CreateWoodpanel(
-      commandsToggleWindow.transform,
+      commandsToggleButtonWindow.transform,
       new Vector2(0.5f, 0f),
       new Vector2(0.5f, 0f),
       new Vector2(0, -(dynamicPanelHeight / 2 + 15f)),
       panelWidth,
       dynamicPanelHeight,
       false);
-    commandsWindow.SetActive(false);
+    commandsWindow.SetActive(hasCommandsWindowOpened);
 
     var startHeight = dynamicPanelHeight / 2f - buttonHeight / 2;
     for (var index = 0; index < commandButtonActions.Count; index++)

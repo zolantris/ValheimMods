@@ -104,6 +104,7 @@ public static class PrefabConfig
       ConfigHelpers.CreateConfigDescription(
         "Set the tank per tread piece X scale (width). This will make the treads larger or smaller allowing more/less grip.", true, false, new AcceptableValueRange<float>(0.5f, 5f)));
 
+
     ExperimentalTreadScaleX.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleStaminaHaulingCost.SettingChanged += (_, __) =>
     {
