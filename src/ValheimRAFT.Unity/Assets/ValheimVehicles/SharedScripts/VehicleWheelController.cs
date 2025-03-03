@@ -203,6 +203,9 @@ namespace ValheimVehicles.SharedScripts
 
     public float currentLeftForce;
     public float currentRightForce;
+
+    public float treadLateralDamping = 0.01f;
+    public float treadBackwardDamping = 50f;
     // Set to false until it's stable/syncs with the treads.
     [Tooltip("Wheels that provide power and move the tank forwards/reverse.")]
     public readonly List<WheelCollider> poweredWheels = new();
@@ -270,9 +273,6 @@ namespace ValheimVehicles.SharedScripts
     public bool IsVehicleReady => _isWheelsInitialized && _isTreadsInitialized && vehicleRootBody; // important catchall for preventing fixedupdate physics from being applied until the vehicle is ready.
     public float wheelColliderRadius => Mathf.Clamp(wheelRadius, 0f, 5f);
 
-    public float treadLateralDamping = 0.01f;
-    public float treadBackwardDamping = 50f;
-    
     [UsedImplicitly]
     public bool IsBraking
     {
@@ -467,7 +467,7 @@ namespace ValheimVehicles.SharedScripts
         treadsLeftTransform.position = vehicleRootBody.transform.TransformPoint(treadsAnchorLeftLocalPosition);
         treadsRightTransform.position = vehicleRootBody.transform.TransformPoint(treadsAnchorRightLocalPosition);
 
-        var scale = new Vector3(1 * treadWidthXScale, 1, 1);
+        var scale = new Vector3(treadWidthXScale, 1, 1);
         treadsLeftTransform.localScale = scale;
         treadsRightTransform.localScale = scale;
 
@@ -592,7 +592,7 @@ namespace ValheimVehicles.SharedScripts
 
       rb.AddForce(dampingForce, ForceMode.Acceleration);
     }
-    
+
     // New method: apply forces directly at the treads to simulate continuous treads
     private void ApplyTreadForces()
     {
@@ -686,7 +686,7 @@ namespace ValheimVehicles.SharedScripts
 
       // todo may only use this to replace sideways velocity damping
       DampUnwantedVelocity(vehicleRootBody, treadLateralDamping, treadBackwardDamping);
-      
+
       // this removes sideways velocities quickly to prevent issues with vehicle at higher speeds turning.
       DampenSidewaysVelocity();
       DampenAngularYVelocity();
@@ -1520,7 +1520,7 @@ namespace ValheimVehicles.SharedScripts
     {
       vehicleRootBody.AddForce(-Vector3.up * Gravity, ForceMode.Acceleration);
     }
-    
+
     private void ApplyFrictionToWheelCollider(WheelCollider wheel, float speed)
     {
       var frictionMultiplier = Mathf.Clamp(10f / wheelColliders.Count, 0.7f, 1.5f);

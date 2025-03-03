@@ -962,7 +962,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   /// <param name="collider"></param>
   public void ConvertColliderToTrigger(Collider collider)
   {
-    collider.isTrigger = true;
+    // collider.isTrigger = true;
     //
     // var colliders = prefab.GetComponentsInChildren<Collider>(true);
     // if (colliders == null) return;
@@ -1038,6 +1038,13 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   {
     if (VehicleInstance?.NetView == null) return;
     cachedIsNetviewOwner = VehicleInstance.NetView.IsOwner();
+    // m_nviewPieces.ForEach((x) =>
+    // {
+    //   if (x != null)
+    //   {
+    //     x.gameObject.SetActive(false);
+    //   }
+    // });
     Sync();
   }
 
@@ -2266,6 +2273,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     return !hasPieces;
   }
 
+  public static Dictionary<Material, Material> FixMaterialUniqueInstances = new();
   /// <summary>
   /// Must return a new material
   /// </summary>
@@ -2273,14 +2281,52 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   /// <returns></returns>
   public static Material FixMaterial(Material material)
   {
-    var isBlackMarble = material.name.Contains("blackmarble");
-    if (isBlackMarble) material.SetFloat(TriplanarLocalPos, 1f);
+    if (!material) return null;
 
-    material.SetFloat(RippleDistance, 0f);
-    material.SetFloat(ValueNoise, 0f);
-    return new Material(material);
+    // Check if material has any of the target properties
+    if (!material.HasFloat(RippleDistance) && !material.HasFloat(ValueNoise) && !material.HasFloat(TriplanarLocalPos))
+    {
+      return material; // No need to fix
+    }
+
+    // If already fixed, return the cached instance
+    if (FixMaterialUniqueInstances.TryGetValue(material, out var fixedMaterialInstance))
+    {
+      return fixedMaterialInstance;
+    }
+
+    // 🔹 Fix: Create a NEW material BEFORE modifying it
+    var newMaterial = new Material(material);
+
+    if (material.name.Contains("blackmarble"))
+    {
+      newMaterial.SetFloat(TriplanarLocalPos, 1f);
+    }
+
+    newMaterial.SetFloat(RippleDistance, 0f);
+    newMaterial.SetFloat(ValueNoise, 0f);
+
+    // Cache the fixed material
+    FixMaterialUniqueInstances[material] = newMaterial;
+
+    return newMaterial;
   }
-
+  // public static Material FixMaterial(Material material)
+  // {
+  //   var isBlackMarble = material.name.Contains("blackmarble");
+  //   if (!material.HasFloat(RippleDistance) && !material.HasFloat(ValueNoise) && !material.HasFloat(TriplanarLocalPos)) return material;
+  //   if (!FixMaterialUniqueInstances.TryGetValue(material, out var fixedMaterialInstance))
+  //   {
+  //     if (isBlackMarble) material.SetFloat(TriplanarLocalPos, 1f);
+  //     material.SetFloat(RippleDistance, 0f);
+  //     material.SetFloat(ValueNoise, 0f);
+  //     var newMaterial = new Material(material);
+  //     FixMaterialUniqueInstances.Add(material, newMaterial);
+  //     fixedMaterialInstance = newMaterial;
+  //   }
+  //   return fixedMaterialInstance;
+  // }
+  
   public static void FixPieceMeshes(ZNetView netView)
   {
     /*
@@ -2290,21 +2336,60 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     var meshes = netView.GetComponentsInChildren<MeshRenderer>(true);
     foreach (var meshRenderer in meshes)
     {
-      foreach (var meshRendererMaterial in meshRenderer.materials)
-        FixMaterial(meshRendererMaterial);
+      // foreach (var meshRendererMaterial in meshRenderer.materials)
+      //   FixMaterial(meshRendererMaterial);
 
-      if ((bool)meshRenderer.sharedMaterial)
+      if (meshRenderer.sharedMaterials.Length > 0)
       {
-        // todo disable triplanar shader which causes shader to move on black marble
         var sharedMaterials = meshRenderer.sharedMaterials;
-
         for (var j = 0; j < sharedMaterials.Length; j++)
           sharedMaterials[j] = FixMaterial(sharedMaterials[j]);
 
         meshRenderer.sharedMaterials = sharedMaterials;
       }
+      else if (meshRenderer.materials.Length > 0)
+      {
+        var materials = meshRenderer.materials;
+
+        for (var j = 0; j < materials.Length; j++)
+          materials[j] = FixMaterial(materials[j]);
+        meshRenderer.materials = materials;
+      }
     }
   }
+
+  // public static void FixPieceMeshes(ZNetView netView)
+  // {
+  //   /*
+  //    * It fixes shadow flicker on all of valheim's prefabs with boats
+  //    * If this is removed, the raft is seizure inducing.
+  //    */
+  //   var meshes = netView.GetComponentsInChildren<MeshRenderer>(true);
+  //   foreach (var meshRenderer in meshes)
+  //   {
+  //     // for (var index = 0; index < meshRenderer.sharedMaterials.Length; index++)
+  //     // {
+  //     //   var meshRendererMaterial = meshRenderer.sharedMaterials[index];
+  //     //   meshRenderer.materials[index] = FixMaterial(meshRendererMaterial);
+  //     // }
+  //     // for (var index = 0; index < meshRenderer.materials.Length; index++)
+  //     // {
+  //     //   var meshRendererMaterial = meshRenderer.materials[index];
+  //     //   meshRenderer.materials[index] = FixMaterial(meshRendererMaterial);
+  //     // }
+  //     //
+  //     if (meshRenderer.sharedMaterial)
+  //     {
+  //       // todo disable triplanar shader which causes shader to move on black marble
+  //       var sharedMaterials = meshRenderer.sharedMaterials;
+  //     
+  //       for (var j = 0; j < sharedMaterials.Length; j++)
+  //         sharedMaterials[j] = FixMaterial(sharedMaterials[j]);
+  //     
+  //       meshRenderer.sharedMaterials = sharedMaterials;
+  //     }
+  //   }
+  // }
 
   public void AddNewPiece(ZNetView netView)
   {
@@ -2850,60 +2935,368 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     }
   }
 
-  public GameObject _lastCombinedGameObj;
+  private Dictionary<Material, GameObject> _previousCombinedMeshObjects = new(); // Store previous combined meshes
 
-  public bool shouldHideAllMeshComponents = true;
-  private void GenerateCollisionMeshes()
+  public static Regex CombinedMeshExclusionPattern;
+  public static Regex CombinedMeshIncludePattern;
+  public static List<string> PrefabExcludeNames = ["wheel", "portal", PrefabNames.MBRopeLadder, PrefabNames.MBRopeAnchor, PrefabNames.ShipSteeringWheel, "door", "chest", "cart"];
+  public static List<string> MeshFilterExcludeNames = ["Destruction", "high", "large_lod", "vehicle_water_mesh", "largelod", "Portal_destruction", "Destruction_Cube"];
+  public static List<string> MeshFilterIncludesNames = ["Combined", "Combined_Mesh"];
+
+  private GameObject combinedMeshParent;
+  public Dictionary<GameObject, List<MeshRenderer>> hiddenMeshRenderersObjMap = new();
+  public Dictionary<GameObject, List<Material>> RelatedMaterialsMap = new();
+  private List<GameObject> currentMeshObjects = new();
+
+  /// <summary>
+  /// Regenerates the components that have shared materials in common with the removed component.
+  /// </summary>
+  /// <param name="go"></param>
+  public void OnWearNTearPieceDestroy(GameObject go)
   {
-    if (_lastCombinedGameObj)
+    if (!RenderingConfig.EnableVehicleClusterMeshRendering.Value) return;
+    if (RelatedMaterialsMap.TryGetValue(go, out var items))
     {
-      Destroy(_lastCombinedGameObj);
-    }
-    // var meshFilters = deck.GetComponentsInChildren<MeshFilter>();
-    var vehicleCombinedMesh = new GameObject()
-    {
-      name = "ValheimVehicles_VehicleCombinedMesh",
-      transform = { parent = transform }
-    };
-    List<MeshFilter> allMeshFilters = [];
-
-    foreach (var x in m_nviewPieces)
-    {
-      if (!x) continue;
-      var doorComponent = x.GetComponentInChildren<Door>();
-      if (doorComponent) continue;
-      var meshFilters = x.GetComponentsInChildren<MeshFilter>();
-      allMeshFilters.AddRange(meshFilters);
-    }
-
-    var combine = new CombineInstance[allMeshFilters.Count];
-
-    for (var i = 0; i < allMeshFilters.Count; i++)
-    {
-      var meshFilter = allMeshFilters[i];
-      if (!meshFilter) continue;
-      // Skip open spaces (e.g., doors, windows) by filtering meshes
-      if (meshFilter.name.Contains("door"))
-        continue;
-
-      combine[i].mesh = meshFilter.sharedMesh;
-      combine[i].transform = meshFilter.transform.localToWorldMatrix;
-
-      if (shouldHideAllMeshComponents)
+      var relatedPrefabs = new List<GameObject>();
+      foreach (var material in items)
       {
-        meshFilter.gameObject.SetActive(false);
+        if (_previousCombinedMeshObjects.TryGetValue(material, out var previousCombinedMeshObject))
+          relatedPrefabs.Add(previousCombinedMeshObject);
+      }
+      if (relatedPrefabs.Count > 0)
+      {
+        GenerateCombinedMeshes(relatedPrefabs, PrefabExcludeNames, MeshFilterIncludesNames);
+        IgnoreAllVehicleColliders();
+      }
+    }
+  }
+
+  public static Regex GenerateRegexFromList(List<string> prefixes)
+  {
+    if (prefixes == null || prefixes.Count == 0)
+    {
+      return new Regex("$^"); // 🔹 Matches NOTHING if list is empty
+    }
+    // Escape special characters in the strings and join them with a pipe (|) for OR condition
+    var escapedPrefixes = new List<string>();
+    foreach (var prefix in prefixes)
+    {
+      escapedPrefixes.Add(Regex.Escape(prefix));
+    }
+
+    // Create a regex pattern that matches the start of the string (^)
+    // It will match any of the provided prefixes at the start of the string
+    var pattern = "^(" + string.Join("|", escapedPrefixes) + ")";
+    return new Regex(pattern);
+  }
+
+  public GameObject GetWNTActiveComponent(WearNTear wnt)
+  {
+    if (wnt.m_wet && wnt.m_wet.activeSelf) return wnt.m_wet;
+    if (wnt.m_worn && wnt.m_worn.activeSelf) return wnt.m_worn;
+    if (wnt.m_broken && wnt.m_broken.activeSelf) return wnt.m_broken;
+    return wnt.m_new;
+  }
+
+  private HashSet<WearNTear> wntSubscribers = new();
+
+  private List<MeshRenderer> GetValidNonNestedMeshRenderers(List<MeshRenderer> selectedRenders, Transform root, WearNTear wnt)
+  {
+    List<MeshRenderer> validRenderers = new();
+    HashSet<Transform> excludedLODs = new(); // 🔹 Track excluded lower LOD objects
+
+    foreach (Transform child in root)
+    {
+      if (wnt && IsChildOfWNT(child, wnt)) continue; // 🔹 Skip WNT sub-objects
+
+      var lodGroup = child.GetComponent<LODGroup>();
+      if (lodGroup)
+      {
+        // 🔹 Get LOD0 (Highest Quality LOD)
+        var lods = lodGroup.GetLODs();
+        if (lods.Length > 0)
+        {
+          var maxLODRenderers = lods[0].renderers.OfType<MeshRenderer>().Where(x => !selectedRenders.Contains(x));
+          validRenderers.AddRange(maxLODRenderers);
+
+          // 🔹 Mark all other LOD objects for exclusion
+          for (var i = 1; i < lods.Length; i++)
+          {
+            foreach (var lowerLodRenderer in lods[i].renderers)
+            {
+              if (lowerLodRenderer)
+                excludedLODs.Add(lowerLodRenderer.transform);
+            }
+          }
+
+          continue; // ✅ Skip further processing for this LODGroup
+        }
+      }
+
+      // 🔹 If no LODGroup, only add if it's NOT part of an excluded LOD
+      if (!excludedLODs.Contains(child))
+      {
+        validRenderers.AddRange(child.GetComponentsInChildren<MeshRenderer>(true));
       }
     }
 
-    var collisionMesh = new Mesh { name = "ValheimVehicles_CombinedMesh" };
-    collisionMesh.CombineMeshes(combine);
-
-    // Assign to MeshCollider
-    var meshCollider = vehicleCombinedMesh.AddComponent<MeshCollider>();
-    meshCollider.sharedMesh = collisionMesh;
-    meshCollider.convex = false; // Keep it non-convex for walkable surfaces
-
+    return validRenderers;
   }
+
+
+// 🔹 Helper: Detect if Transform belongs to a WNT component
+  private bool IsChildOfWNT(Transform child, WearNTear wnt)
+  {
+    if (!wnt) return false; // 🔹 Ensure WNT exists before checking
+
+    // 🔹 Only call IsChildOf() if the transform is NOT null
+    return wnt.m_wet && child.IsChildOf(wnt.m_wet.transform) ||
+           wnt.m_worn && child.IsChildOf(wnt.m_worn.transform) ||
+           wnt.m_broken && child.IsChildOf(wnt.m_broken.transform) ||
+           wnt.m_new && child.IsChildOf(wnt.m_new.transform);
+  }
+
+  private void GenerateCombinedMeshes(List<ZNetView> list, List<string> prefabNameExclusionList, List<string> meshFilterExclusionList)
+  {
+    var objects = list.Where(x => x != null).Select(x => x.gameObject).ToList();
+    GenerateCombinedMeshes(objects, prefabNameExclusionList, meshFilterExclusionList);
+  }
+
+  private void GenerateCombinedMeshes(List<GameObject> list, List<string> prefabNameExclusionList, List<string> meshFilterExclusionList)
+  {
+    if (!combinedMeshParent)
+    {
+      combinedMeshParent = new GameObject
+      {
+        name = "ValheimVehicles_VehicleCombinedMesh",
+        gameObject = { layer = LayerHelpers.CustomRaftLayer },
+        transform = { parent = transform }
+      };
+    }
+
+    Dictionary<Material, List<CombineInstance>> materialToMeshes = new();
+    var prefabExclusionRegex = GenerateRegexFromList(prefabNameExclusionList); // Compile Regex once
+    var meshFilterExclusionRegex = GenerateRegexFromList(meshFilterExclusionList); // Compile Regex once
+    var meshFilterIncludeRegex = GenerateRegexFromList(MeshFilterIncludesNames); // Compile Regex once
+
+    foreach (var x in list)
+    {
+      if (!x) continue; // Skip inactive
+      if (prefabExclusionRegex.IsMatch(x.gameObject.name)) continue; // 🔹 Skip excluded objects
+
+      var wnt = x.GetComponent<WearNTear>();
+      List<MeshRenderer> selectedRenderers = new();
+
+      if (wnt != null)
+      {
+
+        if (!wntSubscribers.Contains(wnt))
+        {
+          wntSubscribers.Add(wnt);
+          wnt.m_onDestroyed += () => OnWearNTearPieceDestroy(x.gameObject);
+        }
+        // 🔹 WNT Exists: Get the active component & its MeshRenderer
+        var activeWNTObject = GetWNTActiveComponent(wnt);
+        if (activeWNTObject)
+        {
+          selectedRenderers.AddRange(activeWNTObject.GetComponentsInChildren<MeshRenderer>(true));
+        }
+      }
+
+      // 🔹 Include non-WNT MeshRenderers that are not nested inside other WNT objects
+      selectedRenderers.AddRange(GetValidNonNestedMeshRenderers(selectedRenderers, x.transform, wnt));
+
+      var shouldContinueAdding = true;
+      if (!hiddenMeshRenderersObjMap.TryGetValue(x.gameObject, out var currentDeactivatedMeshes))
+      {
+        currentDeactivatedMeshes = new List<MeshRenderer>();
+      }
+
+      foreach (var renderer in selectedRenderers)
+      {
+        if (!renderer || renderer.sharedMaterial == null) continue;
+        var mesh = renderer.GetComponent<MeshFilter>().sharedMesh;
+        if (mesh == null) return;
+        if (!mesh.isReadable)
+        {
+          Logger.LogDebug($"Skipping unreadable mesh {mesh.name}");
+          continue; // Skip unreadable meshes
+        }
+        if (meshFilterExclusionRegex.IsMatch(renderer.gameObject.name)) continue;
+        if (meshFilterIncludeRegex.IsMatch(renderer.gameObject.name))
+        {
+          shouldContinueAdding = false;
+        }
+
+        var fixedMaterial = renderer.sharedMaterial;
+        if (!materialToMeshes.ContainsKey(fixedMaterial))
+        {
+          materialToMeshes[fixedMaterial] = new List<CombineInstance>();
+        }
+
+        // deletes previous mesh.
+        if (_previousCombinedMeshObjects.TryGetValue(fixedMaterial, out var obj))
+        {
+          Destroy(obj);
+          _previousCombinedMeshObjects.Remove(fixedMaterial);
+        }
+
+        var meshTransform = renderer.transform;
+
+        // 🔹 Prevent floating-point errors in transform updates
+        var fixedPosition = new Vector3(
+          Mathf.Round(meshTransform.position.x * 1000f) / 1000f,
+          Mathf.Round(meshTransform.position.y * 1000f) / 1000f,
+          Mathf.Round(meshTransform.position.z * 1000f) / 1000f
+        );
+
+        materialToMeshes[fixedMaterial].Add(new CombineInstance
+        {
+          mesh = renderer.GetComponent<MeshFilter>().sharedMesh,
+          transform = Matrix4x4.TRS(fixedPosition, meshTransform.rotation, meshTransform.lossyScale)
+        });
+
+        if (renderer.gameObject.activeSelf && renderer.enabled && !currentDeactivatedMeshes.Contains(renderer))
+        {
+          renderer.enabled = false;
+          currentDeactivatedMeshes.Add(renderer);
+        }
+
+        if (RelatedMaterialsMap.TryGetValue(x, out var relatedMaterials))
+        {
+          if (!relatedMaterials.Contains(fixedMaterial))
+          {
+            relatedMaterials.Add(fixedMaterial);
+          }
+        }
+        else
+        {
+          RelatedMaterialsMap.Add(x, [fixedMaterial]);
+        }
+
+        if (!shouldContinueAdding)
+        {
+          break;
+        }
+      }
+    }
+
+    foreach (var entry in materialToMeshes)
+    {
+      var material = entry.Key;
+      var combineInstances = entry.Value;
+
+      var combinedMesh = new Mesh
+      {
+        name = "ValheimVehicles_CombinedMesh_" + material.name,
+        indexFormat = UnityEngine.Rendering.IndexFormat.UInt32
+      };
+
+      combinedMesh.CombineMeshes(combineInstances.ToArray(), true);
+
+      var meshObject = new GameObject($"CombinedMesh_{material.name}");
+      meshObject.gameObject.layer = LayerHelpers.CustomRaftLayer;
+      meshObject.transform.SetParent(combinedMeshParent.transform);
+
+      var meshFilter = meshObject.AddComponent<MeshFilter>();
+      meshFilter.mesh = combinedMesh;
+
+      var meshRenderer = meshObject.AddComponent<MeshRenderer>();
+
+      // 🔹 Apply fixed material instance
+      meshRenderer.sharedMaterial = material;
+
+      // 🔹 Ensure shadows update properly
+      // meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+      // meshRenderer.receiveShadows = true;
+
+      var meshCollider = meshObject.AddComponent<MeshCollider>();
+      meshCollider.sharedMesh = combinedMesh;
+      meshCollider.convex = false;
+
+      _previousCombinedMeshObjects.Add(material, meshObject);
+    }
+  }
+
+  private void CleanupPreviousCombinedMeshes()
+  {
+    // 🔹 Destroy all previously generated meshes
+    foreach (var obj in _previousCombinedMeshObjects)
+    {
+      if (obj.Value)
+      {
+        Destroy(obj.Value);
+      }
+    }
+    _previousCombinedMeshObjects.Clear();
+  }
+
+  // public GameObject _lastCombinedGameObj;
+
+  public bool shouldHideAllMeshComponents = true;
+  // private void GenerateCollisionMeshes()
+  // {
+  //   if (_lastCombinedGameObj)
+  //   {
+  //     Destroy(_lastCombinedGameObj);
+  //   }
+  //
+  //   var vehicleCombinedMesh = new GameObject
+  //   {
+  //     name = "ValheimVehicles_VehicleCombinedMesh",
+  //     transform = { parent = transform }
+  //   };
+  //
+  //   List<MeshFilter> allMeshFilters = [];
+  //
+  //   foreach (var x in m_nviewPieces)
+  //   {
+  //     if (!x) continue;
+  //     var doorComponent = x.GetComponentInChildren<Door>();
+  //     if (doorComponent) continue; // Skip doors
+  //
+  //     var meshFilters = x.GetComponentsInChildren<MeshFilter>();
+  //     allMeshFilters.AddRange(meshFilters);
+  //   }
+  //
+  //   var combine = new List<CombineInstance>(); // Use a list instead of array
+  //
+  //   foreach (var meshFilter in allMeshFilters)
+  //   {
+  //     if (!meshFilter || meshFilter.sharedMesh == null) continue;
+  //
+  //     // Skip specific meshes (e.g., doors, windows)
+  //     if (meshFilter.name.Contains("door")) continue;
+  //
+  //     combine.Add(new CombineInstance
+  //     {
+  //       mesh = meshFilter.sharedMesh,
+  //       transform = meshFilter.transform.localToWorldMatrix
+  //     });
+  //
+  //     if (shouldHideAllMeshComponents)
+  //     {
+  //       meshFilter.gameObject.SetActive(false);
+  //     }
+  //   }
+  //
+  //   // ✅ Fix: Force UInt32 index format for large meshes
+  //   var collisionMesh = new Mesh
+  //   {
+  //     name = "ValheimVehicles_CombinedMesh",
+  //     indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 // This allows > 65535 vertices
+  //   };
+  //
+  //   collisionMesh.CombineMeshes(combine.ToArray());
+  //
+  //   // Assign to MeshCollider
+  //   var meshCollider = vehicleCombinedMesh.AddComponent<MeshCollider>();
+  //   meshCollider.sharedMesh = collisionMesh;
+  //   meshCollider.convex = false; // Keep it non-convex for accurate walking surfaces
+  //
+  //   _lastCombinedGameObj = vehicleCombinedMesh; // Store reference to delete later if needed
+  // }
+
 
   public void IgnoreColliderForWheelColliders(Collider collider)
   {
@@ -2994,7 +3387,15 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     Physics.SyncTransforms();
     RotateVehicleForwardPosition();
 
-    RebuildConvexHull();
+    try
+    {
+
+      RebuildConvexHull();
+    }
+    catch (Exception e)
+    {
+      Logger.LogError(e);
+    }
 
     _vehiclePieceBounds = convexHullComponent.GetConvexHullBounds(true);
 
@@ -3011,14 +3412,18 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       Logger.LogError(e);
     }
 
-    try
+    if (RenderingConfig.EnableVehicleClusterMeshRendering.Value)
     {
-      // could be a huge performance boost.
-      GenerateCollisionMeshes();
-    }
-    catch (Exception e)
-    {
-      Logger.LogError(e);
+      try
+      {
+        // could be a huge performance boost.
+        // todo potentially map these so only new or removed items are actually run.
+        GenerateCombinedMeshes(m_nviewPieces, PrefabExcludeNames, MeshFilterExcludeNames);
+      }
+      catch (Exception e)
+      {
+        Logger.LogError(e);
+      }
     }
 
     // Critical for vehicle stability otherwise it will blast off in a random direction to due colliders internally colliding.

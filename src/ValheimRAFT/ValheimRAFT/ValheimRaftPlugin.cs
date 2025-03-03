@@ -318,6 +318,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     MinimapConfig.BindConfig(Config);
     HudConfig.BindConfig(Config);
     CameraConfig.BindConfig(Config);
+    RenderingConfig.BindConfig(Config);
 
 #if DEBUG
     // Meant for only being run in debug builds for testing quickly

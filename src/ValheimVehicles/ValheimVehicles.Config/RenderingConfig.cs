@@ -1,0 +1,32 @@
+using BepInEx.Configuration;
+using ComfyLib;
+using ValheimVehicles.SharedScripts;
+using ValheimVehicles.Vehicles.Controllers;
+
+namespace ValheimVehicles.Config;
+
+public static class RenderingConfig
+{
+  private static ConfigFile Config = null!;
+  public static ConfigEntry<bool> EnableVehicleClusterMeshRendering = null!;
+#if DEBUG
+  public static ConfigEntry<bool> EnableWorldClusterMeshRendering = null!;
+#endif
+
+  private const string SectionKey = "Hud";
+
+  public static void BindConfig(ConfigFile config)
+  {
+    Config = config;
+
+    EnableVehicleClusterMeshRendering = config.Bind(SectionKey,
+      "EnableVehicleClusterRendering", false,
+      "Cluster rendering efficiently improves how the raft renders. It will offer 50% boost in FPS for larger ships. You can reach upwards of 90 FPS on a 3000 piece ship vs 40-45fps. It does this by combining meshes so editing and damaging these components is a bit more abrupt. WearNTear animations go away, but the items can still be broken. Updates require re-building the meshes affected so this can be a bit heavy, but not as heavy as bounds collider rebuild.");
+
+#if DEBUG
+    EnableWorldClusterMeshRendering = config.Bind(SectionKey,
+      "EnableWorldClusterMeshRendering", false,
+      "Cluster rendering efficiently improves how the whole world renders and shares meshes. It will allow for significantly higher FPS at the potential cost of wearNTear latency. It is debug only provided and will not be enabled until wearNtear can be optimize with this.");
+#endif
+  }
+}

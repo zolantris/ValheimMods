@@ -5,6 +5,8 @@ using UnityEngine;
 
 #endregion
 
+// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable NamespaceStyle
 namespace ValheimVehicles.SharedScripts
 {
   /// <summary>

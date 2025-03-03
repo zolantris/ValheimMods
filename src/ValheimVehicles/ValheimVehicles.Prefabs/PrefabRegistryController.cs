@@ -268,7 +268,7 @@ public class PrefabRegistryController : MonoBehaviour
   private static void RegisterRopeAnchor()
   {
     var prefab =
-      prefabManager.CreateClonedPrefab("MBRopeAnchor",
+      prefabManager.CreateClonedPrefab(PrefabNames.MBRopeAnchor,
         LoadValheimRaftAssets.rope_anchor);
 
     var mbRopeAnchorPrefabPiece = prefab.AddComponent<Piece>();
