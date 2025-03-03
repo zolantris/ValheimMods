@@ -666,7 +666,7 @@ public class VehicleCommands : ConsoleCommand
 
   private static void ToggleVehicleDebugCommandsComponent()
   {
-    VehicleGui.ToggleCommandsPanelState();
+    VehicleGui.ToggleCommandsPanelState(true);
     foreach (var vehicleShip in VehicleShip.VehicleInstances)
     {
       if (vehicleShip.Value != null)

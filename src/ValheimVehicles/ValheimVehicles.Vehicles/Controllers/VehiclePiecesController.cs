@@ -3099,14 +3099,38 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         var activeWNTObject = GetWNTActiveComponent(wnt);
         if (activeWNTObject)
         {
-          selectedRenderers.AddRange(activeWNTObject.GetComponentsInChildren<MeshRenderer>(true));
+          List<MeshRenderer> selectedRenderersCombinedMesh = new();
+          var tempRenderers = activeWNTObject.GetComponentsInChildren<MeshRenderer>(true);
+
+          // if A combined mesh is found we skip all other mesh renderers without that name.
+          foreach (var tempRenderer in tempRenderers)
+          {
+            if (meshFilterIncludeRegex.IsMatch(tempRenderer.gameObject.name))
+            {
+              selectedRenderersCombinedMesh.Add(tempRenderer);
+            }
+          }
+
+          selectedRenderers.AddRange(selectedRenderersCombinedMesh.Count > 0 ? selectedRenderersCombinedMesh : tempRenderers);
         }
       }
 
-      // 🔹 Include non-WNT MeshRenderers that are not nested inside other WNT objects
-      selectedRenderers.AddRange(GetValidNonNestedMeshRenderers(selectedRenderers, x.transform, wnt));
+      var nonWntRenderers = GetValidNonNestedMeshRenderers(selectedRenderers, x.transform, wnt);
+      var tempNonWntCombinedRenderers = new List<MeshRenderer>();
 
-      var shouldContinueAdding = true;
+      // 🔹 Include non-WNT MeshRenderers that are not nested inside other WNT objects
+      // if A combined mesh is found we skip all other mesh renderers without that name.
+      foreach (var nonWntRenderer in nonWntRenderers)
+      {
+        if (meshFilterIncludeRegex.IsMatch(nonWntRenderer.gameObject.name))
+        {
+          tempNonWntCombinedRenderers.Add(nonWntRenderer);
+        }
+      }
+
+      selectedRenderers.AddRange(tempNonWntCombinedRenderers.Count > 0 ? tempNonWntCombinedRenderers : nonWntRenderers);
+
+
       if (!hiddenMeshRenderersObjMap.TryGetValue(x.gameObject, out var currentDeactivatedMeshes))
       {
         currentDeactivatedMeshes = new List<MeshRenderer>();
@@ -3119,14 +3143,12 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         if (mesh == null) return;
         if (!mesh.isReadable)
         {
+#if DEBUG
           Logger.LogDebug($"Skipping unreadable mesh {mesh.name}");
+#endif
           continue; // Skip unreadable meshes
         }
         if (meshFilterExclusionRegex.IsMatch(renderer.gameObject.name)) continue;
-        if (meshFilterIncludeRegex.IsMatch(renderer.gameObject.name))
-        {
-          shouldContinueAdding = false;
-        }
 
         var fixedMaterial = renderer.sharedMaterial;
         if (!materialToMeshes.ContainsKey(fixedMaterial))
@@ -3144,6 +3166,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         var meshTransform = renderer.transform;
 
         // 🔹 Prevent floating-point errors in transform updates
+        // todo need to confirm that this is a local position mesh and using world transform, not world point mesh vectors using relative transform.
         var fixedPosition = new Vector3(
           Mathf.Round(meshTransform.position.x * 1000f) / 1000f,
           Mathf.Round(meshTransform.position.y * 1000f) / 1000f,
@@ -3173,11 +3196,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         {
           RelatedMaterialsMap.Add(x, [fixedMaterial]);
         }
-
-        if (!shouldContinueAdding)
-        {
-          break;
-        }
       }
     }
 
@@ -3203,9 +3221,13 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
       var meshRenderer = meshObject.AddComponent<MeshRenderer>();
 
+      material.renderQueue -= 1;
+      
       // 🔹 Apply fixed material instance
       meshRenderer.sharedMaterial = material;
 
+      // render queue on a higher layer so that layers lower than it will clip this.
+      
       // 🔹 Ensure shadows update properly
       // meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
       // meshRenderer.receiveShadows = true;
