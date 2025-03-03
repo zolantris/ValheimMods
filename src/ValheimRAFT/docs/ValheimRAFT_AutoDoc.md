@@ -736,15 +736,15 @@ Other methods removed after 2.5.0
 
 ## Vehicle Physics
 
-### flightDamping_3.0.4 
+### flightDamping_3.0.5 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.0.4 
+### flightSidewaysDamping_3.0.5 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.0.4 
+### flightAngularDamping_3.0.5 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -764,15 +764,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1.2
 
-### forceDistance_3.0.4 
-- Description: EXPERIMENTAL_FORCE_DISTANCE
-- Default Value: 3
-
-### force_3.0.4 
+### force_3.0.5 
 - Description: EXPERIMENTAL_FORCE
-- Default Value: 5
+- Default Value: 1
 
-### backwardForce_3.0.4 
+### forceDistance_3.0.5 
+- Description: EXPERIMENTAL_FORCE_DISTANCE
+- Default Value: 1
+
+### backwardForce_3.0.5 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -780,15 +780,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1
 
-### waterDamping_3.0.4 
+### waterDamping_3.0.5 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.0.4 
+### waterSidewaysDamping_3.0.5 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.0.4 
+### waterAngularDamping_3.0.5 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -804,15 +804,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 0.8
 
-### submersibleDamping_3.0.4 
+### submersibleDamping_3.0.5 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.0.4 
+### submersibleSidewaysDamping_3.0.5 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.0.4 
+### submersibleAngularDamping_3.0.5 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -870,7 +870,7 @@ Other methods removed after 2.5.0
 - Description: DEPRECATED!!! Will be removed soon, values of -2 and 2 are allowed. Anything above means you are likely not using this correctly. Please use CenterOfMass instead if your vehicle needs to pivot lower. Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
 - Default Value: 0
 
-### EnableExactVehicleBounds_3.0.4 
+### EnableExactVehicleBounds_3.0.5 
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version
 - Default Value: True
 
@@ -989,6 +989,16 @@ Other methods removed after 2.5.0
 ### CameraZoomMaxDistance 
 - Description: Allows the camera to zoom out between 8 and 64 meters. Percentage based zoom.
 - Default Value: 0
+
+## Hud
+
+### EnableVehicleClusterRendering 
+- Description: Cluster rendering efficiently improves how the raft renders. It will offer 50% boost in FPS for larger ships. You can reach upwards of 90 FPS on a 3000 piece ship vs 40-45fps. It does this by combining meshes so editing and damaging these components is a bit more abrupt. WearNTear animations go away, but the items can still be broken. Updates require re-building the meshes affected so this can be a bit heavy, but not as heavy as bounds collider rebuild.
+- Default Value: False
+
+### EnableWorldClusterMeshRendering 
+- Description: Cluster rendering efficiently improves how the whole world renders and shares meshes. It will allow for significantly higher FPS at the potential cost of wearNTear latency. It is debug only provided and will not be enabled until wearNtear can be optimize with this.
+- Default Value: False
 
 ## QuickStartWorld
 
