@@ -1336,7 +1336,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       ShipMass += pieceWeight;
   }
 
-  public void RebuildBoundsThrottled()
+  public override void OnDelayedBoundsRebuild()
   {
     if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !isInitialActivationComplete) return;
     if (_rebuildBoundsTimer != null)

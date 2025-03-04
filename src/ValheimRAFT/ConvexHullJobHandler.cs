@@ -14,11 +14,11 @@ namespace ValheimVehicles.SharedScripts
         private static readonly HashSet<ConvexHullAPI> ActiveJobs = new(); // ✅ Tracks running jobs
 
         /// <summary>
-        /// Schedules a job to process `PrefabColliderPointData`, generate convex hulls, and return results.
+        /// Schedules a job to process `PrefabPieceData`, generate convex hulls, and return results.
         /// </summary>
         public static void ScheduleConvexHullJob(
             ConvexHullAPI convexHullAPI,
-            List<PrefabColliderPointData> colliderDataList,
+            List<PrefabPieceData> prefabDataList,
             float clusterThreshold)
         {
             if (convexHullAPI == null)
@@ -27,7 +27,7 @@ namespace ValheimVehicles.SharedScripts
                 return;
             }
 
-            if (colliderDataList.Count == 0) return;
+            if (prefabDataList.Count == 0) return;
 
             // ✅ Prevent duplicate jobs for the same `ConvexHullAPI` instance
             if (ActiveJobs.Contains(convexHullAPI))
@@ -38,7 +38,14 @@ namespace ValheimVehicles.SharedScripts
 
             ActiveJobs.Add(convexHullAPI); // ✅ Mark job as running
 
-            // ✅ Convert PrefabColliderPointData into a NativeArray for job processing
+            // ✅ Extract `PrefabColliderPointData` from `PrefabPieceData`
+            var colliderDataList = new List<PrefabColliderPointData>();
+            foreach (var prefabData in prefabDataList)
+            {
+                colliderDataList.Add(prefabData.PointDataItems);
+            }
+
+            // ✅ Convert to NativeArray for job processing
             NativeArray<PrefabColliderPointData> nativeColliderData = new(colliderDataList.ToArray(), Allocator.TempJob);
             NativeArray<ConvexHullResultData> nativeHullResults = new(colliderDataList.Count, Allocator.TempJob);
 
