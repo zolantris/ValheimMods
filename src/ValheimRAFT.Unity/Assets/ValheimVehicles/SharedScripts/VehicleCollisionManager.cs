@@ -24,61 +24,81 @@ namespace ValheimVehicles.SharedScripts
       private NativeArray<IntPtrPair> _collisionPairs;
       private JobHandle _currentJob;
 
+      // allow access to this for tracking dependencies of colliders.
+      public Dictionary<GameObject, List<Collider>> _prefabColliderDependencies = new();
+
       private void OnDestroy()
       {
           _isVehicleDestroyed = true;
           Cleanup();
       }
 
-      public void AddColliderToVehicle(Collider collider)
+      /// <summary>
+      /// We expect only need to get all colliders if the component does not exist.
+      ///
+      /// If component exists then removing colliders makes no sense.
+      /// </summary>
+      /// <param name="prefab"></param>
+      public void AddPrefabCollidersToVehicle(GameObject prefab)
       {
-          AddColliderToVehicle(collider, false);
-      }
-
-      public void AddColliderToVehicle(Collider collider, bool shouldUpdate)
-      {
-          if (collider != null && !_colliders.Contains(collider))
+          if (!_prefabColliderDependencies.TryGetValue(prefab, out var colliders))
           {
-              _colliders.Add(collider);
-          }
-          if (shouldUpdate)
-          {
-              ProcessIgnoreCollisions();
-          }
-      }
-
-      public void AddListOfColliders(List<Collider> colliders, bool shouldUpdate = false)
-      {
-          colliders.ForEach(AddColliderToVehicle);
-          if (shouldUpdate)
-          {
-              ProcessIgnoreCollisions();
+              colliders = new List<Collider>();
+              prefab.GetComponentsInChildren<Collider>(true, colliders);
+              _prefabColliderDependencies[prefab] = colliders;
           }
       }
 
-      public void AddListOfColliders(List<WheelCollider> colliders, bool shouldUpdate = false)
-      {
-          colliders.ForEach(AddColliderToVehicle);
-          if (shouldUpdate)
-          {
-              ProcessIgnoreCollisions();
-          }
-      }
+      // public void AddColliderToVehicle(Collider collider)
+      // {
+      //     AddColliderToVehicle(collider, false);
+      // }
 
-      public void AddObjectToVehicle(GameObject obj, bool shouldUpdate = false)
-      {
-          if (_isVehicleDestroyed || obj == null) return;
 
-          var newColliders = obj.GetComponentsInChildren<Collider>();
-          foreach (var collider in newColliders)
-          {
-              AddColliderToVehicle(collider);
-          }
-          if (shouldUpdate)
-          {
-              ProcessIgnoreCollisions();
-          }  
-      }
+      // private void AddColliderToVehicle(Collider collider, bool shouldUpdate)
+      // {
+      //     if (collider != null && !_colliders.Contains(collider))
+      //     {
+      //         _colliders.Add(collider);
+      //     }
+      //     if (shouldUpdate)
+      //     {
+      //         ProcessIgnoreCollisions();
+      //     }
+      // }
+      //
+      // private void AddListOfColliders(List<Collider> colliders, bool shouldUpdate = false)
+      // {
+      //     colliders.ForEach(AddColliderToVehicle);
+      //     if (shouldUpdate)
+      //     {
+      //         ProcessIgnoreCollisions();
+      //     }
+      // }
+      //
+      // public void AddListOfColliders(List<WheelCollider> colliders, bool shouldUpdate = false)
+      // {
+      //     colliders.ForEach(AddColliderToVehicle);
+      //     if (shouldUpdate)
+      //     {
+      //         ProcessIgnoreCollisions();
+      //     }
+      // }
+
+      // public void AddObjectToVehicle(GameObject obj, bool shouldUpdate = false)
+      // {
+      //     if (_isVehicleDestroyed || obj == null) return;
+      //
+      //     var newColliders = obj.GetComponentsInChildren<Collider>();
+      //     foreach (var collider in newColliders)
+      //     {
+      //         AddColliderToVehicle(collider);
+      //     }
+      //     if (shouldUpdate)
+      //     {
+      //         ProcessIgnoreCollisions();
+      //     }  
+      // }
 
       public void RemoveObjectFromVehicle(GameObject obj)
       {
