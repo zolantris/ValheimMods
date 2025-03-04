@@ -125,13 +125,12 @@ namespace ValheimVehicles.SharedScripts
     /// <returns></returns>
     public Func<string, bool> IsAllowedAsHullOverride = s => false;
 
-    private Transform lastParentTransform;
     [NonSerialized] public List<MeshCollider> newMeshColliders = new();
 
     private const string colliderParentNameDefault = "vehicle_movement/colliders";
     public string colliderParentName = colliderParentNameDefault;
 
-    public Transform parentTransform; 
+    public Transform parentTransform = null!; 
 
     private void Awake()
     {
@@ -513,7 +512,7 @@ namespace ValheimVehicles.SharedScripts
     }
 
 
-    private static List<Vector3> GetColliderPointsGlobal(Collider collider)
+    public static List<Vector3> GetColliderPointsGlobal(Collider collider)
     {
       var points = new List<Vector3>();
 
@@ -1261,9 +1260,9 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
-      if (lastParentTransform != parentObjTransform)
+      if (parentTransform != parentObjTransform)
       {
-        lastParentTransform = parentObjTransform;
+        parentTransform = parentObjTransform;
         convexHullCalculator = new ConvexHullCalculator();
       }
 

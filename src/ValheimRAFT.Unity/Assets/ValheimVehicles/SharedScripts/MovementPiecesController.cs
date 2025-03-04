@@ -1,7 +1,6 @@
 ﻿#region
 
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 #endregion
@@ -23,15 +22,27 @@ namespace ValheimVehicles.SharedScripts
 
         public List<Collider> vehicleCollidersToIgnore = new();
         public readonly Dictionary<GameObject, PrefabPieceData> prefabPieceDataItems = new();
-        public readonly List<PrefabPieceData> m_removedPieceData = new();
-        public readonly List<PrefabPieceData> m_addedPieceData = new();
-
+        public List<GameObject> convexHullMeshes =>
+            m_convexHullAPI.convexHullMeshes;
+        public List<Collider> convexHullColliders = [];
+        public List<MeshCollider> convexHullMeshColliders = [];
+        public List<GameObject> convexHullTriggerMeshes =>
+            m_convexHullAPI.convexHullTriggerMeshes;
         public ConvexHullAPI m_convexHullAPI;
 
         public virtual void Awake()
         {
-            m_convexHullAPI = gameObject.AddComponent<ConvexHullAPI>();
             m_localRigidbody = GetComponent<Rigidbody>();
+        }
+
+        public virtual void Start()
+        {
+#if UNITY_EDITOR
+            if (!m_convexHullAPI)
+            {
+                m_convexHullAPI = gameObject.AddComponent<ConvexHullAPI>();
+            }
+#endif
         }
 
 #if UNITY_EDITOR
@@ -54,7 +65,7 @@ namespace ValheimVehicles.SharedScripts
             piece.transform.SetParent(transform, false);
 #endif
             var prefabPieceData = new PrefabPieceData(piece);
-            prefabPieceDataItems.Add(piece, prefabPieceData);
+            prefabPieceDataItems[piece] = prefabPieceData; // ✅ Direct assignment instead of `.Add()`
 
             // ✅ Ensure collision ignores are updated immediately
             UpdateCollidersIgnoresOnChange(prefabPieceData);
@@ -65,28 +76,33 @@ namespace ValheimVehicles.SharedScripts
 #if UNITY_EDITOR
             piece.transform.SetParent(null);
 #endif
-            if (prefabPieceDataItems.TryGetValue(piece, out var prefabPieceData))
+            if (!prefabPieceDataItems.TryGetValue(piece, out var prefabPieceData)) return;
+
+            // ✅ Avoid LINQ allocation by using `foreach`
+            var shouldRebuild = true;
+            foreach (var meshCollider in m_convexHullAPI.convexHullMeshColliders)
             {
-                var isValidWithin = m_convexHullAPI.convexHullMeshColliders
-                    .FirstOrDefault(x => prefabPieceData.AreAllPointsValid(x, transform, convexAPIThresholdDistance));
-
-                // ✅ Only rebuild if the piece was contributing to the hull
-                if (isValidWithin == null)
+                if (prefabPieceData.AreAllPointsValid(meshCollider, transform, convexAPIThresholdDistance))
                 {
-                    OnDelayedBoundsRebuild();
+                    shouldRebuild = false;
+                    break;
                 }
-
-                prefabPieceDataItems.Remove(piece);
             }
+
+            if (shouldRebuild)
+            {
+                RequestBoundsRebuild();
+            }
+
+            prefabPieceDataItems.Remove(piece);
         }
 
         /// <summary>
-        /// For running all bounds builds. This should be invoked as the main method.
-        /// This method is meant to be overridden and not extended.
+        /// Requests a delayed convex hull rebuild.
         /// </summary>
-        public virtual void OnDelayedBoundsRebuild()
+        public virtual void RequestBoundsRebuild()
         {
-            CancelInvoke(nameof(OnDelayedBoundsRebuild));
+            CancelInvoke(nameof(RequestBoundsRebuild));
             Invoke(nameof(GenerateConvexHull), 1f);
         }
 
@@ -104,6 +120,42 @@ namespace ValheimVehicles.SharedScripts
                     if (vehicleCollider == null) continue;
                     Physics.IgnoreCollision(prefabCollider, vehicleCollider, true);
                 }
+
+                foreach (var convexCollider in m_convexHullAPI.convexHullMeshColliders)
+                {
+                    if (convexCollider == null) continue;
+                    Physics.IgnoreCollision(prefabCollider, convexCollider, true);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Ignores all collisions between convex colliders and tracked vehicle colliders.
+        /// </summary>
+        public void IgnoreAllCollisionsFromConvexColliders()
+        {
+            // ✅ Precompute `AllColliders` to avoid reallocation
+            var allColliders = new HashSet<Collider>();
+            foreach (var prefabPieceData in prefabPieceDataItems.Values)
+            {
+                allColliders.UnionWith(prefabPieceData.AllColliders);
+            }
+
+            foreach (var convexCollider in m_convexHullAPI.convexHullMeshColliders)
+            {
+                if (convexCollider == null) continue;
+
+                foreach (var prefabCollider in allColliders)
+                {
+                    if (prefabCollider == null) continue;
+                    Physics.IgnoreCollision(convexCollider, prefabCollider, true);
+                }
+
+                foreach (var vehicleCollider in vehicleCollidersToIgnore)
+                {
+                    if (vehicleCollider == null) continue;
+                    Physics.IgnoreCollision(convexCollider, vehicleCollider, true);
+                }
             }
         }
 
@@ -112,8 +164,13 @@ namespace ValheimVehicles.SharedScripts
         /// </summary>
         public void GenerateConvexHull(float clusterThreshold)
         {
-            var prefabDataItems = prefabPieceDataItems.Values.ToList();
-            ConvexHullJobHandler.ScheduleConvexHullJob(m_convexHullAPI, prefabDataItems, clusterThreshold);
+            // ✅ Avoid extra allocations by passing `IEnumerable` instead of `.ToList()`
+            var prefabDataItems = prefabPieceDataItems.Values;
+            ConvexHullJobHandler.ScheduleConvexHullJob(m_convexHullAPI, new List<PrefabPieceData>(prefabDataItems), clusterThreshold, () =>
+            {
+                Debug.Log("✅ Convex Hull Generation Complete!");
+                IgnoreAllCollisionsFromConvexColliders();
+            });
         }
     }
 }
