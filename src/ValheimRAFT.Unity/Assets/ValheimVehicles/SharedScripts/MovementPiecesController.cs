@@ -18,14 +18,15 @@ namespace ValheimVehicles.SharedScripts
     public Rigidbody m_localRigidbody;
     public VehicleWheelController m_vehicleWheelController;
     public VehicleCollisionManager m_vehicleCollisionManager;
+    public ConvexHullJobHandler m_convexHullJobHandler;
 
     public bool m_shouldSync = true;
-    public readonly List<GameObject> vehiclePieces = new();
+    public readonly List<PrefabPieceData> prefabPieceDataItems = new();
     public virtual void Awake()
     {
       m_localRigidbody = GetComponent<Rigidbody>();
       m_vehicleCollisionManager = gameObject.AddComponent<VehicleCollisionManager>();
-      AddAllChildrenToIgnores(transform);
+      m_convexHullJobHandler = gameObject.AddComponent<ConvexHullJobHandler>();
     }
 
 #if UNITY_EDITOR
@@ -42,24 +43,11 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public void AddAllChildrenToIgnores(Transform targetTransform)
-    {
-      foreach (Transform child in targetTransform)
-      {
-        m_vehicleCollisionManager.AddObjectToVehicle(child.gameObject);
-      }
-    }
-
     public void OnPieceAdded(GameObject piece)
     {
       piece.transform.SetParent(transform, false);
-      vehiclePieces.Add(piece);
-      // OnPieceAddedIgnoreAllColliders(piece);
-    }
-
-    internal void OnPieceAddedIgnoreAllColliders(GameObject piece)
-    {
-      m_vehicleCollisionManager.AddObjectToVehicle(piece);
+      var prefabPieceData = new PrefabPieceData(piece);
+      prefabPieceDataItems.Add(prefabPieceData);
     }
   }
 }
