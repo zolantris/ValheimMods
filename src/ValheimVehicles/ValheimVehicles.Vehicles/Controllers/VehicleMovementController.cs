@@ -3105,10 +3105,19 @@
     }
 
 
+    /// <summary>
+    /// Todo integrate this and confirm it works. This will help avoid any one player from updating too quickly.
+    ///
+    /// Also should prevent desyncs if we can synchronize it.
+    /// </summary>
     public void SendSyncBounds()
     {
       if (m_nview == null) return;
-      m_nview.InvokeRPC(0, nameof(RPC_SyncBounds));
+
+      OnboardController.m_localPlayers.ForEach(x =>
+      {
+        m_nview.InvokeRPC(x.GetPlayerID(), nameof(RPC_SyncBounds));
+      });
     }
 
     /// <summary>
@@ -3125,7 +3134,7 @@
     public void SyncVehicleBounds()
     {
       if (PiecesController == null) return;
-      PiecesController.RebuildBoundsThrottled();
+      PiecesController.RequestBoundsRebuild();
     }
 
     public void OnFlightChangePolling()

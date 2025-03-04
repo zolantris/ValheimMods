@@ -127,16 +127,8 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
   public bool useWorldColliderPosition = false;
 
+  // abstraction from convexHullAPI overridess it.
   public ConvexHullComponent convexHullComponent = null!;
-
-  public List<GameObject> convexHullMeshes =>
-    convexHullComponent.convexHullMeshes;
-
-  public List<Collider> convexHullColliders = [];
-  public List<MeshCollider> convexHullMeshColliders = [];
-
-  public List<GameObject> convexHullTriggerMeshes =>
-    convexHullComponent.convexHullTriggerMeshes;
 
   public List<MeshCollider> convexHullTriggerMeshColliders = [];
   public List<Collider> convexHullTriggerColliders = [];
@@ -493,9 +485,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       onboardColliderTransform =
         piecesCollidersTransform.Find(PrefabNames.WaterVehicleOnboardCollider);
 
-
-    AddAllChildrenToIgnores(piecesCollidersTransform);
-
+    
     IgnoreAllVehicleColliders();
 
 
@@ -507,7 +497,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
     // m_vehicleCollisionManager.AddObjectToVehicle(FloatCollider.gameObject);
     // m_vehicleCollisionManager.AddObjectToVehicle(OnboardCollider.gameObject);
-
     InitConvexHullGenerator();
     _piecesContainer = GetPiecesContainer();
     _movingPiecesContainer = CreateMovingPiecesContainer();
@@ -525,8 +514,10 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       convexHullComponent =
         gameObject.AddComponent<ConvexHullComponent>();
 
+    convexHullComponent.parentTransform = transform;
     convexHullComponent.MovementController = MovementController;
     // safety check, this will run after game-world loads especially if settings have changed.
+    m_convexHullAPI = convexHullComponent;
     if (!ConvexHullAPI.HasInitialized)
     {
       // static
@@ -617,7 +608,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     return true;
   }
 
-  public virtual void Start()
+  public override void Start()
   {
     ValidateInitialization();
 
@@ -1336,7 +1327,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       ShipMass += pieceWeight;
   }
 
-  public override void OnDelayedBoundsRebuild()
+  public override void RequestBoundsRebuild()
   {
     if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !isInitialActivationComplete) return;
     if (_rebuildBoundsTimer != null)
@@ -1409,7 +1400,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
     IncrementPieceRevision();
     UpdateMass(netView, true);
-    RebuildBoundsThrottled();
+    RequestBoundsRebuild();
 
     if (PrefabNames.IsHull(netView.gameObject)) m_hullPieces.Remove(netView);
 
@@ -1696,7 +1687,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     else if (PendingPiecesState == PendingPieceStateEnum.Complete)
     {
       // Should be called after activation completes provided there is no reset
-      RebuildBoundsThrottled();
+      RequestBoundsRebuild();
     }
 
     if (pieceStateEnum == PendingPieceStateEnum.ForceReset)
@@ -2452,6 +2443,8 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       if (wnt == null) return;
       wnt.Destroy();
     }
+
+    RotateVehicleForwardPosition();
   }
 
   /// <summary>
@@ -2631,7 +2624,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     UpdateMass(netView);
 
     // Handle bounds rebuilding
-    RebuildBoundsThrottled();
+    RequestBoundsRebuild();
 
     if (hasDebug)
       Logger.LogDebug(
@@ -2876,30 +2869,47 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     //   .GetComponentsInChildren<MeshCollider>(true).ToList();
   }
 
-  /// <summary>
-  /// Ignores absolutely all vehicle colliders. This is not optimize and allocates, however it is non-complex and should work every time.
-  ///
-  /// This includes Character, Wagon, Catapults etc that are placed within the vehicle.
-  /// </summary>
+  public List<Collider> tempVehicleColliders = new();
+  public List<Collider> tempPieceColliders = new();
+  [FormerlySerializedAs("shouldUpdatePieceColliders")]
+  public bool _shouldUpdatePieceColliders = false;
+  [FormerlySerializedAs("shouldUpdateVehicleColliders")]
+  public bool _shouldUpdateVehicleColliders = false;
+  /**
+   * Ignores absolutely all vehicle colliders.
+   * This is optimized to prevent duplicate colliders and unnecessary allocations.
+   */
   public void IgnoreAllVehicleColliders()
   {
     if (VehicleInstance?.Instance == null || MovementController == null) return;
 
-    var allVehicleColliders = VehicleInstance.Instance.GetComponentsInChildren<Collider>(true);
-    var allPieceColliders = GetComponentsInChildren<Collider>(true);
+    // ✅ Clear before refilling to avoid stale data
 
+    // ✅ Fetch colliders using `List<>` (HashSet not allowed in GetComponentsInChildren)
+    if (_shouldUpdateVehicleColliders)
+    {
+      tempVehicleColliders.Clear();
+      VehicleInstance.Instance.GetComponentsInChildren(true, tempVehicleColliders);
+    }
+
+    if (_shouldUpdatePieceColliders)
+    {
+      tempPieceColliders.Clear();
+      GetComponentsInChildren(true, tempPieceColliders);
+    }
+    
     // heavy but simple ignore all colliders.
-    foreach (var vehicleCollider in allVehicleColliders)
+    foreach (var vehicleCollider in tempVehicleColliders)
     {
       // must ignore all vehicle colliders
-      foreach (var vehicleCollider2 in allVehicleColliders)
+      foreach (var vehicleCollider2 in tempVehicleColliders)
       {
         if (vehicleCollider == vehicleCollider2) continue;
         Physics.IgnoreCollision(vehicleCollider, vehicleCollider2, true);
       }
-
+    
       // vehicle colliders must ignore pieces. But pieces should likely not ignore eachother and it won't matter with how piece controller ignores physics engine.
-      foreach (var allPieceCollider in allPieceColliders)
+      foreach (var allPieceCollider in tempPieceColliders)
       {
         Physics.IgnoreCollision(vehicleCollider, allPieceCollider, true);
       }
@@ -3362,49 +3372,48 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   // }
 
 
-  public void IgnoreColliderForWheelColliders(Collider collider)
-  {
-    if (collider == null || WheelController == null) return;
-    foreach (var wheelCollider in WheelController.wheelColliders)
-    {
-      if (wheelCollider == null)
-      {
-        continue;
-      }
+  // public void IgnoreColliderForWheelColliders(Collider collider)
+  // {
+  //   if (collider == null || WheelController == null) return;
+  //   foreach (var wheelCollider in WheelController.wheelColliders)
+  //   {
+  //     if (wheelCollider == null)
+  //     {
+  //       continue;
+  //     }
+  //
+  //     Physics.IgnoreCollision(collider, wheelCollider, true);
+  //   }
+  // }
 
-      Physics.IgnoreCollision(collider, wheelCollider, true);
-    }
-  }
+  // public void IgnoreWheelColliders(List<Collider> colliders)
+  // {
+  //   if (WheelController == null) return;
+  //   colliders.ForEach(IgnoreColliderForWheelColliders);
+  // }
 
-  public void IgnoreWheelColliders(List<Collider> colliders)
-  {
-    if (WheelController == null) return;
-    colliders.ForEach(IgnoreColliderForWheelColliders);
-  }
-
-  public void IgnoreAllWheelColliders()
-  {
-    if (WheelController == null || WheelController.wheelColliders.Count == 0) return;
-    m_vehicleCollisionManager.AddListOfColliders(WheelController.wheelColliders);
-    //
-    // var colliders = new List<Collider>();
-    // foreach (var wheelCollider in WheelController.wheelColliders.ToList())
-    // {
-    //   if (wheelCollider == null)
-    //   {
-    //     continue;
-    //   }
-    // OnPieceAddedIgnoreAllColliders(wheelCollider);
-    //
-    //   var collider = wheelCollider.GetComponent<Collider>();
-    //   if (collider == null) continue;
-    //
-    //   IgnoreShipColliderForCollider(collider, true);
-    //   colliders.Add(collider);
-    // }
-    //
-    // IgnoreCollidersForList(colliders, m_nviewPieces);
-  }
+  // public void IgnoreAllWheelColliders()
+  // {
+  //   if (WheelController == null || WheelController.wheelColliders.Count == 0) return;
+  //   //
+  //   // var colliders = new List<Collider>();
+  //   // foreach (var wheelCollider in WheelController.wheelColliders.ToList())
+  //   // {
+  //   //   if (wheelCollider == null)
+  //   //   {
+  //   //     continue;
+  //   //   }
+  //   // OnPieceAddedIgnoreAllColliders(wheelCollider);
+  //   //
+  //   //   var collider = wheelCollider.GetComponent<Collider>();
+  //   //   if (collider == null) continue;
+  //   //
+  //   //   IgnoreShipColliderForCollider(collider, true);
+  //   //   colliders.Add(collider);
+  //   // }
+  //   //
+  //   // IgnoreCollidersForList(colliders, m_nviewPieces);
+  // }
 
   public void TryAddRamToVehicle()
   {
@@ -3439,8 +3448,18 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     if (FloatCollider == null || OnboardCollider == null)
       return;
 
+    _shouldUpdateVehicleColliders = true;
     _lastRebuildTime = Time.fixedTime;
     _lastRebuildItemCount = m_nviewPieces.Count;
+
+    if (_lastRebuildPieceRevision != _lastPieceRevision)
+    {
+      _shouldUpdatePieceColliders = true;
+    }
+
+    // always update them for now until we can get smarter with convex collider detecting which ones have been added if any.
+    _shouldUpdateVehicleColliders = true;
+    
     _lastRebuildPieceRevision = _lastPieceRevision;
 
     ResetSailCachedValues();

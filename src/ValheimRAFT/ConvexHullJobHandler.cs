@@ -11,15 +11,17 @@ namespace ValheimVehicles.SharedScripts
 
     public static class ConvexHullJobHandler
     {
-        private static readonly HashSet<ConvexHullAPI> ActiveJobs = new(); // ✅ Tracks running jobs
+        private static readonly HashSet<ConvexHullAPI> ActiveJobs = new();
+        private static readonly Dictionary<JobHandle, Action> JobCompletionCallbacks = new(); // ✅ Track job handles & their callbacks
 
         /// <summary>
-        /// Schedules a job to process `PrefabPieceData`, generate convex hulls, and return results.
+        /// Schedules a job to process `PrefabPieceData`, generate convex hulls, and execute a callback when complete.
         /// </summary>
         public static void ScheduleConvexHullJob(
             ConvexHullAPI convexHullAPI,
             List<PrefabPieceData> prefabDataList,
-            float clusterThreshold)
+            float clusterThreshold,
+            Action onComplete = null)
         {
             if (convexHullAPI == null)
             {
@@ -29,14 +31,13 @@ namespace ValheimVehicles.SharedScripts
 
             if (prefabDataList.Count == 0) return;
 
-            // ✅ Prevent duplicate jobs for the same `ConvexHullAPI` instance
             if (ActiveJobs.Contains(convexHullAPI))
             {
                 Debug.LogWarning($"⚠️ ConvexHullJob is already running for {convexHullAPI}. Skipping duplicate request.");
                 return;
             }
 
-            ActiveJobs.Add(convexHullAPI); // ✅ Mark job as running
+            ActiveJobs.Add(convexHullAPI);
 
             // ✅ Extract `PrefabColliderPointData` from `PrefabPieceData`
             var colliderDataList = new List<PrefabColliderPointData>();
@@ -45,7 +46,6 @@ namespace ValheimVehicles.SharedScripts
                 colliderDataList.Add(prefabData.PointDataItems);
             }
 
-            // ✅ Convert to NativeArray for job processing
             NativeArray<PrefabColliderPointData> nativeColliderData = new(colliderDataList.ToArray(), Allocator.TempJob);
             NativeArray<ConvexHullResultData> nativeHullResults = new(colliderDataList.Count, Allocator.TempJob);
 
@@ -56,28 +56,56 @@ namespace ValheimVehicles.SharedScripts
                 OutputHullData = nativeHullResults
             };
 
-            var jobHandle = job.Schedule();
-            jobHandle.Complete(); // ✅ Wait for job to complete (can be optimized later)
+            var jobHandle = job.Schedule(); // ✅ Schedule job asynchronously (DO NOT CALL `.Complete()`)
 
-            // ✅ Convert results to managed arrays and call the main thread API
-            for (var i = 0; i < colliderDataList.Count; i++)
+            // ✅ Store the job and its callback
+            JobCompletionCallbacks[jobHandle] = () =>
             {
-                var result = nativeHullResults[i];
+                for (var i = 0; i < colliderDataList.Count; i++)
+                {
+                    var result = nativeHullResults[i];
 
-                convexHullAPI.GenerateMeshFromConvexOutput(
-                    result.Vertices.ToArray(),
-                    result.Triangles.ToArray(),
-                    result.Normals.ToArray(),
-                    i
-                );
+                    convexHullAPI.GenerateMeshFromConvexOutput(
+                        result.Vertices.ToArray(),
+                        result.Triangles.ToArray(),
+                        result.Normals.ToArray(),
+                        i
+                    );
 
-                // ✅ Dispose after copying to managed memory
-                result.Dispose();
+                    result.Dispose();
+                }
+
+                nativeColliderData.Dispose();
+                nativeHullResults.Dispose();
+                ActiveJobs.Remove(convexHullAPI);
+
+                // ✅ Invoke the callback after the job completes
+                onComplete?.Invoke();
+            };
+        }
+
+        /// <summary>
+        /// ✅ This must be called from a `MonoBehaviour` (e.g., `VehicleManager`) in `LateUpdate()`.
+        /// </summary>
+        public static void ProcessCompletedJobs()
+        {
+            var completedJobs = new List<JobHandle>();
+
+            foreach (var job in JobCompletionCallbacks.Keys)
+            {
+                if (job.IsCompleted)
+                {
+                    job.Complete(); // ✅ Now we safely complete without blocking the main thread
+                    JobCompletionCallbacks[job]?.Invoke();
+                    completedJobs.Add(job);
+                }
             }
 
-            nativeColliderData.Dispose();
-            nativeHullResults.Dispose();
-            ActiveJobs.Remove(convexHullAPI); // ✅ Mark job as completed
+            // ✅ Remove completed jobs from the tracking dictionary
+            foreach (var completedJob in completedJobs)
+            {
+                JobCompletionCallbacks.Remove(completedJob);
+            }
         }
 
         /// <summary>
