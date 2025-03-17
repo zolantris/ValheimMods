@@ -1,29 +1,33 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
-using Unity.Collections;
-using UnityEngine;
-
 namespace ValheimVehicles.SharedScripts
 {
   public struct ConvexHullResultData
   {
-    public NativeArray<Vector3> Vertices;
-    public NativeArray<int> Triangles;
-    public NativeArray<Vector3> Normals;
+    public int VertexStartIndex;
+    public int VertexCount;
 
-    public ConvexHullResultData(Vector3[] verts, int[] tris, Vector3[] normals, Allocator allocator)
-    {
-      Vertices = new NativeArray<Vector3>(verts, allocator);
-      Triangles = new NativeArray<int>(tris, allocator);
-      Normals = new NativeArray<Vector3>(normals, allocator);
-    }
+    public int TriangleStartIndex;
+    public int TriangleCount;
 
-    public void Dispose()
+    public int NormalStartIndex;
+    public int NormalCount;
+
+    public int ValidClusterCount;
+
+    public ConvexHullResultData(int vertexStart, int vertexCount, int triStart, int triCount, int normalStart, int normalCount, int validClusters)
     {
-      if (Vertices.IsCreated) Vertices.Dispose();
-      if (Triangles.IsCreated) Triangles.Dispose();
-      if (Normals.IsCreated) Normals.Dispose();
+      VertexStartIndex = vertexStart;
+      VertexCount = vertexCount;
+
+      TriangleStartIndex = triStart;
+      TriangleCount = triCount;
+
+      NormalStartIndex = normalStart;
+      NormalCount = normalCount;
+
+      ValidClusterCount = validClusters;
     }
   }
 }
