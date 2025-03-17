@@ -3,6 +3,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using JetBrains.Annotations;
 using UnityEngine;
 
 #endregion
@@ -36,20 +38,25 @@ namespace ValheimVehicles.SharedScripts
     // convexJobHandler is used for scheduling all piece updates.
     public ConvexHullJobHandler m_convexHullJobHandler;
 
+    public float clusterThreshold = 2f;
+
     public readonly Dictionary<GameObject, PrefabPieceData> prefabPieceDataItems = new();
 
     internal bool _isInitialPieceActivationComplete;
-    internal int _lastPieceRevision = 0;
+    internal int _lastPieceRevision = 1;
 
     // for bounds and piece building revisions.
     internal int _lastRebuildItemCount;
-    internal int _lastRebuildPieceRevision;
+    // revisions must be different
+    internal int _lastRebuildPieceRevision = -1;
+
     internal float _lastRebuildTime;
     internal Coroutine? _rebuildBoundsTimer;
 
     // collision logic
     internal bool _shouldUpdatePieceColliders;
     internal bool _shouldUpdateVehicleColliders;
+    [CanBeNull] internal VehicleWheelController WheelController;
 
     public List<GameObject> convexHullMeshes =>
       m_convexHullAPI.convexHullMeshes;
@@ -126,7 +133,6 @@ namespace ValheimVehicles.SharedScripts
 #if UNITY_EDITOR
       piece.transform.SetParent(transform, false);
 #endif
-      Physics.SyncTransforms();
       var prefabPieceData = new PrefabPieceData(piece);
 
       // ReSharper disable once CanSimplifyDictionaryLookupWithTryAdd
@@ -139,8 +145,12 @@ namespace ValheimVehicles.SharedScripts
 
 
 #if UNITY_EDITOR
-      _isInitialPieceActivationComplete = true;
+      if (!_isInitialPieceActivationComplete)
+      {
+        _isInitialPieceActivationComplete = true;
+      }
 #endif
+
     }
 
     public void OnPieceRemoved(GameObject piece)
@@ -179,10 +189,10 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     public virtual void RequestBoundsRebuild()
     {
+      // if we are already queuing up an update, we can skip any additional requests.
       if (_rebuildBoundsTimer != null)
       {
-        StopCoroutine(_rebuildBoundsTimer);
-        _rebuildBoundsTimer = null;
+        return;
       }
       // No need to run the revision
       if (_lastPieceRevision == _lastRebuildPieceRevision)
@@ -196,7 +206,7 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
-      StartCoroutine(RebuildBoundsThrottleRoutine(() => RebuildBounds()));
+      _rebuildBoundsTimer = StartCoroutine(RebuildBoundsThrottleRoutine(() => RebuildBounds()));
     }
 
     /// <summary>
@@ -223,6 +233,20 @@ namespace ValheimVehicles.SharedScripts
       _shouldUpdateVehicleColliders = true;
 
       _lastRebuildPieceRevision = _lastPieceRevision;
+
+      GenerateConvexHull(clusterThreshold, OnConvexHullGenerated);
+    }
+
+    public virtual void OnConvexHullGenerated()
+    {
+      var items = prefabPieceDataItems.Keys.Where(x => x != null).ToArray();
+      m_meshClusterComponent.GenerateCombinedMeshes(items);
+
+      if (WheelController != null)
+      {
+        var bounds = m_convexHullAPI.GetConvexHullBounds(true);
+        WheelController.Initialize(bounds);
+      }
     }
 
     internal virtual int GetPieceCount()
@@ -306,28 +330,28 @@ namespace ValheimVehicles.SharedScripts
     public void IgnoreAllCollisionsFromConvexColliders()
     {
       // ✅ Precompute `AllColliders` to avoid reallocation
-      // var allColliders = new HashSet<Collider>();
-      // foreach (var prefabPieceData in prefabPieceDataItems.Values)
-      // {
-      //     allColliders.UnionWith(prefabPieceData.AllColliders);
-      // }
-      //
-      // foreach (var convexCollider in m_convexHullAPI.convexHullMeshColliders)
-      // {
-      //     if (convexCollider == null) continue;
-      //
-      //     foreach (var prefabCollider in allColliders)
-      //     {
-      //         if (prefabCollider == null) continue;
-      //         Physics.IgnoreCollision(convexCollider, prefabCollider, true);
-      //     }
-      //
-      //     foreach (var vehicleCollider in vehicleCollidersToIgnore)
-      //     {
-      //         if (vehicleCollider == null) continue;
-      //         Physics.IgnoreCollision(convexCollider, vehicleCollider, true);
-      //     }
-      // }
+      var allColliders = new HashSet<Collider>();
+      foreach (var prefabPieceData in prefabPieceDataItems.Values)
+      {
+        allColliders.UnionWith(prefabPieceData.AllColliders);
+      }
+
+      foreach (var convexCollider in m_convexHullAPI.convexHullMeshColliders)
+      {
+        if (convexCollider == null) continue;
+
+        foreach (var prefabCollider in allColliders)
+        {
+          if (prefabCollider == null) continue;
+          Physics.IgnoreCollision(convexCollider, prefabCollider, true);
+        }
+
+        foreach (var vehicleCollider in vehicleCollidersToIgnore)
+        {
+          if (vehicleCollider == null) continue;
+          Physics.IgnoreCollision(convexCollider, vehicleCollider, true);
+        }
+      }
     }
 
     /// <summary>

@@ -1933,6 +1933,7 @@ MonoBehaviour:
   convexHullColliders: []
   convexHullMeshColliders: []
   m_convexHullAPI: {fileID: 0}
+  m_meshClusterComponent: {fileID: 0}
   pieceDataChangeIndex: 0
   m_convexHullJobHandler: {fileID: 0}
 --- !u!114 &1246876116
@@ -1958,7 +1959,7 @@ MonoBehaviour:
   TriggerParent: {fileID: 0}
   convexMeshLayer: 29
   HasPreviewGeneration: 1
-  m_colliderParentTransform: {fileID: 0}
+  m_colliderParentTransform: {fileID: 1246876111}
   m_rigidbody: {fileID: 1246876113}
   ShouldDestroyOnGenerate: 0
   HasPhysicMaterial: 1
@@ -1966,6 +1967,20 @@ MonoBehaviour:
   PhysicMaterialDynamicFriction: 0.01
   colliderParentName: vehicle_movement/colliders
   parentTransform: {fileID: 5808629398772157823}
+--- !u!114 &1246876117
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1246876110}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c86ca01f04d0b544b2235b63e1fa179, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_movementPiecesController: {fileID: 1246876114}
+  combinedMeshParent: {fileID: 0}
 --- !u!1 &1341137345
 GameObject:
   m_ObjectHideFlags: 0
@@ -2035,7 +2050,7 @@ MonoBehaviour:
   PiecesParentObj: {fileID: 1246876110}
   debugOriginalMesh: 0
   forwardTransform: {fileID: 3462057762617736770}
-  _convexHullAPI: {fileID: 0}
+  _convexHullAPI: {fileID: 1246876116}
   vehicleWheelController: {fileID: 7210998224556755449}
   movementPiecesController: {fileID: 1246876114}
   centerOfMassOffset: -4
@@ -2853,6 +2868,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6660037161417452804, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1246876116}
+    - targetCorrespondingSourceObject: {fileID: 6660037161417452804, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1246876117}
   m_SourcePrefab: {fileID: 100100000, guid: 699de6175e029004e8ce4d6a3873c281, type: 3}
 --- !u!1 &1582973687
 GameObject:
