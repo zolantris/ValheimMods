@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Unity.Collections;
 using UnityEngine;
 
 #endregion
@@ -19,7 +20,7 @@ namespace ValheimVehicles.SharedScripts
   public class MovementPiecesController : MonoBehaviour
   {
     public static GameObject m_convexHullJobHandlerObj;
-    public static float RebuildPieceMinDelay = 4f;
+    public static float RebuildPieceMinDelay = 0.1f;
     public static float RebuildPieceMaxDelay = 60f;
     internal static float RebuildBoundsDelayPerPiece = 0.02f;
     public Rigidbody m_syncRigidbody;
@@ -110,16 +111,10 @@ namespace ValheimVehicles.SharedScripts
 #if UNITY_EDITOR
       if (m_convexHullJobHandlerObj == null)
       {
-        m_convexHullJobHandlerObj = new GameObject("ConvexHullJobHandler");
+        m_convexHullJobHandlerObj = gameObject;
       }
 #endif
       if (m_convexHullJobHandler != null || m_convexHullJobHandlerObj == null) return;
-
-      if (ConvexHullJobHandler.Instance != null)
-      {
-        m_convexHullJobHandler = ConvexHullJobHandler.Instance;
-        return;
-      }
 
       m_convexHullJobHandler = m_convexHullJobHandlerObj.GetComponent<ConvexHullJobHandler>();
       if (m_convexHullJobHandler == null)
@@ -133,7 +128,7 @@ namespace ValheimVehicles.SharedScripts
 #if UNITY_EDITOR
       piece.transform.SetParent(transform, false);
 #endif
-      var prefabPieceData = new PrefabPieceData(piece);
+      var prefabPieceData = new PrefabPieceData(piece, Allocator.Persistent);
 
       // ReSharper disable once CanSimplifyDictionaryLookupWithTryAdd
       if (!prefabPieceDataItems.ContainsKey(piece))
@@ -167,11 +162,11 @@ namespace ValheimVehicles.SharedScripts
       {
         foreach (var meshCollider in m_convexHullAPI.convexHullMeshColliders)
         {
-          if (prefabPieceData.AreAllPointsValid(meshCollider, transform, convexAPIThresholdDistance))
-          {
-            shouldRebuild = false;
-            break;
-          }
+          // if (prefabPieceData.AreAllPointsValid(meshCollider, transform, convexAPIThresholdDistance))
+          // {
+          // shouldRebuild = false;
+          // break;
+          // }
         }
       }
 
@@ -361,7 +356,7 @@ namespace ValheimVehicles.SharedScripts
     {
       // ✅ Avoid extra allocations by passing `IEnumerable` instead of `.ToList()`
       var prefabDataItems = prefabPieceDataItems.Values;
-      ConvexHullJobHandler.ScheduleConvexHullJob(m_convexHullAPI, new List<PrefabPieceData>(prefabDataItems), clusterThreshold, () =>
+      m_convexHullJobHandler.ScheduleConvexHullJob(m_convexHullAPI, new List<PrefabPieceData>(prefabDataItems), clusterThreshold, () =>
       {
         m_convexHullAPI.PostGenerateConvexMeshes();
         Debug.Log("✅ Convex Hull Generation Complete!");

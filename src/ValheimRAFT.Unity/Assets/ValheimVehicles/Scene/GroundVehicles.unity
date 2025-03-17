@@ -1936,6 +1936,7 @@ MonoBehaviour:
   m_meshClusterComponent: {fileID: 0}
   pieceDataChangeIndex: 0
   m_convexHullJobHandler: {fileID: 0}
+  clusterThreshold: 2
 --- !u!114 &1246876116
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1980,7 +1981,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_movementPiecesController: {fileID: 1246876114}
-  combinedMeshParent: {fileID: 0}
+  combinedMeshParent: {fileID: 1246876110}
 --- !u!1 &1341137345
 GameObject:
   m_ObjectHideFlags: 0
@@ -2040,8 +2041,8 @@ MonoBehaviour:
   HasTestPieceGeneration: 1
   DebouncedUpdateInterval: 0.5
   PieceGeneratorInterval: 0.01
-  maxPiecesToAdd: 1000
-  BatchAddSize: 100
+  maxPiecesToAdd: 10000
+  BatchAddSize: 10000
   MaxXGeneration: 8
   MaxZGeneration: 20
   MaxYGeneration: 4
