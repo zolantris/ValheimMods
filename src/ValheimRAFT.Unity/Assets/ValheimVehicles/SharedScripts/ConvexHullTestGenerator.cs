@@ -118,6 +118,8 @@ namespace ValheimVehicles.SharedScripts
         _convexHullAPI.AddLocalPhysicMaterial(0.01f, 0.01f);
       }
 
+      movementPiecesController.WheelController = vehicleWheelController;
+
       SyncAPIProperties();
       Cleanup();
     }
@@ -161,6 +163,7 @@ namespace ValheimVehicles.SharedScripts
       if (!hasCalledFirstGenerate || HasResyncFixedUpdate && CanRunGenerate)
       {
         Generate();
+        // movementPiecesController.RebuildBounds();
         hasCalledFirstGenerate = true;
       }
     }
@@ -366,10 +369,11 @@ namespace ValheimVehicles.SharedScripts
         current++;
       }
 
-      if (currentPieces != movementPiecesController.prefabPieceDataItems.Count)
-      {
-        Generate();
-      }
+      movementPiecesController.RequestBoundsRebuild();
+      // if (currentPieces != movementPiecesController.prefabPieceDataItems.Count)
+      // {
+      //   Generate();
+      // }
     }
 
     public void Cleanup()
