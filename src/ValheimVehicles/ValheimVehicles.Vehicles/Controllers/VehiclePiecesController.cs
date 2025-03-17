@@ -80,16 +80,13 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
   public InitializationState BaseVehicleInitState =>
     _baseVehicleInitializationState;
-
-  public bool isInitialActivationComplete = false;
-
+  
   public bool IsActivationComplete =>
     _pendingPiecesState is not PendingPieceStateEnum.Failure
       and not PendingPieceStateEnum.Running;
 
   public bool HasRunCleanup = false;
 
-  public static float BoundsDelayPerPiece = 0.02f;
   // public ZNetView? LowestPiece = null;
 
   // public Vector3? GetLowestPiecePoint()
@@ -206,7 +203,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   /// <returns></returns>
   public PendingPieceStateEnum PendingPiecesState => _pendingPiecesState;
 
-  private Coroutine? _rebuildBoundsTimer = null;
   public float ShipMass = 0f;
   public static bool hasDebug => ValheimRaftPlugin.Instance.HasDebugBase.Value;
 
@@ -274,14 +270,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   private Coroutine? _bedUpdateCoroutine;
 
   public GameObject vehicleCenter;
-
-  public static float RebuildPieceMinDelay = 4f;
-  public static float RebuildPieceMaxDelay = 60f;
-
-  // for bounds and piece building revisions.
-  private int _lastRebuildItemCount = 0;
-  private int _lastRebuildPieceRevision = 0;
-  private int _lastPieceRevision = 0;
 
   public List<Bed> GetBedPieces()
   {
@@ -463,10 +451,26 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     };
   }
 
+  /// <summary>
+  /// ZNetScene must have the jobhandler so that when the scene is destroyed it can unload
+  /// </summary>
+  public void SetupJobHandlerOnZNetScene()
+  {
+    if (!m_convexHullJobHandlerObj)
+    {
+      m_convexHullJobHandlerObj = ZNetScene.instance.gameObject;
+    }
+  }
+
   public override void Awake()
   {
     if (ZNetView.m_forceDisableInit) return;
+
+    // must be called before base.awake()
+    SetupJobHandlerOnZNetScene();
+    
     base.Awake();
+    
     
     if (vehicleCenter == null)
     {
@@ -487,7 +491,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
     
     IgnoreAllVehicleColliders();
-
 
     if (FloatCollider == null)
       FloatCollider = floatColliderTransform.GetComponent<BoxCollider>();
@@ -630,9 +633,11 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     // zsyncTransform = PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(gameObject);
   }
 
-  private void OnDisable()
+  public override void OnDisable()
   {
-    _isInvalid = false;
+    base.OnDisable();
+
+    _isInvalid = true;
     
     if (MonoUpdaterInstances.Contains(this)) MonoUpdaterInstances.Remove(this);
 
@@ -643,11 +648,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     InitializationTimer.Stop();
     if (_serverUpdatePiecesCoroutine != null)
       StopCoroutine(_serverUpdatePiecesCoroutine);
-
-    if (_rebuildBoundsTimer != null)
-    {
-      StopCoroutine(_rebuildBoundsTimer);
-    }
 
     CleanUp();
   }
@@ -1329,60 +1329,8 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
   public override void RequestBoundsRebuild()
   {
-    if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !isInitialActivationComplete) return;
-    if (_rebuildBoundsTimer != null)
-    {
-      StopCoroutine(_rebuildBoundsTimer);
-      _rebuildBoundsTimer = null;
-    }
-    // No need to run the revision
-    if (_lastPieceRevision == _lastRebuildPieceRevision)
-    {
-      return;
-    }
-
-    var hasMinimumWait = _lastRebuildTime + 40 < Time.fixedTime && Mathf.Abs(m_nviewPieces.Count - _lastRebuildItemCount) > 20f;
-    _rebuildBoundsTimer = StartCoroutine(RebuildBoundsThrottleRoutine(hasMinimumWait));
-  }
-
-  private IEnumerator RebuildBoundsThrottleRoutine(bool hasMinimumWait = false)
-  {
-    var output =
-      m_allPieces.TryGetValue(PersistentZdoId, out var list);
-    if (!output || list == null)
-    {
-      yield break;
-    }
-    if (hasMinimumWait)
-    {
-      yield return new WaitForSeconds(RebuildPieceMinDelay);
-      RebuildBounds();
-      yield break;
-    }
-    
-    // in case the local m_nviewPieces are somehow larger we check.
-    var allItems = Math.Max(list.Count, m_nviewPieces.Count);
-
-    // these calcs ensure we rebuild if there is a significant difference between currentItems
-    var allVsCurrentRebuildItems = allItems - _lastRebuildItemCount;
-    var newItemsDiff = Mathf.Abs(allVsCurrentRebuildItems);
-    var itemDiffRatio = newItemsDiff / Mathf.Min(allItems, 1);
-
-    var additionalWaitTimeFromItems = allItems * BoundsDelayPerPiece;
-
-    // if more than 20 items are added or the vehicle grows in item size by 10% we need to update bounds sooner.
-    if (newItemsDiff > 20 || itemDiffRatio > 0.1f)
-    {
-      yield return new WaitForSeconds(RebuildPieceMinDelay);
-    }
-    else
-    {
-      var timeToWait = Mathf.Clamp(additionalWaitTimeFromItems, RebuildPieceMinDelay, RebuildPieceMaxDelay);
-      yield return new WaitForSeconds(timeToWait);
-    }
-
-    RebuildBounds();
-    _rebuildBoundsTimer = null;
+    if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !_isInitialPieceActivationComplete) return;
+    _rebuildBoundsTimer = StartCoroutine(RebuildBoundsThrottleRoutine(() => RebuildBounds()));
   }
 
 #if DEBUG
@@ -1400,7 +1348,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
     IncrementPieceRevision();
     UpdateMass(netView, true);
-    RequestBoundsRebuild();
+    OnPieceRemoved(netView.gameObject);
 
     if (PrefabNames.IsHull(netView.gameObject)) m_hullPieces.Remove(netView);
 
@@ -1678,11 +1626,11 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     _pendingPiecesState = pieceStateEnum;
     PendingPiecesTimer.Reset();
 
-    if (!isInitialActivationComplete)
+    if (!_isInitialPieceActivationComplete)
     {
-      isInitialActivationComplete = true;
+      _isInitialPieceActivationComplete = true;
       // as a safety measure calling this will prevent collisions if any piece was delayed in activation.
-      RebuildBounds();
+      RebuildBounds(true);
     }
     else if (PendingPiecesState == PendingPieceStateEnum.Complete)
     {
@@ -2519,14 +2467,15 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       Logger.LogError("netView does not exist but somehow called AddPiece()");
       return;
     }
-
     // incrementRevision
     IncrementPieceRevision();    
-
     FixPieceMeshes(netView);
-
-    OnAddPieceIgnoreColliders(netView);
     ResetSailCachedValues();
+    OnPieceAdded(netView.gameObject);
+
+
+    // todo onPieceAdded SHOULD DO this.
+    OnAddPieceIgnoreColliders(netView);
     
     m_nviewPieces.Add(netView);
     UpdatePieceCount();
@@ -2871,10 +2820,14 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
   public List<Collider> tempVehicleColliders = new();
   public List<Collider> tempPieceColliders = new();
-  [FormerlySerializedAs("shouldUpdatePieceColliders")]
-  public bool _shouldUpdatePieceColliders = false;
-  [FormerlySerializedAs("shouldUpdateVehicleColliders")]
-  public bool _shouldUpdateVehicleColliders = false;
+
+
+  public void DebouncedIgnoreAllVehicleColliders()
+  {
+    CancelInvoke(nameof(IgnoreAllVehicleColliders));
+    Invoke(nameof(IgnoreAllVehicleColliders), 0.01f);
+  }
+  
   /**
    * Ignores absolutely all vehicle colliders.
    * This is optimized to prevent duplicate colliders and unnecessary allocations.
@@ -2886,30 +2839,34 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     // ✅ Clear before refilling to avoid stale data
 
     // ✅ Fetch colliders using `List<>` (HashSet not allowed in GetComponentsInChildren)
-    if (_shouldUpdateVehicleColliders)
-    {
-      tempVehicleColliders.Clear();
-      VehicleInstance.Instance.GetComponentsInChildren(true, tempVehicleColliders);
-    }
+    // if (_shouldUpdateVehicleColliders)
+    // {
+    //   tempVehicleColliders.Clear();
+    //   VehicleInstance.Instance.GetComponentsInChildren(true, tempVehicleColliders);
+    // }
+    //
+    // if (_shouldUpdatePieceColliders)
+    // {
+    //   tempPieceColliders.Clear();
+    //   GetComponentsInChildren(true, tempPieceColliders);
+    // }
 
-    if (_shouldUpdatePieceColliders)
-    {
-      tempPieceColliders.Clear();
-      GetComponentsInChildren(true, tempPieceColliders);
-    }
-    
+    var vehicleColliders = VehicleInstance.Instance.GetComponentsInChildren<Collider>(true);
+    var pieceColliders = transform.GetComponentsInChildren<Collider>(true);
+
+    if (vehicleColliders == null) return;
     // heavy but simple ignore all colliders.
-    foreach (var vehicleCollider in tempVehicleColliders)
+    foreach (var vehicleCollider in vehicleColliders)
     {
       // must ignore all vehicle colliders
-      foreach (var vehicleCollider2 in tempVehicleColliders)
+      foreach (var vehicleCollider2 in vehicleColliders)
       {
         if (vehicleCollider == vehicleCollider2) continue;
         Physics.IgnoreCollision(vehicleCollider, vehicleCollider2, true);
       }
     
       // vehicle colliders must ignore pieces. But pieces should likely not ignore eachother and it won't matter with how piece controller ignores physics engine.
-      foreach (var allPieceCollider in tempPieceColliders)
+      foreach (var allPieceCollider in pieceColliders)
       {
         Physics.IgnoreCollision(vehicleCollider, allPieceCollider, true);
       }
@@ -2945,14 +2902,9 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     }
   }
 
-  private Dictionary<Material, GameObject> _previousCombinedMeshObjects = new(); // Store previous combined meshes
-  private Dictionary<Material, HashSet<GameObject>> _relatedMaterialToGameObjectsMap = new(); // Store previous combined meshes
-
-  public static Regex CombinedMeshExclusionPattern;
-  public static Regex CombinedMeshIncludePattern;
-  public static List<string> PrefabExcludeNames = ["wheel", "portal", PrefabNames.MBRopeLadder, PrefabNames.MBRopeAnchor, PrefabNames.ShipSteeringWheel, "door", "chest", "cart"];
-  public static List<string> MeshFilterExcludeNames = ["Destruction", "high", "large_lod", "vehicle_water_mesh", "largelod", "Portal_destruction", "Destruction_Cube"];
-  public static List<string> MeshFilterIncludesNames = ["Combined", "Combined_Mesh"];
+  public static List<string> CombinedMeshOverride_PrefabExcludeNames = ["wheel", "portal", PrefabNames.MBRopeLadder, PrefabNames.MBRopeAnchor, PrefabNames.ShipSteeringWheel, "door", "chest", "cart"];
+  public static List<string> CombinedMeshOverride_MeshFilterExcludeNames = ["Destruction", "high", "large_lod", "vehicle_water_mesh", "largelod", "Portal_destruction", "Destruction_Cube"];
+  public static List<string> CombinedMeshOverride_MeshFilterIncludesNames = ["Combined", "Combined_Mesh"];
 
   private GameObject combinedMeshParent;
   public Dictionary<GameObject, List<MeshRenderer>> hiddenMeshRenderersObjMap = new();
@@ -2972,11 +2924,11 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       var relatedPrefabs = new List<GameObject>();
       foreach (var material in items)
       {
-        if (_relatedMaterialToGameObjectsMap.TryGetValue(material, out var relatedGameObjects))
+        if (m_meshClusterComponent._relatedMaterialToGameObjectsMap.TryGetValue(material, out var relatedGameObjects))
         {
           relatedPrefabs.AddRange(relatedGameObjects);
         }
-        if (_previousCombinedMeshObjects.TryGetValue(material, out var previousCombinedMeshObject))
+        if (m_meshClusterComponent._previousCombinedMeshObjects.TryGetValue(material, out var previousCombinedMeshObject))
         {
           Destroy(previousCombinedMeshObject);
           _previousCombinedMeshObjects.Remove(material);
@@ -2984,7 +2936,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       }
       if (relatedPrefabs.Count < 1) return;
       GenerateCombinedMeshes(relatedPrefabs, PrefabExcludeNames, MeshFilterIncludesNames, true);
-        IgnoreAllVehicleColliders();
+      DebouncedIgnoreAllVehicleColliders();
     }
   }
 
@@ -3131,6 +3083,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       if (prefabExclusionRegex.IsMatch(prefabItem.gameObject.name)) continue; // 🔹 Skip excluded objects
 
       var wnt = prefabItem.GetComponent<WearNTear>();
+      var stubWNT = prefabItem.GetComponent<IWearNTearStub>();
       List<MeshRenderer> selectedRenderers = new();
 
       if (wnt != null)
@@ -3222,10 +3175,11 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
         // 🔹 Prevent floating-point errors in transform updates
         // todo need to confirm that this is a local position mesh and using world transform, not world point mesh vectors using relative transform.
+        var position = meshTransform.position;
         var fixedPosition = new Vector3(
-          Mathf.Round(meshTransform.position.x * 1000f) / 1000f,
-          Mathf.Round(meshTransform.position.y * 1000f) / 1000f,
-          Mathf.Round(meshTransform.position.z * 1000f) / 1000f
+          Mathf.Round(position.x * 1000f) / 1000f,
+          Mathf.Round(position.y * 1000f) / 1000f,
+          Mathf.Round(position.z * 1000f) / 1000f
         );
 
         materialToMeshes[fixedMaterial].Add(new CombineInstance
@@ -3428,7 +3382,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       StopCoroutine(_rebuildBoundsTimer);
     }
 
-    RebuildBounds();
+    RebuildBounds(true);
   }
 
   public void ResetSailCachedValues()
@@ -3437,49 +3391,45 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     cachedTotalSailArea = -1;
   }
 
-  private float _lastRebuildTime = 0f;
   /**
    * Must be wrapped in an Invoke delay to prevent spamming on unmounting
    * bounds cannot be de-encapsulated by default so regenerating it seems prudent on piece removal
    */
-  public void RebuildBounds()
+  public override void RebuildBounds(bool isForced = false)
   {
-    if (!isActiveAndEnabled) return;
     if (FloatCollider == null || OnboardCollider == null)
       return;
 
-    _shouldUpdateVehicleColliders = true;
-    _lastRebuildTime = Time.fixedTime;
-    _lastRebuildItemCount = m_nviewPieces.Count;
+    // internal parent class
+    base.RebuildBounds(isForced);
 
-    if (_lastRebuildPieceRevision != _lastPieceRevision)
-    {
-      _shouldUpdatePieceColliders = true;
-    }
-
-    // always update them for now until we can get smarter with convex collider detecting which ones have been added if any.
-    _shouldUpdateVehicleColliders = true;
-    
-    _lastRebuildPieceRevision = _lastPieceRevision;
+    // methods related to VehiclePiecesController
+    Physics.SyncTransforms();
 
     ResetSailCachedValues();
 
     TryAddRamToVehicle();
     TempDisableRamsDuringRebuild();
-
-    Physics.SyncTransforms();
+    
     RotateVehicleForwardPosition();
+
+    if (!convexHullComponent.TriggerParent && MovementController != null)
+    {
+      convexHullComponent.TriggerParent = MovementController.DamageColliders;
+    }
 
     try
     {
-
-      RebuildConvexHull();
+      GenerateConvexHull(PhysicsConfig.convexHullJoinDistanceThreshold.Value, OnConvexHullGenerated);
     }
     catch (Exception e)
     {
       Logger.LogError(e);
     }
+  }
 
+  public void OnConvexHullGenerated()
+  {
     _vehiclePieceBounds = convexHullComponent.GetConvexHullBounds(true);
 
     try
@@ -3828,7 +3778,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     return new Bounds(tempBounds.center, tempBounds.size);
   }
 
-  internal int GetPieceCount()
+  internal override int GetPieceCount()
   {
     if (VehicleInstance == null) return m_nviewPieces.Count;
     if (VehicleInstance.NetView == null ||

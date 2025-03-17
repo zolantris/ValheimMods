@@ -1,9 +1,7 @@
 #region
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -70,6 +68,7 @@ namespace ValheimVehicles.SharedScripts
     public Vector3 previewScale = Vector3.one;
 
     public Transform PreviewParent;
+    public Transform? TriggerParent;
 
     public int convexMeshLayer = 29;
 
@@ -848,11 +847,26 @@ namespace ValheimVehicles.SharedScripts
     /// <summary>
     /// Determines if a collider is near an existing cluster.
     /// </summary>
-    private static bool IsColliderNearCluster(Collider collider, List<Collider> cluster, float threshold)
+    public static bool IsColliderNearCluster(Collider collider, List<Collider> cluster, float threshold)
     {
       foreach (var clusterCollider in cluster)
       {
-        if (Vector3.Distance(collider.bounds.center, clusterCollider.bounds.center) < threshold)
+        if (Vector3.Distance(collider.bounds.ClosestPoint(clusterCollider.bounds.center), clusterCollider.bounds.ClosestPoint(collider.bounds.center)) < threshold)
+        {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /// <summary>
+    /// Determines if a collider is near an existing cluster.
+    /// </summary>
+    public static bool IsBoundsNearCluster(PrefabColliderPointData targetColliderPointData, List<PrefabColliderPointData> data, float threshold)
+    {
+      foreach (var item in data)
+      {
+        if (Vector3.Distance(item.LocalBounds.ClosestPoint(targetColliderPointData.LocalBounds.center), targetColliderPointData.LocalBounds.ClosestPoint(item.LocalBounds.center)) < threshold)
         {
           return true;
         }
@@ -991,10 +1005,13 @@ namespace ValheimVehicles.SharedScripts
           targetParentGameObject.transform, offset, index);
       }
 
+      PostGenerateConvexMeshes();
+    }
+
+    public void PostGenerateConvexMeshes()
+    {
       CreatePreviewConvexHullMeshes();
-
-      if (triggerParent != null) CreateTriggerConvexHullMeshes(triggerParent);
-
+      if (TriggerParent != null) CreateTriggerConvexHullMeshes(TriggerParent);
       UpdateConvexHullBounds();
     }
 

@@ -2,6 +2,7 @@
 // ReSharper disable NamespaceStyle
 
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections;
 using UnityEngine;
 
@@ -21,7 +22,7 @@ namespace ValheimVehicles.SharedScripts
             HullColliders = new List<Collider>(); // ✅ Tracks only convex-relevant colliders
             PointDataItems = default;
 
-            InitializeColliders(prefab.transform);
+            InitializeColliders(prefab.transform.root);
         }
 
         public void InitializeColliders(Transform root)
@@ -37,8 +38,8 @@ namespace ValheimVehicles.SharedScripts
                     HullColliders.Add(collider); // ✅ Only store relevant colliders for convex processing
 
                     // ✅ Get Collider Points
-                    var points = ConvexHullAPI.GetColliderPointsGlobal(collider);
-
+                    var points = ConvexHullAPI.GetColliderPointsGlobal(collider).Select(root.InverseTransformPoint).ToList();
+                    
                     if (points.Count > 0)
                     {
                         // ✅ Store a **single** PrefabColliderPointData instead of a list

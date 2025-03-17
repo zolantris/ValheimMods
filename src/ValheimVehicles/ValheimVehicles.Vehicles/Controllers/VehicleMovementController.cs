@@ -1180,10 +1180,6 @@
     /// </summary>
     private void UpdateRemovePieceCollisionExclusions()
     {
-      if (!isActiveAndEnabled)
-      {
-        return;
-      }
       if (PiecesController == null || PiecesController.IsInvalid())
       {
         Invoke(nameof(UpdateRemovePieceCollisionExclusions), 5f);
@@ -1863,7 +1859,7 @@
       // sideways force
 
       if (!CanRunSidewaysWaterForceUpdate) return;
-
+      
       // todo rename variables for this section to something meaningful
       // todo abstract this to a method
       var forward = ShipDirection.forward;
@@ -1942,6 +1938,9 @@
         AddForceAtPosition(Vector3.up * rightUpwardForce * deltaForceMultiplier,
           shipRight - centerOffMassDifference,
           PhysicsConfig.rudderVelocityMode.Value);
+
+      // likely for balancing vehicle more.
+      ApplyEdgeForce(Time.fixedDeltaTime);
     }
 
     public void UpdateShipFloatation(ShipFloatation shipFloatation)

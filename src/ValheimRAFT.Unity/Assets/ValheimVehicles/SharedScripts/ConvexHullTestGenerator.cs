@@ -55,6 +55,7 @@ namespace ValheimVehicles.SharedScripts
 
     public GameObject prefabFloorPiece;
     public GameObject prefabWallPiece;
+    public GameObject vehiclePiecesObj;
 
     public Vector3 lastPieceOffset = Vector3.zero;
 
@@ -79,12 +80,16 @@ namespace ValheimVehicles.SharedScripts
       GetOrAddMeshGeneratorApi();
       Cleanup();
 
+
+
       if (vehicleWheelController != null)
       {
         if (vehicleWheelController.wheelParent == null)
         {
           vehicleWheelController.wheelParent = transform.Find("vehicle_land/wheels");
         }
+
+        vehicleWheelController.SetBrake(false);
       }
 
       if (!cameraTransform)
@@ -93,10 +98,6 @@ namespace ValheimVehicles.SharedScripts
       }
 
       startPosition = vehicleWheelController.transform.root.position;
-
-      _convexHullAPI.AddLocalPhysicMaterial(0.01f, 0.01f);
-
-      vehicleWheelController.SetBrake(false);
       // EnableCollisionBetweenLayers(10, 28);
       // EnableCollisionBetweenLayers(28, 10);
       //
@@ -106,6 +107,17 @@ namespace ValheimVehicles.SharedScripts
 
     private void Start()
     {
+      // must be called after Awake otherwise MovementPiecesController cannot initialize these
+      if (vehiclePiecesObj)
+      {
+        _convexHullAPI = vehiclePiecesObj.GetComponent<ConvexHullAPI>();
+      }
+
+      if (_convexHullAPI)
+      {
+        _convexHullAPI.AddLocalPhysicMaterial(0.01f, 0.01f);
+      }
+
       SyncAPIProperties();
       Cleanup();
     }
