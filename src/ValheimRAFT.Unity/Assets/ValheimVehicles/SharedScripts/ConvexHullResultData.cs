@@ -12,16 +12,13 @@ namespace ValheimVehicles.SharedScripts
     public NativeArray<int> Triangles;
     public NativeArray<Vector3> Normals;
 
-    public ConvexHullResultData(Vector3[] vertices, int[] triangles, Vector3[] normals, Allocator allocator)
+    public ConvexHullResultData(Vector3[] verts, int[] tris, Vector3[] normals, Allocator allocator)
     {
-      Vertices = new NativeArray<Vector3>(vertices, allocator);
-      Triangles = new NativeArray<int>(triangles, allocator);
+      Vertices = new NativeArray<Vector3>(verts, allocator);
+      Triangles = new NativeArray<int>(tris, allocator);
       Normals = new NativeArray<Vector3>(normals, allocator);
     }
 
-    /// <summary>
-    /// Disposes the allocated NativeArrays to prevent memory leaks.
-    /// </summary>
     public void Dispose()
     {
       if (Vertices.IsCreated) Vertices.Dispose();
