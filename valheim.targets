@@ -94,6 +94,16 @@
             <HintPath>$(ManagedDataPath)\assembly_valheim.dll</HintPath>
             <Private>False</Private>
         </Reference>
+        <Reference Include="SPlatform">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>$(ManagedDataPath)\SPlatform.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="SPlatform.Steam">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>$(ManagedDataPath)\SPlatform.Steam.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
         <Reference Include="assembly_googleanalytics">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>$(ManagedDataPath)\assembly_googleanalytics.dll</HintPath>

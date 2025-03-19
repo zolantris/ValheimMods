@@ -32,7 +32,7 @@ public class MapPinSync : MonoBehaviour
   public string GetOwnerNameFromZdo(ZDO zdo)
   {
     return CensorShittyWords.FilterUGC(zdo.GetString(ZDOVars.s_ownerName),
-      UGCType.CharacterName, Player.m_localPlayer.GetOwner().ToString());
+      UGCType.CharacterName, Player.m_localPlayer.GetOwner());
   }
 
   public bool hasInitialized = false;
@@ -48,23 +48,14 @@ public class MapPinSync : MonoBehaviour
 
   private void OnDestroy()
   {
-    if (refreshDynamicSpawnPinRoutine != null)
-    {
-      StopCoroutine(refreshVehiclePinsRoutine);
-      refreshVehiclePinsRoutine = null;
-    }
-
-    if (refreshDynamicSpawnPinRoutine != null)
-    {
-      StopCoroutine(refreshDynamicSpawnPinRoutine);
-      refreshDynamicSpawnPinRoutine = null;
-    }
-
+    StopAllCoroutines();
     hasInitialized = false;
   }
 
   private void OnMapReady()
   {
+    if (Minimap.instance == null) return;
+    
     StartVehiclePinSync();
     StartSpawnPinSync();
     hasInitialized = true;
@@ -112,6 +103,7 @@ public class MapPinSync : MonoBehaviour
 
   private IEnumerator UpdatePlayerSpawnPin()
   {
+    if (Minimap.instance == null) yield break;
     if (PlayerSpawnController.Instance == null) yield break;
     if (cachedPlayerSpawnZdo == null)
       yield return PlayerSpawnController.Instance.FindDynamicZdo(
