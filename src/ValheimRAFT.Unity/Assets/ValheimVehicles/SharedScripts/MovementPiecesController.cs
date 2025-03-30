@@ -23,6 +23,8 @@ namespace ValheimVehicles.SharedScripts
     public static float RebuildPieceMinDelay = 0.1f;
     public static float RebuildPieceMaxDelay = 60f;
     internal static float RebuildBoundsDelayPerPiece = 0.02f;
+
+    public static bool isBasicHullCalculation = true;
     public Rigidbody m_syncRigidbody;
     public Rigidbody m_localRigidbody;
 
@@ -38,6 +40,15 @@ namespace ValheimVehicles.SharedScripts
 
     // convexJobHandler is used for scheduling all piece updates.
     public ConvexHullJobHandler m_convexHullJobHandler;
+
+    public enum HullGenerationMode
+    {
+      Basic, // for a simple bounds based mesh. This will not create any additional colliders besides a CapsuleCollider for the vehicle.
+      ConvexHullForeground, // works but a bit Heavy. Very accurate collisions.
+      ConvexHullBackground // not supported yet
+    }
+
+    public HullGenerationMode selectedHullGenerationMode = HullGenerationMode.ConvexHullForeground;
 
     public float clusterThreshold = 2f;
 
@@ -158,17 +169,17 @@ namespace ValheimVehicles.SharedScripts
       // ✅ Avoid LINQ allocation by using `foreach`
       var shouldRebuild = true;
 
-      if (convexHullMeshes.Count > 0)
-      {
-        foreach (var meshCollider in m_convexHullAPI.convexHullMeshColliders)
-        {
-          // if (prefabPieceData.AreAllPointsValid(meshCollider, transform, convexAPIThresholdDistance))
-          // {
-          // shouldRebuild = false;
-          // break;
-          // }
-        }
-      }
+      // if (convexHullMeshes.Count > 0)
+      // {
+      //   foreach (var meshCollider in m_convexHullAPI.convexHullMeshColliders)
+      //   {
+      //     // if (prefabPieceData.AreAllPointsValid(meshCollider, transform, convexAPIThresholdDistance))
+      //     // {
+      //     // shouldRebuild = false;
+      //     // break;
+      //     // }
+      //   }
+      // }
 
       if (shouldRebuild)
       {
@@ -347,14 +358,84 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+    public void GenerateConvexHull(float maxClusters, Action? callback)
+    {
+      switch (selectedHullGenerationMode)
+      {
+
+        case HullGenerationMode.Basic:
+          break;
+        case HullGenerationMode.ConvexHullForeground:
+          GenerateConvexHullOnMainThread(clusterThreshold, callback);
+          break;
+        case HullGenerationMode.ConvexHullBackground:
+          GenerateConvexHullOnBackgroundThread(clusterThreshold, callback);
+          break;
+        default:
+          throw new ArgumentOutOfRangeException();
+      }
+      // todo get this background thread working
+      // GenerateConvexHullOnBackgroundThread(clusterThreshold, callback);
+    }
+
+    private ConvexHullCalculator m_convexHullCalculator = new();
+
+    private List<Vector3> verts = new();
+    private List<int> tris = new();
+    private List<Vector3> normals = new();
+    /// <summary>
+    /// </summary>
+    /// TODO this method should be removed once BackgroundThread is optimized.
+    /// 
+    /// <param name="maxClusters"></param>
+    /// <param name="callback"></param>
+    public void GenerateConvexHullOnMainThread(float maxClusters, Action? callback)
+    {
+      verts.Clear();
+      tris.Clear();
+      normals.Clear();
+
+      // List<Vector3> points;
+      // if (isBasicHullCalculation)
+      // {
+      //   points = prefabPieceDataItems.Values.Select(x => x.ColliderPointData.LocalBounds.center).ToList();
+      // }
+      // else
+      // {
+      //   points = prefabPieceDataItems.Values.SelectMany(x => x.ColliderPointData.Points).ToList();
+      // }
+
+      var basicPoints = prefabPieceDataItems.Values.Select(x => x.ColliderPointData.LocalBounds.center).ToList();
+      var allPoints = prefabPieceDataItems.Values.SelectMany(x => x.ColliderPointData.Points).ToList();
+
+      Debug.Log($"basicPoints length: {basicPoints.Count}");
+      Debug.Log($"allpoints points length: {allPoints.Count}");
+
+      if (allPoints.Count <= 4)
+      {
+        // todo see if this is required or if we should skip this callback when exiting.
+        // callback?.Invoke();
+        return;
+      }
+
+      m_convexHullCalculator.GenerateHull(allPoints, false, ref verts, ref tris, ref normals);
+      m_convexHullAPI.GenerateMeshFromConvexOutput(verts.ToArray(), tris.ToArray(), normals.ToArray(), 0);
+
+      Debug.Log("✅ Convex Hull Generation Complete!");
+      m_convexHullAPI.PostGenerateConvexMeshes();
+      IgnoreAllCollisionsFromConvexColliders();
+      callback?.Invoke();
+    }
+
     /// <summary>
     /// Requests convex hull generation for a tracked prefab.
+    /// TODO must be optimized so that native arrays are not nested and pass references to those native array points so we do not allocate
     /// </summary>
-    public void GenerateConvexHull(float localClusterThreshold, Action? callback)
+    public void GenerateConvexHullOnBackgroundThread(float maxClusters, Action? callback)
     {
       // ✅ Avoid extra allocations by passing `IEnumerable` instead of `.ToList()`
       var prefabDataItems = prefabPieceDataItems.Values.ToArray();
-      m_convexHullJobHandler.ScheduleConvexHullJob(m_convexHullAPI, prefabDataItems, localClusterThreshold, () =>
+      m_convexHullJobHandler.ScheduleConvexHullJob(m_convexHullAPI, prefabDataItems, maxClusters, () =>
       {
         m_convexHullAPI.PostGenerateConvexMeshes();
         Debug.Log("✅ Convex Hull Generation Complete!");

@@ -24,6 +24,7 @@ namespace ValheimVehicles.SharedScripts
       Bubble
     }
 
+    private const string colliderParentNameDefault = "vehicle_movement/colliders";
     public static bool CanRenderBubble = true;
 
     public static bool HasInitialized = false;
@@ -115,7 +116,7 @@ namespace ValheimVehicles.SharedScripts
     public List<MeshRenderer> convexHullPreviewMeshRendererItems = new();
 
     [NonSerialized] public List<GameObject> convexHullTriggerMeshes = new();
-    
+
     /// <summary>
     ///   Allows for additional overrides. This should be a function provided in any
     ///   class extending ConvexHullAPI
@@ -124,10 +125,11 @@ namespace ValheimVehicles.SharedScripts
     /// <returns></returns>
     public Func<string, bool> IsAllowedAsHullOverride = s => false;
 
-    private const string colliderParentNameDefault = "vehicle_movement/colliders";
     public string colliderParentName = colliderParentNameDefault;
 
-    public Transform parentTransform = null!; 
+    public Transform parentTransform = null!;
+
+    [NonSerialized] public List<MeshCollider> newMeshColliders = new();
 
     private void Awake()
     {
@@ -1303,12 +1305,12 @@ namespace ValheimVehicles.SharedScripts
 
       // First step is to either update previous mesh or generate a new one.
       var mesh = meshObject != null
-        ? meshObject.GetComponent<MeshFilter>().sharedMesh
+        ? meshObject.GetComponent<MeshCollider>().sharedMesh
         : new Mesh
         {
-          vertices = vertices.ToArray(),
-          triangles = triangles.ToArray(),
-          normals = normals.ToArray(),
+          vertices = vertices,
+          triangles = triangles,
+          normals = normals,
           name =
             $"{MeshNamePrefix}_{convexHullMeshes.Count}_mesh"
         };
@@ -1316,9 +1318,9 @@ namespace ValheimVehicles.SharedScripts
       // Update the mesh instead of creating a new one (which could cause memory problems)
       if (meshObject != null)
       {
-        mesh.vertices = vertices.ToArray();
-        mesh.triangles = triangles.ToArray();
-        mesh.normals = normals.ToArray();
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;
+        mesh.normals = normals;
       }
 
       // always recalculate to avoid Physics issues. Low perf cost
@@ -1389,7 +1391,7 @@ namespace ValheimVehicles.SharedScripts
     public void UpdateConvexHullBounds()
     {
       var localPoints = convexHullMeshColliders.SelectMany(x => x.sharedMesh.vertices).Select(x => transform.TransformPoint(x)).Select(x => transform.InverseTransformPoint(x)).ToList();
-      
+
       if (localPoints.Count > 0)
       {
         var convexHullBounds = new Bounds(localPoints[0], Vector3.zero);

@@ -102,10 +102,7 @@ public class VehiclePrefabs : IRegisterPrefab
     /*
      * ShipControls were a gameObject with a script attached to them. This approach directly attaches the script instead of having the rudder show.
      */
-
-    var shipInstance = prefab.AddComponent<VehicleShip>();
-    // shipInstance.gameObject.layer = LayerHelpers.CustomRaftLayer;
-
+    
     var piece =
       PrefabRegistryHelpers.AddPieceForPrefab(PrefabNames.WaterVehicleShip,
         prefab);

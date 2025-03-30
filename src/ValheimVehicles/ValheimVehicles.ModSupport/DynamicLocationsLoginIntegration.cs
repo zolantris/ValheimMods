@@ -63,7 +63,7 @@ public class DynamicLocationsLoginIntegration : DynamicLoginIntegration
       yield break;
     }
 
-    yield return new WaitUntil(() => vehicle.Instance.PiecesController != null && (
+    yield return new WaitUntil(() => vehicle.Instance != null && vehicle.Instance.PiecesController != null && (
                                        vehicle.Instance.PiecesController.isInitialPieceActivationComplete ||
                                        vehicle.Instance.PiecesController.IsActivationComplete) ||
                                      localTimer.ElapsedMilliseconds > 2000);

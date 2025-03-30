@@ -17,14 +17,14 @@ namespace ValheimVehicles.SharedScripts
     public GameObject Prefab;
     public List<Collider> AllColliders;
     public List<Collider> HullColliders;
-    public PrefabColliderPointData PointDataItems;
+    public PrefabColliderPointData ColliderPointData;
 
     public PrefabPieceData(GameObject prefab, Allocator allocator)
     {
       Prefab = prefab;
       AllColliders = new List<Collider>();
       HullColliders = new List<Collider>();
-      PointDataItems = default;
+      ColliderPointData = default;
 
       InitializeColliders(prefab.transform.root, allocator);
     }
@@ -46,7 +46,7 @@ namespace ValheimVehicles.SharedScripts
 
         if (points.Length > 0)
         {
-          PointDataItems = new PrefabColliderPointData(
+          ColliderPointData = new PrefabColliderPointData(
             Prefab.transform.localPosition,
             points, // ✅ Pass array directly
             allocator
