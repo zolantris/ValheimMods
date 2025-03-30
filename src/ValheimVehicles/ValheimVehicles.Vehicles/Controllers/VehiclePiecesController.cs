@@ -1235,7 +1235,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
         return;
       }
 
-    AddPendingPiece(id, netView);
+    AddPendingPiece(id, netView, skipActivation);
 
     var wnt = netView.GetComponent<WearNTear>();
     if ((bool)wnt) wnt.enabled = false;
@@ -1507,7 +1507,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       StartActivatePendingPieces();
   }
 
-  private static void AddPendingPiece(int vehicleId, ZNetView piece)
+  private static void AddPendingPiece(int vehicleId, ZNetView piece, bool skipActivation = false)
   {
     ActiveInstances.TryGetValue(vehicleId, out var vehicleInstance);
 
@@ -1520,7 +1520,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       return;
     }
 
-    vehicleInstance.AddPendingPieceToActiveVehicle(vehicleId, piece);
+    vehicleInstance.AddPendingPieceToActiveVehicle(vehicleId, piece, skipActivation);
   }
 
   public static void ActivateAllPendingPieces()
@@ -1563,8 +1563,11 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     if (BaseVehicleInitState != InitializationState.Complete &&
         GetCurrentPendingPieces()?.Count == 0) return;
 
-    _pendingPiecesCoroutine =
-      StartCoroutine(nameof(ActivatePendingPiecesCoroutine));
+    if (_pendingPiecesCoroutine == null)
+    {
+      _pendingPiecesCoroutine =
+        StartCoroutine(nameof(ActivatePendingPiecesCoroutine));
+    }
   }
 
   public void OnActivatePendingPiecesComplete(
@@ -1660,7 +1663,11 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
   public IEnumerator ActivatePendingPiecesCoroutine()
   {
     if (_baseVehicleInitializationState !=
-        InitializationState.Complete) yield break;
+        InitializationState.Complete)
+    {
+      _pendingPiecesCoroutine = null;
+      yield break;
+    }
 
     OnStartActivatePendingPieces();
 
@@ -1690,6 +1697,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       {
         // NetView somehow unmounted;
         OnActivatePendingPiecesComplete(PendingPieceStateEnum.ForceReset);
+        _pendingPiecesCoroutine = null;
         yield break;
       }
 
