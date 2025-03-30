@@ -2913,7 +2913,8 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
   private void GenerateCombinedMeshes(List<ZNetView> list, List<string> prefabNameExclusionList, List<string> meshFilterExclusionList, bool hasRunCleanup = false)
   {
-    var objects = list.Where(x => x != null).Select(x => x.gameObject).ToList();
+    // this might need to be removed. Doing a full iteration is likely less efficient than checking for a null value later and disregarding the result.
+    var objects = list.Where(x => x != null).Select(x => x.gameObject).ToArray();
     m_meshClusterComponent.GenerateCombinedMeshes(objects, prefabNameExclusionList, meshFilterExclusionList);
   }
 

@@ -94,6 +94,8 @@ namespace ValheimVehicles.SharedScripts
           }
         }
         if (relatedPrefabs.Count < 1) return;
+
+        // TODO [PERFORMANCE] may want to debounce this. But it will be very laggy looking if we delay this step. 
         GenerateCombinedMeshes(relatedPrefabs.ToArray(), PrefabExcludeNames, MeshFilterIncludesNames, true);
         IgnoreAllVehicleCollidersCallback();
       }
@@ -137,8 +139,7 @@ namespace ValheimVehicles.SharedScripts
     {
       List<MeshRenderer> validRenderers = new();
       HashSet<Transform> excludedLODs = new(); // 🔹 Track excluded lower LOD objects
-
-
+      
       foreach (Transform child in root)
       {
         if (wnt != null && IsChildOfWNT(child, wnt)) continue; // 🔹 Skip WNT sub-objects
