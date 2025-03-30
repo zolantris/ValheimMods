@@ -95,7 +95,7 @@ namespace ValheimVehicles.SharedScripts
         if (relatedPrefabs.Count < 1) return;
 
         // TODO [PERFORMANCE] may want to debounce this. But it will be very laggy looking if we delay this step. 
-        GenerateCombinedMeshes(relatedPrefabs.ToArray(), PrefabExcludeNames, MeshFilterIncludesNames, true);
+        GenerateCombinedMeshes(relatedPrefabs.ToArray(), true);
         IgnoreAllVehicleCollidersCallback();
       }
     }
@@ -200,12 +200,7 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public void GenerateCombinedMeshes(GameObject[] prefabList)
-    {
-      GenerateCombinedMeshes(prefabList, PrefabExcludeNames, combinedMeshExcludePrefabNames);
-    }
-
-    public void GenerateCombinedMeshes(GameObject[] prefabList, List<string> prefabNameExclusionList, List<string> meshFilterExclusionList, bool hasRunCleanup = false)
+    public void GenerateCombinedMeshes(GameObject[] prefabList, bool hasRunCleanup = false)
     {
       if (!combinedMeshParent)
       {
@@ -223,8 +218,8 @@ namespace ValheimVehicles.SharedScripts
       }
 
       Dictionary<Material, List<CombineInstance>> materialToMeshes = new();
-      var prefabExclusionRegex = GenerateRegexFromList(prefabNameExclusionList); // Compile Regex once
-      var meshFilterExclusionRegex = GenerateRegexFromList(meshFilterExclusionList); // Compile Regex once
+      var prefabExclusionRegex = GenerateRegexFromList(PrefabExcludeNames); // Compile Regex once
+      var meshFilterExclusionRegex = GenerateRegexFromList(MeshFilterExcludeNames); // Compile Regex once
       var meshFilterIncludeRegex = GenerateRegexFromList(MeshFilterIncludesNames); // Compile Regex once
 
       foreach (var prefabItem in prefabList)
