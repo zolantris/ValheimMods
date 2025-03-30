@@ -14,6 +14,11 @@ using UnityEngine.Rendering;
 // ReSharper disable NamespaceStyle
 namespace ValheimVehicles.SharedScripts
 {
+  /// <summary>
+  /// Huge performance boost for larger ships using prefabs that share the same material resources.
+  ///
+  /// Ships go from 30 FPS with 1000+ pieces to over 80FPS again.
+  /// </summary>
   public class MeshClusterController : MonoBehaviour
   {
     public static bool IsClusteringEnabled = true;
@@ -36,9 +41,6 @@ namespace ValheimVehicles.SharedScripts
       new()
       {
         "wheel", "portal",
-        // PrefabNames.MBRopeLadder, 
-        // PrefabNames.MBRopeAnchor, 
-        // PrefabNames.ShipSteeringWheel,
         "door", "chest", "cart"
       };
     public static List<string> MeshFilterExcludeNames = new()
@@ -50,12 +52,9 @@ namespace ValheimVehicles.SharedScripts
       "Combined", "Combined_Mesh"
     };
 
-    public static Regex CombinedMeshExclusionPattern;
-    public static Regex CombinedMeshIncludePattern;
-    public MovementPiecesController m_movementPiecesController;
 
-    public GameObject combinedMeshParent;
-
+    internal MovementPiecesController m_movementPiecesController;
+    internal GameObject combinedMeshParent;
     internal Dictionary<Material, GameObject> _previousCombinedMeshObjects = new(); // Store previous combined meshes
     public Dictionary<GameObject, List<Material>> _relatedGameObjectToMaterialsMap = new();
     internal Dictionary<Material, List<GameObject>> _relatedMaterialToGameObjectsMap = new(); // Store previous combined meshes

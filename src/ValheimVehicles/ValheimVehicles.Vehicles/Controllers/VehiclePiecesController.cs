@@ -462,8 +462,30 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     }
   }
 
+
+  public static bool HasSetupMeshClusterController = false;
+
+  /// <summary>
+  /// A setup function related to adding PrefabNames which is outside the sharedscripts scope in Unity. We need this for valheim game only.
+  ///
+  /// Must be called only 1 time.
+  /// </summary>
+  public void SetupMeshClusterController()
+  {
+    if (HasSetupMeshClusterController) return;
+
+    MeshClusterController.PrefabExcludeNames.AddRange([
+      PrefabNames.MBRopeLadder,
+      PrefabNames.MBRopeAnchor,
+      PrefabNames.ShipSteeringWheel
+    ]);
+
+    HasSetupMeshClusterController = true;
+  }
+
   public override void Awake()
   {
+    SetupMeshClusterController();
     if (ZNetView.m_forceDisableInit) return;
 
     // must be called before base.awake()
@@ -611,7 +633,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     return true;
   }
 
-  public override void Start()
+  public void Start()
   {
     ValidateInitialization();
 
@@ -628,9 +650,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       ActiveInstances.Add(VehicleInstance.PersistentZdoId, this);
 
     StartClientServerUpdaters();
-
-    // tempZNetView = PrefabRegistryHelpers.AddTempNetView(gameObject);
-    // zsyncTransform = PrefabRegistryHelpers.GetOrAddMovementZSyncTransform(gameObject);
   }
 
   public override void OnDisable()
@@ -754,17 +773,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         localVehiclePhysicsMode)
       SetVehiclePhysicsType(VehiclePhysicsMode.ForceSyncedRigidbody);
 
-    // if (flight && localVehiclePhysicsMode ==
-    //     VehiclePhysicsMode.SyncedRigidbody)
-    //   SetVehiclePhysicsType(VehiclePhysicsMode
-    //     .DesyncedJointRigidbodyBody);
-
-    // if (!flight &&
-    //     localVehiclePhysicsMode ==
-    //     VehiclePhysicsMode.DesyncedJointRigidbodyBody)
-    //   SetVehiclePhysicsType(VehiclePhysicsMode.SyncedRigidbody);
-
-
     m_localRigidbody.angularDrag = angularDrag;
     MovementController.m_body.angularDrag = angularDrag;
 
@@ -779,19 +787,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   public VehiclePhysicsMode localVehiclePhysicsMode =
     VehiclePhysicsMode.ForceSyncedRigidbody;
 
-  /// <summary>
-  /// Deprecated, for now. Will not be used unless this can be leveraged as a fix for some physics objects that need a kinematic rigidbody
-  /// </summary>
-  private void SyncMovingPiecesContainer()
-  {
-    if (_movingPiecesContainer == null) return;
-    if (_movingPiecesContainer.position != transform.position)
-      _movingPiecesContainer.position = transform.position;
-
-    if (_movingPiecesContainer.rotation != transform.rotation)
-      _movingPiecesContainer.rotation = transform.rotation;
-  }
-
   public void SetVehiclePhysicsType(
     VehiclePhysicsMode physicsMode)
   {
@@ -803,9 +798,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
   // for adding additional multiplier within lower ranges so angle gets to expected value quicker.
   public static float rotationLeanMultiplier = 1.5f;
-
-  private bool cachedIsNetviewOwner = false;
-
+  
   /// <summary>
   /// Adds a leaning effect similar to sailing when wind is starboard/port pushing upwards/downwards. Cosmetic only to the ship. SailPower controls lean effect. Zero sails will not influence it.
   /// </summary>
@@ -814,10 +807,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   {
     if (MovementController == null || VehicleInstance?.NetView == null)
       return Quaternion.identity;
-
-    // var baseRotation = cachedIsNetviewOwner
-    //   ? MovementController.m_body.rotation
-    //   : VehicleInstance.NetView.GetZDO().GetRotation();
+    
     var baseRotation = MovementController.m_body.rotation;
     if (!PropulsionConfig.EXPERIMENTAL_LeanTowardsWindSailDirection.Value)
       return baseRotation;
@@ -921,14 +911,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   /// </summary>
   public void Sync()
   {
-#if DEBUG
     KinematicSync();
-    // JointSync();
-#endif
-
-#if !DEBUG
-    KinematicSync();
-#endif
   }
 
   public void ForceEnableGPUInstancing(GameObject prefab)
@@ -946,45 +929,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       meshRenderer.sharedMaterial.enableInstancing = true;
     }
   }
-
-  /// <summary>
-  /// Todo may need to ignore doors and other rigidbodies.
-  /// </summary>
-  /// <param name="collider"></param>
-  public void ConvertColliderToTrigger(Collider collider)
-  {
-    // collider.isTrigger = true;
-    //
-    // var colliders = prefab.GetComponentsInChildren<Collider>(true);
-    // if (colliders == null) return;
-    // foreach (var collider in colliders)
-    // {
-    //   collider.isTrigger = true;
-    // }
-  }
-
-  // public void drawMeshesOnly()
-  // {
-  //   
-  //     foreach (var mNviewPiece in m_nviewPieces)
-  //     {
-  //       if (mNviewPiece.isActiveAndEnabled)
-  //       {
-  //         Mesh mesh = mNviewPiece.GetComponent<MeshFilter>().sharedMesh;
-  //         Material material = mNviewPiece.GetComponent<MeshRenderer>().sharedMaterial;
-  //         List<Matrix4x4> matrices = new List<Matrix4x4>();
-  //
-  //         for (int i = 0; i < instanceCount; i++)
-  //         {
-  //           // Vector3 position = new Vector3(Mathf.Range(-10, 10), 0, Random.Range(-10, 10));
-  //           matrices.Add(Matrix4x4.TRS(position, Quaternion.identity, Vector3.one));
-  //         }
-  //
-  //         Graphics.DrawMeshInstanced(mesh, 0, material, matrices.ToArray());
-  //       }
-  //       mNviewPiece.gameObject.SetActive(false);
-  //     }
-  // }
 
   public bool _isInvalid = true;
   public bool IsInvalid()
@@ -1006,7 +950,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   public void CustomUpdate(float deltaTime, float time)
   {
     Client_UpdateAllPieces();
-    // Sync();
   }
 
   private void UpdateBedPiece(Bed mBedPiece)
@@ -1028,25 +971,14 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   public override void CustomFixedUpdate(float deltaTime)
   {
     if (VehicleInstance?.NetView == null) return;
-    cachedIsNetviewOwner = VehicleInstance.NetView.IsOwner();
-    // m_nviewPieces.ForEach((x) =>
-    // {
-    //   if (x != null)
-    //   {
-    //     x.gameObject.SetActive(false);
-    //   }
-    // });
     Sync();
   }
 
   public void CustomLateUpdate(float deltaTime)
   {
-    // Sync();
-    if (!ZNet.instance.IsServer())
-    {
-      Client_UpdateAllPieces();
-      UpdateBedPieces();
-    }
+    if (ZNet.instance == null || ZNet.instance.IsServer()) return;
+    Client_UpdateAllPieces();
+    UpdateBedPieces();
   }
 
   public static bool CanUseActualPiecePosition = false ;
@@ -1327,10 +1259,13 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       ShipMass += pieceWeight;
   }
 
+  /// <summary>
+  /// Small override for addition guards when rebuilding bounds
+  /// </summary>
   public override void RequestBoundsRebuild()
   {
-    if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !_isInitialPieceActivationComplete) return;
-    _rebuildBoundsTimer = StartCoroutine(RebuildBoundsThrottleRoutine(() => RebuildBounds()));
+    if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !isInitialPieceActivationComplete) return;
+    base.RequestBoundsRebuild();
   }
 
 #if DEBUG
@@ -1626,9 +1561,9 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     _pendingPiecesState = pieceStateEnum;
     PendingPiecesTimer.Reset();
 
-    if (!_isInitialPieceActivationComplete)
+    if (!isInitialPieceActivationComplete)
     {
-      _isInitialPieceActivationComplete = true;
+      isInitialPieceActivationComplete = true;
       // as a safety measure calling this will prevent collisions if any piece was delayed in activation.
       RebuildBounds(true);
     }
@@ -2781,42 +2716,42 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     // m_localShipBack = furthestBack;
   }
 
-  public void RebuildConvexHull()
-  {
-    if (VehicleInstance?.Instance == null || MovementController == null) return;
-    var vehicleMovementCollidersTransform =
-      VehicleInstance.Instance.vehicleMovementCollidersTransform;
-    var nvChildGameObjects = m_nviewPieces.Select(x => x.gameObject)
-      .Where(x => !IsExcludedBoundsItem(x.gameObject.name)).ToList();
-    if (WaterConfig.HasUnderwaterHullBubbleEffect.Value)
-      // Makes it slightly larger extended out from the ship
-      convexHullComponent.previewScale = new Vector3(1.05f, 1.05f, 1.05f);
-
-    convexHullComponent
-      .GenerateMeshesFromChildColliders(
-        vehicleMovementCollidersTransform.gameObject, Vector3.zero,
-        PhysicsConfig.convexHullJoinDistanceThreshold.Value,
-        nvChildGameObjects, MovementController.DamageColliders);
-
-    vehicleCenter.transform.localPosition = convexHullComponent.GetConvexHullBounds(true).center;
-
-    // convexHullColliders.Clear();
-    // convexHullMeshColliders.Clear();
-    //
-    // convexHullMeshes.ForEach((x) =>
-    // {
-    //   var meshCollider = x.GetComponent<MeshCollider>();
-    //   var collider = x.GetComponent<Collider>();
-    //
-    //   if (meshCollider != null) convexHullMeshColliders.Add(meshCollider);
-    //   if (collider != null) convexHullColliders.Add(collider);
-    // });
-
-    // convexHullTriggerColliders = MovementController.DamageColliders
-    //   .GetComponentsInChildren<Collider>(true).ToList();
-    // convexHullTriggerMeshColliders = MovementController.DamageColliders
-    //   .GetComponentsInChildren<MeshCollider>(true).ToList();
-  }
+  // public void RebuildConvexHull()
+  // {
+  //   if (VehicleInstance?.Instance == null || MovementController == null) return;
+  //   var vehicleMovementCollidersTransform =
+  //     VehicleInstance.Instance.vehicleMovementCollidersTransform;
+  //   var nvChildGameObjects = m_nviewPieces.Select(x => x.gameObject)
+  //     .Where(x => !IsExcludedBoundsItem(x.gameObject.name)).ToList();
+  //   if (WaterConfig.HasUnderwaterHullBubbleEffect.Value)
+  //     // Makes it slightly larger extended out from the ship
+  //     convexHullComponent.previewScale = new Vector3(1.05f, 1.05f, 1.05f);
+  //
+  //   convexHullComponent
+  //     .GenerateMeshesFromChildColliders(
+  //       vehicleMovementCollidersTransform.gameObject, Vector3.zero,
+  //       PhysicsConfig.convexHullJoinDistanceThreshold.Value,
+  //       nvChildGameObjects, MovementController.DamageColliders);
+  //
+  //   vehicleCenter.transform.localPosition = convexHullComponent.GetConvexHullBounds(true).center;
+  //
+  //   // convexHullColliders.Clear();
+  //   // convexHullMeshColliders.Clear();
+  //   //
+  //   // convexHullMeshes.ForEach((x) =>
+  //   // {
+  //   //   var meshCollider = x.GetComponent<MeshCollider>();
+  //   //   var collider = x.GetComponent<Collider>();
+  //   //
+  //   //   if (meshCollider != null) convexHullMeshColliders.Add(meshCollider);
+  //   //   if (collider != null) convexHullColliders.Add(collider);
+  //   // });
+  //
+  //   // convexHullTriggerColliders = MovementController.DamageColliders
+  //   //   .GetComponentsInChildren<Collider>(true).ToList();
+  //   // convexHullTriggerMeshColliders = MovementController.DamageColliders
+  //   //   .GetComponentsInChildren<MeshCollider>(true).ToList();
+  // }
 
   public List<Collider> tempVehicleColliders = new();
   public List<Collider> tempPieceColliders = new();
@@ -2827,7 +2762,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     CancelInvoke(nameof(IgnoreAllVehicleColliders));
     Invoke(nameof(IgnoreAllVehicleColliders), 0.01f);
   }
-  
+
   /**
    * Ignores absolutely all vehicle colliders.
    * This is optimized to prevent duplicate colliders and unnecessary allocations.
@@ -2852,10 +2787,22 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     // }
 
     var vehicleColliders = VehicleInstance.Instance.GetComponentsInChildren<Collider>(true);
-    var pieceColliders = transform.GetComponentsInChildren<Collider>(true);
-
     if (vehicleColliders == null) return;
-    // heavy but simple ignore all colliders.
+
+    foreach (var prefabPieceDataItem in prefabPieceDataItems.Values)
+    {
+      // a removed reference means we should skip this as the colliders will be shortly removed.
+      if (prefabPieceDataItem.Prefab == null) continue;
+      foreach (var allCollider in prefabPieceDataItem.AllColliders)
+      {
+        foreach (var vehicleCollider in vehicleColliders)
+        {
+          if (allCollider == null || vehicleCollider == null) continue;
+          Physics.IgnoreCollision(allCollider, vehicleCollider);
+        }
+      }
+    }
+
     foreach (var vehicleCollider in vehicleColliders)
     {
       // must ignore all vehicle colliders
@@ -2864,13 +2811,25 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
         if (vehicleCollider == vehicleCollider2) continue;
         Physics.IgnoreCollision(vehicleCollider, vehicleCollider2, true);
       }
-    
-      // vehicle colliders must ignore pieces. But pieces should likely not ignore eachother and it won't matter with how piece controller ignores physics engine.
-      foreach (var allPieceCollider in pieceColliders)
-      {
-        Physics.IgnoreCollision(vehicleCollider, allPieceCollider, true);
-      }
     }
+    // var pieceColliders = transform.GetComponentsInChildren<Collider>(true);
+
+    // heavy but simple ignore all colliders.
+    // foreach (var vehicleCollider in vehicleColliders)
+    // {
+    //   // must ignore all vehicle colliders
+    //   foreach (var vehicleCollider2 in vehicleColliders)
+    //   {
+    //     if (vehicleCollider == vehicleCollider2) continue;
+    //     Physics.IgnoreCollision(vehicleCollider, vehicleCollider2, true);
+    //   }
+    //
+    //   // vehicle colliders must ignore pieces. But pieces should likely not ignore eachother and it won't matter with how piece controller ignores physics engine.
+    //   foreach (var allPieceCollider in pieceColliders)
+    //   {
+    //     Physics.IgnoreCollision(vehicleCollider, allPieceCollider, true);
+    //   }
+    // }
   }
 
   // For when pieces are added
@@ -2886,10 +2845,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     var allVehicleColliders = VehicleInstance.Instance.GetComponentsInChildren<Collider>(true);
     foreach (var collider in colliders)
     {
-      if (!isCharacter)
-      {
-        ConvertColliderToTrigger(collider);
-      }
       foreach (var allVehicleCollider in allVehicleColliders)
       {
         if (collider.name.StartsWith("tread") && isCharacter)
@@ -2901,89 +2856,6 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
       }
     }
   }
-
-  public static List<string> CombinedMeshOverride_PrefabExcludeNames = ["wheel", "portal", PrefabNames.MBRopeLadder, PrefabNames.MBRopeAnchor, PrefabNames.ShipSteeringWheel, "door", "chest", "cart"];
-  public static List<string> CombinedMeshOverride_MeshFilterExcludeNames = ["Destruction", "high", "large_lod", "vehicle_water_mesh", "largelod", "Portal_destruction", "Destruction_Cube"];
-  public static List<string> CombinedMeshOverride_MeshFilterIncludesNames = ["Combined", "Combined_Mesh"];
-
-  private GameObject combinedMeshParent;
-  public Dictionary<GameObject, List<MeshRenderer>> hiddenMeshRenderersObjMap = new();
-  public Dictionary<GameObject, List<Material>> RelatedMaterialsMap = new();
-  private List<GameObject> currentMeshObjects = new();
-
-  private void GenerateCombinedMeshes(List<ZNetView> list, List<string> prefabNameExclusionList, List<string> meshFilterExclusionList, bool hasRunCleanup = false)
-  {
-    // this might need to be removed. Doing a full iteration is likely less efficient than checking for a null value later and disregarding the result.
-    var objects = list.Where(x => x != null).Select(x => x.gameObject).ToArray();
-    m_meshClusterComponent.GenerateCombinedMeshes(objects, prefabNameExclusionList, meshFilterExclusionList);
-  }
-
-  // public GameObject _lastCombinedGameObj;
-
-  public bool shouldHideAllMeshComponents = true;
-  // private void GenerateCollisionMeshes()
-  // {
-  //   if (_lastCombinedGameObj)
-  //   {
-  //     Destroy(_lastCombinedGameObj);
-  //   }
-  //
-  //   var vehicleCombinedMesh = new GameObject
-  //   {
-  //     name = "ValheimVehicles_VehicleCombinedMesh",
-  //     transform = { parent = transform }
-  //   };
-  //
-  //   List<MeshFilter> allMeshFilters = [];
-  //
-  //   foreach (var x in m_nviewPieces)
-  //   {
-  //     if (!x) continue;
-  //     var doorComponent = x.GetComponentInChildren<Door>();
-  //     if (doorComponent) continue; // Skip doors
-  //
-  //     var meshFilters = x.GetComponentsInChildren<MeshFilter>();
-  //     allMeshFilters.AddRange(meshFilters);
-  //   }
-  //
-  //   var combine = new List<CombineInstance>(); // Use a list instead of array
-  //
-  //   foreach (var meshFilter in allMeshFilters)
-  //   {
-  //     if (!meshFilter || meshFilter.sharedMesh == null) continue;
-  //
-  //     // Skip specific meshes (e.g., doors, windows)
-  //     if (meshFilter.name.Contains("door")) continue;
-  //
-  //     combine.Add(new CombineInstance
-  //     {
-  //       mesh = meshFilter.sharedMesh,
-  //       transform = meshFilter.transform.localToWorldMatrix
-  //     });
-  //
-  //     if (shouldHideAllMeshComponents)
-  //     {
-  //       meshFilter.gameObject.SetActive(false);
-  //     }
-  //   }
-  //
-  //   // ✅ Fix: Force UInt32 index format for large meshes
-  //   var collisionMesh = new Mesh
-  //   {
-  //     name = "ValheimVehicles_CombinedMesh",
-  //     indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 // This allows > 65535 vertices
-  //   };
-  //
-  //   collisionMesh.CombineMeshes(combine.ToArray());
-  //
-  //   // Assign to MeshCollider
-  //   var meshCollider = vehicleCombinedMesh.AddComponent<MeshCollider>();
-  //   meshCollider.sharedMesh = collisionMesh;
-  //   meshCollider.convex = false; // Keep it non-convex for accurate walking surfaces
-  //
-  //   _lastCombinedGameObj = vehicleCombinedMesh; // Store reference to delete later if needed
-  // }
-
 
   // public void IgnoreColliderForWheelColliders(Collider collider)
   // {
@@ -3050,19 +2922,20 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     cachedTotalSailArea = -1;
   }
 
-  /**
-   * Must be wrapped in an Invoke delay to prevent spamming on unmounting
-   * bounds cannot be de-encapsulated by default so regenerating it seems prudent on piece removal
-   */
+  /// <summary>
+  /// A override of RebuildBounds scoped towards valheim integration instead of unity-only.
+  /// - Must be wrapped in a delay/coroutine to prevent spamming on unmounting bounds
+  /// - cannot be de-encapsulated by default so regenerating it seems prudent on piece removal
+  /// </summary>
+  /// 
+  /// <param name="isForced"></param>
   public override void RebuildBounds(bool isForced = false)
   {
     if (FloatCollider == null || OnboardCollider == null)
       return;
 
-    // internal parent class
-    base.RebuildBounds(isForced);
-
     // methods related to VehiclePiecesController
+    // todo Physics sync might not be required, but it ensures accuracy.
     Physics.SyncTransforms();
 
     ResetSailCachedValues();
@@ -3079,7 +2952,9 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
     try
     {
-      GenerateConvexHull(PhysicsConfig.convexHullJoinDistanceThreshold.Value, OnConvexHullGenerated);
+      // internal parent class must still be called.
+      clusterThreshold = PhysicsConfig.convexHullJoinDistanceThreshold.Value;
+      base.RebuildBounds(isForced);
     }
     catch (Exception e)
     {
@@ -3087,13 +2962,15 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     }
   }
 
-  public void OnConvexHullGenerated()
+  /// <summary>
+  /// A complete override of OnConvexHullGenerated.
+  /// </summary>
+  public override void OnConvexHullGenerated()
   {
     _vehiclePieceBounds = convexHullComponent.GetConvexHullBounds(true);
 
     try
     {
-
       if (WheelController != null)
       {
         WheelController.Initialize(_vehiclePieceBounds);
@@ -3108,9 +2985,8 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     {
       try
       {
-        // could be a huge performance boost.
-        // todo potentially map these so only new or removed items are actually run.
-        GenerateCombinedMeshes(m_nviewPieces, CombinedMeshOverride_PrefabExcludeNames, CombinedMeshOverride_MeshFilterExcludeNames);
+        var objects = m_nviewPieces.Where(x => x != null).Select(x => x.gameObject).ToArray();
+        m_meshClusterComponent.GenerateCombinedMeshes(objects);
       }
       catch (Exception e)
       {
@@ -3409,10 +3285,9 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
 
   internal override int GetPieceCount()
   {
-    if (VehicleInstance == null) return m_nviewPieces.Count;
-    if (VehicleInstance.NetView == null ||
+    if (VehicleInstance == null || VehicleInstance.NetView == null ||
         VehicleInstance.NetView.m_zdo == null)
-      return m_nviewPieces.Count;
+      return base.GetPieceCount();
 
     var count =
       VehicleInstance.NetView.m_zdo.GetInt(VehicleZdoVars.MBPieceCount,

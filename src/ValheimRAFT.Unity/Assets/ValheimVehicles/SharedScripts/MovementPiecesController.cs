@@ -43,7 +43,7 @@ namespace ValheimVehicles.SharedScripts
 
     public readonly Dictionary<GameObject, PrefabPieceData> prefabPieceDataItems = new();
 
-    internal bool _isInitialPieceActivationComplete;
+    internal bool isInitialPieceActivationComplete;
     internal int _lastPieceRevision = 1;
 
     // for bounds and piece building revisions.
@@ -196,7 +196,7 @@ namespace ValheimVehicles.SharedScripts
       }
 
       // we do not rebuild bounds until this generation is completed
-      if (!_isInitialPieceActivationComplete)
+      if (!isInitialPieceActivationComplete)
       {
         return;
       }
@@ -205,10 +205,8 @@ namespace ValheimVehicles.SharedScripts
     }
 
     /// <summary>
-    /// Additional logic is implemented in the VehiclePiecesController
-    /// Local method is important for
-    /// - updating hashes
-    /// Some Code here will be used for testing within unity editor environment
+    /// - This RebuildBounds must be called within the override if overridden. 
+    /// - Additional logic is implemented in the VehiclePiecesController
     /// </summary>
     /// <param name="isForced"></param>
     public virtual void RebuildBounds(bool isForced = false)
@@ -352,11 +350,11 @@ namespace ValheimVehicles.SharedScripts
     /// <summary>
     /// Requests convex hull generation for a tracked prefab.
     /// </summary>
-    public void GenerateConvexHull(float clusterThreshold, Action? callback)
+    public void GenerateConvexHull(float localClusterThreshold, Action? callback)
     {
       // ✅ Avoid extra allocations by passing `IEnumerable` instead of `.ToList()`
-      var prefabDataItems = prefabPieceDataItems.Values;
-      m_convexHullJobHandler.ScheduleConvexHullJob(m_convexHullAPI, new List<PrefabPieceData>(prefabDataItems), clusterThreshold, () =>
+      var prefabDataItems = prefabPieceDataItems.Values.ToArray();
+      m_convexHullJobHandler.ScheduleConvexHullJob(m_convexHullAPI, prefabDataItems, localClusterThreshold, () =>
       {
         m_convexHullAPI.PostGenerateConvexMeshes();
         Debug.Log("✅ Convex Hull Generation Complete!");

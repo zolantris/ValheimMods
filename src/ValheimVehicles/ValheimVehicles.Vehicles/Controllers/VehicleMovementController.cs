@@ -462,63 +462,68 @@
     {
       if (vehicleRam == null) return;
       if (collider.gameObject.layer == LayerHelpers.TerrainLayer) return;
-      var colliderName = collider.name;
       vehicleRam.OnTriggerEnterHandler(collider);
+    }
+
+    public void GuardedFixedUpdate(float deltaTime)
+    {
+      if (VehicleDebugConfig.AutoShowVehicleColliders.Value &&
+          DebugTargetHeightObj != null)
+      {
+        DebugTargetHeightObj.transform.position =
+          VectorUtils.MergeVectors(transform.position,
+            Vector3.up * TargetHeight);
+        DebugTargetHeightObj.transform.localScale = FloatCollider!.size;
+      }
+
+      // invalid wheel controller should always reset physics to kinematic and skip current run.
+      if (WheelController != null && !WheelController.IsVehicleReady)
+      {
+        m_body.isKinematic = true;
+        InitLandVehicleWheels();
+        return;
+      }
+
+      // if the vehicle has not initialized pieces physics should never be run.
+      if (!_vehicle!
+            .PiecesController!.isInitialPieceActivationComplete)
+      {
+        m_body.isKinematic = true;
+        return;
+      }
+
+      // if the vehicle has not generated a convex hull collider. We do not want to use physics.
+      if (_vehicle!.PiecesController!.convexHullComponent.convexHullMeshColliders.Count < 1)
+      {
+        m_body.isKinematic = true;
+        return;
+      }
+
+      if (PropulsionConfig.AllowFlight.Value ||
+          WaterConfig.WaterBallastEnabled.Value)
+        SyncTargetHeight();
+
+      UpdateShipWheelTurningSpeed();
+
+      /*
+       * creative mode should not allow movement, and applying force on an object will cause errors, when the object is kinematic
+       */
+      if (isCreative) return;
+      if (!isPlayerHaulingVehicle && m_body.isKinematic || isPlayerHaulingVehicle && HaulingPlayer != null && HaulingPlayer.transform.root == PiecesController!.transform.root)
+      {
+        m_body.isKinematic = false;
+      }
+
+      VehicleMovementUpdatesOwnerOnly();
+      VehiclePhysicsFixedUpdateAllClients();
     }
 
     public void CustomFixedUpdate(float deltaTime)
     {
       if (IsInvalid()) return;
-
       try
       {
-
-
-        if (VehicleDebugConfig.AutoShowVehicleColliders.Value &&
-            DebugTargetHeightObj != null)
-        {
-          DebugTargetHeightObj.transform.position =
-            VectorUtils.MergeVectors(transform.position,
-              Vector3.up * TargetHeight);
-          DebugTargetHeightObj.transform.localScale = FloatCollider.size;
-        }
-        if (WheelController != null && !WheelController.IsVehicleReady)
-        {
-          InitLandVehicleWheels();
-          m_body.isKinematic = true;
-          return;
-        }
-
-        if (_vehicle != null && _vehicle
-              .PiecesController != null && !_vehicle
-              .PiecesController.isInitialActivationComplete)
-        {
-          m_body.isKinematic = true;
-          return;
-        }
-
-        if (PropulsionConfig.AllowFlight.Value ||
-            WaterConfig.WaterBallastEnabled.Value)
-          SyncTargetHeight();
-
-        UpdateShipWheelTurningSpeed();
-
-        /*
-         * creative mode should not allow movement, and applying force on an object will cause errors, when the object is kinematic
-         */
-        if (isCreative) return;
-        if (!isPlayerHaulingVehicle && m_body.isKinematic)
-        {
-          m_body.isKinematic = false;
-        }
-        else if (isPlayerHaulingVehicle && HaulingPlayer != null && HaulingPlayer.transform.root == PiecesController.transform.root)
-        {
-          m_body.isKinematic = false;
-        }
-
-        VehicleMovementUpdatesOwnerOnly();
-        VehiclePhysicsFixedUpdateAllClients();
-
+        GuardedFixedUpdate(deltaTime);
       }
       catch (Exception e)
       {
@@ -534,8 +539,8 @@
     /// <param name="time"></param>
     public void CustomUpdate(float deltaTime, float time)
     {
-      if (PiecesController == null) return;
-      // PiecesController.Sync();
+      // if (PiecesController == null) return;
+      // // PiecesController.Sync();
     }
 
     public void CustomLateUpdate(float deltaTime)
@@ -4057,6 +4062,7 @@
 
     public void UpdatePlayerOnShip(Player player)
     {
+      if (OnboardController == null) return;
       OnboardController.TryAddPlayerIfMissing(player);
       FixPlayerParent(player);
     }

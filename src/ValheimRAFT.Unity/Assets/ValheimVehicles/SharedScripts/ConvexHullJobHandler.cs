@@ -41,7 +41,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void ScheduleConvexHullJob(
       ConvexHullAPI convexHullAPI,
-      List<PrefabPieceData> prefabDataList,
+      PrefabPieceData[] prefabDataList,
       float clusterThreshold,
       Action onComplete = null)
     {
@@ -59,7 +59,7 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
-      var colliderDataList = new List<PrefabColliderPointData>(prefabDataList.Count);
+      var colliderDataList = new List<PrefabColliderPointData>(prefabDataList.Length);
       foreach (var prefabData in prefabDataList)
       {
         colliderDataList.Add(prefabData.PointDataItems);
@@ -67,7 +67,7 @@ namespace ValheimVehicles.SharedScripts
 
       NativeArray<PrefabColliderPointData> nativeColliderData = new(colliderDataList.ToArray(), Allocator.TempJob);
       NativeArray<int> validClusterCountArray = new(1, Allocator.Persistent);
-      NativeArray<ConvexHullResultData> nativeHullResults = new(prefabDataList.Count, Allocator.TempJob);
+      NativeArray<ConvexHullResultData> nativeHullResults = new(prefabDataList.Length, Allocator.TempJob);
 
       var maxVertices = 10000;
       var maxTriangles = 10000;
@@ -301,7 +301,7 @@ namespace ValheimVehicles.SharedScripts
         {
           if (processed.Contains(i)) continue;
 
-          var cluster = new List<Vector3>(InputColliderData[i].Points.ToArray());
+          var cluster = new List<Vector3>(InputColliderData[i].Points);
           processed.Add(i);
 
           for (var j = i + 1; j < InputColliderData.Length; j++)
@@ -310,7 +310,7 @@ namespace ValheimVehicles.SharedScripts
 
             if (Vector3.Distance(InputColliderData[i].LocalPosition, InputColliderData[j].LocalPosition) < ClusterThreshold)
             {
-              cluster.AddRange(InputColliderData[j].Points.ToArray());
+              cluster.AddRange(InputColliderData[j].Points);
               processed.Add(j);
             }
           }

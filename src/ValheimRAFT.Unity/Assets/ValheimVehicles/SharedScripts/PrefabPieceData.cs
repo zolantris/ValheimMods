@@ -57,9 +57,9 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
-    public void Dispose()
-    {
-      PointDataItems.Dispose(); // ✅ Dispose local native points
-    }
+    // public void Dispose()
+    // {
+    //   PointDataItems.Dispose(); // ✅ Dispose local native points
+    // }
   }
 }

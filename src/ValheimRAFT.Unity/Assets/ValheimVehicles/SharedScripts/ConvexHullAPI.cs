@@ -124,8 +124,6 @@ namespace ValheimVehicles.SharedScripts
     /// <returns></returns>
     public Func<string, bool> IsAllowedAsHullOverride = s => false;
 
-    [NonSerialized] public List<MeshCollider> newMeshColliders = new();
-
     private const string colliderParentNameDefault = "vehicle_movement/colliders";
     public string colliderParentName = colliderParentNameDefault;
 
@@ -982,10 +980,6 @@ namespace ValheimVehicles.SharedScripts
       {
         DestroyAllConvexMeshes();
       }
-      else
-      {
-        newMeshColliders.Clear();
-      }
 
 
       var hullClusters =
@@ -1305,31 +1299,36 @@ namespace ValheimVehicles.SharedScripts
 
     public void GenerateMeshFromConvexOutput(Vector3[] vertices, int[] triangles, Vector3[] normals, int meshIndex)
     {
-      // Create a Unity Mesh
-      var mesh = new Mesh
-      {
-        vertices = vertices.ToArray(),
-        triangles = triangles.ToArray(),
-        normals = normals.ToArray(),
-        name =
-          $"{MeshNamePrefix}_{convexHullMeshes.Count}_mesh"
-      };
-
-      if (ShouldOptimizeGeneratedMeshes)
-      {
-        // possibly necessary for performance (but a bit of overhead)
-        mesh.Optimize();
-        //
-        // // possibly unnecessary.
-        mesh.RecalculateNormals();
-        mesh.RecalculateBounds();
-      }
-
       var meshObject = convexHullMeshes.Count > meshIndex ? convexHullMeshes[meshIndex] : null;
 
+      // First step is to either update previous mesh or generate a new one.
+      var mesh = meshObject != null
+        ? meshObject.GetComponent<MeshFilter>().sharedMesh
+        : new Mesh
+        {
+          vertices = vertices.ToArray(),
+          triangles = triangles.ToArray(),
+          normals = normals.ToArray(),
+          name =
+            $"{MeshNamePrefix}_{convexHullMeshes.Count}_mesh"
+        };
+
+      // Update the mesh instead of creating a new one (which could cause memory problems)
+      if (meshObject != null)
+      {
+        mesh.vertices = vertices.ToArray();
+        mesh.triangles = triangles.ToArray();
+        mesh.normals = normals.ToArray();
+      }
+
+      // always recalculate to avoid Physics issues. Low perf cost
+      mesh.RecalculateNormals();
+      mesh.RecalculateBounds();
+      
       // Do not create another mesh instance if it already exists. Doing this require every collider to be ignored.
       if (meshObject == null)
       {
+  
         // Create a new GameObject to display the mesh
         meshObject =
           new GameObject(
@@ -1341,13 +1340,14 @@ namespace ValheimVehicles.SharedScripts
         convexHullMeshes.Add(meshObject);
       }
 
+      // todo we get this twice. Possibly optimize this better.
       var meshCollider = meshObject.GetComponent<MeshCollider>();
-
       if (!meshCollider)
       {
         meshCollider = meshObject.AddComponent<MeshCollider>();
+        meshCollider.sharedMesh = mesh;
       }
-
+      
       if (HasPhysicMaterial)
       {
         meshCollider.material = localPhysicMaterial;
@@ -1356,11 +1356,9 @@ namespace ValheimVehicles.SharedScripts
       if (!convexHullMeshColliders.Contains(meshCollider))
       {
         convexHullMeshColliders.Add(meshCollider);
-        newMeshColliders.Add(meshCollider);
       }
 
       meshCollider.sharedMesh = mesh;
-
       meshCollider.convex = true;
       meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
       meshCollider.includeLayers = LayerHelpers.PhysicalLayers;
