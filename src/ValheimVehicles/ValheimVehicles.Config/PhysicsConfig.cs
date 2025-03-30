@@ -15,12 +15,6 @@ namespace ValheimVehicles.Config;
 
 public static class PhysicsConfig
 {
-  public static ConfigEntry<bool> EnableCustomWaterMeshCreators =
-    null!;
-
-  public static ConfigEntry<bool> EnableCustomWaterMeshTestPrefabs =
-    null!;
-
   private const string SectionKey = "Vehicle Physics";
 
   private static string
@@ -293,12 +287,12 @@ public static class PhysicsConfig
     maxLinearVelocityAcceptableValues =
       ModEnvironment.IsDebug
         ? new AcceptableValueRange<float>(1, 2000f)
-        : new AcceptableValueRange<float>(1, 100f);
+        : new AcceptableValueRange<float>(1, 200f);
 
   private static readonly AcceptableValueRange<float>
     maxLinearYVelocityAcceptableValues = ModEnvironment.IsDebug
       ? new AcceptableValueRange<float>(1, 2000f)
-      : new AcceptableValueRange<float>(1, 20f);
+      : new AcceptableValueRange<float>(1, 200f);
 
   public const string PropulsionSection = "Physics: Propulsion";
 
@@ -477,23 +471,23 @@ public static class PhysicsConfig
     VehicleLandTreadOffset.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
 
     // guards for max values
-    MaxLinearVelocity = Config.Bind(SectionKey, "MaxVehicleLinearVelocity", 10f,
+    MaxLinearVelocity = Config.Bind(SectionKey, $"MaxVehicleLinearVelocity_{VersionedConfig.GetDynamicMinorVersionKey()}", 100f,
       ConfigHelpers.CreateConfigDescription(
-        "Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 20. Higher values will increase potential of vehicle flying off to space",
-        true, true, maxLinearVelocityAcceptableValues));
+        "Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 100. Higher values will increase potential of vehicle flying off to space or rapidly accelerating through objects before physics can apply to an unloaded zone.",
+        true, false, maxLinearVelocityAcceptableValues));
 
 
-    MaxLinearYVelocity = Config.Bind(SectionKey, "MaxVehicleLinearYVelocity",
-      3f,
+    MaxLinearYVelocity = Config.Bind(SectionKey, "MaxVehicleLinearUpwardsVelocity",
+      50f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the absolute max speed a vehicle can ever move in vertical direction. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not use gravity well",
-        true, true, maxLinearYVelocityAcceptableValues));
+        true, false, maxLinearYVelocityAcceptableValues));
 
     MaxAngularVelocity = Config.Bind(SectionKey, "MaxVehicleAngularVelocity",
       5f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the absolute max speed a vehicle can ROTATE in. Having a high value means the vehicle can spin out of control.",
-        true, true, new AcceptableValueRange<float>(0.1f, 10f)));
+        true, false, new AcceptableValueRange<float>(0.1f, 10f)));
 
     HullFloatationColliderLocation = Config.Bind(FloatationPhysicsSectionKey,
       "HullFloatationColliderLocation",
