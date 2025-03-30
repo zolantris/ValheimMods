@@ -394,30 +394,25 @@
         tris.Clear();
         normals.Clear();
 
-        // List<Vector3> points;
-        // if (isBasicHullCalculation)
-        // {
-        //   points = prefabPieceDataItems.Values.Select(x => x.ColliderPointData.LocalBounds.center).ToList();
-        // }
-        // else
-        // {
-        //   points = prefabPieceDataItems.Values.SelectMany(x => x.ColliderPointData.Points).ToList();
-        // }
-
-        var basicPoints = prefabPieceDataItems.Values.Select(x => x.ColliderPointData.LocalBounds.center).ToList();
-        var allPoints = prefabPieceDataItems.Values.SelectMany(x => x.ColliderPointData.Points).ToList();
-
-        Debug.Log($"basicPoints length: {basicPoints.Count}");
-        Debug.Log($"allpoints points length: {allPoints.Count}");
-
-        if (allPoints.Count <= 4)
+        List<Vector3> points;
+        if (isBasicHullCalculation)
         {
-          // todo see if this is required or if we should skip this callback when exiting.
-          // callback?.Invoke();
+          points = prefabPieceDataItems.Values.Select(x => x.ColliderPointData.LocalBounds.center).ToList();
+        }
+        else
+        {
+          points = prefabPieceDataItems.Values.SelectMany(x => x.ColliderPointData.Points).ToList();
+        }
+
+
+        // We cannot generate a convex collider with so view points. This is not a good situation to be in.
+        // todo add a fallback that uses a simple box collider in this case. (IE THE BASIC RENDER)
+        if (points.Count <= 4)
+        {
           return;
         }
 
-        m_convexHullCalculator.GenerateHull(allPoints, false, ref verts, ref tris, ref normals);
+        m_convexHullCalculator.GenerateHull(points, false, ref verts, ref tris, ref normals);
         m_convexHullAPI.GenerateMeshFromConvexOutput(verts.ToArray(), tris.ToArray(), normals.ToArray(), 0);
 
         Debug.Log("✅ Convex Hull Generation Complete!");
