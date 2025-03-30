@@ -53,7 +53,7 @@ namespace ValheimVehicles.SharedScripts
     };
 
 
-    internal MovementPiecesController m_movementPiecesController;
+    internal BasePiecesController MBasePiecesController;
     internal GameObject combinedMeshParent;
     internal Dictionary<Material, GameObject> _previousCombinedMeshObjects = new(); // Store previous combined meshes
     public Dictionary<GameObject, List<Material>> _relatedGameObjectToMaterialsMap = new();
@@ -67,14 +67,14 @@ namespace ValheimVehicles.SharedScripts
 
     public void Awake()
     {
-      m_movementPiecesController = GetComponent<MovementPiecesController>();
+      MBasePiecesController = GetComponent<BasePiecesController>();
     }
 
     public void OnPieceDestroyHandler(GameObject go)
     {
       wntSubscribers.Remove(go);
-      if (!m_movementPiecesController) return;
-      if (IsClusteringEnabled || m_movementPiecesController.GetPieceCount() < ClusterRenderingPieceThreshold) return;
+      if (!MBasePiecesController) return;
+      if (IsClusteringEnabled || MBasePiecesController.GetPieceCount() < ClusterRenderingPieceThreshold) return;
       CleanupRelatedCombinedMeshes();
 
       if (_relatedGameObjectToMaterialsMap.TryGetValue(go, out var items))

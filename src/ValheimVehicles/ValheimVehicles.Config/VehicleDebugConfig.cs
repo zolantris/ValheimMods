@@ -184,7 +184,7 @@ public static class VehicleDebugConfig
     
     VehicleBoundsRebuildDelayPerPiece.SettingChanged += (sender, args) =>
     {
-      MovementPiecesController.RebuildBoundsDelayPerPiece = VehicleBoundsRebuildDelayPerPiece.Value;
+      BasePiecesController.RebuildBoundsDelayPerPiece = VehicleBoundsRebuildDelayPerPiece.Value;
     };
     // onChanged
     AutoShowVehicleColliders.SettingChanged +=

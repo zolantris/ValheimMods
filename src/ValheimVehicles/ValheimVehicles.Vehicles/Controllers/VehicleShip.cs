@@ -662,6 +662,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   /// </summary>
   /// <note>
   /// this must be added instead of on the prefab otherwise PlacedPiece cannot get the data in time
+  ///
+  /// This does not call InitFromShip due to init from ship require other values to be set on VehicleShip before running the command.
   /// </note>
   public void InitializeVehiclePiecesController()
   {

@@ -131,7 +131,7 @@ namespace ValheimVehicles.SharedScripts
 
     [NonSerialized] public List<MeshCollider> newMeshColliders = new();
 
-    private void Awake()
+    public virtual void Awake()
     {
       if (m_fallbackMaterial != null && BubbleMaterial == null)
         BubbleMaterial = m_fallbackMaterial;
@@ -140,25 +140,24 @@ namespace ValheimVehicles.SharedScripts
         DebugMaterial = m_fallbackMaterial;
 
       PreviewParent = transform;
-
       m_rigidbody = GetComponent<Rigidbody>();
-
-      if (convexMeshLayer == 29)
-      {
-        convexMeshLayer = LayerHelpers.CustomRaftLayer;
-      }
-
-      if (!parentTransform)
-      {
-        parentTransform = transform;
-      }
     }
 
-    private void Start()
+    public virtual void Start()
     {
       if (!m_colliderParentTransform)
       {
         m_colliderParentTransform = transform.Find(colliderParentName);
+      }
+
+      // if (convexMeshLayer == 29)
+      // {
+      //   convexMeshLayer = LayerHelpers.CustomRaftLayer;
+      // }
+
+      if (!parentTransform)
+      {
+        parentTransform = transform;
       }
     }
 

@@ -38,7 +38,7 @@ namespace ValheimVehicles.Vehicles;
 
 /// <summary>controller used for all vehicles</summary>
 /// <description> This is a controller used for all vehicles, Currently it must be initialized within a vehicle view IE VehicleShip or upcoming VehicleWheeled, and VehicleFlying instances.</description>
-public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
+public class VehiclePiecesController : BasePiecesController, IMonoUpdater
 {
   /*
    * Get all the instances statically
@@ -226,6 +226,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   public float cachedSailForce = 0f;
 
   public virtual IVehicleShip? VehicleInstance { set; get; }
+  private VehicleShip _vehicle;
   public int PersistentZdoId => VehicleInstance?.PersistentZdoId ?? 0;
 
   public VehicleMovementController? MovementController =>
@@ -356,6 +357,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   /// <summary>
   /// Coroutine to init vehicle just in case things get delayed or desync. This allows for it to wait until things are ready without skipping critical initialization
   /// </summary>
+  /// TODO this might need to be removed or more guards need to be added.
   /// <param name="vehicleShip"></param>
   /// <returns></returns>
   private IEnumerator InitVehicle(VehicleShip vehicleShip)
@@ -381,15 +383,22 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
   /// </summary>
   public void InitFromShip(VehicleShip vehicleShip)
   {
+    _vehicle = vehicleShip;
     VehicleInstance = vehicleShip;
 
-    if (!InitializeBaseVehicleValuesWhenReady())
+    var hasInitializedSuccessfully = InitializeBaseVehicleValuesWhenReady(vehicleShip);
+
+    // wait more time if the vehicle is somehow taking forever to init
+    if (!hasInitializedSuccessfully)
       StartCoroutine(InitVehicle(vehicleShip));
   }
 
   private IEnumerator ZdoReadyStart()
   {
-    InitializeBaseVehicleValuesWhenReady();
+    if (VehicleInstance?.Instance != null)
+    {
+      InitializeBaseVehicleValuesWhenReady(VehicleInstance.Instance);
+    }
 
     if (VehicleInstance == null)
       Logger.LogError(
@@ -538,8 +547,7 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
     if (convexHullComponent == null)
       convexHullComponent =
         gameObject.AddComponent<ConvexHullComponent>();
-
-    convexHullComponent.parentTransform = transform;
+    
     convexHullComponent.MovementController = MovementController;
     // safety check, this will run after game-world loads especially if settings have changed.
     m_convexHullAPI = convexHullComponent;
@@ -616,17 +624,23 @@ public class VehiclePiecesController : MovementPiecesController, IMonoUpdater
    * Possible alternatives to this approach:
    * - Add a setter that triggers initializeBaseVehicleValues when the zdo is falsy -> truthy
    */
-  private bool InitializeBaseVehicleValuesWhenReady()
+  private bool InitializeBaseVehicleValuesWhenReady(VehicleShip vehicleShip)
   {
     if (ZNetView.m_forceDisableInit) return false;
     // vehicleInstance is the persistent ID, the pieceContainer only has a netView for syncing ship position
-    if (VehicleInstance?.NetView == null)
+    if (vehicleShip.NetView == null)
     {
       Logger.LogWarning(
         "Warning netview not detected on vehicle, this means any netview attached events will not bind correctly");
       return false;
     }
 
+    if (vehicleShip.vehicleMovementCollidersTransform)
+    {
+      // must set parent to be the vehicle colliders
+      convexHullComponent.parentTransform = vehicleShip.vehicleMovementCollidersTransform;
+    }
+    
     LoadInitState();
     HideGhostContainer();
     LinkFixedJoint();

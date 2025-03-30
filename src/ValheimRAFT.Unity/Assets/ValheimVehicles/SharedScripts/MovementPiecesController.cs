@@ -17,7 +17,7 @@ namespace ValheimVehicles.SharedScripts
   /// <summary>
   /// This is meant to be extended for VehiclePiecesController, allowing non-Valheim asset replication of movement without all other piece logic.
   /// </summary>
-  public class MovementPiecesController : MonoBehaviour
+  public class BasePiecesController : MonoBehaviour
   {
     public static GameObject m_convexHullJobHandlerObj;
     public static float RebuildPieceMinDelay = 0.1f;

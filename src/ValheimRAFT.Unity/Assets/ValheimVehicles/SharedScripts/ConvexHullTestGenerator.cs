@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 #endregion
 
@@ -45,7 +46,8 @@ namespace ValheimVehicles.SharedScripts
 
     public ConvexHullAPI _convexHullAPI;
     public VehicleWheelController vehicleWheelController;
-    public MovementPiecesController movementPiecesController;
+    [FormerlySerializedAs("movementPiecesController")]
+    public BasePiecesController basePiecesController;
 
     public float centerOfMassOffset = -4f;
 
@@ -118,7 +120,7 @@ namespace ValheimVehicles.SharedScripts
         _convexHullAPI.AddLocalPhysicMaterial(0.01f, 0.01f);
       }
 
-      movementPiecesController.WheelController = vehicleWheelController;
+      basePiecesController.WheelController = vehicleWheelController;
 
       SyncAPIProperties();
       Cleanup();
@@ -318,7 +320,7 @@ namespace ValheimVehicles.SharedScripts
     /// <returns></returns>
     public Vector3? GetPieceOffset()
     {
-      var pieceCount = movementPiecesController.prefabPieceDataItems.Count;
+      var pieceCount = basePiecesController.prefabPieceDataItems.Count;
       var currentVector = new Vector3(4 * xOffset, 4 * yOffset, 4 * zOffset);
 
       if (yOffset > MaxYGeneration)
@@ -352,24 +354,24 @@ namespace ValheimVehicles.SharedScripts
 
       var piece = Instantiate(prefab, transform);
       piece.transform.localPosition = localPosition.Value;
-      movementPiecesController.OnPieceAdded(piece);
+      basePiecesController.OnPieceAdded(piece);
     }
 
     private IEnumerator TestAddPieceToVehicleChild()
     {
       if (!prefabFloorPiece) yield break;
-      if (movementPiecesController.prefabPieceDataItems.Count > maxPiecesToAdd) yield break;
-      var currentPieces = movementPiecesController.prefabPieceDataItems.Count;
+      if (basePiecesController.prefabPieceDataItems.Count > maxPiecesToAdd) yield break;
+      var currentPieces = basePiecesController.prefabPieceDataItems.Count;
 
       var current = 0;
-      while (BatchAddSize > current && movementPiecesController.prefabPieceDataItems.Count < maxPiecesToAdd)
+      while (BatchAddSize > current && basePiecesController.prefabPieceDataItems.Count < maxPiecesToAdd)
       {
         InstantiatePrefab(prefabFloorPiece);
         InstantiatePrefab(prefabWallPiece);
         current++;
       }
 
-      movementPiecesController.RequestBoundsRebuild();
+      basePiecesController.RequestBoundsRebuild();
       // if (currentPieces != movementPiecesController.prefabPieceDataItems.Count)
       // {
       //   Generate();

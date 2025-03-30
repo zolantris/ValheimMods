@@ -8,10 +8,11 @@ namespace ValheimVehicles.Vehicles.Components;
 
 public class ConvexHullComponent : ConvexHullAPI
 {
-  public void Awake()
+  public override void Awake()
   {
     IsAllowedAsHullOverride = IsAllowedForConvexHullFn;
     BubbleMaterial = LoadValheimVehicleAssets.DoubleSidedTransparentMat;
+    base.Awake();
   }
 
   public VehicleMovementController? MovementController;
