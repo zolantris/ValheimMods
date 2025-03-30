@@ -477,7 +477,7 @@ public static class PhysicsConfig
         true, false, maxLinearVelocityAcceptableValues));
 
 
-    MaxLinearYVelocity = Config.Bind(SectionKey, "MaxVehicleLinearUpwardsVelocity",
+    MaxLinearYVelocity = Config.Bind(SectionKey, $"MaxVehicleLinearYVelocity_{VersionedConfig.GetDynamicMinorVersionKey()}",
       50f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the absolute max speed a vehicle can ever move in vertical direction. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not use gravity well",
