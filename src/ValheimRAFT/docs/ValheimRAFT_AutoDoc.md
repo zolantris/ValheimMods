@@ -368,7 +368,7 @@
 - Default Value: True
 
 ### DebugMetricsEnabled 
-- Description: Will locally log metrics for ValheimVehicles mods. Meant for debugging functional delays
+- Description: Will locally log metrics for ValheimVehicles mods. Meant for debugging functional delays, convexHull logic, and other long running processes. This can be log heavy but important to enable if the mod is having problems in order to report issues.
 - Default Value: False
 
 ### DebugMetricsTimer 
@@ -976,7 +976,7 @@ Other methods removed after 2.5.0
 - Description: Unstable config, this will possible get you more performance but parts of the vehicle will be hidden when rapidly panning. This Enables hiding active raft pieces at specific intervals. This will hide only the rendered texture.
 - Default Value: False
 
-### DistanceToKeepObjects 
+### UNSTABLE_DistanceToKeepObjects 
 - Description: Threshold at which to retain a object even if it's through a wall.
 - Default Value: 5
 
@@ -988,7 +988,7 @@ Other methods removed after 2.5.0
 
 ### VehicleCameraZoomMaxDistance 
 - Description: Allows the camera to zoom out between 8 and 64 meters. Percentage based zoom.
-- Default Value: 0
+- Default Value: 0.5
 
 ## Hud
 
