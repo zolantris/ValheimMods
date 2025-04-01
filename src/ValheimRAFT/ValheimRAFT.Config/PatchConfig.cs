@@ -56,10 +56,9 @@ public static class PatchConfig
         true, true));
 
     PlanBuildPatches = Config.Bind<bool>("Patches",
-      "Enable PlanBuild Patches (required to be on if you installed PlanBuild)",
+      "Disable Planbuild auto-patches",
       false,
-      ConfigHelpers.CreateConfigDescription(
-        "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT. PlanBuild mod can be found here. https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/", true));
+      ConfigHelpers.CreateConfigDescription("Disable planbuild patches. This will prevent planbuild from working well. Only use this if valheim raft is causing planbuild to crash.", true));
 
     MineRockPatch = Config.Bind<bool>("Patches",
       "Ram MineRock patches",
