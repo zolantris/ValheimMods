@@ -1,5 +1,6 @@
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
+// ReSharper disable UseCollectionExpression
 
 #region
 
@@ -16,13 +17,21 @@ namespace ValheimVehicles.SharedScripts
     public Vector3 LocalPosition;
     public int PointCount => Points.Length;
     public Bounds LocalBounds;
-    public readonly Vector3[] Points; // ✅ Stores points locally per prefab
+    public readonly Vector3[] Points;
 
     public PrefabColliderPointData(Vector3 localPosition, Vector3[] points, Allocator allocator)
     {
       LocalPosition = localPosition;
       LocalBounds = new Bounds(LocalPosition, Vector3.zero);
-      Points = points;
+
+      if (points == null)
+      {
+        points = new Vector3[0];
+      }
+      else
+      {
+        Points = points;
+      }
       
       foreach (var point in points)
       {

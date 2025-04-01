@@ -397,17 +397,44 @@ namespace ValheimVehicles.SharedScripts
       tris.Clear();
       normals.Clear();
 
-      List<Vector3> points;
+      var points = new List<Vector3>();
       if (isBasicHullCalculation)
       {
-        points = prefabPieceDataItems.Values.Select(x => x.ColliderPointData.LocalBounds.center).ToList();
+        points = prefabPieceDataItems.Values.Where(x => x.ColliderPointData != null).Select(x => x.ColliderPointData!.Value.LocalBounds.center).ToList();
       }
       else
       {
-        points = prefabPieceDataItems.Values.SelectMany(x => x.ColliderPointData.Points).ToList();
+        foreach (var item in prefabPieceDataItems.Values)
+        {
+          var itemCollectionData = item.ColliderPointData;
+          if (itemCollectionData == null) continue;
+          if (itemCollectionData.Value.Points == null)
+          {
+            LoggerProvider.LogDebug($"Unexpected Points list is null for item: {item}");
+            continue;
+          }
+
+          try
+          {
+            foreach (var point in itemCollectionData.Value.Points)
+            {
+              // It's possible to get a NRE when adding collections so adding this to guard it.
+              // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+              if (point == null)
+              {
+                LoggerProvider.LogDebug($"ValheimRAFT: Point is null for item: {item}");
+                continue;
+              }
+              points.Add(point);
+            }
+          }
+          catch (Exception e)
+          {
+            LoggerProvider.LogError($"ValheimRAFT: Error while adding points for item: {item}. Error \n {e}");
+          }
+        }
       }
-
-
+      
       // We cannot generate a convex collider with so view points. This is not a good situation to be in.
       // todo add a fallback that uses a simple box collider in this case. (IE THE BASIC RENDER)
       if (points.Count <= 4)

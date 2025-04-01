@@ -17,14 +17,14 @@ namespace ValheimVehicles.SharedScripts
     public GameObject Prefab;
     public List<Collider> AllColliders;
     public List<Collider> HullColliders;
-    public PrefabColliderPointData ColliderPointData;
+    public PrefabColliderPointData? ColliderPointData;
 
     public PrefabPieceData(GameObject prefab, Allocator allocator)
     {
       Prefab = prefab;
       AllColliders = new List<Collider>();
       HullColliders = new List<Collider>();
-      ColliderPointData = default;
+      ColliderPointData = null;
 
       InitializeColliders(prefab.transform.root, allocator);
     }
