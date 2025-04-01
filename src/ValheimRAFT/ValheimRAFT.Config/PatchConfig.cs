@@ -11,7 +11,7 @@ public static class PatchConfig
   public static ConfigEntry<bool>? DynamicLocations { get; private set; }
   public static ConfigEntry<bool> ComfyGizmoPatches { get; set; }
 
-  public static ConfigEntry<bool> PlanBuildPatches { get; set; }
+  public static ConfigEntry<bool> ForceDisablePlanBuildPatches { get; set; }
 
   public static ConfigEntry<bool> MineRockPatch { get; set; }
 
@@ -55,7 +55,7 @@ public static class PatchConfig
         "Prevents pausing on a boat during singleplayer. Must have the Vehicle Prevent Pausing patch as well",
         true, true));
 
-    PlanBuildPatches = Config.Bind<bool>("Patches",
+    ForceDisablePlanBuildPatches = Config.Bind<bool>("Patches",
       "Disable Planbuild auto-patches",
       false,
       ConfigHelpers.CreateConfigDescription("Disable planbuild patches. This will prevent planbuild from working well. Only use this if valheim raft is causing planbuild to crash.", true));

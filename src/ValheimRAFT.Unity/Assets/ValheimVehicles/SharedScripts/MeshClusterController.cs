@@ -24,6 +24,13 @@ namespace ValheimVehicles.SharedScripts
     public static bool IsClusteringEnabled = true;
     public static int ClusterRenderingPieceThreshold = 500;
     public static Action<string> Logger = Debug.Log;
+
+
+    /// <summary>
+    /// enabling IsNonWearNTearMeshCombinationEnabled seems to cause a near infinite loop.
+    /// todo We need to discover why this is happening
+    /// </summary>
+    public static bool IsNonWearNTearMeshCombinationEnabled = false;
     public static List<string> combinedMeshExcludePrefabNames =
       new()
       {
@@ -176,6 +183,7 @@ namespace ValheimVehicles.SharedScripts
 
       return validRenderers;
     }
+    
     private bool IsChildOfWNT(Transform child, [CanBeNull] IWearNTearStub wnt)
     {
       // Ensure WNT exists before checking
@@ -187,6 +195,7 @@ namespace ValheimVehicles.SharedScripts
              wnt.m_broken && child.IsChildOf(wnt.m_broken.transform) ||
              wnt.m_new && child.IsChildOf(wnt.m_new.transform);
     }
+    
     public void RestoreGeneratedMeshes(GameObject obj)
     {
       if (hiddenMeshRenderersObjMap.TryGetValue(obj, out var renderers))
@@ -198,6 +207,21 @@ namespace ValheimVehicles.SharedScripts
         renderers.Clear();
         hiddenMeshRenderersObjMap.Remove(obj);
       }
+    }
+
+    public bool ShouldInclude(string objName, Regex IncludeRegex, Regex ExcludeRegex)
+    {
+      if (ExcludeRegex.IsMatch(objName))
+      {
+        return false;
+      }
+
+      if (!IncludeRegex.IsMatch(objName))
+      {
+        return false;
+      }
+
+      return true;
     }
 
     public void GenerateCombinedMeshes(GameObject[] prefabList, bool hasRunCleanup = false)
@@ -232,7 +256,6 @@ namespace ValheimVehicles.SharedScripts
 
         if (wnt != null)
         {
-
           if (!wntSubscribers.Contains(prefabItem))
           {
             wntSubscribers.Add(prefabItem);
@@ -248,7 +271,7 @@ namespace ValheimVehicles.SharedScripts
             // if A combined mesh is found we skip all other mesh renderers without that name.
             foreach (var tempRenderer in tempRenderers)
             {
-              if (meshFilterIncludeRegex.IsMatch(tempRenderer.gameObject.name))
+              if (ShouldInclude(tempRenderer.gameObject.name, meshFilterIncludeRegex, meshFilterExclusionRegex))
               {
                 selectedRenderersCombinedMesh.Add(tempRenderer);
               }
@@ -258,21 +281,26 @@ namespace ValheimVehicles.SharedScripts
           }
         }
 
-        var nonWntRenderers = GetValidNonNestedMeshRenderers(selectedRenderers, prefabItem.transform, wnt);
-        var tempNonWntCombinedRenderers = new List<MeshRenderer>();
 
-        // 🔹 Include non-WNT MeshRenderers that are not nested inside other WNT objects
-        // if A combined mesh is found we skip all other mesh renderers without that name.
-        foreach (var nonWntRenderer in nonWntRenderers)
+
+        // This code should be considered experimental and unstable as it grab literally all children nodes of MeshRenderer and adds them to the iterator.
+        if (IsNonWearNTearMeshCombinationEnabled)
         {
-          if (meshFilterIncludeRegex.IsMatch(nonWntRenderer.gameObject.name))
+          var nonWntRenderers = GetValidNonNestedMeshRenderers(selectedRenderers, prefabItem.transform, wnt);
+          var tempNonWntCombinedRenderers = new List<MeshRenderer>();
+
+          // 🔹 Include non-WNT MeshRenderers that are not nested inside other WNT objects
+          // if A combined mesh is found we skip all other mesh renderers inside that object.
+          // todo move name skipping into the GetValidNonNestedMeshRenderers
+          foreach (var nonWntRenderer in nonWntRenderers)
           {
-            tempNonWntCombinedRenderers.Add(nonWntRenderer);
+            if (ShouldInclude(nonWntRenderer.gameObject.name, meshFilterIncludeRegex, meshFilterExclusionRegex))
+            {
+              tempNonWntCombinedRenderers.Add(nonWntRenderer);
+            }
           }
+          selectedRenderers.AddRange(tempNonWntCombinedRenderers.Count > 0 ? tempNonWntCombinedRenderers : nonWntRenderers);
         }
-
-        selectedRenderers.AddRange(tempNonWntCombinedRenderers.Count > 0 ? tempNonWntCombinedRenderers : nonWntRenderers);
-
 
         if (!hiddenMeshRenderersObjMap.TryGetValue(prefabItem.gameObject, out var currentDeactivatedMeshes))
         {
