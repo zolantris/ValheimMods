@@ -488,7 +488,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       PrefabNames.MBRopeAnchor,
       PrefabNames.ShipSteeringWheel
     ]);
-    clusterThreshold = PhysicsConfig.convexHullJoinDistanceThreshold.Value;
+    clusterThreshold = RenderingConfig.ClusterRenderingPieceThreshold.Value;
     HasSetupMeshClusterController = true;
   }
 
