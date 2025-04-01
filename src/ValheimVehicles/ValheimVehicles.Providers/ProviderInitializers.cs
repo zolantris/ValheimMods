@@ -15,6 +15,11 @@ public static class ProviderInitializers
   {
     new WearNTearIntegrationProvider().Init();
 
+    // rebind logger provider so we can use it in SharedScripts without referencing Jotunn and other libs.
+    LoggerProvider.LogDebug = Logger.LogDebug;
+    LoggerProvider.LogMessage = Logger.LogMessage;
+    LoggerProvider.LogError = Logger.LogError;
+    
     // bind loggers.
     ConvexHullCalculator.LogDebug = Logger.LogDebug;
     ConvexHullCalculator.LogMessage = Logger.LogMessage;
