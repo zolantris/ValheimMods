@@ -488,7 +488,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       PrefabNames.MBRopeAnchor,
       PrefabNames.ShipSteeringWheel
     ]);
-
+    clusterThreshold = PhysicsConfig.convexHullJoinDistanceThreshold.Value;
     HasSetupMeshClusterController = true;
   }
 
@@ -2975,7 +2975,6 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     try
     {
       // internal parent class must still be called.
-      clusterThreshold = PhysicsConfig.convexHullJoinDistanceThreshold.Value;
       base.RebuildBounds(isForced);
     }
     catch (Exception e)

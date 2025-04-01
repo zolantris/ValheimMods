@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BepInEx.Configuration;
+using ComfyLib;
 using UnityEngine;
 using ValheimRAFT;
 using ValheimVehicles.Vehicles;
@@ -535,6 +536,10 @@ public static class PhysicsConfig
       ConfigHelpers.CreateConfigDescription(
         "The threshold at which a vehicle's colliders are joined with another pieces colliders to make a singular hull. Higher numbers will join multiple pieces together into a singular hull. Lower numbers allow for splitting hulls out at the cost of performance.",
         true, true, new AcceptableValueRange<float>(0.1f, 10f)));
+    convexHullJoinDistanceThreshold.SettingChanged += (_, _) =>
+    {
+      BasePiecesController.clusterThreshold = convexHullJoinDistanceThreshold.Value;
+    };
 
     convexHullDebuggerColor = Config.Bind(FloatationPhysicsSectionKey,
       "convexHullDebuggerColor",
