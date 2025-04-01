@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Debug = UnityEngine.Debug;
 
 #endregion
 
@@ -21,7 +22,10 @@ namespace ValheimVehicles.SharedScripts
 
     private const int INSIDE = -1;
 
-    private const float EPSILON = 0.0001f;
+    public static Action<string> LogMessage = Debug.Log;
+    public static Action<string> LogDebug = Debug.Log;
+
+    private const float EPSILON = 0.0000001f;
 
     private int faceCount;
 
@@ -36,8 +40,58 @@ namespace ValheimVehicles.SharedScripts
 
     private List<PointFace> openSet;
 
-
     private int openSetTail = -1;
+
+    public static int maxLoopDepthMultiplier = 50; // for bailing
+    public static int maxPointsToLog = 20000; // for logging many points.
+    public static bool hasPointDumpingEnabled = false;
+    private const float SANITIZE_TOLERANCE = 0.001f;
+    private readonly List<Vector3> sanitizedPoints = new();
+
+    private string StringifyPointsForUnity(List<Vector3> points, int maxPoints = 100)
+    {
+      var sb = new System.Text.StringBuilder();
+      sb.AppendLine($"// Dumping {Mathf.Min(points.Count, maxPoints)} of {points.Count} points");
+      sb.AppendLine("var points = new List<Vector3>");
+      sb.AppendLine("{");
+
+      for (var i = 0; i < Mathf.Min(points.Count, maxPoints); i++)
+      {
+        var p = points[i];
+        sb.AppendLine($"    new Vector3({p.x:F4}f, {p.y:F4}f, {p.z:F4}f),");
+      }
+
+      if (points.Count > maxPoints)
+        sb.AppendLine($"    // ...output truncated due to points exceeding the maximum number of pointsCount: {points.Count} maxPoints: {maxPoints}");
+
+      sb.AppendLine("};");
+
+      return sb.ToString();
+    }
+
+    public static void SanitizePointsFast(List<Vector3> rawPoints, float tolerance, List<Vector3> output)
+    {
+      output.Clear();
+
+      var inverse = 1.0f / tolerance;
+      var seen = new HashSet<Vector3Int>();
+
+      for (var i = 0; i < rawPoints.Count; i++)
+      {
+        var p = rawPoints[i];
+        var key = new Vector3Int(
+          Mathf.FloorToInt(p.x * inverse),
+          Mathf.FloorToInt(p.y * inverse),
+          Mathf.FloorToInt(p.z * inverse)
+        );
+
+        if (!seen.Contains(key))
+        {
+          seen.Add(key);
+          output.Add(p);
+        }
+      }
+    }
 
     public void GenerateHull(
       List<Vector3> points,
@@ -50,13 +104,30 @@ namespace ValheimVehicles.SharedScripts
         throw new ArgumentException(
           "Need at least 4 points to generate a convex hull");
 
-      Initialize(points, splitVerts);
+      SanitizePointsFast(points, SANITIZE_TOLERANCE, sanitizedPoints);
 
-      GenerateInitialHull(points);
+      var currentLoopDepth = 0;
+      var maxLoopDepth = sanitizedPoints.Count * maxLoopDepthMultiplier;
+      Initialize(sanitizedPoints, splitVerts);
 
-      while (openSetTail >= 0) GrowHull(points);
+      GenerateInitialHull(sanitizedPoints);
 
-      ExportMesh(points, splitVerts, ref verts, ref tris, ref normals);
+      while (openSetTail >= 0 && currentLoopDepth < maxLoopDepth)
+      {
+        GrowHull(sanitizedPoints);
+        currentLoopDepth++;
+      }
+
+      if (currentLoopDepth >= maxLoopDepth)
+      {
+        LogMessage("ValheimRAFT ConvexHullCalculator bailed early due to reaching max loop depth. This means only part of the vehicle was generated.");
+        if (hasPointDumpingEnabled)
+        {
+          LogDebug(StringifyPointsForUnity(sanitizedPoints, maxPointsToLog));
+        }
+      }
+
+      ExportMesh(sanitizedPoints, splitVerts, ref verts, ref tris, ref normals);
       VerifyMesh(points, ref verts, ref tris);
     }
 

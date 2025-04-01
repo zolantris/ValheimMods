@@ -216,7 +216,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   /// 
   public void UnloadAndDestroyPieceContainer()
   {
-    if (!(bool)_vehiclePiecesContainerInstance) return;
+    if (_vehiclePiecesContainerInstance == null) return;
     if (PiecesController != null)
     {
       PiecesController.CleanUp();
@@ -662,12 +662,14 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   /// </summary>
   /// <note>
   /// this must be added instead of on the prefab otherwise PlacedPiece cannot get the data in time
+  ///
+  /// This does not call InitFromShip due to init from ship require other values to be set on VehicleShip before running the command.
   /// </note>
   public void InitializeVehiclePiecesController()
   {
     if (ZNetView.m_forceDisableInit) return;
-    if (!(bool)NetView || NetView.GetZDO() == null || NetView.m_ghost ||
-        (bool)PiecesController || PersistentZdoId == 0) return;
+    if (NetView == null || NetView.GetZDO() == null || NetView.m_ghost ||
+        PiecesController != null || PersistentZdoId == 0 || _vehiclePiecesContainerInstance != null) return;
 
     var ladders = GetComponentsInChildren<Ladder>();
     foreach (var ladder in ladders)

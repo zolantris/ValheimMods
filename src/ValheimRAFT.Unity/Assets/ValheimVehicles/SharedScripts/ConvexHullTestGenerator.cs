@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 #endregion
 
@@ -45,7 +46,8 @@ namespace ValheimVehicles.SharedScripts
 
     public ConvexHullAPI _convexHullAPI;
     public VehicleWheelController vehicleWheelController;
-    public MovementPiecesController movementPiecesController;
+    [FormerlySerializedAs("movementPiecesController")]
+    public BasePiecesController basePiecesController;
 
     public float centerOfMassOffset = -4f;
 
@@ -55,6 +57,7 @@ namespace ValheimVehicles.SharedScripts
 
     public GameObject prefabFloorPiece;
     public GameObject prefabWallPiece;
+    public GameObject vehiclePiecesObj;
 
     public Vector3 lastPieceOffset = Vector3.zero;
 
@@ -79,12 +82,16 @@ namespace ValheimVehicles.SharedScripts
       GetOrAddMeshGeneratorApi();
       Cleanup();
 
+
+
       if (vehicleWheelController != null)
       {
         if (vehicleWheelController.wheelParent == null)
         {
           vehicleWheelController.wheelParent = transform.Find("vehicle_land/wheels");
         }
+
+        vehicleWheelController.SetBrake(false);
       }
 
       if (!cameraTransform)
@@ -93,10 +100,6 @@ namespace ValheimVehicles.SharedScripts
       }
 
       startPosition = vehicleWheelController.transform.root.position;
-
-      _convexHullAPI.AddLocalPhysicMaterial(0.01f, 0.01f);
-
-      vehicleWheelController.SetBrake(false);
       // EnableCollisionBetweenLayers(10, 28);
       // EnableCollisionBetweenLayers(28, 10);
       //
@@ -106,6 +109,19 @@ namespace ValheimVehicles.SharedScripts
 
     private void Start()
     {
+      // must be called after Awake otherwise MovementPiecesController cannot initialize these
+      if (vehiclePiecesObj)
+      {
+        _convexHullAPI = vehiclePiecesObj.GetComponent<ConvexHullAPI>();
+      }
+
+      if (_convexHullAPI)
+      {
+        _convexHullAPI.AddLocalPhysicMaterial(0.01f, 0.01f);
+      }
+
+      basePiecesController.WheelController = vehicleWheelController;
+
       SyncAPIProperties();
       Cleanup();
     }
@@ -149,6 +165,7 @@ namespace ValheimVehicles.SharedScripts
       if (!hasCalledFirstGenerate || HasResyncFixedUpdate && CanRunGenerate)
       {
         Generate();
+        // movementPiecesController.RebuildBounds();
         hasCalledFirstGenerate = true;
       }
     }
@@ -303,7 +320,7 @@ namespace ValheimVehicles.SharedScripts
     /// <returns></returns>
     public Vector3? GetPieceOffset()
     {
-      var pieceCount = movementPiecesController.vehiclePieces.Count;
+      var pieceCount = basePiecesController.prefabPieceDataItems.Count;
       var currentVector = new Vector3(4 * xOffset, 4 * yOffset, 4 * zOffset);
 
       if (yOffset > MaxYGeneration)
@@ -337,27 +354,28 @@ namespace ValheimVehicles.SharedScripts
 
       var piece = Instantiate(prefab, transform);
       piece.transform.localPosition = localPosition.Value;
-      movementPiecesController.OnPieceAdded(piece);
+      basePiecesController.OnPieceAdded(piece);
     }
 
     private IEnumerator TestAddPieceToVehicleChild()
     {
       if (!prefabFloorPiece) yield break;
-      if (movementPiecesController.vehiclePieces.Count > maxPiecesToAdd) yield break;
-      var currentPieces = movementPiecesController.vehiclePieces.Count;
+      if (basePiecesController.prefabPieceDataItems.Count > maxPiecesToAdd) yield break;
+      var currentPieces = basePiecesController.prefabPieceDataItems.Count;
 
       var current = 0;
-      while (BatchAddSize > current && movementPiecesController.vehiclePieces.Count < maxPiecesToAdd)
+      while (BatchAddSize > current && basePiecesController.prefabPieceDataItems.Count < maxPiecesToAdd)
       {
         InstantiatePrefab(prefabFloorPiece);
         InstantiatePrefab(prefabWallPiece);
         current++;
       }
 
-      if (currentPieces != movementPiecesController.vehiclePieces.Count)
-      {
-        Generate();
-      }
+      basePiecesController.RequestBoundsRebuild();
+      // if (currentPieces != movementPiecesController.prefabPieceDataItems.Count)
+      // {
+      //   Generate();
+      // }
     }
 
     public void Cleanup()

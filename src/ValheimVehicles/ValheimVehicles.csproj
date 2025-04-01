@@ -25,8 +25,15 @@
     <Import Project="$(SolutionDir)/valheim.targets"/>
 
     <ItemGroup>
+        <Compile Include="ValheimVehicles.Interfaces\IInitProvider.cs"/>
+        <Compile Include="ValheimVehicles.Interfaces\IRudderControls.cs"/>
+        <Compile Include="ValheimVehicles.Interfaces\IValheimShip.cs"/>
+        <Compile Include="ValheimVehicles.Interfaces\IVehicleMovement.cs"/>
+        <Compile Include="ValheimVehicles.Interfaces\IVehiclePiecesController.cs"/>
+        <Compile Include="ValheimVehicles.Interfaces\IVehicleShip.cs"/>
         <Compile Include="ValheimVehicles.Injections\UnityBurstInjection.cs"/>
-        <Compile Include="ValheimVehicles.Vehicles\Controllers\MeshClusterController.cs"/>
+        <Compile Include="ValheimVehicles.Providers\ProviderInitializers.cs"/>
+        <Compile Include="ValheimVehicles.Providers\WearNTearProvider.cs"/>
         <Compile Include="ValheimVehicles.Vehicles\Controllers\VehiclePiecesJobs.cs"/>
         <Compile Include="ValheimVehicles.Vehicles\Structs\VehicleConfig.cs"/>
         <Compile Include="ValheimVehiclesPlugin.cs"/>

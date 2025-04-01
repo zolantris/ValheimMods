@@ -11,7 +11,7 @@ public static class PatchConfig
   public static ConfigEntry<bool>? DynamicLocations { get; private set; }
   public static ConfigEntry<bool> ComfyGizmoPatches { get; set; }
 
-  public static ConfigEntry<bool> PlanBuildPatches { get; set; }
+  public static ConfigEntry<bool> ForceDisablePlanBuildPatches { get; set; }
 
   public static ConfigEntry<bool> MineRockPatch { get; set; }
 
@@ -55,11 +55,10 @@ public static class PatchConfig
         "Prevents pausing on a boat during singleplayer. Must have the Vehicle Prevent Pausing patch as well",
         true, true));
 
-    PlanBuildPatches = Config.Bind<bool>("Patches",
-      "Enable PlanBuild Patches (required to be on if you installed PlanBuild)",
+    ForceDisablePlanBuildPatches = Config.Bind<bool>("Patches",
+      "Disable Planbuild auto-patches",
       false,
-      ConfigHelpers.CreateConfigDescription(
-        "Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT. PlanBuild mod can be found here. https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/", true));
+      ConfigHelpers.CreateConfigDescription("Disable planbuild patches. This will prevent planbuild from working well. Only use this if valheim raft is causing planbuild to crash.", true));
 
     MineRockPatch = Config.Bind<bool>("Patches",
       "Ram MineRock patches",

@@ -29,6 +29,11 @@ public static class RenderingConfig
       "ClusterRenderingPieceThreshold", 500,
       ConfigHelpers.CreateConfigDescription($"Set the number of pieces to render threshold for using cluster rendering. smaller ships will not have cluster rendering apply. Lowest number of items possible is 10 as it's less efficient to run this on smaller vehicles. Recommended range is above 100 and max is 1000 which will significant improve the ship. If you do not want it enable turn off the feature via the key: <{EnableVehicleClusterMeshRendering.Definition.Key}>.", true, false, new AcceptableValueRange<int>(10, 1000)));
 
+    ClusterRenderingPieceThreshold.SettingChanged += (_, _) =>
+    {
+      BasePiecesController.clusterThreshold = ClusterRenderingPieceThreshold.Value;
+    };
+
 #if DEBUG
     EnableWorldClusterMeshRendering = config.Bind(SectionKey,
       "EnableWorldClusterMeshRendering", false,

@@ -462,33 +462,38 @@
     {
       if (vehicleRam == null) return;
       if (collider.gameObject.layer == LayerHelpers.TerrainLayer) return;
-      var colliderName = collider.name;
       vehicleRam.OnTriggerEnterHandler(collider);
     }
 
-    public void CustomFixedUpdate(float deltaTime)
+    public void GuardedFixedUpdate(float deltaTime)
     {
-      if (m_body == null || m_floatcollider == null ||
-          FloatCollider == null) return;
-
       if (VehicleDebugConfig.AutoShowVehicleColliders.Value &&
           DebugTargetHeightObj != null)
       {
         DebugTargetHeightObj.transform.position =
           VectorUtils.MergeVectors(transform.position,
             Vector3.up * TargetHeight);
-        DebugTargetHeightObj.transform.localScale = FloatCollider.size;
+        DebugTargetHeightObj.transform.localScale = FloatCollider!.size;
       }
+
+      // invalid wheel controller should always reset physics to kinematic and skip current run.
       if (WheelController != null && !WheelController.IsVehicleReady)
       {
+        m_body.isKinematic = true;
         InitLandVehicleWheels();
+        return;
+      }
+
+      // if the vehicle has not initialized pieces physics should never be run.
+      if (!_vehicle!
+            .PiecesController!.isInitialPieceActivationComplete)
+      {
         m_body.isKinematic = true;
         return;
       }
 
-      if (_vehicle != null && _vehicle
-            .PiecesController != null && !_vehicle
-            .PiecesController.isInitialActivationComplete)
+      // if the vehicle has not generated a convex hull collider. We do not want to use physics.
+      if (_vehicle!.PiecesController!.convexHullComponent.convexHullMeshColliders.Count < 1)
       {
         m_body.isKinematic = true;
         return;
@@ -504,17 +509,26 @@
        * creative mode should not allow movement, and applying force on an object will cause errors, when the object is kinematic
        */
       if (isCreative) return;
-      if (!isPlayerHaulingVehicle && m_body.isKinematic)
-      {
-        m_body.isKinematic = false;
-      }
-      else if (isPlayerHaulingVehicle && HaulingPlayer != null && HaulingPlayer.transform.root == PiecesController.transform.root)
+      if (!isPlayerHaulingVehicle && m_body.isKinematic || isPlayerHaulingVehicle && HaulingPlayer != null && HaulingPlayer.transform.root == PiecesController!.transform.root)
       {
         m_body.isKinematic = false;
       }
 
       VehicleMovementUpdatesOwnerOnly();
       VehiclePhysicsFixedUpdateAllClients();
+    }
+
+    public void CustomFixedUpdate(float deltaTime)
+    {
+      if (IsInvalid()) return;
+      try
+      {
+        GuardedFixedUpdate(deltaTime);
+      }
+      catch (Exception e)
+      {
+        OnValidationFailure(e);
+      }
     }
 
     /// <summary>
@@ -525,8 +539,8 @@
     /// <param name="time"></param>
     public void CustomUpdate(float deltaTime, float time)
     {
-      if (PiecesController == null) return;
-      // PiecesController.Sync();
+      // if (PiecesController == null) return;
+      // // PiecesController.Sync();
     }
 
     public void CustomLateUpdate(float deltaTime)
@@ -1165,8 +1179,18 @@
       yield return null;
     }
 
+
+    /// <summary>
+    /// This is required for preventing the vehicle from colliding with any piece
+    /// </summary>
     private void UpdateRemovePieceCollisionExclusions()
     {
+      if (PiecesController == null || PiecesController.IsInvalid())
+      {
+        Invoke(nameof(UpdateRemovePieceCollisionExclusions), 5f);
+        return;
+      }
+      
       var excludedLayers = LayerMask.GetMask("piece_nonsolid");
 
       if (!m_body) GetRigidbody();
@@ -1840,7 +1864,7 @@
       // sideways force
 
       if (!CanRunSidewaysWaterForceUpdate) return;
-
+      
       // todo rename variables for this section to something meaningful
       // todo abstract this to a method
       var forward = ShipDirection.forward;
@@ -1919,6 +1943,9 @@
         AddForceAtPosition(Vector3.up * rightUpwardForce * deltaForceMultiplier,
           shipRight - centerOffMassDifference,
           PhysicsConfig.rudderVelocityMode.Value);
+
+      // likely for balancing vehicle more.
+      ApplyEdgeForce(Time.fixedDeltaTime);
     }
 
     public void UpdateShipFloatation(ShipFloatation shipFloatation)
@@ -2324,36 +2351,77 @@
       m_body.rotation = rotationWithoutTilt;
     }
 
+    // invalid component booleans to avoid checking component existence per frame.
+    private bool _isInvalid = true;
+    private bool _isWheelControllerInvalid = true;
+
+    public bool IsInvalid()
+    {
+      if (!_isInvalid)
+      {
+        return false;
+      }
+
+      _isInvalid = !isActiveAndEnabled || m_body == null || m_floatcollider == null ||
+                   FloatCollider == null || !_vehicle || !VehicleInstance?.PiecesController || !VehicleInstance?.OnboardController || !m_nview ||
+                   m_nview.m_zdo == null ||
+                   !ShipDirection;
+      return _isInvalid;
+    }
+
+    public void UpdateValidComponentChecks()
+    {
+      if (_isWheelControllerInvalid)
+      {
+        _isWheelControllerInvalid = VehicleInstance!.WheelController == null;
+      }
+    }
+
+    public void OnValidationFailure(Exception e)
+    {
+#if DEBUG
+      Logger.LogDebug($"Error occurred after isInvalid return false. This means validation will need to be re-run. \nErrorMessage:\n{e}");
+#endif
+      _isInvalid = true;
+      _isWheelControllerInvalid = true;
+    }
+
     /// <summary>
     ///   Only Updates for the controlling player. Only players are synced
     /// </summary>
     public void VehiclePhysicsFixedUpdateAllClients()
     {
-      if (!(bool)VehicleInstance?.PiecesController || !(bool)m_nview ||
-          m_nview.m_zdo == null ||
-          !(bool)ShipDirection) return;
-
-      UpdateGravity();
-
-      var hasControllingPlayer = HaveControllingPlayer();
-
-      // Sets values based on m_speed
-      UpdateShipWheelTurningSpeed();
-      UpdateShipSpeed(hasControllingPlayer);
-
-      //base ship direction controls
-      UpdateControls(Time.fixedDeltaTime);
-      UpdateSail(Time.fixedDeltaTime);
-
-      // rudder direction
-      UpdateRudder(Time.fixedDeltaTime, hasControllingPlayer);
-
-      // raft pieces transforms
-      SyncVehicleRotationDependentItems();
-
-      if (VehicleInstance!.IsLandVehicle && VehicleInstance.WheelController != null)
+      if (IsInvalid()) return;
+      try
       {
-        VehicleInstance.WheelController.VehicleMovementFixedUpdateAllClients();
+        var deltaTime = Time.fixedDeltaTime;
+        UpdateValidComponentChecks();
+        UpdateGravity();
+
+        var hasControllingPlayer = HaveControllingPlayer();
+
+        // Sets values based on m_speed
+        UpdateShipWheelTurningSpeed();
+        UpdateShipSpeed(hasControllingPlayer);
+
+        //base ship direction controls
+        UpdateControls(deltaTime);
+        UpdateSail(deltaTime);
+
+        // rudder direction
+        UpdateRudder(deltaTime, hasControllingPlayer);
+
+        // raft pieces transforms
+        SyncVehicleRotationDependentItems();
+
+        if (!_isWheelControllerInvalid)
+        {
+          VehicleInstance!.WheelController!.VehicleMovementFixedUpdateAllClients();
+        }
+      }
+      catch (Exception e)
+      {
+        OnValidationFailure(e);
       }
     }
 
@@ -2380,7 +2448,7 @@
     public void UpdateVehicleFromHaulPosition()
     {
       if (!isPlayerHaulingVehicle) return;
-      if (OnboardCollider == null || HaulingPlayer == null || HaulingRopeComponent == null)
+      if (HaulingPlayer == null || HaulingRopeComponent == null)
       {
         ForceStopHauling(true);
         return;
@@ -2413,7 +2481,7 @@
       var rotation = m_body.rotation;
       var haulingPlayerPosition = HaulingPlayer.transform.position;
 
-      var playerClosestPointToVehicle = OnboardCollider.ClosestPointOnBounds(haulingPlayerPosition);
+      var playerClosestPointToVehicle = OnboardCollider!.ClosestPointOnBounds(haulingPlayerPosition);
       var distanceToPlayerVehicleCollider = Vector3.Distance(playerClosestPointToVehicle, haulingPlayerPosition);
       if (distanceToPlayerVehicleCollider < minHaulFollowDistance) return;
 
@@ -2520,7 +2588,8 @@
     /// Physics syncs on 1 client are better otherwise the ships will desync across clients and both will stutter
     public void VehicleMovementUpdatesOwnerOnly()
     {
-      if (!m_nview || !_vehicle) return;
+      if (IsInvalid()) return;
+      
       var hasOwner = m_nview.HasOwner();
       var owner = m_nview.IsOwner();
       if (!VehicleDebugConfig.SyncShipPhysicsOnAllClients.Value && !owner && hasOwner ||
@@ -3040,10 +3109,19 @@
     }
 
 
+    /// <summary>
+    /// Todo integrate this and confirm it works. This will help avoid any one player from updating too quickly.
+    ///
+    /// Also should prevent desyncs if we can synchronize it.
+    /// </summary>
     public void SendSyncBounds()
     {
       if (m_nview == null) return;
-      m_nview.InvokeRPC(0, nameof(RPC_SyncBounds));
+
+      OnboardController.m_localPlayers.ForEach(x =>
+      {
+        m_nview.InvokeRPC(x.GetPlayerID(), nameof(RPC_SyncBounds));
+      });
     }
 
     /// <summary>
@@ -3060,7 +3138,7 @@
     public void SyncVehicleBounds()
     {
       if (PiecesController == null) return;
-      PiecesController.RebuildBoundsThrottled();
+      PiecesController.RequestBoundsRebuild();
     }
 
     public void OnFlightChangePolling()
@@ -3984,6 +4062,7 @@
 
     public void UpdatePlayerOnShip(Player player)
     {
+      if (OnboardController == null) return;
       OnboardController.TryAddPlayerIfMissing(player);
       FixPlayerParent(player);
     }

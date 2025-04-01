@@ -7,11 +7,11 @@ using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
+using Debug = UnityEngine.Debug;
 
 #endregion
 
 // ReSharper disable ArrangeNamespaceBody
-
 // ReSharper disable NamespaceStyle
 namespace ValheimVehicles.SharedScripts
 {
@@ -24,6 +24,7 @@ namespace ValheimVehicles.SharedScripts
       Bubble
     }
 
+    private const string colliderParentNameDefault = "vehicle_movement/colliders";
     public static bool CanRenderBubble = true;
 
     public static bool HasInitialized = false;
@@ -68,6 +69,7 @@ namespace ValheimVehicles.SharedScripts
     public Vector3 previewScale = Vector3.one;
 
     public Transform PreviewParent;
+    public Transform? TriggerParent;
 
     public int convexMeshLayer = 29;
 
@@ -114,6 +116,7 @@ namespace ValheimVehicles.SharedScripts
     public List<MeshRenderer> convexHullPreviewMeshRendererItems = new();
 
     [NonSerialized] public List<GameObject> convexHullTriggerMeshes = new();
+
     /// <summary>
     ///   Allows for additional overrides. This should be a function provided in any
     ///   class extending ConvexHullAPI
@@ -122,10 +125,13 @@ namespace ValheimVehicles.SharedScripts
     /// <returns></returns>
     public Func<string, bool> IsAllowedAsHullOverride = s => false;
 
-    private Transform lastParentTransform;
+    public string colliderParentName = colliderParentNameDefault;
+
+    public Transform parentTransform = null!;
+
     [NonSerialized] public List<MeshCollider> newMeshColliders = new();
 
-    private void Awake()
+    public virtual void Awake()
     {
       if (m_fallbackMaterial != null && BubbleMaterial == null)
         BubbleMaterial = m_fallbackMaterial;
@@ -134,13 +140,24 @@ namespace ValheimVehicles.SharedScripts
         DebugMaterial = m_fallbackMaterial;
 
       PreviewParent = transform;
-
-      m_colliderParentTransform = transform.Find("vehicle_movement/colliders");
       m_rigidbody = GetComponent<Rigidbody>();
+    }
 
-      if (convexMeshLayer == 29)
+    public virtual void Start()
+    {
+      if (!m_colliderParentTransform)
       {
-        convexMeshLayer = LayerHelpers.CustomRaftLayer;
+        m_colliderParentTransform = transform.Find(colliderParentName);
+      }
+
+      // if (convexMeshLayer == 29)
+      // {
+      //   convexMeshLayer = LayerHelpers.CustomRaftLayer;
+      // }
+
+      if (!parentTransform)
+      {
+        parentTransform = transform;
       }
     }
 
@@ -493,7 +510,7 @@ namespace ValheimVehicles.SharedScripts
     }
 
 
-    private static List<Vector3> GetColliderPointsGlobal(Collider collider)
+    public static List<Vector3> GetColliderPointsGlobal(Collider collider)
     {
       var points = new List<Vector3>();
 
@@ -791,79 +808,93 @@ namespace ValheimVehicles.SharedScripts
     }
 
     /// <summary>
-    ///   Checks if a collider is near an existing cluster of colliders.
+    /// Groups colliders by proximity and returns separate clusters for convex hull generation.
     /// </summary>
-    private static bool IsColliderNearCluster(Collider collider,
-      List<Collider> cluster, float proximityThreshold)
+    public List<List<Collider>> GroupCollidersByProximityForPieceData(List<PrefabPieceData> items, float proximityThreshold)
+    {
+      var clusters = new List<List<Collider>>();
+
+      foreach (var prefabPieceData in items)
+      {
+        var addedToCluster = false;
+
+        foreach (var cluster in clusters)
+        {
+          foreach (var collider in prefabPieceData.HullColliders)
+          {
+            if (IsColliderNearCluster(collider, cluster, proximityThreshold))
+            {
+              cluster.Add(collider);
+              addedToCluster = true;
+              break;
+            }
+          }
+
+          if (addedToCluster) break;
+        }
+
+        if (!addedToCluster)
+        {
+          clusters.Add(new List<Collider>(prefabPieceData.HullColliders));
+        }
+      }
+
+      MergeNearbyClusters(clusters, proximityThreshold);
+      return clusters;
+    }
+
+    /// <summary>
+    /// Determines if a collider is near an existing cluster.
+    /// </summary>
+    public static bool IsColliderNearCluster(Collider collider, List<Collider> cluster, float threshold)
     {
       foreach (var clusterCollider in cluster)
       {
-        // Use Bounds.Intersects to handle overlap or nesting
-        if (collider.bounds.Intersects(clusterCollider.bounds))
+        if (Vector3.Distance(collider.bounds.ClosestPoint(clusterCollider.bounds.center), clusterCollider.bounds.ClosestPoint(collider.bounds.center)) < threshold)
+        {
           return true;
-
-        // Fallback to proximity calculation using ClosestPoint
-        var closestPoint =
-          clusterCollider.ClosestPoint(collider.bounds.center);
-        var distance = Vector3.Distance(collider.bounds.center, closestPoint);
-        if (distance <= proximityThreshold)
-          return true;
+        }
       }
-
       return false;
     }
 
     /// <summary>
-    ///   Merges clusters that are near each other based on the proximity threshold.
+    /// Determines if a collider is near an existing cluster.
     /// </summary>
-    private static void MergeNearbyClusters(List<List<Collider>> clusters,
-      float proximityThreshold)
+    public static bool IsBoundsNearCluster(PrefabColliderPointData targetColliderPointData, List<PrefabColliderPointData> data, float threshold)
     {
-      bool merged;
-      do
+      foreach (var item in data)
       {
-        merged = false;
-
-        for (var i = 0; i < clusters.Count; i++)
+        if (Vector3.Distance(item.LocalBounds.ClosestPoint(targetColliderPointData.LocalBounds.center), targetColliderPointData.LocalBounds.ClosestPoint(item.LocalBounds.center)) < threshold)
         {
-          for (var j = i + 1; j < clusters.Count; j++)
-            if (AreClustersNearEachOther(clusters[i], clusters[j],
-                  proximityThreshold))
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /// <summary>
+    /// Merges clusters that are too close to each other.
+    /// </summary>
+    private static void MergeNearbyClusters(List<List<Collider>> clusters, float proximityThreshold)
+    {
+      for (var i = 0; i < clusters.Count; i++)
+      {
+        for (var j = i + 1; j < clusters.Count; j++)
+        {
+          foreach (var collider in clusters[i])
+          {
+            if (clusters[j].Any(otherCollider =>
+                  Vector3.Distance(collider.bounds.center, otherCollider.bounds.center) < proximityThreshold))
             {
-              // Merge clusters
               clusters[i].AddRange(clusters[j]);
               clusters.RemoveAt(j);
-              merged = true;
+              j--;
               break;
             }
-
-          if (merged) break;
+          }
         }
-      } while (merged);
-    }
-
-    /// <summary>
-    ///   Checks if two clusters are near each other based on the proximity threshold.
-    /// </summary>
-    private static bool AreClustersNearEachOther(List<Collider> cluster1,
-      List<Collider> cluster2, float proximityThreshold)
-    {
-      foreach (var collider1 in cluster1)
-      foreach (var collider2 in cluster2)
-      {
-        // Check overlap
-        if (collider1.bounds.Intersects(collider2.bounds))
-          return true;
-
-        // Proximity check
-        var closestPoint = collider1.ClosestPoint(collider2.bounds.center);
-        var distance =
-          Vector3.Distance(collider2.bounds.center, closestPoint);
-        if (distance <= proximityThreshold)
-          return true;
       }
-
-      return false;
     }
 
     public static void DeleteMeshesFromChildColliders(
@@ -950,10 +981,6 @@ namespace ValheimVehicles.SharedScripts
       {
         DestroyAllConvexMeshes();
       }
-      else
-      {
-        newMeshColliders.Clear();
-      }
 
 
       var hullClusters =
@@ -973,10 +1000,13 @@ namespace ValheimVehicles.SharedScripts
           targetParentGameObject.transform, offset, index);
       }
 
+      PostGenerateConvexMeshes();
+    }
+
+    public void PostGenerateConvexMeshes()
+    {
       CreatePreviewConvexHullMeshes();
-
-      if (triggerParent != null) CreateTriggerConvexHullMeshes(triggerParent);
-
+      if (TriggerParent != null) CreateTriggerConvexHullMeshes(TriggerParent);
       UpdateConvexHullBounds();
     }
 
@@ -1242,9 +1272,9 @@ namespace ValheimVehicles.SharedScripts
         return;
       }
 
-      if (lastParentTransform != parentObjTransform)
+      if (parentTransform != parentObjTransform)
       {
-        lastParentTransform = parentObjTransform;
+        parentTransform = parentObjTransform;
         convexHullCalculator = new ConvexHullCalculator();
       }
 
@@ -1265,49 +1295,60 @@ namespace ValheimVehicles.SharedScripts
         ref tris,
         ref normals);
 
-      // Create a Unity Mesh
-      var mesh = new Mesh
-      {
-        vertices = verts.ToArray(),
-        triangles = tris.ToArray(),
-        normals = normals.ToArray(),
-        name =
-          $"{MeshNamePrefix}_{convexHullMeshes.Count}_mesh",
-      };
+      GenerateMeshFromConvexOutput(verts.ToArray(), tris.ToArray(), normals.ToArray(), meshIndex);
+    }
 
-      if (ShouldOptimizeGeneratedMeshes)
-      {
-        // possibly necessary for performance (but a bit of overhead)
-        mesh.Optimize();
-        //
-        // // possibly unnecessary.
-        mesh.RecalculateNormals();
-        mesh.RecalculateBounds();
-      }
-
+    public void GenerateMeshFromConvexOutput(Vector3[] vertices, int[] triangles, Vector3[] normals, int meshIndex)
+    {
       var meshObject = convexHullMeshes.Count > meshIndex ? convexHullMeshes[meshIndex] : null;
 
+      // First step is to either update previous mesh or generate a new one.
+      var mesh = meshObject != null
+        ? meshObject.GetComponent<MeshCollider>().sharedMesh
+        : new Mesh
+        {
+          vertices = vertices,
+          triangles = triangles,
+          normals = normals,
+          name =
+            $"{MeshNamePrefix}_{convexHullMeshes.Count}_mesh"
+        };
+
+      // Update the mesh instead of creating a new one (which could cause memory problems)
+      if (meshObject != null)
+      {
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;
+        mesh.normals = normals;
+      }
+
+      // always recalculate to avoid Physics issues. Low perf cost
+      mesh.RecalculateNormals();
+      mesh.RecalculateBounds();
+      
       // Do not create another mesh instance if it already exists. Doing this require every collider to be ignored.
       if (meshObject == null)
       {
+  
         // Create a new GameObject to display the mesh
         meshObject =
           new GameObject(
             $"{MeshNamePrefix}_{convexHullMeshes.Count}")
           {
             layer = LayerHelpers.CustomRaftLayer,
-            transform = { parent = parentObjTransform, position = parentObjTransform.transform.position }
+            transform = { parent = parentTransform, position = parentTransform.transform.position }
           };
         convexHullMeshes.Add(meshObject);
       }
 
+      // todo we get this twice. Possibly optimize this better.
       var meshCollider = meshObject.GetComponent<MeshCollider>();
-
       if (!meshCollider)
       {
         meshCollider = meshObject.AddComponent<MeshCollider>();
+        meshCollider.sharedMesh = mesh;
       }
-
+      
       if (HasPhysicMaterial)
       {
         meshCollider.material = localPhysicMaterial;
@@ -1316,11 +1357,9 @@ namespace ValheimVehicles.SharedScripts
       if (!convexHullMeshColliders.Contains(meshCollider))
       {
         convexHullMeshColliders.Add(meshCollider);
-        newMeshColliders.Add(meshCollider);
       }
 
       meshCollider.sharedMesh = mesh;
-
       meshCollider.convex = true;
       meshCollider.excludeLayers = LayerHelpers.BlockingColliderExcludeLayers;
       meshCollider.includeLayers = LayerHelpers.PhysicalLayers;
@@ -1350,39 +1389,8 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     public void UpdateConvexHullBounds()
     {
-      // var localBounds = new Bounds();
       var localPoints = convexHullMeshColliders.SelectMany(x => x.sharedMesh.vertices).Select(x => transform.TransformPoint(x)).Select(x => transform.InverseTransformPoint(x)).ToList();
 
-      // foreach (var meshCollider in convexHullMeshColliders)
-      // {
-
-      // var meshTransform = meshCollider.transform;
-      //
-      // // Get mesh vertices in world space
-      // var worldVertices = meshCollider.sharedMesh.vertices
-      //   .Select(v => meshTransform.TransformPoint(v)) // Convert local to world
-      //   .ToArray();
-      //
-      // // Compute world-space bounds
-      // var worldBounds = new Bounds(worldVertices[0], Vector3.zero);
-      // foreach (var vertex in worldVertices)
-      // {
-      //   worldBounds.Encapsulate(vertex);
-      // }
-      //
-      // // Transform world bounds back into local space of the parent
-      // var parentTransform = meshTransform.parent;
-      // if (parentTransform)
-      // {
-      //   // Convert world-space bounds back to parent's local space
-      //   var localMin = parentTransform.InverseTransformPoint(worldBounds.min);
-      //   var localMax = parentTransform.InverseTransformPoint(worldBounds.max);
-      //
-      //   // Compute final local-space bounds
-      //   localBounds.SetMinMax(localMin, localMax);
-      // }
-      // }
-      //
       if (localPoints.Count > 0)
       {
         var convexHullBounds = new Bounds(localPoints[0], Vector3.zero);

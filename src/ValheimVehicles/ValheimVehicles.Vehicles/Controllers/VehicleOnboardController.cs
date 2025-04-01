@@ -477,7 +477,7 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
 
   public void UpdateCameraZoom(Player player, bool isLeaving)
   {
-    if (!CameraConfig.CameraZoomOverridesEnabled.Value || CameraConfig.CameraZoomMaxDistance.Value == 0 || Player.m_localPlayer != player || GameCamera.instance == null)
+    if (!CameraConfig.CameraZoomOverridesEnabled.Value || CameraConfig.VehicleCameraZoomMaxDistance.Value == 0 || Player.m_localPlayer != player || GameCamera.instance == null)
     {
       return;
     }
@@ -488,7 +488,7 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
       return;
     }
 
-    var distance = Mathf.Lerp(CameraConfig.cameraZoomMultiplier, Mathf.Pow(CameraConfig.cameraZoomMultiplier, 2), CameraConfig.CameraZoomMaxDistance.Value);
+    var distance = Mathf.Lerp(CameraConfig.cameraZoomMultiplier, Mathf.Pow(CameraConfig.cameraZoomMultiplier, 2), CameraConfig.VehicleCameraZoomMaxDistance.Value);
     GameCamera.instance.m_maxDistance = distance;
   }
 

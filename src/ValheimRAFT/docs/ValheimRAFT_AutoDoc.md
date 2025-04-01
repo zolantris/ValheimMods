@@ -117,8 +117,8 @@
 - Description: Prevents pausing on a boat during singleplayer. Must have the Vehicle Prevent Pausing patch as well
 - Default Value: True
 
-### Enable PlanBuild Patches (required to be on if you installed PlanBuild) 
-- Description: Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT. PlanBuild mod can be found here. https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/
+### Disable Planbuild auto-patches 
+- Description: Disable planbuild patches. This will prevent planbuild from working well. Only use this if valheim raft is causing planbuild to crash.
 - Default Value: False
 
 ### Ram MineRock patches 
@@ -368,7 +368,7 @@
 - Default Value: True
 
 ### DebugMetricsEnabled 
-- Description: Will locally log metrics for ValheimVehicles mods. Meant for debugging functional delays
+- Description: Will locally log metrics for ValheimVehicles mods. Meant for debugging functional delays, convexHull logic, and other long running processes. This can be log heavy but important to enable if the mod is having problems in order to report issues.
 - Default Value: False
 
 ### DebugMetricsTimer 
@@ -398,7 +398,7 @@
 ## Vehicle Pieces
 
 ### VehicleBoundsRebuildDelayPerPiece 
-- Description: The delay time that is added per piece the vehicle has on it for recalculating vehicle bounds. Example 2000 * 0.02 = 40seconds delay.  Values are clamped at 4 and max value: 60 so even smaller vehicles rebuild at the min value and large >2k piece vehicles build at the max value.
+- Description: The delay time that is added per piece the vehicle has on it for recalculating vehicle bounds. Example 2000 * 0.02 = 40seconds delay.  Values are clamped at 0.1 and max value: 60 so even smaller vehicles rebuild at the min value and large >2k piece vehicles build at the max value.
 - Default Value: 0.02
 
 ### DisableVehicleCube 
@@ -736,15 +736,15 @@ Other methods removed after 2.5.0
 
 ## Vehicle Physics
 
-### flightDamping_3.0.5 
+### flightDamping_3.0.7 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.0.5 
+### flightSidewaysDamping_3.0.7 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.0.5 
+### flightAngularDamping_3.0.7 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -764,15 +764,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1.2
 
-### force_3.0.5 
+### force_3.0.7 
 - Description: EXPERIMENTAL_FORCE
 - Default Value: 1
 
-### forceDistance_3.0.5 
+### forceDistance_3.0.7 
 - Description: EXPERIMENTAL_FORCE_DISTANCE
 - Default Value: 1
 
-### backwardForce_3.0.5 
+### backwardForce_3.0.7 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -780,15 +780,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1
 
-### waterDamping_3.0.5 
+### waterDamping_3.0.7 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.0.5 
+### waterSidewaysDamping_3.0.7 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.0.5 
+### waterAngularDamping_3.0.7 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -804,15 +804,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 0.8
 
-### submersibleDamping_3.0.5 
+### submersibleDamping_3.0.7 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.0.5 
+### submersibleSidewaysDamping_3.0.7 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.0.5 
+### submersibleAngularDamping_3.0.7 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -848,13 +848,13 @@ Other methods removed after 2.5.0
 
 ## Vehicle Physics
 
-### MaxVehicleLinearVelocity 
-- Description: Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 20. Higher values will increase potential of vehicle flying off to space
-- Default Value: 10
+### MaxVehicleLinearVelocity_3.0.x 
+- Description: Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 100. Higher values will increase potential of vehicle flying off to space or rapidly accelerating through objects before physics can apply to an unloaded zone.
+- Default Value: 100
 
-### MaxVehicleLinearYVelocity 
+### MaxVehicleLinearYVelocity_3.0.x 
 - Description: Sets the absolute max speed a vehicle can ever move in vertical direction. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not use gravity well
-- Default Value: 3
+- Default Value: 50
 
 ### MaxVehicleAngularVelocity 
 - Description: Sets the absolute max speed a vehicle can ROTATE in. Having a high value means the vehicle can spin out of control.
@@ -870,7 +870,7 @@ Other methods removed after 2.5.0
 - Description: DEPRECATED!!! Will be removed soon, values of -2 and 2 are allowed. Anything above means you are likely not using this correctly. Please use CenterOfMass instead if your vehicle needs to pivot lower. Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
 - Default Value: 0
 
-### EnableExactVehicleBounds_3.0.5 
+### EnableExactVehicleBounds_3.0.7 
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version
 - Default Value: True
 
@@ -976,19 +976,19 @@ Other methods removed after 2.5.0
 - Description: Unstable config, this will possible get you more performance but parts of the vehicle will be hidden when rapidly panning. This Enables hiding active raft pieces at specific intervals. This will hide only the rendered texture.
 - Default Value: False
 
-### DistanceToKeepObjects 
+### UNSTABLE_DistanceToKeepObjects 
 - Description: Threshold at which to retain a object even if it's through a wall.
 - Default Value: 5
 
 ## Camera Zoom
 
-### CameraZoom Enabled 
+### VehicleCameraZoom_Enabled 
 - Description: Overrides the camera zoom while on the vehicle. Values are configured through other keys.
 - Default Value: False
 
-### CameraZoomMaxDistance 
+### VehicleCameraZoomMaxDistance 
 - Description: Allows the camera to zoom out between 8 and 64 meters. Percentage based zoom.
-- Default Value: 0
+- Default Value: 0.5
 
 ## Hud
 
