@@ -227,8 +227,7 @@ namespace ValheimVehicles.SharedScripts
         if (!prefabItem) continue; // Skip inactive
         if (prefabExclusionRegex.IsMatch(prefabItem.gameObject.name)) continue; // 🔹 Skip excluded objects
 
-        // todo might need to use the actual component.
-        var wnt = prefabItem.GetComponent<IWearNTearStub>();
+        var wnt = ValheimExtensions.GetWearNTear(prefabItem);
         List<MeshRenderer> selectedRenderers = new();
 
         if (wnt != null)

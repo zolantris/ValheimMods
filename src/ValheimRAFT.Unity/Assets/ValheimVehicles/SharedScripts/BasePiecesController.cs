@@ -24,7 +24,7 @@
       public static float RebuildPieceMaxDelay = 60f;
       internal static float RebuildBoundsDelayPerPiece = 0.02f;
 
-      public static bool isBasicHullCalculation = true;
+      public static bool isBasicHullCalculation = false;
       public Rigidbody m_syncRigidbody;
       public Rigidbody m_localRigidbody;
 
@@ -409,6 +409,7 @@
         // todo add a fallback that uses a simple box collider in this case. (IE THE BASIC RENDER)
         if (points.Count <= 4)
         {
+          callback?.Invoke();
           return;
         }
 
