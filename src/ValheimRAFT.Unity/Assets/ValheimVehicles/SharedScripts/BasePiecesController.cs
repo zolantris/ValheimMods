@@ -50,7 +50,7 @@
 
       public HullGenerationMode selectedHullGenerationMode = HullGenerationMode.ConvexHullForeground;
 
-      public static float clusterThreshold = 2f;
+      public static int clusterThreshold = 500;
 
       public readonly Dictionary<GameObject, PrefabPieceData> prefabPieceDataItems = new();
 

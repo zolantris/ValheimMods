@@ -15,7 +15,7 @@ namespace ValheimVehicles.SharedScripts
   public struct ConvexHullJob : IJob
   {
     [ReadOnly] public NativeArray<PrefabColliderPointData> InputColliderData;
-    public float ClusterThreshold;
+    public float ClusterDistanceThreshold;
 
     public NativeArray<int> ValidClusterCount;
     public NativeArray<Vector3> OutputVertices;

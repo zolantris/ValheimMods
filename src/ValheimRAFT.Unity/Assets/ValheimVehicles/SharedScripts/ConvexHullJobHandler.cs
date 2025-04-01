@@ -36,7 +36,7 @@ namespace ValheimVehicles.SharedScripts
     public void ScheduleConvexHullJob(
       ConvexHullAPI convexHullAPI,
       PrefabPieceData[] prefabDataList,
-      float clusterThreshold,
+      float meshClusterDistanceThreshold,
       Action onComplete = null)
     {
       if (_jobMonitorCoroutine != null)
@@ -74,7 +74,7 @@ namespace ValheimVehicles.SharedScripts
       var job = new ConvexHullJob
       {
         // InputColliderData = colliderDataArray,
-        ClusterThreshold = clusterThreshold,
+        ClusterDistanceThreshold = meshClusterDistanceThreshold,
         ValidClusterCount = validClusterCount,
         OutputVertices = outputVertices,
         OutputTriangles = outputTriangles,
