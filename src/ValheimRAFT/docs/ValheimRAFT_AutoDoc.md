@@ -117,8 +117,8 @@
 - Description: Prevents pausing on a boat during singleplayer. Must have the Vehicle Prevent Pausing patch as well
 - Default Value: True
 
-### Enable PlanBuild Patches (required to be on if you installed PlanBuild) 
-- Description: Fixes the PlanBuild mod position problems with ValheimRaft so it uses localPosition of items based on the parent raft. This MUST be enabled to support PlanBuild but can be disabled when the mod owner adds direct support for this part of ValheimRAFT. PlanBuild mod can be found here. https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/
+### Disable Planbuild auto-patches 
+- Description: Disable planbuild patches. This will prevent planbuild from working well. Only use this if valheim raft is causing planbuild to crash.
 - Default Value: False
 
 ### Ram MineRock patches 
@@ -982,11 +982,11 @@ Other methods removed after 2.5.0
 
 ## Camera Zoom
 
-### CameraZoom Enabled 
+### VehicleCameraZoom_Enabled 
 - Description: Overrides the camera zoom while on the vehicle. Values are configured through other keys.
 - Default Value: False
 
-### CameraZoomMaxDistance 
+### VehicleCameraZoomMaxDistance 
 - Description: Allows the camera to zoom out between 8 and 64 meters. Percentage based zoom.
 - Default Value: 0
 

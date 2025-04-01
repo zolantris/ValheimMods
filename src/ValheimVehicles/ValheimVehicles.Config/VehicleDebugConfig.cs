@@ -81,6 +81,8 @@ public static class VehicleDebugConfig
     {
       BatchedLogger.BatchIntervalFrequencyInSeconds = DebugMetricsTimer.Value;
     }
+
+    ConvexHullCalculator.hasPointDumpingEnabled = DebugMetricsEnabled.Value;
   }
 
   private static void OnToggleVehicleDebugMenu()
@@ -114,7 +116,7 @@ public static class VehicleDebugConfig
     DebugMetricsEnabled = config.Bind(SectionName, "DebugMetricsEnabled",
       false,
       ConfigHelpers.CreateConfigDescription(
-        "Will locally log metrics for ValheimVehicles mods. Meant for debugging functional delays",
+        "Will locally log metrics for ValheimVehicles mods. Meant for debugging functional delays, convexHull logic, and other long running processes. This can be log heavy but important to enable if the mod is having problems in order to report issues.",
         false, true));
     DebugMetricsTimer = config.Bind(SectionName, "DebugMetricsTimer",
       1f,

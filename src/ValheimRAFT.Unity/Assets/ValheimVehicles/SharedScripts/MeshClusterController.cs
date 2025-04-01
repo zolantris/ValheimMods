@@ -35,9 +35,6 @@ namespace ValheimVehicles.SharedScripts
       new()
       {
         "wheel", "portal",
-        // PrefabNames.MBRopeLadder,
-        // PrefabNames.MBRopeAnchor,
-        // PrefabNames.ShipSteeringWheel, 
         "door", "chest", "cart"
       };
     public static List<string> combineMeshMeshFilterExcludeNames = new()
@@ -62,7 +59,8 @@ namespace ValheimVehicles.SharedScripts
 
     internal BasePiecesController MBasePiecesController;
     internal GameObject combinedMeshParent;
-    internal Dictionary<Material, GameObject> _previousCombinedMeshObjects = new(); // Store previous combined meshes
+    internal Dictionary<Material, GameObject> _currentCombinedMeshObjects = new(); // Store previous combined meshes
+    internal List<MeshCollider> _currentCombinedMeshColliders = new(); // Store previous combined meshes
     public Dictionary<GameObject, List<Material>> _relatedGameObjectToMaterialsMap = new();
     internal Dictionary<Material, List<GameObject>> _relatedMaterialToGameObjectsMap = new(); // Store previous combined meshes
     public Dictionary<GameObject, List<Material>> CombinedMeshMaterialsObjMap = new();
@@ -93,17 +91,22 @@ namespace ValheimVehicles.SharedScripts
           {
             relatedPrefabs.AddRange(relatedGameObjects);
           }
-          if (_previousCombinedMeshObjects.TryGetValue(material, out var previousCombinedMeshObject))
+          if (_currentCombinedMeshObjects.TryGetValue(material, out var previousCombinedMeshObject))
           {
             Destroy(previousCombinedMeshObject);
-            _previousCombinedMeshObjects.Remove(material);
+            _currentCombinedMeshObjects.Remove(material);
           }
         }
         if (relatedPrefabs.Count < 1) return;
 
         // TODO [PERFORMANCE] may want to debounce this. But it will be very laggy looking if we delay this step. 
         GenerateCombinedMeshes(relatedPrefabs.ToArray(), true);
-        IgnoreAllVehicleCollidersCallback();
+
+        // do nothing if we have no colliders to ignore. This is super inefficient if we run it every time.
+        if (_currentCombinedMeshObjects.Count > 0)
+        {
+          IgnoreAllVehicleCollidersCallback();
+        }
       }
     }
 
@@ -209,6 +212,22 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+    public void EnableCollisionsForCombinedMeshColliders()
+    {
+      for (var index = 0; index < _currentCombinedMeshColliders.Count; index++)
+      {
+        var current = _currentCombinedMeshColliders[index];
+        if (!current)
+        {
+          _currentCombinedMeshColliders.RemoveAt(index);
+          index--;
+          continue;
+        }
+
+        current.enabled = true;
+      }
+    }
+
     public bool ShouldInclude(string objName, Regex IncludeRegex, Regex ExcludeRegex)
     {
       if (ExcludeRegex.IsMatch(objName))
@@ -224,7 +243,7 @@ namespace ValheimVehicles.SharedScripts
       return true;
     }
 
-    public void GenerateCombinedMeshes(GameObject[] prefabList, bool hasRunCleanup = false)
+    public void InitCombinedMeshParentObj()
     {
       if (!combinedMeshParent)
       {
@@ -235,6 +254,11 @@ namespace ValheimVehicles.SharedScripts
           transform = { parent = transform }
         };
       }
+    }
+
+    public void GenerateCombinedMeshes(GameObject[] prefabList, bool hasRunCleanup = false)
+    {
+      InitCombinedMeshParentObj();
 
       if (!hasRunCleanup)
       {
@@ -328,10 +352,10 @@ namespace ValheimVehicles.SharedScripts
           }
 
           // deletes previous mesh.
-          if (_previousCombinedMeshObjects.TryGetValue(fixedMaterial, out var obj))
+          if (_currentCombinedMeshObjects.TryGetValue(fixedMaterial, out var obj))
           {
             Destroy(obj);
-            _previousCombinedMeshObjects.Remove(fixedMaterial);
+            _currentCombinedMeshObjects.Remove(fixedMaterial);
           }
 
           if (_relatedMaterialToGameObjectsMap.TryGetValue(fixedMaterial, out var relatedGameObjectsToMaterial))
@@ -394,7 +418,7 @@ namespace ValheimVehicles.SharedScripts
         var combinedMesh = new Mesh
         {
           name = "ValheimVehicles_CombinedMesh_" + material.name,
-          indexFormat = IndexFormat.UInt32 // we need this (we easily surpass the default value)
+          indexFormat = IndexFormat.UInt32 // combined meshes surpass the 16Bit default. This is expected.
         };
 
         combinedMesh.CombineMeshes(combineInstances.ToArray(), true);
@@ -408,20 +432,30 @@ namespace ValheimVehicles.SharedScripts
 
         var meshRenderer = meshObject.AddComponent<MeshRenderer>();
 
-#if DEBUG
-        // this causes problems with the low LOD items, we could hide those instead but for now not doing this..
-        // material.renderQueue = material.renderQueue == 2000 ? 1999 : material.renderQueue;
-#endif
-
         // 🔹 Apply fixed material instance
         meshRenderer.sharedMaterial = material;
 
-        var meshCollider = meshObject.AddComponent<MeshCollider>();
-        meshCollider.sharedMesh = combinedMesh;
-        meshCollider.convex = false;
-
-        _previousCombinedMeshObjects.Add(material, meshObject);
+#if DEBUG
+        // Mesh colliders are not needed unless we start removing the smaller colliders due to physics optimizations. This is not recommended though because then hit damage would have to be applied differently.
+        // AddMeshCollider(meshObject, combinedMesh);
+#endif
+        _currentCombinedMeshObjects.Add(material, meshObject);
       }
     }
+
+#if DEBUG
+    /// <summary>
+    /// We may want this in the future.
+    /// </summary>
+    /// <param name="meshObject"></param>
+    /// <param name="combinedMesh"></param>
+    public void AddMeshColliderToCombinedMesh(GameObject meshObject, Mesh combinedMesh)
+    {
+      var meshCollider = meshObject.AddComponent<MeshCollider>();
+      meshCollider.sharedMesh = combinedMesh;
+      meshCollider.convex = false;
+      meshCollider.enabled = false; // do not enable until we ignore collisions for this.
+    }
+#endif
   }
 }

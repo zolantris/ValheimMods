@@ -30,6 +30,7 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Propulsion.Sail;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.ValheimVehicles.Providers;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Controllers;
@@ -351,6 +352,9 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     CreateConfig();
     PatchController.Apply(HarmonyGuid);
+
+    // critical for valheim api matching, must be called after config init.
+    ProviderInitializers.InitProviders();
 
     AddPhysicsSettings();
 

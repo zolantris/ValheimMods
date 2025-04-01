@@ -647,10 +647,17 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     return true;
   }
 
+  public void InitializeBasePiecesControllerOverrides()
+  {
+    if (m_meshClusterComponent != null)
+    {
+      m_meshClusterComponent.IgnoreAllVehicleCollidersCallback = IgnoreAllVehicleColliders;
+    }
+  }
+
   public void Start()
   {
     ValidateInitialization();
-
     if (!(bool)ZNet.instance) return;
     if (hasDebug)
     {
@@ -658,6 +665,8 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       Logger.LogInfo($"pendingPieces {m_pendingPieces.Count}");
       Logger.LogInfo($"allPieces {m_allPieces.Count}");
     }
+
+    InitializeBasePiecesControllerOverrides();
 
     if (VehicleInstance != null &&
         !ActiveInstances.ContainsKey(VehicleInstance.PersistentZdoId))
@@ -689,10 +698,10 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
   {
     if (!(bool)ZNet.instance) return;
 
-    Logger.LogMessage($"IsDedicated : {ZNet.instance.IsDedicated()}");
+    Logger.LogDebug($"IsDedicated : {ZNet.instance.IsDedicated()}");
     if (ZNet.instance.IsDedicated() && _serverUpdatePiecesCoroutine == null)
     {
-      Logger.LogMessage("Calling UpdatePiecesInEachSectorWorker");
+      Logger.LogDebug("Calling UpdatePiecesInEachSectorWorker");
       _serverUpdatePiecesCoroutine =
         StartCoroutine(nameof(UpdatePiecesInEachSectorWorker));
     }
@@ -1578,16 +1587,19 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     _pendingPiecesState = pieceStateEnum;
     PendingPiecesTimer.Reset();
 
-    if (!isInitialPieceActivationComplete)
+    if (pieceStateEnum == PendingPieceStateEnum.Complete)
     {
-      isInitialPieceActivationComplete = true;
-      // as a safety measure calling this will prevent collisions if any piece was delayed in activation.
-      RebuildBounds(true);
-    }
-    else if (PendingPiecesState == PendingPieceStateEnum.Complete)
-    {
-      // Should be called after activation completes provided there is no reset
-      RequestBoundsRebuild();
+      if (!isInitialPieceActivationComplete)
+      {
+        isInitialPieceActivationComplete = true;
+        // as a safety measure calling this will prevent collisions if any piece was delayed in activation.
+        ForceRebuildBounds();
+      }
+      else
+      {
+        // Should be called after activation completes provided there is no reset
+        RequestBoundsRebuild();
+      }
     }
 
     if (pieceStateEnum == PendingPieceStateEnum.ForceReset)
@@ -2953,6 +2965,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
   /// <param name="isForced"></param>
   public override void RebuildBounds(bool isForced = false)
   {
+    if (!isActiveAndEnabled || ZNetView.m_forceDisableInit || !isInitialPieceActivationComplete) return;
     if (FloatCollider == null || OnboardCollider == null)
       return;
 

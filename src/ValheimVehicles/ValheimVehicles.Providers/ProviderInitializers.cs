@@ -1,3 +1,5 @@
+using Jotunn;
+using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.ValheimVehicles.Providers;
 
 public static class ProviderInitializers
@@ -12,5 +14,9 @@ public static class ProviderInitializers
   public static void InitProviders()
   {
     new WearNTearIntegrationProvider().Init();
+
+    // bind loggers.
+    ConvexHullCalculator.LogDebug = Logger.LogDebug;
+    ConvexHullCalculator.LogMessage = Logger.LogMessage;
   }
 }

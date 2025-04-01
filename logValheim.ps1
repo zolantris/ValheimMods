@@ -22,7 +22,7 @@ function Get-LogColor
     )
 
     process {
-        if ($LogEntry.Contains("ValheimRAFT") -or $LogEntry.Contains("ValheimVehicles") -or $LogEntry.Contains("DynamicLocations") -or $LogEntry.Contains("ZdoWatcher"))
+        if ($LogEntry.Contains("ValheimRAFT") -or $LogEntry.Contains("ValheimVehicles") -or $LogEntry.Contains("DynamicLocations") -or $LogEntry.Contains("ZdoWatcher") -or $LogEntry.Contains("Zolantris.Shared"))
         {
             if ( $LogEntry.Contains("Debug"))
             {
