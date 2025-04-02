@@ -385,18 +385,15 @@ namespace ValheimVehicles.SharedScripts
       // todo get this background thread working
       // GenerateConvexHullOnBackgroundThread(clusterThreshold, callback);
     }
-    /// <summary>
-    /// </summary>
-    /// TODO this method should be removed once BackgroundThread is optimized.
-    /// 
-    /// <param name="maxClusters"></param>
-    /// <param name="callback"></param>
-    public void GenerateConvexHullOnMainThread(float maxClusters, Action? callback)
-    {
-      verts.Clear();
-      tris.Clear();
-      normals.Clear();
 
+    /// <summary>
+    /// Point getter
+    /// </summary>
+    ///
+    /// Todo add a nativeArray or swap to nativeslice of nativearrays from points to avoid allocations.
+    /// <returns></returns>
+    public List<Vector3> GetPoints()
+    {
       var points = new List<Vector3>();
       if (isBasicHullCalculation)
       {
@@ -434,6 +431,24 @@ namespace ValheimVehicles.SharedScripts
           }
         }
       }
+
+      return points;
+      // var nativePoints = new NativeArray<Vector3>(points.Count, Allocator.Persistent);
+      // return nativePoints;
+    }
+    /// <summary>
+    /// </summary>
+    /// TODO this method should be removed once BackgroundThread is optimized.
+    /// 
+    /// <param name="maxClusters"></param>
+    /// <param name="callback"></param>
+    public void GenerateConvexHullOnMainThread(float maxClusters, Action? callback)
+    {
+      verts.Clear();
+      tris.Clear();
+      normals.Clear();
+
+      var points = GetPoints();
       
       // We cannot generate a convex collider with so view points. This is not a good situation to be in.
       // todo add a fallback that uses a simple box collider in this case. (IE THE BASIC RENDER)

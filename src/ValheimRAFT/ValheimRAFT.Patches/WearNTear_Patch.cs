@@ -8,6 +8,8 @@ using ValheimRAFT.Util;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
+using ValheimVehicles.SharedScripts;
+using ValheimVehicles.ValheimVehicles.Providers;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ZdoWatcher;
@@ -44,6 +46,25 @@ public class WearNTear_Patch
 
     __result = false;
     return false;
+  }
+
+  [HarmonyPatch(typeof(WearNTear), "Repair")]
+  [HarmonyPostfix]
+  private static void WearNTear_Repair_AllowMeshUpdate(WearNTear __instance)
+  {
+    MeshClusterController.CanUpdateHealthItem = true;
+  }
+
+
+  /// <summary>
+  /// for detecting WearNTear changes when using ClusterMeshes
+  /// </summary>
+  /// <param name="__instance"></param>
+  [HarmonyPatch(typeof(WearNTear), "SetHealthVisual")]
+  [HarmonyPostfix]
+  private static void WearNTear_SetHealthVisual_UpdateCombinedMeshes(WearNTear __instance)
+  {
+    WearNTearIntegrationProvider.WearNTearAdapter.OnHealthVisualChange(__instance);
   }
 
   /*
