@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles.Interfaces;
@@ -19,8 +20,9 @@ public class WearNTearIntegrationProvider : IInitProvider
     WearNTearProviderBase.GetWearNTearComponent = ResolveWearNTear;
   }
 
-  private class WearNTearAdapter : IWearNTearStub
+  public class WearNTearAdapter : IWearNTearStub
   {
+    private static Dictionary<WearNTear, WearNTearAdapter> WearNTearAdapterInstances = new();
     private readonly WearNTear _wearNTear;
 
     /// <summary>
@@ -30,37 +32,41 @@ public class WearNTearIntegrationProvider : IInitProvider
     public WearNTearAdapter(WearNTear component)
     {
       _wearNTear = component;
-      m_onDestroyed = component.m_onDestroyed;
-      m_new = component.m_new;
-      m_worn = component.m_worn;
-      m_broken = component.m_broken;
-      m_wet = component.m_wet;
+
+      if (WearNTearAdapterInstances.ContainsKey(component)) return;
+      WearNTearAdapterInstances.Add(component, this);
+      _wearNTear.m_onDestroyed += () =>
+      {
+        WearNTearAdapterInstances.Remove(component);
+      };
     }
+
+    /// <summary>
+    /// WearNTear extension action to invoke when RPC for on repair is called.
+    /// To be invoked in WearNTearPatch
+    /// </summary>
+    public static void OnHealthVisualChange(WearNTear wnt)
+    {
+      if (WearNTearAdapterInstances.TryGetValue(wnt, out var adapter))
+      {
+        adapter.m_onHealthVisualChange.Invoke();
+      }
+    }
+
+    public Action m_onHealthVisualChange { get; set; } = () => {};
 
     public Action m_onDestroyed
     {
-      get;
-      set;
+      get => _wearNTear.m_onDestroyed;
+      set => _wearNTear.m_onDestroyed = value;
     }
-    public GameObject? m_new
-    {
-      get;
-      set;
-    }
-    public GameObject? m_worn
-    {
-      get;
-      set;
-    }
-    public GameObject? m_broken
-    {
-      get;
-      set;
-    }
-    public GameObject? m_wet
-    {
-      get;
-      set;
-    }
+
+    public GameObject? m_new => _wearNTear.m_new;
+
+    public GameObject? m_worn => _wearNTear.m_worn;
+
+    public GameObject? m_broken => _wearNTear.m_broken;
+
+    public GameObject? m_wet => _wearNTear.m_wet;
   }
 }

@@ -107,7 +107,7 @@ namespace ValheimVehicles.SharedScripts
       SanitizePointsFast(points, SANITIZE_TOLERANCE, sanitizedPoints);
 
       var currentLoopDepth = 0;
-      var maxLoopDepth = sanitizedPoints.Count * maxLoopDepthMultiplier;
+      var maxLoopDepth = Math.Min(sanitizedPoints.Count * maxLoopDepthMultiplier, 200);
       Initialize(sanitizedPoints, splitVerts);
 
       GenerateInitialHull(sanitizedPoints);

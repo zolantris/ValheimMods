@@ -22,6 +22,7 @@ namespace ValheimVehicles.SharedScripts
   public class MeshClusterController : MonoBehaviour
   {
     public static bool IsClusteringEnabled = true;
+    public static bool CanRefreshClusteringOnDestroy = true;
     public static int ClusterRenderingPieceThreshold = 500;
     public static Action<string> Logger = Debug.Log;
 
@@ -75,46 +76,75 @@ namespace ValheimVehicles.SharedScripts
       MBasePiecesController = GetComponent<BasePiecesController>();
     }
 
+    public static bool CanUpdateHealthItem = false;
+
+    public void OnPieceHealthUpdatedHandler(GameObject go)
+    {
+      if (!CanUpdateHealthItem) return;
+      UpdatePieceAfterModification(go);
+      CanUpdateHealthItem = false;
+    }
+
     public void OnPieceDestroyHandler(GameObject go)
     {
       wntSubscribers.Remove(go);
-      if (!MBasePiecesController) return;
-      if (IsClusteringEnabled || MBasePiecesController.GetPieceCount() < ClusterRenderingPieceThreshold) return;
+      UpdatePieceAfterModification(go);
+    }
+
+    public void UpdatePieceAfterModification(GameObject go)
+    {
       CleanupRelatedCombinedMeshes();
+      if (!MBasePiecesController) return;
+      if (!IsClusteringEnabled || MBasePiecesController.GetPieceCount() < ClusterRenderingPieceThreshold) return;
 
-      if (_relatedGameObjectToMaterialsMap.TryGetValue(go, out var items))
+      if (!_relatedGameObjectToMaterialsMap.TryGetValue(go, out var items)) return;
+      var relatedPrefabs = new List<GameObject>();
+
+      foreach (var material in items)
       {
-        var relatedPrefabs = new List<GameObject>();
-        foreach (var material in items)
+        if (_relatedMaterialToGameObjectsMap.TryGetValue(material, out var relatedGameObjects))
         {
-          if (_relatedMaterialToGameObjectsMap.TryGetValue(material, out var relatedGameObjects))
-          {
-            relatedPrefabs.AddRange(relatedGameObjects);
-          }
-          if (_currentCombinedMeshObjects.TryGetValue(material, out var previousCombinedMeshObject))
-          {
-            Destroy(previousCombinedMeshObject);
-            _currentCombinedMeshObjects.Remove(material);
-          }
+          relatedPrefabs.AddRange(relatedGameObjects);
         }
-        if (relatedPrefabs.Count < 1) return;
-
-        // TODO [PERFORMANCE] may want to debounce this. But it will be very laggy looking if we delay this step. 
-        GenerateCombinedMeshes(relatedPrefabs.ToArray(), true);
-
-        // do nothing if we have no colliders to ignore. This is super inefficient if we run it every time.
-        if (_currentCombinedMeshObjects.Count > 0)
+        if (_currentCombinedMeshObjects.TryGetValue(material, out var previousCombinedMeshObject))
         {
-          IgnoreAllVehicleCollidersCallback();
+          Destroy(previousCombinedMeshObject);
+          _currentCombinedMeshObjects.Remove(material);
         }
+      }
+
+      if (relatedPrefabs.Count < 1) return;
+
+      // TODO [PERFORMANCE] may want to debounce this. But it will be very laggy looking if we delay this step. 
+      GenerateCombinedMeshes(relatedPrefabs.ToArray(), true);
+
+      // do nothing if we have no colliders to ignore. This is super inefficient if we run it every time.
+      if (_currentCombinedMeshObjects.Count > 0)
+      {
+        IgnoreAllVehicleCollidersCallback();
       }
     }
 
     /// <summary>
     /// Cleanup potentially null lists or hashsets
+    ///
+    /// TODO [PERFORMANCE] this likely a large amount of allocations that could cause performance problems. 
     /// </summary>
     private void CleanupRelatedCombinedMeshes()
     {
+      // foreach (var o in prefabList)
+      // {
+      //   if (!CombinedMeshMaterialsObjMap.TryGetValue(o, out var materialList)) continue;
+      //   foreach (var material in materialList)
+      //   {
+      //     if (material == null) continue;
+      //     if (MaterialToMeshesMap.TryGetValue(material, out var mesh))
+      //     {
+      //       Destroy(mesh);
+      //     }
+      //   }
+      // }
+      
       _relatedGameObjectToMaterialsMap = _relatedGameObjectToMaterialsMap.Where(x => x.Value != null && x.Key != null).ToDictionary(x => x.Key, y => y.Value);
       _relatedMaterialToGameObjectsMap = _relatedMaterialToGameObjectsMap.Where(x => x.Value != null && x.Key != null).ToDictionary(x => x.Key, y => y.Value.Where(x => x != null).ToList());
     }
@@ -256,16 +286,19 @@ namespace ValheimVehicles.SharedScripts
       }
     }
 
+    private List<MeshRenderer> _tempRenders = new();
+
     public void GenerateCombinedMeshes(GameObject[] prefabList, bool hasRunCleanup = false)
     {
       InitCombinedMeshParentObj();
+      _tempRenders.Clear();
 
       if (!hasRunCleanup)
       {
         CleanupRelatedCombinedMeshes();
       }
 
-      Dictionary<Material, List<CombineInstance>> materialToMeshes = new();
+      Dictionary<Material, List<CombineInstance>> MaterialToMeshesMap = new();
       var prefabExclusionRegex = GenerateRegexFromList(PrefabExcludeNames); // Compile Regex once
       var meshFilterExclusionRegex = GenerateRegexFromList(MeshFilterExcludeNames); // Compile Regex once
       var meshFilterIncludeRegex = GenerateRegexFromList(MeshFilterIncludesNames); // Compile Regex once
@@ -280,33 +313,42 @@ namespace ValheimVehicles.SharedScripts
 
         if (wnt != null)
         {
-          if (!wntSubscribers.Contains(prefabItem))
+
+          // we do not want this enable always. This is slightly unstable.
+          if (CanRefreshClusteringOnDestroy)
           {
-            wntSubscribers.Add(prefabItem);
-            wnt.m_onDestroyed += () => OnPieceDestroyHandler(prefabItem.gameObject);
+            var hasSubscription = wntSubscribers.Contains(prefabItem);
+            if (!hasSubscription)
+            {
+              wntSubscribers.Add(prefabItem);
+              wnt.m_onHealthVisualChange += () => OnPieceHealthUpdatedHandler(prefabItem.gameObject);
+              wnt.m_onDestroyed += () => OnPieceDestroyHandler(prefabItem.gameObject);
+            }
           }
           // 🔹 WNT Exists: Get the active component & its MeshRenderer
           var activeWNTObject = GetWNTActiveComponent(wnt);
           if (activeWNTObject)
           {
             List<MeshRenderer> selectedRenderersCombinedMesh = new();
-            var tempRenderers = activeWNTObject.GetComponentsInChildren<MeshRenderer>(true);
+            activeWNTObject.GetComponentsInChildren<MeshRenderer>(true, _tempRenders);
 
-            // if A combined mesh is found we skip all other mesh renderers without that name.
-            foreach (var tempRenderer in tempRenderers)
+            if (_tempRenders.Count > 0)
             {
-              if (ShouldInclude(tempRenderer.gameObject.name, meshFilterIncludeRegex, meshFilterExclusionRegex))
+              // if A combined mesh is found we skip all other mesh renderers without that name.
+              foreach (var tempRenderer in _tempRenders)
               {
-                selectedRenderersCombinedMesh.Add(tempRenderer);
+                if (ShouldInclude(tempRenderer.gameObject.name, meshFilterIncludeRegex, meshFilterExclusionRegex))
+                {
+                  selectedRenderersCombinedMesh.Add(tempRenderer);
+                }
               }
             }
 
-            selectedRenderers.AddRange(selectedRenderersCombinedMesh.Count > 0 ? selectedRenderersCombinedMesh : tempRenderers);
+            selectedRenderers.AddRange(selectedRenderersCombinedMesh.Count > 0 ? selectedRenderersCombinedMesh : _tempRenders);
           }
         }
 
-
-
+        
         // This code should be considered experimental and unstable as it grab literally all children nodes of MeshRenderer and adds them to the iterator.
         if (IsNonWearNTearMeshCombinationEnabled)
         {
@@ -324,6 +366,7 @@ namespace ValheimVehicles.SharedScripts
             }
           }
           selectedRenderers.AddRange(tempNonWntCombinedRenderers.Count > 0 ? tempNonWntCombinedRenderers : nonWntRenderers);
+          tempNonWntCombinedRenderers.Clear();
         }
 
         if (!hiddenMeshRenderersObjMap.TryGetValue(prefabItem.gameObject, out var currentDeactivatedMeshes))
@@ -346,9 +389,9 @@ namespace ValheimVehicles.SharedScripts
           if (meshFilterExclusionRegex.IsMatch(renderer.gameObject.name)) continue;
 
           var fixedMaterial = renderer.sharedMaterial;
-          if (!materialToMeshes.ContainsKey(fixedMaterial))
+          if (!MaterialToMeshesMap.ContainsKey(fixedMaterial))
           {
-            materialToMeshes[fixedMaterial] = new List<CombineInstance>();
+            MaterialToMeshesMap[fixedMaterial] = new List<CombineInstance>();
           }
 
           // deletes previous mesh.
@@ -381,7 +424,7 @@ namespace ValheimVehicles.SharedScripts
             Mathf.Round(position.z * 1000f) / 1000f
           );
 
-          materialToMeshes[fixedMaterial].Add(new CombineInstance
+          MaterialToMeshesMap[fixedMaterial].Add(new CombineInstance
           {
             mesh = renderer.GetComponent<MeshFilter>().sharedMesh,
             transform = Matrix4x4.TRS(fixedPosition, meshTransform.rotation, meshTransform.lossyScale)
@@ -408,9 +451,10 @@ namespace ValheimVehicles.SharedScripts
             });
           }
         }
+        selectedRenderers.Clear();
       }
 
-      foreach (var entry in materialToMeshes)
+      foreach (var entry in MaterialToMeshesMap)
       {
         var material = entry.Key;
         var combineInstances = entry.Value;
@@ -441,6 +485,8 @@ namespace ValheimVehicles.SharedScripts
 #endif
         _currentCombinedMeshObjects.Add(material, meshObject);
       }
+
+      MaterialToMeshesMap.Clear();
     }
 
 #if DEBUG
