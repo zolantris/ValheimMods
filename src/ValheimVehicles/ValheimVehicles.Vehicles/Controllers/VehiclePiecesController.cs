@@ -2113,6 +2113,12 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     FixPieceMeshes(netView);
     OnAddPieceIgnoreColliders(netView);
 
+    if (!isInitialPieceActivationComplete)
+    {
+      var rb = GetComponent<Rigidbody>();
+      rb.isKinematic = true;
+    }
+
     // in case of spam or other in progress apis add a guard to prevent duplication.
     if (!m_tempPieces.Contains(netView))
     {
@@ -2135,16 +2141,14 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
   {
     if (RamPrefabs.IsRam(targetTransform.name))
     {
-      targetTransform.SetParent(VehicleInstance?.Instance?.transform);
+      if (VehicleInstance != null && VehicleInstance.Instance != null)
+      {
+        targetTransform.SetParent(VehicleInstance.Instance.transform);
+      }
       return;
     }
 
     targetTransform.SetParent(_piecesContainer);
-  }
-
-  public void AddTemporaryPiece(Piece piece)
-  {
-    SetPieceToParent(piece.transform);
   }
 
   public void AddNewPiece(Piece piece)
