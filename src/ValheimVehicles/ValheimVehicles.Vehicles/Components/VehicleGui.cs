@@ -243,23 +243,17 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     new()
     {
       title = "Hull debugger",
-      action = () =>
-      {
-        ToggleConvexHullDebugger();
-      }
+      action = ToggleConvexHullDebugger
     },
     new()
     {
       title = "Physics Debugger",
-      action = () =>
-      {
-        ToggleColliderDebugger();
-      }
+      action = ToggleColliderDebugger
     },
     new()
     {
       title = "Raft Creative",
-      action = () => CreativeModeConsoleCommand.RunCreativeModeCommand("raftcreative")
+      action = VehicleCommands.ToggleCreativeMode
     },
     new()
     {
@@ -570,7 +564,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     }
 
     if (GUILayout.Button("raftcreative"))
-      CreativeModeConsoleCommand.RunCreativeModeCommand("raftcreative");
+      VehicleCommands.ToggleCreativeMode();
 
     if (GUILayout.Button("activatePendingPieces"))
       VehicleDebugHelpers.GetVehiclePiecesController()
