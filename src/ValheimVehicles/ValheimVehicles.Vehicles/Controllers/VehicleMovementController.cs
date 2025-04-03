@@ -420,7 +420,7 @@
 #endif
         vehicleRam.OnCollisionEnterHandler(collision);
       }
-      else if (LayerHelpers.IsContainedWithinMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayers))
+      else if (LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayers))
       {
         vehicleRam.OnCollisionEnterHandler(collision);
       }
@@ -452,7 +452,7 @@
       }
 #endif
 
-      if (vehicleRam != null && LayerHelpers.IsContainedWithinMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayers))
+      if (vehicleRam != null && LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayers))
       {
         vehicleRam.OnCollisionEnterHandler(collision);
       }

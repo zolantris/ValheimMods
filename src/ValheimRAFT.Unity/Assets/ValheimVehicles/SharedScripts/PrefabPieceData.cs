@@ -35,7 +35,7 @@ namespace ValheimVehicles.SharedScripts
 
       foreach (var collider in AllColliders)
       {
-        if (!collider.gameObject.activeInHierarchy || !LayerHelpers.IsContainedWithinMask(collider.gameObject.layer, LayerHelpers.PhysicalLayers))
+        if (!collider.gameObject.activeInHierarchy || !LayerHelpers.IsContainedWithinLayerMask(collider.gameObject.layer, LayerHelpers.PhysicalLayers))
           continue;
 
         HullColliders.Add(collider); // ✅ Only store relevant colliders

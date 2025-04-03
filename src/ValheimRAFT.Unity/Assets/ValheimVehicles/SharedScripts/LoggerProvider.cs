@@ -8,8 +8,34 @@ namespace ValheimVehicles.SharedScripts
 
   public static class LoggerProvider
   {
-    public static Action<string> LogError = Debug.Log;
-    public static Action<string> LogMessage = Debug.Log;
-    public static Action<string> LogDebug = Debug.Log;
+    public static void Setup(Action<string> errorAction, Action<string> warningAction, Action<string> debugAction, Action<string> messageAction)
+    {
+      LogErrorAction = errorAction;
+      LogMessageAction = messageAction;
+      LogDebugAction = debugAction;
+      LogWarningAction = warningAction;
+    }
+
+    private static Action<string> LogErrorAction = Debug.Log;
+    private static Action<string> LogWarningAction = Debug.Log;
+    private static Action<string> LogMessageAction = Debug.Log;
+    private static Action<string> LogDebugAction = Debug.Log;
+
+    public static void LogError(string val)
+    {
+      LogErrorAction(val);
+    }
+    public static void LogWarning(string val)
+    {
+      LogWarningAction(val);
+    }
+    public static void LogDebug(string val)
+    {
+      LogDebugAction(val);
+    }
+    public static void LogMessage(string val)
+    {
+      LogMessageAction(val);
+    }
   }
 }

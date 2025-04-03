@@ -2112,7 +2112,12 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     SetPieceToParent(netView.transform);
     FixPieceMeshes(netView);
     OnAddPieceIgnoreColliders(netView);
-    m_tempPieces.Add(netView);
+
+    // in case of spam or other in progress apis add a guard to prevent duplication.
+    if (!m_tempPieces.Contains(netView))
+    {
+      m_tempPieces.Add(netView);
+    }
   }
 
   public void RemoveTempPiece(ZNetView netView)

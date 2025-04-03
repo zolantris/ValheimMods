@@ -19,6 +19,7 @@ namespace ValheimVehicles.SharedScripts
     public static int TerrainLayer = LayerMask.NameToLayer("terrain");
     public static int UILayer = LayerMask.NameToLayer("UI");
     public static int PieceLayer = LayerMask.NameToLayer("piece");
+    public static int ItemLayer = LayerMask.NameToLayer("item"); // should be 12
 
     public static LayerMask CustomRaftLayerMask =
       LayerMask.GetMask(LayerMask.LayerToName(CustomRaftLayer));
@@ -45,12 +46,12 @@ namespace ValheimVehicles.SharedScripts
     public static LayerMask RamColliderExcludeLayers = LayerMask.GetMask(
       "character_trigger", "viewbox", "character_nonenv", "UI",
       "effect", "ghost", "piece_nonsolid", "Water", "WaterVolume", "skybox",
-      "hitbox",
+      "hitbox", "item",
       "character_ghost");
 
     public static int CharacterLayer = LayerMask.NameToLayer("character");
 
-    public static bool IsContainedWithinMask(int layer, LayerMask mask)
+    public static bool IsContainedWithinLayerMask(int layer, LayerMask mask)
     {
       return (mask.value & 1 << layer) != 0;
     }

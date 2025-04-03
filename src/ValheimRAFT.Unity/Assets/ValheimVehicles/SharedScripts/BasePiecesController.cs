@@ -439,6 +439,7 @@ namespace ValheimVehicles.SharedScripts
       // todo add a fallback that uses a simple box collider in this case. (IE THE BASIC RENDER)
       if (points.Count <= 4)
       {
+        LoggerProvider.LogError("Points cannot be less than 4. This is likely an error with the mod or the vehicle only contains a piece without collider points.");
         callback?.Invoke();
         return;
       }

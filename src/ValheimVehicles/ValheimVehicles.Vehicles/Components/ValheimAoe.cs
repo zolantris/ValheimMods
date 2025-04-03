@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.Vehicles;
 
@@ -367,6 +368,11 @@ public class ValheimAoe : MonoBehaviour, IProjectile, IMonoUpdater
     var num = Physics.OverlapSphereNonAlloc(transform.position, m_radius,
       s_hits,
       m_rayMask);
+
+    if (num > s_hits.Length * 0.75f)
+    {
+      LoggerProvider.LogDebug($"Above 75% allocated hits. Actual: {num} of {s_hits.Length} used.");
+    }
 
     s_hitList.Clear();
     for (var index = 0; index < num; ++index)

@@ -516,7 +516,7 @@ namespace ValheimVehicles.SharedScripts
 
       if (!collider.enabled) return points;
       // filters out layer that should not be considered physical during generation
-      if (!LayerHelpers.IsContainedWithinMask(collider.gameObject.layer,
+      if (!LayerHelpers.IsContainedWithinLayerMask(collider.gameObject.layer,
             LayerHelpers.PhysicalLayers) ||
           !collider.gameObject.activeInHierarchy) return points;
 
@@ -743,7 +743,7 @@ namespace ValheimVehicles.SharedScripts
     {
       if (colliders is { Count: > 0 })
         colliders = colliders.Where(x =>
-            LayerHelpers.IsContainedWithinMask(x.gameObject.layer,
+            LayerHelpers.IsContainedWithinLayerMask(x.gameObject.layer,
               LayerHelpers.PhysicalLayers) && x.gameObject.activeInHierarchy)
           .ToList();
 
