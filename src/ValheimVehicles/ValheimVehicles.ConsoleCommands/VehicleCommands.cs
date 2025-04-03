@@ -17,6 +17,7 @@ using ValheimRAFT;
 using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Controllers;
@@ -111,8 +112,8 @@ public class VehicleCommands : ConsoleCommand
         break;
       case VehicleCommandArgs.creative:
         if (!CanRunEditCommand()) return;
-        CreativeModeConsoleCommand.RunCreativeModeCommand(
-          $"{Name} {VehicleCommandArgs.creative}");
+        Game.instance.StartCoroutine(RunCreativeModeCommand(
+          $"{Name} {VehicleCommandArgs.creative}"));
         break;
       case VehicleCommandArgs.debug:
         if (!CanRunCheatCommand()) return;
@@ -209,16 +210,16 @@ public class VehicleCommands : ConsoleCommand
       Vector3.up * Mathf.Clamp(offset, -100f, 100f)));
   }
 
-  public struct SafeMovePlayerData
+  public struct SafeMoveCharacterData
   {
     public Vector3 lastLocalOffset;
-    public Player player;
+    public Character character;
     public bool IsDebugFlying;
   }
 
   public struct SafeMoveData
   {
-    public List<SafeMovePlayerData> playersOnShip;
+    public List<SafeMoveCharacterData> charactersOnShip;
     public bool IsLocalPlayerDebugFlying;
     public VehicleOnboardController OnboardController;
   }
@@ -229,13 +230,13 @@ public class VehicleCommands : ConsoleCommand
   {
     if (vehicleOnboardController == null) return null;
 
-    var playersOnShip = vehicleOnboardController.GetPlayersOnShip();
-    var playerData = new List<SafeMovePlayerData>();
+    var charactersOnShip = vehicleOnboardController.GetCharactersOnShip();
+    var characterData = new List<SafeMoveCharacterData>();
 
     if (!shouldSkipPlayer)
-      playerData.Add(new SafeMovePlayerData()
+      characterData.Add(new SafeMoveCharacterData()
       {
-        player = Player.m_localPlayer,
+        character = Player.m_localPlayer,
         IsDebugFlying = Player.m_localPlayer.IsDebugFlying(),
         lastLocalOffset = Player.m_localPlayer.transform.parent != null
           ? Player.m_localPlayer.transform.localPosition
@@ -243,18 +244,18 @@ public class VehicleCommands : ConsoleCommand
       });
 
     // excludes current player to avoid double toggling.
-    if (playersOnShip.Count > 0)
-      foreach (var player in playersOnShip)
+    if (charactersOnShip.Count > 0)
+      foreach (var character in charactersOnShip)
       {
-        var isDebugFlying = player.IsDebugFlying();
-        if (!isDebugFlying) player.m_body.isKinematic = true;
+        var isDebugFlying = character.IsDebugFlying();
+        if (!isDebugFlying) character.m_body.isKinematic = true;
 
-        player.transform.SetParent(null);
-        playerData.Add(new SafeMovePlayerData()
+        character.transform.SetParent(null);
+        characterData.Add(new SafeMoveCharacterData()
         {
-          player = player, IsDebugFlying = isDebugFlying,
-          lastLocalOffset = player.transform.parent != null
-            ? player.transform.localPosition
+          character = character, IsDebugFlying = isDebugFlying,
+          lastLocalOffset = character.transform.parent != null
+            ? character.transform.localPosition
             : Vector3.zero
         });
       }
@@ -264,7 +265,7 @@ public class VehicleCommands : ConsoleCommand
 
     return new SafeMoveData()
     {
-      playersOnShip = playerData,
+      charactersOnShip = characterData,
       IsLocalPlayerDebugFlying = wasDebugFlying,
       OnboardController = vehicleOnboardController
     };
@@ -276,13 +277,13 @@ public class VehicleCommands : ConsoleCommand
   /// </summary>
   /// <param name="onboardController"></param>
   /// <param name="shouldMoveLocalPlayerOffship">Meant for commands if the player is outside the range they can still follow the vehicle</param>
-  /// <param name="completeCallback">The final position</param>
+  /// <param name="GetPositionAfterMoveCallback">The final position</param>
   /// <param name="coroutineFunc">A method that may need to be called before running complete</param>
   /// <returns></returns>
   public static IEnumerator SafeMovePlayer(
     VehicleOnboardController onboardController,
     bool shouldMoveLocalPlayerOffship,
-    Func<Vector3> completeCallback, IEnumerator? coroutineFunc)
+    Func<Vector3> GetPositionAfterMoveCallback, IEnumerator? coroutineFunc)
   {
     var safeMoveData =
       SafeMovePlayerBefore(onboardController, shouldMoveLocalPlayerOffship);
@@ -290,12 +291,12 @@ public class VehicleCommands : ConsoleCommand
 
     if (coroutineFunc != null) yield return coroutineFunc;
 
-    var nextPosition = completeCallback();
+    var nextPosition = GetPositionAfterMoveCallback();
     yield return SafeMovePlayerAfter(safeMoveData, nextPosition);
     yield return new WaitForFixedUpdate();
   }
 
-  public static void ResetPlayerVelocities(Player player)
+  public static void ResetPlayerVelocities(Character player)
   {
     if (player.m_body.isKinematic) player.m_body.isKinematic = false;
 
@@ -305,12 +306,14 @@ public class VehicleCommands : ConsoleCommand
     player.m_maxAirAltitude = -10000f;
   }
 
-  public static void TeleportImmediately(Player player, Vector3 toPosition)
+  public static void TeleportImmediately(Character character, Vector3 toPosition)
   {
+    var player = character.GetComponent<Player>();
+    if (player == null) return;
     // reset teleporting
     player.m_teleporting = false;
     player.m_teleportTimer = 999f;
-    player.TeleportTo(toPosition, player.transform.rotation, false);
+    player.TeleportTo(toPosition, character.transform.rotation, false);
   }
 
   /// <summary>
@@ -323,32 +326,33 @@ public class VehicleCommands : ConsoleCommand
     Vector3 nextPosition)
   {
     if (data == null) yield break;
-    if (data.Value.playersOnShip.Count <= 0) yield break;
+    if (data.Value.charactersOnShip.Count <= 0) yield break;
     var piecesController =
       data.Value.OnboardController?.PiecesController?.transform;
     var zdo = data.Value.OnboardController?.vehicleShip?.NetView?.m_zdo;
 
-    foreach (var safeMovePlayerData in data.Value.playersOnShip)
+    foreach (var safeMoveCharacterData in data.Value.charactersOnShip)
     {
-      var targetLocation = nextPosition + safeMovePlayerData.lastLocalOffset;
+      var targetLocation = nextPosition + safeMoveCharacterData.lastLocalOffset;
       if (piecesController != null && zdo != null)
       {
-        var deltaX = safeMovePlayerData.player.transform.position.x -
-                     piecesController.transform.position.x;
-        var deltaY = safeMovePlayerData.player.transform.position.y -
-                     piecesController.transform.position.y;
-        var deltaZ = safeMovePlayerData.player.transform.position.z -
-                     piecesController.transform.position.z;
-        // If moving player to the vehicle exceeds the range, they need to be force teleported.
+        var safeMoveCharacterPos = safeMoveCharacterData.character.transform.position;
+        var piecesControllerPos = piecesController.transform.position;
+
+        var deltaX = safeMoveCharacterPos.x -
+                     piecesControllerPos.x;
+        var deltaY = safeMoveCharacterPos.y -
+                     piecesControllerPos.y;
+        var deltaZ = safeMoveCharacterPos.z -
+                     piecesControllerPos.z;
+
         if (Mathf.Abs(deltaX) > 50f || Mathf.Abs(deltaY) > 50f ||
             Mathf.Abs(deltaZ) > 50f)
-          targetLocation = data.Value.OnboardController.vehicleShip
-                             .NetView
-                             .m_zdo
+          targetLocation = zdo
                              .GetPosition() +
-                           safeMovePlayerData.lastLocalOffset;
+                           safeMoveCharacterData.lastLocalOffset;
 
-        TeleportImmediately(safeMovePlayerData.player,
+        TeleportImmediately(safeMoveCharacterData.character,
           targetLocation);
       }
     }
@@ -362,9 +366,9 @@ public class VehicleCommands : ConsoleCommand
       if (complete) break;
 
       var isSuccess = true;
-      foreach (var playerData in data.Value.playersOnShip)
+      foreach (var playerData in data.Value.charactersOnShip)
       {
-        if (playerData.player.IsTeleporting())
+        if (playerData.character.IsTeleporting())
         {
           isSuccess = false;
           continue;
@@ -374,20 +378,20 @@ public class VehicleCommands : ConsoleCommand
         {
           if (!playerData.IsDebugFlying)
           {
-            playerData.player.transform.SetParent(piecesController
+            playerData.character.transform.SetParent(piecesController
               .transform);
-            playerData.player.transform.localPosition =
+            playerData.character.transform.localPosition =
               playerData.lastLocalOffset;
           }
           else
           {
-            playerData.player.transform.position =
+            playerData.character.transform.position =
               piecesController.transform.position +
               playerData.lastLocalOffset;
           }
         }
 
-        ResetPlayerVelocities(playerData.player);
+        ResetPlayerVelocities(playerData.character);
       }
 
       yield return new WaitForFixedUpdate();
@@ -396,17 +400,17 @@ public class VehicleCommands : ConsoleCommand
     }
 
     if (!complete)
-      foreach (var playerData in data.Value.playersOnShip)
-        ResetPlayerVelocities(playerData.player);
+      foreach (var playerData in data.Value.charactersOnShip)
+        ResetPlayerVelocities(playerData.character);
 
     timer.Restart();
     // keep running this for the first 5 seconds to prevent falldamage while the ship recovers it's physics and the player lands on the ship.
     while (timer.ElapsedMilliseconds < 5000)
     {
-      foreach (var playerData in data.Value.playersOnShip)
+      foreach (var playerData in data.Value.charactersOnShip)
       {
-        playerData.player.m_fallTimer = 0f;
-        playerData.player.m_maxAirAltitude = -10000f;
+        playerData.character.m_fallTimer = 0f;
+        playerData.character.m_maxAirAltitude = -10000f;
       }
 
       yield return new WaitForFixedUpdate();
@@ -746,6 +750,7 @@ public class VehicleCommands : ConsoleCommand
       string.Join(",", vehiclePendingPieces?.Select(x => x.name) ?? []);
     if (pendingPiecesString == string.Empty) pendingPiecesString = "None";
 
+    var piecesCount = pieceController.m_nviewPieces.Count;
     var piecesString = string.Join(",",
       pieceController.m_nviewPieces?.Select(x => x.name) ?? []);
 
@@ -761,20 +766,69 @@ public class VehicleCommands : ConsoleCommand
     var logSeparatorEnd =
       $"{separatorDecorator} ValheimRaft/Vehicles report-info END {separatorDecorator}";
 
+    var charactersOnShip = shipInstance?.OnboardController?.GetCharactersOnShip() ?? [];
+
     Logger.LogMessage(string.Join("\n",
       logSeparatorStart,
-      vehiclePendingPiecesCount,
-      $"vehiclePieces, {vehiclePendingPiecesCount}",
-      $"vehiclePiecesCount, {piecesString}",
+      $"vehiclePieces, {piecesString}",
+      $"vehiclePiecesCount, {piecesCount}",
       $"PendingPiecesState {currentPendingState}",
       $"vehiclePendingPieces: {pendingPiecesString}",
       $"vehiclePendingPiecesCount, {vehiclePendingPiecesCount}",
       $"playerPosition: {Player.m_localPlayer.transform.position}",
       $"PlayersOnVehicle: {playersOnVehicle}",
       $"vehiclePosition {shipInstance?.transform.position}",
+      $"charactersOnboard: {charactersOnShip}",
+      $"charactersOnboardCount: {charactersOnShip.Count}",
       GetPlayerPathInfo(),
       logSeparatorEnd
     ));
+  }
+
+
+  public static IEnumerator RunCreativeModeCommand(string commandName)
+  {
+    var player = Player.m_localPlayer;
+    if (!player)
+    {
+      Logger.LogWarning(
+        $"Player does not exist, this command {commandName} cannot be run");
+      yield break;
+    }
+
+    var vehicleInstance = GetNearestVehicleShip(Player.m_localPlayer.transform.position);
+
+    if (vehicleInstance == null || vehicleInstance.OnboardController == null || vehicleInstance.MovementController == null) yield break;
+
+    var nextCreativeMode = !vehicleInstance.isCreative;
+    vehicleInstance.SetCreativeMode(nextCreativeMode);
+
+    var isKinematic = vehicleInstance.isCreative;
+
+    // creative mode is always kinematic and non-creative mode is not kinematic.
+    // technically not needed as the FixedUpdate will auto set this. But since we are directly updating position, it's good to force set it in case fixedUpdate does not fire before some other physics is called.
+    vehicleInstance.MovementController.rigidbody.isKinematic = isKinematic;
+
+    if (nextCreativeMode == false)
+    {
+      yield break;
+    }
+
+    yield return SafeMovePlayer(vehicleInstance.OnboardController, true,
+      () => GetPositionAfterMovingCreativeVehicle(vehicleInstance), null);
+  }
+
+  private static Vector3 GetPositionAfterMovingCreativeVehicle(VehicleShip vehicleInstance)
+  {
+    if (vehicleInstance == null || vehicleInstance.MovementController == null) return Vector3.zero;
+
+    var position = vehicleInstance.MovementController.m_body.position;
+    var shipYPosition =
+      position.y +
+      ValheimRaftPlugin.Instance.RaftCreativeHeight.Value;
+
+    var newPosition = new Vector3(position.x, shipYPosition, position.z);
+    return newPosition;
   }
 
   public static void ToggleColliderEditMode()

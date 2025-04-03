@@ -27,6 +27,7 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
 
   public VehicleShip? vehicleShip;
 
+  // todo Possibly localize these lists and have a delegate to select correct list or skip immediately
   [UsedImplicitly]
   public static readonly Dictionary<ZDOID, WaterZoneCharacterData>
     CharacterOnboardDataItems =
@@ -79,6 +80,43 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     }
 
     isReadyForCollisions = true;
+  }
+
+  /// <summary>
+  /// For all Players and Characters on vehicle.
+  /// </summary>
+  /// <returns></returns>
+  public List<Character> GetCharactersOnShip()
+  {
+    var localOnboardCharacterList = new List<Character>();
+    var characterList = CharacterOnboardDataItems.Values
+      .ToList();
+    foreach (var characterOnboardDataItem in characterList)
+    {
+      if (characterOnboardDataItem == null) continue;
+      if (characterOnboardDataItem.OnboardController == null || characterOnboardDataItem.character == null)
+      {
+        CharacterOnboardDataItems.Remove(characterOnboardDataItem.zdoId);
+        continue;
+      }
+
+      var piecesController = characterOnboardDataItem.OnboardController
+        .PiecesController;
+      if (piecesController == null)
+      {
+        CharacterOnboardDataItems.Remove(characterOnboardDataItem.zdoId);
+        continue;
+      }
+
+      if (piecesController == PiecesController)
+      {
+        var character = characterOnboardDataItem.character;
+        if (character == null) continue;
+        localOnboardCharacterList.Add(character);
+      }
+    }
+
+    return localOnboardCharacterList;
   }
 
   public List<Player> GetPlayersOnShip()
@@ -160,6 +198,11 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     if (player != null)
       m_localPlayers.Remove(player);
 
+    if (PiecesController != null)
+    {
+      PiecesController.RemoveTempPiece(character.m_nview);
+    }
+
     character.InNumShipVolumes--;
     WaterZoneUtils.UpdateDepthValues(character);
   }
@@ -170,6 +213,12 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     var exists =
       CharacterOnboardDataItems.TryGetValue(zdoid,
         out var characterInstance);
+
+    if (PiecesController != null)
+    {
+      PiecesController.AddTemporaryPiece(character.m_nview);
+    }
+    
     if (!exists)
     {
       var onboardDataItem = new WaterZoneCharacterData(character, this);
