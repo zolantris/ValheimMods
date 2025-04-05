@@ -403,11 +403,11 @@ public static class PhysicsConfig
     flightAngularDrag = Config.Bind(SectionKey, "flightAngularDrag", 1.2f);
 
     force = Config.Bind(SectionKey,
-      $"force_{versionResetKey}", 1f,
-      "EXPERIMENTAL_FORCE");
+      $"force_{versionResetKey}", 3f,
+      "EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.");
     forceDistance = Config.Bind(SectionKey,
-      $"forceDistance_{versionResetKey}", 1f,
-      "EXPERIMENTAL_FORCE_DISTANCE");
+      $"forceDistance_{versionResetKey}", 5f,
+      "EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted");
 
     backwardForce = Config.Bind(SectionKey,
       $"backwardForce_{versionResetKey}", 1f,

@@ -280,11 +280,12 @@ public class VehicleCommands : ConsoleCommand
   /// <param name="shouldMoveLocalPlayerOffship">Meant for commands if the player is outside the range they can still follow the vehicle</param>
   /// <param name="GetPositionAfterMoveCallback">The final position</param>
   /// <param name="coroutineFunc">A method that may need to be called before running complete</param>
+  /// <param name="shouldProtectAgainstFallDamage"></param>
   /// <returns></returns>
   public static IEnumerator SafeMovePlayer(
     VehicleOnboardController onboardController,
     bool shouldMoveLocalPlayerOffship,
-    Func<Vector3> GetPositionAfterMoveCallback, IEnumerator? coroutineFunc)
+    Func<Vector3> GetPositionAfterMoveCallback, IEnumerator? coroutineFunc, bool shouldProtectAgainstFallDamage = true)
   {
     var safeMoveData =
       SafeMovePlayerBefore(onboardController, shouldMoveLocalPlayerOffship);
@@ -293,7 +294,7 @@ public class VehicleCommands : ConsoleCommand
     if (coroutineFunc != null) yield return coroutineFunc;
 
     var nextPosition = GetPositionAfterMoveCallback();
-    yield return SafeMoveCharacterAfter(safeMoveData, nextPosition);
+    yield return SafeMoveCharacterAfter(safeMoveData, nextPosition, shouldProtectAgainstFallDamage);
     yield return new WaitForFixedUpdate();
   }
 
@@ -330,7 +331,7 @@ public class VehicleCommands : ConsoleCommand
   /// <param name="data"></param>
   /// <param name="nextPosition"></param>
   public static IEnumerator SafeMoveCharacterAfter(SafeMoveData? data,
-    Vector3 nextPosition)
+    Vector3 nextPosition, bool shouldProtectAgainstFallDamage = true)
   {
     if (data == null) yield break;
     if (data.Value.charactersOnShip.Count <= 0) yield break;
@@ -378,7 +379,7 @@ public class VehicleCommands : ConsoleCommand
         if (playerData.character.IsTeleporting())
         {
           isSuccess = false;
-          continue;
+          break;
         }
 
         if (piecesController != null)
@@ -412,18 +413,21 @@ public class VehicleCommands : ConsoleCommand
       foreach (var playerData in data.Value.charactersOnShip)
         ResetPlayerVelocities(playerData.character);
 
-    timer.Restart();
-    // keep running this for the first 5 seconds to prevent falldamage while the ship recovers it's physics and the player lands on the ship.
-    while (timer.ElapsedMilliseconds < 5000)
+    if (shouldProtectAgainstFallDamage)
     {
-      foreach (var playerData in data.Value.charactersOnShip)
+      // keep running this for the first 5 seconds to prevent falldamage while the ship recovers it's physics and the player lands on the ship.
+      while (timer.ElapsedMilliseconds < 5000)
       {
-        playerData.character.m_fallTimer = 0f;
-        playerData.character.m_maxAirAltitude = -10000f;
-      }
+        foreach (var playerData in data.Value.charactersOnShip)
+        {
+          playerData.character.m_fallTimer = 0f;
+          playerData.character.m_maxAirAltitude = -10000f;
+        }
 
-      yield return new WaitForFixedUpdate();
+        yield return new WaitForFixedUpdate();
+      }
     }
+    timer.Restart();
 
     yield return null;
   }
@@ -853,9 +857,10 @@ public class VehicleCommands : ConsoleCommand
         var newPosition = GetCreativeModeTargetPosition(vehicleInstance);
         vehicleInstance.MovementController.m_body.position = newPosition;
         return newPosition;
-      }, null);
+      }, null, false);
 
     _creativeModeCoroutineInstance = null;
+    LoggerProvider.LogMessage("Completed creative mode commands.");
   }
 
   private static Vector3 GetCreativeModeTargetPosition(VehicleShip vehicleInstance)

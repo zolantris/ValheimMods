@@ -74,10 +74,10 @@ public static class WaterConfig
   /// <summary>
   /// Entities
   /// </summary>
-  public static ConfigEntry<string> AllowedEntiesList = null!;
+  public static ConfigEntry<string> AllowedCharacterList = null!;
 
-  public static ConfigEntry<bool> AllowTamedEntiesUnderwater = null!;
-  public static ConfigEntry<bool> AllowMonsterEntitesUnderwater = null!;
+  public static ConfigEntry<bool> AllowTamedCharactersUnderwater = null!;
+  public static ConfigEntry<bool> AllowMonsterCharactersUnderwater = null!;
 
 
   /// <summary>
@@ -117,7 +117,7 @@ public static class WaterConfig
   private static void OnAllowListUpdate()
   {
     AllowList.Clear();
-    var listItems = AllowedEntiesList.Value.Split(',');
+    var listItems = AllowedCharacterList.Value.Split(',');
     foreach (var listItem in listItems)
     {
       if (listItem == "") continue;
@@ -231,26 +231,26 @@ public static class WaterConfig
         true, true));
 
 
-    AllowMonsterEntitesUnderwater = Config.Bind(
+    AllowMonsterCharactersUnderwater = Config.Bind(
       SectionKey,
-      "AllowMonsterEntitesUnderwater",
+      "AllowMonsterCharactersUnderwater",
       true,
       ConfigHelpers.CreateConfigDescription(
-        "Allows Monster entities onto the ship and underwater. This means they can go underwater similar to player.",
+        "Allows Monster characters (untamed, and enemies too) onto the ship and underwater. This means they can go underwater similar to player.",
         true, true));
 
-    AllowedEntiesList = Config.Bind(
+    AllowedCharacterList = Config.Bind(
       SectionKey,
-      "AllowedEntiesList",
+      "AllowedCharacterList",
       "",
       ConfigHelpers.CreateConfigDescription(
         "List separated by comma for entities that are allowed on the ship. For simplicity consider enabling monsters and tame creatures.",
         true, true));
 
-    AllowTamedEntiesUnderwater = Config.Bind(
+    AllowTamedCharactersUnderwater = Config.Bind(
       SectionKey,
-      "AllowTamedEntiesUnderwater",
-      false,
+      "AllowTamedCharactersUnderwater",
+      true,
       ConfigHelpers.CreateConfigDescription(
         "Lets tamed animals underwater too. Could break or kill them depending on config.",
         true, true));
@@ -321,7 +321,7 @@ public static class WaterConfig
     UnderwaterBubbleEffectColor.SettingChanged += (sender, args) =>
       ConvexHullComponent.UpdatePropertiesForAllComponents();
 
-    AllowedEntiesList.SettingChanged +=
+    AllowedCharacterList.SettingChanged +=
       (sender, args) => OnAllowListUpdate();
     UnderwaterAccessMode.SettingChanged +=
       (sender, args) => OnCharacterWaterModeUpdate();

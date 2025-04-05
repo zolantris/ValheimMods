@@ -35,6 +35,7 @@
         <Compile Include="ValheimVehicles.Providers\ProviderInitializers.cs"/>
         <Compile Include="ValheimVehicles.Providers\WearNTearProvider.cs"/>
         <Compile Include="ValheimVehicles.Vehicles\Controllers\VehiclePiecesJobs.cs"/>
+        <Compile Include="ValheimVehicles.Vehicles\Structs\TempPieceData.cs"/>
         <Compile Include="ValheimVehicles.Vehicles\Structs\VehicleConfig.cs"/>
         <Compile Include="ValheimVehiclesPlugin.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>

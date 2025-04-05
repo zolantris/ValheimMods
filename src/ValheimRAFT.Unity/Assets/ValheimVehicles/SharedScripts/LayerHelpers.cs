@@ -46,7 +46,7 @@ namespace ValheimVehicles.SharedScripts
     public static LayerMask RamColliderExcludeLayers = LayerMask.GetMask(
       "character_trigger", "viewbox", "character_nonenv", "UI",
       "effect", "ghost", "piece_nonsolid", "Water", "WaterVolume", "skybox",
-      "hitbox", "item",
+      "hitbox",
       "character_ghost");
 
     public static int CharacterLayer = LayerMask.NameToLayer("character");

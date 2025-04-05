@@ -22,6 +22,7 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.ValheimVehicles.Vehicles.Structs;
 using ValheimVehicles.Vehicles.Controllers;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Controllers;
@@ -46,7 +47,11 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
   public static Dictionary<int, VehiclePiecesController>
     ActiveInstances = new();
 
+  /// <summary>
+  /// pieceDictionary with a key (vehicleId) and value as a list of netviews 
+  /// </summary>
   public static Dictionary<int, List<ZNetView>> m_pendingPieces = new();
+  public static Dictionary<int, List<ActivationPieceData>> m_pendingTempPieces = new();
 
   private List<ZNetView> _newPendingPiecesQueue = [];
 
@@ -780,6 +785,15 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
         index--;
         continue;
       }
+      var zdo = tempPiece.GetZDO();
+      if (zdo == null)
+      {
+        m_tempPieces.Remove(tempPiece);
+        index--;
+        continue;
+      }
+      // we must update position as these pieces/characters can move while on Vehicles.
+      tempPiece.m_zdo.Set(VehicleZdoVars.MBPositionHash, tempPiece.transform.localPosition);
       tempPiece.transform.SetParent(null);
     }
   }
@@ -1229,20 +1243,40 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     return OnboardCollider.bounds.min.y;
   }
 
+  // freeze only if instance dne
+  public static void AddInactiveTempPiece(ActivationPieceData activationPieceData)
+  {
+    if (ActiveInstances.TryGetValue(activationPieceData.vehicleId, out var activeInstance))
+    {
+      if (activeInstance != null && !activeInstance.IsInvalid())
+      {
+        activeInstance.AddTemporaryPiece(activationPieceData);
+      }
+      return;
+    }
+
+    AddPendingTempPiece(activationPieceData);
+  }
+
   public static void AddInactivePiece(int id, ZNetView netView,
     VehiclePiecesController? instance, bool skipActivation = false)
   {
     if (hasDebug)
       Logger.LogDebug($"addInactivePiece called with {id} for {netView.name}");
 
-    instance?.CancelInvoke(nameof(StartActivatePendingPieces));
+    if (instance != null)
+    {
+      instance.CancelInvoke(nameof(StartActivatePendingPieces));
+    }
 
     if (instance != null && instance.isActiveAndEnabled)
+    {
       if (ActiveInstances.TryGetValue(id, out var activeInstance))
       {
         activeInstance.ActivatePiece(netView);
         return;
       }
+    }
 
     AddPendingPiece(id, netView, skipActivation);
 
@@ -1251,7 +1285,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
 
     if (!skipActivation && instance != null && instance.isActiveAndEnabled)
       // This will queue up a re-run of ActivatePendingPieces if there are any
-      instance?.Invoke(nameof(StartActivatePendingPieces), 1f);
+      instance.Invoke(nameof(StartActivatePendingPieces), 0.1f);
   }
 
 /*
@@ -1489,6 +1523,12 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     else if (gameObject) Destroy(gameObject);
   }
 
+  public void AddTempPieceToActiveVehicle(int vehicleId, ZNetView piece,
+    bool skipActivation = false)
+  {
+
+  }
+
   public void AddPendingPieceToActiveVehicle(int vehicleId, ZNetView piece,
     bool skipActivation = false)
   {
@@ -1514,6 +1554,22 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
         piece.isActiveAndEnabled)
       // delegates to coroutine activation logic
       StartActivatePendingPieces();
+  }
+
+  private static void AddPendingTempPiece(ActivationPieceData activationPieceData)
+  {
+    ActiveInstances.TryGetValue(activationPieceData.vehicleId, out var activeVehicleInstance);
+
+    if (!m_pendingTempPieces.ContainsKey(activationPieceData.vehicleId))
+      m_pendingTempPieces.Add(activationPieceData.vehicleId, []);
+
+    if (activeVehicleInstance == null)
+    {
+      m_pendingTempPieces[activationPieceData.vehicleId].Add(activationPieceData);
+      return;
+    }
+
+    activeVehicleInstance.AddTemporaryPiece(activationPieceData);
   }
 
   private static void AddPendingPiece(int vehicleId, ZNetView piece, bool skipActivation = false)
@@ -1625,10 +1681,6 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
   /// <returns></returns>
   public IEnumerator ActivateDynamicPendingPieces()
   {
-    if (hasDebug)
-      Logger.LogDebug(
-        $"Ship Size calc is: m_bounds {_vehiclePieceBounds} bounds size {_vehiclePieceBounds.size}");
-
     m_dynamicObjects.TryGetValue(VehicleInstance?.PersistentZdoId ?? 0,
       out var objectList);
     var objectListHasNoValidItems = true;
@@ -1637,10 +1689,9 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       if (hasDebug)
         Logger.LogDebug($"m_dynamicObjects is valid: {objectList.Count}");
 
-      foreach (var t in objectList.ToList())
+      foreach (var t in objectList)
       {
         var go = ZNetScene.instance.FindInstance(t);
-
         if (!go) continue;
 
         var nv = go.GetComponentInParent<ZNetView>();
@@ -1651,7 +1702,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
 
         if (ZDOExtraData.s_vec3.TryGetValue(nv.m_zdo.m_uid, out var dic))
         {
-          if (dic.TryGetValue(VehicleZdoVars.VehicleMovingPieceOffsetHash,
+          if (dic.TryGetValue(VehicleZdoVars.MBPositionHash,
                 out var offset))
             nv.transform.position = offset + transform.position;
 
@@ -1659,9 +1710,9 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
         }
 
         ZDOExtraData.RemoveInt(nv.m_zdo.m_uid,
-          VehicleZdoVars.VehicleMovingPiece);
+          VehicleZdoVars.TempPieceParentId);
         ZDOExtraData.RemoveVec3(nv.m_zdo.m_uid,
-          VehicleZdoVars.VehicleMovingPieceOffsetHash);
+          VehicleZdoVars.MBPositionHash);
         dic = null;
       }
 
@@ -1731,6 +1782,12 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     } while
       (_pendingPiecesDirty); // Loop if new items were added during this run
 
+
+    // todo this might be functional but it is older logic. See if we need it for anything.
+    // yield return ActivateDynamicPendingPieces();
+
+    ActivateTempPieces();
+
     OnActivatePendingPiecesComplete(PendingPieceStateEnum.Complete);
   }
 
@@ -1782,18 +1839,18 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       return;
     }
 
-    source.m_zdo.RemoveInt(VehicleZdoVars.VehicleMovingPiece);
-    source.m_zdo.RemoveVec3(VehicleZdoVars.VehicleMovingPieceOffsetHash);
+    source.m_zdo.RemoveInt(VehicleZdoVars.TempPieceParentId);
+    source.m_zdo.RemoveVec3(VehicleZdoVars.MBPositionHash);
   }
 
   /// <summary>
-  /// Makes the player associated with the vehicle ship, if they spawn they are teleported here.
+  /// Makes the Character/Player/Vehicle/Cart associated with the parent vehicle ship, if they spawn near the active vehicle they are move there during initial activation spot.
   /// </summary>
   /// <param name="netView"></param>
-  /// <param name="bvc"></param>
+  /// <param name="vehiclePiecesController"></param>
   /// <returns></returns>
-  public static bool AddDynamicParentForVehicle(ZNetView netView,
-    VehiclePiecesController bvc)
+  public static bool AddTempPieceProperties(ZNetView netView,
+    VehiclePiecesController vehiclePiecesController)
   {
     if (netView == null) return false;
     if (!netView.isActiveAndEnabled)
@@ -1802,24 +1859,24 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       return false;
     }
 
-    netView.m_zdo.Set(VehicleZdoVars.VehicleMovingPiece, bvc.PersistentZdoId);
-    netView.m_zdo.Set(VehicleZdoVars.VehicleMovingPieceOffsetHash,
-      netView.transform.position - bvc.m_localRigidbody.worldCenterOfMass);
+    netView.m_zdo.Set(VehicleZdoVars.TempPieceParentId, vehiclePiecesController.PersistentZdoId);
+    netView.m_zdo.Set(VehicleZdoVars.MBPositionHash,
+      netView.transform.position - vehiclePiecesController.m_localRigidbody.worldCenterOfMass);
     return true;
   }
 
-  public static bool AddDynamicParent(ZNetView source, GameObject target)
+  public static bool AddTempParent(ZNetView netView, GameObject target)
   {
     var bvc = target.GetComponentInParent<VehiclePiecesController>();
-    if (!(bool)bvc) return false;
-    return AddDynamicParentForVehicle(source, bvc);
+    if (bvc == null) return false;
+    return AddTempPieceProperties(netView, bvc);
   }
 
   public static int GetParentVehicleId(ZNetView netView)
   {
     if (!netView) return 0;
 
-    return netView.GetZDO()?.GetInt(VehicleZdoVars.VehicleMovingPiece, 0) ??
+    return netView.GetZDO()?.GetInt(VehicleZdoVars.TempPieceParentId, 0) ??
            0;
   }
 
@@ -1827,7 +1884,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
   {
     if (!netView) return Vector3.zero;
 
-    return netView.m_zdo?.GetVec3(VehicleZdoVars.VehicleMovingPieceOffsetHash,
+    return netView.m_zdo?.GetVec3(VehicleZdoVars.MBPositionHash,
              Vector3.zero) ??
            Vector3.zero;
   }
@@ -1997,7 +2054,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       list.Add(zdo);
     }
 
-    var cid = zdo.GetInt(VehicleZdoVars.VehicleMovingPiece);
+    var cid = zdo.GetInt(VehicleZdoVars.TempPieceParentId);
     if (cid != 0)
     {
       if (!m_dynamicObjects.TryGetValue(cid, out var objectList))
@@ -2054,25 +2111,82 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     return false;
   }
 
+  private static bool TryInitTempPiece(ZNetView netView)
+  {
+    if (netView != null) return false;
+    var zdo = netView.GetZDO();
+    if (zdo == null) return false;
+
+    var tempPieceParentId = zdo.GetInt(VehicleZdoVars.TempPieceParentId);
+    if (tempPieceParentId == 0)
+    {
+      return false;
+    }
+    var tempPieceLocalPosition = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+    if (tempPieceLocalPosition == Vector3.zero)
+    {
+      LoggerProvider.LogDebug($"Possible issue with temp piece {netView.name} It has no local position. Meaning it likely was not saved correctly.");
+    }
+
+    var tempPiece = new ActivationPieceData(netView, tempPieceParentId, tempPieceLocalPosition);
+    AddInactiveTempPiece(tempPiece);
+
+    return true;
+  }
+
+  /// <summary>
+  /// A Method meant to be called in ActivatePendingPieceCoroutine. This must always be run after all pending ship pieces are activated in order to allow the vehicle to align properly.
+  /// </summary>
+  public void ActivateTempPieces()
+  {
+    if (_vehicle == null) return;
+    if (!m_pendingTempPieces.TryGetValue(_vehicle.PersistentZdoId, out var pendingTempPiecesList))
+    {
+      LoggerProvider.LogDebug($"No temp pieces found for vehicle {_vehicle.PersistentZdoId}");
+      return;
+    }
+
+    foreach (var activationPieceData in pendingTempPiecesList)
+    {
+      if (activationPieceData.netView == null) continue;
+      if (activationPieceData.vehicleId != _vehicle.PersistentZdoId)
+      {
+        LoggerProvider.LogError($"VehicleId of temp piece {activationPieceData.gameObject.name} vehicleId: {activationPieceData.vehicleId} is not equal to currently activating vehicle {_vehicle.PersistentZdoId}");
+        continue;
+      }
+      if (hasDebug)
+      {
+        LoggerProvider.LogDebug($"VehicleId of temp piece {activationPieceData.gameObject.name} activated");
+      }
+      AddTemporaryPiece(activationPieceData);
+    }
+
+    pendingTempPiecesList.Clear();
+  }
+
   public static void InitPiece(ZNetView netView)
   {
     if (!netView) return;
-
+    if (TryInitTempPiece(netView)) return;
+    
     var isPiecesOrWaterVehicle = IsExcludedPrefab(netView.gameObject);
-
+    
     if (isPiecesOrWaterVehicle) return;
 
     var rb = netView.GetComponentInChildren<Rigidbody>();
     if ((bool)rb && !rb.isKinematic && !RamPrefabs.IsRam(netView.name)) return;
 
-    var id = GetParentID(netView.m_zdo);
+    var zdo = netView.GetZDO();
+    if (zdo == null) return;
+
+    var id = GetParentID(zdo);
     if (id == 0) return;
 
     var parentObj = ZdoWatchController.Instance.GetGameObject(id);
     if (parentObj != null)
     {
       var vehicleShip = parentObj.GetComponent<VehicleShip>();
-      if (vehicleShip != null || vehicleShip?.PiecesController != null)
+      if (vehicleShip != null && vehicleShip.PiecesController != null)
       {
         vehicleShip.PiecesController.ActivatePiece(netView);
         return;
@@ -2100,24 +2214,60 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     AddPiece(netView);
   }
 
+
   /// <summary>
   /// For Carts and other rigidbody moveable objects.
   /// </summary>
-  /// <param name="netView"></param>
   public void AddTemporaryPiece(ZNetView netView)
   {
+    if (netView == null) return;
+
     var zdo = netView.GetZDO();
     if (zdo == null) return;
-    AddDynamicParentForVehicle(netView, this);
+
+    AddTempPieceProperties(netView, this);
     SetPieceToParent(netView.transform);
-    FixPieceMeshes(netView);
+
+    // Likely do not want to call this.
+    // FixPieceMeshes(netView);
+
+    OnAddPieceIgnoreColliders(netView);
+
+    // in case of spam or other in progress apis add a guard to prevent duplication.
+    if (!m_tempPieces.Contains(netView))
+    {
+      m_tempPieces.Add(netView);
+    }
+  }
+
+  /// <summary>
+  /// For Carts and other rigidbody moveable objects.
+  /// </summary>
+  public void AddTemporaryPiece(ActivationPieceData activationPieceData)
+  {
+    var netView = activationPieceData.netView;
+    if (netView == null) return;
+    
+    var zdo = netView.GetZDO();
+    if (zdo == null) return;
+
+    AddTempPieceProperties(netView, this);
+    SetPieceToParent(netView.transform);
+
+    // Likely do not want to call this.
+    // FixPieceMeshes(netView);
+    
     OnAddPieceIgnoreColliders(netView);
 
     if (!isInitialPieceActivationComplete)
     {
-      var rb = GetComponent<Rigidbody>();
-      rb.isKinematic = true;
+      activationPieceData.FreezeRigidbodies();
     }
+    else
+    {
+      activationPieceData.UnFreezeRigidbodies();
+    }
+    
 
     // in case of spam or other in progress apis add a guard to prevent duplication.
     if (!m_tempPieces.Contains(netView))
@@ -2134,7 +2284,8 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
   }
 
   /// <summary>
-  /// Rams are rigidbodies and thus must not be controlled by a RigidBody
+  /// Adds the piece depending on type to the correct container
+  /// - Rams are rigidbodies and thus must not be controlled by a RigidBody
   /// </summary>
   /// <param name="targetTransform"></param>
   public void SetPieceToParent(Transform targetTransform)
@@ -2399,6 +2550,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
         effectAreaItem);
       break;
     }
+
   }
 
   /// <summary>

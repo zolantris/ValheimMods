@@ -218,7 +218,7 @@ public class Player_Patch
     if ((bool)((Character)__instance).m_lastGroundCollider &&
         ((Character)__instance).m_lastGroundTouch < 0.3f)
     {
-      if (!VehiclePiecesController.AddDynamicParent(__instance.m_nview,
+      if (!VehiclePiecesController.AddTempParent(__instance.m_nview,
             __instance.m_lastGroundCollider.gameObject))
       {
         MoveableBaseRootComponent.AddDynamicParent(__instance.m_nview,

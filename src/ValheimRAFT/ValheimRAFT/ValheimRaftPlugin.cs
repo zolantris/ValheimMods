@@ -404,7 +404,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   public void RegisterConsoleCommands()
   {
-    CommandManager.Instance.AddConsoleCommand(new CreativeModeConsoleCommand());
     CommandManager.Instance.AddConsoleCommand(new MoveRaftConsoleCommand());
     CommandManager.Instance.AddConsoleCommand(new HideRaftConsoleCommand());
     CommandManager.Instance.AddConsoleCommand(new RecoverRaftConsoleCommand());

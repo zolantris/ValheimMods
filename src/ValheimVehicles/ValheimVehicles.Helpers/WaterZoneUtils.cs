@@ -99,13 +99,13 @@ public static class WaterZoneUtils
       return true;
     }
 
-    if (WaterConfig.AllowMonsterEntitesUnderwater.Value &&
+    if (WaterConfig.AllowMonsterCharactersUnderwater.Value &&
         character.IsMonsterFaction(Time.time))
     {
       return true;
     }
 
-    if (WaterConfig.AllowTamedEntiesUnderwater.Value && character.IsTamed())
+    if (WaterConfig.AllowTamedCharactersUnderwater.Value && character.IsTamed())
     {
       return true;
     }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimRAFT.Util;
+using ValheimVehicles.Vehicles;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
@@ -13,16 +14,11 @@ public class CultivatableComponent : MonoBehaviour
 
   private static Dictionary<int, List<int>> m_childObjects = new();
 
-  private static readonly int MBCultivatableParentIdHash =
-    "MBCultivatableParentId".GetStableHashCode();
-
-  public static readonly KeyValuePair<int, int> MBCultivatableParentHash =
-    ZDO.GetHashZDOID("MBCultivatableParent");
-
   private float textureScale = 8f;
 
   public bool isCultivatable { get; set; } = true;
 
+  public Heightmap m_heightmap;
 
   public void Awake()
   {
@@ -31,6 +27,8 @@ public class CultivatableComponent : MonoBehaviour
     if ((bool)wnt)
       wnt.m_onDestroyed =
         (Action)Delegate.Combine(wnt.m_onDestroyed, new Action(OnDestroyed));
+
+    m_heightmap = gameObject.AddComponent<Heightmap>();
   }
 
   public void Start()
@@ -138,17 +136,17 @@ public class CultivatableComponent : MonoBehaviour
 
   public static int GetParentID(ZNetView netview)
   {
-    var id = netview.m_zdo.GetInt(MBCultivatableParentIdHash);
+    var id = netview.m_zdo.GetInt(VehicleZdoVars.MBCultivatableParentIdHash);
     if (id == 0)
     {
-      var zdoid = netview.m_zdo.GetZDOID(MBCultivatableParentHash);
-      if (zdoid != ZDOID.None)
+      var zdoid = netview.m_zdo.GetZDOID(VehicleZdoVars.MBCultivatableParentHash);
+      if (zdoid != ZDOID.None && ZDOMan.instance != null)
       {
         var zdoparent = ZDOMan.instance.GetZDO(zdoid);
         id = zdoparent == null
           ? ZdoWatchController.ZdoIdToId(zdoid)
           : ZdoWatchController.Instance.GetOrCreatePersistentID(zdoparent);
-        netview.m_zdo.Set(MBCultivatableParentIdHash, id);
+        netview.m_zdo.Set(VehicleZdoVars.MBCultivatableParentIdHash, id);
       }
     }
 
@@ -157,7 +155,7 @@ public class CultivatableComponent : MonoBehaviour
 
   public static void AddNewChild(int parent, ZNetView child)
   {
-    child.m_zdo.Set(MBCultivatableParentIdHash, parent);
+    child.m_zdo.Set(VehicleZdoVars.MBCultivatableParentIdHash, parent);
     AddChild(parent, child);
   }
 
