@@ -143,6 +143,6 @@
   "valheim_vehicles_custom_tread_distance_desc": "用于设置特定载具履带的间距。放置两个方块来定义履带间距，替代全局设置。履带将以此间距为中心。",
   "valheim_vehicles_custom_height_tool": "高度工具",
   "valheim_vehicles_custom_height_tool_desc": "放置一个方块来设置船只最大高度，用于排除桅杆参与物理计算，替代全局设置。",
-  "valhiem_vehicles_haul_vehicle_start": "开始拖动载具。",
-  "valhiem_vehicles_haul_vehicle_stop": "停止拖动载具。"
+  "valheim_vehicles_haul_vehicle_start": "开始拖动载具。",
+  "valheim_vehicles_haul_vehicle_stop": "停止拖动载具。"
 }

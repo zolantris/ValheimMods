@@ -132,14 +132,14 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
     if (HaulingStartText == string.Empty)
     {
       HaulingStartText = Localization.instance.Localize(
-        "[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] $valhiem_vehicles_haul_vehicle_start");
+        "[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] $valheim_vehicles_haul_vehicle_start");
     }
 
     // stop does not need a alt key
     if (HaulingStopText == string.Empty)
     {
       HaulingStopText = Localization.instance.Localize(
-        "[<color=yellow><b>$KEY_Use</b></color>] $valhiem_vehicles_haul_vehicle_stop");
+        "[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_haul_vehicle_stop");
     }
 
     if (AttachToText == string.Empty)
