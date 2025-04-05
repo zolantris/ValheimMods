@@ -1,6 +1,7 @@
 #region
 
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine;
 
 #endregion
@@ -19,6 +20,12 @@ namespace ValheimVehicles.SharedScripts
     public static int TerrainLayer = LayerMask.NameToLayer("terrain");
     public static int UILayer = LayerMask.NameToLayer("UI");
     public static int PieceLayer = LayerMask.NameToLayer("piece");
+    public static int ItemLayer = LayerMask.NameToLayer("item"); // should be 12
+
+    public static bool IsItemLayer(int layer)
+    {
+      return layer == ItemLayer;
+    }
 
     public static LayerMask CustomRaftLayerMask =
       LayerMask.GetMask(LayerMask.LayerToName(CustomRaftLayer));
@@ -26,8 +33,11 @@ namespace ValheimVehicles.SharedScripts
     public static LayerMask PhysicalLayers = LayerMask.GetMask("Default",
       "character", "piece",
       "terrain",
-      "static_solid", "Default_small", "character_net", "vehicle",
+      "static_solid", "Default_small",
+      "character_net", "vehicle",
       LayerMask.LayerToName(CustomRaftLayer));
+
+    public static LayerMask OnboardLayers = LayerMask.GetMask("item", "character");
 
     public static LayerMask BlockingColliderExcludeLayers = LayerMask.GetMask(
       "character", "character_net", "character_trigger", "viewbox",
@@ -50,13 +60,12 @@ namespace ValheimVehicles.SharedScripts
 
     public static int CharacterLayer = LayerMask.NameToLayer("character");
 
-    public static bool IsContainedWithinMask(int layer, LayerMask mask)
+    public static bool IsContainedWithinLayerMask(int layer, LayerMask mask)
     {
       return (mask.value & 1 << layer) != 0;
     }
 
-    // todo fix jitters with low headroom at water level
-    // [HarmonyPostfix(typeof(GameCamera), nameof(GameCamera.UpdateNearClipping))]
+    [UsedImplicitly]
     public static List<int> GetActiveLayers(LayerMask mask)
     {
       ActiveLayersForBlockingMask.Clear();

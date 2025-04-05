@@ -250,7 +250,8 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   private int GetPersistentID()
   {
-    if (ZNetView.m_forceDisableInit || ZNetScene.instance == null) return 0;
+    if (ZNetView.m_forceDisableInit || ZNetScene.instance == null || Game.instance == null) return 0;
+    if (_persistentZdoId != 0) return _persistentZdoId;
     if (ZdoWatchController.Instance == null)
     {
       Logger.LogWarning(
@@ -258,9 +259,6 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       _persistentZdoId = 0;
       return _persistentZdoId;
     }
-
-    if (_persistentZdoId != 0) return _persistentZdoId;
-
     if (!NetView) NetView = GetComponent<ZNetView>();
 
     if (NetView == null) return _persistentZdoId;

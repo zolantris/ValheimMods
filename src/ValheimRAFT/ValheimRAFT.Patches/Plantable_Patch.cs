@@ -5,6 +5,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.SharedScripts;
+using ValheimVehicles.Vehicles;
 
 namespace ValheimRAFT.Patches;
 
@@ -105,8 +107,21 @@ public class Plantable_Patch
   private static ZNetView PlantGrowth(GameObject newObject, Plant oldPlant)
   {
     var newPlantNetView = newObject.GetComponent<ZNetView>();
-    var mbr = oldPlant.GetComponentInParent<MoveableBaseRootComponent>();
-    if ((bool)newPlantNetView && (bool)mbr) mbr.AddNewPiece(newPlantNetView);
+
+    if (newPlantNetView != null)
+    {
+      var bvc = oldPlant.GetComponentInParent<VehiclePiecesController>();
+
+      if (bvc != null)
+      {
+        bvc.AddNewPiece(newPlantNetView);
+      }
+      else if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
+      {
+        var mbr = oldPlant.GetComponentInParent<MoveableBaseRootComponent>();
+        if (newPlantNetView && mbr) mbr.AddNewPiece(newPlantNetView);
+      }
+    }
 
     var cultivatable = CultivatableComponent.GetParentID(oldPlant.m_nview);
     if (cultivatable != 0)

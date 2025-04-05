@@ -99,25 +99,29 @@ public class Player_Patch
       else
       {
         Logger.LogDebug("BaseVehicleController: adding temp piece");
-        bvc.AddTemporaryPiece(piece);
+        bvc.SetPieceToParent(piece.transform);
       }
 
       return gameObject;
     }
 
-    var mb = PatchSharedData.PlayerLastRayPiece
-      .GetComponentInParent<MoveableBaseRootComponent>();
-    if (mb != null)
+    // TODO V4.0.0 remove all these references.
+    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
     {
-      if (netView != null)
+      var mb = PatchSharedData.PlayerLastRayPiece
+        .GetComponentInParent<MoveableBaseRootComponent>();
+      if (mb != null)
       {
-        Logger.LogDebug($"adding new piece {piece.name} {gameObject.name}");
-        mb.AddNewPiece(netView);
-      }
-      else
-      {
-        Logger.LogDebug("adding temp piece");
-        mb.AddTemporaryPiece(piece);
+        if (netView != null)
+        {
+          Logger.LogDebug($"adding new piece {piece.name} {gameObject.name}");
+          mb.AddNewPiece(netView);
+        }
+        else
+        {
+          Logger.LogDebug("adding temp piece");
+          mb.AddTemporaryPiece(piece);
+        }
       }
     }
 
@@ -214,7 +218,7 @@ public class Player_Patch
     if ((bool)((Character)__instance).m_lastGroundCollider &&
         ((Character)__instance).m_lastGroundTouch < 0.3f)
     {
-      if (!VehiclePiecesController.AddDynamicParent(__instance.m_nview,
+      if (!VehiclePiecesController.AddTempParent(__instance.m_nview,
             __instance.m_lastGroundCollider.gameObject))
       {
         MoveableBaseRootComponent.AddDynamicParent(__instance.m_nview,

@@ -364,7 +364,7 @@ namespace ValheimVehicles.SharedScripts
     }
     private void OnCollisionStay(Collision collision)
     {
-      if (LayerHelpers.IsContainedWithinMask(collision.gameObject.layer, LayerHelpers.PhysicalLayers))
+      if (LayerHelpers.IsContainedWithinLayerMask(collision.gameObject.layer, LayerHelpers.PhysicalLayers))
       {
         _lastTerrainTouchDeltaTime = 0f;
       }

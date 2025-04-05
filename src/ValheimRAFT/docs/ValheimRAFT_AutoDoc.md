@@ -67,10 +67,6 @@
 
 ## Config
 
-### RaftCreativeHeight 
-- Description: Sets the raftcreative command height, raftcreative is relative to the current height of the ship, negative numbers will sink your ship temporarily
-- Default Value: 5
-
 ### AnchorKeyboardShortcut 
 - Description: Anchor keyboard hotkey. Only applies to keyboard
 - Default Value: LeftShift
@@ -367,6 +363,14 @@
 - Description: Will will allow all debug commands for non-admins. Turning this to false will only allow debug (cheat) commands if the user is an admin.
 - Default Value: True
 
+## Config
+
+### VehicleCreativeHeight 
+- Description: Sets the vehicle creative command height, this value is relative to the current height of the ship, negative numbers will sink your ship temporarily
+- Default Value: 0
+
+## Vehicle Debugging
+
 ### DebugMetricsEnabled 
 - Description: Will locally log metrics for ValheimVehicles mods. Meant for debugging functional delays, convexHull logic, and other long running processes. This can be log heavy but important to enable if the mod is having problems in order to report issues.
 - Default Value: False
@@ -604,17 +608,17 @@ Other methods removed after 2.5.0
 - Description: Ships with high mass to volume will not be able to ballast well above the surface. This adds a ship mass to onboard volume calculation. The calculation is experimental so it might be inaccurate. For now mass to volume includes the length width heigth in a box around the ship. It's unrealistic as of 2.4.0 as this includes emptyspace above water. Eventually this will be calculated via displacement (empty volume with wall all around it) calculation.
 - Default Value: False
 
-### AllowMonsterEntitesUnderwater 
-- Description: Allows Monster entities onto the ship and underwater. This means they can go underwater similar to player.
+### AllowMonsterCharactersUnderwater 
+- Description: Allows Monster characters (untamed, and enemies too) onto the ship and underwater. This means they can go underwater similar to player.
 - Default Value: True
 
-### AllowedEntiesList 
+### AllowedCharacterList 
 - Description: List separated by comma for entities that are allowed on the ship. For simplicity consider enabling monsters and tame creatures.
 - Default Value: 
 
-### AllowTamedEntiesUnderwater 
+### AllowTamedCharactersUnderwater 
 - Description: Lets tamed animals underwater too. Could break or kill them depending on config.
-- Default Value: False
+- Default Value: True
 
 ### FlipWatermeshMode 
 - Description: Flips the water mesh underwater. This can cause some jitters. Turn it on at your own risk. It's improve immersion. Recommended to keep off if you dislike seeing a bit of tearing in the water meshes. Flipping camera above to below surface should fix things.
@@ -736,15 +740,15 @@ Other methods removed after 2.5.0
 
 ## Vehicle Physics
 
-### flightDamping_3.0.7 
+### flightDamping_3.1.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.0.7 
+### flightSidewaysDamping_3.1.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.0.7 
+### flightAngularDamping_3.1.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -764,15 +768,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1.2
 
-### force_3.0.7 
-- Description: EXPERIMENTAL_FORCE
-- Default Value: 1
+### force_3.1.0 
+- Description: EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.
+- Default Value: 3
 
-### forceDistance_3.0.7 
-- Description: EXPERIMENTAL_FORCE_DISTANCE
-- Default Value: 1
+### forceDistance_3.1.0 
+- Description: EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted
+- Default Value: 5
 
-### backwardForce_3.0.7 
+### backwardForce_3.1.0 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -780,15 +784,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1
 
-### waterDamping_3.0.7 
+### waterDamping_3.1.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.0.7 
+### waterSidewaysDamping_3.1.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.0.7 
+### waterAngularDamping_3.1.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -804,15 +808,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 0.8
 
-### submersibleDamping_3.0.7 
+### submersibleDamping_3.1.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.0.7 
+### submersibleSidewaysDamping_3.1.0 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.0.7 
+### submersibleAngularDamping_3.1.0 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -848,11 +852,11 @@ Other methods removed after 2.5.0
 
 ## Vehicle Physics
 
-### MaxVehicleLinearVelocity_3.0.x 
+### MaxVehicleLinearVelocity_3.1.x 
 - Description: Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 100. Higher values will increase potential of vehicle flying off to space or rapidly accelerating through objects before physics can apply to an unloaded zone.
 - Default Value: 100
 
-### MaxVehicleLinearYVelocity_3.0.x 
+### MaxVehicleLinearYVelocity_3.1.x 
 - Description: Sets the absolute max speed a vehicle can ever move in vertical direction. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not use gravity well
 - Default Value: 50
 
@@ -870,7 +874,7 @@ Other methods removed after 2.5.0
 - Description: DEPRECATED!!! Will be removed soon, values of -2 and 2 are allowed. Anything above means you are likely not using this correctly. Please use CenterOfMass instead if your vehicle needs to pivot lower. Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
 - Default Value: 0
 
-### EnableExactVehicleBounds_3.0.7 
+### EnableExactVehicleBounds_3.1.0 
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version
 - Default Value: True
 

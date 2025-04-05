@@ -39,6 +39,34 @@ public class Character_Patch
     if (vpc) __result = false;
   }
 
+  [HarmonyPatch(typeof(Character), nameof(Character.OnDisable))]
+  [HarmonyPostfix]
+  public static void Character_OnDisable(Character __instance)
+  {
+    SaveLastKnownPlaceOnVehicle(__instance);
+  }
+
+  /// <summary>
+  /// Todo might have to do this in NetView instead. Though OnDestroy is like worst place to call it.
+  /// </summary>
+  /// <param name="__instance"></param>
+  [HarmonyPatch(typeof(Character), nameof(Character.OnDestroy))]
+  [HarmonyPostfix]
+  public static void Character_OnDestroy(Character __instance)
+  {
+    SaveLastKnownPlaceOnVehicle(__instance);
+  }
+
+  public static void SaveLastKnownPlaceOnVehicle(Character character)
+  {
+    if (character.m_nview == null) return;
+    var zdo = character.m_nview.GetZDO();
+    if (zdo == null) return;
+    var vehiclePiecesController = character.GetComponentInParent<VehiclePiecesController>();
+    if (vehiclePiecesController == null) return;
+    VehiclePiecesController.AddTempPieceProperties(character.m_nview, vehiclePiecesController);
+  }
+
   public static object? GetStandingOnShip(Character __instance)
   {
     if (__instance.InNumShipVolumes == 0 || !__instance.IsOnGround() ||

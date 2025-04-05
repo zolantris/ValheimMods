@@ -13,6 +13,7 @@ public static class VehicleDebugConfig
 
   public static ConfigEntry<bool> AllowDebugCommandsForNonAdmins;
   public static ConfigEntry<bool> AllowEditCommandsForNonAdmins;
+  public static ConfigEntry<int> VehicleCreativeHeight;
 
   public static ConfigEntry<float> CommandsWindowPosX;
 
@@ -112,6 +113,12 @@ public static class VehicleDebugConfig
       ConfigHelpers.CreateConfigDescription(
         "This will allow non-admins the ability to use vehicle creative to edit their vehicle. Non-admins can still use vehicle sway and config commands to edit their ship. This config is provided to improve realism at the cost of convenience.",
         true, true));
+
+    VehicleCreativeHeight = Config.Bind("Config", "VehicleCreativeHeight",
+      0,
+      ConfigHelpers.CreateConfigDescription(
+        "Sets the vehicle creative command height, this value is relative to the current height of the ship, negative numbers will sink your ship temporarily",
+        false, false, new AcceptableValueRange<int>(-50, 50)));
 
     DebugMetricsEnabled = config.Bind(SectionName, "DebugMetricsEnabled",
       false,

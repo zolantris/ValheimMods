@@ -117,36 +117,43 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     RamDamageToolTier = GetToolTier();
     CanDamageSelf = IsVehicleRamType ? RamConfig.VehicleRamCanDamageSelf.Value : RamConfig.CanDamageSelf.Value;
 
-    if (IsVehicleRamType)
+    switch (m_RamType)
     {
-      MaxVelocityMultiplier = RamConfig.VehicleMaxVelocityMultiplier.Value;
-      RamBaseSlashDamage = RamConfig.VehicleRamBaseSlashDamage.Value;
-      RamBasePierceDamage = RamConfig.VehicleRamBasePierceDamage.Value;
-      RamBaseBluntDamage = RamConfig.VehicleRamBaseBluntDamage.Value;
-      RamBasePickAxeDamage = RamConfig.VehicleRamBasePickAxeDamage.Value;
-      RamBaseChopDamage = RamConfig.VehicleRamBaseChopDamage.Value;
-      m_hitTerrain = RamConfig.VehicleRamCanHitEnvironmentOrTerrain.Value;
-      m_hitProps = RamConfig.VehicleRamCanHitEnvironmentOrTerrain.Value;
-      m_hitCharacters = RamConfig.VehicleRamCanHitCharacters.Value;
-      m_hitFriendly = RamConfig.VehicleRamCanHitFriendly.Value;
-      m_hitEnemy = RamConfig.VehicleRamCanHitEnemies.Value;
-      m_hitParent = RamConfig.VehicleRamCanDamageSelf.Value;
-    }
-    else
-    {
-      MaxVelocityMultiplier = RamConfig.MaxVelocityMultiplier.Value;
-      RamBaseSlashDamage = RamConfig.RamBaseSlashDamage.Value;
-      RamBasePierceDamage = RamConfig.RamBasePierceDamage.Value;
-      RamBaseBluntDamage = RamConfig.RamBaseBluntDamage.Value;
-      RamBasePickAxeDamage = RamConfig.RamBasePickAxeDamage.Value;
-      RamBaseChopDamage = RamConfig.RamBaseChopDamage.Value;
+      case RamPrefabs.RamType.LandVehicle:
+      case RamPrefabs.RamType.WaterVehicle:
+        RamBaseMaximumDamage = RamConfig.RamBaseMaximumDamage.Value;
+        MaxVelocityMultiplier = RamConfig.VehicleMaxVelocityMultiplier.Value;
+        RamBaseSlashDamage = RamConfig.VehicleRamBaseSlashDamage.Value;
+        RamBasePierceDamage = RamConfig.VehicleRamBasePierceDamage.Value;
+        RamBaseBluntDamage = RamConfig.VehicleRamBaseBluntDamage.Value;
+        RamBasePickAxeDamage = RamConfig.VehicleRamBasePickAxeDamage.Value;
+        RamBaseChopDamage = RamConfig.VehicleRamBaseChopDamage.Value;
+        m_hitTerrain = RamConfig.VehicleRamCanHitEnvironmentOrTerrain.Value;
+        m_hitProps = RamConfig.VehicleRamCanHitEnvironmentOrTerrain.Value;
+        m_hitCharacters = RamConfig.VehicleRamCanHitCharacters.Value;
+        m_hitFriendly = RamConfig.VehicleRamCanHitFriendly.Value;
+        m_hitEnemy = RamConfig.VehicleRamCanHitEnemies.Value;
+        m_hitParent = RamConfig.VehicleRamCanDamageSelf.Value;
+        break;
+      case RamPrefabs.RamType.Stake:
+      case RamPrefabs.RamType.Blade:
+        RamBaseMaximumDamage = RamConfig.VehicleRamBaseMaximumDamage.Value;
+        MaxVelocityMultiplier = RamConfig.MaxVelocityMultiplier.Value;
+        RamBaseSlashDamage = RamConfig.RamBaseSlashDamage.Value;
+        RamBasePierceDamage = RamConfig.RamBasePierceDamage.Value;
+        RamBaseBluntDamage = RamConfig.RamBaseBluntDamage.Value;
+        RamBasePickAxeDamage = RamConfig.RamBasePickAxeDamage.Value;
+        RamBaseChopDamage = RamConfig.RamBaseChopDamage.Value;
 
-      m_hitTerrain = RamConfig.CanHitEnvironmentOrTerrain.Value;
-      m_hitProps = RamConfig.CanHitEnvironmentOrTerrain.Value;
-      m_hitCharacters = RamConfig.CanHitCharacters.Value;
-      m_hitFriendly = RamConfig.CanHitFriendly.Value;
-      m_hitEnemy = RamConfig.CanHitEnemies.Value;
-      m_hitParent = RamConfig.CanDamageSelf.Value;
+        m_hitTerrain = RamConfig.CanHitEnvironmentOrTerrain.Value;
+        m_hitProps = RamConfig.CanHitEnvironmentOrTerrain.Value;
+        m_hitCharacters = RamConfig.CanHitCharacters.Value;
+        m_hitFriendly = RamConfig.CanHitFriendly.Value;
+        m_hitEnemy = RamConfig.CanHitEnemies.Value;
+        m_hitParent = RamConfig.CanDamageSelf.Value;
+        break;
+      default:
+        throw new ArgumentOutOfRangeException();
     }
 
     m_blockable = false;
@@ -166,6 +173,9 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     m_useCollider = null;
     m_useAttackSettings = true;
     m_ttl = 0;
+
+    // must be called otherwise nothing will happen when this InitializeConfig is called
+    SetBaseDamageFromConfig();
   }
 
   public float GetTotalDamage(float slashDamage, float bluntDamage,
@@ -202,6 +212,10 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     if (!RamInstances.Contains(this)) RamInstances.Add(this);
     ExclusionPattern = GenerateRegexFromList(PiecesToMoveOnToVehicle);
     rigidbody = GetComponent<Rigidbody>();
+
+    // Prevents problems with items and other objects. Letting collisions hit every layer is not optimal so scoping to only includes/excludes layers is better.
+    // rigidbody.excludeLayers = LayerHelpers.RamColliderExcludeLayers;
+    // rigidbody.includeLayers = LayerHelpers.PhysicalLayers;
   }
 
   public void OnBoundsRebuildStart()
@@ -221,7 +235,6 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   {
     // must initialize after Awake so we can set these values after AddComponent is called.
     InitializeFromConfig();
-    SetBaseDamageFromConfig();
     InitAoe();
     
     Invoke(nameof(UpdateReadyForCollisions), 1f);
@@ -253,10 +266,13 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     }
 
     // Must be within the BaseVehiclePieces after initialization otherwise this AOE could attempt to damage items within the raft ball
+    var root = transform.root;
+    var rootName = root.name;
+    
     var isChildOfBaseVehicle =
-      PrefabNames.IsVehicle(transform.root.name) ||
-      transform.root.name.StartsWith(PrefabNames.VehiclePiecesContainer) ||
-      transform.root.name.StartsWith(
+      PrefabNames.IsVehicle(rootName) ||
+      rootName.StartsWith(PrefabNames.VehiclePiecesContainer) ||
+      rootName.StartsWith(
         PrefabNames
           .VehicleMovingPiecesContainer);
     if (!isChildOfBaseVehicle)
@@ -327,7 +343,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     float slashDamage = 0;
     float chopDamage = 0;
     float pierceDamage = 0;
-
+    
     if (m_RamType == RamPrefabs.RamType.Stake)
       pierceDamage = baseDamage.m_pierce * multiplier;
 
@@ -340,8 +356,8 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     if (IsVehicleRamType)
     {
       slashDamage = baseDamage.m_slash * multiplier;
-      chopDamage = baseDamage.m_slash * multiplier;
-      pierceDamage = baseDamage.m_slash * multiplier;
+      chopDamage = baseDamage.m_chop * multiplier;
+      pierceDamage = baseDamage.m_pierce * multiplier;
     }
 
     var nextTotalDamage = 0f;
@@ -367,15 +383,15 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
         if (bluntDamageRatio == 0)
           bluntDamageRatio = bluntDamage / nextTotalDamage;
 
-        slashDamage = baseDamage.m_slash * slashDamageRatio;
-        bluntDamage = baseDamage.m_blunt * bluntDamageRatio;
-        chopDamage = baseDamage.m_chop * chopDamageRatio;
-        pickaxeDamage = baseDamage.m_pickaxe * pickaxeDamageRatio;
-        pierceDamage = baseDamage.m_pierce * pierceDamageRatio;
+        slashDamage = RamBaseMaximumDamage * slashDamageRatio;
+        bluntDamage = RamBaseMaximumDamage * bluntDamageRatio;
+        chopDamage = RamBaseMaximumDamage * chopDamageRatio;
+        pickaxeDamage = RamBaseMaximumDamage * pickaxeDamageRatio;
+        pierceDamage = RamBaseMaximumDamage * pierceDamageRatio;
       }
     }
 
-    var damageSum = slashDamage + chopDamage + pierceDamage + chopDamage + pickaxeDamage;
+    var damageSum = slashDamage + bluntDamage + pierceDamage + chopDamage + pickaxeDamage;
     if (damageSum < 1)
     {
       m_damage = new HitData.DamageTypes()
@@ -505,7 +521,8 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   public override bool ShouldHit(Collider collider)
   {
     if (!IsReady()) return false;
-
+    var colliderObj = collider.gameObject;
+    
     var character = collider.GetComponentInParent<Character>();
     if (WaterZoneUtils.IsOnboard(character))
     {
@@ -527,7 +544,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     var root = collider.transform.root;
     if (PrefabNames.IsVehicle(root.name)) return false;
 
-    if (ExclusionPattern.IsMatch(root.name))
+    if (ExclusionPattern.IsMatch(root.name) || LayerHelpers.IsItemLayer(collider.gameObject.layer))
     {
       var netView = root.GetComponent<ZNetView>();
       if (!netView) return false;
@@ -545,7 +562,38 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   /// <returns></returns>
   private bool ShouldIgnore(Collider collider)
   {
-    if (!collider) return false;
+    if (!collider) return true;
+
+    VehiclePiecesController? vehiclePiecesController = null;
+
+    var colliderObj = collider.gameObject;
+
+    if (colliderObj.layer == LayerHelpers.ItemLayer)
+    {
+      LoggerProvider.LogDebug($"Ignoring itemLayer {colliderObj.layer} for gameobject {colliderObj.name} because items are not allowed to be collider by vehicle ram colliders.");
+      if (ComponentSelectors.TryGetVehiclePiecesController(m_vehicle, out var piecesController) && collider.transform.root != piecesController.transform)
+      {
+        vehiclePiecesController = piecesController;
+
+        var rootPrefabNetView = GetComponentInParent<ZNetView>();
+        if (rootPrefabNetView != null)
+        {
+          piecesController.AddTemporaryPiece(rootPrefabNetView);
+        }
+      }
+      IgnoreCollider(collider);
+      return true;
+    }
+
+    if (!LayerHelpers.IsContainedWithinLayerMask(colliderObj.layer, LayerHelpers.PhysicalLayers))
+    {
+#if DEBUG
+      LoggerProvider.LogDebug($"Ignoring layer {colliderObj.layer} for gameobject {colliderObj.name} because it is not within PhysicalLayer mask.");
+#endif
+      IgnoreCollider(collider);
+      return false;
+    }
+
     if (PrefabNames.IsVehicleCollider(collider.name))
     {
       IgnoreCollider(collider);
@@ -557,7 +605,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       IgnoreCollider(collider);
       return true;
     }
-
+    
     var character = collider.GetComponentInParent<Character>();
     if (character != null)
     {
@@ -565,6 +613,15 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       {
         m_vehicle.MovementController.StartPlayerCollisionAfterTeleport(collider, character);
         return true;
+      }
+
+      // Animal/Tameable support.
+      // confirm this works
+      if (!character.IsPlayer() && character.IsTamed() && vehiclePiecesController != null)
+      {
+        var nv = character.GetComponent<ZNetView>();
+        vehiclePiecesController.AddTemporaryPiece(nv);
+        return false;
       }
 
       if (WaterZoneUtils.IsOnboard(character))

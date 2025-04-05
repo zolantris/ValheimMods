@@ -57,7 +57,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "3.0.8";
+  public const string Version = "3.1.0";
   public const string ModName = "ValheimRAFT";
   public const string ModNameBeta = "ValheimRAFTBETA";
   public const string ModGuid = $"{Author}.{ModName}";
@@ -95,8 +95,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> BoatDragCoefficient { get; set; }
   public ConfigEntry<float> MastShearForceThreshold { get; set; }
   public ConfigEntry<bool> HasDebugBase { get; set; }
-  
-  public ConfigEntry<float> RaftCreativeHeight { get; set; }
+
   public ConfigEntry<KeyboardShortcut> AnchorKeyboardShortcut { get; set; }
   public ConfigEntry<bool> EnableMetrics { get; set; }
 
@@ -138,15 +137,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         IsAdvanced = isAdvanced
       }
     );
-  }
-
-  private void CreateCommandConfig()
-  {
-    RaftCreativeHeight = Config.Bind("Config", "RaftCreativeHeight",
-      5f,
-      CreateConfigDescription(
-        "Sets the raftcreative command height, raftcreative is relative to the current height of the ship, negative numbers will sink your ship temporarily",
-        false));
   }
 
   private void CreateServerConfig()
@@ -299,7 +289,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CreateBaseConfig();
     CreateDebugConfig();
     CreateServerConfig();
-    CreateCommandConfig();
     CreateKeyboardSetup();
     // for graphics QOL but maybe less FPS friendly
     CreateGraphicsConfig();
@@ -415,7 +404,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   public void RegisterConsoleCommands()
   {
-    CommandManager.Instance.AddConsoleCommand(new CreativeModeConsoleCommand());
     CommandManager.Instance.AddConsoleCommand(new MoveRaftConsoleCommand());
     CommandManager.Instance.AddConsoleCommand(new HideRaftConsoleCommand());
     CommandManager.Instance.AddConsoleCommand(new RecoverRaftConsoleCommand());
