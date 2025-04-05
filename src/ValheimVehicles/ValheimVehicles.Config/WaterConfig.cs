@@ -78,12 +78,7 @@ public static class WaterConfig
 
   public static ConfigEntry<bool> AllowTamedCharactersUnderwater = null!;
   public static ConfigEntry<bool> AllowMonsterCharactersUnderwater = null!;
-
-
-  /// <summary>
-  /// Camera
-  /// </summary>
-  public static ConfigEntry<float> UnderwaterShipCameraZoom = null!;
+  
 
   public static ConfigEntry<bool> UnderwaterFogEnabled =
     null!;
@@ -262,14 +257,6 @@ public static class WaterConfig
       ConfigHelpers.CreateConfigDescription(
         "Flips the water mesh underwater. This can cause some jitters. Turn it on at your own risk. It's improve immersion. Recommended to keep off if you dislike seeing a bit of tearing in the water meshes. Flipping camera above to below surface should fix things.",
         true, true));
-
-    UnderwaterShipCameraZoom = Config.Bind(
-      SectionKey,
-      "UnderwaterShipCameraZoom",
-      5000f,
-      ConfigHelpers.CreateConfigDescription(
-        "Zoom value to allow for underwater zooming. Will allow camera to go underwater at values above 0. 0 will reset camera back to default.",
-        false, false, new AcceptableValueRange<float>(0, 5000f)));
 
     UnderwaterFogEnabled = Config.Bind(
       SectionKey,
