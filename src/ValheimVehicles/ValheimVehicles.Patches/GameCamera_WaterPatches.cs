@@ -95,6 +95,8 @@ internal class GameCamera_WaterPatches
     if (GameCamera.m_instance.m_camera == Camera.main) BlockingWaterMask = __instance.m_blockCameraMask;
   }
 
+  public const int underwaterCameraZoom = -5000;
+
   [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.UpdateCamera))]
   [HarmonyPostfix]
   public static void GameCameraUpdateCameraPatch(GameCamera __instance,
@@ -112,11 +114,6 @@ internal class GameCamera_WaterPatches
     // This is the most important flag, it prevents camera smashing into the watermesh.
     // negative value due to it allowing zoom further out
     // fallthrough logic
-    if (WaterConfig.UnderwaterShipCameraZoom.Value != 0)
-      __instance.m_minWaterDistance =
-        WaterConfig.UnderwaterShipCameraZoom.Value * -1;
-    else
-      // default
-      __instance.m_minWaterDistance = 5f;
+    __instance.m_minWaterDistance = underwaterCameraZoom;
   }
 }
