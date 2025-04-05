@@ -728,12 +728,6 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     StartClientServerUpdaters();
   }
 
-
-  private void OnDestroy()
-  {
-    if (!HasRunCleanup) CleanUp();
-  }
-
   public void CleanUp()
   {
     if (HasRunCleanup) return;
@@ -2218,7 +2212,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
   /// <summary>
   /// For Carts and other rigidbody moveable objects.
   /// </summary>
-  public void AddTemporaryPiece(ZNetView netView)
+  public void AddTemporaryPiece(ZNetView netView, bool shouldSkipIgnoreColliders = false)
   {
     if (netView == null) return;
 
@@ -2229,9 +2223,12 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     SetPieceToParent(netView.transform);
 
     // Likely do not want to call this.
-    // FixPieceMeshes(netView);
+    FixPieceMeshes(netView);
 
-    OnAddPieceIgnoreColliders(netView);
+    if (!shouldSkipIgnoreColliders)
+    {
+      OnAddPieceIgnoreColliders(netView);
+    }
 
     // in case of spam or other in progress apis add a guard to prevent duplication.
     if (!m_tempPieces.Contains(netView))

@@ -25,12 +25,14 @@ public class WearNTear_Patch
     // we could check to see if the object is within a Controller, but this is unnecessary. Start just needs a protector.
     // this is a patch for basegame to prevent WNT from calling on objects without heightmaps which will return a NRE
     var hInstance = Heightmap.FindHeightmap(__instance.transform.position);
-
     if (hInstance != null) return true;
 
-    Logger.LogWarning(
-      $"WearNTear heightmap not found, this could be a problem with a prefab layer type not being a piece, netview name: {__instance.m_nview.name}");
+    // todo add heightmaps to vehicle. See if this helps improve some functionality.
 
+    // if (Environment.All)
+    // Logger.LogWarning(
+    // $"WearNTear heightmap not found, this could be a problem with a prefab layer type not being a piece, netview name: {__instance.m_nview.name}");
+    
     __instance.m_connectedHeightMap = hInstance;
     return false;
   }

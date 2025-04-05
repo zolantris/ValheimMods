@@ -10,6 +10,7 @@
   using ValheimRAFT.Config;
   using ValheimRAFT.Patches;
   using ValheimVehicles.Config;
+  using ValheimVehicles.ConsoleCommands;
   using ValheimVehicles.Constants;
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Helpers;
@@ -1096,6 +1097,41 @@
         };
     }
 
+    public void ForceUpdateVehicleRotation(float transformedX, float eulerY, float transformedZ)
+    {
+      List<Player> onboardPlayers = [];
+      List<Player> modifiedKinematicPlayers = [];
+      if (OnboardController != null)
+      {
+        onboardPlayers = OnboardController.m_localPlayers.ToList();
+        foreach (var onboardPlayer in onboardPlayers)
+          if (!onboardPlayer.IsAttached())
+          {
+            onboardPlayer.m_body.isKinematic = true;
+            modifiedKinematicPlayers.Add(onboardPlayer);
+          }
+      }
+      transform.rotation =
+        Quaternion.Euler(transformedX, eulerY, transformedZ);
+      m_body.velocity = Vector3.zero;
+      m_body.angularVelocity = Vector3.zero;
+
+
+      Physics.SyncTransforms();
+      m_body.velocity = Vector3.zero;
+      m_body.angularVelocity = Vector3.zero;
+
+      foreach (var modifiedKinematicPlayer in modifiedKinematicPlayers)
+        if (modifiedKinematicPlayer.m_body.isKinematic)
+        {
+          modifiedKinematicPlayer.m_body.isKinematic = false;
+          modifiedKinematicPlayer.m_body.velocity = Vector3.zero;
+        }
+
+      onboardPlayers.Clear();
+      modifiedKinematicPlayers.Clear();
+    }
+
     /// <summary>
     /// Flips the ship, and also protects the players from being launched into space by the flip.
     /// </summary>
@@ -1141,39 +1177,13 @@
         }
       }
 
-      if (shouldUpdate)
+      if (shouldUpdate && OnboardController != null)
       {
-        List<Player> onboardPlayers = [];
-        List<Player> modifiedKinematicPlayers = [];
-        if (OnboardController != null)
+        yield return VehicleCommands.SafeMovePlayer(OnboardController, false, () =>
         {
-          onboardPlayers = OnboardController.m_localPlayers.ToList();
-          foreach (var onboardPlayer in onboardPlayers)
-            if (!onboardPlayer.IsAttached())
-            {
-              onboardPlayer.m_body.isKinematic = true;
-              modifiedKinematicPlayers.Add(onboardPlayer);
-            }
-        }
-        transform.rotation =
-          Quaternion.Euler(transformedX, eulerY, transformedZ);
-        m_body.velocity = Vector3.zero;
-        m_body.angularVelocity = Vector3.zero;
-
-
-        Physics.SyncTransforms();
-        m_body.velocity = Vector3.zero;
-        m_body.angularVelocity = Vector3.zero;
-
-        foreach (var modifiedKinematicPlayer in modifiedKinematicPlayers)
-          if (modifiedKinematicPlayer.m_body.isKinematic)
-          {
-            modifiedKinematicPlayer.m_body.isKinematic = false;
-            modifiedKinematicPlayer.m_body.velocity = Vector3.zero;
-          }
-
-        onboardPlayers.Clear();
-        modifiedKinematicPlayers.Clear();
+          ForceUpdateVehicleRotation(transformedX, eulerZ, transformedZ);
+          return Vector3.zero;
+        }, null);
       }
 
       yield return null;

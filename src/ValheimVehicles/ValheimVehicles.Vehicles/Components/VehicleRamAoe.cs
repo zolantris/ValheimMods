@@ -544,7 +544,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
     var root = collider.transform.root;
     if (PrefabNames.IsVehicle(root.name)) return false;
 
-    if (ExclusionPattern.IsMatch(root.name))
+    if (ExclusionPattern.IsMatch(root.name) || LayerHelpers.IsItemLayer(collider.gameObject.layer))
     {
       var netView = root.GetComponent<ZNetView>();
       if (!netView) return false;
@@ -562,7 +562,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   /// <returns></returns>
   private bool ShouldIgnore(Collider collider)
   {
-    if (!collider) return false;
+    if (!collider) return true;
 
     VehiclePiecesController? vehiclePiecesController = null;
 
@@ -582,12 +582,14 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
         }
       }
       IgnoreCollider(collider);
-      return false;
+      return true;
     }
 
     if (!LayerHelpers.IsContainedWithinLayerMask(colliderObj.layer, LayerHelpers.PhysicalLayers))
     {
+#if DEBUG
       LoggerProvider.LogDebug($"Ignoring layer {colliderObj.layer} for gameobject {colliderObj.name} because it is not within PhysicalLayer mask.");
+#endif
       IgnoreCollider(collider);
       return false;
     }

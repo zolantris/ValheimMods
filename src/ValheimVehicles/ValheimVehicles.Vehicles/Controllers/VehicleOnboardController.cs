@@ -8,6 +8,7 @@ using UnityEngine.Serialization;
 using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Patches;
+using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
@@ -57,10 +58,17 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
   public VehiclePiecesController? PiecesController =>
     vehicleShip != null ? vehicleShip.PiecesController : null;
 
+  private Rigidbody onboardRigidbody;
+  
   private void Awake()
   {
     OnboardCollider = GetComponent<BoxCollider>();
     InvokeRepeating(nameof(ValidateCharactersAreOnShip), 1f, 30f);
+
+    if (OnboardCollider)
+    {
+      OnboardCollider.includeLayers = LayerHelpers.OnboardLayers;
+    }
   }
 
   private void Start()
@@ -333,8 +341,31 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
   public void OnTriggerEnter(Collider collider)
   {
     if (!IsReady()) return;
+    if (collider.gameObject.layer == LayerHelpers.ItemLayer)
+    {
+      HandleItemHitVehicle(collider);
+      return;
+    }
     OnPlayerEnterVehicleBounds(collider);
     HandleCharacterHitVehicleBounds(collider, false);
+  }
+
+  public void HandleItemHitVehicle(Collider collider)
+  {
+    if (collider == null) return;
+    var itemNetView = collider.GetComponentInParent<ZNetView>();
+    if (itemNetView == null) return;
+    if (PiecesController == null || PiecesController.m_tempPieces.Contains(itemNetView)) return;
+    PiecesController.AddTemporaryPiece(itemNetView, true);
+  }
+
+  public void HandleItemLeaveVehicle(Collider collider)
+  {
+    if (collider == null) return;
+    var itemNetView = collider.GetComponentInParent<ZNetView>();
+    if (itemNetView == null) return;
+    if (PiecesController == null || !PiecesController.m_tempPieces.Contains(itemNetView)) return;
+    PiecesController.RemoveTempPiece(itemNetView);
   }
 
   /// <summary>
@@ -344,6 +375,11 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
   public void OnTriggerStay(Collider collider)
   {
     if (!isRebuildingCollisions) return;
+    if (collider.gameObject.layer == LayerHelpers.ItemLayer)
+    {
+      return;
+    }
+    
     HandlePlayerExitVehicleBounds(collider);
     HandleCharacterHitVehicleBounds(collider, false);
   }
@@ -351,6 +387,11 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
   public void OnTriggerExit(Collider collider)
   {
     if (!IsReady()) return;
+    if (collider.gameObject.layer == LayerHelpers.ItemLayer)
+    {
+      HandleItemLeaveVehicle(collider);
+      return;
+    }
     HandlePlayerExitVehicleBounds(collider);
     HandleCharacterHitVehicleBounds(collider, true);
   }
@@ -560,9 +601,11 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
 
     if (!isPlayerInList)
       m_localPlayers.Add(player);
-    else
+#if DEBUG
+    else if (!player.IsDebugFlying())
       Logger.LogWarning(
-        "Player detected entering ship, but they are already added within the list of ship players");
+        "Player detected entering ship, but they are already added within the list of ship players. This should be expected for flying and suddenly stopping flight commands");
+#endif
   }
 
   /// <summary>
