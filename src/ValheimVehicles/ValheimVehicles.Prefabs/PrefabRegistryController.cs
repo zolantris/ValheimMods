@@ -142,8 +142,14 @@ public class PrefabRegistryController : MonoBehaviour
     // dependent on ValheimVehiclesShared and RaftAssetBundle
     LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle);
 
+    // ValheimVehicle HammerTab
+    new VehicleHammerTableRegistry().Register();
+    // CreateValheimVehiclesHammer();
+      
     // must be called after assets are loaded
     PrefabRegistryHelpers.Init();
+    
+    
 
     RegisterAllPrefabs();
 

@@ -352,7 +352,7 @@ public abstract class PrefabRegistryHelpers
     }
   }
 
-// todo consider using Jotunn.Manager.RenderManager for these Icon generation
+  /// todo consider using Jotunn.Manager.RenderManager for these Icon generation
   /// todo auto generate this from the translations json
   /// 4x4 and 2x2 icons look similar, may remove 4x4
   public static void Init()

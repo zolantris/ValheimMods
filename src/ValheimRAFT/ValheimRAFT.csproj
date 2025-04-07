@@ -102,6 +102,12 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Loading\LoadValheimVehiclesAssets.cs">
             <Link>ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Loading\LoadValheimVehiclesAssets.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Registry\VehicleHammerTableRegistry.cs">
+            <Link>ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Registry\VehicleHammerTableRegistry.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Registry\GuardedRegistry.cs">
+            <Link>ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Registry\GuardedRegistry.cs</Link>
+        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup><!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->

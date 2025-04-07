@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace ValheimVehicles.Prefabs;
 
 public abstract class ShipHulls
