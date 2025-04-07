@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using UnityEngine;
-using ValheimVehicles.Vehicles.Controllers;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Vehicles.Components;

@@ -22,8 +22,8 @@ namespace ValheimVehicles.SharedScripts
 
     private const int INSIDE = -1;
 
-    public static Action<string> LogMessage = Debug.Log;
-    public static Action<string> LogDebug = Debug.Log;
+    public static Action<string> LogMessage = LoggerProvider.LogMessage;
+    public static Action<string> LogDebug = LoggerProvider.LogDebug;
 
     private const float EPSILON = 0.0000001f;
 

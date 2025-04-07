@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1918200580
+CRC: 2776908981
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 33b9cdef8463d66c54ad6cec17e4b98e
+    Hash: 4b01cdf56edea8eaf9d210d988f8f413
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 5206dd6dbfc5e35a2491c54812fe9b87
+    Hash: 4a59da1204d1245095a97b123d151bb2
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 33b9cdef8463d66c54ad6cec17e4b98e
+    Hash: 4b01cdf56edea8eaf9d210d988f8f413
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -212,9 +212,10 @@ Assets:
 - Assets/ValheimVehicles/Material/bronze_nautilus_metal Variant.mat
 - Assets/ValheimVehicles/Prefabs/GUI/edit_ramp_panel 1.prefab
 - Assets/ValheimVehicles/Prefabs/hull_rib_corner_right_iron.prefab
-- Assets/ValheimVehicles/Prefabs/custom_sail.prefab
+- Assets/ValheimVehicles/Prefabs/vehicle_hammer.prefab
 - Assets/ValheimVehicles/Material/iron_hull.mat
 - Assets/ValheimVehicles/Material/wood_alt_piece_pole_horizontal.mat
+- Assets/ValheimVehicles/Prefabs/custom_sail.prefab
 - Assets/ValheimVehicles/Prefabs/shared_rudder_advanced_double.prefab
 - Assets/ValheimVehicles/Prefabs/hull_corner_floor_left_iron.prefab
 - Assets/ValheimVehicles/Material/iron.mat

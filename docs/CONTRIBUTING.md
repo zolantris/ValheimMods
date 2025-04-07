@@ -109,6 +109,12 @@ dependencies into "libs" will make this step unnecessary.
 
 ## Publicizing
 
+### Valheim Items/Prefabs
+
+All items must be facing Z direction for forward most point. 
+- For flat items like swords the Z forward direction would make the sword/hammer point flat from forward (in front of player) to their hands.
+- for prefabs this matters where the piece is considered forwards. So having the prefab always forward will make it align better.
+
 ### Publicizing Manually
 
 Publicizing manually is not needed. There is a nuget package that handles this

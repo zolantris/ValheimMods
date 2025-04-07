@@ -1012,7 +1012,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     UpdateBedPieces();
   }
 
-  public static bool CanUseActualPiecePosition = false ;
+  public static bool CanUseActualPiecePosition = true;
 
   /// <summary>
   /// This should only be called directly in cases of force moving the vehicle with a command
