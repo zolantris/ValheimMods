@@ -63,7 +63,7 @@ namespace ValheimVehicles.SharedScripts.Validation
         var value = field.GetValue(null);
         if (value == null)
         {
-          LoggerProvider.LogError($"[{context}] Static field '{field.Name}' is null. This can cause a null reference exception in code. Report this error to ");
+          LoggerProvider.LogWarning($"[{context}] Static field '{field.Name}' is null. This can cause a null reference exception in code. Report this error to ");
         }
       }
     }

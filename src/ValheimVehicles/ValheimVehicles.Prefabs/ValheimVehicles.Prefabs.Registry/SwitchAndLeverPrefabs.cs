@@ -38,7 +38,7 @@ public class SwitchAndLeverPrefabs : IRegisterPrefab
       Description = pieceTranslations.Description,
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .VehicleSwitch),
-      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
       Enabled = true,
       Requirements =
       [

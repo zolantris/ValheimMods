@@ -1,4 +1,6 @@
+using System;
 using Jotunn.Managers;
+using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.Prefabs.Registry;
 
 internal interface IGuardedRegistryInternal
@@ -18,7 +20,7 @@ internal interface IGuardedRegistry
 /// <summary>
 /// Test class to see if it's worth making this shareable
 /// </summary>
-public abstract class GuardedRegistry : IGuardedRegistry, IGuardedRegistryInternal
+public abstract class GuardedRegistry<T> : IGuardedRegistry, IGuardedRegistryInternal
 {
   public static bool IsValid()
   {
@@ -41,6 +43,15 @@ public abstract class GuardedRegistry : IGuardedRegistry, IGuardedRegistryIntern
       return;
     }
 
-    OnRegister();
+    try
+    {
+      OnRegister();
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError(
+        $"An error occurred while registering component of type '{typeof(T).FullName}':\n{e}"
+      );
+    }
   }
 }

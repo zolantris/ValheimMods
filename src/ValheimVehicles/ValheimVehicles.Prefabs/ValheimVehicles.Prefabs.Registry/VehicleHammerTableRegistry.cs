@@ -7,19 +7,19 @@ using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Validation;
 namespace ValheimVehicles.Prefabs.Registry;
 
-public class VehicleHammerTableRegistry : GuardedRegistry
+public class VehicleHammerTableRegistry : GuardedRegistry<VehicleHammerTableRegistry>
 {
-  public static CustomPieceTable? VehicleHammerTable { get; set; }
+  public static CustomPieceTable? VehicleHammerTable { get; private set; }
 
   // optional todo: allow re-ordering categories
   // vehicles is kept last - it will not be used unless when placing new vehicles.
-  public static readonly string[] categories = [VehicleHammerTableCategories.Tools, VehicleHammerTableCategories.Structure, VehicleHammerTableCategories.Propulsion, VehicleHammerTableCategories.Vehicles];
+  private static readonly string[] categories = [VehicleHammerTableCategories.Tools, VehicleHammerTableCategories.Structure, VehicleHammerTableCategories.Propulsion, VehicleHammerTableCategories.Vehicles];
 
   public const string VehicleHammerTableName = "ValheimVehicles_HammerTable";
 
   private static void RegisterVehicleHammerTable()
   {
-    var runeTable = new PieceTableConfig
+    var vehicleHammerTableConfig = new PieceTableConfig
     {
       CanRemovePieces = false,
       UseCategories = false,
@@ -27,14 +27,14 @@ public class VehicleHammerTableRegistry : GuardedRegistry
       CustomCategories = categories
     };
 
-    VehicleHammerTable = new CustomPieceTable(VehicleHammerTableName, runeTable);
+    VehicleHammerTable = new CustomPieceTable(VehicleHammerTableName, vehicleHammerTableConfig);
 
     var success = PieceManager.Instance.AddPieceTable(VehicleHammerTable);
 
     if (!success)
     {
-      VehicleHammerTable = null;
       LoggerProvider.LogError("VehicleHammerTable failed to be added. Falling back with original hammer table for all items. This is a bug. This could break your game. Please report this bug.");
+      VehicleHammerTable = null;
     }
   }
 

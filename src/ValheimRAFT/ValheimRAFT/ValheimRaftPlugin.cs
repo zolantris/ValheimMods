@@ -17,6 +17,7 @@ using DynamicLocations.Controllers;
 using DynamicLocations.Structs;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 using ValheimRAFT.Config;
 using ValheimRAFT.Patches;
 using ValheimRAFT.Util;
@@ -68,9 +69,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   // ReSharper restore MemberCanBePrivate.Global
 
   public MapPinSync MapPinSync;
-
-  private bool m_customItemsAdded;
-  public PrefabRegistryController prefabController;
 
   public static VehicleGui Gui;
   public static GameObject GuiObj;
@@ -356,11 +354,15 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     AllowExperimentalPrefabs.SettingChanged +=
       VehiclePrefabs.Instance.OnExperimentalPrefabSettingsChange;
 
-    /*
-     * @todo add a way to skip LoadCustomTextures when on server. This check when used here crashes the Plugin.
-     */
-    PrefabManager.OnVanillaPrefabsAvailable += LoadCustomTextures;
-    PrefabManager.OnVanillaPrefabsAvailable += AddCustomPieces;
+    PrefabManager.OnVanillaPrefabsAvailable += () =>
+    {
+      // do not load custom textures on a dedicated server. This will do nothing but cause an error.
+      if (ZNet.instance == null || ZNet.instance.IsDedicated() == false)
+      {
+        LoadCustomTextures();
+      }
+      AddCustomItemsAndPieces();
+    };
 
     MapPinSync = gameObject.AddComponent<MapPinSync>();
 
@@ -536,13 +538,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     }
   }
 
-  private void AddCustomPieces()
+  private void AddCustomItemsAndPieces()
   {
-    if (m_customItemsAdded) return;
-    // Registers all prefabs using ValheimVehicles PrefabRegistryController
-    prefabController = gameObject.AddComponent<PrefabRegistryController>();
-    PrefabRegistryController.Init();
-
-    m_customItemsAdded = true;
+    PrefabRegistryController.InitAfterVanillaItemsAndPrefabsAreAvailable();
   }
 }

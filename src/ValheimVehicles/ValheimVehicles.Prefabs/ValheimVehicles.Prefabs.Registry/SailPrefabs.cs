@@ -88,7 +88,7 @@ public class SailPrefabs : IRegisterPrefab
         PieceTable = PrefabRegistryController.GetPieceTableName(),
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .VikingMast),
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
         Enabled = true,
         Requirements =
         [
@@ -156,7 +156,7 @@ public class SailPrefabs : IRegisterPrefab
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .VikingMast),
-      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
       Enabled = true,
       Requirements =
       [
@@ -256,7 +256,7 @@ public class SailPrefabs : IRegisterPrefab
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
       Description = $"$mb_sail_{sailCount}_desc",
-      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
       Enabled = true,
       Icon = sailIcon
     }));
@@ -319,7 +319,7 @@ public class SailPrefabs : IRegisterPrefab
         Description =
           GetTieredSailAreaText(1),
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("raftmast"),
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
         Enabled = true,
         Requirements =
         [
@@ -381,7 +381,7 @@ public class SailPrefabs : IRegisterPrefab
         PieceTable = PrefabRegistryController.GetPieceTableName(),
         Description = GetTieredSailAreaText(2),
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("karvemast"),
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
         Enabled = true,
         Requirements = new RequirementConfig[3]
         {

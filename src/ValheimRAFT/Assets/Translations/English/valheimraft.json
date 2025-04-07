@@ -144,5 +144,10 @@
   "valheim_vehicles_custom_height_tool": "Height Tool",
   "valheim_vehicles_custom_height_tool_desc": "Place 1 cube to control the vehicle height cutoff. This will allow configuring max vehicle height per ship allowing excluding masts from physics calcs and disregard global config. The vehicle will then require placement of a new cube to update it's local height cutoff.",
   "valheim_vehicles_haul_vehicle_start": "To begin hauling the vehicle.",
-  "valheim_vehicles_haul_vehicle_stop": "To stop hauling vehicle."
+  "valheim_vehicles_haul_vehicle_stop": "To stop hauling vehicle.",
+  "valheim_vehicles_hammer_name": "Vehicle Hammer",
+  "valheim_vehicles_hammer_description": "Hammer to build and modify valheim-vehicles items (AKA ValheimRAFT).",
+  "valheim_vehicles_toggle_on": "on",
+  "valheim_vehicles_toggle_off": "off",
+  "valheim_vehicles_creative_toggle_desc": "Toggle the vehicle command on/off."
 }

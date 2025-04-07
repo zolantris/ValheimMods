@@ -340,7 +340,7 @@ public class ShipHullPrefab : IRegisterPrefab
         new PieceConfig
         {
           PieceTable = PrefabRegistryController.GetPieceTableName(),
-          Category = DEPRECATED_ValheimRaftMenuName,
+          Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
           Enabled = true,
           Requirements = GetRequirements(hullMaterial, materialCount)
         }));

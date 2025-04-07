@@ -36,84 +36,6 @@
         <!--            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>-->
         <!--        </ProjectReference>-->
         <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Config\TutorialConfig.cs">
-            <Link>ValheimVehicles.Config\TutorialConfig.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Helpers\ConvexHullGeneratorAPI.cs">
-            <Link>ValheimVehicles.Helpers\ConvexHullGeneratorAPI.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleBoundsController.cs">
-            <Link>ValheimVehicles.Vehicles\Controllers\VehicleBoundsController.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\ConvexHullComponent.cs">
-            <Link>ValheimVehicles.Vehicles\Components\ConvexHullComponent.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\ShipAnchorController.cs">
-            <Link>ValheimVehicles.Vehicles\Controllers\ShipAnchorController.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\AnchorPrefabs.cs">
-            <Link>ValheimVehicles.Prefabs\Registry\AnchorPrefabs.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Controllers\VehicleZSyncTransform.cs">
-            <Link>ValheimVehicles.Vehicles\Controllers\VehiclePhysicsSync.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs">
-            <Link>ValheimVehicles.Vehicles\Components\VehicleRamAoe.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\ValheimAoe.cs">
-            <Link>ValheimVehicles.Vehicles\Components\ValheimAoe.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Config\CameraConfig.cs">
-            <Link>ValheimVehicles.Config\CameraConfig.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleCameraCullingComponent.cs">
-            <Link>ValheimVehicles.Vehicles\Components\VehicleCameraCullingComponent.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\DeferredTrigger.cs">
-            <Link>ValheimVehicles.Vehicles\Components\DeferredTrigger.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\DragWindowCntrlExtension.cs">
-            <Link>ValheimVehicles.Vehicles\Components\DragWindowCntrlExtension.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\HoverFadeText.cs">
-            <Link>ValheimVehicles.Vehicles\Components\HoverFadeText.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Attributes\NotNullWhen.cs">
-            <Link>ValheimVehicles.Attributes\NotNullWhen.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\SharedScripts.Validation\SkipValidationAttribute.cs">
-            <Link>SharedScripts.Validation\SkipValidationAttribute.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\SharedScripts.Validation\StaticFieldValidatorTests.cs">
-            <Link>SharedScripts.Validation\StaticFieldValidatorTests.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\VehicleHammerRegistry.cs">
-            <Link>ValheimVehicles.Prefabs\Registry\VehicleHammerRegistry.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\ShipHulls.cs">
-            <Link>ValheimVehicles.Prefabs\ShipHulls.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Loading\LoadValheimAssets.cs">
-            <Link>ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Loading\LoadValheimAssets.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Loading\LoadValheimRaftAssets.cs">
-            <Link>ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Loading\LoadValheimRaftAssets.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Loading\LoadValheimVehiclesAssets.cs">
-            <Link>ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Loading\LoadValheimVehiclesAssets.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Registry\VehicleHammerTableRegistry.cs">
-            <Link>ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Registry\VehicleHammerTableRegistry.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Registry\GuardedRegistry.cs">
-            <Link>ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Registry\GuardedRegistry.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Registry\CommandsPieceRegistry.cs">
-            <Link>ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Registry\CommandsPieceRegistry.cs</Link>
-        </Compile>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Registry\VehicleHammerTableCategories.cs">
-            <Link>ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Registry\VehicleHammerTableCategories.cs</Link>
-        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup><!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->
@@ -123,7 +45,6 @@
     <ItemGroup>
         <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
         <Compile Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\**\*.cs"/>
-        <Compile Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\*.cs"/>
         <Folder Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\"/>
     </ItemGroup>
     <PropertyGroup>

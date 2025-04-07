@@ -14,10 +14,11 @@ using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using Logger = Jotunn.Logger;
+using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.Prefabs;
 
-public class PrefabRegistryController : MonoBehaviour
+public static class PrefabRegistryController
 {
   public static PrefabManager prefabManager;
   public static PieceManager pieceManager;
@@ -27,9 +28,9 @@ public class PrefabRegistryController : MonoBehaviour
 
   public static AssetBundle vehicleAssetBundle;
 
-  private static bool _initialized = false;
+  private static bool HasRunInitSuccessfully = false;
 
-  public static string ValheimDefaultPieceTableName = "Hammer";
+  private static string ValheimDefaultPieceTableName = "Hammer";
 
   /// <summary>
   /// Gets the PieceTableName and falls back to the original piece name.
@@ -93,10 +94,10 @@ public class PrefabRegistryController : MonoBehaviour
           (PrefabNames.IsHull(obj) && obj.name.Contains("(Clone)")))
       {
         var wnt = obj.GetComponent<WearNTear>();
-        if ((bool)wnt)
+        if (wnt)
           wnt.Destroy();
         else
-          Destroy(obj);
+          Object.Destroy(obj);
       }
   }
 
@@ -171,37 +172,56 @@ public class PrefabRegistryController : MonoBehaviour
     tier4.Piece.m_description = SailPrefabs.GetTieredSailAreaText(4);
   }
 
+
   /**
    * initializes the bundle for ValheimVehicles
+   *
+   * InitPrefabs will work with both items and prefab items for OnVanillaItems/Prefabs are ready.
    */
-  public static void Init()
+  public static void InitAfterVanillaItemsAndPrefabsAreAvailable()
   {
-    vehicleAssetBundle =
-      AssetUtils.LoadAssetBundleFromResources("valheim-vehicles",
-        Assembly.GetExecutingAssembly());
+    if (HasRunInitSuccessfully)
+    {
+      LoggerProvider.LogInfo("skipping PrefabRegistryController.Init as it has already been done.");
+      return;
+    }
 
-    prefabManager = PrefabManager.Instance;
-    pieceManager = PieceManager.Instance;
+    try
+    {
 
-    LoadValheimAssets.Instance.Init(prefabManager);
+      vehicleAssetBundle =
+        AssetUtils.LoadAssetBundleFromResources("valheim-vehicles",
+          Assembly.GetExecutingAssembly());
 
-    // dependent on ValheimVehiclesShared
-    LoadValheimRaftAssets.Instance.Init(vehicleAssetBundle);
-    // dependent on ValheimVehiclesShared and RaftAssetBundle
-    LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle);
+      prefabManager = PrefabManager.Instance;
+      pieceManager = PieceManager.Instance;
 
-    // ValheimVehicle HammerTab
-    new VehicleHammerTableRegistry().Register();
-      
-    // must be called after assets are loaded
-    PrefabRegistryHelpers.Init();
+      LoadValheimAssets.Instance.Init(prefabManager);
 
+      // dependent on ValheimVehiclesShared
+      LoadValheimRaftAssets.Instance.Init(vehicleAssetBundle);
+      // dependent on ValheimVehiclesShared and RaftAssetBundle
+      LoadValheimVehicleAssets.Instance.Init(vehicleAssetBundle);
 
-    RegisterAllItemPrefabs();
-    RegisterAllPiecePrefabs();
+      // ValheimVehicle HammerTab, must be done before items and prefab generic registrations
+      new VehicleHammerTableRegistry().Register();
 
-    // must be called after RegisterAllPrefabs and AssetBundle assignment to be safe.
-    SetupComponents();
+      // must be called after assets are loaded
+      PrefabRegistryHelpers.Init();
+
+      RegisterAllItemPrefabs();
+      RegisterAllPiecePrefabs();
+
+      // must be called after RegisterAllPrefabs and AssetBundle assignment to be safe.
+      SetupComponents();
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogError($"Error occurred during InitAfterVanillaItemsAndPrefabsAvailable call. \nException:\n {e}");
+      return;
+    }
+
+    HasRunInitSuccessfully = true;
   }
 
   public static void AddToRaftPrefabPieces(Piece raftPiece)
@@ -408,16 +428,16 @@ public class PrefabRegistryController : MonoBehaviour
     var pierComponent = mbPierPolePrefab.AddComponent<PierComponent>();
     pierComponent.m_segmentObject =
       prefabManager.CreateClonedPrefab("MBPier_Pole_Segment", woodPolePrefab);
-    Destroy(pierComponent.m_segmentObject.GetComponent<ZNetView>());
-    Destroy(pierComponent.m_segmentObject.GetComponent<Piece>());
-    Destroy(pierComponent.m_segmentObject.GetComponent<WearNTear>());
+    Object.Destroy(pierComponent.m_segmentObject.GetComponent<ZNetView>());
+    Object.Destroy(pierComponent.m_segmentObject.GetComponent<Piece>());
+    Object.Destroy(pierComponent.m_segmentObject.GetComponent<WearNTear>());
     PrefabRegistryHelpers.FixSnapPoints(mbPierPolePrefab);
 
     var transforms2 =
       pierComponent.m_segmentObject.GetComponentsInChildren<Transform>();
     for (var j = 0; j < transforms2.Length; j++)
       if ((bool)transforms2[j] && transforms2[j].CompareTag("snappoint"))
-        Destroy(transforms2[j]);
+        Object.Destroy(transforms2[j]);
 
     pierComponent.m_segmentHeight = 4f;
     pierComponent.m_baseOffset = -1f;
@@ -458,15 +478,15 @@ public class PrefabRegistryController : MonoBehaviour
     var pier = pierWallPrefab.AddComponent<PierComponent>();
     pier.m_segmentObject =
       prefabManager.CreateClonedPrefab("MBPier_Stone_Segment", stoneWallPrefab);
-    Destroy(pier.m_segmentObject.GetComponent<ZNetView>());
-    Destroy(pier.m_segmentObject.GetComponent<Piece>());
-    Destroy(pier.m_segmentObject.GetComponent<WearNTear>());
+    Object.Destroy(pier.m_segmentObject.GetComponent<ZNetView>());
+    Object.Destroy(pier.m_segmentObject.GetComponent<Piece>());
+    Object.Destroy(pier.m_segmentObject.GetComponent<WearNTear>());
     PrefabRegistryHelpers.FixSnapPoints(pierWallPrefab);
 
     var transforms = pier.m_segmentObject.GetComponentsInChildren<Transform>();
     for (var i = 0; i < transforms.Length; i++)
       if ((bool)transforms[i] && transforms[i].CompareTag("snappoint"))
-        Destroy(transforms[i]);
+        Object.Destroy(transforms[i]);
 
     pier.m_segmentHeight = 2f;
     pier.m_baseOffset = 0f;
@@ -505,12 +525,12 @@ public class PrefabRegistryController : MonoBehaviour
         LoadValheimRaftAssets.boardingRampAsset);
     var floor = mbBoardingRamp.transform
       .Find("Ramp/Segment/SegmentAnchor/Floor").gameObject;
-    var newFloor = Instantiate(
+    var newFloor = Object.Instantiate(
       LoadValheimAssets.woodFloorPiece.transform
         .Find("New/_Combined Mesh [high]").gameObject,
       floor.transform.parent,
       false);
-    Destroy(floor);
+    Object.Destroy(floor);
     newFloor.transform.localPosition = new Vector3(1f, -52.55f, 0.5f);
     newFloor.transform.localScale = Vector3.one;
     newFloor.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
