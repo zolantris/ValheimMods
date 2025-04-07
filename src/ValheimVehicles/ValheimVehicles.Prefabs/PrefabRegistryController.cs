@@ -29,6 +29,59 @@ public class PrefabRegistryController : MonoBehaviour
 
   private static bool _initialized = false;
 
+  public static string ValheimDefaultPieceTableName = "Hammer";
+
+  /// <summary>
+  /// Gets the PieceTableName and falls back to the original piece name.
+  /// </summary>
+  /// <returns></returns>
+  public static string GetPieceTableName()
+  {
+    return VehicleHammerTableRegistry.VehicleHammerTable != null ? VehicleHammerTableRegistry.VehicleHammerTableName : ValheimDefaultPieceTableName;
+  }
+
+  private static PieceTable? _cachedValheimHammerPieceTable = null;
+
+  /// <summary>
+  /// Gets the customtable name or fallsback to original hammer table.
+  /// </summary>
+  /// <returns></returns>
+  public static PieceTable GetPieceTable()
+  {
+    if (VehicleHammerTableRegistry.VehicleHammerTable != null) return VehicleHammerTableRegistry.VehicleHammerTable.PieceTable;
+
+    if (_cachedValheimHammerPieceTable != null)
+    {
+      return _cachedValheimHammerPieceTable;
+    }
+
+#if DEBUG
+    var allTables = PieceManager.Instance.GetPieceTables();
+
+    // for debugging names.
+    foreach (var pieceTable in allTables)
+    {
+      if (pieceTable == null) continue;
+      LoggerProvider.LogDebug(pieceTable.name);
+    }
+#endif
+
+    _cachedValheimHammerPieceTable = PieceManager.Instance.GetPieceTable(ValheimDefaultPieceTableName);
+
+    return _cachedValheimHammerPieceTable;
+  }
+
+  public static string SetCategoryName(string val)
+  {
+    if (VehicleHammerTableRegistry.VehicleHammerTable != null)
+    {
+      return val;
+    }
+
+    // fallback name.
+    return PrefabNames.DEPRECATED_ValheimRaftMenuName;
+  }
+
   /// <summary>
   /// For debugging and nuking rafts, not to be included in releases
   /// </summary>
@@ -45,11 +98,6 @@ public class PrefabRegistryController : MonoBehaviour
         else
           Destroy(obj);
       }
-  }
-
-  private static void SetupValheimVehiclesBuildMenu()
-  {
-
   }
 
   /// <summary>
@@ -144,14 +192,13 @@ public class PrefabRegistryController : MonoBehaviour
 
     // ValheimVehicle HammerTab
     new VehicleHammerTableRegistry().Register();
-    // CreateValheimVehiclesHammer();
       
     // must be called after assets are loaded
     PrefabRegistryHelpers.Init();
-    
-    
 
-    RegisterAllPrefabs();
+
+    RegisterAllItemPrefabs();
+    RegisterAllPiecePrefabs();
 
     // must be called after RegisterAllPrefabs and AssetBundle assignment to be safe.
     SetupComponents();
@@ -181,7 +228,13 @@ public class PrefabRegistryController : MonoBehaviour
     SwitchAndLeverPrefabs.Instance.Register(prefabManager, pieceManager);
   }
 
-  public static void RegisterAllPrefabs()
+  public static void RegisterAllItemPrefabs()
+  {
+    // main hammer for opening the custom vehicle build menu.
+    new VehicleHammerItemRegistry().Register();
+  }
+
+  public static void RegisterAllPiecePrefabs()
   {
     // Critical Items
     VehiclePrefabs.Instance.Register(prefabManager, pieceManager);
@@ -258,11 +311,11 @@ public class PrefabRegistryController : MonoBehaviour
     pieceManager.AddPiece(new CustomPiece(mbRopeLadderPrefab, false,
       new PieceConfig
       {
-        PieceTable = "Hammer",
+        PieceTable = GetPieceTableName(),
         Description = "$mb_rope_ladder_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .RopeLadder),
-        Category = PrefabNames.ValheimRaftMenuName,
+        Category = SetCategoryName(VehicleHammerTableCategories.Structure),
         Enabled = true,
         Requirements =
         [
@@ -313,10 +366,10 @@ public class PrefabRegistryController : MonoBehaviour
      */
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
-      PieceTable = "Hammer",
+      PieceTable = GetPieceTableName(),
       Description = "$mb_rope_anchor_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("rope_anchor"),
-      Category = PrefabNames.ValheimRaftMenuName,
+      Category = SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
       Requirements =
       [
@@ -371,10 +424,10 @@ public class PrefabRegistryController : MonoBehaviour
 
     var customPiece = new CustomPiece(mbPierPolePrefab, false, new PieceConfig
     {
-      PieceTable = "Hammer",
+      PieceTable = GetPieceTableName(),
       Name = "$mb_pier (" + pierPolePrefabPiece.m_name + ")",
       Description = "$mb_pier_desc\n " + pierPolePrefabPiece.m_description,
-      Category = PrefabNames.ValheimRaftMenuName,
+      Category = SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
       Icon = pierPolePrefabPiece.m_icon,
       Requirements =
@@ -420,10 +473,10 @@ public class PrefabRegistryController : MonoBehaviour
 
     var customPiece = new CustomPiece(pierWallPrefab, false, new PieceConfig
     {
-      PieceTable = "Hammer",
+      PieceTable = GetPieceTableName(),
       Name = "$mb_pier (" + pierWallPrefabPiece.m_name + ")",
       Description = "$mb_pier_desc\n " + pierWallPrefabPiece.m_description,
-      Category = PrefabNames.ValheimRaftMenuName,
+      Category = SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
       Icon = pierWallPrefabPiece.m_icon,
       Requirements =
@@ -514,11 +567,11 @@ public class PrefabRegistryController : MonoBehaviour
 
     pieceManager.AddPiece(new CustomPiece(mbBoardingRamp, false, new PieceConfig
     {
-      PieceTable = "Hammer",
+      PieceTable = GetPieceTableName(),
       Description = "$mb_boarding_ramp_desc",
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .BoardingRamp),
-      Category = PrefabNames.ValheimRaftMenuName,
+      Category = SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
       Requirements =
       [
@@ -564,11 +617,11 @@ public class PrefabRegistryController : MonoBehaviour
     pieceManager.AddPiece(new CustomPiece(mbBoardingRampWide, false,
       new PieceConfig
       {
-        PieceTable = "Hammer",
+        PieceTable = GetPieceTableName(),
         Description = "$mb_boarding_ramp_wide_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .BoardingRamp),
-        Category = PrefabNames.ValheimRaftMenuName,
+        Category = SetCategoryName(VehicleHammerTableCategories.Structure),
         Enabled = true,
         Requirements =
         [
@@ -619,10 +672,10 @@ public class PrefabRegistryController : MonoBehaviour
     pieceManager.AddPiece(new CustomPiece(mbDirtFloorPrefab, false,
       new PieceConfig
       {
-        PieceTable = "Hammer",
+        PieceTable = GetPieceTableName(),
         Name = $"$mb_dirt_floor_{prefabSizeString}",
         Description = $"$mb_dirt_floor_{prefabSizeString}_desc",
-        Category = PrefabNames.ValheimRaftMenuName,
+        Category = SetCategoryName(VehicleHammerTableCategories.Structure),
         Enabled = true,
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .DirtFloor),

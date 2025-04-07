@@ -116,8 +116,8 @@ public class VehiclePrefabs : IRegisterPrefab
     PieceManager.Instance.AddPiece(new CustomPiece(waterVehiclePrefab, true,
       new PieceConfig
       {
-        PieceTable = "Hammer",
-        Category = PrefabNames.ValheimRaftMenuName,
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
         Enabled = true,
         Requirements =
         [
@@ -156,8 +156,8 @@ public class VehiclePrefabs : IRegisterPrefab
     PieceManager.Instance.AddPiece(new CustomPiece(landVehiclePrefab, true,
       new PieceConfig
       {
-        PieceTable = "Hammer",
-        Category = PrefabNames.ValheimRaftMenuName,
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
         Enabled = PrefabConfig.EnableLandVehicles.Value,
         Requirements =
         [
@@ -202,8 +202,8 @@ public class VehiclePrefabs : IRegisterPrefab
 
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
-      PieceTable = "Hammer",
-      Category = PrefabNames.ValheimRaftMenuName,
+      PieceTable = PrefabRegistryController.GetPieceTableName(),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
       Requirements =
       [

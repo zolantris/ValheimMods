@@ -54,9 +54,9 @@ public class AnchorPrefabs : IRegisterPrefab
       new PieceConfig
       {
         Name = piece.name,
-        PieceTable = "Hammer",
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
         Icon = piece.m_icon,
-        Category = PrefabNames.ValheimRaftMenuName,
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
         Requirements = [
           new RequirementConfig
           {

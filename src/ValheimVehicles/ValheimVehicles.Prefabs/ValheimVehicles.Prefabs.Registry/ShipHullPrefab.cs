@@ -339,8 +339,8 @@ public class ShipHullPrefab : IRegisterPrefab
       PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
         new PieceConfig
         {
-          PieceTable = "Hammer",
-          Category = ValheimRaftMenuName,
+          PieceTable = PrefabRegistryController.GetPieceTableName(),
+          Category = DEPRECATED_ValheimRaftMenuName,
           Enabled = true,
           Requirements = GetRequirements(hullMaterial, materialCount)
         }));

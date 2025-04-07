@@ -128,8 +128,8 @@ public class RamPrefabs : IRegisterPrefab
       PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
         new PieceConfig
         {
-          PieceTable = "Hammer",
-          Category = PrefabNames.ValheimRaftMenuName,
+          PieceTable = PrefabRegistryController.GetPieceTableName(),
+          Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
           Enabled = true,
           Requirements =
           [
@@ -205,8 +205,8 @@ public class RamPrefabs : IRegisterPrefab
       PieceManager.Instance.AddPiece(new CustomPiece(prefab, false,
         new PieceConfig
         {
-          PieceTable = "Hammer",
-          Category = PrefabNames.ValheimRaftMenuName,
+          PieceTable = PrefabRegistryController.GetPieceTableName(),
+          Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
           Enabled = true,
           Requirements =
           [

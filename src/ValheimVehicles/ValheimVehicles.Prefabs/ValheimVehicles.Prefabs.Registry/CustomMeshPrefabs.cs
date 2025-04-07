@@ -60,7 +60,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
   //   PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
   //     new PieceConfig
   //     {
-  //       PieceTable = "Hammer",
+  //       PieceTable = PrefabRegistryController.GetPieceTableName(),
   //       Category = PrefabNames.ValheimRaftMenuName,
   //       Enabled = true
   //     }));
@@ -96,7 +96,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
   //   PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
   //     new PieceConfig
   //     {
-  //       PieceTable = "Hammer",
+  //       PieceTable = PrefabRegistryController.GetPieceTableName(),
   //       Category = PrefabNames.ValheimRaftMenuName,
   //       Enabled = true
   //     }));
@@ -132,8 +132,8 @@ public class CustomMeshPrefabs : IRegisterPrefab
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig
       {
-        PieceTable = "Hammer",
-        Category = PrefabNames.ValheimRaftMenuName,
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
         Enabled = true,
       }));
   }
@@ -188,10 +188,10 @@ public class CustomMeshPrefabs : IRegisterPrefab
       new PieceConfig
       {
         Name = piece.name,
-        PieceTable = "Hammer",
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WaterOpacityBucket),
-        Category = PrefabNames.ValheimRaftMenuName,
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
         Enabled = true,
       }));
   }
@@ -238,10 +238,10 @@ public class CustomMeshPrefabs : IRegisterPrefab
       new PieceConfig
       {
         Name = "Vehicle Water Mask Test",
-        PieceTable = "Hammer",
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WaterOpacityBucket),
-        Category = PrefabNames.ValheimRaftMenuName,
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
         Enabled = true,
       }));
   }

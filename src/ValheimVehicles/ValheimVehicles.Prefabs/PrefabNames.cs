@@ -123,7 +123,7 @@ public static class PrefabNames
   public const string WaterVehicleOnboardCollider =
     "VehicleShip_OnboardTriggerCollider";
 
-  public const string ValheimRaftMenuName = "Raft";
+  public const string DEPRECATED_ValheimRaftMenuName = "Raft";
 
   // Containers that are nested within a VehiclePrefab top level
   // utilize the Get<Name> methods within the LoadValheimVehiclesAssets class to get these GameObjects

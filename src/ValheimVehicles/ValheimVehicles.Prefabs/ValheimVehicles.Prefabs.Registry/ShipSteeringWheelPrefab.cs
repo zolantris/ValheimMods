@@ -34,8 +34,8 @@ public class ShipSteeringWheelPrefab : IRegisterPrefab
 
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
-      PieceTable = "Hammer",
-      Category = PrefabNames.ValheimRaftMenuName,
+      PieceTable = PrefabRegistryController.GetPieceTableName(),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
       Requirements =
       [

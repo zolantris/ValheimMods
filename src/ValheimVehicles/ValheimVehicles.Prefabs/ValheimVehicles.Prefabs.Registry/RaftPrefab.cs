@@ -59,9 +59,9 @@ public class RaftPrefab : IRegisterPrefab
 
     pieceManager.AddPiece(new CustomPiece(raftPrefab, false, new PieceConfig
     {
-      PieceTable = "Hammer",
+      PieceTable = PrefabRegistryController.GetPieceTableName(),
       Description = "$mb_raft_desc",
-      Category = PrefabNames.ValheimRaftMenuName,
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value,
       Requirements =
       [

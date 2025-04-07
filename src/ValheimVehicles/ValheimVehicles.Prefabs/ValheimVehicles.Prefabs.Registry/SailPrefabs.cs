@@ -85,10 +85,10 @@ public class SailPrefabs : IRegisterPrefab
     pieceManager.AddPiece(new CustomPiece(vikingShipMastPrefab, false,
       new PieceConfig
       {
-        PieceTable = "Hammer",
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .VikingMast),
-        Category = PrefabNames.ValheimRaftMenuName,
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
         Enabled = true,
         Requirements =
         [
@@ -153,10 +153,10 @@ public class SailPrefabs : IRegisterPrefab
 
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
-      PieceTable = "Hammer",
+      PieceTable = PrefabRegistryController.GetPieceTableName(),
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .VikingMast),
-      Category = PrefabNames.ValheimRaftMenuName,
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
       Requirements =
       [
@@ -254,9 +254,9 @@ public class SailPrefabs : IRegisterPrefab
 
     pieceManager.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
-      PieceTable = "Hammer",
+      PieceTable = PrefabRegistryController.GetPieceTableName(),
       Description = $"$mb_sail_{sailCount}_desc",
-      Category = PrefabNames.ValheimRaftMenuName,
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
       Icon = sailIcon
     }));
@@ -315,11 +315,11 @@ public class SailPrefabs : IRegisterPrefab
     pieceManager.AddPiece(new CustomPiece(mbRaftMastPrefab, false,
       new PieceConfig
       {
-        PieceTable = "Hammer",
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
         Description =
           GetTieredSailAreaText(1),
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("raftmast"),
-        Category = PrefabNames.ValheimRaftMenuName,
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
         Enabled = true,
         Requirements =
         [
@@ -378,10 +378,10 @@ public class SailPrefabs : IRegisterPrefab
     pieceManager.AddPiece(new CustomPiece(mbKarveMastPrefab, false,
       new PieceConfig
       {
-        PieceTable = "Hammer",
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
         Description = GetTieredSailAreaText(2),
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("karvemast"),
-        Category = PrefabNames.ValheimRaftMenuName,
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
         Enabled = true,
         Requirements = new RequirementConfig[3]
         {

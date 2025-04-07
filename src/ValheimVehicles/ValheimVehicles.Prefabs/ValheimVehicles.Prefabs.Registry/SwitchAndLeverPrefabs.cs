@@ -34,11 +34,11 @@ public class SwitchAndLeverPrefabs : IRegisterPrefab
 
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
-      PieceTable = "Hammer",
+      PieceTable = PrefabRegistryController.GetPieceTableName(),
       Description = pieceTranslations.Description,
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .VehicleSwitch),
-      Category = PrefabNames.ValheimRaftMenuName,
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
       Requirements =
       [

@@ -27,10 +27,10 @@ public class ShipKeelPrefab : IRegisterPrefab
 
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
-      PieceTable = "Hammer",
+      PieceTable = PrefabRegistryController.GetPieceTableName(),
       Description = pieceTranslations.Description,
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipKeel),
-      Category = PrefabNames.ValheimRaftMenuName,
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
       Requirements =
       [
