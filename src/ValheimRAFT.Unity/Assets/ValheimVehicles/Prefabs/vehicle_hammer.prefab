@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5926141241312746689}
+  - component: {fileID: 2572199198916636548}
   m_Layer: 0
   m_Name: vehicle_hammer
   m_TagString: Untagged
@@ -32,6 +33,33 @@ Transform:
   - {fileID: 1068870810142989418}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!54 &2572199198916636548
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4230367608162710557}
+  serializedVersion: 4
+  m_Mass: 10
+  m_Drag: 0.05
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 3154272772
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1001 &675501649303059329
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -191,10 +219,39 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2573726282031660673, guid: 2642b2f5e7c2d864992c252051ad651d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 293026991367981745}
   m_SourcePrefab: {fileID: 100100000, guid: 2642b2f5e7c2d864992c252051ad651d, type: 3}
 --- !u!4 &1068870810142989418 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2642b2f5e7c2d864992c252051ad651d, type: 3}
   m_PrefabInstance: {fileID: 675501649303059329}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &3091839071617762560 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2573726282031660673, guid: 2642b2f5e7c2d864992c252051ad651d, type: 3}
+  m_PrefabInstance: {fileID: 675501649303059329}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &293026991367981745
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3091839071617762560}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6015, y: 1.2075, z: 0.315}
+  m_Center: {x: -0.05154475, y: 0.60375, z: -0.06778504}

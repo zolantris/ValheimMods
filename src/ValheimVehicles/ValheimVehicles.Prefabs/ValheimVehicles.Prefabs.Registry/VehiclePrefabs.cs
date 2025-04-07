@@ -117,7 +117,7 @@ public class VehiclePrefabs : IRegisterPrefab
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Vehicles),
         Enabled = true,
         Requirements =
         [
@@ -157,7 +157,7 @@ public class VehiclePrefabs : IRegisterPrefab
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Vehicles),
         Enabled = PrefabConfig.EnableLandVehicles.Value,
         Requirements =
         [
@@ -203,7 +203,7 @@ public class VehiclePrefabs : IRegisterPrefab
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
-      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Vehicles),
       Enabled = true,
       Requirements =
       [

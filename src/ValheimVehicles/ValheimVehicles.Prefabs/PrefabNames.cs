@@ -318,7 +318,8 @@ public static class PrefabNames
   public const string VehicleHudAnchorIndicator =
     $"{ValheimVehiclesPrefix}_HudAnchorIndicator";
 
-  public const string VehicleHammer = "Vehicle Hammer";
+  // hammers must contain "hammer" in the string to match.
+  public const string VehicleHammer = $"{ValheimVehiclesPrefix}_vehicle_hammer";
 
   public const string RamBladePrefix = $"{ValheimVehiclesPrefix}_ram_blade";
   public const string RamStakePrefix = $"{ValheimVehiclesPrefix}_ram_stake";

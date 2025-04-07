@@ -32,24 +32,21 @@ public class VehicleHammerItemRegistry : GuardedRegistry<VehicleHammerTableRegis
 
     itemDrop.m_itemData.m_shared = new ItemDrop.ItemData.SharedData
     {
-      m_name = "$valheim_vehicles_hammer_name",
-      // Required setup
+      m_name = PrefabNames.VehicleHammer,
       m_useDurability = true,
       m_durabilityDrain = 0f,
       m_durabilityPerLevel = 200f,
-
-
       m_icons = [icon],
-      // m_animationState = ItemDrop.ItemData.AnimationState.Torch,
-
       m_buildPieces = PrefabRegistryController.GetPieceTable(),
       m_toolTier = 1,
-      m_itemType = ItemDrop.ItemData.ItemType.None
-      // m_attack =
-      // {
-      //   m_attackAnimation = "swing_pickaxe", // avoid weapon behavior
-      //   m_attackType = Attack.AttackType.None
-      // }
+      // See In HammerItemElement.IsHammer (valheim.dll) regarding hammer logic matchers
+      // requires
+      // - m_skillType =  Skills.SkillType.Swords
+      // - m_itemType = ItemDrop.ItemData.ItemType.Tool
+      // - prefab name must container "hammer" lower case.
+      m_equipDuration = 0,
+      m_skillType = Skills.SkillType.Swords,
+      m_itemType = ItemDrop.ItemData.ItemType.Tool
     };
 
     var itemConfig = new ItemConfig
@@ -69,13 +66,6 @@ public class VehicleHammerItemRegistry : GuardedRegistry<VehicleHammerTableRegis
     };
 
     var customItem = new CustomItem(hammerPrefab, true, itemConfig);
-
-    // var originalHammer = ItemManager.Instance.GetItem("Hammer");
-    //
-    // if (originalHammer != null)
-    // {
-    //   LoggerProvider.LogDebug("Found original hammer");
-    // }
 
     var success = ItemManager.Instance.AddItem(customItem);
     if (!success)
