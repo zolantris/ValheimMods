@@ -133,7 +133,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
       new PieceConfig
       {
         PieceTable = PrefabRegistryController.GetPieceTableName(),
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
         Enabled = true,
       }));
   }
@@ -191,7 +191,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
         PieceTable = PrefabRegistryController.GetPieceTableName(),
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WaterOpacityBucket),
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
         Enabled = true,
       }));
   }
@@ -241,7 +241,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
         PieceTable = PrefabRegistryController.GetPieceTableName(),
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WaterOpacityBucket),
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
         Enabled = true,
       }));
   }

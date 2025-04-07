@@ -79,19 +79,21 @@ public class VehicleHammerItemRegistry : GuardedRegistry<VehicleHammerItemRegist
       itemDrop.m_itemData.m_shared.m_attack = new Attack();
     }
 
-    if (itemDrop.m_itemData.m_shared.m_secondaryAttack == null)
-    {
-      itemDrop.m_itemData.m_shared.m_secondaryAttack = new Attack();
-    }
-
+    
     itemDrop.m_itemData.m_shared.m_attack.m_attackAnimation = "swing_hammer";
     itemDrop.m_itemData.m_shared.m_attack.m_attackType = Attack.AttackType.Horizontal;
     itemDrop.m_itemData.m_shared.m_attack.m_attackStamina = 5;
+    itemDrop.m_itemData.m_shared.m_attack.m_hitTerrain = true;
 
+    // secondary attacks are invalid as valheim uses Player To destroy the piece and do a raycast when pressing center button.
+    // if (itemDrop.m_itemData.m_shared.m_secondaryAttack == null)
+    // {
+    //   itemDrop.m_itemData.m_shared.m_secondaryAttack = new Attack();
+    // }
     // itemDrop.m_itemData.m_shared.m_secondaryAttack.m_attackAnimation = "";
-    itemDrop.m_itemData.m_shared.m_secondaryAttack.m_attackType = Attack.AttackType.Horizontal;
-    itemDrop.m_itemData.m_shared.m_secondaryAttack.m_attackAnimation = "swing_hammer";
-    itemDrop.m_itemData.m_shared.m_secondaryAttack.m_attackStamina = 20;
+    // itemDrop.m_itemData.m_shared.m_secondaryAttack.m_attackType = Attack.AttackType.Horizontal;
+    // itemDrop.m_itemData.m_shared.m_secondaryAttack.m_attackAnimation = "swing_hammer";
+    // itemDrop.m_itemData.m_shared.m_secondaryAttack.m_attackStamina = 20;
     // itemDrop.m_itemData.m_shared.m_attack.m_speedFactor = 0.2f; // default value. can remove 
     // itemDrop.m_itemData.m_shared.m_attack.m_speedFactorRotation = 0.2f; // default value. can remove.
 

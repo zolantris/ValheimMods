@@ -44,7 +44,7 @@ public static class PrefabRegistryController
   private static PieceTable? _cachedValheimHammerPieceTable = null;
 
   /// <summary>
-  /// Gets the customtable name or fallsback to original hammer table.
+  /// Gets the custom-table name or fallsback to original hammer table.
   /// </summary>
   /// <returns></returns>
   public static PieceTable GetPieceTable()
@@ -231,6 +231,7 @@ public static class PrefabRegistryController
 
   public static void RegisterValheimVehiclesPrefabs()
   {
+    SwitchAndLeverPrefabs.Instance.Register(prefabManager, pieceManager);
     CustomMeshPrefabs.Instance.Register(prefabManager, pieceManager);
 
     AnchorPrefabs.Instance.Register(prefabManager, pieceManager);
@@ -244,8 +245,6 @@ public static class PrefabRegistryController
     VehiclePiecesPrefab.Instance.Register(prefabManager, pieceManager);
 
     RamPrefabs.Instance.Register(prefabManager, pieceManager);
-
-    SwitchAndLeverPrefabs.Instance.Register(prefabManager, pieceManager);
   }
 
   public static void RegisterAllItemPrefabs()

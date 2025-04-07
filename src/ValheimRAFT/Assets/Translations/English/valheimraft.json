@@ -115,7 +115,7 @@
   "valheim_vehicles_rudder_advanced_double": "Ship Rudder (Advanced)x2",
   "valheim_vehicles_rudder_advanced_desc": "Advanced Ship Rudder, the technology of steering has advanced. You now can steer better. Allows for turning ships of large mass, the direction a rudder faces will determine the boat sailing direction",
   "valheim_vehicles_toggle_switch": "Toggle Switch",
-  "valheim_vehicles_toggle_switch_desc": "Toggle Switch used for toggling vehicle features",
+  "valheim_vehicles_toggle_switch_desc": "Toggle Switch used for toggling vehicle features and showing additional menus.",
   "valheim_vehicles_ram_stake": "Ram Stake",
   "valheim_vehicles_ram_stake_desc": "Used to puncture hulls, enemies, and terrain. Less area damage, but can smash rocks harder within a small area. Cannot damage trees.",
   "valheim_vehicles_ram_blade": "Ram Blade",
@@ -149,5 +149,8 @@
   "valheim_vehicles_hammer_description": "Hammer to build and modify valheim-vehicles items (AKA ValheimRAFT).",
   "valheim_vehicles_toggle_on": "on",
   "valheim_vehicles_toggle_off": "off",
-  "valheim_vehicles_creative_toggle_desc": "Toggle the vehicle command on/off."
+  "valheim_vehicles_creative_toggle_desc": "Toggle the vehicle command on/off.",
+  "valheim_vehicles_commands_edit_menu": "edit-menu",
+  "valheim_vehicles_commands_creative_mode": "creative-mode",
+  "valheim_vehicles_commands_mask_edit_mode": "collider-edit-mode"
 }

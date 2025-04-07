@@ -3,7 +3,9 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
+using JetBrains.Annotations;
 using UnityEngine;
+using Valheim.UI;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
@@ -45,6 +47,34 @@ public class Player_Patch
         Transpilers.EmitDelegate<System.Func<GameObject, GameObject>>(
           PlacedPiece))
       .InstructionEnumeration();
+  }
+
+  [HarmonyPatch(typeof(Player), nameof(Player.InRepairMode))]
+  [HarmonyPostfix]
+  public static void Player_InRepairMode(Player __instance, ref bool __result)
+  {
+    if (__instance.InPlaceMode())
+    {
+      var selectedPiece = __instance.m_buildPieces.GetSelectedPiece();
+      if (selectedPiece != null)
+      {
+        __result = selectedPiece.m_repairPiece || selectedPiece.m_removePiece;
+        return;
+      }
+    }
+    __result = false;
+  }
+
+  [HarmonyPatch(typeof(HammerItemElement), nameof(HammerItemElement.IsHammer))]
+  [HarmonyPostfix]
+  public static void HammerItemElement_IsHammer(HammerItemElement __instance, ItemDrop.ItemData item, bool __result)
+  {
+    if (
+      item.m_shared.m_name == PrefabNames.VehicleHammer)
+    {
+      // ReSharper disable once RedundantAssignment
+      __result = true;
+    }
   }
 
   public static void HidePreviewComponent(ZNetView netView)

@@ -1,3 +1,4 @@
+using Components;
 using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Entities;
@@ -30,11 +31,14 @@ public class SwitchAndLeverPrefabs : IRegisterPrefab
     piece.name = prefab.name;
     piece.m_description =
       "Toggle Switch - allows additional controls on vehicles";
-    // var toggleSwitch = prefab.AddComponent<ToggleSwitch>();
 
-    pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
+    // main toggle switch.
+    prefab.AddComponent<CustomToggleSwitch>();
+
+    pieceManager.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
+      Name = pieceTranslations.Name,
       Description = pieceTranslations.Description,
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
         .VehicleSwitch),
@@ -54,10 +58,6 @@ public class SwitchAndLeverPrefabs : IRegisterPrefab
 
   public void Register(PrefabManager prefabManager, PieceManager pieceManager)
   {
-    // Not registering prefabs in production as this does nothing for now.
-
-#if DEBUG
     RegisterToggleSwitch(prefabManager, pieceManager);
-#endif
   }
 }

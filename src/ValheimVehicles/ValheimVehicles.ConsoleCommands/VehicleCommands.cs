@@ -111,12 +111,10 @@ public class VehicleCommands : ConsoleCommand
           $"{Name} {VehicleCommandArgs.recover}");
         break;
       case VehicleCommandArgs.creative:
-        if (!CanRunEditCommand()) return;
         ToggleCreativeMode();
         break;
       case VehicleCommandArgs.debug:
-        if (!CanRunCheatCommand()) return;
-        ToggleVehicleDebugCommandsComponent();
+        ToggleVehicleCommandsHud();
         break;
 #if DEBUG
       // config is not ready - only debug for now.
@@ -681,8 +679,9 @@ public class VehicleCommands : ConsoleCommand
     VehicleGui.ToggleConfigPanelState(true);
   }
 
-  private static void ToggleVehicleDebugCommandsComponent()
+  public static void ToggleVehicleCommandsHud()
   {
+    if (!CanRunCheatCommand()) return;
     VehicleGui.ToggleCommandsPanelState(true);
     foreach (var vehicleShip in VehicleShip.VehicleInstances)
     {
@@ -802,6 +801,7 @@ public class VehicleCommands : ConsoleCommand
 
   public static void ToggleCreativeMode()
   {
+    if (!CanRunEditCommand()) return;
     if (Game.instance == null)
     {
       _creativeModeCoroutineInstance = null;
