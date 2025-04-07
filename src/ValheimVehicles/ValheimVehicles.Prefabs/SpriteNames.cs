@@ -12,6 +12,8 @@ public abstract class SpriteNames
   public const string ShipRudderAdvancedIron = "rudder_advanced_single_iron";
   public const string Anchor = "anchor";
 
+  public const string VehicleHammer = "vehicle_hammer";
+
   public const string ShipRudderAdvancedDoubleWood =
     "rudder_advanced_double_wood";
 

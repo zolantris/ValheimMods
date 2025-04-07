@@ -47,6 +47,11 @@ public class PrefabRegistryController : MonoBehaviour
       }
   }
 
+  private static void SetupValheimVehiclesBuildMenu()
+  {
+
+  }
+
   /// <summary>
   /// Requires assetbundle values to be set already
   /// </summary>

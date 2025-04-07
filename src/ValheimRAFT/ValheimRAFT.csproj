@@ -81,6 +81,27 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Attributes\NotNullWhen.cs">
             <Link>ValheimVehicles.Attributes\NotNullWhen.cs</Link>
         </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\SharedScripts.Validation\SkipValidationAttribute.cs">
+            <Link>SharedScripts.Validation\SkipValidationAttribute.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\SharedScripts.Validation\StaticFieldValidatorTests.cs">
+            <Link>SharedScripts.Validation\StaticFieldValidatorTests.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\Registry\VehicleHammerRegistry.cs">
+            <Link>ValheimVehicles.Prefabs\Registry\VehicleHammerRegistry.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\ShipHulls.cs">
+            <Link>ValheimVehicles.Prefabs\ShipHulls.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Loading\LoadValheimAssets.cs">
+            <Link>ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Loading\LoadValheimAssets.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Loading\LoadValheimRaftAssets.cs">
+            <Link>ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Loading\LoadValheimRaftAssets.cs</Link>
+        </Compile>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Loading\LoadValheimVehiclesAssets.cs">
+            <Link>ValheimVehicles.Prefabs\ValheimVehicles.Prefabs.Loading\LoadValheimVehiclesAssets.cs</Link>
+        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup><!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->
@@ -89,6 +110,7 @@
     </ItemGroup>
     <ItemGroup>
         <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
+        <Compile Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\**\*.cs"/>
         <Compile Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\*.cs"/>
         <Folder Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\"/>
     </ItemGroup>
