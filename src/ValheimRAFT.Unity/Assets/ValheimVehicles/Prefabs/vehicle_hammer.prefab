@@ -134,7 +134,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 580ae5285232e8842bf685639ef0ec74, type: 2}
     - target: {fileID: 919132149155446097, guid: 2642b2f5e7c2d864992c252051ad651d, type: 3}
       propertyPath: m_Name
-      value: Water_hammer
+      value: water_hammer
       objectReference: {fileID: 0}
     - target: {fileID: 4497477574752178036, guid: 2642b2f5e7c2d864992c252051ad651d, type: 3}
       propertyPath: m_CastShadows
