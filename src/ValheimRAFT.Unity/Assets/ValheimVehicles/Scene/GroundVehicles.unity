@@ -1925,18 +1925,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78ee141785a123c488f2a4f4fecf2abd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_syncRigidbody: {fileID: 4313409606746086540}
-  m_localRigidbody: {fileID: 1246876113}
-  m_shouldSync: 1
-  convexAPIThresholdDistance: {x: 1, y: 1, z: 1}
-  vehicleCollidersToIgnore: []
-  convexHullColliders: []
-  convexHullMeshColliders: []
-  m_convexHullAPI: {fileID: 0}
-  m_meshClusterComponent: {fileID: 0}
-  pieceDataChangeIndex: 0
-  m_convexHullJobHandler: {fileID: 0}
-  clusterThreshold: 2
 --- !u!114 &1246876116
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1980,8 +1968,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c86ca01f04d0b544b2235b63e1fa179, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_movementPiecesController: {fileID: 1246876114}
-  combinedMeshParent: {fileID: 1246876110}
 --- !u!1 &1341137345
 GameObject:
   m_ObjectHideFlags: 0
@@ -2053,7 +2039,7 @@ MonoBehaviour:
   forwardTransform: {fileID: 3462057762617736770}
   _convexHullAPI: {fileID: 1246876116}
   vehicleWheelController: {fileID: 7210998224556755449}
-  movementPiecesController: {fileID: 1246876114}
+  basePiecesController: {fileID: 1246876114}
   centerOfMassOffset: -4
   cameraTransform: {fileID: 2010887271}
   hasCalledFirstGenerate: 0
