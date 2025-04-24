@@ -1,6 +1,4 @@
 ﻿using System.Runtime.InteropServices;
-using BepInEx;
-using ValheimRAFT;
 namespace ValheimVehicles.Injections;
 
 using System;
@@ -9,8 +7,16 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
+/// <summary>
+/// The BurstInjector is experimental and the code is only compiled in DEBUG variants.
+///
+/// This class is supposed to be able to inject the full Unity Burst DLL into the Valheim or other mod game. However, the burst dll file is not easy to find or is named something different.
+/// </summary>
+/// 
+/// todo find out what UnityBurst.dll is needed to allow injection of burst within games that could support it but do not include it.
 public class BurstInjector
 {
+#if DEBUG
     // public static void LoadBurst()
     // {
     //     var burstDllPath = "";
@@ -140,4 +146,6 @@ public class BurstInjector
         if (handle == IntPtr.Zero)
             throw new Exception($"Failed to load library: {path}");
     }
+
+#endif
 }

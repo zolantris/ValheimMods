@@ -331,9 +331,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   }
 
   public void Awake()
-  {
-    // BurstInjector.LoadBurst();
-    
+  {    
     Instance = this;
     gameObject.AddComponent<BatchedLogger>();
 
