@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using DynamicLocations;
 using DynamicLocations.Constants;
 using DynamicLocations.Controllers;
 using Jotunn.GUI;
 using Jotunn.Managers;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -13,10 +15,13 @@ using ValheimRAFT;
 using ValheimRAFT.Patches;
 using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
+using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.Structs;
 using ValheimVehicles.ValheimVehicles.API;
+using ValheimVehicles.ValheimVehicles.GUI;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Enums;
 using Logger = Jotunn.Logger;
@@ -28,6 +33,8 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
   private GUIStyle? myButtonStyle;
   private string ShipMovementOffsetText;
   private Vector3 _shipMovementOffset;
+  public static Dropdown VehicleSelectDropdown;
+
 
   private Vector3 GetShipMovementOffset()
   {
@@ -41,8 +48,8 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
 
 
   // todo translate this
-  public const string vehicleCommandsHide = "Vehicle Commands (Hide)";
-  public const string vehicleCommandsShow = "Vehicle Commands (Show)";
+  public static string vehicleCommandsHide => $"{ModTranslations.GuiCommandsMenuTitle} ({ModTranslations.GuiHide})";
+  public static string vehicleCommandsShow => $"{ModTranslations.GuiCommandsMenuTitle} ({ModTranslations.GuiShow})";
 
   // todo translate this
   public const string vehicleConfigHide = "Vehicle Config (Hide)";
@@ -193,26 +200,12 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     hasInitialized = true;
   }
 
-  public struct ButtonAction
-  {
-    public string title;
-    public Action action;
-  }
-
-  public struct InputAction
-  {
-    public string title;
-    public string description;
-    public Action saveAction;
-    public Action resetAction;
-  }
-
   public VehicleShip? targetInstance;
 
-  private ButtonAction GetCurrentVehicleButtonAction = new()
+  private GenericInputAction _getCurrentVehicleGenericInputAction = new()
   {
     title = "Update current vehicle",
-    action = () =>
+    OnButtonPress = () =>
     {
       if (Instance == null) return;
       var piecesController = VehicleDebugHelpers.GetVehiclePiecesController();
@@ -225,85 +218,59 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     }
   };
 
-  private static List<InputAction> configSections =
-  [
-    new()
+
+  public static void VehicleSelectOnDropdownChanged(int index)
+  {
+    var vehicles = VehicleStorageAPI.GetAllVehicles();
+    if (index >= 0 && index < vehicles.Count)
     {
-      title = "Treads Max Width",
-      description = "Set the max width of treads",
-      saveAction = () =>
-      {
-      },
-      resetAction = () => {}
+      VehicleStorageAPI.SelectedVehicle = vehicles[index].Settings.VehicleType.ToString();
+      LoggerProvider.LogInfo($"Selected Vehicle: {VehicleStorageAPI.SelectedVehicle}");
     }
-  ];
-
-
-  private static List<ButtonAction> commandButtonActions =
-  [
-    new()
+    else
     {
-      title = "Hull debugger",
-      action = ToggleConvexHullDebugger
-    },
-    new()
-    {
-      title = "Physics Debugger",
-      action = ToggleColliderDebugger
-    },
-    new()
-    {
-      title = "Raft Creative",
-      action = VehicleCommands.ToggleCreativeMode
-    },
-    new()
-    {
-      title = "Save Vehicle",
-      action = VehicleStorageAPI.SaveClosestVehicle
-    },
-    new()
-    {
-      title = "Spawn Last Vehicle",
-      action = VehicleStorageAPI.SpawnVehicle
-    },
-    new()
-    {
-      title = "Zero Ship Rotation X/Z",
-      action = () =>
-      {
-        var onboardHelpers = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
-        if (onboardHelpers != null) onboardHelpers.FlipShip();
-      }
-    },
-    new()
-    {
-      title = "Toggle Ocean Sway",
-      action = VehicleCommands.VehicleToggleOceanSway
-    },
-    new()
-    {
-      title = "Rebuild Bounds",
-      action = () =>
-      {
-        var vpc = VehicleDebugHelpers.GetVehiclePiecesController();
-        if (vpc == null)
-          return;
-        vpc.ForceRebuildBounds();
-      }
-    },
-#if DEBUG
-    new()
-    {
-      title = "Config",
-      action = () =>
-      {
-        ToggleConfigPanelState(true);
-      }
+      LoggerProvider.LogWarning("No vehicles detected cannot select any vehicle.");
+      VehicleStorageAPI.SelectedVehicle = "";
     }
-#endif
-  ];
+  }
 
-  public GameObject AddInputWithAction(InputAction inputAction, int index, float StartHeight, Transform windowTransform)
+  private static GameObject AddDropdownWithAction(GenericInputAction genericInputAction, int index, float StartHeight, Transform windowTransform)
+  {
+    // Add Dropdown
+    var currentDropdown = GUIManager.Instance.CreateDropDown(windowTransform,
+      new Vector2(0, 1f),
+      new Vector2(0, 1f),
+      new Vector2(0f, 0f),
+      18);
+    var dropdownComponent = currentDropdown.GetComponent<Dropdown>();
+    VehicleSelectDropdown.GetComponent<RectTransform>().sizeDelta = new Vector2(300, 60);
+    dropdownComponent.captionText.text = "Select Vehicle";
+
+    // it should never be null here.
+    if (genericInputAction.OnDropdownChanged != null)
+    {
+      dropdownComponent.onValueChanged.AddListener(genericInputAction.OnDropdownChanged);
+    }
+    else
+    {
+      LoggerProvider.LogError("OnDropdownChanged not provided for a AddDropdownAction. This is an error with Valheim Vehicles. Please Report");
+    }
+
+    currentDropdown.AddComponent<DropdownRefreshOnHover>();
+
+    // todo likely do not need this.
+    currentDropdown.SetActive(true);
+
+    if (genericInputAction.OnCreateDropdown != null)
+    {
+      genericInputAction.OnCreateDropdown(dropdownComponent);
+    }
+
+    return currentDropdown;
+  }
+
+
+  public GameObject AddInputWithAction(GenericInputAction genericInputAction, int index, float StartHeight, Transform windowTransform)
   {
 
     var buttonObj = GUIManager.Instance.CreateInputField(
@@ -342,11 +309,11 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
   }
 
 
-  public GameObject AddButtonWithAction(ButtonAction buttonAction, int index, float StartHeight, Transform windowTransform)
+  public GameObject AddButtonWithAction(GenericInputAction genericInputAction, int index, float StartHeight, Transform windowTransform)
   {
 
     var buttonObj = GUIManager.Instance.CreateButton(
-      buttonAction.title,
+      genericInputAction.title,
       windowTransform,
       new Vector2(0.5f, 0.5f),
       new Vector2(0.5f, 0.5f),
@@ -362,7 +329,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
       text.fontSize = buttonFontSize;
     }
 
-    button.onClick.AddListener(() => buttonAction.action());
+    button.onClick.AddListener(() => genericInputAction.OnButtonPress());
     return buttonObj;
   }
 
@@ -469,7 +436,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
 
     configToggleButtonWindow = CreateConfigTogglePanel();
 
-    var dynamicPanelHeight = configSections.Count * buttonHeight + configSections.Count * 5;
+    var dynamicPanelHeight = VehicleGUIItems.configSections.Count * buttonHeight + VehicleGUIItems.configSections.Count * 5;
     configWindow = GUIManager.Instance.CreateWoodpanel(
       configToggleButtonWindow.transform,
       new Vector2(0.5f, 0f),
@@ -481,9 +448,9 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     configWindow.SetActive(hasConfigPanelOpened);
 
     var startHeight = dynamicPanelHeight / 2f - buttonHeight / 2;
-    for (var index = 0; index < configSections.Count; index++)
+    for (var index = 0; index < VehicleGUIItems.configSections.Count; index++)
     {
-      var inputAction = configSections[index];
+      var inputAction = VehicleGUIItems.configSections[index];
       var obj = AddInputWithAction(inputAction, index, startHeight, configWindow.transform);
       configPanelToggleObjects.Add(obj);
     }
@@ -495,7 +462,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
 
     commandsToggleButtonWindow = CreateCommandsTogglePanel();
 
-    var dynamicPanelHeight = commandButtonActions.Count * buttonHeight + commandButtonActions.Count * 5;
+    var dynamicPanelHeight = VehicleGUIItems.commandButtonActions.Count * buttonHeight + VehicleGUIItems.commandButtonActions.Count * 5;
     commandsWindow = GUIManager.Instance.CreateWoodpanel(
       commandsToggleButtonWindow.transform,
       new Vector2(0.5f, 0f),
@@ -507,15 +474,32 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     commandsWindow.SetActive(hasCommandsWindowOpened);
 
     var startHeight = dynamicPanelHeight / 2f - buttonHeight / 2;
-    for (var index = 0; index < commandButtonActions.Count; index++)
+    for (var index = 0; index < VehicleGUIItems.commandButtonActions.Count; index++)
     {
-      var buttonAction = commandButtonActions[index];
-      var obj = AddButtonWithAction(buttonAction, index, startHeight, commandsWindow.transform);
-      commandsPanelToggleObjects.Add(obj);
+      var genericActionElement = VehicleGUIItems.commandButtonActions[index];
+      GameObject obj;
+      switch (genericActionElement.inputType)
+      {
+        case InputType.Dropdown:
+          obj = AddDropdownWithAction(genericActionElement, index, startHeight, commandsWindow.transform);
+          break;
+        case InputType.Input:
+          obj = AddInputWithAction(genericActionElement, index, startHeight, commandsWindow.transform);
+          break;
+        case InputType.Button:
+          obj = AddButtonWithAction(genericActionElement, index, startHeight, commandsWindow.transform);
+          break;
+        default:
+          throw new ArgumentOutOfRangeException();
+      }
+      if (obj != null)
+      {
+        commandsPanelToggleObjects.Add(obj);
+      }
     }
   }
 
-  private static void ToggleConvexHullDebugger()
+  public static void ToggleConvexHullDebugger()
   {
     Logger.LogMessage(
       "Toggling convex hull debugger on the ship. This will show/hide the current convex hulls.");
@@ -542,7 +526,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
   }
 
 
-  private static void ToggleColliderDebugger()
+  public static void ToggleColliderDebugger()
   {
     Logger.LogMessage(
       "Collider debugger called, \nblue = BlockingCollider for collisions and keeping boat on surface, \ngreen is float collider for pushing the boat upwards, typically it needs to be below or at same level as BlockingCollider to prevent issues, \nYellow is onboardtrigger for calculating if player is onboard");

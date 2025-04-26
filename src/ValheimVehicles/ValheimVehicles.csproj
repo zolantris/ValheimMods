@@ -25,6 +25,7 @@
     <Import Project="$(SolutionDir)/valheim.targets"/>
 
     <ItemGroup>
+        <Compile Include="ValheimVehicles.GUI\DropdownRefreshHover.cs"/>
         <Compile Include="ValheimVehicles.Interfaces\IInitProvider.cs"/>
         <Compile Include="ValheimVehicles.Interfaces\IRudderControls.cs"/>
         <Compile Include="ValheimVehicles.Interfaces\IValheimShip.cs"/>
@@ -34,6 +35,12 @@
         <Compile Include="ValheimVehicles.Injections\UnityBurstInjection.cs"/>
         <Compile Include="ValheimVehicles.Providers\ProviderInitializers.cs"/>
         <Compile Include="ValheimVehicles.Providers\WearNTearProvider.cs"/>
+        <Compile Include="ValheimVehicles.Structs\GameCacheValue.cs"/>
+        <Compile Include="ValheimVehicles.Structs\ShipFloatation.cs"/>
+        <Compile Include="ValheimVehicles.Structs\TempPieceData.cs"/>
+        <Compile Include="ValheimVehicles.Structs\VehicleConfig.cs"/>
+        <Compile Include="ValheimVehicles.Structs\VehicleGuiItemTypes.cs"/>
+        <Compile Include="ValheimVehicles.Structs\VehicleZdoVars.cs"/>
         <Compile Include="ValheimVehicles.Vehicles\Controllers\VehiclePiecesJobs.cs"/>
         <Compile Include="ValheimVehicles.Vehicles\Structs\TempPieceData.cs"/>
         <Compile Include="ValheimVehicles.Vehicles\Structs\VehicleConfig.cs"/>

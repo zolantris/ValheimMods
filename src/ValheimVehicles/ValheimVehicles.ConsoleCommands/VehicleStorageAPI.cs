@@ -20,7 +20,7 @@ namespace ValheimVehicles.ValheimVehicles.API;
 
 public static class VehicleStorageAPI
 {
-  private static readonly string BaseFolderPath = Path.Combine(Paths.PluginPath, ValheimRaftPlugin.Instance.PluginFolderName.Value);
+  private static readonly string BaseFolderPath = Path.Combine(Paths.ConfigPath, $"{ValheimRaftPlugin.Author}-{ValheimRaftPlugin.ModName}", ValheimRaftPlugin.Instance.PluginFolderName.Value);
   private static readonly string SavedVehiclesFolderPath = Path.Combine(BaseFolderPath, "SavedVehicles");
 
   static VehicleStorageAPI()
@@ -163,6 +163,19 @@ public static class VehicleStorageAPI
     return Path.Combine(SavedVehiclesFolderPath, $"{vehicleName}.json");
   }
 
+  public static string SelectedVehicle = "";
+
+  public static void SetSelectedVehicle(string vehicleName)
+  {
+    if (!File.Exists(GetVehicleFilePath(vehicleName)))
+    {
+      SelectedVehicle = "";
+      return;
+    }
+
+    SelectedVehicle = vehicleName;
+  }
+
   public static void SaveClosestVehicle()
   {
     if (!Player.m_localPlayer) return;
@@ -200,7 +213,7 @@ public static class VehicleStorageAPI
     SaveOrUpdateVehicle(vehicleName, data);
   }
 
-  public static void SpawnVehicle()
+  public static void SpawnSelectedVehicle()
   {
     if (!VehicleCommands.CanRunCheatCommand()) return;
     var allVehicles = GetAllVehicles();
