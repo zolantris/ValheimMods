@@ -16,6 +16,7 @@ using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.ValheimVehicles.API;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Enums;
 using Logger = Jotunn.Logger;
@@ -254,6 +255,16 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     {
       title = "Raft Creative",
       action = VehicleCommands.ToggleCreativeMode
+    },
+    new()
+    {
+      title = "Save Vehicle",
+      action = VehicleStorageAPI.SaveClosestVehicle
+    },
+    new()
+    {
+      title = "Spawn Last Vehicle",
+      action = VehicleStorageAPI.SpawnVehicle
     },
     new()
     {

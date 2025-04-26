@@ -374,11 +374,16 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       Logger.LogDebug(
         $"Valheim GameEngine is using: <{renderPipeline}> graphics pipeline ");
 
+    // for modern translation approach to update only in 1 place / less duplicate code
+    ModTranslations.Init();
+
+    // still need this for now.
     Localization.OnLanguageChange += VehicleAnchorMechanismController.setLocalizedStates;
   }
 
   private void OnDestroy()
   {
+    ModTranslations.Cleanup();
     Localization.OnLanguageChange -= VehicleAnchorMechanismController.setLocalizedStates;
     PatchController.UnpatchSelf();
   }

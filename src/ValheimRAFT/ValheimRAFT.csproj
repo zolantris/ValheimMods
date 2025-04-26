@@ -36,12 +36,11 @@
         <!--            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>-->
         <!--        </ProjectReference>-->
         <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>
+        <Compile Update="..\ValheimVehicles\ValheimVehicles.ConsoleCommands\VehicleStorageAPI.cs">
+            <Link>ValheimVehicles.ConsoleCommands\VehicleStorageAPI.cs</Link>
+        </Compile>
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
-    <ItemGroup><!--        <Compile Include="Properties\AssemblyInfo.cs"/>-->
-        <!--        <Compile Include="Properties\CustomAssemblyAttributes.cs"/>-->
-
-    </ItemGroup>
     <ItemGroup>
         <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
         <Compile Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\**\*.cs"/>

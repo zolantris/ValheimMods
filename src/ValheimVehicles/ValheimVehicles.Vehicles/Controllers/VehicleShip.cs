@@ -47,7 +47,9 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   public GameObject RudderObject { get; set; }
   public const float MinimumRigibodyMass = 1000;
 
+  // controller used to disable some behaviors when copying the vehicle to prevent spawning the base prefab piece.
   public static bool CanInitHullPiece = true;
+  
   private int _persistentZdoId;
   public int PersistentZdoId => GetPersistentID();
 
@@ -540,6 +542,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   /**
    * toggle VehicleShip ability to init pieces
+   * todo swap out prefab for a prefab type check similar to vehicle storage api.
    */
   public static VehicleShip? InitWithoutStarterPiece(Transform obj)
   {
