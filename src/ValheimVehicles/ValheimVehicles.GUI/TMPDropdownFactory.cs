@@ -6,7 +6,7 @@ namespace ValheimVehicles.ValheimVehicles.GUI;
 
 public static class TMPDropdownFactory
 {
-    public static Color BackgroundElementColor = new(0f, 0f, 0f, 1f); // black
+    public static Color BackgroundElementColor = new(0.2f, 0.2f, 0.2f, 1f); // gray...todo use jotunn gui or valheim to get default bg color. Or use a ColorBlock (Which might be what jotunn is doing)
 
     public static TMP_Dropdown CreateTMPDropDown(
         Transform parent,

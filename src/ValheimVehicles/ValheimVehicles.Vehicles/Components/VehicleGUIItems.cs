@@ -9,7 +9,7 @@ namespace ValheimVehicles.Vehicles.Components;
 /// <summary>
 /// Nit-pick: rename GUI to different value. It makes names messy
 /// </summary>
-public class VehicleGUIItems
+public static class VehicleGUIItems
 {
   public static readonly List<GenericInputAction> configSections =
   [
@@ -60,7 +60,7 @@ public class VehicleGUIItems
         VehicleStorageAPI.RefreshVehicleSelectionGui(dropdown);
       },
       OnDropdownChanged = VehicleGui.VehicleSelectOnDropdownChanged,
-      OnPointerEnterAction = VehicleStorageAPI.RefreshVehicleSelectionGui
+      // OnPointerEnterAction = VehicleStorageAPI.RefreshVehicleSelectionGui
     },
     new()
     {

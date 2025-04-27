@@ -230,9 +230,9 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
       return;
     }
 
-    if (index >= 0 && index <= vehicles.Count)
+    if (index > 0 && index <= vehicles.Count)
     {
-      VehicleStorageAPI.SelectedVehicle = vehicles[index].Settings.VehicleType.ToString();
+      VehicleStorageAPI.SelectedVehicle = vehicles[index - 1].VehicleName;
       LoggerProvider.LogInfo($"Selected Vehicle: {VehicleStorageAPI.SelectedVehicle}");
     }
     else

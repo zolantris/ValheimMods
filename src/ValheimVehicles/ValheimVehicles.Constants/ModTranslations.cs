@@ -10,19 +10,6 @@ public static class ModTranslations
   public static string CreativeMode = "";
   public static string EditMode = "";
 
-  public static void Init()
-  {
-    Localization.OnLanguageChange += UpdateTranslations;
-    UpdateTranslations();
-  }
-  public static void Cleanup()
-  {
-    if (Localization.OnLanguageChange != null)
-    {
-      Localization.OnLanguageChange -= UpdateTranslations;
-    }
-  }
-
   /// <summary>
   /// Possibly move to a localization generator to generate these on the fly based on the current english translations.
   /// </summary>

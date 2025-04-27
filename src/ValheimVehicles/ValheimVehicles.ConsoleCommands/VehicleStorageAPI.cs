@@ -180,6 +180,11 @@ public static class VehicleStorageAPI
     SelectedVehicle = vehicleName;
   }
 
+  public static VehicleTypeEnum GetVehicleType(VehicleShip vehicle)
+  {
+    return vehicle.IsLandVehicle ? VehicleTypeEnum.Land : VehicleTypeEnum.All;
+  }
+
   public static void SaveClosestVehicle()
   {
     if (!Player.m_localPlayer) return;
@@ -201,9 +206,9 @@ public static class VehicleStorageAPI
       };
       pieces.Add(storedPieceData);
     }
-
+    var vehicleType = GetVehicleType(closestShip);
     var localDate = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-    var vehicleName = string.Join("_", Player.m_localPlayer.GetPlayerName(), localDate);
+    var vehicleName = string.Join("_", Player.m_localPlayer.GetPlayerName(), vehicleType.ToString(), localDate);
 
     var data = new StoredVehicleData
     {
@@ -212,11 +217,16 @@ public static class VehicleStorageAPI
       Pieces = pieces,
       Settings = new VehicleSettings
       {
-        VehicleType = closestShip.IsLandVehicle ? VehicleTypeEnum.Land : VehicleTypeEnum.All
+        VehicleType = vehicleType
       }
     };
 
     SaveOrUpdateVehicle(vehicleName, data);
+  }
+
+  public static void LogAllVehicles(List<StoredVehicleData> allVehicles)
+  {
+    LoggerProvider.LogDebug($"Found ({allVehicles.Count} total vehicles. Vehicle Names: {allVehicles.Select(x => x.VehicleName).ToList()}) ");
   }
 
   public static void SpawnSelectedVehicle()
@@ -229,10 +239,24 @@ public static class VehicleStorageAPI
       return;
     }
 
-    var selectedVehicle = allVehicles.Last();
-    if (selectedVehicle == null) return;
+    var matchingVehicle = allVehicles.Find(x => x.VehicleName == SelectedVehicle);
 
-    SpawnVehicleFromData(selectedVehicle);
+    if (matchingVehicle == null)
+    {
+#if DEBUG
+      LogAllVehicles(allVehicles);
+#endif
+      // we log all vehicle names here if the user allows debug logging
+      if (SelectedVehicle != "")
+      {
+        LogAllVehicles(allVehicles);
+      }
+
+      LoggerProvider.LogMessage($"No saved vehicles found for {SelectedVehicle}");
+      return;
+    }
+
+    SpawnVehicleFromData(matchingVehicle);
   }
 
   /// <summary>
