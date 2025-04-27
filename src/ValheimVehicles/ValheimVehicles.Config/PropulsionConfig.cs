@@ -1,7 +1,7 @@
 using BepInEx.Configuration;
 using UnityEngine;
 using ValheimVehicles.Propulsion.Sail;
-using ValheimVehicles.Vehicles;
+
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Vehicles.Enums;
 

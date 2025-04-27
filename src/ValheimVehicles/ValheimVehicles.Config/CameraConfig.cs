@@ -1,6 +1,6 @@
 using BepInEx.Configuration;
 using UnityEngine;
-using ValheimVehicles.Vehicles;
+
 using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.Config;

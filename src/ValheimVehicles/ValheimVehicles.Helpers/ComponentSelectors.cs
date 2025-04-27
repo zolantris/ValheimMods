@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using ValheimVehicles.Vehicles;
+
 using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.Helpers;

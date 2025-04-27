@@ -4,7 +4,7 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimRAFT;
-using ValheimVehicles.Vehicles;
+
 using ValheimVehicles.Vehicles.Components;
 using Object = UnityEngine.Object;
 

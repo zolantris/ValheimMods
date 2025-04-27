@@ -35,7 +35,7 @@ using Logger = Jotunn.Logger;
 using Object = object;
 using PrefabNames = ValheimVehicles.Prefabs.PrefabNames;
 
-namespace ValheimVehicles.Vehicles;
+namespace ValheimVehicles.Controllers;
 
 /// <summary>controller used for all vehicles</summary>
 /// <description> This is a controller used for all vehicles, Currently it must be initialized within a vehicle view IE VehicleShip or upcoming VehicleWheeled, and VehicleFlying instances.</description>

@@ -3,7 +3,7 @@ using Components;
 using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Config;
-using ValheimVehicles.Vehicles;
+
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;

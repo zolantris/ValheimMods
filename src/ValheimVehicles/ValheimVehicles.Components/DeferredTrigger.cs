@@ -1,4 +1,4 @@
-﻿namespace ValheimVehicles.Vehicles;
+﻿namespace ValheimVehicles.Components;
 
 public interface IDeferredTrigger
 {

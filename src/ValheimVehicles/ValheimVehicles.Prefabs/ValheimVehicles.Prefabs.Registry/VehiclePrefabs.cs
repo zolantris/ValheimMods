@@ -8,7 +8,7 @@ using UnityEngine;
 using ValheimRAFT;
 using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles;
+
 using ValheimVehicles.Vehicles.Components;
 using Object = UnityEngine.Object;
 

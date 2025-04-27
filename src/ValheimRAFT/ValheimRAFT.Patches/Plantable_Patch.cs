@@ -6,7 +6,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles;
+
 
 namespace ValheimRAFT.Patches;
 

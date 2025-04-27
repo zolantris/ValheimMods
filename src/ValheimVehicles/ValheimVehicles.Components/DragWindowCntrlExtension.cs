@@ -2,7 +2,7 @@
 using Jotunn.GUI;
 using UnityEngine;
 using UnityEngine.EventSystems;
-namespace ValheimVehicles.Vehicles;
+namespace ValheimVehicles.Components;
 
 /// <summary>
 /// Copied from Jotunn.DragWindowCntrl

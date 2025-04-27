@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ValheimRAFT.Util;
-using ValheimVehicles.Vehicles;
+
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
 

@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using ValheimRAFT.Util;
-using ValheimVehicles.Vehicles;
+
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
 

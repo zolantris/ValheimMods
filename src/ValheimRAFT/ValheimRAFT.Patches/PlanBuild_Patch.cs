@@ -8,7 +8,7 @@ using PlanBuild.Blueprints;
 using PlanBuild.Blueprints.Components;
 using PlanBuild.ModCompat;
 using PlanBuild.Plans;
-using ValheimVehicles.Vehicles;
+
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;

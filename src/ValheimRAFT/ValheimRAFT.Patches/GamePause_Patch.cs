@@ -8,7 +8,7 @@ using ValheimRAFT.Config;
 using ValheimRAFT.Util;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
-using ValheimVehicles.Vehicles;
+
 using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 

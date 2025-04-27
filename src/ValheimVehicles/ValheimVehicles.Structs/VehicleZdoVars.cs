@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace ValheimVehicles.Vehicles;
+namespace ValheimVehicles.Structs;
 
 public static class VehicleZdoVars
 {

@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles;
+
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
 

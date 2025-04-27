@@ -3,7 +3,7 @@ using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles;
+
 using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.Config;

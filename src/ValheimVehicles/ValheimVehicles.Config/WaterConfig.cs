@@ -6,7 +6,7 @@ using ComfyLib;
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles;
+
 using ValheimVehicles.Vehicles.Components;
 
 namespace ValheimVehicles.Config;

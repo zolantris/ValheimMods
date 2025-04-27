@@ -9,7 +9,7 @@ using UnityEngine.Serialization;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 
-namespace ValheimVehicles.Vehicles;
+namespace ValheimVehicles.Components;
 
 /// <summary>
 /// ValheimVehicles Debuggable AOE from valheim base game. But might be modified to support vehicles better

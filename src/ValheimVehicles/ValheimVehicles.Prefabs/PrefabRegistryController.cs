@@ -12,7 +12,7 @@ using ValheimRAFT;
 using ValheimRAFT.Patches;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles;
+
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 

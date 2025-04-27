@@ -1,7 +1,7 @@
 using BepInEx.Configuration;
 using ValheimRAFT;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles;
+
 using ValheimVehicles.Vehicles.Components;
 using Zolantris.Shared;
 

@@ -8,7 +8,7 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 
-namespace ValheimVehicles.Vehicles;
+namespace ValheimVehicles.Controllers;
 
 /*
  * Mostly vanilla Valheim However this is safe from other mods overriding valheim ships directly

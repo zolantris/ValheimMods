@@ -2,13 +2,13 @@ using System;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles;
+
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
 
-namespace ValheimVehicles.Vehicles;
+namespace ValheimVehicles.Controllers;
 
 /// <summary>
 /// Compatibility Class made to remap a ship to VehicleShip and provide the same methods so VehicleShip requires minimal code changes

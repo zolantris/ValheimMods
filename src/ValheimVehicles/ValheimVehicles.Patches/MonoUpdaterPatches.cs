@@ -1,6 +1,6 @@
 using HarmonyLib;
 using UnityEngine;
-using ValheimVehicles.Vehicles;
+
 using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 

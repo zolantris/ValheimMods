@@ -7,7 +7,7 @@ using ValheimVehicles.Attributes;
 using ValheimVehicles.Config;
 using ValheimVehicles.Patches;
 using ValheimVehicles.Prefabs;
-using ValheimVehicles.Vehicles;
+
 using ValheimVehicles.Vehicles.Components;
 using ValheimVehicles.Controllers;
 using Zolantris.Shared;

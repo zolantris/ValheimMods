@@ -17,7 +17,7 @@ using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
-namespace ValheimVehicles.Vehicles;
+namespace ValheimVehicles.Components;
 
 public struct DrawTargetColliders
 {

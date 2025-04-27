@@ -5,7 +5,7 @@ using BepInEx.Configuration;
 using ComfyLib;
 using UnityEngine;
 using ValheimRAFT;
-using ValheimVehicles.Vehicles;
+
 using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;

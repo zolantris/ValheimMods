@@ -22,7 +22,7 @@ using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
 using ValheimVehicles.ValheimVehicles.API;
 using ValheimVehicles.ValheimVehicles.GUI;
-using ValheimVehicles.Vehicles;
+
 using ValheimVehicles.Vehicles.Enums;
 using Logger = Jotunn.Logger;
 

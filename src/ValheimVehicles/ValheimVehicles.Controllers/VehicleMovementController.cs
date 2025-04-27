@@ -1,5 +1,3 @@
-#region
-
   using System;
   using System.Collections;
   using System.Collections.Generic;
@@ -26,9 +24,7 @@
   using ValheimVehicles.Vehicles.Structs;
   using Logger = Jotunn.Logger;
 
-#endregion
-
-  namespace ValheimVehicles.Vehicles;
+  namespace ValheimVehicles.Controllers;
 
   public class VehicleMovementController : ValheimBaseGameShip, IVehicleMovement,
     IValheimShip,

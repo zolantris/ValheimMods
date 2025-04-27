@@ -8,7 +8,7 @@ using ValheimRAFT.Util;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
-using ValheimVehicles.Vehicles;
+
 using ValheimVehicles.Vehicles.Components;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
