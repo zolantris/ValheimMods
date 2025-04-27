@@ -7,6 +7,8 @@ public static class VehicleZdoVars
   public const string ZdoKeyBaseVehicleInitState =
     "ValheimVehicles_BaseVehicle_Initialized";
 
+  public const string VehicleFloatationHeight = "ValheimVehicles_VehicleFloatationHeight";
+
   public static string ToggleSwitchAction = "ValheimVehicles_ToggleSwitchAction";
 
   public static string CustomMeshId =

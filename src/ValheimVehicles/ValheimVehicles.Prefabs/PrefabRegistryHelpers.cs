@@ -74,19 +74,24 @@ public abstract class PrefabRegistryHelpers
   {
     var netView = obj.GetComponent<ZNetView>();
     if (netView == null)
-      // var prevVal = ZNetView.m_useInitZDO;
-      // ZNetView.m_useInitZDO = false;
       netView = obj.AddComponent<ZNetView>();
-    // ZNetView.m_useInitZDO = prevVal;
     if (prioritized) netView.m_type = ZDO.ObjectType.Prioritized;
 
     netView.m_persistent = false;
-    // netView.m_distant = true;
     return netView;
   }
 
   private static void RegisterCustomMeshPieces()
   {
+    PieceDataDictionary.Add(PrefabNames.CustomWaterFloatation,
+      new PieceData
+      {
+        Name = "$valheim_vehicles_custom_floatation_tool",
+        Description = "$valheim_vehicles_custom_floatation_tool_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .WaterFloatationHeight)
+      });
+    
     PieceDataDictionary.Add(PrefabNames.CustomWaterMaskCreator,
       new PieceData
       {
@@ -134,7 +139,7 @@ public abstract class PrefabRegistryHelpers
           PrefabNames.GetRamStakeName(ramMaterial, ramSize), new PieceData()
           {
             Name =
-              $"$valheim_vehicles_ram_stake {materialTranslation}",
+              $"$valheim_vehicles_ram_stake  {materialTranslation}",
             Description = "$valheim_vehicles_ram_stake_desc",
             Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(
               SpriteNames.GetRamStakeName(ramMaterial, ramSize))

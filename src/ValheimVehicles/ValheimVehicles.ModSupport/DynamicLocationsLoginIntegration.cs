@@ -14,7 +14,7 @@ using Jotunn;
 using UnityEngine;
 using UnityEngine.UI;
 using ValheimVehicles.Config;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Controllers;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 

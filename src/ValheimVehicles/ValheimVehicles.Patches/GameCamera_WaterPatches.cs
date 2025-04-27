@@ -4,7 +4,7 @@ using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT.Patches;
 using ValheimVehicles.Config;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Controllers;
 
 namespace ValheimVehicles.Patches;
 

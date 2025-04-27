@@ -5,7 +5,7 @@ using UnityEngine;
 using ValheimVehicles.Config;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Controllers;
 using Zolantris.Shared;
 using Logger = Jotunn.Logger;
 using ValheimVehicles.Helpers;

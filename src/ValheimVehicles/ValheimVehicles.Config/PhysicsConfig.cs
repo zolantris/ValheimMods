@@ -10,7 +10,7 @@ using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles.Components;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Controllers;
 
 namespace ValheimVehicles.Config;
 

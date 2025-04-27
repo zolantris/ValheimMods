@@ -25,6 +25,47 @@
     <Import Project="$(SolutionDir)/valheim.targets"/>
 
     <ItemGroup>
+        <Compile Include="ValheimVehicles.Enums\VehicleMovementFlags.cs" />
+        <Compile Include="ValheimVehicles.Enums\VehiclePhysicsMode.cs" />
+        <Compile Include="ValheimVehicles.Components\CircleWindGui\CircleLine.cs" />
+        <Compile Include="ValheimVehicles.Components\CircleWindGui\CircleWindColors.cs" />
+        <Compile Include="ValheimVehicles.Components\CircleWindGui\CircleWindIndicator.cs" />
+        <Compile Include="ValheimVehicles.Components\ConvexHullComponent.cs" />
+        <Compile Include="ValheimVehicles.Components\CreativeModeColliderComponent.cs" />
+        <Compile Include="ValheimVehicles.Components\CustomMeshCreatorComponent.cs" />
+        <Compile Include="ValheimVehicles.Components\CustomToggleSwitch.cs" />
+        <Compile Include="ValheimVehicles.Components\DeferredTrigger.cs" />
+        <Compile Include="ValheimVehicles.Components\DragWindowCntrlExtension.cs" />
+        <Compile Include="ValheimVehicles.Components\LeverComponent.cs" />
+        <Compile Include="ValheimVehicles.Components\MapPinSync.cs" />
+        <Compile Include="ValheimVehicles.Components\RudderComponent.cs" />
+        <Compile Include="ValheimVehicles.Components\ScalableDoubleSidedCube.cs" />
+        <Compile Include="ValheimVehicles.Components\ValheimAoe.cs" />
+        <Compile Include="ValheimVehicles.Components\VehicleBuildGhost.cs" />
+        <Compile Include="ValheimVehicles.Components\VehicleCameraCullingComponent.cs" />
+        <Compile Include="ValheimVehicles.Components\VehicleDebugHelpers.cs" />
+        <Compile Include="ValheimVehicles.Components\VehicleGui.cs" />
+        <Compile Include="ValheimVehicles.Components\VehicleGUIItems.cs" />
+        <Compile Include="ValheimVehicles.Components\VehicleHUDComponent.cs" />
+        <Compile Include="ValheimVehicles.Components\VehicleRamAoe.cs" />
+        <Compile Include="ValheimVehicles.Components\VehicleShipEffects.cs" />
+        <Compile Include="ValheimVehicles.Components\VehicleZoneRenderer.cs" />
+        <Compile Include="ValheimVehicles.Components\WaterMaskZoneColliderComponent.cs" />
+        <Compile Include="ValheimVehicles.Components\WaterZoneCharacterData.cs" />
+        <Compile Include="ValheimVehicles.Controllers\BaseVehicleItemStorage.cs" />
+        <Compile Include="ValheimVehicles.Controllers\GameCacheController.cs" />
+        <Compile Include="ValheimVehicles.Controllers\RetryGuard.cs" />
+        <Compile Include="ValheimVehicles.Controllers\ValheimBaseGameShip.cs" />
+        <Compile Include="ValheimVehicles.Controllers\VehicleAnchorMechanismController.cs" />
+        <Compile Include="ValheimVehicles.Controllers\VehicleBoundsController.cs" />
+        <Compile Include="ValheimVehicles.Controllers\VehicleConfigSync.cs" />
+        <Compile Include="ValheimVehicles.Controllers\VehicleMovementController.cs" />
+        <Compile Include="ValheimVehicles.Controllers\VehicleOnboardController.cs" />
+        <Compile Include="ValheimVehicles.Controllers\VehiclePiecesController.cs" />
+        <Compile Include="ValheimVehicles.Controllers\VehicleShip.cs" />
+        <Compile Include="ValheimVehicles.Controllers\VehicleShipCompat.cs" />
+        <Compile Include="ValheimVehicles.Controllers\VehicleZSyncTransform.cs" />
+        <Compile Include="ValheimVehicles.Controllers\WaterZoneController.cs" />
         <Compile Include="ValheimVehicles.GUI\DropdownHelpers.cs"/>
         <Compile Include="ValheimVehicles.GUI\DropdownRefreshHover.cs"/>
         <Compile Include="ValheimVehicles.GUI\TMPDropdownFactory.cs"/>
@@ -43,9 +84,6 @@
         <Compile Include="ValheimVehicles.Structs\VehicleConfig.cs"/>
         <Compile Include="ValheimVehicles.Structs\VehicleGuiItemTypes.cs"/>
         <Compile Include="ValheimVehicles.Structs\VehicleZdoVars.cs"/>
-        <Compile Include="ValheimVehicles.Vehicles\Controllers\VehiclePiecesJobs.cs"/>
-        <Compile Include="ValheimVehicles.Vehicles\Structs\TempPieceData.cs"/>
-        <Compile Include="ValheimVehicles.Vehicles\Structs\VehicleConfig.cs"/>
         <Compile Include="ValheimVehiclesPlugin.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
     </ItemGroup>

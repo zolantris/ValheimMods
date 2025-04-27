@@ -12,7 +12,7 @@ using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Vehicles.Interfaces;
 using Logger = Jotunn.Logger;
 
@@ -385,7 +385,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   // Otherwise updates for anchor are handled in MovementController
   public void FixedUpdate()
   {
-    steeringWheelHoverText.UpdateText();
+    steeringWheelHoverText.FixedUpdate_UpdateText();
 
     // only for v1
     FixedUpdateDeprecatedShip();

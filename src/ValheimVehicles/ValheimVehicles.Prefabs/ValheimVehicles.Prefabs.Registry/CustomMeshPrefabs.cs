@@ -23,6 +23,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
   {
     RegisterWaterMaskCreator();
     RegisterWaterMaskPrefab();
+    RegisterCustomFloatationPrefab();
 
     if (CustomMeshConfig.EnableCustomWaterMeshTestPrefabs.Value)
     {
@@ -101,6 +102,37 @@ public class CustomMeshPrefabs : IRegisterPrefab
   //       Enabled = true
   //     }));
   // }
+  private static void RegisterCustomFloatationPrefab()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.CustomWaterFloatation, false);
+
+    // 1x1x1 cube is way too big. Always 10% of that.
+    prefab.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+
+    var meshRenderer = prefab.GetComponent<MeshRenderer>();
+
+    // No special-effects, etc. Should be completely empty area invisible.
+    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
+    meshRenderer.receiveShadows = false;
+    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+    meshRenderer.rayTracingMode = RayTracingMode.Off;
+    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+
+    PrefabRegistryHelpers.AddTempNetView(prefab);
+
+    PrefabRegistryHelpers.AddPieceForPrefab(
+      PrefabNames.CustomWaterFloatation,
+      prefab);
+
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Enabled = true
+      }));
+  }
 
   private void RegisterWaterMaskCreator()
   {

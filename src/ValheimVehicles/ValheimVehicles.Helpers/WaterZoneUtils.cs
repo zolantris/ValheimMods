@@ -9,7 +9,7 @@ using ValheimVehicles.Patches;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Controllers;
 using Zolantris.Shared;
 
 namespace ValheimVehicles.Helpers;

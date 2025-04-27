@@ -20,7 +20,7 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Controllers;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;

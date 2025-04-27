@@ -34,7 +34,7 @@ using ValheimVehicles.SharedScripts;
 using ValheimVehicles.ValheimVehicles.Providers;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Controllers;
 using ZdoWatcher;
 using Zolantris.Shared;
 using Zolantris.Shared.BepInExAutoDoc;

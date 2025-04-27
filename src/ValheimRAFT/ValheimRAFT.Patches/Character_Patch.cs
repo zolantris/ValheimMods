@@ -6,7 +6,7 @@ using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Controllers;
 
 namespace ValheimRAFT.Patches;
 

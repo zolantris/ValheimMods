@@ -42,6 +42,7 @@
         <Compile Update="..\ValheimVehicles\ValheimVehicles.Vehicles\Components\VehicleGUIItems.cs">
             <Link>ValheimVehicles.Vehicles\Components\VehicleGUIItems.cs</Link>
         </Compile>
+        <Compile Remove="..\ValheimVehicles\ValheimVehicles.Vehicles\**" />
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
     <ItemGroup>
