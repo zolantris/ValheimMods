@@ -17,6 +17,17 @@ namespace ValheimVehicles.SharedScripts
     private float messageFadeValue = 255f;
     private static readonly Color messageColor = new(249f, 224f, 0f, 255f);
     public string currentText = "";
+    public bool canUpdate = true;
+
+    public static HoverFadeText CreateHoverFadeText(Transform? parent = null)
+    {
+      var hoverFadeGameObject = new GameObject("HoverFadeText")
+      {
+        transform = { parent = parent, localPosition = Vector3.zero, localRotation = Quaternion.identity, localScale = Vector3.one }
+      };
+      var hoverFadeText = hoverFadeGameObject.AddComponent<HoverFadeText>();
+      return hoverFadeText;
+    }
 
     public void Awake()
     {
@@ -50,10 +61,11 @@ namespace ValheimVehicles.SharedScripts
     }
 
     /// <summary>
-    /// Method meant to be called by integrated component during a FixedUpdate.
+    /// Method meant to be called by integrated component during a FixedUpdate
     /// </summary>
-    public void UpdateText()
+    public void FixedUpdate_UpdateText()
     {
+      if (!canUpdate) return;
       if (Camera.main == null) return;
       if (!hasHudEnabled || currentText == Empty || ShouldHideAfterLastStateUpdate() || textMeshPro == null)
       {
