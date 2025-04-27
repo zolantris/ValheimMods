@@ -449,6 +449,13 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     }
 
     ModTranslations.UpdateTranslations();
+    if (!ModTranslations.IsHealthy())
+    {
+      UpdateTranslationRunCount++;
+      Invoke(nameof(UpdateTranslations), 1f);
+      return;
+    }
+    
     UpdateTranslationRunCount = 0;
   }
 

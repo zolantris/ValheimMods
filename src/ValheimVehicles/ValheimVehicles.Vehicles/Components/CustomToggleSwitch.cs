@@ -102,8 +102,6 @@ public class CustomToggleSwitch : MonoBehaviour, Interactable, Hoverable
       default:
         throw new ArgumentOutOfRangeException();
     }
-
-    UpdateSwitch();
   }
 
   public ToggleSwitchAction GetNextAction()
@@ -125,6 +123,7 @@ public class CustomToggleSwitch : MonoBehaviour, Interactable, Hoverable
   public void OnAltPressHandler()
   {
     SwapHandlerToNextAction();
+    UpdateSwitch();
   }
 
   public bool Interact(Humanoid character, bool hold, bool alt)
