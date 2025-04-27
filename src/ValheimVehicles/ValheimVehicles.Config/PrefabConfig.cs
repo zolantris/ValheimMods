@@ -1,10 +1,10 @@
 using BepInEx.Configuration;
 using Jotunn.Managers;
 using UnityEngine;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
-
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 
 namespace ValheimVehicles.Config;
 

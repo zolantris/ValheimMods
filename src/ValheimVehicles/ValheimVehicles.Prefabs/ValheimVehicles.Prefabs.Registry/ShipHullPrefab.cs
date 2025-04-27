@@ -5,7 +5,7 @@ using Jotunn.Entities;
 using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using static ValheimVehicles.Prefabs.PrefabNames;
 using Logger = Jotunn.Logger;
 

@@ -5,9 +5,9 @@ using HarmonyLib;
 using Jotunn.Extensions;
 using UnityEngine;
 using UnityEngine.UI;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
-
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;

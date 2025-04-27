@@ -4,24 +4,19 @@
   using System.Linq;
   using UnityEngine;
   using UnityEngine.Serialization;
-  using ValheimRAFT;
-  using ValheimRAFT.Config;
-  using ValheimRAFT.Patches;
   using ValheimVehicles.Config;
   using ValheimVehicles.ConsoleCommands;
   using ValheimVehicles.Constants;
-  using ValheimVehicles.Controllers;
   using ValheimVehicles.Helpers;
   using ValheimVehicles.Prefabs;
   using ValheimVehicles.Prefabs.Registry;
   using ValheimVehicles.Propulsion.Rudder;
   using ValheimVehicles.SharedScripts;
-  using ValheimVehicles.ValheimVehicles.Vehicles.Structs;
-  using ValheimVehicles.Vehicles.Components;
-  using ValheimVehicles.Controllers;
-  using ValheimVehicles.Vehicles.Enums;
-  using ValheimVehicles.Vehicles.Interfaces;
-  using ValheimVehicles.Vehicles.Structs;
+  using ValheimVehicles.Structs;
+  using ValheimVehicles.Components;
+  using ValheimVehicles.Enums;
+  using ValheimVehicles.Interfaces;
+  using ValheimVehicles.Patches;
   using Logger = Jotunn.Logger;
 
   namespace ValheimVehicles.Controllers;
@@ -3714,24 +3709,6 @@
 
     public static bool GetAnchorKeyUp()
     {
-      if (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() !=
-          "False" &&
-          ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() !=
-          "Not set")
-      {
-        var mainKeyString = ValheimRaftPlugin.Instance.AnchorKeyboardShortcut
-          .Value.MainKey
-          .ToString();
-        var buttonDownDynamic =
-          ZInput.GetButtonUp(mainKeyString);
-
-        if (buttonDownDynamic)
-          Logger.LogDebug($"Dynamic Anchor Button down: {mainKeyString}");
-
-        return buttonDownDynamic ||
-               ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsUp();
-      }
-
       var isPressingRun =
         ZInput.GetButtonUp("Run") || ZInput.GetButtonUp("JoyRun");
       var isPressingJoyRun = ZInput.GetButtonUp("JoyRun");
@@ -3739,14 +3716,21 @@
       return isPressingRun || isPressingJoyRun;
     }
 
-    public static bool GetAnchorKeyDown()
+#if DEBUG
+    /// <summary>
+    /// Works only for keyboards so this is not the default method for vehicle controls
+    ///
+    /// TODO this should be cached
+    /// </summary>
+    /// <returns></returns>
+    public static bool GetCustomAnchorKeyDown()
     {
-      if (ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() !=
+      if (InputsConfig.AnchorKeyboardShortcut.Value.ToString() !=
           "False" &&
-          ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() !=
+          InputsConfig.AnchorKeyboardShortcut.Value.ToString() !=
           "Not set")
       {
-        var mainKeyString = ValheimRaftPlugin.Instance.AnchorKeyboardShortcut
+        var mainKeyString = InputsConfig.AnchorKeyboardShortcut
           .Value.MainKey
           .ToString();
         var buttonDownDynamic =
@@ -3756,9 +3740,15 @@
           Logger.LogDebug($"Dynamic Anchor Button down: {mainKeyString}");
 
         return buttonDownDynamic ||
-               ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.IsDown();
+               InputsConfig.AnchorKeyboardShortcut.Value.IsDown();
       }
 
+      return false;
+    }
+#endif
+
+    public static bool GetAnchorKeyDown()
+    {
       var isPressingRun =
         ZInput.GetButtonDown("Run") || ZInput.GetButtonDown("JoyRun");
       var isPressingJoyRun = ZInput.GetButtonDown("JoyRun");

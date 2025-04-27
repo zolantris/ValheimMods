@@ -1,4 +1,4 @@
-﻿namespace ValheimVehicles.ValheimVehicles.Vehicles.Structs;
+﻿namespace ValheimVehicles.Structs;
 
 public struct VehicleConfig()
 {

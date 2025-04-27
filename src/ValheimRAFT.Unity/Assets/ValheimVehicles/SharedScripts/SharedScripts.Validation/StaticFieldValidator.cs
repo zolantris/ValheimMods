@@ -14,47 +14,60 @@ namespace ValheimVehicles.SharedScripts.Validation
     /// <summary>
     /// Validates public static fields and optionally instance fields.
     /// </summary>
-    public static void ValidateRequiredNonNullFields(Type type, object? instance = null, string? context = null)
+    public static bool ValidateRequiredNonNullFields(Type type, object? instance = null, string? context = null)
     {
       context ??= type.Name;
 
+      var isValid = true;
       if (instance != null)
       {
-        ValidateInstanceFields(instance, context);
+        isValid = ValidateInstanceFields(instance, context);
       }
 
-      ValidateStaticFields(type, context);
+      if (!ValidateStaticFields(type, context))
+      {
+        isValid = false;
+      }
+
+      return isValid;
     }
 
     /// <summary>
     /// Generic overload for type-based validation.
     /// </summary>
-    public static void ValidateRequiredNonNullFields<T>(object? instance = null, string? context = null)
+    public static bool ValidateRequiredNonNullFields<T>(object? instance = null, string? context = null)
     {
-      ValidateRequiredNonNullFields(typeof(T), instance, context);
+      return ValidateRequiredNonNullFields(typeof(T), instance, context);
     }
 
     /// <summary>
     /// Instance-based validation with an option to skip static field validation.
     /// </summary>
-    public static void ValidateRequiredNonNullFields(object instance, string? context = null, bool skipStatic = false)
+    public static bool ValidateRequiredNonNullFields(object instance, string? context = null, bool skipStatic = false)
     {
       if (instance == null) throw new ArgumentNullException(nameof(instance));
 
       var type = instance.GetType();
       context ??= type.Name;
 
-      ValidateInstanceFields(instance, context);
+      var isValid = ValidateInstanceFields(instance, context);
 
       if (!skipStatic)
       {
-        ValidateStaticFields(type, context);
+        if (!ValidateStaticFields(type, context))
+        {
+          isValid = false;
+        }
       }
+
+      return isValid;
     }
 
-    private static void ValidateStaticFields(Type type, string context)
+    private static bool ValidateStaticFields(Type type, string context)
     {
       var staticFields = type.GetFields(BindingFlags.Static | BindingFlags.Public);
+
+      var isValid = true;
 
       foreach (var field in staticFields)
       {
@@ -64,14 +77,19 @@ namespace ValheimVehicles.SharedScripts.Validation
         if (value == null)
         {
           LoggerProvider.LogWarning($"[{context}] Static field '{field.Name}' is null. This can cause a null reference exception in code. Report this error to ");
+          isValid = false;
         }
       }
+
+      return isValid;
     }
 
-    private static void ValidateInstanceFields(object instance, string context)
+    private static bool ValidateInstanceFields(object instance, string context)
     {
       var type = instance.GetType();
       var instanceFields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+      var isValid = true;
 
       foreach (var field in instanceFields)
       {
@@ -83,8 +101,11 @@ namespace ValheimVehicles.SharedScripts.Validation
         if (value == null)
         {
           LoggerProvider.LogError($"[{context}] Instance field '{field.Name}' is null. Report this issue to {ModIssuesPage}");
+          isValid = false;
         }
       }
+
+      return isValid;
     }
 
     private static bool ShouldSkip(FieldInfo field)

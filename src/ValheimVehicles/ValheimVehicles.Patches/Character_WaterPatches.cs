@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Config;
-
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using Zolantris.Shared;
 using Logger = Jotunn.Logger;

@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Logger = Jotunn.Logger;
 
-namespace ValheimRAFT.UI;
+namespace ValheimVehicles.UI;
 
 public class PanelUtil
 {

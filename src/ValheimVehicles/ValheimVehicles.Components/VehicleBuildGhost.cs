@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace ValheimVehicles.Vehicles.Components;
+namespace ValheimVehicles.Components;
 
 /**
  * @description Valheim Requires a Ghost placeholder that must be shown to place an item. This component is required to show and place a vehicle.

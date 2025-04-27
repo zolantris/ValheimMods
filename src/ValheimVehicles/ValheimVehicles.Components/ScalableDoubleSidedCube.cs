@@ -1,15 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Serialization;
-using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
-using Logger = Jotunn.Logger;
+using ValheimVehicles.Structs;
 
-namespace ValheimVehicles.Vehicles.Components;
+namespace ValheimVehicles.Components;
 
 // [ExecuteInEditMode]
 public class ScalableDoubleSidedCube : MonoBehaviour

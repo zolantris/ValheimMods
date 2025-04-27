@@ -1,10 +1,11 @@
 using System;
 using System.Linq;
 using ValheimVehicles.Config;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 
-namespace ValheimVehicles.Vehicles.Components;
+namespace ValheimVehicles.Components;
 
 public class ConvexHullComponent : ConvexHullAPI
 {

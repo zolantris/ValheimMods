@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ValheimVehicles.Vehicles.Interfaces;
+namespace ValheimVehicles.Interfaces;
 
 public interface IValheimShip
 {

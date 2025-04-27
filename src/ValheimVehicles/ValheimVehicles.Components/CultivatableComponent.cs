@@ -6,7 +6,7 @@ using ValheimRAFT.Util;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
-namespace ValheimRAFT;
+namespace ValheimVehicles.Components;
 
 public class CultivatableComponent : MonoBehaviour
 {

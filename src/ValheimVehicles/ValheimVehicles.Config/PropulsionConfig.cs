@@ -1,9 +1,8 @@
 using BepInEx.Configuration;
-using UnityEngine;
 using ValheimVehicles.Propulsion.Sail;
-
-using ValheimVehicles.Vehicles.Components;
-using ValheimVehicles.Vehicles.Enums;
+using ValheimVehicles.Components;
+using ValheimVehicles.Controllers;
+using ValheimVehicles.Enums;
 
 namespace ValheimVehicles.Config;
 

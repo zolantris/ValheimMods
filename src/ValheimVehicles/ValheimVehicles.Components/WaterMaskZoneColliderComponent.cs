@@ -1,7 +1,7 @@
 using UnityEngine;
 using Logger = Jotunn.Logger;
 
-namespace ValheimVehicles.Vehicles.Components;
+namespace ValheimVehicles.Components;
 
 /// <summary>
 /// A collider delgate componennt meant to send events upwards

@@ -3,7 +3,7 @@ using UnityEngine;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 
-namespace ValheimVehicles.Vehicles.Components;
+namespace ValheimVehicles.Components;
 
 public class CreativeModeColliderComponent : MonoBehaviour
 {

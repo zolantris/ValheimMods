@@ -5,15 +5,17 @@ using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimVehicles.Attributes;
+using ValheimVehicles.Components;
 using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Structs;
 using Logger = Jotunn.Logger;
 
-namespace ValheimVehicles.Vehicles.Components;
+namespace ValheimVehicles.Components;
 
 public class WaterZoneController : CreativeModeColliderComponent
 {

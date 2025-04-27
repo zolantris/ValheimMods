@@ -6,14 +6,14 @@ using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
-using ValheimRAFT;
-using ValheimRAFT.Patches;
+
+
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 
 using ValheimVehicles.Controllers;
-using ValheimVehicles.Vehicles.Interfaces;
+using ValheimVehicles.Interfaces;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Propulsion.Rudder;
@@ -25,7 +25,6 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   public VehicleMovementController? Controls => _controls;
   public ShipControlls deprecatedShipControls;
   public bool HasDeprecatedControls = false;
-  public MoveableBaseShipComponent deprecatedMBShip;
 
   public IVehicleShip ShipInstance;
   public Transform? wheelTransform;
@@ -70,10 +69,7 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   /// <returns></returns>
   public static string GetAnchorHotkeyString()
   {
-    return ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString() !=
-           "Not set"
-      ? ValheimRaftPlugin.Instance.AnchorKeyboardShortcut.Value.ToString()
-      : ZInput.instance.GetBoundKeyString("Run");
+    return ZInput.instance.GetBoundKeyString("Run");
   }
 
   public const string AnchorUseMessage =

@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ValheimVehicles.ValheimVehicles.GUI;
+namespace ValheimVehicles.GUI;
 
 public static class TMPDropdownFactory
 {

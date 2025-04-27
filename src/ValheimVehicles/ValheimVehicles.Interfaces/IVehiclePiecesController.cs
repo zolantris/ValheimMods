@@ -1,6 +1,6 @@
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 
-namespace ValheimVehicles.Vehicles.Interfaces;
+namespace ValheimVehicles.Interfaces;
 
 public interface IVehiclePiecesController
 {

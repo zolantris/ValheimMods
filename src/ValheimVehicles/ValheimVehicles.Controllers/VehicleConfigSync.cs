@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 
 namespace ValheimVehicles.Controllers;
 

@@ -1,4 +1,4 @@
-namespace ValheimRAFT;
+namespace ValheimVehicles.Components;
 
 /*
  * Material weight per 2x2 IE wood_floor stone_floor black_marble floor

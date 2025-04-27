@@ -1,6 +1,6 @@
 using ValheimVehicles.Controllers;
 
-namespace ValheimVehicles.Vehicles.Components;
+namespace ValheimVehicles.Components;
 
 public interface ICharacterOnboardData
 {

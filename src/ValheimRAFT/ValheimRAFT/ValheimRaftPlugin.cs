@@ -15,6 +15,7 @@ using DynamicLocations;
 using DynamicLocations.API;
 using DynamicLocations.Controllers;
 using DynamicLocations.Structs;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
@@ -31,9 +32,8 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.Propulsion.Sail;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.ValheimVehicles.Providers;
-
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Providers;
+using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ZdoWatcher;
 using Zolantris.Shared;
@@ -67,12 +67,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     "Valheim Mod for building on the sea, requires Jotunn to be installed.";
   public const string CopyRight = "Copyright © 2023-2024, GNU-v3 licensed";
   // ReSharper restore MemberCanBePrivate.Global
-
-  public MapPinSync MapPinSync;
-
-  public static VehicleGui Gui;
-  public static GameObject GuiObj;
-
+  
   public static ValheimRaftPlugin Instance { get; private set; }
 
   public ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
@@ -94,7 +89,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public ConfigEntry<float> MastShearForceThreshold { get; set; }
   public ConfigEntry<bool> HasDebugBase { get; set; }
 
-  public ConfigEntry<KeyboardShortcut> AnchorKeyboardShortcut { get; set; }
   public ConfigEntry<bool> EnableMetrics { get; set; }
 
   public ConfigEntry<bool> ProtectVehiclePiecesOnErrorFromWearNTearDamage
@@ -135,6 +129,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         IsAdvanced = isAdvanced
       }
     );
+  }
+
+  [UsedImplicitly]
+  public static string GetVersion()
+  {
+    return Version;
   }
 
   private void CreateServerConfig()
@@ -264,15 +264,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
         }));
   }
 
-  private void CreateKeyboardSetup()
-  {
-    AnchorKeyboardShortcut =
-      Config.Bind("Config", "AnchorKeyboardShortcut",
-        new KeyboardShortcut(KeyCode.LeftShift),
-        new ConfigDescription(
-          "Anchor keyboard hotkey. Only applies to keyboard"));
-  }
-
   /*
    * aggregates all config creators.
    *
@@ -287,31 +278,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CreateBaseConfig();
     CreateDebugConfig();
     CreateServerConfig();
-    CreateKeyboardSetup();
     // for graphics QOL but maybe less FPS friendly
     CreateGraphicsConfig();
     CreateSoundConfig();
 
-
-    // new way to do things. Makes life easier for config
-    PatchConfig.BindConfig(Config);
-    RamConfig.BindConfig(Config);
-    PrefabConfig.BindConfig(Config);
-    VehicleDebugConfig.BindConfig(Config);
-    PropulsionConfig.BindConfig(Config);
-    ModSupportConfig.BindConfig(Config);
-    CustomMeshConfig.BindConfig(Config);
-    WaterConfig.BindConfig(Config);
-    PhysicsConfig.BindConfig(Config);
-    MinimapConfig.BindConfig(Config);
-    HudConfig.BindConfig(Config);
-    CameraConfig.BindConfig(Config);
-    RenderingConfig.BindConfig(Config);
-
-#if DEBUG
-    // Meant for only being run in debug builds for testing quickly
-    QuickStartWorldConfig.BindConfig(Config);
-#endif
+    ValheimVehiclesPlugin.CreateConfigFromRAFTConfig(Config);
   }
 
   internal void ApplyMetricIfAvailable()
@@ -333,6 +304,11 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   public void Awake()
   {    
     Instance = this;
+
+    gameObject.AddComponent<ValheimVehiclesPlugin>();
+    // allows for accessing ValheimRAFT old apis through reflection
+    ValheimVehicles.Compat.ValheimRAFTApi.RegisterHost(Instance);
+    
     gameObject.AddComponent<BatchedLogger>();
 
     CreateConfig();
@@ -361,8 +337,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       }
       AddCustomItemsAndPieces();
     };
-
-    MapPinSync = gameObject.AddComponent<MapPinSync>();
 
     ZdoWatcherDelegate.RegisterToZdoManager();
     // PlayerSpawnController.PlayerMoveToVehicleCallback =
@@ -421,42 +395,15 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CommandManager.Instance.AddConsoleCommand(new VehicleCommands());
   }
 
-  private int UpdateTranslationRunCount = 0;
 
   private void Start()
   {
-    UpdateTranslations();
-    
+  
     // SentryLoads after
     ApplyMetricIfAvailable();
-    AddRemoveVehicleGui();
-
+    
     if (ModEnvironment.IsDebug)
       new BepInExConfigAutoDoc().Generate(this, Config, "ValheimRAFT");
-  }
-
-  /// <summary>
-  /// Localization.instance seems flake. Having a 50 second queue of calling it until it success 1 time should guard against problems.
-  /// </summary>
-  public void UpdateTranslations()
-  {
-    if (UpdateTranslationRunCount > 50) return;
-    if (Localization.instance == null)
-    {
-      UpdateTranslationRunCount++;
-      Invoke(nameof(UpdateTranslations), 1f);
-      return;
-    }
-
-    ModTranslations.UpdateTranslations();
-    if (!ModTranslations.IsHealthy())
-    {
-      UpdateTranslationRunCount++;
-      Invoke(nameof(UpdateTranslations), 1f);
-      return;
-    }
-    
-    UpdateTranslationRunCount = 0;
   }
 
   /**
@@ -537,35 +484,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     {
       texture.Texture.wrapMode = TextureWrapMode.Clamp;
       if ((bool)texture.Normal) texture.Normal.wrapMode = TextureWrapMode.Clamp;
-    }
-  }
-
-  /**
-   * todo: move to Vehicles plugin when it is ready
-   */
-  public void AddRemoveVehicleGui()
-  {
-    if (!GuiObj)
-    {
-      GuiObj = new GameObject("ValheimVehicles_VehicleGui")
-      {
-        transform = { parent = transform },
-        layer = LayerHelpers.UILayer
-      };
-    }
-    Gui = GuiObj.GetComponent<VehicleGui>();
-    if (!VehicleGui.hasConfigPanelOpened && Gui)
-    {
-      Destroy(GuiObj);
-    }
-    else if (!Gui)
-      Gui = GuiObj.AddComponent<VehicleGui>();
-
-
-    if (VehicleGui.Instance != null)
-    {
-      VehicleGui.Instance.InitPanel();
-      VehicleGui.SetCommandsPanelState(VehicleDebugConfig.VehicleDebugMenuEnabled.Value);
     }
   }
 

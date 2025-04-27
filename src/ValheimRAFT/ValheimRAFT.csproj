@@ -32,20 +32,10 @@
         <ProjectReference Include="..\Shared\Shared.csproj"/>
     </ItemGroup>
     <ItemGroup Label="Embedded ValheimVehicles">
-        <!--        <ProjectReference Include="..\ValheimVehicles\ValheimVehicles.csproj">-->
-        <!--            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>-->
-        <!--        </ProjectReference>-->
-        <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>
-        <Compile Update="..\ValheimVehicles\ValheimVehicles.ConsoleCommands\VehicleStorageAPI.cs">
-            <Link>ValheimVehicles.ConsoleCommands\VehicleStorageAPI.cs</Link>
-        </Compile>
+        <ProjectReference Include="..\ValheimVehicles\ValheimVehicles.csproj"/>
+        <!--        <Compile Include="..\ValheimVehicles\ValheimVehicles.*\**\*.cs"/>-->
     </ItemGroup>
     <Import Project="..\..\gameLauncher.targets"/>
-    <ItemGroup>
-        <!--  Allows for both sharing and testing these scripts within unity. Best of both worlds.      -->
-        <Compile Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\**\*.cs"/>
-        <Folder Include="..\ValheimRAFT.Unity\Assets\ValheimVehicles\SharedScripts\"/>
-    </ItemGroup>
     <PropertyGroup>
         <SentryDSN>https://e720adb5b1a1fdb40d073635eb76817d@o243490.ingest.sentry.io/4506613652586496</SentryDSN>
     </PropertyGroup>
@@ -81,7 +71,6 @@
         <Content Include="src\ValheimRAFT\README.md"/>
         <Content Include="Thunderstore\icon.png"/>
         <Content Include="Thunderstore\manifest.json"/>
-        <Content Include="ValheimRAFT.Unity\.gitignore"/>
     </ItemGroup>
 
     <!--  Other bepinex plugins  -->
@@ -94,6 +83,9 @@
             <HintPath>$(SolutionDir)\libs\PlanBuild.dll</HintPath>
             <Private>False</Private>
         </Reference>
+    </ItemGroup>
+    <ItemGroup>
+        <Folder Include="ValheimRAFT.UI\"/>
     </ItemGroup>
 
     <!-- Debug Variants -->

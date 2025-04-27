@@ -13,13 +13,12 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
-using ValheimRAFT;
+
 using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
-
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;

@@ -3,8 +3,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Constants;
-
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 
 namespace Components;
 

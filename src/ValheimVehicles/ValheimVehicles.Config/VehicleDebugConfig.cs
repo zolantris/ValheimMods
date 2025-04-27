@@ -1,8 +1,7 @@
 using BepInEx.Configuration;
-using ValheimRAFT;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.SharedScripts;
-
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using Zolantris.Shared;
 
 namespace ValheimVehicles.Config;
@@ -72,7 +71,7 @@ public static class VehicleDebugConfig
 
   private static void OnShowVehicleDebugMenuChange()
   {
-    ValheimRaftPlugin.Instance.AddRemoveVehicleGui();
+    VehicleGui.AddRemoveVehicleGui();
   }
 
   private static void OnMetricsUpdate()
@@ -90,7 +89,6 @@ public static class VehicleDebugConfig
   {
     if (VehicleGui.Instance == null)
     {
-      ValheimRaftPlugin.Instance.AddRemoveVehicleGui();
     }
     else
     {

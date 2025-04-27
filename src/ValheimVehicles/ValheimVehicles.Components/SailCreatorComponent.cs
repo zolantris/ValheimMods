@@ -6,7 +6,7 @@ using ValheimVehicles.Prefabs;
 
 using Logger = Jotunn.Logger;
 
-namespace ValheimRAFT;
+namespace ValheimVehicles.Components;
 
 public class SailCreatorComponent : MonoBehaviour
 {

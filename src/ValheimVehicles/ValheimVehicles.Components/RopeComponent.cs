@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ValheimRAFT;
+namespace ValheimVehicles.Components;
 
 public class RopeComponent : MonoBehaviour
 {

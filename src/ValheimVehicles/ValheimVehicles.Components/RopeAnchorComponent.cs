@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using ValheimRAFT.Util;
-
+using ValheimVehicles.Controllers;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
 
-namespace ValheimRAFT;
+namespace ValheimVehicles.Components;
 
 public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
 {

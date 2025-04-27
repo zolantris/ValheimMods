@@ -8,8 +8,8 @@ using Jotunn.Utils;
 using Registry;
 using UnityEngine;
 using UnityEngine.U2D;
-using ValheimRAFT;
-using ValheimRAFT.Patches;
+
+
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 

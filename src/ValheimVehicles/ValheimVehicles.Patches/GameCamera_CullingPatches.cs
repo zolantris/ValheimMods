@@ -1,6 +1,6 @@
 ﻿using HarmonyLib;
 using ValheimVehicles.Config;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 
 namespace ValheimVehicles.Patches;
 

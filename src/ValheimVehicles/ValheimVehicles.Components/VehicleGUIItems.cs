@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Structs;
-using ValheimVehicles.ValheimVehicles.API;
-namespace ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.API;
+namespace ValheimVehicles.Components;
 
 /// <summary>
 /// Nit-pick: rename GUI to different value. It makes names messy

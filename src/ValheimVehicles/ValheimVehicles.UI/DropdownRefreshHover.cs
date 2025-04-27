@@ -4,8 +4,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using ValheimVehicles.ValheimVehicles.API;
-namespace ValheimVehicles.ValheimVehicles.GUI;
+using ValheimVehicles.API;
+namespace ValheimVehicles.GUI;
 
 public class DropdownRefreshOnHover : MonoBehaviour, IPointerEnterHandler
 {

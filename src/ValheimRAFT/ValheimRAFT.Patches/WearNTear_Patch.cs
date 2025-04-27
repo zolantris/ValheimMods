@@ -6,10 +6,11 @@ using HarmonyLib;
 using UnityEngine;
 using ValheimRAFT.Util;
 using ValheimVehicles.Config;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
-
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Structs;
+using ValheimVehicles.Components;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
 

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Jotunn;
 
-namespace ValheimRAFT;
+namespace ValheimVehicles.Components;
 
 public class ShipStats
 {

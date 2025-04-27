@@ -9,9 +9,9 @@ using Valheim.UI;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Propulsion.Rudder;
-
-using ValheimVehicles.Vehicles.Components;
-using ValheimVehicles.Vehicles.Interfaces;
+using ValheimVehicles.Components;
+using ValheimVehicles
+..Interfaces;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 

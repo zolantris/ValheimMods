@@ -1,9 +1,9 @@
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 
-namespace ValheimVehicles.Vehicles.Interfaces;
+namespace ValheimVehicles.Interfaces;
 
 public interface IVehicleShip
 

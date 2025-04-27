@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using BepInEx;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using DynamicLocations.API;
 using DynamicLocations.Constants;
 using DynamicLocations.Controllers;

@@ -11,7 +11,7 @@ using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ZdoWatcher;
 
-namespace ValheimVehicles.Vehicles.Components;
+namespace ValheimVehicles.Components;
 
 public class MapPinSync : MonoBehaviour
 {

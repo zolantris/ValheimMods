@@ -53,7 +53,7 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
         HudConfig.HudAnchorTextSize.Value;
   }
 
-  public new void Awake()
+  public override void Awake()
   {
     base.Awake();
     setLocalizedStates();

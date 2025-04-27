@@ -1,32 +1,24 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using DynamicLocations;
 using DynamicLocations.Constants;
 using DynamicLocations.Controllers;
-using Jotunn.GUI;
 using Jotunn.Managers;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using ValheimRAFT;
-using ValheimRAFT.Patches;
 using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Constants;
-using ValheimVehicles.Helpers;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
-using ValheimVehicles.ValheimVehicles.API;
-using ValheimVehicles.ValheimVehicles.GUI;
-
-using ValheimVehicles.Vehicles.Enums;
+using ValheimVehicles.API;
+using ValheimVehicles.GUI;
 using Logger = Jotunn.Logger;
 
-namespace ValheimVehicles.Vehicles.Components;
+namespace ValheimVehicles.Components;
 
 public class VehicleGui : SingletonBehaviour<VehicleGui>
 {
@@ -35,6 +27,42 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
   private Vector3 _shipMovementOffset;
   public static TMP_Dropdown VehicleSelectDropdown;
 
+  public static VehicleGui Gui;
+  public static GameObject GuiObj;
+
+  public static void AddRemoveVehicleGui()
+  {
+    if (Game.instance == null) return;
+    if (GuiObj == null)
+    {
+      GuiObj = new GameObject("ValheimVehicles_VehicleGui")
+      {
+        transform = { parent = Game.instance.transform },
+        layer = LayerHelpers.UILayer
+      };
+    }
+
+    if (Gui == null)
+    {
+      Gui = GuiObj.GetComponent<VehicleGui>();
+    }
+    if (Gui == null && hasConfigPanelOpened)
+    {
+      Gui = GuiObj.AddComponent<VehicleGui>();
+    }
+
+    if (Gui != null && !hasConfigPanelOpened)
+    {
+      Gui.gameObject.SetActive(false);
+    }
+
+
+    if (Instance != null)
+    {
+      Instance.InitPanel();
+      SetCommandsPanelState(VehicleDebugConfig.VehicleDebugMenuEnabled.Value);
+    }
+  }
 
   private Vector3 GetShipMovementOffset()
   {
@@ -544,13 +572,8 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     Logger.LogMessage(
       "Collider debugger called, \nblue = BlockingCollider for collisions and keeping boat on surface, \ngreen is float collider for pushing the boat upwards, typically it needs to be below or at same level as BlockingCollider to prevent issues, \nYellow is onboardtrigger for calculating if player is onboard");
     var currentInstance = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
-
-    if (!currentInstance)
-      currentInstance = VehicleDebugHelpers.GetOnboardMBRaftDebugHelper();
-
-    if (!currentInstance) return;
-
-    currentInstance?.StartRenderAllCollidersLoop();
+    if (currentInstance == null) return;
+    currentInstance.StartRenderAllCollidersLoop();
   }
 
   /// <summary>

@@ -1,11 +1,8 @@
-using System;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
-
-using ValheimVehicles.Vehicles.Components;
-using ValheimVehicles.Controllers;
-using ValheimVehicles.Vehicles.Interfaces;
+using ValheimVehicles.Components;
+using ValheimVehicles.Interfaces;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Controllers;

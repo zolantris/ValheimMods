@@ -1,23 +1,24 @@
 using System;
-using ValheimRAFT;
+
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.Validation;
 namespace ValheimVehicles.Constants;
 
 public class ModTranslations
 {
-  public static string GuiShow = "";
-  public static string GuiHide = "";
-  public static string GuiCommandsMenuTitle = "";
+  public static string GuiShow = null!;
+  public static string GuiHide = null!;
+  public static string GuiCommandsMenuTitle = null!;
 
-  public static string EditMenu = "";
-  public static string CreativeMode = "";
-  public static string EditMode = "";
+  public static string EditMenu = null!;
+  public static string CreativeMode = null!;
+  public static string EditMode = null!;
 
-  public static string ToggleSwitch_CommandsHudText = "";
-  public static string ToggleSwitch_MaskColliderEditMode = "";
-  public static string ToggleSwitch_NextActionString = "";
-  public static string ToggleSwitch_CurrentActionString = "";
-  public static string ToggleSwitch_SwitchName = "";
+  public static string ToggleSwitch_CommandsHudText = null!;
+  public static string ToggleSwitch_MaskColliderEditMode = null!;
+  public static string ToggleSwitch_NextActionString = null!;
+  public static string ToggleSwitch_CurrentActionString = null!;
+  public static string ToggleSwitch_SwitchName = null!;
 
   /// <summary>
   /// Check a couple keys and ensure this object is healthy
@@ -27,6 +28,7 @@ public class ModTranslations
   /// <returns></returns>
   public static bool IsHealthy()
   {
+    StaticFieldValidator.ValidateRequiredNonNullFields<ModTranslations>();
     if (GuiHide == string.Empty || GuiShow == string.Empty) return false;
     return true;
   }

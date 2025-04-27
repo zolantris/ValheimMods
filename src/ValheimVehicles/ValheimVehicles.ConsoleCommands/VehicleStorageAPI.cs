@@ -10,20 +10,18 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using TMPro;
 using UnityEngine.UI;
-using ValheimRAFT;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
-using ValheimVehicles.ValheimVehicles.GUI;
-
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.GUI;
+using ValheimVehicles.Components;
 using Object = UnityEngine.Object;
 
-namespace ValheimVehicles.ValheimVehicles.API;
+namespace ValheimVehicles.API;
 
 public static class VehicleStorageAPI
 {
-  private static readonly string BaseFolderPath = Path.Combine(Paths.ConfigPath, $"{ValheimRaftPlugin.Author}-{ValheimRaftPlugin.ModName}", ValheimRaftPlugin.Instance.PluginFolderName.Value);
+  private static readonly string BaseFolderPath = Path.Combine(Paths.ConfigPath, $"{ValheimVehiclesPlugin.Author}-{ValheimVehiclesPlugin.ModName}");
   private static readonly string SavedVehiclesFolderPath = Path.Combine(BaseFolderPath, "SavedVehicles");
 
   static VehicleStorageAPI()

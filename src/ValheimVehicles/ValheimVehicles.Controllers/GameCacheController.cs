@@ -4,8 +4,8 @@ using System.Reflection;
 using System.Text;
 using UnityEngine;
 using ValheimVehicles.Attributes;
-using ValheimVehicles.Vehicles.Components;
-using ValheimVehicles.Vehicles.Structs;
+using ValheimVehicles.Components;
+using ValheimVehicles.Structs;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Controllers;
@@ -13,6 +13,8 @@ namespace ValheimVehicles.Controllers;
 /// <summary>
 /// This uses attributes to create a cache list and then each method that is calling will have a cache value and will not update within the time interval.
 /// - This allows for all the cached logic to exist outside of this cache controller allowing for more organization.
+///
+/// TODO this component does nothing currently
 /// </summary>
 public class GameCacheController : MonoBehaviour
 {

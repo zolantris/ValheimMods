@@ -3,9 +3,9 @@ using UnityEngine;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 
-namespace ValheimVehicles.Vehicles.Components;
+namespace ValheimVehicles.Components;
 
 public class VehicleCameraCullingComponent : MonoBehaviour
 {

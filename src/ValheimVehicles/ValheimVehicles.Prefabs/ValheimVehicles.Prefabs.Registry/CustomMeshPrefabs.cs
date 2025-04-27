@@ -7,7 +7,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;

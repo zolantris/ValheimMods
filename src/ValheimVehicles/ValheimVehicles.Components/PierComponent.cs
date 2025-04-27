@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace ValheimRAFT;
+namespace ValheimVehicles.Components;
 
 public class PierComponent : MonoBehaviour
 {

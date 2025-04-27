@@ -1,6 +1,6 @@
 using Jotunn;
 using ValheimVehicles.SharedScripts;
-namespace ValheimVehicles.ValheimVehicles.Providers;
+namespace ValheimVehicles.Providers;
 
 public static class ProviderInitializers
 {

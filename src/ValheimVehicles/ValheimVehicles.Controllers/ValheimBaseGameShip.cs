@@ -5,7 +5,7 @@ using UnityEngine;
 using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Controllers;

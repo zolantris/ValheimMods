@@ -2,8 +2,9 @@ using System;
 using Components;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.Components;
 using ValheimVehicles.Config;
-
+using ValheimVehicles.Structs;
 using Logger = Jotunn.Logger;
 
 namespace ValheimRAFT.Patches;

@@ -6,7 +6,7 @@ using HarmonyLib;
 using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
-using ValheimRAFT;
+
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs.Registry;
 using Logger = Jotunn.Logger;

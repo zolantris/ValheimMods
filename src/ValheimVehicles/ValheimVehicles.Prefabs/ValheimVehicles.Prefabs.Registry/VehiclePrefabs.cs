@@ -5,11 +5,10 @@ using Jotunn.Entities;
 using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
-using ValheimRAFT;
+
 using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts;
-
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.Prefabs.Registry;

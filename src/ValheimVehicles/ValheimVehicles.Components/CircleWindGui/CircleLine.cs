@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Prefabs;
 
-namespace ValheimVehicles.Vehicles.Components;
+namespace ValheimVehicles.Components;
 
 public class CircleLine : MonoBehaviour
 {

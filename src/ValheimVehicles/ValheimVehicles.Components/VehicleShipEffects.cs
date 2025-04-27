@@ -1,7 +1,7 @@
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 
-namespace ValheimVehicles.Vehicles.Components;
+namespace ValheimVehicles.Components;
 
 using System.Collections.Generic;
 using UnityEngine;

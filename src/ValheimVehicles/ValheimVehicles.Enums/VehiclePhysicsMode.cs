@@ -1,4 +1,4 @@
-namespace ValheimVehicles.Vehicles.Enums;
+namespace ValheimVehicles.Enums;
 
 public enum VehiclePhysicsMode
 {

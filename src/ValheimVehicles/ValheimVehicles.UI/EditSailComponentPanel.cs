@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.UI;
+using ValheimVehicles.Components;
 using ValheimVehicles.Prefabs;
 
-namespace ValheimRAFT.UI;
+namespace ValheimVehicles.UI;
 
 public class EditSailComponentPanel
 {

@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Jotunn.Entities;
-using ValheimRAFT;
-using ValheimVehicles.Prefabs;
 
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Prefabs;
+using ValheimVehicles.Components;
 
 namespace ValheimVehicles.ConsoleCommands;
 

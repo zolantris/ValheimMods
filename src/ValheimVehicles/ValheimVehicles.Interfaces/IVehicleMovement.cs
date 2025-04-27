@@ -1,7 +1,7 @@
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles.Enums;
+using ValheimVehicles.Enums;
 
-namespace ValheimVehicles.Vehicles.Interfaces;
+namespace ValheimVehicles.Interfaces;
 
 public interface IVehicleMovement
 {

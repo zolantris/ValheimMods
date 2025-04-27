@@ -69,7 +69,7 @@ namespace ValheimVehicles.SharedScripts
     ///   This rigidbody should not start awakened to prevent collision problems on
     ///   placement
     /// </summary>
-    internal void Awake()
+    public virtual void Awake()
     {
       if (prefabRigidbody == null)
       {
@@ -180,7 +180,7 @@ namespace ValheimVehicles.SharedScripts
       anchorStateFadeText.ResetHoverTimer();
     }
 
-    internal void UpdateAnchorState(AnchorState newState, string text)
+    public void UpdateAnchorState(AnchorState newState, string text)
     {
       // Do nothing if state is equivalent
       if (newState == currentState) return;

@@ -9,11 +9,11 @@ using Jotunn.Managers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
-using ValheimRAFT;
 using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
@@ -259,18 +259,6 @@ public class VehicleDebugHelpers : MonoBehaviour
     var helper = vehicleInstance.Instance.VehicleDebugHelpersInstance;
     
     return helper;
-  }
-
-  public static VehicleDebugHelpers? GetOnboardMBRaftDebugHelper()
-  {
-    return GetMBRaftController()?.shipController?.VehicleDebugHelpersInstance;
-  }
-
-  public static MoveableBaseRootComponent? GetMBRaftController()
-  {
-    var rayCastHitInfo = RaycastToPiecesUnderPlayerCamera();
-    return rayCastHitInfo?.collider
-      .GetComponentInParent<MoveableBaseRootComponent>();
   }
 
   public static VehiclePiecesController? GetVehiclePiecesController()

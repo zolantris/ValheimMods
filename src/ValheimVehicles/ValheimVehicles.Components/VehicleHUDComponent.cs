@@ -1,4 +1,4 @@
-namespace ValheimVehicles.Vehicles.Components;
+namespace ValheimVehicles.Components;
 
 public class VehicleHUDComponent
 {

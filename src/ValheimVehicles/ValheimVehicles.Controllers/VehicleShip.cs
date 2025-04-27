@@ -8,20 +8,18 @@ using Jotunn.Managers;
 using Registry;
 using UnityEngine;
 using UnityEngine.UI;
-using ValheimRAFT;
-using ValheimRAFT.Patches;
+using ValheimVehicles.Components;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.ValheimVehicles.Vehicles.Structs;
 using ValheimVehicles.Controllers;
-using ValheimVehicles.Vehicles.Interfaces;
-using ValheimVehicles.Vehicles.Structs;
+using ValheimVehicles.Interfaces;
+using ValheimVehicles.Structs;
 using ZdoWatcher;
 using static ValheimVehicles.Config.PrefabConfig;
 using Logger = Jotunn.Logger;
 
-namespace ValheimVehicles.Vehicles.Components;
+namespace ValheimVehicles.Components;
 
 public static class VehicleShipHelpers
 {

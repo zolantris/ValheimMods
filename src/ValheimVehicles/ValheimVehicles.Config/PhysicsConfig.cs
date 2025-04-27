@@ -4,12 +4,11 @@ using System.Linq;
 using BepInEx.Configuration;
 using ComfyLib;
 using UnityEngine;
-using ValheimRAFT;
 
 using ValheimVehicles.Constants;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 
 namespace ValheimVehicles.Config;

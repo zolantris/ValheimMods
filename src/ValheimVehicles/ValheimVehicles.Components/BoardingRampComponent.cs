@@ -4,7 +4,7 @@ using UnityEngine;
 using ValheimRAFT.UI;
 using Logger = Jotunn.Logger;
 
-namespace ValheimRAFT;
+namespace ValheimVehicles.Components;
 
 public class BoardingRampComponent : MonoBehaviour, Interactable, Hoverable
 {

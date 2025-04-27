@@ -1,7 +1,6 @@
 using BepInEx.Configuration;
-using ValheimVehicles.Config;
 
-namespace ValheimRAFT.Config;
+namespace ValheimVehicles.Config;
 
 public static class PatchConfig
 {

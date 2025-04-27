@@ -1,6 +1,6 @@
 using System;
 
-namespace ValheimVehicles.Vehicles.Enums;
+namespace ValheimVehicles.Enums;
 
 [Flags]
 public enum VehicleMovementFlags

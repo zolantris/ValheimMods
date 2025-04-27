@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using ValheimRAFT.UI;
-using ValheimRAFT.Util;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using Logger = Jotunn.Logger;
 
-namespace ValheimRAFT;
+namespace ValheimVehicles.Components;
 
 public class SailComponent : MonoBehaviour, Interactable, Hoverable
 {
