@@ -421,16 +421,35 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     CommandManager.Instance.AddConsoleCommand(new VehicleCommands());
   }
 
+  private int UpdateTranslationRunCount = 0;
+
   private void Start()
   {
+    UpdateTranslations();
+    
     // SentryLoads after
     ApplyMetricIfAvailable();
     AddRemoveVehicleGui();
 
     if (ModEnvironment.IsDebug)
       new BepInExConfigAutoDoc().Generate(this, Config, "ValheimRAFT");
+  }
+
+  /// <summary>
+  /// Localization.instance seems flake. Having a 50 second queue of calling it until it success 1 time should guard against problems.
+  /// </summary>
+  public void UpdateTranslations()
+  {
+    if (UpdateTranslationRunCount > 50) return;
+    if (Localization.instance == null)
+    {
+      UpdateTranslationRunCount++;
+      Invoke(nameof(UpdateTranslations), 1f);
+      return;
+    }
 
     ModTranslations.UpdateTranslations();
+    UpdateTranslationRunCount = 0;
   }
 
   /**
