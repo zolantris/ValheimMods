@@ -7,6 +7,8 @@ public static class VehicleZdoVars
   public const string ZdoKeyBaseVehicleInitState =
     "ValheimVehicles_BaseVehicle_Initialized";
 
+  public static string ToggleSwitchAction = "ValheimVehicles_ToggleSwitchAction";
+
   public static string CustomMeshId =
     "ValheimVehicles_CustomMesh";
 

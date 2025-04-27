@@ -1,6 +1,9 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ValheimVehicles.ConsoleCommands;
+using ValheimVehicles.Constants;
+using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 
 namespace Components;
@@ -12,13 +15,66 @@ public class CustomToggleSwitch : MonoBehaviour, Interactable, Hoverable
   /// </summary>
   /// todo
   /// Add actions for Non-vehicle commands to open a panel or just add a panel toggle as another command. Also retain the last position of the command.
-  public enum ActivationActions
+  public enum ToggleSwitchAction
   {
     CommandsHud,
     CreativeMode,
     ColliderEditMode
   }
 
+  public ToggleSwitchAction mToggleSwitchType = ToggleSwitchAction.CreativeMode;
+  private ZNetView netView;
+
+  public void Awake()
+  {
+    netView = GetComponent<ZNetView>();
+  }
+  public void Start()
+  {
+    SyncSwitchMode();
+  }
+
+  public void OnEnable()
+  {
+    netView.Register(nameof(RPC_UpdateSwitch), RPC_UpdateSwitch);
+  }
+
+  public void OnDisable()
+  {
+    netView.Unregister(nameof(RPC_UpdateSwitch));
+  }
+
+  public void RPC_UpdateSwitch(long sender)
+  {
+    SyncSwitchMode();
+  }
+
+  /// <summary>
+  /// This must be run by the client that needs to update the switch
+  /// </summary>
+  public void UpdateSwitch()
+  {
+    netView.m_zdo.Set(VehicleZdoVars.ToggleSwitchAction, mToggleSwitchType.ToString());
+    // todo may want to just send the string to other clients.
+    netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_UpdateSwitch));
+  }
+
+  public ToggleSwitchAction GetActivationActionFromString(string activationActionString)
+  {
+    if (!Enum.TryParse<ToggleSwitchAction>(activationActionString, out var result))
+    {
+      result = ToggleSwitchAction.CommandsHud;
+    }
+
+    return result;
+  }
+
+  public void SyncSwitchMode()
+  {
+    var activationActionString = netView.GetZDO().GetString(VehicleZdoVars.ToggleSwitchAction, nameof(ToggleSwitchAction.CreativeMode));
+
+    mToggleSwitchType = GetActivationActionFromString(activationActionString);
+  }
 
   private void HandleToggleCreativeMode()
   {
@@ -30,19 +86,17 @@ public class CustomToggleSwitch : MonoBehaviour, Interactable, Hoverable
     VehicleCommands.ToggleVehicleCommandsHud();
   }
 
-  public ActivationActions m_activationType = ActivationActions.CreativeMode;
-
   public void OnPressHandler(CustomToggleSwitch toggleSwitch, Humanoid humanoid)
   {
-    switch (m_activationType)
+    switch (mToggleSwitchType)
     {
-      case ActivationActions.CommandsHud:
+      case ToggleSwitchAction.CommandsHud:
         HandleToggleCommandsHud();
         break;
-      case ActivationActions.CreativeMode:
+      case ToggleSwitchAction.CreativeMode:
         HandleToggleCreativeMode();
         break;
-      case ActivationActions.ColliderEditMode:
+      case ToggleSwitchAction.ColliderEditMode:
         VehicleCommands.ToggleColliderEditMode();
         break;
       default:
@@ -50,25 +104,26 @@ public class CustomToggleSwitch : MonoBehaviour, Interactable, Hoverable
     }
   }
 
-  public ActivationActions GetNextAction()
+  public ToggleSwitchAction GetNextAction()
   {
-    return m_activationType switch
+    return mToggleSwitchType switch
     {
-      ActivationActions.CommandsHud => ActivationActions.CreativeMode,
-      ActivationActions.CreativeMode => ActivationActions.ColliderEditMode,
-      ActivationActions.ColliderEditMode => ActivationActions.CommandsHud,
+      ToggleSwitchAction.CommandsHud => ToggleSwitchAction.CreativeMode,
+      ToggleSwitchAction.CreativeMode => ToggleSwitchAction.ColliderEditMode,
+      ToggleSwitchAction.ColliderEditMode => ToggleSwitchAction.CommandsHud,
       _ => throw new ArgumentOutOfRangeException()
     };
   }
 
   public void SwapHandlerToNextAction()
   {
-    m_activationType = GetNextAction();
+    mToggleSwitchType = GetNextAction();
   }
 
   public void OnAltPressHandler()
   {
     SwapHandlerToNextAction();
+    UpdateSwitch();
   }
 
   public bool Interact(Humanoid character, bool hold, bool alt)
@@ -86,13 +141,13 @@ public class CustomToggleSwitch : MonoBehaviour, Interactable, Hoverable
     return true;
   }
 
-  public string GetLocalizedActionText(ActivationActions action)
+  public string GetLocalizedActionText(ToggleSwitchAction action)
   {
     return action switch
     {
-      ActivationActions.CommandsHud => localizedCommandsHudText,
-      ActivationActions.CreativeMode => localizedCreativeModeText,
-      ActivationActions.ColliderEditMode => localizedMaskColliderEditMode,
+      ToggleSwitchAction.CommandsHud => ModTranslations.ToggleSwitch_CommandsHudText,
+      ToggleSwitchAction.CreativeMode => ModTranslations.CreativeMode,
+      ToggleSwitchAction.ColliderEditMode => ModTranslations.ToggleSwitch_MaskColliderEditMode,
       _ => throw new ArgumentOutOfRangeException(nameof(action), action, null)
     };
   }
@@ -102,45 +157,14 @@ public class CustomToggleSwitch : MonoBehaviour, Interactable, Hoverable
     return false;
   }
 
-  public static string localizedCommandsHudText = "";
-  public static string localizedMaskColliderEditMode = "";
-  public static string localizedCreativeModeText = "";
-  public static string nextActionString = "";
-  public static string currentActionString = "";
-  public static string switchName = "";
-
-  public void GetToggleSwitchText()
-  {
-    currentActionString = Localization.instance.Localize(
-      "[<color=yellow><b>$KEY_Use</b></color>] To Toggle:");
-    nextActionString = Localization.instance.Localize(
-      "[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] To Switch To:");
-
-    localizedCreativeModeText = Localization.instance.Localize(
-      "$valheim_vehicles_commands_creative_mode");
-    localizedMaskColliderEditMode = Localization.instance.Localize(
-      "$valheim_vehicles_commands_mask_edit_mode");
-    localizedCommandsHudText = Localization.instance.Localize(
-      "$valheim_vehicles_commands_edit_menu");
-  }
-
 
   public string GetHoverName()
   {
-    if (switchName == string.Empty)
-    {
-      switchName = Localization.instance.Localize("$valheim_vehicles_toggle_switch");
-    }
-    return switchName;
+    return ModTranslations.ToggleSwitch_SwitchName;
   }
 
   public string GetHoverText()
   {
-    if (localizedCreativeModeText == string.Empty || localizedCommandsHudText == string.Empty || currentActionString == string.Empty || nextActionString == string.Empty || localizedMaskColliderEditMode == string.Empty)
-    {
-      GetToggleSwitchText();
-    }
-
-    return $"{currentActionString} {GetLocalizedActionText(m_activationType)}\n{nextActionString} {GetLocalizedActionText(GetNextAction())}";
+    return $"{ModTranslations.ToggleSwitch_CurrentActionString} {GetLocalizedActionText(mToggleSwitchType)}\n{ModTranslations.ToggleSwitch_NextActionString} {GetLocalizedActionText(GetNextAction())}";
   }
 }
