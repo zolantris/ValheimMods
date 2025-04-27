@@ -57,13 +57,16 @@ public class VehicleGUIItems
       OnCreateDropdown = (dropdown) =>
       {
         VehicleGui.VehicleSelectDropdown = dropdown;
+        VehicleStorageAPI.RefreshVehicleSelectionGui(dropdown);
       },
-      OnDropdownChanged = VehicleGui.VehicleSelectOnDropdownChanged
+      OnDropdownChanged = VehicleGui.VehicleSelectOnDropdownChanged,
+      OnPointerEnterAction = VehicleStorageAPI.RefreshVehicleSelectionGui
     },
     new()
     {
-      title = "Spawn Selected Vehicle",
-      OnButtonPress = VehicleStorageAPI.SpawnSelectedVehicle
+      title = "[Admin] Spawn Selected Vehicle",
+      OnButtonPress = VehicleStorageAPI.SpawnSelectedVehicle,
+      IsAdminOnly = true
     },
     new()
     {
@@ -82,6 +85,7 @@ public class VehicleGUIItems
     new()
     {
       title = "Rebuild Bounds",
+      IsAdminOnly = true,
       OnButtonPress = () =>
       {
         var vpc = VehicleDebugHelpers.GetVehiclePiecesController();
@@ -91,6 +95,11 @@ public class VehicleGUIItems
       }
     },
 #if DEBUG
+    new()
+    {
+      title = "Destroy Current Vehicle",
+      OnButtonPress = VehicleCommands.DestroyCurrentVehicle
+    },
     new()
     {
       title = "Config",

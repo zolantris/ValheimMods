@@ -12,12 +12,7 @@ public static class ModTranslations
 
   public static void Init()
   {
-    if (Localization.OnLanguageChange != null)
-    {
-      Localization.OnLanguageChange += UpdateTranslations;
-    }
-
-    // todo confirm this works safely
+    Localization.OnLanguageChange += UpdateTranslations;
     UpdateTranslations();
   }
   public static void Cleanup()
@@ -34,9 +29,9 @@ public static class ModTranslations
   public static void UpdateTranslations()
   {
     if (Localization.instance == null) return;
-    EditMenu = Localization.instance.Localize("valheim_vehicles_commands_edit_menu");
-    CreativeMode = Localization.instance.Localize("valheim_vehicles_commands_creative_mode");
-    EditMode = Localization.instance.Localize("valheim_vehicles_commands_mask_edit_mode");
+    EditMenu = Localization.instance.Localize("$valheim_vehicles_commands_edit_menu");
+    CreativeMode = Localization.instance.Localize("$valheim_vehicles_commands_creative_mode");
+    EditMode = Localization.instance.Localize("$valheim_vehicles_commands_mask_edit_mode");
     GuiShow = Localization.instance.Localize("$valheim_vehicles_gui_show");
     GuiHide = Localization.instance.Localize("$valheim_vehicles_gui_hide");
     GuiCommandsMenuTitle = Localization.instance.Localize("$valheim_vehicles_gui_commands_menu_title");

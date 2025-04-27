@@ -96,8 +96,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     set => m_onboardCollider = value;
   }
 
-  public static bool HasVehicleDebugger =>
-    VehicleDebugConfig.VehicleDebugMenuEnabled.Value;
+  public static bool HasVehicleDebugger = false;
 
   public void SetCreativeMode(bool val)
   {
@@ -278,6 +277,9 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     NetView = GetComponent<ZNetView>();
     GetPersistentID();
 
+    // this flag can be updated manually via VehicleCommands.
+    HasVehicleDebugger = VehicleDebugConfig.VehicleDebugMenuEnabled.Value;
+
     vehicleMovementCollidersTransform =
       GetVehicleMovementCollidersTransform(transform);
     vehicleMovementTransform = GetVehicleMovementTransform(transform);
@@ -452,7 +454,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   public void Start()
   {
-    if (HasVehicleDebugger && PiecesController) InitializeVehicleDebugger();
+    if (HasVehicleDebugger && PiecesController) AddOrRemoveVehicleDebugger();
 
     UpdateShipSounds(this);
     UpdateShipEffects();
@@ -488,7 +490,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     if (isValidZdo) InitializeAllComponents();
 
     if (HasVehicleDebugger && PiecesController != null)
-      InitializeVehicleDebugger();
+      AddOrRemoveVehicleDebugger();
   }
 
   public void UpdateShipZdoPosition()
@@ -626,15 +628,23 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     PiecesController.SetInitComplete();
   }
 
-  public void InitializeVehicleDebugger()
+  public void AddOrRemoveVehicleDebugger()
   {
     if (!isActiveAndEnabled) return;
+    // early exit if this should not be added. only need to remove this for performance reasons if the player has specifically flagged the debugger off.
+    if (!HasVehicleDebugger && !VehicleDebugConfig.VehicleDebugMenuEnabled.Value)
+    {
+      Destroy(VehicleDebugHelpersInstance);
+      VehicleDebugHelpersInstance = null;
+      return;
+    }
+    
     if (VehicleDebugHelpersInstance != null) return;
     if (MovementController == null || !MovementController.FloatCollider ||
         !MovementController.OnboardCollider)
     {
-      CancelInvoke(nameof(InitializeVehicleDebugger));
-      Invoke(nameof(InitializeVehicleDebugger), 1);
+      CancelInvoke(nameof(AddOrRemoveVehicleDebugger));
+      Invoke(nameof(AddOrRemoveVehicleDebugger), 1);
       return;
     }
 

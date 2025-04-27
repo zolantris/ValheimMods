@@ -8,6 +8,8 @@ using UnityEngine;
 using ValheimVehicles.SharedScripts; // Assume you want the shared scripts style.
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using TMPro;
+using UnityEngine.UI;
 using ValheimRAFT;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
@@ -139,6 +141,7 @@ public static class VehicleStorageAPI
   public class StoredVehicleData
   {
     public string ModVersion;
+    public string VehicleName;
     public VehicleSettings Settings;
     public List<StoredPieceData> Pieces;
   }
@@ -198,10 +201,12 @@ public static class VehicleStorageAPI
       pieces.Add(storedPieceData);
     }
 
-    var vehicleName = string.Join("_", Player.m_localPlayer.GetPlayerName(), DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
+    var localDate = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+    var vehicleName = string.Join("_", Player.m_localPlayer.GetPlayerName(), localDate);
 
     var data = new StoredVehicleData
     {
+      VehicleName = "", // we never want this value saved. We only use filename.
       ModVersion = ValheimRaftPlugin.Version,
       Pieces = pieces,
       Settings = new VehicleSettings
@@ -310,6 +315,27 @@ public static class VehicleStorageAPI
     {
       LoggerProvider.LogError($"[VehicleStorageAPI] Failed to save vehicle '{vehicleName}': {ex}");
     }
+
+    RefreshVehicleSelectionGui(VehicleGui.VehicleSelectDropdown);
+  }
+
+  public static void RefreshVehicleSelectionGui(TMP_Dropdown dropdown)
+  {
+    if (dropdown == null) return;
+
+    dropdown.ClearOptions();
+
+    var options = GetAllVehicles()
+      .Select(x => new TMP_Dropdown.OptionData(x.VehicleName))
+      .ToList();
+
+    if (options.Count == 0)
+    {
+      options.Add(new TMP_Dropdown.OptionData("No Vehicles"));
+    }
+
+    dropdown.options = options;
+    dropdown.RefreshShownValue();
   }
 
   /// <summary>
@@ -333,12 +359,6 @@ public static class VehicleStorageAPI
 
   public static GameObject GetVehicleTypeFromVehicleData(StoredVehicleData vehicleData)
   {
-    // if (vehicleData.Settings.VehicleType == null)
-    // {
-    //   LoggerProvider.LogError($"Vehicle data is corrupt or unsupported. Could not find vehicle type within settings of vehicleData: {vehicleData}");
-    //   return;
-    // }
-
     switch (vehicleData.Settings.VehicleType)
     {
       case VehicleTypeEnum.Land:
@@ -379,16 +399,19 @@ public static class VehicleStorageAPI
     LoggerProvider.LogDebug(allVehicles.ToString());
   }
 
+  private static readonly List<StoredVehicleData> _allVehicles = new(); 
+
   /// <summary>
   /// Loads all saved vehicles.
   /// </summary>
   public static List<StoredVehicleData> GetAllVehicles()
   {
-    var vehicles = new List<StoredVehicleData>();
+    _allVehicles.Clear();
+    
     try
     {
       if (!Directory.Exists(SavedVehiclesFolderPath))
-        return vehicles;
+        return _allVehicles;
 
       var files = Directory.GetFiles(SavedVehiclesFolderPath, "*.json");
       foreach (var file in files)
@@ -397,7 +420,14 @@ public static class VehicleStorageAPI
         var vehicle = JsonConvert.DeserializeObject<StoredVehicleData>(json);
         if (vehicle != null)
         {
-          vehicles.Add(vehicle);
+          // Vehicle name should match the file name. This will prevent problems.
+          var fileTextName = file.Replace(SavedVehiclesFolderPath, "").Replace("\\", "").Replace(".json", "");
+
+          // always use the filename as vehicle name.
+          // todo might want to sanitize strings to prevent issues.
+          vehicle.VehicleName = fileTextName;
+
+          _allVehicles.Add(vehicle);
         }
       }
     }
@@ -405,20 +435,7 @@ public static class VehicleStorageAPI
     {
       Debug.LogError($"[VehicleStorageAPI] Failed to load vehicles: {ex}");
     }
-    return vehicles;
+
+    return _allVehicles;
   }
-
-  public static void OpenSelectionMenu()
-  {
-
-  }
-
-  // Placeholder for future batch update (e.g., update many vehicles at once)
-  // public static void SaveOrUpdateVehicles(IEnumerable<StoredVehicleData> vehicles)
-  // {
-  //   foreach (var vehicle in vehicles)
-  //   {
-  //     SaveOrUpdateVehicle(vehicle);
-  //   }
-  // }
 }

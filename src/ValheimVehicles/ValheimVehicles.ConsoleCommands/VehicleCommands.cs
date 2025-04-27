@@ -675,20 +675,22 @@ public class VehicleCommands : ConsoleCommand
     {
       ValheimRaftPlugin.Instance.AddRemoveVehicleGui();
     }
-
+    
     VehicleGui.ToggleConfigPanelState(true);
   }
 
   public static void ToggleVehicleCommandsHud()
   {
     if (!CanRunCheatCommand()) return;
+
+    // must do this otherwise the commands panel will not cycle debug value if we need to enable it.
     VehicleGui.ToggleCommandsPanelState(true);
+    VehicleShip.HasVehicleDebugger = VehicleGui.hasCommandsWindowOpened;
+    
     foreach (var vehicleShip in VehicleShip.VehicleInstances)
     {
-      if (vehicleShip.Value != null)
-      {
-        vehicleShip.Value.InitializeVehicleDebugger();
-      }
+      if (vehicleShip.Value == null) return;
+      vehicleShip.Value.AddOrRemoveVehicleDebugger();
     }
   }
 
@@ -878,6 +880,26 @@ public class VehicleCommands : ConsoleCommand
     CreativeModeColliderComponent.ToggleEditMode();
     WaterZoneController.OnToggleEditMode(CreativeModeColliderComponent
       .IsEditMode);
+  }
+
+  public static void DestroyCurrentVehicle()
+  {
+    if (!CanRunCheatCommand()) return;
+    if (!Player.m_localPlayer) return;
+    var closestVehicle = GetNearestVehicleShip(Player.m_localPlayer.transform.position);
+    if (!closestVehicle) return;
+
+    var nvPiecesClone = closestVehicle.PiecesController.m_nviewPieces.ToList();
+
+    foreach (var piecesControllerMNviewPiece in nvPiecesClone)
+    {
+      if (piecesControllerMNviewPiece == null) continue;
+      piecesControllerMNviewPiece.Destroy();
+    }
+
+    closestVehicle.Instance.NetView.Destroy();
+
+    LoggerProvider.LogMessage("Completed destroy vehicle command.");
   }
 
   public override List<string> CommandOptionList()

@@ -26,6 +26,7 @@
 
     <ItemGroup>
         <Compile Include="ValheimVehicles.GUI\DropdownRefreshHover.cs"/>
+        <Compile Include="ValheimVehicles.GUI\TMPDropdownFactory.cs"/>
         <Compile Include="ValheimVehicles.Interfaces\IInitProvider.cs"/>
         <Compile Include="ValheimVehicles.Interfaces\IRudderControls.cs"/>
         <Compile Include="ValheimVehicles.Interfaces\IValheimShip.cs"/>

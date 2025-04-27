@@ -33,7 +33,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
   private GUIStyle? myButtonStyle;
   private string ShipMovementOffsetText;
   private Vector3 _shipMovementOffset;
-  public static Dropdown VehicleSelectDropdown;
+  public static TMP_Dropdown VehicleSelectDropdown;
 
 
   private Vector3 GetShipMovementOffset()
@@ -159,7 +159,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     }
   }
 
-  public static void HideOrShowDebugCommandPanel(bool isVisible, bool canUpdateTogglePanel)
+  public static void HideOrShowCommandPanel(bool isVisible, bool canUpdateTogglePanel)
   {
     if (Instance == null) return;
     Instance.HideOrShowPanel(isVisible, canUpdateTogglePanel, ref Instance.commandsToggleButtonWindow, ref Instance.commandsWindow, ref Instance.commandsPanelToggleObjects);
@@ -181,7 +181,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
   {
     hasCommandsWindowOpened = !hasCommandsWindowOpened;
     // this should not hide the actual commands panel button.
-    HideOrShowDebugCommandPanel(hasCommandsWindowOpened, canUpdateTogglePanel);
+    HideOrShowCommandPanel(hasCommandsWindowOpened, canUpdateTogglePanel);
   }
 
   public void InitPanel()
@@ -194,7 +194,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     CreateCommandsShortcutPanel();
     CreateVehicleConfigShortcutPanel();
 
-    HideOrShowDebugCommandPanel(hasCommandsWindowOpened, true);
+    HideOrShowCommandPanel(hasCommandsWindowOpened, true);
     HideOrShowVehicleConfigPanel(hasConfigPanelOpened, true);
     
     hasInitialized = true;
@@ -234,39 +234,32 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     }
   }
 
-  private static GameObject AddDropdownWithAction(GenericInputAction genericInputAction, int index, float StartHeight, Transform windowTransform)
+  private static GameObject AddDropdownWithAction(GenericInputAction genericInputAction, int index, float StartHeight, Transform parent)
   {
-    // Add Dropdown
-    var currentDropdown = GUIManager.Instance.CreateDropDown(windowTransform,
-      new Vector2(0, 1f),
-      new Vector2(0, 1f),
-      new Vector2(0f, 0f),
-      18);
-    var dropdownComponent = currentDropdown.GetComponent<Dropdown>();
-    VehicleSelectDropdown.GetComponent<RectTransform>().sizeDelta = new Vector2(300, 60);
-    dropdownComponent.captionText.text = "Select Vehicle";
-
+    var tmpDropdown = TMPDropdownFactory.CreateTMPDropDown(parent, new Vector2(0, 0), new Vector2(300, 60));
+    
     // it should never be null here.
     if (genericInputAction.OnDropdownChanged != null)
     {
-      dropdownComponent.onValueChanged.AddListener(genericInputAction.OnDropdownChanged);
+      tmpDropdown.onValueChanged.AddListener(genericInputAction.OnDropdownChanged);
     }
     else
     {
       LoggerProvider.LogError("OnDropdownChanged not provided for a AddDropdownAction. This is an error with Valheim Vehicles. Please Report");
     }
 
-    currentDropdown.AddComponent<DropdownRefreshOnHover>();
-
-    // todo likely do not need this.
-    currentDropdown.SetActive(true);
+    var refreshHandler = tmpDropdown.gameObject.AddComponent<DropdownRefreshOnHover>();
+    if (genericInputAction.OnPointerEnterAction != null)
+    {
+      refreshHandler.OnPointerEnterAction = genericInputAction.OnPointerEnterAction;
+    }
 
     if (genericInputAction.OnCreateDropdown != null)
     {
-      genericInputAction.OnCreateDropdown(dropdownComponent);
+      genericInputAction.OnCreateDropdown(tmpDropdown);
     }
 
-    return currentDropdown;
+    return tmpDropdown.gameObject;
   }
 
 
@@ -422,7 +415,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     {
       var nextState = !commandsWindow.activeSelf;
       buttonText.text = nextState ? vehicleCommandsHide : vehicleCommandsShow;
-      HideOrShowDebugCommandPanel(nextState, false);
+      HideOrShowCommandPanel(nextState, false);
     });
 
     panel.SetActive(hasCommandsWindowOpened);
@@ -456,6 +449,13 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     }
   }
 
+  private static bool CanAddAdminCommand()
+  {
+    if (ZNet.instance == null) return false;
+    if (ZNet.instance.LocalPlayerIsAdminOrHost() || VehicleDebugConfig.AllowDebugCommandsForNonAdmins.Value) return true;
+    return false;
+  }
+
   private void CreateCommandsShortcutPanel()
   {
     if (commandsToggleButtonWindow != null) return;
@@ -478,6 +478,10 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     {
       var genericActionElement = VehicleGUIItems.commandButtonActions[index];
       GameObject obj;
+
+      // prevent non-admins from seeing debug/hack commands.
+      if (genericActionElement.IsAdminOnly && !CanAddAdminCommand()) continue;
+      
       switch (genericActionElement.inputType)
       {
         case InputType.Dropdown:
@@ -503,16 +507,13 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
   {
     Logger.LogMessage(
       "Toggling convex hull debugger on the ship. This will show/hide the current convex hulls.");
-    var currentInstance = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
+    var currentInstance = VehicleCommands.GetNearestVehicleShip(Player.m_localPlayer.transform.position);
 
-    if (!currentInstance)
-      currentInstance = VehicleDebugHelpers.GetOnboardMBRaftDebugHelper();
+    if (currentInstance == null || currentInstance.PiecesController == null) return;
 
-    if (!currentInstance) return;
-
-    var convexHullComponent = currentInstance.VehicleShipInstance
+    var convexHullComponent = currentInstance
       .PiecesController.convexHullComponent;
-    // Just a 3 mode loop
+
     convexHullComponent.PreviewMode =
       convexHullComponent.PreviewMode switch
       {
@@ -521,7 +522,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
         _ => ConvexHullAPI.PreviewModes.Bubble
       };
 
-    currentInstance.VehicleShipInstance.PiecesController.convexHullComponent
+    currentInstance.PiecesController.convexHullComponent
       .CreatePreviewConvexHullMeshes();
   }
 
