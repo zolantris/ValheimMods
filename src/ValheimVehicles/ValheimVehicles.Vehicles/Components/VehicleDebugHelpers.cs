@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using ValheimRAFT;
 using ValheimVehicles.Config;
+using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Vehicles.Components;
 using Logger = Jotunn.Logger;
@@ -246,10 +247,17 @@ public class VehicleDebugHelpers : MonoBehaviour
     return rayCastHitInfo;
   }
 
-  public static VehicleDebugHelpers GetOnboardVehicleDebugHelper()
+  public static VehicleDebugHelpers? GetOnboardVehicleDebugHelper()
   {
-    var helper = GetVehiclePiecesController()?.VehicleInstance?.Instance
-      ?.VehicleDebugHelpersInstance;
+    if (!Player.m_localPlayer) return null;
+
+    var vehicleInstance = VehicleCommands.GetNearestVehicleShip(Player.m_localPlayer.transform.position);
+
+    if (vehicleInstance == null) return null;
+
+    vehicleInstance.AddOrRemoveVehicleDebugger();
+    var helper = vehicleInstance.Instance.VehicleDebugHelpersInstance;
+    
     return helper;
   }
 

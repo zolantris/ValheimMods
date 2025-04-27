@@ -2456,6 +2456,13 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
   //   }
   // }
 
+  public void AddNewPiece(GameObject obj)
+  {
+    var nv = obj.GetComponent<ZNetView>();
+    if (nv == null) return;
+    AddNewPiece(nv);
+  }
+
   public void AddNewPiece(ZNetView netView)
   {
     if (!(bool)netView)

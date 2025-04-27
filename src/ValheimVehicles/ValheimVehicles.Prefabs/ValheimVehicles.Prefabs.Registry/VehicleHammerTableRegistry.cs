@@ -39,6 +39,8 @@ public class VehicleHammerTableRegistry : GuardedRegistry<VehicleHammerTableRegi
     }
   }
 
+
+#if DEBUG
   public static void AddRepairToolToPieceTable(PieceTable table)
   {
     var repairToolPrefab = PrefabManager.Instance.GetPrefab("RepairTool");
@@ -74,14 +76,17 @@ public class VehicleHammerTableRegistry : GuardedRegistry<VehicleHammerTableRegi
       Jotunn.Logger.LogInfo($"Added RepairTool to VehicleHammerTable category {category}");
     }
   }
+#endif
 
   public override void OnRegister()
   {
     RegisterVehicleHammerTable();
 
-    if (VehicleHammerTable != null)
-    {
-      AddRepairToolToPieceTable(VehicleHammerTable.PieceTable);
-    }
+#if DEBUG
+    // if (VehicleHammerTable != null)
+    // {
+    //   AddRepairToolToPieceTable(VehicleHammerTable.PieceTable);
+    // }
+#endif
   }
 }

@@ -152,5 +152,8 @@
   "valheim_vehicles_creative_toggle_desc": "Toggle the vehicle command on/off.",
   "valheim_vehicles_commands_edit_menu": "edit-menu",
   "valheim_vehicles_commands_creative_mode": "creative-mode",
-  "valheim_vehicles_commands_mask_edit_mode": "collider-edit-mode"
+  "valheim_vehicles_commands_mask_edit_mode": "collider-edit-mode",
+  "valheim_vehicles_gui_hide": "Hide",
+  "valheim_vehicles_gui_show": "Show",
+  "valheim_vehicles_gui_commands_menu_title": "Vehicle Commands"
 }

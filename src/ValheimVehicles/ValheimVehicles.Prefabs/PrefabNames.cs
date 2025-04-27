@@ -76,6 +76,7 @@ public static class PrefabNames
   private const string ValheimVehiclesPrefix = "ValheimVehicles";
 
   public const string LandVehicle = $"{ValheimVehiclesPrefix}_VehicleLand";
+  public const string AirVehicle = $"{ValheimVehiclesPrefix}_VehicleAir";
   public const string WheelSet = $"{ValheimVehiclesPrefix}_WheelSet";
 
   public const string MBRopeAnchor = "MBRopeAnchor";

@@ -35,7 +35,7 @@ public class ShipSteeringWheelPrefab : IRegisterPrefab
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
-      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Vehicles),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
       Enabled = true,
       Requirements =
       [
