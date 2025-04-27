@@ -101,7 +101,7 @@ public static class TMPDropdownFactory
         layoutGroup.childForceExpandWidth = true;
         layoutGroup.childControlWidth = true;
         layoutGroup.spacing = 5f;
-        layoutGroup.padding = new RectOffset(0, 0, 5, 5);
+        layoutGroup.padding = new RectOffset(5, 5, 5, 5);
 
         var fitter = contentGO.GetComponent<ContentSizeFitter>();
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
@@ -110,6 +110,12 @@ public static class TMPDropdownFactory
 
         // Create an item (Option prototype)
         var itemGO = new GameObject("Item", typeof(RectTransform), typeof(Toggle));
+
+        var itemLayoutElement = itemGO.AddComponent<LayoutElement>();
+        itemLayoutElement.preferredHeight = 30f;
+        itemLayoutElement.minHeight = 30f;
+        itemLayoutElement.flexibleHeight = 0f;
+        
         itemGO.transform.SetParent(contentGO.transform, false);
 
         var itemRT = itemGO.GetComponent<RectTransform>();

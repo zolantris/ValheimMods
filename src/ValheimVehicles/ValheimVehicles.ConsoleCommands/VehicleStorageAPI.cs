@@ -14,6 +14,7 @@ using ValheimRAFT;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
+using ValheimVehicles.ValheimVehicles.GUI;
 using ValheimVehicles.Vehicles;
 using ValheimVehicles.Vehicles.Components;
 using Object = UnityEngine.Object;
@@ -325,17 +326,24 @@ public static class VehicleStorageAPI
 
     dropdown.ClearOptions();
 
-    var options = GetAllVehicles()
+    List<TMP_Dropdown.OptionData> options = new();
+
+    var vehicleOptions = GetAllVehicles()
       .Select(x => new TMP_Dropdown.OptionData(x.VehicleName))
       .ToList();
+
+    if (vehicleOptions.Count > 0)
+    {
+      options.Add(new TMP_Dropdown.OptionData("None"));
+      options.AddRange(vehicleOptions);
+    }
 
     if (options.Count == 0)
     {
       options.Add(new TMP_Dropdown.OptionData("No Vehicles"));
     }
 
-    dropdown.options = options;
-    dropdown.RefreshShownValue();
+    DropdownHelpers.SetupOptionsAndSelectFirst(dropdown, options);
   }
 
   /// <summary>

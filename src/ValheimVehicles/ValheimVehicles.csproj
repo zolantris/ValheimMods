@@ -25,6 +25,7 @@
     <Import Project="$(SolutionDir)/valheim.targets"/>
 
     <ItemGroup>
+        <Compile Include="ValheimVehicles.GUI\DropdownHelpers.cs"/>
         <Compile Include="ValheimVehicles.GUI\DropdownRefreshHover.cs"/>
         <Compile Include="ValheimVehicles.GUI\TMPDropdownFactory.cs"/>
         <Compile Include="ValheimVehicles.Interfaces\IInitProvider.cs"/>

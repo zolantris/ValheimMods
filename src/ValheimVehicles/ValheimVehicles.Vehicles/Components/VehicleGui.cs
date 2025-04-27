@@ -88,7 +88,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
 
   private const int panelHeight = 500;
   private const float buttonHeight = 60f;
-  private const float buttonWidth = 150f;
+  private const float buttonWidth = 350f;
   private static float panelWidth = buttonWidth * 1.1f;
 
   private static readonly Vector2 anchorMin = new(0f, 0.5f);
@@ -222,7 +222,15 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
   public static void VehicleSelectOnDropdownChanged(int index)
   {
     var vehicles = VehicleStorageAPI.GetAllVehicles();
-    if (index >= 0 && index < vehicles.Count)
+
+    // index 0 is a [None].
+    if (index == 0)
+    {
+      VehicleStorageAPI.SelectedVehicle = "";
+      return;
+    }
+
+    if (index >= 0 && index <= vehicles.Count)
     {
       VehicleStorageAPI.SelectedVehicle = vehicles[index].Settings.VehicleType.ToString();
       LoggerProvider.LogInfo($"Selected Vehicle: {VehicleStorageAPI.SelectedVehicle}");
@@ -236,7 +244,11 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
 
   private static GameObject AddDropdownWithAction(GenericInputAction genericInputAction, int index, float StartHeight, Transform parent)
   {
-    var tmpDropdown = TMPDropdownFactory.CreateTMPDropDown(parent, new Vector2(0, 0), new Vector2(300, 60));
+    var tmpDropdown = TMPDropdownFactory.CreateTMPDropDown(
+      parent,
+      new Vector2(0f, StartHeight - index * buttonHeight),
+      new Vector2(buttonWidth, buttonHeight)
+    );
     
     // it should never be null here.
     if (genericInputAction.OnDropdownChanged != null)
