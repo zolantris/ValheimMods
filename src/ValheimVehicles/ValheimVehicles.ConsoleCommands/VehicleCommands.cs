@@ -32,7 +32,7 @@ public class VehicleCommands : ConsoleCommand
   {
     // public const string locate = "locate";
     // public const string rotate = "rotate";
-    // public const string destroy = "destroy";
+    public const string destroy = "destroy";
     public const string reportInfo = "report-info";
     public const string debug = "debug";
     public const string config = "config";
@@ -114,6 +114,9 @@ public class VehicleCommands : ConsoleCommand
         break;
       case VehicleCommandArgs.debug:
         ToggleVehicleCommandsHud();
+        break;
+      case VehicleCommandArgs.destroy:
+        DestroyCurrentVehicle();
         break;
 #if DEBUG
       // config is not ready - only debug for now.
@@ -821,7 +824,7 @@ public class VehicleCommands : ConsoleCommand
     if (!CanRunCheatCommand()) return;
     if (!Player.m_localPlayer) return;
     var closestVehicle = GetNearestVehicleShip(Player.m_localPlayer.transform.position);
-    if (!closestVehicle) return;
+    if (closestVehicle == null || closestVehicle.PiecesController == null) return;
 
     var nvPiecesClone = closestVehicle.PiecesController.m_nviewPieces.ToList();
 
