@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using BepInEx.Configuration;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -35,6 +36,16 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   {
     Instance = this;
     _rpcRegisterRetry = new RetryGuard(Instance);
+
+    if (Localization.instance != null)
+    {
+      Localization.OnLanguageChange += UpdateTranslations;
+      UpdateTranslations();
+    }
+    else
+    {
+      StartCoroutine(WaitForLocalizationAndSubscribe());
+    }
   }
 
   private void OnEnable()
@@ -49,12 +60,13 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     {
       Destroy(_mapPinSync);
     }
+
+    Localization.OnLanguageChange -= UpdateTranslations;
   }
 
   public void Setup()
   {
     if (HasRunSetup) return;
-    UpdateTranslations();
     // components
     SetupComponents();
 
@@ -71,18 +83,37 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   /// </summary>
   public void UpdateTranslations()
   {
-    if (!_rpcRegisterRetry.CanRetry) return;
-    if (Localization.instance == null)
+    try
     {
-      _rpcRegisterRetry.Retry(UpdateTranslations, 1f);
+      if (!_rpcRegisterRetry.CanRetry) return;
+      if (Localization.instance == null)
+      {
+        _rpcRegisterRetry.Retry(UpdateTranslations, 1f);
+        return;
+      }
+
+      VehicleAnchorMechanismController.setLocalizedStates();
+      ModTranslations.UpdateTranslations();
+      if (!ModTranslations.IsHealthy())
+      {
+        _rpcRegisterRetry.Retry(UpdateTranslations, 1f);
+      }
+    }
+    catch (Exception e)
+    {
       return;
     }
+  }
 
-    ModTranslations.UpdateTranslations();
-    if (!ModTranslations.IsHealthy())
+  private IEnumerator WaitForLocalizationAndSubscribe()
+  {
+    while (Localization.instance == null || string.IsNullOrEmpty(Localization.instance.GetSelectedLanguage()))
     {
-      _rpcRegisterRetry.Retry(UpdateTranslations, 1f);
+      yield return null;
     }
+
+    Localization.OnLanguageChange += UpdateTranslations;
+    UpdateTranslations();
   }
 
 

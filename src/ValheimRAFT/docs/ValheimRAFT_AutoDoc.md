@@ -5,92 +5,6 @@
 - Description: Enable sentry debug logging. Requires sentry logging plugin installed to work. Sentry Logging plugin will make it easier to troubleshoot raft errors and detect performance bottlenecks. The bare minimum is collected, and only data related to ValheimRaft. See https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT#logging-metrics for more details about what is collected
 - Default Value: True
 
-### Debug logging for Vehicle/Raft 
-- Description: Outputs more debug logs for the Vehicle components. Useful for troubleshooting errors, but will spam logs
-- Default Value: False
-
-## Deprecated Config
-
-### Initial Floor Height (V1 raft) 
-- Description: Allows users to set the raft floor spawn height. 0.45 was the original height in 1.4.9 but it looked a bit too low. Now people can customize it
-- Default Value: 0.6
-
-## Config
-
-### pluginFolderName 
-- Description: Users can leave this empty. If they do not, the mod will attempt to match the folder string. Allows users to set the folder search name if their manager renames the folder, r2modman has a fallback case added to search for zolantris-ValheimRAFTDefault search values are an ordered list first one is always matching non-empty strings from this pluginFolderName.Folder Matches are:  zolantris-ValheimRAFT, zolantris-ValheimRAFT Zolantris-ValheimRAFT, and ValheimRAFT
-- Default Value: 
-
-## Debug
-
-### RemoveStartMenuBackground 
-- Description: Removes the start scene background, only use this if you want to speedup start time
-- Default Value: False
-
-## Server config
-
-### Protect Vehicle pieces from breaking on Error 
-- Description: Protects against crashes breaking raft/vehicle initialization causing raft/vehicles to slowly break pieces attached to it. This will make pieces attached to valid raft ZDOs unbreakable from damage, but still breakable with hammer
-- Default Value: True
-
-### AdminsCanOnlyBuildRaft 
-- Description: ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart
-- Default Value: False
-
-### AllowOldV1RaftRecipe 
-- Description: Allows the V1 Raft to be built, this Raft is not performant, but remains in >=v2.0.0 as a Fallback in case there are problems with the new raft
-- Default Value: False
-
-### AllowExperimentalPrefabs 
-- Description: Allows >=v2.0.0 experimental prefabs such as Iron variants of slabs, hulls, and ribs. They do not look great so they are disabled by default
-- Default Value: False
-
-## Rendering
-
-### Force Ship Owner Piece Update Per Frame 
-- Description: Forces an update during the Update sync of unity meaning it fires every frame for the Ship owner who also owns Physics. This will possibly make updates better for non-boat owners. Noting that the boat owner is determined by the first person on the boat, otherwise the game owns it.
-- Default Value: False
-
-## Server config
-
-### ServerRaftUpdateZoneInterval 
-- Description: Allows Server Admin control over the update tick for the RAFT location. Larger Rafts will take much longer and lag out players, but making this ticket longer will make the raft turn into a box from a long distance away.
-- Default Value: 5
-
-### MakeAllPiecesWaterProof 
-- Description: Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.
-- Default Value: True
-
-### AllowCustomRudderSpeeds 
-- Description: Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed. See advanced section for the actual speed settings.
-- Default Value: True
-
-## Config
-
-### AnchorKeyboardShortcut 
-- Description: Anchor keyboard hotkey. Only applies to keyboard
-- Default Value: LeftShift
-
-## Graphics
-
-### Sails Fade In Fog 
-- Description: Allow sails to fade in fog. Unchecking this will be slightly better FPS but less realistic. Should be fine to keep enabled
-- Default Value: True
-
-## Sounds
-
-### Ship Sailing Sounds 
-- Description: Toggles the ship sail sounds.
-- Default Value: True
-
-### Ship Wake Sounds 
-- Description: Toggles Ship Wake sounds. Can be pretty loud
-- Default Value: True
-
-### Ship In-Water Sounds 
-- Description: Toggles ShipInWater Sounds, the sound of the hull hitting water
-- Default Value: True
-
 ## Patches
 
 ### DynamicLocations 
@@ -337,6 +251,10 @@
 - Description: Shows the controls required to auto ascend/descend and run to speedup ladder
 - Default Value: True
 
+### Protect Vehicle pieces from breaking on Error 
+- Description: Protects against crashes breaking raft/vehicle initialization causing raft/vehicles to slowly break pieces attached to it. This will make pieces attached to valid raft ZDOs unbreakable from damage, but still breakable with hammer
+- Default Value: True
+
 ### GlassDefaultColor 
 - Description: Set the experimental glass color for your vehicle. This will be used for most glass meshes. This is the default color. Eventually players can customize the color of the glass.
 - Default Value: RGBA(0.600, 0.600, 0.600, 0.050)
@@ -356,6 +274,30 @@
 ### Experimental_TreadScaleX 
 - Description: Set the tank per tread piece X scale (width). This will make the treads larger or smaller allowing more/less grip.
 - Default Value: 1
+
+## Server config
+
+### AdminsCanOnlyBuildRaft 
+- Description: ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart
+- Default Value: False
+
+## PrefabConfig
+
+### AllowExperimentalPrefabs 
+- Description: Allows >=v2.0.0 experimental prefabs such as Iron variants of slabs, hulls, and ribs. They do not look great so they are disabled by default
+- Default Value: False
+
+## Graphics
+
+### Sails Fade In Fog 
+- Description: Allow sails to fade in fog. Unchecking this will be slightly better FPS but less realistic. Should be fine to keep enabled
+- Default Value: True
+
+## Server config
+
+### MakeAllPiecesWaterProof 
+- Description: Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.
+- Default Value: True
 
 ## Vehicle Debugging
 
@@ -415,6 +357,10 @@
 - Description: Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only.
 - Default Value: False
 
+### HasDebugPieces 
+- Description: Outputs more debug information for the vehicle pieces controller which manages all pieces placement. Meant for debugging mod issues. Will cause performance issues and lots of logging when enabled.
+- Default Value: False
+
 ## Vehicle Debugging
 
 ### CommandsWindowPosX 
@@ -435,13 +381,49 @@
 
 ### ButtonFontSize 
 - Description: 
-- Default Value: 16
+- Default Value: 18
 
 ### LabelFontSize 
 - Description: 
 - Default Value: 22
 
 ## Propulsion
+
+### Rudder Back Speed 
+- Description: Set the Back speed of rudder, this will apply with sails
+- Default Value: 1
+
+### Rudder Slow Speed 
+- Description: Set the Slow speed of rudder, this will apply with sails
+- Default Value: 1
+
+### Rudder Half Speed 
+- Description: Set the Half speed of rudder, this will apply with sails
+- Default Value: 0
+
+### Rudder Full Speed 
+- Description: Set the Full speed of rudder, this will apply with sails
+- Default Value: 0
+
+### LandVehicle Back Speed 
+- Description: Set the Back speed of land vehicle.
+- Default Value: 1
+
+### LandVehicle Slow Speed 
+- Description: Set the Slow speed of land vehicle.
+- Default Value: 1
+
+### LandVehicle Half Speed 
+- Description: Set the Half speed of land vehicle.
+- Default Value: 1
+
+### LandVehicle Full Speed 
+- Description: Set the Full speed of land vehicle.
+- Default Value: 1
+
+### LandVehicle Turn Speed 
+- Description: Turn speed for landvehicles. Zero is half the normal speed, 50% is normal speed, and 100% is double normal speed.
+- Default Value: 0.5
 
 ### AllowFlight 
 - Description: Allow the raft to fly (jump\crouch to go up and down)
@@ -544,15 +526,31 @@ Other methods removed after 2.5.0
 - Description: Flight allows for different rudder speeds. Use rudder speed only. Do not use sail speed.
 - Default Value: False
 
+### AllowCustomRudderSpeeds 
+- Description: Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed. See advanced section for the actual speed settings.
+- Default Value: True
+
 ### WheelDeadZone 
 - Description: Plus or minus deadzone of the wheel when turning. Setting this to 0 will disable this feature. This will zero out the rudder if the user attempts to navigate with a value lower than this threshold range
 - Default Value: 0.02
+
+## ModSupport:Assets
+
+### pluginFolderName 
+- Description: Users can leave this empty. If they do not, the mod will attempt to match the folder string. Allows users to set the folder search name if their manager renames the folder, r2modman has a fallback case added to search for the mod folder.Default search values are an ordered list first one is always matching non-empty strings from this pluginFolderName.Folder Matches are: zolantris-ValheimRAFT, Zolantris-ValheimRAFT, and ValheimRAFT
+- Default Value: 
 
 ## ModSupport:DynamicLocations
 
 ### DynamicLocationLoginMovesPlayerToBed 
 - Description: login/logoff point moves player to last interacted bed or first bed on ship
 - Default Value: True
+
+## ModSupport:DebugOptimizations
+
+### RemoveStartMenuBackground 
+- Description: Removes the start scene background, only use this if you want to speedup start time and lower GPU power cost significantly if you are idle on the start menu.
+- Default Value: False
 
 ## CustomMesh
 
@@ -648,93 +646,21 @@ Other methods removed after 2.5.0
 - Description: Set the underwater bubble color
 - Default Value: RGBA(0.000, 0.400, 0.400, 0.800)
 
-## Physics: Propulsion
-
-### VehicleLand LockXZRotation 
-- Description: Prevents XZ rotation on landvehicles DEBUG ONLY. Vehicles will always remain perfectly flat to horizon but this will limit upwards/downwards angular traversal
-- Default Value: False
-
-### VehicleLand WheelMass 
-- Description: The weight per wheel of the vehicle. This will allow more traction, but could slow down the vehicle at higher values. Experimental only
-- Default Value: 200
-
-### LandVehicle WheelRadius 
-- Description: Wheel radius. Larger wheels have more traction. But may be less realistic.
-- Default Value: 1
-
-### LandVehicle ShouldHideWheels 
-- Description: Hides the wheel visual as wheels are not perfectly synced.
-- Default Value: False
-
-### LandVehicle ShouldSyncWheelPositions 
-- Description: Toggles syncing of wheels to their actual collider position. Can cause desync with tracks.
-- Default Value: False
-
-### LandVehicle Suspension Distance 
-- Description: Distance suspension distance between vehicle position and wheel position. Higher values push the vehicle up and make it more bouncy.
-- Default Value: 2.25
-
-### LandVehicle SuspensionSpring 
-- Description: Suspension spring value. This will control how much the vehicle bounces when it drops. No suspension will be a bit jarring but high suspension can cause lots of screen jump. Ensure a higher SuspensionSpringDamper to fix the bounce continuing.
-- Default Value: 35000
-
-### LandVehicle SuspensionSpringDamper 
-- Description: Suspension spring damper value. This will control how much the vehicle stops bouncing. Higher values must be supplied for higher suspension spring values.
-- Default Value: 1500
-
-### LandVehicle wheelSuspensionSpringTarget 
-- Description: Suspension target. Between 0 and 1 it will determine the target spring position. This can allow for high suspension but also high targets
-- Default Value: 0.4
-
-### Rudder Back Speed 
-- Description: Set the Back speed of rudder, this will apply with sails
-- Default Value: 1
-
-### Rudder Slow Speed 
-- Description: Set the Slow speed of rudder, this will apply with sails
-- Default Value: 1
-
-### Rudder Half Speed 
-- Description: Set the Half speed of rudder, this will apply with sails
-- Default Value: 0
-
-### Rudder Full Speed 
-- Description: Set the Full speed of rudder, this will apply with sails
-- Default Value: 0
-
-### LandVehicle Back Speed 
-- Description: Set the Back speed of land vehicle.
-- Default Value: 1
-
-### LandVehicle Slow Speed 
-- Description: Set the Slow speed of land vehicle.
-- Default Value: 1
-
-### LandVehicle Half Speed 
-- Description: Set the Half speed of land vehicle.
-- Default Value: 1
-
-### LandVehicle Full Speed 
-- Description: Set the Full speed of land vehicle.
-- Default Value: 1
-
-### LandVehicle Turn Speed 
-- Description: Turn speed for landvehicles. Zero is half the normal speed, 50% is normal speed, and 100% is double normal speed.
-- Default Value: 0.5
+## Vehicle Physics
 
 ### LandVehicle Max Tread Width 
-- Description: Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles though.
+- Description: Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles. In future version there will be an individual config setting.
 - Default Value: 8
 
 ### LandVehicle Max Tread Length 
-- Description: Max length the treads can expand to.
+- Description: Max length the treads can expand to. In future version there will be an individual config setting.
 - Default Value: 20
 
 ### Vehicle CenterOfMassOffset 
-- Description: Offset the center of mass by a percentage of vehicle total height. Should always be a positive number. Higher values will make the vehicle more sturdy as it will pivot lower. Too high a value will make the ship behave weirdly possibly flipping. 0 will be the center of all colliders within the physics of the vehicle. 100% will be 50% lower than the vehicle's collider. 50% will be the very bottom of the vehicle's collider.
+- Description: Offset the center of mass by a percentage of vehicle total height. Should always be a positive number. Higher values will make the vehicle more sturdy as it will pivot lower. Too high a value will make the ship behave weirdly possibly flipping. 0 will be the center of all colliders within the physics of the vehicle. 
+100% will be 50% lower than the vehicle's collider. 
+50% will be the very bottom of the vehicle's collider. In future version there will be an individual config setting.
 - Default Value: 0.65
-
-## Vehicle Physics
 
 ### flightDamping_3.2.0 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
@@ -840,19 +766,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1.2
 
-## Physics: Propulsion
-
 ### LandVehicle TreadOffset 
 - Description: Wheel offset. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads
 - Default Value: -1
 
-## Vehicle Physics
-
-### MaxVehicleLinearVelocity_3.2.x 
+### MaxVehicleLinearVelocity_1.0.x 
 - Description: Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 100. Higher values will increase potential of vehicle flying off to space or rapidly accelerating through objects before physics can apply to an unloaded zone.
 - Default Value: 100
 
-### MaxVehicleLinearYVelocity_3.2.x 
+### MaxVehicleLinearYVelocity_1.0.x 
 - Description: Sets the absolute max speed a vehicle can ever move in vertical direction. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not use gravity well
 - Default Value: 50
 
@@ -864,11 +786,7 @@ Other methods removed after 2.5.0
 
 ### HullFloatationColliderLocation 
 - Description: Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20
-- Default Value: Custom
-
-### HullFloatation Custom Offset 
-- Description: DEPRECATED!!! Will be removed soon, values of -2 and 2 are allowed. Anything above means you are likely not using this correctly. Please use CenterOfMass instead if your vehicle needs to pivot lower. Hull Floatation Collider Customization. Set this value and it will always make the ship float at that offset, will only work when HullFloatationColliderLocation=Custom. Positive numbers sink ship, negative will make ship float higher.
-- Default Value: 0
+- Default Value: Fixed
 
 ### EnableExactVehicleBounds_3.2.0 
 - Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version
@@ -1003,6 +921,32 @@ Other methods removed after 2.5.0
 ### EnableWorldClusterMeshRendering 
 - Description: Cluster rendering efficiently improves how the whole world renders and shares meshes. It will allow for significantly higher FPS at the potential cost of wearNTear latency. It is debug only provided and will not be enabled until wearNtear can be optimize with this.
 - Default Value: False
+
+## VehicleGlobal:Sound
+
+### Ship Sailing Sounds 
+- Description: Toggles the ship sail sounds.
+- Default Value: True
+
+### Ship Wake Sounds 
+- Description: Toggles Ship Wake sounds. Can be pretty loud
+- Default Value: True
+
+### Ship In-Water Sounds 
+- Description: Toggles ShipInWater Sounds, the sound of the hull hitting water
+- Default Value: True
+
+## Rendering
+
+### Force Ship Owner Piece Update Per Frame 
+- Description: Forces an update during the Update sync of unity meaning it fires every frame for the Ship owner who also owns Physics. This will possibly make updates better for non-boat owners. Noting that the boat owner is determined by the first person on the boat, otherwise the game owns it.
+- Default Value: False
+
+## VehicleGlobal:Updates
+
+### ServerRaftUpdateZoneInterval 
+- Description: Allows Server Admin control over the update tick for the RAFT location. Larger Rafts will take much longer and lag out players, but making this ticket longer will make the raft turn into a box from a long distance away.
+- Default Value: 5
 
 ## QuickStartWorld
 

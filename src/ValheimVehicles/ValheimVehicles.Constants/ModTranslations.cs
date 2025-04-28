@@ -28,14 +28,6 @@ public class ModTranslations
 
   public static string WheelControls_Name = null!;
 
-  public static void TryUpdateTranslations()
-  {
-    if (!IsHealthy())
-    {
-      UpdateTranslations();
-    }
-  }
-
   /// <summary>
   /// Looks for null values. If any string is null, it will return that it's not healthy.
   /// </summary>
@@ -50,7 +42,7 @@ public class ModTranslations
   /// </summary>
   public static void UpdateTranslations()
   {
-    if (Localization.instance == null) return;
+    if (Localization.instance == null || string.IsNullOrEmpty(Localization.instance.GetSelectedLanguage())) return;
     try
     {
       WheelControls_Name = Localization.instance.Localize("$valheim_vehicles_wheel");
@@ -80,7 +72,7 @@ public class ModTranslations
     }
     catch (Exception e)
     {
-      LoggerProvider.LogWarning($"error while registering ModTranslations. This could break some item interactivity \n{e}");
+      LoggerProvider.LogWarning($"Problem while registering ModTranslations this call was likely too early.  \n{e}");
     }
   }
 }

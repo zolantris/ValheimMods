@@ -155,20 +155,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     };
 
     ZdoWatcherDelegate.RegisterToZdoManager();
-    // PlayerSpawnController.PlayerMoveToVehicleCallback =
-    // VehiclePiecesController.OnPlayerSpawnInVehicle;
     AddModSupport();
 
     var renderPipeline = GraphicsSettings.defaultRenderPipeline;
     if (renderPipeline != null)
       Logger.LogDebug(
         $"Valheim GameEngine is using: <{renderPipeline}> graphics pipeline ");
-
-    // for modern translation approach to update only in 1 place / less duplicate code
-
-    // still need this for now.
-    Localization.OnLanguageChange += ModTranslations.UpdateTranslations;
-    Localization.OnLanguageChange += VehicleAnchorMechanismController.setLocalizedStates;
 
     gameObject.AddComponent<ValheimVehiclesPlugin>();
   }

@@ -42,20 +42,25 @@ public class MapPinSync : MonoBehaviour
     Instance = this;
     if (ZNet.instance == null) return;
     if (ZNet.instance.IsDedicated()) return;
-    MinimapManager.OnVanillaMapDataLoaded += OnMapReady;
     ZdoWatchController.Instance.GetAllZdoGuids();
   }
 
-  private void OnDestroy()
+  private void OnEnable()
   {
+    MinimapManager.OnVanillaMapDataLoaded += OnMapReady;
+  }
+
+  private void OnDisable()
+  {
+    MinimapManager.OnVanillaMapDataLoaded -= OnMapReady;
     StopAllCoroutines();
+    refreshVehiclePinsRoutine = null;
     hasInitialized = false;
   }
 
   private void OnMapReady()
   {
-    if (Minimap.instance == null) return;
-    
+    if (ZNet.instance == null || Minimap.instance == null) return;
     StartVehiclePinSync();
     StartSpawnPinSync();
     hasInitialized = true;
