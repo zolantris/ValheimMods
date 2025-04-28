@@ -587,7 +587,7 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
 
     if (!piecesTransform)
     {
-      Logger.LogDebug("Unable to get piecesControllerTransform.");
+      LoggerProvider.LogDebug("Unable to get piecesControllerTransform.");
       return;
     }
 
@@ -598,11 +598,6 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
 
     if (!isPlayerInList)
       m_localPlayers.Add(player);
-#if DEBUG
-    else if (!player.IsDebugFlying())
-      Logger.LogWarning(
-        "Player detected entering ship, but they are already added within the list of ship players. This should be expected for flying and suddenly stopping flight commands");
-#endif
   }
 
   /// <summary>

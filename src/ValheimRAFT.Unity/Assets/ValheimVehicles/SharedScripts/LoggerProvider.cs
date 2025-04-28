@@ -1,8 +1,11 @@
+using BepInEx;
+using BepInEx.Configuration;
+using BepInEx.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
-using BepInEx.Logging;
 
 namespace ValheimVehicles.SharedScripts
 {
@@ -11,12 +14,17 @@ namespace ValheimVehicles.SharedScripts
         public static LogLevel ActiveLogLevel = LogLevel.All;
 
         private static ManualLogSource Logger;
+        private static LogLevel GlobalLogLevel = LogLevel.All;
 
         private static readonly Dictionary<string, string> _callerCache = new();
 
-        public static void Setup(ManualLogSource logger)
+        public static void Setup(ManualLogSource? logger)
         {
+            logger ??= new ManualLogSource("ValheimVehicles");
             Logger = logger;
+            GlobalLogLevel = ReadBepInExConsoleLogLevel();
+
+            LogInfo($"Logger initialized. Plugin Level: {ActiveLogLevel}, Global Level: {GlobalLogLevel}");
         }
 
         public static void LogError(string val,
@@ -70,9 +78,10 @@ namespace ValheimVehicles.SharedScripts
 
         private static bool IsLevelEnabled(LogLevel level)
         {
-            if (ActiveLogLevel == LogLevel.All) return true;
-            if (ActiveLogLevel == LogLevel.None) return false;
-            return level <= ActiveLogLevel;
+            if (ActiveLogLevel == LogLevel.None || GlobalLogLevel == LogLevel.None) return false;
+            if (ActiveLogLevel == LogLevel.All && GlobalLogLevel == LogLevel.All) return true;
+
+            return level <= ActiveLogLevel && level <= GlobalLogLevel;
         }
 
         private static string Format(string logType, string message, string file, int line)
@@ -94,6 +103,33 @@ namespace ValheimVehicles.SharedScripts
             }
 
             return $"{logType}:{callerInfo} {message}";
+        }
+
+        private static LogLevel ReadBepInExConsoleLogLevel()
+        {
+            try
+            {
+                var configPath = Path.Combine(Paths.ConfigPath, "BepInEx.cfg");
+                if (!File.Exists(configPath))
+                {
+                    return LogLevel.All;
+                }
+
+                var configFile = new ConfigFile(configPath, true);
+                if (configFile.TryGetEntry("Logging", "ConsoleDisplayedLevel", out ConfigEntry<string> consoleLevelEntry))
+                {
+                    if (Enum.TryParse(consoleLevelEntry.Value, true, out LogLevel parsedLevel))
+                    {
+                        return parsedLevel;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Logger?.LogWarning($"LoggerProvider: Failed to read BepInEx.cfg console level. Defaulting to All. Exception: {e.Message}");
+            }
+
+            return LogLevel.All;
         }
     }
 }
