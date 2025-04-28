@@ -112,7 +112,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
 
   private const int panelHeight = 500;
   private const float buttonHeight = 60f;
-  private const float buttonWidth = 250f;
+  private const float buttonWidth = 350f;
   private static float panelWidth = buttonWidth * 1.1f;
 
   private static readonly Vector2 anchorMin = new(0f, 0.5f);

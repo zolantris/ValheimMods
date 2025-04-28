@@ -2783,6 +2783,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
 
     var totalHeight = 0f;
 
+    _vehicle.VehicleConfigSync.SyncVehicleConfig();
     var hullFloatationMode = _vehicle.VehicleConfigSync.GetWaterFloatationHeightMode();
 
     var isAverageOfPieces = hullFloatationMode ==
