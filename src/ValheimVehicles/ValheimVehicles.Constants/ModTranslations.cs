@@ -28,14 +28,21 @@ public class ModTranslations
 
   public static string WheelControls_Name = null!;
 
+  public static void TryUpdateTranslations()
+  {
+    if (!IsHealthy())
+    {
+      UpdateTranslations();
+    }
+  }
+
   /// <summary>
   /// Looks for null values. If any string is null, it will return that it's not healthy.
   /// </summary>
   /// <returns></returns>
   public static bool IsHealthy()
   {
-    if (StaticFieldValidator.ValidateRequiredNonNullFields<ModTranslations>(null, null, false)) return false;
-    return true;
+    return StaticFieldValidator.ValidateRequiredNonNullFields<ModTranslations>(null, null, false);
   }
   
   /// <summary>

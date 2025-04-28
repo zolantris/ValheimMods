@@ -46,14 +46,10 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
     {
       Gui = GuiObj.GetComponent<VehicleGui>();
     }
-    if (Gui == null && hasConfigPanelOpened)
+
+    if (Gui == null)
     {
       Gui = GuiObj.AddComponent<VehicleGui>();
-    }
-
-    if (Gui != null)
-    {
-      Gui.gameObject.SetActive(hasConfigPanelOpened);
     }
 
 
@@ -189,13 +185,21 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
 
   public static void HideOrShowCommandPanel(bool isVisible, bool canUpdateTogglePanel)
   {
-    if (Instance == null) return;
+    if (Instance == null)
+    {
+      AddRemoveVehicleGui();
+      return;
+    }
     Instance.HideOrShowPanel(isVisible, canUpdateTogglePanel, ref Instance.commandsToggleButtonWindow, ref Instance.commandsWindow, ref Instance.commandsPanelToggleObjects);
   }
 
   public static void HideOrShowVehicleConfigPanel(bool isVisible, bool canUpdateTogglePanel)
   {
-    if (Instance == null) return;
+    if (Instance == null)
+    {
+      AddRemoveVehicleGui();
+      return;
+    }
     Instance.HideOrShowPanel(isVisible, canUpdateTogglePanel, ref Instance.configToggleButtonWindow, ref Instance.configWindow, ref Instance.configPanelToggleObjects);
   }
 

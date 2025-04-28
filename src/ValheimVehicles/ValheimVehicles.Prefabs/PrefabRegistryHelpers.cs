@@ -107,15 +107,6 @@ public abstract class PrefabRegistryHelpers
   /// </summary>
   private static void RegisterVehicleBoundsControllerPieces()
   {
-    PieceDataDictionary.Add(PrefabNames.CustomTreadDistanceCreator,
-      new PieceData
-      {
-        Name = "$valheim_vehicles_custom_tread_distance",
-        Description = "$valheim_vehicles_tread_distance_desc",
-        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-          .TankTreadIcon)
-      });
-
     PieceDataDictionary.Add(PrefabNames.CustomVehicleMaxCollisionHeightCreator,
       new PieceData
       {

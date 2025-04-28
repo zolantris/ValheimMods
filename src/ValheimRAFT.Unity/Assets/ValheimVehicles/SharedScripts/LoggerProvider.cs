@@ -2,7 +2,8 @@
 // ReSharper disable NamespaceStyle
 
 using System;
-using UnityEngine;
+using System.Diagnostics;
+using Debug = UnityEngine.Debug;
 namespace ValheimVehicles.SharedScripts
 {
 
@@ -31,6 +32,13 @@ namespace ValheimVehicles.SharedScripts
     {
       LogWarningAction(val);
     }
+
+    [Conditional("DEBUG")]
+    public static void LogDev(string val)
+    {
+      LogDebugAction(val);
+    }
+    
     public static void LogDebug(string val)
     {
       LogDebugAction(val);

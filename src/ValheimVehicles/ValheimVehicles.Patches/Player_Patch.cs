@@ -119,6 +119,10 @@ public class Player_Patch
       .GetComponent<VehiclePiecesController>() ?? null;
     if (bvc != null)
     {
+      if (gameObject.name.StartsWith(PrefabNames.CustomWaterFloatation))
+      {
+        bvc.AddCustomFloatationPrefab(gameObject);
+      }
       if (netView != null)
       {
         Logger.LogDebug(

@@ -2438,6 +2438,32 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
   //   }
   // }
 
+  /// <summary>
+  /// For custom config cubes that are deleted near instantly.
+  /// </summary>
+  /// <param name="prefab"></param>
+  public void AddCustomFloatationPrefab(GameObject prefab)
+  {
+    if (!prefab.name.StartsWith(PrefabNames.CustomWaterFloatation)) return;
+    SetPieceToParent(prefab.transform);
+
+    var isVehicleUsingCustomFloatation = _vehicle.VehicleConfigSync.GetWaterFloatationHeightMode() == VehicleFloatationMode.Custom;
+    var nextState = !isVehicleUsingCustomFloatation;
+
+    _vehicle.VehicleConfigSync.SendSyncFloatationMode(nextState, prefab.transform.localPosition.y);
+
+    var stateText = nextState ? ModTranslations.EnabledText : ModTranslations.DisabledText;
+
+    m_hoverFadeText.currentText = $"{ModTranslations.VehicleConfig_CustomFloatationHeight} ({stateText})";
+    m_hoverFadeText.transform.position = prefab.transform.position;
+    m_hoverFadeText.ResetHoverTimer();
+    CanUpdateHoverFadeText = true;
+    IgnoreAllVehicleCollidersForGameObjectChildren(prefab);
+
+    // destroy the prefab. It has no use after this call.
+    Destroy(prefab);
+  }
+
   public void AddNewPiece(Piece piece)
   {
     if (!(bool)piece)
@@ -2500,26 +2526,6 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     if (netView.GetZDO() == null)
     {
       Logger.LogError("NetView has no valid ZDO returning");
-      return;
-    }
-
-    // todo update floatation point. This point should be relative to the vehicle's localPosition. Need to confirm.
-    // todo sync floatation point
-    // todo if adding second time remove customFloatation point. We can check this by looking at the value of the saved ZDO var. if it's not 0 and adding it again set it to zero.
-    // We may want a boolean to set to enable/disable this feature so it's not based on the number which could be pretty inaccurate.
-    if (netView.gameObject.name.StartsWith(PrefabNames.CustomWaterFloatation))
-    {
-      var isVehicleUsingCustomFloatation = _vehicle.VehicleConfigSync.GetWaterFloatationHeightMode() == VehicleFloatationMode.Custom;
-      var nextState = !isVehicleUsingCustomFloatation;
-
-      _vehicle.VehicleConfigSync.SendSyncFloatationMode(nextState, netView.transform.localPosition.y);
-
-      var stateText = nextState ? ModTranslations.EnabledText : ModTranslations.DisabledText;
-
-      m_hoverFadeText.currentText = $"{ModTranslations.VehicleConfig_CustomFloatationHeight} ({stateText})";
-      m_hoverFadeText.ResetHoverTimer();
-      CanUpdateHoverFadeText = true;
-      Destroy(netView);
       return;
     }
 
@@ -2812,7 +2818,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       case VehicleFloatationMode.Fixed:
         return HullFloatationColliderAlignmentOffset;
       case VehicleFloatationMode.Custom:
-        return _vehicle.VehicleConfigSync.GetWaterFloatationHeight();
+        return _vehicle.VehicleConfigSync.config.CustomFloatationHeight;
       case VehicleFloatationMode.Center:
       default:
         return _vehicleHullBounds.center.y;

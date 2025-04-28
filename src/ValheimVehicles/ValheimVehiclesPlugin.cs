@@ -54,7 +54,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   public void Setup()
   {
     if (HasRunSetup) return;
-
+    UpdateTranslations();
     // components
     SetupComponents();
 

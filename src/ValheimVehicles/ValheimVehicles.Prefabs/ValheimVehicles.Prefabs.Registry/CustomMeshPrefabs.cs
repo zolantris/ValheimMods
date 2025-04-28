@@ -106,12 +106,17 @@ public class CustomMeshPrefabs : IRegisterPrefab
   {
     var prefab =
       PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.CustomWaterFloatation, false);
-
-    // 1x1x1 cube is way too big. Always 10% of that.
-    prefab.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-
     var meshRenderer = prefab.GetComponent<MeshRenderer>();
-
+    var material = new Material(LoadValheimAssets.CustomPieceShader)
+    {
+      color = new Color(0.3f, 0.4f, 1, 0.8f)
+    };
+    var collider = prefab.GetComponent<BoxCollider>();
+    prefab.layer = LayerMask.NameToLayer("piece_nonsolid");
+    collider.excludeLayers = LayerHelpers.CustomRaftLayerMask;
+    meshRenderer.material = material;
+    prefab.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+    
     // No special-effects, etc. Should be completely empty area invisible.
     meshRenderer.lightProbeUsage = LightProbeUsage.Off;
     meshRenderer.receiveShadows = false;

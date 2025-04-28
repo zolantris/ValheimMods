@@ -37,7 +37,8 @@ namespace ValheimVehicles.SharedScripts.Validation
     /// </summary>
     public static bool ValidateRequiredNonNullFields<T>(object? instance = null, string? context = null, bool canLog = true)
     {
-      return ValidateRequiredNonNullFields(typeof(T), instance, context);
+      var result = ValidateRequiredNonNullFields(typeof(T), instance, context, canLog);
+      return result;
     }
 
     /// <summary>
@@ -78,7 +79,7 @@ namespace ValheimVehicles.SharedScripts.Validation
         {
           if (canLog)
           {
-            LoggerProvider.LogWarning($"[{context}] Static field '{field.Name}' is null. This can cause a null reference exception in code. Report this error to ");
+            LoggerProvider.LogWarning($"[{context}] Static field '{field.Name}' is null. This can cause a null reference exception in code.");
           }
           isValid = false;
         }

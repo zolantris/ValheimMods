@@ -90,9 +90,6 @@ public static class PrefabNames
   public const string CustomWaterMaskCreator =
     $"{ValheimVehiclesPrefix}_CustomWaterMaskCreator";
 
-  public const string CustomTreadDistanceCreator =
-    $"{ValheimVehiclesPrefix}_CustomTreadDistanceCreator";
-
   public const string CustomVehicleMaxCollisionHeightCreator =
     $"{ValheimVehiclesPrefix}_CustomVehicleMaxCollisionHeightCreator";
 

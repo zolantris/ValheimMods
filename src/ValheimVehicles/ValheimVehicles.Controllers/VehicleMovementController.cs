@@ -3231,32 +3231,8 @@
       m_nview.Unregister(nameof(RPC_RequestControl));
       m_nview.Unregister(nameof(RPC_RequestResponse));
       m_nview.Unregister(nameof(RPC_ReleaseControl));
-
-      // sync_everything
-      m_nview.Unregister(nameof(RPC_SyncVehicleConfig));
-
+      
       _hasRegister = false;
-    }
-
-    public void SyncVehicleConfig()
-    {
-      var currentVehicleConfig = new VehicleConfig()
-      {
-        treadDistance = 5f
-      };
-      m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SyncVehicleConfig), new VehicleConfig());
-    }
-    /// <summary>
-    /// This is meant to sync all individual vehicle config values. When a value changes we must emit this to all clients.
-    ///
-    /// TODO move to vehicle if this makes sense since this config effects everything, not just movement properties.
-    /// </summary>
-    private void RPC_SyncVehicleConfig(long sender, VehicleConfig vehicleConfig)
-    {
-      if (_vehicle == null) return;
-      _vehicle.VehicleConfig = vehicleConfig;
-      // todo add all vehicle client syncs here
-      // todo have an interface / struct for all vehicle config values. This should be serialized via the RPC sync.
     }
 
     private void RegisterRPCListeners()
@@ -3294,10 +3270,7 @@
         RPC_RequestResponse);
       m_nview.Register<long>(nameof(RPC_ReleaseControl),
         RPC_ReleaseControl);
-
-      // vehicle config
-      m_nview.Register<VehicleConfig>(nameof(RPC_SyncVehicleConfig), RPC_SyncVehicleConfig);
-
+      
       _hasRegister = true;
     }
 
