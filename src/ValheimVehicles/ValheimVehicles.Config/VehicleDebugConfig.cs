@@ -164,7 +164,7 @@ public static class VehicleDebugConfig
     VehicleBoundsRebuildDelayPerPiece = Config.Bind(VehiclePiecesSectionName,
       "VehicleBoundsRebuildDelayPerPiece", 0.02f,
       ConfigHelpers.CreateConfigDescription(
-        $"The delay time that is added per piece the vehicle has on it for recalculating vehicle bounds. Example 2000 * 0.02 = 40seconds delay.  Values are clamped at {VehiclePiecesController.RebuildPieceMinDelay} and max value: {VehiclePiecesController.RebuildPieceMaxDelay} so even smaller vehicles rebuild at the min value and large >2k piece vehicles build at the max value.",
+        $"The delay time that is added per piece the vehicle has on it for recalculating vehicle bounds. Example 2000 * 0.02 = 40seconds delay.  Values are clamped at {BasePiecesController.RebuildPieceMinDelay} and max value: {BasePiecesController.RebuildPieceMaxDelay} so even smaller vehicles rebuild at the min value and large >2k piece vehicles build at the max value.",
         false, true, new AcceptableValueRange<float>(0.001f, 0.1f)));
 
 #if DEBUG
@@ -192,7 +192,7 @@ public static class VehicleDebugConfig
     CommandsWindowPosY = Config.Bind(SectionName, "CommandsWindowPosY", 0f);
     VehicleConfigWindowPosX = Config.Bind(SectionName, "ConfigWindowPosX", 0f);
     VehicleConfigWindowPosY = Config.Bind(SectionName, "ConfigWindowPosY", 0f);
-    ButtonFontSize = Config.Bind(SectionName, "ButtonFontSize", 16);
+    ButtonFontSize = Config.Bind(SectionName, "ButtonFontSize", 18);
     TitleFontSize = Config.Bind(SectionName, "LabelFontSize", 22);
     
     VehicleBoundsRebuildDelayPerPiece.SettingChanged += (sender, args) =>

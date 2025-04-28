@@ -122,7 +122,7 @@ public class VehiclePrefabs : IRegisterPrefab
         [
           new RequirementConfig
           {
-            Amount = 16,
+            Amount = 72,
             Item = "Wood",
             Recover = false
           }
@@ -168,6 +168,12 @@ public class VehiclePrefabs : IRegisterPrefab
           },
           new RequirementConfig
           {
+            Amount = 32,
+            Item = "Wood",
+            Recover = false
+          },
+          new RequirementConfig
+          {
             Amount = 12,
             Item = "Tar",
             Recover = false
@@ -202,7 +208,7 @@ public class VehiclePrefabs : IRegisterPrefab
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
-      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Vehicles),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
       Requirements =
       [

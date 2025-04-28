@@ -637,7 +637,7 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     if (Player.m_localPlayer == playerInList)
       ValheimBaseGameShip.s_currentShips.Add(MovementController);
 
-    Logger.LogDebug(
+    LoggerProvider.LogDebug(
       $"Player: {playerInList.GetPlayerName()} on-board, total onboard {m_localPlayers.Count}");
 
     var vehicleZdo = MovementController.VehicleInstance?.NetView != null
@@ -673,7 +673,7 @@ public class VehicleOnboardController : MonoBehaviour, IDeferredTrigger
     {
       RemovePlayerOnShip(delayedExitSubscription.Value);
       var remainingPlayers = m_localPlayers.Count;
-      Logger.LogDebug(
+      LoggerProvider.LogDebug(
         $"Player: {delayedExitSubscription.Value.GetPlayerName()} over-board, players remaining {remainingPlayers}");
       RemoveLogoutPoint(delayedExitSubscription);
     }

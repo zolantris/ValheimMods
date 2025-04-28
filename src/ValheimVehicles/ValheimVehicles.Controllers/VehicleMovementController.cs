@@ -3995,8 +3995,8 @@
       if (previousUserId != targetPlayer.GetPlayerID() || previousUserId == 0L)
         m_nview.GetZDO().Set(ZDOVars.s_user, targetPlayer.GetPlayerID());
 
-      Logger.LogDebug("Changing ship owner to " + playerOwner +
-                      $", name: {targetPlayer.GetPlayerName()}");
+      LoggerProvider.LogDebug("Changing ship owner to " + playerOwner +
+                              $", name: {targetPlayer.GetPlayerName()}");
 
       VehicleInstance.VehicleConfigSync.SyncVehicleBounds();
       var attachTransform = lastUsedWheelComponent.AttachPoint;

@@ -109,13 +109,13 @@ public class CustomMeshPrefabs : IRegisterPrefab
     var meshRenderer = prefab.GetComponent<MeshRenderer>();
     var material = new Material(LoadValheimAssets.CustomPieceShader)
     {
-      color = new Color(0.3f, 0.4f, 1, 0.8f)
+      color = new Color(0.5f, 0.4f, 0.5f, 0.8f)
     };
     var collider = prefab.GetComponent<BoxCollider>();
     prefab.layer = LayerMask.NameToLayer("piece_nonsolid");
     collider.excludeLayers = LayerHelpers.CustomRaftLayerMask;
     meshRenderer.material = material;
-    prefab.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+    prefab.transform.localScale = new Vector3(0.4f, 0.1f, 0.4f);
     
     // No special-effects, etc. Should be completely empty area invisible.
     meshRenderer.lightProbeUsage = LightProbeUsage.Off;

@@ -623,12 +623,13 @@ public class VehicleCommands : ConsoleCommand
 
     // must do this otherwise the commands panel will not cycle debug value if we need to enable it.
     VehicleGui.ToggleCommandsPanelState(true);
-    VehicleShip.HasVehicleDebugger = VehicleGui.hasCommandsWindowOpened;
-    
-    foreach (var vehicleShip in VehicleShip.VehicleInstances)
+
+    var closestVehicle = GetNearestVehicleShip(Player.m_localPlayer.transform.position);
+
+    if (closestVehicle != null)
     {
-      if (vehicleShip.Value == null) return;
-      vehicleShip.Value.AddOrRemoveVehicleDebugger();
+      closestVehicle.Instance.HasVehicleDebugger = VehicleGui.hasCommandsWindowOpened;
+      closestVehicle.AddOrRemoveVehicleDebugger();
     }
   }
 

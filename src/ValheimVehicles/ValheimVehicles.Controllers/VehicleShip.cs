@@ -94,7 +94,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     set => m_onboardCollider = value;
   }
 
-  public static bool HasVehicleDebugger = false;
+  public bool HasVehicleDebugger = false;
 
   public void SetCreativeMode(bool val)
   {
@@ -619,7 +619,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   {
     if (!isActiveAndEnabled) return;
     // early exit if this should not be added. only need to remove this for performance reasons if the player has specifically flagged the debugger off.
-    if (!HasVehicleDebugger && !VehicleDebugConfig.VehicleDebugMenuEnabled.Value)
+    if (!HasVehicleDebugger)
     {
       Destroy(VehicleDebugHelpersInstance);
       VehicleDebugHelpersInstance = null;

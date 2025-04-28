@@ -72,11 +72,11 @@ public class ModTranslations
       GuiHide = Localization.instance.Localize("$valheim_vehicles_gui_hide");
       GuiCommandsMenuTitle = Localization.instance.Localize("$valheim_vehicles_gui_commands_menu_title");
 
-      VehicleConfig_CustomFloatationHeight = Localization.instance.Localize("valheim_vehicles_custom_floatation_height");
+      VehicleConfig_CustomFloatationHeight = Localization.instance.Localize("$valheim_vehicles_custom_floatation_height");
 
       // basic states used to combine with other states.
-      DisabledText = Localization.instance.Localize("valheim_vehicles_gui_disabled");
-      EnabledText = Localization.instance.Localize("valheim_vehicles_gui_enabled");
+      DisabledText = Localization.instance.Localize("$valheim_vehicles_gui_disabled");
+      EnabledText = Localization.instance.Localize("$valheim_vehicles_gui_enabled");
     }
     catch (Exception e)
     {

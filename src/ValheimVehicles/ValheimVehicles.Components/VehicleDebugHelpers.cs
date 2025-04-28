@@ -115,6 +115,17 @@ public class VehicleDebugHelpers : MonoBehaviour
       .ForEach(x => x.ForEach(Destroy));
     lines.Clear();
 
+    Destroy(worldCenterOfMassCube);
+    Destroy(vehicleMovementAutomaticCenterOfMassCube);
+    Destroy(vehiclePiecesCenterOfMassCube);
+    Destroy(vehiclePiecesCenterCube);
+    Destroy(vehiclePieceCenterPoint);
+    Destroy(vehicleMovementCenterCube);
+    Destroy(forwardCube);
+    Destroy(backwardCube);
+    Destroy(rightCube);
+    Destroy(leftCube);
+
     foreach (var obj in targetColliders)
     {
       if (obj.collider == null) continue;

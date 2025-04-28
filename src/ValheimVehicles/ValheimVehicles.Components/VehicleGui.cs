@@ -112,7 +112,7 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
 
   private const int panelHeight = 500;
   private const float buttonHeight = 60f;
-  private const float buttonWidth = 350f;
+  private const float buttonWidth = 250f;
   private static float panelWidth = buttonWidth * 1.1f;
 
   private static readonly Vector2 anchorMin = new(0f, 0.5f);
@@ -575,6 +575,9 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
   {
     Logger.LogMessage(
       "Collider debugger called, \nblue = BlockingCollider for collisions and keeping boat on surface, \ngreen is float collider for pushing the boat upwards, typically it needs to be below or at same level as BlockingCollider to prevent issues, \nYellow is onboardtrigger for calculating if player is onboard");
+    var currentShip = VehicleCommands.GetNearestVehicleShip(Player.m_localPlayer.transform.position);
+    if (currentShip == null) return;
+    currentShip.Instance.HasVehicleDebugger = !currentShip.Instance.HasVehicleDebugger;
     var currentInstance = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
     if (currentInstance == null) return;
     currentInstance.StartRenderAllCollidersLoop();

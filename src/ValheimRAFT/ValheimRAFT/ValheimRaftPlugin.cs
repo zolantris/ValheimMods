@@ -135,7 +135,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     PatchController.Apply(HarmonyGuid);
 
     // critical for valheim api matching which must be called after config init.
-    ProviderInitializers.InitProviders();
+    ProviderInitializers.InitProviders(Logger);
 
     AddPhysicsSettings();
 

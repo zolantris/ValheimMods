@@ -42,48 +42,40 @@ public class VehicleConfigSyncComponent : MonoBehaviour
   private void RegisterRPCListeners()
   {
     // retry guards. Sometimes things are not available on Awake().
-    if (m_nview == null)
+    if (!IsValid(out var netView))
     {
       _rpcRegisterRetry.Retry(RegisterRPCListeners, 1);
       return;
     }
     if (_hasRegister) return;
     // ship piece bounds syncing
-    m_nview.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
+    netView.Register(nameof(RPC_SyncBounds), RPC_SyncBounds);
 
     // all config sync
-    m_nview.Register<ZPackage>(nameof(RPC_SetVehicleConfig), RPC_SetVehicleConfig);
-    m_nview.Register(nameof(RPC_SyncVehicleConfig), RPC_SyncVehicleConfig);
+    netView.Register<ZPackage>(nameof(RPC_SetVehicleConfig), RPC_SetVehicleConfig);
+    netView.Register(nameof(RPC_SyncVehicleConfig), RPC_SyncVehicleConfig);
 
-    // piece float mode syncing
-    // m_nview.Register<bool>(nameof(RPC_SyncWaterFloatationMode), RPC_SyncWaterFloatationMode);
-
-    // ship water floatation syncing
-    // m_nview.Register(nameof(RPC_SyncWaterFloatationHeight), RPC_SyncWaterFloatationHeight);
+    VehicleConfig.LoadVehicleConfig(netView.GetZDO());
 
     _hasRegister = true;
   }
   
   private void UnregisterRPCListeners()
   {
-    if (!_hasRegister || m_nview == null)
+    if (!IsValid(out var netView))
     {
       _hasRegister = false;
       return;
     }
 
+    if (!_hasRegister) return;
+
     // ship piece bounds syncing
-    m_nview.Unregister(nameof(RPC_SyncBounds));
+    netView.Unregister(nameof(RPC_SyncBounds));
 
     // all configs
-    m_nview.Unregister(nameof(RPC_SetVehicleConfig));
-    m_nview.Unregister(nameof(RPC_SyncVehicleConfig));
-
-    // piece float mode syncing
-    // m_nview.Unregister(nameof(RPC_SyncWaterFloatationMode));
-
-    // ship water floatation height
-    // m_nview.Unregister(nameof(RPC_SyncWaterFloatationHeight));
+    netView.Unregister(nameof(RPC_SetVehicleConfig));
+    netView.Unregister(nameof(RPC_SyncVehicleConfig));
 
     _hasRegister = false;
   }
@@ -144,93 +136,24 @@ public class VehicleConfigSyncComponent : MonoBehaviour
     if (IsValid()) return false;
     return true;
   }
-
-  // public void SetWaterFloatHeight(float waterFloatHeight)
-  // {
-  //   if (!IsValid(out var netView)) return;
-  //   netView.GetZDO().Set(VehicleZdoVars.VehicleFloatationHeight, waterFloatHeight);
-  //   netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SyncWaterFloatationHeight));
-  // }
-  //
+  
   public VehicleFloatationMode GetWaterFloatationHeightMode()
   {
     if (config.HasCustomFloatationHeight) return VehicleFloatationMode.Custom;
     return PhysicsConfig.HullFloatationColliderLocation.Value;
   }
 
-  // {
-  // if (!IsValid()) return PhysicsConfig.HullFloatationColliderLocation.Value;
-  // var vehicleFloatationCustomModeEnabled = m_nview!.GetZDO().GetBool(VehicleZdoVars.VehicleFloatationCustomModeEnabled, false);
-  // return vehicleFloatationCustomModeEnabled ? VehicleFloatationMode.Custom : PhysicsConfig.HullFloatationColliderLocation.Value;
-  // }
-
   public void SendSyncFloatationMode(bool isCustom, float relativeHeight)
   {
+    // do nothing for land-vehicles.
+    if (_vehicle.IsLandVehicle) return;
+    
     // set config immediately, but it might not be updated if the ranges are out of bounds
     config.HasCustomFloatationHeight = isCustom;
     config.CustomFloatationHeight = relativeHeight;
 
-    var shouldUpdate = config.HasCustomFloatationHeight != isCustom || !Mathf.Approximately(config.CustomFloatationHeight, relativeHeight);
-    if (!shouldUpdate)
-    {
-      return;
-    }
-
     SendVehicleConfig();
   }
-// floatation Sync
-
-  // public void SendSyncFloatationMode(bool isCustom, float relativeHeight)
-  // {
-  //   if (!IsValid(out var netView)) return;
-  //   netView.GetZDO().Set(VehicleZdoVars.VehicleFloatationCustomModeEnabled, isCustom);
-  //   netView.InvokeRPC(nameof(RPC_SyncWaterFloatationMode), isCustom);
-  //
-  //   if (!isCustom)
-  //   {
-  //     return;
-  //   }
-  //
-  //   // we want to set the new height if enabling the custom height
-  //   SetWaterFloatHeight(relativeHeight);
-  // }
-
-  // public void RPC_SyncWaterFloatationHeight(long sender)
-  // {
-  //   if (!PiecesController) return;
-  //   SyncWaterFloatationHeight();
-  // }
-
-  // public void RPC_SyncWaterFloatationMode(long sender, bool isCustom)
-  // {
-  //   if (!IsValid()) return;
-  //   if (!PiecesController) return;
-  //   SyncWaterFloatationMode();
-  //   SyncWaterFloatationHeight();
-  // }
-
-  // public void SyncWaterFloatationHeight()
-  // {
-  //   if (!PiecesController || FloatCollider == null) return;
-  //  
-  //   var center = FloatCollider.center;
-  //   _cachedFloatationHeight = GetWaterFloatationHeight(center.y);
-  //
-  //   center.y = _cachedFloatationHeight;
-  //   FloatCollider.center = center;
-  // }
-
-  // public void SyncWaterFloatationMode()
-  // {
-  //   _cachedFloatationMode = GetWaterFloatationHeightMode();
-  // }
-
-  // public float GetWaterFloatationHeight(float fallbackValue = 0)
-  // {
-  //   if (!IsValid(out var netView)) return fallbackValue;
-  //   var floatationHeight = netView.GetZDO().GetFloat(VehicleZdoVars.VehicleFloatationHeight, fallbackValue);
-  //   return floatationHeight;
-  // }
 
   // bounds sync
 

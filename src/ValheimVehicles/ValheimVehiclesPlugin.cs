@@ -19,7 +19,7 @@ namespace ValheimVehicles;
 /// </summary>
 public class ValheimVehiclesPlugin : MonoBehaviour
 {
-  public const string Author = "Zolantris";
+  public const string Author = "zolantris";
   public const string Version = "1.0.0";
   internal const string ModName = "ValheimVehicles";
   public const string Guid = $"{Author}.{ModName}";
