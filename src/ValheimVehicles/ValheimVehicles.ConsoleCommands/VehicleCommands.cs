@@ -59,6 +59,7 @@ public class VehicleCommands : ConsoleCommand
       // config is only debug for now.
       $"\n<{VehicleCommandArgs.config}>: will show a menu related to the current vehicle you are on. This GUI menu will let you customize values specifically for your current vehicle." +
 #endif
+      $"\n<{VehicleCommandArgs.destroy}>: will DELETE the current raft and BREAK all pieces. This is a destructive admin-only command or (if cheats are enabled). You have been warned!" +
       $"\n<{VehicleCommandArgs.debug}>: will show a menu with options like rotating or debugging vehicle colliders" +
       $"\n<{VehicleCommandArgs.recover}>: will recover any vehicles within range of 1000 and turn them into V2 Vehicles" +
       $"\n<{VehicleCommandArgs.rotate}>: defaults to zeroing x and z tilt. Can also provide 3 args: x y z" +
