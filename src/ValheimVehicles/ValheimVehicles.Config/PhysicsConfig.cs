@@ -7,6 +7,7 @@ using ValheimVehicles.Constants;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Enums;
+using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.Config;
 
@@ -143,6 +144,9 @@ public static class PhysicsConfig
 
   private static readonly AcceptableValueRange<float> StableSailForceRange =
     new(0.01f, 0.1f);
+
+
+  private const string InvalidCustomSettingInVehicleFloatConfig = "Invalid HullFloatationColliderLocation 'Custom' was set in config. Resetting to 'Fixed'. Do not do this! Custom is only meant for local vehicles.";
 
   /// <summary>
   /// Force overrides the value if any of the Physics values change after loading in a release.
@@ -434,6 +438,24 @@ public static class PhysicsConfig
     MaxLinearVelocity.SettingChanged += (sender, args) =>
       VehicleMovementController.Instances.ForEach(x =>
         x.UpdateVehicleSpeedThrottle());
+
+
+    // Guard against setting any global values as a Custom floatation mode.
+    if (HullFloatationColliderLocation.Value == VehicleFloatationMode.Custom)
+    {
+      HullFloatationColliderLocation.Value = VehicleFloatationMode.Fixed;
+      LoggerProvider.LogWarning(InvalidCustomSettingInVehicleFloatConfig);
+    }
+
+    // Guard against setting any global values as a Custom floatation mode during reload process.
+    HullFloatationColliderLocation.SettingChanged += (_, _) =>
+    {
+      if (HullFloatationColliderLocation.Value == VehicleFloatationMode.Custom)
+      {
+        HullFloatationColliderLocation.Value = VehicleFloatationMode.Fixed;
+        LoggerProvider.LogWarning(InvalidCustomSettingInVehicleFloatConfig);
+      }
+    };
     
 
     VehicleLandMaxTreadWidth.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
