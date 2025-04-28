@@ -844,7 +844,7 @@ public class VehicleCommands : ConsoleCommand
     return
     [
       // VehicleCommandArgs.locate, 
-      // VehicleCommandArgs.destroy,
+      VehicleCommandArgs.destroy,
 #if DEBUG
       // config is only debug for now.
       VehicleCommandArgs.config,
