@@ -155,7 +155,10 @@
   "valheim_vehicles_commands_mask_edit_mode": "collider-edit-mode",
   "valheim_vehicles_gui_hide": "Hide",
   "valheim_vehicles_gui_show": "Show",
+  "valheim_vehicles_gui_disabled": "Disabled",
+  "valheim_vehicles_gui_enabled": "Enabled",
   "valheim_vehicles_gui_commands_menu_title": "Vehicle Commands",
   "valheim_vehicles_custom_floatation_tool": "Custom Floatation Tool",
-  "valheim_vehicles_custom_floatation_tool_desc": "Customize the floatation point per vehicle. Wherever this is place becomes the new float point. Adding another cube will remove the last cube."
+  "valheim_vehicles_custom_floatation_tool_desc": "Customize the floatation height per vehicle. Wherever this is place becomes the new float point. Adding another cube will remove the last cube.",
+  "valheim_vehicles_custom_floatation_height": "Custom Floatation Height"
 }

@@ -8,6 +8,7 @@ public static class VehicleZdoVars
     "ValheimVehicles_BaseVehicle_Initialized";
 
   public const string VehicleFloatationHeight = "ValheimVehicles_VehicleFloatationHeight";
+  public const string VehicleFloatationCustomModeEnabled = "ValheimVehicles_VehicleFloatationCustomModeEnabled";
 
   public static string ToggleSwitchAction = "ValheimVehicles_ToggleSwitchAction";
 

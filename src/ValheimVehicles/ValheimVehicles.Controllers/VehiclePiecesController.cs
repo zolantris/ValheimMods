@@ -2503,12 +2503,23 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       return;
     }
 
+    // todo update floatation point. This point should be relative to the vehicle's localPosition. Need to confirm.
+    // todo sync floatation point
+    // todo if adding second time remove customFloatation point. We can check this by looking at the value of the saved ZDO var. if it's not 0 and adding it again set it to zero.
+    // We may want a boolean to set to enable/disable this feature so it's not based on the number which could be pretty inaccurate.
     if (netView.gameObject.name.StartsWith(PrefabNames.CustomWaterFloatation))
     {
-      // todo update floatation point. This point should be relative to the vehicle's localPosition. Need to confirm.
-      // todo sync floatation point
-      // todo if adding second time remove customFloatation point. We can check this by looking at the value of the saved ZDO var. if it's not 0 and adding it again set it to zero.
-      // We may want a boolean to set to enable/disable this feature so it's not based on the number which could be pretty inaccurate.
+      var isVehicleUsingCustomFloatation = _vehicle.VehicleConfigSync.GetWaterFloatationHeightMode() == VehicleFloatationMode.Custom;
+      var nextState = !isVehicleUsingCustomFloatation;
+
+      _vehicle.VehicleConfigSync.SendSyncFloatationMode(nextState, netView.transform.localPosition.y);
+
+      var stateText = nextState ? ModTranslations.EnabledText : ModTranslations.DisabledText;
+
+      m_hoverFadeText.currentText = $"{ModTranslations.VehicleConfig_CustomFloatationHeight} ({stateText})";
+      m_hoverFadeText.ResetHoverTimer();
+      CanUpdateHoverFadeText = true;
+      Destroy(netView);
       return;
     }
 
@@ -2760,15 +2771,17 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
   // pushes the collider down a bit to have the boat spawn above water.
   private const float HullFloatationColliderAlignmentOffset = -1.5f;
 
-  private float GetAverageFloatHeightFromHulls()
+  private float GetVehicleFloatHeight()
   {
     _pendingHullBounds = new Bounds();
 
     var totalHeight = 0f;
 
-    var isAverageCollider = PhysicsConfig.HullFloatationColliderLocation.Value ==
-                            PhysicsConfig.HullFloatation.AverageOfHullPieces;
-    var items = isAverageCollider ? m_hullPieces : m_nviewPieces;
+    var hullFloatationMode = _vehicle.VehicleConfigSync.GetWaterFloatationHeightMode();
+
+    var isAverageOfPieces = hullFloatationMode ==
+                            VehicleFloatationMode.AverageOfHullPieces;
+    var items = isAverageOfPieces ? m_hullPieces : m_nviewPieces;
 
     foreach (var piece in items)
     {
@@ -2782,13 +2795,12 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
 
     _vehicleHullBounds = _pendingHullBounds;
 
-
-    switch (PhysicsConfig.HullFloatationColliderLocation.Value)
+    switch (hullFloatationMode)
     {
-      case PhysicsConfig.HullFloatation.AverageOfHullPieces:
-      case PhysicsConfig.HullFloatation.Average:
+      case VehicleFloatationMode.AverageOfHullPieces:
+      case VehicleFloatationMode.Average:
         var hullPieceCount =
-          PhysicsConfig.EnableExactVehicleBounds.Value
+          isAverageOfPieces
             ? m_hullPieces.Count
             : m_nviewPieces.Count;
 
@@ -2797,15 +2809,11 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
           return _vehicleHullBounds.center.y;
 
         return totalHeight / hullPieceCount;
-
-      case PhysicsConfig.HullFloatation.Bottom:
-        return _vehicleHullBounds.min.y;
-      case PhysicsConfig.HullFloatation.Top:
-        return _vehicleHullBounds.max.y;
-      case PhysicsConfig.HullFloatation.Custom:
-        return PhysicsConfig.HullFloatationCustomColliderOffset
-          .Value + HullFloatationColliderAlignmentOffset;
-      case PhysicsConfig.HullFloatation.Center:
+      case VehicleFloatationMode.Fixed:
+        return HullFloatationColliderAlignmentOffset;
+      case VehicleFloatationMode.Custom:
+        return _vehicle.VehicleConfigSync.GetWaterFloatationHeight();
+      case VehicleFloatationMode.Center:
       default:
         return _vehicleHullBounds.center.y;
     }
@@ -3251,15 +3259,14 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       return;
     }
 
-
     /*
      * @description float collider logic
      * - should match all ship colliders at surface level
      * - surface level eventually will change based on weight of ship and if it is sinking
      */
-    var averageFloatHeight = GetAverageFloatHeightFromHulls();
+    var vehicleFloatHeight = GetVehicleFloatHeight();
     var floatColliderCenterOffset =
-      new Vector3(_vehiclePieceBounds.center.x, averageFloatHeight,
+      new Vector3(_vehiclePieceBounds.center.x, vehicleFloatHeight,
         _vehiclePieceBounds.center.z);
 
     var floatColliderSize = new Vector3(

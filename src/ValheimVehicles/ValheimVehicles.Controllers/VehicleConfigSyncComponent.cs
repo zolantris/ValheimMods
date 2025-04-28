@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 using ValheimVehicles.Components;
+using ValheimVehicles.Config;
+using ValheimVehicles.Enums;
 using ValheimVehicles.Structs;
 
 namespace ValheimVehicles.Controllers;
@@ -69,15 +71,43 @@ public class VehicleConfigSyncComponent : MonoBehaviour
     _hasRegister = false;
   }
 
-  public void SetWaterFloatHeight(float waterFloatHeight)
+
+  public bool IsValid()
   {
-    if (!isActiveAndEnabled || !m_nview || m_nview.GetZDO() == null) return;
-    m_nview.GetZDO().Set(VehicleZdoVars.VehicleFloatationHeight, waterFloatHeight);
-    m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SyncWaterFloatationHeight));
+    if (!isActiveAndEnabled || m_nview == null || m_nview.GetZDO() == null) return false;
+    return true;
   }
 
+  public void SetWaterFloatHeight(float waterFloatHeight)
+  {
+    if (!IsValid()) return;
+    m_nview!.GetZDO().Set(VehicleZdoVars.VehicleFloatationHeight, waterFloatHeight);
+    m_nview!.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SyncWaterFloatationHeight));
+  }
+
+  public VehicleFloatationMode GetWaterFloatationHeightMode()
+  {
+    if (!IsValid()) return PhysicsConfig.HullFloatationColliderLocation.Value;
+    var vehicleFloatationCustomModeEnabled = m_nview!.GetZDO().GetBool(VehicleZdoVars.VehicleFloatationCustomModeEnabled, false);
+    return vehicleFloatationCustomModeEnabled ? VehicleFloatationMode.Custom : PhysicsConfig.HullFloatationColliderLocation.Value;
+  }
 
   // floatation Sync
+
+  public void SendSyncFloatationMode(bool isCustom, float relativeHeight)
+  {
+    if (!IsValid()) return;
+    m_nview!.GetZDO().Set(VehicleZdoVars.VehicleFloatationCustomModeEnabled, isCustom);
+    m_nview.InvokeRPC(nameof(SyncWaterFloatationMode));
+
+    if (!isCustom)
+    {
+      return;
+    }
+
+    // we want to set the new height if enabling the custom height
+    SetWaterFloatHeight(relativeHeight);
+  }
 
   public void RPC_SyncWaterFloatationHeight(long sender)
   {
@@ -85,12 +115,31 @@ public class VehicleConfigSyncComponent : MonoBehaviour
     SyncWaterFloatationHeight();
   }
 
+  public void RPC_SyncWaterFloatationMode(long sender, bool isCustom)
+  {
+    if (!IsValid()) return;
+    if (!PiecesController) return;
+    SyncWaterFloatationMode();
+    SyncWaterFloatationHeight();
+  }
+
   public void SyncWaterFloatationHeight()
   {
     if (!PiecesController || FloatCollider == null) return;
+   
     var center = FloatCollider.center;
-    center.y = GetWaterFloatationHeight(center.y);
+    _cachedFloatationHeight = GetWaterFloatationHeight(center.y);
+
+    center.y = _cachedFloatationHeight;
     FloatCollider.center = center;
+  }
+
+  private VehicleFloatationMode _cachedFloatationMode = VehicleFloatationMode.Average;
+  private float _cachedFloatationHeight = 0;
+
+  public void SyncWaterFloatationMode()
+  {
+    _cachedFloatationMode = GetWaterFloatationHeightMode();
   }
 
   public float GetWaterFloatationHeight(float fallbackValue = 0)

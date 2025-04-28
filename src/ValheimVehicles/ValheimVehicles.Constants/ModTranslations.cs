@@ -14,11 +14,17 @@ public class ModTranslations
   public static string CreativeMode = null!;
   public static string EditMode = null!;
 
+  public static string EnabledText = null!;
+  public static string DisabledText = null!;
+  
+
   public static string ToggleSwitch_CommandsHudText = null!;
   public static string ToggleSwitch_MaskColliderEditMode = null!;
   public static string ToggleSwitch_NextActionString = null!;
   public static string ToggleSwitch_CurrentActionString = null!;
   public static string ToggleSwitch_SwitchName = null!;
+
+  public static string VehicleConfig_CustomFloatationHeight = null!;
 
   public static string WheelControls_Name = null!;
 
@@ -28,7 +34,7 @@ public class ModTranslations
   /// <returns></returns>
   public static bool IsHealthy()
   {
-    if (StaticFieldValidator.ValidateRequiredNonNullFields<ModTranslations>()) return false;
+    if (StaticFieldValidator.ValidateRequiredNonNullFields<ModTranslations>(null, null, false)) return false;
     return true;
   }
   
@@ -58,6 +64,12 @@ public class ModTranslations
       GuiShow = Localization.instance.Localize("$valheim_vehicles_gui_show");
       GuiHide = Localization.instance.Localize("$valheim_vehicles_gui_hide");
       GuiCommandsMenuTitle = Localization.instance.Localize("$valheim_vehicles_gui_commands_menu_title");
+
+      VehicleConfig_CustomFloatationHeight = Localization.instance.Localize("valheim_vehicles_custom_floatation_height");
+
+      // basic states used to combine with other states.
+      DisabledText = Localization.instance.Localize("valheim_vehicles_gui_disabled");
+      EnabledText = Localization.instance.Localize("valheim_vehicles_gui_enabled");
     }
     catch (Exception e)
     {
