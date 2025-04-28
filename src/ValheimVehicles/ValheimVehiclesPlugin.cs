@@ -107,7 +107,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
 
   private IEnumerator WaitForLocalizationAndSubscribe()
   {
-    while (Localization.instance == null || string.IsNullOrEmpty(Localization.instance.GetSelectedLanguage()))
+    while (Localization.instance == null || ZInput.instance == null || string.IsNullOrEmpty(Localization.instance.GetSelectedLanguage()))
     {
       yield return null;
     }

@@ -36,39 +36,62 @@ public class ModTranslations
   {
     return StaticFieldValidator.ValidateRequiredNonNullFields<ModTranslations>(null, null, false);
   }
+
+  /// <summary>
+  /// We load localize too soon sometimes. Guard it.
+  /// </summary>
+  /// <param name="key"></param>
+  /// <returns></returns>
+  private static string SafeLocalize(string key)
+  {
+    try
+    {
+      if (Localization.instance == null) return null; // fallback
+      return Localization.instance.Localize(key) ?? null;
+    }
+    catch (Exception e)
+    {
+#if DEBUG
+      LoggerProvider.LogWarning($"Failed to localize key {key}.\n{e}");
+#endif
+      return null; // fallback gracefully
+    }
+  }
+  
+  
   
   /// <summary>
   /// Possibly move to a localization generator to generate these on the fly based on the current english translations.
   /// </summary>
   public static void UpdateTranslations()
   {
-    if (Localization.instance == null || string.IsNullOrEmpty(Localization.instance.GetSelectedLanguage())) return;
+    if (Localization.instance == null || ZInput.instance == null || string.IsNullOrEmpty(Localization.instance.GetSelectedLanguage())) return;
     try
     {
-      WheelControls_Name = Localization.instance.Localize("$valheim_vehicles_wheel");
-      ToggleSwitch_CurrentActionString = Localization.instance.Localize(
+      WheelControls_Name = SafeLocalize("$valheim_vehicles_wheel");
+      ToggleSwitch_CurrentActionString = SafeLocalize(
         "[<color=yellow><b>$KEY_Use</b></color>] To Toggle:");
-      ToggleSwitch_NextActionString = Localization.instance.Localize(
+      ToggleSwitch_NextActionString = SafeLocalize(
         "[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] To Switch To:");
 
-      ToggleSwitch_MaskColliderEditMode = Localization.instance.Localize(
+      ToggleSwitch_MaskColliderEditMode = SafeLocalize(
         "$valheim_vehicles_commands_mask_edit_mode");
-      ToggleSwitch_CommandsHudText = Localization.instance.Localize(
+      ToggleSwitch_CommandsHudText = SafeLocalize(
         "$valheim_vehicles_commands_edit_menu");
-      ToggleSwitch_SwitchName = Localization.instance.Localize("$valheim_vehicles_toggle_switch");
+      ToggleSwitch_SwitchName = SafeLocalize("$valheim_vehicles_toggle_switch");
 
-      EditMenu = Localization.instance.Localize("$valheim_vehicles_commands_edit_menu");
-      CreativeMode = Localization.instance.Localize("$valheim_vehicles_commands_creative_mode");
-      EditMode = Localization.instance.Localize("$valheim_vehicles_commands_mask_edit_mode");
-      GuiShow = Localization.instance.Localize("$valheim_vehicles_gui_show");
-      GuiHide = Localization.instance.Localize("$valheim_vehicles_gui_hide");
-      GuiCommandsMenuTitle = Localization.instance.Localize("$valheim_vehicles_gui_commands_menu_title");
+      EditMenu = SafeLocalize("$valheim_vehicles_commands_edit_menu");
+      CreativeMode = SafeLocalize("$valheim_vehicles_commands_creative_mode");
+      EditMode = SafeLocalize("$valheim_vehicles_commands_mask_edit_mode");
+      GuiShow = SafeLocalize("$valheim_vehicles_gui_show");
+      GuiHide = SafeLocalize("$valheim_vehicles_gui_hide");
+      GuiCommandsMenuTitle = SafeLocalize("$valheim_vehicles_gui_commands_menu_title");
 
-      VehicleConfig_CustomFloatationHeight = Localization.instance.Localize("$valheim_vehicles_custom_floatation_height");
+      VehicleConfig_CustomFloatationHeight = SafeLocalize("$valheim_vehicles_custom_floatation_height");
 
       // basic states used to combine with other states.
-      DisabledText = Localization.instance.Localize("$valheim_vehicles_gui_disabled");
-      EnabledText = Localization.instance.Localize("$valheim_vehicles_gui_enabled");
+      DisabledText = SafeLocalize("$valheim_vehicles_gui_disabled");
+      EnabledText = SafeLocalize("$valheim_vehicles_gui_enabled");
     }
     catch (Exception e)
     {
