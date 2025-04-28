@@ -1,6 +1,7 @@
-using Jotunn;
+using BepInEx;
+using BepInEx.Logging;
 using ValheimVehicles.SharedScripts;
-namespace ValheimVehicles.ValheimVehicles.Providers;
+namespace ValheimVehicles.Providers;
 
 public static class ProviderInitializers
 {
@@ -11,11 +12,9 @@ public static class ProviderInitializers
   /// <note>
   /// This is a new pattern to ensure this Mod can test code in isolation but still reference valheim code at runtime
   /// </note>
-  public static void InitProviders()
+  public static void InitProviders(ManualLogSource Logger)
   {
     new WearNTearIntegrationProvider().Init();
-
-    // rebind logger provider so we can use it in SharedScripts without referencing Jotunn and other libs.
-    LoggerProvider.Setup(Logger.LogError, Logger.LogWarning, Logger.LogDebug, Logger.LogInfo, Logger.LogMessage);
+    LoggerProvider.Setup(Logger);
   }
 }

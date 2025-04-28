@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-namespace ValheimVehicles.ValheimVehicles.Vehicles.Structs;
+namespace ValheimVehicles.Structs;
 
 public struct ActivationPieceData
 {

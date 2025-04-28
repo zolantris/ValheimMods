@@ -1,6 +1,6 @@
 using System;
 
-namespace ValheimVehicles.Vehicles.Structs;
+namespace ValheimVehicles.Structs;
 
 /// <summary>
 /// Main method to get the cache or non-cache value based on timer interval

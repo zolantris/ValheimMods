@@ -1,8 +1,7 @@
 using BepInEx.Configuration;
-using ValheimRAFT;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using Zolantris.Shared;
 
 namespace ValheimVehicles.Config;
@@ -14,6 +13,7 @@ public static class VehicleDebugConfig
   public static ConfigEntry<bool> AllowDebugCommandsForNonAdmins;
   public static ConfigEntry<bool> AllowEditCommandsForNonAdmins;
   public static ConfigEntry<int> VehicleCreativeHeight;
+  public static ConfigEntry<bool> HasDebugPieces;
 
   public static ConfigEntry<float> CommandsWindowPosX;
 
@@ -72,7 +72,7 @@ public static class VehicleDebugConfig
 
   private static void OnShowVehicleDebugMenuChange()
   {
-    ValheimRaftPlugin.Instance.AddRemoveVehicleGui();
+    VehicleGui.AddRemoveVehicleGui();
   }
 
   private static void OnMetricsUpdate()
@@ -90,7 +90,6 @@ public static class VehicleDebugConfig
   {
     if (VehicleGui.Instance == null)
     {
-      ValheimRaftPlugin.Instance.AddRemoveVehicleGui();
     }
     else
     {
@@ -165,7 +164,7 @@ public static class VehicleDebugConfig
     VehicleBoundsRebuildDelayPerPiece = Config.Bind(VehiclePiecesSectionName,
       "VehicleBoundsRebuildDelayPerPiece", 0.02f,
       ConfigHelpers.CreateConfigDescription(
-        $"The delay time that is added per piece the vehicle has on it for recalculating vehicle bounds. Example 2000 * 0.02 = 40seconds delay.  Values are clamped at {VehiclePiecesController.RebuildPieceMinDelay} and max value: {VehiclePiecesController.RebuildPieceMaxDelay} so even smaller vehicles rebuild at the min value and large >2k piece vehicles build at the max value.",
+        $"The delay time that is added per piece the vehicle has on it for recalculating vehicle bounds. Example 2000 * 0.02 = 40seconds delay.  Values are clamped at {BasePiecesController.RebuildPieceMinDelay} and max value: {BasePiecesController.RebuildPieceMaxDelay} so even smaller vehicles rebuild at the min value and large >2k piece vehicles build at the max value.",
         false, true, new AcceptableValueRange<float>(0.001f, 0.1f)));
 
 #if DEBUG
@@ -183,12 +182,17 @@ public static class VehicleDebugConfig
       ConfigHelpers.CreateConfigDescription(
         "Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only.",
         false, true));
+    HasDebugPieces = Config.Bind("Debug", "HasDebugPieces", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Outputs more debug information for the vehicle pieces controller which manages all pieces placement. Meant for debugging mod issues. Will cause performance issues and lots of logging when enabled.",
+        false, true));
+
     
     CommandsWindowPosX = Config.Bind(SectionName, "CommandsWindowPosX", 0f);
     CommandsWindowPosY = Config.Bind(SectionName, "CommandsWindowPosY", 0f);
     VehicleConfigWindowPosX = Config.Bind(SectionName, "ConfigWindowPosX", 0f);
     VehicleConfigWindowPosY = Config.Bind(SectionName, "ConfigWindowPosY", 0f);
-    ButtonFontSize = Config.Bind(SectionName, "ButtonFontSize", 16);
+    ButtonFontSize = Config.Bind(SectionName, "ButtonFontSize", 18);
     TitleFontSize = Config.Bind(SectionName, "LabelFontSize", 22);
     
     VehicleBoundsRebuildDelayPerPiece.SettingChanged += (sender, args) =>

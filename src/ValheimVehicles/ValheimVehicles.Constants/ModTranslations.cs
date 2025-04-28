@@ -1,34 +1,48 @@
 using System;
-using ValheimRAFT;
+
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.Validation;
 namespace ValheimVehicles.Constants;
 
 public class ModTranslations
 {
-  public static string GuiShow = "";
-  public static string GuiHide = "";
-  public static string GuiCommandsMenuTitle = "";
+  public static string GuiShow = null!;
+  public static string GuiHide = null!;
+  public static string GuiCommandsMenuTitle = null!;
 
-  public static string EditMenu = "";
-  public static string CreativeMode = "";
-  public static string EditMode = "";
+  public static string EditMenu = null!;
+  public static string CreativeMode = null!;
+  public static string EditMode = null!;
 
-  public static string ToggleSwitch_CommandsHudText = "";
-  public static string ToggleSwitch_MaskColliderEditMode = "";
-  public static string ToggleSwitch_NextActionString = "";
-  public static string ToggleSwitch_CurrentActionString = "";
-  public static string ToggleSwitch_SwitchName = "";
+  public static string EnabledText = null!;
+  public static string DisabledText = null!;
+  
+
+  public static string ToggleSwitch_CommandsHudText = null!;
+  public static string ToggleSwitch_MaskColliderEditMode = null!;
+  public static string ToggleSwitch_NextActionString = null!;
+  public static string ToggleSwitch_CurrentActionString = null!;
+  public static string ToggleSwitch_SwitchName = null!;
+
+  public static string VehicleConfig_CustomFloatationHeight = null!;
+
+  public static string WheelControls_Name = null!;
+
+  public static void TryUpdateTranslations()
+  {
+    if (!IsHealthy())
+    {
+      UpdateTranslations();
+    }
+  }
 
   /// <summary>
-  /// Check a couple keys and ensure this object is healthy
-  ///
-  /// todo use the object validator that runs on all keys
+  /// Looks for null values. If any string is null, it will return that it's not healthy.
   /// </summary>
   /// <returns></returns>
   public static bool IsHealthy()
   {
-    if (GuiHide == string.Empty || GuiShow == string.Empty) return false;
-    return true;
+    return StaticFieldValidator.ValidateRequiredNonNullFields<ModTranslations>(null, null, false);
   }
   
   /// <summary>
@@ -39,6 +53,7 @@ public class ModTranslations
     if (Localization.instance == null) return;
     try
     {
+      WheelControls_Name = Localization.instance.Localize("$valheim_vehicles_wheel");
       ToggleSwitch_CurrentActionString = Localization.instance.Localize(
         "[<color=yellow><b>$KEY_Use</b></color>] To Toggle:");
       ToggleSwitch_NextActionString = Localization.instance.Localize(
@@ -56,6 +71,12 @@ public class ModTranslations
       GuiShow = Localization.instance.Localize("$valheim_vehicles_gui_show");
       GuiHide = Localization.instance.Localize("$valheim_vehicles_gui_hide");
       GuiCommandsMenuTitle = Localization.instance.Localize("$valheim_vehicles_gui_commands_menu_title");
+
+      VehicleConfig_CustomFloatationHeight = Localization.instance.Localize("$valheim_vehicles_custom_floatation_height");
+
+      // basic states used to combine with other states.
+      DisabledText = Localization.instance.Localize("$valheim_vehicles_gui_disabled");
+      EnabledText = Localization.instance.Localize("$valheim_vehicles_gui_enabled");
     }
     catch (Exception e)
     {

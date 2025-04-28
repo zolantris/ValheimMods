@@ -81,14 +81,14 @@ public static class PrefabNames
 
   public const string MBRopeAnchor = "MBRopeAnchor";
 
+  public const string CustomWaterFloatation =
+    $"{ValheimVehiclesPrefix}_CustomWaterFloatation";
+
   public const string CustomWaterMask =
     $"{ValheimVehiclesPrefix}_CustomWaterMask";
 
   public const string CustomWaterMaskCreator =
     $"{ValheimVehiclesPrefix}_CustomWaterMaskCreator";
-
-  public const string CustomTreadDistanceCreator =
-    $"{ValheimVehiclesPrefix}_CustomTreadDistanceCreator";
 
   public const string CustomVehicleMaxCollisionHeightCreator =
     $"{ValheimVehiclesPrefix}_CustomVehicleMaxCollisionHeightCreator";

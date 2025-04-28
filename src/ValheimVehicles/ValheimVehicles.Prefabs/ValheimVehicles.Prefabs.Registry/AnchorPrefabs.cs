@@ -3,7 +3,7 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Controllers;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;

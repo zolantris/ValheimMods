@@ -7,23 +7,19 @@ using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.SharedScripts; // Assume you want the shared scripts style.
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using TMPro;
-using UnityEngine.UI;
-using ValheimRAFT;
+using ValheimVehicles.Compat;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
-using ValheimVehicles.Prefabs.Registry;
-using ValheimVehicles.ValheimVehicles.GUI;
-using ValheimVehicles.Vehicles;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.GUI;
+using ValheimVehicles.Components;
 using Object = UnityEngine.Object;
 
-namespace ValheimVehicles.ValheimVehicles.API;
+namespace ValheimVehicles.API;
 
 public static class VehicleStorageAPI
 {
-  private static readonly string BaseFolderPath = Path.Combine(Paths.ConfigPath, $"{ValheimRaftPlugin.Author}-{ValheimRaftPlugin.ModName}", ValheimRaftPlugin.Instance.PluginFolderName.Value);
+  private static readonly string BaseFolderPath = Path.Combine(Paths.ConfigPath, $"{ValheimVehiclesPlugin.Author}-{ValheimVehiclesPlugin.ModName}");
   private static readonly string SavedVehiclesFolderPath = Path.Combine(BaseFolderPath, "SavedVehicles");
 
   static VehicleStorageAPI()
@@ -213,7 +209,7 @@ public static class VehicleStorageAPI
     var data = new StoredVehicleData
     {
       VehicleName = "", // we never want this value saved. We only use filename.
-      ModVersion = ValheimRaftPlugin.Version,
+      ModVersion = ValheimRAFT_API.GetPluginVersion(),
       Pieces = pieces,
       Settings = new VehicleSettings
       {

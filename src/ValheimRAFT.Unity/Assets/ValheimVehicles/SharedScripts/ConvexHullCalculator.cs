@@ -22,9 +22,6 @@ namespace ValheimVehicles.SharedScripts
 
     private const int INSIDE = -1;
 
-    public static Action<string> LogMessage = LoggerProvider.LogMessage;
-    public static Action<string> LogDebug = LoggerProvider.LogDebug;
-
     private const float EPSILON = 0.0000001f;
 
     private int faceCount;
@@ -120,10 +117,10 @@ namespace ValheimVehicles.SharedScripts
 
       if (currentLoopDepth >= maxLoopDepth)
       {
-        LogMessage("ValheimRAFT ConvexHullCalculator bailed early due to reaching max loop depth. This means only part of the vehicle was generated.");
+        LoggerProvider.LogMessage("ValheimRAFT ConvexHullCalculator bailed early due to reaching max loop depth. This means only part of the vehicle was generated.");
         if (hasPointDumpingEnabled)
         {
-          LogDebug(StringifyPointsForUnity(sanitizedPoints, maxPointsToLog));
+          LoggerProvider.LogDebug(StringifyPointsForUnity(sanitizedPoints, maxPointsToLog));
         }
       }
 

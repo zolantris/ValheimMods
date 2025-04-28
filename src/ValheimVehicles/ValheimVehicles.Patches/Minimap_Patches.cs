@@ -1,7 +1,7 @@
 using System;
 using HarmonyLib;
 using UnityEngine;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.Patches;

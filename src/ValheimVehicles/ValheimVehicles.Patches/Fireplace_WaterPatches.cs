@@ -1,5 +1,6 @@
 using HarmonyLib;
-using ValheimVehicles.Vehicles;
+using ValheimVehicles.Controllers;
+
 
 namespace ValheimVehicles.Patches;
 

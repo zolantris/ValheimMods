@@ -1,4 +1,4 @@
-namespace ValheimVehicles.Vehicles.Interfaces;
+namespace ValheimVehicles.Interfaces;
 
 public interface IInitProvider
 {

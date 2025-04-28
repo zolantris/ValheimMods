@@ -1,9 +1,9 @@
 using System;
 using UnityEngine;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles.Interfaces;
+using ValheimVehicles.Interfaces;
 
-namespace ValheimVehicles.ValheimVehicles.Providers;
+namespace ValheimVehicles.Providers;
 
 public class WearNTearIntegrationProvider : IInitProvider
 {

@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
-using ValheimVehicles.Vehicles;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Controllers;
+using ValheimVehicles.Components;
 
 namespace ValheimVehicles.Helpers;
 

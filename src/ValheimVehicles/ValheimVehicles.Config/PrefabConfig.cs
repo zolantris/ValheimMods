@@ -1,10 +1,11 @@
 using BepInEx.Configuration;
 using Jotunn.Managers;
 using UnityEngine;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
+using ValheimVehicles.Prefabs.Registry;
 
 namespace ValheimVehicles.Config;
 
@@ -17,6 +18,17 @@ public static class PrefabConfig
     get;
     private set;
   }
+
+  public static ConfigEntry<bool> ProtectVehiclePiecesOnErrorFromWearNTearDamage
+  {
+    get;
+    set;
+  }
+
+  public static ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
+
+  public static ConfigEntry<bool> AllowExperimentalPrefabs { get; set; }
+  public static ConfigEntry<bool> AdminsCanOnlyBuildRaft { get; set; }
 
   public static ConfigEntry<Color> GlassDefaultColor { get; private set; } =
     null!;
@@ -34,6 +46,8 @@ public static class PrefabConfig
 
   public static ConfigEntry<float> VehicleStaminaHaulingCost = null!;
   public static ConfigEntry<bool> VehicleHaulingSnapsOnStaminaZero = null!;
+  public static ConfigEntry<bool> Graphics_AllowSailsFadeInFog { get; set; }
+
 
   public enum VehicleShipInitPiece
   {
@@ -77,6 +91,13 @@ public static class PrefabConfig
       ConfigHelpers.CreateConfigDescription(
         "Shows the controls required to auto ascend/descend and run to speedup ladder"));
 
+    ProtectVehiclePiecesOnErrorFromWearNTearDamage = Config.Bind(
+      SectionKey,
+      "Protect Vehicle pieces from breaking on Error", true,
+      ConfigHelpers.CreateConfigDescription(
+        "Protects against crashes breaking raft/vehicle initialization causing raft/vehicles to slowly break pieces attached to it. This will make pieces attached to valid raft ZDOs unbreakable from damage, but still breakable with hammer",
+        true, true));
+
     GlassDefaultColor = Config.Bind(SectionKey,
       "GlassDefaultColor",
       new Color(0.60f, 0.60f, 0.60f, 0.05f),
@@ -104,6 +125,34 @@ public static class PrefabConfig
       ConfigHelpers.CreateConfigDescription(
         "Set the tank per tread piece X scale (width). This will make the treads larger or smaller allowing more/less grip.", true, false, new AcceptableValueRange<float>(0.5f, 5f)));
 
+
+    AdminsCanOnlyBuildRaft = Config.Bind("Server config",
+      "AdminsCanOnlyBuildRaft", false,
+      ConfigHelpers.CreateConfigDescription(
+        "ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart",
+        true, true));
+
+    AllowExperimentalPrefabs = Config.Bind(SectionKey,
+      "AllowExperimentalPrefabs", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Allows >=v2.0.0 experimental prefabs such as Iron variants of slabs, hulls, and ribs. They do not look great so they are disabled by default",
+        true, false));
+
+
+
+    Graphics_AllowSailsFadeInFog = Config.Bind("Graphics", "Sails Fade In Fog",
+      true,
+      "Allow sails to fade in fog. Unchecking this will be slightly better FPS but less realistic. Should be fine to keep enabled");
+
+
+    MakeAllPiecesWaterProof = Config.Bind<bool>("Server config",
+      "MakeAllPiecesWaterProof", true, ConfigHelpers.CreateConfigDescription(
+        "Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.",
+        true
+      ));
+
+    AllowExperimentalPrefabs.SettingChanged +=
+      VehiclePrefabs.Instance.OnExperimentalPrefabSettingsChange;
 
     ExperimentalTreadScaleX.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleStaminaHaulingCost.SettingChanged += (_, __) =>

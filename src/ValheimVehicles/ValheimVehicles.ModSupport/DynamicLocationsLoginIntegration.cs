@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using BepInEx;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using DynamicLocations.API;
 using DynamicLocations.Constants;
 using DynamicLocations.Controllers;
@@ -14,7 +14,7 @@ using Jotunn;
 using UnityEngine;
 using UnityEngine.UI;
 using ValheimVehicles.Config;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Controllers;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 

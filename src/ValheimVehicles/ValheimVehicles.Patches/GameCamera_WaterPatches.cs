@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using System.Configuration;
 using HarmonyLib;
 using UnityEngine;
-using ValheimRAFT.Patches;
+
 using ValheimVehicles.Config;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Controllers;
 
 namespace ValheimVehicles.Patches;
 
@@ -12,7 +12,7 @@ namespace ValheimVehicles.Patches;
 /// from vikings do swim might get things working 
 /// </summary>
 [HarmonyPatch]
-internal class GameCamera_WaterPatches
+public class GameCamera_WaterPatches
 {
   public static float CameraPositionY = 0f;
 

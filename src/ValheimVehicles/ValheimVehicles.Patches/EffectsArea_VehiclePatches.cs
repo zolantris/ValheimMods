@@ -1,7 +1,8 @@
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
-using ValheimVehicles.Vehicles;
+using ValheimVehicles.Controllers;
+
 
 namespace ValheimVehicles.Patches;
 

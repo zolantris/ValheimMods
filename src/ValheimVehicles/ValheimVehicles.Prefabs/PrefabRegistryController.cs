@@ -8,11 +8,11 @@ using Jotunn.Utils;
 using Registry;
 using UnityEngine;
 using UnityEngine.U2D;
-using ValheimRAFT;
-using ValheimRAFT.Patches;
+using ValheimVehicles.Components;
+using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles;
+
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
 
@@ -139,12 +139,12 @@ public static class PrefabRegistryController
 
   public static void UpdatePrefabStatus()
   {
-    if (!ValheimRaftPlugin.Instance.AdminsCanOnlyBuildRaft.Value &&
+    if (!PrefabConfig.AdminsCanOnlyBuildRaft.Value &&
         prefabsEnabled)
       return;
 
     Logger.LogDebug(
-      $"ValheimRAFT: UpdatePrefabStatusCalled with AdminsCanOnlyBuildRaft set as {ValheimRaftPlugin.Instance.AdminsCanOnlyBuildRaft.Value}, updating prefabs and player access");
+      $"ValheimRAFT: UpdatePrefabStatusCalled with AdminsCanOnlyBuildRaft set as {PrefabConfig.AdminsCanOnlyBuildRaft.Value}, updating prefabs and player access");
     var isAdmin = SynchronizationManager.Instance.PlayerIsAdmin;
     UpdatePrefabs(isAdmin);
   }
@@ -188,10 +188,10 @@ public static class PrefabRegistryController
 
     try
     {
-
+// todo call Assembly.GetExecutingAssembly if we move the asset bundle into ValheimVehicles mod.
       vehicleAssetBundle =
         AssetUtils.LoadAssetBundleFromResources("valheim-vehicles",
-          Assembly.GetExecutingAssembly());
+          Assembly.GetCallingAssembly());
 
       prefabManager = PrefabManager.Instance;
       pieceManager = PieceManager.Instance;
@@ -257,7 +257,6 @@ public static class PrefabRegistryController
   {
     // Critical Items
     VehiclePrefabs.Instance.Register(prefabManager, pieceManager);
-    RaftPrefab.Instance.Register(prefabManager, pieceManager);
     ShipSteeringWheelPrefab.Instance.Register(prefabManager, pieceManager);
 
     // ValheimVehicle Prefabs

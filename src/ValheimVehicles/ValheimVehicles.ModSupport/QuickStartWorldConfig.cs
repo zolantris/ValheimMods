@@ -1,7 +1,6 @@
 using BepInEx.Configuration;
-using ComfyLib;
-using ValheimRAFT.Patches;
 using ValheimVehicles.Config;
+using ValheimVehicles.Patches;
 
 namespace ValheimVehicles.ModSupport;
 

@@ -5,11 +5,10 @@ using Jotunn.Entities;
 using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
-using ValheimRAFT;
+
 using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using Object = UnityEngine.Object;
 
 namespace ValheimVehicles.Prefabs.Registry;
@@ -123,7 +122,7 @@ public class VehiclePrefabs : IRegisterPrefab
         [
           new RequirementConfig
           {
-            Amount = 16,
+            Amount = 72,
             Item = "Wood",
             Recover = false
           }
@@ -169,6 +168,12 @@ public class VehiclePrefabs : IRegisterPrefab
           },
           new RequirementConfig
           {
+            Amount = 32,
+            Item = "Wood",
+            Recover = false
+          },
+          new RequirementConfig
+          {
             Amount = 12,
             Item = "Tar",
             Recover = false
@@ -203,7 +208,7 @@ public class VehiclePrefabs : IRegisterPrefab
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
-      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Vehicles),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
       Requirements =
       [
@@ -227,7 +232,7 @@ public class VehiclePrefabs : IRegisterPrefab
   public void RegisterNautilus()
   {
     var shouldEnable =
-      ValheimRaftPlugin.Instance.AllowExperimentalPrefabs.Value;
+      PrefabConfig.AllowExperimentalPrefabs.Value;
 
     var nautilus = PrefabManager.Instance?.GetPrefab(PrefabNames.Nautilus);
 

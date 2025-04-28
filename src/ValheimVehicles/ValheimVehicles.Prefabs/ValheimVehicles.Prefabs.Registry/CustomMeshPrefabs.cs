@@ -7,7 +7,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using ValheimVehicles.Config;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Prefabs.Registry;
@@ -23,6 +23,7 @@ public class CustomMeshPrefabs : IRegisterPrefab
   {
     RegisterWaterMaskCreator();
     RegisterWaterMaskPrefab();
+    RegisterCustomFloatationPrefab();
 
     if (CustomMeshConfig.EnableCustomWaterMeshTestPrefabs.Value)
     {
@@ -101,6 +102,42 @@ public class CustomMeshPrefabs : IRegisterPrefab
   //       Enabled = true
   //     }));
   // }
+  private static void RegisterCustomFloatationPrefab()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateEmptyPrefab(PrefabNames.CustomWaterFloatation, false);
+    var meshRenderer = prefab.GetComponent<MeshRenderer>();
+    var material = new Material(LoadValheimAssets.CustomPieceShader)
+    {
+      color = new Color(0.5f, 0.4f, 0.5f, 0.8f)
+    };
+    var collider = prefab.GetComponent<BoxCollider>();
+    prefab.layer = LayerMask.NameToLayer("piece_nonsolid");
+    collider.excludeLayers = LayerHelpers.CustomRaftLayerMask;
+    meshRenderer.material = material;
+    prefab.transform.localScale = new Vector3(0.4f, 0.1f, 0.4f);
+    
+    // No special-effects, etc. Should be completely empty area invisible.
+    meshRenderer.lightProbeUsage = LightProbeUsage.Off;
+    meshRenderer.receiveShadows = false;
+    meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+    meshRenderer.rayTracingMode = RayTracingMode.Off;
+    meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+
+    PrefabRegistryHelpers.AddTempNetView(prefab);
+
+    PrefabRegistryHelpers.AddPieceForPrefab(
+      PrefabNames.CustomWaterFloatation,
+      prefab);
+
+    PieceManager.Instance.AddPiece(new CustomPiece(prefab, true,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Tools),
+        Enabled = true
+      }));
+  }
 
   private void RegisterWaterMaskCreator()
   {

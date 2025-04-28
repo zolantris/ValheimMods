@@ -62,7 +62,9 @@
 
     <!--  Required for vehicle serialization/storage  -->
     <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+        <Reference Include="Newtonsoft.Json" Version="13.0.3">
+            <HintPath>$(SolutionDir)\plugins\Newtonsoft.Json.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
     <!-- Automatic publicize game libs -->

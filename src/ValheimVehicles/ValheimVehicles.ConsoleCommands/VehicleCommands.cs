@@ -13,14 +13,13 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
-using ValheimRAFT;
+
 using ValheimVehicles.Config;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles;
-using ValheimVehicles.Vehicles.Components;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Components;
+using ValheimVehicles.Controllers;
 using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 using Object = UnityEngine.Object;
@@ -33,7 +32,7 @@ public class VehicleCommands : ConsoleCommand
   {
     // public const string locate = "locate";
     // public const string rotate = "rotate";
-    // public const string destroy = "destroy";
+    public const string destroy = "destroy";
     public const string reportInfo = "report-info";
     public const string debug = "debug";
     public const string config = "config";
@@ -60,6 +59,7 @@ public class VehicleCommands : ConsoleCommand
       // config is only debug for now.
       $"\n<{VehicleCommandArgs.config}>: will show a menu related to the current vehicle you are on. This GUI menu will let you customize values specifically for your current vehicle." +
 #endif
+      $"\n<{VehicleCommandArgs.destroy}>: will DELETE the current raft and BREAK all pieces. This is a destructive admin-only command or (if cheats are enabled). You have been warned!" +
       $"\n<{VehicleCommandArgs.debug}>: will show a menu with options like rotating or debugging vehicle colliders" +
       $"\n<{VehicleCommandArgs.recover}>: will recover any vehicles within range of 1000 and turn them into V2 Vehicles" +
       $"\n<{VehicleCommandArgs.rotate}>: defaults to zeroing x and z tilt. Can also provide 3 args: x y z" +
@@ -116,20 +116,17 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.debug:
         ToggleVehicleCommandsHud();
         break;
+      case VehicleCommandArgs.destroy:
+        DestroyCurrentVehicle();
+        break;
 #if DEBUG
       // config is not ready - only debug for now.
       case VehicleCommandArgs.config:
         ToggleVehicleGuiConfig();
         break;
 #endif
-      case VehicleCommandArgs.upgradeToV2:
-        RunUpgradeToV2();
-        break;
       case VehicleCommandArgs.reportInfo:
         OnReportInfo();
-        break;
-      case VehicleCommandArgs.downgradeToV1:
-        RunDowngradeToV1();
         break;
       case VehicleCommandArgs.colliderEditMode:
         ToggleColliderEditMode();
@@ -610,70 +607,11 @@ public class VehicleCommands : ConsoleCommand
     }
   }
 
-  private static void RunDowngradeToV1()
-  {
-    var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
-    if (!vehicleController)
-    {
-      Logger.LogMessage("No v1 raft detected");
-      return;
-    }
-
-    var vehicleShip = vehicleController?.VehicleInstance;
-    if (vehicleShip == null)
-    {
-      Logger.LogMessage("No VehicleShip detected exiting. Without downgrading");
-      return;
-    }
-
-    var mbRaftPrefab = PrefabManager.Instance.GetPrefab(PrefabNames.MBRaft);
-    var mbRaftPrefabInstance = Object.Instantiate(mbRaftPrefab,
-      vehicleController.transform.position,
-      vehicleController.transform.rotation, null);
-
-    var mbShip = mbRaftPrefabInstance.GetComponent<MoveableBaseShipComponent>();
-    var piecesInVehicleController = vehicleController.GetCurrentPendingPieces();
-
-    foreach (var zNetView in piecesInVehicleController)
-      zNetView.m_zdo.Set(MoveableBaseRootComponent.MBParentIdHash,
-        mbShip.GetMbRoot().GetPersistentId());
-
-    if (vehicleShip.Instance != null)
-      ZNetScene.instance.Destroy(vehicleShip.Instance.gameObject);
-  }
-
-  private static void RunUpgradeToV2()
-  {
-    var mbRaft = VehicleDebugHelpers.GetMBRaftController();
-    if (!mbRaft)
-    {
-      Logger.LogMessage("No v1 raft detected");
-      return;
-    }
-
-    var vehiclePrefab =
-      PrefabManager.Instance.GetPrefab(PrefabNames.WaterVehicleShip);
-
-    if (mbRaft == null) return;
-
-    var vehicleInstance = Object.Instantiate(vehiclePrefab,
-      mbRaft.m_ship.transform.position,
-      mbRaft.m_ship.transform.rotation, null);
-    var vehicleShip = vehicleInstance.GetComponent<VehicleShip>();
-
-    var piecesInMbRaft = mbRaft.m_pieces;
-    foreach (var zNetView in piecesInMbRaft)
-      zNetView.m_zdo.Set(VehicleZdoVars.MBParentIdHash,
-        vehicleShip.PersistentZdoId);
-
-    ZNetScene.instance.Destroy(mbRaft.m_ship.gameObject);
-  }
-
   private static void ToggleVehicleGuiConfig()
   {
     if (!VehicleGui.Instance)
     {
-      ValheimRaftPlugin.Instance.AddRemoveVehicleGui();
+      VehicleGui.AddRemoveVehicleGui();
     }
     
     VehicleGui.ToggleConfigPanelState(true);
@@ -685,12 +623,13 @@ public class VehicleCommands : ConsoleCommand
 
     // must do this otherwise the commands panel will not cycle debug value if we need to enable it.
     VehicleGui.ToggleCommandsPanelState(true);
-    VehicleShip.HasVehicleDebugger = VehicleGui.hasCommandsWindowOpened;
-    
-    foreach (var vehicleShip in VehicleShip.VehicleInstances)
+
+    var closestVehicle = GetNearestVehicleShip(Player.m_localPlayer.transform.position);
+
+    if (closestVehicle != null)
     {
-      if (vehicleShip.Value == null) return;
-      vehicleShip.Value.AddOrRemoveVehicleDebugger();
+      closestVehicle.Instance.HasVehicleDebugger = VehicleGui.hasCommandsWindowOpened;
+      closestVehicle.AddOrRemoveVehicleDebugger();
     }
   }
 
@@ -887,7 +826,7 @@ public class VehicleCommands : ConsoleCommand
     if (!CanRunCheatCommand()) return;
     if (!Player.m_localPlayer) return;
     var closestVehicle = GetNearestVehicleShip(Player.m_localPlayer.transform.position);
-    if (!closestVehicle) return;
+    if (closestVehicle == null || closestVehicle.PiecesController == null) return;
 
     var nvPiecesClone = closestVehicle.PiecesController.m_nviewPieces.ToList();
 
@@ -907,7 +846,7 @@ public class VehicleCommands : ConsoleCommand
     return
     [
       // VehicleCommandArgs.locate, 
-      // VehicleCommandArgs.destroy,
+      VehicleCommandArgs.destroy,
 #if DEBUG
       // config is only debug for now.
       VehicleCommandArgs.config,

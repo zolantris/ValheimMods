@@ -1,5 +1,5 @@
 using BepInEx.Configuration;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 
 namespace ValheimVehicles.Config;
 

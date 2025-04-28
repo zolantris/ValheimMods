@@ -1,7 +1,6 @@
 using BepInEx.Configuration;
-using ComfyLib;
 using ValheimVehicles.SharedScripts;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Controllers;
 
 namespace ValheimVehicles.Config;
 

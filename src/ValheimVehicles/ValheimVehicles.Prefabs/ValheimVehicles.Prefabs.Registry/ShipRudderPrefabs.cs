@@ -4,7 +4,7 @@ using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Prefabs.Registry;
-using ValheimVehicles.Vehicles.Components;
+using ValheimVehicles.Components;
 
 namespace ValheimVehicles.Prefabs;
 
@@ -30,7 +30,7 @@ public class ShipRudderPrefabs : IRegisterPrefab
     pieceManager.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
-      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
       Enabled = true,
       Requirements =
       [
@@ -67,7 +67,7 @@ public class ShipRudderPrefabs : IRegisterPrefab
     PieceManager.Instance.AddPiece(new CustomPiece(prefab, false, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
-      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
       Enabled = true,
       Requirements =
       [

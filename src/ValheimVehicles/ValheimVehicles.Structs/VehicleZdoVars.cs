@@ -1,11 +1,14 @@
 using System.Collections.Generic;
 
-namespace ValheimVehicles.Vehicles;
+namespace ValheimVehicles.Structs;
 
 public static class VehicleZdoVars
 {
   public const string ZdoKeyBaseVehicleInitState =
     "ValheimVehicles_BaseVehicle_Initialized";
+
+  public const string VehicleFloatationHeight = "ValheimVehicles_VehicleFloatationHeight";
+  public const string VehicleFloatationCustomModeEnabled = "ValheimVehicles_VehicleFloatationCustomModeEnabled";
 
   public static string ToggleSwitchAction = "ValheimVehicles_ToggleSwitchAction";
 

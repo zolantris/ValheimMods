@@ -1,6 +1,6 @@
 using DynamicLocations.Controllers;
 using HarmonyLib;
-using ValheimVehicles.Vehicles.Controllers;
+using ValheimVehicles.Controllers;
 
 namespace ValheimVehicles.Patches;
 

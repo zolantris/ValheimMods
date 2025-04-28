@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ValheimVehicles.Vehicles.Structs;
+namespace ValheimVehicles.Structs;
 
 public struct ShipFloatation
 {

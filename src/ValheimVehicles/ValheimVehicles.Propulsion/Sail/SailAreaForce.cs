@@ -6,7 +6,7 @@
 
 namespace ValheimVehicles.Propulsion.Sail;
 
-static class SailAreaForce
+public static class SailAreaForce
 {
   public static readonly float Tier1 = 5f;
   public static readonly float Tier2 = 10f;
