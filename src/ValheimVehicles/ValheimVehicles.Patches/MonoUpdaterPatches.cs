@@ -2,7 +2,6 @@ using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
-using ValheimVehicles.Components;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Patches;

@@ -84,8 +84,8 @@ public class RopeAnchorComponent : MonoBehaviour, Interactable, Hoverable
   private uint m_zdoDataRevision;
 
   private float m_lastRopeCheckTime;
-  
-  internal static GameObject m_draggingRopeTo;
+
+  public static GameObject m_draggingRopeTo;
 
   public bool isHauling = false;
   private static string AttachToText = "";

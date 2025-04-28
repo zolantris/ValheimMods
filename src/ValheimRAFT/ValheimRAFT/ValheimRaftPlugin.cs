@@ -2,43 +2,27 @@
 using BepInEx.Configuration;
 using Jotunn.Managers;
 using Jotunn.Utils;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.RegularExpressions;
 using BepInEx.Bootstrap;
 using DynamicLocations;
 using DynamicLocations.API;
 using DynamicLocations.Controllers;
-using DynamicLocations.Structs;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Serialization;
-using ValheimRAFT.Config;
-using ValheimRAFT.Patches;
-using ValheimRAFT.Util;
 using ValheimVehicles;
-using ValheimVehicles.Config;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Injections;
 using ValheimVehicles.ModSupport;
 using ValheimVehicles.Prefabs;
-using ValheimVehicles.Prefabs.Registry;
-using ValheimVehicles.Propulsion.Sail;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Providers;
-using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Helpers;
+using ValheimVehicles.Patches;
 using ZdoWatcher;
 using Zolantris.Shared;
 using Zolantris.Shared.BepInExAutoDoc;
-using Logger = Jotunn.Logger;
 namespace ValheimRAFT;
 
 internal abstract class PluginDependencies
@@ -46,6 +30,9 @@ internal abstract class PluginDependencies
   public const string JotunnModGuid = Jotunn.Main.ModGuid;
 }
 
+/// <summary>
+/// ValheimRAFTPlugin is mostly a wrapper around ValheimVehicles which was added >=2.0.0. As of 3.2.0 ValheimVehicles contains 99% of the code.
+/// </summary>
 // [SentryDSN()]
 [BepInPlugin(ModGuid, ModName, Version)]
 [BepInDependency(ZdoWatcherPlugin.ModGuid)]
@@ -69,52 +56,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   // ReSharper restore MemberCanBePrivate.Global
   
   public static ValheimRaftPlugin Instance { get; private set; }
-
-  public ConfigEntry<bool> MakeAllPiecesWaterProof { get; set; }
-
-  public ConfigEntry<bool> Graphics_AllowSailsFadeInFog { get; set; }
-  public ConfigEntry<bool> AllowCustomRudderSpeeds { get; set; }
-
-  public ConfigEntry<string> PluginFolderName { get; set; }
-  public ConfigEntry<float> InitialRaftFloorHeight { get; set; }
-
-  public ConfigEntry<float> ServerRaftUpdateZoneInterval { get; set; }
-  public ConfigEntry<float> RaftSailForceMultiplier { get; set; }
-  public ConfigEntry<bool> AdminsCanOnlyBuildRaft { get; set; }
-  public ConfigEntry<bool> AllowOldV1RaftRecipe { get; set; }
-  public ConfigEntry<bool> AllowExperimentalPrefabs { get; set; }
-  public ConfigEntry<bool> ForceShipOwnerUpdatePerFrame { get; set; }
   
-  public ConfigEntry<float> BoatDragCoefficient { get; set; }
-  public ConfigEntry<float> MastShearForceThreshold { get; set; }
-  public ConfigEntry<bool> HasDebugBase { get; set; }
-
   public ConfigEntry<bool> EnableMetrics { get; set; }
-
-  public ConfigEntry<bool> ProtectVehiclePiecesOnErrorFromWearNTearDamage
-  {
-    get;
-    set;
-  }
-
-  public ConfigEntry<bool> DebugRemoveStartMenuBackground { get; set; }
-
-  // sounds for VehicleShip Effects
-  public ConfigEntry<bool> EnableShipWakeSounds { get; set; }
-  public ConfigEntry<bool> EnableShipInWaterSounds { get; set; }
-  public ConfigEntry<bool> EnableShipSailSounds { get; set; }
-
-
-  /**
-   * These folder names are matched for the CustomTexturesGroup
-   */
-  public string[] possibleModFolderNames =
-  [
-    $"{Author}-{ModName}", $"zolantris-{ModName}", $"Zolantris-{ModName}",
-    ModName, $"{Author}-{ModNameBeta}", $"zolantris-{ModNameBeta}",
-    $"Zolantris-{ModNameBeta}",
-    ModNameBeta
-  ];
 
   private ConfigDescription CreateConfigDescription(string description,
     bool isAdmin = false,
@@ -137,81 +80,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     return Version;
   }
 
-  private void CreateServerConfig()
-  {
-    ProtectVehiclePiecesOnErrorFromWearNTearDamage = Config.Bind(
-      "Server config",
-      "Protect Vehicle pieces from breaking on Error", true,
-      CreateConfigDescription(
-        "Protects against crashes breaking raft/vehicle initialization causing raft/vehicles to slowly break pieces attached to it. This will make pieces attached to valid raft ZDOs unbreakable from damage, but still breakable with hammer",
-        true, true));
-    AdminsCanOnlyBuildRaft = Config.Bind("Server config",
-      "AdminsCanOnlyBuildRaft", false,
-      CreateConfigDescription(
-        "ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart",
-        true, true));
-    AllowOldV1RaftRecipe = Config.Bind("Server config", "AllowOldV1RaftRecipe",
-      false,
-      CreateConfigDescription(
-        "Allows the V1 Raft to be built, this Raft is not performant, but remains in >=v2.0.0 as a Fallback in case there are problems with the new raft",
-        true, true));
-    AllowExperimentalPrefabs = Config.Bind("Server config",
-      "AllowExperimentalPrefabs", false,
-      CreateConfigDescription(
-        "Allows >=v2.0.0 experimental prefabs such as Iron variants of slabs, hulls, and ribs. They do not look great so they are disabled by default",
-        true, true));
-
-    ForceShipOwnerUpdatePerFrame = Config.Bind("Rendering",
-      "Force Ship Owner Piece Update Per Frame", false,
-      CreateConfigDescription(
-        "Forces an update during the Update sync of unity meaning it fires every frame for the Ship owner who also owns Physics. This will possibly make updates better for non-boat owners. Noting that the boat owner is determined by the first person on the boat, otherwise the game owns it.",
-        true, true));
-
-    ServerRaftUpdateZoneInterval = Config.Bind("Server config",
-      "ServerRaftUpdateZoneInterval",
-      5f,
-      CreateConfigDescription(
-        "Allows Server Admin control over the update tick for the RAFT location. Larger Rafts will take much longer and lag out players, but making this ticket longer will make the raft turn into a box from a long distance away.",
-        true, true));
-
-    MakeAllPiecesWaterProof = Config.Bind<bool>("Server config",
-      "MakeAllPiecesWaterProof", true, CreateConfigDescription(
-        "Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.",
-        true
-      ));
-    AllowCustomRudderSpeeds = Config.Bind("Server config",
-      "AllowCustomRudderSpeeds", true,
-      CreateConfigDescription(
-        "Allow the raft to use custom rudder speeds set by the player, these speeds are applied alongside sails at half and full speed. See advanced section for the actual speed settings.",
-        true));
-  }
-
-  private void CreateDebugConfig()
-  {
-    DebugRemoveStartMenuBackground =
-      Config.Bind("Debug", "RemoveStartMenuBackground", false,
-        CreateConfigDescription(
-          "Removes the start scene background, only use this if you want to speedup start time",
-          false, true));
-  }
-
-  private void CreateGraphicsConfig()
-  {
-    Graphics_AllowSailsFadeInFog = Config.Bind("Graphics", "Sails Fade In Fog",
-      true,
-      "Allow sails to fade in fog. Unchecking this will be slightly better FPS but less realistic. Should be fine to keep enabled");
-  }
-
-  private void CreateSoundConfig()
-  {
-    EnableShipSailSounds = Config.Bind("Sounds", "Ship Sailing Sounds", true,
-      "Toggles the ship sail sounds.");
-    EnableShipWakeSounds = Config.Bind("Sounds", "Ship Wake Sounds", true,
-      "Toggles Ship Wake sounds. Can be pretty loud");
-    EnableShipInWaterSounds = Config.Bind("Sounds", "Ship In-Water Sounds",
-      true,
-      "Toggles ShipInWater Sounds, the sound of the hull hitting water");
-  }
 
   private void CreateBaseConfig()
   {
@@ -219,49 +87,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       "Enable Sentry Metrics (requires sentryUnityPlugin)", true,
       CreateConfigDescription(
         "Enable sentry debug logging. Requires sentry logging plugin installed to work. Sentry Logging plugin will make it easier to troubleshoot raft errors and detect performance bottlenecks. The bare minimum is collected, and only data related to ValheimRaft. See https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT#logging-metrics for more details about what is collected"));
-
-    HasDebugBase = Config.Bind("Debug", "Debug logging for Vehicle/Raft", false,
-      CreateConfigDescription(
-        "Outputs more debug logs for the Vehicle components. Useful for troubleshooting errors, but will spam logs"));
-
-
-    InitialRaftFloorHeight = Config.Bind<float>("Deprecated Config",
-      "Initial Floor Height (V1 raft)", 0.6f, new ConfigDescription(
-        "Allows users to set the raft floor spawn height. 0.45 was the original height in 1.4.9 but it looked a bit too low. Now people can customize it",
-        (AcceptableValueBase)null, new object[1]
-        {
-          (object)new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = false
-          }
-        }));
-
-    PluginFolderName = Config.Bind<string>("Config",
-      "pluginFolderName", "", new ConfigDescription(
-        "Users can leave this empty. If they do not, the mod will attempt to match the folder string. Allows users to set the folder search name if their" +
-        $" manager renames the folder, r2modman has a fallback case added to search for {Author}-{ModName}" +
-        "Default search values are an ordered list first one is always matching non-empty strings from this pluginFolderName." +
-        $"Folder Matches are:  {Author}-{ModName}, zolantris-{ModName} Zolantris-{ModName}, and {ModName}",
-        (AcceptableValueBase)null, new object[1]
-        {
-          (object)new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = false
-          }
-        }));
-    PluginFolderName = Config.Bind<string>("Config",
-      "pluginFolderName", "", new ConfigDescription(
-        "Users can leave this empty. If they do not, the mod will attempt to match the folder string. Allows users to set the folder search name if their" +
-        $" manager renames the folder, r2modman has a fallback case added to search for {Author}-{ModName}" +
-        "Default search values are an ordered list first one is always matching non-empty strings from this pluginFolderName." +
-        $"Folder Matches are:  {Author}-{ModName}, zolantris-{ModName} Zolantris-{ModName}, and {ModName}",
-        (AcceptableValueBase)null, new object[1]
-        {
-          (object)new ConfigurationManagerAttributes()
-          {
-            IsAdminOnly = false
-          }
-        }));
   }
 
   /*
@@ -276,57 +101,48 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   private void CreateConfig()
   {
     CreateBaseConfig();
-    CreateDebugConfig();
-    CreateServerConfig();
-    // for graphics QOL but maybe less FPS friendly
-    CreateGraphicsConfig();
-    CreateSoundConfig();
-
     ValheimVehiclesPlugin.CreateConfigFromRAFTConfig(Config);
   }
 
   internal void ApplyMetricIfAvailable()
   {
+#if DEBUG
+    
     var @namespace = "SentryUnityWrapper";
     var @pluginClass = "SentryUnityWrapperPlugin";
     Logger.LogDebug(
       $"contains sentryunitywrapper: {Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper")}");
 
-    Logger.LogDebug($"plugininfos {Chainloader.PluginInfos}");
 
     if (!EnableMetrics.Value ||
         !Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper"))
       return;
     Logger.LogDebug("Made it to sentry check");
     SentryMetrics.ApplyMetrics();
+#endif
   }
 
   public void Awake()
   {    
     Instance = this;
 
-    gameObject.AddComponent<ValheimVehiclesPlugin>();
-    // allows for accessing ValheimRAFT old apis through reflection
-    ValheimVehicles.Compat.ValheimRAFTApi.RegisterHost(Instance);
-    
+    // RegisterHost command might need to be called before AddComponent
+    // - ValheimRAFT_API allows for accessing ValheimRAFT old apis through reflection
+    ValheimVehicles.Compat.ValheimRAFT_API.RegisterHost(Instance);
     gameObject.AddComponent<BatchedLogger>();
 
     CreateConfig();
     PatchController.Apply(HarmonyGuid);
 
-    // critical for valheim api matching, must be called after config init.
+    // critical for valheim api matching which must be called after config init.
     ProviderInitializers.InitProviders();
 
     AddPhysicsSettings();
 
-    RegisterConsoleCommands();
     RegisterVehicleConsoleCommands();
 
-    EnableShipSailSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
-    EnableShipWakeSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
-    EnableShipInWaterSounds.SettingChanged += VehicleShip.UpdateAllShipSounds;
-    AllowExperimentalPrefabs.SettingChanged +=
-      VehiclePrefabs.Instance.OnExperimentalPrefabSettingsChange;
+
+
 
     PrefabManager.OnVanillaPrefabsAvailable += () =>
     {
@@ -353,6 +169,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     // still need this for now.
     Localization.OnLanguageChange += ModTranslations.UpdateTranslations;
     Localization.OnLanguageChange += VehicleAnchorMechanismController.setLocalizedStates;
+
+    gameObject.AddComponent<ValheimVehiclesPlugin>();
   }
 
   private void OnDestroy()
@@ -381,20 +199,12 @@ public class ValheimRaftPlugin : BaseUnityPlugin
       integrationInstance);
   }
 
-  public void RegisterConsoleCommands()
-  {
-    CommandManager.Instance.AddConsoleCommand(new MoveRaftConsoleCommand());
-    CommandManager.Instance.AddConsoleCommand(new HideRaftConsoleCommand());
-    CommandManager.Instance.AddConsoleCommand(new RecoverRaftConsoleCommand());
-  }
-
 
   // this will be removed when vehicles becomes independent of valheim raft.
   public void RegisterVehicleConsoleCommands()
   {
     CommandManager.Instance.AddConsoleCommand(new VehicleCommands());
   }
-
 
   private void Start()
   {

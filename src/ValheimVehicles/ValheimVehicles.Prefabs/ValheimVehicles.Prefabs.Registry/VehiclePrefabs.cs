@@ -226,7 +226,7 @@ public class VehiclePrefabs : IRegisterPrefab
   public void RegisterNautilus()
   {
     var shouldEnable =
-      ValheimRaftPlugin.Instance.AllowExperimentalPrefabs.Value;
+      PrefabConfig.AllowExperimentalPrefabs.Value;
 
     var nautilus = PrefabManager.Instance?.GetPrefab(PrefabNames.Nautilus);
 

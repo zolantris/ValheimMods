@@ -198,7 +198,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
   public PendingPieceStateEnum PendingPiecesState => _pendingPiecesState;
 
   public float ShipMass = 0f;
-  public static bool hasDebug => ValheimRaftPlugin.Instance.HasDebugBase.Value;
+  public static bool hasDebug => VehicleDebugConfig.HasDebugPieces.Value;
 
   public float TotalMass => ShipMass;
 
@@ -1094,7 +1094,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
 
     if (sector == m_sector)
     {
-      if (ValheimRaftPlugin.Instance.ForceShipOwnerUpdatePerFrame.Value)
+      if (VehicleGlobalConfig.ForceShipOwnerUpdatePerFrame.Value)
         ForceUpdateAllPiecePositions();
 
       return;
@@ -1212,7 +1212,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       {
         yield return new WaitForSeconds(Math.Max(
           ModEnvironment.IsDebug ? 0.05f : 2f,
-          ValheimRaftPlugin.Instance.ServerRaftUpdateZoneInterval
+          VehicleGlobalConfig.ServerRaftUpdateZoneInterval
             .Value));
         continue;
       }
@@ -1342,6 +1342,8 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     var components = netView.GetComponents<Component>();
 
     foreach (var component in components)
+    {
+      if (component == null) continue;
       switch (component)
       {
         case SailComponent sail:
@@ -1392,12 +1394,12 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
 
         case RopeLadderComponent ladder:
           m_ladders.Remove(ladder);
-          ladder.m_mbroot = null;
           ladder.vehiclePiecesController = null;
           break;
         default:
           break;
       }
+    }
   }
 
 /*
@@ -2628,7 +2630,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       switch (component)
       {
         case WearNTear wnt
-          when ValheimRaftPlugin.Instance.MakeAllPiecesWaterProof.Value:
+          when PrefabConfig.MakeAllPiecesWaterProof.Value:
           wnt.m_noRoofWear = false;
           break;
         case Fireplace fireplace:

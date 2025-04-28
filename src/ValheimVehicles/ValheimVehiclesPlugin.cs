@@ -111,6 +111,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     HudConfig.BindConfig(config);
     CameraConfig.BindConfig(config);
     RenderingConfig.BindConfig(config);
+    VehicleGlobalConfig.BindConfig(config);
 
 #if DEBUG
     // Meant for only being run in debug builds for testing quickly

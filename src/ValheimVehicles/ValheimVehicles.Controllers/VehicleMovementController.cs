@@ -886,7 +886,7 @@
     /// <returns></returns>
     private float GetRudderForcePerSpeed()
     {
-      if (!ValheimRaftPlugin.Instance.AllowCustomRudderSpeeds.Value)
+      if (!PropulsionConfig.AllowCustomRudderSpeeds.Value)
       {
         _rudderForce = 1f;
         return _rudderForce;
@@ -899,23 +899,23 @@
           break;
         case Ship.Speed.Back:
           _rudderForce =
-            Mathf.Clamp(PhysicsConfig.VehicleRudderSpeedBack.Value,
+            Mathf.Clamp(PropulsionConfig.VehicleRudderSpeedBack.Value,
               0,
               PhysicsConfig.MaxLinearVelocity.Value);
           break;
         case Ship.Speed.Slow:
           _rudderForce = Mathf.Clamp(
-            PhysicsConfig.VehicleRudderSpeedSlow.Value, 0,
+            PropulsionConfig.VehicleRudderSpeedSlow.Value, 0,
             PhysicsConfig.MaxLinearVelocity.Value);
           break;
         case Ship.Speed.Half:
           _rudderForce = Mathf.Clamp(
-            PhysicsConfig.VehicleRudderSpeedHalf.Value, 0,
+            PropulsionConfig.VehicleRudderSpeedHalf.Value, 0,
             PhysicsConfig.MaxLinearVelocity.Value);
           break;
         case Ship.Speed.Full:
           _rudderForce = Mathf.Clamp(
-            PhysicsConfig.VehicleRudderSpeedFull.Value, 0,
+            PropulsionConfig.VehicleRudderSpeedFull.Value, 0,
             PhysicsConfig.MaxLinearVelocity.Value);
           break;
         default:
@@ -1526,13 +1526,15 @@
         return 0;
       }
 
+      const int reverseDirectionSpeed = -1;
+
       return vehicleSpeed switch
       {
         Ship.Speed.Stop => 0,
-        Ship.Speed.Back => -PhysicsConfig.VehicleLandSpeedBack.Value,
-        Ship.Speed.Slow => PhysicsConfig.VehicleLandSpeedSlow.Value,
-        Ship.Speed.Half => PhysicsConfig.VehicleLandSpeedHalf.Value,
-        Ship.Speed.Full => PhysicsConfig.VehicleLandSpeedFull.Value,
+        Ship.Speed.Back => PropulsionConfig.VehicleLandSpeedBack.Value * reverseDirectionSpeed,
+        Ship.Speed.Slow => PropulsionConfig.VehicleLandSpeedSlow.Value,
+        Ship.Speed.Half => PropulsionConfig.VehicleLandSpeedHalf.Value,
+        Ship.Speed.Full => PropulsionConfig.VehicleLandSpeedFull.Value,
         _ => throw new ArgumentOutOfRangeException()
       };
     }
@@ -1608,18 +1610,6 @@
       // heavily throttle turning to prevent infinite spin issues especially uphill.
       m_body.maxAngularVelocity = Mathf.Min(PhysicsConfig.MaxAngularVelocity.Value, 0.3f);
       m_body.maxLinearVelocity = PhysicsConfig.MaxLinearVelocity.Value;
-
-#if DEBUG
-      if (PhysicsConfig.VehicleLandLockXZRotation.Value)
-      {
-        UpdateAndFreezeRotation();
-      }
-      else
-      {
-        if (m_body.constraints == FreezeBothXZ)
-          m_body.constraints = RigidbodyConstraints.None;
-      }
-#endif
     }
 
     /// <summary>
@@ -2318,7 +2308,7 @@
       if (!isCreative) return;
       var rotationY = m_body.rotation.eulerAngles.y;
 
-      if (PatchController.HasGizmoMod)
+      if (PatchConfig.HasGizmoModEnabled)
       {
         if (PatchConfig.ComfyGizmoPatchCreativeHasNoRotation.Value)
           rotationY = 0;
@@ -2915,7 +2905,7 @@
                                    (m_stearForce * (0f - m_rudderValue) *
                                     directionMultiplier);
 
-      if (ValheimRaftPlugin.Instance.AllowCustomRudderSpeeds.Value)
+      if (PropulsionConfig.AllowCustomRudderSpeeds.Value)
         shipAdditiveSteerForce *= Mathf.Clamp(_rudderForce, 1f, 10f);
 
       // Adds additional speeds to turning
@@ -3026,7 +3016,7 @@
 
       // todo see if this is necessary. This logic is from the Base game Ship
 
-      if (ValheimRaftPlugin.Instance.AllowCustomRudderSpeeds.Value)
+      if (PropulsionConfig.AllowCustomRudderSpeeds.Value)
         steerForce += GetAdditiveSteerForce(directionMultiplier);
       else if (VehicleSpeed is Ship.Speed.Back or Ship.Speed.Slow)
         steerForce += GetAdditiveSteerForce(directionMultiplier);
@@ -3642,15 +3632,6 @@
       return isAttached && isAttachedToShip;
     }
 
-    public static void DEPRECATED_OnFlightControls(
-      MoveableBaseShipComponent mbShip)
-    {
-      if (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"))
-        mbShip.Ascend();
-      else if (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"))
-        mbShip.Descent();
-    }
-
     public void ClearAutoClimbState()
     {
       _isAscending = false;
@@ -4044,7 +4025,7 @@
       Logger.LogDebug("Changing ship owner to " + playerOwner +
                       $", name: {targetPlayer.GetPlayerName()}");
 
-      SyncVehicleBounds();
+      VehicleInstance.VehicleConfigSync.SyncVehicleBounds();
       var attachTransform = lastUsedWheelComponent.AttachPoint;
 
       // local player only.

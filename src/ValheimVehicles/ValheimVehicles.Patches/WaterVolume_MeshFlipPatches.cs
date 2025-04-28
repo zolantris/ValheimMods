@@ -8,7 +8,7 @@ using ValheimVehicles.Controllers;
 
 namespace ValheimVehicles.Patches;
 
-internal class WaterVolume_WaterPatches
+public class WaterVolume_WaterPatches
 {
   public enum CameraWaterStateTypes
   {

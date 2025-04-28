@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using ValheimRAFT.UI;
+using ValheimVehicles.UI;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Components;

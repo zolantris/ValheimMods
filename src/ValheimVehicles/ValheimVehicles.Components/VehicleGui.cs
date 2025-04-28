@@ -51,9 +51,9 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
       Gui = GuiObj.AddComponent<VehicleGui>();
     }
 
-    if (Gui != null && !hasConfigPanelOpened)
+    if (Gui != null)
     {
-      Gui.gameObject.SetActive(false);
+      Gui.gameObject.SetActive(hasConfigPanelOpened);
     }
 
 

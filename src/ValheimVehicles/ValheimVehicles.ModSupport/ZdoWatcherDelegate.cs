@@ -1,5 +1,6 @@
 
 
+using ValheimVehicles.Controllers;
 using ZdoWatcher;
 
 namespace ValheimVehicles.ModSupport;
@@ -17,20 +18,10 @@ public abstract class ZdoWatcherDelegate
   private static void OnZdoLoad(ZDO zdo)
   {
     VehiclePiecesController.InitZdo(zdo);
-
-    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
-    {
-      MoveableBaseRootComponent.InitZDO(zdo);
-    }
   }
 
   public static void OnZdoReset(ZDO zdo)
   {
     VehiclePiecesController.RemoveZDO(zdo);
-
-    if (ValheimRaftPlugin.Instance.AllowOldV1RaftRecipe.Value)
-    {
-      MoveableBaseRootComponent.RemoveZDO(zdo);
-    }
   }
 }

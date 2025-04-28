@@ -7,12 +7,10 @@ using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.SharedScripts; // Assume you want the shared scripts style.
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using TMPro;
-using UnityEngine.UI;
+using ValheimVehicles.Compat;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
-using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.GUI;
 using ValheimVehicles.Components;
 using Object = UnityEngine.Object;
@@ -211,7 +209,7 @@ public static class VehicleStorageAPI
     var data = new StoredVehicleData
     {
       VehicleName = "", // we never want this value saved. We only use filename.
-      ModVersion = ValheimRaftPlugin.Version,
+      ModVersion = ValheimRAFT_API.GetPluginVersion(),
       Pieces = pieces,
       Settings = new VehicleSettings
       {

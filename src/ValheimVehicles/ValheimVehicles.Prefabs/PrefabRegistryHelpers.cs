@@ -6,7 +6,7 @@ using HarmonyLib;
 using Jotunn.Extensions;
 using Jotunn.Managers;
 using UnityEngine;
-
+using ValheimVehicles.Config;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs.Registry;
 using Logger = Jotunn.Logger;
@@ -162,7 +162,7 @@ public abstract class PrefabRegistryHelpers
 
   private static void RegisterExternalShips()
   {
-    if (!ValheimRaftPlugin.Instance.AllowExperimentalPrefabs.Value) return;
+    if (!PrefabConfig.AllowExperimentalPrefabs.Value) return;
 
     const string prefabName = "Nautilus Submarine";
     const string description =

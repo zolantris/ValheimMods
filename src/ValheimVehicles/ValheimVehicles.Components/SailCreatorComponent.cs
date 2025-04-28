@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Jotunn.Managers;
 using UnityEngine;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
 
 using Logger = Jotunn.Logger;
@@ -93,25 +94,7 @@ public class SailCreatorComponent : MonoBehaviour
    */
   public void AddToVehicle(ZNetView netView)
   {
-    if (AddToBasicVehicle(netView))
-    {
-      return;
-    }
-
-    AddToMoveableBaseRoot(netView);
-  }
-
-  private bool AddToMoveableBaseRoot(ZNetView netView)
-  {
-    var mbr =
-      m_sailCreators[0].GetComponentInParent<MoveableBaseRootComponent>();
-    if ((bool)mbr)
-    {
-      mbr.AddNewPiece(netView);
-      return true;
-    }
-
-    return false;
+    AddToBasicVehicle(netView);
   }
 
   private bool AddToBasicVehicle(ZNetView netView)

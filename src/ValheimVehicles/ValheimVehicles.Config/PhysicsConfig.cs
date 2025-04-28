@@ -1,13 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using BepInEx.Configuration;
-using ComfyLib;
 using UnityEngine;
-
+using ValheimVehicles.Compat;
 using ValheimVehicles.Constants;
-using ValheimVehicles.Helpers;
-using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 
@@ -21,21 +17,6 @@ public static class PhysicsConfig
     FloatationPhysicsSectionKey = $"{SectionKey}: Floatation";
 
   private static string VelocityModeSectionKey = $"{SectionKey}: Velocity Mode";
-
-  // rudder speed
-  public static ConfigEntry<float> VehicleRudderSpeedBack = null!;
-  public static ConfigEntry<float> VehicleRudderSpeedSlow = null!;
-  public static ConfigEntry<float> VehicleRudderSpeedHalf = null!;
-  public static ConfigEntry<float> VehicleRudderSpeedFull = null!;
-
-  // landvehicle speed
-  public static ConfigEntry<float> VehicleLandSpeedBack = null!;
-  public static ConfigEntry<float> VehicleLandSpeedSlow = null!;
-  public static ConfigEntry<float> VehicleLandSpeedHalf = null!;
-  public static ConfigEntry<float> VehicleLandSpeedFull = null!;
-
-  // landvehicle turning
-  public static ConfigEntry<float> VehicleLandTurnSpeed = null!;
   
   public static ConfigEntry<int> VehicleLandMaxTreadWidth = null!;
   public static ConfigEntry<int> VehicleLandMaxTreadLength = null!;
@@ -43,19 +24,6 @@ public static class PhysicsConfig
   // all vehicles
   public static ConfigEntry<float> VehicleCenterOfMassOffset = null!;
   public static ConfigEntry<float> VehicleLandTreadOffset = null!;
-
-#if DEBUG
-  // for debug only most of this content does not exist in prod.
-  public static ConfigEntry<float> VehicleLandWheelRadius = null!;
-  public static ConfigEntry<float> VehicleLandWheelMass = null!;
-  public static ConfigEntry<bool> VehicleLandLockXZRotation = null!;
-  public static ConfigEntry<float> VehicleLandSuspensionDistance = null!;
-  public static ConfigEntry<float> VehicleLandWheelSuspensionSpring = null!;
-  public static ConfigEntry<float> VehicleLandWheelSuspensionSpringDamper = null!;
-  public static ConfigEntry<float> VehicleLandWheelSuspensionSpringTarget = null!;
-  public static ConfigEntry<bool> DEBUG_VehicleLandShouldHideWheels = null!;
-  public static ConfigEntry<bool> DEBUG_VehicleLandShouldSyncWheelPositions = null!;
-#endif
 
   // flight
   public static ConfigEntry<float> flightAngularDamping = null!;
@@ -176,7 +144,7 @@ public static class PhysicsConfig
     "Controls how much the water pushes the boat sideways based on wind direction and velocity.";
 
   // may make this per version update as this can be very important to force reset people to defaults.
-  private const string versionResetKey = ValheimRaftPlugin.Version;
+  private static readonly string versionResetKey = ValheimRAFT_API.GetPluginVersion();
 
   private static void OnPhysicsChangeForceUpdateAllVehiclePhysics(object sender,
     EventArgs eventArgs)
@@ -210,73 +178,6 @@ public static class PhysicsConfig
       ForceSetVehiclePhysics(velocityConfig);
   }
 
-  private static void DebugOnlyConfig()
-  {
-
-#if DEBUG
-    VehicleLandLockXZRotation = Config.Bind(PropulsionSection,
-      "VehicleLand LockXZRotation",
-      false,
-      ConfigHelpers.CreateConfigDescription(
-        "Prevents XZ rotation on landvehicles DEBUG ONLY. Vehicles will always remain perfectly flat to horizon but this will limit upwards/downwards angular traversal", true, false));
-
-    VehicleLandWheelMass = Config.Bind(PropulsionSection,
-      "VehicleLand WheelMass",
-      200f,
-      ConfigHelpers.CreateConfigDescription(
-        "The weight per wheel of the vehicle. This will allow more traction, but could slow down the vehicle at higher values. Experimental only", true, false, new AcceptableValueRange<float>(1f, 2000f)));
-    VehicleLandWheelRadius = Config.Bind(PropulsionSection,
-      "LandVehicle WheelRadius",
-      1f,
-      ConfigHelpers.CreateConfigDescription(
-        "Wheel radius. Larger wheels have more traction. But may be less realistic.", true, false, new AcceptableValueRange<float>(0.25f, 5f)));
-
-   
-    DEBUG_VehicleLandShouldHideWheels = Config.Bind(PropulsionSection,
-      "LandVehicle ShouldHideWheels",
-      false,
-      ConfigHelpers.CreateConfigDescription(
-        "Hides the wheel visual as wheels are not perfectly synced.", true, false));
-    DEBUG_VehicleLandShouldSyncWheelPositions = Config.Bind(PropulsionSection,
-      "LandVehicle ShouldSyncWheelPositions",
-      false,
-      ConfigHelpers.CreateConfigDescription(
-        "Toggles syncing of wheels to their actual collider position. Can cause desync with tracks.", true, false));
-
-    VehicleLandSuspensionDistance = Config.Bind(PropulsionSection,
-      "LandVehicle Suspension Distance",
-      2.25f,
-      ConfigHelpers.CreateConfigDescription(
-        "Distance suspension distance between vehicle position and wheel position. Higher values push the vehicle up and make it more bouncy.", true, false, new AcceptableValueRange<float>(0.25f, 20f)));
-
-
-    VehicleLandWheelSuspensionSpring = Config.Bind(PropulsionSection,
-      "LandVehicle SuspensionSpring",
-      35000f,
-      ConfigHelpers.CreateConfigDescription(
-        "Suspension spring value. This will control how much the vehicle bounces when it drops. No suspension will be a bit jarring but high suspension can cause lots of screen jump. Ensure a higher SuspensionSpringDamper to fix the bounce continuing.", true, false, new AcceptableValueRange<float>(0f, 50000f)));
-
-    VehicleLandWheelSuspensionSpringDamper = Config.Bind(PropulsionSection,
-      "LandVehicle SuspensionSpringDamper",
-      1500f,
-      ConfigHelpers.CreateConfigDescription(
-        "Suspension spring damper value. This will control how much the vehicle stops bouncing. Higher values must be supplied for higher suspension spring values.", true, false, new AcceptableValueRange<float>(0f, 50000f)));
-
-    VehicleLandWheelSuspensionSpringTarget = Config.Bind(PropulsionSection,
-      "LandVehicle wheelSuspensionSpringTarget",
-      0.4f,
-      ConfigHelpers.CreateConfigDescription(
-        "Suspension target. Between 0 and 1 it will determine the target spring position. This can allow for high suspension but also high targets", true, false, new AcceptableValueRange<float>(0f, 1f)));
-
-    VehicleLandWheelSuspensionSpring.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
-    VehicleLandWheelSuspensionSpringDamper.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
-    VehicleLandWheelSuspensionSpringTarget.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
-    VehicleLandSuspensionDistance.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
-    VehicleLandWheelMass.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
-    VehicleLandWheelRadius.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
-#endif
-  }
-
   private static List<ConfigEntry<ForceMode>> VelocityConfigs =>
   [
     floatationVelocityMode, sailingVelocityMode, turningVelocityMode,
@@ -293,76 +194,30 @@ public static class PhysicsConfig
     maxLinearYVelocityAcceptableValues = ModEnvironment.IsDebug
       ? new AcceptableValueRange<float>(1, 2000f)
       : new AcceptableValueRange<float>(1, 200f);
-
-  public const string PropulsionSection = "Physics: Propulsion";
-
+  
   public static void BindConfig(ConfigFile config)
   {
     Config = config;
 
-#if DEBUG
-    DebugOnlyConfig();
-#endif
+    const string vehicleCustomSettingTodo = "In future version there will be an individual config setting.";
 
-    VehicleRudderSpeedBack = Config.Bind(PropulsionSection, "Rudder Back Speed",
-      1f,
-      ConfigHelpers.CreateConfigDescription(
-        "Set the Back speed of rudder, this will apply with sails", true));
-    VehicleRudderSpeedSlow = Config.Bind(PropulsionSection, "Rudder Slow Speed",
-      1f,
-      ConfigHelpers.CreateConfigDescription(
-        "Set the Slow speed of rudder, this will apply with sails", true));
-    VehicleRudderSpeedHalf = Config.Bind(PropulsionSection, "Rudder Half Speed",
-      0f,
-      ConfigHelpers.CreateConfigDescription(
-        "Set the Half speed of rudder, this will apply with sails", true));
-    VehicleRudderSpeedFull = Config.Bind(PropulsionSection, "Rudder Full Speed",
-      0f,
-      ConfigHelpers.CreateConfigDescription(
-        "Set the Full speed of rudder, this will apply with sails", true));
-
-    VehicleLandSpeedBack = Config.Bind(PropulsionSection, "LandVehicle Back Speed", 1f,
-      ConfigHelpers.CreateConfigDescription(
-        "Set the Back speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(0.0001f, 100f)));
-    VehicleLandSpeedSlow = Config.Bind(PropulsionSection, "LandVehicle Slow Speed",
-      1f,
-      ConfigHelpers.CreateConfigDescription(
-        "Set the Slow speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(0.05f, 4f)));
-    VehicleLandSpeedHalf = Config.Bind(PropulsionSection, "LandVehicle Half Speed",
-      1f,
-      ConfigHelpers.CreateConfigDescription(
-        "Set the Half speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(0.05f, 4f)));
-    VehicleLandSpeedFull = Config.Bind(PropulsionSection, "LandVehicle Full Speed",
-      1f,
-      ConfigHelpers.CreateConfigDescription(
-        "Set the Full speed of land vehicle.",
-        true, false, new AcceptableValueRange<float>(0.05f, 4f)));
-    VehicleLandTurnSpeed = Config.Bind(PropulsionSection,
-      "LandVehicle Turn Speed",
-      0.5f,
-      ConfigHelpers.CreateConfigDescription(
-        "Turn speed for landvehicles. Zero is half the normal speed, 50% is normal speed, and 100% is double normal speed.", true, false, new AcceptableValueRange<float>(0, 1f)));
-
-    VehicleLandMaxTreadWidth = Config.Bind(PropulsionSection,
+    VehicleLandMaxTreadWidth = Config.Bind(SectionKey,
       "LandVehicle Max Tread Width",
       8,
       ConfigHelpers.CreateConfigDescription(
-        "Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles though.", true, false, new AcceptableValueRange<int>(1, 20)));
+        $"Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles. {vehicleCustomSettingTodo}", true, false, new AcceptableValueRange<int>(1, 20)));
 
-    VehicleLandMaxTreadLength = Config.Bind(PropulsionSection,
+    VehicleLandMaxTreadLength = Config.Bind(SectionKey,
       "LandVehicle Max Tread Length",
       20,
       ConfigHelpers.CreateConfigDescription(
-        "Max length the treads can expand to.", true, false, new AcceptableValueRange<int>(4, 100)));
+        $"Max length the treads can expand to. {vehicleCustomSettingTodo}", true, false, new AcceptableValueRange<int>(4, 100)));
 
-    VehicleCenterOfMassOffset = Config.Bind(PropulsionSection,
+    VehicleCenterOfMassOffset = Config.Bind(SectionKey,
       "Vehicle CenterOfMassOffset",
       0.65f,
       ConfigHelpers.CreateConfigDescription(
-        "Offset the center of mass by a percentage of vehicle total height. Should always be a positive number. Higher values will make the vehicle more sturdy as it will pivot lower. Too high a value will make the ship behave weirdly possibly flipping. 0 will be the center of all colliders within the physics of the vehicle. 100% will be 50% lower than the vehicle's collider. 50% will be the very bottom of the vehicle's collider.", true, true, new AcceptableValueRange<float>(0f, 1f)));
+        $"Offset the center of mass by a percentage of vehicle total height. Should always be a positive number. Higher values will make the vehicle more sturdy as it will pivot lower. Too high a value will make the ship behave weirdly possibly flipping. 0 will be the center of all colliders within the physics of the vehicle. \n100% will be 50% lower than the vehicle's collider. \n50% will be the very bottom of the vehicle's collider. {vehicleCustomSettingTodo}", true, true, new AcceptableValueRange<float>(0f, 1f)));
 
 
 
@@ -463,7 +318,7 @@ public static class PhysicsConfig
     landDrag = Config.Bind(SectionKey, "landDrag", 0.05f);
     landAngularDrag = Config.Bind(SectionKey, "landAngularDrag", 1.2f);
 
-    VehicleLandTreadOffset = Config.Bind(PropulsionSection,
+    VehicleLandTreadOffset = Config.Bind(SectionKey,
       "LandVehicle TreadOffset",
       -1f,
       ConfigHelpers.CreateConfigDescription(
@@ -471,13 +326,13 @@ public static class PhysicsConfig
     VehicleLandTreadOffset.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
 
     // guards for max values
-    MaxLinearVelocity = Config.Bind(SectionKey, $"MaxVehicleLinearVelocity_{VersionedConfig.GetDynamicMinorVersionKey()}", 100f,
+    MaxLinearVelocity = Config.Bind(SectionKey, $"MaxVehicleLinearVelocity_{VersionedConfigUtil.GetDynamicMinorVersionKey()}", 100f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 100. Higher values will increase potential of vehicle flying off to space or rapidly accelerating through objects before physics can apply to an unloaded zone.",
         true, false, maxLinearVelocityAcceptableValues));
 
 
-    MaxLinearYVelocity = Config.Bind(SectionKey, $"MaxVehicleLinearYVelocity_{VersionedConfig.GetDynamicMinorVersionKey()}",
+    MaxLinearYVelocity = Config.Bind(SectionKey, $"MaxVehicleLinearYVelocity_{VersionedConfigUtil.GetDynamicMinorVersionKey()}",
       50f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the absolute max speed a vehicle can ever move in vertical direction. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not use gravity well",
@@ -506,7 +361,7 @@ public static class PhysicsConfig
       ));
 
     EnableExactVehicleBounds = Config.Bind(FloatationPhysicsSectionKey,
-      $"EnableExactVehicleBounds_{ValheimRaftPlugin.Version}", true,
+      $"EnableExactVehicleBounds_{ValheimRAFT_API.GetPluginVersion()}", true,
       ConfigHelpers.CreateConfigDescription(
         "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version",
         true, true));
@@ -604,7 +459,7 @@ public static class PhysicsConfig
       VehicleMovementController.Instances.ForEach(x =>
         x.UpdateVehicleSpeedThrottle());
     
-    VehicleLandTurnSpeed.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
+
     VehicleLandMaxTreadWidth.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
     VehicleLandMaxTreadLength.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
 

@@ -85,7 +85,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Folder Include="ValheimRAFT.UI\"/>
+        <Folder Include="ValheimRAFT.Patches\"/>
     </ItemGroup>
 
     <!-- Debug Variants -->

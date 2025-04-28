@@ -118,6 +118,11 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   public VehicleDebugHelpers? VehicleDebugHelpersInstance { get; private set; }
 
   public VehicleMovementController? MovementController { get; set; }
+  public VehicleConfigSyncComponent VehicleConfigSync
+  {
+    get;
+    set;
+  } = null!;
 
   public VehicleOnboardController? OnboardController { get; set; }
   public VehicleWheelController? WheelController { get; set; }
@@ -176,16 +181,11 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   private static void UpdateShipSounds(VehicleShip vehicleShip)
   {
-    if (vehicleShip?.ShipEffects == null) return;
-    vehicleShip.ShipEffects.m_inWaterSoundRoot.SetActive(ValheimRaftPlugin
-      .Instance
-      .EnableShipInWaterSounds.Value);
-    vehicleShip.ShipEffects.m_wakeSoundRoot.SetActive(ValheimRaftPlugin.Instance
-      .EnableShipWakeSounds.Value);
-    // this one is not a gameobject so have to select the gameobject
-    vehicleShip.ShipEffects.m_sailSound.gameObject.SetActive(ValheimRaftPlugin
-      .Instance
-      .EnableShipInWaterSounds.Value);
+    if (vehicleShip == null) return;
+    if (vehicleShip.ShipEffects == null) return;
+    vehicleShip.ShipEffects.m_inWaterSoundRoot.SetActive(VehicleGlobalConfig.EnableShipInWaterSounds.Value);
+    vehicleShip.ShipEffects.m_wakeSoundRoot.SetActive(VehicleGlobalConfig.EnableShipWakeSounds.Value);
+    vehicleShip.ShipEffects.m_sailSound.gameObject.SetActive(VehicleGlobalConfig.EnableShipSailSounds.Value);
   }
 
   private static void UpdateAllShipSounds()
@@ -275,6 +275,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     NetView = GetComponent<ZNetView>();
     GetPersistentID();
 
+    VehicleConfigSync = gameObject.AddComponent<VehicleConfigSyncComponent>();
     // this flag can be updated manually via VehicleCommands.
     HasVehicleDebugger = VehicleDebugConfig.VehicleDebugMenuEnabled.Value;
 
@@ -404,23 +405,11 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
       WheelController.wheelPrefab = LoadValheimVehicleAssets.WheelSingle;
     }
 
-
-#if DEBUG
-    WheelController.wheelSuspensionTarget = PhysicsConfig.VehicleLandWheelSuspensionSpringTarget.Value;
-    WheelController.wheelRadius = PhysicsConfig.VehicleLandWheelRadius.Value;
-    WheelController.wheelSuspensionDistance = PhysicsConfig.VehicleLandSuspensionDistance.Value;
-    WheelController.wheelSuspensionSpring = PhysicsConfig.VehicleLandWheelSuspensionSpring.Value;
-    WheelController.wheelSuspensionSpringDamper = PhysicsConfig.VehicleLandWheelSuspensionSpringDamper.Value;
-    WheelController.ShouldSyncWheelsToCollider = PhysicsConfig.DEBUG_VehicleLandShouldSyncWheelPositions.Value;
-    WheelController.ShouldHideWheelRender = PhysicsConfig.DEBUG_VehicleLandShouldHideWheels.Value;
-        WheelController.wheelMass = PhysicsConfig.VehicleLandWheelMass.Value;
-#endif
-
     WheelController.treadWidthXScale = ExperimentalTreadScaleX.Value;
 
 
     // very important to add these. We always need a base of 30.
-    var additionalTurnRate = Mathf.Lerp(VehicleWheelController.defaultTurnAccelerationMultiplier / 2, VehicleWheelController.defaultTurnAccelerationMultiplier * 2, Mathf.Clamp01(PhysicsConfig.VehicleLandTurnSpeed.Value));
+    var additionalTurnRate = Mathf.Lerp(VehicleWheelController.defaultTurnAccelerationMultiplier / 2, VehicleWheelController.defaultTurnAccelerationMultiplier * 2, Mathf.Clamp01(PropulsionConfig.VehicleLandTurnSpeed.Value));
     
     VehicleWheelController.baseTurnAccelerationMultiplier = additionalTurnRate;
     WheelController.maxTreadLength = PhysicsConfig.VehicleLandMaxTreadLength.Value;

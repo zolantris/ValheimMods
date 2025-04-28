@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using ValheimRAFT.Util;
-
+using ValheimVehicles.Structs;
 using ZdoWatcher;
 using Logger = Jotunn.Logger;
 

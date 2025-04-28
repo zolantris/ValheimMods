@@ -12,7 +12,7 @@ namespace ValheimVehicles.Patches;
 /// from vikings do swim might get things working 
 /// </summary>
 [HarmonyPatch]
-internal class GameCamera_WaterPatches
+public class GameCamera_WaterPatches
 {
   public static float CameraPositionY = 0f;
 

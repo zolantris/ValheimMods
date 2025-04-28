@@ -20,16 +20,15 @@ public class ModTranslations
   public static string ToggleSwitch_CurrentActionString = null!;
   public static string ToggleSwitch_SwitchName = null!;
 
+  public static string WheelControls_Name = null!;
+
   /// <summary>
-  /// Check a couple keys and ensure this object is healthy
-  ///
-  /// todo use the object validator that runs on all keys
+  /// Looks for null values. If any string is null, it will return that it's not healthy.
   /// </summary>
   /// <returns></returns>
   public static bool IsHealthy()
   {
-    StaticFieldValidator.ValidateRequiredNonNullFields<ModTranslations>();
-    if (GuiHide == string.Empty || GuiShow == string.Empty) return false;
+    if (StaticFieldValidator.ValidateRequiredNonNullFields<ModTranslations>()) return false;
     return true;
   }
   
@@ -41,6 +40,7 @@ public class ModTranslations
     if (Localization.instance == null) return;
     try
     {
+      WheelControls_Name = Localization.instance.Localize("$valheim_vehicles_wheel");
       ToggleSwitch_CurrentActionString = Localization.instance.Localize(
         "[<color=yellow><b>$KEY_Use</b></color>] To Toggle:");
       ToggleSwitch_NextActionString = Localization.instance.Localize(

@@ -121,14 +121,8 @@ public class VehicleCommands : ConsoleCommand
         ToggleVehicleGuiConfig();
         break;
 #endif
-      case VehicleCommandArgs.upgradeToV2:
-        RunUpgradeToV2();
-        break;
       case VehicleCommandArgs.reportInfo:
         OnReportInfo();
-        break;
-      case VehicleCommandArgs.downgradeToV1:
-        RunDowngradeToV1();
         break;
       case VehicleCommandArgs.colliderEditMode:
         ToggleColliderEditMode();
@@ -609,70 +603,11 @@ public class VehicleCommands : ConsoleCommand
     }
   }
 
-  private static void RunDowngradeToV1()
-  {
-    var vehicleController = VehicleDebugHelpers.GetVehiclePiecesController();
-    if (!vehicleController)
-    {
-      Logger.LogMessage("No v1 raft detected");
-      return;
-    }
-
-    var vehicleShip = vehicleController?.VehicleInstance;
-    if (vehicleShip == null)
-    {
-      Logger.LogMessage("No VehicleShip detected exiting. Without downgrading");
-      return;
-    }
-
-    var mbRaftPrefab = PrefabManager.Instance.GetPrefab(PrefabNames.MBRaft);
-    var mbRaftPrefabInstance = Object.Instantiate(mbRaftPrefab,
-      vehicleController.transform.position,
-      vehicleController.transform.rotation, null);
-
-    var mbShip = mbRaftPrefabInstance.GetComponent<MoveableBaseShipComponent>();
-    var piecesInVehicleController = vehicleController.GetCurrentPendingPieces();
-
-    foreach (var zNetView in piecesInVehicleController)
-      zNetView.m_zdo.Set(MoveableBaseRootComponent.MBParentIdHash,
-        mbShip.GetMbRoot().GetPersistentId());
-
-    if (vehicleShip.Instance != null)
-      ZNetScene.instance.Destroy(vehicleShip.Instance.gameObject);
-  }
-
-  private static void RunUpgradeToV2()
-  {
-    var mbRaft = VehicleDebugHelpers.GetMBRaftController();
-    if (!mbRaft)
-    {
-      Logger.LogMessage("No v1 raft detected");
-      return;
-    }
-
-    var vehiclePrefab =
-      PrefabManager.Instance.GetPrefab(PrefabNames.WaterVehicleShip);
-
-    if (mbRaft == null) return;
-
-    var vehicleInstance = Object.Instantiate(vehiclePrefab,
-      mbRaft.m_ship.transform.position,
-      mbRaft.m_ship.transform.rotation, null);
-    var vehicleShip = vehicleInstance.GetComponent<VehicleShip>();
-
-    var piecesInMbRaft = mbRaft.m_pieces;
-    foreach (var zNetView in piecesInMbRaft)
-      zNetView.m_zdo.Set(VehicleZdoVars.MBParentIdHash,
-        vehicleShip.PersistentZdoId);
-
-    ZNetScene.instance.Destroy(mbRaft.m_ship.gameObject);
-  }
-
   private static void ToggleVehicleGuiConfig()
   {
     if (!VehicleGui.Instance)
     {
-      ValheimRaftPlugin.Instance.AddRemoveVehicleGui();
+      VehicleGui.AddRemoveVehicleGui();
     }
     
     VehicleGui.ToggleConfigPanelState(true);

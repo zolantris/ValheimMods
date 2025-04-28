@@ -13,6 +13,7 @@ public static class VehicleDebugConfig
   public static ConfigEntry<bool> AllowDebugCommandsForNonAdmins;
   public static ConfigEntry<bool> AllowEditCommandsForNonAdmins;
   public static ConfigEntry<int> VehicleCreativeHeight;
+  public static ConfigEntry<bool> HasDebugPieces;
 
   public static ConfigEntry<float> CommandsWindowPosX;
 
@@ -181,6 +182,11 @@ public static class VehicleDebugConfig
       ConfigHelpers.CreateConfigDescription(
         "Outputs all custom sail information when saving and updating ZDOs for the sails. Debug only.",
         false, true));
+    HasDebugPieces = Config.Bind("Debug", "HasDebugPieces", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Outputs more debug information for the vehicle pieces controller which manages all pieces placement. Meant for debugging mod issues. Will cause performance issues and lots of logging when enabled.",
+        false, true));
+
     
     CommandsWindowPosX = Config.Bind(SectionName, "CommandsWindowPosX", 0f);
     CommandsWindowPosY = Config.Bind(SectionName, "CommandsWindowPosY", 0f);

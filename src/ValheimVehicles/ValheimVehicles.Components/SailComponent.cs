@@ -4,7 +4,10 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Config;
+using ValheimVehicles.Helpers;
+using ValheimVehicles.Injections;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.UI;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Components;
@@ -173,7 +176,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   {
     UpdateSailClothWind();
 
-    if (ValheimRaftPlugin.Instance.Graphics_AllowSailsFadeInFog.Value)
+    if (PrefabConfig.Graphics_AllowSailsFadeInFog.Value)
     {
       UpdateMistAlphaForPlayerCamera();
     }
@@ -792,7 +795,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
           .sqrMagnitude;
         if (dist < sqrSubDist) break;
 
-        MeshHelper.Subdivide(mesh);
+        MeshUtils.Subdivide(mesh);
       }
     }
 

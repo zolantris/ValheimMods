@@ -1,9 +1,11 @@
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 
 namespace ValheimVehicles.Config;
 
 public static class PatchConfig
 {
+  private const string ComfyGizmoGuid = "bruce.valheim.comfymods.gizmo";
   private const string SectionName = "Patches";
   private static ConfigFile? Config { get; set; }
 
@@ -23,6 +25,13 @@ public static class PatchConfig
 
   public static ConfigEntry<bool> ShipPausePatch { get; set; }
   public static ConfigEntry<bool> ShipPausePatchSinglePlayer { get; set; }
+
+  public static bool HasGizmoModEnabled;
+
+  public static void CheckForGizmoMod()
+  {
+    HasGizmoModEnabled = Chainloader.PluginInfos.ContainsKey(ComfyGizmoGuid);
+  }
 
   public static void BindConfig(ConfigFile config)
   {
@@ -66,5 +75,6 @@ public static class PatchConfig
         "Enable MineRock5 patches to so vehicle and rams prefabs do not trigger errors when hitting areas over the default radius size"
         , true));
 
+    CheckForGizmoMod();
   }
 }
