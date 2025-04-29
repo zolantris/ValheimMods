@@ -144,5 +144,21 @@
   "valheim_vehicles_custom_height_tool": "高度工具",
   "valheim_vehicles_custom_height_tool_desc": "放置一个方块来设置船只最大高度，用于排除桅杆参与物理计算，替代全局设置。",
   "valheim_vehicles_haul_vehicle_start": "开始拖动载具。",
-  "valheim_vehicles_haul_vehicle_stop": "停止拖动载具。"
+  "valheim_vehicles_haul_vehicle_stop": "停止拖动载具。",
+  "valheim_vehicles_hammer_name": "载具锤",
+  "valheim_vehicles_hammer_description": "用于建造和修改 Valheim-vehicles 项目的锤子（又名 ValheimRAFT）。",
+  "valheim_vehicles_toggle_on": "开",
+  "valheim_vehicles_toggle_off": "关",
+  "valheim_vehicles_creative_toggle_desc": "切换载具指令开/关。",
+  "valheim_vehicles_commands_edit_menu": "编辑菜单",
+  "valheim_vehicles_commands_creative_mode": "创意模式",
+  "valheim_vehicles_commands_mask_edit_mode": "碰撞体编辑模式",
+  "valheim_vehicles_gui_hide": "隐藏",
+  "valheim_vehicles_gui_show": "显示",
+  "valheim_vehicles_gui_disabled": "已禁用",
+  "valheim_vehicles_gui_enabled": "已启用",
+  "valheim_vehicles_gui_commands_menu_title": "载具指令",
+  "valheim_vehicles_custom_floatation_tool": "自定义浮力工具",
+  "valheim_vehicles_custom_floatation_tool_desc": "为每个载具自定义浮力高度。放置的位置将成为新的浮力点。添加新的方块将替换上一个。",
+  "valheim_vehicles_custom_floatation_height": "自定义浮力高度"
 }
