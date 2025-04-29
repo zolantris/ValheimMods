@@ -13,16 +13,17 @@ using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.GUI;
 using ValheimVehicles.Components;
+using ValheimVehicles.Storage.Serialization;
 using Object = UnityEngine.Object;
 
-namespace ValheimVehicles.API;
+namespace ValheimVehicles.Controllers;
 
-public static class VehicleStorageAPI
+public static class VehicleStorageController
 {
   private static readonly string BaseFolderPath = Path.Combine(Paths.ConfigPath, $"{ValheimVehiclesPlugin.Author}-{ValheimVehiclesPlugin.ModName}");
   private static readonly string SavedVehiclesFolderPath = Path.Combine(BaseFolderPath, "SavedVehicles");
 
-  static VehicleStorageAPI()
+  static VehicleStorageController()
   {
     EnsureStorageFolderExists();
   }
@@ -36,63 +37,6 @@ public static class VehicleStorageAPI
     Land,
     All,
     Air
-  }
-
-  [Serializable]
-  public struct SerializableVector3
-  {
-    public float x;
-    public float y;
-    public float z;
-
-    public SerializableVector3(float x, float y, float z)
-    {
-      this.x = x;
-      this.y = y;
-      this.z = z;
-    }
-
-    public SerializableVector3(Vector3 v)
-    {
-      x = v.x;
-      y = v.y;
-      z = v.z;
-    }
-
-    public readonly Vector3 ToVector3()
-    {
-      return new Vector3(x, y, z);
-    }
-  }
-
-  [Serializable]
-  public struct SerializableQuaternion
-  {
-    public float x;
-    public float y;
-    public float z;
-    public float w;
-
-    public SerializableQuaternion(float x, float y, float z, float w)
-    {
-      this.x = x;
-      this.y = y;
-      this.z = z;
-      this.w = w;
-    }
-
-    public SerializableQuaternion(Quaternion q)
-    {
-      x = q.x;
-      y = q.y;
-      z = q.z;
-      w = q.w;
-    }
-
-    public readonly Quaternion ToQuaternion()
-    {
-      return new Quaternion(x, y, z, w);
-    }
   }
 
   public class SafeVehicleTypeEnumConverter : JsonConverter<VehicleTypeEnum>
@@ -149,13 +93,16 @@ public static class VehicleStorageAPI
     public VehicleTypeEnum VehicleType;
   }
 
+
   [Serializable]
-  public struct StoredPieceData
+  public class StoredPieceData
   {
     public SerializableVector3 Position;
     public SerializableQuaternion Rotation;
     public string PrefabName;
     public int PrefabId;
+
+    public StoredSailData? SailData; // Optional component data
   }
 
   private static string GetVehicleFilePath(string vehicleName)
@@ -200,6 +147,9 @@ public static class VehicleStorageAPI
         Position = new SerializableVector3(pieceTransform.localPosition),
         Rotation = new SerializableQuaternion(pieceTransform.localRotation)
       };
+
+      AddCustomPieceData(storedPieceData, piece.gameObject);
+      
       pieces.Add(storedPieceData);
     }
     var vehicleType = GetVehicleType(closestShip);
@@ -255,6 +205,34 @@ public static class VehicleStorageAPI
     SpawnVehicleFromData(matchingVehicle);
   }
 
+  public static void AddCustomPieceData(StoredPieceData storedPieceData, GameObject piecePrefabInstance)
+  {
+    if (piecePrefabInstance.name.StartsWith(PrefabNames.Tier1CustomSailName))
+    {
+      var sail = piecePrefabInstance.GetComponent<SailComponent>();
+      if (sail != null && sail.m_nview != null)
+      {
+        var zdo = sail.m_nview.GetZDO();
+        if (zdo != null)
+        {
+          storedPieceData.SailData = StoredSailDataExtensions.LoadFromZDO(zdo, sail);
+        }
+      }
+    }
+  }
+
+  public static void InitPieceCustomData(StoredPieceData vehicleDataPiece, GameObject piecePrefabInstance)
+  {
+    if (vehicleDataPiece.PrefabName.StartsWith(PrefabNames.Tier1CustomSailName))
+    {
+      var sail = piecePrefabInstance.GetComponent<SailComponent>();
+      if (sail != null && vehicleDataPiece.SailData != null && sail.m_nview != null && sail.m_nview.GetZDO() != null)
+      {
+        sail.ApplyLoadedSailData(vehicleDataPiece.SailData);
+      }
+    }
+  }
+
   /// <summary>
   /// Todo take a position so we can spawn this further from player.
   /// </summary>
@@ -307,12 +285,17 @@ public static class VehicleStorageAPI
       }
       try
       {
-        // todo add exceptions for sail spawning. So we can copy the ZDO data required for sails to be created into the SailComponent Directly.
-      var piecePrefabInstance = Object.Instantiate(piecePrefab, vehicleShip.PiecesController.transform.position + vehicleDataPiece.Position.ToVector3(), vehicleDataPiece.Rotation.ToQuaternion(), vehicleShip.PiecesController.transform);
+        var piecePrefabInstance = Object.Instantiate(piecePrefab, vehicleShip.PiecesController.transform.position + vehicleDataPiece.Position.ToVector3(), vehicleDataPiece.Rotation.ToQuaternion(), vehicleShip.PiecesController.transform);
+
+        // all custom checks done here.
+        InitPieceCustomData(vehicleDataPiece, piecePrefabInstance);
+      
+      
       prefabsToAdd.Add(piecePrefabInstance);
       }
       catch (Exception e)
       {
+        // SailComponent.CanInitSails = true;
         LoggerProvider.LogError($"Failed to add piece {piecePrefab.name} to vehicle {vehiclePrefabInstance.name} \n {e}");
       }
     }
@@ -341,7 +324,7 @@ public static class VehicleStorageAPI
     }
     catch (Exception ex)
     {
-      LoggerProvider.LogError($"[VehicleStorageAPI] Failed to save vehicle '{vehicleName}': {ex}");
+      LoggerProvider.LogError($"Failed to save vehicle '{vehicleName}': {ex}");
     }
 
     RefreshVehicleSelectionGui(VehicleGui.VehicleSelectDropdown);
@@ -388,7 +371,7 @@ public static class VehicleStorageAPI
     }
     catch (Exception ex)
     {
-      Debug.LogError($"[VehicleStorageAPI] Failed to delete vehicle '{vehicleName}': {ex}");
+      Debug.LogError($"Failed to delete vehicle '{vehicleName}': {ex}");
     }
   }
 
@@ -423,7 +406,7 @@ public static class VehicleStorageAPI
     }
     catch (Exception ex)
     {
-      Debug.LogError($"[VehicleStorageAPI] Failed to load vehicle '{vehicleName}': {ex}");
+      LoggerProvider.LogError($"Failed to load vehicle '{vehicleName}': {ex}");
       return null;
     }
   }
@@ -468,7 +451,7 @@ public static class VehicleStorageAPI
     }
     catch (Exception ex)
     {
-      Debug.LogError($"[VehicleStorageAPI] Failed to load vehicles: {ex}");
+      Debug.LogError($"Failed to load vehicles: {ex}");
     }
 
     return _allVehicles;

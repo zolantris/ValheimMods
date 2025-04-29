@@ -1,9 +1,7 @@
-using System;
 using System.Collections.Generic;
-using UnityEngine.UI;
 using ValheimVehicles.ConsoleCommands;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Structs;
-using ValheimVehicles.API;
 namespace ValheimVehicles.Components;
 
 /// <summary>
@@ -47,7 +45,7 @@ public static class VehicleGUIItems
     new()
     {
       title = "Save Vehicle",
-      OnButtonPress = VehicleStorageAPI.SaveClosestVehicle
+      OnButtonPress = VehicleStorageController.SaveClosestVehicle
     },
     new()
     {
@@ -57,7 +55,7 @@ public static class VehicleGUIItems
       OnCreateDropdown = (dropdown) =>
       {
         VehicleGui.VehicleSelectDropdown = dropdown;
-        VehicleStorageAPI.RefreshVehicleSelectionGui(dropdown);
+        VehicleStorageController.RefreshVehicleSelectionGui(dropdown);
       },
       OnDropdownChanged = VehicleGui.VehicleSelectOnDropdownChanged,
       // OnPointerEnterAction = VehicleStorageAPI.RefreshVehicleSelectionGui
@@ -65,7 +63,7 @@ public static class VehicleGUIItems
     new()
     {
       title = "[Admin] Spawn Selected Vehicle",
-      OnButtonPress = VehicleStorageAPI.SpawnSelectedVehicle,
+      OnButtonPress = VehicleStorageController.SpawnSelectedVehicle,
       IsAdminOnly = true
     },
     new()

@@ -1,10 +1,7 @@
 using System;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
-using ValheimVehicles.API;
 namespace ValheimVehicles.GUI;
 
 public class DropdownRefreshOnHover : MonoBehaviour, IPointerEnterHandler

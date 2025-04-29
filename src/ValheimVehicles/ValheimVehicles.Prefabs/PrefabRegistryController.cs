@@ -235,7 +235,7 @@ public static class PrefabRegistryController
     SwitchAndLeverPrefabs.Instance.Register(prefabManager, pieceManager);
     CustomMeshPrefabs.Instance.Register(prefabManager, pieceManager);
 
-    AnchorPrefabs.Instance.Register(prefabManager, pieceManager);
+    AnchorPrefabs.Register();
     
     ShipRudderPrefabs.Instance.Register(prefabManager, pieceManager);
 
