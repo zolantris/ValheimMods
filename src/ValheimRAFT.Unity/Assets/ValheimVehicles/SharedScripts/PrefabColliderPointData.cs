@@ -28,11 +28,9 @@ namespace ValheimVehicles.SharedScripts
       {
         points = new Vector3[0];
       }
-      else
-      {
-        Points = points;
-      }
-      
+
+      Points = points;
+
       foreach (var point in points)
       {
         LocalBounds.Encapsulate(point);

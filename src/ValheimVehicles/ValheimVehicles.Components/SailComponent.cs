@@ -1,13 +1,18 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Config;
+using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Injections;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.SharedScripts;
+using ValheimVehicles.Storage.Serialization;
 using ValheimVehicles.UI;
+using Zolantris.Shared.Debug;
 using Logger = Jotunn.Logger;
 
 namespace ValheimVehicles.Components;
@@ -35,35 +40,35 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   }
 
 
-  private int m_mainHashRefHash = "m_mainHash".GetStableHashCode();
+  public int m_mainHashRefHash = "m_mainHash".GetStableHashCode();
 
-  private int m_sailCornersCountHash =
+  public int m_sailCornersCountHash =
     "m_sailCornersCountHash".GetStableHashCode();
 
-  private int m_sailCorner1Hash = "m_sailCorner1Hash".GetStableHashCode();
-  private int m_sailCorner2Hash = "m_sailCorner2Hash".GetStableHashCode();
-  private int m_sailCorner3Hash = "m_sailCorner3Hash".GetStableHashCode();
-  private int m_sailCorner4Hash = "m_sailCorner4Hash".GetStableHashCode();
-  private int m_lockedSailSidesHash = "m_lockedSailSides".GetStableHashCode();
+  public int m_sailCorner1Hash = "m_sailCorner1Hash".GetStableHashCode();
+  public int m_sailCorner2Hash = "m_sailCorner2Hash".GetStableHashCode();
+  public int m_sailCorner3Hash = "m_sailCorner3Hash".GetStableHashCode();
+  public int m_sailCorner4Hash = "m_sailCorner4Hash".GetStableHashCode();
+  public int m_lockedSailSidesHash = "m_lockedSailSides".GetStableHashCode();
 
-  private int m_lockedSailCornersHash =
+  public int m_lockedSailCornersHash =
     "m_lockedSailCorners".GetStableHashCode();
 
-  private int m_mainScaleHash = "m_mainScale".GetStableHashCode();
-  private int m_mainOffsetHash = "m_mainOffset".GetStableHashCode();
-  private int m_mainColorHash = "m_mainColor".GetStableHashCode();
-  private int m_patternScaleHash = "m_patternScale".GetStableHashCode();
-  private int m_patternOffsetHash = "m_patternOffset".GetStableHashCode();
-  private int m_patternColorHash = "m_patternColor".GetStableHashCode();
-  private int m_patternZDOHash = "m_patternHash".GetStableHashCode();
-  private int m_patternRotationHash = "m_patternRotation".GetStableHashCode();
-  private int m_logoZdoHash = "m_logoHash".GetStableHashCode();
-  private int m_logoColorHash = "m_logoColor".GetStableHashCode();
-  private int m_logoScaleHash = "m_logoScale".GetStableHashCode();
-  private int m_logoRotationHash = "m_logoRotation".GetStableHashCode();
-  private int m_logoOffsetHash = "m_logoOffset".GetStableHashCode();
-  private int m_sailFlagsHash = "m_sailFlagsHash".GetStableHashCode();
-  private int HasInitialized = "HasInitialized".GetStableHashCode();
+  public int m_mainScaleHash = "m_mainScale".GetStableHashCode();
+  public int m_mainOffsetHash = "m_mainOffset".GetStableHashCode();
+  public int m_mainColorHash = "m_mainColor".GetStableHashCode();
+  public int m_patternScaleHash = "m_patternScale".GetStableHashCode();
+  public int m_patternOffsetHash = "m_patternOffset".GetStableHashCode();
+  public int m_patternColorHash = "m_patternColor".GetStableHashCode();
+  public int m_patternZDOHash = "m_patternHash".GetStableHashCode();
+  public int m_patternRotationHash = "m_patternRotation".GetStableHashCode();
+  public int m_logoZdoHash = "m_logoHash".GetStableHashCode();
+  public int m_logoColorHash = "m_logoColor".GetStableHashCode();
+  public int m_logoScaleHash = "m_logoScale".GetStableHashCode();
+  public int m_logoRotationHash = "m_logoRotation".GetStableHashCode();
+  public int m_logoOffsetHash = "m_logoOffset".GetStableHashCode();
+  public int m_sailFlagsHash = "m_sailFlagsHash".GetStableHashCode();
+  public int HasInitialized = "HasInitialized".GetStableHashCode();
 
   private MastComponent m_mastComponent;
 
@@ -115,15 +120,15 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public float m_logoRotation;
 
-  private int m_mainHash;
+  public int m_mainHash;
 
-  private Vector2 m_mainScale;
+  public Vector2 m_mainScale;
 
-  private Vector2 m_mainOffset;
+  public Vector2 m_mainOffset;
 
-  private Color m_mainColor;
+  public Color m_mainColor;
 
-  private float m_mistAlpha = 1f;
+  public float m_mistAlpha = 1f;
 
   private float m_sailArea = 0f;
   private static bool DebugBoxCollider = true;
@@ -161,15 +166,24 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     m_mesh = GetComponent<SkinnedMeshRenderer>();
     m_meshCollider = GetComponent<MeshCollider>();
     m_nview = GetComponent<ZNetView>();
+  }
 
-    if (GetIsInitialized())
+  private IEnumerator WaitForInitialization()
+  {
+    var timer = DebugSafeTimer.StartNew();
+    const int maxWaitTime = 20000;
+    while (timer.ElapsedMilliseconds < maxWaitTime && !GetIsInitialized())
     {
-      LoadZDO();
+      yield return new WaitForFixedUpdate();
     }
-    else
+
+    if (timer.ElapsedMilliseconds > maxWaitTime)
     {
-      Invoke(nameof(LoadZDO), 5f);
+      LoggerProvider.LogDev("Exiting WaitForInitialization due to timeout");
+      yield break;
     }
+
+    LoadZDO();
   }
 
   public void FixedUpdate()
@@ -193,7 +207,19 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   private void OnEnable()
   {
     m_nview = GetComponent<ZNetView>();
-    LoadZDO();
+    Initialize();
+  }
+
+  public void Initialize()
+  {
+    if (GetIsInitialized())
+    {
+      LoadZDO();
+    }
+    else
+    {
+      StartCoroutine(WaitForInitialization());
+    }
   }
 
 
@@ -218,22 +244,58 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   public void OnDisable()
   {
     CancelInvoke();
+    StopAllCoroutines();
   }
 
   private void DestroySelfOnError()
   {
-    var wnt = GetComponent<WearNTear>();
-    if ((bool)wnt)
+    try
     {
-      wnt.Destroy();
+      if (ZNetScene.instance != null)
+      {
+        ZNetScene.instance.Destroy(gameObject);
+      }
+      CancelInvoke();
     }
-    else
+    catch (Exception e)
     {
-      Destroy(this);
+      LoggerProvider.LogDebug($"Problem occurred while attempting to destroy invalid sail \n{e}");
     }
-
-    CancelInvoke();
   }
+
+  public void ApplyLoadedSailData(StoredSailData data)
+  {
+    m_sailCorners = data.SailCorners.Select(corner => corner.ToVector3()).ToList();
+    m_lockedSailSides = (SailLockedSide)data.LockedSides;
+    m_lockedSailCorners = (SailLockedSide)data.LockedCorners;
+
+    SetMain(data.MainHash);
+    SetMainColor(data.MainColor.ToColor());
+    SetMainOffset(data.MainOffset.ToVector2());
+    SetMainScale(data.MainScale.ToVector2());
+
+    SetPattern(data.PatternHash);
+    SetPatternColor(data.PatternColor.ToColor());
+    SetPatternOffset(data.PatternOffset.ToVector2());
+    SetPatternScale(data.PatternScale.ToVector2());
+    SetPatternRotation(data.PatternRotation);
+
+    SetLogo(data.LogoHash);
+    SetLogoColor(data.LogoColor.ToColor());
+    SetLogoOffset(data.LogoOffset.ToVector2());
+    SetLogoScale(data.LogoScale.ToVector2());
+    SetLogoRotation(data.LogoRotation);
+
+    SetSailMastSetting(SailFlags.AllowSailShrinking,
+      ((SailFlags)data.SailFlags).HasFlag(SailFlags.AllowSailShrinking));
+
+    SetSailMastSetting(SailFlags.DisableCloth,
+      ((SailFlags)data.SailFlags).HasFlag(SailFlags.DisableCloth));
+
+    UpdateSailArea();
+    CreateSailMesh();
+  }
+
 
   private bool GetIsInitialized()
   {
@@ -243,13 +305,34 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     var zdoCorners = zdo.GetInt(m_sailCornersCountHash);
     var hasInitialized = zdo.GetBool(HasInitialized);
 
-    switch (hasInitialized)
+    if (!hasInitialized)
     {
-      case true when zdoCorners == 0 && m_sailCorners.Count != 3 &&
-                     m_sailCorners.Count != 4:
-        return false;
-      case true:
-        return true;
+      return false;
+    }
+
+    // for 4 point sails
+    if (zdoCorners == 0 || m_sailCorners.Count != zdoCorners || m_sailCorners.Count == 0)
+    {
+      var impossibleVector3 = new Vector3(100001f, 100001f, 100001f);
+
+      var corner1 = zdo.GetVec3(m_sailCorner1Hash, impossibleVector3);
+      var corner2 = zdo.GetVec3(m_sailCorner2Hash, impossibleVector3);
+      var corner3 = zdo.GetVec3(m_sailCorner3Hash, impossibleVector3);
+      var corner4 = zdo.GetVec3(m_sailCorner4Hash, impossibleVector3);
+
+      if (corner1 != impossibleVector3 && corner2 != impossibleVector3 && corner3 != impossibleVector3 && corner4 != impossibleVector3)
+      {
+        m_sailCorners.Clear();
+        m_sailCorners.AddRange([corner1, corner2, corner3, corner4]);
+        zdo.Set(m_sailCornersCountHash, 4);
+        zdoCorners = 4;
+      }
+    }
+
+    if (m_sailCorners.Count != 3 &&
+        m_sailCorners.Count != 4)
+    {
+      return false;
     }
 
     if (zdoCorners is 3 or 4)
@@ -332,24 +415,23 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
     if (VehicleDebugConfig.HasDebugSails.Value)
     {
-      Logger.LogDebug("AFTER LOAD FROM MATERIAL");
-      Logger.LogDebug($"m_lockedSailSides {m_lockedSailSides}");
-      Logger.LogDebug($"m_lockedSailCorners {m_lockedSailCorners}");
-      Logger.LogDebug($"m_mainScale {m_mainScale}");
-      Logger.LogDebug($"m_mainOffset {m_mainOffset}");
-      Logger.LogDebug($"m_mainColor {m_mainColor}");
-      Logger.LogDebug($"m_mainHash {m_mainHash}");
-      Logger.LogDebug($"m_patternScale {m_patternScale}");
-      Logger.LogDebug($"m_patternOffset {m_patternOffset}");
-      Logger.LogDebug($"m_patternColor {m_patternColor}");
-      Logger.LogDebug($"m_patternHash {m_patternHash}");
-      Logger.LogDebug($"m_patternRotation {m_patternRotation}");
-      Logger.LogDebug($"m_logoScale {m_logoScale}");
-      Logger.LogDebug($"m_logoOffset {m_logoOffset}");
-      Logger.LogDebug($"m_logoColor {m_logoColor}");
-      Logger.LogDebug($"m_logoHash {m_logoHash}");
-      Logger.LogDebug($"m_logoRotation {m_logoRotation}");
-      Logger.LogDebug($"m_sailFlags {m_sailFlags}");
+      LoggerProvider.LogDebug($"m_lockedSailSides {m_lockedSailSides}");
+      LoggerProvider.LogDebug($"m_lockedSailCorners {m_lockedSailCorners}");
+      LoggerProvider.LogDebug($"m_mainScale {m_mainScale}");
+      LoggerProvider.LogDebug($"m_mainOffset {m_mainOffset}");
+      LoggerProvider.LogDebug($"m_mainColor {m_mainColor}");
+      LoggerProvider.LogDebug($"m_mainHash {m_mainHash}");
+      LoggerProvider.LogDebug($"m_patternScale {m_patternScale}");
+      LoggerProvider.LogDebug($"m_patternOffset {m_patternOffset}");
+      LoggerProvider.LogDebug($"m_patternColor {m_patternColor}");
+      LoggerProvider.LogDebug($"m_patternHash {m_patternHash}");
+      LoggerProvider.LogDebug($"m_patternRotation {m_patternRotation}");
+      LoggerProvider.LogDebug($"m_logoScale {m_logoScale}");
+      LoggerProvider.LogDebug($"m_logoOffset {m_logoOffset}");
+      LoggerProvider.LogDebug($"m_logoColor {m_logoColor}");
+      LoggerProvider.LogDebug($"m_logoHash {m_logoHash}");
+      LoggerProvider.LogDebug($"m_logoRotation {m_logoRotation}");
+      LoggerProvider.LogDebug($"m_sailFlags {m_sailFlags}");
     }
   }
 
@@ -411,179 +493,34 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     m_mesh.material.SetFloat(MistAlpha, Mathf.Clamp(alpha, 0, 1));
   }
 
+  public static int RenderQueueLevel = 3000;
+
+  private void SetMaterialRenderQueue()
+  {
+    m_mesh.material.renderQueue = RenderQueueLevel;
+  }
+
   public void LoadZDO()
   {
-    if (!m_nview || m_nview.m_zdo == null) return;
+    if (!m_nview || m_nview.m_zdo == null || !GetIsInitialized()) return;
+
     var zdo = m_nview.m_zdo;
 
-    var meshUpdateRequired = false;
-    var coefficientUpdateRequired = false;
-    var zdoCorners = zdo.GetInt(m_sailCornersCountHash);
-
-    if (!GetIsInitialized())
-    {
-      Logger.LogError(
-        $"SailCornersCount: {m_sailCorners.Count} is corrupt or mismatches the last ValheimRAFT version. Destroying this component to prevent errors");
-      DestroySelfOnError();
-      return;
-    }
-
-    if (m_sailCorners.Count != zdoCorners)
-    {
-      m_sailCorners.Clear();
-      meshUpdateRequired = true;
-    }
-
-    for (var i = 0; i < zdoCorners; i++)
-    {
-      Vector3 sailCorner = default;
-
-      switch (i)
-      {
-        case 0:
-          sailCorner = zdo.GetVec3(m_sailCorner1Hash, sailCorner);
-          break;
-        case 1:
-          sailCorner = zdo.GetVec3(m_sailCorner2Hash, sailCorner);
-          break;
-        case 2:
-          sailCorner = zdo.GetVec3(m_sailCorner3Hash, sailCorner);
-          break;
-        case 3:
-          sailCorner = zdo.GetVec3(m_sailCorner4Hash, sailCorner);
-          break;
-      }
-
-      if (sailCorner == default)
-      {
-        Logger.LogError("SailCorner not detected when it should exist");
-        continue;
-      }
-
-      if (m_sailCorners.Count > i)
-      {
-        if (m_sailCorners[i] == sailCorner) continue;
-        m_sailCorners[i] = sailCorner;
-        meshUpdateRequired = true;
-      }
-      else
-      {
-        m_sailCorners.Add(sailCorner);
-      }
-    }
-
-    var zdo_lockedSailSides =
-      (SailLockedSide)zdo.GetInt(m_lockedSailCornersHash,
-        (int)m_lockedSailCorners);
-    var zdo_lockedSailCorners =
-      (SailLockedSide)zdo.GetInt(m_lockedSailSidesHash, (int)m_lockedSailSides);
-
-    var zdo_mainHash = zdo.GetInt(m_mainHashRefHash, m_mainHash);
-    var zdo_mainScale = zdo.GetVec3(m_mainScaleHash, m_mainScale);
-    var zdo_mainOffset = zdo.GetVec3(m_mainOffsetHash, m_mainOffset);
-    var zdo_mainColor =
-      GetColorFromByteStream(zdo.GetByteArray(m_mainColorHash));
-
-    var zdo_patternScale = zdo.GetVec3(m_patternScaleHash, m_patternScale);
-    var zdo_patternOffset = zdo.GetVec3(m_patternOffsetHash, m_patternOffset);
-    var zdo_patternColor =
-      GetColorFromByteStream(zdo.GetByteArray(m_patternColorHash));
-    var zdo_patternHash = zdo.GetInt(m_patternZDOHash, m_patternHash);
-    var zdo_patternRotation =
-      zdo.GetFloat(m_patternRotationHash, m_patternRotation);
-
-    var zdo_logoScale = zdo.GetVec3(m_logoScaleHash, m_logoScale);
-    var zdo_logoOffset = zdo.GetVec3(m_logoOffsetHash, m_logoOffset);
-    var zdo_logoColor =
-      GetColorFromByteStream(zdo.GetByteArray(m_logoColorHash));
-    var zdo_logoHash = zdo.GetInt(m_logoZdoHash, m_logoHash);
-    var zdo_logoRotation = zdo.GetFloat(m_logoRotationHash, m_logoRotation);
-    var zdo_sailFlags =
-      (SailFlags)zdo.GetInt(m_sailFlagsHash, (int)m_sailFlags);
-
-    if (zdo_mainColor != m_mainColor)
-      Logger.LogDebug(
-        $"ZDO color: {zdo_mainColor} updated on LoadZDO of mesh color {m_mainColor} from sailMaterialColor: {GetSailMaterial().GetColor(MainColor)}");
-
-    if (VehicleDebugConfig.HasDebugSails.Value)
-    {
-      Logger.LogDebug($"zdo_lockedSailSides {zdo_lockedSailSides}");
-      Logger.LogDebug($"zdo_lockedSailCorners {zdo_lockedSailCorners}");
-      Logger.LogDebug($"zdo_mainScale {zdo_mainScale}");
-      Logger.LogDebug($"zdo_mainOffset {zdo_mainOffset}");
-      Logger.LogDebug($"zdo_mainColor {zdo_mainColor}");
-      Logger.LogDebug($"zdo_mainHash {zdo_mainHash}");
-      Logger.LogDebug($"zdo_patternScale {zdo_patternScale}");
-      Logger.LogDebug($"zdo_patternOffset {zdo_patternOffset}");
-      Logger.LogDebug($"zdo_patternColor {zdo_patternColor}");
-      Logger.LogDebug($"zdo_patternHash {zdo_patternHash}");
-      Logger.LogDebug($"zdo_patternRotation {zdo_patternRotation}");
-      Logger.LogDebug($"zdo_logoScale {zdo_logoScale}");
-      Logger.LogDebug($"zdo_logoOffset {zdo_logoOffset}");
-      Logger.LogDebug($"zdo_logoColor {zdo_logoColor}");
-      Logger.LogDebug($"zdo_logoHash {zdo_logoHash}");
-      Logger.LogDebug($"zdo_logoRotation {zdo_logoRotation}");
-      Logger.LogDebug($"zdo_sailFlags {zdo_sailFlags}");
-    }
-
-    if (zdo_lockedSailSides != m_lockedSailSides)
-    {
-      coefficientUpdateRequired = true;
-      m_lockedSailSides = zdo_lockedSailSides;
-    }
-
-    if (zdo_lockedSailCorners != m_lockedSailCorners)
-    {
-      coefficientUpdateRequired = true;
-      m_lockedSailCorners = zdo_lockedSailCorners;
-    }
-
-    SetMain(zdo_mainHash);
-    SetMainColor(zdo_mainColor);
-    SetMainOffset(zdo_mainOffset);
-    SetMainScale(zdo_mainScale);
-    SetPattern(zdo_patternHash);
-    SetPatternColor(zdo_patternColor);
-    SetPatternOffset(zdo_patternOffset);
-    SetPatternScale(zdo_patternScale);
-    SetPatternRotation(zdo_patternRotation);
-    SetLogo(zdo_logoHash);
-    SetLogoColor(zdo_logoColor);
-    SetLogoOffset(zdo_logoOffset);
-    SetLogoScale(zdo_logoScale);
-    SetLogoRotation(zdo_logoRotation);
-
-
-    SetSailMastSetting(SailFlags.AllowSailShrinking,
-      zdo_sailFlags.HasFlag(SailFlags.AllowSailShrinking));
-    SetSailMastSetting(SailFlags.DisableCloth,
-      zdo_sailFlags.HasFlag(SailFlags.DisableCloth));
-
-    if (zdo_sailFlags.HasFlag(SailFlags.AllowSailRotation))
-    {
-      zdo_sailFlags &= ~SailFlags.AllowSailRotation;
-      Logger.LogInfo(
-        "ValheimRaft >=2.0.0 no longer supports sail rotation, removing it's reference in sail flags.");
-      m_nview.GetZDO().Set(m_sailFlagsHash, (int)zdo_sailFlags);
-    }
-
-    UpdateSailArea();
-    if (meshUpdateRequired)
-      CreateSailMesh();
-    else if (coefficientUpdateRequired) UpdateCoefficients();
+    var data = StoredSailDataExtensions.LoadFromZDO(zdo, this);
+    ApplyLoadedSailData(data);
   }
 
   /**
    * Using a single ReadColor per stream is not super efficient but it will eliminate any order dependent issues per ZDO sync
    */
-  private Color GetColorFromByteStream(byte[] bytes)
+  public Color GetColorFromByteStream(byte[] bytes)
   {
     var stream = new MemoryStream(bytes);
     var reader = new BinaryReader(stream);
     return reader.ReadColor();
   }
 
-  private byte[] ConvertColorToByteStream(Color inputColor)
+  public byte[] ConvertColorToByteStream(Color inputColor)
   {
     var stream = new MemoryStream();
     var writer = new BinaryWriter(stream);
@@ -593,78 +530,43 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     return stream.ToArray();
   }
 
+  private StoredSailData CreateStoredSailData()
+  {
+    return new StoredSailData
+    {
+      SailCorners = m_sailCorners.Select(v => new SerializableVector3(v)).ToList(),
+      LockedSides = (int)m_lockedSailSides,
+      LockedCorners = (int)m_lockedSailCorners,
+
+      MainHash = m_mainHash,
+      MainScale = new SerializableVector2(m_mainScale),
+      MainOffset = new SerializableVector2(m_mainOffset),
+      MainColor = new SerializableColor(m_mainColor),
+
+      PatternHash = m_patternHash,
+      PatternScale = new SerializableVector2(m_patternScale),
+      PatternOffset = new SerializableVector2(m_patternOffset),
+      PatternColor = new SerializableColor(m_patternColor),
+      PatternRotation = m_patternRotation,
+
+      LogoHash = m_logoHash,
+      LogoScale = new SerializableVector2(m_logoScale),
+      LogoOffset = new SerializableVector2(m_logoOffset),
+      LogoColor = new SerializableColor(m_logoColor),
+      LogoRotation = m_logoRotation,
+
+      SailFlags = (int)m_sailFlags
+    };
+  }
+
+
   public void SaveZdo()
   {
-    if (!(bool)m_nview || m_nview.m_zdo == null) return;
-    if (VehicleDebugConfig.HasDebugSails.Value)
-    {
-      Logger.LogDebug($"m_lockedSailSides {m_lockedSailSides}");
-      Logger.LogDebug($"m_lockedSailCorners {m_lockedSailCorners}");
-      Logger.LogDebug($"m_mainScale {m_mainScale}");
-      Logger.LogDebug($"m_mainOffset {m_mainOffset}");
-      Logger.LogDebug($"m_mainColor {m_mainColor}");
-      Logger.LogDebug($"m_mainHash {m_mainHash}");
-      Logger.LogDebug($"m_patternScale {m_patternScale}");
-      Logger.LogDebug($"m_patternOffset {m_patternOffset}");
-      Logger.LogDebug($"m_patternColor {m_patternColor}");
-      Logger.LogDebug($"m_patternHash {m_patternHash}");
-      Logger.LogDebug($"m_patternRotation {m_patternRotation}");
-      Logger.LogDebug($"m_logoScale {m_logoScale}");
-      Logger.LogDebug($"m_logoOffset {m_logoOffset}");
-      Logger.LogDebug($"m_logoColor {m_logoColor}");
-      Logger.LogDebug($"m_logoHash {m_logoHash}");
-      Logger.LogDebug($"m_logoRotation {m_logoRotation}");
-      Logger.LogDebug($"m_sailFlags {m_sailFlags}");
-    }
+    if (m_nview == null || m_nview.m_zdo == null) return;
 
-    var zdo = m_nview.GetZDO();
-
-    zdo.Set(m_sailCornersCountHash, m_sailCorners.Count);
-    for (var i = 0; i < m_sailCorners.Count; i++)
-      switch (i)
-      {
-        case 0:
-          zdo.Set(m_sailCorner1Hash, m_sailCorners[i]);
-          break;
-        case 1:
-          zdo.Set(m_sailCorner2Hash, m_sailCorners[i]);
-          break;
-        case 2:
-          zdo.Set(m_sailCorner3Hash, m_sailCorners[i]);
-          break;
-        case 3:
-          zdo.Set(m_sailCorner4Hash, m_sailCorners[i]);
-          break;
-      }
-
-    zdo.Set(m_lockedSailSidesHash, (int)m_lockedSailSides);
-    zdo.Set(m_lockedSailCornersHash, (int)m_lockedSailCorners);
-
-
-    var mainColorByteArray = ConvertColorToByteStream(m_mainColor);
-    var patternColorByteArray = ConvertColorToByteStream(m_patternColor);
-    var logoColorByteArray = ConvertColorToByteStream(m_logoColor);
-
-    zdo.Set(m_mainHashRefHash, m_mainHash);
-    zdo.Set(m_mainScaleHash, m_mainScale);
-    zdo.Set(m_mainOffsetHash, m_mainOffset);
-    zdo.Set(m_mainColorHash, mainColorByteArray);
-
-    zdo.Set(m_patternScaleHash, m_patternScale);
-    zdo.Set(m_patternOffsetHash, m_patternOffset);
-    zdo.Set(m_patternColorHash, patternColorByteArray);
-    zdo.Set(m_patternZDOHash, m_patternHash);
-    zdo.Set(m_patternRotationHash, m_patternRotation);
-
-    zdo.Set(m_logoScaleHash, m_logoScale);
-    zdo.Set(m_logoOffsetHash, m_logoOffset);
-    zdo.Set(m_logoColorHash, logoColorByteArray);
-    zdo.Set(m_logoZdoHash, m_logoHash);
-    zdo.Set(m_logoRotationHash, m_logoRotation);
-    zdo.Set(m_sailFlagsHash, (int)m_sailFlags);
-
-    // important for first load check and load of ZDO vals
-    zdo.Set(HasInitialized, true);
+    var zdo = m_nview.m_zdo;
+    var data = CreateStoredSailData();
+    data.ApplyToZDO(zdo, this);
   }
 
   /// <summary>
@@ -718,6 +620,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     var vertices = new List<Vector3>();
     var uvs = new List<Vector2>();
     var triangles = new List<int>();
+    
     if (m_sailCorners.Count == 3)
     {
       vertices.Add(m_sailCorners[0]);
@@ -763,7 +666,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
           y = (float)y2 / dys
         });
       }
-
+      
       dxs += 1f;
       dys += 1f;
       for (var x = 0; (float)x < dxs - 1f; x++)
@@ -782,8 +685,10 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     mesh.SetVertices(vertices);
     mesh.SetTriangles(triangles, 0);
     mesh.SetUVs(0, uvs);
+    
     mesh.Optimize();
     mesh.RecalculateNormals();
+    mesh.RecalculateTangents();
 
     if (m_sailCorners.Count == 3)
     {
@@ -1007,26 +912,18 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public void SetPatternColor(Color color)
   {
-    if (!(m_patternColor == color))
-    {
-      m_patternColor = color;
-      m_mesh.material.SetColor(PatternColor, color);
-    }
+    m_patternColor = color;
+    m_mesh.material.SetColor(PatternColor, color);
   }
 
   public void SetPatternRotation(float rotation)
   {
-    if (m_patternRotation != rotation)
-    {
-      m_patternRotation = rotation;
-      m_mesh.material.SetFloat(PatternRotation, rotation);
-    }
+    m_patternRotation = rotation;
+    m_mesh.material.SetFloat(PatternRotation, rotation);
   }
 
   public void SetPattern(int hash)
   {
-    if (m_patternHash == hash) return;
-
     m_patternHash = hash;
     var customtexture =
       CustomTextureGroup.Get("Patterns").GetTextureByHash(hash);
@@ -1040,35 +937,24 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public void SetMainScale(Vector2 vector2)
   {
-    if (!(m_mainScale == vector2))
-    {
-      m_mainScale = vector2;
-      m_mesh.material.SetTextureScale(MainTex, m_mainScale);
-    }
+    m_mainScale = vector2;
+    m_mesh.material.SetTextureScale(MainTex, m_mainScale);
   }
 
   public void SetMainOffset(Vector2 vector2)
   {
-    if (!(m_mainOffset == vector2))
-    {
-      m_mainOffset = vector2;
-      m_mesh.material.SetTextureOffset(MainTex, m_mainOffset);
-    }
+    m_mainOffset = vector2;
+    m_mesh.material.SetTextureOffset(MainTex, m_mainOffset);
   }
 
   public void SetMainColor(Color color)
   {
-    if (!(m_mainColor == color))
-    {
-      m_mainColor = color;
-      m_mesh.material.SetColor(MainColor, color);
-    }
+    m_mainColor = color;
+    m_mesh.material.SetColor(MainColor, color);
   }
 
   public void SetMain(int hash)
   {
-    if (m_mainHash == hash) return;
-
     m_mainHash = hash;
     // var customtexture =
     //   CustomTextureGroup.Get("Sails").GetTextureByHash(hash);
@@ -1082,36 +968,30 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
 
   public void SetLogoScale(Vector2 vector2)
   {
-    if (m_logoScale == vector2) return;
     m_logoScale = vector2;
     m_mesh.material.SetTextureScale(LogoTex, m_logoScale);
   }
 
   public void SetLogoOffset(Vector2 vector2)
   {
-    if (m_logoOffset == vector2) return;
     m_logoOffset = vector2;
     m_mesh.material.SetTextureOffset(LogoTex, m_logoOffset);
   }
 
   public void SetLogoColor(Color color)
   {
-    if (m_logoColor == color) return;
     m_logoColor = color;
     m_mesh.material.SetColor(LogoColor, color);
   }
 
   public void SetLogoRotation(float rotation)
   {
-    if (m_logoRotation == rotation) return;
     m_logoRotation = rotation;
     m_mesh.material.SetFloat(LogoRotation, rotation);
   }
 
   public void SetLogo(int hash)
   {
-    if (m_logoHash == hash) return;
-
     m_logoHash = hash;
     var customtexture =
       CustomTextureGroup.Get("Logos").GetTextureByHash(hash);
@@ -1155,6 +1035,7 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
     else
     {
       CancelInvoke(nameof(TryEdit));
+      if (m_editPanel == null) return; 
       m_editPanel.ShowPanel(this);
     }
   }

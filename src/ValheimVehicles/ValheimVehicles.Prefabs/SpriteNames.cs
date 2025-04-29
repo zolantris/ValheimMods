@@ -68,6 +68,12 @@ public abstract class SpriteNames
     return $"ram_blade_{dir}";
   }
 
+  // Should be 1:1 prefab and prefab icon.
+  public static string GetCustomMastName(string mastLevel)
+  {
+    return PrefabNames.GetMastByLevelFromAssetBundle(mastLevel);
+  }
+
   public static string GetRamStakeName(string material, int size)
   {
     var sizeString = size == 1 ? "1x2" : "2x4";

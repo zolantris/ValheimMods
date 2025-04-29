@@ -14,7 +14,6 @@ using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Structs;
-using ValheimVehicles.API;
 using ValheimVehicles.GUI;
 using Logger = Jotunn.Logger;
 
@@ -253,24 +252,24 @@ public class VehicleGui : SingletonBehaviour<VehicleGui>
 
   public static void VehicleSelectOnDropdownChanged(int index)
   {
-    var vehicles = VehicleStorageAPI.GetAllVehicles();
+    var vehicles = VehicleStorageController.GetAllVehicles();
 
     // index 0 is a [None].
     if (index == 0)
     {
-      VehicleStorageAPI.SelectedVehicle = "";
+      VehicleStorageController.SelectedVehicle = "";
       return;
     }
 
     if (index > 0 && index <= vehicles.Count)
     {
-      VehicleStorageAPI.SelectedVehicle = vehicles[index - 1].VehicleName;
-      LoggerProvider.LogInfo($"Selected Vehicle: {VehicleStorageAPI.SelectedVehicle}");
+      VehicleStorageController.SelectedVehicle = vehicles[index - 1].VehicleName;
+      LoggerProvider.LogInfo($"Selected Vehicle: {VehicleStorageController.SelectedVehicle}");
     }
     else
     {
       LoggerProvider.LogWarning("No vehicles detected cannot select any vehicle.");
-      VehicleStorageAPI.SelectedVehicle = "";
+      VehicleStorageController.SelectedVehicle = "";
     }
   }
 

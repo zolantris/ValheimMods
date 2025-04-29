@@ -25,7 +25,7 @@ public class SailPrefabs : IRegisterPrefab
     RegisterVikingMast(prefabManager, pieceManager);
     RegisterDrakkalMast(prefabManager, pieceManager);
     RegisterCustomSail(prefabManager, pieceManager);
-    RegisterCustomSailCreator(prefabManager, pieceManager, 3);
+    // RegisterCustomSailCreator(prefabManager, pieceManager, 3);
     RegisterCustomSailCreator(prefabManager, pieceManager, 4);
   }
 

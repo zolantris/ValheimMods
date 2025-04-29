@@ -568,7 +568,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
     if (colliderObj.layer == LayerHelpers.ItemLayer)
     {
-      LoggerProvider.LogDebug($"Ignoring itemLayer {colliderObj.layer} for gameobject {colliderObj.name} because items are not allowed to be collider by vehicle ram colliders.");
+      LoggerProvider.LogDev($"Ignoring itemLayer {colliderObj.layer} for gameobject {colliderObj.name} because items are not allowed to be collider by vehicle ram colliders.");
       if (ComponentSelectors.TryGetVehiclePiecesController(m_vehicle, out var piecesController) && collider.transform.root != piecesController.transform)
       {
         vehiclePiecesController = piecesController;

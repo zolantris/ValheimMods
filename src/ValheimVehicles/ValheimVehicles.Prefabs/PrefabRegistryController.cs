@@ -11,6 +11,7 @@ using UnityEngine.U2D;
 using ValheimVehicles.Components;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs.Registry;
+using ValheimVehicles.Prefabs.ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
 
 using Logger = Jotunn.Logger;
@@ -234,8 +235,8 @@ public static class PrefabRegistryController
     SwitchAndLeverPrefabs.Instance.Register(prefabManager, pieceManager);
     CustomMeshPrefabs.Instance.Register(prefabManager, pieceManager);
 
-    AnchorPrefabs.Instance.Register(prefabManager, pieceManager);
-
+    AnchorPrefabs.Register();
+    
     ShipRudderPrefabs.Instance.Register(prefabManager, pieceManager);
 
     // Raft Structure
@@ -245,6 +246,9 @@ public static class PrefabRegistryController
     VehiclePiecesPrefab.Instance.Register(prefabManager, pieceManager);
 
     RamPrefabs.Instance.Register(prefabManager, pieceManager);
+
+    // new way to register components
+    CustomVehicleMastRegistry.Register();
   }
 
   public static void RegisterAllItemPrefabs()

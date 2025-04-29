@@ -11,11 +11,9 @@ namespace ValheimVehicles.Prefabs.Registry;
 /**
  * example registry of a prefab
  */
-public class AnchorPrefabs : IRegisterPrefab
+public class AnchorPrefabs : RegisterPrefab<AnchorPrefabs>
 {
-  public static readonly AnchorPrefabs Instance = new();
-
-  public void Register(PrefabManager prefabManager, PieceManager pieceManager)
+  public override void OnRegister()
   {
     RegisterAnchorWoodPrefab();
   }
@@ -56,7 +54,7 @@ public class AnchorPrefabs : IRegisterPrefab
         Name = piece.name,
         PieceTable = PrefabRegistryController.GetPieceTableName(),
         Icon = piece.m_icon,
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
         Requirements = [
           new RequirementConfig
           {

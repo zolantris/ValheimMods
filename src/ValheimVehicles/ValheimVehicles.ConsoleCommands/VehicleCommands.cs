@@ -44,8 +44,6 @@ public class VehicleCommands : ConsoleCommand
     public const string moveUp = "moveUp";
     public const string move = "move";
     public const string toggleOceanSway = "toggleOceanSway";
-    public const string upgradeToV2 = "upgradeShipToV2";
-    public const string downgradeToV1 = "downgradeShipToV1";
     public const string resetVehicleOwner = "resetLocalOwnership";
   }
 
@@ -61,7 +59,7 @@ public class VehicleCommands : ConsoleCommand
 #endif
       $"\n<{VehicleCommandArgs.destroy}>: will DELETE the current raft and BREAK all pieces. This is a destructive admin-only command or (if cheats are enabled). You have been warned!" +
       $"\n<{VehicleCommandArgs.debug}>: will show a menu with options like rotating or debugging vehicle colliders" +
-      $"\n<{VehicleCommandArgs.recover}>: will recover any vehicles within range of 1000 and turn them into V2 Vehicles" +
+      $"\n<{VehicleCommandArgs.recover}>: will recover any vehicles within range of 1000" +
       $"\n<{VehicleCommandArgs.rotate}>: defaults to zeroing x and z tilt. Can also provide 3 args: x y z" +
       $"\n<{VehicleCommandArgs.toggleOceanSway}>: stops the vehicle from swaying in the water. It will stay at 0 degrees (x and z) tilt and only allow rotating on y axis" +
       $"\n<{VehicleCommandArgs.reportInfo}>: outputs information related to the vehicle the player is on or near. This is meant for error reports" +
@@ -856,8 +854,6 @@ public class VehicleCommands : ConsoleCommand
       VehicleCommandArgs.toggleOceanSway,
       VehicleCommandArgs.creative,
       VehicleCommandArgs.help,
-      VehicleCommandArgs.upgradeToV2,
-      VehicleCommandArgs.downgradeToV1,
       VehicleCommandArgs.recover,
       VehicleCommandArgs.reportInfo,
       VehicleCommandArgs.colliderEditMode,
