@@ -3,16 +3,14 @@ using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
-using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Prefabs.Registry;
 
 namespace ValheimVehicles.Config;
 
-public static class PrefabConfig
+public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
 {
-  public static ConfigFile? Config { get; private set; }
-
   public static ConfigEntry<VehicleShipInitPiece>? StartingPiece
   {
     get;
@@ -70,9 +68,8 @@ public static class PrefabConfig
     prefab.Piece.m_enabled = enabled;
   }
 
-  public static void BindConfig(ConfigFile config)
+  public override void OnBindConfig(ConfigFile config)
   {
-    Config = config;
     RopeLadderEjectionOffset = config.Bind(SectionKey,
       "RopeLadderEjectionPoint", Vector3.zero,
       "The place the player is placed after they leave the ladder. Defaults to Y +0.25 and Z +0.5 meaning you are placed forwards of the ladder.");
@@ -91,48 +88,48 @@ public static class PrefabConfig
       ConfigHelpers.CreateConfigDescription(
         "Shows the controls required to auto ascend/descend and run to speedup ladder"));
 
-    ProtectVehiclePiecesOnErrorFromWearNTearDamage = Config.Bind(
+    ProtectVehiclePiecesOnErrorFromWearNTearDamage = config.Bind(
       SectionKey,
       "Protect Vehicle pieces from breaking on Error", true,
       ConfigHelpers.CreateConfigDescription(
         "Protects against crashes breaking raft/vehicle initialization causing raft/vehicles to slowly break pieces attached to it. This will make pieces attached to valid raft ZDOs unbreakable from damage, but still breakable with hammer",
         true, true));
 
-    GlassDefaultColor = Config.Bind(SectionKey,
+    GlassDefaultColor = config.Bind(SectionKey,
       "GlassDefaultColor",
       new Color(0.60f, 0.60f, 0.60f, 0.05f),
       ConfigHelpers.CreateConfigDescription(
         "Set the experimental glass color for your vehicle. This will be used for most glass meshes. This is the default color. Eventually players can customize the color of the glass.",
         true, true));
 
-    EnableLandVehicles = Config.Bind(SectionKey, "enableLandVehicles", false,
+    EnableLandVehicles = config.Bind(SectionKey, "enableLandVehicles", false,
       ConfigHelpers.CreateConfigDescription(
         "Vehicles land vehicle prefab will be enabled. LandVehicles will be available for all version above V3.0.0",
         true));
 
-    VehicleStaminaHaulingCost = Config.Bind(SectionKey,
+    VehicleStaminaHaulingCost = config.Bind(SectionKey,
       "VehicleStaminaHaulingCost",
       5f,
       ConfigHelpers.CreateConfigDescription(
         "The cost per 1 meter of hauling a vehicle. This cost is on incurred if the vehicle is being pulled towards the player. When stamina runs out, the player is damaged by this amount until they release the vehicle.", true, false, new AcceptableValueRange<float>(0, 10f)));
-    VehicleHaulingSnapsOnStaminaZero = Config.Bind(SectionKey,
+    VehicleHaulingSnapsOnStaminaZero = config.Bind(SectionKey,
       "VehicleHaulingSnapsOnStaminaZero", false,
       ConfigHelpers.CreateConfigDescription(
         "Instead of allowing the viking to use health. The vehicle hauling line will snap when you have zero stamina doing a single one-time damage.", true, false));
 
-    ExperimentalTreadScaleX = Config.Bind(SectionKey,
+    ExperimentalTreadScaleX = config.Bind(SectionKey,
       "Experimental_TreadScaleX", 1f,
       ConfigHelpers.CreateConfigDescription(
         "Set the tank per tread piece X scale (width). This will make the treads larger or smaller allowing more/less grip.", true, false, new AcceptableValueRange<float>(0.5f, 5f)));
 
 
-    AdminsCanOnlyBuildRaft = Config.Bind("Server config",
+    AdminsCanOnlyBuildRaft = config.Bind("Server config",
       "AdminsCanOnlyBuildRaft", false,
       ConfigHelpers.CreateConfigDescription(
         "ValheimRAFT hammer menu pieces are registered as disabled unless the user is an Admin, allowing only admins to create rafts. This will update automatically make sure to un-equip the hammer to see it apply (if your remove yourself as admin). Server / client does not need to restart",
         true, true));
 
-    AllowExperimentalPrefabs = Config.Bind(SectionKey,
+    AllowExperimentalPrefabs = config.Bind(SectionKey,
       "AllowExperimentalPrefabs", false,
       ConfigHelpers.CreateConfigDescription(
         "Allows >=v2.0.0 experimental prefabs such as Iron variants of slabs, hulls, and ribs. They do not look great so they are disabled by default",
@@ -140,12 +137,12 @@ public static class PrefabConfig
 
 
 
-    Graphics_AllowSailsFadeInFog = Config.Bind("Graphics", "Sails Fade In Fog",
+    Graphics_AllowSailsFadeInFog = config.Bind("Graphics", "Sails Fade In Fog",
       true,
       "Allow sails to fade in fog. Unchecking this will be slightly better FPS but less realistic. Should be fine to keep enabled");
 
 
-    MakeAllPiecesWaterProof = Config.Bind<bool>("Server config",
+    MakeAllPiecesWaterProof = config.Bind<bool>("Server config",
       "MakeAllPiecesWaterProof", true, ConfigHelpers.CreateConfigDescription(
         "Makes it so all building pieces (walls, floors, etc) on the ship don't take rain damage.",
         true

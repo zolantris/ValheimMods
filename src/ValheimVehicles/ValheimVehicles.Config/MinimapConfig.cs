@@ -1,9 +1,10 @@
 using BepInEx.Configuration;
 using ValheimVehicles.Components;
+using ValheimVehicles.Helpers;
 
 namespace ValheimVehicles.Config;
 
-public class MinimapConfig
+public class MinimapConfig : BepInExBaseConfig<MinimapConfig>
 {
   public static ConfigEntry<string> VehicleNameTag =
     null!;
@@ -20,17 +21,14 @@ public class MinimapConfig
 
   private const string SectionKey = "MinimapConfig";
 
-  private static ConfigFile Config { get; set; } = null!;
 
-  public static void BindConfig(ConfigFile config)
+  public override void OnBindConfig(ConfigFile config)
   {
-    Config = config;
-
-    BedPinSyncInterval = Config.Bind(SectionKey, "BedPinSyncInterval", 3f,
+    BedPinSyncInterval = config.Bind(SectionKey, "BedPinSyncInterval", 3f,
       ConfigHelpers.CreateConfigDescription(
         "The interval in seconds at which DynamicSpawn Player pins are synced to the client.",
         false, false, new AcceptableValueRange<float>(1f, 200f)));
-    VehiclePinSyncInterval = Config.Bind(SectionKey, "VehiclePinSyncInterval",
+    VehiclePinSyncInterval = config.Bind(SectionKey, "VehiclePinSyncInterval",
       3f,
       ConfigHelpers.CreateConfigDescription(
         "The interval in seconds at which vehicle pins are synced to the client.",
@@ -46,21 +44,21 @@ public class MinimapConfig
       MapPinSync.Instance.StartSpawnPinSync();
     };
 
-    VehicleNameTag = Config.Bind(SectionKey, "VehicleNameTag", "Vehicle",
+    VehicleNameTag = config.Bind(SectionKey, "VehicleNameTag", "Vehicle",
       "Set the name of the vehicle icon.");
 
-    ShowAllVehiclesOnMap = Config.Bind(SectionKey, "ShowAllVehiclesOnMap",
+    ShowAllVehiclesOnMap = config.Bind(SectionKey, "ShowAllVehiclesOnMap",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Shows all vehicles on global map. All vehicles will update their position.",
         true, true));
 
-    VisibleVehicleRadius = Config.Bind(SectionKey, "VisibleVehicleRadius", 50f,
+    VisibleVehicleRadius = config.Bind(SectionKey, "VisibleVehicleRadius", 50f,
       ConfigHelpers.CreateConfigDescription(
         "A radius in which all vehicles are revealed. This is more balanced than ShowAllVehicles.",
         true, true, new AcceptableValueRange<float>(5, 1000f)));
 
-    ShowBedsOnVehicles = Config.Bind(SectionKey, "ShowBedsOnVehicles", true,
+    ShowBedsOnVehicles = config.Bind(SectionKey, "ShowBedsOnVehicles", true,
       ConfigHelpers.CreateConfigDescription(
         "Will show your bed on you vehicle. This requires DynamicLocations to be enabled. This config may be migrated to dynamic locations.",
         true, true));

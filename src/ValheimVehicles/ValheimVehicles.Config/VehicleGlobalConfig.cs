@@ -1,9 +1,10 @@
 using BepInEx.Configuration;
 using ValheimVehicles.Components;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts.Validation;
 namespace ValheimVehicles.Config;
 
-public class VehicleGlobalConfig
+public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
 {
   // sounds for VehicleShip Effects
   public static ConfigEntry<bool> EnableShipWakeSounds = null!;
@@ -19,12 +20,10 @@ public class VehicleGlobalConfig
   private const string VehicleSoundKey = $"{VehicleGlobalBaseKey}:Sound";
   private const string VehicleGlobalUpdateKey = $"{VehicleGlobalBaseKey}:Updates";
 
-  public static void BindConfig(ConfigFile config)
+  public override void OnBindConfig(ConfigFile config)
   {
     CreateSoundConfig(config);
     CreateVehicleUpdaterConfig(config);
-
-    StaticFieldValidator.ValidateRequiredNonNullFields<VehicleGlobalConfig>();
   }
 
   private static void CreateVehicleUpdaterConfig(ConfigFile config)

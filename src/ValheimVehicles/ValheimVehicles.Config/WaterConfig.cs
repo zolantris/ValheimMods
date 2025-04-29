@@ -6,7 +6,7 @@ using ValheimVehicles.Components;
 
 namespace ValheimVehicles.Config;
 
-public static class WaterConfig
+public class WaterConfig : BepInExBaseConfig<WaterConfig>
 {
   public enum UnderwaterAccessModeType
   {
@@ -133,7 +133,7 @@ public static class WaterConfig
   public static bool IsDisabled => UnderwaterAccessMode.Value ==
                                    UnderwaterAccessModeType.Disabled;
 
-  public static void BindDebugConfig(ConfigFile config)
+  public static void InitDebugConfig(ConfigFile config)
   {
     DEBUG_WaterDisplacementMeshPrimitive = config.Bind(SectionKeyDebug,
       "DEBUG_WaterDisplacementMeshPrimitive",
@@ -190,11 +190,11 @@ public static class WaterConfig
   private const string aboveSurfaceConfigKey =
     "EXPERIMENTAL_AboveSurfaceBallastUsesShipMass";
 
-  public static void BindConfig(ConfigFile config)
+  public override void OnBindConfig(ConfigFile config)
   {
     Config = config;
 
-    BindDebugConfig(Config);
+    InitDebugConfig(Config);
 
     WaterBallastEnabled = Config.Bind(
       SectionKey,

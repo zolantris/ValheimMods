@@ -2819,7 +2819,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       case VehicleFloatationMode.Fixed:
         return HullFloatationColliderAlignmentOffset;
       case VehicleFloatationMode.Custom:
-        return _vehicle.VehicleConfigSync.config.CustomFloatationHeight;
+        return _vehicle.VehicleConfigSync.CustomZdoConfig.CustomFloatationHeight;
       case VehicleFloatationMode.Center:
       default:
         return _vehicleHullBounds.center.y;

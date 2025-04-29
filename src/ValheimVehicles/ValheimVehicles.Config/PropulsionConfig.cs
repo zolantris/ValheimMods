@@ -3,10 +3,11 @@ using ValheimVehicles.Propulsion.Sail;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Enums;
+using ValheimVehicles.Helpers;
 
 namespace ValheimVehicles.Config;
 
-public static class PropulsionConfig
+public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
 {
   public static ConfigFile? Config { get; private set; }
 
@@ -108,7 +109,7 @@ public static class PropulsionConfig
   ///
   /// TODO translate all config descriptions and keys...
   /// <param name="config"></param>
-  public static void BindConfig(ConfigFile config)
+  public override void OnBindConfig(ConfigFile config)
   {
     Config = config;
 

@@ -1,8 +1,8 @@
 using System.Linq;
 using HarmonyLib;
-using ValheimVehicles.ModSupport;
+using ValheimVehicles.QuickStartWorld.Config;
 
-namespace ValheimVehicles.Patches;
+namespace ValheimVehicles.QuickStartWorld.Patches;
 
 public class QuickStartWorld_Patch
 {

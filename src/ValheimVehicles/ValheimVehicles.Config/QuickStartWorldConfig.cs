@@ -1,15 +1,18 @@
 using BepInEx.Configuration;
 using ValheimVehicles.Config;
-using ValheimVehicles.Patches;
+using ValheimVehicles.Helpers;
+using ValheimVehicles.QuickStartWorld.Patches;
 
-namespace ValheimVehicles.ModSupport;
+namespace ValheimVehicles.QuickStartWorld.Config;
 
 /// <summary>
-/// Whole file is debug only related.
+/// For configuring quickstart worlds meant for debug an BETA variants of valheimRAFT
+/// TODO move this into its own mod. This is super helpful for starting and/or connecting to a world/server without any UI input.
+/// 
+/// The Config file is debug-only for now.
 /// </summary>
-public static class QuickStartWorldConfig
+public class QuickStartWorldConfig : BepInExBaseConfig<QuickStartWorldConfig>
 {
-  public static ConfigFile? Config { get; private set; }
 
   private const string QuickStartSection = "QuickStartWorld";
 #if DEBUG
@@ -74,11 +77,9 @@ public static class QuickStartWorldConfig
   }
 #endif
 
-  public static void BindConfig(ConfigFile config)
+  public override void OnBindConfig(ConfigFile config)
   {
 #if DEBUG
-    Config = config;
-
     ServerOnlineBackendType = config.Bind(QuickStartSection, "ServerOnlineBackendType", OnlineBackendType.Steamworks);
 
     QuickStartWorldName = config.Bind(QuickStartSection, "QuickStartWorldName",

@@ -38,13 +38,10 @@ public class ShipHullPrefab : IRegisterPrefab
       DirectionVariant.Right
     ];
 
-    // RegisterWindowPortholeIronStandalone();
     RegisterWindowWallPorthole2x2Iron();
     RegisterWindowWallPorthole4x4Iron();
     RegisterWindowWallPorthole8x4Iron();
     RegisterWindowFloorPorthole4x4Iron();
-    // RegisterWindowWallSquareWood();
-    // RegisterWindowWallSquareIron();
 
     foreach (var hullMaterialType in hullMaterialTypes)
       RegisterHull(GetShipHullCenterName(hullMaterialType), hullMaterialType,
@@ -145,28 +142,6 @@ public class ShipHullPrefab : IRegisterPrefab
 
     // windows are half health
     wnt.m_health /= 2f;
-  }
-
-  public static void RegisterWindowWallSquareWood()
-  {
-    var prefab =
-      PrefabManager.Instance.CreateClonedPrefab(
-        WindowWallSquareWoodPrefabName,
-        LoadValheimVehicleAssets.ShipWindowSquareWallWood);
-
-    SetupHullPrefab(prefab, WindowWallSquareWoodPrefabName,
-      ShipHulls.HullMaterial.Wood, 3);
-  }
-
-  public static void RegisterWindowWallSquareIron()
-  {
-    var prefab =
-      PrefabManager.Instance.CreateClonedPrefab(
-        WindowWallSquareIronPrefabName,
-        LoadValheimVehicleAssets.ShipWindowSquareWallIron);
-
-    SetupHullPrefab(prefab, WindowWallSquareIronPrefabName,
-      ShipHulls.HullMaterial.Iron, 3);
   }
 
   public static RequirementConfig[] GetRequirements(string material,

@@ -54,7 +54,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
   // The rudder force multiplier applied to the ship speed
   private float _rudderForce = 1f;
 
-  public VehicleConfig VehicleConfig { get; set; }
+  public VehicleCustomZdoConfig VehicleCustomZdoConfig { get; set; }
 
   public GameObject GhostContainer()
   {

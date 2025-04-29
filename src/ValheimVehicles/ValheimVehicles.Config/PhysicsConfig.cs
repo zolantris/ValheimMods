@@ -7,11 +7,12 @@ using ValheimVehicles.Constants;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Enums;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.Config;
 
-public static class PhysicsConfig
+public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
 {
   private const string SectionKey = "Vehicle Physics";
 
@@ -82,10 +83,7 @@ public static class PhysicsConfig
 
   public static ConfigEntry<CollisionDetectionMode>
     vehiclePiecesShipCollisionDetectionMode = null!;
-
-
-  private static ConfigFile Config = null!;
-
+  
   private static AcceptableValueRange<float>
     SafeDampingRangeWaterVehicle =
       new(0.05f,
@@ -183,26 +181,24 @@ public static class PhysicsConfig
     maxLinearYVelocityAcceptableValues = ModEnvironment.IsDebug
       ? new AcceptableValueRange<float>(1, 2000f)
       : new AcceptableValueRange<float>(1, 200f);
-  
-  public static void BindConfig(ConfigFile config)
-  {
-    Config = config;
 
+  public override void OnBindConfig(ConfigFile config)
+  {
     const string vehicleCustomSettingTodo = "In future version there will be an individual config setting.";
 
-    VehicleLandMaxTreadWidth = Config.Bind(SectionKey,
+    VehicleLandMaxTreadWidth = config.Bind(SectionKey,
       "LandVehicle Max Tread Width",
       8,
       ConfigHelpers.CreateConfigDescription(
         $"Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles. {vehicleCustomSettingTodo}", true, false, new AcceptableValueRange<int>(1, 20)));
 
-    VehicleLandMaxTreadLength = Config.Bind(SectionKey,
+    VehicleLandMaxTreadLength = config.Bind(SectionKey,
       "LandVehicle Max Tread Length",
       20,
       ConfigHelpers.CreateConfigDescription(
         $"Max length the treads can expand to. {vehicleCustomSettingTodo}", true, false, new AcceptableValueRange<int>(4, 100)));
 
-    VehicleCenterOfMassOffset = Config.Bind(SectionKey,
+    VehicleCenterOfMassOffset = config.Bind(SectionKey,
       "Vehicle CenterOfMassOffset",
       0.65f,
       ConfigHelpers.CreateConfigDescription(
@@ -229,74 +225,74 @@ public static class PhysicsConfig
 
     // flight
     flightDamping =
-      Config.Bind(SectionKey, $"flightDamping_{versionResetKey}", 1f,
+      config.Bind(SectionKey, $"flightDamping_{versionResetKey}", 1f,
         dampingDescription);
     flightSidewaysDamping =
-      Config.Bind(SectionKey, $"flightSidewaysDamping_{versionResetKey}", 2f,
+      config.Bind(SectionKey, $"flightSidewaysDamping_{versionResetKey}", 2f,
         dampingSidewaysDescription);
-    flightAngularDamping = Config.Bind(SectionKey,
+    flightAngularDamping = config.Bind(SectionKey,
       $"flightAngularDamping_{versionResetKey}", 1f,
       dampingAngularDescription);
-    flightSteerForce = Config.Bind(SectionKey, "flightSteerForce", 1f,
+    flightSteerForce = config.Bind(SectionKey, "flightSteerForce", 1f,
       debugSailForceAndFactorDescription);
     flightSailForceFactor =
-      Config.Bind(SectionKey, "UNSTABLE_flightSailForceFactor", 0.075f,
+      config.Bind(SectionKey, "UNSTABLE_flightSailForceFactor", 0.075f,
         debugSailForceAndFactorDescription);
-    flightDrag = Config.Bind(SectionKey, "flightDrag", 1.2f);
-    flightAngularDrag = Config.Bind(SectionKey, "flightAngularDrag", 1.2f);
+    flightDrag = config.Bind(SectionKey, "flightDrag", 1.2f);
+    flightAngularDrag = config.Bind(SectionKey, "flightAngularDrag", 1.2f);
 
-    force = Config.Bind(SectionKey,
+    force = config.Bind(SectionKey,
       $"force_{versionResetKey}", 2f,
       "EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.");
-    forceDistance = Config.Bind(SectionKey,
+    forceDistance = config.Bind(SectionKey,
       $"forceDistance_{versionResetKey}", 10f,
       "EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted");
 
-    backwardForce = Config.Bind(SectionKey,
+    backwardForce = config.Bind(SectionKey,
       $"backwardForce_{versionResetKey}", 1f,
       "EXPERIMENTAL_BackwardFORCE");
 
     // water
-    waterSteerForce = Config.Bind(SectionKey, "waterSteerForce", 1f);
+    waterSteerForce = config.Bind(SectionKey, "waterSteerForce", 1f);
 
-    waterDamping = Config.Bind(SectionKey, $"waterDamping_{versionResetKey}",
+    waterDamping = config.Bind(SectionKey, $"waterDamping_{versionResetKey}",
       1f,
       dampingDescription);
     waterSidewaysDamping =
-      Config.Bind(SectionKey, $"waterSidewaysDamping_{versionResetKey}", 2f,
+      config.Bind(SectionKey, $"waterSidewaysDamping_{versionResetKey}", 2f,
         dampingSidewaysDescription);
-    waterAngularDamping = Config.Bind(SectionKey,
+    waterAngularDamping = config.Bind(SectionKey,
       $"waterAngularDamping_{versionResetKey}", 1f,
       dampingAngularDescription);
 
     waterSailForceFactor =
-      Config.Bind(SectionKey, "UNSTABLE_waterSailForceFactor", 0.05f,
+      config.Bind(SectionKey, "UNSTABLE_waterSailForceFactor", 0.05f,
         debugSailForceAndFactorDescription
       );
-    waterDrag = Config.Bind(SectionKey, "waterDrag", 0.8f);
-    waterAngularDrag = Config.Bind(SectionKey, "waterAngularDrag", 0.8f);
+    waterDrag = config.Bind(SectionKey, "waterDrag", 0.8f);
+    waterAngularDrag = config.Bind(SectionKey, "waterAngularDrag", 0.8f);
 
     // underwater
-    submersibleDamping = Config.Bind(SectionKey,
+    submersibleDamping = config.Bind(SectionKey,
       $"submersibleDamping_{versionResetKey}", 1f,
       dampingDescription);
     submersibleSidewaysDamping =
-      Config.Bind(SectionKey, $"submersibleSidewaysDamping_{versionResetKey}",
+      config.Bind(SectionKey, $"submersibleSidewaysDamping_{versionResetKey}",
         2f,
         dampingSidewaysDescription);
     submersibleAngularDamping =
-      Config.Bind(SectionKey, $"submersibleAngularDamping_{versionResetKey}",
+      config.Bind(SectionKey, $"submersibleAngularDamping_{versionResetKey}",
         1f,
         dampingAngularDescription);
 
     submersibleSteerForce =
-      Config.Bind(SectionKey, "submersibleSteerForce", 1f);
+      config.Bind(SectionKey, "submersibleSteerForce", 1f);
     submersibleSailForceFactor =
-      Config.Bind(SectionKey, "UNSTABLE_submersibleSailForceFactor", 0.05f,
+      config.Bind(SectionKey, "UNSTABLE_submersibleSailForceFactor", 0.05f,
         debugSailForceAndFactorDescription);
-    submersibleDrag = Config.Bind(SectionKey, "submersibleDrag", 1.5f);
+    submersibleDrag = config.Bind(SectionKey, "submersibleDrag", 1.5f);
     submersibleAngularDrag =
-      Config.Bind(SectionKey, "submersibleAngularDrag", 1.5f);
+      config.Bind(SectionKey, "submersibleAngularDrag", 1.5f);
 
     var hullFloatationRange = new AcceptableValueRange<float>(-2f, 2f);
 #if DEBUG
@@ -304,10 +300,10 @@ public static class PhysicsConfig
 #endif
 
     // landVehicles much more simple. No sails allowed etc.
-    landDrag = Config.Bind(SectionKey, "landDrag", 0.05f);
-    landAngularDrag = Config.Bind(SectionKey, "landAngularDrag", 1.2f);
+    landDrag = config.Bind(SectionKey, "landDrag", 0.05f);
+    landAngularDrag = config.Bind(SectionKey, "landAngularDrag", 1.2f);
 
-    VehicleLandTreadOffset = Config.Bind(SectionKey,
+    VehicleLandTreadOffset = config.Bind(SectionKey,
       "LandVehicle TreadOffset",
       -1f,
       ConfigHelpers.CreateConfigDescription(
@@ -315,38 +311,38 @@ public static class PhysicsConfig
     VehicleLandTreadOffset.SettingChanged += (sender, args) => VehicleShip.UpdateAllWheelControllers();
 
     // guards for max values
-    MaxLinearVelocity = Config.Bind(SectionKey, $"MaxVehicleLinearVelocity_{VersionedConfigUtil.GetDynamicMinorVersionKey()}", 100f,
+    MaxLinearVelocity = config.Bind(SectionKey, $"MaxVehicleLinearVelocity_{VersionedConfigUtil.GetDynamicMinorVersionKey()}", 100f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 100. Higher values will increase potential of vehicle flying off to space or rapidly accelerating through objects before physics can apply to an unloaded zone.",
         true, false, maxLinearVelocityAcceptableValues));
 
 
-    MaxLinearYVelocity = Config.Bind(SectionKey, $"MaxVehicleLinearYVelocity_{VersionedConfigUtil.GetDynamicMinorVersionKey()}",
+    MaxLinearYVelocity = config.Bind(SectionKey, $"MaxVehicleLinearYVelocity_{VersionedConfigUtil.GetDynamicMinorVersionKey()}",
       50f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the absolute max speed a vehicle can ever move in vertical direction. This will limit the ship capability to launch into space. Lower values are safer. Too low and the vehicle will not use gravity well",
         true, false, maxLinearYVelocityAcceptableValues));
 
-    MaxAngularVelocity = Config.Bind(SectionKey, "MaxVehicleAngularVelocity",
+    MaxAngularVelocity = config.Bind(SectionKey, "MaxVehicleAngularVelocity",
       5f,
       ConfigHelpers.CreateConfigDescription(
         "Sets the absolute max speed a vehicle can ROTATE in. Having a high value means the vehicle can spin out of control.",
         true, false, new AcceptableValueRange<float>(0.1f, 10f)));
 
-    HullFloatationColliderLocation = Config.Bind(FloatationPhysicsSectionKey,
+    HullFloatationColliderLocation = config.Bind(FloatationPhysicsSectionKey,
       "HullFloatationColliderLocation",
       VehicleFloatationMode.Fixed,
       ConfigHelpers.CreateConfigDescription(
         "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20",
         true, false));
 
-    EnableExactVehicleBounds = Config.Bind(FloatationPhysicsSectionKey,
+    EnableExactVehicleBounds = config.Bind(FloatationPhysicsSectionKey,
       $"EnableExactVehicleBounds_{ValheimRAFT_API.GetPluginVersion()}", true,
       ConfigHelpers.CreateConfigDescription(
         "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version",
         true, true));
 
-    vehiclePiecesShipCollisionDetectionMode = Config.Bind(
+    vehiclePiecesShipCollisionDetectionMode = config.Bind(
       FloatationPhysicsSectionKey,
       "vehiclePiecesShipCollisionDetectionMode",
       CollisionDetectionMode.Continuous,
@@ -364,61 +360,61 @@ public static class PhysicsConfig
         }
       }
     };
-    convexHullJoinDistanceThreshold = Config.Bind(FloatationPhysicsSectionKey,
+    convexHullJoinDistanceThreshold = config.Bind(FloatationPhysicsSectionKey,
       "convexHullJoinDistanceThreshold",
       3f,
       ConfigHelpers.CreateConfigDescription(
         "The threshold at which a vehicle's colliders are joined with another pieces colliders to make a singular hull. Higher numbers will join multiple pieces together into a singular hull. Lower numbers allow for splitting hulls out at the cost of performance.",
         true, true, new AcceptableValueRange<float>(0.1f, 10f)));
 
-    convexHullDebuggerColor = Config.Bind(FloatationPhysicsSectionKey,
+    convexHullDebuggerColor = config.Bind(FloatationPhysicsSectionKey,
       "convexHullDebuggerColor",
       new Color(0.10f, 0.23f, 0.07f, 0.5f),
       ConfigHelpers.CreateConfigDescription(
         "Allows the user to set the debugger hull color.",
         true, true));
 
-    convexHullDebuggerForceEnabled = Config.Bind(FloatationPhysicsSectionKey,
+    convexHullDebuggerForceEnabled = config.Bind(FloatationPhysicsSectionKey,
       "convexHullDebuggerForceEnabled",
       false,
       ConfigHelpers.CreateConfigDescription(
         "Force enables the convex hull. This will be turned off if other commands are run or re-enabled if toggled.",
         true, true));
 
-    convexHullPreviewOffset = Config.Bind(FloatationPhysicsSectionKey,
+    convexHullPreviewOffset = config.Bind(FloatationPhysicsSectionKey,
       "convexHullPreviewOffset",
       new Vector3(0, 0, 0),
       ConfigHelpers.CreateConfigDescription(
         $"Sets the hull preview offset, this will allow previewing the hull side by side with your vehicle. This can only be seen if the {convexHullDebuggerForceEnabled.Definition} is true.",
         true, true));
 
-    floatationVelocityMode = Config.Bind(VelocityModeSectionKey,
+    floatationVelocityMode = config.Bind(VelocityModeSectionKey,
       "floatationVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
         true, true));
-    flyingVelocityMode = Config.Bind(VelocityModeSectionKey,
+    flyingVelocityMode = config.Bind(VelocityModeSectionKey,
       "flyingVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
         true, true));
-    turningVelocityMode = Config.Bind(VelocityModeSectionKey,
+    turningVelocityMode = config.Bind(VelocityModeSectionKey,
       "turningVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
         true, true));
-    sailingVelocityMode = Config.Bind(VelocityModeSectionKey,
+    sailingVelocityMode = config.Bind(VelocityModeSectionKey,
       "sailingVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
         true, true));
-    rudderVelocityMode = Config.Bind(VelocityModeSectionKey,
+    rudderVelocityMode = config.Bind(VelocityModeSectionKey,
       "rudderVelocityMode", ForceMode.VelocityChange,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL VelocityMode changeable in debug only. Override so mass and vehicle size are accounted for",
         true, true));
 
-    removeCameraCollisionWithObjectsOnBoat = Config.Bind(SectionKey,
+    removeCameraCollisionWithObjectsOnBoat = config.Bind(SectionKey,
       "EXPERIMENTAL removeCameraCollisionWithObjectsOnBoat", false,
       ConfigHelpers.CreateConfigDescription(
         "EXPERIMENTAL removes all collision of camera for objects on boat. Should significantly lower jitter when camera smashes into objects on boat it will force camera through it instead of pushing rapidly forward with vehicle force too. This will cause objects to pop in and out of view.",
@@ -427,7 +423,7 @@ public static class PhysicsConfig
     var waterForceDeltaMultiplierRange = ModEnvironment.IsDebug
       ? new AcceptableValueRange<float>(0.1f, 5000f)
       : new AcceptableValueRange<float>(10f, 50f);
-    waterDeltaForceMultiplier = Config.Bind(SectionKey,
+    waterDeltaForceMultiplier = config.Bind(SectionKey,
       "waterDeltaForceMultiplier", 50f,
       ConfigHelpers.CreateConfigDescription("Water delta force multiplier",
         true, true, waterForceDeltaMultiplierRange));
