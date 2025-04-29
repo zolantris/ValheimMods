@@ -1,11 +1,11 @@
 using BepInEx.Configuration;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
 
 namespace ValheimVehicles.Config;
 
-public static class RenderingConfig
+public class RenderingConfig : BepInExBaseConfig<RenderingConfig>
 {
-  private static ConfigFile Config = null!;
   public static ConfigEntry<bool> EnableVehicleClusterMeshRendering = null!;
   public static ConfigEntry<int> ClusterRenderingPieceThreshold = null!;
 #if DEBUG
@@ -14,10 +14,8 @@ public static class RenderingConfig
 
   private const string SectionKey = "Hud";
 
-  public static void BindConfig(ConfigFile config)
+  public override void OnBindConfig(ConfigFile config)
   {
-    Config = config;
-
     EnableVehicleClusterMeshRendering = config.Bind(SectionKey,
       "EnableVehicleClusterRendering", false,
       ConfigHelpers.CreateConfigDescription("Cluster rendering efficiently improves how the raft renders. It will offer 50% boost in FPS for larger ships. You can reach upwards of 90 FPS on a 3000 piece ship vs 40-45fps. It does this by combining meshes so editing and damaging these components is a bit more abrupt. WearNTear animations go away, but the items can still be broken. Updates require re-building the meshes affected so this can be a bit heavy, but not as heavy as bounds collider rebuild.", true, false)

@@ -14,7 +14,6 @@ public class LoadValheimVehicleAssets : ILoadAssets
   // CustomSail
   public static GameObject CustomSail = null!;
   
-  public static Shader DoubleSidedTransparentShader = null!;
   public static Material DoubleSidedTransparentMat = null!;
 
   public static GameObject VehicleHammer = null!;
@@ -45,11 +44,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject VehicleLand = null!;
   public static GameObject WheelSingle = null!;
   public static GameObject TankTreadsSingle = null!;
-
-  // hull ribs
-  public static GameObject ShipHullRibWoodAsset = null!;
-  public static GameObject ShipHullRibIronAsset = null!;
-
+  
   // slabs (act as hulls too)
   public static GameObject ShipHullSlab2X2WoodAsset = null!;
   public static GameObject ShipHullSlab2X2IronAsset = null!;
@@ -84,8 +79,6 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static GameObject ShipWindowPortholeWall4x4 = null!;
   public static GameObject ShipWindowPortholeWall8x4 = null!;
   public static GameObject ShipWindowPortholeFloor4x4 = null!;
-  public static GameObject ShipWindowSquareWallIron = null!;
-  public static GameObject ShipWindowSquareWallWood = null!;
   public static GameObject ShipWindowPortholeStandalone = null!;
 
   // hud
@@ -162,10 +155,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public void Init(AssetBundle assetBundle)
   {
     _bundle = assetBundle;
-
-    DoubleSidedTransparentShader =
-      assetBundle.LoadAsset<Shader>(
-        "DoubleSidedTransparentShader.shader");
+    
     DoubleSidedTransparentMat =
       assetBundle.LoadAsset<Material>(
         "double_sided_transparent.mat");
@@ -256,11 +246,6 @@ public class LoadValheimVehicleAssets : ILoadAssets
     ShipWindowPortholeWall8x4 =
       assetBundle.LoadAsset<GameObject>(
         $"hull_wall_window_porthole_iron_8x4.prefab");
-
-    // ShipWindowSquareWallIron =
-    //   assetBundle.LoadAsset<GameObject>($"hull_wall_window_square_iron_2x2.prefab");
-    // ShipWindowSquareWallWood =
-    //   assetBundle.LoadAsset<GameObject>($"hull_wall_window_square_wood_2x2.prefab");
 
     ShipWindowPortholeFloor4x4 =
       assetBundle.LoadAsset<GameObject>(

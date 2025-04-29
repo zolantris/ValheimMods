@@ -8,7 +8,7 @@ namespace ValheimVehicles.Config;
 /// A config syncing component for per-vehicle configs.
 /// - This is not a BepInEx config component, there will be no BepInEx fields used.
 /// </summary>
-public class VehicleConfig
+public class VehicleCustomZdoConfig
 {
   // Constants for ZDO keys
   private const string Key_Version = "vehicle_version";
@@ -85,36 +85,36 @@ public class VehicleConfig
     package.Write(_treadScaleX);
   }
 
-  public static void SaveVehicleConfig(ZDO zdo, VehicleConfig config)
+  public static void SaveVehicleConfig(ZDO zdo, VehicleCustomZdoConfig customZdoConfig)
   {
     LoggerProvider.LogDebug("Saving vehicle config");
 
-    if (zdo.GetString(Key_Version) != config.Version)
-      zdo.Set(Key_Version, config.Version);
+    if (zdo.GetString(Key_Version) != customZdoConfig.Version)
+      zdo.Set(Key_Version, customZdoConfig.Version);
 
-    if (!Mathf.Approximately(zdo.GetFloat(Key_TreadDistance), config.TreadDistance))
-      zdo.Set(Key_TreadDistance, config.TreadDistance);
+    if (!Mathf.Approximately(zdo.GetFloat(Key_TreadDistance), customZdoConfig.TreadDistance))
+      zdo.Set(Key_TreadDistance, customZdoConfig.TreadDistance);
 
-    if (!Mathf.Approximately(zdo.GetFloat(Key_TreadHeight), config.TreadHeight))
-      zdo.Set(Key_TreadHeight, config.TreadHeight);
+    if (!Mathf.Approximately(zdo.GetFloat(Key_TreadHeight), customZdoConfig.TreadHeight))
+      zdo.Set(Key_TreadHeight, customZdoConfig.TreadHeight);
 
-    if (!Mathf.Approximately(zdo.GetFloat(Key_TreadScaleX), config.TreadScaleX))
-      zdo.Set(Key_TreadScaleX, config.TreadScaleX);
+    if (!Mathf.Approximately(zdo.GetFloat(Key_TreadScaleX), customZdoConfig.TreadScaleX))
+      zdo.Set(Key_TreadScaleX, customZdoConfig.TreadScaleX);
 
-    if (zdo.GetBool(Key_HasCustomFloatationHeight) != config.HasCustomFloatationHeight)
-      zdo.Set(Key_HasCustomFloatationHeight, config.HasCustomFloatationHeight);
+    if (zdo.GetBool(Key_HasCustomFloatationHeight) != customZdoConfig.HasCustomFloatationHeight)
+      zdo.Set(Key_HasCustomFloatationHeight, customZdoConfig.HasCustomFloatationHeight);
 
-    if (!Mathf.Approximately(zdo.GetFloat(Key_CustomFloatationHeight), config.CustomFloatationHeight))
-      zdo.Set(Key_CustomFloatationHeight, config.CustomFloatationHeight);
+    if (!Mathf.Approximately(zdo.GetFloat(Key_CustomFloatationHeight), customZdoConfig.CustomFloatationHeight))
+      zdo.Set(Key_CustomFloatationHeight, customZdoConfig.CustomFloatationHeight);
 
-    if (!Mathf.Approximately(zdo.GetFloat(Key_CenterOfMassOffset), config.CenterOfMassOffset))
-      zdo.Set(Key_CenterOfMassOffset, config.CenterOfMassOffset);
+    if (!Mathf.Approximately(zdo.GetFloat(Key_CenterOfMassOffset), customZdoConfig.CenterOfMassOffset))
+      zdo.Set(Key_CenterOfMassOffset, customZdoConfig.CenterOfMassOffset);
   }
 
 
-  public static VehicleConfig LoadVehicleConfig(ZDO zdo)
+  public static VehicleCustomZdoConfig LoadVehicleConfig(ZDO zdo)
   {
-    return new VehicleConfig
+    return new VehicleCustomZdoConfig
     {
       Version = zdo.GetString(Key_Version, ValheimRAFT_API.GetPluginVersion()),
       TreadDistance = zdo.GetFloat(Key_TreadDistance, 2f),
@@ -126,9 +126,9 @@ public class VehicleConfig
     };
   }
 
-  public static VehicleConfig Deserialize(ZPackage package)
+  public static VehicleCustomZdoConfig Deserialize(ZPackage package)
   {
-    return new VehicleConfig
+    return new VehicleCustomZdoConfig
     {
       Version = package.ReadString(),
       CenterOfMassOffset = package.ReadSingle(),

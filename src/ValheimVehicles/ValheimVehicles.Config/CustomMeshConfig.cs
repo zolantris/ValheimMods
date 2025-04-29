@@ -1,8 +1,9 @@
 using BepInEx.Configuration;
+using ValheimVehicles.Helpers;
 
 namespace ValheimVehicles.Config;
 
-public class CustomMeshConfig
+public class CustomMeshConfig : BepInExBaseConfig<CustomMeshConfig>
 {
   public static ConfigEntry<bool> EnableCustomWaterMeshCreators =
     null!;
@@ -12,19 +13,17 @@ public class CustomMeshConfig
 
   private const string SectionKey = "CustomMesh";
 
-  private static ConfigFile Config { get; set; } = null!;
 
-  public static void BindConfig(ConfigFile config)
+  public override void OnBindConfig(ConfigFile config)
   {
-    Config = config;
-    EnableCustomWaterMeshCreators = Config.Bind(
+    EnableCustomWaterMeshCreators = config.Bind(
       SectionKey,
       "Water Mask Prefabs Enabled",
       true,
       ConfigHelpers.CreateConfigDescription(
         "Allows placing a dynamically sized cube that removes all water meshes intersecting with it. This also removes all water meshes when looking through it. So use it wisely, it's not perfect",
         true));
-    EnableCustomWaterMeshTestPrefabs = Config.Bind(
+    EnableCustomWaterMeshTestPrefabs = config.Bind(
       SectionKey,
       "Enable Testing 4x4 Water Mask Prefabs, these are meant for demoing water obstruction.",
       false,

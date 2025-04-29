@@ -1,5 +1,4 @@
-using System;
-namespace ValheimVehicles.Config;
+namespace ValheimVehicles.Helpers;
 
 public class VersionedConfigUtil
 {

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using Debug = UnityEngine.Debug; // Minimal UnityEngine pull
 
 namespace ValheimVehicles.SharedScripts
 {
@@ -13,15 +14,23 @@ namespace ValheimVehicles.SharedScripts
     {
         public static LogLevel ActiveLogLevel = LogLevel.All;
 
-        private static ManualLogSource Logger;
+        private static ManualLogSource? Logger;
         private static LogLevel GlobalLogLevel = LogLevel.All;
 
+        private static bool _hasInitialized = false;
         private static readonly Dictionary<string, string> _callerCache = new();
 
         public static void Setup(ManualLogSource? logger)
         {
-            logger ??= new ManualLogSource("ValheimVehicles");
-            Logger = logger;
+            if (_hasInitialized)
+            {
+                Debug.LogWarning("LoggerProvider: Setup called more than once. Ignoring duplicate initialization.");
+                return;
+            }
+
+            _hasInitialized = true;
+
+            Logger = logger ?? new ManualLogSource("ValheimVehiclesLoggerProviderFallback");
             GlobalLogLevel = ReadBepInExConsoleLogLevel();
 
             LogInfo($"Logger initialized. Plugin Level: {ActiveLogLevel}, Global Level: {GlobalLogLevel}");
@@ -32,7 +41,7 @@ namespace ValheimVehicles.SharedScripts
             [CallerLineNumber] int line = 0)
         {
             if (!IsLevelEnabled(LogLevel.Error)) return;
-            Logger.LogError(Format("Error", val, file, line));
+            SafeLog(LogLevel.Error, Format("Error", val, file, line));
         }
 
         public static void LogWarning(string val,
@@ -40,7 +49,7 @@ namespace ValheimVehicles.SharedScripts
             [CallerLineNumber] int line = 0)
         {
             if (!IsLevelEnabled(LogLevel.Warning)) return;
-            Logger.LogWarning(Format("Warning", val, file, line));
+            SafeLog(LogLevel.Warning, Format("Warning", val, file, line));
         }
 
         [Conditional("DEBUG")]
@@ -49,7 +58,7 @@ namespace ValheimVehicles.SharedScripts
             [CallerLineNumber] int line = 0)
         {
             if (!IsLevelEnabled(LogLevel.Debug)) return;
-            Logger.LogDebug(Format("Dev", val, file, line));
+            SafeLog(LogLevel.Debug, Format("Dev", val, file, line));
         }
 
         public static void LogDebug(string val,
@@ -57,7 +66,7 @@ namespace ValheimVehicles.SharedScripts
             [CallerLineNumber] int line = 0)
         {
             if (!IsLevelEnabled(LogLevel.Debug)) return;
-            Logger.LogDebug(Format("Debug", val, file, line));
+            SafeLog(LogLevel.Debug, Format("Debug", val, file, line));
         }
 
         public static void LogMessage(string val,
@@ -65,7 +74,7 @@ namespace ValheimVehicles.SharedScripts
             [CallerLineNumber] int line = 0)
         {
             if (!IsLevelEnabled(LogLevel.Message)) return;
-            Logger.LogMessage(Format("Message", val, file, line));
+            SafeLog(LogLevel.Message, Format("Message", val, file, line));
         }
 
         public static void LogInfo(string val,
@@ -73,7 +82,7 @@ namespace ValheimVehicles.SharedScripts
             [CallerLineNumber] int line = 0)
         {
             if (!IsLevelEnabled(LogLevel.Info)) return;
-            Logger.LogInfo(Format("Info", val, file, line));
+            SafeLog(LogLevel.Info, Format("Info", val, file, line));
         }
 
         private static bool IsLevelEnabled(LogLevel level)
@@ -82,6 +91,48 @@ namespace ValheimVehicles.SharedScripts
             if (ActiveLogLevel == LogLevel.All && GlobalLogLevel == LogLevel.All) return true;
 
             return level <= ActiveLogLevel && level <= GlobalLogLevel;
+        }
+
+        private static void SafeLog(LogLevel level, string message)
+        {
+            try
+            {
+                if (Logger != null)
+                {
+                    switch (level)
+                    {
+                        case LogLevel.Fatal:
+                            Logger.LogFatal(message);
+                            break;
+                        case LogLevel.Error:
+                            Logger.LogError(message);
+                            break;
+                        case LogLevel.Warning:
+                            Logger.LogWarning(message);
+                            break;
+                        case LogLevel.Message:
+                            Logger.LogMessage(message);
+                            break;
+                        case LogLevel.Info:
+                            Logger.LogInfo(message);
+                            break;
+                        case LogLevel.Debug:
+                            Logger.LogDebug(message);
+                            break;
+                        default:
+                            Logger.LogMessage(message);
+                            break;
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning(message); // Unity fallback if no logger
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"LoggerProvider: Failed to log message. Exception: {e.Message}\nOriginalMessage: {message}");
+            }
         }
 
         private static string Format(string logType, string message, string file, int line)
@@ -96,7 +147,7 @@ namespace ValheimVehicles.SharedScripts
                 var declaringType = method?.DeclaringType;
                 var fullTypeName = declaringType?.FullName ?? "UnknownType";
                 var methodName = method?.Name ?? "UnknownMethod";
-                var fileName = System.IO.Path.GetFileName(file);
+                var fileName = Path.GetFileName(file);
 
                 callerInfo = $"[{fullTypeName}.{fileName}:{line} ({methodName})]";
                 _callerCache[callerKey] = callerInfo;
@@ -126,7 +177,7 @@ namespace ValheimVehicles.SharedScripts
             }
             catch (Exception e)
             {
-                Logger?.LogWarning($"LoggerProvider: Failed to read BepInEx.cfg console level. Defaulting to All. Exception: {e.Message}");
+                Debug.LogWarning($"LoggerProvider: Failed to read BepInEx.cfg console level. Defaulting to All. Exception: {e.Message}");
             }
 
             return LogLevel.All;

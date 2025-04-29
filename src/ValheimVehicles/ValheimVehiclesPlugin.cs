@@ -7,7 +7,7 @@ using ValheimVehicles.Components;
 using ValheimVehicles.Config;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Controllers;
-using ValheimVehicles.ModSupport;
+using ValheimVehicles.QuickStartWorld.Config;
 
 namespace ValheimVehicles;
 

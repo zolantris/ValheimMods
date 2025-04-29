@@ -2,11 +2,12 @@ using BepInEx.Configuration;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
+using ValheimVehicles.Helpers;
 using Zolantris.Shared;
 
 namespace ValheimVehicles.Config;
 
-public static class VehicleDebugConfig
+public class VehicleDebugConfig : BepInExBaseConfig<VehicleDebugConfig>
 {
   public static ConfigFile? Config { get; private set; }
 
@@ -98,7 +99,7 @@ public static class VehicleDebugConfig
     }
   }
 
-  public static void BindConfig(ConfigFile config)
+  public override void OnBindConfig(ConfigFile config)
   {
     Config = config;
 

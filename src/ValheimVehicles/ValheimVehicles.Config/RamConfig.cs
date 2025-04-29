@@ -7,7 +7,7 @@ namespace ValheimVehicles.Config;
 /// <summary>
 /// Aggregation of all Ram and vehicle impact damages. These are all AOE impacts.
 /// </summary>
-public static class RamConfig
+public class RamConfig : BepInExBaseConfig<RamConfig>
 {
   public static ConfigFile Config { get; private set; }
 
@@ -87,9 +87,8 @@ public static class RamConfig
   private const string VehicleRamSectionName = "Ram: Vehicles";
   private static AcceptableValueRange<int> ToolTierRange = new(1, 1000);
 
-  public static void BindConfig(ConfigFile config)
+  public override void OnBindConfig(ConfigFile config)
   {
-    Config = config;
     var damageDescription =
       "the base applied per hit on all items within the hit area. This damage is affected by velocity and ship mass.";
 

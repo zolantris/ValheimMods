@@ -45,7 +45,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string Version = "3.2.0";
+  public const string Version = "3.2.1";
   public const string ModName = "ValheimRAFT";
   public const string ModNameBeta = "ValheimRAFTBETA";
   public const string ModGuid = $"{Author}.{ModName}";
@@ -128,14 +128,16 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     // RegisterHost command might need to be called before AddComponent
     // - ValheimRAFT_API allows for accessing ValheimRAFT old apis through reflection
+
+    // critical for valheim api matching which must be called after config init.
+    // must be done before any other services that require LoggerProvider otherwise it will not work.
+    ProviderInitializers.InitProviders(Logger);
+    
     ValheimVehicles.Compat.ValheimRAFT_API.RegisterHost(Instance);
     gameObject.AddComponent<BatchedLogger>();
 
     CreateConfig();
     PatchController.Apply(HarmonyGuid);
-
-    // critical for valheim api matching which must be called after config init.
-    ProviderInitializers.InitProviders(Logger);
 
     AddPhysicsSettings();
 

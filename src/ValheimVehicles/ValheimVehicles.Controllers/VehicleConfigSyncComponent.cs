@@ -21,7 +21,7 @@ public class VehicleConfigSyncComponent : MonoBehaviour
   private VehicleFloatationMode _cachedFloatationMode = VehicleFloatationMode.Average;
   private float _cachedFloatationHeight = 0;
 
-  public VehicleConfig config = new();
+  public VehicleCustomZdoConfig CustomZdoConfig = new();
 
   public void Awake()
   {
@@ -55,7 +55,7 @@ public class VehicleConfigSyncComponent : MonoBehaviour
     netView.Register<ZPackage>(nameof(RPC_SetVehicleConfig), RPC_SetVehicleConfig);
     netView.Register(nameof(RPC_SyncVehicleConfig), RPC_SyncVehicleConfig);
 
-    VehicleConfig.LoadVehicleConfig(netView.GetZDO());
+    VehicleCustomZdoConfig.LoadVehicleConfig(netView.GetZDO());
 
     _hasRegister = true;
   }
@@ -84,7 +84,7 @@ public class VehicleConfigSyncComponent : MonoBehaviour
   {
     if (!IsValid(out var netView)) return;
     var package = new ZPackage();
-    config.Serialize(package);
+    CustomZdoConfig.Serialize(package);
     netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SetVehicleConfig), package);
   }
 
@@ -96,13 +96,13 @@ public class VehicleConfigSyncComponent : MonoBehaviour
   public void RPC_SetVehicleConfig(long sender, ZPackage package)
   {
     if (!IsValid(out var netView)) return;
-    var localVehicleConfig = VehicleConfig.Deserialize(package);
-    LoggerProvider.LogDebug($"Received vehicleConfig: {config}");
-    config = localVehicleConfig;
+    var localVehicleConfig = VehicleCustomZdoConfig.Deserialize(package);
+    LoggerProvider.LogDebug($"Received vehicleConfig: {CustomZdoConfig}");
+    CustomZdoConfig = localVehicleConfig;
 
     if (!netView.HasOwner() || netView.IsOwner())
     {
-      VehicleConfig.SaveVehicleConfig(netView.GetZDO(), config);
+      VehicleCustomZdoConfig.SaveVehicleConfig(netView.GetZDO(), CustomZdoConfig);
     }
 
     netView.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_SyncVehicleConfig), package);
@@ -116,7 +116,7 @@ public class VehicleConfigSyncComponent : MonoBehaviour
   public void SyncVehicleConfig()
   {
     if (!IsValid(out var netView)) return;
-    config = VehicleConfig.LoadVehicleConfig(netView.GetZDO());
+    CustomZdoConfig = VehicleCustomZdoConfig.LoadVehicleConfig(netView.GetZDO());
   }
 
   public bool IsValid()
@@ -139,7 +139,7 @@ public class VehicleConfigSyncComponent : MonoBehaviour
   
   public VehicleFloatationMode GetWaterFloatationHeightMode()
   {
-    if (config.HasCustomFloatationHeight) return VehicleFloatationMode.Custom;
+    if (CustomZdoConfig.HasCustomFloatationHeight) return VehicleFloatationMode.Custom;
     return PhysicsConfig.HullFloatationColliderLocation.Value;
   }
 
@@ -149,8 +149,8 @@ public class VehicleConfigSyncComponent : MonoBehaviour
     if (_vehicle.IsLandVehicle) return;
     
     // set config immediately, but it might not be updated if the ranges are out of bounds
-    config.HasCustomFloatationHeight = isCustom;
-    config.CustomFloatationHeight = relativeHeight;
+    CustomZdoConfig.HasCustomFloatationHeight = isCustom;
+    CustomZdoConfig.CustomFloatationHeight = relativeHeight;
 
     SendVehicleConfig();
   }

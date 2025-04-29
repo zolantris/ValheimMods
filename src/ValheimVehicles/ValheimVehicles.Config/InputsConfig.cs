@@ -2,21 +2,19 @@ using BepInEx.Configuration;
 using UnityEngine;
 namespace ValheimVehicles.Config;
 
-public class InputsConfig
+public class InputsConfig : BepInExBaseConfig<InputsConfig>
 {
-  private static ConfigFile Config = null!;
 
 #if DEBUG
   public static ConfigEntry<KeyboardShortcut> AnchorKeyboardShortcut = null!;
 #endif
 
-  public static void BindConfig(ConfigFile config)
+  public override void OnBindConfig(ConfigFile config)
   {
-    Config = config;
 
 #if DEBUG
     AnchorKeyboardShortcut =
-      Config.Bind("Config", "AnchorKeyboardShortcut",
+      config.Bind("Input", "AnchorKeyboardShortcut",
         new KeyboardShortcut(KeyCode.LeftShift),
         new ConfigDescription(
           "Anchor keyboard hotkey. Only works for DEBUG currently"));
