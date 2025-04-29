@@ -229,6 +229,9 @@ public static class VehicleStorageController
       if (sail != null && vehicleDataPiece.SailData != null && sail.m_nview != null && sail.m_nview.GetZDO() != null)
       {
         sail.ApplyLoadedSailData(vehicleDataPiece.SailData);
+
+        // must save all data otherwise it will not be loaded on reload of the spawned vehicle.
+        sail.SaveZdo();
       }
     }
   }
@@ -289,13 +292,10 @@ public static class VehicleStorageController
 
         // all custom checks done here.
         InitPieceCustomData(vehicleDataPiece, piecePrefabInstance);
-      
-      
-      prefabsToAdd.Add(piecePrefabInstance);
+        prefabsToAdd.Add(piecePrefabInstance);
       }
       catch (Exception e)
       {
-        // SailComponent.CanInitSails = true;
         LoggerProvider.LogError($"Failed to add piece {piecePrefab.name} to vehicle {vehiclePrefabInstance.name} \n {e}");
       }
     }
