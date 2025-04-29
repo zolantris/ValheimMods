@@ -22,7 +22,7 @@ public class CameraConfig : BepInExBaseConfig<CameraConfig>
   public static ConfigEntry<float> VehicleCameraZoomMaxDistance = null!;
 
   /// <summary>
-  /// Debug will always run this. However onboard controller should control this normally.
+  /// Debug will always run this. However, OnboardController should control this normally.
   /// </summary>
   public static void OnCameraZoomChange()
   {
