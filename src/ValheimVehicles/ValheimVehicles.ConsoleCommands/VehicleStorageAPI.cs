@@ -305,9 +305,16 @@ public static class VehicleStorageAPI
         LoggerProvider.LogMessage($"Could not find prefab piece by name. {vehicleDataPiece.PrefabName}");
         continue;
       }
-      // todo might need to delay adding to parent
+      try
+      {
+        // todo add exceptions for sail spawning. So we can copy the ZDO data required for sails to be created into the SailComponent Directly.
       var piecePrefabInstance = Object.Instantiate(piecePrefab, vehicleShip.PiecesController.transform.position + vehicleDataPiece.Position.ToVector3(), vehicleDataPiece.Rotation.ToQuaternion(), vehicleShip.PiecesController.transform);
       prefabsToAdd.Add(piecePrefabInstance);
+      }
+      catch (Exception e)
+      {
+        LoggerProvider.LogError($"Failed to add piece {piecePrefab.name} to vehicle {vehiclePrefabInstance.name} \n {e}");
+      }
     }
 
     foreach (var pieceInstance in prefabsToAdd)
