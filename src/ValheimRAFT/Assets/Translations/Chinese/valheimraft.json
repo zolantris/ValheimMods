@@ -150,6 +150,8 @@
   "valheim_vehicles_toggle_on": "开",
   "valheim_vehicles_toggle_off": "关",
   "valheim_vehicles_creative_toggle_desc": "切换载具指令开/关。",
+  "valheim_vehicles_activate": "激活",
+  "valheim_vehicles_toggle": "切换",
   "valheim_vehicles_commands_edit_menu": "编辑菜单",
   "valheim_vehicles_commands_creative_mode": "创意模式",
   "valheim_vehicles_commands_mask_edit_mode": "碰撞体编辑模式",

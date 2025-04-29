@@ -150,6 +150,8 @@
   "valheim_vehicles_toggle_on": "вкл",
   "valheim_vehicles_toggle_off": "выкл",
   "valheim_vehicles_creative_toggle_desc": "Переключить команду техники вкл/выкл.",
+  "valheim_vehicles_activate": "Активировать",
+  "valheim_vehicles_toggle": "Переключить",
   "valheim_vehicles_commands_edit_menu": "меню-редактирования",
   "valheim_vehicles_commands_creative_mode": "творческий-режим",
   "valheim_vehicles_commands_mask_edit_mode": "режим-редактирования-коллайдера",
