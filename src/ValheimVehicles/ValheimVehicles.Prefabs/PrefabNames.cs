@@ -338,6 +338,39 @@ public static class PrefabNames
     return $"{RamStakePrefix}_{tier}_{sizeString}";
   }
 
+  public static class MastLevels
+  {
+    public const string ONE = "level_1";
+    public const string TWO = "level_2";
+    public const string THREE = "level_3";
+  }
+
+  public static void ValidateMastTypeName(string mastLevel)
+  {
+    // We validate the input at runtime to make sure it's a MastLevels constant.
+    if (mastLevel != MastLevels.ONE && mastLevel != MastLevels.TWO && mastLevel != MastLevels.THREE)
+    {
+      throw new ArgumentException($"Invalid mast tier name: {mastLevel}", nameof(mastLevel));
+    }
+  }
+
+  /// <summary>
+  /// Does not add prefixes as this would mismatch the exported asset for both images and prefabs.
+  /// </summary>
+  /// <param name="mastLevel"></param>
+  /// <returns></returns>
+  public static string GetMastByLevelFromAssetBundle(string mastLevel)
+  {
+    ValidateMastTypeName(mastLevel);
+    return $"mast_{mastLevel}";
+  }
+
+  public static string GetMastByLevelName(string mastLevel)
+  {
+    ValidateMastTypeName(mastLevel);
+    return $"{ValheimVehiclesPrefix}_{GetMastByLevelFromAssetBundle(mastLevel)}";
+  }
+
   public static bool IsVehicleCollider(string objName)
   {
     return objName.StartsWith(WaterVehicleBlockingCollider) ||

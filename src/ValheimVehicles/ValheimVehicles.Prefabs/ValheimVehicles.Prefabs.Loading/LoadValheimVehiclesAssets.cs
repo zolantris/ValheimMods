@@ -146,6 +146,14 @@ public class LoadValheimVehicleAssets : ILoadAssets
     return _bundle.LoadAsset<GameObject>(assetNameToLoad);
   }
 
+  public static GameObject GetMastVariant(string mastType)
+  {
+    PrefabNames.ValidateMastTypeName(mastType);
+    const string baseName = "mast";
+    var assetNameToLoad = $"{baseName}_{mastType}.prefab";
+    return _bundle.LoadAsset<GameObject>(assetNameToLoad);
+  }
+
   /// <summary>
   /// This loads all the assets
   /// </summary>

@@ -24,10 +24,7 @@ public class BepInExBaseConfig<TSelf> : IBepInExBaseConfig
   /// <param name="config"></param>
   public static void BindConfig(ConfigFile config)
   {
-    LoggerProvider.LogDev($"Called BindConfig for {typeof(TSelf).FullName}");
-
     Instance.OnBindConfig(config);
-
     StaticFieldValidator.ValidateRequiredNonNullFields<TSelf>();
   }
 

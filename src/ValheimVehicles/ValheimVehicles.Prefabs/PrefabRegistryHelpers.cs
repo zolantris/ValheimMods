@@ -81,6 +81,32 @@ public abstract class PrefabRegistryHelpers
     return netView;
   }
 
+  private static void RegisterCustomMastPieces()
+  {
+    PieceDataDictionary.Add(PrefabNames.GetMastByLevelName(PrefabNames.MastLevels.ONE),
+      new PieceData
+      {
+        Name = "$valheim_vehicles_custom_mast $valheim_vehicles_level 1",
+        Description = "$valheim_vehicles_custom_mast_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(PrefabNames.GetMastByLevelFromAssetBundle(PrefabNames.MastLevels.ONE))
+      });
+
+    PieceDataDictionary.Add(PrefabNames.GetMastByLevelName(PrefabNames.MastLevels.TWO),
+      new PieceData
+      {
+        Name = "$valheim_vehicles_custom_mast $valheim_vehicles_level 2",
+        Description = "$valheim_vehicles_custom_mast_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(PrefabNames.GetMastByLevelFromAssetBundle(PrefabNames.MastLevels.TWO))
+      });
+
+    PieceDataDictionary.Add(PrefabNames.GetMastByLevelName(PrefabNames.MastLevels.THREE),
+      new PieceData
+      {
+        Name = "$valheim_vehicles_custom_mast $valheim_vehicles_level 3",
+        Description = "$valheim_vehicles_custom_mast_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(PrefabNames.GetMastByLevelFromAssetBundle(PrefabNames.MastLevels.THREE))
+      });
+  }
   private static void RegisterCustomMeshPieces()
   {
     PieceDataDictionary.Add(PrefabNames.CustomWaterFloatation,
@@ -355,6 +381,7 @@ public abstract class PrefabRegistryHelpers
   {
     PieceLayer = LayerMask.NameToLayer("piece");
 
+    RegisterCustomMastPieces();
     RegisterCustomMeshPieces();
     RegisterVehicleBoundsControllerPieces();
     
@@ -662,7 +689,7 @@ public abstract class PrefabRegistryHelpers
   public static WearNTear GetWearNTearSafe(GameObject prefabComponent)
   {
     var wearNTearComponent = prefabComponent.GetComponent<WearNTear>();
-    if (!(bool)wearNTearComponent)
+    if (wearNTearComponent == null)
     {
       // Many components do not have WearNTear so they must be added to the prefabPiece
       wearNTearComponent = prefabComponent.AddComponent<WearNTear>();
@@ -801,6 +828,34 @@ public abstract class PrefabRegistryHelpers
     HoistSnapPointsToPrefab(prefab, prefab.transform);
   }
 
+  /// <summary>
+  /// Recursive.
+  /// </summary>
+  /// TODO might want to just use a GetComponentsInChildren<Transform> and then iterate through that.
+  ///
+  public static void HoistSnappointChildren(Transform prefabRoot, Transform currentParent)
+  {
+    if (currentParent.childCount == 0) return;
+    for (var i = 0; i < currentParent.childCount; i++)
+    {
+      var transformObj = currentParent.GetChild(i);
+      if (transformObj.tag != SnappointTag && transformObj.childCount == 0)
+      {
+        continue;
+      }
+      if (transformObj.childCount > 0)
+      {
+        HoistSnappointChildren(prefabRoot, transformObj);
+        continue;
+      }
+
+      // changing parent makes the current childCount immediately drop.
+      transformObj.SetParent(prefabRoot);
+      transformObj.gameObject.SetActive(false);
+      i--;
+    }
+  }
+
 // Use this to work around object resizing requiring repeated movement of child snappoints. This way snappoints can stay in the relative object without issue
   public static void HoistSnapPointsToPrefab(GameObject prefab,
     Transform parent,
@@ -814,14 +869,7 @@ public abstract class PrefabRegistryHelpers
 
     if (snappointParent != null)
     {
-      for (var i = 0; i < snappointParent.childCount; i++)
-      {
-        var transformObj = snappointParent.GetChild(i);
-        // changing parent makes the current childCount immediately drop.
-        transformObj.SetParent(prefab.transform);
-        transformObj.gameObject.SetActive(false);
-        i--;
-      }
+      HoistSnappointChildren(prefab.transform, snappointParent);
       return;
     }
     
