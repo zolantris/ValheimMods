@@ -65,7 +65,6 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
   /// <summary>
   /// Todo might be worth caching this.
   /// </summary>
-  /// <returns></returns>
   public static string GetAnchorHotkeyString()
   {
     return ZInput.instance.GetBoundKeyString("Run");
@@ -89,26 +88,9 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
       $"{anchoredStatus}\n[<color=yellow><b>{anchorKeyString}</b></color>] <color=white>{anchorText}</color>";
   }
 
-  public static string GetTutorialAnchorMessage(bool isAnchored)
-  {
-    var anchorMessage = GetAnchorMessage(isAnchored,
-      GetAnchorHotkeyString());
-    anchorMessage = Regex.Replace(anchorMessage, @"[\[\]]", "");
-    return $"Vehicle is {anchorMessage}";
-  }
-
   /// <summary>
   /// Gets the hover text info for wheel
   /// </summary>
-  /// todo cache the localized text.
-  /// <param name="sailArea"></param>
-  /// <param name="totalMass"></param>
-  /// <param name="shipMass"></param>
-  /// <param name="shipContainerMass"></param>
-  /// <param name="shipPropulsion"></param>
-  /// <param name="isAnchored"></param>
-  /// <param name="anchorKeyString"></param>
-  /// <returns></returns>
   public static string GetHoverTextFromShip(float sailArea, float totalMass,
     float shipMass, float shipPropulsion, bool isAnchored,
     string anchorKeyString)
@@ -202,7 +184,6 @@ public class SteeringWheelComponent : MonoBehaviour, Hoverable, Interactable,
 
   private void Awake()
   {
-    VehicleAnchorMechanismController.setLocalizedStates();
     AttachPoint = transform.Find("attachpoint");
     wheelTransform = transform.Find("controls/wheel");
     wheelLocalOffset = wheelTransform.position - transform.position;

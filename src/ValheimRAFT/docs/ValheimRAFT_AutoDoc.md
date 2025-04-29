@@ -1,10 +1,4 @@
 
-## Debug
-
-### Enable Sentry Metrics (requires sentryUnityPlugin) 
-- Description: Enable sentry debug logging. Requires sentry logging plugin installed to work. Sentry Logging plugin will make it easier to troubleshoot raft errors and detect performance bottlenecks. The bare minimum is collected, and only data related to ValheimRaft. See https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT#logging-metrics for more details about what is collected
-- Default Value: True
-
 ## Patches
 
 ### DynamicLocations 
@@ -662,15 +656,15 @@ Other methods removed after 2.5.0
 50% will be the very bottom of the vehicle's collider. In future version there will be an individual config setting.
 - Default Value: 0.65
 
-### flightDamping_3.2.0 
+### flightDamping_3.2.1 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### flightSidewaysDamping_3.2.0 
+### flightSidewaysDamping_3.2.1 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### flightAngularDamping_3.2.0 
+### flightAngularDamping_3.2.1 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -690,15 +684,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1.2
 
-### force_3.2.0 
+### force_3.2.1 
 - Description: EXPERIMENTAL_FORCE. Lower values will not allow the vehicle to balance fast when tilted. Lower values can reduce bobbing, but must be below the forceDistance value.
 - Default Value: 2
 
-### forceDistance_3.2.0 
+### forceDistance_3.2.1 
 - Description: EXPERIMENTAL_FORCE_DISTANCE should always be above the value of force. Otherwise bobbing will occur. Lower values will not allow the vehicle to balance fast when tilted
 - Default Value: 10
 
-### backwardForce_3.2.0 
+### backwardForce_3.2.1 
 - Description: EXPERIMENTAL_BackwardFORCE
 - Default Value: 1
 
@@ -706,15 +700,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 1
 
-### waterDamping_3.2.0 
+### waterDamping_3.2.1 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### waterSidewaysDamping_3.2.0 
+### waterSidewaysDamping_3.2.1 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### waterAngularDamping_3.2.0 
+### waterAngularDamping_3.2.1 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -730,15 +724,15 @@ Other methods removed after 2.5.0
 - Description: 
 - Default Value: 0.8
 
-### submersibleDamping_3.2.0 
+### submersibleDamping_3.2.1 
 - Description: Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.
 - Default Value: 1
 
-### submersibleSidewaysDamping_3.2.0 
+### submersibleSidewaysDamping_3.2.1 
 - Description: Controls how much the water pushes the boat sideways based on wind direction and velocity.
 - Default Value: 2
 
-### submersibleAngularDamping_3.2.0 
+### submersibleAngularDamping_3.2.1 
 - Description: Controls how much the water pushes the boat from a vertical angle based on water and velocity. Lower values will cause more rocking and allow better turn rates. Higher values will make the vehicle more stable, but less turning angle and possibly less realistic. If you get motion-sickness this can allow tweaking sway without disabling it all and also prevent rapid turning.
 - Default Value: 1
 
@@ -787,10 +781,6 @@ Other methods removed after 2.5.0
 ### HullFloatationColliderLocation 
 - Description: Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20
 - Default Value: Fixed
-
-### EnableExactVehicleBounds_3.2.0 
-- Description: Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version
-- Default Value: True
 
 ### vehiclePiecesShipCollisionDetectionMode 
 - Description: Set the collision mode of the vehicle ship pieces container. This the container that people walk on and use the boat. Collision Continuous will prevent people from passing through the boat. Other modes might improve performance like Discrete but cost in more jitter or lag.

@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 using ValheimVehicles.Config;
+using ValheimVehicles.Constants;
 using ValheimVehicles.SharedScripts;
 using Logger = Jotunn.Logger;
 
@@ -13,36 +14,6 @@ namespace ValheimVehicles.Controllers;
 public class VehicleAnchorMechanismController : AnchorMechanismController
 {
   public const float maxAnchorDistance = 40f;
-  private static bool hasLocalizedAnchorState = false;
-  public static string recoveredAnchorText = "";
-  public static string reelingText = "";
-  public static string anchoredText = "";
-  public static string loweringText = "";
-  public static string breakingText = "";
-  public static string idleText = "";
-
-  public static void setLocalizedStates()
-  {
-    if (hasLocalizedAnchorState) return;
-
-    breakingText = Localization.instance.Localize("$valheim_vehicles_land_state_breaking");
-
-    idleText = Localization.instance.Localize("$valheim_vehicles_land_state_idle");
-
-    reelingText =
-      Localization.instance.Localize("$valheim_vehicles_anchor_state_reeling");
-
-    recoveredAnchorText =
-      Localization.instance.Localize(
-        "$valheim_vehicles_anchor_state_recovered");
-
-    anchoredText =
-      Localization.instance.Localize("$valheim_vehicles_anchor_state_anchored");
-
-    loweringText =
-      Localization.instance.Localize("$valheim_vehicles_anchor_state_lowering");
-    hasLocalizedAnchorState = true;
-  }
 
   public static void SyncHudAnchorValues()
   {
@@ -56,7 +27,6 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
   public override void Awake()
   {
     base.Awake();
-    setLocalizedStates();
     CanUseHotkeys = false;
   }
 
@@ -82,16 +52,16 @@ public class VehicleAnchorMechanismController : AnchorMechanismController
   {
     if (isLandVehicle)
     {
-      return anchorState == AnchorState.Anchored ? breakingText : idleText;
+      return anchorState == AnchorState.Anchored ? ModTranslations.breakingText : ModTranslations.idleText;
     }
 
     return anchorState switch
     {
       AnchorState.Idle => "Idle",
-      AnchorState.Lowering => loweringText,
-      AnchorState.Anchored => anchoredText,
-      AnchorState.Reeling => reelingText,
-      AnchorState.Recovered => recoveredAnchorText,
+      AnchorState.Lowering => ModTranslations.loweringText,
+      AnchorState.Anchored => ModTranslations.anchoredText,
+      AnchorState.Reeling => ModTranslations.reelingText,
+      AnchorState.Recovered => ModTranslations.Anchor_RecoveredAnchorText,
       _ => throw new ArgumentOutOfRangeException()
     };
   }

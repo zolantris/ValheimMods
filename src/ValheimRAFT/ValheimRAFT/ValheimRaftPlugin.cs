@@ -2,7 +2,6 @@
 using BepInEx.Configuration;
 using Jotunn.Managers;
 using Jotunn.Utils;
-using BepInEx.Bootstrap;
 using DynamicLocations;
 using DynamicLocations.API;
 using DynamicLocations.Controllers;
@@ -18,10 +17,7 @@ using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Providers;
 using ValheimVehicles.Controllers;
-using ValheimVehicles.Helpers;
-using ValheimVehicles.Patches;
 using ZdoWatcher;
-using Zolantris.Shared;
 using Zolantris.Shared.BepInExAutoDoc;
 namespace ValheimRAFT;
 
@@ -56,8 +52,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   // ReSharper restore MemberCanBePrivate.Global
   
   public static ValheimRaftPlugin Instance { get; private set; }
-  
-  public ConfigEntry<bool> EnableMetrics { get; set; }
+
+  // public ConfigEntry<bool> EnableMetrics { get; set; }
 
   private ConfigDescription CreateConfigDescription(string description,
     bool isAdmin = false,
@@ -81,46 +77,45 @@ public class ValheimRaftPlugin : BaseUnityPlugin
   }
 
 
-  private void CreateBaseConfig()
-  {
-    EnableMetrics = Config.Bind("Debug",
-      "Enable Sentry Metrics (requires sentryUnityPlugin)", true,
-      CreateConfigDescription(
-        "Enable sentry debug logging. Requires sentry logging plugin installed to work. Sentry Logging plugin will make it easier to troubleshoot raft errors and detect performance bottlenecks. The bare minimum is collected, and only data related to ValheimRaft. See https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT#logging-metrics for more details about what is collected"));
-  }
+  // private void CreateBaseConfig()
+  // {
+  //   EnableMetrics = Config.Bind("Debug",
+  //     "Enable Sentry Metrics (requires sentryUnityPlugin)", true,
+  //     CreateConfigDescription(
+  //       "Enable sentry debug logging. Requires sentry logging plugin installed to work. Sentry Logging plugin will make it easier to troubleshoot raft errors and detect performance bottlenecks. The bare minimum is collected, and only data related to ValheimRaft. See https://github.com/zolantris/ValheimMods/tree/main/src/ValheimRAFT#logging-metrics for more details about what is collected"));
+  // }
 
-  /*
-   * aggregates all config creators.
-   *
-   * Future plans:
-   * - Abstract specific config directly into related files and call init here to set those values in the associated classes.
-   * - Most likely those items will need to be "static" values.
-   * - Add a watcher so those items can take the new config and process it as things update.
-   */
+  // /*
+  //  * aggregates all config creators.
+  //  *
+  //  * Future plans:
+  //  * - Abstract specific config directly into related files and call init here to set those values in the associated classes.
+  //  * - Most likely those items will need to be "static" values.
+  //  * - Add a watcher so those items can take the new config and process it as things update.
+  //  */
+  //
+  // private void CreateConfig()
+  // {
+  //   CreateBaseConfig();
+  // }
 
-  private void CreateConfig()
-  {
-    CreateBaseConfig();
-    ValheimVehiclesPlugin.CreateConfigFromRAFTConfig(Config);
-  }
-
+#if DEBUG
   internal void ApplyMetricIfAvailable()
   {
-#if DEBUG
-    
-    var @namespace = "SentryUnityWrapper";
-    var @pluginClass = "SentryUnityWrapperPlugin";
-    Logger.LogDebug(
-      $"contains sentryunitywrapper: {Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper")}");
 
-
-    if (!EnableMetrics.Value ||
-        !Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper"))
-      return;
-    Logger.LogDebug("Made it to sentry check");
-    SentryMetrics.ApplyMetrics();
-#endif
+    // var @namespace = "SentryUnityWrapper";
+    // var @pluginClass = "SentryUnityWrapperPlugin";
+    // Logger.LogDebug(
+    //   $"contains sentryunitywrapper: {Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper")}");
+    //
+    //
+    // if (!EnableMetrics.Value ||
+    //     !Chainloader.PluginInfos.ContainsKey("zolantris.SentryUnityWrapper"))
+    //   return;
+    // Logger.LogDebug("Made it to sentry check");
+    // SentryMetrics.ApplyMetrics();
   }
+#endif
 
   public void Awake()
   {    
@@ -131,21 +126,18 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
     // critical for valheim api matching which must be called after config init.
     // must be done before any other services that require LoggerProvider otherwise it will not work.
-    ProviderInitializers.InitProviders(Logger);
-    
+    ProviderInitializers.InitProviders(Logger, gameObject);
     ValheimVehicles.Compat.ValheimRAFT_API.RegisterHost(Instance);
-    gameObject.AddComponent<BatchedLogger>();
+    ValheimVehiclesPlugin.CreateConfigFromRAFTConfig(Config);
 
-    CreateConfig();
+    // @warning patch controller must be called after CreateConfig.
     PatchController.Apply(HarmonyGuid);
 
     AddPhysicsSettings();
 
     RegisterVehicleConsoleCommands();
 
-
-
-
+    
     PrefabManager.OnVanillaPrefabsAvailable += () =>
     {
       // do not load custom textures on a dedicated server. This will do nothing but cause an error.
@@ -169,8 +161,6 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void OnDestroy()
   {
-    Localization.OnLanguageChange -= ModTranslations.UpdateTranslations;
-    Localization.OnLanguageChange -= VehicleAnchorMechanismController.setLocalizedStates;
     PatchController.UnpatchSelf();
   }
 
@@ -202,10 +192,14 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 
   private void Start()
   {
-  
-    // SentryLoads after
+#if DEBUG
     ApplyMetricIfAvailable();
-    
+#endif
+    GenerateAutoDocs();
+  }
+
+  private void GenerateAutoDocs()
+  {
     if (ModEnvironment.IsDebug)
       new BepInExConfigAutoDoc().Generate(this, Config, "ValheimRAFT");
   }

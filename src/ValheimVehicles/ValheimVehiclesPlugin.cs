@@ -8,6 +8,8 @@ using ValheimVehicles.Config;
 using ValheimVehicles.Constants;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.QuickStartWorld.Config;
+using ValheimVehicles.SharedScripts;
+using Zolantris.Shared.Debug;
 
 namespace ValheimVehicles;
 
@@ -26,7 +28,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   public const string Guid = $"{Author}.{ModName}";
   public static bool HasRunSetup;
   private static bool HasCreatedConfig = false;
-  private RetryGuard _rpcRegisterRetry;
+  private RetryGuard _languageRetry;
 
   private MapPinSync _mapPinSync;
 
@@ -35,17 +37,22 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   private void Awake()
   {
     Instance = this;
-    _rpcRegisterRetry = new RetryGuard(Instance);
+    _languageRetry = new RetryGuard(Instance);
+  }
 
-    if (Localization.instance != null)
+  private IEnumerator Start()
+  {
+    // bail at 10 seconds and add OnLanguageChanged regardless
+    var timer = DebugSafeTimer.StartNew();
+    while (timer.ElapsedMilliseconds < 10000 && !ModTranslations.CanRunLocalization())
     {
-      Localization.OnLanguageChange += UpdateTranslations;
-      UpdateTranslations();
+      yield return null;
     }
-    else
-    {
-      StartCoroutine(WaitForLocalizationAndSubscribe());
-    }
+    Localization.OnLanguageChange += OnLanguageChanged;
+
+    // must wait for next-frame otherwise Awake and other lifecycles might not have fired for translations api.
+    yield return null;
+    OnLanguageChanged();
   }
 
   private void OnEnable()
@@ -61,7 +68,11 @@ public class ValheimVehiclesPlugin : MonoBehaviour
       Destroy(_mapPinSync);
     }
 
-    Localization.OnLanguageChange -= UpdateTranslations;
+    if (Localization.instance != null)
+    {
+
+      Localization.OnLanguageChange -= OnLanguageChanged;
+    }
   }
 
   public void Setup()
@@ -78,42 +89,17 @@ public class ValheimVehiclesPlugin : MonoBehaviour
     _mapPinSync = gameObject.AddComponent<MapPinSync>();
   }
 
-  /// <summary>
-  /// Localization.instance seems flake. Having a 50 second queue of calling it until it success 1 time should guard against problems.
-  /// </summary>
-  public void UpdateTranslations()
+  private void OnLanguageChanged()
   {
-    try
+    ModTranslations.UpdateTranslations();
+    if (!ModTranslations.IsHealthy())
     {
-      if (!_rpcRegisterRetry.CanRetry) return;
-      if (Localization.instance == null)
-      {
-        _rpcRegisterRetry.Retry(UpdateTranslations, 1f);
-        return;
-      }
-
-      VehicleAnchorMechanismController.setLocalizedStates();
-      ModTranslations.UpdateTranslations();
-      if (!ModTranslations.IsHealthy())
-      {
-        _rpcRegisterRetry.Retry(UpdateTranslations, 1f);
-      }
+      _languageRetry.Retry(ModTranslations.UpdateTranslations, 1f);
     }
-    catch (Exception e)
+    else
     {
-      return;
+      _languageRetry.Reset();
     }
-  }
-
-  private IEnumerator WaitForLocalizationAndSubscribe()
-  {
-    while (Localization.instance == null || ZInput.instance == null || string.IsNullOrEmpty(Localization.instance.GetSelectedLanguage()))
-    {
-      yield return null;
-    }
-
-    Localization.OnLanguageChange += UpdateTranslations;
-    UpdateTranslations();
   }
 
 
