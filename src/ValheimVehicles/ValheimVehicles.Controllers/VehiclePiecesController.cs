@@ -3486,20 +3486,11 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     if (!door && !ladder && !isRope && !SailPrefabs.IsSail(go.name)
         && !RamPrefabs.IsRam(go.name))
     {
-      if (PhysicsConfig.EnableExactVehicleBounds.Value ||
-          PrefabNames.IsHull(go))
-      {
-        var newBounds =
-          EncapsulateColliders(tempBounds.center, tempBounds.size,
-            go);
-        if (newBounds != null)
-          return new Bounds(newBounds.Value.center, newBounds.Value.size);
-      }
-      else
-      {
-        var relativePosition = transform.InverseTransformPoint(go.transform.position);
-        tempBounds.Encapsulate(relativePosition);
-      }
+      var newBounds =
+        EncapsulateColliders(tempBounds.center, tempBounds.size,
+          go);
+      if (newBounds != null)
+        return new Bounds(newBounds.Value.center, newBounds.Value.size);
     }
     
     return new Bounds(tempBounds.center, tempBounds.size);

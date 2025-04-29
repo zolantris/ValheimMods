@@ -114,10 +114,6 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
   public static ConfigEntry<float> MaxLinearVelocity = null!;
   public static ConfigEntry<float> MaxLinearYVelocity = null!;
 
-
-  public static ConfigEntry<bool> EnableExactVehicleBounds = null!;
-
-
   private const string SailDampingExplaination =
     "Controls how much the water pushes the boat upwards directly. This value may affect angular damping too. Recommended to keep the original value. But tweaking can remove or add additional jitter. Higher values likely will add more jitter.";
 
@@ -335,12 +331,7 @@ public class PhysicsConfig : BepInExBaseConfig<PhysicsConfig>
       ConfigHelpers.CreateConfigDescription(
         "Hull Floatation Collider will determine the location the ship floats and hovers above the sea. Average is the average height of all Vehicle Hull Pieces attached to the vehicle. The point calculate is the center of the prefab. Center is the center point of all the float boats. This center point is determined by the max and min height points included for ship hulls. Lowest is the lowest most hull piece will determine the float height, allowing users to easily raise the ship if needed by adding a piece at the lowest point of the ship. Custom allows for setting floatation between -20 and 20",
         true, false));
-
-    EnableExactVehicleBounds = config.Bind(FloatationPhysicsSectionKey,
-      $"EnableExactVehicleBounds_{ValheimRAFT_API.GetPluginVersion()}", true,
-      ConfigHelpers.CreateConfigDescription(
-        "Ensures that a piece placed within the raft is included in the float collider correctly. May not be accurate if the parent GameObjects are changing their scales above or below 1,1,1. Mods like Gizmo could be incompatible. This is enabled by default but may change per update if things are determined to be less stable. Changes Per mod version",
-        true, true));
+    
 
     vehiclePiecesShipCollisionDetectionMode = config.Bind(
       FloatationPhysicsSectionKey,
