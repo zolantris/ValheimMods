@@ -570,6 +570,39 @@ public class SailComponent : MonoBehaviour, Interactable, Hoverable
   }
 
   /// <summary>
+  /// Request for all peers to sync this new data. Does not send the data. This expects the data to arrive within a short period of time.
+  /// </summary>
+  public void RequestSyncZDOData()
+  {
+    if (m_nview == null || m_nview.m_zdo == null) return;
+    m_nview.InvokeRPC(nameof(RPC_SyncSailData));
+  }
+
+  public void RPC_SyncSailData(long sender)
+  {
+    if (!isActiveAndEnabled) return;
+    if (LoadZDOCoroutine != null) return;
+    LoadZDOCoroutine = StartCoroutine(Debounce_LoadZDO());
+  }
+
+  private Coroutine? LoadZDOCoroutine = null;
+
+  public IEnumerator Debounce_LoadZDO()
+  {
+    yield return new WaitForSeconds(0.1f);
+    yield return new WaitForFixedUpdate();
+    try
+    {
+      LoadZDO();
+    }
+    catch (Exception e)
+    {
+      // ignored
+    }
+    LoadZDOCoroutine = null;
+  }
+
+  /// <summary>
   /// Creates collision mesh, currently breaks for 3 
   /// </summary>
   /// todo May need to inflate the mesh
