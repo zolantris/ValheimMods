@@ -9,7 +9,7 @@ namespace ValheimVehicles.SharedScripts.UI
 {
   public static partial class SwivelUIHelpers
   {
-    private RectTransform CreateViewport(ScrollRect scrollRect, Unity2dStyles styles)
+    public static RectTransform CreateViewport(ScrollRect scrollRect, Unity2dStyles styles)
     {
       var viewportGO = new GameObject("Viewport", typeof(RectTransform), typeof(Mask), typeof(Image));
       viewportGO.transform.SetParent(scrollRect.transform, false);

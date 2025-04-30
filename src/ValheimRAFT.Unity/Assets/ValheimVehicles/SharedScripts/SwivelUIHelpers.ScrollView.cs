@@ -9,7 +9,7 @@ namespace ValheimVehicles.SharedScripts.UI
 {
   public static partial class SwivelUIHelpers
   {
-    private ScrollRect CreateScrollView(Canvas canvas, Unity2dStyles styles)
+    public static ScrollRect CreateScrollView(Canvas canvas, Unity2dStyles styles)
     {
       var scrollGO = new GameObject("ScrollView", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
       scrollGO.transform.SetParent(canvas.transform, false);

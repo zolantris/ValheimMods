@@ -9,9 +9,9 @@ namespace ValheimVehicles.SharedScripts.UI
 {
   public static partial class SwivelUIHelpers
   {
-    private Canvas CreateSwivelUICanvas(Transform parent)
+    public static Canvas CreateUICanvas(string name, Transform parent, Unity2dStyles styles)
     {
-      var canvasGO = new GameObject("SwivelUICanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+      var canvasGO = new GameObject(name, typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
       canvasGO.transform.SetParent(parent, false);
 
       var canvas = canvasGO.GetComponent<Canvas>();

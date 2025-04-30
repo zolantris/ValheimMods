@@ -61,60 +61,17 @@ namespace ValheimVehicles.SharedScripts.UI
 
     private void CreateUI()
     {
-      var canvasGO = new GameObject("SwivelUICanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-      canvasGO.transform.SetParent(transform, false);
-      var canvas = canvasGO.GetComponent<Canvas>();
-      canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+      var canvas = SwivelUIHelpers.CreateUICanvas("SwivelUICanvas", transform, styles);
+      var scrollRect = SwivelUIHelpers.CreateScrollView(canvas, styles);
+      var scrollViewport = SwivelUIHelpers.CreateViewport(scrollRect, styles);
 
-      var scaler = canvasGO.GetComponent<CanvasScaler>();
-      scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-      scaler.referenceResolution = new Vector2(1920, 1080);
+      var scrollViewContent = SwivelUIHelpers.CreateContent("Content", scrollViewport.transform, styles);
 
-      var scrollGO = new GameObject("ScrollView", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
-      scrollGO.transform.SetParent(canvasGO.transform, false);
-      var scrollRect = scrollGO.GetComponent<ScrollRect>();
-      var scrollRectTransform = scrollGO.GetComponent<RectTransform>();
-      scrollRectTransform.anchorMin = new Vector2(0, 1);
-      scrollRectTransform.anchorMax = new Vector2(0, 1);
-      scrollRectTransform.pivot = new Vector2(0, 1);
-      scrollRectTransform.anchoredPosition = new Vector2(20f, -20f);
-      scrollRectTransform.sizeDelta = new Vector2(Mathf.Clamp(Screen.width * 0.3f, 500f, MaxUIWidth), 600f);
-
-      var viewportGO = new GameObject("Viewport", typeof(RectTransform), typeof(Mask), typeof(Image));
-      viewportGO.transform.SetParent(scrollGO.transform, false);
-      var viewportRT = viewportGO.GetComponent<RectTransform>();
-      viewportRT.anchorMin = Vector2.zero;
-      viewportRT.anchorMax = Vector2.one;
-      viewportRT.offsetMin = Vector2.zero;
-      viewportRT.offsetMax = Vector2.zero;
-      scrollRect.viewport = viewportRT;
-      var viewportBGImage = viewportGO.GetComponent<Image>();
-      viewportBGImage.color = styles.ScrollViewBackgroundColor;
-
-      var contentGO = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
-      contentGO.transform.SetParent(viewportGO.transform, false);
-      layoutParent = contentGO.transform;
-
-      var layoutGroup = contentGO.GetComponent<VerticalLayoutGroup>();
-      layoutGroup.childControlHeight = true;
-      layoutGroup.childControlWidth = true;
-      layoutGroup.spacing = 10f;
-      layoutGroup.padding = new RectOffset(20, 20, 20, 20);
-      layoutGroup.childAlignment = TextAnchor.UpperLeft;
-
-      var fitter = contentGO.GetComponent<ContentSizeFitter>();
-      fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-      fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-
-      var contentRT = contentGO.GetComponent<RectTransform>();
-      contentRT.anchorMin = new Vector2(0, 1);
-      contentRT.anchorMax = new Vector2(1, 1);
-      contentRT.pivot = new Vector2(0.5f, 1);
-      contentRT.sizeDelta = new Vector2(0, 0);
-
-      scrollRect.content = contentRT;
+      layoutParent = scrollViewContent.transform;
+      scrollRect.content = scrollViewContent;
 
       SwivelUIHelpers.AddSectionLabel(layoutParent, styles, "Swivel Config");
+
       modeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, styles, "Swivel Mode", EnumNames<SwivelMode>(), swivel.Mode.ToString(), i =>
       {
         if (swivel != null)
