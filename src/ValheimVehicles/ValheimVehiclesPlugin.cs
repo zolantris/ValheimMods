@@ -9,6 +9,7 @@ using ValheimVehicles.Constants;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.QuickStartWorld.Config;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.UI;
 using Zolantris.Shared.Debug;
 
 namespace ValheimVehicles;
@@ -31,6 +32,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   private RetryGuard _languageRetry;
 
   private MapPinSync _mapPinSync;
+  private SwivelUIPanelComponent _swivelUIPanel;
 
   public static ValheimVehiclesPlugin Instance { get; private set; }
 
@@ -87,6 +89,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
   private void SetupComponents()
   {
     _mapPinSync = gameObject.AddComponent<MapPinSync>();
+    _swivelUIPanel = gameObject.AddComponent<SwivelUIPanelComponent>();
   }
 
   private void OnLanguageChanged()

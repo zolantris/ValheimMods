@@ -26,15 +26,31 @@ using PrefabNames = ValheimVehicles.Prefabs.PrefabNames;
 
 namespace ValheimVehicles.Controllers;
 
+public class VehiclePieceActivator : BasePieceActivatorComponent
+{
+  [SerializeField] private VehiclePiecesController _host;
+
+  public override IPieceActivatorHost Host => _host;
+
+  protected override void TrySetPieceToParent(ZNetView netView)
+  {
+    // Classic vehicle-specific logic
+    netView.transform.SetParent(_host.GetPiecesContainer(), false);
+  }
+}
+
 /// <summary>controller used for all vehicles</summary>
 /// <description> This is a controller used for all vehicles, Currently it must be initialized within a vehicle view IE VehicleShip or upcoming VehicleWheeled, and VehicleFlying instances.</description>
-public class VehiclePiecesController : BasePiecesController, IMonoUpdater
+public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPieceActivatorHost
 {
   /*
    * Get all the instances statically
    */
   public static Dictionary<int, VehiclePiecesController>
     ActiveInstances = new();
+
+  private VehiclePieceActivator _pieceActivator;
+
 
   /// <summary>
   /// pieceDictionary with a key (vehicleId) and value as a list of netviews 
@@ -169,27 +185,10 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
 
   internal List<BoardingRampComponent> m_boardingRamps = [];
 
-  private Transform? _piecesContainer;
-  private Transform? _movingPiecesContainer;
+  private Transform? _piecesContainerTransform;
+  private Transform? _movingPiecesContainerTransform;
 
   public static bool UseManualSync = true;
-
-  public enum InitializationState
-  {
-    Pending, // when the ship has a pending state
-    Complete, // when the ship loads as an existing ship and has pieces.
-    Created // when the ship is created with 0 pieces
-  }
-
-  public enum PendingPieceStateEnum
-  {
-    Idle, // not started
-    Scheduled, // called but not started
-    Running, // running
-    Failure, // failed
-    Complete, // completed successfully
-    ForceReset // forced to exit IE teleport or despawn or logout or command to destroy it.
-  }
 
   /// <summary>
   /// For usage in debugging
@@ -266,6 +265,16 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
 
   public GameObject vehicleCenter;
 
+  public ZNetView? GetNetView()
+  {
+    return VehicleInstance?.NetView;
+  }
+
+  public Transform GetPieceContainer()
+  {
+    return _piecesContainerTransform != null ? _piecesContainerTransform : transform;
+  }
+
   public List<Bed> GetBedPieces()
   {
     return m_bedPieces;
@@ -276,9 +285,14 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     return _vehiclePieceBounds;
   }
 
+  public int? GetPersistentId()
+  {
+    return VehicleInstance?.PersistentZdoId;
+  }
+
   public List<ZNetView>? GetCurrentPendingPieces()
   {
-    var persistentId = VehicleInstance?.PersistentZdoId;
+    var persistentId = GetPersistentId();
     if (persistentId == null) return null;
     m_pendingPieces.TryGetValue(persistentId.Value,
       out var pendingPiecesList);
@@ -426,7 +440,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
 
   private Transform CreateMovingPiecesContainer()
   {
-    if (_movingPiecesContainer) return _movingPiecesContainerObj.transform;
+    if (_movingPiecesContainerTransform) return _movingPiecesContainerObj.transform;
 
     var mpc = new GameObject()
     {
@@ -498,7 +512,9 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     SetupJobHandlerOnZNetScene();
     
     base.Awake();
-    
+
+    _pieceActivator = gameObject.AddComponent<VehiclePieceActivator>();
+    _pieceActivator.Initialize(this);
     
     if (vehicleCenter == null)
     {
@@ -531,10 +547,10 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     // m_vehicleCollisionManager.AddObjectToVehicle(FloatCollider.gameObject);
     // m_vehicleCollisionManager.AddObjectToVehicle(OnboardCollider.gameObject);
     InitConvexHullGenerator();
-    _piecesContainer = GetPiecesContainer();
-    _movingPiecesContainer = CreateMovingPiecesContainer();
-    m_localRigidbody = _piecesContainer.GetComponent<Rigidbody>();
-    m_fixedJoint = _piecesContainer.GetComponent<FixedJoint>();
+    _piecesContainerTransform = GetPiecesContainer();
+    _movingPiecesContainerTransform = CreateMovingPiecesContainer();
+    m_localRigidbody = _piecesContainerTransform.GetComponent<Rigidbody>();
+    m_fixedJoint = _piecesContainerTransform.GetComponent<FixedJoint>();
     InitializationTimer.Start();
   }
 
@@ -1024,8 +1040,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
 
     // todo might have to set this to the current position not the sent in position
     controller.VehicleInstance?.NetView?.m_zdo?.SetPosition(position);
-
-
+    
     for (var index = 0; index < controller.m_nviewPieces.Count; index++)
     {
       var nv = controller.m_nviewPieces[index];
@@ -1038,12 +1053,27 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
         continue;
       }
 
-      // todo convert this getComponent to a Dictionary lookup
-      var bedComponent = nv.GetComponent<Bed>();
-      if (bedComponent)
+      var hasPrefabPieceData = controller.prefabPieceDataItems.TryGetValue(nv.gameObject, out var prefabPieceData);
+
+      if (hasPrefabPieceData)
       {
-        controller.UpdateBedPiece(bedComponent);
-        continue;
+        if (prefabPieceData.IsBed)
+        {
+          var bedComponent = nv.GetComponent<Bed>();
+          if (bedComponent)
+          {
+            controller.UpdateBedPiece(bedComponent);
+            continue;
+          }
+        }
+        if (prefabPieceData.IsSwivelChild)
+        {
+          var swivel = nv.GetComponentInParent<SwivelComponentIntegration>();
+          if (swivel != null)
+          {
+            nv.m_zdo?.SetPosition(CanUseActualPiecePosition ? nv.transform.position : position);
+          }
+        }
       }
 
       nv.m_zdo?.SetPosition(CanUseActualPiecePosition ? nv.transform.position : position);
@@ -1145,7 +1175,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
       // This could also be a problem. If the zdo is created but the ship is in part of another sector it gets cut off.
       if (zdo.GetSector() == sector) continue;
 
-      var id = zdo.GetInt(VehicleZdoVars.MBParentIdHash);
+      var id = zdo.GetInt(VehicleZdoVars.MBParentId);
       if (id != VehicleInstance?.PersistentZdoId)
       {
         list.FastRemoveAt(i);
@@ -1629,7 +1659,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     }
   }
 
-  public void OnActivatePendingPiecesComplete(
+  public override void OnActivatePendingPiecesComplete(
     PendingPieceStateEnum pieceStateEnum,
     string message = "")
   {
@@ -2074,7 +2104,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
 
   private static int GetParentID(ZDO zdo)
   {
-    var id = zdo.GetInt(VehicleZdoVars.MBParentIdHash);
+    var id = zdo.GetInt(VehicleZdoVars.MBParentId);
     if (id == 0)
     {
       var zdoid = zdo.GetZDOID(VehicleZdoVars.MBParentHash);
@@ -2084,7 +2114,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
         id = zdoparent == null
           ? ZdoWatchController.ZdoIdToId(zdoid)
           : ZdoWatchController.Instance.GetOrCreatePersistentID(zdoparent);
-        zdo.Set(VehicleZdoVars.MBParentIdHash, id);
+        zdo.Set(VehicleZdoVars.MBParentId, id);
         zdo.Set(VehicleZdoVars.MBRotationVecHash,
           zdo.GetQuaternion(VehicleZdoVars.MBRotationHash, Quaternion.identity)
             .eulerAngles);
@@ -2192,10 +2222,12 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
 
   public void ActivatePiece(ZNetView netView)
   {
-    if (!(bool)netView) return;
+    if (netView == null) return;
+    var zdo = netView.GetZDO();
     if (netView.m_zdo == null) return;
 
-    SetPieceToParent(netView.transform);
+    TrySetPieceToParent(netView, zdo);
+
     netView.transform.localPosition =
       netView.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
     netView.transform.localRotation =
@@ -2220,7 +2252,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     if (zdo == null) return;
 
     AddTempPieceProperties(netView, this);
-    SetPieceToParent(netView.transform);
+    TrySetPieceToParent(netView, zdo);
 
     // Likely do not want to call this.
     FixPieceMeshes(netView);
@@ -2249,7 +2281,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
     if (zdo == null) return;
 
     AddTempPieceProperties(netView, this);
-    SetPieceToParent(netView.transform);
+    TrySetPieceToParent(netView, zdo);
 
     // Likely do not want to call this.
     // FixPieceMeshes(netView);
@@ -2284,19 +2316,24 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
   /// Adds the piece depending on type to the correct container
   /// - Rams are rigidbodies and thus must not be controlled by a RigidBody
   /// </summary>
-  /// <param name="targetTransform"></param>
-  public void SetPieceToParent(Transform targetTransform)
+  public void TrySetPieceToParent(ZNetView? netView, ZDO? zdo)
   {
-    if (RamPrefabs.IsRam(targetTransform.name))
+    if (netView == null || zdo == null) return;
+
+    // todo we could just set the child to the swivel parent now.
+
+    if (SwivelComponentIntegration.TryAddPieceToSwivelContainer(netView, zdo)) return;
+
+    if (RamPrefabs.IsRam(netView.name))
     {
       if (VehicleInstance != null && VehicleInstance.Instance != null)
       {
-        targetTransform.SetParent(VehicleInstance.Instance.transform);
+        netView.transform.SetParent(VehicleInstance.Instance.transform);
       }
       return;
     }
 
-    targetTransform.SetParent(_piecesContainer);
+    netView.transform.SetParent(_piecesContainerTransform);
   }
 
   /**
@@ -2445,7 +2482,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
   public void AddCustomFloatationPrefab(GameObject prefab)
   {
     if (!prefab.name.StartsWith(PrefabNames.CustomWaterFloatation)) return;
-    SetPieceToParent(prefab.transform);
+    prefab.transform.SetParent(_piecesContainerTransform);
 
     var isVehicleUsingCustomFloatation = _vehicle.VehicleConfigSync.GetWaterFloatationHeightMode() == VehicleFloatationMode.Custom;
     var nextState = !isVehicleUsingCustomFloatation;
@@ -2491,9 +2528,16 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
 
   public void AddNewPiece(ZNetView netView)
   {
-    if (!(bool)netView)
+    if (netView == null)
     {
       Logger.LogError("netView does not exist");
+      return;
+    }
+
+    var zdo = netView.GetZDO();
+    if (zdo == null)
+    {
+      LoggerProvider.LogError($"NetView <{netView.name}> has no valid ZDO returning");
       return;
     }
 
@@ -2505,12 +2549,12 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
 
     var previousCount = GetPieceCount();
 
-    SetPieceToParent(netView.transform);
+    TrySetPieceToParent(netView, zdo);
 
     if (netView.m_zdo != null && netView.m_persistent)
     {
       if (VehicleInstance?.PersistentZdoId != null)
-        netView.m_zdo.Set(VehicleZdoVars.MBParentIdHash,
+        netView.m_zdo.Set(VehicleZdoVars.MBParentId,
           VehicleInstance.PersistentZdoId);
       else
         // We should not reach this, but this would be a critical issue and should be tracked.
@@ -2523,14 +2567,8 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater
         netView.transform.localPosition);
     }
 
-    if (netView.GetZDO() == null)
-    {
-      Logger.LogError("NetView has no valid ZDO returning");
-      return;
-    }
-
     AddPiece(netView, true);
-    InitZdo(netView.GetZDO());
+    InitZdo(zdo);
 
     if (previousCount == 0 && GetPieceCount() == 1) SetInitComplete();
   }

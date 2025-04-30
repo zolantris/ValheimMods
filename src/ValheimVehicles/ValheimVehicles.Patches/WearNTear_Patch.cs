@@ -59,7 +59,7 @@ public class WearNTear_Patch
       return false;
 
     var parentVehicleHash =
-      __instance.m_nview.m_zdo.GetInt(VehicleZdoVars.MBParentIdHash, 0);
+      __instance.m_nview.m_zdo.GetInt(VehicleZdoVars.MBParentId, 0);
 
     var hasParentVehicleHash = parentVehicleHash != 0;
     if (!hasParentVehicleHash) return false;

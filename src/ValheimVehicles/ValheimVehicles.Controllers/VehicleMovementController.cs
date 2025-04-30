@@ -605,6 +605,10 @@
       return false;
     }
 
+    /// <summary>
+    /// Utils must be reference global::Utils if there is a Utils namespace brought in.
+    /// </summary>
+    /// <returns></returns>
     public float GetWindAngle()
     {
       // moder power support

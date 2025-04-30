@@ -120,7 +120,7 @@ public class RecoverRaftConsoleCommand : ConsoleCommand
       if (withinVehicleRoot) continue;
 
       var zdoid2 = nv.m_zdo.GetZDOID(VehicleZdoVars.MBParentHash);
-      var mbRaftZdo = nv.m_zdo.GetInt(VehicleZdoVars.MBParentIdHash);
+      var mbRaftZdo = nv.m_zdo.GetInt(VehicleZdoVars.MBParentId);
 
 
       var parentInstance = ZNetScene.instance.FindInstance(zdoid2);

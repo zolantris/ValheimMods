@@ -256,7 +256,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
       return;
     }
 
-    var isVehicleChild = m_nview.GetZDO().GetInt(VehicleZdoVars.MBParentIdHash);
+    var isVehicleChild = m_nview.GetZDO().GetInt(VehicleZdoVars.MBParentId);
     if (isVehicleChild == 0)
     {
       isReadyForCollisions = true;

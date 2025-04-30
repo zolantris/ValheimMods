@@ -13,6 +13,7 @@ using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.Structs;
 using ZdoWatcher;
@@ -249,24 +250,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
 
   private int GetPersistentID()
   {
-    if (ZNetView.m_forceDisableInit || ZNetScene.instance == null || Game.instance == null) return 0;
-    if (_persistentZdoId != 0) return _persistentZdoId;
-    if (ZdoWatchController.Instance == null)
-    {
-      Logger.LogWarning(
-        "No ZdoWatchManager instance, this means something went wrong");
-      _persistentZdoId = 0;
-      return _persistentZdoId;
-    }
-    if (!NetView) NetView = GetComponent<ZNetView>();
-
-    if (NetView == null) return _persistentZdoId;
-
-    if (NetView.GetZDO() == null) return _persistentZdoId;
-
-    _persistentZdoId =
-      ZdoWatchController.Instance.GetOrCreatePersistentID(NetView.GetZDO());
-    return _persistentZdoId;
+    return PersistentIdHelper.GetPersistentIdFrom(NetView, ref _persistentZdoId);
   }
 
   private void Awake()

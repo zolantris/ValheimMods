@@ -2,6 +2,10 @@ using System.Collections.Generic;
 
 namespace ValheimVehicles.Structs;
 
+/// <summary>
+/// ZdoVars do not need to be a hashcode. Using a Hashcode makes it harder to see what the ZDO value relates to as well. So for any future ZDOVars they should be strings.
+/// </summary>
+
 public static class VehicleZdoVars
 {
   public const string ZdoKeyBaseVehicleInitState =
@@ -52,7 +56,7 @@ public static class VehicleZdoVars
   public static readonly KeyValuePair<int, int> MBParentHash =
     ZDO.GetHashZDOID("MBParent");
 
-  public static readonly int MBParentIdHash = "MBParentId".GetStableHashCode();
+  public static readonly int MBParentId = "MBParentId".GetStableHashCode();
 
   /// <summary>
   /// This is the main positional hash for an object within the vehicle. This position is relative to the vehicle and coordinates are in local position after parented within the vehicle.
@@ -69,6 +73,22 @@ public static class VehicleZdoVars
 
   public static readonly int MBPieceCount = "MBPieceCount".GetStableHashCode();
 
-  public const string VehicleParentIdHash = "VehicleParentIdHash";
-  public const string VehicleParentId = "VehicleParentId";
+  // For Components that are within a Swivel
+  public const string SwivelParentId = "SwivelParentId";
+
+  // for swivels
+  public const string SwivelPersistentId = "SwivelPersistentId";
+  public const string SwivelMode = "SwivelMode";
+  public const string SwivelMaxAngleRange = "SwivelMaxAngleRange";
+
+  // SwivelDoors
+  public const string SwivelDoorIsOpened = "SwivelMode";
+  public const string SwivelDoorHingeMode = "SwivelMode";
+  public const string SwivelDoorHingDirectionY = "SwivelMode";
+  public const string SwivelDoorHingDirectionZ = "SwivelMode";
+
+  // SwivelTargeting
+  public const string SwivelTargetMode = "SwivelTargetMode";
+  public const string SwivelTargetMaxRange = "SwivelTargetMaxRange";
+  public const string SwivelTargetMinRange = "SwivelTargetMinRange";
 }

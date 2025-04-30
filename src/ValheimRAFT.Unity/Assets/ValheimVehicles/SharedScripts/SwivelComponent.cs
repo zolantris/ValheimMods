@@ -1,15 +1,15 @@
 #region
 
+using System.ComponentModel;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 #endregion
 
 namespace ValheimVehicles.SharedScripts
 {
-  [RequireComponent(typeof(Rigidbody))]
   public class SwivelComponent : MonoBehaviour
   {
-
     public enum DoorHingeMode
     {
       ZOnly,
@@ -23,32 +23,45 @@ namespace ValheimVehicles.SharedScripts
       Backward // negative angle
     }
 
+    public const string SNAPPOINT_TAG = "snappoint";
+
     [Header("Swivel Settings")]
     [SerializeField] private SwivelMode mode = SwivelMode.None;
-    [SerializeField] private Transform planeTransform;
+    [FormerlySerializedAs("movingTransform")] [SerializeField]
+    private Transform animatedTransform;
+
     [SerializeField] private float maxTurnAnglePerSecond = 90f;
+    [SerializeField] private float maxTurnAngle = 90f; // turn angle maximum from the original forward rotation position of the swivel.
     [SerializeField] private float maxInclineZ = 90f;
     [SerializeField] private float turningLerpSpeed = 5f;
 
     [Header("Enemy Tracking Settings")]
     [SerializeField] private float minTrackingRange = 5f;
     [SerializeField] private float maxTrackingRange = 50f;
-    [SerializeField] private GameObject nearestEnemyMock;
+    [SerializeField] internal GameObject? nearestTarget;
 
     [Header("Door Mode Settings")]
     [SerializeField] private bool isDoorOpen;
     [SerializeField] private float doorLerpSpeed = 2f;
-    [SerializeField] public DoorHingeMode hingeMode = DoorHingeMode.ZOnly;
+    [SerializeField] private DoorHingeMode hingeMode = DoorHingeMode.ZOnly;
     [SerializeField] private HingeDirection zHingeDirection = HingeDirection.Forward;
     [SerializeField] private HingeDirection yHingeDirection = HingeDirection.Forward;
 
     [SerializeField] private float maxYAngle = 90f; // optional Y rotation max (like a normal swing door)
+
+    [Description("Piece component meant for containing all pieces that will be swivelled.")]
+    public Transform pieceContainer;
+
+    [Description("_connectorContainer is meant to be shown until an object is connected to the swivel component. It will also display a forward direction indicator.")]
+    public Transform connectorContainer;
 
     private float _currentYAngle;
     private float _currentZAngle;
 
     [Header("Other Settings")]
     private Rigidbody _rigidbody;
+
+    private Transform _snappoint;
     private Quaternion _targetRotation;
 
     public DoorHingeMode CurrentHingeMode => hingeMode;
@@ -62,20 +75,50 @@ namespace ValheimVehicles.SharedScripts
 
     public float MaxYAngle => maxYAngle;
 
-    private void Awake()
+    public virtual void Awake()
     {
-      _rigidbody = GetComponent<Rigidbody>();
+      FindSnappoint();
+      animatedTransform = transform.Find("animated");
+      pieceContainer = animatedTransform.Find("piece_container");
+      connectorContainer = animatedTransform.Find("connector_container");
+
+      _rigidbody = animatedTransform.GetComponent<Rigidbody>();
       _rigidbody.isKinematic = true;
-      if (!planeTransform)
+      if (!pieceContainer || !connectorContainer)
       {
-        Debug.LogError($"{nameof(SwivelComponent)} missing Plane Transform!");
+        Debug.LogError($"{nameof(SwivelComponent)} missing pieceContainer or connectorContainer!");
       }
     }
 
-    private void FixedUpdate()
+    public virtual void FixedUpdate()
     {
       UpdateTargetRotation();
       ApplyRotation();
+      SyncSnappoint();
+    }
+
+    /// <summary>
+    /// Sync snappoint to the moving section. This will allow for building on these moving pieces without having to reload the vehicle zero the position again.
+    ///
+    /// use connector container as this will not be adding pieces which could mutate a position.
+    /// </summary>
+    public void SyncSnappoint()
+    {
+      if (_snappoint == null || animatedTransform == null) return;
+      _snappoint.transform.position = connectorContainer.position;
+    }
+
+    public void FindSnappoint()
+    {
+      for (var i = 0; i < transform.childCount; i++)
+      {
+        var child = transform.GetChild(i);
+        if (child.CompareTag(SNAPPOINT_TAG))
+        {
+          _snappoint = transform.GetChild(i);
+          break;
+        }
+      }
     }
 
     private void UpdateTargetRotation()
@@ -108,10 +151,10 @@ namespace ValheimVehicles.SharedScripts
 
     private void ApplyRotation()
     {
-      if (_rigidbody == null || planeTransform == null || mode == SwivelMode.None)
+      if (_rigidbody == null || connectorContainer == null || mode == SwivelMode.None)
         return;
 
-      var currentRotation = planeTransform.rotation;
+      var currentRotation = connectorContainer.rotation;
       var newRotation = Quaternion.Slerp(currentRotation, _targetRotation, turningLerpSpeed * Time.fixedDeltaTime);
       _rigidbody.MoveRotation(NormalizeQuaternion(newRotation));
     }
@@ -165,26 +208,26 @@ namespace ValheimVehicles.SharedScripts
 
     protected virtual Quaternion CalculateTargetNearestEnemyRotation()
     {
-      if (nearestEnemyMock == null)
+      if (nearestTarget == null)
       {
         // No target: Face forward by default
-        return planeTransform.rotation;
+        return connectorContainer.rotation;
       }
 
-      var toTarget = nearestEnemyMock.transform.position - planeTransform.position;
+      var toTarget = nearestTarget.transform.position - connectorContainer.position;
       var distance = toTarget.magnitude;
 
       if (distance < minTrackingRange || distance > maxTrackingRange)
       {
         // Outside tracking range: No rotation change
-        return planeTransform.rotation;
+        return connectorContainer.rotation;
       }
 
       // Calculate direction and target rotation
       var flatDirection = new Vector3(toTarget.x, 0f, toTarget.z).normalized;
       if (flatDirection.sqrMagnitude < 0.001f)
       {
-        return planeTransform.rotation;
+        return connectorContainer.rotation;
       }
 
       var targetRotation = Quaternion.LookRotation(flatDirection, Vector3.up);
@@ -199,7 +242,7 @@ namespace ValheimVehicles.SharedScripts
 
     protected virtual Quaternion CalculateDoorModeRotation()
     {
-      if (planeTransform == null)
+      if (connectorContainer == null)
         return Quaternion.identity;
 
       var targetZ = _currentZAngle;

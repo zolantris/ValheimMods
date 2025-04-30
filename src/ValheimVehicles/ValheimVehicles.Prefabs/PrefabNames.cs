@@ -371,6 +371,9 @@ public static class PrefabNames
     return $"{ValheimVehiclesPrefix}_{GetMastByLevelFromAssetBundle(mastLevel)}";
   }
 
+  public const string SwivelPrefabName = $"{ValheimVehiclesPrefix}_Swivel";
+  public const string SwivelAssetName = "swivel";
+
   public static bool IsVehicleCollider(string objName)
   {
     return objName.StartsWith(WaterVehicleBlockingCollider) ||

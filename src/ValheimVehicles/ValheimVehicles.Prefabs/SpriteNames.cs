@@ -58,6 +58,9 @@ public abstract class SpriteNames
 
   public const string Nautilus = "nautilus";
 
+  public const string SwivelIcon = "swivel";
+
+
   /// <summary>
   /// Can be top,bottom,left,right this helper is likely not needed, but provided for organization
   /// </summary>

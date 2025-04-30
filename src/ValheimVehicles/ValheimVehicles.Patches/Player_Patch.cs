@@ -133,7 +133,7 @@ public class Player_Patch
       else
       {
         Logger.LogDebug("BaseVehicleController: adding temp piece");
-        bvc.SetPieceToParent(piece.transform);
+        bvc.TrySetPieceToParent(piece.transform);
       }
     }
     
