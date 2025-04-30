@@ -108,8 +108,8 @@ namespace ValheimVehicles.SharedScripts.UI
 
       scrollRect.content = contentRT;
 
-      SwivelUIHelpers.AddSectionLabel(layoutParent, "Swivel Mode");
-      modeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, "Mode", EnumNames<SwivelMode>(), i =>
+      SwivelUIHelpers.AddSectionLabel(layoutParent, "Swivel Config");
+      modeDropdown = SwivelUIHelpers.AddDropdownRow(layoutParent, "Swivel Mode", EnumNames<SwivelMode>(), i =>
       {
         if (swivel != null)
         {

@@ -14,7 +14,7 @@ namespace ValheimVehicles.SharedScripts.UI
   {
     public static TMP_Dropdown AddDropdownRow(Transform parent, string label, string[] options, UnityAction<int> onChanged)
     {
-      // === Root Group ===
+      // === Root Vertical Group ===
       var root = new GameObject($"{label}_DropdownGroup", typeof(RectTransform), typeof(VerticalLayoutGroup));
       root.transform.SetParent(parent, false);
 
@@ -37,7 +37,6 @@ namespace ValheimVehicles.SharedScripts.UI
       // === Dropdown ===
       var dropdownGO = new GameObject("Dropdown", typeof(RectTransform), typeof(Image), typeof(TMP_Dropdown));
       dropdownGO.transform.SetParent(root.transform, false);
-
       var dropdownRT = dropdownGO.GetComponent<RectTransform>();
       dropdownRT.anchorMin = new Vector2(0, 0);
       dropdownRT.anchorMax = new Vector2(1, 0);
@@ -54,7 +53,9 @@ namespace ValheimVehicles.SharedScripts.UI
         dropdown.options.Add(new TMP_Dropdown.OptionData(option));
       dropdown.onValueChanged.AddListener(onChanged);
 
-      // === Caption Text ===
+      dropdownGO.GetComponent<Image>().color = new Color(0.9f, 0.9f, 0.9f, 1f); // Light gray background
+
+      // === Caption ===
       var captionGO = new GameObject("Caption", typeof(TextMeshProUGUI));
       captionGO.transform.SetParent(dropdownGO.transform, false);
       var caption = captionGO.GetComponent<TextMeshProUGUI>();
@@ -66,17 +67,21 @@ namespace ValheimVehicles.SharedScripts.UI
       dropdown.captionText = caption;
 
       // === Template ===
-      var templateGO = new GameObject("Template", typeof(RectTransform), typeof(ScrollRect));
+      var templateGO = new GameObject("Template", typeof(RectTransform), typeof(Image), typeof(ScrollRect));
       templateGO.transform.SetParent(dropdownGO.transform, false);
-      templateGO.SetActive(true);
+      templateGO.SetActive(true); // Force layout init
       var templateRT = templateGO.GetComponent<RectTransform>();
       templateRT.pivot = new Vector2(0.5f, 1f);
       templateRT.anchorMin = new Vector2(0, 0);
       templateRT.anchorMax = new Vector2(1, 0);
       templateRT.sizeDelta = new Vector2(0, SwivelUIConstants.DropdownHeight);
-      dropdown.template = templateRT;
+      templateGO.GetComponent<Image>().color = new Color(0.75f, 0.75f, 0.75f, 1f); // Medium gray
 
+      dropdown.template = templateRT;
       var scrollRect = templateGO.GetComponent<ScrollRect>();
+      scrollRect.vertical = true;
+      scrollRect.horizontal = false;
+      scrollRect.movementType = ScrollRect.MovementType.Clamped;
 
       // === Viewport ===
       var viewportGO = new GameObject("Viewport", typeof(RectTransform), typeof(Mask), typeof(Image));
@@ -86,7 +91,9 @@ namespace ValheimVehicles.SharedScripts.UI
       viewportRT.anchorMax = Vector2.one;
       viewportRT.offsetMin = Vector2.zero;
       viewportRT.offsetMax = Vector2.zero;
+
       scrollRect.viewport = viewportRT;
+      viewportGO.GetComponent<Image>().color = new Color(0.85f, 0.85f, 0.85f, 1f);
 
       // === Content ===
       var contentGO = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
@@ -103,6 +110,7 @@ namespace ValheimVehicles.SharedScripts.UI
       contentLayout.childControlHeight = true;
       contentLayout.childForceExpandHeight = false;
       contentLayout.spacing = 2f;
+      contentLayout.padding = new RectOffset(0, 0, 4, 4); // top and bottom spacing
 
       var contentFitter = contentGO.GetComponent<ContentSizeFitter>();
       contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
@@ -110,6 +118,18 @@ namespace ValheimVehicles.SharedScripts.UI
       // === Item ===
       var itemGO = new GameObject("Item", typeof(RectTransform), typeof(Toggle));
       itemGO.transform.SetParent(contentGO.transform, false);
+      var itemRT = itemGO.GetComponent<RectTransform>();
+      itemRT.anchorMin = new Vector2(0, 0.5f);
+      itemRT.anchorMax = new Vector2(0, 0.5f);
+      itemRT.pivot = new Vector2(0, 0.5f);
+
+      var itemBG = itemGO.AddComponent<Image>();
+      itemBG.color = new Color(0.65f, 0.65f, 0.65f, 1f); // Darker background
+
+      var itemToggle = itemGO.GetComponent<Toggle>();
+      itemToggle.targetGraphic = itemBG;
+      itemToggle.graphic = itemBG;
+
       var itemLayout = itemGO.AddComponent<LayoutElement>();
       itemLayout.minHeight = SwivelUIConstants.DropdownItemHeight;
       itemLayout.preferredHeight = SwivelUIConstants.DropdownItemHeight;
@@ -124,10 +144,9 @@ namespace ValheimVehicles.SharedScripts.UI
       itemLabel.overflowMode = TextOverflowModes.Ellipsis;
 
       dropdown.itemText = itemLabel;
-      dropdown.itemImage = itemGO.AddComponent<Image>();
+      dropdown.itemImage = itemBG;
 
-      // Finalize template visibility
-      templateGO.SetActive(false);
+      templateGO.SetActive(false); // Finalize layout
 
       return dropdown;
     }
