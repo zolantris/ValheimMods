@@ -122,6 +122,7 @@ public class Player_Patch
       if (gameObject.name.StartsWith(PrefabNames.CustomWaterFloatation))
       {
         bvc.AddCustomFloatationPrefab(gameObject);
+        return gameObject;
       }
       if (netView != null)
       {

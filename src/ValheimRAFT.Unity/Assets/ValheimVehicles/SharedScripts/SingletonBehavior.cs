@@ -1,4 +1,9 @@
+#region
+
+using System;
 using UnityEngine;
+
+#endregion
 
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
@@ -8,17 +13,17 @@ namespace ValheimVehicles.SharedScripts
   {
     public static T? Instance { get; protected set; }
 
-    private void Awake()
+    public void Awake()
     {
       if (Instance != null && Instance != this)
       {
         Destroy(this);
-        throw new System.Exception("An instance of this singleton already exists.");
+        throw new Exception("An instance of this singleton already exists.");
       }
-      else
-      {
-        Instance = (T)this;
-      }
+      Instance = (T)this;
+      OnAwake();
     }
+
+    protected virtual void OnAwake() {}
   }
 }
