@@ -5,6 +5,7 @@ using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.SharedScripts.UI;
 using ValheimVehicles.Structs;
 using ZdoWatcher;
 namespace ValheimVehicles.Components;
@@ -22,15 +23,18 @@ namespace ValheimVehicles.Components;
 /// - Swivels can function outside a vehicle.
 /// - Swivels can function inside the hierarchy of a vehicle. This requires setting the children of swivels and escaping out of any logic that sets the parent to the VehiclePiecesController container.
 /// </logic>
-public class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost
+public class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost, Hoverable, Interactable
 {
   public VehiclePiecesController? m_piecesController;
   public VehicleShip? m_vehicle => m_piecesController?.VehicleInstance?.Instance;
 
   private ZNetView m_nview;
   private int _persistentZdoId;
-  public static Dictionary<int, SwivelComponentIntegration> ActiveInstances = [];
-  private SwivelPieceActivator _pieceActivator = null!;
+  public static readonly Dictionary<int, SwivelComponentIntegration> ActiveInstances = [];
+  public List<ZNetView> m_nviewPieces = [];
+  public List<ZNetView> m_tempPieces = [];
+
+  private SwivelPieceActivator<SwivelComponentIntegration> _pieceActivator = null!;
 
   public override void Awake()
   {
@@ -38,8 +42,32 @@ public class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost
     m_nview = GetComponent<ZNetView>();
 
     // TODO share activation logic with another component so we can reuse things.
-    _pieceActivator = gameObject.AddComponent<SwivelPieceActivator>();
+    _pieceActivator = gameObject.AddComponent<SwivelPieceActivator<SwivelComponentIntegration>>();
+    _pieceActivator.Init(this);
     _pieceActivator.StartInitPersistentId();
+  }
+
+  public void OnEnable()
+  {
+    var persistentId = GetPersistentId();
+    if (persistentId == 0) return;
+
+    if (ActiveInstances.TryGetValue(persistentId, out var swivelComponentIntegration))
+    {
+      return;
+    }
+    ActiveInstances.Add(persistentId, this);
+  }
+
+  public void OnDisable()
+  {
+    var persistentId = GetPersistentId();
+    if (persistentId == 0) return;
+    if (!ActiveInstances.TryGetValue(persistentId, out var swivelComponentIntegration))
+    {
+      return;
+    }
+    ActiveInstances.Remove(persistentId);
   }
 
   public static bool TryAddPieceToSwivelContainer(int persistentId, ZNetView netViewPrefab)
@@ -63,12 +91,19 @@ public class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost
 
   public void OnDestroy()
   {
-
+    StopAllCoroutines();
+    Cleanup();
   }
 
   public void Cleanup()
   {
-    _pieceActivator.m_pieces()
+    if (!isActiveAndEnabled) return;
+    if (ZNetScene.instance == null || Game.instance == null) return;
+    foreach (var nvPiece in m_nviewPieces)
+    {
+      if (nvPiece == null || nvPiece.GetZDO() == null) continue;
+      nvPiece.GetZDO().RemoveInt(VehicleZdoVars.SwivelParentId);
+    }
   }
 
 
@@ -131,6 +166,35 @@ public class SwivelComponentIntegration : SwivelComponent, IPieceActivatorHost
   }
 
 #endregion
-  
 
+
+  public string GetHoverText()
+  {
+    return "Hover text";
+  }
+  public string GetHoverName()
+  {
+    return "Hover name";
+  }
+  public bool Interact(Humanoid user, bool hold, bool alt)
+  {
+    if (SwivelUIPanelComponent.Instance == null) Game.instance.gameObject.AddComponent<SwivelUIPanelComponent>();
+    if (SwivelUIPanelComponent.Instance != null)
+    {
+      if (SwivelUIPanelComponent.Instance.gameObject.activeInHierarchy)
+      {
+        SwivelUIPanelComponent.Instance.Hide();
+      }
+      else
+      {
+        SwivelUIPanelComponent.Instance.BindTo(this);
+      }
+      return true;
+    }
+    return false;
+  }
+  public bool UseItem(Humanoid user, ItemDrop.ItemData item)
+  {
+    return false;
+  }
 }

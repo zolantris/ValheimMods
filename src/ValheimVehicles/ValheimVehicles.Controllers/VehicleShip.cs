@@ -1,22 +1,17 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
 using Jotunn.Extensions;
 using Jotunn.Managers;
 using Registry;
 using UnityEngine;
-using UnityEngine.UI;
-using ValheimVehicles.Components;
 using ValheimVehicles.Config;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Enums;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.Structs;
-using ZdoWatcher;
 using static ValheimVehicles.Config.PrefabConfig;
 using Logger = Jotunn.Logger;
 
@@ -554,7 +549,7 @@ public class VehicleShip : MonoBehaviour, IVehicleShip
     GetPersistentID();
 
     if (PiecesController.BaseVehicleInitState !=
-        VehiclePiecesController.InitializationState.Created)
+        InitializationState.Created)
       return;
 
     var prefab = GetStarterPiece();

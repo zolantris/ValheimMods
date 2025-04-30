@@ -30,6 +30,11 @@ public class VehiclePieceActivator : BasePieceActivatorComponent
 {
   [SerializeField] private VehiclePiecesController _host;
 
+  public void Init(VehiclePiecesController host)
+  {
+    _host = host;
+  }
+
   public override IPieceActivatorHost Host => _host;
 
   protected override void TrySetPieceToParent(ZNetView netView)
@@ -285,16 +290,15 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
     return _vehiclePieceBounds;
   }
 
-  public int? GetPersistentId()
+  public int GetPersistentId()
   {
-    return VehicleInstance?.PersistentZdoId;
+    return VehicleInstance?.PersistentZdoId ?? 0;
   }
 
   public List<ZNetView>? GetCurrentPendingPieces()
   {
     var persistentId = GetPersistentId();
-    if (persistentId == null) return null;
-    m_pendingPieces.TryGetValue(persistentId.Value,
+    m_pendingPieces.TryGetValue(persistentId,
       out var pendingPiecesList);
     return pendingPiecesList ?? null;
   }
@@ -513,8 +517,8 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
     
     base.Awake();
 
-    _pieceActivator = gameObject.AddComponent<VehiclePieceActivator>();
-    _pieceActivator.Initialize(this);
+    // _pieceActivator = gameObject.AddComponent<VehiclePieceActivator>();
+    // _pieceActivator.Init(this);
     
     if (vehicleCenter == null)
     {
@@ -1659,7 +1663,7 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
     }
   }
 
-  public override void OnActivatePendingPiecesComplete(
+  public void OnActivatePendingPiecesComplete(
     PendingPieceStateEnum pieceStateEnum,
     string message = "")
   {
@@ -2310,6 +2314,12 @@ public class VehiclePiecesController : BasePiecesController, IMonoUpdater, IPiec
     RemoveDynamicParentForVehicle(netView);
     netView.transform.SetParent(null);
     m_tempPieces.Remove(netView);
+  }
+
+  public void TrySetPieceToParent(ZNetView? netView)
+  {
+    if (netView == null) return;
+    TrySetPieceToParent(netView, netView.GetZDO());
   }
 
   /// <summary>

@@ -1,28 +1,26 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using ValheimVehicles.Controllers;
 using ValheimVehicles.Interfaces;
-using ValheimVehicles.SharedScripts;
 namespace ValheimVehicles.Components;
 
-public class SwivelPieceActivator : BasePieceActivatorComponent
+/// <summary>
+/// Todo move this to the base activator with Type passthrough or write a interface for Init so these Flavors of Base can use that.
+/// </summary>
+/// <typeparam name="TSelf"></typeparam>
+public class SwivelPieceActivator<TSelf> : BasePieceActivatorComponent where TSelf : MonoBehaviour, IPieceActivatorHost
 {
-  [SerializeField] private SwivelComponentIntegration _host;
+  [SerializeField] private TSelf _host;
   public override IPieceActivatorHost Host => _host;
-
-  protected IEnumerator InitPersistentId(VehicleShip vehicleShip)
-  {
-    while (!_host.GetNetView())
-    {
-      yield return null;
-    }
-  }
-
+  
   protected override void TrySetPieceToParent(ZNetView netView)
   {
     // Classic vehicle-specific logic
     netView.transform.SetParent(_host.GetPieceContainer(), false);
+  }
+
+  public void Init(TSelf host)
+  {
+    _host = host;
   }
 
   public static void AddPendingSwivelPiece(int swivelId, ZNetView netView)
